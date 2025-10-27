@@ -6,7 +6,7 @@ import Combine
 ///
 /// Coordinates:
 /// - Microphone input (for voice/breath capture)
-/// - Binaural beat generation (for brainwave entrainment)
+/// - Binaural beat generation (auditory beat synthesis)
 /// - Spatial audio with head tracking
 /// - Bio-parameter mapping (HRV → Audio)
 /// - Real-time mixing and effects
@@ -38,7 +38,7 @@ class AudioEngine: ObservableObject {
     /// Microphone manager for voice/breath input
     let microphoneManager: MicrophoneManager
 
-    /// Binaural beat generator for healing frequencies
+    /// Binaural beat generator for frequency synthesis
     private let binauralGenerator = BinauralBeatGenerator()
 
     /// Spatial audio engine for 3D audio
@@ -84,8 +84,8 @@ class AudioEngine: ObservableObject {
 
         // Configure default binaural beat settings
         binauralGenerator.configure(
-            carrier: 432.0,  // Healing frequency
-            beat: 10.0,      // Alpha waves (relaxation)
+            carrier: 432.0,  // A=432 Hz tuning
+            beat: 10.0,      // Alpha band (10 Hz)
             amplitude: 0.3
         )
 

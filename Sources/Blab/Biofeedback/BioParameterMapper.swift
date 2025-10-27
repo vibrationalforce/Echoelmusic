@@ -72,9 +72,10 @@ class BioParameterMapper: ObservableObject {
 
     // MARK: - Musical Scale Configuration
 
-    /// Musical scale for harmonic generation
-    private let healingScale: [Float] = [
-        432.0,   // A4 (base healing frequency)
+    /// Musical scale for harmonic generation (based on A=432 Hz tuning)
+    /// Note: This uses 432 Hz as the reference instead of the standard A=440 Hz
+    private let musicalScale: [Float] = [
+        432.0,   // A4
         486.0,   // B4
         512.0,   // C5
         576.0,   // D5
@@ -110,7 +111,7 @@ class BioParameterMapper: ObservableObject {
         let targetAmplitude = mapToAmplitude(hrvCoherence: hrvCoherence, audioLevel: audioLevel)
         amplitude = smooth(current: amplitude, target: targetAmplitude, factor: smoothingFactor)
 
-        // Map Voice Pitch → Base Frequency (snap to healing scale)
+        // Map Voice Pitch → Base Frequency (snap to musical scale)
         let targetFrequency = mapVoicePitchToScale(voicePitch: voicePitch)
         baseFrequency = smooth(current: baseFrequency, target: targetFrequency, factor: fastSmoothingFactor)
 
@@ -187,16 +188,16 @@ class BioParameterMapper: ObservableObject {
         )
     }
 
-    /// Map Voice Pitch → Musical Scale (healing frequencies)
-    /// Snaps detected pitch to nearest note in healing scale
+    /// Map Voice Pitch → Musical Scale
+    /// Snaps detected pitch to nearest note in the configured musical scale
     private func mapVoicePitchToScale(voicePitch: Float) -> Float {
-        guard voicePitch > 0 else { return healingScale[0] }
+        guard voicePitch > 0 else { return musicalScale[0] }
 
-        // Find nearest note in healing scale
-        var closestNote = healingScale[0]
+        // Find nearest note in musical scale
+        var closestNote = musicalScale[0]
         var minDistance = abs(voicePitch - closestNote)
 
-        for note in healingScale {
+        for note in musicalScale {
             let distance = abs(voicePitch - note)
             if distance < minDistance {
                 minDistance = distance
@@ -297,28 +298,28 @@ class BioParameterMapper: ObservableObject {
             reverbWet = 0.7
             filterCutoff = 500.0
             amplitude = 0.5
-            baseFrequency = 432.0
+            baseFrequency = 432.0  // A4 (A=432 Hz tuning)
             tempo = 6.0
 
         case .focus:
             reverbWet = 0.3
             filterCutoff = 1500.0
             amplitude = 0.6
-            baseFrequency = 528.0  // Focus frequency
+            baseFrequency = 528.0  // C5 (approximately)
             tempo = 7.0
 
         case .relaxation:
             reverbWet = 0.8
             filterCutoff = 300.0
             amplitude = 0.4
-            baseFrequency = 396.0  // Root chakra frequency
+            baseFrequency = 396.0  // G4 (approximately)
             tempo = 4.0
 
         case .energize:
             reverbWet = 0.2
             filterCutoff = 2000.0
             amplitude = 0.7
-            baseFrequency = 741.0  // Awakening frequency
+            baseFrequency = 741.0  // F#5 (approximately)
             tempo = 8.0
         }
 

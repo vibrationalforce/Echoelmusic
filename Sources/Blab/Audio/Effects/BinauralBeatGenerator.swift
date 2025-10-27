@@ -2,13 +2,15 @@ import Foundation
 import AVFoundation
 import Accelerate
 
-/// Generates binaural beats for brainwave entrainment and healing frequencies
+/// Generates binaural beats - an auditory illusion perceived when two slightly different
+/// pure tones are presented separately to each ear.
 ///
-/// Binaural beats work by playing two slightly different frequencies (one per ear),
-/// causing the brain to perceive a "beat" at the difference frequency.
-/// This can induce specific brainwave states for relaxation, focus, sleep, etc.
+/// When different frequencies are played to each ear (e.g., 440 Hz left, 446 Hz right),
+/// the brain perceives a rhythmic "beating" at the difference frequency (6 Hz in this example).
 ///
-/// Scientific basis: Oster, G. (1973). "Auditory beats in the brain"
+/// Scientific basis: Oster, G. (1973). "Auditory beats in the brain" - describes the
+/// perceptual phenomenon. Note: Claims about brainwave entrainment and therapeutic effects
+/// remain controversial and are not conclusively proven in peer-reviewed research.
 @MainActor
 class BinauralBeatGenerator: ObservableObject {
 
@@ -20,15 +22,17 @@ class BinauralBeatGenerator: ObservableObject {
         case isochronic   // Mono - pulsed tone (works on speakers, spatial audio, etc.)
     }
 
-    // MARK: - Brainwave Presets
+    // MARK: - Frequency Presets
 
-    /// Brainwave state configurations based on neuroscience research
+    /// Frequency presets corresponding to natural brainwave frequency bands.
+    /// Note: These are frequency ranges observed in EEG measurements. Direct causal
+    /// effects of binaural beats on mental states are not scientifically established.
     enum BrainwaveState: String, CaseIterable {
-        case delta      // 2 Hz - Deep sleep, healing
-        case theta      // 6 Hz - Meditation, creativity
-        case alpha      // 10 Hz - Relaxation, learning
-        case beta       // 20 Hz - Focus, alertness
-        case gamma      // 40 Hz - Peak awareness, cognition
+        case delta      // 2 Hz - Associated with deep sleep
+        case theta      // 6 Hz - Associated with meditation states
+        case alpha      // 10 Hz - Associated with relaxed wakefulness
+        case beta       // 20 Hz - Associated with active thinking
+        case gamma      // 40 Hz - Associated with cognitive processing
 
         /// Beat frequency in Hz for this brainwave state
         var beatFrequency: Float {
@@ -44,11 +48,11 @@ class BinauralBeatGenerator: ObservableObject {
         /// Human-readable description
         var description: String {
             switch self {
-            case .delta: return "Deep Sleep & Healing"
-            case .theta: return "Meditation & Creativity"
-            case .alpha: return "Relaxation & Learning"
-            case .beta: return "Focus & Alertness"
-            case .gamma: return "Peak Awareness"
+            case .delta: return "Deep Sleep"
+            case .theta: return "Meditation"
+            case .alpha: return "Relaxation"
+            case .beta: return "Active Focus"
+            case .gamma: return "Cognitive Processing"
             }
         }
     }
@@ -56,13 +60,13 @@ class BinauralBeatGenerator: ObservableObject {
 
     // MARK: - Configuration
 
-    /// Carrier frequency in Hz (the base tone, often 432 Hz for healing)
-    /// 432 Hz is considered the "natural frequency" in some healing traditions
+    /// Carrier frequency in Hz (the base tone)
+    /// Default: 432 Hz (a pitch slightly below A440 standard tuning)
     private(set) var carrierFrequency: Float = 432.0
 
     /// Beat frequency in Hz (difference between left and right ear)
-    /// This is what entrains the brain to the target brainwave state
-    private(set) var beatFrequency: Float = 10.0  // Alpha by default
+    /// This is the perceived rhythmic beating frequency
+    private(set) var beatFrequency: Float = 10.0  // Alpha band by default
 
     /// Amplitude (volume) of the generated tone (0.0 - 1.0)
     private(set) var amplitude: Float = 0.3
@@ -132,11 +136,11 @@ class BinauralBeatGenerator: ObservableObject {
         print("🧠 Configured for \(state.rawValue) state: \(state.description)")
     }
 
-    /// Set beat frequency dynamically based on HRV coherence
-    /// Maps coherence (0-100) to optimal brainwave states:
-    /// - Low coherence (0-40) → Alpha (10 Hz) for relaxation
+    /// Set beat frequency dynamically based on HRV coherence score
+    /// Maps coherence (0-100) to different frequency bands:
+    /// - Low coherence (0-40) → Alpha band (10 Hz)
     /// - Medium coherence (40-60) → Alpha-Beta transition (15 Hz)
-    /// - High coherence (60-100) → Beta (20 Hz) for peak focus
+    /// - High coherence (60-100) → Beta band (20 Hz)
     ///
     /// - Parameter coherence: HRV coherence score (0-100)
     func setBeatFrequencyFromHRV(coherence: Double) {

@@ -28,7 +28,7 @@
 
 	<!-- HealthKit Permissions (for HRV biofeedback) -->
 	<key>NSHealthShareUsageDescription</key>
-	<string>BLAB reads your heart rate variability (HRV) to create adaptive healing frequencies that respond to your nervous system state.</string>
+	<string>BLAB reads your heart rate variability (HRV) to create adaptive audio parameters that respond to your physiological state.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>BLAB may log your meditation and breathing sessions to HealthKit for wellness tracking.</string>
 

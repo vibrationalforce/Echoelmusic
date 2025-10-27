@@ -1,6 +1,6 @@
 # BLAB iOS App 🫧
 
-**Breath → Sound → Light → Consciousness**
+**Breath → Sound → Light → Expression**
 
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
 [![iOS](https://img.shields.io/badge/iOS-15.0+-blue.svg)](https://developer.apple.com/ios/)
@@ -47,7 +47,7 @@ Then in Xcode:
 
 ## 🎯 What is BLAB?
 
-BLAB is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
+BLAB is a **bio-reactive multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
 - 🌊 **Spatial Audio** (3D/4D/Fibonacci Field Arrays)
 - 🎨 **Real-time Visuals** (Cymatics, Mandalas, Particles)
 - 💡 **LED/DMX Lighting** (Push 3, Art-Net)
@@ -59,7 +59,7 @@ BLAB is an **embodied multimodal music system** that transforms biometric signal
 - ✅ Real-time voice processing (AVAudioEngine)
 - ✅ FFT frequency detection
 - ✅ YIN pitch detection
-- ✅ Binaural beat generator (8 brainwave states)
+- ✅ Binaural beat generator (5 frequency bands: delta, theta, alpha, beta, gamma)
 - ✅ Node-based audio graph
 - ✅ Multi-track recording
 
@@ -84,7 +84,7 @@ BLAB is an **embodied multimodal music system** that transforms biometric signal
 
 #### **Biofeedback:**
 - ✅ HealthKit integration (HRV, Heart Rate)
-- ✅ HeartMath coherence algorithm
+- ✅ HRV coherence analysis (frequency-domain)
 - ✅ Bio-parameter mapping (HRV → audio/visual/light)
 - ✅ Real-time signal smoothing
 
@@ -425,19 +425,16 @@ Proprietary software - not for redistribution.
 
 ---
 
-## 🫧 Philosophy
+## 🫧 About
 
-> "BLAB is not just a music app - it's an interface to embodied consciousness.
-> Through breath, biometrics, and intention, we transform life itself into art."
+BLAB is an innovative bio-reactive music and performance system that bridges physiological signals with artistic expression. By combining real-time biometric data, voice input, spatial audio processing, and visual synthesis, BLAB creates an immersive multimodal creative environment.
 
-**breath → sound → light → consciousness**
+**breath → sound → light → expression**
 
 ---
 
-**Built with** ❤️ using Swift, SwiftUI, AVFoundation, Metal, HealthKit, ARKit, and pure creative energy.
+**Built with** ❤️ using Swift, SwiftUI, AVFoundation, Metal, HealthKit, ARKit, and modern iOS technologies.
 
 **Status:** ✅ Ready for Xcode Development
 **Next:** 🚀 UI Integration & Testing
-**Vision:** 🌊 Embodied Multimodal Music System
-
-🫧 *Let's flow...* ✨
+**Vision:** 🌊 Bio-Reactive Multimodal Music System

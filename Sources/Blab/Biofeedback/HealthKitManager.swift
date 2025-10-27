@@ -4,7 +4,10 @@ import Combine
 import Accelerate
 
 /// Manages HealthKit integration for real-time HRV and heart rate monitoring
-/// Implements HeartMath Institute's coherence algorithm for biofeedback
+///
+/// Implements a frequency-domain coherence analysis inspired by HeartMath Institute's methods.
+/// Note: While HRV coherence shows correlation with subjective well-being in some studies,
+/// causal claims and therapeutic applications remain subjects of ongoing research.
 @MainActor
 class HealthKitManager: ObservableObject {
 
@@ -18,10 +21,12 @@ class HealthKitManager: ObservableObject {
     /// Normal range: 20-100 ms (higher = better autonomic function)
     @Published var hrvRMSSD: Double = 0.0
 
-    /// HeartMath coherence score (0-100)
-    /// 0-40: Low coherence (stress/anxiety)
-    /// 40-60: Medium coherence (transitional)
-    /// 60-100: High coherence (optimal/flow state)
+    /// HRV coherence score (0-100)
+    /// A frequency-domain metric analyzing HRV rhythmicity. Higher scores indicate
+    /// more rhythmic, organized heart rate patterns. Interpretation:
+    /// 0-40: Low coherence (irregular HRV patterns)
+    /// 40-60: Medium coherence (moderate rhythmicity)
+    /// 60-100: High coherence (highly rhythmic patterns)
     @Published var hrvCoherence: Double = 0.0
 
     /// Whether HealthKit authorization has been granted
@@ -288,21 +293,24 @@ class HealthKitManager: ObservableObject {
     }
 
 
-    // MARK: - HeartMath Coherence Algorithm
+    // MARK: - HRV Coherence Algorithm
 
-    /// Calculate HeartMath coherence score from RR intervals
-    /// Based on HeartMath Institute's research on heart-brain coherence
+    /// Calculate HRV coherence score from RR intervals using frequency-domain analysis
+    ///
+    /// This implements a spectral analysis method that measures the concentration of HRV power
+    /// in a specific frequency band (0.04-0.26 Hz), which corresponds to typical respiratory
+    /// and baroreceptor frequencies. Higher coherence indicates more rhythmic, organized patterns.
     ///
     /// Algorithm steps:
     /// 1. Detrend RR intervals (remove linear trend)
-    /// 2. Apply Hamming window
-    /// 3. Perform FFT
+    /// 2. Apply Hamming window (reduce spectral leakage)
+    /// 3. Perform FFT (Fast Fourier Transform)
     /// 4. Calculate power spectral density
-    /// 5. Measure peak power in coherence band (0.04-0.26 Hz, centered at 0.1 Hz)
-    /// 6. Normalize to 0-100 scale
+    /// 5. Measure peak power in the 0.04-0.26 Hz band
+    /// 6. Normalize to 0-100 scale based on peak-to-total power ratio
     ///
     /// - Parameter rrIntervals: Array of RR intervals in milliseconds
-    /// - Returns: Coherence score from 0 (low) to 100 (high)
+    /// - Returns: Coherence score from 0 (irregular) to 100 (highly rhythmic)
     func calculateCoherence(rrIntervals: [Double]) -> Double {
         guard rrIntervals.count >= 30 else { return 0.0 }
 
@@ -317,11 +325,12 @@ class HealthKitManager: ObservableObject {
         let powerSpectrum = performFFTForCoherence(windowed, fftSize: fftSize)
 
         // Step 4: Calculate coherence score
-        // HeartMath coherence band: 0.04-0.26 Hz, with peak typically at 0.1 Hz
+        // Analysis band: 0.04-0.26 Hz (respiratory/baroreceptor range)
+        // Typical peak around 0.1 Hz corresponds to ~6 breaths per minute
         // Assuming 1 Hz sampling rate (1 RR interval per second)
         let samplingRate = 1.0
-        let coherenceBandLow = 0.04  // Hz
-        let coherenceBandHigh = 0.26 // Hz
+        let coherenceBandLow = 0.04  // Hz (lower bound)
+        let coherenceBandHigh = 0.26 // Hz (upper bound)
 
         let binLow = Int(coherenceBandLow * Double(fftSize) / samplingRate)
         let binHigh = Int(coherenceBandHigh * Double(fftSize) / samplingRate)
