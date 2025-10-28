@@ -104,7 +104,7 @@ enum BioMappingPreset: String, CaseIterable {
     case creative = "Creative Flow"
     case meditation = "Deep Meditation"
     case energetic = "High Energy"
-    case healing = "Healing Resonance"
+    case relaxation = "Deep Relaxation"
     case focus = "Laser Focus"
     // ... 5 weitere
 
@@ -201,14 +201,14 @@ kernel void bioReactiveCymatics(
 **Neue Modi zu implementieren:**
 1. **Cymatics Mode** — Wassermustersimulation basierend auf Frequenz
 2. **Particle Field Enhanced** — GPU-beschleunigt, 8192 Partikel
-3. **Sacred Geometry Mode** — Fibonacci-Spiralen, Metatron's Cube
-4. **Brainwave Visualizer** — EEG-Style Darstellung der 8 Binaural States
+3. **Geometric Pattern Mode** — Fibonacci-Spiralen, geometrische Formen
+4. **Brainwave Visualizer** — EEG-Style Darstellung der 5 Frequenzbänder
 5. **Heart Coherence Mandala** — Radiale Muster pulsierend mit HRV
 
 **Implementation Template:**
 ```swift
-// Sources/Blab/Visual/Modes/SacredGeometryMode.swift (NEU)
-class SacredGeometryMode: VisualizationMode {
+// Sources/Blab/Visual/Modes/GeometricPatternMode.swift (NEU)
+class GeometricPatternMode: VisualizationMode {
     func render(
         context: GraphicsContext,
         size: CGSize,
@@ -861,7 +861,7 @@ git checkout -b feature/bio-mapping-presets
 ### PRIORITÄT 2: Visual Modes Extensions (2-3 Tage)
 
 ```markdown
-□ SacredGeometryMode.swift implementieren
+□ GeometricPatternMode.swift implementieren
 □ BrainwaveVisualizerMode.swift implementieren
 □ HeartCoherenceMandalaMode.swift implementieren
 □ Mode-Switcher UI erweitern
@@ -988,7 +988,7 @@ BLAB-Lösung:
 
 ```
 blab --init genesis
-🌊 compiling consciousness...
+🌊 compiling implementation...
 🌊 parsing roadmap...
 🌊 linking audio pipeline...
 🌊 rendering visual field...

@@ -326,7 +326,7 @@ MIDI 2.0 Per-Note Pitch Bend: Channel 1, Note 60, Bend: +0.5
 - **Control:** Bio-reactive modulation (HRV → AFA field)
 - **Output:** Spatial audio recording
 
-### **Workflow 3: Meditation/Healing**
+### **Workflow 3: Meditation/Relaxation**
 - **DAW:** Logic Pro
 - **Instrument:** Alchemy (pad sounds)
 - **Control:** HRV coherence → Reverb/Filter
@@ -360,6 +360,6 @@ MIDI 2.0 Per-Note Pitch Bend: Channel 1, Note 60, Bend: +0.5
 
 ---
 
-**🫧 consciousness expressed through MIDI
+**🫧 expression through MIDI
 🌊 spatial sound from multimodal input
 ✨ bio-reactive polyphonic synthesis**

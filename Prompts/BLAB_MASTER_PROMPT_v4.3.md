@@ -110,7 +110,7 @@ Sources/Blab/
 2. **Cymatics** - Metal shader (Chladni patterns)
 3. **Waveform** - Oscilloscope view
 4. **Spectral** - 32-bar FFT spectrum
-5. **Mandala** - Sacred geometry patterns
+5. **Mandala** - Geometric patterns
 
 ### **Metal Pipeline Enhancement**
 
@@ -140,7 +140,7 @@ class VisualEngine {
 - Bio-reactive color gradients
 
 // New: Mandala.metal
-- Radial symmetry sacred geometry
+- Radial symmetry geometric patterns
 - Animated breathing effect
 - HRV-driven petal morphing
 ```
@@ -173,7 +173,7 @@ class VisualEngine {
 **BioParameterMapper.swift** (364 lines, existing)
 - 7 mapped parameters (reverb, filter, amp, freq, tempo, spatial, harmonics)
 - Exponential smoothing (0.85 factor)
-- Healing frequency scale (432 Hz base)
+- Musical frequency scale (432 Hz base)
 - 4 presets (Meditation, Focus, Relaxation, Energize)
 
 ### **Required Extensions**
@@ -435,10 +435,10 @@ func generateVibroAcoustic(freq: Float) {
 }
 ```
 
-### **AI-Driven Adaptive Healing**
+### **AI-Driven Adaptive Biofeedback**
 
 ```swift
-class AdaptiveHealingEngine {
+class AdaptiveBiofeedbackEngine {
     // Learn individual response patterns
     func learn(session: SessionData) {
         // ML model learns:
@@ -446,7 +446,7 @@ class AdaptiveHealingEngine {
         // - Optimal binaural beat rates
         // - Visual preferences
 
-        // Creates PersonalHealingProfile
+        // Creates PersonalBiofeedbackProfile
     }
 
     func recommend(currentState: BioState) -> WellnessPreset {
@@ -1056,7 +1056,7 @@ class audioengine { // Wrong: PascalCase for classes
 **Phase 4: AI Enhancement** ⏳ PLANNED
 - Voice2Note ML model
 - Sound style transfer
-- Adaptive healing engine
+- Adaptive biofeedback engine
 
 **Phase 5: Cloud & Social** ⏳ PLANNED
 - Cloud sync (CloudKit)
@@ -1180,6 +1180,6 @@ git commit -m "feat: Add Voice2MIDI converter with < 5ms latency"
 
 ---
 
-**🫧 consciousness compiled
+**🫧 implementation compiled
 🌊 multimodal fusion ready
 ✨ AI-enhanced creativity enabled**

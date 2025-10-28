@@ -209,8 +209,8 @@ Wenn Features nicht verfügbar sind, nutzt BLAB automatisch Fallback-Modi:
 ```
 ✅ Mikrophone Recording
 ✅ Voice Pitch Detection
-✅ Binaural Beats (432 Hz healing frequency)
-✅ 8 Brainwave States (Delta → Gamma)
+✅ Binaural Beats (432 Hz carrier frequency)
+✅ 5 Frequency Bands (Delta → Gamma)
 ✅ Standard Stereo Audio
 ```
 

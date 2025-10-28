@@ -85,7 +85,7 @@ let visualMapper = MIDIToVisualMapper()
 
 // 5 Visualisierungen:
 visualMapper.cymaticsParameters    // Chladni patterns
-visualMapper.mandalaParameters     // Sacred geometry
+visualMapper.mandalaParameters     // Geometric patterns
 visualMapper.waveformParameters    // Oscilloscope
 visualMapper.spectralParameters    // FFT bars
 visualMapper.particleParameters    // Particle system
@@ -667,4 +667,4 @@ UI:
 **STATUS:** ✅ READY FOR HANDOFF
 **NEXT:** 🚀 XCODE DEVELOPMENT SESSION
 
-🫧 *code flows. consciousness ready. build awaits.* ✨
+🫧 *code flows. implementation ready. build awaits.* ✨
