@@ -25,7 +25,8 @@ class BioParameterMapper: ObservableObject {
 
     /// Base note frequency (Hz)
     /// Mapped from: Voice Pitch
-    @Published var baseFrequency: Float = 432.0
+    /// Default: 440 Hz (ISO 16:1975 international standard)
+    @Published var baseFrequency: Float = 440.0
 
     /// Tempo (BPM)
     /// Mapped from: Heart Rate (synchronized breathing)
@@ -72,16 +73,16 @@ class BioParameterMapper: ObservableObject {
 
     // MARK: - Musical Scale Configuration
 
-    /// Musical scale for harmonic generation (based on A=432 Hz tuning)
-    /// Note: This uses 432 Hz as the reference instead of the standard A=440 Hz
+    /// Musical scale for harmonic generation (based on A=440 Hz ISO standard)
+    /// Uses equal temperament tuning with A4 = 440 Hz
     private let musicalScale: [Float] = [
-        432.0,   // A4
-        486.0,   // B4
-        512.0,   // C5
-        576.0,   // D5
-        648.0,   // E5
-        729.0,   // F#5
-        768.0,   // G5
+        440.0,   // A4 (ISO 16:1975 standard)
+        493.9,   // B4
+        523.3,   // C5
+        587.3,   // D5
+        659.3,   // E5
+        740.0,   // F#5
+        784.0,   // G5
     ]
 
 
@@ -298,7 +299,7 @@ class BioParameterMapper: ObservableObject {
             reverbWet = 0.7
             filterCutoff = 500.0
             amplitude = 0.5
-            baseFrequency = 432.0  // A4 (A=432 Hz tuning)
+            baseFrequency = 440.0  // A4 (ISO 16:1975 standard)
             tempo = 6.0
 
         case .focus:

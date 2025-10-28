@@ -61,8 +61,8 @@ class BinauralBeatGenerator: ObservableObject {
     // MARK: - Configuration
 
     /// Carrier frequency in Hz (the base tone)
-    /// Default: 432 Hz (a pitch slightly below A440 standard tuning)
-    private(set) var carrierFrequency: Float = 432.0
+    /// Default: 440 Hz (ISO 16:1975 international standard tuning)
+    private(set) var carrierFrequency: Float = 440.0
 
     /// Beat frequency in Hz (difference between left and right ear)
     /// This is the perceived rhythmic beating frequency
@@ -119,7 +119,7 @@ class BinauralBeatGenerator: ObservableObject {
 
     /// Configure the binaural beat parameters
     /// - Parameters:
-    ///   - carrier: Base frequency in Hz (typically 200-500 Hz, default 432 Hz)
+    ///   - carrier: Base frequency in Hz (typically 200-500 Hz, default 440 Hz ISO standard)
     ///   - beat: Beat frequency in Hz (0.5-40 Hz for different brainwave states)
     ///   - amplitude: Volume (0.0-1.0, default 0.3)
     func configure(carrier: Float, beat: Float, amplitude: Float) {

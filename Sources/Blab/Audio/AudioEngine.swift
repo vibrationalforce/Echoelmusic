@@ -84,7 +84,7 @@ class AudioEngine: ObservableObject {
 
         // Configure default binaural beat settings
         binauralGenerator.configure(
-            carrier: 432.0,  // A=432 Hz tuning
+            carrier: 440.0,  // A=440 Hz (ISO 16:1975 standard)
             beat: 10.0,      // Alpha band (10 Hz)
             amplitude: 0.3
         )
@@ -199,7 +199,7 @@ class AudioEngine: ObservableObject {
     func setBinauralAmplitude(_ amplitude: Float) {
         binauralAmplitude = amplitude
         binauralGenerator.configure(
-            carrier: 432.0,
+            carrier: 440.0,  // A=440 Hz (ISO standard)
             beat: currentBrainwaveState.beatFrequency,
             amplitude: amplitude
         )
@@ -264,7 +264,7 @@ class AudioEngine: ObservableObject {
         binauralAmplitude = adaptiveAmplitude
 
         binauralGenerator.configure(
-            carrier: 432.0,
+            carrier: 440.0,  // A=440 Hz (ISO standard)
             beat: binauralGenerator.beatFrequency,
             amplitude: adaptiveAmplitude
         )
