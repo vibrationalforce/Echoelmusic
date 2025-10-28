@@ -4,6 +4,18 @@ import MetalKit
 import CoreGraphics
 import AVFoundation
 
+// MARK: - Shader Uniforms Structure
+
+/// Uniforms structure matching Metal shader
+struct Uniforms {
+    var time: Float
+    var audioLevel: Float
+    var frequency: Float
+    var hrvCoherence: Float
+    var heartRate: Float
+    var resolution: SIMD2<Float>
+}
+
 /// Renders visualizations to Metal textures for video export
 /// Supports all visualization modes: Particles, Cymatics, Waveform, Spectral, Mandala
 @MainActor
@@ -24,6 +36,7 @@ class VisualizationVideoRenderer {
 
     private let size: CGSize
     private let pixelFormat: MTLPixelFormat = .bgra8Unorm
+    private let fftExtractor: AudioFFTExtractor
 
     // MARK: - Visualization Renderers
 
@@ -33,9 +46,10 @@ class VisualizationVideoRenderer {
 
     // MARK: - Initialization
 
-    init(device: MTLDevice, size: CGSize) throws {
+    init(device: MTLDevice, size: CGSize, fftExtractor: AudioFFTExtractor) throws {
         self.device = device
         self.size = size
+        self.fftExtractor = fftExtractor
 
         guard let commandQueue = device.makeCommandQueue() else {
             throw VideoExportError.unsupportedFormat
@@ -77,24 +91,18 @@ class VisualizationVideoRenderer {
     }
 
     private func setupPipeline() throws {
-        // Basic pipeline for solid color rendering
-        // In full implementation, this would load actual shaders for each visualization mode
-
-        let library = device.makeDefaultLibrary()
-        let vertexFunction = library?.makeFunction(name: "vertexShader")
-        let fragmentFunction = library?.makeFunction(name: "fragmentShader")
-
-        let pipelineDescriptor = MTLRenderPipelineDescriptor()
-        pipelineDescriptor.vertexFunction = vertexFunction
-        pipelineDescriptor.fragmentFunction = fragmentFunction
-        pipelineDescriptor.colorAttachments[0].pixelFormat = pixelFormat
-
-        do {
-            renderPipelineState = try device.makeRenderPipelineState(descriptor: pipelineDescriptor)
-        } catch {
-            print("⚠️ Could not create render pipeline state (using fallback): \(error)")
-            // Fallback: we'll render without shaders (solid colors)
+        guard let library = device.makeDefaultLibrary() else {
+            print("⚠️ Could not load default Metal library")
+            return
         }
+
+        guard let vertexFunction = library.makeFunction(name: "vertexShader") else {
+            print("⚠️ Could not load vertex shader")
+            return
+        }
+
+        // We'll set the fragment function per-mode, so just store the vertex function
+        print("✅ Metal shaders loaded successfully")
     }
 
 
@@ -156,10 +164,13 @@ class VisualizationVideoRenderer {
         bioData: BioRenderData,
         time: TimeInterval
     ) {
-        // TODO: Implement particle system rendering
-        // For now, render a solid color based on audio level
-        let audioLevel = audioData.reduce(0, +) / Float(max(audioData.count, 1))
-        renderSolidColor(encoder: encoder, red: audioLevel, green: 0.5, blue: 1.0 - audioLevel)
+        renderWithShader(
+            encoder: encoder,
+            shaderName: "particleFragment",
+            audioData: audioData,
+            bioData: bioData,
+            time: time
+        )
     }
 
     private func renderCymatics(
@@ -168,8 +179,13 @@ class VisualizationVideoRenderer {
         bioData: BioRenderData,
         time: TimeInterval
     ) {
-        // TODO: Implement cymatics pattern rendering
-        renderSolidColor(encoder: encoder, red: 0.2, green: 0.5, blue: 0.8)
+        renderWithShader(
+            encoder: encoder,
+            shaderName: "cymaticsFragment",
+            audioData: audioData,
+            bioData: bioData,
+            time: time
+        )
     }
 
     private func renderWaveform(
@@ -178,8 +194,13 @@ class VisualizationVideoRenderer {
         bioData: BioRenderData,
         time: TimeInterval
     ) {
-        // TODO: Implement waveform rendering
-        renderSolidColor(encoder: encoder, red: 0.0, green: 1.0, blue: 0.0)
+        renderWithShader(
+            encoder: encoder,
+            shaderName: "waveformFragment",
+            audioData: audioData,
+            bioData: bioData,
+            time: time
+        )
     }
 
     private func renderSpectral(
@@ -188,8 +209,13 @@ class VisualizationVideoRenderer {
         bioData: BioRenderData,
         time: TimeInterval
     ) {
-        // TODO: Implement spectral analyzer rendering
-        renderSolidColor(encoder: encoder, red: 0.5, green: 0.0, blue: 1.0)
+        renderWithShader(
+            encoder: encoder,
+            shaderName: "spectralFragment",
+            audioData: audioData,
+            bioData: bioData,
+            time: time
+        )
     }
 
     private func renderMandala(
@@ -198,9 +224,62 @@ class VisualizationVideoRenderer {
         bioData: BioRenderData,
         time: TimeInterval
     ) {
-        // TODO: Implement mandala pattern rendering
-        let hue = Float(bioData.hrvCoherence / 100.0)
-        renderSolidColor(encoder: encoder, red: hue, green: 0.7, blue: 1.0 - hue)
+        renderWithShader(
+            encoder: encoder,
+            shaderName: "mandalaFragment",
+            audioData: audioData,
+            bioData: bioData,
+            time: time
+        )
+    }
+
+    /// Render with Metal shader
+    private func renderWithShader(
+        encoder: MTLRenderCommandEncoder,
+        shaderName: String,
+        audioData: [Float],
+        bioData: BioRenderData,
+        time: TimeInterval
+    ) {
+        guard let library = device.makeDefaultLibrary(),
+              let vertexFunction = library.makeFunction(name: "vertexShader"),
+              let fragmentFunction = library.makeFunction(name: shaderName) else {
+            // Fallback to solid color if shader not available
+            let audioLevel = audioData.reduce(0, +) / Float(max(audioData.count, 1))
+            renderSolidColor(encoder: encoder, red: audioLevel, green: 0.5, blue: 1.0)
+            return
+        }
+
+        // Create pipeline state for this shader
+        let pipelineDescriptor = MTLRenderPipelineDescriptor()
+        pipelineDescriptor.vertexFunction = vertexFunction
+        pipelineDescriptor.fragmentFunction = fragmentFunction
+        pipelineDescriptor.colorAttachments[0].pixelFormat = pixelFormat
+
+        guard let pipelineState = try? device.makeRenderPipelineState(descriptor: pipelineDescriptor) else {
+            return
+        }
+
+        encoder.setRenderPipelineState(pipelineState)
+
+        // Create uniforms
+        let audioLevel = audioData.reduce(0, +) / Float(max(audioData.count, 1))
+        let frequency: Float = fftExtractor.getDominantFrequency(from: audioData)
+
+        var uniforms = Uniforms(
+            time: Float(time),
+            audioLevel: audioLevel,
+            frequency: frequency,
+            hrvCoherence: Float(bioData.hrvCoherence),
+            heartRate: Float(bioData.heartRate),
+            resolution: SIMD2<Float>(Float(size.width), Float(size.height))
+        )
+
+        // Set uniforms
+        encoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+
+        // Draw fullscreen quad
+        encoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
     }
 
 

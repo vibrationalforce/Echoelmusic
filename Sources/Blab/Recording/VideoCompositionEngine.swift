@@ -19,16 +19,19 @@ class VideoCompositionEngine: ObservableObject {
     private let device: MTLDevice
     private var visualRenderer: VisualizationVideoRenderer?
     private var videoRecorder: VideoRecordingEngine?
+    private let fftExtractor: AudioFFTExtractor
 
     // MARK: - Export State
 
     private var cancellables = Set<AnyCancellable>()
+    private var fftTimeline: [[Float]]?
 
 
     // MARK: - Initialization
 
-    init(device: MTLDevice) {
+    init(device: MTLDevice, sampleRate: Double = 44100.0, fftSize: Int = 2048) {
         self.device = device
+        self.fftExtractor = AudioFFTExtractor(fftSize: fftSize, sampleRate: sampleRate)
     }
 
 
@@ -58,10 +61,21 @@ class VideoCompositionEngine: ObservableObject {
         print("   Duration: \(String(format: "%.2f", session.duration))s")
         print("   Mode: \(visualizationMode.rawValue)")
 
+        // Extract FFT timeline from session
+        print("🎵 Extracting audio FFT data...")
+        do {
+            fftTimeline = try session.extractFFTTimeline(fftExtractor: fftExtractor)
+            print("   ✅ Extracted \(fftTimeline?.count ?? 0) FFT frames")
+        } catch {
+            print("   ⚠️ Could not extract FFT data: \(error)")
+            fftTimeline = nil
+        }
+
         // Create visualization renderer
         visualRenderer = try VisualizationVideoRenderer(
             device: device,
-            size: configuration.resolution.size
+            size: configuration.resolution.size,
+            fftExtractor: fftExtractor
         )
 
         // Create video recorder
@@ -148,9 +162,23 @@ class VideoCompositionEngine: ObservableObject {
 
     /// Get audio FFT data for specific time
     private func getAudioData(for session: Session, at time: TimeInterval) -> [Float] {
-        // TODO: Extract actual audio FFT data from session
-        // For now, return mock data
-        return VisualizationVideoRenderer.mockAudioData(frequency: 440.0, sampleCount: 512)
+        // Use pre-extracted FFT timeline if available
+        guard let timeline = fftTimeline, !timeline.isEmpty else {
+            // Fallback to mock data if FFT extraction failed
+            return VisualizationVideoRenderer.mockAudioData(frequency: 440.0, sampleCount: 512)
+        }
+
+        // Calculate frame index based on time
+        // AudioFFTExtractor uses hopSize = fftSize / 4, so 75% overlap
+        let hopSize = 2048 / 4  // Default fftSize is 2048
+        let sampleRate = 44100.0
+        let framesPerSecond = sampleRate / Double(hopSize)
+        let frameIndex = Int(time * framesPerSecond)
+
+        // Clamp to valid range
+        let clampedIndex = min(max(0, frameIndex), timeline.count - 1)
+
+        return timeline[clampedIndex]
     }
 
     /// Get bio-feedback data for specific time
@@ -245,7 +273,8 @@ class VideoCompositionEngine: ObservableObject {
         // Create visualization renderer
         visualRenderer = try VisualizationVideoRenderer(
             device: device,
-            size: configuration.resolution.size
+            size: configuration.resolution.size,
+            fftExtractor: fftExtractor
         )
 
         // Create video recorder

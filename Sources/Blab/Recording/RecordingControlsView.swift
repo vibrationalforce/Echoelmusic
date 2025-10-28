@@ -11,6 +11,7 @@ struct RecordingControlsView: View {
     @State private var showTrackList = false
     @State private var showMixer = false
     @State private var showExportOptions = false
+    @State private var showVideoExport = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -86,6 +87,12 @@ struct RecordingControlsView: View {
         }
         .sheet(isPresented: $showExportOptions) {
             exportOptionsView
+        }
+        .sheet(isPresented: $showVideoExport) {
+            if let session = recordingEngine.currentSession {
+                VideoExportView(session: session)
+                    .presentationDetents([.large])
+            }
         }
     }
 
@@ -342,6 +349,25 @@ struct RecordingControlsView: View {
     private var exportOptionsView: some View {
         NavigationView {
             List {
+                Section(header: Text("Video & Social Media")) {
+                    Button(action: { showVideoExport = true; showExportOptions = false }) {
+                        HStack {
+                            Image(systemName: "video.fill")
+                                .foregroundColor(.purple)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Export Video")
+                                    .font(.system(size: 16, weight: .medium))
+                                Text("Instagram, TikTok, YouTube & more")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "arrow.right")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
                 Section(header: Text("Audio Format")) {
                     exportFormatButton(title: "WAV", icon: "waveform", format: .wav)
                     exportFormatButton(title: "M4A", icon: "music.note", format: .m4a)
