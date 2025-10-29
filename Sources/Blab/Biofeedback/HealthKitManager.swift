@@ -18,6 +18,11 @@ class HealthKitManager: ObservableObject {
     /// Normal range: 20-100 ms (higher = better autonomic function)
     @Published var hrvRMSSD: Double = 0.0
 
+    /// Alias for hrvRMSSD for compatibility
+    public var hrv: Double {
+        return hrvRMSSD
+    }
+
     /// HeartMath coherence score (0-100)
     /// 0-40: Low coherence (stress/anxiety)
     /// 40-60: Medium coherence (transitional)

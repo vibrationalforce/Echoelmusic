@@ -11,6 +11,8 @@ struct RecordingControlsView: View {
     @State private var showTrackList = false
     @State private var showMixer = false
     @State private var showExportOptions = false
+    @State private var shareURL: URL?
+    @State private var showShareSheet = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -86,6 +88,13 @@ struct RecordingControlsView: View {
         }
         .sheet(isPresented: $showExportOptions) {
             exportOptionsView
+        }
+        .sheet(isPresented: $showShareSheet, onDismiss: {
+            shareURL = nil
+        }) {
+            if let url = shareURL {
+                ShareSheet(items: [url])
+            }
         }
     }
 
@@ -454,7 +463,11 @@ struct RecordingControlsView: View {
             do {
                 let url = try await exportManager.exportAudio(session: session, format: format)
                 print("📤 Exported to: \(url.path)")
-                // TODO: Show share sheet
+                await MainActor.run {
+                    shareURL = url
+                    showShareSheet = true
+                    showExportOptions = false
+                }
             } catch {
                 print("❌ Export failed: \(error)")
             }
@@ -468,7 +481,9 @@ struct RecordingControlsView: View {
         do {
             let url = try exportManager.exportBioData(session: session, format: format)
             print("📤 Exported bio-data to: \(url.path)")
-            // TODO: Show share sheet
+            shareURL = url
+            showShareSheet = true
+            showExportOptions = false
         } catch {
             print("❌ Export failed: \(error)")
         }
@@ -482,7 +497,11 @@ struct RecordingControlsView: View {
             do {
                 let url = try await exportManager.exportSessionPackage(session: session)
                 print("📦 Exported package to: \(url.path)")
-                // TODO: Show share sheet
+                await MainActor.run {
+                    shareURL = url
+                    showShareSheet = true
+                    showExportOptions = false
+                }
             } catch {
                 print("❌ Export failed: \(error)")
             }
@@ -496,5 +515,28 @@ struct RecordingControlsView: View {
         let seconds = Int(time) % 60
         let milliseconds = Int((time.truncatingRemainder(dividingBy: 1)) * 10)
         return String(format: "%02d:%02d.%01d", minutes, seconds, milliseconds)
+    }
+}
+
+// MARK: - Share Sheet Helper
+
+import UIKit
+
+/// UIKit Share Sheet wrapper for SwiftUI
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    var excludedActivityTypes: [UIActivity.ActivityType]? = nil
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(
+            activityItems: items,
+            applicationActivities: nil
+        )
+        controller.excludedActivityTypes = excludedActivityTypes
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
+        // No updates needed
     }
 }

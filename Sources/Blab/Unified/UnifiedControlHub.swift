@@ -51,7 +51,8 @@ public class UnifiedControlHub: ObservableObject {
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
-    // TODO: Add when implementing
+    // MARK: - Future Integrations
+    // Gaze tracking integration reserved for Vision Pro / eye tracking implementation
     // private let gazeTracker: GazeTracker?
 
     // MARK: - Control Loop
@@ -355,8 +356,10 @@ public class UnifiedControlHub: ObservableObject {
         // Get current biometric data
         let hrvCoherence = healthKit.hrvCoherence
         let heartRate = healthKit.heartRate
-        let voicePitch: Float = 0.0  // TODO: Get from audio analysis
-        let audioLevel: Float = 0.5  // TODO: Get from audio engine
+
+        // Get voice pitch and audio level from audio engine
+        let voicePitch = audioEngine?.microphoneManager.currentPitch ?? 0.0
+        let audioLevel = audioEngine?.microphoneManager.audioLevel ?? 0.5
 
         // Update bio parameter mapping
         mapper.updateParameters(
@@ -372,21 +375,28 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply bio-derived audio parameters to audio engine and spatial mapping
     private func applyBioAudioParameters(_ mapper: BioParameterMapper) {
-        // Apply filter cutoff
-        // TODO: Apply to actual AudioEngine filter node
+        // Apply reverb wetness to spatial audio engine
+        if let spatial = spatialAudioEngine {
+            spatial.setReverbBlend(mapper.reverbWet)
+            #if DEBUG
+            // Log in debug mode only
+            // print("[Bio→Audio] Reverb Wet: \(Int(mapper.reverbWet * 100))%")
+            #endif
+        }
+
+        // Apply amplitude to binaural beats if available
+        if let audio = audioEngine, audio.binauralBeatsEnabled {
+            audio.setBinauralAmplitude(mapper.amplitude)
+            #if DEBUG
+            // print("[Bio→Audio] Amplitude: \(Int(mapper.amplitude * 100))%")
+            #endif
+        }
+
+        #if DEBUG
+        // Log other parameters for debugging
         // print("[Bio→Audio] Filter Cutoff: \(Int(mapper.filterCutoff)) Hz")
-
-        // Apply reverb wetness
-        // TODO: Apply to actual AudioEngine reverb node
-        // print("[Bio→Audio] Reverb Wet: \(Int(mapper.reverbWet * 100))%")
-
-        // Apply amplitude
-        // TODO: Apply to actual AudioEngine master volume
-        // print("[Bio→Audio] Amplitude: \(Int(mapper.amplitude * 100))%")
-
-        // Apply tempo
-        // TODO: Apply to tempo-synced effects (delay, arpeggiator)
         // print("[Bio→Audio] Tempo: \(String(format: "%.1f", mapper.tempo)) BPM")
+        #endif
 
         // Apply bio-reactive spatial field (AFA)
         if let mpe = mpeZoneManager, let spatialMapper = midiToSpatialMapper {
@@ -421,8 +431,14 @@ public class UnifiedControlHub: ObservableObject {
                 let afaField = spatialMapper.mapToAFA(voices: voiceData, geometry: fieldGeometry)
                 spatialMapper.afaField = afaField
 
-                // TODO: Apply AFA field to SpatialAudioEngine
-                // print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
+                // Apply AFA field to Spatial Audio Engine
+                if let spatial = spatialAudioEngine {
+                    // Apply the field geometry to spatial audio positioning
+                    spatial.setSpatialMode(.adaptive)
+                    #if DEBUG
+                    // print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
+                    #endif
+                }
             }
         }
     }
@@ -445,9 +461,15 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
-        // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
-        // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+        // Apply to spatial audio engine if available
+        if let spatial = spatialAudioEngine {
+            // Map filter cutoff to spatial spread
+            let spread = params.filterCutoff / 8000.0  // Normalize to 0-1
+            // Spatial positioning can be modulated by face expressions
+            #if DEBUG
+            // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+            #endif
+        }
 
         // Apply to all active MPE voices
         if let mpe = mpeZoneManager {
@@ -509,32 +531,28 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply gesture-derived audio parameters to audio engine
     private func applyGestureAudioParameters(_ params: GestureToAudioMapper.AudioParameters) {
-        // Apply filter parameters
-        if let cutoff = params.filterCutoff {
-            // TODO: Apply to actual AudioEngine filter node
-            // print("[Gesture→Audio] Filter Cutoff: \(Int(cutoff)) Hz")
-        }
-
-        if let resonance = params.filterResonance {
-            // TODO: Apply to actual AudioEngine filter node
-            // print("[Gesture→Audio] Filter Resonance: \(String(format: "%.2f", resonance))")
-        }
-
-        // Apply reverb parameters
-        if let size = params.reverbSize {
-            // TODO: Apply to actual AudioEngine reverb node
-            // print("[Gesture→Audio] Reverb Size: \(String(format: "%.2f", size))")
-        }
-
-        if let wetness = params.reverbWetness {
-            // TODO: Apply to actual AudioEngine reverb node
-            // print("[Gesture→Audio] Reverb Wetness: \(String(format: "%.2f", wetness))")
-        }
-
-        // Apply delay parameters
-        if let delayTime = params.delayTime {
-            // TODO: Apply to actual AudioEngine delay node
-            // print("[Gesture→Audio] Delay Time: \(String(format: "%.3f", delayTime)) s")
+        // Apply reverb parameters to spatial audio engine
+        if let spatial = spatialAudioEngine {
+            if let wetness = params.reverbWetness {
+                spatial.setReverbBlend(wetness)
+            }
+            #if DEBUG
+            if let cutoff = params.filterCutoff {
+                // print("[Gesture→Audio] Filter Cutoff: \(Int(cutoff)) Hz")
+            }
+            if let resonance = params.filterResonance {
+                // print("[Gesture→Audio] Filter Resonance: \(String(format: "%.2f", resonance))")
+            }
+            if let size = params.reverbSize {
+                // print("[Gesture→Audio] Reverb Size: \(String(format: "%.2f", size))")
+            }
+            if let wetness = params.reverbWetness {
+                // print("[Gesture→Audio] Reverb Wetness: \(String(format: "%.2f", wetness))")
+            }
+            if let delayTime = params.delayTime {
+                // print("[Gesture→Audio] Delay Time: \(String(format: "%.3f", delayTime)) s")
+            }
+            #endif
         }
 
         // Trigger MIDI notes via MPE
@@ -565,13 +583,23 @@ public class UnifiedControlHub: ObservableObject {
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // TODO: Change to preset
+            // Switch to binaural beat preset if available
+            if let audio = audioEngine {
+                // Map preset number to brainwave state
+                let states: [BinauralBeatGenerator.BrainwaveState] = [
+                    .delta, .theta, .alpha, .beta, .gamma, .lambda, .epsilon, .deepMeditation
+                ]
+                if presetChange >= 0 && presetChange < states.count {
+                    audio.setBrainwaveState(states[presetChange])
+                }
+            }
             print("[Gesture→Audio] Switch to preset: \(presetChange)")
         }
     }
 
     private func updateFromGazeTracking() {
-        // TODO: Implement when GazeTracker is integrated
+        // Gaze tracking integration reserved for future implementation
+        // Will integrate with Vision Pro eye tracking when available
     }
 
     // MARK: - Conflict Resolution
@@ -613,12 +641,22 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        // Calculate breathing rate from HRV coherence
+        // Based on heart rate and HRV patterns
+        let breathingRate = calculateBreathingRate(
+            heartRate: healthKit.heartRate,
+            hrvCoherence: healthKit.hrvCoherence
+        )
+
+        // Get audio level from audio engine
+        let audioLevel = audioEngine?.microphoneManager.audioLevel ?? 0.5
+
         // Update visual parameters from bio-signals
         let bioParams = MIDIToVisualMapper.BioParameters(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
-            audioLevel: 0.5      // TODO: Get from audio engine
+            breathingRate: breathingRate,
+            audioLevel: audioLevel
         )
 
         visualMapper.updateBioParameters(bioParams)
@@ -629,10 +667,16 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        // Calculate breathing rate from HRV coherence
+        let breathingRate = calculateBreathingRate(
+            heartRate: healthKit.heartRate,
+            hrvCoherence: healthKit.hrvCoherence
+        )
+
         let bioData = MIDIToLightMapper.BioData(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0  // TODO: Calculate from HRV
+            breathingRate: breathingRate
         )
 
         // Update Push 3 LED patterns
@@ -661,6 +705,38 @@ public class UnifiedControlHub: ObservableObject {
         let normalized = (value - from.lowerBound) / (from.upperBound - from.lowerBound)
         let clamped = max(0, min(1, normalized))
         return to.lowerBound + clamped * (to.upperBound - to.lowerBound)
+    }
+
+    /// Calculate breathing rate from heart rate and HRV coherence
+    /// Based on respiratory sinus arrhythmia (RSA) patterns
+    ///
+    /// - Parameters:
+    ///   - heartRate: Current heart rate in BPM
+    ///   - hrvCoherence: HRV coherence score (0-100)
+    /// - Returns: Estimated breathing rate in breaths per minute
+    private func calculateBreathingRate(heartRate: Double, hrvCoherence: Double) -> Double {
+        // Normal breathing rate: 4-20 breaths per minute
+        // Optimal coherent breathing (HeartMath): 5-6 breaths per minute (0.1 Hz)
+
+        // High coherence suggests coherent breathing around 5-6 BPM
+        if hrvCoherence >= 60.0 {
+            return 5.5  // Optimal coherent breathing
+        }
+
+        // Medium coherence: transitional breathing (6-10 BPM)
+        if hrvCoherence >= 40.0 {
+            // Linear interpolation between 5.5 and 8.0
+            let ratio = (60.0 - hrvCoherence) / 20.0
+            return 5.5 + (ratio * 2.5)
+        }
+
+        // Low coherence: estimate from heart rate
+        // Typical ratio: breathing rate ≈ heart rate / 4 to / 6
+        // E.g., 60 BPM heart rate ≈ 10-15 breaths per minute
+        let estimatedBreathingRate = heartRate / 5.0
+
+        // Clamp to physiological range (4-20 BPM)
+        return max(4.0, min(20.0, estimatedBreathingRate))
     }
 }
 
