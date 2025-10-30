@@ -24,6 +24,23 @@ class HealthKitManager: ObservableObject {
     /// 60-100: High coherence (optimal/flow state)
     @Published var hrvCoherence: Double = 0.0
 
+    /// Low Frequency HRV power (0.04-0.15 Hz) - Sympathetic activity
+    /// Reflects baroreflex activity and sympathetic modulation
+    @Published var hrvLF: Double = 0.0
+
+    /// High Frequency HRV power (0.15-0.4 Hz) - Parasympathetic activity
+    /// Reflects respiratory sinus arrhythmia (RSA) and vagal tone
+    @Published var hrvHF: Double = 0.0
+
+    /// LF/HF Ratio - Sympathovagal balance
+    /// < 1.0: Parasympathetic dominance (relaxation)
+    /// 1.0-2.5: Balanced autonomic state
+    /// > 2.5: Sympathetic dominance (stress/activation)
+    @Published var hrvLFHFRatio: Double = 0.0
+
+    /// Total HRV power (0.003-0.4 Hz)
+    @Published var hrvTotalPower: Double = 0.0
+
     /// Whether HealthKit authorization has been granted
     @Published var isAuthorized: Bool = false
 
@@ -269,9 +286,10 @@ class HealthKitManager: ObservableObject {
             Task { @MainActor in
                 self.hrvRMSSD = rmssd
 
-                // Calculate coherence from buffered RR intervals
+                // Calculate coherence and frequency domain metrics from buffered RR intervals
                 if self.rrIntervalBuffer.count >= 30 { // Need minimum data
                     self.hrvCoherence = self.calculateCoherence(rrIntervals: self.rrIntervalBuffer)
+                    self.updateFrequencyDomainMetrics()
                 }
             }
         }
@@ -340,6 +358,101 @@ class HealthKitManager: ObservableObject {
         let coherenceScore = min(coherenceRatio * 500.0, 100.0)
 
         return coherenceScore
+    }
+
+    /// Calculate HRV frequency domain analysis (LF, HF, LF/HF ratio)
+    ///
+    /// **Scientific Basis:**
+    /// - LF (0.04-0.15 Hz): Baroreflex activity, sympathetic + parasympathetic modulation
+    /// - HF (0.15-0.4 Hz): Respiratory sinus arrhythmia (RSA), pure parasympathetic
+    /// - LF/HF Ratio: Sympathovagal balance indicator
+    ///
+    /// **References:**
+    /// - Task Force (1996). Heart rate variability: Standards of measurement
+    /// - Malik, M. (1996). Heart rate variability. Annals of Noninvasive Electrocardiology
+    /// - McCraty, R. & Shaffer, F. (2015). Heart rate variability: New perspectives
+    ///
+    /// - Parameter rrIntervals: Array of RR intervals in milliseconds
+    /// - Returns: Tuple with (LF power, HF power, LF/HF ratio, total power)
+    func calculateLFHF(rrIntervals: [Double]) -> (lf: Double, hf: Double, lfhfRatio: Double, totalPower: Double) {
+        guard rrIntervals.count >= 30 else {
+            return (0.0, 0.0, 0.0, 0.0)
+        }
+
+        // Step 1: Detrend and window the data
+        let detrended = detrend(rrIntervals)
+        let windowed = applyHammingWindow(detrended)
+
+        // Step 2: Perform FFT
+        let fftSize = nextPowerOf2(windowed.count)
+        let powerSpectrum = performFFTForCoherence(windowed, fftSize: fftSize)
+
+        // Step 3: Define frequency bands (Task Force, 1996)
+        let samplingRate = 1.0  // 1 Hz (1 RR interval per second)
+        let vlfLow = 0.003   // Hz
+        let vlfHigh = 0.04   // Hz
+        let lfLow = 0.04     // Hz
+        let lfHigh = 0.15    // Hz
+        let hfLow = 0.15     // Hz
+        let hfHigh = 0.4     // Hz
+
+        // Convert frequencies to FFT bins
+        let vlfBinLow = Int(vlfLow * Double(fftSize) / samplingRate)
+        let vlfBinHigh = Int(vlfHigh * Double(fftSize) / samplingRate)
+        let lfBinLow = Int(lfLow * Double(fftSize) / samplingRate)
+        let lfBinHigh = Int(lfHigh * Double(fftSize) / samplingRate)
+        let hfBinLow = Int(hfLow * Double(fftSize) / samplingRate)
+        let hfBinHigh = Int(hfHigh * Double(fftSize) / samplingRate)
+
+        // Step 4: Calculate power in each band
+        let vlfPower = powerSpectrum[vlfBinLow...min(vlfBinHigh, powerSpectrum.count - 1)].reduce(0.0, +)
+        let lfPower = powerSpectrum[lfBinLow...min(lfBinHigh, powerSpectrum.count - 1)].reduce(0.0, +)
+        let hfPower = powerSpectrum[hfBinLow...min(hfBinHigh, powerSpectrum.count - 1)].reduce(0.0, +)
+
+        // Total power (VLF + LF + HF)
+        let totalPower = vlfPower + lfPower + hfPower
+
+        // LF/HF Ratio (guard against division by zero)
+        let lfhfRatio = hfPower > 0.001 ? lfPower / hfPower : 0.0
+
+        return (lf: lfPower, hf: hfPower, lfhfRatio: lfhfRatio, totalPower: totalPower)
+    }
+
+    /// Update HRV frequency domain metrics
+    private func updateFrequencyDomainMetrics() {
+        guard rrIntervalBuffer.count >= 30 else { return }
+
+        let result = calculateLFHF(rrIntervals: rrIntervalBuffer)
+
+        Task { @MainActor in
+            self.hrvLF = result.lf
+            self.hrvHF = result.hf
+            self.hrvLFHFRatio = result.lfhfRatio
+            self.hrvTotalPower = result.totalPower
+        }
+    }
+
+    /// Get autonomic balance interpretation
+    var autonomicBalanceDescription: String {
+        if hrvLFHFRatio < 1.0 {
+            return "Parasympathetic Dominance (Relaxed)"
+        } else if hrvLFHFRatio < 2.5 {
+            return "Balanced Autonomic State"
+        } else {
+            return "Sympathetic Dominance (Stressed/Active)"
+        }
+    }
+
+    /// Get detailed HRV frequency analysis summary
+    var frequencyAnalysisSummary: String {
+        """
+        HRV Frequency Domain Analysis:
+          LF Power: \(String(format: "%.2f", hrvLF)) ms²
+          HF Power: \(String(format: "%.2f", hrvHF)) ms²
+          LF/HF Ratio: \(String(format: "%.2f", hrvLFHFRatio))
+          Total Power: \(String(format: "%.2f", hrvTotalPower)) ms²
+          Balance: \(autonomicBalanceDescription)
+        """
     }
 
     /// Remove linear trend from signal
