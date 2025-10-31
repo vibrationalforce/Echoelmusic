@@ -143,7 +143,7 @@ class Push3LEDController: ObservableObject {
 
     // MARK: - Connection Management
 
-    func connect() {
+    func connect() throws {
         guard !isConnected else { return }
         findPush3Endpoint()
 
@@ -258,6 +258,12 @@ class Push3LEDController: ObservableObject {
         }
 
         sendGridToHardware()
+    }
+
+    /// Update LEDs with bio-reactive parameters (wrapper for compatibility)
+    func updateBioReactive(hrvCoherence: Double, heartRate: Double, breathingRate: Double) {
+        // Use breathing rate to modulate pattern speed if needed
+        updateFromBioSignals(hrvCoherence: hrvCoherence, heartRate: heartRate)
     }
 
     // MARK: - Pattern Implementations
