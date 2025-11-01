@@ -4,7 +4,7 @@ import Combine
 import Accelerate
 
 /// Manages HealthKit integration for real-time HRV and heart rate monitoring
-/// Implements HeartMath Institute's coherence algorithm for biofeedback
+/// Implements HRV coherence analysis using spectral analysis of RR intervals
 @MainActor
 class HealthKitManager: ObservableObject {
 
@@ -18,10 +18,11 @@ class HealthKitManager: ObservableObject {
     /// Normal range: 20-100 ms (higher = better autonomic function)
     @Published var hrvRMSSD: Double = 0.0
 
-    /// HeartMath coherence score (0-100)
-    /// 0-40: Low coherence (stress/anxiety)
+    /// HRV coherence score (0-100) based on spectral power concentration
+    /// Measures power in 0.04-0.26 Hz band (respiratory sinus arrhythmia)
+    /// 0-40: Low coherence (distributed power)
     /// 40-60: Medium coherence (transitional)
-    /// 60-100: High coherence (optimal/flow state)
+    /// 60-100: High coherence (concentrated power in resonance band)
     @Published var hrvCoherence: Double = 0.0
 
     /// Whether HealthKit authorization has been granted
@@ -288,15 +289,20 @@ class HealthKitManager: ObservableObject {
     }
 
 
-    // MARK: - HeartMath Coherence Algorithm
+    // MARK: - HRV Coherence Algorithm
 
-    /// Calculate HeartMath coherence score from RR intervals
-    /// Based on HeartMath Institute's research on heart-brain coherence
+    /// Calculate HRV coherence score from RR intervals using spectral analysis
+    /// Measures the concentration of power in the low-frequency band (0.04-0.26 Hz)
+    ///
+    /// Note: This implementation is inspired by HRV coherence research, but uses
+    /// standard signal processing techniques (FFT, power spectral density).
+    /// The specific frequency band (0.04-0.26 Hz) corresponds to respiratory
+    /// sinus arrhythmia and autonomic nervous system activity.
     ///
     /// Algorithm steps:
     /// 1. Detrend RR intervals (remove linear trend)
-    /// 2. Apply Hamming window
-    /// 3. Perform FFT
+    /// 2. Apply Hamming window to reduce spectral leakage
+    /// 3. Perform FFT (Fast Fourier Transform)
     /// 4. Calculate power spectral density
     /// 5. Measure peak power in coherence band (0.04-0.26 Hz, centered at 0.1 Hz)
     /// 6. Normalize to 0-100 scale
@@ -317,7 +323,8 @@ class HealthKitManager: ObservableObject {
         let powerSpectrum = performFFTForCoherence(windowed, fftSize: fftSize)
 
         // Step 4: Calculate coherence score
-        // HeartMath coherence band: 0.04-0.26 Hz, with peak typically at 0.1 Hz
+        // HRV coherence band: 0.04-0.26 Hz (respiratory sinus arrhythmia range)
+        // Peak typically at 0.1 Hz (6 breaths/minute resonance frequency)
         // Assuming 1 Hz sampling rate (1 RR interval per second)
         let samplingRate = 1.0
         let coherenceBandLow = 0.04  // Hz

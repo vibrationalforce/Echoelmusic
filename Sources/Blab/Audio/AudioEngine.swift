@@ -38,7 +38,7 @@ class AudioEngine: ObservableObject {
     /// Microphone manager for voice/breath input
     let microphoneManager: MicrophoneManager
 
-    /// Binaural beat generator for healing frequencies
+    /// Binaural beat generator for auditory beat synthesis
     private let binauralGenerator = BinauralBeatGenerator()
 
     /// Spatial audio engine for 3D audio
@@ -84,8 +84,8 @@ class AudioEngine: ObservableObject {
 
         // Configure default binaural beat settings
         binauralGenerator.configure(
-            carrier: 432.0,  // Healing frequency
-            beat: 10.0,      // Alpha waves (relaxation)
+            carrier: 440.0,  // A4 standard tuning
+            beat: 10.0,      // 10 Hz modulation (alpha EEG band)
             amplitude: 0.3
         )
 
@@ -199,7 +199,7 @@ class AudioEngine: ObservableObject {
     func setBinauralAmplitude(_ amplitude: Float) {
         binauralAmplitude = amplitude
         binauralGenerator.configure(
-            carrier: 432.0,
+            carrier: 440.0,
             beat: currentBrainwaveState.beatFrequency,
             amplitude: amplitude
         )
@@ -264,7 +264,7 @@ class AudioEngine: ObservableObject {
         binauralAmplitude = adaptiveAmplitude
 
         binauralGenerator.configure(
-            carrier: 432.0,
+            carrier: 440.0,
             beat: binauralGenerator.beatFrequency,
             amplitude: adaptiveAmplitude
         )
@@ -278,8 +278,8 @@ class AudioEngine: ObservableObject {
             return
         }
 
-        // Update bio-parameters every 100ms
-        Timer.publish(every: 0.1, on: .main, in: .common)
+        // Update bio-parameters at 60 Hz (~16.67ms) for smooth, low-latency response
+        Timer.publish(every: 1.0/60.0, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 self?.updateBioParameters()

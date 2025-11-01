@@ -2,13 +2,15 @@ import Foundation
 import AVFoundation
 import Accelerate
 
-/// Generates binaural beats for brainwave entrainment and healing frequencies
+/// Generates binaural beats - an auditory phenomenon discovered by Oster (1973)
 ///
 /// Binaural beats work by playing two slightly different frequencies (one per ear),
 /// causing the brain to perceive a "beat" at the difference frequency.
-/// This can induce specific brainwave states for relaxation, focus, sleep, etc.
 ///
-/// Scientific basis: Oster, G. (1973). "Auditory beats in the brain"
+/// Note: The auditory phenomenon is well-documented, but therapeutic claims
+/// for specific brainwave entrainment lack robust clinical evidence.
+///
+/// Reference: Oster, G. (1973). "Auditory beats in the brain" - Scientific American
 @MainActor
 class BinauralBeatGenerator: ObservableObject {
 
@@ -22,15 +24,16 @@ class BinauralBeatGenerator: ObservableObject {
 
     // MARK: - Brainwave Presets
 
-    /// Brainwave state configurations based on neuroscience research
+    /// Preset beat frequencies corresponding to documented EEG brainwave bands
+    /// Note: Association with specific mental states is correlational, not causal
     enum BrainwaveState: String, CaseIterable {
-        case delta      // 2 Hz - Deep sleep, healing
-        case theta      // 6 Hz - Meditation, creativity
-        case alpha      // 10 Hz - Relaxation, learning
-        case beta       // 20 Hz - Focus, alertness
-        case gamma      // 40 Hz - Peak awareness, cognition
+        case delta      // 2 Hz - Slow wave sleep EEG band
+        case theta      // 6 Hz - Theta EEG band
+        case alpha      // 10 Hz - Alpha EEG band (resting, eyes closed)
+        case beta       // 20 Hz - Beta EEG band (active thinking)
+        case gamma      // 40 Hz - Gamma EEG band (high cognitive load)
 
-        /// Beat frequency in Hz for this brainwave state
+        /// Beat frequency in Hz for this EEG band
         var beatFrequency: Float {
             switch self {
             case .delta: return 2.0
@@ -44,11 +47,11 @@ class BinauralBeatGenerator: ObservableObject {
         /// Human-readable description
         var description: String {
             switch self {
-            case .delta: return "Deep Sleep & Healing"
-            case .theta: return "Meditation & Creativity"
-            case .alpha: return "Relaxation & Learning"
-            case .beta: return "Focus & Alertness"
-            case .gamma: return "Peak Awareness"
+            case .delta: return "Delta Band (1-4 Hz)"
+            case .theta: return "Theta Band (4-8 Hz)"
+            case .alpha: return "Alpha Band (8-12 Hz)"
+            case .beta: return "Beta Band (13-30 Hz)"
+            case .gamma: return "Gamma Band (30+ Hz)"
             }
         }
     }
@@ -56,13 +59,13 @@ class BinauralBeatGenerator: ObservableObject {
 
     // MARK: - Configuration
 
-    /// Carrier frequency in Hz (the base tone, often 432 Hz for healing)
-    /// 432 Hz is considered the "natural frequency" in some healing traditions
-    private(set) var carrierFrequency: Float = 432.0
+    /// Carrier frequency in Hz (the base tone)
+    /// Default: 440 Hz (standard A4 tuning, ISO 16 international standard)
+    private(set) var carrierFrequency: Float = 440.0
 
     /// Beat frequency in Hz (difference between left and right ear)
-    /// This is what entrains the brain to the target brainwave state
-    private(set) var beatFrequency: Float = 10.0  // Alpha by default
+    /// The brain perceives this as a rhythmic modulation
+    private(set) var beatFrequency: Float = 10.0  // 10 Hz modulation by default
 
     /// Amplitude (volume) of the generated tone (0.0 - 1.0)
     private(set) var amplitude: Float = 0.3
@@ -96,8 +99,8 @@ class BinauralBeatGenerator: ObservableObject {
     /// Whether the generator is currently playing
     private(set) var isPlaying: Bool = false
 
-    /// Timer for continuous buffer generation
-    private var bufferTimer: Timer?
+    /// High-precision timer for continuous buffer generation
+    private var bufferTimer: DispatchSourceTimer?
 
 
     // MARK: - Initialization
@@ -115,8 +118,8 @@ class BinauralBeatGenerator: ObservableObject {
 
     /// Configure the binaural beat parameters
     /// - Parameters:
-    ///   - carrier: Base frequency in Hz (typically 200-500 Hz, default 432 Hz)
-    ///   - beat: Beat frequency in Hz (0.5-40 Hz for different brainwave states)
+    ///   - carrier: Base frequency in Hz (typically 200-500 Hz, default 440 Hz = A4)
+    ///   - beat: Beat frequency in Hz (0.5-40 Hz, perceived as rhythmic modulation)
     ///   - amplitude: Volume (0.0-1.0, default 0.3)
     func configure(carrier: Float, beat: Float, amplitude: Float) {
         self.carrierFrequency = carrier
@@ -178,10 +181,16 @@ class BinauralBeatGenerator: ObservableObject {
             // Schedule initial buffers
             scheduleBuffers()
 
-            // Start timer for continuous buffer generation
-            bufferTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-                self?.scheduleBuffers()
+            // Start high-precision timer for continuous buffer generation (50ms precision)
+            let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .userInteractive))
+            timer.schedule(deadline: .now(), repeating: .milliseconds(50))
+            timer.setEventHandler { [weak self] in
+                Task { @MainActor [weak self] in
+                    self?.scheduleBuffers()
+                }
             }
+            timer.resume()
+            bufferTimer = timer
 
             isPlaying = true
             let modeStr = audioMode == .binaural ? "Binaural (stereo)" : "Isochronic (mono)"
@@ -197,7 +206,7 @@ class BinauralBeatGenerator: ObservableObject {
         guard isPlaying else { return }
 
         // Stop timer
-        bufferTimer?.invalidate()
+        bufferTimer?.cancel()
         bufferTimer = nil
 
         // Stop player nodes

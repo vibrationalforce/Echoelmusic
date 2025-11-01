@@ -472,6 +472,12 @@ class UDPSocket {
     private var connection: NWConnection?
     private let queue = DispatchQueue(label: "com.blab.udp", qos: .userInitiated)
 
+    // Connection monitoring
+    private(set) var isConnected: Bool = false
+    private(set) var sendErrorCount: Int = 0
+    private(set) var sendSuccessCount: Int = 0
+    private let maxRetries: Int = 3
+
     init(address: String, port: UInt16) throws {
         self.address = address
         self.port = port
@@ -489,10 +495,15 @@ class UDPSocket {
         connection?.stateUpdateHandler = { [weak self] state in
             switch state {
             case .ready:
+                self?.isConnected = true
                 print("💡 UDP Socket connected: \(address):\(port)")
             case .failed(let error):
+                self?.isConnected = false
                 print("❌ UDP Socket failed: \(error)")
+                // Auto-reconnect on failure
+                self?.reconnect()
             case .cancelled:
+                self?.isConnected = false
                 print("🔌 UDP Socket cancelled")
             default:
                 break
@@ -503,20 +514,97 @@ class UDPSocket {
         connection?.start(queue: queue)
     }
 
-    func send(data: Data) {
+    func send(data: Data, retryCount: Int = 0) {
         guard let connection = connection else {
             print("⚠️ UDP Socket not connected")
+            if retryCount < maxRetries {
+                // Retry with exponential backoff
+                let delay = Double(1 << retryCount) * 0.1  // 100ms, 200ms, 400ms
+                DispatchQueue.global().asyncAfter(deadline: .now() + delay) { [weak self] in
+                    self?.send(data: data, retryCount: retryCount + 1)
+                }
+            } else {
+                sendErrorCount += 1
+            }
+            return
+        }
+
+        guard isConnected else {
+            if retryCount < maxRetries {
+                let delay = Double(1 << retryCount) * 0.1
+                DispatchQueue.global().asyncAfter(deadline: .now() + delay) { [weak self] in
+                    self?.send(data: data, retryCount: retryCount + 1)
+                }
+            } else {
+                sendErrorCount += 1
+            }
             return
         }
 
         connection.send(
             content: data,
-            completion: .contentProcessed { error in
+            completion: .contentProcessed { [weak self] error in
                 if let error = error {
-                    print("❌ UDP send error: \(error)")
+                    self?.sendErrorCount += 1
+                    print("❌ UDP send error: \(error) (total errors: \(self?.sendErrorCount ?? 0))")
+
+                    // Retry on error with exponential backoff
+                    if retryCount < (self?.maxRetries ?? 3) {
+                        let delay = Double(1 << retryCount) * 0.1
+                        DispatchQueue.global().asyncAfter(deadline: .now() + delay) { [weak self] in
+                            self?.send(data: data, retryCount: retryCount + 1)
+                        }
+                    }
+                } else {
+                    self?.sendSuccessCount += 1
                 }
             }
         )
+    }
+
+    /// Attempt to reconnect to the UDP socket
+    private func reconnect() {
+        guard let oldConnection = connection else { return }
+        oldConnection.cancel()
+
+        // Recreate connection after 1 second delay
+        DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+
+            let host = NWEndpoint.Host(self.address)
+            let port = NWEndpoint.Port(integerLiteral: self.port)
+
+            self.connection = NWConnection(
+                to: .hostPort(host: host, port: port),
+                using: .udp
+            )
+
+            self.connection?.stateUpdateHandler = { [weak self] state in
+                switch state {
+                case .ready:
+                    self?.isConnected = true
+                    print("💡 UDP Socket reconnected: \(self?.address ?? ""):\(self?.port ?? 0)")
+                case .failed(let error):
+                    self?.isConnected = false
+                    print("❌ UDP Socket reconnect failed: \(error)")
+                    // Try again
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 2.0) {
+                        self?.reconnect()
+                    }
+                case .cancelled:
+                    self?.isConnected = false
+                default:
+                    break
+                }
+            }
+
+            self.connection?.start(queue: self.queue)
+        }
+    }
+
+    /// Get connection statistics
+    var stats: String {
+        return "UDP Stats: ✅ \(sendSuccessCount) sent, ❌ \(sendErrorCount) errors, 📊 \(isConnected ? "Connected" : "Disconnected")"
     }
 
     func close() {

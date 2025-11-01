@@ -25,7 +25,7 @@ class BioParameterMapper: ObservableObject {
 
     /// Base note frequency (Hz)
     /// Mapped from: Voice Pitch
-    @Published var baseFrequency: Float = 432.0
+    @Published var baseFrequency: Float = 440.0
 
     /// Tempo (BPM)
     /// Mapped from: Heart Rate (synchronized breathing)
@@ -72,15 +72,15 @@ class BioParameterMapper: ObservableObject {
 
     // MARK: - Musical Scale Configuration
 
-    /// Musical scale for harmonic generation
-    private let healingScale: [Float] = [
-        432.0,   // A4 (base healing frequency)
-        486.0,   // B4
-        512.0,   // C5
-        576.0,   // D5
-        648.0,   // E5
-        729.0,   // F#5
-        768.0,   // G5
+    /// Musical scale for harmonic generation (Equal temperament, A4 = 440 Hz)
+    private let musicalScale: [Float] = [
+        440.0,   // A4 (standard tuning ISO 16)
+        493.88,  // B4
+        523.25,  // C5
+        587.33,  // D5
+        659.25,  // E5
+        739.99,  // F#5
+        783.99,  // G5
     ]
 
 
@@ -187,16 +187,16 @@ class BioParameterMapper: ObservableObject {
         )
     }
 
-    /// Map Voice Pitch → Musical Scale (healing frequencies)
-    /// Snaps detected pitch to nearest note in healing scale
+    /// Map Voice Pitch → Musical Scale (equal temperament)
+    /// Snaps detected pitch to nearest note in musical scale
     private func mapVoicePitchToScale(voicePitch: Float) -> Float {
-        guard voicePitch > 0 else { return healingScale[0] }
+        guard voicePitch > 0 else { return musicalScale[0] }
 
-        // Find nearest note in healing scale
-        var closestNote = healingScale[0]
+        // Find nearest note in musical scale
+        var closestNote = musicalScale[0]
         var minDistance = abs(voicePitch - closestNote)
 
-        for note in healingScale {
+        for note in musicalScale {
             let distance = abs(voicePitch - note)
             if distance < minDistance {
                 minDistance = distance
@@ -297,28 +297,28 @@ class BioParameterMapper: ObservableObject {
             reverbWet = 0.7
             filterCutoff = 500.0
             amplitude = 0.5
-            baseFrequency = 432.0
+            baseFrequency = 440.0  // A4 standard tuning
             tempo = 6.0
 
         case .focus:
             reverbWet = 0.3
             filterCutoff = 1500.0
             amplitude = 0.6
-            baseFrequency = 528.0  // Focus frequency
+            baseFrequency = 523.25  // C5 (bright, energetic)
             tempo = 7.0
 
         case .relaxation:
             reverbWet = 0.8
             filterCutoff = 300.0
             amplitude = 0.4
-            baseFrequency = 396.0  // Root chakra frequency
+            baseFrequency = 329.63  // E4 (lower, calming)
             tempo = 4.0
 
         case .energize:
             reverbWet = 0.2
             filterCutoff = 2000.0
             amplitude = 0.7
-            baseFrequency = 741.0  // Awakening frequency
+            baseFrequency = 659.25  // E5 (high, energizing)
             tempo = 8.0
         }
 
