@@ -323,6 +323,9 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     private func controlLoopTick() {
+        // Record control loop update for performance monitoring
+        PerformanceMonitor.shared.recordControlLoopUpdate()
+
         // Measure actual frequency
         let now = Date()
         let deltaTime = now.timeIntervalSince(lastUpdateTime)

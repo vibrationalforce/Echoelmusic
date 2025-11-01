@@ -31,6 +31,12 @@ struct ContentView: View {
     /// Show visualization mode picker
     @State private var showVisualizationPicker = false
 
+    /// Show Phase 3 controls (Spatial Audio, Visual, LED, DMX)
+    @State private var showPhase3Controls = false
+
+    /// Show performance metrics
+    @State private var showPerformanceMetrics = false
+
     /// Currently selected visualization mode
     @State private var selectedVisualizationMode: VisualizationMode = .particles
 
@@ -317,6 +323,53 @@ struct ContentView: View {
                         }
                     }
                 }
+
+                // Secondary Control Row
+                HStack(spacing: 30) {
+                    Spacer()
+
+                    // Phase 3 Controls (Spatial + Visual + LED)
+                    Button(action: { showPhase3Controls.toggle() }) {
+                        VStack(spacing: 8) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.orange.opacity(0.3))
+                                    .frame(width: 50, height: 50)
+
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white)
+                            }
+
+                            Text("Phase 3")
+                                .font(.system(size: 9, weight: .light))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                    }
+
+                    // Performance Metrics
+                    Button(action: { showPerformanceMetrics.toggle() }) {
+                        VStack(spacing: 8) {
+                            ZStack {
+                                Circle()
+                                    .fill(PerformanceMonitor.shared.isPerformanceWarning ? Color.yellow.opacity(0.3) : Color.green.opacity(0.3))
+                                    .frame(width: 50, height: 50)
+
+                                Image(systemName: "gauge.high")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white)
+                            }
+
+                            Text("Metrics")
+                                .font(.system(size: 9, weight: .light))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                    }
+
+                    Spacer()
+                }
+                .padding(.top, 10)
+            }
                 .padding(.bottom, 20)
 
                 // Spatial Audio Controls (NEW!)
@@ -468,6 +521,67 @@ struct ContentView: View {
                 .environmentObject(healthKitManager)
                 .environmentObject(microphoneManager)
                 .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showPhase3Controls) {
+            if let spatialEngine = audioEngine.spatialAudioEngine,
+               let visualMapper = audioEngine.visualMapper,
+               let push3Controller = audioEngine.push3Controller,
+               let lightMapper = audioEngine.lightMapper {
+                Phase3ControlsView(
+                    spatialEngine: spatialEngine,
+                    visualMapper: visualMapper,
+                    push3Controller: push3Controller,
+                    lightMapper: lightMapper
+                )
+                .presentationDetents([.large])
+            } else {
+                VStack(spacing: 20) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 60))
+                        .foregroundColor(.orange)
+                    Text("Phase 3 Components Not Initialized")
+                        .font(.headline)
+                    Text("Please ensure Spatial Audio, Visual Mapper, and LED controllers are properly initialized.")
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                }
+                .padding()
+            }
+        }
+        .sheet(isPresented: $showPerformanceMetrics) {
+            NavigationView {
+                VStack(spacing: 20) {
+                    MetricsView()
+                        .padding()
+
+                    Divider()
+
+                    VStack(spacing: 16) {
+                        Text("Performance Report")
+                            .font(.headline)
+
+                        Button("Generate Report") {
+                            let report = PerformanceMonitor.shared.generateReport()
+                            print(report.formattedReport)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .padding()
+
+                    Spacer()
+                }
+                .navigationTitle("Performance")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") {
+                            showPerformanceMetrics = false
+                        }
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
         }
     }
 
