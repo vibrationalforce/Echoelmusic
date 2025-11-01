@@ -353,14 +353,25 @@ class OSCBridge {
 
 ---
 
-## PHASE 7: Advanced I/O (5 weeks total)
-### Goal: AUv3 + VST3 plugins + MPE + hardware integration
+## PHASE 7: Multi-Platform Plugin Suite (8 weeks total)
+### Goal: JUCE-based plugins (VST3+AU+AUv3+CLAP+LV2) + MPE + hardware integration
 
-> **⚡ NEW (2025-11-01):** VST3 SDK 3.8.0 now available under MIT license!
-> BLAB can now target VST3 (cross-platform) in addition to AUv3 (Apple only).
-> See [VST3_ASIO_LICENSE_UPDATE.md](VST3_ASIO_LICENSE_UPDATE.md) for details.
+> **⚡ OPTIMIZED STRATEGY (2025-11-01):** JUCE Framework → ALL formats at once!
+>
+> **Key Changes:**
+> - VST3 SDK 3.8.0+ now MIT licensed (FREE!)
+> - CLAP SDK (MIT) - next-gen plugin standard, perfect for BLAB's bio-reactive design
+> - JUCE Framework (£699) exports to VST3, AU, AUv3, CLAP, LV2, Standalone
+>
+> **Market Coverage:**
+> - Original plan (AUv3 only): ~15% DAW market
+> - **JUCE Multi-Format: ~95%+ DAW market** ⚡
+>
+> **ROI:** £699 → 95%+ market coverage = **MASSIVE** value
+>
+> See [VST3_ASIO_LICENSE_UPDATE.md](VST3_ASIO_LICENSE_UPDATE.md) for full strategic analysis.
 
-#### 7.1 AUv3 Plugin (2 weeks) ⏳
+#### 7.1 AUv3 Plugin - Native Swift (2 weeks) ⏳
 ```swift
 class BlabAudioUnit: AUAudioUnit {
     override func allocateRenderResources() throws
@@ -383,65 +394,195 @@ class BlabAudioUnit: AUAudioUnit {
 
 ---
 
-#### 7.2 VST3 Plugin (3 weeks) ⏳ **NEW!**
+#### 7.2 JUCE Multi-Format Plugin (4 weeks) ⏳ **RECOMMENDED STRATEGY** ⚡
 
-> **License:** VST3 SDK 3.8.0+ (MIT License - Free for all use!)
+> **Framework:** JUCE 7.0+ (£699 Personal License or GPL)
+> **Exports:** VST3, AU, AUv3, LV2, Standalone (5+ formats from one codebase!)
 
-```cpp
-// BlabVST3Processor - Cross-platform VST3 plugin
-class BlabVST3Processor : public vst3::AudioEffect {
-    tresult PLUGIN_API process(Vst::ProcessData& data) override;
-    // Shared BLAB audio engine (platform-agnostic)
-};
-```
+**Why JUCE over manual VST3:**
+- ✅ Get VST3 + AU + AUv3 + LV2 + Standalone from single codebase
+- ✅ Professional DSP library (FFT, filters, spatial audio)
+- ✅ Metal/OpenGL UI (perfect for cymatics visuals in plugins!)
+- ✅ Industry standard (FabFilter, iZotope, Native Instruments)
+- ✅ Easy CLAP support later (via clap-juce-extensions)
+- ✅ 4 weeks → all formats vs 3+ weeks per format manually
 
 **New target:**
-- `BlabVST3` (VST3 plugin bundle)
+- `BlabPlugin` (JUCE project → exports all formats)
 
-**Platform:** macOS/Windows/Linux
-**DAWs:** Ableton Live, Bitwig Studio, Cubase, FL Studio, Reaper, Studio One
+**Platforms:**
+- macOS: VST3 + AU + Standalone
+- Windows: VST3 + Standalone
+- Linux: VST3 + LV2 + Standalone
+- iOS: AUv3 (via JUCE or native wrapper)
+
+**DAWs Supported:**
+- Ableton Live, Bitwig Studio, Cubase, FL Studio, Reaper, Studio One (VST3)
+- Logic Pro, GarageBand macOS (AU)
+- Logic Pro, GarageBand iOS, AUM (AUv3)
+- Ardour, Mixbus, Carla (LV2)
 
 **Prerequisites:**
-- [ ] Download VST3 SDK 3.8.0+ (https://github.com/steinbergmedia/vst3sdk)
-- [ ] Verify MIT license in SDK
-- [ ] Set up cross-platform build (CMake or SPM)
+- [ ] JUCE Framework 7.0+ (https://juce.com)
+- [ ] JUCE Personal license (£699 one-time) or GPL for open-source
+- [ ] CMake 3.22+ for build system
+- [ ] Projucer (JUCE project manager)
 
-**Features:**
-- [ ] VST3 plugin (Ableton, Bitwig, Cubase, FL Studio, Reaper)
-- [ ] Cross-platform builds (macOS/Windows/Linux)
-- [ ] VST3 processor interface
-- [ ] VST3 editor UI (VSTGUI or custom)
-- [ ] Parameter automation (VST3 parameters)
-- [ ] State save/restore (VST3 presets)
-- [ ] Shared presets with AUv3 version
-- [ ] CI/CD for automated builds (GitHub Actions)
-- [ ] Code signing (macOS/Windows)
-- [ ] VST3 validator compliance
+**Tasks (Week 1-2): DSP Core Migration**
+- [ ] Port Swift DSP to C++ (BiofeedbackProcessor, SpatialAudioEngine)
+- [ ] Create Swift ↔ C++ bridge for iOS app to use C++ core
+- [ ] Maintain feature parity with Swift implementation
+- [ ] Unit tests for C++ DSP core
+- [ ] Verify iOS app works with C++ backend
 
-**Shared Core Engine:**
-```swift
-// Platform-agnostic core (used by both AUv3 and VST3)
-Sources/BlabCore/
-  ├── BlabAudioEngine.swift
-  ├── BiofeedbackProcessor.swift
-  ├── SpatialAudioEngine.swift
-  ├── MIDIToVisualMapper.swift
-  └── BioParameterMapper.swift
+**Tasks (Week 3-4): JUCE Plugin Development**
+- [ ] Create JUCE AudioProcessor (BlabProcessor.cpp)
+- [ ] Implement parameter system (HRV, coherence, spatial modes, etc.)
+- [ ] Create JUCE UI (BlabEditor.cpp) with Metal rendering for visuals
+- [ ] Build all formats: VST3, AU, AUv3, LV2, Standalone
+- [ ] Test in DAWs: Ableton, Logic, Bitwig, Reaper, Ardour
+- [ ] Preset management (JUCE PresetManager)
+- [ ] State save/restore (JUCE ValueTreeState)
+- [ ] Parameter automation (JUCE automation system)
+
+**Files:**
+```
+JUCE/BlabPlugin/
+  ├── Source/
+  │   ├── PluginProcessor.cpp/h      (JUCE AudioProcessor)
+  │   ├── PluginEditor.cpp/h         (JUCE UI + Metal visuals)
+  │   ├── Parameters.cpp/h           (parameter definitions)
+  │   └── DSP/
+  │       ├── BlabAudioEngine.cpp/h
+  │       ├── BiofeedbackProcessor.cpp/h (HRV, coherence)
+  │       ├── SpatialAudioEngine.cpp/h   (3D/4D/AFA)
+  │       └── MIDIToVisualMapper.cpp/h   (cymatics, mandalas)
+  ├── BlabPlugin.jucer               (JUCE project file)
+  └── CMakeLists.txt
+```
+
+**Build Setup:**
+```cmake
+cmake_minimum_required(VERSION 3.22)
+project(BlabPlugin VERSION 1.0.0)
+
+add_subdirectory(JUCE)
+
+juce_add_plugin(BlabPlugin
+    COMPANY_NAME "BLAB Studio"
+    PLUGIN_NAME "BLAB Bio-Reactive Synth"
+    FORMATS VST3 AU AUv3 LV2 Standalone
+    PRODUCT_NAME "BLAB"
+)
+
+target_sources(BlabPlugin PRIVATE
+    Source/PluginProcessor.cpp
+    Source/PluginEditor.cpp
+    Source/DSP/BlabAudioEngine.cpp
+    # ... other sources
+)
+```
+
+**Output (Automatic via JUCE):**
+```
+Builds/
+  ├── MacOSX/
+  │   ├── BLAB.component        (AU - Logic Pro)
+  │   ├── BLAB.vst3             (VST3 - Ableton, Bitwig)
+  │   └── BLAB.app              (Standalone)
+  ├── Windows/
+  │   ├── BLAB.vst3             (VST3)
+  │   └── BLAB.exe              (Standalone)
+  └── Linux/
+      ├── BLAB.vst3             (VST3)
+      ├── BLAB.lv2/             (LV2 - Ardour)
+      └── BLAB                  (Standalone)
 ```
 
 **Market Impact:**
-- AUv3 alone: ~15% DAW market (Apple ecosystem)
-- **VST3 addition: +70% market coverage** → 85% total!
+- AUv3 alone: ~15% DAW market
+- **JUCE Multi-Format: ~95%+ DAW market** → **6x market expansion!**
 
 **Biofeedback on Desktop:**
-- Bluetooth HRV sensors (Polar H10, Garmin)
+- Bluetooth HRV sensors (Polar H10, Garmin ANT+)
 - Elite HRV API integration
 - OSC bridge from iOS companion app
 - Manual BPM input fallback
 
 ---
 
-#### 7.3 MPE Support ⏳
+#### 7.3 CLAP Support (1 week) ⏳ **FUTURE-PROOF!** ⚡
+
+> **License:** CLAP SDK (MIT License - FREE!)
+> **Target:** Bitwig Studio, Reaper, FL Studio (future)
+
+**Why CLAP is Critical:**
+- ✅ Next-generation plugin standard (designed 2022, fixes VST3/AU limitations)
+- ✅ **Perfect for BLAB:** Native polyphonic modulation, per-note expressions
+- ✅ Bitwig (MPE-friendly DAW) has first-class CLAP support
+- ✅ **Custom extensions:** BLAB can define custom biofeedback parameters!
+- ✅ Future-proof as adoption grows rapidly
+
+**Prerequisites:**
+- [ ] Phase 7.2 complete (JUCE plugin working)
+- [ ] CLAP SDK (https://github.com/free-audio/clap)
+- [ ] clap-juce-extensions (https://github.com/free-audio/clap-juce-extensions)
+
+**Tasks:**
+- [ ] Add clap-juce-extensions to JUCE project
+- [ ] Enable CLAP format in CMakeLists.txt
+- [ ] Implement CLAP note expressions (bio-signals → per-note modulation)
+- [ ] Define custom CLAP extension: `com.blab.biofeedback`
+  - HRV Coherence parameter
+  - Breath Rate parameter
+  - Custom bio-signal routing
+- [ ] Test in Bitwig Studio (native CLAP support)
+- [ ] Test in Reaper 7+ (CLAP support)
+- [ ] Validate with clap-validator
+
+**CLAP-Specific Features:**
+```cpp
+// Custom BLAB biofeedback descriptor
+static const clap_plugin_descriptor_t descriptor = {
+    .id = "com.blab.bioreactive-synth",
+    .name = "BLAB Bio-Reactive Synth",
+    .vendor = "BLAB Studio",
+    .version = "1.0.0",
+    .description = "Spatial audio synthesizer with biofeedback control",
+    .features = (const char*[]) {
+        CLAP_PLUGIN_FEATURE_INSTRUMENT,
+        CLAP_PLUGIN_FEATURE_SYNTHESIZER,
+        CLAP_PLUGIN_FEATURE_SPATIAL,
+        "biofeedback",      // Custom BLAB feature
+        "bio-reactive",     // Custom BLAB feature
+        "hrv-controlled",   // Custom BLAB feature
+        NULL
+    }
+};
+
+// Per-note HRV modulation
+clap_event_note_expression {
+    .expression_id = CLAP_NOTE_EXPRESSION_BRIGHTNESS,
+    .value = hrvCoherence  // HRV → per-note brightness
+};
+```
+
+**Output:**
+```
+Builds/
+  ├── MacOSX/BLAB.clap
+  ├── Windows/BLAB.clap
+  └── Linux/BLAB.clap
+```
+
+**Market Impact:**
+- Bitwig users: **BEST experience** (CLAP native + MPE native = perfect match)
+- Reaper users: Modern plugin format
+- Future DAW adoption: FL Studio planning CLAP support
+
+---
+
+#### 7.4 MPE Support ⏳
 ```swift
 class MPEController {
     func handlePressure(_ pressure: Float, note: UInt8)
@@ -455,11 +596,36 @@ class MPEController {
 - [ ] Push 3 MPE integration
 - [ ] Per-note expression
 - [ ] Multi-dimensional control
-- [ ] Compatible with both AUv3 and VST3 plugins
+- [ ] Compatible with ALL plugin formats (AUv3, VST3, CLAP)
 
 ---
 
-#### 7.4 Apple Watch Bridge ⏳
+#### 7.5 Cross-Platform Distribution (1 week) ⏳
+
+**Platforms:**
+- macOS: Universal Binary (Intel + Apple Silicon)
+- Windows: x64, ARM64 (future)
+- Linux: x64, ARM64
+
+**Distribution Channels:**
+- **Plugins:** VST3, AU, AUv3, CLAP, LV2 (all from JUCE)
+- **Standalone:** DMG (Mac), MSI (Windows), AppImage (Linux)
+- **App Store:** AUv3 for iOS
+- **Preset Sharing:** iCloud Drive sync
+
+**Tasks:**
+- [ ] Automated builds (GitHub Actions for all platforms)
+- [ ] Code signing (macOS Developer ID, Windows Authenticode)
+- [ ] Notarization (macOS)
+- [ ] Installer packages (DMG, MSI, DEB/RPM, AppImage)
+- [ ] Plugin validation (VST3 validator, AU validator, clap-validator)
+- [ ] Website landing page with download links
+- [ ] Demo videos (YouTube)
+- [ ] Documentation (manual, quick start guide)
+
+---
+
+#### 7.6 Apple Watch Bridge ⏳
 ```swift
 // watchOS companion app
 class WatchBridge {
