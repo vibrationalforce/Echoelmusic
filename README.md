@@ -405,13 +405,17 @@ git push origin feature/my-feature
 ### 🔵 Planned:
 - Phase 5: AI Composition Layer
 - Phase 6: Networking & Collaboration
-- Phase 7: AUv3 Plugin + MPE
+- **Phase 7: AUv3 + VST3 Plugins + MPE** ⚡ *NEW: VST3 now MIT licensed!*
 - Phase 8: Vision Pro / ARKit
 - Phase 9: Distribution & Publishing
 - Phase 10: Polish & Release
 
 **Estimated MVP Completion:** 3-4 months
 **Full Feature Set:** 6-7 months
+
+> **⚡ NEW (2025-11-01):** VST3 SDK 3.8.0 now MIT licensed!
+> BLAB can now target VST3 (cross-platform) + AUv3 (Apple).
+> See [VST3_ASIO_LICENSE_UPDATE.md](VST3_ASIO_LICENSE_UPDATE.md) for details.
 
 See `BLAB_IMPLEMENTATION_ROADMAP.md` for details.
 

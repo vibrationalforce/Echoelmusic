@@ -353,10 +353,14 @@ class OSCBridge {
 
 ---
 
-## PHASE 7: Advanced I/O (2 weeks)
-### Goal: AUv3 plugin + MPE + hardware integration
+## PHASE 7: Advanced I/O (5 weeks total)
+### Goal: AUv3 + VST3 plugins + MPE + hardware integration
 
-#### 7.1 AUv3 Plugin ⏳
+> **⚡ NEW (2025-11-01):** VST3 SDK 3.8.0 now available under MIT license!
+> BLAB can now target VST3 (cross-platform) in addition to AUv3 (Apple only).
+> See [VST3_ASIO_LICENSE_UPDATE.md](VST3_ASIO_LICENSE_UPDATE.md) for details.
+
+#### 7.1 AUv3 Plugin (2 weeks) ⏳
 ```swift
 class BlabAudioUnit: AUAudioUnit {
     override func allocateRenderResources() throws
@@ -367,13 +371,77 @@ class BlabAudioUnit: AUAudioUnit {
 **New target:**
 - `BlabAudioUnit` (Audio Unit Extension)
 
+**Platform:** macOS/iOS
+**DAWs:** Logic Pro, GarageBand, AUM, AudioBus
+
 **Features:**
 - [ ] AUv3 plugin (Logic Pro, GarageBand, etc.)
 - [ ] Parameter automation
 - [ ] State save/restore
 - [ ] Preset management
+- [ ] App Store distribution
 
-#### 7.2 MPE Support ⏳
+---
+
+#### 7.2 VST3 Plugin (3 weeks) ⏳ **NEW!**
+
+> **License:** VST3 SDK 3.8.0+ (MIT License - Free for all use!)
+
+```cpp
+// BlabVST3Processor - Cross-platform VST3 plugin
+class BlabVST3Processor : public vst3::AudioEffect {
+    tresult PLUGIN_API process(Vst::ProcessData& data) override;
+    // Shared BLAB audio engine (platform-agnostic)
+};
+```
+
+**New target:**
+- `BlabVST3` (VST3 plugin bundle)
+
+**Platform:** macOS/Windows/Linux
+**DAWs:** Ableton Live, Bitwig Studio, Cubase, FL Studio, Reaper, Studio One
+
+**Prerequisites:**
+- [ ] Download VST3 SDK 3.8.0+ (https://github.com/steinbergmedia/vst3sdk)
+- [ ] Verify MIT license in SDK
+- [ ] Set up cross-platform build (CMake or SPM)
+
+**Features:**
+- [ ] VST3 plugin (Ableton, Bitwig, Cubase, FL Studio, Reaper)
+- [ ] Cross-platform builds (macOS/Windows/Linux)
+- [ ] VST3 processor interface
+- [ ] VST3 editor UI (VSTGUI or custom)
+- [ ] Parameter automation (VST3 parameters)
+- [ ] State save/restore (VST3 presets)
+- [ ] Shared presets with AUv3 version
+- [ ] CI/CD for automated builds (GitHub Actions)
+- [ ] Code signing (macOS/Windows)
+- [ ] VST3 validator compliance
+
+**Shared Core Engine:**
+```swift
+// Platform-agnostic core (used by both AUv3 and VST3)
+Sources/BlabCore/
+  ├── BlabAudioEngine.swift
+  ├── BiofeedbackProcessor.swift
+  ├── SpatialAudioEngine.swift
+  ├── MIDIToVisualMapper.swift
+  └── BioParameterMapper.swift
+```
+
+**Market Impact:**
+- AUv3 alone: ~15% DAW market (Apple ecosystem)
+- **VST3 addition: +70% market coverage** → 85% total!
+
+**Biofeedback on Desktop:**
+- Bluetooth HRV sensors (Polar H10, Garmin)
+- Elite HRV API integration
+- OSC bridge from iOS companion app
+- Manual BPM input fallback
+
+---
+
+#### 7.3 MPE Support ⏳
 ```swift
 class MPEController {
     func handlePressure(_ pressure: Float, note: UInt8)
@@ -387,8 +455,11 @@ class MPEController {
 - [ ] Push 3 MPE integration
 - [ ] Per-note expression
 - [ ] Multi-dimensional control
+- [ ] Compatible with both AUv3 and VST3 plugins
 
-#### 7.3 Apple Watch Bridge ⏳
+---
+
+#### 7.4 Apple Watch Bridge ⏳
 ```swift
 // watchOS companion app
 class WatchBridge {

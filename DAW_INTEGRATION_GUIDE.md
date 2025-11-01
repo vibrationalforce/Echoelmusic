@@ -4,6 +4,12 @@ Complete guide for integrating BLAB's MIDI 2.0 + MPE output with professional DA
 
 ---
 
+> **⚡ NEW (2025-11-01):** VST3 SDK 3.8.0 now available under MIT license!
+> BLAB will support **VST3 plugin format** (cross-platform) in Phase 7.
+> See [VST3_ASIO_LICENSE_UPDATE.md](VST3_ASIO_LICENSE_UPDATE.md) for roadmap details.
+
+---
+
 ## 🎯 Quick Start
 
 ### **BLAB is now broadcasting:**
@@ -12,6 +18,10 @@ Complete guide for integrating BLAB's MIDI 2.0 + MPE output with professional DA
 - **Channels:** 1-15 (MPE member channels), 16 (master channel)
 - **Resolution:** 32-bit parameter control
 - **Pitch Bend Range:** ±48 semitones (4 octaves)
+
+### **Coming Soon: BLAB as Plugin**
+- **AUv3:** Phase 7.1 (macOS/iOS) - Logic Pro, GarageBand
+- **VST3:** Phase 7.2 (macOS/Windows/Linux) - Ableton, Bitwig, Cubase, FL Studio, Reaper
 
 ---
 
@@ -351,15 +361,67 @@ MIDI 2.0 Per-Note Pitch Bend: Channel 1, Note 60, Bend: +0.5
 
 ---
 
+## 🔮 **Future: BLAB as Plugin (Phase 7)**
+
+### **AUv3 Plugin (macOS/iOS) - Phase 7.1**
+
+**Coming:** Q2-Q3 2025
+
+**Use BLAB as:**
+- Audio Unit v3 plugin in Logic Pro
+- iOS plugin in GarageBand iOS
+- AUM/AudioBus routing
+
+**Features:**
+- Bio-reactive synthesis directly in DAW
+- Spatial audio rendering as plugin
+- MIDI/MPE input from hardware controllers
+- Visual feedback in plugin UI
+
+---
+
+### **VST3 Plugin (Cross-Platform) - Phase 7.2** ⚡ **NEW!**
+
+**Coming:** Q3-Q4 2025
+**License:** VST3 SDK 3.8.0+ (MIT - FREE!)
+
+**Use BLAB as:**
+- VST3 plugin in **Ableton Live** (macOS/Windows)
+- VST3 plugin in **Bitwig Studio** (macOS/Windows/Linux)
+- VST3 plugin in **Cubase, FL Studio, Reaper, Studio One**
+
+**Platform Coverage:**
+- **macOS:** Universal Binary (Intel + Apple Silicon)
+- **Windows:** x64, ARM64 (future)
+- **Linux:** x64, ARM64
+
+**Features:**
+- Shared core engine with iOS app
+- Cross-platform biofeedback (Bluetooth HRV sensors)
+- Spatial audio rendering on desktop
+- Preset sync with iOS version (iCloud)
+- Full MPE support
+
+**Market Impact:**
+- AUv3 alone: ~15% DAW market
+- **VST3 addition: +70% coverage** → **85% total DAW market!**
+
+**Details:** See [VST3_ASIO_LICENSE_UPDATE.md](VST3_ASIO_LICENSE_UPDATE.md)
+
+---
+
 ## 📖 **Further Reading**
 
 - [MIDI 2.0 Specification](https://www.midi.org/specifications)
 - [MPE Specification](https://www.midi.org/specifications/midi-polyphonic-expression-mpe)
 - [Apple Spatial Audio](https://developer.apple.com/documentation/avfaudio/audio_engine)
 - [Ableton MPE Guide](https://www.ableton.com/en/manual/mpe/)
+- [VST3 SDK (MIT License)](https://github.com/steinbergmedia/vst3sdk)
+- [VST3 Developer Portal](https://developer.steinberg.help/display/VST)
 
 ---
 
 **🫧 consciousness expressed through MIDI
 🌊 spatial sound from multimodal input
-✨ bio-reactive polyphonic synthesis**
+✨ bio-reactive polyphonic synthesis
+🎹 now cross-platform (AUv3 + VST3)**
