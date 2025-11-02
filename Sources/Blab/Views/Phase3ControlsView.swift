@@ -183,7 +183,7 @@ struct SpatialSourceRow: View {
 
             Spacer()
 
-            Text(String(format: "%.0f dB", source.gain))
+            Text(String(format: "%.2f", source.amplitude))
                 .font(.caption)
                 .foregroundColor(.secondary)
         }

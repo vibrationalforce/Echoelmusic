@@ -64,22 +64,31 @@ class MIDIToVisualMapper: ObservableObject {
     struct WaveformParameters {
         var waveform: [Float] = []            // Audio buffer
         var amplitude: Float = 1.0            // Overall amplitude
-        var color: Color = .cyan              // HRV-based color
+        var color: Float = 0.5                // HRV-based color (hue 0-1)
         var glowIntensity: Float = 0.5        // Audio level → Glow
+        var thickness: Float = 2.0            // Line thickness
+        var smoothness: Float = 0.5           // Smoothing factor
     }
 
     struct SpectralParameters {
         var magnitudes: [Float] = []          // FFT magnitudes (32 bars)
         var hue: Float = 0.5                  // HRV → Base hue
         var barGradient: [Color] = []         // Frequency-based gradient
+        var barWidth: Float = 4.0             // Bar width in pixels
+        var barSpacing: Float = 2.0           // Spacing between bars
+        var sensitivity: Float = 1.0          // Amplitude sensitivity
+        var colorScheme: Float = 0.5          // Color scheme variation (0-1)
     }
 
     struct ParticleParameters {
         var particles: [Particle] = []        // Active particles
         var emissionRate: Float = 10.0        // Notes → Emission rate
         var particleColor: Color = .white
-        var particleSize: Float = 2.0
+        var particleSize: Float = 3.0
         var velocity: SIMD2<Float> = SIMD2(0, 1)
+        var particleCount: Int = 100          // Total particle count
+        var speed: Float = 1.0                // Particle speed multiplier
+        var gravity: Float = 0.0              // Gravity effect (-1 to 1)
 
         struct Particle {
             let id: UUID = UUID()

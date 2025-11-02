@@ -231,6 +231,11 @@ class Push3LEDController: ObservableObject {
 
     // MARK: - Biometric → LED Mapping
 
+    /// Update LEDs based on bio parameters (alias for updateFromBioSignals)
+    func updateBioParameters(hrvCoherence: Float, heartRate: Int, breathingRate: Float) {
+        updateFromBioSignals(hrvCoherence: Double(hrvCoherence), heartRate: Double(heartRate))
+    }
+
     /// Update LEDs based on HRV coherence
     func updateFromBioSignals(hrvCoherence: Double, heartRate: Double) {
         switch currentPattern {
@@ -442,6 +447,70 @@ class Push3LEDController: ObservableObject {
         }
 
         return hueToRGB(hue: hue, value: 200)
+    }
+
+    // MARK: - Test Helper Methods
+
+    /// Set all LEDs to a single color
+    func setAllLEDs(color: RGB) {
+        for row in 0..<8 {
+            for col in 0..<8 {
+                ledGrid[row][col] = color
+            }
+        }
+        sendGridToHardware()
+    }
+
+    /// Update animation (called regularly for animated patterns)
+    func updateAnimation(time: TimeInterval) {
+        switch currentPattern {
+        case .rainbow:
+            applyRainbowPattern()
+        case .wave:
+            applyWavePattern()
+        case .spiral:
+            applySpiralPattern()
+        default:
+            break
+        }
+        sendGridToHardware()
+    }
+
+    /// Trigger gesture flash (alias for flashGesture)
+    func triggerGestureFlash(type: String) {
+        flashGesture(gesture: type)
+    }
+
+    /// Create LED SysEx message for testing
+    func createLEDSysExMessage(row: Int, col: Int, color: RGB) -> [UInt8]? {
+        guard row >= 0 && row < 8 && col >= 0 && col < 8 else { return nil }
+
+        var sysex: [UInt8] = SysExCommand.header
+        sysex.append(SysExCommand.ledSetCommand)
+
+        // Add LED position and color
+        sysex.append(UInt8(row))
+        sysex.append(UInt8(col))
+        sysex.append(color.r & 0x7F)
+        sysex.append(color.g & 0x7F)
+        sysex.append(color.b & 0x7F)
+
+        sysex.append(SysExCommand.footer)
+        return sysex
+    }
+
+    /// Interpolate between two colors
+    func interpolateColor(from: RGB, to: RGB, t: Float) -> RGB {
+        let t = max(0.0, min(1.0, t))  // Clamp to 0-1
+        let r = UInt8(Float(from.r) * (1.0 - t) + Float(to.r) * t)
+        let g = UInt8(Float(from.g) * (1.0 - t) + Float(to.g) * t)
+        let b = UInt8(Float(from.b) * (1.0 - t) + Float(to.b) * t)
+        return RGB(r: r, g: g, b: b)
+    }
+
+    /// Convert HRV coherence to color (alias for coherenceToColor)
+    func hrvCoherenceToColor(coherence: Float) -> RGB {
+        coherenceToColor(coherence: Double(coherence))
     }
 
     // MARK: - Debug Info

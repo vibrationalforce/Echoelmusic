@@ -200,6 +200,45 @@ class SpatialAudioEngine: ObservableObject {
         spatialSources[index].orbitalPhase = phase
     }
 
+    /// Convenience method to add a source from a SpatialSource struct
+    func addSource(_ source: SpatialSource) {
+        spatialSources.append(source)
+        createAudioSourceNode(for: source)
+        print("✅ Added spatial source: \(source.id)")
+    }
+
+    /// Convenience method to update entire source
+    func updateSource(_ source: SpatialSource) {
+        guard let index = spatialSources.firstIndex(where: { $0.id == source.id }) else { return }
+        spatialSources[index] = source
+        applyPositionToNode(id: source.id, position: source.position)
+    }
+
+    /// Update Fibonacci sphere positions for all sources with fibonacci geometry
+    func updateFibonacciPositions() {
+        let fibonacciSources = spatialSources.filter { $0.fieldGeometry == .fibonacci }
+        guard !fibonacciSources.isEmpty else { return }
+
+        // Generate Fibonacci sphere positions
+        for (index, source) in fibonacciSources.enumerated() {
+            let position = calculateFibonacciPosition(index: source.fieldIndex, total: fibonacciSources.count)
+            updateSourcePosition(id: source.id, position: position)
+        }
+    }
+
+    /// Calculate Fibonacci sphere position
+    private func calculateFibonacciPosition(index: Int, total: Int) -> SIMD3<Float> {
+        let goldenRatio: Float = (1.0 + sqrt(5.0)) / 2.0
+        let theta = 2.0 * Float.pi * Float(index) / goldenRatio
+        let phi = acos(1.0 - 2.0 * (Float(index) + 0.5) / Float(total))
+
+        let x = cos(theta) * sin(phi)
+        let y = sin(theta) * sin(phi)
+        let z = cos(phi)
+
+        return SIMD3<Float>(x, y, z)
+    }
+
     // MARK: - Audio Node Creation
 
     private func createAudioSourceNode(for source: SpatialSource) {

@@ -13,9 +13,14 @@ class MIDIToLightMapper: ObservableObject {
     // MARK: - Published State
 
     @Published var isActive: Bool = false
+    @Published var isConnected: Bool = false  // Art-Net connection status
     @Published var currentScene: LightScene = .ambient
     @Published var dmxUniverse: [UInt8] = Array(repeating: 0, count: 512)
     @Published var ledStrips: [LEDStrip] = []
+    @Published var masterIntensity: Float = 1.0  // Master dimmer (0-1)
+    @Published var hrvToHueEnabled: Bool = false
+    @Published var hrToIntensityEnabled: Bool = false
+    @Published var gestureStrobeEnabled: Bool = false
 
     // MARK: - DMX Configuration
 
