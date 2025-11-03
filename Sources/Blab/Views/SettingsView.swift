@@ -27,6 +27,7 @@ struct SettingsView: View {
         case performance = "Performance"
         case spatial = "Spatial Audio"
         case midi = "MIDI & Control"
+        case automation = "Automation"
         case biometrics = "Biometrics"
         case general = "General"
         case about = "About"
@@ -39,6 +40,7 @@ struct SettingsView: View {
             case .performance: return "speedometer"
             case .spatial: return "move.3d"
             case .midi: return "pianokeys"
+            case .automation: return "bolt.circle"
             case .biometrics: return "heart.text.square"
             case .general: return "gearshape"
             case .about: return "info.circle"
@@ -51,6 +53,7 @@ struct SettingsView: View {
             case .performance: return "Latency, CPU, monitoring"
             case .spatial: return "3D audio, head tracking"
             case .midi: return "MIDI 2.0, MPE, LED control"
+            case .automation: return "Macros, Stream Deck"
             case .biometrics: return "HRV, heart rate, coherence"
             case .general: return "App preferences, notifications"
             case .about: return "Version, credits, support"
@@ -216,6 +219,9 @@ struct SettingsView: View {
 
         case .midi:
             MIDISettingsView(controlHub: controlHub)
+
+        case .automation:
+            AutomationSettingsView(controlHub: controlHub, audioEngine: audioEngine)
 
         case .biometrics:
             BiometricsSettingsView(controlHub: controlHub)
@@ -484,6 +490,52 @@ struct GeneralSettingsView: View {
             }
         }
         .navigationTitle("General")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Automation Settings
+
+@available(iOS 15.0, *)
+struct AutomationSettingsView: View {
+    @ObservedObject var controlHub: UnifiedControlHub
+    @ObservedObject var audioEngine: AudioEngine
+
+    var body: some View {
+        List {
+            Section {
+                NavigationLink("Macros") {
+                    MacroView(controlHub: controlHub, audioEngine: audioEngine)
+                }
+
+                NavigationLink("Stream Deck") {
+                    StreamDeckView(controlHub: controlHub, audioEngine: audioEngine)
+                }
+            } header: {
+                Text("Automation Tools")
+            } footer: {
+                Text("Automate workflows with macros and control BLAB with Stream Deck")
+            }
+
+            Section {
+                HStack {
+                    Text("Saved Macros")
+                    Spacer()
+                    Text("\(MacroSystem.shared.macros.count)")
+                        .foregroundColor(.secondary)
+                }
+
+                HStack {
+                    Text("Stream Deck")
+                    Spacer()
+                    Text(StreamDeckController.shared.isConnected ? "Connected" : "Not Connected")
+                        .foregroundColor(StreamDeckController.shared.isConnected ? .green : .secondary)
+                }
+            } header: {
+                Text("Status")
+            }
+        }
+        .navigationTitle("Automation")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
