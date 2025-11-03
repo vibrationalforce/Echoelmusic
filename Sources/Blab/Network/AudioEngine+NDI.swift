@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import ObjectiveC  // Required for objc_getAssociatedObject/objc_setAssociatedObject
 
 /// NDI Extension for AudioEngine
 /// Adds NDI audio streaming capabilities to the main audio engine

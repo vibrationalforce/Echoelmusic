@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import ObjectiveC  // Required for objc_getAssociatedObject/objc_setAssociatedObject
 
 /// NDI Extension for UnifiedControlHub
 /// Adds centralized NDI control to the unified control system
