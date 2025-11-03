@@ -32,6 +32,19 @@ class AudioEngine: ObservableObject {
     /// Binaural beat amplitude (0.0 - 1.0)
     @Published var binauralAmplitude: Float = 0.3
 
+    /// Current audio sample rate (Hz)
+    public var sampleRate: Double {
+        // Get from audio session
+        return AVAudioSession.sharedInstance().sampleRate
+    }
+
+    /// Current audio buffer size (frames)
+    public var bufferSize: Int {
+        // Get from audio session
+        let duration = AVAudioSession.sharedInstance().ioBufferDuration
+        return Int(duration * sampleRate)
+    }
+
 
     // MARK: - Audio Components
 
@@ -59,6 +72,9 @@ class AudioEngine: ObservableObject {
     /// Node graph for effects processing
     private var nodeGraph: NodeGraph?
 
+    /// Advanced DSP processor (Noise Gate, De-Esser, Limiter, Compressor)
+    public let dspProcessor: DSPProcessor
+
 
     // MARK: - Private Properties
 
@@ -70,6 +86,9 @@ class AudioEngine: ObservableObject {
 
     init(microphoneManager: MicrophoneManager) {
         self.microphoneManager = microphoneManager
+
+        // Initialize DSP processor
+        self.dspProcessor = DSPProcessor(sampleRate: AVAudioSession.sharedInstance().sampleRate)
 
         // Configure audio session for optimal performance
         do {
@@ -124,6 +143,9 @@ class AudioEngine: ObservableObject {
 
     /// Start the audio engine (microphone + optional binaural beats + spatial audio)
     func start() {
+        // Start latency monitoring
+        enableLatencyMonitoring()
+
         // Start microphone
         microphoneManager.startRecording()
 
@@ -152,6 +174,9 @@ class AudioEngine: ObservableObject {
 
     /// Stop the audio engine
     func stop() {
+        // Stop latency monitoring
+        disableLatencyMonitoring()
+
         // Stop microphone
         microphoneManager.stopRecording()
 
