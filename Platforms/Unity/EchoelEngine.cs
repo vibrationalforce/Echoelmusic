@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Blab
+namespace Echoel
 {
     /// <summary>
     /// Visualization modes available in BLAB
@@ -78,22 +78,22 @@ namespace Blab
     /// Main BLAB Engine - Singleton
     /// Add to a GameObject in your scene to enable BLAB features
     /// </summary>
-    public class BlabEngine : MonoBehaviour
+    public class EchoelEngine : MonoBehaviour
     {
         // MARK: - Singleton
 
-        private static BlabEngine _instance;
-        public static BlabEngine Instance
+        private static EchoelEngine _instance;
+        public static EchoelEngine Instance
         {
             get
             {
                 if (_instance == null)
                 {
-                    _instance = FindObjectOfType<BlabEngine>();
+                    _instance = FindObjectOfType<EchoelEngine>();
                     if (_instance == null)
                     {
-                        GameObject go = new GameObject("BlabEngine");
-                        _instance = go.AddComponent<BlabEngine>();
+                        GameObject go = new GameObject("EchoelEngine");
+                        _instance = go.AddComponent<EchoelEngine>();
                     }
                 }
                 return _instance;
@@ -374,9 +374,9 @@ namespace Blab
         #if UNITY_IOS || UNITY_STANDALONE_OSX
         private const string DllName = "__Internal";
         #elif UNITY_ANDROID
-        private const string DllName = "blab";
+        private const string DllName = "echoel";
         #else
-        private const string DllName = "blab";
+        private const string DllName = "echoel";
         #endif
 
         [DllImport(DllName)]
@@ -448,16 +448,16 @@ namespace Blab
                 targetRenderer.material.SetTexture(materialTextureProperty, renderTarget);
             }
 
-            BlabEngine.Instance.SetVisualizationMode(mode);
+            EchoelEngine.Instance.SetVisualizationMode(mode);
         }
 
         private void Update()
         {
-            BlabEngine.Instance.RenderToTexture(renderTarget);
+            EchoelEngine.Instance.RenderToTexture(renderTarget);
 
             if (bioReactive)
             {
-                BiofeedbackData bio = BlabEngine.Instance.GetBiofeedbackData();
+                BiofeedbackData bio = EchoelEngine.Instance.GetBiofeedbackData();
                 hue = bio.coherence / 100f;
             }
         }
@@ -468,7 +468,7 @@ namespace Blab
         public void SetMode(VisualizationMode newMode)
         {
             mode = newMode;
-            BlabEngine.Instance.SetVisualizationMode(mode);
+            EchoelEngine.Instance.SetVisualizationMode(mode);
         }
     }
 
@@ -485,12 +485,12 @@ namespace Blab
 
         private void Start()
         {
-            BlabEngine.Instance.SetSpatialMode(spatialMode);
+            EchoelEngine.Instance.SetSpatialMode(spatialMode);
         }
 
         private void OnAudioFilterRead(float[] data, int channels)
         {
-            BlabEngine.Instance.ProcessAudio(data, channels);
+            EchoelEngine.Instance.ProcessAudio(data, channels);
         }
 
         /// <summary>
@@ -499,7 +499,7 @@ namespace Blab
         public void SetSpatialMode(SpatialMode newMode)
         {
             spatialMode = newMode;
-            BlabEngine.Instance.SetSpatialMode(spatialMode);
+            EchoelEngine.Instance.SetSpatialMode(spatialMode);
         }
     }
 

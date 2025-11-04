@@ -1,9 +1,9 @@
-# 🌊 BLAB Implementation Roadmap
+# 🌊 ECHOEL Implementation Roadmap
 ## From Current iOS App → Full Allwave Vision
 
 **Created:** 2025-10-20
-**Vision:** BLAB Allwave V∞.2 (Claude Code Edition)
-**Current:** BLAB iOS v0.1 (Biofeedback + Binaural Beats + Spatial Audio)
+**Vision:** ECHOEL Allwave V∞.2 (Claude Code Edition)
+**Current:** ECHOEL iOS v0.1 (Biofeedback + Binaural Beats + Spatial Audio)
 
 ---
 
@@ -66,8 +66,8 @@ audioSession.setPreferredSampleRate(48000)
 ```
 
 **Files to modify:**
-- `Sources/Blab/Audio/AudioEngine.swift`
-- `Sources/Blab/MicrophoneManager.swift`
+- `Sources/Echoel/Audio/AudioEngine.swift`
+- `Sources/Echoel/MicrophoneManager.swift`
 
 **New features:**
 - [ ] Real-time scheduling (DispatchQueue.userInteractive)
@@ -77,7 +77,7 @@ audioSession.setPreferredSampleRate(48000)
 
 #### 1.2 Modular Node System ⏳
 ```swift
-protocol BlabNode {
+protocol EchoelNode {
     var id: UUID { get }
     var name: String { get }
     func process(_ buffer: AVAudioPCMBuffer, time: AVAudioTime) -> AVAudioPCMBuffer
@@ -86,10 +86,10 @@ protocol BlabNode {
 ```
 
 **New files:**
-- `Sources/Blab/Audio/Nodes/BlabNode.swift`
-- `Sources/Blab/Audio/Nodes/ReverbNode.swift`
-- `Sources/Blab/Audio/Nodes/FilterNode.swift`
-- `Sources/Blab/Audio/Nodes/CompressorNode.swift`
+- `Sources/Echoel/Audio/Nodes/EchoelNode.swift`
+- `Sources/Echoel/Audio/Nodes/ReverbNode.swift`
+- `Sources/Echoel/Audio/Nodes/FilterNode.swift`
+- `Sources/Echoel/Audio/Nodes/CompressorNode.swift`
 
 **Features:**
 - [ ] Protocol-based node architecture
@@ -106,8 +106,8 @@ protocol BlabNode {
 ```
 
 **Files to modify:**
-- `Sources/Blab/Biofeedback/BioParameterMapper.swift`
-- `Sources/Blab/Biofeedback/HealthKitManager.swift`
+- `Sources/Echoel/Biofeedback/BioParameterMapper.swift`
+- `Sources/Echoel/Biofeedback/HealthKitManager.swift`
 
 **New features:**
 - [ ] Respiratory rate tracking (HKQuantityTypeIdentifier.respiratoryRate)
@@ -134,9 +134,9 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 ```
 
 **New files:**
-- `Sources/Blab/Visual/CymaticsRenderer.swift`
-- `Sources/Blab/Visual/Shaders/Cymatics.metal`
-- `Sources/Blab/Visual/Shaders/ParticleShader.metal`
+- `Sources/Echoel/Visual/CymaticsRenderer.swift`
+- `Sources/Echoel/Visual/Shaders/Cymatics.metal`
+- `Sources/Echoel/Visual/Shaders/ParticleShader.metal`
 
 **Features:**
 - [ ] Metal compute shaders for FFT visualization
@@ -153,8 +153,8 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 - [ ] Mandala (radial symmetry)
 
 **Files:**
-- `Sources/Blab/Visual/VisualizationMode.swift`
-- `Sources/Blab/Visual/Modes/CymaticsMode.swift`
+- `Sources/Echoel/Visual/VisualizationMode.swift`
+- `Sources/Echoel/Visual/Modes/CymaticsMode.swift`
 - etc.
 
 #### 2.3 Bio-Synesthetic Mapping ⏳
@@ -185,9 +185,9 @@ let source = PHASESource(engine: engine)
 ```
 
 **New files:**
-- `Sources/Blab/Audio/Spatial/PHASEEngine.swift`
-- `Sources/Blab/Audio/Spatial/AmbisonicRenderer.swift`
-- `Sources/Blab/Audio/Spatial/HRTFProcessor.swift`
+- `Sources/Echoel/Audio/Spatial/PHASEEngine.swift`
+- `Sources/Echoel/Audio/Spatial/AmbisonicRenderer.swift`
+- `Sources/Echoel/Audio/Spatial/HRTFProcessor.swift`
 
 **Features:**
 - [ ] PHASE audio environment
@@ -222,10 +222,10 @@ class RecordingEngine {
 ```
 
 **New files:**
-- `Sources/Blab/Recording/RecordingEngine.swift`
-- `Sources/Blab/Recording/Track.swift`
-- `Sources/Blab/Recording/Recording.swift`
-- `Sources/Blab/Recording/ExportManager.swift`
+- `Sources/Echoel/Recording/RecordingEngine.swift`
+- `Sources/Echoel/Recording/Track.swift`
+- `Sources/Echoel/Recording/Recording.swift`
+- `Sources/Echoel/Recording/ExportManager.swift`
 
 **Features:**
 - [ ] Multi-track recording
@@ -270,7 +270,7 @@ struct Session: Codable {
 ```swift
 import CoreML
 
-class BlabComposer {
+class EchoelComposer {
     let model: MLModel
 
     func generate(genre: Genre, mood: Mood, tempo: Float) -> Composition
@@ -280,10 +280,10 @@ class BlabComposer {
 ```
 
 **New files:**
-- `Sources/Blab/AI/BlabComposer.swift`
-- `Sources/Blab/AI/CompositionGenerator.swift`
-- `Sources/Blab/AI/MoodAnalyzer.swift`
-- `Resources/Models/BlabComposer.mlmodel`
+- `Sources/Echoel/AI/EchoelComposer.swift`
+- `Sources/Echoel/AI/CompositionGenerator.swift`
+- `Sources/Echoel/AI/MoodAnalyzer.swift`
+- `Resources/Models/EchoelComposer.mlmodel`
 
 **Features:**
 - [ ] Genre-aware composition (10+ genres)
@@ -326,9 +326,9 @@ class CollaborationEngine {
 ```
 
 **New files:**
-- `Sources/Blab/Network/WebRTCEngine.swift`
-- `Sources/Blab/Network/PeerConnection.swift`
-- `Sources/Blab/Network/SyncManager.swift`
+- `Sources/Echoel/Network/WebRTCEngine.swift`
+- `Sources/Echoel/Network/PeerConnection.swift`
+- `Sources/Echoel/Network/SyncManager.swift`
 
 **Features:**
 - [ ] Peer-to-peer audio streaming
@@ -358,14 +358,14 @@ class OSCBridge {
 
 #### 7.1 AUv3 Plugin ⏳
 ```swift
-class BlabAudioUnit: AUAudioUnit {
+class EchoelAudioUnit: AUAudioUnit {
     override func allocateRenderResources() throws
     override var internalRenderBlock: AUInternalRenderBlock
 }
 ```
 
 **New target:**
-- `BlabAudioUnit` (Audio Unit Extension)
+- `EchoelAudioUnit` (Audio Unit Extension)
 
 **Features:**
 - [ ] AUv3 plugin (Logic Pro, GarageBand, etc.)
@@ -392,7 +392,7 @@ class MPEController {
 ```swift
 // watchOS companion app
 class WatchBridge {
-    func streamHRV(to mainApp: BlabApp)
+    func streamHRV(to mainApp: EchoelApp)
     func displayCoherence(_ score: Double)
 }
 ```
@@ -413,7 +413,7 @@ class WatchBridge {
 import SwiftUI
 import RealityKit
 
-struct BlabVisionApp: App {
+struct EchoelVisionApp: App {
     var body: some Scene {
         WindowGroup {
             ImmersiveSpace {
@@ -425,7 +425,7 @@ struct BlabVisionApp: App {
 ```
 
 **New target:**
-- `BlabVision` (visionOS app)
+- `EchoelVision` (visionOS app)
 
 **Features:**
 - [ ] 3D spatial visualization
@@ -472,7 +472,7 @@ class PublishingPipeline {
 
 #### 9.2 Streaming Integration ⏳
 **Platforms:**
-- [ ] Twitch (live BLAB sessions)
+- [ ] Twitch (live ECHOEL sessions)
 - [ ] YouTube Live
 - [ ] Instagram Live
 - [ ] RTMP custom endpoints
@@ -704,7 +704,7 @@ class PublishingPipeline {
 2. ✅ Verify GitHub Actions build
 3. ⏳ Start Phase 1.1: Audio optimization
 4. ⏳ Profile current audio latency
-5. ⏳ Create BlabNode protocol
+5. ⏳ Create EchoelNode protocol
 
 ### This Month:
 - Complete Phase 1 (Audio Enhancement)

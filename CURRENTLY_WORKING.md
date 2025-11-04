@@ -45,7 +45,7 @@
 - Claude Mac: ✅ Async authorization flow (enableBiometricMonitoring)
 - Claude Mac: ✅ Bio → Audio mapping (HRV → Reverb, HR → Filter, Tempo, Spatial)
 - Claude Mac: ✅ Combine subscriptions for real-time updates
-- Claude Mac: ✅ BlabApp auto-enables biometric monitoring on start
+- Claude Mac: ✅ EchoelApp auto-enables biometric monitoring on start
 
 **🎉 PHASE 1 MILESTONE REACHED:**
 **Core Multimodal Control Working!**
@@ -82,7 +82,7 @@
 - Claude Mac: ✅ Gestures → MPE voice control (Pinch → Pitch Bend, Fist → Voice allocation)
 - Claude Mac: ✅ Face → Per-note brightness/timbre (Jaw/Smile → CC 74/71)
 - Claude Mac: ✅ Bio → AFA field morphing (HRV → Grid/Circle/Fibonacci)
-- Claude Mac: ✅ MIDI 2.0 auto-enabled in BlabApp.swift
+- Claude Mac: ✅ MIDI 2.0 auto-enabled in EchoelApp.swift
 - **Signal Flow:** Multimodal Input → MPE (15 voices) → MIDI 2.0 UMP → Spatial Field → DAW
 
 **Complete Integration:**

@@ -1,15 +1,15 @@
-# 🧠 BLAB_MASTER_PROMPT_v4.3 for Claude Sonnet 4.5
+# 🧠 ECHOEL_MASTER_PROMPT_v4.3 for Claude Sonnet 4.5
 
-**Repository:** [vibrationalforce/blab-ios-app](https://github.com/vibrationalforce/blab-ios-app)
+**Repository:** [vibrationalforce/echoel-ios-app](https://github.com/vibrationalforce/echoel-ios-app)
 **Version:** 4.3 (October 2025)
 **Target AI:** Claude Sonnet 4.5 / Claude Code
-**Purpose:** Complete system architecture and development guidelines for BLAB iOS App
+**Purpose:** Complete system architecture and development guidelines for ECHOEL iOS App
 
 ---
 
 ## 🎯 Systemrolle
 
-Du bist leitender **AI- und Systemarchitekt** für *BLAB*, eine iOS-App, die Stimme und Biofeedback in Musik und Visuals transformiert.
+Du bist leitender **AI- und Systemarchitekt** für *ECHOEL*, eine iOS-App, die Stimme und Biofeedback in Musik und Visuals transformiert.
 
 **Ziel:** Erweiterung des bestehenden **SwiftUI + AVFoundation-Fundaments** zu einer multimodalen, KI-gestützten Neuro-Audio-Engine mit visueller Echtzeitdarstellung und Biofeedback-Steuerung.
 
@@ -34,7 +34,7 @@ Du bist leitender **AI- und Systemarchitekt** für *BLAB*, eine iOS-App, die Sti
 ### **Framework-Architektur**
 
 ```
-Sources/Blab/
+Sources/Echoel/
 ├── Audio/               # Audio engine & DSP
 ├── Biofeedback/        # HealthKit + bio-parameter mapping
 ├── MIDI/               # MIDI 2.0 + MPE infrastructure
@@ -585,7 +585,7 @@ class WatchConnectivityManager {
 **Theme: Dark Neuro**
 ```swift
 extension Color {
-    // BLAB Color Palette
+    // ECHOEL Color Palette
     static let blabPrimary = Color(red: 0.2, green: 0.8, blue: 0.9)  // Cyan
     static let blabSecondary = Color(red: 0.8, green: 0.3, blue: 0.9)  // Magenta
     static let blabAccent = Color(red: 0.0, green: 0.85, blue: 0.64)  // Green
@@ -722,9 +722,9 @@ struct PulseEffect: ViewModifier {
 #if os(iOS)
 import ActivityKit
 
-struct BlabLiveActivity: Widget {
+struct EchoelLiveActivity: Widget {
     var body: some WidgetConfiguration {
-        ActivityConfiguration(for: BlabActivityAttributes.self) { context in
+        ActivityConfiguration(for: EchoelActivityAttributes.self) { context in
             // Lock screen / Dynamic Island UI
             HStack {
                 Image(systemName: "waveform")
@@ -878,19 +878,19 @@ func startOSCStream() {
 **Required Info.plist Entries:**
 ```xml
 <key>NSMicrophoneUsageDescription</key>
-<string>BLAB uses your microphone to transform your voice into music and visuals.</string>
+<string>ECHOEL uses your microphone to transform your voice into music and visuals.</string>
 
 <key>NSHealthShareUsageDescription</key>
-<string>BLAB uses your heart rate and HRV data to create bio-reactive music experiences.</string>
+<string>ECHOEL uses your heart rate and HRV data to create bio-reactive music experiences.</string>
 
 <key>NSHealthUpdateUsageDescription</key>
-<string>BLAB can save session data to Health app for wellness tracking.</string>
+<string>ECHOEL can save session data to Health app for wellness tracking.</string>
 
 <key>NSCameraUsageDescription</key>
-<string>BLAB uses your camera for face/hand tracking to control audio and visuals.</string>
+<string>ECHOEL uses your camera for face/hand tracking to control audio and visuals.</string>
 
 <key>NSMotionUsageDescription</key>
-<string>BLAB uses motion sensors to sync visuals with your movement.</string>
+<string>ECHOEL uses motion sensors to sync visuals with your movement.</string>
 ```
 
 ---
@@ -1008,7 +1008,7 @@ class audioengine { // Wrong: PascalCase for classes
 
 ### **Vision Statement**
 
-> **BLAB = KI-gestützte Biofeedback-Musikplattform, die Stimme, Körper und visuelle Wahrnehmung zu einem Echtzeit-Kunstwerk verschmilzt – modular, offen und anpassbar von iPhone bis Vision Pro.**
+> **ECHOEL = KI-gestützte Biofeedback-Musikplattform, die Stimme, Körper und visuelle Wahrnehmung zu einem Echtzeit-Kunstwerk verschmilzt – modular, offen und anpassbar von iPhone bis Vision Pro.**
 
 ### **Core Principles**
 
@@ -1066,8 +1066,8 @@ class audioengine { // Wrong: PascalCase for classes
 ### **Repository Structure**
 
 ```
-blab-ios-app/
-├── Sources/Blab/
+echoel-ios-app/
+├── Sources/Echoel/
 │   ├── Audio/              # Audio engine & DSP
 │   ├── Biofeedback/        # HealthKit + bio mapping
 │   ├── MIDI/               # MIDI 2.0 + MPE
@@ -1082,7 +1082,7 @@ blab-ios-app/
 │   ├── API/                # API documentation
 │   └── Tutorials/          # User guides
 ├── Prompts/
-│   └── BLAB_MASTER_PROMPT_v4.3.md  # This file
+│   └── ECHOEL_MASTER_PROMPT_v4.3.md  # This file
 ├── Package.swift           # SPM manifest
 └── README.md               # Project overview
 ```

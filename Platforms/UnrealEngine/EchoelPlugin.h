@@ -111,12 +111,12 @@ struct FBlabAudioAnalysis
  * Place in your level to enable BLAB features
  */
 UCLASS(Blueprintable, ClassGroup = (BLAB), meta = (BlueprintSpawnableComponent))
-class BLABPLUGIN_API ABlabEngine : public AActor
+class ECHOELPLUGIN_API AEchoelEngine : public AActor
 {
     GENERATED_BODY()
 
 public:
-    ABlabEngine();
+    AEchoelEngine();
 
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -194,7 +194,7 @@ public:
 
 protected:
     /** Internal engine state */
-    void* BlabEngineInstance;
+    void* EchoelEngineInstance;
 
     /** Current biofeedback data */
     FBlabBiofeedbackData CurrentBiofeedback;
@@ -218,7 +218,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnMIDINote, int32, Note, int32, 
  * Attach to any actor to render BLAB visuals
  */
 UCLASS(ClassGroup = (BLAB), meta = (BlueprintSpawnableComponent))
-class BLABPLUGIN_API UBlabVisualizationComponent : public UActorComponent
+class ECHOELPLUGIN_API UBlabVisualizationComponent : public UActorComponent
 {
     GENERATED_BODY()
 
@@ -257,7 +257,7 @@ protected:
  * Blueprint-callable functions for shaders
  */
 UCLASS()
-class BLABPLUGIN_API UBlabMaterialFunctions : public UBlueprintFunctionLibrary
+class ECHOELPLUGIN_API UBlabMaterialFunctions : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 
@@ -280,7 +280,7 @@ public:
  * Spatialize audio sources based on biofeedback and gestures
  */
 UCLASS(ClassGroup = (BLAB), meta = (BlueprintSpawnableComponent))
-class BLABPLUGIN_API UBlabSpatialAudioComponent : public UAudioComponent
+class ECHOELPLUGIN_API UBlabSpatialAudioComponent : public UAudioComponent
 {
     GENERATED_BODY()
 

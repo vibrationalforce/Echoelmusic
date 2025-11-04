@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Blab",
+    name: "Echoel",
     platforms: [
         .iOS(.v15)  // Minimum iOS 15 for wide device compatibility
                     // iOS 16+ recommended for enhanced features
@@ -13,8 +13,8 @@ let package = Package(
     products: [
         // The main app product
         .library(
-            name: "Blab",
-            targets: ["Blab"]),
+            name: "Echoel",
+            targets: ["Echoel"]),
     ],
     dependencies: [
         // Add future dependencies here (e.g., for audio processing, ML, etc.)
@@ -22,7 +22,7 @@ let package = Package(
     targets: [
         // The main app target
         .target(
-            name: "Blab",
+            name: "Echoel",
             dependencies: [],
             resources: [
                 // Include Info.plist and other resources
@@ -31,7 +31,7 @@ let package = Package(
 
         // Test target for unit tests
         .testTarget(
-            name: "BlabTests",
-            dependencies: ["Blab"]),
+            name: "EchoelTests",
+            dependencies: ["Echoel"]),
     ]
 )

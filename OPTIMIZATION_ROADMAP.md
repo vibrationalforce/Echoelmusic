@@ -1,4 +1,4 @@
-# BLAB Optimization Roadmap - Next Steps 🚀
+# ECHOEL Optimization Roadmap - Next Steps 🚀
 
 ## Noch zu optimierende Bereiche
 
@@ -147,7 +147,7 @@
 - [ ] Interactive Tutorial (Guided)
 - [ ] Personalisierung (Profil auswählen)
 - [ ] Permission Requests (Kontext)
-- [ ] Value Proposition (Why BLAB?)
+- [ ] Value Proposition (Why ECHOEL?)
 
 **First-Time User Experience:**
 - [ ] Tooltips für alle Features
@@ -386,7 +386,7 @@
 ## Long-Term Vision (2026+):
 
 - 🌍 **100+ Sprachen** (Community-translated)
-- 🎓 **10,000+ Schulen** nutzen BLAB kostenlos
+- 🎓 **10,000+ Schulen** nutzen ECHOEL kostenlos
 - 🎵 **1M+ Creators** in der Community
 - ♿️ **WCAG AAA** Zertifizierung
 - 🌱 **Carbon Neutral** Infrastructure

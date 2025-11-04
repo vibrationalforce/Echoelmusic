@@ -1,4 +1,4 @@
-# BLAB Platform Support
+# ECHOEL Platform Support
 
 Comprehensive cross-platform architecture for iOS, Android, macOS, Windows, Linux, Web, VR/AR.
 
@@ -23,7 +23,7 @@ Comprehensive cross-platform architecture for iOS, Android, macOS, Windows, Linu
 ### Core Engine (Platform-Agnostic)
 
 ```
-Sources/Blab/
+Sources/Echoel/
 ├── Platform/
 │   ├── HardwareAbstractionLayer.swift   ✅ IMPLEMENTED
 │   └── GraphicsAPIAbstraction.swift     ✅ IMPLEMENTED
@@ -175,7 +175,7 @@ All platforms expose the same high-level API:
 
 ```swift
 // Same API across all platforms
-let blab = BlabEngine()
+let blab = EchoelEngine()
 blab.start()
 
 blab.setVisualizationMode(.cymatics)
@@ -213,7 +213,7 @@ blab.export(to: url, format: .hevc)
 ### iOS
 ```bash
 cd Platforms/iOS
-xcodebuild -scheme Blab
+xcodebuild -scheme Echoel
 ```
 
 ### Android
@@ -225,7 +225,7 @@ cd Platforms/Android
 ### macOS
 ```bash
 cd Platforms/macOS
-xcodebuild -scheme Blab-macOS
+xcodebuild -scheme Echoel-macOS
 ```
 
 ### Web
@@ -262,5 +262,5 @@ See [LICENSE](../LICENSE)
 ## Support
 
 - Documentation: https://blab.audio/docs
-- Issues: https://github.com/vibrationalforce/blab-ios-app/issues
+- Issues: https://github.com/vibrationalforce/echoel-ios-app/issues
 - Discord: https://discord.gg/blab

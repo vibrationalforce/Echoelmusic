@@ -252,7 +252,7 @@ public final class OSCManager: ObservableObject {
     private var receiveListener: NWListener?
     private var receiveConnections: [NWConnection] = []
 
-    private let queue = DispatchQueue(label: "com.blab.osc", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "com.echoel.osc", qos: .userInitiated)
 
     // Message handlers
     private var messageHandlers: [String: (OSCMessage) -> Void] = [:]

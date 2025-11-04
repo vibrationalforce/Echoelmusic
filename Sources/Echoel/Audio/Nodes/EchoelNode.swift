@@ -1,7 +1,7 @@
 import Foundation
 import AVFoundation
 
-/// Protocol for all audio processing nodes in BLAB
+/// Protocol for all audio processing nodes in ECHOEL
 /// Every audio effect, generator, or processor must conform to this protocol
 ///
 /// Design Philosophy:
@@ -9,7 +9,7 @@ import AVFoundation
 /// - Nodes can react to bio-signals in real-time
 /// - Nodes are chain-able for complex signal flows
 /// - Thread-safe for real-time audio processing
-protocol BlabNode: AnyObject {
+protocol EchoelNode: AnyObject {
 
     // MARK: - Identity
 
@@ -207,9 +207,9 @@ struct NodeManifest: Codable {
 
 /// Base class for nodes with common functionality
 @MainActor
-class BaseBlabNode: BlabNode {
+class BaseEchoelNode: EchoelNode {
 
-    // MARK: - BlabNode Protocol
+    // MARK: - EchoelNode Protocol
 
     let id: UUID
     let name: String

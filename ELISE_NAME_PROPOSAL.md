@@ -333,7 +333,7 @@ for wellness, creativity, and self-expression..."
 - [ ] App Icon Design
 
 ### Phase 3: Implementation (2 Wochen)
-- [ ] Rebranding im Code (alle "BLAB" → "Elise")
+- [ ] Rebranding im Code (alle "ECHOEL" → "Elise")
 - [ ] App Store Listing Update
 - [ ] Marketing Materials
 - [ ] Website Launch (elise.app oder getelise.com)

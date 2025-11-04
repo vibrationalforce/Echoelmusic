@@ -58,7 +58,7 @@ public class UnifiedControlHub: ObservableObject {
 
     private var controlLoopTimer: AnyCancellable?
     private let controlQueue = DispatchQueue(
-        label: "com.blab.control",
+        label: "com.echoel.control",
         qos: .userInteractive
     )
 
@@ -149,7 +149,7 @@ public class UnifiedControlHub: ObservableObject {
 
         guard healthKit.isAuthorized else {
             throw NSError(
-                domain: "com.blab.healthkit",
+                domain: "com.echoel.healthkit",
                 code: 2,
                 userInfo: [NSLocalizedDescriptionKey: "HealthKit authorization denied"]
             )

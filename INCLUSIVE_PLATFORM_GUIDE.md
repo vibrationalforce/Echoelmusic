@@ -1,8 +1,8 @@
-# BLAB Inclusive Platform Guide 🌍
+# ECHOEL Inclusive Platform Guide 🌍
 
 ## Vision: A Generational, Accessible, Inclusive Platform for All
 
-BLAB is designed from the ground up to be accessible to **everyone** - regardless of age, ability, economic status, technical skill, or geographic location. This guide outlines our comprehensive approach to universal accessibility.
+ECHOEL is designed from the ground up to be accessible to **everyone** - regardless of age, ability, economic status, technical skill, or geographic location. This guide outlines our comprehensive approach to universal accessibility.
 
 ---
 
@@ -330,7 +330,7 @@ Time Left: 18 hours
 ### Interactive Tutorials 📚
 
 **Beginner Track:**
-1. Welcome to BLAB (5 min)
+1. Welcome to ECHOEL (5 min)
 2. Your First Session (5 min)
 3. Visualization Modes (10 min)
 4. Audio Effects Basics (10 min)
@@ -382,7 +382,7 @@ Time Left: 18 hours
 ```
 IMPORTANT DISCLAIMER:
 
-BLAB is a wellness and creative tool, NOT a medical device.
+ECHOEL is a wellness and creative tool, NOT a medical device.
 
 • NOT intended for diagnosis, treatment, or prevention
 • NOT a substitute for professional medical advice
@@ -784,4 +784,4 @@ We measure success by:
 
 ---
 
-**BLAB: For everyone, everywhere, always. 🌍✨**
+**ECHOEL: For everyone, everywhere, always. 🌍✨**

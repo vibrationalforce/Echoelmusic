@@ -4,7 +4,7 @@ import AVFoundation
 /// Reverb effect node with bio-reactive parameters
 /// HRV Coherence → Reverb Wetness (higher coherence = more reverb = spacious feeling)
 @MainActor
-class ReverbNode: BaseBlabNode {
+class ReverbNode: BaseEchoelNode {
 
     // MARK: - AVAudioUnit Reverb
 

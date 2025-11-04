@@ -1,8 +1,8 @@
-# BLAB Visual Engine - Complete Integration Guide
+# ECHOEL Visual Engine - Complete Integration Guide
 
 ## 🎨 Comprehensive Integration & Optimization - 2025
 
-This guide covers the complete BLAB Visual Engine ecosystem with all integrations, optimizations, and cross-platform support.
+This guide covers the complete ECHOEL Visual Engine ecosystem with all integrations, optimizations, and cross-platform support.
 
 ---
 
@@ -21,7 +21,7 @@ This guide covers the complete BLAB Visual Engine ecosystem with all integration
 
 ## 🌟 Overview
 
-BLAB Visual Engine is a comprehensive audio-reactive, bio-responsive visual synthesis platform with:
+ECHOEL Visual Engine is a comprehensive audio-reactive, bio-responsive visual synthesis platform with:
 
 - **Cross-Platform**: iOS, Android, macOS, Windows, Linux, Web, VR/AR
 - **Hardware-Agnostic**: Smartphone to high-end workstations
@@ -112,7 +112,7 @@ All platforms use the new **Hardware Abstraction Layer (HAL)** for:
 - Fallback mechanisms
 - Zero-cost abstractions
 
-**File**: `Sources/Blab/Platform/HardwareAbstractionLayer.swift`
+**File**: `Sources/Echoel/Platform/HardwareAbstractionLayer.swift`
 
 ### Graphics API Abstraction
 
@@ -131,9 +131,9 @@ Unified shader transpiler converts MSL to GLSL/HLSL/WGSL.
 ### 1. Native iOS/macOS App
 
 ```swift
-import Blab
+import Echoel
 
-let blab = BlabEngine()
+let blab = EchoelEngine()
 blab.start()
 
 blab.setVisualizationMode(.cymatics)
@@ -218,21 +218,21 @@ webrtc.onDataReceived = { message in
 ### 4. Unreal Engine 5.6+
 
 ```cpp
-// Place ABlabEngine in your level
-ABlabEngine* BlabEngine = GetWorld()->SpawnActor<ABlabEngine>();
+// Place AEchoelEngine in your level
+AEchoelEngine* EchoelEngine = GetWorld()->SpawnActor<AEchoelEngine>();
 
 // Set visualization mode
-BlabEngine->SetVisualizationMode(EBlabVisualizationMode::Cymatics);
+EchoelEngine->SetVisualizationMode(EEchoelVisualizationMode::Cymatics);
 
 // Listen to biofeedback updates
-BlabEngine->OnBiofeedbackUpdate.AddDynamic(this, &AMyClass::HandleBioUpdate);
+EchoelEngine->OnBiofeedbackUpdate.AddDynamic(this, &AMyClass::HandleBioUpdate);
 
 // Render to material
-UBlabVisualizationComponent* VisComp = CreateDefaultSubobject<UBlabVisualizationComponent>(TEXT("BlabVis"));
+UEchoelVisualizationComponent* VisComp = CreateDefaultSubobject<UEchoelVisualizationComponent>(TEXT("EchoelVis"));
 VisComp->RenderTarget = CreateRenderTarget2D(1920, 1080);
 
 // Apply to material
-Material->SetTextureParameterValue(FName("BlabTexture"), VisComp->RenderTarget);
+Material->SetTextureParameterValue(FName("EchoelTexture"), VisComp->RenderTarget);
 ```
 
 **Unreal Blueprint Support**: Full visual scripting support
@@ -240,16 +240,16 @@ Material->SetTextureParameterValue(FName("BlabTexture"), VisComp->RenderTarget);
 ### 5. Unity Integration
 
 ```csharp
-using Blab;
+using Echoel;
 
 // Add to GameObject
-BlabEngine.Instance.StartEngine();
+EchoelEngine.Instance.StartEngine();
 
 // Set visualization
-BlabEngine.Instance.SetVisualizationMode(VisualizationMode.Cymatics);
+EchoelEngine.Instance.SetVisualizationMode(VisualizationMode.Cymatics);
 
 // Listen to events
-BlabEngine.Instance.OnBiofeedbackUpdate.AddListener(OnBioUpdate);
+EchoelEngine.Instance.OnBiofeedbackUpdate.AddListener(OnBioUpdate);
 
 void OnBioUpdate(BiofeedbackData data)
 {
@@ -257,20 +257,20 @@ void OnBioUpdate(BiofeedbackData data)
 }
 
 // Render to texture
-BlabEngine.Instance.RenderToTexture(renderTarget);
+EchoelEngine.Instance.RenderToTexture(renderTarget);
 
 // Export video
-BlabEngine.Instance.ExportToVideo("/path/to/output.mp4", 1920, 1080, 60);
+EchoelEngine.Instance.ExportToVideo("/path/to/output.mp4", 1920, 1080, 60);
 ```
 
-**Unity Component**: `BlabVisualization` - Attach to any GameObject
+**Unity Component**: `EchoelVisualization` - Attach to any GameObject
 
 ### 6. Web (JavaScript/TypeScript)
 
 ```typescript
-import { BlabEngine } from '@blab/engine-wasm';
+import { EchoelEngine } from '@blab/engine-wasm';
 
-const blab = new BlabEngine({
+const blab = new EchoelEngine({
     canvas: document.getElementById('canvas'),
     visualizationMode: 'cymatics',
     spatialMode: 'afa'
@@ -336,7 +336,7 @@ const blob = await blab.stopRecording();
 
 ### Core Classes
 
-**BlabEngine** - Main engine singleton
+**EchoelEngine** - Main engine singleton
 - `start()` - Start engine
 - `stop()` - Stop engine
 - `setVisualizationMode(mode:)` - Change visual mode
@@ -402,7 +402,7 @@ WebRTCConfiguration(
 
 ```swift
 class PerformanceController {
-    let blab = BlabEngine()
+    let blab = EchoelEngine()
     let osc = OSCManager()
     let push3 = Push3LEDController()
 
@@ -439,7 +439,7 @@ class PerformanceController {
 ```swift
 class JamSession {
     let webrtc = WebRTCManager()
-    let blab = BlabEngine()
+    let blab = EchoelEngine()
 
     func join(roomID: String) async throws {
         try await webrtc.connect(
@@ -472,7 +472,7 @@ class JamSession {
 
 ```swift
 class VideoRecorder {
-    let blab = BlabEngine()
+    let blab = EchoelEngine()
     var exporter: VideoExportManager?
 
     func startRecording() throws {
@@ -543,23 +543,23 @@ class VideoRecorder {
 
 ### Quick Start (iOS)
 
-1. Open `Blab.xcodeproj` in Xcode
+1. Open `Echoel.xcodeproj` in Xcode
 2. Build and run on device
 3. Grant microphone, camera, HealthKit permissions
 4. Explore visualization modes and biofeedback
 
 ### Integration (Unity)
 
-1. Copy `Platforms/Unity/BlabEngine.cs` to your project
+1. Copy `Platforms/Unity/EchoelEngine.cs` to your project
 2. Build native plugin for your platform
-3. Add `BlabEngine` component to GameObject
+3. Add `EchoelEngine` component to GameObject
 4. Configure and start
 
 ### Integration (Unreal)
 
 1. Copy `Platforms/UnrealEngine/` to your project plugins folder
-2. Add `Blab` to `PublicDependencyModuleNames` in `.Build.cs`
-3. Place `ABlabEngine` actor in level
+2. Add `Echoel` to `PublicDependencyModuleNames` in `.Build.cs`
+3. Place `AEchoelEngine` actor in level
 4. Configure via Blueprint or C++
 
 ---
@@ -567,7 +567,7 @@ class VideoRecorder {
 ## 📦 File Structure
 
 ```
-Sources/Blab/
+Sources/Echoel/
 ├── Platform/
 │   ├── HardwareAbstractionLayer.swift   ✅ NEW
 │   └── GraphicsAPIAbstraction.swift     ✅ NEW
@@ -648,7 +648,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 - **Documentation**: https://docs.blab.audio
 - **Discord**: https://discord.gg/blab
 - **Email**: support@blab.audio
-- **GitHub Issues**: https://github.com/vibrationalforce/blab-ios-app/issues
+- **GitHub Issues**: https://github.com/vibrationalforce/echoel-ios-app/issues
 
 ---
 

@@ -1,8 +1,8 @@
-# BLAB Freemium Model - Accessible for Everyone 🌍
+# ECHOEL Freemium Model - Accessible for Everyone 🌍
 
 ## Mission: Universal Access to Wellness & Creativity
 
-BLAB is committed to making audio-visual wellness and creative expression accessible to **everyone**, regardless of economic circumstances. We believe that tools for wellness, creativity, and self-expression should not be limited to those who can afford premium subscriptions.
+ECHOEL is committed to making audio-visual wellness and creative expression accessible to **everyone**, regardless of economic circumstances. We believe that tools for wellness, creativity, and self-expression should not be limited to those who can afford premium subscriptions.
 
 ---
 
@@ -342,7 +342,7 @@ Premium features are genuinely advanced tools for creators and professionals, no
 - No vendor lock-in
 - Contribute improvements back
 
-**GitHub:** https://github.com/vibrationalforce/blab-ios-app
+**GitHub:** https://github.com/vibrationalforce/echoel-ios-app
 
 ---
 
@@ -432,4 +432,4 @@ Everyone deserves access to tools for wellness, creativity, and self-expression.
 
 ---
 
-**BLAB: Accessible to all. 🌍✨**
+**ECHOEL: Accessible to all. 🌍✨**

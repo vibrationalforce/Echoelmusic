@@ -1,8 +1,8 @@
-# Name Proposals for BLAB 🎨
+# Name Proposals for ECHOEL 🎨
 
 ## Current Name Analysis
 
-**BLAB:**
+**ECHOEL:**
 - ❌ Negativ: "blabber" = schwatzen, Gerede
 - ❌ Keine klare Bedeutung
 - ❌ Nicht intuitiv für Nicht-Englischsprecher
@@ -300,7 +300,7 @@
 
 ### 🥉 3. **AURA**
 **Warum:**
-- ✅ Kurz (4 Buchstaben wie BLAB)
+- ✅ Kurz (4 Buchstaben wie ECHOEL)
 - ✅ Spirituell + Modern
 - ✅ International bekannt
 - ✅ Positiv konnotiert

@@ -5,7 +5,7 @@ import AVFoundation
 /// Respiratory Rate → Threshold (breath controls compression)
 /// HRV → Attack/Release (coherence controls dynamics)
 @MainActor
-class CompressorNode: BaseBlabNode {
+class CompressorNode: BaseEchoelNode {
 
     // MARK: - AVAudioUnit Compressor
 

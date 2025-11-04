@@ -1,9 +1,9 @@
-# 🌊 BLAB ULTIMATE DEVELOPMENT PROMPT — CLAUDE CODE EDITION
+# 🌊 ECHOEL ULTIMATE DEVELOPMENT PROMPT — CLAUDE CODE EDITION
 ## Koordinierte Entwicklung mit ChatGPT Codex
 
 **Version:** V∞.3 Ultimate
 **Datum:** 2025-10-21
-**Repo:** https://github.com/vibrationalforce/blab-ios-app
+**Repo:** https://github.com/vibrationalforce/echoel-ios-app
 **Branch:** `claude/enhance-blab-development-011CULKRFZeVGeKHTB3N5dTD`
 **Koordination:** ChatGPT Codex = Debug/Optimize | Claude Code = Feature Development
 
@@ -11,7 +11,7 @@
 
 ## 🎯 MISSION STATEMENT
 
-Du bist **BLAB Development AI** — ein spezialisierter Entwicklungs-Agent für die BLAB iOS App.
+Du bist **ECHOEL Development AI** — ein spezialisierter Entwicklungs-Agent für die ECHOEL iOS App.
 
 **Deine primären Aufgaben:**
 1. **Feature Development** — Neue Features gemäß Roadmap implementieren
@@ -35,7 +35,7 @@ Du bist **BLAB Development AI** — ein spezialisierter Entwicklungs-Agent für 
 - ✅ YIN Pitch Detection für Voice
 - ✅ Binaural Beat Generator (8 Gehirnwellenzustände)
 - ✅ Spatial Audio Engine (AVAudioEnvironmentNode + Head Tracking)
-- ✅ Node-basierte Architektur (BlabNode, FilterNode, ReverbNode, DelayNode, CompressorNode)
+- ✅ Node-basierte Architektur (EchoelNode, FilterNode, ReverbNode, DelayNode, CompressorNode)
 - ✅ NodeGraph für modulare Audio-Pipeline
 - ✅ LoopEngine für Echtzeit-Looping
 
@@ -86,7 +86,7 @@ struct OptimizedAudioConfig {
 }
 ```
 
-**Files:** `Sources/Blab/Audio/AudioEngine.swift`, `Sources/Blab/Audio/AudioConfiguration.swift`
+**Files:** `Sources/Echoel/Audio/AudioEngine.swift`, `Sources/Echoel/Audio/AudioConfiguration.swift`
 
 **Next Steps:**
 1. Implementiere Real-Time Scheduling mit `.userInteractive` Priority
@@ -99,7 +99,7 @@ struct OptimizedAudioConfig {
 
 **Deine Aufgaben:**
 ```swift
-// Sources/Blab/Biofeedback/BioMappingPresets.swift (NEU)
+// Sources/Echoel/Biofeedback/BioMappingPresets.swift (NEU)
 enum BioMappingPreset: String, CaseIterable {
     case creative = "Creative Flow"
     case meditation = "Deep Meditation"
@@ -123,16 +123,16 @@ enum BioMappingPreset: String, CaseIterable {
 ```
 
 **New Files zu erstellen:**
-- `Sources/Blab/Biofeedback/BioMappingPresets.swift`
-- `Sources/Blab/Biofeedback/BioParameterMapping.swift`
-- `Sources/Blab/UI/PresetSelectionView.swift`
+- `Sources/Echoel/Biofeedback/BioMappingPresets.swift`
+- `Sources/Echoel/Biofeedback/BioParameterMapping.swift`
+- `Sources/Echoel/UI/PresetSelectionView.swift`
 
 #### 1.3 Advanced Node Features
 **Ziel:** Dynamisches Node-Loading & Visualization
 
 **Implementierung:**
 ```swift
-// Sources/Blab/Audio/Nodes/NodeManifest.swift (NEU)
+// Sources/Echoel/Audio/Nodes/NodeManifest.swift (NEU)
 struct NodeManifest: Codable {
     let id: String
     let name: String
@@ -142,17 +142,17 @@ struct NodeManifest: Codable {
     let version: String
 }
 
-// Sources/Blab/Audio/Nodes/NodeRegistry.swift (NEU)
+// Sources/Echoel/Audio/Nodes/NodeRegistry.swift (NEU)
 class NodeRegistry {
-    static func loadNode(from manifest: NodeManifest) -> BlabNode
+    static func loadNode(from manifest: NodeManifest) -> EchoelNode
     static func availableNodes() -> [NodeManifest]
-    static func saveCustomNode(_ node: BlabNode, name: String)
+    static func saveCustomNode(_ node: EchoelNode, name: String)
 }
 ```
 
 **UI Component:**
 ```swift
-// Sources/Blab/UI/NodeGraphView.swift (NEU)
+// Sources/Echoel/UI/NodeGraphView.swift (NEU)
 struct NodeGraphView: View {
     @ObservedObject var nodeGraph: NodeGraph
 
@@ -178,7 +178,7 @@ struct NodeGraphView: View {
 
 **Neuer Shader Code:**
 ```metal
-// Sources/Blab/Visual/Shaders/BioReactiveCymatics.metal (NEU)
+// Sources/Echoel/Visual/Shaders/BioReactiveCymatics.metal (NEU)
 kernel void bioReactiveCymatics(
     texture2d<float, access::write> outTexture [[texture(0)]],
     constant float &hrv [[buffer(0)]],
@@ -207,7 +207,7 @@ kernel void bioReactiveCymatics(
 
 **Implementation Template:**
 ```swift
-// Sources/Blab/Visual/Modes/SacredGeometryMode.swift (NEU)
+// Sources/Echoel/Visual/Modes/SacredGeometryMode.swift (NEU)
 class SacredGeometryMode: VisualizationMode {
     func render(
         context: GraphicsContext,
@@ -245,10 +245,10 @@ class SacredGeometryMode: VisualizationMode {
 
 **Code Template:**
 ```swift
-// Sources/Blab/AI/BlabComposer.swift (NEU)
+// Sources/Echoel/AI/EchoelComposer.swift (NEU)
 import CoreML
 
-class BlabComposer {
+class EchoelComposer {
     private let model: MLModel
 
     func generate(
@@ -281,7 +281,7 @@ class BlabComposer {
 **Ziel:** AI schlägt Melodien/Rhythmen basierend auf Bio-State vor
 
 ```swift
-// Sources/Blab/AI/PatternSuggestion.swift (NEU)
+// Sources/Echoel/AI/PatternSuggestion.swift (NEU)
 class PatternSuggestionEngine {
     func suggestMelody(
         forKey key: MusicalKey,
@@ -312,7 +312,7 @@ class PatternSuggestionEngine {
 
 **Deine Aufgaben:**
 ```swift
-// Sources/Blab/Recording/ExportManager.swift erweitern
+// Sources/Echoel/Recording/ExportManager.swift erweitern
 
 enum ExportFormat: String, CaseIterable {
     case wav = "WAV (PCM)"
@@ -348,7 +348,7 @@ class ADMBWFWriter {
 **Ziel:** Visualisierung als MP4 Video exportieren
 
 ```swift
-// Sources/Blab/Recording/VideoExportManager.swift (NEU)
+// Sources/Echoel/Recording/VideoExportManager.swift (NEU)
 import AVFoundation
 
 class VideoExportManager {
@@ -490,10 +490,10 @@ func gen(s: Int, f: Float) -> Any {
 ### Architektur-Prinzipien
 
 1. **Separation of Concerns**
-   - Audio Logic → `Sources/Blab/Audio/`
-   - Visual Logic → `Sources/Blab/Visual/`
-   - Biofeedback → `Sources/Blab/Biofeedback/`
-   - UI → `Sources/Blab/UI/` oder direkt in Views
+   - Audio Logic → `Sources/Echoel/Audio/`
+   - Visual Logic → `Sources/Echoel/Visual/`
+   - Biofeedback → `Sources/Echoel/Biofeedback/`
+   - UI → `Sources/Echoel/UI/` oder direkt in Views
 
 2. **Protocol-Oriented Design**
    ```swift
@@ -551,9 +551,9 @@ func gen(s: Int, f: Float) -> Any {
 ### Unit Tests schreiben
 
 ```swift
-// Tests/BlabTests/BioMappingTests.swift
+// Tests/EchoelTests/BioMappingTests.swift
 import XCTest
-@testable import Blab
+@testable import Echoel
 
 final class BioMappingTests: XCTestCase {
 
@@ -585,7 +585,7 @@ final class BioMappingTests: XCTestCase {
 ### Performance Tests
 
 ```swift
-// Tests/BlabTests/AudioEnginePerformanceTests.swift
+// Tests/EchoelTests/AudioEnginePerformanceTests.swift
 final class AudioEnginePerformanceTests: XCTestCase {
 
     func testAudioProcessingLatency() {
@@ -658,8 +658,8 @@ struct BioMappingView: View {
 ### Design System (aus Roadmap)
 
 ```swift
-// Sources/Blab/UI/DesignSystem.swift (NEU)
-enum BlabColors {
+// Sources/Echoel/UI/DesignSystem.swift (NEU)
+enum EchoelColors {
     static let primaryBackground = Color(hex: "#0A1628") // Deep Ocean Blue
     static let accentGolden = Color(hex: "#FFB700")
     static let accentGreen = Color(hex: "#00D9A3") // Biofeedback
@@ -668,13 +668,13 @@ enum BlabColors {
     static let error = Color(hex: "#FF5252")
 }
 
-enum BlabTypography {
+enum EchoelTypography {
     static let title = Font.system(.largeTitle, design: .rounded, weight: .bold)
     static let body = Font.system(.body, design: .rounded)
     static let mono = Font.system(.body, design: .monospaced)
 }
 
-enum BlabAnimations {
+enum EchoelAnimations {
     static let standardDuration: Double = 0.3
     static let audioReactiveDuration: Double = 0.1
     static let customEasing = Animation.timingCurve(0.4, 0.0, 0.2, 1.0)
@@ -755,11 +755,11 @@ dependencies: [
 ]
 ```
 
-### BLAB-Spezifische Docs im Repo
+### ECHOEL-Spezifische Docs im Repo
 
 ```
-/BLAB_IMPLEMENTATION_ROADMAP.md  → Vollständige Roadmap
-/BLAB_Allwave_V∞_ClaudeEdition.txt → Vision & Architektur
+/ECHOEL_IMPLEMENTATION_ROADMAP.md  → Vollständige Roadmap
+/ECHOEL_Allwave_V∞_ClaudeEdition.txt → Vision & Architektur
 /COMPATIBILITY.md → iOS 15+ Kompatibilitäts-Guide
 /DEBUGGING_COMPLETE.md → Debug-Historie
 /QUICKSTART.md → Schnellstart für neue Entwickler
@@ -784,10 +784,10 @@ dependencies: [
 $ blab --init-feature advanced-bio-mappings
 
 → Erstellt:
-  - Sources/Blab/Biofeedback/BioMappingPresets.swift
-  - Sources/Blab/Biofeedback/BioParameterMapping.swift
-  - Sources/Blab/UI/PresetSelectionView.swift
-  - Tests/BlabTests/BioMappingPresetsTests.swift
+  - Sources/Echoel/Biofeedback/BioMappingPresets.swift
+  - Sources/Echoel/Biofeedback/BioParameterMapping.swift
+  - Sources/Echoel/UI/PresetSelectionView.swift
+  - Tests/EchoelTests/BioMappingPresetsTests.swift
 
 → Branch: feature/advanced-bio-mappings
 → TODO: [x] File structure [ ] Implementation [ ] Tests [ ] Documentation
@@ -884,7 +884,7 @@ git checkout -b feature/bio-mapping-presets
 
 ```markdown
 □ CoreML Model Training Pipeline
-□ BlabComposer.swift Grundstruktur
+□ EchoelComposer.swift Grundstruktur
 □ PatternSuggestionEngine implementieren
 □ Genre/Mood Enums definieren
 □ Integration in Recording Workflow
@@ -940,7 +940,7 @@ git checkout -b feature/bio-mapping-presets
 ### Code als Kunst
 
 ```markdown
-BLAB ist nicht nur eine App, sondern ein **kreatives Instrument**.
+ECHOEL ist nicht nur eine App, sondern ein **kreatives Instrument**.
 
 **Entwicklungs-Prinzipien:**
 
@@ -966,7 +966,7 @@ BLAB ist nicht nur eine App, sondern ein **kreatives Instrument**.
 **Beispiel: Adaptive Buffer Sizing**
 
 Standard-Lösung: Fixer Buffer = 256 Frames
-BLAB-Lösung:
+ECHOEL-Lösung:
 - iPhone 16 Pro Max → 128 Frames (low latency)
 - Ältere iPhones → 512 Frames (stability)
 - Dynamische Anpassung basierend auf CPU Load
@@ -975,7 +975,7 @@ BLAB-Lösung:
 **Beispiel: Bio-Reactive Visuals**
 
 Standard-Lösung: Audio → FFT → Particles
-BLAB-Lösung:
+ECHOEL-Lösung:
 - Audio → FFT → Particles
 - HRV → Hue Shift
 - Coherence → Brightness
