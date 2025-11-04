@@ -401,7 +401,9 @@ struct PerformView: View {
                         get: { audioEngine.currentBrainwaveState },
                         set: { audioEngine.setBrainwaveState($0) }
                     )) {
-                        // TODO: Add brainwave state options
+                        ForEach(BinauralBeatGenerator.BrainwaveState.allCases, id: \.self) { state in
+                            Text(state.displayName).tag(state)
+                        }
                     }
                 }
             }

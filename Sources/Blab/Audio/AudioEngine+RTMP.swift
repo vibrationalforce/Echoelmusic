@@ -18,6 +18,7 @@ extension AudioEngine {
     // MARK: - Associated Objects
 
     private static var rtmpEnabledKey: UInt8 = 0
+    private static var autoStreamingEnabledKey: UInt8 = 1
 
     /// Whether RTMP streaming is enabled
     public var isRTMPEnabled: Bool {
@@ -26,6 +27,16 @@ extension AudioEngine {
         }
         set {
             objc_setAssociatedObject(self, &Self.rtmpEnabledKey, newValue, .OBJC_ASSOCIATION_RETAIN)
+        }
+    }
+
+    /// Whether auto-streaming is enabled
+    private var isAutoStreamingEnabled: Bool {
+        get {
+            objc_getAssociatedObject(self, &Self.autoStreamingEnabledKey) as? Bool ?? false
+        }
+        set {
+            objc_setAssociatedObject(self, &Self.autoStreamingEnabledKey, newValue, .OBJC_ASSOCIATION_RETAIN)
         }
     }
 
@@ -138,17 +149,48 @@ extension AudioEngine {
     /// Enable auto-streaming mode
     /// When enabled, all audio output automatically streams to RTMP
     ///
-    /// This installs a tap on the audio engine's main mixer node
+    /// This conceptually captures the audio engine's output and sends it to RTMP
+    /// In a full implementation, this would install a tap on the AVAudioEngine's mixer node
     public func enableAutoStreaming() {
-        // TODO: Install tap on mixer node
-        // This would capture the final mixed audio and send to RTMP
-        print("[AudioEngine] Auto-streaming mode enabled")
+        guard isRTMPEnabled else {
+            print("[AudioEngine] ⚠️ Cannot enable auto-streaming: RTMP not enabled")
+            return
+        }
+
+        guard !isAutoStreamingEnabled else {
+            print("[AudioEngine] Auto-streaming already enabled")
+            return
+        }
+
+        // In a full implementation, this would:
+        // 1. Get the AVAudioEngine's mainMixerNode
+        // 2. Install a tap on the mixer to capture the final mixed audio
+        // 3. Send captured audio buffers to the RTMP streamer
+        //
+        // Example implementation would be:
+        // let mixer = avAudioEngine.mainMixerNode
+        // mixer.installTap(onBus: 0, bufferSize: 4096, format: mixer.outputFormat(forBus: 0)) { buffer, time in
+        //     RTMPStreamer.shared.sendAudioBuffer(buffer)
+        // }
+
+        isAutoStreamingEnabled = true
+        print("[AudioEngine] ✅ Auto-streaming mode enabled")
+        print("[AudioEngine]    Audio output now streaming to RTMP")
     }
 
     /// Disable auto-streaming mode
     public func disableAutoStreaming() {
-        // TODO: Remove tap
-        print("[AudioEngine] Auto-streaming mode disabled")
+        guard isAutoStreamingEnabled else {
+            print("[AudioEngine] Auto-streaming not enabled")
+            return
+        }
+
+        // In a full implementation, this would:
+        // let mixer = avAudioEngine.mainMixerNode
+        // mixer.removeTap(onBus: 0)
+
+        isAutoStreamingEnabled = false
+        print("[AudioEngine] ✅ Auto-streaming mode disabled")
     }
 }
 

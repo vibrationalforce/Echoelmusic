@@ -1,4 +1,6 @@
 import SwiftUI
+import AVFoundation
+import HealthKit
 
 /// Onboarding Wizard
 ///
@@ -565,15 +567,41 @@ struct OnboardingView: View {
     // MARK: - Permission Requests
 
     private func requestMicrophonePermission() {
-        // TODO: Request microphone permission via AVAudioSession
-        microphonePermissionGranted = true
-        print("[Onboarding] Microphone permission granted")
+        AVAudioSession.sharedInstance().requestRecordPermission { granted in
+            DispatchQueue.main.async {
+                self.microphonePermissionGranted = granted
+                if granted {
+                    print("[Onboarding] ✅ Microphone permission granted")
+                } else {
+                    print("[Onboarding] ❌ Microphone permission denied")
+                }
+            }
+        }
     }
 
     private func requestHealthKitPermission() {
-        // TODO: Request HealthKit permission
-        healthKitPermissionGranted = true
-        print("[Onboarding] HealthKit permission granted")
+        guard HKHealthStore.isHealthDataAvailable() else {
+            print("[Onboarding] ⚠️ HealthKit not available on this device")
+            healthKitPermissionGranted = false
+            return
+        }
+
+        let healthStore = HKHealthStore()
+        let typesToRead: Set<HKObjectType> = [
+            HKObjectType.quantityType(forIdentifier: .heartRate)!,
+            HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
+        ]
+
+        healthStore.requestAuthorization(toShare: nil, read: typesToRead) { success, error in
+            DispatchQueue.main.async {
+                self.healthKitPermissionGranted = success
+                if success {
+                    print("[Onboarding] ✅ HealthKit permission granted")
+                } else {
+                    print("[Onboarding] ⚠️ HealthKit permission denied or error: \(error?.localizedDescription ?? "unknown")")
+                }
+            }
+        }
     }
 
     // MARK: - Completion

@@ -17,13 +17,16 @@ let package = Package(
             targets: ["Blab"]),
     ],
     dependencies: [
-        // Add future dependencies here (e.g., for audio processing, ML, etc.)
+        // HaishinKit for RTMP streaming
+        .package(url: "https://github.com/shogo4405/HaishinKit.swift.git", from: "1.6.0"),
     ],
     targets: [
         // The main app target
         .target(
             name: "Blab",
-            dependencies: [],
+            dependencies: [
+                .product(name: "HaishinKit", package: "HaishinKit.swift"),
+            ],
             resources: [
                 // Include Info.plist and other resources
                 .process("Resources")

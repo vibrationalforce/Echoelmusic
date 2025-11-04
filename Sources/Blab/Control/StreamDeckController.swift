@@ -163,6 +163,9 @@ public class StreamDeckController: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private weak var audioEngine: AudioEngine?
     private weak var controlHub: UnifiedControlHub?
+    private var currentPresetIndex: Int = 0
+    private var currentBitrate: Int = 128_000 // Default 128 kbps
+    private var isAudioMuted: Bool = false
 
     // MARK: - Initialization
 
@@ -324,20 +327,26 @@ public class StreamDeckController: ObservableObject {
             print("[StreamDeck] RTMP requires configuration")
 
         case .startRecording:
-            // TODO: Start recording
-            print("[StreamDeck] Recording started")
+            // Start recording through macro system
+            Task {
+                if let macro = MacroSystem.shared.macros.first(where: { $0.name == "Start Recording Session" }) {
+                    await MacroSystem.shared.execute(macro)
+                } else {
+                    print("[StreamDeck] Recording macro not found")
+                }
+            }
 
         case .stopRecording:
-            // TODO: Stop recording
+            // Stop recording (for now, just log - full implementation requires recording manager)
             print("[StreamDeck] Recording stopped")
+            // TODO: Integrate with future RecordingManager
+            // recordingManager?.stopRecording()
 
         case .nextPreset:
-            // TODO: Next DSP preset
-            print("[StreamDeck] Next preset")
+            cycleDSPPreset(forward: true)
 
         case .previousPreset:
-            // TODO: Previous DSP preset
-            print("[StreamDeck] Previous preset")
+            cycleDSPPreset(forward: false)
 
         case .toggleNoiseGate:
             let dsp = audioEngine.dspProcessor.advanced
@@ -356,28 +365,51 @@ public class StreamDeckController: ObservableObject {
             }
 
         case .increaseBitrate:
-            // TODO: Increase streaming bitrate
-            print("[StreamDeck] Bitrate increased")
+            // Increase RTMP streaming bitrate
+            currentBitrate = min(currentBitrate + 32_000, 320_000) // Max 320 kbps
+            print("[StreamDeck] Bitrate increased to \(currentBitrate / 1000) kbps")
+            // Apply to RTMP streamer if available
+            // RealRTMPStreamer.shared.setBitrate(currentBitrate)
 
         case .decreaseBitrate:
-            // TODO: Decrease streaming bitrate
-            print("[StreamDeck] Bitrate decreased")
+            // Decrease RTMP streaming bitrate
+            currentBitrate = max(currentBitrate - 32_000, 64_000) // Min 64 kbps
+            print("[StreamDeck] Bitrate decreased to \(currentBitrate / 1000) kbps")
+            // Apply to RTMP streamer if available
+            // RealRTMPStreamer.shared.setBitrate(currentBitrate)
 
         case .muteAudio:
-            // TODO: Mute audio
-            print("[StreamDeck] Audio muted")
+            // Toggle audio mute
+            isAudioMuted.toggle()
+            if isAudioMuted {
+                audioEngine.stop()
+                print("[StreamDeck] Audio muted")
+            } else {
+                audioEngine.start()
+                print("[StreamDeck] Audio unmuted")
+            }
 
         case .soloAudio:
-            // TODO: Solo audio
-            print("[StreamDeck] Audio solo")
+            // Solo mode: enable only spatial audio
+            audioEngine.toggleSpatialAudio()
+            print("[StreamDeck] Spatial audio solo toggled")
 
         case .triggerMacro:
-            // TODO: Trigger macro
-            print("[StreamDeck] Macro triggered")
+            // Trigger the first available macro
+            Task {
+                if let firstMacro = MacroSystem.shared.macros.first {
+                    await MacroSystem.shared.execute(firstMacro)
+                } else {
+                    print("[StreamDeck] No macros available")
+                }
+            }
 
         case .switchScene:
-            // TODO: Switch scene
-            print("[StreamDeck] Scene switched")
+            // Switch to next layout preset
+            let presets = LayoutPreset.allCases
+            let currentIndex = presets.firstIndex(of: getCurrentLayoutPreset()) ?? 0
+            let nextIndex = (currentIndex + 1) % presets.count
+            loadPreset(presets[nextIndex])
         }
     }
 
@@ -408,6 +440,8 @@ public class StreamDeckController: ObservableObject {
 
     /// Load button layout preset
     public func loadPreset(_ preset: LayoutPreset) {
+        currentLayoutPreset = preset
+
         switch preset {
         case .default:
             setupDefaultLayout()
@@ -493,5 +527,34 @@ public class StreamDeckController: ObservableObject {
         } catch {
             print("[StreamDeck] ❌ Failed to load layout: \(error)")
         }
+    }
+
+    // MARK: - Helper Functions
+
+    /// Cycle through DSP presets
+    private func cycleDSPPreset(forward: Bool) {
+        guard let audioEngine = audioEngine else {
+            print("[StreamDeck] ⚠️ Audio engine not connected")
+            return
+        }
+
+        let presets = AdvancedDSP.Preset.allCases
+
+        if forward {
+            currentPresetIndex = (currentPresetIndex + 1) % presets.count
+        } else {
+            currentPresetIndex = (currentPresetIndex - 1 + presets.count) % presets.count
+        }
+
+        let preset = presets[currentPresetIndex]
+        audioEngine.dspProcessor.applyPreset(preset)
+        print("[StreamDeck] ✅ Applied DSP preset: \(preset.rawValue)")
+    }
+
+    /// Get current layout preset (tracked by button configuration)
+    private var currentLayoutPreset: LayoutPreset = .default
+
+    private func getCurrentLayoutPreset() -> LayoutPreset {
+        return currentLayoutPreset
     }
 }

@@ -29,6 +29,10 @@ struct RTMPStreamView: View {
     @State private var audioBitrate: Int = 128
     @State private var enableVideo: Bool = false
 
+    // Error handling
+    @State private var showingErrorAlert = false
+    @State private var errorMessage = ""
+
     // Stats refresh
     @State private var statsTimer: Timer?
     @State private var stats: RTMPStreamer.StreamStatistics?
@@ -175,6 +179,11 @@ struct RTMPStreamView: View {
         }
         .sheet(isPresented: $showingSettings) {
             RTMPAdvancedSettingsView()
+        }
+        .alert("Stream Error", isPresented: $showingErrorAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
         }
         .onAppear {
             startStatsTimer()
@@ -323,7 +332,8 @@ struct RTMPStreamView: View {
 
             } catch {
                 print("[Stream] ❌ Failed to start stream: \(error.localizedDescription)")
-                // TODO: Show error alert
+                errorMessage = error.localizedDescription
+                showingErrorAlert = true
             }
         }
     }
