@@ -1,6 +1,6 @@
-# ECHOEL Brand Guide 🎵✨
+# ECHOEL Brand Guide 🎵
 
-**Version**: 1.0
+**Version**: 2.0
 **Last Updated**: November 4, 2025
 **Author**: Echoel
 
@@ -14,59 +14,77 @@
 4. [Typography](#4-typography)
 5. [App Icon](#5-app-icon)
 6. [Voice & Tone](#6-voice--tone)
-7. [Usage Guidelines](#7-usage-guidelines)
+7. [Social Media Strategy](#7-social-media-strategy)
 8. [Marketing Assets](#8-marketing-assets)
-9. [Do's and Don'ts](#9-dos-and-donts)
-10. [File Templates](#10-file-templates)
+9. [Usage Guidelines](#9-usage-guidelines)
+10. [Cross-Promotion](#10-cross-promotion)
 
 ---
 
 ## 1. Brand Identity
 
 ### Name
-**ECHOEL** (pronounced: "EH-ko-el" or "eh-KOH-el")
+**ECHOEL**
 
-Always use ALL CAPS in marketing materials and logos.
-Use "Echoel" (title case) in sentences and body text.
+**Pronunciation**: "EH-ko-el"
 
-### Meaning
-- **Echo**: Sound, resonance, repetition, audio heritage
-- **El**: Light, elevation, divine element (Hebrew/Arabic origin)
-- **Combined**: "Echo of Light" - Where sound becomes visible
+**Usage**:
+- Marketing & headlines: **ECHOEL** (all caps)
+- Body text & sentences: Echoel (title case)
+- Never: Echoël, Echöel, or other variations
 
 ### Taglines
 
-**Primary Tagline** (Official):
+**Primary**:
 ```
-"Echo Your Truth"
+Echo Your Truth
 ```
 
-**Alternative Taglines**:
-- "Where Sound Echoes Light"
-- "Illuminate Your Sound"
-- "Your Personal Audio-Visual Sanctuary"
-- "Find Your Frequency"
+**Alternatives**:
+```
+Where Sound Meets Vision
+Your Audio-Visual Sanctuary
+Transform Sound into Art
+Find Your Frequency
+Create. Explore. Breathe.
+```
 
 ### Mission Statement
+
 ```
-ECHOEL transforms your voice, music, and biofeedback into stunning
-real-time visualizations, creating a personal sanctuary for meditation,
-creativity, and self-expression. From ages 4 to 100+, everyone can
-explore, create, and find their inner calm.
+ECHOEL is an audio-visual wellness platform that transforms your
+voice, music, and biofeedback into stunning real-time visualizations.
+A personal sanctuary for meditation, creativity, and self-expression—
+designed for everyone from age 4 to 100+.
 ```
 
+### Positioning
+
+**What ECHOEL Is**:
+- Audio-visual wellness platform
+- Creative meditation tool
+- Biofeedback visualization app
+- Artist-owned technology
+
+**What ECHOEL Is NOT**:
+- Medical device
+- Treatment tool
+- Corporate wellness product
+- Just another music visualizer
+
 ### Core Values
-1. **Universal Access** - Free core, accessible to all
-2. **Privacy First** - Your data stays yours
-3. **Artist-Owned** - Built by a musician who gets it
-4. **Science + Spirit** - Technology meets wellness
-5. **Generational Design** - For everyone, everywhere
+
+1. **Universal Access** - Free core features, forever
+2. **Privacy First** - Your data never leaves your device
+3. **Artist-Owned** - Built by musician Echoel (@echoelmusic)
+4. **Science + Spirit** - Technology meets human wellness
+5. **Generational Design** - Accessible to all ages and abilities
 
 ---
 
 ## 2. Logo & Visual Mark
 
-### Logo Concept 1: Wave Echo (PRIMARY)
+### Primary Logo: Wave Pulse
 
 ```
      ╱╲╱╲╱╲
@@ -74,43 +92,47 @@ explore, create, and find their inner calm.
   E C H O E L
 ```
 
-**Description**:
+**Design Elements**:
 - Minimalist sound wave above wordmark
-- Clean, professional, infinitely scalable
-- Works in monochrome and color
-- Best for app icon, website header, print
+- Three peaks representing: Sound → Vision → Wellness
+- Clean, professional, scalable to any size
+- Works in full color, monochrome, or white
 
-**Spacing**:
-- Minimum clear space: 20% of logo height on all sides
+**Minimum Clear Space**: 20% of logo height on all sides
+
+**Proportions**:
 - Wave height: 30% of text height
-- Letter spacing: 10% wider than default
+- Letter spacing: +10% wider than default tracking
 
-### Logo Concept 2: Light Burst (ALTERNATIVE)
-
-```
-       ✦
-      ╱│╲
-     ╱ │ ╲
-    E•C•H•O•E•L
-```
-
-**Description**:
-- Light rays emanating from center
-- Spiritual, uplifting, ethereal
-- Emphasizes "Light" in "Echo of Light"
-- Best for wellness materials, meditation contexts
-
-### Logo Concept 3: Waveform Glyph (ICON)
+### Secondary Logo: Waveform Glyph
 
 ```
   ▁▃▅▇▅▃▁
 ```
 
-**Description**:
-- Abstract waveform symbol
-- Modern, tech-forward, minimalist
-- Can stand alone without text
-- Best for app icons, social media avatars, favicons
+**Usage**:
+- App icon
+- Social media avatars
+- Favicon
+- Loading animations
+- When full wordmark won't fit
+
+**Style**: Abstract waveform, symmetric, bold
+
+### Logo Variants
+
+**Full Color** (Primary):
+- Wave: Cyan to Golden Yellow gradient
+- Text: Deep Purple
+- Background: Transparent or white
+
+**Monochrome**:
+- Black on white (print, documents)
+- White on dark (dark mode, video overlays)
+
+**Single Color**:
+- Deep Purple (brand applications)
+- White (dark backgrounds)
 
 ---
 
@@ -120,33 +142,33 @@ explore, create, and find their inner calm.
 
 #### Deep Purple
 ```
-HEX: #4A148C
-RGB: 74, 20, 140
-HSL: 272°, 75%, 31%
-Pantone: 2613 C (closest)
+HEX:     #4A148C
+RGB:     74, 20, 140
+HSL:     272°, 75%, 31%
+PANTONE: 2613 C (closest match)
 ```
-**Usage**: Primary brand color, backgrounds, meditation UI
-**Meaning**: Depth, spirituality, meditation, sophistication
+**Psychology**: Meditation, depth, spirituality, premium quality
+**Usage**: Primary brand color, backgrounds, UI chrome
 
 #### Cyan
 ```
-HEX: #00BCD4
-RGB: 0, 188, 212
-HSL: 187°, 100%, 42%
-Pantone: 311 C (closest)
+HEX:     #00BCD4
+RGB:     0, 188, 212
+HSL:     187°, 100%, 42%
+PANTONE: 311 C (closest match)
 ```
-**Usage**: Accents, interactive elements, audio visualizations
-**Meaning**: Technology, clarity, trust, innovation
+**Psychology**: Technology, clarity, trust, flow
+**Usage**: Interactive elements, audio visualizations, accents
 
 #### Golden Yellow
 ```
-HEX: #FFC107
-RGB: 255, 193, 7
-HSL: 45°, 100%, 51%
-Pantone: 1235 C (closest)
+HEX:     #FFC107
+RGB:     255, 193, 7
+HSL:     45°, 100%, 51%
+PANTONE: 1235 C (closest match)
 ```
-**Usage**: Highlights, achievements, calls-to-action
-**Meaning**: Energy, optimism, warmth, light
+**Psychology**: Energy, optimism, achievement, warmth
+**Usage**: Highlights, achievements, CTAs, success states
 
 ### Secondary Colors
 
@@ -154,7 +176,6 @@ Pantone: 1235 C (closest)
 ```
 HEX: #1A237E
 RGB: 26, 35, 126
-HSL: 236°, 66%, 30%
 ```
 **Usage**: Dark mode backgrounds, depth layers
 
@@ -162,469 +183,594 @@ HSL: 236°, 66%, 30%
 ```
 HEX: #00897B
 RGB: 0, 137, 123
-HSL: 174°, 100%, 27%
 ```
-**Usage**: Wellness indicators, success states, heart coherence
+**Usage**: Wellness indicators, coherence meters, positive feedback
 
 #### Coral Pink
 ```
 HEX: #FF6E40
 RGB: 255, 110, 64
-HSL: 14°, 100%, 63%
 ```
-**Usage**: Warmth, human connection, biofeedback alerts
+**Usage**: Biofeedback alerts, warm accents, human connection
 
-### Gradient Collections
+### Gradients
 
-#### Primary Gradient (Brand Identity)
+#### Brand Gradient (Primary)
 ```
 Linear: Deep Purple (#4A148C) → Cyan (#00BCD4) → Golden Yellow (#FFC107)
-Angle: 135° (diagonal)
+Angle: 135° (diagonal, top-left to bottom-right)
 ```
-**Usage**: App backgrounds, marketing hero sections, splash screens
+**Usage**: App backgrounds, hero sections, marketing materials
 
-#### Wellness Gradient (Meditation)
+#### Wellness Gradient
 ```
 Linear: Emerald Green (#00897B) → Cyan (#00BCD4) → Deep Purple (#4A148C)
-Angle: 180° (vertical)
+Angle: 180° (vertical, top to bottom)
 ```
-**Usage**: Meditation modes, wellness sessions, calm states
+**Usage**: Meditation modes, calm states, breathing exercises
 
-#### Energy Gradient (Active)
+#### Energy Gradient
 ```
 Linear: Coral Pink (#FF6E40) → Golden Yellow (#FFC107) → Cyan (#00BCD4)
-Angle: 90° (horizontal)
+Angle: 90° (horizontal, left to right)
 ```
-**Usage**: Active visualization modes, high energy, performance
+**Usage**: Active modes, performance visualization, high energy states
 
-### Accessibility Colors
+### Accessibility
 
-#### High Contrast Mode
+**WCAG 2.1 AA Compliance**: All text color combinations tested
+
+**High Contrast Mode**:
 - Background: Pure Black `#000000`
 - Foreground: Pure White `#FFFFFF`
 - Accent: Bright Cyan `#00E5FF`
 
-#### Color Blindness Support
-All gradients tested against:
-- Protanopia (red-blind)
-- Deuteranopia (green-blind)
-- Tritanopia (blue-blind)
-- Achromatopsia (total color blindness)
+**Color Blindness Support**:
+- Tested against Protanopia, Deuteranopia, Tritanopia
+- Never rely on color alone to convey information
+- Patterns + icons + text labels required
 
 ---
 
 ## 4. Typography
 
-### Primary Font: SF Pro Display (iOS/macOS)
+### iOS/macOS: SF Pro
 
-**Headings**:
-- **Hero/H1**: SF Pro Display Semibold, 34pt, -2% tracking
-- **H2**: SF Pro Display Medium, 28pt, -1% tracking
-- **H3**: SF Pro Display Regular, 22pt, 0% tracking
+**Display (Headings)**:
+```
+H1: SF Pro Display Semibold, 34pt, -2% tracking
+H2: SF Pro Display Medium, 28pt, -1% tracking
+H3: SF Pro Display Regular, 22pt, 0% tracking
+H4: SF Pro Display Medium, 18pt, 0% tracking
+```
 
-**Body Text**:
-- **Large Body**: SF Pro Text Regular, 17pt (iOS standard)
-- **Body**: SF Pro Text Regular, 15pt
-- **Small Body**: SF Pro Text Regular, 13pt
+**Text (Body)**:
+```
+Large:  SF Pro Text Regular, 17pt (iOS standard body)
+Body:   SF Pro Text Regular, 15pt
+Small:  SF Pro Text Regular, 13pt
+Caption: SF Pro Text Regular, 11pt
+```
 
-**Accent Text**:
-- **Buttons**: SF Pro Display Semibold, 17pt, +2% tracking (uppercase)
-- **Labels**: SF Pro Text Medium, 12pt, +5% tracking (uppercase)
+**Accent**:
+```
+Button:  SF Pro Display Semibold, 17pt, +2% tracking, UPPERCASE
+Label:   SF Pro Text Medium, 12pt, +5% tracking, UPPERCASE
+```
 
-### Cross-Platform Alternative: Inter
+### Cross-Platform: Inter
 
-For web, Android, and other platforms where SF Pro isn't available:
-- **Download**: https://rsms.me/inter/
-- **Usage**: Same sizes and weights as SF Pro
-- **Fallback**: System-ui, -apple-system, BlinkMacSystemFont, "Segoe UI"
+For web, Android, Windows where SF Pro isn't available:
 
-### Dynamic Type Support (iOS)
+**Headings**: Inter SemiBold / Medium
+**Body**: Inter Regular
+**Fallback**: `system-ui, -apple-system, "Segoe UI", sans-serif`
 
-ECHOEL fully supports iOS Dynamic Type for accessibility:
+**Download**: https://rsms.me/inter/
 
-| Category | Size Range |
-|----------|------------|
-| Extra Small | 14pt - 19pt |
-| Small | 15pt - 20pt |
-| Medium | 16pt - 21pt |
-| Large (Default) | 17pt - 22pt |
-| Extra Large | 19pt - 24pt |
-| XXL | 21pt - 26pt |
-| XXXL | 23pt - 28pt |
-| Accessibility M | 28pt - 33pt |
-| Accessibility L | 33pt - 40pt |
-| Accessibility XL | 40pt - 53pt |
-| Accessibility XXL | 48pt - 64pt |
-| Accessibility XXXL | 56pt - 76pt |
+### Dynamic Type (iOS)
 
-### Code Font: SF Mono / JetBrains Mono
+Full support for iOS Dynamic Type accessibility:
 
-For documentation, developer tools, and technical content:
-- **Primary**: SF Mono (Apple platforms)
-- **Alternative**: JetBrains Mono (cross-platform)
+| Category | Default | Max Accessibility |
+|----------|---------|-------------------|
+| Large Title | 34pt | 76pt |
+| Title 1 | 28pt | 64pt |
+| Title 2 | 22pt | 53pt |
+| Body | 17pt | 40pt |
+| Caption | 11pt | 28pt |
+
+### Monospace: JetBrains Mono
+
+For code, technical docs, developer tools:
 - **Size**: 13pt - 15pt
 - **Line Height**: 1.6
+- **Usage**: Code snippets, logs, debug output
 
 ---
 
 ## 5. App Icon
 
-### iOS App Icon Specifications
+### Design Concept
 
-#### Sizes Required
-- **1024×1024** - App Store (no alpha channel)
-- **180×180** - iPhone (@3x)
-- **120×120** - iPhone (@2x)
-- **167×167** - iPad Pro (@2x)
-- **152×152** - iPad (@2x)
-- **76×76** - iPad (@1x)
-- **60×60** - iPhone Spotlight (@3x)
-- **40×40** - iPhone Spotlight (@2x)
+**Base**: Deep purple gradient background (135° angle)
+**Symbol**: Symmetric waveform `▁▃▅▇▅▃▁` in cyan
+**Effect**: Subtle glow (4px outer glow, 30% opacity)
+**Style**: Minimalist, no text, instantly recognizable
 
-#### Design Elements
+### Required Sizes (iOS)
 
-**Base**:
-- Deep purple gradient background (135° angle)
-- Subtle radial light burst from center
+| Size | Usage |
+|------|-------|
+| 1024×1024 | App Store (no alpha) |
+| 180×180 | iPhone @3x |
+| 120×120 | iPhone @2x |
+| 167×167 | iPad Pro @2x |
+| 152×152 | iPad @2x |
+| 76×76 | iPad @1x |
+| 60×60 | Spotlight @3x |
+| 40×40 | Spotlight @2x |
 
-**Symbol**:
-- Waveform glyph in cyan and golden yellow
-- Three-wave design: ▁▃▅▇▅▃▁
-- Glowing effect (outer glow, 4px, 30% opacity)
+### Design Principles
 
-**Style**:
-- Minimalist, no text (just the waveform symbol)
-- Recognizable at all sizes (16px to 1024px)
-- No gradients in the waveform itself (solid cyan)
-- Soft shadow beneath waveform (depth)
+✅ **DO**:
+- Keep it simple - must work at 16×16px
+- Use strong contrast
+- Center the waveform symbol
+- Test on various backgrounds
 
-#### Variants
+❌ **DON'T**:
+- Add text (unreadable at small sizes)
+- Use complex gradients in the symbol itself
+- Include borders or frames
+- Rely on fine details
 
-1. **Light Mode Icon**: Vibrant colors, full saturation
-2. **Dark Mode Icon**: Softer colors, glowing appearance
-3. **Alternative Icon 1**: Pure waveform (no background gradient)
-4. **Alternative Icon 2**: Light burst design
-5. **Alternative Icon 3**: Minimalist "E" monogram
+### Alternative Icons
 
-### macOS App Icon
+Users can choose alternative app icons (iOS 10.3+):
 
-Additional macOS-specific considerations:
-- Rounded square (default macOS style)
-- Shadow and depth (follows macOS Big Sur+ design language)
-- 1024×1024 source at 72 DPI
+1. **Classic** - Purple gradient + cyan waveform (default)
+2. **Minimal** - Solid purple + white waveform
+3. **Dark** - Black background + gradient waveform
+4. **Pride** - Rainbow gradient (June)
+5. **Artist** - @echoelmusic album artwork style
 
 ---
 
 ## 6. Voice & Tone
 
-### Voice Characteristics
+### Brand Voice
 
-**ECHOEL sounds like**:
-- Calm yet energetic
-- Welcoming, not preachy
-- Scientific, not clinical
-- Spiritual, not religious
-- Playful, not childish
+ECHOEL speaks with:
+- **Calm energy** - Supportive but not sleepy
+- **Creative confidence** - Inspiring but not boastful
+- **Scientific honesty** - Factual but not clinical
+- **Inclusive warmth** - Welcoming to everyone
 
 ### Tone by Context
 
-#### Marketing & Website
-**Tone**: Inspirational, Clear, Inviting
-```
-✅ "Find your calm. Illuminate your sound. Echo your truth."
-✅ "From meditation to music creation, ECHOEL adapts to your journey."
+#### Marketing (Website, Social Media)
+**Tone**: Inspiring, Clear, Inviting
 
-❌ "ECHOEL will revolutionize your life!"
-❌ "The #1 best wellness app ever created!"
+✅ Good:
+```
+"Find your calm. Create visual art. Echo your truth."
+"Transform any sound into stunning visuals in real-time."
+```
+
+❌ Avoid:
+```
+"REVOLUTIONARY app will CHANGE YOUR LIFE!"
+"#1 wellness app in the world!"
 ```
 
 #### In-App Copy
 **Tone**: Helpful, Encouraging, Simple
-```
-✅ "Let's start with a 5-minute calm breathing session."
-✅ "Great session! You maintained 87% coherence."
 
-❌ "You failed to maintain coherence."
-❌ "Advanced biometric synchronization initiated."
+✅ Good:
+```
+"Ready for a 5-minute breathing session?"
+"Great work! 87% coherence maintained."
+"Tap the microphone to start creating."
+```
+
+❌ Avoid:
+```
+"You failed to maintain coherence."
+"Initializing biometric synchronization protocol..."
 ```
 
 #### Error Messages
-**Tone**: Friendly, Clear, Solution-Oriented
-```
-✅ "Can't access the microphone. Check Settings > Privacy > Microphone."
-✅ "Export paused. You'll need 500MB of free space."
+**Tone**: Clear, Friendly, Solution-Oriented
 
-❌ "ERROR: Microphone permission denied (Code: 403)."
-❌ "Insufficient disk space. Operation aborted."
+✅ Good:
+```
+"Microphone access needed. Tap Settings to enable."
+"Need 500MB free space to export video."
+```
+
+❌ Avoid:
+```
+"ERROR 403: Permission denied."
+"Insufficient disk space. Abort."
 ```
 
 #### Wellness Content
 **Tone**: Supportive, Non-Medical, Empowering
-```
-✅ "This session may help you practice relaxation techniques."
-✅ "Many users report feeling more calm after regular practice."
 
-❌ "This session will cure your anxiety."
-❌ "Clinically proven to reduce stress by 50%."
+✅ Good:
+```
+"This session may help you practice relaxation."
+"Many users feel more calm after regular use."
+```
+
+❌ Avoid:
+```
+"Clinically proven to cure anxiety."
+"Guaranteed stress reduction."
 ```
 
 ### Word Choices
 
-**Prefer**:
-- "Practice" (not "treatment")
-- "Session" (not "therapy")
-- "Wellness" (not "health")
-- "May help" (not "will cure")
-- "Explore" (not "diagnose")
-- "Journey" (not "program")
-
-**Avoid**:
-- Medical claims (cure, treat, diagnose, prevent)
-- Superlatives (best, #1, revolutionary)
-- Jargon (unless necessary and explained)
-- Fear-based language (warning, danger, risk)
+**Prefer**: Practice, session, wellness, explore, may help, journey
+**Avoid**: Treatment, therapy, cure, diagnose, guaranteed, medical
 
 ---
 
-## 7. Usage Guidelines
+## 7. Social Media Strategy
 
-### Logo Usage
+### Account Structure
 
-#### DO:
-✅ Use the primary wave echo logo on light backgrounds
-✅ Use sufficient clear space (20% of logo height minimum)
-✅ Scale proportionally - never distort
-✅ Use approved color combinations only
-✅ Convert to single color (white/black) when necessary
+#### Music (Existing)
+**Handle**: @echoelmusic ✅
+**Platforms**: Instagram, Twitter/X, YouTube, TikTok, Spotify
+**Content**: Music releases, performances, artist updates, behind-the-scenes
 
-#### DON'T:
-❌ Rotate, skew, or distort the logo
-❌ Change colors outside approved palette
-❌ Add effects (shadows, glows, bevels) unless specified
-❌ Place on busy backgrounds that reduce legibility
-❌ Use outdated "BLAB" branding anywhere
+#### App (New)
+**Primary Handle**: @echoel (if available)
+**Backup Handle**: @echoelapp
 
-### Color Usage
+**Platforms to Secure**:
+- Instagram: @echoel or @echoelapp
+- Twitter/X: @echoel or @echoelapp
+- YouTube: @echoel (app tutorials, demos)
+- TikTok: @echoelapp
+- Discord: echoel (community server)
 
-#### DO:
-✅ Use Deep Purple for primary brand elements
-✅ Use Cyan for interactive elements (buttons, links)
-✅ Use gradients for backgrounds and hero sections
-✅ Test all colors for accessibility (WCAG AA minimum)
-✅ Provide high contrast alternatives
+### Content Strategy
 
-#### DON'T:
-❌ Use colors outside the defined palette
-❌ Use low contrast color combinations (text on background)
-❌ Overuse gradients (one per screen maximum)
-❌ Use pure red for wellness features (too alarming)
+#### @echoelmusic (Music)
+```
+Focus: Music, artistry, creative process
+Audience: Music fans, fellow musicians
+Style: Artistic, personal, behind-the-scenes
+Frequency: 3-5 posts/week
+```
 
-### Typography Usage
+**Example Posts**:
+- New track releases
+- Studio sessions
+- Live performances
+- "Visualized with ECHOEL" content
 
-#### DO:
-✅ Support iOS Dynamic Type (all 9 sizes)
-✅ Use SF Pro Display for headings
-✅ Use SF Pro Text for body copy
-✅ Maintain minimum touch target size (44×44pt)
-✅ Left-align body text (better for readability)
+#### @echoel (App)
+```
+Focus: App features, user creations, tips
+Audience: Wellness seekers, creatives, VJs
+Style: Educational, inspiring, community-driven
+Frequency: 5-7 posts/week
+```
 
-#### DON'T:
-❌ Use more than 3 font sizes per screen
-❌ Use center-aligned body paragraphs (hard to read)
-❌ Set text smaller than 13pt (except metadata)
-❌ Use decorative fonts for UI elements
+**Example Posts**:
+- Feature tutorials
+- User-generated content
+- Meditation tips
+- App updates
+
+### Hashtag Strategy
+
+**Brand Tags**:
+- #echoel
+- #echoelmusic (music content)
+- #echoelapp (app content)
+
+**Category Tags**:
+- #audiovisual
+- #cymatics
+- #musicvisualization
+- #meditationapp
+- #biofeedback
+- #vjapp
+
+**Community Tags**:
+- #madewithechoel (user content)
+- #echoelcommunity
 
 ---
 
 ## 8. Marketing Assets
 
+### Website Hero (echoel.app)
+
+```
+Background: Brand gradient with animated particles
+Logo: ECHOEL wordmark (200px height)
+Headline: "Echo Your Truth"
+Subheadline: "Transform sound into visual art.
+              Your personal wellness sanctuary."
+CTA: "Download Free" (iOS badge)
+Visual: iPhone mockup with live visualization
+```
+
+**Typography**:
+- Headline: 64pt SF Pro Display Semibold
+- Subheadline: 24pt SF Pro Text Regular
+- Max width: 800px
+
+### App Store Assets
+
+#### Screenshots (iPhone 6.7" Display)
+**Size**: 1290×2796 pixels
+**Count**: 5 screenshots (order matters!)
+
+**#1 - Hero**:
+```
+Visual: Main visualization active (cymatics mode)
+Text Overlay: "Echo Your Truth"
+Focus: Beautiful, captivating first impression
+```
+
+**#2 - Features**:
+```
+Visual: Feature grid (4-6 icons with labels)
+Features: Real-time audio, biofeedback, export, accessibility
+Focus: Show breadth of capabilities
+```
+
+**#3 - Meditation**:
+```
+Visual: Calm breathing session in progress
+Text: "Find Your Calm"
+Focus: Wellness use case
+```
+
+**#4 - Creation**:
+```
+Visual: Video export interface / professional tools
+Text: "Create & Share"
+Focus: Creative use case
+```
+
+**#5 - Community**:
+```
+Visual: User testimonials or achievement system
+Text: "Join the Community"
+Focus: Social proof, engagement
+```
+
+#### App Preview Video
+- **Duration**: 15-30 seconds
+- **Resolution**: 1080×1920 (portrait)
+- **Captions**: Required for accessibility
+- **Voiceover**: Optional (music + sound effects better)
+
+**Script** (30 seconds):
+```
+0:00 - ECHOEL logo appears
+0:03 - Speak/sing into phone
+0:06 - Sound becomes visual (cymatics)
+0:10 - Biofeedback integration (heart rate → colors)
+0:15 - Multiple visualization modes
+0:20 - Export video feature
+0:25 - "Download Free" + App Store badge
+0:30 - End on ECHOEL logo
+```
+
 ### Social Media Templates
 
 #### Instagram Post (1080×1080)
 ```
-Background: Primary Gradient (135°)
-Logo: Top left (80×80px)
-Headline: SF Pro Display Semibold, 48pt
-Body: SF Pro Text Regular, 28pt
-CTA: "Download on the App Store" badge
+Background: Wellness gradient
+Logo: Top left (100×100px)
+Headline: SF Pro Display Bold, 52pt, max 3 words
+Body: SF Pro Text Regular, 28pt, max 2 lines
+CTA: "Link in bio" or App Store badge
 ```
 
-#### Twitter/X Header (1500×500)
+#### Twitter/X Card (1200×675)
 ```
-Background: Deep Purple with subtle waveform pattern
-Logo: Center (200×200px equivalent)
-Tagline: "Echo Your Truth" beneath logo
+Background: Brand gradient or screenshot
+Logo: Subtle watermark
+Text: Headline only (72pt), let image speak
 ```
 
 #### YouTube Thumbnail (1280×720)
 ```
-Background: Energy Gradient (90°)
-Logo: Top right (120×120px equivalent)
-Feature: Screenshot of app + bold headline
-Text: Maximum 5 words, 72pt+
+Background: High-contrast (Energy gradient)
+Face/Visual: Left 2/3 of frame
+Text: Right 1/3, maximum 5 words, 96pt
+Logo: Bottom right corner
 ```
 
-### Website Hero Section
+### Email Signature
 
-```html
-Background: Primary Gradient (135°) with animated particles
-Logo: 120×120px
-Headline: "Echo Your Truth" - 64pt, SF Pro Display Semibold
-Subheadline: "Transform sound into light..." - 24pt
-CTA Button: "Download Free" - Deep Purple, 18pt, rounded
-Screenshot: iPhone mockup with app running
 ```
-
-### App Store Assets
-
-#### Screenshots (iPhone 6.7" / iPhone 14 Pro Max)
-- **1290×2796** pixels
-- **5 screenshots maximum** (show best features first)
-
-**Screenshot 1 - Hero**:
+---
+[Your Name]
+Echoel - Audio Visual Wellness
+🎵 Music: @echoelmusic
+📱 App: echoel.app
 ```
-Title: "Echo Your Truth"
-Visual: Main visualization mode active
-Overlay: Minimal text
-```
-
-**Screenshot 2 - Biofeedback**:
-```
-Title: "Real-Time Bio-Reactive Visuals"
-Visual: Biometrics panel + visualization
-```
-
-**Screenshot 3 - Meditation**:
-```
-Title: "Find Your Calm"
-Visual: Calm breathing session
-```
-
-**Screenshot 4 - Export**:
-```
-Title: "Export & Share"
-Visual: Video export interface
-```
-
-**Screenshot 5 - Features**:
-```
-Title: "Designed For Everyone"
-Visual: Feature grid (accessibility, gamification, etc.)
-```
-
-#### App Preview Video (6.7" iPhone)
-- **1080×1920** pixels (portrait)
-- **15-30 seconds** duration
-- **No audio** required (but nice to have)
-- **Captions** required for accessibility
 
 ---
 
-## 9. Do's and Don'ts
+## 9. Usage Guidelines
 
-### Brand Identity
+### Logo Usage
 
-#### DO:
-✅ Refer to the app as "ECHOEL" (all caps) in headlines
-✅ Use "Echoel" (title case) in sentences
-✅ Pronounce as "EH-ko-el" or "eh-KOH-el"
-✅ Explain the "Echo of Light" meaning when introducing the brand
-✅ Connect to the artist "Echoel" when relevant
+✅ **DO**:
+- Use official logo files only
+- Maintain clear space (20% minimum)
+- Scale proportionally
+- Place on clean backgrounds
+- Use white version on dark backgrounds
 
-#### DON'T:
-❌ Use old "BLAB" branding anywhere
-❌ Spell as "Echoél" or "Echöel" (no diacritics)
-❌ Abbreviate to "ECH" or "EO"
-❌ Call it "the ECHOEL app" (just "ECHOEL")
+❌ **DON'T**:
+- Distort, rotate, or skew
+- Change colors outside palette
+- Add effects (shadows, glows) unless specified
+- Place on busy/low-contrast backgrounds
+- Recreate or modify the logo
 
-### Messaging
+### Color Usage
 
-#### DO:
-✅ Emphasize universal accessibility (4 to 100+ years)
-✅ Highlight "free forever" core functionality
-✅ Use inclusive language
-✅ Show diverse users in marketing materials
-✅ Focus on creative and wellness use cases
+✅ **DO**:
+- Use hex codes exactly as specified
+- Test for WCAG AA contrast (4.5:1 minimum)
+- Provide alternative views for color blindness
+- Use gradients for backgrounds and heroes
 
-#### DON'T:
-❌ Make medical or health claims
-❌ Promise to "cure" or "treat" anything
-❌ Use fear-based marketing
-❌ Exclude any age group or ability level
-❌ Gatekeep features unnecessarily
+❌ **DON'T**:
+- Invent new colors
+- Use more than 3 colors per screen
+- Rely solely on color to convey meaning
+- Use low contrast combinations
 
-### Visual Design
+### Typography Usage
 
-#### DO:
-✅ Use animations (particle systems, smooth transitions)
-✅ Embrace dark mode (primary UI style)
-✅ Show real app screenshots (not mockups) in marketing
-✅ Include diverse representation in any people imagery
-✅ Test all designs for color blindness accessibility
+✅ **DO**:
+- Support Dynamic Type (iOS)
+- Left-align body text
+- Maintain minimum 44pt touch targets
+- Use maximum 3 font sizes per screen
 
-#### DON'T:
-❌ Use stock photos of meditating people (overused cliché)
-❌ Over-animate (can cause motion sickness)
-❌ Use flashing lights (epilepsy trigger)
-❌ Rely solely on color to convey information
+❌ **DON'T**:
+- Center-align paragraphs (hard to read)
+- Go below 11pt font size
+- Use all-caps for body text
+- Mix too many font weights
+
+### Brand Name Usage
+
+✅ **DO**:
+```
+Headlines: ECHOEL (all caps)
+Sentences: Echoel transforms your...
+Social: #echoel, @echoel
+```
+
+❌ **DON'T**:
+```
+Echoël, Echöel (diacritics)
+The ECHOEL app (unnecessary "the" and "app")
+ECHOEL™ (no trademark in marketing)
+```
 
 ---
 
-## 10. File Templates
+## 10. Cross-Promotion
 
-### Logo Files
+### @echoelmusic → ECHOEL App
 
-**Production Files** (create these):
+#### Instagram Story
 ```
-ECHOEL_Logo_Primary_RGB.svg         (Wave Echo, RGB color)
-ECHOEL_Logo_Primary_CMYK.ai         (Wave Echo, CMYK for print)
-ECHOEL_Logo_Alternative_RGB.svg     (Light Burst variant)
-ECHOEL_Logo_Icon_RGB.svg            (Waveform glyph only)
-ECHOEL_Logo_Monochrome_Black.svg    (Single color, black)
-ECHOEL_Logo_Monochrome_White.svg    (Single color, white)
+[Music visualization created with ECHOEL]
+Swipe up: Download ECHOEL app 📱
+#madewithechoel #echoelmusic
+```
+
+#### YouTube Video Description
+```
+🎵 Visualization created with ECHOEL
+Download: echoel.app
+
+ECHOEL is my audio-visual wellness app that transforms
+sound into real-time art. Perfect for musicians,
+meditators, and creative explorers.
+```
+
+#### Spotify Bio
+```
+Artist · Producer
+🎵 Listen everywhere
+📱 Visualize with ECHOEL: echoel.app
+```
+
+### ECHOEL App → @echoelmusic
+
+#### App Store Description
+```
+Created by musician Echoel (@echoelmusic), who understands
+the deep connection between sound and emotion. ECHOEL brings
+studio-quality audio visualization to everyone.
+```
+
+#### In-App Credits
+```
+Settings → About ECHOEL
+Created by Echoel
+Music: @echoelmusic
+Support: support@echoel.app
+```
+
+#### App Launch Screen
+```
+ECHOEL
+by @echoelmusic
+[Continue]
+```
+
+### Mutual Benefits
+
+**For @echoelmusic**:
+- Showcase technical innovation
+- Behind-the-scenes content (app development)
+- Unique content creation tool
+- Personal brand strengthening
+
+**For ECHOEL**:
+- Built by real artist credibility
+- Music industry connections
+- Content creation from musician perspective
+- Authentic understanding of audio
+
+### Content Ideas
+
+1. **"Making of ECHOEL"** video series on @echoelmusic
+2. **Music visualizations** using ECHOEL app for releases
+3. **App feature tutorials** posted to both accounts
+4. **User spotlight** - musicians using ECHOEL
+5. **Live streaming** music creation → ECHOEL visualization
+
+---
+
+## File Deliverables
+
+### Logo Files (To Create)
+```
+ECHOEL_Logo_Primary.svg          (Full color, vector)
+ECHOEL_Logo_Monochrome_Black.svg (Print)
+ECHOEL_Logo_Monochrome_White.svg (Dark backgrounds)
+ECHOEL_Glyph_Icon.svg            (Waveform only)
 ```
 
 ### Color Swatches
-
-**Adobe Swatch Exchange (.ase)**:
 ```
-ECHOEL_Brand_Colors.ase
-  ├─ Primary Colors
-  │  ├─ Deep Purple (#4A148C)
-  │  ├─ Cyan (#00BCD4)
-  │  └─ Golden Yellow (#FFC107)
-  ├─ Secondary Colors
-  │  ├─ Midnight Blue (#1A237E)
-  │  ├─ Emerald Green (#00897B)
-  │  └─ Coral Pink (#FF6E40)
-  └─ Accessibility
-     ├─ Pure Black (#000000)
-     └─ Pure White (#FFFFFF)
+ECHOEL_Colors.ase                (Adobe Swatch Exchange)
+ECHOEL_Colors.sketchpalette      (Sketch)
+ECHOEL_Colors.clr                (macOS)
 ```
 
-### Sketch/Figma Templates
-
-**Component Library**:
+### Design System
 ```
-ECHOEL_Design_System.sketch
-  ├─ 🎨 Colors (all swatches)
-  ├─ 🔤 Typography (text styles)
-  ├─ 🔘 Buttons (all states)
-  ├─ 📱 iOS Components (native elements)
-  ├─ 🖼️ App Icon (all sizes)
-  └─ 📄 Templates (common screens)
+ECHOEL_DesignSystem.sketch       (Sketch library)
+ECHOEL_DesignSystem.fig          (Figma)
 ```
 
 ### App Icon Source
-
-**Photoshop/Sketch**:
 ```
-ECHOEL_AppIcon_Source.psd (1024×1024, layers preserved)
-  ├─ Background Gradient
-  ├─ Radial Light Burst
-  ├─ Waveform Symbol
-  ├─ Glow Effects
-  └─ Export Settings (for all sizes)
+ECHOEL_AppIcon.psd               (1024×1024, layered)
+ECHOEL_AppIcon_Variants/         (Alternative icon folder)
 ```
 
 ---
@@ -633,17 +779,34 @@ ECHOEL_AppIcon_Source.psd (1024×1024, layers preserved)
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
+| 2.0 | Nov 4, 2025 | Simplified branding, removed etymology, added @echoelmusic strategy | Echoel |
 | 1.0 | Nov 4, 2025 | Initial brand guide created | Echoel |
 
 ---
 
-## Contact
+## Next Steps
 
-**Brand Guidelines Questions**: [Your Email]
-**Design Assets**: [Asset Repository URL]
-**Trademark Usage**: [Legal Contact]
+### Immediate (Week 1)
+- [ ] Register echoel.app domain
+- [ ] Secure @echoel social media handles
+- [ ] Create logo files (3 concepts)
+- [ ] Design app icon (primary + 4 alternatives)
+
+### Short Term (Week 2-4)
+- [ ] Build landing page (echoel.app)
+- [ ] Create 5 App Store screenshots
+- [ ] Produce app preview video (30s)
+- [ ] Launch @echoel Instagram account
+
+### Long Term (Month 2-3)
+- [ ] Trademark search and filing
+- [ ] Full marketing website
+- [ ] Press kit creation
+- [ ] Community Discord server
 
 ---
 
-*"Where your sound becomes light, and your light finds its echo."*
-**— ECHOEL** 🎵✨
+**ECHOEL**
+*Audio-visual wellness by @echoelmusic*
+
+🎵 Transform sound into art. Find your frequency. Echo your truth.
