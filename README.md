@@ -1,4 +1,4 @@
-# BLAB iOS App 🫧
+# Echoelmusic iOS App 🫧
 
 **Breath → Sound → Light → Consciousness**
 
@@ -13,7 +13,7 @@
 ## 🚀 Quick Start (Xcode Handoff)
 
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/echoelmusic-ios-app
 open Package.swift  # Opens in Xcode automatically
 ```
 
@@ -30,7 +30,7 @@ Then in Xcode:
 
 **Current Phase:** Phase 3 Complete & Optimized ✅
 **Last Update:** 2025-10-24
-**GitHub:** `vibrationalforce/blab-ios-app`
+**GitHub:** `vibrationalforce/echoelmusic-ios-app`
 **Latest Commit:** `65a260f` - API integration complete
 
 ### Phase Completion:
@@ -45,9 +45,9 @@ Then in Xcode:
 
 ---
 
-## 🎯 What is BLAB?
+## 🎯 What is Echoelmusic?
 
-BLAB is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
+Echoelmusic is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
 - 🌊 **Spatial Audio** (3D/4D/Fibonacci Field Arrays)
 - 🎨 **Real-time Visuals** (Cymatics, Mandalas, Particles)
 - 💡 **LED/DMX Lighting** (Push 3, Art-Net)
@@ -140,9 +140,9 @@ BLAB is an **embodied multimodal music system** that transforms biometric signal
 ## 📁 Project Structure
 
 ```
-blab-ios-app/
+echoelmusic-ios-app/
 ├── Package.swift                    # Swift Package config
-├── Sources/Blab/
+├── Sources/Echoelmusic/
 │   ├── BlabApp.swift               # App entry point
 │   ├── ContentView.swift           # Main UI
 │   ├── Audio/
@@ -419,7 +419,7 @@ See `BLAB_IMPLEMENTATION_ROADMAP.md` for details.
 
 ## 📜 License
 
-Copyright © 2025 BLAB Studio. All rights reserved.
+Copyright © 2025 Echoelmusic Studio. All rights reserved.
 
 Proprietary software - not for redistribution.
 
@@ -427,7 +427,7 @@ Proprietary software - not for redistribution.
 
 ## 🫧 Philosophy
 
-> "BLAB is not just a music app - it's an interface to embodied consciousness.
+> "Echoelmusic is not just a music app - it's an interface to embodied consciousness.
 > Through breath, biometrics, and intention, we transform life itself into art."
 
 **breath → sound → light → consciousness**

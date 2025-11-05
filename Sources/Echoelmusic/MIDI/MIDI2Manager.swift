@@ -56,7 +56,7 @@ class MIDI2Manager: ObservableObject {
         do {
             // Create MIDI client
             var client: MIDIClientRef = 0
-            let clientStatus = MIDIClientCreateWithBlock("BLAB_MIDI2_Client" as CFString, &client) { notification in
+            let clientStatus = MIDIClientCreateWithBlock("Echoelmusic_MIDI2_Client" as CFString, &client) { notification in
                 // Handle MIDI notifications
                 self.handleMIDINotification(notification)
             }
@@ -71,7 +71,7 @@ class MIDI2Manager: ObservableObject {
             var source: MIDIEndpointRef = 0
             let sourceStatus = MIDISourceCreateWithProtocol(
                 midiClient,
-                "BLAB MIDI 2.0 Output" as CFString,
+                "Echoelmusic MIDI 2.0 Output" as CFString,
                 ._2_0,  // MIDI 2.0 protocol
                 &source
             )
@@ -86,7 +86,7 @@ class MIDI2Manager: ObservableObject {
             var port: MIDIPortRef = 0
             let portStatus = MIDIOutputPortCreate(
                 midiClient,
-                "BLAB_Output" as CFString,
+                "Echoelmusic_Output" as CFString,
                 &port
             )
 

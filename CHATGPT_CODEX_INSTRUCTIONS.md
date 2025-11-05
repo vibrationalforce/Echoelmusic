@@ -27,9 +27,9 @@ Bitte führe ein **vollständiges Performance & Code Quality Review** durch für
    - Reporting Format
 
 2. **Implementation Files:**
-   - `Sources/Blab/Unified/UnifiedControlHub.swift`
-   - `Sources/Blab/Spatial/ARFaceTrackingManager.swift`
-   - `Sources/Blab/Unified/FaceToAudioMapper.swift`
+   - `Sources/Echoelmusic/Unified/UnifiedControlHub.swift`
+   - `Sources/Echoelmusic/Spatial/ARFaceTrackingManager.swift`
+   - `Sources/Echoelmusic/Unified/FaceToAudioMapper.swift`
 
 3. **Tests:**
    - `Tests/BlabTests/UnifiedControlHubTests.swift`

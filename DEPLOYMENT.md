@@ -57,8 +57,8 @@ This guide explains how to develop BLAB in VS Code and deploy to your iPhone.
 
 **1. Clone Repository**
 ```bash
-git clone https://github.com/vibrationalforce/blab-ios-app.git
-cd blab-ios-app
+git clone https://github.com/vibrationalforce/echoelmusic-ios-app.git
+cd echoelmusic-ios-app
 ```
 
 **2. Verify Swift Installation**
@@ -82,7 +82,7 @@ swift --version
 ### Phase 2: Daily Development (VS Code)
 
 **Write Code in VS Code:**
-- Edit Swift files in `Sources/Blab/`
+- Edit Swift files in `Sources/Echoelmusic/`
 - Modern syntax highlighting
 - IntelliSense (with SourceKit-LSP)
 - Git integration
@@ -199,7 +199,7 @@ Generate Xcode project and deploy:
 ## 📁 Project Structure
 
 ```
-blab-ios-app/
+echoelmusic-ios-app/
 ├── Package.swift              # Swift Package Manager config
 ├── Resources/
 │   └── Info.plist            # iOS permissions & config
@@ -243,7 +243,7 @@ swift package resolve
 **Error: "No such file or directory: Package.swift"**
 ```bash
 # Make sure you're in the project root
-cd blab-ios-app
+cd echoelmusic-ios-app
 ./build.sh
 ```
 
@@ -325,7 +325,7 @@ cd blab-ios-app
 ### Scenario 1: New Swift File Added
 
 **In VS Code:**
-1. Create new file in `Sources/Blab/`
+1. Create new file in `Sources/Echoelmusic/`
 2. Write code
 3. `./build.sh` (automatically includes new file)
 4. `git commit -m "Add new feature"`
@@ -395,7 +395,7 @@ git push origin feature/new-audio-effect
 
 ## 📞 Support
 
-**Issues:** https://github.com/vibrationalforce/blab-ios-app/issues
+**Issues:** https://github.com/vibrationalforce/echoelmusic-ios-app/issues
 
 **Questions:**
 - Check existing issues

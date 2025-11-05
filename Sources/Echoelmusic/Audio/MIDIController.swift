@@ -110,7 +110,7 @@ class MIDIController: ObservableObject {
         var status: OSStatus
 
         // Create MIDI client
-        status = MIDIClientCreate("BLAB" as CFString, nil, nil, &midiClient)
+        status = MIDIClientCreate("Echoelmusic" as CFString, nil, nil, &midiClient)
         guard status == noErr else {
             print("❌ Failed to create MIDI client: \(status)")
             return

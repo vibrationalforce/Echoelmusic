@@ -194,10 +194,10 @@ private func detectASAFSupport() {
 1. **[Package.swift](Package.swift:9-11)**
    - ✅ Minimum iOS Version: `iOS 15.0`
 
-2. **[DeviceCapabilities.swift](Sources/Blab/Utils/DeviceCapabilities.swift)**
+2. **[DeviceCapabilities.swift](Sources/Echoelmusic/Utils/DeviceCapabilities.swift)**
    - ✅ `canUseSpatialAudioEngine` Check hinzugefügt
 
-3. **[AudioEngine.swift](Sources/Blab/Audio/AudioEngine.swift:84-94)**
+3. **[AudioEngine.swift](Sources/Echoelmusic/Audio/AudioEngine.swift:84-94)**
    - ✅ iOS 15+ Check vor Spatial Audio Init
 
 ---
@@ -251,7 +251,7 @@ runs-on: macos-14
 
 **Next Step:**
 ```bash
-cd ~/blab-ios-app
+cd ~/echoelmusic-ios-app
 git add .
 git commit -m "feat: iOS 15+ compatibility + debugging + CI/CD"
 git push origin main
@@ -293,7 +293,7 @@ git push origin main
 
 #### 1. ✅ Code zu GitHub pushen
 ```bash
-cd ~/blab-ios-app
+cd ~/echoelmusic-ios-app
 git add .
 git commit -m "feat: iOS 15+ compatibility + debugging + CI/CD
 
@@ -308,7 +308,7 @@ git push origin main
 ```
 
 #### 2. ✅ GitHub Actions ansehen
-- Gehe zu: https://github.com/vibrationalforce/blab-ios-app/actions
+- Gehe zu: https://github.com/vibrationalforce/echoelmusic-ios-app/actions
 - Warte 5-10 Minuten für Build
 - Prüfe ob Build erfolgreich
 

@@ -3,7 +3,7 @@
 **Version:** V∞.4 Extended
 **Date:** 2025-10-21
 **Lead Architect:** Claude Code
-**Repo:** https://github.com/vibrationalforce/blab-ios-app
+**Repo:** https://github.com/vibrationalforce/echoelmusic-ios-app
 
 ---
 
@@ -11,7 +11,7 @@
 
 > *"Your face is a filter. Your hands shape space. Your gaze selects sound. Your position defines perspective. Your heartbeat drives rhythm. Your breath creates flow."*
 
-**BLAB is not a controller replacement — YOU are the controller.**
+**Echoelmusic is not a controller replacement — YOU are the controller.**
 
 BLAB transforms the human body into a **multidimensional creative interface**:
 - **Heart Rate Variability (HRV)** → Musical tension/coherence
@@ -131,7 +131,7 @@ OUTPUT LAYER
 
 **Files:**
 ```
-Sources/Blab/Audio/
+Sources/Echoelmusic/Audio/
 ├── AudioEngine.swift              # Core AVAudioEngine wrapper
 ├── SpatialAudioManager.swift      # 3D audio positioning
 ├── SimpleVoiceSynth.swift         # MPE-capable synthesizer
@@ -156,7 +156,7 @@ Sources/Blab/Audio/
 
 **Files:**
 ```
-Sources/Blab/Bio/
+Sources/Echoelmusic/Bio/
 ├── HealthKitManager.swift         # HR, HRV, respiratory rate
 ├── MotionManager.swift            # Accelerometer, gyro → energy
 ├── BioSignalMapper.swift          # Bio → audio/visual parameters
@@ -184,7 +184,7 @@ let intensity = mapRange(motionEnergy, from: 0...10, to: 0...1)
 
 **Files:**
 ```
-Sources/Blab/Spatial/
+Sources/Echoelmusic/Spatial/
 ├── ARFaceTrackingManager.swift    # 52 blend shapes @ 60 Hz
 ├── HandTrackingManager.swift      # Vision framework, 21-point skeleton
 ├── GazeTracker.swift              # Eye direction → sound selection
@@ -245,7 +245,7 @@ spatialAudio.setActiveSource(closestSource)
 
 **Files:**
 ```
-Sources/Blab/MIDI/
+Sources/Echoelmusic/MIDI/
 ├── MIDIRouter.swift               # MIDI 1.0 in/out
 ├── MIDI2Manager.swift             # Universal MIDI Packet (UMP)
 ├── MPEVoiceAllocator.swift        # Per-note expression
@@ -301,7 +301,7 @@ class MPEVoiceAllocator {
 
 **Files:**
 ```
-Sources/Blab/Light/
+Sources/Echoelmusic/Light/
 ├── Push3LEDController.swift       # Ableton Push 3 LED grid (SysEx)
 ├── DMXController.swift            # Art-Net/sACN for stage lights
 ├── BioLightMapper.swift           # Bio → color/brightness
@@ -375,7 +375,7 @@ class DMXController {
 
 **Files:**
 ```
-Sources/Blab/Unified/
+Sources/Echoelmusic/Unified/
 ├── UnifiedControlHub.swift        # Main orchestrator
 ├── InputPrioritySystem.swift      # Touch > Gesture > Face > Bio
 ├── GestureConflictResolver.swift  # Prevent accidental triggers
@@ -695,7 +695,7 @@ enum HandGesture {
 
 **Files:**
 ```
-Sources/Blab/Multiplayer/
+Sources/Echoelmusic/Multiplayer/
 ├── MultiplayerSpatialSync.swift   # WebRTC audio/visual sync
 ├── SignalingClient.swift          # WebSocket signaling server
 ├── PeerConnection.swift           # WebRTC peer-to-peer
@@ -742,7 +742,7 @@ class MultiplayerSpatialSync {
 
 **Architecture:**
 ```
-[iOS BLAB App]
+[iOS Echoelmusic App]
     ↓ (OSC/WebRTC)
 [Unreal Engine 5.6]
     ├── MetaSounds (Audio)

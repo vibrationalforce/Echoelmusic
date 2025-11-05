@@ -3,7 +3,7 @@
 **Date:** 2025-10-24
 **Status:** ✅ Ready for Xcode Development
 **Last Commit:** `65a260f` - API integration complete
-**GitHub:** `vibrationalforce/blab-ios-app`
+**GitHub:** `vibrationalforce/echoelmusic-ios-app`
 
 ---
 
@@ -32,7 +32,7 @@
 
 #### **1.1 Projekt öffnen:**
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/echoelmusic-ios-app
 open Package.swift
 ```
 
@@ -62,7 +62,7 @@ Cmd+B  # Build testen
 
 **Spatial Audio:**
 ```swift
-// File: Sources/Blab/Spatial/SpatialAudioEngine.swift (482 Zeilen)
+// File: Sources/Echoelmusic/Spatial/SpatialAudioEngine.swift (482 Zeilen)
 let spatial = SpatialAudioEngine()
 try spatial.start()
 
@@ -80,7 +80,7 @@ spatial.headTrackingEnabled = true
 
 **Visual Mapping:**
 ```swift
-// File: Sources/Blab/Visual/MIDIToVisualMapper.swift (415 Zeilen)
+// File: Sources/Echoelmusic/Visual/MIDIToVisualMapper.swift (415 Zeilen)
 let visualMapper = MIDIToVisualMapper()
 
 // 5 Visualisierungen:
@@ -102,7 +102,7 @@ visualMapper.updateBioParameters(bioParams)
 
 **Push 3 LED Control:**
 ```swift
-// File: Sources/Blab/LED/Push3LEDController.swift (458 Zeilen)
+// File: Sources/Echoelmusic/LED/Push3LEDController.swift (458 Zeilen)
 let push3 = Push3LEDController()
 try push3.connect()  // Auto-detects Push 3 via CoreMIDI
 
@@ -125,7 +125,7 @@ push3.updateBioReactive(
 
 **DMX Lighting:**
 ```swift
-// File: Sources/Blab/LED/MIDIToLightMapper.swift (520 Zeilen)
+// File: Sources/Echoelmusic/LED/MIDIToLightMapper.swift (520 Zeilen)
 let lighting = MIDIToLightMapper()
 try lighting.connect()  // Art-Net UDP to 192.168.1.100:6454
 
@@ -145,7 +145,7 @@ lighting.setScene(.strobeSync)   // Heart rate strobe
 
 #### **2.2 UnifiedControlHub Integration:**
 ```swift
-// File: Sources/Blab/Unified/UnifiedControlHub.swift (650+ Zeilen)
+// File: Sources/Echoelmusic/Unified/UnifiedControlHub.swift (650+ Zeilen)
 let hub = UnifiedControlHub()
 
 // Enable all Phase 3 features:
@@ -322,7 +322,7 @@ Cmd+U (Run Tests)
 
 ### **4.1 Neue UI Controls erstellen:**
 
-Erstelle: `Sources/Blab/Views/Components/Phase3ControlsView.swift`
+Erstelle: `Sources/Echoelmusic/Views/Components/Phase3ControlsView.swift`
 
 ```swift
 import SwiftUI
@@ -568,7 +568,7 @@ Diese TODOs sind **nicht kritisch** - Fallback-Werte (6.0 breathing, 0.5 audio) 
 ### **Für schnellen Start:**
 ```bash
 # 1. Projekt öffnen
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/echoelmusic-ios-app
 open Package.swift
 
 # 2. In Xcode:
@@ -613,7 +613,7 @@ UI:
 ```
 
 ### **GitHub:**
-- **Repo:** `vibrationalforce/blab-ios-app`
+- **Repo:** `vibrationalforce/echoelmusic-ios-app`
 - **Branch:** `main`
 - **Latest:** `65a260f` (API integration complete)
 

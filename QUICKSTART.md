@@ -1,4 +1,4 @@
-# BLAB - Quick Start Guide
+# Echoelmusic - Quick Start Guide
 
 This guide will help you build and install the Blab app on your iPhone **without needing the full Xcode application**.
 
@@ -170,7 +170,7 @@ Once the app is working, you can:
 
 ### 1. Customize Colors
 
-Edit [ContentView.swift](Sources/Blab/ContentView.swift):
+Edit [ContentView.swift](Sources/Echoelmusic/ContentView.swift):
 
 ```swift
 // Change background gradient (lines ~25-30)
@@ -179,7 +179,7 @@ Color(red: 0.05, green: 0.05, blue: 0.15),  // Your custom color here
 
 ### 2. Modify Particles
 
-Edit [ParticleView.swift](Sources/Blab/ParticleView.swift):
+Edit [ParticleView.swift](Sources/Echoelmusic/ParticleView.swift):
 
 ```swift
 // Change particle colors (lines ~35-40)
@@ -188,7 +188,7 @@ Color.cyan.opacity(0.6),  // Change to your preferred color
 
 ### 3. Adjust Audio Sensitivity
 
-Edit [MicrophoneManager.swift](Sources/Blab/MicrophoneManager.swift):
+Edit [MicrophoneManager.swift](Sources/Echoelmusic/MicrophoneManager.swift):
 
 ```swift
 // Line ~135 - adjust the multiplier (currently 20)
@@ -240,7 +240,7 @@ BlabStudio/
 ├── README.md               # Full documentation
 ├── QUICKSTART.md           # This file
 ├── .gitignore              # Git ignore rules
-└── Sources/Blab/
+└── Sources/Echoelmusic/
     ├── BlabApp.swift       # App entry point
     ├── ContentView.swift   # Main UI
     ├── MicrophoneManager.swift  # Audio capture

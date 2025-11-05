@@ -1,4 +1,4 @@
-# 🎹 DAW Integration Guide - BLAB iOS App
+# 🎹 DAW Integration Guide - Echoelmusic iOS App
 
 Complete guide for integrating BLAB's MIDI 2.0 + MPE output with professional DAWs and MPE synths.
 

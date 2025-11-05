@@ -18,7 +18,7 @@ Code auf MacBook schreiben (VS Code) → Push zu GitHub → Automatischer Build 
 - App in App Store Connect registrieren
 
 ### 3. GitHub Repository
-- Du hast bereits: https://github.com/vibrationalforce/blab-ios-app
+- Du hast bereits: https://github.com/vibrationalforce/echoelmusic-ios-app
 - GitHub Actions ist aktiviert (kostenlos für öffentliche Repos)
 
 ---
@@ -101,7 +101,7 @@ Code auf MacBook schreiben (VS Code) → Push zu GitHub → Automatischer Build 
 
 **3.1. Secrets in GitHub Repository hinzufügen**
 ```
-→ Gehe zu: https://github.com/vibrationalforce/blab-ios-app/settings/secrets/actions
+→ Gehe zu: https://github.com/vibrationalforce/echoelmusic-ios-app/settings/secrets/actions
 → Klicke "New repository secret"
 ```
 
@@ -135,7 +135,7 @@ cat ~/Downloads/AuthKey_ABC123XYZ.p8
 **Option A: Eigener Mac mit Xcode (empfohlen)**
 ```bash
 # Auf einem Mac mit Xcode:
-cd ~/blab-ios-app
+cd ~/echoelmusic-ios-app
 open Package.swift  # Öffnet in Xcode
 
 # In Xcode:
@@ -148,7 +148,7 @@ open Package.swift  # Öffnet in Xcode
 → Language: Swift
 
 # Importiere deine existierenden Swift Files
-→ Drag & Drop alle .swift files aus Sources/Blab/
+→ Drag & Drop alle .swift files aus Sources/Echoelmusic/
 → Signing & Capabilities → Automatically manage signing ✅
 ```
 
@@ -193,19 +193,19 @@ Du hast bereits 2 Workflow Files:
 **5.2. Workflow aktivieren**
 ```bash
 # Committen und pushen
-cd ~/blab-ios-app
+cd ~/echoelmusic-ios-app
 git add .github/workflows/
 git commit -m "Add GitHub Actions workflows for CI/CD"
 git push origin main
 
 # Auf GitHub prüfen
-→ https://github.com/vibrationalforce/blab-ios-app/actions
+→ https://github.com/vibrationalforce/echoelmusic-ios-app/actions
 → Du solltest einen laufenden Workflow sehen
 ```
 
 **5.3. Ersten Build triggern**
 ```
-→ Gehe zu: https://github.com/vibrationalforce/blab-ios-app/actions
+→ Gehe zu: https://github.com/vibrationalforce/echoelmusic-ios-app/actions
 → Wähle "iOS Build & Test" Workflow
 → Klicke "Run workflow" → "Run workflow"
 → Warte 5-10 Minuten für ersten Build
@@ -249,7 +249,7 @@ git push origin main
 
 ```bash
 # 1. Code schreiben
-code ~/blab-ios-app
+code ~/echoelmusic-ios-app
 
 # 2. Changes committen
 git add .
@@ -275,7 +275,7 @@ git push origin main
 
 ```
 1. Öffne TestFlight App
-2. BLAB App → "Update" (wenn neue Version)
+2. Echoelmusic App → "Update" (wenn neue Version)
 3. Teste die neue Version
 4. Feedback direkt in TestFlight geben (optional)
 ```
@@ -286,7 +286,7 @@ git push origin main
 
 **Wo?**
 ```
-→ https://github.com/vibrationalforce/blab-ios-app/actions
+→ https://github.com/vibrationalforce/echoelmusic-ios-app/actions
 → Klicke auf einen Workflow Run
 → Klicke auf "Build and Test iOS App" Job
 → Sieh alle Build Schritte und Logs
@@ -295,7 +295,7 @@ git push origin main
 **Build Status Badge hinzufügen** (optional)
 ```markdown
 # In README.md:
-![iOS Build](https://github.com/vibrationalforce/blab-ios-app/workflows/iOS%20Build%20%26%20Test/badge.svg)
+![iOS Build](https://github.com/vibrationalforce/echoelmusic-ios-app/workflows/iOS%20Build%20%26%20Test/badge.svg)
 ```
 
 ---

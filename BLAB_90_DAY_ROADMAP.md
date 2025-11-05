@@ -3,7 +3,7 @@
 **Start Date:** 2025-10-21 (Week 1)
 **Target Completion:** 2026-01-19 (Week 13)
 **Lead Developer:** Claude Code
-**Repository:** https://github.com/vibrationalforce/blab-ios-app
+**Repository:** https://github.com/vibrationalforce/echoelmusic-ios-app
 
 ---
 
@@ -42,7 +42,7 @@
 
 1. **Project Restructure**
    ```
-   Sources/Blab/
+   Sources/Echoelmusic/
    ├── Audio/          (existing, refactor)
    ├── Bio/            (existing, refactor)
    ├── Spatial/        (NEW)

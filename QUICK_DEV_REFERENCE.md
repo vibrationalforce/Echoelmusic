@@ -47,9 +47,9 @@ swift build                 # Build ohne Run
 ### 1️⃣ Bio-Mapping Presets
 **Files zu erstellen:**
 ```
-Sources/Blab/Biofeedback/BioMappingPresets.swift
-Sources/Blab/Biofeedback/BioParameterMapping.swift
-Sources/Blab/UI/PresetSelectionView.swift
+Sources/Echoelmusic/Biofeedback/BioMappingPresets.swift
+Sources/Echoelmusic/Biofeedback/BioParameterMapping.swift
+Sources/Echoelmusic/UI/PresetSelectionView.swift
 Tests/BlabTests/BioMappingPresetsTests.swift
 ```
 
@@ -63,10 +63,10 @@ Tests/BlabTests/BioMappingPresetsTests.swift
 ### 2️⃣ Visual Modes Extensions
 **Files zu erstellen:**
 ```
-Sources/Blab/Visual/Modes/SacredGeometryMode.swift
-Sources/Blab/Visual/Modes/BrainwaveVisualizerMode.swift
-Sources/Blab/Visual/Modes/HeartCoherenceMandalaMode.swift
-Sources/Blab/Visual/Shaders/BioReactiveCymatics.metal
+Sources/Echoelmusic/Visual/Modes/SacredGeometryMode.swift
+Sources/Echoelmusic/Visual/Modes/BrainwaveVisualizerMode.swift
+Sources/Echoelmusic/Visual/Modes/HeartCoherenceMandalaMode.swift
+Sources/Echoelmusic/Visual/Shaders/BioReactiveCymatics.metal
 ```
 
 ---
@@ -76,7 +76,7 @@ Sources/Blab/Visual/Shaders/BioReactiveCymatics.metal
 ### Neues BlabNode erstellen
 
 ```swift
-// Sources/Blab/Audio/Nodes/MyNode.swift
+// Sources/Echoelmusic/Audio/Nodes/MyNode.swift
 import AVFoundation
 
 class MyNode: BlabNode {
@@ -113,7 +113,7 @@ class MyNode: BlabNode {
 ### Neuer Visualization Mode
 
 ```swift
-// Sources/Blab/Visual/Modes/MyMode.swift
+// Sources/Echoelmusic/Visual/Modes/MyMode.swift
 import SwiftUI
 
 class MyMode: VisualizationMode {
@@ -338,9 +338,9 @@ Implementiere das Bio-Mapping Presets System gemäß
 CLAUDE_CODE_ULTIMATE_PROMPT.md, Sektion "Bio-Mapping Presets".
 
 Files:
-- Sources/Blab/Biofeedback/BioMappingPresets.swift
-- Sources/Blab/Biofeedback/BioParameterMapping.swift
-- Sources/Blab/UI/PresetSelectionView.swift
+- Sources/Echoelmusic/Biofeedback/BioMappingPresets.swift
+- Sources/Echoelmusic/Biofeedback/BioParameterMapping.swift
+- Sources/Echoelmusic/UI/PresetSelectionView.swift
 - Tests/BlabTests/BioMappingPresetsTests.swift
 
 Requirements:
@@ -453,5 +453,5 @@ Bitte debuggen und fixen.
 
 **Happy Coding!** ✨
 
-*Generated with Claude Code for BLAB Development*
+*Generated with Claude Code for Echoelmusic Development*
 *Version: V∞.3 | 2025-10-21*

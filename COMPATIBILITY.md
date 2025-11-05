@@ -1,4 +1,4 @@
-# BLAB - iOS Kompatibilität & Features
+# Echoelmusic - iOS Kompatibilität & Features
 
 ## 📱 Unterstützte iOS Versionen
 
