@@ -1,14 +1,16 @@
-// swift-tools-version: 5.7
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 5.5
+// Minimum Swift 5.5 for maximum Xcode compatibility (13.4+)
+// Compatible with Xcode 13.4 - 16.2+ for smooth upgrades
 
 import PackageDescription
 
 let package = Package(
     name: "Echoelmusic",
     platforms: [
-        .iOS(.v15)  // Minimum iOS 15 for wide device compatibility
-                    // iOS 16+ recommended for enhanced features
-                    // iOS 19+ for Apple Spatial Audio Features (ASAF)
+        .iOS(.v14)  // iOS 14.0+ for maximum device compatibility
+                    // iOS 15+ recommended for enhanced features (HealthKit, ARKit)
+                    // iOS 16+ for advanced MIDI 2.0
+                    // iOS 19+ for Apple Spatial Audio Features (AVAudioEnvironmentNode)
     ],
     products: [
         // The main app product

@@ -2,12 +2,13 @@ import Foundation
 import UIKit
 import AVFoundation
 
-/// Detects device capabilities for BLAB
+/// Detects device capabilities for Echoelmusic
 /// - iPhone model detection
-/// - iOS version check
-/// - ASAF (Apple Spatial Audio Features) support
+/// - iOS version check (iOS 14.0+)
+/// - ASAF (Apple Spatial Audio Features) support (iOS 19+)
 /// - AirPods model detection
 /// - Audio codec capabilities
+/// - Runtime feature detection for maximum compatibility
 @MainActor
 class DeviceCapabilities: ObservableObject {
 
@@ -225,6 +226,28 @@ class DeviceCapabilities: ObservableObject {
             return false
         }
         return majorInt >= 15
+    }
+
+    /// Check if device runs iOS 14+ (minimum version for app)
+    var meetsMinimumIOSVersion: Bool {
+        let versionComponents = iOSVersion.components(separatedBy: ".")
+        guard let majorVersion = versionComponents.first,
+              let majorInt = Int(majorVersion) else {
+            return false
+        }
+        return majorInt >= 14
+    }
+
+    /// Check if HealthKit is available (iOS 8+, but optimized for iOS 14+)
+    var canUseHealthKit: Bool {
+        // HealthKit available since iOS 8, so always true on our min iOS 14+
+        return meetsMinimumIOSVersion
+    }
+
+    /// Check if ARKit Face Tracking is available (iOS 11+)
+    var canUseFaceTracking: Bool {
+        // ARKit Face Tracking available since iOS 11, always true on iOS 14+
+        return meetsMinimumIOSVersion
     }
 
     /// Get capability summary

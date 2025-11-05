@@ -2,11 +2,14 @@
 
 **Breath → Sound → Light → Consciousness**
 
-[![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
-[![iOS](https://img.shields.io/badge/iOS-15.0+-blue.svg)](https://developer.apple.com/ios/)
+[![Swift](https://img.shields.io/badge/Swift-5.5+-orange.svg)](https://swift.org)
+[![iOS](https://img.shields.io/badge/iOS-14.0+-blue.svg)](https://developer.apple.com/ios/)
+[![Xcode](https://img.shields.io/badge/Xcode-13.4+-blue.svg)](https://developer.apple.com/xcode/)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 
 > Bio-reactive music creation and performance system combining voice, biofeedback, spatial audio, and light control
+
+**📋 [Full Compatibility Matrix](COMPATIBILITY_MATRIX.md)** - iOS 14-19, Xcode 13.4-16.2+
 
 ---
 
@@ -220,6 +223,7 @@ swift test
 ## 📖 Documentation
 
 ### Quick References:
+- **[COMPATIBILITY_MATRIX.md](COMPATIBILITY_MATRIX.md)** - Full compatibility guide (iOS 14-19, Xcode 13.4-16.2+)
 - **[XCODE_HANDOFF.md](XCODE_HANDOFF.md)** - Xcode development guide (MUST READ)
 - **[PHASE_3_OPTIMIZED.md](PHASE_3_OPTIMIZED.md)** - Phase 3 optimization details
 - **[DAW_INTEGRATION_GUIDE.md](DAW_INTEGRATION_GUIDE.md)** - DAW integration
@@ -227,7 +231,7 @@ swift test
 - **[BLAB_90_DAY_ROADMAP.md](BLAB_90_DAY_ROADMAP.md)** - 90-day plan
 
 ### Additional Docs:
-- `COMPATIBILITY.md` - iOS compatibility notes
+- `COMPATIBILITY.md` - iOS compatibility notes (legacy)
 - `DEPLOYMENT.md` - Deployment guide
 - `TESTFLIGHT_SETUP.md` - TestFlight configuration
 
