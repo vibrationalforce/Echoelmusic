@@ -6,8 +6,8 @@ import PackageDescription
 let package = Package(
     name: "Echoelmusic",
     platforms: [
-        .iOS(.v15)  // Minimum iOS 15 for wide device compatibility
-                    // iOS 16+ recommended for enhanced features
+        .iOS(.v16)  // Minimum iOS 16 for core features
+                    // iOS 17+ recommended for enhanced performance
                     // iOS 19+ for Apple Spatial Audio Features (ASAF)
     ],
     products: [

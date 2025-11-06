@@ -7,9 +7,10 @@ import AVFoundation
 @MainActor
 class DelayNode: BaseBlabNode {
 
-    // MARK: - AVAudioUnit Delay
+    // MARK: - DSP Processing
 
-    private let delayUnit: AVAudioUnitDelay
+    private let dspProcessor = ManualDSPProcessor()
+    private var sampleRate: Double = 48000.0
 
 
     // MARK: - Parameters
@@ -25,8 +26,6 @@ class DelayNode: BaseBlabNode {
     // MARK: - Initialization
 
     init() {
-        self.delayUnit = AVAudioUnitDelay()
-
         super.init(name: "Bio-Reactive Delay", type: .effect)
 
         // Setup parameters
@@ -75,13 +74,7 @@ class DelayNode: BaseBlabNode {
                 isAutomatable: true,
                 type: .continuous
             )
-        ]
-
-        // Configure delay
-        delayUnit.delayTime = 0.5  // 500ms
-        delayUnit.feedback = 30.0   // 30%
-        delayUnit.wetDryMix = 30.0  // 30% wet
-        delayUnit.lowPassCutoff = 8000.0  // 8kHz
+        )
     }
 
 
@@ -92,25 +85,21 @@ class DelayNode: BaseBlabNode {
             return buffer
         }
 
-        // Apply delay parameters
-        if let delayTime = getParameter(name: Params.delayTime) {
-            delayUnit.delayTime = TimeInterval(delayTime)
+        // Get delay parameters
+        guard let delayTime = getParameter(name: Params.delayTime),
+              let feedback = getParameter(name: Params.feedback),
+              let wetDryMix = getParameter(name: Params.wetDryMix) else {
+            return buffer
         }
 
-        if let feedback = getParameter(name: Params.feedback) {
-            delayUnit.feedback = feedback
-        }
-
-        if let wetDryMix = getParameter(name: Params.wetDryMix) {
-            delayUnit.wetDryMix = wetDryMix
-        }
-
-        if let cutoff = getParameter(name: Params.lowPassCutoff) {
-            delayUnit.lowPassCutoff = cutoff
-        }
-
-        // Note: Full implementation would render through AVAudioUnit
-        return buffer
+        // Process with manual DSP
+        return dspProcessor.processDelay(
+            buffer,
+            delayTime: delayTime,
+            feedback: feedback,
+            wetDryMix: wetDryMix,
+            sampleRate: sampleRate
+        ) ?? buffer
     }
 
 
@@ -181,7 +170,7 @@ class DelayNode: BaseBlabNode {
     // MARK: - Lifecycle
 
     override func prepare(sampleRate: Double, maxFrames: AVAudioFrameCount) {
-        // Delay is ready (uses AVAudioUnitDelay)
+        self.sampleRate = sampleRate
     }
 
     override func start() {

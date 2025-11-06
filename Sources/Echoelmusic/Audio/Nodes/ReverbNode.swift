@@ -6,9 +6,10 @@ import AVFoundation
 @MainActor
 class ReverbNode: BaseBlabNode {
 
-    // MARK: - AVAudioUnit Reverb
+    // MARK: - DSP Processing
 
-    private let reverbUnit: AVAudioUnitReverb
+    private let dspProcessor = ManualDSPProcessor()
+    private var sampleRate: Double = 48000.0
 
 
     // MARK: - Parameters
@@ -24,8 +25,6 @@ class ReverbNode: BaseBlabNode {
     // MARK: - Initialization
 
     init() {
-        self.reverbUnit = AVAudioUnitReverb()
-
         super.init(name: "Bio-Reactive Reverb", type: .effect)
 
         // Setup parameters
@@ -74,11 +73,7 @@ class ReverbNode: BaseBlabNode {
                 isAutomatable: true,
                 type: .continuous
             )
-        ]
-
-        // Configure reverb
-        reverbUnit.wetDryMix = 30.0  // 30% wet
-        reverbUnit.loadFactoryPreset(.mediumHall)
+        )
     }
 
 
@@ -90,16 +85,19 @@ class ReverbNode: BaseBlabNode {
             return buffer
         }
 
-        // Apply reverb parameters
-        if let wetDry = getParameter(name: Params.wetDry) {
-            reverbUnit.wetDryMix = wetDry
+        // Get reverb parameters
+        guard let wetDry = getParameter(name: Params.wetDry),
+              let roomSize = getParameter(name: Params.mediumRoomSize) else {
+            return buffer
         }
 
-        // Note: In a full implementation, we'd render through the AVAudioUnit
-        // For now, this is a placeholder showing the architecture
-        // Real implementation would use AVAudioEngine or manual DSP
-
-        return buffer
+        // Process with manual DSP
+        return dspProcessor.processReverb(
+            buffer,
+            wetDryMix: wetDry,
+            roomSize: roomSize,
+            sampleRate: sampleRate
+        ) ?? buffer
     }
 
 
@@ -143,7 +141,7 @@ class ReverbNode: BaseBlabNode {
     // MARK: - Lifecycle
 
     override func prepare(sampleRate: Double, maxFrames: AVAudioFrameCount) {
-        // Reverb is always ready (uses AVAudioUnitReverb)
+        self.sampleRate = sampleRate
     }
 
     override func start() {
