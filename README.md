@@ -1,4 +1,4 @@
-# BLAB iOS App 🫧
+# Echoelmusic iOS App 🎵
 
 **Breath → Sound → Light → Consciousness**
 
@@ -13,7 +13,7 @@
 ## 🚀 Quick Start (Xcode Handoff)
 
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/echoelmusic-ios-app
 open Package.swift  # Opens in Xcode automatically
 ```
 
@@ -29,9 +29,9 @@ Then in Xcode:
 ## 📊 Project Status
 
 **Current Phase:** Phase 3 Complete & Optimized ✅
-**Last Update:** 2025-10-24
+**Last Update:** 2025-11-06
 **GitHub:** `vibrationalforce/blab-ios-app`
-**Latest Commit:** `65a260f` - API integration complete
+**Latest Commit:** App renamed to Echoelmusic
 
 ### Phase Completion:
 - ✅ **Phase 0:** Project Setup & CI/CD (100%)
@@ -45,9 +45,9 @@ Then in Xcode:
 
 ---
 
-## 🎯 What is BLAB?
+## 🎯 What is Echoelmusic?
 
-BLAB is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
+Echoelmusic is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
 - 🌊 **Spatial Audio** (3D/4D/Fibonacci Field Arrays)
 - 🎨 **Real-time Visuals** (Cymatics, Mandalas, Particles)
 - 💡 **LED/DMX Lighting** (Push 3, Art-Net)
