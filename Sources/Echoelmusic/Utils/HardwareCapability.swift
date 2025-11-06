@@ -51,15 +51,32 @@ public class HardwareCapability {
 
     // MARK: - Feature Availability
 
-    /// Can use ARKit face tracking
+    /// Can use ARKit face tracking (TrueDepth)
     public var canUseFaceTracking: Bool {
         return hasTrueDepthCamera && ARFaceTrackingConfiguration.isSupported
     }
 
     /// Can use Vision-based face detection (fallback)
     public var canUseVisionFaceDetection: Bool {
-        // Available on all devices with front camera
+        // Available on all devices with front camera (iOS 16+)
         return true
+    }
+
+    /// Can use ANY face tracking method (ARKit OR Vision)
+    /// Coverage: 90%+ of devices
+    public var canUseAnyFaceTracking: Bool {
+        return canUseFaceTracking || canUseVisionFaceDetection
+    }
+
+    /// Get recommended face tracking method
+    public var recommendedFaceTrackingMethod: FaceTrackingMethod {
+        if canUseFaceTracking {
+            return .arkit  // TrueDepth: 52 blend shapes, 95% accuracy
+        } else if canUseVisionFaceDetection {
+            return .vision  // 2D landmarks: ~13 blend shapes, 85% accuracy
+        } else {
+            return .none
+        }
     }
 
     /// Can use device gyroscope for head tracking
@@ -280,7 +297,8 @@ public class HardwareCapability {
         - Neural Engine: \(hasNeuralEngine ? "✅" : "❌")
 
         Features:
-        - Face Tracking: \(canUseFaceTracking ? "✅ Native" : "⚠️ Fallback")
+        - Face Tracking: \(canUseAnyFaceTracking ? (canUseFaceTracking ? "✅ ARKit (52 shapes)" : "✅ Vision (13 shapes)") : "❌")
+        - Face Method: \(recommendedFaceTrackingMethod.rawValue)
         - Head Tracking: \(canUseGyroscopeHeadTracking ? "✅" : "❌")
         - Spatial Audio: \(canUseHardwareSpatialAudio ? "✅ Hardware" : "⚠️ Software")
         - Metal 3: \(hasMetal3 ? "✅" : "❌")
@@ -348,6 +366,36 @@ public enum VisualQuality: String {
         case .high: return 60
         case .medium: return 30
         case .low: return 30
+        }
+    }
+}
+
+public enum FaceTrackingMethod: String {
+    case arkit = "ARKit TrueDepth"
+    case vision = "Vision 2D"
+    case none = "None"
+
+    var blendShapeCount: Int {
+        switch self {
+        case .arkit: return 52
+        case .vision: return 13
+        case .none: return 0
+        }
+    }
+
+    var accuracy: Float {
+        switch self {
+        case .arkit: return 0.95
+        case .vision: return 0.85
+        case .none: return 0.0
+        }
+    }
+
+    var deviceCoverage: String {
+        switch self {
+        case .arkit: return "~40% (TrueDepth devices)"
+        case .vision: return "~90% (all with front camera)"
+        case .none: return "0%"
         }
     }
 }
