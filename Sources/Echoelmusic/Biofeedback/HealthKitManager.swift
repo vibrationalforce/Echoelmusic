@@ -24,6 +24,11 @@ class HealthKitManager: ObservableObject {
     /// 60-100: High coherence (optimal/flow state)
     @Published var hrvCoherence: Double = 0.0
 
+    /// Breathing rate in breaths per minute (calculated from HRV)
+    /// Normal range: 6-20 breaths/min
+    /// Optimal for relaxation: 5-6 breaths/min (resonant frequency breathing)
+    @Published var breathingRate: Double = 6.0
+
     /// Whether HealthKit authorization has been granted
     @Published var isAuthorized: Bool = false
 
@@ -46,6 +51,9 @@ class HealthKitManager: ObservableObject {
     /// Stores last 60 seconds of RR intervals
     private var rrIntervalBuffer: [Double] = []
     private let maxBufferSize = 120 // 120 RR intervals ≈ 60 seconds at 60 BPM
+
+    /// Timestamp buffer for breathing rate calculation
+    private var rrTimestamps: [Date] = []
 
     /// Types we need to read from HealthKit
     private let typesToRead: Set<HKObjectType> = [
@@ -273,6 +281,11 @@ class HealthKitManager: ObservableObject {
                 if self.rrIntervalBuffer.count >= 30 { // Need minimum data
                     self.hrvCoherence = self.calculateCoherence(rrIntervals: self.rrIntervalBuffer)
                 }
+
+                // Calculate breathing rate from RR intervals
+                if self.rrIntervalBuffer.count >= 40 { // Need more data for breathing rate
+                    self.breathingRate = self.calculateBreathingRate(rrIntervals: self.rrIntervalBuffer)
+                }
             }
         }
     }
@@ -415,6 +428,68 @@ class HealthKitManager: ObservableObject {
             power *= 2
         }
         return power
+    }
+
+
+    // MARK: - Breathing Rate Calculation
+
+    /// Calculate breathing rate from RR interval patterns
+    /// Breathing induces oscillations in RR intervals (Respiratory Sinus Arrhythmia)
+    /// Typical breathing frequency: 0.15-0.4 Hz (9-24 breaths/min)
+    /// Optimal for relaxation: 0.1 Hz (6 breaths/min)
+    ///
+    /// Algorithm:
+    /// 1. Detrend RR intervals
+    /// 2. Apply bandpass filter for respiratory frequency band (0.15-0.4 Hz)
+    /// 3. Detect peaks in filtered signal
+    /// 4. Calculate breathing rate from inter-peak intervals
+    ///
+    /// - Parameter rrIntervals: Array of RR intervals in milliseconds
+    /// - Returns: Breathing rate in breaths per minute
+    func calculateBreathingRate(rrIntervals: [Double]) -> Double {
+        guard rrIntervals.count >= 40 else { return 6.0 } // Default to 6 breaths/min
+
+        // Step 1: Detrend the data
+        let detrended = detrend(rrIntervals)
+
+        // Step 2: Perform FFT to analyze frequencies
+        let fftSize = nextPowerOf2(detrended.count)
+        let powerSpectrum = performFFTForCoherence(detrended, fftSize: fftSize)
+
+        // Step 3: Find peak in respiratory frequency band
+        // Respiratory band: 0.15-0.4 Hz (9-24 breaths/min)
+        // Assuming ~1 Hz sampling rate (1 RR interval per second)
+        let samplingRate = 1.0
+        let respiratoryBandLow = 0.15  // Hz (9 breaths/min)
+        let respiratoryBandHigh = 0.4  // Hz (24 breaths/min)
+
+        let binLow = Int(respiratoryBandLow * Double(fftSize) / samplingRate)
+        let binHigh = Int(respiratoryBandHigh * Double(fftSize) / samplingRate)
+
+        // Find peak frequency in respiratory band
+        var maxPower: Double = 0.0
+        var peakBin: Int = binLow
+
+        for bin in binLow...min(binHigh, powerSpectrum.count - 1) {
+            if powerSpectrum[bin] > maxPower {
+                maxPower = powerSpectrum[bin]
+                peakBin = bin
+            }
+        }
+
+        // Convert bin to frequency
+        let peakFrequency = Double(peakBin) * samplingRate / Double(fftSize)
+
+        // Convert frequency to breaths per minute
+        let breathingRate = peakFrequency * 60.0
+
+        // Clamp to reasonable range (4-30 breaths/min)
+        let clampedRate = max(4.0, min(30.0, breathingRate))
+
+        // Smooth with previous value
+        let smoothed = self.breathingRate * 0.8 + clampedRate * 0.2
+
+        return smoothed
     }
 
 

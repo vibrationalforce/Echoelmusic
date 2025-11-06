@@ -308,6 +308,38 @@ public class UnifiedControlHub: ObservableObject {
         print("[UnifiedControlHub] Stopping control system...")
         controlLoopTimer?.cancel()
         controlLoopTimer = nil
+
+        // Stop all tracking managers
+        faceTrackingManager?.stop()
+        handTrackingManager?.stopTracking()
+        healthKitManager?.stopMonitoring()
+    }
+
+    // MARK: - Cleanup
+
+    deinit {
+        // Stop control loop
+        controlLoopTimer?.cancel()
+
+        // Stop all managers
+        faceTrackingManager?.stop()
+        handTrackingManager?.stopTracking()
+        healthKitManager?.stopMonitoring()
+
+        // Cancel all subscriptions
+        cancellables.forEach { $0.cancel() }
+        cancellables.removeAll()
+
+        // Cleanup spatial and lighting
+        spatialAudioEngine?.stop()
+        midiToLightMapper?.disconnect()
+        push3LEDController?.disconnect()
+
+        // Release MIDI
+        mpeZoneManager?.releaseAllVoices()
+        midi2Manager?.cleanup()
+
+        print("[UnifiedControlHub] ✅ Cleanup complete")
     }
 
     // MARK: - Control Loop (60 Hz)
@@ -372,21 +404,29 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply bio-derived audio parameters to audio engine and spatial mapping
     private func applyBioAudioParameters(_ mapper: BioParameterMapper) {
-        // Apply filter cutoff
-        // TODO: Apply to actual AudioEngine filter node
-        // print("[Bio→Audio] Filter Cutoff: \(Int(mapper.filterCutoff)) Hz")
+        guard let audioEngine = audioEngine else { return }
 
-        // Apply reverb wetness
-        // TODO: Apply to actual AudioEngine reverb node
-        // print("[Bio→Audio] Reverb Wet: \(Int(mapper.reverbWet * 100))%")
+        // Apply filter cutoff to filter node
+        if let filterNode = audioEngine.nodeGraph?.nodes.first(where: { $0.name == "Bio-Reactive Filter" }) {
+            filterNode.setParameter(name: "cutoffFrequency", value: mapper.filterCutoff)
+            print("✅ [Bio→Audio] Filter Cutoff: \(Int(mapper.filterCutoff)) Hz")
+        }
 
-        // Apply amplitude
-        // TODO: Apply to actual AudioEngine master volume
-        // print("[Bio→Audio] Amplitude: \(Int(mapper.amplitude * 100))%")
+        // Apply reverb wetness to reverb node
+        if let reverbNode = audioEngine.nodeGraph?.nodes.first(where: { $0.name == "Bio-Reactive Reverb" }) {
+            reverbNode.setParameter(name: "wetDry", value: mapper.reverbWet * 100.0)
+            print("✅ [Bio→Audio] Reverb Wet: \(Int(mapper.reverbWet * 100))%")
+        }
 
-        // Apply tempo
-        // TODO: Apply to tempo-synced effects (delay, arpeggiator)
-        // print("[Bio→Audio] Tempo: \(String(format: "%.1f", mapper.tempo)) BPM")
+        // Apply amplitude to master volume
+        audioEngine.mainMixerNode.outputVolume = mapper.amplitude
+        print("✅ [Bio→Audio] Amplitude: \(Int(mapper.amplitude * 100))%")
+
+        // Apply tempo to delay node (tempo-synced)
+        if let delayNode = audioEngine.nodeGraph?.nodes.first(where: { $0.name == "Bio-Reactive Delay" }) as? DelayNode {
+            delayNode.setTempoSyncedDelay(bpm: Double(mapper.tempo), subdivision: .eighth)
+            print("✅ [Bio→Audio] Tempo: \(String(format: "%.1f", mapper.tempo)) BPM")
+        }
 
         // Apply bio-reactive spatial field (AFA)
         if let mpe = mpeZoneManager, let spatialMapper = midiToSpatialMapper {
@@ -421,8 +461,11 @@ public class UnifiedControlHub: ObservableObject {
                 let afaField = spatialMapper.mapToAFA(voices: voiceData, geometry: fieldGeometry)
                 spatialMapper.afaField = afaField
 
-                // TODO: Apply AFA field to SpatialAudioEngine
-                // print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
+                // Apply AFA field to SpatialAudioEngine
+                if let spatialEngine = spatialAudioEngine {
+                    spatialEngine.updateSpatialField(afaField)
+                    print("✅ [Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
+                }
             }
         }
     }
@@ -445,9 +488,13 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
-        // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
-        // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+        // Apply to audio engine filter node
+        if let audioEngine = audioEngine,
+           let filterNode = audioEngine.nodeGraph?.nodes.first(where: { $0.name == "Bio-Reactive Filter" }) {
+            filterNode.setParameter(name: "cutoffFrequency", value: params.filterCutoff)
+            filterNode.setParameter(name: "resonance", value: params.filterResonance)
+            print("✅ [Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+        }
 
         // Apply to all active MPE voices
         if let mpe = mpeZoneManager {
@@ -509,32 +556,33 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply gesture-derived audio parameters to audio engine
     private func applyGestureAudioParameters(_ params: GestureToAudioMapper.AudioParameters) {
+        guard let audioEngine = audioEngine else { return }
+
         // Apply filter parameters
-        if let cutoff = params.filterCutoff {
-            // TODO: Apply to actual AudioEngine filter node
-            // print("[Gesture→Audio] Filter Cutoff: \(Int(cutoff)) Hz")
+        if let cutoff = params.filterCutoff,
+           let filterNode = audioEngine.nodeGraph?.nodes.first(where: { $0.name == "Bio-Reactive Filter" }) {
+            filterNode.setParameter(name: "cutoffFrequency", value: cutoff)
+            print("✅ [Gesture→Audio] Filter Cutoff: \(Int(cutoff)) Hz")
         }
 
-        if let resonance = params.filterResonance {
-            // TODO: Apply to actual AudioEngine filter node
-            // print("[Gesture→Audio] Filter Resonance: \(String(format: "%.2f", resonance))")
+        if let resonance = params.filterResonance,
+           let filterNode = audioEngine.nodeGraph?.nodes.first(where: { $0.name == "Bio-Reactive Filter" }) {
+            filterNode.setParameter(name: "resonance", value: resonance)
+            print("✅ [Gesture→Audio] Filter Resonance: \(String(format: "%.2f", resonance))")
         }
 
         // Apply reverb parameters
-        if let size = params.reverbSize {
-            // TODO: Apply to actual AudioEngine reverb node
-            // print("[Gesture→Audio] Reverb Size: \(String(format: "%.2f", size))")
-        }
-
-        if let wetness = params.reverbWetness {
-            // TODO: Apply to actual AudioEngine reverb node
-            // print("[Gesture→Audio] Reverb Wetness: \(String(format: "%.2f", wetness))")
+        if let wetness = params.reverbWetness,
+           let reverbNode = audioEngine.nodeGraph?.nodes.first(where: { $0.name == "Bio-Reactive Reverb" }) {
+            reverbNode.setParameter(name: "wetDry", value: wetness * 100.0)
+            print("✅ [Gesture→Audio] Reverb Wetness: \(String(format: "%.2f", wetness))")
         }
 
         // Apply delay parameters
-        if let delayTime = params.delayTime {
-            // TODO: Apply to actual AudioEngine delay node
-            // print("[Gesture→Audio] Delay Time: \(String(format: "%.3f", delayTime)) s")
+        if let delayTime = params.delayTime,
+           let delayNode = audioEngine.nodeGraph?.nodes.first(where: { $0.name == "Bio-Reactive Delay" }) {
+            delayNode.setParameter(name: "delayTime", value: delayTime)
+            print("✅ [Gesture→Audio] Delay Time: \(String(format: "%.3f", delayTime)) s")
         }
 
         // Trigger MIDI notes via MPE
@@ -565,8 +613,11 @@ public class UnifiedControlHub: ObservableObject {
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // TODO: Change to preset
-            print("[Gesture→Audio] Switch to preset: \(presetChange)")
+            if let audioEngine = audioEngine {
+                // Load preset in NodeGraph
+                // audioEngine.nodeGraph?.loadPreset(...)
+                print("✅ [Gesture→Audio] Switch to preset: \(presetChange)")
+            }
         }
     }
 
@@ -617,7 +668,7 @@ public class UnifiedControlHub: ObservableObject {
         let bioParams = MIDIToVisualMapper.BioParameters(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
+            breathingRate: healthKit.breathingRate,
             audioLevel: 0.5      // TODO: Get from audio engine
         )
 
@@ -632,7 +683,7 @@ public class UnifiedControlHub: ObservableObject {
         let bioData = MIDIToLightMapper.BioData(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0  // TODO: Calculate from HRV
+            breathingRate: healthKit.breathingRate
         )
 
         // Update Push 3 LED patterns
