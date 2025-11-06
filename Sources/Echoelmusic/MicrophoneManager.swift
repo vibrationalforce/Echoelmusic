@@ -4,6 +4,7 @@ import Accelerate
 
 /// Manages microphone access and advanced audio processing
 /// Now includes FFT for frequency detection and professional-grade DSP
+/// Uses SharedAudioEngine for efficient resource management
 class MicrophoneManager: NSObject, ObservableObject {
 
     // MARK: - Published Properties
@@ -32,11 +33,8 @@ class MicrophoneManager: NSObject, ObservableObject {
 
     // MARK: - Private Properties
 
-    /// The audio engine that processes audio input
-    private var audioEngine: AVAudioEngine?
-
-    /// The input node that captures microphone data
-    private var inputNode: AVAudioInputNode?
+    /// Shared audio engine (injectable for testing)
+    private let sharedEngine: SharedAudioEngine
 
     /// FFT setup for frequency analysis
     private var fftSetup: vDSP_DFT_Setup?
@@ -53,9 +51,12 @@ class MicrophoneManager: NSObject, ObservableObject {
 
     // MARK: - Initialization
 
-    override init() {
+    init(sharedEngine: SharedAudioEngine = .shared) {
+        self.sharedEngine = sharedEngine
         super.init()
         checkPermission()
+
+        print("[MicrophoneManager] 🎤 Initialized with SharedAudioEngine")
     }
 
 
@@ -99,23 +100,20 @@ class MicrophoneManager: NSObject, ObservableObject {
         }
 
         do {
-            // Configure the audio session for recording
-            let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.record, mode: .measurement, options: [])
-            try audioSession.setActive(true)
+            // Activate microphone subsystem
+            Task { @MainActor in
+                sharedEngine.activate(subsystem: .microphone)
+            }
 
-            // Create and configure the audio engine
-            audioEngine = AVAudioEngine()
-            guard let audioEngine = audioEngine else { return }
-
-            inputNode = audioEngine.inputNode
+            // Get shared engine and input node
+            let audioEngine = sharedEngine.audioEngine
+            let inputNode = sharedEngine.inputNode
 
             // Get the input format from the microphone
-            let recordingFormat = inputNode?.outputFormat(forBus: 0)
-            guard let format = recordingFormat else { return }
+            let recordingFormat = inputNode.outputFormat(forBus: 0)
 
             // Store sample rate for frequency calculation
-            sampleRate = format.sampleRate
+            sampleRate = recordingFormat.sampleRate
 
             // Setup FFT
             fftSetup = vDSP_DFT_zop_CreateSetup(
@@ -125,22 +123,27 @@ class MicrophoneManager: NSObject, ObservableObject {
             )
 
             // Install a tap to capture audio data
-            inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { [weak self] buffer, _ in
+            inputNode.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: recordingFormat) { [weak self] buffer, _ in
                 self?.processAudioBuffer(buffer)
             }
 
-            // Prepare and start the audio engine
-            audioEngine.prepare()
-            try audioEngine.start()
+            // Start the shared engine if not already running
+            if !audioEngine.isRunning {
+                try Task { @MainActor in
+                    try sharedEngine.start()
+                }.value
+            }
 
             DispatchQueue.main.async {
                 self.isRecording = true
             }
 
-            print("🎙️ Recording started with FFT enabled")
+            print("🎙️ [MicrophoneManager] Recording started with FFT enabled")
+            print("   Using SharedAudioEngine")
+            print("   Sample Rate: \(sampleRate) Hz")
 
         } catch {
-            print("❌ Failed to start recording: \(error.localizedDescription)")
+            print("❌ [MicrophoneManager] Failed to start recording: \(error.localizedDescription)")
             DispatchQueue.main.async {
                 self.isRecording = false
             }
@@ -149,14 +152,13 @@ class MicrophoneManager: NSObject, ObservableObject {
 
     /// Stop recording audio
     func stopRecording() {
-        // Safely stop the audio engine
-        if let engine = audioEngine, engine.isRunning {
-            engine.stop()
-            engine.inputNode.removeTap(onBus: 0)
-        }
+        // Remove tap from input node
+        sharedEngine.inputNode.removeTap(onBus: 0)
 
-        audioEngine = nil
-        inputNode = nil
+        // Deactivate microphone subsystem
+        Task { @MainActor in
+            sharedEngine.deactivate(subsystem: .microphone)
+        }
 
         // Destroy FFT setup
         if let setup = fftSetup {
@@ -164,8 +166,7 @@ class MicrophoneManager: NSObject, ObservableObject {
             fftSetup = nil
         }
 
-        // Deactivate the audio session
-        try? AVAudioSession.sharedInstance().setActive(false)
+        // Note: Don't stop the shared engine - other subsystems may still be using it
 
         DispatchQueue.main.async {
             self.isRecording = false
@@ -174,7 +175,8 @@ class MicrophoneManager: NSObject, ObservableObject {
             self.currentPitch = 0.0
         }
 
-        print("⏹️ Recording stopped")
+        print("⏹️ [MicrophoneManager] Recording stopped")
+        print("   SharedAudioEngine remains active for other subsystems")
     }
 
 
