@@ -48,6 +48,10 @@ struct BlabApp: App {
                     // Connect RecordingEngine to AudioEngine for audio routing
                     recordingEngine.connectAudioEngine(audioEngine)
 
+                    // Enable microphone integration in UnifiedControlHub
+                    unifiedControlHub.enableMicrophoneIntegration(microphoneManager)
+                    print("✅ Microphone integration enabled via UnifiedControlHub")
+
                     // Enable biometric monitoring through UnifiedControlHub
                     Task {
                         do {

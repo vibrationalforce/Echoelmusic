@@ -33,6 +33,7 @@ public class UnifiedControlHub: ObservableObject {
     // MARK: - Dependencies (Injected)
 
     private let audioEngine: AudioEngine?
+    private var microphoneManager: MicrophoneManager?
     private var faceTrackingManager: ARFaceTrackingManager?
     private var faceToAudioMapper: FaceToAudioMapper?
     private var handTrackingManager: HandTrackingManager?
@@ -189,6 +190,34 @@ public class UnifiedControlHub: ObservableObject {
     private func handleBioSignalUpdate() {
         // Bio signal updates happen via Combine subscriptions
         // Actual mapping happens in updateFromBioSignals()
+    }
+
+    /// Enable microphone integration for audio level and pitch tracking
+    /// - Parameter micManager: The MicrophoneManager instance to integrate
+    public func enableMicrophoneIntegration(_ micManager: MicrophoneManager) {
+        self.microphoneManager = micManager
+
+        // Subscribe to audio level changes
+        micManager.$audioLevel
+            .sink { [weak self] _ in
+                // Audio level updates will be used in updateFromBioSignals()
+            }
+            .store(in: &cancellables)
+
+        // Subscribe to pitch changes
+        micManager.$currentPitch
+            .sink { [weak self] _ in
+                // Pitch updates will be used in updateFromBioSignals()
+            }
+            .store(in: &cancellables)
+
+        print("[UnifiedControlHub] Microphone integration enabled")
+    }
+
+    /// Disable microphone integration
+    public func disableMicrophoneIntegration() {
+        microphoneManager = nil
+        print("[UnifiedControlHub] Microphone integration disabled")
     }
 
     /// Enable MIDI 2.0 + MPE output
@@ -355,8 +384,10 @@ public class UnifiedControlHub: ObservableObject {
         // Get current biometric data
         let hrvCoherence = healthKit.hrvCoherence
         let heartRate = healthKit.heartRate
-        let voicePitch: Float = 0.0  // TODO: Get from audio analysis
-        let audioLevel: Float = 0.5  // TODO: Get from audio engine
+
+        // Get audio data from MicrophoneManager (if available)
+        let voicePitch: Float = microphoneManager?.currentPitch ?? 0.0
+        let audioLevel: Float = microphoneManager?.audioLevel ?? 0.5
 
         // Update bio parameter mapping
         mapper.updateParameters(
@@ -372,21 +403,17 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply bio-derived audio parameters to audio engine and spatial mapping
     private func applyBioAudioParameters(_ mapper: BioParameterMapper) {
-        // Apply filter cutoff
-        // TODO: Apply to actual AudioEngine filter node
-        // print("[Bio→Audio] Filter Cutoff: \(Int(mapper.filterCutoff)) Hz")
+        // Apply filter cutoff to AudioEngine
+        audioEngine?.setFilterCutoff(mapper.filterCutoff)
 
-        // Apply reverb wetness
-        // TODO: Apply to actual AudioEngine reverb node
-        // print("[Bio→Audio] Reverb Wet: \(Int(mapper.reverbWet * 100))%")
+        // Apply reverb wetness to AudioEngine
+        audioEngine?.setReverbWet(mapper.reverbWet)
 
-        // Apply amplitude
-        // TODO: Apply to actual AudioEngine master volume
-        // print("[Bio→Audio] Amplitude: \(Int(mapper.amplitude * 100))%")
+        // Apply amplitude to master volume
+        audioEngine?.setMasterVolume(mapper.amplitude)
 
-        // Apply tempo
-        // TODO: Apply to tempo-synced effects (delay, arpeggiator)
-        // print("[Bio→Audio] Tempo: \(String(format: "%.1f", mapper.tempo)) BPM")
+        // Apply tempo to tempo-synced effects
+        audioEngine?.setTempo(mapper.tempo)
 
         // Apply bio-reactive spatial field (AFA)
         if let mpe = mpeZoneManager, let spatialMapper = midiToSpatialMapper {
@@ -446,8 +473,8 @@ public class UnifiedControlHub: ObservableObject {
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
         // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
-        // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+        audioEngine?.setFilterCutoff(params.filterCutoff)
+        // Note: Filter resonance pending implementation
 
         // Apply to all active MPE voices
         if let mpe = mpeZoneManager {
@@ -511,30 +538,28 @@ public class UnifiedControlHub: ObservableObject {
     private func applyGestureAudioParameters(_ params: GestureToAudioMapper.AudioParameters) {
         // Apply filter parameters
         if let cutoff = params.filterCutoff {
-            // TODO: Apply to actual AudioEngine filter node
-            // print("[Gesture→Audio] Filter Cutoff: \(Int(cutoff)) Hz")
+            audioEngine?.setFilterCutoff(cutoff)
         }
 
         if let resonance = params.filterResonance {
-            // TODO: Apply to actual AudioEngine filter node
-            // print("[Gesture→Audio] Filter Resonance: \(String(format: "%.2f", resonance))")
+            // TODO: Implement setFilterResonance when filter node is added
+            print("[Gesture→Audio] Filter Resonance: \(String(format: "%.2f", resonance)) (pending implementation)")
         }
 
         // Apply reverb parameters
         if let size = params.reverbSize {
-            // TODO: Apply to actual AudioEngine reverb node
-            // print("[Gesture→Audio] Reverb Size: \(String(format: "%.2f", size))")
+            // TODO: Implement setReverbSize when reverb node is enhanced
+            print("[Gesture→Audio] Reverb Size: \(String(format: "%.2f", size)) (pending implementation)")
         }
 
         if let wetness = params.reverbWetness {
-            // TODO: Apply to actual AudioEngine reverb node
-            // print("[Gesture→Audio] Reverb Wetness: \(String(format: "%.2f", wetness))")
+            audioEngine?.setReverbWet(wetness)
         }
 
         // Apply delay parameters
         if let delayTime = params.delayTime {
-            // TODO: Apply to actual AudioEngine delay node
-            // print("[Gesture→Audio] Delay Time: \(String(format: "%.3f", delayTime)) s")
+            // TODO: Implement setDelayTime when delay node is added
+            print("[Gesture→Audio] Delay Time: \(String(format: "%.3f", delayTime)) s (pending implementation)")
         }
 
         // Trigger MIDI notes via MPE
@@ -617,8 +642,8 @@ public class UnifiedControlHub: ObservableObject {
         let bioParams = MIDIToVisualMapper.BioParameters(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
-            audioLevel: 0.5      // TODO: Get from audio engine
+            breathingRate: healthKit.breathingRate,
+            audioLevel: microphoneManager?.audioLevel ?? 0.5
         )
 
         visualMapper.updateBioParameters(bioParams)
@@ -632,7 +657,7 @@ public class UnifiedControlHub: ObservableObject {
         let bioData = MIDIToLightMapper.BioData(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0  // TODO: Calculate from HRV
+            breathingRate: healthKit.breathingRate
         )
 
         // Update Push 3 LED patterns

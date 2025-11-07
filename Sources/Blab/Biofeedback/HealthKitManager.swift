@@ -24,6 +24,11 @@ class HealthKitManager: ObservableObject {
     /// 60-100: High coherence (optimal/flow state)
     @Published var hrvCoherence: Double = 0.0
 
+    /// Estimated breathing rate in breaths per minute
+    /// Derived from respiratory sinus arrhythmia (RSA) in HRV data
+    /// Normal range: 6-20 breaths/min, optimal: 6 breaths/min
+    @Published var breathingRate: Double = 12.0
+
     /// Whether HealthKit authorization has been granted
     @Published var isAuthorized: Bool = false
 
@@ -269,9 +274,10 @@ class HealthKitManager: ObservableObject {
             Task { @MainActor in
                 self.hrvRMSSD = rmssd
 
-                // Calculate coherence from buffered RR intervals
+                // Calculate coherence and breathing rate from buffered RR intervals
                 if self.rrIntervalBuffer.count >= 30 { // Need minimum data
                     self.hrvCoherence = self.calculateCoherence(rrIntervals: self.rrIntervalBuffer)
+                    self.breathingRate = self.calculateBreathingRate(rrIntervals: self.rrIntervalBuffer)
                 }
             }
         }
@@ -340,6 +346,61 @@ class HealthKitManager: ObservableObject {
         let coherenceScore = min(coherenceRatio * 500.0, 100.0)
 
         return coherenceScore
+    }
+
+    /// Calculate breathing rate from RR intervals using respiratory sinus arrhythmia (RSA)
+    /// RSA is the natural variation in heart rate that occurs during breathing:
+    /// - Heart rate increases during inhalation
+    /// - Heart rate decreases during exhalation
+    ///
+    /// This function uses FFT to find the dominant frequency in the respiratory band (0.15-0.4 Hz)
+    /// and converts it to breaths per minute.
+    ///
+    /// - Parameter rrIntervals: Array of RR intervals in milliseconds
+    /// - Returns: Breathing rate in breaths per minute (typical range: 6-20 bpm)
+    func calculateBreathingRate(rrIntervals: [Double]) -> Double {
+        guard rrIntervals.count >= 30 else { return 12.0 } // Default to 12 bpm
+
+        // Prepare data (same preprocessing as coherence)
+        let detrended = detrend(rrIntervals)
+        let windowed = applyHammingWindow(detrended)
+
+        // Perform FFT
+        let fftSize = nextPowerOf2(windowed.count)
+        let powerSpectrum = performFFTForCoherence(windowed, fftSize: fftSize)
+
+        // Respiratory band: 0.15-0.4 Hz (9-24 breaths/minute)
+        // Most adults breathe at 0.2-0.33 Hz (12-20 breaths/minute)
+        let samplingRate = 1.0 // 1 RR interval per second (approximate)
+        let respiratoryBandLow = 0.15  // Hz (9 breaths/min)
+        let respiratoryBandHigh = 0.4  // Hz (24 breaths/min)
+
+        let binLow = Int(respiratoryBandLow * Double(fftSize) / samplingRate)
+        let binHigh = Int(respiratoryBandHigh * Double(fftSize) / samplingRate)
+
+        // Find peak frequency in respiratory band
+        guard binHigh < powerSpectrum.count else { return 12.0 }
+
+        var maxPower = 0.0
+        var peakBin = binLow
+
+        for bin in binLow...binHigh {
+            if powerSpectrum[bin] > maxPower {
+                maxPower = powerSpectrum[bin]
+                peakBin = bin
+            }
+        }
+
+        // Convert bin to frequency (Hz)
+        let peakFrequency = Double(peakBin) * samplingRate / Double(fftSize)
+
+        // Convert frequency to breaths per minute
+        let breathsPerMinute = peakFrequency * 60.0
+
+        // Sanity check: clamp to reasonable range (6-20 breaths/min)
+        let clampedRate = min(max(breathsPerMinute, 6.0), 20.0)
+
+        return clampedRate
     }
 
     /// Remove linear trend from signal

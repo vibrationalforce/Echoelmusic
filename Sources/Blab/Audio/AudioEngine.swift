@@ -211,6 +211,44 @@ class AudioEngine: ObservableObject {
         }
     }
 
+    // MARK: - Bio-Reactive Audio Parameters
+
+    /// Set filter cutoff frequency
+    /// - Parameter frequency: Cutoff frequency in Hz (20-20000)
+    func setFilterCutoff(_ frequency: Float) {
+        // TODO: Implement when filter node is added to NodeGraph
+        // nodeGraph?.filterNode?.cutoffFrequency = frequency
+        print("[AudioEngine] Filter cutoff: \(Int(frequency)) Hz (stub - to be implemented)")
+    }
+
+    /// Set reverb wetness/blend
+    /// - Parameter wet: Wet/dry mix (0.0 - 1.0)
+    func setReverbWet(_ wet: Float) {
+        // Apply to spatial audio if available
+        if let spatial = spatialAudioEngine {
+            spatial.setReverbBlend(wet)
+        }
+        // TODO: Apply to main reverb node when added
+        // nodeGraph?.reverbNode?.wetDryMix = wet * 100
+    }
+
+    /// Set master volume
+    /// - Parameter volume: Volume level (0.0 - 1.0)
+    func setMasterVolume(_ volume: Float) {
+        // TODO: Implement when master output node is added
+        // nodeGraph?.masterVolume = volume
+        print("[AudioEngine] Master volume: \(Int(volume * 100))% (stub - to be implemented)")
+    }
+
+    /// Set tempo for tempo-synced effects
+    /// - Parameter bpm: Tempo in beats per minute
+    func setTempo(_ bpm: Float) {
+        // TODO: Implement when delay/arpeggiator nodes are added
+        // nodeGraph?.delayNode?.tempo = bpm
+        // nodeGraph?.arpeggiatorNode?.tempo = bpm
+        print("[AudioEngine] Tempo: \(String(format: "%.1f", bpm)) BPM (stub - to be implemented)")
+    }
+
     /// Toggle spatial audio on/off
     func toggleSpatialAudio() {
         spatialAudioEnabled.toggle()

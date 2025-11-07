@@ -11,6 +11,7 @@ struct RecordingControlsView: View {
     @State private var showTrackList = false
     @State private var showMixer = false
     @State private var showExportOptions = false
+    @State private var shareSheetItem: URL?
 
     var body: some View {
         VStack(spacing: 20) {
@@ -86,6 +87,9 @@ struct RecordingControlsView: View {
         }
         .sheet(isPresented: $showExportOptions) {
             exportOptionsView
+        }
+        .sheet(item: $shareSheetItem) { url in
+            ShareSheet(activityItems: [url])
         }
     }
 
@@ -454,7 +458,9 @@ struct RecordingControlsView: View {
             do {
                 let url = try await exportManager.exportAudio(session: session, format: format)
                 print("📤 Exported to: \(url.path)")
-                // TODO: Show share sheet
+                await MainActor.run {
+                    shareSheetItem = url
+                }
             } catch {
                 print("❌ Export failed: \(error)")
             }
@@ -468,7 +474,7 @@ struct RecordingControlsView: View {
         do {
             let url = try exportManager.exportBioData(session: session, format: format)
             print("📤 Exported bio-data to: \(url.path)")
-            // TODO: Show share sheet
+            shareSheetItem = url
         } catch {
             print("❌ Export failed: \(error)")
         }
@@ -482,7 +488,9 @@ struct RecordingControlsView: View {
             do {
                 let url = try await exportManager.exportSessionPackage(session: session)
                 print("📦 Exported package to: \(url.path)")
-                // TODO: Show share sheet
+                await MainActor.run {
+                    shareSheetItem = url
+                }
             } catch {
                 print("❌ Export failed: \(error)")
             }
@@ -496,5 +504,33 @@ struct RecordingControlsView: View {
         let seconds = Int(time) % 60
         let milliseconds = Int((time.truncatingRemainder(dividingBy: 1)) * 10)
         return String(format: "%02d:%02d.%01d", minutes, seconds, milliseconds)
+    }
+}
+
+// MARK: - ShareSheet
+
+/// UIKit ShareSheet wrapper for SwiftUI
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    let applicationActivities: [UIActivity]? = nil
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(
+            activityItems: activityItems,
+            applicationActivities: applicationActivities
+        )
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
+        // No updates needed
+    }
+}
+
+// MARK: - URL Identifiable Extension
+
+extension URL: Identifiable {
+    public var id: String {
+        absoluteString
     }
 }
