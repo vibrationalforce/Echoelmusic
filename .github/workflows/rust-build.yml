@@ -1,0 +1,215 @@
+name: Rust Core Build & Test
+
+on:
+  push:
+    branches: [main, develop, "claude/**"]
+    paths:
+      - "blab-core/**"
+      - "BlabCoreSwift/**"
+      - ".github/workflows/rust-build.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "blab-core/**"
+      - "BlabCoreSwift/**"
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # Lint and format check
+  lint:
+    name: Lint (clippy + rustfmt)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: blab-core/target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run rustfmt
+        working-directory: blab-core
+        run: cargo fmt --all -- --check
+
+      - name: Run clippy
+        working-directory: blab-core
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+  # Test on Linux
+  test-linux:
+    name: Test (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev pkg-config
+
+      - name: Cache cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            blab-core/target
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run tests
+        working-directory: blab-core
+        run: cargo test --workspace --verbose
+
+      - name: Build release
+        working-directory: blab-core
+        run: cargo build --workspace --release
+
+  # Build for iOS
+  build-ios:
+    name: Build (iOS)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,x86_64-apple-ios,aarch64-apple-ios-sim
+
+      - name: Install cbindgen
+        run: cargo install cbindgen
+
+      - name: Cache cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            blab-core/target
+          key: ${{ runner.os }}-cargo-ios-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build iOS XCFramework
+        working-directory: blab-core
+        run: ./build-ios.sh
+
+      - name: Upload XCFramework artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libblab_ffi.xcframework
+          path: blab-core/target/xcframework/libblab_ffi.xcframework
+          retention-days: 7
+
+      - name: Upload C header
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlabCore.h
+          path: blab-core/BlabCore.h
+          retention-days: 7
+
+  # Build for Android (future)
+  build-android:
+    name: Build (Android)
+    runs-on: ubuntu-latest
+    if: false  # Disabled until Android crate is ready
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
+
+      - name: Cache cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            blab-core/target
+          key: ${{ runner.os }}-cargo-android-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build Android AAR
+        working-directory: blab-core
+        run: ./build-android.sh
+
+      - name: Upload AAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: blab-core.aar
+          path: blab-core/target/android/blab-core.aar
+          retention-days: 7
+
+  # Benchmark performance
+  benchmark:
+    name: Benchmark
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev pkg-config
+
+      - name: Cache cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            blab-core/target
+          key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run benchmarks
+        working-directory: blab-core
+        run: cargo bench --workspace --no-fail-fast
+
+  # Security audit
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Run security audit
+        working-directory: blab-core
+        run: cargo audit
