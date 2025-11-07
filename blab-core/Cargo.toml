@@ -2,9 +2,6 @@
 members = [
     "crates/audio",
     "crates/visual",
-    "crates/ai",
-    "crates/video",
-    "crates/bio",
     "crates/ffi",
 ]
 resolver = "2"

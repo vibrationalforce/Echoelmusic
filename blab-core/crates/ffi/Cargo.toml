@@ -1,0 +1,18 @@
+[package]
+name = "blab-ffi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+blab-audio = { path = "../audio" }
+blab-visual = { path = "../visual" }
+libc = { workspace = true }
+anyhow = { workspace = true }
+
+[build-dependencies]
+cbindgen = "0.26"
