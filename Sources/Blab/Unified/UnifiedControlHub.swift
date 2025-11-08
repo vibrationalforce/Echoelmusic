@@ -355,8 +355,10 @@ public class UnifiedControlHub: ObservableObject {
         // Get current biometric data
         let hrvCoherence = healthKit.hrvCoherence
         let heartRate = healthKit.heartRate
-        let voicePitch: Float = 0.0  // TODO: Get from audio analysis
-        let audioLevel: Float = 0.5  // TODO: Get from audio engine
+
+        // Get audio data from audio engine's microphone manager
+        let voicePitch: Float = audioEngine?.microphoneManager.currentPitch ?? 0.0
+        let audioLevel: Float = audioEngine?.microphoneManager.audioLevel ?? 0.5
 
         // Update bio parameter mapping
         mapper.updateParameters(
@@ -372,21 +374,26 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply bio-derived audio parameters to audio engine and spatial mapping
     private func applyBioAudioParameters(_ mapper: BioParameterMapper) {
-        // Apply filter cutoff
-        // TODO: Apply to actual AudioEngine filter node
-        // print("[Bio→Audio] Filter Cutoff: \(Int(mapper.filterCutoff)) Hz")
+        // Apply parameters to AudioEngine node graph
+        if let nodeGraph = audioEngine?.effectsChain {
+            // Find filter node and update cutoff
+            for node in nodeGraph.nodes {
+                if node.name.contains("Filter") {
+                    node.setParameter(name: "cutoffFrequency", value: mapper.filterCutoff)
+                }
 
-        // Apply reverb wetness
-        // TODO: Apply to actual AudioEngine reverb node
-        // print("[Bio→Audio] Reverb Wet: \(Int(mapper.reverbWet * 100))%")
+                // Find reverb node and update wetness
+                if node.name.contains("Reverb") {
+                    node.setParameter(name: "wetDry", value: mapper.reverbWet * 100.0)
+                }
 
-        // Apply amplitude
-        // TODO: Apply to actual AudioEngine master volume
-        // print("[Bio→Audio] Amplitude: \(Int(mapper.amplitude * 100))%")
-
-        // Apply tempo
-        // TODO: Apply to tempo-synced effects (delay, arpeggiator)
-        // print("[Bio→Audio] Tempo: \(String(format: "%.1f", mapper.tempo)) BPM")
+                // Find delay node and update based on tempo
+                if node.name.contains("Delay") {
+                    let delayTime = 60.0 / Float(mapper.tempo)  // Convert BPM to seconds
+                    node.setParameter(name: "delayTime", value: delayTime)
+                }
+            }
+        }
 
         // Apply bio-reactive spatial field (AFA)
         if let mpe = mpeZoneManager, let spatialMapper = midiToSpatialMapper {
@@ -445,8 +452,15 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
-        // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
+        // Apply to audio engine node graph
+        if let nodeGraph = audioEngine?.effectsChain {
+            for node in nodeGraph.nodes {
+                if node.name.contains("Filter") {
+                    node.setParameter(name: "cutoffFrequency", value: params.filterCutoff)
+                    node.setParameter(name: "resonance", value: params.filterResonance)
+                }
+            }
+        }
         // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
 
         // Apply to all active MPE voices

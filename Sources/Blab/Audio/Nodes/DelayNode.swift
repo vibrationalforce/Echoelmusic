@@ -11,6 +11,13 @@ class DelayNode: BaseBlabNode {
 
     private let delayUnit: AVAudioUnitDelay
 
+    // MARK: - DSP State
+
+    // Delay line buffer (circular buffer)
+    private var delayBuffer: [[Float]] = [[], []]  // L, R channels
+    private var writeIndex: [Int] = [0, 0]
+    private var maxDelayFrames: Int = 88200  // 2 seconds at 44.1kHz
+    private var currentSampleRate: Double = 44100.0
 
     // MARK: - Parameters
 
@@ -92,24 +99,54 @@ class DelayNode: BaseBlabNode {
             return buffer
         }
 
-        // Apply delay parameters
-        if let delayTime = getParameter(name: Params.delayTime) {
-            delayUnit.delayTime = TimeInterval(delayTime)
+        // Get delay parameters
+        guard let delayTime = getParameter(name: Params.delayTime),
+              let feedback = getParameter(name: Params.feedback),
+              let wetDryMix = getParameter(name: Params.wetDryMix) else {
+            return buffer
         }
 
-        if let feedback = getParameter(name: Params.feedback) {
-            delayUnit.feedback = feedback
+        // Process audio buffer (in-place)
+        guard let channelData = buffer.floatChannelData else {
+            return buffer
         }
 
-        if let wetDryMix = getParameter(name: Params.wetDryMix) {
-            delayUnit.wetDryMix = wetDryMix
+        let channelCount = Int(buffer.format.channelCount)
+        let frameLength = Int(buffer.frameLength)
+
+        // Calculate delay in samples
+        let delaySamples = Int(Float(delayTime) * Float(currentSampleRate))
+        let feedbackGain = feedback / 100.0  // Convert % to 0-1
+        let wetGain = wetDryMix / 100.0
+        let dryGain = 1.0 - wetGain
+
+        for channel in 0..<min(channelCount, 2) {
+            let channelDataPtr = channelData[channel]
+
+            for frame in 0..<frameLength {
+                let input = channelDataPtr[frame]
+
+                // Read from delay buffer (with bounds check)
+                let readIndex = (writeIndex[channel] - delaySamples + maxDelayFrames) % maxDelayFrames
+                let delayed = readIndex < delayBuffer[channel].count ? delayBuffer[channel][readIndex] : 0.0
+
+                // Mix dry and wet signals
+                let output = dryGain * input + wetGain * delayed
+
+                // Write to delay buffer with feedback
+                let toWrite = input + feedbackGain * delayed
+                if writeIndex[channel] < delayBuffer[channel].count {
+                    delayBuffer[channel][writeIndex[channel]] = toWrite
+                }
+
+                // Advance write index (circular)
+                writeIndex[channel] = (writeIndex[channel] + 1) % maxDelayFrames
+
+                // Write output
+                channelDataPtr[frame] = output
+            }
         }
 
-        if let cutoff = getParameter(name: Params.lowPassCutoff) {
-            delayUnit.lowPassCutoff = cutoff
-        }
-
-        // Note: Full implementation would render through AVAudioUnit
         return buffer
     }
 
@@ -181,7 +218,17 @@ class DelayNode: BaseBlabNode {
     // MARK: - Lifecycle
 
     override func prepare(sampleRate: Double, maxFrames: AVAudioFrameCount) {
-        // Delay is ready (uses AVAudioUnitDelay)
+        currentSampleRate = sampleRate
+
+        // Allocate delay buffers (2 seconds max)
+        maxDelayFrames = Int(sampleRate * 2.0)
+        delayBuffer = [
+            Array(repeating: 0.0, count: maxDelayFrames),
+            Array(repeating: 0.0, count: maxDelayFrames)
+        ]
+        writeIndex = [0, 0]
+
+        print("🎵 DelayNode prepared: \(maxDelayFrames) frames buffer")
     }
 
     override func start() {

@@ -127,6 +127,14 @@ class AudioEngine: ObservableObject {
         // Start microphone
         microphoneManager.startRecording()
 
+        // Start node graph if available
+        if let graph = nodeGraph {
+            let sampleRate = 44100.0  // TODO: Get from audio session
+            let maxFrames: AVAudioFrameCount = 4096
+            graph.start(sampleRate: sampleRate, maxFrames: maxFrames)
+            print("🎵 NodeGraph started")
+        }
+
         // Start binaural beats if enabled
         if binauralBeatsEnabled {
             binauralGenerator.start()
@@ -154,6 +162,9 @@ class AudioEngine: ObservableObject {
     func stop() {
         // Stop microphone
         microphoneManager.stopRecording()
+
+        // Stop node graph
+        nodeGraph?.stop()
 
         // Stop binaural beats
         binauralGenerator.stop()
@@ -336,6 +347,20 @@ class AudioEngine: ObservableObject {
                 amplitude: bioParameterMapper.amplitude
             )
         }
+
+        // Apply bio-parameters to node graph
+        if let graph = nodeGraph, let healthKit = healthKitManager {
+            let bioSignal = BioSignal(
+                hrv: healthKit.hrv,
+                heartRate: healthKit.heartRate,
+                coherence: healthKit.hrvCoherence,
+                respiratoryRate: nil,  // TODO: Calculate from HRV
+                audioLevel: microphoneManager.audioLevel,
+                voicePitch: microphoneManager.currentPitch,
+                customData: [:]
+            )
+            graph.updateBioSignal(bioSignal)
+        }
     }
 
 
@@ -375,5 +400,21 @@ class AudioEngine: ObservableObject {
     /// Get bio-parameter mapping summary
     var bioParameterSummary: String {
         bioParameterMapper.parameterSummary
+    }
+
+    // MARK: - Node Graph Access
+
+    /// Get access to node graph for UI
+    var effectsChain: NodeGraph? {
+        return nodeGraph
+    }
+
+    /// Process audio buffer through node graph
+    /// Called by MicrophoneManager or RecordingEngine
+    func processBuffer(_ buffer: AVAudioPCMBuffer, time: AVAudioTime) -> AVAudioPCMBuffer {
+        guard let graph = nodeGraph, graph.isProcessing else {
+            return buffer
+        }
+        return graph.process(buffer, time: time)
     }
 }

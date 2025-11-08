@@ -11,6 +11,11 @@ class CompressorNode: BaseBlabNode {
 
     private let compressorUnit: AVAudioUnitEffect
 
+    // MARK: - DSP State
+
+    // Envelope follower state (per channel)
+    private var envelope: [Float] = [0.0, 0.0]
+    private var currentSampleRate: Double = 44100.0
 
     // MARK: - Parameters
 
@@ -128,16 +133,75 @@ class CompressorNode: BaseBlabNode {
             return buffer
         }
 
-        // Apply compressor parameters
-        updateCompressorParameters()
+        // Get compressor parameters
+        guard let threshold = getParameter(name: Params.threshold),
+              let ratio = getParameter(name: Params.ratio),
+              let attackTime = getParameter(name: Params.attack),
+              let releaseTime = getParameter(name: Params.release),
+              let makeupGain = getParameter(name: Params.makeupGain) else {
+            return buffer
+        }
 
-        // Note: Full implementation would render through AVAudioUnit
+        // Process audio buffer (in-place)
+        guard let channelData = buffer.floatChannelData else {
+            return buffer
+        }
+
+        let channelCount = Int(buffer.format.channelCount)
+        let frameLength = Int(buffer.frameLength)
+
+        // Convert dB to linear
+        let thresholdLin = dBToLinear(threshold)
+        let makeupGainLin = dBToLinear(makeupGain)
+
+        // Calculate attack/release coefficients
+        let attackCoeff = exp(-1.0 / (Float(currentSampleRate) * attackTime * 0.001))  // ms to seconds
+        let releaseCoeff = exp(-1.0 / (Float(currentSampleRate) * releaseTime * 0.001))
+
+        for channel in 0..<min(channelCount, 2) {
+            let channelDataPtr = channelData[channel]
+
+            for frame in 0..<frameLength {
+                let input = channelDataPtr[frame]
+                let inputAbs = abs(input)
+
+                // Envelope follower (peak detector)
+                if inputAbs > envelope[channel] {
+                    // Attack
+                    envelope[channel] = attackCoeff * envelope[channel] + (1.0 - attackCoeff) * inputAbs
+                } else {
+                    // Release
+                    envelope[channel] = releaseCoeff * envelope[channel] + (1.0 - releaseCoeff) * inputAbs
+                }
+
+                // Calculate gain reduction
+                var gainReduction: Float = 1.0
+                if envelope[channel] > thresholdLin {
+                    // Compression above threshold
+                    let overThreshold = envelope[channel] / thresholdLin
+                    let compressed = pow(overThreshold, 1.0 / ratio)
+                    gainReduction = compressed / overThreshold
+                }
+
+                // Apply gain reduction and makeup gain
+                let output = input * gainReduction * makeupGainLin
+
+                // Write output
+                channelDataPtr[frame] = output
+            }
+        }
+
         return buffer
     }
 
-    private func updateCompressorParameters() {
-        // Update Audio Unit parameters based on node parameters
-        // This would use AVAudioUnit's AUParameterTree in production
+    /// Convert dB to linear gain
+    private func dBToLinear(_ dB: Float) -> Float {
+        return pow(10.0, dB / 20.0)
+    }
+
+    /// Convert linear gain to dB
+    private func linearTodB(_ linear: Float) -> Float {
+        return 20.0 * log10(max(linear, 0.00001))
     }
 
 
@@ -200,7 +264,12 @@ class CompressorNode: BaseBlabNode {
     // MARK: - Lifecycle
 
     override func prepare(sampleRate: Double, maxFrames: AVAudioFrameCount) {
-        // Compressor is ready (uses AVAudioUnitEffect)
+        currentSampleRate = sampleRate
+
+        // Reset envelope state
+        envelope = [0.0, 0.0]
+
+        print("🎵 CompressorNode prepared")
     }
 
     override func start() {

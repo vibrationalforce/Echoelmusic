@@ -66,6 +66,23 @@ class FilterNode: BaseBlabNode {
     }
 
 
+    // MARK: - DSP State
+
+    // Biquad filter coefficients for low-pass filter
+    private var b0: Float = 1.0
+    private var b1: Float = 0.0
+    private var b2: Float = 0.0
+    private var a1: Float = 0.0
+    private var a2: Float = 0.0
+
+    // Filter state (previous samples)
+    private var x1: [Float] = [0.0, 0.0]  // Previous input (L, R)
+    private var x2: [Float] = [0.0, 0.0]
+    private var y1: [Float] = [0.0, 0.0]  // Previous output (L, R)
+    private var y2: [Float] = [0.0, 0.0]
+
+    private var currentSampleRate: Double = 44100.0
+
     // MARK: - Audio Processing
 
     override func process(_ buffer: AVAudioPCMBuffer, time: AVAudioTime) -> AVAudioPCMBuffer {
@@ -74,18 +91,60 @@ class FilterNode: BaseBlabNode {
             return buffer
         }
 
-        // Apply filter parameters
-        if let cutoff = getParameter(name: Params.cutoffFrequency),
-           let resonance = getParameter(name: Params.resonance),
-           let band = eqUnit.bands.first {
-            band.frequency = cutoff
-            band.bandwidth = resonance
+        // Get filter parameters
+        guard let cutoff = getParameter(name: Params.cutoffFrequency),
+              let resonance = getParameter(name: Params.resonance) else {
+            return buffer
         }
 
-        // Note: In full implementation, render through AVAudioUnit
-        // This is architectural placeholder
+        // Update filter coefficients if parameters changed
+        updateBiquadCoefficients(cutoff: cutoff, q: resonance, sampleRate: currentSampleRate)
+
+        // Process audio buffer (in-place)
+        guard let channelData = buffer.floatChannelData else {
+            return buffer
+        }
+
+        let channelCount = Int(buffer.format.channelCount)
+        let frameLength = Int(buffer.frameLength)
+
+        for channel in 0..<min(channelCount, 2) {
+            let channelDataPtr = channelData[channel]
+
+            for frame in 0..<frameLength {
+                let input = channelDataPtr[frame]
+
+                // Biquad filter equation: y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]
+                let output = b0 * input + b1 * x1[channel] + b2 * x2[channel] - a1 * y1[channel] - a2 * y2[channel]
+
+                // Update state
+                x2[channel] = x1[channel]
+                x1[channel] = input
+                y2[channel] = y1[channel]
+                y1[channel] = output
+
+                // Write output
+                channelDataPtr[frame] = output
+            }
+        }
 
         return buffer
+    }
+
+    /// Update biquad coefficients for low-pass filter
+    private func updateBiquadCoefficients(cutoff: Float, q: Float, sampleRate: Double) {
+        let omega = 2.0 * Float.pi * cutoff / Float(sampleRate)
+        let sinOmega = sin(omega)
+        let cosOmega = cos(omega)
+        let alpha = sinOmega / (2.0 * q)
+
+        // Low-pass filter coefficients
+        let a0 = 1.0 + alpha
+        b0 = ((1.0 - cosOmega) / 2.0) / a0
+        b1 = (1.0 - cosOmega) / a0
+        b2 = ((1.0 - cosOmega) / 2.0) / a0
+        a1 = (-2.0 * cosOmega) / a0
+        a2 = (1.0 - alpha) / a0
     }
 
 
@@ -133,7 +192,19 @@ class FilterNode: BaseBlabNode {
     // MARK: - Lifecycle
 
     override func prepare(sampleRate: Double, maxFrames: AVAudioFrameCount) {
-        // EQ is always ready (uses AVAudioUnitEQ)
+        currentSampleRate = sampleRate
+
+        // Initialize filter coefficients
+        if let cutoff = getParameter(name: Params.cutoffFrequency),
+           let resonance = getParameter(name: Params.resonance) {
+            updateBiquadCoefficients(cutoff: cutoff, q: resonance, sampleRate: sampleRate)
+        }
+
+        // Reset filter state
+        x1 = [0.0, 0.0]
+        x2 = [0.0, 0.0]
+        y1 = [0.0, 0.0]
+        y2 = [0.0, 0.0]
     }
 
     override func start() {

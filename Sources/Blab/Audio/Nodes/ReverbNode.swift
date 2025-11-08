@@ -10,6 +10,16 @@ class ReverbNode: BaseBlabNode {
 
     private let reverbUnit: AVAudioUnitReverb
 
+    // MARK: - DSP State
+
+    // Multi-tap delay lines for reverb (Schroeder-style)
+    private var combDelays: [[Float]] = []  // 4 comb filters per channel
+    private var combIndices: [[Int]] = [[0,0,0,0], [0,0,0,0]]
+    private var combDelayTimes: [Int] = [1116, 1188, 1277, 1356]  // Prime numbers for diffusion
+    private var allpassDelays: [[Float]] = []  // 2 allpass filters per channel
+    private var allpassIndices: [[Int]] = [[0,0], [0,0]]
+    private var allpassDelayTimes: [Int] = [225, 556]
+    private var currentSampleRate: Double = 44100.0
 
     // MARK: - Parameters
 
@@ -90,14 +100,81 @@ class ReverbNode: BaseBlabNode {
             return buffer
         }
 
-        // Apply reverb parameters
-        if let wetDry = getParameter(name: Params.wetDry) {
-            reverbUnit.wetDryMix = wetDry
+        // Get reverb parameters
+        guard let wetDry = getParameter(name: Params.wetDry) else {
+            return buffer
         }
 
-        // Note: In a full implementation, we'd render through the AVAudioUnit
-        // For now, this is a placeholder showing the architecture
-        // Real implementation would use AVAudioEngine or manual DSP
+        // Process audio buffer (in-place)
+        guard let channelData = buffer.floatChannelData else {
+            return buffer
+        }
+
+        let channelCount = Int(buffer.format.channelCount)
+        let frameLength = Int(buffer.frameLength)
+
+        let wetGain = wetDry / 100.0
+        let dryGain = 1.0 - wetGain
+        let combGain: Float = 0.85  // Feedback for comb filters
+        let allpassGain: Float = 0.5
+
+        for channel in 0..<min(channelCount, 2) {
+            let channelDataPtr = channelData[channel]
+
+            for frame in 0..<frameLength {
+                let input = channelDataPtr[frame]
+
+                // Parallel comb filters
+                var combSum: Float = 0.0
+                for i in 0..<4 {
+                    let delayTime = combDelayTimes[i]
+                    let bufferIndex = i
+                    let readIdx = combIndices[channel][i]
+
+                    if readIdx < combDelays[channel * 4 + bufferIndex].count {
+                        let delayed = combDelays[channel * 4 + bufferIndex][readIdx]
+                        combSum += delayed
+
+                        // Write with feedback
+                        let toWrite = input + combGain * delayed
+                        combDelays[channel * 4 + bufferIndex][readIdx] = toWrite
+
+                        // Advance index
+                        combIndices[channel][i] = (readIdx + 1) % delayTime
+                    }
+                }
+                combSum *= 0.25  // Average 4 combs
+
+                // Serial allpass filters for diffusion
+                var allpassOut = combSum
+                for i in 0..<2 {
+                    let delayTime = allpassDelayTimes[i]
+                    let bufferIndex = i
+                    let readIdx = allpassIndices[channel][i]
+
+                    if readIdx < allpassDelays[channel * 2 + bufferIndex].count {
+                        let delayed = allpassDelays[channel * 2 + bufferIndex][readIdx]
+
+                        // Allpass: output = -input + delayed
+                        let output = -allpassGain * allpassOut + delayed
+
+                        // Write: input + gain * delayed
+                        allpassDelays[channel * 2 + bufferIndex][readIdx] = allpassOut + allpassGain * delayed
+
+                        // Advance index
+                        allpassIndices[channel][i] = (readIdx + 1) % delayTime
+
+                        allpassOut = output
+                    }
+                }
+
+                // Mix dry and wet
+                let output = dryGain * input + wetGain * allpassOut
+
+                // Write output
+                channelDataPtr[frame] = output
+            }
+        }
 
         return buffer
     }
@@ -143,7 +220,32 @@ class ReverbNode: BaseBlabNode {
     // MARK: - Lifecycle
 
     override func prepare(sampleRate: Double, maxFrames: AVAudioFrameCount) {
-        // Reverb is always ready (uses AVAudioUnitReverb)
+        currentSampleRate = sampleRate
+
+        // Scale delay times based on sample rate (designed for 44.1kHz)
+        let scale = sampleRate / 44100.0
+        let scaledCombTimes = combDelayTimes.map { Int(Double($0) * scale) }
+        let scaledAllpassTimes = allpassDelayTimes.map { Int(Double($0) * scale) }
+
+        // Allocate comb delay buffers (4 per channel, 2 channels)
+        combDelays = []
+        for channel in 0..<2 {
+            for delayTime in scaledCombTimes {
+                combDelays.append(Array(repeating: 0.0, count: delayTime))
+            }
+        }
+        combIndices = [[0,0,0,0], [0,0,0,0]]
+
+        // Allocate allpass delay buffers (2 per channel, 2 channels)
+        allpassDelays = []
+        for channel in 0..<2 {
+            for delayTime in scaledAllpassTimes {
+                allpassDelays.append(Array(repeating: 0.0, count: delayTime))
+            }
+        }
+        allpassIndices = [[0,0], [0,0]]
+
+        print("🎵 ReverbNode prepared: Schroeder reverb with 4 combs + 2 allpass")
     }
 
     override func start() {
