@@ -43,8 +43,9 @@ Then in Xcode:
 - ✅ **Phase 6:** Networking & Collaboration (100%) 🌐
 - ✅ **Phase 7:** AUv3 Plugin + MPE (100%) 🎹
 - ✅ **Phase 8:** Vision Pro / ARKit (100%) 👓
+- ✅ **Phase 9:** Video & Advanced Mapping (100%) 🎬
 
-**Overall MVP Progress:** ~95%
+**Overall MVP Progress:** ~98%
 
 ### 🆕 What's New (2025-11-08):
 
@@ -81,6 +82,17 @@ Then in Xcode:
 - 🫀 Biometric visualization in 3D space
 - 👋 Hand tracking integration
 - 👁️ Eye tracking for parameter control
+
+**Phase 9 - Video & Advanced Mapping:**
+- 🎬 Complete video recording engine with audio sync
+- 🎥 12 real-time video effects (Kaleidoscope, Bloom, Vortex, Chroma Key, etc.)
+- 📹 Visualization recorder (Cymatics, Waveform, Spatial @ 60 FPS)
+- 🫀 Bio-data overlay on video (HRV graphs, heart rate display)
+- 📤 Social media export presets (Instagram, YouTube, TikTok, Twitter)
+- 🎬→🎵 Video → Audio mapping (Brightness, Color, Motion detection)
+- 🏃→🎹 Motion → MIDI with optical flow & Vision framework
+- 📹 Camera integration with green screen/chroma key
+- 🎨 CoreImage filter chains for real-time processing
 
 ---
 
@@ -139,6 +151,17 @@ BLAB is an **embodied multimodal music system** that transforms biometric signal
 - ✅ Multi-modal sensor fusion
 - ✅ Priority-based input resolution
 - ✅ Real-time parameter mapping
+
+#### **Video System (Phase 9):**
+- ✅ Video recording with audio sync (MP4/MOV, 60 FPS)
+- ✅ 12 real-time CoreImage effects
+- ✅ Chroma key / green screen
+- ✅ Bio-data overlay (HRV graphs, timestamps)
+- ✅ Camera capture (front/back switching)
+- ✅ Visualization recorder (Cymatics, Waveform, Spatial)
+- ✅ Social media export (Instagram, YouTube, TikTok)
+- ✅ Video → Audio mapping (Brightness, Color, Motion)
+- ✅ Motion → MIDI mapping (Optical Flow, Vision framework)
 
 ---
 
@@ -203,6 +226,11 @@ blab-ios-app/
 │   │   └── BlabAudioUnit.swift     # AUv3 instrument plugin 🎹
 │   ├── VisionPro/                   # 🆕 Phase 8
 │   │   └── SpatialUIManager.swift  # visionOS spatial UI 👓
+│   ├── Video/                       # 🆕 Phase 9
+│   │   ├── VideoRecordingEngine.swift    # Video recording + audio sync 🎬
+│   │   ├── VideoEffectsEngine.swift      # 12 real-time effects 🎥
+│   │   ├── VisualizationRecorder.swift   # Record visualizations 📹
+│   │   └── VideoToAudioMapper.swift      # Video → Audio + Motion → MIDI 🎬→🎵
 │   ├── Spatial/
 │   │   ├── SpatialAudioEngine.swift     # 3D/4D spatial audio ✨
 │   │   ├── ARFaceTrackingManager.swift  # Face tracking
@@ -239,6 +267,7 @@ blab-ios-app/
 🌐 = Phase 6: Networking (400+ lines)
 🎹 = Phase 7: AUv3 Plugin (350+ lines)
 👓 = Phase 8: Vision Pro (400+ lines)
+🎬 = Phase 9: Video System (1400+ lines)
 ```
 
 ---
@@ -251,9 +280,10 @@ blab-ios-app/
 - **Graphics:** Metal + SwiftUI Canvas
 - **Biofeedback:** HealthKit + CoreMotion
 - **Spatial:** AVAudioEnvironmentNode (iOS 19+)
-- **Vision:** ARKit + Vision Framework
+- **Vision:** ARKit + Vision Framework + CoreImage
 - **MIDI:** CoreMIDI + MIDI 2.0
 - **Networking:** Network Framework (UDP/Art-Net)
+- **Video:** AVFoundation + CoreImage + Vision (Optical Flow)
 - **Platform:** iOS 15.0+ (optimized for iOS 19+)
 
 ---
