@@ -3,7 +3,7 @@ import Foundation
 /// Maps hand gestures to audio parameters
 ///
 /// This mapper translates gesture data from GestureRecognizer into
-/// audio control parameters following BLAB's bio-reactive design.
+/// audio control parameters following Echoelmusic's bio-reactive design.
 ///
 /// **Gesture Mappings:**
 /// - **Pinch** (Left) → Filter Cutoff (200-8000 Hz)

@@ -7,7 +7,7 @@ import Combine
 /// **MPE Overview:**
 /// - Each note gets its own MIDI channel for independent expression
 /// - Lower zone: Channels 1-15 (Master channel 1 or 16)
-/// - Upper zone: Typically not used in BLAB (could use channels 16-31 with MIDI 2.0)
+/// - Upper zone: Typically not used in Echoelmusic (could use channels 16-31 with MIDI 2.0)
 /// - Voice allocation: Round-robin or priority-based
 /// - Per-note pitch bend, pressure, timbre control
 ///

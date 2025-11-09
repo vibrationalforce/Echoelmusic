@@ -2,7 +2,7 @@ import Foundation
 import UIKit
 import AVFoundation
 
-/// Detects device capabilities for BLAB
+/// Detects device capabilities for Echoelmusic
 /// - iPhone model detection
 /// - iOS version check
 /// - ASAF (Apple Spatial Audio Features) support

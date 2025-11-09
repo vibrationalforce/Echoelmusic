@@ -470,7 +470,7 @@ class UDPSocket {
     private let address: String
     private let port: UInt16
     private var connection: NWConnection?
-    private let queue = DispatchQueue(label: "com.blab.udp", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "com.echoelmusic.udp", qos: .userInitiated)
 
     init(address: String, port: UInt16) throws {
         self.address = address

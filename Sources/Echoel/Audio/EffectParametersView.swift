@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Effects parameter editor for fine-tuning audio node parameters
 struct EffectParametersView: View {
-    let node: BlabNode
+    let node: EchoelNode
     @ObservedObject var nodeGraph: NodeGraph
 
     var body: some View {

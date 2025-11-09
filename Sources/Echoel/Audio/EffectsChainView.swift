@@ -369,7 +369,7 @@ struct EffectsChainView: View {
 
     // MARK: - Helpers
 
-    private func nodeColor(for node: BlabNode) -> Color {
+    private func nodeColor(for node: EchoelNode) -> Color {
         let name = node.name.lowercased()
 
         if name.contains("filter") {
@@ -389,7 +389,7 @@ struct EffectsChainView: View {
 // MARK: - Node Row
 
 struct NodeRow: View {
-    let node: BlabNode
+    let node: EchoelNode
     @ObservedObject var nodeGraph: NodeGraph
     let isSelected: Bool
 
