@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Main entry point for the Blab app
+/// Main entry point for the Echoelmusic app
 /// This is where your iOS app starts running
 @main
-struct BlabApp: App {
+struct EchoelApp: App {
 
     /// StateObject ensures the MicrophoneManager stays alive
     /// throughout the app's lifetime
@@ -69,9 +69,9 @@ struct BlabApp: App {
                     // Start UnifiedControlHub
                     unifiedControlHub.start()
 
-                    print("🎵 BLAB App Started - All Systems Connected!")
+                    print("🌊 Echoelmusic Started - All Systems Connected!")
                     print("🎹 MIDI 2.0 + MPE + Spatial Audio Ready")
-                    print("🌊 Stereo → 3D → 4D → AFA Sound")
+                    print("✨ where your breath echoes")
                 }
         }
     }

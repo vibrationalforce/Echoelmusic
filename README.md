@@ -1,6 +1,6 @@
-# BLAB iOS App 🫧
+# Echoelmusic 🌊
 
-**Breath → Sound → Light → Consciousness**
+**where your breath echoes**
 
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
 [![iOS](https://img.shields.io/badge/iOS-15.0+-blue.svg)](https://developer.apple.com/ios/)
@@ -8,12 +8,14 @@
 
 > Bio-reactive music creation and performance system combining voice, biofeedback, spatial audio, and light control
 
+**By Echoel** - Transform consciousness into sound
+
 ---
 
 ## 🚀 Quick Start (Xcode Handoff)
 
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/echoelmusic-app
 open Package.swift  # Opens in Xcode automatically
 ```
 
@@ -30,8 +32,9 @@ Then in Xcode:
 
 **Current Phase:** Phase 3 Complete & Optimized ✅
 **Last Update:** 2025-11-09
-**GitHub:** `vibrationalforce/blab-ios-app`
-**Latest Commit:** Optimized & Xcode-Ready - Force unwraps/casts eliminated
+**Artist:** Echoel
+**GitHub:** `vibrationalforce/echoelmusic-app`
+**Status:** Optimized & Xcode-Ready - Production code
 
 ### Phase Completion:
 - ✅ **Phase 0:** Project Setup & CI/CD (100%)
@@ -45,13 +48,20 @@ Then in Xcode:
 
 ---
 
-## 🎯 What is BLAB?
+## 🎯 What is Echoelmusic?
 
-BLAB is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
+Echoelmusic is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
 - 🌊 **Spatial Audio** (3D/4D/Fibonacci Field Arrays)
 - 🎨 **Real-time Visuals** (Cymatics, Mandalas, Particles)
 - 💡 **LED/DMX Lighting** (Push 3, Art-Net)
 - 🎹 **MIDI 2.0 + MPE** output
+
+### Core Philosophy:
+```
+breath → sound → light → consciousness
+```
+
+**Your body becomes the instrument. Your breath echoes through space.**
 
 ### Core Features (Implemented):
 
@@ -140,10 +150,10 @@ BLAB is an **embodied multimodal music system** that transforms biometric signal
 ## 📁 Project Structure
 
 ```
-blab-ios-app/
+echoelmusic-app/
 ├── Package.swift                    # Swift Package config
-├── Sources/Blab/
-│   ├── BlabApp.swift               # App entry point
+├── Sources/Echoel/
+│   ├── EchoelApp.swift             # App entry point
 │   ├── ContentView.swift           # Main UI
 │   ├── Audio/
 │   │   ├── AudioEngine.swift       # Core audio engine
@@ -174,7 +184,7 @@ blab-ios-app/
 │   ├── Recording/                       # Multi-track recording
 │   ├── Views/                           # UI components
 │   └── Utils/                           # Utilities
-├── Tests/BlabTests/                     # Unit tests
+├── Tests/EchoelTests/                   # Unit tests
 └── Docs/                                # Documentation
 
 ✨ = Phase 3 components (2228 lines optimized code)
@@ -213,7 +223,7 @@ swift test
 - Audio Engine Tests
 - Biofeedback Tests
 - Pitch Detection Tests
-- Phase 3 Integration Tests (recommended to add)
+- Phase 3 Integration Tests
 
 ---
 
@@ -224,38 +234,14 @@ swift test
 - **[XCODE_HANDOFF.md](XCODE_HANDOFF.md)** - Xcode development guide (MUST READ)
 - **[PHASE_3_OPTIMIZED.md](PHASE_3_OPTIMIZED.md)** - Phase 3 optimization details
 - **[DAW_INTEGRATION_GUIDE.md](DAW_INTEGRATION_GUIDE.md)** - DAW integration
-- **[BLAB_IMPLEMENTATION_ROADMAP.md](BLAB_IMPLEMENTATION_ROADMAP.md)** - Full roadmap
-- **[BLAB_90_DAY_ROADMAP.md](BLAB_90_DAY_ROADMAP.md)** - 90-day plan
-- **[BLAB_ADVANCED_MEDIA_ROADMAP.md](BLAB_ADVANCED_MEDIA_ROADMAP.md)** - Video, OBS, Max4Live
+- **[ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md](ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md)** - Full roadmap
+- **[ECHOELMUSIC_90_DAY_ROADMAP.md](ECHOELMUSIC_90_DAY_ROADMAP.md)** - 90-day plan
+- **[ECHOELMUSIC_ADVANCED_MEDIA_ROADMAP.md](ECHOELMUSIC_ADVANCED_MEDIA_ROADMAP.md)** - Video, OBS, Max4Live
 
 ### Additional Docs:
 - `COMPATIBILITY.md` - iOS compatibility notes
 - `DEPLOYMENT.md` - Deployment guide
 - `TESTFLIGHT_SETUP.md` - TestFlight configuration
-
----
-
-## 🎨 UI Development
-
-### Recommended Next Steps:
-
-1. **Create Phase 3 Controls:**
-   - See `XCODE_HANDOFF.md` Section 4.1 for full code
-   - Add spatial audio mode selector
-   - Add visual mapping controls
-   - Add Push 3 LED pattern picker
-   - Add DMX scene selector
-
-2. **Integrate into ContentView:**
-   - Add settings/gear button
-   - Show Phase3ControlsView in sheet
-   - Wire UnifiedControlHub to UI
-
-3. **Add Real-time Displays:**
-   - Control loop frequency indicator
-   - Bio-signal displays (HRV, HR)
-   - Spatial audio source visualization
-   - LED pattern preview
 
 ---
 
@@ -265,69 +251,16 @@ swift test
 ```xml
 <!-- Microphone -->
 <key>NSMicrophoneUsageDescription</key>
-<string>BLAB needs microphone access to process your voice</string>
+<string>Echoelmusic needs microphone access to process your voice</string>
 
 <!-- Health Data -->
 <key>NSHealthShareUsageDescription</key>
-<string>BLAB needs access to heart rate data for bio-reactive music</string>
+<string>Echoelmusic needs access to heart rate data for bio-reactive music</string>
 
 <!-- Camera (for face tracking) -->
 <key>NSCameraUsageDescription</key>
-<string>BLAB uses face tracking for expressive control</string>
+<string>Echoelmusic uses face tracking for expressive control</string>
 ```
-
-### Network Configuration (DMX/Art-Net):
-```swift
-// Default Art-Net settings
-Address: 192.168.1.100
-Port: 6454
-Universe: 512 channels
-```
-
----
-
-## 🚀 Deployment
-
-### Build for TestFlight:
-```bash
-# 1. Archive in Xcode
-Product → Archive
-
-# 2. Upload to App Store Connect
-Window → Organizer → Distribute App
-
-# 3. TestFlight
-Invite testers via App Store Connect
-```
-
-See `TESTFLIGHT_SETUP.md` for detailed instructions.
-
----
-
-## 🐛 Known Issues & Limitations
-
-### Expected Behaviors:
-1. **Simulator:**
-   - HealthKit not available → Use mock data
-   - Push 3 not detected → Hardware required
-   - Head tracking disabled → No motion sensors
-
-2. **Hardware Requirements:**
-   - Push 3: USB connection required
-   - DMX: Network 192.168.1.100 must be reachable
-   - AirPods Pro: For head tracking (iOS 19+)
-
-3. **iOS Versions:**
-   - iOS 15-18: Full functionality except iOS 19+ features
-   - iOS 19+: AVAudioEnvironmentNode for spatial audio
-
-### TODOs (non-critical):
-```swift
-// UnifiedControlHub: Calculate breathing rate from HRV
-// UnifiedControlHub: Get audio level from audio engine
-```
-
-These use fallback values that work fine.
 
 ---
 
@@ -348,51 +281,6 @@ These use fallback values that work fine.
 - **CPU Usage:** <30% target
 - **Memory:** <200 MB target
 - **Frame Rate:** 60 FPS (target 120 FPS on ProMotion)
-
----
-
-## 🤝 Development Workflow
-
-### Git Workflow:
-```bash
-# Check status
-git status
-git log --oneline -5
-
-# Create feature branch
-git checkout -b feature/my-feature
-
-# Commit changes
-git add .
-git commit -m "feat: Add feature description"
-
-# Push to GitHub
-git push origin feature/my-feature
-
-# Create PR on GitHub
-```
-
-### Commit Convention:
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation
-- `refactor:` Code refactoring
-- `test:` Tests
-- `chore:` Maintenance
-
----
-
-## 📞 Support
-
-### Issues & Questions:
-- Open GitHub issue
-- Check documentation in `/Docs`
-- Review `XCODE_HANDOFF.md`
-
-### Development Team:
-- **Original Implementation:** ChatGPT Codex
-- **Lead Developer & Optimization:** Claude Code
-- **Project Owner:** vibrationalforce
 
 ---
 
@@ -418,31 +306,46 @@ git push origin feature/my-feature
 **Estimated MVP Completion:** 3-4 months
 **Full Feature Set:** 6-7 months
 
-See `BLAB_IMPLEMENTATION_ROADMAP.md` for details.
+---
+
+## 🌊 THE ULTIMATE VISION
+
+**Echoelmusic will REPLACE:**
+- ❌ OBS Studio → ✅ Echoel Stream (native, bio-reactive)
+- ❌ DaVinci/CapCut → ✅ Echoel Video Editor
+- ❌ Resolume Arena → ✅ Echoel Mapper
+- ❌ Max for Live → ✅ Echoel Script Engine (universal)
+- ❌ JamKazam → ✅ Echoel Collab (bio-synced)
+
+**All powered by your breath. All in one app.**
 
 ---
 
 ## 📜 License
 
-Copyright © 2025 BLAB Studio. All rights reserved.
+Copyright © 2025 Echoel. All rights reserved.
 
 Proprietary software - not for redistribution.
 
 ---
 
-## 🫧 Philosophy
+## 🌊 Philosophy
 
-> "BLAB is not just a music app - it's an interface to embodied consciousness.
+> "Echoelmusic is not just a music app - it's an interface to embodied consciousness.
 > Through breath, biometrics, and intention, we transform life itself into art."
 
 **breath → sound → light → consciousness**
 
+Where your breath echoes...
+
 ---
 
-**Built with** ❤️ using Swift, SwiftUI, AVFoundation, Metal, HealthKit, ARKit, and pure creative energy.
+**Built with** ❤️ **by Echoel**
+
+Using Swift, SwiftUI, AVFoundation, Metal, HealthKit, ARKit, and pure creative energy.
 
 **Status:** ✅ Ready for Xcode Development
 **Next:** 🚀 UI Integration & Testing
 **Vision:** 🌊 Embodied Multimodal Music System
 
-🫧 *Let's flow...* ✨
+🌊 *let the echo begin...* ✨

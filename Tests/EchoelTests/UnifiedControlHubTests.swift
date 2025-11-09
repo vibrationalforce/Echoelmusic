@@ -1,5 +1,5 @@
 import XCTest
-@testable import Blab
+@testable import Echoel
 
 /// Tests for UnifiedControlHub
 @MainActor
