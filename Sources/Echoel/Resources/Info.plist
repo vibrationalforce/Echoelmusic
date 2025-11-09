@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App Identity -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleDisplayName</key>
+    <string>Echoelmusic</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+
+    <!-- Marketing -->
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.music</string>
+
+    <!-- Privacy Usage Descriptions - Required for App Store -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Echoelmusic uses your microphone to capture your voice and breath, transforming them into bio-reactive soundscapes and visuals.</string>
+
+    <key>NSHealthShareUsageDescription</key>
+    <string>Echoelmusic reads your heart rate variability (HRV) to create bio-responsive music that adapts to your physiological state in real-time.</string>
+
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>Echoelmusic tracks meditation and breathing session data to help you understand your bio-feedback patterns over time.</string>
+
+    <key>NSCameraUsageDescription</key>
+    <string>Echoelmusic uses face tracking to map your facial expressions to musical parameters, creating expressive performances.</string>
+
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>Echoelmusic connects to MIDI controllers like Ableton Push 3 to provide tactile control over sound, visuals, and lighting.</string>
+
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Echoelmusic uses Bluetooth to connect with MIDI controllers, audio interfaces, and AirPods for spatial audio head tracking.</string>
+
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Echoelmusic sends DMX/Art-Net data over your local network to control stage lighting and LED strips synchronized to your bio-reactive music.</string>
+
+    <key>NSMotionUsageDescription</key>
+    <string>Echoelmusic uses motion sensors to detect gestures and movements that control sound parameters and spatial audio positioning.</string>
+
+    <!-- App Transport Security -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <false/>
+        <!-- Allow local network for DMX/Art-Net -->
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+
+    <!-- Background Modes -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>audio</string>
+        <string>bluetooth-central</string>
+        <string>processing</string>
+    </array>
+
+    <!-- Required Device Capabilities -->
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>arm64</string>
+        <string>microphone</string>
+    </array>
+
+    <!-- Interface Orientation -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- iPad Specific -->
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- App Icon -->
+    <key>CFBundleIcons</key>
+    <dict>
+        <key>CFBundlePrimaryIcon</key>
+        <dict>
+            <key>CFBundleIconFiles</key>
+            <array>
+                <string>AppIcon</string>
+            </array>
+        </dict>
+    </dict>
+
+    <!-- Launch Screen -->
+    <key>UILaunchScreen</key>
+    <dict>
+        <key>UIImageName</key>
+        <string>LaunchImage</string>
+        <key>UIColorName</key>
+        <string>LaunchScreenBackground</string>
+    </dict>
+
+    <!-- Modern iOS Features -->
+    <key>UIApplicationSupportsIndirectInputEvents</key>
+    <true/>
+
+    <!-- Scene Configuration for SwiftUI -->
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <true/>
+        <key>UISceneConfigurations</key>
+        <dict>
+            <key>UIWindowSceneSessionRoleApplication</key>
+            <array>
+                <dict>
+                    <key>UISceneConfigurationName</key>
+                    <string>Default Configuration</string>
+                    <key>UISceneDelegateClassName</key>
+                    <string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+                </dict>
+            </array>
+        </dict>
+    </dict>
+
+    <!-- File Sharing & Document Types -->
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.echoel.echoelmusic.session</string>
+            <key>UTTypeDescription</key>
+            <string>Echoelmusic Session</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>echoel</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
+
+    <!-- Document Browser -->
+    <key>UISupportsDocumentBrowser</key>
+    <true/>
+
+    <!-- Status Bar -->
+    <key>UIStatusBarStyle</key>
+    <string>UIStatusBarStyleLightContent</string>
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <false/>
+</dict>
+</plist>
