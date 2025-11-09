@@ -9,8 +9,12 @@ Echoelmusic automatically detects your audio output and delivers the **best poss
 - €600 AirPods Max
 - €5,000 Dolby Atmos home theater
 - €50,000 professional studio monitors
+- €500,000 cinema Dolby Atmos systems (64+ speakers)
+- €2,000,000 stadium PA systems (2000+ speakers)
 
 **No manual configuration needed** - plug and play! 🚀
+
+**For professional venues (cinema, clubs, theaters, festivals), see:** `PROFESSIONAL_VENUE_AUDIO.md`
 
 ---
 
