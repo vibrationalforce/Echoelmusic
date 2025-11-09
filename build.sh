@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# build.sh - VS Code friendly build script for BLAB
+# build.sh - VS Code friendly build script for Echoelmusic
 # Wraps swift build with better output and error handling
 #
 # Usage:
@@ -19,9 +19,9 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Banner
-echo -e "${BLUE}╔═══════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║  🎵 BLAB - Building from VS Code    ║${NC}"
-echo -e "${BLUE}╚═══════════════════════════════════════╝${NC}"
+echo -e "${BLUE}╔═══════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║  🎵 Echoelmusic - Building from VS Code  ║${NC}"
+echo -e "${BLUE}╚═══════════════════════════════════════════╝${NC}"
 echo ""
 
 # Check if we're in the right directory
@@ -56,7 +56,7 @@ echo -e "${BLUE}📦 Resolving dependencies...${NC}"
 swift package resolve
 
 echo ""
-echo -e "${BLUE}🔨 Building BLAB...${NC}"
+echo -e "${BLUE}🔨 Building Echoelmusic...${NC}"
 echo ""
 
 # Build with appropriate configuration

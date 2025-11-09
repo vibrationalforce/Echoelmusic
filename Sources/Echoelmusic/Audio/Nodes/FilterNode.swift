@@ -4,7 +4,7 @@ import AVFoundation
 /// Low-pass filter node with bio-reactive cutoff
 /// Heart Rate → Filter Cutoff (higher HR = brighter/more open sound)
 @MainActor
-class FilterNode: BaseBlabNode {
+class FilterNode: BaseEchoelmusicNode {
 
     // MARK: - AVAudioUnit EQ
 
