@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-/// Available visualization modes for BLAB
+/// Available visualization modes for Echoelmusic
 enum VisualizationMode: String, CaseIterable, Identifiable {
     case particles = "Particles"
     case cymatics = "Cymatics"

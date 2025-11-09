@@ -1,9 +1,9 @@
-# 🧠 BLAB_MASTER_PROMPT_v4.3 for Claude Sonnet 4.5
+# 🧠 ECHOELMUSIC_MASTER_PROMPT_v4.3 for Claude Sonnet 4.5
 
-**Repository:** [vibrationalforce/blab-ios-app](https://github.com/vibrationalforce/blab-ios-app)
+**Repository:** [vibrationalforce/Echoelmusic](https://github.com/vibrationalforce/Echoelmusic)
 **Version:** 4.3 (October 2025)
 **Target AI:** Claude Sonnet 4.5 / Claude Code
-**Purpose:** Complete system architecture and development guidelines for BLAB iOS App
+**Purpose:** Complete system architecture and development guidelines for Echoelmusic iOS App
 
 ---
 
@@ -34,7 +34,7 @@ Du bist leitender **AI- und Systemarchitekt** für *BLAB*, eine iOS-App, die Sti
 ### **Framework-Architektur**
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 ├── Audio/               # Audio engine & DSP
 ├── Biofeedback/        # HealthKit + bio-parameter mapping
 ├── MIDI/               # MIDI 2.0 + MPE infrastructure
@@ -585,7 +585,7 @@ class WatchConnectivityManager {
 **Theme: Dark Neuro**
 ```swift
 extension Color {
-    // BLAB Color Palette
+    // Echoelmusic Color Palette
     static let blabPrimary = Color(red: 0.2, green: 0.8, blue: 0.9)  // Cyan
     static let blabSecondary = Color(red: 0.8, green: 0.3, blue: 0.9)  // Magenta
     static let blabAccent = Color(red: 0.0, green: 0.85, blue: 0.64)  // Green
@@ -1066,8 +1066,8 @@ class audioengine { // Wrong: PascalCase for classes
 ### **Repository Structure**
 
 ```
-blab-ios-app/
-├── Sources/Blab/
+Echoelmusic/
+├── Sources/Echoelmusic/
 │   ├── Audio/              # Audio engine & DSP
 │   ├── Biofeedback/        # HealthKit + bio mapping
 │   ├── MIDI/               # MIDI 2.0 + MPE
@@ -1082,7 +1082,7 @@ blab-ios-app/
 │   ├── API/                # API documentation
 │   └── Tutorials/          # User guides
 ├── Prompts/
-│   └── BLAB_MASTER_PROMPT_v4.3.md  # This file
+│   └── ECHOELMUSIC_MASTER_PROMPT_v4.3.md  # This file
 ├── Package.swift           # SPM manifest
 └── README.md               # Project overview
 ```

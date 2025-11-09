@@ -1,4 +1,4 @@
-# 🚀 BLAB Quick Development Reference
+# 🚀 Echoelmusic Quick Development Reference
 
 **Für schnellen Zugriff während der Entwicklung**
 
@@ -35,8 +35,8 @@ swift build                 # Build ohne Run
 |------|-------|
 | `CLAUDE_CODE_ULTIMATE_PROMPT.md` | **Haupt-Prompt** für Claude Code Development |
 | `.github/CLAUDE_TODO.md` | Aktuelle TODO-Liste & Sprint-Planung |
-| `BLAB_IMPLEMENTATION_ROADMAP.md` | Komplette Roadmap Phase 0-10 |
-| `BLAB_Allwave_V∞_ClaudeEdition.txt` | Vision & System-Architektur |
+| `ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md` | Komplette Roadmap Phase 0-10 |
+| `ECHOELMUSIC_Allwave_V∞_ClaudeEdition.txt` | Vision & System-Architektur |
 | `QUICK_DEV_REFERENCE.md` | Diese Datei (Quick-Ref) |
 | `blab-dev.sh` | Development Helper Script |
 
@@ -47,10 +47,10 @@ swift build                 # Build ohne Run
 ### 1️⃣ Bio-Mapping Presets
 **Files zu erstellen:**
 ```
-Sources/Blab/Biofeedback/BioMappingPresets.swift
-Sources/Blab/Biofeedback/BioParameterMapping.swift
-Sources/Blab/UI/PresetSelectionView.swift
-Tests/BlabTests/BioMappingPresetsTests.swift
+Sources/Echoelmusic/Biofeedback/BioMappingPresets.swift
+Sources/Echoelmusic/Biofeedback/BioParameterMapping.swift
+Sources/Echoelmusic/UI/PresetSelectionView.swift
+Tests/EchoelmusicTests/BioMappingPresetsTests.swift
 ```
 
 **Start:**
@@ -63,10 +63,10 @@ Tests/BlabTests/BioMappingPresetsTests.swift
 ### 2️⃣ Visual Modes Extensions
 **Files zu erstellen:**
 ```
-Sources/Blab/Visual/Modes/SacredGeometryMode.swift
-Sources/Blab/Visual/Modes/BrainwaveVisualizerMode.swift
-Sources/Blab/Visual/Modes/HeartCoherenceMandalaMode.swift
-Sources/Blab/Visual/Shaders/BioReactiveCymatics.metal
+Sources/Echoelmusic/Visual/Modes/SacredGeometryMode.swift
+Sources/Echoelmusic/Visual/Modes/BrainwaveVisualizerMode.swift
+Sources/Echoelmusic/Visual/Modes/HeartCoherenceMandalaMode.swift
+Sources/Echoelmusic/Visual/Shaders/BioReactiveCymatics.metal
 ```
 
 ---
@@ -76,7 +76,7 @@ Sources/Blab/Visual/Shaders/BioReactiveCymatics.metal
 ### Neues BlabNode erstellen
 
 ```swift
-// Sources/Blab/Audio/Nodes/MyNode.swift
+// Sources/Echoelmusic/Audio/Nodes/MyNode.swift
 import AVFoundation
 
 class MyNode: BlabNode {
@@ -113,7 +113,7 @@ class MyNode: BlabNode {
 ### Neuer Visualization Mode
 
 ```swift
-// Sources/Blab/Visual/Modes/MyMode.swift
+// Sources/Echoelmusic/Visual/Modes/MyMode.swift
 import SwiftUI
 
 class MyMode: VisualizationMode {
@@ -149,7 +149,7 @@ class MyMode: VisualizationMode {
 ### Unit Test Template
 
 ```swift
-// Tests/BlabTests/MyFeatureTests.swift
+// Tests/EchoelmusicTests/MyFeatureTests.swift
 import XCTest
 @testable import Blab
 
@@ -338,10 +338,10 @@ Implementiere das Bio-Mapping Presets System gemäß
 CLAUDE_CODE_ULTIMATE_PROMPT.md, Sektion "Bio-Mapping Presets".
 
 Files:
-- Sources/Blab/Biofeedback/BioMappingPresets.swift
-- Sources/Blab/Biofeedback/BioParameterMapping.swift
-- Sources/Blab/UI/PresetSelectionView.swift
-- Tests/BlabTests/BioMappingPresetsTests.swift
+- Sources/Echoelmusic/Biofeedback/BioMappingPresets.swift
+- Sources/Echoelmusic/Biofeedback/BioParameterMapping.swift
+- Sources/Echoelmusic/UI/PresetSelectionView.swift
+- Tests/EchoelmusicTests/BioMappingPresetsTests.swift
 
 Requirements:
 - 10 Presets (Creative, Meditation, Focus, etc.)
@@ -453,5 +453,5 @@ Bitte debuggen und fixen.
 
 **Happy Coding!** ✨
 
-*Generated with Claude Code for BLAB Development*
+*Generated with Claude Code for Echoelmusic Development*
 *Version: V∞.3 | 2025-10-21*

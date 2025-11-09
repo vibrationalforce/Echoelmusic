@@ -1,9 +1,9 @@
-# 🗓️ BLAB 90-DAY ROADMAP — Week-by-Week Implementation Plan
+# 🗓️ Echoelmusic 90-DAY ROADMAP — Week-by-Week Implementation Plan
 
 **Start Date:** 2025-10-21 (Week 1)
 **Target Completion:** 2026-01-19 (Week 13)
 **Lead Developer:** Claude Code
-**Repository:** https://github.com/vibrationalforce/blab-ios-app
+**Repository:** https://github.com/vibrationalforce/Echoelmusic
 
 ---
 
@@ -42,7 +42,7 @@
 
 1. **Project Restructure**
    ```
-   Sources/Blab/
+   Sources/Echoelmusic/
    ├── Audio/          (existing, refactor)
    ├── Bio/            (existing, refactor)
    ├── Spatial/        (NEW)
@@ -753,7 +753,7 @@
 
 This roadmap is **ambitious but achievable**. Each week builds on the previous, creating a **compounding effect**.
 
-By Week 13, BLAB will be the world's most advanced **embodied multimodal creation system**.
+By Week 13, Echoelmusic will be the world's most advanced **embodied multimodal creation system**.
 
 **Remember:**
 > "Perfect is the enemy of shipped. Ship weekly, iterate forever."

@@ -1,9 +1,9 @@
-# 🌊 BLAB Implementation Roadmap
+# 🌊 Echoelmusic Implementation Roadmap
 ## From Current iOS App → Full Allwave Vision
 
 **Created:** 2025-10-20
-**Vision:** BLAB Allwave V∞.2 (Claude Code Edition)
-**Current:** BLAB iOS v0.1 (Biofeedback + Binaural Beats + Spatial Audio)
+**Vision:** Echoelmusic Allwave V∞.2 (Claude Code Edition)
+**Current:** Echoelmusic iOS v0.1 (Biofeedback + Binaural Beats + Spatial Audio)
 
 ---
 
@@ -66,8 +66,8 @@ audioSession.setPreferredSampleRate(48000)
 ```
 
 **Files to modify:**
-- `Sources/Blab/Audio/AudioEngine.swift`
-- `Sources/Blab/MicrophoneManager.swift`
+- `Sources/Echoelmusic/Audio/AudioEngine.swift`
+- `Sources/Echoelmusic/MicrophoneManager.swift`
 
 **New features:**
 - [ ] Real-time scheduling (DispatchQueue.userInteractive)
@@ -86,10 +86,10 @@ protocol BlabNode {
 ```
 
 **New files:**
-- `Sources/Blab/Audio/Nodes/BlabNode.swift`
-- `Sources/Blab/Audio/Nodes/ReverbNode.swift`
-- `Sources/Blab/Audio/Nodes/FilterNode.swift`
-- `Sources/Blab/Audio/Nodes/CompressorNode.swift`
+- `Sources/Echoelmusic/Audio/Nodes/BlabNode.swift`
+- `Sources/Echoelmusic/Audio/Nodes/ReverbNode.swift`
+- `Sources/Echoelmusic/Audio/Nodes/FilterNode.swift`
+- `Sources/Echoelmusic/Audio/Nodes/CompressorNode.swift`
 
 **Features:**
 - [ ] Protocol-based node architecture
@@ -106,8 +106,8 @@ protocol BlabNode {
 ```
 
 **Files to modify:**
-- `Sources/Blab/Biofeedback/BioParameterMapper.swift`
-- `Sources/Blab/Biofeedback/HealthKitManager.swift`
+- `Sources/Echoelmusic/Biofeedback/BioParameterMapper.swift`
+- `Sources/Echoelmusic/Biofeedback/HealthKitManager.swift`
 
 **New features:**
 - [ ] Respiratory rate tracking (HKQuantityTypeIdentifier.respiratoryRate)
@@ -134,9 +134,9 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 ```
 
 **New files:**
-- `Sources/Blab/Visual/CymaticsRenderer.swift`
-- `Sources/Blab/Visual/Shaders/Cymatics.metal`
-- `Sources/Blab/Visual/Shaders/ParticleShader.metal`
+- `Sources/Echoelmusic/Visual/CymaticsRenderer.swift`
+- `Sources/Echoelmusic/Visual/Shaders/Cymatics.metal`
+- `Sources/Echoelmusic/Visual/Shaders/ParticleShader.metal`
 
 **Features:**
 - [ ] Metal compute shaders for FFT visualization
@@ -153,8 +153,8 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 - [ ] Mandala (radial symmetry)
 
 **Files:**
-- `Sources/Blab/Visual/VisualizationMode.swift`
-- `Sources/Blab/Visual/Modes/CymaticsMode.swift`
+- `Sources/Echoelmusic/Visual/VisualizationMode.swift`
+- `Sources/Echoelmusic/Visual/Modes/CymaticsMode.swift`
 - etc.
 
 #### 2.3 Bio-Synesthetic Mapping ⏳
@@ -185,9 +185,9 @@ let source = PHASESource(engine: engine)
 ```
 
 **New files:**
-- `Sources/Blab/Audio/Spatial/PHASEEngine.swift`
-- `Sources/Blab/Audio/Spatial/AmbisonicRenderer.swift`
-- `Sources/Blab/Audio/Spatial/HRTFProcessor.swift`
+- `Sources/Echoelmusic/Audio/Spatial/PHASEEngine.swift`
+- `Sources/Echoelmusic/Audio/Spatial/AmbisonicRenderer.swift`
+- `Sources/Echoelmusic/Audio/Spatial/HRTFProcessor.swift`
 
 **Features:**
 - [ ] PHASE audio environment
@@ -222,10 +222,10 @@ class RecordingEngine {
 ```
 
 **New files:**
-- `Sources/Blab/Recording/RecordingEngine.swift`
-- `Sources/Blab/Recording/Track.swift`
-- `Sources/Blab/Recording/Recording.swift`
-- `Sources/Blab/Recording/ExportManager.swift`
+- `Sources/Echoelmusic/Recording/RecordingEngine.swift`
+- `Sources/Echoelmusic/Recording/Track.swift`
+- `Sources/Echoelmusic/Recording/Recording.swift`
+- `Sources/Echoelmusic/Recording/ExportManager.swift`
 
 **Features:**
 - [ ] Multi-track recording
@@ -280,9 +280,9 @@ class BlabComposer {
 ```
 
 **New files:**
-- `Sources/Blab/AI/BlabComposer.swift`
-- `Sources/Blab/AI/CompositionGenerator.swift`
-- `Sources/Blab/AI/MoodAnalyzer.swift`
+- `Sources/Echoelmusic/AI/BlabComposer.swift`
+- `Sources/Echoelmusic/AI/CompositionGenerator.swift`
+- `Sources/Echoelmusic/AI/MoodAnalyzer.swift`
 - `Resources/Models/BlabComposer.mlmodel`
 
 **Features:**
@@ -326,9 +326,9 @@ class CollaborationEngine {
 ```
 
 **New files:**
-- `Sources/Blab/Network/WebRTCEngine.swift`
-- `Sources/Blab/Network/PeerConnection.swift`
-- `Sources/Blab/Network/SyncManager.swift`
+- `Sources/Echoelmusic/Network/WebRTCEngine.swift`
+- `Sources/Echoelmusic/Network/PeerConnection.swift`
+- `Sources/Echoelmusic/Network/SyncManager.swift`
 
 **Features:**
 - [ ] Peer-to-peer audio streaming
@@ -392,7 +392,7 @@ class MPEController {
 ```swift
 // watchOS companion app
 class WatchBridge {
-    func streamHRV(to mainApp: BlabApp)
+    func streamHRV(to mainApp: EchoelmusicApp)
     func displayCoherence(_ score: Double)
 }
 ```
@@ -472,7 +472,7 @@ class PublishingPipeline {
 
 #### 9.2 Streaming Integration ⏳
 **Platforms:**
-- [ ] Twitch (live BLAB sessions)
+- [ ] Twitch (live Echoelmusic sessions)
 - [ ] YouTube Live
 - [ ] Instagram Live
 - [ ] RTMP custom endpoints

@@ -1,4 +1,4 @@
-# BLAB iOS App 🫧
+# Echoelmusic iOS App 🫧
 
 **Breath → Sound → Light → Consciousness**
 
@@ -13,7 +13,7 @@
 ## 🚀 Quick Start (Xcode Handoff)
 
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/Echoelmusic
 open Package.swift  # Opens in Xcode automatically
 ```
 
@@ -30,7 +30,7 @@ Then in Xcode:
 
 **Current Phase:** Phase 3 Complete & Optimized ✅
 **Last Update:** 2025-10-24
-**GitHub:** `vibrationalforce/blab-ios-app`
+**GitHub:** `vibrationalforce/Echoelmusic`
 **Latest Commit:** `65a260f` - API integration complete
 
 ### Phase Completion:
@@ -45,9 +45,9 @@ Then in Xcode:
 
 ---
 
-## 🎯 What is BLAB?
+## 🎯 What is Echoelmusic?
 
-BLAB is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
+Echoelmusic is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
 - 🌊 **Spatial Audio** (3D/4D/Fibonacci Field Arrays)
 - 🎨 **Real-time Visuals** (Cymatics, Mandalas, Particles)
 - 💡 **LED/DMX Lighting** (Push 3, Art-Net)
@@ -140,10 +140,10 @@ BLAB is an **embodied multimodal music system** that transforms biometric signal
 ## 📁 Project Structure
 
 ```
-blab-ios-app/
+Echoelmusic/
 ├── Package.swift                    # Swift Package config
-├── Sources/Blab/
-│   ├── BlabApp.swift               # App entry point
+├── Sources/Echoelmusic/
+│   ├── EchoelmusicApp.swift               # App entry point
 │   ├── ContentView.swift           # Main UI
 │   ├── Audio/
 │   │   ├── AudioEngine.swift       # Core audio engine
@@ -174,7 +174,7 @@ blab-ios-app/
 │   ├── Recording/                       # Multi-track recording
 │   ├── Views/                           # UI components
 │   └── Utils/                           # Utilities
-├── Tests/BlabTests/                     # Unit tests
+├── Tests/EchoelmusicTests/                     # Unit tests
 └── Docs/                                # Documentation
 
 ✨ = Phase 3 components (2228 lines optimized code)
@@ -223,8 +223,8 @@ swift test
 - **[XCODE_HANDOFF.md](XCODE_HANDOFF.md)** - Xcode development guide (MUST READ)
 - **[PHASE_3_OPTIMIZED.md](PHASE_3_OPTIMIZED.md)** - Phase 3 optimization details
 - **[DAW_INTEGRATION_GUIDE.md](DAW_INTEGRATION_GUIDE.md)** - DAW integration
-- **[BLAB_IMPLEMENTATION_ROADMAP.md](BLAB_IMPLEMENTATION_ROADMAP.md)** - Full roadmap
-- **[BLAB_90_DAY_ROADMAP.md](BLAB_90_DAY_ROADMAP.md)** - 90-day plan
+- **[ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md](ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md)** - Full roadmap
+- **[ECHOELMUSIC_90_DAY_ROADMAP.md](ECHOELMUSIC_90_DAY_ROADMAP.md)** - 90-day plan
 
 ### Additional Docs:
 - `COMPATIBILITY.md` - iOS compatibility notes
@@ -263,15 +263,15 @@ swift test
 ```xml
 <!-- Microphone -->
 <key>NSMicrophoneUsageDescription</key>
-<string>BLAB needs microphone access to process your voice</string>
+<string>Echoelmusic needs microphone access to process your voice</string>
 
 <!-- Health Data -->
 <key>NSHealthShareUsageDescription</key>
-<string>BLAB needs access to heart rate data for bio-reactive music</string>
+<string>Echoelmusic needs access to heart rate data for bio-reactive music</string>
 
 <!-- Camera (for face tracking) -->
 <key>NSCameraUsageDescription</key>
-<string>BLAB uses face tracking for expressive control</string>
+<string>Echoelmusic uses face tracking for expressive control</string>
 ```
 
 ### Network Configuration (DMX/Art-Net):
@@ -413,13 +413,13 @@ git push origin feature/my-feature
 **Estimated MVP Completion:** 3-4 months
 **Full Feature Set:** 6-7 months
 
-See `BLAB_IMPLEMENTATION_ROADMAP.md` for details.
+See `ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md` for details.
 
 ---
 
 ## 📜 License
 
-Copyright © 2025 BLAB Studio. All rights reserved.
+Copyright © 2025 Echoelmusic Studio. All rights reserved.
 
 Proprietary software - not for redistribution.
 
@@ -427,7 +427,7 @@ Proprietary software - not for redistribution.
 
 ## 🫧 Philosophy
 
-> "BLAB is not just a music app - it's an interface to embodied consciousness.
+> "Echoelmusic is not just a music app - it's an interface to embodied consciousness.
 > Through breath, biometrics, and intention, we transform life itself into art."
 
 **breath → sound → light → consciousness**

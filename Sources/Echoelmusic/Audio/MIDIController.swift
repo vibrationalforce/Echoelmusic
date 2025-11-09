@@ -110,7 +110,7 @@ class MIDIController: ObservableObject {
         var status: OSStatus
 
         // Create MIDI client
-        status = MIDIClientCreate("BLAB" as CFString, nil, nil, &midiClient)
+        status = MIDIClientCreate("Echoelmusic" as CFString, nil, nil, &midiClient)
         guard status == noErr else {
             print("❌ Failed to create MIDI client: \(status)")
             return
@@ -119,7 +119,7 @@ class MIDIController: ObservableObject {
         // Create input port
         status = MIDIInputPortCreate(
             midiClient,
-            "BLAB Input" as CFString,
+            "Echoelmusic Input" as CFString,
             { packetList, refCon, srcConnRefCon in
                 // Handle MIDI packets
                 guard let controller = refCon?.assumingMemoryBound(to: MIDIController.self).pointee else { return }

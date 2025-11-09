@@ -1,4 +1,4 @@
-# 🎉 BLAB - Integration Complete!
+# 🎉 Echoelmusic - Integration Complete!
 
 ## ✅ PHASE 2 & 3 - Spatial Audio + Bio-Parameter Mapping
 
@@ -11,7 +11,7 @@ All components have been successfully integrated into BLAB!
 ### Spatial Audio (ASAF) - PHASE 2
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 ├── Utils/
 │   ├── DeviceCapabilities.swift       ✨ NEW - Device & ASAF detection
 │   └── HeadTrackingManager.swift      ✨ NEW - CoreMotion head tracking
@@ -22,7 +22,7 @@ Sources/Blab/
 ### Bio-Parameter Mapping - PHASE 3
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 └── Biofeedback/
     └── BioParameterMapper.swift       ✨ NEW - HRV/HR → Audio mapping
 ```
@@ -30,7 +30,7 @@ Sources/Blab/
 ### UI Components
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 └── Views/Components/
     ├── SpatialAudioControlsView.swift ✨ NEW - Spatial audio UI
     └── HeadTrackingVisualization.swift ✨ NEW - 3D position indicator
@@ -39,7 +39,7 @@ Sources/Blab/
 ### Updated Files
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 ├── Audio/
 │   └── AudioEngine.swift              ✏️ UPDATED - Full integration
 └── Package.swift                      ✏️ UPDATED - Resources added
@@ -136,7 +136,7 @@ Sources/Blab/
 
 ### Build Test
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/Echoelmusic
 ./build.sh
 ```
 
@@ -362,7 +362,7 @@ swift package resolve
 - Enable Debug mode in Xcode
 
 **GitHub Issues:**
-https://github.com/vibrationalforce/blab-ios-app/issues
+https://github.com/vibrationalforce/Echoelmusic/issues
 
 ---
 

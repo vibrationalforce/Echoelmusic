@@ -85,7 +85,7 @@ class HealthKitManager: ObservableObject {
     func requestAuthorization() async throws {
         guard HKHealthStore.isHealthDataAvailable() else {
             let error = NSError(
-                domain: "com.blab.healthkit",
+                domain: "com.echoelmusic.healthkit",
                 code: 1,
                 userInfo: [NSLocalizedDescriptionKey: "HealthKit not available"]
             )
