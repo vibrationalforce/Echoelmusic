@@ -3,7 +3,7 @@
 **Date:** 2025-10-24
 **Status:** ✅ Ready for Xcode Development
 **Last Commit:** `65a260f` - API integration complete
-**GitHub:** `vibrationalforce/blab-ios-app`
+**GitHub:** `vibrationalforce/Echoelmusic-ios-app`
 
 ---
 
@@ -613,7 +613,7 @@ UI:
 ```
 
 ### **GitHub:**
-- **Repo:** `vibrationalforce/blab-ios-app`
+- **Repo:** `vibrationalforce/Echoelmusic-ios-app`
 - **Branch:** `main`
 - **Latest:** `65a260f` (API integration complete)
 

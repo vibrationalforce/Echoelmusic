@@ -57,7 +57,7 @@ This guide explains how to develop ECHOELMUSIC in VS Code and deploy to your iPh
 
 **1. Clone Repository**
 ```bash
-git clone https://github.com/vibrationalforce/blab-ios-app.git
+git clone https://github.com/vibrationalforce/Echoelmusic-ios-app.git
 cd blab-ios-app
 ```
 
@@ -395,7 +395,7 @@ git push origin feature/new-audio-effect
 
 ## 📞 Support
 
-**Issues:** https://github.com/vibrationalforce/blab-ios-app/issues
+**Issues:** https://github.com/vibrationalforce/Echoelmusic-ios-app/issues
 
 **Questions:**
 - Check existing issues

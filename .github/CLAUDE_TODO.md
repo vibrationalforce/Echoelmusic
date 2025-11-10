@@ -14,7 +14,7 @@
 - [x] FFT + Pitch Detection
 - [x] Binaural Beat Generator
 - [x] Spatial Audio Engine
-- [x] Node-basierte Architektur (BlabNode)
+- [x] Node-basierte Architektur (EchoelmusicNode)
 - [x] Recording System Basis
 - [x] Multi-Track Recording
 - [x] Visual Engine mit Metal
@@ -45,7 +45,7 @@
   - [ ] Visual Feedback bei Preset-Wechsel
 
 - [ ] Tests
-  - [ ] `Tests/BlabTests/BioMappingPresetsTests.swift`
+  - [ ] `Tests/EchoelmusicTests/BioMappingPresetsTests.swift`
   - [ ] Unit Tests für alle 10 Presets
   - [ ] Integration Test mit HealthKit Mock
 

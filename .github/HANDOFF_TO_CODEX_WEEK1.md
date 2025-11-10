@@ -22,12 +22,12 @@
 - `Sources/Echoelmusic/Unified/UnifiedControlHub.swift` (230 lines)
 - `Sources/Echoelmusic/Spatial/ARFaceTrackingManager.swift` (300 lines)
 - `Sources/Echoelmusic/Unified/FaceToAudioMapper.swift` (230 lines)
-- `Tests/BlabTests/UnifiedControlHubTests.swift` (16 tests)
-- `Tests/BlabTests/FaceToAudioMapperTests.swift` (17 tests)
+- `Tests/EchoelmusicTests/UnifiedControlHubTests.swift` (16 tests)
+- `Tests/EchoelmusicTests/FaceToAudioMapperTests.swift` (17 tests)
 
 **Documentation:**
-- `BLAB_EXTENDED_VISION.md` (Extended system architecture)
-- `BLAB_90_DAY_ROADMAP.md` (13-week implementation plan)
+- `ECHOELMUSIC_EXTENDED_VISION.md` (Extended system architecture)
+- `ECHOELMUSIC_90_DAY_ROADMAP.md` (13-week implementation plan)
 
 ---
 
@@ -194,8 +194,8 @@ Task { @MainActor in
 ### 5. **Test Coverage — Edge Cases**
 
 **Files:**
-- `Tests/BlabTests/UnifiedControlHubTests.swift`
-- `Tests/BlabTests/FaceToAudioMapperTests.swift`
+- `Tests/EchoelmusicTests/UnifiedControlHubTests.swift`
+- `Tests/EchoelmusicTests/FaceToAudioMapperTests.swift`
 
 **Concern:**
 Are there edge cases we missed?

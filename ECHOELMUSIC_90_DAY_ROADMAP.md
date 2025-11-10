@@ -3,7 +3,7 @@
 **Start Date:** 2025-10-21 (Week 1)
 **Target Completion:** 2026-01-19 (Week 13)
 **Lead Developer:** Claude Code
-**Repository:** https://github.com/vibrationalforce/blab-ios-app
+**Repository:** https://github.com/vibrationalforce/Echoelmusic
 
 ---
 
@@ -574,9 +574,9 @@
    - Receive Unreal parameters (optional)
 
 2. **Unreal Engine OSC Receiver (Blueprint)**
-   - Receive `/blab/bio/*` messages
-   - Receive `/blab/hand/*` messages
-   - Receive `/blab/face/*` messages
+   - Receive `/echoelmusic/bio/*` messages
+   - Receive `/echoelmusic/hand/*` messages
+   - Receive `/echoelmusic/face/*` messages
 
 3. **MetaSounds Integration**
    - Bio → MetaSounds parameters

@@ -49,13 +49,13 @@ function run_tests() {
 
 function run_audio_tests() {
     echo -e "${YELLOW}🎵 Running audio tests...${NC}"
-    swift test --filter BlabTests.Audio
+    swift test --filter echoelmusicTests.Audio
     echo -e "${GREEN}✅ Audio tests passed${NC}"
 }
 
 function run_visual_tests() {
     echo -e "${YELLOW}🎨 Running visual tests...${NC}"
-    swift test --filter BlabTests.Visual
+    swift test --filter echoelmusicTests.Visual
     echo -e "${GREEN}✅ Visual tests passed${NC}"
 }
 

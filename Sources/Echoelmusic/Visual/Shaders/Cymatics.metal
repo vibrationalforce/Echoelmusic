@@ -1,6 +1,6 @@
 //
 //  Cymatics.metal
-//  BLAB
+//  ECHOELMUSIC
 //
 //  Cymatics visualization shader
 //  Creates water-like patterns driven by FFT audio data

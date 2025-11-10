@@ -345,7 +345,7 @@ cd /Users/michpack/blab-ios-app
 - INTEGRATION_COMPLETE.md - API reference
 - Code comments - Inline docs
 
-**GitHub:** https://github.com/vibrationalforce/blab-ios-app
+**GitHub:** https://github.com/vibrationalforce/Echoelmusic-ios-app
 
 ---
 

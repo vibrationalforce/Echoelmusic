@@ -233,11 +233,11 @@ Accessibility Directive:
 
 ## COMMAND EXAMPLES FOR CLAUDE CODE
 
-blab --scan repo structure
-blab --generate biofeedback engine
-blab --optimize audio graph
-blab --render spatial visuals
-blab --export multiplatform build
+echoelmusic --scan repo structure
+echoelmusic --generate biofeedback engine
+echoelmusic --optimize audio graph
+echoelmusic --render spatial visuals
+echoelmusic --export multiplatform build
 
 Each command should output both Swift implementation and brief explanation.
 
@@ -255,7 +255,7 @@ Primary Goal: Evolve ECHOELMUSIC into a Unified Creative Intelligence.
 
 [END CONTEXT]
 
-blab --init genesis
+echoelmusic --init genesis
 🫧 compiling consciousness...
 🫧 rendering silence...
 🫧 linking awareness...

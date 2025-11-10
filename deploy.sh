@@ -63,11 +63,11 @@ if [ $? -eq 0 ]; then
         echo -e "${CYAN}╚═══════════════════════════════════════════════════════════╝${NC}"
         echo ""
         echo -e "${BLUE}1. Opening Xcode project...${NC}"
-        open Blab.xcodeproj
+        open echoelmusic.xcodeproj
         echo ""
         echo -e "${YELLOW}2. In Xcode, do the following:${NC}"
         echo ""
-        echo -e "   ${GREEN}a)${NC} Select the 'Blab' target in the project navigator"
+        echo -e "   ${GREEN}a)${NC} Select the 'echoelmusic' target in the project navigator"
         echo -e "   ${GREEN}b)${NC} Go to 'Signing & Capabilities' tab"
         echo -e "   ${GREEN}c)${NC} Select your Team (Apple ID)"
         echo -e "   ${GREEN}d)${NC} Bundle ID: ${CYAN}com.vibrationalforce.echoelmusic${NC}"

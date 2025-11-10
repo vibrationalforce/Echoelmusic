@@ -1,6 +1,6 @@
 # 🧠 BLAB_MASTER_PROMPT_v4.3 for Claude Sonnet 4.5
 
-**Repository:** [vibrationalforce/blab-ios-app](https://github.com/vibrationalforce/blab-ios-app)
+**Repository:** [vibrationalforce/Echoelmusic-ios-app](https://github.com/vibrationalforce/Echoelmusic-ios-app)
 **Version:** 4.3 (October 2025)
 **Target AI:** Claude Sonnet 4.5 / Claude Code
 **Purpose:** Complete system architecture and development guidelines for ECHOELMUSIC iOS App

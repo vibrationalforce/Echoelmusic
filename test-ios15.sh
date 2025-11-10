@@ -57,7 +57,7 @@ echo ""
 # Step 3: Build for iOS 15 Simulator
 echo -e "${YELLOW}→ Building for iOS 15.0 Simulator...${NC}"
 xcodebuild clean build \
-    -scheme Blab \
+    -scheme echoelmusic \
     -sdk iphonesimulator \
     -destination 'platform=iOS Simulator,name=iPhone 13,OS=15.0' \
     -configuration Debug \
@@ -93,7 +93,7 @@ fi
 # Step 4: Run unit tests
 echo -e "${YELLOW}→ Running unit tests on iOS 15...${NC}"
 xcodebuild test \
-    -scheme Blab \
+    -scheme echoelmusic \
     -sdk iphonesimulator \
     -destination 'platform=iOS Simulator,name=iPhone 13,OS=15.0' \
     CODE_SIGNING_ALLOWED=NO \

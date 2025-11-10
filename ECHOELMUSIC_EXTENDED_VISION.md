@@ -3,7 +3,7 @@
 **Version:** V∞.4 Extended
 **Date:** 2025-10-21
 **Lead Architect:** Claude Code
-**Repo:** https://github.com/vibrationalforce/blab-ios-app
+**Repo:** https://github.com/vibrationalforce/Echoelmusic-ios-app
 
 ---
 

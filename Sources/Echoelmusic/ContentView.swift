@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Main user interface for the Blab app
+/// Main user interface for the Echoelmusic app
 /// Optimized with proper state management and error handling
 struct ContentView: View {
 
@@ -457,7 +457,7 @@ struct ContentView: View {
             Button("Open Settings", action: openSettings)
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Blab needs microphone access to create music from your voice. Please enable it in Settings.")
+            Text("Echoelmusic needs microphone access to create music from your voice. Please enable it in Settings.")
         }
         .sheet(isPresented: $showVisualizationPicker) {
             VisualizationModePicker(selectedMode: $selectedVisualizationMode)

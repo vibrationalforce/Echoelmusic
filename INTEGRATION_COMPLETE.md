@@ -362,7 +362,7 @@ swift package resolve
 - Enable Debug mode in Xcode
 
 **GitHub Issues:**
-https://github.com/vibrationalforce/blab-ios-app/issues
+https://github.com/vibrationalforce/Echoelmusic-ios-app/issues
 
 ---
 

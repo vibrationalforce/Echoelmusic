@@ -308,7 +308,7 @@ git push origin main
 ```
 
 #### 2. ✅ GitHub Actions ansehen
-- Gehe zu: https://github.com/vibrationalforce/blab-ios-app/actions
+- Gehe zu: https://github.com/vibrationalforce/Echoelmusic-ios-app/actions
 - Warte 5-10 Minuten für Build
 - Prüfe ob Build erfolgreich
 

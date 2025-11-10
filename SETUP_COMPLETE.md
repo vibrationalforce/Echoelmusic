@@ -30,7 +30,7 @@
 **Nächste Schritte:**
 1. Code zu GitHub pushen
 2. GitHub Actions läuft automatisch
-3. Build Status auf https://github.com/vibrationalforce/blab-ios-app/actions ansehen
+3. Build Status auf https://github.com/vibrationalforce/Echoelmusic-ios-app/actions ansehen
 
 ---
 
@@ -79,7 +79,7 @@ git commit -m "Add new feature"
 git push origin develop
 
 # 4. GitHub Actions baut automatisch (5-10 Min)
-# → Sieh Status auf: https://github.com/vibrationalforce/blab-ios-app/actions
+# → Sieh Status auf: https://github.com/vibrationalforce/Echoelmusic-ios-app/actions
 ```
 
 **Vorteile:**
@@ -190,7 +190,7 @@ iPhone anschließen → ⌘ + R
    ```
 
 2. **GitHub Actions Status ansehen**
-   - https://github.com/vibrationalforce/blab-ios-app/actions
+   - https://github.com/vibrationalforce/Echoelmusic-ios-app/actions
    - Warte 5-10 Minuten für ersten Build
 
 3. **Weiter entwickeln in VS Code**
@@ -249,9 +249,9 @@ blab-ios-app/
 ## 💡 Wichtige Links
 
 ### Projekt
-- **GitHub Repo:** https://github.com/vibrationalforce/blab-ios-app
-- **GitHub Actions:** https://github.com/vibrationalforce/blab-ios-app/actions
-- **Issues:** https://github.com/vibrationalforce/blab-ios-app/issues
+- **GitHub Repo:** https://github.com/vibrationalforce/Echoelmusic-ios-app
+- **GitHub Actions:** https://github.com/vibrationalforce/Echoelmusic-ios-app/actions
+- **Issues:** https://github.com/vibrationalforce/Echoelmusic-ios-app/issues
 
 ### Apple
 - **Developer Portal:** https://developer.apple.com/account
@@ -271,7 +271,7 @@ blab-ios-app/
 ### "GitHub Actions Build failed"
 ```bash
 # 1. Logs ansehen
-→ https://github.com/vibrationalforce/blab-ios-app/actions
+→ https://github.com/vibrationalforce/Echoelmusic-ios-app/actions
 → Klick auf failed Workflow
 → Klick auf "Build and Test iOS App"
 → Siehe Fehler-Details
