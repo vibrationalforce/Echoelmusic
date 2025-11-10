@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# BLAB Debug Build Script
+# ECHOELMUSIC Debug Build Script
 # Kompiliert das Projekt mit ausführlichem Debug-Output
 
 set -e  # Exit on error
@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}  BLAB - Debug Build${NC}"
+echo -e "${BLUE}  ECHOELMUSIC - Debug Build${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 

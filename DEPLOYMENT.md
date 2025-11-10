@@ -1,8 +1,8 @@
-# 📱 BLAB - Deployment Guide
+# 📱 ECHOELMUSIC - Deployment Guide
 
 **VS Code First Development Workflow**
 
-This guide explains how to develop BLAB in VS Code and deploy to your iPhone.
+This guide explains how to develop ECHOELMUSIC in VS Code and deploy to your iPhone.
 
 ---
 
@@ -82,7 +82,7 @@ swift --version
 ### Phase 2: Daily Development (VS Code)
 
 **Write Code in VS Code:**
-- Edit Swift files in `Sources/Blab/`
+- Edit Swift files in `Sources/Echoelmusic/`
 - Modern syntax highlighting
 - IntelliSense (with SourceKit-LSP)
 - Git integration
@@ -129,13 +129,13 @@ git push
 
 This will:
 1. ✅ Build the project
-2. ✅ Generate Xcode project (`Blab.xcodeproj`)
+2. ✅ Generate Xcode project (`Echoelmusic.xcodeproj`)
 3. ✅ Open Xcode automatically
 4. ✅ Show deployment instructions
 
 **Step 2: In Xcode (5 minutes)**
 
-1. **Select Target:** Click "Blab" in project navigator
+1. **Select Target:** Click "Echoelmusic" in project navigator
 2. **Signing & Capabilities Tab:**
    - Team: Select your Apple ID
    - Bundle ID: `com.vibrationalforce.blab`
@@ -204,7 +204,7 @@ blab-ios-app/
 ├── Resources/
 │   └── Info.plist            # iOS permissions & config
 ├── Sources/
-│   └── Blab/
+│   └── Echoelmusic/
 │       ├── BlabApp.swift     # App entry point
 │       ├── ContentView.swift # Main UI
 │       ├── MicrophoneManager.swift
@@ -325,7 +325,7 @@ cd blab-ios-app
 ### Scenario 1: New Swift File Added
 
 **In VS Code:**
-1. Create new file in `Sources/Blab/`
+1. Create new file in `Sources/Echoelmusic/`
 2. Write code
 3. `./build.sh` (automatically includes new file)
 4. `git commit -m "Add new feature"`

@@ -1,6 +1,6 @@
 # TestFlight Setup - Automatisches iPhone Testing
 
-Dieses Dokument erklärt, wie du BLAB automatisch via GitHub Actions bauen und auf dein iPhone über TestFlight installieren kannst - **OHNE lokales Xcode**!
+Dieses Dokument erklärt, wie du ECHOELMUSIC automatisch via GitHub Actions bauen und auf dein iPhone über TestFlight installieren kannst - **OHNE lokales Xcode**!
 
 ## 🎯 Ziel
 
@@ -40,7 +40,7 @@ Code auf MacBook schreiben (VS Code) → Push zu GitHub → Automatischer Build 
 → Gehe zu: https://developer.apple.com/account/resources/identifiers/list
 → Klicke auf "+" (neue ID)
 → Wähle "App IDs" → "App"
-→ Description: "BLAB Biofeedback Music"
+→ Description: "ECHOELMUSIC Biofeedback Music"
 → Bundle ID: "com.vibrationalforce.blab"
 → Capabilities aktivieren:
    ✅ HealthKit
@@ -69,7 +69,7 @@ Code auf MacBook schreiben (VS Code) → Push zu GitHub → Automatischer Build 
 → Gehe zu: https://appstoreconnect.apple.com
 → Klicke "My Apps" → "+" → "New App"
 → Platforms: iOS
-→ Name: BLAB
+→ Name: ECHOELMUSIC
 → Primary Language: German (oder English)
 → Bundle ID: com.vibrationalforce.blab (wähle die erstellte ID)
 → SKU: blab-001 (eindeutige ID)
@@ -141,14 +141,14 @@ open Package.swift  # Öffnet in Xcode
 # In Xcode:
 → File → New → Project
 → iOS → App
-→ Product Name: Blab
+→ Product Name: Echoelmusic
 → Team: [Wähle dein Developer Team]
 → Bundle Identifier: com.vibrationalforce.blab
 → Interface: SwiftUI
 → Language: Swift
 
 # Importiere deine existierenden Swift Files
-→ Drag & Drop alle .swift files aus Sources/Blab/
+→ Drag & Drop alle .swift files aus Sources/Echoelmusic/
 → Signing & Capabilities → Automatically manage signing ✅
 ```
 
@@ -231,14 +231,14 @@ git push origin main
 → Du bekommst eine Email mit Einladung
 ```
 
-**6.3. BLAB auf iPhone installieren**
+**6.3. ECHOELMUSIC auf iPhone installieren**
 ```
 → Öffne TestFlight Email auf iPhone
 → Klicke "View in TestFlight"
 → TestFlight öffnet sich
 → Klicke "Install" / "Installieren"
 → App wird installiert (wie normale App)
-→ Öffne BLAB vom Home Screen
+→ Öffne ECHOELMUSIC vom Home Screen
 ```
 
 ---
@@ -275,7 +275,7 @@ git push origin main
 
 ```
 1. Öffne TestFlight App
-2. BLAB App → "Update" (wenn neue Version)
+2. ECHOELMUSIC App → "Update" (wenn neue Version)
 3. Teste die neue Version
 4. Feedback direkt in TestFlight geben (optional)
 ```

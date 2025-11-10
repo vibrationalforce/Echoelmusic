@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# BLAB iOS 15 Compatibility Test Script
+# ECHOELMUSIC iOS 15 Compatibility Test Script
 # Tests the app on iOS 15.0+ simulators (requires Xcode)
 
 set -e  # Exit on error
@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}  BLAB - iOS 15 Compatibility Test${NC}"
+echo -e "${BLUE}  ECHOELMUSIC - iOS 15 Compatibility Test${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 

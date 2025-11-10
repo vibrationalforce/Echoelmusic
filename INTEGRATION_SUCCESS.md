@@ -1,4 +1,4 @@
-# 🎉 BLAB - INTEGRATION ERFOLGREICH!
+# 🎉 ECHOELMUSIC - INTEGRATION ERFOLGREICH!
 
 ## ✅ Alle Quick Wins implementiert!
 
@@ -122,7 +122,7 @@ Audio follows head movement! 🎧
 
 ```
 ┌─────────────────────────────────────┐
-│           BLAB                      │
+│           ECHOELMUSIC                      │
 │       breath → sound                │
 ├─────────────────────────────────────┤
 │                                     │
@@ -292,24 +292,24 @@ cd /Users/michpack/blab-ios-app
 ## 📁 Files Modified:
 
 ```
-✏️  Sources/Blab/BlabApp.swift
+✏️  Sources/Echoelmusic/BlabApp.swift
     - Added AudioEngine initialization
     - Added HealthKit connection
     - Environment objects setup
 
-✏️  Sources/Blab/ContentView.swift
+✏️  Sources/Echoelmusic/ContentView.swift
     - Uses AudioEngine centrally
     - Added Spatial Audio UI
     - Removed duplicate components
     - Integrated all modules
 
-✅ Sources/Blab/Audio/AudioEngine.swift
+✅ Sources/Echoelmusic/Audio/AudioEngine.swift
     (Already perfect - full integration!)
 
-✅ Sources/Blab/Biofeedback/BioParameterMapper.swift
+✅ Sources/Echoelmusic/Biofeedback/BioParameterMapper.swift
     (Already perfect - ready to use!)
 
-✅ Sources/Blab/Audio/SpatialAudioEngine.swift
+✅ Sources/Echoelmusic/Audio/SpatialAudioEngine.swift
     (Already perfect - ready to use!)
 
 ✅ All other files unchanged and working!
@@ -349,7 +349,7 @@ cd /Users/michpack/blab-ios-app
 
 ---
 
-**🎵 BLAB is ready to create biofeedback music! 🎵**
+**🎵 ECHOELMUSIC is ready to create biofeedback music! 🎵**
 
 Built with SwiftUI, AVFoundation, CoreMotion, HealthKit, and ❤️
 

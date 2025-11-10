@@ -1,4 +1,4 @@
-# BLAB iOS App 🫧
+# ECHOELMUSIC iOS App 🫧
 
 **Breath → Sound → Light → Consciousness**
 
@@ -45,9 +45,9 @@ Then in Xcode:
 
 ---
 
-## 🎯 What is BLAB?
+## 🎯 What is ECHOELMUSIC?
 
-BLAB is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
+ECHOELMUSIC is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
 - 🌊 **Spatial Audio** (3D/4D/Fibonacci Field Arrays)
 - 🎨 **Real-time Visuals** (Cymatics, Mandalas, Particles)
 - 💡 **LED/DMX Lighting** (Push 3, Art-Net)
@@ -142,7 +142,7 @@ BLAB is an **embodied multimodal music system** that transforms biometric signal
 ```
 blab-ios-app/
 ├── Package.swift                    # Swift Package config
-├── Sources/Blab/
+├── Sources/Echoelmusic/
 │   ├── BlabApp.swift               # App entry point
 │   ├── ContentView.swift           # Main UI
 │   ├── Audio/
@@ -263,15 +263,15 @@ swift test
 ```xml
 <!-- Microphone -->
 <key>NSMicrophoneUsageDescription</key>
-<string>BLAB needs microphone access to process your voice</string>
+<string>ECHOELMUSIC needs microphone access to process your voice</string>
 
 <!-- Health Data -->
 <key>NSHealthShareUsageDescription</key>
-<string>BLAB needs access to heart rate data for bio-reactive music</string>
+<string>ECHOELMUSIC needs access to heart rate data for bio-reactive music</string>
 
 <!-- Camera (for face tracking) -->
 <key>NSCameraUsageDescription</key>
-<string>BLAB uses face tracking for expressive control</string>
+<string>ECHOELMUSIC uses face tracking for expressive control</string>
 ```
 
 ### Network Configuration (DMX/Art-Net):
@@ -419,7 +419,7 @@ See `BLAB_IMPLEMENTATION_ROADMAP.md` for details.
 
 ## 📜 License
 
-Copyright © 2025 BLAB Studio. All rights reserved.
+Copyright © 2025 ECHOELMUSIC Studio. All rights reserved.
 
 Proprietary software - not for redistribution.
 
@@ -427,7 +427,7 @@ Proprietary software - not for redistribution.
 
 ## 🫧 Philosophy
 
-> "BLAB is not just a music app - it's an interface to embodied consciousness.
+> "ECHOELMUSIC is not just a music app - it's an interface to embodied consciousness.
 > Through breath, biometrics, and intention, we transform life itself into art."
 
 **breath → sound → light → consciousness**

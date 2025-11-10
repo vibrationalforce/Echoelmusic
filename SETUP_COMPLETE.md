@@ -1,15 +1,15 @@
-# 🎉 BLAB Setup Komplett!
+# 🎉 ECHOELMUSIC Setup Komplett!
 
 ## ✅ Was wurde gerade eingerichtet
 
 ### 1. iOS 15+ Abwärtskompatibilität ✅
 **Änderungen:**
 - [Package.swift](Package.swift) - Minimum iOS Version: `iOS 15.0+` (statt 16.0)
-- [DeviceCapabilities.swift](Sources/Blab/Utils/DeviceCapabilities.swift) - `canUseSpatialAudioEngine` Check hinzugefügt
-- [AudioEngine.swift](Sources/Blab/Audio/AudioEngine.swift) - Runtime iOS Version Check
+- [DeviceCapabilities.swift](Sources/Echoelmusic/Utils/DeviceCapabilities.swift) - `canUseSpatialAudioEngine` Check hinzugefügt
+- [AudioEngine.swift](Sources/Echoelmusic/Audio/AudioEngine.swift) - Runtime iOS Version Check
 
 **Ergebnis:**
-- ✅ BLAB läuft jetzt auf **iPhone 6s und neuer** (iOS 15+)
+- ✅ ECHOELMUSIC läuft jetzt auf **iPhone 6s und neuer** (iOS 15+)
 - ✅ Automatische Feature Detection zur Laufzeit
 - ✅ Graceful Fallbacks wenn Features nicht verfügbar
 
@@ -231,7 +231,7 @@ blab-ios-app/
 │       ├── ios-build-simple.yml    # ← NEU: Basic CI Build
 │       └── ios-build.yml           # ← NEU: TestFlight Deployment
 │
-├── Sources/Blab/
+├── Sources/Echoelmusic/
 │   ├── Audio/
 │   │   └── AudioEngine.swift       # ← GEÄNDERT: iOS 15+ Check
 │   └── Utils/
@@ -367,4 +367,4 @@ Nur für finales iPhone-Testing brauchst du entweder:
 - **Option B:** Zugang zu Mac mit Xcode (einmalig für Setup)
 - **Option C:** Weiter nur Code entwickeln (VS Code)
 
-**Viel Erfolg mit BLAB! 🎵🧠✨**
+**Viel Erfolg mit ECHOELMUSIC! 🎵🧠✨**
