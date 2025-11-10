@@ -1,0 +1,118 @@
+name: echoelmusic
+description: Cross-platform multimedia production software
+version: 1.0.0+1
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI & Material Design
+  cupertino_icons: ^1.0.6
+  material_color_utilities: ^0.8.0
+
+  # FFI bridge to native JUCE engine
+  ffi: ^2.1.0
+
+  # State management
+  provider: ^6.1.1
+  riverpod: ^2.4.9
+
+  # Audio
+  flutter_sound: ^9.2.13
+  just_audio: ^0.9.36
+
+  # Video
+  video_player: ^2.8.1
+  camera: ^0.10.5+5
+
+  # AR/VR
+  arcore_flutter_plugin: ^0.1.0  # Android AR
+  ar_flutter_plugin: ^0.7.3       # iOS AR (ARKit)
+
+  # Sensors (for medical/biofeedback)
+  sensors_plus: ^4.0.2
+  health: ^10.1.0                 # HealthKit/Google Fit
+
+  # File management
+  path_provider: ^2.1.1
+  file_picker: ^6.1.1
+
+  # Networking (cloud sync)
+  http: ^1.1.2
+  dio: ^5.4.0
+
+  # Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  shared_preferences: ^2.2.2
+
+  # Platform detection
+  universal_platform: ^1.0.0+1
+
+  # WebGL/WebGPU for web platform
+  js: ^0.6.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.1
+  build_runner: ^2.4.7
+
+flutter:
+  uses-material-design: true
+
+  # Platform-specific configuration
+  # assets:
+  #   - assets/images/
+  #   - assets/sounds/
+
+# Platform channels for native integration
+# Each platform has a method channel to communicate with JUCE engine
+
+# Android configuration
+# android/app/src/main/AndroidManifest.xml:
+#   - Audio recording permission
+#   - Low-latency audio (AAUDIO)
+#   - OpenSL ES
+
+# iOS configuration
+# ios/Runner/Info.plist:
+#   - Microphone usage
+#   - Background audio
+#   - CoreAudio
+
+# Windows configuration
+# windows/runner/CMakeLists.txt:
+#   - Link JUCE library
+#   - WASAPI/ASIO
+
+# Linux configuration
+# linux/CMakeLists.txt:
+#   - Link JUCE library
+#   - JACK/ALSA
+
+# Web configuration
+# web/index.html:
+#   - Web Audio API
+#   - WebAssembly + WebGPU
+#   - AudioWorklet for low latency
+
+# Build for all platforms:
+#
+#   flutter build apk         # Android
+#   flutter build ios         # iOS
+#   flutter build windows     # Windows
+#   flutter build linux       # Linux
+#   flutter build macos       # macOS
+#   flutter build web         # Web (WASM + WebGPU)
+#
+# Performance targets:
+#   - 60 fps UI (16ms per frame)
+#   - <2ms audio latency (via JUCE)
+#   - Smooth animations (Impeller renderer)
+#   - GPU-accelerated graphics (Skia/Impeller)
