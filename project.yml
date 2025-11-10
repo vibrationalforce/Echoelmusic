@@ -1,82 +1,191 @@
 # XcodeGen Project Configuration for Echoelmusic
-# This file defines how to generate the Xcode project
+# Multi-Platform Audio/Video Production Suite
+# Supports: iOS, iPadOS, macOS, watchOS, tvOS, visionOS
 
 name: Echoelmusic
 
 options:
   bundleIdPrefix: com.echoelmusic
   deploymentTarget:
-    iOS: "16.0"
-  # Generate Info.plist automatically
+    iOS: "15.0"
+    macOS: "12.0"
+    watchOS: "8.0"
+    tvOS: "15.0"
+    visionOS: "1.0"
   generateEmptyDirectories: true
+  createIntermediateGroups: true
 
 settings:
   base:
-    SWIFT_VERSION: "5.7"
+    SWIFT_VERSION: "5.9"
     PRODUCT_NAME: $(TARGET_NAME)
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
+    ENABLE_BITCODE: NO
+    CODE_SIGN_STYLE: Automatic
+
+# ====================
+# TARGETS
+# ====================
 
 targets:
-  Echoelmusic:
+  # -------------------- iOS/iPadOS App --------------------
+  Echoelmusic-iOS:
     type: application
     platform: iOS
 
-    # Source files location
     sources:
       - path: Sources/Echoelmusic
-        type: group
+        excludes:
+          - "**/*macOS*.swift"
+          - "**/*watchOS*.swift"
+          - "**/*tvOS*.swift"
+          - "**/*visionOS*.swift"
 
-    # Info.plist configuration (inline)
-    info:
-      path: Info.plist
-      properties:
-        CFBundleDevelopmentRegion: en
-        CFBundleExecutable: $(EXECUTABLE_NAME)
-        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
-        CFBundleInfoDictionaryVersion: "6.0"
-        CFBundleName: $(PRODUCT_NAME)
-        CFBundlePackageType: APPL
-        CFBundleShortVersionString: $(MARKETING_VERSION)
-        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        CFBundleDisplayName: Echoelmusic
-        LSRequiresIPhoneOS: true
-
-        # Microphone permission
-        NSMicrophoneUsageDescription: "Echoelmusic needs microphone access to create music from your voice and breath"
-
-        # UI Configuration
-        UILaunchScreen: {}
-        UISupportedInterfaceOrientations:
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationPortraitUpsideDown
-        UIUserInterfaceStyle: Dark
-
-        # SwiftUI support
-        UIApplicationSceneManifest:
-          UIApplicationSupportsMultipleScenes: false
-          UISceneConfigurations:
-            UIWindowSceneSessionRoleApplication:
-              - UISceneConfigurationName: Default Configuration
-                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
-
-    # App settings
     settings:
       base:
         PRODUCT_NAME: Echoelmusic
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.studio
-        INFOPLIST_FILE: Info.plist
-        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"  # iPhone + iPad
+        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+        SUPPORTS_MACCATALYST: YES
+        DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER: YES
 
-        # Code signing (for development)
-        CODE_SIGN_STYLE: Automatic
-        CODE_SIGN_IDENTITY: ""
-        DEVELOPMENT_TEAM: ""
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Echoelmusic
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSRequiresIPhoneOS: true
+        UIUserInterfaceStyle: Dark
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSMicrophoneUsageDescription: "Echoelmusic needs microphone access for audio recording and music creation"
+        NSCameraUsageDescription: "Echoelmusic needs camera access for video recording and live streaming"
+        NSPhotoLibraryUsageDescription: "Echoelmusic needs photo library access to export videos and images"
+        NSHealthShareUsageDescription: "Echoelmusic uses heart rate data for bio-reactive music"
+        NSHealthUpdateUsageDescription: "Echoelmusic records coherence data to HealthKit"
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
 
-        # Build settings
-        TARGETED_DEVICE_FAMILY: "1"
-        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
-        SWIFT_VERSION: "5.7"
-        ENABLE_BITCODE: NO
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+  # -------------------- macOS App --------------------
+  Echoelmusic-macOS:
+    type: application
+    platform: macOS
+
+    sources:
+      - path: Sources/Echoelmusic
+        excludes:
+          - "**/*iOS*.swift"
+          - "**/*watchOS*.swift"
+          - "**/*tvOS*.swift"
+          - "**/*visionOS*.swift"
+
+    settings:
+      base:
+        PRODUCT_NAME: Echoelmusic
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.studio.mac
+        MACOSX_DEPLOYMENT_TARGET: "12.0"
+        ENABLE_HARDENED_RUNTIME: YES
+        COMBINE_HIDPI_IMAGES: YES
+
+    info:
+      path: Info-macOS.plist
+      properties:
+        CFBundleDisplayName: Echoelmusic Pro
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        NSMicrophoneUsageDescription: "Echoelmusic needs microphone access for professional audio recording"
+        NSCameraUsageDescription: "Echoelmusic needs camera access for professional video production"
+        NSPrincipalClass: NSApplication
+        NSHighResolutionCapable: true
+
+  # -------------------- watchOS App --------------------
+  Echoelmusic-watchOS:
+    type: application
+    platform: watchOS
+
+    sources:
+      - path: Sources/Echoelmusic/watchOS
+
+    settings:
+      base:
+        PRODUCT_NAME: Echoelmusic
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.studio.watchos
+        WATCHOS_DEPLOYMENT_TARGET: "8.0"
+        TARGETED_DEVICE_FAMILY: "4"
+
+    info:
+      path: Info-watchOS.plist
+      properties:
+        CFBundleDisplayName: Echoelmusic
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        WKWatchOnly: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+
+  # -------------------- tvOS App --------------------
+  Echoelmusic-tvOS:
+    type: application
+    platform: tvOS
+
+    sources:
+      - path: Sources/Echoelmusic
+        excludes:
+          - "**/*iOS*.swift"
+          - "**/*macOS*.swift"
+          - "**/*watchOS*.swift"
+          - "**/*visionOS*.swift"
+          - "**/Biofeedback/**"  # No HealthKit on tvOS
+
+    settings:
+      base:
+        PRODUCT_NAME: Echoelmusic
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.studio.tv
+        TVOS_DEPLOYMENT_TARGET: "15.0"
+        TARGETED_DEVICE_FAMILY: "3"
+
+    info:
+      path: Info-tvOS.plist
+      properties:
+        CFBundleDisplayName: Echoelmusic
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UIUserInterfaceStyle: Dark
+
+  # -------------------- visionOS App --------------------
+  Echoelmusic-visionOS:
+    type: application
+    platform: visionOS
+
+    sources:
+      - path: Sources/Echoelmusic
+        excludes:
+          - "**/*iOS*.swift"
+          - "**/*macOS*.swift"
+          - "**/*watchOS*.swift"
+          - "**/*tvOS*.swift"
+
+    settings:
+      base:
+        PRODUCT_NAME: Echoelmusic
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.studio.vision
+        XROS_DEPLOYMENT_TARGET: "1.0"
+        TARGETED_DEVICE_FAMILY: "7"  # visionOS
+
+    info:
+      path: Info-visionOS.plist
+      properties:
+        CFBundleDisplayName: Echoelmusic Spatial
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSMicrophoneUsageDescription: "Echoelmusic needs microphone access for spatial audio recording"
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+          UIApplicationPreferredDefaultSceneSessionRole: UIWindowSceneSessionRoleImmersiveSpaceApplication

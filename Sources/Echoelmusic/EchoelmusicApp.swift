@@ -1,7 +1,11 @@
 import SwiftUI
 
+#if os(iOS) || os(macOS)
+// Main app entry point for iOS/iPadOS/macOS
+// Other platforms (watchOS, tvOS, visionOS) have their own entry points
+
 /// Main entry point for the Echoelmusic app
-/// This is where your iOS app starts running
+/// Cross-platform: iOS, iPadOS, macOS, Mac Catalyst
 @main
 struct EchoelmusicApp: App {
 
@@ -12,8 +16,10 @@ struct EchoelmusicApp: App {
     /// Central AudioEngine coordinates all audio components
     @StateObject private var audioEngine: AudioEngine
 
-    /// HealthKit manager for biofeedback
+    /// HealthKit manager for biofeedback (iOS only)
+    #if os(iOS)
     @StateObject private var healthKitManager = HealthKitManager()
+    #endif
 
     /// Recording engine for multi-track recording
     @StateObject private var recordingEngine = RecordingEngine()
@@ -22,6 +28,8 @@ struct EchoelmusicApp: App {
     @StateObject private var unifiedControlHub: UnifiedControlHub
 
     init() {
+        print("🚀 Initializing Echoelmusic for \(PlatformCapabilities.platformName)")
+
         // Initialize AudioEngine with MicrophoneManager
         let micManager = MicrophoneManager()
         _microphoneManager = StateObject(wrappedValue: micManager)
@@ -30,6 +38,12 @@ struct EchoelmusicApp: App {
         _audioEngine = StateObject(wrappedValue: audioEng)
 
         _unifiedControlHub = StateObject(wrappedValue: UnifiedControlHub(audioEngine: audioEng))
+
+        print("✅ Platform: \(PlatformCapabilities.platformName)")
+        print("✅ Device: \(PlatformCapabilities.deviceType)")
+        print("✅ HealthKit Available: \(PlatformCapabilities.hasHealthKit)")
+        print("✅ Camera Available: \(PlatformCapabilities.hasCamera)")
+        print("✅ Spatial Audio: \(PlatformCapabilities.hasSpatialAudio)")
     }
 
     var body: some Scene {
@@ -37,25 +51,31 @@ struct EchoelmusicApp: App {
             ContentView()
                 .environmentObject(microphoneManager)      // Makes mic manager available to all views
                 .environmentObject(audioEngine)             // Makes audio engine available
-                .environmentObject(healthKitManager)        // Makes health data available
+                #if os(iOS)
+                .environmentObject(healthKitManager)        // Makes health data available (iOS only)
+                #endif
                 .environmentObject(recordingEngine)         // Makes recording engine available
                 .environmentObject(unifiedControlHub)       // Makes unified control available
                 .preferredColorScheme(.dark)                // Force dark theme
                 .onAppear {
-                    // Connect HealthKit to AudioEngine for bio-parameter mapping
+                    #if os(iOS)
+                    // Connect HealthKit to AudioEngine for bio-parameter mapping (iOS only)
                     audioEngine.connectHealthKit(healthKitManager)
+                    #endif
 
                     // Connect RecordingEngine to AudioEngine for audio routing
                     recordingEngine.connectAudioEngine(audioEngine)
 
                     // Enable biometric monitoring through UnifiedControlHub
                     Task {
+                        #if os(iOS)
                         do {
                             try await unifiedControlHub.enableBiometricMonitoring()
                             print("✅ Biometric monitoring enabled via UnifiedControlHub")
                         } catch {
                             print("⚠️ Biometric monitoring not available: \(error.localizedDescription)")
                         }
+                        #endif
 
                         // Enable MIDI 2.0 + MPE
                         do {
@@ -72,7 +92,15 @@ struct EchoelmusicApp: App {
                     print("🎵 Echoelmusic App Started - All Systems Connected!")
                     print("🎹 MIDI 2.0 + MPE + Spatial Audio Ready")
                     print("🌊 Stereo → 3D → 4D → AFA Sound")
+                    print("📱 Platform: \(PlatformCapabilities.platformName)")
                 }
         }
+        #if os(macOS)
+        .windowStyle(.automatic)
+        .defaultSize(width: 1280, height: 800)
+        #endif
     }
 }
+
+#endif
+
