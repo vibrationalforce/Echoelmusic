@@ -56,6 +56,26 @@ struct Session: Identifiable, Codable {
         bioData.append(point)
     }
 
+    /// Record bio-data point (called from RecordingEngine)
+    mutating func recordBioData(
+        heartRate: Double,
+        hrv: Double,
+        coherence: Double,
+        respiratoryRate: Double?,
+        at timestamp: TimeInterval
+    ) {
+        let point = BioDataPoint(
+            timestamp: timestamp,
+            hrv: hrv,
+            heartRate: heartRate,
+            coherence: coherence,
+            respiratoryRate: respiratoryRate,
+            audioLevel: 0.0, // Will be filled by audio engine
+            frequency: 0.0   // Will be filled by pitch detector
+        )
+        bioData.append(point)
+    }
+
     mutating func clearBioData() {
         bioData.removeAll()
     }
@@ -179,11 +199,13 @@ struct TimeSignature: Codable {
 }
 
 /// Bio-data point captured during session
-struct BioDataPoint: Codable {
+struct BioDataPoint: Codable, Identifiable {
+    let id: UUID
     var timestamp: TimeInterval
     var hrv: Double
     var heartRate: Double
     var coherence: Double
+    var respiratoryRate: Double?
     var audioLevel: Float
     var frequency: Float
 
@@ -192,13 +214,16 @@ struct BioDataPoint: Codable {
         hrv: Double,
         heartRate: Double,
         coherence: Double,
-        audioLevel: Float,
-        frequency: Float
+        respiratoryRate: Double? = nil,
+        audioLevel: Float = 0.0,
+        frequency: Float = 0.0
     ) {
+        self.id = UUID()
         self.timestamp = timestamp
         self.hrv = hrv
         self.heartRate = heartRate
         self.coherence = coherence
+        self.respiratoryRate = respiratoryRate
         self.audioLevel = audioLevel
         self.frequency = frequency
     }

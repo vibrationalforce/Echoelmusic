@@ -31,6 +31,14 @@ class RecordingEngine: ObservableObject {
     /// Current track being recorded
     @Published var currentTrackID: UUID?
 
+    /// Punch In/Out Recording State
+    @Published var isPunchRecordingEnabled: Bool = false
+    @Published var punchInTime: TimeInterval = 0.0
+    @Published var punchOutTime: TimeInterval = 0.0
+
+    /// Bio-Data Recording State
+    @Published var bioDataRecordingEnabled: Bool = true
+
 
     // MARK: - Private Properties
 
@@ -51,6 +59,9 @@ class RecordingEngine: ObservableObject {
 
     /// Reference to main audio engine for audio routing
     private weak var mainAudioEngine: AudioEngine?
+
+    /// Reference to HealthKit manager for bio-data recording
+    private weak var healthKitManager: HealthKitManager?
 
     /// Directory for storing session files
     private let sessionsDirectory: URL
@@ -91,6 +102,63 @@ class RecordingEngine: ObservableObject {
     func connectAudioEngine(_ audioEngine: AudioEngine) {
         self.mainAudioEngine = audioEngine
         print("🔌 Connected to main audio engine")
+    }
+
+    /// Connect to HealthKit manager for bio-data recording
+    func connectHealthKit(_ healthKitManager: HealthKitManager) {
+        self.healthKitManager = healthKitManager
+        print("🔌 Connected to HealthKit manager for bio-data recording")
+    }
+
+    // MARK: - Punch In/Out Recording
+
+    /// Enable punch in/out recording
+    func enablePunchRecording(punchIn: TimeInterval, punchOut: TimeInterval) {
+        guard punchIn < punchOut else {
+            print("⚠️ Punch in time must be before punch out time")
+            return
+        }
+
+        self.punchInTime = punchIn
+        self.punchOutTime = punchOut
+        self.isPunchRecordingEnabled = true
+
+        print("⏱️ Punch recording enabled: \(punchIn)s → \(punchOut)s")
+    }
+
+    /// Disable punch in/out recording
+    func disablePunchRecording() {
+        self.isPunchRecordingEnabled = false
+        print("⏱️ Punch recording disabled")
+    }
+
+    /// Check if we should be recording at current time (for punch in/out)
+    private func shouldPunchRecord(at time: TimeInterval) -> Bool {
+        guard isPunchRecordingEnabled else { return true }
+        return time >= punchInTime && time <= punchOutTime
+    }
+
+    // MARK: - Bio-Data Recording
+
+    /// Record bio-data point during recording
+    private func recordBioDataPoint(at time: TimeInterval) {
+        guard bioDataRecordingEnabled,
+              let healthKit = healthKitManager,
+              var session = currentSession else {
+            return
+        }
+
+        // Record current bio-data
+        session.recordBioData(
+            heartRate: healthKit.heartRate,
+            hrv: healthKit.hrvSDNN,
+            coherence: healthKit.hrvCoherence,
+            respiratoryRate: healthKit.respiratoryRate,
+            at: time
+        )
+
+        // Update session
+        currentSession = session
     }
 
 

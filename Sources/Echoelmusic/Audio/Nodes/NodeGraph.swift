@@ -316,20 +316,91 @@ struct NodeGraphPreset: Codable, Identifiable {
 
 extension NodeGraph {
 
-    /// Create default biofeedback processing chain
+    /// Create default biofeedback processing chain (UPDATED with new nodes)
     static func createBiofeedbackChain() -> NodeGraph {
         let graph = NodeGraph()
 
-        // Create nodes
+        // Create nodes (including NEW Phase 1 nodes!)
         let filter = FilterNode()
+        let distortion = DistortionNode()
+        let stereoWidth = StereoWidthNode()
+        let pitchShifter = PitchShifterNode()
         let reverb = ReverbNode()
 
         // Add to graph
         graph.addNode(filter)
+        graph.addNode(distortion)
+        graph.addNode(stereoWidth)
+        graph.addNode(pitchShifter)
         graph.addNode(reverb)
 
-        // Connect: Input → Filter → Reverb → Output
-        try? graph.connect(from: filter.id, to: reverb.id)
+        // Connect chain: Input → Filter → Distortion → Stereo Width → Pitch Shifter → Reverb → Output
+        try? graph.connect(from: filter.id, to: distortion.id)
+        try? graph.connect(from: distortion.id, to: stereoWidth.id)
+        try? graph.connect(from: stereoWidth.id, to: pitchShifter.id)
+        try? graph.connect(from: pitchShifter.id, to: reverb.id)
+
+        return graph
+    }
+
+    /// Create distortion effect chain
+    static func createDistortionChain() -> NodeGraph {
+        let graph = NodeGraph()
+
+        let distortion = DistortionNode()
+        let stereoWidth = StereoWidthNode()
+
+        // Configure for warm overdrive with wide stereo
+        distortion.setParameter(name: "type", value: 4.0) // Overdrive
+        distortion.setParameter(name: "amount", value: 40.0)
+        stereoWidth.setParameter(name: "width", value: 1.5)
+
+        graph.addNode(distortion)
+        graph.addNode(stereoWidth)
+
+        try? graph.connect(from: distortion.id, to: stereoWidth.id)
+
+        return graph
+    }
+
+    /// Create pitch/time processing chain
+    static func createPitchTimeChain() -> NodeGraph {
+        let graph = NodeGraph()
+
+        let pitchShifter = PitchShifterNode()
+        let timeStretch = TimeStretchNode()
+
+        graph.addNode(pitchShifter)
+        graph.addNode(timeStretch)
+
+        try? graph.connect(from: pitchShifter.id, to: timeStretch.id)
+
+        return graph
+    }
+
+    /// Create vocal processing chain
+    static func createVocalChain() -> NodeGraph {
+        let graph = NodeGraph()
+
+        let filter = FilterNode()
+        let pitchShifter = PitchShifterNode()
+        let stereoWidth = StereoWidthNode()
+        let reverb = ReverbNode()
+
+        // Configure for vocal enhancement
+        filter.setParameter(name: "cutoffFrequency", value: 3000.0)
+        pitchShifter.setParameter(name: "preserveFormants", value: 1.0)
+        stereoWidth.setParameter(name: "width", value: 1.2)
+        reverb.setParameter(name: "wetDry", value: 30.0)
+
+        graph.addNode(filter)
+        graph.addNode(pitchShifter)
+        graph.addNode(stereoWidth)
+        graph.addNode(reverb)
+
+        try? graph.connect(from: filter.id, to: pitchShifter.id)
+        try? graph.connect(from: pitchShifter.id, to: stereoWidth.id)
+        try? graph.connect(from: stereoWidth.id, to: reverb.id)
 
         return graph
     }
@@ -338,10 +409,22 @@ extension NodeGraph {
     static func createHealingPreset() -> NodeGraph {
         let graph = NodeGraph()
 
+        let stereoWidth = StereoWidthNode()
         let reverb = ReverbNode()
-        reverb.setParameter(name: "wetDry", value: 60.0)  // More wet
+        let timeStretch = TimeStretchNode()
 
+        // Configure for healing/meditative state
+        stereoWidth.setParameter(name: "width", value: 1.8) // Wide and immersive
+        reverb.setParameter(name: "wetDry", value: 70.0)    // More wet
+        timeStretch.setParameter(name: "rate", value: 0.8)   // Slower time
+        timeStretch.setParameter(name: "syncToHeartRate", value: 1.0) // Sync to heart
+
+        graph.addNode(stereoWidth)
         graph.addNode(reverb)
+        graph.addNode(timeStretch)
+
+        try? graph.connect(from: stereoWidth.id, to: reverb.id)
+        try? graph.connect(from: reverb.id, to: timeStretch.id)
 
         return graph
     }
@@ -351,9 +434,62 @@ extension NodeGraph {
         let graph = NodeGraph()
 
         let filter = FilterNode()
-        filter.setParameter(name: "cutoffFrequency", value: 4000.0)  // Brighter
+        let distortion = DistortionNode()
+        let stereoWidth = StereoWidthNode()
+
+        // Configure for energy boost
+        filter.setParameter(name: "cutoffFrequency", value: 5000.0)  // Brighter
+        distortion.setParameter(name: "type", value: 4.0) // Overdrive
+        distortion.setParameter(name: "amount", value: 35.0)
+        stereoWidth.setParameter(name: "width", value: 1.4)
 
         graph.addNode(filter)
+        graph.addNode(distortion)
+        graph.addNode(stereoWidth)
+
+        try? graph.connect(from: filter.id, to: distortion.id)
+        try? graph.connect(from: distortion.id, to: stereoWidth.id)
+
+        return graph
+    }
+
+    /// Create psychedelic preset (all effects!)
+    static func createPsychedelicPreset() -> NodeGraph {
+        let graph = NodeGraph()
+
+        let filter = FilterNode()
+        let distortion = DistortionNode()
+        let pitchShifter = PitchShifterNode()
+        let timeStretch = TimeStretchNode()
+        let stereoWidth = StereoWidthNode()
+        let delay = DelayNode()
+        let reverb = ReverbNode()
+
+        // Configure for psychedelic experience
+        filter.setParameter(name: "resonance", value: 0.7)
+        distortion.setParameter(name: "type", value: 2.0) // Waveshaping
+        distortion.setParameter(name: "amount", value: 50.0)
+        pitchShifter.setParameter(name: "pitchSemitones", value: 7.0) // Perfect fifth
+        timeStretch.setParameter(name: "rate", value: 0.9)
+        stereoWidth.setParameter(name: "width", value: 2.0) // Super wide
+        delay.setParameter(name: "delayTime", value: 0.5)
+        reverb.setParameter(name: "wetDry", value: 50.0)
+
+        graph.addNode(filter)
+        graph.addNode(distortion)
+        graph.addNode(pitchShifter)
+        graph.addNode(timeStretch)
+        graph.addNode(stereoWidth)
+        graph.addNode(delay)
+        graph.addNode(reverb)
+
+        // Complex routing
+        try? graph.connect(from: filter.id, to: distortion.id)
+        try? graph.connect(from: distortion.id, to: pitchShifter.id)
+        try? graph.connect(from: pitchShifter.id, to: timeStretch.id)
+        try? graph.connect(from: timeStretch.id, to: stereoWidth.id)
+        try? graph.connect(from: stereoWidth.id, to: delay.id)
+        try? graph.connect(from: delay.id, to: reverb.id)
 
         return graph
     }
