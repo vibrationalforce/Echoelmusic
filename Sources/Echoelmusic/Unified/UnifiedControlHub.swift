@@ -51,8 +51,9 @@ public class UnifiedControlHub: ObservableObject {
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
-    // TODO: Add when implementing
-    // private let gazeTracker: GazeTracker?
+    // Gaze Tracking Integration
+    private var gazeTrackingManager: GazeTrackingManager?
+    private var gazeToAudioMapper: GazeToAudioMapper?
 
     // MARK: - Control Loop
 
@@ -268,6 +269,29 @@ public class UnifiedControlHub: ObservableObject {
         push3LEDController?.disconnect()
         push3LEDController = nil
         print("[UnifiedControlHub] Push 3 LED controller disabled")
+    }
+
+    /// Enable gaze tracking
+    public func enableGazeTracking() {
+        let gazeManager = GazeTrackingManager()
+        let gazeMapper = GazeToAudioMapper()
+
+        gazeMapper.connect(gazeTracker: gazeManager)
+        gazeManager.start()
+
+        self.gazeTrackingManager = gazeManager
+        self.gazeToAudioMapper = gazeMapper
+        gazeMapper.isEnabled = true
+
+        print("[UnifiedControlHub] Gaze tracking enabled")
+    }
+
+    /// Disable gaze tracking
+    public func disableGazeTracking() {
+        gazeTrackingManager?.stop()
+        gazeTrackingManager = nil
+        gazeToAudioMapper = nil
+        print("[UnifiedControlHub] Gaze tracking disabled")
     }
 
     /// Enable DMX/LED strip lighting
