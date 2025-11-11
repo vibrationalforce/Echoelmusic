@@ -1,0 +1,99 @@
+# SwiftLint Configuration for Echoelmusic
+# Enforces Swift best practices and code style
+
+# Included directories
+included:
+  - Sources
+  - Tests
+
+# Excluded directories
+excluded:
+  - .build
+  - build
+  - DerivedData
+  - Pods
+  - .git
+
+# Disabled rules (too strict for our project)
+disabled_rules:
+  - trailing_whitespace
+  - file_length  # Some files are legitimately long
+  - type_body_length  # Audio engine classes can be large
+  - function_body_length  # Complex audio processing
+
+# Opt-in rules (not enabled by default)
+opt_in_rules:
+  - empty_count
+  - explicit_init
+  - first_where
+  - sorted_imports
+  - closure_spacing
+  - contains_over_filter_count
+  - empty_string
+  - fallthrough
+  - fatal_error_message
+  - force_unwrapping  # We want to catch these!
+  - implicitly_unwrapped_optional
+  - multiline_parameters
+  - overridden_super_call
+  - private_outlet
+  - redundant_nil_coalescing
+  - unneeded_parentheses_in_closure_argument
+  - vertical_whitespace_closing_braces
+  - vertical_whitespace_opening_braces
+
+# Rule configurations
+line_length:
+  warning: 120
+  error: 150
+  ignores_comments: true
+  ignores_urls: true
+
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  max_length:
+    warning: 50
+    error: 60
+  excluded:
+    - id
+    - x
+    - y
+    - z
+    - i
+    - db
+    - db
+    - hz
+    - ms
+
+type_name:
+  min_length: 3
+  max_length: 50
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25
+
+nesting:
+  type_level: 2
+  function_level: 3
+
+# Custom rules
+custom_rules:
+  # Avoid print statements in production
+  no_print:
+    name: "Print Statement"
+    regex: '^\s*print\('
+    message: "Use proper logging instead of print()"
+    severity: warning
+
+  # Require MARK comments
+  mark_sections:
+    name: "MARK sections"
+    regex: '^\s*//\s*MARK:\s*-\s*.+$'
+    message: "Use MARK: - for section organization"
+    severity: warning
+
+# Reporter
+reporter: "xcode"

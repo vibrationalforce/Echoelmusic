@@ -57,7 +57,7 @@ class AudioEngine: ObservableObject {
     private var deviceCapabilities: DeviceCapabilities?
 
     /// Node graph for effects processing
-    private var nodeGraph: NodeGraph?
+    var nodeGraph: NodeGraph?
 
 
     // MARK: - Private Properties

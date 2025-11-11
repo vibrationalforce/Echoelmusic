@@ -355,8 +355,10 @@ public class UnifiedControlHub: ObservableObject {
         // Get current biometric data
         let hrvCoherence = healthKit.hrvCoherence
         let heartRate = healthKit.heartRate
-        let voicePitch: Float = 0.0  // TODO: Get from audio analysis
-        let audioLevel: Float = 0.5  // TODO: Get from audio engine
+
+        // Get audio analysis data from microphone manager
+        let voicePitch: Float = audioEngine?.microphoneManager.currentPitch ?? 0.0
+        let audioLevel: Float = audioEngine?.microphoneManager.audioLevel ?? 0.5
 
         // Update bio parameter mapping
         mapper.updateParameters(
@@ -372,21 +374,27 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply bio-derived audio parameters to audio engine and spatial mapping
     private func applyBioAudioParameters(_ mapper: BioParameterMapper) {
-        // Apply filter cutoff
-        // TODO: Apply to actual AudioEngine filter node
-        // print("[Bio→Audio] Filter Cutoff: \(Int(mapper.filterCutoff)) Hz")
+        // Apply filter cutoff to filter nodes
+        audioEngine?.nodeGraph?.nodes.compactMap { $0 as? FilterNode }.forEach { filterNode in
+            filterNode.setParameter(name: "cutoffFrequency", value: mapper.filterCutoff)
+        }
 
-        // Apply reverb wetness
-        // TODO: Apply to actual AudioEngine reverb node
-        // print("[Bio→Audio] Reverb Wet: \(Int(mapper.reverbWet * 100))%")
+        // Apply reverb wetness to reverb nodes
+        audioEngine?.nodeGraph?.nodes.compactMap { $0 as? ReverbNode }.forEach { reverbNode in
+            reverbNode.setParameter(name: "wetDry", value: mapper.reverbWet * 100.0)
+        }
 
-        // Apply amplitude
-        // TODO: Apply to actual AudioEngine master volume
-        // print("[Bio→Audio] Amplitude: \(Int(mapper.amplitude * 100))%")
+        // Apply amplitude as master volume (normalized to 0-1)
+        // Could be applied to master mixer or compressor nodes
+        audioEngine?.nodeGraph?.nodes.compactMap { $0 as? CompressorNode }.forEach { compressor in
+            let makeupGain = mapper.amplitude * 10.0  // Map 0-1 to 0-10 dB
+            compressor.setParameter(name: "makeupGain", value: makeupGain)
+        }
 
-        // Apply tempo
-        // TODO: Apply to tempo-synced effects (delay, arpeggiator)
-        // print("[Bio→Audio] Tempo: \(String(format: "%.1f", mapper.tempo)) BPM")
+        // Apply tempo to delay nodes for tempo-synced effects
+        audioEngine?.nodeGraph?.nodes.compactMap { $0 as? DelayNode }.forEach { delayNode in
+            delayNode.setTempoSyncedDelay(bpm: Double(mapper.tempo), subdivision: .eighth)
+        }
 
         // Apply bio-reactive spatial field (AFA)
         if let mpe = mpeZoneManager, let spatialMapper = midiToSpatialMapper {
@@ -613,12 +621,19 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        // Calculate breathing rate from HRV (6 breaths/min = optimal coherence)
+        // HRV coherence peaks around 0.1 Hz = 6 breaths/minute
+        let breathingRate = calculateBreathingRate(from: healthKit.hrv, heartRate: healthKit.heartRate)
+
+        // Get audio level from microphone manager
+        let audioLevel = audioEngine?.microphoneManager.audioLevel ?? 0.5
+
         // Update visual parameters from bio-signals
         let bioParams = MIDIToVisualMapper.BioParameters(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
-            audioLevel: 0.5      // TODO: Get from audio engine
+            breathingRate: breathingRate,
+            audioLevel: Double(audioLevel)
         )
 
         visualMapper.updateBioParameters(bioParams)
@@ -629,10 +644,13 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        // Calculate breathing rate from HRV
+        let breathingRate = calculateBreathingRate(from: healthKit.hrv, heartRate: healthKit.heartRate)
+
         let bioData = MIDIToLightMapper.BioData(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0  // TODO: Calculate from HRV
+            breathingRate: breathingRate
         )
 
         // Update Push 3 LED patterns
@@ -651,6 +669,42 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     // MARK: - Utilities
+
+    /// Calculate breathing rate from HRV and heart rate
+    /// Based on respiratory sinus arrhythmia (RSA) patterns
+    ///
+    /// - Parameters:
+    ///   - hrv: Heart rate variability in ms
+    ///   - heartRate: Heart rate in BPM
+    /// - Returns: Estimated breathing rate in breaths per minute
+    private func calculateBreathingRate(from hrv: Double, heartRate: Double) -> Double {
+        // Optimal coherence occurs at ~0.1 Hz = 6 breaths/minute
+        // HRV coherence peaks when breathing matches natural resonance frequency
+
+        // Higher HRV typically indicates slower, deeper breathing
+        // Lower HRV indicates faster, shallow breathing or stress
+
+        // Use HRV to estimate breathing rate
+        // These ranges are based on respiratory sinus arrhythmia (RSA) research
+
+        if hrv > 100 {
+            // High HRV: Deep, slow breathing (meditation state)
+            // 4-6 breaths/minute
+            return 4.0 + (hrv - 100) / 100.0  // Gradually approach 4 BPM
+        } else if hrv > 50 {
+            // Medium HRV: Normal, relaxed breathing
+            // 6-8 breaths/minute - optimal coherence zone
+            return 6.0 + (100 - hrv) / 50.0 * 2.0
+        } else if hrv > 20 {
+            // Low-medium HRV: Slightly elevated breathing
+            // 8-12 breaths/minute
+            return 8.0 + (50 - hrv) / 30.0 * 4.0
+        } else {
+            // Low HRV: Fast, stressed breathing
+            // 12-20 breaths/minute
+            return min(20.0, 12.0 + (20 - hrv) / 20.0 * 8.0)
+        }
+    }
 
     /// Map a value from one range to another
     public func mapRange(
