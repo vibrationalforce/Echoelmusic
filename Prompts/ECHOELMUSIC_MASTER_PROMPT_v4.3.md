@@ -1,15 +1,15 @@
-# 🧠 BLAB_MASTER_PROMPT_v4.3 for Claude Sonnet 4.5
+# 🧠 ECHOELMUSIC_MASTER_PROMPT_v4.3 for Claude Sonnet 4.5
 
-**Repository:** [vibrationalforce/blab-ios-app](https://github.com/vibrationalforce/blab-ios-app)
+**Repository:** [vibrationalforce/echoelmusic-ios-app](https://github.com/vibrationalforce/echoelmusic-ios-app)
 **Version:** 4.3 (October 2025)
 **Target AI:** Claude Sonnet 4.5 / Claude Code
-**Purpose:** Complete system architecture and development guidelines for BLAB iOS App
+**Purpose:** Complete system architecture and development guidelines for ECHOELMUSIC iOS App
 
 ---
 
 ## 🎯 Systemrolle
 
-Du bist leitender **AI- und Systemarchitekt** für *BLAB*, eine iOS-App, die Stimme und Biofeedback in Musik und Visuals transformiert.
+Du bist leitender **AI- und Systemarchitekt** für *ECHOELMUSIC*, eine iOS-App, die Stimme und Biofeedback in Musik und Visuals transformiert.
 
 **Ziel:** Erweiterung des bestehenden **SwiftUI + AVFoundation-Fundaments** zu einer multimodalen, KI-gestützten Neuro-Audio-Engine mit visueller Echtzeitdarstellung und Biofeedback-Steuerung.
 
@@ -34,7 +34,7 @@ Du bist leitender **AI- und Systemarchitekt** für *BLAB*, eine iOS-App, die Sti
 ### **Framework-Architektur**
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 ├── Audio/               # Audio engine & DSP
 ├── Biofeedback/        # HealthKit + bio-parameter mapping
 ├── MIDI/               # MIDI 2.0 + MPE infrastructure
@@ -585,11 +585,11 @@ class WatchConnectivityManager {
 **Theme: Dark Neuro**
 ```swift
 extension Color {
-    // BLAB Color Palette
-    static let blabPrimary = Color(red: 0.2, green: 0.8, blue: 0.9)  // Cyan
-    static let blabSecondary = Color(red: 0.8, green: 0.3, blue: 0.9)  // Magenta
-    static let blabAccent = Color(red: 0.0, green: 0.85, blue: 0.64)  // Green
-    static let blabBackground = Color(red: 0.05, green: 0.05, blue: 0.15)  // Deep blue-black
+    // ECHOELMUSIC Color Palette
+    static let echoelmusicPrimary = Color(red: 0.2, green: 0.8, blue: 0.9)  // Cyan
+    static let echoelmusicSecondary = Color(red: 0.8, green: 0.3, blue: 0.9)  // Magenta
+    static let echoelmusicAccent = Color(red: 0.0, green: 0.85, blue: 0.64)  // Green
+    static let echoelmusicBackground = Color(red: 0.05, green: 0.05, blue: 0.15)  // Deep blue-black
 
     // Bio-reactive colors
     static func bioGradient(coherence: Double) -> LinearGradient {
@@ -603,9 +603,9 @@ extension Color {
 **Typography**
 ```swift
 extension Font {
-    static let blabTitle = Font.system(size: 48, weight: .bold, design: .rounded)
-    static let blabBody = Font.system(size: 16, weight: .regular, design: .default)
-    static let blabCaption = Font.system(size: 12, weight: .light)
+    static let echoelmusicTitle = Font.system(size: 48, weight: .bold, design: .rounded)
+    static let echoelmusicBody = Font.system(size: 16, weight: .regular, design: .default)
+    static let echoelmusicCaption = Font.system(size: 12, weight: .light)
 }
 ```
 
@@ -667,18 +667,18 @@ struct StateBadge: View {
             Image(systemName: icon)
                 .font(.system(size: 12))
             Text(label)
-                .font(.blabCaption)
+                .font(.echoelmusicCaption)
         }
-        .foregroundColor(active ? .blabAccent : .white.opacity(0.5))
+        .foregroundColor(active ? .echoelmusicAccent : .white.opacity(0.5))
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(
             Capsule()
-                .fill(active ? Color.blabAccent.opacity(0.2) : Color.white.opacity(0.1))
+                .fill(active ? Color.echoelmusicAccent.opacity(0.2) : Color.white.opacity(0.1))
         )
         .overlay(
             Capsule()
-                .stroke(active ? Color.blabAccent : Color.clear, lineWidth: 1)
+                .stroke(active ? Color.echoelmusicAccent : Color.clear, lineWidth: 1)
         )
         .animation(.easeInOut, value: active)
     }
@@ -722,9 +722,9 @@ struct PulseEffect: ViewModifier {
 #if os(iOS)
 import ActivityKit
 
-struct BlabLiveActivity: Widget {
+struct EchoelmusicLiveActivity: Widget {
     var body: some WidgetConfiguration {
-        ActivityConfiguration(for: BlabActivityAttributes.self) { context in
+        ActivityConfiguration(for: EchoelmusicActivityAttributes.self) { context in
             // Lock screen / Dynamic Island UI
             HStack {
                 Image(systemName: "waveform")
@@ -878,19 +878,19 @@ func startOSCStream() {
 **Required Info.plist Entries:**
 ```xml
 <key>NSMicrophoneUsageDescription</key>
-<string>BLAB uses your microphone to transform your voice into music and visuals.</string>
+<string>ECHOELMUSIC uses your microphone to transform your voice into music and visuals.</string>
 
 <key>NSHealthShareUsageDescription</key>
-<string>BLAB uses your heart rate and HRV data to create bio-reactive music experiences.</string>
+<string>ECHOELMUSIC uses your heart rate and HRV data to create bio-reactive music experiences.</string>
 
 <key>NSHealthUpdateUsageDescription</key>
-<string>BLAB can save session data to Health app for wellness tracking.</string>
+<string>ECHOELMUSIC can save session data to Health app for wellness tracking.</string>
 
 <key>NSCameraUsageDescription</key>
-<string>BLAB uses your camera for face/hand tracking to control audio and visuals.</string>
+<string>ECHOELMUSIC uses your camera for face/hand tracking to control audio and visuals.</string>
 
 <key>NSMotionUsageDescription</key>
-<string>BLAB uses motion sensors to sync visuals with your movement.</string>
+<string>ECHOELMUSIC uses motion sensors to sync visuals with your movement.</string>
 ```
 
 ---
@@ -1008,7 +1008,7 @@ class audioengine { // Wrong: PascalCase for classes
 
 ### **Vision Statement**
 
-> **BLAB = KI-gestützte Biofeedback-Musikplattform, die Stimme, Körper und visuelle Wahrnehmung zu einem Echtzeit-Kunstwerk verschmilzt – modular, offen und anpassbar von iPhone bis Vision Pro.**
+> **ECHOELMUSIC = KI-gestützte Biofeedback-Musikplattform, die Stimme, Körper und visuelle Wahrnehmung zu einem Echtzeit-Kunstwerk verschmilzt – modular, offen und anpassbar von iPhone bis Vision Pro.**
 
 ### **Core Principles**
 
@@ -1066,8 +1066,8 @@ class audioengine { // Wrong: PascalCase for classes
 ### **Repository Structure**
 
 ```
-blab-ios-app/
-├── Sources/Blab/
+echoelmusic-ios-app/
+├── Sources/Echoelmusic/
 │   ├── Audio/              # Audio engine & DSP
 │   ├── Biofeedback/        # HealthKit + bio mapping
 │   ├── MIDI/               # MIDI 2.0 + MPE
@@ -1082,7 +1082,7 @@ blab-ios-app/
 │   ├── API/                # API documentation
 │   └── Tutorials/          # User guides
 ├── Prompts/
-│   └── BLAB_MASTER_PROMPT_v4.3.md  # This file
+│   └── ECHOELMUSIC_MASTER_PROMPT_v4.3.md  # This file
 ├── Package.swift           # SPM manifest
 └── README.md               # Project overview
 ```

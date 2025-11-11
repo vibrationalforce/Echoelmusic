@@ -1,4 +1,4 @@
-# 🐛 BUG FIXES REPORT - Blab iOS App
+# 🐛 BUG FIXES REPORT - Echoelmusic iOS App
 
 ## ✅ ALL CRITICAL BUGS FIXED
 
@@ -104,11 +104,11 @@ private func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
 ```xml
 <!-- ✅ Microphone permission -->
 <key>NSMicrophoneUsageDescription</key>
-<string>Blab needs microphone access to transform your voice and breath into immersive audio-visual experiences.</string>
+<string>Echoelmusic needs microphone access to transform your voice and breath into immersive audio-visual experiences.</string>
 
 <!-- ✅ Health data permission (future HRV integration) -->
 <key>NSHealthShareUsageDescription</key>
-<string>Blab may use heart rate data to create adaptive audio-visual experiences.</string>
+<string>Echoelmusic may use heart rate data to create adaptive audio-visual experiences.</string>
 
 <!-- ✅ Background audio support -->
 <key>UIBackgroundModes</key>
@@ -146,7 +146,7 @@ private func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
     Button("Open Settings", action: openSettings)
     Button("Cancel", role: .cancel) {}
 } message: {
-    Text("Blab needs microphone access to create music from your voice. Please enable it in Settings.")
+    Text("Echoelmusic needs microphone access to create music from your voice. Please enable it in Settings.")
 }
 
 // ✅ Proper error handling in toggleRecording()
@@ -367,7 +367,7 @@ private var isRecording: Bool {
 
 ## 🚀 DEPLOYMENT STATUS
 
-**Repository:** https://github.com/vibrationalforce/blab-ios-app
+**Repository:** https://github.com/vibrationalforce/echoelmusic-ios-app
 
 **Latest Commit:** 5f2926c
 

@@ -1,5 +1,5 @@
 import XCTest
-@testable import Blab
+@testable import Echoelmusic
 
 /// Tests for UnifiedControlHub
 @MainActor

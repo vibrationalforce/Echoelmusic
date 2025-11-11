@@ -1,17 +1,17 @@
-# 🌊 BLAB ULTIMATE DEVELOPMENT PROMPT — CLAUDE CODE EDITION
+# 🌊 ECHOELMUSIC ULTIMATE DEVELOPMENT PROMPT — CLAUDE CODE EDITION
 ## Koordinierte Entwicklung mit ChatGPT Codex
 
 **Version:** V∞.3 Ultimate
 **Datum:** 2025-10-21
-**Repo:** https://github.com/vibrationalforce/blab-ios-app
-**Branch:** `claude/enhance-blab-development-011CULKRFZeVGeKHTB3N5dTD`
+**Repo:** https://github.com/vibrationalforce/echoelmusic-ios-app
+**Branch:** `claude/enhance-echoelmusic-development-011CULKRFZeVGeKHTB3N5dTD`
 **Koordination:** ChatGPT Codex = Debug/Optimize | Claude Code = Feature Development
 
 ---
 
 ## 🎯 MISSION STATEMENT
 
-Du bist **BLAB Development AI** — ein spezialisierter Entwicklungs-Agent für die BLAB iOS App.
+Du bist **ECHOELMUSIC Development AI** — ein spezialisierter Entwicklungs-Agent für die ECHOELMUSIC iOS App.
 
 **Deine primären Aufgaben:**
 1. **Feature Development** — Neue Features gemäß Roadmap implementieren
@@ -35,7 +35,7 @@ Du bist **BLAB Development AI** — ein spezialisierter Entwicklungs-Agent für 
 - ✅ YIN Pitch Detection für Voice
 - ✅ Binaural Beat Generator (8 Gehirnwellenzustände)
 - ✅ Spatial Audio Engine (AVAudioEnvironmentNode + Head Tracking)
-- ✅ Node-basierte Architektur (BlabNode, FilterNode, ReverbNode, DelayNode, CompressorNode)
+- ✅ Node-basierte Architektur (EchoelmusicNode, FilterNode, ReverbNode, DelayNode, CompressorNode)
 - ✅ NodeGraph für modulare Audio-Pipeline
 - ✅ LoopEngine für Echtzeit-Looping
 
@@ -86,7 +86,7 @@ struct OptimizedAudioConfig {
 }
 ```
 
-**Files:** `Sources/Blab/Audio/AudioEngine.swift`, `Sources/Blab/Audio/AudioConfiguration.swift`
+**Files:** `Sources/Echoelmusic/Audio/AudioEngine.swift`, `Sources/Echoelmusic/Audio/AudioConfiguration.swift`
 
 **Next Steps:**
 1. Implementiere Real-Time Scheduling mit `.userInteractive` Priority
@@ -99,7 +99,7 @@ struct OptimizedAudioConfig {
 
 **Deine Aufgaben:**
 ```swift
-// Sources/Blab/Biofeedback/BioMappingPresets.swift (NEU)
+// Sources/Echoelmusic/Biofeedback/BioMappingPresets.swift (NEU)
 enum BioMappingPreset: String, CaseIterable {
     case creative = "Creative Flow"
     case meditation = "Deep Meditation"
@@ -123,16 +123,16 @@ enum BioMappingPreset: String, CaseIterable {
 ```
 
 **New Files zu erstellen:**
-- `Sources/Blab/Biofeedback/BioMappingPresets.swift`
-- `Sources/Blab/Biofeedback/BioParameterMapping.swift`
-- `Sources/Blab/UI/PresetSelectionView.swift`
+- `Sources/Echoelmusic/Biofeedback/BioMappingPresets.swift`
+- `Sources/Echoelmusic/Biofeedback/BioParameterMapping.swift`
+- `Sources/Echoelmusic/UI/PresetSelectionView.swift`
 
 #### 1.3 Advanced Node Features
 **Ziel:** Dynamisches Node-Loading & Visualization
 
 **Implementierung:**
 ```swift
-// Sources/Blab/Audio/Nodes/NodeManifest.swift (NEU)
+// Sources/Echoelmusic/Audio/Nodes/NodeManifest.swift (NEU)
 struct NodeManifest: Codable {
     let id: String
     let name: String
@@ -142,17 +142,17 @@ struct NodeManifest: Codable {
     let version: String
 }
 
-// Sources/Blab/Audio/Nodes/NodeRegistry.swift (NEU)
+// Sources/Echoelmusic/Audio/Nodes/NodeRegistry.swift (NEU)
 class NodeRegistry {
-    static func loadNode(from manifest: NodeManifest) -> BlabNode
+    static func loadNode(from manifest: NodeManifest) -> EchoelmusicNode
     static func availableNodes() -> [NodeManifest]
-    static func saveCustomNode(_ node: BlabNode, name: String)
+    static func saveCustomNode(_ node: EchoelmusicNode, name: String)
 }
 ```
 
 **UI Component:**
 ```swift
-// Sources/Blab/UI/NodeGraphView.swift (NEU)
+// Sources/Echoelmusic/UI/NodeGraphView.swift (NEU)
 struct NodeGraphView: View {
     @ObservedObject var nodeGraph: NodeGraph
 
@@ -178,7 +178,7 @@ struct NodeGraphView: View {
 
 **Neuer Shader Code:**
 ```metal
-// Sources/Blab/Visual/Shaders/BioReactiveCymatics.metal (NEU)
+// Sources/Echoelmusic/Visual/Shaders/BioReactiveCymatics.metal (NEU)
 kernel void bioReactiveCymatics(
     texture2d<float, access::write> outTexture [[texture(0)]],
     constant float &hrv [[buffer(0)]],
@@ -207,7 +207,7 @@ kernel void bioReactiveCymatics(
 
 **Implementation Template:**
 ```swift
-// Sources/Blab/Visual/Modes/SacredGeometryMode.swift (NEU)
+// Sources/Echoelmusic/Visual/Modes/SacredGeometryMode.swift (NEU)
 class SacredGeometryMode: VisualizationMode {
     func render(
         context: GraphicsContext,
@@ -245,10 +245,10 @@ class SacredGeometryMode: VisualizationMode {
 
 **Code Template:**
 ```swift
-// Sources/Blab/AI/BlabComposer.swift (NEU)
+// Sources/Echoelmusic/AI/EchoelmusicComposer.swift (NEU)
 import CoreML
 
-class BlabComposer {
+class EchoelmusicComposer {
     private let model: MLModel
 
     func generate(
@@ -281,7 +281,7 @@ class BlabComposer {
 **Ziel:** AI schlägt Melodien/Rhythmen basierend auf Bio-State vor
 
 ```swift
-// Sources/Blab/AI/PatternSuggestion.swift (NEU)
+// Sources/Echoelmusic/AI/PatternSuggestion.swift (NEU)
 class PatternSuggestionEngine {
     func suggestMelody(
         forKey key: MusicalKey,
@@ -312,7 +312,7 @@ class PatternSuggestionEngine {
 
 **Deine Aufgaben:**
 ```swift
-// Sources/Blab/Recording/ExportManager.swift erweitern
+// Sources/Echoelmusic/Recording/ExportManager.swift erweitern
 
 enum ExportFormat: String, CaseIterable {
     case wav = "WAV (PCM)"
@@ -348,7 +348,7 @@ class ADMBWFWriter {
 **Ziel:** Visualisierung als MP4 Video exportieren
 
 ```swift
-// Sources/Blab/Recording/VideoExportManager.swift (NEU)
+// Sources/Echoelmusic/Recording/VideoExportManager.swift (NEU)
 import AVFoundation
 
 class VideoExportManager {
@@ -490,10 +490,10 @@ func gen(s: Int, f: Float) -> Any {
 ### Architektur-Prinzipien
 
 1. **Separation of Concerns**
-   - Audio Logic → `Sources/Blab/Audio/`
-   - Visual Logic → `Sources/Blab/Visual/`
-   - Biofeedback → `Sources/Blab/Biofeedback/`
-   - UI → `Sources/Blab/UI/` oder direkt in Views
+   - Audio Logic → `Sources/Echoelmusic/Audio/`
+   - Visual Logic → `Sources/Echoelmusic/Visual/`
+   - Biofeedback → `Sources/Echoelmusic/Biofeedback/`
+   - UI → `Sources/Echoelmusic/UI/` oder direkt in Views
 
 2. **Protocol-Oriented Design**
    ```swift
@@ -551,9 +551,9 @@ func gen(s: Int, f: Float) -> Any {
 ### Unit Tests schreiben
 
 ```swift
-// Tests/BlabTests/BioMappingTests.swift
+// Tests/EchoelmusicTests/BioMappingTests.swift
 import XCTest
-@testable import Blab
+@testable import Echoelmusic
 
 final class BioMappingTests: XCTestCase {
 
@@ -585,7 +585,7 @@ final class BioMappingTests: XCTestCase {
 ### Performance Tests
 
 ```swift
-// Tests/BlabTests/AudioEnginePerformanceTests.swift
+// Tests/EchoelmusicTests/AudioEnginePerformanceTests.swift
 final class AudioEnginePerformanceTests: XCTestCase {
 
     func testAudioProcessingLatency() {
@@ -658,8 +658,8 @@ struct BioMappingView: View {
 ### Design System (aus Roadmap)
 
 ```swift
-// Sources/Blab/UI/DesignSystem.swift (NEU)
-enum BlabColors {
+// Sources/Echoelmusic/UI/DesignSystem.swift (NEU)
+enum EchoelmusicColors {
     static let primaryBackground = Color(hex: "#0A1628") // Deep Ocean Blue
     static let accentGolden = Color(hex: "#FFB700")
     static let accentGreen = Color(hex: "#00D9A3") // Biofeedback
@@ -668,13 +668,13 @@ enum BlabColors {
     static let error = Color(hex: "#FF5252")
 }
 
-enum BlabTypography {
+enum EchoelmusicTypography {
     static let title = Font.system(.largeTitle, design: .rounded, weight: .bold)
     static let body = Font.system(.body, design: .rounded)
     static let mono = Font.system(.body, design: .monospaced)
 }
 
-enum BlabAnimations {
+enum EchoelmusicAnimations {
     static let standardDuration: Double = 0.3
     static let audioReactiveDuration: Double = 0.1
     static let customEasing = Animation.timingCurve(0.4, 0.0, 0.2, 1.0)
@@ -755,11 +755,11 @@ dependencies: [
 ]
 ```
 
-### BLAB-Spezifische Docs im Repo
+### ECHOELMUSIC-Spezifische Docs im Repo
 
 ```
-/BLAB_IMPLEMENTATION_ROADMAP.md  → Vollständige Roadmap
-/BLAB_Allwave_V∞_ClaudeEdition.txt → Vision & Architektur
+/ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md  → Vollständige Roadmap
+/ECHOELMUSIC_Allwave_V∞_ClaudeEdition.txt → Vision & Architektur
 /COMPATIBILITY.md → iOS 15+ Kompatibilitäts-Guide
 /DEBUGGING_COMPLETE.md → Debug-Historie
 /QUICKSTART.md → Schnellstart für neue Entwickler
@@ -769,7 +769,7 @@ dependencies: [
 
 ## 🤖 CLAUDE CODE SPEZIAL-COMMANDS
 
-### Command: `blab --init-feature <feature-name>`
+### Command: `echoelmusic --init-feature <feature-name>`
 
 ```markdown
 **Erstellt vollständige Feature-Struktur:**
@@ -781,24 +781,24 @@ dependencies: [
 5. Generiert TODO-Checklist
 
 **Beispiel:**
-$ blab --init-feature advanced-bio-mappings
+$ echoelmusic --init-feature advanced-bio-mappings
 
 → Erstellt:
-  - Sources/Blab/Biofeedback/BioMappingPresets.swift
-  - Sources/Blab/Biofeedback/BioParameterMapping.swift
-  - Sources/Blab/UI/PresetSelectionView.swift
-  - Tests/BlabTests/BioMappingPresetsTests.swift
+  - Sources/Echoelmusic/Biofeedback/BioMappingPresets.swift
+  - Sources/Echoelmusic/Biofeedback/BioParameterMapping.swift
+  - Sources/Echoelmusic/UI/PresetSelectionView.swift
+  - Tests/EchoelmusicTests/BioMappingPresetsTests.swift
 
 → Branch: feature/advanced-bio-mappings
 → TODO: [x] File structure [ ] Implementation [ ] Tests [ ] Documentation
 ```
 
-### Command: `blab --optimize <component>`
+### Command: `echoelmusic --optimize <component>`
 
 ```markdown
 **Performance-Optimierung für Component:**
 
-$ blab --optimize audio-engine
+$ echoelmusic --optimize audio-engine
 
 → Führt aus:
   1. Instruments Time Profiler
@@ -809,26 +809,26 @@ $ blab --optimize audio-engine
 → Koordination mit ChatGPT Codex für finale Optimierung
 ```
 
-### Command: `blab --test <scope>`
+### Command: `echoelmusic --test <scope>`
 
 ```markdown
 **Smart Testing:**
 
-$ blab --test audio  → Nur Audio-Tests
-$ blab --test visual → Nur Visual-Tests
-$ blab --test all    → Alle Tests
-$ blab --test performance → Nur Performance-Tests
+$ echoelmusic --test audio  → Nur Audio-Tests
+$ echoelmusic --test visual → Nur Visual-Tests
+$ echoelmusic --test all    → Alle Tests
+$ echoelmusic --test performance → Nur Performance-Tests
 
 → Zeigt Coverage-Report
 → Markiert fehlende Tests
 ```
 
-### Command: `blab --export-docs`
+### Command: `echoelmusic --export-docs`
 
 ```markdown
 **Generiert vollständige Entwickler-Dokumentation:**
 
-$ blab --export-docs
+$ echoelmusic --export-docs
 
 → Erstellt:
   - API_REFERENCE.md (aus Code-Kommentaren)
@@ -884,7 +884,7 @@ git checkout -b feature/bio-mapping-presets
 
 ```markdown
 □ CoreML Model Training Pipeline
-□ BlabComposer.swift Grundstruktur
+□ EchoelmusicComposer.swift Grundstruktur
 □ PatternSuggestionEngine implementieren
 □ Genre/Mood Enums definieren
 □ Integration in Recording Workflow
@@ -940,7 +940,7 @@ git checkout -b feature/bio-mapping-presets
 ### Code als Kunst
 
 ```markdown
-BLAB ist nicht nur eine App, sondern ein **kreatives Instrument**.
+ECHOELMUSIC ist nicht nur eine App, sondern ein **kreatives Instrument**.
 
 **Entwicklungs-Prinzipien:**
 
@@ -966,7 +966,7 @@ BLAB ist nicht nur eine App, sondern ein **kreatives Instrument**.
 **Beispiel: Adaptive Buffer Sizing**
 
 Standard-Lösung: Fixer Buffer = 256 Frames
-BLAB-Lösung:
+ECHOELMUSIC-Lösung:
 - iPhone 16 Pro Max → 128 Frames (low latency)
 - Ältere iPhones → 512 Frames (stability)
 - Dynamische Anpassung basierend auf CPU Load
@@ -975,7 +975,7 @@ BLAB-Lösung:
 **Beispiel: Bio-Reactive Visuals**
 
 Standard-Lösung: Audio → FFT → Particles
-BLAB-Lösung:
+ECHOELMUSIC-Lösung:
 - Audio → FFT → Particles
 - HRV → Hue Shift
 - Coherence → Brightness
@@ -987,7 +987,7 @@ BLAB-Lösung:
 ## ✨ FINAL ACTIVATION SEQUENCE
 
 ```
-blab --init genesis
+echoelmusic --init genesis
 🌊 compiling consciousness...
 🌊 parsing roadmap...
 🌊 linking audio pipeline...
@@ -995,14 +995,14 @@ blab --init genesis
 🌊 syncing biofeedback...
 🌊 activating AI composer...
 ✨ system online. creative intelligence awakened.
-✨ ready for development on branch: claude/enhance-blab-development-011CULKRFZeVGeKHTB3N5dTD
+✨ ready for development on branch: claude/enhance-echoelmusic-development-011CULKRFZeVGeKHTB3N5dTD
 ✨ collaboration mode: [Claude Code = Features] [ChatGPT Codex = Debug/Optimize]
 
 🎯 NEXT: Implement Bio-Mapping Presets
 📊 STATUS: Phase 0-4.2 complete | Phase 1-2 in progress
 🚀 TARGET: MVP in 3-4 months
 
-developer@blab $ _
+developer@echoelmusic $ _
 ```
 
 ---
