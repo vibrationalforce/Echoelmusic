@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Main user interface for the Blab app
+/// Main user interface for the Echoelmusic app
 /// Optimized with proper state management and error handling
 struct ContentView: View {
 

@@ -1,9 +1,9 @@
-# 🌊 BLAB EXTENDED VISION — Embodied Multimodal Creation System
+# 🌊 ECHOELMUSIC EXTENDED VISION — Embodied Multimodal Creation System
 
 **Version:** V∞.4 Extended
 **Date:** 2025-10-21
 **Lead Architect:** Claude Code
-**Repo:** https://github.com/vibrationalforce/blab-ios-app
+**Repo:** https://github.com/vibrationalforce/echoelmusic-app
 
 ---
 
@@ -11,9 +11,9 @@
 
 > *"Your face is a filter. Your hands shape space. Your gaze selects sound. Your position defines perspective. Your heartbeat drives rhythm. Your breath creates flow."*
 
-**BLAB is not a controller replacement — YOU are the controller.**
+**ECHOELMUSIC is not a controller replacement — YOU are the controller.**
 
-BLAB transforms the human body into a **multidimensional creative interface**:
+ECHOELMUSIC transforms the human body into a **multidimensional creative interface**:
 - **Heart Rate Variability (HRV)** → Musical tension/coherence
 - **Heart Rate (BPM)** → Tempo modulation
 - **Facial Expressions** (52 ARKit Blend Shapes) → Filter resonance, reverb, timbre
@@ -127,7 +127,7 @@ OUTPUT LAYER
 
 ## 📦 MODULE STRUCTURE (iOS Swift)
 
-### 1. BLABAudio — Audio Engine & Synthesis
+### 1. ECHOELMUSICAudio — Audio Engine & Synthesis
 
 **Files:**
 ```
@@ -152,7 +152,7 @@ Sources/Blab/Audio/
 
 ---
 
-### 2. BLABBio — Biofeedback Integration
+### 2. ECHOELMUSICBio — Biofeedback Integration
 
 **Files:**
 ```
@@ -180,7 +180,7 @@ let intensity = mapRange(motionEnergy, from: 0...10, to: 0...1)
 
 ---
 
-### 3. BLABSpatial — ARKit Face/Hand Tracking & Spatial Control
+### 3. ECHOELMUSICSpatial — ARKit Face/Hand Tracking & Spatial Control
 
 **Files:**
 ```
@@ -241,7 +241,7 @@ spatialAudio.setActiveSource(closestSource)
 
 ---
 
-### 4. BLABMIDI — MIDI 1.0, MIDI 2.0, MPE
+### 4. ECHOELMUSICMIDI — MIDI 1.0, MIDI 2.0, MPE
 
 **Files:**
 ```
@@ -297,7 +297,7 @@ class MPEVoiceAllocator {
 
 ---
 
-### 5. BLABLight — LED Feedback & DMX Stage Lights
+### 5. ECHOELMUSICLight — LED Feedback & DMX Stage Lights
 
 **Files:**
 ```
@@ -371,7 +371,7 @@ class DMXController {
 
 ---
 
-### 6. BLABUnified — Central Control Hub
+### 6. ECHOELMUSICUnified — Central Control Hub
 
 **Files:**
 ```
@@ -418,7 +418,7 @@ class UnifiedControlHub: ObservableObject {
     @Published private(set) var conflictResolved: Bool = true
 
     private var cancellables = Set<AnyCancellable>()
-    private let controlQueue = DispatchQueue(label: "com.blab.control", qos: .userInteractive)
+    private let controlQueue = DispatchQueue(label: "com.echoelmusic.control", qos: .userInteractive)
 
     // MARK: - Input Priority
     enum InputMode {
@@ -691,7 +691,7 @@ enum HandGesture {
 
 ---
 
-### 7. BLABMultiplayer — WebRTC Spatial Sync
+### 7. ECHOELMUSICMultiplayer — WebRTC Spatial Sync
 
 **Files:**
 ```
@@ -742,7 +742,7 @@ class MultiplayerSpatialSync {
 
 **Architecture:**
 ```
-[iOS BLAB App]
+[iOS ECHOELMUSIC App]
     ↓ (OSC/WebRTC)
 [Unreal Engine 5.6]
     ├── MetaSounds (Audio)
@@ -798,7 +798,7 @@ Set Post Process (Color Hue Shift)
 
 ## 🗓️ 90-DAY ROADMAP (Next Document)
 
-See `BLAB_90_DAY_ROADMAP.md` for detailed weekly milestones.
+See `ECHOELMUSIC_90_DAY_ROADMAP.md` for detailed weekly milestones.
 
 **High-Level Phases:**
 
@@ -843,7 +843,7 @@ See `BLAB_90_DAY_ROADMAP.md` for detailed weekly milestones.
 
 ## 🎯 SUCCESS CRITERIA
 
-**By Day 90, BLAB should:**
+**By Day 90, ECHOELMUSIC should:**
 
 ✅ Fuse 6+ input modalities seamlessly (Bio, Face, Hands, Gaze, Position, Touch)
 ✅ Achieve < 5ms audio latency on iPhone 13+
@@ -862,7 +862,7 @@ See `BLAB_90_DAY_ROADMAP.md` for detailed weekly milestones.
 
 > "Your body is not a controller replacement — it IS the controller."
 
-BLAB erases the boundary between artist and instrument. Every breath, every glance, every gesture, every heartbeat becomes a creative act.
+ECHOELMUSIC erases the boundary between artist and instrument. Every breath, every glance, every gesture, every heartbeat becomes a creative act.
 
 ---
 

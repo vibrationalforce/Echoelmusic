@@ -50,7 +50,7 @@ cd /Users/michpack/BlabStudio
 gh auth login
 
 # Repository erstellen
-gh repo create blab-ios-app --public --source=. --remote=origin --push
+gh repo create echoelmusic-app --public --source=. --remote=origin --push
 ```
 
 Das macht alles automatisch!
@@ -62,7 +62,7 @@ Das macht alles automatisch!
 1. **Gehe zu:** https://github.com/new
 
 2. **Fülle aus:**
-   - Repository name: `blab-ios-app`
+   - Repository name: `echoelmusic-app`
    - Description: `Biofeedback Music Creation App for iOS`
    - Visibility: **Public** (damit GitHub Actions kostenlos ist)
    - **NICHT** "Initialize with README" anklicken (haben wir schon!)
@@ -71,7 +71,7 @@ Das macht alles automatisch!
 
 4. **GitHub zeigt dir Commands:**
    ```bash
-   git remote add origin https://github.com/DEIN_USERNAME/blab-ios-app.git
+   git remote add origin https://github.com/DEIN_USERNAME/echoelmusic-app.git
    git branch -M main
    git push -u origin main
    ```
@@ -81,7 +81,7 @@ Das macht alles automatisch!
    cd /Users/michpack/BlabStudio
 
    # Füge deine GitHub URL ein (ersetze DEIN_USERNAME!)
-   git remote add origin https://github.com/DEIN_USERNAME/blab-ios-app.git
+   git remote add origin https://github.com/DEIN_USERNAME/echoelmusic-app.git
    git branch -M main
    git add .
    git commit -m "Initial commit - Blab iOS App"
@@ -103,7 +103,7 @@ Das macht alles automatisch!
 **Auf GitHub.com:**
 
 1. **Gehe zu deinem Repository:**
-   https://github.com/DEIN_USERNAME/blab-ios-app
+   https://github.com/DEIN_USERNAME/echoelmusic-app
 
 2. **Klicke auf den Tab:** **"Actions"** (oben)
 
@@ -325,7 +325,7 @@ Du hast jetzt:
 
 ## 📚 Nützliche Links
 
-- **Dein GitHub Repo:** https://github.com/DEIN_USERNAME/blab-ios-app
+- **Dein GitHub Repo:** https://github.com/DEIN_USERNAME/echoelmusic-app
 - **GitHub Actions Docs:** https://docs.github.com/en/actions
 - **Apple Developer:** https://developer.apple.com/
 - **Sideloadly:** https://sideloadly.io/

@@ -1,4 +1,4 @@
-# 🎉 BLAB - INTEGRATION ERFOLGREICH!
+# 🎉 ECHOELMUSIC - INTEGRATION ERFOLGREICH!
 
 ## ✅ Alle Quick Wins implementiert!
 
@@ -122,7 +122,7 @@ Audio follows head movement! 🎧
 
 ```
 ┌─────────────────────────────────────┐
-│           BLAB                      │
+│           ECHOELMUSIC                      │
 │       breath → sound                │
 ├─────────────────────────────────────┤
 │                                     │
@@ -266,7 +266,7 @@ You know everything works when:
 
 ### IMMEDIATE (When you get Xcode):
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/echoelmusic-app
 ./deploy.sh
 # Follow instructions to deploy to iPhone
 ```
@@ -345,11 +345,11 @@ cd /Users/michpack/blab-ios-app
 - INTEGRATION_COMPLETE.md - API reference
 - Code comments - Inline docs
 
-**GitHub:** https://github.com/vibrationalforce/blab-ios-app
+**GitHub:** https://github.com/vibrationalforce/echoelmusic-app
 
 ---
 
-**🎵 BLAB is ready to create biofeedback music! 🎵**
+**🎵 ECHOELMUSIC is ready to create biofeedback music! 🎵**
 
 Built with SwiftUI, AVFoundation, CoreMotion, HealthKit, and ❤️
 

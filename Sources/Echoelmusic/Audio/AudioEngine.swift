@@ -11,7 +11,7 @@ import Combine
 /// - Bio-parameter mapping (HRV → Audio)
 /// - Real-time mixing and effects
 ///
-/// This class acts as the central hub for all audio processing in Blab
+/// This class acts as the central hub for all audio processing in Echoelmusic
 @MainActor
 class AudioEngine: ObservableObject {
 

@@ -1,4 +1,4 @@
-# 🐛 BLAB Debugging & Abwärtskompatibilität - Komplett!
+# 🐛 ECHOELMUSIC Debugging & Abwärtskompatibilität - Komplett!
 
 ## ✅ Was wurde geprüft und verbessert
 
@@ -34,7 +34,7 @@
 - Alle vDSP Funktionen - iOS 4.0+
 
 ### Ergebnis:
-**BLAB ist 100% iOS 15.0+ kompatibel!** 🎉
+**ECHOELMUSIC ist 100% iOS 15.0+ kompatibel!** 🎉
 
 Siehe: [iOS15_COMPATIBILITY_AUDIT.md](iOS15_COMPATIBILITY_AUDIT.md)
 
@@ -251,7 +251,7 @@ runs-on: macos-14
 
 **Next Step:**
 ```bash
-cd ~/blab-ios-app
+cd ~/echoelmusic-app
 git add .
 git commit -m "feat: iOS 15+ compatibility + debugging + CI/CD"
 git push origin main
@@ -293,7 +293,7 @@ git push origin main
 
 #### 1. ✅ Code zu GitHub pushen
 ```bash
-cd ~/blab-ios-app
+cd ~/echoelmusic-app
 git add .
 git commit -m "feat: iOS 15+ compatibility + debugging + CI/CD
 
@@ -308,7 +308,7 @@ git push origin main
 ```
 
 #### 2. ✅ GitHub Actions ansehen
-- Gehe zu: https://github.com/vibrationalforce/blab-ios-app/actions
+- Gehe zu: https://github.com/vibrationalforce/echoelmusic-app/actions
 - Warte 5-10 Minuten für Build
 - Prüfe ob Build erfolgreich
 
@@ -355,7 +355,7 @@ git push origin main
 - ✅ TestFlight (für iPhone testing)
 
 ### 2. Head Tracking auf iOS 15
-**Issue:** Head Tracking requires iOS 14+, aber BLAB ist iOS 15+
+**Issue:** Head Tracking requires iOS 14+, aber ECHOELMUSIC ist iOS 15+
 
 **Status:** ✅ **KEIN PROBLEM** - iOS 15 > iOS 14
 
@@ -454,7 +454,7 @@ git push origin main
 
 ## 🎉 Bottom Line
 
-**BLAB ist production-ready für iOS 15+!**
+**ECHOELMUSIC ist production-ready für iOS 15+!**
 
 ✅ **Code:** 100% iOS 15 kompatibel
 ✅ **Dokumentation:** Comprehensive

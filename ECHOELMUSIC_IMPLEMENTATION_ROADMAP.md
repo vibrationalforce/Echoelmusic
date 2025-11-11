@@ -1,9 +1,9 @@
-# 🌊 BLAB Implementation Roadmap
+# 🌊 ECHOELMUSIC Implementation Roadmap
 ## From Current iOS App → Full Allwave Vision
 
 **Created:** 2025-10-20
-**Vision:** BLAB Allwave V∞.2 (Claude Code Edition)
-**Current:** BLAB iOS v0.1 (Biofeedback + Binaural Beats + Spatial Audio)
+**Vision:** ECHOELMUSIC Allwave V∞.2 (Claude Code Edition)
+**Current:** ECHOELMUSIC iOS v0.1 (Biofeedback + Binaural Beats + Spatial Audio)
 
 ---
 
@@ -472,7 +472,7 @@ class PublishingPipeline {
 
 #### 9.2 Streaming Integration ⏳
 **Platforms:**
-- [ ] Twitch (live BLAB sessions)
+- [ ] Twitch (live ECHOELMUSIC sessions)
 - [ ] YouTube Live
 - [ ] Instagram Live
 - [ ] RTMP custom endpoints

@@ -1,9 +1,9 @@
-# 🌊 BLAB ULTIMATE DEVELOPMENT PROMPT — CLAUDE CODE EDITION
+# 🌊 ECHOELMUSIC ULTIMATE DEVELOPMENT PROMPT — CLAUDE CODE EDITION
 ## Koordinierte Entwicklung mit ChatGPT Codex
 
 **Version:** V∞.3 Ultimate
 **Datum:** 2025-10-21
-**Repo:** https://github.com/vibrationalforce/blab-ios-app
+**Repo:** https://github.com/vibrationalforce/echoelmusic-app
 **Branch:** `claude/enhance-blab-development-011CULKRFZeVGeKHTB3N5dTD`
 **Koordination:** ChatGPT Codex = Debug/Optimize | Claude Code = Feature Development
 
@@ -11,7 +11,7 @@
 
 ## 🎯 MISSION STATEMENT
 
-Du bist **BLAB Development AI** — ein spezialisierter Entwicklungs-Agent für die BLAB iOS App.
+Du bist **ECHOELMUSIC Development AI** — ein spezialisierter Entwicklungs-Agent für die ECHOELMUSIC iOS App.
 
 **Deine primären Aufgaben:**
 1. **Feature Development** — Neue Features gemäß Roadmap implementieren
@@ -755,11 +755,11 @@ dependencies: [
 ]
 ```
 
-### BLAB-Spezifische Docs im Repo
+### ECHOELMUSIC-Spezifische Docs im Repo
 
 ```
-/BLAB_IMPLEMENTATION_ROADMAP.md  → Vollständige Roadmap
-/BLAB_Allwave_V∞_ClaudeEdition.txt → Vision & Architektur
+/ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md  → Vollständige Roadmap
+/ECHOELMUSIC_Allwave_V∞_ClaudeEdition.txt → Vision & Architektur
 /COMPATIBILITY.md → iOS 15+ Kompatibilitäts-Guide
 /DEBUGGING_COMPLETE.md → Debug-Historie
 /QUICKSTART.md → Schnellstart für neue Entwickler
@@ -940,7 +940,7 @@ git checkout -b feature/bio-mapping-presets
 ### Code als Kunst
 
 ```markdown
-BLAB ist nicht nur eine App, sondern ein **kreatives Instrument**.
+ECHOELMUSIC ist nicht nur eine App, sondern ein **kreatives Instrument**.
 
 **Entwicklungs-Prinzipien:**
 
@@ -966,7 +966,7 @@ BLAB ist nicht nur eine App, sondern ein **kreatives Instrument**.
 **Beispiel: Adaptive Buffer Sizing**
 
 Standard-Lösung: Fixer Buffer = 256 Frames
-BLAB-Lösung:
+ECHOELMUSIC-Lösung:
 - iPhone 16 Pro Max → 128 Frames (low latency)
 - Ältere iPhones → 512 Frames (stability)
 - Dynamische Anpassung basierend auf CPU Load
@@ -975,7 +975,7 @@ BLAB-Lösung:
 **Beispiel: Bio-Reactive Visuals**
 
 Standard-Lösung: Audio → FFT → Particles
-BLAB-Lösung:
+ECHOELMUSIC-Lösung:
 - Audio → FFT → Particles
 - HRV → Hue Shift
 - Coherence → Brightness

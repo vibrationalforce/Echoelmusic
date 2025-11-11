@@ -1,4 +1,4 @@
-# 🚀 BLAB Quick Development Reference
+# 🚀 ECHOELMUSIC Quick Development Reference
 
 **Für schnellen Zugriff während der Entwicklung**
 
@@ -35,8 +35,8 @@ swift build                 # Build ohne Run
 |------|-------|
 | `CLAUDE_CODE_ULTIMATE_PROMPT.md` | **Haupt-Prompt** für Claude Code Development |
 | `.github/CLAUDE_TODO.md` | Aktuelle TODO-Liste & Sprint-Planung |
-| `BLAB_IMPLEMENTATION_ROADMAP.md` | Komplette Roadmap Phase 0-10 |
-| `BLAB_Allwave_V∞_ClaudeEdition.txt` | Vision & System-Architektur |
+| `ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md` | Komplette Roadmap Phase 0-10 |
+| `ECHOELMUSIC_Allwave_V∞_ClaudeEdition.txt` | Vision & System-Architektur |
 | `QUICK_DEV_REFERENCE.md` | Diese Datei (Quick-Ref) |
 | `blab-dev.sh` | Development Helper Script |
 
@@ -407,7 +407,7 @@ Bitte debuggen und fixen.
 
 ## 🌊 Entwicklungs-Philosophie (Quick Reminder)
 
-**BLAB-Prinzipien:**
+**ECHOELMUSIC-Prinzipien:**
 1. **Resonanz vor Funktion** — Code soll fließen
 2. **Bio-Adaptive Intelligenz** — System passt sich an User an
 3. **Ästhetik = Performance** — Schön UND schnell
@@ -453,5 +453,5 @@ Bitte debuggen und fixen.
 
 **Happy Coding!** ✨
 
-*Generated with Claude Code for BLAB Development*
+*Generated with Claude Code for ECHOELMUSIC Development*
 *Version: V∞.3 | 2025-10-21*

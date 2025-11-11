@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# deploy.sh - Deploy BLAB to iPhone (via Xcode)
+# deploy.sh - Deploy ECHOELMUSIC to iPhone (via Xcode)
 # Generates Xcode project and provides deployment instructions
 #
 # Usage:
@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 
 # Banner
 echo -e "${MAGENTA}╔═══════════════════════════════════════╗${NC}"
-echo -e "${MAGENTA}║  📱 BLAB - Deploy to iPhone         ║${NC}"
+echo -e "${MAGENTA}║  📱 ECHOELMUSIC - Deploy to iPhone         ║${NC}"
 echo -e "${MAGENTA}╚═══════════════════════════════════════╝${NC}"
 echo ""
 
@@ -63,14 +63,14 @@ if [ $? -eq 0 ]; then
         echo -e "${CYAN}╚═══════════════════════════════════════════════════════════╝${NC}"
         echo ""
         echo -e "${BLUE}1. Opening Xcode project...${NC}"
-        open Blab.xcodeproj
+        open Echoelmusic.xcodeproj
         echo ""
         echo -e "${YELLOW}2. In Xcode, do the following:${NC}"
         echo ""
-        echo -e "   ${GREEN}a)${NC} Select the 'Blab' target in the project navigator"
+        echo -e "   ${GREEN}a)${NC} Select the 'Echoelmusic' target in the project navigator"
         echo -e "   ${GREEN}b)${NC} Go to 'Signing & Capabilities' tab"
         echo -e "   ${GREEN}c)${NC} Select your Team (Apple ID)"
-        echo -e "   ${GREEN}d)${NC} Bundle ID: ${CYAN}com.vibrationalforce.blab${NC}"
+        echo -e "   ${GREEN}d)${NC} Bundle ID: ${CYAN}com.vibrationalforce.echoelmusic${NC}"
         echo ""
         echo -e "   ${GREEN}e)${NC} Connect your iPhone 16 Pro Max via USB"
         echo -e "   ${GREEN}f)${NC} Product → Destination → iPhone 16 Pro Max"

@@ -1,4 +1,4 @@
-# 🎉 BLAB Setup Komplett!
+# 🎉 ECHOELMUSIC Setup Komplett!
 
 ## ✅ Was wurde gerade eingerichtet
 
@@ -9,7 +9,7 @@
 - [AudioEngine.swift](Sources/Blab/Audio/AudioEngine.swift) - Runtime iOS Version Check
 
 **Ergebnis:**
-- ✅ BLAB läuft jetzt auf **iPhone 6s und neuer** (iOS 15+)
+- ✅ ECHOELMUSIC läuft jetzt auf **iPhone 6s und neuer** (iOS 15+)
 - ✅ Automatische Feature Detection zur Laufzeit
 - ✅ Graceful Fallbacks wenn Features nicht verfügbar
 
@@ -30,7 +30,7 @@
 **Nächste Schritte:**
 1. Code zu GitHub pushen
 2. GitHub Actions läuft automatisch
-3. Build Status auf https://github.com/vibrationalforce/blab-ios-app/actions ansehen
+3. Build Status auf https://github.com/vibrationalforce/echoelmusic-app/actions ansehen
 
 ---
 
@@ -68,7 +68,7 @@
 ### Option 1: Nur Code-Entwicklung (MacBook)
 ```bash
 # 1. Code in VS Code schreiben
-cd ~/blab-ios-app
+cd ~/echoelmusic-app
 code .
 
 # 2. Changes committen
@@ -79,7 +79,7 @@ git commit -m "Add new feature"
 git push origin develop
 
 # 4. GitHub Actions baut automatisch (5-10 Min)
-# → Sieh Status auf: https://github.com/vibrationalforce/blab-ios-app/actions
+# → Sieh Status auf: https://github.com/vibrationalforce/echoelmusic-app/actions
 ```
 
 **Vorteile:**
@@ -183,14 +183,14 @@ iPhone anschließen → ⌘ + R
 ### Sofort möglich (ohne Xcode):
 1. **Code zu GitHub pushen**
    ```bash
-   cd ~/blab-ios-app
+   cd ~/echoelmusic-app
    git add .
    git commit -m "Setup iOS 15+ compatibility + GitHub Actions"
    git push origin main
    ```
 
 2. **GitHub Actions Status ansehen**
-   - https://github.com/vibrationalforce/blab-ios-app/actions
+   - https://github.com/vibrationalforce/echoelmusic-app/actions
    - Warte 5-10 Minuten für ersten Build
 
 3. **Weiter entwickeln in VS Code**
@@ -225,7 +225,7 @@ iPhone anschließen → ⌘ + R
 ## 📁 Neue Dateien Overview
 
 ```
-blab-ios-app/
+echoelmusic-app/
 ├── .github/
 │   └── workflows/
 │       ├── ios-build-simple.yml    # ← NEU: Basic CI Build
@@ -249,9 +249,9 @@ blab-ios-app/
 ## 💡 Wichtige Links
 
 ### Projekt
-- **GitHub Repo:** https://github.com/vibrationalforce/blab-ios-app
-- **GitHub Actions:** https://github.com/vibrationalforce/blab-ios-app/actions
-- **Issues:** https://github.com/vibrationalforce/blab-ios-app/issues
+- **GitHub Repo:** https://github.com/vibrationalforce/echoelmusic-app
+- **GitHub Actions:** https://github.com/vibrationalforce/echoelmusic-app/actions
+- **Issues:** https://github.com/vibrationalforce/echoelmusic-app/issues
 
 ### Apple
 - **Developer Portal:** https://developer.apple.com/account
@@ -271,7 +271,7 @@ blab-ios-app/
 ### "GitHub Actions Build failed"
 ```bash
 # 1. Logs ansehen
-→ https://github.com/vibrationalforce/blab-ios-app/actions
+→ https://github.com/vibrationalforce/echoelmusic-app/actions
 → Klick auf failed Workflow
 → Klick auf "Build and Test iOS App"
 → Siehe Fehler-Details
@@ -308,7 +308,7 @@ Siehe auch: [TESTFLIGHT_SETUP.md](TESTFLIGHT_SETUP.md) - Troubleshooting Sektion
 
 ### 1. Code zu GitHub pushen ✅
 ```bash
-cd ~/blab-ios-app
+cd ~/echoelmusic-app
 git add .
 git commit -m "feat: iOS 15+ compatibility + GitHub Actions CI/CD
 
@@ -367,4 +367,4 @@ Nur für finales iPhone-Testing brauchst du entweder:
 - **Option B:** Zugang zu Mac mit Xcode (einmalig für Setup)
 - **Option C:** Weiter nur Code entwickeln (VS Code)
 
-**Viel Erfolg mit BLAB! 🎵🧠✨**
+**Viel Erfolg mit ECHOELMUSIC! 🎵🧠✨**

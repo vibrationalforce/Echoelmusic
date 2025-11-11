@@ -91,7 +91,7 @@ class Push3LEDController: ObservableObject {
         // Create MIDI client
         var client: MIDIClientRef = 0
         let clientStatus = MIDIClientCreateWithBlock(
-            "BLAB Push 3 Controller" as CFString,
+            "ECHOELMUSIC Push 3 Controller" as CFString,
             &client
         ) { _ in }
 

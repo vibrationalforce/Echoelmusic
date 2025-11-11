@@ -3,7 +3,7 @@
 **Date:** 2025-10-24
 **Status:** ✅ Ready for Xcode Development
 **Last Commit:** `65a260f` - API integration complete
-**GitHub:** `vibrationalforce/blab-ios-app`
+**GitHub:** `vibrationalforce/echoelmusic-app`
 
 ---
 
@@ -32,7 +32,7 @@
 
 #### **1.1 Projekt öffnen:**
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/echoelmusic-app
 open Package.swift
 ```
 
@@ -568,7 +568,7 @@ Diese TODOs sind **nicht kritisch** - Fallback-Werte (6.0 breathing, 0.5 audio) 
 ### **Für schnellen Start:**
 ```bash
 # 1. Projekt öffnen
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/echoelmusic-app
 open Package.swift
 
 # 2. In Xcode:
@@ -593,8 +593,8 @@ git push origin main
 ### **Documentation:**
 - `PHASE_3_OPTIMIZED.md` - Optimization details
 - `DAW_INTEGRATION_GUIDE.md` - DAW integration
-- `BLAB_IMPLEMENTATION_ROADMAP.md` - Overall roadmap
-- `BLAB_90_DAY_ROADMAP.md` - 90-day plan
+- `ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md` - Overall roadmap
+- `ECHOELMUSIC_90_DAY_ROADMAP.md` - 90-day plan
 
 ### **Code Locations:**
 ```
@@ -613,7 +613,7 @@ UI:
 ```
 
 ### **GitHub:**
-- **Repo:** `vibrationalforce/blab-ios-app`
+- **Repo:** `vibrationalforce/echoelmusic-app`
 - **Branch:** `main`
 - **Latest:** `65a260f` (API integration complete)
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 🌊 BLAB Development Helper Script
+# 🌊 ECHOELMUSIC Development Helper Script
 # Shortcuts für häufige Entwicklungs-Tasks
 
 set -e
@@ -11,13 +11,13 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 function print_header() {
-    echo -e "${BLUE}🌊 BLAB Dev Tool${NC}"
+    echo -e "${BLUE}🌊 ECHOELMUSIC Dev Tool${NC}"
     echo -e "${BLUE}===============${NC}\n"
 }
 
 function show_help() {
     print_header
-    echo "Usage: ./blab-dev.sh [command]"
+    echo "Usage: ./echoelmusic-dev.sh [command]"
     echo ""
     echo "Commands:"
     echo "  build              Build the project"
@@ -36,7 +36,7 @@ function show_help() {
 }
 
 function build_project() {
-    echo -e "${YELLOW}🔨 Building BLAB...${NC}"
+    echo -e "${YELLOW}🔨 Building ECHOELMUSIC...${NC}"
     swift build
     echo -e "${GREEN}✅ Build successful${NC}"
 }
@@ -49,13 +49,13 @@ function run_tests() {
 
 function run_audio_tests() {
     echo -e "${YELLOW}🎵 Running audio tests...${NC}"
-    swift test --filter BlabTests.Audio
+    swift test --filter EchoelmusicTests.Audio
     echo -e "${GREEN}✅ Audio tests passed${NC}"
 }
 
 function run_visual_tests() {
     echo -e "${YELLOW}🎨 Running visual tests...${NC}"
-    swift test --filter BlabTests.Visual
+    swift test --filter EchoelmusicTests.Visual
     echo -e "${GREEN}✅ Visual tests passed${NC}"
 }
 
@@ -89,7 +89,7 @@ function show_status() {
 
 function create_feature_branch() {
     if [ -z "$1" ]; then
-        echo -e "${YELLOW}Usage: ./blab-dev.sh feature <feature-name>${NC}"
+        echo -e "${YELLOW}Usage: ./echoelmusic-dev.sh feature <feature-name>${NC}"
         exit 1
     fi
     

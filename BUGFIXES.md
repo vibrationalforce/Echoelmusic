@@ -367,7 +367,7 @@ private var isRecording: Bool {
 
 ## 🚀 DEPLOYMENT STATUS
 
-**Repository:** https://github.com/vibrationalforce/blab-ios-app
+**Repository:** https://github.com/vibrationalforce/echoelmusic-app
 
 **Latest Commit:** 5f2926c
 

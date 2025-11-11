@@ -1,4 +1,4 @@
-# BLAB - Quick Start Guide
+# ECHOELMUSIC - Quick Start Guide
 
 This guide will help you build and install the Blab app on your iPhone **without needing the full Xcode application**.
 
@@ -151,7 +151,7 @@ After installation, you should see:
 2. **Permission Dialog** - "Allow microphone access?" → Tap **Allow**
 3. **Main Screen:**
    - Dark purple/blue gradient background
-   - "BLAB" title at top
+   - "ECHOELMUSIC" title at top
    - Particle visualization in center
    - Large green "Start" button at bottom
 
