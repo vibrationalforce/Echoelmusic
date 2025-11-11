@@ -20,6 +20,9 @@ EchoelmusicAudioProcessor::EchoelmusicAudioProcessor()
     bioReactiveDSP = std::make_unique<BioReactiveDSP>();
     hrvProcessor = std::make_unique<HRVProcessor>();
 
+    // Initialize spectrum data
+    spectrumData.fill(0.0f);
+
     // Add parameter listeners
     parameters.addParameterListener(PARAM_ID_HRV, this);
     parameters.addParameterListener(PARAM_ID_COHERENCE, this);
@@ -268,6 +271,9 @@ void EchoelmusicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // Generate heartbeat MIDI
     if (producesMidi())
         generateHeartbeatMIDI(midiMessages, buffer.getNumSamples());
+
+    // Update spectrum data for visualization
+    updateSpectrumData(buffer);
 }
 
 //==============================================================================
@@ -366,6 +372,59 @@ void EchoelmusicAudioProcessor::setStateInformation (const void* data, int sizeI
     if (xmlState.get() != nullptr)
         if (xmlState->hasTagName (parameters.state.getType()))
             parameters.replaceState (juce::ValueTree::fromXml (*xmlState));
+}
+
+//==============================================================================
+// Spectrum Analysis
+//==============================================================================
+
+std::vector<float> EchoelmusicAudioProcessor::getSpectrumData() const
+{
+    std::lock_guard<std::mutex> lock(spectrumMutex);
+    return std::vector<float>(spectrumData.begin(), spectrumData.end());
+}
+
+void EchoelmusicAudioProcessor::updateSpectrumData(const juce::AudioBuffer<float>& buffer)
+{
+    if (buffer.getNumChannels() == 0 || buffer.getNumSamples() == 0)
+        return;
+
+    // Simple RMS-based spectrum approximation for visualization
+    // For full FFT spectrum, this should be done in a separate thread
+    // to avoid adding latency to audio processing
+
+    std::lock_guard<std::mutex> lock(spectrumMutex);
+
+    const auto* channelData = buffer.getReadPointer(0);
+    const int numSamples = buffer.getNumSamples();
+
+    // Divide audio into frequency bands and calculate RMS per band
+    // This is a simplified approach - for production, use proper FFT
+
+    // Logarithmic frequency bands (20Hz to 20kHz)
+    for (int bin = 0; bin < spectrumSize; ++bin)
+    {
+        // Calculate RMS for this "band" (simplified - just use sequential samples)
+        int startSample = (bin * numSamples) / spectrumSize;
+        int endSample = ((bin + 1) * numSamples) / spectrumSize;
+
+        float rms = 0.0f;
+        for (int i = startSample; i < endSample && i < numSamples; ++i)
+        {
+            rms += channelData[i] * channelData[i];
+        }
+
+        if (endSample > startSample)
+            rms = std::sqrt(rms / (endSample - startSample));
+
+        // Convert to dB and normalize
+        float db = juce::Decibels::gainToDecibels(rms + 0.0001f);
+        float normalized = juce::jmap(db, -60.0f, 0.0f, 0.0f, 1.0f);
+
+        // Smooth with previous value
+        spectrumData[bin] = spectrumData[bin] * 0.7f + normalized * 0.3f;
+        spectrumData[bin] = juce::jlimit(0.0f, 1.0f, spectrumData[bin]);
+    }
 }
 
 //==============================================================================

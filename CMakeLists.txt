@@ -4,30 +4,96 @@ project(Echoelmusic VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# ===========================
+# Platform Detection
+# ===========================
+
+if(WIN32)
+    set(PLATFORM_WINDOWS TRUE)
+    message(STATUS "Platform: Windows")
+elseif(APPLE)
+    set(PLATFORM_MACOS TRUE)
+    message(STATUS "Platform: macOS/iOS")
+elseif(UNIX AND NOT APPLE)
+    set(PLATFORM_LINUX TRUE)
+    message(STATUS "Platform: Linux")
+elseif(ANDROID)
+    set(PLATFORM_ANDROID TRUE)
+    message(STATUS "Platform: Android")
+endif()
+
+# ===========================
+# Build Options
+# ===========================
+
+option(BUILD_VST3 "Build VST3 plugin" ON)
+option(BUILD_AU "Build Audio Units plugin" ON)
+option(BUILD_AAX "Build AAX plugin for Pro Tools" ON)
+option(BUILD_AUv3 "Build AUv3 plugin for iOS" ON)
+option(BUILD_LV2 "Build LV2 plugin for Linux" ON)
+option(BUILD_CLAP "Build CLAP plugin" ON)
+option(BUILD_STANDALONE "Build standalone application" ON)
+
+option(BUILD_ANDROID_APP "Build Android app" OFF)
+option(BUILD_WINDOWS_VST3 "Build Windows VST3" ON)
+option(BUILD_LINUX_VST3 "Build Linux VST3" ON)
+
+option(ENABLE_ASIO "Enable ASIO support (Windows)" ON)
+option(ENABLE_WASAPI "Enable WASAPI support (Windows)" ON)
+option(ENABLE_DIRECTSOUND "Enable DirectSound (Windows)" ON)
+
+option(ENABLE_ALSA "Enable ALSA support (Linux)" ON)
+option(ENABLE_JACK "Enable JACK support (Linux)" ON)
+option(ENABLE_PULSEAUDIO "Enable PulseAudio (Linux)" ON)
+
+option(ENABLE_ANDROID_OBOE "Enable Oboe (Android)" ON)
+option(ENABLE_ANDROID_AAUDIO "Enable AAudio (Android)" ON)
 
 # ===========================
 # JUCE Framework
 # ===========================
 
-# Add JUCE as subdirectory (will be downloaded via git submodule)
 add_subdirectory(ThirdParty/JUCE)
 
 # ===========================
 # Plugin Formats
 # ===========================
 
-# Enable plugin formats
-set(FORMATS
-    VST3      # Steinberg VST3 (Open Source!)
-    AU        # Apple Audio Units
-    Standalone # Standalone App
-)
+set(FORMATS)
 
-# Add CLAP support if available
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/clap")
-    list(APPEND FORMATS CLAP)
-    message(STATUS "CLAP support enabled")
+if(BUILD_VST3)
+    list(APPEND FORMATS VST3)
 endif()
+
+if(BUILD_AU AND APPLE)
+    list(APPEND FORMATS AU)
+endif()
+
+if(BUILD_AAX)
+    list(APPEND FORMATS AAX)
+endif()
+
+if(BUILD_AUv3 AND IOS)
+    list(APPEND FORMATS AUv3)
+endif()
+
+if(BUILD_LV2 AND UNIX)
+    list(APPEND FORMATS LV2)
+endif()
+
+if(BUILD_CLAP)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/clap")
+        list(APPEND FORMATS CLAP)
+    endif()
+endif()
+
+if(BUILD_STANDALONE)
+    list(APPEND FORMATS Standalone)
+endif()
+
+message(STATUS "Plugin Formats: ${FORMATS}")
 
 # ===========================
 # Echoelmusic Plugin
@@ -53,17 +119,30 @@ juce_add_plugin(Echoelmusic
     COPY_PLUGIN_AFTER_BUILD TRUE
 
     # VST3 specific
-    VST3_CATEGORIES "Fx" "Analyzer"
+    VST3_CATEGORIES "Fx" "Analyzer" "Tools"
+    VST3_AUTO_MANIFEST FALSE
 
     # AU specific
     AU_MAIN_TYPE "kAudioUnitType_Effect"
+    AU_SANDBOX_SAFE TRUE
 
-    # Bundle ID (for macOS/iOS)
+    # AAX specific
+    AAX_CATEGORY "AAX_ePlugInCategory_Effect"
+
+    # AUv3 specific (iOS)
+    IPHONE_SCREEN_ORIENTATIONS UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+    IPAD_SCREEN_ORIENTATIONS UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+
+    # Bundle ID
     BUNDLE_ID "com.echoelmusic.plugin"
 
     # Description
-    DESCRIPTION "Bio-Reactive Audio Processing with Heart Rate Variability"
+    DESCRIPTION "Bio-Reactive Audio Processing - Heart Rate Variability meets Professional Audio"
     PLUGIN_NAME "Echoelmusic"
+
+    # Icon
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Icon-512.png"
+    ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Icon-64.png"
 )
 
 # ===========================
@@ -74,27 +153,60 @@ target_sources(Echoelmusic
     PRIVATE
         # Main Plugin
         Sources/Plugin/PluginProcessor.cpp
+        Sources/Plugin/PluginProcessor.h
         Sources/Plugin/PluginEditor.cpp
+        Sources/Plugin/PluginEditor.h
 
         # DSP Core
         Sources/DSP/BioReactiveDSP.cpp
-        Sources/DSP/ParametricEQ.cpp
-        Sources/DSP/MultibandCompressor.cpp
-        Sources/DSP/ConvolutionReverb.cpp
-        Sources/DSP/BrickWallLimiter.cpp
+        Sources/DSP/BioReactiveDSP.h
+        Sources/DSP/AdvancedDSP.cpp
+        Sources/DSP/AdvancedDSP.h
 
-        # Bio-Data Integration
-        Sources/BioData/BioDataBridge.mm  # Objective-C++ for Swift bridge
-        Sources/BioData/HRVProcessor.cpp
+        # Advanced Effects (ported from Swift)
+        Sources/DSP/Effects/ParametricEQ.cpp
+        Sources/DSP/Effects/ParametricEQ.h
+        Sources/DSP/Effects/MultibandCompressor.cpp
+        Sources/DSP/Effects/MultibandCompressor.h
+        Sources/DSP/Effects/ConvolutionReverb.cpp
+        Sources/DSP/Effects/ConvolutionReverb.h
+        Sources/DSP/Effects/BrickWallLimiter.cpp
+        Sources/DSP/Effects/BrickWallLimiter.h
+        Sources/DSP/Effects/DeEsser.cpp
+        Sources/DSP/Effects/DeEsser.h
+        Sources/DSP/Effects/TapeDelay.cpp
+        Sources/DSP/Effects/TapeDelay.h
+        Sources/DSP/Effects/StereoImager.cpp
+        Sources/DSP/Effects/StereoImager.h
 
         # Synthesis
         Sources/Synthesis/FMSynthesizer.cpp
+        Sources/Synthesis/FMSynthesizer.h
         Sources/Synthesis/WavetableSynthesizer.cpp
+        Sources/Synthesis/WavetableSynthesizer.h
         Sources/Synthesis/PhysicalModeling.cpp
+        Sources/Synthesis/PhysicalModeling.h
+        Sources/Synthesis/GranularSynthesis.cpp
+        Sources/Synthesis/GranularSynthesis.h
 
         # Visualization
         Sources/Visualization/SpectrumAnalyzer.cpp
+        Sources/Visualization/SpectrumAnalyzer.h
         Sources/Visualization/BioReactiveVisualizer.cpp
+        Sources/Visualization/BioReactiveVisualizer.h
+        Sources/Visualization/WaveformDisplay.cpp
+        Sources/Visualization/WaveformDisplay.h
+
+        # Bio-Data Integration
+        Sources/BioData/BioDataBridge.mm
+        Sources/BioData/BioDataBridge.h
+        Sources/BioData/HRVProcessor.cpp
+        Sources/BioData/HRVProcessor.h
+
+        # Platform-Specific
+        $<$<PLATFORM_ID:Windows>:Sources/Platform/Windows/WindowsAudio.cpp>
+        $<$<PLATFORM_ID:Linux>:Sources/Platform/Linux/LinuxAudio.cpp>
+        $<$<PLATFORM_ID:Android>:Sources/Platform/Android/AndroidAudio.cpp>
 )
 
 # ===========================
@@ -103,11 +215,14 @@ target_sources(Echoelmusic
 
 target_include_directories(Echoelmusic
     PUBLIC
+        Sources
         Sources/Plugin
         Sources/DSP
-        Sources/BioData
+        Sources/DSP/Effects
         Sources/Synthesis
         Sources/Visualization
+        Sources/BioData
+        Sources/Platform
 )
 
 # ===========================
@@ -116,7 +231,7 @@ target_include_directories(Echoelmusic
 
 target_link_libraries(Echoelmusic
     PRIVATE
-        # JUCE Core
+        # Core
         juce::juce_core
         juce::juce_data_structures
         juce::juce_events
@@ -140,6 +255,9 @@ target_link_libraries(Echoelmusic
         juce::juce_graphics
         juce::juce_opengl
 
+        # Optional: Video (for visual feedback)
+        $<$<PLATFORM_ID:Darwin>:juce::juce_video>
+
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
@@ -155,22 +273,26 @@ target_compile_definitions(Echoelmusic
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
-
-        # Disable JUCE splash screen for GPL builds
         JUCE_DISPLAY_SPLASH_SCREEN=0
-
-        # Performance
         JUCE_USE_SIMD=1
 
-        # Audio
+        # Plugin Host Support
         JUCE_PLUGINHOST_VST3=1
         JUCE_PLUGINHOST_AU=1
+        JUCE_PLUGINHOST_LADSPA=0
+
+        # Modal Loops
+        JUCE_MODAL_LOOPS_PERMITTED=0
+
+        # Strict mode
+        JUCE_STRICT_REFCOUNTEDPOINTER=1
 )
 
 # ===========================
 # Platform-Specific Settings
 # ===========================
 
+# macOS / iOS
 if(APPLE)
     target_compile_definitions(Echoelmusic
         PRIVATE
@@ -178,123 +300,243 @@ if(APPLE)
             JUCE_COREMIDI_ENABLED=1
     )
 
-    # Link macOS/iOS frameworks
     target_link_libraries(Echoelmusic
         PRIVATE
             "-framework CoreAudio"
             "-framework CoreMIDI"
             "-framework AudioToolbox"
             "-framework Accelerate"
+            "-framework CoreFoundation"
     )
 
-    # HealthKit for bio-data
     if(IOS)
         target_link_libraries(Echoelmusic
             PRIVATE
                 "-framework HealthKit"
+                "-framework UIKit"
         )
     endif()
 
+    # Universal Binary (Intel + Apple Silicon)
+    set_target_properties(Echoelmusic PROPERTIES
+        OSX_ARCHITECTURES "arm64;x86_64"
+        OSX_DEPLOYMENT_TARGET "12.0"
+    )
+
+# Windows
 elseif(WIN32)
     target_compile_definitions(Echoelmusic
         PRIVATE
-            JUCE_WASAPI=1
-            JUCE_ASIO=1
+            # Audio backends
+            $<$<BOOL:${ENABLE_WASAPI}>:JUCE_WASAPI=1>
+            $<$<BOOL:${ENABLE_ASIO}>:JUCE_ASIO=1>
+            $<$<BOOL:${ENABLE_DIRECTSOUND}>:JUCE_DIRECTSOUND=1>
+
+            # Windows specific
+            _UNICODE
+            UNICODE
+            NOMINMAX
+            WIN32_LEAN_AND_MEAN
     )
 
-elseif(UNIX)
-    target_compile_definitions(Echoelmusic
-        PRIVATE
-            JUCE_ALSA=1
-            JUCE_JACK=1
-    )
-
-    # Link ALSA and JACK
+    # Link Windows libraries
     target_link_libraries(Echoelmusic
         PRIVATE
-            asound
-            jack
+            winmm
+            ole32
+            oleaut32
+            uuid
+            wsock32
+            wininet
+            version
+            shlwapi
+            Dwmapi
+    )
+
+    # ASIO SDK (if available)
+    if(ENABLE_ASIO AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/asiosdk")
+        target_include_directories(Echoelmusic
+            PRIVATE
+                ThirdParty/asiosdk/common
+        )
+    endif()
+
+# Linux
+elseif(UNIX AND NOT APPLE)
+    target_compile_definitions(Echoelmusic
+        PRIVATE
+            # Audio backends
+            $<$<BOOL:${ENABLE_ALSA}>:JUCE_ALSA=1>
+            $<$<BOOL:${ENABLE_JACK}>:JUCE_JACK=1>
+            $<$<BOOL:${ENABLE_PULSEAUDIO}>:JUCE_USE_PULSEAUDIO=1>
+
+            # Linux specific
+            LINUX=1
+    )
+
+    # Find required packages
+    find_package(PkgConfig REQUIRED)
+
+    # ALSA
+    if(ENABLE_ALSA)
+        pkg_check_modules(ALSA REQUIRED alsa)
+        target_link_libraries(Echoelmusic PRIVATE ${ALSA_LIBRARIES})
+        target_include_directories(Echoelmusic PRIVATE ${ALSA_INCLUDE_DIRS})
+    endif()
+
+    # JACK
+    if(ENABLE_JACK)
+        pkg_check_modules(JACK jack)
+        if(JACK_FOUND)
+            target_link_libraries(Echoelmusic PRIVATE ${JACK_LIBRARIES})
+            target_include_directories(Echoelmusic PRIVATE ${JACK_INCLUDE_DIRS})
+        endif()
+    endif()
+
+    # PulseAudio
+    if(ENABLE_PULSEAUDIO)
+        pkg_check_modules(PULSE libpulse)
+        if(PULSE_FOUND)
+            target_link_libraries(Echoelmusic PRIVATE ${PULSE_LIBRARIES})
+            target_include_directories(Echoelmusic PRIVATE ${PULSE_INCLUDE_DIRS})
+        endif()
+    endif()
+
+    # Standard Linux libraries
+    target_link_libraries(Echoelmusic
+        PRIVATE
+            pthread
+            dl
+            rt
+            X11
+            Xext
+            freetype
+    )
+
+# Android
+elseif(ANDROID)
+    target_compile_definitions(Echoelmusic
+        PRIVATE
+            JUCE_ANDROID=1
+            $<$<BOOL:${ENABLE_ANDROID_OBOE}>:JUCE_USE_ANDROID_OBOE=1>
+            $<$<BOOL:${ENABLE_ANDROID_AAUDIO}>:JUCE_USE_ANDROID_AAUDIO=1>
+    )
+
+    # Oboe (Google's low-latency audio library)
+    if(ENABLE_ANDROID_OBOE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/oboe")
+        add_subdirectory(ThirdParty/oboe)
+        target_link_libraries(Echoelmusic PRIVATE oboe)
+    endif()
+
+    target_link_libraries(Echoelmusic
+        PRIVATE
+            android
+            log
+            OpenSLES
     )
 endif()
 
 # ===========================
-# CLAP Plugin Support
+# AAX SDK (Pro Tools)
 # ===========================
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/clap")
-    # Add CLAP headers
-    target_include_directories(Echoelmusic
-        PRIVATE
-            ThirdParty/clap/include
-    )
+if(BUILD_AAX)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/AAX_SDK")
+        message(STATUS "AAX SDK found - building AAX plugin")
+        target_include_directories(Echoelmusic
+            PRIVATE
+                ThirdParty/AAX_SDK/Interfaces
+                ThirdParty/AAX_SDK/Interfaces/ACF
+        )
 
-    # Add CLAP wrapper source
-    target_sources(Echoelmusic
-        PRIVATE
-            Sources/Plugin/CLAPWrapper.cpp
-    )
+        # AAX requires code signing on macOS
+        if(APPLE)
+            set_target_properties(Echoelmusic_AAX PROPERTIES
+                XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Developer ID Application"
+            )
+        endif()
+    else()
+        message(WARNING "AAX SDK not found - AAX plugin disabled")
+        list(REMOVE_ITEM FORMATS AAX)
+    endif()
+endif()
 
-    message(STATUS "Building CLAP plugin")
+# ===========================
+# LV2 Support (Linux)
+# ===========================
+
+if(BUILD_LV2 AND UNIX)
+    # LV2 is typically built via separate mechanism
+    # JUCE doesn't natively support LV2, so we'd need a wrapper
+    message(STATUS "LV2 support requires additional wrapper")
 endif()
 
 # ===========================
 # Installation
 # ===========================
 
-# Install VST3
-if(VST3 IN_LIST FORMATS)
-    install(TARGETS Echoelmusic_VST3
-        LIBRARY DESTINATION "$ENV{HOME}/Library/Audio/Plug-Ins/VST3"  # macOS
-        RUNTIME DESTINATION "C:/Program Files/Common Files/VST3"      # Windows
-    )
+# Install paths
+if(APPLE)
+    set(VST3_INSTALL_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/VST3")
+    set(AU_INSTALL_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/Components")
+    set(AAX_INSTALL_DIR "$ENV{HOME}/Library/Application Support/Avid/Audio/Plug-Ins")
+    set(CLAP_INSTALL_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/CLAP")
+elseif(WIN32)
+    set(VST3_INSTALL_DIR "C:/Program Files/Common Files/VST3")
+    set(AAX_INSTALL_DIR "C:/Program Files/Common Files/Avid/Audio/Plug-Ins")
+    set(CLAP_INSTALL_DIR "$ENV{APPDATA}/CLAP")
+elseif(UNIX)
+    set(VST3_INSTALL_DIR "$ENV{HOME}/.vst3")
+    set(LV2_INSTALL_DIR "$ENV{HOME}/.lv2")
+    set(CLAP_INSTALL_DIR "$ENV{HOME}/.clap")
 endif()
 
-# Install AU
-if(AU IN_LIST FORMATS AND APPLE)
-    install(TARGETS Echoelmusic_AU
-        LIBRARY DESTINATION "$ENV{HOME}/Library/Audio/Plug-Ins/Components"
-    )
-endif()
-
-# Install CLAP
-if(CLAP IN_LIST FORMATS)
-    install(TARGETS Echoelmusic_CLAP
-        LIBRARY DESTINATION "$ENV{HOME}/Library/Audio/Plug-Ins/CLAP"  # macOS
-        RUNTIME DESTINATION "$ENV{APPDATA}/CLAP"                      # Windows
-    )
-endif()
-
-# ===========================
-# Documentation
-# ===========================
-
-add_custom_target(docs
-    COMMAND echo "Building documentation..."
-    COMMAND echo "Plugin Formats: ${FORMATS}"
-    COMMAND echo "Install locations configured"
-)
-
-# ===========================
-# Testing
-# ===========================
-
-option(BUILD_TESTING "Build tests" ON)
-
-if(BUILD_TESTING)
-    enable_testing()
-    add_subdirectory(Tests)
-endif()
+# Install targets
+foreach(FORMAT ${FORMATS})
+    if(FORMAT STREQUAL "VST3")
+        install(TARGETS Echoelmusic_VST3 DESTINATION "${VST3_INSTALL_DIR}")
+    elseif(FORMAT STREQUAL "AU" AND APPLE)
+        install(TARGETS Echoelmusic_AU DESTINATION "${AU_INSTALL_DIR}")
+    elseif(FORMAT STREQUAL "AAX")
+        install(TARGETS Echoelmusic_AAX DESTINATION "${AAX_INSTALL_DIR}")
+    elseif(FORMAT STREQUAL "CLAP")
+        install(TARGETS Echoelmusic_CLAP DESTINATION "${CLAP_INSTALL_DIR}")
+    elseif(FORMAT STREQUAL "Standalone")
+        install(TARGETS Echoelmusic_Standalone DESTINATION bin)
+    endif()
+endforeach()
 
 # ===========================
 # Summary
 # ===========================
 
 message(STATUS "==============================================")
-message(STATUS "Echoelmusic Plugin Configuration")
+message(STATUS "Echoelmusic - Universal Plugin Build")
 message(STATUS "==============================================")
-message(STATUS "Plugin Formats: ${FORMATS}")
+message(STATUS "Platform: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "Formats: ${FORMATS}")
 message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "JUCE Version: 7.x")
-message(STATUS "VST3: ${VST3}")
+if(APPLE)
+    message(STATUS "Architectures: arm64, x86_64")
+endif()
+message(STATUS "==============================================")
+message(STATUS "Audio Backends:")
+if(APPLE)
+    message(STATUS "  - CoreAudio (macOS/iOS)")
+endif()
+if(WIN32)
+    message(STATUS "  - WASAPI: ${ENABLE_WASAPI}")
+    message(STATUS "  - ASIO: ${ENABLE_ASIO}")
+    message(STATUS "  - DirectSound: ${ENABLE_DIRECTSOUND}")
+endif()
+if(UNIX AND NOT APPLE)
+    message(STATUS "  - ALSA: ${ENABLE_ALSA}")
+    message(STATUS "  - JACK: ${ENABLE_JACK}")
+    message(STATUS "  - PulseAudio: ${ENABLE_PULSEAUDIO}")
+endif()
+if(ANDROID)
+    message(STATUS "  - Oboe: ${ENABLE_ANDROID_OBOE}")
+    message(STATUS "  - AAudio: ${ENABLE_ANDROID_AAUDIO}")
+endif()
 message(STATUS "==============================================")

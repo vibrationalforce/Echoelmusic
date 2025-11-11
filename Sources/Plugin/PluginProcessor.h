@@ -90,6 +90,13 @@ public:
     // Parameter Management
 
     juce::AudioProcessorValueTreeState& getParameters() { return parameters; }
+    juce::AudioProcessorValueTreeState& getAPVTS() { return parameters; }
+
+    /**
+     * Get spectrum data for visualization
+     * Returns normalized magnitude values (0.0 to 1.0) for frequency bins
+     */
+    std::vector<float> getSpectrumData() const;
 
     // Parameter IDs
     static constexpr const char* PARAM_ID_HRV = "hrv";
@@ -140,6 +147,14 @@ private:
     };
 
     PerformanceStats performanceStats;
+
+    //==============================================================================
+    // Spectrum Analysis
+    static constexpr int spectrumSize = 64;
+    mutable std::array<float, spectrumSize> spectrumData;
+    mutable std::mutex spectrumMutex;
+
+    void updateSpectrumData(const juce::AudioBuffer<float>& buffer);
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EchoelmusicAudioProcessor)
