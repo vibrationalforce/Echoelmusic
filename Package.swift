@@ -4,34 +4,35 @@
 import PackageDescription
 
 let package = Package(
-    name: "Blab",
+    name: "Echoelmusic",
     platforms: [
-        .iOS(.v15)  // Minimum iOS 15 for wide device compatibility
-                    // iOS 16+ recommended for enhanced features
-                    // iOS 19+ for Apple Spatial Audio Features (ASAF)
+        .iOS(.v15),        // iPhone & iPad - iOS 15+ for wide compatibility
+        .macOS(.v12),      // macOS Monterey+ for Apple Silicon & Intel
+        .watchOS(.v8),     // Apple Watch - Critical for bio-data collection
+        .tvOS(.v15),       // Apple TV - Large display visualizations
+        .visionOS(.v1)     // Apple Vision Pro - Spatial Audio & Immersive
     ],
     products: [
-        // The main app product
+        // Core library - shared across all platforms
         .library(
-            name: "Blab",
-            targets: ["Blab"]),
+            name: "Echoelmusic",
+            targets: ["Echoelmusic"]),
     ],
     dependencies: [
         // Add future dependencies here (e.g., for audio processing, ML, etc.)
     ],
     targets: [
-        // The main app target
+        // Core Echoelmusic target - cross-platform code
         .target(
-            name: "Blab",
+            name: "Echoelmusic",
             dependencies: [],
             resources: [
-                // Include Info.plist and other resources
                 .process("Resources")
             ]),
 
         // Test target for unit tests
         .testTarget(
-            name: "BlabTests",
-            dependencies: ["Blab"]),
+            name: "EchoelmusicTests",
+            dependencies: ["Echoelmusic"]),
     ]
 )
