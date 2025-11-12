@@ -233,7 +233,6 @@ target_sources(Echoelmusic
         Sources/DSP/BrickWallLimiter.cpp        # ✅ Mastering limiter
         Sources/DSP/DeEsser.cpp                 # ✅ Vocal de-esser
         Sources/DSP/TransientDesigner.cpp       # ✅ Transient shaping
-        # Sources/DSP/DynamicEQ.cpp             # TODO: Fix ParametricEQ::FilterType references
 
         # Spatial & Stereo
         Sources/DSP/StereoImager.cpp            # ✅ M/S stereo imaging
@@ -247,7 +246,19 @@ target_sources(Echoelmusic
         Sources/DSP/VintageEffects.cpp          # ✅ Analog emulation
         Sources/DSP/HarmonicForge.cpp           # ✅ Harmonic saturation
         Sources/DSP/EdgeControl.cpp             # ✅ Transient + dynamics
-        # Sources/DSP/SpectralSculptor.cpp      # TODO: Fix JUCE 7 FFT API (Complex<float> + WindowingFunction)
+
+        # Modern Effects (NEW! 2025-11-12)
+        Sources/DSP/UnderwaterEffect.cpp        # 🌊 Underwater/Aquatic effect
+        Sources/DSP/ShimmerReverb.cpp           # ✨ Shimmer reverb (Brian Eno style)
+        Sources/DSP/LofiBitcrusher.cpp          # 📼 LoFi/Bitcrusher (Vaporwave!)
+
+        # Vocal Effects Suite (NEW! 2025-11-12)
+        Sources/DSP/VocalChain.cpp              # 🎤 Complete vocal processor (6 presets)
+        Sources/DSP/VocalDoubler.cpp            # 👥 Professional vocal doubling
+
+        # Pending (needs JUCE 7 fixes)
+        # Sources/DSP/DynamicEQ.cpp             # TODO: Fix ParametricEQ::FilterType
+        # Sources/DSP/SpectralSculptor.cpp      # TODO: Fix FFT API
 
         # =====================================================================
         # PHASE 3: ADVANCED FEATURES (Later)
