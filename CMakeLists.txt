@@ -203,6 +203,10 @@ target_sources(Echoelmusic
         Sources/BioData/HRVProcessor.cpp
         Sources/BioData/HRVProcessor.h
 
+        # AI/ML Intelligent Processing
+        Sources/AI/SmartMixer.cpp
+        Sources/AI/SmartMixer.h
+
         # Hardware Integration
         Sources/Hardware/AbletonLink.cpp
         Sources/Hardware/AbletonLink.h
@@ -254,6 +258,7 @@ target_include_directories(Echoelmusic
         Sources/Synthesis
         Sources/Visualization
         Sources/BioData
+        Sources/AI
         Sources/Hardware
         Sources/Video
         Sources/Audio
