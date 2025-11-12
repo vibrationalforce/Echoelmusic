@@ -335,15 +335,16 @@ void EchoelmusicAudioProcessor::parameterChanged(const juce::String& parameterID
                                                   float newValue)
 {
     // Handle parameter changes
-            //     if (bioReactiveDSP)
-            //     {
-            //         if (parameterID == PARAM_ID_FILTER_CUTOFF)
-            //             bioReactiveDSP->setFilterCutoff(newValue);
-            //         else if (parameterID == PARAM_ID_RESONANCE)
-            //             bioReactiveDSP->setResonance(newValue);
-            //         else if (parameterID == PARAM_ID_REVERB_MIX)
-            //             bioReactiveDSP->setReverbMix(newValue);
-    }
+    // TODO: Re-enable when DSP is ported to JUCE 7
+    //     if (bioReactiveDSP)
+    //     {
+    //         if (parameterID == PARAM_ID_FILTER_CUTOFF)
+    //             bioReactiveDSP->setFilterCutoff(newValue);
+    //         else if (parameterID == PARAM_ID_RESONANCE)
+    //             bioReactiveDSP->setResonance(newValue);
+    //         else if (parameterID == PARAM_ID_REVERB_MIX)
+    //             bioReactiveDSP->setReverbMix(newValue);
+    //     }
 }
 
 //==============================================================================

@@ -2,8 +2,8 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
-#include "../Visualization/BioReactiveVisualizer.h"
-#include "../Visualization/SpectrumAnalyzer.h"
+// #include "../Visualization/BioReactiveVisualizer.h"  // TODO: Enable in Phase 2
+// #include "../Visualization/SpectrumAnalyzer.h"  // TODO: Enable in Phase 2
 
 /**
  * Echoelmusic Plugin Editor
@@ -53,8 +53,8 @@ private:
     std::unique_ptr<BioDataPanel> bioDataPanel;
 
     // Visualizers
-    std::unique_ptr<BioReactiveVisualizer> bioVisualizer;
-    std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
+    // std::unique_ptr<BioReactiveVisualizer> bioVisualizer;  // TODO: Enable in Phase 2
+    // std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;  // TODO: Enable in Phase 2
 
     // Parameter Controls
     class RotarySlider : public juce::Slider

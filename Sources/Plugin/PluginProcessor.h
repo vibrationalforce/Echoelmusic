@@ -121,7 +121,7 @@ private:
 
     //==============================================================================
     // DSP Modules
-    std::unique_ptr<BioReactiveDSP> bioReactiveDSP;
+    // std::unique_ptr<BioReactiveDSP> bioReactiveDSP;  // TODO: Enable when DSP is ported to JUCE 7
     // std::unique_ptr<HRVProcessor> hrvProcessor;  // TODO: Enable when HRVProcessor is implemented
 
     //==============================================================================

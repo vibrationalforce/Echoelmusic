@@ -23,11 +23,12 @@ EchoelmusicAudioProcessorEditor::EchoelmusicAudioProcessorEditor (EchoelmusicAud
     // Visualizers
     //==========================================================================
 
-    bioVisualizer = std::make_unique<BioReactiveVisualizer>();
-    addAndMakeVisible (bioVisualizer.get());
+    // TODO: Enable in Phase 2 when Visualization classes are built
+    // bioVisualizer = std::make_unique<BioReactiveVisualizer>();
+    // addAndMakeVisible (bioVisualizer.get());
 
-    spectrumAnalyzer = std::make_unique<SpectrumAnalyzer>();
-    addAndMakeVisible (spectrumAnalyzer.get());
+    // spectrumAnalyzer = std::make_unique<SpectrumAnalyzer>();
+    // addAndMakeVisible (spectrumAnalyzer.get());
 
     //==========================================================================
     // Parameter Sliders
@@ -216,11 +217,12 @@ void EchoelmusicAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawRoundedRectangle (bioDataBounds.expanded (2.0f), 8.0f, 2.0f);
 
     // Visualizer borders
-    auto bioVisBounds = bioVisualizer->getBounds().toFloat();
-    g.drawRoundedRectangle (bioVisBounds.expanded (2.0f), 8.0f, 2.0f);
+    // TODO: Enable in Phase 2
+    // auto bioVisBounds = bioVisualizer->getBounds().toFloat();
+    // g.drawRoundedRectangle (bioVisBounds.expanded (2.0f), 8.0f, 2.0f);
 
-    auto spectrumBounds = spectrumAnalyzer->getBounds().toFloat();
-    g.drawRoundedRectangle (spectrumBounds.expanded (2.0f), 8.0f, 2.0f);
+    // auto spectrumBounds = spectrumAnalyzer->getBounds().toFloat();
+    // g.drawRoundedRectangle (spectrumBounds.expanded (2.0f), 8.0f, 2.0f);
 
     //==========================================================================
     // Version Info
@@ -273,16 +275,17 @@ void EchoelmusicAudioProcessorEditor::resized()
     bounds.reduce (margin, margin);
 
     // Top: Spectrum Analyzer
-    auto spectrumArea = bounds.removeFromTop (bounds.getHeight() / 3);
-    spectrumAnalyzer->setBounds (spectrumArea);
+    // TODO: Enable in Phase 2
+    // auto spectrumArea = bounds.removeFromTop (bounds.getHeight() / 3);
+    // spectrumAnalyzer->setBounds (spectrumArea);
 
-    bounds.removeFromTop (margin);
+    // bounds.removeFromTop (margin);
 
     // Middle: Bio-Reactive Visualizer
-    auto visualizerArea = bounds.removeFromTop (bounds.getHeight() / 2);
-    bioVisualizer->setBounds (visualizerArea);
+    // auto visualizerArea = bounds.removeFromTop (bounds.getHeight() / 2);
+    // bioVisualizer->setBounds (visualizerArea);
 
-    bounds.removeFromTop (margin);
+    // bounds.removeFromTop (margin);
 
     //==========================================================================
     // Bottom: Parameter Sliders (2 rows of 3)
@@ -342,13 +345,14 @@ void EchoelmusicAudioProcessorEditor::timerCallback()
     bioDataPanel->update (bioData.hrv, bioData.coherence, bioData.heartRate);
 
     // Update visualizers
-    bioVisualizer->updateBioData (bioData.hrv, bioData.coherence);
-    spectrumAnalyzer->updateAudioData (audioProcessor.getSpectrumData());
+    // TODO: Enable in Phase 2
+    // bioVisualizer->updateBioData (bioData.hrv, bioData.coherence);
+    // spectrumAnalyzer->updateAudioData (audioProcessor.getSpectrumData());
 
     // Repaint if needed
     bioDataPanel->repaint();
-    bioVisualizer->repaint();
-    spectrumAnalyzer->repaint();
+    // bioVisualizer->repaint();
+    // spectrumAnalyzer->repaint();
 }
 
 //==============================================================================
