@@ -203,6 +203,42 @@ target_sources(Echoelmusic
         Sources/BioData/HRVProcessor.cpp
         Sources/BioData/HRVProcessor.h
 
+        # Hardware Integration
+        Sources/Hardware/AbletonLink.cpp
+        Sources/Hardware/AbletonLink.h
+        Sources/Hardware/MIDIHardwareManager.cpp
+        Sources/Hardware/MIDIHardwareManager.h
+        Sources/Hardware/ModularIntegration.cpp
+        Sources/Hardware/ModularIntegration.h
+        Sources/Hardware/DJEquipmentIntegration.cpp
+        Sources/Hardware/DJEquipmentIntegration.h
+        Sources/Hardware/OSCManager.cpp
+        Sources/Hardware/OSCManager.h
+        Sources/Hardware/HardwareSyncManager.cpp
+        Sources/Hardware/HardwareSyncManager.h
+
+        # Video Editing
+        Sources/Video/VideoWeaver.cpp
+        Sources/Video/VideoWeaver.h
+
+        # Spatial Audio
+        Sources/Audio/SpatialForge.cpp
+        Sources/Audio/SpatialForge.h
+
+        # Healing/Resonance
+        Sources/Healing/ResonanceHealer.cpp
+        Sources/Healing/ResonanceHealer.h
+
+        # Platform/Business Management
+        Sources/Platform/CreatorManager.cpp
+        Sources/Platform/CreatorManager.h
+        Sources/Platform/AgencyManager.cpp
+        Sources/Platform/AgencyManager.h
+        Sources/Platform/GlobalReachOptimizer.cpp
+        Sources/Platform/GlobalReachOptimizer.h
+        Sources/Platform/EchoHub.cpp
+        Sources/Platform/EchoHub.h
+
         # Platform-Specific
         $<$<PLATFORM_ID:Windows>:Sources/Platform/Windows/WindowsAudio.cpp>
         $<$<PLATFORM_ID:Linux>:Sources/Platform/Linux/LinuxAudio.cpp>
@@ -222,6 +258,10 @@ target_include_directories(Echoelmusic
         Sources/Synthesis
         Sources/Visualization
         Sources/BioData
+        Sources/Hardware
+        Sources/Video
+        Sources/Audio
+        Sources/Healing
         Sources/Platform
 )
 
@@ -255,8 +295,11 @@ target_link_libraries(Echoelmusic
         juce::juce_graphics
         juce::juce_opengl
 
-        # Optional: Video (for visual feedback)
-        $<$<PLATFORM_ID:Darwin>:juce::juce_video>
+        # Video (for VideoWeaver)
+        juce::juce_video
+
+        # OSC (for OSCManager)
+        juce::juce_osc
 
     PUBLIC
         juce::juce_recommended_config_flags
