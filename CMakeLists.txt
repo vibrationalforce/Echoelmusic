@@ -256,6 +256,12 @@ target_sources(Echoelmusic
         Sources/DSP/VocalChain.cpp              # 🎤 Complete vocal processor (6 presets)
         Sources/DSP/VocalDoubler.cpp            # 👥 Professional vocal doubling
 
+        # Advanced Vocal Effects Suite (NEW! 2025-11-12) 🎙️✨
+        Sources/DSP/PitchCorrection.cpp         # 🎵 Echoeltune (Autotune) - Pro pitch correction
+        Sources/DSP/Harmonizer.cpp              # 🎼 Intelligent harmony generator (4 voices)
+        Sources/DSP/FormantFilter.cpp           # 🗣️ Talkbox/Vowel morphing (A/E/I/O/U)
+        Sources/DSP/Vocoder.cpp                 # 🤖 Classic carrier/modulator vocoder
+
         # Pending (needs JUCE 7 fixes)
         # Sources/DSP/DynamicEQ.cpp             # TODO: Fix ParametricEQ::FilterType
         # Sources/DSP/SpectralSculptor.cpp      # TODO: Fix FFT API
