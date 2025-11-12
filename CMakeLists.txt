@@ -190,9 +190,9 @@ juce_add_plugin(Echoelmusic
     DESCRIPTION "Bio-Reactive Audio Processing - Heart Rate Variability meets Professional Audio"
     PLUGIN_NAME "Echoelmusic"
 
-    # Icon
-    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Icon-512.png"
-    ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Icon-64.png"
+    # Icon (TODO: Add icon files later)
+    # ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Icon-512.png"
+    # ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Icon-64.png"
 )
 
 # ===========================
@@ -210,52 +210,54 @@ target_sources(Echoelmusic
         # DSP Core
         Sources/DSP/BioReactiveDSP.cpp
         Sources/DSP/BioReactiveDSP.h
-        Sources/DSP/AdvancedDSP.cpp
-        Sources/DSP/AdvancedDSP.h
+        # Sources/DSP/AdvancedDSP.cpp  # TODO: Create this file
+        # Sources/DSP/AdvancedDSP.h
 
-        # Advanced Effects (ported from Swift)
-        Sources/DSP/Effects/ParametricEQ.cpp
-        Sources/DSP/Effects/ParametricEQ.h
-        Sources/DSP/Effects/MultibandCompressor.cpp
-        Sources/DSP/Effects/MultibandCompressor.h
-        Sources/DSP/Effects/ConvolutionReverb.cpp
-        Sources/DSP/Effects/ConvolutionReverb.h
-        Sources/DSP/Effects/BrickWallLimiter.cpp
-        Sources/DSP/Effects/BrickWallLimiter.h
-        Sources/DSP/Effects/DeEsser.cpp
-        Sources/DSP/Effects/DeEsser.h
-        Sources/DSP/Effects/TapeDelay.cpp
-        Sources/DSP/Effects/TapeDelay.h
-        Sources/DSP/Effects/StereoImager.cpp
-        Sources/DSP/Effects/StereoImager.h
+        # Advanced Effects (ported from Swift) - TODO: These are in DSP/, not DSP/Effects/
+        # Sources/DSP/Effects/ParametricEQ.cpp
+        # Sources/DSP/Effects/ParametricEQ.h
+        # Sources/DSP/Effects/MultibandCompressor.cpp
+        # Sources/DSP/Effects/MultibandCompressor.h
+        # Sources/DSP/Effects/ConvolutionReverb.cpp
+        # Sources/DSP/Effects/ConvolutionReverb.h
+        # Sources/DSP/Effects/BrickWallLimiter.cpp
+        # Sources/DSP/Effects/BrickWallLimiter.h
+        # Sources/DSP/Effects/DeEsser.cpp
+        # Sources/DSP/Effects/DeEsser.h
+        # Sources/DSP/Effects/TapeDelay.cpp
+        # Sources/DSP/Effects/TapeDelay.h
+        # Sources/DSP/Effects/StereoImager.cpp
+        # Sources/DSP/Effects/StereoImager.h
 
-        # Synthesis
-        Sources/Synthesis/FMSynthesizer.cpp
-        Sources/Synthesis/FMSynthesizer.h
-        Sources/Synthesis/WavetableSynthesizer.cpp
-        Sources/Synthesis/WavetableSynthesizer.h
-        Sources/Synthesis/PhysicalModeling.cpp
-        Sources/Synthesis/PhysicalModeling.h
-        Sources/Synthesis/GranularSynthesis.cpp
-        Sources/Synthesis/GranularSynthesis.h
+        # Synthesis - TODO: Most of these don't exist yet
+        # Sources/Synthesis/FMSynthesizer.cpp
+        # Sources/Synthesis/FMSynthesizer.h
+        # Sources/Synthesis/WavetableSynthesizer.cpp
+        # Sources/Synthesis/WavetableSynthesizer.h
+        # Sources/Synthesis/PhysicalModeling.cpp
+        # Sources/Synthesis/PhysicalModeling.h
+        # Sources/Synthesis/GranularSynthesis.cpp
+        # Sources/Synthesis/GranularSynthesis.h
+        Sources/Synthesis/DrumSynthesizer.cpp  # This one exists!
 
         # Visualization
         Sources/Visualization/SpectrumAnalyzer.cpp
         Sources/Visualization/SpectrumAnalyzer.h
         Sources/Visualization/BioReactiveVisualizer.cpp
         Sources/Visualization/BioReactiveVisualizer.h
-        Sources/Visualization/WaveformDisplay.cpp
-        Sources/Visualization/WaveformDisplay.h
+        # Sources/Visualization/WaveformDisplay.cpp  # TODO: Create
+        # Sources/Visualization/WaveformDisplay.h
 
-        # Bio-Data Integration
-        Sources/BioData/BioDataBridge.mm
-        Sources/BioData/BioDataBridge.h
-        Sources/BioData/HRVProcessor.cpp
-        Sources/BioData/HRVProcessor.h
+        # Bio-Data Integration - TODO: BioDataBridge.mm won't compile on Linux (Objective-C++)
+        # Sources/BioData/BioDataBridge.mm
+        # Sources/BioData/BioDataBridge.h
+        # Sources/BioData/HRVProcessor.cpp
+        # Sources/BioData/HRVProcessor.h
 
         # AI/ML Intelligent Processing
         Sources/AI/SmartMixer.cpp
         Sources/AI/SmartMixer.h
+        Sources/AI/PatternGenerator.cpp
 
         # Core Audio Engine (NEW! 2025-11-12)
         Sources/Audio/AudioEngine.cpp
@@ -336,6 +338,10 @@ target_sources(Echoelmusic
         Sources/Platform/GlobalReachOptimizer.h
         Sources/Platform/EchoHub.cpp
         Sources/Platform/EchoHub.h
+
+        # UI - Main Window (NEW! 2025-11-12)
+        Sources/UI/MainWindow.cpp
+        Sources/UI/MainWindow.h
 
         # Platform-Specific
         $<$<PLATFORM_ID:Windows>:Sources/Platform/Windows/WindowsAudio.cpp>
