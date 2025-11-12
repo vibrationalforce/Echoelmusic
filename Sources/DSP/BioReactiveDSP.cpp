@@ -21,8 +21,8 @@ void BioReactiveDSP::prepare(const juce::dsp::ProcessSpec& spec)
 {
     currentSampleRate = spec.sampleRate;
 
-    // Prepare reverb
-    reverb.setSampleRate(spec.sampleRate);
+    // Prepare reverb (JUCE 7 API)
+    reverb.prepare(spec);
     reverb.reset();
 
     // Prepare delay
@@ -96,7 +96,7 @@ void BioReactiveDSP::process(juce::AudioBuffer<float>& buffer, float hrv, float 
         }
     }
 
-    // Apply reverb to entire buffer
+    // Apply reverb to entire buffer (JUCE 7 API)
     if (reverbMix > 0.01f)
     {
         // Create reverb buffer
@@ -106,17 +106,10 @@ void BioReactiveDSP::process(juce::AudioBuffer<float>& buffer, float hrv, float 
         for (int ch = 0; ch < numChannels; ++ch)
             reverbBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
-        // Process reverb
-        if (numChannels == 1)
-        {
-            reverb.processMono(reverbBuffer.getWritePointer(0), numSamples);
-        }
-        else if (numChannels >= 2)
-        {
-            reverb.processStereo(reverbBuffer.getWritePointer(0),
-                                reverbBuffer.getWritePointer(1),
-                                numSamples);
-        }
+        // Process reverb using JUCE 7 AudioBlock API
+        juce::dsp::AudioBlock<float> block(reverbBuffer);
+        juce::dsp::ProcessContextReplacing<float> context(block);
+        reverb.process(context);
 
         // Mix wet/dry based on bio-coherence
         float wetLevel = bioReverbMix;

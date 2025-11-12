@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-// #include "../DSP/BioReactiveDSP.h"  // TODO: Enable when DSP effects are ported to JUCE 7
+#include "../DSP/BioReactiveDSP.h"  // ✅ Ported to JUCE 7 (2025-11-12)
 // #include "../BioData/HRVProcessor.h"  // TODO: Create HRVProcessor when Bio-Data integration is ready
 
 /**
@@ -121,7 +121,7 @@ private:
 
     //==============================================================================
     // DSP Modules
-    // std::unique_ptr<BioReactiveDSP> bioReactiveDSP;  // TODO: Enable when DSP is ported to JUCE 7
+    std::unique_ptr<BioReactiveDSP> bioReactiveDSP;  // ✅ Ported to JUCE 7 (2025-11-12)
     // std::unique_ptr<HRVProcessor> hrvProcessor;  // TODO: Enable when HRVProcessor is implemented
 
     //==============================================================================

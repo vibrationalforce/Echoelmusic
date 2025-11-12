@@ -51,7 +51,10 @@ void ParametricEQ::process(juce::AudioBuffer<float>& buffer)
         {
             auto* data = buffer.getWritePointer(channel);
             int filterIndex = bandIndex * 2 + channel;
-            filters[filterIndex].processSamples(data, numSamples);
+
+            // JUCE 7: processSamples() removed, use processSample() in loop
+            for (int sample = 0; sample < numSamples; ++sample)
+                data[sample] = filters[filterIndex].processSample(data[sample]);
         }
     }
 }

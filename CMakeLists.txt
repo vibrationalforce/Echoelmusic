@@ -217,10 +217,10 @@ target_sources(Echoelmusic
         Sources/UI/MainWindow.cpp
 
         # =====================================================================
-        # PHASE 2: DSP EFFECTS (TODO: Port to JUCE 7)
+        # PHASE 2: DSP EFFECTS (Porting to JUCE 7)
         # =====================================================================
-        # Sources/DSP/BioReactiveDSP.cpp          # TODO: Reverb API change
-        # Sources/DSP/ParametricEQ.cpp            # TODO: processSamples → processSample
+        Sources/DSP/BioReactiveDSP.cpp          # ✅ Ported to JUCE 7 (2025-11-12)
+        Sources/DSP/ParametricEQ.cpp            # ✅ Ported to JUCE 7 (2025-11-12)
         # Sources/DSP/Compressor.cpp              # TODO: Test JUCE 7
         # Sources/DSP/SpectralSculptor.cpp        # TODO: Test JUCE 7
         # Sources/DSP/BrickWallLimiter.cpp        # TODO: Test JUCE 7

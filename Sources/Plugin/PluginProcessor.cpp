@@ -17,8 +17,8 @@ EchoelmusicAudioProcessor::EchoelmusicAudioProcessor()
                   createParameterLayout())
 {
     // Initialize DSP modules
-    //     bioReactiveDSP = std::make_unique<BioReactiveDSP>();
-    //     hrvProcessor = std::make_unique<HRVProcessor>();  // TODO: Enable when HRVProcessor is implemented
+    bioReactiveDSP = std::make_unique<BioReactiveDSP>();  // ✅ Ported to JUCE 7
+    // hrvProcessor = std::make_unique<HRVProcessor>();  // TODO: Enable when HRVProcessor is implemented
 
     // Initialize spectrum data (lock-free FIFO buffers)
     spectrumDataForUI.fill(0.0f);
@@ -204,8 +204,8 @@ void EchoelmusicAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     spec.maximumBlockSize = static_cast<uint32_t>(samplesPerBlock);
     spec.numChannels = 2;
 
-        //     if (bioReactiveDSP)
-        //         bioReactiveDSP->prepare(spec);
+    if (bioReactiveDSP)
+        bioReactiveDSP->prepare(spec);
 
     // Reset heartbeat timing
     samplesUntilNextBeat = 0;
@@ -213,8 +213,8 @@ void EchoelmusicAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 
 void EchoelmusicAudioProcessor::releaseResources()
 {
-        //     if (bioReactiveDSP)
-        //         bioReactiveDSP->reset();
+    if (bioReactiveDSP)
+        bioReactiveDSP->reset();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -254,7 +254,7 @@ void EchoelmusicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const float coherence = currentCoherence.load();
 
     // Update DSP parameters based on bio-data
-        //     if (bioReactiveDSP)
+    if (bioReactiveDSP)
     {
         // HRV modulates filter cutoff
         float filterCutoff = juce::jmap(hrv, 0.0f, 1.0f, 500.0f, 10000.0f);
@@ -267,7 +267,7 @@ void EchoelmusicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         parameters.getParameter(PARAM_ID_REVERB_MIX)->setValueNotifyingHost(reverbMix);
 
         // Process audio with bio-reactive DSP
-            //         bioReactiveDSP->process(buffer, hrv, coherence);
+        bioReactiveDSP->process(buffer, hrv, coherence);
     }
 
     // Generate heartbeat MIDI
@@ -335,16 +335,15 @@ void EchoelmusicAudioProcessor::parameterChanged(const juce::String& parameterID
                                                   float newValue)
 {
     // Handle parameter changes
-    // TODO: Re-enable when DSP is ported to JUCE 7
-    //     if (bioReactiveDSP)
-    //     {
-    //         if (parameterID == PARAM_ID_FILTER_CUTOFF)
-    //             bioReactiveDSP->setFilterCutoff(newValue);
-    //         else if (parameterID == PARAM_ID_RESONANCE)
-    //             bioReactiveDSP->setResonance(newValue);
-    //         else if (parameterID == PARAM_ID_REVERB_MIX)
-    //             bioReactiveDSP->setReverbMix(newValue);
-    //     }
+    if (bioReactiveDSP)
+    {
+        if (parameterID == PARAM_ID_FILTER_CUTOFF)
+            bioReactiveDSP->setFilterCutoff(newValue);
+        else if (parameterID == PARAM_ID_RESONANCE)
+            bioReactiveDSP->setResonance(newValue);
+        else if (parameterID == PARAM_ID_REVERB_MIX)
+            bioReactiveDSP->setReverbMix(newValue);
+    }
 }
 
 //==============================================================================
