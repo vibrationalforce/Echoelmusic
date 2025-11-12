@@ -82,7 +82,7 @@ option(BUILD_VST3 "Build VST3 plugin" ON)
 option(BUILD_AU "Build Audio Units plugin" ON)
 option(BUILD_AAX "Build AAX plugin for Pro Tools" ON)
 option(BUILD_AUv3 "Build AUv3 plugin for iOS" ON)
-option(BUILD_LV2 "Build LV2 plugin for Linux" ON)
+option(BUILD_LV2 "Build LV2 plugin for Linux" OFF)  # Disabled: linker segfault, use VST3 instead
 option(BUILD_CLAP "Build CLAP plugin" ON)
 option(BUILD_STANDALONE "Build standalone application" ON)
 
@@ -178,6 +178,9 @@ juce_add_plugin(Echoelmusic
 
     # AAX specific
     AAX_CATEGORY "AAX_ePlugInCategory_Effect"
+
+    # LV2 specific (Linux)
+    LV2URI "http://echoelmusic.com/plugins/echoelmusic"
 
     # AUv3 specific (iOS)
     IPHONE_SCREEN_ORIENTATIONS UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
