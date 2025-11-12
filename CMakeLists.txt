@@ -257,6 +257,46 @@ target_sources(Echoelmusic
         Sources/AI/SmartMixer.cpp
         Sources/AI/SmartMixer.h
 
+        # Core Audio Engine (NEW! 2025-11-12)
+        Sources/Audio/AudioEngine.cpp
+        Sources/Audio/AudioEngine.h
+        Sources/Audio/Track.cpp
+        Sources/Audio/Track.h
+
+        # Built-in DSP Effects (Updated 2025-11-12)
+        Sources/DSP/ParametricEQ.cpp
+        Sources/DSP/ParametricEQ.h
+        Sources/DSP/Compressor.cpp
+        Sources/DSP/Compressor.h
+        Sources/DSP/SpectralSculptor.cpp
+        Sources/DSP/SpectralSculptor.h
+        Sources/DSP/BrickWallLimiter.cpp
+        Sources/DSP/BrickWallLimiter.h
+        Sources/DSP/MultibandCompressor.cpp
+        Sources/DSP/MultibandCompressor.h
+        Sources/DSP/DynamicEQ.cpp
+        Sources/DSP/DynamicEQ.h
+        Sources/DSP/ConvolutionReverb.cpp
+        Sources/DSP/ConvolutionReverb.h
+        Sources/DSP/DeEsser.cpp
+        Sources/DSP/DeEsser.h
+        Sources/DSP/TapeDelay.cpp
+        Sources/DSP/TapeDelay.h
+        Sources/DSP/StereoImager.cpp
+        Sources/DSP/StereoImager.h
+        Sources/DSP/TransientDesigner.cpp
+        Sources/DSP/TransientDesigner.h
+        Sources/DSP/HarmonicForge.cpp
+        Sources/DSP/HarmonicForge.h
+        Sources/DSP/VintageEffects.cpp
+        Sources/DSP/VintageEffects.h
+        Sources/DSP/ModulationSuite.cpp
+        Sources/DSP/ModulationSuite.h
+        Sources/DSP/EdgeControl.cpp
+        Sources/DSP/EdgeControl.h
+        Sources/DSP/BioReactiveDSP.cpp
+        Sources/DSP/BioReactiveDSP.h
+
         # Remote Processing & Cloud Integration (NEW! 2025-11-12)
         Sources/Remote/RemoteProcessingEngine.cpp
         Sources/Remote/RemoteProcessingEngine.h
