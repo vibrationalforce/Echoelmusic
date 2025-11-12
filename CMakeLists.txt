@@ -225,10 +225,6 @@ target_sources(Echoelmusic
         Sources/Audio/SpatialForge.cpp
         Sources/Audio/SpatialForge.h
 
-        # Healing/Resonance
-        Sources/Healing/ResonanceHealer.cpp
-        Sources/Healing/ResonanceHealer.h
-
         # Platform/Business Management
         Sources/Platform/CreatorManager.cpp
         Sources/Platform/CreatorManager.h
@@ -261,7 +257,6 @@ target_include_directories(Echoelmusic
         Sources/Hardware
         Sources/Video
         Sources/Audio
-        Sources/Healing
         Sources/Platform
 )
 
