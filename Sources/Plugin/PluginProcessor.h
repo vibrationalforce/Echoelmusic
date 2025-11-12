@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../DSP/BioReactiveDSP.h"
+// #include "../DSP/BioReactiveDSP.h"  // TODO: Enable when DSP effects are ported to JUCE 7
 // #include "../BioData/HRVProcessor.h"  // TODO: Create HRVProcessor when Bio-Data integration is ready
 
 /**

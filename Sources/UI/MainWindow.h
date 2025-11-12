@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "../Audio/AudioEngine.h"
+#include "../Audio/Track.h"
 
 /**
  * Echoelmusic Main Window
