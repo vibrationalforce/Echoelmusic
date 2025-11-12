@@ -257,6 +257,14 @@ target_sources(Echoelmusic
         Sources/AI/SmartMixer.cpp
         Sources/AI/SmartMixer.h
 
+        # Remote Processing & Cloud Integration (NEW! 2025-11-12)
+        Sources/Remote/RemoteProcessingEngine.cpp
+        Sources/Remote/RemoteProcessingEngine.h
+        Sources/Remote/CloudRenderManager.h
+
+        # Universal Sync System - EchoSync™ (NEW! 2025-11-12)
+        Sources/Sync/EchoSync.h
+
         # Hardware Integration
         Sources/Hardware/AbletonLink.cpp
         Sources/Hardware/AbletonLink.h
@@ -313,6 +321,8 @@ target_include_directories(Echoelmusic
         Sources/Video
         Sources/Audio
         Sources/Platform
+        Sources/Remote
+        Sources/Sync
 )
 
 # ===========================
