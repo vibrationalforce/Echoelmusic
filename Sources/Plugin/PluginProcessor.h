@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 #include "../DSP/BioReactiveDSP.h"
-#include "../BioData/HRVProcessor.h"
+// #include "../BioData/HRVProcessor.h"  // TODO: Create HRVProcessor when Bio-Data integration is ready
 
 /**
  * Echoelmusic Audio Processor
@@ -122,7 +122,7 @@ private:
     //==============================================================================
     // DSP Modules
     std::unique_ptr<BioReactiveDSP> bioReactiveDSP;
-    std::unique_ptr<HRVProcessor> hrvProcessor;
+    // std::unique_ptr<HRVProcessor> hrvProcessor;  // TODO: Enable when HRVProcessor is implemented
 
     //==============================================================================
     // Bio-Data

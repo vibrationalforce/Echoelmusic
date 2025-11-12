@@ -207,57 +207,30 @@ target_sources(Echoelmusic
         Sources/Plugin/PluginEditor.cpp
         Sources/Plugin/PluginEditor.h
 
-        # DSP Core
-        Sources/DSP/BioReactiveDSP.cpp
-        Sources/DSP/BioReactiveDSP.h
-        # Sources/DSP/AdvancedDSP.cpp  # TODO: Create this file
-        # Sources/DSP/AdvancedDSP.h
-
-        # Advanced Effects (ported from Swift) - TODO: These are in DSP/, not DSP/Effects/
-        # Sources/DSP/Effects/ParametricEQ.cpp
-        # Sources/DSP/Effects/ParametricEQ.h
-        # Sources/DSP/Effects/MultibandCompressor.cpp
-        # Sources/DSP/Effects/MultibandCompressor.h
-        # Sources/DSP/Effects/ConvolutionReverb.cpp
-        # Sources/DSP/Effects/ConvolutionReverb.h
-        # Sources/DSP/Effects/BrickWallLimiter.cpp
-        # Sources/DSP/Effects/BrickWallLimiter.h
-        # Sources/DSP/Effects/DeEsser.cpp
-        # Sources/DSP/Effects/DeEsser.h
-        # Sources/DSP/Effects/TapeDelay.cpp
-        # Sources/DSP/Effects/TapeDelay.h
-        # Sources/DSP/Effects/StereoImager.cpp
-        # Sources/DSP/Effects/StereoImager.h
-
-        # Synthesis - TODO: Most of these don't exist yet
-        # Sources/Synthesis/FMSynthesizer.cpp
-        # Sources/Synthesis/FMSynthesizer.h
-        # Sources/Synthesis/WavetableSynthesizer.cpp
-        # Sources/Synthesis/WavetableSynthesizer.h
-        # Sources/Synthesis/PhysicalModeling.cpp
-        # Sources/Synthesis/PhysicalModeling.h
-        # Sources/Synthesis/GranularSynthesis.cpp
-        # Sources/Synthesis/GranularSynthesis.h
-        Sources/Synthesis/DrumSynthesizer.cpp  # This one exists!
+        # AI/ML Intelligent Processing
+        Sources/AI/SmartMixer.cpp
+        # Sources/AI/PatternGenerator.cpp  # TODO: Fix map operator[] errors
 
         # Visualization
         Sources/Visualization/SpectrumAnalyzer.cpp
-        Sources/Visualization/SpectrumAnalyzer.h
         Sources/Visualization/BioReactiveVisualizer.cpp
-        Sources/Visualization/BioReactiveVisualizer.h
-        # Sources/Visualization/WaveformDisplay.cpp  # TODO: Create
-        # Sources/Visualization/WaveformDisplay.h
 
-        # Bio-Data Integration - TODO: BioDataBridge.mm won't compile on Linux (Objective-C++)
-        # Sources/BioData/BioDataBridge.mm
-        # Sources/BioData/BioDataBridge.h
-        # Sources/BioData/HRVProcessor.cpp
-        # Sources/BioData/HRVProcessor.h
+        # Synthesis
+        Sources/Synthesis/DrumSynthesizer.cpp
+        # Sources/Synth/WaveWeaver.cpp  # TODO: Fix JUCE AudioFormatReader API
+        # Sources/Synth/FrequencyFusion.cpp  # TODO: Fix many warnings
 
-        # AI/ML Intelligent Processing
-        Sources/AI/SmartMixer.cpp
-        Sources/AI/SmartMixer.h
-        Sources/AI/PatternGenerator.cpp
+        # Healing & Resonance
+        Sources/Healing/ResonanceHealer.cpp
+
+        # Instruments & Sequencing
+        Sources/Instrument/RhythmMatrix.cpp
+        Sources/Sequencer/ArpWeaver.cpp
+
+        # Video & Visual Effects
+        Sources/Video/VideoWeaver.cpp
+        Sources/Visual/VisualForge.cpp
+        Sources/Visual/LaserForce.cpp
 
         # Core Audio Engine (NEW! 2025-11-12)
         Sources/Audio/AudioEngine.cpp
@@ -265,88 +238,49 @@ target_sources(Echoelmusic
         Sources/Audio/Track.cpp
         Sources/Audio/Track.h
 
-        # Built-in DSP Effects (Updated 2025-11-12)
-        Sources/DSP/ParametricEQ.cpp
-        Sources/DSP/ParametricEQ.h
-        Sources/DSP/Compressor.cpp
-        Sources/DSP/Compressor.h
-        Sources/DSP/SpectralSculptor.cpp
-        Sources/DSP/SpectralSculptor.h
-        Sources/DSP/BrickWallLimiter.cpp
-        Sources/DSP/BrickWallLimiter.h
-        Sources/DSP/MultibandCompressor.cpp
-        Sources/DSP/MultibandCompressor.h
-        Sources/DSP/DynamicEQ.cpp
-        Sources/DSP/DynamicEQ.h
-        Sources/DSP/ConvolutionReverb.cpp
-        Sources/DSP/ConvolutionReverb.h
-        Sources/DSP/DeEsser.cpp
-        Sources/DSP/DeEsser.h
-        Sources/DSP/TapeDelay.cpp
-        Sources/DSP/TapeDelay.h
-        Sources/DSP/StereoImager.cpp
-        Sources/DSP/StereoImager.h
-        Sources/DSP/TransientDesigner.cpp
-        Sources/DSP/TransientDesigner.h
-        Sources/DSP/HarmonicForge.cpp
-        Sources/DSP/HarmonicForge.h
-        Sources/DSP/VintageEffects.cpp
-        Sources/DSP/VintageEffects.h
-        Sources/DSP/ModulationSuite.cpp
-        Sources/DSP/ModulationSuite.h
-        Sources/DSP/EdgeControl.cpp
-        Sources/DSP/EdgeControl.h
+        # Built-in DSP Effects (17 effects! Updated 2025-11-12)
         Sources/DSP/BioReactiveDSP.cpp
-        Sources/DSP/BioReactiveDSP.h
+        Sources/DSP/ParametricEQ.cpp
+        Sources/DSP/Compressor.cpp
+        Sources/DSP/SpectralSculptor.cpp
+        Sources/DSP/BrickWallLimiter.cpp
+        Sources/DSP/MultibandCompressor.cpp
+        Sources/DSP/DynamicEQ.cpp
+        Sources/DSP/ConvolutionReverb.cpp
+        Sources/DSP/DeEsser.cpp
+        Sources/DSP/TapeDelay.cpp
+        Sources/DSP/StereoImager.cpp
+        Sources/DSP/TransientDesigner.cpp
+        Sources/DSP/HarmonicForge.cpp
+        Sources/DSP/VintageEffects.cpp
+        Sources/DSP/ModulationSuite.cpp
+        Sources/DSP/EdgeControl.cpp
 
         # Remote Processing & Cloud Integration (NEW! 2025-11-12)
         Sources/Remote/RemoteProcessingEngine.cpp
-        Sources/Remote/RemoteProcessingEngine.h
-        Sources/Remote/EchoelCloudManager.h
-
-        # Universal Sync System - EchoelSync™ (NEW! 2025-11-12)
-        Sources/Sync/EchoelSync.h
 
         # Hardware Integration
         Sources/Hardware/AbletonLink.cpp
-        Sources/Hardware/AbletonLink.h
         Sources/Hardware/MIDIHardwareManager.cpp
-        Sources/Hardware/MIDIHardwareManager.h
         Sources/Hardware/ModularIntegration.cpp
-        Sources/Hardware/ModularIntegration.h
         Sources/Hardware/DJEquipmentIntegration.cpp
-        Sources/Hardware/DJEquipmentIntegration.h
         Sources/Hardware/OSCManager.cpp
-        Sources/Hardware/OSCManager.h
         Sources/Hardware/HardwareSyncManager.cpp
-        Sources/Hardware/HardwareSyncManager.h
-
-        # Video Editing
-        Sources/Video/VideoWeaver.cpp
-        Sources/Video/VideoWeaver.h
 
         # Spatial Audio
         Sources/Audio/SpatialForge.cpp
-        Sources/Audio/SpatialForge.h
 
         # Platform/Business Management
         Sources/Platform/CreatorManager.cpp
-        Sources/Platform/CreatorManager.h
         Sources/Platform/AgencyManager.cpp
-        Sources/Platform/AgencyManager.h
         Sources/Platform/GlobalReachOptimizer.cpp
-        Sources/Platform/GlobalReachOptimizer.h
         Sources/Platform/EchoHub.cpp
-        Sources/Platform/EchoHub.h
 
         # UI - Main Window (NEW! 2025-11-12)
         Sources/UI/MainWindow.cpp
-        Sources/UI/MainWindow.h
 
-        # Platform-Specific
-        $<$<PLATFORM_ID:Windows>:Sources/Platform/Windows/WindowsAudio.cpp>
-        $<$<PLATFORM_ID:Linux>:Sources/Platform/Linux/LinuxAudio.cpp>
-        $<$<PLATFORM_ID:Android>:Sources/Platform/Android/AndroidAudio.cpp>
+        # iOS App (conditional - only for iOS/macOS builds)
+        $<$<BOOL:${IOS}>:Sources/iOS/EchoelmusicApp.cpp>
 )
 
 # ===========================

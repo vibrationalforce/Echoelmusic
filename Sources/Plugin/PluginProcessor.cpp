@@ -18,7 +18,7 @@ EchoelmusicAudioProcessor::EchoelmusicAudioProcessor()
 {
     // Initialize DSP modules
     bioReactiveDSP = std::make_unique<BioReactiveDSP>();
-    hrvProcessor = std::make_unique<HRVProcessor>();
+    //     hrvProcessor = std::make_unique<HRVProcessor>();  // TODO: Enable when HRVProcessor is implemented
 
     // Initialize spectrum data (lock-free FIFO buffers)
     spectrumDataForUI.fill(0.0f);

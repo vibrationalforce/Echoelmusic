@@ -88,9 +88,8 @@ public:
         float targetLUFS = -14.0f;
         float truePeakCeiling = -1.0f;  // dBTP
         bool limitingEnabled = true;
-        bool stereoenhanc
+        bool stereoEnhancementEnabled = false;
 
-ementEnabled = false;
     };
 
     //==========================================================================
