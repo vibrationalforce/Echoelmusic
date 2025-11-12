@@ -260,10 +260,10 @@ target_sources(Echoelmusic
         # Remote Processing & Cloud Integration (NEW! 2025-11-12)
         Sources/Remote/RemoteProcessingEngine.cpp
         Sources/Remote/RemoteProcessingEngine.h
-        Sources/Remote/CloudRenderManager.h
+        Sources/Remote/EchoelCloudManager.h
 
-        # Universal Sync System - EchoSync™ (NEW! 2025-11-12)
-        Sources/Sync/EchoSync.h
+        # Universal Sync System - EchoelSync™ (NEW! 2025-11-12)
+        Sources/Sync/EchoelSync.h
 
         # Hardware Integration
         Sources/Hardware/AbletonLink.cpp

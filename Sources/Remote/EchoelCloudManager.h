@@ -4,11 +4,11 @@
 #include "RemoteProcessingEngine.h"
 
 /**
- * CloudRenderManager
+ * EchoelCloudManager
  *
  * Verwaltet Batch-Rendering und Export-Jobs auf Cloud-Servern.
  * Während RemoteProcessingEngine für Real-Time Verarbeitung ist,
- * ist CloudRenderManager für Offline-Rendering optimiert.
+ * ist EchoelCloudManager für Offline-Rendering optimiert.
  *
  * Features:
  * - Export ganzer Projekte auf Remote-Server
@@ -32,7 +32,7 @@
  * - Azure Virtual Machines
  * - Eigener Server (VPS, dediziert)
  */
-class CloudRenderManager
+class EchoelCloudManager
 {
 public:
     //==========================================================================
@@ -167,8 +167,8 @@ public:
     // Constructor / Destructor
     //==========================================================================
 
-    CloudRenderManager();
-    ~CloudRenderManager();
+    EchoelCloudManager();
+    ~EchoelCloudManager();
 
     //==========================================================================
     // Server Management
@@ -422,5 +422,5 @@ private:
     void downloadResultsFromServer(const juce::String& jobId);
     void processJobLocally(RenderJob& job);
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CloudRenderManager)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoelCloudManager)
 };

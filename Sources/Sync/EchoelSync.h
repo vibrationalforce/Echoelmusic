@@ -12,11 +12,11 @@
  * ███████╗╚███████╗██║  ██║╚██████╔╝███████║   ██║   ██║ ╚████║╚██████╗
  * ╚══════╝ ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═══╝ ╚═════╝
  *
- * EchoSync - Die intelligente Sync-Technologie von Echoelmusic
+ * EchoelSync - Die intelligente Sync-Technologie von Echoelmusic
  *
  * DIE UNIVERSELLE SYNCHRONISATIONS-LÖSUNG FÜR ALLE GERÄTE & STANDARDS
  *
- * EchoSync vereint ALLE existierenden Sync-Standards unter einem Dach
+ * EchoelSync vereint ALLE existierenden Sync-Standards unter einem Dach
  * und macht sie intelligent, automatisch, und latenzfrei verfügbar.
  *
  * KOMPATIBILITÄT MIT ALLEN STANDARDS:
@@ -30,7 +30,7 @@
  * ✅ WebRTC sync (browser-based apps)
  * ✅ NTP (Network Time Protocol) (internet-wide)
  *
- * WAS MACHT ECHOSYNC BESSER?
+ * WAS MACHT ECHOELSYNC BESSER?
  * ✨ Automatische Erkennung aller Sync-Quellen im Netzwerk
  * ✨ Intelligente Protokoll-Auswahl (bestes für Situation)
  * ✨ Sample-accurate auch über Internet (< 50ms)
@@ -43,26 +43,26 @@
  *
  * ANWENDUNGSFÄLLE:
  * 1. Multi-DAW Sync: Echoelmusic ↔ Ableton ↔ Logic ↔ FL Studio
- * 2. Live Performance: Drummer → MIDI → EchoSync → alle Geräte
+ * 2. Live Performance: Drummer → MIDI → EchoelSync → alle Geräte
  * 3. Video Sync: Premiere Pro ↔ Echoelmusic (LTC/MTC)
- * 4. Club Setup: CDJ ↔ EchoSync ↔ Lighting ↔ Visuals (Resolume)
+ * 4. Club Setup: CDJ ↔ EchoelSync ↔ Lighting ↔ Visuals (Resolume)
  * 5. Remote Jam: Berlin ↔ New York (< 50ms Internet sync)
  * 6. Studio: Hardware Synths ↔ DAW ↔ Drum Machines
  *
  * NETWORK DISCOVERY:
- * - mDNS/Bonjour: _echosync._tcp.local (primary)
+ * - mDNS/Bonjour: _echoelsync._tcp.local (primary)
  * - UDP Broadcast: Port 20738 (fallback)
  - Bluetooth LE: Advertisement (proximity)
  * - QR Code: Manual pairing
  * - Cloud Relay: Internet-wide discovery
  *
  * BRANDING FEATURES:
- * - EchoSync Logo im UI
- * - "Powered by EchoSync" badge
- * - EchoSync Server List (community)
- * - EchoSync.io website mit Server-Browser
+ * - EchoelSync Logo im UI
+ * - "Powered by EchoelSync" badge
+ * - EchoelSync Server List (community)
+ * - EchoelSync.io website mit Server-Browser
  */
-class EchoSync
+class EchoelSync
 {
 public:
     //==========================================================================
@@ -71,7 +71,7 @@ public:
 
     enum class SyncProtocol
     {
-        EchoSyncNative,     // Eigenes Protokoll (sample-accurate, ultra-low latency)
+        EchoelSyncNative,     // Eigenes Protokoll (sample-accurate, ultra-low latency)
         AbletonLink,        // Ableton Link kompatibel
         MIDIClock,          // MIDI Clock (24 PPQN)
         MIDITimeCode,       // MTC (video sync)
@@ -103,7 +103,7 @@ public:
         juce::String appName;               // "Echoelmusic", "Ableton Live", etc.
 
         // Protocol
-        SyncProtocol protocol = SyncProtocol::EchoSyncNative;
+        SyncProtocol protocol = SyncProtocol::EchoelSyncNative;
         SyncRole role = SyncRole::Peer;
 
         // Transport
@@ -115,7 +115,7 @@ public:
 
         // Network
         juce::String ipAddress;
-        int port = 20738;                   // EchoSync default port
+        int port = 20738;                   // EchoelSync default port
         float latencyMs = 0.0f;
         float jitterMs = 0.0f;
         int numPeers = 0;                   // Connected devices
@@ -141,8 +141,8 @@ public:
     // Constructor / Destructor
     //==========================================================================
 
-    EchoSync();
-    ~EchoSync();
+    EchoelSync();
+    ~EchoelSync();
 
     //==========================================================================
     // Network Discovery (Automatic)
@@ -240,7 +240,7 @@ public:
     int64_t sampleTimeAtBeat(double beat, double sampleRate) const;
 
     //==========================================================================
-    // Intelligent Sync Features (EchoSync-Exclusive)
+    // Intelligent Sync Features (EchoelSync-Exclusive)
     //==========================================================================
 
     /** Enable AI-powered beat prediction (für schlechtes Netzwerk) */
@@ -285,10 +285,10 @@ public:
     void setOSCOutputEnabled(bool enable, const juce::String& targetIP, int port = 8000);
 
     //==========================================================================
-    // Server Mode (EchoSync Server)
+    // Server Mode (EchoelSync Server)
     //==========================================================================
 
-    /** Start as EchoSync Server (andere können connecten) */
+    /** Start as EchoelSync Server (andere können connecten) */
     bool startServer(int port = 20738);
 
     /** Stop server */
@@ -351,10 +351,10 @@ public:
     std::function<void(double)> onTempoChanged;
 
     //==========================================================================
-    // EchoSync Community Features
+    // EchoelSync Community Features
     //==========================================================================
 
-    /** Connect to EchoSync.io global server list */
+    /** Connect to EchoelSync.io global server list */
     void connectToGlobalServerList();
 
     /** Publish this server to global list (opt-in) */
@@ -448,11 +448,11 @@ private:
     float calculateSyncQuality() const;
     SyncProtocol selectOptimalProtocol() const;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoSync)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoelSync)
 };
 
 //==============================================================================
-// EchoSync Utilities
+// EchoelSync Utilities
 //==============================================================================
 
 /** Convert BPM to microseconds per beat */

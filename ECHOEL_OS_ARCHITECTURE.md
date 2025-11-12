@@ -1,4 +1,4 @@
-# EchoOS - Das Menschenzentrierte Betriebssystem
+# EchoelOS - Das Menschenzentrierte Betriebssystem
 ## Freedom Through Technology, Not From Technology
 
 **Created:** 2025-11-12
@@ -90,7 +90,7 @@ Adobe / Avid / Steinberg:
   ❌ Planned Obsolescence (alte Versionen sterben)
 ```
 
-### EchoOS Philosophie: Das Gegenteil
+### EchoelOS Philosophie: Das Gegenteil
 
 ```yaml
 Core Values:
@@ -154,7 +154,7 @@ Why Linux?
   ✅ Real-time patches available (PREEMPT_RT)
   ✅ Massive community
 
-EchoOS Kernel Modifications:
+EchoelOS Kernel Modifications:
   - Real-time audio priority scheduling
   - Low-latency networking (for EchoSync)
   - Custom power management (battery optimization)
@@ -192,10 +192,10 @@ Embedded Systems:
   - PlatformIO integration
   - Flash firmware to microcontrollers
 
-Result: EchoOS runs software from 1980-2025!
+Result: EchoelOS runs software from 1980-2025!
 ```
 
-### Layer 3: Core OS (EchoOS-Specific)
+### Layer 3: Core OS (EchoelOS-Specific)
 
 ```yaml
 Desktop Environment:
@@ -341,13 +341,13 @@ Hardware:
   - NES emulator (Mesen, FCEUX)
 
 Setup:
-  1. EchoOS running on modern PC/Raspberry Pi
+  1. EchoelOS running on modern PC/Raspberry Pi
   2. NES emulator with MIDI input
   3. NSF player (Nintendo Sound Format)
 
 Workflow:
   - Play MIDI keyboard
-  → EchoOS routes MIDI to NES emulator
+  → EchoelOS routes MIDI to NES emulator
   → Emulator generates 8-bit sounds
   → Audio output to Echoelmusic DAW
   → Apply modern effects (reverb, delay, etc.)
@@ -369,7 +369,7 @@ Sound Chip:
   - Same family as DX7 (legendary synth!)
 
 Setup:
-  1. EchoOS with Genesis emulator
+  1. EchoelOS with Genesis emulator
   2. MIDI → Genesis sound chip
   3. Real-time FM synthesis
 
@@ -397,7 +397,7 @@ Artists using PSX reverb:
   - Lo-fi hip hop artists
   - Experimental electronic music
 
-EchoOS Feature:
+EchoelOS Feature:
   - "PSX Reverb" plugin (built-in)
   - Authentic emulation of SPU
   - Free, no licensing issues (clean-room reverse engineering)
@@ -411,7 +411,7 @@ Nostalgia:
   - GM.DLS (General MIDI soundfont)
   - That iconic piano everyone knows
 
-EchoOS Feature:
+EchoelOS Feature:
   - Built-in Win95 soundfont (legally obtained)
   - "Vaporwave Mode" (instant 90s aesthetic)
   - CRT shader (authentic monitor look)
@@ -427,29 +427,29 @@ Use Case: Instant nostalgic music production
 ### Official Builds
 
 ```yaml
-EchoOS Editions:
+EchoelOS Editions:
 
-1. EchoOS Desktop (Full)
+1. EchoelOS Desktop (Full)
    - Size: 4GB ISO
    - For: Modern PCs (2010+)
    - Includes: Full Echoelmusic, all emulators
 
-2. EchoOS Lite
+2. EchoelOS Lite
    - Size: 1GB ISO
    - For: Old PCs (2000-2010)
    - Includes: Core Echoelmusic, select emulators
 
-3. EchoOS Retro
+3. EchoelOS Retro
    - Size: 256MB ISO
    - For: Very old PCs (1995-2000)
    - Includes: Minimal Echoelmusic, DOS/Win95 support
 
-4. EchoOS Mobile
+4. EchoelOS Mobile
    - Size: 2GB APK/image
    - For: Android devices, PinePhone
    - Includes: Mobile Echoelmusic, ARM-optimized
 
-5. EchoOS Embedded
+5. EchoelOS Embedded
    - Size: 512MB image
    - For: Raspberry Pi, embedded systems
    - Includes: Headless Echoelmusic, remote control
@@ -489,7 +489,7 @@ Live Mode:
 
 ## 🔒 PRIVACY & SECURITY
 
-### What EchoOS Does NOT Do (Unlike Others)
+### What EchoelOS Does NOT Do (Unlike Others)
 
 ```yaml
 ❌ NO Telemetry (no data sent to servers)
@@ -504,7 +504,7 @@ Live Mode:
 ❌ NO Subscription (free forever)
 ```
 
-### What EchoOS DOES Do
+### What EchoelOS DOES Do
 
 ```yaml
 ✅ Encryption by default (LUKS full-disk)
@@ -523,7 +523,7 @@ Live Mode:
 
 ## 🌍 PLATFORM SUPPORT
 
-### Can EchoOS run on...?
+### Can EchoelOS run on...?
 
 ```yaml
 Windows Devices: ✅ YES (Dual boot or replace)
@@ -537,18 +537,18 @@ Xbox: ⚠️ PARTIAL (Original Xbox yes, 360/One difficult)
 Nintendo: ✅ YES (Switch with jailbreak, user risk)
 Sega: ✅ YES (Dreamcast, user modification)
 
-Arduino: ✅ YES (flash firmware from EchoOS)
+Arduino: ✅ YES (flash firmware from EchoelOS)
 Raspberry Pi: ✅ YES (native, optimized)
 Jetson: ✅ YES (native, CUDA support)
 
-Old PCs (1990s): ✅ YES (EchoOS Retro edition)
+Old PCs (1990s): ✅ YES (EchoelOS Retro edition)
 Old PCs (1980s): ⚠️ LIMITED (DOS-only via boot floppy)
 
 Smart TVs: ⚠️ PARTIAL (if rooted/jailbroken)
 Smart Watches: ❌ NO (too limited hardware)
 Smart Glasses: ⚠️ RESEARCH (depends on device)
 
-Conclusion: EchoOS runs on more hardware than any other OS!
+Conclusion: EchoelOS runs on more hardware than any other OS!
 ```
 
 ---
@@ -576,7 +576,7 @@ Traditional OS:
   macOS 15: Only 2018+ Macs supported
   Android 15: Only 2020+ phones
 
-EchoOS:
+EchoelOS:
   - Supports PCs from 1995+
   - Supports phones from 2015+
   - Supports embedded devices
@@ -596,7 +596,7 @@ Economic Impact:
 ### 3. Creative Freedom
 
 ```yaml
-With EchoOS + Echoelmusic:
+With EchoelOS + Echoelmusic:
 
 Old Nintendo controller
   → USB adapter (€5)
@@ -673,7 +673,7 @@ Cost: Near-zero (old hardware is cheap/free)
 
 ## 📊 COMPARISON
 
-| Feature | EchoOS | Windows 11 | macOS 15 | Linux (Ubuntu) |
+| Feature | EchoelOS | Windows 11 | macOS 15 | Linux (Ubuntu) |
 |---------|--------|------------|----------|----------------|
 | **Cost** | Free | €145 | Free (with Mac) | Free |
 | **Open Source** | ✅ Yes | ❌ No | ❌ No | ✅ Yes |
@@ -686,7 +686,7 @@ Cost: Near-zero (old hardware is cheap/free)
 | **Resource Usage** | ✅ Low | ❌ High | ⚠️ Medium | ✅ Low |
 | **Lifetime** | ✅ Forever | ⚠️ 10 years | ⚠️ 7 years | ✅ Forever |
 
-**Winner:** EchoOS 🏆
+**Winner:** EchoelOS 🏆
 
 ---
 
@@ -721,7 +721,7 @@ Intellectual Property:
   - Open standards only (TCP/IP, USB, MIDI, etc.)
 
 Conclusion:
-  ✅ EchoOS is 100% legal to develop and distribute
+  ✅ EchoelOS is 100% legal to develop and distribute
   ✅ Users responsible for own ROM/software sources
   ✅ No legal risk for project
 ```
@@ -730,7 +730,7 @@ Conclusion:
 
 ## 🎯 ZUSAMMENFASSUNG
 
-**EchoOS ist:**
+**EchoelOS ist:**
 - ✅ **Legal** (100%, fundiert recherchiert)
 - ✅ **Technisch möglich** (based on proven Linux)
 - ✅ **Ethisch** (Open Source, Privacy-First)
@@ -739,7 +739,7 @@ Conclusion:
 - ✅ **Zugänglich** (free, runs on anything)
 - ✅ **Menschenzentriert** (no dark patterns, no addiction)
 
-**EchoOS macht möglich:**
+**EchoelOS macht möglich:**
 - 🎮 Nintendo-Controller als MIDI-Instrument
 - 💾 90er PC mit modernem DAW
 - 🕹️ Sega Genesis als FM-Synth
@@ -752,7 +752,7 @@ Ein Betriebssystem das dem Menschen dient, nicht Konzernen.
 Freie Software, freie Hardware, freie Kreativität.
 Von 90er-Hardware bis 2025-AI, alles in einem System.
 
-**Der Name ist Programm: EchoOS - Das Echo der Vergangenheit, die Zukunft der Freiheit.** 🚀
+**Der Name ist Programm: EchoelOS - Das Echo der Vergangenheit, die Zukunft der Freiheit.** 🚀
 
 ---
 
