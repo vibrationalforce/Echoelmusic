@@ -149,10 +149,14 @@ private:
     PerformanceStats performanceStats;
 
     //==============================================================================
-    // Spectrum Analysis
+    // Spectrum Analysis (Lock-Free Communication)
     static constexpr int spectrumSize = 64;
-    mutable std::array<float, spectrumSize> spectrumData;
-    mutable std::mutex spectrumMutex;
+    static constexpr int spectrumFifoSize = 4;
+
+    // Lock-free FIFO for audio thread -> UI thread communication
+    juce::AbstractFifo spectrumFifo { spectrumFifoSize };
+    std::array<std::array<float, spectrumSize>, spectrumFifoSize> spectrumBuffer;
+    mutable std::array<float, spectrumSize> spectrumDataForUI;  // Read by UI thread
 
     void updateSpectrumData(const juce::AudioBuffer<float>& buffer);
 

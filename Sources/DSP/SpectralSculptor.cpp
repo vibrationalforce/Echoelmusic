@@ -221,8 +221,11 @@ void SpectralSculptor::setZeroLatencyMode(bool enabled)
 
 void SpectralSculptor::prepare(double sampleRate, int maxBlockSize)
 {
-    juce::ignoreUnused(maxBlockSize);
     currentSampleRate = sampleRate;
+
+    // ✅ Pre-allocate dry buffer to avoid allocation in audio thread
+    dryBuffer.setSize(2, maxBlockSize);
+    dryBuffer.clear();
 
     updateFFTSize();
     reset();
@@ -256,8 +259,11 @@ void SpectralSculptor::process(juce::AudioBuffer<float>& buffer)
     const int numSamples = buffer.getNumSamples();
     const int numChannels = juce::jmin(buffer.getNumChannels(), 2);
 
+    // ✅ Use pre-allocated dry buffer (NO ALLOCATION in audio thread)
+    jassert(dryBuffer.getNumChannels() >= numChannels);
+    jassert(dryBuffer.getNumSamples() >= numSamples);
+
     // Store dry signal for mixing
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
     for (int ch = 0; ch < numChannels; ++ch)
     {
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);

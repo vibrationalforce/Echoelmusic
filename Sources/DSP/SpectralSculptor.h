@@ -175,9 +175,9 @@ private:
     juce::dsp::FFT inverseFFT {fftOrder};
     juce::dsp::WindowingFunction<float> window {fftSize, juce::dsp::WindowingFunction<float>::hann};
 
-    //==========================================================================
+    //==============================================================================
     // Processing Buffers
-    //==========================================================================
+    //==============================================================================
 
     struct ChannelState
     {
@@ -191,6 +191,9 @@ private:
     };
 
     std::array<ChannelState, 2> channelStates;
+
+    // ✅ Pre-allocated dry buffer (no allocation in audio thread)
+    juce::AudioBuffer<float> dryBuffer;
 
     //==========================================================================
     // Noise Profile (for denoising)

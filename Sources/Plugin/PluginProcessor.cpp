@@ -20,8 +20,10 @@ EchoelmusicAudioProcessor::EchoelmusicAudioProcessor()
     bioReactiveDSP = std::make_unique<BioReactiveDSP>();
     hrvProcessor = std::make_unique<HRVProcessor>();
 
-    // Initialize spectrum data
-    spectrumData.fill(0.0f);
+    // Initialize spectrum data (lock-free FIFO buffers)
+    spectrumDataForUI.fill(0.0f);
+    for (auto& buffer : spectrumBuffer)
+        buffer.fill(0.0f);
 
     // Add parameter listeners
     parameters.addParameterListener(PARAM_ID_HRV, this);
@@ -380,8 +382,18 @@ void EchoelmusicAudioProcessor::setStateInformation (const void* data, int sizeI
 
 std::vector<float> EchoelmusicAudioProcessor::getSpectrumData() const
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
-    return std::vector<float>(spectrumData.begin(), spectrumData.end());
+    // ✅ LOCK-FREE: Read from FIFO (called from UI thread)
+    int start1, size1, start2, size2;
+    spectrumFifo.prepareToRead(1, start1, size1, start2, size2);
+
+    if (size1 > 0)
+    {
+        // Copy latest spectrum data
+        const_cast<EchoelmusicAudioProcessor*>(this)->spectrumDataForUI = spectrumBuffer[start1];
+        const_cast<juce::AbstractFifo&>(spectrumFifo).finishedRead(size1);
+    }
+
+    return std::vector<float>(spectrumDataForUI.begin(), spectrumDataForUI.end());
 }
 
 void EchoelmusicAudioProcessor::updateSpectrumData(const juce::AudioBuffer<float>& buffer)
@@ -389,41 +401,45 @@ void EchoelmusicAudioProcessor::updateSpectrumData(const juce::AudioBuffer<float
     if (buffer.getNumChannels() == 0 || buffer.getNumSamples() == 0)
         return;
 
-    // Simple RMS-based spectrum approximation for visualization
-    // For full FFT spectrum, this should be done in a separate thread
-    // to avoid adding latency to audio processing
+    // ✅ LOCK-FREE: Write to FIFO (called from audio thread)
+    // NO MUTEX - Real-time safe!
 
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    int start1, size1, start2, size2;
+    spectrumFifo.prepareToWrite(1, start1, size1, start2, size2);
 
-    const auto* channelData = buffer.getReadPointer(0);
-    const int numSamples = buffer.getNumSamples();
-
-    // Divide audio into frequency bands and calculate RMS per band
-    // This is a simplified approach - for production, use proper FFT
-
-    // Logarithmic frequency bands (20Hz to 20kHz)
-    for (int bin = 0; bin < spectrumSize; ++bin)
+    if (size1 > 0)
     {
-        // Calculate RMS for this "band" (simplified - just use sequential samples)
-        int startSample = (bin * numSamples) / spectrumSize;
-        int endSample = ((bin + 1) * numSamples) / spectrumSize;
+        auto& targetBuffer = spectrumBuffer[start1];
+        const auto* channelData = buffer.getReadPointer(0);
+        const int numSamples = buffer.getNumSamples();
 
-        float rms = 0.0f;
-        for (int i = startSample; i < endSample && i < numSamples; ++i)
+        // Simple RMS-based spectrum approximation for visualization
+        // Logarithmic frequency bands (20Hz to 20kHz)
+        for (int bin = 0; bin < spectrumSize; ++bin)
         {
-            rms += channelData[i] * channelData[i];
+            // Calculate RMS for this "band" (simplified - just use sequential samples)
+            int startSample = (bin * numSamples) / spectrumSize;
+            int endSample = ((bin + 1) * numSamples) / spectrumSize;
+
+            float rms = 0.0f;
+            for (int i = startSample; i < endSample && i < numSamples; ++i)
+            {
+                rms += channelData[i] * channelData[i];
+            }
+
+            if (endSample > startSample)
+                rms = std::sqrt(rms / (endSample - startSample));
+
+            // Convert to dB and normalize
+            float db = juce::Decibels::gainToDecibels(rms + 0.0001f);
+            float normalized = juce::jmap(db, -60.0f, 0.0f, 0.0f, 1.0f);
+
+            // Smooth with previous value (using UI thread's last read)
+            targetBuffer[bin] = spectrumDataForUI[bin] * 0.7f + normalized * 0.3f;
+            targetBuffer[bin] = juce::jlimit(0.0f, 1.0f, targetBuffer[bin]);
         }
 
-        if (endSample > startSample)
-            rms = std::sqrt(rms / (endSample - startSample));
-
-        // Convert to dB and normalize
-        float db = juce::Decibels::gainToDecibels(rms + 0.0001f);
-        float normalized = juce::jmap(db, -60.0f, 0.0f, 0.0f, 1.0f);
-
-        // Smooth with previous value
-        spectrumData[bin] = spectrumData[bin] * 0.7f + normalized * 0.3f;
-        spectrumData[bin] = juce::jlimit(0.0f, 1.0f, spectrumData[bin]);
+        spectrumFifo.finishedWrite(size1);
     }
 }
 
