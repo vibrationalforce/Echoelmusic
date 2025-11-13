@@ -279,6 +279,8 @@ target_sources(Echoelmusic
         # =====================================================================
         Sources/DSP/SpectrumMaster.cpp          # 🌈 Pro-Q 4 Evolution - Visual Learning
         Sources/DSP/MasteringMentor.cpp         # 🎓 AI Teaching Assistant - Learn-by-Doing
+        Sources/DSP/PhaseAnalyzer.cpp           # 🔄 Multi-track Phase Correlation & Goniometer
+        Sources/DSP/StyleAwareMastering.cpp     # 🎵 Genre-Specific Mastering (20+ Genres)
 
         # =====================================================================
         # PHASE 4D: ADVANCED INSTRUMENTS (NEW! 2025-11-13) 🎹🎛️✨
