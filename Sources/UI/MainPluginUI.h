@@ -17,7 +17,8 @@
  * - Theme switcher
  * - Touch-optimized
  */
-class MainPluginUI : public ResponsiveComponent
+class MainPluginUI : public ResponsiveComponent,
+                     public juce::ChangeListener
 {
 public:
     enum class View
@@ -37,7 +38,6 @@ public:
 
         // Create navigation tabs
         addAndMakeVisible(tabBar);
-        tabBar.setTabBarDepth(44);  // Touch-friendly height
         tabBar.addTab("Phase Analyzer", modernLookAndFeel->getColors().backgroundDark, 0);
         tabBar.addTab("Mastering", modernLookAndFeel->getColors().backgroundDark, 1);
         tabBar.addTab("EchoSynth", modernLookAndFeel->getColors().backgroundDark, 2);
