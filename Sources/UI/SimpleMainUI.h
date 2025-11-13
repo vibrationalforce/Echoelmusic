@@ -4,6 +4,7 @@
 #include "../Visualization/AudioVisualizers.h"
 #include "../Visualization/BioDataVisualizer.h"
 #include "../Visualization/FrequencyColorTranslator.h"
+#include "../Visualization/EMSpectrumAnalyzer.h"
 #include "../BioData/BioReactiveModulator.h"
 
 //==============================================================================
