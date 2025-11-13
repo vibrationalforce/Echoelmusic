@@ -83,7 +83,7 @@ public:
 
         // Latin American
         Salsa,
-        Bossa Nova,
+        BossaNova,
         Tango,
         Cumbia,
         Reggaeton,

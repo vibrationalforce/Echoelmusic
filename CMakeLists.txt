@@ -272,6 +272,7 @@ target_sources(Echoelmusic
         Sources/MIDI/MelodyForge.cpp            # 🎶 AI melody generator (Captain Melody competitor)
         Sources/MIDI/BasslineArchitect.cpp      # 🎸 Intelligent basslines (Captain Deep competitor)
         Sources/MIDI/ArpWeaver.cpp              # ✨ Advanced arpeggiator (Cthulhu competitor)
+        Sources/MIDI/WorldMusicDatabase.cpp     # 🌍 50+ global music styles (Baroque to K-Pop)
 
         # Pending (needs JUCE 7 fixes)
         # Sources/DSP/DynamicEQ.cpp             # TODO: Fix ParametricEQ::FilterType

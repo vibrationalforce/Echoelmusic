@@ -84,7 +84,7 @@ void WorldMusicDatabase::addModernStyles()
     styleDatabase[StyleCategory::House] = {
         "House", StyleCategory::House, "USA/Europe", "1980s-Present",
         {{0}, {5, 3}},  // Single chord or vi-IV vamps
-        {ChordGenius::Scale::Minor, ChordGenius::Scale::Dorian},
+        {ChordGenius::Scale::NaturalMinor, ChordGenius::Scale::Dorian},
         {ChordGenius::ChordQuality::Minor7, ChordGenius::ChordQuality::Major7},
         120.0f, 130.0f,
         "Four-on-the-floor", "Repetitive",
@@ -168,7 +168,7 @@ void WorldMusicDatabase::addClassicalStyles()
     styleDatabase[StyleCategory::Impressionist] = {
         "Impressionist", StyleCategory::Impressionist, "France", "1890-1920",
         {{0, 1, 0}, {0, 6, 0}},  // Unconventional progressions
-        {ChordGenius::Scale::WholeTone, ChordGenius::Scale::Pentatonic, ChordGenius::Scale::Lydian},
+        {ChordGenius::Scale::WholeTone, ChordGenius::Scale::MajorPentatonic, ChordGenius::Scale::Lydian},
         {ChordGenius::ChordQuality::Major9, ChordGenius::ChordQuality::Dominant9, ChordGenius::ChordQuality::Augmented},
         60.0f, 100.0f,
         "Floating, atmospheric", "Ambiguous, coloristic",
@@ -335,7 +335,7 @@ void WorldMusicDatabase::addAsianStyles()
     styleDatabase[StyleCategory::Gamelan] = {
         "Gamelan", StyleCategory::Gamelan, "Indonesia", "Ancient-Present",
         {{0}, {0, 4}},  // Cyclical patterns
-        {ChordGenius::Scale::Pentatonic, ChordGenius::Scale::Major},
+        {ChordGenius::Scale::MajorPentatonic, ChordGenius::Scale::Major},
         {ChordGenius::ChordQuality::Major, ChordGenius::ChordQuality::Power},
         100.0f, 150.0f,
         "Interlocking patterns", "Cyclical, layered",
@@ -450,7 +450,7 @@ void WorldMusicDatabase::addWorldMusicStyles()
 //==============================================================================
 // Database Access
 
-WorldMusicDatabase::MusicStyle WorldMusicDatabase::getStyle(StyleCategory category)
+WorldMusicDatabase::MusicStyle WorldMusicDatabase::getStyle(WorldMusicDatabase::StyleCategory category)
 {
     auto it = styleDatabase.find(category);
     if (it != styleDatabase.end())
@@ -461,7 +461,7 @@ WorldMusicDatabase::MusicStyle WorldMusicDatabase::getStyle(StyleCategory catego
 
 std::vector<WorldMusicDatabase::MusicStyle> WorldMusicDatabase::getStylesByRegion(const std::string& region)
 {
-    std::vector<MusicStyle> styles;
+    std::vector<WorldMusicDatabase::MusicStyle> styles;
 
     for (const auto& [category, style] : styleDatabase)
     {
@@ -474,7 +474,7 @@ std::vector<WorldMusicDatabase::MusicStyle> WorldMusicDatabase::getStylesByRegio
 
 std::vector<WorldMusicDatabase::MusicStyle> WorldMusicDatabase::getStylesByPeriod(const std::string& period)
 {
-    std::vector<MusicStyle> styles;
+    std::vector<WorldMusicDatabase::MusicStyle> styles;
 
     for (const auto& [category, style] : styleDatabase)
     {
@@ -487,7 +487,7 @@ std::vector<WorldMusicDatabase::MusicStyle> WorldMusicDatabase::getStylesByPerio
 
 std::vector<WorldMusicDatabase::MusicStyle> WorldMusicDatabase::searchStyles(const std::string& query)
 {
-    std::vector<MusicStyle> styles;
+    std::vector<WorldMusicDatabase::MusicStyle> styles;
 
     std::string lowerQuery = query;
     std::transform(lowerQuery.begin(), lowerQuery.end(), lowerQuery.begin(), ::tolower);
@@ -509,7 +509,7 @@ std::vector<WorldMusicDatabase::MusicStyle> WorldMusicDatabase::searchStyles(con
 
 std::vector<WorldMusicDatabase::MusicStyle> WorldMusicDatabase::getAllStyles()
 {
-    std::vector<MusicStyle> styles;
+    std::vector<WorldMusicDatabase::MusicStyle> styles;
 
     for (const auto& [category, style] : styleDatabase)
         styles.push_back(style);
@@ -542,16 +542,15 @@ WorldMusicDatabase::MusicStyle WorldMusicDatabase::getRandomStyle()
 //==============================================================================
 // Integration with MIDI Tools
 
-std::vector<ChordGenius::Chord> WorldMusicDatabase::getProgressionForStyle(StyleCategory category,
-                                                                            int key,
-                                                                            int length)
+std::vector<ChordGenius::Chord> WorldMusicDatabase::getProgressionForStyle(
+    WorldMusicDatabase::StyleCategory category, int key, int length)
 {
     std::vector<ChordGenius::Chord> chords;
     // Implementation would use ChordGenius to generate progression based on style
     return chords;
 }
 
-ChordGenius::Scale WorldMusicDatabase::getScaleForStyle(StyleCategory category)
+ChordGenius::Scale WorldMusicDatabase::getScaleForStyle(WorldMusicDatabase::StyleCategory category)
 {
     auto style = getStyle(category);
 
@@ -561,7 +560,7 @@ ChordGenius::Scale WorldMusicDatabase::getScaleForStyle(StyleCategory category)
     return ChordGenius::Scale::Major;
 }
 
-std::pair<float, float> WorldMusicDatabase::getTempoRangeForStyle(StyleCategory category)
+std::pair<float, float> WorldMusicDatabase::getTempoRangeForStyle(WorldMusicDatabase::StyleCategory category)
 {
     auto style = getStyle(category);
     return {style.minTempo, style.maxTempo};
