@@ -58,13 +58,13 @@ public:
         Fifths,             // Perfect fifths
         ThirdsUp,           // Ascending thirds
         ThirdsDown,         // Descending thirds
-        Penta Up,           // Pentatonic scale up
+        PentaUp,            // Pentatonic scale up
         PentaDown,          // Pentatonic down
         Sequence,           // Repeating sequence
-        Ping Pong,          // Bounce back & forth
+        PingPong,           // Bounce back & forth
         Converge,           // From edges to center
         Diverge,            // From center to edges
-        Random Walk         // Constrained random
+        RandomWalk          // Constrained random
     };
 
     //==============================================================================

@@ -206,9 +206,8 @@ public:
 
     static const std::vector<ProgressionTemplate> POPULAR_PROGRESSIONS;
 
-private:
     //==============================================================================
-    // Theory Tables
+    // Theory Tables (Public for other MIDI tools)
 
     // Note names
     static const std::array<std::string, 12> NOTE_NAMES;
@@ -219,6 +218,7 @@ private:
     // Chord quality intervals
     static const std::map<ChordQuality, std::vector<int>> CHORD_INTERVALS;
 
+private:
     //==============================================================================
     // Helper Functions
 

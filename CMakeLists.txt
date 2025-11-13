@@ -262,6 +262,17 @@ target_sources(Echoelmusic
         Sources/DSP/FormantFilter.cpp           # 🗣️ Talkbox/Vowel morphing (A/E/I/O/U)
         Sources/DSP/Vocoder.cpp                 # 🤖 Classic carrier/modulator vocoder
 
+        # Spectral Processing Suite (NEW! 2025-11-13) 🔬✨
+        Sources/DSP/ResonanceHealer.cpp         # 🔧 Adaptive resonance suppressor (soothe-style)
+
+        # =====================================================================
+        # PHASE 4: MIDI SONGWRITING TOOLS (NEW! 2025-11-13) 🎼🎹
+        # =====================================================================
+        Sources/MIDI/ChordGenius.cpp            # 🎵 500+ chords, AI progressions (Scaler competitor)
+        Sources/MIDI/MelodyForge.cpp            # 🎶 AI melody generator (Captain Melody competitor)
+        Sources/MIDI/BasslineArchitect.cpp      # 🎸 Intelligent basslines (Captain Deep competitor)
+        Sources/MIDI/ArpWeaver.cpp              # ✨ Advanced arpeggiator (Cthulhu competitor)
+
         # Pending (needs JUCE 7 fixes)
         # Sources/DSP/DynamicEQ.cpp             # TODO: Fix ParametricEQ::FilterType
         # Sources/DSP/SpectralSculptor.cpp      # TODO: Fix FFT API
@@ -301,6 +312,7 @@ target_include_directories(Echoelmusic
     PUBLIC
         Sources
         Sources/Plugin
+        Sources/MIDI
         Sources/DSP
         Sources/DSP/Effects
         Sources/Synthesis
