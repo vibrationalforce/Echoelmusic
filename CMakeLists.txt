@@ -281,6 +281,19 @@ target_sources(Echoelmusic
         Sources/DSP/MasteringMentor.cpp         # 🎓 AI Teaching Assistant - Learn-by-Doing
 
         # =====================================================================
+        # PHASE 4D: ADVANCED INSTRUMENTS (NEW! 2025-11-13) 🎹🎛️✨
+        # =====================================================================
+        Sources/DSP/EchoSynth.cpp               # 🎹 Analog Subtractive Synthesizer (Minimoog/Juno-60 style)
+        Sources/DSP/WaveForge.cpp               # 🌊 Advanced Wavetable Synthesizer (Serum/Vital competitor)
+        Sources/DSP/SampleEngine.cpp            # 🎵 Advanced Sampler with Time-Stretching (Kontakt-style)
+
+        # =====================================================================
+        # PHASE 4E: AI FEATURES (NEW! 2025-11-13) 🤖🧠✨
+        # =====================================================================
+        Sources/DSP/ChordSense.cpp              # 🎼 Real-time Chord Detection (Mixed In Key competitor)
+        Sources/DSP/Audio2MIDI.cpp              # 🎵 Polyphonic Audio to MIDI Conversion (Melodyne-style)
+
+        # =====================================================================
         # PHASE 4A+4B: MIDI SONGWRITING TOOLS (2025-11-13) 🎼🎹
         # =====================================================================
         Sources/MIDI/ChordGenius.cpp            # 🎵 500+ chords, AI progressions (Scaler competitor)
