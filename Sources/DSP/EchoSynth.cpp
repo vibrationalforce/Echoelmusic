@@ -279,6 +279,114 @@ void EchoSynth::loadPreset(Preset preset)
             setGlideTime(50.0f);
             break;
 
+        case Preset::Strings:
+            setOsc1Waveform(Waveform::Sawtooth);
+            setOsc2Waveform(Waveform::Sawtooth);
+            setOsc2Octave(-1);
+            setOsc2Detune(8.0f);
+            setOsc2Mix(0.7f);
+            setFilterType(FilterType::LowPass12);
+            setFilterCutoff(3500.0f);
+            setFilterResonance(0.25f);
+            setFilterEnvAmount(0.3f);
+            setFilterAttack(400.0f);
+            setFilterDecay(600.0f);
+            setFilterSustain(0.6f);
+            setAmpAttack(300.0f);
+            setAmpDecay(400.0f);
+            setAmpSustain(0.8f);
+            setAmpRelease(800.0f);
+            setUnisonVoices(6);
+            setUnisonDetune(12.0f);
+            setAnalogWarmth(0.3f);
+            setLFORate(5.5f);
+            setLFOToPitch(0.15f);
+            break;
+
+        case Preset::VintageKeys:
+            setOsc1Waveform(Waveform::Square);
+            setOsc2Waveform(Waveform::Square);
+            setOsc2Octave(-1);
+            setOsc2Mix(0.5f);
+            setFilterType(FilterType::LowPass12);
+            setFilterCutoff(4000.0f);
+            setFilterResonance(0.2f);
+            setFilterEnvAmount(0.4f);
+            setFilterAttack(10.0f);
+            setFilterDecay(500.0f);
+            setFilterSustain(0.3f);
+            setAmpAttack(5.0f);
+            setAmpDecay(600.0f);
+            setAmpSustain(0.4f);
+            setAmpRelease(400.0f);
+            setAnalogWarmth(0.7f);
+            setAnalogDrift(0.5f);
+            break;
+
+        case Preset::SquareLead:
+            setOsc1Waveform(Waveform::Square);
+            setOsc2Waveform(Waveform::Square);
+            setOsc2Detune(12.0f);
+            setOsc2Mix(0.6f);
+            setFilterType(FilterType::LowPass24);
+            setFilterCutoff(2500.0f);
+            setFilterResonance(0.6f);
+            setFilterEnvAmount(0.8f);
+            setFilterAttack(5.0f);
+            setFilterDecay(300.0f);
+            setFilterSustain(0.4f);
+            setAmpAttack(5.0f);
+            setAmpSustain(0.9f);
+            setAmpRelease(100.0f);
+            setLFORate(6.0f);
+            setLFOToPitch(0.2f);
+            setUnisonVoices(2);
+            setUnisonDetune(10.0f);
+            break;
+
+        case Preset::HooverSynth:
+            setOsc1Waveform(Waveform::Sawtooth);
+            setOsc2Waveform(Waveform::Sawtooth);
+            setOsc2Semitones(7);  // Perfect fifth
+            setOsc2Mix(0.8f);
+            setFilterType(FilterType::LowPass24);
+            setFilterCutoff(1800.0f);
+            setFilterResonance(0.7f);
+            setFilterEnvAmount(0.6f);
+            setFilterAttack(20.0f);
+            setFilterDecay(400.0f);
+            setFilterSustain(0.5f);
+            setAmpAttack(20.0f);
+            setAmpSustain(0.9f);
+            setAmpRelease(300.0f);
+            setUnisonVoices(7);
+            setUnisonDetune(30.0f);
+            setUnisonSpread(0.8f);
+            setLFORate(6.5f);
+            setLFOToFilter(0.5f);
+            setAnalogWarmth(0.4f);
+            break;
+
+        case Preset::Wobble:
+            setOsc1Waveform(Waveform::Sawtooth);
+            setOsc2Waveform(Waveform::Square);
+            setOsc2Octave(-1);
+            setOsc2Mix(0.7f);
+            setFilterType(FilterType::LowPass24);
+            setFilterCutoff(300.0f);
+            setFilterResonance(0.85f);
+            setFilterEnvAmount(0.0f);  // No envelope, LFO controls filter
+            setAmpAttack(5.0f);
+            setAmpSustain(1.0f);
+            setAmpRelease(100.0f);
+            setLFORate(4.0f);  // Wobble speed (quarter notes at 120 BPM)
+            setLFOWaveform(LFOWaveform::Sine);
+            setLFOToFilter(1.0f);  // Maximum filter modulation
+            setUnisonVoices(4);
+            setUnisonDetune(20.0f);
+            setAnalogWarmth(0.6f);
+            break;
+
         default:
             loadPreset(Preset::Init);
             break;

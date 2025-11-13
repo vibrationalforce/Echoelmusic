@@ -375,6 +375,45 @@ void WaveForge::loadPreset(Preset preset)
             setAmpRelease(100.0f);
             break;
 
+        case Preset::VocalPad:
+            setWavetable(WavetableType::Vocal, 0);  // Vocal formants
+            setWavetablePosition(0.5f);
+            setFilterType(FilterType::BandPass);
+            setFilterCutoff(1200.0f);
+            setFilterResonance(0.5f);
+            setFilterEnvAmount(0.3f);
+            setModAttack(600.0f);
+            setModDecay(400.0f);
+            setModSustain(0.6f);
+            setAmpAttack(500.0f);
+            setAmpSustain(0.8f);
+            setAmpRelease(1200.0f);
+            setLFORate(0.3f);
+            setLFOToWavetable(0.5f);
+            setUnisonVoices(5);
+            setUnisonDetune(18.0f);
+            break;
+
+        case Preset::BellLead:
+            setWavetable(WavetableType::Metallic, 0);  // Metallic resonance
+            setWavetablePosition(0.7f);
+            setFilterType(FilterType::HighPass);
+            setFilterCutoff(800.0f);
+            setFilterResonance(0.4f);
+            setFilterEnvAmount(0.6f);
+            setModAttack(5.0f);
+            setModDecay(800.0f);
+            setModSustain(0.2f);
+            setAmpAttack(5.0f);
+            setAmpDecay(1200.0f);
+            setAmpSustain(0.3f);
+            setAmpRelease(1500.0f);
+            setDistortion(0.15f);
+            setDistortionType(0);  // Soft clip
+            setUnisonVoices(3);
+            setUnisonDetune(8.0f);
+            break;
+
         case Preset::EvolvingPad:
             setWavetable(WavetableType::Analog, 0);  // Analog Evolution
             setWavetablePosition(0.3f);
@@ -386,6 +425,68 @@ void WaveForge::loadPreset(Preset preset)
             setAmpRelease(1500.0f);
             setUnisonVoices(6);
             setUnisonDetune(20.0f);
+            break;
+
+        case Preset::AggressiveLead:
+            setWavetable(WavetableType::Digital, 0);  // Digital FM
+            setWavetablePosition(0.9f);
+            setFilterType(FilterType::LowPass);
+            setFilterCutoff(4000.0f);
+            setFilterResonance(0.7f);
+            setFilterDrive(0.8f);
+            setFilterEnvAmount(0.9f);
+            setModAttack(5.0f);
+            setModDecay(200.0f);
+            setModSustain(0.4f);
+            setAmpAttack(5.0f);
+            setAmpSustain(0.95f);
+            setAmpRelease(100.0f);
+            setLFORate(7.0f);
+            setLFOToPitch(0.15f);
+            setDistortion(0.6f);
+            setDistortionType(2);  // Wavefold
+            setUnisonVoices(2);
+            setUnisonDetune(12.0f);
+            break;
+
+        case Preset::SubBass:
+            setWavetable(WavetableType::Basic, 0);  // Sine
+            setOscPitch(-12.0f);  // One octave down
+            setFilterType(FilterType::LowPass);
+            setFilterCutoff(200.0f);
+            setFilterResonance(0.1f);
+            setFilterEnvAmount(0.2f);
+            setModAttack(10.0f);
+            setModDecay(100.0f);
+            setModSustain(0.0f);
+            setAmpAttack(5.0f);
+            setAmpSustain(1.0f);
+            setAmpRelease(80.0f);
+            setDistortion(0.3f);
+            setDistortionType(0);  // Soft clip for warmth
+            break;
+
+        case Preset::OrganicTexture:
+            setWavetable(WavetableType::Organic, 0);  // Natural/acoustic textures
+            setWavetablePosition(0.4f);
+            setFilterType(FilterType::Formant);
+            setFilterCutoff(1500.0f);
+            setFilterResonance(0.6f);
+            setFilterEnvAmount(0.4f);
+            setModAttack(300.0f);
+            setModDecay(600.0f);
+            setModSustain(0.5f);
+            setAmpAttack(200.0f);
+            setAmpDecay(400.0f);
+            setAmpSustain(0.7f);
+            setAmpRelease(800.0f);
+            setLFORate(0.15f);
+            setLFOShape(0.6f);
+            setLFOToWavetable(0.6f);
+            setLFOToFilter(0.3f);
+            setUnisonVoices(4);
+            setUnisonDetune(15.0f);
+            setDistortion(0.2f);
             break;
 
         default:
