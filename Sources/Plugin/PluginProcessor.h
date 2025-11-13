@@ -2,7 +2,8 @@
 
 #include <JuceHeader.h>
 #include "../DSP/BioReactiveDSP.h"  // ✅ Ported to JUCE 7 (2025-11-12)
-// #include "../BioData/HRVProcessor.h"  // TODO: Create HRVProcessor when Bio-Data integration is ready
+#include "../DSP/BioReactiveAudioProcessor.h"  // ✅ NEW: Bio-reactive audio processing (2025-11-13)
+#include "../BioData/BioReactiveModulator.h"  // ✅ NEW: Bio-feedback system (2025-11-13)
 
 /**
  * Echoelmusic Audio Processor
@@ -122,7 +123,8 @@ private:
     //==============================================================================
     // DSP Modules
     std::unique_ptr<BioReactiveDSP> bioReactiveDSP;  // ✅ Ported to JUCE 7 (2025-11-12)
-    // std::unique_ptr<HRVProcessor> hrvProcessor;  // TODO: Enable when HRVProcessor is implemented
+    std::unique_ptr<BioReactiveAudioProcessor> bioReactiveAudioProcessor;  // ✅ NEW: Bio-reactive audio (2025-11-13)
+    std::unique_ptr<BioFeedbackSystem> bioFeedbackSystem;  // ✅ NEW: Bio-feedback (2025-11-13)
 
     //==============================================================================
     // Bio-Data

@@ -18,7 +18,8 @@ EchoelmusicAudioProcessor::EchoelmusicAudioProcessor()
 {
     // Initialize DSP modules
     bioReactiveDSP = std::make_unique<BioReactiveDSP>();  // ✅ Ported to JUCE 7
-    // hrvProcessor = std::make_unique<HRVProcessor>();  // TODO: Enable when HRVProcessor is implemented
+    bioReactiveAudioProcessor = std::make_unique<BioReactiveAudioProcessor>();  // ✅ NEW: Bio-reactive audio (2025-11-13)
+    bioFeedbackSystem = std::make_unique<BioFeedbackSystem>();  // ✅ NEW: Bio-feedback (2025-11-13)
 
     // Initialize spectrum data (lock-free FIFO buffers)
     spectrumDataForUI.fill(0.0f);
@@ -207,6 +208,9 @@ void EchoelmusicAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     if (bioReactiveDSP)
         bioReactiveDSP->prepare(spec);
 
+    if (bioReactiveAudioProcessor)
+        bioReactiveAudioProcessor->prepare(sampleRate, samplesPerBlock, 2);  // Stereo
+
     // Reset heartbeat timing
     samplesUntilNextBeat = 0;
 }
@@ -215,6 +219,9 @@ void EchoelmusicAudioProcessor::releaseResources()
 {
     if (bioReactiveDSP)
         bioReactiveDSP->reset();
+
+    if (bioReactiveAudioProcessor)
+        bioReactiveAudioProcessor->reset();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -249,24 +256,31 @@ void EchoelmusicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // Get current bio-data values
-    const float hrv = currentHRV.load();
-    const float coherence = currentCoherence.load();
+    // Update bio-feedback system
+    if (bioFeedbackSystem)
+    {
+        bioFeedbackSystem->update();
 
-    // Update DSP parameters based on bio-data
+        // Get modulated parameters from bio-feedback
+        auto modulatedParams = bioFeedbackSystem->getModulatedParameters();
+
+        // Apply bio-reactive audio processing
+        if (bioReactiveAudioProcessor)
+        {
+            bioReactiveAudioProcessor->process(buffer, modulatedParams);
+        }
+
+        // Update parameter display for UI (optional - shows bio-data in host)
+        auto bioData = bioFeedbackSystem->getCurrentBioData();
+        parameters.getParameter(PARAM_ID_HRV)->setValueNotifyingHost(bioData.hrv);
+        parameters.getParameter(PARAM_ID_COHERENCE)->setValueNotifyingHost(bioData.coherence);
+    }
+
+    // Legacy bio-reactive DSP (can be removed later or used as additional layer)
     if (bioReactiveDSP)
     {
-        // HRV modulates filter cutoff
-        float filterCutoff = juce::jmap(hrv, 0.0f, 1.0f, 500.0f, 10000.0f);
-        parameters.getParameter(PARAM_ID_FILTER_CUTOFF)->setValueNotifyingHost(
-            parameters.getParameterRange(PARAM_ID_FILTER_CUTOFF).convertTo0to1(filterCutoff)
-        );
-
-        // Coherence modulates reverb mix
-        float reverbMix = juce::jmap(coherence, 0.0f, 1.0f, 0.0f, 0.7f);
-        parameters.getParameter(PARAM_ID_REVERB_MIX)->setValueNotifyingHost(reverbMix);
-
-        // Process audio with bio-reactive DSP
+        const float hrv = currentHRV.load();
+        const float coherence = currentCoherence.load();
         bioReactiveDSP->process(buffer, hrv, coherence);
     }
 
