@@ -51,5 +51,29 @@ void EchoelmusicAudioProcessorEditor::resized()
 
 void EchoelmusicAudioProcessorEditor::timerCallback()
 {
-    // Simple UI handles its own updates
+    // Get audio spectrum data from processor (lock-free)
+    auto spectrumData = audioProcessor.getSpectrumData();
+
+    // Create temporary audio buffer for visualization
+    // Note: This is a simplified approach for visualization only
+    // In a production system, you'd use a lock-free FIFO for audio data
+    juce::AudioBuffer<float> tempBuffer(2, 512);
+    tempBuffer.clear();
+
+    // Convert spectrum data to fake audio samples for visualization
+    // (In production, you'd pass real audio data via lock-free FIFO)
+    for (int ch = 0; ch < 2; ++ch)
+    {
+        auto* channelData = tempBuffer.getWritePointer(ch);
+        for (int i = 0; i < tempBuffer.getNumSamples(); ++i)
+        {
+            int spectrumIndex = (i * spectrumData.size()) / tempBuffer.getNumSamples();
+            if (spectrumIndex < static_cast<int>(spectrumData.size()))
+                channelData[i] = spectrumData[spectrumIndex] * 0.1f;  // Scale down
+        }
+    }
+
+    // Update visualizers with audio data
+    if (mainUI)
+        mainUI->processBlock(tempBuffer);
 }

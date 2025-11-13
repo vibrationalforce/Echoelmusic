@@ -2,6 +2,8 @@
 
 #include <JuceHeader.h>
 #include "../Visualization/AudioVisualizers.h"
+#include "../Visualization/BioDataVisualizer.h"
+#include "../BioData/BioReactiveModulator.h"
 
 //==============================================================================
 /**
@@ -43,6 +45,17 @@ public:
         particleSystem = std::make_unique<ParticleSystem>();
         addAndMakeVisible(particleSystem.get());
 
+        // Bio-data visualizer
+        bioDataVisualizer = std::make_unique<BioDataVisualizer>();
+        addAndMakeVisible(bioDataVisualizer.get());
+
+        // Breathing pacer
+        breathingPacer = std::make_unique<BreathingPacer>();
+        addAndMakeVisible(breathingPacer.get());
+
+        // Bio-feedback system (simulation mode enabled by default in constructor)
+        bioFeedbackSystem = std::make_unique<BioFeedbackSystem>();
+
         // Visualizer labels
         addAndMakeVisible(waveformLabel);
         waveformLabel.setText("Waveform", juce::dontSendNotification);
@@ -61,6 +74,18 @@ public:
         particleLabel.setJustificationType(juce::Justification::centredLeft);
         particleLabel.setFont(juce::Font(12.0f, juce::Font::bold));
         particleLabel.setColour(juce::Label::textColourId, juce::Colour(0xff00d4ff));
+
+        addAndMakeVisible(bioDataLabel);
+        bioDataLabel.setText("Bio-Data Monitor", juce::dontSendNotification);
+        bioDataLabel.setJustificationType(juce::Justification::centredLeft);
+        bioDataLabel.setFont(juce::Font(12.0f, juce::Font::bold));
+        bioDataLabel.setColour(juce::Label::textColourId, juce::Colour(0xffff4444));
+
+        addAndMakeVisible(breathingLabel);
+        breathingLabel.setText("Coherence Training", juce::dontSendNotification);
+        breathingLabel.setJustificationType(juce::Justification::centredLeft);
+        breathingLabel.setFont(juce::Font(12.0f, juce::Font::bold));
+        breathingLabel.setColour(juce::Label::textColourId, juce::Colour(0xffff4444));
 
         setSize(1200, 800);
     }
@@ -89,10 +114,15 @@ public:
 
         bounds.removeFromTop(margin);
 
+        // Split into left (audio visualizers) and right (bio-data) panels
+        auto bioPanel = bounds.removeFromRight(bounds.getWidth() / 3);  // Right 1/3 for bio-data
+        auto audioPanel = bounds;
+
+        // ===== Audio Visualizers (Left 2/3) =====
         // Layout visualizers in 3 rows
-        auto topRow = bounds.removeFromTop((bounds.getHeight() - margin * 2) / 3);
-        auto middleRow = bounds.removeFromTop((bounds.getHeight() - margin) / 2);
-        auto bottomRow = bounds;
+        auto topRow = audioPanel.removeFromTop((audioPanel.getHeight() - margin * 2) / 3);
+        auto middleRow = audioPanel.removeFromTop((audioPanel.getHeight() - margin) / 2);
+        auto bottomRow = audioPanel;
 
         // Waveform (top)
         waveformLabel.setBounds(topRow.removeFromTop(20).reduced(margin, 0));
@@ -107,6 +137,19 @@ public:
         bottomRow.removeFromTop(margin);
         particleLabel.setBounds(bottomRow.removeFromTop(20).reduced(margin, 0));
         particleSystem->setBounds(bottomRow.reduced(margin, 5));
+
+        // ===== Bio-Data Panel (Right 1/3) =====
+        bioPanel.removeFromLeft(margin);  // Left margin
+
+        // Bio-data visualizer (top 60%)
+        auto bioTop = bioPanel.removeFromTop(bioPanel.getHeight() * 0.6f);
+        bioDataLabel.setBounds(bioTop.removeFromTop(20).reduced(margin, 0));
+        bioDataVisualizer->setBounds(bioTop.reduced(margin, 5));
+
+        // Breathing pacer (bottom 40%)
+        bioPanel.removeFromTop(margin);
+        breathingLabel.setBounds(bioPanel.removeFromTop(20).reduced(margin, 0));
+        breathingPacer->setBounds(bioPanel.reduced(margin, 5));
     }
 
     void prepareToPlay(double, int) {}
@@ -122,6 +165,24 @@ public:
 
         if (particleSystem)
             particleSystem->pushAudioData(buffer);
+
+        // Update bio-feedback system
+        if (bioFeedbackSystem)
+        {
+            // Update bio-feedback system (processes bio-data)
+            bioFeedbackSystem->update();
+
+            // Get current bio-data sample
+            auto bioSample = bioFeedbackSystem->getCurrentBioData();
+
+            // Update bio-data visualizer
+            if (bioDataVisualizer)
+                bioDataVisualizer->updateBioData(bioSample);
+
+            // Get modulated parameters (for future audio processing)
+            auto modulatedParams = bioFeedbackSystem->getModulatedParameters();
+            // TODO: Apply modulatedParams to audio processing in Phase 2
+        }
     }
 
 private:
@@ -131,10 +192,16 @@ private:
     juce::Label waveformLabel;
     juce::Label spectrumLabel;
     juce::Label particleLabel;
+    juce::Label bioDataLabel;
+    juce::Label breathingLabel;
 
     std::unique_ptr<WaveformVisualizer> waveformVisualizer;
     std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
     std::unique_ptr<ParticleSystem> particleSystem;
+    std::unique_ptr<BioDataVisualizer> bioDataVisualizer;
+    std::unique_ptr<BreathingPacer> breathingPacer;
+
+    std::unique_ptr<BioFeedbackSystem> bioFeedbackSystem;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SimpleMainUI)
 };
