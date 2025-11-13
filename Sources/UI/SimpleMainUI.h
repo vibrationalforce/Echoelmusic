@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "../Visualization/AudioVisualizers.h"
 #include "../Visualization/BioDataVisualizer.h"
+#include "../Visualization/FrequencyColorTranslator.h"
 #include "../BioData/BioReactiveModulator.h"
 
 //==============================================================================
@@ -45,6 +46,10 @@ public:
         particleSystem = std::make_unique<ParticleSystem>();
         addAndMakeVisible(particleSystem.get());
 
+        // Color spectrum analyzer (frequency-to-color translation)
+        colorSpectrumAnalyzer = std::make_unique<ColorSpectrumAnalyzer>();
+        addAndMakeVisible(colorSpectrumAnalyzer.get());
+
         // Bio-data visualizer
         bioDataVisualizer = std::make_unique<BioDataVisualizer>();
         addAndMakeVisible(bioDataVisualizer.get());
@@ -74,6 +79,12 @@ public:
         particleLabel.setJustificationType(juce::Justification::centredLeft);
         particleLabel.setFont(juce::Font(12.0f, juce::Font::bold));
         particleLabel.setColour(juce::Label::textColourId, juce::Colour(0xff00d4ff));
+
+        addAndMakeVisible(colorSpectrumLabel);
+        colorSpectrumLabel.setText("Frequency → Color Translation (Physics-Based)", juce::dontSendNotification);
+        colorSpectrumLabel.setJustificationType(juce::Justification::centredLeft);
+        colorSpectrumLabel.setFont(juce::Font(12.0f, juce::Font::bold));
+        colorSpectrumLabel.setColour(juce::Label::textColourId, juce::Colour(0xffffaa00));
 
         addAndMakeVisible(bioDataLabel);
         bioDataLabel.setText("Bio-Data Monitor", juce::dontSendNotification);
@@ -119,24 +130,30 @@ public:
         auto audioPanel = bounds;
 
         // ===== Audio Visualizers (Left 2/3) =====
-        // Layout visualizers in 3 rows
-        auto topRow = audioPanel.removeFromTop((audioPanel.getHeight() - margin * 2) / 3);
-        auto middleRow = audioPanel.removeFromTop((audioPanel.getHeight() - margin) / 2);
-        auto bottomRow = audioPanel;
+        // Layout visualizers in 4 rows
+        auto row1 = audioPanel.removeFromTop((audioPanel.getHeight() - margin * 3) / 4);
+        auto row2 = audioPanel.removeFromTop((audioPanel.getHeight() - margin * 2) / 3);
+        auto row3 = audioPanel.removeFromTop((audioPanel.getHeight() - margin) / 2);
+        auto row4 = audioPanel;
 
-        // Waveform (top)
-        waveformLabel.setBounds(topRow.removeFromTop(20).reduced(margin, 0));
-        waveformVisualizer->setBounds(topRow.reduced(margin, 5));
+        // Waveform (row 1)
+        waveformLabel.setBounds(row1.removeFromTop(20).reduced(margin, 0));
+        waveformVisualizer->setBounds(row1.reduced(margin, 5));
 
-        // Spectrum (middle)
-        middleRow.removeFromTop(margin);
-        spectrumLabel.setBounds(middleRow.removeFromTop(20).reduced(margin, 0));
-        spectrumAnalyzer->setBounds(middleRow.reduced(margin, 5));
+        // Spectrum (row 2)
+        row2.removeFromTop(margin);
+        spectrumLabel.setBounds(row2.removeFromTop(20).reduced(margin, 0));
+        spectrumAnalyzer->setBounds(row2.reduced(margin, 5));
 
-        // Particles (bottom)
-        bottomRow.removeFromTop(margin);
-        particleLabel.setBounds(bottomRow.removeFromTop(20).reduced(margin, 0));
-        particleSystem->setBounds(bottomRow.reduced(margin, 5));
+        // Color Spectrum (row 3)
+        row3.removeFromTop(margin);
+        colorSpectrumLabel.setBounds(row3.removeFromTop(20).reduced(margin, 0));
+        colorSpectrumAnalyzer->setBounds(row3.reduced(margin, 5));
+
+        // Particles (row 4)
+        row4.removeFromTop(margin);
+        particleLabel.setBounds(row4.removeFromTop(20).reduced(margin, 0));
+        particleSystem->setBounds(row4.reduced(margin, 5));
 
         // ===== Bio-Data Panel (Right 1/3) =====
         bioPanel.removeFromLeft(margin);  // Left margin
@@ -166,6 +183,9 @@ public:
         if (particleSystem)
             particleSystem->pushAudioData(buffer);
 
+        if (colorSpectrumAnalyzer)
+            colorSpectrumAnalyzer->pushAudioData(buffer);
+
         // Update bio-feedback system
         if (bioFeedbackSystem)
         {
@@ -192,12 +212,14 @@ private:
     juce::Label waveformLabel;
     juce::Label spectrumLabel;
     juce::Label particleLabel;
+    juce::Label colorSpectrumLabel;
     juce::Label bioDataLabel;
     juce::Label breathingLabel;
 
     std::unique_ptr<WaveformVisualizer> waveformVisualizer;
     std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
     std::unique_ptr<ParticleSystem> particleSystem;
+    std::unique_ptr<ColorSpectrumAnalyzer> colorSpectrumAnalyzer;
     std::unique_ptr<BioDataVisualizer> bioDataVisualizer;
     std::unique_ptr<BreathingPacer> breathingPacer;
 
