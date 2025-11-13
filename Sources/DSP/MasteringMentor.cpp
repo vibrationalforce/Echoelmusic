@@ -105,7 +105,7 @@ void MasteringMentor::generateSuggestions()
         suggestion.explanation = "Your mix is " + juce::String(std::abs(loudness.distanceFromTarget), 1).toStdString()
                                + " LU " + (loudness.distanceFromTarget > 0 ? "too loud" : "too quiet")
                                + " for " + targetGenre + ".";
-        suggestion.reasoning = loudness.genreRecommendation.toStdString();
+        suggestion.reasoning = loudness.genreRecommendation;
         suggestion.actionStep = (loudness.distanceFromTarget > 0)
             ? "Reduce output gain or use less compression. Aim for proper headroom (-6dB peak minimum)."
             : "Apply gentle limiting or compression to increase loudness. Don't sacrifice dynamics!";
