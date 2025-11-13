@@ -258,6 +258,50 @@ void SampleEngine::loadPreset(Preset preset)
             setLFOToFilter(0.5f);
             break;
 
+        case Preset::Choir:
+            setLoopEnabled(true);
+            setLoopStart(0.2f);
+            setLoopEnd(0.8f);
+            setLoopMode(LoopMode::Forward);
+            setFilterType(FilterType::LowPass);
+            setFilterCutoff(5000.0f);
+            setFilterResonance(0.3f);
+            setFilterEnvAmount(0.2f);
+            setFilterAttack(300.0f);
+            setFilterDecay(400.0f);
+            setFilterSustain(0.6f);
+            setAmpAttack(400.0f);
+            setAmpDecay(500.0f);
+            setAmpSustain(0.8f);
+            setAmpRelease(1000.0f);
+            setLFORate(4.0f);
+            setLFOToPitch(0.1f);
+            break;
+
+        case Preset::GranularPad:
+            setSampleStart(0.0f);
+            setSampleEnd(1.0f);
+            setLoopEnabled(true);
+            setLoopStart(0.1f);
+            setLoopEnd(0.9f);
+            setLoopMode(LoopMode::PingPong);
+            setTimeStretch(0.5f);  // Slow down to 50%
+            setFilterType(FilterType::LowPass);
+            setFilterCutoff(3000.0f);
+            setFilterResonance(0.4f);
+            setFilterEnvAmount(0.5f);
+            setFilterAttack(600.0f);
+            setFilterDecay(800.0f);
+            setFilterSustain(0.5f);
+            setAmpAttack(600.0f);
+            setAmpDecay(1000.0f);
+            setAmpSustain(0.7f);
+            setAmpRelease(1500.0f);
+            setLFORate(0.2f);
+            setLFOToFilter(0.4f);
+            setLFOToSampleStart(0.3f);  // Granular-like sample position modulation
+            break;
+
         default:
             loadPreset(Preset::Init);
             break;
