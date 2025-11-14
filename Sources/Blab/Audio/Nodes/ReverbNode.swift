@@ -84,6 +84,12 @@ class ReverbNode: BaseBlabNode {
 
     // MARK: - Audio Processing
 
+    // MARK: - Reverb State
+
+    private var delayBuffer: [[Float]] = []
+    private var delayIndices: [Int] = []
+    private let delaySizes = [1557, 1617, 1491, 1422, 1277, 1356, 1188, 1116]  // Prime numbers for natural reverb
+
     override func process(_ buffer: AVAudioPCMBuffer, time: AVAudioTime) -> AVAudioPCMBuffer {
         // If bypassed, return original buffer
         guard !isBypassed, isActive else {
@@ -95,9 +101,46 @@ class ReverbNode: BaseBlabNode {
             reverbUnit.wetDryMix = wetDry
         }
 
-        // Note: In a full implementation, we'd render through the AVAudioUnit
-        // For now, this is a placeholder showing the architecture
-        // Real implementation would use AVAudioEngine or manual DSP
+        // Simple reverb using multiple delay lines (Schroeder reverb)
+        guard let channelData = buffer.floatChannelData else { return buffer }
+        let frameCount = Int(buffer.frameLength)
+        let channelCount = Int(buffer.format.channelCount)
+
+        // Initialize delay buffers if needed
+        if delayBuffer.isEmpty {
+            delayBuffer = delaySizes.map { Array(repeating: Float(0), count: $0) }
+            delayIndices = Array(repeating: 0, count: delaySizes.count)
+        }
+
+        if let wetDryMix = getParameter(name: Params.wetDry) {
+            let wet = wetDryMix / 100.0
+            let dry = 1.0 - wet
+            let decay: Float = 0.5  // Reverb decay factor
+
+            for channel in 0..<channelCount {
+                let samples = UnsafeMutablePointer<Float>(channelData[channel])
+
+                for frame in 0..<frameCount {
+                    var reverbSample: Float = 0.0
+
+                    // Sum all delay lines
+                    for (i, delaySize) in delaySizes.enumerated() {
+                        let delayedSample = delayBuffer[i][delayIndices[i]]
+                        reverbSample += delayedSample
+
+                        // Write to delay line with feedback
+                        delayBuffer[i][delayIndices[i]] = samples[frame] + delayedSample * decay
+
+                        // Increment delay index
+                        delayIndices[i] = (delayIndices[i] + 1) % delaySize
+                    }
+
+                    // Mix wet and dry
+                    reverbSample *= Float(wet) / Float(delaySizes.count)
+                    samples[frame] = samples[frame] * Float(dry) + reverbSample
+                }
+            }
+        }
 
         return buffer
     }

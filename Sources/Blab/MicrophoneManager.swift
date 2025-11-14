@@ -50,6 +50,9 @@ class MicrophoneManager: NSObject, ObservableObject {
     /// YIN pitch detector for fundamental frequency estimation
     private let pitchDetector = PitchDetector()
 
+    /// Optional NodeGraph for audio effects processing
+    var nodeGraphProcessor: ((AVAudioPCMBuffer, AVAudioTime) -> AVAudioPCMBuffer)?
+
 
     // MARK: - Initialization
 
@@ -184,8 +187,20 @@ class MicrophoneManager: NSObject, ObservableObject {
     private func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
         guard let channelData = buffer.floatChannelData else { return }
 
-        let frameLength = Int(buffer.frameLength)
-        let channelDataValue = channelData.pointee
+        // Process through NodeGraph if available
+        let processedBuffer: AVAudioPCMBuffer
+        if let processor = nodeGraphProcessor {
+            let time = AVAudioTime(hostTime: mach_absolute_time())
+            processedBuffer = processor(buffer, time)
+        } else {
+            processedBuffer = buffer
+        }
+
+        // Use processed buffer for analysis
+        guard let processedChannelData = processedBuffer.floatChannelData else { return }
+
+        let frameLength = Int(processedBuffer.frameLength)
+        let channelDataValue = processedChannelData.pointee
 
         // Calculate RMS (amplitude/volume)
         var sum: Float = 0.0

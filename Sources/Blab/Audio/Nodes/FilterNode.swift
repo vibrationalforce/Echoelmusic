@@ -82,8 +82,31 @@ class FilterNode: BaseBlabNode {
             band.bandwidth = resonance
         }
 
-        // Note: In full implementation, render through AVAudioUnit
-        // This is architectural placeholder
+        // Simple low-pass filter implementation using RC filter formula
+        // This is a basic implementation - can be upgraded to AVAudioEngine routing later
+        guard let channelData = buffer.floatChannelData else { return buffer }
+        let frameCount = Int(buffer.frameLength)
+        let channelCount = Int(buffer.format.channelCount)
+
+        if let cutoff = getParameter(name: Params.cutoffFrequency) {
+            let sampleRate = buffer.format.sampleRate
+            let rc = 1.0 / (Double(cutoff) * 2.0 * .pi)
+            let dt = 1.0 / sampleRate
+            let alpha = Float(dt / (rc + dt))
+
+            // Apply simple low-pass filter to each channel
+            for channel in 0..<channelCount {
+                let samples = UnsafeMutablePointer<Float>(channelData[channel])
+                var previousOutput: Float = samples[0]
+
+                for frame in 1..<frameCount {
+                    let currentSample = samples[frame]
+                    let filtered = previousOutput + alpha * (currentSample - previousOutput)
+                    samples[frame] = filtered
+                    previousOutput = filtered
+                }
+            }
+        }
 
         return buffer
     }

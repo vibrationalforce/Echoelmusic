@@ -113,10 +113,19 @@ class AudioEngine: ObservableObject {
         // Initialize node graph with default biofeedback chain
         nodeGraph = NodeGraph.createBiofeedbackChain()
 
+        // Connect NodeGraph to MicrophoneManager for real-time audio processing
+        microphoneManager.nodeGraphProcessor = { [weak self] buffer, time in
+            guard let self = self, let graph = self.nodeGraph, graph.isProcessing else {
+                return buffer
+            }
+            return graph.process(buffer, time: time)
+        }
+
         print("🎵 AudioEngine initialized")
         print("   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "✅" : "❌")")
         print("   Head Tracking: \(headTrackingManager?.isAvailable == true ? "✅" : "❌")")
         print("   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")
+        print("   NodeGraph → MicrophoneManager connected ✅")
     }
 
 
@@ -143,6 +152,13 @@ class AudioEngine: ObservableObject {
             }
         }
 
+        // Start NodeGraph for effects processing
+        if let graph = nodeGraph {
+            // Use 48kHz sample rate and 512 frame buffer
+            graph.start(sampleRate: 48000, maxFrames: 512)
+            print("📊 NodeGraph activated with \(graph.nodes.count) nodes")
+        }
+
         // Start bio-parameter mapping updates
         startBioParameterMapping()
 
@@ -160,6 +176,9 @@ class AudioEngine: ObservableObject {
 
         // Stop spatial audio
         spatialAudioEngine?.stop()
+
+        // Stop NodeGraph
+        nodeGraph?.stop()
 
         // Stop bio-parameter mapping
         stopBioParameterMapping()
@@ -312,6 +331,20 @@ class AudioEngine: ObservableObject {
             voicePitch: voicePitch,
             audioLevel: audioLevel
         )
+
+        // Send bio-signals to NodeGraph for real-time reactivity
+        if let graph = nodeGraph, graph.isProcessing {
+            let bioSignal = BioSignal(
+                hrv: healthKit.hrvCoherence,
+                heartRate: heartKit.heartRate,
+                coherence: healthKit.hrvCoherence,
+                respiratoryRate: nil,  // TODO: Calculate from HRV
+                audioLevel: audioLevel,
+                voicePitch: voicePitch,
+                customData: [:]
+            )
+            graph.updateBioSignal(bioSignal)
+        }
 
         // Apply mapped parameters to audio engine
         applyBioParameters()
