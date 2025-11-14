@@ -215,6 +215,8 @@ target_sources(Echoelmusic
         # Core Audio Engine (NEW! 2025-11-12) ✅ TESTED
         Sources/Audio/AudioEngine.cpp
         Sources/Audio/Track.cpp
+        Sources/Audio/AudioExporter.cpp         # ✅ Audio export system (WAV, FLAC, OGG)
+        Sources/Audio/SessionManager.cpp        # ✅ Session save/load system
 
         # UI - Main Window (NEW! 2025-11-12) ✅ TESTED
         Sources/UI/MainWindow.cpp
