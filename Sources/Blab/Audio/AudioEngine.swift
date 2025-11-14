@@ -336,7 +336,7 @@ class AudioEngine: ObservableObject {
         if let graph = nodeGraph, graph.isProcessing {
             let bioSignal = BioSignal(
                 hrv: healthKit.hrvCoherence,
-                heartRate: heartKit.heartRate,
+                heartRate: healthKit.heartRate,
                 coherence: healthKit.hrvCoherence,
                 respiratoryRate: nil,  // TODO: Calculate from HRV
                 audioLevel: audioLevel,
