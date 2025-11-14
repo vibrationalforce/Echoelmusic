@@ -51,6 +51,10 @@ public class UnifiedControlHub: ObservableObject {
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
+    // Phase 3: Touch + Orientation Integration
+    private var touchTrackingManager: TouchTrackingManager?
+    private var deviceOrientationManager: DeviceOrientationManager?
+
     // TODO: Add when implementing
     // private let gazeTracker: GazeTracker?
 
@@ -285,6 +289,37 @@ public class UnifiedControlHub: ObservableObject {
         print("[UnifiedControlHub] DMX lighting disabled")
     }
 
+    /// Enable touch tracking
+    public func enableTouchTracking() {
+        let touchTracker = TouchTrackingManager()
+        self.touchTrackingManager = touchTracker
+        print("[UnifiedControlHub] Touch tracking enabled")
+    }
+
+    /// Disable touch tracking
+    public func disableTouchTracking() {
+        touchTrackingManager?.clearAllTouches()
+        touchTrackingManager = nil
+        print("[UnifiedControlHub] Touch tracking disabled")
+    }
+
+    /// Enable device orientation + motion tracking
+    public func enableOrientationTracking() {
+        let orientationManager = DeviceOrientationManager()
+        orientationManager.startOrientationTracking()
+        orientationManager.startMotionTracking()
+        self.deviceOrientationManager = orientationManager
+        print("[UnifiedControlHub] Orientation + motion tracking enabled")
+    }
+
+    /// Disable orientation tracking
+    public func disableOrientationTracking() {
+        deviceOrientationManager?.stopOrientationTracking()
+        deviceOrientationManager?.stopMotionTracking()
+        deviceOrientationManager = nil
+        print("[UnifiedControlHub] Orientation + motion tracking disabled")
+    }
+
     // MARK: - Lifecycle
 
     /// Start the unified control system
@@ -296,6 +331,13 @@ public class UnifiedControlHub: ObservableObject {
 
         // Start hand tracking if enabled
         handTrackingManager?.startTracking()
+
+        // Start touch tracking if enabled
+        // TouchTrackingManager is event-driven, no start needed
+
+        // Start device orientation + motion tracking if enabled
+        deviceOrientationManager?.startOrientationTracking()
+        deviceOrientationManager?.startMotionTracking()
 
         // HealthKit monitoring already started in enableBiometricMonitoring()
 

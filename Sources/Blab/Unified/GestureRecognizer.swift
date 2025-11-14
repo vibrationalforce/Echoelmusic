@@ -22,6 +22,10 @@ class GestureRecognizer: ObservableObject {
     @Published var leftPinchAmount: Float = 0.0
     @Published var rightPinchAmount: Float = 0.0
 
+    /// Spread amount (0 = closed, 1 = fully spread)
+    @Published var leftSpreadAmount: Float = 0.0
+    @Published var rightSpreadAmount: Float = 0.0
+
 
     // MARK: - Gesture Types
 
@@ -78,21 +82,25 @@ class GestureRecognizer: ObservableObject {
             let gesture = recognizeGesture(for: .left)
             leftHandGesture = gesture.type
             leftPinchAmount = gesture.pinchAmount
+            leftSpreadAmount = gesture.spreadAmount
 
             // Update history
             addToHistory(gesture: gesture.type, confidence: gesture.confidence)
         } else {
             leftHandGesture = .none
             leftPinchAmount = 0.0
+            leftSpreadAmount = 0.0
         }
 
         if tracker.rightHandDetected {
             let gesture = recognizeGesture(for: .right)
             rightHandGesture = gesture.type
             rightPinchAmount = gesture.pinchAmount
+            rightSpreadAmount = gesture.spreadAmount
         } else {
             rightHandGesture = .none
             rightPinchAmount = 0.0
+            rightSpreadAmount = 0.0
         }
 
         // Calculate overall confidence from history
@@ -102,38 +110,38 @@ class GestureRecognizer: ObservableObject {
         updateHandVelocity()
     }
 
-    private func recognizeGesture(for hand: HandTrackingManager.Hand) -> (type: Gesture, confidence: Float, pinchAmount: Float) {
+    private func recognizeGesture(for hand: HandTrackingManager.Hand) -> (type: Gesture, confidence: Float, pinchAmount: Float, spreadAmount: Float) {
         guard let tracker = handTracker else {
-            return (.none, 0.0, 0.0)
+            return (.none, 0.0, 0.0, 0.0)
         }
 
         // Check each gesture in priority order
         // 1. Pinch (highest priority - most precise)
         if let pinchResult = detectPinch(hand: hand, tracker: tracker) {
-            return (pinchResult.isPinched ? .pinch : .none, pinchResult.confidence, pinchResult.amount)
+            return (pinchResult.isPinched ? .pinch : .none, pinchResult.confidence, pinchResult.amount, 0.0)
         }
 
         // 2. Fist
         if detectFist(hand: hand, tracker: tracker) {
-            return (.fist, 0.9, 0.0)
+            return (.fist, 0.9, 0.0, 0.0)
         }
 
         // 3. Spread
-        if detectSpread(hand: hand, tracker: tracker) {
-            return (.spread, 0.85, 0.0)
+        if let spreadResult = detectSpread(hand: hand, tracker: tracker) {
+            return (.spread, 0.85, 0.0, spreadResult.amount)
         }
 
         // 4. Point
         if detectPoint(hand: hand, tracker: tracker) {
-            return (.point, 0.8, 0.0)
+            return (.point, 0.8, 0.0, 0.0)
         }
 
         // 5. Swipe (check velocity)
         if detectSwipe(hand: hand) {
-            return (.swipe, 0.75, 0.0)
+            return (.swipe, 0.75, 0.0, 0.0)
         }
 
-        return (.none, 0.0, 0.0)
+        return (.none, 0.0, 0.0, 0.0)
     }
 
 
@@ -155,14 +163,16 @@ class GestureRecognizer: ObservableObject {
     }
 
     /// Detect spread gesture (all fingers extended and separated)
-    private func detectSpread(hand: HandTrackingManager.Hand, tracker: HandTrackingManager) -> Bool {
+    private func detectSpread(hand: HandTrackingManager.Hand, tracker: HandTrackingManager) -> (isSpread: Bool, amount: Float)? {
         // Check if all fingers are extended
         let fingers: [HandTrackingManager.Finger] = [.thumb, .index, .middle, .ring, .little]
 
+        var totalExtension: Float = 0.0
         for finger in fingers {
             let extension = tracker.getFingerExtension(hand: hand, finger: finger)
+            totalExtension += extension
             if extension < 0.6 {
-                return false // Finger not extended enough
+                return nil // Finger not extended enough
             }
         }
 
@@ -170,14 +180,20 @@ class GestureRecognizer: ObservableObject {
         guard let indexTip = tracker.getJointPosition(hand: hand, joint: .indexTip),
               let middleTip = tracker.getJointPosition(hand: hand, joint: .middleTip),
               let ringTip = tracker.getJointPosition(hand: hand, joint: .ringTip) else {
-            return false
+            return nil
         }
 
         let indexMiddleDist = distance(indexTip, middleTip)
         let middleRingDist = distance(middleTip, ringTip)
 
+        // Calculate spread amount (0-1) based on finger spacing and extension
+        let avgSpacing = (indexMiddleDist + middleRingDist) / 2.0
+        let avgExtension = totalExtension / Float(fingers.count)
+        let spreadAmount = min(1.0, (avgSpacing / spreadThreshold) * avgExtension)
+
         // Fingers should be spread apart
-        return indexMiddleDist > spreadThreshold && middleRingDist > spreadThreshold
+        let isSpread = indexMiddleDist > spreadThreshold && middleRingDist > spreadThreshold
+        return (isSpread, spreadAmount)
     }
 
     /// Detect fist gesture (all fingers closed)
