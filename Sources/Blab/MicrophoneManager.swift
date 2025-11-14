@@ -38,6 +38,15 @@ class MicrophoneManager: NSObject, ObservableObject {
     /// The input node that captures microphone data
     private var inputNode: AVAudioInputNode?
 
+    /// Output engine for speaker playback
+    private var outputEngine: AVAudioEngine?
+
+    /// Player node for output
+    private var playerNode: AVAudioPlayerNode?
+
+    /// Audio format for output
+    private var outputFormat: AVAudioFormat?
+
     /// FFT setup for frequency analysis
     private var fftSetup: vDSP_DFT_Setup?
 
@@ -52,6 +61,9 @@ class MicrophoneManager: NSObject, ObservableObject {
 
     /// Optional NodeGraph for audio effects processing
     var nodeGraphProcessor: ((AVAudioPCMBuffer, AVAudioTime) -> AVAudioPCMBuffer)?
+
+    /// Whether to enable audio output (playback through speakers)
+    var enableAudioOutput: Bool = true
 
 
     // MARK: - Initialization
@@ -102,9 +114,9 @@ class MicrophoneManager: NSObject, ObservableObject {
         }
 
         do {
-            // Configure the audio session for recording
+            // Configure the audio session for playthrough (record + play)
             let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.record, mode: .measurement, options: [])
+            try audioSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
             try audioSession.setActive(true)
 
             // Create and configure the audio engine
@@ -119,6 +131,11 @@ class MicrophoneManager: NSObject, ObservableObject {
 
             // Store sample rate for frequency calculation
             sampleRate = format.sampleRate
+
+            // Setup output engine if audio output is enabled
+            if enableAudioOutput {
+                setupOutputEngine(format: format)
+            }
 
             // Setup FFT
             fftSetup = vDSP_DFT_zop_CreateSetup(
@@ -141,6 +158,9 @@ class MicrophoneManager: NSObject, ObservableObject {
             }
 
             print("🎙️ Recording started with FFT enabled")
+            if enableAudioOutput {
+                print("🔊 Audio output (playback) enabled")
+            }
 
         } catch {
             print("❌ Failed to start recording: \(error.localizedDescription)")
@@ -150,8 +170,49 @@ class MicrophoneManager: NSObject, ObservableObject {
         }
     }
 
+    /// Setup output engine for speaker playback
+    private func setupOutputEngine(format: AVAudioFormat) {
+        // Create output engine
+        outputEngine = AVAudioEngine()
+        guard let outputEngine = outputEngine else { return }
+
+        // Create player node
+        playerNode = AVAudioPlayerNode()
+        guard let playerNode = playerNode else { return }
+
+        // Store format
+        outputFormat = format
+
+        // Attach player node to output engine
+        outputEngine.attach(playerNode)
+
+        // Connect player to output
+        outputEngine.connect(playerNode, to: outputEngine.mainMixerNode, format: format)
+        outputEngine.connect(outputEngine.mainMixerNode, to: outputEngine.outputNode, format: format)
+
+        // Start output engine
+        do {
+            try outputEngine.start()
+            playerNode.play()
+            print("🔊 Output engine started")
+        } catch {
+            print("❌ Failed to start output engine: \(error)")
+        }
+    }
+
     /// Stop recording audio
     func stopRecording() {
+        // Stop output engine first
+        if let player = playerNode, player.isPlaying {
+            player.stop()
+        }
+        if let engine = outputEngine, engine.isRunning {
+            engine.stop()
+        }
+        outputEngine = nil
+        playerNode = nil
+        outputFormat = nil
+
         // Safely stop the audio engine
         if let engine = audioEngine, engine.isRunning {
             engine.stop()
@@ -178,6 +239,7 @@ class MicrophoneManager: NSObject, ObservableObject {
         }
 
         print("⏹️ Recording stopped")
+        print("🔇 Audio output stopped")
     }
 
 
@@ -225,6 +287,11 @@ class MicrophoneManager: NSObject, ObservableObject {
 
         // Perform YIN pitch detection for fundamental frequency
         let detectedPitch = pitchDetector.detectPitch(buffer: buffer, sampleRate: Float(sampleRate))
+
+        // Send processed audio to output (speakers) if enabled
+        if enableAudioOutput, let player = playerNode, let engine = outputEngine, engine.isRunning {
+            player.scheduleBuffer(processedBuffer, completionHandler: nil)
+        }
 
         // Update UI on main thread with smoothing
         DispatchQueue.main.async { [weak self] in
