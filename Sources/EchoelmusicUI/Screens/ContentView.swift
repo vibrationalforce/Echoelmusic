@@ -66,15 +66,36 @@ public struct ContentView: View {
             VStack(spacing: 40) {
 
                 // App Title
-                Text("ECHOELMUSIC")
-                    .font(.system(size: 40, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .padding(.top, 60)
+                VStack(spacing: 8) {
+                    Text("ECHOELMUSIC")
+                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
 
-                Text("breath → sound → consciousness")
-                    .font(.system(size: 12, weight: .light))
-                    .foregroundColor(.white.opacity(0.5))
-                    .tracking(3)
+                    Text("breath → sound → consciousness")
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundColor(.white.opacity(0.5))
+                        .tracking(3)
+
+                    // AudioEngine Status Indicator
+                    if audioEngine.isRunning {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 6, height: 6)
+                            Text("Audio Engine Active")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.green.opacity(0.8))
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(Color.green.opacity(0.1))
+                        )
+                        .transition(.scale.combined(with: .opacity))
+                    }
+                }
+                .padding(.top, 60)
 
                 Spacer()
 
@@ -625,16 +646,24 @@ public struct ContentView: View {
         } else {
             if microphoneManager.hasPermission {
                 // Start via AudioEngine (handles all components)
-                audioEngine.start()
+                Task {
+                    do {
+                        try await audioEngine.start()
 
-                // Start HealthKit monitoring if authorized
-                if healthKitManager.isAuthorized {
-                    healthKitManager.startMonitoring()
+                        // Start HealthKit monitoring if authorized
+                        if healthKitManager.isAuthorized {
+                            healthKitManager.startMonitoring()
+                        }
+
+                        // Provide haptic feedback
+                        await MainActor.run {
+                            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                            impactFeedback.impactOccurred()
+                        }
+                    } catch {
+                        print("❌ Failed to start audio engine: \(error)")
+                    }
                 }
-
-                // Provide haptic feedback
-                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                impactFeedback.impactOccurred()
             } else {
                 // Request permission and show alert if denied
                 microphoneManager.requestPermission()

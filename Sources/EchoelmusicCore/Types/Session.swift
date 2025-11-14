@@ -138,7 +138,116 @@ public struct Session: Identifiable, Codable {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
 
-        return try decoder.decode(Session.self, from: data)
+        let session = try decoder.decode(Session.self, from: data)
+        try session.validate()
+        return session
+    }
+
+
+    // MARK: - Validation
+
+    /// Validate session data
+    public func validate() throws {
+        // Validate name
+        guard !name.isEmpty else {
+            throw SessionError.invalidName
+        }
+
+        guard name.count <= 200 else {
+            throw SessionError.nameTooLong
+        }
+
+        // Validate tempo
+        guard tempo > 0 && tempo < 999 else {
+            throw SessionError.invalidTempo
+        }
+
+        // Validate time signature
+        guard timeSignature.numerator > 0 && timeSignature.numerator <= 32 else {
+            throw SessionError.invalidTimeSignature
+        }
+
+        guard timeSignature.denominator > 0 && [1, 2, 4, 8, 16, 32].contains(timeSignature.denominator) else {
+            throw SessionError.invalidTimeSignature
+        }
+
+        // Validate tracks
+        for track in tracks {
+            guard !track.name.isEmpty else {
+                throw SessionError.invalidTrackName
+            }
+
+            guard track.volume >= 0 && track.volume <= 1.0 else {
+                throw SessionError.invalidTrackVolume
+            }
+
+            guard track.pan >= -1.0 && track.pan <= 1.0 else {
+                throw SessionError.invalidTrackPan
+            }
+        }
+
+        // Validate bio data points
+        for point in bioData {
+            guard point.timestamp >= 0 else {
+                throw SessionError.invalidBioData
+            }
+
+            guard point.hrv >= 0 && point.hrv <= 500 else {
+                throw SessionError.invalidBioData
+            }
+
+            guard point.heartRate >= 0 && point.heartRate <= 300 else {
+                throw SessionError.invalidBioData
+            }
+
+            guard point.coherence >= 0 && point.coherence <= 100 else {
+                throw SessionError.invalidBioData
+            }
+        }
+    }
+}
+
+
+// MARK: - Session Errors
+
+public enum SessionError: Error, LocalizedError {
+    case invalidName
+    case nameTooLong
+    case invalidTempo
+    case invalidTimeSignature
+    case invalidTrackName
+    case invalidTrackVolume
+    case invalidTrackPan
+    case invalidBioData
+    case saveFailed(Error)
+    case loadFailed(Error)
+    case sessionNotFound
+
+    public var errorDescription: String? {
+        switch self {
+        case .invalidName:
+            return "Session name cannot be empty"
+        case .nameTooLong:
+            return "Session name is too long (max 200 characters)"
+        case .invalidTempo:
+            return "Tempo must be between 1 and 998 BPM"
+        case .invalidTimeSignature:
+            return "Invalid time signature"
+        case .invalidTrackName:
+            return "Track name cannot be empty"
+        case .invalidTrackVolume:
+            return "Track volume must be between 0.0 and 1.0"
+        case .invalidTrackPan:
+            return "Track pan must be between -1.0 and 1.0"
+        case .invalidBioData:
+            return "Invalid biometric data point"
+        case .saveFailed(let error):
+            return "Failed to save session: \(error.localizedDescription)"
+        case .loadFailed(let error):
+            return "Failed to load session: \(error.localizedDescription)"
+        case .sessionNotFound:
+            return "Session not found"
+        }
     }
 }
 
