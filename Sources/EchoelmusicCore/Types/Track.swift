@@ -2,7 +2,7 @@ import Foundation
 import AVFoundation
 
 /// Represents a single audio track in a recording session
-struct Track: Identifiable, Codable {
+public struct Track: Identifiable, Codable {
     let id: UUID
     var name: String
     var url: URL?
@@ -18,9 +18,9 @@ struct Track: Identifiable, Codable {
 
     // MARK: - Track Type
 
-    var type: TrackType
+    public var type: TrackType
 
-    enum TrackType: String, Codable {
+    public enum TrackType: String, Codable {
         case audio = "Audio"
         case voice = "Voice"
         case binaural = "Binaural"
@@ -31,7 +31,7 @@ struct Track: Identifiable, Codable {
 
     // MARK: - Initialization
 
-    init(
+    public init(
         name: String,
         type: TrackType = .audio,
         volume: Float = 0.8,
@@ -56,7 +56,7 @@ struct Track: Identifiable, Codable {
     // MARK: - Audio File Management
 
     /// Set audio file URL for this track
-    mutating func setAudioFile(_ url: URL) {
+    public mutating func setAudioFile(_ url: URL) {
         self.url = url
         self.modifiedAt = Date()
 
@@ -67,7 +67,7 @@ struct Track: Identifiable, Codable {
     }
 
     /// Generate waveform data for visualization
-    mutating func generateWaveform(samples: Int = 100) {
+    public mutating func generateWaveform(samples: Int = 100) {
         guard let url = url else { return }
 
         do {
@@ -111,12 +111,12 @@ struct Track: Identifiable, Codable {
 
     // MARK: - Effects Management
 
-    mutating func addEffect(_ nodeID: String) {
+    public mutating func addEffect(_ nodeID: String) {
         effects.append(nodeID)
         modifiedAt = Date()
     }
 
-    mutating func removeEffect(_ nodeID: String) {
+    public mutating func removeEffect(_ nodeID: String) {
         effects.removeAll { $0 == nodeID }
         modifiedAt = Date()
     }
@@ -141,28 +141,28 @@ struct Track: Identifiable, Codable {
 
 extension Track {
     /// Create voice track preset
-    static func voiceTrack() -> Track {
+    public static func voiceTrack() -> Track {
         var track = Track(name: "Voice", type: .voice)
         track.volume = 0.9
         return track
     }
 
     /// Create binaural beats track
-    static func binauralTrack() -> Track {
+    public static func binauralTrack() -> Track {
         var track = Track(name: "Binaural Beats", type: .binaural)
         track.volume = 0.3
         return track
     }
 
     /// Create spatial audio track
-    static func spatialTrack() -> Track {
+    public static func spatialTrack() -> Track {
         var track = Track(name: "Spatial", type: .spatial)
         track.volume = 0.7
         return track
     }
 
     /// Create master mix track
-    static func masterTrack() -> Track {
+    public static func masterTrack() -> Track {
         var track = Track(name: "Master", type: .master)
         track.volume = 1.0
         return track

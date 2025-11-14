@@ -1,7 +1,7 @@
 import Foundation
 
 /// Recording session containing multiple tracks and settings
-struct Session: Identifiable, Codable {
+public struct Session: Identifiable, Codable {
     let id: UUID
     var name: String
     var tracks: [Track]
@@ -16,7 +16,7 @@ struct Session: Identifiable, Codable {
 
     // MARK: - Initialization
 
-    init(name: String, tempo: Double = 120.0) {
+    public init(name: String, tempo: Double = 120.0) {
         self.id = UUID()
         self.name = name
         self.tracks = []
@@ -32,17 +32,17 @@ struct Session: Identifiable, Codable {
 
     // MARK: - Track Management
 
-    mutating func addTrack(_ track: Track) {
+    public mutating func addTrack(_ track: Track) {
         tracks.append(track)
         modifiedAt = Date()
     }
 
-    mutating func removeTrack(id: UUID) {
+    public mutating func removeTrack(id: UUID) {
         tracks.removeAll { $0.id == id }
         modifiedAt = Date()
     }
 
-    mutating func updateTrack(_ track: Track) {
+    public mutating func updateTrack(_ track: Track) {
         if let index = tracks.firstIndex(where: { $0.id == track.id }) {
             tracks[index] = track
             modifiedAt = Date()
@@ -52,30 +52,30 @@ struct Session: Identifiable, Codable {
 
     // MARK: - Bio Data Management
 
-    mutating func addBioDataPoint(_ point: BioDataPoint) {
+    public mutating func addBioDataPoint(_ point: BioDataPoint) {
         bioData.append(point)
     }
 
-    mutating func clearBioData() {
+    public mutating func clearBioData() {
         bioData.removeAll()
     }
 
 
     // MARK: - Session Statistics
 
-    var averageHRV: Double {
+    public var averageHRV: Double {
         guard !bioData.isEmpty else { return 0 }
         let sum = bioData.reduce(0.0) { $0 + $1.hrv }
         return sum / Double(bioData.count)
     }
 
-    var averageHeartRate: Double {
+    public var averageHeartRate: Double {
         guard !bioData.isEmpty else { return 60 }
         let sum = bioData.reduce(0.0) { $0 + $1.heartRate }
         return sum / Double(bioData.count)
     }
 
-    var averageCoherence: Double {
+    public var averageCoherence: Double {
         guard !bioData.isEmpty else { return 50 }
         let sum = bioData.reduce(0.0) { $0 + $1.coherence }
         return sum / Double(bioData.count)
@@ -85,7 +85,7 @@ struct Session: Identifiable, Codable {
     // MARK: - File Management
 
     /// Get session directory URL
-    func getSessionDirectory() -> URL {
+    public func getSessionDirectory() -> URL {
         let documentsPath = FileManager.default.urls(
             for: .documentDirectory,
             in: .userDomainMask
@@ -97,7 +97,7 @@ struct Session: Identifiable, Codable {
     }
 
     /// Create session directory
-    func createSessionDirectory() throws {
+    public func createSessionDirectory() throws {
         let sessionDir = getSessionDirectory()
         try FileManager.default.createDirectory(
             at: sessionDir,
@@ -106,7 +106,7 @@ struct Session: Identifiable, Codable {
     }
 
     /// Save session to disk
-    func save() throws {
+    public func save() throws {
         try createSessionDirectory()
 
         let sessionFile = getSessionDirectory()
@@ -123,7 +123,7 @@ struct Session: Identifiable, Codable {
     }
 
     /// Load session from disk
-    static func load(id: UUID) throws -> Session {
+    public static func load(id: UUID) throws -> Session {
         let documentsPath = FileManager.default.urls(
             for: .documentDirectory,
             in: .userDomainMask
@@ -146,40 +146,40 @@ struct Session: Identifiable, Codable {
 // MARK: - Supporting Types
 
 /// Time signature (e.g., 4/4, 3/4)
-struct TimeSignature: Codable {
+public struct TimeSignature: Codable {
     var numerator: Int
     var denominator: Int
 
-    var description: String {
+    public var description: String {
         "\(numerator)/\(denominator)"
     }
 
     /// Alternative property names for clarity
-    var beats: Int {
+    public var beats: Int {
         get { numerator }
         set { numerator = newValue }
     }
 
-    var noteValue: Int {
+    public var noteValue: Int {
         get { denominator }
         set { denominator = newValue }
     }
 
     /// Initialize with beats and noteValue
-    init(beats: Int, noteValue: Int) {
+    public init(beats: Int, noteValue: Int) {
         self.numerator = beats
         self.denominator = noteValue
     }
 
     /// Initialize with numerator and denominator
-    init(numerator: Int, denominator: Int) {
+    public init(numerator: Int, denominator: Int) {
         self.numerator = numerator
         self.denominator = denominator
     }
 }
 
 /// Bio-data point captured during session
-struct BioDataPoint: Codable {
+public struct BioDataPoint: Codable {
     var timestamp: TimeInterval
     var hrv: Double
     var heartRate: Double
@@ -187,7 +187,7 @@ struct BioDataPoint: Codable {
     var audioLevel: Float
     var frequency: Float
 
-    init(
+    public init(
         timestamp: TimeInterval,
         hrv: Double,
         heartRate: Double,
@@ -205,13 +205,13 @@ struct BioDataPoint: Codable {
 }
 
 /// Session metadata
-struct SessionMetadata: Codable {
+public struct SessionMetadata: Codable {
     var tags: [String]
     var genre: String?
     var mood: String?
     var notes: String?
 
-    init(
+    public init(
         tags: [String] = [],
         genre: String? = nil,
         mood: String? = nil,
@@ -229,14 +229,14 @@ struct SessionMetadata: Codable {
 
 extension Session {
     /// Session template types
-    enum SessionTemplate {
+    public enum SessionTemplate {
         case meditation
         case healing
         case creative
         case custom
     }
     /// Create meditation session template
-    static func meditationTemplate() -> Session {
+    public static func meditationTemplate() -> Session {
         var session = Session(name: "Meditation Session", tempo: 60)
         session.addTrack(.binauralTrack())
         session.metadata.genre = "Meditation"
@@ -245,7 +245,7 @@ extension Session {
     }
 
     /// Create healing session template
-    static func healingTemplate() -> Session {
+    public static func healingTemplate() -> Session {
         var session = Session(name: "Healing Session", tempo: 72)
         session.addTrack(.voiceTrack())
         session.addTrack(.binauralTrack())
@@ -255,7 +255,7 @@ extension Session {
     }
 
     /// Create creative session template
-    static func creativeTemplate() -> Session {
+    public static func creativeTemplate() -> Session {
         var session = Session(name: "Creative Session", tempo: 120)
         session.addTrack(.voiceTrack())
         session.addTrack(.binauralTrack())
