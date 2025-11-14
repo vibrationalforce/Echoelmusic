@@ -1,12 +1,17 @@
 import SwiftUI
+import EchoelmusicControl
 
 /// Visual indicator for head tracking position
 /// Shows real-time head rotation as a 3D sphere with direction indicator
-struct HeadTrackingVisualization: View {
+public struct HeadTrackingVisualization: View {
 
     @ObservedObject var headTrackingManager: HeadTrackingManager
 
-    var body: some View {
+    public init(headTrackingManager: HeadTrackingManager) {
+        self.headTrackingManager = headTrackingManager
+    }
+
+    public var body: some View {
         VStack(spacing: 12) {
             // 3D Position Indicator
             ZStack {

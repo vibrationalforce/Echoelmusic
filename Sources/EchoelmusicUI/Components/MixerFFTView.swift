@@ -1,13 +1,18 @@
 import SwiftUI
 
 /// Real-time FFT visualization for mixer channels
-struct MixerFFTView: View {
+public struct MixerFFTView: View {
     let fftMagnitudes: [Float]
     let trackColor: Color
 
     private let barCount = 32
 
-    var body: some View {
+    public init(fftMagnitudes: [Float], trackColor: Color) {
+        self.fftMagnitudes = fftMagnitudes
+        self.trackColor = trackColor
+    }
+
+    public var body: some View {
         GeometryReader { geometry in
             Canvas { context, size in
                 guard !fftMagnitudes.isEmpty else {
@@ -104,11 +109,16 @@ struct MixerFFTView: View {
 }
 
 /// Compact FFT meter for mixer channel strips
-struct CompactFFTMeter: View {
+public struct CompactFFTMeter: View {
     let fftMagnitudes: [Float]
     let trackColor: Color
 
-    var body: some View {
+    public init(fftMagnitudes: [Float], trackColor: Color) {
+        self.fftMagnitudes = fftMagnitudes
+        self.trackColor = trackColor
+    }
+
+    public var body: some View {
         MixerFFTView(fftMagnitudes: fftMagnitudes, trackColor: trackColor)
             .frame(height: 60)
     }

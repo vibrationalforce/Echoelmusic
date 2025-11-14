@@ -1,8 +1,10 @@
 import SwiftUI
+import EchoelmusicAudio
+import EchoelmusicControl
 
 /// UI Controls for Spatial Audio
 /// Shows spatial audio toggle, mode selector, and status
-struct SpatialAudioControlsView: View {
+public struct SpatialAudioControlsView: View {
 
     @ObservedObject var audioEngine: AudioEngine
     @ObservedObject var deviceCapabilities: DeviceCapabilities
@@ -11,7 +13,14 @@ struct SpatialAudioControlsView: View {
 
     @State private var showDetails = false
 
-    var body: some View {
+    public init(audioEngine: AudioEngine, deviceCapabilities: DeviceCapabilities, headTrackingManager: HeadTrackingManager, spatialAudioEngine: SpatialAudioEngine) {
+        self.audioEngine = audioEngine
+        self.deviceCapabilities = deviceCapabilities
+        self.headTrackingManager = headTrackingManager
+        self.spatialAudioEngine = spatialAudioEngine
+    }
+
+    public var body: some View {
         VStack(spacing: 15) {
             // Header
             HStack {

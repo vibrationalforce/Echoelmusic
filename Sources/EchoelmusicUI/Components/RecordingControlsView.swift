@@ -1,7 +1,10 @@
 import SwiftUI
+import EchoelmusicAudio
+import EchoelmusicBio
+import EchoelmusicCore
 
 /// Main recording controls view with session management
-struct RecordingControlsView: View {
+public struct RecordingControlsView: View {
     @EnvironmentObject var recordingEngine: RecordingEngine
     @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var microphoneManager: MicrophoneManager
@@ -12,7 +15,9 @@ struct RecordingControlsView: View {
     @State private var showMixer = false
     @State private var showExportOptions = false
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         VStack(spacing: 20) {
             // Header
             HStack {

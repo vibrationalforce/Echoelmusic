@@ -1,11 +1,16 @@
 import SwiftUI
 
 /// Real-time waveform visualization during recording
-struct RecordingWaveformView: View {
+public struct RecordingWaveformView: View {
     let waveformData: [Float]
     let level: Float
 
-    var body: some View {
+    public init(waveformData: [Float], level: Float) {
+        self.waveformData = waveformData
+        self.level = level
+    }
+
+    public var body: some View {
         GeometryReader { geometry in
             Canvas { context, size in
                 guard !waveformData.isEmpty else {

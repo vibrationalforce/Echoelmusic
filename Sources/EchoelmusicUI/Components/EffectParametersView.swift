@@ -1,11 +1,17 @@
 import SwiftUI
+import EchoelmusicAudio
 
 /// Effects parameter editor for fine-tuning audio node parameters
-struct EffectParametersView: View {
+public struct EffectParametersView: View {
     let node: EchoelmusicNode
     @ObservedObject var nodeGraph: NodeGraph
 
-    var body: some View {
+    public init(node: EchoelmusicNode, nodeGraph: NodeGraph) {
+        self.node = node
+        self.nodeGraph = nodeGraph
+    }
+
+    public var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {

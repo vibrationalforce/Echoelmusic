@@ -1,9 +1,12 @@
 import SwiftUI
+import EchoelmusicAudio
+import EchoelmusicBio
+import EchoelmusicControl
 
 /// Main entry point for the Echoelmusic app
 /// This is where your iOS app starts running
 @main
-struct EchoelmusicApp: App {
+public struct EchoelmusicApp: App {
 
     /// StateObject ensures the MicrophoneManager stays alive
     /// throughout the app's lifetime
@@ -21,7 +24,7 @@ struct EchoelmusicApp: App {
     /// UnifiedControlHub for multimodal input
     @StateObject private var unifiedControlHub: UnifiedControlHub
 
-    init() {
+    public init() {
         // Initialize AudioEngine with MicrophoneManager
         let micManager = MicrophoneManager()
         _microphoneManager = StateObject(wrappedValue: micManager)

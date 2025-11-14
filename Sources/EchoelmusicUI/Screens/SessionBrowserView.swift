@@ -1,7 +1,9 @@
 import SwiftUI
+import EchoelmusicAudio
+import EchoelmusicCore
 
 /// Session browser and manager for loading/organizing recording sessions
-struct SessionBrowserView: View {
+public struct SessionBrowserView: View {
     @EnvironmentObject var recordingEngine: RecordingEngine
     @Environment(\.dismiss) var dismiss
 
@@ -20,7 +22,9 @@ struct SessionBrowserView: View {
         case durationDescending = "Duration (Longest)"
     }
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         NavigationView {
             VStack(spacing: 0) {
                 // Search bar
@@ -227,12 +231,18 @@ struct SessionBrowserView: View {
 
 // MARK: - Session Row
 
-struct SessionRow: View {
+public struct SessionRow: View {
     let session: SessionInfo
     let onLoad: () -> Void
     let onDelete: () -> Void
 
-    var body: some View {
+    public init(session: SessionInfo, onLoad: @escaping () -> Void, onDelete: @escaping () -> Void) {
+        self.session = session
+        self.onLoad = onLoad
+        self.onDelete = onDelete
+    }
+
+    public var body: some View {
         Button(action: onLoad) {
             HStack(spacing: 16) {
                 // Session icon
@@ -311,13 +321,24 @@ struct SessionRow: View {
 
 // MARK: - Session Info Model
 
-struct SessionInfo: Identifiable {
-    let id: UUID
-    var name: String
-    var duration: TimeInterval
-    var trackCount: Int
-    var genre: String
-    var mood: String
-    var createdAt: Date
-    var modifiedAt: Date
+public struct SessionInfo: Identifiable {
+    public let id: UUID
+    public var name: String
+    public var duration: TimeInterval
+    public var trackCount: Int
+    public var genre: String
+    public var mood: String
+    public var createdAt: Date
+    public var modifiedAt: Date
+
+    public init(id: UUID, name: String, duration: TimeInterval, trackCount: Int, genre: String, mood: String, createdAt: Date, modifiedAt: Date) {
+        self.id = id
+        self.name = name
+        self.duration = duration
+        self.trackCount = trackCount
+        self.genre = genre
+        self.mood = mood
+        self.createdAt = createdAt
+        self.modifiedAt = modifiedAt
+    }
 }

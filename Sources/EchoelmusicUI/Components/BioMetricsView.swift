@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Clean, modern display of biometric data with visual indicators
 /// Shows heart rate, HRV coherence, and voice pitch in an elegant layout
-struct BioMetricsView: View {
+public struct BioMetricsView: View {
 
     /// Heart rate in BPM
     let heartRate: Double
@@ -19,7 +19,14 @@ struct BioMetricsView: View {
     /// Animation state for pulsing heart
     @State private var heartScale: CGFloat = 1.0
 
-    var body: some View {
+    public init(heartRate: Double, hrvCoherence: Double, voicePitch: Float, isActive: Bool) {
+        self.heartRate = heartRate
+        self.hrvCoherence = hrvCoherence
+        self.voicePitch = voicePitch
+        self.isActive = isActive
+    }
+
+    public var body: some View {
         HStack(spacing: 30) {
             // Heart rate with pulsing icon
             VStack(spacing: 8) {

@@ -1,14 +1,19 @@
 import SwiftUI
+import EchoelmusicAudio
 
 /// Visual effects chain editor with node routing
-struct EffectsChainView: View {
+public struct EffectsChainView: View {
     @ObservedObject var nodeGraph: NodeGraph
 
     @State private var selectedNode: UUID?
     @State private var showNodePicker = false
     @State private var showPresets = false
 
-    var body: some View {
+    public init(nodeGraph: NodeGraph) {
+        self.nodeGraph = nodeGraph
+    }
+
+    public var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
@@ -388,12 +393,18 @@ struct EffectsChainView: View {
 
 // MARK: - Node Row
 
-struct NodeRow: View {
+public struct NodeRow: View {
     let node: EchoelmusicNode
     @ObservedObject var nodeGraph: NodeGraph
     let isSelected: Bool
 
-    var body: some View {
+    public init(node: EchoelmusicNode, nodeGraph: NodeGraph, isSelected: Bool) {
+        self.node = node
+        self.nodeGraph = nodeGraph
+        self.isSelected = isSelected
+    }
+
+    public var body: some View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
                 // Node icon

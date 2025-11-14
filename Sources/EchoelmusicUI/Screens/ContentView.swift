@@ -1,8 +1,11 @@
 import SwiftUI
+import EchoelmusicAudio
+import EchoelmusicBio
+import EchoelmusicVisual
 
 /// Main user interface for the Echoelmusic app
 /// Optimized with proper state management and error handling
-struct ContentView: View {
+public struct ContentView: View {
 
     /// Access to the microphone manager from the environment
     @EnvironmentObject var microphoneManager: MicrophoneManager
@@ -45,7 +48,9 @@ struct ContentView: View {
         microphoneManager.isRecording
     }
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         ZStack {
             // Background gradient
             LinearGradient(

@@ -1,14 +1,20 @@
 import SwiftUI
+import EchoelmusicAudio
+import EchoelmusicCore
 
 /// Track list view with individual track controls
-struct TrackListView: View {
+public struct TrackListView: View {
     @EnvironmentObject var recordingEngine: RecordingEngine
     @Binding var session: Session
 
     @State private var showDeleteConfirmation = false
     @State private var trackToDelete: UUID?
 
-    var body: some View {
+    public init(session: Binding<Session>) {
+        self._session = session
+    }
+
+    public var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 12) {
@@ -60,13 +66,17 @@ struct TrackListView: View {
 }
 
 /// Individual track row with controls
-struct TrackRow: View {
+public struct TrackRow: View {
     @EnvironmentObject var recordingEngine: RecordingEngine
     let track: Track
 
     @State private var showTrackDetails = false
 
-    var body: some View {
+    public init(track: Track) {
+        self.track = track
+    }
+
+    public var body: some View {
         VStack(spacing: 12) {
             // Track header
             HStack(spacing: 12) {
@@ -321,7 +331,7 @@ struct TrackRow: View {
 
 // MARK: - Track Type Extensions
 
-extension Track.TrackType {
+public extension Track.TrackType {
     var icon: String {
         switch self {
         case .audio: return "waveform"

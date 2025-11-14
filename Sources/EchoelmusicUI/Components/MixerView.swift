@@ -1,11 +1,17 @@
 import SwiftUI
+import EchoelmusicAudio
+import EchoelmusicCore
 
 /// Professional mixer view with faders and metering
-struct MixerView: View {
+public struct MixerView: View {
     @EnvironmentObject var recordingEngine: RecordingEngine
     @Binding var session: Session
 
-    var body: some View {
+    public init(session: Binding<Session>) {
+        self._session = session
+    }
+
+    public var body: some View {
         NavigationView {
             GeometryReader { geometry in
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -41,11 +47,15 @@ struct MixerView: View {
 }
 
 /// Individual mixer channel strip
-struct MixerChannelStrip: View {
+public struct MixerChannelStrip: View {
     @EnvironmentObject var recordingEngine: RecordingEngine
     let track: Track
 
-    var body: some View {
+    public init(track: Track) {
+        self.track = track
+    }
+
+    public var body: some View {
         VStack(spacing: 12) {
             // Track name
             Text(track.name)
@@ -255,10 +265,12 @@ struct MixerChannelStrip: View {
 }
 
 /// Master channel strip
-struct MasterChannelStrip: View {
+public struct MasterChannelStrip: View {
     @EnvironmentObject var recordingEngine: RecordingEngine
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         VStack(spacing: 12) {
             // Master label
             Text("MASTER")
