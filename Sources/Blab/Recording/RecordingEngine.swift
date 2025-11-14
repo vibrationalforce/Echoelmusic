@@ -52,6 +52,9 @@ class RecordingEngine: ObservableObject {
     /// Reference to main audio engine for audio routing
     private weak var mainAudioEngine: AudioEngine?
 
+    /// Reference to unified audio I/O manager (Phase 4)
+    private weak var audioIOManager: AudioIOManager?
+
     /// Directory for storing session files
     private let sessionsDirectory: URL
 
@@ -91,6 +94,13 @@ class RecordingEngine: ObservableObject {
     func connectAudioEngine(_ audioEngine: AudioEngine) {
         self.mainAudioEngine = audioEngine
         print("🔌 Connected to main audio engine")
+    }
+
+    /// Connect to unified audio I/O manager (Phase 4 - Recommended)
+    /// - Parameter audioIOManager: The unified AudioIOManager instance
+    func connectAudioIOManager(_ audioIOManager: AudioIOManager) {
+        self.audioIOManager = audioIOManager
+        print("🔌 Connected to unified AudioIOManager (Ultra-Low-Latency I/O)")
     }
 
 
@@ -186,23 +196,48 @@ class RecordingEngine: ObservableObject {
 
     /// Setup audio engine tap for recording
     private func setupAudioRecording() throws {
-        audioEngine = AVAudioEngine()
-        guard let engine = audioEngine else { return }
+        // Prefer unified AudioIOManager if available (Phase 4)
+        if let audioIO = audioIOManager, audioIO.isRunning {
+            // Use unified engine (recommended - better latency)
+            let engine = audioIO.getEngine()
+            audioEngine = engine
+            inputNode = engine.inputNode
 
-        inputNode = engine.inputNode
-        guard let input = inputNode else { return }
+            let inputFormat = inputNode?.outputFormat(forBus: 0) ?? recordingFormat
 
-        let inputFormat = input.outputFormat(forBus: 0)
-
-        // Install tap to capture audio data
-        input.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] buffer, time in
-            Task { @MainActor [weak self] in
-                self?.processRecordingBuffer(buffer)
+            // Install tap on master mixer for recording
+            // This captures the processed audio with effects
+            engine.mainMixerNode.installTap(
+                onBus: 0,
+                bufferSize: 4096,
+                format: inputFormat
+            ) { [weak self] buffer, time in
+                Task { @MainActor [weak self] in
+                    self?.processRecordingBuffer(buffer)
+                }
             }
-        }
 
-        try engine.start()
-        print("🎙️ Audio recording engine started")
+            print("🎙️ Recording using unified AudioIOManager (low-latency)")
+        } else {
+            // Fallback: Create separate audio engine (legacy)
+            audioEngine = AVAudioEngine()
+            guard let engine = audioEngine else { return }
+
+            inputNode = engine.inputNode
+            guard let input = inputNode else { return }
+
+            let inputFormat = input.outputFormat(forBus: 0)
+
+            // Install tap to capture audio data
+            input.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] buffer, time in
+                Task { @MainActor [weak self] in
+                    self?.processRecordingBuffer(buffer)
+                }
+            }
+
+            try engine.start()
+            print("🎙️ Audio recording engine started (legacy mode)")
+        }
     }
 
     /// Process incoming audio buffer during recording
@@ -252,10 +287,21 @@ class RecordingEngine: ObservableObject {
     func stopRecording() throws {
         guard isRecording else { return }
 
-        // Stop audio engine
-        if let engine = audioEngine, let input = inputNode {
-            input.removeTap(onBus: 0)
-            engine.stop()
+        // Remove tap from audio engine
+        if let engine = audioEngine {
+            if audioIOManager != nil {
+                // Using unified AudioIOManager - remove tap from main mixer
+                engine.mainMixerNode.removeTap(onBus: 0)
+                // Don't stop the unified engine (it's shared)
+                print("🎙️ Recording stopped (unified engine remains running)")
+            } else {
+                // Using separate engine - remove tap and stop engine
+                if let input = inputNode {
+                    input.removeTap(onBus: 0)
+                }
+                engine.stop()
+                print("🎙️ Recording engine stopped (legacy mode)")
+            }
         }
 
         isRecording = false

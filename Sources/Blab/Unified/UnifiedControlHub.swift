@@ -51,6 +51,9 @@ public class UnifiedControlHub: ObservableObject {
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
+    // Phase 4: Ultra-Low-Latency I/O Management
+    private var audioIOManager: AudioIOManager?
+
     // TODO: Add when implementing
     // private let gazeTracker: GazeTracker?
 
@@ -283,6 +286,53 @@ public class UnifiedControlHub: ObservableObject {
         midiToLightMapper?.disconnect()
         midiToLightMapper = nil
         print("[UnifiedControlHub] DMX lighting disabled")
+    }
+
+    // MARK: - Phase 4: Ultra-Low-Latency I/O Management
+
+    /// Enable ultra-low-latency audio I/O with direct monitoring
+    /// - Parameter latencyMode: Target latency mode (ultraLow: ~2.7ms, low: ~5.3ms, normal: ~10.7ms)
+    public func enableAudioIO(latencyMode: AudioConfiguration.LatencyMode = .low) async throws {
+        let audioIO = AudioIOManager()
+        self.audioIOManager = audioIO
+
+        // Set latency mode and start audio I/O
+        try await audioIO.setLatencyMode(latencyMode)
+        try audioIO.start()
+
+        print("[UnifiedControlHub] Audio I/O enabled (\(latencyMode.description))")
+        print(audioIO.statusDescription)
+    }
+
+    /// Disable audio I/O
+    public func disableAudioIO() {
+        audioIOManager?.stop()
+        audioIOManager = nil
+        print("[UnifiedControlHub] Audio I/O disabled")
+    }
+
+    /// Set direct monitoring on/off
+    /// - Parameter enabled: True to enable zero-latency direct monitoring
+    public func setDirectMonitoring(_ enabled: Bool) {
+        audioIOManager?.setDirectMonitoring(enabled)
+    }
+
+    /// Set wet/dry mix for audio I/O
+    /// - Parameter mix: 0.0 = dry (direct monitoring), 1.0 = wet (effects)
+    public func setAudioWetDryMix(_ mix: Float) {
+        audioIOManager?.setWetDryMix(mix)
+    }
+
+    /// Set input gain
+    /// - Parameter db: Gain in dB (-96 to +12 dB)
+    public func setInputGain(_ db: Float) {
+        audioIOManager?.setInputGain(db)
+    }
+
+    /// Switch audio I/O latency mode at runtime
+    /// - Parameter mode: Target latency mode
+    public func setAudioLatencyMode(_ mode: AudioConfiguration.LatencyMode) async throws {
+        try await audioIOManager?.setLatencyMode(mode)
     }
 
     // MARK: - Lifecycle
