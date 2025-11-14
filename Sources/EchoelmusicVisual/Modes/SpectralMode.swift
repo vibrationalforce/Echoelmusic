@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Spectral analyzer visualization
 /// Shows frequency spectrum as vertical bars (like a spectrum analyzer)
-struct SpectralMode: View {
+public struct SpectralMode: View {
     /// FFT magnitude data (frequency bins)
     var fftMagnitudes: [Float]
 
@@ -15,7 +15,13 @@ struct SpectralMode: View {
     /// Number of bars to display
     private let barCount = 32
 
-    var body: some View {
+    public init(fftMagnitudes: [Float], audioLevel: Float, hrvCoherence: Double) {
+        self.fftMagnitudes = fftMagnitudes
+        self.audioLevel = audioLevel
+        self.hrvCoherence = hrvCoherence
+    }
+
+    public var body: some View {
         GeometryReader { geometry in
             HStack(spacing: geometry.size.width / CGFloat(barCount) * 0.2) {
                 ForEach(0..<barCount, id: \.self) { index in
@@ -45,13 +51,20 @@ struct SpectralMode: View {
 }
 
 /// Single spectrum bar
-struct SpectrumBar: View {
+public struct SpectrumBar: View {
     var magnitude: Float
     var index: Int
     var totalBars: Int
     var hrvCoherence: Double
 
-    var body: some View {
+    public init(magnitude: Float, index: Int, totalBars: Int, hrvCoherence: Double) {
+        self.magnitude = magnitude
+        self.index = index
+        self.totalBars = totalBars
+        self.hrvCoherence = hrvCoherence
+    }
+
+    public var body: some View {
         GeometryReader { geometry in
             VStack {
                 Spacer()

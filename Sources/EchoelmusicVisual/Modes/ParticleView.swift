@@ -7,7 +7,7 @@ import SwiftUI
 /// - Voice pitch influences particle size
 /// - Physics: gravity, turbulence (heart rate), center attractor (coherence)
 /// - 60 FPS TimelineView updates
-struct ParticleView: View {
+public struct ParticleView: View {
 
     /// Whether the visualization is active (recording)
     let isActive: Bool
@@ -41,7 +41,16 @@ struct ParticleView: View {
         return minCount + Int(Float(range) * audioLevel)
     }
 
-    var body: some View {
+    public init(isActive: Bool, audioLevel: Float, frequency: Float?, voicePitch: Float, hrvCoherence: Double, heartRate: Double) {
+        self.isActive = isActive
+        self.audioLevel = audioLevel
+        self.frequency = frequency
+        self.voicePitch = voicePitch
+        self.hrvCoherence = hrvCoherence
+        self.heartRate = heartRate
+    }
+
+    public var body: some View {
         TimelineView(.animation) { timeline in
             Canvas { context, size in
                 let center = CGPoint(x: size.width / 2, y: size.height / 2)
@@ -303,15 +312,26 @@ struct ParticleView: View {
 // MARK: - Particle Model
 
 /// Particle with physics properties and lifetime
-struct Particle: Identifiable {
-    let id: UUID
-    var position: CGPoint
-    var velocity: CGVector
-    var size: CGFloat
-    var color: Color
-    var alpha: Float
-    let lifetime: Double
-    var age: Double
+public struct Particle: Identifiable {
+    public let id: UUID
+    public var position: CGPoint
+    public var velocity: CGVector
+    public var size: CGFloat
+    public var color: Color
+    public var alpha: Float
+    public let lifetime: Double
+    public var age: Double
+
+    public init(id: UUID, position: CGPoint, velocity: CGVector, size: CGFloat, color: Color, alpha: Float, lifetime: Double, age: Double) {
+        self.id = id
+        self.position = position
+        self.velocity = velocity
+        self.size = size
+        self.color = color
+        self.alpha = alpha
+        self.lifetime = lifetime
+        self.age = age
+    }
 }
 
 

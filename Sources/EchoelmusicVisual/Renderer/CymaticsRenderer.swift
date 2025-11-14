@@ -5,7 +5,7 @@ import SwiftUI
 /// Metal-based Cymatics Renderer
 /// Renders real-time audio-reactive cymatics patterns using GPU shaders
 @MainActor
-class CymaticsRenderer: NSObject, MTKViewDelegate {
+public class CymaticsRenderer: NSObject, MTKViewDelegate {
 
     // MARK: - Metal Components
 
@@ -64,7 +64,7 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 
     // MARK: - Initialization
 
-    override init() {
+    public override init() {
         super.init()
         setupMetal()
     }
@@ -131,12 +131,12 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 
     // MARK: - MTKViewDelegate
 
-    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+    public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         // Update resolution uniform
         uniforms.resolution = SIMD2<Float>(Float(size.width), Float(size.height))
     }
 
-    func draw(in view: MTKView) {
+    public func draw(in view: MTKView) {
         // Update time
         uniforms.time = Float(Date().timeIntervalSince(startTime))
 
@@ -182,7 +182,7 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 
     // MARK: - Errors
 
-    enum RendererError: Error {
+    public enum RendererError: Error {
         case libraryCreationFailed
         case shaderLoadFailed
         case pipelineCreationFailed
@@ -193,7 +193,7 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 // MARK: - SwiftUI Integration
 
 /// SwiftUI view wrapper for Metal Cymatics Renderer
-struct CymaticsView: UIViewRepresentable {
+public struct CymaticsView: UIViewRepresentable {
 
     /// Audio level (0.0 - 1.0)
     var audioLevel: Float
@@ -207,12 +207,18 @@ struct CymaticsView: UIViewRepresentable {
     /// Heart rate (BPM)
     var heartRate: Double
 
+    public init(audioLevel: Float, frequency: Float, hrvCoherence: Double, heartRate: Double) {
+        self.audioLevel = audioLevel
+        self.frequency = frequency
+        self.hrvCoherence = hrvCoherence
+        self.heartRate = heartRate
+    }
 
-    func makeCoordinator() -> Coordinator {
+    public func makeCoordinator() -> Coordinator {
         Coordinator()
     }
 
-    func makeUIView(context: Context) -> MTKView {
+    public func makeUIView(context: Context) -> MTKView {
         let mtkView = MTKView()
         mtkView.device = MTLCreateSystemDefaultDevice()
         mtkView.delegate = context.coordinator.renderer
@@ -224,7 +230,7 @@ struct CymaticsView: UIViewRepresentable {
         return mtkView
     }
 
-    func updateUIView(_ mtkView: MTKView, context: Context) {
+    public func updateUIView(_ mtkView: MTKView, context: Context) {
         // Update renderer with current values
         context.coordinator.renderer.audioLevel = audioLevel
         context.coordinator.renderer.frequency = frequency
@@ -235,7 +241,7 @@ struct CymaticsView: UIViewRepresentable {
 
     // MARK: - Coordinator
 
-    class Coordinator {
+    public class Coordinator {
         let renderer = CymaticsRenderer()
     }
 }

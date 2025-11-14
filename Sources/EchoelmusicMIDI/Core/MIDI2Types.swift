@@ -20,10 +20,10 @@ import CoreMIDI
 // MARK: - UMP Packet Structure
 
 /// Universal MIDI Packet (32-bit base)
-struct UMPPacket32 {
+public struct UMPPacket32 {
     let word1: UInt32
 
-    init(messageType: UInt8, group: UInt8, status: UInt8, data1: UInt8, data2: UInt8 = 0) {
+    public init(messageType: UInt8, group: UInt8, status: UInt8, data1: UInt8, data2: UInt8 = 0) {
         // Bit layout: [MT:4][Group:4][Status:8][Data1:8][Data2:8]
         word1 = (UInt32(messageType & 0xF) << 28) |
                 (UInt32(group & 0xF) << 24) |
@@ -32,27 +32,27 @@ struct UMPPacket32 {
                 UInt32(data2)
     }
 
-    var messageType: UInt8 {
+    public var messageType: UInt8 {
         UInt8((word1 >> 28) & 0xF)
     }
 
-    var group: UInt8 {
+    public var group: UInt8 {
         UInt8((word1 >> 24) & 0xF)
     }
 
-    var status: UInt8 {
+    public var status: UInt8 {
         UInt8((word1 >> 16) & 0xFF)
     }
 
-    var data1: UInt8 {
+    public var data1: UInt8 {
         UInt8((word1 >> 8) & 0xFF)
     }
 
-    var data2: UInt8 {
+    public var data2: UInt8 {
         UInt8(word1 & 0xFF)
     }
 
-    var bytes: [UInt8] {
+    public var bytes: [UInt8] {
         [
             UInt8((word1 >> 24) & 0xFF),
             UInt8((word1 >> 16) & 0xFF),
@@ -63,11 +63,11 @@ struct UMPPacket32 {
 }
 
 /// Universal MIDI Packet (64-bit, for MIDI 2.0 messages)
-struct UMPPacket64 {
+public struct UMPPacket64 {
     let word1: UInt32
     let word2: UInt32
 
-    init(messageType: UInt8, group: UInt8, status: UInt8, channel: UInt8,
+    public init(messageType: UInt8, group: UInt8, status: UInt8, channel: UInt8,
          index: UInt8, data: UInt32) {
         // Word 1: [MT:4][Group:4][Status:4][Channel:4][Index:8][Reserved:8]
         word1 = (UInt32(messageType & 0xF) << 28) |
@@ -80,31 +80,31 @@ struct UMPPacket64 {
         word2 = data
     }
 
-    var messageType: UInt8 {
+    public var messageType: UInt8 {
         UInt8((word1 >> 28) & 0xF)
     }
 
-    var group: UInt8 {
+    public var group: UInt8 {
         UInt8((word1 >> 24) & 0xF)
     }
 
-    var status: UInt8 {
+    public var status: UInt8 {
         UInt8((word1 >> 20) & 0xF)
     }
 
-    var channel: UInt8 {
+    public var channel: UInt8 {
         UInt8((word1 >> 16) & 0xF)
     }
 
-    var index: UInt8 {
+    public var index: UInt8 {
         UInt8((word1 >> 8) & 0xFF)
     }
 
-    var data: UInt32 {
+    public var data: UInt32 {
         word2
     }
 
-    var bytes: [UInt8] {
+    public var bytes: [UInt8] {
         [
             UInt8((word1 >> 24) & 0xFF),
             UInt8((word1 >> 16) & 0xFF),
@@ -120,7 +120,7 @@ struct UMPPacket64 {
 
 // MARK: - Message Type Constants
 
-enum UMPMessageType: UInt8 {
+public enum UMPMessageType: UInt8 {
     case utility = 0x0
     case systemRealTime = 0x1
     case midi1ChannelVoice = 0x2
@@ -131,7 +131,7 @@ enum UMPMessageType: UInt8 {
 
 // MARK: - MIDI 2.0 Status Codes
 
-enum MIDI2Status: UInt8 {
+public enum MIDI2Status: UInt8 {
     // Channel voice messages (Type 4)
     case noteOff = 0x8
     case noteOn = 0x9
@@ -150,7 +150,7 @@ enum MIDI2Status: UInt8 {
 // MARK: - Per-Note Controller IDs
 
 /// Per-Note Controller numbers (MIDI 2.0)
-enum PerNoteController: UInt8 {
+public enum PerNoteController: UInt8 {
     case modulation = 1          // CC 1
     case breath = 2              // CC 2
     case expression = 11         // CC 11
@@ -168,7 +168,7 @@ enum PerNoteController: UInt8 {
 
 // MARK: - MIDI 2.0 Message Builders
 
-extension UMPPacket64 {
+public extension UMPPacket64 {
 
     /// Create a MIDI 2.0 Note On message
     /// - Parameters:
@@ -279,7 +279,7 @@ extension UMPPacket64 {
 
 // MARK: - Utility Extensions
 
-extension Float {
+public extension Float {
     /// Convert normalized 0-1 value to MIDI 2.0 32-bit resolution
     var toMIDI2Value: UInt32 {
         UInt32(min(max(self, 0.0), 1.0) * 4294967295.0)
@@ -292,7 +292,7 @@ extension Float {
     }
 }
 
-extension UInt32 {
+public extension UInt32 {
     /// Convert MIDI 2.0 32-bit value to normalized 0-1
     var fromMIDI2Value: Float {
         Float(self) / 4294967295.0

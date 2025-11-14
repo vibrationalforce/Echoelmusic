@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Classic oscilloscope waveform visualization
 /// Shows audio waveform in real-time like a traditional oscilloscope
-struct WaveformMode: View {
+public struct WaveformMode: View {
     /// Audio buffer data
     var audioBuffer: [Float]
 
@@ -12,7 +12,13 @@ struct WaveformMode: View {
     /// HRV Coherence for color
     var hrvCoherence: Double
 
-    var body: some View {
+    public init(audioBuffer: [Float], audioLevel: Float, hrvCoherence: Double) {
+        self.audioBuffer = audioBuffer
+        self.audioLevel = audioLevel
+        self.hrvCoherence = hrvCoherence
+    }
+
+    public var body: some View {
         Canvas { context, size in
             let width = size.width
             let height = size.height

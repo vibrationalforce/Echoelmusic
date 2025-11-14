@@ -7,7 +7,7 @@ import Combine
 /// Voice Pitch → Base Note, Harmonics
 /// Implements exponential smoothing for natural parameter changes
 @MainActor
-class BioParameterMapper: ObservableObject {
+public class BioParameterMapper: ObservableObject {
 
     // MARK: - Published Mapped Parameters
 
@@ -86,13 +86,15 @@ class BioParameterMapper: ObservableObject {
 
     // MARK: - Public Methods
 
+    public init() {}
+
     /// Update all mapped parameters from biometric data
     /// - Parameters:
     ///   - hrvCoherence: HRV coherence score (0-100)
     ///   - heartRate: Heart rate (BPM)
     ///   - voicePitch: Detected voice pitch (Hz)
     ///   - audioLevel: Current audio level (0.0-1.0)
-    func updateParameters(
+    public func updateParameters(
         hrvCoherence: Double,
         heartRate: Double,
         voicePitch: Float,
@@ -291,7 +293,7 @@ class BioParameterMapper: ObservableObject {
     // MARK: - Presets
 
     /// Apply preset for specific state
-    func applyPreset(_ preset: BioPreset) {
+    public func applyPreset(_ preset: BioPreset) {
         switch preset {
         case .meditation:
             reverbWet = 0.7
@@ -325,7 +327,7 @@ class BioParameterMapper: ObservableObject {
         print("🎛️  Applied preset: \(preset.rawValue)")
     }
 
-    enum BioPreset: String, CaseIterable {
+    public enum BioPreset: String, CaseIterable {
         case meditation = "Meditation"
         case focus = "Focus"
         case relaxation = "Deep Relaxation"
@@ -339,7 +341,7 @@ class BioParameterMapper: ObservableObject {
 extension BioParameterMapper {
 
     /// Validate that all parameters are in valid ranges
-    var isValid: Bool {
+    public var isValid: Bool {
         reverbWet >= 0.0 && reverbWet <= 1.0 &&
         filterCutoff >= 20.0 && filterCutoff <= 20000.0 &&
         amplitude >= 0.0 && amplitude <= 1.0 &&
@@ -348,7 +350,7 @@ extension BioParameterMapper {
     }
 
     /// Get parameter summary for debugging
-    var parameterSummary: String {
+    public var parameterSummary: String {
         """
         BioParameter Mapping:
         - Reverb: \(Int(reverbWet * 100))%

@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Mandala visualization with radial symmetry
 /// Creates sacred geometry patterns that respond to audio and bio-signals
-struct MandalaMode: View {
+public struct MandalaMode: View {
     /// Audio level
     var audioLevel: Float
 
@@ -18,7 +18,14 @@ struct MandalaMode: View {
     /// Animation time
     @State private var time: Double = 0
 
-    var body: some View {
+    public init(audioLevel: Float, frequency: Float, hrvCoherence: Double, heartRate: Double) {
+        self.audioLevel = audioLevel
+        self.frequency = frequency
+        self.hrvCoherence = hrvCoherence
+        self.heartRate = heartRate
+    }
+
+    public var body: some View {
         TimelineView(.animation) { timeline in
             Canvas { context, size in
                 let center = CGPoint(x: size.width / 2, y: size.height / 2)

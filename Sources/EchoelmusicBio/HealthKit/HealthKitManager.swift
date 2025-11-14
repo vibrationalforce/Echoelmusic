@@ -6,7 +6,7 @@ import Accelerate
 /// Manages HealthKit integration for real-time HRV and heart rate monitoring
 /// Implements HeartMath Institute's coherence algorithm for biofeedback
 @MainActor
-class HealthKitManager: ObservableObject {
+public class HealthKitManager: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -56,7 +56,7 @@ class HealthKitManager: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         checkAvailability()
     }
 
@@ -82,7 +82,7 @@ class HealthKitManager: ObservableObject {
 
     /// Request authorization to access HealthKit data
     /// - Throws: HealthKit authorization errors
-    func requestAuthorization() async throws {
+    public func requestAuthorization() async throws {
         guard HKHealthStore.isHealthDataAvailable() else {
             let error = NSError(
                 domain: "com.echoelmusic.healthkit",
@@ -119,7 +119,7 @@ class HealthKitManager: ObservableObject {
     // MARK: - Monitoring Control
 
     /// Start real-time monitoring of heart rate and HRV
-    func startMonitoring() {
+    public func startMonitoring() {
         guard isAuthorized else {
             errorMessage = "HealthKit not authorized. Please grant access."
             return
@@ -132,7 +132,7 @@ class HealthKitManager: ObservableObject {
     }
 
     /// Stop all HealthKit monitoring
-    func stopMonitoring() {
+    public func stopMonitoring() {
         if let query = heartRateQuery {
             healthStore.stop(query)
             heartRateQuery = nil
@@ -303,7 +303,7 @@ class HealthKitManager: ObservableObject {
     ///
     /// - Parameter rrIntervals: Array of RR intervals in milliseconds
     /// - Returns: Coherence score from 0 (low) to 100 (high)
-    func calculateCoherence(rrIntervals: [Double]) -> Double {
+    public func calculateCoherence(rrIntervals: [Double]) -> Double {
         guard rrIntervals.count >= 30 else { return 0.0 }
 
         // Step 1: Detrend the data (remove linear trend)

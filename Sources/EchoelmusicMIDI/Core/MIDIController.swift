@@ -4,7 +4,7 @@ import Combine
 
 /// MIDI controller support for external hardware control
 @MainActor
-class MIDIController: ObservableObject {
+public class MIDIController: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -14,23 +14,23 @@ class MIDIController: ObservableObject {
 
     // MARK: - MIDI Device Model
 
-    struct MIDIDevice: Identifiable, Equatable {
-        let id: MIDIEndpointRef
-        let name: String
-        let manufacturer: String
-        let isOnline: Bool
+    public struct MIDIDevice: Identifiable, Equatable {
+        public let id: MIDIEndpointRef
+        public let name: String
+        public let manufacturer: String
+        public let isOnline: Bool
     }
 
     // MARK: - MIDI Message Model
 
-    struct MIDIMessage {
-        let timestamp: Date
-        let type: MessageType
-        let channel: UInt8
-        let data1: UInt8
-        let data2: UInt8
+    public struct MIDIMessage {
+        public let timestamp: Date
+        public let type: MessageType
+        public let channel: UInt8
+        public let data1: UInt8
+        public let data2: UInt8
 
-        enum MessageType {
+        public enum MessageType {
             case noteOn
             case noteOff
             case controlChange
@@ -40,38 +40,45 @@ class MIDIController: ObservableObject {
             case unknown
         }
 
-        var controllerNumber: UInt8? {
+        public var controllerNumber: UInt8? {
             type == .controlChange ? data1 : nil
         }
 
-        var controllerValue: UInt8? {
+        public var controllerValue: UInt8? {
             type == .controlChange ? data2 : nil
         }
 
-        var noteNumber: UInt8? {
+        public var noteNumber: UInt8? {
             (type == .noteOn || type == .noteOff) ? data1 : nil
         }
 
-        var velocity: UInt8? {
+        public var velocity: UInt8? {
             (type == .noteOn || type == .noteOff) ? data2 : nil
         }
     }
 
     // MARK: - MIDI Mapping
 
-    struct MIDIMapping {
-        let controllerNumber: UInt8
-        let parameter: MIDIParameter
-        let minValue: Float
-        let maxValue: Float
+    public struct MIDIMapping {
+        public let controllerNumber: UInt8
+        public let parameter: MIDIParameter
+        public let minValue: Float
+        public let maxValue: Float
 
-        func map(midiValue: UInt8) -> Float {
+        public init(controllerNumber: UInt8, parameter: MIDIParameter, minValue: Float, maxValue: Float) {
+            self.controllerNumber = controllerNumber
+            self.parameter = parameter
+            self.minValue = minValue
+            self.maxValue = maxValue
+        }
+
+        public func map(midiValue: UInt8) -> Float {
             let normalized = Float(midiValue) / 127.0
             return minValue + normalized * (maxValue - minValue)
         }
     }
 
-    enum MIDIParameter {
+    public enum MIDIParameter {
         case volume
         case pan
         case filterCutoff
@@ -96,7 +103,7 @@ class MIDIController: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         setupMIDI()
     }
 
@@ -251,26 +258,26 @@ class MIDIController: ObservableObject {
     // MARK: - Mapping Management
 
     /// Add MIDI CC mapping
-    func addMapping(_ mapping: MIDIMapping) {
+    public func addMapping(_ mapping: MIDIMapping) {
         mappings.append(mapping)
         print("🎹 Added MIDI mapping: CC\(mapping.controllerNumber) → \(mapping.parameter)")
     }
 
     /// Remove all mappings
-    func clearMappings() {
+    public func clearMappings() {
         mappings.removeAll()
         print("🎹 Cleared all MIDI mappings")
     }
 
     /// Register message handler
-    func onMIDIMessage(_ handler: @escaping (MIDIMessage) -> Void) {
+    public func onMIDIMessage(_ handler: @escaping (MIDIMessage) -> Void) {
         messageHandlers.append(handler)
     }
 
     // MARK: - Default Mappings
 
     /// Setup default control mappings
-    func setupDefaultMappings() {
+    public func setupDefaultMappings() {
         clearMappings()
 
         // Standard MIDI CC mappings
@@ -300,7 +307,7 @@ class MIDIController: ObservableObject {
 
 // MARK: - MIDI Learn Mode
 
-extension MIDIController {
+public extension MIDIController {
     /// Start MIDI learn mode for parameter
     func startLearnMode(for parameter: MIDIParameter, minValue: Float, maxValue: Float, timeout: TimeInterval = 10.0) async -> UInt8? {
         print("🎹 MIDI Learn: Waiting for controller input...")

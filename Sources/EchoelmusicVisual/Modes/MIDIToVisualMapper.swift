@@ -6,7 +6,7 @@ import Combine
 /// Cymatics, Mandala, Waveform, Spectral visualizations
 /// Integrates with Metal shaders and SwiftUI Canvas
 @MainActor
-class MIDIToVisualMapper: ObservableObject {
+public class MIDIToVisualMapper: ObservableObject {
 
     // MARK: - Published Visual Parameters
 
@@ -29,15 +29,21 @@ class MIDIToVisualMapper: ObservableObject {
         let timestamp: Date = Date()
     }
 
+    // MARK: - Initialization
+
+    public init() {}
+
     // MARK: - Visual Parameter Structures
 
-    struct CymaticsParameters {
+    public struct CymaticsParameters {
         var frequency: Float = 440.0          // Note → Chladni pattern frequency
         var amplitude: Float = 0.5            // Velocity → Pattern amplitude
         var hue: Float = 0.5                  // HRV Coherence → Color hue (0-1)
         var patterns: [ChladniPattern] = []   // Active patterns per note
 
-        struct ChladniPattern {
+        public init() {}
+
+        public struct ChladniPattern {
             let frequency: Float
             let amplitude: Float
             let position: SIMD2<Float>
@@ -45,14 +51,16 @@ class MIDIToVisualMapper: ObservableObject {
         }
     }
 
-    struct MandalaParameters {
+    public struct MandalaParameters {
         var petalCount: Int = 8               // Note → Petal count (6-12)
         var petalSize: Float = 0.5            // Velocity → Petal size
         var rotationSpeed: Float = 1.0        // Heart rate → Rotation
         var hue: Float = 0.5                  // HRV → Color hue
         var layers: [MandalaLayer] = []       // Multi-layer mandala
 
-        struct MandalaLayer {
+        public init() {}
+
+        public struct MandalaLayer {
             let petalCount: Int
             let petalSize: Float
             let rotationSpeed: Float
@@ -61,27 +69,33 @@ class MIDIToVisualMapper: ObservableObject {
         }
     }
 
-    struct WaveformParameters {
+    public struct WaveformParameters {
         var waveform: [Float] = []            // Audio buffer
         var amplitude: Float = 1.0            // Overall amplitude
         var color: Color = .cyan              // HRV-based color
         var glowIntensity: Float = 0.5        // Audio level → Glow
+
+        public init() {}
     }
 
-    struct SpectralParameters {
+    public struct SpectralParameters {
         var magnitudes: [Float] = []          // FFT magnitudes (32 bars)
         var hue: Float = 0.5                  // HRV → Base hue
         var barGradient: [Color] = []         // Frequency-based gradient
+
+        public init() {}
     }
 
-    struct ParticleParameters {
+    public struct ParticleParameters {
         var particles: [Particle] = []        // Active particles
         var emissionRate: Float = 10.0        // Notes → Emission rate
         var particleColor: Color = .white
         var particleSize: Float = 2.0
         var velocity: SIMD2<Float> = SIMD2(0, 1)
 
-        struct Particle {
+        public init() {}
+
+        public struct Particle {
             let id: UUID = UUID()
             var position: SIMD2<Float>
             var velocity: SIMD2<Float>
@@ -94,7 +108,7 @@ class MIDIToVisualMapper: ObservableObject {
     // MARK: - Biometric Data Structure
 
     /// Bio-reactive visual data from HealthKit/sensors
-    struct BioParameters {
+    public struct BioParameters {
         var hrvCoherence: Double
         var heartRate: Double
         var breathingRate: Double
@@ -104,7 +118,7 @@ class MIDIToVisualMapper: ObservableObject {
     // MARK: - MIDI → Visual Mapping
 
     /// Map MIDI note on to visual parameters
-    func handleNoteOn(note: UInt8, velocity: Float) {
+    public func handleNoteOn(note: UInt8, velocity: Float) {
         let state = NoteVisualState(note: note, velocity: velocity)
         activeNotes[note] = state
 
@@ -121,7 +135,7 @@ class MIDIToVisualMapper: ObservableObject {
     }
 
     /// Map MIDI note off to visual parameters
-    func handleNoteOff(note: UInt8) {
+    public func handleNoteOff(note: UInt8) {
         activeNotes.removeValue(forKey: note)
 
         // Remove Cymatics pattern
@@ -131,7 +145,7 @@ class MIDIToVisualMapper: ObservableObject {
     }
 
     /// Map per-note pitch bend to visual parameters
-    func handlePitchBend(note: UInt8, bend: Float) {
+    public func handlePitchBend(note: UInt8, bend: Float) {
         guard var state = activeNotes[note] else { return }
         state.pitchBend = bend
         activeNotes[note] = state
@@ -145,7 +159,7 @@ class MIDIToVisualMapper: ObservableObject {
     }
 
     /// Map per-note brightness (CC 74) to visual parameters
-    func handleBrightness(note: UInt8, brightness: Float) {
+    public func handleBrightness(note: UInt8, brightness: Float) {
         guard var state = activeNotes[note] else { return }
         state.brightness = brightness
         activeNotes[note] = state
@@ -167,7 +181,7 @@ class MIDIToVisualMapper: ObservableObject {
     }
 
     /// Map per-note timbre (CC 71) to visual parameters
-    func handleTimbre(note: UInt8, timbre: Float) {
+    public func handleTimbre(note: UInt8, timbre: Float) {
         guard var state = activeNotes[note] else { return }
         state.timbre = timbre
         activeNotes[note] = state
@@ -180,7 +194,7 @@ class MIDIToVisualMapper: ObservableObject {
     // MARK: - Biometric → Visual Mapping
 
     /// Update visuals from bio-reactive data (UnifiedControlHub interface)
-    func updateBioParameters(_ bioParams: BioParameters) {
+    public func updateBioParameters(_ bioParams: BioParameters) {
         updateFromBioSignals(
             hrvCoherence: bioParams.hrvCoherence,
             heartRate: bioParams.heartRate
@@ -189,7 +203,7 @@ class MIDIToVisualMapper: ObservableObject {
     }
 
     /// Map HRV coherence to visual parameters
-    func updateFromBioSignals(hrvCoherence: Double, heartRate: Double) {
+    public func updateFromBioSignals(hrvCoherence: Double, heartRate: Double) {
         // HRV → Color hue (0-100 → 0.0-1.0)
         let hue = Float(hrvCoherence) / 100.0
         cymaticsParameters.hue = hue
@@ -208,18 +222,18 @@ class MIDIToVisualMapper: ObservableObject {
     }
 
     /// Map audio level to visual parameters
-    func updateFromAudioLevel(_ level: Float) {
+    public func updateFromAudioLevel(_ level: Float) {
         waveformParameters.glowIntensity = level
         cymaticsParameters.amplitude = level
     }
 
     /// Map audio buffer to waveform
-    func updateWaveform(buffer: [Float]) {
+    public func updateWaveform(buffer: [Float]) {
         waveformParameters.waveform = buffer
     }
 
     /// Map FFT magnitudes to spectral view
-    func updateSpectral(magnitudes: [Float]) {
+    public func updateSpectral(magnitudes: [Float]) {
         spectralParameters.magnitudes = magnitudes
 
         // Generate gradient based on frequency
@@ -317,7 +331,7 @@ class MIDIToVisualMapper: ObservableObject {
     }
 
     /// Update particle system (call every frame)
-    func updateParticles(deltaTime: Float) {
+    public func updateParticles(deltaTime: Float) {
         // Update particle positions and lifetimes
         for i in (0..<particleParameters.particles.count).reversed() {
             var particle = particleParameters.particles[i]
@@ -341,14 +355,14 @@ class MIDIToVisualMapper: ObservableObject {
     }
 
     /// Convert MIDI note to color
-    func noteToColor(_ note: UInt8) -> Color {
+    public func noteToColor(_ note: UInt8) -> Color {
         let hue = Double(note % 12) / 12.0
         return Color(hue: hue, saturation: 0.8, brightness: 0.9)
     }
 
     // MARK: - Preset Visual Modes
 
-    func applyPreset(_ preset: VisualPreset) {
+    public func applyPreset(_ preset: VisualPreset) {
         switch preset {
         case .meditation:
             // Soft, slow-moving visuals
@@ -377,7 +391,7 @@ class MIDIToVisualMapper: ObservableObject {
         print("🎨 Visual preset: \(preset.rawValue)")
     }
 
-    enum VisualPreset: String, CaseIterable {
+    public enum VisualPreset: String, CaseIterable {
         case meditation = "Meditation"
         case energizing = "Energizing"
         case healing = "Healing"
@@ -386,7 +400,7 @@ class MIDIToVisualMapper: ObservableObject {
 
     // MARK: - Debug Info
 
-    var debugInfo: String {
+    public var debugInfo: String {
         """
         MIDIToVisualMapper:
         - Active Notes: \(activeNotes.count)

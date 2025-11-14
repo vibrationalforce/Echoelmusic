@@ -27,7 +27,7 @@ import Combine
 /// mpe.deallocateVoice(voice: voice)
 /// ```
 @MainActor
-class MPEZoneManager: ObservableObject {
+public class MPEZoneManager: ObservableObject {
 
     // MARK: - Published State
 
@@ -37,23 +37,23 @@ class MPEZoneManager: ObservableObject {
 
     // MARK: - MPE Voice Model
 
-    struct MPEVoice: Identifiable {
-        let id: UUID
-        let channel: UInt8    // MIDI channel (1-15 for lower zone)
-        let note: UInt8       // MIDI note number
-        let velocity: Float   // Initial velocity
-        let timestamp: Date   // When voice was allocated
+    public struct MPEVoice: Identifiable {
+        public let id: UUID
+        public let channel: UInt8    // MIDI channel (1-15 for lower zone)
+        public let note: UInt8       // MIDI note number
+        public let velocity: Float   // Initial velocity
+        public let timestamp: Date   // When voice was allocated
 
         // Current expression state
-        var pitchBend: Float = 0.0      // -1.0 to +1.0
-        var pressure: Float = 0.0       // 0.0 to 1.0 (aftertouch)
-        var brightness: Float = 0.5     // 0.0 to 1.0 (CC 74)
-        var timbre: Float = 0.5         // 0.0 to 1.0 (CC 71)
+        public var pitchBend: Float = 0.0      // -1.0 to +1.0
+        public var pressure: Float = 0.0       // 0.0 to 1.0 (aftertouch)
+        public var brightness: Float = 0.5     // 0.0 to 1.0 (CC 74)
+        public var timbre: Float = 0.5         // 0.0 to 1.0 (CC 71)
     }
 
     // MARK: - Configuration
 
-    enum VoiceAllocationMode {
+    public enum VoiceAllocationMode {
         case roundRobin      // Cycle through channels
         case leastRecent     // Steal least recently used
         case lowestNote      // Steal lowest note
@@ -74,7 +74,7 @@ class MPEZoneManager: ObservableObject {
 
     // MARK: - Initialization
 
-    init(midi2Manager: MIDI2Manager) {
+    public init(midi2Manager: MIDI2Manager) {
         self.midi2Manager = midi2Manager
     }
 
@@ -85,7 +85,7 @@ class MPEZoneManager: ObservableObject {
     ///   - note: MIDI note number (0-127)
     ///   - velocity: Velocity (0.0-1.0)
     /// - Returns: Allocated voice, or nil if allocation failed
-    func allocateVoice(note: UInt8, velocity: Float) -> MPEVoice? {
+    public func allocateVoice(note: UInt8, velocity: Float) -> MPEVoice? {
         // Check if we have available channels
         if voices.count >= maxVoices {
             // Need to steal a voice
@@ -126,7 +126,7 @@ class MPEZoneManager: ObservableObject {
     }
 
     /// Deallocate a voice
-    func deallocateVoice(voice: MPEVoice) {
+    public func deallocateVoice(voice: MPEVoice) {
         // Send Note Off
         midi2Manager.sendNoteOff(channel: voice.channel, note: voice.note)
 
@@ -177,7 +177,7 @@ class MPEZoneManager: ObservableObject {
     /// - Parameters:
     ///   - voice: Voice to control
     ///   - bend: Pitch bend (-1.0 to +1.0, center = 0.0)
-    func setVoicePitchBend(voice: MPEVoice, bend: Float) {
+    public func setVoicePitchBend(voice: MPEVoice, bend: Float) {
         guard var updatedVoice = voices[voice.id] else { return }
 
         updatedVoice.pitchBend = bend
@@ -194,7 +194,7 @@ class MPEZoneManager: ObservableObject {
     }
 
     /// Set pressure (aftertouch) for a specific voice
-    func setVoicePressure(voice: MPEVoice, pressure: Float) {
+    public func setVoicePressure(voice: MPEVoice, pressure: Float) {
         guard var updatedVoice = voices[voice.id] else { return }
 
         updatedVoice.pressure = pressure
@@ -207,7 +207,7 @@ class MPEZoneManager: ObservableObject {
     }
 
     /// Set brightness (CC 74) for a specific voice
-    func setVoiceBrightness(voice: MPEVoice, brightness: Float) {
+    public func setVoiceBrightness(voice: MPEVoice, brightness: Float) {
         guard var updatedVoice = voices[voice.id] else { return }
 
         updatedVoice.brightness = brightness
@@ -225,7 +225,7 @@ class MPEZoneManager: ObservableObject {
     }
 
     /// Set timbre (CC 71) for a specific voice
-    func setVoiceTimbre(voice: MPEVoice, timbre: Float) {
+    public func setVoiceTimbre(voice: MPEVoice, timbre: Float) {
         guard var updatedVoice = voices[voice.id] else { return }
 
         updatedVoice.timbre = timbre
@@ -245,7 +245,7 @@ class MPEZoneManager: ObservableObject {
     // MARK: - Master Channel Control
 
     /// Send control change on master channel (affects all voices)
-    func sendMasterControlChange(controller: UInt8, value: Float) {
+    public func sendMasterControlChange(controller: UInt8, value: Float) {
         midi2Manager.sendControlChange(
             channel: masterChannel,
             controller: controller,
@@ -261,17 +261,17 @@ class MPEZoneManager: ObservableObject {
     }
 
     /// Get voice by ID
-    func getVoice(id: UUID) -> MPEVoice? {
+    public func getVoice(id: UUID) -> MPEVoice? {
         voices[id]
     }
 
     /// Get voice by note number
-    func getVoiceByNote(note: UInt8) -> MPEVoice? {
+    public func getVoiceByNote(note: UInt8) -> MPEVoice? {
         voices.values.first { $0.note == note }
     }
 
     /// Release all voices
-    func releaseAllVoices() {
+    public func releaseAllVoices() {
         for voice in voices.values {
             midi2Manager.sendNoteOff(channel: voice.channel, note: voice.note)
         }
@@ -286,7 +286,7 @@ class MPEZoneManager: ObservableObject {
 
     /// Send MPE Configuration Message (RPN)
     /// This configures the receiving device for MPE mode
-    func sendMPEConfiguration(memberChannels: UInt8 = 15) {
+    public func sendMPEConfiguration(memberChannels: UInt8 = 15) {
         // MPE Configuration is done via RPN (Registered Parameter Number)
         // RPN 0 (MSB=0, LSB=0) = Pitch Bend Sensitivity
         // For MPE: Set number of member channels
@@ -310,7 +310,7 @@ class MPEZoneManager: ObservableObject {
     }
 
     /// Send MPE pitch bend range configuration
-    func setPitchBendRange(semitones: UInt8 = 48) {
+    public func setPitchBendRange(semitones: UInt8 = 48) {
         let channel = masterChannel
 
         // RPN MSB (CC 101) = 0
@@ -332,7 +332,7 @@ class MPEZoneManager: ObservableObject {
 
 // MARK: - Voice Statistics
 
-extension MPEZoneManager {
+public extension MPEZoneManager {
 
     /// Get statistics about voice usage
     var statistics: VoiceStatistics {
@@ -346,6 +346,17 @@ extension MPEZoneManager {
     }
 
     struct VoiceStatistics {
+        public let activeVoices: Int
+        public let maxVoices: Int
+        public let availableVoices: Int
+        public let oldestVoiceAge: TimeInterval?
+        public let newestVoiceAge: TimeInterval?
+    }
+}
+
+// Helper extension for internal use
+extension MPEZoneManager {
+    struct InternalVoiceStatistics {
         let activeVoices: Int
         let maxVoices: Int
         let availableVoices: Int

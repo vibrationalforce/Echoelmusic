@@ -23,7 +23,7 @@ import simd
 /// - Phase-coherent synthesis
 /// - Bio-reactive field morphing
 @MainActor
-class MIDIToSpatialMapper: ObservableObject {
+public class MIDIToSpatialMapper: ObservableObject {
 
     // MARK: - Published State
 
@@ -31,9 +31,13 @@ class MIDIToSpatialMapper: ObservableObject {
     @Published var currentPosition: SpatialPosition = SpatialPosition(x: 0, y: 0, z: 1)
     @Published var afaField: AFAField?
 
+    // MARK: - Initialization
+
+    public init() {}
+
     // MARK: - Spatial Modes
 
-    enum SpatialMode {
+    public enum SpatialMode {
         case stereo         // Simple L/R panning
         case surround_3d    // X/Y/Z (azimuth/elevation/distance)
         case surround_4d    // X/Y/Z + temporal evolution
@@ -44,14 +48,21 @@ class MIDIToSpatialMapper: ObservableObject {
 
     // MARK: - Spatial Position
 
-    struct SpatialPosition {
-        var x: Float   // Left (-1) to Right (+1)
-        var y: Float   // Back (-1) to Front (+1)
-        var z: Float   // Down (-1) to Up (+1), or distance
-        var time: Float = 0.0  // For 4D temporal evolution
+    public struct SpatialPosition {
+        public var x: Float   // Left (-1) to Right (+1)
+        public var y: Float   // Back (-1) to Front (+1)
+        public var z: Float   // Down (-1) to Up (+1), or distance
+        public var time: Float = 0.0  // For 4D temporal evolution
+
+        public init(x: Float, y: Float, z: Float, time: Float = 0.0) {
+            self.x = x
+            self.y = y
+            self.z = z
+            self.time = time
+        }
 
         /// Convert to spherical coordinates (azimuth, elevation, distance)
-        var spherical: (azimuth: Float, elevation: Float, distance: Float) {
+        public var spherical: (azimuth: Float, elevation: Float, distance: Float) {
             let distance = sqrt(x*x + y*y + z*z)
             let azimuth = atan2(y, x) // Radians
             let elevation = asin(z / max(distance, 0.001))
@@ -59,7 +70,7 @@ class MIDIToSpatialMapper: ObservableObject {
         }
 
         /// Convert from spherical to Cartesian
-        static func fromSpherical(azimuth: Float, elevation: Float, distance: Float) -> SpatialPosition {
+        public static func fromSpherical(azimuth: Float, elevation: Float, distance: Float) -> SpatialPosition {
             let x = distance * cos(elevation) * cos(azimuth)
             let y = distance * cos(elevation) * sin(azimuth)
             let z = distance * sin(elevation)
@@ -69,12 +80,18 @@ class MIDIToSpatialMapper: ObservableObject {
 
     // MARK: - AFA Field (Algorithmic Field Array)
 
-    struct AFAField {
-        var sources: [AFASource]
-        var fieldGeometry: FieldGeometry
-        var phaseCoherence: Float = 1.0  // 0.0 = chaotic, 1.0 = perfectly coherent
+    public struct AFAField {
+        public var sources: [AFASource]
+        public var fieldGeometry: FieldGeometry
+        public var phaseCoherence: Float = 1.0  // 0.0 = chaotic, 1.0 = perfectly coherent
 
-        enum FieldGeometry {
+        public init(sources: [AFASource], fieldGeometry: FieldGeometry, phaseCoherence: Float = 1.0) {
+            self.sources = sources
+            self.fieldGeometry = fieldGeometry
+            self.phaseCoherence = phaseCoherence
+        }
+
+        public enum FieldGeometry {
             case circle(radius: Float, sourceCount: Int)
             case sphere(radius: Float, sourceCount: Int)
             case spiral(turns: Int, sourceCount: Int)
@@ -83,13 +100,22 @@ class MIDIToSpatialMapper: ObservableObject {
         }
     }
 
-    struct AFASource {
-        let id: UUID
-        var position: SpatialPosition
-        var amplitude: Float
-        var frequency: Float
-        var phase: Float
-        var color: (r: Float, g: Float, b: Float)  // For visualization
+    public struct AFASource {
+        public let id: UUID
+        public var position: SpatialPosition
+        public var amplitude: Float
+        public var frequency: Float
+        public var phase: Float
+        public var color: (r: Float, g: Float, b: Float)  // For visualization
+
+        public init(id: UUID, position: SpatialPosition, amplitude: Float, frequency: Float, phase: Float, color: (r: Float, g: Float, b: Float)) {
+            self.id = id
+            self.position = position
+            self.amplitude = amplitude
+            self.frequency = frequency
+            self.phase = phase
+            self.color = color
+        }
     }
 
     // MARK: - Mapping Configuration
@@ -106,7 +132,7 @@ class MIDIToSpatialMapper: ObservableObject {
     // MARK: - Stereo Mapping
 
     /// Map MIDI parameters to stereo pan (-1 = left, +1 = right)
-    func mapToStereo(note: UInt8, velocity: Float, pan: Float? = nil) -> Float {
+    public func mapToStereo(note: UInt8, velocity: Float, pan: Float? = nil) -> Float {
         if let panOverride = pan {
             return (panOverride * 2.0) - 1.0  // Convert 0-1 to -1 to +1
         }
@@ -126,7 +152,7 @@ class MIDIToSpatialMapper: ObservableObject {
     ///   - brightness: CC 74 (affects elevation)
     ///   - pan: CC 10 (overrides azimuth)
     /// - Returns: 3D spatial position
-    func mapTo3D(note: UInt8, velocity: Float, brightness: Float = 0.5, pan: Float? = nil) -> SpatialPosition {
+    public func mapTo3D(note: UInt8, velocity: Float, brightness: Float = 0.5, pan: Float? = nil) -> SpatialPosition {
         // Calculate azimuth (horizontal angle)
         let azimuth: Float
         if let panValue = pan {
@@ -176,7 +202,7 @@ class MIDIToSpatialMapper: ObservableObject {
     ///   - pitchBend: Pitch bend (-1 to +1, controls orbital motion)
     ///   - time: Current time (for evolution)
     /// - Returns: 4D spatial position with temporal evolution
-    func mapTo4D(note: UInt8, velocity: Float, brightness: Float = 0.5,
+    public func mapTo4D(note: UInt8, velocity: Float, brightness: Float = 0.5,
                  pitchBend: Float = 0.0, time: Float = 0.0) -> SpatialPosition {
         // Start with 3D position
         var position = mapTo3D(note: note, velocity: velocity, brightness: brightness)
@@ -204,7 +230,7 @@ class MIDIToSpatialMapper: ObservableObject {
     ///   - voices: Array of active MPE voices
     ///   - geometry: Field geometry
     /// - Returns: AFA field with positioned sources
-    func mapToAFA(voices: [MPEVoiceData], geometry: AFAField.FieldGeometry) -> AFAField {
+    public func mapToAFA(voices: [MPEVoiceData], geometry: AFAField.FieldGeometry) -> AFAField {
         var sources: [AFASource] = []
 
         for (index, voice) in voices.enumerated() {
@@ -340,10 +366,18 @@ class MIDIToSpatialMapper: ObservableObject {
 
 // MARK: - MPE Voice Data (for AFA)
 
-struct MPEVoiceData {
-    let id: UUID
-    let note: UInt8
-    let velocity: Float
-    let pitchBend: Float
-    let brightness: Float
+public struct MPEVoiceData {
+    public let id: UUID
+    public let note: UInt8
+    public let velocity: Float
+    public let pitchBend: Float
+    public let brightness: Float
+
+    public init(id: UUID, note: UInt8, velocity: Float, pitchBend: Float, brightness: Float) {
+        self.id = id
+        self.note = note
+        self.velocity = velocity
+        self.pitchBend = pitchBend
+        self.brightness = brightness
+    }
 }

@@ -23,7 +23,7 @@ import Combine
 /// midi2.sendPerNoteController(channel: 0, note: 60, controller: .brightness, value: 0.5)
 /// ```
 @MainActor
-class MIDI2Manager: ObservableObject {
+public class MIDI2Manager: ObservableObject {
 
     // MARK: - Published State
 
@@ -47,10 +47,10 @@ class MIDI2Manager: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {}
+    public init() {}
 
     /// Initialize MIDI 2.0 system
-    func initialize() async throws {
+    public func initialize() async throws {
         guard !isInitialized else { return }
 
         do {
@@ -106,7 +106,7 @@ class MIDI2Manager: ObservableObject {
     }
 
     /// Cleanup MIDI resources
-    func cleanup() {
+    public func cleanup() {
         if virtualSource != 0 {
             MIDIEndpointDispose(virtualSource)
             virtualSource = 0
@@ -178,7 +178,7 @@ class MIDI2Manager: ObservableObject {
     ///   - channel: MIDI channel (0-15)
     ///   - note: Note number (0-127)
     ///   - velocity: Velocity (0.0-1.0)
-    func sendNoteOn(channel: UInt8, note: UInt8, velocity: Float) {
+    public func sendNoteOn(channel: UInt8, note: UInt8, velocity: Float) {
         guard isInitialized else {
             print("⚠️ MIDI 2.0 not initialized")
             return
@@ -192,7 +192,7 @@ class MIDI2Manager: ObservableObject {
     }
 
     /// Send MIDI 2.0 Note Off
-    func sendNoteOff(channel: UInt8, note: UInt8, velocity: Float = 0.0) {
+    public func sendNoteOff(channel: UInt8, note: UInt8, velocity: Float = 0.0) {
         guard isInitialized else { return }
 
         let packet = UMPPacket64.noteOff(channel: channel, note: note, velocity: velocity)
@@ -210,7 +210,7 @@ class MIDI2Manager: ObservableObject {
     ///   - note: Note number (0-127)
     ///   - controller: Controller type
     ///   - value: Controller value (0.0-1.0)
-    func sendPerNoteController(channel: UInt8, note: UInt8,
+    public func sendPerNoteController(channel: UInt8, note: UInt8,
                                controller: PerNoteController, value: Float) {
         guard isInitialized else { return }
 
@@ -236,7 +236,7 @@ class MIDI2Manager: ObservableObject {
     ///   - channel: MIDI channel (0-15)
     ///   - note: Note number (0-127)
     ///   - bend: Pitch bend (-1.0 to +1.0, center = 0.0)
-    func sendPerNotePitchBend(channel: UInt8, note: UInt8, bend: Float) {
+    public func sendPerNotePitchBend(channel: UInt8, note: UInt8, bend: Float) {
         guard isInitialized else { return }
 
         let noteId = NoteIdentifier(channel: channel, note: note)
@@ -252,7 +252,7 @@ class MIDI2Manager: ObservableObject {
     // MARK: - Channel Messages
 
     /// Send Channel Pressure (Aftertouch)
-    func sendChannelPressure(channel: UInt8, pressure: Float) {
+    public func sendChannelPressure(channel: UInt8, pressure: Float) {
         guard isInitialized else { return }
 
         let packet = UMPPacket64.channelPressure(channel: channel, pressure: pressure)
@@ -260,7 +260,7 @@ class MIDI2Manager: ObservableObject {
     }
 
     /// Send Control Change (MIDI 2.0 32-bit resolution)
-    func sendControlChange(channel: UInt8, controller: UInt8, value: Float) {
+    public func sendControlChange(channel: UInt8, controller: UInt8, value: Float) {
         guard isInitialized else { return }
 
         let packet = UMPPacket64.controlChange(channel: channel, controller: controller, value: value)
@@ -304,7 +304,7 @@ class MIDI2Manager: ObservableObject {
     // MARK: - Utility
 
     /// Get info about connected MIDI 2.0 endpoints
-    func getEndpointInfo() -> [String] {
+    public func getEndpointInfo() -> [String] {
         var info: [String] = []
 
         for endpoint in connectedEndpoints {
@@ -320,12 +320,12 @@ class MIDI2Manager: ObservableObject {
     }
 
     /// Check if note is currently active
-    func isNoteActive(channel: UInt8, note: UInt8) -> Bool {
+    public func isNoteActive(channel: UInt8, note: UInt8) -> Bool {
         activeNotes.contains(NoteIdentifier(channel: channel, note: note))
     }
 
     /// Get count of active notes
-    var activeNoteCount: Int {
+    public var activeNoteCount: Int {
         activeNotes.count
     }
 
@@ -336,13 +336,13 @@ class MIDI2Manager: ObservableObject {
 
 // MARK: - Errors
 
-enum MIDI2Error: Error, LocalizedError {
+public enum MIDI2Error: Error, LocalizedError {
     case clientCreationFailed(Int)
     case sourceCreationFailed(Int)
     case portCreationFailed(Int)
     case notInitialized
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .clientCreationFailed(let code):
             return "MIDI client creation failed with code \(code)"

@@ -2,16 +2,16 @@ import Foundation
 import SwiftUI
 
 /// Available visualization modes for BLAB
-enum VisualizationMode: String, CaseIterable, Identifiable {
+public enum VisualizationMode: String, CaseIterable, Identifiable {
     case particles = "Particles"
     case cymatics = "Cymatics"
     case waveform = "Waveform"
     case spectral = "Spectral"
     case mandala = "Mandala"
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var icon: String {
+    public var icon: String {
         switch self {
         case .particles: return "sparkles"
         case .cymatics: return "waveform.circle"
@@ -21,7 +21,7 @@ enum VisualizationMode: String, CaseIterable, Identifiable {
         }
     }
 
-    var description: String {
+    public var description: String {
         switch self {
         case .particles:
             return "Bio-reactive particle field with physics simulation"
@@ -36,7 +36,7 @@ enum VisualizationMode: String, CaseIterable, Identifiable {
         }
     }
 
-    var color: Color {
+    public var color: Color {
         switch self {
         case .particles: return .cyan
         case .cymatics: return .blue
@@ -49,10 +49,14 @@ enum VisualizationMode: String, CaseIterable, Identifiable {
 
 
 /// Visualization mode picker view
-struct VisualizationModePicker: View {
+public struct VisualizationModePicker: View {
     @Binding var selectedMode: VisualizationMode
 
-    var body: some View {
+    public init(selectedMode: Binding<VisualizationMode>) {
+        self._selectedMode = selectedMode
+    }
+
+    public var body: some View {
         VStack(spacing: 12) {
             Text("Visualization Mode")
                 .font(.system(size: 14, weight: .medium))
