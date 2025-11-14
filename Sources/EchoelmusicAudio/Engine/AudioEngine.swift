@@ -13,7 +13,7 @@ import Combine
 ///
 /// This class acts as the central hub for all audio processing in Blab
 @MainActor
-class AudioEngine: ObservableObject {
+public class AudioEngine: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -68,7 +68,7 @@ class AudioEngine: ObservableObject {
 
     // MARK: - Initialization
 
-    init(microphoneManager: MicrophoneManager) {
+    public init(microphoneManager: MicrophoneManager) {
         self.microphoneManager = microphoneManager
 
         // Configure audio session for optimal performance

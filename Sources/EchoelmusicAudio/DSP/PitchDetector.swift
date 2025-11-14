@@ -7,7 +7,9 @@ import Accelerate
 ///
 /// Reference: "YIN, a fundamental frequency estimator for speech and music"
 /// by Alain de Cheveigné and Hideki Kawahara (2002)
-class PitchDetector {
+public class PitchDetector {
+
+    public init() {}
 
     // MARK: - Configuration
 

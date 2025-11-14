@@ -1,11 +1,12 @@
 import Foundation
 import AVFoundation
+import EchoelmusicCore
 
 /// Delay effect node with bio-reactive parameters
 /// HRV → Delay Time (coherence creates rhythmic echoes)
 /// Heart Rate → Feedback (tempo-synced repeats)
 @MainActor
-class DelayNode: BaseEchoelmusicNode {
+public class DelayNode: BaseEchoelmusicNode {
 
     // MARK: - AVAudioUnit Delay
 
@@ -24,7 +25,7 @@ class DelayNode: BaseEchoelmusicNode {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         self.delayUnit = AVAudioUnitDelay()
 
         super.init(name: "Bio-Reactive Delay", type: .effect)
@@ -204,7 +205,7 @@ class DelayNode: BaseEchoelmusicNode {
         setParameter(name: Params.delayTime, value: delayTime)
     }
 
-    enum MusicalSubdivision {
+    public enum MusicalSubdivision {
         case whole      // 4 beats
         case half       // 2 beats
         case quarter    // 1 beat

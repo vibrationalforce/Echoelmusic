@@ -1,10 +1,11 @@
 import Foundation
 import AVFoundation
+import EchoelmusicCore
 
 /// Reverb effect node with bio-reactive parameters
 /// HRV Coherence → Reverb Wetness (higher coherence = more reverb = spacious feeling)
 @MainActor
-class ReverbNode: BaseEchoelmusicNode {
+public class ReverbNode: BaseEchoelmusicNode {
 
     // MARK: - AVAudioUnit Reverb
 
@@ -23,7 +24,7 @@ class ReverbNode: BaseEchoelmusicNode {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         self.reverbUnit = AVAudioUnitReverb()
 
         super.init(name: "Bio-Reactive Reverb", type: .effect)

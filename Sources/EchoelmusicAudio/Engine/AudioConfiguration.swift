@@ -3,7 +3,7 @@ import AVFoundation
 
 /// Audio configuration constants and optimization settings
 /// Target: < 5ms latency for real-time performance
-enum AudioConfiguration {
+public enum AudioConfiguration {
 
     // MARK: - Sample Rate
 
@@ -95,7 +95,7 @@ enum AudioConfiguration {
 
     // MARK: - Latency Modes
 
-    enum LatencyMode {
+    public enum LatencyMode {
         case ultraLow   // 128 frames (~2.7ms @ 48kHz) - max CPU usage
         case low        // 256 frames (~5.3ms @ 48kHz) - balanced
         case normal     // 512 frames (~10.7ms @ 48kHz) - battery friendly

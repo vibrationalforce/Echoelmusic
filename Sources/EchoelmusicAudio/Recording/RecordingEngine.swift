@@ -6,7 +6,7 @@ import Accelerate
 /// Manages multi-track audio recording with bio-signal integration
 /// Coordinates recording, playback, and real-time monitoring
 @MainActor
-class RecordingEngine: ObservableObject {
+public class RecordingEngine: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -64,7 +64,7 @@ class RecordingEngine: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         // Setup sessions directory
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         self.sessionsDirectory = documentsPath.appendingPathComponent("Sessions", isDirectory: true)

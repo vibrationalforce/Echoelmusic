@@ -1,11 +1,12 @@
 import Foundation
 import AVFoundation
 import Combine
+import EchoelmusicCore
 
 /// Manages a graph of interconnected audio processing nodes
 /// Handles signal routing, parameter automation, and bio-reactivity
 @MainActor
-class NodeGraph: ObservableObject {
+public class NodeGraph: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -270,7 +271,7 @@ class NodeGraph: ObservableObject {
 
     // MARK: - Errors
 
-    enum NodeGraphError: Error, LocalizedError {
+    public enum NodeGraphError: Error, LocalizedError {
         case nodeNotFound
         case circularDependency
         case invalidConnection
@@ -292,14 +293,14 @@ class NodeGraph: ObservableObject {
 // MARK: - Supporting Types
 
 /// Connection between two nodes
-struct NodeConnection: Identifiable {
+public struct NodeConnection: Identifiable {
     let id = UUID()
     let sourceNodeID: UUID
     let destinationNodeID: UUID
 }
 
 /// Node graph preset
-struct NodeGraphPreset: Codable, Identifiable {
+public struct NodeGraphPreset: Codable, Identifiable {
     let id = UUID()
     let name: String
     let nodes: [NodeManifest]

@@ -1,11 +1,12 @@
 import Foundation
 import AVFoundation
 import Combine
+import SwiftUI
 
 /// Manages audio looping functionality with tempo-sync and quantization
 /// Supports loop recording, overdubbing, and playback
 @MainActor
-class LoopEngine: ObservableObject {
+public class LoopEngine: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -115,7 +116,7 @@ class LoopEngine: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         // Setup loops directory
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         self.loopsDirectory = documentsPath.appendingPathComponent("Loops", isDirectory: true)

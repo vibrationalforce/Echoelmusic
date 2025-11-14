@@ -4,7 +4,7 @@ import Accelerate
 
 /// Manages microphone access and advanced audio processing
 /// Now includes FFT for frequency detection and professional-grade DSP
-class MicrophoneManager: NSObject, ObservableObject {
+public class MicrophoneManager: NSObject, ObservableObject {
 
     // MARK: - Published Properties
 
@@ -53,7 +53,7 @@ class MicrophoneManager: NSObject, ObservableObject {
 
     // MARK: - Initialization
 
-    override init() {
+    public override init() {
         super.init()
         checkPermission()
     }

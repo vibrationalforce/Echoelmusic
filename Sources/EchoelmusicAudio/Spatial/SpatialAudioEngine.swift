@@ -7,7 +7,7 @@ import CoreMotion
 /// Supports iOS 15+ with runtime feature detection for iOS 19+ spatial audio
 /// Integrates with MIDIToSpatialMapper for bio-reactive spatial fields
 @MainActor
-class SpatialAudioEngine: ObservableObject {
+public class SpatialAudioEngine: ObservableObject {
 
     // MARK: - Published State
 
@@ -30,7 +30,7 @@ class SpatialAudioEngine: ObservableObject {
 
     // MARK: - Spatial Modes
 
-    enum SpatialMode: String, CaseIterable {
+    public enum SpatialMode: String, CaseIterable {
         case stereo = "Stereo"
         case surround_3d = "3D Spatial"
         case surround_4d = "4D Orbital"
@@ -52,7 +52,7 @@ class SpatialAudioEngine: ObservableObject {
 
     // MARK: - Spatial Source
 
-    struct SpatialSource: Identifiable {
+    public struct SpatialSource: Identifiable {
         let id: UUID
         var position: SIMD3<Float>  // X, Y, Z
         var velocity: SIMD3<Float> = .zero
@@ -78,7 +78,7 @@ class SpatialAudioEngine: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         setupAudioEngine()
     }
 
@@ -347,7 +347,7 @@ class SpatialAudioEngine: ObservableObject {
         print("🌊 AFA field applied: \(geometry) (coherence: \(Int(coherence)))")
     }
 
-    enum AFAFieldGeometry {
+    public enum AFAFieldGeometry {
         case grid(rows: Int, cols: Int)
         case circle(radius: Float)
         case fibonacci(count: Int)

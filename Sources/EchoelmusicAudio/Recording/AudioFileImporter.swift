@@ -4,7 +4,9 @@ import UniformTypeIdentifiers
 
 /// Handles importing audio files into sessions
 @MainActor
-class AudioFileImporter: ObservableObject {
+public class AudioFileImporter: ObservableObject {
+
+    public init() {}
 
     // MARK: - Published Properties
 
@@ -197,7 +199,7 @@ class AudioFileImporter: ObservableObject {
 
 // MARK: - Import Errors
 
-enum ImportError: LocalizedError {
+public enum ImportError: LocalizedError {
     case fileNotFound
     case fileTooLarge
     case invalidFormat

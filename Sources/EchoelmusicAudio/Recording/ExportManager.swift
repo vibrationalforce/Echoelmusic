@@ -4,11 +4,13 @@ import AVFoundation
 /// Manages export of recording sessions to various formats
 /// Handles audio mixdown, bio-data export, and format conversion
 @MainActor
-class ExportManager {
+public class ExportManager {
+
+    public init() {}
 
     // MARK: - Export Formats
 
-    enum ExportFormat {
+    public enum ExportFormat {
         case wav
         case m4a
         case aiff
@@ -42,7 +44,7 @@ class ExportManager {
         }
     }
 
-    enum BioDataFormat {
+    public enum BioDataFormat {
         case json
         case csv
 

@@ -1,10 +1,11 @@
 import Foundation
 import AVFoundation
+import EchoelmusicCore
 
 /// Low-pass filter node with bio-reactive cutoff
 /// Heart Rate → Filter Cutoff (higher HR = brighter/more open sound)
 @MainActor
-class FilterNode: BaseEchoelmusicNode {
+public class FilterNode: BaseEchoelmusicNode {
 
     // MARK: - AVAudioUnit EQ
 
@@ -22,7 +23,7 @@ class FilterNode: BaseEchoelmusicNode {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         // Create EQ with single band for low-pass filtering
         self.eqUnit = AVAudioUnitEQ(numberOfBands: 1)
 
@@ -149,7 +150,7 @@ class FilterNode: BaseEchoelmusicNode {
 
     // MARK: - Filter Type
 
-    enum FilterType: String {
+    public enum FilterType: String {
         case lowPass = "Low Pass"
         case highPass = "High Pass"
         case bandPass = "Band Pass"

@@ -1,11 +1,12 @@
 import Foundation
 import AVFoundation
+import EchoelmusicCore
 
 /// Dynamic range compressor node with bio-reactive parameters
 /// Respiratory Rate → Threshold (breath controls compression)
 /// HRV → Attack/Release (coherence controls dynamics)
 @MainActor
-class CompressorNode: BaseEchoelmusicNode {
+public class CompressorNode: BaseEchoelmusicNode {
 
     // MARK: - AVAudioUnit Compressor
 
@@ -25,7 +26,7 @@ class CompressorNode: BaseEchoelmusicNode {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         // Create dynamics processor (compressor)
         let componentDescription = AudioComponentDescription(
             componentType: kAudioUnitType_Effect,

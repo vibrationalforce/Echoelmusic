@@ -10,12 +10,12 @@ import Accelerate
 ///
 /// Scientific basis: Oster, G. (1973). "Auditory beats in the brain"
 @MainActor
-class BinauralBeatGenerator: ObservableObject {
+public class BinauralBeatGenerator: ObservableObject {
 
     // MARK: - Audio Mode
 
     /// Audio output mode based on device capabilities
-    enum AudioMode {
+    public enum AudioMode {
         case binaural     // Stereo - different frequency per ear (requires headphones)
         case isochronic   // Mono - pulsed tone (works on speakers, spatial audio, etc.)
     }
@@ -23,7 +23,7 @@ class BinauralBeatGenerator: ObservableObject {
     // MARK: - Brainwave Presets
 
     /// Brainwave state configurations based on neuroscience research
-    enum BrainwaveState: String, CaseIterable {
+    public enum BrainwaveState: String, CaseIterable {
         case delta      // 2 Hz - Deep sleep, healing
         case theta      // 6 Hz - Meditation, creativity
         case alpha      // 10 Hz - Relaxation, learning
@@ -102,7 +102,7 @@ class BinauralBeatGenerator: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         setupAudioEngine()
     }
 
