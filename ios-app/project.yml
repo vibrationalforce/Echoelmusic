@@ -1,0 +1,82 @@
+# XcodeGen Project Configuration for Echoel
+# This file defines how to generate the Xcode project
+
+name: Echoel
+
+options:
+  bundleIdPrefix: com.echoel
+  deploymentTarget:
+    iOS: "16.0"
+  # Generate Info.plist automatically
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.7"
+    PRODUCT_NAME: $(TARGET_NAME)
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  Echoel:
+    type: application
+    platform: iOS
+
+    # Source files location
+    sources:
+      - path: Sources/Echoel
+        type: group
+
+    # Info.plist configuration (inline)
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDisplayName: Echoel
+        LSRequiresIPhoneOS: true
+
+        # Microphone permission
+        NSMicrophoneUsageDescription: "Echoel needs microphone access to create music from your voice and breath"
+
+        # UI Configuration
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+        UIUserInterfaceStyle: Dark
+
+        # SwiftUI support
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default Configuration
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
+
+    # App settings
+    settings:
+      base:
+        PRODUCT_NAME: Echoel
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoel.studio
+        INFOPLIST_FILE: Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+
+        # Code signing (for development)
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: ""
+        DEVELOPMENT_TEAM: ""
+
+        # Build settings
+        TARGETED_DEVICE_FAMILY: "1"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        SWIFT_VERSION: "5.7"
+        ENABLE_BITCODE: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor

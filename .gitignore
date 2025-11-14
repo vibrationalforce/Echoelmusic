@@ -100,3 +100,40 @@ iOSInjectionProject/
 *.swp
 *.swo
 *~
+
+# ========== iOS App Specific ==========
+
+# iOS Build artifacts
+ios-app/DerivedData/
+ios-app/**/*.xcworkspace
+ios-app/**/*.xcuserdata
+ios-app/build/
+ios-app/.build/
+
+# ========== Desktop Engine (JUCE) Specific ==========
+
+# JUCE Build folders
+desktop-engine/Builds/
+desktop-engine/JuceLibraryCode/
+
+# JUCE generated files
+desktop-engine/**/*.o
+desktop-engine/**/*.obj
+desktop-engine/**/*.a
+desktop-engine/**/*.lib
+
+# Built applications
+desktop-engine/**/*.app
+desktop-engine/**/*.exe
+desktop-engine/**/*.vst3
+desktop-engine/**/*.component
+
+# Distribution
+*.dmg
+*.pkg
+*.zip
+
+# ========== Documentation Archive ==========
+
+# Old docs are archived, don't track changes
+docs/archive/
