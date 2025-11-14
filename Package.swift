@@ -112,7 +112,7 @@ let package = Package(
             path: "Tests/EchoelmusicHardwareTests"
         ),
 
-        // MARK: - Control Module (depends on Core, Audio, Bio, Visual)
+        // MARK: - Control Module (depends on Core, Audio, Bio, Visual, MIDI)
 
         .target(
             name: "EchoelmusicControl",
@@ -120,7 +120,8 @@ let package = Package(
                 "EchoelmusicCore",
                 "EchoelmusicAudio",
                 "EchoelmusicBio",
-                "EchoelmusicVisual"
+                "EchoelmusicVisual",
+                "EchoelmusicMIDI"
             ],
             path: "Sources/EchoelmusicControl"
         ),
@@ -143,14 +144,17 @@ let package = Package(
             path: "Tests/EchoelmusicPlatformTests"
         ),
 
-        // MARK: - UI Module (depends on Core, Control, Visual)
+        // MARK: - UI Module (depends on Core, Audio, Bio, Visual, Control, Platform)
 
         .target(
             name: "EchoelmusicUI",
             dependencies: [
                 "EchoelmusicCore",
+                "EchoelmusicAudio",
+                "EchoelmusicBio",
+                "EchoelmusicVisual",
                 "EchoelmusicControl",
-                "EchoelmusicVisual"
+                "EchoelmusicPlatform"
             ],
             path: "Sources/EchoelmusicUI"
         ),
