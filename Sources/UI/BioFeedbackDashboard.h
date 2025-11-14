@@ -1,7 +1,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../BioData/HRVProcessor.h"
 #include "../BioData/BioReactiveModulator.h"
 #include <vector>
 #include <deque>
@@ -28,8 +27,7 @@ public:
     //==============================================================================
     BioFeedbackDashboard()
     {
-        hrvProcessor = std::make_unique<HRVProcessor>();
-        modulator = std::make_unique<BioReactiveModulator>();
+        bioFeedbackSystem = std::make_unique<BioFeedbackSystem>();
 
         // Initialize history buffer
         heartRateHistory.resize(300, 70.0f);  // 10 seconds at 30 FPS
@@ -81,37 +79,28 @@ public:
     //==============================================================================
     void timerCallback() override
     {
-        // Update HRV processor
-        if (hrvProcessor)
-            hrvProcessor->update(1.0f / 30.0f);
+        // Update bio-feedback system
+        if (bioFeedbackSystem)
+            bioFeedbackSystem->update();
 
-        // Get current metrics
-        auto metrics = hrvProcessor->getCurrentMetrics();
+        // Get current bio-data
+        auto bioData = bioFeedbackSystem->getCurrentBioData();
 
         // Update history buffers
-        heartRateHistory.push_back(metrics.heartRate);
+        heartRateHistory.push_back(bioData.heartRate);
         if (heartRateHistory.size() > 300)
             heartRateHistory.pop_front();
 
-        hrvHistory.push_back(metrics.hrv);
+        hrvHistory.push_back(bioData.hrv);
         if (hrvHistory.size() > 300)
             hrvHistory.pop_front();
 
-        coherenceHistory.push_back(metrics.coherence);
+        coherenceHistory.push_back(bioData.coherence);
         if (coherenceHistory.size() > 300)
             coherenceHistory.pop_front();
 
-        // Update modulator
-        if (modulator)
-        {
-            BioDataInput::BioDataSample sample;
-            sample.heartRate = metrics.heartRate;
-            sample.hrv = metrics.hrv;
-            sample.coherence = metrics.coherence;
-            sample.stressLevel = metrics.stressIndex;
-
-            modulatedParams = modulator->process(sample);
-        }
+        // Get modulated parameters
+        modulatedParams = bioFeedbackSystem->getModulatedParameters();
 
         repaint();
     }
@@ -123,54 +112,42 @@ public:
         return modulatedParams;
     }
 
-    // Get HRV metrics
-    HRVProcessor::HRVMetrics getCurrentMetrics() const
+    // Get bio-data sample
+    BioDataInput::BioDataSample getCurrentBioData() const
     {
-        return hrvProcessor->getCurrentMetrics();
+        return bioFeedbackSystem->getCurrentBioData();
     }
 
 private:
     //==============================================================================
     void drawMetricsCards(juce::Graphics& g, juce::Rectangle<int> area)
     {
-        auto metrics = hrvProcessor->getCurrentMetrics();
+        auto bioData = bioFeedbackSystem->getCurrentBioData();
 
-        int cardHeight = area.getHeight() / 6;
+        int cardHeight = area.getHeight() / 4;  // 4 cards
 
         // HEART RATE
         auto hrCard = area.removeFromTop(cardHeight).reduced(5);
-        drawMetricCard(g, hrCard, "Heart Rate", juce::String(metrics.heartRate, 1) + " BPM",
-                      getHeartRateColor(metrics.heartRate), true);
+        drawMetricCard(g, hrCard, "Heart Rate", juce::String(bioData.heartRate, 1) + " BPM",
+                      getHeartRateColor(bioData.heartRate), true);
 
         // HRV
         auto hrvCard = area.removeFromTop(cardHeight).reduced(5);
-        juce::String hrvText = juce::String(metrics.hrv * 100.0f, 0) + "%";
+        juce::String hrvText = juce::String(bioData.hrv * 100.0f, 0) + "%";
         drawMetricCard(g, hrvCard, "HRV", hrvText,
-                      getHRVColor(metrics.hrv), false);
+                      getHRVColor(bioData.hrv), false);
 
         // COHERENCE
         auto coherenceCard = area.removeFromTop(cardHeight).reduced(5);
-        juce::String coherenceText = juce::String(metrics.coherence * 100.0f, 0) + "%";
+        juce::String coherenceText = juce::String(bioData.coherence * 100.0f, 0) + "%";
         drawMetricCard(g, coherenceCard, "Coherence", coherenceText,
-                      getCoherenceColor(metrics.coherence), false);
+                      getCoherenceColor(bioData.coherence), false);
 
         // STRESS INDEX
         auto stressCard = area.removeFromTop(cardHeight).reduced(5);
-        juce::String stressText = juce::String(metrics.stressIndex * 100.0f, 0) + "%";
-        drawMetricCard(g, stressCard, "Stress", stressText,
-                      getStressColor(metrics.stressIndex), false);
-
-        // SDNN
-        auto sdnnCard = area.removeFromTop(cardHeight).reduced(5);
-        juce::String sdnnText = juce::String(metrics.sdnn, 1) + " ms";
-        drawMetricCard(g, sdnnCard, "SDNN", sdnnText,
-                      juce::Colours::cyan, false);
-
-        // RMSSD
-        auto rmssdCard = area.removeFromTop(cardHeight).reduced(5);
-        juce::String rmssdText = juce::String(metrics.rmssd, 1) + " ms";
-        drawMetricCard(g, rmssdCard, "RMSSD", rmssdText,
-                      juce::Colours::lightblue, false);
+        juce::String stressText = juce::String(bioData.stressIndex * 100.0f, 0) + "%";
+        drawMetricCard(g, stressCard, "Stress Index", stressText,
+                      getStressColor(bioData.stressIndex), false);
     }
 
     void drawMetricCard(juce::Graphics& g, juce::Rectangle<int> area,
@@ -318,19 +295,18 @@ private:
             return juce::Colours::green;      // High coherence (good)
     }
 
-    juce::Colour getStressColor(float stress) const
+    juce::Colour getStressColor(float stressIndex) const
     {
-        if (stress > 0.7f)
+        if (stressIndex > 0.7f)
             return juce::Colours::red;        // High stress
-        else if (stress > 0.4f)
+        else if (stressIndex > 0.4f)
             return juce::Colours::orange;     // Moderate stress
         else
             return juce::Colours::green;      // Low stress (good)
     }
 
     //==============================================================================
-    std::unique_ptr<HRVProcessor> hrvProcessor;
-    std::unique_ptr<BioReactiveModulator> modulator;
+    std::unique_ptr<BioFeedbackSystem> bioFeedbackSystem;
 
     // History buffers (10 seconds at 30 FPS = 300 samples)
     std::deque<float> heartRateHistory;

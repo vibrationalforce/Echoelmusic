@@ -121,9 +121,9 @@ public:
         return aveSystem->getSessionState();
     }
 
-    const ColorLightTherapy::ColorState& getColorState() const
+    const ColorLightTherapy::LightState& getColorState() const
     {
-        return colorTherapy->getColorState();
+        return colorTherapy->getLightState();
     }
 
     float getVibrationAmplitude() const
@@ -302,13 +302,20 @@ private:
     //==============================================================================
     bool showSafetyWarningDialog()
     {
-        juce::String warningText = SafetyWarningText::getFullWarningText();
+        juce::String warningText = "⚠️ WICHTIGE SICHERHEITSHINWEISE ⚠️\n\n";
+        warningText += "DIESES SYSTEM IST NUR FÜR ENTERTAINMENT/FORSCHUNGSZWECKE!\n";
+        warningText += "KEINE MEDIZINISCHEN VERSPRECHEN!\n\n";
+        warningText += "WARNUNGEN:\n";
+        warningText += "⚠️ NICHT verwenden bei Epilepsie\n";
+        warningText += "⚠️ NICHT verwenden mit Herzschrittmacher\n";
+        warningText += "⚠️ NICHT verwenden während der Schwangerschaft\n";
+        warningText += "⚠️ Bei Unwohlsein SOFORT stoppen!\n\n";
+        warningText += "Konsultieren Sie einen Arzt vor der Nutzung!";
 
-        juce::AlertWindow::showMessageBox(
+        juce::AlertWindow::showMessageBoxAsync(
             juce::AlertWindow::WarningIcon,
             "⚠️ SAFETY WARNING - WICHTIG ⚠️",
-            warningText,
-            "I ACKNOWLEDGE"
+            warningText
         );
 
         return true;  // User acknowledged
@@ -319,7 +326,7 @@ private:
     {
         if (!safetyAcknowledged)
         {
-            juce::AlertWindow::showMessageBox(juce::AlertWindow::WarningIcon,
+            juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
                 "Safety Warning", "Please acknowledge safety warnings first!");
             return;
         }
@@ -334,17 +341,18 @@ private:
             // Configure settings
             AudioVisualEntrainment::SessionSettings settings;
             settings.safetyWarningAcknowledged = true;
-            settings.intensity = static_cast<float>(aveIntensitySlider.getValue());
+            settings.maxIntensity = static_cast<float>(aveIntensitySlider.getValue());
 
-            // Set frequency band
+            // Convert frequency band to target frequency
             int bandId = aveBandCombo.getSelectedId();
             switch (bandId)
             {
-                case 1: settings.band = AudioVisualEntrainment::FrequencyBand::Delta; break;
-                case 2: settings.band = AudioVisualEntrainment::FrequencyBand::Theta; break;
-                case 3: settings.band = AudioVisualEntrainment::FrequencyBand::Alpha; break;
-                case 4: settings.band = AudioVisualEntrainment::FrequencyBand::Beta; break;
-                case 5: settings.band = AudioVisualEntrainment::FrequencyBand::Gamma; break;
+                case 1: settings.targetFrequencyHz = 2.0f; break;   // Delta (0.5-4 Hz) - use 2 Hz
+                case 2: settings.targetFrequencyHz = 6.0f; break;   // Theta (4-8 Hz) - use 6 Hz
+                case 3: settings.targetFrequencyHz = 10.0f; break;  // Alpha (8-13 Hz) - use 10 Hz
+                case 4: settings.targetFrequencyHz = 20.0f; break;  // Beta (13-30 Hz) - use 20 Hz (avoid 15-25 Hz risk zone!)
+                case 5: settings.targetFrequencyHz = 40.0f; break;  // Gamma (30-100 Hz) - use 40 Hz
+                default: settings.targetFrequencyHz = 10.0f; break; // Default: Alpha
             }
 
             if (aveSystem->startSession(settings))
@@ -358,12 +366,12 @@ private:
     {
         if (!safetyAcknowledged)
         {
-            juce::AlertWindow::showMessageBox(juce::AlertWindow::WarningIcon,
+            juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
                 "Safety Warning", "Please acknowledge safety warnings first!");
             return;
         }
 
-        if (colorTherapy->getColorState().isActive)
+        if (colorTherapy->getLightState().isActive)
         {
             colorTherapy->stopSession();
             colorStartButton.setButtonText("Start Color");
@@ -397,7 +405,7 @@ private:
     {
         if (!safetyAcknowledged)
         {
-            juce::AlertWindow::showMessageBox(juce::AlertWindow::WarningIcon,
+            juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
                 "Safety Warning", "Please acknowledge safety warnings first!");
             return;
         }
@@ -448,7 +456,7 @@ private:
         colorStartButton.setButtonText("Start Color");
         vibroStartButton.setButtonText("Start Vibro");
 
-        juce::AlertWindow::showMessageBox(juce::AlertWindow::InfoIcon,
+        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
             "Emergency Stop", "All wellness systems stopped!");
     }
 
@@ -470,9 +478,9 @@ private:
         }
 
         // Color status
-        if (colorTherapy->getColorState().isActive)
+        if (colorTherapy->getLightState().isActive)
         {
-            float elapsed = colorTherapy->getColorState().elapsedSeconds;
+            float elapsed = colorTherapy->getLightState().elapsedSeconds;
             colorStatusLabel.setText("Status: Active (" + juce::String(elapsed, 1) + "s)",
                                     juce::dontSendNotification);
             colorStatusLabel.setColour(juce::Label::textColourId, juce::Colours::green);

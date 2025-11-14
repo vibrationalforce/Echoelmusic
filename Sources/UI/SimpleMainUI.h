@@ -6,6 +6,9 @@
 #include "../Visualization/FrequencyColorTranslator.h"
 #include "../Visualization/EMSpectrumAnalyzer.h"
 #include "../BioData/BioReactiveModulator.h"
+#include "BioFeedbackDashboard.h"
+#include "WellnessControlPanel.h"
+#include "CreativeToolsPanel.h"
 
 //==============================================================================
 /**
@@ -36,6 +39,22 @@ public:
         titleLabel.setJustificationType(juce::Justification::centred);
         infoLabel.setFont(juce::Font(14.0f));
         infoLabel.setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.7f));
+
+        // Wellness & Creative Tools Buttons
+        addAndMakeVisible(bioFeedbackButton);
+        bioFeedbackButton.setButtonText("Bio-Feedback Dashboard");
+        bioFeedbackButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xffff4444));
+        bioFeedbackButton.onClick = [this]() { openBioFeedbackWindow(); };
+
+        addAndMakeVisible(wellnessButton);
+        wellnessButton.setButtonText("Wellness Controls");
+        wellnessButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff44ff44));
+        wellnessButton.onClick = [this]() { openWellnessWindow(); };
+
+        addAndMakeVisible(creativeToolsButton);
+        creativeToolsButton.setButtonText("Creative Tools");
+        creativeToolsButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff4444ff));
+        creativeToolsButton.onClick = [this]() { openCreativeToolsWindow(); };
 
         // Create visualizers
         waveformVisualizer = std::make_unique<WaveformVisualizer>();
@@ -124,6 +143,15 @@ public:
         titleLabel.setBounds(bounds.removeFromTop(50).reduced(margin, 10));
         infoLabel.setBounds(bounds.removeFromTop(25).reduced(margin, 0));
 
+        // Toolbar buttons
+        auto toolbar = bounds.removeFromTop(40).reduced(margin, 5);
+        const int buttonWidth = (toolbar.getWidth() - 20) / 3;  // 3 buttons with spacing
+        bioFeedbackButton.setBounds(toolbar.removeFromLeft(buttonWidth));
+        toolbar.removeFromLeft(10);
+        wellnessButton.setBounds(toolbar.removeFromLeft(buttonWidth));
+        toolbar.removeFromLeft(10);
+        creativeToolsButton.setBounds(toolbar.removeFromLeft(buttonWidth));
+
         bounds.removeFromTop(margin);
 
         // Split into left (audio visualizers) and right (bio-data) panels
@@ -206,9 +234,93 @@ public:
         }
     }
 
+    //==============================================================================
+    // Window opening methods
+    void openBioFeedbackWindow()
+    {
+        if (bioFeedbackWindow == nullptr)
+        {
+            auto* dashboard = new BioFeedbackDashboard();
+            dashboard->setSize(900, 600);
+
+            bioFeedbackWindow = std::make_unique<juce::DocumentWindow>(
+                "Bio-Feedback Dashboard",
+                juce::Colour(0xff0a0a0a),
+                juce::DocumentWindow::closeButton | juce::DocumentWindow::minimiseButton
+            );
+
+            bioFeedbackWindow->setContentOwned(dashboard, true);
+            bioFeedbackWindow->setResizable(true, false);
+            bioFeedbackWindow->centreWithSize(900, 600);
+            bioFeedbackWindow->setVisible(true);
+        }
+        else
+        {
+            bioFeedbackWindow->toFront(true);
+        }
+    }
+
+    void openWellnessWindow()
+    {
+        if (wellnessWindow == nullptr)
+        {
+            auto* wellness = new WellnessControlPanel();
+            wellness->setSize(800, 700);
+
+            wellnessWindow = std::make_unique<juce::DocumentWindow>(
+                "Wellness Controls (AVE + Color Light + Vibrotherapy)",
+                juce::Colour(0xff0a0a0a),
+                juce::DocumentWindow::closeButton | juce::DocumentWindow::minimiseButton
+            );
+
+            wellnessWindow->setContentOwned(wellness, true);
+            wellnessWindow->setResizable(true, false);
+            wellnessWindow->centreWithSize(800, 700);
+            wellnessWindow->setVisible(true);
+        }
+        else
+        {
+            wellnessWindow->toFront(true);
+        }
+    }
+
+    void openCreativeToolsWindow()
+    {
+        if (creativeToolsWindow == nullptr)
+        {
+            auto* tools = new CreativeToolsPanel();
+            tools->setSize(700, 650);
+
+            creativeToolsWindow = std::make_unique<juce::DocumentWindow>(
+                "Creative Tools (Studio Calculator Suite)",
+                juce::Colour(0xff0a0a0a),
+                juce::DocumentWindow::closeButton | juce::DocumentWindow::minimiseButton
+            );
+
+            creativeToolsWindow->setContentOwned(tools, true);
+            creativeToolsWindow->setResizable(true, false);
+            creativeToolsWindow->centreWithSize(700, 650);
+            creativeToolsWindow->setVisible(true);
+        }
+        else
+        {
+            creativeToolsWindow->toFront(true);
+        }
+    }
+
 private:
     juce::Label titleLabel;
     juce::Label infoLabel;
+
+    // Toolbar buttons
+    juce::TextButton bioFeedbackButton;
+    juce::TextButton wellnessButton;
+    juce::TextButton creativeToolsButton;
+
+    // Separate windows for wellness/creative tools
+    std::unique_ptr<juce::DocumentWindow> bioFeedbackWindow;
+    std::unique_ptr<juce::DocumentWindow> wellnessWindow;
+    std::unique_ptr<juce::DocumentWindow> creativeToolsWindow;
 
     juce::Label waveformLabel;
     juce::Label spectrumLabel;
