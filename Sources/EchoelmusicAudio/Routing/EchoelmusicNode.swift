@@ -9,7 +9,7 @@ import AVFoundation
 /// - Nodes can react to bio-signals in real-time
 /// - Nodes are chain-able for complex signal flows
 /// - Thread-safe for real-time audio processing
-protocol EchoelmusicNode: AnyObject {
+public protocol EchoelmusicNode: AnyObject {
 
     // MARK: - Identity
 
@@ -86,7 +86,7 @@ protocol EchoelmusicNode: AnyObject {
 // MARK: - Supporting Types
 
 /// Node type classification
-enum NodeType: String, Codable {
+public enum NodeType: String, Codable {
     case generator  // Generates audio (oscillators, samplers)
     case effect     // Processes audio (reverb, delay, filter)
     case analyzer   // Analyzes audio (FFT, pitch detection)
@@ -96,29 +96,29 @@ enum NodeType: String, Codable {
 
 
 /// Bio-signal data for node reactivity
-struct BioSignal {
+public struct BioSignal {
     /// Heart rate variability (ms)
-    var hrv: Double
+    public var hrv: Double
 
     /// Heart rate (BPM)
-    var heartRate: Double
+    public var heartRate: Double
 
     /// HRV coherence score (0-100, HeartMath)
-    var coherence: Double
+    public var coherence: Double
 
     /// Respiratory rate (breaths per minute)
-    var respiratoryRate: Double?
+    public var respiratoryRate: Double?
 
     /// Audio level (0.0 - 1.0)
-    var audioLevel: Float
+    public var audioLevel: Float
 
     /// Voice pitch (Hz)
-    var voicePitch: Float
+    public var voicePitch: Float
 
     /// Custom data for extensibility
-    var customData: [String: Any]
+    public var customData: [String: Any]
 
-    init(
+    public init(
         hrv: Double = 0,
         heartRate: Double = 60,
         coherence: Double = 50,
@@ -139,37 +139,37 @@ struct BioSignal {
 
 
 /// Node parameter definition
-struct NodeParameter: Identifiable {
-    let id = UUID()
+public struct NodeParameter: Identifiable {
+    public let id = UUID()
 
     /// Parameter name (unique within node)
-    let name: String
+    public let name: String
 
     /// Display label
-    let label: String
+    public let label: String
 
     /// Current value
-    var value: Float
+    public var value: Float
 
     /// Minimum value
-    let min: Float
+    public let min: Float
 
     /// Maximum value
-    let max: Float
+    public let max: Float
 
     /// Default value
-    let defaultValue: Float
+    public let defaultValue: Float
 
     /// Unit (Hz, dB, ms, %, etc.)
-    let unit: String?
+    public let unit: String?
 
     /// Whether this parameter can be automated
-    let isAutomatable: Bool
+    public let isAutomatable: Bool
 
     /// Parameter type for UI rendering
-    let type: ParameterType
+    public let type: ParameterType
 
-    enum ParameterType {
+    public enum ParameterType {
         case continuous  // Slider
         case discrete    // Stepped values
         case toggle      // On/off switch
@@ -179,27 +179,27 @@ struct NodeParameter: Identifiable {
 
 
 /// Node manifest for serialization and loading
-struct NodeManifest: Codable {
+public struct NodeManifest: Codable {
     /// Node ID
-    let id: String
+    public let id: String
 
     /// Node type
-    let type: NodeType
+    public let type: NodeType
 
     /// Node class name (for dynamic loading)
-    let className: String
+    public let className: String
 
     /// Version
-    let version: String
+    public let version: String
 
     /// Parameters and their current values
-    let parameters: [String: Float]
+    public let parameters: [String: Float]
 
     /// Is bypassed
-    let isBypassed: Bool
+    public let isBypassed: Bool
 
     /// Custom metadata
-    let metadata: [String: String]?
+    public let metadata: [String: String]?
 }
 
 
@@ -207,23 +207,23 @@ struct NodeManifest: Codable {
 
 /// Base class for nodes with common functionality
 @MainActor
-class BaseEchoelmusicNode: EchoelmusicNode {
+public class BaseEchoelmusicNode: EchoelmusicNode {
 
     // MARK: - EchoelmusicNode Protocol
 
-    let id: UUID
-    let name: String
-    let type: NodeType
+    public let id: UUID
+    public let name: String
+    public let type: NodeType
 
-    var isBypassed: Bool = false
-    var isActive: Bool = false
+    public var isBypassed: Bool = false
+    public var isActive: Bool = false
 
-    var parameters: [NodeParameter] = []
+    public var parameters: [NodeParameter] = []
 
 
     // MARK: - Initialization
 
-    init(name: String, type: NodeType) {
+    public init(name: String, type: NodeType) {
         self.id = UUID()
         self.name = name
         self.type = type
@@ -232,7 +232,7 @@ class BaseEchoelmusicNode: EchoelmusicNode {
 
     // MARK: - Audio Processing (to be overridden)
 
-    func process(_ buffer: AVAudioPCMBuffer, time: AVAudioTime) -> AVAudioPCMBuffer {
+    public func process(_ buffer: AVAudioPCMBuffer, time: AVAudioTime) -> AVAudioPCMBuffer {
         // Base implementation: pass-through
         // Subclasses should override
         return buffer
@@ -241,7 +241,7 @@ class BaseEchoelmusicNode: EchoelmusicNode {
 
     // MARK: - Bio-Reactivity (to be overridden)
 
-    func react(to signal: BioSignal) {
+    public func react(to signal: BioSignal) {
         // Base implementation: no reaction
         // Subclasses can override to implement bio-reactivity
     }
@@ -249,7 +249,7 @@ class BaseEchoelmusicNode: EchoelmusicNode {
 
     // MARK: - Parameters
 
-    func setParameter(name: String, value: Float) {
+    public func setParameter(name: String, value: Float) {
         if let index = parameters.firstIndex(where: { $0.name == name }) {
             let parameter = parameters[index]
             // Clamp value to range
@@ -258,27 +258,27 @@ class BaseEchoelmusicNode: EchoelmusicNode {
         }
     }
 
-    func getParameter(name: String) -> Float? {
+    public func getParameter(name: String) -> Float? {
         return parameters.first(where: { $0.name == name })?.value
     }
 
 
     // MARK: - Lifecycle (to be overridden)
 
-    func prepare(sampleRate: Double, maxFrames: AVAudioFrameCount) {
+    public func prepare(sampleRate: Double, maxFrames: AVAudioFrameCount) {
         // Base implementation: no-op
         // Subclasses should override to allocate resources
     }
 
-    func start() {
+    public func start() {
         isActive = true
     }
 
-    func stop() {
+    public func stop() {
         isActive = false
     }
 
-    func reset() {
+    public func reset() {
         // Reset all parameters to default
         for i in 0..<parameters.count {
             parameters[i].value = parameters[i].defaultValue
@@ -289,7 +289,7 @@ class BaseEchoelmusicNode: EchoelmusicNode {
     // MARK: - Serialization
 
     /// Create manifest for this node
-    func createManifest() -> NodeManifest {
+    public func createManifest() -> NodeManifest {
         let parameterDict = parameters.reduce(into: [String: Float]()) { dict, param in
             dict[param.name] = param.value
         }
