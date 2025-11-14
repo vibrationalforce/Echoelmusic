@@ -54,6 +54,9 @@ public class UnifiedControlHub: ObservableObject {
     // Phase 4: Ultra-Low-Latency I/O Management
     private var audioIOManager: AudioIOManager?
 
+    // Phase 5: Super Intelligence Layer
+    private var intelligenceEngine: IntelligenceEngine?
+
     // TODO: Add when implementing
     // private let gazeTracker: GazeTracker?
 
@@ -333,6 +336,63 @@ public class UnifiedControlHub: ObservableObject {
     /// - Parameter mode: Target latency mode
     public func setAudioLatencyMode(_ mode: AudioConfiguration.LatencyMode) async throws {
         try await audioIOManager?.setLatencyMode(mode)
+    }
+
+    // MARK: - Phase 5: Super Intelligence
+
+    /// Enable Super Intelligence Engine
+    /// - Parameter autoOptimize: Enable automatic optimization (default: true)
+    public func enableIntelligence(autoOptimize: Bool = true) {
+        let intelligence = IntelligenceEngine()
+        intelligence.setAutoOptimization(autoOptimize)
+        intelligence.start()
+
+        self.intelligenceEngine = intelligence
+
+        print("[UnifiedControlHub] 🧠 Super Intelligence enabled (auto-optimize: \(autoOptimize ? "ON" : "OFF"))")
+    }
+
+    /// Disable Super Intelligence Engine
+    public func disableIntelligence() {
+        intelligenceEngine?.stop()
+        intelligenceEngine = nil
+        print("[UnifiedControlHub] 🧠 Super Intelligence disabled")
+    }
+
+    /// Apply AI-recommended settings to Audio I/O
+    public func applyIntelligentSettings() async throws {
+        guard let intelligence = intelligenceEngine,
+              let audioIO = audioIOManager else {
+            print("⚠️  Intelligence or Audio I/O not available")
+            return
+        }
+
+        try await intelligence.applyRecommendedSettings(to: audioIO)
+        print("[UnifiedControlHub] ✅ Applied intelligent recommendations")
+    }
+
+    /// Save current settings as preferred for current context
+    public func saveIntelligentScene() {
+        guard let intelligence = intelligenceEngine,
+              let audioIO = audioIOManager else {
+            return
+        }
+
+        intelligence.saveCurrentScene(
+            latencyMode: audioIO.latencyMode,
+            wetDryMix: audioIO.wetDryMix,
+            inputGain: audioIO.inputGainDB
+        )
+    }
+
+    /// Record user action for learning
+    public func recordUserAction(_ action: UserAction) {
+        intelligenceEngine?.recordUserAction(action)
+    }
+
+    /// Get intelligence status
+    public var intelligenceStatus: String? {
+        return intelligenceEngine?.statusDescription
     }
 
     // MARK: - Lifecycle
