@@ -19,6 +19,9 @@ public struct ContentView: View {
     /// Access to Recording engine from the environment
     @EnvironmentObject var recordingEngine: RecordingEngine
 
+    /// Bio-feedback engine for real-time bio-audio mapping
+    @StateObject private var bioFeedbackEngine = BioFeedbackEngine()
+
     /// Show permission denial alert
     @State private var showPermissionAlert = false
 
@@ -33,6 +36,9 @@ public struct ContentView: View {
 
     /// Show visualization mode picker
     @State private var showVisualizationPicker = false
+
+    /// Show detailed bio-feedback panel
+    @State private var showBioFeedbackDetails = false
 
     /// Currently selected visualization mode
     @State private var selectedVisualizationMode: VisualizationMode = .particles
@@ -176,37 +182,44 @@ public struct ContentView: View {
                     .transition(.opacity.combined(with: .scale))
                 }
 
-                // HRV Biofeedback Display
+                // HRV Biofeedback Display (tap for details)
                 if healthKitManager.isAuthorized && isRecording {
-                    HStack(spacing: 40) {
-                        // Heart Rate
-                        VStack(spacing: 4) {
-                            Text("\(Int(healthKitManager.heartRate))")
-                                .font(.system(size: 30, weight: .light, design: .monospaced))
-                                .foregroundColor(Color.red.opacity(0.8))
-                            Text("BPM")
-                                .font(.system(size: 10, weight: .light))
-                                .foregroundColor(.white.opacity(0.5))
-                        }
+                    Button(action: { showBioFeedbackDetails.toggle() }) {
+                        HStack(spacing: 40) {
+                            // Heart Rate
+                            VStack(spacing: 4) {
+                                Text("\(Int(healthKitManager.heartRate))")
+                                    .font(.system(size: 30, weight: .light, design: .monospaced))
+                                    .foregroundColor(Color.red.opacity(0.8))
+                                Text("BPM")
+                                    .font(.system(size: 10, weight: .light))
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
 
-                        // HRV RMSSD
-                        VStack(spacing: 4) {
-                            Text(String(format: "%.1f", healthKitManager.hrvRMSSD))
-                                .font(.system(size: 30, weight: .light, design: .monospaced))
-                                .foregroundColor(Color.green.opacity(0.8))
-                            Text("HRV ms")
-                                .font(.system(size: 10, weight: .light))
-                                .foregroundColor(.white.opacity(0.5))
-                        }
+                            // HRV RMSSD
+                            VStack(spacing: 4) {
+                                Text(String(format: "%.1f", healthKitManager.hrvRMSSD))
+                                    .font(.system(size: 30, weight: .light, design: .monospaced))
+                                    .foregroundColor(Color.green.opacity(0.8))
+                                Text("HRV ms")
+                                    .font(.system(size: 10, weight: .light))
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
 
-                        // Coherence Score
-                        VStack(spacing: 4) {
-                            Text("\(Int(healthKitManager.hrvCoherence))")
-                                .font(.system(size: 30, weight: .light, design: .monospaced))
-                                .foregroundColor(coherenceColor(healthKitManager.hrvCoherence))
-                            Text("coherence")
-                                .font(.system(size: 10, weight: .light))
-                                .foregroundColor(.white.opacity(0.5))
+                            // Coherence Score
+                            VStack(spacing: 4) {
+                                Text("\(Int(healthKitManager.hrvCoherence))")
+                                    .font(.system(size: 30, weight: .light, design: .monospaced))
+                                    .foregroundColor(coherenceColor(healthKitManager.hrvCoherence))
+                                Text("coherence")
+                                    .font(.system(size: 10, weight: .light))
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
+
+                            // Tap indicator
+                            Image(systemName: "chevron.right.circle")
+                                .font(.system(size: 16))
+                                .foregroundColor(.white.opacity(0.4))
                         }
                     }
                     .padding(.bottom, 15)
@@ -494,6 +507,27 @@ public struct ContentView: View {
                 .environmentObject(healthKitManager)
                 .environmentObject(microphoneManager)
                 .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showBioFeedbackDetails) {
+            BioFeedbackView(bioFeedbackEngine: bioFeedbackEngine)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .onChange(of: microphoneManager.audioLevel) { _ in
+            // Feed audio level to bio-feedback engine
+            bioFeedbackEngine.updateAudioLevel(microphoneManager.audioLevel)
+        }
+        .onChange(of: microphoneManager.currentPitch) { _ in
+            // Feed voice pitch to bio-feedback engine
+            bioFeedbackEngine.updateVoicePitch(microphoneManager.currentPitch)
+        }
+        .onChange(of: isRecording) { recording in
+            // Enable bio-feedback engine when recording starts
+            if recording && healthKitManager.isAuthorized {
+                bioFeedbackEngine.enable()
+            } else if !recording {
+                bioFeedbackEngine.disable()
+            }
         }
     }
 

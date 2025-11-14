@@ -2,6 +2,7 @@ import Foundation
 import HealthKit
 import Combine
 import Accelerate
+import EchoelmusicCore
 
 /// Manages HealthKit integration for real-time HRV and heart rate monitoring
 /// Implements HeartMath Institute's coherence algorithm for biofeedback
@@ -205,6 +206,9 @@ public class HealthKitManager: ObservableObject {
 
             Task { @MainActor in
                 self.heartRate = bpm
+
+                // Publish bio signal update to EventBus
+                self.publishBioSignalUpdate()
             }
         }
     }
@@ -273,6 +277,9 @@ public class HealthKitManager: ObservableObject {
                 if self.rrIntervalBuffer.count >= 30 { // Need minimum data
                     self.hrvCoherence = self.calculateCoherence(rrIntervals: self.rrIntervalBuffer)
                 }
+
+                // Publish bio signal update to EventBus
+                self.publishBioSignalUpdate()
             }
         }
     }
@@ -416,6 +423,36 @@ public class HealthKitManager: ObservableObject {
         }
         return power
     }
+
+
+    // MARK: - EventBus Integration
+
+    /// Publish current bio signal data to EventBus
+    /// Other modules (Audio, Visual, Control) can subscribe to these updates
+    private func publishBioSignalUpdate() {
+        let event = BioSignalUpdatedEvent(
+            heartRate: heartRate,
+            hrv: hrvRMSSD,
+            coherence: hrvCoherence,
+            respiratoryRate: nil,  // Not yet implemented
+            timestamp: Date()
+        )
+
+        EventBus.shared.publish(event)
+
+        // Log significant coherence changes
+        if abs(hrvCoherence - previousCoherence) > 10.0 {
+            if hrvCoherence >= 60 {
+                print("✨ High coherence achieved: \(Int(hrvCoherence))% - Flow state!")
+            } else if hrvCoherence < 40 {
+                print("⚠️ Low coherence: \(Int(hrvCoherence))% - Consider breathing exercise")
+            }
+            previousCoherence = hrvCoherence
+        }
+    }
+
+    /// Track previous coherence for change detection
+    private var previousCoherence: Double = 0.0
 
 
     // MARK: - Cleanup
