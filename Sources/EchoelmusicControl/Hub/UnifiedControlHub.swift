@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import AVFoundation
+import EchoelmusicCore
 
 /// Central orchestrator for all input modalities in BLAB
 ///
@@ -20,6 +21,9 @@ import AVFoundation
 public class UnifiedControlHub: ObservableObject {
 
     // MARK: - Published State
+
+    /// Whether the control hub is running
+    @Published public private(set) var isRunning: Bool = false
 
     /// Current active input mode
     @Published public private(set) var activeInputMode: InputMode = .automatic
@@ -64,6 +68,7 @@ public class UnifiedControlHub: ObservableObject {
 
     private var lastUpdateTime: Date = Date()
     private let targetFrequency: Double = 60.0  // 60 Hz
+    private var frameCount: Int = 0
 
     // MARK: - Cancellables
 
@@ -289,6 +294,8 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Start the unified control system
     public func start() {
+        guard !isRunning else { return }
+
         print("[UnifiedControlHub] Starting control system...")
 
         // Start face tracking if enabled
@@ -301,13 +308,19 @@ public class UnifiedControlHub: ObservableObject {
 
         // Start control loop
         startControlLoop()
+
+        isRunning = true
     }
 
     /// Stop the unified control system
     public func stop() {
+        guard isRunning else { return }
+
         print("[UnifiedControlHub] Stopping control system...")
         controlLoopTimer?.cancel()
         controlLoopTimer = nil
+
+        isRunning = false
     }
 
     // MARK: - Control Loop (60 Hz)
@@ -323,11 +336,26 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     private func controlLoopTick() {
+        frameCount += 1
+
         // Measure actual frequency
         let now = Date()
         let deltaTime = now.timeIntervalSince(lastUpdateTime)
         controlLoopFrequency = 1.0 / deltaTime
         lastUpdateTime = now
+
+        // Publish tick event every 60 frames (once per second)
+        if frameCount % 60 == 0 {
+            EventBus.shared.publish(ControlLoopTickEvent(
+                frameNumber: frameCount,
+                actualHz: controlLoopFrequency
+            ))
+
+            // Performance check
+            if abs(controlLoopFrequency - targetFrequency) > 5.0 {
+                print("⚠️ Control loop drift detected: \(String(format: "%.1f", controlLoopFrequency))Hz (target: 60Hz)")
+            }
+        }
 
         // Priority-based parameter updates
         updateFromBioSignals()
