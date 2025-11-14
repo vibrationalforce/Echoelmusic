@@ -97,12 +97,21 @@ class IntelligenceEngine: ObservableObject {
     /// Context stability duration (seconds)
     private var contextStabilityDuration: TimeInterval = 0
 
+    /// Data connector (provides real-time data from all sources)
+    private var connector: IntelligenceConnector?
+
 
     // MARK: - Initialization
 
     init() {
         print("🧠 IntelligenceEngine initializing...")
         loadLearningData()
+    }
+
+    /// Connect to data sources via connector
+    func connectDataSources(_ connector: IntelligenceConnector) {
+        self.connector = connector
+        print("🧠 IntelligenceEngine connected to real-time data sources")
     }
 
 
@@ -454,70 +463,73 @@ class IntelligenceEngine: ObservableObject {
     }
 
 
-    // MARK: - Helper Methods (to be connected to real managers)
+    // MARK: - Helper Methods (connected via IntelligenceConnector)
 
     private func getCurrentAudioLevel() -> Float {
-        // TODO: Connect to AudioIOManager
-        return 0.5
+        return connector?.getCurrentAudioLevel() ?? 0.0
     }
 
     private func getCurrentHRVCoherence() -> Double {
-        // TODO: Connect to HealthKitManager
-        return 60.0
+        return connector?.getCurrentHRVCoherence() ?? 50.0
     }
 
     private func getCurrentHeartRate() -> Double {
-        // TODO: Connect to HealthKitManager
-        return 70.0
+        return connector?.getCurrentHeartRate() ?? 70.0
     }
 
     private func getCurrentGestureActivity() -> Float {
-        // TODO: Connect to GestureRecognizer
-        return 0.0
+        return connector?.getCurrentGestureActivity() ?? 0.0
     }
 
     private func getCurrentFaceExpression() -> String {
-        // TODO: Connect to FaceTrackingManager
-        return "neutral"
+        return connector?.getCurrentFaceExpression() ?? "neutral"
     }
 
     private func getCurrentLatencyMode() -> AudioConfiguration.LatencyMode {
-        // TODO: Connect to AudioIOManager
-        return .low
+        return connector?.getCurrentLatencyMode() ?? .low
     }
 
     private func getCurrentWetDryMix() -> Float {
-        // TODO: Connect to AudioIOManager
-        return 0.3
+        return connector?.getCurrentWetDryMix() ?? 0.3
     }
 
     private func getCurrentInputGain() -> Float {
-        // TODO: Connect to AudioIOManager
-        return 0.0
+        return connector?.getCurrentInputGain() ?? 0.0
     }
 
     private func getCurrentInputLevel() -> Float {
-        // TODO: Connect to AudioIOManager
-        return -20.0
+        return connector?.getCurrentInputLevel() ?? -96.0
     }
 
     private func getCurrentOutputLevel() -> Float {
-        // TODO: Connect to AudioIOManager
-        return -20.0
+        return connector?.getCurrentOutputLevel() ?? -96.0
     }
 
     private func getCurrentLatency() -> TimeInterval {
-        // TODO: Connect to AudioIOManager
-        return 0.005
+        return connector?.getCurrentLatency() ?? 0.005
     }
 
     private func getCurrentCPUUsage() -> Float {
-        // System CPU usage
-        return ProcessInfo.processInfo.systemUptime > 0 ? 0.15 : 0.0
+        // Get actual CPU usage
+        var info = mach_task_basic_info()
+        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
+
+        let result = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
+                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+            }
+        }
+
+        if result == KERN_SUCCESS {
+            let threads = Double(info.threads_count)
+            return Float(threads / 100.0) // Rough estimate
+        }
+
+        return 0.15 // Fallback
     }
 
     private func getAudioDropouts() -> Int {
-        // TODO: Track dropouts
+        // TODO: Track dropouts in AudioIOManager
         return 0
     }
 

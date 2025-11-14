@@ -56,6 +56,7 @@ public class UnifiedControlHub: ObservableObject {
 
     // Phase 5: Super Intelligence Layer
     private var intelligenceEngine: IntelligenceEngine?
+    private var intelligenceConnector: IntelligenceConnector?
 
     // TODO: Add when implementing
     // private let gazeTracker: GazeTracker?
@@ -343,19 +344,38 @@ public class UnifiedControlHub: ObservableObject {
     /// Enable Super Intelligence Engine
     /// - Parameter autoOptimize: Enable automatic optimization (default: true)
     public func enableIntelligence(autoOptimize: Bool = true) {
+        // Create intelligence engine
         let intelligence = IntelligenceEngine()
         intelligence.setAutoOptimization(autoOptimize)
+
+        // Create connector to link intelligence with data sources
+        let connector = IntelligenceConnector()
+        connector.connect(
+            intelligence: intelligence,
+            audioIO: audioIOManager,
+            healthKit: healthKitManager,
+            gestures: gestureRecognizer,
+            faceTracking: faceTrackingManager
+        )
+
+        // Connect intelligence to connector
+        intelligence.connectDataSources(connector)
+
+        // Start intelligence engine
         intelligence.start()
 
         self.intelligenceEngine = intelligence
+        self.intelligenceConnector = connector
 
         print("[UnifiedControlHub] 🧠 Super Intelligence enabled (auto-optimize: \(autoOptimize ? "ON" : "OFF"))")
+        print("   ✅ Connected to real-time data sources")
     }
 
     /// Disable Super Intelligence Engine
     public func disableIntelligence() {
         intelligenceEngine?.stop()
         intelligenceEngine = nil
+        intelligenceConnector = nil
         print("[UnifiedControlHub] 🧠 Super Intelligence disabled")
     }
 
