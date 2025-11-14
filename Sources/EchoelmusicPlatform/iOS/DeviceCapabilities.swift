@@ -9,7 +9,7 @@ import AVFoundation
 /// - AirPods model detection
 /// - Audio codec capabilities
 @MainActor
-class DeviceCapabilities: ObservableObject {
+public class DeviceCapabilities: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -46,7 +46,7 @@ class DeviceCapabilities: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         detectCapabilities()
     }
 
@@ -54,7 +54,7 @@ class DeviceCapabilities: ObservableObject {
     // MARK: - Detection Methods
 
     /// Detect all device capabilities
-    func detectCapabilities() {
+    public func detectCapabilities() {
         detectDeviceModel()
         detectiOSVersion()
         detectASAFSupport()

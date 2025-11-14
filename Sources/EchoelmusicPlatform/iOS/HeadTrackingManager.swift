@@ -6,7 +6,7 @@ import Combine
 /// Provides real-time head orientation data for spatial audio
 /// Requires: AirPods Pro/Max with iOS 14+
 @MainActor
-class HeadTrackingManager: ObservableObject {
+public class HeadTrackingManager: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -62,7 +62,7 @@ class HeadTrackingManager: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         checkAvailability()
     }
 
@@ -85,7 +85,7 @@ class HeadTrackingManager: ObservableObject {
     // MARK: - Tracking Control
 
     /// Start head tracking
-    func startTracking() {
+    public func startTracking() {
         guard isAvailable else {
             print("❌ Cannot start head tracking: Not available")
             return
@@ -120,7 +120,7 @@ class HeadTrackingManager: ObservableObject {
     }
 
     /// Stop head tracking
-    func stopTracking() {
+    public func stopTracking() {
         guard isTracking else { return }
 
         motionManager.stopDeviceMotionUpdates()

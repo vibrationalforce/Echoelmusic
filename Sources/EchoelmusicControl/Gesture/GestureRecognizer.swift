@@ -5,7 +5,7 @@ import Combine
 /// Recognizes hand gestures from HandTrackingManager data
 /// Supports: Pinch, Spread, Fist, Point, Swipe
 @MainActor
-class GestureRecognizer: ObservableObject {
+public class GestureRecognizer: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -22,10 +22,17 @@ class GestureRecognizer: ObservableObject {
     @Published var leftPinchAmount: Float = 0.0
     @Published var rightPinchAmount: Float = 0.0
 
+    /// Spread amount (0 = closed, 1 = fully spread)
+    @Published var leftSpreadAmount: Float = 0.0
+    @Published var rightSpreadAmount: Float = 0.0
+
+    /// Left gesture confidence (0.0 - 1.0)
+    @Published var leftGestureConfidence: Float = 0.0
+
 
     // MARK: - Gesture Types
 
-    enum Gesture: String {
+    public enum Gesture: String {
         case none = "None"
         case pinch = "Pinch"
         case spread = "Spread"
@@ -61,7 +68,7 @@ class GestureRecognizer: ObservableObject {
 
     // MARK: - Initialization
 
-    init(handTracker: HandTrackingManager) {
+    public init(handTracker: HandTrackingManager) {
         self.handTracker = handTracker
         print("✋ GestureRecognizer initialized")
     }
@@ -70,7 +77,7 @@ class GestureRecognizer: ObservableObject {
     // MARK: - Gesture Recognition
 
     /// Update gesture recognition from current hand state
-    func updateGestures() {
+    public func updateGestures() {
         guard let tracker = handTracker else { return }
 
         // Recognize gestures for each hand

@@ -15,11 +15,11 @@ import Foundation
 /// - **Point** → Delay Time (mapped to finger extension)
 /// - **Swipe** → Preset change trigger
 @MainActor
-class GestureToAudioMapper {
+public class GestureToAudioMapper {
 
     // MARK: - Audio Parameter Result
 
-    struct AudioParameters {
+    public struct AudioParameters {
         // Filter parameters
         var filterCutoff: Float?
         var filterResonance: Float?
@@ -36,7 +36,7 @@ class GestureToAudioMapper {
         var presetChange: Int?
     }
 
-    struct MIDINote {
+    public struct MIDINote {
         let note: UInt8
         let velocity: UInt8
         let channel: UInt8
@@ -62,10 +62,14 @@ class GestureToAudioMapper {
     private var lastFistTriggerTime: [HandTrackingManager.Hand: Date] = [:]
     private let fistTriggerCooldown: TimeInterval = 0.3 // 300ms cooldown
 
+    // MARK: - Initialization
+
+    public init() {}
+
     // MARK: - Mapping Methods
 
     /// Map gestures from both hands to audio parameters
-    func mapToAudio(gestureRecognizer: GestureRecognizer) -> AudioParameters {
+    public func mapToAudio(gestureRecognizer: GestureRecognizer) -> AudioParameters {
         var params = AudioParameters()
 
         // Left hand mappings

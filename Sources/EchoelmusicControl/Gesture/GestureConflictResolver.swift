@@ -4,7 +4,7 @@ import Combine
 /// Resolves conflicts between gestures and other input sources
 /// Prevents accidental triggers and ensures intentional control
 @MainActor
-class GestureConflictResolver: ObservableObject {
+public class GestureConflictResolver: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -39,7 +39,7 @@ class GestureConflictResolver: ObservableObject {
 
     // MARK: - Initialization
 
-    init(
+    public init(
         gestureRecognizer: GestureRecognizer,
         handTracker: HandTrackingManager,
         faceTracker: ARFaceTrackingManager? = nil
@@ -55,7 +55,7 @@ class GestureConflictResolver: ObservableObject {
     // MARK: - Conflict Resolution
 
     /// Check if gesture is valid and should be processed
-    func shouldProcessGesture(
+    public func shouldProcessGesture(
         _ gesture: GestureRecognizer.Gesture,
         hand: HandTrackingManager.Hand,
         confidence: Float
@@ -192,7 +192,7 @@ class GestureConflictResolver: ObservableObject {
         return .bio
     }
 
-    enum InputSource {
+    public enum InputSource {
         case gesture
         case face
         case gaze

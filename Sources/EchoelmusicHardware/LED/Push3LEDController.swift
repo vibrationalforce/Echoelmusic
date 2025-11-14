@@ -7,7 +7,7 @@ import Combine
 /// 8x8 RGB LED grid (64 LEDs)
 /// Integrates with biofeedback system for real-time LED visualization
 @MainActor
-class Push3LEDController: ObservableObject {
+public class Push3LEDController: ObservableObject {
 
     // MARK: - Published State
 
@@ -77,7 +77,7 @@ class Push3LEDController: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         setupMIDI()
     }
 
@@ -143,7 +143,7 @@ class Push3LEDController: ObservableObject {
 
     // MARK: - Connection Management
 
-    func connect() {
+    public func connect() throws {
         guard !isConnected else { return }
         findPush3Endpoint()
 
@@ -153,7 +153,7 @@ class Push3LEDController: ObservableObject {
         }
     }
 
-    func disconnect() {
+    public func disconnect() {
         if isConnected {
             clearGrid()
         }
@@ -232,7 +232,7 @@ class Push3LEDController: ObservableObject {
     // MARK: - Biometric → LED Mapping
 
     /// Update LEDs based on HRV coherence
-    func updateFromBioSignals(hrvCoherence: Double, heartRate: Double) {
+    public func updateBioReactive(hrvCoherence: Double, heartRate: Double, breathingRate: Double) {
         switch currentPattern {
         case .breathe:
             applyBreathePattern(coherence: hrvCoherence)

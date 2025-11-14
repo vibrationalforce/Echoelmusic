@@ -8,7 +8,7 @@ import Combine
 /// Supports Art-Net, sACN (E1.31), and serial LED protocols
 /// Bio-reactive lighting for live performances and installations
 @MainActor
-class MIDIToLightMapper: ObservableObject {
+public class MIDIToLightMapper: ObservableObject {
 
     // MARK: - Published State
 
@@ -106,7 +106,7 @@ class MIDIToLightMapper: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         setupDefaultLEDStrips()
     }
 
@@ -151,16 +151,22 @@ class MIDIToLightMapper: ObservableObject {
     // MARK: - Biometric Data Structure
 
     /// Bio-reactive lighting data from HealthKit/sensors
-    struct BioData {
-        var hrvCoherence: Double
-        var heartRate: Double
-        var breathingRate: Double
+    public struct BioData {
+        public var hrvCoherence: Double
+        public var heartRate: Double
+        public var breathingRate: Double
+
+        public init(hrvCoherence: Double, heartRate: Double, breathingRate: Double) {
+            self.hrvCoherence = hrvCoherence
+            self.heartRate = heartRate
+            self.breathingRate = breathingRate
+        }
     }
 
     // MARK: - Connection Management
 
     /// Connect to Art-Net network
-    func connect() throws {
+    public func connect() throws {
         guard !isActive else { return }
 
         // Initialize Art-Net socket
@@ -170,7 +176,7 @@ class MIDIToLightMapper: ObservableObject {
     }
 
     /// Disconnect from Art-Net network
-    func disconnect() {
+    public func disconnect() {
         guard isActive else { return }
 
         blackoutAll()
@@ -258,7 +264,7 @@ class MIDIToLightMapper: ObservableObject {
     // MARK: - Biometric → Light Mapping
 
     /// Update lights from bio-reactive data (UnifiedControlHub interface)
-    func updateBioReactive(_ bioData: BioData) {
+    public func updateBioReactive(_ bioData: BioData) {
         updateFromBioSignals(
             hrvCoherence: bioData.hrvCoherence,
             heartRate: bioData.heartRate

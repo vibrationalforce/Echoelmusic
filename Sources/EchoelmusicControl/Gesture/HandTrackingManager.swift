@@ -6,7 +6,7 @@ import Combine
 /// Manages hand tracking using Vision framework
 /// Provides 21-point skeleton detection per hand at 30 Hz
 @MainActor
-class HandTrackingManager: ObservableObject {
+public class HandTrackingManager: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -61,7 +61,7 @@ class HandTrackingManager: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    public init() {
         setupHandPoseRequest()
         print("👋 HandTrackingManager initialized")
     }
@@ -84,7 +84,7 @@ class HandTrackingManager: ObservableObject {
     // MARK: - Tracking Control
 
     /// Start hand tracking
-    func startTracking() {
+    public func startTracking() {
         guard !isTracking else { return }
 
         isTracking = true
@@ -92,7 +92,7 @@ class HandTrackingManager: ObservableObject {
     }
 
     /// Stop hand tracking
-    func stopTracking() {
+    public func stopTracking() {
         guard isTracking else { return }
 
         isTracking = false
@@ -227,13 +227,13 @@ class HandTrackingManager: ObservableObject {
     // MARK: - Helper Methods
 
     /// Get specific joint position for a hand
-    func getJointPosition(hand: Hand, joint: VNHumanHandPoseObservation.JointName) -> CGPoint? {
+    public func getJointPosition(hand: Hand, joint: VNHumanHandPoseObservation.JointName) -> CGPoint? {
         let landmarks = hand == .left ? leftHandLandmarks : rightHandLandmarks
         return landmarks.first(where: { $0.jointName == joint })?.position
     }
 
     /// Get distance between two joints
-    func getJointDistance(hand: Hand, from: VNHumanHandPoseObservation.JointName, to: VNHumanHandPoseObservation.JointName) -> Float? {
+    public func getJointDistance(hand: Hand, from: VNHumanHandPoseObservation.JointName, to: VNHumanHandPoseObservation.JointName) -> Float? {
         guard let fromPos = getJointPosition(hand: hand, joint: from),
               let toPos = getJointPosition(hand: hand, joint: to) else {
             return nil
@@ -246,7 +246,7 @@ class HandTrackingManager: ObservableObject {
     }
 
     /// Get finger extension (0 = closed, 1 = extended)
-    func getFingerExtension(hand: Hand, finger: Finger) -> Float {
+    public func getFingerExtension(hand: Hand, finger: Finger) -> Float {
         let landmarks = hand == .left ? leftHandLandmarks : rightHandLandmarks
 
         guard let wrist = landmarks.first(where: { $0.jointName == .wrist }),
@@ -264,15 +264,15 @@ class HandTrackingManager: ObservableObject {
     }
 
     /// Check if finger is curled (closed)
-    func isFingerCurled(hand: Hand, finger: Finger) -> Bool {
+    public func isFingerCurled(hand: Hand, finger: Finger) -> Bool {
         return getFingerExtension(hand: hand, finger: finger) < 0.4
     }
 
-    enum Hand {
+    public enum Hand {
         case left, right
     }
 
-    enum Finger {
+    public enum Finger {
         case thumb, index, middle, ring, little
 
         var tipJoint: VNHumanHandPoseObservation.JointName {
