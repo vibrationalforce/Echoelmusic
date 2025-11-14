@@ -1,5 +1,5 @@
 import XCTest
-@testable import Blab
+@testable import Echoelmusic
 
 /// Unit tests for HealthKitManager
 /// Tests coherence calculation algorithm and error handling

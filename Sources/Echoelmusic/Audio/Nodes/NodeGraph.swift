@@ -10,7 +10,7 @@ class NodeGraph: ObservableObject {
     // MARK: - Published Properties
 
     /// All nodes in the graph
-    @Published var nodes: [BlabNode] = []
+    @Published var nodes: [EchoelmusicNode] = []
 
     /// Active connections between nodes
     @Published var connections: [NodeConnection] = []
@@ -29,7 +29,7 @@ class NodeGraph: ObservableObject {
 
     /// Processing queue (audio thread)
     private let audioQueue = DispatchQueue(
-        label: "com.blab.nodegraph.audio",
+        label: "com.echoelmusic.nodegraph.audio",
         qos: .userInteractive
     )
 
@@ -37,7 +37,7 @@ class NodeGraph: ObservableObject {
     // MARK: - Node Management
 
     /// Add a node to the graph
-    func addNode(_ node: BlabNode) {
+    func addNode(_ node: EchoelmusicNode) {
         nodes.append(node)
         print("📊 Added node: \(node.name) (\(node.type.rawValue))")
     }
@@ -54,7 +54,7 @@ class NodeGraph: ObservableObject {
     }
 
     /// Get node by ID
-    func node(withID id: UUID) -> BlabNode? {
+    func node(withID id: UUID) -> EchoelmusicNode? {
         return nodes.first { $0.id == id }
     }
 
@@ -257,7 +257,7 @@ class NodeGraph: ObservableObject {
     /// Save current configuration as preset
     func savePreset(name: String) -> NodeGraphPreset {
         let nodeManifests = nodes.map { node in
-            (node as? BaseBlabNode)?.createManifest()
+            (node as? BaseEchoelmusicNode)?.createManifest()
         }.compactMap { $0 }
 
         return NodeGraphPreset(

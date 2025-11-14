@@ -1,6 +1,6 @@
 import XCTest
 import AVFoundation
-@testable import Blab
+@testable import Echoelmusic
 
 /// Unit tests for BinauralBeatGenerator
 /// Tests binaural/isochronic mode, frequency accuracy, and brainwave presets

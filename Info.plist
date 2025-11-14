@@ -11,7 +11,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Blab</string>
+	<string>Echoelmusic</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -21,7 +21,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Blab needs microphone access to transform your voice and breath into immersive audio-visual experiences.</string>
+	<string>Echoelmusic needs microphone access to transform your voice and breath into immersive audio-visual experiences.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -53,10 +53,10 @@
 		<string>audio</string>
 	</array>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Blab may use heart rate data to create adaptive audio-visual experiences.</string>
+	<string>Echoelmusic may use heart rate data to create adaptive audio-visual experiences.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Blab uses your camera for face tracking to control audio parameters with your facial expressions.</string>
+	<string>Echoelmusic uses your camera for face tracking to control audio parameters with your facial expressions.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Blab uses face tracking (not Face ID) to map your expressions to audio-visual parameters.</string>
+	<string>Echoelmusic uses face tracking (not Face ID) to map your expressions to audio-visual parameters.</string>
 </dict>
 </plist>

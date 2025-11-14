@@ -1,6 +1,6 @@
 import XCTest
 import AVFoundation
-@testable import Blab
+@testable import Echoelmusic
 
 /// Unit tests for PitchDetector (YIN algorithm)
 /// Tests accuracy, performance, and edge cases for real-time pitch detection

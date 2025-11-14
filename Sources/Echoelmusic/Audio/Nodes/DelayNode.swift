@@ -5,7 +5,7 @@ import AVFoundation
 /// HRV → Delay Time (coherence creates rhythmic echoes)
 /// Heart Rate → Feedback (tempo-synced repeats)
 @MainActor
-class DelayNode: BaseBlabNode {
+class DelayNode: BaseEchoelmusicNode {
 
     // MARK: - AVAudioUnit Delay
 

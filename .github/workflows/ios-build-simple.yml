@@ -51,7 +51,7 @@ jobs:
       run: |
         set -o pipefail
         xcodebuild clean build \
-          -scheme Blab \
+          -scheme Echoelmusic \
           -sdk iphonesimulator \
           -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=latest' \
           -configuration Debug \
