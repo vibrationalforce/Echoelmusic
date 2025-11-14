@@ -71,7 +71,7 @@ public class MIDI2Manager: ObservableObject {
             var source: MIDIEndpointRef = 0
             let sourceStatus = MIDISourceCreateWithProtocol(
                 midiClient,
-                "BLAB MIDI 2.0 Output" as CFString,
+                "ECHOELMUSIC MIDI 2.0 Output" as CFString,
                 ._2_0,  // MIDI 2.0 protocol
                 &source
             )

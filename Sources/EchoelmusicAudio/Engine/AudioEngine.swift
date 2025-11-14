@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import EchoelmusicCore
 
 /// Central audio engine that manages and mixes multiple audio sources
 ///
@@ -11,14 +12,17 @@ import Combine
 /// - Bio-parameter mapping (HRV → Audio)
 /// - Real-time mixing and effects
 ///
-/// This class acts as the central hub for all audio processing in Blab
+/// This class acts as the central hub for all audio processing in Echoelmusic
 @MainActor
 public class AudioEngine: ObservableObject {
 
     // MARK: - Published Properties
 
     /// Whether the audio engine is currently running
-    @Published var isRunning: Bool = false
+    @Published public var isRunning: Bool = false
+
+    /// Current audio level (0.0 - 1.0)
+    @Published public var currentAudioLevel: Float = 0.0
 
     /// Whether binaural beats are enabled
     @Published var binauralBeatsEnabled: Bool = false
@@ -123,7 +127,7 @@ public class AudioEngine: ObservableObject {
     // MARK: - Public Methods
 
     /// Start the audio engine (microphone + optional binaural beats + spatial audio)
-    func start() {
+    public func start() async throws {
         // Start microphone
         microphoneManager.startRecording()
 
@@ -146,12 +150,21 @@ public class AudioEngine: ObservableObject {
         // Start bio-parameter mapping updates
         startBioParameterMapping()
 
-        isRunning = true
+        await MainActor.run {
+            self.isRunning = true
+        }
+
+        // Publish event
+        EventBus.shared.publish(AudioEngineStartedEvent(
+            sampleRate: 44100.0, // TODO: Get actual sample rate
+            bufferSize: 512
+        ))
+
         print("🎵 AudioEngine started")
     }
 
     /// Stop the audio engine
-    func stop() {
+    public func stop() {
         // Stop microphone
         microphoneManager.stopRecording()
 
@@ -165,11 +178,15 @@ public class AudioEngine: ObservableObject {
         stopBioParameterMapping()
 
         isRunning = false
+
+        // Publish event
+        EventBus.shared.publish(AudioEngineStoppedEvent())
+
         print("🎵 AudioEngine stopped")
     }
 
     /// Toggle binaural beats on/off
-    func toggleBinauralBeats() {
+    public func toggleBinauralBeats() {
         binauralBeatsEnabled.toggle()
 
         if binauralBeatsEnabled {
@@ -183,7 +200,7 @@ public class AudioEngine: ObservableObject {
 
     /// Set brainwave state for binaural beats
     /// - Parameter state: Target brainwave state (delta, theta, alpha, beta, gamma)
-    func setBrainwaveState(_ state: BinauralBeatGenerator.BrainwaveState) {
+    public func setBrainwaveState(_ state: BinauralBeatGenerator.BrainwaveState) {
         currentBrainwaveState = state
         binauralGenerator.configure(state: state)
 
@@ -196,7 +213,7 @@ public class AudioEngine: ObservableObject {
 
     /// Set binaural beat amplitude
     /// - Parameter amplitude: Volume (0.0 - 1.0)
-    func setBinauralAmplitude(_ amplitude: Float) {
+    public func setBinauralAmplitude(_ amplitude: Float) {
         binauralAmplitude = amplitude
         binauralGenerator.configure(
             carrier: 432.0,
@@ -212,7 +229,7 @@ public class AudioEngine: ObservableObject {
     }
 
     /// Toggle spatial audio on/off
-    func toggleSpatialAudio() {
+    public func toggleSpatialAudio() {
         spatialAudioEnabled.toggle()
 
         if spatialAudioEnabled {
@@ -236,7 +253,7 @@ public class AudioEngine: ObservableObject {
 
     /// Connect to HealthKit manager for HRV-based adaptations
     /// - Parameter healthKitManager: HealthKit manager instance
-    func connectHealthKit(_ healthKitManager: HealthKitManager) {
+    public func connectHealthKit(_ healthKitManager: HealthKitManager) {
         self.healthKitManager = healthKitManager
 
         // Subscribe to HRV coherence changes

@@ -126,7 +126,7 @@ public class MIDIController: ObservableObject {
         // Create input port
         status = MIDIInputPortCreate(
             midiClient,
-            "BLAB Input" as CFString,
+            "ECHOELMUSIC Input" as CFString,
             { packetList, refCon, srcConnRefCon in
                 // Handle MIDI packets
                 guard let controller = refCon?.assumingMemoryBound(to: MIDIController.self).pointee else { return }
