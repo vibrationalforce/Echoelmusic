@@ -459,9 +459,20 @@ public:
     struct ActuatorChannel
     {
         juce::String name;
-        VibrotherapySystem system;
+        std::unique_ptr<VibrotherapySystem> system;
         float gainMultiplier = 1.0f;
         bool enabled = true;
+
+        // Constructor
+        ActuatorChannel() : system(std::make_unique<VibrotherapySystem>()) {}
+
+        // Default move operations
+        ActuatorChannel(ActuatorChannel&&) noexcept = default;
+        ActuatorChannel& operator=(ActuatorChannel&&) noexcept = default;
+
+        // Delete copy operations
+        ActuatorChannel(const ActuatorChannel&) = delete;
+        ActuatorChannel& operator=(const ActuatorChannel&) = delete;
     };
 
     //==============================================================================
@@ -472,7 +483,7 @@ public:
     {
         ActuatorChannel channel;
         channel.name = name;
-        actuators.push_back(channel);
+        actuators.push_back(std::move(channel));
     }
 
     /**
@@ -491,7 +502,7 @@ public:
         if (index < 0 || index >= static_cast<int>(actuators.size()))
             return nullptr;
 
-        return &actuators[index].system;
+        return actuators[index].system.get();
     }
 
     /**
@@ -501,8 +512,8 @@ public:
     {
         for (auto& actuator : actuators)
         {
-            if (actuator.enabled)
-                actuator.system.update(deltaSeconds);
+            if (actuator.enabled && actuator.system)
+                actuator.system->update(deltaSeconds);
         }
     }
 
@@ -516,9 +527,9 @@ public:
 
         for (const auto& actuator : actuators)
         {
-            if (actuator.enabled && actuator.system.getVibrationState().isActive)
+            if (actuator.enabled && actuator.system && actuator.system->getVibrationState().isActive)
             {
-                mixedOutput += actuator.system.getVibrationAmplitude() * actuator.gainMultiplier;
+                mixedOutput += actuator.system->getVibrationAmplitude() * actuator.gainMultiplier;
                 activeCount++;
             }
         }
@@ -536,7 +547,10 @@ public:
     void emergencyStopAll()
     {
         for (auto& actuator : actuators)
-            actuator.system.stopSession();
+        {
+            if (actuator.system)
+                actuator.system->stopSession();
+        }
     }
 
 private:
