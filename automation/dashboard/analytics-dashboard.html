@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echoelmusic Analytics Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 1.1em;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .metric-card {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    }
+
+    .metric-title {
+      color: #888;
+      font-size: 0.9em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .metric-value {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+
+    .metric-change {
+      font-size: 0.9em;
+      padding: 5px 10px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    .metric-change.positive {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .metric-change.negative {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .chart-container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .chart-title {
+      font-size: 1.5em;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 30px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 50px;
+      color: white;
+      font-size: 1.5em;
+    }
+
+    .refresh-btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .refresh-btn:hover {
+      background: #764ba2;
+    }
+
+    .last-updated {
+      color: #888;
+      font-size: 0.9em;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+      .metric-value {
+        font-size: 2em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📊 Echoelmusic Analytics Dashboard</h1>
+      <p class="subtitle">Real-time business metrics and performance indicators</p>
+      <button class="refresh-btn" onclick="refreshData()">🔄 Refresh Data</button>
+      <p class="last-updated" id="lastUpdated">Last updated: Never</p>
+    </header>
+
+    <div class="metrics-grid" id="metricsGrid">
+      <!-- Metrics cards will be populated here -->
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-container">
+        <h2 class="chart-title">User Growth (30 Days)</h2>
+        <canvas id="userGrowthChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h2 class="chart-title">Revenue Breakdown</h2>
+        <canvas id="revenueChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h2 class="chart-title">Monthly Recurring Revenue (MRR)</h2>
+        <canvas id="mrrChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h2 class="chart-title">Feature Usage</h2>
+        <canvas id="featureUsageChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h2 class="chart-title">Project Activity</h2>
+        <canvas id="projectActivityChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h2 class="chart-title">Conversion Funnel</h2>
+        <canvas id="conversionFunnelChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const API_BASE_URL = 'https://api.echoelmusic.com';
+    let charts = {};
+
+    // Fetch analytics data
+    async function fetchAnalytics() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/analytics/dashboard`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('apiToken')}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch analytics data');
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+        // Return mock data for development
+        return getMockData();
+      }
+    }
+
+    // Mock data for development/testing
+    function getMockData() {
+      return {
+        metrics: {
+          totalUsers: 15420,
+          totalUsersChange: 12.5,
+          mau: 8934,
+          mauChange: 8.2,
+          mrr: 18450.00,
+          mrrChange: 15.3,
+          arr: 221400.00,
+          arrChange: 15.3,
+          totalProjects: 45890,
+          totalProjectsChange: 22.1,
+          conversionRate: 5.8,
+          conversionRateChange: 1.2,
+          churnRate: 3.2,
+          churnRateChange: -0.8,
+          arpu: 2.07,
+          arpuChange: 2.3
+        },
+        userGrowth: {
+          labels: Array.from({length: 30}, (_, i) => {
+            const date = new Date();
+            date.setDate(date.getDate() - (29 - i));
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          }),
+          data: Array.from({length: 30}, (_, i) => 14000 + Math.floor(Math.random() * 1500) + (i * 45))
+        },
+        revenueBreakdown: {
+          labels: ['Free', 'Pro', 'Studio'],
+          data: [12420, 2500, 500]
+        },
+        mrr: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          data: [12000, 13500, 15200, 16800, 17900, 18450]
+        },
+        featureUsage: {
+          labels: ['AI Auto-Mix', 'Cloud Sync', '3D Visualizer', 'MPE', 'Automation', 'Video Export'],
+          data: [8500, 6200, 4100, 2300, 5800, 3900]
+        },
+        projectActivity: {
+          labels: Array.from({length: 7}, (_, i) => {
+            const date = new Date();
+            date.setDate(date.getDate() - (6 - i));
+            return date.toLocaleDateString('en-US', { weekday: 'short' });
+          }),
+          data: [450, 520, 480, 610, 590, 720, 550]
+        },
+        conversionFunnel: {
+          labels: ['Signups', 'Created Project', 'Exported', 'Started Trial', 'Converted'],
+          data: [1000, 820, 650, 180, 58]
+        }
+      };
+    }
+
+    // Render metric cards
+    function renderMetrics(metrics) {
+      const metricsGrid = document.getElementById('metricsGrid');
+
+      const metricCards = [
+        { title: 'Total Users', value: metrics.totalUsers.toLocaleString(), change: metrics.totalUsersChange },
+        { title: 'MAU', value: metrics.mau.toLocaleString(), change: metrics.mauChange },
+        { title: 'MRR', value: `€${metrics.mrr.toLocaleString()}`, change: metrics.mrrChange },
+        { title: 'ARR', value: `€${metrics.arr.toLocaleString()}`, change: metrics.arrChange },
+        { title: 'Total Projects', value: metrics.totalProjects.toLocaleString(), change: metrics.totalProjectsChange },
+        { title: 'Conversion Rate', value: `${metrics.conversionRate}%`, change: metrics.conversionRateChange },
+        { title: 'Churn Rate', value: `${metrics.churnRate}%`, change: metrics.churnRateChange },
+        { title: 'ARPU', value: `€${metrics.arpu.toFixed(2)}`, change: metrics.arpuChange }
+      ];
+
+      metricsGrid.innerHTML = metricCards.map(metric => `
+        <div class="metric-card">
+          <div class="metric-title">${metric.title}</div>
+          <div class="metric-value">${metric.value}</div>
+          <div class="metric-change ${metric.change >= 0 ? 'positive' : 'negative'}">
+            ${metric.change >= 0 ? '↑' : '↓'} ${Math.abs(metric.change)}%
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Create charts
+    function createCharts(data) {
+      // User Growth Chart
+      charts.userGrowth = new Chart(document.getElementById('userGrowthChart'), {
+        type: 'line',
+        data: {
+          labels: data.userGrowth.labels,
+          datasets: [{
+            label: 'Total Users',
+            data: data.userGrowth.data,
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      // Revenue Breakdown Chart
+      charts.revenue = new Chart(document.getElementById('revenueChart'), {
+        type: 'doughnut',
+        data: {
+          labels: data.revenueBreakdown.labels,
+          datasets: [{
+            data: data.revenueBreakdown.data,
+            backgroundColor: ['#667eea', '#764ba2', '#f093fb']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true
+        }
+      });
+
+      // MRR Chart
+      charts.mrr = new Chart(document.getElementById('mrrChart'), {
+        type: 'bar',
+        data: {
+          labels: data.mrr.labels,
+          datasets: [{
+            label: 'MRR (€)',
+            data: data.mrr.data,
+            backgroundColor: '#667eea'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      // Feature Usage Chart
+      charts.featureUsage = new Chart(document.getElementById('featureUsageChart'), {
+        type: 'bar',
+        data: {
+          labels: data.featureUsage.labels,
+          datasets: [{
+            label: 'Users',
+            data: data.featureUsage.data,
+            backgroundColor: '#764ba2'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      // Project Activity Chart
+      charts.projectActivity = new Chart(document.getElementById('projectActivityChart'), {
+        type: 'line',
+        data: {
+          labels: data.projectActivity.labels,
+          datasets: [{
+            label: 'Projects Created',
+            data: data.projectActivity.data,
+            borderColor: '#f093fb',
+            backgroundColor: 'rgba(240, 147, 251, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      // Conversion Funnel Chart
+      charts.conversionFunnel = new Chart(document.getElementById('conversionFunnelChart'), {
+        type: 'bar',
+        data: {
+          labels: data.conversionFunnel.labels,
+          datasets: [{
+            label: 'Users',
+            data: data.conversionFunnel.data,
+            backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+
+    // Refresh data
+    async function refreshData() {
+      const data = await fetchAnalytics();
+      renderMetrics(data.metrics);
+
+      // Destroy existing charts
+      Object.values(charts).forEach(chart => chart.destroy());
+
+      // Create new charts
+      createCharts(data);
+
+      // Update timestamp
+      document.getElementById('lastUpdated').textContent =
+        `Last updated: ${new Date().toLocaleString()}`;
+    }
+
+    // Initialize dashboard
+    async function init() {
+      await refreshData();
+
+      // Auto-refresh every 5 minutes
+      setInterval(refreshData, 5 * 60 * 1000);
+    }
+
+    // Load dashboard on page load
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>

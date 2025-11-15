@@ -1,0 +1,155 @@
+{
+  "knowledgeBase": {
+    "title": "Echoelmusic Help Center",
+    "version": "1.0.0",
+    "lastUpdated": "2024-11-15",
+    "categories": [
+      {
+        "id": "getting-started",
+        "name": "Getting Started",
+        "icon": "rocket",
+        "articles": [
+          {
+            "id": "what-is-echoelmusic",
+            "title": "What is Echoelmusic?",
+            "keywords": ["about", "overview", "introduction"],
+            "content": "Echoelmusic is an all-in-one creative platform that combines a professional DAW (Digital Audio Workstation), video editing, 3D visual effects, social sharing, and live streaming in one powerful application. Create music, edit videos, design visuals, and share your work - all in one place.",
+            "relatedArticles": ["features-overview", "supported-platforms"]
+          },
+          {
+            "id": "features-overview",
+            "title": "Feature Overview",
+            "keywords": ["features", "capabilities", "what can I do"],
+            "content": "Echoelmusic offers:\n\n• **Music Production**: Full DAW with unlimited tracks, MIDI, automation, VST/AU plugins\n• **AI Tools**: AI mixing, mastering, sound design, and beat detection\n• **Video Editing**: Multi-track timeline, color grading, keyframe animation\n• **3D Visuals**: Real-time particle effects, PBR rendering, node-based system\n• **Social**: Share projects, follow creators, join challenges\n• **Collaboration**: Real-time co-creation with team members\n• **Cloud Sync**: Access projects from any device\n• **Broadcasting**: Stream to multiple platforms simultaneously",
+            "relatedArticles": ["what-is-echoelmusic", "pricing-plans"]
+          },
+          {
+            "id": "supported-platforms",
+            "title": "Supported Platforms",
+            "keywords": ["platforms", "devices", "compatibility", "system requirements"],
+            "content": "Echoelmusic is available on:\n\n• iOS 15+ (iPhone, iPad)\n• macOS 12+ (Intel & Apple Silicon)\n• Windows 10/11 (64-bit)\n• Linux (Ubuntu 20.04+, Fedora, Arch)\n• Web (Chrome, Firefox, Safari, Edge)\n\n**Minimum Requirements:**\n• 8GB RAM (16GB recommended)\n• 4-core CPU (8-core recommended)\n• 10GB free storage\n• GPU with Metal/OpenGL 3.3+ support",
+            "relatedArticles": ["installation-guide"]
+          },
+          {
+            "id": "installation-guide",
+            "title": "Installation Guide",
+            "keywords": ["install", "download", "setup"],
+            "content": "**iOS/iPadOS:**\n1. Open App Store\n2. Search 'Echoelmusic'\n3. Tap 'Get' to download\n4. Open and sign in\n\n**macOS:**\n1. Download from Mac App Store or echoelmusic.com\n2. Open .dmg file\n3. Drag to Applications\n4. Launch and sign in\n\n**Windows:**\n1. Download installer from echoelmusic.com\n2. Run setup.exe\n3. Follow installation wizard\n4. Launch and sign in\n\n**Linux:**\nChoose your package format:\n• AppImage: Download, make executable, run\n• .deb: `sudo dpkg -i echoelmusic.deb`\n• Flatpak: `flatpak install com.echoelmusic.Echoelmusic`\n• Snap: `snap install echoelmusic`",
+            "relatedArticles": ["first-project", "account-setup"]
+          }
+        ]
+      },
+      {
+        "id": "account-billing",
+        "name": "Account & Billing",
+        "icon": "user-circle",
+        "articles": [
+          {
+            "id": "pricing-plans",
+            "title": "Pricing Plans",
+            "keywords": ["pricing", "cost", "subscription", "plans", "free"],
+            "content": "**Free:**\n• 3 projects\n• Basic features\n• Watermarked exports\n• No cloud sync\n\n**Pro (€9.99/month or €99/year):**\n• Unlimited projects\n• All features\n• No watermarks\n• 50GB cloud storage\n• Priority support\n\n**Studio (€19.99/month or €199/year):**\n• Everything in Pro\n• 500GB cloud storage\n• Advanced AI features\n• Collaboration (5 users)\n• Marketplace seller access\n\nAll paid plans include a 30-day money-back guarantee.",
+            "relatedArticles": ["upgrade-subscription", "cancel-subscription"]
+          },
+          {
+            "id": "upgrade-subscription",
+            "title": "How to Upgrade",
+            "keywords": ["upgrade", "pro", "studio", "payment"],
+            "content": "**In the App:**\n1. Open Settings\n2. Tap 'Subscription'\n3. Choose Pro or Studio\n4. Select monthly or annual\n5. Complete payment\n\n**Accepted Payment Methods:**\n• Credit/Debit cards (Visa, Mastercard, Amex)\n• Apple Pay\n• SEPA Direct Debit (Germany/EU)\n• PayPal\n\nYour subscription starts immediately and renews automatically. Cancel anytime.",
+            "relatedArticles": ["pricing-plans", "payment-methods", "invoices"]
+          },
+          {
+            "id": "cancel-subscription",
+            "title": "How to Cancel",
+            "keywords": ["cancel", "unsubscribe", "refund"],
+            "content": "**Cancel Anytime:**\n\n**iOS/Mac App Store:**\n1. Open Settings app\n2. Tap your name → Subscriptions\n3. Select Echoelmusic\n4. Tap 'Cancel Subscription'\n\n**In the App (Web/Stripe):**\n1. Open Settings → Subscription\n2. Tap 'Cancel Subscription'\n3. Confirm cancellation\n\nYour access continues until the end of your billing period. No refunds for partial periods.\n\n**30-Day Guarantee:**\nFirst-time subscribers get a full refund within 30 days. Email refund@echoelmusic.com",
+            "relatedArticles": ["refund-policy", "downgrade-account"]
+          },
+          {
+            "id": "refund-policy",
+            "title": "Refund Policy",
+            "keywords": ["refund", "money back", "guarantee"],
+            "content": "**30-Day Money-Back Guarantee:**\nFirst-time Pro/Studio subscribers can request a full refund within 30 days of their first payment.\n\n**How to Request:**\nEmail refund@echoelmusic.com with:\n• Your account email\n• Reason for refund (optional)\n• Order/Transaction ID\n\nRefunds processed within 5-7 business days to original payment method.\n\n**Note:** Refunds not available for:\n• Renewals after first 30 days\n• Marketplace purchases\n• App Store subscriptions (managed by Apple)",
+            "relatedArticles": ["cancel-subscription", "contact-support"]
+          }
+        ]
+      },
+      {
+        "id": "troubleshooting",
+        "name": "Troubleshooting",
+        "icon": "wrench",
+        "articles": [
+          {
+            "id": "app-crashes",
+            "title": "App Crashes or Freezes",
+            "keywords": ["crash", "freeze", "hang", "not responding"],
+            "content": "**Quick Fixes:**\n\n1. **Restart the app**\n2. **Update to latest version** (Settings → About → Check for Updates)\n3. **Clear cache** (Settings → Storage → Clear Cache)\n4. **Free up disk space** (need 5GB minimum)\n\n**Still crashing?**\n\n1. **Check system requirements** (8GB RAM, 4-core CPU)\n2. **Close other apps** (free up RAM)\n3. **Disable plugins** (Settings → Plugins → Disable All)\n4. **Reinstall app** (backup projects first!)\n\n**Persistent issues?**\nEmail support@echoelmusic.com with:\n• Device/OS version\n• App version\n• When crash occurs\n• Crash logs (Settings → Help → Send Diagnostics)",
+            "relatedArticles": ["audio-issues", "performance-issues"]
+          },
+          {
+            "id": "audio-issues",
+            "title": "No Sound or Audio Issues",
+            "keywords": ["no sound", "audio", "silence", "crackling"],
+            "content": "**Check these first:**\n\n1. **Volume** - Is app volume and system volume up?\n2. **Output Device** - Settings → Audio → Output Device\n3. **Sample Rate** - Match project (44.1kHz or 48kHz)\n4. **Buffer Size** - Increase if crackling (Settings → Audio → Buffer Size → 512 or 1024)\n5. **Driver** - Update audio interface drivers\n\n**Common Solutions:**\n\n• **No sound**: Check mute/solo on tracks, master volume\n• **Crackling**: Increase buffer size, close other apps\n• **Latency**: Decrease buffer size, use ASIO (Windows) or CoreAudio (Mac)\n• **Interface not detected**: Restart app, replug USB, check permissions",
+            "relatedArticles": ["app-crashes", "midi-issues"]
+          },
+          {
+            "id": "sync-issues",
+            "title": "Cloud Sync Not Working",
+            "keywords": ["sync", "cloud", "not syncing", "upload", "download"],
+            "content": "**Troubleshoot sync:**\n\n1. **Check internet** - Need stable connection\n2. **Check storage** - Settings → Cloud → Storage Used\n3. **Check subscription** - Cloud sync requires Pro/Studio\n4. **Toggle sync** - Settings → Cloud → Disable → Enable\n5. **Check permissions** - Allow iCloud/Google Drive access\n\n**Manual sync:**\nSettings → Cloud → Sync Now\n\n**Still not syncing?**\n• Log out and back in\n• Check firewall/VPN settings\n• Contact support@echoelmusic.com",
+            "relatedArticles": ["storage-full", "account-issues"]
+          }
+        ]
+      },
+      {
+        "id": "features",
+        "name": "Features & How-To",
+        "icon": "lightbulb",
+        "articles": [
+          {
+            "id": "first-project",
+            "title": "Create Your First Project",
+            "keywords": ["new project", "start", "create", "tutorial"],
+            "content": "**Quick Start:**\n\n1. **Tap '+' or File → New Project**\n2. **Choose template** or start blank\n3. **Set tempo and key** (optional)\n4. **Tap 'Create'**\n\n**Add tracks:**\n• Tap '+' in track list\n• Choose: Audio, MIDI, Video, or Visual\n\n**Record audio:**\n1. Arm track (red button)\n2. Check input (Settings → Audio → Input)\n3. Tap record (or R key)\n\n**Add MIDI:**\n1. Create MIDI track\n2. Tap to draw notes in piano roll\n3. Choose instrument from library\n\n**Export:**\nFile → Export → Choose format → Export\n\nSee video tutorials: echoelmusic.com/tutorials",
+            "relatedArticles": ["templates", "record-audio", "export-project"]
+          },
+          {
+            "id": "ai-features",
+            "title": "Using AI Features",
+            "keywords": ["ai", "artificial intelligence", "auto", "smart"],
+            "content": "**AI Tools Available:**\n\n**AI Mixing:**\n• Auto-balance levels\n• Detect frequency conflicts\n• Suggest EQ/compression\n• Generate mastering chain\n\nUse: Select tracks → AI → Auto-Mix\n\n**AI Sound Design:**\n• Generate custom sounds\n• Describe what you want (\"warm pad\", \"punchy kick\")\n• Adjust parameters\n\nUse: Instruments → AI Sound Design\n\n**AI Mastering:**\n• LUFS normalization\n• Genre-adaptive processing\n• Streaming platform optimization\n\nUse: Master track → AI → Auto-Master\n\n**Beat Detection:**\n• Detect tempo\n• Find beats\n• Extract key/chords\n\nUse: Audio track → AI → Analyze\n\n*AI features require Pro or Studio subscription.",
+            "relatedArticles": ["mixing-guide", "mastering-guide"]
+          }
+        ]
+      }
+    ],
+    "commonIssues": [
+      {
+        "question": "How do I cancel my subscription?",
+        "answer": "Go to Settings → Subscription → Cancel, or manage via App Store subscriptions.",
+        "articleId": "cancel-subscription"
+      },
+      {
+        "question": "Why is my app crashing?",
+        "answer": "Try: Update app, clear cache, free up disk space, or reinstall. See troubleshooting guide.",
+        "articleId": "app-crashes"
+      },
+      {
+        "question": "How much does it cost?",
+        "answer": "Free tier available. Pro: €9.99/month, Studio: €19.99/month. 30-day money-back guarantee.",
+        "articleId": "pricing-plans"
+      },
+      {
+        "question": "Can I use plugins?",
+        "answer": "Yes! Supports VST3, AU, and AUv3 plugins. Load in Settings → Plugins.",
+        "articleId": "plugin-support"
+      },
+      {
+        "question": "How do I export my project?",
+        "answer": "File → Export → Choose format (WAV, MP3, MP4, etc.) → Export.",
+        "articleId": "export-project"
+      }
+    ]
+  }
+}

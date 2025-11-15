@@ -1,0 +1,75 @@
+{
+  "emailTemplates": {
+    "welcome": {
+      "subject": "Welcome to Echoelmusic! 🎵",
+      "from": "Michael from Echoelmusic <hello@echoelmusic.com>",
+      "body": "Hi {{name}},\n\nWelcome to Echoelmusic! I'm Michael, the creator, and I'm thrilled to have you join our community of creators.\n\nEchoelmusic combines everything you need for creative production in one powerful app:\n• Professional DAW with unlimited tracks\n• AI-powered mixing and mastering\n• Video editing and 3D visuals\n• Social sharing and collaboration\n\n**Get Started:**\n1. Create your first project (tap '+')\n2. Explore templates and AI features\n3. Join the community (share your work!)\n\n**Quick Links:**\n• [Video Tutorials](https://echoelmusic.com/tutorials)\n• [Help Center](https://help.echoelmusic.com)\n• [Join Discord](https://discord.gg/echoelmusic)\n\nQuestions? Just reply to this email - I read every message!\n\nHappy creating,\nMichael\n\nP.S. Check your inbox tomorrow for your first tutorial video.",
+      "delay": 0,
+      "trigger": "signup"
+    },
+    "onboarding-day2": {
+      "subject": "Your first project awaits! 🚀",
+      "from": "Michael from Echoelmusic <hello@echoelmusic.com>",
+      "body": "Hey {{name}},\n\nI noticed you signed up yesterday - awesome! Ready to create your first project?\n\n**Here's a 2-minute tutorial:**\n[Watch: Create Your First Beat in Echoelmusic]\n\nOr start with a template:\n• Electronic Production (128 BPM EDM starter)\n• Hip Hop Beat (90 BPM with drums & bass)\n• Pop Production (120 BPM full arrangement)\n\nTap '+' → Choose Template → Start Creating!\n\n**Pro Tip:** Use AI Auto-Mix to instantly balance your tracks.\n\nStuck? Reply and I'll help personally.\n\nCheers,\nMichael",
+      "delay": 86400,
+      "trigger": "signup"
+    },
+    "onboarding-day7": {
+      "subject": "Unlock Pro features (50% off for you!) 💎",
+      "from": "Michael from Echoelmusic <hello@echoelmusic.com>",
+      "body": "Hi {{name}},\n\nYou've been using Echoelmusic for a week - that's fantastic!\n\nAs a thank you, here's an exclusive **50% off** your first month of Pro:\n\n**[Claim Your Discount →](https://echoelmusic.com/upgrade?code={{discount_code}})**\n\n**With Pro, you get:**\n✓ Unlimited projects (vs 3 on Free)\n✓ No watermarks on exports\n✓ 50GB cloud storage\n✓ Advanced AI features\n✓ Priority support\n\nThis offer expires in 48 hours!\n\nP.S. Already Pro? Share this with a friend!\n\nMichael",
+      "delay": 604800,
+      "trigger": "signup"
+    },
+    "trial-ending": {
+      "subject": "Your free trial ends in 3 days ⏰",
+      "from": "Echoelmusic <hello@echoelmusic.com>",
+      "body": "Hi {{name}},\n\nJust a heads up - your Pro trial ends in 3 days.\n\n**To keep full access:**\n• Unlimited projects\n• AI features\n• Cloud sync\n• No watermarks\n\nSimply do nothing - your subscription starts automatically. Or cancel anytime in Settings → Subscription.\n\n**Need more time?** Reply and I'll extend your trial.\n\nQuestions? I'm here to help.\n\nMichael",
+      "delay": -259200,
+      "trigger": "trial_end"
+    },
+    "payment-failed": {
+      "subject": "Payment issue - Update your card 💳",
+      "from": "Echoelmusic Billing <billing@echoelmusic.com>",
+      "body": "Hi {{name}},\n\nWe couldn't process your payment for Echoelmusic Pro.\n\n**Update your payment method:**\n[Update Card →](https://echoelmusic.com/billing)\n\nYour access continues for 7 days. After that, you'll be downgraded to Free (3 projects, watermarked exports).\n\n**Need help?** Reply to this email or contact support@echoelmusic.com\n\nEchoelmusic Team",
+      "delay": 0,
+      "trigger": "payment_failed"
+    },
+    "feature-announcement": {
+      "subject": "New: {{feature_name}} is here! 🎉",
+      "from": "Michael from Echoelmusic <hello@echoelmusic.com>",
+      "body": "Hey {{name}},\n\nBig news! We just released {{feature_name}}.\n\n{{feature_description}}\n\n**Try it now:**\n{{feature_cta}}\n\n[Watch Demo Video →]({{feature_video_url}})\n\nThis was one of your most requested features - hope you love it!\n\nAs always, feedback is welcome. Reply with your thoughts!\n\nMichael\n\nP.S. Didn't request this feature? You should have - it's awesome! 😄",
+      "delay": 0,
+      "trigger": "manual"
+    },
+    "project-milestone": {
+      "subject": "Congrats on {{count}} projects! 🎉",
+      "from": "Michael from Echoelmusic <hello@echoelmusic.com>",
+      "body": "{{name}},\n\nYou just created your {{count}}th project on Echoelmusic!\n\n{{#if milestone_10}}That's 10 projects! You're getting the hang of this. Keep going!\n{{/if}}{{#if milestone_50}}50 projects?! You're a creative machine. Seriously impressive.\n{{/if}}{{#if milestone_100}}100 PROJECTS! You're officially an Echoelmusic power user. 🏆\n{{/if}}\n\n**Share your best work:**\nTap Share on your favorite project and tag @echoelmusic on social media. We'll feature you!\n\n**Want a free month of Studio?**\nRefer 3 friends who sign up for Pro and it's yours.\n\nKeep creating,\nMichael",
+      "delay": 0,
+      "trigger": "project_milestone"
+    }
+  },
+  "campaigns": [
+    {
+      "name": "Welcome Series",
+      "description": "Onboarding sequence for new users",
+      "emails": ["welcome", "onboarding-day2", "onboarding-day7"],
+      "trigger": "signup",
+      "active": true
+    },
+    {
+      "name": "Trial Nurture",
+      "description": "Convert trial users to paid",
+      "emails": ["trial-ending"],
+      "trigger": "trial",
+      "active": true
+    },
+    {
+      "name": "Re-engagement",
+      "description": "Win back inactive users",
+      "trigger": "inactive_30days",
+      "active": true
+    }
+  ]
+}

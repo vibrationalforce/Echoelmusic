@@ -1,0 +1,198 @@
+{
+  "posts": [
+    {
+      "id": "week1_monday",
+      "type": "feature",
+      "title": "Feature Highlight: AI Auto-Mix",
+      "text": "🎵 Did you know? Echoelmusic has AI Auto-Mix that instantly balances your tracks!\n\nJust tap the magic wand icon and watch your mix come together in seconds. Perfect for:\n✓ Quick demos\n✓ Learning mixing basics\n✓ Starting point for manual mixing\n\nTry it now: echoelmusic.com\n\n#MusicProduction #DAW #Echoelmusic #AIMusic",
+      "platforms": ["twitter", "linkedin"],
+      "scheduledTime": "2025-01-06T09:00:00.000Z",
+      "media": [
+        {
+          "url": "https://cdn.echoelmusic.com/social/ai-automix-demo.jpg",
+          "thumbnail": "https://cdn.echoelmusic.com/social/ai-automix-thumb.jpg"
+        }
+      ]
+    },
+    {
+      "id": "week1_wednesday",
+      "type": "tutorial",
+      "title": "Tutorial: Creating Your First Beat",
+      "text": "🎓 Quick Tutorial: Creating Your First Beat in Echoelmusic\n\n1️⃣ Tap '+' to create a new project\n2️⃣ Choose 'Hip Hop Beat' template (90 BPM)\n3️⃣ Add drums, bass, and melody\n4️⃣ Use AI Auto-Mix to balance\n5️⃣ Export and share!\n\nWatch the full video tutorial: echoelmusic.com/tutorials/first-beat\n\n#MusicProduction #Tutorial #Echoelmusic #BeatMaking",
+      "platforms": ["instagram", "tiktok"],
+      "scheduledTime": "2025-01-08T11:00:00.000Z",
+      "media": [
+        {
+          "url": "https://cdn.echoelmusic.com/social/first-beat-tutorial.mp4",
+          "thumbnail": "https://cdn.echoelmusic.com/social/first-beat-thumb.jpg"
+        }
+      ]
+    },
+    {
+      "id": "week1_friday",
+      "type": "showcase",
+      "title": "User Showcase: Amazing Track",
+      "text": "🌟 Amazing work by our community creator!\n\n\"Sunset Dreams\" - a beautiful electronic production made entirely in Echoelmusic 🎧\n\nThis track showcases:\n✓ Advanced synthesis\n✓ Creative effects chains\n✓ Professional mixing\n\nShare your creations with #MadeWithEchoelmusic and we'll feature you!\n\n#MusicProduction #Community #ElectronicMusic",
+      "platforms": ["twitter", "instagram"],
+      "scheduledTime": "2025-01-10T15:00:00.000Z",
+      "media": [
+        {
+          "url": "https://cdn.echoelmusic.com/social/user-showcase-1.jpg",
+          "thumbnail": "https://cdn.echoelmusic.com/social/user-showcase-1-thumb.jpg"
+        }
+      ]
+    },
+    {
+      "id": "week1_sunday",
+      "type": "bts",
+      "title": "Behind the Scenes: Development Update",
+      "text": "👨‍💻 Behind the scenes at Echoelmusic HQ\n\nWorking on exciting new features for the next update:\n• Real-time collaboration\n• Advanced 3D visuals\n• New AI mixing algorithms\n\nFollow our journey: echoelmusic.com/blog\n\n#IndieDev #MusicTech #AppDevelopment",
+      "platforms": ["instagram", "tiktok"],
+      "scheduledTime": "2025-01-12T19:00:00.000Z",
+      "media": [
+        {
+          "url": "https://cdn.echoelmusic.com/social/bts-development.jpg",
+          "thumbnail": "https://cdn.echoelmusic.com/social/bts-development-thumb.jpg"
+        }
+      ]
+    },
+    {
+      "id": "week2_monday",
+      "type": "feature",
+      "title": "Feature Highlight: Cloud Sync",
+      "text": "☁️ Never lose your work again!\n\nEchoelmusic's Cloud Sync keeps your projects safe and accessible across all devices:\n\n✓ Automatic backups\n✓ Version history\n✓ Work on iPhone, iPad, Mac, or PC\n✓ Conflict-free sync\n\nAvailable on Pro and Studio plans.\n\n#MusicProduction #CloudStorage #Echoelmusic",
+      "platforms": ["twitter", "linkedin"],
+      "scheduledTime": "2025-01-13T09:00:00.000Z",
+      "media": []
+    },
+    {
+      "id": "week2_wednesday",
+      "type": "tutorial",
+      "title": "Tutorial: Mixing Vocals Like a Pro",
+      "text": "🎤 Quick Tutorial: Mixing Vocals Like a Pro\n\n1️⃣ Record your vocals\n2️⃣ Apply EQ to remove mud (200-400 Hz)\n3️⃣ Add compression (4:1 ratio)\n4️⃣ Use reverb for space\n5️⃣ Final polish with de-esser\n\nFull video breakdown: echoelmusic.com/tutorials/vocal-mixing\n\n#VocalProduction #MixingTips #Echoelmusic",
+      "platforms": ["instagram", "tiktok"],
+      "scheduledTime": "2025-01-15T11:00:00.000Z",
+      "media": [
+        {
+          "url": "https://cdn.echoelmusic.com/social/vocal-mixing-tutorial.mp4",
+          "thumbnail": "https://cdn.echoelmusic.com/social/vocal-mixing-thumb.jpg"
+        }
+      ]
+    },
+    {
+      "id": "week2_friday",
+      "type": "showcase",
+      "title": "User Showcase: Original Song",
+      "text": "🌟 Incredible original song by @musiccreator!\n\n\"Midnight City\" - a powerful indie rock track with:\n✓ Live guitars\n✓ Punchy drums\n✓ Emotional vocals\n\nAll recorded and mixed in Echoelmusic 🎸\n\nTag #MadeWithEchoelmusic to be featured!\n\n#MusicProduction #IndieRock #OriginalMusic",
+      "platforms": ["twitter", "instagram"],
+      "scheduledTime": "2025-01-17T15:00:00.000Z",
+      "media": []
+    },
+    {
+      "id": "week2_sunday",
+      "type": "bts",
+      "title": "Behind the Scenes: Studio Session",
+      "text": "🎵 Weekend vibes at the studio\n\nTesting new features, creating presets, and jamming on ideas for future updates.\n\nWhat features would YOU like to see in Echoelmusic? Drop a comment! 👇\n\n#MusicProduction #StudioLife #Echoelmusic",
+      "platforms": ["instagram", "tiktok"],
+      "scheduledTime": "2025-01-19T19:00:00.000Z",
+      "media": []
+    },
+    {
+      "id": "week3_monday",
+      "type": "feature",
+      "title": "Feature Highlight: MPE Support",
+      "text": "🎹 Express yourself with MPE!\n\nEchoelmusic now supports MIDI Polyphonic Expression (MPE) for expressive performances:\n\n✓ Per-note pitch bend\n✓ Individual note pressure\n✓ Polyphonic timbre control\n✓ Works with Seaboard, LinnStrument, and more\n\n#MusicProduction #MPE #Echoelmusic #MIDI",
+      "platforms": ["twitter", "linkedin"],
+      "scheduledTime": "2025-01-20T09:00:00.000Z",
+      "media": []
+    },
+    {
+      "id": "week3_wednesday",
+      "type": "tutorial",
+      "title": "Tutorial: Sound Design Basics",
+      "text": "🔊 Sound Design 101: Creating Your Own Sounds\n\n1️⃣ Start with basic waveforms\n2️⃣ Shape with filters\n3️⃣ Add movement with LFOs\n4️⃣ Create space with reverb/delay\n5️⃣ Save as preset!\n\nWatch the full tutorial: echoelmusic.com/tutorials/sound-design\n\n#SoundDesign #Synthesis #Echoelmusic",
+      "platforms": ["instagram", "tiktok"],
+      "scheduledTime": "2025-01-22T11:00:00.000Z",
+      "media": []
+    },
+    {
+      "id": "week3_friday",
+      "type": "showcase",
+      "title": "User Showcase: EDM Banger",
+      "text": "🔥 This EDM banger from @djproducer is FIRE!\n\n\"Electric Pulse\" showcases:\n✓ Massive drops\n✓ Clean mixdown\n✓ Professional mastering\n\nAll done in Echoelmusic! 🎧\n\nShare your tracks with #MadeWithEchoelmusic\n\n#EDM #ElectronicMusic #MusicProduction",
+      "platforms": ["twitter", "instagram"],
+      "scheduledTime": "2025-01-24T15:00:00.000Z",
+      "media": []
+    },
+    {
+      "id": "week3_sunday",
+      "type": "bts",
+      "title": "Behind the Scenes: Community Spotlight",
+      "text": "❤️ Thank you to our amazing community!\n\nOver 10,000 creators have joined Echoelmusic in the past month. Your creativity inspires us every day!\n\nWhat should we build next? Vote in our community poll 🗳️\n\n#Community #MusicProduction #Echoelmusic",
+      "platforms": ["instagram", "tiktok"],
+      "scheduledTime": "2025-01-26T19:00:00.000Z",
+      "media": []
+    },
+    {
+      "id": "week4_monday",
+      "type": "feature",
+      "title": "Feature Highlight: 3D Visualizer",
+      "text": "🎨 Bring your music to life!\n\nEchoelmusic's 3D Visualizer creates stunning real-time visuals that react to your audio:\n\n✓ Particle systems\n✓ Reactive shaders\n✓ Export as video\n✓ Perfect for social media\n\n#MusicVisualization #3D #Echoelmusic #MusicVideo",
+      "platforms": ["twitter", "linkedin"],
+      "scheduledTime": "2025-01-27T09:00:00.000Z",
+      "media": []
+    },
+    {
+      "id": "week4_wednesday",
+      "type": "tutorial",
+      "title": "Tutorial: Mastering Your Track",
+      "text": "🎛️ Final Polish: Mastering Your Track\n\n1️⃣ Set proper headroom (-6dB peak)\n2️⃣ Apply multiband compression\n3️⃣ Subtle EQ for clarity\n4️⃣ Limiter for loudness (LUFS -14)\n5️⃣ Export at 44.1kHz, 24-bit\n\nFull guide: echoelmusic.com/tutorials/mastering\n\n#Mastering #AudioEngineering #Echoelmusic",
+      "platforms": ["instagram", "tiktok"],
+      "scheduledTime": "2025-01-29T11:00:00.000Z",
+      "media": []
+    },
+    {
+      "id": "week4_friday",
+      "type": "showcase",
+      "title": "User Showcase: Jazz Fusion",
+      "text": "🎺 Smooth jazz fusion from @jazzmaster\n\n\"Blue Horizon\" features:\n✓ Live saxophone\n✓ Complex chord progressions\n✓ Tight rhythm section\n\nProduced entirely in Echoelmusic! 🎷\n\n#Jazz #MusicProduction #JazzFusion",
+      "platforms": ["twitter", "instagram"],
+      "scheduledTime": "2025-01-31T15:00:00.000Z",
+      "media": []
+    },
+    {
+      "id": "week4_sunday",
+      "type": "bts",
+      "title": "Behind the Scenes: Year in Review",
+      "text": "🎉 What a month it's been!\n\n• 50,000+ projects created\n• 100,000+ exports\n• 10 new features released\n• Amazing community growth\n\nThank you for being part of the Echoelmusic journey! 🙏\n\n#YearInReview #MusicProduction #Echoelmusic",
+      "platforms": ["instagram", "tiktok"],
+      "scheduledTime": "2025-02-02T19:00:00.000Z",
+      "media": []
+    }
+  ],
+  "contentGuidelines": {
+    "postingFrequency": {
+      "twitter": "1-2 posts per day",
+      "instagram": "3-4 posts per week",
+      "tiktok": "2-3 videos per week",
+      "linkedin": "2 posts per week"
+    },
+    "optimalTimes": {
+      "twitter": ["09:00", "15:00"],
+      "instagram": ["11:00", "19:00"],
+      "tiktok": ["12:00", "18:00"],
+      "linkedin": ["08:00", "17:00"]
+    },
+    "contentMix": {
+      "feature": "25% - Highlight app features and capabilities",
+      "tutorial": "35% - Educational content and how-tos",
+      "showcase": "25% - User-generated content and community highlights",
+      "bts": "15% - Behind-the-scenes and company updates"
+    },
+    "hashtags": {
+      "core": ["#Echoelmusic", "#MusicProduction", "#DAW"],
+      "platform": ["#MusicTech", "#AudioEngineering", "#Producer"],
+      "trending": ["#MusicMaker", "#StudioLife", "#MusicCreator"]
+    }
+  }
+}

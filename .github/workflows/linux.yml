@@ -1,0 +1,304 @@
+name: Linux Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-linux:
+    name: Build Linux App
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            container: ubuntu:22.04
+          - arch: arm64
+            container: ubuntu:22.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          pkg-config \
+          libasound2-dev \
+          libfreetype6-dev \
+          libx11-dev \
+          libxrandr-dev \
+          libxinerama-dev \
+          libxcursor-dev \
+          libgl1-mesa-dev \
+          libwebkit2gtk-4.0-dev \
+          libcurl4-openssl-dev \
+          libfuse2
+
+    - name: Cache JUCE
+      uses: actions/cache@v3
+      with:
+        path: |
+          desktop-engine/JUCE
+          desktop-engine/build
+        key: ${{ runner.os }}-${{ matrix.arch }}-juce-${{ hashFiles('desktop-engine/CMakeLists.txt') }}
+
+    - name: Configure CMake
+      run: |
+        cd desktop-engine
+        cmake -B build -S . \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DJUCE_BUILD_EXTRAS=OFF \
+          -DJUCE_BUILD_EXAMPLES=OFF
+
+    - name: Build
+      run: |
+        cd desktop-engine
+        cmake --build build --config Release --parallel $(nproc)
+
+    - name: Run tests
+      run: |
+        cd desktop-engine/build
+        ./EchoelmusicTests
+
+    - name: Create AppImage
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        # Download linuxdeploy
+        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        chmod +x linuxdeploy-x86_64.AppImage
+
+        # Create AppDir
+        mkdir -p AppDir/usr/bin
+        mkdir -p AppDir/usr/share/applications
+        mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+
+        # Copy files
+        cp desktop-engine/build/Echoelmusic AppDir/usr/bin/
+        cp desktop-engine/Resources/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/echoelmusic.png
+
+        # Create desktop file
+        cat > AppDir/usr/share/applications/echoelmusic.desktop << EOF
+        [Desktop Entry]
+        Type=Application
+        Name=Echoelmusic
+        Comment=All-in-One Creative Platform
+        Exec=Echoelmusic
+        Icon=echoelmusic
+        Categories=AudioVideo;Audio;Music;
+        Terminal=false
+        EOF
+
+        # Build AppImage
+        ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
+
+    - name: Create .deb package
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        mkdir -p package/DEBIAN
+        mkdir -p package/usr/bin
+        mkdir -p package/usr/share/applications
+        mkdir -p package/usr/share/icons/hicolor/256x256/apps
+
+        # Copy files
+        cp desktop-engine/build/Echoelmusic package/usr/bin/
+        cp desktop-engine/Resources/icon.png package/usr/share/icons/hicolor/256x256/apps/echoelmusic.png
+        cp AppDir/usr/share/applications/echoelmusic.desktop package/usr/share/applications/
+
+        # Create control file
+        cat > package/DEBIAN/control << EOF
+        Package: echoelmusic
+        Version: ${GITHUB_REF#refs/tags/v}
+        Section: sound
+        Priority: optional
+        Architecture: amd64
+        Depends: libasound2, libfreetype6, libx11-6, libxrandr2, libxinerama1, libxcursor1, libgl1
+        Maintainer: Michael Terbuyken <hello@echoelmusic.com>
+        Description: All-in-One Creative Platform
+         Echoelmusic is an all-in-one creative platform combining DAW, video editing,
+         3D visuals, and social features in one powerful application.
+        Homepage: https://echoelmusic.com
+        EOF
+
+        # Build .deb
+        dpkg-deb --build package echoelmusic_${GITHUB_REF#refs/tags/v}_amd64.deb
+
+    - name: Create .rpm package
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        sudo apt-get install -y rpm
+
+        mkdir -p rpm/SOURCES
+        mkdir -p rpm/SPECS
+
+        # Create tarball
+        tar czf rpm/SOURCES/echoelmusic-${GITHUB_REF#refs/tags/v}.tar.gz desktop-engine/build/Echoelmusic
+
+        # Create spec file
+        cat > rpm/SPECS/echoelmusic.spec << EOF
+        Name: echoelmusic
+        Version: ${GITHUB_REF#refs/tags/v}
+        Release: 1%{?dist}
+        Summary: All-in-One Creative Platform
+        License: Proprietary
+        URL: https://echoelmusic.com
+        Source0: echoelmusic-%{version}.tar.gz
+
+        BuildRequires: gcc, cmake, alsa-lib-devel
+        Requires: alsa-lib, freetype, libX11
+
+        %description
+        Echoelmusic is an all-in-one creative platform combining DAW, video editing,
+        3D visuals, and social features in one powerful application.
+
+        %install
+        mkdir -p %{buildroot}%{_bindir}
+        cp Echoelmusic %{buildroot}%{_bindir}/
+
+        %files
+        %{_bindir}/Echoelmusic
+
+        %changelog
+        * $(date +'%a %b %d %Y') Michael Terbuyken <hello@echoelmusic.com> - ${GITHUB_REF#refs/tags/v}-1
+        - Automated build
+        EOF
+
+        # Build RPM
+        rpmbuild --define "_topdir $(pwd)/rpm" -ba rpm/SPECS/echoelmusic.spec
+
+    - name: Build Flatpak
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        sudo apt-get install -y flatpak flatpak-builder
+
+        # Create flatpak manifest
+        cat > com.echoelmusic.Echoelmusic.yml << EOF
+        app-id: com.echoelmusic.Echoelmusic
+        runtime: org.freedesktop.Platform
+        runtime-version: '23.08'
+        sdk: org.freedesktop.Sdk
+        command: Echoelmusic
+        finish-args:
+          - --share=ipc
+          - --socket=x11
+          - --socket=wayland
+          - --socket=pulseaudio
+          - --device=all
+          - --filesystem=home
+        modules:
+          - name: echoelmusic
+            buildsystem: simple
+            build-commands:
+              - install -D Echoelmusic /app/bin/Echoelmusic
+            sources:
+              - type: file
+                path: desktop-engine/build/Echoelmusic
+        EOF
+
+        # Build flatpak
+        flatpak-builder --force-clean --repo=repo build-dir com.echoelmusic.Echoelmusic.yml
+        flatpak build-bundle repo echoelmusic.flatpak com.echoelmusic.Echoelmusic
+
+    - name: Submit to Flathub
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        FLATHUB_TOKEN: ${{ secrets.FLATHUB_TOKEN }}
+      run: |
+        # This requires pre-setup with Flathub
+        # See: https://github.com/flathub/flathub/wiki/App-Submission
+
+    - name: Build Snap
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        sudo apt-get install -y snapd snapcraft
+
+        # Create snapcraft.yaml
+        cat > snapcraft.yaml << EOF
+        name: echoelmusic
+        version: '${GITHUB_REF#refs/tags/v}'
+        summary: All-in-One Creative Platform
+        description: |
+          Echoelmusic is an all-in-one creative platform combining DAW, video editing,
+          3D visuals, and social features in one powerful application.
+
+        base: core22
+        confinement: strict
+        grade: stable
+
+        apps:
+          echoelmusic:
+            command: bin/Echoelmusic
+            plugs:
+              - home
+              - audio-playback
+              - audio-record
+              - network
+              - opengl
+              - x11
+
+        parts:
+          echoelmusic:
+            plugin: dump
+            source: desktop-engine/build
+            organize:
+              Echoelmusic: bin/Echoelmusic
+        EOF
+
+        # Build snap
+        snapcraft
+
+    - name: Upload to Snap Store
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+      run: |
+        echo "$SNAPCRAFT_STORE_CREDENTIALS" | snapcraft login --with -
+        snapcraft upload --release=stable echoelmusic_*.snap
+
+    - name: Upload to CDN
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: eu-central-1
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        aws s3 cp *.AppImage s3://echoelmusic-downloads/linux/Echoelmusic-$VERSION-x86_64.AppImage --acl public-read
+        aws s3 cp echoelmusic_*.deb s3://echoelmusic-downloads/linux/ --acl public-read
+        aws s3 cp rpm/RPMS/x86_64/*.rpm s3://echoelmusic-downloads/linux/ --acl public-read
+
+    - name: Upload artifacts
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: actions/upload-artifact@v3
+      with:
+        name: Echoelmusic-Linux
+        path: |
+          *.AppImage
+          *.deb
+          rpm/RPMS/x86_64/*.rpm
+          *.flatpak
+          *.snap
+
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          *.AppImage
+          *.deb
+          rpm/RPMS/x86_64/*.rpm
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
