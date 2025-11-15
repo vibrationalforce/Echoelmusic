@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echoelmusic Setup Wizard 🎵</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      color: #333;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 1.2em;
+      opacity: 0.9;
+    }
+
+    .wizard-content {
+      padding: 40px;
+    }
+
+    .step {
+      display: none;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-header {
+      margin-bottom: 30px;
+    }
+
+    .step-header h2 {
+      color: #667eea;
+      font-size: 1.8em;
+      margin-bottom: 10px;
+    }
+
+    .step-header p {
+      color: #666;
+      font-size: 1.1em;
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .form-group small {
+      display: block;
+      margin-top: 5px;
+      color: #888;
+      font-size: 0.9em;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+      justify-content: space-between;
+    }
+
+    button {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: #f0f0f0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 30px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.3s ease;
+    }
+
+    .output-section {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .output-section h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+      font-size: 0.9em;
+      overflow-x: auto;
+      position: relative;
+      margin-bottom: 15px;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 6px 12px;
+      font-size: 0.85em;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover {
+      background: #764ba2;
+    }
+
+    .info-box {
+      background: #e7f3ff;
+      border-left: 4px solid #2196F3;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+
+    .warning-box {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+
+    .success-box {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+
+    .checklist {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .checklist li {
+      padding: 10px;
+      margin-bottom: 8px;
+      background: white;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+    }
+
+    .checklist li:before {
+      content: '✓';
+      display: inline-block;
+      width: 25px;
+      height: 25px;
+      background: #28a745;
+      color: white;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 25px;
+      margin-right: 12px;
+      font-weight: bold;
+    }
+
+    .download-all {
+      background: #28a745;
+      color: white;
+      padding: 15px 30px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1.1em;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .download-all:hover {
+      background: #218838;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    }
+
+    .step-indicator {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #888;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎵 Echoelmusic Setup Wizard</h1>
+      <p>Generiere alle Konfigurationsdateien für dein Deployment</p>
+    </div>
+
+    <div class="wizard-content">
+      <!-- Progress Bar -->
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+      </div>
+
+      <div class="step-indicator" id="stepIndicator">Schritt 1 von 5</div>
+
+      <!-- Step 1: Basic Info -->
+      <div class="step active" id="step1">
+        <div class="step-header">
+          <h2>📋 Grundinformationen</h2>
+          <p>Starte mit deinen persönlichen Daten und Projektdetails</p>
+        </div>
+
+        <div class="info-box">
+          <strong>💡 Hinweis:</strong> Alle Daten bleiben lokal in deinem Browser. Nichts wird hochgeladen!
+        </div>
+
+        <div class="form-group">
+          <label>Dein Name *</label>
+          <input type="text" id="artistName" value="Michael Terbuyken" placeholder="Max Mustermann">
+          <small>Für Impressum und rechtliche Dokumente</small>
+        </div>
+
+        <div class="form-group">
+          <label>Künstlername / Projektname *</label>
+          <input type="text" id="brandName" value="Echoel" placeholder="Dein Künstlername">
+          <small>Wie soll dein Projekt heißen?</small>
+        </div>
+
+        <div class="form-group">
+          <label>Email-Adresse *</label>
+          <input type="email" id="email" value="michaelterbuyken@gmail.com" placeholder="hello@example.com">
+          <small>Kontakt-Email für Support und rechtliche Anfragen</small>
+        </div>
+
+        <div class="form-group">
+          <label>Domain (optional)</label>
+          <input type="text" id="domain" value="echoelmusic.com" placeholder="meineapp.com">
+          <small>Deine Wunschdomain (ohne https://)</small>
+        </div>
+
+        <div class="button-group">
+          <div></div>
+          <button class="btn-primary" onclick="nextStep()">Weiter →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Location & Legal -->
+      <div class="step" id="step2">
+        <div class="step-header">
+          <h2>📍 Standort & Rechtliches</h2>
+          <p>Für DSGVO-Konformität und Impressum</p>
+        </div>
+
+        <div class="form-group">
+          <label>Straße & Hausnummer *</label>
+          <input type="text" id="street" value="Bahrenfelder Chaussee 35" placeholder="Musterstraße 123">
+        </div>
+
+        <div class="form-group">
+          <label>PLZ *</label>
+          <input type="text" id="zip" value="22761" placeholder="12345">
+        </div>
+
+        <div class="form-group">
+          <label>Stadt *</label>
+          <input type="text" id="city" value="Hamburg" placeholder="Berlin">
+        </div>
+
+        <div class="form-group">
+          <label>Land *</label>
+          <select id="country">
+            <option value="Deutschland" selected>Deutschland</option>
+            <option value="Österreich">Österreich</option>
+            <option value="Schweiz">Schweiz</option>
+            <option value="Andere">Andere</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>USt-ID / Steuernummer (optional)</label>
+          <input type="text" id="taxId" placeholder="DE123456789 oder 'Kleinunternehmer §19 UStG'">
+          <small>Lass leer für §19 UStG (Kleinunternehmer)</small>
+        </div>
+
+        <div class="button-group">
+          <button class="btn-secondary" onclick="prevStep()">← Zurück</button>
+          <button class="btn-primary" onclick="nextStep()">Weiter →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Services & Credentials -->
+      <div class="step" id="step3">
+        <div class="step-header">
+          <h2>🔐 Service-Konfiguration</h2>
+          <p>API-Keys und Service-URLs (kannst du später ändern)</p>
+        </div>
+
+        <div class="warning-box">
+          <strong>⚠️ Wichtig:</strong> Nutze erst Platzhalter, dann ersetze nach der Registrierung bei den Services!
+        </div>
+
+        <div class="form-group">
+          <label>Supabase URL</label>
+          <input type="text" id="supabaseUrl" placeholder="https://xxxxx.supabase.co">
+          <small>Erhältst du nach Registrierung auf supabase.com</small>
+        </div>
+
+        <div class="form-group">
+          <label>Supabase Anon Key</label>
+          <input type="password" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+          <small>Public anon key (nicht secret key!)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Stripe Publishable Key</label>
+          <input type="text" id="stripeKey" placeholder="pk_live_... oder pk_test_...">
+          <small>Erhältst du nach Registrierung auf stripe.com</small>
+        </div>
+
+        <div class="form-group">
+          <label>Stripe Secret Key</label>
+          <input type="password" id="stripeSecret" placeholder="sk_live_... oder sk_test_...">
+          <small>⚠️ Geheim halten! Niemals in Git committen!</small>
+        </div>
+
+        <div class="form-group">
+          <label>JWT Secret</label>
+          <input type="password" id="jwtSecret" value="">
+          <small>
+            <button type="button" class="btn-secondary" style="padding: 5px 10px; font-size: 0.9em;" onclick="generateJWT()">
+              🎲 Zufälligen Secret generieren
+            </button>
+          </small>
+        </div>
+
+        <div class="button-group">
+          <button class="btn-secondary" onclick="prevStep()">← Zurück</button>
+          <button class="btn-primary" onclick="nextStep()">Weiter →</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Server Configuration -->
+      <div class="step" id="step4">
+        <div class="step-header">
+          <h2>🖥️ Server-Konfiguration</h2>
+          <p>Einstellungen für deinen Backend-Server</p>
+        </div>
+
+        <div class="form-group">
+          <label>Server-Typ</label>
+          <select id="serverType">
+            <option value="minimal" selected>Minimal (Hetzner CX11 - 2GB RAM)</option>
+            <option value="standard">Standard (Hetzner CX21 - 4GB RAM)</option>
+            <option value="performance">Performance (Hetzner CX31 - 8GB RAM)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Server IP-Adresse (optional)</label>
+          <input type="text" id="serverIp" placeholder="123.456.789.0">
+          <small>Kannst du später hinzufügen</small>
+        </div>
+
+        <div class="form-group">
+          <label>API Port</label>
+          <input type="number" id="apiPort" value="3000">
+          <small>Standard: 3000</small>
+        </div>
+
+        <div class="form-group">
+          <label>Node Environment</label>
+          <select id="nodeEnv">
+            <option value="production" selected>Production</option>
+            <option value="staging">Staging</option>
+            <option value="development">Development</option>
+          </select>
+        </div>
+
+        <div class="button-group">
+          <button class="btn-secondary" onclick="prevStep()">← Zurück</button>
+          <button class="btn-primary" onclick="nextStep()">Weiter →</button>
+        </div>
+      </div>
+
+      <!-- Step 5: Generate Files -->
+      <div class="step" id="step5">
+        <div class="step-header">
+          <h2>🎉 Fertig! Dateien generieren</h2>
+          <p>Alle Konfigurationsdateien sind bereit zum Download</p>
+        </div>
+
+        <div class="success-box">
+          <strong>✅ Setup abgeschlossen!</strong> Deine personalisierten Konfigurationsdateien wurden generiert.
+        </div>
+
+        <div class="info-box">
+          <strong>📥 Was jetzt?</strong>
+          <ol style="margin-left: 20px; margin-top: 10px;">
+            <li>Lade alle Dateien herunter</li>
+            <li>Folge der Anleitung in BROWSER_ONLY_DEPLOY.md</li>
+            <li>Kopiere die Dateien zu deinem Server (z.B. via Hetzner Web Console)</li>
+          </ol>
+        </div>
+
+        <div id="generatedFiles"></div>
+
+        <button class="download-all" onclick="downloadAll()">
+          📦 Alle Dateien als ZIP herunterladen
+        </button>
+
+        <div class="button-group">
+          <button class="btn-secondary" onclick="prevStep()">← Zurück</button>
+          <button class="btn-primary" onclick="location.reload()">🔄 Neu starten</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    const totalSteps = 5;
+
+    function updateProgress() {
+      const progress = (currentStep / totalSteps) * 100;
+      document.getElementById('progressBar').style.width = progress + '%';
+      document.getElementById('stepIndicator').textContent = `Schritt ${currentStep} von ${totalSteps}`;
+    }
+
+    function nextStep() {
+      if (currentStep < totalSteps) {
+        document.getElementById('step' + currentStep).classList.remove('active');
+        currentStep++;
+        document.getElementById('step' + currentStep).classList.add('active');
+        updateProgress();
+
+        if (currentStep === totalSteps) {
+          generateFiles();
+        }
+
+        window.scrollTo(0, 0);
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        document.getElementById('step' + currentStep).classList.remove('active');
+        currentStep--;
+        document.getElementById('step' + currentStep).classList.add('active');
+        updateProgress();
+        window.scrollTo(0, 0);
+      }
+    }
+
+    function generateJWT() {
+      const array = new Uint8Array(32);
+      crypto.getRandomValues(array);
+      const secret = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+      document.getElementById('jwtSecret').value = secret;
+    }
+
+    function getValue(id) {
+      const element = document.getElementById(id);
+      return element ? element.value : '';
+    }
+
+    function generateEnvFile() {
+      const domain = getValue('domain') || 'yourdomain.com';
+      const supabaseUrl = getValue('supabaseUrl') || 'https://YOUR_PROJECT.supabase.co';
+      const supabaseKey = getValue('supabaseKey') || 'YOUR_SUPABASE_ANON_KEY';
+      const stripeKey = getValue('stripeKey') || 'pk_test_YOUR_KEY';
+      const stripeSecret = getValue('stripeSecret') || 'sk_test_YOUR_SECRET';
+      const jwtSecret = getValue('jwtSecret') || 'GENERATE_A_SECURE_SECRET';
+      const nodeEnv = getValue('nodeEnv') || 'production';
+      const apiPort = getValue('apiPort') || '3000';
+
+      return `# Echoelmusic Backend Configuration
+# Generated by Setup Wizard - ${new Date().toLocaleString('de-DE')}
+
+# ================================
+# ENVIRONMENT
+# ================================
+NODE_ENV=${nodeEnv}
+PORT=${apiPort}
+
+# ================================
+# DOMAIN & URLS
+# ================================
+DOMAIN=${domain}
+API_URL=https://api.${domain}
+WEB_URL=https://${domain}
+LEGAL_PAGES_URL=https://YOUR_GITHUB_USERNAME.github.io/echoelmusic-legal/
+
+# ================================
+# SUPABASE (Database)
+# ================================
+SUPABASE_URL=${supabaseUrl}
+SUPABASE_ANON_KEY=${supabaseKey}
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
+
+# FREE TIER LIMITS:
+# - 500MB Database
+# - 1GB File Storage
+# - 50k Monthly Active Users
+# UPGRADE AT: ~500-1,000 users
+
+# ================================
+# AUTHENTICATION
+# ================================
+JWT_SECRET=${jwtSecret}
+JWT_EXPIRES_IN=7d
+REFRESH_TOKEN_EXPIRES_IN=30d
+
+# ================================
+# STRIPE (Payments)
+# ================================
+STRIPE_PUBLISHABLE_KEY=${stripeKey}
+STRIPE_SECRET_KEY=${stripeSecret}
+STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET
+
+# Stripe Product IDs (create these in Stripe Dashboard)
+STRIPE_PRICE_PRO_MONTHLY=price_YOUR_PRO_MONTHLY
+STRIPE_PRICE_PRO_YEARLY=price_YOUR_PRO_YEARLY
+STRIPE_PRICE_STUDIO_MONTHLY=price_YOUR_STUDIO_MONTHLY
+STRIPE_PRICE_STUDIO_YEARLY=price_YOUR_STUDIO_YEARLY
+
+# FREE: No payment processing fees
+# UPGRADE COSTS: 2.9% + €0.30 per transaction
+
+# ================================
+# APPLE IN-APP PURCHASE
+# ================================
+APPLE_SHARED_SECRET=YOUR_APPLE_SHARED_SECRET
+APPLE_BUNDLE_ID=com.echoelmusic.app
+
+# ================================
+# GOOGLE PLAY BILLING
+# ================================
+GOOGLE_PACKAGE_NAME=com.echoelmusic.app
+GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/google-service-account.json
+
+# ================================
+# EMAIL (Optional - for notifications)
+# ================================
+# Using Gmail SMTP (free!)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=${getValue('email')}
+SMTP_PASSWORD=YOUR_GMAIL_APP_PASSWORD
+EMAIL_FROM=${getValue('email')}
+
+# ================================
+# ANALYTICS & MONITORING
+# ================================
+# Mixpanel (free tier: 100k events/month)
+MIXPANEL_TOKEN=YOUR_MIXPANEL_TOKEN
+
+# Sentry (free tier: 5k errors/month)
+SENTRY_DSN=https://YOUR_SENTRY_DSN@sentry.io/PROJECT_ID
+
+# ================================
+# STORAGE (AWS S3 - Free Tier)
+# ================================
+AWS_REGION=eu-central-1
+AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY
+AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_KEY
+S3_BUCKET_NAME=echoelmusic-projects
+S3_BUCKET_REGION=eu-central-1
+
+# FREE TIER: 5GB storage, 20k GET, 2k PUT
+# UPGRADE AT: >5GB or >20k requests/month
+
+# ================================
+# REDIS (Optional - using Upstash free tier)
+# ================================
+# REDIS_URL=redis://default:YOUR_PASSWORD@YOUR_UPSTASH.upstash.io:6379
+# FREE TIER: 10k commands/day
+
+# ================================
+# RATE LIMITING
+# ================================
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# ================================
+# CORS
+# ================================
+CORS_ORIGIN=https://${domain},https://api.${domain}
+
+# ================================
+# LOGGING
+# ================================
+LOG_LEVEL=info
+LOG_FORMAT=json
+
+# ================================
+# FEATURE FLAGS
+# ================================
+ENABLE_REGISTRATION=true
+ENABLE_STRIPE_PAYMENTS=true
+ENABLE_APPLE_IAP=true
+ENABLE_GOOGLE_IAP=true
+ENABLE_EMAIL_NOTIFICATIONS=true
+ENABLE_ANALYTICS=true
+
+# ================================
+# NOTES
+# ================================
+# 1. Replace ALL "YOUR_*" placeholders with real values
+# 2. NEVER commit this file to Git! (.gitignore already configured)
+# 3. For Stripe keys: Get from https://dashboard.stripe.com/apikeys
+# 4. For Supabase keys: Get from https://app.supabase.com/project/_/settings/api
+# 5. JWT_SECRET: Use "openssl rand -hex 32" to generate
+`;
+    }
+
+    function generateDockerCompose() {
+      const serverType = getValue('serverType') || 'minimal';
+
+      const resources = {
+        minimal: { cpu: '0.7', memory: '1024M', reserveCpu: '0.3', reserveMemory: '512M' },
+        standard: { cpu: '1.5', memory: '2048M', reserveCpu: '0.5', reserveMemory: '1024M' },
+        performance: { cpu: '3.0', memory: '4096M', reserveCpu: '1.0', reserveMemory: '2048M' }
+      };
+
+      const res = resources[serverType];
+
+      return `# Docker Compose - Echoelmusic Backend
+# Generated by Setup Wizard - ${new Date().toLocaleString('de-DE')}
+# Server Type: ${serverType}
+
+version: '3.8'
+
+services:
+  # ================================
+  # API Server (Node.js)
+  # ================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: echoelmusic-api
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '${res.cpu}'
+          memory: ${res.memory}
+        reservations:
+          cpus: '${res.reserveCpu}'
+          memory: ${res.reserveMemory}
+
+    ports:
+      - "3000:3000"
+
+    env_file:
+      - .env
+
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Logging (limit to save disk space)
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ================================
+  # Nginx Reverse Proxy
+  # ================================
+  nginx:
+    image: nginx:alpine
+    container_name: echoelmusic-nginx
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - /var/log/nginx:/var/log/nginx
+
+    depends_on:
+      - api
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ================================
+# Networks
+# ================================
+networks:
+  default:
+    name: echoelmusic-network
+
+# ================================
+# Volumes
+# ================================
+volumes:
+  nginx_logs:
+    driver: local
+`;
+    }
+
+    function generateNginxConf() {
+      const domain = getValue('domain') || 'yourdomain.com';
+
+      return `# Nginx Configuration - Echoelmusic
+# Generated by Setup Wizard - ${new Date().toLocaleString('de-DE')}
+
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log warn;
+pid /var/run/nginx.pid;
+
+events {
+    worker_connections 1024;
+    use epoll;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    # Logging
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log /var/log/nginx/access.log main;
+
+    # Performance
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+    server_tokens off;
+
+    # Compression
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml text/javascript
+               application/json application/javascript application/xml+rss;
+
+    # Rate limiting
+    limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
+    limit_req_zone $binary_remote_addr zone=auth_limit:10m rate=5r/m;
+    limit_req_status 429;
+
+    # Client body size
+    client_max_body_size 100M;
+
+    # HTTP → HTTPS Redirect
+    server {
+        listen 80;
+        server_name api.${domain};
+
+        location /.well-known/acme-challenge/ {
+            root /var/www/certbot;
+        }
+
+        location / {
+            return 301 https://$server_name$request_uri;
+        }
+    }
+
+    # HTTPS Server
+    server {
+        listen 443 ssl http2;
+        server_name api.${domain};
+
+        # SSL Certificate (Let's Encrypt)
+        ssl_certificate /etc/nginx/ssl/fullchain.pem;
+        ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+
+        # SSL Configuration
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256';
+        ssl_prefer_server_ciphers off;
+        ssl_session_cache shared:SSL:10m;
+        ssl_session_timeout 10m;
+
+        # Security headers
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+
+        # API Endpoints
+        location /api {
+            limit_req zone=api_limit burst=20 nodelay;
+
+            proxy_pass http://api:3000;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # Health Check
+        location /health {
+            proxy_pass http://api:3000;
+            access_log off;
+        }
+    }
+}
+`;
+    }
+
+    function generateImpressum() {
+      const name = getValue('artistName') || 'Dein Name';
+      const street = getValue('street') || 'Deine Straße';
+      const zip = getValue('zip') || '12345';
+      const city = getValue('city') || 'Deine Stadt';
+      const country = getValue('country') || 'Deutschland';
+      const email = getValue('email') || 'deine@email.com';
+      const taxId = getValue('taxId') || 'Umsatzsteuerbefreit nach §19 UStG';
+
+      return `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impressum - Echoelmusic</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>⚖️ Impressum</h1>
+      <p class="subtitle"><a href="index.html">← Zurück</a></p>
+    </header>
+
+    <main>
+      <section>
+        <h2>Angaben gemäß § 5 TMG</h2>
+
+        <div class="info-block">
+          <p><strong>${name}</strong></p>
+          <p>${street}<br>${zip} ${city}<br>${country}</p>
+        </div>
+
+        <h3>Kontakt</h3>
+        <div class="info-block">
+          <p>E-Mail: <a href="mailto:${email}">${email}</a></p>
+        </div>
+
+        <h3>Umsatzsteuer</h3>
+        <div class="info-block">
+          <p>${taxId}</p>
+        </div>
+
+        <h3>Verantwortlich für den Inhalt</h3>
+        <div class="info-block">
+          <p>${name}<br>${street}<br>${zip} ${city}</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>© ${new Date().getFullYear()} ${name}</p>
+    </footer>
+  </div>
+</body>
+</html>
+`;
+    }
+
+    function generateReadme() {
+      const domain = getValue('domain') || 'yourdomain.com';
+      const name = getValue('artistName') || 'Dein Name';
+
+      return `# 🎵 Echoelmusic Backend - Setup-Dateien
+
+**Generiert von: Setup Wizard**
+**Datum: ${new Date().toLocaleString('de-DE')}**
+**Für: ${name}**
+
+---
+
+## 📦 In diesem Paket enthalten:
+
+1. ✅ \`.env\` - Umgebungsvariablen (API-Keys, Secrets)
+2. ✅ \`docker-compose.yml\` - Docker-Container-Konfiguration
+3. ✅ \`nginx.conf\` - Nginx-Webserver-Konfiguration
+4. ✅ \`impressum.html\` - Dein personalisiertes Impressum
+
+---
+
+## 🚀 Wie geht es weiter?
+
+### Schritt 1: Services registrieren
+
+Registriere dich bei folgenden kostenlosen Services:
+
+1. **Supabase** (Database): https://supabase.com
+   - Erstelle ein neues Projekt
+   - Kopiere URL und Anon Key
+   - Füge sie in \`.env\` ein
+
+2. **Stripe** (Payments): https://stripe.com
+   - Erstelle einen Account
+   - Kopiere Publishable und Secret Key
+   - Füge sie in \`.env\` ein
+
+3. **Hetzner** (Server): https://www.hetzner.com/cloud
+   - Miete einen Server (CX11 für €4/Monat)
+   - Notiere die IP-Adresse
+
+### Schritt 2: Domain & DNS konfigurieren
+
+1. **Domain kaufen** (z.B. bei IONOS für ~€1/Monat)
+   - Domain: ${domain}
+
+2. **DNS Records setzen:**
+   \`\`\`
+   A    @              -> DEINE_SERVER_IP
+   A    api            -> DEINE_SERVER_IP
+   CNAME www          -> @
+   \`\`\`
+
+### Schritt 3: Dateien auf den Server hochladen
+
+**Via Browser (Hetzner Web Console):**
+
+1. Gehe zu Hetzner Cloud Console
+2. Klicke auf deinen Server → "Console"
+3. Erstelle Ordner: \`mkdir -p /root/echoelmusic\`
+4. Upload Dateien:
+   - Kopiere Inhalt von \`.env\` → \`nano /root/echoelmusic/.env\` → Einfügen → Speichern
+   - Kopiere Inhalt von \`docker-compose.yml\` → \`nano /root/echoelmusic/docker-compose.yml\`
+   - Kopiere Inhalt von \`nginx.conf\` → \`nano /root/echoelmusic/nginx/nginx.conf\`
+
+### Schritt 4: Backend starten
+
+Im Hetzner Web Console Terminal:
+
+\`\`\`bash
+cd /root/echoelmusic
+docker-compose up -d
+\`\`\`
+
+### Schritt 5: SSL-Zertifikat einrichten
+
+\`\`\`bash
+apt-get install certbot python3-certbot-nginx
+certbot --nginx -d api.${domain}
+\`\`\`
+
+### Schritt 6: Legal Pages deployen
+
+1. Gehe zu GitHub → Dein Repository
+2. Upload \`impressum.html\` nach \`legal-pages/\`
+3. Aktiviere GitHub Pages (Settings → Pages → Source: main branch, /legal-pages)
+4. Deine Legal Pages sind jetzt live unter:
+   \`https://YOUR_GITHUB_USERNAME.github.io/echoelmusic-legal/\`
+
+---
+
+## ✅ Checklist
+
+- [ ] Supabase Account erstellt & Keys in \`.env\` eingefügt
+- [ ] Stripe Account erstellt & Keys in \`.env\` eingefügt
+- [ ] Hetzner Server gemietet
+- [ ] Domain gekauft
+- [ ] DNS Records gesetzt
+- [ ] Dateien auf Server hochgeladen
+- [ ] Docker Container gestartet
+- [ ] SSL-Zertifikat eingerichtet
+- [ ] GitHub Pages aktiviert
+- [ ] API-Test: \`https://api.${domain}/health\`
+- [ ] Legal Pages Test: \`https://YOUR_USERNAME.github.io/echoelmusic-legal/\`
+
+---
+
+## 🆘 Hilfe benötigt?
+
+**Detaillierte Anleitung:** Siehe \`BROWSER_ONLY_DEPLOY.md\` im Repository
+
+**Support:** ${getValue('email')}
+
+**Dokumentation:**
+- Supabase: https://supabase.com/docs
+- Stripe: https://stripe.com/docs
+- Docker: https://docs.docker.com
+- Let's Encrypt: https://letsencrypt.org/getting-started
+
+---
+
+**Status:** 🎉 Bereit für Deployment!
+
+---
+
+© ${new Date().getFullYear()} ${name} | Generiert mit Echoelmusic Setup Wizard
+`;
+    }
+
+    function generateFiles() {
+      const files = {
+        '.env': generateEnvFile(),
+        'docker-compose.yml': generateDockerCompose(),
+        'nginx.conf': generateNginxConf(),
+        'impressum.html': generateImpressum(),
+        'README.txt': generateReadme()
+      };
+
+      let html = '';
+
+      for (const [filename, content] of Object.entries(files)) {
+        html += `
+          <div class="output-section">
+            <h3>
+              📄 ${filename}
+              <button class="copy-btn" onclick="copyToClipboard('${filename}', \`${content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
+                📋 Kopieren
+              </button>
+            </h3>
+            <div class="code-block" id="file-${filename.replace(/\./g, '-')}">
+              <pre>${escapeHtml(content)}</pre>
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('generatedFiles').innerHTML = html;
+
+      // Store files for download
+      window.generatedFiles = files;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function copyToClipboard(filename, content) {
+      navigator.clipboard.writeText(content).then(() => {
+        alert(`✅ ${filename} in Zwischenablage kopiert!`);
+      }).catch(err => {
+        console.error('Fehler beim Kopieren:', err);
+        alert('❌ Kopieren fehlgeschlagen. Bitte manuell kopieren.');
+      });
+    }
+
+    function downloadFile(filename, content) {
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function downloadAll() {
+      // Using JSZip would require external library
+      // Instead, download files individually
+      for (const [filename, content] of Object.entries(window.generatedFiles)) {
+        downloadFile(filename, content);
+        await new Promise(resolve => setTimeout(resolve, 300)); // Delay between downloads
+      }
+
+      alert('✅ Alle Dateien wurden heruntergeladen!\n\nPrüfe deinen Downloads-Ordner.');
+    }
+
+    // Initialize
+    updateProgress();
+    generateJWT(); // Generate JWT secret on load
+  </script>
+</body>
+</html>
