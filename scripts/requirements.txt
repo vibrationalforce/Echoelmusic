@@ -1,0 +1,2 @@
+# Python requirements for OSC test script
+python-osc==1.8.3
