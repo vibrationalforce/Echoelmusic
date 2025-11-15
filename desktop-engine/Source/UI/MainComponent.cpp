@@ -7,7 +7,7 @@ MainComponent::MainComponent()
 {
     // Create components
     oscManager = std::make_unique<OSCManager>();
-    synthesizer = std::make_unique<BasicSynthesizer>();
+    synthesizer = std::make_unique<EnhancedSynthesizer>();
 
     // Setup
     setupOSC();
@@ -19,7 +19,7 @@ MainComponent::MainComponent()
     // Start UI update timer (30 Hz)
     startTimer(33);
 
-    setSize(600, 400);
+    setSize(600, 450);  // Slightly taller for breath rate label
 }
 
 MainComponent::~MainComponent()
@@ -48,12 +48,22 @@ void MainComponent::setupOSC()
     {
         synthesizer->setHeartRate(bpm);
         displayHeartRate.store(bpm);
+
+        // Auto-detect iOS client address on first message
+        // (In real app, iOS would send its IP via /echoel/sync/hello)
+        // For now, we'll set it manually or via command line
     };
 
     oscManager->onHRVReceived = [this](float ms)
     {
         synthesizer->setHRV(ms);
         displayHRV.store(ms);
+    };
+
+    oscManager->onBreathRateReceived = [this](float breathsPerMin)
+    {
+        synthesizer->setBreathRate(breathsPerMin);
+        displayBreathRate.store(breathsPerMin);
     };
 
     oscManager->onParameterChanged = [this](juce::String paramName, float value)
@@ -69,13 +79,17 @@ void MainComponent::setupOSC()
     {
         synthesizer->setPitch(frequency, confidence);
     };
+
+    // Set iOS client address (hardcoded for now - should be configurable)
+    // TODO: Add UI for entering iOS device IP address
+    // oscManager->setClientAddress("192.168.1.50", 8001);
 }
 
 void MainComponent::setupUI()
 {
     // Title
     addAndMakeVisible(titleLabel);
-    titleLabel.setText("🎵 Echoelmusic Desktop Engine", juce::dontSendNotification);
+    titleLabel.setText("🎵 Echoelmusic Desktop Engine (Enhanced)", juce::dontSendNotification);
     titleLabel.setFont(juce::Font(24.0f, juce::Font::bold));
     titleLabel.setJustificationType(juce::Justification::centred);
 
@@ -94,6 +108,10 @@ void MainComponent::setupUI()
     addAndMakeVisible(hrvLabel);
     hrvLabel.setText("🫀 HRV: --", juce::dontSendNotification);
     hrvLabel.setFont(juce::Font(18.0f));
+
+    addAndMakeVisible(breathRateLabel);
+    breathRateLabel.setText("🌬️ Breath Rate: --", juce::dontSendNotification);
+    breathRateLabel.setFont(juce::Font(18.0f));
 
     addAndMakeVisible(coherenceLabel);
     coherenceLabel.setText("🧘 Coherence: --", juce::dontSendNotification);
@@ -137,12 +155,15 @@ void MainComponent::resized()
     area.removeFromTop(30);
 
     // Biofeedback displays (centered)
-    auto displayArea = area.withSizeKeepingCentre(400, 200);
+    auto displayArea = area.withSizeKeepingCentre(400, 250);
 
     heartRateLabel.setBounds(displayArea.removeFromTop(40));
     displayArea.removeFromTop(10);
 
     hrvLabel.setBounds(displayArea.removeFromTop(40));
+    displayArea.removeFromTop(10);
+
+    breathRateLabel.setBounds(displayArea.removeFromTop(40));
     displayArea.removeFromTop(10);
 
     coherenceLabel.setBounds(displayArea.removeFromTop(40));
@@ -156,6 +177,7 @@ void MainComponent::timerCallback()
     // Update UI labels (runs on message thread, safe)
     float hr = displayHeartRate.load();
     float hrv = displayHRV.load();
+    float breathRate = displayBreathRate.load();
     float coherence = displayCoherence.load();
 
     if (hr > 0.0f)
@@ -168,6 +190,12 @@ void MainComponent::timerCallback()
     {
         hrvLabel.setText("🫀 HRV: " + juce::String(hrv, 1) + " ms",
                          juce::dontSendNotification);
+    }
+
+    if (breathRate > 0.0f)
+    {
+        breathRateLabel.setText("🌬️ Breath Rate: " + juce::String(breathRate, 1) + " /min",
+                                juce::dontSendNotification);
     }
 
     if (coherence > 0.0f)
@@ -183,4 +211,27 @@ void MainComponent::timerCallback()
         frequencyLabel.setText("🎹 Frequency: " + juce::String(freq, 1) + " Hz",
                                juce::dontSendNotification);
     }
+
+    // Send OSC feedback to iOS periodically (every ~333ms)
+    feedbackCounter++;
+    if (feedbackCounter >= feedbackInterval)
+    {
+        feedbackCounter = 0;
+        sendOSCFeedback();
+    }
+}
+
+void MainComponent::sendOSCFeedback()
+{
+    if (!oscConnected || !oscManager)
+        return;
+
+    // Get analysis data from synthesizer
+    float rms = synthesizer->getRMS();
+    float peak = synthesizer->getPeak();
+    std::vector<float> spectrum = synthesizer->getSpectrum();
+
+    // Send to iOS
+    oscManager->sendAudioAnalysis(rms, peak);
+    oscManager->sendSpectrum(spectrum);
 }
