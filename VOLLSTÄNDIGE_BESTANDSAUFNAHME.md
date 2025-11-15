@@ -512,9 +512,10 @@ docs/
 ├── setup-guide.md - Setup Instructions
 │
 └── archive/ (24 Dokumente):
-    ├── BLAB_90_DAY_ROADMAP.md - 13-Week Plan
-    ├── BLAB_IMPLEMENTATION_ROADMAP.md - Implementation Details
-    ├── BLAB_EXTENDED_VISION.md - Complete Vision
+    ├── ECHOELMUSIC_90_DAY_ROADMAP.md - 13-Week Plan
+    ├── ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md - Implementation Details
+    ├── ECHOELMUSIC_EXTENDED_VISION.md - Complete Vision
+    ├── ECHOEL_Allwave_V∞_ClaudeEdition.txt - Artist Edition
     ├── DAW_INTEGRATION_GUIDE.md
     ├── DEPLOYMENT.md
     ├── GITHUB_ACTIONS_GUIDE.md
