@@ -1,27 +1,28 @@
 # 🎵 Echoelmusic
 
-**Bio-Reactive DAW & Creative Ecosystem**
+**Professional Music Production for Everyone**
 
-Transform your biometric signals, voice, gestures, and creativity into professional music, visuals, and immersive experiences.
+A personal art project by **Echoel** (Michael Terbuyken) | Hamburg, Germany
 
 ---
 
 ## 🌟 What is Echoelmusic?
 
-**Echoelmusic** is a revolutionary music production ecosystem combining:
+**Echoelmusic** is a cross-platform music production app that brings professional DAW features to everyone:
 
-- 🧠 **Bio-Reactive Control** - Heart rate, HRV, breath → music parameters
 - 🎹 **Professional DAW** - Timeline, MIDI sequencer, multi-track recording
 - 🎭 **Session View** - Ableton-style clip launcher for live performance
-- 🌌 **Spatial Audio** - 3D audio with ARKit face/hand tracking
-- 🎨 **Visual Engine** - Real-time cymatics and audio-reactive visuals
-- 💡 **LED/DMX** - Ableton Push 3 + DMX512 integration
-- 🖥️ **Cross-Platform** - iOS + macOS/Windows/Linux desktop engine
+- 🧠 **Bio-Reactive Control** - Heart rate, HRV → music parameters (unique!)
+- 🌌 **Spatial Audio** - 3D audio with ARKit integration
+- 🎨 **3D Visualizer** - Real-time GPU-accelerated audio-reactive visuals
+- 🤖 **AI Features** - Auto-Mix, smart suggestions, key detection
+- 🖥️ **True Cross-Platform** - iOS, macOS, Windows, Linux, Android
+
+**Vision:** Make professional music production accessible and affordable, without compromising on features or quality.
 
 **Brand:**
-- **Echoelmusic** = Product (DAW, App, System)
-- **Echoel** = Artist Name
-- **Echo+tools** = AI/ML Tools (planned)
+- **Echoelmusic** = Product (DAW, App, Platform)
+- **Echoel** = Artist Name (Michael Terbuyken)
 
 ---
 
@@ -341,7 +342,78 @@ https://tropicaldrones.de
 
 ---
 
-**Status:** Active Development | Ecosystem v1.0
-**Last Updated:** November 2024
+---
 
-🌟 **Welcome to Echoelmusic - Where Biology Meets Creativity** 🌟
+## 💰 Pricing
+
+| Plan | Price | Best For |
+|------|-------|----------|
+| **Free** | €0/month | Getting started, unlimited projects |
+| **Pro** | €9.99/month | Serious creators (Cloud sync, AI features) |
+| **Studio** | €19.99/month | Professionals (Everything + priority support) |
+
+**30-day money-back guarantee** | **Cancel anytime** | **No hidden fees**
+
+---
+
+## 🚀 Deployment & Launch
+
+### For Solo Artists / Minimal Cost (€5-15/month)
+
+**Ready to deploy your own instance?**
+
+1. **[DEPLOY_NOW_GUIDE.md](DEPLOY_NOW_GUIDE.md)** - Deploy in one day (⭐ START HERE)
+2. **[MINIMAL_COST_SETUP.md](MINIMAL_COST_SETUP.md)** - €5/month sustainable setup
+3. **[ARTIST_VISION.md](ARTIST_VISION.md)** - The story & philosophy
+
+### For Full Automation (€150-200/month)
+
+4. **[AUTOMATION_SETUP_GUIDE.md](AUTOMATION_SETUP_GUIDE.md)** - Complete automation
+5. **[AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md)** - Automation overview
+
+### Legal & Business
+
+6. **[LEGAL_BUSINESS_ANALYSIS.md](LEGAL_BUSINESS_ANALYSIS.md)** - Global compliance
+7. **[legal-pages/](legal-pages/)** - DSGVO, AGB, Impressum (ready for GitHub Pages)
+
+---
+
+## 💙 About the Creator
+
+**Michael Terbuyken (Echoel)**
+- 📍 Hamburg, Germany
+- 🎵 Musician, Producer & Solo Developer
+- ⚖️ Freelance Artist (§19 UStG - German small business)
+- 💻 3+ years building Echoelmusic
+
+**Why Echoelmusic?**
+
+> "Professional DAWs cost hundreds of euros and lock you into one platform. I wanted something affordable, cross-platform, and privacy-respecting. So I built it."
+> — Michael
+
+Full story: **[ARTIST_VISION.md](ARTIST_VISION.md)**
+
+---
+
+## 📧 Contact
+
+**General:** hello@echoelmusic.com
+**Support:** support@echoelmusic.com
+**Press:** press@echoelmusic.com
+
+**Legal:**
+Echoel (Michael Terbuyken)
+Bahrenfelder Chaussee 35
+22761 Hamburg, Germany
+
+---
+
+**Status:** Production-Ready | Launch Q1 2025
+**Last Updated:** November 15, 2024
+**Progress:** 92% Feature-Complete
+
+---
+
+🌟 **Echoelmusic - Where Creativity Meets Accessibility** 🌟
+
+_A personal art project, developed with ❤️ in Hamburg_

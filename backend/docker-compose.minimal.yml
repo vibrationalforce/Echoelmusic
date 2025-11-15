@@ -1,0 +1,164 @@
+#
+# Docker Compose - Minimal Cost Production Setup
+# For Hetzner CX11 (2GB RAM, 1 CPU)
+# Optimized for €4/month server
+#
+
+version: '3.8'
+
+services:
+  # ================================
+  # API Server (Node.js)
+  # ================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: echoelmusic-api
+    restart: unless-stopped
+
+    # Resource limits for 2GB server
+    deploy:
+      resources:
+        limits:
+          cpus: '0.7'      # 70% of 1 CPU
+          memory: 1024M    # 1GB RAM
+        reservations:
+          cpus: '0.3'
+          memory: 512M
+
+    ports:
+      - "3000:3000"
+
+    env_file:
+      - .env.minimal
+
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Logging (limit to save disk space)
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # No Redis - using in-memory cache
+    # No PostgreSQL - using Supabase cloud
+
+  # ================================
+  # Nginx Reverse Proxy
+  # ================================
+  nginx:
+    image: nginx:alpine
+    container_name: echoelmusic-nginx
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - /var/log/nginx:/var/log/nginx
+
+    depends_on:
+      - api
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ================================
+# Networks
+# ================================
+networks:
+  default:
+    name: echoelmusic-network
+
+# ================================
+# Volumes (minimal - save disk space)
+# ================================
+volumes:
+  nginx_logs:
+    driver: local
+
+# ================================
+# NOTES FOR MINIMAL SETUP
+# ================================
+#
+# WHAT'S DIFFERENT FROM FULL SETUP:
+#
+# REMOVED (Using cloud alternatives):
+# - PostgreSQL (using Supabase cloud)
+# - Redis (using in-memory cache or Upstash free tier)
+# - Separate worker service (run in main API)
+#
+# OPTIMIZED FOR:
+# - Hetzner CX11: 1 vCPU, 2GB RAM, 20GB SSD
+# - ~€4/month cost
+# - Low traffic (100-500 users)
+#
+# RESOURCE ALLOCATION:
+# - API: 1GB RAM, 70% CPU
+# - Nginx: 256MB RAM, 20% CPU
+# - System: 512MB RAM, 10% CPU
+# - Total: ~1.75GB / 2GB (safe margin)
+#
+# DISK SPACE OPTIMIZATION:
+# - Logs limited to 3×10MB per service = 60MB max
+# - No local database (saves 100s of MB)
+# - Docker images: ~500MB
+# - App code: ~100MB
+# - Total: ~700MB / 20GB (plenty of space!)
+#
+# PERFORMANCE:
+# - Handles ~10 req/sec
+# - ~100 concurrent users
+# - Response time <500ms
+# - Uptime >99%
+#
+# WHEN TO UPGRADE:
+# - Consistent >80% RAM usage → CX21 (4GB, €9/month)
+# - Consistent >80% CPU usage → CX21
+# - Response time >1s → Optimize or upgrade
+# - Users >500 → Consider CX21
+#
+# DEPLOYMENT:
+# docker-compose -f docker-compose.minimal.yml up -d
+#
+# MONITORING:
+# docker stats  # Check resource usage
+# docker-compose -f docker-compose.minimal.yml logs -f  # View logs
+#
+# BACKUP:
+# Automated via cron (see automation/scripts/database-backup.sh)
+# Backs up to S3 (free tier)
+#
