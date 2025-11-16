@@ -1,0 +1,138 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: echoelmusic_db
+    environment:
+      POSTGRES_USER: echoelmusic
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: echoelmusic
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U echoelmusic"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and pub/sub
+  redis:
+    image: redis:7-alpine
+    container_name: echoelmusic_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: echoelmusic_api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://echoelmusic:password@db:5432/echoelmusic
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - media_storage:/app/media
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Celery Worker for background tasks
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: echoelmusic_celery_worker
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://echoelmusic:password@db:5432/echoelmusic
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./backend:/app
+      - media_storage:/app/media
+    command: celery -A app.celery_app worker --loglevel=info
+
+  # Celery Beat for scheduled tasks
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: echoelmusic_celery_beat
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://echoelmusic:password@db:5432/echoelmusic
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./backend:/app
+    command: celery -A app.celery_app beat --loglevel=info
+
+  # Flower for Celery monitoring
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: echoelmusic_flower
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    depends_on:
+      - redis
+      - celery_worker
+    command: celery -A app.celery_app flower --port=5555
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: echoelmusic_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - media_storage:/usr/share/nginx/html/media
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  media_storage:
+    driver: local
+
+networks:
+  default:
+    name: echoelmusic_network
