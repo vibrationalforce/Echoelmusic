@@ -292,44 +292,132 @@ class BioParameterMapper: ObservableObject {
 
     /// Apply preset for specific state
     func applyPreset(_ preset: BioPreset) {
-        switch preset {
-        case .meditation:
-            reverbWet = 0.7
-            filterCutoff = 500.0
-            amplitude = 0.5
-            baseFrequency = 432.0
-            tempo = 6.0
+        let config = preset.configuration
 
-        case .focus:
-            reverbWet = 0.3
-            filterCutoff = 1500.0
-            amplitude = 0.6
-            baseFrequency = 528.0  // Focus frequency
-            tempo = 7.0
-
-        case .relaxation:
-            reverbWet = 0.8
-            filterCutoff = 300.0
-            amplitude = 0.4
-            baseFrequency = 396.0  // Root chakra frequency
-            tempo = 4.0
-
-        case .energize:
-            reverbWet = 0.2
-            filterCutoff = 2000.0
-            amplitude = 0.7
-            baseFrequency = 741.0  // Awakening frequency
-            tempo = 8.0
-        }
+        reverbWet = config.reverbWet
+        filterCutoff = config.filterCutoff
+        amplitude = config.amplitude
+        baseFrequency = config.baseFrequency
+        tempo = config.tempo
+        harmonicCount = config.harmonicCount
+        spatialPosition = config.spatialPosition
 
         print("🎛️  Applied preset: \(preset.rawValue)")
+        print("   📝 \(preset.description)")
     }
 
-    enum BioPreset: String, CaseIterable {
+    enum BioPreset: String, CaseIterable, Identifiable {
         case meditation = "Meditation"
         case focus = "Focus"
         case relaxation = "Deep Relaxation"
         case energize = "Energize"
+        case creativeFlow = "Creative Flow"
+
+        var id: String { rawValue }
+
+        /// Detaillierte Beschreibung des Presets
+        var description: String {
+            switch self {
+            case .meditation:
+                return "Ruhige, tiefe Meditation mit maximaler Reverb und niedrigen Frequenzen für innere Ruhe"
+            case .focus:
+                return "Klarer, präsenter Sound für konzentriertes Arbeiten mit 528 Hz Fokus-Frequenz"
+            case .relaxation:
+                return "Maximale Entspannung mit dunklen Frequenzen und langsamer Atmungsführung"
+            case .energize:
+                return "Helle, energetische Frequenzen mit minimalem Reverb für Aktivierung"
+            case .creativeFlow:
+                return "Ausgewogener Sound für kreativen Flow-Zustand mit dynamischer Modulation"
+            }
+        }
+
+        /// Icon/Symbol für UI
+        var icon: String {
+            switch self {
+            case .meditation: return "🧘‍♂️"
+            case .focus: return "🎯"
+            case .relaxation: return "😌"
+            case .energize: return "⚡️"
+            case .creativeFlow: return "🎨"
+            }
+        }
+
+        /// Preset-Konfiguration
+        var configuration: PresetConfiguration {
+            switch self {
+            case .meditation:
+                return PresetConfiguration(
+                    reverbWet: 0.7,
+                    filterCutoff: 500.0,
+                    amplitude: 0.5,
+                    baseFrequency: 432.0,  // Heilfrequenz
+                    tempo: 6.0,  // Langsame Atmung
+                    harmonicCount: 7,  // Reiche Harmonien
+                    spatialPosition: (x: 0.0, y: 0.0, z: 1.0),  // Zentriert
+                    colorMood: (r: 0.4, g: 0.2, b: 0.8)  // Violett
+                )
+
+            case .focus:
+                return PresetConfiguration(
+                    reverbWet: 0.3,
+                    filterCutoff: 1500.0,
+                    amplitude: 0.6,
+                    baseFrequency: 528.0,  // Fokus-Frequenz (Solfeggio)
+                    tempo: 7.0,
+                    harmonicCount: 5,
+                    spatialPosition: (x: 0.0, y: 0.0, z: 1.0),
+                    colorMood: (r: 0.2, g: 0.6, b: 0.9)  // Blau
+                )
+
+            case .relaxation:
+                return PresetConfiguration(
+                    reverbWet: 0.8,  // Maximaler Reverb
+                    filterCutoff: 300.0,  // Dunkle Frequenzen
+                    amplitude: 0.4,  // Leise
+                    baseFrequency: 396.0,  // Wurzelchakra-Frequenz
+                    tempo: 4.0,  // Sehr langsame Atmung
+                    harmonicCount: 3,  // Einfache Harmonien
+                    spatialPosition: (x: 0.0, y: 0.0, z: 1.5),  // Weiter weg
+                    colorMood: (r: 0.2, g: 0.8, b: 0.5)  // Grün
+                )
+
+            case .energize:
+                return PresetConfiguration(
+                    reverbWet: 0.2,  // Wenig Reverb (trocken)
+                    filterCutoff: 2000.0,  // Helle Frequenzen
+                    amplitude: 0.7,  // Laut
+                    baseFrequency: 741.0,  // Erweckungs-Frequenz
+                    tempo: 8.0,  // Schnelle Atmung
+                    harmonicCount: 6,
+                    spatialPosition: (x: 0.0, y: 0.0, z: 0.8),  // Näher
+                    colorMood: (r: 1.0, g: 0.5, b: 0.0)  // Orange
+                )
+
+            case .creativeFlow:
+                return PresetConfiguration(
+                    reverbWet: 0.5,  // Ausgewogen
+                    filterCutoff: 1200.0,  // Mittlere Frequenzen
+                    amplitude: 0.6,
+                    baseFrequency: 639.0,  // Harmonie-Frequenz (Solfeggio)
+                    tempo: 6.5,  // Moderate Atmung
+                    harmonicCount: 8,  // Reichhaltige Harmonien für Kreativität
+                    spatialPosition: (x: 0.0, y: 0.0, z: 1.0),
+                    colorMood: (r: 0.6, g: 0.3, b: 0.9)  // Lila
+                )
+            }
+        }
+    }
+
+    /// Konfiguration für ein Bio-Mapping Preset
+    struct PresetConfiguration {
+        let reverbWet: Float
+        let filterCutoff: Float
+        let amplitude: Float
+        let baseFrequency: Float
+        let tempo: Float
+        let harmonicCount: Int
+        let spatialPosition: (x: Float, y: Float, z: Float)
+        let colorMood: (r: Float, g: Float, b: Float)
     }
 }
 
