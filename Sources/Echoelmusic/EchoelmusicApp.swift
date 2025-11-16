@@ -34,7 +34,7 @@ struct EchoelmusicApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainAppView()
                 .environmentObject(microphoneManager)      // Makes mic manager available to all views
                 .environmentObject(audioEngine)             // Makes audio engine available
                 .environmentObject(healthKitManager)        // Makes health data available
