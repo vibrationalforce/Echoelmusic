@@ -75,6 +75,13 @@ elseif(ANDROID)
 endif()
 
 # ===========================
+# ML Infrastructure Options
+# ===========================
+
+option(ENABLE_ML "Enable ML features (ONNX Runtime)" ON)
+option(ENABLE_ML_GPU "Enable GPU acceleration for ML" ON)
+
+# ===========================
 # Build Options
 # ===========================
 
@@ -106,6 +113,73 @@ option(ENABLE_ANDROID_AAUDIO "Enable AAudio (Android)" ON)
 # ===========================
 
 add_subdirectory(ThirdParty/JUCE)
+
+# ===========================
+# ML Infrastructure Setup
+# ===========================
+
+if(ENABLE_ML)
+    message(STATUS "ML features enabled - searching for ONNX Runtime")
+
+    # Try to find ONNX Runtime
+    # Option 1: Use system-installed ONNX Runtime
+    find_package(onnxruntime QUIET)
+
+    if(NOT onnxruntime_FOUND)
+        # Option 2: Check for manual installation in ThirdParty
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/onnxruntime")
+            message(STATUS "Using ONNX Runtime from ThirdParty/onnxruntime")
+            set(ONNXRUNTIME_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/onnxruntime/include")
+
+            if(WIN32)
+                set(ONNXRUNTIME_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/onnxruntime/lib")
+                set(ONNXRUNTIME_LIBRARIES "${ONNXRUNTIME_LIB_DIR}/onnxruntime.lib")
+            elseif(APPLE)
+                set(ONNXRUNTIME_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/onnxruntime/lib")
+                set(ONNXRUNTIME_LIBRARIES "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.dylib")
+            else()
+                set(ONNXRUNTIME_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/onnxruntime/lib")
+                set(ONNXRUNTIME_LIBRARIES "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so")
+            endif()
+
+            set(ONNXRUNTIME_FOUND TRUE)
+        else()
+            message(WARNING "ONNX Runtime not found. ML features will be disabled.")
+            message(WARNING "Install via: brew install onnxruntime (macOS) or vcpkg install onnxruntime (Windows)")
+            message(WARNING "Or download from: https://github.com/microsoft/onnxruntime/releases")
+            set(ENABLE_ML OFF)
+        endif()
+    endif()
+
+    if(ONNXRUNTIME_FOUND)
+        message(STATUS "ONNX Runtime found!")
+
+        # GPU Acceleration Detection
+        if(ENABLE_ML_GPU)
+            # Check for CUDA (NVIDIA GPUs)
+            find_package(CUDA QUIET)
+            if(CUDA_FOUND)
+                message(STATUS "CUDA found - GPU acceleration enabled (NVIDIA)")
+                set(HAS_CUDA TRUE)
+            endif()
+
+            # Check for Metal (Apple GPUs)
+            if(APPLE)
+                message(STATUS "Metal available - GPU acceleration enabled (Apple)")
+                set(HAS_METAL TRUE)
+            endif()
+
+            # Check for OpenCL (Generic GPUs)
+            find_package(OpenCL QUIET)
+            if(OpenCL_FOUND)
+                message(STATUS "OpenCL found - GPU acceleration enabled (Generic)")
+                set(HAS_OPENCL TRUE)
+            endif()
+        endif()
+    endif()
+else()
+    message(STATUS "ML features disabled")
+endif()
 
 # ===========================
 # Plugin Formats
@@ -311,6 +385,11 @@ target_sources(Echoelmusic
         # Sources/DSP/SpectralSculptor.cpp      # TODO: Fix FFT API
 
         # =====================================================================
+        # PHASE 2B: ML INFRASTRUCTURE (NEW! 2025-11-16) 🤖🧠
+        # =====================================================================
+        Sources/ML/MLEngine.cpp                 # ✅ Neural inference engine (ONNX Runtime)
+
+        # =====================================================================
         # PHASE 3: ADVANCED FEATURES (Later)
         # =====================================================================
         # Sources/AI/SmartMixer.cpp               # AI mixing assistant
@@ -352,6 +431,7 @@ target_include_directories(Echoelmusic
         Sources/Visualization
         Sources/BioData
         Sources/AI
+        Sources/ML
         Sources/Hardware
         Sources/Video
         Sources/Audio
@@ -403,6 +483,59 @@ target_link_libraries(Echoelmusic
 )
 
 # ===========================
+# ML Dependencies
+# ===========================
+
+if(ENABLE_ML AND ONNXRUNTIME_FOUND)
+    # Add ONNX Runtime include directories
+    target_include_directories(Echoelmusic
+        PRIVATE
+            ${ONNXRUNTIME_INCLUDE_DIR}
+    )
+
+    # Link ONNX Runtime libraries
+    if(onnxruntime_FOUND)
+        # System-installed via package manager
+        target_link_libraries(Echoelmusic PRIVATE onnxruntime::onnxruntime)
+    else()
+        # Manual installation in ThirdParty
+        target_link_libraries(Echoelmusic PRIVATE ${ONNXRUNTIME_LIBRARIES})
+
+        # Add runtime library path for dynamic linking
+        if(APPLE)
+            set_target_properties(Echoelmusic PROPERTIES
+                BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}"
+                INSTALL_RPATH "${ONNXRUNTIME_LIB_DIR}"
+            )
+        elseif(UNIX)
+            set_target_properties(Echoelmusic PROPERTIES
+                BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}"
+                INSTALL_RPATH "$ORIGIN:${ONNXRUNTIME_LIB_DIR}"
+            )
+        endif()
+    endif()
+
+    # GPU Acceleration Libraries
+    if(HAS_CUDA)
+        target_include_directories(Echoelmusic PRIVATE ${CUDA_INCLUDE_DIRS})
+        target_link_libraries(Echoelmusic PRIVATE ${CUDA_LIBRARIES})
+    endif()
+
+    if(HAS_METAL AND APPLE)
+        target_link_libraries(Echoelmusic PRIVATE
+            "-framework Metal"
+            "-framework MetalPerformanceShaders"
+        )
+    endif()
+
+    if(HAS_OPENCL)
+        target_link_libraries(Echoelmusic PRIVATE OpenCL::OpenCL)
+    endif()
+
+    message(STATUS "ML dependencies configured successfully")
+endif()
+
+# ===========================
 # Compile Definitions
 # ===========================
 
@@ -424,6 +557,12 @@ target_compile_definitions(Echoelmusic
 
         # Strict mode
         JUCE_STRICT_REFCOUNTEDPOINTER=1
+
+        # ML Features
+        $<$<BOOL:${ENABLE_ML}>:ECHOELMUSIC_HAS_ML=1>
+        $<$<BOOL:${HAS_CUDA}>:ECHOELMUSIC_HAS_CUDA=1>
+        $<$<BOOL:${HAS_METAL}>:ECHOELMUSIC_HAS_METAL=1>
+        $<$<BOOL:${HAS_OPENCL}>:ECHOELMUSIC_HAS_OPENCL=1>
 )
 
 # ===========================
@@ -657,6 +796,22 @@ message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 if(APPLE)
     message(STATUS "Architectures: arm64, x86_64")
+endif()
+message(STATUS "==============================================")
+message(STATUS "ML Infrastructure:")
+if(ENABLE_ML AND ONNXRUNTIME_FOUND)
+    message(STATUS "  - ONNX Runtime: ✅ ENABLED")
+    if(HAS_CUDA)
+        message(STATUS "  - GPU Acceleration: CUDA (NVIDIA)")
+    elseif(HAS_METAL)
+        message(STATUS "  - GPU Acceleration: Metal (Apple)")
+    elseif(HAS_OPENCL)
+        message(STATUS "  - GPU Acceleration: OpenCL (Generic)")
+    else()
+        message(STATUS "  - GPU Acceleration: CPU Only")
+    endif()
+else()
+    message(STATUS "  - ONNX Runtime: ❌ DISABLED (install to enable neural synthesis)")
 endif()
 message(STATUS "==============================================")
 message(STATUS "Audio Backends:")
