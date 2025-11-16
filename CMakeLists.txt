@@ -335,6 +335,25 @@ target_sources(Echoelmusic
         # Sources/Platform/AgencyManager.cpp
         # Sources/Platform/GlobalReachOptimizer.cpp
         # Sources/Platform/EchoHub.cpp
+
+        # =====================================================================
+        # SUPER INTELLIGENCE FEATURES (NEW! 2025-11-16) 🚀🧠✨
+        # =====================================================================
+
+        # Video Systems
+        Sources/Video/CameraCaptureSystem.cpp           # 📷 Professional camera capture + Auto-ML white balance
+        Sources/Video/BiofeedbackVideoEditor.cpp        # 🎬 AI video editing (HRV → Auto-cuts)
+        Sources/Video/MultiPlatformStreamer.cpp         # 📡 5-platform simultaneous streaming
+        Sources/Video/BiofeedbackColorCorrection.cpp    # 🎨 Auto color grading (Mood → Colors)
+
+        # Audio Systems
+        Sources/Audio/BiofeedbackSpatialAudio.cpp       # 🎵 3D/4D spatial audio (Breathing → Position)
+
+        # AI Systems
+        Sources/AI/SuperIntelligenceEngine.cpp          # 🧠 Beat detection, scene recognition, auto-tagging
+
+        # Revenue Systems
+        Sources/Platform/RevenueAutomation.cpp          # 💰 Subscription + NFT + Cloud rendering automation
 )
 
 # ===========================
@@ -354,10 +373,17 @@ target_include_directories(Echoelmusic
         Sources/AI
         Sources/Hardware
         Sources/Video
+        Sources/Visual
         Sources/Audio
         Sources/Platform
         Sources/Remote
         Sources/Sync
+        Sources/Healing
+        Sources/Instrument
+        Sources/Sequencer
+        Sources/Wellness
+        Sources/CreativeTools
+        Sources/UI
 )
 
 # ===========================
