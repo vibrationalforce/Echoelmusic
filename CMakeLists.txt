@@ -390,10 +390,11 @@ target_sources(Echoelmusic
         Sources/ML/MLEngine.cpp                 # ✅ Neural inference engine (ONNX Runtime)
 
         # =====================================================================
-        # PHASE 2B: CORE 3 NEURAL SYNTHESIS (Week 3-6) 🎹🤖
+        # PHASE 2B: CORE 3 NEURAL SYNTHESIS (Week 3-8) 🎹🤖✅ COMPLETE!
         # =====================================================================
         Sources/Synth/NeuralSoundSynth.cpp      # ✅ Bio-reactive neural synthesizer (RAVE VAE)
         Sources/Synth/SpectralGranularSynth.cpp # ✅ 32-stream spectral granular engine
+        Sources/Instrument/IntelligentSampler.cpp # ✅ AI-powered sampler (128 layers)
 
         # =====================================================================
         # PHASE 3: ADVANCED FEATURES (Later)
@@ -435,6 +436,7 @@ target_include_directories(Echoelmusic
         Sources/DSP/Effects
         Sources/Synthesis
         Sources/Synth
+        Sources/Instrument
         Sources/Visualization
         Sources/BioData
         Sources/AI

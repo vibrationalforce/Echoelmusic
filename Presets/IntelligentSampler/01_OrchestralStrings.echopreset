@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<IntelligentSamplerPreset name="Orchestral Strings" category="Orchestral">
+  <GlobalSettings>
+    <PolyphonyMode voices="16" mode="Polyphonic"/>
+    <SampleEngine mode="Hybrid" quality="High"/>
+    <AutoMapping enabled="true" velocityLayers="4" roundRobin="true"/>
+  </GlobalSettings>
+
+  <Layers active="32" maxLayers="128">
+    <Layer id="0-15" rootNote="C3-D#4" velocityRange="1-31" articulation="Sustain" engine="Spectral"/>
+    <Layer id="16-31" rootNote="C3-D#4" velocityRange="32-63" articulation="Sustain" engine="Spectral"/>
+    <Layer id="32-47" rootNote="C3-D#4" velocityRange="64-95" articulation="Sustain" engine="Spectral"/>
+    <Layer id="48-63" rootNote="C3-D#4" velocityRange="96-127" articulation="Sustain" engine="Spectral"/>
+  </Layers>
+
+  <PitchDetection algorithm="CREPE" confidence="0.95" autoTune="true"/>
+  <LoopMode type="Forward" autoFind="true" crossfade="20ms"/>
+
+  <ArticulationDetection enabled="true">
+    <SupportedTypes>Sustain,Staccato,Legato,Tremolo,Pizzicato</SupportedTypes>
+  </ArticulationDetection>
+
+  <Filter type="LowPass" cutoff="8000" resonance="0.3" envelope="0.6"/>
+  <Envelope attack="0.02" decay="0.1" sustain="0.8" release="0.5"/>
+
+  <ModulationMatrix slots="12">
+    <Slot id="0" source="Velocity" dest="FilterCutoff" amount="0.7"/>
+    <Slot id="1" source="ModWheel" dest="Vibrato" amount="0.5"/>
+    <Slot id="2" source="Aftertouch" dest="FilterCutoff" amount="0.4"/>
+    <Slot id="3" source="LFO1" dest="Vibrato" amount="0.3"/>
+    <Slot id="4" source="Coherence" dest="FilterCutoff" amount="0.6"/>
+    <Slot id="5" source="HRV" dest="SampleSelection" amount="0.3"/>
+  </ModulationMatrix>
+
+  <BioReactive enabled="true">
+    <HRV target="SampleSelection" amount="0.3"/>
+    <Coherence target="FilterCutoff" amount="0.6"/>
+    <Breath target="VolumeEnvelope" amount="0.7"/>
+  </BioReactive>
+
+  <Description>Rich orchestral strings with 4 velocity layers, bio-reactive expression, and intelligent articulation detection. Perfect for film scoring.</Description>
+</IntelligentSamplerPreset>

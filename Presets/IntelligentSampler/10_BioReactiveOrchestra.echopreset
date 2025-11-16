@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<IntelligentSamplerPreset name="Bio-Reactive Orchestra" category="Experimental">
+  <GlobalSettings>
+    <PolyphonyMode voices="16" mode="Polyphonic"/>
+    <SampleEngine mode="Hybrid" quality="Ultra"/>
+    <AutoMapping enabled="true" velocityLayers="8" roundRobin="true"/>
+  </GlobalSettings>
+
+  <Layers active="128" maxLayers="128">
+    <!-- Full 128-layer capacity: Strings, Brass, Woodwinds, Percussion -->
+    <!-- Strings: Layers 0-31 -->
+    <Layer id="0-31" rootNote="C2-C6" velocityRange="auto" articulation="auto" engine="Spectral"/>
+    <!-- Brass: Layers 32-63 -->
+    <Layer id="32-63" rootNote="C2-C5" velocityRange="auto" articulation="auto" engine="Spectral"/>
+    <!-- Woodwinds: Layers 64-95 -->
+    <Layer id="64-95" rootNote="C3-C6" velocityRange="auto" articulation="auto" engine="Spectral"/>
+    <!-- Percussion: Layers 96-127 -->
+    <Layer id="96-127" rootNote="C1-C4" velocityRange="auto" articulation="auto" engine="Classic"/>
+  </Layers>
+
+  <PitchDetection algorithm="CREPE" confidence="0.98" autoTune="true"/>
+  <LoopMode type="Forward" autoFind="true" crossfade="30ms"/>
+
+  <ArticulationDetection enabled="true">
+    <SupportedTypes>All</SupportedTypes>
+    <AutoSwitching enabled="true" velocity="true" duration="true" HRV="true"/>
+  </ArticulationDetection>
+
+  <Filter type="LowPass" cutoff="10000" resonance="0.3" envelope="0.6"/>
+  <Envelope attack="0.02" decay="0.2" sustain="0.75" release="0.5"/>
+
+  <ModulationMatrix slots="64">
+    <!-- Standard modulation -->
+    <Slot id="0" source="Velocity" dest="Volume" amount="0.9"/>
+    <Slot id="1" source="Velocity" dest="FilterCutoff" amount="0.7"/>
+    <Slot id="2" source="ModWheel" dest="Vibrato" amount="0.5"/>
+    <Slot id="3" source="Aftertouch" dest="Brightness" amount="0.6"/>
+
+    <!-- LFO modulation -->
+    <Slot id="4-7" source="LFO1-4" dest="Various" amount="0.3-0.5"/>
+
+    <!-- Bio-reactive modulation (20 slots) -->
+    <Slot id="20" source="HRV" dest="SampleSelection" amount="1.0"/>
+    <Slot id="21" source="HRV" dest="LayerSelection" amount="0.9"/>
+    <Slot id="22" source="HRV" dest="ArticulationSwitch" amount="0.8"/>
+    <Slot id="23" source="HRV" dest="RoundRobinSpeed" amount="0.7"/>
+
+    <Slot id="24" source="Coherence" dest="FilterCutoff" amount="1.0"/>
+    <Slot id="25" source="Coherence" dest="Resonance" amount="0.6"/>
+    <Slot id="26" source="Coherence" dest="Brightness" amount="0.8"/>
+
+    <Slot id="27" source="Breath" dest="Volume" amount="1.0"/>
+    <Slot id="28" source="Breath" dest="Attack" amount="0.5"/>
+    <Slot id="29" source="Breath" dest="Release" amount="0.4"/>
+
+    <!-- Advanced bio-routing -->
+    <Slot id="30" source="HRV" dest="EngineSelection" amount="0.8"/>
+    <Slot id="31" source="Coherence" dest="VelocityLayerBlend" amount="0.7"/>
+    <Slot id="32" source="Breath" dest="CrossfadeTime" amount="0.6"/>
+  </ModulationMatrix>
+
+  <BioReactive enabled="true">
+    <HRV target="Everything" amount="1.0"/>
+    <Coherence target="Timbre" amount="1.0"/>
+    <Breath target="Dynamics" amount="1.0"/>
+    <Description>Full bio-reactive control - your physiology IS the orchestra!</Description>
+  </BioReactive>
+
+  <Description>WORLD'S FIRST 100% BIO-REACTIVE ORCHESTRA! All 128 layers controlled by heart, breath, coherence. Your body becomes the conductor!</Description>
+</IntelligentSamplerPreset>

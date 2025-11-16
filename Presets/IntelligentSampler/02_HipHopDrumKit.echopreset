@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<IntelligentSamplerPreset name="Hip-Hop Drum Kit" category="Drums">
+  <GlobalSettings>
+    <PolyphonyMode voices="16" mode="Polyphonic"/>
+    <SampleEngine mode="Classic" quality="High"/>
+    <AutoMapping enabled="true" velocityLayers="8" roundRobin="true"/>
+  </GlobalSettings>
+
+  <Layers active="64" maxLayers="128">
+    <!-- Kick: C1-D1 (8 layers, 8 velocity zones, 4 round-robins) -->
+    <Layer id="0-7" rootNote="C1" velocityRange="1-15" roundRobinGroup="0" engine="Classic"/>
+    <Layer id="8-15" rootNote="C1" velocityRange="16-31" roundRobinGroup="1" engine="Classic"/>
+    <Layer id="16-23" rootNote="C1" velocityRange="32-47" roundRobinGroup="2" engine="Classic"/>
+    <Layer id="24-31" rootNote="C1" velocityRange="48-127" roundRobinGroup="3" engine="Classic"/>
+
+    <!-- Snare: D1-E1 (4 round-robins) -->
+    <Layer id="32-39" rootNote="D1" velocityRange="1-127" roundRobinGroup="0-3" engine="Classic"/>
+
+    <!-- Hi-hats: F#1-A#1 (closed, open, pedal) -->
+    <Layer id="40-47" rootNote="F#1-A#1" velocityRange="1-127" roundRobinGroup="0-1" engine="Classic"/>
+
+    <!-- Toms, percussion -->
+    <Layer id="48-63" rootNote="B1-F2" velocityRange="1-127" engine="Classic"/>
+  </Layers>
+
+  <PitchDetection algorithm="CREPE" confidence="0.85" autoTune="false"/>
+  <LoopMode type="Off" autoFind="false"/>
+
+  <ArticulationDetection enabled="true">
+    <SupportedTypes>Staccato,Marcato</SupportedTypes>
+  </ArticulationDetection>
+
+  <Filter type="HighPass" cutoff="50" resonance="0.1" envelope="0.0"/>
+  <Envelope attack="0.001" decay="0.15" sustain="0.0" release="0.1"/>
+
+  <ModulationMatrix slots="8">
+    <Slot id="0" source="Velocity" dest="Volume" amount="1.0"/>
+    <Slot id="1" source="Velocity" dest="FilterCutoff" amount="0.3"/>
+    <Slot id="2" source="HRV" dest="SampleSelection" amount="0.5"/>
+    <Slot id="3" source="Coherence" dest="Attack" amount="0.2"/>
+  </ModulationMatrix>
+
+  <BioReactive enabled="true">
+    <HRV target="RoundRobinSelection" amount="0.5"/>
+    <Coherence target="AttackTime" amount="0.2"/>
+    <Breath target="Volume" amount="0.0"/>
+  </BioReactive>
+
+  <Description>Classic hip-hop drum kit with 4 round-robin variations per hit, 8 velocity layers. HRV controls sample variation for organic feel.</Description>
+</IntelligentSamplerPreset>

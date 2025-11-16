@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<IntelligentSamplerPreset name="Spectral Bass" category="Bass">
+  <GlobalSettings>
+    <PolyphonyMode voices="4" mode="Monophonic"/>
+    <SampleEngine mode="Spectral" quality="Ultra"/>
+    <AutoMapping enabled="true" velocityLayers="3" roundRobin="false"/>
+  </GlobalSettings>
+
+  <Layers active="12" maxLayers="128">
+    <Layer id="0-3" rootNote="E1-E2" velocityRange="1-42" articulation="Sustain" engine="Spectral"/>
+    <Layer id="4-7" rootNote="E1-E2" velocityRange="43-84" articulation="Sustain" engine="Spectral"/>
+    <Layer id="8-11" rootNote="E1-E2" velocityRange="85-127" articulation="Marcato" engine="Spectral"/>
+  </Layers>
+
+  <PitchDetection algorithm="CREPE" confidence="0.98" autoTune="true"/>
+  <LoopMode type="Forward" autoFind="true" crossfade="10ms"/>
+
+  <SpectralSettings>
+    <FormantPreservation enabled="true" amount="0.8"/>
+    <SpectralMask low="30" high="500"/>
+    <Tonality value="0.9"/>
+  </SpectralSettings>
+
+  <ArticulationDetection enabled="true">
+    <SupportedTypes>Sustain,Marcato,Staccato</SupportedTypes>
+  </ArticulationDetection>
+
+  <Filter type="LowPass" cutoff="1500" resonance="0.6" envelope="0.8"/>
+  <Envelope attack="0.01" decay="0.3" sustain="0.7" release="0.2"/>
+
+  <ModulationMatrix slots="12">
+    <Slot id="0" source="Velocity" dest="FilterCutoff" amount="0.8"/>
+    <Slot id="1" source="ModWheel" dest="FormantShift" amount="0.5"/>
+    <Slot id="2" source="Aftertouch" dest="FilterResonance" amount="0.4"/>
+    <Slot id="3" source="LFO1" dest="Pitch" amount="0.1"/>
+    <Slot id="4" source="Coherence" dest="FilterCutoff" amount="0.7"/>
+    <Slot id="5" source="Breath" dest="Volume" amount="0.6"/>
+  </ModulationMatrix>
+
+  <BioReactive enabled="true">
+    <HRV target="FormantShift" amount="0.3"/>
+    <Coherence target="FilterCutoff" amount="0.7"/>
+    <Breath target="VolumeEnvelope" amount="0.6"/>
+  </BioReactive>
+
+  <Description>Deep spectral bass with formant preservation. Monophonic mode, 3 velocity layers. Bio-reactive filter and formant shifting.</Description>
+</IntelligentSamplerPreset>

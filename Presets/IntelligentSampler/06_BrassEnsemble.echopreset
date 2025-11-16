@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<IntelligentSamplerPreset name="Brass Ensemble" category="Orchestral">
+  <GlobalSettings>
+    <PolyphonyMode voices="16" mode="Polyphonic"/>
+    <SampleEngine mode="Hybrid" quality="High"/>
+    <AutoMapping enabled="true" velocityLayers="4" roundRobin="true"/>
+  </GlobalSettings>
+
+  <Layers active="48" maxLayers="128">
+    <!-- Trumpets, Trombones, French Horns, Tuba -->
+    <Layer id="0-11" rootNote="C2-C5" velocityRange="1-31" articulation="Sustain" engine="Spectral"/>
+    <Layer id="12-23" rootNote="C2-C5" velocityRange="32-63" articulation="Sustain" engine="Spectral"/>
+    <Layer id="24-35" rootNote="C2-C5" velocityRange="64-95" articulation="Marcato" engine="Spectral"/>
+    <Layer id="36-47" rootNote="C2-C5" velocityRange="96-127" articulation="Staccato" engine="Classic"/>
+  </Layers>
+
+  <PitchDetection algorithm="CREPE" confidence="0.96" autoTune="true"/>
+  <LoopMode type="Forward" autoFind="true" crossfade="25ms"/>
+
+  <ArticulationDetection enabled="true">
+    <SupportedTypes>Sustain,Staccato,Marcato,Legato</SupportedTypes>
+    <AutoSwitching enabled="true" velocity="true" duration="true"/>
+  </ArticulationDetection>
+
+  <Filter type="LowPass" cutoff="10000" resonance="0.2" envelope="0.5"/>
+  <Envelope attack="0.03" decay="0.15" sustain="0.75" release="0.4"/>
+
+  <ModulationMatrix slots="14">
+    <Slot id="0" source="Velocity" dest="Volume" amount="0.9"/>
+    <Slot id="1" source="Velocity" dest="FilterCutoff" amount="0.6"/>
+    <Slot id="2" source="ModWheel" dest="Vibrato" amount="0.6"/>
+    <Slot id="3" source="Aftertouch" dest="Brightness" amount="0.5"/>
+    <Slot id="4" source="LFO1" dest="Vibrato" amount="0.4"/>
+    <Slot id="5" source="HRV" dest="ArticulationSelection" amount="0.3"/>
+    <Slot id="6" source="Coherence" dest="FilterCutoff" amount="0.6"/>
+    <Slot id="7" source="Breath" dest="Volume" amount="0.8"/>
+  </ModulationMatrix>
+
+  <BioReactive enabled="true">
+    <HRV target="ArticulationSwitch" amount="0.3"/>
+    <Coherence target="FilterCutoff" amount="0.6"/>
+    <Breath target="VolumeEnvelope" amount="0.8"/>
+  </BioReactive>
+
+  <Description>Full brass ensemble with auto-detected articulations. Breath control drives volume for natural wind instrument expression.</Description>
+</IntelligentSamplerPreset>

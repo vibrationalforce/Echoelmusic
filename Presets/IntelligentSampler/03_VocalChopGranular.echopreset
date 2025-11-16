@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<IntelligentSamplerPreset name="Vocal Chop Granular" category="EDM">
+  <GlobalSettings>
+    <PolyphonyMode voices="16" mode="Polyphonic"/>
+    <SampleEngine mode="Granular" quality="High"/>
+    <AutoMapping enabled="true" velocityLayers="2" roundRobin="false"/>
+  </GlobalSettings>
+
+  <Layers active="24" maxLayers="128">
+    <Layer id="0-11" rootNote="C2-B3" velocityRange="1-63" articulation="Sustain" engine="Granular"/>
+    <Layer id="12-23" rootNote="C2-B3" velocityRange="64-127" articulation="Sustain" engine="Granular"/>
+  </Layers>
+
+  <PitchDetection algorithm="CREPE" confidence="0.90" autoTune="true"/>
+  <LoopMode type="Forward" autoFind="true" crossfade="50ms"/>
+
+  <GranularSettings>
+    <GrainSize min="50" max="200" default="100"/>
+    <GrainDensity value="32"/>
+    <GrainSpray position="0.4" pitch="0.3" pan="0.7"/>
+  </GranularSettings>
+
+  <ArticulationDetection enabled="true">
+    <SupportedTypes>Sustain,Legato</SupportedTypes>
+  </ArticulationDetection>
+
+  <Filter type="BandPass" cutoff="2000" resonance="0.5" envelope="0.7"/>
+  <Envelope attack="0.05" decay="0.2" sustain="0.6" release="0.3"/>
+
+  <ModulationMatrix slots="16">
+    <Slot id="0" source="Velocity" dest="GrainSize" amount="0.6"/>
+    <Slot id="1" source="ModWheel" dest="GrainDensity" amount="0.8"/>
+    <Slot id="2" source="LFO1" dest="GrainPosition" amount="0.5"/>
+    <Slot id="3" source="LFO2" dest="FilterCutoff" amount="0.4"/>
+    <Slot id="4" source="HRV" dest="GrainDensity" amount="0.7"/>
+    <Slot id="5" source="Coherence" dest="GrainSize" amount="0.6"/>
+    <Slot id="6" source="Breath" dest="FilterCutoff" amount="0.8"/>
+  </ModulationMatrix>
+
+  <BioReactive enabled="true">
+    <HRV target="GrainDensity" amount="0.7"/>
+    <Coherence target="GrainSize" amount="0.6"/>
+    <Breath target="FilterCutoff" amount="0.8"/>
+  </BioReactive>
+
+  <Description>Granular vocal chops for EDM. Bio-reactive grain parameters create organic, evolving textures. Your heart controls the grain cloud!</Description>
+</IntelligentSamplerPreset>

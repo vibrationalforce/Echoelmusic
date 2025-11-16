@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<parameter name="content"><?xml version="1.0" encoding="UTF-8"?>
+<IntelligentSamplerPreset name="Guitar Hybrid" category="Guitar">
+  <GlobalSettings>
+    <PolyphonyMode voices="6" mode="Polyphonic"/>
+    <SampleEngine mode="Hybrid" quality="High"/>
+    <AutoMapping enabled="true" velocityLayers="3" roundRobin="true"/>
+  </GlobalSettings>
+
+  <Layers active="36" maxLayers="128">
+    <!-- 6 strings × 2 octaves × 3 velocity layers -->
+    <Layer id="0-11" rootNote="E2-E5" velocityRange="1-42" articulation="Sustain" engine="Hybrid"/>
+    <Layer id="12-23" rootNote="E2-E5" velocityRange="43-84" articulation="Sustain" engine="Hybrid"/>
+    <Layer id="24-35" rootNote="E2-E5" velocityRange="85-127" articulation="Marcato" engine="Hybrid"/>
+  </Layers>
+
+  <PitchDetection algorithm="CREPE" confidence="0.94" autoTune="true"/>
+  <LoopMode type="Forward" autoFind="true" crossfade="15ms"/>
+
+  <ArticulationDetection enabled="true">
+    <SupportedTypes>Sustain,Staccato,Pizzicato,Marcato,Tremolo</SupportedTypes>
+  </ArticulationDetection>
+
+  <Filter type="BandPass" cutoff="1500" resonance="0.4" envelope="0.4"/>
+  <Envelope attack="0.005" decay="0.2" sustain="0.5" release="0.3"/>
+
+  <ModulationMatrix slots="12">
+    <Slot id="0" source="Velocity" dest="FilterCutoff" amount="0.7"/>
+    <Slot id="1" source="ModWheel" dest="Vibrato" amount="0.4"/>
+    <Slot id="2" source="Aftertouch" dest="Pitch" amount="0.05"/>
+    <Slot id="3" source="LFO1" dest="Pan" amount="0.2"/>
+    <Slot id="4" source="Coherence" dest="FilterCutoff" amount="0.5"/>
+    <Slot id="5" source="HRV" dest="RoundRobin" amount="0.6"/>
+  </ModulationMatrix>
+
+  <BioReactive enabled="true">
+    <HRV target="RoundRobinSelection" amount="0.6"/>
+    <Coherence target="FilterCutoff" amount="0.5"/>
+    <Breath target="Vibrato" amount="0.4"/>
+  </BioReactive>
+
+  <Description>Acoustic guitar with hybrid engine combining classic and spectral modes. 3 velocity layers, 3 round-robins per note for natural variation.</Description>
+</IntelligentSamplerPreset>

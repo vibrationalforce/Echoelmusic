@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<IntelligentSamplerPreset name="Synth Stack Classic" category="Synth">
+  <GlobalSettings>
+    <PolyphonyMode voices="16" mode="Polyphonic"/>
+    <SampleEngine mode="Classic" quality="High"/>
+    <AutoMapping enabled="true" velocityLayers="2" roundRobin="false"/>
+  </GlobalSettings>
+
+  <Layers active="48" maxLayers="128">
+    <!-- Multi-layered synth stack -->
+    <Layer id="0-23" rootNote="C1-C4" velocityRange="1-63" articulation="Sustain" engine="Classic"/>
+    <Layer id="24-47" rootNote="C1-C4" velocityRange="64-127" articulation="Sustain" engine="Classic"/>
+  </Layers>
+
+  <PitchDetection algorithm="CREPE" confidence="0.92" autoTune="true"/>
+  <LoopMode type="Forward" autoFind="true" crossfade="5ms"/>
+
+  <ArticulationDetection enabled="false"/>
+
+  <Filter type="LowPass" cutoff="5000" resonance="0.7" envelope="0.9"/>
+  <Envelope attack="0.01" decay="0.4" sustain="0.6" release="0.5"/>
+
+  <ModulationMatrix slots="20">
+    <Slot id="0" source="Velocity" dest="FilterCutoff" amount="0.9"/>
+    <Slot id="1" source="ModWheel" dest="FilterCutoff" amount="0.8"/>
+    <Slot id="2" source="Aftertouch" dest="FilterResonance" amount="0.5"/>
+    <Slot id="3" source="LFO1" dest="FilterCutoff" amount="0.4"/>
+    <Slot id="4" source="LFO2" dest="Pitch" amount="0.05"/>
+    <Slot id="5" source="LFO3" dest="Pan" amount="0.3"/>
+    <Slot id="6" source="Envelope1" dest="FilterCutoff" amount="0.8"/>
+    <Slot id="7" source="HRV" dest="LFO1Rate" amount="0.6"/>
+    <Slot id="8" source="Coherence" dest="FilterCutoff" amount="0.8"/>
+    <Slot id="9" source="Breath" dest="FilterResonance" amount="0.6"/>
+  </ModulationMatrix>
+
+  <BioReactive enabled="true">
+    <HRV target="LFORate" amount="0.6"/>
+    <Coherence target="FilterCutoff" amount="0.8"/>
+    <Breath target="FilterResonance" amount="0.6"/>
+  </BioReactive>
+
+  <Description>Classic synth stack with 48 layers. Bio-reactive filter modulation creates organic, evolving timbres. Perfect for pads and leads.</Description>
+</IntelligentSamplerPreset>

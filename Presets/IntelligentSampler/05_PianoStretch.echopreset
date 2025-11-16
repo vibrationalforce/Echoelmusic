@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<IntelligentSamplerPreset name="Piano Stretch" category="Keys">
+  <GlobalSettings>
+    <PolyphonyMode voices="16" mode="Polyphonic"/>
+    <SampleEngine mode="Stretch" quality="Ultra"/>
+    <AutoMapping enabled="true" velocityLayers="5" roundRobin="true"/>
+  </GlobalSettings>
+
+  <Layers active="88" maxLayers="128">
+    <!-- Full 88-key piano with 5 velocity layers -->
+    <Layer id="0-17" rootNote="A0-C8" velocityRange="1-25" articulation="Sustain" engine="Stretch"/>
+    <Layer id="18-35" rootNote="A0-C8" velocityRange="26-50" articulation="Sustain" engine="Stretch"/>
+    <Layer id="36-53" rootNote="A0-C8" velocityRange="51-75" articulation="Sustain" engine="Stretch"/>
+    <Layer id="54-71" rootNote="A0-C8" velocityRange="76-100" articulation="Sustain" engine="Stretch"/>
+    <Layer id="72-87" rootNote="A0-C8" velocityRange="101-127" articulation="Marcato" engine="Stretch"/>
+  </Layers>
+
+  <PitchDetection algorithm="CREPE" confidence="0.99" autoTune="true"/>
+  <LoopMode type="Forward" autoFind="true" crossfade="30ms"/>
+
+  <StretchSettings>
+    <TimeStretch enabled="true" preservePitch="true"/>
+    <Quality mode="Ultra" latency="Low"/>
+  </StretchSettings>
+
+  <ArticulationDetection enabled="true">
+    <SupportedTypes>Sustain,Staccato,Marcato</SupportedTypes>
+  </ArticulationDetection>
+
+  <Filter type="HighPass" cutoff="30" resonance="0.1" envelope="0.0"/>
+  <Envelope attack="0.001" decay="0.5" sustain="0.6" release="0.8"/>
+
+  <ModulationMatrix slots="10">
+    <Slot id="0" source="Velocity" dest="Volume" amount="1.0"/>
+    <Slot id="1" source="Velocity" dest="Release" amount="0.3"/>
+    <Slot id="2" source="Sustain" dest="Sustain" amount="1.0"/>
+    <Slot id="3" source="Coherence" dest="Release" amount="0.4"/>
+    <Slot id="4" source="Breath" dest="Volume" amount="0.5"/>
+  </ModulationMatrix>
+
+  <BioReactive enabled="true">
+    <HRV target="SampleSelection" amount="0.2"/>
+    <Coherence target="ReleaseTime" amount="0.4"/>
+    <Breath target="Volume" amount="0.5"/>
+  </BioReactive>
+
+  <Description>Full 88-key piano with 5 velocity layers. Time-stretch engine maintains natural tone at all pitches. Bio-reactive sustain control.</Description>
+</IntelligentSamplerPreset>

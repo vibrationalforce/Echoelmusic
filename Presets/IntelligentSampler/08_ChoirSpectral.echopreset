@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<IntelligentSamplerPreset name="Choir Spectral" category="Vocal">
+  <GlobalSettings>
+    <PolyphonyMode voices="16" mode="Polyphonic"/>
+    <SampleEngine mode="Spectral" quality="Ultra"/>
+    <AutoMapping enabled="true" velocityLayers="3" roundRobin="false"/>
+  </GlobalSettings>
+
+  <Layers active="72" maxLayers="128">
+    <!-- Soprano, Alto, Tenor, Bass sections -->
+    <Layer id="0-23" rootNote="C3-C5" velocityRange="1-42" articulation="Sustain" engine="Spectral"/>
+    <Layer id="24-47" rootNote="C3-C5" velocityRange="43-84" articulation="Sustain" engine="Spectral"/>
+    <Layer id="48-71" rootNote="C3-C5" velocityRange="85-127" articulation="Marcato" engine="Spectral"/>
+  </Layers>
+
+  <PitchDetection algorithm="CREPE" confidence="0.97" autoTune="true"/>
+  <LoopMode type="Forward" autoFind="true" crossfade="40ms"/>
+
+  <SpectralSettings>
+    <FormantPreservation enabled="true" amount="0.9"/>
+    <SpectralMask low="150" high="8000"/>
+    <Tonality value="0.95"/>
+  </SpectralSettings>
+
+  <ArticulationDetection enabled="true">
+    <SupportedTypes>Sustain,Staccato,Legato,Marcato</SupportedTypes>
+  </ArticulationDetection>
+
+  <Filter type="LowPass" cutoff="12000" resonance="0.2" envelope="0.3"/>
+  <Envelope attack="0.08" decay="0.2" sustain="0.85" release="0.6"/>
+
+  <ModulationMatrix slots="16">
+    <Slot id="0" source="Velocity" dest="Volume" amount="0.8"/>
+    <Slot id="1" source="ModWheel" dest="Vibrato" amount="0.5"/>
+    <Slot id="2" source="Aftertouch" dest="Brightness" amount="0.6"/>
+    <Slot id="3" source="LFO1" dest="Vibrato" amount="0.3"/>
+    <Slot id="4" source="LFO2" dest="Pan" amount="0.2"/>
+    <Slot id="5" source="HRV" dest="FormantShift" amount="0.4"/>
+    <Slot id="6" source="Coherence" dest="FilterCutoff" amount="0.7"/>
+    <Slot id="7" source="Breath" dest="Volume" amount="0.9"/>
+  </ModulationMatrix>
+
+  <BioReactive enabled="true">
+    <HRV target="FormantShift" amount="0.4"/>
+    <Coherence target="FilterCutoff" amount="0.7"/>
+    <Breath target="VolumeEnvelope" amount="0.9"/>
+  </BioReactive>
+
+  <Description>Ethereal choir with spectral formant preservation. Breath control drives volume naturally. 72 layers for full SATB ensemble.</Description>
+</IntelligentSamplerPreset>
