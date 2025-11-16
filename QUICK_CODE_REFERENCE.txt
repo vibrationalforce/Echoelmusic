@@ -1,0 +1,55 @@
+ECHOELMUSIC - QUICK REFERENCE GUIDE
+====================================
+
+1. MUSIC CONTEXTS (4 Implemented)
+   Location: /Sources/Echoelmusic/Biofeedback/BioParameterMapper.swift
+   - Meditation (432 Hz, 70% reverb, 6 breaths/min)
+   - Focus (528 Hz, 30% reverb, 7 breaths/min)
+   - Relaxation (396 Hz, 80% reverb, 4 breaths/min)
+   - Energize (741 Hz, 20% reverb, 8 breaths/min)
+
+2. BIOMETRIC INTEGRATION
+   Location: /Sources/Echoelmusic/Biofeedback/HealthKitManager.swift
+   Features:
+   - Real-time HRV monitoring (RMSSD in ms)
+   - Heart rate tracking (BPM)
+   - HeartMath coherence algorithm (FFT-based, 0-100)
+   - 120-sample circular buffer for RR intervals
+
+3. REAL-TIME PROCESSING
+   Location: /Sources/Echoelmusic/Unified/UnifiedControlHub.swift
+   - 60 Hz control loop
+   - Face tracking (60 Hz) + Hand tracking (30 Hz)
+   - Gesture recognition (5 gestures)
+   - Biometric streaming (event-driven)
+   - MIDI 2.0 + 15-voice MPE (32-bit)
+   - 4D spatial audio mapping
+
+4. HARDWARE INTEGRATION
+   Location: /Sources/Echoelmusic/Hardware/HardwareAbstractionLayer.swift
+           /Sources/Echoelmusic/Integration/UniversalDeviceIntegration.swift
+   Supported:
+   - iOS, macOS, watchOS, tvOS, visionOS
+   - Vehicles (CarPlay, Tesla, Apple Car)
+   - Drones (MAVLink)
+   - Smart Home (HomeKit)
+   - Medical devices (FHIR, with disclaimers)
+   - Robots (ROS 2)
+
+5. MISSING FEATURES (TODO)
+   Activity contexts: sitting, lying, walking, running, sports
+   Advanced biometrics: SpO2, temperature, sleep, stress
+   5D+ audio processing
+   EEG/neural interface integration
+
+Key Files:
+- BioParameterMapper.swift (364 lines) - Bio→Audio mapping
+- HealthKitManager.swift (427 lines) - HRV monitoring
+- UnifiedControlHub.swift (400+ lines) - 60 Hz orchestrator
+- HardwareAbstractionLayer.swift (634 lines) - Platform abstraction
+- UniversalDeviceIntegration.swift (537 lines) - External devices
+
+Evidence Base:
+- Lehrer & Gevirtz (2014) - HRV biofeedback
+- Shaffer & Ginsberg (2017) - HRV protocols
+- McCraty et al. (2009) - HeartMath coherence
