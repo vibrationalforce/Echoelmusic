@@ -1,0 +1,122 @@
+# Echoelmusic Development Environment
+# Docker Compose configuration for local development
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: echoelmusic-postgres
+    environment:
+      POSTGRES_USER: echoelmusic
+      POSTGRES_PASSWORD: echoelmusic_dev_password
+      POSTGRES_DB: echoelmusic_dev
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U echoelmusic"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: echoelmusic-redis
+    command: redis-server --requirepass echoelmusic_redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # IPFS Node (optional - use Pinata for production)
+  ipfs:
+    image: ipfs/kubo:latest
+    container_name: echoelmusic-ipfs
+    environment:
+      - IPFS_PROFILE=server
+      - IPFS_PATH=/data/ipfs
+    ports:
+      - "4001:4001"     # Swarm
+      - "5001:5001"     # API
+      - "8080:8080"     # Gateway
+    volumes:
+      - ipfs_data:/data/ipfs
+    restart: unless-stopped
+
+  # Backend API (Node.js)
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    container_name: echoelmusic-backend
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://echoelmusic:echoelmusic_dev_password@postgres:5432/echoelmusic_dev
+      REDIS_URL: redis://:echoelmusic_redis_password@redis:6379/0
+      IPFS_NODE_URL: http://ipfs:5001
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../backend:/app
+      - /app/node_modules  # Prevent overwriting node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: npm run dev
+
+  # Hardhat Local Blockchain (for smart contract development)
+  hardhat:
+    build:
+      context: ../../contracts
+      dockerfile: Dockerfile
+    container_name: echoelmusic-hardhat
+    ports:
+      - "8545:8545"
+    volumes:
+      - ../../contracts:/app
+      - /app/node_modules
+    command: npx hardhat node
+    restart: unless-stopped
+
+  # pgAdmin (Database Management UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: echoelmusic-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@echoelmusic.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  ipfs_data:
+  pgadmin_data:
+
+networks:
+  default:
+    name: echoelmusic-network
