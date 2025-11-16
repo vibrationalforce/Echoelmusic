@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NeuralPreset name="Bio-Reactive Exploration" mode="5">
+  <LatentVector brightness="0.5" warmth="0.5" richness="0.5" attack="0.5"
+                texture="0.5" movement="0.5" space="0.5" character="0.5"/>
+  <Description>Fully bio-reactive preset - let your heart guide the sound!</Description>
+  <Category>Custom</Category>
+  <BioMapping hrvDimension="64" hrvAmount="1.0" coherenceDimension="80"
+              coherenceAmount="1.0" breathDimension="96" breathAmount="1.0"/>
+</NeuralPreset>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NeuralPreset name="Cinematic Atmosphere" mode="0">
+  <LatentVector brightness="0.45" warmth="0.6" richness="0.85" attack="0.05"
+                texture="0.4" movement="0.95" space="0.95" character="0.5"/>
+  <Description>Evolving cinematic soundscape with bio-reactive depth</Description>
+  <Category>FX</Category>
+  <BioMapping hrvDimension="100" hrvAmount="0.95" coherenceDimension="110"
+              coherenceAmount="0.95" breathDimension="118" breathAmount="1.0"/>
+</NeuralPreset>

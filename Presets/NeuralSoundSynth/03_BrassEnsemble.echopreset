@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NeuralPreset name="Brass Ensemble" mode="0">
+  <LatentVector brightness="0.75" warmth="0.65" richness="0.9" attack="0.75"
+                texture="0.6" movement="0.35" space="0.25" character="0.7"/>
+  <Description>Powerful brass section with punchy attack and rich harmonics</Description>
+  <Category>Brass</Category>
+  <BioMapping hrvDimension="72" hrvAmount="0.4" coherenceDimension="56"
+              coherenceAmount="0.5" breathDimension="104" breathAmount="0.8"/>
+</NeuralPreset>

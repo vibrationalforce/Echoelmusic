@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NeuralPreset name="Synth Bass" mode="0">
+  <LatentVector brightness="0.25" warmth="0.8" richness="0.95" attack="0.85"
+                texture="0.7" movement="0.45" space="0.05" character="0.75"/>
+  <Description>Punchy, modern synth bass with powerful low-end</Description>
+  <Category>Bass</Category>
+  <BioMapping hrvDimension="8" hrvAmount="0.3" coherenceDimension="24"
+              coherenceAmount="0.4" breathDimension="40" breathAmount="0.5"/>
+</NeuralPreset>

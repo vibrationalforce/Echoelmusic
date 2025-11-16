@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NeuralPreset name="Vocal Choir" mode="0">
+  <LatentVector brightness="0.55" warmth="0.75" richness="0.8" attack="0.35"
+                texture="0.35" movement="0.65" space="0.5" character="0.65"/>
+  <Description>Lush vocal ensemble with natural breathing and expression</Description>
+  <Category>Vocal</Category>
+  <BioMapping hrvDimension="88" hrvAmount="0.7" coherenceDimension="92"
+              coherenceAmount="0.8" breathDimension="108" breathAmount="0.95"/>
+</NeuralPreset>

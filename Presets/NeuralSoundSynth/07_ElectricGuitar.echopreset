@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NeuralPreset name="Electric Guitar" mode="0">
+  <LatentVector brightness="0.7" warmth="0.55" richness="0.65" attack="0.9"
+                texture="0.8" movement="0.4" space="0.2" character="0.85"/>
+  <Description>Expressive electric guitar with natural articulation</Description>
+  <Category>Guitar</Category>
+  <BioMapping hrvDimension="20" hrvAmount="0.6" coherenceDimension="36"
+              coherenceAmount="0.5" breathDimension="52" breathAmount="0.3"/>
+</NeuralPreset>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NeuralPreset name="Organic Percussion" mode="0">
+  <LatentVector brightness="0.6" warmth="0.5" richness="0.55" attack="0.95"
+                texture="0.85" movement="0.3" space="0.35" character="0.8"/>
+  <Description>Natural percussion with expressive dynamics and texture</Description>
+  <Category>Percussion</Category>
+  <BioMapping hrvDimension="12" hrvAmount="0.8" coherenceDimension="28"
+              coherenceAmount="0.6" breathDimension="44" breathAmount="0.4"/>
+</NeuralPreset>

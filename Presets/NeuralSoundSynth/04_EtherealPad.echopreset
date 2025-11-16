@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NeuralPreset name="Ethereal Pad" mode="0">
+  <LatentVector brightness="0.5" warmth="0.7" richness="0.75" attack="0.1"
+                texture="0.25" movement="0.8" space="0.9" character="0.55"/>
+  <Description">Evolving ambient pad with bio-reactive movement and space</Description>
+  <Category>Synth</Category>
+  <BioMapping hrvDimension="112" hrvAmount="0.9" coherenceDimension="116"
+              coherenceAmount="0.85" breathDimension="120" breathAmount="0.9"/>
+</NeuralPreset>

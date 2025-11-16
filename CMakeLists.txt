@@ -390,6 +390,11 @@ target_sources(Echoelmusic
         Sources/ML/MLEngine.cpp                 # ✅ Neural inference engine (ONNX Runtime)
 
         # =====================================================================
+        # PHASE 2B: CORE 3 NEURAL SYNTHESIS (Week 3-4) 🎹🤖
+        # =====================================================================
+        Sources/Synth/NeuralSoundSynth.cpp      # ✅ Bio-reactive neural synthesizer (RAVE VAE)
+
+        # =====================================================================
         # PHASE 3: ADVANCED FEATURES (Later)
         # =====================================================================
         # Sources/AI/SmartMixer.cpp               # AI mixing assistant
@@ -428,6 +433,7 @@ target_include_directories(Echoelmusic
         Sources/DSP
         Sources/DSP/Effects
         Sources/Synthesis
+        Sources/Synth
         Sources/Visualization
         Sources/BioData
         Sources/AI

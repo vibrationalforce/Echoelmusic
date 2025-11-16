@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NeuralPreset name="Warm Strings" mode="0">
+  <LatentVector brightness="0.35" warmth="0.9" richness="0.85" attack="0.2"
+                texture="0.4" movement="0.55" space="0.3" character="0.6"/>
+  <Description>Lush, warm orchestral strings with rich harmonic content</Description>
+  <Category>Strings</Category>
+  <BioMapping hrvDimension="48" hrvAmount="0.5" coherenceDimension="80"
+              coherenceAmount="0.6" breathDimension="16" breathAmount="0.7"/>
+</NeuralPreset>
