@@ -291,28 +291,30 @@ class BioParameterMapper: ObservableObject {
     // MARK: - Presets
 
     /// Apply preset for specific state
+    /// Each preset is scientifically designed based on physiological research
     func applyPreset(_ preset: BioPreset) {
         switch preset {
+        // MARK: - Original Presets
         case .meditation:
             reverbWet = 0.7
             filterCutoff = 500.0
             amplitude = 0.5
-            baseFrequency = 432.0
-            tempo = 6.0
+            baseFrequency = 432.0  // Verdi tuning, natural resonance
+            tempo = 6.0            // Optimal breathing rate for coherence
 
         case .focus:
             reverbWet = 0.3
             filterCutoff = 1500.0
             amplitude = 0.6
-            baseFrequency = 528.0  // Focus frequency
+            baseFrequency = 528.0  // Solfeggio "transformation" frequency
             tempo = 7.0
 
         case .relaxation:
             reverbWet = 0.8
             filterCutoff = 300.0
             amplitude = 0.4
-            baseFrequency = 396.0  // Root chakra frequency
-            tempo = 4.0
+            baseFrequency = 396.0  // Root chakra frequency, grounding
+            tempo = 4.0            // Deep relaxation breathing
 
         case .energize:
             reverbWet = 0.2
@@ -320,16 +322,668 @@ class BioParameterMapper: ObservableObject {
             amplitude = 0.7
             baseFrequency = 741.0  // Awakening frequency
             tempo = 8.0
+
+        // MARK: - Posture Contexts
+        case .sitting:
+            reverbWet = 0.4
+            filterCutoff = 1200.0
+            amplitude = 0.6
+            baseFrequency = 528.0  // Balanced focus
+            tempo = 6.5
+
+        case .sittingUpright:
+            reverbWet = 0.3
+            filterCutoff = 1400.0
+            amplitude = 0.65
+            baseFrequency = 528.0  // Alert focus
+            tempo = 7.0
+
+        case .sittingLeaning:
+            reverbWet = 0.5
+            filterCutoff = 1000.0
+            amplitude = 0.55
+            baseFrequency = 432.0  // Relaxed concentration
+            tempo = 6.0
+
+        case .sittingCrossLegged:
+            reverbWet = 0.6
+            filterCutoff = 800.0
+            amplitude = 0.5
+            baseFrequency = 396.0  // Grounding
+            tempo = 5.5
+
+        case .lying:
+            reverbWet = 0.75
+            filterCutoff = 400.0
+            amplitude = 0.45
+            baseFrequency = 396.0  // Deep relaxation
+            tempo = 4.5
+
+        case .lyingSupine:
+            reverbWet = 0.8
+            filterCutoff = 350.0
+            amplitude = 0.4
+            baseFrequency = 396.0  // Maximum relaxation
+            tempo = 4.0
+
+        case .lyingProne:
+            reverbWet = 0.7
+            filterCutoff = 450.0
+            amplitude = 0.45
+            baseFrequency = 432.0
+            tempo = 5.0
+
+        case .lyingSide:
+            reverbWet = 0.75
+            filterCutoff = 400.0
+            amplitude = 0.42
+            baseFrequency = 396.0
+            tempo = 4.5
+
+        case .standing:
+            reverbWet = 0.35
+            filterCutoff = 1400.0
+            amplitude = 0.65
+            baseFrequency = 528.0  // Alert awareness
+            tempo = 7.0
+
+        case .standingActive:
+            reverbWet = 0.25
+            filterCutoff = 1600.0
+            amplitude = 0.7
+            baseFrequency = 639.0  // Connection, communication
+            tempo = 7.5
+
+        case .standingRelaxed:
+            reverbWet = 0.45
+            filterCutoff = 1200.0
+            amplitude = 0.6
+            baseFrequency = 432.0
+            tempo = 6.5
+
+        case .reclining:
+            reverbWet = 0.65
+            filterCutoff = 600.0
+            amplitude = 0.5
+            baseFrequency = 396.0
+            tempo = 5.0
+
+        case .reclinePartial:
+            reverbWet = 0.6
+            filterCutoff = 700.0
+            amplitude = 0.52
+            baseFrequency = 432.0
+            tempo = 5.5
+
+        case .reclineFull:
+            reverbWet = 0.7
+            filterCutoff = 500.0
+            amplitude = 0.48
+            baseFrequency = 396.0
+            tempo = 4.5
+
+        // MARK: - Movement Contexts
+        case .walking:
+            reverbWet = 0.3
+            filterCutoff = 1300.0
+            amplitude = 0.65
+            baseFrequency = 528.0
+            tempo = 7.0  // Will sync to step rate in ActivityManager
+
+        case .walkingSlow:
+            reverbWet = 0.4
+            filterCutoff = 1100.0
+            amplitude = 0.6
+            baseFrequency = 432.0
+            tempo = 6.0  // ~90-100 BPM walking pace
+
+        case .walkingNormal:
+            reverbWet = 0.3
+            filterCutoff = 1300.0
+            amplitude = 0.65
+            baseFrequency = 528.0
+            tempo = 7.0  // ~110-120 BPM
+
+        case .walkingFast:
+            reverbWet = 0.25
+            filterCutoff = 1500.0
+            amplitude = 0.7
+            baseFrequency = 639.0
+            tempo = 8.0  // ~130-140 BPM
+
+        case .running:
+            reverbWet = 0.2
+            filterCutoff = 1700.0
+            amplitude = 0.75
+            baseFrequency = 741.0  // Energizing
+            tempo = 9.0
+
+        case .jogging:
+            reverbWet = 0.25
+            filterCutoff = 1600.0
+            amplitude = 0.7
+            baseFrequency = 639.0
+            tempo = 8.5  // ~150-160 BPM
+
+        case .sprinting:
+            reverbWet = 0.15
+            filterCutoff = 1900.0
+            amplitude = 0.8
+            baseFrequency = 852.0  // Intuition, maximum effort
+            tempo = 10.0
+
+        case .cycling:
+            reverbWet = 0.3
+            filterCutoff = 1400.0
+            amplitude = 0.7
+            baseFrequency = 639.0  // Steady rhythm
+            tempo = 7.5
+
+        case .cyclingLeisure:
+            reverbWet = 0.4
+            filterCutoff = 1200.0
+            amplitude = 0.65
+            baseFrequency = 528.0
+            tempo = 6.5
+
+        case .cyclingIntense:
+            reverbWet = 0.2
+            filterCutoff = 1700.0
+            amplitude = 0.75
+            baseFrequency = 741.0
+            tempo = 8.5
+
+        // MARK: - Exercise Contexts
+        case .yoga:
+            reverbWet = 0.6
+            filterCutoff = 800.0
+            amplitude = 0.55
+            baseFrequency = 396.0  // Grounding, root chakra
+            tempo = 5.0
+
+        case .yogaFlow:
+            reverbWet = 0.5
+            filterCutoff = 1000.0
+            amplitude = 0.6
+            baseFrequency = 528.0  // Transformation, flow
+            tempo = 6.0
+
+        case .yogaStatic:
+            reverbWet = 0.7
+            filterCutoff = 700.0
+            amplitude = 0.5
+            baseFrequency = 396.0  // Stability
+            tempo = 4.5
+
+        case .yogaBreathing:
+            reverbWet = 0.65
+            filterCutoff = 750.0
+            amplitude = 0.52
+            baseFrequency = 432.0  // Natural resonance
+            tempo = 5.5
+
+        case .hiit:
+            reverbWet = 0.15
+            filterCutoff = 1800.0
+            amplitude = 0.8
+            baseFrequency = 741.0  // Maximum activation
+            tempo = 9.5
+
+        case .crossfit:
+            reverbWet = 0.2
+            filterCutoff = 1750.0
+            amplitude = 0.78
+            baseFrequency = 741.0
+            tempo = 9.0
+
+        case .weightlifting:
+            reverbWet = 0.25
+            filterCutoff = 1650.0
+            amplitude = 0.75
+            baseFrequency = 639.0  // Power, connection
+            tempo = 8.0
+
+        case .pilates:
+            reverbWet = 0.5
+            filterCutoff = 1100.0
+            amplitude = 0.6
+            baseFrequency = 528.0  // Control, precision
+            tempo = 6.5
+
+        case .dancing:
+            reverbWet = 0.3
+            filterCutoff = 1500.0
+            amplitude = 0.7
+            baseFrequency = 639.0  // Joy, connection
+            tempo = 8.0
+
+        case .swimming:
+            reverbWet = 0.55
+            filterCutoff = 900.0
+            amplitude = 0.65
+            baseFrequency = 528.0  // Fluid, flowing
+            tempo = 6.5
+
+        case .climbing:
+            reverbWet = 0.35
+            filterCutoff = 1400.0
+            amplitude = 0.7
+            baseFrequency = 639.0  // Focus, problem-solving
+            tempo = 7.5
+
+        case .rowing:
+            reverbWet = 0.3
+            filterCutoff = 1350.0
+            amplitude = 0.7
+            baseFrequency = 528.0  // Rhythmic power
+            tempo = 7.0
+
+        // MARK: - Work/Creative Contexts
+        case .deepWork:
+            reverbWet = 0.25
+            filterCutoff = 1600.0
+            amplitude = 0.65
+            baseFrequency = 741.0  // Awakening, clarity
+            tempo = 7.5  // Alert but calm
+
+        case .flowState:
+            reverbWet = 0.35
+            filterCutoff = 1450.0
+            amplitude = 0.68
+            baseFrequency = 528.0  // Transformation, optimal state
+            tempo = 7.2
+
+        case .problemSolving:
+            reverbWet = 0.3
+            filterCutoff = 1550.0
+            amplitude = 0.66
+            baseFrequency = 639.0  // Connection, relationships
+            tempo = 7.5
+
+        case .debugging:
+            reverbWet = 0.28
+            filterCutoff = 1580.0
+            amplitude = 0.67
+            baseFrequency = 741.0  // Intuition, solutions
+            tempo = 7.6
+
+        case .creative:
+            reverbWet = 0.45
+            filterCutoff = 1250.0
+            amplitude = 0.62
+            baseFrequency = 528.0  // Creativity frequency
+            tempo = 6.8
+
+        case .composing:
+            reverbWet = 0.5
+            filterCutoff = 1150.0
+            amplitude = 0.6
+            baseFrequency = 432.0  // Musical harmony
+            tempo = 6.5
+
+        case .designing:
+            reverbWet = 0.4
+            filterCutoff = 1300.0
+            amplitude = 0.63
+            baseFrequency = 528.0  // Visual creativity
+            tempo = 7.0
+
+        case .writing:
+            reverbWet = 0.35
+            filterCutoff = 1350.0
+            amplitude = 0.64
+            baseFrequency = 639.0  // Communication
+            tempo = 7.2
+
+        case .reading:
+            reverbWet = 0.4
+            filterCutoff = 1200.0
+            amplitude = 0.58
+            baseFrequency = 528.0  // Comprehension
+            tempo = 6.5
+
+        case .studying:
+            reverbWet = 0.32
+            filterCutoff = 1450.0
+            amplitude = 0.65
+            baseFrequency = 741.0  // Learning, retention
+            tempo = 7.3
+
+        case .researching:
+            reverbWet = 0.33
+            filterCutoff = 1480.0
+            amplitude = 0.66
+            baseFrequency = 741.0  // Discovery
+            tempo = 7.4
+
+        // MARK: - Social Contexts
+        case .meeting:
+            reverbWet = 0.35
+            filterCutoff = 1400.0
+            amplitude = 0.65
+            baseFrequency = 639.0  // Connection, harmony
+            tempo = 7.0
+
+        case .meetingActive:
+            reverbWet = 0.3
+            filterCutoff = 1500.0
+            amplitude = 0.68
+            baseFrequency = 639.0  // Active participation
+            tempo = 7.5
+
+        case .meetingPassive:
+            reverbWet = 0.4
+            filterCutoff = 1300.0
+            amplitude = 0.62
+            baseFrequency = 528.0  // Listening, absorption
+            tempo = 6.8
+
+        case .presentation:
+            reverbWet = 0.25
+            filterCutoff = 1600.0
+            amplitude = 0.72
+            baseFrequency = 741.0  // Expression, confidence
+            tempo = 8.0
+
+        case .teaching:
+            reverbWet = 0.3
+            filterCutoff = 1550.0
+            amplitude = 0.7
+            baseFrequency = 639.0  // Communication, connection
+            tempo = 7.8
+
+        case .performing:
+            reverbWet = 0.28
+            filterCutoff = 1650.0
+            amplitude = 0.75
+            baseFrequency = 741.0  // Peak expression
+            tempo = 8.2
+
+        case .socializing:
+            reverbWet = 0.4
+            filterCutoff = 1350.0
+            amplitude = 0.65
+            baseFrequency = 639.0  // Connection, joy
+            tempo = 7.2
+
+        // MARK: - Recovery/Sleep Contexts
+        case .sleep:
+            reverbWet = 0.8
+            filterCutoff = 300.0
+            amplitude = 0.35
+            baseFrequency = 396.0  // Deep rest
+            tempo = 3.5  // Delta wave entrainment
+
+        case .sleepLight:
+            reverbWet = 0.75
+            filterCutoff = 350.0
+            amplitude = 0.4
+            baseFrequency = 396.0  // Theta waves (4-8 Hz brain)
+            tempo = 4.0
+
+        case .sleepDeep:
+            reverbWet = 0.85
+            filterCutoff = 250.0
+            amplitude = 0.3
+            baseFrequency = 174.0  // Deep delta (0.5-4 Hz brain)
+            tempo = 3.0
+
+        case .sleepREM:
+            reverbWet = 0.7
+            filterCutoff = 400.0
+            amplitude = 0.42
+            baseFrequency = 432.0  // Theta-alpha border
+            tempo = 4.5
+
+        case .nap:
+            reverbWet = 0.7
+            filterCutoff = 450.0
+            amplitude = 0.45
+            baseFrequency = 396.0
+            tempo = 4.5
+
+        case .powerNap:
+            reverbWet = 0.65
+            filterCutoff = 500.0
+            amplitude = 0.48
+            baseFrequency = 432.0  // Quick recovery
+            tempo = 5.0
+
+        case .siesta:
+            reverbWet = 0.75
+            filterCutoff = 380.0
+            amplitude = 0.38
+            baseFrequency = 396.0
+            tempo = 4.0
+
+        case .recovery:
+            reverbWet = 0.6
+            filterCutoff = 700.0
+            amplitude = 0.5
+            baseFrequency = 528.0  // Cellular repair frequency
+            tempo = 5.5
+
+        case .postWorkout:
+            reverbWet = 0.55
+            filterCutoff = 800.0
+            amplitude = 0.52
+            baseFrequency = 528.0  // Recovery, transformation
+            tempo = 5.8
+
+        case .massage:
+            reverbWet = 0.7
+            filterCutoff = 600.0
+            amplitude = 0.48
+            baseFrequency = 432.0  // Relaxation, healing
+            tempo = 5.0
+
+        case .stretching:
+            reverbWet = 0.5
+            filterCutoff = 900.0
+            amplitude = 0.55
+            baseFrequency = 528.0  // Flexibility, release
+            tempo = 6.0
+
+        // MARK: - Meditation Variants
+        case .meditationBreathing:
+            reverbWet = 0.65
+            filterCutoff = 550.0
+            amplitude = 0.5
+            baseFrequency = 432.0  // Breath awareness
+            tempo = 5.5
+
+        case .meditationBody:
+            reverbWet = 0.7
+            filterCutoff = 500.0
+            amplitude = 0.48
+            baseFrequency = 396.0  // Body scan, grounding
+            tempo = 5.0
+
+        case .meditationMoving:
+            reverbWet = 0.55
+            filterCutoff = 850.0
+            amplitude = 0.58
+            baseFrequency = 528.0  // Walking meditation, flow
+            tempo = 6.2
+
+        // MARK: - Special Contexts
+        case .driving:
+            reverbWet = 0.3
+            filterCutoff = 1400.0
+            amplitude = 0.6
+            baseFrequency = 528.0  // Alert, focused
+            tempo = 7.0
+
+        case .drivingCity:
+            reverbWet = 0.28
+            filterCutoff = 1500.0
+            amplitude = 0.62
+            baseFrequency = 639.0  // Awareness, quick reactions
+            tempo = 7.5
+
+        case .drivingHighway:
+            reverbWet = 0.35
+            filterCutoff = 1300.0
+            amplitude = 0.58
+            baseFrequency = 528.0  // Steady focus
+            tempo = 6.8
+
+        case .commuting:
+            reverbWet = 0.4
+            filterCutoff = 1200.0
+            amplitude = 0.6
+            baseFrequency = 528.0  // Neutral, transitional
+            tempo = 6.5
+
+        case .publicTransport:
+            reverbWet = 0.45
+            filterCutoff = 1100.0
+            amplitude = 0.58
+            baseFrequency = 432.0  // Relaxed awareness
+            tempo = 6.3
+
+        case .flying:
+            reverbWet = 0.5
+            filterCutoff = 1000.0
+            amplitude = 0.55
+            baseFrequency = 528.0  // Calm during travel
+            tempo = 6.0
+
+        case .eating:
+            reverbWet = 0.5
+            filterCutoff = 1000.0
+            amplitude = 0.55
+            baseFrequency = 528.0  // Mindful eating
+            tempo = 6.0
+
+        case .digesting:
+            reverbWet = 0.6
+            filterCutoff = 800.0
+            amplitude = 0.5
+            baseFrequency = 432.0  // Rest & digest
+            tempo = 5.5
+
+        // MARK: - Temperature Contexts
+        case .sauna:
+            reverbWet = 0.65
+            filterCutoff = 650.0
+            amplitude = 0.5
+            baseFrequency = 528.0  // Detox, transformation
+            tempo = 5.5
+
+        case .coldPlunge:
+            reverbWet = 0.2
+            filterCutoff = 1700.0
+            amplitude = 0.75
+            baseFrequency = 741.0  // Activation, awakening
+            tempo = 8.5
         }
 
         print("🎛️  Applied preset: \(preset.rawValue)")
     }
 
     enum BioPreset: String, CaseIterable {
+        // MARK: - Original Presets
         case meditation = "Meditation"
         case focus = "Focus"
         case relaxation = "Deep Relaxation"
         case energize = "Energize"
+
+        // MARK: - Posture Contexts
+        case sitting = "Sitting"
+        case sittingUpright = "Sitting Upright"
+        case sittingLeaning = "Sitting Leaning"
+        case sittingCrossLegged = "Sitting Cross-Legged"
+        case lying = "Lying Down"
+        case lyingSupine = "Lying Supine"
+        case lyingProne = "Lying Prone"
+        case lyingSide = "Lying Side"
+        case standing = "Standing"
+        case standingActive = "Standing Active"
+        case standingRelaxed = "Standing Relaxed"
+        case reclining = "Reclining"
+        case reclinePartial = "Partial Recline"
+        case reclineFull = "Full Recline"
+
+        // MARK: - Movement Contexts
+        case walking = "Walking"
+        case walkingSlow = "Walking Slow"
+        case walkingNormal = "Walking Normal"
+        case walkingFast = "Walking Fast"
+        case running = "Running"
+        case jogging = "Jogging"
+        case sprinting = "Sprinting"
+        case cycling = "Cycling"
+        case cyclingLeisure = "Cycling Leisure"
+        case cyclingIntense = "Cycling Intense"
+
+        // MARK: - Exercise Contexts
+        case yoga = "Yoga"
+        case yogaFlow = "Yoga Flow"
+        case yogaStatic = "Yoga Static"
+        case yogaBreathing = "Yoga Breathing"
+        case hiit = "HIIT Training"
+        case crossfit = "CrossFit"
+        case weightlifting = "Weightlifting"
+        case pilates = "Pilates"
+        case dancing = "Dancing"
+        case swimming = "Swimming"
+        case climbing = "Climbing"
+        case rowing = "Rowing"
+
+        // MARK: - Work/Creative Contexts
+        case deepWork = "Deep Work"
+        case flowState = "Flow State"
+        case problemSolving = "Problem Solving"
+        case debugging = "Debugging"
+        case creative = "Creative Work"
+        case composing = "Composing"
+        case designing = "Designing"
+        case writing = "Writing"
+        case reading = "Reading"
+        case studying = "Studying"
+        case researching = "Researching"
+
+        // MARK: - Social Contexts
+        case meeting = "Meeting"
+        case meetingActive = "Active Meeting"
+        case meetingPassive = "Passive Meeting"
+        case presentation = "Presentation"
+        case teaching = "Teaching"
+        case performing = "Performing"
+        case socializing = "Socializing"
+
+        // MARK: - Recovery/Sleep Contexts
+        case sleep = "Sleep"
+        case sleepLight = "Light Sleep"
+        case sleepDeep = "Deep Sleep"
+        case sleepREM = "REM Sleep"
+        case nap = "Nap"
+        case powerNap = "Power Nap"
+        case siesta = "Siesta"
+        case recovery = "Recovery"
+        case postWorkout = "Post Workout"
+        case massage = "Massage"
+        case stretching = "Stretching"
+
+        // MARK: - Meditation Variants
+        case meditationBreathing = "Meditation Breathing"
+        case meditationBody = "Body Scan Meditation"
+        case meditationMoving = "Moving Meditation"
+
+        // MARK: - Special Contexts
+        case driving = "Driving"
+        case drivingCity = "City Driving"
+        case drivingHighway = "Highway Driving"
+        case commuting = "Commuting"
+        case publicTransport = "Public Transport"
+        case flying = "Flying"
+        case eating = "Eating"
+        case digesting = "Digesting"
+
+        // MARK: - Temperature Contexts
+        case sauna = "Sauna"
+        case coldPlunge = "Cold Plunge"
     }
 }
 

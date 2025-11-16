@@ -51,6 +51,11 @@ public class UnifiedControlHub: ObservableObject {
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
+    // Phase 4: Extended Context & Activity Detection
+    private var activityContextManager: ActivityContextManager?
+    private var contextTransitionEngine: ContextTransitionEngine?
+    private var extendedBioData: ExtendedBioData = ExtendedBioData()
+
     // TODO: Add when implementing
     // private let gazeTracker: GazeTracker?
 
@@ -225,6 +230,65 @@ public class UnifiedControlHub: ObservableObject {
         print("[UnifiedControlHub] MIDI 2.0 disabled")
     }
 
+    // MARK: - Phase 4: Activity Detection Integration
+
+    /// Enable activity context detection (motion-based)
+    public func enableActivityDetection() {
+        guard let bioMapper = bioParameterMapper else {
+            print("[UnifiedControlHub] ⚠️  Bio parameter mapper not enabled, required for activity detection")
+            return
+        }
+
+        let activityManager = ActivityContextManager()
+        let transitionEngine = ContextTransitionEngine(initialContext: .focus, bioMapper: bioMapper)
+
+        self.activityContextManager = activityManager
+        self.contextTransitionEngine = transitionEngine
+
+        // Subscribe to activity context changes
+        activityManager.$currentContext
+            .sink { [weak self] newContext in
+                self?.handleActivityContextChange(newContext)
+            }
+            .store(in: &cancellables)
+
+        // Start motion monitoring
+        activityManager.startMonitoring()
+
+        print("[UnifiedControlHub] Activity detection enabled (30 Hz motion sensing)")
+    }
+
+    /// Disable activity detection
+    public func disableActivityDetection() {
+        activityContextManager?.stopMonitoring()
+        activityContextManager = nil
+        contextTransitionEngine = nil
+        print("[UnifiedControlHub] Activity detection disabled")
+    }
+
+    /// Handle activity context changes with smooth transitions
+    private func handleActivityContextChange(_ newContext: ActivityContext) {
+        guard let transitionEngine = contextTransitionEngine else { return }
+
+        // Map activity to bio preset
+        let targetPreset = newContext.toBioPreset()
+
+        // Smooth transition to new preset
+        transitionEngine.transition(to: targetPreset)
+
+        print("🏃 Activity changed: \(newContext.rawValue) → Preset: \(targetPreset.rawValue)")
+    }
+
+    /// Manually set activity context (overrides auto-detection)
+    public func setManualActivityContext(_ context: ActivityContext, duration: TimeInterval = 300) {
+        activityContextManager?.setManualContext(context, duration: duration)
+    }
+
+    /// Get current recommended preset based on activity
+    public func recommendedPreset() -> BioParameterMapper.BioPreset? {
+        return activityContextManager?.recommendedPreset()
+    }
+
     // MARK: - Phase 3 Integration
 
     /// Enable spatial audio engine
@@ -358,6 +422,21 @@ public class UnifiedControlHub: ObservableObject {
         let voicePitch: Float = 0.0  // TODO: Get from audio analysis
         let audioLevel: Float = 0.5  // TODO: Get from audio engine
 
+        // Update ExtendedBioData with current readings
+        extendedBioData.hrv = healthKit.hrv
+        extendedBioData.heartRate = heartRate
+        extendedBioData.hrvCoherence = hrvCoherence
+        extendedBioData.timestamp = Date()
+
+        // TODO: Add extended sensor data (EEG, SpO2, Temperature, etc.)
+        // extendedBioData.spo2 = getSpO2FromAppleWatch()
+        // extendedBioData.eeg = getEEGFromMuseHeadband()
+        // extendedBioData.sleepStage = getSleepStageFromHealthKit()
+
+        // Calculate derived metrics
+        // extendedBioData.stressScore is auto-computed from HRV/HR
+        // extendedBioData.readinessScore is auto-computed
+
         // Update bio parameter mapping
         mapper.updateParameters(
             hrvCoherence: hrvCoherence,
@@ -368,6 +447,52 @@ public class UnifiedControlHub: ObservableObject {
 
         // Apply bio-derived audio parameters
         applyBioAudioParameters(mapper)
+
+        // Apply context-specific adjustments if activity detection is enabled
+        if let activityManager = activityContextManager {
+            applyActivityAdjustments(activityManager, mapper: mapper)
+        }
+    }
+
+    /// Apply activity-specific adjustments to audio parameters
+    /// Called when activity detection is enabled
+    private func applyActivityAdjustments(_ activityManager: ActivityContextManager, mapper: BioParameterMapper) {
+        let currentActivity = activityManager.currentContext
+        let stepRate = activityManager.stepRate
+
+        // For walking/running contexts, sync tempo to step rate
+        switch currentActivity {
+        case .walkingSlow, .walkingNormal, .walkingFast:
+            // Sync audio tempo to walking pace (convert steps/min to breaths/min)
+            if stepRate > 0 {
+                let walkingTempo = stepRate / 15.0  // ~15 steps per breath
+                mapper.tempo = min(8.0, max(4.0, walkingTempo))
+            }
+
+        case .jogging, .running, .sprinting:
+            // Sync to running cadence
+            if stepRate > 0 {
+                let runningTempo = stepRate / 20.0  // ~20 steps per breath
+                mapper.tempo = min(10.0, max(7.0, runningTempo))
+            }
+
+        default:
+            // Use preset tempo
+            break
+        }
+
+        // Adjust spatial position based on motion intensity
+        let motionIntensity = activityManager.motionIntensity
+        if motionIntensity > 0.5 {
+            // Higher motion = wider spatial field
+            let spread = min(1.0, motionIntensity)
+            let angle = Float(Date().timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 6.28))
+            mapper.spatialPosition = (
+                cos(angle) * spread * 0.7,
+                sin(angle) * spread * 0.7,
+                1.0 - (spread * 0.3)  // Slightly closer during high motion
+            )
+        }
     }
 
     /// Apply bio-derived audio parameters to audio engine and spatial mapping
