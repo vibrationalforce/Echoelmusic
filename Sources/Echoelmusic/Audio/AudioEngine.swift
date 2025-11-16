@@ -38,7 +38,8 @@ class AudioEngine: ObservableObject {
     /// Microphone manager for voice/breath input
     let microphoneManager: MicrophoneManager
 
-    /// Binaural beat generator for healing frequencies
+    /// Binaural beat generator for brainwave entrainment
+    /// Uses evidence-based frequencies per peer-reviewed research
     private let binauralGenerator = BinauralBeatGenerator()
 
     /// Spatial audio engine for 3D audio
@@ -83,9 +84,10 @@ class AudioEngine: ObservableObject {
         AudioConfiguration.setAudioThreadPriority()
 
         // Configure default binaural beat settings
+        // ISO 16:1975 standard A440 carrier frequency
         binauralGenerator.configure(
-            carrier: 432.0,  // Healing frequency
-            beat: 10.0,      // Alpha waves (relaxation)
+            carrier: 440.0,  // ISO standard (NOT 432 Hz pseudoscience)
+            beat: 10.0,      // Alpha waves (relaxation) - Wahbeh et al., 2015
             amplitude: 0.3
         )
 

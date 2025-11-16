@@ -56,9 +56,10 @@ class BinauralBeatGenerator: ObservableObject {
 
     // MARK: - Configuration
 
-    /// Carrier frequency in Hz (the base tone, often 432 Hz for healing)
-    /// 432 Hz is considered the "natural frequency" in some healing traditions
-    private(set) var carrierFrequency: Float = 432.0
+    /// Carrier frequency in Hz (ISO 16:1975 standard: A440)
+    /// ❌ REMOVED: 432 Hz "natural frequency" claim (pseudoscience)
+    /// ✅ REPLACED: 440 Hz ISO international standard
+    private(set) var carrierFrequency: Float = 440.0
 
     /// Beat frequency in Hz (difference between left and right ear)
     /// This is what entrains the brain to the target brainwave state
