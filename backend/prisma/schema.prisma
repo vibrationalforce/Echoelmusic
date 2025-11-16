@@ -1,0 +1,153 @@
+// Echoelmusic Database Schema
+// PostgreSQL + Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Model
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // Hashed with bcrypt
+  name      String?
+
+  // Subscription
+  subscription      SubscriptionTier @default(FREE)
+  stripeCustomerId  String?          @unique
+  subscriptionId    String?          @unique
+  subscriptionStatus SubscriptionStatus @default(INACTIVE)
+
+  // Trial
+  trialEndsAt       DateTime?
+  isTrialActive     Boolean          @default(true)
+
+  // Metadata
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  lastLoginAt       DateTime?
+
+  // Relations
+  projects          Project[]
+  sessions          Session[]
+  payments          Payment[]
+
+  @@index([email])
+  @@index([stripeCustomerId])
+}
+
+// Subscription Tiers
+enum SubscriptionTier {
+  FREE
+  PRO
+  STUDIO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+}
+
+// Project Model (Cloud Synced Projects)
+model Project {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Project Info
+  title       String
+  description String?
+  tempo       Float    @default(120.0)
+
+  // Files
+  xmlDataUrl  String?  // S3 URL to project XML
+  audioFiles  AudioFile[]
+
+  // Metadata
+  version     Int      @default(1)
+  platform    Platform @default(DESKTOP)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum Platform {
+  DESKTOP
+  IOS
+  WEB
+}
+
+// Audio Files (for Cloud Projects)
+model AudioFile {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // File Info
+  filename   String
+  s3Url      String
+  size       Int      // Bytes
+  duration   Float?   // Seconds
+  format     String   // wav, flac, mp3, etc.
+
+  createdAt  DateTime @default(now())
+
+  @@index([projectId])
+}
+
+// Session Model (DAW Sessions)
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Session Data
+  projectId  String?
+  state      String   // JSON state (recording, playing, idle)
+
+  // Bio-Data
+  hrvData    String?  // JSON array of HRV readings
+  gestureData String? // JSON array of gesture recordings
+
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Payment Model (Stripe Payments)
+model Payment {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Stripe
+  stripePaymentId  String   @unique
+  amount           Int      // Amount in cents
+  currency         String   @default("eur")
+  status           PaymentStatus
+
+  // Metadata
+  description      String?
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
