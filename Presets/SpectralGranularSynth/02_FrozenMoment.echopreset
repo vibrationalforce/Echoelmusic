@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SpectralGranularPreset name="Frozen Moment" mode="Spectral">
+  <GlobalParams grainSize="200" density="64" position="0.5" pitch="0"/>
+  <Streams active="24"/>
+  <GrainParams envelope="Hann" attack="0.2" release="0.2" direction="BiDirectional">
+    <Spray position="0.2" pitch="0.1" pan="0.6" size="0.1"/>
+    <Spectral maskLow="100" maskHigh="12000" tonality="0.9" noisiness="0"/>
+  </GrainParams>
+  <FreezeMode enabled="true" position="0.5" windowSize="150" blur="0.6"/>
+  <SwarmMode enabled="false" chaos="0" attraction="0" repulsion="0"/>
+  <TextureMode enabled="false" complexity="0" evolution="0" randomness="0"/>
+  <BioMapping hrvDensity="0.2" hrvPosition="0.1" coherenceSize="0.8" breathPitch="0.3"/>
+  <Description>Time-frozen spectral clouds with bio-reactive blur</Description>
+</SpectralGranularPreset>

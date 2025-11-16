@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SpectralGranularPreset name="Orchestra Ghost" mode="Spectral">
+  <GlobalParams grainSize="180" density="48" position="0.4" pitch="-5"/>
+  <Streams active="32"/>
+  <GrainParams envelope="Gaussian" attack="0.18" release="0.18" direction="BiDirectional">
+    <Spray position="0.35" pitch="0.25" pan="0.75" size="0.25"/>
+    <Spectral maskLow="80" maskHigh="4000" tonality="0.85" noisiness="0.1"/>
+  </GrainParams>
+  <FreezeMode enabled="true" position="0.45" windowSize="120" blur="0.4"/>
+  <SwarmMode enabled="true" chaos="0.25" attraction="0.7" repulsion="0.15"/>
+  <TextureMode enabled="true" complexity="0.6" evolution="0.35" randomness="0.25"/>
+  <BioMapping hrvDensity="0.4" hrvPosition="0.5" coherenceSize="0.75" breathPitch="0.65"/>
+  <Description>Ghostly orchestral textures from frozen spectral moments</Description>
+</SpectralGranularPreset>

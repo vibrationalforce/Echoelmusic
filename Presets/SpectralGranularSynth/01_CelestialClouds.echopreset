@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SpectralGranularPreset name="Celestial Clouds" mode="Hybrid">
+  <GlobalParams grainSize="150" density="32" position="0.5" pitch="0"/>
+  <Streams active="16"/>
+  <GrainParams envelope="Gaussian" attack="0.15" release="0.15" direction="Forward">
+    <Spray position="0.7" pitch="0.4" pan="0.8" size="0.3"/>
+    <Spectral maskLow="200" maskHigh="8000" tonality="0.7" noisiness="0.1"/>
+  </GrainParams>
+  <FreezeMode enabled="false" position="0.5" windowSize="100" blur="0"/>
+  <SwarmMode enabled="true" chaos="0.35" attraction="0.6" repulsion="0.1"/>
+  <TextureMode enabled="true" complexity="0.6" evolution="0.3" randomness="0.4"/>
+  <BioMapping hrvDensity="0.7" hrvPosition="0.4" coherenceSize="0.5" breathPitch="0.6"/>
+  <Description>Ethereal ambient clouds with bio-reactive swarm behavior</Description>
+</SpectralGranularPreset>

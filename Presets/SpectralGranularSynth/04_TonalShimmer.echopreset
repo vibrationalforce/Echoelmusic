@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SpectralGranularPreset name="Tonal Shimmer" mode="Spectral">
+  <GlobalParams grainSize="100" density="40" position="0.6" pitch="12"/>
+  <Streams active="20"/>
+  <GrainParams envelope="Hamming" attack="0.1" release="0.1" direction="Forward">
+    <Spray position="0.4" pitch="0.2" pan="0.5" size="0.2"/>
+    <Spectral maskLow="150" maskHigh="6000" tonality="1.0" noisiness="0"/>
+  </GrainParams>
+  <FreezeMode enabled="false" position="0" windowSize="0" blur="0"/>
+  <SwarmMode enabled="true" chaos="0.2" attraction="0.8" repulsion="0.1"/>
+  <TextureMode enabled="true" complexity="0.7" evolution="0.4" randomness="0.2"/>
+  <BioMapping hrvDensity="0.5" hrvPosition="0.3" coherenceSize="0.7" breathPitch="0.8"/>
+  <Description>Pure tonal grains with gentle swarm behavior - perfect for pads</Description>
+</SpectralGranularPreset>

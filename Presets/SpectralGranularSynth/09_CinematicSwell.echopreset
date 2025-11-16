@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SpectralGranularPreset name="Cinematic Swell" mode="Spectral">
+  <GlobalParams grainSize="300" density="16" position="0.35" pitch="7"/>
+  <Streams active="24"/>
+  <GrainParams envelope="Exponential" attack="0.3" release="0.3" direction="Forward">
+    <Spray position="0.25" pitch="0.15" pan="0.6" size="0.2"/>
+    <Spectral maskLow="60" maskHigh="6000" tonality="0.8" noisiness="0.15"/>
+  </GrainParams>
+  <FreezeMode enabled="false" position="0" windowSize="0" blur="0"/>
+  <SwarmMode enabled="true" chaos="0.15" attraction="0.9" repulsion="0.05"/>
+  <TextureMode enabled="true" complexity="0.55" evolution="0.25" randomness="0.15"/>
+  <BioMapping hrvDensity="0.3" hrvPosition="0.2" coherenceSize="0.9" breathPitch="0.95"/>
+  <Description>Massive cinematic builds controlled by breath - perfect for trailers</Description>
+</SpectralGranularPreset>

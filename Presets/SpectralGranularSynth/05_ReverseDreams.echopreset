@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SpectralGranularPreset name="Reverse Dreams" mode="Hybrid">
+  <GlobalParams grainSize="250" density="24" position="0.7" pitch="5"/>
+  <Streams active="12"/>
+  <GrainParams envelope="Welch" attack="0.25" release="0.25" direction="Reverse">
+    <Spray position="0.5" pitch="0.3" pan="0.7" size="0.4"/>
+    <Spectral maskLow="250" maskHigh="10000" tonality="0.6" noisiness="0.2"/>
+  </GrainParams>
+  <FreezeMode enabled="false" position="0" windowSize="0" blur="0"/>
+  <SwarmMode enabled="true" chaos="0.4" attraction="0.5" repulsion="0.2"/>
+  <TextureMode enabled="true" complexity="0.5" evolution="0.5" randomness="0.3"/>
+  <BioMapping hrvDensity="0.6" hrvPosition="0.6" coherenceSize="0.6" breathPitch="0.7"/>
+  <Description>Backward-moving grains create reverse ambiences and swells</Description>
+</SpectralGranularPreset>

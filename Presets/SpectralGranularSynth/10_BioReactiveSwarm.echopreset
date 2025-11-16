@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SpectralGranularPreset name="Bio-Reactive Swarm" mode="Neural">
+  <GlobalParams grainSize="120" density="60" position="0.5" pitch="0"/>
+  <Streams active="32"/>
+  <GrainParams envelope="Gaussian" attack="0.15" release="0.15" direction="BiDirectional">
+    <Spray position="0.6" pitch="0.5" pan="0.85" size="0.5"/>
+    <Spectral maskLow="100" maskHigh="15000" tonality="0.5" noisiness="0.5"/>
+  </GrainParams>
+  <FreezeMode enabled="false" position="0" windowSize="0" blur="0"/>
+  <SwarmMode enabled="true" chaos="0.95" attraction="0.5" repulsion="0.9"/>
+  <TextureMode enabled="true" complexity="1.0" evolution="1.0" randomness="1.0"/>
+  <BioMapping hrvDensity="1.0" hrvPosition="1.0" coherenceSize="1.0" breathPitch="1.0"/>
+  <Description>100% bio-reactive chaos - your heart creates the sound!</Description>
+</SpectralGranularPreset>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SpectralGranularPreset name="Rhythmic Glitch" mode="Classic">
+  <GlobalParams grainSize="15" density="128" position="0.3" pitch="-7"/>
+  <Streams active="8"/>
+  <GrainParams envelope="Triangle" attack="0.05" release="0.05" direction="Random">
+    <Spray position="0.9" pitch="0.8" pan="1.0" size="0.7"/>
+    <Spectral maskLow="500" maskHigh="8000" tonality="0.3" noisiness="0.7"/>
+  </GrainParams>
+  <FreezeMode enabled="false" position="0" windowSize="0" blur="0"/>
+  <SwarmMode enabled="true" chaos="0.9" attraction="0.2" repulsion="0.7"/>
+  <TextureMode enabled="true" complexity="0.9" evolution="0.8" randomness="0.9"/>
+  <BioMapping hrvDensity="1.0" hrvPosition="0.8" coherenceSize="0.3" breathPitch="0.5"/>
+  <Description>Chaotic glitch textures with extreme bio-reactivity</Description>
+</SpectralGranularPreset>
