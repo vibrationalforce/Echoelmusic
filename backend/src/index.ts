@@ -15,6 +15,10 @@ import authRoutes from './auth/auth.routes';
 import userRoutes from './users/user.routes';
 import paymentRoutes from './payments/payment.routes';
 import projectRoutes from './projects/project.routes';
+import nftRoutes from './nft/nft.routes';
+import distributionRoutes from './distribution/distribution.routes';
+import streamingRoutes from './streaming/streaming.routes';
+import socialRoutes from './social/social.routes';
 
 // Import middleware
 import { errorHandler } from './middleware/error.middleware';
@@ -66,6 +70,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/nft', nftRoutes);
+app.use('/api/distribution', distributionRoutes);
+app.use('/api/streaming', streamingRoutes);
+app.use('/api/social', socialRoutes);
 
 // 404 handler
 app.use((req, res) => {

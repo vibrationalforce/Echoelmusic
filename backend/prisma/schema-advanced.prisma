@@ -1,0 +1,514 @@
+// Extended Prisma Schema with Advanced Features
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== EXISTING MODELS =====
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  username  String?  @unique  // For social features
+  bio       String?
+  avatar    String?  // Avatar URL
+
+  // Subscription
+  subscription      SubscriptionTier @default(FREE)
+  stripeCustomerId  String?          @unique
+  subscriptionId    String?          @unique
+  subscriptionStatus SubscriptionStatus @default(INACTIVE)
+
+  // Trial
+  trialEndsAt       DateTime?
+  isTrialActive     Boolean          @default(true)
+
+  // Blockchain
+  walletAddress     String?          @unique  // Ethereum wallet
+
+  // Metadata
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  lastLoginAt       DateTime?
+
+  // Relations
+  projects          Project[]
+  sessions          Session[]
+  payments          Payment[]
+  nfts              NFT[]
+  releases          Release[]
+  streams           LiveStream[]
+
+  // Social
+  posts             Post[]
+  comments          Comment[]
+  likes             Like[]
+  following         Follow[]         @relation("UserFollowing")
+  followers         Follow[]         @relation("UserFollowers")
+  notifications     Notification[]
+
+  @@index([email])
+  @@index([username])
+  @@index([walletAddress])
+}
+
+enum SubscriptionTier {
+  FREE
+  PRO
+  STUDIO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  tempo       Float    @default(120.0)
+  xmlDataUrl  String?
+  audioFiles  AudioFile[]
+  version     Int      @default(1)
+  platform    Platform @default(DESKTOP)
+
+  // Social
+  isPublic    Boolean  @default(false)
+  posts       Post[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isPublic])
+}
+
+enum Platform {
+  DESKTOP
+  IOS
+  WEB
+}
+
+model AudioFile {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  filename   String
+  s3Url      String
+  size       Int
+  duration   Float?
+  format     String
+
+  createdAt  DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projectId  String?
+  state      String
+  hrvData    String?
+  gestureData String?
+
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Payment {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  stripePaymentId  String   @unique
+  amount           Int
+  currency         String   @default("eur")
+  status           PaymentStatus
+  description      String?
+
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+// ===== NFT MINTING MODELS =====
+
+model NFT {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // NFT Metadata
+  title           String
+  description     String?
+  tokenId         String?  @unique  // Blockchain token ID
+  contractAddress String?  // Smart contract address
+  blockchain      Blockchain @default(POLYGON)
+
+  // Media
+  audioUrl        String   // IPFS or S3 URL
+  coverImageUrl   String?  // Cover art
+  metadata        String   // JSON metadata (NFT standards)
+
+  // Pricing
+  price           Float?   // ETH/MATIC price
+  currency        String   @default("MATIC")
+  royaltyPercent  Float    @default(10.0)  // Creator royalty %
+
+  // Status
+  status          NFTStatus @default(DRAFT)
+  mintedAt        DateTime?
+  listedAt        DateTime?
+
+  // Bio-Data (unique feature!)
+  hrvSnapshot     String?  // HRV data during creation
+  gestureData     String?  // Gesture data
+  biometricHash   String?  // Hash of biometric signature
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  sales           NFTSale[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([blockchain])
+}
+
+enum Blockchain {
+  ETHEREUM
+  POLYGON
+  ARBITRUM
+  OPTIMISM
+}
+
+enum NFTStatus {
+  DRAFT
+  MINTING
+  MINTED
+  LISTED
+  SOLD
+  TRANSFERRED
+}
+
+model NFTSale {
+  id              String   @id @default(cuid())
+  nftId           String
+  nft             NFT      @relation(fields: [nftId], references: [id], onDelete: Cascade)
+
+  buyerAddress    String   // Wallet address
+  sellerAddress   String
+  price           Float
+  currency        String
+  txHash          String   @unique  // Transaction hash
+
+  createdAt       DateTime @default(now())
+
+  @@index([nftId])
+  @@index([buyerAddress])
+}
+
+// ===== MUSIC DISTRIBUTION MODELS =====
+
+model Release {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Release Info
+  title           String
+  artistName      String
+  albumArt        String?
+  genre           String
+  releaseDate     DateTime
+
+  // Distribution
+  upc             String?  @unique  // Universal Product Code
+  isrc            String?  // International Standard Recording Code
+
+  // Tracks
+  tracks          Track[]
+
+  // Platforms
+  distributions   Distribution[]
+
+  // Metadata
+  label           String?
+  copyrightYear   Int
+  copyrightHolder String
+
+  status          ReleaseStatus @default(DRAFT)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Track {
+  id              String   @id @default(cuid())
+  releaseId       String
+  release         Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  title           String
+  artists         String   // Comma-separated
+  duration        Float    // Seconds
+  audioUrl        String   // S3 URL
+  trackNumber     Int
+
+  isrc            String?  @unique
+
+  createdAt       DateTime @default(now())
+
+  @@index([releaseId])
+}
+
+model Distribution {
+  id              String   @id @default(cuid())
+  releaseId       String
+  release         Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  platform        MusicPlatform
+  status          DistributionStatus @default(PENDING)
+  platformId      String?  // Platform-specific ID
+  platformUrl     String?  // Link to release on platform
+
+  submittedAt     DateTime?
+  publishedAt     DateTime?
+
+  // Analytics
+  streams         Int      @default(0)
+  revenue         Float    @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([releaseId])
+  @@index([platform])
+}
+
+enum MusicPlatform {
+  SPOTIFY
+  APPLE_MUSIC
+  YOUTUBE_MUSIC
+  AMAZON_MUSIC
+  TIDAL
+  DEEZER
+  SOUNDCLOUD
+  BANDCAMP
+}
+
+enum ReleaseStatus {
+  DRAFT
+  SUBMITTED
+  PROCESSING
+  LIVE
+  TAKEDOWN
+}
+
+enum DistributionStatus {
+  PENDING
+  SUBMITTED
+  PROCESSING
+  LIVE
+  FAILED
+  TAKEDOWN
+}
+
+// ===== LIVE STREAMING MODELS =====
+
+model LiveStream {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title           String
+  description     String?
+  thumbnailUrl    String?
+
+  // Stream Config
+  streamKey       String   @unique  // RTMP stream key
+  rtmpUrl         String   // RTMP ingest URL
+
+  // Platforms
+  destinations    StreamDestination[]
+
+  // Status
+  status          StreamStatus @default(SCHEDULED)
+  scheduledAt     DateTime?
+  startedAt       DateTime?
+  endedAt         DateTime?
+
+  // Analytics
+  peakViewers     Int      @default(0)
+  totalViewers    Int      @default(0)
+  duration        Int      @default(0)  // Seconds
+
+  // Bio-Reactive
+  hrvEnabled      Boolean  @default(false)
+  biometricData   String?  // JSON biometric log
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model StreamDestination {
+  id              String   @id @default(cuid())
+  streamId        String
+  stream          LiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+
+  platform        StreamPlatform
+  platformKey     String   // Platform-specific stream key
+  platformUrl     String?  // Stream URL
+  enabled         Boolean  @default(true)
+
+  status          String?  // Connected, disconnected, error
+
+  createdAt       DateTime @default(now())
+
+  @@index([streamId])
+}
+
+enum StreamPlatform {
+  TWITCH
+  YOUTUBE
+  FACEBOOK
+  INSTAGRAM
+  TIKTOK
+  CUSTOM_RTMP
+}
+
+enum StreamStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELED
+}
+
+// ===== SOCIAL FEATURES MODELS =====
+
+model Post {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  content         String
+  mediaUrl        String?  // Audio/video/image
+  projectId       String?
+  project         Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  // Engagement
+  likes           Like[]
+  comments        Comment[]
+  likesCount      Int      @default(0)
+  commentsCount   Int      @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Comment {
+  id              String   @id @default(cuid())
+  postId          String
+  post            Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  content         String
+
+  createdAt       DateTime @default(now())
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model Like {
+  id              String   @id @default(cuid())
+  postId          String
+  post            Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+
+  @@unique([postId, userId])  // User can only like once
+  @@index([userId])
+}
+
+model Follow {
+  id              String   @id @default(cuid())
+  followerId      String
+  follower        User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId     String
+  following       User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Notification {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type            NotificationType
+  title           String
+  message         String
+  linkUrl         String?
+
+  read            Boolean  @default(false)
+
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  FOLLOW
+  LIKE
+  COMMENT
+  NFT_SALE
+  RELEASE_LIVE
+  STREAM_STARTED
+  PAYMENT_RECEIVED
+}
