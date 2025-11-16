@@ -222,6 +222,19 @@ target_sources(Echoelmusic
         Sources/UI/MainWindow.cpp
 
         # =====================================================================
+        # PHASE 2B: ADVANCED UI COMPONENTS (NEW! 2025-11-16) 🎨✨
+        # =====================================================================
+
+        # Spectral Granular Synth UI (Complete implementation)
+        Sources/UI/SpectralGranularSynthUI.cpp      # ✅ Spectral granular synthesis UI with visualizers
+
+        # Intelligent Sampler UI (Complete implementation)
+        Sources/UI/IntelligentSamplerUI.cpp         # ✅ Advanced sampler UI with ML analysis
+
+        # Common UI Base Classes
+        Sources/UI/Common/VisualizerBase.cpp        # ✅ Base class for all visualizers with GPU optimization
+
+        # =====================================================================
         # PHASE 2: DSP EFFECTS (All JUCE 7 Compatible! 🎉)
         # =====================================================================
 
@@ -354,6 +367,8 @@ target_include_directories(Echoelmusic
         Sources/AI
         Sources/Hardware
         Sources/Video
+        Sources/UI
+        Sources/UI/Common
         Sources/Audio
         Sources/Platform
         Sources/Remote
@@ -413,6 +428,10 @@ target_compile_definitions(Echoelmusic
         JUCE_VST3_CAN_REPLACE_VST2=0
         JUCE_DISPLAY_SPLASH_SCREEN=0
         JUCE_USE_SIMD=1
+
+        # GPU Acceleration for UI
+        JUCE_OPENGL=1
+        JUCE_USE_OPENGL_RENDERER=1
 
         # Plugin Host Support
         JUCE_PLUGINHOST_VST3=1
