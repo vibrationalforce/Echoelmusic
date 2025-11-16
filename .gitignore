@@ -101,3 +101,9 @@ iOSInjectionProject/
 *.swp
 *.swo
 *~
+
+# Third-Party Dependencies
+# These are downloaded by setup_juce.sh and should not be committed
+ThirdParty/JUCE/
+ThirdParty/vst3sdk/
+ThirdParty/clap/
