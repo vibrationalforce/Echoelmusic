@@ -1,0 +1,62 @@
+--- a/Sources/Echoelmusic/Privacy/PrivacyManager.swift
++++ b/Sources/Echoelmusic/Privacy/PrivacyManager.swift
+@@ -196,11 +196,35 @@ class PrivacyManager: ObservableObject {
+     }
+
+     private func loadKeyFromKeychain() -> Data? {
+-        // Simplified - in production use proper Keychain API
+-        return UserDefaults.standard.data(forKey: "encryptionKey")
++        // Load from iOS Keychain (secure storage)
++        let query: [String: Any] = [
++            kSecClass as String: kSecClassGenericPassword,
++            kSecAttrAccount as String: "com.echoelmusic.encryption.key",
++            kSecReturnData as String: true,
++            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
++        ]
++
++        var result: AnyObject?
++        let status = SecItemCopyMatching(query as CFDictionary, &result)
++
++        guard status == errSecSuccess, let keyData = result as? Data else {
++            return nil
++        }
++
++        return keyData
+     }
+
+     private func saveKeyToKeychain(_ key: SymmetricKey) {
+-        // Simplified - in production use proper Keychain API
+-        UserDefaults.standard.set(key.withUnsafeBytes { Data($0) }, forKey: "encryptionKey")
++        // Save to iOS Keychain (NOT UserDefaults)
++        let keyData = key.withUnsafeBytes { Data($0) }
++
++        let query: [String: Any] = [
++            kSecClass as String: kSecClassGenericPassword,
++            kSecAttrAccount as String: "com.echoelmusic.encryption.key",
++            kSecValueData as String: keyData,
++            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
++        ]
++
++        SecItemDelete(query as CFDictionary)  // Remove old key
++        let status = SecItemAdd(query as CFDictionary, nil)
++
++        guard status == errSecSuccess else {
++            fatalError("Failed to save encryption key to Keychain: \(status)")
++        }
+     }
+
+     // MARK: - Data Encryption
+@@ -327,6 +351,11 @@ class PrivacyManager: ObservableObject {
+     }
+
+     private func deleteEncryptionKeyFromKeychain() {
+-        UserDefaults.standard.removeObject(forKey: "encryptionKey")
+-        print("   Deleted encryption key")
++        let query: [String: Any] = [
++            kSecClass as String: kSecClassGenericPassword,
++            kSecAttrAccount as String: "com.echoelmusic.encryption.key"
++        ]
++
++        SecItemDelete(query as CFDictionary)
++        print("   Deleted encryption key from Keychain")
+     }

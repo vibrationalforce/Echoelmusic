@@ -1,0 +1,124 @@
+--- a/Sources/Echoelmusic/Cloud/CloudSyncManager.swift
++++ b/Sources/Echoelmusic/Cloud/CloudSyncManager.swift
+@@ -15,6 +15,7 @@ class CloudSyncManager: ObservableObject {
+     private let container: CKContainer
+     private let privateDatabase: CKDatabase
+     private let sharedDatabase: CKDatabase
++    private var privacyManager: PrivacyManager?
+
+     init() {
+         self.container = CKContainer(identifier: "iCloud.com.echoelmusic.app")
+@@ -23,6 +24,11 @@ class CloudSyncManager: ObservableObject {
+         print("✅ CloudSyncManager: Initialized")
+     }
+
++    // Connect privacy manager for encryption
++    func connectPrivacyManager(_ manager: PrivacyManager) {
++        self.privacyManager = manager
++    }
++
+     // MARK: - Enable/Disable Sync
+
+     func enableSync() async throws {
+@@ -46,15 +52,32 @@ class CloudSyncManager: ObservableObject {
+     func saveSession(_ session: Session) async throws {
+         guard syncEnabled else { return }
++        guard let privacyManager = privacyManager else {
++            throw CloudError.encryptionUnavailable
++        }
+
+         isSyncing = true
+         defer { isSyncing = false }
+
++        // Encode session to JSON
++        let sessionData = try JSONEncoder().encode(session)
++
++        // Encrypt with AES-256 (E2E encryption)
++        let encryptedData = try privacyManager.encrypt(data: sessionData)
++
+         // Create CKRecord
+         let record = CKRecord(recordType: "Session")
+-        record["name"] = session.name as CKRecordValue
+-        record["duration"] = session.duration as CKRecordValue
+-        record["avgHRV"] = session.avgHRV as CKRecordValue
+-        record["avgCoherence"] = session.avgCoherence as CKRecordValue
++
++        // Store ONLY encrypted blob
++        record["encryptedData"] = encryptedData as CKRecordValue
++
++        // Store minimal metadata (for search/sorting, NOT sensitive)
++        record["createdAt"] = Date() as CKRecordValue
++        record["deviceType"] = "iOS" as CKRecordValue
++
++        // WARNING: Do NOT store plaintext session data
++        // record["name"] = session.name ❌ NEVER
++        // record["avgHRV"] = session.avgHRV ❌ NEVER
++        // record["avgCoherence"] = session.avgCoherence ❌ NEVER
+
+         // Save to private database
+         try await privateDatabase.save(record)
+@@ -68,6 +91,10 @@ class CloudSyncManager: ObservableObject {
+
+     func fetchSessions() async throws -> [CloudSession] {
+         guard syncEnabled else { return [] }
++        guard let privacyManager = privacyManager else {
++            throw CloudError.encryptionUnavailable
++        }
+
+         isSyncing = true
+         defer { isSyncing = false }
+@@ -79,13 +106,21 @@ class CloudSyncManager: ObservableObject {
+
+         var sessions: [CloudSession] = []
+         for (_, result) in results.matchResults {
+             if case .success(let record) = result {
+-                let session = CloudSession(
+-                    id: UUID(),
+-                    name: record["name"] as? String ?? "Untitled",
+-                    duration: record["duration"] as? TimeInterval ?? 0,
+-                    avgHRV: record["avgHRV"] as? Float ?? 0,
+-                    avgCoherence: record["avgCoherence"] as? Float ?? 0
+-                )
++                // Decrypt encrypted data
++                guard let encryptedData = record["encryptedData"] as? Data else {
++                    continue  // Skip corrupted records
++                }
++
++                let decryptedData = try privacyManager.decrypt(data: encryptedData)
++                let sessionDecoded = try JSONDecoder().decode(Session.self, from: decryptedData)
++
++                let session = CloudSession(
++                    id: UUID(),
++                    name: sessionDecoded.name,
++                    duration: sessionDecoded.duration,
++                    avgHRV: sessionDecoded.avgHRV,
++                    avgCoherence: sessionDecoded.avgCoherence
++                )
+                 sessions.append(session)
+             }
+         }
+@@ -125,6 +160,7 @@ struct CloudSession: Identifiable {
+ enum CloudError: LocalizedError {
+     case iCloudNotAvailable
+     case syncFailed
++    case encryptionUnavailable
+
+     var errorDescription: String? {
+         switch self {
+@@ -132,6 +168,8 @@ enum CloudError: LocalizedError {
+             return "iCloud is not available. Please sign in to iCloud in Settings."
+         case .syncFailed:
+             return "Cloud sync failed"
++        case .encryptionUnavailable:
++            return "Encryption manager not initialized"
+         }
+     }
+ }
+@@ -141,7 +179,7 @@ struct Session {
+     let name: String
+     let duration: TimeInterval
+     let avgHRV: Float
+     let avgCoherence: Float
+ }
++
++extension Session: Codable {}

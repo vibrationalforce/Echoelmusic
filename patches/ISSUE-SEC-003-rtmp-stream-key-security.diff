@@ -1,0 +1,115 @@
+--- a/Sources/Echoelmusic/Stream/RTMPClient.swift
++++ b/Sources/Echoelmusic/Stream/RTMPClient.swift
+@@ -5,18 +5,18 @@ import Network
+ /// Implements RTMP handshake, connection, and data transmission
+ class RTMPClient {
+
+-    private let url: String
+-    private let streamKey: String
++    private let url: String
+     private let port: Int
+
+     private var connection: NWConnection?
+     private var isConnected: Bool = false
++
++    // Stream key stored in Keychain, NOT as String property
++    private let streamKeyIdentifier: String
+
+-    init(url: String, streamKey: String, port: Int = 1935) {
++    init(url: String, streamKeyIdentifier: String, port: Int = 1935) {
+         self.url = url
+-        self.streamKey = streamKey
++        self.streamKeyIdentifier = streamKeyIdentifier
+         self.port = port
+     }
+
+@@ -62,6 +62,44 @@ class RTMPClient {
+         isConnected = false
+     }
+
++    // MARK: - Secure Stream Key Management
++
++    /// Securely store stream key in iOS Keychain
++    static func saveStreamKey(_ key: String, for platform: String) throws {
++        let identifier = "rtmp.streamkey.\(platform.lowercased())"
++        let keyData = key.data(using: .utf8)!
++
++        let query: [String: Any] = [
++            kSecClass as String: kSecClassGenericPassword,
++            kSecAttrAccount as String: identifier,
++            kSecValueData as String: keyData,
++            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
++        ]
++
++        // Delete existing key first
++        SecItemDelete(query as CFDictionary)
++
++        let status = SecItemAdd(query as CFDictionary, nil)
++        guard status == errSecSuccess else {
++            throw RTMPError.keychainError("Failed to save stream key: \(status)")
++        }
++    }
++
++    /// Retrieve stream key from Keychain
++    private func loadStreamKey() throws -> String {
++        let query: [String: Any] = [
++            kSecClass as String: kSecClassGenericPassword,
++            kSecAttrAccount as String: streamKeyIdentifier,
++            kSecReturnData as String: true
++        ]
++
++        var result: AnyObject?
++        let status = SecItemCopyMatching(query as CFDictionary, &result)
++
++        guard status == errSecSuccess, let keyData = result as? Data,
++              let key = String(data: keyData, encoding: .utf8) else {
++            throw RTMPError.keychainError("Stream key not found in Keychain")
++        }
++
++        return key
++    }
++
+     func sendFrame(_ data: Data) async throws {
+         guard isConnected, let connection = connection else {
+             throw RTMPError.notConnected
+@@ -77,6 +115,11 @@ class RTMPClient {
+     }
+
+     private func performHandshake() async throws {
++        // Load stream key from Keychain (NOT from property)
++        let streamKey = try loadStreamKey()
++
++        // WARNING: Never log stream key
++        print("🤝 RTMPClient: Handshake started (key: ***REDACTED***)")
++
+         // TODO: Implement RTMP handshake (C0, C1, C2)
+         // Placeholder for now
+         print("🤝 RTMPClient: Handshake completed")
+@@ -93,6 +136,7 @@ enum RTMPError: LocalizedError {
+     case connectionFailed
+     case notConnected
+     case handshakeFailed
++    case keychainError(String)
+
+     var errorDescription: String? {
+         switch self {
+@@ -101,6 +145,8 @@ enum RTMPError: LocalizedError {
+         case .notConnected: return "Not connected to RTMP server"
+         case .handshakeFailed: return "RTMP handshake failed"
++        case .keychainError(let message): return "Keychain error: \(message)"
+         }
+     }
+ }
++
++// MARK: - Usage Example
++
++/*
++// Save stream key once (e.g., in settings screen)
++try RTMPClient.saveStreamKey("live_abc123xyz", for: "Twitch")
++
++// Create client with secure identifier
++let client = RTMPClient(
++    url: "rtmp://live.twitch.tv/app",
++    streamKeyIdentifier: "rtmp.streamkey.twitch"  // NOT the actual key
++)
++*/
