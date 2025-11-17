@@ -358,6 +358,12 @@ target_include_directories(Echoelmusic
         Sources/Platform
         Sources/Remote
         Sources/Sync
+        Sources/Common
+        Sources/DAW
+        Sources/Lighting
+        Sources/Biofeedback
+        Sources/Development
+        Sources/Examples
 )
 
 # ===========================
