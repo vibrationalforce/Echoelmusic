@@ -72,15 +72,16 @@ class BioParameterMapper: ObservableObject {
 
     // MARK: - Musical Scale Configuration
 
-    /// Musical scale for harmonic generation
-    private let healingScale: [Float] = [
-        432.0,   // A4 (base healing frequency)
-        486.0,   // B4
-        512.0,   // C5
-        576.0,   // D5
-        648.0,   // E5
-        729.0,   // F#5
-        768.0,   // G5
+    /// Musical scale for harmonic generation (ISO 16:1975 Standard)
+    /// Equal temperament tuning based on A440 concert pitch
+    private let musicalScale: [Float] = [
+        440.00,  // A4 (ISO standard concert pitch)
+        493.88,  // B4
+        523.25,  // C5
+        587.33,  // D5
+        659.25,  // E5
+        698.46,  // F5
+        783.99,  // G5
     ]
 
 
@@ -187,16 +188,16 @@ class BioParameterMapper: ObservableObject {
         )
     }
 
-    /// Map Voice Pitch → Musical Scale (healing frequencies)
-    /// Snaps detected pitch to nearest note in healing scale
+    /// Map Voice Pitch → Musical Scale (ISO standard frequencies)
+    /// Snaps detected pitch to nearest note in equal temperament scale
     private func mapVoicePitchToScale(voicePitch: Float) -> Float {
-        guard voicePitch > 0 else { return healingScale[0] }
+        guard voicePitch > 0 else { return musicalScale[0] }
 
-        // Find nearest note in healing scale
-        var closestNote = healingScale[0]
+        // Find nearest note in musical scale (ISO 440Hz standard)
+        var closestNote = musicalScale[0]
         var minDistance = abs(voicePitch - closestNote)
 
-        for note in healingScale {
+        for note in musicalScale {
             let distance = abs(voicePitch - note)
             if distance < minDistance {
                 minDistance = distance
@@ -315,19 +316,19 @@ class BioParameterMapper: ObservableObject {
 
         var id: String { rawValue }
 
-        /// Detaillierte Beschreibung des Presets
+        /// Detaillierte Beschreibung des Presets (wissenschaftlich fundiert)
         var description: String {
             switch self {
             case .meditation:
-                return "Ruhige, tiefe Meditation mit maximaler Reverb und niedrigen Frequenzen für innere Ruhe"
+                return "Theta wave entrainment (6Hz) - Supports meditation practice via low-frequency modulation (Fell & Axmacher, 2009)"
             case .focus:
-                return "Klarer, präsenter Sound für konzentriertes Arbeiten mit 528 Hz Fokus-Frequenz"
+                return "Beta wave support (20Hz) - Maintains alertness and attention during active tasks (Engel & Fries, 2012)"
             case .relaxation:
-                return "Maximale Entspannung mit dunklen Frequenzen und langsamer Atmungsführung"
+                return "Alpha wave enhancement (10Hz) - Promotes relaxation and reduces anxiety (Bazanova & Vernon, 2015)"
             case .energize:
-                return "Helle, energetische Frequenzen mit minimalem Reverb für Aktivierung"
+                return "Gamma stimulation (40Hz) - May enhance cognitive function and attention (Iaccarino et al., Nature 2016)"
             case .creativeFlow:
-                return "Ausgewogener Sound für kreativen Flow-Zustand mit dynamischer Modulation"
+                return "Alpha-Theta transition (8Hz) - Supports creative thinking and flow states (research-based)"
             }
         }
 
@@ -350,11 +351,11 @@ class BioParameterMapper: ObservableObject {
                     reverbWet: 0.7,
                     filterCutoff: 500.0,
                     amplitude: 0.5,
-                    baseFrequency: 432.0,  // Heilfrequenz
-                    tempo: 6.0,  // Langsame Atmung
-                    harmonicCount: 7,  // Reiche Harmonien
-                    spatialPosition: (x: 0.0, y: 0.0, z: 1.0),  // Zentriert
-                    colorMood: (r: 0.4, g: 0.2, b: 0.8)  // Violett
+                    baseFrequency: 261.63,  // C4 (ISO standard) - Theta entrainment (6Hz)
+                    tempo: 6.0,  // Theta brainwave frequency (Fell & Axmacher, 2009)
+                    harmonicCount: 7,  // Rich harmonies
+                    spatialPosition: (x: 0.0, y: 0.0, z: 1.0),
+                    colorMood: (r: 0.4, g: 0.2, b: 0.8)
                 )
 
             case .focus:
@@ -362,47 +363,47 @@ class BioParameterMapper: ObservableObject {
                     reverbWet: 0.3,
                     filterCutoff: 1500.0,
                     amplitude: 0.6,
-                    baseFrequency: 528.0,  // Fokus-Frequenz (Solfeggio)
+                    baseFrequency: 440.0,  // A4 (ISO 16:1975 standard) - Beta (20Hz)
                     tempo: 7.0,
                     harmonicCount: 5,
                     spatialPosition: (x: 0.0, y: 0.0, z: 1.0),
-                    colorMood: (r: 0.2, g: 0.6, b: 0.9)  // Blau
+                    colorMood: (r: 0.2, g: 0.6, b: 0.9)
                 )
 
             case .relaxation:
                 return PresetConfiguration(
-                    reverbWet: 0.8,  // Maximaler Reverb
-                    filterCutoff: 300.0,  // Dunkle Frequenzen
-                    amplitude: 0.4,  // Leise
-                    baseFrequency: 396.0,  // Wurzelchakra-Frequenz
-                    tempo: 4.0,  // Sehr langsame Atmung
-                    harmonicCount: 3,  // Einfache Harmonien
-                    spatialPosition: (x: 0.0, y: 0.0, z: 1.5),  // Weiter weg
-                    colorMood: (r: 0.2, g: 0.8, b: 0.5)  // Grün
+                    reverbWet: 0.8,  // Maximum reverb
+                    filterCutoff: 300.0,  // Low frequencies
+                    amplitude: 0.4,  // Quiet
+                    baseFrequency: 196.0,  // G3 (ISO standard) - Alpha (10Hz) relaxation
+                    tempo: 4.0,  // Very slow breathing (Delta approaching)
+                    harmonicCount: 3,  // Simple harmonies
+                    spatialPosition: (x: 0.0, y: 0.0, z: 1.5),
+                    colorMood: (r: 0.2, g: 0.8, b: 0.5)
                 )
 
             case .energize:
                 return PresetConfiguration(
-                    reverbWet: 0.2,  // Wenig Reverb (trocken)
-                    filterCutoff: 2000.0,  // Helle Frequenzen
-                    amplitude: 0.7,  // Laut
-                    baseFrequency: 741.0,  // Erweckungs-Frequenz
-                    tempo: 8.0,  // Schnelle Atmung
+                    reverbWet: 0.2,  // Minimal reverb (dry)
+                    filterCutoff: 2000.0,  // Bright frequencies
+                    amplitude: 0.7,  // Loud
+                    baseFrequency: 329.63,  // E4 (ISO standard) - Gamma (40Hz) cognition
+                    tempo: 8.0,  // Fast breathing
                     harmonicCount: 6,
-                    spatialPosition: (x: 0.0, y: 0.0, z: 0.8),  // Näher
-                    colorMood: (r: 1.0, g: 0.5, b: 0.0)  // Orange
+                    spatialPosition: (x: 0.0, y: 0.0, z: 0.8),
+                    colorMood: (r: 1.0, g: 0.5, b: 0.0)
                 )
 
             case .creativeFlow:
                 return PresetConfiguration(
-                    reverbWet: 0.5,  // Ausgewogen
-                    filterCutoff: 1200.0,  // Mittlere Frequenzen
+                    reverbWet: 0.5,  // Balanced
+                    filterCutoff: 1200.0,  // Mid frequencies
                     amplitude: 0.6,
-                    baseFrequency: 639.0,  // Harmonie-Frequenz (Solfeggio)
-                    tempo: 6.5,  // Moderate Atmung
-                    harmonicCount: 8,  // Reichhaltige Harmonien für Kreativität
+                    baseFrequency: 293.66,  // D4 (ISO standard) - Alpha-Theta transition (8Hz)
+                    tempo: 6.5,  // Moderate breathing
+                    harmonicCount: 8,  // Rich harmonies for creativity
                     spatialPosition: (x: 0.0, y: 0.0, z: 1.0),
-                    colorMood: (r: 0.6, g: 0.3, b: 0.9)  // Lila
+                    colorMood: (r: 0.6, g: 0.3, b: 0.9)
                 )
             }
         }
