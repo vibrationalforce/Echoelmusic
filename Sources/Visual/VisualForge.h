@@ -360,6 +360,13 @@ private:
     juce::Image generateParticles(const std::map<juce::String, float>& params);
     juce::Image generateFractal(const std::map<juce::String, float>& params);
 
+    // Advanced generators
+    juce::Image generateFlowField(const std::map<juce::String, float>& params);
+    juce::Image generate3DCube(const std::map<juce::String, float>& params);
+    juce::Image generate3DSphere(const std::map<juce::String, float>& params);
+    juce::Image generate3DTorus(const std::map<juce::String, float>& params);
+    juce::Image generateLSystem(const std::map<juce::String, float>& params);
+
     //==========================================================================
     // Effect Implementations (simplified - would use GPU shaders in production)
     //==========================================================================

@@ -271,9 +271,25 @@ juce::Image VisualForge::renderGenerator(const Layer& layer)
         case GeneratorType::ParticleSystem:
             return generateParticles(layer.generatorParams);
 
+        case GeneratorType::FlowField:
+            return generateFlowField(layer.generatorParams);
+
+        case GeneratorType::Cube3D:
+            return generate3DCube(layer.generatorParams);
+
+        case GeneratorType::Sphere3D:
+            return generate3DSphere(layer.generatorParams);
+
+        case GeneratorType::Torus3D:
+            return generate3DTorus(layer.generatorParams);
+
         case GeneratorType::Mandelbrot:
         case GeneratorType::Julia:
             return generateFractal(layer.generatorParams);
+
+        case GeneratorType::LSystem:
+        case GeneratorType::FractalTree:
+            return generateLSystem(layer.generatorParams);
 
         default:
             return generateSolidColor(layer.generatorParams);
@@ -707,6 +723,483 @@ juce::Image VisualForge::effectKaleidoscope(const juce::Image& input, int segmen
 {
     juce::ignoreUnused(segments);
     return input.createCopy();  // Would implement kaleidoscope transformation
+}
+
+//==============================================================================
+// Advanced Generator Implementations
+//==============================================================================
+
+juce::Image VisualForge::generateFlowField(const std::map<juce::String, float>& params)
+{
+    // FLOW FIELD PARTICLE SYSTEM - UP TO 100,000 PARTICLES
+    // Uses Perlin noise to create organic, flowing particle motion
+
+    int particleCount = params.count("count") ? static_cast<int>(params.at("count")) : 10000;
+    particleCount = juce::jlimit(1000, 100000, particleCount); // Max 100k particles!
+
+    float flowStrength = params.count("flow") ? params.at("flow") : 0.1f;
+    float time = params.count("time") ? params.at("time") : 0.0f;
+
+    juce::Image img(juce::Image::ARGB, outputWidth, outputHeight, true);
+    juce::Graphics gfx(img);
+
+    gfx.fillAll(juce::Colours::black);
+
+    // Particle structure
+    struct Particle
+    {
+        float x, y;
+        float vx, vy;
+        juce::Colour color;
+        float life;
+        float size;
+    };
+
+    static std::vector<Particle> particles;
+
+    // Initialize particles if needed
+    if (particles.size() != static_cast<size_t>(particleCount))
+    {
+        particles.clear();
+        particles.reserve(particleCount);
+
+        for (int i = 0; i < particleCount; ++i)
+        {
+            Particle p;
+            p.x = juce::Random::getSystemRandom().nextFloat() * outputWidth;
+            p.y = juce::Random::getSystemRandom().nextFloat() * outputHeight;
+            p.vx = 0.0f;
+            p.vy = 0.0f;
+            p.life = juce::Random::getSystemRandom().nextFloat();
+            p.size = 1.0f + juce::Random::getSystemRandom().nextFloat() * 2.0f;
+
+            // Audio-reactive color
+            float hue = currentSpectrum.empty() ? p.life :
+                       currentSpectrum[i % currentSpectrum.size()];
+            p.color = juce::Colour::fromHSV(hue, 0.8f, 0.9f, 0.6f);
+
+            particles.push_back(p);
+        }
+    }
+
+    // Update and render particles
+    for (auto& p : particles)
+    {
+        // PERLIN NOISE FLOW FIELD
+        // Calculate flow direction based on position
+        float noiseX = (p.x * 0.005f) + time * 0.1f;
+        float noiseY = (p.y * 0.005f) + time * 0.1f;
+
+        // Simplified 2D Perlin noise
+        float angle = std::sin(noiseX * 3.14159f) * std::cos(noiseY * 3.14159f) * 6.28318f;
+
+        // Bio-reactive flow modulation
+        if (bioReactiveEnabled)
+        {
+            angle += (bioHRV - 0.5f) * 3.14159f;
+            flowStrength *= (0.5f + bioCoherence * 0.5f);
+        }
+
+        // Audio-reactive flow
+        if (!currentSpectrum.empty())
+        {
+            int specIndex = static_cast<int>(p.x / outputWidth * currentSpectrum.size());
+            specIndex = juce::jlimit(0, static_cast<int>(currentSpectrum.size()) - 1, specIndex);
+            flowStrength *= (0.8f + currentSpectrum[specIndex] * 0.4f);
+        }
+
+        // Update velocity based on flow field
+        p.vx += std::cos(angle) * flowStrength;
+        p.vy += std::sin(angle) * flowStrength;
+
+        // Damping
+        p.vx *= 0.95f;
+        p.vy *= 0.95f;
+
+        // Update position
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Wrap around edges
+        if (p.x < 0) p.x += outputWidth;
+        if (p.x >= outputWidth) p.x -= outputWidth;
+        if (p.y < 0) p.y += outputHeight;
+        if (p.y >= outputHeight) p.y -= outputHeight;
+
+        // Update life
+        p.life += 0.01f;
+        if (p.life > 1.0f) p.life -= 1.0f;
+
+        // Update color based on life and audio
+        float hue = p.life;
+        if (!currentSpectrum.empty())
+        {
+            int specIndex = static_cast<int>(p.life * currentSpectrum.size());
+            specIndex = juce::jlimit(0, static_cast<int>(currentSpectrum.size()) - 1, specIndex);
+            hue = currentSpectrum[specIndex];
+        }
+        p.color = juce::Colour::fromHSV(hue, 0.8f, 0.9f, 0.6f);
+
+        // Render particle with motion blur
+        gfx.setColour(p.color);
+        gfx.fillEllipse(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+
+        // Trail effect
+        gfx.setColour(p.color.withAlpha(0.3f));
+        gfx.drawLine(p.x, p.y, p.x - p.vx * 2, p.y - p.vy * 2, 0.5f);
+    }
+
+    return img;
+}
+
+juce::Image VisualForge::generate3DCube(const std::map<juce::String, float>& params)
+{
+    // 3D ROTATING CUBE WITH AUDIO-REACTIVE ROTATION
+
+    float rotationX = params.count("rotX") ? params.at("rotX") : 0.0f;
+    float rotationY = params.count("rotY") ? params.at("rotY") : 0.0f;
+    float rotationZ = params.count("rotZ") ? params.at("rotZ") : 0.0f;
+    float scale = params.count("scale") ? params.at("scale") : 100.0f;
+
+    // Bio-reactive rotation
+    if (bioReactiveEnabled)
+    {
+        rotationY += bioHRV * 3.14159f;
+        rotationX += bioCoherence * 1.5708f;
+        scale *= (0.8f + bioHRV * 0.4f);
+    }
+
+    // Audio-reactive rotation
+    if (!currentSpectrum.empty())
+    {
+        float avgSpec = 0.0f;
+        for (float s : currentSpectrum) avgSpec += s;
+        avgSpec /= currentSpectrum.size();
+        rotationZ += avgSpec * 6.28318f;
+        scale *= (1.0f + avgSpec * 0.5f);
+    }
+
+    juce::Image img(juce::Image::ARGB, outputWidth, outputHeight, true);
+    juce::Graphics gfx(img);
+
+    gfx.fillAll(juce::Colours::black);
+
+    // Define cube vertices
+    std::vector<juce::Point<float>> vertices = {
+        {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
+        {-1, -1, 1}, {1, -1, 1}, {1, 1, 1}, {-1, 1, 1}
+    };
+
+    // Rotate and project vertices
+    std::vector<juce::Point<float>> projected;
+    for (auto& v : vertices)
+    {
+        // 3D rotation matrices
+        float x = v.x, y = v.y, z = v.z;
+
+        // Rotate X
+        float y1 = y * std::cos(rotationX) - z * std::sin(rotationX);
+        float z1 = y * std::sin(rotationX) + z * std::cos(rotationX);
+
+        // Rotate Y
+        float x2 = x * std::cos(rotationY) + z1 * std::sin(rotationY);
+        float z2 = -x * std::sin(rotationY) + z1 * std::cos(rotationY);
+
+        // Rotate Z
+        float x3 = x2 * std::cos(rotationZ) - y1 * std::sin(rotationZ);
+        float y3 = x2 * std::sin(rotationZ) + y1 * std::cos(rotationZ);
+
+        // Perspective projection
+        float perspective = 300.0f / (300.0f + z2);
+        float px = x3 * scale * perspective + outputWidth / 2;
+        float py = y3 * scale * perspective + outputHeight / 2;
+
+        projected.push_back({px, py});
+    }
+
+    // Draw cube edges with frequency-reactive colors
+    const int edges[][2] = {
+        {0,1}, {1,2}, {2,3}, {3,0},  // Front face
+        {4,5}, {5,6}, {6,7}, {7,4},  // Back face
+        {0,4}, {1,5}, {2,6}, {3,7}   // Connecting edges
+    };
+
+    for (int i = 0; i < 12; ++i)
+    {
+        float hue = static_cast<float>(i) / 12.0f;
+        if (!currentSpectrum.empty())
+        {
+            int specIndex = i * currentSpectrum.size() / 12;
+            hue = currentSpectrum[specIndex];
+        }
+
+        gfx.setColour(juce::Colour::fromHSV(hue, 0.9f, 1.0f, 1.0f));
+        gfx.drawLine(projected[edges[i][0]].x, projected[edges[i][0]].y,
+                     projected[edges[i][1]].x, projected[edges[i][1]].y, 3.0f);
+    }
+
+    return img;
+}
+
+juce::Image VisualForge::generate3DSphere(const std::map<juce::String, float>& params)
+{
+    // 3D SPHERE WITH AUDIO-REACTIVE DISPLACEMENT
+
+    float rotation = params.count("rotation") ? params.at("rotation") : 0.0f;
+    float radius = params.count("radius") ? params.at("radius") : 150.0f;
+    int resolution = params.count("resolution") ? static_cast<int>(params.at("resolution")) : 32;
+
+    juce::Image img(juce::Image::ARGB, outputWidth, outputHeight, true);
+    juce::Graphics gfx(img);
+
+    gfx.fillAll(juce::Colours::black);
+
+    // Generate sphere vertices using spherical coordinates
+    for (int lat = 0; lat < resolution; ++lat)
+    {
+        for (int lon = 0; lon < resolution; ++lon)
+        {
+            float theta = lat * 3.14159f / resolution;
+            float phi = lon * 2.0f * 3.14159f / resolution + rotation;
+
+            // Spherical to Cartesian conversion
+            float x = radius * std::sin(theta) * std::cos(phi);
+            float y = radius * std::sin(theta) * std::sin(phi);
+            float z = radius * std::cos(theta);
+
+            // Audio-reactive displacement
+            float displacement = 1.0f;
+            if (!currentSpectrum.empty())
+            {
+                int specIndex = (lat * resolution + lon) % currentSpectrum.size();
+                displacement += currentSpectrum[specIndex] * 0.3f;
+            }
+
+            // Bio-reactive pulsing
+            if (bioReactiveEnabled)
+            {
+                displacement *= (0.9f + bioCoherence * 0.2f);
+            }
+
+            x *= displacement;
+            y *= displacement;
+            z *= displacement;
+
+            // Perspective projection
+            float perspective = 400.0f / (400.0f + z);
+            float px = x * perspective + outputWidth / 2;
+            float py = y * perspective + outputHeight / 2;
+
+            // Color based on position and audio
+            float hue = static_cast<float>(lat) / resolution;
+            if (!currentSpectrum.empty())
+            {
+                int specIndex = lat * currentSpectrum.size() / resolution;
+                hue = currentSpectrum[specIndex];
+            }
+
+            gfx.setColour(juce::Colour::fromHSV(hue, 0.8f, 0.9f, 0.8f));
+            gfx.fillEllipse(px - 2, py - 2, 4, 4);
+        }
+    }
+
+    return img;
+}
+
+juce::Image VisualForge::generate3DTorus(const std::map<juce::String, float>& params)
+{
+    // 3D TORUS WITH BIO-REACTIVE PARTICLE EMISSION
+
+    float rotation = params.count("rotation") ? params.at("rotation") : 0.0f;
+    float majorRadius = params.count("majorRadius") ? params.at("majorRadius") : 120.0f;
+    float minorRadius = params.count("minorRadius") ? params.at("minorRadius") : 40.0f;
+    int resolution = 64;
+
+    juce::Image img(juce::Image::ARGB, outputWidth, outputHeight, true);
+    juce::Graphics gfx(img);
+
+    gfx.fillAll(juce::Colours::black);
+
+    // Generate torus vertices
+    for (int u = 0; u < resolution; ++u)
+    {
+        for (int v = 0; v < resolution; ++v)
+        {
+            float theta = u * 2.0f * 3.14159f / resolution + rotation;
+            float phi = v * 2.0f * 3.14159f / resolution;
+
+            // Torus parametric equations
+            float x = (majorRadius + minorRadius * std::cos(phi)) * std::cos(theta);
+            float y = (majorRadius + minorRadius * std::cos(phi)) * std::sin(theta);
+            float z = minorRadius * std::sin(phi);
+
+            // Bio-reactive modulation
+            if (bioReactiveEnabled)
+            {
+                float modulation = 1.0f + (bioHRV - 0.5f) * 0.3f;
+                x *= modulation;
+                y *= modulation;
+            }
+
+            // Perspective projection
+            float perspective = 500.0f / (500.0f + z);
+            float px = x * perspective + outputWidth / 2;
+            float py = y * perspective + outputHeight / 2;
+
+            // Frequency-reactive color
+            float hue = static_cast<float>(v) / resolution;
+            if (!currentSpectrum.empty())
+            {
+                int specIndex = v * currentSpectrum.size() / resolution;
+                hue = currentSpectrum[specIndex];
+            }
+
+            gfx.setColour(juce::Colour::fromHSV(hue, 0.9f, 1.0f, 0.9f));
+            gfx.fillEllipse(px - 1.5f, py - 1.5f, 3, 3);
+        }
+    }
+
+    // Emit particles from torus (bio-reactive)
+    if (bioReactiveEnabled)
+    {
+        int particleCount = static_cast<int>(bioCoherence * 100);
+        for (int i = 0; i < particleCount; ++i)
+        {
+            float theta = juce::Random::getSystemRandom().nextFloat() * 6.28318f;
+            float phi = juce::Random::getSystemRandom().nextFloat() * 6.28318f;
+
+            float x = (majorRadius + minorRadius * std::cos(phi)) * std::cos(theta);
+            float y = (majorRadius + minorRadius * std::cos(phi)) * std::sin(theta);
+            float z = minorRadius * std::sin(phi);
+
+            float perspective = 500.0f / (500.0f + z);
+            float px = x * perspective + outputWidth / 2;
+            float py = y * perspective + outputHeight / 2;
+
+            gfx.setColour(juce::Colours::white.withAlpha(0.6f));
+            gfx.fillEllipse(px - 1, py - 1, 2, 2);
+        }
+    }
+
+    return img;
+}
+
+juce::Image VisualForge::generateLSystem(const std::map<juce::String, float>& params)
+{
+    // L-SYSTEM FRACTAL GENERATOR
+    // Creates organic, plant-like fractals using Lindenmayer systems
+
+    int iterations = params.count("iterations") ? static_cast<int>(params.at("iterations")) : 5;
+    float angle = params.count("angle") ? params.at("angle") : 25.0f;
+    float length = params.count("length") ? params.at("length") : 10.0f;
+
+    // Bio-reactive parameters
+    if (bioReactiveEnabled)
+    {
+        angle += bioCoherence * 20.0f; // More coherence = more branching
+        length *= (0.8f + bioHRV * 0.4f);
+    }
+
+    iterations = juce::jlimit(1, 7, iterations); // Max 7 iterations for performance
+
+    juce::Image img(juce::Image::ARGB, outputWidth, outputHeight, true);
+    juce::Graphics gfx(img);
+
+    gfx.fillAll(juce::Colours::black);
+
+    // L-System rules (Fractal Tree)
+    // Axiom: "F"
+    // Rules: F -> FF+[+F-F-F]-[-F+F+F]
+    juce::String axiom = "F";
+    juce::String result = axiom;
+
+    // Apply production rules iteratively
+    for (int iter = 0; iter < iterations; ++iter)
+    {
+        juce::String next = "";
+        for (int i = 0; i < result.length(); ++i)
+        {
+            juce::juce_wchar c = result[i];
+            if (c == 'F')
+            {
+                // Tree branching rule
+                next += "FF+[+F-F-F]-[-F+F+F]";
+            }
+            else
+            {
+                next += c;
+            }
+        }
+        result = next;
+    }
+
+    // Interpret the L-system string and draw
+    struct TurtleState
+    {
+        float x, y;
+        float heading; // Angle in radians
+    };
+
+    std::vector<TurtleState> stack;
+    TurtleState turtle;
+    turtle.x = outputWidth / 2.0f;
+    turtle.y = outputHeight - 50.0f;
+    turtle.heading = -90.0f * 3.14159f / 180.0f; // Start facing up
+
+    float angleRad = angle * 3.14159f / 180.0f;
+
+    // Draw the L-system
+    for (int i = 0; i < result.length() && i < 10000; ++i) // Limit for performance
+    {
+        juce::juce_wchar c = result[i];
+
+        if (c == 'F')
+        {
+            // Draw forward
+            float newX = turtle.x + length * std::cos(turtle.heading);
+            float newY = turtle.y + length * std::sin(turtle.heading);
+
+            // Color based on depth and audio
+            float hue = static_cast<float>(stack.size()) / 10.0f;
+            if (!currentSpectrum.empty())
+            {
+                int specIndex = stack.size() % currentSpectrum.size();
+                hue = currentSpectrum[specIndex];
+            }
+
+            gfx.setColour(juce::Colour::fromHSV(hue, 0.7f, 0.9f, 0.8f));
+            gfx.drawLine(turtle.x, turtle.y, newX, newY, 1.5f);
+
+            turtle.x = newX;
+            turtle.y = newY;
+        }
+        else if (c == '+')
+        {
+            // Turn right
+            turtle.heading += angleRad;
+        }
+        else if (c == '-')
+        {
+            // Turn left
+            turtle.heading -= angleRad;
+        }
+        else if (c == '[')
+        {
+            // Push state
+            stack.push_back(turtle);
+        }
+        else if (c == ']')
+        {
+            // Pop state
+            if (!stack.empty())
+            {
+                turtle = stack.back();
+                stack.pop_back();
+            }
+        }
+    }
+
+    return img;
 }
 
 //==============================================================================
