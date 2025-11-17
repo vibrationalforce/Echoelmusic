@@ -1,0 +1,232 @@
+================================================================================
+ECHOELMUSIC CODEBASE - QUICK REFERENCE CARD
+================================================================================
+
+PROJECT TYPE
+  Native iOS/macOS/watchOS/tvOS/visionOS app in Swift 5.7+
+  
+BUILD SYSTEM  
+  Swift Package Manager (Package.swift) - NO external dependencies currently
+
+UI FRAMEWORK
+  SwiftUI with Combine for state management
+
+=================================================================================
+CORE TECH STACK
+=================================================================================
+
+STATE MANAGEMENT
+  - Combine: @Published, @StateObject, ObservableObject
+  - SwiftUI: @EnvironmentObject for dependency injection
+  - Pattern: Manager classes with @MainActor annotation
+
+AUDIO SYSTEM
+  - AVFoundation (AVAudioEngine, AVAudioFile)
+  - Accelerate framework (FFT, DSP)
+  - Real-time audio processing @ 48kHz stereo
+
+BIOFEEDBACK
+  - HealthKit: HRV (RMSSD), Heart Rate, Coherence
+  - Real-time monitoring with HeartMath algorithm
+
+STORAGE - CURRENT STATE
+  - Local: JSON files in Documents/Sessions/{UUID}/
+  - Cloud: CloudKit (iCloud) - BASIC ONLY, not production
+  - No backend API exists
+
+=================================================================================
+MAIN ENTRY POINTS
+=================================================================================
+
+PRIMARY FILES
+  /Sources/Echoelmusic/EchoelmusicApp.swift    (App initialization)
+  /Sources/Echoelmusic/ContentView.swift       (Main UI - 677 lines)
+  /Sources/Echoelmusic/Recording/Session.swift (Core data model)
+  /Sources/Echoelmusic/Recording/Track.swift   (Track data model)
+
+KEY MANAGERS (State)
+  MicrophoneManager         - Audio input, FFT, pitch detection
+  AudioEngine              - Audio hub, binaural beats, spatial audio
+  RecordingEngine          - Multi-track recording, playback
+  HealthKitManager         - HRV, heart rate, coherence
+  CloudSyncManager         - Cloud sync (CloudKit only)
+
+=================================================================================
+DATA MODELS
+=================================================================================
+
+SESSION (Main recording container)
+  - id: UUID
+  - name, tempo, timeSignature, duration
+  - tracks: [Track]
+  - bioData: [BioDataPoint]
+  - metadata: SessionMetadata
+  - createdAt, modifiedAt: Date
+
+TRACK (Individual audio track)
+  - id, name, type (audio/voice/binaural/spatial/master)
+  - url: URL? (audio file path)
+  - volume, pan, isMuted, isSoloed
+  - effects: [String], waveformData: [Float]?
+
+BIO DATA POINT (Captured metrics)
+  - timestamp, hrv, heartRate, coherence, audioLevel, frequency
+
+SESSION METADATA
+  - tags, genre, mood, notes
+
+=================================================================================
+PROJECT STRUCTURE
+=================================================================================
+
+Sources/Echoelmusic/ (103 Swift files in 30+ modules)
+  ├── Audio/              (AudioEngine, DSP, Effects, Nodes)
+  ├── Recording/          (Session, Track, RecordingEngine, Export)
+  ├── Biofeedback/        (HealthKitManager)
+  ├── Cloud/              (CloudSyncManager - CloudKit only)
+  ├── Video/              (Video processing & export)
+  ├── Visual/             (5 visualization modes)
+  ├── AI/                 (ML models)
+  ├── Spatial/            (Spatial audio, AR tracking)
+  ├── MIDI/               (MIDI 2.0 + MPE)
+  ├── Stream/             (RTMP streaming)
+  ├── Views/              (SwiftUI components)
+  └── [20+ other modules] (Healthcare, accessibility, etc.)
+
+=================================================================================
+EXISTING CLOUD INTEGRATION (MINIMAL)
+=================================================================================
+
+CloudSyncManager
+  - Uses CloudKit (iCloud), NOT a REST API
+  - Can save/fetch sessions to iCloud
+  - Auto-backup every 5 minutes
+  - NO conflict resolution
+  - NO multi-device sync
+
+MISSING
+  ✗ User authentication service
+  ✗ REST/GraphQL API client
+  ✗ Centralized network error handling
+  ✗ Conflict resolution
+  ✗ Offline queue
+  ✗ Real-time sync
+
+=================================================================================
+FOR SUPABASE INTEGRATION
+=================================================================================
+
+FILES TO CREATE
+  /Sources/Echoelmusic/Backend/Services/SupabaseClient.swift
+  /Sources/Echoelmusic/Backend/Services/AuthService.swift
+  /Sources/Echoelmusic/Backend/Services/ProjectService.swift
+  /Sources/Echoelmusic/Backend/Services/StorageService.swift
+  /Sources/Echoelmusic/Backend/Models/APIProject.swift
+  /Sources/Echoelmusic/Backend/Models/AuthUser.swift
+  /Sources/Echoelmusic/Backend/Error/NetworkError.swift
+
+FILES TO MODIFY
+  Package.swift                    (Add Supabase SDK)
+  EchoelmusicApp.swift             (Add auth state)
+  Recording/Session.swift          (Add cloud_id field)
+  Recording/RecordingEngine.swift  (Add sync hooks)
+  Cloud/CloudSyncManager.swift     (Extend with Supabase)
+
+=================================================================================
+KEY ARCHITECTURAL PATTERNS
+=================================================================================
+
+OBSERVABLE OBJECT PATTERN
+  @MainActor
+  class AudioEngine: ObservableObject {
+    @Published var isRunning = false
+    // SwiftUI auto-updates when @Published changes
+  }
+
+DEPENDENCY INJECTION VIA ENVIRONMENT
+  ContentView {
+    @EnvironmentObject var audioEngine: AudioEngine
+    @EnvironmentObject var recordingEngine: RecordingEngine
+  }
+
+MANAGER PATTERN
+  Each subsystem has a manager that:
+  - Owns state (@Published properties)
+  - Manages lifecycle
+  - Provides public API
+  - Coordinates with other managers
+
+=================================================================================
+IMPORTANT PATHS
+=================================================================================
+
+Sessions stored at:
+  ~/Documents/Sessions/{SESSION_UUID}/
+    └── session.json (metadata + biodata)
+    └── audio_files/ (track audio)
+
+Audio format:
+  48kHz, stereo, float32, interleaved=false
+
+Package definition:
+  Package.swift (Swift Package Manager format)
+
+=================================================================================
+IMMEDIATE NEXT STEPS FOR CLOUD BACKEND
+=================================================================================
+
+1. READ THESE DOCS
+   ✓ CLOUD_BACKEND_ARCHITECTURE.md (detailed overview)
+   ✓ SUPABASE_INTEGRATION_ROADMAP.md (step-by-step guide)
+   ✓ This file (quick reference)
+
+2. SUPABASE SETUP
+   - Create Supabase project
+   - Create database schema (see roadmap SQL)
+   - Enable RLS policies
+   - Create Storage buckets
+
+3. CODE IMPLEMENTATION (Phase 1-5 in roadmap)
+   Phase 1 (2-3 days):  Auth
+   Phase 2 (3-4 days):  Project sync
+   Phase 3 (2-3 days):  File storage
+   Phase 4 (1-2 days):  Presets
+   Phase 5 (2-3 days):  Real-time + offline
+
+4. TOTAL TIMELINE: 3-4 weeks for full implementation
+
+=================================================================================
+CRITICAL FILES TO UNDERSTAND FIRST
+=================================================================================
+
+1. Session.swift (200 lines)
+   - Core data model, understand structure first
+
+2. EchoelmusicApp.swift (80 lines)
+   - App initialization, dependency injection
+
+3. ContentView.swift (677 lines)
+   - Main UI, shows how managers are used
+
+4. RecordingEngine.swift (first 100 lines)
+   - Session management, file I/O
+
+5. AudioEngine.swift (first 150 lines)
+   - Central audio coordination
+
+6. CloudSyncManager.swift (150 lines)
+   - Existing cloud integration (CloudKit only)
+
+=================================================================================
+QUESTIONS? CHECK THESE FILES
+=================================================================================
+
+How is state managed?          → EchoelmusicApp.swift, ContentView.swift
+How is audio processed?        → AudioEngine.swift, MicrophoneManager.swift
+Where is data stored?          → Session.swift (JSON in Documents/)
+How does cloud sync work?      → CloudSyncManager.swift (CloudKit)
+What models exist?             → Recording/Session.swift, Track.swift
+How are views structured?      → Views/ folder, ContentView.swift
+
+=================================================================================
+END QUICK REFERENCE
