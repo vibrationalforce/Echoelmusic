@@ -101,3 +101,10 @@ iOSInjectionProject/
 *.swp
 *.swo
 *~
+
+# Build artifacts
+*.log
+build.log
+CMakeCache.txt
+compile_commands.json
+.cache/
