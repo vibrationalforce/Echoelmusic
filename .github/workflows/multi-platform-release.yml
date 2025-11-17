@@ -1,0 +1,276 @@
+name: Multi-Platform Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+      - develop
+      - 'claude/**'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+  JUCE_VERSION: 7.0.12
+
+jobs:
+  build-linux:
+    name: Build Linux (x86_64)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install JUCE if missing
+        run: |
+          if [ ! -d "ThirdParty/JUCE/modules" ]; then
+            echo "Installing JUCE..."
+            rm -rf ThirdParty/JUCE
+            git clone --depth 1 --branch ${{ env.JUCE_VERSION }} https://github.com/juce-framework/JUCE.git ThirdParty/JUCE
+          fi
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2-dev \
+            libfreetype6-dev \
+            libx11-dev \
+            libxext-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            ninja-build
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DBUILD_VST3=ON \
+            -DBUILD_STANDALONE=ON \
+            -DBUILD_AAX=OFF \
+            -DBUILD_LV2=OFF \
+            -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel $(nproc)
+
+      - name: Strip binaries
+        run: |
+          strip build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic || true
+          find build/Echoelmusic_artefacts/Release/VST3 -name "*.so" -exec strip {} \; || true
+
+      - name: Package artifacts
+        run: |
+          mkdir -p artifacts/linux
+          cp -r build/Echoelmusic_artefacts/Release/Standalone artifacts/linux/
+          cp -r build/Echoelmusic_artefacts/Release/VST3 artifacts/linux/
+          cd artifacts
+          tar -czf Echoelmusic-Linux-x86_64.tar.gz linux/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Linux-x86_64
+          path: artifacts/Echoelmusic-Linux-x86_64.tar.gz
+          retention-days: 90
+
+      - name: Run tests (if available)
+        run: |
+          if [ -f "build/Tests/EchoelmusicTests" ]; then
+            cd build && ctest --output-on-failure
+          fi
+
+  build-windows:
+    name: Build Windows (x86_64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install JUCE if missing
+        shell: bash
+        run: |
+          if [ ! -d "ThirdParty/JUCE/modules" ]; then
+            echo "Installing JUCE..."
+            rm -rf ThirdParty/JUCE
+            git clone --depth 1 --branch ${{ env.JUCE_VERSION }} https://github.com/juce-framework/JUCE.git ThirdParty/JUCE
+          fi
+
+      - name: Setup MSVC
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+            -DBUILD_VST3=ON `
+            -DBUILD_STANDALONE=ON `
+            -DBUILD_AAX=OFF `
+            -DBUILD_LV2=OFF
+
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+
+      - name: Package artifacts
+        shell: bash
+        run: |
+          mkdir -p artifacts/windows
+          cp -r build/Echoelmusic_artefacts/Release/Standalone artifacts/windows/
+          cp -r build/Echoelmusic_artefacts/Release/VST3 artifacts/windows/
+          cd artifacts
+          7z a -tzip Echoelmusic-Windows-x86_64.zip windows/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Windows-x86_64
+          path: artifacts/Echoelmusic-Windows-x86_64.zip
+          retention-days: 90
+
+  build-macos:
+    name: Build macOS (Universal Binary)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install JUCE if missing
+        run: |
+          if [ ! -d "ThirdParty/JUCE/modules" ]; then
+            echo "Installing JUCE..."
+            rm -rf ThirdParty/JUCE
+            git clone --depth 1 --branch ${{ env.JUCE_VERSION }} https://github.com/juce-framework/JUCE.git ThirdParty/JUCE
+          fi
+
+      - name: Install dependencies
+        run: brew install ninja
+
+      - name: Configure CMake (Universal Binary)
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13 \
+            -DBUILD_VST3=ON \
+            -DBUILD_AU=ON \
+            -DBUILD_STANDALONE=ON \
+            -DBUILD_AAX=OFF \
+            -DBUILD_LV2=OFF
+
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel $(sysctl -n hw.ncpu)
+
+      - name: Strip binaries
+        run: |
+          strip build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic.app/Contents/MacOS/Echoelmusic || true
+          find build/Echoelmusic_artefacts/Release/VST3 -name "Echoelmusic" -exec strip {} \; || true
+          find build/Echoelmusic_artefacts/Release/AU -name "Echoelmusic" -exec strip {} \; || true
+
+      - name: Package artifacts
+        run: |
+          mkdir -p artifacts/macos
+          cp -r build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic.app artifacts/macos/
+          cp -r build/Echoelmusic_artefacts/Release/VST3 artifacts/macos/
+          cp -r build/Echoelmusic_artefacts/Release/AU artifacts/macos/
+          cd artifacts
+          tar -czf Echoelmusic-macOS-Universal.tar.gz macos/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-macOS-Universal
+          path: artifacts/Echoelmusic-macOS-Universal.tar.gz
+          retention-days: 90
+
+      - name: Verify Universal Binary
+        run: |
+          lipo -info build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic.app/Contents/MacOS/Echoelmusic || true
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release-artifacts/Echoelmusic-Linux-x86_64/*.tar.gz
+            release-artifacts/Echoelmusic-Windows-x86_64/*.zip
+            release-artifacts/Echoelmusic-macOS-Universal/*.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            # Echoelmusic ${{ github.ref_name }}
+
+            ## 🎉 Multi-Platform Release
+
+            **Platforms:**
+            - ✅ Linux x86_64 (VST3, Standalone)
+            - ✅ Windows x86_64 (VST3, Standalone)
+            - ✅ macOS Universal (VST3, AU, Standalone)
+
+            **Features:**
+            - 46 professional DSP effects
+            - 5 MIDI composition tools
+            - Biofeedback integration
+            - Ultra-low latency (<1ms capable)
+            - SIMD optimizations (AVX2/NEON/SSE)
+
+            **Installation:**
+            - Linux: Extract and copy to ~/.vst3/
+            - Windows: Extract and copy to C:\Program Files\Common Files\VST3\
+            - macOS: Extract and copy to ~/Library/Audio/Plug-Ins/
+
+            **Documentation:** https://github.com/vibrationalforce/Echoelmusic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update latest release
+        run: |
+          echo "Release created: ${{ github.ref_name }}"
+          echo "Download links available on GitHub releases page"
+
+  notify:
+    name: Build Status Notification
+    needs: [build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Build Summary
+        run: |
+          echo "## 🚀 Echoelmusic Multi-Platform Build"
+          echo "**Linux:** ${{ needs.build-linux.result }}"
+          echo "**Windows:** ${{ needs.build-windows.result }}"
+          echo "**macOS:** ${{ needs.build-macos.result }}"

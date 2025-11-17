@@ -1,0 +1,92 @@
+name: Code Quality & Testing
+
+on:
+  push:
+    branches: [ main, develop, 'claude/**' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck clang-format clang-tidy
+
+      - name: Run cppcheck
+        run: |
+          cppcheck --enable=all --suppress=missingIncludeSystem \
+            --error-exitcode=0 \
+            --inline-suppr \
+            Sources/ 2>&1 | tee cppcheck-report.txt
+
+      - name: Check formatting
+        run: |
+          find Sources -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run --Werror || true
+
+      - name: Count warnings
+        run: |
+          echo "### Warning Analysis" >> $GITHUB_STEP_SUMMARY
+          if [ -f "build.log" ]; then
+            WARNINGS=$(grep -c "warning:" build.log || echo "0")
+            echo "Total warnings: $WARNINGS" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-quality-reports
+          path: |
+            cppcheck-report.txt
+          retention-days: 30
+
+  build-test:
+    name: Quick Build Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install JUCE
+        run: |
+          if [ ! -d "ThirdParty/JUCE/modules" ]; then
+            git clone --depth 1 --branch 7.0.12 https://github.com/juce-framework/JUCE.git ThirdParty/JUCE
+          fi
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libfreetype6-dev libx11-dev \
+            libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev \
+            libgl1-mesa-dev libglu1-mesa-dev ninja-build
+
+      - name: Configure & Build
+        run: |
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_VST3=ON -DBUILD_STANDALONE=ON
+          cmake --build build --parallel $(nproc)
+
+      - name: Verify outputs
+        run: |
+          echo "### Build Outputs" >> $GITHUB_STEP_SUMMARY
+          if [ -f "build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic" ]; then
+            SIZE=$(du -h build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic | cut -f1)
+            echo "✅ Standalone: $SIZE" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -d "build/Echoelmusic_artefacts/Release/VST3/Echoelmusic.vst3" ]; then
+            SIZE=$(du -sh build/Echoelmusic_artefacts/Release/VST3/Echoelmusic.vst3 | cut -f1)
+            echo "✅ VST3: $SIZE" >> $GITHUB_STEP_SUMMARY
+          fi
