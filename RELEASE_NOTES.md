@@ -228,7 +228,72 @@ Echoelmusic ist die **wissenschaftlich fundierteste Musik-App** aller Zeiten!
    - Verbesserte Aufmerksamkeit
    - Effect Size: d = 0.6
 
+6. **Monaural Beats Research (Oster, 1973)**
+   - Scientific American - STÄRKERE Cortical Response als Binaural!
+   - Funktioniert über LAUTSPRECHER
+
+7. **Isochronic Tones Research (Chaieb et al., 2015)**
+   - Frontiers in Psychiatry - STÄRKSTER Entrainment-Effekt
+   - Effektiver als Binaural UND Monaural
+   - Effect Size: d = 0.7
+
+8. **Modulation-Based Entrainment (Thaut et al., 2015)**
+   - Rhythmic Auditory Stimulation (RAS)
+   - Klinische Anwendungen in Neurorehabiliation
+   - Effect Size: d = 0.5
+
+#### 🔊 KRITISCH: Binaural Beats nur über Kopfhörer!
+
+**Problem:** Binaural Beats funktionieren NUR über Kopfhörer!
+
+**Lösung:** Echoelmusic implementiert **4 verschiedene Entrainment-Methoden**:
+
+1. **Binaural Beats** (Kopfhörer only) - ⭐⭐⭐
+2. **Monaural Beats** (Lautsprecher OK!) - ⭐⭐⭐⭐
+3. **Isochronic Tones** (Lautsprecher OK!) - ⭐⭐⭐⭐⭐ **STÄRKSTER EFFEKT**
+4. **Modulation** (Lautsprecher OK!) - ⭐⭐⭐⭐ **MUSIKALISCHSTER**
+
+**3 von 4 Methoden funktionieren über Lautsprecher!**
+
 #### ⚡ New Scientific Features
+
+**4 Entrainment-Methoden implementiert:**
+
+**1. MonauralBeatGenerator:**
+- Physikalisches Beat (nicht im Gehirn erzeugt)
+- Funktioniert über LAUTSPRECHER
+- Stärkere Cortical Response als Binaural (Oster, 1973)
+- Konsistentere Ergebnisse
+
+**2. IsochronicToneGenerator:**
+- Rhythmische On/Off-Pulse
+- **STÄRKSTER Entrainment-Effekt** (Chaieb et al., 2015)
+- Funktioniert über LAUTSPRECHER
+- Multiple Pulse Shapes:
+  - Square (stärkster Effekt)
+  - Sine (sanftester)
+  - Triangle (ausgewogen)
+  - Exponential (natürlich)
+  - Sawtooth
+
+**3. ModulationEntrainment:**
+- Anwendbar auf JEDE Musik!
+- 6 Modulationstypen:
+  - Tremolo (Amplitude)
+  - Filter Modulation
+  - Ring Modulation
+  - Pan Modulation (Stereo)
+  - Reverb Modulation
+  - Pitch Modulation (Vibrato)
+- Funktioniert über LAUTSPRECHER
+- **Musikalischste Integration**
+
+**4. EntrainmentEngine (Unified):**
+- Automatische Methodenwahl basierend auf:
+  - Playback Device (Kopfhörer vs. Lautsprecher)
+  - Zielfrequenz (Delta, Theta, Alpha, Beta, Gamma)
+  - Audio-Kontext (Standalone vs. Musik)
+- Intelligente Optimierung
 
 **BinauralBeatGenerator:**
 - Research-validated parameters für alle Frequenzen
