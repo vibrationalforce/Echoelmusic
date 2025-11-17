@@ -362,6 +362,8 @@ target_include_directories(Echoelmusic
         Sources/DAW
         Sources/Lighting
         Sources/Biofeedback
+        Sources/Development
+        Sources/Examples
 )
 
 # ===========================
