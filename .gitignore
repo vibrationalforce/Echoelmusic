@@ -101,3 +101,6 @@ iOSInjectionProject/
 *.swp
 *.swo
 *~
+
+# Third-party dependencies (users should clone these)
+ThirdParty/JUCE/
