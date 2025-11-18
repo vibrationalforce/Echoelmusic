@@ -19,13 +19,16 @@ let package = Package(
             targets: ["Echoelmusic"]),
     ],
     dependencies: [
-        // Add future dependencies here (e.g., for audio processing, ML, etc.)
+        // Supabase Swift SDK - Cloud backend (Auth, Database, Storage, Realtime)
+        .package(url: "https://github.com/supabase/supabase-swift.git", from: "2.0.0"),
     ],
     targets: [
         // Core Echoelmusic target - cross-platform code
         .target(
             name: "Echoelmusic",
-            dependencies: [],
+            dependencies: [
+                .product(name: "Supabase", package: "supabase-swift"),
+            ],
             resources: [
                 .process("Resources")
             ]),
