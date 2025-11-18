@@ -236,6 +236,17 @@ target_sources(Echoelmusic
         Sources/Plugin/PluginManager.cpp      # ✅ VST3/AU Plugin Scanning, Loading, State Management
 
         # =====================================================================
+        # PHASE 4: NETWORK & COLLABORATION (NEW! 2025-11-18) 🌐✨
+        # Ultra-Low-Latency Streaming, WebRTC, Ableton Link, NDI, Syphon
+        # =====================================================================
+        Sources/Remote/WebRTCTransport.cpp    # ✅ WebRTC P2P (<10ms LAN, <50ms Internet)
+        Sources/Remote/AbletonLinkSync.cpp    # ✅ Ableton Link Sample-Accurate Sync
+        Sources/Remote/NDIManager.cpp         # ✅ NDI Network Video (OBS/vMix/TouchDesigner)
+
+        # macOS-only (Objective-C++)
+        $<$<PLATFORM_ID:Darwin>:Sources/Remote/SyphonManager.mm>  # ✅ Syphon macOS Video Sharing
+
+        # =====================================================================
         # PHASE 2: DSP EFFECTS (All JUCE 7 Compatible! 🎉)
         # =====================================================================
 
