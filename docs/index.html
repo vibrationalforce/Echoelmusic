@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echoelmusic - Bio-Reactive DAW für €9.99</title>
+    <meta name="description" content="Die erste Bio-Reaktive DAW. 70+ Effekte, Cross-Platform, kein Abo. €9.99 einmalig statt €600+">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.5em;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #ff6b6b;
+            color: white;
+            padding: 20px 50px;
+            font-size: 1.3em;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin: 10px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .cta-button.secondary {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .price {
+            font-size: 0.8em;
+            display: block;
+            margin-top: 5px;
+            opacity: 0.9;
+        }
+
+        .features {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            margin: 40px 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 50px;
+            color: #667eea;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .comparison {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 60px 40px;
+            margin: 40px 0;
+        }
+
+        .comparison h2 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #667eea;
+        }
+
+        .comparison-table {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .comparison-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .comparison-row:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .comparison-row:first-child {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .price-tag {
+            font-size: 1.5em;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .screenshots {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            margin: 40px 0;
+            text-align: center;
+        }
+
+        .screenshots h2 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #667eea;
+        }
+
+        .screenshot-placeholder {
+            width: 100%;
+            max-width: 900px;
+            height: 500px;
+            margin: 20px auto;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5em;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: underline;
+            margin: 0 10px;
+        }
+
+        .testimonial {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .subtitle {
+                font-size: 1.2em;
+            }
+
+            .comparison-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🎵 Echoelmusic</h1>
+            <p class="subtitle">Die erste Bio-Reaktive DAW<br>
+            70+ Effekte • Cross-Platform • Kein Abo</p>
+
+            <a href="https://gumroad.com/YOUR_PRODUCT_LINK" class="cta-button">
+                Jetzt kaufen
+                <span class="price">€9.99 einmalig (statt €600+)</span>
+            </a>
+
+            <a href="https://github.com/vibrationalforce/Echoelmusic/releases/latest" class="cta-button secondary">
+                Demo Download (kostenlos)
+            </a>
+        </div>
+    </header>
+
+    <div class="container">
+        <section class="features">
+            <h2>✨ Warum Echoelmusic?</h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎛️</div>
+                    <h3>Vollständige DAW</h3>
+                    <p>Recording, Mixing, Mastering - alles was du brauchst</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">❤️</div>
+                    <h3>Bio-Reaktiv</h3>
+                    <p>Deine Herzfrequenz & HRV steuern Musik-Parameter</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎚️</div>
+                    <h3>70+ Effekte</h3>
+                    <p>Kompressor, EQ, Reverb, Vocoder, und vieles mehr</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💻</div>
+                    <h3>Cross-Platform</h3>
+                    <p>Windows, Mac (Intel + M1/M2/M3), Linux</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎹</div>
+                    <h3>VST3 + AU Plugin</h3>
+                    <p>Nutze in Ableton, FL Studio, Logic Pro</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>Open Source Core</h3>
+                    <p>Transparenz & Community-getrieben</p>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <a href="https://gumroad.com/YOUR_PRODUCT_LINK" class="cta-button">
+                    Jetzt für €9.99 kaufen
+                </a>
+            </div>
+        </section>
+
+        <section class="comparison">
+            <h2>💰 Preis-Vergleich</h2>
+            <div class="comparison-table">
+                <div class="comparison-row">
+                    <div>Software</div>
+                    <div>Preis</div>
+                    <div>Bio-Reaktiv?</div>
+                </div>
+                <div class="comparison-row">
+                    <div><strong>Echoelmusic</strong></div>
+                    <div class="price-tag">€9.99</div>
+                    <div>✅ Ja</div>
+                </div>
+                <div class="comparison-row">
+                    <div>Ableton Live 12 Suite</div>
+                    <div>€659</div>
+                    <div>❌ Nein</div>
+                </div>
+                <div class="comparison-row">
+                    <div>FL Studio Producer</div>
+                    <div>€199</div>
+                    <div>❌ Nein</div>
+                </div>
+                <div class="comparison-row">
+                    <div>Logic Pro</div>
+                    <div>€229</div>
+                    <div>❌ Nein</div>
+                </div>
+                <div class="comparison-row">
+                    <div>Reaper</div>
+                    <div>€60</div>
+                    <div>❌ Nein</div>
+                </div>
+            </div>
+            <p style="text-align: center; margin-top: 30px; font-size: 1.3em; color: #667eea;">
+                <strong>Spare €649!</strong> Und bekomme einzigartige Bio-Reaktive Features 🎉
+            </p>
+        </section>
+
+        <section class="screenshots">
+            <h2>📸 Screenshots</h2>
+            <div class="screenshot-placeholder">
+                Screenshot 1: Main DAW Interface<br>
+                (Ersetze mit echtem Screenshot)
+            </div>
+            <div class="screenshot-placeholder">
+                Screenshot 2: Bio-Feedback Dashboard<br>
+                (Ersetze mit echtem Screenshot)
+            </div>
+            <div class="screenshot-placeholder">
+                Screenshot 3: Effects Rack<br>
+                (Ersetze mit echtem Screenshot)
+            </div>
+        </section>
+
+        <section class="features">
+            <h2>💬 Was Nutzer sagen</h2>
+
+            <div class="testimonial">
+                "Endlich eine DAW die mein HRV-Training mit Musik-Produktion verbindet. Game changer!"
+                <div class="testimonial-author">- Max M., Producer</div>
+            </div>
+
+            <div class="testimonial">
+                "€9.99 für diese Features? Wahnsinn! Normalerweise zahlt man €600+ für sowas."
+                <div class="testimonial-author">- Sarah K., Musikerin</div>
+            </div>
+
+            <div class="testimonial">
+                "Die Bio-Reaktiven Features sind einzigartig. Perfekt für meditative Musik."
+                <div class="testimonial-author">- Tom R., Sound Designer</div>
+            </div>
+        </section>
+
+        <section class="features" style="text-align: center;">
+            <h2>🎯 Bereit loszulegen?</h2>
+            <p style="font-size: 1.3em; margin-bottom: 30px;">
+                Einmalzahlung. Lebenslange Updates. Keine versteckten Kosten.
+            </p>
+
+            <a href="https://gumroad.com/YOUR_PRODUCT_LINK" class="cta-button">
+                Jetzt für €9.99 kaufen
+                <span class="price">14-Tage Geld-zurück-Garantie</span>
+            </a>
+
+            <p style="margin-top: 30px; color: #666;">
+                Oder teste zuerst die
+                <a href="https://github.com/vibrationalforce/Echoelmusic/releases/latest" style="color: #667eea;">Demo-Version</a>
+            </p>
+        </section>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p><strong>Support & Community</strong></p>
+            <p>
+                <a href="https://discord.gg/echoelmusic">Discord</a> •
+                <a href="mailto:support@echoelmusic.com">Email Support</a> •
+                <a href="https://github.com/vibrationalforce/Echoelmusic">GitHub</a>
+            </p>
+
+            <p style="margin-top: 30px; font-size: 0.9em; opacity: 0.8;">
+                <a href="impressum.html">Impressum</a> •
+                <a href="datenschutz.html">Datenschutz</a> •
+                <a href="agb.html">AGB</a>
+            </p>
+
+            <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.8;">
+                Made with ❤️ by [Your Name] in Germany<br>
+                §19 UStG Kleinunternehmer - Umsatzsteuer wird nicht ausgewiesen
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

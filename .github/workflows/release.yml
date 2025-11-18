@@ -1,0 +1,317 @@
+name: 🚀 Automatic Release (Windows, Mac, Linux)
+
+# ULTRA-AUTOMATION für Solo-Künstler:
+# Du machst: git push
+# GitHub macht: Build Windows/Mac/Linux + automatisches Release
+# Du: 0 Minuten Arbeit! ✅
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*.*.*'  # Triggered by version tags (z.B. v1.0.0)
+  workflow_dispatch:  # Manual trigger via GitHub UI
+
+jobs:
+  # ============================================
+  # JOB 1: BUILD WINDOWS
+  # ============================================
+  build-windows:
+    name: 🪟 Windows Build
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup JUCE dependencies
+        run: |
+          ./setup_juce.sh
+        shell: bash
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Build
+        run: |
+          cmake --build build --config Release --parallel 4
+
+      - name: Package Windows installer
+        run: |
+          # Create installer directory
+          mkdir -p Echoelmusic-Windows
+
+          # Copy VST3 plugin
+          cp -r build/Echoelmusic_artefacts/Release/VST3/Echoelmusic.vst3 Echoelmusic-Windows/
+
+          # Copy standalone app
+          cp build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic.exe Echoelmusic-Windows/
+
+          # Create README
+          echo "# Echoelmusic - Windows Installation" > Echoelmusic-Windows/README.txt
+          echo "" >> Echoelmusic-Windows/README.txt
+          echo "INSTALLATION:" >> Echoelmusic-Windows/README.txt
+          echo "1. Copy Echoelmusic.vst3 to: C:\\Program Files\\Common Files\\VST3\\" >> Echoelmusic-Windows/README.txt
+          echo "2. Run Echoelmusic.exe for standalone version" >> Echoelmusic-Windows/README.txt
+          echo "" >> Echoelmusic-Windows/README.txt
+          echo "Visit: https://echoelmusic.com" >> Echoelmusic-Windows/README.txt
+
+          # Zip everything
+          7z a Echoelmusic-Windows.zip Echoelmusic-Windows/
+        shell: bash
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Windows
+          path: Echoelmusic-Windows.zip
+
+  # ============================================
+  # JOB 2: BUILD MACOS
+  # ============================================
+  build-macos:
+    name: 🍎 macOS Build (Universal Binary)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup JUCE dependencies
+        run: |
+          bash setup_juce.sh
+
+      - name: Configure CMake (Universal Binary: Intel + Apple Silicon)
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
+            -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Build
+        run: |
+          cmake --build build --config Release --parallel 4
+
+      - name: Code sign (optional - für später)
+        run: |
+          # TODO: Add Apple Developer certificate for notarization
+          # codesign --deep --force --verify --verbose --sign "Developer ID" build/*.app
+          echo "Code signing: Disabled (add certificate for production)"
+
+      - name: Package macOS installer
+        run: |
+          # Create DMG directory
+          mkdir -p Echoelmusic-macOS
+
+          # Copy AU plugin
+          cp -r build/Echoelmusic_artefacts/Release/AU/Echoelmusic.component Echoelmusic-macOS/
+
+          # Copy VST3 plugin
+          cp -r build/Echoelmusic_artefacts/Release/VST3/Echoelmusic.vst3 Echoelmusic-macOS/
+
+          # Copy standalone app
+          cp -r build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic.app Echoelmusic-macOS/
+
+          # Create README
+          cat > Echoelmusic-macOS/README.txt << EOF
+# Echoelmusic - macOS Installation
+
+INSTALLATION:
+1. Copy Echoelmusic.component to: /Library/Audio/Plug-Ins/Components/
+2. Copy Echoelmusic.vst3 to: /Library/Audio/Plug-Ins/VST3/
+3. Run Echoelmusic.app for standalone version
+
+COMPATIBILITY:
+- Universal Binary (Intel + Apple Silicon M1/M2/M3)
+- macOS 12 (Monterey) or later
+
+Visit: https://echoelmusic.com
+EOF
+
+          # Create DMG
+          hdiutil create -volname "Echoelmusic" -srcfolder Echoelmusic-macOS -ov -format UDZO Echoelmusic-macOS.dmg
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-macOS
+          path: Echoelmusic-macOS.dmg
+
+  # ============================================
+  # JOB 3: BUILD LINUX
+  # ============================================
+  build-linux:
+    name: 🐧 Linux Build (AppImage)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2-dev \
+            libjack-jackd2-dev \
+            libcurl4-openssl-dev \
+            libfreetype6-dev \
+            libx11-dev \
+            libxcomposite-dev \
+            libxcursor-dev \
+            libxext-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxrender-dev \
+            libwebkit2gtk-4.0-dev \
+            libglu1-mesa-dev \
+            mesa-common-dev \
+            fuse \
+            libfuse2
+
+      - name: Setup JUCE dependencies
+        run: |
+          bash setup_juce.sh
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Build
+        run: |
+          cmake --build build --config Release --parallel 4
+
+      - name: Package Linux AppImage
+        run: |
+          # Create AppDir structure
+          mkdir -p Echoelmusic.AppDir/usr/bin
+          mkdir -p Echoelmusic.AppDir/usr/lib/vst3
+          mkdir -p Echoelmusic.AppDir/usr/share/applications
+          mkdir -p Echoelmusic.AppDir/usr/share/icons/hicolor/256x256/apps
+
+          # Copy standalone binary
+          cp build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic Echoelmusic.AppDir/usr/bin/
+
+          # Copy VST3 plugin
+          cp -r build/Echoelmusic_artefacts/Release/VST3/Echoelmusic.vst3 Echoelmusic.AppDir/usr/lib/vst3/
+
+          # Create .desktop file
+          cat > Echoelmusic.AppDir/usr/share/applications/echoelmusic.desktop << EOF
+[Desktop Entry]
+Type=Application
+Name=Echoelmusic
+Comment=Bio-Reactive DAW
+Exec=Echoelmusic
+Icon=echoelmusic
+Categories=AudioVideo;Audio;Midi;
+Terminal=false
+EOF
+
+          # Create AppRun script
+          cat > Echoelmusic.AppDir/AppRun << EOF
+#!/bin/bash
+SELF=\$(readlink -f "\$0")
+HERE=\${SELF%/*}
+export PATH="\${HERE}/usr/bin:\${PATH}"
+export LD_LIBRARY_PATH="\${HERE}/usr/lib:\${LD_LIBRARY_PATH}"
+exec "\${HERE}/usr/bin/Echoelmusic" "\$@"
+EOF
+          chmod +x Echoelmusic.AppDir/AppRun
+
+          # Download appimagetool
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+
+          # Create AppImage
+          ./appimagetool-x86_64.AppImage Echoelmusic.AppDir Echoelmusic-Linux-x86_64.AppImage || true
+
+          # Fallback: Create tar.gz if AppImage fails
+          if [ ! -f Echoelmusic-Linux-x86_64.AppImage ]; then
+            echo "AppImage creation failed, creating tar.gz instead"
+            tar czf Echoelmusic-Linux-x86_64.tar.gz -C Echoelmusic.AppDir .
+          fi
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Linux
+          path: |
+            Echoelmusic-Linux-x86_64.AppImage
+            Echoelmusic-Linux-x86_64.tar.gz
+
+  # ============================================
+  # JOB 4: CREATE GITHUB RELEASE
+  # ============================================
+  create-release:
+    name: 📦 Create GitHub Release
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release-artifacts/Echoelmusic-Windows/Echoelmusic-Windows.zip
+            release-artifacts/Echoelmusic-macOS/Echoelmusic-macOS.dmg
+            release-artifacts/Echoelmusic-Linux/Echoelmusic-Linux-x86_64.AppImage
+            release-artifacts/Echoelmusic-Linux/Echoelmusic-Linux-x86_64.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            # 🎵 Echoelmusic - Bio-Reactive DAW
+
+            ## Download für dein System:
+            - **Windows:** `Echoelmusic-Windows.zip`
+            - **macOS:** `Echoelmusic-macOS.dmg` (Universal: Intel + Apple Silicon)
+            - **Linux:** `Echoelmusic-Linux-x86_64.AppImage`
+
+            ## Was ist neu?
+            _(Automatisch generiert aus Commits)_
+
+            ## Kaufen:
+            **€9.99 einmalig** - Lebenslang Updates!
+            👉 [Jetzt kaufen auf Gumroad](https://gumroad.com/YOUR_PRODUCT_LINK)
+
+            ## Support:
+            - Discord: https://discord.gg/echoelmusic
+            - Email: support@echoelmusic.com
+
+            ---
+            Made with ❤️ by [Your Name] | §19 UStG Kleinunternehmer
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================
+  # JOB 5: NOTIFY ON SUCCESS (Optional)
+  # ============================================
+  notify:
+    name: 🔔 Notify on Discord (optional)
+    needs: [create-release]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Discord notification
+        run: |
+          # TODO: Add Discord webhook for automatic notifications
+          # curl -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
+          #   -H "Content-Type: application/json" \
+          #   -d '{"content": "🚀 New Echoelmusic release is live!"}'
+          echo "Discord notifications: Disabled (add webhook for production)"
