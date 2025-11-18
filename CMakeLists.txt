@@ -230,6 +230,12 @@ target_sources(Echoelmusic
         Sources/Export/ExportManager.cpp      # ✅ WAV export, LUFS normalization, Presets
 
         # =====================================================================
+        # PHASE 3B: MIDI + VST3 PLUGIN HOSTING (NEW! 2025-11-18) ✅ CRITICAL MVP
+        # =====================================================================
+        Sources/MIDI/MIDIEngine.cpp           # ✅ MIDI I/O, Recording, MPE, MIDI Learn, Quantization
+        Sources/Plugin/PluginManager.cpp      # ✅ VST3/AU Plugin Scanning, Loading, State Management
+
+        # =====================================================================
         # PHASE 2: DSP EFFECTS (All JUCE 7 Compatible! 🎉)
         # =====================================================================
 
