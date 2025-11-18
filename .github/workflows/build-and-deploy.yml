@@ -1,0 +1,380 @@
+name: Echoelmusic CI/CD - Multi-Platform Build & Deploy
+
+on:
+  push:
+    branches: [main, develop, 'claude/**']
+  pull_request:
+    branches: [main, develop]
+  release:
+    types: [published]
+  workflow_dispatch:  # Manual trigger
+
+env:
+  BUILD_TYPE: Release
+  JUCE_VERSION: 7.0.9
+
+jobs:
+  # ===========================================================================
+  # Job 1: Build for Linux (Ubuntu)
+  # ===========================================================================
+  build-linux:
+    name: 🐧 Linux Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2-dev \
+            libjack-jackd2-dev \
+            ladspa-sdk \
+            libcurl4-openssl-dev \
+            libfreetype6-dev \
+            libx11-dev \
+            libxcomposite-dev \
+            libxcursor-dev \
+            libxext-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxrender-dev \
+            libwebkit2gtk-4.0-dev \
+            libglu1-mesa-dev \
+            mesa-common-dev \
+            ninja-build \
+            cmake
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DBUILD_VST3=ON \
+            -DBUILD_STANDALONE=ON \
+            -DENABLE_ALSA=ON
+
+      - name: Build
+        run: cmake --build build --config $BUILD_TYPE --parallel $(nproc)
+
+      - name: Run Tests
+        run: |
+          cd build
+          ctest --output-on-failure --parallel $(nproc)
+
+      - name: Package
+        run: |
+          cd build
+          cpack -G TGZ
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: echoelmusic-linux-x64
+          path: build/*.tar.gz
+          retention-days: 30
+
+  # ===========================================================================
+  # Job 2: Build for macOS (Universal Binary - Intel + Apple Silicon)
+  # ===========================================================================
+  build-macos:
+    name: 🍎 macOS Build
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          brew install cmake ninja
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
+            -DBUILD_VST3=ON \
+            -DBUILD_AU=ON \
+            -DBUILD_STANDALONE=ON
+
+      - name: Build
+        run: cmake --build build --config $BUILD_TYPE --parallel $(sysctl -n hw.ncpu)
+
+      - name: Run Tests
+        run: |
+          cd build
+          ctest --output-on-failure --parallel $(sysctl -n hw.ncpu)
+
+      - name: Code Sign (if secrets available)
+        if: ${{ secrets.APPLE_CERTIFICATE }}
+        run: |
+          # Import certificate
+          echo "${{ secrets.APPLE_CERTIFICATE }}" | base64 --decode > certificate.p12
+          security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+          security import certificate.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+
+          # Sign plugins
+          codesign --force --sign "Developer ID Application" \
+            --options runtime \
+            --timestamp \
+            build/Echoelmusic_artefacts/$BUILD_TYPE/VST3/Echoelmusic.vst3
+
+      - name: Notarize (if secrets available)
+        if: ${{ secrets.APPLE_ID }}
+        run: |
+          # Create ZIP for notarization
+          cd build/Echoelmusic_artefacts/$BUILD_TYPE
+          zip -r Echoelmusic-macOS.zip VST3/ AU/ Standalone/
+
+          # Submit for notarization
+          xcrun notarytool submit Echoelmusic-macOS.zip \
+            --apple-id "${{ secrets.APPLE_ID }}" \
+            --password "${{ secrets.APPLE_APP_PASSWORD }}" \
+            --team-id "${{ secrets.APPLE_TEAM_ID }}" \
+            --wait
+
+      - name: Package
+        run: |
+          cd build
+          cpack -G DragNDrop
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: echoelmusic-macos-universal
+          path: |
+            build/*.dmg
+            build/*.pkg
+          retention-days: 30
+
+  # ===========================================================================
+  # Job 3: Build for Windows
+  # ===========================================================================
+  build-windows:
+    name: 🪟 Windows Build
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSVC
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: Install CMake & Ninja
+        run: |
+          choco install cmake ninja
+
+      - name: Configure CMake
+        run: |
+          cmake -B build `
+            -G "Visual Studio 17 2022" `
+            -A x64 `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DBUILD_VST3=ON `
+            -DBUILD_STANDALONE=ON `
+            -DENABLE_WASAPI=ON `
+            -DENABLE_ASIO=ON
+
+      - name: Build
+        run: cmake --build build --config $env:BUILD_TYPE --parallel
+
+      - name: Run Tests
+        run: |
+          cd build
+          ctest -C $env:BUILD_TYPE --output-on-failure --parallel
+
+      - name: Code Sign (if secrets available)
+        if: ${{ secrets.WINDOWS_CERTIFICATE }}
+        run: |
+          # Sign executables
+          signtool sign /f certificate.pfx /p "${{ secrets.CERTIFICATE_PASSWORD }}" `
+            /tr http://timestamp.digicert.com /td SHA256 `
+            build\Echoelmusic_artefacts\$env:BUILD_TYPE\VST3\Echoelmusic.vst3
+
+      - name: Package
+        run: |
+          cd build
+          cpack -G WIX -G ZIP
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: echoelmusic-windows-x64
+          path: |
+            build/*.msi
+            build/*.zip
+          retention-days: 30
+
+  # ===========================================================================
+  # Job 4: Build for iOS
+  # ===========================================================================
+  build-ios:
+    name: 📱 iOS Build
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build iOS App
+        run: |
+          xcodebuild -scheme Echoelmusic \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Build iOS Simulator (for testing)
+        run: |
+          xcodebuild -scheme Echoelmusic \
+            -sdk iphonesimulator \
+            -configuration Release \
+            -derivedDataPath build-simulator
+
+      - name: Upload iOS Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: echoelmusic-ios
+          path: build/Build/Products/Release-iphoneos/
+          retention-days: 30
+
+  # ===========================================================================
+  # Job 5: Code Quality & Security Scan
+  # ===========================================================================
+  code-quality:
+    name: 🔍 Code Quality & Security
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Run Clang-Tidy
+        run: |
+          sudo apt-get install -y clang-tidy
+          cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          clang-tidy -p build Sources/**/*.cpp --checks='-*,modernize-*,performance-*,bugprone-*'
+
+      - name: Run Cppcheck
+        run: |
+          sudo apt-get install -y cppcheck
+          cppcheck --enable=all --suppress=missingIncludeSystem Sources/
+
+      - name: Security Scan with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Security Results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # ===========================================================================
+  # Job 6: Deploy to CDN & Update Website
+  # ===========================================================================
+  deploy:
+    name: 🚀 Deploy
+    needs: [build-linux, build-macos, build-windows, build-ios]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' || github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Deploy to AWS S3
+        if: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        run: |
+          aws s3 sync . s3://downloads.echoelmusic.com/releases/${{ github.ref_name }}/ \
+            --exclude "*" \
+            --include "*.zip" \
+            --include "*.dmg" \
+            --include "*.msi" \
+            --include "*.tar.gz"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: us-east-1
+
+      - name: Deploy Website
+        if: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm install -g vercel
+          vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Notify Discord
+        if: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          curl -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"content\": \"✅ Echoelmusic ${{ github.ref_name }} deployed successfully!\"}"
+
+  # ===========================================================================
+  # Job 7: Create GitHub Release
+  # ===========================================================================
+  create-release:
+    name: 📦 Create GitHub Release
+    needs: [build-linux, build-macos, build-windows]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            **/*.zip
+            **/*.dmg
+            **/*.msi
+            **/*.tar.gz
+          body: |
+            ## 🎵 Echoelmusic ${{ github.ref_name }}
+
+            ### Downloads
+            - **Windows**: `Echoelmusic-${{ github.ref_name }}-Windows.zip`
+            - **macOS**: `Echoelmusic-${{ github.ref_name }}-macOS.dmg`
+            - **Linux**: `Echoelmusic-${{ github.ref_name }}-Linux.tar.gz`
+
+            ### Formats
+            - VST3 (Windows, macOS, Linux)
+            - AU (macOS)
+            - AAX (Windows, macOS)
+            - Standalone (All platforms)
+
+            ### Changelog
+            See [CHANGELOG.md](CHANGELOG.md) for details.
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
