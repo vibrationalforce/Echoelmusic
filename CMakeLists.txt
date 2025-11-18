@@ -220,6 +220,14 @@ target_sources(Echoelmusic
 
         # UI - Main Window (NEW! 2025-11-12) ✅ TESTED
         Sources/UI/MainWindow.cpp
+        Sources/UI/TrackView.cpp              # ✅ Waveform display, zoom, selection (2025-11-18)
+        Sources/UI/TransportBar.cpp           # ✅ Play/Stop/Record controls (2025-11-18)
+
+        # Project Management (NEW! 2025-11-18) ✅ CRITICAL MVP
+        Sources/Project/ProjectManager.cpp    # ✅ Save/Load JSON, Auto-save, Templates
+
+        # Export System (NEW! 2025-11-18) ✅ CRITICAL MVP
+        Sources/Export/ExportManager.cpp      # ✅ WAV export, LUFS normalization, Presets
 
         # =====================================================================
         # PHASE 2: DSP EFFECTS (All JUCE 7 Compatible! 🎉)
