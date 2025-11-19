@@ -220,6 +220,7 @@ target_sources(Echoelmusic
         Sources/Audio/SampleLibrary.cpp         # ✅ Sample management & organization (2025-11-19)
         Sources/Audio/SampleProcessor.cpp       # ✅ Intelligent sample transformation & creative naming (2025-11-19)
         Sources/Audio/SampleImportPipeline.cpp  # ✅ One-click import: Transform → Organize → Ready! (2025-11-19)
+        Sources/Audio/FLStudioMobileImporter.cpp # ✅ FL Studio Mobile auto-detect & import from ANY folder (2025-11-19)
 
         # UI - Main Window (NEW! 2025-11-12) ✅ TESTED
         Sources/UI/MainWindow.cpp
