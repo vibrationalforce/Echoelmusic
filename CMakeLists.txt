@@ -218,6 +218,7 @@ target_sources(Echoelmusic
         Sources/Audio/AudioExporter.cpp         # ✅ Audio export system (WAV, FLAC, OGG)
         Sources/Audio/SessionManager.cpp        # ✅ Session save/load system
         Sources/Audio/SampleLibrary.cpp         # ✅ Sample management & organization (2025-11-19)
+        Sources/Audio/SampleProcessor.cpp       # ✅ Intelligent sample transformation & creative naming (2025-11-19)
 
         # UI - Main Window (NEW! 2025-11-12) ✅ TESTED
         Sources/UI/MainWindow.cpp
