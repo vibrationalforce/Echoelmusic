@@ -104,3 +104,4 @@ iOSInjectionProject/
 
 # Third-party dependencies (users should clone these)
 ThirdParty/JUCE/
+build_test/
