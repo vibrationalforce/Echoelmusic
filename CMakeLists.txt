@@ -222,6 +222,7 @@ target_sources(Echoelmusic
         Sources/Audio/SampleImportPipeline.cpp  # ✅ One-click import: Transform → Organize → Ready! (2025-11-19)
         Sources/Audio/FLStudioMobileImporter.cpp # ✅ FL Studio Mobile auto-detect & import from ANY folder (2025-11-19)
         Sources/Audio/CloudSampleManager.cpp    # ✅ Cloud upload (Google Drive/Dropbox/WeTransfer) + FLAC/Opus compression + on-demand streaming (2025-11-19)
+        Sources/Audio/ProducerStyleProcessor.cpp # ✅ HIGH-END Producer-Style Processing: 808 Mafia, Metro Boomin, Dr. Dre, Timbaland, Aphex Twin, etc. (2025-11-19)
 
         # UI - Main Window (NEW! 2025-11-12) ✅ TESTED
         Sources/UI/MainWindow.cpp
