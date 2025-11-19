@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- HealthKit: Required for Apple Watch HRV biofeedback -->
+	<key>com.apple.developer.healthkit</key>
+	<true/>
+	<key>com.apple.developer.healthkit.access</key>
+	<array>
+		<string>health-records</string>
+	</array>
+
+	<!-- Background Audio: Required for audio playback while screen locked -->
+	<key>com.apple.developer.playable-content</key>
+	<true/>
+
+	<!-- App Groups: For sharing data between iOS app and Apple Watch app -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.echoelmusic.shared</string>
+	</array>
+
+	<!-- Inter-App Audio: For AUv3 plugin hosting -->
+	<key>inter-app-audio</key>
+	<true/>
+
+	<!-- Push Notifications: For cloud sync notifications (future) -->
+	<key>aps-environment</key>
+	<string>development</string>
+
+	<!-- iCloud: For cloud sync (future) -->
+	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.com.echoelmusic</string>
+	</array>
+	<key>com.apple.developer.icloud-services</key>
+	<array>
+		<string>CloudKit</string>
+		<string>CloudDocuments</string>
+	</array>
+
+	<!-- Keychain Sharing: For secure credential storage -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.echoelmusic</string>
+	</array>
+</dict>
+</plist>

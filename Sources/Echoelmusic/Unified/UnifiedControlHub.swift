@@ -372,21 +372,21 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply bio-derived audio parameters to audio engine and spatial mapping
     private func applyBioAudioParameters(_ mapper: BioParameterMapper) {
-        // Apply filter cutoff
-        // TODO: Apply to actual AudioEngine filter node
-        // print("[Bio→Audio] Filter Cutoff: \(Int(mapper.filterCutoff)) Hz")
+        // ✅ IMPLEMENTED: Bio-reactive audio parameter bridge to C++ AudioEngine
 
-        // Apply reverb wetness
-        // TODO: Apply to actual AudioEngine reverb node
-        // print("[Bio→Audio] Reverb Wet: \(Int(mapper.reverbWet * 100))%")
+        // Apply filter cutoff (HRV modulates filter frequency)
+        AudioEngineParameterBridge.shared.setFilterCutoff(mapper.filterCutoff)
 
-        // Apply amplitude
-        // TODO: Apply to actual AudioEngine master volume
-        // print("[Bio→Audio] Amplitude: \(Int(mapper.amplitude * 100))%")
+        // Apply reverb size (cardiac coherence = larger reverb for expansive feeling)
+        AudioEngineParameterBridge.shared.setReverbSize(mapper.reverbWet)
 
-        // Apply tempo
-        // TODO: Apply to tempo-synced effects (delay, arpeggiator)
-        // print("[Bio→Audio] Tempo: \(String(format: "%.1f", mapper.tempo)) BPM")
+        // Apply master volume (can be used for gentle breathing-based volume swell)
+        AudioEngineParameterBridge.shared.setMasterVolume(mapper.amplitude)
+
+        // Apply delay time based on heart rate interval (tempo-synced effects)
+        // Convert BPM to delay time: 60000ms / BPM = ms per beat
+        let delayTimeMs = Float(60000.0 / Double(mapper.tempo))
+        AudioEngineParameterBridge.shared.setDelayTime(delayTimeMs)
 
         // Apply bio-reactive spatial field (AFA)
         if let mpe = mpeZoneManager, let spatialMapper = midiToSpatialMapper {

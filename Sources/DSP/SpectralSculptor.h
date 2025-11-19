@@ -242,8 +242,16 @@ private:
     float mix = 1.0f;
     bool zeroLatency = false;
 
-    // Visualization
-    mutable std::mutex spectrumMutex;
+    // Visualization (lock-free communication between audio and UI threads)
+    static constexpr int visualFifoSize = 2;
+    juce::AbstractFifo visualSpectrumFifo { visualFifoSize };
+    juce::AbstractFifo visualNoiseProfileFifo { visualFifoSize };
+
+    // Double-buffered visualization data
+    std::array<std::vector<float>, visualFifoSize> visualSpectrumBuffers;
+    std::array<std::vector<float>, visualFifoSize> visualNoiseProfileBuffers;
+
+    // UI thread reads from these (no locks needed)
     std::vector<float> visualSpectrum;
     std::vector<float> visualNoiseProfile;
 

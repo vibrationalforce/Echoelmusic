@@ -163,8 +163,11 @@ private:
     std::array<float, fftSize * 2> fftData;
     int fftDataIndex = 0;
 
-    std::array<float, spectrumBins> spectrumData;
-    mutable std::mutex spectrumMutex;
+    // Lock-free visualization communication
+    static constexpr int spectrumFifoSize = 2;
+    juce::AbstractFifo spectrumFifo { spectrumFifoSize };
+    std::array<std::array<float, spectrumBins>, spectrumFifoSize> spectrumBuffers;
+    std::array<float, spectrumBins> spectrumData;  // UI thread reads from this
 
     //==========================================================================
     // Internal Methods

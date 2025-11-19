@@ -185,8 +185,17 @@ private:
     // Oversampling
     std::unique_ptr<juce::dsp::Oversampling<float>> oversampling;
 
-    // Visualization
-    mutable std::mutex spectrumMutex;
+    // Visualization (lock-free communication)
+    static constexpr int spectrumFifoSize = 2;
+    std::array<juce::AbstractFifo, 4> spectrumFifos {{
+        juce::AbstractFifo{spectrumFifoSize},
+        juce::AbstractFifo{spectrumFifoSize},
+        juce::AbstractFifo{spectrumFifoSize},
+        juce::AbstractFifo{spectrumFifoSize}
+    }};
+
+    // Double-buffered spectrum data for each band
+    std::array<std::array<std::vector<float>, spectrumFifoSize>, 4> spectrumBuffers;
 
     //==========================================================================
     // Internal Methods

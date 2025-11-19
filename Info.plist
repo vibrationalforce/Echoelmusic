@@ -11,17 +11,19 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Blab</string>
+	<string>Echoelmusic</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>0.8.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>CFBundleDisplayName</key>
+	<string>Echoelmusic</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Blab needs microphone access to transform your voice and breath into immersive audio-visual experiences.</string>
+	<string>Echoelmusic needs microphone access to record audio and create music with real-time effects.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -51,12 +53,24 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
+		<string>processing</string>
+		<string>fetch</string>
 	</array>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Blab may use heart rate data to create adaptive audio-visual experiences.</string>
+	<string>Echoelmusic uses Apple Watch heart rate variability (HRV) data to create bio-reactive music that responds to your emotional state in real-time.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Echoelmusic may store audio session data for analysis.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Blab uses your camera for face tracking to control audio parameters with your facial expressions.</string>
-	<key>NSFaceIDUsageDescription</key>
-	<string>Blab uses face tracking (not Face ID) to map your expressions to audio-visual parameters.</string>
+	<string>Echoelmusic uses your camera for face tracking to control audio parameters with your facial expressions and for video recording.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Echoelmusic can save your music videos to your photo library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Echoelmusic can access your photo library to add visual content to music videos.</string>
 </dict>
 </plist>

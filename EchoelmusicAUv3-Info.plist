@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Echoelmusic</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>XPC!</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.8.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<key>AudioComponents</key>
+			<array>
+				<dict>
+					<!-- Instrument (Generator) -->
+					<key>name</key>
+					<string>Echoelmusic: Bio-Reactive Synthesizer</string>
+					<key>description</key>
+					<string>Bio-reactive music synthesis with HRV control</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicAudioUnitFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aumu</string>
+					<key>subtype</key>
+					<string>echo</string>
+					<key>version</key>
+					<integer>1</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Synthesizer</string>
+						<string>Biofeedback</string>
+					</array>
+				</dict>
+				<dict>
+					<!-- Effect (Processor) -->
+					<key>name</key>
+					<string>Echoelmusic: Bio-Reactive Effects</string>
+					<key>description</key>
+					<string>Real-time audio effects controlled by HRV biofeedback</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicEffectFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>echo</string>
+					<key>version</key>
+					<integer>1</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+						<string>Biofeedback</string>
+					</array>
+				</dict>
+			</array>
+		</dict>
+		<key>NSExtensionMainStoryboard</key>
+		<string>MainInterface</string>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.AudioUnit-UI</string>
+	</dict>
+</dict>
+</plist>
