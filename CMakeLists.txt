@@ -232,6 +232,8 @@ target_sources(Echoelmusic
         Sources/Audio/UniversalSampleEngine.cpp # ✅ UNIVERSAL SAMPLE ENGINE: Centralized sample management for ALL instruments (1.2GB → <100MB optimization) (2025-11-19)
         Sources/Audio/ProceduralSampleSynthesizer.cpp  # 🚀 PROCEDURAL SYNTHESIS: 1.2GB → <10MB! Alle Sounds prozedural generiert (2025-11-19)
         Sources/Audio/EchoelmusicSignatureSounds.cpp   # 🎵 SIGNATURE LIBRARY: 70 handverlesene Sounds, perfekt für Echoelmusic (2025-11-19)
+        Sources/Audio/HybridSampleAnalyzer.cpp         # 🧬 HYBRID SYNTHESIS: Real Sample Analysis → Synthesis Models + Analog Behavior (2025-11-19)
+        Sources/Audio/HybridProducerStyleIntegration.cpp # 🎛️ PRODUCER-STYLE INTEGRATION: Sample Analysis + Producer Styles + Synthesis (2025-11-19)
 
         # UI - Main Window (NEW! 2025-11-12) ✅ TESTED
         Sources/UI/MainWindow.cpp
