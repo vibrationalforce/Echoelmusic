@@ -222,12 +222,15 @@ target_sources(Echoelmusic
         Sources/UI/MainWindow.cpp
         Sources/UI/TrackView.cpp              # ✅ Waveform display, zoom, selection (2025-11-18)
         Sources/UI/TransportBar.cpp           # ✅ Play/Stop/Record controls (2025-11-18)
+        Sources/UI/PianoRollView.cpp          # ✅ Professional MIDI note editor (2025-11-19)
+        Sources/UI/PluginEditorWindow.cpp     # ✅ VST3/AU plugin UI host (2025-11-19)
 
         # Project Management (NEW! 2025-11-18) ✅ CRITICAL MVP
         Sources/Project/ProjectManager.cpp    # ✅ Save/Load JSON, Auto-save, Templates
 
         # Export System (NEW! 2025-11-18) ✅ CRITICAL MVP
         Sources/Export/ExportManager.cpp      # ✅ WAV export, LUFS normalization, Presets
+        Sources/Export/AudioExporter.cpp      # ✅ MP3/AAC export, streaming presets (2025-11-19)
 
         # =====================================================================
         # PHASE 3B: MIDI + VST3 PLUGIN HOSTING (NEW! 2025-11-18) ✅ CRITICAL MVP
@@ -242,6 +245,7 @@ target_sources(Echoelmusic
         Sources/Remote/WebRTCTransport.cpp    # ✅ WebRTC P2P (<10ms LAN, <50ms Internet)
         Sources/Remote/AbletonLinkSync.cpp    # ✅ Ableton Link Sample-Accurate Sync
         Sources/Remote/NDIManager.cpp         # ✅ NDI Network Video (OBS/vMix/TouchDesigner)
+        Sources/Collaboration/SessionSharing.cpp  # ✅ QR Code + Link-Based Sessions (Flockdraw-style) (2025-11-19)
 
         # macOS-only (Objective-C++)
         $<$<PLATFORM_ID:Darwin>:Sources/Remote/SyphonManager.mm>  # ✅ Syphon macOS Video Sharing
@@ -370,6 +374,7 @@ target_include_directories(Echoelmusic
     PUBLIC
         Sources
         Sources/Plugin
+        Sources/UI
         Sources/MIDI
         Sources/DSP
         Sources/DSP/Effects
@@ -389,6 +394,9 @@ target_include_directories(Echoelmusic
         Sources/Biofeedback
         Sources/Development
         Sources/Examples
+        Sources/Export
+        Sources/Project
+        Sources/Collaboration
 )
 
 # ===========================
