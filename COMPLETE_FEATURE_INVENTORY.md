@@ -634,8 +634,9 @@ However, you have:
 10. **Spatial Audio** - Object-based 3D audio positioning
 11. **AUv3 Plugin Capability** - Works standalone AND inside GarageBand/Logic/Cubasis
 12. **Unified Pricing** - €29.99 for everything (no subscriptions)
+13. **Complete Visual Performance System** ⭐ **BONUS FEATURE!** - Laser shows, VJ visuals, video editing, lighting control
 
-**✨ 12 UNIQUE FEATURES - The Sacred Number of Completeness ✨**
+**✨ 12 UNIQUE FEATURES + 1 BONUS = 13 (The Sacred Number of Transformation) ✨**
 
 ---
 
