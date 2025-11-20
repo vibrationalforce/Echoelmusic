@@ -1,6 +1,22 @@
 #include "AudioEngine.h"
 #include "Track.h"
 
+// Forward declaration of bio-reactive parameters from Objective-C++ bridge
+// Implementation in EchoelmusicAudioEngineBridge.mm
+namespace EchoelmusicBioReactive {
+    float getFilterCutoffHz();
+    float getReverbSize();
+    float getReverbDecay();
+    float getBioVolume();
+    float getDelayTimeMs();
+    float getDelayFeedback();
+    float getModulationRateHz();
+    float getModulationDepth();
+    float getDistortionAmount();
+    float getCompressorThresholdDb();
+    float getCompressorRatio();
+}
+
 //==============================================================================
 AudioEngine::AudioEngine()
 {
@@ -26,6 +42,38 @@ void AudioEngine::prepare(double sampleRate, int maximumBlockSize)
 
     recordBuffer.setSize(2, maximumBlockSize);
     recordBuffer.clear();
+
+    bioReactiveFXBuffer.setSize(2, maximumBlockSize);
+    bioReactiveFXBuffer.clear();
+
+    // Prepare bio-reactive DSP chain
+    bioReactiveDSPSpec.sampleRate = sampleRate;
+    bioReactiveDSPSpec.maximumBlockSize = (juce::uint32)maximumBlockSize;
+    bioReactiveDSPSpec.numChannels = 2;
+
+    // Filter (State Variable TPT - low/high/bandpass)
+    bioReactiveFilter.prepare(bioReactiveDSPSpec);
+    bioReactiveFilter.setType(Filter::Type::lowpass);
+    bioReactiveFilter.setCutoffFrequency(1000.0f); // Default, will be modulated by HRV
+    bioReactiveFilter.setResonance(0.707f); // Butterworth (flat response)
+
+    // Reverb
+    juce::dsp::Reverb::Parameters reverbParams;
+    reverbParams.roomSize = 0.5f;     // Will be modulated by cardiac coherence
+    reverbParams.damping = 0.5f;
+    reverbParams.wetLevel = 0.3f;     // 30% wet by default
+    reverbParams.dryLevel = 0.7f;     // 70% dry
+    reverbParams.width = 1.0f;        // Full stereo width
+    reverbParams.freezeMode = 0.0f;
+    bioReactiveReverb.setParameters(reverbParams);
+
+    // Delay (pre-allocated to 2 seconds max)
+    bioReactiveDelay.prepare(bioReactiveDSPSpec);
+    bioReactiveDelay.reset();
+    bioReactiveDelay.setMaximumDelayInSamples((int)(sampleRate * 2.0));
+
+    // Reset LFO phase
+    lfoPhase = 0.0f;
 
     // Prepare all tracks
     const juce::ScopedLock sl(tracksLock);
@@ -276,11 +324,14 @@ void AudioEngine::processAudioBlock(const float* const* input, float* const* out
         // Mix all tracks to master
         mixTracksToMaster(numSamples);
 
+        // Apply bio-reactive DSP (HRV-modulated effects)
+        applyBioReactiveDSP(masterBuffer, numSamples);
+
         // Update playhead position
         updatePlayhead(numSamples);
     }
 
-    // Apply master volume
+    // Apply master volume (after bio-reactive DSP)
     float volume = masterVolume.load();
     for (int channel = 0; channel < juce::jmin(2, masterBuffer.getNumChannels()); ++channel)
     {
@@ -373,6 +424,100 @@ void AudioEngine::updateMetering(const float* const* output, int numOutputs, int
 
         masterPeakRight.store(peakR);
     }
+}
+
+//==============================================================================
+// Bio-Reactive DSP (HRV-Modulated Effects)
+//==============================================================================
+
+void AudioEngine::applyBioReactiveDSP(juce::AudioBuffer<float>& buffer, int numSamples)
+{
+    // Read atomic bio-reactive parameters (lock-free, real-time safe)
+    const float filterCutoff = EchoelmusicBioReactive::getFilterCutoffHz();
+    const float reverbSize = EchoelmusicBioReactive::getReverbSize();
+    const float bioVolume = EchoelmusicBioReactive::getBioVolume();
+    const float delayTimeMs = EchoelmusicBioReactive::getDelayTimeMs();
+    const float delayFeedback = EchoelmusicBioReactive::getDelayFeedback();
+    const float modRateHz = EchoelmusicBioReactive::getModulationRateHz();
+    const float modDepth = EchoelmusicBioReactive::getModulationDepth();
+
+    const int numChannels = juce::jmin(buffer.getNumChannels(), 2);
+    if (numChannels == 0 || numSamples == 0)
+        return;
+
+    // 1. FILTER (HRV modulates cutoff frequency)
+    // Update filter parameters (smoothed to avoid zipper noise)
+    bioReactiveFilter.setCutoffFrequency(filterCutoff);
+
+    // Process filter
+    juce::dsp::AudioBlock<float> block(buffer);
+    juce::dsp::ProcessContextReplacing<float> filterContext(block);
+    filterContext.getOutputBlock() = filterContext.getOutputBlock().getSubsetChannelBlock(0, numChannels);
+    bioReactiveFilter.process(filterContext);
+
+    // 2. REVERB (Cardiac coherence modulates room size)
+    juce::dsp::Reverb::Parameters reverbParams = bioReactiveReverb.getParameters();
+    reverbParams.roomSize = juce::jlimit(0.0f, 1.0f, reverbSize);
+    reverbParams.wetLevel = 0.3f; // 30% wet mix
+    reverbParams.dryLevel = 0.7f; // 70% dry mix
+    bioReactiveReverb.setParameters(reverbParams);
+
+    // Process reverb
+    bioReactiveReverb.processStereo(buffer.getWritePointer(0),
+                                    numChannels > 1 ? buffer.getWritePointer(1) : buffer.getWritePointer(0),
+                                    numSamples);
+
+    // 3. DELAY (Heart rate interval modulates delay time)
+    const int delaySamples = juce::jlimit(1, (int)(currentSampleRate * 2.0),
+                                          (int)(delayTimeMs * currentSampleRate / 1000.0f));
+    bioReactiveDelay.setDelay((float)delaySamples);
+
+    // Process delay with feedback (manual implementation for control)
+    for (int channel = 0; channel < numChannels; ++channel)
+    {
+        auto* channelData = buffer.getWritePointer(channel);
+
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            // Read delayed sample
+            float delayedSample = bioReactiveDelay.popSample(channel);
+
+            // Mix with current sample (50% wet)
+            float output = channelData[sample] * 0.7f + delayedSample * 0.3f;
+
+            // Push to delay line with feedback
+            bioReactiveDelay.pushSample(channel, channelData[sample] + delayedSample * delayFeedback);
+
+            channelData[sample] = output;
+        }
+    }
+
+    // 4. LFO MODULATION (Breathing rate modulates amplitude/filter)
+    // Update LFO phase
+    const float lfoIncrement = (modRateHz / (float)currentSampleRate) * juce::MathConstants<float>::twoPi;
+
+    for (int sample = 0; sample < numSamples; ++sample)
+    {
+        // Calculate LFO value (sine wave, 0-1 range)
+        float lfoValue = (std::sin(lfoPhase) + 1.0f) * 0.5f;
+
+        // Apply modulation to amplitude (gentle breathing effect)
+        float modulation = 1.0f - (modDepth * 0.2f * (1.0f - lfoValue));
+
+        for (int channel = 0; channel < numChannels; ++channel)
+        {
+            auto* channelData = buffer.getWritePointer(channel);
+            channelData[sample] *= modulation;
+        }
+
+        // Advance LFO phase
+        lfoPhase += lfoIncrement;
+        if (lfoPhase >= juce::MathConstants<float>::twoPi)
+            lfoPhase -= juce::MathConstants<float>::twoPi;
+    }
+
+    // 5. BIO VOLUME (Final gain stage from HRV)
+    buffer.applyGain(bioVolume);
 }
 
 //==============================================================================
