@@ -4,15 +4,15 @@ import CoreAudio
 import Accelerate
 import simd
 
-/// Spatial Audio Manager - Professional Dolby Atmos & Apple Spatial Audio
+/// Spatial Audio Manager - Professional Immersive Audio & Apple Spatial Audio
 ///
 /// **Supported Formats:**
-/// - Dolby Atmos (7.1.4 bed + objects)
+/// - Immersive Audio ADM BWF (7.1.4 bed + objects, ITU-R BS.2076)
 /// - Apple Spatial Audio (Binaural + Head Tracking)
 /// - ADM BWF (Audio Definition Model Broadcast Wave Format)
 /// - Ambisonic (1st-4th order)
 /// - Sony 360 Reality Audio
-/// - DTS:X (object-based)
+/// - MPEG-H 3D Audio (object-based)
 ///
 /// **Backward Compatibility:**
 /// - Stereo downmix as primary track
@@ -31,10 +31,10 @@ import simd
 /// **Example:**
 /// ```swift
 /// let spatial = SpatialAudioManager()
-/// try await spatial.exportDolbyAtmos(
+/// try await spatial.exportImmersiveAudio(
 ///     session: mySession,
 ///     outputURL: outputURL,
-///     includeStereoDow nmix: true
+///     includeStereoDownmix: true
 /// )
 /// ```
 @MainActor
@@ -43,24 +43,24 @@ class SpatialAudioManager: ObservableObject {
     // MARK: - Published State
 
     @Published var isProcessing: Bool = false
-    @Published var currentFormat: SpatialFormat = .dolbyAtmos
+    @Published var currentFormat: SpatialFormat = .immersiveAudio
     @Published var objectCount: Int = 0
     @Published var headTrackingEnabled: Bool = false
 
     // MARK: - Spatial Audio Formats
 
     enum SpatialFormat: String, CaseIterable {
-        case dolbyAtmos = "Dolby Atmos"
+        case immersiveAudio = "Immersive Audio (ADM BWF)"
         case appleSpatial = "Apple Spatial Audio"
         case admBWF = "ADM BWF (Broadcast Wave)"
         case ambisonicFOA = "Ambisonic (1st Order)"
         case ambisonicHOA = "Ambisonic (Higher Order)"
         case sony360 = "Sony 360 Reality Audio"
-        case dtsX = "DTS:X"
+        case mpegH = "MPEG-H 3D Audio"
 
         var channelConfiguration: ChannelConfiguration {
             switch self {
-            case .dolbyAtmos:
+            case .immersiveAudio:
                 return .atmos714  // 7.1.4 bed + objects
             case .appleSpatial:
                 return .binaural  // Stereo with spatial metadata
@@ -72,14 +72,14 @@ class SpatialAudioManager: ObservableObject {
                 return .ambisonic3  // 16 channels (3rd order)
             case .sony360:
                 return .custom
-            case .dtsX:
+            case .mpegH:
                 return .atmos714
             }
         }
 
         var supportsObjects: Bool {
             switch self {
-            case .dolbyAtmos, .dtsX, .sony360:
+            case .immersiveAudio, .mpegH, .sony360:
                 return true
             case .appleSpatial, .admBWF, .ambisonicFOA, .ambisonicHOA:
                 return false
@@ -88,8 +88,8 @@ class SpatialAudioManager: ObservableObject {
 
         var maxObjects: Int {
             switch self {
-            case .dolbyAtmos: return 128
-            case .dtsX: return 64
+            case .immersiveAudio: return 128
+            case .mpegH: return 64
             case .sony360: return 24
             default: return 0
             }
@@ -97,8 +97,8 @@ class SpatialAudioManager: ObservableObject {
 
         var description: String {
             switch self {
-            case .dolbyAtmos:
-                return "Dolby Atmos with 7.1.4 bed + up to 128 objects"
+            case .immersiveAudio:
+                return "Immersive Audio (ADM BWF) with 7.1.4 bed + up to 128 objects - ITU-R BS.2076"
             case .appleSpatial:
                 return "Apple Spatial Audio with head tracking and binaural rendering"
             case .admBWF:
@@ -109,8 +109,8 @@ class SpatialAudioManager: ObservableObject {
                 return "Higher-order Ambisonic (up to 64 channels)"
             case .sony360:
                 return "Sony 360 Reality Audio with up to 24 objects"
-            case .dtsX:
-                return "DTS:X object-based audio"
+            case .mpegH:
+                return "MPEG-H 3D Audio object-based format"
             }
         }
     }
@@ -279,7 +279,7 @@ class SpatialAudioManager: ObservableObject {
     // MARK: - Export Options
 
     struct SpatialExportOptions {
-        var format: SpatialFormat = .dolbyAtmos
+        var format: SpatialFormat = .immersiveAudio
         var channelConfiguration: ChannelConfiguration = .atmos714
         var includeStereoDownmix: Bool = true
         var stereoDownmixGain: Float = -3.0  // dB (to avoid clipping)
@@ -335,10 +335,11 @@ class SpatialAudioManager: ObservableObject {
         listener.orientation = orientation
     }
 
-    // MARK: - Dolby Atmos Export
+    // MARK: - Immersive Audio Export
 
-    /// Export session as Dolby Atmos file (ADM BWF)
-    func exportDolbyAtmos(
+    /// Export session as Immersive Audio file (ADM BWF - ITU-R BS.2076)
+    /// Compatible with professional workflows (Pro Tools, Logic Pro, Nuendo)
+    func exportImmersiveAudio(
         session: Session,
         outputURL: URL,
         options: SpatialExportOptions = SpatialExportOptions(),
@@ -347,7 +348,7 @@ class SpatialAudioManager: ObservableObject {
         isProcessing = true
         defer { isProcessing = false }
 
-        print("🎬 Exporting Dolby Atmos:")
+        print("🎬 Exporting Immersive Audio (ADM BWF):")
         print("   Format: \(options.format.rawValue)")
         print("   Configuration: \(options.channelConfiguration.layoutDescription)")
         print("   Objects: \(objects.count)")
@@ -386,7 +387,8 @@ class SpatialAudioManager: ObservableObject {
         )
 
         progressHandler?(1.0)
-        print("   💾 Dolby Atmos file written: \(outputURL.lastPathComponent)")
+        print("   💾 Immersive Audio (ADM BWF) file written: \(outputURL.lastPathComponent)")
+        print("   ✅ Compatible with: Pro Tools, Logic Pro, Nuendo, Fairlight")
 
         return outputURL
     }
