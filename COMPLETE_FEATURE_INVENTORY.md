@@ -1,7 +1,8 @@
 # Echoelmusic - Complete Feature Inventory
 
-**Date:** November 20, 2025
+**Date:** November 21, 2025
 **Status:** 100% AppStore Ready
+**Update:** Added 15 Classical Sound Therapy Instruments
 
 ---
 
@@ -55,6 +56,154 @@
 - AUv3 plugins (e.g., Korg Module, Minimoog Model D, etc.)
 - MIDI-controlled external hardware synths
 - Import audio from other apps (GarageBand, Logic, etc.)
+
+---
+
+## 🧘 Sound Therapy Instruments (Classical Healing Instruments)
+
+### ✅ 15 THERAPEUTIC INSTRUMENTS INCLUDED
+
+**Echoelmusic includes a complete collection of classical healing instruments from worldwide traditions!**
+
+### Singing Bowls (2)
+1. **Tibetan Singing Bowl** (Tibetische Klangschale)
+   - 5 bowl sizes: Small (600-1200 Hz), Medium (400-600 Hz), Large (250-400 Hz), Extra Large (150-250 Hz), Therapeutic (80-150 Hz)
+   - 3 playing techniques: Striking, Rimming (mallet), Pulsing (rhythmic)
+   - Traditional 7-metal composition: Gold (Sun), Silver (Moon), Mercury, Copper (Venus), Iron (Mars), Tin (Jupiter), Lead (Saturn)
+   - Complex inharmonic overtone synthesis with ADSR envelope
+   - Weight range: 100g - 5kg
+
+2. **Crystal Singing Bowl** (Kristall-Klangschale)
+   - 4 crystal types: Clear Quartz (purest), Frosted (softer), Alchemical (gemstone-infused), Gemstone (colored)
+   - 7 chakra tunings: Root (C 256 Hz), Sacral (D 288 Hz), Solar Plexus (E 320 Hz), Heart (F 341.3 Hz), Throat (G 384 Hz), Third Eye (A 426.7 Hz), Crown (B 480 Hz)
+   - Very pure harmonic synthesis (almost perfect sine waves)
+   - Subtle beating and shimmer effects
+
+### Monochords (2)
+3. **Somachord** (Body Monochord)
+   - 40-string configuration for full-body resonance
+   - 4 therapeutic presets:
+     - Classical A 432 Hz (harmonic alignment)
+     - OM 136.1 Hz (year of the Earth)
+     - Schumann 7.83 Hz (Earth resonance frequency)
+     - Chakra Spectrum (full 7-chakra tuning)
+   - Multi-string phase-offset synthesis for rich sound field
+   - Professional therapy bed instrument
+
+4. **Monochord** (Traditional Monochord)
+   - Single-string to 25-string configurations
+   - Multiple tuning systems (Pythagorean, Just Intonation, Equal Temperament)
+   - Meditation and sound journey support
+
+### Gongs (2)
+5. **Therapeutic Gong** (Therapeutischer Gong)
+   - 5 gong types: Tam-Tam (Chinese), Chau (Thai), Planetary, Symphonic, Feng (wind gong)
+   - 11 planetary frequencies:
+     - Sun 126.22 Hz, Moon 210.42 Hz, Earth/OM 136.10 Hz
+     - Mercury 141.27 Hz, Venus 221.23 Hz, Mars 144.72 Hz
+     - Jupiter 183.58 Hz, Saturn 147.85 Hz
+     - Uranus 207.36 Hz, Neptune 211.44 Hz, Pluto 140.25 Hz
+   - Extremely complex harmonic content (50-100 simultaneous frequencies)
+   - Inharmonic overtones and metallic shimmer
+
+6. **Sound Bath Gong**
+   - Multi-gong configuration for immersive sound baths
+   - Sustained resonance modeling
+   - Professional therapy application
+
+### Tuning Forks (1)
+7. **Therapeutic Tuning Forks** (Therapeutische Stimmgabeln)
+   - 14 specialized forks:
+     - C 128 Hz (body work, muscle release)
+     - OM 136.1 Hz (year of the Earth, grounding)
+     - 9 Solfeggio frequencies: 174, 285, 396, 417, 528 (DNA repair), 639, 741, 852, 963 Hz
+     - Otto 64 Hz (bone work, deep tissue)
+     - Otto 128 Hz (spine and nervous system)
+     - Schumann 7.83 Hz (Earth resonance, grounding)
+   - Very pure sine wave generation
+   - Medical-grade precision
+
+### Percussion Instruments (3)
+8. **Hang / Handpan**
+   - 9-note to 12-note scales
+   - Helmholtz resonance modeling
+   - Multiple scale types: D Minor (Kurd), Celtic Minor, Equinox, Mystic
+
+9. **Ocean Drum** (Meeresklangtrommel)
+   - Wave motion simulation
+   - Calming oceanic sounds
+   - Meditation and relaxation
+
+10. **Rain Stick** (Regenstab)
+    - Length variations (50cm - 150cm)
+    - Natural rain sound synthesis
+    - Therapeutic relaxation
+
+### Drone Instruments (2)
+11. **Shruti Box** (Drone Box)
+    - 13-note to 26-note reed configurations
+    - Multiple Indian ragas and Western scales
+    - Continuous drone harmonics
+    - Meditation and voice work support
+
+12. **Tanpura** (Indian Drone Lute)
+    - 4-string or 6-string configurations
+    - Drone tunings: SA-PA (perfect fifth) or SA-MA (perfect fourth)
+    - Rich harmonic overtone series
+    - Classical Indian music and meditation
+
+### Sound Beds & Special Instruments (3)
+13. **Sound Bed** (Klangliege)
+    - Full-body vibro-acoustic therapy
+    - Multiple transducer simulation
+    - Frequency range: 20-200 Hz
+    - Professional therapy application
+
+14. **Didgeridoo** (Australian Drone Instrument)
+    - Multiple key options (C, D, E, F)
+    - Circular breathing simulation
+    - Traditional Aboriginal healing
+
+15. **Tibetan Bells** (Tingsha)
+    - Paired cymbal configuration
+    - Pure harmonic resonance
+    - Meditation beginning/ending marker
+
+**Synthesis Technology:**
+- Realistic physical modeling (inharmonic overtones, resonance)
+- AVAudioPCMBuffer synthesis at 48kHz sample rate
+- ADSR envelope shaping with realistic decay
+- Complex harmonic/inharmonic overtone series
+- Phase offset and beating effects
+- Stereo field generation
+- Traditional frequency systems:
+  - Planetary frequencies (cosmic octaves)
+  - Chakra frequencies (energy centers)
+  - Solfeggio frequencies (sacred healing tones)
+  - Schumann resonance (Earth frequency)
+  - OM frequency (year of the Earth - 136.1 Hz)
+
+**Cultural & Therapeutic Context:**
+- Tibetan Buddhist traditions (singing bowls, bells)
+- Indian classical music (tanpura, shruti box)
+- Chinese healing traditions (gongs)
+- Australian Aboriginal culture (didgeridoo)
+- European sound therapy (somachord, monochord)
+- Modern vibroacoustic therapy (sound bed)
+- Chromotherapy integration (chakra frequencies)
+
+**Professional Applications:**
+- Sound healing sessions
+- Vibroacoustic therapy
+- Meditation and mindfulness
+- Yoga and movement therapy
+- Energy work and bodywork
+- Music therapy
+- Stress reduction and relaxation
+- Pain management
+- Sleep therapy
+
+**File:** `Sources/Echoelmusic/Therapy/SoundTherapyInstruments.swift` (775 lines)
 
 ---
 
@@ -850,8 +999,8 @@ Echoelmusic includes a COMPLETE creator business platform that rivals profession
 
 **Core 12 Features:**
 1. **Bio-Reactive Music** - No other DAW offers this (HRV/heart rate → audio parameters)
-2. **17 Built-in Professional Instruments** - Synths, drums, keys, strings included
-3. **Quantum Therapy System** - 27 healing frequencies (Solfeggio, Binaural, Chakra)
+2. **32 Built-in Professional Instruments** - 17 standard instruments + 15 classical sound therapy instruments (Tibetan singing bowls, somachord, therapeutic gongs, tuning forks, etc.)
+3. **Quantum Therapy System** - 27 healing frequencies (Solfeggio, Binaural, Chakra) + 15 classical healing instruments
 4. **Audio Super Scan** - 7 professional analysis modes (FFT, LUFS, Phase Correlation)
 5. **All-in-One Production Suite** - Record, mix, master, stream, distribute
 6. **Professional Quality on iOS** - Desktop-grade features (24-bit/192kHz)
@@ -915,7 +1064,8 @@ Echoelmusic at €29.99 includes what would cost $2,000+/year elsewhere:
 | Feature | Echoelmusic | GarageBand | Cubasis | Auria Pro |
 |---------|-------------|------------|---------|-----------|
 | **Bio-Reactive** | ✅ | ❌ | ❌ | ❌ |
-| **Built-in Instruments** | ✅ (17) | ✅ (100+) | ✅ (70+) | ✅ (50+) |
+| **Built-in Instruments** | ✅ (32) | ✅ (100+) | ✅ (70+) | ✅ (50+) |
+| **Sound Therapy Instruments** | ✅ (15 classical) | ❌ | ❌ | ❌ |
 | **Quantum Therapy** | ✅ (27 frequencies) | ❌ | ❌ | ❌ |
 | **Audio Super Scan** | ✅ (7 modes) | ❌ | ❌ | ❌ |
 | **Professional Export** | ✅ (24-bit/192kHz) | ❌ | ✅ | ✅ |
@@ -930,7 +1080,7 @@ Echoelmusic at €29.99 includes what would cost $2,000+/year elsewhere:
 **Total Feature Count:** 150+ features across 18 categories (UPDATED with Visual System + Creator Platform)
 **Unique Features:** 14 (12 Core + Visual System + Creator Platform) ✨
 **Professional Features:** 100+ (matching Logic Pro + TouchDesigner + DaVinci + Later + TalentX)
-**Instruments Included:** 17 professional instruments (synths, drums, keys, strings, plucked, FX)
+**Instruments Included:** 32 professional instruments (17 standard instruments + 15 sound therapy instruments)
 **Streaming Platforms:** 12 (Twitch, YouTube, Facebook, Instagram, TikTok, LinkedIn, Kick, Rumble, Twitter/X, 3x Custom RTMP)
 **Social Media Platforms:** 11 (TikTok, Instagram x3, YouTube x2, Facebook, Twitter, LinkedIn, Snapchat, Pinterest)
 **Analytics Platforms:** 15 (YouTube, TikTok, Instagram, Twitter/X, Twitch, Facebook, LinkedIn, Spotify, Apple Music, SoundCloud, Patreon, OnlyFans, Substack, Bandcamp, Discord)
