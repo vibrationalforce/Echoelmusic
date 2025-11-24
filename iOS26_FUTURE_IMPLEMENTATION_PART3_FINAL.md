@@ -10,7 +10,7 @@
 ### Distributed Actors for Multi-Device Collaboration
 
 ```swift
-// Sources/Echoelmusic/Collaboration/DistributedCollaboration.swift
+// Sources/EOEL/Collaboration/DistributedCollaboration.swift
 
 import Foundation
 import Distributed  // Swift 7
@@ -301,7 +301,7 @@ struct ClusterActorSystem: DistributedActorSystem {
 ### Collaborative Production & Virtual Concerts
 
 ```swift
-// Sources/Echoelmusic/Social/SharePlay3Integration.swift
+// Sources/EOEL/Social/SharePlay3Integration.swift
 
 import GroupActivities3  // iOS 26
 import AVFoundation
@@ -589,7 +589,7 @@ extension Notification.Name {
 ### Virtual Concert Platform
 
 ```swift
-// Sources/Echoelmusic/Metaverse/VirtualVenuePlatform.swift
+// Sources/EOEL/Metaverse/VirtualVenuePlatform.swift
 
 import RealityKit3
 import MetaverseKit  // iOS 26 framework
@@ -676,7 +676,7 @@ class VirtualVenuePlatform: ObservableObject {
             splits: [
                 currentArtist.walletAddress: 0.8,  // 80% to artist
                 venue.ownerAddress: 0.15,          // 15% to venue
-                "0xEchoelmusic": 0.05              // 5% platform fee
+                "0xEOEL": 0.05              // 5% platform fee
             ]
         )
 
@@ -865,7 +865,7 @@ class MetaverseClient {
 ### AI-Powered Dynamic Pricing & Tokenomics
 
 ```swift
-// Sources/Echoelmusic/Business/BusinessModel2025.swift
+// Sources/EOEL/Business/BusinessModel2025.swift
 
 import Foundation
 import CoreML6

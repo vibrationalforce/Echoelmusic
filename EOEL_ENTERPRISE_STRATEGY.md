@@ -24,7 +24,7 @@ EOEL - Music Production
 
 #### **Subtitle (30 characters max)**
 ```
-AI DAW, JUMPER Network, Studio
+AI DAW, EoelWork, Studio
 ```
 
 #### **Keywords (100 characters max)**
@@ -487,7 +487,7 @@ Target publications:
 
 | Competitor | Strengths | Weaknesses | EOEL Advantage |
 |------------|-----------|------------|----------------|
-| **GarageBand** | Free, Apple ecosystem | Limited features, no AI | AI engine, JUMPER Network, Pro features |
+| **GarageBand** | Free, Apple ecosystem | Limited features, no AI | AI engine, EoelWork, Pro features |
 | **FL Studio Mobile** | Brand recognition, Desktop parity | Expensive ($15), No network features | Better UX, AI tools, Social features |
 | **Cubasis** | Professional features | Expensive ($50), Steep learning curve | More accessible, AI assistance |
 | **BeatMaker 3** | Sampling focus | Limited distribution features | Complete ecosystem |
@@ -613,7 +613,7 @@ Target publications:
 **Targets**:
 - 50,000 downloads (Month 1)
 - 5,000 paid conversions
-- 10,000 JUMPER Network™ profiles
+- 10,000 EoelWork profiles
 - App Store featuring (Music category)
 
 #### **Phase 2: Growth (Months 4-12)**
@@ -642,7 +642,7 @@ Target publications:
 - 250,000 total users (Month 12)
 - 25,000 paid subscribers
 - 50,000 active JUMPER profiles
-- 10,000 bookings via JUMPER Network™
+- 10,000 bookings via EoelWork
 
 #### **Phase 3: Scale (Year 2-3)**
 
@@ -650,7 +650,7 @@ Target publications:
 - Localization: 10 languages
 - Regional marketing campaigns
 - Local influencer partnerships
-- Regional JUMPER Network™ growth
+- Regional EoelWork growth
 
 **Platform Expansion**:
 - macOS version (Year 2 Q2)
@@ -750,7 +750,7 @@ Target publications:
 | CAC | $25 | $30 | $35 |
 | LTV:CAC Ratio | 14.4:1 | 14:1 | 13.7:1 |
 
-#### **JUMPER Network™ Metrics**
+#### **EoelWork Metrics**
 
 | Metric | Year 1 | Year 3 | Year 5 |
 |--------|--------|--------|--------|
@@ -860,7 +860,7 @@ Target publications:
 
 #### **Guideline 1: Safety**
 ✅ **1.1 Objectionable Content**: None - music production app
-✅ **1.2 User Generated Content**: Moderation system for JUMPER Network™
+✅ **1.2 User Generated Content**: Moderation system for EoelWork
 ✅ **1.3 Kids Category**: Not applicable
 ✅ **1.4 Physical Harm**: None
 ✅ **1.5 Developer Information**: Complete contact info provided
@@ -982,7 +982,7 @@ To test JUMPER NETWORK™:
 
 All features are functional.
 No external hardware required.
-Internet required for JUMPER Network™ and cloud sync.
+Internet required for EoelWork and cloud sync.
 ```
 
 ### 3.3 Privacy & Legal Documents
@@ -1008,7 +1008,7 @@ https://eoel.app/terms
 
 **Key Points**:
 - Standard license grant
-- JUMPER Network™ terms
+- EoelWork terms
 - Commission structure
 - Commercial use terms (Ultimate tier)
 - Acceptable use policy

@@ -13,7 +13,7 @@ Integration with existing: `Video/VideoExportManager.swift`, `Video/CameraManage
 **Multi-track timeline video editor optimized for music videos, optimized for iPhone 16 Pro Max**
 
 ```swift
-// Sources/Echoelmusic/Video/ProfessionalVideoEditor.swift
+// Sources/EOEL/Video/ProfessionalVideoEditor.swift
 
 import SwiftUI
 import AVFoundation

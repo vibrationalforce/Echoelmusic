@@ -1,4 +1,4 @@
-# SCIENTIFIC ARCHITECTURE - Echoelmusic
+# SCIENTIFIC ARCHITECTURE - EOEL
 
 **Wissenschaftlich fundierte Audio/Video-Plattform** ohne esoterische Komponenten.
 
@@ -549,4 +549,4 @@ System Performance:
 
 ---
 
-**Echoelmusic: Wissenschaftlich fundierte, messbare Audio-Technologie. 🔬🎵**
+**EOEL: Wissenschaftlich fundierte, messbare Audio-Technologie. 🔬🎵**

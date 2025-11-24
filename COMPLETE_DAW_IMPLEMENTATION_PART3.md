@@ -7,7 +7,7 @@
 ## 📦 MODULE 5: EXPORT ENGINE (ALL FORMATS + LUFS)
 
 ```swift
-// Sources/Echoelmusic/Export/UniversalExportEngine.swift
+// Sources/EOEL/Export/UniversalExportEngine.swift
 
 import AVFoundation
 import Accelerate

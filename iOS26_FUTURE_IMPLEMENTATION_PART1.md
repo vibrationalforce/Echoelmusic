@@ -14,14 +14,14 @@ Release: Q4 2025 - Q2 2026
 ### On-Device 100B Parameter LLM
 
 ```swift
-// Sources/Echoelmusic/AI/AppleIntelligence2.swift
+// Sources/EOEL/AI/AppleIntelligence2.swift
 
 import Foundation
 import AppleIntelligence  // iOS 26 framework
 import CoreML6
 import NeuralEngine3
 
-/// Apple Intelligence 2.0 integration for Echoelmusic
+/// Apple Intelligence 2.0 integration for EOEL
 /// 100B parameter on-device LLM with music-specific fine-tuning
 @MainActor
 class AppleIntelligence2Manager: ObservableObject {
@@ -577,7 +577,7 @@ enum AIError: Error {
 ### Immersive 3D Music Production
 
 ```swift
-// Sources/Echoelmusic/VisionPro/SpatialDAW.swift
+// Sources/EOEL/VisionPro/SpatialDAW.swift
 
 import SwiftUI
 import RealityKit3

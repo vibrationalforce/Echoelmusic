@@ -30,7 +30,7 @@
 #### **Architecture:**
 
 ```swift
-// Sources/Echoelmusic/Audio/PluginHost/PluginHostManager.swift
+// Sources/EOEL/Audio/PluginHost/PluginHostManager.swift
 
 import AudioToolbox
 import AVFoundation
@@ -245,7 +245,7 @@ class PluginScanner {
 #### **Integration with AudioEngine:**
 
 ```swift
-// Sources/Echoelmusic/Audio/AudioEngine.swift
+// Sources/EOEL/Audio/AudioEngine.swift
 
 extension AudioEngine {
 
@@ -292,7 +292,7 @@ extension AudioEngine {
 #### **Architecture:**
 
 ```swift
-// Sources/Echoelmusic/Audio/Mixer/MixerEngine.swift
+// Sources/EOEL/Audio/Mixer/MixerEngine.swift
 
 import AVFoundation
 
@@ -490,7 +490,7 @@ extension Float {
 #### **Mixer UI:**
 
 ```swift
-// Sources/Echoelmusic/Views/Mixer/MixerView.swift
+// Sources/EOEL/Views/Mixer/MixerView.swift
 
 import SwiftUI
 
@@ -677,7 +677,7 @@ struct Knob: View {
 ### **Week 5-6: Basic Effects Suite**
 
 ```swift
-// Sources/Echoelmusic/Audio/Effects/BasicEffects.swift
+// Sources/EOEL/Audio/Effects/BasicEffects.swift
 
 import AVFoundation
 
@@ -885,7 +885,7 @@ class Delay: ObservableObject {
 ### **Week 7-8: Export Engine**
 
 ```swift
-// Sources/Echoelmusic/Export/ExportEngine.swift
+// Sources/EOEL/Export/ExportEngine.swift
 
 import AVFoundation
 
@@ -1101,7 +1101,7 @@ class ExportEngine: ObservableObject {
 ### **Week 9-10: Ableton Link Integration**
 
 ```swift
-// Sources/Echoelmusic/Audio/Sync/AbletonLinkManager.swift
+// Sources/EOEL/Audio/Sync/AbletonLinkManager.swift
 
 import AVFoundation
 
@@ -1155,7 +1155,7 @@ class AbletonLinkManager: ObservableObject {
 ### **Week 11-12: Live Looping Engine**
 
 ```swift
-// Sources/Echoelmusic/Audio/Looping/LiveLoopEngine.swift
+// Sources/EOEL/Audio/Looping/LiveLoopEngine.swift
 
 import AVFoundation
 

@@ -9,7 +9,7 @@ This is the FINAL module completing the user's request: "Alle fehlenden Teile ve
 Automatically generates optimized content for TikTok, Instagram, YouTube, Spotify Canvas from your finished tracks.
 
 ```swift
-// Sources/Echoelmusic/Content/ContentAutomationSuite.swift
+// Sources/EOEL/Content/ContentAutomationSuite.swift
 
 import SwiftUI
 import AVFoundation

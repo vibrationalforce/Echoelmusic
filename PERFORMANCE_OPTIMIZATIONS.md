@@ -10,7 +10,7 @@
 ### Object Pooling for High-Frequency Allocations
 
 ```swift
-// Sources/Echoelmusic/Optimization/ObjectPool.swift
+// Sources/EOEL/Optimization/ObjectPool.swift
 
 import Foundation
 
@@ -129,7 +129,7 @@ class OptimizedAudioEngine {
 ### Lazy Loading & Deferred Initialization
 
 ```swift
-// Sources/Echoelmusic/Optimization/LazyResources.swift
+// Sources/EOEL/Optimization/LazyResources.swift
 
 import SwiftUI
 import AVFoundation
@@ -196,7 +196,7 @@ class LazyResourceManager: ObservableObject {
 ### Memory-Mapped Files for Large Data
 
 ```swift
-// Sources/Echoelmusic/Optimization/MemoryMappedAudio.swift
+// Sources/EOEL/Optimization/MemoryMappedAudio.swift
 
 import Foundation
 import AVFoundation
@@ -249,7 +249,7 @@ final class MemoryMappedAudioFile {
 ### Intelligent Background Processing
 
 ```swift
-// Sources/Echoelmusic/Optimization/BatteryOptimizer.swift
+// Sources/EOEL/Optimization/BatteryOptimizer.swift
 
 import UIKit
 import Combine
@@ -427,7 +427,7 @@ class BatteryAwareVideoEditor {
 ### CPU Thermal Management
 
 ```swift
-// Sources/Echoelmusic/Optimization/ThermalStateManager.swift
+// Sources/EOEL/Optimization/ThermalStateManager.swift
 
 import UIKit
 
@@ -535,7 +535,7 @@ class ThermalAwareGeneticAlgorithm {
 ### Request Batching & Debouncing
 
 ```swift
-// Sources/Echoelmusic/Optimization/NetworkOptimizer.swift
+// Sources/EOEL/Optimization/NetworkOptimizer.swift
 
 import Foundation
 import Combine
@@ -667,7 +667,7 @@ class NetworkRequest {
 ### Intelligent Caching Strategy
 
 ```swift
-// Sources/Echoelmusic/Optimization/IntelligentCache.swift
+// Sources/EOEL/Optimization/IntelligentCache.swift
 
 import Foundation
 
@@ -912,7 +912,7 @@ class CachedSampleLibrary {
 ### Metal Command Buffer Reuse
 
 ```swift
-// Sources/Echoelmusic/Optimization/MetalOptimizer.swift
+// Sources/EOEL/Optimization/MetalOptimizer.swift
 
 import Metal
 import MetalKit
@@ -1041,7 +1041,7 @@ kernel void optimizedBlur(
 ### Optimized Genetic Algorithm (Parallel + Early Termination)
 
 ```swift
-// Sources/Echoelmusic/Optimization/OptimizedGeneticAlgorithm.swift
+// Sources/EOEL/Optimization/OptimizedGeneticAlgorithm.swift
 
 import Foundation
 
@@ -1194,7 +1194,7 @@ final class OptimizedGeneticAlgorithm {
 ### Optimized DSP (SIMD + Loop Unrolling)
 
 ```swift
-// Sources/Echoelmusic/Optimization/OptimizedDSP.swift
+// Sources/EOEL/Optimization/OptimizedDSP.swift
 
 import Accelerate
 
@@ -1295,7 +1295,7 @@ final class OptimizedDSP {
 ## 6. PERFORMANCE MONITORING
 
 ```swift
-// Sources/Echoelmusic/Optimization/PerformanceMonitor.swift
+// Sources/EOEL/Optimization/PerformanceMonitor.swift
 
 import Foundation
 import os.signpost

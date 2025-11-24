@@ -145,7 +145,7 @@ Launch Pricing: $6.99/mo (30% off)
 - Locks in early adopters
 - Lifetime discount for supporters
 
-JUMPER Network™: Still 5% commission
+EoelWork: Still 5% commission
 - Pure profit (no infrastructure cost)
 - Scales with usage
 - Win-win-win
@@ -233,7 +233,7 @@ Reality: Your audience = your customers
 **Example Content Calendar** (Week 1):
 ```
 Monday (Twitter):
-"🧵 Day 1 of building EOEL - implementing quantum-inspired matching for JUMPER Network™. Here's why traditional algorithms aren't good enough... [thread]"
+"🧵 Day 1 of building EOEL - implementing quantum-inspired matching for EoelWork. Here's why traditional algorithms aren't good enough... [thread]"
 
 Tuesday (TikTok):
 "Watch me implement AI mixing in real-time" [15-second sped-up coding clip with AI visualization]
@@ -242,7 +242,7 @@ Wednesday (YouTube):
 "I spent 12 hours debugging CloudKit sync. Here's what I learned about distributed systems..."
 
 Thursday (Twitter):
-"The JUMPER Network™ has a chicken-egg problem. Here's how we're solving it..."
+"The EoelWork has a chicken-egg problem. Here's how we're solving it..."
 
 Friday (Blog):
 "Why I'm building EOEL without investment: The case for bootstrapping"
@@ -357,7 +357,7 @@ Audio: Upbeat production music
 ```
 Week 1: "Why I'm Building a Music Production App in 2025"
 Week 2: "Implementing AI Mixing: The Technical Deep-Dive"
-Week 3: "The JUMPER Network™: Solving the Chicken-Egg Problem"
+Week 3: "The EoelWork: Solving the Chicken-Egg Problem"
 Week 4: "How I Built Quantum-Inspired Algorithms for iOS"
 ...
 
@@ -369,7 +369,7 @@ Goal: Document entire journey
 ```
 "Complete Guide to EOEL for Beginners"
 "10 AI Mixing Tricks You Didn't Know"
-"How to Use JUMPER Network™ to Find Gigs"
+"How to Use EoelWork to Find Gigs"
 "Creating TikTok Content with EOEL"
 
 Format: 10-15 minutes, tutorial-style
@@ -447,12 +447,12 @@ Comments: Engage with EVERY comment, provide value
 
 #### **LinkedIn (B2B + Personal Brand)**
 
-**Strategy**: Professional credibility + JUMPER Network™ promotion
+**Strategy**: Professional credibility + EoelWork promotion
 
 **Content Types**:
 1. **Founder Journey Posts** (2x/week): Lessons learned, milestones
 2. **Technical Posts** (1x/week): "How we built [feature]"
-3. **JUMPER Network™ Focus** (1x/week): Target venues, event planners
+3. **EoelWork Focus** (1x/week): Target venues, event planners
 
 **Audience**: Music industry professionals, venue owners, event planners
 
@@ -598,7 +598,7 @@ Publishing Schedule:
 - Week 1: "Best Mobile DAWs for iPhone in 2025 (Compared)"
 - Week 2: "How AI is Changing Music Production"
 - Week 3: "Complete Guide to iPad Music Production"
-- Week 4: "JUMPER Network™: The Future of Gig Economy for Musicians"
+- Week 4: "EoelWork: The Future of Gig Economy for Musicians"
 
 SEO Tactics (Free):
 - Internal linking (connect posts)
@@ -667,7 +667,7 @@ Total: 16 hours/weekend
 1. Ship MVP (60% of time)
    - Core DAW features working
    - AI mixing functional
-   - JUMPER Network™ MVP
+   - EoelWork MVP
    - App Store ready
 
 2. Build Audience (30% of time)
@@ -836,7 +836,7 @@ Decision: WAIT (only 1/3, need more revenue + growth)
 - ✅ AI mixing suggestions (limited to 5/day on free, unlimited on paid)
 - ✅ Basic auto-mastering (1 preset: "Streaming")
 
-**JUMPER Network™**:
+**EoelWork**:
 - ✅ Create request (DJ category only for MVP)
 - ✅ Basic matching (simple algorithm, no quantum yet)
 - ✅ Accept/decline
@@ -1092,7 +1092,7 @@ Viral Coefficient: 0.6 (not quite viral, but helps!)
 **Development** (60% of time):
 - Core DAW features only
 - Basic AI mixing
-- JUMPER Network™ MVP
+- EoelWork MVP
 - App Store submission prep
 
 **Marketing** (30% of time):

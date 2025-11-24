@@ -9,7 +9,7 @@
 ### **Parametric EQ (8-Band):**
 
 ```swift
-// Sources/Echoelmusic/Audio/Effects/ParametricEQ.swift
+// Sources/EOEL/Audio/Effects/ParametricEQ.swift
 
 import AVFoundation
 import Accelerate
@@ -415,7 +415,7 @@ struct EQBandControl: View {
 ## 📦 MODULE 4: PROFESSIONAL COMPRESSOR
 
 ```swift
-// Sources/Echoelmusic/Audio/Effects/ProfessionalCompressor.swift
+// Sources/EOEL/Audio/Effects/ProfessionalCompressor.swift
 
 import AVFoundation
 

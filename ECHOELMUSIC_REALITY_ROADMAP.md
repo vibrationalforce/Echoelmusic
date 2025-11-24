@@ -62,7 +62,7 @@
 
 #### **Phase 3: Artist Platform (12-18 Monate)**
 - ❌ Booking Platform
-- ❌ Springer-Netzwerk (Substitute Network)
+- ❌ EoelWork (Substitute Network)
 - ❌ Collaboration Tools
 - ❌ Contract Management
 - ❌ Tour Router
@@ -175,7 +175,7 @@ class ContentCreatorSuite {
 class ArtistPlatform {
 
     class BookingPlatform {
-        // KILLER FEATURE #1: Springer-Netzwerk
+        // KILLER FEATURE #1: EoelWork
         - DJ krank? → Sofort Ersatz! ⭐⭐⭐⭐⭐
         - Genre/Style Matching
         - Equipment Match
@@ -418,7 +418,7 @@ WOCHE 23-24:
 
 #### **Monat 13-14: Booking Platform**
 ```
-✅ KILLER FEATURE: Springer-Netzwerk
+✅ KILLER FEATURE: EoelWork
    - Artist Profiles
    - Emergency Replacement System
    - Genre/Equipment Matching
@@ -644,7 +644,7 @@ PRO ($29.99/mo or $299/year):
 ├─ Distribution API
 ├─ 50 GB Cloud Storage
 ├─ Priority Support
-└─ Springer-Netzwerk Access
+└─ EoelWork Access
 
 CREATOR ($49.99/mo or $499/year):
 ├─ All Pro Features
@@ -857,7 +857,7 @@ Total Year 5: $500M+
 
 2. ✅ ARTIST ECONOMY
    - Booking Platform
-   - Springer-Netzwerk
+   - EoelWork
    - Revenue Tools
 
 3. ✅ CONTENT CREATION

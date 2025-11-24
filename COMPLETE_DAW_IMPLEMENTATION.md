@@ -13,7 +13,7 @@
 ### **Architecture Overview:**
 
 ```swift
-// Sources/Echoelmusic/Audio/PluginHosting/PluginHostManager.swift
+// Sources/EOEL/Audio/PluginHosting/PluginHostManager.swift
 
 import AudioToolbox
 import AVFoundation
@@ -670,7 +670,7 @@ struct PresetPicker: View {
 ### **Complete Mixer Implementation:**
 
 ```swift
-// Sources/Echoelmusic/Audio/Mixer/ProfessionalMixer.swift
+// Sources/EOEL/Audio/Mixer/ProfessionalMixer.swift
 
 import AVFoundation
 import Accelerate

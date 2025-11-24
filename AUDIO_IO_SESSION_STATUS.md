@@ -196,7 +196,7 @@ public:
 ❌ Recent Files
 
 ### Kritisch für DAW-Nutzung:
-🔴 **Session Management** - Ohne Save/Load ist Echoelmusic nicht produktiv nutzbar!
+🔴 **Session Management** - Ohne Save/Load ist EOEL nicht produktiv nutzbar!
 🔴 **Audio Export** - User müssen ihre Mixe exportieren können!
 
 ---

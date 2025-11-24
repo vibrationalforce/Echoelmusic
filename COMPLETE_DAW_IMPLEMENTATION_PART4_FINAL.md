@@ -7,7 +7,7 @@
 ## 📦 MODULE 6: AUTOMATION SYSTEM
 
 ```swift
-// Sources/Echoelmusic/Automation/AutomationEngine.swift
+// Sources/EOEL/Automation/AutomationEngine.swift
 
 import AVFoundation
 import Combine
@@ -523,7 +523,7 @@ struct AutomationCurveView: View {
 ## 📦 MODULE 7: ABLETON LINK INTEGRATION
 
 ```swift
-// Sources/Echoelmusic/Sync/AbletonLinkManager.swift
+// Sources/EOEL/Sync/AbletonLinkManager.swift
 
 import AVFoundation
 import Combine

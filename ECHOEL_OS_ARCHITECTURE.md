@@ -1,4 +1,4 @@
-# EchoelOS - Das Menschenzentrierte Betriebssystem
+# EOELOS - Das Menschenzentrierte Betriebssystem
 ## Freedom Through Technology, Not From Technology
 
 **Created:** 2025-11-12
@@ -53,7 +53,7 @@ Legal Status (2025):
     - Using old hardware as instrument: Completely legal
     - Reverse engineering for interoperability: Protected
 
-Echoelmusic Approach:
+EOEL Approach:
   - Provide emulation framework (legal)
   - User provides own ROMs (legal if owned)
   - No pre-loaded pirated ROMs (illegal)
@@ -90,7 +90,7 @@ Adobe / Avid / Steinberg:
   ❌ Planned Obsolescence (alte Versionen sterben)
 ```
 
-### EchoelOS Philosophie: Das Gegenteil
+### EOELOS Philosophie: Das Gegenteil
 
 ```yaml
 Core Values:
@@ -154,7 +154,7 @@ Why Linux?
   ✅ Real-time patches available (PREEMPT_RT)
   ✅ Massive community
 
-EchoelOS Kernel Modifications:
+EOELOS Kernel Modifications:
   - Real-time audio priority scheduling
   - Low-latency networking (for EchoSync)
   - Custom power management (battery optimization)
@@ -192,10 +192,10 @@ Embedded Systems:
   - PlatformIO integration
   - Flash firmware to microcontrollers
 
-Result: EchoelOS runs software from 1980-2025!
+Result: EOELOS runs software from 1980-2025!
 ```
 
-### Layer 3: Core OS (EchoelOS-Specific)
+### Layer 3: Core OS (EOELOS-Specific)
 
 ```yaml
 Desktop Environment:
@@ -227,7 +227,7 @@ Networking:
   - Firewall (nftables, GUI config)
 ```
 
-### Layer 4: Echoelmusic Integration
+### Layer 4: EOEL Integration
 
 ```yaml
 Audio:
@@ -341,15 +341,15 @@ Hardware:
   - NES emulator (Mesen, FCEUX)
 
 Setup:
-  1. EchoelOS running on modern PC/Raspberry Pi
+  1. EOELOS running on modern PC/Raspberry Pi
   2. NES emulator with MIDI input
   3. NSF player (Nintendo Sound Format)
 
 Workflow:
   - Play MIDI keyboard
-  → EchoelOS routes MIDI to NES emulator
+  → EOELOS routes MIDI to NES emulator
   → Emulator generates 8-bit sounds
-  → Audio output to Echoelmusic DAW
+  → Audio output to EOEL DAW
   → Apply modern effects (reverb, delay, etc.)
 
 Result: Authentic chiptune with modern production!
@@ -369,7 +369,7 @@ Sound Chip:
   - Same family as DX7 (legendary synth!)
 
 Setup:
-  1. EchoelOS with Genesis emulator
+  1. EOELOS with Genesis emulator
   2. MIDI → Genesis sound chip
   3. Real-time FM synthesis
 
@@ -390,14 +390,14 @@ The PSX Reverb:
 Setup:
   1. PS1 emulator with SPU emulation
   2. Send any audio through PSX reverb
-  3. Capture output in Echoelmusic
+  3. Capture output in EOEL
 
 Artists using PSX reverb:
   - Vaporwave producers (LOTS)
   - Lo-fi hip hop artists
   - Experimental electronic music
 
-EchoelOS Feature:
+EOELOS Feature:
   - "PSX Reverb" plugin (built-in)
   - Authentic emulation of SPU
   - Free, no licensing issues (clean-room reverse engineering)
@@ -411,7 +411,7 @@ Nostalgia:
   - GM.DLS (General MIDI soundfont)
   - That iconic piano everyone knows
 
-EchoelOS Feature:
+EOELOS Feature:
   - Built-in Win95 soundfont (legally obtained)
   - "Vaporwave Mode" (instant 90s aesthetic)
   - CRT shader (authentic monitor look)
@@ -427,32 +427,32 @@ Use Case: Instant nostalgic music production
 ### Official Builds
 
 ```yaml
-EchoelOS Editions:
+EOELOS Editions:
 
-1. EchoelOS Desktop (Full)
+1. EOELOS Desktop (Full)
    - Size: 4GB ISO
    - For: Modern PCs (2010+)
-   - Includes: Full Echoelmusic, all emulators
+   - Includes: Full EOEL, all emulators
 
-2. EchoelOS Lite
+2. EOELOS Lite
    - Size: 1GB ISO
    - For: Old PCs (2000-2010)
-   - Includes: Core Echoelmusic, select emulators
+   - Includes: Core EOEL, select emulators
 
-3. EchoelOS Retro
+3. EOELOS Retro
    - Size: 256MB ISO
    - For: Very old PCs (1995-2000)
-   - Includes: Minimal Echoelmusic, DOS/Win95 support
+   - Includes: Minimal EOEL, DOS/Win95 support
 
-4. EchoelOS Mobile
+4. EOELOS Mobile
    - Size: 2GB APK/image
    - For: Android devices, PinePhone
-   - Includes: Mobile Echoelmusic, ARM-optimized
+   - Includes: Mobile EOEL, ARM-optimized
 
-5. EchoelOS Embedded
+5. EOELOS Embedded
    - Size: 512MB image
    - For: Raspberry Pi, embedded systems
-   - Includes: Headless Echoelmusic, remote control
+   - Includes: Headless EOEL, remote control
 
 Download:
   - echoos.io (primary)
@@ -489,7 +489,7 @@ Live Mode:
 
 ## 🔒 PRIVACY & SECURITY
 
-### What EchoelOS Does NOT Do (Unlike Others)
+### What EOELOS Does NOT Do (Unlike Others)
 
 ```yaml
 ❌ NO Telemetry (no data sent to servers)
@@ -504,7 +504,7 @@ Live Mode:
 ❌ NO Subscription (free forever)
 ```
 
-### What EchoelOS DOES Do
+### What EOELOS DOES Do
 
 ```yaml
 ✅ Encryption by default (LUKS full-disk)
@@ -523,7 +523,7 @@ Live Mode:
 
 ## 🌍 PLATFORM SUPPORT
 
-### Can EchoelOS run on...?
+### Can EOELOS run on...?
 
 ```yaml
 Windows Devices: ✅ YES (Dual boot or replace)
@@ -537,18 +537,18 @@ Xbox: ⚠️ PARTIAL (Original Xbox yes, 360/One difficult)
 Nintendo: ✅ YES (Switch with jailbreak, user risk)
 Sega: ✅ YES (Dreamcast, user modification)
 
-Arduino: ✅ YES (flash firmware from EchoelOS)
+Arduino: ✅ YES (flash firmware from EOELOS)
 Raspberry Pi: ✅ YES (native, optimized)
 Jetson: ✅ YES (native, CUDA support)
 
-Old PCs (1990s): ✅ YES (EchoelOS Retro edition)
+Old PCs (1990s): ✅ YES (EOELOS Retro edition)
 Old PCs (1980s): ⚠️ LIMITED (DOS-only via boot floppy)
 
 Smart TVs: ⚠️ PARTIAL (if rooted/jailbroken)
 Smart Watches: ❌ NO (too limited hardware)
 Smart Glasses: ⚠️ RESEARCH (depends on device)
 
-Conclusion: EchoelOS runs on more hardware than any other OS!
+Conclusion: EOELOS runs on more hardware than any other OS!
 ```
 
 ---
@@ -576,7 +576,7 @@ Traditional OS:
   macOS 15: Only 2018+ Macs supported
   Android 15: Only 2020+ phones
 
-EchoelOS:
+EOELOS:
   - Supports PCs from 1995+
   - Supports phones from 2015+
   - Supports embedded devices
@@ -596,24 +596,24 @@ Economic Impact:
 ### 3. Creative Freedom
 
 ```yaml
-With EchoelOS + Echoelmusic:
+With EOELOS + EOEL:
 
 Old Nintendo controller
   → USB adapter (€5)
   → MIDI mapping
-  → Control Echoelmusic
+  → Control EOEL
   → Result: Unique instrument!
 
 Old CRT TV
   → Composite output
   → Video feedback loops
-  → Echoelmusic video processing
+  → EOEL video processing
   → Result: Authentic retro visuals!
 
 Old dial-up modem
   → USB serial adapter
   → Audio sampling
-  → Echoelmusic synthesis
+  → EOEL synthesis
   → Result: Vaporwave nostalgia!
 
 Possibilities: INFINITE
@@ -635,12 +635,12 @@ Cost: Near-zero (old hardware is cheap/free)
 ✅ Basic ISO builds
 ```
 
-### Phase 2: Echoelmusic Integration (2026 Q3)
+### Phase 2: EOEL Integration (2026 Q3)
 
 ```yaml
 ⏳ JACK/PipeWire configuration
 ⏳ Low-latency kernel patches
-⏳ Echoelmusic as core app
+⏳ EOEL as core app
 ⏳ MIDI routing system-wide
 ⏳ EchoSync daemon
 ⏳ Retro console → MIDI mapping
@@ -673,7 +673,7 @@ Cost: Near-zero (old hardware is cheap/free)
 
 ## 📊 COMPARISON
 
-| Feature | EchoelOS | Windows 11 | macOS 15 | Linux (Ubuntu) |
+| Feature | EOELOS | Windows 11 | macOS 15 | Linux (Ubuntu) |
 |---------|--------|------------|----------|----------------|
 | **Cost** | Free | €145 | Free (with Mac) | Free |
 | **Open Source** | ✅ Yes | ❌ No | ❌ No | ✅ Yes |
@@ -686,7 +686,7 @@ Cost: Near-zero (old hardware is cheap/free)
 | **Resource Usage** | ✅ Low | ❌ High | ⚠️ Medium | ✅ Low |
 | **Lifetime** | ✅ Forever | ⚠️ 10 years | ⚠️ 7 years | ✅ Forever |
 
-**Winner:** EchoelOS 🏆
+**Winner:** EOELOS 🏆
 
 ---
 
@@ -721,7 +721,7 @@ Intellectual Property:
   - Open standards only (TCP/IP, USB, MIDI, etc.)
 
 Conclusion:
-  ✅ EchoelOS is 100% legal to develop and distribute
+  ✅ EOELOS is 100% legal to develop and distribute
   ✅ Users responsible for own ROM/software sources
   ✅ No legal risk for project
 ```
@@ -730,7 +730,7 @@ Conclusion:
 
 ## 🎯 ZUSAMMENFASSUNG
 
-**EchoelOS ist:**
+**EOELOS ist:**
 - ✅ **Legal** (100%, fundiert recherchiert)
 - ✅ **Technisch möglich** (based on proven Linux)
 - ✅ **Ethisch** (Open Source, Privacy-First)
@@ -739,7 +739,7 @@ Conclusion:
 - ✅ **Zugänglich** (free, runs on anything)
 - ✅ **Menschenzentriert** (no dark patterns, no addiction)
 
-**EchoelOS macht möglich:**
+**EOELOS macht möglich:**
 - 🎮 Nintendo-Controller als MIDI-Instrument
 - 💾 90er PC mit modernem DAW
 - 🕹️ Sega Genesis als FM-Synth
@@ -752,7 +752,7 @@ Ein Betriebssystem das dem Menschen dient, nicht Konzernen.
 Freie Software, freie Hardware, freie Kreativität.
 Von 90er-Hardware bis 2025-AI, alles in einem System.
 
-**Der Name ist Programm: EchoelOS - Das Echo der Vergangenheit, die Zukunft der Freiheit.** 🚀
+**Der Name ist Programm: EOELOS - Das Echo der Vergangenheit, die Zukunft der Freiheit.** 🚀
 
 ---
 

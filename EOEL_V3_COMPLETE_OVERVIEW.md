@@ -13,7 +13,7 @@
 
 EOEL is the **world's first unified creative platform** combining:
 - ✅ **Professional DAW** (Digital Audio Workstation)
-- ✅ **JUMPER Network™** (Multi-industry substitute platform)
+- ✅ **EoelWork** (Multi-industry substitute platform)
 - ✅ **Content Creation Suite** (Audio, Video, Live Streaming)
 - ✅ **Smart Lighting Integration** (DMX512, HomeKit, Philips Hue)
 - ✅ **Biometric Creative Control** (HRV, Motion, Breathing → Audio)
@@ -32,7 +32,7 @@ EOEL is the **world's first unified creative platform** combining:
 
 ## 🌍 JUMPER NETWORK™ - ALL JOB PROFILES SUPPORTED
 
-### What is JUMPER Network™?
+### What is EoelWork?
 
 **Emergency substitute platform** connecting service providers with urgent gig opportunities across **8+ industries**.
 
@@ -1292,7 +1292,7 @@ final class OpticalCommunication {
 
 ### EOEL's 10 Unique Selling Points:
 
-1. **JUMPER Network™** - World's first multi-industry emergency substitute platform
+1. **EoelWork** - World's first multi-industry emergency substitute platform
 2. **Professional Mobile DAW** - Desktop-class performance on iPhone/iPad
 3. **Complete Creative Suite** - Audio + Video + Streaming + Lighting in one app
 4. **Biometric Creative Control** - Heart rate/breathing/motion → music parameters

@@ -9,7 +9,7 @@
 
 ## 🚀 Overview
 
-Echoelmusic now includes **enterprise-grade development tools** that rival commercial products like Ableton Live, Pro Tools, and Logic Pro in terms of code quality, debugging capabilities, and deployment automation.
+EOEL now includes **enterprise-grade development tools** that rival commercial products like Ableton Live, Pro Tools, and Logic Pro in terms of code quality, debugging capabilities, and deployment automation.
 
 ### What's Included
 
@@ -38,7 +38,7 @@ Echoelmusic now includes **enterprise-grade development tools** that rival comme
 #include "Development/AdvancedDiagnostics.h"
 
 // Performance profiling
-Echoel::PerformanceProfiler profiler;
+EOEL::PerformanceProfiler profiler;
 
 void processAudio() {
     ECHOEL_PROFILE_SCOPE(profiler, "processAudio");
@@ -65,25 +65,25 @@ applyEQ                                      0.078      0.072      0.145       1
 ```cpp
 // Track allocations
 auto* data = new float[1024];
-Echoel::MemoryTracker::getInstance().trackAllocation(data, 1024 * sizeof(float), "Audio buffer");
+EOEL::MemoryTracker::getInstance().trackAllocation(data, 1024 * sizeof(float), "Audio buffer");
 
 // Later, check for leaks
-DBG(Echoel::MemoryTracker::getInstance().generateReport());
+DBG(EOEL::MemoryTracker::getInstance().generateReport());
 ```
 
 #### Buffer Analysis:
 ```cpp
 // Analyze audio buffer for problems
-auto stats = Echoel::AudioBufferAnalyzer::analyze(buffer);
+auto stats = EOEL::AudioBufferAnalyzer::analyze(buffer);
 if (stats.hasNaN || stats.hasInf || stats.hasClipping) {
     DBG("⚠️ Audio buffer issues detected!");
-    DBG(Echoel::AudioBufferAnalyzer::getWarnings(stats));
+    DBG(EOEL::AudioBufferAnalyzer::getWarnings(stats));
 }
 ```
 
 #### Thread Safety:
 ```cpp
-Echoel::ThreadSafetyChecker checker;
+EOEL::ThreadSafetyChecker checker;
 
 // In prepareToPlay:
 checker.registerAudioThread();
@@ -109,7 +109,7 @@ ECHOEL_LOG_ERROR("Failed to load preset");
 ECHOEL_LOG_CRITICAL("Out of memory!");
 
 // Generate log report
-DBG(Echoel::DiagnosticLogger::getInstance().generateReport());
+DBG(EOEL::DiagnosticLogger::getInstance().generateReport());
 ```
 
 ---
@@ -126,7 +126,7 @@ DBG(Echoel::DiagnosticLogger::getInstance().generateReport());
 
 #### Writing Tests:
 ```cpp
-class MyDSPTest : public Echoel::TestFramework::TestCase {
+class MyDSPTest : public EOEL::TestFramework::TestCase {
 public:
     MyDSPTest() : TestCase("MyDSP") {}
 
@@ -156,11 +156,11 @@ public:
 
 #### Running Tests:
 ```cpp
-Echoel::TestFramework framework;
+EOEL::TestFramework framework;
 
 // Register tests
-framework.registerTest(std::make_unique<Echoel::AudioProcessingTest>());
-framework.registerTest(std::make_unique<Echoel::DSPTest>());
+framework.registerTest(std::make_unique<EOEL::AudioProcessingTest>());
+framework.registerTest(std::make_unique<EOEL::DSPTest>());
 framework.registerTest(std::make_unique<MyDSPTest>());
 
 // Run all
@@ -191,7 +191,7 @@ Details:
 #### Benchmarking:
 ```cpp
 // Benchmark a function
-auto result = Echoel::BenchmarkSuite::benchmark("My Function", []() {
+auto result = EOEL::BenchmarkSuite::benchmark("My Function", []() {
     // Code to benchmark
     processHeavyDSP();
 }, 1000);  // 1000 iterations
@@ -203,16 +203,16 @@ DBG("Max: " << result.maxTimeMs << " ms");
 
 #### Memory Leak Detection:
 ```cpp
-Echoel::MemoryLeakDetector::getInstance().startTracking();
+EOEL::MemoryLeakDetector::getInstance().startTracking();
 
 // Run your code that might leak
 allocateAndFreeMemory();
 
-Echoel::MemoryLeakDetector::getInstance().stopTracking();
+EOEL::MemoryLeakDetector::getInstance().stopTracking();
 
-if (Echoel::MemoryLeakDetector::getInstance().hasLeaks()) {
+if (EOEL::MemoryLeakDetector::getInstance().hasLeaks()) {
     DBG("❌ MEMORY LEAK DETECTED!");
-    DBG(Echoel::MemoryLeakDetector::getInstance().getReport());
+    DBG(EOEL::MemoryLeakDetector::getInstance().getReport());
 }
 ```
 
@@ -230,14 +230,14 @@ if (Echoel::MemoryLeakDetector::getInstance().hasLeaks()) {
 
 #### Version Management:
 ```cpp
-auto version = Echoel::VersionManager::getCurrentVersion();
+auto version = EOEL::VersionManager::getCurrentVersion();
 
 DBG("Current Version: " << version.toString());           // "1.0.0"
 DBG("Full Version: " << version.toFullString());         // "1.0.0 (Release) [abc1234] built Jan 17 2025"
-DBG("Build Info:\n" << Echoel::VersionManager::getBuildInfo());
+DBG("Build Info:\n" << EOEL::VersionManager::getBuildInfo());
 
 // Check compatibility
-Echoel::VersionManager::Version otherVersion{1, 1, 0};
+EOEL::VersionManager::Version otherVersion{1, 1, 0};
 if (!version.isCompatibleWith(otherVersion)) {
     DBG("⚠️ Version incompatibility!");
 }
@@ -258,31 +258,31 @@ Architecture: 64-bit
 #### Crash Reporting:
 ```cpp
 // Initialize crash reporter
-Echoel::CrashReporter::getInstance().initialize();
+EOEL::CrashReporter::getInstance().initialize();
 
 // Add custom data to crash reports
-Echoel::CrashReporter::getInstance().addCustomData("user_id", "12345");
-Echoel::CrashReporter::getInstance().addCustomData("session_id", "abc-def-ghi");
+EOEL::CrashReporter::getInstance().addCustomData("user_id", "12345");
+EOEL::CrashReporter::getInstance().addCustomData("session_id", "abc-def-ghi");
 
 // Set endpoint for automatic upload
-Echoel::CrashReporter::getInstance().setCrashReportEndpoint("https://crash.echoelmusic.com/api");
+EOEL::CrashReporter::getInstance().setCrashReportEndpoint("https://crash.echoelmusic.com/api");
 
 // Crash reports are automatically generated on crashes
-// Saved to: ~/Library/Application Support/Echoelmusic/CrashReports/
+// Saved to: ~/Library/Application Support/EOEL/CrashReports/
 ```
 
 #### Telemetry (Privacy-Friendly):
 ```cpp
 // Initialize
-Echoel::TelemetrySystem::getInstance().initialize("your-api-key", false);
+EOEL::TelemetrySystem::getInstance().initialize("your-api-key", false);
 
 // Track events
-Echoel::TelemetrySystem::getInstance().trackEvent("plugin_loaded", {
+EOEL::TelemetrySystem::getInstance().trackEvent("plugin_loaded", {
     {"daw", "Ableton Live"},
     {"version", "11.3"}
 });
 
-Echoel::TelemetrySystem::getInstance().trackEvent("effect_applied", {
+EOEL::TelemetrySystem::getInstance().trackEvent("effect_applied", {
     {"effect", "reverb"},
     {"preset", "large_hall"}
 });
@@ -294,7 +294,7 @@ Echoel::TelemetrySystem::getInstance().trackEvent("effect_applied", {
 
 #### Feature Flags:
 ```cpp
-auto& flags = Echoel::FeatureFlags::getInstance();
+auto& flags = EOEL::FeatureFlags::getInstance();
 
 // Check if feature is enabled
 if (flags.isEnabled("video_sync")) {
@@ -311,7 +311,7 @@ flags.loadFromServer("https://api.echoelmusic.com/features");
 
 #### Update Checking:
 ```cpp
-Echoel::UpdateChecker::getInstance().checkForUpdates([](auto updateInfo) {
+EOEL::UpdateChecker::getInstance().checkForUpdates([](auto updateInfo) {
     if (updateInfo.updateAvailable) {
         DBG("🎉 New version available: " << updateInfo.latestVersion.toString());
         DBG("Download: " << updateInfo.downloadUrl);
@@ -326,15 +326,15 @@ Echoel::UpdateChecker::getInstance().checkForUpdates([](auto updateInfo) {
 
 #### Build Automation:
 ```cpp
-Echoel::BuildAutomation::BuildConfig config;
+EOEL::BuildAutomation::BuildConfig config;
 config.buildType = "Release";
 config.runTests = true;
 config.generateDocs = true;
 config.signBinaries = true;
 config.targetPlatforms = {"Windows", "macOS", "Linux"};
 
-DBG(Echoel::BuildAutomation::generateBuildReport(config));
-DBG(Echoel::BuildAutomation::generateReleaseNotes());
+DBG(EOEL::BuildAutomation::generateBuildReport(config));
+DBG(EOEL::BuildAutomation::generateReleaseNotes());
 ```
 
 ---
@@ -352,19 +352,19 @@ class MyAwesomeProcessor : public juce::AudioProcessor {
 public:
     MyAwesomeProcessor() {
         // Initialize diagnostics
-        diagnostics = std::make_unique<Echoel::DiagnosticsSuite>();
+        diagnostics = std::make_unique<EOEL::DiagnosticsSuite>();
 
         // Initialize crash reporter
-        Echoel::CrashReporter::getInstance().initialize();
-        Echoel::CrashReporter::getInstance().addCustomData("plugin_name", "MyAwesome");
+        EOEL::CrashReporter::getInstance().initialize();
+        EOEL::CrashReporter::getInstance().addCustomData("plugin_name", "MyAwesome");
 
         // Initialize telemetry
-        Echoel::TelemetrySystem::getInstance().initialize("api-key");
-        Echoel::TelemetrySystem::getInstance().trackEvent("plugin_created");
+        EOEL::TelemetrySystem::getInstance().initialize("api-key");
+        EOEL::TelemetrySystem::getInstance().trackEvent("plugin_created");
 
         // Log startup
         ECHOEL_LOG_INFO("Plugin initialized - v" +
-            Echoel::VersionManager::getCurrentVersion().toString());
+            EOEL::VersionManager::getCurrentVersion().toString());
 
         // Run self-tests (debug builds only)
 #ifndef NDEBUG
@@ -377,7 +377,7 @@ public:
         diagnostics->getThreadChecker().registerAudioThread();
 
         // Track memory baseline
-        Echoel::MemoryLeakDetector::getInstance().startTracking();
+        EOEL::MemoryLeakDetector::getInstance().startTracking();
 
         // Log event
         ECHOEL_LOG_INFO("Prepared to play: " +
@@ -399,10 +399,10 @@ public:
         }
 
         // Analyze buffer for problems
-        auto stats = Echoel::AudioBufferAnalyzer::analyze(buffer);
+        auto stats = EOEL::AudioBufferAnalyzer::analyze(buffer);
         if (stats.hasNaN || stats.hasInf || stats.hasClipping) {
             ECHOEL_LOG_ERROR("Audio buffer issues: " +
-                Echoel::AudioBufferAnalyzer::getWarnings(stats));
+                EOEL::AudioBufferAnalyzer::getWarnings(stats));
         }
 
         // Update CPU monitor
@@ -418,18 +418,18 @@ public:
     // Save diagnostics to file
     void saveDiagnostics() {
         auto file = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
-                       .getChildFile("Echoelmusic_Diagnostics.txt");
+                       .getChildFile("EOEL_Diagnostics.txt");
         diagnostics->saveReport(file);
         ECHOEL_LOG_INFO("Diagnostics saved to: " + file.getFullPathName());
     }
 
 private:
-    std::unique_ptr<Echoel::DiagnosticsSuite> diagnostics;
+    std::unique_ptr<EOEL::DiagnosticsSuite> diagnostics;
 
     void runSelfTests() {
-        Echoel::TestFramework framework;
-        framework.registerTest(std::make_unique<Echoel::AudioProcessingTest>());
-        framework.registerTest(std::make_unique<Echoel::DSPTest>());
+        EOEL::TestFramework framework;
+        framework.registerTest(std::make_unique<EOEL::AudioProcessingTest>());
+        framework.registerTest(std::make_unique<EOEL::DSPTest>());
 
         auto results = framework.runAllTests();
         ECHOEL_LOG_INFO("Self-tests:\n" + framework.generateReport(results));
@@ -468,7 +468,7 @@ private:
 
 ## 🏆 Industry Comparison
 
-| Feature | Echoelmusic | Waves | iZotope | FabFilter | UAD |
+| Feature | EOEL | Waves | iZotope | FabFilter | UAD |
 |---------|-------------|-------|---------|-----------|-----|
 | **Performance Profiling** | ✅ Built-in | ❌ | ❌ | ❌ | ❌ |
 | **Automated Testing** | ✅ Full suite | ⚠️ Internal | ⚠️ Internal | ⚠️ Internal | ⚠️ Internal |
@@ -479,7 +479,7 @@ private:
 | **Thread Safety Checks** | ✅ Automatic | ⚠️ Internal | ⚠️ Internal | ⚠️ Internal | ⚠️ Internal |
 | **Open Source** | ✅ | ❌ | ❌ | ❌ | ❌ |
 
-**Verdict:** Echoelmusic now has **enterprise-grade development tools** that match or exceed commercial competitors!
+**Verdict:** EOEL now has **enterprise-grade development tools** that match or exceed commercial competitors!
 
 ---
 
@@ -488,7 +488,7 @@ private:
 ### 1. Performance Optimization
 ```cpp
 // Profile your entire plugin
-Echoel::PerformanceProfiler profiler;
+EOEL::PerformanceProfiler profiler;
 
 void processBlock() {
     ECHOEL_PROFILE_SCOPE(profiler, "processBlock");
@@ -511,7 +511,7 @@ DBG(profiler.generateReport());
 ### 2. Quality Assurance
 ```cpp
 // Run tests before release
-Echoel::TestFramework tests;
+EOEL::TestFramework tests;
 tests.registerTest(std::make_unique<AudioProcessingTest>());
 tests.registerTest(std::make_unique<PresetLoadingTest>());
 tests.registerTest(std::make_unique<ParameterRangeTest>());
@@ -526,13 +526,13 @@ if (std::any_of(results.begin(), results.end(),
 ### 3. Production Monitoring
 ```cpp
 // Track real-world usage
-Echoel::TelemetrySystem::getInstance().trackEvent("preset_loaded", {
+EOEL::TelemetrySystem::getInstance().trackEvent("preset_loaded", {
     {"preset_name", "Cathedral Reverb"},
     {"user_rating", "5_stars"}
 });
 
 // Feature flag for gradual rollout
-if (Echoel::FeatureFlags::getInstance().isEnabled("new_algorithm")) {
+if (EOEL::FeatureFlags::getInstance().isEnabled("new_algorithm")) {
     useNewAlgorithm();  // Only for beta users
 } else {
     useStableAlgorithm();  // For everyone else
@@ -582,7 +582,7 @@ All systems are **header-only** and fully documented:
 
 ## 🌟 Bottom Line
 
-**Echoelmusic now has development tools that rival Fortune 500 companies.**
+**EOEL now has development tools that rival Fortune 500 companies.**
 
 ✅ **Professional profiling** like Xcode Instruments
 ✅ **Automated testing** like Google Test

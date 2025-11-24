@@ -14,7 +14,7 @@ Integrating with existing: `Audio/AudioEngine.swift`, `Biofeedback/HealthKitMana
 **THE SOLUTION:** AI-powered tour routing that maximizes revenue, minimizes travel, handles logistics
 
 ```swift
-// Sources/Echoelmusic/Business/TourRouter.swift
+// Sources/EOEL/Business/TourRouter.swift
 
 import SwiftUI
 import Combine
@@ -768,7 +768,7 @@ struct TourStopCard: View {
 **NEW: Real-time low-latency biofeedback processing with Metal acceleration**
 
 ```swift
-// Sources/Echoelmusic/Biofeedback/BiofeedbackMusicEngine.swift
+// Sources/EOEL/Biofeedback/BiofeedbackMusicEngine.swift
 
 import SwiftUI
 import Combine

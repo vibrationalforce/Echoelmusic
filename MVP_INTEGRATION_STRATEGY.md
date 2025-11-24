@@ -1,4 +1,4 @@
-# Echoelmusic MVP Strategy - Integration First! 🔗
+# EOEL MVP Strategy - Integration First! 🔗
 
 **CRITICAL INSIGHT (November 2025):**
 > "User hat bereits €€€ in Apps/Plugins investiert (FL Mobile, Ableton, Reaper, AUv3 plugins, visuals).
@@ -6,15 +6,15 @@
 
 ---
 
-## 🎯 Neue Strategie: Echoelmusic als Universal Hub
+## 🎯 Neue Strategie: EOEL als Universal Hub
 
-### Was Echoelmusic NICHT ist:
+### Was EOEL NICHT ist:
 - ❌ **NICHT** ein geschlossenes Ökosystem (wie Apple/Ableton)
 - ❌ **NICHT** "entweder unsere Apps ODER andere Apps"
 - ❌ **NICHT** eigenes Plugin-Format das User neu kaufen müssen
 - ❌ **NICHT** Replacement für bestehende Investments
 
-### Was Echoelmusic IST:
+### Was EOEL IST:
 - ✅ **HUB** der ALLE Apps/Plugins/Hardware verbindet
 - ✅ **BRIDGE** zwischen allen Ökosystemen
 - ✅ **AMPLIFIER** für bestehende Tools (macht sie besser zusammen)
@@ -37,12 +37,12 @@ MUST HAVE (MVP):
 User Keeps Everything:
   • FL Studio Mobile (bereits gekauft) ✅
   • Alle AUv3 Plugins (Reverbs, Delays, Synths) ✅
-  • Visual Apps (kann mit Echoelmusic syncen) ✅
+  • Visual Apps (kann mit EOEL syncen) ✅
   • Hardware (über MIDI/Audio weiter nutzbar) ✅
 ```
 
 **Marketing Message:**
-> "Echoelmusic doesn't replace your tools. It connects them."
+> "EOEL doesn't replace your tools. It connects them."
 > "Keep your FL Studio Mobile. Keep your plugins. Add superpowers."
 
 ---
@@ -67,10 +67,10 @@ DAW Integration:
   ✅ VST3 as plugin IN other DAWs
 
 User benutzt:
-  • Ableton (weiter nutzen!) + Echoelmusic als Rewire Slave
-  • Reaper (weiter nutzen!) + Echoelmusic für spezielle Features
-  • FL Studio Producer (weiter nutzen!) + EchoelSync
-  • Alle VST plugins (funktionieren in Echoelmusic!)
+  • Ableton (weiter nutzen!) + EOEL als Rewire Slave
+  • Reaper (weiter nutzen!) + EOEL für spezielle Features
+  • FL Studio Producer (weiter nutzen!) + EOELSync
+  • Alle VST plugins (funktionieren in EOEL!)
 ```
 
 **Philosophy:**
@@ -102,7 +102,7 @@ MadMapper, VDMX, etc.:
 
 ---
 
-## 🔧 EchoelOS Strategy (REVISED!)
+## 🔧 EOELOS Strategy (REVISED!)
 
 ### Desktop: Linux Layer, NOT Replacement
 
@@ -114,15 +114,15 @@ OLD Strategy (zu aggressiv):
 
 NEW Strategy (smart!):
   ✅ Linux distribution (optional!)
-  ✅ Echoelmusic runs on Windows/Mac/Linux
-  ✅ EchoelOS = optimized Linux for music
-  ✅ But Echoelmusic works EVERYWHERE
+  ✅ EOEL runs on Windows/Mac/Linux
+  ✅ EOELOS = optimized Linux for music
+  ✅ But EOEL works EVERYWHERE
 
 User Choice:
-  - Keep Windows? → Echoelmusic works!
-  - Keep macOS? → Echoelmusic works!
-  - Try EchoelOS? → Optimized experience, but optional
-  - Mix all three? → YES! EchoelSync connects them!
+  - Keep Windows? → EOEL works!
+  - Keep macOS? → EOEL works!
+  - Try EOELOS? → Optimized experience, but optional
+  - Mix all three? → YES! EOELSync connects them!
 ```
 
 ### Mobile: Enhancement, NOT Replacement
@@ -130,13 +130,13 @@ User Choice:
 ```yaml
 iOS/iPadOS:
   ❌ We CANNOT replace iOS (Apple doesn't allow)
-  ✅ Echoelmusic APP on iOS
+  ✅ EOEL APP on iOS
   ✅ Works WITH all other apps
-  ✅ EchoelSync connects everything
+  ✅ EOELSync connects everything
 
 Android:
   ✅ Similar approach
-  ✅ EchoelOS possible (custom ROM)
+  ✅ EOELOS possible (custom ROM)
   ✅ But most users: just install app
 ```
 
@@ -176,7 +176,7 @@ Core DSP (Built-in):
 Sync (THE KILLER FEATURE!):
   ✅ Ableton Link (connect FL Mobile, Beatmaker, etc.)
   ✅ MIDI Clock out
-  ✅ EchoelSync basic (LAN only for MVP)
+  ✅ EOELSync basic (LAN only for MVP)
 
 Export:
   ✅ WAV export (16/24-bit)
@@ -194,12 +194,12 @@ UI:
 
 ```yaml
 Advanced Features:
-  ⏳ Cloud rendering (EchoelCloud™)
+  ⏳ Cloud rendering (EOELCloud™)
   ⏳ Remote processing (iPad → Server)
-  ⏳ EchoelWisdom (AI assistant)
+  ⏳ EOELWisdom (AI assistant)
   ⏳ Video integration
   ⏳ Spatial audio (Ambisonics)
-  ⏳ Advanced EchoelSync (Internet-wide)
+  ⏳ Advanced EOELSync (Internet-wide)
 
 These can wait! Focus on core first.
 ```
@@ -208,19 +208,19 @@ These can wait! Focus on core first.
 
 ## 💰 Pricing Strategy (Revised)
 
-### Why Users Pay for Echoelmusic (wenn sie schon FL/Ableton haben?)
+### Why Users Pay for EOEL (wenn sie schon FL/Ableton haben?)
 
 **Unique Value:**
 
 1. **Mobile-First Production** (iPad mit Desktop power)
    - FL Mobile ist limitiert (keine VST3, kein cloud rendering)
-   - Echoelmusic: Full DAW auf iPad + remote processing
+   - EOEL: Full DAW auf iPad + remote processing
 
-2. **Universal Sync** (EchoelSync™)
+2. **Universal Sync** (EOELSync™)
    - Connect FL Mobile + Ableton + Hardware + Visuals
    - Niemand anders macht das so gut
 
-3. **Cloud Rendering** (EchoelCloud™)
+3. **Cloud Rendering** (EOELCloud™)
    - Export final mixes auf Server (95% günstiger als lokal rendern)
    - FL Mobile kann das nicht
 
@@ -266,13 +266,13 @@ Bundle:
 **ECHOELMUSIC VALUE:**
 - ✅ Import FL Mobile projects? (wenn möglich)
 - ✅ Use all AUv3 plugins (natürlich!)
-- ✅ Add Echoelmusic's unique features:
+- ✅ Add EOEL's unique features:
   - Remote processing (iPad nutzt €30/Monat Hetzner server)
   - Cloud rendering (final export auf Server, 10x schneller)
   - Better MIDI editor (FL Mobile's ist basic)
-  - EchoelSync (connect with visuals, other devices)
+  - EOELSync (connect with visuals, other devices)
 
-**DECISION:** "I keep FL Mobile für sketches, use Echoelmusic für final production"
+**DECISION:** "I keep FL Mobile für sketches, use EOEL für final production"
 
 **RESULT:** €49.99 iPad app sale + €9.99/month cloud subscription = €169.87 year 1
 
@@ -286,13 +286,13 @@ Bundle:
 - ✅ All VST plugins work (keep your investment!)
 - ✅ Use alongside Ableton:
   - Ableton für main production
-  - Echoelmusic für specific tasks:
+  - EOEL für specific tasks:
     - Mobile recording (iPad on location)
     - Cloud rendering (save CPU during mixdown)
     - Linux production (Ableton doesn't run native Linux)
     - Spatial audio (Ambisonics, later)
 
-**DECISION:** "I keep Ableton, add Echoelmusic für mobile + Linux workflow"
+**DECISION:** "I keep Ableton, add EOEL für mobile + Linux workflow"
 
 **RESULT:** €99 desktop + €49.99 mobile = €149 one-time
 
@@ -303,16 +303,16 @@ Bundle:
 **USER:** "Ich nutze Resolume Arena (€799) + TouchDesigner (free/€600 commercial)"
 
 **ECHOELMUSIC VALUE:**
-- ✅ Perfect sync with visuals (EchoelSync™)
+- ✅ Perfect sync with visuals (EOELSync™)
 - ✅ Audio analysis → OSC → TouchDesigner
 - ✅ Live performance rig:
-  - Echoelmusic (audio + sync master)
+  - EOEL (audio + sync master)
   - Resolume (video)
   - TouchDesigner (generative)
   - Hardware (MIDI controllers)
   - All perfectly synced, ultra-low latency
 
-**DECISION:** "Echoelmusic becomes my audio hub for live shows"
+**DECISION:** "EOEL becomes my audio hub for live shows"
 
 **RESULT:** €99 desktop + €9.99/month sync service = €219 year 1
 
@@ -391,7 +391,7 @@ Platforms:
 
 Unique Value:
   - Project compatibility with iPad version
-  - EchoelSync (connect iPad + Desktop)
+  - EOELSync (connect iPad + Desktop)
   - More CPU power (more tracks, more plugins)
   - Cloud rendering integration
 
@@ -402,13 +402,13 @@ Launch:
 
 **Phase 3: Cloud Services (Months 6-12)**
 ```yaml
-EchoelCloud (rendering farm):
+EOELCloud (rendering farm):
   - Hetzner integration
   - €9.99/month subscription
   - Render final mixes on server
   - 10x faster, 95% cheaper
 
-EchoelSync Pro (Internet-wide sync):
+EOELSync Pro (Internet-wide sync):
   - Included in cloud subscription
   - Remote jamming
   - Global session discovery
@@ -467,16 +467,16 @@ EchoelSync Pro (Internet-wide sync):
 
 1. **Respect User Investments**
    - ✅ Niemand muss bestehende Apps/Plugins aufgeben
-   - ✅ Echoelmusic ENHANCES what you have
+   - ✅ EOEL ENHANCES what you have
    - ✅ Not competition, but collaboration
 
 2. **Mobile-First Power**
    - ✅ FL Mobile ist gut, aber limitiert
-   - ✅ Echoelmusic: Full power auf iPad
+   - ✅ EOEL: Full power auf iPad
    - ✅ + Remote processing (iPad + Server = Mac Studio)
 
 3. **Universal Connectivity**
-   - ✅ EchoelSync™ connects EVERYTHING
+   - ✅ EOELSync™ connects EVERYTHING
    - ✅ iOS + Android + Windows + Mac + Linux + Web
    - ✅ Audio + MIDI + Video + Hardware
 
@@ -486,7 +486,7 @@ EchoelSync Pro (Internet-wide sync):
    - ✅ Open ecosystem (keine Vendor lock-in)
 
 5. **Artist-Made**
-   - ✅ Du bist Echoel (artist identity)
+   - ✅ Du bist EOEL (artist identity)
    - ✅ Built by someone who actually makes music
    - ✅ Not a corporate product committee
 
@@ -523,7 +523,7 @@ EchoelSync Pro (Internet-wide sync):
 
 ---
 
-**Created by Echoel™**
+**Created by EOEL™**
 **Integration > Replacement**
 **Freedom > Control**
 **November 2025** 🔗

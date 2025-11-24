@@ -97,7 +97,7 @@ pending:
 include:
   - Core DAW (8 tracks, 10 instruments, 20 effects)
   - Basic mixing & mastering
-  - JUMPER Network (music industry only)
+  - EoelWork (music industry only)
   - iOS only (iPhone)
   - No video editing
   - No smart lighting
@@ -118,7 +118,7 @@ investment_needed: $0
 include:
   - Professional DAW (32 tracks, 30 instruments, 50 effects)
   - Advanced mixing & mastering
-  - JUMPER Network (music + 2 other industries)
+  - EoelWork (music + 2 other industries)
   - iOS + iPad
   - Basic video editing (1080p)
   - Smart lighting (Hue, HomeKit only)
@@ -138,7 +138,7 @@ investment_needed: $0-$50K
 ```yaml
 include:
   - Complete DAW (unlimited tracks, 47+ instruments, 77+ effects)
-  - JUMPER Network (all 8+ industries)
+  - EoelWork (all 8+ industries)
   - iOS + iPad + Mac
   - Professional video editing (4K/8K)
   - 21+ lighting systems
@@ -508,7 +508,7 @@ final class AudioRecorder: ObservableObject {
 - ✅ MIDI keyboard support
 - ✅ Project save/load
 
-### Month 5-6: JUMPER Network MVP
+### Month 5-6: EoelWork MVP
 - ✅ User registration & authentication
 - ✅ Profile creation (musicians only for MVP)
 - ✅ Gig posting (venues)
@@ -790,7 +790,7 @@ total_year_1: $50K-$150K
 ```yaml
 ✅ 8-track DAW complete
 ✅ 30 instruments, 50 effects
-✅ JUMPER Network (music industry)
+✅ EoelWork (music industry)
 ✅ Basic video editing
 ✅ Smart lighting (Hue, HomeKit)
 ```

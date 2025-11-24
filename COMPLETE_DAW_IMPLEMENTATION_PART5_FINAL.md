@@ -7,7 +7,7 @@
 ## 📦 MODULE 8: PROFESSIONAL LIVE LOOPING
 
 ```swift
-// Sources/Echoelmusic/Live/ProfessionalLoopEngine.swift
+// Sources/EOEL/Live/ProfessionalLoopEngine.swift
 
 import AVFoundation
 import Accelerate
@@ -496,7 +496,7 @@ struct LoopSlotView: View {
 ## 📦 MODULE 9: DJ MODE
 
 ```swift
-// Sources/Echoelmusic/DJ/DJMode.swift
+// Sources/EOEL/DJ/DJMode.swift
 
 import AVFoundation
 import Accelerate

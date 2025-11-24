@@ -10,7 +10,7 @@
 ### Apple Watch Ultra 3 + AirPods Ultra Integration
 
 ```swift
-// Sources/Echoelmusic/Biofeedback/ExtendedBiometrics2025.swift
+// Sources/EOEL/Biofeedback/ExtendedBiometrics2025.swift
 
 import HealthKit3  // iOS 26
 import WatchConnectivity2
@@ -488,7 +488,7 @@ let HKObjectQueryNoLimit = Int.max
 ### Quantum Audio Processing
 
 ```swift
-// Sources/Echoelmusic/Quantum/QuantumAudioProcessor.swift
+// Sources/EOEL/Quantum/QuantumAudioProcessor.swift
 
 import Foundation
 import QuantumKit  // iOS 26 framework
@@ -776,7 +776,7 @@ class ClassicalProcessor {
 ### Decentralized Music Rights & NFTs
 
 ```swift
-// Sources/Echoelmusic/Web3/Blockchain3Integration.swift
+// Sources/EOEL/Web3/Blockchain3Integration.swift
 
 import Foundation
 import AppleChain  // iOS 26 blockchain framework

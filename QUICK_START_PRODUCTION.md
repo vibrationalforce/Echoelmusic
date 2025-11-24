@@ -43,7 +43,7 @@ float frequency = 440.0;  // Warning: implicit conversion from 'double' to 'floa
 ```cpp
 #include "Common/GlobalWarningFixes.h"
 
-using namespace EchoelConstants;
+using namespace EOELConstants;
 
 float frequency = 440.0_f;  // ✅ No warning!
 float phase = 1.5_pi;       // ✅ 1.5 * PI, no warning!
@@ -59,7 +59,7 @@ float phase = 1.5_pi;       // ✅ 1.5 * PI, no warning!
 #include "DAW/DAWOptimizer.h"
 
 // In your prepareToPlay():
-Echoel::DAWOptimizer optimizer;
+EOEL::DAWOptimizer optimizer;
 optimizer.applyOptimizations();
 
 // Done! Now optimized for the user's DAW automatically
@@ -77,7 +77,7 @@ optimizer.applyOptimizations();
 ```cpp
 #include "Video/VideoSyncEngine.h"
 
-Echoel::VideoSyncEngine videoSync;
+EOEL::VideoSyncEngine videoSync;
 videoSync.setBPM(120.0);
 videoSync.updateFromAudio(audioLevel, frequency, color);
 videoSync.syncToAllTargets();  // Sends to Resolume, TouchDesigner, MadMapper, etc.
@@ -92,7 +92,7 @@ videoSync.syncToAllTargets();  // Sends to Resolume, TouchDesigner, MadMapper, e
 ```cpp
 #include "Lighting/LightController.h"
 
-Echoel::AdvancedLightController lights;
+EOEL::AdvancedLightController lights;
 lights.mapFrequencyToLight(440.0f, 0.8f);  // Frequency + amplitude
 
 // Done! Controls DMX, Hue, WLED, and lasers simultaneously
@@ -107,7 +107,7 @@ lights.mapFrequencyToLight(440.0f, 0.8f);  // Frequency + amplitude
 ```cpp
 #include "Biofeedback/AdvancedBiofeedbackProcessor.h"
 
-Echoel::AdvancedBiofeedbackProcessor bio;
+EOEL::AdvancedBiofeedbackProcessor bio;
 bio.updateHeartRate(72.0f);  // BPM from sensor
 bio.updateEEG(0.1f, 0.2f, 0.6f, 0.3f, 0.1f);  // Delta, Theta, Alpha, Beta, Gamma
 
@@ -134,10 +134,10 @@ class MyProcessor : public juce::AudioProcessor {
 public:
     MyProcessor() {
         // Initialize everything
-        daw = std::make_unique<Echoel::DAWOptimizer>();
-        video = std::make_unique<Echoel::VideoSyncEngine>();
-        lights = std::make_unique<Echoel::AdvancedLightController>();
-        bio = std::make_unique<Echoel::AdvancedBiofeedbackProcessor>();
+        daw = std::make_unique<EOEL::DAWOptimizer>();
+        video = std::make_unique<EOEL::VideoSyncEngine>();
+        lights = std::make_unique<EOEL::AdvancedLightController>();
+        bio = std::make_unique<EOEL::AdvancedBiofeedbackProcessor>();
     }
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override {
@@ -166,10 +166,10 @@ public:
     }
 
 private:
-    std::unique_ptr<Echoel::DAWOptimizer> daw;
-    std::unique_ptr<Echoel::VideoSyncEngine> video;
-    std::unique_ptr<Echoel::AdvancedLightController> lights;
-    std::unique_ptr<Echoel::AdvancedBiofeedbackProcessor> bio;
+    std::unique_ptr<EOEL::DAWOptimizer> daw;
+    std::unique_ptr<EOEL::VideoSyncEngine> video;
+    std::unique_ptr<EOEL::AdvancedLightController> lights;
+    std::unique_ptr<EOEL::AdvancedBiofeedbackProcessor> bio;
 };
 ```
 

@@ -154,7 +154,7 @@ Talking points:
 **Launch Day Promotions**:
 - 50% off annual subscriptions (first 48 hours)
 - Referral program: Refer 3 friends, get 1 month free
-- JUMPER Network™ bonus: First 1,000 profiles get priority matching for 6 months
+- EoelWork bonus: First 1,000 profiles get priority matching for 6 months
 
 **Launch Day Targets**:
 - 25,000 downloads
@@ -304,10 +304,10 @@ Bid Strategy: Maximize Conversions
 1. "EOEL - Professional Music Production"
 2. "AI-Powered DAW for iPhone & iPad"
 3. "Create Music Like a Pro | EOEL App"
-4. "JUMPER Network™ | Find DJ Substitutes"
+4. "EoelWork | Find DJ Substitutes"
 
 **Description Variations**:
-1. "Complete music ecosystem with AI mixing, JUMPER Network™, and content creation. Free download!"
+1. "Complete music ecosystem with AI mixing, EoelWork, and content creation. Free download!"
 2. "Professional DAW + AI tools + Artist network. Everything you need to create, connect, distribute."
 3. "Revolutionary music app with quantum-inspired optimization. Download free, upgrade anytime."
 
@@ -389,7 +389,7 @@ Bid Strategy: Maximize Conversions
 
 **Content Examples**:
 1. "How to fix a muddy mix in 10 seconds" → Demo AI EQ
-2. "When you need a DJ ASAP" → Demo JUMPER Network™
+2. "When you need a DJ ASAP" → Demo EoelWork
 3. "POV: You just discovered EOEL" → Showcase features
 4. "My AI mixing engineer" → Demo Neural Engine
 
@@ -464,7 +464,7 @@ It's free to download with a Pro tier at $9.99/mo. Would love to hear what you t
 **Monday: Tutorial/How-To**
 - Week 1: "How to Mix Your First Track with AI"
 - Week 2: "Creating TikTok Content from Your Music"
-- Week 3: "Using JUMPER Network™ to Find Gig Replacements"
+- Week 3: "Using EoelWork to Find Gig Replacements"
 - Week 4: "Mastering for Streaming Platforms"
 
 **Wednesday: Industry Insights**
@@ -475,7 +475,7 @@ It's free to download with a Pro tier at $9.99/mo. Would love to hear what you t
 
 **Friday: User Success Stories**
 - Week 1: Case study with electronic music producer
-- Week 2: Interview with DJ using JUMPER Network™
+- Week 2: Interview with DJ using EoelWork
 - Week 3: Content creator who went viral using EOEL
 - Week 4: Studio engineer's mobile workflow
 
@@ -493,7 +493,7 @@ It's free to download with a Pro tier at $9.99/mo. Would love to hear what you t
 **Tuesday: Tutorial Videos** (10-15 minutes)
 - "Complete Beginner's Guide to EOEL"
 - "10 AI Mixing Tips for Better Tracks"
-- "Creating a Hit with JUMPER Network™"
+- "Creating a Hit with EoelWork"
 - "From Idea to Spotify in 30 Minutes"
 
 **Friday: Feature Deep-Dives** (5-10 minutes)
@@ -610,7 +610,7 @@ It's free to download with a Pro tier at $9.99/mo. Would love to hear what you t
 - #feedback-friday (weekly feedback thread)
 - #tutorials-and-tips
 
-**🎪 JUMPER Network™**
+**🎪 EoelWork**
 - #jumper-requests (find/offer gigs)
 - #jumper-success-stories
 - #venue-owners
@@ -666,7 +666,7 @@ It's free to download with a Pro tier at $9.99/mo. Would love to hear what you t
 - Creator shoutouts
 
 **#JUMPERStories**
-- Share JUMPER Network™ success stories
+- Share EoelWork success stories
 - Featured on website testimonials page
 - Video interviews with successful users
 
@@ -979,7 +979,7 @@ Code Inline: 14pt / Medium / Monospace
 #### **Icon System**: SF Symbols (iOS system icons)
 
 **Custom Icons** (for unique features):
-- JUMPER Network™ icon (custom)
+- EoelWork icon (custom)
 - Neural Engine icon (custom)
 - Quantum Processor icon (custom)
 

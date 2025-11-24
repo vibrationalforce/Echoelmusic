@@ -115,7 +115,7 @@ enum AnalyticsEvent {
 └─────────────────────────────────────────┘
 ```
 
-**JUMPER Network™ Metrics**:
+**EoelWork Metrics**:
 ```
 ┌─────────────────────────────────────────┐
 │ JUMPER NETWORK™                         │
@@ -181,7 +181,7 @@ Metrics:
 - NPS score
 ```
 
-**Section 5: JUMPER Network™**
+**Section 5: EoelWork**
 ```
 Chart: Request & Match Trends (Dual-axis line chart)
 
@@ -270,7 +270,7 @@ Feature: Hashtag Optimization
 - Click-through from generated content
 ```
 
-#### **JUMPER Network™ Analytics**
+#### **EoelWork Analytics**
 
 ```
 Requests:
@@ -465,7 +465,7 @@ Target NPS: >50 (Excellent)
 - 3x Power users (daily usage)
 - 3x Regular users (weekly usage)
 - 2x Churned users
-- 2x JUMPER Network™ active users
+- 2x EoelWork active users
 
 **Interview Script Topics**:
 1. Background & music production experience
@@ -475,7 +475,7 @@ Target NPS: >50 (Excellent)
 5. Pain points: What frustrates you?
 6. Feature requests: What's missing?
 7. Comparison: How does it compare to [competitor]?
-8. JUMPER Network™ (if applicable)
+8. EoelWork (if applicable)
 9. Pricing: Perception of value
 10. Wrap-up: Final thoughts
 
@@ -558,7 +558,7 @@ CoreML models for AI mixing/mastering might be too large (>100MB) or too slow (>
 **Severity**: MEDIUM RISK
 
 **Description**:
-CloudKit outages or sync issues could break JUMPER Network™ and cloud sync features.
+CloudKit outages or sync issues could break EoelWork and cloud sync features.
 
 **Mitigation Strategies**:
 1. **Redundancy**:
@@ -653,7 +653,7 @@ Conversion from free to paid might be lower than projected (10%), threatening re
 
 ---
 
-#### **Risk 6: JUMPER Network™ Liquidity**
+#### **Risk 6: EoelWork Liquidity**
 
 **Probability**: High (60%)
 **Impact**: High
@@ -739,7 +739,7 @@ Established competitors (GarageBand, FL Studio Mobile) could copy key features, 
 **Severity**: MEDIUM RISK
 
 **Description**:
-JUMPER Network™ could face labor law, contractor classification, or liability issues.
+EoelWork could face labor law, contractor classification, or liability issues.
 
 **Mitigation Strategies**:
 1. **Legal Structure**:
@@ -934,7 +934,7 @@ Must include:
 - [ ] Prohibited activities
 - [ ] Intellectual property rights
 - [ ] User content rights
-- [ ] JUMPER Network™ specific terms
+- [ ] EoelWork specific terms
 - [ ] Payment terms
 - [ ] Refund policy (per Apple requirements)
 - [ ] Subscription terms
@@ -947,7 +947,7 @@ Must include:
 - [ ] Changes to terms
 - [ ] Contact information
 
-**✅ JUMPER Network™ Terms** (https://eoel.app/jumper-terms)
+**✅ EoelWork Terms** (https://eoel.app/jumper-terms)
 
 Must include:
 - [ ] Independent contractor status
@@ -979,7 +979,7 @@ Must include:
 Must include:
 - [ ] Respectful behavior requirements
 - [ ] Prohibited content (hate speech, harassment, etc.)
-- [ ] JUMPER Network™ specific guidelines
+- [ ] EoelWork specific guidelines
 - [ ] Consequences of violations
 - [ ] Reporting mechanisms
 - [ ] Appeal process
@@ -1012,7 +1012,7 @@ Must include:
 **✅ Tax Compliance**
 - [ ] Sales tax nexus analyzed (per state)
 - [ ] Sales tax collection setup (if required)
-- [ ] 1099 reporting for JUMPER Network™ (US)
+- [ ] 1099 reporting for EoelWork (US)
 - [ ] International VAT compliance plan
 - [ ] Quarterly estimated taxes calculated
 - [ ] Annual tax filing prepared
@@ -1176,7 +1176,7 @@ Must include:
 - [x] App Store guidelines reviewed
 - [x] Privacy policy drafted
 - [x] Terms of service drafted
-- [x] JUMPER Network™ terms drafted
+- [x] EoelWork terms drafted
 - [x] Legal entity structure planned
 - [x] IP protection strategy defined
 - [x] Compliance checklist complete

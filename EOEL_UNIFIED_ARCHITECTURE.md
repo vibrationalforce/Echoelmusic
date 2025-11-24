@@ -514,7 +514,7 @@ struct EventSubscriber {
 ```swift
 // MARK: - JUMPER NETWORK™
 /// Revolutionary DJ/Artist substitute network with quantum-inspired matching
-/// Replaces the Springer-Netzwerk with advanced AI, blockchain verification,
+/// Replaces the EoelWork with advanced AI, blockchain verification,
 /// and multi-category support (DJs, Musicians, Producers, Engineers)
 @MainActor
 final class JumperNetwork: ObservableObject {

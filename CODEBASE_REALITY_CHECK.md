@@ -190,7 +190,7 @@
 
 ❌ MISSING:
 - Booking platform
-- Springer-Netzwerk (substitute network)
+- EoelWork (substitute network)
 - Contract management
 - Revenue tracking
 - Analytics dashboard
@@ -351,7 +351,7 @@ Blocker: NO - But killer feature for creators
 #### ❌ **11. Booking Platform** (Priority: 🟢 MEDIUM)
 ```
 Current: None
-Required: Gig marketplace + Springer-Netzwerk
+Required: Gig marketplace + EoelWork
 Effort: 6-8 weeks
 Blocker: NO - Phase 3 feature
 ```
@@ -453,7 +453,7 @@ Day 60:    App Store submission
 ### **Phase 3: Artist Platform (Months 3-6)**
 ```
 ✅ Booking Platform
-✅ Springer-Netzwerk (substitute network)
+✅ EoelWork (substitute network)
 ✅ Contract Management
 ✅ Tour Router
 ```
@@ -566,7 +566,7 @@ GarageBand:
 ✅ Automation
 ✅ Easy to use
 
-Echoelmusic (Current):
+EOEL (Current):
 ✅ Biofeedback integration (UNIQUE!)
 ✅ Spatial audio (UNIQUE!)
 ✅ LED/DMX control (UNIQUE!)
@@ -589,7 +589,7 @@ FL Studio Mobile:
 ✅ Automation
 ✅ Step sequencer
 
-Echoelmusic (Current):
+EOEL (Current):
 ✅ Biofeedback (UNIQUE!)
 ✅ Spatial audio (UNIQUE!)
 ✅ Livestreaming (UNIQUE!)
@@ -612,7 +612,7 @@ Ableton Live:
 ✅ Professional effects
 ✅ Automation
 
-Echoelmusic (Current):
+EOEL (Current):
 ✅ Biofeedback (UNIQUE!)
 ✅ Mobile-first (ADVANTAGE!)
 ✅ Bioreactive (UNIQUE!)
@@ -629,7 +629,7 @@ VERDICT: Not yet competitive for live performance
 
 ## 💡 UNIQUE SELLING POINTS (WORKING)
 
-### **What Makes Echoelmusic Different RIGHT NOW:**
+### **What Makes EOEL Different RIGHT NOW:**
 
 1. **✅ Biofeedback Integration**
    - HRV → Audio parameters
@@ -682,7 +682,7 @@ WEEK 9-10: Testing & Bug Fixes
 
 ```
 MONTH 2-3: Distribution API, Content Automation
-MONTH 4-5: Booking Platform, Springer-Netzwerk
+MONTH 4-5: Booking Platform, EoelWork
 MONTH 6:   Video Editor, AI Coach
 ```
 
@@ -763,7 +763,7 @@ NOT REQUIRED for MVP:
 
 ## 🎯 CONCLUSION
 
-**Echoelmusic has an EXCELLENT foundation:**
+**EOEL has an EXCELLENT foundation:**
 - ✅ Clean architecture
 - ✅ 40K lines of code
 - ✅ Unique features (biofeedback, spatial audio, LED control)

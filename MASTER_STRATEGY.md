@@ -344,7 +344,7 @@ add_subdirectory(Sources/Audio)
 add_subdirectory(Sources/Healing)
 
 # Link all libraries
-target_link_libraries(Echoelmusic
+target_link_libraries(EOEL
     PRIVATE
         juce::juce_audio_basics
         juce::juce_audio_devices

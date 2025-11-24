@@ -1,4 +1,4 @@
-# Echoelmusic - Current Status 🚀
+# EOEL - Current Status 🚀
 
 **Last Updated:** November 12, 2025
 **Branch:** `claude/echoelmusic-feature-review-011CV2CqwKKLAkffcptfZLVy`
@@ -16,7 +16,7 @@ Sources/Audio/AudioEngine.h/.cpp (500+ lines)
   ✅ Tempo & time signature
   ✅ Recording to armed tracks
   ✅ Master bus mixing & metering
-  ✅ EchoelSync integration
+  ✅ EOELSync integration
   ✅ LUFS metering (streaming-ready)
   ✅ < 10ms latency optimized
 
@@ -102,9 +102,9 @@ Sources/Audio/Track.h/.cpp (300+ lines)
 17. (More to come...)
 ```
 
-### 🔗 EchoelSync™ (Complete!)
+### 🔗 EOELSync™ (Complete!)
 ```
-Sources/Sync/EchoelSync.h (complete, 500+ lines)
+Sources/Sync/EOELSync.h (complete, 500+ lines)
   ✅ Universal sync protocol
   ✅ Ableton Link compatible
   ✅ MIDI Clock, MTC, LTC, OSC
@@ -125,7 +125,7 @@ Sources/Remote/RemoteProcessingEngine.h/.cpp (1,400+ lines)
   ✅ Adaptive fallback
   ✅ Remote recording
 
-Sources/Remote/EchoelCloudManager.h (800+ lines)
+Sources/Remote/EOELCloudManager.h (800+ lines)
   ✅ Cloud rendering system
   ✅ Batch processing
   ✅ Cost optimization (Hetzner €0.01/hr)
@@ -135,7 +135,7 @@ Sources/Remote/EchoelCloudManager.h (800+ lines)
 
 ### 📱 iOS Foundation (Ready!)
 ```
-Sources/iOS/EchoelmusicApp.h/.cpp
+Sources/iOS/EOELApp.h/.cpp
   ✅ iOS app lifecycle
   ✅ Audio session setup (< 10ms latency)
   ✅ Interruption handling
@@ -157,7 +157,7 @@ Core Components (Shared):
   ├── Track System      ✅ Done
   ├── DSP Effects (17)  ✅ Done
   ├── MIDI Engine       ⏳ TODO
-  ├── EchoelSync        ✅ Done
+  ├── EOELSync        ✅ Done
   └── Project System    ⏳ TODO
 
 Platform-Specific:
@@ -264,7 +264,7 @@ iOS Later (with Mac):
 vs. Ableton/FL Studio/Logic:
   ✅ €99 one-time (not €600+/year)
   ✅ Mobile-first (iPad + remote processing)
-  ✅ Universal sync (EchoelSync™)
+  ✅ Universal sync (EOELSync™)
   ✅ Cloud rendering (€9.99/mo, optional)
   ✅ Open source (GPL, auditable)
   ✅ Artist-made (not corporate)
@@ -279,7 +279,7 @@ vs. Reaper:
   ✅ Better UI (vaporwave aesthetic)
   ✅ Mobile version (iPad)
   ✅ Cloud rendering built-in
-  ✅ EchoelSync integration
+  ✅ EOELSync integration
   ✅ Simpler workflow
 ```
 
@@ -360,7 +360,7 @@ Accents: Press Start 2P (sparingly)
 ### UI Components
 ```
 ┌────────────────────────────────────────────┐
-│ ⚙️  Echoel  |  Project  |  ▶️ 128 BPM  ☁️ │
+│ ⚙️  EOEL  |  Project  |  ▶️ 128 BPM  ☁️ │
 ├─────┬──────────────────────────────────────┤
 │  T  │                                      │
 │  r  │      Waveform / Piano Roll View    │
@@ -384,8 +384,8 @@ Accents: Press Start 2P (sparingly)
 ### What You Can Do NOW (without Mac)
 ```bash
 # Clone & Build Desktop Version
-git clone https://github.com/vibrationalforce/Echoelmusic.git
-cd Echoelmusic
+git clone https://github.com/vibrationalforce/EOEL.git
+cd EOEL
 
 # Create build directory
 mkdir build && cd build
@@ -397,7 +397,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 
 # Run
-./Echoelmusic
+./EOEL
 ```
 
 ### What Needs Mac (Later)
@@ -440,7 +440,7 @@ Everything else: Build NOW!
 - ✅ Core audio engine (professional-grade!)
 - ✅ 8-track recording/playback
 - ✅ 17 DSP effects (industry-level!)
-- ✅ EchoelSync™ (universal sync!)
+- ✅ EOELSync™ (universal sync!)
 - ✅ iOS foundation (when Mac available)
 
 **NEXT STEPS:**
@@ -465,6 +465,6 @@ Everything else: Build NOW!
 
 **Status: ON TRACK! 🚀**
 
-**Created by Echoel™**
+**Created by EOEL™**
 **Building the Future of Music Production**
 **November 2025**
