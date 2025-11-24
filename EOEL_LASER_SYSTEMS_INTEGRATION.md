@@ -158,7 +158,7 @@ final class MobileLiDARSystem: ObservableObject {
 
     private let arSession = ARSession()
 
-    // ========== NAVIGATION FOR JUMPER GIGS ==========
+    // ========== NAVIGATION FOR EOELWORK GIGS ==========
 
     func navigateToVenue(venue: Venue) async throws {
         // 1. Outdoor navigation (GPS + Compass)
@@ -1473,7 +1473,7 @@ final class PhotonicSystemIntegration {
 
     // ========== USE CASES ==========
 
-    func integrateWithJUMPER() {
+    func integrateWithEoelWork() {
         // LiDAR navigation for gig locations
 
         jumperNetwork.onGigAccepted { gig in

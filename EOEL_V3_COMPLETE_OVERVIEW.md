@@ -20,7 +20,7 @@ EOEL is the **world's first unified creative platform** combining:
 - ✅ **Photonic Systems** (LiDAR, Laser Performance, Optical Communication)
 
 **What Makes EOEL Unique:**
-1. **Cross-Industry JUMPER™** - Not just music, but 8+ industries (Gastronomy, Tech, Medical, etc.)
+1. **Cross-Industry EoelWork™** - Not just music, but 8+ industries (Gastronomy, Tech, Medical, etc.)
 2. **Swimming Pool Immersive Audio** - World's first underwater vibrational music system
 3. **Biometric-to-Audio Mapping** - Heart rate, breathing, motion control audio parameters
 4. **Professional Mobile DAW** - <2ms latency on iPhone/iPad (competitors: 10-20ms)
@@ -30,7 +30,7 @@ EOEL is the **world's first unified creative platform** combining:
 
 ---
 
-## 🌍 JUMPER NETWORK™ - ALL JOB PROFILES SUPPORTED
+## 🌍 EoelWork™ - ALL JOB PROFILES SUPPORTED
 
 ### What is EoelWork?
 
@@ -71,7 +71,7 @@ enum MusicJobProfiles: CaseIterable {
 }
 ```
 
-**JUMPER Scenarios:**
+**EoelWork Scenarios:**
 - DJ cancels 2 hours before wedding → Find replacement with matching genre
 - Sound engineer sick during festival → Emergency substitute with festival experience
 - VJ equipment failure → Backup VJ with own hardware
@@ -114,7 +114,7 @@ enum TechnologyJobProfiles: CaseIterable {
 }
 ```
 
-**JUMPER Scenarios:**
+**EoelWork Scenarios:**
 - Production server down at 3am → Emergency DevOps engineer
 - Security breach detected → Incident responder needed immediately
 - Developer COVID-positive during sprint → Remote substitute for critical tasks
@@ -150,7 +150,7 @@ enum GastronomyJobProfiles: CaseIterable {
 }
 ```
 
-**JUMPER Scenarios:**
+**EoelWork Scenarios:**
 - Chef food poisoning during dinner service → Substitute chef with Italian cuisine experience
 - Bartender no-show Friday night → Emergency bartender with cocktail expertise
 - Waiter quits mid-shift → Experienced server for fine dining
@@ -190,7 +190,7 @@ enum MedicalJobProfiles: CaseIterable {
 }
 ```
 
-**JUMPER Scenarios:**
+**EoelWork Scenarios:**
 - ER nurse calls in sick during night shift → ICU-certified RN substitute
 - Paramedic injured on duty → EMT-P certified backup
 - Hospital understaffed during flu season → Pool of registered nurses
@@ -221,7 +221,7 @@ enum EducationJobProfiles: CaseIterable {
 }
 ```
 
-**JUMPER Scenarios:**
+**EoelWork Scenarios:**
 - Teacher flu during exam week → Certified substitute teacher for calculus
 - Professor emergency during finals → PhD candidate covers lectures
 - Tutor cancels SAT prep → Experienced SAT tutor with 1500+ score
@@ -258,7 +258,7 @@ enum TradesJobProfiles: CaseIterable {
 }
 ```
 
-**JUMPER Scenarios:**
+**EoelWork Scenarios:**
 - Electrician emergency during renovation → Licensed electrician for commercial work
 - Plumber sick during pipe burst → Master plumber with emergency experience
 - HVAC failure during heatwave → EPA-certified technician
@@ -291,7 +291,7 @@ enum EventsJobProfiles: CaseIterable {
 }
 ```
 
-**JUMPER Scenarios:**
+**EoelWork Scenarios:**
 - Event planner COVID-positive week before wedding → Certified wedding planner
 - Lighting programmer quits during festival setup → MA3 programmer
 - AV tech no-show at conference → Experienced corporate AV technician
@@ -327,7 +327,7 @@ enum ConsultingJobProfiles: CaseIterable {
 }
 ```
 
-**JUMPER Scenarios:**
+**EoelWork Scenarios:**
 - Consultant double-booked → Strategy consultant with manufacturing experience
 - CPA sick during tax season → Certified accountant for complex returns
 - Lawyer conflict of interest → Specialized IP attorney
@@ -579,7 +579,7 @@ final class IntelligentModeSwitcher: ObservableObject {
         case producer       // DAW focus
         case dj             // Performance focus
         case contentCreator // Video/streaming focus
-        case serviceProvider // JUMPER focus
+        case serviceProvider // EoelWork focus
         case venue          // Booking/management focus
     }
 
@@ -600,7 +600,7 @@ final class IntelligentModeSwitcher: ObservableObject {
         // Examples:
         // - Friday 10pm + DJ controller connected → .dj
         // - Monday 2pm + camera connected → .contentCreator
-        // - New JUMPER notification → .serviceProvider
+        // - New EoelWork notification → .serviceProvider
         // - Clean slate → .producer
 
         return prediction?.mode ?? .auto
@@ -674,7 +674,7 @@ struct EOELInterface: View {
 ```swift
 @MainActor
 final class CrossModuleWorkflows {
-    // Example: DJ gig leads to JUMPER opportunity
+    // Example: DJ gig leads to EoelWork opportunity
     func djGigToJumper() {
         // 1. User DJs at venue
         daw.performLiveSet()
@@ -685,7 +685,7 @@ final class CrossModuleWorkflows {
         // 3. Venue automatically adds user to favorites
         jumperNetwork.addToFavorites(user, venue)
 
-        // 4. Future JUMPER requests prioritize this user
+        // 4. Future EoelWork requests prioritize this user
         jumperNetwork.notifyFirst(user, when: venue.hasEmergency)
     }
 
@@ -704,9 +704,9 @@ final class CrossModuleWorkflows {
         }
     }
 
-    // Example: JUMPER booking to calendar
+    // Example: EoelWork booking to calendar
     func jumperToCalendar() {
-        // 1. User accepts JUMPER gig
+        // 1. User accepts EoelWork gig
         jumperNetwork.acceptGig(gig)
 
         // 2. Automatically adds to calendar
@@ -824,10 +824,10 @@ struct EOELOnboarding: View {
 
 ### Result: **One Interface, Infinite Possibilities**
 
-- **Beginner DJ** sees: Play button, crossfader, effects, BPM sync, JUMPER gigs
+- **Beginner DJ** sees: Play button, crossfader, effects, BPM sync, EoelWork gigs
 - **Expert Producer** sees: Full DAW, spectrum analyzer, modular synthesis, neural effects
 - **Content Creator** sees: Camera controls, video editor, smart lighting, live streaming
-- **Service Provider** sees: JUMPER opportunities, calendar, navigation, earnings
+- **Service Provider** sees: EoelWork opportunities, calendar, navigation, earnings
 - **Venue Owner** sees: Booking dashboard, talent search, event management
 
 **Everyone gets exactly what they need, nothing they don't.**
@@ -1199,7 +1199,7 @@ enum LiveStreaming: CaseIterable {
 ```swift
 @MainActor
 final class LiDARSystems {
-    // Navigation for JUMPER gigs
+    // Navigation for EoelWork gigs
     func navigateToVenue() {
         lidar.createIndoorMap()
         lidar.provideAccessibilityGuidance()
@@ -1316,7 +1316,7 @@ final class OpticalCommunication {
 
 EOELCore/                  // Core functionality (required)
 ├── EOELAudio/            // Audio engine (required)
-├── EOEL_JUMPER/          // JUMPER network (optional)
+├── EOEL_JUMPER/          // EoelWork network (optional)
 ├── EOELVideo/            // Video editor (optional)
 ├── EOELLighting/         // Smart lighting (optional)
 ├── EOELPhotonics/        // Laser/LiDAR (optional)
@@ -1341,8 +1341,8 @@ final class LazyModuleLoader {
         await loadModule(.audioEngine)
         await loadModule(.ui)
 
-        // JUMPER: Load when user opens JUMPER tab
-        if user.openedJUMPER {
+        // JUMPER: Load when user opens EoelWork tab
+        if user.openedEoelWork {
             await loadModule(.jumperNetwork)
         }
 
@@ -1408,9 +1408,9 @@ struct SmartDefaults {
             return .armRecording
         }
 
-        // User always opens JUMPER on Friday evenings → suggest gigs
+        // User always opens EoelWork on Friday evenings → suggest gigs
         if dayOfWeek == .friday && hour >= 18 {
-            return .showJUMPERGigs
+            return .showEoelWorkGigs
         }
 
         return .idle
@@ -1500,7 +1500,7 @@ v2_0_features:  # 12 months after launch
 Week 1-4:   Core audio engine + basic UI
 Week 5-8:   MIDI support + 10 instruments
 Week 9-12:  Effects chain + mixing
-Week 13-16: JUMPER basic (music only)
+Week 13-16: EoelWork basic (music only)
 ```
 
 ### Phase 2: Content Creation (Months 5-8)
@@ -1524,9 +1524,9 @@ Week 45-48: v1.1 planning
 ### Phase 4: Expansion (Months 13-18)
 
 ```
-Month 13-14: Add gastronomy to JUMPER
+Month 13-14: Add gastronomy to EoelWork
 Month 15-16: DMX512 lighting + 4K video
-Month 17-18: Add remaining JUMPER industries
+Month 17-18: Add remaining EoelWork industries
 ```
 
 ---

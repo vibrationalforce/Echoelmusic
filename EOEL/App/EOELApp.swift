@@ -10,24 +10,31 @@ import SwiftUI
 
 @main
 struct EOELApp: App {
-    @StateObject private var audioEngine = EOELAudioEngine.shared
-    @StateObject private var eoelWorkManager = EoelWorkManager.shared
-    @StateObject private var lightingController = UnifiedLightingController()
-    @StateObject private var photonicSystem = PhotonicSystem()
+    // Unified Feature Integration - Central coordinator for all 164+ features
+    @StateObject private var unifiedIntegration = UnifiedFeatureIntegration.shared
+
+    // Direct access to core systems (for convenience)
+    private var audioEngine: EOELAudioEngine { unifiedIntegration.audioEngine }
+    private var eoelWorkManager: EoelWorkManager { unifiedIntegration.eoelWorkManager }
+    private var lightingController: UnifiedLightingController { unifiedIntegration.lightingController }
+    private var photonicSystem: PhotonicSystem { unifiedIntegration.photonicSystem }
 
     init() {
         // Configure app appearance
         setupAppearance()
 
-        // Initialize core systems
+        // Initialize ALL systems through unified integration
         Task {
-            await initializeCoreSystems()
+            await initializeUnifiedSystem()
         }
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                // Inject unified integration (provides access to all systems)
+                .environmentObject(unifiedIntegration)
+                // Also inject individual systems for direct access
                 .environmentObject(audioEngine)
                 .environmentObject(eoelWorkManager)
                 .environmentObject(lightingController)
@@ -45,21 +52,16 @@ struct EOELApp: App {
         // Accent: Pink (#EC4899)
     }
 
-    private func initializeCoreSystems() async {
+    private func initializeUnifiedSystem() async {
         do {
-            // Initialize audio engine
-            try await audioEngine.initialize()
+            // Initialize ALL EOEL systems and features through unified integration
+            // This handles:
+            // - 4 core systems (Audio, EoelWork, Lighting, Photonics)
+            // - 164+ features (47 instruments, 77 effects, 40 video, 21 lighting, etc.)
+            // - Cross-system integration (audio→lighting, biometrics→audio, etc.)
+            try await unifiedIntegration.initialize()
 
-            // Initialize EoelWork
-            try await eoelWorkManager.initialize()
-
-            // Initialize lighting systems
-            try await lightingController.discoverDevices()
-
-            // Initialize photonic systems (LiDAR, laser safety checks)
-            try await photonicSystem.initialize()
-
-            print("✅ EOEL Core Systems Initialized")
+            print("✅ EOEL Unified System Initialized - \(unifiedIntegration.activeFeatures.count) features active")
         } catch {
             print("❌ Initialization Error: \(error)")
         }

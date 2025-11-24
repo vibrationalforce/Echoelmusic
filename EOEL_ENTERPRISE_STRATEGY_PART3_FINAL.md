@@ -67,7 +67,7 @@ enum AnalyticsEvent {
 **What We Don't Track**:
 - ❌ Personal information (names, emails stored separately)
 - ❌ Content of user projects
-- ❌ Detailed location (only city-level for JUMPER)
+- ❌ Detailed location (only city-level for EoelWork)
 - ❌ Cross-app tracking
 - ❌ Third-party cookies
 
@@ -118,7 +118,7 @@ enum AnalyticsEvent {
 **EoelWork Metrics**:
 ```
 ┌─────────────────────────────────────────┐
-│ JUMPER NETWORK™                         │
+│ EoelWork™                         │
 │ Active Jumpers: 10,000 ↑ 15%           │
 │ Requests (30d): 1,500 ↑ 22%            │
 │ Match Rate: 87% ↑ 2%                   │
@@ -157,7 +157,7 @@ Metrics:
 ```
 Chart: Revenue Trend (Line chart + bar chart combo)
 - Subscription revenue
-- JUMPER commission revenue
+- EoelWork commission revenue
 - Marketplace revenue
 
 Metrics:
@@ -394,7 +394,7 @@ Duration: 3 weeks
 Success criteria: >15% increase in acceptance rate
 ```
 
-**Experiment 4: JUMPER Matching Algorithm**
+**Experiment 4: EoelWork Matching Algorithm**
 ```
 Hypothesis: Showing match reasoning will increase acceptance
 
@@ -600,7 +600,7 @@ Apple could reject the app for various reasons (IAP implementation, API misuse, 
 
 2. **Compliance Focus**:
    - IAP for all digital goods
-   - JUMPER commissions outside IAP (physical service)
+   - EoelWork commissions outside IAP (physical service)
    - Privacy policy prominent and complete
    - All required disclosures
 
@@ -641,7 +641,7 @@ Conversion from free to paid might be lower than projected (10%), threatening re
    - Limited-time offers for new users
 
 3. **Alternative Revenue**:
-   - Focus on JUMPER commissions
+   - Focus on EoelWork commissions
    - Marketplace revenue (samples, templates)
    - Enterprise/education sales
 
@@ -707,7 +707,7 @@ Established competitors (GarageBand, FL Studio Mobile) could copy key features, 
 1. **Patent Protection**:
    - Patent quantum-inspired algorithms
    - Patent JUMPER matching system
-   - Trademark "JUMPER NETWORK™"
+   - Trademark "EoelWork™"
 
 2. **Rapid Innovation**:
    - Ship new features monthly
@@ -867,7 +867,7 @@ Economic recession could reduce consumer spending on apps, especially subscripti
 - [ ] In-App Purchase properly implemented
 - [ ] Subscriptions correctly configured (auto-renewable)
 - [ ] Restore purchases function works
-- [ ] JUMPER commissions outside IAP (verified as allowed)
+- [ ] EoelWork commissions outside IAP (verified as allowed)
 - [ ] Receipts validated server-side
 - [ ] Free tier functional without payment
 - [ ] Pricing displayed correctly in all regions
@@ -996,7 +996,7 @@ Must include:
 
 **✅ Intellectual Property**
 - [ ] Trademark: "EOEL" (filed)
-- [ ] Trademark: "JUMPER NETWORK™" (filed)
+- [ ] Trademark: "EoelWork™" (filed)
 - [ ] Logo copyright (registered)
 - [ ] Patent applications filed (quantum algorithms, matching system)
 - [ ] Domain names secured (.com, .app, .io, .ai)
@@ -1158,7 +1158,7 @@ Must include:
 - [x] Complete implementation (5,000+ lines)
 - [x] iOS-first architecture
 - [x] All 10 subsystems built
-- [x] JUMPER NETWORK™ complete
+- [x] EoelWork™ complete
 - [x] Neural Audio Engine ready
 - [x] Quantum algorithms implemented
 - [x] Performance optimizations done

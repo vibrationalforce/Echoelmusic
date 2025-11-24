@@ -1139,7 +1139,7 @@ We provide care.
 
 ```python
 # Python API Example
-from echoelwisdom import KnowledgeBase, CoachingEngine
+from eoelwisdom import KnowledgeBase, CoachingEngine
 
 kb = KnowledgeBase()
 coach = CoachingEngine()
@@ -1174,8 +1174,8 @@ print(f"Recommended follow-up: {response.suggested_actions}")
 #include "echoel/wisdom/CoachingEngine.h"
 #include "echoel/health/HRVMonitor.h"
 
-echoel::wisdom::CoachingEngine coach;
-echoel::health::HRVMonitor hrv;
+eoel::wisdom::CoachingEngine coach;
+eoel::health::HRVMonitor hrv;
 
 // Get HRV state
 auto hrvState = hrv.getCurrentState();
