@@ -57,8 +57,8 @@ struct TherapeuticColorSystem {
         /// Research: Human eye most sensitive at 555nm (photopic), 520nm optimal for displays
         static let eyeComfortGreen = Color(red: 0.0, green: 1.0, blue: 0.0)
 
-        /// 528nm - "Love frequency" (Solfeggio), DNA repair
-        /// Research: Controversial but used in sound/light therapy
+        /// 528nm - Mid-green wavelength
+        /// Research: Within optimal eye sensitivity range, may reduce visual fatigue
         static let healingGreen = Color(red: 0.0, green: 0.9, blue: 0.2)
 
         /// 550nm - Balance and harmony, stress reduction
@@ -91,8 +91,8 @@ struct TherapeuticColorSystem {
 
         // MARK: - Indigo Spectrum (435-450nm)
 
-        /// 445nm - Intuition and insight
-        /// Research: Activates pineal gland, affects melatonin
+        /// 445nm - Short-wavelength blue-violet
+        /// Research: May affect melatonin production (use cautiously)
         static let insightIndigo = Color(red: 0.29, green: 0.0, blue: 0.51)
 
         /// 440nm - Deep meditation state
@@ -104,8 +104,9 @@ struct TherapeuticColorSystem {
         /// Research: Kills bacteria and viruses, used in hospitals
         static let antimicrobialViolet = Color(red: 0.58, green: 0.0, blue: 0.83)
 
-        /// 420nm - Spiritual connection, crown chakra
-        static let spiritualViolet = Color(red: 0.5, green: 0.0, blue: 0.7)
+        /// 420nm - Short-wavelength violet
+        /// Research: High-energy visible light, may have antimicrobial properties
+        static let deepViolet = Color(red: 0.5, green: 0.0, blue: 0.7)
 
         // MARK: - Near-Infrared (750-1000nm) - Represented as deep red
 
@@ -582,7 +583,7 @@ class TherapeuticThemeManager: ObservableObject {
                     ("Green\n520nm", TherapeuticColorSystem.WavelengthColors.eyeComfortGreen),
                     ("Cyan\n490nm", TherapeuticColorSystem.WavelengthColors.calmingCyan),
                     ("Blue\n480nm", TherapeuticColorSystem.WavelengthColors.circadianBlue),
-                    ("Violet\n420nm", TherapeuticColorSystem.WavelengthColors.spiritualViolet)
+                    ("Violet\n420nm", TherapeuticColorSystem.WavelengthColors.deepViolet)
                 ], id: \.0) { name, color in
                     VStack {
                         Rectangle()

@@ -161,7 +161,7 @@ struct TherapeuticInterfaceShowcase: View {
                     ("Green\n520nm", TherapeuticColorSystem.WavelengthColors.eyeComfortGreen, "Comfort"),
                     ("Cyan\n490nm", TherapeuticColorSystem.WavelengthColors.calmingCyan, "Calming"),
                     ("Blue\n480nm", TherapeuticColorSystem.WavelengthColors.circadianBlue, "Circadian"),
-                    ("Violet\n420nm", TherapeuticColorSystem.WavelengthColors.spiritualViolet, "Spiritual")
+                    ("Violet\n420nm", TherapeuticColorSystem.WavelengthColors.deepViolet, "Antimicrobial")
                 ], id: \.0) { name, color, effect in
                     VStack(spacing: 4) {
                         Rectangle()
