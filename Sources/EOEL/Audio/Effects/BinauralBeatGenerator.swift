@@ -17,6 +17,7 @@ class BinauralBeatGenerator: ObservableObject {
     /// Audio output mode based on device capabilities
     enum AudioMode {
         case binaural     // Stereo - different frequency per ear (requires headphones)
+        case monaural     // Mono - both frequencies mixed acoustically (works anywhere, acoustic beating)
         case isochronic   // Mono - pulsed tone (works on speakers, spatial audio, etc.)
     }
 
@@ -238,14 +239,23 @@ class BinauralBeatGenerator: ObservableObject {
 
     /// Schedule audio buffers for continuous playback
     private func scheduleBuffers() {
-        if audioMode == .binaural {
+        switch audioMode {
+        case .binaural:
             // Binaural mode: different frequency per ear
             let leftBuffer = generateToneBuffer(frequency: leftEarFrequency)
             let rightBuffer = generateToneBuffer(frequency: rightEarFrequency)
 
             leftPlayerNode.scheduleBuffer(leftBuffer, completionHandler: nil)
             rightPlayerNode.scheduleBuffer(rightBuffer, completionHandler: nil)
-        } else {
+
+        case .monaural:
+            // Monaural mode: both frequencies mixed acoustically (mono)
+            let monauralBuffer = generateMonauralBuffer()
+
+            leftPlayerNode.scheduleBuffer(monauralBuffer, completionHandler: nil)
+            rightPlayerNode.scheduleBuffer(monauralBuffer, completionHandler: nil)
+
+        case .isochronic:
             // Isochronic mode: pulsed tone (same on both ears)
             let isoBuffer = generateIsochronicBuffer()
 
@@ -316,6 +326,43 @@ class BinauralBeatGenerator: ObservableObject {
             let envelope = 1.0 - (Float(i) / Float(fadeLength))
             channelData[startIndex + i] *= envelope
         }
+    }
+
+    /// Generate monaural beat buffer (two frequencies mixed acoustically)
+    /// Creates REAL acoustic beating that works on any output device
+    /// Unlike binaural (brain perceives beat), monaural produces actual interference pattern
+    /// - Returns: Audio buffer containing monaural beat
+    private func generateMonauralBuffer() -> AVAudioPCMBuffer {
+        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
+        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: bufferSize)!
+        buffer.frameLength = bufferSize
+
+        guard let channelData = buffer.floatChannelData?[0] else {
+            return buffer
+        }
+
+        // Generate TWO sine waves at different frequencies and MIX them acoustically
+        // This creates real interference/beating pattern (constructive/destructive interference)
+        let freq1AngularFreq = 2.0 * Float.pi * leftEarFrequency   // Carrier - beatFreq/2
+        let freq2AngularFreq = 2.0 * Float.pi * rightEarFrequency  // Carrier + beatFreq/2
+        let sampleRateFloat = Float(sampleRate)
+
+        for i in 0..<Int(bufferSize) {
+            let time = Float(i) / sampleRateFloat
+
+            // Two sine waves
+            let wave1 = sin(freq1AngularFreq * time)
+            let wave2 = sin(freq2AngularFreq * time)
+
+            // Mix them acoustically (simple addition creates interference pattern)
+            // The beating occurs naturally from constructive/destructive interference
+            // Beat frequency = |freq2 - freq1| (our target beat frequency)
+            let mixed = (wave1 + wave2) / 2.0  // Divide by 2 to prevent clipping
+
+            channelData[i] = amplitude * mixed
+        }
+
+        return buffer
     }
 
     /// Generate isochronic tone buffer (pulsed carrier tone at beat frequency)
