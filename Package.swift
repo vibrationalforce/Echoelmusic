@@ -19,13 +19,34 @@ let package = Package(
             targets: ["EOEL"]),
     ],
     dependencies: [
-        // Add future dependencies here (e.g., for audio processing, ML, etc.)
+        // Firebase - Backend infrastructure
+        .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "10.20.0"),
+
+        // Networking
+        .package(url: "https://github.com/Alamofire/Alamofire", from: "5.8.0"),
+
+        // Secure Storage
+        .package(url: "https://github.com/kishikawakatsumi/KeychainAccess", from: "4.2.2"),
+
+        // Analytics (Privacy-Friendly)
+        .package(url: "https://github.com/TelemetryDeck/SwiftClient", from: "1.4.0"),
     ],
     targets: [
         // Core EOEL target - cross-platform code
         .target(
             name: "EOEL",
-            dependencies: [],
+            dependencies: [
+                .product(name: "FirebaseCore", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseFunctions", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseMessaging", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseCrashlytics", package: "firebase-ios-sdk"),
+                .product(name: "FirebasePerformance", package: "firebase-ios-sdk"),
+                "Alamofire",
+                "KeychainAccess",
+                "TelemetryDeck",
+            ],
             resources: [
                 .process("Resources")
             ]),

@@ -11,7 +11,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Blab</string>
+	<string>EOEL</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -21,7 +21,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Blab needs microphone access to transform your voice and breath into immersive audio-visual experiences.</string>
+	<string>EOEL needs microphone access to record audio, process vocals, and create immersive audio-visual experiences in real-time.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -53,10 +53,10 @@
 		<string>audio</string>
 	</array>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Blab may use heart rate data to create adaptive audio-visual experiences.</string>
+	<string>EOEL uses heart rate variability (HRV) and biometric data to create adaptive, personalized audio-visual experiences that respond to your body's rhythms.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Blab uses your camera for face tracking to control audio parameters with your facial expressions.</string>
+	<string>EOEL uses your camera for face tracking and AR features to control audio parameters with facial expressions and create immersive spatial audio experiences.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Blab uses face tracking (not Face ID) to map your expressions to audio-visual parameters.</string>
+	<string>EOEL uses ARKit face tracking (not Face ID authentication) to map your facial expressions to audio-visual parameters for expressive control of music and visuals.</string>
 </dict>
 </plist>
