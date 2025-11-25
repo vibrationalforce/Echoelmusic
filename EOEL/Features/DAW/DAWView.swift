@@ -75,27 +75,38 @@ struct TransportBar: View {
                 Image(systemName: "backward.fill")
                     .font(.title2)
             }
+            .accessibilityLabel("Rewind")
+            .accessibilityHint("Jump back to previous position")
 
             Button(action: { isPlaying.toggle() }) {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                     .font(.title)
             }
+            .accessibilityLabel(isPlaying ? "Pause" : "Play")
+            .accessibilityHint(isPlaying ? "Pause playback" : "Start playback")
+            .accessibilityAddTraits(.startsMediaSession)
 
             Button(action: { /* Stop */ }) {
                 Image(systemName: "stop.fill")
                     .font(.title2)
             }
+            .accessibilityLabel("Stop")
+            .accessibilityHint("Stop playback and return to start")
 
             Button(action: { /* Record */ }) {
                 Image(systemName: "record.circle")
                     .font(.title2)
                     .foregroundColor(.red)
             }
+            .accessibilityLabel("Record")
+            .accessibilityHint("Start recording audio")
+            .accessibilityAddTraits(.startsMediaSession)
 
             Spacer()
 
             Text("00:00:00")
                 .font(.system(.body, design: .monospaced))
+                .accessibilityLabel("Time position: 0 hours, 0 minutes, 0 seconds")
         }
         .padding()
         .background(Color(.systemGray6))
@@ -124,22 +135,36 @@ struct TrackRow: View {
             // Volume Control
             Image(systemName: track.muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                 .foregroundColor(track.muted ? .red : .primary)
+                .accessibilityLabel(track.muted ? "Muted" : "Unmuted")
+                .accessibilityHint("Volume indicator")
 
             // Solo Button
-            Text("S")
-                .font(.caption)
-                .fontWeight(.bold)
-                .frame(width: 24, height: 24)
-                .background(track.solo ? Color.yellow : Color.gray.opacity(0.3))
-                .cornerRadius(4)
+            Button(action: { /* Toggle solo */ }) {
+                Text("S")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .frame(width: 24, height: 24)
+                    .background(track.solo ? Color.yellow : Color.gray.opacity(0.3))
+                    .cornerRadius(4)
+            }
+            .accessibilityLabel("Solo")
+            .accessibilityValue(track.solo ? "On" : "Off")
+            .accessibilityHint("Play only this track")
+            .accessibilityAddTraits(track.solo ? [.isButton, .isSelected] : .isButton)
 
             // Mute Button
-            Text("M")
-                .font(.caption)
-                .fontWeight(.bold)
-                .frame(width: 24, height: 24)
-                .background(track.muted ? Color.red : Color.gray.opacity(0.3))
-                .cornerRadius(4)
+            Button(action: { /* Toggle mute */ }) {
+                Text("M")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .frame(width: 24, height: 24)
+                    .background(track.muted ? Color.red : Color.gray.opacity(0.3))
+                    .cornerRadius(4)
+            }
+            .accessibilityLabel("Mute")
+            .accessibilityValue(track.muted ? "On" : "Off")
+            .accessibilityHint("Silence this track")
+            .accessibilityAddTraits(track.muted ? [.isButton, .isSelected] : .isButton)
         }
         .padding()
         .background(isSelected ? Color.purple.opacity(0.2) : Color(.systemBackground))

@@ -39,6 +39,8 @@ struct LightingControlView: View {
                                     await lightingController.setAllLights(brightness: newValue)
                                 }
                             }
+                            .accessibilityLabel("Master Brightness")
+                            .accessibilityValue("\(Int(masterBrightness * 100)) percent")
 
                         HStack {
                             Text("0%")
@@ -111,6 +113,8 @@ struct LightRow: View {
             Circle()
                 .fill(light.isReachable ? Color.green : Color.red)
                 .frame(width: 8, height: 8)
+                .accessibilityLabel(light.isReachable ? "Connected" : "Disconnected")
+                .accessibilityAddTraits(.isImage)
 
             VStack(alignment: .leading) {
                 Text(light.name)
@@ -125,7 +129,10 @@ struct LightRow: View {
             Text("\(Int(light.brightness * 100))%")
                 .font(.caption)
                 .foregroundColor(.secondary)
+                .accessibilityLabel("Brightness \(Int(light.brightness * 100)) percent")
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(light.name), \(light.system.rawValue), \(light.isReachable ? "Connected" : "Disconnected"), Brightness \(Int(light.brightness * 100)) percent")
     }
 }
 
