@@ -316,3 +316,289 @@ fragment float4 filmGrainShader(
 
     return float4(color.rgb + grain, color.a);
 }
+
+// MARK: - Advanced Color Temperature
+
+struct ColorTemperatureParams {
+    float temperature;  // Kelvin (2000-10000)
+    float tint;        // Green-Magenta shift
+    float exposure;
+    float contrast;
+    float saturation;
+    float highlights;
+    float shadows;
+    float whites;
+    float blacks;
+    // Lift/Gamma/Gain (Color Wheels)
+    float3 lift;
+    float3 gamma;
+    float3 gain;
+};
+
+// Convert Kelvin temperature to RGB multiplier
+float3 kelvinToRGB(float kelvin) {
+    float temp = kelvin / 100.0;
+    float3 color;
+
+    // Red
+    if (temp <= 66.0) {
+        color.r = 1.0;
+    } else {
+        color.r = temp - 60.0;
+        color.r = 1.2929 * pow(color.r, -0.1332);
+        color.r = clamp(color.r, 0.0, 1.0);
+    }
+
+    // Green
+    if (temp <= 66.0) {
+        color.g = 0.390082 * log(temp) - 0.631841;
+    } else {
+        color.g = temp - 60.0;
+        color.g = 1.1298 * pow(color.g, -0.0755);
+    }
+    color.g = clamp(color.g, 0.0, 1.0);
+
+    // Blue
+    if (temp >= 66.0) {
+        color.b = 1.0;
+    } else if (temp <= 19.0) {
+        color.b = 0.0;
+    } else {
+        color.b = temp - 10.0;
+        color.b = 0.543206 * log(color.b) - 1.196254;
+        color.b = clamp(color.b, 0.0, 1.0);
+    }
+
+    return color;
+}
+
+fragment float4 advancedColorTemperatureShader(
+    VertexOut in [[stage_in]],
+    texture2d<float> colorTexture [[texture(0)]],
+    constant ColorTemperatureParams& params [[buffer(0)]]
+) {
+    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
+    float4 color = colorTexture.sample(textureSampler, in.texCoord);
+
+    // 1. Apply color temperature
+    float3 tempRGB = kelvinToRGB(params.temperature);
+    color.rgb *= tempRGB;
+
+    // 2. Apply tint (green-magenta)
+    color.g += params.tint * 0.01;
+    color.rb -= params.tint * 0.005;
+
+    // 3. Exposure
+    color.rgb *= pow(2.0, params.exposure);
+
+    // 4. Lift/Gamma/Gain (CDL - Color Decision List)
+    // Lift (Shadows)
+    color.rgb = color.rgb + params.lift;
+
+    // Gamma (Midtones)
+    color.rgb = pow(max(color.rgb, 0.0), 1.0 / (params.gamma + 1.0));
+
+    // Gain (Highlights)
+    color.rgb *= (params.gain + 1.0);
+
+    // 5. Highlights/Shadows (Parametric adjustment)
+    float luminance = dot(color.rgb, float3(0.2126, 0.7152, 0.0722));
+
+    // Highlight adjustment (affects bright areas)
+    float highlightMask = smoothstep(0.5, 1.0, luminance);
+    color.rgb += params.highlights * 0.01 * highlightMask;
+
+    // Shadow adjustment (affects dark areas)
+    float shadowMask = smoothstep(0.5, 0.0, luminance);
+    color.rgb += params.shadows * 0.01 * shadowMask;
+
+    // Whites (pure white adjustment)
+    float whiteMask = smoothstep(0.8, 1.0, luminance);
+    color.rgb += params.whites * 0.01 * whiteMask;
+
+    // Blacks (pure black adjustment)
+    float blackMask = smoothstep(0.2, 0.0, luminance);
+    color.rgb += params.blacks * 0.01 * blackMask;
+
+    // 6. Contrast
+    color.rgb = ((color.rgb - 0.5) * params.contrast) + 0.5;
+
+    // 7. Saturation
+    float finalLuminance = dot(color.rgb, float3(0.2126, 0.7152, 0.0722));
+    color.rgb = mix(float3(finalLuminance), color.rgb, params.saturation);
+
+    return clamp(color, 0.0, 1.0);
+}
+
+// MARK: - LUT (Look-Up Table)
+
+fragment float4 lutShader(
+    VertexOut in [[stage_in]],
+    texture2d<float> colorTexture [[texture(0)]],
+    texture3d<float> lutTexture [[texture(1)]],
+    constant float& intensity [[buffer(0)]]
+) {
+    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
+    constexpr sampler lutSampler(mag_filter::linear, min_filter::linear);
+
+    float4 color = colorTexture.sample(textureSampler, in.texCoord);
+
+    // Sample 3D LUT
+    float3 lutCoord = clamp(color.rgb, 0.0, 1.0);
+    float3 gradedColor = lutTexture.sample(lutSampler, lutCoord).rgb;
+
+    // Blend with original based on intensity
+    color.rgb = mix(color.rgb, gradedColor, intensity);
+
+    return color;
+}
+
+// MARK: - Tone Curves
+
+struct ToneCurveParams {
+    float4 shadows;    // x=input, y=output for shadows
+    float4 midtones;   // x=input, y=output for midtones
+    float4 highlights; // x=input, y=output for highlights
+};
+
+float evaluateCurve(float x, float4 shadows, float4 midtones, float4 highlights) {
+    if (x < 0.33) {
+        // Shadows curve
+        float t = x / 0.33;
+        return mix(shadows.y, midtones.y, smoothstep(0.0, 1.0, t));
+    } else if (x < 0.67) {
+        // Midtones curve
+        float t = (x - 0.33) / 0.34;
+        return mix(midtones.y, highlights.y, smoothstep(0.0, 1.0, t));
+    } else {
+        // Highlights curve
+        float t = (x - 0.67) / 0.33;
+        return mix(highlights.y, 1.0, smoothstep(0.0, 1.0, t));
+    }
+}
+
+fragment float4 toneCurveShader(
+    VertexOut in [[stage_in]],
+    texture2d<float> colorTexture [[texture(0)]],
+    constant ToneCurveParams& params [[buffer(0)]]
+) {
+    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
+    float4 color = colorTexture.sample(textureSampler, in.texCoord);
+
+    // Apply curve to each channel
+    color.r = evaluateCurve(color.r, params.shadows, params.midtones, params.highlights);
+    color.g = evaluateCurve(color.g, params.shadows, params.midtones, params.highlights);
+    color.b = evaluateCurve(color.b, params.shadows, params.midtones, params.highlights);
+
+    return clamp(color, 0.0, 1.0);
+}
+
+// MARK: - Color Wheels (Hue/Saturation)
+
+struct ColorWheelParams {
+    float liftHue;
+    float liftSaturation;
+    float gammaHue;
+    float gammaSaturation;
+    float gainHue;
+    float gainSaturation;
+};
+
+float3 rgbToHsv(float3 rgb) {
+    float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+    float4 p = mix(float4(rgb.bg, K.wz), float4(rgb.gb, K.xy), step(rgb.b, rgb.g));
+    float4 q = mix(float4(p.xyw, rgb.r), float4(rgb.r, p.yzx), step(p.x, rgb.r));
+
+    float d = q.x - min(q.w, q.y);
+    float e = 1.0e-10;
+    return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+}
+
+float3 hsvToRgb(float3 hsv) {
+    float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    float3 p = abs(fract(hsv.xxx + K.xyz) * 6.0 - K.www);
+    return hsv.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), hsv.y);
+}
+
+fragment float4 colorWheelShader(
+    VertexOut in [[stage_in]],
+    texture2d<float> colorTexture [[texture(0)]],
+    constant ColorWheelParams& params [[buffer(0)]]
+) {
+    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
+    float4 color = colorTexture.sample(textureSampler, in.texCoord);
+
+    float3 hsv = rgbToHsv(color.rgb);
+    float luminance = dot(color.rgb, float3(0.2126, 0.7152, 0.0722));
+
+    // Lift (Shadows) - affects dark areas
+    if (luminance < 0.33) {
+        float mask = smoothstep(0.33, 0.0, luminance);
+        hsv.x += params.liftHue * mask;
+        hsv.y = mix(hsv.y, hsv.y * (1.0 + params.liftSaturation), mask);
+    }
+
+    // Gamma (Midtones) - affects mid-range
+    if (luminance >= 0.33 && luminance <= 0.67) {
+        float mask = 1.0 - abs(luminance - 0.5) * 2.0;
+        hsv.x += params.gammaHue * mask;
+        hsv.y = mix(hsv.y, hsv.y * (1.0 + params.gammaSaturation), mask);
+    }
+
+    // Gain (Highlights) - affects bright areas
+    if (luminance > 0.67) {
+        float mask = smoothstep(0.67, 1.0, luminance);
+        hsv.x += params.gainHue * mask;
+        hsv.y = mix(hsv.y, hsv.y * (1.0 + params.gainSaturation), mask);
+    }
+
+    color.rgb = hsvToRgb(hsv);
+
+    return clamp(color, 0.0, 1.0);
+}
+
+// MARK: - Cinematic Color Presets
+
+fragment float4 cinematicWarmShader(
+    VertexOut in [[stage_in]],
+    texture2d<float> colorTexture [[texture(0)]]
+) {
+    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
+    float4 color = colorTexture.sample(textureSampler, in.texCoord);
+
+    // Orange/Teal look
+    color.r *= 1.15;
+    color.g *= 1.05;
+    color.b *= 0.85;
+
+    // Lift shadows
+    color.rgb += float3(0.02, 0.01, 0.0);
+
+    // Reduce saturation slightly in shadows
+    float luminance = dot(color.rgb, float3(0.2126, 0.7152, 0.0722));
+    float shadowMask = smoothstep(0.3, 0.0, luminance);
+    color.rgb = mix(color.rgb, float3(luminance), shadowMask * 0.2);
+
+    return clamp(color, 0.0, 1.0);
+}
+
+fragment float4 cinematicCoolShader(
+    VertexOut in [[stage_in]],
+    texture2d<float> colorTexture [[texture(0)]]
+) {
+    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
+    float4 color = colorTexture.sample(textureSampler, in.texCoord);
+
+    // Teal/Blue look
+    color.r *= 0.9;
+    color.g *= 1.05;
+    color.b *= 1.2;
+
+    // Crush blacks
+    color.rgb = max(color.rgb - 0.03, 0.0) * 1.05;
+
+    // Increase contrast
+    color.rgb = ((color.rgb - 0.5) * 1.15) + 0.5;
+
+    return clamp(color, 0.0, 1.0);
+}
