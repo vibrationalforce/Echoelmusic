@@ -1,9 +1,9 @@
-# BLAB iOS App 🫧
+# EOEL - Biofeedback Creative Platform
 
-**Breath → Sound → Light → Consciousness**
+**Where Biology Becomes Art**
 
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
-[![iOS](https://img.shields.io/badge/iOS-15.0+-blue.svg)](https://developer.apple.com/ios/)
+[![iOS](https://img.shields.io/badge/iOS-18.0+-blue.svg)](https://developer.apple.com/ios/)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 
 > Bio-reactive music creation and performance system combining voice, biofeedback, spatial audio, and light control
@@ -13,7 +13,7 @@
 ## 🚀 Quick Start (Xcode Handoff)
 
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /path/to/Echoelmusic
 open Package.swift  # Opens in Xcode automatically
 ```
 
@@ -29,9 +29,9 @@ Then in Xcode:
 ## 📊 Project Status
 
 **Current Phase:** Phase 3 Complete & Optimized ✅
-**Last Update:** 2025-10-24
-**GitHub:** `vibrationalforce/blab-ios-app`
-**Latest Commit:** `65a260f` - API integration complete
+**Last Update:** 2025-11-25
+**GitHub:** `vibrationalforce/Echoelmusic`
+**Status:** Build-ready, 124,874 lines of code ✅
 
 ### Phase Completion:
 - ✅ **Phase 0:** Project Setup & CI/CD (100%)
@@ -45,9 +45,9 @@ Then in Xcode:
 
 ---
 
-## 🎯 What is BLAB?
+## 🎯 What is EOEL?
 
-BLAB is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
+EOEL is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
 - 🌊 **Spatial Audio** (3D/4D/Fibonacci Field Arrays)
 - 🎨 **Real-time Visuals** (Cymatics, Mandalas, Particles)
 - 💡 **LED/DMX Lighting** (Push 3, Art-Net)
@@ -140,10 +140,15 @@ BLAB is an **embodied multimodal music system** that transforms biometric signal
 ## 📁 Project Structure
 
 ```
-blab-ios-app/
+Echoelmusic/
 ├── Package.swift                    # Swift Package config
-├── Sources/Blab/
-│   ├── BlabApp.swift               # App entry point
+├── EOEL/
+│   ├── App/EOELApp.swift           # App entry point (@main)
+│   ├── Core/                       # Core Systems
+│   ├── Features/                   # Feature Modules
+│   ├── UI/                         # SwiftUI Views
+├── Sources/EOEL/                    # Swift Core (40,197 lines)
+│   ├── EchoelmusicApp.swift        # Legacy entry point
 │   ├── ContentView.swift           # Main UI
 │   ├── Audio/
 │   │   ├── AudioEngine.swift       # Core audio engine
@@ -174,10 +179,15 @@ blab-ios-app/
 │   ├── Recording/                       # Multi-track recording
 │   ├── Views/                           # UI components
 │   └── Utils/                           # Utilities
-├── Tests/BlabTests/                     # Unit tests
-└── Docs/                                # Documentation
+├── Sources/                             # C++ Backend (69,068 lines)
+│   ├── Audio/                          # Audio Engine (C++)
+│   ├── DSP/                            # 86 DSP files
+│   ├── Hardware/                       # OSCManager
+│   └── [more...]
+├── Tests/EOELTests/                     # Unit tests
+└── [106 .md files]                      # Documentation
 
-✨ = Phase 3 components (2228 lines optimized code)
+✨ = Complete feature implementation across all layers
 ```
 
 ---
@@ -263,15 +273,15 @@ swift test
 ```xml
 <!-- Microphone -->
 <key>NSMicrophoneUsageDescription</key>
-<string>BLAB needs microphone access to process your voice</string>
+<string>EOEL needs microphone access to process your voice</string>
 
 <!-- Health Data -->
 <key>NSHealthShareUsageDescription</key>
-<string>BLAB needs access to heart rate data for bio-reactive music</string>
+<string>EOEL needs access to heart rate data for bio-reactive music</string>
 
 <!-- Camera (for face tracking) -->
 <key>NSCameraUsageDescription</key>
-<string>BLAB uses face tracking for expressive control</string>
+<string>EOEL uses face tracking for expressive control</string>
 ```
 
 ### Network Configuration (DMX/Art-Net):
@@ -419,25 +429,25 @@ See `BLAB_IMPLEMENTATION_ROADMAP.md` for details.
 
 ## 📜 License
 
-Copyright © 2025 BLAB Studio. All rights reserved.
+Copyright © 2025 EOEL. All rights reserved.
 
-Proprietary software - not for redistribution.
+Proprietary software - not for redistribution. See LICENSE file.
 
 ---
 
-## 🫧 Philosophy
+## 🎵 Philosophy
 
-> "BLAB is not just a music app - it's an interface to embodied consciousness.
+> "EOEL is not just a music app - it's an interface to embodied consciousness.
 > Through breath, biometrics, and intention, we transform life itself into art."
 
-**breath → sound → light → consciousness**
+**Where Biology Becomes Art**
 
 ---
 
 **Built with** ❤️ using Swift, SwiftUI, AVFoundation, Metal, HealthKit, ARKit, and pure creative energy.
 
-**Status:** ✅ Ready for Xcode Development
-**Next:** 🚀 UI Integration & Testing
-**Vision:** 🌊 Embodied Multimodal Music System
+**Status:** ✅ Build-ready - 124,874 lines of code
+**Next:** 🚀 Open Package.swift in Xcode on macOS
+**Vision:** 🌊 Where Biology Becomes Art
 
-🫧 *Let's flow...* ✨
+🎵 *Transform life into art...* ✨
