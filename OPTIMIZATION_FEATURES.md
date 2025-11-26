@@ -1,8 +1,8 @@
-# 🚀 Echoelmusic Production-Ready Optimizations
+# 🚀 EOEL Production-Ready Optimizations
 
 ## Overview
 
-This update transforms Echoelmusic from a development build into a production-ready platform with systematic warning fixes and professional integrations for DAW, Video, Lighting, and Biofeedback workflows.
+This update transforms EOEL from a development build into a production-ready platform with systematic warning fixes and professional integrations for DAW, Video, Lighting, and Biofeedback workflows.
 
 ---
 
@@ -24,23 +24,23 @@ This update transforms Echoelmusic from a development build into a production-re
 ```cpp
 #include "Common/GlobalWarningFixes.h"
 
-using namespace EchoelConstants;
+using namespace EOELConstants;
 
 // Float literals
 float freq = 440.0_f;
 float phase = 1.5_pi;  // 1.5 * PI
 
 // Safe casting
-int bufferSize = EchoelUtils::toInt(someVector.size());
-float gain = EchoelUtils::dBToGain(-6.0f);
+int bufferSize = EOELUtils::toInt(someVector.size());
+float gain = EOELUtils::dBToGain(-6.0f);
 
 // Loop iteration without warnings
-EchoelLoops::forEach(myArray, [](auto& item, int index) {
+EOELLoops::forEach(myArray, [](auto& item, int index) {
     // Process item
 });
 
 // DSP operations
-float value = EchoelDSP::map(input, 0.0f, 1.0f, 20.0f, 20000.0f);
+float value = EOELDSP::map(input, 0.0f, 1.0f, 20.0f, 20000.0f);
 ```
 
 ---
@@ -77,7 +77,7 @@ float value = EchoelDSP::map(input, 0.0f, 1.0f, 20.0f, 20000.0f);
 ```cpp
 #include "DAW/DAWOptimizer.h"
 
-Echoel::DAWOptimizer optimizer;
+EOEL::DAWOptimizer optimizer;
 
 // Auto-detect and optimize
 optimizer.applyOptimizations();
@@ -156,7 +156,7 @@ juce::String report = optimizer.getOptimizationReport();
 ```cpp
 #include "Video/VideoSyncEngine.h"
 
-Echoel::VideoSyncEngine videoSync;
+EOEL::VideoSyncEngine videoSync;
 
 // Update from audio
 videoSync.updateFromAudio(audioLevel, dominantFreq, dominantColor);
@@ -224,14 +224,14 @@ videoSync.setTouchDesignerPort(7001);
 ```cpp
 #include "Lighting/LightController.h"
 
-Echoel::AdvancedLightController lightControl;
+EOEL::AdvancedLightController lightControl;
 
 // Map audio frequency to lighting
 lightControl.mapFrequencyToLight(440.0f, 0.8f);
 
 // Manual DMX control
 auto* artNet = lightControl.getArtNet();
-Echoel::DMXPacket dmx;
+EOEL::DMXPacket dmx;
 dmx.setChannel(1, 255);  // Red full
 dmx.setChannel(2, 0);    // Green off
 dmx.setChannel(3, 128);  // Blue half
@@ -344,7 +344,7 @@ Channel 8: Shutter (0=closed, 255=open)
 ```cpp
 #include "Biofeedback/AdvancedBiofeedbackProcessor.h"
 
-Echoel::AdvancedBiofeedbackProcessor bioProcessor;
+EOEL::AdvancedBiofeedbackProcessor bioProcessor;
 
 // Update from sensors
 bioProcessor.updateHeartRate(72.0f);  // BPM
@@ -420,7 +420,7 @@ DBG(report);
 The new modules are header-only and automatically included via CMake:
 
 ```cmake
-target_include_directories(Echoelmusic
+target_include_directories(EOEL
     PUBLIC
         Sources/Common
         Sources/DAW
@@ -443,17 +443,17 @@ class MyProcessor : public juce::AudioProcessor {
 public:
     MyProcessor() {
         // Initialize optimizations
-        dawOptimizer = std::make_unique<Echoel::DAWOptimizer>();
-        videoSync = std::make_unique<Echoel::VideoSyncEngine>();
-        lightControl = std::make_unique<Echoel::AdvancedLightController>();
-        bioProcessor = std::make_unique<Echoel::AdvancedBiofeedbackProcessor>();
+        dawOptimizer = std::make_unique<EOEL::DAWOptimizer>();
+        videoSync = std::make_unique<EOEL::VideoSyncEngine>();
+        lightControl = std::make_unique<EOEL::AdvancedLightController>();
+        bioProcessor = std::make_unique<EOEL::AdvancedBiofeedbackProcessor>();
     }
 
 private:
-    std::unique_ptr<Echoel::DAWOptimizer> dawOptimizer;
-    std::unique_ptr<Echoel::VideoSyncEngine> videoSync;
-    std::unique_ptr<Echoel::AdvancedLightController> lightControl;
-    std::unique_ptr<Echoel::AdvancedBiofeedbackProcessor> bioProcessor;
+    std::unique_ptr<EOEL::DAWOptimizer> dawOptimizer;
+    std::unique_ptr<EOEL::VideoSyncEngine> videoSync;
+    std::unique_ptr<EOEL::AdvancedLightController> lightControl;
+    std::unique_ptr<EOEL::AdvancedBiofeedbackProcessor> bioProcessor;
 };
 ```
 
@@ -491,15 +491,15 @@ cmake --build . --config Release -j8
 
 1. **Float literal warnings (200+):**
    - Added user-defined literals `_f` and `_pi`
-   - Explicit float constants in `EchoelConstants`
+   - Explicit float constants in `EOELConstants`
 
 2. **Unused parameter warnings (150+):**
    - `ECHOEL_UNUSED()` and `ECHOEL_UNUSED_PARAMS()` macros
    - Proper parameter handling in callbacks
 
 3. **Sign comparison warnings (100+):**
-   - `EchoelLoops::count()` returns int
-   - Safe casting utilities in `EchoelUtils`
+   - `EOELLoops::count()` returns int
+   - Safe casting utilities in `EOELUtils`
 
 4. **Deprecated API warnings (50+):**
    - Modern JUCE API usage
@@ -544,7 +544,7 @@ cmake --build . --config Release -j8
 
 **Last Updated:** 2025-11-17
 **Version:** 1.0.0
-**Author:** Echoelmusic Development Team
+**Author:** EOEL Development Team
 
 ---
 

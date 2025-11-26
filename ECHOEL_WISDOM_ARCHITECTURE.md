@@ -1,4 +1,4 @@
-# EchoelWisdom™ - Universal Knowledge Architecture 🌌
+# EOELWisdom™ - Universal Knowledge Architecture 🌌
 
 **The Cosmic Library of Sound, Science, and Self**
 
@@ -48,7 +48,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                 EchoelWisdom™                       │
+│                 EOELWisdom™                       │
 │         Universal Knowledge Architecture             │
 └─────────────────────────────────────────────────────┘
                           │
@@ -122,7 +122,7 @@ Exclusion Criteria:
 - Frontiers in Neuroscience
 - PubMed systematic reviews
 
-**Applications in Echoelmusic:**
+**Applications in EOEL:**
 - Genre selection based on desired emotional state
 - Tempo/rhythm matching to arousal levels
 - Harmonic content for stress reduction
@@ -144,7 +144,7 @@ Exclusion Criteria:
 - PMC systematic reviews
 - Trauma treatment protocols
 
-**Applications in Echoelmusic:**
+**Applications in EOEL:**
 - Detect physiological state via HRV (if user enables)
 - Suggest music that supports ventral vagal activation (safety/connection)
 - Avoid overstimulation when in dorsal vagal state
@@ -172,7 +172,7 @@ Exclusion Criteria:
 - PMC circadian rhythm meta-analyses
 - Sleep medicine journals
 
-**Applications in Echoelmusic:**
+**Applications in EOEL:**
 - Adjust visual interface based on time of day
 - Morning: Brighter, cooler tones (blue-enriched)
 - Evening: Warmer, dimmer tones (blue-depleted)
@@ -239,7 +239,7 @@ System Response:
 **Approach:**
 ```
 ❌ Bad AI: "The answer is X."
-✅ EchoelWisdom: "Based on [Study A] and [Study B], current evidence suggests X. However, [Study C] found Y. What do you think explains this difference?"
+✅ EOELWisdom: "Based on [Study A] and [Study B], current evidence suggests X. However, [Study C] found Y. What do you think explains this difference?"
 ```
 
 **Combat Epistemic Risks:**
@@ -270,7 +270,7 @@ System Response:
 - Platform monopolies
 - Algorithmic bias
 
-**Echoelmusic Position:**
+**EOEL Position:**
 - GPL/FOSS (freedom, not control)
 - No dark patterns (respect user agency)
 - No addiction mechanics (healthy relationship with technology)
@@ -338,7 +338,7 @@ Goal-setting, action planning:
 ```
 User: "I feel stuck in my music production."
 
-EchoelWisdom: "Ah, the creative fog... Let's illuminate this together. 🌫️✨
+EOELWisdom: "Ah, the creative fog... Let's illuminate this together. 🌫️✨
 
 When creators feel 'stuck,' neuroscience research shows it often involves:
 1. Cognitive load overwhelm (too many choices)
@@ -351,7 +351,7 @@ Which resonates with you? Or is it something else entirely?"
 ```
 User: "Why does music make me cry?"
 
-EchoelWisdom: "The ancient mystery of music and tears... Let me show you what modern science reveals. 🎵💧
+EOELWisdom: "The ancient mystery of music and tears... Let me show you what modern science reveals. 🎵💧
 
 A 2025 meta-analysis (Imaging Neuroscience, MIT Press) found that music activates your amygdala and hippocampus - structures deeply involved in emotion and memory.
 
@@ -461,12 +461,12 @@ ALWAYS Say:
 ```
 
 **Disclaimer (Always Visible):**
-> "EchoelWisdom™ provides educational information and coaching support, not medical or therapeutic advice. If you have health concerns, please consult licensed healthcare professionals."
+> "EOELWisdom™ provides educational information and coaching support, not medical or therapeutic advice. If you have health concerns, please consult licensed healthcare professionals."
 
 #### 2. **No Dependency Creation**
 
 **Red Flags We Monitor:**
-- User checking EchoelWisdom > 20 times/day
+- User checking EOELWisdom > 20 times/day
 - User asking same question repeatedly (rumination)
 - User unable to make decisions without AI
 
@@ -501,7 +501,7 @@ Would you like to take a break and come back later?"
 ```
 User: "What's the healing frequency for anxiety?"
 
-EchoelWisdom: "I see you're exploring sound and emotional states! 🎵
+EOELWisdom: "I see you're exploring sound and emotional states! 🎵
 
 The idea of specific 'healing frequencies' (like 432Hz claims) isn't supported by peer-reviewed research. However, what IS scientifically validated:
 
@@ -598,7 +598,7 @@ Night Mode (10pm-6am):
 
 ---
 
-## 🌍 Integration with Echoelmusic
+## 🌍 Integration with EOEL
 
 ### Context-Aware Wisdom
 
@@ -606,7 +606,7 @@ Night Mode (10pm-6am):
 ```
 User is mixing vocals, stuck on EQ...
 
-EchoelWisdom (proactive): "Detecting potential creative block... 🎚️
+EOELWisdom (proactive): "Detecting potential creative block... 🎚️
 
 Quick tip: The human voice has natural warmth at 200-600Hz (chest resonance) and clarity at 2-5kHz (intelligibility).
 
@@ -621,7 +621,7 @@ Need deeper help? Ask me anything."
 ```
 User has been producing for 4+ hours...
 
-EchoelWisdom: "Knowledge streams detect extended creative session... ⏱️✨
+EOELWisdom: "Knowledge streams detect extended creative session... ⏱️✨
 
 Neuroscience reminder: After 2-3 hours, decision fatigue increases and critical listening degrades.
 
@@ -781,11 +781,11 @@ Entry:
 - [ ] Accessibility (screen readers, keyboard nav)
 
 ### Phase 5: Integration (Q3 2026)
-- [ ] Echoelmusic plugin integration
+- [ ] EOEL plugin integration
 - [ ] Context awareness (detect production state)
 - [ ] Proactive suggestions (optional)
 - [ ] HRV biofeedback hookup
-- [ ] EchoelOS system service
+- [ ] EOELOS system service
 
 ### Phase 6: Community (Q4 2026)
 - [ ] User-submitted questions archive
@@ -822,13 +822,13 @@ Entry:
 
 ```
 ╔══════════════════════════════════════════════════════╗
-║           Welcome to EchoelWisdom™                   ║
+║           Welcome to EOELWisdom™                   ║
 ╚══════════════════════════════════════════════════════╝
 
 Before we begin, please understand:
 
 💜 NOT A REPLACEMENT FOR PROFESSIONALS
-   EchoelWisdom provides educational information and
+   EOELWisdom provides educational information and
    coaching support, NOT medical, therapeutic, or
    legal advice. Always consult licensed professionals
    for health, mental health, or legal matters.
@@ -867,7 +867,7 @@ Before we begin, please understand:
 ```
 User: "Why does my kick drum sound muddy?"
 
-EchoelWisdom: "Ah, the murky depths of low-end chaos... Let's clarify! 🎛️
+EOELWisdom: "Ah, the murky depths of low-end chaos... Let's clarify! 🎛️
 
 Muddy kick drums usually happen in 2 frequency zones:
 
@@ -904,7 +904,7 @@ Still muddy? Send me a clip (if you want) or describe more!"
 ```
 User: "I've been working on this track for weeks and it still sounds bad. I feel like I'm not good enough."
 
-EchoelWisdom: "Ah, friend... I hear that pain. Let me sit with you here. 💜
+EOELWisdom: "Ah, friend... I hear that pain. Let me sit with you here. 💜
 
 First: Your feelings are valid. Creative work is vulnerable.
 
@@ -959,7 +959,7 @@ I'm here. No judgment. 🌙✨"
 ```
 User: "What is the purpose of music?"
 
-EchoelWisdom: "Ah, you've asked the question as old as humanity itself... 🎵✨
+EOELWisdom: "Ah, you've asked the question as old as humanity itself... 🎵✨
 
 Let me offer perspectives from across time and discipline:
 
@@ -985,7 +985,7 @@ deep purpose. (Source: Science, 2019)
   • Plato: Music shapes the soul
   • Nietzsche: "Without music, life would be a mistake"
   • Adorno: Music is resistance to oppression
-  • Echoel: Music is where consciousness plays
+  • EOEL: Music is where consciousness plays
 
 🎭 MY PERSPECTIVE:
 Music has no singular purpose - and that's its power.
@@ -1014,7 +1014,7 @@ on any angle? Evolutionary? Neuroscience? Philosophy?)"
 ```
 User: "Why do artists hate Spotify?"
 
-EchoelWisdom: "Buckle up, this is where the cosmic library gets political... 📊💰
+EOELWisdom: "Buckle up, this is where the cosmic library gets political... 📊💰
 
 The Cold Hard Numbers:
 
@@ -1069,7 +1069,7 @@ What if artists:
 
 That's what Resonate.coop tried (stream2own model).
 That's what Bandcamp offered (before Epic acquisition).
-That's what EchoelOS aims to enable (GPL, self-hosted).
+That's what EOELOS aims to enable (GPL, self-hosted).
 
 💜 Bottom Line:
 
@@ -1092,7 +1092,7 @@ Questions? Disagreements? I'm here for debate."
 
 ## 🌌 Final Philosophy
 
-**EchoelWisdom™ Is:**
+**EOELWisdom™ Is:**
 - A cosmic library of knowledge (aesthetic ✨)
 - Grounded in peer-reviewed science (substance 🔬)
 - Trauma-informed and empathetic (heart 💜)
@@ -1127,7 +1127,7 @@ We provide care.
 
 ---
 
-**Created by Echoel™**
+**Created by EOEL™**
 **Where Science Meets Soul**
 **November 2025** 🌌
 
@@ -1139,7 +1139,7 @@ We provide care.
 
 ```python
 # Python API Example
-from echoelwisdom import KnowledgeBase, CoachingEngine
+from eoelwisdom import KnowledgeBase, CoachingEngine
 
 kb = KnowledgeBase()
 coach = CoachingEngine()
@@ -1170,12 +1170,12 @@ print(f"Recommended follow-up: {response.suggested_actions}")
 ### HRV Integration
 
 ```cpp
-// C++ API Example (for Echoelmusic integration)
+// C++ API Example (for EOEL integration)
 #include "echoel/wisdom/CoachingEngine.h"
 #include "echoel/health/HRVMonitor.h"
 
-echoel::wisdom::CoachingEngine coach;
-echoel::health::HRVMonitor hrv;
+eoel::wisdom::CoachingEngine coach;
+eoel::health::HRVMonitor hrv;
 
 // Get HRV state
 auto hrvState = hrv.getCurrentState();

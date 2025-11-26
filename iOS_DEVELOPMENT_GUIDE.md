@@ -1,4 +1,4 @@
-# Echoelmusic iOS/iPad App - Development Guide 📱
+# EOEL iOS/iPad App - Development Guide 📱
 
 **Target:** iPad as primary platform (iPhone secondary)
 **Goal:** MVP in 2-3 months
@@ -57,11 +57,11 @@ UI:
 ### Deferred (v2.0+)
 ```yaml
 Later:
-  ⏳ Cloud rendering (EchoelCloud™)
+  ⏳ Cloud rendering (EOELCloud™)
   ⏳ Remote processing (iPad → server)
   ⏳ Video integration
   ⏳ Spatial audio
-  ⏳ EchoelWisdom AI assistant
+  ⏳ EOELWisdom AI assistant
   ⏳ Collaboration features
 ```
 
@@ -91,7 +91,7 @@ iOS Support:
 ```cmake
 # CMake for iOS
 cmake_minimum_required(VERSION 3.22)
-project(Echoelmusic_iOS VERSION 1.0.0 LANGUAGES CXX OBJCXX)
+project(EOEL_iOS VERSION 1.0.0 LANGUAGES CXX OBJCXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_SYSTEM_NAME iOS)
@@ -100,10 +100,10 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET 15.0)  # iOS 15+
 # JUCE
 add_subdirectory(JUCE)
 
-juce_add_gui_app(Echoelmusic_iOS
-    PRODUCT_NAME "Echoelmusic"
+juce_add_gui_app(EOEL_iOS
+    PRODUCT_NAME "EOEL"
     BUNDLE_ID "com.echoel.echoelmusic"
-    COMPANY_NAME "Echoel"
+    COMPANY_NAME "EOEL"
     COMPANY_WEBSITE "https://echoelmusic.com"
 
     # iOS specific
@@ -112,26 +112,26 @@ juce_add_gui_app(Echoelmusic_iOS
 
     # Capabilities
     MICROPHONE_PERMISSION_ENABLED TRUE
-    MICROPHONE_PERMISSION_TEXT "Echoelmusic needs microphone access for audio recording"
+    MICROPHONE_PERMISSION_TEXT "EOEL needs microphone access for audio recording"
 
     BLUETOOTH_PERMISSION_ENABLED TRUE
     BLUETOOTH_PERMISSION_TEXT "Connect MIDI controllers via Bluetooth"
 )
 
 # AUv3 Support
-target_compile_definitions(Echoelmusic_iOS PRIVATE
+target_compile_definitions(EOEL_iOS PRIVATE
     JUCE_PLUGINHOST_AUv3=1
     JUCE_PLUGINHOST_AU=1
 )
 
 # ARM NEON optimizations (iPad)
-target_compile_options(Echoelmusic_iOS PRIVATE
+target_compile_options(EOEL_iOS PRIVATE
     -march=armv8-a+simd
     -ffast-math
 )
 
 # Frameworks
-target_link_libraries(Echoelmusic_iOS PRIVATE
+target_link_libraries(EOEL_iOS PRIVATE
     "-framework CoreAudio"
     "-framework AVFoundation"
     "-framework CoreMIDI"
@@ -145,10 +145,10 @@ target_link_libraries(Echoelmusic_iOS PRIVATE
 ## 📦 Project Structure
 
 ```
-Echoelmusic/
+EOEL/
 ├── Sources/
 │   ├── iOS/                        # iOS-specific code
-│   │   ├── EchoelmusicApp.h/.mm   # Main iOS app
+│   │   ├── EOELApp.h/.mm   # Main iOS app
 │   │   ├── MainViewController.h/.mm # Root view controller
 │   │   ├── AudioEngine_iOS.h/.cpp  # iOS audio backend
 │   │   └── Gestures.h/.mm          # Touch gesture handling
@@ -175,7 +175,7 @@ Echoelmusic/
 │   │   └── MIDIRouter.h/.cpp
 │   │
 │   ├── Sync/
-│   │   ├── EchoelSync.h/.cpp       # Already created!
+│   │   ├── EOELSync.h/.cpp       # Already created!
 │   │   └── AbletonLink.cpp         # Ableton Link SDK
 │   │
 │   ├── UI/                         # User interface
@@ -233,7 +233,7 @@ Touch Interactions:
 ### Layout (iPad Landscape)
 ```
 ┌────────────────────────────────────────────────────────┐
-│ ⚙️ Echoel | 🎵 Project Name  | ▶️ [BPM: 128]  ☁️ 📱│
+│ ⚙️ EOEL | 🎵 Project Name  | ▶️ [BPM: 128]  ☁️ 📱│
 ├─────┬──────────────────────────────────────────────────┤
 │     │                                                  │
 │  T  │          Waveform / Piano Roll View            │
@@ -385,7 +385,7 @@ struct PluginView: UIViewControllerRepresentable {
 
 ### SDK Integration
 ```cpp
-// Already have EchoelSync.h!
+// Already have EOELSync.h!
 // But for iOS-specific implementation:
 
 #include <ableton/Link.hpp>
@@ -463,8 +463,8 @@ Software:
 
 #### 1. Clone & Configure
 ```bash
-git clone https://github.com/vibrationalforce/Echoelmusic.git
-cd Echoelmusic
+git clone https://github.com/vibrationalforce/EOEL.git
+cd EOEL
 
 # Create iOS build directory
 mkdir build-ios && cd build-ios
@@ -479,11 +479,11 @@ cmake .. \
 
 #### 2. Open in Xcode
 ```bash
-open Echoelmusic.xcodeproj
+open EOEL.xcodeproj
 ```
 
 #### 3. Configure Signing
-- Select Echoelmusic target
+- Select EOEL target
 - Signing & Capabilities
 - Team: Your Apple Developer account
 - Bundle ID: com.echoel.echoelmusic
@@ -529,7 +529,7 @@ Preview Video (optional):
 
 ### App Store Description
 ```
-Echoelmusic - Mobile-First Music Production
+EOEL - Mobile-First Music Production
 
 CREATE MUSIC ANYWHERE
 • 8-track audio + MIDI recording
@@ -560,7 +560,7 @@ ONE-TIME PURCHASE
 €49.99 - Yours forever!
 No subscriptions. No in-app purchases.
 
-Created by Echoel, an artist who codes.
+Created by EOEL, an artist who codes.
 ```
 
 ### Pricing
@@ -629,14 +629,14 @@ Week 11-12: Testing & Launch
 
 1. **Setup iOS Build** (Today)
    ```bash
-   cd Echoelmusic
+   cd EOEL
    mkdir build-ios
    cd build-ios
    cmake .. -G Xcode -DCMAKE_SYSTEM_NAME=iOS
    ```
 
 2. **Create iOS-Specific Files** (This Week)
-   - Sources/iOS/EchoelmusicApp.mm
+   - Sources/iOS/EOELApp.mm
    - Sources/iOS/AudioEngine_iOS.cpp
    - Sources/Plugin/AUv3Host.mm
 
@@ -652,6 +652,6 @@ Week 11-12: Testing & Launch
 
 ---
 
-**Created by Echoel™**
+**Created by EOEL™**
 **Mobile-First Music Production**
 **November 2025** 📱

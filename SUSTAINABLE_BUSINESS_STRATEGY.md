@@ -1,4 +1,4 @@
-# Sustainable Business Strategy - Echoelmusic 💰🌍
+# Sustainable Business Strategy - EOEL 💰🌍
 
 **Für Solo-Artist/Developer der von unterwegs arbeitet**
 
@@ -14,7 +14,7 @@
 - Kein Unique Value (Browser sind Commodity)
 
 **Stattdessen:**
-- ✅ Echoelmusic läuft IN jedem Browser (PWA)
+- ✅ EOEL läuft IN jedem Browser (PWA)
 - ✅ Nutze Electron für Desktop (Chromium embedded)
 - ✅ Fokus auf Music-Tech, nicht Browser-Engine
 
@@ -44,7 +44,7 @@
 **Stattdessen:**
 - ✅ Managed Services (Hetzner Cloud, Cloudflare)
 - ✅ Serverless wo möglich (auto-scaling)
-- ✅ Community self-hosting (EchoelOS = user-hosted)
+- ✅ Community self-hosting (EOELOS = user-hosted)
 
 ---
 
@@ -54,7 +54,7 @@
 
 #### 🥇 Tier 1: Core Revenue (Must-Have)
 
-**1. Echoelmusic DAW - Core Product**
+**1. EOEL DAW - Core Product**
 ```yaml
 What: Professional DAW (Desktop + Mobile)
 Revenue: One-time €99 OR subscription €9.99/month
@@ -62,7 +62,7 @@ Target: 1,000 users = €10k/month (subscription)
 Maintenance: Low (monthly bug fixes)
 ```
 
-**2. EchoelCloud™ - Rendering Service**
+**2. EOELCloud™ - Rendering Service**
 ```yaml
 What: Cloud rendering (users pay per hour)
 Revenue:
@@ -97,7 +97,7 @@ Maintenance: Medium (OS updates, testing)
 
 #### 🥈 Tier 2: Growth Revenue (Nice-to-Have)
 
-**4. EchoelSync™ Global Servers**
+**4. EOELSync™ Global Servers**
 ```yaml
 What: Distributed sync network (like Ableton Link++)
 Revenue: Freemium model
@@ -112,7 +112,7 @@ Maintenance: LOW (P2P architecture)
 ```yaml
 What: Curated samples, presets, templates
 Revenue:
-  - Echoel Signature Pack: €29
+  - EOEL Signature Pack: €29
   - Genre Packs: €19 each
   - Preset Collections: €9 each
 
@@ -142,7 +142,7 @@ Target: Grows with community
 Maintenance: VERY LOW (automated)
 ```
 
-**8. EchoelOS - Donations/Support**
+**8. EOELOS - Donations/Support**
 ```yaml
 What: Free OS, optional donations
 Revenue: €1-10k/month (if community grows)
@@ -155,7 +155,7 @@ Maintenance: Community-driven (not just you)
 
 ### Year 1 (MVP Phase)
 ```yaml
-Focus: Echoelmusic DAW + EchoelCloud
+Focus: EOEL DAW + EOELCloud
 
 Users:
   - 100 DAW licenses @ €99 = €9,900 one-time
@@ -220,7 +220,7 @@ Time Investment:
 ## 🎯 The Smart Strategy
 
 ### Phase 1: Core Product (Months 1-6)
-**Focus:** Make Echoelmusic REALLY GOOD
+**Focus:** Make EOEL REALLY GOOD
 
 - [ ] Fix all critical bugs (audio thread safety ✅)
 - [ ] Polish UI/UX (beautiful, intuitive)
@@ -235,7 +235,7 @@ Time Investment:
 ---
 
 ### Phase 2: Cloud Infrastructure (Months 6-12)
-**Focus:** Launch EchoelCloud™ for recurring revenue
+**Focus:** Launch EOELCloud™ for recurring revenue
 
 - [ ] Hetzner Cloud integration ✅ (already designed!)
 - [ ] Payment processing (Stripe)
@@ -283,7 +283,7 @@ Time Investment:
 
 - [ ] Community forum (users help each other)
 - [ ] Plugin marketplace (30% revenue share)
-- [ ] Automated support (EchoelWisdom chatbot)
+- [ ] Automated support (EOELWisdom chatbot)
 - [ ] Affiliate program (others sell for you)
 - [ ] Open-source community contributions
 
@@ -363,7 +363,7 @@ Weekend:
 **AI/ML:**
 - Fine-tuning: Hugging Face Transformers
 - Inference: llama.cpp (CPU) or vLLM (GPU)
-- Embeddings: SentenceTransformers (for EchoelWisdom)
+- Embeddings: SentenceTransformers (for EOELWisdom)
 
 ---
 
@@ -384,7 +384,7 @@ Year 2 (Growing):
   Hetzner Cloud: €100/month (rendering servers)
   Cloudflare: €20/month (CDN, security)
   Supabase: €25/month (database, auth)
-  OpenAI API: €50/month (EchoelWisdom queries)
+  OpenAI API: €50/month (EOELWisdom queries)
   Backups: €10/month
 
   Total: ~€200/month
@@ -410,7 +410,7 @@ Year 5 (Mature):
 
 ### What to Launch First (6 Months)
 
-**Echoelmusic DAW - Core Features Only:**
+**EOEL DAW - Core Features Only:**
 
 ```yaml
 ✅ Must Have:
@@ -423,9 +423,9 @@ Year 5 (Mature):
   - Beautiful UI (this matters!)
 
 ❌ NOT in MVP:
-  - EchoelWisdom (later!)
+  - EOELWisdom (later!)
   - Cloud rendering (later!)
-  - EchoelOS (later!)
+  - EOELOS (later!)
   - Video integration (later!)
   - Hardware integration (later!)
   - Every feature we documented (later!)
@@ -472,7 +472,7 @@ Year 5 (Mature):
 
 ## 🎯 Your Unique Angle (Competitive Advantage)
 
-### What Makes Echoelmusic Different:
+### What Makes EOEL Different:
 
 1. **Mobile-First with Desktop Power**
    - iPad as controller + cloud processing
@@ -484,7 +484,7 @@ Year 5 (Mature):
    - Fair pricing (not rent-seeking)
 
 3. **AI-Augmented (Not AI-Replaced)**
-   - EchoelWisdom helps, doesn't replace creativity
+   - EOELWisdom helps, doesn't replace creativity
    - Trauma-informed (unique!)
    - Evidence-based (not hype)
 
@@ -494,7 +494,7 @@ Year 5 (Mature):
    - Own OS eventually (ultimate freedom)
 
 5. **Artist-Made for Artists**
-   - You're Echoel the artist
+   - You're EOEL the artist
    - Built by someone who actually makes music
    - Not a corporate product committee
 
@@ -513,7 +513,7 @@ Months 1-6: MVP Development
 └─ First 100 users
 
 Months 6-12: Cloud Infrastructure
-├─ EchoelCloud rendering
+├─ EOELCloud rendering
 ├─ Payment system
 ├─ Web dashboard
 └─ 50 cloud subscribers
@@ -532,7 +532,7 @@ Months 18-24: Content & Growth
 
 Year 2-3: Scale & Automate
 ├─ Plugin marketplace
-├─ EchoelWisdom beta
+├─ EOELWisdom beta
 ├─ Community growth
 └─ 2,000+ users
 
@@ -605,7 +605,7 @@ Year 3-5: Passive Income
 
 - ❌ Own browser (use Electron)
 - ❌ Train LLM (use APIs)
-- ❌ EchoelOS (Year 2-3 project)
+- ❌ EOELOS (Year 2-3 project)
 - ❌ Every feature we designed (prioritize!)
 
 **PHILOSOPHY:**
@@ -629,7 +629,7 @@ Year 3-5: Passive Income
 - Friday: Off
 
 **Income:** €30k-120k/month (automated)
-- EchoelCloud subscriptions (passive)
+- EOELCloud subscriptions (passive)
 - DAW licenses (passive)
 - Sound packs (passive)
 - Courses (passive)
@@ -677,7 +677,7 @@ Das ist 100% möglich! Aber:
 
 ## 🎯 Next Steps
 
-1. **Clean up codebase** (remove "Blab", rename to Echoel)
+1. **Clean up codebase** (remove "Blab", rename to EOEL)
 2. **Prioritize MVP features** (core DAW only)
 3. **Build for 6 months** (focused, no distractions)
 4. **Launch beta** (100 users, €10k validation)
@@ -690,7 +690,7 @@ Das ist 100% möglich! Aber:
 
 What do you want to do FIRST?
 
-A) Clean up code + rename everything to Echoel (2-3 days)
+A) Clean up code + rename everything to EOEL (2-3 days)
 B) Prioritize MVP feature list (what stays, what goes)
 C) Design payment system (Stripe integration)
 D) Build landing page (marketing site)
@@ -699,6 +699,6 @@ Let me know and I'll help you execute! 🚀
 
 ---
 
-**Created by Echoel™**
+**Created by EOEL™**
 **Building Sustainable Freedom Through Code**
 **November 2025** 🌍✨

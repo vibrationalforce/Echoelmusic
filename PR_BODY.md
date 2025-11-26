@@ -1,6 +1,6 @@
-## 🚀 Echoelmusic Production-Ready Optimizations
+## 🚀 EOEL Production-Ready Optimizations
 
-This PR transforms Echoelmusic from a development build into a **production-ready platform** with systematic warning fixes and professional integrations for DAW, Video, Lighting, and Biofeedback workflows.
+This PR transforms EOEL from a development build into a **production-ready platform** with systematic warning fixes and professional integrations for DAW, Video, Lighting, and Biofeedback workflows.
 
 ---
 
@@ -31,8 +31,8 @@ This PR transforms Echoelmusic from a development build into a **production-read
 
 float freq = 440.0_f;           // No warning!
 float phase = 1.5_pi;           // 1.5 * PI
-int size = EchoelUtils::toInt(vector.size());  // Safe cast
-float gain = EchoelUtils::dBToGain(-6.0f);
+int size = EOELUtils::toInt(vector.size());  // Safe cast
+float gain = EOELUtils::dBToGain(-6.0f);
 ```
 
 ---
@@ -60,7 +60,7 @@ float gain = EchoelUtils::dBToGain(-6.0f);
 
 **Example:**
 ```cpp
-Echoel::DAWOptimizer optimizer;
+EOEL::DAWOptimizer optimizer;
 optimizer.applyOptimizations();
 DBG("Detected: " << optimizer.getDAWName());
 DBG(optimizer.getOptimizationReport());
@@ -114,7 +114,7 @@ DBG(optimizer.getOptimizationReport());
 
 **Example:**
 ```cpp
-Echoel::AdvancedLightController lights;
+EOEL::AdvancedLightController lights;
 lights.mapFrequencyToLight(440.0f, 0.8f);  // Maps audio to all systems
 ```
 
@@ -252,10 +252,10 @@ Includes:
 
 class MyProcessor : public juce::AudioProcessor {
 private:
-    std::unique_ptr<Echoel::DAWOptimizer> dawOptimizer;
-    std::unique_ptr<Echoel::VideoSyncEngine> videoSync;
-    std::unique_ptr<Echoel::AdvancedLightController> lightControl;
-    std::unique_ptr<Echoel::AdvancedBiofeedbackProcessor> bioProcessor;
+    std::unique_ptr<EOEL::DAWOptimizer> dawOptimizer;
+    std::unique_ptr<EOEL::VideoSyncEngine> videoSync;
+    std::unique_ptr<EOEL::AdvancedLightController> lightControl;
+    std::unique_ptr<EOEL::AdvancedBiofeedbackProcessor> bioProcessor;
 };
 ```
 
@@ -302,7 +302,7 @@ private:
 
 ## 🎉 Credits
 
-**Developed by:** Echoelmusic Development Team
+**Developed by:** EOEL Development Team
 **Date:** 2025-11-17
 **Version:** 1.0.0
 
@@ -334,6 +334,6 @@ private:
 
 **🎵 Ready to Transform Your Audio Production Workflow! 🎵**
 
-This PR brings Echoelmusic from development to **production-ready** status with professional-grade integrations that compete with industry-leading software.
+This PR brings EOEL from development to **production-ready** status with professional-grade integrations that compete with industry-leading software.
 
 **Questions? See `OPTIMIZATION_FEATURES.md` for complete documentation.**

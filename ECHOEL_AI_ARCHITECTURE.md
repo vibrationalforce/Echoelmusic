@@ -1,4 +1,4 @@
-# EchoelAI™ - Modular Intelligence Architecture 🧠
+# EOELAI™ - Modular Intelligence Architecture 🧠
 
 **Last Updated:** November 12, 2025
 **Status:** Architecture Complete, Implementation Ready
@@ -10,7 +10,7 @@
 
 > **"AI suggests, User decides, Always."**
 
-Every EchoelAI module:
+Every EOELAI module:
 - ✅ Provides technical analysis and suggestions
 - ✅ Shows reasoning and evidence
 - ✅ Gives FULL control to user
@@ -330,7 +330,7 @@ Example Output:
   Problem Plugins:
     1. Track 3: Reverb Plugin XYZ → 8.2ms latency
        → Uses FFT with 8192 block size (overkill)
-       Suggestion: Replace with low-latency reverb (EchoelReverb < 1ms)
+       Suggestion: Replace with low-latency reverb (EOELReverb < 1ms)
 
     2. Track 1: Vintage Compressor → 1.3ms latency
        → Model oversampling (4x internal)
@@ -1124,7 +1124,7 @@ public:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ 🧠 EchoelAI™                            [⚙️ Settings] [❌]  │
+│ 🧠 EOELAI™                            [⚙️ Settings] [❌]  │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  Mode: [🔇 Off] [👀 Observe] [💡 Suggest] [⚡ Assisted]     │
@@ -1295,7 +1295,7 @@ vs. AI Plugins (iZotope, Sonible):
   ✅ Integrated into workflow (not separate plugins)
   ✅ Cross-module intelligence (holistic view)
   ✅ Project-aware (understands full context)
-  ✅ Free (included with Echoelmusic)
+  ✅ Free (included with EOEL)
 
 Market Position:
   "The DAW that teaches AND assists"
@@ -1306,7 +1306,7 @@ Market Position:
 ### Pricing Strategy
 
 ```yaml
-Base Echoelmusic: €99 one-time (includes ALL AI modules)
+Base EOEL: €99 one-time (includes ALL AI modules)
   vs. iZotope Music Production Suite: €999/year
   vs. Sonible smart:bundle: €399/year
 
@@ -1395,7 +1395,7 @@ Production Techniques:
 
 ## ✅ SUMMARY
 
-**EchoelAI™ delivers:**
+**EOELAI™ delivers:**
 
 1. **12 Modular Intelligence Tools** - Each focused, combinable, user-controlled
 2. **Full Transparency** - Every suggestion explained with reasoning + references
@@ -1421,6 +1421,6 @@ Production Techniques:
 **Next Step:** Implement Module Manager + First 3 Modules (Mix, Mastering, Learning)
 **Timeline:** 12 weeks to full suite (phased rollout)
 
-**Created by Echoel™**
+**Created by EOEL™**
 **"AI That Respects the Artist"**
 **November 2025** 🧠✨

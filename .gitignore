@@ -104,3 +104,40 @@ iOSInjectionProject/
 
 # Third-party dependencies (users should clone these)
 ThirdParty/JUCE/
+
+# ====================
+# Secrets & API Keys
+# ====================
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+.env*.local
+
+# Secrets folder
+Secrets/
+**/Secrets/
+
+# API Keys & Config
+APIKeys.swift
+APIKeys.plist
+Stripe.plist
+StripeConfig.plist
+
+# Firebase
+GoogleService-Info.plist
+google-services.json
+
+# Apple Certificates & Provisioning
+*.key
+*.pem
+*.p12
+*.cer
+*.certSigningRequest
+*.mobileprovision
+
+# Private keys
+private*.key
+*_private.key

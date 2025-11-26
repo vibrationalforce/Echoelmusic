@@ -38,7 +38,7 @@ FÜR ECHOELMUSIC:
      - "Live Performance Setup" → routing + sync config
 
   ✅ "AI Assistants" für specific tasks
-     → EchoelWisdom™ (unser AI coach!)
+     → EOELWisdom™ (unser AI coach!)
      - Mixing Assistant (frequency conflicts, phase issues)
      - Mastering Assistant (LUFS, dynamics, export)
      - Performance Assistant (routing, monitoring setup)
@@ -97,7 +97,7 @@ FÜR ECHOELMUSIC:
      → Mobile → Desktop streaming
      → WebRTC ultra-low latency
 
-  ✅ EchoelSync™ (better than all of them!)
+  ✅ EOELSync™ (better than all of them!)
      - Not just audio streaming (Sessionwire)
      - Not just single-DAW (Evercast)
      - Universal sync (ALL DAWs + hardware + visual apps)
@@ -171,7 +171,7 @@ FÜR ECHOELMUSIC:
      - Integration with actual music tools
 
   ✅ Documentation (inspired by Notion)
-     → EchoelWisdom™ Knowledge Base
+     → EOELWisdom™ Knowledge Base
      - Track notes (lyrics, ideas, production notes)
      - Session logs (what worked, what didn't)
      - Mix notes (frequency decisions, compression settings)
@@ -186,7 +186,7 @@ FÜR ECHOELMUSIC:
   💡 Our Advantage:
      - Adobe Workfront = enterprise €€€€
      - Motion = $19-34/month
-     - Echoelmusic = €9.99/month (all-in-one)
+     - EOEL = €9.99/month (all-in-one)
 ```
 
 ---
@@ -202,14 +202,14 @@ Problem:
   - Logic Pro iPad = powerful, but expensive + no cross-platform
 
 Our Solution:
-  ✅ Echoelmusic iPad App + Remote Processing
+  ✅ EOEL iPad App + Remote Processing
      - Full DAW on iPad
      - Offload CPU to €30/month Hetzner server
      - Same project: iPad ↔ Desktop ↔ Linux
      - AUv3 plugins (user's existing investments!)
 ```
 
-### 2. **Universal Sync (EchoelSync™)**
+### 2. **Universal Sync (EOELSync™)**
 ```yaml
 Problem:
   - Ableton Link = good, but only tempo sync (no video, no legacy)
@@ -218,7 +218,7 @@ Problem:
   - No tool connects EVERYTHING (DAWs + hardware + visuals + gaming)
 
 Our Solution:
-  ✅ EchoelSync™ connects:
+  ✅ EOELSync™ connects:
      - DAWs (Ableton, FL, Logic, Reaper, Bitwig)
      - Hardware (Drum machines, synths)
      - Mobile (FL Mobile, Beatmaker, etc.)
@@ -237,7 +237,7 @@ Problem:
   - Splice: $9.99-29.99/month (forever)
 
 Our Solution:
-  ✅ Echoelmusic Pricing:
+  ✅ EOEL Pricing:
      - €99 Desktop (one-time, yours forever)
      - €49.99 Mobile (one-time)
      - €9.99/month Cloud (optional!)
@@ -258,7 +258,7 @@ Problem:
   - Dark patterns everywhere (lock-in, upsells, feature removal)
 
 Our Solution:
-  ✅ Echoel = Artist who codes
+  ✅ EOEL = Artist who codes
      - Built by someone who actually makes music
      - GPL/Open Source (auditable, forkable)
      - No dark patterns (respect user agency)
@@ -270,14 +270,14 @@ Our Solution:
 
 ## 📊 Feature Comparison Matrix
 
-| Feature | Motion | Sessionwire | Notion | **Echoelmusic** |
+| Feature | Motion | Sessionwire | Notion | **EOEL** |
 |---------|--------|-------------|--------|-----------------|
 | **AI Workflow Creation** | ✅ | ❌ | ❌ | ✅ (Music-specific!) |
 | **Remote Collaboration** | ❌ | ✅ | Async only | ✅ (Remote processing) |
 | **Low-Latency Audio** | ❌ | ✅ | ❌ | ✅ (< 10ms LAN) |
 | **Mobile-First** | ⚠️ (App exists) | ❌ | ⚠️ (Basic app) | ✅ (iPad primary!) |
 | **Plugin Support** | ❌ | ❌ | ❌ | ✅ (AUv3, VST3, AU) |
-| **Universal Sync** | ❌ | ❌ | ❌ | ✅ (EchoelSync™) |
+| **Universal Sync** | ❌ | ❌ | ❌ | ✅ (EOELSync™) |
 | **One-Time Purchase** | ❌ (Sub only) | ❌ (Sub only) | ❌ (Sub only) | ✅ (€99 or sub) |
 | **Open Source** | ❌ | ❌ | ❌ | ✅ (GPL) |
 | **Pricing** | $19-34/mo | $25-99/mo | $4-10/mo | €9.99/mo |
@@ -289,7 +289,7 @@ Our Solution:
 
 ### From **Motion.app**: AI Workflow Templates
 ```cpp
-// EchoelWisdom Workflow Generator
+// EOELWisdom Workflow Generator
 class WorkflowGenerator
 {
 public:
@@ -364,7 +364,7 @@ public:
 
 ### From **Notion**: Documentation & Knowledge Base
 ```yaml
-# EchoelWisdom Project Notes (Markdown + AI)
+# EOELWisdom Project Notes (Markdown + AI)
 
 ## Track Notes
 
@@ -379,7 +379,7 @@ public:
 
 ### Bass (Track 4)
 - Synth: Serum "808 Sub Bass"
-- **EchoelWisdom Note**: "This frequency (55Hz = A1) is in the 'power zone'
+- **EOELWisdom Note**: "This frequency (55Hz = A1) is in the 'power zone'
   for club systems. Research shows 50-60Hz = maximum perceived bass impact
   (Source: Sound on Sound, Mixing Bass Frequencies, 2023)"
 
@@ -397,7 +397,7 @@ public:
 - v2.0 (16:15): Added EQ cuts, better! ✅
 - v2.1 (16:45): Adjusted compression, kick punches now
 
-**EchoelWisdom**: "Your mix improved 23% in clarity (RMS dynamics analysis).
+**EOELWisdom**: "Your mix improved 23% in clarity (RMS dynamics analysis).
 Ready to export for Spotify (-14 LUFS)?"
 ```
 
@@ -414,7 +414,7 @@ Competitors:
   - Ableton Live Suite: €599 one-time
   - Logic Pro iPad: €49.99 (but Mac-only ecosystem)
 
-Echoelmusic:
+EOEL:
   - Desktop: €99 one-time (yours forever!)
   - Mobile: €49.99 one-time
   - Cloud: €9.99/month = €120/year (optional!)
@@ -432,7 +432,7 @@ Competitors:
   - FL Studio: Windows/Mac separate licenses
   - Logic Pro: Mac/iPad only (Apple lock-in)
 
-Echoelmusic:
+EOEL:
   ✅ Works with everything:
      - Your existing AUv3 plugins (FL Mobile, etc.)
      - Your existing VST3 plugins (desktop)
@@ -452,7 +452,7 @@ Competitors:
   - FL Studio Mobile: Good, but isolated (no cloud processing)
   - Logic Pro iPad: Powerful, but €5.99/month after trial
 
-Echoelmusic:
+EOEL:
   ✅ iPad as primary platform
   ✅ Remote processing (iPad + server = desktop power)
   ✅ AUv3 support (all user's plugins work!)
@@ -470,7 +470,7 @@ Competitors:
   - Dark patterns (upsells, feature removal)
   - VC-funded (growth > sustainability)
 
-Echoelmusic:
+EOEL:
   ✅ GPL Open Source (auditable, forkable)
   ✅ No lock-in (standard formats)
   ✅ No dark patterns (respect users)
@@ -500,7 +500,7 @@ Echoelmusic:
 3. **Project Notes System** (Notion-inspired)
    - [ ] Markdown notes per track
    - [ ] Session logs (what worked, what didn't)
-   - [ ] AI-assisted suggestions (EchoelWisdom)
+   - [ ] AI-assisted suggestions (EOELWisdom)
    - [ ] Version history (mix iterations)
 
 ### SHORT-TERM (Next 2 Months):
@@ -511,7 +511,7 @@ Echoelmusic:
    - [ ] Ableton Link (sync with FL Mobile, etc.)
    - [ ] Beautiful vaporwave UI
 
-5. **EchoelSync Basic**
+5. **EOELSync Basic**
    - [ ] Ableton Link integration
    - [ ] MIDI Clock out
    - [ ] OSC support (Resolume, TouchDesigner)
@@ -538,8 +538,8 @@ Price (€/year)
   │
   │ Ableton Suite (€599 one-time, amortized) ███████
   │
-  │ Echoelmusic (€120/year cloud) ████
-  │ Echoelmusic (€99 one-time) ███
+  │ EOEL (€120/year cloud) ████
+  │ EOEL (€99 one-time) ███
   │
   └─────────────────────────────────────→ Features
 
@@ -554,7 +554,7 @@ We're in the "High Value, Low Price" quadrant!
 
 1. **Motion's AI Workflows** → Adapt for music
 2. **Sessionwire's Remote Collaboration** → But we do Remote PROCESSING (better!)
-3. **Notion's Documentation** → EchoelWisdom knowledge base
+3. **Notion's Documentation** → EOELWisdom knowledge base
 4. **ALL tools' cloud-native approach** → But we're hybrid (local-first, cloud-optional)
 
 **Was wir BESSER machen:**
@@ -575,5 +575,5 @@ D) **Business Plan finalisieren** (pricing, marketing, launch)
 
 ---
 
-**Created by Echoel™**
+**Created by EOEL™**
 **November 2025** 🔍
