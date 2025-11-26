@@ -51,7 +51,7 @@ jobs:
       run: |
         set -o pipefail
         xcodebuild clean build \
-          -scheme Blab \
+          -scheme Eoel \
           -sdk iphonesimulator \
           -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=latest' \
           -configuration Debug \
@@ -64,7 +64,7 @@ jobs:
       run: |
         echo "✅ Build successful!"
         echo "📱 Platform: iOS Simulator"
-        echo "🎯 Scheme: Blab"
+        echo "🎯 Scheme: Eoel"
         echo "📦 Configuration: Debug"
 
     - name: Upload Build Logs
