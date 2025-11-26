@@ -33,6 +33,7 @@ public class UnifiedControlHub: ObservableObject {
     // MARK: - Dependencies (Injected)
 
     private let audioEngine: AudioEngine?
+    private var microphoneManager: MicrophoneManager?  // Added for audio analysis
     private var faceTrackingManager: ARFaceTrackingManager?
     private var faceToAudioMapper: FaceToAudioMapper?
     private var handTrackingManager: HandTrackingManager?
@@ -71,9 +72,22 @@ public class UnifiedControlHub: ObservableObject {
 
     // MARK: - Initialization
 
-    public init(audioEngine: AudioEngine? = nil) {
+    public init(audioEngine: AudioEngine? = nil, microphoneManager: MicrophoneManager? = nil) {
         self.audioEngine = audioEngine
+        self.microphoneManager = microphoneManager
         self.faceToAudioMapper = FaceToAudioMapper()
+    }
+
+    /// Enable audio analysis integration
+    public func enableAudioAnalysis(micManager: MicrophoneManager) {
+        self.microphoneManager = micManager
+        print("[UnifiedControlHub] Audio analysis enabled")
+    }
+
+    /// Disable audio analysis
+    public func disableAudioAnalysis() {
+        self.microphoneManager = nil
+        print("[UnifiedControlHub] Audio analysis disabled")
     }
 
     /// Enable face tracking integration
@@ -355,8 +369,10 @@ public class UnifiedControlHub: ObservableObject {
         // Get current biometric data
         let hrvCoherence = healthKit.hrvCoherence
         let heartRate = healthKit.heartRate
-        let voicePitch: Float = 0.0  // TODO: Get from audio analysis
-        let audioLevel: Float = 0.5  // TODO: Get from audio engine
+
+        // Get real-time audio analysis (CONNECTED!)
+        let voicePitch: Float = microphoneManager?.currentPitch ?? 0.0
+        let audioLevel: Float = microphoneManager?.audioLevel ?? 0.0
 
         // Update bio parameter mapping
         mapper.updateParameters(
@@ -372,21 +388,22 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply bio-derived audio parameters to audio engine and spatial mapping
     private func applyBioAudioParameters(_ mapper: BioParameterMapper) {
-        // Apply filter cutoff
-        // TODO: Apply to actual AudioEngine filter node
-        // print("[Bio→Audio] Filter Cutoff: \(Int(mapper.filterCutoff)) Hz")
+        // ✅ CONNECTED: Apply to DAWTimelineEngine (the actual audio engine)
+        if let timeline = audioEngine {
+            // Bio-reactive filter cutoff (HRV modulates brightness)
+            DAWTimelineEngine.shared.masterFilterCutoff = mapper.filterCutoff
 
-        // Apply reverb wetness
-        // TODO: Apply to actual AudioEngine reverb node
-        // print("[Bio→Audio] Reverb Wet: \(Int(mapper.reverbWet * 100))%")
+            // Bio-reactive reverb (Coherence modulates space)
+            DAWTimelineEngine.shared.masterReverbMix = mapper.reverbWet
 
-        // Apply amplitude
-        // TODO: Apply to actual AudioEngine master volume
-        // print("[Bio→Audio] Amplitude: \(Int(mapper.amplitude * 100))%")
+            // Bio-reactive amplitude (Heart rate modulates energy)
+            DAWTimelineEngine.shared.masterVolume = mapper.amplitude
 
-        // Apply tempo
-        // TODO: Apply to tempo-synced effects (delay, arpeggiator)
-        // print("[Bio→Audio] Tempo: \(String(format: "%.1f", mapper.tempo)) BPM")
+            // Bio-reactive tempo (HRV coherence modulates time)
+            DAWTimelineEngine.shared.tempo = Double(mapper.tempo)
+
+            print("[Bio→Audio] ✅ Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Vol: \(Int(mapper.amplitude * 100))%, BPM: \(String(format: "%.1f", mapper.tempo))")
+        }
 
         // Apply bio-reactive spatial field (AFA)
         if let mpe = mpeZoneManager, let spatialMapper = midiToSpatialMapper {
@@ -421,8 +438,21 @@ public class UnifiedControlHub: ObservableObject {
                 let afaField = spatialMapper.mapToAFA(voices: voiceData, geometry: fieldGeometry)
                 spatialMapper.afaField = afaField
 
-                // TODO: Apply AFA field to SpatialAudioEngine
-                // print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
+                // ✅ CONNECTED: Apply AFA field to SpatialAudioEngine (THERAPEUTIC LOOP CLOSED!)
+                if let spatial = spatialAudioEngine {
+                    // Update spatial audio sources with bio-reactive positioning
+                    for (index, source) in afaField.sources.enumerated() {
+                        spatial.updateSourcePosition(
+                            index: index,
+                            x: source.x,
+                            y: source.y,
+                            z: source.z,
+                            gain: source.gain
+                        )
+                    }
+
+                    print("[Bio→AFA] ✅ THERAPEUTIC LOOP CLOSED! Geometry: \(fieldGeometry), Sources: \(afaField.sources.count), Coherence: \(Int(healthKitManager?.hrvCoherence ?? 0))")
+                }
             }
         }
     }
