@@ -199,6 +199,30 @@ public class UnifiedControlHub: ObservableObject {
         print("[UnifiedControlHub] Biometric monitoring disabled")
     }
 
+    /// Enable Apple Watch biofeedback sync
+    /// Call this after enableBiometricMonitoring() to sync bio data with Apple Watch
+    public func enableWatchSync() {
+        #if os(iOS)
+        guard let healthKit = healthKitManager else {
+            print("[UnifiedControlHub] ⚠️ Enable biometric monitoring first before enabling Watch sync")
+            return
+        }
+
+        healthKit.enableWatchSync()
+        print("[UnifiedControlHub] ✅ Watch sync enabled - biofeedback will sync iPhone↔Watch")
+        #else
+        print("[UnifiedControlHub] ⚠️ Watch sync only available on iOS")
+        #endif
+    }
+
+    /// Disable Apple Watch sync
+    public func disableWatchSync() {
+        #if os(iOS)
+        healthKitManager?.disableWatchSync()
+        print("[UnifiedControlHub] Watch sync disabled")
+        #endif
+    }
+
     /// Handle bio signal updates from HealthKit
     private func handleBioSignalUpdate() {
         // Bio signal updates happen via Combine subscriptions

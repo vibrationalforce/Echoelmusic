@@ -3,6 +3,10 @@ import HealthKit
 import Combine
 import Accelerate
 
+#if os(iOS) || os(watchOS)
+import WatchConnectivity
+#endif
+
 /// Manages HealthKit integration for real-time HRV and heart rate monitoring
 /// Implements HeartMath Institute's coherence algorithm for biofeedback
 @MainActor
@@ -30,11 +34,19 @@ class HealthKitManager: ObservableObject {
     /// Error message if authorization or monitoring fails
     @Published var errorMessage: String?
 
+    /// Whether Watch sync is enabled
+    @Published var watchSyncEnabled: Bool = false
+
 
     // MARK: - Private Properties
 
     /// The HealthKit store for querying health data
     private let healthStore = HKHealthStore()
+
+    #if os(iOS) || os(watchOS)
+    /// WatchConnectivity manager for iPhone↔Watch sync
+    private var watchConnectivity: WatchConnectivityManager?
+    #endif
 
     /// Active query for heart rate monitoring
     private var heartRateQuery: HKQuery?
@@ -58,8 +70,68 @@ class HealthKitManager: ObservableObject {
 
     init() {
         checkAvailability()
+        #if os(iOS) || os(watchOS)
+        setupWatchConnectivity()
+        #endif
     }
 
+
+    // MARK: - Watch Connectivity
+
+    #if os(iOS) || os(watchOS)
+    private func setupWatchConnectivity() {
+        watchConnectivity = WatchConnectivityManager.shared
+
+        // Observe received bio data from Watch
+        watchConnectivity?.$receivedBioData
+            .compactMap { $0 }
+            .sink { [weak self] bioData in
+                self?.handleReceivedBioData(bioData)
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Enable synchronization with Apple Watch
+    func enableWatchSync() {
+        watchSyncEnabled = true
+        print("⌚ Watch sync enabled")
+    }
+
+    /// Disable synchronization with Apple Watch
+    func disableWatchSync() {
+        watchSyncEnabled = false
+        print("⌚ Watch sync disabled")
+    }
+
+    /// Handle bio data received from Watch
+    private func handleReceivedBioData(_ bioData: WatchConnectivityManager.BioDataMessage) {
+        // Only update from Watch data if we're not monitoring locally
+        // This prevents data conflicts
+        guard heartRateQuery == nil else { return }
+
+        Task { @MainActor in
+            heartRate = bioData.heartRate
+            hrvRMSSD = bioData.hrv
+            hrvCoherence = bioData.coherence
+
+            print("⌚ Received bio data from \(bioData.source): HR=\(Int(bioData.heartRate)), HRV=\(Int(bioData.hrv)), Coherence=\(Int(bioData.coherence))")
+        }
+    }
+
+    /// Send current bio data to Watch
+    private func sendBioDataToWatch() {
+        guard watchSyncEnabled else { return }
+
+        watchConnectivity?.sendBioData(
+            heartRate: heartRate,
+            hrv: hrvRMSSD,
+            coherence: hrvCoherence
+        )
+    }
+    #endif
+
+    // MARK: - Cancellables
+    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - HealthKit Availability
 
@@ -205,6 +277,11 @@ class HealthKitManager: ObservableObject {
 
             Task { @MainActor in
                 self.heartRate = bpm
+
+                #if os(iOS) || os(watchOS)
+                // Send to Watch if enabled
+                self.sendBioDataToWatch()
+                #endif
             }
         }
     }
@@ -273,6 +350,11 @@ class HealthKitManager: ObservableObject {
                 if self.rrIntervalBuffer.count >= 30 { // Need minimum data
                     self.hrvCoherence = self.calculateCoherence(rrIntervals: self.rrIntervalBuffer)
                 }
+
+                #if os(iOS) || os(watchOS)
+                // Send to Watch if enabled
+                self.sendBioDataToWatch()
+                #endif
             }
         }
     }

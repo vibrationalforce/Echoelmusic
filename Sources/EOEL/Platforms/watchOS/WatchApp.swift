@@ -2,6 +2,7 @@ import Foundation
 import WatchKit
 import HealthKit
 import Combine
+import WatchConnectivity
 
 #if os(watchOS)
 
@@ -13,6 +14,7 @@ import Combine
 /// - Komplikationen: Live HRV/Coherence auf dem Watch Face
 /// - Haptic Feedback: Taktiles Biofeedback für Atemübungen
 /// - Standalone: Funktioniert unabhängig vom iPhone
+/// - **iPhone Sync**: Real-time biofeedback sync via WatchConnectivity
 ///
 /// Features:
 /// - Real-time HRV & Coherence Monitoring
@@ -21,6 +23,7 @@ import Combine
 /// - Workout Integration (Meditation, Breathing, etc.)
 /// - Complications für Watch Faces
 /// - Background Heart Rate Monitoring
+/// - iPhone↔Watch sync for unified experience
 ///
 @MainActor
 @Observable
@@ -40,11 +43,15 @@ class WatchApp {
     /// Session-Status
     var sessionDuration: TimeInterval = 0
 
+    /// iPhone sync enabled
+    var iPhoneSyncEnabled: Bool = true
+
     // MARK: - Private Properties
 
     private let healthKitManager: WatchHealthKitManager
     private let hapticEngine: HapticEngine
     private let audioEngine: WatchAudioEngine
+    private let watchConnectivity: WatchConnectivityManager
     private var workoutSession: HKWorkoutSession?
     private var sessionStartTime: Date?
 
@@ -90,6 +97,7 @@ class WatchApp {
         self.healthKitManager = WatchHealthKitManager()
         self.hapticEngine = HapticEngine()
         self.audioEngine = WatchAudioEngine()
+        self.watchConnectivity = WatchConnectivityManager.shared
 
         setupObservers()
     }
@@ -100,8 +108,42 @@ class WatchApp {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] metrics in
                 self?.currentMetrics = metrics
+
+                // Send to iPhone if sync enabled
+                if self?.iPhoneSyncEnabled == true {
+                    self?.sendMetricsToiPhone(metrics)
+                }
             }
             .store(in: &cancellables)
+
+        // Beobachte empfangene Befehle vom iPhone
+        watchConnectivity.$receivedBioData
+            .compactMap { $0 }
+            .sink { [weak self] bioData in
+                // iPhone sent biofeedback data (if iPhone is monitoring)
+                print("⌚ Received bio data from iPhone: HR=\(Int(bioData.heartRate)), HRV=\(Int(bioData.hrv))")
+            }
+            .store(in: &cancellables)
+    }
+
+    // MARK: - iPhone Sync
+
+    private func sendMetricsToiPhone(_ metrics: BioMetrics) {
+        watchConnectivity.sendBioData(
+            heartRate: metrics.heartRate,
+            hrv: metrics.hrv,
+            coherence: metrics.coherence
+        )
+    }
+
+    func enableiPhoneSync() {
+        iPhoneSyncEnabled = true
+        print("⌚ iPhone sync enabled")
+    }
+
+    func disableiPhoneSync() {
+        iPhoneSyncEnabled = false
+        print("⌚ iPhone sync disabled")
     }
 
     // MARK: - Session Management
@@ -246,8 +288,23 @@ class WatchApp {
             date: Date()
         )
 
-        // TODO: Sync with iPhone via WatchConnectivity
-        print("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        // Sync with iPhone via WatchConnectivity
+        if iPhoneSyncEnabled {
+            let sessionMessage = WatchConnectivityManager.SessionMessage(
+                sessionType: session.type.rawValue,
+                duration: session.duration,
+                avgHeartRate: session.avgHeartRate,
+                avgHRV: session.avgHRV,
+                avgCoherence: session.avgCoherence,
+                startDate: session.date.addingTimeInterval(-duration),
+                endDate: session.date
+            )
+
+            watchConnectivity.sendSession(sessionMessage)
+            print("💾 Session saved & synced to iPhone: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        } else {
+            print("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        }
     }
 
     struct SessionData: Codable {
