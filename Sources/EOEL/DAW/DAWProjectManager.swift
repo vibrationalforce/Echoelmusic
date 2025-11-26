@@ -369,6 +369,9 @@ class DAWProjectManager: ObservableObject {
         // Update recent projects
         addToRecentProjects(project, url: saveURL)
 
+        // Trigger cloud backup if available
+        triggerCloudBackup(for: saveURL)
+
         print("💾 Saved project: \(project.name) to \(saveURL)")
     }
 
@@ -784,7 +787,83 @@ class DAWProjectManager: ObservableObject {
     }
 
     private func saveRecentProjects() {
-        // TODO: Persist to UserDefaults or file
+        let encoder = JSONEncoder()
+        if let encoded = try? encoder.encode(recentProjects) {
+            UserDefaults.standard.set(encoded, forKey: "EOEL.recentProjects")
+            print("💾 Saved \(recentProjects.count) recent projects to UserDefaults")
+        }
+    }
+
+    private func loadRecentProjects() {
+        if let data = UserDefaults.standard.data(forKey: "EOEL.recentProjects") {
+            let decoder = JSONDecoder()
+            if let decoded = try? decoder.decode([ProjectInfo].self, from: data) {
+                recentProjects = decoded
+                print("📂 Loaded \(recentProjects.count) recent projects from UserDefaults")
+            }
+        }
+    }
+
+    /// Persist project settings to UserDefaults
+    func saveSettings() {
+        let settings: [String: Any] = [
+            "isAutoSaveEnabled": isAutoSaveEnabled,
+            "autoSaveInterval": autoSaveInterval,
+            "maxUndoStackSize": maxUndoStackSize
+        ]
+        UserDefaults.standard.set(settings, forKey: "EOEL.projectSettings")
+        print("⚙️ Saved project settings to UserDefaults")
+    }
+
+    /// Load project settings from UserDefaults
+    func loadSettings() {
+        if let settings = UserDefaults.standard.dictionary(forKey: "EOEL.projectSettings") {
+            if let autoSave = settings["isAutoSaveEnabled"] as? Bool {
+                isAutoSaveEnabled = autoSave
+                if autoSave {
+                    startAutoSaveTimer()
+                }
+            }
+            print("⚙️ Loaded project settings from UserDefaults")
+        }
+    }
+
+    // MARK: - Cloud Backup
+
+    /// Trigger automatic cloud backup via iCloud or CloudKit
+    private func triggerCloudBackup(for fileURL: URL) {
+        #if os(iOS) || os(macOS)
+        // Check if iCloud is available
+        if let ubiquityURL = FileManager.default.url(forUbiquityContainerIdentifier: nil) {
+            Task {
+                do {
+                    let cloudURL = ubiquityURL.appendingPathComponent("Documents").appendingPathComponent(fileURL.lastPathComponent)
+
+                    // Create directory if needed
+                    try FileManager.default.createDirectory(
+                        at: cloudURL.deletingLastPathComponent(),
+                        withIntermediateDirectories: true
+                    )
+
+                    // Copy to iCloud
+                    if FileManager.default.fileExists(atPath: cloudURL.path) {
+                        try FileManager.default.removeItem(at: cloudURL)
+                    }
+                    try FileManager.default.copyItem(at: fileURL, to: cloudURL)
+
+                    await MainActor.run {
+                        print("☁️ Backed up project to iCloud: \(cloudURL.lastPathComponent)")
+                    }
+                } catch {
+                    await MainActor.run {
+                        print("⚠️ Cloud backup failed: \(error.localizedDescription)")
+                    }
+                }
+            }
+        } else {
+            print("☁️ iCloud not available, skipping cloud backup")
+        }
+        #endif
     }
 
     // MARK: - Utilities
@@ -815,9 +894,17 @@ class DAWProjectManager: ObservableObject {
     // MARK: - Initialization
 
     private init() {
+        loadSettings()
+        loadRecentProjects()
+
         if isAutoSaveEnabled {
             startAutoSaveTimer()
         }
+    }
+
+    deinit {
+        saveSettings()
+        autoSaveTimer?.invalidate()
     }
 }
 

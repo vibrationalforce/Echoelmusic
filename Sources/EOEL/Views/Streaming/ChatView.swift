@@ -32,12 +32,30 @@ struct ChatView: View {
 
             // Messages
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 12) {
-                    ForEach(liveEngine.chatMessages) { message in
-                        ChatMessageRow(message: message)
+                if liveEngine.chatMessages.isEmpty {
+                    // Empty state
+                    VStack(spacing: 20) {
+                        Image(systemName: "bubble.left.and.bubble.right")
+                            .font(.system(size: 60))
+                            .foregroundColor(.gray.opacity(0.5))
+                        Text("No messages yet")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        Text("Messages from viewers will appear here when you go live")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    LazyVStack(alignment: .leading, spacing: 12) {
+                        ForEach(liveEngine.chatMessages) { message in
+                            ChatMessageRow(message: message)
+                        }
+                    }
+                    .padding()
                 }
-                .padding()
             }
 
             Divider()

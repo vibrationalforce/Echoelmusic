@@ -98,31 +98,35 @@ class BioParameterMapper: ObservableObject {
         voicePitch: Float,
         audioLevel: Float
     ) {
+        // Batch all @Published updates together to reduce UI churn
+        // This sends only ONE objectWillChange notification instead of 7
+        objectWillChange.send()
+
         // Map HRV Coherence → Reverb Wet
         let targetReverb = mapHRVToReverb(hrvCoherence: hrvCoherence)
-        reverbWet = smooth(current: reverbWet, target: targetReverb, factor: smoothingFactor)
+        _reverbWet.projectedValue.value = smooth(current: reverbWet, target: targetReverb, factor: smoothingFactor)
 
         // Map Heart Rate → Filter Cutoff
         let targetFilter = mapHeartRateToFilter(heartRate: heartRate)
-        filterCutoff = smooth(current: filterCutoff, target: targetFilter, factor: smoothingFactor)
+        _filterCutoff.projectedValue.value = smooth(current: filterCutoff, target: targetFilter, factor: smoothingFactor)
 
         // Map HRV + Audio Level → Amplitude
         let targetAmplitude = mapToAmplitude(hrvCoherence: hrvCoherence, audioLevel: audioLevel)
-        amplitude = smooth(current: amplitude, target: targetAmplitude, factor: smoothingFactor)
+        _amplitude.projectedValue.value = smooth(current: amplitude, target: targetAmplitude, factor: smoothingFactor)
 
         // Map Voice Pitch → Base Frequency (snap to healing scale)
         let targetFrequency = mapVoicePitchToScale(voicePitch: voicePitch)
-        baseFrequency = smooth(current: baseFrequency, target: targetFrequency, factor: fastSmoothingFactor)
+        _baseFrequency.projectedValue.value = smooth(current: baseFrequency, target: targetFrequency, factor: fastSmoothingFactor)
 
         // Map Heart Rate → Tempo (for breathing guidance)
         let targetTempo = mapHeartRateToTempo(heartRate: heartRate)
-        tempo = smooth(current: tempo, target: targetTempo, factor: smoothingFactor)
+        _tempo.projectedValue.value = smooth(current: tempo, target: targetTempo, factor: smoothingFactor)
 
         // Map HRV Coherence → Spatial Position
-        spatialPosition = mapHRVToSpatialPosition(hrvCoherence: hrvCoherence)
+        _spatialPosition.projectedValue.value = mapHRVToSpatialPosition(hrvCoherence: hrvCoherence)
 
         // Map Voice Pitch Clarity → Harmonic Count
-        harmonicCount = mapVoicePitchToHarmonics(voicePitch: voicePitch, audioLevel: audioLevel)
+        _harmonicCount.projectedValue.value = mapVoicePitchToHarmonics(voicePitch: voicePitch, audioLevel: audioLevel)
 
         #if DEBUG
         logParameters()

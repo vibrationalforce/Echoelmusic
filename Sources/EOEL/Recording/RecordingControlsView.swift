@@ -98,6 +98,7 @@ struct RecordingControlsView: View {
                 ShareSheet(items: [url])
             }
         }
+        .errorDisplay()  // Show user-facing error messages
     }
 
     // MARK: - Recording Controls Section
@@ -464,7 +465,13 @@ struct RecordingControlsView: View {
     }
 
     private func exportAudio(format: ExportManager.ExportFormat) {
-        guard let session = recordingEngine.currentSession else { return }
+        guard let session = recordingEngine.currentSession else {
+            ErrorDisplayManager.shared.showWarning(
+                "No Recording",
+                message: "There is no recording session to export. Please record audio first."
+            )
+            return
+        }
 
         let exportManager = ExportManager()
         Task {
@@ -474,15 +481,30 @@ struct RecordingControlsView: View {
                 await MainActor.run {
                     shareURL = url
                     showShareSheet = true
+                    ErrorDisplayManager.shared.showInfo(
+                        "Export Successful",
+                        message: "Audio exported as \(format.rawValue)"
+                    )
                 }
             } catch {
-                print("❌ Export failed: \(error)")
+                await MainActor.run {
+                    ErrorDisplayManager.shared.showError(
+                        "Export Failed",
+                        message: "Could not export audio: \(error.localizedDescription)"
+                    )
+                }
             }
         }
     }
 
     private func exportBioData(format: ExportManager.BioDataFormat) {
-        guard let session = recordingEngine.currentSession else { return }
+        guard let session = recordingEngine.currentSession else {
+            ErrorDisplayManager.shared.showWarning(
+                "No Recording",
+                message: "There is no recording session to export. Please record audio first."
+            )
+            return
+        }
 
         let exportManager = ExportManager()
         do {
@@ -490,13 +512,26 @@ struct RecordingControlsView: View {
             print("📤 Exported bio-data to: \(url.path)")
             shareURL = url
             showShareSheet = true
+            ErrorDisplayManager.shared.showInfo(
+                "Export Successful",
+                message: "Bio-data exported as \(format.rawValue)"
+            )
         } catch {
-            print("❌ Export failed: \(error)")
+            ErrorDisplayManager.shared.showError(
+                "Export Failed",
+                message: "Could not export bio-data: \(error.localizedDescription)"
+            )
         }
     }
 
     private func exportPackage() {
-        guard let session = recordingEngine.currentSession else { return }
+        guard let session = recordingEngine.currentSession else {
+            ErrorDisplayManager.shared.showWarning(
+                "No Recording",
+                message: "There is no recording session to export. Please record audio first."
+            )
+            return
+        }
 
         let exportManager = ExportManager()
         Task {
@@ -506,9 +541,18 @@ struct RecordingControlsView: View {
                 await MainActor.run {
                     shareURL = url
                     showShareSheet = true
+                    ErrorDisplayManager.shared.showInfo(
+                        "Export Successful",
+                        message: "Session package exported successfully"
+                    )
                 }
             } catch {
-                print("❌ Export failed: \(error)")
+                await MainActor.run {
+                    ErrorDisplayManager.shared.showError(
+                        "Export Failed",
+                        message: "Could not export session package: \(error.localizedDescription)"
+                    )
+                }
             }
         }
     }

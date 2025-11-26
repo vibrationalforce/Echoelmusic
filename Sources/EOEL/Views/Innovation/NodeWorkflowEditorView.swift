@@ -52,27 +52,50 @@ struct NodeWorkflowEditorView: View {
                     }
                 }
 
-                // Nodes
-                ForEach(workflow.currentGraph?.nodes ?? []) { node in
-                    NodeView(
-                        node: node,
-                        isSelected: selectedNode == node.id,
-                        onSelect: { selectedNode = node.id },
-                        onOutputDrag: { outputIndex in
-                            connectionStart = (node.id, outputIndex)
-                        },
-                        onInputDrop: { inputIndex in
-                            if let start = connectionStart {
-                                connectNodes(from: start.nodeId, output: start.outputIndex, to: node.id, input: inputIndex)
-                                connectionStart = nil
+                // Nodes or empty state
+                if let nodes = workflow.currentGraph?.nodes, !nodes.isEmpty {
+                    ForEach(nodes) { node in
+                        NodeView(
+                            node: node,
+                            isSelected: selectedNode == node.id,
+                            onSelect: { selectedNode = node.id },
+                            onOutputDrag: { outputIndex in
+                                connectionStart = (node.id, outputIndex)
+                            },
+                            onInputDrop: { inputIndex in
+                                if let start = connectionStart {
+                                    connectNodes(from: start.nodeId, output: start.outputIndex, to: node.id, input: inputIndex)
+                                    connectionStart = nil
+                                }
                             }
+                        )
+                        .position(
+                            x: CGFloat(node.position.x) * zoomLevel + panOffset.width,
+                            y: CGFloat(node.position.y) * zoomLevel + panOffset.height
+                        )
+                        .scaleEffect(zoomLevel)
+                    }
+                } else {
+                    // Empty state
+                    VStack(spacing: 20) {
+                        Image(systemName: "square.3.layers.3d")
+                            .font(.system(size: 80))
+                            .foregroundColor(.gray.opacity(0.5))
+                        Text("No Nodes Yet")
+                            .font(.title)
+                            .foregroundColor(.secondary)
+                        Text("Click 'Add Node' to start building your workflow")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                        Button(action: { showNodePalette = true }) {
+                            Label("Add Your First Node", systemImage: "plus.circle.fill")
+                                .padding()
+                                .background(Color.accentColor)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
                         }
-                    )
-                    .position(
-                        x: CGFloat(node.position.x) * zoomLevel + panOffset.width,
-                        y: CGFloat(node.position.y) * zoomLevel + panOffset.height
-                    )
-                    .scaleEffect(zoomLevel)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
 
                 // Toolbar
