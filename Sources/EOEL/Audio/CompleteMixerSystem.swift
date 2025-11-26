@@ -571,9 +571,9 @@ struct MixerChannelStripView: View {
 
             // Sends (show first 4)
             VStack(spacing: 2) {
-                ForEach(channel.sends.prefix(4)) { send in
+                ForEach(Array(channel.sends.prefix(4).enumerated()), id: \.element.id) { index, send in
                     HStack(spacing: 2) {
-                        Text(String(format: "S%d", channel.sends.firstIndex(where: { $0.id == send.id })! + 1))
+                        Text(String(format: "S%d", index + 1))
                             .font(.caption2)
                             .frame(width: 20)
                         Rectangle()
