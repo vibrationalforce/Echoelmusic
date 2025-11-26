@@ -36,6 +36,9 @@ class MIDIRouter: ObservableObject {
     @Published var routingMode: RoutingMode = .allInstruments
     @Published var selectedInstrumentID: UUID?
 
+    // Round-robin state
+    private var roundRobinIndex: Int = 0
+
     enum RoutingMode {
         case allInstruments      // Send to all instruments
         case selectedOnly        // Send to selected instrument only
@@ -175,8 +178,22 @@ class MIDIRouter: ObservableObject {
             }
 
         case .roundRobin:
-            // TODO: Implement round-robin voice allocation
-            break
+            // Round-robin: cycle through all available instruments
+            let allIDs = Array(samplers.keys) + Array(instruments.keys)
+            guard !allIDs.isEmpty else { return }
+
+            // Get next instrument in round-robin sequence
+            let targetID = allIDs[roundRobinIndex % allIDs.count]
+
+            // Route to selected instrument
+            if let sampler = samplers[targetID] {
+                sampler.noteOn(note: clampedNote, velocity: clampedVelocity)
+            } else if let instrument = instruments[targetID] {
+                instrument.noteOn(note: clampedNote, velocity: clampedVelocity, channel: channel)
+            }
+
+            // Advance round-robin counter
+            roundRobinIndex = (roundRobinIndex + 1) % allIDs.count
 
         case .layering:
             // Send to all with velocity scaling
