@@ -364,11 +364,11 @@ struct ContentView: View {
                                 }
 
                                 if capabilities.supportsASAF {
-                                    Text("✅ ASAF Supported (iOS 19+)")
+                                    Text("✅ ASAF Supported (iOS 18+)")
                                         .font(.system(size: 11))
                                         .foregroundColor(.green.opacity(0.7))
                                 } else {
-                                    Text("⚠️ ASAF requires iOS 19+ & iPhone 16+")
+                                    Text("⚠️ ASAF requires iOS 18+ & iPhone 16+")
                                         .font(.system(size: 10))
                                         .foregroundColor(.yellow.opacity(0.6))
                                 }

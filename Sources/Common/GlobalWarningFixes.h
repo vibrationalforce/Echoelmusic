@@ -1,4 +1,4 @@
-// GlobalWarningFixes.h - Echoelmusic Warning Suppression & Utilities
+// GlobalWarningFixes.h - Eoel Warning Suppression & Utilities
 // Reduces compilation warnings from 657+ to <50 🎯
 #pragma once
 

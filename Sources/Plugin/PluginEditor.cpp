@@ -4,7 +4,7 @@
 // Constructor
 //==============================================================================
 
-EchoelmusicAudioProcessorEditor::EchoelmusicAudioProcessorEditor (EchoelmusicAudioProcessor& p)
+EoelAudioProcessorEditor::EoelAudioProcessorEditor (EoelAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
     // Create simplified UI
@@ -20,7 +20,7 @@ EchoelmusicAudioProcessorEditor::EchoelmusicAudioProcessorEditor (EchoelmusicAud
     startTimer(33);
 }
 
-EchoelmusicAudioProcessorEditor::~EchoelmusicAudioProcessorEditor()
+EoelAudioProcessorEditor::~EoelAudioProcessorEditor()
 {
     stopTimer();
 }
@@ -29,7 +29,7 @@ EchoelmusicAudioProcessorEditor::~EchoelmusicAudioProcessorEditor()
 // Paint
 //==============================================================================
 
-void EchoelmusicAudioProcessorEditor::paint (juce::Graphics& g)
+void EoelAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // SimpleMainUI handles all painting
     g.fillAll(juce::Colour(0xff1a1a1f));
@@ -39,7 +39,7 @@ void EchoelmusicAudioProcessorEditor::paint (juce::Graphics& g)
 // Resized
 //==============================================================================
 
-void EchoelmusicAudioProcessorEditor::resized()
+void EoelAudioProcessorEditor::resized()
 {
     if (mainUI)
         mainUI->setBounds(getLocalBounds());
@@ -49,7 +49,7 @@ void EchoelmusicAudioProcessorEditor::resized()
 // Timer Callback (Real-time Updates)
 //==============================================================================
 
-void EchoelmusicAudioProcessorEditor::timerCallback()
+void EoelAudioProcessorEditor::timerCallback()
 {
     // Get audio spectrum data from processor (lock-free)
     auto spectrumData = audioProcessor.getSpectrumData();

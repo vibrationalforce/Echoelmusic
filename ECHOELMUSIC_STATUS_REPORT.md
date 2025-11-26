@@ -7,7 +7,7 @@
 
 ## 📊 PROJEKT-ÜBERSICHT
 
-**Echoelmusic** ist eine professionelle DAW (Digital Audio Workstation) mit einzigartiger Spezialisierung auf:
+**Eoel** ist eine professionelle DAW (Digital Audio Workstation) mit einzigartiger Spezialisierung auf:
 
 ### 🎯 Nische-Fokus: Kreativ + Gesund + Mobil + Biofeedback
 
@@ -39,8 +39,8 @@ Optimizations: AVX2/SSE4.2 + LTO (Link-Time Optimization)
 Audio Backend: ALSA
 Status: ✅ 100% Erfolgreich
 Artefakte:
-  - Standalone: Echoelmusic_artefacts/Release/Standalone/Echoelmusic
-  - VST3: /root/.vst3/Echoelmusic.vst3
+  - Standalone: Eoel_artefacts/Release/Standalone/Eoel
+  - VST3: /root/.vst3/Eoel.vst3
 ```
 
 ### ⚠️ Code-Qualität (Warnings)
@@ -417,7 +417,7 @@ Custom JUCE Look & Feel:
 ## 📁 CODE-STRUKTUR
 
 ```
-Echoelmusic/
+Eoel/
 ├── Sources/
 │   ├── DSP/                    # 46 Audio-Effekte
 │   ├── MIDI/                   # 5 MIDI-Generatoren
@@ -599,7 +599,7 @@ void func(float /*unused*/) { }  // Kommentiere unused aus
 🧪 **Testing** - Unit-Tests & Integration-Tests fehlen
 
 ### 🎯 EINZIGARTIGKEIT
-Was Echoelmusic **unersetzlich** macht:
+Was Eoel **unersetzlich** macht:
 1. **EchoCalculator Suite** - Studio-Rechner direkt im DSP
 2. **Wellness Integration** - Keine andere DAW hat AVE + Color + Vibro!
 3. **Bio-Reactive Audio** - Musik passt sich an HRV an
@@ -610,7 +610,7 @@ Was Echoelmusic **unersetzlich** macht:
 
 ## 🚀 FAZIT
 
-**Echoelmusic ist jetzt:**
+**Eoel ist jetzt:**
 - ✅ **Brauchbar** (usable) - Build funktioniert, UI ist integriert
 - ✅ **Einzigartig** (unique) - EchoCalculator + Wellness Suite existieren sonst nirgends
 - ⏳ **Unersetzlich** (irreplaceable) - Noch nicht ganz - Audio I/O fehlt noch

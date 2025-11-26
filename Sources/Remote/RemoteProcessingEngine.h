@@ -75,7 +75,7 @@ public:
     struct RemoteServer
     {
         juce::String hostName;              // e.g., "studio-pc.local" oder IP
-        int port = 7777;                    // Default Echoelmusic remote port
+        int port = 7777;                    // Default Eoel remote port
 
         juce::String deviceName;            // "MacBook Pro M3 Max"
         juce::String osVersion;             // "macOS 15.1"

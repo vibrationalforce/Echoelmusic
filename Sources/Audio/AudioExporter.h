@@ -5,7 +5,7 @@
 #include <functional>
 
 /**
- * AudioExporter - Professional audio export system for Echoelmusic
+ * AudioExporter - Professional audio export system for Eoel
  *
  * Features:
  * - Master mixdown export (full project)

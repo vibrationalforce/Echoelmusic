@@ -200,7 +200,7 @@ private:
 
     void saveCrashReport(const CrashReport& report) {
         auto crashDir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                           .getChildFile("Echoelmusic")
+                           .getChildFile("Eoel")
                            .getChildFile("CrashReports");
 
         crashDir.createDirectory();
@@ -209,7 +209,7 @@ private:
         auto file = crashDir.getChildFile(filename);
 
         juce::String content;
-        content << "Echoelmusic Crash Report\n";
+        content << "Eoel Crash Report\n";
         content << "========================\n\n";
         content << "Version: " << report.version.toFullString() << "\n";
         content << "Platform: " << report.platform << "\n";

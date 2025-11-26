@@ -81,7 +81,7 @@ class VideoExportManager: ObservableObject {
             case .prores422, .prores4444:
                 return false // Software only
             case .spatial_video, .dolby_vision:
-                return true // iOS 19+
+                return true // iOS 18+
             }
         }
 

@@ -1,8 +1,8 @@
-# Echoelmusic - Remote Processing & Cloud Integration Strategy
+# Eoel - Remote Processing & Cloud Integration Strategy
 ## Die Zukunft der latenzfreien mobilen Produktion
 
 **Created:** 2025-11-12
-**Vision:** Echoelmusic wird zur universellen Control & Wellness Platform mit nahtloser Remote-Verarbeitung
+**Vision:** Eoel wird zur universellen Control & Wellness Platform mit nahtloser Remote-Verarbeitung
 
 ---
 
@@ -175,7 +175,7 @@ Connection: OSC, MIDI, Mackie Control
 
 Features:
   - Nuendo als Remote-Renderer
-  - Echoelmusic als Controller
+  - Eoel als Controller
   - Bidirectional sync
   - Automation data exchange
   - Plugin parameter mapping
@@ -226,13 +226,13 @@ Features:
 
 TouchDesigner Operators:
   - OSC In CHOP: Receive audio data
-  - Audio File In CHOP: Sync with Echoelmusic timeline
-  - MIDI In CHOP: MIDI from Echoelmusic
+  - Audio File In CHOP: Sync with Eoel timeline
+  - MIDI In CHOP: MIDI from Eoel
   - UDP In DAT: Control messages
-  - Syphon Spout In TOP: Video from Echoelmusic
+  - Syphon Spout In TOP: Video from Eoel
 
 Example Workflow:
-  Echoelmusic → OSC → TouchDesigner → Projector
+  Eoel → OSC → TouchDesigner → Projector
   Audio analysis drives generative visuals in real-time
 ```
 
@@ -245,8 +245,8 @@ Connection: Ableton Link, MIDI, OSC
 Features:
   - Sample-accurate tempo sync (Link)
   - MIDI Clock sync (legacy)
-  - Max for Live devices control Echoelmusic
-  - Echoelmusic as Ableton control surface
+  - Max for Live devices control Eoel
+  - Eoel as Ableton control surface
   - Audio routing (ReWire successor via JACK/IAC)
 
 Ableton Link Benefits:
@@ -281,8 +281,8 @@ Grapes Protocol:
 
 Integration Plan:
   File: Sources/Integration/GrapesProtocol.h
-  Map: Echoelmusic tracks → Grapes objects
-  Automation: Send position data from Echoelmusic automation
+  Map: Eoel tracks → Grapes objects
+  Automation: Send position data from Eoel automation
 ```
 
 ### 6. Dolby Atmos Renderer Integration
@@ -341,7 +341,7 @@ Implementation:
   Framework: CarPlay SDK (Apple)
   UI: CarPlay templates (list, grid, tab bar)
   Audio: Background audio capability
-  File: Echoelmusic/Platforms/CarPlay/CarPlayApp.swift
+  File: Eoel/Platforms/CarPlay/CarPlayApp.swift
 ```
 
 ### Android Auto Integration
@@ -360,7 +360,7 @@ Features:
 Implementation:
   Framework: Android for Cars App Library
   API Level: 30+ (Android 11+)
-  File: Echoelmusic/Platforms/AndroidAuto/AutoApp.kt
+  File: Eoel/Platforms/AndroidAuto/AutoApp.kt
 ```
 
 ### Tesla Integration (Research)
@@ -430,7 +430,7 @@ Scientific Basis:
   - AI-guided tissue repair
   - External magnetic field control
 
-Echoelmusic Role:
+Eoel Role:
   - Low-frequency sound → tissue vibration
   - Ultrasound guidance → nanorobot steering
   - Frequency modulation → activate/deactivate robots
@@ -476,7 +476,7 @@ Use Cases:
   4. Rhythm Games (Beat Saber-style)
 
 Unity Integration:
-  Package: Echoelmusic Unity Plugin
+  Package: Eoel Unity Plugin
   API: C# wrapper around C++ core
   Features:
     - Real-time audio processing
@@ -485,7 +485,7 @@ Unity Integration:
     - Beat detection → game events
 
 Unreal Integration:
-  Plugin: Echoelmusic UE5 Plugin
+  Plugin: Eoel UE5 Plugin
   API: Blueprint + C++
   Features:
     - MetaSounds integration
@@ -495,13 +495,13 @@ Unreal Integration:
 
 Example (Unity):
 ```csharp
-using Echoelmusic;
+using Eoel;
 
 public class DynamicMusic : MonoBehaviour {
-    EchoelmusicEngine engine;
+    EoelEngine engine;
 
     void Start() {
-        engine = new EchoelmusicEngine();
+        engine = new EoelEngine();
         engine.LoadProject("DynamicOST.echoelmusic");
     }
 
@@ -674,7 +674,7 @@ Implementation:
   Language: Swift + SwiftUI
   Framework: RealityKit, ARKit
   Audio: Spatial Audio API
-  File: Echoelmusic/Platforms/visionOS/VisionApp.swift
+  File: Eoel/Platforms/visionOS/VisionApp.swift
 ```
 
 ### Meta Quest 3 Integration
@@ -691,7 +691,7 @@ Features:
   - Virtual instruments (play in air)
 
 Unity/Unreal:
-  - Build Echoelmusic as VR app
+  - Build Eoel as VR app
   - Use Meta XR SDK
   - Spatial audio with Quest 3's speakers
 
@@ -867,7 +867,7 @@ Traditional Setup:
   Plugins: €2,000
   Total: €10,000
 
-Echoelmusic Setup:
+Eoel Setup:
   Laptop: €1,500
   Interface: €300
   Headphones: €200
@@ -1115,11 +1115,11 @@ Audio Therapy:
 
 ### General Disclaimer
 ```
-Echoelmusic ist eine Software für Audio/Video-Produktion, Creative Tools,
+Eoel ist eine Software für Audio/Video-Produktion, Creative Tools,
 und Wellness-Anwendungen. Folgende Punkte sind wichtig:
 
 1. KEINE MEDIZINISCHEN CLAIMS
-   - Echoelmusic ist KEIN medizinisches Gerät
+   - Eoel ist KEIN medizinisches Gerät
    - Keine Diagnose oder Behandlung von Krankheiten
    - Wellness/Meditation nur
    - Bei gesundheitlichen Problemen → Arzt konsultieren
@@ -1163,7 +1163,7 @@ und Wellness-Anwendungen. Folgende Punkte sind wichtig:
 ```
 ⚠️ WICHTIGER MEDIZINISCHER HINWEIS:
 
-Echoelmusic's Biofeedback-, HRV- und "Wellness"-Funktionen sind:
+Eoel's Biofeedback-, HRV- und "Wellness"-Funktionen sind:
 - NICHT für medizinische Diagnose
 - NICHT für medizinische Behandlung
 - NICHT von FDA, EMA, oder anderen Gesundheitsbehörden zugelassen
@@ -1172,7 +1172,7 @@ Echoelmusic's Biofeedback-, HRV- und "Wellness"-Funktionen sind:
 Bei gesundheitlichen Problemen:
 → Konsultieren Sie einen qualifizierten Arzt
 → Verwenden Sie medizinisch zugelassene Geräte
-→ Echoelmusic ersetzt KEINE medizinische Beratung
+→ Eoel ersetzt KEINE medizinische Beratung
 
 Nanorobotics Research:
 → Rein konzeptionell / Forschungszwecke
@@ -1206,7 +1206,7 @@ Generell:
 
 ## 🎯 ZUSAMMENFASSUNG
 
-**Echoelmusic wird zur ultimativen Universal Platform:**
+**Eoel wird zur ultimativen Universal Platform:**
 
 ✅ **Mobile First:**
 - iPad/Android als Controller
@@ -1255,7 +1255,7 @@ Generell:
 **Cost:** €6-150/Monat (vs. €700-2000 traditional)
 
 **Die Zukunft der Audio/Video-Produktion ist mobil, vernetzt, und intelligent.
-Echoelmusic macht es möglich. 🚀**
+Eoel macht es möglich. 🚀**
 
 ---
 

@@ -5,7 +5,7 @@
 #include <map>
 #include <functional>
 
-namespace Echoelmusic {
+namespace Eoel {
 
 /**
  * OSCManager - Open Sound Control network protocol
@@ -209,4 +209,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OSCManager)
 };
 
-} // namespace Echoelmusic
+} // namespace Eoel

@@ -1,4 +1,4 @@
-# 🚀 BLAB Quick Development Reference
+# 🚀 Eoel Quick Development Reference
 
 **Für schnellen Zugriff während der Entwicklung**
 
@@ -35,8 +35,8 @@ swift build                 # Build ohne Run
 |------|-------|
 | `CLAUDE_CODE_ULTIMATE_PROMPT.md` | **Haupt-Prompt** für Claude Code Development |
 | `.github/CLAUDE_TODO.md` | Aktuelle TODO-Liste & Sprint-Planung |
-| `BLAB_IMPLEMENTATION_ROADMAP.md` | Komplette Roadmap Phase 0-10 |
-| `BLAB_Allwave_V∞_ClaudeEdition.txt` | Vision & System-Architektur |
+| `Eoel_IMPLEMENTATION_ROADMAP.md` | Komplette Roadmap Phase 0-10 |
+| `Eoel_Allwave_V∞_ClaudeEdition.txt` | Vision & System-Architektur |
 | `QUICK_DEV_REFERENCE.md` | Diese Datei (Quick-Ref) |
 | `blab-dev.sh` | Development Helper Script |
 
@@ -47,10 +47,10 @@ swift build                 # Build ohne Run
 ### 1️⃣ Bio-Mapping Presets
 **Files zu erstellen:**
 ```
-Sources/Blab/Biofeedback/BioMappingPresets.swift
-Sources/Blab/Biofeedback/BioParameterMapping.swift
-Sources/Blab/UI/PresetSelectionView.swift
-Tests/BlabTests/BioMappingPresetsTests.swift
+Sources/Eoel/Biofeedback/BioMappingPresets.swift
+Sources/Eoel/Biofeedback/BioParameterMapping.swift
+Sources/Eoel/UI/PresetSelectionView.swift
+Tests/EoelTests/BioMappingPresetsTests.swift
 ```
 
 **Start:**
@@ -63,23 +63,23 @@ Tests/BlabTests/BioMappingPresetsTests.swift
 ### 2️⃣ Visual Modes Extensions
 **Files zu erstellen:**
 ```
-Sources/Blab/Visual/Modes/SacredGeometryMode.swift
-Sources/Blab/Visual/Modes/BrainwaveVisualizerMode.swift
-Sources/Blab/Visual/Modes/HeartCoherenceMandalaMode.swift
-Sources/Blab/Visual/Shaders/BioReactiveCymatics.metal
+Sources/Eoel/Visual/Modes/SacredGeometryMode.swift
+Sources/Eoel/Visual/Modes/BrainwaveVisualizerMode.swift
+Sources/Eoel/Visual/Modes/HeartCoherenceMandalaMode.swift
+Sources/Eoel/Visual/Shaders/BioReactiveCymatics.metal
 ```
 
 ---
 
 ## 🏗️ Code Templates
 
-### Neues BlabNode erstellen
+### Neues EoelNode erstellen
 
 ```swift
-// Sources/Blab/Audio/Nodes/MyNode.swift
+// Sources/Eoel/Audio/Nodes/MyNode.swift
 import AVFoundation
 
-class MyNode: BlabNode {
+class MyNode: EoelNode {
     let id = UUID()
     let name = "My Audio Node"
 
@@ -113,7 +113,7 @@ class MyNode: BlabNode {
 ### Neuer Visualization Mode
 
 ```swift
-// Sources/Blab/Visual/Modes/MyMode.swift
+// Sources/Eoel/Visual/Modes/MyMode.swift
 import SwiftUI
 
 class MyMode: VisualizationMode {
@@ -149,9 +149,9 @@ class MyMode: VisualizationMode {
 ### Unit Test Template
 
 ```swift
-// Tests/BlabTests/MyFeatureTests.swift
+// Tests/EoelTests/MyFeatureTests.swift
 import XCTest
-@testable import Blab
+@testable import Eoel
 
 final class MyFeatureTests: XCTestCase {
 
@@ -186,12 +186,12 @@ final class MyFeatureTests: XCTestCase {
 
 ```swift
 // In deinem Code verwenden:
-BlabColors.primaryBackground  // #0A1628 Deep Ocean Blue
-BlabColors.accentGolden       // #FFB700 Golden
-BlabColors.accentGreen        // #00D9A3 Biofeedback Green
-BlabColors.accentCyan         // #00E5FF Spatial Audio Cyan
-BlabColors.warning            // #FF9800
-BlabColors.error              // #FF5252
+EoelColors.primaryBackground  // #0A1628 Deep Ocean Blue
+EoelColors.accentGolden       // #FFB700 Golden
+EoelColors.accentGreen        // #00D9A3 Biofeedback Green
+EoelColors.accentCyan         // #00E5FF Spatial Audio Cyan
+EoelColors.warning            // #FF9800
+EoelColors.error              // #FF5252
 ```
 
 ---
@@ -338,10 +338,10 @@ Implementiere das Bio-Mapping Presets System gemäß
 CLAUDE_CODE_ULTIMATE_PROMPT.md, Sektion "Bio-Mapping Presets".
 
 Files:
-- Sources/Blab/Biofeedback/BioMappingPresets.swift
-- Sources/Blab/Biofeedback/BioParameterMapping.swift
-- Sources/Blab/UI/PresetSelectionView.swift
-- Tests/BlabTests/BioMappingPresetsTests.swift
+- Sources/Eoel/Biofeedback/BioMappingPresets.swift
+- Sources/Eoel/Biofeedback/BioParameterMapping.swift
+- Sources/Eoel/UI/PresetSelectionView.swift
+- Tests/EoelTests/BioMappingPresetsTests.swift
 
 Requirements:
 - 10 Presets (Creative, Meditation, Focus, etc.)
@@ -407,7 +407,7 @@ Bitte debuggen und fixen.
 
 ## 🌊 Entwicklungs-Philosophie (Quick Reminder)
 
-**BLAB-Prinzipien:**
+**Eoel-Prinzipien:**
 1. **Resonanz vor Funktion** — Code soll fließen
 2. **Bio-Adaptive Intelligenz** — System passt sich an User an
 3. **Ästhetik = Performance** — Schön UND schnell
@@ -453,5 +453,5 @@ Bitte debuggen und fixen.
 
 **Happy Coding!** ✨
 
-*Generated with Claude Code for BLAB Development*
+*Generated with Claude Code for Eoel Development*
 *Version: V∞.3 | 2025-10-21*

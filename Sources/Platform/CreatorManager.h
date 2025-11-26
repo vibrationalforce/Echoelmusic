@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 
-namespace Echoelmusic {
+namespace Eoel {
 
 /**
  * CreatorManager - Content Creator Management System
@@ -334,4 +334,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CreatorManager)
 };
 
-} // namespace Echoelmusic
+} // namespace Eoel

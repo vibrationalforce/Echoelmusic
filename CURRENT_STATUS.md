@@ -1,4 +1,4 @@
-# Echoelmusic - Current Status 🚀
+# Eoel - Current Status 🚀
 
 **Last Updated:** November 12, 2025
 **Branch:** `claude/echoelmusic-feature-review-011CV2CqwKKLAkffcptfZLVy`
@@ -135,7 +135,7 @@ Sources/Remote/EchoelCloudManager.h (800+ lines)
 
 ### 📱 iOS Foundation (Ready!)
 ```
-Sources/iOS/EchoelmusicApp.h/.cpp
+Sources/iOS/EoelApp.h/.cpp
   ✅ iOS app lifecycle
   ✅ Audio session setup (< 10ms latency)
   ✅ Interruption handling
@@ -384,8 +384,8 @@ Accents: Press Start 2P (sparingly)
 ### What You Can Do NOW (without Mac)
 ```bash
 # Clone & Build Desktop Version
-git clone https://github.com/vibrationalforce/Echoelmusic.git
-cd Echoelmusic
+git clone https://github.com/vibrationalforce/Eoel.git
+cd Eoel
 
 # Create build directory
 mkdir build && cd build
@@ -397,7 +397,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 
 # Run
-./Echoelmusic
+./Eoel
 ```
 
 ### What Needs Mac (Later)

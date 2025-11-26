@@ -1,6 +1,6 @@
 #include "CreatorManager.h"
 
-namespace Echoelmusic {
+namespace Eoel {
 
 CreatorManager::CreatorManager()
 {
@@ -638,4 +638,4 @@ void CreatorManager::loadFromDatabase()
     DBG("Loading creator database...");
 }
 
-} // namespace Echoelmusic
+} // namespace Eoel

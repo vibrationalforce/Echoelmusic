@@ -1,6 +1,6 @@
 #include "MIDIHardwareManager.h"
 
-namespace Echoelmusic {
+namespace Eoel {
 
 MIDIHardwareManager::MIDIHardwareManager()
 {
@@ -309,7 +309,7 @@ void MIDIHardwareManager::saveTemplate(const juce::String& deviceIdentifier, con
 {
     // Save current mappings as template
     juce::File templatesDir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                                  .getChildFile("Echoelmusic")
+                                  .getChildFile("Eoel")
                                   .getChildFile("MIDI Templates");
 
     templatesDir.createDirectory();
@@ -558,4 +558,4 @@ void MIDIHardwareManager::setupBidirectionalComm(const juce::String& identifier)
     }
 }
 
-} // namespace Echoelmusic
+} // namespace Eoel

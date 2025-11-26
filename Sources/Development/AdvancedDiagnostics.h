@@ -508,7 +508,7 @@ public:
     juce::String generateComprehensiveReport() const {
         juce::String report;
         report << "╔════════════════════════════════════════════════════════╗\n";
-        report << "║        ECHOELMUSIC DIAGNOSTICS REPORT                  ║\n";
+        report << "║        EOEL DIAGNOSTICS REPORT                  ║\n";
         report << "╚════════════════════════════════════════════════════════╝\n\n";
 
         report << profiler.generateReport() << "\n\n";

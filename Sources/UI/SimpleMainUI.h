@@ -12,7 +12,7 @@
 
 //==============================================================================
 /**
- * @brief Main UI for Echoelmusic with Audio Visualizers
+ * @brief Main UI for Eoel with Audio Visualizers
  *
  * Features:
  * - Real-time waveform display
@@ -27,7 +27,7 @@ public:
     {
         // Title
         addAndMakeVisible(titleLabel);
-        titleLabel.setText("Echoelmusic DAW", juce::dontSendNotification);
+        titleLabel.setText("Eoel DAW", juce::dontSendNotification);
         titleLabel.setJustificationType(juce::Justification::centred);
         titleLabel.setFont(juce::Font(32.0f, juce::Font::bold));
         titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xff00d4ff));

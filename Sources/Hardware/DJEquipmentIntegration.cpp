@@ -1,6 +1,6 @@
 #include "DJEquipmentIntegration.h"
 
-namespace Echoelmusic {
+namespace Eoel {
 
 DJEquipmentIntegration::DJEquipmentIntegration()
 {
@@ -613,4 +613,4 @@ void DJEquipmentIntegration::processProDJLinkMessage(const juce::MemoryBlock& da
     // Real implementation would decode Pioneer protocol
 }
 
-} // namespace Echoelmusic
+} // namespace Eoel

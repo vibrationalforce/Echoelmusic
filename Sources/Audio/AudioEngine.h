@@ -6,7 +6,7 @@
 #include <vector>
 
 /**
- * AudioEngine - Core audio engine for Echoelmusic
+ * AudioEngine - Core audio engine for Eoel
  *
  * Cross-platform audio engine (Desktop + iOS).
  * Handles multi-track recording, playback, routing, and mixing.

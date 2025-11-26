@@ -92,7 +92,7 @@
 
 ### vs. Industry Leaders
 
-| Feature Category | Echoelmusic | Waves | iZotope | FabFilter | UAD |
+| Feature Category | Eoel | Waves | iZotope | FabFilter | UAD |
 |------------------|-------------|-------|---------|-----------|-----|
 | **Warning-Free Build** | ✅ <50 | ✅ | ✅ | ✅ | ✅ |
 | **DAW Auto-Optimization** | ✅ 13+ | ❌ | ❌ | ❌ | ⚠️ Some |
@@ -110,7 +110,7 @@
 
 ### Verdict: **INDUSTRY LEADING** 🏆
 
-Echoelmusic now has:
+Eoel now has:
 - ✅ **5 unique features** not found in ANY commercial plugin
 - ✅ **Enterprise-grade development tools** matching Fortune 500 companies
 - ✅ **Complete transparency** (open source)

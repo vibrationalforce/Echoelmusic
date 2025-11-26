@@ -3,7 +3,7 @@
 **Date:** 2025-10-24
 **Status:** ✅ Ready for Xcode Development
 **Last Commit:** `65a260f` - API integration complete
-**GitHub:** `vibrationalforce/blab-ios-app`
+**GitHub:** `vibrationalforce/eoel-ios-app`
 
 ---
 
@@ -32,7 +32,7 @@
 
 #### **1.1 Projekt öffnen:**
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/eoel-ios-app
 open Package.swift
 ```
 
@@ -51,7 +51,7 @@ Cmd+B  # Build testen
 - Check: Command Line Tools gesetzt
 
 #### **1.3 Scheme überprüfen:**
-- Xcode → Product → Scheme → "Blab"
+- Xcode → Product → Scheme → "Eoel"
 - Target: iOS Simulator (iPhone 15 Pro empfohlen)
 
 ---
@@ -62,7 +62,7 @@ Cmd+B  # Build testen
 
 **Spatial Audio:**
 ```swift
-// File: Sources/Blab/Spatial/SpatialAudioEngine.swift (482 Zeilen)
+// File: Sources/Eoel/Spatial/SpatialAudioEngine.swift (482 Zeilen)
 let spatial = SpatialAudioEngine()
 try spatial.start()
 
@@ -80,7 +80,7 @@ spatial.headTrackingEnabled = true
 
 **Visual Mapping:**
 ```swift
-// File: Sources/Blab/Visual/MIDIToVisualMapper.swift (415 Zeilen)
+// File: Sources/Eoel/Visual/MIDIToVisualMapper.swift (415 Zeilen)
 let visualMapper = MIDIToVisualMapper()
 
 // 5 Visualisierungen:
@@ -102,7 +102,7 @@ visualMapper.updateBioParameters(bioParams)
 
 **Push 3 LED Control:**
 ```swift
-// File: Sources/Blab/LED/Push3LEDController.swift (458 Zeilen)
+// File: Sources/Eoel/LED/Push3LEDController.swift (458 Zeilen)
 let push3 = Push3LEDController()
 try push3.connect()  // Auto-detects Push 3 via CoreMIDI
 
@@ -125,7 +125,7 @@ push3.updateBioReactive(
 
 **DMX Lighting:**
 ```swift
-// File: Sources/Blab/LED/MIDIToLightMapper.swift (520 Zeilen)
+// File: Sources/Eoel/LED/MIDIToLightMapper.swift (520 Zeilen)
 let lighting = MIDIToLightMapper()
 try lighting.connect()  // Art-Net UDP to 192.168.1.100:6454
 
@@ -145,7 +145,7 @@ lighting.setScene(.strobeSync)   // Heart rate strobe
 
 #### **2.2 UnifiedControlHub Integration:**
 ```swift
-// File: Sources/Blab/Unified/UnifiedControlHub.swift (650+ Zeilen)
+// File: Sources/Eoel/Unified/UnifiedControlHub.swift (650+ Zeilen)
 let hub = UnifiedControlHub()
 
 // Enable all Phase 3 features:
@@ -177,7 +177,7 @@ hub.start()
 
 #### **3.1 Simulator Build Test:**
 ```
-1. Select Scheme: Blab
+1. Select Scheme: Eoel
 2. Select Device: iPhone 15 Pro (Simulator)
 3. Cmd+R (Run)
 ```
@@ -194,11 +194,11 @@ hub.start()
 
 #### **3.2 Integration Test (in Code):**
 
-Erstelle Test-File: `Tests/BlabTests/Phase3IntegrationTests.swift`
+Erstelle Test-File: `Tests/EoelTests/Phase3IntegrationTests.swift`
 
 ```swift
 import XCTest
-@testable import Blab
+@testable import Eoel
 
 @MainActor
 final class Phase3IntegrationTests: XCTestCase {
@@ -322,7 +322,7 @@ Cmd+U (Run Tests)
 
 ### **4.1 Neue UI Controls erstellen:**
 
-Erstelle: `Sources/Blab/Views/Components/Phase3ControlsView.swift`
+Erstelle: `Sources/Eoel/Views/Components/Phase3ControlsView.swift`
 
 ```swift
 import SwiftUI
@@ -568,7 +568,7 @@ Diese TODOs sind **nicht kritisch** - Fallback-Werte (6.0 breathing, 0.5 audio) 
 ### **Für schnellen Start:**
 ```bash
 # 1. Projekt öffnen
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/eoel-ios-app
 open Package.swift
 
 # 2. In Xcode:
@@ -593,8 +593,8 @@ git push origin main
 ### **Documentation:**
 - `PHASE_3_OPTIMIZED.md` - Optimization details
 - `DAW_INTEGRATION_GUIDE.md` - DAW integration
-- `BLAB_IMPLEMENTATION_ROADMAP.md` - Overall roadmap
-- `BLAB_90_DAY_ROADMAP.md` - 90-day plan
+- `Eoel_IMPLEMENTATION_ROADMAP.md` - Overall roadmap
+- `Eoel_90_DAY_ROADMAP.md` - 90-day plan
 
 ### **Code Locations:**
 ```
@@ -606,14 +606,14 @@ Phase 3 Components:
 └── Unified/UnifiedControlHub.swift       (650+ Zeilen)
 
 Tests:
-└── Tests/BlabTests/Phase3IntegrationTests.swift (new)
+└── Tests/EoelTests/Phase3IntegrationTests.swift (new)
 
 UI:
 └── Views/Components/Phase3ControlsView.swift (new)
 ```
 
 ### **GitHub:**
-- **Repo:** `vibrationalforce/blab-ios-app`
+- **Repo:** `vibrationalforce/eoel-ios-app`
 - **Branch:** `main`
 - **Latest:** `65a260f` (API integration complete)
 

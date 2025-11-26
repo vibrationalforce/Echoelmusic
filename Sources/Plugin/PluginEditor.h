@@ -7,7 +7,7 @@
 // #include "../Visualization/SpectrumAnalyzer.h"  // TODO: Enable in Phase 2
 
 /**
- * Echoelmusic Plugin Editor
+ * Eoel Plugin Editor
  *
  * Beautiful, professional plugin GUI with:
  * - Cross-platform responsive UI (Desktop/Tablet/Phone)
@@ -18,12 +18,12 @@
  * - Modern dark/light themes
  * - Touch-optimized controls
  */
-class EchoelmusicAudioProcessorEditor  : public juce::AudioProcessorEditor,
+class EoelAudioProcessorEditor  : public juce::AudioProcessorEditor,
                                           private juce::Timer
 {
 public:
-    EchoelmusicAudioProcessorEditor (EchoelmusicAudioProcessor&);
-    ~EchoelmusicAudioProcessorEditor() override;
+    EoelAudioProcessorEditor (EoelAudioProcessor&);
+    ~EoelAudioProcessorEditor() override;
 
     //==============================================================================
     void paint (juce::Graphics&) override;
@@ -40,8 +40,8 @@ private:
 
     //==============================================================================
     // Reference to processor
-    EchoelmusicAudioProcessor& audioProcessor;
+    EoelAudioProcessor& audioProcessor;
 
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EchoelmusicAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EoelAudioProcessorEditor)
 };

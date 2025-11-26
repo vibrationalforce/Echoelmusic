@@ -4,7 +4,7 @@
 
 //==============================================================================
 /**
- * @brief Modern Look & Feel for Echoelmusic
+ * @brief Modern Look & Feel for Eoel
  *
  * Inspired by: Serum, FabFilter Pro-Q 3, iZotope Ozone, Ableton Live
  *

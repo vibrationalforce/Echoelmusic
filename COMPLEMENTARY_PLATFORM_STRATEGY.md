@@ -1,4 +1,4 @@
-# 🎭 Echoelmusic: Complementary Platform Strategy
+# 🎭 Eoel: Complementary Platform Strategy
 
 > **"Desktop und Mobile Anwendung könnte sich auch einfach ergänzen"**
 > Two platforms. One vision. Infinite possibilities.
@@ -234,7 +234,7 @@ class MIDINetworkManager {
 
 **Session File Format (XML):**
 ```xml
-<EchoelmusicSession version="2.0" platform="ios">
+<EoelSession version="2.0" platform="ios">
   <ProjectInfo title="Bio-Reactive Jam" tempo="128.0" />
   <Tracks>
     <Track id="1" name="Looper 1" file="loop1.wav" />
@@ -243,7 +243,7 @@ class MIDINetworkManager {
     <HRVRecording file="hrv_data.json" />
     <GestureRecording file="gestures.json" />
   </BioData>
-</EchoelmusicSession>
+</EoelSession>
 ```
 
 **Implementation:**
@@ -256,7 +256,7 @@ class SessionCloudSync {
         let container = CKContainer.default()
         let database = container.privateCloudDatabase
 
-        let record = CKRecord(recordType: "EchoelmusicSession")
+        let record = CKRecord(recordType: "EoelSession")
         record["title"] = session.title
         record["tempo"] = session.tempo
         record["xmlData"] = session.toXML().data(using: .utf8)
@@ -454,13 +454,13 @@ sudo ufw allow 5004:5009/udp
 ### Mobile App Permissions (Info.plist)
 ```xml
 <key>NSHealthShareUsageDescription</key>
-<string>Echoelmusic uses your heart rate and HRV data for bio-reactive music control</string>
+<string>Eoel uses your heart rate and HRV data for bio-reactive music control</string>
 
 <key>NSCameraUsageDescription</key>
-<string>Echoelmusic uses face tracking for expressive audio control</string>
+<string>Eoel uses face tracking for expressive audio control</string>
 
 <key>NSLocalNetworkUsageDescription</key>
-<string>Echoelmusic communicates with your Desktop DAW via OSC and MIDI</string>
+<string>Eoel communicates with your Desktop DAW via OSC and MIDI</string>
 
 <key>NSBonjourServices</key>
 <array>
@@ -501,7 +501,7 @@ sudo ufw allow 5004:5009/udp
 | **Feature Velocity** | ✅ Independent release cycles | ⚠️ Coupled releases |
 | **Testing** | ⚠️ Test both platforms | ✅ Test once |
 
-**Verdict:** Complementary wins for **innovation velocity** and **native platform excellence**. Consolidated wins for **maintenance efficiency**. Since Echoelmusic is **innovation-focused**, complementary is the right choice.
+**Verdict:** Complementary wins for **innovation velocity** and **native platform excellence**. Consolidated wins for **maintenance efficiency**. Since Eoel is **innovation-focused**, complementary is the right choice.
 
 ---
 

@@ -6,7 +6,7 @@
 #include "../BioData/BioReactiveModulator.h"  // ✅ NEW: Bio-feedback system (2025-11-13)
 
 /**
- * Echoelmusic Audio Processor
+ * Eoel Audio Processor
  *
  * Main plugin processor with bio-reactive audio processing.
  * Integrates heart rate variability (HRV) and coherence data
@@ -20,13 +20,13 @@
  * - Professional DSP effects
  * - Low-latency (<5ms target)
  */
-class EchoelmusicAudioProcessor : public juce::AudioProcessor,
+class EoelAudioProcessor : public juce::AudioProcessor,
                                    public juce::AudioProcessorValueTreeState::Listener
 {
 public:
     //==============================================================================
-    EchoelmusicAudioProcessor();
-    ~EchoelmusicAudioProcessor() override;
+    EoelAudioProcessor();
+    ~EoelAudioProcessor() override;
 
     //==============================================================================
     // Audio Processing
@@ -163,5 +163,5 @@ private:
     void updateSpectrumData(const juce::AudioBuffer<float>& buffer);
 
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EchoelmusicAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EoelAudioProcessor)
 };

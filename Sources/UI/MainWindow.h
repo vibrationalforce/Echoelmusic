@@ -5,7 +5,7 @@
 #include "../Audio/Track.h"
 
 /**
- * Echoelmusic Main Window
+ * Eoel Main Window
  * 
  * Features:
  * - Vaporwave aesthetic (cyan/magenta/purple)

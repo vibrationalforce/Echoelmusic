@@ -8,7 +8,7 @@
 
 ## 1. EXECUTIVE SUMMARY
 
-Das Echoelmusic Repository ist ein ambitioniertes **Dual-Codebase Projekt** mit ca. **111.000 Zeilen Code**, das eine biofeedback-gesteuerte kreative Plattform implementiert. Das Projekt besteht aus:
+Das Eoel Repository ist ein ambitioniertes **Dual-Codebase Projekt** mit ca. **111.000 Zeilen Code**, das eine biofeedback-gesteuerte kreative Plattform implementiert. Das Projekt besteht aus:
 
 1. **C++ JUCE Plugin** (~69.000 Zeilen) - Desktop Audio Plugin mit umfangreicher DSP-Suite
 2. **Swift iOS App** (~42.000 Zeilen) - Multi-Platform App (iOS, macOS, watchOS, tvOS, visionOS)
@@ -25,7 +25,7 @@ Das Echoelmusic Repository ist ein ambitioniertes **Dual-Codebase Projekt** mit 
 **Kritische Probleme:**
 - **iOS 19.0 Referenzen** - Code kompiliert nicht (iOS 19 existiert nicht!)
 - **RTMP/WebRTC fehlt komplett** - Streaming & Collaboration non-funktional
-- **44+ Dateien mit veraltetem "BLAB" Branding** (437+ Vorkommen) - Siehe [BRANDING_INVENTORY_COMPLETE.md](BRANDING_INVENTORY_COMPLETE.md)
+- **44+ Dateien mit veraltetem "Eoel" Branding** (437+ Vorkommen) - Siehe [BRANDING_INVENTORY_COMPLETE.md](BRANDING_INVENTORY_COMPLETE.md)
 - **Remote Processing Modul ist Stub** - 15+ TODOs, keine echte Implementierung
 - **Type-Safety Violations** in Audio-kritischem Code
 
@@ -51,7 +51,7 @@ Das Echoelmusic Repository ist ein ambitioniertes **Dual-Codebase Projekt** mit 
 | TODO/FIXME Comments       | 94 total         |                  |
 | - C++ Codebase            | 47               |                  |
 | - Swift Codebase          | 47               |                  |
-| BLAB-Referenzen (legacy)  | 44+ files, 437+  | BRANDING ISSUE   |
+| Eoel-Referenzen (legacy)  | 44+ files, 437+  | BRANDING ISSUE   |
 | Branding-Varianten gesamt | 6 Varianten      | Siehe Inventar   |
 +---------------------------+------------------+------------------+
 | CI/CD Workflows           | 4 pipelines      | Functional       |
@@ -78,7 +78,7 @@ Das Echoelmusic Repository ist ein ambitioniertes **Dual-Codebase Projekt** mit 
 | Collaboration | 5% | WebRTC nicht impl. |
 | AI Features | 20% | CoreML Models fehlen |
 | Remote Processing | 10% | Stubs only |
-| Branding | 40% | BLAB vs Echoel |
+| Branding | 40% | Eoel vs Echoel |
 | Documentation | 70% | Gut, aber inkonsistent |
 | Testing | 40% | Nur Swift, kein C++ |
 | CI/CD | 85% | Funktional |
@@ -144,7 +144,7 @@ Zeile 622: TODO: Start WebRTC signaling server
 reinterpret_cast<float*>(state.freqData.data())  // GEFÄHRLICH
 
 // Sources/Plugin/PluginProcessor.cpp
-const_cast<EchoelmusicAudioProcessor*>(this)->spectrumDataForUI  // RACE CONDITION RISIKO
+const_cast<EoelAudioProcessor*>(this)->spectrumDataForUI  // RACE CONDITION RISIKO
 ```
 
 ### 3.2 Swift iOS App Codebase
@@ -164,7 +164,7 @@ const_cast<EchoelmusicAudioProcessor*>(this)->spectrumDataForUI  // RACE CONDITI
 #### KRITISCHE Compilation-Fehler:
 
 ```swift
-// Sources/Echoelmusic/Spatial/SpatialAudioEngine.swift
+// Sources/Eoel/Spatial/SpatialAudioEngine.swift
 @available(iOS 19.0, *)  // iOS 19 EXISTIERT NICHT!
 private func setupEnvironmentNode() { ... }
 
@@ -195,10 +195,10 @@ private func setupEnvironmentNode() { ... }
 
 | Variante | Vorkommen | Status |
 |----------|-----------|--------|
-| Echoelmusic | 788 | AKTUELL (Hauptname) |
+| Eoel | 788 | AKTUELL (Hauptname) |
 | Echoel | 438 | AKTUELL (Kurzname) |
-| BLAB/Blab/blab | 437 | VERALTET |
-| blab-ios-app | 51 | VERALTET (alter Repo-Name) |
+| Eoel/Eoel/blab | 437 | VERALTET |
+| eoel-ios-app | 51 | VERALTET (alter Repo-Name) |
 | vibrationalforce | 42 | BEHALTEN (GitHub User) |
 | EOEL | 11 (Commits) | HISTORISCH |
 
@@ -211,23 +211,23 @@ private func setupEnvironmentNode() { ... }
 | Swift Source | 5 | com.blab Bundle IDs, blabVisualRenderer Variable |
 | Shell Scripts | 5 | build.sh, debug.sh, deploy.sh, test.sh |
 | Dokumentation | 25+ | README.md, DAW_INTEGRATION_GUIDE.md |
-| Prompts | 1 | BLAB_MASTER_PROMPT_v4.3.md (100+ Referenzen) |
+| Prompts | 1 | Eoel_MASTER_PROMPT_v4.3.md (100+ Referenzen) |
 
 **project.yml Zeile 27-28:**
 ```yaml
 sources:
-  - path: Sources/Blab  # EXISTIERT NICHT! Sollte Sources/Echoelmusic sein
+  - path: Sources/Eoel  # EXISTIERT NICHT! Sollte Sources/Eoel sein
 ```
 
 **Swift Code mit veraltetem Branding:**
 ```swift
-// Sources/Echoelmusic/Audio/Nodes/NodeGraph.swift:32
+// Sources/Eoel/Audio/Nodes/NodeGraph.swift:32
 label: "com.blab.nodegraph.audio"  // → com.echoelmusic.nodegraph.audio
 
-// Sources/Echoelmusic/Unified/UnifiedControlHub.swift:61
+// Sources/Eoel/Unified/UnifiedControlHub.swift:61
 label: "com.blab.control"          // → com.echoelmusic.control
 
-// Sources/Echoelmusic/Video/BackgroundSourceManager.swift:42
+// Sources/Eoel/Video/BackgroundSourceManager.swift:42
 private var blabVisualRenderer     // → echoelmusicVisualRenderer
 ```
 
@@ -259,7 +259,7 @@ private var blabVisualRenderer     // → echoelmusicVisualRenderer
 
 **Vorhandene Tests (Swift):**
 ```
-Tests/EchoelmusicTests/
+Tests/EoelTests/
 ├── BinauralBeatTests.swift
 ├── ComprehensiveTestSuite.swift  (513 Zeilen - umfangreich!)
 ├── FaceToAudioMapperTests.swift
@@ -326,7 +326,7 @@ Tests/EchoelmusicTests/
 | # | Item | Aufwand | Abhängigkeiten | Risiko |
 |---|------|---------|----------------|--------|
 | 1 | **iOS 19.0 -> iOS 18.0 ändern** | S (2h) | Keine | Niedrig |
-| 2 | **project.yml: Sources/Blab -> Sources/Echoelmusic** | S (30m) | Keine | Niedrig |
+| 2 | **project.yml: Sources/Eoel -> Sources/Eoel** | S (30m) | Keine | Niedrig |
 | 3 | **const_cast in PluginProcessor fixen** | S (2h) | Keine | Mittel |
 | 4 | **reinterpret_cast in SpectralSculptor sichern** | M (4h) | Keine | Mittel |
 
@@ -341,7 +341,7 @@ find Sources -name "*.swift" -exec sed -i 's/iOS 19, \*/iOS 17, \*/g' {} \;
 
 | # | Item | Aufwand | Abhängigkeiten | Risiko |
 |---|------|---------|----------------|--------|
-| 5 | Branding Cleanup (BLAB -> Echoel) | M (8h) | #2 | Niedrig |
+| 5 | Branding Cleanup (Eoel -> Echoel) | M (8h) | #2 | Niedrig |
 | 6 | C++ Unit Test Framework aufsetzen | M (8h) | Keine | Niedrig |
 | 7 | MainWindow.cpp UI-TODOs implementieren | L (16h) | Keine | Mittel |
 | 8 | Metal Shader Dateien erstellen | L (20h) | Keine | Mittel |
@@ -385,14 +385,14 @@ grep -rl "#available(iOS 19" Sources/ | xargs sed -i 's/iOS 19,/iOS 17,/g'
 ```yaml
 # Zeile 27-28 ändern
 sources:
-  - path: Sources/Echoelmusic  # War: Sources/Blab
+  - path: Sources/Eoel  # War: Sources/Eoel
 ```
 
 ### QW3: README.md Branding Fix
 ```bash
-# Ersetze "BLAB" mit "Echoelmusic" im README
-sed -i 's/# BLAB iOS App/# Echoelmusic/g' README.md
-sed -i 's/BLAB/Echoelmusic/g' README.md
+# Ersetze "Eoel" mit "Eoel" im README
+sed -i 's/# Eoel iOS App/# Eoel/g' README.md
+sed -i 's/Eoel/Eoel/g' README.md
 ```
 
 ### QW4: Swift Source Bundle IDs
@@ -403,9 +403,9 @@ find Sources -name "*.swift" -exec sed -i 's/com\.blab\./com.echoelmusic./g' {} 
 
 ### QW5: Info.plist aktualisieren
 ```bash
-sed -i 's/<string>Blab<\/string>/<string>Echoelmusic<\/string>/g' Info.plist
-sed -i 's/Blab needs/Echoelmusic needs/g' Info.plist
-sed -i 's/BLAB needs/Echoelmusic needs/g' Resources/Info.plist
+sed -i 's/<string>Eoel<\/string>/<string>Eoel<\/string>/g' Info.plist
+sed -i 's/Eoel needs/Eoel needs/g' Info.plist
+sed -i 's/Eoel needs/Eoel needs/g' Resources/Info.plist
 ```
 
 **Vollständige Migrations-Anleitung:** Siehe [BRANDING_INVENTORY_COMPLETE.md](BRANDING_INVENTORY_COMPLETE.md)
@@ -531,7 +531,7 @@ sed -i 's/BLAB needs/Echoelmusic needs/g' Resources/Info.plist
 Sources/Remote/RemoteProcessingEngine.cpp:26     # Ableton Link Stub
 Sources/Plugin/PluginProcessor.cpp:163           # const_cast Issue
 Sources/DSP/SpectralSculptor.cpp:1               # reinterpret_cast
-Sources/Echoelmusic/Spatial/SpatialAudioEngine.swift:47  # iOS 19.0
+Sources/Eoel/Spatial/SpatialAudioEngine.swift:47  # iOS 19.0
 project.yml:27                                    # Falscher Pfad
 ```
 
@@ -539,8 +539,8 @@ project.yml:27                                    # Falscher Pfad
 ```
 Sources/DSP/Compressor.cpp                       # Vorbildliche DSP
 Sources/Audio/AudioEngine.cpp                    # Solide Architektur
-Sources/Echoelmusic/Audio/AudioEngine.swift      # Gute Swift Patterns
-Tests/EchoelmusicTests/ComprehensiveTestSuite.swift  # Umfangreiche Tests
+Sources/Eoel/Audio/AudioEngine.swift      # Gute Swift Patterns
+Tests/EoelTests/ComprehensiveTestSuite.swift  # Umfangreiche Tests
 ```
 
 ### B. Statistik-Zusammenfassung

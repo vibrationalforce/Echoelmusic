@@ -1,8 +1,8 @@
-# Cross-Platform Framework Analysis für Echoelmusic
+# Cross-Platform Framework Analysis für Eoel
 
 ## Executive Summary
 
-**EMPFEHLUNG: JUCE + CLAP Plugin-Support ist ein GAME CHANGER für Echoelmusic!**
+**EMPFEHLUNG: JUCE + CLAP Plugin-Support ist ein GAME CHANGER für Eoel!**
 
 Hier ist warum:
 
@@ -19,7 +19,7 @@ Hier ist warum:
 - FabFilter
 - Waves
 
-### Vorteile für Echoelmusic
+### Vorteile für Eoel
 
 #### ✅ **Audio-Expertise**
 - **Ultra-Low Latency**: <5ms möglich (kritisch für Bio-Feedback!)
@@ -35,7 +35,7 @@ Hier ist warum:
 - CLAP (neu, modern)
 - Standalone App
 ```
-→ **Echoelmusic könnte als DAW-Plugin laufen!**
+→ **Eoel könnte als DAW-Plugin laufen!**
 
 #### ✅ **Cross-Platform**
 - Windows (10/11)
@@ -59,10 +59,10 @@ Hier ist warum:
 - ❌ Lernkurve für JUCE-spezifische Patterns
 - ❌ Keine native SwiftUI-Integration
 
-### **Use Case für Echoelmusic:**
+### **Use Case für Eoel:**
 ```cpp
-// Echoelmusic als VST3/AU Plugin in DAWs!
-class EchoelmusicPlugin : public AudioProcessor
+// Eoel als VST3/AU Plugin in DAWs!
+class EoelPlugin : public AudioProcessor
 {
     void processBlock (AudioBuffer<float>& buffer, MidiBuffer& midi)
     {
@@ -79,7 +79,7 @@ class EchoelmusicPlugin : public AudioProcessor
 };
 ```
 
-**Rating für Echoelmusic: 10/10** ⭐⭐⭐⭐⭐
+**Rating für Eoel: 10/10** ⭐⭐⭐⭐⭐
 
 ---
 
@@ -125,10 +125,10 @@ clap_event_param_value_t hrv_event = {
 };
 ```
 
-### **Use Case für Echoelmusic:**
-→ **Echoelmusic als CLAP-Plugin = Bio-Reactive Effects in jedem DAW!**
+### **Use Case für Eoel:**
+→ **Eoel als CLAP-Plugin = Bio-Reactive Effects in jedem DAW!**
 
-**Rating für Echoelmusic: 10/10** ⭐⭐⭐⭐⭐
+**Rating für Eoel: 10/10** ⭐⭐⭐⭐⭐
 
 ---
 
@@ -149,10 +149,10 @@ Google's UI-Framework für Cross-Platform Apps
 - ❌ **Keine VST/AU Plugin-Support**
 - ❌ **Keine direkte HealthKit-Integration** (Platform Channels)
 
-### **Use Case für Echoelmusic:**
+### **Use Case für Eoel:**
 ```dart
 // Flutter NUR für UI Layer
-class EchoelmusicApp extends StatelessWidget {
+class EoelApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -166,7 +166,7 @@ class EchoelmusicApp extends StatelessWidget {
 }
 ```
 
-**Rating für Echoelmusic: 6/10** (Gut für UI, schlecht für Audio)
+**Rating für Eoel: 6/10** (Gut für UI, schlecht für Audio)
 
 ---
 
@@ -220,7 +220,7 @@ class EchoelmusicApp extends StatelessWidget {
 **Architektur:**
 ```
 ┌─────────────────────────────────────┐
-│  Echoelmusic Core (Swift)           │
+│  Eoel Core (Swift)           │
 │  - Bio-Data Collection (HealthKit)  │
 │  - ML Models (CoreML)               │
 │  - Data Processing                  │
@@ -245,9 +245,9 @@ class EchoelmusicApp extends StatelessWidget {
 
 **Implementation:**
 ```
-Echoelmusic/
+Eoel/
 ├── Sources/
-│   ├── Echoelmusic/        # Swift Core (Bio-Data, ML)
+│   ├── Eoel/        # Swift Core (Bio-Data, ML)
 │   ├── JUCEAudioEngine/    # C++ JUCE Audio
 │   └── CLAPPlugin/         # CLAP Plugin Wrapper
 ├── Plugins/
@@ -274,7 +274,7 @@ Echoelmusic/
 ```swift
 // Swift UI + Bio-Data
 @MainActor
-class EchoelmusicApp: ObservableObject {
+class EoelApp: ObservableObject {
     private let juceEngine: JUCEAudioEngine
 
     func updateWithBioData(hrv: Float, coherence: Float) {
@@ -332,7 +332,7 @@ class JUCEAudioEngine : public AudioProcessor {
 - DSP Libraries
 
 **Phase 3: Add CLAP Plugin Support** 🔥🔥 GAME CHANGER
-- Echoelmusic als Plugin in DAWs!
+- Eoel als Plugin in DAWs!
 - Use Bio-Data in Ableton, Bitwig, Reaper, etc.
 - Professional Workflows
 

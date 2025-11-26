@@ -12,7 +12,7 @@
  * ███████╗╚███████╗██║  ██║╚██████╔╝███████║   ██║   ██║ ╚████║╚██████╗
  * ╚══════╝ ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═══╝ ╚═════╝
  *
- * EchoelSync - Die intelligente Sync-Technologie von Echoelmusic
+ * EchoelSync - Die intelligente Sync-Technologie von Eoel
  *
  * DIE UNIVERSELLE SYNCHRONISATIONS-LÖSUNG FÜR ALLE GERÄTE & STANDARDS
  *
@@ -42,9 +42,9 @@
  * ✨ Plug & Play (zero configuration)
  *
  * ANWENDUNGSFÄLLE:
- * 1. Multi-DAW Sync: Echoelmusic ↔ Ableton ↔ Logic ↔ FL Studio
+ * 1. Multi-DAW Sync: Eoel ↔ Ableton ↔ Logic ↔ FL Studio
  * 2. Live Performance: Drummer → MIDI → EchoelSync → alle Geräte
- * 3. Video Sync: Premiere Pro ↔ Echoelmusic (LTC/MTC)
+ * 3. Video Sync: Premiere Pro ↔ Eoel (LTC/MTC)
  * 4. Club Setup: CDJ ↔ EchoelSync ↔ Lighting ↔ Visuals (Resolume)
  * 5. Remote Jam: Berlin ↔ New York (< 50ms Internet sync)
  * 6. Studio: Hardware Synths ↔ DAW ↔ Drum Machines
@@ -100,7 +100,7 @@ public:
     {
         juce::String sourceId;              // Unique identifier
         juce::String deviceName;            // "Studio MacBook Pro"
-        juce::String appName;               // "Echoelmusic", "Ableton Live", etc.
+        juce::String appName;               // "Eoel", "Ableton Live", etc.
 
         // Protocol
         SyncProtocol protocol = SyncProtocol::EchoelSyncNative;
@@ -415,7 +415,7 @@ private:
     ConflictResolution conflictStrategy = ConflictResolution::MajorityVote;
 
     std::atomic<bool> serverMode { false };
-    juce::String serverName = "Echoelmusic Studio";
+    juce::String serverName = "Eoel Studio";
     int maxPeers = 16;
 
     // Protocol implementations

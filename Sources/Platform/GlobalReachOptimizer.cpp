@@ -1,6 +1,6 @@
 #include "GlobalReachOptimizer.h"
 
-namespace Echoelmusic {
+namespace Eoel {
 
 GlobalReachOptimizer::GlobalReachOptimizer()
 {
@@ -620,4 +620,4 @@ void GlobalReachOptimizer::loadEducationalDomains()
     DBG("Loaded " << m_educationalDomains.size() << " educational domains");
 }
 
-} // namespace Echoelmusic
+} // namespace Eoel

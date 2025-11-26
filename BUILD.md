@@ -1,6 +1,6 @@
-# BUILD & SETUP GUIDE - Echoelmusic 🎵
+# BUILD & SETUP GUIDE - Eoel 🎵
 
-Complete guide to building Echoelmusic from source on all platforms.
+Complete guide to building Eoel from source on all platforms.
 
 ---
 
@@ -60,15 +60,15 @@ Complete guide to building Echoelmusic from source on all platforms.
 ## 🔧 STEP 1: CLONE REPOSITORY
 
 ```bash
-git clone https://github.com/vibrationalforce/Echoelmusic.git
-cd Echoelmusic
+git clone https://github.com/vibrationalforce/Eoel.git
+cd Eoel
 ```
 
 ---
 
 ## 🎼 STEP 2: INSTALL JUCE FRAMEWORK
 
-Echoelmusic requires JUCE 7.0.9 or later.
+Eoel requires JUCE 7.0.9 or later.
 
 ### Option A: Git Submodule (Recommended)
 
@@ -120,9 +120,9 @@ cmake --install . --config Release
 ```
 
 **Output Locations:**
-- VST3: `~/Library/Audio/Plug-Ins/VST3/Echoelmusic.vst3`
-- AU: `~/Library/Audio/Plug-Ins/Components/Echoelmusic.component`
-- Standalone: `build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic.app`
+- VST3: `~/Library/Audio/Plug-Ins/VST3/Eoel.vst3`
+- AU: `~/Library/Audio/Plug-Ins/Components/Eoel.component`
+- Standalone: `build/Eoel_artefacts/Release/Standalone/Eoel.app`
 
 #### Build for iOS (AUv3)
 
@@ -171,8 +171,8 @@ cmake --install . --config Release
 ```
 
 **Output Locations:**
-- VST3: `C:\Program Files\Common Files\VST3\Echoelmusic.vst3`
-- Standalone: `build\Echoelmusic_artefacts\Release\Standalone\Echoelmusic.exe`
+- VST3: `C:\Program Files\Common Files\VST3\Eoel.vst3`
+- Standalone: `build\Eoel_artefacts\Release\Standalone\Eoel.exe`
 
 #### With ASIO Support
 
@@ -205,8 +205,8 @@ sudo cmake --install . --config Release
 ```
 
 **Output Locations:**
-- VST3: `~/.vst3/Echoelmusic.vst3`
-- Standalone: `build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic`
+- VST3: `~/.vst3/Eoel.vst3`
+- Standalone: `build/Eoel_artefacts/Release/Standalone/Eoel`
 
 ---
 
@@ -236,40 +236,40 @@ Import `build-android` into Android Studio for app packaging.
 
 #### macOS
 ```bash
-./build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic.app/Contents/MacOS/Echoelmusic
+./build/Eoel_artefacts/Release/Standalone/Eoel.app/Contents/MacOS/Eoel
 ```
 
 #### Windows
 ```bash
-.\build\Echoelmusic_artefacts\Release\Standalone\Echoelmusic.exe
+.\build\Eoel_artefacts\Release\Standalone\Eoel.exe
 ```
 
 #### Linux
 ```bash
-./build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic
+./build/Eoel_artefacts/Release/Standalone/Eoel
 ```
 
 ### Test Plugin in DAW
 
 1. Open your DAW (Ableton, Logic, FL Studio, Reaper, etc.)
 2. Rescan plugins
-3. Look for "Echoelmusic" in effects/instruments
+3. Look for "Eoel" in effects/instruments
 4. Load plugin and test audio routing
 
 ### Verify Installation
 
 ```bash
 # macOS - Check VST3
-ls -la ~/Library/Audio/Plug-Ins/VST3/Echoelmusic.vst3
+ls -la ~/Library/Audio/Plug-Ins/VST3/Eoel.vst3
 
 # macOS - Check AU
-ls -la ~/Library/Audio/Plug-Ins/Components/Echoelmusic.component
+ls -la ~/Library/Audio/Plug-Ins/Components/Eoel.component
 
 # Windows - Check VST3
-dir "C:\Program Files\Common Files\VST3\Echoelmusic.vst3"
+dir "C:\Program Files\Common Files\VST3\Eoel.vst3"
 
 # Linux - Check VST3
-ls -la ~/.vst3/Echoelmusic.vst3
+ls -la ~/.vst3/Eoel.vst3
 ```
 
 ---
@@ -342,8 +342,8 @@ git submodule update --init --recursive
 **Solution:**
 ```bash
 # Remove quarantine flag
-xattr -cr ~/Library/Audio/Plug-Ins/VST3/Echoelmusic.vst3
-xattr -cr ~/Library/Audio/Plug-Ins/Components/Echoelmusic.component
+xattr -cr ~/Library/Audio/Plug-Ins/VST3/Eoel.vst3
+xattr -cr ~/Library/Audio/Plug-Ins/Components/Eoel.component
 
 # Or allow in System Preferences > Security & Privacy
 ```
@@ -369,7 +369,7 @@ sudo ldconfig
 
 **Solution:**
 - Ensure ASIO drivers are installed (ASIO4ALL or hardware drivers)
-- Run Echoelmusic as Administrator (first time only)
+- Run Eoel as Administrator (first time only)
 - Check Windows audio settings
 
 ### Plugin Not Showing in DAW
@@ -378,8 +378,8 @@ sudo ldconfig
 1. **Rescan plugins** in DAW preferences
 2. **Check plugin paths** in DAW settings
 3. **Verify installation**:
-   - macOS: `pluginval --validate ~/Library/Audio/Plug-Ins/VST3/Echoelmusic.vst3`
-   - Windows: `pluginval.exe --validate "C:\Program Files\Common Files\VST3\Echoelmusic.vst3"`
+   - macOS: `pluginval --validate ~/Library/Audio/Plug-Ins/VST3/Eoel.vst3`
+   - Windows: `pluginval.exe --validate "C:\Program Files\Common Files\VST3\Eoel.vst3"`
 
 ---
 
@@ -389,13 +389,13 @@ sudo ldconfig
 
 ```bash
 # Create DMG
-hdiutil create -volname "Echoelmusic" \
-  -srcfolder build/Echoelmusic_artefacts/Release \
-  -ov -format UDZO Echoelmusic-1.0.0-macOS.dmg
+hdiutil create -volname "Eoel" \
+  -srcfolder build/Eoel_artefacts/Release \
+  -ov -format UDZO Eoel-1.0.0-macOS.dmg
 
 # Sign DMG (requires Developer ID)
 codesign --force --sign "Developer ID Application: Your Name" \
-  Echoelmusic-1.0.0-macOS.dmg
+  Eoel-1.0.0-macOS.dmg
 ```
 
 ### Windows - Create Installer
@@ -405,14 +405,14 @@ Use **Inno Setup** or **NSIS**:
 ```iss
 ; Inno Setup Script
 [Setup]
-AppName=Echoelmusic
+AppName=Eoel
 AppVersion=1.0.0
-DefaultDirName={commonpf}\VST3\Echoelmusic
-OutputBaseFilename=Echoelmusic-1.0.0-Windows
+DefaultDirName={commonpf}\VST3\Eoel
+OutputBaseFilename=Eoel-1.0.0-Windows
 
 [Files]
-Source: "build\Echoelmusic_artefacts\Release\VST3\Echoelmusic.vst3"; DestDir: "{app}"
-Source: "build\Echoelmusic_artefacts\Release\Standalone\Echoelmusic.exe"; DestDir: "{app}"
+Source: "build\Eoel_artefacts\Release\VST3\Eoel.vst3"; DestDir: "{app}"
+Source: "build\Eoel_artefacts\Release\Standalone\Eoel.exe"; DestDir: "{app}"
 ```
 
 ### Linux - Create DEB Package
@@ -424,9 +424,9 @@ mkdir -p echoelmusic_1.0.0/usr/bin
 mkdir -p echoelmusic_1.0.0/DEBIAN
 
 # Copy files
-cp -r build/Echoelmusic_artefacts/Release/VST3/Echoelmusic.vst3 \
+cp -r build/Eoel_artefacts/Release/VST3/Eoel.vst3 \
   echoelmusic_1.0.0/usr/lib/vst3/
-cp build/Echoelmusic_artefacts/Release/Standalone/Echoelmusic \
+cp build/Eoel_artefacts/Release/Standalone/Eoel \
   echoelmusic_1.0.0/usr/bin/
 
 # Create control file
@@ -434,7 +434,7 @@ cat > echoelmusic_1.0.0/DEBIAN/control <<EOF
 Package: echoelmusic
 Version: 1.0.0
 Architecture: amd64
-Maintainer: Echoelmusic <support@echoelmusic.com>
+Maintainer: Eoel <support@echoelmusic.com>
 Description: Bio-Reactive Audio Processing Platform
 EOF
 
@@ -453,10 +453,10 @@ dpkg-deb --build echoelmusic_1.0.0
 codesign --force --sign "Developer ID Application: Your Name" \
   --options runtime \
   --entitlements Resources/Entitlements.plist \
-  ~/Library/Audio/Plug-Ins/VST3/Echoelmusic.vst3
+  ~/Library/Audio/Plug-Ins/VST3/Eoel.vst3
 
 # Notarize
-xcrun notarytool submit Echoelmusic-1.0.0-macOS.dmg \
+xcrun notarytool submit Eoel-1.0.0-macOS.dmg \
   --apple-id your@email.com \
   --team-id TEAMID \
   --password APP_SPECIFIC_PASSWORD
@@ -467,7 +467,7 @@ xcrun notarytool submit Echoelmusic-1.0.0-macOS.dmg \
 ```bash
 # Sign with signtool
 signtool sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 \
-  /a Echoelmusic.vst3
+  /a Eoel.vst3
 ```
 
 ---
@@ -507,7 +507,7 @@ signtool sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 \
 - [GLOBAL_REACH_STRATEGY.md](GLOBAL_REACH_STRATEGY.md) - Accessibility & i18n
 
 **Community:**
-- GitHub Issues: https://github.com/vibrationalforce/Echoelmusic/issues
+- GitHub Issues: https://github.com/vibrationalforce/Eoel/issues
 - Discord: https://discord.gg/echoelmusic
 - Forum: https://forum.echoelmusic.com
 

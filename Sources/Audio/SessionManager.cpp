@@ -114,7 +114,7 @@ void SessionManager::setSessionState(std::unique_ptr<juce::XmlElement> state)
 //==============================================================================
 std::unique_ptr<juce::XmlElement> SessionManager::createSessionXML()
 {
-    auto xml = std::make_unique<juce::XmlElement>("EchoelmusicSession");
+    auto xml = std::make_unique<juce::XmlElement>("EoelSession");
     xml->setAttribute("version", "1.0");
 
     // Project Info
@@ -133,7 +133,7 @@ std::unique_ptr<juce::XmlElement> SessionManager::createSessionXML()
 
 bool SessionManager::restoreFromXML(const juce::XmlElement& xml)
 {
-    if (xml.getTagName() != "EchoelmusicSession")
+    if (xml.getTagName() != "EoelSession")
         return false;
 
     // Check version

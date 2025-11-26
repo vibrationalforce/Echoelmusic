@@ -7,7 +7,7 @@
 
 //==============================================================================
 /**
- * @brief Echoelmusic Main UI - Mobile-Friendly Tab Layout
+ * @brief Eoel Main UI - Mobile-Friendly Tab Layout
  *
  * Unified interface for:
  * 1. Bio-Feedback Dashboard (ZENTRAL für die Niche!)
@@ -56,7 +56,7 @@ public:
 
         // Header
         addAndMakeVisible(headerLabel);
-        headerLabel.setText("Echoelmusic DAW", juce::dontSendNotification);
+        headerLabel.setText("Eoel DAW", juce::dontSendNotification);
         headerLabel.setFont(juce::Font(28.0f, juce::Font::bold));
         headerLabel.setJustificationType(juce::Justification::centred);
         headerLabel.setColour(juce::Label::textColourId, juce::Colours::white);

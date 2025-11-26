@@ -122,7 +122,7 @@ Exclusion Criteria:
 - Frontiers in Neuroscience
 - PubMed systematic reviews
 
-**Applications in Echoelmusic:**
+**Applications in Eoel:**
 - Genre selection based on desired emotional state
 - Tempo/rhythm matching to arousal levels
 - Harmonic content for stress reduction
@@ -144,7 +144,7 @@ Exclusion Criteria:
 - PMC systematic reviews
 - Trauma treatment protocols
 
-**Applications in Echoelmusic:**
+**Applications in Eoel:**
 - Detect physiological state via HRV (if user enables)
 - Suggest music that supports ventral vagal activation (safety/connection)
 - Avoid overstimulation when in dorsal vagal state
@@ -172,7 +172,7 @@ Exclusion Criteria:
 - PMC circadian rhythm meta-analyses
 - Sleep medicine journals
 
-**Applications in Echoelmusic:**
+**Applications in Eoel:**
 - Adjust visual interface based on time of day
 - Morning: Brighter, cooler tones (blue-enriched)
 - Evening: Warmer, dimmer tones (blue-depleted)
@@ -270,7 +270,7 @@ System Response:
 - Platform monopolies
 - Algorithmic bias
 
-**Echoelmusic Position:**
+**Eoel Position:**
 - GPL/FOSS (freedom, not control)
 - No dark patterns (respect user agency)
 - No addiction mechanics (healthy relationship with technology)
@@ -598,7 +598,7 @@ Night Mode (10pm-6am):
 
 ---
 
-## 🌍 Integration with Echoelmusic
+## 🌍 Integration with Eoel
 
 ### Context-Aware Wisdom
 
@@ -781,7 +781,7 @@ Entry:
 - [ ] Accessibility (screen readers, keyboard nav)
 
 ### Phase 5: Integration (Q3 2026)
-- [ ] Echoelmusic plugin integration
+- [ ] Eoel plugin integration
 - [ ] Context awareness (detect production state)
 - [ ] Proactive suggestions (optional)
 - [ ] HRV biofeedback hookup
@@ -1170,7 +1170,7 @@ print(f"Recommended follow-up: {response.suggested_actions}")
 ### HRV Integration
 
 ```cpp
-// C++ API Example (for Echoelmusic integration)
+// C++ API Example (for Eoel integration)
 #include "echoel/wisdom/CoachingEngine.h"
 #include "echoel/health/HRVMonitor.h"
 

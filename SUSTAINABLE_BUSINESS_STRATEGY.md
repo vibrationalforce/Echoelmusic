@@ -1,4 +1,4 @@
-# Sustainable Business Strategy - Echoelmusic 💰🌍
+# Sustainable Business Strategy - Eoel 💰🌍
 
 **Für Solo-Artist/Developer der von unterwegs arbeitet**
 
@@ -14,7 +14,7 @@
 - Kein Unique Value (Browser sind Commodity)
 
 **Stattdessen:**
-- ✅ Echoelmusic läuft IN jedem Browser (PWA)
+- ✅ Eoel läuft IN jedem Browser (PWA)
 - ✅ Nutze Electron für Desktop (Chromium embedded)
 - ✅ Fokus auf Music-Tech, nicht Browser-Engine
 
@@ -54,7 +54,7 @@
 
 #### 🥇 Tier 1: Core Revenue (Must-Have)
 
-**1. Echoelmusic DAW - Core Product**
+**1. Eoel DAW - Core Product**
 ```yaml
 What: Professional DAW (Desktop + Mobile)
 Revenue: One-time €99 OR subscription €9.99/month
@@ -155,7 +155,7 @@ Maintenance: Community-driven (not just you)
 
 ### Year 1 (MVP Phase)
 ```yaml
-Focus: Echoelmusic DAW + EchoelCloud
+Focus: Eoel DAW + EchoelCloud
 
 Users:
   - 100 DAW licenses @ €99 = €9,900 one-time
@@ -220,7 +220,7 @@ Time Investment:
 ## 🎯 The Smart Strategy
 
 ### Phase 1: Core Product (Months 1-6)
-**Focus:** Make Echoelmusic REALLY GOOD
+**Focus:** Make Eoel REALLY GOOD
 
 - [ ] Fix all critical bugs (audio thread safety ✅)
 - [ ] Polish UI/UX (beautiful, intuitive)
@@ -410,7 +410,7 @@ Year 5 (Mature):
 
 ### What to Launch First (6 Months)
 
-**Echoelmusic DAW - Core Features Only:**
+**Eoel DAW - Core Features Only:**
 
 ```yaml
 ✅ Must Have:
@@ -472,7 +472,7 @@ Year 5 (Mature):
 
 ## 🎯 Your Unique Angle (Competitive Advantage)
 
-### What Makes Echoelmusic Different:
+### What Makes Eoel Different:
 
 1. **Mobile-First with Desktop Power**
    - iPad as controller + cloud processing
@@ -677,7 +677,7 @@ Das ist 100% möglich! Aber:
 
 ## 🎯 Next Steps
 
-1. **Clean up codebase** (remove "Blab", rename to Echoel)
+1. **Clean up codebase** (remove "Eoel", rename to Echoel)
 2. **Prioritize MVP features** (core DAW only)
 3. **Build for 6 months** (focused, no distractions)
 4. **Launch beta** (100 users, €10k validation)

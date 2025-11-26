@@ -254,8 +254,8 @@ Desktop:
 if(APPLE AND IOS)
     set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2")  # iPhone + iPad
 
-    juce_add_gui_app(Echoelmusic_iOS
-        PRODUCT_NAME "Echoelmusic"
+    juce_add_gui_app(Eoel_iOS
+        PRODUCT_NAME "Eoel"
         BUNDLE_ID "com.echoelmusic.app"
         IPHONE_SCREEN_ORIENTATIONS UIInterfaceOrientationPortrait
         IPAD_SCREEN_ORIENTATIONS UIInterfaceOrientationPortrait

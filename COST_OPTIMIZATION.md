@@ -1,4 +1,4 @@
-# KOSTEN-OPTIMIERUNG - Echoelmusic 💰
+# KOSTEN-OPTIMIERUNG - Eoel 💰
 
 Strategie für **minimale laufende Kosten** und **maximale Effizienz**.
 

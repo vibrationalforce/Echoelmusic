@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 
-namespace Echoelmusic {
+namespace Eoel {
 
 /**
  * GlobalReachOptimizer - Maximum Global Accessibility & Reach
@@ -413,4 +413,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GlobalReachOptimizer)
 };
 
-} // namespace Echoelmusic
+} // namespace Eoel

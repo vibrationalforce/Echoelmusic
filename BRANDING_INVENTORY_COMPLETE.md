@@ -11,10 +11,10 @@ Das Repository enthält **6 verschiedene Branding-Varianten** die historisch gew
 
 | Variante | Vorkommen | Status |
 |----------|-----------|--------|
-| **Echoelmusic** | 788 | AKTUELL (Hauptname) |
+| **Eoel** | 788 | AKTUELL (Hauptname) |
 | **Echoel** | 438 | AKTUELL (Kurzname) |
-| **BLAB/Blab/blab** | 437 | VERALTET - Muss migriert werden |
-| **blab-ios-app** | 51 | VERALTET (alter Repo-Name) |
+| **Eoel/Eoel/blab** | 437 | VERALTET - Muss migriert werden |
+| **eoel-ios-app** | 51 | VERALTET (alter Repo-Name) |
 | **vibrationalforce** | 42 | BEHALTEN (GitHub Username) |
 | **EOEL** | 11 (nur Commits) | HISTORISCH (Zwischenname) |
 
@@ -25,25 +25,25 @@ Das Repository enthält **6 verschiedene Branding-Varianten** die historisch gew
 ### Detaillierte Zählung
 
 ```
-Echoelmusic:        696 Vorkommen (Hauptname)
+Eoel:        696 Vorkommen (Hauptname)
 Echoel:             417 Vorkommen (Kurzname, Produktfamilie)
 echoelmusic:         92 Vorkommen (lowercase)
 echoel:              21 Vorkommen (lowercase)
 --------------------------------------------------
 ECHOEL-FAMILIE:   1,226 VORKOMMEN (KORREKT)
 
-Blab:               205 Vorkommen
-BLAB:               155 Vorkommen
+Eoel:               205 Vorkommen
+Eoel:               155 Vorkommen
 blab:                77 Vorkommen
 --------------------------------------------------
-BLAB-FAMILIE:       437 VORKOMMEN (VERALTET)
+Eoel-FAMILIE:       437 VORKOMMEN (VERALTET)
 
-blab-ios-app:        51 Vorkommen (alter Repo-Name)
-BlabApp:             14 Vorkommen (Swift Entry Point)
+eoel-ios-app:        51 Vorkommen (alter Repo-Name)
+EoelApp:             14 Vorkommen (Swift Entry Point)
 com.blab:             9 Vorkommen (Bundle ID)
-BlabNode:             8 Vorkommen (Protocol Name)
-BlabColors:           7 Vorkommen (Color Constants)
-BlabStudio:           6 Vorkommen (Ordnerpfad)
+EoelNode:             8 Vorkommen (Protocol Name)
+EoelColors:           7 Vorkommen (Color Constants)
+EoelStudio:           6 Vorkommen (Ordnerpfad)
 --------------------------------------------------
 LEGACY-VARIANTEN:    95 VORKOMMEN (VERALTET)
 
@@ -64,63 +64,63 @@ HISTORISCH:          11 VORKOMMEN (ignorieren)
 
 | Datei | Problem | Fix |
 |-------|---------|-----|
-| `project.yml` | `name: Blab`, `Sources/Blab`, `com.blab` | → Echoelmusic |
-| `Info.plist` | `CFBundleName: Blab`, Permissions mit "Blab" | → Echoelmusic |
-| `Resources/Info.plist` | `BLAB needs microphone...` | → Echoelmusic |
-| `Makefile` | Referenzen auf Blab | → Echoelmusic |
+| `project.yml` | `name: Eoel`, `Sources/Eoel`, `com.blab` | → Eoel |
+| `Info.plist` | `CFBundleName: Eoel`, Permissions mit "Eoel" | → Eoel |
+| `Resources/Info.plist` | `Eoel needs microphone...` | → Eoel |
+| `Makefile` | Referenzen auf Eoel | → Eoel |
 
 ### 2.2 GitHub Workflows (HOHE PRIORITÄT)
 
 | Datei | Zeilen | Problem |
 |-------|--------|---------|
-| `.github/workflows/build-ios.yml` | 38-411 | Komplettes Xcode-Projekt als "Blab" |
-| `.github/workflows/ios-build.yml` | 48, 58, 85-106 | `-scheme Blab`, Artifact names |
-| `.github/workflows/ios-build-simple.yml` | 54, 67 | `-scheme Blab` |
+| `.github/workflows/build-ios.yml` | 38-411 | Komplettes Xcode-Projekt als "Eoel" |
+| `.github/workflows/ios-build.yml` | 48, 58, 85-106 | `-scheme Eoel`, Artifact names |
+| `.github/workflows/ios-build-simple.yml` | 54, 67 | `-scheme Eoel` |
 
 ### 2.3 Swift Source Code (HOHE PRIORITÄT)
 
 | Datei | Zeile | Problem |
 |-------|-------|---------|
-| `Sources/Echoelmusic/Audio/Nodes/NodeGraph.swift` | 32 | `com.blab.nodegraph.audio` |
-| `Sources/Echoelmusic/Unified/UnifiedControlHub.swift` | 61, 152 | `com.blab.control`, `com.blab.healthkit` |
-| `Sources/Echoelmusic/Biofeedback/HealthKitManager.swift` | 88 | `com.blab.healthkit` |
-| `Sources/Echoelmusic/LED/MIDIToLightMapper.swift` | 473 | `com.blab.udp` |
-| `Sources/Echoelmusic/Video/BackgroundSourceManager.swift` | 42-730 | `blabVisualRenderer`, `BlabError`, etc. |
+| `Sources/Eoel/Audio/Nodes/NodeGraph.swift` | 32 | `com.blab.nodegraph.audio` |
+| `Sources/Eoel/Unified/UnifiedControlHub.swift` | 61, 152 | `com.blab.control`, `com.blab.healthkit` |
+| `Sources/Eoel/Biofeedback/HealthKitManager.swift` | 88 | `com.blab.healthkit` |
+| `Sources/Eoel/LED/MIDIToLightMapper.swift` | 473 | `com.blab.udp` |
+| `Sources/Eoel/Video/BackgroundSourceManager.swift` | 42-730 | `blabVisualRenderer`, `EoelError`, etc. |
 
 ### 2.4 Shell Scripts (MITTLERE PRIORITÄT)
 
 | Datei | Problem |
 |-------|---------|
-| `build.sh` | Referenzen auf Blab |
-| `debug.sh` | Referenzen auf Blab |
-| `deploy.sh` | Referenzen auf Blab |
-| `test.sh` | Referenzen auf Blab |
-| `test-ios15.sh` | Referenzen auf Blab |
+| `build.sh` | Referenzen auf Eoel |
+| `debug.sh` | Referenzen auf Eoel |
+| `deploy.sh` | Referenzen auf Eoel |
+| `test.sh` | Referenzen auf Eoel |
+| `test-ios15.sh` | Referenzen auf Eoel |
 
 ### 2.5 Dokumentation (MITTLERE PRIORITÄT)
 
 | Datei | Referenzen |
 |-------|------------|
-| `README.md` | "# BLAB iOS App", "BLAB is an embodied..." |
-| `QUICK_DEV_REFERENCE.md` | 30+ Referenzen (Sources/Blab/, BlabNode, BlabColors) |
-| `DAW_INTEGRATION_GUIDE.md` | 40+ Referenzen ("BLAB MIDI 2.0 Output") |
+| `README.md` | "# Eoel iOS App", "Eoel is an embodied..." |
+| `QUICK_DEV_REFERENCE.md` | 30+ Referenzen (Sources/Eoel/, EoelNode, EoelColors) |
+| `DAW_INTEGRATION_GUIDE.md` | 40+ Referenzen ("Eoel MIDI 2.0 Output") |
 | `INTEGRATION_COMPLETE.md` | 20+ Referenzen |
 | `GITHUB_ACTIONS_GUIDE.md` | 20+ Referenzen |
 | `TESTFLIGHT_SETUP.md` | 15+ Referenzen |
 | `XCODE_HANDOFF.md` | 10+ Referenzen |
 | `COMPATIBILITY.md` | Referenzen |
 | `DEPLOYMENT.md` | Referenzen |
-| `QUICKSTART.md` | BlabStudio Pfade |
-| `BUGFIXES.md` | "BUG FIXES REPORT - Blab iOS App" |
+| `QUICKSTART.md` | EoelStudio Pfade |
+| `BUGFIXES.md` | "BUG FIXES REPORT - Eoel iOS App" |
 | `DEBUGGING_COMPLETE.md` | Referenzen |
-| `Prompts/BLAB_MASTER_PROMPT_v4.3.md` | 100+ Referenzen (gesamtes Dokument) |
-| `BLAB_Allwave_V∞_ClaudeEdition.txt` | 50+ Referenzen |
+| `Prompts/Eoel_MASTER_PROMPT_v4.3.md` | 100+ Referenzen (gesamtes Dokument) |
+| `Eoel_Allwave_V∞_ClaudeEdition.txt` | 50+ Referenzen |
 
 ---
 
 ## 3. VOLLSTÄNDIGE DATEILISTE
 
-### 3.1 Dateien mit "BLAB/Blab/blab" (44 Dateien)
+### 3.1 Dateien mit "Eoel/Eoel/blab" (44 Dateien)
 
 ```
 .github/CLAUDE_TODO.md
@@ -128,7 +128,7 @@ HISTORISCH:          11 VORKOMMEN (ignorieren)
 .github/workflows/build-ios.yml
 .github/workflows/ios-build-simple.yml
 .github/workflows/ios-build.yml
-BLAB_Allwave_V∞_ClaudeEdition.txt
+Eoel_Allwave_V∞_ClaudeEdition.txt
 BUGFIXES.md
 CHATGPT_CODEX_INSTRUCTIONS.md
 CLAUDE_CODE_ULTIMATE_PROMPT.md
@@ -145,18 +145,18 @@ INTEGRATION_SUCCESS.md
 iOS15_COMPATIBILITY_AUDIT.md
 Makefile
 PHASE_3_OPTIMIZED.md
-Prompts/BLAB_MASTER_PROMPT_v4.3.md
+Prompts/Eoel_MASTER_PROMPT_v4.3.md
 QUICK_DEV_REFERENCE.md
 QUICKSTART.md
 README.md
 Resources/Info.plist
 SESSION_SUMMARY_2025_11_12.md
 SETUP_COMPLETE.md
-Sources/Echoelmusic/Audio/Nodes/NodeGraph.swift
-Sources/Echoelmusic/Biofeedback/HealthKitManager.swift
-Sources/Echoelmusic/LED/MIDIToLightMapper.swift
-Sources/Echoelmusic/Unified/UnifiedControlHub.swift
-Sources/Echoelmusic/Video/BackgroundSourceManager.swift
+Sources/Eoel/Audio/Nodes/NodeGraph.swift
+Sources/Eoel/Biofeedback/HealthKitManager.swift
+Sources/Eoel/LED/MIDIToLightMapper.swift
+Sources/Eoel/Unified/UnifiedControlHub.swift
+Sources/Eoel/Video/BackgroundSourceManager.swift
 SUSTAINABLE_BUSINESS_STRATEGY.md
 TESTFLIGHT_SETUP.md
 XCODE_HANDOFF.md
@@ -168,7 +168,7 @@ test-ios15.sh
 test.sh
 ```
 
-### 3.2 Dateien mit "Echoel" (ohne "Echoelmusic") (23 Dateien)
+### 3.2 Dateien mit "Echoel" (ohne "Eoel") (23 Dateien)
 
 ```
 AUDIT_REPORT_2025_11_26.md
@@ -209,11 +209,11 @@ Sources/Video/VideoSyncEngine.h
 
 | Kontext | Name | Beispiel |
 |---------|------|----------|
-| **App Store** | Echoelmusic | "Echoelmusic - Bio-Reactive Music" |
+| **App Store** | Eoel | "Eoel - Bio-Reactive Music" |
 | **Bundle ID** | com.echoelmusic.app | `PRODUCT_BUNDLE_IDENTIFIER` |
-| **Swift Module** | Echoelmusic | `import Echoelmusic` |
+| **Swift Module** | Eoel | `import Eoel` |
 | **C++ Namespace** | echoelmusic:: | `namespace echoelmusic { }` |
-| **GitHub Repo** | Echoelmusic | `vibrationalforce/Echoelmusic` |
+| **GitHub Repo** | Eoel | `vibrationalforce/Eoel` |
 
 ### 4.2 Produkt-Familie
 
@@ -231,9 +231,9 @@ Sources/Video/VideoSyncEngine.h
 
 ```swift
 // Swift Naming
-class EchoelmusicAudioEngine { }
-struct EchoelmusicConfiguration { }
-enum EchoelmusicMode { }
+class EoelAudioEngine { }
+struct EoelConfiguration { }
+enum EoelMode { }
 let echoelmusicQueue = DispatchQueue(label: "com.echoelmusic.audio")
 
 // C++ Naming
@@ -246,7 +246,7 @@ namespace echoelmusic {
 
 ```
 Sources/
-├── Echoelmusic/          # Swift iOS App
+├── Eoel/          # Swift iOS App
 │   ├── Audio/
 │   ├── Biofeedback/
 │   └── ...
@@ -264,18 +264,18 @@ Sources/
 
 ```bash
 # 1. project.yml
-sed -i 's/name: Blab/name: Echoelmusic/g' project.yml
-sed -i 's/Sources\/Blab/Sources\/Echoelmusic/g' project.yml
+sed -i 's/name: Eoel/name: Eoel/g' project.yml
+sed -i 's/Sources\/Eoel/Sources\/Eoel/g' project.yml
 sed -i 's/com\.blab/com.echoelmusic/g' project.yml
 
 # 2. Info.plist
-sed -i 's/<string>Blab<\/string>/<string>Echoelmusic<\/string>/g' Info.plist
-sed -i 's/Blab needs/Echoelmusic needs/g' Info.plist
-sed -i 's/BLAB needs/Echoelmusic needs/g' Resources/Info.plist
-sed -i 's/BLAB reads/Echoelmusic reads/g' Resources/Info.plist
-sed -i 's/BLAB uses/Echoelmusic uses/g' Resources/Info.plist
-sed -i 's/BLAB may/Echoelmusic may/g' Resources/Info.plist
-sed -i 's/BLAB detects/Echoelmusic detects/g' Resources/Info.plist
+sed -i 's/<string>Eoel<\/string>/<string>Eoel<\/string>/g' Info.plist
+sed -i 's/Eoel needs/Eoel needs/g' Info.plist
+sed -i 's/Eoel needs/Eoel needs/g' Resources/Info.plist
+sed -i 's/Eoel reads/Eoel reads/g' Resources/Info.plist
+sed -i 's/Eoel uses/Eoel uses/g' Resources/Info.plist
+sed -i 's/Eoel may/Eoel may/g' Resources/Info.plist
+sed -i 's/Eoel detects/Eoel detects/g' Resources/Info.plist
 ```
 
 ### Phase 2: Swift Source Code (1h)
@@ -287,7 +287,7 @@ find Sources -name "*.swift" -exec sed -i 's/com\.blab\./com.echoelmusic./g' {} 
 # Variable Names
 find Sources -name "*.swift" -exec sed -i 's/blabVisualRenderer/echoelmusicVisualRenderer/g' {} \;
 find Sources -name "*.swift" -exec sed -i 's/blabVisual/echoelmusicVisual/g' {} \;
-find Sources -name "*.swift" -exec sed -i 's/BlabError/EchoelmusicError/g' {} \;
+find Sources -name "*.swift" -exec sed -i 's/EoelError/EoelError/g' {} \;
 ```
 
 ### Phase 3: CI/CD Workflows (2h)
@@ -303,20 +303,20 @@ Diese müssen manuell aktualisiert werden:
 
 ```bash
 # Hauptdokumentation
-sed -i 's/# BLAB iOS App/# Echoelmusic/g' README.md
-sed -i 's/BLAB is/Echoelmusic is/g' README.md
-sed -i 's/BLAB MIDI/Echoelmusic MIDI/g' DAW_INTEGRATION_GUIDE.md
+sed -i 's/# Eoel iOS App/# Eoel/g' README.md
+sed -i 's/Eoel is/Eoel is/g' README.md
+sed -i 's/Eoel MIDI/Eoel MIDI/g' DAW_INTEGRATION_GUIDE.md
 
 # Alle MD-Dateien
-find . -name "*.md" -exec sed -i 's/Sources\/Blab/Sources\/Echoelmusic/g' {} \;
-find . -name "*.md" -exec sed -i 's/BlabNode/EchoelmusicNode/g' {} \;
-find . -name "*.md" -exec sed -i 's/BlabColors/EchoelmusicColors/g' {} \;
+find . -name "*.md" -exec sed -i 's/Sources\/Eoel/Sources\/Eoel/g' {} \;
+find . -name "*.md" -exec sed -i 's/EoelNode/EoelNode/g' {} \;
+find . -name "*.md" -exec sed -i 's/EoelColors/EoelColors/g' {} \;
 ```
 
 ### Phase 5: Prompt-Dateien umbenennen
 
 ```bash
-mv Prompts/BLAB_MASTER_PROMPT_v4.3.md Prompts/ECHOELMUSIC_MASTER_PROMPT_v5.0.md
+mv Prompts/Eoel_MASTER_PROMPT_v4.3.md Prompts/ECHOELMUSIC_MASTER_PROMPT_v5.0.md
 # Dann Inhalt manuell aktualisieren
 ```
 
@@ -325,17 +325,17 @@ mv Prompts/BLAB_MASTER_PROMPT_v4.3.md Prompts/ECHOELMUSIC_MASTER_PROMPT_v5.0.md
 ## 6. VALIDIERUNG NACH MIGRATION
 
 ```bash
-# Check für verbleibende BLAB-Referenzen
-echo "=== Verbleibende BLAB Referenzen ==="
+# Check für verbleibende Eoel-Referenzen
+echo "=== Verbleibende Eoel Referenzen ==="
 grep -rli "blab" --include="*.swift" --include="*.yml" --include="*.plist" . | grep -v ".git"
 
 # Check für verbleibende com.blab
 echo "=== Verbleibende com.blab Referenzen ==="
 grep -rn "com\.blab" --include="*.swift" --include="*.yml" --include="*.plist" .
 
-# Check für Sources/Blab Pfade
-echo "=== Verbleibende Sources/Blab Pfade ==="
-grep -rn "Sources/Blab" --include="*.md" --include="*.yml" --include="*.swift" .
+# Check für Sources/Eoel Pfade
+echo "=== Verbleibende Sources/Eoel Pfade ==="
+grep -rn "Sources/Eoel" --include="*.md" --include="*.yml" --include="*.swift" .
 ```
 
 ---
@@ -355,7 +355,7 @@ grep -rn "Sources/Blab" --include="*.md" --include="*.yml" --include="*.swift" .
 
 Wenn die App bereits im App Store ist oder TestFlight-Builds existieren:
 - Behalte `com.blab.studio` als Bundle ID
-- Verwende "Echoelmusic" nur als Display Name
+- Verwende "Eoel" nur als Display Name
 - Plane Bundle ID Migration für v2.0
 
 Wenn noch keine Veröffentlichung:
@@ -382,19 +382,19 @@ Wenn noch keine Veröffentlichung:
 
 ```bash
 # Phase 1
-git commit -m "chore(branding): Update project.yml and Info.plist to Echoelmusic"
+git commit -m "chore(branding): Update project.yml and Info.plist to Eoel"
 
 # Phase 2
 git commit -m "refactor(swift): Migrate com.blab to com.echoelmusic in source"
 
 # Phase 3
-git commit -m "ci: Update GitHub workflows to Echoelmusic branding"
+git commit -m "ci: Update GitHub workflows to Eoel branding"
 
 # Phase 4
-git commit -m "docs: Migrate documentation from BLAB to Echoelmusic"
+git commit -m "docs: Migrate documentation from Eoel to Eoel"
 
 # Phase 5
-git commit -m "chore: Rename BLAB prompt files to Echoelmusic"
+git commit -m "chore: Rename Eoel prompt files to Eoel"
 ```
 
 ---
@@ -407,14 +407,14 @@ git commit -m "chore: Rename BLAB prompt files to Echoelmusic"
 Commits mit EOEL:
 - "EOEL 100% COMPLETE!"
 - "EOEL V1.0 FINAL IMPLEMENTATION PLAN"
-- "Complete EOEL Rebranding - JUMPER→EoelWork, Echoel/Echoelmusic→EOEL"
+- "Complete EOEL Rebranding - JUMPER→EoelWork, Echoel/Eoel→EOEL"
 - "EOEL v3.0 Complete Overview"
 - "EOEL v2.0 Unified Architecture"
 ```
 
-**Status:** EOEL wurde zu Echoelmusic umbenannt. Keine aktiven Dateien mit EOEL.
+**Status:** EOEL wurde zu Eoel umbenannt. Keine aktiven Dateien mit EOEL.
 
 ---
 
 **Erstellt von:** Claude Code (Opus 4)
-**Für:** Echoelmusic Repository Branding Cleanup
+**Für:** Eoel Repository Branding Cleanup

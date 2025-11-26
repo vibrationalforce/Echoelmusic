@@ -1,6 +1,6 @@
 # ECHOELMUSIC - STRATEGIE FÜR MAXIMALE GLOBALE REICHWEITE 🌍
 
-> **Ziel:** Echoelmusic für 8 MILLIARDEN Menschen zugänglich machen!
+> **Ziel:** Eoel für 8 MILLIARDEN Menschen zugänglich machen!
 
 ---
 
@@ -562,7 +562,7 @@ SCHOOL/UNIVERSITY:
 
 ### **Warum kostenlos für Bildung?**
 
-**ROI für Echoelmusic:**
+**ROI für Eoel:**
 1. **Nächste Generation** lernt mit unserem Tool
 2. **Word-of-Mouth** durch 1 Milliarde Studenten
 3. **Professionelle Nutzer** in 5-10 Jahren (zahlen dann!)
@@ -570,7 +570,7 @@ SCHOOL/UNIVERSITY:
 
 **Beispiel:**
 ```
-10.000 Studenten nutzen Echoelmusic kostenlos
+10.000 Studenten nutzen Eoel kostenlos
 → 50% bleiben nach Abschluss (5.000)
 → 30% werden Pro-Nutzer (1.500 × $29.99 = $44,985/mo)
 → 5% werden Enterprise (500 × $499 = $249,500/mo)
@@ -655,14 +655,14 @@ TOTAL: 5+ MILLIARDEN Geräte!
 ### **Open Source Strategy:**
 
 ```
-Echoelmusic Core: Apache 2.0 (Open Source)
+Eoel Core: Apache 2.0 (Open Source)
 ├─ Audio Engine
 ├─ MIDI Processing
 ├─ Effects (basic)
 ├─ Synthesizer (basic)
 └─ File I/O
 
-Echoelmusic Pro: Proprietary
+Eoel Pro: Proprietary
 ├─ Advanced Effects
 ├─ Premium Synthesizers
 ├─ Video Editor

@@ -1295,7 +1295,7 @@ vs. AI Plugins (iZotope, Sonible):
   ✅ Integrated into workflow (not separate plugins)
   ✅ Cross-module intelligence (holistic view)
   ✅ Project-aware (understands full context)
-  ✅ Free (included with Echoelmusic)
+  ✅ Free (included with Eoel)
 
 Market Position:
   "The DAW that teaches AND assists"
@@ -1306,7 +1306,7 @@ Market Position:
 ### Pricing Strategy
 
 ```yaml
-Base Echoelmusic: €99 one-time (includes ALL AI modules)
+Base Eoel: €99 one-time (includes ALL AI modules)
   vs. iZotope Music Production Suite: €999/year
   vs. Sonible smart:bundle: €399/year
 

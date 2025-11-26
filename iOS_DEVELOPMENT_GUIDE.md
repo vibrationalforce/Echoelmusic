@@ -1,4 +1,4 @@
-# Echoelmusic iOS/iPad App - Development Guide 📱
+# Eoel iOS/iPad App - Development Guide 📱
 
 **Target:** iPad as primary platform (iPhone secondary)
 **Goal:** MVP in 2-3 months
@@ -91,7 +91,7 @@ iOS Support:
 ```cmake
 # CMake for iOS
 cmake_minimum_required(VERSION 3.22)
-project(Echoelmusic_iOS VERSION 1.0.0 LANGUAGES CXX OBJCXX)
+project(Eoel_iOS VERSION 1.0.0 LANGUAGES CXX OBJCXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_SYSTEM_NAME iOS)
@@ -100,8 +100,8 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET 15.0)  # iOS 15+
 # JUCE
 add_subdirectory(JUCE)
 
-juce_add_gui_app(Echoelmusic_iOS
-    PRODUCT_NAME "Echoelmusic"
+juce_add_gui_app(Eoel_iOS
+    PRODUCT_NAME "Eoel"
     BUNDLE_ID "com.echoel.echoelmusic"
     COMPANY_NAME "Echoel"
     COMPANY_WEBSITE "https://echoelmusic.com"
@@ -112,26 +112,26 @@ juce_add_gui_app(Echoelmusic_iOS
 
     # Capabilities
     MICROPHONE_PERMISSION_ENABLED TRUE
-    MICROPHONE_PERMISSION_TEXT "Echoelmusic needs microphone access for audio recording"
+    MICROPHONE_PERMISSION_TEXT "Eoel needs microphone access for audio recording"
 
     BLUETOOTH_PERMISSION_ENABLED TRUE
     BLUETOOTH_PERMISSION_TEXT "Connect MIDI controllers via Bluetooth"
 )
 
 # AUv3 Support
-target_compile_definitions(Echoelmusic_iOS PRIVATE
+target_compile_definitions(Eoel_iOS PRIVATE
     JUCE_PLUGINHOST_AUv3=1
     JUCE_PLUGINHOST_AU=1
 )
 
 # ARM NEON optimizations (iPad)
-target_compile_options(Echoelmusic_iOS PRIVATE
+target_compile_options(Eoel_iOS PRIVATE
     -march=armv8-a+simd
     -ffast-math
 )
 
 # Frameworks
-target_link_libraries(Echoelmusic_iOS PRIVATE
+target_link_libraries(Eoel_iOS PRIVATE
     "-framework CoreAudio"
     "-framework AVFoundation"
     "-framework CoreMIDI"
@@ -145,10 +145,10 @@ target_link_libraries(Echoelmusic_iOS PRIVATE
 ## 📦 Project Structure
 
 ```
-Echoelmusic/
+Eoel/
 ├── Sources/
 │   ├── iOS/                        # iOS-specific code
-│   │   ├── EchoelmusicApp.h/.mm   # Main iOS app
+│   │   ├── EoelApp.h/.mm   # Main iOS app
 │   │   ├── MainViewController.h/.mm # Root view controller
 │   │   ├── AudioEngine_iOS.h/.cpp  # iOS audio backend
 │   │   └── Gestures.h/.mm          # Touch gesture handling
@@ -463,8 +463,8 @@ Software:
 
 #### 1. Clone & Configure
 ```bash
-git clone https://github.com/vibrationalforce/Echoelmusic.git
-cd Echoelmusic
+git clone https://github.com/vibrationalforce/Eoel.git
+cd Eoel
 
 # Create iOS build directory
 mkdir build-ios && cd build-ios
@@ -479,11 +479,11 @@ cmake .. \
 
 #### 2. Open in Xcode
 ```bash
-open Echoelmusic.xcodeproj
+open Eoel.xcodeproj
 ```
 
 #### 3. Configure Signing
-- Select Echoelmusic target
+- Select Eoel target
 - Signing & Capabilities
 - Team: Your Apple Developer account
 - Bundle ID: com.echoel.echoelmusic
@@ -529,7 +529,7 @@ Preview Video (optional):
 
 ### App Store Description
 ```
-Echoelmusic - Mobile-First Music Production
+Eoel - Mobile-First Music Production
 
 CREATE MUSIC ANYWHERE
 • 8-track audio + MIDI recording
@@ -629,14 +629,14 @@ Week 11-12: Testing & Launch
 
 1. **Setup iOS Build** (Today)
    ```bash
-   cd Echoelmusic
+   cd Eoel
    mkdir build-ios
    cd build-ios
    cmake .. -G Xcode -DCMAKE_SYSTEM_NAME=iOS
    ```
 
 2. **Create iOS-Specific Files** (This Week)
-   - Sources/iOS/EchoelmusicApp.mm
+   - Sources/iOS/EoelApp.mm
    - Sources/iOS/AudioEngine_iOS.cpp
    - Sources/Plugin/AUv3Host.mm
 
