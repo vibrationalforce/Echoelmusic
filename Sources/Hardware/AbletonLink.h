@@ -4,7 +4,7 @@
 #include <atomic>
 #include <functional>
 
-namespace Echoelmusic {
+namespace Eoel {
 
 /**
  * AbletonLink - Network-based tempo synchronization
@@ -156,4 +156,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AbletonLink)
 };
 
-} // namespace Echoelmusic
+} // namespace Eoel

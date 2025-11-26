@@ -9,7 +9,7 @@
 
 ## 🚀 Overview
 
-Echoelmusic now includes **enterprise-grade development tools** that rival commercial products like Ableton Live, Pro Tools, and Logic Pro in terms of code quality, debugging capabilities, and deployment automation.
+Eoel now includes **enterprise-grade development tools** that rival commercial products like Ableton Live, Pro Tools, and Logic Pro in terms of code quality, debugging capabilities, and deployment automation.
 
 ### What's Included
 
@@ -268,7 +268,7 @@ Echoel::CrashReporter::getInstance().addCustomData("session_id", "abc-def-ghi");
 Echoel::CrashReporter::getInstance().setCrashReportEndpoint("https://crash.echoelmusic.com/api");
 
 // Crash reports are automatically generated on crashes
-// Saved to: ~/Library/Application Support/Echoelmusic/CrashReports/
+// Saved to: ~/Library/Application Support/Eoel/CrashReports/
 ```
 
 #### Telemetry (Privacy-Friendly):
@@ -418,7 +418,7 @@ public:
     // Save diagnostics to file
     void saveDiagnostics() {
         auto file = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
-                       .getChildFile("Echoelmusic_Diagnostics.txt");
+                       .getChildFile("Eoel_Diagnostics.txt");
         diagnostics->saveReport(file);
         ECHOEL_LOG_INFO("Diagnostics saved to: " + file.getFullPathName());
     }
@@ -468,7 +468,7 @@ private:
 
 ## 🏆 Industry Comparison
 
-| Feature | Echoelmusic | Waves | iZotope | FabFilter | UAD |
+| Feature | Eoel | Waves | iZotope | FabFilter | UAD |
 |---------|-------------|-------|---------|-----------|-----|
 | **Performance Profiling** | ✅ Built-in | ❌ | ❌ | ❌ | ❌ |
 | **Automated Testing** | ✅ Full suite | ⚠️ Internal | ⚠️ Internal | ⚠️ Internal | ⚠️ Internal |
@@ -479,7 +479,7 @@ private:
 | **Thread Safety Checks** | ✅ Automatic | ⚠️ Internal | ⚠️ Internal | ⚠️ Internal | ⚠️ Internal |
 | **Open Source** | ✅ | ❌ | ❌ | ❌ | ❌ |
 
-**Verdict:** Echoelmusic now has **enterprise-grade development tools** that match or exceed commercial competitors!
+**Verdict:** Eoel now has **enterprise-grade development tools** that match or exceed commercial competitors!
 
 ---
 
@@ -582,7 +582,7 @@ All systems are **header-only** and fully documented:
 
 ## 🌟 Bottom Line
 
-**Echoelmusic now has development tools that rival Fortune 500 companies.**
+**Eoel now has development tools that rival Fortune 500 companies.**
 
 ✅ **Professional profiling** like Xcode Instruments
 ✅ **Automated testing** like Google Test

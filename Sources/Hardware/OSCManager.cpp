@@ -1,6 +1,6 @@
 #include "OSCManager.h"
 
-namespace Echoelmusic {
+namespace Eoel {
 
 OSCManager::OSCManager()
 {
@@ -394,4 +394,4 @@ bool OSCManager::matchesPattern(const juce::String& address, const juce::String&
     return false;
 }
 
-} // namespace Echoelmusic
+} // namespace Eoel

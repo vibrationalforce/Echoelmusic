@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #######################################################
-# Echoelmusic JUCE + VST3 + CLAP Setup Script
+# Eoel JUCE + VST3 + CLAP Setup Script
 #######################################################
 
 set -e
 
 echo "🎸 ================================================"
-echo "🎸 Echoelmusic JUCE Plugin Setup"
+echo "🎸 Eoel JUCE Plugin Setup"
 echo "🎸 ================================================"
 echo ""
 
@@ -142,9 +142,9 @@ echo "2. Install plugins:"
 echo "   cmake --build . --target install"
 echo ""
 echo "Plugin locations:"
-echo "   • VST3:  ~/Library/Audio/Plug-Ins/VST3/Echoelmusic.vst3"
-echo "   • AU:    ~/Library/Audio/Plug-Ins/Components/Echoelmusic.component"
-echo "   • CLAP:  ~/Library/Audio/Plug-Ins/CLAP/Echoelmusic.clap"
+echo "   • VST3:  ~/Library/Audio/Plug-Ins/VST3/Eoel.vst3"
+echo "   • AU:    ~/Library/Audio/Plug-Ins/Components/Eoel.component"
+echo "   • CLAP:  ~/Library/Audio/Plug-Ins/CLAP/Eoel.clap"
 echo ""
 echo "3. Test in your DAW:"
 echo "   • Ableton Live"

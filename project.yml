@@ -1,10 +1,10 @@
-# XcodeGen Project Configuration for Blab
+# XcodeGen Project Configuration for Eoel
 # This file defines how to generate the Xcode project
 
-name: Blab
+name: Eoel
 
 options:
-  bundleIdPrefix: com.blab
+  bundleIdPrefix: com.eoel
   deploymentTarget:
     iOS: "16.0"
   # Generate Info.plist automatically
@@ -18,13 +18,13 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
 
 targets:
-  Blab:
+  Eoel:
     type: application
     platform: iOS
 
     # Source files location
     sources:
-      - path: Sources/Blab
+      - path: Sources/Eoel
         type: group
 
     # Info.plist configuration (inline)
@@ -39,11 +39,11 @@ targets:
         CFBundlePackageType: APPL
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        CFBundleDisplayName: Blab
+        CFBundleDisplayName: Eoel
         LSRequiresIPhoneOS: true
 
         # Microphone permission
-        NSMicrophoneUsageDescription: "Blab needs microphone access to create music from your voice and breath"
+        NSMicrophoneUsageDescription: "Eoel needs microphone access to create music from your voice and breath"
 
         # UI Configuration
         UILaunchScreen: {}
@@ -63,8 +63,8 @@ targets:
     # App settings
     settings:
       base:
-        PRODUCT_NAME: Blab
-        PRODUCT_BUNDLE_IDENTIFIER: com.blab.studio
+        PRODUCT_NAME: Eoel
+        PRODUCT_BUNDLE_IDENTIFIER: com.eoel.app
         INFOPLIST_FILE: Info.plist
         GENERATE_INFOPLIST_FILE: NO
 

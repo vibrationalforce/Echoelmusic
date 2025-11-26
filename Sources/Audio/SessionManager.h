@@ -5,7 +5,7 @@
 #include "../DSP/BioReactiveAudioProcessor.h"
 
 /**
- * SessionManager - Project save/load system for Echoelmusic
+ * SessionManager - Project save/load system for Eoel
  *
  * Features:
  * - XML-based session format (.echoelmusic or .xml)
@@ -19,7 +19,7 @@
  * - Crash recovery
  *
  * Session File Structure:
- * <EchoelmusicSession version="1.0">
+ * <EoelSession version="1.0">
  *   <ProjectInfo>
  *     <Title>My Project</Title>
  *     <Tempo>120.0</Tempo>
@@ -46,7 +46,7 @@
  *     <AVE enabled="false"/>
  *     <ColorTherapy enabled="false"/>
  *   </Wellness>
- * </EchoelmusicSession>
+ * </EoelSession>
  */
 class SessionManager
 {

@@ -119,7 +119,7 @@ AVAudioSession.sharedInstance().setAllowedOutputChannels(
 - ✅ **Hand Tracking** - Gestensteuerung
 - ✅ **Eye Tracking** - (mit User Permission)
 
-#### **Echoelmusic Vision Pro Features**
+#### **Eoel Vision Pro Features**
 ```swift
 // Spatial Audio Mixer in 3D Space
 struct SpatialMixerView: View {
@@ -237,7 +237,7 @@ AudioFormat format = new AudioFormat.Builder()
 
 ### **1. EU AI Act (2024-2026)**
 
-#### **Relevante Bestimmungen für Echoelmusic**
+#### **Relevante Bestimmungen für Eoel**
 - ✅ **Transparenz** - AI-generierte Inhalte müssen gekennzeichnet sein
 - ✅ **Keine High-Risk AI** - Musik-AI ist "Limited Risk"
 - ✅ **User Creativity First** - ✓ Bereits implementiert!
@@ -247,7 +247,7 @@ AudioFormat format = new AudioFormat.Builder()
 // AI-Generated Content Watermarking
 struct AIContentMetadata {
     bool isAIGenerated = false;
-    juce::String aiModel;           // "Echoelmusic PatternGen v1.0"
+    juce::String aiModel;           // "Eoel PatternGen v1.0"
     float aiContribution = 0.0f;    // 0% = full user, 100% = full AI
     juce::String userPrompt;        // Was user eingegeben hat
 };
@@ -258,7 +258,7 @@ void exportTrack(juce::File& output) {
         // EU AI Act Compliance: Metadaten schreiben
         output.setXMPMetadata("dc:creator", "User with AI Assistance");
         output.setXMPMetadata("ai:contribution", track.aiContribution);
-        output.setXMPMetadata("ai:model", "Echoelmusic v1.0");
+        output.setXMPMetadata("ai:model", "Eoel v1.0");
     }
 }
 ```
@@ -268,7 +268,7 @@ void exportTrack(juce::File& output) {
 ### **2. Digital Markets Act (DMA) - EU 2024**
 
 #### **Relevanz**
-- ✅ **Interoperabilität** - Echoelmusic MUSS mit anderen DAWs kompatibel sein
+- ✅ **Interoperabilität** - Eoel MUSS mit anderen DAWs kompatibel sein
 - ✅ **Offene Standards** - VST3, AAX, CLAP, AUv3 (✓ alle implementiert)
 - ✅ **Keine Lock-In** - User darf Projekte exportieren
 
@@ -337,7 +337,7 @@ public:
 - ✅ **LGPD** (Brasilien)
 - ✅ **PIPEDA** (Kanada)
 
-#### **Echoelmusic Privacy-First Design**
+#### **Eoel Privacy-First Design**
 ```cpp
 // KEINE User Tracking
 // KEINE Analytics ohne Opt-In
@@ -350,7 +350,7 @@ struct PrivacySettings {
 
     // Transparent Data Policy
     juce::String getDataCollectionPolicy() const {
-        return "Echoelmusic collects NO personal data by default. "
+        return "Eoel collects NO personal data by default. "
                "All processing happens locally on your device. "
                "Optional cloud features require explicit opt-in.";
     }
@@ -564,14 +564,14 @@ jobs:
       - name: Sign & Notarize (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          codesign --deep --force --sign "$CERT_ID" build/Echoelmusic.app
-          xcrun notarytool submit build/Echoelmusic.zip
+          codesign --deep --force --sign "$CERT_ID" build/Eoel.app
+          xcrun notarytool submit build/Eoel.zip
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            build/Echoelmusic-*
+            build/Eoel-*
 ```
 
 #### **Auto-Update System (in-app)**
@@ -667,4 +667,4 @@ Repository Structure:
 ✅ **Compliance** mit allen aktuellen + zukünftigen Standards
 ✅ **Industrie-Anerkennung** durch Konferenzen + Open Source
 
-🚀 **Echoelmusic kann die Welt erreichen!**
+🚀 **Eoel kann die Welt erreichen!**

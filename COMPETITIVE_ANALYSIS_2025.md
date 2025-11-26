@@ -186,7 +186,7 @@ FÜR ECHOELMUSIC:
   💡 Our Advantage:
      - Adobe Workfront = enterprise €€€€
      - Motion = $19-34/month
-     - Echoelmusic = €9.99/month (all-in-one)
+     - Eoel = €9.99/month (all-in-one)
 ```
 
 ---
@@ -202,7 +202,7 @@ Problem:
   - Logic Pro iPad = powerful, but expensive + no cross-platform
 
 Our Solution:
-  ✅ Echoelmusic iPad App + Remote Processing
+  ✅ Eoel iPad App + Remote Processing
      - Full DAW on iPad
      - Offload CPU to €30/month Hetzner server
      - Same project: iPad ↔ Desktop ↔ Linux
@@ -237,7 +237,7 @@ Problem:
   - Splice: $9.99-29.99/month (forever)
 
 Our Solution:
-  ✅ Echoelmusic Pricing:
+  ✅ Eoel Pricing:
      - €99 Desktop (one-time, yours forever)
      - €49.99 Mobile (one-time)
      - €9.99/month Cloud (optional!)
@@ -270,7 +270,7 @@ Our Solution:
 
 ## 📊 Feature Comparison Matrix
 
-| Feature | Motion | Sessionwire | Notion | **Echoelmusic** |
+| Feature | Motion | Sessionwire | Notion | **Eoel** |
 |---------|--------|-------------|--------|-----------------|
 | **AI Workflow Creation** | ✅ | ❌ | ❌ | ✅ (Music-specific!) |
 | **Remote Collaboration** | ❌ | ✅ | Async only | ✅ (Remote processing) |
@@ -414,7 +414,7 @@ Competitors:
   - Ableton Live Suite: €599 one-time
   - Logic Pro iPad: €49.99 (but Mac-only ecosystem)
 
-Echoelmusic:
+Eoel:
   - Desktop: €99 one-time (yours forever!)
   - Mobile: €49.99 one-time
   - Cloud: €9.99/month = €120/year (optional!)
@@ -432,7 +432,7 @@ Competitors:
   - FL Studio: Windows/Mac separate licenses
   - Logic Pro: Mac/iPad only (Apple lock-in)
 
-Echoelmusic:
+Eoel:
   ✅ Works with everything:
      - Your existing AUv3 plugins (FL Mobile, etc.)
      - Your existing VST3 plugins (desktop)
@@ -452,7 +452,7 @@ Competitors:
   - FL Studio Mobile: Good, but isolated (no cloud processing)
   - Logic Pro iPad: Powerful, but €5.99/month after trial
 
-Echoelmusic:
+Eoel:
   ✅ iPad as primary platform
   ✅ Remote processing (iPad + server = desktop power)
   ✅ AUv3 support (all user's plugins work!)
@@ -470,7 +470,7 @@ Competitors:
   - Dark patterns (upsells, feature removal)
   - VC-funded (growth > sustainability)
 
-Echoelmusic:
+Eoel:
   ✅ GPL Open Source (auditable, forkable)
   ✅ No lock-in (standard formats)
   ✅ No dark patterns (respect users)
@@ -538,8 +538,8 @@ Price (€/year)
   │
   │ Ableton Suite (€599 one-time, amortized) ███████
   │
-  │ Echoelmusic (€120/year cloud) ████
-  │ Echoelmusic (€99 one-time) ███
+  │ Eoel (€120/year cloud) ████
+  │ Eoel (€99 one-time) ███
   │
   └─────────────────────────────────────→ Features
 

@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 
-namespace Echoelmusic {
+namespace Eoel {
 
 /**
  * DJEquipmentIntegration - Professional DJ hardware integration
@@ -305,4 +305,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DJEquipmentIntegration)
 };
 
-} // namespace Echoelmusic
+} // namespace Eoel

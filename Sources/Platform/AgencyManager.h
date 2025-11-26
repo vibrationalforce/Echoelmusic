@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 
-namespace Echoelmusic {
+namespace Eoel {
 
 /**
  * AgencyManager - Talent Agency & Booking System
@@ -403,4 +403,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AgencyManager)
 };
 
-} // namespace Echoelmusic
+} // namespace Eoel

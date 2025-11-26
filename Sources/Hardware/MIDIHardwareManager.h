@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 
-namespace Echoelmusic {
+namespace Eoel {
 
 /**
  * MIDIHardwareManager - Universal MIDI device integration
@@ -199,4 +199,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MIDIHardwareManager)
 };
 
-} // namespace Echoelmusic
+} // namespace Eoel

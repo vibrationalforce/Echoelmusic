@@ -1,6 +1,6 @@
 #include "AgencyManager.h"
 
-namespace Echoelmusic {
+namespace Eoel {
 
 AgencyManager::AgencyManager()
 {
@@ -367,4 +367,4 @@ void AgencyManager::loadFromDatabase()
     DBG("Loading agency database...");
 }
 
-} // namespace Echoelmusic
+} // namespace Eoel

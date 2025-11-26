@@ -1,6 +1,6 @@
 #include "AbletonLink.h"
 
-namespace Echoelmusic {
+namespace Eoel {
 
 AbletonLink::AbletonLink()
 {
@@ -228,4 +228,4 @@ void AbletonLink::notifyCallbacks()
     // Callbacks are triggered in updateState() when changes occur
 }
 
-} // namespace Echoelmusic
+} // namespace Eoel

@@ -2,7 +2,7 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-EchoelmusicAudioProcessor::EchoelmusicAudioProcessor()
+EoelAudioProcessor::EoelAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
@@ -13,7 +13,7 @@ EchoelmusicAudioProcessor::EchoelmusicAudioProcessor()
                      #endif
                        ),
 #endif
-      parameters (*this, nullptr, juce::Identifier ("EchoelmusicParameters"),
+      parameters (*this, nullptr, juce::Identifier ("EoelParameters"),
                   createParameterLayout())
 {
     // Initialize DSP modules
@@ -34,7 +34,7 @@ EchoelmusicAudioProcessor::EchoelmusicAudioProcessor()
     parameters.addParameterListener(PARAM_ID_REVERB_MIX, this);
 }
 
-EchoelmusicAudioProcessor::~EchoelmusicAudioProcessor()
+EoelAudioProcessor::~EoelAudioProcessor()
 {
     parameters.removeParameterListener(PARAM_ID_HRV, this);
     parameters.removeParameterListener(PARAM_ID_COHERENCE, this);
@@ -45,7 +45,7 @@ EchoelmusicAudioProcessor::~EchoelmusicAudioProcessor()
 
 //==============================================================================
 juce::AudioProcessorValueTreeState::ParameterLayout
-EchoelmusicAudioProcessor::createParameterLayout()
+EoelAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
@@ -131,12 +131,12 @@ EchoelmusicAudioProcessor::createParameterLayout()
 }
 
 //==============================================================================
-const juce::String EchoelmusicAudioProcessor::getName() const
+const juce::String EoelAudioProcessor::getName() const
 {
     return JucePlugin_Name;
 }
 
-bool EchoelmusicAudioProcessor::acceptsMidi() const
+bool EoelAudioProcessor::acceptsMidi() const
 {
    #if JucePlugin_WantsMidiInput
     return true;
@@ -145,7 +145,7 @@ bool EchoelmusicAudioProcessor::acceptsMidi() const
    #endif
 }
 
-bool EchoelmusicAudioProcessor::producesMidi() const
+bool EoelAudioProcessor::producesMidi() const
 {
    #if JucePlugin_ProducesMidiOutput
     return true;
@@ -154,7 +154,7 @@ bool EchoelmusicAudioProcessor::producesMidi() const
    #endif
 }
 
-bool EchoelmusicAudioProcessor::isMidiEffect() const
+bool EoelAudioProcessor::isMidiEffect() const
 {
    #if JucePlugin_IsMidiEffect
     return true;
@@ -163,39 +163,39 @@ bool EchoelmusicAudioProcessor::isMidiEffect() const
    #endif
 }
 
-double EchoelmusicAudioProcessor::getTailLengthSeconds() const
+double EoelAudioProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int EchoelmusicAudioProcessor::getNumPrograms()
+int EoelAudioProcessor::getNumPrograms()
 {
     return 1;
 }
 
-int EchoelmusicAudioProcessor::getCurrentProgram()
+int EoelAudioProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void EchoelmusicAudioProcessor::setCurrentProgram (int index)
+void EoelAudioProcessor::setCurrentProgram (int index)
 {
     juce::ignoreUnused (index);
 }
 
-const juce::String EchoelmusicAudioProcessor::getProgramName (int index)
+const juce::String EoelAudioProcessor::getProgramName (int index)
 {
     juce::ignoreUnused (index);
     return {};
 }
 
-void EchoelmusicAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void EoelAudioProcessor::changeProgramName (int index, const juce::String& newName)
 {
     juce::ignoreUnused (index, newName);
 }
 
 //==============================================================================
-void EchoelmusicAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void EoelAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     currentSampleRate = sampleRate;
 
@@ -215,7 +215,7 @@ void EchoelmusicAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     samplesUntilNextBeat = 0;
 }
 
-void EchoelmusicAudioProcessor::releaseResources()
+void EoelAudioProcessor::releaseResources()
 {
     if (bioReactiveDSP)
         bioReactiveDSP->reset();
@@ -225,7 +225,7 @@ void EchoelmusicAudioProcessor::releaseResources()
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool EchoelmusicAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool EoelAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
   #if JucePlugin_IsMidiEffect
     juce::ignoreUnused (layouts);
@@ -245,7 +245,7 @@ bool EchoelmusicAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
 }
 #endif
 
-void EchoelmusicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
+void EoelAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                               juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
@@ -293,7 +293,7 @@ void EchoelmusicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 }
 
 //==============================================================================
-void EchoelmusicAudioProcessor::generateHeartbeatMIDI(juce::MidiBuffer& midiMessages,
+void EoelAudioProcessor::generateHeartbeatMIDI(juce::MidiBuffer& midiMessages,
                                                        int numSamples)
 {
     const float heartRate = currentHeartRate.load();
@@ -317,7 +317,7 @@ void EchoelmusicAudioProcessor::generateHeartbeatMIDI(juce::MidiBuffer& midiMess
 }
 
 //==============================================================================
-void EchoelmusicAudioProcessor::updateBioData(float hrv, float coherence, float heartRate)
+void EoelAudioProcessor::updateBioData(float hrv, float coherence, float heartRate)
 {
     // Thread-safe atomic updates
     currentHRV.store(hrv);
@@ -334,7 +334,7 @@ void EchoelmusicAudioProcessor::updateBioData(float hrv, float coherence, float 
         cohParam->setValueNotifyingHost(coherence);
 }
 
-EchoelmusicAudioProcessor::BioData EchoelmusicAudioProcessor::getCurrentBioData() const
+EoelAudioProcessor::BioData EoelAudioProcessor::getCurrentBioData() const
 {
     BioData data;
     data.hrv = currentHRV.load();
@@ -345,7 +345,7 @@ EchoelmusicAudioProcessor::BioData EchoelmusicAudioProcessor::getCurrentBioData(
 }
 
 //==============================================================================
-void EchoelmusicAudioProcessor::parameterChanged(const juce::String& parameterID,
+void EoelAudioProcessor::parameterChanged(const juce::String& parameterID,
                                                   float newValue)
 {
     // Handle parameter changes
@@ -361,18 +361,18 @@ void EchoelmusicAudioProcessor::parameterChanged(const juce::String& parameterID
 }
 
 //==============================================================================
-bool EchoelmusicAudioProcessor::hasEditor() const
+bool EoelAudioProcessor::hasEditor() const
 {
     return true;
 }
 
-juce::AudioProcessorEditor* EchoelmusicAudioProcessor::createEditor()
+juce::AudioProcessorEditor* EoelAudioProcessor::createEditor()
 {
-    return new EchoelmusicAudioProcessorEditor (*this);
+    return new EoelAudioProcessorEditor (*this);
 }
 
 //==============================================================================
-void EchoelmusicAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void EoelAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     // Save parameter state
     auto state = parameters.copyState();
@@ -380,7 +380,7 @@ void EchoelmusicAudioProcessor::getStateInformation (juce::MemoryBlock& destData
     copyXmlToBinary (*xml, destData);
 }
 
-void EchoelmusicAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void EoelAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // Restore parameter state
     std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
@@ -394,7 +394,7 @@ void EchoelmusicAudioProcessor::setStateInformation (const void* data, int sizeI
 // Spectrum Analysis
 //==============================================================================
 
-std::vector<float> EchoelmusicAudioProcessor::getSpectrumData() const
+std::vector<float> EoelAudioProcessor::getSpectrumData() const
 {
     // ✅ LOCK-FREE: Read from FIFO (called from UI thread)
     int start1, size1, start2, size2;
@@ -403,14 +403,14 @@ std::vector<float> EchoelmusicAudioProcessor::getSpectrumData() const
     if (size1 > 0)
     {
         // Copy latest spectrum data
-        const_cast<EchoelmusicAudioProcessor*>(this)->spectrumDataForUI = spectrumBuffer[start1];
+        const_cast<EoelAudioProcessor*>(this)->spectrumDataForUI = spectrumBuffer[start1];
         const_cast<juce::AbstractFifo&>(spectrumFifo).finishedRead(size1);
     }
 
     return std::vector<float>(spectrumDataForUI.begin(), spectrumDataForUI.end());
 }
 
-void EchoelmusicAudioProcessor::updateSpectrumData(const juce::AudioBuffer<float>& buffer)
+void EoelAudioProcessor::updateSpectrumData(const juce::AudioBuffer<float>& buffer)
 {
     if (buffer.getNumChannels() == 0 || buffer.getNumSamples() == 0)
         return;
@@ -461,5 +461,5 @@ void EchoelmusicAudioProcessor::updateSpectrumData(const juce::AudioBuffer<float
 // This creates new instances of the plugin
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new EchoelmusicAudioProcessor();
+    return new EoelAudioProcessor();
 }

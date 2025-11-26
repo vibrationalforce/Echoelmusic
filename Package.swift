@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Echoelmusic",
+    name: "Eoel",
     platforms: [
         .iOS(.v15),        // iPhone & iPad - iOS 15+ for wide compatibility
         .macOS(.v12),      // macOS Monterey+ for Apple Silicon & Intel
@@ -15,16 +15,16 @@ let package = Package(
     products: [
         // Core library - shared across all platforms
         .library(
-            name: "Echoelmusic",
-            targets: ["Echoelmusic"]),
+            name: "Eoel",
+            targets: ["Eoel"]),
     ],
     dependencies: [
         // Add future dependencies here (e.g., for audio processing, ML, etc.)
     ],
     targets: [
-        // Core Echoelmusic target - cross-platform code
+        // Core Eoel target - cross-platform code
         .target(
-            name: "Echoelmusic",
+            name: "Eoel",
             dependencies: [],
             resources: [
                 .process("Resources")
@@ -32,7 +32,7 @@ let package = Package(
 
         // Test target for unit tests
         .testTarget(
-            name: "EchoelmusicTests",
-            dependencies: ["Echoelmusic"]),
+            name: "EoelTests",
+            dependencies: ["Eoel"]),
     ]
 )

@@ -1,6 +1,6 @@
 #include "ModularIntegration.h"
 
-namespace Echoelmusic {
+namespace Eoel {
 
 ModularIntegration::ModularIntegration()
 {
@@ -551,4 +551,4 @@ float ModularIntegration::processEnvelope(EnvelopeGenerator& env, int numSamples
     return output;
 }
 
-} // namespace Echoelmusic
+} // namespace Eoel

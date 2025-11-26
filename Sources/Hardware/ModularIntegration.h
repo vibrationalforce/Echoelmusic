@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 
-namespace Echoelmusic {
+namespace Eoel {
 
 /**
  * ModularIntegration - CV/Gate and Eurorack integration
@@ -257,4 +257,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModularIntegration)
 };
 
-} // namespace Echoelmusic
+} // namespace Eoel

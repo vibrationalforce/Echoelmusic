@@ -3,7 +3,7 @@
 #include <JuceHeader.h>
 #include <atomic>
 
-namespace Echoelmusic {
+namespace Eoel {
 
 /**
  * HardwareSyncManager - Master clock sync for all hardware
@@ -235,4 +235,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HardwareSyncManager)
 };
 
-} // namespace Echoelmusic
+} // namespace Eoel

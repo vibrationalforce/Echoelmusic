@@ -53,7 +53,7 @@ Legal Status (2025):
     - Using old hardware as instrument: Completely legal
     - Reverse engineering for interoperability: Protected
 
-Echoelmusic Approach:
+Eoel Approach:
   - Provide emulation framework (legal)
   - User provides own ROMs (legal if owned)
   - No pre-loaded pirated ROMs (illegal)
@@ -227,7 +227,7 @@ Networking:
   - Firewall (nftables, GUI config)
 ```
 
-### Layer 4: Echoelmusic Integration
+### Layer 4: Eoel Integration
 
 ```yaml
 Audio:
@@ -349,7 +349,7 @@ Workflow:
   - Play MIDI keyboard
   → EchoelOS routes MIDI to NES emulator
   → Emulator generates 8-bit sounds
-  → Audio output to Echoelmusic DAW
+  → Audio output to Eoel DAW
   → Apply modern effects (reverb, delay, etc.)
 
 Result: Authentic chiptune with modern production!
@@ -390,7 +390,7 @@ The PSX Reverb:
 Setup:
   1. PS1 emulator with SPU emulation
   2. Send any audio through PSX reverb
-  3. Capture output in Echoelmusic
+  3. Capture output in Eoel
 
 Artists using PSX reverb:
   - Vaporwave producers (LOTS)
@@ -432,27 +432,27 @@ EchoelOS Editions:
 1. EchoelOS Desktop (Full)
    - Size: 4GB ISO
    - For: Modern PCs (2010+)
-   - Includes: Full Echoelmusic, all emulators
+   - Includes: Full Eoel, all emulators
 
 2. EchoelOS Lite
    - Size: 1GB ISO
    - For: Old PCs (2000-2010)
-   - Includes: Core Echoelmusic, select emulators
+   - Includes: Core Eoel, select emulators
 
 3. EchoelOS Retro
    - Size: 256MB ISO
    - For: Very old PCs (1995-2000)
-   - Includes: Minimal Echoelmusic, DOS/Win95 support
+   - Includes: Minimal Eoel, DOS/Win95 support
 
 4. EchoelOS Mobile
    - Size: 2GB APK/image
    - For: Android devices, PinePhone
-   - Includes: Mobile Echoelmusic, ARM-optimized
+   - Includes: Mobile Eoel, ARM-optimized
 
 5. EchoelOS Embedded
    - Size: 512MB image
    - For: Raspberry Pi, embedded systems
-   - Includes: Headless Echoelmusic, remote control
+   - Includes: Headless Eoel, remote control
 
 Download:
   - echoos.io (primary)
@@ -596,24 +596,24 @@ Economic Impact:
 ### 3. Creative Freedom
 
 ```yaml
-With EchoelOS + Echoelmusic:
+With EchoelOS + Eoel:
 
 Old Nintendo controller
   → USB adapter (€5)
   → MIDI mapping
-  → Control Echoelmusic
+  → Control Eoel
   → Result: Unique instrument!
 
 Old CRT TV
   → Composite output
   → Video feedback loops
-  → Echoelmusic video processing
+  → Eoel video processing
   → Result: Authentic retro visuals!
 
 Old dial-up modem
   → USB serial adapter
   → Audio sampling
-  → Echoelmusic synthesis
+  → Eoel synthesis
   → Result: Vaporwave nostalgia!
 
 Possibilities: INFINITE
@@ -635,12 +635,12 @@ Cost: Near-zero (old hardware is cheap/free)
 ✅ Basic ISO builds
 ```
 
-### Phase 2: Echoelmusic Integration (2026 Q3)
+### Phase 2: Eoel Integration (2026 Q3)
 
 ```yaml
 ⏳ JACK/PipeWire configuration
 ⏳ Low-latency kernel patches
-⏳ Echoelmusic as core app
+⏳ Eoel as core app
 ⏳ MIDI routing system-wide
 ⏳ EchoSync daemon
 ⏳ Retro console → MIDI mapping

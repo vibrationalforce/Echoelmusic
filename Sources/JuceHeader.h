@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * Common JUCE includes for Echoelmusic
+ * Common JUCE includes for Eoel
  *
  * JUCE 7.x doesn't have a single JuceHeader.h anymore,
  * so we include the specific modules we need.

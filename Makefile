@@ -1,9 +1,9 @@
-# Makefile for Blab iOS App
+# Makefile for Eoel iOS App
 # Makes building and deploying the app easy!
 
 # Variables
-PROJECT_NAME = Blab
-SCHEME = Blab
+PROJECT_NAME = Eoel
+SCHEME = Eoel
 CONFIGURATION = Debug
 SDK = iphoneos
 BUILD_DIR = build
@@ -18,7 +18,7 @@ NC = \033[0m # No Color
 
 # Default target - show help
 help:
-	@echo "$(GREEN)Blab iOS App Build Commands:$(NC)"
+	@echo "$(GREEN)Eoel iOS App Build Commands:$(NC)"
 	@echo ""
 	@echo "  $(YELLOW)make setup$(NC)      - Install required tools (xcodegen, ios-deploy)"
 	@echo "  $(YELLOW)make generate$(NC)   - Generate Xcode project from project.yml"

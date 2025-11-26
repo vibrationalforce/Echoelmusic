@@ -1,8 +1,8 @@
-# 🚀 Echoelmusic Production-Ready Optimizations
+# 🚀 Eoel Production-Ready Optimizations
 
 ## Overview
 
-This update transforms Echoelmusic from a development build into a production-ready platform with systematic warning fixes and professional integrations for DAW, Video, Lighting, and Biofeedback workflows.
+This update transforms Eoel from a development build into a production-ready platform with systematic warning fixes and professional integrations for DAW, Video, Lighting, and Biofeedback workflows.
 
 ---
 
@@ -420,7 +420,7 @@ DBG(report);
 The new modules are header-only and automatically included via CMake:
 
 ```cmake
-target_include_directories(Echoelmusic
+target_include_directories(Eoel
     PUBLIC
         Sources/Common
         Sources/DAW
@@ -544,7 +544,7 @@ cmake --build . --config Release -j8
 
 **Last Updated:** 2025-11-17
 **Version:** 1.0.0
-**Author:** Echoelmusic Development Team
+**Author:** Eoel Development Team
 
 ---
 

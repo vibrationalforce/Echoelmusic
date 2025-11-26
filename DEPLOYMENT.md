@@ -1,8 +1,8 @@
-# 📱 BLAB - Deployment Guide
+# 📱 Eoel - Deployment Guide
 
 **VS Code First Development Workflow**
 
-This guide explains how to develop BLAB in VS Code and deploy to your iPhone.
+This guide explains how to develop Eoel in VS Code and deploy to your iPhone.
 
 ---
 
@@ -57,8 +57,8 @@ This guide explains how to develop BLAB in VS Code and deploy to your iPhone.
 
 **1. Clone Repository**
 ```bash
-git clone https://github.com/vibrationalforce/blab-ios-app.git
-cd blab-ios-app
+git clone https://github.com/vibrationalforce/eoel-ios-app.git
+cd eoel-ios-app
 ```
 
 **2. Verify Swift Installation**
@@ -82,7 +82,7 @@ swift --version
 ### Phase 2: Daily Development (VS Code)
 
 **Write Code in VS Code:**
-- Edit Swift files in `Sources/Blab/`
+- Edit Swift files in `Sources/Eoel/`
 - Modern syntax highlighting
 - IntelliSense (with SourceKit-LSP)
 - Git integration
@@ -129,13 +129,13 @@ git push
 
 This will:
 1. ✅ Build the project
-2. ✅ Generate Xcode project (`Blab.xcodeproj`)
+2. ✅ Generate Xcode project (`Eoel.xcodeproj`)
 3. ✅ Open Xcode automatically
 4. ✅ Show deployment instructions
 
 **Step 2: In Xcode (5 minutes)**
 
-1. **Select Target:** Click "Blab" in project navigator
+1. **Select Target:** Click "Eoel" in project navigator
 2. **Signing & Capabilities Tab:**
    - Team: Select your Apple ID
    - Bundle ID: `com.vibrationalforce.blab`
@@ -199,13 +199,13 @@ Generate Xcode project and deploy:
 ## 📁 Project Structure
 
 ```
-blab-ios-app/
+eoel-ios-app/
 ├── Package.swift              # Swift Package Manager config
 ├── Resources/
 │   └── Info.plist            # iOS permissions & config
 ├── Sources/
-│   └── Blab/
-│       ├── BlabApp.swift     # App entry point
+│   └── Eoel/
+│       ├── EoelApp.swift     # App entry point
 │       ├── ContentView.swift # Main UI
 │       ├── MicrophoneManager.swift
 │       ├── Audio/
@@ -220,7 +220,7 @@ blab-ios-app/
 │           └── Components/
 │               └── BioMetricsView.swift
 ├── Tests/
-│   └── BlabTests/
+│   └── EoelTests/
 ├── build.sh                  # Build script
 ├── test.sh                   # Test script
 ├── deploy.sh                 # Deploy script
@@ -243,7 +243,7 @@ swift package resolve
 **Error: "No such file or directory: Package.swift"**
 ```bash
 # Make sure you're in the project root
-cd blab-ios-app
+cd eoel-ios-app
 ./build.sh
 ```
 
@@ -325,7 +325,7 @@ cd blab-ios-app
 ### Scenario 1: New Swift File Added
 
 **In VS Code:**
-1. Create new file in `Sources/Blab/`
+1. Create new file in `Sources/Eoel/`
 2. Write code
 3. `./build.sh` (automatically includes new file)
 4. `git commit -m "Add new feature"`
@@ -395,7 +395,7 @@ git push origin feature/new-audio-effect
 
 ## 📞 Support
 
-**Issues:** https://github.com/vibrationalforce/blab-ios-app/issues
+**Issues:** https://github.com/vibrationalforce/eoel-ios-app/issues
 
 **Questions:**
 - Check existing issues

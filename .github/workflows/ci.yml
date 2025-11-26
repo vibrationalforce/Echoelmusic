@@ -1,4 +1,4 @@
-name: Echoelmusic CI/CD Pipeline
+name: Eoel CI/CD Pipeline
 
 on:
   push:
@@ -92,7 +92,7 @@ jobs:
     - name: Build for Testing
       run: |
         xcodebuild build-for-testing \
-          -scheme Echoelmusic \
+          -scheme Eoel \
           -destination '${{ matrix.destination }}' \
           -configuration Debug \
           -enableCodeCoverage YES \
@@ -102,7 +102,7 @@ jobs:
     - name: Run Tests
       run: |
         xcodebuild test-without-building \
-          -scheme Echoelmusic \
+          -scheme Eoel \
           -destination '${{ matrix.destination }}' \
           -configuration Debug \
           -enableCodeCoverage YES \
@@ -116,7 +116,7 @@ jobs:
         xcrun llvm-cov export \
           -format="lcov" \
           -instr-profile=$(find . -name "*.profdata") \
-          $(find . -name "Echoelmusic") \
+          $(find . -name "Eoel") \
           > coverage.lcov
       continue-on-error: true
 
@@ -162,7 +162,7 @@ jobs:
     - name: Build for Testing (macOS)
       run: |
         xcodebuild build-for-testing \
-          -scheme Echoelmusic \
+          -scheme Eoel \
           -destination 'platform=macOS' \
           -configuration Debug \
           -enableCodeCoverage YES \
@@ -171,7 +171,7 @@ jobs:
     - name: Run Tests (macOS)
       run: |
         xcodebuild test-without-building \
-          -scheme Echoelmusic \
+          -scheme Eoel \
           -destination 'platform=macOS' \
           -configuration Debug \
           -enableCodeCoverage YES \
@@ -193,10 +193,10 @@ jobs:
     - name: Run Performance Tests
       run: |
         xcodebuild test \
-          -scheme Echoelmusic \
+          -scheme Eoel \
           -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
-          -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testAdaptiveQualityAdjustment \
-          -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testMemoryOptimizationCaching \
+          -only-testing:EoelTests/ComprehensiveTestSuite/testAdaptiveQualityAdjustment \
+          -only-testing:EoelTests/ComprehensiveTestSuite/testMemoryOptimizationCaching \
           | xcpretty
       continue-on-error: true
 
@@ -204,7 +204,7 @@ jobs:
       run: |
         echo "🔍 Checking for memory leaks..."
         xcodebuild test \
-          -scheme Echoelmusic \
+          -scheme Eoel \
           -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
           -enableAddressSanitizer YES \
           | xcpretty || true
@@ -231,9 +231,9 @@ jobs:
     - name: Test Legacy Device Support
       run: |
         xcodebuild test \
-          -scheme Echoelmusic \
+          -scheme Eoel \
           -destination '${{ matrix.device }}' \
-          -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testLegacyDeviceDetection \
+          -only-testing:EoelTests/ComprehensiveTestSuite/testLegacyDeviceDetection \
           | xcpretty
 
   # Job 6: Security Scan
@@ -280,10 +280,10 @@ jobs:
     - name: Build Release Archive
       run: |
         xcodebuild archive \
-          -scheme Echoelmusic \
+          -scheme Eoel \
           -destination 'generic/platform=iOS' \
           -configuration Release \
-          -archivePath ./build/Echoelmusic.xcarchive \
+          -archivePath ./build/Eoel.xcarchive \
           | xcpretty
       continue-on-error: true
 
@@ -291,8 +291,8 @@ jobs:
       if: success()
       uses: actions/upload-artifact@v3
       with:
-        name: Echoelmusic-Archive
-        path: build/Echoelmusic.xcarchive
+        name: Eoel-Archive
+        path: build/Eoel.xcarchive
         retention-days: 30
 
   # Job 8: Documentation Generation
@@ -313,7 +313,7 @@ jobs:
     - name: Generate Swift Documentation
       run: |
         if command -v swift-docc &> /dev/null; then
-          swift package generate-documentation --target Echoelmusic
+          swift package generate-documentation --target Eoel
         else
           echo "⚠️  swift-docc not available, skipping"
         fi

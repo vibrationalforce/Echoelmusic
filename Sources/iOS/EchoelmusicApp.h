@@ -3,16 +3,16 @@
 #include <JuceHeader.h>
 
 /**
- * Echoelmusic iOS/iPad App
+ * Eoel iOS/iPad App
  *
  * Main application class for iOS platform.
  * Handles app lifecycle, audio session, and UI.
  */
-class EchoelmusicApp : public juce::JUCEApplication
+class EoelApp : public juce::JUCEApplication
 {
 public:
     //==========================================================================
-    EchoelmusicApp() = default;
+    EoelApp() = default;
 
     //==========================================================================
     // JUCEApplication overrides
@@ -20,7 +20,7 @@ public:
 
     const juce::String getApplicationName() override
     {
-        return "Echoelmusic";
+        return "Eoel";
     }
 
     const juce::String getApplicationVersion() override
@@ -51,5 +51,5 @@ private:
     std::unique_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::unique_ptr<class MainWindow> mainWindow;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoelmusicApp)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EoelApp)
 };

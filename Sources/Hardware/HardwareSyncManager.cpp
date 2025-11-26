@@ -1,6 +1,6 @@
 #include "HardwareSyncManager.h"
 
-namespace Echoelmusic {
+namespace Eoel {
 
 HardwareSyncManager::HardwareSyncManager()
 {
@@ -440,4 +440,4 @@ HardwareSyncManager::SyncStatus HardwareSyncManager::getStatus() const
     return status;
 }
 
-} // namespace Echoelmusic
+} // namespace Eoel

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(Echoelmusic VERSION 1.0.0 LANGUAGES CXX)
+project(Eoel VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -146,17 +146,17 @@ endif()
 message(STATUS "Plugin Formats: ${FORMATS}")
 
 # ===========================
-# Echoelmusic Plugin
+# Eoel Plugin
 # ===========================
 
-juce_add_plugin(Echoelmusic
-    COMPANY_NAME "Echoelmusic"
+juce_add_plugin(Eoel
+    COMPANY_NAME "Eoel"
     PLUGIN_MANUFACTURER_CODE Ech0
     PLUGIN_CODE Ech1
     FORMATS ${FORMATS}
 
     # Product name
-    PRODUCT_NAME "Echoelmusic"
+    PRODUCT_NAME "Eoel"
 
     # Plugin characteristics
     IS_SYNTH FALSE
@@ -191,7 +191,7 @@ juce_add_plugin(Echoelmusic
 
     # Description
     DESCRIPTION "Bio-Reactive Audio Processing - Heart Rate Variability meets Professional Audio"
-    PLUGIN_NAME "Echoelmusic"
+    PLUGIN_NAME "Eoel"
 
     # Icon (TODO: Add icon files later)
     # ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Icon-512.png"
@@ -202,7 +202,7 @@ juce_add_plugin(Echoelmusic
 # Source Files
 # ===========================
 
-target_sources(Echoelmusic
+target_sources(Eoel
     PRIVATE
         # =====================================================================
         # PHASE 1: MINIMAL CORE BUILD (100% WORKING!)
@@ -341,7 +341,7 @@ target_sources(Echoelmusic
 # Include Directories
 # ===========================
 
-target_include_directories(Echoelmusic
+target_include_directories(Eoel
     PUBLIC
         Sources
         Sources/Plugin
@@ -370,7 +370,7 @@ target_include_directories(Echoelmusic
 # JUCE Modules
 # ===========================
 
-target_link_libraries(Echoelmusic
+target_link_libraries(Eoel
     PRIVATE
         # Core
         juce::juce_core
@@ -412,7 +412,7 @@ target_link_libraries(Echoelmusic
 # Compile Definitions
 # ===========================
 
-target_compile_definitions(Echoelmusic
+target_compile_definitions(Eoel
     PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
@@ -438,13 +438,13 @@ target_compile_definitions(Echoelmusic
 
 # macOS / iOS
 if(APPLE)
-    target_compile_definitions(Echoelmusic
+    target_compile_definitions(Eoel
         PRIVATE
             JUCE_COREAUDIO_ENABLED=1
             JUCE_COREMIDI_ENABLED=1
     )
 
-    target_link_libraries(Echoelmusic
+    target_link_libraries(Eoel
         PRIVATE
             "-framework CoreAudio"
             "-framework CoreMIDI"
@@ -454,7 +454,7 @@ if(APPLE)
     )
 
     if(IOS)
-        target_link_libraries(Echoelmusic
+        target_link_libraries(Eoel
             PRIVATE
                 "-framework HealthKit"
                 "-framework UIKit"
@@ -462,14 +462,14 @@ if(APPLE)
     endif()
 
     # Universal Binary (Intel + Apple Silicon)
-    set_target_properties(Echoelmusic PROPERTIES
+    set_target_properties(Eoel PROPERTIES
         OSX_ARCHITECTURES "arm64;x86_64"
         OSX_DEPLOYMENT_TARGET "12.0"
     )
 
 # Windows
 elseif(WIN32)
-    target_compile_definitions(Echoelmusic
+    target_compile_definitions(Eoel
         PRIVATE
             # Audio backends
             $<$<BOOL:${ENABLE_WASAPI}>:JUCE_WASAPI=1>
@@ -484,7 +484,7 @@ elseif(WIN32)
     )
 
     # Link Windows libraries
-    target_link_libraries(Echoelmusic
+    target_link_libraries(Eoel
         PRIVATE
             winmm
             ole32
@@ -499,7 +499,7 @@ elseif(WIN32)
 
     # ASIO SDK (if available)
     if(ENABLE_ASIO AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/asiosdk")
-        target_include_directories(Echoelmusic
+        target_include_directories(Eoel
             PRIVATE
                 ThirdParty/asiosdk/common
         )
@@ -507,7 +507,7 @@ elseif(WIN32)
 
 # Linux
 elseif(UNIX AND NOT APPLE)
-    target_compile_definitions(Echoelmusic
+    target_compile_definitions(Eoel
         PRIVATE
             # Audio backends
             $<$<BOOL:${ENABLE_ALSA}>:JUCE_ALSA=1>
@@ -524,16 +524,16 @@ elseif(UNIX AND NOT APPLE)
     # ALSA
     if(ENABLE_ALSA)
         pkg_check_modules(ALSA REQUIRED alsa)
-        target_link_libraries(Echoelmusic PRIVATE ${ALSA_LIBRARIES})
-        target_include_directories(Echoelmusic PRIVATE ${ALSA_INCLUDE_DIRS})
+        target_link_libraries(Eoel PRIVATE ${ALSA_LIBRARIES})
+        target_include_directories(Eoel PRIVATE ${ALSA_INCLUDE_DIRS})
     endif()
 
     # JACK
     if(ENABLE_JACK)
         pkg_check_modules(JACK jack)
         if(JACK_FOUND)
-            target_link_libraries(Echoelmusic PRIVATE ${JACK_LIBRARIES})
-            target_include_directories(Echoelmusic PRIVATE ${JACK_INCLUDE_DIRS})
+            target_link_libraries(Eoel PRIVATE ${JACK_LIBRARIES})
+            target_include_directories(Eoel PRIVATE ${JACK_INCLUDE_DIRS})
         endif()
     endif()
 
@@ -541,13 +541,13 @@ elseif(UNIX AND NOT APPLE)
     if(ENABLE_PULSEAUDIO)
         pkg_check_modules(PULSE libpulse)
         if(PULSE_FOUND)
-            target_link_libraries(Echoelmusic PRIVATE ${PULSE_LIBRARIES})
-            target_include_directories(Echoelmusic PRIVATE ${PULSE_INCLUDE_DIRS})
+            target_link_libraries(Eoel PRIVATE ${PULSE_LIBRARIES})
+            target_include_directories(Eoel PRIVATE ${PULSE_INCLUDE_DIRS})
         endif()
     endif()
 
     # Standard Linux libraries
-    target_link_libraries(Echoelmusic
+    target_link_libraries(Eoel
         PRIVATE
             pthread
             dl
@@ -559,7 +559,7 @@ elseif(UNIX AND NOT APPLE)
 
 # Android
 elseif(ANDROID)
-    target_compile_definitions(Echoelmusic
+    target_compile_definitions(Eoel
         PRIVATE
             JUCE_ANDROID=1
             $<$<BOOL:${ENABLE_ANDROID_OBOE}>:JUCE_USE_ANDROID_OBOE=1>
@@ -569,10 +569,10 @@ elseif(ANDROID)
     # Oboe (Google's low-latency audio library)
     if(ENABLE_ANDROID_OBOE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/oboe")
         add_subdirectory(ThirdParty/oboe)
-        target_link_libraries(Echoelmusic PRIVATE oboe)
+        target_link_libraries(Eoel PRIVATE oboe)
     endif()
 
-    target_link_libraries(Echoelmusic
+    target_link_libraries(Eoel
         PRIVATE
             android
             log
@@ -587,7 +587,7 @@ endif()
 if(BUILD_AAX)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/AAX_SDK")
         message(STATUS "AAX SDK found - building AAX plugin")
-        target_include_directories(Echoelmusic
+        target_include_directories(Eoel
             PRIVATE
                 ThirdParty/AAX_SDK/Interfaces
                 ThirdParty/AAX_SDK/Interfaces/ACF
@@ -595,7 +595,7 @@ if(BUILD_AAX)
 
         # AAX requires code signing on macOS
         if(APPLE)
-            set_target_properties(Echoelmusic_AAX PROPERTIES
+            set_target_properties(Eoel_AAX PROPERTIES
                 XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Developer ID Application"
             )
         endif()
@@ -638,15 +638,15 @@ endif()
 # Install targets
 foreach(FORMAT ${FORMATS})
     if(FORMAT STREQUAL "VST3")
-        install(TARGETS Echoelmusic_VST3 DESTINATION "${VST3_INSTALL_DIR}")
+        install(TARGETS Eoel_VST3 DESTINATION "${VST3_INSTALL_DIR}")
     elseif(FORMAT STREQUAL "AU" AND APPLE)
-        install(TARGETS Echoelmusic_AU DESTINATION "${AU_INSTALL_DIR}")
+        install(TARGETS Eoel_AU DESTINATION "${AU_INSTALL_DIR}")
     elseif(FORMAT STREQUAL "AAX")
-        install(TARGETS Echoelmusic_AAX DESTINATION "${AAX_INSTALL_DIR}")
+        install(TARGETS Eoel_AAX DESTINATION "${AAX_INSTALL_DIR}")
     elseif(FORMAT STREQUAL "CLAP")
-        install(TARGETS Echoelmusic_CLAP DESTINATION "${CLAP_INSTALL_DIR}")
+        install(TARGETS Eoel_CLAP DESTINATION "${CLAP_INSTALL_DIR}")
     elseif(FORMAT STREQUAL "Standalone")
-        install(TARGETS Echoelmusic_Standalone DESTINATION bin)
+        install(TARGETS Eoel_Standalone DESTINATION bin)
     endif()
 endforeach()
 
@@ -655,7 +655,7 @@ endforeach()
 # ===========================
 
 message(STATUS "==============================================")
-message(STATUS "Echoelmusic - Universal Plugin Build")
+message(STATUS "Eoel - Universal Plugin Build")
 message(STATUS "==============================================")
 message(STATUS "Platform: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "Formats: ${FORMATS}")

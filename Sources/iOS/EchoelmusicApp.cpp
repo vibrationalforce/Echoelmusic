@@ -1,8 +1,8 @@
-#include "EchoelmusicApp.h"
+#include "EoelApp.h"
 #include "../UI/MainWindow.h"
 
 //==============================================================================
-void EchoelmusicApp::initialise(const juce::String& commandLine)
+void EoelApp::initialise(const juce::String& commandLine)
 {
     juce::ignoreUnused(commandLine);
 
@@ -65,20 +65,20 @@ void EchoelmusicApp::initialise(const juce::String& commandLine)
     mainWindow->setVisible(true);
 }
 
-void EchoelmusicApp::shutdown()
+void EoelApp::shutdown()
 {
     // Clean shutdown
     mainWindow = nullptr;
     audioDeviceManager = nullptr;
 }
 
-void EchoelmusicApp::systemRequestedQuit()
+void EoelApp::systemRequestedQuit()
 {
     // Allow quit (save state first if needed)
     quit();
 }
 
-void EchoelmusicApp::anotherInstanceStarted(const juce::String& commandLine)
+void EoelApp::anotherInstanceStarted(const juce::String& commandLine)
 {
     juce::ignoreUnused(commandLine);
     // iOS is single-instance, this shouldn't be called
@@ -88,7 +88,7 @@ void EchoelmusicApp::anotherInstanceStarted(const juce::String& commandLine)
 // iOS Audio Session Setup
 //==============================================================================
 
-void EchoelmusicApp::setupAudioSession()
+void EoelApp::setupAudioSession()
 {
 #if JUCE_IOS
     // Configure iOS audio session for pro audio
@@ -182,7 +182,7 @@ void EchoelmusicApp::setupAudioSession()
 #endif
 }
 
-void EchoelmusicApp::handleAudioSessionInterruption(bool interrupted)
+void EoelApp::handleAudioSessionInterruption(bool interrupted)
 {
     if (interrupted)
     {
@@ -200,7 +200,7 @@ void EchoelmusicApp::handleAudioSessionInterruption(bool interrupted)
     }
 }
 
-void EchoelmusicApp::handleAudioSessionRouteChange()
+void EoelApp::handleAudioSessionRouteChange()
 {
     DBG("Audio route changed (headphones plugged/unplugged, etc.)");
 
@@ -212,4 +212,4 @@ void EchoelmusicApp::handleAudioSessionRouteChange()
 // JUCE Application Entry Point
 //==============================================================================
 
-START_JUCE_APPLICATION(EchoelmusicApp)
+START_JUCE_APPLICATION(EoelApp)
