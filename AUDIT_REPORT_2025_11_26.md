@@ -25,7 +25,7 @@ Das Echoelmusic Repository ist ein ambitioniertes **Dual-Codebase Projekt** mit 
 **Kritische Probleme:**
 - **iOS 19.0 Referenzen** - Code kompiliert nicht (iOS 19 existiert nicht!)
 - **RTMP/WebRTC fehlt komplett** - Streaming & Collaboration non-funktional
-- **43 Dateien mit veraltetem "BLAB" Branding**
+- **44+ Dateien mit veraltetem "BLAB" Branding** (437+ Vorkommen) - Siehe [BRANDING_INVENTORY_COMPLETE.md](BRANDING_INVENTORY_COMPLETE.md)
 - **Remote Processing Modul ist Stub** - 15+ TODOs, keine echte Implementierung
 - **Type-Safety Violations** in Audio-kritischem Code
 
@@ -51,7 +51,8 @@ Das Echoelmusic Repository ist ein ambitioniertes **Dual-Codebase Projekt** mit 
 | TODO/FIXME Comments       | 94 total         |                  |
 | - C++ Codebase            | 47               |                  |
 | - Swift Codebase          | 47               |                  |
-| BLAB-Referenzen (legacy)  | 43 files         | BRANDING ISSUE   |
+| BLAB-Referenzen (legacy)  | 44+ files, 437+  | BRANDING ISSUE   |
+| Branding-Varianten gesamt | 6 Varianten      | Siehe Inventar   |
 +---------------------------+------------------+------------------+
 | CI/CD Workflows           | 4 pipelines      | Functional       |
 | Unit Tests vorhanden      | 6 test files     | Swift only       |
@@ -186,23 +187,51 @@ private func setupEnvironmentNode() { ... }
 | **AIComposer.swift** | CoreML Models nicht geladen | AI generiert Random Notes |
 | **ScriptEngine.swift** | Swift Compiler nicht integriert | Scripts non-executable |
 
-### 3.3 Branding-Inkonsistenz
+### 3.3 Branding-Inkonsistenz (VOLLSTÄNDIGES INVENTAR)
 
-**43 Dateien enthalten noch "BLAB" Referenzen:**
+**Siehe: [BRANDING_INVENTORY_COMPLETE.md](BRANDING_INVENTORY_COMPLETE.md) für alle Details.**
 
-| Kategorie | Dateien | Beispiele |
-|-----------|---------|-----------|
-| Dokumentation | 25 | README.md, BUGFIXES.md, COMPATIBILITY.md |
-| Workflows | 4 | build-ios.yml, ios-build.yml |
-| Konfiguration | 3 | project.yml, Info.plist, build.sh |
-| Prompts | 2 | BLAB_MASTER_PROMPT_v4.3.md |
-| Swift Code | 5 | UnifiedControlHub.swift, HealthKitManager.swift |
+**6 verschiedene Branding-Varianten wurden identifiziert:**
+
+| Variante | Vorkommen | Status |
+|----------|-----------|--------|
+| Echoelmusic | 788 | AKTUELL (Hauptname) |
+| Echoel | 438 | AKTUELL (Kurzname) |
+| BLAB/Blab/blab | 437 | VERALTET |
+| blab-ios-app | 51 | VERALTET (alter Repo-Name) |
+| vibrationalforce | 42 | BEHALTEN (GitHub User) |
+| EOEL | 11 (Commits) | HISTORISCH |
+
+**Kritische Dateien mit veraltetem Branding:**
+
+| Kategorie | Dateien | Kritische Beispiele |
+|-----------|---------|---------------------|
+| Konfiguration | 4 | project.yml, Info.plist, Resources/Info.plist |
+| GitHub Workflows | 3 | build-ios.yml (komplettes embedded Xcode-Projekt) |
+| Swift Source | 5 | com.blab Bundle IDs, blabVisualRenderer Variable |
+| Shell Scripts | 5 | build.sh, debug.sh, deploy.sh, test.sh |
+| Dokumentation | 25+ | README.md, DAW_INTEGRATION_GUIDE.md |
+| Prompts | 1 | BLAB_MASTER_PROMPT_v4.3.md (100+ Referenzen) |
 
 **project.yml Zeile 27-28:**
 ```yaml
 sources:
   - path: Sources/Blab  # EXISTIERT NICHT! Sollte Sources/Echoelmusic sein
 ```
+
+**Swift Code mit veraltetem Branding:**
+```swift
+// Sources/Echoelmusic/Audio/Nodes/NodeGraph.swift:32
+label: "com.blab.nodegraph.audio"  // → com.echoelmusic.nodegraph.audio
+
+// Sources/Echoelmusic/Unified/UnifiedControlHub.swift:61
+label: "com.blab.control"          // → com.echoelmusic.control
+
+// Sources/Echoelmusic/Video/BackgroundSourceManager.swift:42
+private var blabVisualRenderer     // → echoelmusicVisualRenderer
+```
+
+**Migrations-Aufwand:** ~7 Stunden (siehe Inventar für detaillierte Anleitung)
 
 ### 3.4 CI/CD & DevOps
 
@@ -366,13 +395,22 @@ sed -i 's/# BLAB iOS App/# Echoelmusic/g' README.md
 sed -i 's/BLAB/Echoelmusic/g' README.md
 ```
 
-### QW4: CI Workflow Branding Fix
+### QW4: Swift Source Bundle IDs
 ```bash
-# In .github/workflows/
-sed -i 's/Blab/Echoelmusic/g' *.yml
+# Bundle IDs aktualisieren
+find Sources -name "*.swift" -exec sed -i 's/com\.blab\./com.echoelmusic./g' {} \;
 ```
 
-### QW5: PluginEditor TODOs aktivieren
+### QW5: Info.plist aktualisieren
+```bash
+sed -i 's/<string>Blab<\/string>/<string>Echoelmusic<\/string>/g' Info.plist
+sed -i 's/Blab needs/Echoelmusic needs/g' Info.plist
+sed -i 's/BLAB needs/Echoelmusic needs/g' Resources/Info.plist
+```
+
+**Vollständige Migrations-Anleitung:** Siehe [BRANDING_INVENTORY_COMPLETE.md](BRANDING_INVENTORY_COMPLETE.md)
+
+### QW6: PluginEditor TODOs aktivieren
 ```cpp
 // Sources/Plugin/PluginEditor.h - Zeile 6-7 entkommentieren
 #include "../Visualization/SpectrumAnalyzer.h"  // War: // TODO: Enable in Phase 2
