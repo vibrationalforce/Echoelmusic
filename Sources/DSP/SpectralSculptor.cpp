@@ -10,6 +10,12 @@ SpectralSculptor::SpectralSculptor()
     gateEnvelopes.resize(fftSize / 2 + 1, 1.0f);
     visualSpectrum.resize(1024, 0.0f);
     visualNoiseProfile.resize(1024, 0.0f);
+
+    // Initialize lock-free double buffers for visualization
+    for (auto& buffer : visualSpectrumBuffers)
+        buffer.resize(1024, 0.0f);
+    for (auto& buffer : visualNoiseProfileBuffers)
+        buffer.resize(1024, 0.0f);
 }
 
 //==============================================================================
@@ -86,13 +92,20 @@ void SpectralSculptor::learnNoiseProfile(const juce::AudioBuffer<float>& buffer)
         noiseProfileLearned = true;
         noiseLearnFrames = 0;
 
-        // Update visualization
-        std::lock_guard<std::mutex> lock(spectrumMutex);
-        const float scale = 1024.0f / static_cast<float>(noiseProfile.size());
-        for (size_t i = 0; i < visualNoiseProfile.size(); ++i)
+        // Update visualization (lock-free write from audio thread)
+        int start1, size1, start2, size2;
+        visualNoiseProfileFifo.prepareToWrite(1, start1, size1, start2, size2);
+
+        if (size1 > 0)
         {
-            int bin = static_cast<int>(i / scale);
-            visualNoiseProfile[i] = noiseProfile[bin];
+            auto& targetBuffer = visualNoiseProfileBuffers[start1];
+            const float scale = 1024.0f / static_cast<float>(noiseProfile.size());
+            for (size_t i = 0; i < targetBuffer.size(); ++i)
+            {
+                int bin = static_cast<int>(i / scale);
+                targetBuffer[i] = noiseProfile[bin];
+            }
+            visualNoiseProfileFifo.finishedWrite(size1);
         }
     }
 }
@@ -317,13 +330,33 @@ void SpectralSculptor::process(juce::AudioBuffer<float>& buffer)
 
 std::vector<float> SpectralSculptor::getSpectrumData() const
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    // Lock-free read from UI thread
+    int start1, size1, start2, size2;
+    visualSpectrumFifo.prepareToRead(1, start1, size1, start2, size2);
+
+    if (size1 > 0)
+    {
+        const auto& sourceBuffer = visualSpectrumBuffers[start1];
+        const_cast<SpectralSculptor*>(this)->visualSpectrum = sourceBuffer;
+        const_cast<juce::AbstractFifo&>(visualSpectrumFifo).finishedRead(size1);
+    }
+
     return visualSpectrum;
 }
 
 std::vector<float> SpectralSculptor::getNoiseProfileData() const
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    // Lock-free read from UI thread
+    int start1, size1, start2, size2;
+    visualNoiseProfileFifo.prepareToRead(1, start1, size1, start2, size2);
+
+    if (size1 > 0)
+    {
+        const auto& sourceBuffer = visualNoiseProfileBuffers[start1];
+        const_cast<SpectralSculptor*>(this)->visualNoiseProfile = sourceBuffer;
+        const_cast<juce::AbstractFifo&>(visualNoiseProfileFifo).finishedRead(size1);
+    }
+
     return visualNoiseProfile;
 }
 
@@ -621,17 +654,25 @@ int SpectralSculptor::frequencyToBin(float freq) const
 
 void SpectralSculptor::updateVisualization(const std::vector<std::complex<float>>& freqData)
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    // Lock-free write from audio thread
+    int start1, size1, start2, size2;
+    visualSpectrumFifo.prepareToWrite(1, start1, size1, start2, size2);
 
-    const float scale = 1024.0f / static_cast<float>(freqData.size());
-
-    for (size_t i = 0; i < visualSpectrum.size(); ++i)
+    if (size1 > 0)
     {
-        int bin = static_cast<int>(i / scale);
-        if (bin < static_cast<int>(freqData.size()))
+        auto& targetBuffer = visualSpectrumBuffers[start1];
+        const float scale = 1024.0f / static_cast<float>(freqData.size());
+
+        for (size_t i = 0; i < targetBuffer.size(); ++i)
         {
-            float magnitude = std::abs(freqData[bin]);
-            visualSpectrum[i] = magnitude;
+            int bin = static_cast<int>(i / scale);
+            if (bin < static_cast<int>(freqData.size()))
+            {
+                float magnitude = std::abs(freqData[bin]);
+                targetBuffer[i] = magnitude;
+            }
         }
+
+        visualSpectrumFifo.finishedWrite(size1);
     }
 }

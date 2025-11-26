@@ -24,6 +24,15 @@ HarmonicForge::HarmonicForge()
     {
         state.spectrumData.resize(128, -100.0f);
     }
+
+    // Initialize lock-free double buffers for each band
+    for (auto& bandBuffers : spectrumBuffers)
+    {
+        for (auto& buffer : bandBuffers)
+        {
+            buffer.resize(128, -100.0f);
+        }
+    }
 }
 
 //==============================================================================
@@ -219,10 +228,20 @@ void HarmonicForge::process(juce::AudioBuffer<float>& buffer)
 
 std::vector<float> HarmonicForge::getHarmonicSpectrum(int bandIndex) const
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
-
     if (bandIndex >= 0 && bandIndex < 4)
     {
+        // Lock-free read from UI thread
+        auto& fifo = const_cast<juce::AbstractFifo&>(spectrumFifos[bandIndex]);
+        int start1, size1, start2, size2;
+        fifo.prepareToRead(1, start1, size1, start2, size2);
+
+        if (size1 > 0)
+        {
+            const auto& sourceBuffer = spectrumBuffers[bandIndex][start1];
+            const_cast<HarmonicForge*>(this)->bandStates[bandIndex].spectrumData = sourceBuffer;
+            fifo.finishedRead(size1);
+        }
+
         return bandStates[bandIndex].spectrumData;
     }
 

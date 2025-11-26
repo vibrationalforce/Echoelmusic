@@ -28,6 +28,10 @@ DynamicEQ::DynamicEQ()
     // Initialize FFT data
     fftData.fill(0.0f);
     spectrumData.fill(0.0f);
+
+    // Initialize lock-free double buffers
+    for (auto& buffer : spectrumBuffers)
+        buffer.fill(0.0f);
 }
 
 //==============================================================================
@@ -194,7 +198,17 @@ void DynamicEQ::setBandRatio(int index, float ratio)
 
 std::vector<float> DynamicEQ::getSpectrumData() const
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    // Lock-free read from UI thread
+    int start1, size1, start2, size2;
+    spectrumFifo.prepareToRead(1, start1, size1, start2, size2);
+
+    if (size1 > 0)
+    {
+        const auto& sourceBuffer = spectrumBuffers[start1];
+        const_cast<DynamicEQ*>(this)->spectrumData = sourceBuffer;
+        const_cast<juce::AbstractFifo&>(spectrumFifo).finishedRead(size1);
+    }
+
     return std::vector<float>(spectrumData.begin(), spectrumData.end());
 }
 
@@ -425,33 +439,41 @@ void DynamicEQ::updateSpectrumData(const juce::AudioBuffer<float>& buffer)
             window.multiplyWithWindowingTable(fftData.data(), fftSize);
             fft.performFrequencyOnlyForwardTransform(fftData.data());
 
-            // Convert to spectrum bins
-            std::lock_guard<std::mutex> lock(spectrumMutex);
+            // Convert to spectrum bins (lock-free write from audio thread)
+            int start1, size1, start2, size2;
+            spectrumFifo.prepareToWrite(1, start1, size1, start2, size2);
 
-            for (int bin = 0; bin < spectrumBins; ++bin)
+            if (size1 > 0)
             {
-                float minFreq = 20.0f * std::pow(1000.0f, static_cast<float>(bin) / spectrumBins);
-                float maxFreq = 20.0f * std::pow(1000.0f, static_cast<float>(bin + 1) / spectrumBins);
+                auto& targetBuffer = spectrumBuffers[start1];
 
-                int minFFTBin = static_cast<int>(minFreq / (currentSampleRate / fftSize));
-                int maxFFTBin = static_cast<int>(maxFreq / (currentSampleRate / fftSize));
-
-                float sum = 0.0f;
-                int count = 0;
-
-                for (int fftBin = minFFTBin; fftBin < maxFFTBin && fftBin < fftSize / 2; ++fftBin)
+                for (int bin = 0; bin < spectrumBins; ++bin)
                 {
-                    sum += fftData[fftBin];
-                    count++;
+                    float minFreq = 20.0f * std::pow(1000.0f, static_cast<float>(bin) / spectrumBins);
+                    float maxFreq = 20.0f * std::pow(1000.0f, static_cast<float>(bin + 1) / spectrumBins);
+
+                    int minFFTBin = static_cast<int>(minFreq / (currentSampleRate / fftSize));
+                    int maxFFTBin = static_cast<int>(maxFreq / (currentSampleRate / fftSize));
+
+                    float sum = 0.0f;
+                    int count = 0;
+
+                    for (int fftBin = minFFTBin; fftBin < maxFFTBin && fftBin < fftSize / 2; ++fftBin)
+                    {
+                        sum += fftData[fftBin];
+                        count++;
+                    }
+
+                    if (count > 0)
+                    {
+                        float avgMagnitude = sum / count;
+                        float db = juce::Decibels::gainToDecibels(avgMagnitude + 0.001f);
+                        float normalized = juce::jmap(db, -60.0f, 0.0f, 0.0f, 1.0f);
+                        targetBuffer[bin] = juce::jlimit(0.0f, 1.0f, normalized);
+                    }
                 }
 
-                if (count > 0)
-                {
-                    float avgMagnitude = sum / count;
-                    float db = juce::Decibels::gainToDecibels(avgMagnitude + 0.001f);
-                    float normalized = juce::jmap(db, -60.0f, 0.0f, 0.0f, 1.0f);
-                    spectrumData[bin] = juce::jlimit(0.0f, 1.0f, normalized);
-                }
+                spectrumFifo.finishedWrite(size1);
             }
 
             fftDataIndex = 0;

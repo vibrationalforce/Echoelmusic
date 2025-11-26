@@ -516,6 +516,205 @@ class VideoExportManager: ObservableObject {
 
         print("❌ VideoExportManager: Export cancelled")
     }
+
+    // MARK: - Social Media Presets
+
+    enum SocialMediaPlatform: String, CaseIterable {
+        case tiktok = "TikTok"
+        case instagram_reel = "Instagram Reel"
+        case instagram_post = "Instagram Post"
+        case instagram_story = "Instagram Story"
+        case youtube_short = "YouTube Short"
+        case youtube_video = "YouTube Video"
+        case facebook = "Facebook"
+        case twitter = "Twitter/X"
+
+        struct Preset {
+            let resolution: Resolution
+            let frameRate: FrameRate
+            let format: ExportFormat
+            let quality: Quality
+            let aspectRatio: AspectRatio
+            let maxDuration: TimeInterval?
+            let recommendedBitrate: Int // kbps
+
+            enum AspectRatio: String {
+                case portrait_9_16 = "9:16"  // 1080x1920
+                case square_1_1 = "1:1"       // 1080x1080
+                case landscape_16_9 = "16:9"  // 1920x1080
+                case landscape_4_3 = "4:3"    // 1440x1080
+            }
+        }
+
+        var preset: Preset {
+            switch self {
+            case .tiktok:
+                return Preset(
+                    resolution: .hd1920x1080, // Will be rotated to 1080x1920
+                    frameRate: .fps30,
+                    format: .h264_high,
+                    quality: .high,
+                    aspectRatio: .portrait_9_16,
+                    maxDuration: 180, // 3 minutes
+                    recommendedBitrate: 6000
+                )
+
+            case .instagram_reel:
+                return Preset(
+                    resolution: .hd1920x1080,
+                    frameRate: .fps30,
+                    format: .h264_high,
+                    quality: .high,
+                    aspectRatio: .portrait_9_16,
+                    maxDuration: 90, // 90 seconds
+                    recommendedBitrate: 5000
+                )
+
+            case .instagram_post:
+                return Preset(
+                    resolution: .hd1920x1080,
+                    frameRate: .fps30,
+                    format: .h264_high,
+                    quality: .high,
+                    aspectRatio: .square_1_1,
+                    maxDuration: 60,
+                    recommendedBitrate: 4000
+                )
+
+            case .instagram_story:
+                return Preset(
+                    resolution: .hd1920x1080,
+                    frameRate: .fps30,
+                    format: .h264_high,
+                    quality: .high,
+                    aspectRatio: .portrait_9_16,
+                    maxDuration: 15,
+                    recommendedBitrate: 4000
+                )
+
+            case .youtube_short:
+                return Preset(
+                    resolution: .hd1920x1080,
+                    frameRate: .fps60,
+                    format: .h264_high,
+                    quality: .maximum,
+                    aspectRatio: .portrait_9_16,
+                    maxDuration: 60,
+                    recommendedBitrate: 8000
+                )
+
+            case .youtube_video:
+                return Preset(
+                    resolution: .hd1920x1080,
+                    frameRate: .fps60,
+                    format: .h264_high,
+                    quality: .maximum,
+                    aspectRatio: .landscape_16_9,
+                    maxDuration: nil, // No limit
+                    recommendedBitrate: 8000
+                )
+
+            case .facebook:
+                return Preset(
+                    resolution: .hd1920x1080,
+                    frameRate: .fps30,
+                    format: .h264_high,
+                    quality: .high,
+                    aspectRatio: .landscape_16_9,
+                    maxDuration: 240, // 4 minutes recommended
+                    recommendedBitrate: 5000
+                )
+
+            case .twitter:
+                return Preset(
+                    resolution: .hd1280x720,
+                    frameRate: .fps30,
+                    format: .h264_main,
+                    quality: .high,
+                    aspectRatio: .landscape_16_9,
+                    maxDuration: 140, // 2:20 for most accounts
+                    recommendedBitrate: 5000
+                )
+            }
+        }
+
+        var description: String {
+            let p = preset
+            var desc = "\(rawValue) - \(p.aspectRatio.rawValue)"
+            if let maxDuration = p.maxDuration {
+                desc += ", max \(Int(maxDuration))s"
+            }
+            desc += ", \(p.recommendedBitrate / 1000)Mbps"
+            return desc
+        }
+    }
+
+    /// Export for specific social media platform with optimized settings
+    func exportForSocialMedia(
+        composition: AVMutableComposition,
+        to outputURL: URL,
+        platform: SocialMediaPlatform
+    ) async throws {
+        let preset = platform.preset
+
+        // Validate duration if platform has max duration
+        if let maxDuration = preset.maxDuration {
+            let duration = composition.duration.seconds
+            if duration > maxDuration {
+                print("⚠️ VideoExportManager: Video duration (\(Int(duration))s) exceeds \(platform.rawValue) limit (\(Int(maxDuration))s)")
+                // Could trim or throw error
+            }
+        }
+
+        print("📱 VideoExportManager: Exporting for \(platform.rawValue)")
+        print("   Resolution: \(preset.resolution.rawValue)")
+        print("   Aspect Ratio: \(preset.aspectRatio.rawValue)")
+        print("   Frame Rate: \(preset.frameRate.rawValue) FPS")
+        print("   Bitrate: \(preset.recommendedBitrate) kbps")
+
+        try await export(
+            composition: composition,
+            to: outputURL,
+            format: preset.format,
+            resolution: preset.resolution,
+            frameRate: preset.frameRate,
+            quality: preset.quality
+        )
+
+        print("✅ VideoExportManager: \(platform.rawValue) export complete")
+    }
+
+    /// Export to multiple social media platforms in one batch
+    func exportToAllPlatforms(
+        composition: AVMutableComposition,
+        outputDirectory: URL,
+        platforms: [SocialMediaPlatform] = SocialMediaPlatform.allCases
+    ) async throws {
+        guard !isExporting else {
+            throw ExportError.exportAlreadyInProgress
+        }
+
+        let baseFilename = "video_\(Date().timeIntervalSince1970)"
+
+        for platform in platforms {
+            let preset = platform.preset
+            let filename = "\(baseFilename)_\(platform.rawValue.replacingOccurrences(of: " ", with: "_")).\(preset.format.fileExtension)"
+            let outputURL = outputDirectory.appendingPathComponent(filename)
+
+            do {
+                try await exportForSocialMedia(
+                    composition: composition,
+                    to: outputURL,
+                    platform: platform
+                )
+            } catch {
+                print("❌ VideoExportManager: Failed to export for \(platform.rawValue) - \(error)")
+                throw error
+            }
+        }
+
+        print("✅ VideoExportManager: Exported to \(platforms.count) platforms")
+    }
 }
 
 // MARK: - Errors

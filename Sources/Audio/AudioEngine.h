@@ -195,12 +195,27 @@ private:
     std::function<double()> syncTempoCallback;
     std::function<bool()> syncTransportCallback;
 
+    // Bio-Reactive DSP Chain (Master Effects)
+    using Filter = juce::dsp::StateVariableTPTFilter<float>;
+    using Reverb = juce::dsp::Reverb;
+
+    juce::dsp::ProcessSpec bioReactiveDSPSpec;
+    Filter bioReactiveFilter;
+    Reverb bioReactiveReverb;
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> bioReactiveDelay { 96000 }; // 2s @ 48kHz
+    juce::AudioBuffer<float> bioReactiveFXBuffer; // Temp buffer for DSP processing
+
+    // LFO for modulation
+    float lfoPhase = 0.0f;
+
     //==========================================================================
     // Internal Methods
     //==========================================================================
 
     void processAudioBlock(const float* const* input, float* const* output,
                           int numInputs, int numOutputs, int numSamples);
+
+    void applyBioReactiveDSP(juce::AudioBuffer<float>& buffer, int numSamples);
 
     void mixTracksToMaster(int numSamples);
     void recordInputToTracks(const float* const* input, int numInputs, int numSamples);

@@ -492,13 +492,30 @@ struct BioSceneRule: Identifiable {
 class EncodingManager {
     private let device: MTLDevice
     private var compressionSession: VTCompressionSession?
+    private var frameCount: Int64 = 0
+    private let encodingQueue = DispatchQueue(label: "com.echoelmusic.encoding", qos: .userInteractive)
+
+    // Encoded frame storage (lock-free single-producer-single-consumer)
+    private var encodedFrameData: Data?
+    private let encodedDataSemaphore = DispatchSemaphore(value: 0)
+
     var adaptiveBitrateEnabled: Bool = true
+
+    // Current encoding parameters
+    private var currentResolution: StreamEngine.Resolution = .hd1920x1080
+    private var currentFrameRate: Int = 60
+    private var currentBitrate: Int = 6000
 
     init(device: MTLDevice) {
         self.device = device
     }
 
     func startEncoding(resolution: StreamEngine.Resolution, frameRate: Int, bitrate: Int) throws {
+        self.currentResolution = resolution
+        self.currentFrameRate = frameRate
+        self.currentBitrate = bitrate
+        self.frameCount = 0
+
         // Create compression session
         var session: VTCompressionSession?
 
@@ -513,8 +530,8 @@ class EncodingManager {
             encoderSpecification: nil,
             imageBufferAttributes: nil,
             compressedDataAllocator: nil,
-            outputCallback: nil,
-            refcon: nil,
+            outputCallback: compressionOutputCallback,
+            refcon: Unmanaged.passUnretained(self).toOpaque(),
             compressionSessionOut: &session
         )
 
@@ -522,12 +539,16 @@ class EncodingManager {
             throw StreamError.encodingInitializationFailed
         }
 
-        // Configure session
+        // Configure session for real-time streaming
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_RealTime, value: kCFBooleanTrue)
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ProfileLevel, value: kVTProfileLevel_H264_High_AutoLevel)
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AverageBitRate, value: bitrate * 1000 as CFNumber)
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ExpectedFrameRate, value: frameRate as CFNumber)
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_MaxKeyFrameInterval, value: frameRate * 2 as CFNumber)
+        VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AllowFrameReordering, value: kCFBooleanFalse)
+
+        // Low latency settings for streaming
+        VTSessionSetProperty(session, key: kVTCompressionPropertyKey_MaxH264SliceBytes, value: 1400 as CFNumber) // MTU-friendly
 
         VTCompressionSessionPrepareToEncodeFrames(session)
 
@@ -538,20 +559,169 @@ class EncodingManager {
 
     func stopEncoding() {
         if let session = compressionSession {
+            VTCompressionSessionCompleteFrames(session, untilPresentationTimeStamp: .invalid)
             VTCompressionSessionInvalidate(session)
             compressionSession = nil
         }
+        frameCount = 0
+        encodedFrameData = nil
     }
 
     func encodeFrame(texture: MTLTexture) -> Data? {
-        // TODO: Implement actual frame encoding using VTCompressionSession
-        // This is a placeholder
-        return Data()
+        guard let session = compressionSession else {
+            print("❌ EncodingManager: No active compression session")
+            return nil
+        }
+
+        // Convert MTLTexture to CVPixelBuffer
+        guard let pixelBuffer = createPixelBuffer(from: texture) else {
+            print("❌ EncodingManager: Failed to create pixel buffer from texture")
+            return nil
+        }
+
+        // Prepare presentation timestamp
+        let timeScale: Int32 = Int32(currentFrameRate)
+        let frameTime = CMTime(value: frameCount, timescale: timeScale)
+        let frameDuration = CMTime(value: 1, timescale: timeScale)
+
+        // Reset encoded data
+        encodedFrameData = nil
+
+        // Encode frame
+        let flags: VTEncodeInfoFlags = []
+        let status = VTCompressionSessionEncodeFrame(
+            session,
+            imageBuffer: pixelBuffer,
+            presentationTimeStamp: frameTime,
+            duration: frameDuration,
+            frameProperties: nil,
+            sourceFrameRefcon: nil,
+            infoFlagsOut: nil
+        )
+
+        guard status == noErr else {
+            print("❌ EncodingManager: Frame encoding failed with status \(status)")
+            return nil
+        }
+
+        frameCount += 1
+
+        // Wait for callback to populate encodedFrameData (with timeout)
+        let result = encodedDataSemaphore.wait(timeout: .now() + .milliseconds(100))
+
+        guard result == .success, let data = encodedFrameData else {
+            print("⚠️ EncodingManager: Encoding callback timeout or no data")
+            return nil
+        }
+
+        return data
+    }
+
+    // MARK: - MTLTexture → CVPixelBuffer Conversion
+
+    private func createPixelBuffer(from texture: MTLTexture) -> CVPixelBuffer? {
+        let width = texture.width
+        let height = texture.height
+
+        // Create pixel buffer
+        var pixelBuffer: CVPixelBuffer?
+        let attributes: [CFString: Any] = [
+            kCVPixelBufferPixelFormatTypeKey: kCVPixelFormatType_32BGRA,
+            kCVPixelBufferWidthKey: width,
+            kCVPixelBufferHeightKey: height,
+            kCVPixelBufferIOSurfacePropertiesKey: [:] as CFDictionary,
+            kCVPixelBufferMetalCompatibilityKey: kCFBooleanTrue
+        ]
+
+        let status = CVPixelBufferCreate(
+            kCFAllocatorDefault,
+            width,
+            height,
+            kCVPixelFormatType_32BGRA,
+            attributes as CFDictionary,
+            &pixelBuffer
+        )
+
+        guard status == kCVReturnSuccess, let buffer = pixelBuffer else {
+            print("❌ EncodingManager: Failed to create pixel buffer")
+            return nil
+        }
+
+        // Lock pixel buffer
+        CVPixelBufferLockBaseAddress(buffer, CVPixelBufferLockFlags(rawValue: 0))
+        defer { CVPixelBufferUnlockBaseAddress(buffer, CVPixelBufferLockFlags(rawValue: 0)) }
+
+        guard let baseAddress = CVPixelBufferGetBaseAddress(buffer) else {
+            print("❌ EncodingManager: Failed to get pixel buffer base address")
+            return nil
+        }
+
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(buffer)
+
+        // Copy texture data to pixel buffer
+        texture.getBytes(
+            baseAddress,
+            bytesPerRow: bytesPerRow,
+            from: MTLRegion(
+                origin: MTLOrigin(x: 0, y: 0, z: 0),
+                size: MTLSize(width: width, height: height, depth: 1)
+            ),
+            mipmapLevel: 0
+        )
+
+        return buffer
+    }
+
+    // MARK: - VTCompressionSession Callback
+
+    private let compressionOutputCallback: VTCompressionOutputCallback = { (
+        outputCallbackRefCon: UnsafeMutableRawPointer?,
+        sourceFrameRefCon: UnsafeMutableRawPointer?,
+        status: OSStatus,
+        infoFlags: VTEncodeInfoFlags,
+        sampleBuffer: CMSampleBuffer?
+    ) in
+        guard status == noErr, let buffer = sampleBuffer else {
+            print("❌ EncodingManager: Compression callback error \(status)")
+            return
+        }
+
+        guard let refCon = outputCallbackRefCon else { return }
+        let encodingManager = Unmanaged<EncodingManager>.fromOpaque(refCon).takeUnretainedValue()
+
+        // Extract encoded data from sample buffer
+        guard let dataBuffer = CMSampleBufferGetDataBuffer(buffer) else {
+            print("❌ EncodingManager: No data buffer in sample")
+            return
+        }
+
+        var length: Int = 0
+        var dataPointer: UnsafeMutablePointer<Int8>?
+        let result = CMBlockBufferGetDataPointer(
+            dataBuffer,
+            atOffset: 0,
+            lengthAtOffsetOut: nil,
+            totalLengthOut: &length,
+            dataPointerOut: &dataPointer
+        )
+
+        guard result == kCMBlockBufferNoErr, let pointer = dataPointer, length > 0 else {
+            print("❌ EncodingManager: Failed to get data pointer")
+            return
+        }
+
+        // Copy data
+        encodingManager.encodedFrameData = Data(bytes: pointer, count: length)
+
+        // Signal that data is ready
+        encodingManager.encodedDataSemaphore.signal()
     }
 
     func updateBitrate(_ bitrate: Int) {
         guard let session = compressionSession else { return }
+        currentBitrate = bitrate
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AverageBitRate, value: bitrate * 1000 as CFNumber)
+        print("📊 EncodingManager: Updated bitrate to \(bitrate) kbps")
     }
 }
 

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- DISTRIBUTION METHOD -->
+	<!-- Options: app-store, ad-hoc, enterprise, development -->
+	<key>method</key>
+	<string>app-store</string>
+
+	<!-- APP STORE UPLOAD OPTIONS -->
+	<key>uploadBitcode</key>
+	<false/>
+
+	<key>uploadSymbols</key>
+	<true/>
+
+	<key>compileBitcode</key>
+	<false/>
+
+	<!-- CODE SIGNING -->
+	<!-- IMPORTANT: Replace with your actual Team ID from Apple Developer Portal -->
+	<!-- Find at: https://developer.apple.com/account > Membership > Team ID -->
+	<key>teamID</key>
+	<string>YOUR_TEAM_ID_HERE</string>
+
+	<!-- PROVISIONING PROFILE -->
+	<!-- Automatic signing (recommended) -->
+	<key>signingStyle</key>
+	<string>automatic</string>
+
+	<!-- Manual signing (if needed) -->
+	<!-- Uncomment and configure if using manual signing:
+	<key>signingStyle</key>
+	<string>manual</string>
+
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>com.vibrationalforce.echoelmusic</key>
+		<string>YOUR_PROVISIONING_PROFILE_NAME</string>
+	</dict>
+	-->
+
+	<!-- SIGNING CERTIFICATE -->
+	<!-- The certificate identity to use for signing -->
+	<!-- Options: "Apple Distribution", "iPhone Distribution", or specific cert name -->
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
+
+	<!-- APP THINNING -->
+	<!-- Optimize app for specific devices -->
+	<key>thinning</key>
+	<string>&lt;none&gt;</string>
+
+	<!-- STRIP SWIFT SYMBOLS -->
+	<!-- Reduce app size by stripping Swift symbols -->
+	<key>stripSwiftSymbols</key>
+	<true/>
+
+	<!-- MANIFEST FOR OVER-THE-AIR INSTALLATION -->
+	<!-- Only for enterprise distribution -->
+	<key>generateAppStoreInformation</key>
+	<false/>
+
+	<!-- ICLOUD CONTAINER ENVIRONMENT -->
+	<!-- Options: Production, Development -->
+	<key>iCloudContainerEnvironment</key>
+	<string>Production</string>
+
+	<!-- DESTINATION -->
+	<!-- Where to export the IPA -->
+	<key>destination</key>
+	<string>export</string>
+</dict>
+</plist>
