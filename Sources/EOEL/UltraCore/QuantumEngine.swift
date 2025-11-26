@@ -446,7 +446,22 @@ class QuantumEngine: ObservableObject {
     private init() {
         // Setup Metal
         guard let device = MTLCreateSystemDefaultDevice() else {
-            fatalError("Metal not supported")
+            // Graceful fallback if Metal not supported
+            print("⚠️ Metal not supported - QuantumEngine running in CPU fallback mode")
+            ErrorDisplayManager.shared.showWarning(
+                "GPU Acceleration Unavailable",
+                message: "Metal is not supported on this device. Audio processing will use CPU fallback mode, which may have reduced performance."
+            )
+            // Set device to nil and continue with CPU-only processing
+            self.device = nil
+            self.commandQueue = nil
+
+            // Allocate SIMD buffer pool for CPU fallback
+            for _ in 0..<16 {
+                let buffer = allocateCacheAligned(count: 4096) as UnsafeMutablePointer<SIMD16<Float>>
+                simdBufferPool.append(buffer)
+            }
+            return
         }
 
         self.device = device
@@ -458,7 +473,11 @@ class QuantumEngine: ObservableObject {
             do {
                 computePipeline = try device.makeComputePipelineState(function: function)
             } catch {
-                print("Failed to create compute pipeline: \(error)")
+                print("⚠️ Failed to create compute pipeline: \(error)")
+                ErrorDisplayManager.shared.showWarning(
+                    "GPU Pipeline Creation Failed",
+                    message: "Could not create Metal compute pipeline. Falling back to CPU processing."
+                )
             }
         }
 

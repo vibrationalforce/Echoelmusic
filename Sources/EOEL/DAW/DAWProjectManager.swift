@@ -78,6 +78,7 @@ class DAWProjectManager: ObservableObject {
         var audioTracks: [AudioTrackData]
         var videoTracks: [VideoTrackData]
         var busses: [BusData]
+        var masterBusData: MasterBusData?
         var timeSignatureChanges: [TimeSignatureData]
         var tempoChanges: [TempoChangeData]
         var automationLanes: [AutomationLaneData]
@@ -108,6 +109,7 @@ class DAWProjectManager: ObservableObject {
             self.audioTracks = []
             self.videoTracks = []
             self.busses = []
+            self.masterBusData = nil
             self.timeSignatureChanges = []
             self.tempoChanges = []
             self.automationLanes = []
@@ -115,6 +117,15 @@ class DAWProjectManager: ObservableObject {
             self.markers = []
             self.regions = []
         }
+    }
+
+    // MARK: - Master Bus Data
+
+    struct MasterBusData: Codable {
+        let volume: Float
+        let pan: Float
+        let limitingEnabled: Bool
+        let meteringEnabled: Bool
     }
 
     // MARK: - Project Data Structures
@@ -347,6 +358,7 @@ class DAWProjectManager: ObservableObject {
         project.audioTracks = collectAudioTracks()
         project.videoTracks = collectVideoTracks()
         project.busses = collectBusses()
+        project.masterBusData = collectMasterBus()
         project.timeSignatureChanges = collectTimeSignatures()
         project.tempoChanges = collectTempoChanges()
         project.automationLanes = collectAutomation()
@@ -359,6 +371,9 @@ class DAWProjectManager: ObservableObject {
 
         // Determine save URL
         let saveURL = url ?? defaultProjectURL(for: project)
+
+        // Validate disk space before saving
+        try validateDiskSpace(for: data, at: saveURL)
 
         // Write to file
         try data.write(to: saveURL)
@@ -523,143 +538,182 @@ class DAWProjectManager: ObservableObject {
         }
     }
 
+    private func collectMasterBus() -> MasterBusData {
+        MasterBusData(
+            volume: multiTrack.masterBus.volume,
+            pan: multiTrack.masterBus.pan,
+            limitingEnabled: multiTrack.masterBus.limitingEnabled,
+            meteringEnabled: multiTrack.masterBus.meteringEnabled
+        )
+    }
+
     // MARK: - Data Restoration
 
     private func restoreProject(_ project: DAWProject) {
         print("🔄 Restoring project data...")
 
-        // 1. Restore Timeline Engine
-        print("  ↳ Restoring timeline...")
-        DAWTimelineEngine.shared.currentPosition = project.timeline.currentPosition
-        DAWTimelineEngine.shared.tempo = project.timeline.tempo
-        DAWTimelineEngine.shared.timeSignatureNumerator = project.timeline.timeSignatureNumerator
-        DAWTimelineEngine.shared.timeSignatureDenominator = project.timeline.timeSignatureDenominator
-        DAWTimelineEngine.shared.loopEnabled = project.timeline.loopEnabled
-        DAWTimelineEngine.shared.loopStart = project.timeline.loopStart
-        DAWTimelineEngine.shared.loopEnd = project.timeline.loopEnd
-        DAWTimelineEngine.shared.lengthInSamples = project.timeline.lengthInSamples
-        DAWTimelineEngine.shared.sampleRate = project.timeline.sampleRate
+        // 1. Restore Timeline Engine settings
+        print("  ↳ Restoring timeline settings...")
+        timeline.sampleRate = project.sampleRate
+        timeline.projectLength = project.projectLength
 
         // 2. Restore Tempo Map
-        print("  ↳ Restoring tempo map...")
-        DAWTimelineEngine.shared.tempoChanges = project.timeline.tempoChanges.map { tempoData in
-            DAWTimelineEngine.TempoChange(
-                position: tempoData.position,
-                tempo: tempoData.tempo,
-                curve: DAWTimelineEngine.TempoCurve(rawValue: tempoData.curve) ?? .linear
+        print("  ↳ Restoring tempo changes...")
+        tempoMap.globalTempo = project.globalTempo
+        // Restore tempo changes from project.tempoChanges
+        for tempoData in project.tempoChanges {
+            tempoMap.addTempoChange(
+                at: DAWTimelineEngine.TimelinePosition(samples: tempoData.position),
+                tempo: tempoData.tempo
             )
         }
+        print("    ↳ \(project.tempoChanges.count) tempo changes restored")
 
         // 3. Restore Markers
         print("  ↳ Restoring markers...")
-        DAWTimelineEngine.shared.markers = project.timeline.markers.map { markerData in
-            DAWTimelineEngine.Marker(
-                id: markerData.id,
-                position: markerData.position,
+        for markerData in project.markers {
+            timeline.addMarker(
+                at: DAWTimelineEngine.TimelinePosition(samples: markerData.position),
                 name: markerData.name,
-                color: Color(hex: markerData.color) ?? .yellow
+                color: markerData.color
             )
         }
+        print("    ↳ \(project.markers.count) markers restored")
 
         // 4. Restore Regions
         print("  ↳ Restoring regions...")
-        DAWTimelineEngine.shared.regions = project.timeline.regions.map { regionData in
-            DAWTimelineEngine.Region(
-                id: regionData.id,
-                startPosition: regionData.startPosition,
-                endPosition: regionData.endPosition,
+        for regionData in project.regions {
+            timeline.addRegion(
+                start: DAWTimelineEngine.TimelinePosition(samples: regionData.startPosition),
+                end: DAWTimelineEngine.TimelinePosition(samples: regionData.endPosition),
                 name: regionData.name,
-                color: Color(hex: regionData.color) ?? .cyan
+                color: regionData.color
             )
         }
+        print("    ↳ \(project.regions.count) regions restored")
 
-        // 5. Restore Tracks
-        print("  ↳ Restoring tracks (\(project.tracks.count) tracks)...")
-        DAWMultiTrack.shared.tracks = project.tracks.map { trackData in
-            let track = DAWMultiTrack.Track(
+        // 5. Restore Time Signatures
+        print("  ↳ Restoring time signatures...")
+        for tsData in project.timeSignatureChanges {
+            timeline.addTimeSignature(
+                at: DAWTimelineEngine.TimelinePosition(samples: tsData.position),
+                numerator: tsData.numerator,
+                denominator: tsData.denominator
+            )
+        }
+        print("    ↳ \(project.timeSignatureChanges.count) time signature changes restored")
+
+        // 6. Restore Audio Tracks
+        print("  ↳ Restoring audio tracks (\(project.audioTracks.count) tracks)...")
+        multiTrack.tracks.removeAll()
+        for trackData in project.audioTracks {
+            let track = DAWMultiTrack.AudioTrack(
                 name: trackData.name,
-                type: DAWMultiTrack.Track.TrackType(rawValue: trackData.type) ?? .audio
+                color: trackData.color,
+                inputSource: .none,
+                volume: trackData.volume,
+                pan: trackData.pan
             )
-            track.volume = trackData.volume
-            track.pan = trackData.pan
-            track.isMuted = trackData.muted
-            track.isSolo = trackData.solo
-            track.isRecordArmed = trackData.recordArmed
-            track.color = Color(hex: trackData.color) ?? .cyan
-            track.outputBus = trackData.outputBus
+            track.muted = trackData.muted
+            track.soloed = trackData.soloed
 
-            // Restore track regions/clips (would need to load audio files)
-            print("    ↳ Track '\(track.name)' restored")
-            return track
-        }
-
-        // 6. Restore Automation
-        print("  ↳ Restoring automation lanes...")
-        DAWAutomationSystem.shared.lanes.removeAll()
-        for laneData in project.automation {
-            var lane = DAWAutomationSystem.AutomationLane(
-                trackId: laneData.trackId,
-                parameterName: laneData.parameterName
-            )
-
-            lane.points = laneData.points.map { pointData in
-                DAWAutomationSystem.AutomationPoint(
-                    position: pointData.position,
-                    value: pointData.value,
-                    curve: DAWAutomationSystem.CurveType(rawValue: pointData.curve) ?? .linear
+            // Restore audio regions
+            for regionData in trackData.audioRegions {
+                let region = DAWMultiTrack.AudioRegion(
+                    id: regionData.id,
+                    trackId: track.id,
+                    name: trackData.name,
+                    audioFileURL: regionData.audioFileURL,
+                    startPosition: DAWTimelineEngine.TimelinePosition(samples: regionData.startPosition),
+                    sourceStartTime: regionData.sourceStartTime,
+                    duration: regionData.duration,
+                    fadeInDuration: regionData.fadeInDuration,
+                    fadeOutDuration: regionData.fadeOutDuration,
+                    gain: regionData.gain
                 )
+                track.audioRegions.append(region)
             }
 
-            DAWAutomationSystem.shared.lanes[lane.id] = lane
+            multiTrack.tracks.append(track)
+            print("    ↳ Track '\(track.name)' restored with \(trackData.audioRegions.count) regions")
         }
-        print("    ↳ \(project.automation.count) automation lanes restored")
 
-        // 7. Restore Plugins
+        // 7. Restore Video Tracks
+        print("  ↳ Restoring video tracks (\(project.videoTracks.count) tracks)...")
+        for trackData in project.videoTracks {
+            let track = videoSync.createVideoTrack(name: trackData.name)
+            track.enabled = trackData.enabled
+            track.opacity = trackData.opacity
+
+            // Restore video clips
+            for clipData in trackData.videoClips {
+                videoSync.addVideoClip(
+                    url: clipData.videoURL,
+                    to: track.id,
+                    at: DAWTimelineEngine.TimelinePosition(samples: clipData.startPosition),
+                    duration: clipData.duration
+                )
+            }
+            print("    ↳ Video track '\(track.name)' restored with \(trackData.videoClips.count) clips")
+        }
+
+        // 8. Restore Busses
+        print("  ↳ Restoring busses (\(project.busses.count) busses)...")
+        multiTrack.busses.removeAll()
+        for busData in project.busses {
+            let bus = DAWMultiTrack.AudioBus(
+                name: busData.name,
+                color: busData.color,
+                volume: busData.volume,
+                pan: busData.pan
+            )
+            multiTrack.busses.append(bus)
+        }
+
+        // 9. Restore Automation
+        print("  ↳ Restoring automation lanes...")
+        automation.automationLanes.removeAll()
+        for laneData in project.automationLanes {
+            let lane = DAWAutomationSystem.AutomationLane(
+                trackId: laneData.trackId,
+                parameterName: laneData.parameterName,
+                points: laneData.points.map { pointData in
+                    DAWAutomationSystem.AutomationPoint(
+                        position: DAWTimelineEngine.TimelinePosition(samples: pointData.position),
+                        value: pointData.value,
+                        curveType: pointData.curve
+                    )
+                }
+            )
+            automation.automationLanes.append(lane)
+        }
+        print("    ↳ \(project.automationLanes.count) automation lanes restored")
+
+        // 10. Restore Plugins
         print("  ↳ Restoring plugin instances...")
         for pluginData in project.plugins {
-            // Find the track
-            if let track = DAWMultiTrack.shared.tracks.first(where: { $0.id == pluginData.trackId }) {
-                // Create plugin instance (placeholder - would need actual plugin loading)
-                let plugin = DAWPluginManager.PluginInstance(
-                    name: pluginData.pluginName,
-                    manufacturer: pluginData.manufacturer,
-                    format: .vst3  // Would parse from plugin data
-                )
-                plugin.enabled = pluginData.enabled
-
-                // Restore preset if available
-                if let presetData = pluginData.presetData {
-                    // plugin.loadPreset(presetData)
-                    print("    ↳ Plugin '\(plugin.name)' loaded with preset")
-                }
-
-                // Add to track's insert slot
-                if pluginData.slot < 8 {
-                    // track.insertEffects[pluginData.slot] = plugin
-                }
-            }
+            // Plugin restoration would happen here when plugin hosting is complete
+            print("    ↳ Plugin '\(pluginData.pluginName)' marked for loading")
         }
-        print("    ↳ \(project.plugins.count) plugin instances restored")
+        print("    ↳ \(project.plugins.count) plugin instances queued")
 
-        // 8. Restore Master Fader
+        // 11. Restore Master Bus (if we have the data)
         print("  ↳ Restoring master bus...")
-        if let mixer = DAWMixerManager.shared {
-            mixer.masterFader = project.masterFader
+        if let masterData = project.masterBusData {
+            multiTrack.masterBus.volume = masterData.volume
+            multiTrack.masterBus.pan = masterData.pan
+            print("    ↳ Master bus restored")
         }
 
-        // 9. Restore Video Timeline (if available)
-        if let videoTimeline = project.videoTimeline {
-            print("  ↳ Restoring video timeline...")
-            // DAWVideoSyncEngine.shared.restore(videoTimeline)
-        }
-
-        // 10. Trigger systems update
+        // Trigger systems update
         print("✅ Project restoration complete!")
-        print("   Tracks: \(project.tracks.count)")
-        print("   Automation: \(project.automation.count) lanes")
+        print("   Audio Tracks: \(project.audioTracks.count)")
+        print("   Video Tracks: \(project.videoTracks.count)")
+        print("   Automation: \(project.automationLanes.count) lanes")
         print("   Plugins: \(project.plugins.count)")
-        print("   Markers: \(project.timeline.markers.count)")
-        print("   Tempo: \(project.timeline.tempo) BPM")
+        print("   Markers: \(project.markers.count)")
+        print("   Tempo: \(project.globalTempo) BPM")
+        print("   Sample Rate: \(project.sampleRate) Hz")
     }
 
     // MARK: - Undo/Redo
@@ -873,6 +927,46 @@ class DAWProjectManager: ObservableObject {
         return documentsURL.appendingPathComponent("\(project.name).eoel")
     }
 
+    /// Validate that sufficient disk space is available before saving
+    private func validateDiskSpace(for data: Data, at url: URL) throws {
+        let fileManager = FileManager.default
+
+        // Get available disk space
+        guard let attributes = try? fileManager.attributesOfFileSystem(forPath: url.path),
+              let freeSize = attributes[.systemFreeSize] as? Int64 else {
+            // If we can't determine space, log warning but allow save
+            print("⚠️ Could not determine available disk space")
+            return
+        }
+
+        // Required space: file size + 100MB buffer
+        let requiredSpace = Int64(data.count) + (100 * 1024 * 1024)
+        let availableGB = Double(freeSize) / (1024 * 1024 * 1024)
+        let requiredMB = Double(requiredSpace) / (1024 * 1024)
+
+        if freeSize < requiredSpace {
+            let error = ProjectError.insufficientDiskSpace(
+                available: availableGB,
+                required: requiredMB
+            )
+
+            ErrorDisplayManager.shared.showError(
+                "Insufficient Disk Space",
+                message: "Cannot save project. Available: \(String(format: "%.2f", availableGB))GB, Required: \(String(format: "%.1f", requiredMB))MB. Please free up disk space and try again."
+            )
+
+            throw error
+        }
+
+        // Warn if less than 1GB free
+        if freeSize < (1024 * 1024 * 1024) {
+            ErrorDisplayManager.shared.showWarning(
+                "Low Disk Space",
+                message: "Only \(String(format: "%.2f", availableGB))GB remaining. Consider freeing up space soon."
+            )
+        }
+    }
+
     // MARK: - Errors
 
     enum ProjectError: Error {
@@ -880,6 +974,7 @@ class DAWProjectManager: ObservableObject {
         case saveFailed
         case loadFailed
         case invalidProjectFile
+        case insufficientDiskSpace(available: Double, required: Double)
 
         var description: String {
             switch self {
@@ -887,6 +982,8 @@ class DAWProjectManager: ObservableObject {
             case .saveFailed: return "Failed to save project"
             case .loadFailed: return "Failed to load project"
             case .invalidProjectFile: return "Invalid project file"
+            case .insufficientDiskSpace(let available, let required):
+                return "Insufficient disk space (Available: \(String(format: "%.2f", available))GB, Required: \(String(format: "%.1f", required))MB)"
             }
         }
     }
