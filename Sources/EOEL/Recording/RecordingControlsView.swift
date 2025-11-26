@@ -11,6 +11,7 @@ struct RecordingControlsView: View {
     @State private var showTrackList = false
     @State private var showMixer = false
     @State private var showExportOptions = false
+    @State private var bioDataTimer: Timer?
 
     var body: some View {
         VStack(spacing: 20) {
@@ -86,6 +87,9 @@ struct RecordingControlsView: View {
         }
         .sheet(isPresented: $showExportOptions) {
             exportOptionsView
+        }
+        .onDisappear {
+            stopBioDataCapture()
         }
     }
 
@@ -408,6 +412,7 @@ struct RecordingControlsView: View {
     private func toggleRecording() {
         if recordingEngine.isRecording {
             try? recordingEngine.stopRecording()
+            stopBioDataCapture()
         } else {
             try? recordingEngine.startRecording()
 
@@ -430,7 +435,7 @@ struct RecordingControlsView: View {
 
     private func startBioDataCapture() {
         // Capture bio-data every 0.5 seconds while recording
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
+        bioDataTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
             if !recordingEngine.isRecording {
                 timer.invalidate()
                 return
@@ -444,6 +449,11 @@ struct RecordingControlsView: View {
                 frequency: microphoneManager.frequency
             )
         }
+    }
+
+    private func stopBioDataCapture() {
+        bioDataTimer?.invalidate()
+        bioDataTimer = nil
     }
 
     private func exportAudio(format: ExportManager.ExportFormat) {

@@ -262,6 +262,7 @@ struct AnimatedNeonBorder: View {
 
 struct RippleEffect: View {
     @State private var ripples: [Ripple] = []
+    @State private var timer: Timer?
     var color: Color = VaporwaveDesignSystem.Colors.neonCyan
 
     struct Ripple: Identifiable {
@@ -285,11 +286,15 @@ struct RippleEffect: View {
             .onAppear {
                 addRipple()
             }
+            .onDisappear {
+                timer?.invalidate()
+                timer = nil
+            }
         }
     }
 
     private func addRipple() {
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
             var newRipple = Ripple()
 
             withAnimation(.easeOut(duration: 2)) {
@@ -301,6 +306,7 @@ struct RippleEffect: View {
 
             // Remove old ripples
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                guard !ripples.isEmpty else { return }
                 ripples.removeFirst()
             }
         }
@@ -312,6 +318,7 @@ struct RippleEffect: View {
 struct GlitchEffect: ViewModifier {
     @State private var offset: CGSize = .zero
     @State private var isGlitching = false
+    @State private var timer: Timer?
 
     func body(content: Content) -> some View {
         ZStack {
@@ -333,10 +340,14 @@ struct GlitchEffect: ViewModifier {
         .onAppear {
             startGlitching()
         }
+        .onDisappear {
+            timer?.invalidate()
+            timer = nil
+        }
     }
 
     private func startGlitching() {
-        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
             withAnimation(.linear(duration: 0.1)) {
                 isGlitching = true
                 offset = CGSize(width: CGFloat.random(in: -5...5), height: CGFloat.random(in: -5...5))

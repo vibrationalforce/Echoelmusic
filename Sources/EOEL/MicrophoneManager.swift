@@ -50,11 +50,22 @@ class MicrophoneManager: NSObject, ObservableObject {
     /// YIN pitch detector for fundamental frequency estimation
     private let pitchDetector = PitchDetector()
 
+    /// Pre-allocated buffers to avoid allocations in audio callback
+    private var capturedBuffer = [Float](repeating: 0, count: 512)
+    private var realParts = [Float](repeating: 0, count: 2048)
+    private var imagParts = [Float](repeating: 0, count: 2048)
+    private var hannWindow = [Float](repeating: 0, count: 2048)
+    private var magnitudesBuffer = [Float](repeating: 0, count: 1024)  // fftSize / 2
+    private var visualMagnitudesBuffer = [Float](repeating: 0, count: 256)
 
     // MARK: - Initialization
 
     override init() {
         super.init()
+
+        // Pre-compute Hann window for FFT
+        vDSP_hann_window(&hannWindow, vDSP_Length(fftSize), Int32(vDSP_HANN_NORM))
+
         checkPermission()
     }
 
@@ -201,8 +212,12 @@ class MicrophoneManager: NSObject, ObservableObject {
         let normalizedLevel = min(rms * 15.0, 1.0)
 
         // Capture audio buffer for waveform visualization (last 512 samples)
+        // Reuse pre-allocated buffer to avoid allocations in audio callback
         let bufferSampleCount = min(512, frameLength)
-        var capturedBuffer = [Float](repeating: 0, count: bufferSampleCount)
+        guard bufferSampleCount <= capturedBuffer.count else {
+            print("⚠️ Buffer overflow prevented: bufferSampleCount \(bufferSampleCount) > capturedBuffer.count \(capturedBuffer.count)")
+            return
+        }
         cblas_scopy(Int32(bufferSampleCount), channelDataValue, 1, &capturedBuffer, 1)
 
         // Perform FFT for frequency detection and get magnitudes
@@ -241,49 +256,53 @@ class MicrophoneManager: NSObject, ObservableObject {
     private func performFFT(on data: UnsafePointer<Float>, frameLength: Int) -> (frequency: Float, magnitudes: [Float]) {
         guard let setup = fftSetup else { return (0, []) }
 
-        // Prepare buffers
-        var realParts = [Float](repeating: 0, count: fftSize)
-        var imagParts = [Float](repeating: 0, count: fftSize)
+        // Reuse pre-allocated buffers (zero them first)
+        realParts.withUnsafeMutableBufferPointer { buffer in
+            buffer.baseAddress?.initialize(repeating: 0, count: fftSize)
+        }
+        imagParts.withUnsafeMutableBufferPointer { buffer in
+            buffer.baseAddress?.initialize(repeating: 0, count: fftSize)
+        }
 
         // Copy audio data to real parts (pad with zeros if needed)
         let copyLength = min(frameLength, fftSize)
+        guard copyLength <= realParts.count else {
+            print("⚠️ FFT buffer overflow prevented: copyLength \(copyLength) > realParts.count \(realParts.count)")
+            return (0, [])
+        }
         for i in 0..<copyLength {
             realParts[i] = data[i]
         }
 
-        // Apply Hann window to reduce spectral leakage
-        var window = [Float](repeating: 0, count: fftSize)
-        vDSP_hann_window(&window, vDSP_Length(fftSize), Int32(vDSP_HANN_NORM))
-        vDSP_vmul(realParts, 1, window, 1, &realParts, 1, vDSP_Length(fftSize))
+        // Apply pre-computed Hann window to reduce spectral leakage
+        vDSP_vmul(realParts, 1, hannWindow, 1, &realParts, 1, vDSP_Length(fftSize))
 
         // Perform FFT
         vDSP_DFT_Execute(setup, &realParts, &imagParts, &realParts, &imagParts)
 
-        // Calculate magnitudes (power spectrum)
-        var magnitudes = [Float](repeating: 0, count: fftSize / 2)
+        // Calculate magnitudes (power spectrum) using pre-allocated buffer
         for i in 0..<(fftSize / 2) {
-            magnitudes[i] = sqrt(realParts[i] * realParts[i] + imagParts[i] * imagParts[i])
+            magnitudesBuffer[i] = sqrt(realParts[i] * realParts[i] + imagParts[i] * imagParts[i])
         }
 
         // Downsample magnitudes for visualization (256 bins for spectral mode)
         let visualBins = 256
-        var visualMagnitudes = [Float](repeating: 0, count: visualBins)
-        let binRatio = magnitudes.count / visualBins
+        let binRatio = magnitudesBuffer.count / visualBins
         for i in 0..<visualBins {
             let startIdx = i * binRatio
-            let endIdx = min(startIdx + binRatio, magnitudes.count)
+            let endIdx = min(startIdx + binRatio, magnitudesBuffer.count)
             var sum: Float = 0
             for j in startIdx..<endIdx {
-                sum += magnitudes[j]
+                sum += magnitudesBuffer[j]
             }
-            visualMagnitudes[i] = sum / Float(binRatio)
+            visualMagnitudesBuffer[i] = sum / Float(binRatio)
         }
 
         // Find peak frequency (ignore DC component at index 0)
         var maxMagnitude: Float = 0
         var maxIndex: vDSP_Length = 0
 
-        vDSP_maxvi(Array(magnitudes[1...]), 1, &maxMagnitude, &maxIndex, vDSP_Length(magnitudes.count - 1))
+        vDSP_maxvi(Array(magnitudesBuffer[1...]), 1, &maxMagnitude, &maxIndex, vDSP_Length(magnitudesBuffer.count - 1))
         maxIndex += 1 // Adjust for skipping index 0
 
         // Convert bin index to frequency
@@ -291,10 +310,10 @@ class MicrophoneManager: NSObject, ObservableObject {
 
         // Only return frequencies in audible/useful range
         if frequency > 50 && frequency < 2000 && maxMagnitude > 0.01 {
-            return (frequency, visualMagnitudes)
+            return (frequency, visualMagnitudesBuffer)
         }
 
-        return (0.0, visualMagnitudes)
+        return (0.0, visualMagnitudesBuffer)
     }
 
 
