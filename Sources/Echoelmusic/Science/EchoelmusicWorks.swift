@@ -1,19 +1,28 @@
 import Foundation
 import Combine
 
-/// EchoelmusicWorks - Music Industry Job Placement & Career Development Platform
-/// Connecting creative talent with opportunities in music, audio, and entertainment
+/// EchoelmusicWorks - Creative Audio & Wellness Career Platform
+/// Connecting creative talent with opportunities in audio, wellness, and creative industries
 ///
-/// Mission: Every creative person deserves access to meaningful work in the music industry
-/// that aligns with their talents, respects their abilities, and nurtures their artistry.
+/// Mission: Every person deserves access to meaningful work that aligns with
+/// their talents, respects their abilities, and contributes to wellbeing.
 ///
-/// Music Industry Focus:
-/// - Music Production & Engineering
-/// - Artist Management & Booking
-/// - Live Sound & Events
-/// - Content Creation & Streaming
-/// - Music Education & Therapy
-/// - Recording Studios & Labels
+/// Career Domains (Not Just Music!):
+/// - Audio & Sound (Music, Podcasts, Sound Design, Audio Engineering)
+/// - Wellness & Healing (Sound Therapy, Meditation, Biofeedback)
+/// - Creative Production (Content Creation, Streaming, Multimedia)
+/// - Technology & Development (Audio Tech, App Dev, AI/ML)
+/// - Education & Coaching (Teaching, Mentoring, Training)
+/// - Business & Management (Artist Management, Booking, Consulting)
+///
+/// Target Audience:
+/// - Musicians & Audio Professionals
+/// - Podcasters & Content Creators
+/// - Sound Designers & Audio Engineers
+/// - Wellness Practitioners & Therapists
+/// - Educators & Coaches
+/// - Tech Developers & Creatives
+/// - Career Changers & New Entrants
 ///
 /// Scientific Foundation:
 /// - Holland Occupational Themes (RIASEC) - Holland, 1997
@@ -737,10 +746,10 @@ public final class EchoelmusicWorks: ObservableObject {
 
     private init() {
         print("==============================================")
-        print("   ECHOELMUSIC WORKS - MUSIC INDUSTRY JOBS")
+        print("   ECHOELMUSIC WORKS - CREATIVE CAREERS")
         print("==============================================")
         print("   Connecting creative talent with opportunity")
-        print("   Music production, management, live sound")
+        print("   Audio, wellness, creative industries")
         print("   Accessibility-first job matching")
         print("==============================================")
     }
@@ -1025,62 +1034,73 @@ public final class EchoelmusicWorks: ObservableObject {
     }
 
     private func generateJobTemplates() -> [JobOpportunity] {
-        // Music Industry focused jobs through Echoelmusic platform
+        // Diverse creative, audio, and wellness jobs through Echoelmusic platform
         return [
-            // Production & Engineering
-            createMusicJob("Music Producer", "Echoelmusic Studios", "Produce tracks for artists, oversee recording sessions, mix and master audio", remote: true, category: .production, accessibility: [.flexibleSchedule, .remoteOption]),
-            createMusicJob("Audio Engineer", "SoundWave Records", "Record, mix, and master music in professional studio environment", remote: false, category: .production, accessibility: [.ergonomicEquipment, .flexibleBreaks]),
-            createMusicJob("Mixing Engineer", "Echoelmusic Remote", "Remote mixing services for independent artists worldwide", remote: true, category: .production, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
-            createMusicJob("Mastering Engineer", "Master Suite Audio", "Final audio mastering for release-ready tracks", remote: true, category: .production, accessibility: [.remoteOption, .quietEnvironment]),
+            // === AUDIO & SOUND (Music + Beyond) ===
+            createCreativeJob("Music Producer", "Echoelmusic Studios", "Produce tracks, oversee recording sessions, mix and master audio", remote: true, category: .audioProduction, accessibility: [.flexibleSchedule, .remoteOption]),
+            createCreativeJob("Podcast Producer", "Audio Stories Network", "Produce, edit, and publish podcasts on any topic", remote: true, category: .audioProduction, accessibility: [.remoteOption, .flexibleSchedule]),
+            createCreativeJob("Audiobook Narrator", "VoiceWorks Publishing", "Record and produce audiobook narrations", remote: true, category: .audioProduction, accessibility: [.remoteOption, .flexibleSchedule, .quietEnvironment]),
+            createCreativeJob("Sound Designer", "Immersive Audio Co", "Create sound effects for games, films, and VR experiences", remote: true, category: .soundDesign, accessibility: [.remoteOption, .flexibleSchedule]),
+            createCreativeJob("Foley Artist", "Film Sound Studios", "Create and record sound effects for visual media", remote: false, category: .soundDesign, accessibility: [.ergonomicEquipment, .flexibleBreaks]),
+            createCreativeJob("Audio Engineer", "SoundWave Studios", "Record, mix, and master audio for various media", remote: false, category: .audioProduction, accessibility: [.ergonomicEquipment, .flexibleBreaks]),
 
-            // Artist Management & Booking
-            createMusicJob("Artist Manager", "Echoelmusic Management", "Guide artist careers, negotiate deals, coordinate releases", remote: true, category: .management, accessibility: [.flexibleSchedule, .remoteOption]),
-            createMusicJob("Booking Agent", "LiveSound Bookings", "Book live performances, negotiate contracts, coordinate tours", remote: true, category: .management, accessibility: [.remoteOption, .flexibleSchedule]),
-            createMusicJob("A&R Coordinator", "Echoelmusic Label", "Discover new talent, coordinate artist development", remote: true, category: .management, accessibility: [.flexibleSchedule, .mentalHealthSupport]),
+            // === WELLNESS & HEALING ===
+            createCreativeJob("Sound Therapist", "Healing Frequencies Center", "Use sound and vibration for therapeutic healing", remote: true, category: .wellness, accessibility: [.flexibleSchedule, .mentalHealthSupport, .remoteOption]),
+            createCreativeJob("Meditation Guide", "Mindful Audio", "Create and guide meditation sessions with sound", remote: true, category: .wellness, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
+            createCreativeJob("Biofeedback Coach", "Echoelmusic Wellness", "Guide clients using bio-reactive audio technology", remote: true, category: .wellness, accessibility: [.remoteOption, .flexibleSchedule]),
+            createCreativeJob("Breathwork Facilitator", "Breath & Sound Institute", "Lead breathwork sessions with audio guidance", remote: true, category: .wellness, accessibility: [.remoteOption, .mentalHealthSupport]),
+            createCreativeJob("Wellness Content Creator", "Mindful Media", "Create wellness and self-care audio/video content", remote: true, category: .wellness, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
 
-            // Live Sound & Events
-            createMusicJob("Live Sound Engineer", "Concert Tech Pro", "Operate sound systems for live events and concerts", remote: false, category: .liveSound, accessibility: [.ergonomicEquipment, .flexibleBreaks]),
-            createMusicJob("Stage Manager", "Festival Productions", "Coordinate backstage operations and artist schedules", remote: false, category: .liveSound, accessibility: [.clearInstructions, .structuredSchedule]),
-            createMusicJob("FOH Engineer", "Touring Crew Inc", "Front-of-house mixing for touring artists", remote: false, category: .liveSound, accessibility: [.ergonomicEquipment]),
+            // === CREATIVE PRODUCTION ===
+            createCreativeJob("Content Creator", "Echoelmusic Media", "Create tutorials, reviews, and educational content", remote: true, category: .content, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
+            createCreativeJob("Video Editor", "Creative Studios", "Edit video content with audio synchronization", remote: true, category: .content, accessibility: [.remoteOption, .flexibleSchedule]),
+            createCreativeJob("Livestream Producer", "Stream Networks", "Produce and manage live streaming shows", remote: true, category: .content, accessibility: [.remoteOption, .flexibleSchedule]),
+            createCreativeJob("Social Media Manager", "Brand Audio Agency", "Manage brand presence with audio-visual content", remote: true, category: .content, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
 
-            // Content Creation & Streaming
-            createMusicJob("Music Content Creator", "Echoelmusic Media", "Create music tutorials, reviews, and educational content", remote: true, category: .content, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
-            createMusicJob("Podcast Producer", "Audio Stories Network", "Produce and edit music-focused podcasts", remote: true, category: .content, accessibility: [.remoteOption, .flexibleSchedule]),
-            createMusicJob("Social Media Manager", "Echoelmusic Marketing", "Manage artist social media presence and engagement", remote: true, category: .content, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
+            // === TECHNOLOGY & DEVELOPMENT ===
+            createCreativeJob("Audio Plugin Developer", "Echoelmusic Tech", "Develop VST/AU plugins for audio production", remote: true, category: .technology, accessibility: [.remoteOption, .flexibleSchedule, .quietEnvironment]),
+            createCreativeJob("iOS/Android Developer", "SoundApp Studios", "Build mobile apps for audio and wellness", remote: true, category: .technology, accessibility: [.remoteOption, .flexibleSchedule, .ergonomicEquipment]),
+            createCreativeJob("AI/ML Engineer", "Audio AI Labs", "Develop AI models for audio processing and generation", remote: true, category: .technology, accessibility: [.remoteOption, .flexibleSchedule]),
+            createCreativeJob("UX Designer", "Creative Tech Co", "Design intuitive interfaces for audio applications", remote: true, category: .technology, accessibility: [.remoteOption, .flexibleSchedule, .screenReader]),
 
-            // Music Education & Therapy
-            createMusicJob("Music Teacher", "Echoelmusic Academy", "Teach music production, instruments, and theory online", remote: true, category: .education, accessibility: [.remoteOption, .flexibleSchedule, .screenReader]),
-            createMusicJob("Music Therapist", "Healing Harmonies", "Use music for therapeutic healing and wellness", remote: true, category: .education, accessibility: [.flexibleSchedule, .mentalHealthSupport, .remoteOption]),
-            createMusicJob("DAW Instructor", "ProAudio Training", "Teach Ableton, Logic, Pro Tools to aspiring producers", remote: true, category: .education, accessibility: [.remoteOption, .flexibleSchedule]),
+            // === EDUCATION & COACHING ===
+            createCreativeJob("Online Instructor", "Echoelmusic Academy", "Teach audio production, music, or wellness online", remote: true, category: .education, accessibility: [.remoteOption, .flexibleSchedule, .screenReader]),
+            createCreativeJob("Career Coach", "Creative Careers Hub", "Guide creative professionals in career development", remote: true, category: .education, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
+            createCreativeJob("Workshop Facilitator", "Skill Share Co", "Lead workshops on creative and wellness topics", remote: true, category: .education, accessibility: [.remoteOption, .flexibleSchedule]),
+            createCreativeJob("Mentorship Coordinator", "Echoelmusic Mentors", "Connect mentors with mentees in creative fields", remote: true, category: .education, accessibility: [.remoteOption, .flexibleSchedule]),
 
-            // Technical & Development
-            createMusicJob("Audio Plugin Developer", "Echoelmusic Tech", "Develop VST/AU plugins for music production", remote: true, category: .technical, accessibility: [.remoteOption, .flexibleSchedule, .quietEnvironment]),
-            createMusicJob("Music App Developer", "SoundApp Studios", "Build iOS/Android apps for musicians", remote: true, category: .technical, accessibility: [.remoteOption, .flexibleSchedule, .ergonomicEquipment]),
+            // === BUSINESS & MANAGEMENT ===
+            createCreativeJob("Talent Manager", "Echoelmusic Management", "Guide creative careers, negotiate deals, coordinate projects", remote: true, category: .management, accessibility: [.flexibleSchedule, .remoteOption]),
+            createCreativeJob("Project Manager", "Creative Projects Inc", "Manage audio/visual production projects", remote: true, category: .management, accessibility: [.remoteOption, .flexibleSchedule]),
+            createCreativeJob("Community Manager", "Creator Community Hub", "Build and nurture creative communities online", remote: true, category: .management, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
+            createCreativeJob("Business Consultant", "Creative Biz Advisors", "Advise creative professionals on business strategy", remote: true, category: .management, accessibility: [.remoteOption, .flexibleSchedule]),
 
-            // Session Work
-            createMusicJob("Session Musician", "Echoelmusic Sessions", "Record instruments remotely for various projects", remote: true, category: .performance, accessibility: [.remoteOption, .flexibleSchedule]),
-            createMusicJob("Vocalist/Singer", "VoiceOver Productions", "Provide vocals for commercial and artistic projects", remote: true, category: .performance, accessibility: [.remoteOption, .flexibleSchedule])
+            // === LIVE & EVENTS ===
+            createCreativeJob("Live Sound Engineer", "Event Audio Pro", "Operate sound systems for live events", remote: false, category: .liveEvents, accessibility: [.ergonomicEquipment, .flexibleBreaks]),
+            createCreativeJob("Event Coordinator", "Creative Events Co", "Coordinate creative and wellness events", remote: false, category: .liveEvents, accessibility: [.clearInstructions, .structuredSchedule]),
+            createCreativeJob("Virtual Event Host", "Online Events Hub", "Host and moderate virtual creative events", remote: true, category: .liveEvents, accessibility: [.remoteOption, .flexibleSchedule])
         ]
     }
 
-    /// Music industry job categories
-    public enum MusicJobCategory: String, Codable {
-        case production = "Production & Engineering"
-        case management = "Artist Management"
-        case liveSound = "Live Sound & Events"
+    /// Broad creative career categories (not just music!)
+    public enum CreativeJobCategory: String, Codable {
+        case audioProduction = "Audio Production"
+        case soundDesign = "Sound Design"
+        case wellness = "Wellness & Healing"
         case content = "Content Creation"
-        case education = "Music Education"
-        case technical = "Audio Technology"
-        case performance = "Session & Performance"
+        case technology = "Technology & Development"
+        case education = "Education & Coaching"
+        case management = "Business & Management"
+        case liveEvents = "Live & Events"
     }
 
-    private func createMusicJob(_ title: String, _ company: String, _ description: String, remote: Bool, category: MusicJobCategory, accessibility: [AccessibilityNeed]) -> JobOpportunity {
+    private func createCreativeJob(_ title: String, _ company: String, _ description: String, remote: Bool, category: CreativeJobCategory, accessibility: [AccessibilityNeed]) -> JobOpportunity {
         var job = JobOpportunity(title: title, company: company, description: description, location: remote ? "Remote" : "Various", isRemote: remote)
         job.accessibilityFeatures = accessibility
         job.mentalHealthSupport = accessibility.contains(.mentalHealthSupport)
         job.inclusivityRating = Float(accessibility.count) * 15 + 40
         job.industry = category.rawValue
-        job.companyValues = ["Creativity", "Accessibility", "Artist Development"]
+        job.companyValues = ["Creativity", "Accessibility", "Personal Growth", "Wellbeing"]
         return job
     }
 
@@ -1170,18 +1190,18 @@ public final class EchoelmusicWorks: ObservableObject {
     public func getReport() -> String {
         return """
         =====================================================
-        ECHOELMUSIC WORKS - MUSIC INDUSTRY CAREER REPORT
+        ECHOELMUSIC WORKS - CREATIVE CAREER REPORT
         =====================================================
 
         PROFILE STATUS: \(userProfile != nil ? "Complete" : "Incomplete")
 
-        MUSIC SKILLS:
+        YOUR SKILLS:
         \(userProfile?.skills.map { "  - \($0.name): \($0.proficiency.rawValue)" }.joined(separator: "\n") ?? "  None recorded")
 
         ACCESSIBILITY NEEDS:
         \(userProfile?.accessibilityNeeds.map { "  - \($0.rawValue)" }.joined(separator: "\n") ?? "  None specified")
 
-        MUSIC INDUSTRY JOB MATCHES: \(jobMatches.count)
+        JOB MATCHES: \(jobMatches.count)
         \(jobMatches.prefix(5).map { "  - \($0.title) at \($0.company) (\(String(format: "%.0f", $0.matchScore))% match)" }.joined(separator: "\n"))
 
         APPLICATIONS: \(applications.count)
@@ -1192,7 +1212,8 @@ public final class EchoelmusicWorks: ObservableObject {
         \(skillDevelopmentPlan?.skillGaps.map { "  - Gap: \($0.skillName) (\(String(format: "%.0f", $0.gap))%)" }.joined(separator: "\n") ?? "")
 
         =====================================================
-        "Connecting creative talent with music industry careers"
+        "Connecting creative talent with meaningful careers"
+        Audio • Wellness • Creative • Technology
         Powered by Echoelmusic
         =====================================================
         """
