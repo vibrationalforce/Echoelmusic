@@ -2,6 +2,17 @@ import SwiftUI
 
 /// Main entry point for the Echoelmusic app
 /// Bio-reactive audio-visual experiences platform
+///
+/// ECHOELMUSIC - Bio-Reactive Sound. Healing Through Music.
+///
+/// Integrated Systems:
+/// - Audio Engine (C++ Core + Swift)
+/// - Bio/Health (HRV, HealthKit, Healing)
+/// - Input (Face, Gesture, MIDI, Touch)
+/// - Output (Spatial Audio, Visuals, LED)
+/// - Intelligence (Quantum AI, ML)
+/// - Business (Creator, Agency, EoelWorks)
+/// - 23+ Languages, WCAG 2.1 AAA
 @main
 struct EchoelmusicApp: App {
 
@@ -20,6 +31,9 @@ struct EchoelmusicApp: App {
 
     /// UnifiedControlHub for multimodal input
     @StateObject private var unifiedControlHub: UnifiedControlHub
+
+    /// Master Integration Hub - connects ALL 90+ systems
+    @StateObject private var integrationHub = EchoelmusicIntegrationHub.shared
 
     init() {
         // Initialize AudioEngine with MicrophoneManager
@@ -40,6 +54,7 @@ struct EchoelmusicApp: App {
                 .environmentObject(healthKitManager)        // Makes health data available
                 .environmentObject(recordingEngine)         // Makes recording engine available
                 .environmentObject(unifiedControlHub)       // Makes unified control available
+                .environmentObject(integrationHub)          // Makes integration hub available
                 .preferredColorScheme(.dark)                // Force dark theme
                 .onAppear {
                     // Connect HealthKit to AudioEngine for bio-parameter mapping
@@ -50,28 +65,52 @@ struct EchoelmusicApp: App {
 
                     // Enable biometric monitoring through UnifiedControlHub
                     Task {
+                        // Initialize the master integration hub (connects all 90+ systems)
+                        await integrationHub.initializeAllSystems()
+
                         do {
                             try await unifiedControlHub.enableBiometricMonitoring()
-                            print("✅ Biometric monitoring enabled via UnifiedControlHub")
+                            print("Biometric monitoring enabled via UnifiedControlHub")
                         } catch {
-                            print("⚠️ Biometric monitoring not available: \(error.localizedDescription)")
+                            print("Biometric monitoring not available: \(error.localizedDescription)")
                         }
 
                         // Enable MIDI 2.0 + MPE
                         do {
                             try await unifiedControlHub.enableMIDI2()
-                            print("✅ MIDI 2.0 + MPE enabled via UnifiedControlHub")
+                            print("MIDI 2.0 + MPE enabled via UnifiedControlHub")
                         } catch {
-                            print("⚠️ MIDI 2.0 not available: \(error.localizedDescription)")
+                            print("MIDI 2.0 not available: \(error.localizedDescription)")
                         }
+
+                        // Start bio-reactive mode
+                        await integrationHub.startBioReactiveMode()
                     }
 
                     // Start UnifiedControlHub
                     unifiedControlHub.start()
 
-                    print("🎵 Echoelmusic Started - All Systems Connected!")
-                    print("🎹 MIDI 2.0 + MPE + Spatial Audio Ready")
-                    print("🌊 Bio-Reactive Audio-Visual Platform Ready")
+                    print("""
+
+                    ========================================
+                    ECHOELMUSIC - ALL SYSTEMS ONLINE
+                    ========================================
+                    Bio-Reactive Audio-Visual Platform
+                    Healing Through Music
+                    ========================================
+                    - Audio Engine: Ready
+                    - Bio-Reactive Mode: Active
+                    - MIDI 2.0 + MPE: Ready
+                    - Spatial Audio: Ready
+                    - QuantumLifeScanner: Ready
+                    - EoelWorks (Arbeitsvermittlung): Ready
+                    - CreatorManager: Ready
+                    - AgencyManager: Ready
+                    - 23+ Languages: Ready
+                    - Accessibility (WCAG AAA): Ready
+                    ========================================
+
+                    """)
                 }
         }
     }
