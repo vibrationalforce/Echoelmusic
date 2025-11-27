@@ -45,7 +45,7 @@ jobs:
     - name: Build for iOS Simulator (iPhone 15 Pro)
       run: |
         xcodebuild clean build \
-          -scheme Blab \
+          -scheme Echoelmusic \
           -sdk iphonesimulator \
           -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2' \
           CODE_SIGNING_ALLOWED=NO \
@@ -55,7 +55,7 @@ jobs:
       if: success()
       uses: actions/upload-artifact@v3
       with:
-        name: blab-build-artifacts
+        name: echoelmusic-build-artifacts
         path: .build/
         retention-days: 7
 
@@ -82,17 +82,17 @@ jobs:
         MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
       run: |
         xcodebuild archive \
-          -scheme Blab \
+          -scheme Echoelmusic \
           -sdk iphoneos \
           -configuration Release \
-          -archivePath ./build/Blab.xcarchive \
+          -archivePath ./build/Echoelmusic.xcarchive \
           CODE_SIGN_IDENTITY="${{ secrets.CODE_SIGN_IDENTITY }}" \
           PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE }}"
 
     - name: Export IPA
       run: |
         xcodebuild -exportArchive \
-          -archivePath ./build/Blab.xcarchive \
+          -archivePath ./build/Echoelmusic.xcarchive \
           -exportOptionsPlist ./ExportOptions.plist \
           -exportPath ./build
 
@@ -103,7 +103,7 @@ jobs:
       run: |
         xcrun altool --upload-app \
           --type ios \
-          --file ./build/Blab.ipa \
+          --file ./build/Echoelmusic.ipa \
           --apiKey $APP_STORE_CONNECT_KEY_ID \
           --apiIssuer $APP_STORE_CONNECT_ISSUER_ID
 

@@ -13,7 +13,7 @@
 ## 🚀 Quick Start (Xcode Handoff)
 
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /path/to/Echoelmusic
 open Package.swift  # Opens in Xcode automatically
 ```
 
@@ -30,7 +30,7 @@ Then in Xcode:
 
 **Current Phase:** Phase 3 Complete & Optimized ✅
 **Last Update:** 2025-10-24
-**GitHub:** `vibrationalforce/blab-ios-app`
+**GitHub:** `vibrationalforce/Echoelmusic`
 **Latest Commit:** `65a260f` - API integration complete
 
 ### Phase Completion:
@@ -140,44 +140,30 @@ Echoelmusic is an **embodied multimodal healing platform** that transforms biome
 ## 📁 Project Structure
 
 ```
-blab-ios-app/
+Echoelmusic/
 ├── Package.swift                    # Swift Package config
-├── Sources/Blab/
-│   ├── BlabApp.swift               # App entry point
+├── Sources/Echoelmusic/
+│   ├── EchoelmusicApp.swift        # App entry point
 │   ├── ContentView.swift           # Main UI
-│   ├── Audio/
-│   │   ├── AudioEngine.swift       # Core audio engine
-│   │   ├── Effects/               # Audio effects (reverb, filter, etc.)
-│   │   ├── DSP/                   # DSP (FFT, pitch detection)
-│   │   └── Nodes/                 # Modular audio nodes
-│   ├── Spatial/
-│   │   ├── SpatialAudioEngine.swift     # 3D/4D spatial audio ✨
-│   │   ├── ARFaceTrackingManager.swift  # Face tracking
-│   │   └── HandTrackingManager.swift    # Hand tracking
-│   ├── Visual/
-│   │   ├── MIDIToVisualMapper.swift     # MIDI → Visual ✨
-│   │   ├── CymaticsRenderer.swift       # Cymatics patterns
-│   │   ├── Modes/                       # 5 visualization modes
-│   │   └── Shaders/                     # Metal shaders
-│   ├── LED/
-│   │   ├── Push3LEDController.swift     # Push 3 LED ✨
-│   │   └── MIDIToLightMapper.swift      # DMX/Art-Net ✨
-│   ├── MIDI/
-│   │   ├── MIDI2Manager.swift           # MIDI 2.0
-│   │   ├── MPEZoneManager.swift         # MPE
-│   │   └── MIDIToSpatialMapper.swift    # MIDI → Spatial
-│   ├── Unified/
-│   │   └── UnifiedControlHub.swift      # Central control ✨
-│   ├── Biofeedback/
-│   │   ├── HealthKitManager.swift       # HealthKit
-│   │   └── BioParameterMapper.swift     # Bio → Audio mapping
-│   ├── Recording/                       # Multi-track recording
-│   ├── Views/                           # UI components
-│   └── Utils/                           # Utilities
-├── Tests/BlabTests/                     # Unit tests
-└── Docs/                                # Documentation
-
-✨ = Phase 3 components (2228 lines optimized code)
+│   ├── Audio/                      # Audio engine & effects
+│   ├── Spatial/                    # 3D/4D spatial audio
+│   ├── Visual/                     # Cymatics, visuals
+│   ├── LED/                        # Push 3, DMX/Art-Net
+│   ├── MIDI/                       # MIDI 2.0, MPE
+│   ├── Science/                    # Healing & Career systems
+│   │   ├── QuantumLifeScanner.swift
+│   │   ├── EchoelmusicWorks.swift
+│   │   ├── PotentialDevelopment.swift
+│   │   ├── HealingProgressTracker.swift
+│   │   └── GlobalInclusivity.swift
+│   ├── Integration/
+│   │   └── EchoelmusicIntegrationHub.swift
+│   ├── Biofeedback/                # HealthKit, HRV
+│   ├── Recording/                  # Multi-track recording
+│   └── Platforms/                  # iOS, visionOS, watchOS
+├── Sources/                        # C++ Core (DSP, Audio)
+├── Tests/                          # Unit tests
+└── Docs/                           # Documentation
 ```
 
 ---
@@ -223,8 +209,7 @@ swift test
 - **[XCODE_HANDOFF.md](XCODE_HANDOFF.md)** - Xcode development guide (MUST READ)
 - **[PHASE_3_OPTIMIZED.md](PHASE_3_OPTIMIZED.md)** - Phase 3 optimization details
 - **[DAW_INTEGRATION_GUIDE.md](DAW_INTEGRATION_GUIDE.md)** - DAW integration
-- **[BLAB_IMPLEMENTATION_ROADMAP.md](BLAB_IMPLEMENTATION_ROADMAP.md)** - Full roadmap
-- **[BLAB_90_DAY_ROADMAP.md](BLAB_90_DAY_ROADMAP.md)** - 90-day plan
+- **[ECHOELMUSIC_MASTER_PROMPT_v4.3.md](Prompts/ECHOELMUSIC_MASTER_PROMPT_v4.3.md)** - Master prompt
 
 ### Additional Docs:
 - `COMPATIBILITY.md` - iOS compatibility notes
@@ -263,15 +248,15 @@ swift test
 ```xml
 <!-- Microphone -->
 <key>NSMicrophoneUsageDescription</key>
-<string>BLAB needs microphone access to process your voice</string>
+<string>Echoelmusic needs microphone access for bio-reactive audio</string>
 
 <!-- Health Data -->
 <key>NSHealthShareUsageDescription</key>
-<string>BLAB needs access to heart rate data for bio-reactive music</string>
+<string>Echoelmusic uses heart rate data for healing audio experiences</string>
 
 <!-- Camera (for face tracking) -->
 <key>NSCameraUsageDescription</key>
-<string>BLAB uses face tracking for expressive control</string>
+<string>Echoelmusic uses face tracking for expressive control</string>
 ```
 
 ### Network Configuration (DMX/Art-Net):
@@ -413,24 +398,24 @@ git push origin feature/my-feature
 **Estimated MVP Completion:** 3-4 months
 **Full Feature Set:** 6-7 months
 
-See `BLAB_IMPLEMENTATION_ROADMAP.md` for details.
+See documentation for details.
 
 ---
 
 ## 📜 License
 
-Copyright © 2025 BLAB Studio. All rights reserved.
+Copyright © 2025 Echoelmusic. All rights reserved.
 
 Proprietary software - not for redistribution.
 
 ---
 
-## 🫧 Philosophy
+## 🎵 Philosophy
 
-> "BLAB is not just a music app - it's an interface to embodied consciousness.
-> Through breath, biometrics, and intention, we transform life itself into art."
+> "Echoelmusic is not just an app - it's an interface to healing and self-discovery.
+> Through breath, biometrics, and intention, we transform life itself into wellness."
 
-**breath → sound → light → consciousness**
+**Bio-Reactive Sound. Healing Through Music.**
 
 ---
 
