@@ -1,10 +1,10 @@
 import Foundation
 import Combine
 
-/// HealingProgressTracker - Scientific Outcome Measurement System
-/// Tracking healing progress with evidence-based metrics
+/// WellbeingTracker - Scientific Outcome Measurement System
+/// Tracking well-being progress with evidence-based metrics
 ///
-/// Mission: Provide scientific validation of healing progress while
+/// Mission: Provide scientific validation of well-being progress while
 /// honoring the subjective experience of each person's journey.
 ///
 /// Scientific Foundation:
@@ -18,28 +18,28 @@ import Combine
 /// Accessibility: Visual, audio, and simplified progress tracking
 /// Privacy: Local-first, user-controlled data sharing
 @MainActor
-public final class HealingProgressTracker: ObservableObject {
+public final class WellbeingTracker: ObservableObject {
 
     // MARK: - Singleton
 
-    public static let shared = HealingProgressTracker()
+    public static let shared = WellbeingTracker()
 
     // MARK: - Published State
 
-    @Published public var healingJourney: HealingJourney?
+    @Published public var wellbeingJourney: WellbeingJourney?
     @Published public var currentProtocol: ActiveProtocol?
     @Published public var outcomes: [OutcomeMeasure] = []
-    @Published public var milestones: [HealingMilestone] = []
+    @Published public var milestones: [WellbeingMilestone] = []
     @Published public var dailyLogs: [DailyLog] = []
     @Published public var scientificReport: ScientificReport?
 
-    // MARK: - Healing Journey
+    // MARK: - Well-being Journey
 
-    public struct HealingJourney: Codable, Identifiable {
+    public struct WellbeingJourney: Codable, Identifiable {
         public let id: UUID
         public var startDate: Date
-        public var primaryGoals: [HealingGoal]
-        public var currentPhase: HealingPhase
+        public var primaryGoals: [WellbeingGoal]
+        public var currentPhase: WellbeingPhase
         public var overallProgress: Float           // 0-100
         public var qualityOfLife: Float             // 0-100 (WHOQOL-BREF mapped)
         public var functioningLevel: Float          // 0-100
@@ -56,7 +56,7 @@ public final class HealingProgressTracker: ObservableObject {
             self.id = UUID()
             self.startDate = Date()
             self.primaryGoals = []
-            self.currentPhase = .stabilization
+            self.currentPhase = .foundation
             self.overallProgress = 0
             self.qualityOfLife = 50
             self.functioningLevel = 50
@@ -71,9 +71,9 @@ public final class HealingProgressTracker: ObservableObject {
         }
     }
 
-    // MARK: - Healing Goal
+    // MARK: - Well-being Goal
 
-    public struct HealingGoal: Codable, Identifiable {
+    public struct WellbeingGoal: Codable, Identifiable {
         public let id: UUID
         public var title: String
         public var description: String
@@ -178,12 +178,12 @@ public final class HealingProgressTracker: ObservableObject {
         }
     }
 
-    // MARK: - Healing Phase
+    // MARK: - Well-being Phase
 
-    public enum HealingPhase: String, Codable, CaseIterable {
+    public enum WellbeingPhase: String, Codable, CaseIterable {
         case assessment = "Assessment"
-        case stabilization = "Stabilization"
-        case processing = "Processing"
+        case foundation = "Foundation"
+        case development = "Development"
         case integration = "Integration"
         case growth = "Growth"
         case maintenance = "Maintenance"
@@ -193,9 +193,9 @@ public final class HealingProgressTracker: ObservableObject {
             switch self {
             case .assessment:
                 return "Understanding your current state and needs"
-            case .stabilization:
+            case .foundation:
                 return "Building safety, routine, and basic coping skills"
-            case .processing:
+            case .development:
                 return "Working through challenges with new tools"
             case .integration:
                 return "Combining learnings into daily life"
@@ -211,8 +211,8 @@ public final class HealingProgressTracker: ObservableObject {
         var typicalDuration: String {
             switch self {
             case .assessment: return "1-2 weeks"
-            case .stabilization: return "2-4 weeks"
-            case .processing: return "4-12 weeks"
+            case .foundation: return "2-4 weeks"
+            case .development: return "4-12 weeks"
             case .integration: return "4-8 weeks"
             case .growth: return "Ongoing"
             case .maintenance: return "Ongoing"
@@ -224,9 +224,9 @@ public final class HealingProgressTracker: ObservableObject {
             switch self {
             case .assessment:
                 return "Based on biopsychosocial assessment model (Engel, 1977)"
-            case .stabilization:
-                return "Phase-based trauma treatment (Herman, 1992)"
-            case .processing:
+            case .foundation:
+                return "Phase-based treatment (Herman, 1992)"
+            case .development:
                 return "Cognitive processing models (Beck, 1976)"
             case .integration:
                 return "Integration in learning theory (Kolb, 1984)"
@@ -410,9 +410,9 @@ public final class HealingProgressTracker: ObservableObject {
         }
     }
 
-    // MARK: - Healing Milestone
+    // MARK: - Well-being Milestone
 
-    public struct HealingMilestone: Codable, Identifiable {
+    public struct WellbeingMilestone: Codable, Identifiable {
         public let id: UUID
         public var title: String
         public var description: String
@@ -573,7 +573,7 @@ public final class HealingProgressTracker: ObservableObject {
 
     private init() {
         print("==============================================")
-        print("   HEALING PROGRESS TRACKER")
+        print("   WELLBEING TRACKER")
         print("==============================================")
         print("   Scientific outcome measurement")
         print("   Evidence-based progress tracking")
@@ -583,16 +583,16 @@ public final class HealingProgressTracker: ObservableObject {
 
     // MARK: - Record Scan
 
-    public func recordScan(_ scan: QuantumLifeScanner.LifeScan) async {
-        if healingJourney == nil {
-            healingJourney = HealingJourney()
+    public func recordScan(_ scan: EchoelScan.LifeScan) async {
+        if wellbeingJourney == nil {
+            wellbeingJourney = WellbeingJourney()
         }
 
         // Update journey metrics
-        healingJourney?.qualityOfLife = scan.overallWellbeing
-        healingJourney?.functioningLevel = (scan.physicalWellbeing + scan.mentalWellbeing) / 2
-        healingJourney?.coherenceProgress = scan.coherenceLevel * 100
-        healingJourney?.resilienceGrowth = scan.resilience
+        wellbeingJourney?.qualityOfLife = scan.overallWellbeing
+        wellbeingJourney?.functioningLevel = (scan.physicalWellbeing + scan.mentalWellbeing) / 2
+        wellbeingJourney?.coherenceProgress = scan.coherenceLevel * 100
+        wellbeingJourney?.resilienceGrowth = scan.resilience
 
         // Record outcome measurements
         recordOutcome(name: "Anxiety", category: .anxiety, value: scan.anxietyLevel)
@@ -608,7 +608,7 @@ public final class HealingProgressTracker: ObservableObject {
         // Update phase if needed
         updatePhase()
 
-        print("   HealingTracker: Scan recorded")
+        print("   WellbeingTracker: Scan recorded")
         print("   Quality of Life: \(String(format: "%.1f", scan.overallWellbeing))%")
     }
 
@@ -635,7 +635,7 @@ public final class HealingProgressTracker: ObservableObject {
     public func startProtocol(name: String, description: String, sessions: Int) -> ActiveProtocol {
         let protocol_ = ActiveProtocol(name: name, description: description, totalSessions: sessions)
         currentProtocol = protocol_
-        print("   HealingTracker: Protocol started - \(name)")
+        print("   WellbeingTracker: Protocol started - \(name)")
         return protocol_
     }
 
@@ -646,8 +646,8 @@ public final class HealingProgressTracker: ObservableObject {
         currentProtocol?.completedSessions += 1
 
         // Update journey
-        healingJourney?.totalSessions += 1
-        healingJourney?.totalMinutes += Int(duration / 60)
+        wellbeingJourney?.totalSessions += 1
+        wellbeingJourney?.totalMinutes += Int(duration / 60)
 
         // Update streak
         updateStreak()
@@ -657,7 +657,7 @@ public final class HealingProgressTracker: ObservableObject {
             currentProtocol?.adherenceRate = Float(protocol_.completedSessions) / Float(protocol_.totalSessions) * 100
         }
 
-        print("   HealingTracker: Session logged (\(String(format: "%.0f", duration/60)) min, Rating: \(String(format: "%.0f", rating)))")
+        print("   WellbeingTracker: Session logged (\(String(format: "%.0f", duration/60)) min, Rating: \(String(format: "%.0f", rating)))")
     }
 
     // MARK: - Log Daily
@@ -665,7 +665,7 @@ public final class HealingProgressTracker: ObservableObject {
     public func logDaily(_ log: DailyLog) {
         dailyLogs.append(log)
         updateStreak()
-        print("   HealingTracker: Daily log recorded")
+        print("   WellbeingTracker: Daily log recorded")
     }
 
     // MARK: - Generate Report
@@ -716,7 +716,7 @@ public final class HealingProgressTracker: ObservableObject {
         report.overallTrajectory = determineTrajectory()
 
         scientificReport = report
-        print("   HealingTracker: Scientific report generated")
+        print("   WellbeingTracker: Scientific report generated")
 
         return report
     }
@@ -724,11 +724,11 @@ public final class HealingProgressTracker: ObservableObject {
     // MARK: - Helper Methods
 
     private func checkMilestones() {
-        guard let journey = healingJourney else { return }
+        guard let journey = wellbeingJourney else { return }
 
         // First session
         if journey.totalSessions == 1 && !milestones.contains(where: { $0.category == .firstSession }) {
-            addMilestone(title: "First Step", description: "Completed your first healing session", category: .firstSession)
+            addMilestone(title: "First Step", description: "Completed your first well-being session", category: .firstSession)
         }
 
         // Week streak
@@ -749,8 +749,8 @@ public final class HealingProgressTracker: ObservableObject {
         }
     }
 
-    private func addMilestone(title: String, description: String, category: HealingMilestone.MilestoneCategory, significance: String = "") {
-        let milestone = HealingMilestone(
+    private func addMilestone(title: String, description: String, category: WellbeingMilestone.MilestoneCategory, significance: String = "") {
+        let milestone = WellbeingMilestone(
             title: title,
             description: description,
             category: category,
@@ -761,7 +761,7 @@ public final class HealingProgressTracker: ObservableObject {
     }
 
     private func updateStreak() {
-        guard let journey = healingJourney else { return }
+        guard let journey = wellbeingJourney else { return }
 
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -774,25 +774,25 @@ public final class HealingProgressTracker: ObservableObject {
         }
 
         if recentLogs.isEmpty {
-            healingJourney?.streakDays = 0
+            wellbeingJourney?.streakDays = 0
         } else {
-            healingJourney?.streakDays += 1
+            wellbeingJourney?.streakDays += 1
         }
 
-        healingJourney?.longestStreak = max(journey.longestStreak, healingJourney?.streakDays ?? 0)
+        wellbeingJourney?.longestStreak = max(journey.longestStreak, wellbeingJourney?.streakDays ?? 0)
     }
 
     private func updatePhase() {
-        guard let journey = healingJourney else { return }
+        guard let journey = wellbeingJourney else { return }
 
         // Simple phase progression based on progress
         let progress = journey.overallProgress
-        let newPhase: HealingPhase
+        let newPhase: WellbeingPhase
 
         switch progress {
         case 0..<10: newPhase = .assessment
-        case 10..<25: newPhase = .stabilization
-        case 25..<50: newPhase = .processing
+        case 10..<25: newPhase = .foundation
+        case 25..<50: newPhase = .development
         case 50..<70: newPhase = .integration
         case 70..<85: newPhase = .growth
         case 85..<95: newPhase = .maintenance
@@ -800,7 +800,7 @@ public final class HealingProgressTracker: ObservableObject {
         }
 
         if newPhase != journey.currentPhase {
-            healingJourney?.currentPhase = newPhase
+            wellbeingJourney?.currentPhase = newPhase
             addMilestone(
                 title: "Phase: \(newPhase.rawValue)",
                 description: "Advanced to the \(newPhase.rawValue) phase",
@@ -861,13 +861,13 @@ public final class HealingProgressTracker: ObservableObject {
     // MARK: - Report
 
     public func getReport() -> String {
-        guard let journey = healingJourney else {
-            return "No healing journey started. Complete a Quantum Life Scan to begin."
+        guard let journey = wellbeingJourney else {
+            return "No well-being journey started. Complete an EchoelScan to begin."
         }
 
         return """
         =====================================================
-        HEALING PROGRESS REPORT
+        WELLBEING PROGRESS REPORT
         =====================================================
 
         CURRENT PHASE: \(journey.currentPhase.rawValue)

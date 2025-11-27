@@ -21,7 +21,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Echoelmusic needs microphone access to transform your voice and breath into bio-reactive healing audio experiences.</string>
+	<string>Echoelmusic needs microphone access to transform your voice and breath into bio-reactive audio experiences.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -53,7 +53,7 @@
 		<string>audio</string>
 	</array>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Echoelmusic uses heart rate data to create bio-reactive healing audio experiences.</string>
+	<string>Echoelmusic uses heart rate data to create bio-reactive audio experiences.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Echoelmusic uses your camera for face tracking to control audio parameters with your expressions.</string>
 	<key>NSFaceIDUsageDescription</key>

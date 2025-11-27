@@ -3,15 +3,15 @@ import SwiftUI
 /// Main entry point for the Echoelmusic app
 /// Bio-reactive audio-visual experiences platform
 ///
-/// ECHOELMUSIC - Bio-Reactive Sound. Healing Through Music.
+/// ECHOELMUSIC - Bio-Reactive Sound. Well-being Through Music.
 ///
 /// Integrated Systems:
 /// - Audio Engine (C++ Core + Swift)
-/// - Bio/Health (HRV, HealthKit, Healing)
+/// - Bio/Health (HRV, HealthKit, Well-being)
 /// - Input (Face, Gesture, MIDI, Touch)
 /// - Output (Spatial Audio, Visuals, LED)
 /// - Intelligence (Quantum AI, ML)
-/// - Business (Creator, Agency, EchoelmusicWorks)
+/// - Business (Creator, Agency, Echoelworks)
 /// - 23+ Languages, WCAG 2.1 AAA
 @main
 struct EchoelmusicApp: App {
@@ -96,14 +96,14 @@ struct EchoelmusicApp: App {
                     ECHOELMUSIC - ALL SYSTEMS ONLINE
                     ========================================
                     Bio-Reactive Audio-Visual Platform
-                    Healing Through Music
+                    Well-being Through Music
                     ========================================
                     - Audio Engine: Ready
                     - Bio-Reactive Mode: Active
                     - MIDI 2.0 + MPE: Ready
                     - Spatial Audio: Ready
-                    - QuantumLifeScanner: Ready
-                    - EchoelmusicWorks (Music Industry Jobs): Ready
+                    - EchoelScan: Ready
+                    - Echoelworks (Creative Industry Jobs): Ready
                     - CreatorManager: Ready
                     - AgencyManager: Ready
                     - 23+ Languages: Ready

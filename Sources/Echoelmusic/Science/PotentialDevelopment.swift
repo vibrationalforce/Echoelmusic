@@ -546,9 +546,9 @@ public final class PotentialDevelopment: ObservableObject {
         initializeDefaultPractices()
     }
 
-    // MARK: - Update from QuantumLifeScanner
+    // MARK: - Update from EchoelScan
 
-    public func updateFromScan(_ scan: QuantumLifeScanner.LifeScan) async {
+    public func updateFromScan(_ scan: EchoelScan.LifeScan) async {
         if userPotentialProfile == nil {
             userPotentialProfile = PotentialProfile()
         }
@@ -761,7 +761,7 @@ public final class PotentialDevelopment: ObservableObject {
 
     // MARK: - Map to Virtue
 
-    private func mapToVirtue(_ category: QuantumLifeScanner.Strength.StrengthCategory) -> CharacterStrength.Virtue {
+    private func mapToVirtue(_ category: EchoelScan.Strength.StrengthCategory) -> CharacterStrength.Virtue {
         switch category {
         case .wisdom: return .wisdom
         case .courage: return .courage
@@ -776,7 +776,7 @@ public final class PotentialDevelopment: ObservableObject {
 
     public func getReport() -> String {
         guard let profile = userPotentialProfile else {
-            return "No potential profile created yet. Complete a Quantum Life Scan to begin."
+            return "No potential profile created yet. Complete an EchoelScan to begin."
         }
 
         return """

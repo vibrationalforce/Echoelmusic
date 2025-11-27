@@ -1,15 +1,15 @@
 import Foundation
 import Combine
 
-/// EchoelmusicWorks - Creative Audio & Wellness Career Platform
-/// Connecting creative talent with opportunities in audio, wellness, and creative industries
+/// Echoelworks - Creative Audio & Well-being Career Platform
+/// Connecting creative talent with opportunities in audio, well-being, and creative industries
 ///
 /// Mission: Every person deserves access to meaningful work that aligns with
 /// their talents, respects their abilities, and contributes to wellbeing.
 ///
 /// Career Domains (Not Just Music!):
 /// - Audio & Sound (Music, Podcasts, Sound Design, Audio Engineering)
-/// - Wellness & Therapeutic (Sound Therapy, Meditation, Biofeedback)
+/// - Well-being & Therapeutic (Sound Therapy, Meditation, Biofeedback)
 /// - Creative Production (Content Creation, Streaming, Multimedia)
 /// - Technology & Development (Audio Tech, App Dev, AI/ML)
 /// - Education & Coaching (Teaching, Mentoring, Training)
@@ -19,7 +19,7 @@ import Combine
 /// - Musicians & Audio Professionals
 /// - Podcasters & Content Creators
 /// - Sound Designers & Audio Engineers
-/// - Wellness Practitioners & Therapists
+/// - Well-being Practitioners & Therapists
 /// - Educators & Coaches
 /// - Tech Developers & Creatives
 /// - Career Changers & New Entrants
@@ -37,11 +37,11 @@ import Combine
 /// - Sensory impairments: Accessible job recommendations
 /// - Mental health considerations: Stress-appropriate roles
 @MainActor
-public final class EchoelmusicWorks: ObservableObject {
+public final class Echoelworks: ObservableObject {
 
     // MARK: - Singleton
 
-    public static let shared = EchoelmusicWorks()
+    public static let shared = Echoelworks()
 
     // MARK: - Published State
 
@@ -73,7 +73,7 @@ public final class EchoelmusicWorks: ObservableObject {
         public var workHistory: [WorkExperience]
         public var certifications: [Certification]
 
-        // Strengths & Interests (from QuantumLifeScanner)
+        // Strengths & Interests (from EchoelScan)
         public var characterStrengths: [String]
         public var hollandCodes: [String]    // RIASEC
         public var values: [WorkValue]
@@ -89,7 +89,7 @@ public final class EchoelmusicWorks: ObservableObject {
         public var remotePreference: RemotePreference
 
         // Health & Wellbeing Integration
-        public var wellbeingScore: Float?    // From QuantumLifeScanner
+        public var wellbeingScore: Float?    // From EchoelScan
         public var stressCapacity: StressCapacity
         public var idealWorkEnvironment: [String]
 
@@ -746,17 +746,17 @@ public final class EchoelmusicWorks: ObservableObject {
 
     private init() {
         print("==============================================")
-        print("   ECHOELMUSIC WORKS - CREATIVE CAREERS")
+        print("   ECHOELWORKS - CREATIVE CAREERS")
         print("==============================================")
         print("   Connecting creative talent with opportunity")
-        print("   Audio, wellness, creative industries")
+        print("   Audio, well-being, creative industries")
         print("   Accessibility-first job matching")
         print("==============================================")
     }
 
-    // MARK: - Update from QuantumLifeScanner
+    // MARK: - Update from EchoelScan
 
-    public func updateFromScan(_ scan: QuantumLifeScanner.LifeScan) async {
+    public func updateFromScan(_ scan: EchoelScan.LifeScan) async {
         // Update or create profile with scan data
         if userProfile == nil {
             userProfile = WorkerProfile()
@@ -799,7 +799,7 @@ public final class EchoelmusicWorks: ObservableObject {
             return job
         }
 
-        print("   EchoelmusicWorks: Profile updated from scan")
+        print("   Echoelworks: Profile updated from scan")
         print("   Skills: \(userProfile?.skills.count ?? 0)")
         print("   Job Matches: \(jobMatches.count)")
     }
@@ -808,11 +808,11 @@ public final class EchoelmusicWorks: ObservableObject {
 
     public func findJobs(limit: Int = 20) async -> [JobOpportunity] {
         guard let profile = userProfile else {
-            print("   EchoelmusicWorks: No profile - cannot match jobs")
+            print("   Echoelworks: No profile - cannot match jobs")
             return []
         }
 
-        print("\n--- ECHOELMUSIC WORKS JOB SEARCH ---")
+        print("\n--- ECHOELWORKS JOB SEARCH ---")
         print("Skills: \(profile.skills.count)")
         print("Accessibility needs: \(profile.accessibilityNeeds.count)")
         print("Remote preference: \(profile.remotePreference.rawValue)")
@@ -920,13 +920,13 @@ public final class EchoelmusicWorks: ObservableObject {
         )
         applications.append(application)
 
-        print("   EchoelmusicWorks: Applied to \(job.title) at \(job.company)")
+        print("   Echoelworks: Applied to \(job.title) at \(job.company)")
         return application
     }
 
     // MARK: - Helper Methods
 
-    private func mapSkillCategory(_ category: QuantumLifeScanner.Skill.SkillCategory) -> WorkSkill.SkillCategory {
+    private func mapSkillCategory(_ category: EchoelScan.Skill.SkillCategory) -> WorkSkill.SkillCategory {
         switch category {
         case .technical: return .technical
         case .creative: return .creative
@@ -1086,7 +1086,7 @@ public final class EchoelmusicWorks: ObservableObject {
     public enum CreativeJobCategory: String, Codable {
         case audioProduction = "Audio Production"
         case soundDesign = "Sound Design"
-        case wellness = "Wellness & Therapeutic"
+        case wellbeing = "Well-being & Therapeutic"
         case content = "Content Creation"
         case technology = "Technology & Development"
         case education = "Education & Coaching"
@@ -1190,7 +1190,7 @@ public final class EchoelmusicWorks: ObservableObject {
     public func getReport() -> String {
         return """
         =====================================================
-        ECHOELMUSIC WORKS - CREATIVE CAREER REPORT
+        ECHOELWORKS - CREATIVE CAREER REPORT
         =====================================================
 
         PROFILE STATUS: \(userProfile != nil ? "Complete" : "Incomplete")

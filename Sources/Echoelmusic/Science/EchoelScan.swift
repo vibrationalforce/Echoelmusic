@@ -2,10 +2,10 @@ import Foundation
 import Combine
 import HealthKit
 
-/// Quantum Life Scanner (QLS) - The Heart of Healing & Potential Development
-/// A comprehensive bio-psycho-social scanning system with quantum-inspired precision
+/// EchoelScan - Bio-Psycho-Social Well-being Scanner
+/// A comprehensive bio-psycho-social scanning system with precision metrics
 ///
-/// Mission: To help EVERY person worldwide heal, develop their potential,
+/// Mission: To help EVERY person worldwide develop their potential, enhance well-being,
 /// and find meaningful work - regardless of ability, language, culture, or circumstance.
 ///
 /// Scientific Foundation:
@@ -17,11 +17,11 @@ import HealthKit
 ///
 /// Accessibility: WCAG 2.1 AAA compliant, 23+ languages, works offline
 @MainActor
-public final class QuantumLifeScanner: ObservableObject {
+public final class EchoelScan: ObservableObject {
 
     // MARK: - Singleton
 
-    public static let shared = QuantumLifeScanner()
+    public static let shared = EchoelScan()
 
     // MARK: - Published State
 
@@ -39,9 +39,9 @@ public final class QuantumLifeScanner: ObservableObject {
 
     // MARK: - Integrated Systems
 
-    private let echoelmusicWorks = EchoelmusicWorks.shared
+    private let echoelworks = Echoelworks.shared
     private let potentialDev = PotentialDevelopment.shared
-    private let healingTracker = HealingProgressTracker.shared
+    private let wellbeingTracker = WellbeingTracker.shared
     private let globalInclusivity = GlobalInclusivity.shared
 
     // MARK: - Combine
@@ -53,7 +53,7 @@ public final class QuantumLifeScanner: ObservableObject {
     public enum ScannerMode: String, CaseIterable, Identifiable {
         case quick = "Quick Scan"
         case comprehensive = "Comprehensive Scan"
-        case healing = "Healing Focus"
+        case wellbeing = "Well-being Focus"
         case potential = "Potential Development"
         case career = "Career Matching"
         case scientific = "Scientific Research"
@@ -66,8 +66,8 @@ public final class QuantumLifeScanner: ObservableObject {
                 return "2-minute assessment for immediate insights"
             case .comprehensive:
                 return "Full life scan covering all dimensions (10-15 min)"
-            case .healing:
-                return "Focus on health, wellness, and recovery needs"
+            case .wellbeing:
+                return "Focus on health, well-being, and recovery needs"
             case .potential:
                 return "Identify strengths, talents, and growth opportunities"
             case .career:
@@ -81,7 +81,7 @@ public final class QuantumLifeScanner: ObservableObject {
             switch self {
             case .quick: return 120           // 2 minutes
             case .comprehensive: return 900   // 15 minutes
-            case .healing: return 600         // 10 minutes
+            case .wellbeing: return 600         // 10 minutes
             case .potential: return 480       // 8 minutes
             case .career: return 600          // 10 minutes
             case .scientific: return 1800     // 30 minutes
@@ -173,7 +173,7 @@ public final class QuantumLifeScanner: ObservableObject {
         // Overall
         public var overallWellbeing: Float      // 0-100 aggregate of all dimensions
         public var recommendations: [Recommendation]
-        public var healingProtocol: HealingProtocol?
+        public var wellbeingProtocol: WellbeingProtocol?
 
         // Accessibility
         public var accessibilityNotes: String
@@ -222,7 +222,7 @@ public final class QuantumLifeScanner: ObservableObject {
 
             self.overallWellbeing = 50
             self.recommendations = []
-            self.healingProtocol = nil
+            self.wellbeingProtocol = nil
 
             self.accessibilityNotes = ""
             self.languageUsed = "en"
@@ -242,10 +242,10 @@ public final class QuantumLifeScanner: ObservableObject {
         case stressed = "Stressed"
         case overwhelmed = "Overwhelmed"
 
-        public var healingRecommendation: String {
+        public var wellbeingRecommendation: String {
             switch self {
             case .joyful, .peaceful, .hopeful:
-                return "Maintain your positive state. Consider sharing your well-being with others."
+                return "Maintain your positive state. Consider sharing your positive energy with others."
             case .neutral:
                 return "Good baseline. Small positive actions can elevate your mood."
             case .anxious:
@@ -475,7 +475,7 @@ public final class QuantumLifeScanner: ObservableObject {
         }
 
         public enum RecommendationCategory: String, Codable, CaseIterable {
-            case healing = "Healing"
+            case wellbeing = "Well-being"
             case potential = "Potential Development"
             case career = "Career"
             case social = "Social Connection"
@@ -493,9 +493,9 @@ public final class QuantumLifeScanner: ObservableObject {
         }
     }
 
-    // MARK: - Healing Protocol
+    // MARK: - Well-being Protocol
 
-    public struct HealingProtocol: Codable {
+    public struct WellbeingProtocol: Codable {
         public let name: String
         public let targetAreas: [String]
         public let interventions: [Intervention]
@@ -530,9 +530,9 @@ public final class QuantumLifeScanner: ObservableObject {
 
     private init() {
         print("==============================================")
-        print("   QUANTUM LIFE SCANNER INITIALIZED")
+        print("   ECHOELSCAN INITIALIZED")
         print("==============================================")
-        print("   Mission: Healing & Potential for EVERYONE")
+        print("   Mission: Well-being & Potential for EVERYONE")
         print("   Accessibility: WCAG 2.1 AAA Compliant")
         print("   Languages: 23+ supported")
         print("   Offline: Fully functional")
@@ -545,7 +545,7 @@ public final class QuantumLifeScanner: ObservableObject {
         isScanning = true
         scanProgress = 0.0
 
-        print("\n--- QUANTUM LIFE SCANNER ---")
+        print("\n--- ECHOELSCAN ---")
         print("Mode: \(mode.rawValue)")
         print("Accessibility: \(accessibilityMode.rawValue)")
         print("Offline: \(offlineMode ? "Yes" : "No")")
@@ -584,9 +584,9 @@ public final class QuantumLifeScanner: ObservableObject {
         // Generate recommendations
         scan.recommendations = generateRecommendations(scan)
 
-        // Generate healing protocol if needed
+        // Generate well-being protocol if needed
         if scan.overallWellbeing < 60 {
-            scan.healingProtocol = generateHealingProtocol(scan)
+            scan.wellbeingProtocol = generateWellbeingProtocol(scan)
         }
 
         // Store scan
@@ -1008,11 +1008,11 @@ public final class QuantumLifeScanner: ObservableObject {
         return recommendations
     }
 
-    private func generateHealingProtocol(_ scan: LifeScan) -> HealingProtocol {
-        var interventions: [HealingProtocol.Intervention] = []
+    private func generateWellbeingProtocol(_ scan: LifeScan) -> WellbeingProtocol {
+        var interventions: [WellbeingProtocol.Intervention] = []
 
         // HRV Breathing
-        interventions.append(HealingProtocol.Intervention(
+        interventions.append(WellbeingProtocol.Intervention(
             name: "Coherence Breathing",
             type: .breathing,
             duration: 300, // 5 minutes
@@ -1023,7 +1023,7 @@ public final class QuantumLifeScanner: ObservableObject {
 
         // Based on emotional state
         if scan.anxietyLevel > 50 {
-            interventions.append(HealingProtocol.Intervention(
+            interventions.append(WellbeingProtocol.Intervention(
                 name: "Progressive Muscle Relaxation",
                 type: .relaxation,
                 duration: 600, // 10 minutes
@@ -1034,8 +1034,8 @@ public final class QuantumLifeScanner: ObservableObject {
         }
 
         // Bio-reactive music
-        interventions.append(HealingProtocol.Intervention(
-            name: "Bio-Reactive Sound Healing",
+        interventions.append(WellbeingProtocol.Intervention(
+            name: "Bio-Reactive Sound Session",
             type: .music,
             duration: 900, // 15 minutes
             instructions: "Listen to music that responds to your biometrics",
@@ -1043,8 +1043,8 @@ public final class QuantumLifeScanner: ObservableObject {
             accessibleVersion: "Visual and haptic feedback modes available"
         ))
 
-        return HealingProtocol(
-            name: "Personalized Healing Journey",
+        return WellbeingProtocol(
+            name: "Personalized Well-being Journey",
             targetAreas: ["Stress reduction", "Emotional balance", "Energy restoration"],
             interventions: interventions,
             duration: interventions.reduce(0) { $0 + $1.duration },
@@ -1056,16 +1056,16 @@ public final class QuantumLifeScanner: ObservableObject {
     }
 
     private func syncWithIntegratedSystems(_ scan: LifeScan) async {
-        // Sync with EchoelmusicWorks for music industry job matching
-        await echoelmusicWorks.updateFromScan(scan)
+        // Sync with Echoelworks for career job matching
+        await echoelworks.updateFromScan(scan)
 
         // Sync with Potential Development tracker
         await potentialDev.updateFromScan(scan)
 
-        // Sync with Healing Progress Tracker
-        await healingTracker.recordScan(scan)
+        // Sync with Well-being Tracker
+        await wellbeingTracker.recordScan(scan)
 
-        print("   Synced with EchoelmusicWorks, PotentialDev, HealingTracker")
+        print("   Synced with Echoelworks, PotentialDev, WellbeingTracker")
     }
 
     // MARK: - Accessibility Report
@@ -1073,7 +1073,7 @@ public final class QuantumLifeScanner: ObservableObject {
     public func getAccessibilityReport() -> String {
         return """
         =====================================================
-        QUANTUM LIFE SCANNER - ACCESSIBILITY REPORT
+        ECHOELSCAN - ACCESSIBILITY REPORT
         =====================================================
 
         WCAG 2.1 AAA COMPLIANCE: FULL

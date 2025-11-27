@@ -1,12 +1,12 @@
 # Echoelmusic 🎵
 
-**Bio-Reactive Sound. Healing Through Music.**
+**Bio-Reactive Sound. Well-being Through Music.**
 
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
 [![iOS](https://img.shields.io/badge/iOS-15.0+-blue.svg)](https://developer.apple.com/ios/)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 
-> Bio-reactive healing audio platform combining voice, biofeedback, spatial audio, and music industry job placement (EchoelmusicWorks)
+> Bio-reactive audio platform combining voice, biofeedback, spatial audio, and creative industry job placement (Echoelworks)
 
 ---
 
@@ -47,7 +47,7 @@ Then in Xcode:
 
 ## 🎯 What is Echoelmusic?
 
-Echoelmusic is an **embodied multimodal healing platform** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
+Echoelmusic is an **embodied multimodal well-being platform** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
 - 🌊 **Spatial Audio** (3D/4D/Fibonacci Field Arrays)
 - 🎨 **Real-time Visuals** (Cymatics, Mandalas, Particles)
 - 💡 **LED/DMX Lighting** (Push 3, Art-Net)
@@ -150,11 +150,11 @@ Echoelmusic/
 │   ├── Visual/                     # Cymatics, visuals
 │   ├── LED/                        # Push 3, DMX/Art-Net
 │   ├── MIDI/                       # MIDI 2.0, MPE
-│   ├── Science/                    # Healing & Career systems
-│   │   ├── QuantumLifeScanner.swift
-│   │   ├── EchoelmusicWorks.swift
+│   ├── Science/                    # Well-being & Career systems
+│   │   ├── EchoelScan.swift
+│   │   ├── Echoelworks.swift
 │   │   ├── PotentialDevelopment.swift
-│   │   ├── HealingProgressTracker.swift
+│   │   ├── WellbeingTracker.swift
 │   │   └── GlobalInclusivity.swift
 │   ├── Integration/
 │   │   └── EchoelmusicIntegrationHub.swift
@@ -252,7 +252,7 @@ swift test
 
 <!-- Health Data -->
 <key>NSHealthShareUsageDescription</key>
-<string>Echoelmusic uses heart rate data for healing audio experiences</string>
+<string>Echoelmusic uses heart rate data for bio-reactive audio experiences</string>
 
 <!-- Camera (for face tracking) -->
 <key>NSCameraUsageDescription</key>
@@ -412,10 +412,10 @@ Proprietary software - not for redistribution.
 
 ## 🎵 Philosophy
 
-> "Echoelmusic is not just an app - it's an interface to healing and self-discovery.
-> Through breath, biometrics, and intention, we transform life itself into wellness."
+> "Echoelmusic is not just an app - it's an interface to well-being and self-discovery.
+> Through breath, biometrics, and intention, we transform life itself into creative flow."
 
-**Bio-Reactive Sound. Healing Through Music.**
+**Bio-Reactive Sound. Well-being Through Music.**
 
 ---
 

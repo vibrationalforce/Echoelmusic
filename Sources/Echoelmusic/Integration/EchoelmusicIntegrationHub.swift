@@ -6,15 +6,15 @@ import SwiftUI
 /// Connects ALL 90+ systems into one unified bio-reactive platform
 ///
 /// Brand: ECHOELMUSIC
-/// Mission: Bio-reactive audio-visual healing platform for creators and humanity
+/// Mission: Bio-reactive audio-visual well-being platform for creators and humanity
 ///
 /// This hub integrates:
 /// - Audio Engine (C++ core + Swift wrapper)
-/// - Bio/Health Systems (HRV, HealthKit, Healing)
+/// - Bio/Health Systems (HRV, HealthKit, Well-being)
 /// - Input Systems (Face, Gesture, MIDI, Touch)
 /// - Output Systems (Spatial Audio, Visuals, LED, Streaming)
 /// - Intelligence Systems (Quantum AI, ML, Pattern Generation)
-/// - Business Systems (Creator Management, Agency, EchoelmusicWorks)
+/// - Business Systems (Creator Management, Agency, Echoelworks)
 /// - Platform Systems (iOS, visionOS, watchOS, tvOS)
 /// - Cloud Systems (Sync, Collaboration, Remote Processing)
 @MainActor
@@ -27,8 +27,8 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
     // MARK: - Brand Identity
 
     public let brandName = "Echoelmusic"
-    public let brandTagline = "Bio-Reactive Sound. Healing Through Music."
-    public let brandMission = "Connecting human potential with meaningful work and healing through bio-reactive music technology."
+    public let brandTagline = "Bio-Reactive Sound. Well-being Through Music."
+    public let brandMission = "Connecting human potential with meaningful work and well-being through bio-reactive music technology."
 
     // MARK: - Published State
 
@@ -44,7 +44,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         case ready = "Ready"
         case processing = "Processing"
         case bioReactive = "Bio-Reactive Mode"
-        case healing = "Healing Session"
+        case wellbeing = "Well-being Session"
         case recording = "Recording"
         case streaming = "Streaming"
         case error = "Error"
@@ -56,10 +56,10 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
     public lazy var audioEffectController = AudioEffectController()
 
     // Bio/Health Systems
-    public lazy var quantumLifeScanner = QuantumLifeScanner.shared
-    public lazy var echoelmusicWorks = EchoelmusicWorks.shared
+    public lazy var echoelScan = EchoelScan.shared
+    public lazy var echoelworks = Echoelworks.shared
     public lazy var potentialDevelopment = PotentialDevelopment.shared
-    public lazy var healingProgressTracker = HealingProgressTracker.shared
+    public lazy var wellbeingTracker = WellbeingTracker.shared
     public lazy var globalInclusivity = GlobalInclusivity.shared
 
     // Combine
@@ -91,7 +91,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         ║     ╚══════╝ ╚═════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝        ║
         ║                     MUSIC                                    ║
         ║                                                              ║
-        ║     Bio-Reactive Sound. Healing Through Music.               ║
+        ║     Bio-Reactive Sound. Well-being Through Music.             ║
         ║                                                              ║
         ╠══════════════════════════════════════════════════════════════╣
         ║  INTEGRATION HUB INITIALIZING...                             ║
@@ -154,8 +154,8 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         ║                                                              ║
         ║  Systems Online:                                             ║
         ║  ✓ Audio Engine (Bio-Reactive)                               ║
-        ║  ✓ QuantumLifeScanner (Healing + Career)                     ║
-        ║  ✓ EchoelmusicWorks (Music Industry Jobs)                     ║
+        ║  ✓ EchoelScan (Well-being + Career)                          ║
+        ║  ✓ Echoelworks (Creative Industry Jobs)                       ║
         ║  ✓ CreatorManager (Artists/Influencers)                      ║
         ║  ✓ AgencyManager (Booking/Management)                        ║
         ║  ✓ Spatial Audio (3D/Ambisonics)                             ║
@@ -184,13 +184,13 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
     // MARK: - Phase 2: Bio/Health Systems
 
     private func initializeBioHealthSystems() async {
-        // QuantumLifeScanner is already initialized as singleton
-        print("   ✓ QuantumLifeScanner ready")
+        // EchoelScan is already initialized as singleton
+        print("   ✓ EchoelScan ready")
 
         // Connect scanner to other health systems
-        print("   ✓ EchoelmusicWorks (Music Industry Jobs) ready")
+        print("   ✓ Echoelworks (Creative Industry Jobs) ready")
         print("   ✓ PotentialDevelopment ready")
-        print("   ✓ HealingProgressTracker ready")
+        print("   ✓ WellbeingTracker ready")
         print("   ✓ GlobalInclusivity ready")
         print("   ✓ EvidenceBasedHRVTraining ready")
     }
@@ -236,22 +236,22 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         // Bridge 1: Bio ↔ Audio
         bioAudioBridge = BioAudioBridge(
             audioController: audioEffectController,
-            scanner: quantumLifeScanner,
-            healingTracker: healingProgressTracker
+            scanner: echoelScan,
+            wellbeingTracker: wellbeingTracker
         )
         print("   ✓ Bio ↔ Audio Bridge created")
 
         // Bridge 2: Creator ↔ Career
         creatorCareerBridge = CreatorCareerBridge(
-            echoelmusicWorks: echoelmusicWorks,
+            echoelworks: echoelworks,
             potentialDev: potentialDevelopment
         )
         print("   ✓ Creator ↔ Career Bridge created")
 
         // Bridge 3: Recording ↔ Health
         recordingHealthBridge = RecordingHealthBridge(
-            scanner: quantumLifeScanner,
-            healingTracker: healingProgressTracker
+            scanner: echoelScan,
+            wellbeingTracker: wellbeingTracker
         )
         print("   ✓ Recording ↔ Health Bridge created")
 
@@ -281,27 +281,27 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
 
     // MARK: - Start Healing Session
 
-    public func startHealingSession() async -> QuantumLifeScanner.LifeScan {
+    public func startWellbeingSession() async -> EchoelScan.LifeScan {
         guard isInitialized else {
             print("[EchoelmusicHub] Error: Not initialized.")
-            return QuantumLifeScanner.LifeScan()
+            return EchoelScan.LifeScan()
         }
 
-        systemStatus = .healing
+        systemStatus = .wellbeing
 
-        print("\n[EchoelmusicHub] HEALING SESSION STARTED")
+        print("\n[EchoelmusicHub] WELL-BEING SESSION STARTED")
 
         // Run comprehensive scan
-        let scan = await quantumLifeScanner.startScan(mode: .healing)
+        let scan = await echoelScan.startScan(mode: .wellbeing)
 
-        // Record in healing tracker
-        await healingProgressTracker.recordScan(scan)
+        // Record in wellbeing tracker
+        await wellbeingTracker.recordScan(scan)
 
         // Update potential development
         await potentialDevelopment.updateFromScan(scan)
 
         // Update career matches
-        await echoelmusicWorks.updateFromScan(scan)
+        await echoelworks.updateFromScan(scan)
 
         print("[EchoelmusicHub] Healing session complete")
         print("   Overall Wellbeing: \(String(format: "%.1f", scan.overallWellbeing))%")
@@ -314,7 +314,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
 
     // MARK: - Start Career Scan
 
-    public func startCareerScan() async -> [EchoelmusicWorks.JobOpportunity] {
+    public func startCareerScan() async -> [Echoelworks.JobOpportunity] {
         guard isInitialized else {
             print("[EchoelmusicHub] Error: Not initialized.")
             return []
@@ -323,13 +323,13 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         print("\n[EchoelmusicHub] CAREER SCAN STARTED")
 
         // Run comprehensive scan with career focus
-        let scan = await quantumLifeScanner.startScan(mode: .career)
+        let scan = await echoelScan.startScan(mode: .career)
 
-        // Update EchoelmusicWorks
-        await echoelmusicWorks.updateFromScan(scan)
+        // Update Echoelworks
+        await echoelworks.updateFromScan(scan)
 
         // Find job matches
-        let jobs = await echoelmusicWorks.findJobs(limit: 20)
+        let jobs = await echoelworks.findJobs(limit: 20)
 
         print("[EchoelmusicHub] Career scan complete")
         print("   Skills: \(scan.skillsInventory.count)")
@@ -365,15 +365,15 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         └── 30+ DSP Effects
 
         BIO/HEALTH SYSTEMS:
-        ├── QuantumLifeScanner (5-Dimension Scan)
+        ├── EchoelScan (5-Dimension Scan)
         ├── HealthKitManager (HRV/HR)
         ├── BioParameterMapper (Bio→Audio)
-        ├── HealingProgressTracker (MCID Validated)
+        ├── WellbeingTracker (MCID Validated)
         ├── EvidenceBasedHRVTraining (Cochrane)
         └── GlobalInclusivity (WHO Framework)
 
         CAREER/WORK SYSTEMS:
-        ├── EchoelmusicWorks (Music Industry Jobs)
+        ├── Echoelworks (Creative Industry Jobs)
         ├── PotentialDevelopment (VIA Strengths)
         ├── CreatorManager (C++ - Artists/Influencers)
         ├── AgencyManager (C++ - Booking/Management)
@@ -427,7 +427,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
            Stress → Compression Ratio
 
         2. CREATOR ↔ CAREER BRIDGE
-           CreatorManager Skills → EchoelmusicWorks Profile
+           CreatorManager Skills → Echoelworks Profile
            AgencyManager Bookings → Career History
            Portfolio → Job Matching
 
@@ -555,16 +555,16 @@ public class AudioEffectController: ObservableObject {
 @MainActor
 public class BioAudioBridge {
     private let audioController: AudioEffectController
-    private let scanner: QuantumLifeScanner
-    private let healingTracker: HealingProgressTracker
+    private let scanner: EchoelScan
+    private let wellbeingTracker: WellbeingTracker
 
     private var isRunning: Bool = false
     private var updateTask: Task<Void, Never>?
 
-    public init(audioController: AudioEffectController, scanner: QuantumLifeScanner, healingTracker: HealingProgressTracker) {
+    public init(audioController: AudioEffectController, scanner: EchoelScan, wellbeingTracker: WellbeingTracker) {
         self.audioController = audioController
         self.scanner = scanner
-        self.healingTracker = healingTracker
+        self.wellbeingTracker = wellbeingTracker
     }
 
     public func startBioReactiveLoop() {
@@ -604,19 +604,19 @@ public class BioAudioBridge {
 
 // MARK: - Creator Career Bridge
 
-/// Bridges CreatorManager/AgencyManager (C++) with EchoelmusicWorks (Swift)
+/// Bridges CreatorManager/AgencyManager (C++) with Echoelworks (Swift)
 @MainActor
 public class CreatorCareerBridge {
-    private let echoelmusicWorks: EchoelmusicWorks
+    private let echoelworks: Echoelworks
     private let potentialDev: PotentialDevelopment
 
-    public init(echoelmusicWorks: EchoelmusicWorks, potentialDev: PotentialDevelopment) {
-        self.echoelmusicWorks = echoelmusicWorks
+    public init(echoelworks: Echoelworks, potentialDev: PotentialDevelopment) {
+        self.echoelworks = echoelworks
         self.potentialDev = potentialDev
     }
 
-    /// Convert Creator profile (C++) to EchoelmusicWorks profile (Swift)
-    public func syncCreatorToEchoelmusicWorks(
+    /// Convert Creator profile (C++) to Echoelworks profile (Swift)
+    public func syncCreatorToEchoelworks(
         creatorName: String,
         creatorType: String,
         skills: [String],
@@ -624,14 +624,14 @@ public class CreatorCareerBridge {
         engagementRate: Float,
         earnings: Double
     ) async {
-        // Create or update EchoelmusicWorks profile from Creator data
-        if echoelmusicWorks.userProfile == nil {
-            var profile = EchoelmusicWorks.WorkerProfile()
+        // Create or update Echoelworks profile from Creator data
+        if echoelworks.userProfile == nil {
+            var profile = Echoelworks.WorkerProfile()
             profile.name = creatorName
 
             // Map creator skills to work skills
             profile.skills = skills.map { skillName in
-                EchoelmusicWorks.WorkSkill(
+                Echoelworks.WorkSkill(
                     name: skillName,
                     category: mapCreatorSkillCategory(skillName),
                     proficiency: .advanced,
@@ -643,10 +643,10 @@ public class CreatorCareerBridge {
             profile.remotePreference = .remotePreferred
             profile.preferredWorkStyle = .flexible
 
-            echoelmusicWorks.userProfile = profile
+            echoelworks.userProfile = profile
         }
 
-        print("[CreatorCareerBridge] Synced creator '\(creatorName)' to EchoelmusicWorks")
+        print("[CreatorCareerBridge] Synced creator '\(creatorName)' to Echoelworks")
     }
 
     /// Map Agency bookings to career history
@@ -654,7 +654,7 @@ public class CreatorCareerBridge {
         bookings: [(title: String, client: String, rate: Double, date: Date)]
     ) async {
         for booking in bookings {
-            let experience = EchoelmusicWorks.WorkExperience(
+            let experience = Echoelworks.WorkExperience(
                 company: booking.client,
                 title: booking.title,
                 description: "Booking via agency",
@@ -662,13 +662,13 @@ public class CreatorCareerBridge {
                 endDate: booking.date,
                 isCurrent: false
             )
-            echoelmusicWorks.userProfile?.workHistory.append(experience)
+            echoelworks.userProfile?.workHistory.append(experience)
         }
 
         print("[CreatorCareerBridge] Synced \(bookings.count) bookings to career history")
     }
 
-    private func mapCreatorSkillCategory(_ skillName: String) -> EchoelmusicWorks.WorkSkill.SkillCategory {
+    private func mapCreatorSkillCategory(_ skillName: String) -> Echoelworks.WorkSkill.SkillCategory {
         let skill = skillName.lowercased()
         if skill.contains("music") || skill.contains("audio") || skill.contains("dj") {
             return .creative
@@ -688,8 +688,8 @@ public class CreatorCareerBridge {
 /// Bridges Recording sessions with Health tracking
 @MainActor
 public class RecordingHealthBridge {
-    private let scanner: QuantumLifeScanner
-    private let healingTracker: HealingProgressTracker
+    private let scanner: EchoelScan
+    private let wellbeingTracker: WellbeingTracker
 
     // Session health data
     public struct SessionHealthData: Codable {
@@ -704,9 +704,9 @@ public class RecordingHealthBridge {
 
     private var currentSessionHealth: SessionHealthData?
 
-    public init(scanner: QuantumLifeScanner, healingTracker: HealingProgressTracker) {
+    public init(scanner: EchoelScan, wellbeingTracker: WellbeingTracker) {
         self.scanner = scanner
-        self.healingTracker = healingTracker
+        self.wellbeingTracker = wellbeingTracker
     }
 
     /// Start capturing health data for a recording session
@@ -771,18 +771,18 @@ public class RecordingHealthBridge {
 extension EchoelmusicIntegrationHub {
 
     /// Quick access to run a full life scan
-    public func runFullLifeScan() async -> QuantumLifeScanner.LifeScan {
-        return await quantumLifeScanner.startScan(mode: .comprehensive)
+    public func runFullLifeScan() async -> EchoelScan.LifeScan {
+        return await echoelScan.startScan(mode: .comprehensive)
     }
 
     /// Quick access to find jobs
-    public func findJobs() async -> [EchoelmusicWorks.JobOpportunity] {
-        return await echoelmusicWorks.findJobs()
+    public func findJobs() async -> [Echoelworks.JobOpportunity] {
+        return await echoelworks.findJobs()
     }
 
-    /// Quick access to get healing report
-    public func getHealingReport() -> String {
-        return healingProgressTracker.getReport()
+    /// Quick access to get well-being report
+    public func getWellbeingReport() -> String {
+        return wellbeingTracker.getReport()
     }
 
     /// Quick access to get potential report
@@ -792,7 +792,7 @@ extension EchoelmusicIntegrationHub {
 
     /// Quick access to get career report
     public func getCareerReport() -> String {
-        return echoelmusicWorks.getReport()
+        return echoelworks.getReport()
     }
 
     /// Get all reports combined
