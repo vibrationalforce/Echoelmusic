@@ -24,11 +24,11 @@
 
 	<!-- Microphone Permission (REQUIRED for audio capture) -->
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Echoelmusic needs microphone access to capture your voice and breath for bio-reactive healing audio experiences.</string>
+	<string>Echoelmusic needs microphone access to capture your voice and breath for bio-reactive audio experiences.</string>
 
 	<!-- HealthKit Permissions (for HRV biofeedback) -->
 	<key>NSHealthShareUsageDescription</key>
-	<string>Echoelmusic reads your heart rate variability (HRV) to create adaptive healing frequencies that respond to your nervous system state.</string>
+	<string>Echoelmusic reads your heart rate variability (HRV) to create adaptive audio that responds to your nervous system state.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Echoelmusic may log your meditation and breathing sessions to HealthKit for wellness tracking.</string>
 

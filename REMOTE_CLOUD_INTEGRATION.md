@@ -450,7 +450,7 @@ Potential Research Areas:
      Research: University of Helsinki (vibroacoustic therapy for pain)
 
   3. Cymatics (Visual Sound Patterns)
-     Application: Visualize healing frequencies
+     Application: Visualize audio frequencies as geometric patterns
      Implemented: Sources/Visual/CymaticsRenderer.cpp
 
 Implementation:
