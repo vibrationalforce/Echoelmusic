@@ -142,21 +142,61 @@ MainNavigationView (8 main tabs)
   - Ambient, IDM, Downtempo
   - Each genre includes: BPM range, drum patterns, bass patterns, characteristic elements
 
-### Music Theory (Sources/Echoelmusic/MusicTheory/)
+### Music Theory & Composition Education
+
+**Swift (Sources/Echoelmusic/MusicTheory/):**
 - `GlobalMusicTheoryDatabase.swift` (560 lines) - **World Music Education System**
   - 13 music cultures: Western, Arabic, Indian, Chinese, Japanese, African, Celtic, Flamenco, Balkan, Indonesian, Brazilian, Nordic, Middle Eastern
   - Scales and modes for each culture
   - Rhythm patterns and time signatures
-  - Composition techniques for educational purposes
   - **IMPORTANT:** Education-focused - "Menschen sollen komponieren, nicht die Maschine!"
 
-### MIDI (Sources/Echoelmusic/MIDI/)
+**C++/JUCE (Sources/MIDI/) - MASTER DATABASE:**
+- `WorldMusicDatabase.cpp/.h` (568 lines) - **Complete Style Database with Composition Techniques**
+  - **50+ Stile** covering OLD and NEW music
+  - Modern: Pop, Rock, Hip-Hop, R&B, Soul, Funk, House, Techno, Trance, DubStep, D&B, Ambient, Synthwave
+  - Classical Periods: Medieval, Renaissance, Baroque, Classical, Romantic, Impressionist, Modern
+  - Jazz: Dixieland, Swing, Bebop, Cool, Modal, Free, Fusion, Smooth
+  - Latin: Salsa, Bossa Nova, Tango, Cumbia, Reggaeton, Samba
+  - African: Afrobeat, Highlife, Soukous
+  - Asian: Indian Classical, Chinese, Japanese, Gamelan, K-Pop
+  - Middle Eastern: Arabic, Persian, Turkish
+  - European Folk: Celtic, Nordic, Slavic, Flamenco, Fado
+
+  **Kompositionstechniken pro Stil:**
+  - `typicalProgressions` - Akkordfolgen (z.B. I-V-vi-IV)
+  - `typicalScales` - Empfohlene Skalen
+  - `chromaticismAmount` - Chromatik-Level (0-1)
+  - `dissonanceAmount` - Dissonanz-Level (0-1)
+  - `complexityLevel` - Komplexitätsgrad (0-1)
+  - `syncopationAmount` - Synkopierungs-Level (0-1)
+  - `melodicContour` - Melodieführung
+  - `rhythmicFeel` - Rhythmus-Charakter
+
+### MIDI (Sources/Echoelmusic/MIDI/ + Sources/MIDI/)
+
+**Swift (Sources/Echoelmusic/MIDI/):**
 - `MIDIEffects.swift` (1,490 lines) - Ultra-Intelligence MIDI System
   - EchoelArp: Advanced arpeggiator with euclidean rhythms
   - Intelligent Harmonizer: AI-powered harmony generation
   - Generative Sequencer: Markov chains, cellular automata
   - Bio-Reactive MIDI: HRV/HR → MIDI parameters (UNIQUE!)
   - MIDI LFO, Polyrhythm Generator, and 10+ standard effects
+
+**C++/JUCE Composition Suite (Sources/MIDI/) - PROFESSIONAL TOOLSET:**
+- `ChordGenius.cpp/.h` - **500+ Akkordtypen**, AI Progressions, Voice Leading
+  - Major, Minor, Dim, Aug, Sus, 7th, 9th, 11th, 13th, Altered, Exotic
+  - Genre-specific progressions (Pop, Jazz, R&B, EDM, Classical)
+  - Voicing variations (close, open, drop-2, drop-3)
+- `MelodyForge.cpp/.h` - **AI Melodie-Generierung**
+  - Scale-aware (nie falsche Noten!)
+  - Rhythm pattern library, humanization
+  - Melodic contour control, motif development
+- `BasslineArchitect.cpp/.h` - **Intelligente Bassline-Generierung**
+  - Groove Templates: Funk, Rock, EDM, Reggae, Latin, Walking Bass
+  - Ghost notes, slides, articulations
+- `ArpWeaver.cpp/.h` - **Professioneller Arpeggiator**
+  - Genre-specific patterns from WorldMusicDatabase
 
 ### Video (Sources/Echoelmusic/Video/, VideoAI/)
 - `VideoEditingEngine.swift` (620 lines)
