@@ -9,7 +9,7 @@ import Combine
 ///
 /// Career Domains (Not Just Music!):
 /// - Audio & Sound (Music, Podcasts, Sound Design, Audio Engineering)
-/// - Wellness & Healing (Sound Therapy, Meditation, Biofeedback)
+/// - Wellness & Therapeutic (Sound Therapy, Meditation, Biofeedback)
 /// - Creative Production (Content Creation, Streaming, Multimedia)
 /// - Technology & Development (Audio Tech, App Dev, AI/ML)
 /// - Education & Coaching (Teaching, Mentoring, Training)
@@ -1044,8 +1044,8 @@ public final class EchoelmusicWorks: ObservableObject {
             createCreativeJob("Foley Artist", "Film Sound Studios", "Create and record sound effects for visual media", remote: false, category: .soundDesign, accessibility: [.ergonomicEquipment, .flexibleBreaks]),
             createCreativeJob("Audio Engineer", "SoundWave Studios", "Record, mix, and master audio for various media", remote: false, category: .audioProduction, accessibility: [.ergonomicEquipment, .flexibleBreaks]),
 
-            // === WELLNESS & HEALING ===
-            createCreativeJob("Sound Therapist", "Healing Frequencies Center", "Use sound and vibration for therapeutic healing", remote: true, category: .wellness, accessibility: [.flexibleSchedule, .mentalHealthSupport, .remoteOption]),
+            // === WELLNESS & THERAPEUTIC ===
+            createCreativeJob("Sound Therapist", "Therapeutic Sound Center", "Use sound and vibration for therapeutic wellbeing", remote: true, category: .wellness, accessibility: [.flexibleSchedule, .mentalHealthSupport, .remoteOption]),
             createCreativeJob("Meditation Guide", "Mindful Audio", "Create and guide meditation sessions with sound", remote: true, category: .wellness, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
             createCreativeJob("Biofeedback Coach", "Echoelmusic Wellness", "Guide clients using bio-reactive audio technology", remote: true, category: .wellness, accessibility: [.remoteOption, .flexibleSchedule]),
             createCreativeJob("Breathwork Facilitator", "Breath & Sound Institute", "Lead breathwork sessions with audio guidance", remote: true, category: .wellness, accessibility: [.remoteOption, .mentalHealthSupport]),
@@ -1086,7 +1086,7 @@ public final class EchoelmusicWorks: ObservableObject {
     public enum CreativeJobCategory: String, Codable {
         case audioProduction = "Audio Production"
         case soundDesign = "Sound Design"
-        case wellness = "Wellness & Healing"
+        case wellness = "Wellness & Therapeutic"
         case content = "Content Creation"
         case technology = "Technology & Development"
         case education = "Education & Coaching"

@@ -44,7 +44,7 @@ class BinauralBeatGenerator: ObservableObject {
         /// Human-readable description
         var description: String {
             switch self {
-            case .delta: return "Deep Sleep & Healing"
+            case .delta: return "Deep Sleep & Recovery"
             case .theta: return "Meditation & Creativity"
             case .alpha: return "Relaxation & Learning"
             case .beta: return "Focus & Alertness"
@@ -56,8 +56,8 @@ class BinauralBeatGenerator: ObservableObject {
 
     // MARK: - Configuration
 
-    /// Carrier frequency in Hz (the base tone, often 432 Hz for healing)
-    /// 432 Hz is considered the "natural frequency" in some healing traditions
+    /// Carrier frequency in Hz (the base tone, default 432 Hz)
+    /// 432 Hz is an alternative concert pitch (vs. standard 440 Hz A4)
     private(set) var carrierFrequency: Float = 432.0
 
     /// Beat frequency in Hz (difference between left and right ear)

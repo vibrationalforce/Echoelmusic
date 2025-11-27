@@ -5,66 +5,58 @@
 #include <vector>
 
 /**
- * ResonanceHealer
+ * FrequencyEntrainer
  *
- * Professional healing frequency system for organ resonance and wellness.
- * Brings organs back into coherence using specific frequencies.
+ * Evidence-based brainwave entrainment system using auditory stimulation.
+ *
+ * Scientific Foundation:
+ * - Brainwave entrainment via binaural beats (Oster, 1973; Lane et al., 1998)
+ * - Frequency Following Response (FFR) in auditory processing
+ * - EEG-validated brainwave frequency ranges (Niedermeyer & da Silva, 2005)
  *
  * Features:
- * - Organ-specific resonance frequencies
- * - Solfeggio frequencies (396Hz, 417Hz, 528Hz, etc.)
- * - Schumann resonance (7.83Hz Earth frequency)
- * - Chakra tuning frequencies
  * - Binaural beats (Alpha, Beta, Theta, Delta, Gamma)
- * - Isochronic tones
- * - Bio-feedback integration
- * - Personalized healing programs
+ * - Isochronic tones for monaural entrainment
+ * - Bio-feedback integration (HRV, coherence)
  * - Session tracking & progress monitoring
+ *
+ * DISCLAIMER: This is a wellness tool, not a medical device.
+ * Consult a healthcare professional for medical concerns.
  */
-class ResonanceHealer
+class FrequencyEntrainer
 {
 public:
     //==========================================================================
-    // Organ Resonance Frequencies (Research-based)
+    // Brainwave States (Evidence-Based EEG Ranges)
+    // Reference: Niedermeyer & da Silva (2005) "Electroencephalography"
     //==========================================================================
 
-    enum class Organ
+    enum class BrainwaveState
     {
-        Brain,           // 72 Hz
-        Heart,           // 67-70 Hz
-        Lungs,           // 58-65 Hz
-        Liver,           // 55-60 Hz
-        Kidneys,         // 50-55 Hz
-        Stomach,         // 58 Hz
-        Intestines,      // 48 Hz
-        Pancreas,        // 60 Hz
-        Spleen,          // 55 Hz
-        Thyroid,         // 16 Hz
-        AdrenalGlands,   // 24 Hz
-        Bones,           // 38 Hz
-        Muscles,         // 25 Hz
-        Nerves,          // 72 Hz
-        Blood,           // 60 Hz
-        WholeBody        // 8 Hz (Schumann)
+        Delta,           // 0.5-4 Hz (Deep sleep, restoration)
+        Theta,           // 4-8 Hz (Relaxation, meditation)
+        Alpha,           // 8-13 Hz (Calm alertness, learning)
+        Beta,            // 13-30 Hz (Active thinking, focus)
+        Gamma            // 30-100 Hz (High-level information processing)
     };
 
     //==========================================================================
-    // Healing Program
+    // Entrainment Program
     //==========================================================================
 
-    struct HealingProgram
+    struct EntrainmentProgram
     {
         juce::String name;
-        Organ targetOrgan;
+        BrainwaveState targetState;
 
-        // Primary frequency
-        float frequency = 440.0f;    // Hz
+        // Primary carrier frequency (Hz)
+        float carrierFrequency = 200.0f;
+
+        // Beat frequency for entrainment (Hz)
+        float beatFrequency = 10.0f;  // Alpha default
 
         // Harmonic support frequencies
         std::vector<float> harmonics;
-
-        // Binaural beat (if applicable)
-        float binauralBeatFreq = 0.0f;  // Delta/Theta/Alpha/Beta/Gamma
 
         // Duration & amplitude
         float duration = 600.0f;     // Seconds (10 min default)
@@ -74,75 +66,54 @@ public:
         float amplitudeModulation = 0.0f;  // Hz (breathing rhythm)
         float frequencyModulation = 0.0f;  // Hz (subtle drift)
 
-        HealingProgram() = default;
+        EntrainmentProgram() = default;
     };
 
     //==========================================================================
-    // Solfeggio Frequencies
+    // Preset Programs (Evidence-Based)
     //==========================================================================
 
-    enum class SolfeggioTone
+    enum class ProgramPreset
     {
-        UT_396,          // Liberation from fear/guilt
-        RE_417,          // Facilitating change
-        MI_528,          // DNA repair, love frequency
-        FA_639,          // Relationships, connection
-        SOL_741,         // Awakening intuition
-        LA_852,          // Returning to spiritual order
-        SI_963           // Divine consciousness
-    };
+        // Sleep & Rest
+        DeepSleep,           // Delta (2 Hz) - Sleep onset
+        LightSleep,          // Theta (4 Hz) - Light sleep stages
 
-    //==========================================================================
-    // Chakra Frequencies
-    //==========================================================================
+        // Relaxation
+        Meditation,          // Theta (6 Hz) - Meditative states
+        Relaxation,          // Alpha (10 Hz) - Calm alertness
+        StressReduction,     // Alpha-Theta border (8 Hz)
 
-    enum class Chakra
-    {
-        Root,            // 194.18 Hz (C)
-        Sacral,          // 210.42 Hz (D)
-        SolarPlexus,     // 126.22 Hz (E)
-        Heart,           // 136.10 Hz (F#)
-        Throat,          // 141.27 Hz (G)
-        ThirdEye,        // 221.23 Hz (A)
-        Crown            // 172.06 Hz (B)
-    };
+        // Focus & Performance
+        LearningState,       // Alpha (10-12 Hz) - Optimal learning
+        FocusedWork,         // Low Beta (14 Hz) - Concentration
+        ActiveThinking,      // Beta (18 Hz) - Problem solving
+        PeakPerformance,     // Gamma (40 Hz) - High cognition
 
-    //==========================================================================
-    // Brainwave States (Binaural Beats)
-    //==========================================================================
-
-    enum class BrainwaveState
-    {
-        Delta,           // 0.5-4 Hz (Deep sleep, healing)
-        Theta,           // 4-8 Hz (Meditation, creativity)
-        Alpha,           // 8-14 Hz (Relaxation, learning)
-        Beta,            // 14-30 Hz (Focus, alertness)
-        Gamma            // 30-100 Hz (Higher consciousness)
+        // Biofeedback-Driven
+        AdaptiveCoherence    // Adjusts based on HRV/coherence
     };
 
     //==========================================================================
     // Constructor / Destructor
     //==========================================================================
 
-    ResonanceHealer();
-    ~ResonanceHealer() = default;
+    FrequencyEntrainer();
+    ~FrequencyEntrainer() = default;
 
     //==========================================================================
     // Program Management
     //==========================================================================
 
-    /** Get built-in healing program for organ */
-    HealingProgram getOrganProgram(Organ organ);
+    /** Get preset entrainment program */
+    EntrainmentProgram getPresetProgram(ProgramPreset preset);
 
-    /** Get Solfeggio frequency program */
-    HealingProgram getSolfeggioProgram(SolfeggioTone tone);
-
-    /** Get Chakra tuning program */
-    HealingProgram getChakraProgram(Chakra chakra);
+    /** Get program for specific brainwave state */
+    EntrainmentProgram getBrainwaveProgram(BrainwaveState state);
 
     /** Create custom program */
-    void setCustomProgram(const HealingProgram& program);
-    const HealingProgram& getCurrentProgram() const { return currentProgram; }
+    void setCustomProgram(const EntrainmentProgram& program);
+    const EntrainmentProgram& getCurrentProgram() const { return currentProgram; }
 
     //==========================================================================
     // Binaural Beats
@@ -160,23 +131,23 @@ public:
     // Bio-Feedback Integration
     //==========================================================================
 
-    /** Update with current bio-data for adaptive healing */
+    /** Update with current bio-data for adaptive entrainment */
     void setBioData(float hrv, float coherence, float heartRate);
 
     /** Enable adaptive frequency adjustment based on bio-feedback */
-    void setAdaptiveHealingEnabled(bool enabled);
+    void setAdaptiveEnabled(bool enabled);
 
-    /** Get suggested healing program based on bio-data */
-    HealingProgram suggestProgramFromBioData();
+    /** Get suggested program based on bio-data */
+    EntrainmentProgram suggestProgramFromBioData();
 
     //==========================================================================
     // Session Control
     //==========================================================================
 
-    /** Start healing session */
+    /** Start entrainment session */
     void startSession();
 
-    /** Stop healing session */
+    /** Stop entrainment session */
     void stopSession();
 
     /** Pause/Resume */
@@ -206,7 +177,7 @@ public:
     {
         juce::String date;
         juce::String programName;
-        Organ targetOrgan;
+        BrainwaveState targetState;
         float duration;              // Actual duration completed
         float avgCoherence;          // Average coherence during session
         float startHRV;
@@ -237,7 +208,7 @@ private:
     // Member Variables
     //==========================================================================
 
-    HealingProgram currentProgram;
+    EntrainmentProgram currentProgram;
 
     bool sessionActive = false;
     bool sessionPaused = false;
@@ -253,7 +224,7 @@ private:
     float currentHRV = 0.5f;
     float currentCoherence = 0.5f;
     float currentHeartRate = 70.0f;
-    bool adaptiveHealingEnabled = true;
+    bool adaptiveEnabled = true;
 
     // Audio generation
     double currentSampleRate = 48000.0;
@@ -271,9 +242,6 @@ private:
     //==========================================================================
 
     void initializeFrequencyDatabase();
-    std::map<Organ, float> organFrequencies;
-    std::map<SolfeggioTone, float> solfeggioFrequencies;
-    std::map<Chakra, float> chakraFrequencies;
     std::map<BrainwaveState, std::pair<float, float>> brainwaveRanges;
 
     //==========================================================================
@@ -285,5 +253,5 @@ private:
     void applyAmplitudeModulation(juce::AudioBuffer<float>& buffer, float modFreq);
 
     //==========================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonanceHealer)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FrequencyEntrainer)
 };

@@ -72,9 +72,10 @@ class BioParameterMapper: ObservableObject {
 
     // MARK: - Musical Scale Configuration
 
-    /// Musical scale for harmonic generation
-    private let healingScale: [Float] = [
-        432.0,   // A4 (base healing frequency)
+    /// Musical scale for harmonic generation (A=432Hz tuning)
+    /// Note: 432Hz is an alternative concert pitch, not a "healing" frequency
+    private let therapeuticScale: [Float] = [
+        432.0,   // A4 (alternative concert pitch)
         486.0,   // B4
         512.0,   // C5
         576.0,   // D5
@@ -187,16 +188,16 @@ class BioParameterMapper: ObservableObject {
         )
     }
 
-    /// Map Voice Pitch → Musical Scale (healing frequencies)
-    /// Snaps detected pitch to nearest note in healing scale
+    /// Map Voice Pitch → Musical Scale (therapeutic frequencies)
+    /// Snaps detected pitch to nearest note in therapeutic scale
     private func mapVoicePitchToScale(voicePitch: Float) -> Float {
-        guard voicePitch > 0 else { return healingScale[0] }
+        guard voicePitch > 0 else { return therapeuticScale[0] }
 
-        // Find nearest note in healing scale
-        var closestNote = healingScale[0]
+        // Find nearest note in therapeutic scale
+        var closestNote = therapeuticScale[0]
         var minDistance = abs(voicePitch - closestNote)
 
-        for note in healingScale {
+        for note in therapeuticScale {
             let distance = abs(voicePitch - note)
             if distance < minDistance {
                 minDistance = distance
@@ -304,21 +305,21 @@ class BioParameterMapper: ObservableObject {
             reverbWet = 0.3
             filterCutoff = 1500.0
             amplitude = 0.6
-            baseFrequency = 528.0  // Focus frequency
+            baseFrequency = 528.0  // C5 (bright, attention-grabbing)
             tempo = 7.0
 
         case .relaxation:
             reverbWet = 0.8
             filterCutoff = 300.0
             amplitude = 0.4
-            baseFrequency = 396.0  // Root chakra frequency
+            baseFrequency = 396.0  // G4 (warm, grounding tone)
             tempo = 4.0
 
         case .energize:
             reverbWet = 0.2
             filterCutoff = 2000.0
             amplitude = 0.7
-            baseFrequency = 741.0  // Awakening frequency
+            baseFrequency = 741.0  // F#5 (bright, energizing tone)
             tempo = 8.0
         }
 
