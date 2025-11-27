@@ -275,7 +275,7 @@ class UniversalDeviceIntegration: ObservableObject {
 
         connectedDevices.append(device)
 
-        smartHomeStatus = SmartHomeStatus(
+        let newStatus = SmartHomeStatus(
             lights: [
                 SmartHomeStatus.SmartLight(id: "1", name: "Living Room", isOn: true, brightness: 0.7, hue: 30, saturation: 0.5),
                 SmartHomeStatus.SmartLight(id: "2", name: "Bedroom", isOn: false, brightness: 0.5, hue: 240, saturation: 0.8)
@@ -286,10 +286,11 @@ class UniversalDeviceIntegration: ObservableObject {
             ],
             bioSyncEnabled: true
         )
+        smartHomeStatus = newStatus
 
         print("✅ Smart Home connected")
         print("   Protocol: HomeKit")
-        print("   Devices: \(smartHomeStatus!.lights.count) lights, 1 thermostat, \(smartHomeStatus!.speakers.count) speakers")
+        print("   Devices: \(newStatus.lights.count) lights, 1 thermostat, \(newStatus.speakers.count) speakers")
 
         return true
     }

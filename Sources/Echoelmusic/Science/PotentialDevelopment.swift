@@ -713,8 +713,9 @@ public final class PotentialDevelopment: ObservableObject {
         guard let index = flowSessions.firstIndex(where: { $0.id == sessionId }) else { return }
 
         var session = flowSessions[index]
-        session.endTime = Date()
-        session.duration = session.endTime!.timeIntervalSince(session.startTime)
+        let endTime = Date()
+        session.endTime = endTime
+        session.duration = endTime.timeIntervalSince(session.startTime)
         session.flowIntensity = flowIntensity
         session.insights = insights
 
