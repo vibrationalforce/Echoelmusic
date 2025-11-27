@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 
 # Banner
 echo -e "${MAGENTA}╔═══════════════════════════════════════╗${NC}"
-echo -e "${MAGENTA}║  📱 BLAB - Deploy to iPhone         ║${NC}"
+echo -e "${MAGENTA}║  📱 ECHOELMUSIC - Deploy to iPhone   ║${NC}"
 echo -e "${MAGENTA}╚═══════════════════════════════════════╝${NC}"
 echo ""
 

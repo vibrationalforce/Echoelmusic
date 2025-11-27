@@ -1,11 +1,11 @@
-# BLAB - iOS Kompatibilität & Features
+# Echoelmusic - iOS Kompatibilität & Features
 
 ## 📱 Unterstützte iOS Versionen
 
 ### Minimum: iOS 15.0+ ✅
-BLAB läuft auf **iOS 15.0 und höher**.
+Echoelmusic läuft auf **iOS 15.0 und höher**.
 
-Das bedeutet BLAB funktioniert auf:
+Das bedeutet Echoelmusic funktioniert auf:
 - iPhone 6s und neuer (2015+)
 - iPad Air 2 und neuer (2014+)
 - iPad mini 4 und neuer (2015+)

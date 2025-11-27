@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Build Blab iOS App
+    name: Build Echoelmusic iOS App
     runs-on: macos-14  # Latest macOS with Xcode 15
 
     steps:
@@ -35,10 +35,10 @@ jobs:
       - name: Create Xcode project structure
         run: |
           # Create Xcode project directory
-          mkdir -p Blab.xcodeproj
+          mkdir -p Echoelmusic.xcodeproj
 
           # Create project.pbxproj file
-          cat > Blab.xcodeproj/project.pbxproj << 'EOF'
+          cat > Echoelmusic.xcodeproj/project.pbxproj << 'EOF'
           // !$*UTF8*$!
           {
             archiveVersion = 1;

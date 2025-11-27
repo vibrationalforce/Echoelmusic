@@ -1,12 +1,12 @@
-# BLAB iOS App 🫧
+# Echoelmusic 🎵
 
-**Breath → Sound → Light → Consciousness**
+**Bio-Reactive Sound. Healing Through Music.**
 
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
 [![iOS](https://img.shields.io/badge/iOS-15.0+-blue.svg)](https://developer.apple.com/ios/)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 
-> Bio-reactive music creation and performance system combining voice, biofeedback, spatial audio, and light control
+> Bio-reactive healing audio platform combining voice, biofeedback, spatial audio, and music industry job placement (EchoelmusicWorks)
 
 ---
 
@@ -45,9 +45,9 @@ Then in Xcode:
 
 ---
 
-## 🎯 What is BLAB?
+## 🎯 What is Echoelmusic?
 
-BLAB is an **embodied multimodal music system** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
+Echoelmusic is an **embodied multimodal healing platform** that transforms biometric signals (HRV, heart rate, breathing), voice, gestures, and facial expressions into:
 - 🌊 **Spatial Audio** (3D/4D/Fibonacci Field Arrays)
 - 🎨 **Real-time Visuals** (Cymatics, Mandalas, Particles)
 - 💡 **LED/DMX Lighting** (Push 3, Art-Net)
