@@ -54,17 +54,26 @@ struct HeadTrackingVisualization: View {
                 }
             }
             .frame(width: 120, height: 120)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Head Position Indicator")
+            .accessibilityValue(headTrackingManager.isTracking ? headPositionDescription : "Not tracking")
+            .accessibilityHint("Visual representation of your head position in 3D space")
 
             // Tracking Status
             HStack(spacing: 8) {
                 Image(systemName: headTrackingManager.isTracking ? "location.fill" : "location.slash")
                     .font(.system(size: 12))
                     .foregroundColor(headTrackingManager.isTracking ? .green : .gray)
+                    .accessibilityHidden(true)
 
                 Text(headTrackingManager.isTracking ? "Tracking" : "Inactive")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.white.opacity(0.7))
+                    .accessibilityHidden(true)
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Tracking Status")
+            .accessibilityValue(headTrackingManager.isTracking ? "Active" : "Inactive")
 
             // Rotation Values (Debug)
             if headTrackingManager.isTracking {
@@ -72,12 +81,22 @@ struct HeadTrackingVisualization: View {
                     let degrees = headTrackingManager.headRotation.degrees
 
                     rotationRow(label: "Yaw", value: degrees.yaw, icon: "arrow.left.and.right")
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Yaw rotation: \(Int(degrees.yaw)) degrees")
                     rotationRow(label: "Pitch", value: degrees.pitch, icon: "arrow.up.and.down")
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Pitch rotation: \(Int(degrees.pitch)) degrees")
                     rotationRow(label: "Roll", value: degrees.roll, icon: "rotate.right")
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Roll rotation: \(Int(degrees.roll)) degrees")
                 }
                 .padding(.top, 8)
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Head Rotation Values")
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Head Tracking Visualization")
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
@@ -128,6 +147,47 @@ struct HeadTrackingVisualization: View {
 
         let colors = headTrackingManager.getVisualizationColor()
         return Color(red: colors.red, green: colors.green, blue: colors.blue)
+    }
+
+    /// Human-readable description of head position for accessibility
+    private var headPositionDescription: String {
+        let x = headTrackingManager.normalizedPosition.x
+        let y = headTrackingManager.normalizedPosition.y
+
+        var horizontal: String
+        var vertical: String
+
+        // Horizontal position
+        if x < -0.3 {
+            horizontal = "far left"
+        } else if x < -0.1 {
+            horizontal = "slightly left"
+        } else if x > 0.3 {
+            horizontal = "far right"
+        } else if x > 0.1 {
+            horizontal = "slightly right"
+        } else {
+            horizontal = "centered horizontally"
+        }
+
+        // Vertical position
+        if y < -0.3 {
+            vertical = "looking down"
+        } else if y < -0.1 {
+            vertical = "tilted slightly down"
+        } else if y > 0.3 {
+            vertical = "looking up"
+        } else if y > 0.1 {
+            vertical = "tilted slightly up"
+        } else {
+            vertical = "level"
+        }
+
+        if horizontal == "centered horizontally" && vertical == "level" {
+            return "Head centered"
+        } else {
+            return "\(horizontal), \(vertical)"
+        }
     }
 }
 
