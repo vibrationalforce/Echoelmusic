@@ -1,4 +1,4 @@
-# 🚀 BLAB Quick Development Reference
+# 🚀 ECHOELMUSIC Quick Development Reference
 
 **Für schnellen Zugriff während der Entwicklung**
 
@@ -8,12 +8,12 @@
 
 ```bash
 # Development Helper Tool
-./blab-dev.sh status        # Projekt-Status
-./blab-dev.sh build         # Projekt bauen
-./blab-dev.sh test          # Tests laufen lassen
-./blab-dev.sh commit        # Interaktiver Commit
-./blab-dev.sh feature NAME  # Neuen Feature-Branch erstellen
-./blab-dev.sh metrics       # Code-Metriken anzeigen
+./echoelmusic-dev.sh status        # Projekt-Status
+./echoelmusic-dev.sh build         # Projekt bauen
+./echoelmusic-dev.sh test          # Tests laufen lassen
+./echoelmusic-dev.sh commit        # Interaktiver Commit
+./echoelmusic-dev.sh feature NAME  # Neuen Feature-Branch erstellen
+./echoelmusic-dev.sh metrics       # Code-Metriken anzeigen
 
 # Git Basics
 git status
@@ -35,10 +35,10 @@ swift build                 # Build ohne Run
 |------|-------|
 | `CLAUDE_CODE_ULTIMATE_PROMPT.md` | **Haupt-Prompt** für Claude Code Development |
 | `.github/CLAUDE_TODO.md` | Aktuelle TODO-Liste & Sprint-Planung |
-| `BLAB_IMPLEMENTATION_ROADMAP.md` | Komplette Roadmap Phase 0-10 |
-| `BLAB_Allwave_V∞_ClaudeEdition.txt` | Vision & System-Architektur |
+| `ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md` | Komplette Roadmap Phase 0-10 |
+| `ECHOELMUSIC_Allwave_V∞_ClaudeEdition.txt` | Vision & System-Architektur |
 | `QUICK_DEV_REFERENCE.md` | Diese Datei (Quick-Ref) |
-| `blab-dev.sh` | Development Helper Script |
+| `echoelmusic-dev.sh` | Development Helper Script |
 
 ---
 
@@ -47,39 +47,39 @@ swift build                 # Build ohne Run
 ### 1️⃣ Bio-Mapping Presets
 **Files zu erstellen:**
 ```
-Sources/Blab/Biofeedback/BioMappingPresets.swift
-Sources/Blab/Biofeedback/BioParameterMapping.swift
-Sources/Blab/UI/PresetSelectionView.swift
-Tests/BlabTests/BioMappingPresetsTests.swift
+Sources/Echoelmusic/Biofeedback/BioMappingPresets.swift
+Sources/Echoelmusic/Biofeedback/BioParameterMapping.swift
+Sources/Echoelmusic/UI/PresetSelectionView.swift
+Tests/EchoelmusicTests/BioMappingPresetsTests.swift
 ```
 
 **Start:**
 ```bash
-./blab-dev.sh feature bio-mapping-presets
+./echoelmusic-dev.sh feature bio-mapping-presets
 # ... implementierung
-./blab-dev.sh commit
+./echoelmusic-dev.sh commit
 ```
 
 ### 2️⃣ Visual Modes Extensions
 **Files zu erstellen:**
 ```
-Sources/Blab/Visual/Modes/SacredGeometryMode.swift
-Sources/Blab/Visual/Modes/BrainwaveVisualizerMode.swift
-Sources/Blab/Visual/Modes/HeartCoherenceMandalaMode.swift
-Sources/Blab/Visual/Shaders/BioReactiveCymatics.metal
+Sources/Echoelmusic/Visual/Modes/SacredGeometryMode.swift
+Sources/Echoelmusic/Visual/Modes/BrainwaveVisualizerMode.swift
+Sources/Echoelmusic/Visual/Modes/HeartCoherenceMandalaMode.swift
+Sources/Echoelmusic/Visual/Shaders/BioReactiveCymatics.metal
 ```
 
 ---
 
 ## 🏗️ Code Templates
 
-### Neues BlabNode erstellen
+### Neues EchoelmusicNode erstellen
 
 ```swift
-// Sources/Blab/Audio/Nodes/MyNode.swift
+// Sources/Echoelmusic/Audio/Nodes/MyNode.swift
 import AVFoundation
 
-class MyNode: BlabNode {
+class MyNode: EchoelmusicNode {
     let id = UUID()
     let name = "My Audio Node"
 
@@ -113,7 +113,7 @@ class MyNode: BlabNode {
 ### Neuer Visualization Mode
 
 ```swift
-// Sources/Blab/Visual/Modes/MyMode.swift
+// Sources/Echoelmusic/Visual/Modes/MyMode.swift
 import SwiftUI
 
 class MyMode: VisualizationMode {
@@ -149,9 +149,9 @@ class MyMode: VisualizationMode {
 ### Unit Test Template
 
 ```swift
-// Tests/BlabTests/MyFeatureTests.swift
+// Tests/EchoelmusicTests/MyFeatureTests.swift
 import XCTest
-@testable import Blab
+@testable import Echoelmusic
 
 final class MyFeatureTests: XCTestCase {
 
@@ -186,12 +186,12 @@ final class MyFeatureTests: XCTestCase {
 
 ```swift
 // In deinem Code verwenden:
-BlabColors.primaryBackground  // #0A1628 Deep Ocean Blue
-BlabColors.accentGolden       // #FFB700 Golden
-BlabColors.accentGreen        // #00D9A3 Biofeedback Green
-BlabColors.accentCyan         // #00E5FF Spatial Audio Cyan
-BlabColors.warning            // #FF9800
-BlabColors.error              // #FF5252
+EchoelmusicColors.primaryBackground  // #0A1628 Deep Ocean Blue
+EchoelmusicColors.accentGolden       // #FFB700 Golden
+EchoelmusicColors.accentGreen        // #00D9A3 Biofeedback Green
+EchoelmusicColors.accentCyan         // #00E5FF Spatial Audio Cyan
+EchoelmusicColors.warning            // #FF9800
+EchoelmusicColors.error              // #FF5252
 ```
 
 ---
@@ -233,8 +233,8 @@ git add .
 git commit -m "feat: Beschreibung"
 
 # Feature fertig
-./blab-dev.sh test          # Tests laufen lassen
-./blab-dev.sh build         # Build checken
+./echoelmusic-dev.sh test          # Tests laufen lassen
+./echoelmusic-dev.sh build         # Build checken
 git push -u origin feature/my-feature
 
 # Wenn alles grün: Merge oder PR
@@ -323,7 +323,7 @@ try AVAudioSession.sharedInstance().setActive(true)
 ### Problem: Build Errors nach Git Pull
 **Lösung:**
 ```bash
-./blab-dev.sh clean
+./echoelmusic-dev.sh clean
 swift package update
 swift build
 ```
@@ -338,10 +338,10 @@ Implementiere das Bio-Mapping Presets System gemäß
 CLAUDE_CODE_ULTIMATE_PROMPT.md, Sektion "Bio-Mapping Presets".
 
 Files:
-- Sources/Blab/Biofeedback/BioMappingPresets.swift
-- Sources/Blab/Biofeedback/BioParameterMapping.swift
-- Sources/Blab/UI/PresetSelectionView.swift
-- Tests/BlabTests/BioMappingPresetsTests.swift
+- Sources/Echoelmusic/Biofeedback/BioMappingPresets.swift
+- Sources/Echoelmusic/Biofeedback/BioParameterMapping.swift
+- Sources/Echoelmusic/UI/PresetSelectionView.swift
+- Tests/EchoelmusicTests/BioMappingPresetsTests.swift
 
 Requirements:
 - 10 Presets (Creative, Meditation, Focus, etc.)
@@ -407,7 +407,7 @@ Bitte debuggen und fixen.
 
 ## 🌊 Entwicklungs-Philosophie (Quick Reminder)
 
-**BLAB-Prinzipien:**
+**ECHOELMUSIC-Prinzipien:**
 1. **Resonanz vor Funktion** — Code soll fließen
 2. **Bio-Adaptive Intelligenz** — System passt sich an User an
 3. **Ästhetik = Performance** — Schön UND schnell
@@ -427,7 +427,7 @@ Bitte debuggen und fixen.
 
 **Morgens:**
 - [ ] `git pull origin main`
-- [ ] `./blab-dev.sh status`
+- [ ] `./echoelmusic-dev.sh status`
 - [ ] `.github/CLAUDE_TODO.md` checken
 
 **Während der Arbeit:**
@@ -437,8 +437,8 @@ Bitte debuggen und fixen.
 - [ ] Regelmäßig committen
 
 **Abends:**
-- [ ] `./blab-dev.sh test`
-- [ ] `./blab-dev.sh build`
+- [ ] `./echoelmusic-dev.sh test`
+- [ ] `./echoelmusic-dev.sh build`
 - [ ] Final Commit & Push
 - [ ] TODO.md updaten
 
@@ -453,5 +453,5 @@ Bitte debuggen und fixen.
 
 **Happy Coding!** ✨
 
-*Generated with Claude Code for BLAB Development*
+*Generated with Claude Code for ECHOELMUSIC Development*
 *Version: V∞.3 | 2025-10-21*

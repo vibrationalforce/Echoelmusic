@@ -286,7 +286,7 @@ git push origin main
 
 **Wo?**
 ```
-→ https://github.com/vibrationalforce/blab-ios-app/actions
+→ https://github.com/vibrationalforce/Echoelmusic/actions
 → Klicke auf einen Workflow Run
 → Klicke auf "Build and Test iOS App" Job
 → Sieh alle Build Schritte und Logs

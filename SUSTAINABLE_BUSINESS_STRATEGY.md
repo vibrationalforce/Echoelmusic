@@ -677,7 +677,7 @@ Das ist 100% möglich! Aber:
 
 ## 🎯 Next Steps
 
-1. **Clean up codebase** (remove "Blab", rename to Echoel)
+1. **Clean up codebase** (remove "Echoelmusic", rename to Echoel)
 2. **Prioritize MVP features** (core DAW only)
 3. **Build for 6 months** (focused, no distractions)
 4. **Launch beta** (100 users, €10k validation)
