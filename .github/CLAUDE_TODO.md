@@ -1,4 +1,4 @@
-# 🎯 BLAB DEVELOPMENT TODO — Claude Code Edition
+# 🎯 ECHOELMUSIC DEVELOPMENT TODO — Claude Code Edition
 
 **Last Updated:** 2025-10-21
 **Current Phase:** 1-2 (Audio Enhancement + Visual Upgrade)
@@ -14,7 +14,7 @@
 - [x] FFT + Pitch Detection
 - [x] Binaural Beat Generator
 - [x] Spatial Audio Engine
-- [x] Node-basierte Architektur (BlabNode)
+- [x] Node-basierte Architektur (EchoelmusicNode)
 - [x] Recording System Basis
 - [x] Multi-Track Recording
 - [x] Visual Engine mit Metal
@@ -29,23 +29,23 @@
 **Assigned:** Claude Code
 **Status:** 🟡 Ready to Start
 
-- [ ] `Sources/Blab/Biofeedback/BioMappingPresets.swift` erstellen
+- [ ] `Sources/Echoelmusic/Biofeedback/BioMappingPresets.swift` erstellen
   - [ ] 10 Presets definieren (Creative, Meditation, Focus, Healing, Energetic, etc.)
   - [ ] Enum mit `.mapping()` Methode
   - [ ] Parameter-Ranges für jedes Preset
 
-- [ ] `Sources/Blab/Biofeedback/BioParameterMapping.swift` implementieren
+- [ ] `Sources/Echoelmusic/Biofeedback/BioParameterMapping.swift` implementieren
   - [ ] Struct für Mapping-Konfiguration
   - [ ] `.apply(to bioData: BioData)` Methode
   - [ ] Kalman Filter für Signal-Smoothing
 
-- [ ] `Sources/Blab/UI/PresetSelectionView.swift` UI
+- [ ] `Sources/Echoelmusic/UI/PresetSelectionView.swift` UI
   - [ ] Picker für Preset-Auswahl
   - [ ] Live-Preview der Parameter
   - [ ] Visual Feedback bei Preset-Wechsel
 
 - [ ] Tests
-  - [ ] `Tests/BlabTests/BioMappingPresetsTests.swift`
+  - [ ] `Tests/EchoelmusicTests/BioMappingPresetsTests.swift`
   - [ ] Unit Tests für alle 10 Presets
   - [ ] Integration Test mit HealthKit Mock
 
@@ -62,20 +62,20 @@
 **Assigned:** Claude Code
 **Status:** 🟡 Ready to Start
 
-- [ ] `Sources/Blab/Visual/Modes/SacredGeometryMode.swift`
+- [ ] `Sources/Echoelmusic/Visual/Modes/SacredGeometryMode.swift`
   - [ ] Golden Ratio Spirale
   - [ ] Fibonacci Patterns
   - [ ] Metatron's Cube Option
   - [ ] Audio Frequency → Rotation Speed
   - [ ] HRV → Color Shift
 
-- [ ] `Sources/Blab/Visual/Modes/BrainwaveVisualizerMode.swift`
+- [ ] `Sources/Echoelmusic/Visual/Modes/BrainwaveVisualizerMode.swift`
   - [ ] EEG-Style 8-Channel Darstellung
   - [ ] Jeder Kanal = ein Binaural State
   - [ ] Alpha/Beta/Theta/Delta Waves
   - [ ] Real-time FFT Integration
 
-- [ ] `Sources/Blab/Visual/Modes/HeartCoherenceMandalaMode.swift`
+- [ ] `Sources/Echoelmusic/Visual/Modes/HeartCoherenceMandalaMode.swift`
   - [ ] Radiales Mandala-Pattern
   - [ ] Pulsiert mit Herzfrequenz
   - [ ] Coherence → Symmetrie-Grad
@@ -155,7 +155,7 @@
   - [ ] Feature Extraction
   - [ ] Model Training (Create ML)
 
-- [ ] BlabComposer.swift
+- [ ] EchoelmusicComposer.swift
   - [ ] Genre-aware Generation
   - [ ] Mood Detection
   - [ ] Pattern Suggestion

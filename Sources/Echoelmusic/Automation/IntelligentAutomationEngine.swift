@@ -111,14 +111,16 @@ class IntelligentAutomationEngine: ObservableObject {
 
         /// Evaluate automation value at specific time
         func valueAt(time: Double) -> Float {
-            guard !points.isEmpty else { return 0.5 }
+            guard let firstPoint = points.first, let lastPoint = points.last else {
+                return 0.5
+            }
 
             // Find surrounding points
-            if time <= points.first!.time {
-                return points.first!.value
+            if time <= firstPoint.time {
+                return firstPoint.value
             }
-            if time >= points.last!.time {
-                return points.last!.value
+            if time >= lastPoint.time {
+                return lastPoint.value
             }
 
             // Find interpolation points

@@ -755,7 +755,7 @@ Benefits:
    - "Made with Echoelmusic" in Credits von #1 Hits
    - Industry leader in 5 Jahren
 
-**Der alte Name "Blab" ist Geschichte.**
+**Der alte Name "Echoelmusic" ist Geschichte.**
 **Die Zukunft heißt Echoelmusic mit der Echo-Brand-Familie.** 🚀
 
 ---

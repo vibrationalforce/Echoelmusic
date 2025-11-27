@@ -31,15 +31,22 @@ struct BioMetricsView: View {
                         isActive ? Animation.easeInOut(duration: 60.0 / max(heartRate, 1.0)).repeatForever(autoreverses: true) : .default,
                         value: heartScale
                     )
+                    .accessibilityHidden(true)
 
                 Text("\(Int(heartRate))")
                     .font(.system(size: 24, weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
+                    .accessibilityHidden(true)
 
                 Text("BPM")
                     .font(.system(size: 10, weight: .light))
                     .foregroundColor(.white.opacity(0.6))
+                    .accessibilityHidden(true)
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Heart Rate")
+            .accessibilityValue("\(Int(heartRate)) beats per minute, \(heartRateZoneDescription)")
+            .accessibilityHint("Your current heart rate from biometric sensors")
             .onAppear {
                 if isActive {
                     heartScale = 1.2
@@ -73,10 +80,12 @@ struct BioMetricsView: View {
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundColor(coherenceColor)
                 }
+                .accessibilityHidden(true)
 
                 Text("Coherence")
                     .font(.system(size: 10, weight: .light))
                     .foregroundColor(.white.opacity(0.6))
+                    .accessibilityHidden(true)
 
                 // Coherence state indicator
                 Text(coherenceState)
@@ -88,7 +97,12 @@ struct BioMetricsView: View {
                         Capsule()
                             .fill(coherenceColor.opacity(0.2))
                     )
+                    .accessibilityHidden(true)
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("HRV Coherence")
+            .accessibilityValue("\(Int(hrvCoherence)) percent, \(coherenceState) coherence")
+            .accessibilityHint("Heart rate variability coherence score. Higher values indicate better heart-brain synchronization.")
 
             // Voice pitch visualization
             if voicePitch > 0 {
@@ -116,17 +130,27 @@ struct BioMetricsView: View {
                         )
                     }
                     .frame(width: 40, height: 30)
+                    .accessibilityHidden(true)
 
                     Text("\(Int(voicePitch))")
                         .font(.system(size: 18, weight: .semibold, design: .rounded))
                         .foregroundColor(pitchColor)
+                        .accessibilityHidden(true)
 
                     Text("Hz")
                         .font(.system(size: 10, weight: .light))
                         .foregroundColor(.white.opacity(0.6))
+                        .accessibilityHidden(true)
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Voice Pitch")
+                .accessibilityValue("\(Int(voicePitch)) hertz, \(pitchRangeDescription)")
+                .accessibilityHint("Your detected voice pitch frequency")
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Biometrics Display")
+        .accessibilityHint(isActive ? "Live biometric data is being recorded" : "Biometric monitoring is inactive")
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20)
@@ -149,6 +173,19 @@ struct BioMetricsView: View {
             return Color.orange  // Elevated
         } else {
             return Color.red  // High
+        }
+    }
+
+    /// Heart rate zone description for accessibility
+    private var heartRateZoneDescription: String {
+        if heartRate < 50 {
+            return "resting zone"
+        } else if heartRate < 70 {
+            return "optimal zone"
+        } else if heartRate < 100 {
+            return "elevated zone"
+        } else {
+            return "high zone"
         }
     }
 
@@ -182,6 +219,17 @@ struct BioMetricsView: View {
             return Color.purple.opacity(0.8)  // Tenor/Alto
         } else {
             return Color.pink.opacity(0.8)  // Soprano
+        }
+    }
+
+    /// Voice pitch range description for accessibility
+    private var pitchRangeDescription: String {
+        if voicePitch < 200 {
+            return "bass range"
+        } else if voicePitch < 400 {
+            return "mid range"
+        } else {
+            return "high range"
         }
     }
 }

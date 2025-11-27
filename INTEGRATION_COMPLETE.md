@@ -1,8 +1,8 @@
-# 🎉 BLAB - Integration Complete!
+# 🎉 ECHOELMUSIC - Integration Complete!
 
 ## ✅ PHASE 2 & 3 - Spatial Audio + Bio-Parameter Mapping
 
-All components have been successfully integrated into BLAB!
+All components have been successfully integrated into ECHOELMUSIC!
 
 ---
 
@@ -11,7 +11,7 @@ All components have been successfully integrated into BLAB!
 ### Spatial Audio (ASAF) - PHASE 2
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 ├── Utils/
 │   ├── DeviceCapabilities.swift       ✨ NEW - Device & ASAF detection
 │   └── HeadTrackingManager.swift      ✨ NEW - CoreMotion head tracking
@@ -22,7 +22,7 @@ Sources/Blab/
 ### Bio-Parameter Mapping - PHASE 3
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 └── Biofeedback/
     └── BioParameterMapper.swift       ✨ NEW - HRV/HR → Audio mapping
 ```
@@ -30,7 +30,7 @@ Sources/Blab/
 ### UI Components
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 └── Views/Components/
     ├── SpatialAudioControlsView.swift ✨ NEW - Spatial audio UI
     └── HeadTrackingVisualization.swift ✨ NEW - 3D position indicator
@@ -39,7 +39,7 @@ Sources/Blab/
 ### Updated Files
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 ├── Audio/
 │   └── AudioEngine.swift              ✏️ UPDATED - Full integration
 └── Package.swift                      ✏️ UPDATED - Resources added
@@ -73,7 +73,7 @@ Sources/Blab/
 - ✅ HRV Coherence → Reverb Wet (10-80%)
 - ✅ Heart Rate → Filter Cutoff (200-2000 Hz)
 - ✅ Heart Rate → Tempo (breathing guidance)
-- ✅ Voice Pitch → Base Frequency (healing scale)
+- ✅ Voice Pitch → Base Frequency (therapeutic scale)
 - ✅ HRV Coherence → Spatial Position (centered/spread)
 - ✅ Voice Clarity → Harmonic Count (3-7)
 - ✅ Exponential Smoothing (natural transitions)
@@ -136,7 +136,7 @@ Sources/Blab/
 
 ### Build Test
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/Echoelmusic
 ./build.sh
 ```
 
@@ -166,7 +166,7 @@ Follow on-screen instructions to:
 ## 📱 Usage on iPhone
 
 ### Basic Flow
-1. Launch BLAB
+1. Launch ECHOELMUSIC
 2. Grant permissions (Microphone, HealthKit, Motion)
 3. Connect AirPods Pro/Max
 4. Tap "Start Recording"
@@ -183,7 +183,7 @@ Follow on-screen instructions to:
 - **Low HRV** → Less reverb, audio moves around
 - **High HR** → Brighter sound (higher filter)
 - **Low HR** → Darker sound (lower filter)
-- **Voice Pitch** → Adapts to healing frequencies
+- **Voice Pitch** → Adapts to therapeutic frequencies
 
 ---
 
@@ -342,7 +342,7 @@ You know the integration is working when:
 ✅ Head tracking visualization shows movement
 ✅ Audio follows head movements
 ✅ HRV changes affect reverb/spatial position
-✅ Voice pitch adapts to healing frequencies
+✅ Voice pitch adapts to therapeutic frequencies
 ✅ Bio-parameters display in UI
 
 ---
@@ -362,7 +362,7 @@ swift package resolve
 - Enable Debug mode in Xcode
 
 **GitHub Issues:**
-https://github.com/vibrationalforce/blab-ios-app/issues
+https://github.com/vibrationalforce/Echoelmusic/issues
 
 ---
 
@@ -372,4 +372,4 @@ https://github.com/vibrationalforce/blab-ios-app/issues
 
 ---
 
-🎵 **BLAB V15 - Biofeedback Music Creation with Spatial Audio** 🎵
+🎵 **ECHOELMUSIC V15 - Biofeedback Music Creation with Spatial Audio** 🎵

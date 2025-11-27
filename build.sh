@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# build.sh - VS Code friendly build script for BLAB
-# Wraps swift build with better output and error handling
+# build.sh - VS Code friendly build script for Echoelmusic
+# Bio-Reactive Sound. Healing Through Music.
 #
 # Usage:
 #   ./build.sh           # Standard build
@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 
 # Banner
 echo -e "${BLUE}╔═══════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║  🎵 BLAB - Building from VS Code    ║${NC}"
+echo -e "${BLUE}║  🎵 ECHOELMUSIC - Building...        ║${NC}"
 echo -e "${BLUE}╚═══════════════════════════════════════╝${NC}"
 echo ""
 
@@ -56,7 +56,7 @@ echo -e "${BLUE}📦 Resolving dependencies...${NC}"
 swift package resolve
 
 echo ""
-echo -e "${BLUE}🔨 Building BLAB...${NC}"
+echo -e "${BLUE}🔨 Building Echoelmusic...${NC}"
 echo ""
 
 # Build with appropriate configuration

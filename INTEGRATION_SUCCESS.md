@@ -1,4 +1,4 @@
-# 🎉 BLAB - INTEGRATION ERFOLGREICH!
+# 🎉 ECHOELMUSIC - INTEGRATION ERFOLGREICH!
 
 ## ✅ Alle Quick Wins implementiert!
 
@@ -6,7 +6,7 @@
 
 ## 🚀 Was wurde gemacht:
 
-### 1. **BlabApp.swift - Central Hub** ✅
+### 1. **EchoelmusicApp.swift - Central Hub** ✅
 ```swift
 @StateObject private var audioEngine: AudioEngine
 @StateObject private var healthKitManager = HealthKitManager()
@@ -95,7 +95,7 @@ BioParameterMapper
 ├─ Reverb: 10-80% (based on HRV)
 ├─ Filter: 200-2000 Hz (based on HR)
 ├─ Spatial Position: X/Y/Z (based on coherence)
-└─ Base Frequency: 432 Hz healing scale
+└─ Base Frequency: 432 Hz therapeutic scale
     ↓
 Applied to Audio Output (100ms updates!)
 ```
@@ -122,7 +122,7 @@ Audio follows head movement! 🎧
 
 ```
 ┌─────────────────────────────────────┐
-│           BLAB                      │
+│           ECHOELMUSIC                      │
 │       breath → sound                │
 ├─────────────────────────────────────┤
 │                                     │
@@ -235,7 +235,7 @@ CONNECTIONS:          ████████████ 100%
 4. **Bio-Parameter Mapping**
    - [ ] HRV changes → reverb changes (listen!)
    - [ ] HR changes → sound brightness changes
-   - [ ] Voice pitch → adapts to healing frequencies
+   - [ ] Voice pitch → adapts to therapeutic frequencies
 
 5. **Spatial Audio** (if iOS 19+ with AirPods)
    - [ ] Connect AirPods Pro/Max
@@ -266,7 +266,7 @@ You know everything works when:
 
 ### IMMEDIATE (When you get Xcode):
 ```bash
-cd /Users/michpack/blab-ios-app
+cd /Users/michpack/Echoelmusic
 ./deploy.sh
 # Follow instructions to deploy to iPhone
 ```
@@ -292,24 +292,24 @@ cd /Users/michpack/blab-ios-app
 ## 📁 Files Modified:
 
 ```
-✏️  Sources/Blab/BlabApp.swift
+✏️  Sources/Echoelmusic/EchoelmusicApp.swift
     - Added AudioEngine initialization
     - Added HealthKit connection
     - Environment objects setup
 
-✏️  Sources/Blab/ContentView.swift
+✏️  Sources/Echoelmusic/ContentView.swift
     - Uses AudioEngine centrally
     - Added Spatial Audio UI
     - Removed duplicate components
     - Integrated all modules
 
-✅ Sources/Blab/Audio/AudioEngine.swift
+✅ Sources/Echoelmusic/Audio/AudioEngine.swift
     (Already perfect - full integration!)
 
-✅ Sources/Blab/Biofeedback/BioParameterMapper.swift
+✅ Sources/Echoelmusic/Biofeedback/BioParameterMapper.swift
     (Already perfect - ready to use!)
 
-✅ Sources/Blab/Audio/SpatialAudioEngine.swift
+✅ Sources/Echoelmusic/Audio/SpatialAudioEngine.swift
     (Already perfect - ready to use!)
 
 ✅ All other files unchanged and working!
@@ -345,11 +345,11 @@ cd /Users/michpack/blab-ios-app
 - INTEGRATION_COMPLETE.md - API reference
 - Code comments - Inline docs
 
-**GitHub:** https://github.com/vibrationalforce/blab-ios-app
+**GitHub:** https://github.com/vibrationalforce/Echoelmusic
 
 ---
 
-**🎵 BLAB is ready to create biofeedback music! 🎵**
+**🎵 ECHOELMUSIC is ready to create biofeedback music! 🎵**
 
 Built with SwiftUI, AVFoundation, CoreMotion, HealthKit, and ❤️
 

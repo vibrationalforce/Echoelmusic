@@ -18,10 +18,12 @@ struct SpatialAudioControlsView: View {
                 Image(systemName: "airpodspro")
                     .font(.system(size: 20))
                     .foregroundColor(.cyan)
+                    .accessibilityHidden(true)
 
                 Text("Spatial Audio")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
+                    .accessibilityHidden(true)
 
                 Spacer()
 
@@ -30,6 +32,7 @@ struct SpatialAudioControlsView: View {
                     .fill(statusColor)
                     .frame(width: 10, height: 10)
                     .shadow(color: statusColor.opacity(0.5), radius: 5)
+                    .accessibilityHidden(true)
 
                 // Expand button
                 Button(action: { withAnimation { showDetails.toggle() } }) {
@@ -37,7 +40,11 @@ struct SpatialAudioControlsView: View {
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.7))
                 }
+                .accessibilityLabel(showDetails ? "Collapse details" : "Expand details")
+                .accessibilityHint("Shows additional spatial audio settings and device information")
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Spatial Audio Controls, \(spatialStatusText)")
 
             // Main Toggle
             Toggle(isOn: $audioEngine.spatialAudioEnabled) {
@@ -55,6 +62,9 @@ struct SpatialAudioControlsView: View {
             }
             .toggleStyle(SwitchToggleStyle(tint: .cyan))
             .disabled(!spatialAudioEngine.isAvailable)
+            .accessibilityLabel("Spatial Audio")
+            .accessibilityValue(audioEngine.spatialAudioEnabled ? "Enabled" : "Disabled")
+            .accessibilityHint(spatialAudioEngine.isAvailable ? "Double tap to toggle spatial audio" : "Spatial audio is not available on this device")
 
             // Expanded Details
             if showDetails {
@@ -68,6 +78,7 @@ struct SpatialAudioControlsView: View {
                             Text("Mode")
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundColor(.white.opacity(0.6))
+                                .accessibilityHidden(true)
 
                             Picker("Spatial Mode", selection: Binding(
                                 get: { spatialAudioEngine.spatialMode },
@@ -78,6 +89,8 @@ struct SpatialAudioControlsView: View {
                                 }
                             }
                             .pickerStyle(.segmented)
+                            .accessibilityLabel("Spatial Audio Mode")
+                            .accessibilityHint("Select how audio is positioned in 3D space")
                         }
                     }
 
@@ -86,10 +99,12 @@ struct SpatialAudioControlsView: View {
                         Image(systemName: headTrackingManager.isTracking ? "gyroscope" : "gyroscope.slash")
                             .font(.system(size: 14))
                             .foregroundColor(headTrackingManager.isTracking ? .green : .gray)
+                            .accessibilityHidden(true)
 
                         Text(headTrackingManager.statusDescription)
                             .font(.system(size: 12, weight: .light))
                             .foregroundColor(.white.opacity(0.7))
+                            .accessibilityHidden(true)
 
                         Spacer()
 
@@ -97,8 +112,13 @@ struct SpatialAudioControlsView: View {
                             Text(headTrackingManager.getDirectionArrow())
                                 .font(.system(size: 20))
                                 .foregroundColor(.cyan)
+                                .accessibilityHidden(true)
                         }
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Head Tracking")
+                    .accessibilityValue(headTrackingManager.isTracking ? "Active, \(headTrackingManager.statusDescription)" : "Inactive")
+                    .accessibilityHint("Tracks head movement for immersive spatial audio positioning")
 
                     // Device Info
                     VStack(spacing: 4) {
@@ -107,6 +127,8 @@ struct SpatialAudioControlsView: View {
                             label: "Device",
                             value: deviceCapabilities.deviceModel
                         )
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Device: \(deviceCapabilities.deviceModel)")
 
                         if deviceCapabilities.hasAirPodsConnected {
                             deviceInfoRow(
@@ -114,6 +136,8 @@ struct SpatialAudioControlsView: View {
                                 label: "Audio",
                                 value: deviceCapabilities.airPodsModel ?? "Unknown"
                             )
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("Audio Output: \(deviceCapabilities.airPodsModel ?? "Unknown")")
                         }
 
                         deviceInfoRow(
@@ -122,11 +146,18 @@ struct SpatialAudioControlsView: View {
                             value: deviceCapabilities.supportsASAF ? "Supported" : "Not Available",
                             color: deviceCapabilities.supportsASAF ? .green : .red
                         )
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Apple Spatial Audio Features")
+                        .accessibilityValue(deviceCapabilities.supportsASAF ? "Supported" : "Not Available")
                     }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Device Information")
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Spatial Audio Controls Panel")
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)

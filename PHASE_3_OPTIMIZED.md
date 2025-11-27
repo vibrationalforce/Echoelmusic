@@ -23,7 +23,7 @@
 - ✅ Art-Net protocol ready
 - ✅ Error handling & connection management
 
-**File:** `Sources/Blab/LED/MIDIToLightMapper.swift`
+**File:** `Sources/Echoelmusic/LED/MIDIToLightMapper.swift`
 ```swift
 // Before: Stub implementation
 // TODO: Implement actual UDP socket using Network framework
@@ -129,7 +129,7 @@ private func updateLightSystems() {
   - ✅ Runtime feature detection
   - ✅ Self-contained architecture
 
-**File:** `Sources/Blab/Spatial/SpatialAudioEngine.swift` (482 lines)
+**File:** `Sources/Echoelmusic/Spatial/SpatialAudioEngine.swift` (482 lines)
 
 ### 2. **MIDIToVisualMapper**
 - **Features:**
@@ -145,7 +145,7 @@ private func updateLightSystems() {
   - CC 74 (Brightness) → Glow intensity
   - CC 71 (Timbre) → Mandala petal count
 
-**File:** `Sources/Blab/Visual/MIDIToVisualMapper.swift` (396 lines)
+**File:** `Sources/Echoelmusic/Visual/MIDIToVisualMapper.swift` (396 lines)
 
 ### 3. **Push3LEDController**
 - **Features:**
@@ -159,7 +159,7 @@ private func updateLightSystems() {
   F0 00 21 1D 01 01 0A [LED data] F7
   ```
 
-**File:** `Sources/Blab/LED/Push3LEDController.swift` (458 lines)
+**File:** `Sources/Echoelmusic/LED/Push3LEDController.swift` (458 lines)
 
 ### 4. **MIDIToLightMapper**
 - **Features:**
@@ -174,14 +174,14 @@ private func updateLightSystems() {
   - Multiple LED strip support
   - Pixel format: RGB, RGBW, GRB
 
-**File:** `Sources/Blab/LED/MIDIToLightMapper.swift` (463 lines)
+**File:** `Sources/Echoelmusic/LED/MIDIToLightMapper.swift` (463 lines)
 
 ---
 
 ## 📁 FILE STRUCTURE (Optimized)
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 ├── Spatial/
 │   ├── SpatialAudioEngine.swift ✅ (NEW - 482 lines)
 │   ├── ARFaceTrackingManager.swift
@@ -323,11 +323,11 @@ CODE QUALITY:
 - Clean separation of concerns
 
 FILES CHANGED:
-M  Sources/Blab/LED/MIDIToLightMapper.swift (+58 lines)
-M  Sources/Blab/Unified/UnifiedControlHub.swift (+87 lines)
-M  Sources/Blab/Views/Components/SpatialAudioControlsView.swift
-D  Sources/Blab/Audio/SpatialAudioEngine.swift
-R  Sources/Blab/Visuals/MIDIToVisualMapper.swift → Visual/
+M  Sources/Echoelmusic/LED/MIDIToLightMapper.swift (+58 lines)
+M  Sources/Echoelmusic/Unified/UnifiedControlHub.swift (+87 lines)
+M  Sources/Echoelmusic/Views/Components/SpatialAudioControlsView.swift
+D  Sources/Echoelmusic/Audio/SpatialAudioEngine.swift
+R  Sources/Echoelmusic/Visuals/MIDIToVisualMapper.swift → Visual/
 A  DAW_INTEGRATION_GUIDE.md
 
 READY FOR:

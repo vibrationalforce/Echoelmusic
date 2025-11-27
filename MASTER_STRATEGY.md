@@ -295,7 +295,7 @@ Priority: 2
 Time: 1 day
 
 Key Features to Implement:
-- Frequency generator (Solfeggio, Schumann)
+- Frequency generator (therapeutic frequencies, Earth's electromagnetic resonance 7.83 Hz)
 - Organ-specific resonance
 - Binaural beat generator
 - Bio-feedback integration
