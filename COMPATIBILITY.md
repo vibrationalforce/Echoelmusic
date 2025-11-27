@@ -209,7 +209,7 @@ Wenn Features nicht verfügbar sind, nutzt Echoelmusic automatisch Fallback-Modi
 ```
 ✅ Mikrophone Recording
 ✅ Voice Pitch Detection
-✅ Binaural Beats (432 Hz healing frequency)
+✅ Binaural Beats (432 Hz carrier frequency)
 ✅ 8 Brainwave States (Delta → Gamma)
 ✅ Standard Stereo Audio
 ```

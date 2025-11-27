@@ -95,7 +95,7 @@ BioParameterMapper
 ├─ Reverb: 10-80% (based on HRV)
 ├─ Filter: 200-2000 Hz (based on HR)
 ├─ Spatial Position: X/Y/Z (based on coherence)
-└─ Base Frequency: 432 Hz healing scale
+└─ Base Frequency: 432 Hz therapeutic scale
     ↓
 Applied to Audio Output (100ms updates!)
 ```
@@ -235,7 +235,7 @@ CONNECTIONS:          ████████████ 100%
 4. **Bio-Parameter Mapping**
    - [ ] HRV changes → reverb changes (listen!)
    - [ ] HR changes → sound brightness changes
-   - [ ] Voice pitch → adapts to healing frequencies
+   - [ ] Voice pitch → adapts to therapeutic frequencies
 
 5. **Spatial Audio** (if iOS 19+ with AirPods)
    - [ ] Connect AirPods Pro/Max

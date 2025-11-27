@@ -2,7 +2,7 @@ import Foundation
 import AVFoundation
 import Accelerate
 
-/// Generates binaural beats for brainwave entrainment and healing frequencies
+/// Generates binaural beats for brainwave entrainment and therapeutic audio
 ///
 /// Binaural beats work by playing two slightly different frequencies (one per ear),
 /// causing the brain to perceive a "beat" at the difference frequency.

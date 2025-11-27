@@ -173,7 +173,7 @@ class VisualEngine {
 **BioParameterMapper.swift** (364 lines, existing)
 - 7 mapped parameters (reverb, filter, amp, freq, tempo, spatial, harmonics)
 - Exponential smoothing (0.85 factor)
-- Healing frequency scale (432 Hz base)
+- Therapeutic frequency scale (432 Hz base)
 - 4 presets (Meditation, Focus, Relaxation, Energize)
 
 ### **Required Extensions**
@@ -416,7 +416,7 @@ enum WellnessPreset {
 
     var scientificRefs: [String] {
         // Reference studies for each frequency
-        // e.g., "528 Hz DNA Repair [Frontiers 2025]"
+        // e.g., "Alpha 10 Hz relaxation [Journal of Neurotherapy 2010]"
     }
 }
 ```
@@ -1113,7 +1113,7 @@ Echoelmusic/
 ### **Neuro-Acoustics Research**
 - HeartMath Institute - HRV Coherence
 - Brainwave Entrainment Studies
-- Solfeggio Frequencies Research
+- Therapeutic Frequency Research
 
 ### **AI/ML Resources**
 - [Core ML Models](https://developer.apple.com/machine-learning/models/)

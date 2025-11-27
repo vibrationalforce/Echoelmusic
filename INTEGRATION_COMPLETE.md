@@ -73,7 +73,7 @@ Sources/Echoelmusic/
 - ✅ HRV Coherence → Reverb Wet (10-80%)
 - ✅ Heart Rate → Filter Cutoff (200-2000 Hz)
 - ✅ Heart Rate → Tempo (breathing guidance)
-- ✅ Voice Pitch → Base Frequency (healing scale)
+- ✅ Voice Pitch → Base Frequency (therapeutic scale)
 - ✅ HRV Coherence → Spatial Position (centered/spread)
 - ✅ Voice Clarity → Harmonic Count (3-7)
 - ✅ Exponential Smoothing (natural transitions)
@@ -183,7 +183,7 @@ Follow on-screen instructions to:
 - **Low HRV** → Less reverb, audio moves around
 - **High HR** → Brighter sound (higher filter)
 - **Low HR** → Darker sound (lower filter)
-- **Voice Pitch** → Adapts to healing frequencies
+- **Voice Pitch** → Adapts to therapeutic frequencies
 
 ---
 
@@ -342,7 +342,7 @@ You know the integration is working when:
 ✅ Head tracking visualization shows movement
 ✅ Audio follows head movements
 ✅ HRV changes affect reverb/spatial position
-✅ Voice pitch adapts to healing frequencies
+✅ Voice pitch adapts to therapeutic frequencies
 ✅ Bio-parameters display in UI
 
 ---
