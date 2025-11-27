@@ -14,7 +14,7 @@ import SwiftUI
 /// - Input Systems (Face, Gesture, MIDI, Touch)
 /// - Output Systems (Spatial Audio, Visuals, LED, Streaming)
 /// - Intelligence Systems (Quantum AI, ML, Pattern Generation)
-/// - Business Systems (Creator Management, Agency, EoelWorks)
+/// - Business Systems (Creator Management, Agency, EchoelmusicWorks)
 /// - Platform Systems (iOS, visionOS, watchOS, tvOS)
 /// - Cloud Systems (Sync, Collaboration, Remote Processing)
 @MainActor
@@ -57,7 +57,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
 
     // Bio/Health Systems
     public lazy var quantumLifeScanner = QuantumLifeScanner.shared
-    public lazy var eoelWorks = EoelWorks.shared
+    public lazy var echoelmusicWorks = EchoelmusicWorks.shared
     public lazy var potentialDevelopment = PotentialDevelopment.shared
     public lazy var healingProgressTracker = HealingProgressTracker.shared
     public lazy var globalInclusivity = GlobalInclusivity.shared
@@ -155,7 +155,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         ║  Systems Online:                                             ║
         ║  ✓ Audio Engine (Bio-Reactive)                               ║
         ║  ✓ QuantumLifeScanner (Healing + Career)                     ║
-        ║  ✓ EoelWorks (Arbeitsvermittlung)                            ║
+        ║  ✓ EchoelmusicWorks (Music Industry Jobs)                     ║
         ║  ✓ CreatorManager (Artists/Influencers)                      ║
         ║  ✓ AgencyManager (Booking/Management)                        ║
         ║  ✓ Spatial Audio (3D/Ambisonics)                             ║
@@ -188,7 +188,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         print("   ✓ QuantumLifeScanner ready")
 
         // Connect scanner to other health systems
-        print("   ✓ EoelWorks (Job Placement) ready")
+        print("   ✓ EchoelmusicWorks (Music Industry Jobs) ready")
         print("   ✓ PotentialDevelopment ready")
         print("   ✓ HealingProgressTracker ready")
         print("   ✓ GlobalInclusivity ready")
@@ -243,7 +243,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
 
         // Bridge 2: Creator ↔ Career
         creatorCareerBridge = CreatorCareerBridge(
-            eoelWorks: eoelWorks,
+            echoelmusicWorks: echoelmusicWorks,
             potentialDev: potentialDevelopment
         )
         print("   ✓ Creator ↔ Career Bridge created")
@@ -301,7 +301,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         await potentialDevelopment.updateFromScan(scan)
 
         // Update career matches
-        await eoelWorks.updateFromScan(scan)
+        await echoelmusicWorks.updateFromScan(scan)
 
         print("[EchoelmusicHub] Healing session complete")
         print("   Overall Wellbeing: \(String(format: "%.1f", scan.overallWellbeing))%")
@@ -314,7 +314,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
 
     // MARK: - Start Career Scan
 
-    public func startCareerScan() async -> [EoelWorks.JobOpportunity] {
+    public func startCareerScan() async -> [EchoelmusicWorks.JobOpportunity] {
         guard isInitialized else {
             print("[EchoelmusicHub] Error: Not initialized.")
             return []
@@ -325,11 +325,11 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         // Run comprehensive scan with career focus
         let scan = await quantumLifeScanner.startScan(mode: .career)
 
-        // Update EoelWorks
-        await eoelWorks.updateFromScan(scan)
+        // Update EchoelmusicWorks
+        await echoelmusicWorks.updateFromScan(scan)
 
         // Find job matches
-        let jobs = await eoelWorks.findJobs(limit: 20)
+        let jobs = await echoelmusicWorks.findJobs(limit: 20)
 
         print("[EchoelmusicHub] Career scan complete")
         print("   Skills: \(scan.skillsInventory.count)")
@@ -373,7 +373,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         └── GlobalInclusivity (WHO Framework)
 
         CAREER/WORK SYSTEMS:
-        ├── EoelWorks (Arbeitsvermittlung)
+        ├── EchoelmusicWorks (Music Industry Jobs)
         ├── PotentialDevelopment (VIA Strengths)
         ├── CreatorManager (C++ - Artists/Influencers)
         ├── AgencyManager (C++ - Booking/Management)
@@ -427,7 +427,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
            Stress → Compression Ratio
 
         2. CREATOR ↔ CAREER BRIDGE
-           CreatorManager Skills → EoelWorks Profile
+           CreatorManager Skills → EchoelmusicWorks Profile
            AgencyManager Bookings → Career History
            Portfolio → Job Matching
 
@@ -604,19 +604,19 @@ public class BioAudioBridge {
 
 // MARK: - Creator Career Bridge
 
-/// Bridges CreatorManager/AgencyManager (C++) with EoelWorks (Swift)
+/// Bridges CreatorManager/AgencyManager (C++) with EchoelmusicWorks (Swift)
 @MainActor
 public class CreatorCareerBridge {
-    private let eoelWorks: EoelWorks
+    private let echoelmusicWorks: EchoelmusicWorks
     private let potentialDev: PotentialDevelopment
 
-    public init(eoelWorks: EoelWorks, potentialDev: PotentialDevelopment) {
-        self.eoelWorks = eoelWorks
+    public init(echoelmusicWorks: EchoelmusicWorks, potentialDev: PotentialDevelopment) {
+        self.echoelmusicWorks = echoelmusicWorks
         self.potentialDev = potentialDev
     }
 
-    /// Convert Creator profile (C++) to EoelWorks profile (Swift)
-    public func syncCreatorToEoelWorks(
+    /// Convert Creator profile (C++) to EchoelmusicWorks profile (Swift)
+    public func syncCreatorToEchoelmusicWorks(
         creatorName: String,
         creatorType: String,
         skills: [String],
@@ -624,14 +624,14 @@ public class CreatorCareerBridge {
         engagementRate: Float,
         earnings: Double
     ) async {
-        // Create or update EoelWorks profile from Creator data
-        if eoelWorks.userProfile == nil {
-            var profile = EoelWorks.WorkerProfile()
+        // Create or update EchoelmusicWorks profile from Creator data
+        if echoelmusicWorks.userProfile == nil {
+            var profile = EchoelmusicWorks.WorkerProfile()
             profile.name = creatorName
 
             // Map creator skills to work skills
             profile.skills = skills.map { skillName in
-                EoelWorks.WorkSkill(
+                EchoelmusicWorks.WorkSkill(
                     name: skillName,
                     category: mapCreatorSkillCategory(skillName),
                     proficiency: .advanced,
@@ -643,10 +643,10 @@ public class CreatorCareerBridge {
             profile.remotePreference = .remotePreferred
             profile.preferredWorkStyle = .flexible
 
-            eoelWorks.userProfile = profile
+            echoelmusicWorks.userProfile = profile
         }
 
-        print("[CreatorCareerBridge] Synced creator '\(creatorName)' to EoelWorks")
+        print("[CreatorCareerBridge] Synced creator '\(creatorName)' to EchoelmusicWorks")
     }
 
     /// Map Agency bookings to career history
@@ -654,7 +654,7 @@ public class CreatorCareerBridge {
         bookings: [(title: String, client: String, rate: Double, date: Date)]
     ) async {
         for booking in bookings {
-            let experience = EoelWorks.WorkExperience(
+            let experience = EchoelmusicWorks.WorkExperience(
                 company: booking.client,
                 title: booking.title,
                 description: "Booking via agency",
@@ -662,13 +662,13 @@ public class CreatorCareerBridge {
                 endDate: booking.date,
                 isCurrent: false
             )
-            eoelWorks.userProfile?.workHistory.append(experience)
+            echoelmusicWorks.userProfile?.workHistory.append(experience)
         }
 
         print("[CreatorCareerBridge] Synced \(bookings.count) bookings to career history")
     }
 
-    private func mapCreatorSkillCategory(_ skillName: String) -> EoelWorks.WorkSkill.SkillCategory {
+    private func mapCreatorSkillCategory(_ skillName: String) -> EchoelmusicWorks.WorkSkill.SkillCategory {
         let skill = skillName.lowercased()
         if skill.contains("music") || skill.contains("audio") || skill.contains("dj") {
             return .creative
@@ -776,8 +776,8 @@ extension EchoelmusicIntegrationHub {
     }
 
     /// Quick access to find jobs
-    public func findJobs() async -> [EoelWorks.JobOpportunity] {
-        return await eoelWorks.findJobs()
+    public func findJobs() async -> [EchoelmusicWorks.JobOpportunity] {
+        return await echoelmusicWorks.findJobs()
     }
 
     /// Quick access to get healing report
@@ -792,7 +792,7 @@ extension EchoelmusicIntegrationHub {
 
     /// Quick access to get career report
     public func getCareerReport() -> String {
-        return eoelWorks.getReport()
+        return echoelmusicWorks.getReport()
     }
 
     /// Get all reports combined

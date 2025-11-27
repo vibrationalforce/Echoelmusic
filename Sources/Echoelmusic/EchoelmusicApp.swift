@@ -11,7 +11,7 @@ import SwiftUI
 /// - Input (Face, Gesture, MIDI, Touch)
 /// - Output (Spatial Audio, Visuals, LED)
 /// - Intelligence (Quantum AI, ML)
-/// - Business (Creator, Agency, EoelWorks)
+/// - Business (Creator, Agency, EchoelmusicWorks)
 /// - 23+ Languages, WCAG 2.1 AAA
 @main
 struct EchoelmusicApp: App {
@@ -103,7 +103,7 @@ struct EchoelmusicApp: App {
                     - MIDI 2.0 + MPE: Ready
                     - Spatial Audio: Ready
                     - QuantumLifeScanner: Ready
-                    - EoelWorks (Arbeitsvermittlung): Ready
+                    - EchoelmusicWorks (Music Industry Jobs): Ready
                     - CreatorManager: Ready
                     - AgencyManager: Ready
                     - 23+ Languages: Ready

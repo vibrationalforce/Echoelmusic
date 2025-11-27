@@ -39,7 +39,7 @@ public final class QuantumLifeScanner: ObservableObject {
 
     // MARK: - Integrated Systems
 
-    private let eoelWorks = EoelWorks.shared
+    private let echoelmusicWorks = EchoelmusicWorks.shared
     private let potentialDev = PotentialDevelopment.shared
     private let healingTracker = HealingProgressTracker.shared
     private let globalInclusivity = GlobalInclusivity.shared
@@ -875,7 +875,7 @@ public final class QuantumLifeScanner: ObservableObject {
     }
 
     private func generateJobMatches(skills: [Skill], interests: [InterestArea], strengths: [Strength], accessibilityMode: AccessibilityMode) async -> [JobMatch] {
-        // In production: EoelWorks matching algorithm
+        // In production: EchoelmusicWorks matching algorithm
         return [
             JobMatch(
                 jobTitle: "UX Designer",
@@ -1056,8 +1056,8 @@ public final class QuantumLifeScanner: ObservableObject {
     }
 
     private func syncWithIntegratedSystems(_ scan: LifeScan) async {
-        // Sync with EoelWorks for job matching
-        await eoelWorks.updateFromScan(scan)
+        // Sync with EchoelmusicWorks for music industry job matching
+        await echoelmusicWorks.updateFromScan(scan)
 
         // Sync with Potential Development tracker
         await potentialDev.updateFromScan(scan)
@@ -1065,7 +1065,7 @@ public final class QuantumLifeScanner: ObservableObject {
         // Sync with Healing Progress Tracker
         await healingTracker.recordScan(scan)
 
-        print("   Synced with EoelWorks, PotentialDev, HealingTracker")
+        print("   Synced with EchoelmusicWorks, PotentialDev, HealingTracker")
     }
 
     // MARK: - Accessibility Report

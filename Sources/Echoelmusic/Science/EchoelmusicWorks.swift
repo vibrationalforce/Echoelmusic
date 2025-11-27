@@ -1,11 +1,19 @@
 import Foundation
 import Combine
 
-/// EoelWorks - Global Arbeitsvermittlung (Job Placement) & Career Development Platform
-/// Connecting human potential with meaningful work worldwide
+/// EchoelmusicWorks - Music Industry Job Placement & Career Development Platform
+/// Connecting creative talent with opportunities in music, audio, and entertainment
 ///
-/// Mission: Every person deserves access to meaningful work that aligns with
-/// their strengths, respects their abilities, and contributes to their wellbeing.
+/// Mission: Every creative person deserves access to meaningful work in the music industry
+/// that aligns with their talents, respects their abilities, and nurtures their artistry.
+///
+/// Music Industry Focus:
+/// - Music Production & Engineering
+/// - Artist Management & Booking
+/// - Live Sound & Events
+/// - Content Creation & Streaming
+/// - Music Education & Therapy
+/// - Recording Studios & Labels
 ///
 /// Scientific Foundation:
 /// - Holland Occupational Themes (RIASEC) - Holland, 1997
@@ -20,11 +28,11 @@ import Combine
 /// - Sensory impairments: Accessible job recommendations
 /// - Mental health considerations: Stress-appropriate roles
 @MainActor
-public final class EoelWorks: ObservableObject {
+public final class EchoelmusicWorks: ObservableObject {
 
     // MARK: - Singleton
 
-    public static let shared = EoelWorks()
+    public static let shared = EchoelmusicWorks()
 
     // MARK: - Published State
 
@@ -729,11 +737,11 @@ public final class EoelWorks: ObservableObject {
 
     private init() {
         print("==============================================")
-        print("   EOELWORKS - GLOBAL JOB PLACEMENT")
+        print("   ECHOELMUSIC WORKS - MUSIC INDUSTRY JOBS")
         print("==============================================")
-        print("   Connecting potential with opportunity")
+        print("   Connecting creative talent with opportunity")
+        print("   Music production, management, live sound")
         print("   Accessibility-first job matching")
-        print("   Evidence-based career development")
         print("==============================================")
     }
 
@@ -782,7 +790,7 @@ public final class EoelWorks: ObservableObject {
             return job
         }
 
-        print("   EoelWorks: Profile updated from scan")
+        print("   EchoelmusicWorks: Profile updated from scan")
         print("   Skills: \(userProfile?.skills.count ?? 0)")
         print("   Job Matches: \(jobMatches.count)")
     }
@@ -791,11 +799,11 @@ public final class EoelWorks: ObservableObject {
 
     public func findJobs(limit: Int = 20) async -> [JobOpportunity] {
         guard let profile = userProfile else {
-            print("   EoelWorks: No profile - cannot match jobs")
+            print("   EchoelmusicWorks: No profile - cannot match jobs")
             return []
         }
 
-        print("\n--- EOELWORKS JOB SEARCH ---")
+        print("\n--- ECHOELMUSIC WORKS JOB SEARCH ---")
         print("Skills: \(profile.skills.count)")
         print("Accessibility needs: \(profile.accessibilityNeeds.count)")
         print("Remote preference: \(profile.remotePreference.rawValue)")
@@ -903,7 +911,7 @@ public final class EoelWorks: ObservableObject {
         )
         applications.append(application)
 
-        print("   EoelWorks: Applied to \(job.title) at \(job.company)")
+        print("   EchoelmusicWorks: Applied to \(job.title) at \(job.company)")
         return application
     }
 
@@ -1017,28 +1025,65 @@ public final class EoelWorks: ObservableObject {
     }
 
     private func generateJobTemplates() -> [JobOpportunity] {
-        // In production: Fetch from real job APIs
+        // Music Industry focused jobs through Echoelmusic platform
         return [
-            createJob("UX Designer", "TechCorp", "Design accessible user experiences", remote: true, accessibility: [.screenReader, .flexibleSchedule]),
-            createJob("Data Analyst", "Analytics Inc", "Analyze data and create insights", remote: true, accessibility: [.remoteOption, .flexibleSchedule]),
-            createJob("Content Writer", "Media Co", "Create engaging content for diverse audiences", remote: true, accessibility: [.remoteOption, .mentalHealthSupport]),
-            createJob("Customer Support Specialist", "ServiceFirst", "Help customers solve problems", remote: true, accessibility: [.hearingImpairment, .flexibleSchedule]),
-            createJob("Software Developer", "CodeLab", "Build accessible applications", remote: true, accessibility: [.screenReader, .flexibleSchedule, .ergonomicEquipment]),
-            createJob("Project Coordinator", "GlobalOrg", "Coordinate projects and teams", remote: false, accessibility: [.wheelchairAccessible, .ergonomicEquipment]),
-            createJob("Research Assistant", "University", "Support research initiatives", remote: true, accessibility: [.flexibleSchedule, .quietEnvironment]),
-            createJob("Graphic Designer", "Creative Studio", "Design visual communications", remote: true, accessibility: [.remoteOption, .flexibleSchedule]),
-            createJob("Virtual Assistant", "VA Services", "Provide administrative support remotely", remote: true, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
-            createJob("Wellness Coach", "HealthFirst", "Guide others on wellness journeys", remote: true, accessibility: [.remoteOption, .mentalHealthSupport])
+            // Production & Engineering
+            createMusicJob("Music Producer", "Echoelmusic Studios", "Produce tracks for artists, oversee recording sessions, mix and master audio", remote: true, category: .production, accessibility: [.flexibleSchedule, .remoteOption]),
+            createMusicJob("Audio Engineer", "SoundWave Records", "Record, mix, and master music in professional studio environment", remote: false, category: .production, accessibility: [.ergonomicEquipment, .flexibleBreaks]),
+            createMusicJob("Mixing Engineer", "Echoelmusic Remote", "Remote mixing services for independent artists worldwide", remote: true, category: .production, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
+            createMusicJob("Mastering Engineer", "Master Suite Audio", "Final audio mastering for release-ready tracks", remote: true, category: .production, accessibility: [.remoteOption, .quietEnvironment]),
+
+            // Artist Management & Booking
+            createMusicJob("Artist Manager", "Echoelmusic Management", "Guide artist careers, negotiate deals, coordinate releases", remote: true, category: .management, accessibility: [.flexibleSchedule, .remoteOption]),
+            createMusicJob("Booking Agent", "LiveSound Bookings", "Book live performances, negotiate contracts, coordinate tours", remote: true, category: .management, accessibility: [.remoteOption, .flexibleSchedule]),
+            createMusicJob("A&R Coordinator", "Echoelmusic Label", "Discover new talent, coordinate artist development", remote: true, category: .management, accessibility: [.flexibleSchedule, .mentalHealthSupport]),
+
+            // Live Sound & Events
+            createMusicJob("Live Sound Engineer", "Concert Tech Pro", "Operate sound systems for live events and concerts", remote: false, category: .liveSound, accessibility: [.ergonomicEquipment, .flexibleBreaks]),
+            createMusicJob("Stage Manager", "Festival Productions", "Coordinate backstage operations and artist schedules", remote: false, category: .liveSound, accessibility: [.clearInstructions, .structuredSchedule]),
+            createMusicJob("FOH Engineer", "Touring Crew Inc", "Front-of-house mixing for touring artists", remote: false, category: .liveSound, accessibility: [.ergonomicEquipment]),
+
+            // Content Creation & Streaming
+            createMusicJob("Music Content Creator", "Echoelmusic Media", "Create music tutorials, reviews, and educational content", remote: true, category: .content, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
+            createMusicJob("Podcast Producer", "Audio Stories Network", "Produce and edit music-focused podcasts", remote: true, category: .content, accessibility: [.remoteOption, .flexibleSchedule]),
+            createMusicJob("Social Media Manager", "Echoelmusic Marketing", "Manage artist social media presence and engagement", remote: true, category: .content, accessibility: [.remoteOption, .flexibleSchedule, .mentalHealthSupport]),
+
+            // Music Education & Therapy
+            createMusicJob("Music Teacher", "Echoelmusic Academy", "Teach music production, instruments, and theory online", remote: true, category: .education, accessibility: [.remoteOption, .flexibleSchedule, .screenReader]),
+            createMusicJob("Music Therapist", "Healing Harmonies", "Use music for therapeutic healing and wellness", remote: true, category: .education, accessibility: [.flexibleSchedule, .mentalHealthSupport, .remoteOption]),
+            createMusicJob("DAW Instructor", "ProAudio Training", "Teach Ableton, Logic, Pro Tools to aspiring producers", remote: true, category: .education, accessibility: [.remoteOption, .flexibleSchedule]),
+
+            // Technical & Development
+            createMusicJob("Audio Plugin Developer", "Echoelmusic Tech", "Develop VST/AU plugins for music production", remote: true, category: .technical, accessibility: [.remoteOption, .flexibleSchedule, .quietEnvironment]),
+            createMusicJob("Music App Developer", "SoundApp Studios", "Build iOS/Android apps for musicians", remote: true, category: .technical, accessibility: [.remoteOption, .flexibleSchedule, .ergonomicEquipment]),
+
+            // Session Work
+            createMusicJob("Session Musician", "Echoelmusic Sessions", "Record instruments remotely for various projects", remote: true, category: .performance, accessibility: [.remoteOption, .flexibleSchedule]),
+            createMusicJob("Vocalist/Singer", "VoiceOver Productions", "Provide vocals for commercial and artistic projects", remote: true, category: .performance, accessibility: [.remoteOption, .flexibleSchedule])
         ]
     }
 
-    private func createJob(_ title: String, _ company: String, _ description: String, remote: Bool, accessibility: [AccessibilityNeed]) -> JobOpportunity {
+    /// Music industry job categories
+    public enum MusicJobCategory: String, Codable {
+        case production = "Production & Engineering"
+        case management = "Artist Management"
+        case liveSound = "Live Sound & Events"
+        case content = "Content Creation"
+        case education = "Music Education"
+        case technical = "Audio Technology"
+        case performance = "Session & Performance"
+    }
+
+    private func createMusicJob(_ title: String, _ company: String, _ description: String, remote: Bool, category: MusicJobCategory, accessibility: [AccessibilityNeed]) -> JobOpportunity {
         var job = JobOpportunity(title: title, company: company, description: description, location: remote ? "Remote" : "Various", isRemote: remote)
         job.accessibilityFeatures = accessibility
         job.mentalHealthSupport = accessibility.contains(.mentalHealthSupport)
         job.inclusivityRating = Float(accessibility.count) * 15 + 40
+        job.industry = category.rawValue
+        job.companyValues = ["Creativity", "Accessibility", "Artist Development"]
         return job
     }
+
 
     private func getRequiredSkillsForRole(_ role: String) -> [(name: String, level: Float, priority: Int)] {
         // Simplified: In production, this would be a comprehensive database
@@ -1125,19 +1170,19 @@ public final class EoelWorks: ObservableObject {
     public func getReport() -> String {
         return """
         =====================================================
-        EOELWORKS - CAREER DEVELOPMENT REPORT
+        ECHOELMUSIC WORKS - MUSIC INDUSTRY CAREER REPORT
         =====================================================
 
         PROFILE STATUS: \(userProfile != nil ? "Complete" : "Incomplete")
 
-        SKILLS:
+        MUSIC SKILLS:
         \(userProfile?.skills.map { "  - \($0.name): \($0.proficiency.rawValue)" }.joined(separator: "\n") ?? "  None recorded")
 
         ACCESSIBILITY NEEDS:
         \(userProfile?.accessibilityNeeds.map { "  - \($0.rawValue)" }.joined(separator: "\n") ?? "  None specified")
 
-        JOB MATCHES: \(jobMatches.count)
-        \(jobMatches.prefix(5).map { "  - \($0.title) (\(String(format: "%.0f", $0.matchScore))% match)" }.joined(separator: "\n"))
+        MUSIC INDUSTRY JOB MATCHES: \(jobMatches.count)
+        \(jobMatches.prefix(5).map { "  - \($0.title) at \($0.company) (\(String(format: "%.0f", $0.matchScore))% match)" }.joined(separator: "\n"))
 
         APPLICATIONS: \(applications.count)
         \(applications.map { "  - \($0.jobTitle) at \($0.company): \($0.status.rawValue)" }.joined(separator: "\n"))
@@ -1147,7 +1192,8 @@ public final class EoelWorks: ObservableObject {
         \(skillDevelopmentPlan?.skillGaps.map { "  - Gap: \($0.skillName) (\(String(format: "%.0f", $0.gap))%)" }.joined(separator: "\n") ?? "")
 
         =====================================================
-        "Every person deserves meaningful work."
+        "Connecting creative talent with music industry careers"
+        Powered by Echoelmusic
         =====================================================
         """
     }
