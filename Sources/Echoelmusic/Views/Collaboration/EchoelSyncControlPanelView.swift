@@ -26,6 +26,7 @@ struct EchoelSyncControlPanelView: View {
         case session = "Session"
         case peers = "Peers"
         case transport = "Transport"
+        case realtime = "Real-Time"
         case audio = "Audio"
         case chat = "Chat"
         case sync = "Sync Monitor"
@@ -51,6 +52,9 @@ struct EchoelSyncControlPanelView: View {
 
                 transportView
                     .tag(SyncTab.transport)
+
+                realtimeSyncView
+                    .tag(SyncTab.realtime)
 
                 audioView
                     .tag(SyncTab.audio)
@@ -210,6 +214,7 @@ struct EchoelSyncControlPanelView: View {
         case .session: return "network"
         case .peers: return "person.3"
         case .transport: return "play.circle"
+        case .realtime: return "bolt.circle"
         case .audio: return "waveform"
         case .chat: return "message"
         case .sync: return "gauge"
@@ -581,6 +586,284 @@ struct EchoelSyncControlPanelView: View {
             Spacer()
         }
         .padding()
+    }
+
+    // MARK: - Real-Time Sync View (Ableton Link-Level)
+
+    private var realtimeSyncView: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                // Phase Lock Status
+                GroupBox("Phase-Locked Sync") {
+                    VStack(spacing: 16) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Sub-Millisecond Precision")
+                                    .font(.headline)
+                                Text("Ableton Link-compatible quantum alignment")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Spacer()
+
+                            Circle()
+                                .fill(syncEngine.isEnabled ? Color.green : Color.gray)
+                                .frame(width: 16, height: 16)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white, lineWidth: 2)
+                                )
+                        }
+
+                        Divider()
+
+                        // Current Phase Info
+                        HStack(spacing: 24) {
+                            VStack(spacing: 8) {
+                                Text("Beat Phase")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                Text(String(format: "%.4f", syncEngine.currentBeat.truncatingRemainder(dividingBy: 1.0)))
+                                    .font(.system(size: 24, weight: .bold, design: .monospaced))
+                            }
+
+                            VStack(spacing: 8) {
+                                Text("Quantum")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                Text("\(syncEngine.timeSignature.numerator) beats")
+                                    .font(.system(size: 24, weight: .bold, design: .monospaced))
+                            }
+
+                            VStack(spacing: 8) {
+                                Text("Timing")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                Text("1000 Hz")
+                                    .font(.system(size: 24, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.green)
+                            }
+                        }
+                    }
+                    .padding()
+                }
+
+                // Quantum Aligned Transport
+                GroupBox("Quantum-Aligned Transport") {
+                    VStack(spacing: 16) {
+                        Text("Start/Stop syncs to bar boundaries like Ableton Link")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        HStack(spacing: 16) {
+                            Button {
+                                syncEngine.requestPlayQuantized(atQuantum: Double(syncEngine.timeSignature.numerator))
+                            } label: {
+                                VStack(spacing: 4) {
+                                    Image(systemName: "play.fill")
+                                        .font(.title)
+                                    Text("Play at Bar")
+                                        .font(.caption)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.green)
+
+                            Button {
+                                syncEngine.stop()
+                            } label: {
+                                VStack(spacing: 4) {
+                                    Image(systemName: "stop.fill")
+                                        .font(.title)
+                                    Text("Stop")
+                                        .font(.caption)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(.red)
+                        }
+
+                        // Time until next bar
+                        HStack {
+                            Text("Next bar in:")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(String(format: "%.3f s", syncEngine.timeUntilNextQuantum(Double(syncEngine.timeSignature.numerator))))
+                                .font(.caption.monospaced())
+                                .fontWeight(.bold)
+                        }
+                    }
+                    .padding()
+                }
+
+                // Tempo Change with Quantum Sync
+                GroupBox("Quantum-Synced Tempo Change") {
+                    VStack(spacing: 16) {
+                        Text("Tempo changes happen at next bar boundary (like Link)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        HStack(spacing: 12) {
+                            ForEach([80, 100, 120, 140, 160], id: \.self) { bpm in
+                                Button {
+                                    syncEngine.requestTempo(Double(bpm), syncToQuantum: true)
+                                } label: {
+                                    Text("\(bpm)")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .frame(width: 50, height: 40)
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(Int(syncEngine.tempo) == bpm ? .blue : nil)
+                            }
+                        }
+                    }
+                    .padding()
+                }
+
+                // Sample-Accurate Info
+                GroupBox("Sample-Accurate Timing") {
+                    VStack(spacing: 16) {
+                        HStack(spacing: 24) {
+                            VStack(spacing: 4) {
+                                Text("Sample Rate")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                Text("48,000 Hz")
+                                    .font(.headline)
+                            }
+
+                            VStack(spacing: 4) {
+                                Text("Beat at Sample 48000")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                Text(String(format: "%.4f", syncEngine.beatAtSampleTime(48000)))
+                                    .font(.headline.monospaced())
+                            }
+
+                            VStack(spacing: 4) {
+                                Text("Sample at Beat 1.0")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                Text("\(syncEngine.sampleTimeAtBeat(1.0))")
+                                    .font(.headline.monospaced())
+                            }
+                        }
+
+                        Divider()
+
+                        // Boundary indicators
+                        HStack(spacing: 24) {
+                            HStack(spacing: 8) {
+                                Circle()
+                                    .fill(syncEngine.isAtBeatBoundary() ? Color.green : Color.gray.opacity(0.3))
+                                    .frame(width: 12, height: 12)
+                                Text("Beat Boundary")
+                                    .font(.caption)
+                            }
+
+                            HStack(spacing: 8) {
+                                Circle()
+                                    .fill(syncEngine.isAtBarBoundary() ? Color.blue : Color.gray.opacity(0.3))
+                                    .frame(width: 12, height: 12)
+                                Text("Bar Boundary")
+                                    .font(.caption)
+                            }
+                        }
+                    }
+                    .padding()
+                }
+
+                // Network Discovery
+                GroupBox("Network Discovery") {
+                    VStack(spacing: 16) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("UDP Multicast Discovery")
+                                    .font(.headline)
+                                Text("Link-compatible peer discovery on 224.76.78.75:20738")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Spacer()
+
+                            Button("Start Discovery") {
+                                syncEngine.startMulticastDiscovery()
+                            }
+                            .buttonStyle(.bordered)
+                        }
+
+                        Button("Broadcast Presence") {
+                            syncEngine.broadcastPresence()
+                        }
+                        .buttonStyle(.bordered)
+                        .frame(maxWidth: .infinity)
+                    }
+                    .padding()
+                }
+
+                // Link Compatibility
+                GroupBox("Ableton Link Compatibility") {
+                    VStack(spacing: 12) {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Phase-locked beat sync")
+                                .font(.caption)
+                            Spacer()
+                        }
+
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Quantum alignment (Start Stop Sync)")
+                                .font(.caption)
+                            Spacer()
+                        }
+
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Sub-millisecond precision timing")
+                                .font(.caption)
+                            Spacer()
+                        }
+
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Sample-accurate audio scheduling")
+                                .font(.caption)
+                            Spacer()
+                        }
+
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Adaptive latency compensation")
+                                .font(.caption)
+                            Spacer()
+                        }
+
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("UDP multicast peer discovery")
+                                .font(.caption)
+                            Spacer()
+                        }
+                    }
+                    .padding()
+                }
+            }
+            .padding()
+        }
     }
 
     private var beatGridView: some View {
