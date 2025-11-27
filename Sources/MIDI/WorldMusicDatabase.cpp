@@ -125,6 +125,35 @@ void WorldMusicDatabase::addModernStyles()
 
 void WorldMusicDatabase::addClassicalStyles()
 {
+    // Medieval (500-1400) - Gregorian Chant & Early Polyphony
+    styleDatabase[StyleCategory::Medieval] = {
+        "Medieval / Gregorian", StyleCategory::Medieval, "Europe", "500-1400",
+        {{0}, {0, 4}},  // Monophonic or simple organum (parallel 4ths/5ths)
+        {ChordGenius::Scale::Dorian, ChordGenius::Scale::Phrygian, ChordGenius::Scale::Lydian, ChordGenius::Scale::Mixolydian},
+        {ChordGenius::ChordQuality::Power, ChordGenius::ChordQuality::Sus4},  // Open 5ths, no 3rds
+        60.0f, 100.0f,
+        "Free rhythm (Gregorian) or modal rhythmic modes", "Stepwise, narrow range, melismatic",
+        {"Voice", "Organ (Portativ)", "Vielle", "Recorder", "Bells"},
+        "Gregorian Chant: Monophonic, Latin liturgical texts, 8 church modes (Dorian, Phrygian, Lydian, Mixolydian + Hypo-). "
+        "Organum: Early polyphony with parallel 4ths/5ths. Notre Dame School: Léonin, Pérotin. "
+        "Ars Nova (1300s): Philippe de Vitry, Guillaume de Machaut. Hildegard von Bingen.",
+        0.1f, 0.2f, 0.5f, 0.0f  // Low chromaticism, low dissonance, moderate complexity, no syncopation
+    };
+
+    // Renaissance (1400-1600) - Polyphony & Motets
+    styleDatabase[StyleCategory::Renaissance] = {
+        "Renaissance", StyleCategory::Renaissance, "Europe", "1400-1600",
+        {{0, 3, 4, 0}, {0, 5, 0}},  // I-IV-V-I, I-vi-I (early functional harmony)
+        {ChordGenius::Scale::Dorian, ChordGenius::Scale::Major, ChordGenius::Scale::NaturalMinor},
+        {ChordGenius::ChordQuality::Major, ChordGenius::ChordQuality::Minor},
+        70.0f, 120.0f,
+        "Tactus (steady beat), imitative counterpoint", "Stepwise, imitation, melismatic",
+        {"Voice (SATB)", "Lute", "Recorder", "Viol", "Organ", "Sackbut"},
+        "Polyphonic masses & motets (Palestrina, Josquin, Lassus). Madrigals (Monteverdi, Gesualdo). "
+        "Word painting, imitative counterpoint, modal harmony transitioning to tonal.",
+        0.3f, 0.3f, 0.7f, 0.1f
+    };
+
     // Baroque (1600-1750)
     styleDatabase[StyleCategory::Baroque] = {
         "Baroque", StyleCategory::Baroque, "Europe", "1600-1750",
