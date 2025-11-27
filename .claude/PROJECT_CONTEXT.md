@@ -70,6 +70,14 @@ MainNavigationView (8 main tabs)
 - `MusicalTuningSystem.swift` (760 lines) - 40+ tuning systems
 - `AdditionalEffects.swift` (1,406 lines) - Pro effects
 
+### MIDI (Sources/Echoelmusic/MIDI/)
+- `MIDIEffects.swift` (1,490 lines) - Ultra-Intelligence MIDI System
+  - EchoelArp: Advanced arpeggiator with euclidean rhythms
+  - Intelligent Harmonizer: AI-powered harmony generation
+  - Generative Sequencer: Markov chains, cellular automata
+  - Bio-Reactive MIDI: HRV/HR → MIDI parameters (UNIQUE!)
+  - MIDI LFO, Polyrhythm Generator, and 10+ standard effects
+
 ### Video (Sources/Echoelmusic/Video/, VideoAI/)
 - `VideoEditingEngine.swift` (620 lines)
 - `ColorGradingSystem.swift` (754 lines) - DaVinci-level grading
@@ -144,4 +152,5 @@ These files exist and should NOT be recreated:
 - Expanded `DAWScoreView.swift` (75 → 773 lines) - Full musical notation editor
 - Expanded `AIComposer.swift` (99 → 1129 lines) - AI composition engine
 - Expanded `ChatAggregator.swift` (65 → 998 lines) - Multi-platform chat
+- Expanded `MIDIEffects.swift` (647 → 1490 lines) - Ultra-Intelligence MIDI System
 - Created `.claude/PROJECT_CONTEXT.md` - Session persistence
