@@ -28,6 +28,9 @@ import AVFoundation
 import NaturalLanguage
 import CoreImage
 import Combine
+import os.log
+
+private let logger = Logger(subsystem: "com.echoelmusic.app", category: "contentDetector")
 
 // MARK: - Content Type Detector
 
@@ -239,7 +242,7 @@ class ContentTypeDetector: ObservableObject {
     // MARK: - Content Analysis
 
     func analyzeVideo(url: URL) async throws -> AnalysisResult {
-        print("🔍 Analyzing video content...")
+        logger.info("Analyzing video content")
         isAnalyzing = true
         analysisProgress = 0.0
 
@@ -247,7 +250,7 @@ class ContentTypeDetector: ObservableObject {
         let asset = AVAsset(url: url)
         let duration = try await asset.load(.duration).seconds
 
-        print("  Duration: \(Int(duration))s")
+        logger.debug("Duration: \(Int(duration), privacy: .public)s")
 
         // Multi-modal analysis
         analysisProgress = 0.2
@@ -307,9 +310,7 @@ class ContentTypeDetector: ObservableObject {
         self.suggestedStyles = styles
         self.detectedTags = tags
 
-        print("✅ Analysis complete: \(contentType.emoji) \(contentType.rawValue)")
-        print("  Confidence: \(Int(confidence * 100))%")
-        print("  Sub-categories: \(subCategories.joined(separator: ", "))")
+        logger.info("Analysis complete: \(contentType.rawValue, privacy: .public) - Confidence: \(Int(confidence * 100), privacy: .public)%, Sub-categories: \(subCategories.joined(separator: ", "), privacy: .public)")
 
         return result
     }
@@ -559,7 +560,7 @@ class ContentTypeDetector: ObservableObject {
     // MARK: - Initialization
 
     private init() {
-        print("🔍 Content Type Detector initialized")
+        logger.info("Content Type Detector initialized")
     }
 }
 
@@ -568,18 +569,12 @@ class ContentTypeDetector: ObservableObject {
 #if DEBUG
 extension ContentTypeDetector {
     func testContentDetection() async {
-        print("🧪 Testing Content Type Detector...")
+        logger.debug("Testing Content Type Detector")
 
         // Simulate video analysis
         let testURL = URL(fileURLWithPath: "/tmp/test_video.mp4")
 
         do {
-            // Note: This would fail without a real video file
-            // let result = try await analyzeVideo(url: testURL)
-            // print("  Detected: \(result.contentType.emoji) \(result.contentType.rawValue)")
-            // print("  Confidence: \(Int(result.confidence * 100))%")
-            // print("  Suggestions: \(result.recommendations.count)")
-
             // Test classification logic directly
             let testFeatures = DetectionFeatures(
                 objectCategories: ["food", "kitchen"],
@@ -589,13 +584,13 @@ extension ContentTypeDetector {
             )
 
             let (type, confidence) = classifyContentType(features: testFeatures)
-            print("  Test classification: \(type.emoji) \(type.rawValue) (\(Int(confidence * 100))%)")
+            logger.debug("Test classification: \(type.rawValue) (\(Int(confidence * 100))%)")
 
         } catch {
-            print("  Note: Test requires real video file")
+            logger.debug("Test requires real video file")
         }
 
-        print("✅ Content Detection test complete")
+        logger.debug("Content Detection test complete")
     }
 }
 #endif

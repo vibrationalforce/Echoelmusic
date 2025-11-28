@@ -30,6 +30,9 @@ import CoreImage
 import CoreML
 import Accelerate
 import Combine
+import os.log
+
+private let logger = Logger(subsystem: "com.echoelmusic.app", category: "aiEditor")
 
 // MARK: - AI Video Editor
 
@@ -233,8 +236,7 @@ class AIVideoEditor: ObservableObject {
     // MARK: - Automatic Editing
 
     func automaticEdit(videoURL: URL, style: ContentTypeDetector.EditingStyle) async throws -> EditTimeline {
-        print("🎬 Starting automatic edit...")
-        print("  Style: \(style.description)")
+        logger.info("Starting automatic edit - Style: \(style.description, privacy: .public)")
 
         isEditing = true
         editProgress = 0.0
@@ -242,19 +244,19 @@ class AIVideoEditor: ObservableObject {
         // Step 1: Analyze content
         editProgress = 0.1
         let analysis = try await contentDetector.analyzeVideo(url: videoURL)
-        print("  Content type: \(analysis.contentType.emoji) \(analysis.contentType.rawValue)")
+        logger.info("Content type: \(analysis.contentType.rawValue, privacy: .public)")
 
         // Step 2: Detect scenes
         editProgress = 0.3
         let scenes = try await detectScenes(in: videoURL)
-        print("  Detected \(scenes.count) scenes")
+        logger.debug("Detected \(scenes.count, privacy: .public) scenes")
 
         // Step 3: Detect beats (if music)
         var beats: [TimeInterval] = []
         if analysis.features.hasMusic {
             editProgress = 0.4
             beats = try await detectBeats(in: videoURL)
-            print("  Detected \(beats.count) beats")
+            logger.debug("Detected \(beats.count, privacy: .public) beats")
         }
 
         // Step 4: Generate cuts
@@ -265,7 +267,7 @@ class AIVideoEditor: ObservableObject {
             contentType: analysis.contentType,
             pacing: analysis.contentType.recommendedPacing
         )
-        print("  Generated \(cuts.count) cuts")
+        logger.debug("Generated \(cuts.count, privacy: .public) cuts")
 
         // Step 5: Create timeline
         editProgress = 0.6
@@ -294,9 +296,7 @@ class AIVideoEditor: ObservableObject {
 
         self.timeline = timeline
 
-        print("✅ Automatic edit complete!")
-        print("  Duration: \(Int(timeline.duration))s")
-        print("  Clips: \(timeline.clips.count)")
+        logger.info("Automatic edit complete - Duration: \(Int(timeline.duration), privacy: .public)s, Clips: \(timeline.clips.count, privacy: .public)")
 
         return timeline
     }
@@ -383,7 +383,7 @@ class AIVideoEditor: ObservableObject {
     // MARK: - Beat Detection
 
     func detectBeats(in videoURL: URL) async throws -> [TimeInterval] {
-        print("🎵 Detecting beats...")
+        logger.debug("Detecting beats")
 
         let asset = AVAsset(url: videoURL)
         var beats: [TimeInterval] = []
@@ -516,7 +516,7 @@ class AIVideoEditor: ObservableObject {
             timeline.transitions.append(transition)
         }
 
-        print("  Added \(timeline.transitions.count) transitions")
+        logger.debug("Added \(timeline.transitions.count, privacy: .public) transitions")
     }
 
     // MARK: - Automatic Text Overlays
@@ -543,7 +543,7 @@ class AIVideoEditor: ObservableObject {
             }
         }
 
-        print("  Added \(timeline.textOverlays.count) text overlays")
+        logger.debug("Added \(timeline.textOverlays.count, privacy: .public) text overlays")
     }
 
     // MARK: - Automatic Color Grading
@@ -585,7 +585,7 @@ class AIVideoEditor: ObservableObject {
             timeline.clips[i].colorGrade = grade
         }
 
-        print("  Applied \(style.rawValue) color grade")
+        logger.debug("Applied \(style.rawValue, privacy: .public) color grade")
     }
 
     // MARK: - Audio Optimization
@@ -597,7 +597,7 @@ class AIVideoEditor: ObservableObject {
                 timeline.audioTracks[i].isDucked = true
                 timeline.audioTracks[i].volume = 0.3  // Duck to 30%
             }
-            print("  Enabled audio ducking")
+            logger.debug("Enabled audio ducking")
         }
 
         // Add fade in/out
@@ -610,15 +610,12 @@ class AIVideoEditor: ObservableObject {
     // MARK: - Export
 
     func exportVideo(timeline: EditTimeline, outputURL: URL, preset: ExportPreset) async throws {
-        print("📤 Exporting video...")
-        print("  Preset: \(preset.name)")
-        print("  Resolution: \(preset.resolution)")
-        print("  Bitrate: \(preset.bitrate / 1_000_000) Mbps")
+        logger.info("Exporting video - Preset: \(preset.name, privacy: .public), Resolution: \(preset.resolution.x, privacy: .public)x\(preset.resolution.y, privacy: .public), Bitrate: \(preset.bitrate / 1_000_000, privacy: .public) Mbps")
 
         // Would render timeline to video file
         // For now, just log
 
-        print("✅ Export complete: \(outputURL.lastPathComponent)")
+        logger.info("Export complete: \(outputURL.lastPathComponent, privacy: .public)")
     }
 
     struct ExportPreset {
@@ -705,7 +702,7 @@ class AIVideoEditor: ObservableObject {
     // MARK: - Initialization
 
     private init() {
-        print("🎬 AI Video Editor initialized")
+        logger.info("AI Video Editor initialized")
     }
 }
 
@@ -714,7 +711,7 @@ class AIVideoEditor: ObservableObject {
 #if DEBUG
 extension AIVideoEditor {
     func testAIVideoEditor() async {
-        print("🧪 Testing AI Video Editor...")
+        logger.debug("Testing AI Video Editor")
 
         let testURL = URL(fileURLWithPath: "/tmp/test_video.mp4")
 
@@ -733,17 +730,17 @@ extension AIVideoEditor {
             ]
 
             let timeline = createTimeline(from: testURL, cuts: testCuts)
-            print("  Test timeline: \(timeline.clips.count) clips")
+            logger.debug("Test timeline: \(timeline.clips.count) clips")
 
             // Test suggestions
             let suggestions = generateSuggestions(for: timeline)
-            print("  Suggestions: \(suggestions.count)")
+            logger.debug("Suggestions: \(suggestions.count)")
 
         } catch {
-            print("  Note: Test requires real video file")
+            logger.debug("Test requires real video file")
         }
 
-        print("✅ AI Video Editor test complete")
+        logger.debug("AI Video Editor test complete")
     }
 }
 #endif

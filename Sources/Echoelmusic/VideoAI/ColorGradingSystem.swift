@@ -29,6 +29,9 @@ import CoreImage
 import CoreGraphics
 import simd
 import Accelerate
+import os.log
+
+private let logger = Logger(subsystem: "com.echoelmusic.app", category: "colorGrading")
 
 // MARK: - Color Grading System
 
@@ -550,7 +553,7 @@ class ColorGradingSystem: ObservableObject {
     // MARK: - Color Matching
 
     func matchColors(source: CIImage, reference: CIImage) -> ColorGrade {
-        print("🎨 Matching colors...")
+        logger.info("Matching colors")
 
         // Analyze both images
         let sourceStats = analyzeColorStatistics(source)
@@ -571,8 +574,7 @@ class ColorGradingSystem: ObservableObject {
         // Match contrast
         grade.contrast = refStats.contrast / sourceStats.contrast
 
-        print("  Exposure adjustment: \(grade.exposure)")
-        print("  Temperature: \(grade.temperature)")
+        logger.debug("Exposure adjustment: \(grade.exposure, privacy: .public), Temperature: \(grade.temperature, privacy: .public)")
 
         return grade
     }
@@ -637,7 +639,7 @@ class ColorGradingSystem: ObservableObject {
     // MARK: - Film Emulation
 
     func applyFilmEmulation(_ film: FilmEmulation, to image: CIImage) -> CIImage {
-        print("🎞️ Applying film emulation: \(film.name)")
+        logger.info("Applying film emulation: \(film.name, privacy: .public)")
 
         // Apply film characteristics
         var result = image
@@ -715,13 +717,13 @@ class ColorGradingSystem: ObservableObject {
 
     func loadPreset(_ preset: ColorGrade) {
         currentGrade = preset
-        print("📋 Loaded preset: \(preset.name)")
+        logger.info("Loaded preset: \(preset.name, privacy: .public)")
     }
 
     // MARK: - Initialization
 
     private init() {
-        print("🎨 Color Grading System initialized")
+        logger.info("Color Grading System initialized")
     }
 }
 
@@ -730,25 +732,23 @@ class ColorGradingSystem: ObservableObject {
 #if DEBUG
 extension ColorGradingSystem {
     func testColorGrading() {
-        print("🧪 Testing Color Grading System...")
+        logger.debug("Testing Color Grading System")
 
         // Test presets
-        print("  Cinematic preset:")
-        print("    Contrast: \(ColorGrade.cinematic.contrast)")
-        print("    Saturation: \(ColorGrade.cinematic.saturation)")
+        logger.debug("Cinematic preset - Contrast: \(ColorGrade.cinematic.contrast), Saturation: \(ColorGrade.cinematic.saturation)")
 
         // Test scopes
         let testImage = CIImage(color: CIColor(red: 0.5, green: 0.5, blue: 0.5))
         let waveform = generateWaveform(from: testImage)
-        print("  Waveform data points: \(waveform.count)")
+        logger.debug("Waveform data points: \(waveform.count)")
 
         let histogram = generateHistogram(from: testImage)
-        print("  Histogram: R=\(histogram.red.count), G=\(histogram.green.count), B=\(histogram.blue.count)")
+        logger.debug("Histogram: R=\(histogram.red.count), G=\(histogram.green.count), B=\(histogram.blue.count)")
 
         // Test film emulation
-        print("  Film stocks available: 3")
+        logger.debug("Film stocks available: 3")
 
-        print("✅ Color Grading test complete")
+        logger.debug("Color Grading test complete")
     }
 }
 #endif
