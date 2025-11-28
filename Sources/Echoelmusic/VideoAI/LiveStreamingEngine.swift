@@ -32,6 +32,9 @@ import Foundation
 import AVFoundation
 import Network
 import Combine
+import os.log
+
+private let logger = Logger(subsystem: "com.echoelmusic.app", category: "streaming")
 
 // MARK: - Live Streaming Engine
 
@@ -262,10 +265,10 @@ class LiveStreamingEngine: ObservableObject {
         destinations: [StreamDestination],
         settings: StreamSettings
     ) async throws {
-        print("🔴 Starting live stream...")
-        print("  Platforms: \(destinations.map { $0.platform.rawValue }.joined(separator: ", "))")
-        print("  Resolution: \(settings.resolution.x)x\(settings.resolution.y) @ \(Int(settings.framerate))fps")
-        print("  Bitrate: \(settings.bitrate / 1_000_000) Mbps")
+        logger.info("Starting live stream")
+        logger.info("Platforms: \(destinations.map { $0.platform.rawValue }.joined(separator: ", "), privacy: .public)")
+        logger.info("Resolution: \(settings.resolution.x, privacy: .public)x\(settings.resolution.y, privacy: .public) @ \(Int(settings.framerate), privacy: .public)fps")
+        logger.info("Bitrate: \(settings.bitrate / 1_000_000, privacy: .public) Mbps")
 
         // Initialize encoders
         for destination in destinations {
@@ -287,11 +290,11 @@ class LiveStreamingEngine: ObservableObject {
         // Start monitoring
         startHealthMonitoring()
 
-        print("✅ Live stream started!")
+        logger.info("Live stream started successfully")
     }
 
     func stopStreaming() async {
-        print("⏹️ Stopping stream...")
+        logger.info("Stopping stream")
 
         isStreaming = false
 
@@ -302,9 +305,7 @@ class LiveStreamingEngine: ObservableObject {
 
         activeStreams.removeAll()
 
-        print("✅ Stream stopped")
-        print("  Duration: \(formatDuration(streamDuration))")
-        print("  Total viewers: \(analytics.totalViewers)")
+        logger.info("Stream stopped - Duration: \(self.formatDuration(self.streamDuration), privacy: .public), Total viewers: \(self.analytics.totalViewers, privacy: .public)")
     }
 
     // MARK: - Encoder Management
@@ -313,12 +314,12 @@ class LiveStreamingEngine: ObservableObject {
         for destination: StreamDestination,
         settings: StreamSettings
     ) async throws {
-        print("  Initializing encoder for \(destination.platform.rawValue)...")
+        logger.debug("Initializing encoder for \(destination.platform.rawValue, privacy: .public)")
 
         // Would create AVAssetWriter or custom encoder
         // Configure for RTMP streaming
 
-        print("    ✓ Encoder ready")
+        logger.debug("Encoder ready for \(destination.platform.rawValue, privacy: .public)")
     }
 
     // MARK: - Capture
@@ -329,11 +330,11 @@ class LiveStreamingEngine: ObservableObject {
             throw StreamError.noActiveScene
         }
 
-        print("  Starting capture from scene: \(scene.name)")
+        logger.debug("Starting capture from scene: \(scene.name, privacy: .public)")
 
         // Would start AVCaptureSession for all sources
 
-        print("    ✓ Capture started")
+        logger.debug("Capture started")
     }
 
     enum StreamError: Error {
@@ -345,22 +346,22 @@ class LiveStreamingEngine: ObservableObject {
     // MARK: - Server Connection
 
     private func connectToServer(_ destination: StreamDestination) async throws {
-        print("  Connecting to \(destination.platform.rawValue)...")
+        logger.debug("Connecting to \(destination.platform.rawValue, privacy: .public)")
 
         // Would establish RTMP connection
         // For now, simulate
 
         try await Task.sleep(nanoseconds: 500_000_000)  // 0.5s
 
-        print("    ✓ Connected")
+        logger.debug("Connected to \(destination.platform.rawValue, privacy: .public)")
     }
 
     private func disconnect(from destination: StreamDestination) async {
-        print("  Disconnecting from \(destination.platform.rawValue)...")
+        logger.debug("Disconnecting from \(destination.platform.rawValue, privacy: .public)")
 
         // Would close RTMP connection
 
-        print("    ✓ Disconnected")
+        logger.debug("Disconnected from \(destination.platform.rawValue, privacy: .public)")
     }
 
     // MARK: - Scene Management
@@ -368,22 +369,22 @@ class LiveStreamingEngine: ObservableObject {
     func createScene(name: String) -> Scene {
         let scene = Scene(name: name)
         scenes.append(scene)
-        print("🎬 Created scene: \(name)")
+        logger.info("Created scene: \(name, privacy: .public)")
         return scene
     }
 
     func switchToScene(_ scene: Scene) {
-        print("🔄 Switching to scene: \(scene.name)")
+        logger.info("Switching to scene: \(scene.name, privacy: .public)")
 
         let transition = scene.transition
-        print("  Transition: \(transition.rawValue) (\(transition.duration)s)")
+        logger.debug("Transition: \(transition.rawValue, privacy: .public) (\(transition.duration, privacy: .public)s)")
 
         activeScene = scene
     }
 
     func addSource(to scene: Scene, source: Source) {
         scene.sources.append(source)
-        print("➕ Added source to scene: \(source.name)")
+        logger.debug("Added source to scene: \(source.name, privacy: .public)")
     }
 
     // MARK: - Health Monitoring
@@ -432,13 +433,13 @@ class LiveStreamingEngine: ObservableObject {
         if streamHealth == .poor || streamHealth == .critical {
             // Reduce bitrate
             let newBitrate = Int(Float(bitrate) * 0.8)
-            print("⚠️ Network issues detected - reducing bitrate to \(newBitrate / 1_000_000) Mbps")
+            logger.warning("Network issues detected - reducing bitrate to \(newBitrate / 1_000_000, privacy: .public) Mbps")
             bitrate = newBitrate
         } else if streamHealth == .excellent && droppedFrames == 0 {
             // Can potentially increase bitrate
             let newBitrate = Int(Float(bitrate) * 1.1)
             if newBitrate <= 20_000_000 {  // Max 20 Mbps
-                print("📈 Network stable - increasing bitrate to \(newBitrate / 1_000_000) Mbps")
+                logger.info("Network stable - increasing bitrate to \(newBitrate / 1_000_000, privacy: .public) Mbps")
                 bitrate = newBitrate
             }
         }
@@ -447,7 +448,7 @@ class LiveStreamingEngine: ObservableObject {
     // MARK: - Chat Integration
 
     func connectChat(for platforms: [StreamDestination.Platform]) {
-        print("💬 Connecting to chat...")
+        logger.info("Connecting to chat")
 
         for platform in platforms {
             connectPlatformChat(platform)
@@ -455,14 +456,14 @@ class LiveStreamingEngine: ObservableObject {
     }
 
     private func connectPlatformChat(_ platform: StreamDestination.Platform) {
-        print("  Connected to \(platform.rawValue) chat")
+        logger.debug("Connected to \(platform.rawValue, privacy: .public) chat")
 
         // Would connect to platform's chat API
         // For now, simulate incoming messages
     }
 
     func sendChatMessage(_ message: String, to platform: StreamDestination.Platform) {
-        print("💬 [\(platform.rawValue)]: \(message)")
+        logger.debug("Chat [\(platform.rawValue, privacy: .public)]: \(message, privacy: .private)")
 
         // Would send via platform API
     }
@@ -470,21 +471,20 @@ class LiveStreamingEngine: ObservableObject {
     // MARK: - Recording
 
     func startRecording(outputURL: URL) async throws {
-        print("🎙️ Recording stream to disk...")
-        print("  Output: \(outputURL.lastPathComponent)")
+        logger.info("Recording stream to disk: \(outputURL.lastPathComponent, privacy: .public)")
 
         // Would start recording alongside streaming
     }
 
     func stopRecording() async throws -> URL {
-        print("✅ Recording saved")
+        logger.info("Recording saved")
         return URL(fileURLWithPath: "/path/to/recording.mp4")
     }
 
     // MARK: - Highlights
 
     func createHighlightClip(duration: TimeInterval) async -> URL? {
-        print("⭐ Creating highlight clip (last \(Int(duration))s)...")
+        logger.info("Creating highlight clip (last \(Int(duration), privacy: .public)s)")
 
         // Would extract last N seconds of stream
         // For now, return nil
@@ -495,8 +495,7 @@ class LiveStreamingEngine: ObservableObject {
     // MARK: - Multi-Camera
 
     func enableMultiCam(cameras: [String]) {
-        print("📹 Enabling multi-camera setup...")
-        print("  Cameras: \(cameras.count)")
+        logger.info("Enabling multi-camera setup - Cameras: \(cameras.count, privacy: .public)")
 
         // Would create PiP (Picture-in-Picture) or split screen layout
     }
@@ -504,7 +503,7 @@ class LiveStreamingEngine: ObservableObject {
     // MARK: - Presets
 
     func applyPreset(_ preset: StreamPreset) {
-        print("📋 Applying preset: \(preset.name)")
+        logger.info("Applying preset: \(preset.name, privacy: .public)")
 
         // Would configure scenes and settings
     }
@@ -562,7 +561,7 @@ class LiveStreamingEngine: ObservableObject {
         scenes.append(defaultScene)
         activeScene = defaultScene
 
-        print("🔴 Live Streaming Engine initialized")
+        logger.info("Live Streaming Engine initialized")
     }
 }
 
@@ -571,7 +570,7 @@ class LiveStreamingEngine: ObservableObject {
 #if DEBUG
 extension LiveStreamingEngine {
     func testLiveStreaming() async {
-        print("🧪 Testing Live Streaming Engine...")
+        logger.debug("Testing Live Streaming Engine")
 
         // Create test destinations
         let youtube = StreamDestination(
@@ -608,15 +607,13 @@ extension LiveStreamingEngine {
 
             await stopStreaming()
         } catch {
-            print("  Note: Test simulation only")
+            logger.debug("Test simulation only")
         }
 
         // Test analytics
-        print("  Analytics:")
-        print("    Total viewers: \(analytics.totalViewers)")
-        print("    Peak viewers: \(analytics.peakViewers)")
+        logger.debug("Analytics - Total viewers: \(analytics.totalViewers), Peak viewers: \(analytics.peakViewers)")
 
-        print("✅ Live Streaming test complete")
+        logger.debug("Live Streaming test complete")
     }
 }
 #endif

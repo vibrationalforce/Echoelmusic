@@ -26,6 +26,9 @@ import Foundation
 import AVFoundation
 import CoreML
 import Combine
+import os.log
+
+private let logger = Logger(subsystem: "com.echoelmusic.app", category: "autoEditor")
 
 // MARK: - Automatic Video Editor
 
@@ -244,7 +247,7 @@ class AutomaticVideoEditor: ObservableObject {
     // MARK: - One-Click Edit
 
     func oneClickEdit(videoURL: URL, template: EditTemplate? = nil) async throws -> URL {
-        print("🎬 Starting one-click edit...")
+        logger.info("Starting one-click edit")
 
         isProcessing = true
         progress = 0.0
@@ -255,7 +258,7 @@ class AutomaticVideoEditor: ObservableObject {
             progress = 0.1
             let analysis = try await contentDetector.analyzeVideo(url: videoURL)
             selectedTemplate = getTemplate(for: analysis.contentType)
-            print("  Auto-detected: \(analysis.contentType.emoji) \(analysis.contentType.rawValue)")
+            logger.info("Auto-detected content type: \(analysis.contentType.rawValue, privacy: .public)")
         }
 
         guard let editTemplate = selectedTemplate else {
@@ -263,7 +266,7 @@ class AutomaticVideoEditor: ObservableObject {
         }
 
         currentTemplate = editTemplate
-        print("  Template: \(editTemplate.name)")
+        logger.info("Using template: \(editTemplate.name, privacy: .public)")
 
         // Step 2: Execute edit steps
         progress = 0.2
@@ -279,8 +282,7 @@ class AutomaticVideoEditor: ObservableObject {
         progress = 1.0
         isProcessing = false
 
-        print("✅ One-click edit complete!")
-        print("  Output: \(outputURL.lastPathComponent)")
+        logger.info("One-click edit complete - Output: \(outputURL.lastPathComponent, privacy: .public)")
 
         return outputURL
     }
@@ -296,14 +298,14 @@ class AutomaticVideoEditor: ObservableObject {
         videoURL: URL,
         steps: [EditTemplate.EditStep]
     ) async throws -> AIVideoEditor.EditTimeline {
-        print("  Executing \(steps.count) edit steps...")
+        logger.debug("Executing \(steps.count, privacy: .public) edit steps")
 
         let timeline = AIVideoEditor.EditTimeline()
         var currentProgress: Float = 0.2
         let progressPerStep = 0.7 / Float(steps.count)
 
         for (index, step) in steps.enumerated() {
-            print("    Step \(index + 1)/\(steps.count): \(stepDescription(step))")
+            logger.debug("Step \(index + 1, privacy: .public)/\(steps.count, privacy: .public): \(self.stepDescription(step), privacy: .public)")
 
             try await executeStep(step, videoURL: videoURL, timeline: timeline)
 
@@ -322,11 +324,11 @@ class AutomaticVideoEditor: ObservableObject {
         switch step {
         case .detectScenes:
             let scenes = try await aiEditor.detectScenes(in: videoURL)
-            print("      Detected \(scenes.count) scenes")
+            logger.debug("Detected \(scenes.count, privacy: .public) scenes")
 
         case .detectBeats:
             let beats = try await aiEditor.detectBeats(in: videoURL)
-            print("      Detected \(beats.count) beats")
+            logger.debug("Detected \(beats.count, privacy: .public) beats")
 
         case .detectHighlights:
             await detectHighlights(in: videoURL, timeline: timeline)
@@ -368,11 +370,11 @@ class AutomaticVideoEditor: ObservableObject {
     private func detectHighlights(in videoURL: URL, timeline: AIVideoEditor.EditTimeline) async {
         // AI-powered highlight detection
         // Would use ML to find most interesting moments
-        print("      Analyzing highlights...")
+        logger.debug("Analyzing highlights")
     }
 
     private func addIntro(to timeline: AIVideoEditor.EditTimeline, duration: TimeInterval) {
-        print("      Adding intro (\(duration)s)")
+        logger.debug("Adding intro (\(duration, privacy: .public)s)")
 
         // Would add intro template
         let intro = AIVideoEditor.TextOverlay(
@@ -391,7 +393,7 @@ class AutomaticVideoEditor: ObservableObject {
     }
 
     private func addOutro(to timeline: AIVideoEditor.EditTimeline, duration: TimeInterval) {
-        print("      Adding outro (\(duration)s)")
+        logger.debug("Adding outro (\(duration, privacy: .public)s)")
 
         let outroStart = timeline.duration
         let outro = AIVideoEditor.TextOverlay(
@@ -411,13 +413,13 @@ class AutomaticVideoEditor: ObservableObject {
     }
 
     private func addTextOverlays(to timeline: AIVideoEditor.EditTimeline, style: EditTemplate.EditStep.TextStyle) {
-        print("      Adding text overlays (\(style))")
+        logger.debug("Adding text overlays")
 
         // Would generate context-aware text overlays
     }
 
     private func addMusic(to timeline: AIVideoEditor.EditTimeline, volume: Float) {
-        print("      Adding background music (volume: \(Int(volume * 100))%)")
+        logger.debug("Adding background music (volume: \(Int(volume * 100), privacy: .public)%)")
 
         // Would add royalty-free background music
         let musicURL = URL(fileURLWithPath: "/path/to/music.mp3")
@@ -434,7 +436,7 @@ class AutomaticVideoEditor: ObservableObject {
     }
 
     private func addTransitions(to timeline: AIVideoEditor.EditTimeline, style: EditTemplate.EditStep.TransitionStyle) {
-        print("      Adding transitions (\(style))")
+        logger.debug("Adding transitions")
 
         let transitionType: AIVideoEditor.Transition.TransitionType = {
             switch style {
@@ -457,7 +459,7 @@ class AutomaticVideoEditor: ObservableObject {
     }
 
     private func applyColorGrade(to timeline: AIVideoEditor.EditTimeline, preset: String) {
-        print("      Applying color grade: \(preset)")
+        logger.debug("Applying color grade: \(preset, privacy: .public)")
 
         let grade: AIVideoEditor.ColorGrade = {
             switch preset {
@@ -484,7 +486,7 @@ class AutomaticVideoEditor: ObservableObject {
     }
 
     private func applySpeedRamping(to timeline: AIVideoEditor.EditTimeline) {
-        print("      Applying speed ramping")
+        logger.debug("Applying speed ramping")
 
         // Add slow-motion to highlight moments
         for i in 0..<min(3, timeline.clips.count) {
@@ -493,19 +495,19 @@ class AutomaticVideoEditor: ObservableObject {
     }
 
     private func addBRoll(to timeline: AIVideoEditor.EditTimeline) {
-        print("      Adding B-roll footage")
+        logger.debug("Adding B-roll footage")
 
         // Would insert supplementary footage
     }
 
     private func removeFillerWords(from timeline: AIVideoEditor.EditTimeline) {
-        print("      Removing filler words (um, uh, like...)")
+        logger.debug("Removing filler words")
 
         // Would use speech recognition to detect and remove filler words
     }
 
     private func addChapters(to timeline: AIVideoEditor.EditTimeline) {
-        print("      Adding chapters")
+        logger.debug("Adding chapters")
 
         // Would detect chapter points and add markers
     }
@@ -516,9 +518,7 @@ class AutomaticVideoEditor: ObservableObject {
         _ timeline: AIVideoEditor.EditTimeline,
         preset: EditTemplate.ExportPreset
     ) async throws -> URL {
-        print("  Exporting: \(preset.name)")
-        print("    Resolution: \(preset.resolution.x)x\(preset.resolution.y)")
-        print("    Aspect ratio: \(preset.aspectRatio)")
+        logger.info("Exporting: \(preset.name, privacy: .public) - Resolution: \(preset.resolution.x, privacy: .public)x\(preset.resolution.y, privacy: .public), Aspect: \(preset.aspectRatio, privacy: .public)")
 
         let outputURL = URL(fileURLWithPath: "/tmp/edited_video_\(preset.platform).mp4")
 
@@ -583,25 +583,25 @@ class AutomaticVideoEditor: ObservableObject {
     // MARK: - Batch Processing
 
     func batchEdit(videos: [URL], template: EditTemplate) async throws -> [URL] {
-        print("🎬 Batch editing \(videos.count) videos...")
+        logger.info("Batch editing \(videos.count, privacy: .public) videos")
 
         var outputs: [URL] = []
 
         for (index, videoURL) in videos.enumerated() {
-            print("  Processing \(index + 1)/\(videos.count): \(videoURL.lastPathComponent)")
+            logger.info("Processing \(index + 1, privacy: .public)/\(videos.count, privacy: .public): \(videoURL.lastPathComponent, privacy: .public)")
 
             let output = try await oneClickEdit(videoURL: videoURL, template: template)
             outputs.append(output)
         }
 
-        print("✅ Batch edit complete!")
+        logger.info("Batch edit complete")
         return outputs
     }
 
     // MARK: - Initialization
 
     private init() {
-        print("🎬 Automatic Video Editor initialized")
+        logger.info("Automatic Video Editor initialized")
     }
 }
 
@@ -610,28 +610,25 @@ class AutomaticVideoEditor: ObservableObject {
 #if DEBUG
 extension AutomaticVideoEditor {
     func testAutomaticEditor() async {
-        print("🧪 Testing Automatic Video Editor...")
+        logger.debug("Testing Automatic Video Editor")
 
         let testURL = URL(fileURLWithPath: "/tmp/test_video.mp4")
 
         // Test template selection
         for contentType in ContentTypeDetector.ContentType.allCases.prefix(5) {
             let template = getTemplate(for: contentType)
-            print("  \(contentType.emoji) \(contentType.rawValue) → \(template.name)")
-            print("    Steps: \(template.steps.count)")
-            print("    Presets: \(template.exportPresets.count)")
+            logger.debug("\(contentType.rawValue) → \(template.name) - Steps: \(template.steps.count), Presets: \(template.exportPresets.count)")
         }
 
         // Test one-click edit (would fail without real video)
         do {
             // let output = try await oneClickEdit(videoURL: testURL, template: recipeVideoTemplate)
-            // print("  Output: \(output.lastPathComponent)")
-            print("  Note: Test requires real video file")
+            logger.debug("Test requires real video file")
         } catch {
-            print("  Note: Test simulation only")
+            logger.debug("Test simulation only")
         }
 
-        print("✅ Automatic Video Editor test complete")
+        logger.debug("Automatic Video Editor test complete")
     }
 }
 #endif
