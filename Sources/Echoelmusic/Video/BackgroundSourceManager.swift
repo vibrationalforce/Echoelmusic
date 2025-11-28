@@ -110,7 +110,7 @@ class BackgroundSourceManager: ObservableObject {
         var displayName: String {
             switch self {
             case .cymatics: return "Cymatics (Water Patterns)"
-            case .mandala: return "Mandala (Sacred Geometry)"
+            case .mandala: return "Mandala (Geometric Pattern)"
             case .particles: return "Particles (Bio-Reactive)"
             case .waveform: return "Waveform (Audio)"
             case .spectral: return "Spectral (FFT)"

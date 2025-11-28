@@ -32,7 +32,7 @@ enum VisualizationMode: String, CaseIterable, Identifiable {
         case .spectral:
             return "Real-time frequency spectrum analyzer"
         case .mandala:
-            return "Radial symmetry patterns with sacred geometry"
+            return "Radial symmetry patterns with geometric designs"
         }
     }
 

@@ -84,6 +84,12 @@ class RecordingEngine: ObservableObject {
         print("   Sessions directory: \(sessionsDirectory.path)")
     }
 
+    deinit {
+        // Ensure timer is invalidated to prevent retain cycle
+        timer?.invalidate()
+        timer = nil
+    }
+
 
     // MARK: - Audio Engine Connection
 

@@ -5,8 +5,17 @@ import Accelerate
 
 /// Manages HealthKit integration for real-time HRV and heart rate monitoring
 /// Implements HeartMath Institute's coherence algorithm for biofeedback
+///
+/// **SAFETY NOTICE:**
+/// This is a wellness app, NOT a medical device. HRV data is for informational
+/// purposes only and should not be used to make medical decisions.
 @MainActor
 class HealthKitManager: ObservableObject {
+
+    // MARK: - Singleton
+
+    /// Shared instance for app-wide access
+    static let shared = HealthKitManager()
 
     // MARK: - Published Properties
 
@@ -30,6 +39,12 @@ class HealthKitManager: ObservableObject {
     /// Error message if authorization or monitoring fails
     @Published var errorMessage: String?
 
+    /// Whether monitoring is currently active
+    @Published var isMonitoring: Bool = false
+
+    /// Whether medical disclaimer has been acknowledged
+    @Published var hasAcknowledgedDisclaimer: Bool = false
+
 
     // MARK: - Private Properties
 
@@ -47,17 +62,44 @@ class HealthKitManager: ObservableObject {
     private var rrIntervalBuffer: [Double] = []
     private let maxBufferSize = 120 // 120 RR intervals ≈ 60 seconds at 60 BPM
 
-    /// Types we need to read from HealthKit
-    private let typesToRead: Set<HKObjectType> = [
-        HKObjectType.quantityType(forIdentifier: .heartRate)!,
-        HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
-    ]
+    /// Valid HRV range for validation (in milliseconds)
+    private let validHRVRange: ClosedRange<Double> = 5.0...300.0
+
+    /// Valid heart rate range (BPM)
+    private let validHeartRateRange: ClosedRange<Double> = 30.0...220.0
+
+    /// UserDefaults key for disclaimer acknowledgment
+    private let disclaimerKey = "healthkit_disclaimer_acknowledged"
+
+    /// Types we need to read from HealthKit (SAFE: no force unwrap)
+    private var typesToRead: Set<HKObjectType> {
+        var types = Set<HKObjectType>()
+        if let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) {
+            types.insert(heartRateType)
+        }
+        if let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) {
+            types.insert(hrvType)
+        }
+        return types
+    }
 
 
     // MARK: - Initialization
 
     init() {
+        loadDisclaimerStatus()
         checkAvailability()
+    }
+
+    /// Load disclaimer acknowledgment status from UserDefaults
+    private func loadDisclaimerStatus() {
+        hasAcknowledgedDisclaimer = UserDefaults.standard.bool(forKey: disclaimerKey)
+    }
+
+    /// Acknowledge the medical disclaimer
+    func acknowledgeDisclaimer() {
+        hasAcknowledgedDisclaimer = true
+        UserDefaults.standard.set(true, forKey: disclaimerKey)
     }
 
 
@@ -70,10 +112,13 @@ class HealthKitManager: ObservableObject {
             return
         }
 
-        // Check authorization status
-        let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
-        let status = healthStore.authorizationStatus(for: heartRateType)
+        // Check authorization status (SAFE: no force unwrap)
+        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            errorMessage = "Heart rate type not available on this device"
+            return
+        }
 
+        let status = healthStore.authorizationStatus(for: heartRateType)
         isAuthorized = (status == .sharingAuthorized)
     }
 
@@ -85,10 +130,21 @@ class HealthKitManager: ObservableObject {
     func requestAuthorization() async throws {
         guard HKHealthStore.isHealthDataAvailable() else {
             let error = NSError(
-                domain: "com.blab.healthkit",
+                domain: "com.eoel.healthkit",
                 code: 1,
-                userInfo: [NSLocalizedDescriptionKey: "HealthKit not available"]
+                userInfo: [NSLocalizedDescriptionKey: "HealthKit not available on this device"]
             )
+            errorMessage = "HealthKit is not available on this device"
+            throw error
+        }
+
+        guard !typesToRead.isEmpty else {
+            let error = NSError(
+                domain: "com.eoel.healthkit",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "Required HealthKit types not available"]
+            )
+            errorMessage = "Heart rate monitoring not supported on this device"
             throw error
         }
 
@@ -96,20 +152,35 @@ class HealthKitManager: ObservableObject {
             // Request read access for heart rate and HRV
             try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
 
-            // Check if actually authorized
-            let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
+            // Check if actually authorized (SAFE: no force unwrap)
+            guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+                errorMessage = "Heart rate type not available"
+                return
+            }
+
             let status = healthStore.authorizationStatus(for: heartRateType)
 
-            isAuthorized = (status == .sharingAuthorized)
-
-            if isAuthorized {
-                print("✅ HealthKit authorized")
+            switch status {
+            case .sharingAuthorized:
+                isAuthorized = true
                 errorMessage = nil
-            } else {
-                errorMessage = "HealthKit access denied. Enable in Settings."
+                print("✅ HealthKit authorized")
+
+            case .notDetermined:
+                isAuthorized = false
+                errorMessage = "HealthKit authorization pending. Please grant access."
+
+            case .sharingDenied:
+                isAuthorized = false
+                errorMessage = "HealthKit access denied. Enable in Settings > Privacy > Health."
+
+            @unknown default:
+                isAuthorized = false
+                errorMessage = "Unknown HealthKit authorization status."
             }
 
         } catch {
+            isAuthorized = false
             errorMessage = "HealthKit authorization failed: \(error.localizedDescription)"
             throw error
         }
@@ -119,15 +190,24 @@ class HealthKitManager: ObservableObject {
     // MARK: - Monitoring Control
 
     /// Start real-time monitoring of heart rate and HRV
+    /// - Note: Requires disclaimer acknowledgment and authorization
     func startMonitoring() {
-        guard isAuthorized else {
-            errorMessage = "HealthKit not authorized. Please grant access."
+        guard hasAcknowledgedDisclaimer else {
+            errorMessage = "Please acknowledge the medical disclaimer before using biofeedback features."
             return
         }
+
+        guard isAuthorized else {
+            errorMessage = "HealthKit not authorized. Please grant access in Settings > Privacy > Health."
+            return
+        }
+
+        guard !isMonitoring else { return }
 
         startHeartRateMonitoring()
         startHRVMonitoring()
 
+        isMonitoring = true
         print("🫀 HealthKit monitoring started")
     }
 
@@ -143,9 +223,20 @@ class HealthKitManager: ObservableObject {
             hrvQuery = nil
         }
 
-        rrIntervalBuffer.removeAll()
+        // Secure memory clearing: zero out buffer before removing
+        securelyCleanBuffer()
 
+        isMonitoring = false
         print("⏹️ HealthKit monitoring stopped")
+    }
+
+    /// Securely clear the RR interval buffer (privacy/security)
+    private func securelyCleanBuffer() {
+        // Overwrite with zeros before clearing
+        for i in 0..<rrIntervalBuffer.count {
+            rrIntervalBuffer[i] = 0.0
+        }
+        rrIntervalBuffer.removeAll()
     }
 
 
@@ -262,6 +353,12 @@ class HealthKitManager: ObservableObject {
         for sample in samples {
             let rmssd = sample.quantity.doubleValue(for: HKUnit.secondUnit(with: .milli))
 
+            // VALIDATE HRV data before processing
+            guard validateHRVValue(rmssd) else {
+                print("⚠️ Invalid HRV value rejected: \(rmssd) ms")
+                continue
+            }
+
             // Add to buffer (simulating RR intervals from RMSSD)
             // In production, you'd want actual RR intervals via HKHeartbeatSeriesSample
             addRRInterval(rmssd)
@@ -275,6 +372,39 @@ class HealthKitManager: ObservableObject {
                 }
             }
         }
+    }
+
+    /// Validate HRV value is within physiologically possible range
+    /// - Parameter hrv: HRV value in milliseconds
+    /// - Returns: true if valid, false if outlier
+    private func validateHRVValue(_ hrv: Double) -> Bool {
+        // Check for NaN or infinity
+        guard hrv.isFinite else { return false }
+
+        // Check physiological range (RMSSD typically 5-300ms)
+        guard validHRVRange.contains(hrv) else { return false }
+
+        // Outlier detection: if we have history, check for sudden spikes
+        if rrIntervalBuffer.count >= 5 {
+            let recentMean = rrIntervalBuffer.suffix(5).reduce(0, +) / 5.0
+            let deviation = abs(hrv - recentMean)
+            let maxAllowedDeviation = recentMean * 1.5 // 150% deviation threshold
+
+            if deviation > maxAllowedDeviation && deviation > 50 {
+                print("⚠️ HRV outlier detected: \(hrv) ms (mean: \(recentMean) ms)")
+                return false
+            }
+        }
+
+        return true
+    }
+
+    /// Validate heart rate value is within physiologically possible range
+    /// - Parameter bpm: Heart rate in beats per minute
+    /// - Returns: true if valid, false if outlier
+    private func validateHeartRate(_ bpm: Double) -> Bool {
+        guard bpm.isFinite else { return false }
+        return validHeartRateRange.contains(bpm)
     }
 
     /// Add RR interval to circular buffer

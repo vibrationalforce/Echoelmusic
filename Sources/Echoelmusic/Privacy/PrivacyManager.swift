@@ -1,6 +1,9 @@
 import Foundation
 import CryptoKit
 import Combine
+import os.log
+
+private let logger = Logger(subsystem: "com.echoelmusic.app", category: "privacy")
 
 /// Privacy Manager - Local-First, Privacy-Preserving Architecture
 /// Zero-knowledge design: Your data never leaves your device without explicit consent
@@ -125,10 +128,8 @@ class PrivacyManager: ObservableObject {
         loadPrivacySettings()
         generateEncryptionKey()
 
-        print("✅ Privacy Manager: Initialized")
-        print("🔒 Privacy Mode: \(privacyMode.rawValue)")
-        print("🏠 All data stored locally first")
-        print("🚫 Zero third-party trackers")
+        logger.info("Privacy Manager initialized - Mode: \(self.privacyMode.rawValue, privacy: .public)")
+        logger.debug("Local-first storage active, zero third-party trackers")
     }
 
     // MARK: - Load Privacy Settings
@@ -171,12 +172,12 @@ class PrivacyManager: ObservableObject {
         // Apply mode constraints
         if !mode.allowsCloudSync {
             cloudSyncEnabled = false
-            print("🔒 Cloud sync disabled (privacy mode: \(mode.rawValue))")
+            logger.info("Cloud sync disabled for privacy mode: \(mode.rawValue, privacy: .public)")
         }
 
         if !mode.allowsAnalytics {
             analyticsEnabled = false
-            print("🔒 Analytics disabled (privacy mode: \(mode.rawValue))")
+            logger.info("Analytics disabled for privacy mode: \(mode.rawValue, privacy: .public)")
         }
 
         savePrivacySettings()
@@ -188,11 +189,11 @@ class PrivacyManager: ObservableObject {
         // Generate or load encryption key from Keychain
         if let keyData = loadKeyFromKeychain() {
             encryptionKey = SymmetricKey(data: keyData)
-            print("🔑 Encryption key loaded from Keychain")
+            logger.debug("Encryption key loaded from Keychain")
         } else {
             encryptionKey = SymmetricKey(size: .bits256)
             saveKeyToKeychain(encryptionKey!)
-            print("🔑 New encryption key generated")
+            logger.debug("New encryption key generated")
         }
     }
 
@@ -241,7 +242,7 @@ class PrivacyManager: ObservableObject {
     // MARK: - Data Export (GDPR Right to Data Portability)
 
     func exportAllUserData() async throws -> URL {
-        print("📦 Exporting all user data...")
+        logger.info("Exporting all user data...")
 
         var exportData: [String: Any] = [:]
 
@@ -266,7 +267,7 @@ class PrivacyManager: ObservableObject {
 
         try jsonData.write(to: tempURL)
 
-        print("✅ User data exported to: \(tempURL.path)")
+        logger.info("User data exported to: \(tempURL.path, privacy: .private)")
         return tempURL
     }
 
@@ -302,7 +303,7 @@ class PrivacyManager: ObservableObject {
     // MARK: - Data Deletion (GDPR Right to be Forgotten)
 
     func deleteAllUserData() async throws {
-        print("🗑️ Deleting all user data...")
+        logger.warning("Deleting all user data...")
 
         // Delete local database
         try await deleteLocalDatabase()
@@ -319,22 +320,22 @@ class PrivacyManager: ObservableObject {
         // Delete Keychain
         deleteEncryptionKeyFromKeychain()
 
-        print("✅ All user data deleted")
+        logger.info("All user data deleted successfully")
     }
 
     private func deleteLocalDatabase() async throws {
         // Delete local SQLite/CoreData database
-        print("   Deleted local database")
+        logger.debug("Deleted local database")
     }
 
     private func deleteCloudData() async throws {
         // Delete iCloud data
-        print("   Deleted cloud data")
+        logger.debug("Deleted cloud data")
     }
 
     private func deleteEncryptionKeyFromKeychain() {
         UserDefaults.standard.removeObject(forKey: "encryptionKey")
-        print("   Deleted encryption key")
+        logger.debug("Deleted encryption key")
     }
 
     // MARK: - Privacy Nutrition Label Data
@@ -449,10 +450,9 @@ class PrivacyManager: ObservableObject {
             cloudStorageUsed = await calculateCloudStorageSize()
         }
 
-        print("💾 Storage Usage:")
-        print("   Local: \(ByteCountFormatter.string(fromByteCount: localStorageUsed, countStyle: .file))")
+        logger.info("Storage Usage - Local: \(ByteCountFormatter.string(fromByteCount: localStorageUsed, countStyle: .file), privacy: .public)")
         if cloudSyncEnabled {
-            print("   Cloud: \(ByteCountFormatter.string(fromByteCount: cloudStorageUsed, countStyle: .file))")
+            logger.info("Storage Usage - Cloud: \(ByteCountFormatter.string(fromByteCount: cloudStorageUsed, countStyle: .file), privacy: .public)")
         }
     }
 

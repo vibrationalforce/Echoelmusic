@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Mandala visualization with radial symmetry
-/// Creates sacred geometry patterns that respond to audio and bio-signals
+/// Creates geometric patterns that respond to audio and bio-signals
 struct MandalaMode: View {
     /// Audio level
     var audioLevel: Float

@@ -89,7 +89,7 @@ class VisionApp {
             case particleField = "Partikel-Feld"
             case bioReactiveSphere = "Bio-Reaktive Sphäre"
             case quantumField = "Quanten-Feld"
-            case sacredGeometry = "Heilige Geometrie"
+            case geometricPatterns = "Geometrische Muster"
 
             var description: String {
                 switch self {
@@ -107,8 +107,8 @@ class VisionApp {
                     return "Sphäre pulsiert mit Herzfrequenz"
                 case .quantumField:
                     return "Quantenphänomene visualisiert"
-                case .sacredGeometry:
-                    return "Blume des Lebens, Metatrons Würfel, etc."
+                case .geometricPatterns:
+                    return "Fraktale, Mandalas und mathematische Muster"
                 }
             }
         }
@@ -364,9 +364,9 @@ class RealityKitEngine {
                 entities.append(particle)
             }
 
-        case .sacredGeometry:
-            // Erstelle Blume des Lebens
-            let geometry = createFlowerOfLife()
+        case .geometricPatterns:
+            // Erstelle mathematische Muster (Fraktale)
+            let geometry = createGeometricPattern()
             entities.append(geometry)
 
         default:
@@ -376,8 +376,8 @@ class RealityKitEngine {
         return entities
     }
 
-    private func createFlowerOfLife() -> Entity {
-        // Heilige Geometrie: Blume des Lebens
+    private func createGeometricPattern() -> Entity {
+        // Mathematische Muster: Overlapping Circles
         let container = Entity()
 
         let radius: Float = 1.0
@@ -438,12 +438,12 @@ class SpatialAudioEngine {
             // Binaurale Beats in 3D positioniert
             sources.append(VisionApp.ImmersiveScene.SpatialAudioSource(
                 position: SIMD3(-2, 0, -2),
-                soundType: .binauralBeat(frequency: 7.83) // Schumann-Resonanz
+                soundType: .binauralBeat(frequency: 10.0) // Alpha waves (8-13 Hz)
             ))
 
             sources.append(VisionApp.ImmersiveScene.SpatialAudioSource(
                 position: SIMD3(2, 0, -2),
-                soundType: .binauralBeat(frequency: 7.83)
+                soundType: .binauralBeat(frequency: 10.0)
             ))
 
         case .cosmos:

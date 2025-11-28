@@ -2,13 +2,16 @@ import Foundation
 import AVFoundation
 import Accelerate
 
-/// Generates binaural beats for brainwave entrainment and healing frequencies
+/// Generates binaural beats for auditory brainwave entrainment
 ///
 /// Binaural beats work by playing two slightly different frequencies (one per ear),
 /// causing the brain to perceive a "beat" at the difference frequency.
-/// This can induce specific brainwave states for relaxation, focus, sleep, etc.
+/// Research suggests potential effects on brainwave states.
 ///
-/// Scientific basis: Oster, G. (1973). "Auditory beats in the brain"
+/// References:
+/// - Oster, G. (1973). "Auditory beats in the brain", Scientific American
+/// - Wahbeh et al. (2007). "Binaural Beat Technology in Humans"
+/// - Note: Effects vary by individual; not a medical treatment
 @MainActor
 class BinauralBeatGenerator: ObservableObject {
 
@@ -22,13 +25,14 @@ class BinauralBeatGenerator: ObservableObject {
 
     // MARK: - Brainwave Presets
 
-    /// Brainwave state configurations based on neuroscience research
+    /// Brainwave state configurations based on EEG research
+    /// Reference: Niedermeyer & da Silva, "Electroencephalography"
     enum BrainwaveState: String, CaseIterable {
-        case delta      // 2 Hz - Deep sleep, healing
-        case theta      // 6 Hz - Meditation, creativity
-        case alpha      // 10 Hz - Relaxation, learning
-        case beta       // 20 Hz - Focus, alertness
-        case gamma      // 40 Hz - Peak awareness, cognition
+        case delta      // 0.5-4 Hz - Deep sleep
+        case theta      // 4-8 Hz - Drowsiness, light sleep
+        case alpha      // 8-13 Hz - Relaxed wakefulness
+        case beta       // 13-30 Hz - Active thinking
+        case gamma      // 30-100 Hz - Higher cognitive functions
 
         /// Beat frequency in Hz for this brainwave state
         var beatFrequency: Float {
@@ -41,14 +45,14 @@ class BinauralBeatGenerator: ObservableObject {
             }
         }
 
-        /// Human-readable description
+        /// Human-readable description (based on EEG research)
         var description: String {
             switch self {
-            case .delta: return "Deep Sleep & Healing"
-            case .theta: return "Meditation & Creativity"
-            case .alpha: return "Relaxation & Learning"
-            case .beta: return "Focus & Alertness"
-            case .gamma: return "Peak Awareness"
+            case .delta: return "Deep Sleep (0.5-4 Hz)"
+            case .theta: return "Light Sleep/Drowsy (4-8 Hz)"
+            case .alpha: return "Relaxed Wakefulness (8-13 Hz)"
+            case .beta: return "Active Thinking (13-30 Hz)"
+            case .gamma: return "Higher Cognition (30+ Hz)"
             }
         }
     }
@@ -56,9 +60,10 @@ class BinauralBeatGenerator: ObservableObject {
 
     // MARK: - Configuration
 
-    /// Carrier frequency in Hz (the base tone, often 432 Hz for healing)
-    /// 432 Hz is considered the "natural frequency" in some healing traditions
-    private(set) var carrierFrequency: Float = 432.0
+    /// Carrier frequency in Hz (the base tone)
+    /// Default: 440 Hz (ISO 16 standard pitch, A4)
+    /// Note: 432 Hz has no scientific basis for special properties
+    private(set) var carrierFrequency: Float = 440.0
 
     /// Beat frequency in Hz (difference between left and right ear)
     /// This is what entrains the brain to the target brainwave state
@@ -72,6 +77,45 @@ class BinauralBeatGenerator: ObservableObject {
 
     /// Current audio mode (automatically detected)
     @Published private(set) var audioMode: AudioMode = .binaural
+
+    // MARK: - Gradual Onset Configuration (Brainwave Safety)
+
+    /// Whether gradual onset/offset is enabled (recommended for safety)
+    /// Gradual frequency ramping prevents sudden brainwave state changes
+    /// which can cause disorientation or discomfort
+    @Published var gradualOnsetEnabled: Bool = true
+
+    /// Duration for gradual onset in seconds (default: 5 minutes = 300 seconds)
+    /// Research suggests 3-5 minutes for comfortable brainwave entrainment
+    var gradualOnsetDuration: TimeInterval = 300.0
+
+    /// Duration for gradual offset when stopping (default: 2 minutes)
+    var gradualOffsetDuration: TimeInterval = 120.0
+
+    /// Starting frequency for gradual onset (Alpha/10 Hz - natural relaxed state)
+    /// Most people naturally hover around alpha when eyes closed
+    private let onsetStartFrequency: Float = 10.0
+
+    /// Target beat frequency (set when configuring, ramped to during onset)
+    private var targetBeatFrequency: Float = 10.0
+
+    /// Time when playback started (for onset ramp calculation)
+    private var playbackStartTime: Date?
+
+    /// Whether currently in offset (stopping) phase
+    private var isInOffsetPhase: Bool = false
+
+    /// Time when offset phase started
+    private var offsetStartTime: Date?
+
+    /// Beat frequency when offset started (to ramp from)
+    private var offsetStartFrequency: Float = 10.0
+
+    /// Current effective beat frequency (after ramping applied)
+    @Published private(set) var effectiveBeatFrequency: Float = 10.0
+
+    /// Progress of gradual onset (0.0 = just started, 1.0 = fully ramped)
+    @Published private(set) var onsetProgress: Float = 0.0
 
 
     // MARK: - Audio Components
@@ -120,6 +164,7 @@ class BinauralBeatGenerator: ObservableObject {
     ///   - amplitude: Volume (0.0-1.0, default 0.3)
     func configure(carrier: Float, beat: Float, amplitude: Float) {
         self.carrierFrequency = carrier
+        self.targetBeatFrequency = beat
         self.beatFrequency = beat
         self.amplitude = min(max(amplitude, 0.0), 1.0)  // Clamp to 0-1
     }
@@ -127,6 +172,7 @@ class BinauralBeatGenerator: ObservableObject {
     /// Configure using a brainwave preset
     /// - Parameter state: Predefined brainwave state (delta, theta, alpha, beta, gamma)
     func configure(state: BrainwaveState) {
+        self.targetBeatFrequency = state.beatFrequency
         self.beatFrequency = state.beatFrequency
         // Keep current carrier frequency and amplitude
         print("🧠 Configured for \(state.rawValue) state: \(state.description)")
@@ -140,20 +186,44 @@ class BinauralBeatGenerator: ObservableObject {
     ///
     /// - Parameter coherence: HRV coherence score (0-100)
     func setBeatFrequencyFromHRV(coherence: Double) {
+        var newTarget: Float
         if coherence < 40 {
             // Low coherence: promote relaxation
-            beatFrequency = 10.0  // Alpha
+            newTarget = 10.0  // Alpha
         } else if coherence < 60 {
             // Medium coherence: transition to focus
-            beatFrequency = 15.0  // Alpha-Beta blend
+            newTarget = 15.0  // Alpha-Beta blend
         } else {
             // High coherence: maintain focus
-            beatFrequency = 20.0  // Beta
+            newTarget = 20.0  // Beta
         }
-        print("💓 HRV coherence \(Int(coherence)) → \(beatFrequency) Hz beat")
+
+        // Smooth transition for HRV-driven changes (avoid sudden jumps)
+        if gradualOnsetEnabled && isPlaying {
+            // Gradual transition over 30 seconds for HRV-driven changes
+            targetBeatFrequency = newTarget
+            // The effective frequency will be updated by updateEffectiveFrequency()
+        } else {
+            targetBeatFrequency = newTarget
+            beatFrequency = newTarget
+        }
+        print("💓 HRV coherence \(Int(coherence)) → target \(newTarget) Hz beat")
+    }
+
+    /// Configure gradual onset/offset parameters
+    /// - Parameters:
+    ///   - enabled: Whether to enable gradual ramping
+    ///   - onsetDuration: Time to ramp from start frequency to target (seconds)
+    ///   - offsetDuration: Time to ramp down when stopping (seconds)
+    func configureGradualOnset(enabled: Bool, onsetDuration: TimeInterval = 300, offsetDuration: TimeInterval = 120) {
+        self.gradualOnsetEnabled = enabled
+        self.gradualOnsetDuration = max(30, min(600, onsetDuration))  // 30s - 10min
+        self.gradualOffsetDuration = max(15, min(300, offsetDuration))  // 15s - 5min
+        print("🌅 Gradual onset: \(enabled ? "ON" : "OFF"), onset: \(Int(onsetDuration))s, offset: \(Int(offsetDuration))s")
     }
 
     /// Start generating and playing binaural/isochronic beats
+    /// With gradual onset enabled, frequency ramps from alpha (10 Hz) to target over 5 minutes
     func start() {
         guard !isPlaying else { return }
 
@@ -165,6 +235,20 @@ class BinauralBeatGenerator: ObservableObject {
 
             // Detect audio output type and choose optimal mode
             detectAudioMode()
+
+            // Initialize gradual onset
+            if gradualOnsetEnabled {
+                playbackStartTime = Date()
+                isInOffsetPhase = false
+                offsetStartTime = nil
+                // Start at alpha frequency (natural relaxed state)
+                effectiveBeatFrequency = onsetStartFrequency
+                onsetProgress = 0.0
+                print("🌅 Gradual onset started: \(onsetStartFrequency) Hz → \(targetBeatFrequency) Hz over \(Int(gradualOnsetDuration))s")
+            } else {
+                effectiveBeatFrequency = targetBeatFrequency
+                onsetProgress = 1.0
+            }
 
             // Start the audio engine
             if !audioEngine.isRunning {
@@ -178,24 +262,54 @@ class BinauralBeatGenerator: ObservableObject {
             // Schedule initial buffers
             scheduleBuffers()
 
-            // Start timer for continuous buffer generation
+            // Start timer for continuous buffer generation AND frequency ramping
             bufferTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-                self?.scheduleBuffers()
+                Task { @MainActor in
+                    self?.updateEffectiveFrequency()
+                    self?.scheduleBuffers()
+                }
             }
 
             isPlaying = true
             let modeStr = audioMode == .binaural ? "Binaural (stereo)" : "Isochronic (mono)"
-            print("▶️ \(modeStr) beats started: \(carrierFrequency) Hz @ \(beatFrequency) Hz")
+            let onsetStr = gradualOnsetEnabled ? " (gradual onset)" : ""
+            print("▶️ \(modeStr) beats started: \(carrierFrequency) Hz @ \(effectiveBeatFrequency) Hz\(onsetStr)")
 
         } catch {
             print("❌ Failed to start beats: \(error.localizedDescription)")
         }
     }
 
+    /// Start with immediate skip to target frequency (no gradual onset)
+    /// Use for short sessions or when user explicitly wants immediate effect
+    func startImmediate() {
+        gradualOnsetEnabled = false
+        start()
+    }
+
     /// Stop playing binaural beats
+    /// With gradual offset enabled, frequency ramps down to alpha before stopping
     func stop() {
         guard isPlaying else { return }
 
+        // If gradual offset is enabled and not already in offset phase, start gradual stop
+        if gradualOnsetEnabled && !isInOffsetPhase {
+            startGradualOffset()
+            return
+        }
+
+        // Immediate stop (or after gradual offset complete)
+        performImmediateStop()
+    }
+
+    /// Stop immediately without gradual offset
+    func stopImmediate() {
+        isInOffsetPhase = false
+        performImmediateStop()
+    }
+
+    /// Internal method to perform immediate stop
+    private func performImmediateStop() {
         // Stop timer
         bufferTimer?.invalidate()
         bufferTimer = nil
@@ -210,12 +324,75 @@ class BinauralBeatGenerator: ObservableObject {
         // Deactivate audio session
         try? AVAudioSession.sharedInstance().setActive(false)
 
+        // Reset state
         isPlaying = false
+        isInOffsetPhase = false
+        playbackStartTime = nil
+        offsetStartTime = nil
+        onsetProgress = 0.0
+
         print("⏹️ Binaural beats stopped")
+    }
+
+    /// Start gradual offset phase (ramp down to alpha before stopping)
+    private func startGradualOffset() {
+        isInOffsetPhase = true
+        offsetStartTime = Date()
+        offsetStartFrequency = effectiveBeatFrequency
+        print("🌆 Gradual offset started: \(effectiveBeatFrequency) Hz → \(onsetStartFrequency) Hz over \(Int(gradualOffsetDuration))s")
     }
 
 
     // MARK: - Private Methods
+
+    /// Update effective frequency based on gradual onset/offset progress
+    /// Called every 0.5 seconds during playback
+    private func updateEffectiveFrequency() {
+        guard gradualOnsetEnabled else {
+            effectiveBeatFrequency = targetBeatFrequency
+            onsetProgress = 1.0
+            return
+        }
+
+        if isInOffsetPhase {
+            // Gradual offset: ramp DOWN to alpha
+            guard let startTime = offsetStartTime else { return }
+
+            let elapsed = Date().timeIntervalSince(startTime)
+            let progress = Float(min(1.0, elapsed / gradualOffsetDuration))
+
+            // Ease-out curve for natural deceleration
+            let easedProgress = 1.0 - pow(1.0 - progress, 2)
+
+            // Interpolate from offset start frequency to alpha
+            effectiveBeatFrequency = offsetStartFrequency + (onsetStartFrequency - offsetStartFrequency) * easedProgress
+            onsetProgress = 1.0 - progress
+
+            // Check if offset complete
+            if progress >= 1.0 {
+                print("🌆 Gradual offset complete, stopping")
+                performImmediateStop()
+            }
+        } else {
+            // Gradual onset: ramp UP to target
+            guard let startTime = playbackStartTime else { return }
+
+            let elapsed = Date().timeIntervalSince(startTime)
+            let progress = Float(min(1.0, elapsed / gradualOnsetDuration))
+
+            // Ease-in-out curve for natural acceleration/deceleration
+            // S-curve: 3t² - 2t³ (smoothstep)
+            let easedProgress = progress * progress * (3.0 - 2.0 * progress)
+
+            // Interpolate from alpha to target frequency
+            effectiveBeatFrequency = onsetStartFrequency + (targetBeatFrequency - onsetStartFrequency) * easedProgress
+            onsetProgress = progress
+
+            if progress >= 1.0 && onsetProgress < 1.0 {
+                print("🌅 Gradual onset complete: now at \(targetBeatFrequency) Hz")
+            }
+        }
+    }
 
     /// Setup audio engine with stereo output
     private func setupAudioEngine() {
@@ -256,14 +433,16 @@ class BinauralBeatGenerator: ObservableObject {
 
     /// Calculate frequency for left ear
     /// Left ear plays carrier frequency MINUS half the beat frequency
+    /// Uses effectiveBeatFrequency for gradual onset/offset support
     private var leftEarFrequency: Float {
-        return carrierFrequency - (beatFrequency / 2.0)
+        return carrierFrequency - (effectiveBeatFrequency / 2.0)
     }
 
     /// Calculate frequency for right ear
     /// Right ear plays carrier frequency PLUS half the beat frequency
+    /// Uses effectiveBeatFrequency for gradual onset/offset support
     private var rightEarFrequency: Float {
-        return carrierFrequency + (beatFrequency / 2.0)
+        return carrierFrequency + (effectiveBeatFrequency / 2.0)
     }
 
     /// Generate a pure sine wave tone buffer at specified frequency
@@ -320,6 +499,7 @@ class BinauralBeatGenerator: ObservableObject {
 
     /// Generate isochronic tone buffer (pulsed carrier tone at beat frequency)
     /// Works on mono speakers, Bluetooth, spatial audio - no stereo required
+    /// Uses effectiveBeatFrequency for gradual onset/offset support
     /// - Returns: Audio buffer containing pulsed tone
     private func generateIsochronicBuffer() -> AVAudioPCMBuffer {
         let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
@@ -332,7 +512,7 @@ class BinauralBeatGenerator: ObservableObject {
 
         // Generate carrier tone with amplitude modulation at beat frequency
         let carrierAngularFreq = 2.0 * Float.pi * carrierFrequency
-        let pulseAngularFreq = 2.0 * Float.pi * beatFrequency
+        let pulseAngularFreq = 2.0 * Float.pi * effectiveBeatFrequency  // Use effective frequency
         let sampleRateFloat = Float(sampleRate)
 
         for i in 0..<Int(bufferSize) {
