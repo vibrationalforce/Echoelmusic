@@ -27,6 +27,9 @@ import Combine
 import Accelerate
 import simd
 import os.log
+
+private let logger = Logger(subsystem: "com.echoelmusic.app", category: "quantumFlow")
+
 #if canImport(Metal)
 import Metal
 import MetalPerformanceShaders
@@ -136,7 +139,7 @@ public final class QuantumInspiredProcessor {
     ) -> T? {
         guard !searchSpace.isEmpty else {
             // Return nil instead of crashing for empty search space
-            print("⚠️ [QuantumFlowEngine] groverOptimize called with empty search space")
+            logger.warning("groverOptimize called with empty search space")
             return nil
         }
 

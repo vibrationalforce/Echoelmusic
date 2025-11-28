@@ -1,6 +1,9 @@
 import Foundation
 import CoreMIDI
 import Combine
+import os.log
+
+private let logger = Logger(subsystem: "com.echoelmusic.app", category: "midiController")
 
 /// MIDI controller support for external hardware control
 @MainActor
@@ -112,7 +115,7 @@ class MIDIController: ObservableObject {
         // Create MIDI client
         status = MIDIClientCreate("Echoelmusic" as CFString, nil, nil, &midiClient)
         guard status == noErr else {
-            print("❌ Failed to create MIDI client: \(status)")
+            logger.error("Failed to create MIDI client: \(status, privacy: .public)")
             return
         }
 
@@ -132,14 +135,14 @@ class MIDIController: ObservableObject {
         )
 
         guard status == noErr else {
-            print("❌ Failed to create MIDI input port: \(status)")
+            logger.error("Failed to create MIDI input port: \(status, privacy: .public)")
             return
         }
 
         // Connect to all sources
         connectToAllSources()
 
-        print("🎹 MIDI controller initialized")
+        logger.info("MIDI controller initialized")
     }
 
     // MARK: - MIDI Connection
@@ -154,7 +157,7 @@ class MIDIController: ObservableObject {
             if status == noErr {
                 let device = getDeviceInfo(for: source)
                 connectedDevices.append(device)
-                print("🎹 Connected to MIDI device: \(device.name)")
+                logger.info("Connected to MIDI device: \(device.name, privacy: .public)")
             }
         }
 

@@ -1,6 +1,9 @@
 import Foundation
 import AVFoundation
 import Combine
+import os.log
+
+private let logger = Logger(subsystem: "com.echoelmusic.app", category: "audioEngine")
 
 /// Central audio engine that manages and mixes multiple audio sources
 ///
@@ -75,9 +78,9 @@ class AudioEngine: ObservableObject {
         // Configure audio session for optimal performance
         do {
             try AudioConfiguration.configureAudioSession()
-            print(AudioConfiguration.latencyStats())
+            logger.info("\(AudioConfiguration.latencyStats(), privacy: .public)")
         } catch {
-            print("⚠️  Failed to configure audio session: \(error)")
+            logger.warning("Failed to configure audio session: \(error.localizedDescription, privacy: .public)")
         }
 
         // Set real-time audio thread priority
@@ -105,8 +108,7 @@ class AudioEngine: ObservableObject {
                 deviceCapabilities: capabilities
             )
         } else {
-            print("⚠️  Spatial audio engine requires iOS 15+")
-        }
+            logger.info("Spatial audio engine requires iOS 15+")
 
         // Start monitoring device capabilities
         deviceCapabilities?.startMonitoringAudioRoute()
@@ -114,10 +116,7 @@ class AudioEngine: ObservableObject {
         // Initialize node graph with default biofeedback chain
         nodeGraph = NodeGraph.createBiofeedbackChain()
 
-        print("🎵 AudioEngine initialized")
-        print("   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "✅" : "❌")")
-        print("   Head Tracking: \(headTrackingManager?.isAvailable == true ? "✅" : "❌")")
-        print("   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")
+        logger.info("AudioEngine initialized - Spatial: \(deviceCapabilities?.canUseSpatialAudio == true ? "yes" : "no", privacy: .public), HeadTracking: \(headTrackingManager?.isAvailable == true ? "yes" : "no", privacy: .public), Nodes: \(nodeGraph?.nodes.count ?? 0, privacy: .public)")
     }
 
 
@@ -148,7 +147,7 @@ class AudioEngine: ObservableObject {
         startBioParameterMapping()
 
         isRunning = true
-        print("🎵 AudioEngine started")
+        logger.info("AudioEngine started")
     }
 
     /// Stop the audio engine
@@ -169,7 +168,7 @@ class AudioEngine: ObservableObject {
         cancellables.removeAll()
 
         isRunning = false
-        print("🎵 AudioEngine stopped")
+        logger.info("AudioEngine stopped")
     }
 
     /// Toggle binaural beats on/off
@@ -178,10 +177,10 @@ class AudioEngine: ObservableObject {
 
         if binauralBeatsEnabled {
             binauralGenerator.start()
-            print("🔊 Binaural beats enabled")
+            logger.info("Binaural beats enabled")
         } else {
             binauralGenerator.stop()
-            print("🔇 Binaural beats disabled")
+            logger.info("Binaural beats disabled")
         }
     }
 
@@ -223,18 +222,18 @@ class AudioEngine: ObservableObject {
             if let spatial = spatialAudioEngine {
                 do {
                     try spatial.start()
-                    print("🎵 Spatial audio enabled")
+                    logger.info("Spatial audio enabled")
                 } catch {
-                    print("❌ Failed to enable spatial audio: \(error)")
+                    logger.error("Failed to enable spatial audio: \(error.localizedDescription, privacy: .public)")
                     spatialAudioEnabled = false
                 }
             } else {
-                print("⚠️  Spatial audio not available")
+                logger.warning("Spatial audio not available")
                 spatialAudioEnabled = false
             }
         } else {
             spatialAudioEngine?.stop()
-            print("🎵 Spatial audio disabled")
+            logger.info("Spatial audio disabled")
         }
     }
 
@@ -278,7 +277,7 @@ class AudioEngine: ObservableObject {
     /// Start bio-parameter mapping (HRV/HR → Audio)
     private func startBioParameterMapping() {
         guard let healthKit = healthKitManager else {
-            print("⚠️  Bio-parameter mapping: HealthKit not connected")
+            logger.debug("Bio-parameter mapping: HealthKit not connected")
             return
         }
 
@@ -290,13 +289,13 @@ class AudioEngine: ObservableObject {
             }
             .store(in: &cancellables)
 
-        print("🎛️  Bio-parameter mapping started")
+        logger.debug("Bio-parameter mapping started")
     }
 
     /// Stop bio-parameter mapping
     private func stopBioParameterMapping() {
         // Cancellables will be cleared when engine stops
-        print("🎛️  Bio-parameter mapping stopped")
+        logger.debug("Bio-parameter mapping stopped")
     }
 
     /// Update bio-parameters from current biometric data

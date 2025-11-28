@@ -13,7 +13,6 @@
 //  - VJ (Resolume Arena-level visual performance)
 //  - Stream (Live broadcasting)
 //  - Collaborate (Worldwide real-time collaboration)
-//  - Work (EoelWork gig platform)
 //  - Settings (All configuration)
 //
 
@@ -30,7 +29,6 @@ struct MainNavigationView: View {
         case vj = "VJ"
         case stream = "Stream"
         case collaborate = "Collab"
-        case work = "Work"
         case settings = "Settings"
 
         var icon: String {
@@ -41,7 +39,6 @@ struct MainNavigationView: View {
             case .vj: return "square.grid.3x3.fill"
             case .stream: return "video.badge.waveform"
             case .collaborate: return "person.3.fill"
-            case .work: return "briefcase.fill"
             case .settings: return "gearshape.fill"
             }
         }
@@ -54,7 +51,6 @@ struct MainNavigationView: View {
             case .vj: return .pink
             case .stream: return .red
             case .collaborate: return .green
-            case .work: return .blue
             case .settings: return .gray
             }
         }
@@ -133,8 +129,6 @@ struct MainNavigationView: View {
             LiveStreamingView()
         case .collaborate:
             CollaborationView()
-        case .work:
-            EoelWorkMainView()
         case .settings:
             SettingsView()
         }
@@ -368,215 +362,6 @@ struct CollaborationView: View {
             EchoelSyncControlPanelView()
                 .navigationTitle("Collaborate")
         }
-    }
-}
-
-// MARK: - EoelWork Main View
-
-struct EoelWorkMainView: View {
-    @StateObject private var backend = EchoelmusicWorkBackend.shared
-
-    @State private var selectedSection: WorkSection = .dashboard
-
-    enum WorkSection: String, CaseIterable {
-        case dashboard = "Dashboard"
-        case findGigs = "Find Gigs"
-        case myGigs = "My Gigs"
-        case messages = "Messages"
-        case earnings = "Earnings"
-
-        var icon: String {
-            switch self {
-            case .dashboard: return "square.grid.2x2"
-            case .findGigs: return "magnifyingglass"
-            case .myGigs: return "briefcase"
-            case .messages: return "bubble.left.and.bubble.right"
-            case .earnings: return "dollarsign.circle"
-            }
-        }
-    }
-
-    var body: some View {
-        NavigationView {
-            List {
-                // User Status Card
-                if let user = backend.currentUser {
-                    Section {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Image(systemName: "person.circle.fill")
-                                    .font(.largeTitle)
-                                    .foregroundColor(.purple)
-                                VStack(alignment: .leading) {
-                                    Text(user.profile.name)
-                                        .font(.headline)
-                                    HStack {
-                                        Image(systemName: "star.fill")
-                                            .foregroundColor(.yellow)
-                                            .font(.caption)
-                                        Text(String(format: "%.1f", user.rating))
-                                            .font(.caption)
-                                        Text("•")
-                                        Text("\(user.completedGigs) gigs")
-                                            .font(.caption)
-                                    }
-                                    .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                        .padding(.vertical, 8)
-                    }
-                } else {
-                    Section {
-                        NavigationLink {
-                            SignInView()
-                        } label: {
-                            Label("Sign In to EoelWork", systemImage: "person.badge.plus")
-                        }
-                    }
-                }
-
-                // Quick Actions
-                Section("Quick Actions") {
-                    NavigationLink {
-                        GigSearchView()
-                    } label: {
-                        Label("Find Gigs", systemImage: "magnifyingglass")
-                    }
-
-                    NavigationLink {
-                        PostGigView()
-                    } label: {
-                        Label("Post a Gig", systemImage: "plus.circle")
-                    }
-                }
-
-                // Industries
-                Section("Industries") {
-                    ForEach(["Music & Audio", "Film & Video", "Events", "Hospitality", "Healthcare", "Retail", "Education", "Tech"], id: \.self) { industry in
-                        NavigationLink {
-                            IndustryGigsView(industry: industry)
-                        } label: {
-                            Text(industry)
-                        }
-                    }
-                }
-
-                // Subscription
-                Section {
-                    NavigationLink {
-                        SubscriptionView()
-                    } label: {
-                        HStack {
-                            Label("Subscription", systemImage: "creditcard")
-                            Spacer()
-                            Text("$6.99/mo")
-                                .font(.caption)
-                                .foregroundColor(.purple)
-                        }
-                    }
-                }
-            }
-            .navigationTitle("EoelWork")
-        }
-    }
-}
-
-// MARK: - Supporting Views
-
-struct SignInView: View {
-    @State private var email = ""
-    @State private var password = ""
-
-    var body: some View {
-        Form {
-            Section("Sign In") {
-                TextField("Email", text: $email)
-                    .textContentType(.emailAddress)
-                    .keyboardType(.emailAddress)
-                SecureField("Password", text: $password)
-            }
-
-            Section {
-                Button("Sign In") {
-                    // Sign in action
-                }
-                .frame(maxWidth: .infinity)
-            }
-
-            Section {
-                NavigationLink("Create Account") {
-                    Text("Sign Up View")
-                }
-                NavigationLink("Forgot Password?") {
-                    Text("Password Reset View")
-                }
-            }
-        }
-        .navigationTitle("Sign In")
-    }
-}
-
-struct PostGigView: View {
-    @State private var title = ""
-    @State private var description = ""
-    @State private var budget = ""
-    @State private var selectedIndustry = "Music & Audio"
-    @State private var urgency = "Normal"
-
-    let industries = ["Music & Audio", "Film & Video", "Events", "Hospitality", "Healthcare", "Retail", "Education", "Tech"]
-    let urgencies = ["Flexible", "Normal", "Urgent", "Emergency"]
-
-    var body: some View {
-        Form {
-            Section("Gig Details") {
-                TextField("Title", text: $title)
-                TextField("Description", text: $description, axis: .vertical)
-                    .lineLimit(3...6)
-            }
-
-            Section("Category") {
-                Picker("Industry", selection: $selectedIndustry) {
-                    ForEach(industries, id: \.self) { industry in
-                        Text(industry).tag(industry)
-                    }
-                }
-
-                Picker("Urgency", selection: $urgency) {
-                    ForEach(urgencies, id: \.self) { u in
-                        Text(u).tag(u)
-                    }
-                }
-            }
-
-            Section("Budget") {
-                HStack {
-                    Text("$")
-                    TextField("Amount", text: $budget)
-                        .keyboardType(.decimalPad)
-                }
-            }
-
-            Section {
-                Button("Post Gig") {
-                    // Post gig action
-                }
-                .frame(maxWidth: .infinity)
-            }
-        }
-        .navigationTitle("Post Gig")
-    }
-}
-
-struct IndustryGigsView: View {
-    let industry: String
-
-    var body: some View {
-        List {
-            Text("Showing gigs for \(industry)")
-                .foregroundColor(.secondary)
-        }
-        .navigationTitle(industry)
     }
 }
 

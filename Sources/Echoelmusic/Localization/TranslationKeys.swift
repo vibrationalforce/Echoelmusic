@@ -35,10 +35,6 @@ extension LocalizationManager {
                 .english: "Lighting",
                 .german: "Beleuchtung"
             ],
-            "nav.eoelwork": [
-                .english: "EoelWork",
-                .german: "EoelWork"
-            ],
             "nav.settings": [
                 .english: "Settings",
                 .german: "Einstellungen"
@@ -366,7 +362,6 @@ struct TranslationTemplateGenerator {
             "daw": "DAW",
             "video": "Video",
             "lighting": "Lighting",
-            "eoelwork": "EoelWork",
             "settings": "Settings"
           },
 

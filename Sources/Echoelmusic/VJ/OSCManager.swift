@@ -6,6 +6,9 @@
 import Foundation
 import Network
 import Combine
+import os.log
+
+private let logger = Logger(subsystem: "com.echoelmusic.app", category: "osc")
 
 // MARK: - OSC Types
 
@@ -522,9 +525,9 @@ public class OSCServer: ObservableObject {
                 switch state {
                 case .ready:
                     self?.isRunning = true
-                    print("OSC Server listening on port \(self?.port ?? 0)")
+                    logger.info("OSC Server listening on port \(self?.port ?? 0, privacy: .public)")
                 case .failed(let error):
-                    print("OSC Server failed: \(error)")
+                    logger.error("OSC Server failed: \(error.localizedDescription, privacy: .public)")
                     self?.isRunning = false
                 case .cancelled:
                     self?.isRunning = false
@@ -645,7 +648,7 @@ public class OSCClient: ObservableObject {
                 switch state {
                 case .ready:
                     self?.isConnected = true
-                    print("OSC Client connected to \(self?.host ?? ""):\(self?.port ?? 0)")
+                    logger.info("OSC Client connected to \(self?.host ?? "", privacy: .public):\(self?.port ?? 0, privacy: .public)")
                 case .failed, .cancelled:
                     self?.isConnected = false
                 default:
@@ -667,14 +670,14 @@ public class OSCClient: ObservableObject {
     /// Send an OSC message
     public func send(_ message: OSCMessage) {
         guard isConnected else {
-            print("OSC Client not connected")
+            logger.warning("OSC Client not connected")
             return
         }
 
         let data = OSCEncoder.encode(message)
         connection?.send(content: data, completion: .contentProcessed { error in
             if let error = error {
-                print("OSC send error: \(error)")
+                logger.error("OSC send error: \(error.localizedDescription, privacy: .public)")
             }
         })
     }
@@ -682,14 +685,14 @@ public class OSCClient: ObservableObject {
     /// Send an OSC bundle
     public func send(_ bundle: OSCBundle) {
         guard isConnected else {
-            print("OSC Client not connected")
+            logger.warning("OSC Client not connected")
             return
         }
 
         let data = OSCEncoder.encode(bundle)
         connection?.send(content: data, completion: .contentProcessed { error in
             if let error = error {
-                print("OSC send error: \(error)")
+                logger.error("OSC send error: \(error.localizedDescription, privacy: .public)")
             }
         })
     }

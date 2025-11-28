@@ -12,6 +12,9 @@ import Foundation
 import CoreSpotlight
 import MobileCoreServices
 import UniformTypeIdentifiers
+import os.log
+
+private let logger = Logger(subsystem: "com.echoelmusic.app", category: "spotlight")
 
 @MainActor
 final class SpotlightIndexer {
@@ -66,9 +69,9 @@ final class SpotlightIndexer {
         // Index
         searchableIndex.indexSearchableItems([item]) { error in
             if let error = error {
-                print("Failed to index project: \(error)")
+                logger.error("Failed to index project: \(error.localizedDescription, privacy: .public)")
             } else {
-                print("Successfully indexed project: \(project.name)")
+                logger.debug("Indexed project: \(project.name, privacy: .public)")
             }
         }
     }
@@ -118,7 +121,7 @@ final class SpotlightIndexer {
         // Index
         searchableIndex.indexSearchableItems([item]) { error in
             if let error = error {
-                print("Failed to index recording: \(error)")
+                logger.error("Failed to index recording: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -149,46 +152,7 @@ final class SpotlightIndexer {
 
         searchableIndex.indexSearchableItems([item]) { error in
             if let error = error {
-                print("Failed to index instrument: \(error)")
-            }
-        }
-    }
-
-    // MARK: - Index EoelWork Gig
-
-    func indexGig(_ gig: Gig) {
-        let attributeSet = CSSearchableItemAttributeSet(contentType: .item)
-
-        attributeSet.title = gig.title
-        attributeSet.contentDescription = "\(gig.location) • \(gig.paymentAmount)"
-
-        attributeSet.keywords = [
-            "gig",
-            "job",
-            "work",
-            "eoelwork",
-            gig.category.lowercased()
-        ]
-
-        if let deadline = gig.deadline {
-            attributeSet.dueDate = deadline
-        }
-
-        attributeSet.latitude = NSNumber(value: gig.latitude ?? 0)
-        attributeSet.longitude = NSNumber(value: gig.longitude ?? 0)
-
-        let item = CSSearchableItem(
-            uniqueIdentifier: "gig-\(gig.id)",
-            domainIdentifier: "app.eoel.gigs",
-            attributeSet: attributeSet
-        )
-
-        // Gigs should expire
-        item.expirationDate = gig.deadline ?? Date().addingTimeInterval(30 * 24 * 3600) // 30 days
-
-        searchableIndex.indexSearchableItems([item]) { error in
-            if let error = error {
-                print("Failed to index gig: \(error)")
+                logger.error("Failed to index instrument: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -198,7 +162,7 @@ final class SpotlightIndexer {
     func deleteItem(identifier: String) {
         searchableIndex.deleteSearchableItems(withIdentifiers: [identifier]) { error in
             if let error = error {
-                print("Failed to delete item: \(error)")
+                logger.error("Failed to delete item: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -216,7 +180,7 @@ final class SpotlightIndexer {
     func deleteAllProjects() {
         searchableIndex.deleteSearchableItems(withDomainIdentifiers: ["app.eoel.projects"]) { error in
             if let error = error {
-                print("Failed to delete projects: \(error)")
+                logger.error("Failed to delete projects: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -224,7 +188,7 @@ final class SpotlightIndexer {
     func deleteAllRecordings() {
         searchableIndex.deleteSearchableItems(withDomainIdentifiers: ["app.eoel.recordings"]) { error in
             if let error = error {
-                print("Failed to delete recordings: \(error)")
+                logger.error("Failed to delete recordings: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -232,7 +196,7 @@ final class SpotlightIndexer {
     func deleteAllItems() {
         searchableIndex.deleteAllSearchableItems { error in
             if let error = error {
-                print("Failed to delete all items: \(error)")
+                logger.error("Failed to delete all items: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -255,9 +219,9 @@ final class SpotlightIndexer {
 
         searchableIndex.indexSearchableItems(items) { error in
             if let error = error {
-                print("Failed to batch index projects: \(error)")
+                logger.error("Failed to batch index projects: \(error.localizedDescription, privacy: .public)")
             } else {
-                print("Successfully indexed \(projects.count) projects")
+                logger.debug("Indexed \(projects.count, privacy: .public) projects")
             }
         }
     }
@@ -323,17 +287,6 @@ struct Instrument {
     let icon: UIImage?
 }
 
-struct Gig {
-    let id: String
-    let title: String
-    let location: String
-    let paymentAmount: String
-    let category: String
-    let deadline: Date?
-    let latitude: Double?
-    let longitude: Double?
-}
-
 // MARK: - UTType Extension
 
 extension UTType {
@@ -360,10 +313,6 @@ extension UTType {
              let recordingID = identifier.replacingOccurrences(of: "recording-", with: "")
              // Open recording
              navigationCoordinator.openRecording(id: recordingID)
-         } else if identifier.hasPrefix("gig-") {
-             let gigID = identifier.replacingOccurrences(of: "gig-", with: "")
-             // Open gig details
-             navigationCoordinator.openGig(id: gigID)
          }
      }
  }

@@ -16,6 +16,9 @@
 
 import Foundation
 import Combine
+import os.log
+
+private let logger = Logger(subsystem: "com.echoelmusic.app", category: "dependency")
 
 // MARK: - Dependency Resolution Errors
 
@@ -109,7 +112,7 @@ public final class DependencyContainer: ObservableObject {
             return try resolveOrThrow(type)
         } catch {
             // Log error instead of crashing
-            print("⚠️ [DependencyContainer] Resolution failed for \(type): \(error.localizedDescription)")
+            logger.error("Resolution failed for \(String(describing: type), privacy: .public): \(error.localizedDescription, privacy: .public)")
             // Return default if possible, otherwise this will crash - but with better diagnostics
             preconditionFailure("Critical: Cannot resolve required dependency \(type). Error: \(error)")
         }
