@@ -57,9 +57,9 @@ struct TherapeuticColorSystem {
         /// Research: Human eye most sensitive at 555nm (photopic), 520nm optimal for displays
         static let eyeComfortGreen = Color(red: 0.0, green: 1.0, blue: 0.0)
 
-        /// 528nm - "Love frequency" (Solfeggio), DNA repair
-        /// Research: Controversial but used in sound/light therapy
-        static let healingGreen = Color(red: 0.0, green: 0.9, blue: 0.2)
+        /// 528nm - Green light in visible spectrum
+        /// Research: Part of green spectrum, used in phototherapy
+        static let therapeuticGreen = Color(red: 0.0, green: 0.9, blue: 0.2)
 
         /// 550nm - Balance and harmony, stress reduction
         /// Research: Lowers cortisol, parasympathetic activation

@@ -35,7 +35,7 @@ class BiologicalFrequencyOptimizer: ObservableObject {
         case alphaRelaxation = "Alpha - Relaxation"
         case betaFocus = "Beta - Focus"
         case gammaInsight = "Gamma - Insight"
-        case schumannGrounding = "Schumann - Grounding"
+        case thetaLow = "Theta Low - Deep Relaxation"
         case adeyCalcium = "Adey - Calcium Ion"
 
         var id: String { rawValue }
@@ -47,7 +47,7 @@ class BiologicalFrequencyOptimizer: ObservableObject {
             case .alphaRelaxation: return 10.0   // 8-13 Hz
             case .betaFocus: return 20.0         // 13-30 Hz
             case .gammaInsight: return 40.0      // 30-100 Hz
-            case .schumannGrounding: return 7.83 // Exact Schumann resonance
+            case .thetaLow: return 7.83 // Low theta range (4-8 Hz)
             case .adeyCalcium: return 16.0       // Adey's calcium window (6-20 Hz)
             }
         }
@@ -64,8 +64,8 @@ class BiologicalFrequencyOptimizer: ObservableObject {
                 return "13-30 Hz • Active thinking, problem-solving, sustained attention, alertness"
             case .gammaInsight:
                 return "30-100 Hz • Higher cognition, insight, peak performance, information processing"
-            case .schumannGrounding:
-                return "7.83 Hz • Earth's resonance frequency, grounding, circadian sync, stress relief"
+            case .thetaLow:
+                return "7.83 Hz • Low theta range, deep relaxation, drowsiness transition"
             case .adeyCalcium:
                 return "6-20 Hz • Dr. Adey's calcium ion efflux window, neurotransmitter modulation, synaptic plasticity"
             }
@@ -108,12 +108,12 @@ class BiologicalFrequencyOptimizer: ObservableObject {
                     "Facilitates insight and epiphany",
                     "Peak mental performance"
                 ]
-            case .schumannGrounding:
+            case .thetaLow:
                 return [
-                    "Synchronizes circadian rhythms",
+                    "Promotes deep relaxation",
                     "Reduces stress and anxiety",
-                    "Improves heart rate variability",
-                    "Enhances grounding effect"
+                    "Transition state between wake and sleep",
+                    "Supports meditation practice"
                 ]
             case .adeyCalcium:
                 return [
@@ -137,8 +137,8 @@ class BiologicalFrequencyOptimizer: ObservableObject {
                 return "Safe for daytime use. Avoid before sleep as it may delay sleep onset."
             case .gammaInsight:
                 return "High frequency. Use for short periods (15-30 min). May cause headaches if overused."
-            case .schumannGrounding:
-                return "Very safe. Natural Earth frequency. Suitable for extended use."
+            case .thetaLow:
+                return "Very safe. Low theta range. Can cause drowsiness - use in relaxed setting."
             case .adeyCalcium:
                 return "Research-backed frequency. Safe for most users. Consult physician if epileptic."
             }

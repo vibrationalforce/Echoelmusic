@@ -306,7 +306,7 @@ class BioParameterMapper: ObservableObject {
             reverbWet = 0.3
             filterCutoff = 1500.0
             amplitude = 0.6
-            baseFrequency = 528.0  // Focus frequency
+            baseFrequency = 523.25  // C5 - bright register for alertness
             tempo = 7.0
 
         case .relaxation:
