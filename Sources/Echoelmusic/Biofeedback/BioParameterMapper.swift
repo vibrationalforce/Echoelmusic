@@ -25,7 +25,7 @@ class BioParameterMapper: ObservableObject {
 
     /// Base note frequency (Hz)
     /// Mapped from: Voice Pitch
-    @Published var baseFrequency: Float = 432.0
+    @Published var baseFrequency: Float = 440.0  // ISO 16 standard pitch (A4)
 
     /// Tempo (BPM)
     /// Mapped from: Heart Rate (synchronized breathing)
@@ -299,7 +299,7 @@ class BioParameterMapper: ObservableObject {
             reverbWet = 0.7
             filterCutoff = 500.0
             amplitude = 0.5
-            baseFrequency = 432.0
+            baseFrequency = 440.0  // ISO 16 standard pitch
             tempo = 6.0
 
         case .focus:

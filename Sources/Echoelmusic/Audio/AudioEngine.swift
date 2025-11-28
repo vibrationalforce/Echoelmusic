@@ -202,7 +202,7 @@ class AudioEngine: ObservableObject {
     func setBinauralAmplitude(_ amplitude: Float) {
         binauralAmplitude = amplitude
         binauralGenerator.configure(
-            carrier: 432.0,
+            carrier: 440.0,  // ISO 16 standard pitch
             beat: currentBrainwaveState.beatFrequency,
             amplitude: amplitude
         )
@@ -267,7 +267,7 @@ class AudioEngine: ObservableObject {
         binauralAmplitude = adaptiveAmplitude
 
         binauralGenerator.configure(
-            carrier: 432.0,
+            carrier: 440.0,  // ISO 16 standard pitch
             beat: binauralGenerator.beatFrequency,
             amplitude: adaptiveAmplitude
         )
