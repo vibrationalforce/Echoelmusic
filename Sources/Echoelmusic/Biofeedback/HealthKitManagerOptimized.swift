@@ -66,11 +66,23 @@ class HealthKitManagerOptimized: ObservableObject {
     private var rrIntervalBuffer: [Double] = []
     private let maxBufferSize = 120
 
-    /// Types to read from HealthKit
-    private let typesToRead: Set<HKObjectType> = [
-        HKObjectType.quantityType(forIdentifier: .heartRate)!,
-        HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
-    ]
+    /// Valid HRV range for validation (in milliseconds)
+    private let validHRVRange: ClosedRange<Double> = 5.0...300.0
+
+    /// Valid heart rate range (BPM)
+    private let validHeartRateRange: ClosedRange<Double> = 30.0...220.0
+
+    /// Types to read from HealthKit (SAFE: no force unwrap)
+    private var typesToRead: Set<HKObjectType> {
+        var types = Set<HKObjectType>()
+        if let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) {
+            types.insert(heartRateType)
+        }
+        if let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) {
+            types.insert(hrvType)
+        }
+        return types
+    }
 
     // MARK: - Initialization
 

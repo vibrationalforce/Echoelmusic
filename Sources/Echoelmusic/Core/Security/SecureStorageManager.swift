@@ -226,46 +226,153 @@ enum EncryptionError: Error {
 final class SSLPinningManager: NSObject, URLSessionDelegate {
     static let shared = SSLPinningManager()
 
-    // SHA-256 hashes of valid certificates
-    private let trustedCertificateHashes: Set<String> = [
-        // Add your certificate hashes here
-        // Example: "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    /// Whether SSL pinning is enabled (disable for development if needed)
+    var isPinningEnabled: Bool = true
+
+    /// Trusted domains that should have SSL pinning applied
+    private let pinnedDomains: Set<String> = [
+        "firebaseio.com",
+        "googleapis.com",
+        "firebase.google.com",
+        "eoel.app",
+        "api.eoel.app"
     ]
+
+    /// SHA-256 hashes of valid certificates
+    /// These should be updated when certificates are rotated
+    /// Generate with: openssl s_client -connect domain:443 | openssl x509 -pubkey | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64
+    private let trustedCertificateHashes: Set<String> = [
+        // Google/Firebase root certificates (GTS Root R1, R2, R3, R4)
+        "sha256/hxqRlPTu1bMS/0DITB1SSu0vd4u/8l8TjPgfaAp63Gc=",  // GTS Root R1
+        "sha256/Vfd95BwDeSQo+NUYxVEEeqROBvEuGBvMiHpZJvRkLqo=",  // GTS Root R2
+        "sha256/QXnt2YHvdHR3tJYmQIr0Paosp6t/nggsEGD4QJZ3Q0g=",  // GTS Root R3
+        "sha256/mEflZT5enoR1FuXLgYYGqnVEoZvmf9c2bVBpiOjYQ0c=",  // GTS Root R4
+
+        // GlobalSign Root CA (used by many services)
+        "sha256/K87oWBWM9UZfyddvDfoxL+8lpNyoUB2ptGtn0fv6G2Q=",  // GlobalSign Root CA
+
+        // DigiCert Global Root G2
+        "sha256/i7WTqTvh0OioIruIfFR4kMPnBqrS2rdiVPl/s2uC/CY=",  // DigiCert Global Root G2
+
+        // Let's Encrypt (ISRG Root X1)
+        "sha256/C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=",  // ISRG Root X1
+
+        // Amazon Root CA 1-4
+        "sha256/++MBgDH5WGvL9Bcn5Be30cRcL0f5O+NyoXuWtQdX1aI=",  // Amazon Root CA 1
+        "sha256/f0KW/FtqTjs108NpYj42SrGvOB2PpxIVM8nWxjPqJGE=",  // Amazon Root CA 2
+        "sha256/NqvDJlas/GRcYbcWE8S/IceH9cq77kg0jVhZeAPXq8k=",  // Amazon Root CA 3
+        "sha256/9+ze1cZgR9KO1kZrVDxA4HQ6voHRCSVNz4RdTCx4U8U=",  // Amazon Root CA 4
+    ]
+
+    private override init() {
+        super.init()
+    }
 
     func urlSession(
         _ session: URLSession,
         didReceive challenge: URLAuthenticationChallenge,
         completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) {
+        // Only perform pinning for server trust challenges
         guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
               let serverTrust = challenge.protectionSpace.serverTrust else {
             completionHandler(.cancelAuthenticationChallenge, nil)
             return
         }
 
-        // Validate certificate
-        let policy = SecPolicyCreateSSL(true, challenge.protectionSpace.host as CFString)
+        let host = challenge.protectionSpace.host
+
+        // Check if this domain should be pinned
+        let shouldPin = isPinningEnabled && pinnedDomains.contains(where: { host.hasSuffix($0) })
+
+        // Validate certificate chain
+        let policy = SecPolicyCreateSSL(true, host as CFString)
         SecTrustSetPolicies(serverTrust, policy)
 
-        var result: SecTrustResultType = .invalid
-        SecTrustEvaluate(serverTrust, &result)
+        var error: CFError?
+        let isServerTrusted = SecTrustEvaluateWithError(serverTrust, &error)
 
-        let isValid = (result == .unspecified || result == .proceed)
-
-        if isValid {
-            let credential = URLCredential(trust: serverTrust)
-            completionHandler(.useCredential, credential)
-        } else {
+        guard isServerTrusted else {
+            print("🔒 SSL: Server trust evaluation failed for \(host): \(error?.localizedDescription ?? "unknown error")")
             completionHandler(.cancelAuthenticationChallenge, nil)
+            return
         }
+
+        // If pinning is enabled for this domain, verify certificate hash
+        if shouldPin {
+            let certificateCount = SecTrustGetCertificateCount(serverTrust)
+
+            var isPinned = false
+
+            for index in 0..<certificateCount {
+                guard let certificate = SecTrustGetCertificateAtIndex(serverTrust, index) else {
+                    continue
+                }
+
+                // Get public key and hash it
+                if let publicKey = SecCertificateCopyKey(certificate),
+                   let publicKeyData = SecKeyCopyExternalRepresentation(publicKey, nil) as Data? {
+
+                    let hash = publicKeyData.sha256Base64()
+                    let hashWithPrefix = "sha256/\(hash)"
+
+                    if trustedCertificateHashes.contains(hashWithPrefix) {
+                        isPinned = true
+                        break
+                    }
+                }
+            }
+
+            if !isPinned {
+                print("🔒 SSL: Certificate pinning failed for \(host) - no matching pin found")
+                completionHandler(.cancelAuthenticationChallenge, nil)
+                return
+            }
+
+            print("🔒 SSL: Certificate pinning succeeded for \(host)")
+        }
+
+        // Certificate is valid (and pinned if required)
+        let credential = URLCredential(trust: serverTrust)
+        completionHandler(.useCredential, credential)
     }
 
+    /// Create a secure URLSession with SSL pinning
     func createSecureSession() -> URLSession {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30
         configuration.timeoutIntervalForResource = 60
 
+        // Security settings
+        configuration.tlsMinimumSupportedProtocolVersion = .TLSv12
+        configuration.tlsMaximumSupportedProtocolVersion = .TLSv13
+
         return URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
+    }
+
+    /// Disable pinning for development/testing (NOT for production!)
+    func disablePinningForDevelopment() {
+        #if DEBUG
+        isPinningEnabled = false
+        print("⚠️ SSL Pinning DISABLED for development")
+        #else
+        print("⚠️ Cannot disable SSL pinning in release builds")
+        #endif
+    }
+}
+
+// MARK: - Data SHA256 Extension
+
+extension Data {
+    /// Calculate SHA-256 hash and return as Base64 string
+    func sha256Base64() -> String {
+        var hash = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
+
+        self.withUnsafeBytes { buffer in
+            _ = CC_SHA256(buffer.baseAddress, CC_LONG(self.count), &hash)
+        }
+
+        return Data(hash).base64EncodedString()
     }
 }
 
