@@ -8,20 +8,17 @@
 //  COMPREHENSIVE MUSICAL TUNING SYSTEM
 //
 //  Physically correct octave tuning with multiple temperaments:
-//  - Equal Temperament (12-TET, modern standard)
-//  - Pythagorean Tuning (perfect 3:2 fifths)
+//  - Equal Temperament (12-TET, modern standard since 1917)
+//  - Pythagorean Tuning (perfect 3:2 fifths, ancient Greek)
 //  - Just Intonation (whole number frequency ratios)
-//  - 432 Hz Tuning (Verdi pitch, "cosmic" tuning)
-//  - Planck-Derived Frequencies (physics-based)
-//  - Schumann Resonance Based (Earth frequencies)
-//  - Historical Temperaments (Meantone, Well-tempered, etc.)
+//  - Historical Temperaments (Meantone, Well-tempered, Kirnberger)
+//  - Concert Pitch variants (440 Hz standard, 415 Hz Baroque, 432 Hz Verdi)
 //
 //  Physics Background:
-//  - Octave = 2:1 frequency ratio (universal)
-//  - Perfect Fifth = 3:2 ratio (Pythagorean)
+//  - Octave = 2:1 frequency ratio (universal acoustic principle)
+//  - Perfect Fifth = 3:2 ratio (Pythagorean basis)
 //  - Perfect Fourth = 4:3 ratio
-//  - Planck frequency = √(c⁵/ℏG) ≈ 1.855×10⁴³ Hz
-//  - Schumann resonance = 7.83 Hz (Earth's EM cavity)
+//  - Equal temperament: semitone = 2^(1/12) ≈ 1.0595
 //
 
 import Foundation
@@ -44,34 +41,7 @@ public class MusicalTuningSystem: ObservableObject {
     // MARK: - Physical Constants
 
     public enum PhysicalConstants {
-        // Planck units (SI)
-        public static let planckConstant: Double = 6.62607015e-34  // J·s (exact)
-        public static let reducedPlanck: Double = 1.054571817e-34  // ℏ = h/2π
-        public static let speedOfLight: Double = 299792458.0  // m/s (exact)
-        public static let gravitationalConstant: Double = 6.67430e-11  // m³/(kg·s²)
-
-        // Planck frequency = √(c⁵/ℏG)
-        public static var planckFrequency: Double {
-            let c5 = pow(speedOfLight, 5)
-            let hG = reducedPlanck * gravitationalConstant
-            return sqrt(c5 / hG)  // ≈ 1.855×10⁴³ Hz
-        }
-
-        // Octave reduction of Planck frequency to audible range
-        // We reduce by ~143 octaves to get into musical range
-        public static func planckOctaveReduced(targetOctave: Int = 4) -> Double {
-            // log₂(planckFreq / 440) ≈ 143 octaves above A4
-            // We'll derive a "Planck A" by reducing
-            let octavesAboveA4 = log2(planckFrequency / 440.0)
-            let octavesToReduce = Int(octavesAboveA4) - targetOctave + 4
-            return planckFrequency / pow(2.0, Double(octavesToReduce))
-        }
-
-        // Schumann resonances (Earth's electromagnetic cavity)
-        public static let schumannFundamental: Double = 7.83  // Hz
-        public static let schumannHarmonics: [Double] = [7.83, 14.3, 20.8, 27.3, 33.8]
-
-        // Golden ratio
+        // Golden ratio (for experimental microtonal tuning)
         public static let phi: Double = 1.6180339887498948482
 
         // Mathematical constants for tuning
@@ -88,8 +58,6 @@ public class MusicalTuningSystem: ObservableObject {
         case justIntonationMinor = "Just Intonation (Minor)"
         case concert432 = "432 Hz Tuning"
         case scientific256C = "Scientific C256"
-        case planckDerived = "Planck-Derived"
-        case schumannBased = "Schumann Resonance"
         case goldenRatio = "Golden Ratio"
         case meantoneQuarter = "Quarter-Comma Meantone"
         case wellTempered = "Well Temperament (Werckmeister III)"
@@ -112,10 +80,6 @@ public class MusicalTuningSystem: ObservableObject {
                 return "A4 = 432 Hz. Claimed to align with natural/cosmic frequencies. Verdi's preferred pitch."
             case .scientific256C:
                 return "C4 = 256 Hz (2^8). Mathematically elegant, all C notes are powers of 2."
-            case .planckDerived:
-                return "Frequencies derived from Planck constant octave reduction. Physics-based tuning."
-            case .schumannBased:
-                return "Based on Earth's 7.83 Hz resonance. Octave-expanded for musical use."
             case .goldenRatio:
                 return "Intervals based on φ (1.618...). Experimental non-octave tuning."
             case .meantoneQuarter:
@@ -133,7 +97,6 @@ public class MusicalTuningSystem: ObservableObject {
             switch self {
             case .concert432: return 432.0
             case .scientific256C: return 430.5389646099  // A4 when C4 = 256 Hz
-            case .schumannBased: return 432.09375  // 7.83 Hz × 2^5.78...
             default: return 440.0
             }
         }
@@ -394,10 +357,6 @@ public class MusicalTuningSystem: ObservableObject {
             return IntervalRatios.werckmeisterIII  // Similar
         case .concert432, .scientific256C:
             return IntervalRatios.equalTemperament  // Same ratios, different base
-        case .planckDerived:
-            return calculatePlanckRatios()
-        case .schumannBased:
-            return calculateSchumannRatios()
         case .goldenRatio:
             return calculateGoldenRatios()
         case .custom:
@@ -407,58 +366,7 @@ public class MusicalTuningSystem: ObservableObject {
 
     // MARK: - Special Tuning Calculations
 
-    /// Planck-derived frequency ratios
-    /// Uses octave-reduced Planck frequency as reference
-    private func calculatePlanckRatios() -> [Double] {
-        // Start with equal temperament but adjust based on Planck harmonics
-        // This is experimental/artistic interpretation
-        var ratios = IntervalRatios.equalTemperament
-
-        // Planck frequency octave-reduced gives us a "fundamental"
-        // We can derive "pure" intervals from this
-        // Using 7-limit just intonation as approximation of "natural" ratios
-        ratios[7] = 3.0 / 2.0  // Perfect fifth
-        ratios[5] = 4.0 / 3.0  // Perfect fourth
-        ratios[4] = 5.0 / 4.0  // Major third
-        ratios[3] = 6.0 / 5.0  // Minor third
-        ratios[10] = 7.0 / 4.0  // Harmonic seventh (7-limit)
-
-        return ratios
-    }
-
-    /// Schumann resonance-based ratios
-    /// Expands 7.83 Hz to musical octaves
-    private func calculateSchumannRatios() -> [Double] {
-        // Use Schumann harmonics to derive intervals
-        // 7.83, 14.3, 20.8, 27.3, 33.8 Hz
-        // These aren't exact octaves, creating unique intervals
-
-        var ratios = [Double](repeating: 1.0, count: 13)
-        ratios[0] = 1.0
-        ratios[12] = 2.0
-
-        // Map Schumann harmonics to scale degrees
-        let schumann = PhysicalConstants.schumannHarmonics
-        let fundamental = schumann[0]
-
-        ratios[5] = schumann[1] / fundamental / (14.3 / 7.83)  // ~4th
-        ratios[7] = schumann[2] / fundamental / 2.0  // ~5th
-        ratios[9] = schumann[3] / fundamental / 2.0  // ~6th
-        ratios[11] = schumann[4] / fundamental / 4.0  // ~7th
-
-        // Fill in remaining with just intonation
-        ratios[1] = 16.0 / 15.0
-        ratios[2] = 9.0 / 8.0
-        ratios[3] = 6.0 / 5.0
-        ratios[4] = 5.0 / 4.0
-        ratios[6] = 45.0 / 32.0
-        ratios[8] = 8.0 / 5.0
-        ratios[10] = 9.0 / 5.0
-
-        return ratios
-    }
-
-    /// Golden ratio-based tuning (experimental)
+    /// Golden ratio-based tuning (experimental microtonal system)
     private func calculateGoldenRatios() -> [Double] {
         let phi = PhysicalConstants.phi
 
@@ -706,11 +614,11 @@ extension MusicalTuningSystem {
 
         print("\n🎵 Frequency Comparison Table (Octave \(octave))")
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        print(String(format: "%-5s │ %12s │ %12s │ %12s │ %12s │ %12s",
-              "Note", "12-TET", "Pythagorean", "Just Major", "432 Hz", "Planck"))
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        print(String(format: "%-5s │ %12s │ %12s │ %12s │ %12s",
+              "Note", "12-TET", "Pythagorean", "Just Major", "432 Hz"))
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-        let tunings: [TuningSystem] = [.equalTemperament, .pythagorean, .justIntonationMajor, .concert432, .planckDerived]
+        let tunings: [TuningSystem] = [.equalTemperament, .pythagorean, .justIntonationMajor, .concert432]
 
         for (index, noteName) in noteNames.enumerated() {
             let midiNote = 60 + index  // Start from C4

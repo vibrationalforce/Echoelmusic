@@ -471,8 +471,6 @@ struct TuningSettingsView: View {
         case .justIntonationMinor: return "Reine Moll-Intervalle"
         case .concert432: return "432 Hz Basis"
         case .scientific256C: return "C = 256 Hz"
-        case .planckDerived: return "Physik-basiert"
-        case .schumannBased: return "Erdresonanz"
         case .goldenRatio: return "φ-basierte Intervalle"
         case .meantoneQuarter: return "Reine Terzen"
         case .wellTempered: return "Alle Tonarten spielbar"
