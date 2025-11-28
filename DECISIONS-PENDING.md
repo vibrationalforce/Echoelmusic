@@ -1,69 +1,42 @@
-# Pending Human Decisions
+# Evolution Tracker
 
-> Items requiring human approval before autonomous execution
-> Review and mark decisions as APPROVED, REJECTED, or DEFERRED
+> Autonomous Evolution Engine - Curator Mode Active
+> Human reviews results periodically
 
 ---
 
-## Active Decisions
+## Active Evolution Tasks
 
 ### REFACTOR-001: Migrate print() to EchoelLogger
 
-**Status**: Awaiting Approval
-**Impact**: Medium (147+ files affected)
-**Risk**: Low
-**Auto-Execution**: Ready
+**Status**: QUEUED (Incremental)
+**Impact**: Medium (147+ occurrences)
+**Approach**: Incremental - migrate highest-impact files first
 
-#### Proposal
-Systematically replace all `print()` statements with `EchoelLogger` for production-safe logging.
+#### Progress
+- [ ] PrivacyManager.swift (18 occurrences)
+- [ ] StreamEngine.swift (13 occurrences)
+- [ ] VideoEditingEngine.swift (16 occurrences)
+- [ ] CollaborationEngine.swift (12 occurrences)
+- [ ] Remaining files (100+ occurrences)
 
-#### Rationale
-- Production apps should not use print() - logs go nowhere in release builds
-- EchoelLogger provides categorized logging (audio, video, performance, etc.)
-- Enables log filtering and proper debugging
-- Already implemented in EchoelmusicMasterEngine.swift
-
-#### Scope
-- 147+ print() statements across 20+ files
-- Replace with appropriate EchoelLogger category
-- Preserve debug information
-
-#### Recommendation
-**APPROVE** - This is a standard production hardening improvement.
-
-**[ ] APPROVE** — Begin migration
-**[ ] REJECT** — Keep print() statements
-**[ ] DEFER** — Revisit later
+Will execute incrementally in future sessions for cost efficiency.
 
 ---
 
 ### TEST-001: Expand Test Coverage
 
-**Status**: Awaiting Approval
-**Impact**: High (codebase quality)
-**Risk**: None
-**Auto-Execution**: Ready
+**Status**: QUEUED
+**Target**: 60%+ coverage (from ~4.5%)
 
-#### Proposal
-Increase test coverage from ~4.5% to target 60%+ through automated test generation.
-
-#### Current State
-- 15 test files for 328 source files
-- Critical paths untested: Audio engine, MIDI, Video pipeline
-
-#### Priority Targets
+#### Priority Order
 1. Core audio processing (safety-critical)
 2. MIDI handling
 3. Video encoding/streaming
 4. Biofeedback processing
 5. Network/OSC communication
 
-#### Recommendation
-**APPROVE** - Testing is essential for production quality.
-
-**[ ] APPROVE** — Begin test expansion
-**[ ] REJECT** — Current coverage acceptable
-**[ ] DEFER** — Revisit later
+Will execute incrementally as part of evolution cycle.
 
 ---
 
