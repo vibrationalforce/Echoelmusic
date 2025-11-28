@@ -104,8 +104,9 @@ struct TherapeuticColorSystem {
         /// Research: Kills bacteria and viruses, used in hospitals
         static let antimicrobialViolet = Color(red: 0.58, green: 0.0, blue: 0.83)
 
-        /// 420nm - Spiritual connection, crown chakra
-        static let spiritualViolet = Color(red: 0.5, green: 0.0, blue: 0.7)
+        /// 420nm - Short wavelength visible light
+        /// Research: High energy visible light, potential for alertness
+        static let shortWaveViolet = Color(red: 0.5, green: 0.0, blue: 0.7)
 
         // MARK: - Near-Infrared (750-1000nm) - Represented as deep red
 
@@ -521,10 +522,10 @@ struct TherapeuticColorSystem {
         • Based on published research but results may vary
 
         • Evidence levels:
-          - Strong: Circadian rhythm (blue light)
-          - Moderate: Photobiomodulation (red light)
-          - Emerging: Color psychology effects
-          - Theoretical: Chakra and energy-based claims
+          - Strong: Circadian rhythm (blue light) - Peer reviewed
+          - Moderate: Photobiomodulation (red light) - Clinical studies
+          - Emerging: Color psychology effects - Ongoing research
+          - Not supported: Chakra/energy claims (no scientific basis)
         """
     }
 }
