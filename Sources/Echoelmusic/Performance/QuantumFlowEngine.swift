@@ -133,8 +133,12 @@ public final class QuantumInspiredProcessor {
         searchSpace: [T],
         objective: (T) -> Float,
         iterations: Int = 10
-    ) -> T {
-        guard !searchSpace.isEmpty else { fatalError("Empty search space") }
+    ) -> T? {
+        guard !searchSpace.isEmpty else {
+            // Return nil instead of crashing for empty search space
+            print("⚠️ [QuantumFlowEngine] groverOptimize called with empty search space")
+            return nil
+        }
 
         var amplitudes = [Float](repeating: 1.0 / sqrt(Float(searchSpace.count)), count: searchSpace.count)
 

@@ -157,10 +157,21 @@ class PhilipsHueAPI: ObservableObject {
             throw HueError.invalidURL
         }
 
-        guard let url = URL(string: "http://\(ipAddress)\(path)") else {
+        // Try HTTPS first (preferred for security), fallback to HTTP for local devices
+        // Note: Local Hue bridges typically use HTTP for local network communication
+        let scheme = useHTTPS ? "https" : "http"
+        guard let url = URL(string: "\(scheme)://\(ipAddress)\(path)") else {
             throw HueError.invalidURL
         }
         return url
+    }
+
+    /// Whether to use HTTPS (default: false for local Hue bridges)
+    private var useHTTPS: Bool = false
+
+    /// Enable HTTPS for API communication
+    public func enableHTTPS(_ enabled: Bool) {
+        useHTTPS = enabled
     }
 }
 

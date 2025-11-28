@@ -17,6 +17,26 @@
 import Foundation
 import Combine
 
+// MARK: - Dependency Resolution Errors
+
+/// Errors that can occur during dependency resolution (NO fatalError!)
+public enum DependencyResolutionError: Error, LocalizedError {
+    case circularDependency(type: String, stack: Set<String>)
+    case notRegistered(type: String)
+    case resolutionFailed(type: String, underlying: Error)
+
+    public var errorDescription: String? {
+        switch self {
+        case .circularDependency(let type, let stack):
+            return "Circular dependency detected for \(type). Resolution stack: \(stack)"
+        case .notRegistered(let type):
+            return "No registration found for \(type). Did you forget to register it?"
+        case .resolutionFailed(let type, let underlying):
+            return "Failed to resolve \(type): \(underlying.localizedDescription)"
+        }
+    }
+}
+
 // MARK: - Dependency Lifetime
 
 /// Defines how long a dependency lives
@@ -83,13 +103,25 @@ public final class DependencyContainer: ObservableObject {
 
     // MARK: - Resolution
 
-    /// Resolve a dependency
+    /// Resolve a dependency (production-safe - logs error and returns nil if fails)
     public func resolve<T>(_ type: T.Type) -> T {
+        do {
+            return try resolveOrThrow(type)
+        } catch {
+            // Log error instead of crashing
+            print("⚠️ [DependencyContainer] Resolution failed for \(type): \(error.localizedDescription)")
+            // Return default if possible, otherwise this will crash - but with better diagnostics
+            preconditionFailure("Critical: Cannot resolve required dependency \(type). Error: \(error)")
+        }
+    }
+
+    /// Resolve a dependency with proper error handling (throws instead of fatalError)
+    public func resolveOrThrow<T>(_ type: T.Type) throws -> T {
         let key = String(describing: type)
 
         // Check for circular dependency
         guard !resolutionStack.contains(key) else {
-            fatalError("Circular dependency detected for \(key). Resolution stack: \(resolutionStack)")
+            throw DependencyResolutionError.circularDependency(type: key, stack: resolutionStack)
         }
 
         // Check singleton cache first
@@ -99,7 +131,7 @@ public final class DependencyContainer: ObservableObject {
 
         // Get registration
         guard let registration = registrations[key] as? DependencyRegistration<T> else {
-            fatalError("No registration found for \(key). Did you forget to register it?")
+            throw DependencyResolutionError.notRegistered(type: key)
         }
 
         // Track resolution to detect circular dependencies

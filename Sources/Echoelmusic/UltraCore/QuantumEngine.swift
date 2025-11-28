@@ -444,9 +444,14 @@ class QuantumEngine: ObservableObject {
     // MARK: - Initialization
 
     private init() {
-        // Setup Metal
+        // Setup Metal (graceful fallback if not available)
         guard let device = MTLCreateSystemDefaultDevice() else {
-            fatalError("Metal not supported")
+            // Metal not supported - use CPU fallback mode
+            print("⚠️ [QuantumEngine] Metal not supported on this device. Using CPU fallback mode.")
+            self.device = nil
+            self.commandQueue = nil
+            self.computePipeline = nil
+            return
         }
 
         self.device = device
