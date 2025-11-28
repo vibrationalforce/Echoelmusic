@@ -109,11 +109,22 @@ public:
         Gamelan,            // Indonesian
         KPop,
         JPop,
+        Thai,               // Thai traditional
+        Vietnamese,         // Vietnamese traditional
+        Filipino,           // Kulintang, OPM
 
         // Middle Eastern
         Arabic,
         Persian,
         Turkish,
+        Kurdish,            // Kurdish traditional
+        Armenian,           // Armenian traditional
+        Georgian,           // Georgian polyphonic
+
+        // Jewish
+        Klezmer,            // Eastern European Jewish
+        Mizrahi,            // Middle Eastern Jewish
+        Cantorial,          // Synagogue liturgical
 
         // European Folk
         Celtic,
@@ -122,6 +133,37 @@ public:
         Flamenco,           // Spanish
         Fado,               // Portuguese
         Balkan,             // Balkan traditional
+        Greek,              // Rebetiko, traditional
+        Roma,               // Romani/Gypsy music
+
+        // Oceania & Pacific
+        Aboriginal,         // Australian Aboriginal
+        Maori,              // New Zealand Maori
+        Polynesian,         // Hawaii, Tahiti, Samoa
+        Melanesian,         // Papua New Guinea, Fiji
+
+        // Americas (Indigenous & Traditional)
+        Andean,             // Peru, Bolivia (pan flute, charango)
+        Mariachi,           // Mexican traditional
+        Norteño,            // Northern Mexico
+        FirstNations,       // Canadian Indigenous
+
+        // Modern African (Contemporary)
+        Afrobeats,          // Modern Nigerian/Ghanaian (different from Afrobeat!)
+        Amapiano,           // South African house
+        Gqom,               // South African electronic
+        Kwaito,             // South African hip-hop/house
+        Kuduro,             // Angolan electronic
+        BaileFunk,          // Brazilian favela funk
+
+        // Modern Caribbean
+        Dancehall,          // Jamaican (distinct from Reggae)
+        Dembow,             // Dominican/Puerto Rican
+
+        // Modern Electronic (Extended)
+        Footwork,           // Chicago juke/footwork
+        UKFunky,            // UK Funky house
+        JerseyClub,         // New Jersey club
 
         // Sacred/Spiritual/Ritual
         GregorianChant,     // Medieval church music
@@ -239,8 +281,13 @@ private:
     void addAsianStyles();
     void addMiddleEasternStyles();
     void addEuropeanFolkStyles();
-    void addSacredSpiritualStyles();    // NEW: Sacred/Ritual/Healing music
-    void addModernElectronicStyles();   // NEW: Extended electronic genres
+    void addSacredSpiritualStyles();    // Sacred/Ritual/Healing music
+    void addModernElectronicStyles();   // Extended electronic genres
+    void addOceaniaStyles();            // Pacific Islands, Aboriginal, Maori
+    void addJewishStyles();             // Klezmer, Mizrahi, Cantorial
+    void addAmericasIndigenousStyles(); // Andean, Mariachi, First Nations
+    void addModernAfricanStyles();      // Amapiano, Afrobeats, Gqom
+    void addModernCaribbeanStyles();    // Dancehall, Dembow
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WorldMusicDatabase)
 };
