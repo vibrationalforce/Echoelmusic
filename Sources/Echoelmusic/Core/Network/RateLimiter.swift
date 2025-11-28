@@ -9,6 +9,9 @@
 //
 
 import Foundation
+import os.log
+
+private let Logger = os.Logger
 
 /// Actor-based rate limiter for API calls
 actor RateLimiter {
@@ -174,8 +177,13 @@ final class NetworkOptimizer {
     // MARK: - Network Reachability
 
     func checkReachability() async -> Bool {
+        // Use safe URL construction instead of force-unwrap
+        guard let url = URL(string: "https://www.apple.com") else {
+            return false
+        }
+
         do {
-            let (_, response) = try await URLSession.shared.data(from: URL(string: "https://www.apple.com")!)
+            let (_, response) = try await URLSession.shared.data(from: url)
 
             if let httpResponse = response as? HTTPURLResponse {
                 return httpResponse.statusCode == 200
@@ -212,28 +220,42 @@ enum NetworkError: Error {
 
 actor OfflineQueue {
     private var queuedRequests: [(url: URL, data: Data?, method: String)] = []
+    private let logger = Logger(subsystem: "com.eoel", category: "OfflineQueue")
 
     func enqueue(url: URL, data: Data? = nil, method: String = "GET") {
         queuedRequests.append((url, data, method))
+        logger.info("Request queued: \(method) \(url.absoluteString)")
     }
 
     func processQueue() async throws {
-        for request in queuedRequests {
-            // Try to process each queued request
+        guard !queuedRequests.isEmpty else { return }
+
+        var successfulIndices: Set<Int> = []
+
+        for (index, request) in queuedRequests.enumerated() {
             var urlRequest = URLRequest(url: request.url)
             urlRequest.httpMethod = request.method
             urlRequest.httpBody = request.data
+            urlRequest.timeoutInterval = 30
 
             do {
                 _ = try await URLSession.shared.data(for: urlRequest)
+                successfulIndices.insert(index)
+                logger.info("Queued request succeeded: \(request.method) \(request.url.absoluteString)")
             } catch {
-                // Keep in queue if still failing
-                continue
+                // Log but don't remove - will retry next time
+                logger.error("Queued request failed: \(request.method) \(request.url.absoluteString) - \(error.localizedDescription)")
             }
         }
 
-        // Clear successfully processed requests
-        queuedRequests.removeAll()
+        // Only remove successful requests (iterate in reverse to preserve indices)
+        for index in successfulIndices.sorted().reversed() {
+            queuedRequests.remove(at: index)
+        }
+
+        if !queuedRequests.isEmpty {
+            logger.warning("\(self.queuedRequests.count) requests still pending in queue")
+        }
     }
 
     func clearQueue() {

@@ -175,10 +175,12 @@ public class WorldwideSyncBridge: ObservableObject {
 
     private func setupEchoelSyncCallbacks() {
         // Listen for local peer changes
+        // FIXED: Capture the peer value from the async stream instead of re-reading
+        // to avoid race condition where value changes between await and read
         Task {
-            for await _ in echoelSync.$connectedPeers.values {
+            for await peers in echoelSync.$connectedPeers.values {
                 await MainActor.run {
-                    self.localPeers = echoelSync.connectedPeers
+                    self.localPeers = peers  // Use captured value, not re-read
                     self.updateConnectionMode()
                 }
             }

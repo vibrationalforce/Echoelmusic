@@ -164,6 +164,9 @@ class AudioEngine: ObservableObject {
         // Stop bio-parameter mapping
         stopBioParameterMapping()
 
+        // Clear all subscriptions to prevent retain cycles
+        cancellables.removeAll()
+
         isRunning = false
         print("🎵 AudioEngine stopped")
     }

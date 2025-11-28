@@ -283,7 +283,15 @@ final class SSLPinningManager: NSObject, URLSessionDelegate {
         let host = challenge.protectionSpace.host
 
         // Check if this domain should be pinned
-        let shouldPin = isPinningEnabled && pinnedDomains.contains(where: { host.hasSuffix($0) })
+        // SECURITY: Use exact domain matching or proper subdomain matching
+        // hasSuffix alone is vulnerable: "evil.com" matches "api.evil.com" but so does "notevil.com"
+        let shouldPin = isPinningEnabled && pinnedDomains.contains(where: { domain in
+            // Exact match
+            if host == domain { return true }
+            // Subdomain match (host ends with ".domain")
+            if host.hasSuffix(".\(domain)") { return true }
+            return false
+        })
 
         // Validate certificate chain
         let policy = SecPolicyCreateSSL(true, host as CFString)

@@ -286,7 +286,7 @@ public class AuthenticationManager: NSObject, ObservableObject {
         }
 
         // Hash password (in production, this would be done server-side)
-        let passwordHash = hashPassword(password)
+        let passwordHash = preparePassword(password)
 
         // API call
         let body: [String: Any] = [
@@ -315,7 +315,7 @@ public class AuthenticationManager: NSObject, ObservableObject {
 
         defer { isLoading = false }
 
-        let passwordHash = hashPassword(password)
+        let passwordHash = preparePassword(password)
 
         let body: [String: Any] = [
             "email": email,
@@ -370,7 +370,7 @@ public class AuthenticationManager: NSObject, ObservableObject {
 
         let body: [String: Any] = [
             "token": token,
-            "newPassword": hashPassword(newPassword)
+            "newPassword": preparePassword(newPassword)
         ]
 
         _ = try await apiRequest(
@@ -579,12 +579,24 @@ public class AuthenticationManager: NSObject, ObservableObject {
         clearSession()
     }
 
+    // MARK: - Network Configuration
+
+    /// Configured URLSession with proper timeouts
+    private lazy var session: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30   // 30 seconds for request
+        config.timeoutIntervalForResource = 60  // 60 seconds for resource
+        config.waitsForConnectivity = true
+        return URLSession(configuration: config)
+    }()
+
     // MARK: - API Helpers
 
     private func apiRequest(endpoint: String, method: String, body: [String: Any]?, authToken: String? = nil) async throws -> [String: Any] {
         var request = URLRequest(url: apiBaseURL.appendingPathComponent(endpoint))
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 30  // Per-request timeout
 
         if let token = authToken {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -594,7 +606,7 @@ public class AuthenticationManager: NSObject, ObservableObject {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
         }
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw AuthError.networkError
@@ -680,12 +692,28 @@ public class AuthenticationManager: NSObject, ObservableObject {
         return email.range(of: emailRegex, options: .regularExpression) != nil
     }
 
-    private func hashPassword(_ password: String) -> String {
-        // In production, use proper password hashing (server-side)
-        // This is just for demonstration
-        let data = Data(password.utf8)
-        let hash = SHA256.hash(data: data)
-        return hash.compactMap { String(format: "%02x", $0) }.joined()
+    /// Whether to send plaintext passwords (server handles hashing)
+    /// SECURITY NOTE: This should be TRUE for production.
+    /// Client-side hashing does NOT add security - passwords should only be sent over HTTPS.
+    /// Server should hash with bcrypt/argon2 with proper salt.
+    private let sendPlaintextPassword: Bool = true
+
+    /// Transform password for API transmission
+    /// - DEPRECATED: Client-side hashing is a security anti-pattern
+    /// - Password travels through network regardless of hashing
+    /// - Server should receive plaintext (over HTTPS) and hash with bcrypt/argon2
+    /// - SHA256 is NOT suitable for password storage (too fast, no salt)
+    private func preparePassword(_ password: String) -> String {
+        if sendPlaintextPassword {
+            // CORRECT: Send plaintext over HTTPS, server hashes with bcrypt/argon2
+            return password
+        } else {
+            // LEGACY: Client-side hashing (NOT SECURE - for backward compatibility only)
+            // WARNING: This provides no additional security and is an anti-pattern
+            let data = Data(password.utf8)
+            let hash = SHA256.hash(data: data)
+            return hash.compactMap { String(format: "%02x", $0) }.joined()
+        }
     }
 
     // MARK: - Auth Token Access

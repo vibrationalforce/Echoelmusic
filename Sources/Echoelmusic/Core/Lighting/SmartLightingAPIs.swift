@@ -72,30 +72,34 @@ class PhilipsHueAPI: ObservableObject {
 
     /// Register app with bridge (press link button)
     func registerWithBridge(ipAddress: String) async throws -> String {
-        let url = URL(string: "http://\(ipAddress)/api")!
+        let url = try buildBridgeURL(ipAddress: ipAddress, path: "/api")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 10
 
         let body: [String: Any] = ["devicetype": "eoel#iphone"]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, _) = try await URLSession.shared.data(for: request)
-        let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]]
 
-        if let success = json?.first?["success"] as? [String: String],
-           let username = success["username"] {
-            return username
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            throw HueError.invalidResponse
         }
 
-        throw HueError.linkButtonNotPressed
+        guard let success = json.first?["success"] as? [String: String],
+              let username = success["username"] else {
+            throw HueError.linkButtonNotPressed
+        }
+
+        return username
     }
 
     /// Get all lights
     func getLights(bridge: HueBridge) async throws -> [HueLight] {
         guard let username = bridge.username else { throw HueError.notAuthenticated }
 
-        let url = URL(string: "http://\(bridge.ipAddress)/api/\(username)/lights")!
+        let url = try buildBridgeURL(ipAddress: bridge.ipAddress, path: "/api/\(username)/lights")
         let (data, _) = try await URLSession.shared.data(from: url)
         let json = try JSONSerialization.jsonObject(with: data) as? [String: [String: Any]] ?? [:]
 
@@ -122,7 +126,7 @@ class PhilipsHueAPI: ObservableObject {
     func setLight(bridge: HueBridge, lightId: String, isOn: Bool? = nil, brightness: Int? = nil, hue: Int? = nil, saturation: Int? = nil) async throws {
         guard let username = bridge.username else { throw HueError.notAuthenticated }
 
-        let url = URL(string: "http://\(bridge.ipAddress)/api/\(username)/lights/\(lightId)/state")!
+        let url = try buildBridgeURL(ipAddress: bridge.ipAddress, path: "/api/\(username)/lights/\(lightId)/state")
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -140,6 +144,23 @@ class PhilipsHueAPI: ObservableObject {
     enum HueError: Error {
         case linkButtonNotPressed
         case notAuthenticated
+        case invalidURL
+        case invalidResponse
+    }
+
+    /// Safely construct URL for Hue bridge API calls
+    /// Note: Hue bridges use HTTP on local network (no HTTPS support)
+    private func buildBridgeURL(ipAddress: String, path: String) throws -> URL {
+        // Validate IP address format to prevent injection
+        let ipPattern = #"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"#
+        guard ipAddress.range(of: ipPattern, options: .regularExpression) != nil else {
+            throw HueError.invalidURL
+        }
+
+        guard let url = URL(string: "http://\(ipAddress)\(path)") else {
+            throw HueError.invalidURL
+        }
+        return url
     }
 }
 

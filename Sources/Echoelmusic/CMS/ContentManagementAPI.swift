@@ -832,13 +832,19 @@ public class ContentManagementAPI: ObservableObject {
         queryParams: [String: String]? = nil,
         body: (any Encodable)? = nil
     ) async throws -> T {
-        var urlComponents = URLComponents(url: configuration.baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: true)!
+        guard var urlComponents = URLComponents(url: configuration.baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: true) else {
+            throw APIError(code: "INVALID_ENDPOINT", message: "Failed to construct URL for endpoint: \(endpoint)", details: nil)
+        }
 
         if let queryParams = queryParams {
             urlComponents.queryItems = queryParams.map { URLQueryItem(name: $0.key, value: $0.value) }
         }
 
-        var request = URLRequest(url: urlComponents.url!)
+        guard let requestURL = urlComponents.url else {
+            throw APIError(code: "INVALID_URL", message: "Failed to construct request URL with query parameters", details: nil)
+        }
+
+        var request = URLRequest(url: requestURL)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -871,13 +877,19 @@ public class ContentManagementAPI: ObservableObject {
         queryParams: [String: String]? = nil,
         body: [String: Any]?
     ) async throws -> T {
-        var urlComponents = URLComponents(url: configuration.baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: true)!
+        guard var urlComponents = URLComponents(url: configuration.baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: true) else {
+            throw APIError(code: "INVALID_ENDPOINT", message: "Failed to construct URL for endpoint: \(endpoint)", details: nil)
+        }
 
         if let queryParams = queryParams {
             urlComponents.queryItems = queryParams.map { URLQueryItem(name: $0.key, value: $0.value) }
         }
 
-        var request = URLRequest(url: urlComponents.url!)
+        guard let requestURL = urlComponents.url else {
+            throw APIError(code: "INVALID_URL", message: "Failed to construct request URL with query parameters", details: nil)
+        }
+
+        var request = URLRequest(url: requestURL)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
