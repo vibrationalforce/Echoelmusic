@@ -21,6 +21,8 @@ void WorldMusicDatabase::initializeDatabase()
     addAsianStyles();
     addMiddleEasternStyles();
     addEuropeanFolkStyles();
+    addSacredSpiritualStyles();     // Sacred/Ritual/Healing music
+    addModernElectronicStyles();    // Extended electronic genres
 }
 
 //==============================================================================
@@ -474,6 +476,284 @@ void WorldMusicDatabase::addWorldMusicStyles()
     addAsianStyles();
     addMiddleEasternStyles();
     addEuropeanFolkStyles();
+}
+
+//==============================================================================
+// Sacred, Spiritual & Ritual Music
+
+void WorldMusicDatabase::addSacredSpiritualStyles()
+{
+    // Gregorian Chant (already added in Classical, but also referenced here)
+    styleDatabase[StyleCategory::GregorianChant] = {
+        "Gregorian Chant", StyleCategory::GregorianChant, "Europe (Medieval)", "500-1400",
+        {{0}, {0, 4}},  // Monophonic, modal
+        {ChordGenius::Scale::Dorian, ChordGenius::Scale::Phrygian, ChordGenius::Scale::Lydian, ChordGenius::Scale::Mixolydian},
+        {ChordGenius::ChordQuality::Power},  // Open 5ths, no 3rds
+        60.0f, 80.0f,
+        "Free rhythm (prose rhythm)", "Stepwise, narrow range, melismatic",
+        {"Voice (Monophonic)", "Organ"},
+        "Latin liturgical texts, 8 church modes, monophonic, contemplative. "
+        "Hildegard von Bingen, Notre Dame School. Used in meditation and healing.",
+        0.0f, 0.1f, 0.4f, 0.0f
+    };
+
+    // Tibetan Buddhist Music
+    styleDatabase[StyleCategory::TibetanBuddhist] = {
+        "Tibetan Buddhist", StyleCategory::TibetanBuddhist, "Tibet/Nepal/Bhutan", "Ancient-Present",
+        {{0}, {0, 4}},  // Drone-based
+        {ChordGenius::Scale::Phrygian, ChordGenius::Scale::Dorian},
+        {ChordGenius::ChordQuality::Power},
+        40.0f, 80.0f,
+        "Free rhythm, cyclical mantras", "Low drones, overtone-rich",
+        {"Singing Bowls", "Dungchen (Long Horns)", "Gyaling (Oboe)", "Damaru (Drum)", "Tingsha (Cymbals)", "Voice"},
+        "Chanting, mantras, overtone singing. Instruments: singing bowls, long horns (dungchen). "
+        "Used for meditation, healing, and spiritual practice. Om Mani Padme Hum.",
+        0.1f, 0.2f, 0.5f, 0.0f
+    };
+
+    // Sufi Music
+    styleDatabase[StyleCategory::SufiMusic] = {
+        "Sufi / Qawwali", StyleCategory::SufiMusic, "Turkey/Pakistan/India", "700s-Present",
+        {{0, 4}, {0, 5}},  // Modal, repetitive
+        {ChordGenius::Scale::Phrygian, ChordGenius::Scale::HarmonicMinor, ChordGenius::Scale::Arabic},
+        {ChordGenius::ChordQuality::Minor, ChordGenius::ChordQuality::Dominant7},
+        80.0f, 160.0f,
+        "Accelerating tempo, trance-inducing", "Melismatic, ornamented, ecstatic",
+        {"Harmonium", "Tabla", "Dholak", "Voice", "Ney", "Saz"},
+        "Qawwali (Pakistan), Sema/Whirling Dervishes (Turkey). Nusrat Fateh Ali Khan. "
+        "Ecstatic devotional music, trance states, divine union. Accelerating tempo.",
+        0.5f, 0.3f, 0.7f, 0.6f
+    };
+
+    // Hindu Devotional (Kirtan/Bhajan)
+    styleDatabase[StyleCategory::HinduDevotional] = {
+        "Hindu Devotional", StyleCategory::HinduDevotional, "India", "Ancient-Present",
+        {{0, 3, 4}, {0, 4, 0}},  // Simple progressions
+        {ChordGenius::Scale::Major, ChordGenius::Scale::Dorian, ChordGenius::Scale::Mixolydian},
+        {ChordGenius::ChordQuality::Major, ChordGenius::ChordQuality::Minor},
+        80.0f, 140.0f,
+        "Call-and-response, accelerating", "Repetitive, mantra-like",
+        {"Harmonium", "Tabla", "Mridangam", "Kartal", "Voice"},
+        "Kirtan (call-and-response chanting), Bhajan (devotional songs), Vedic chanting. "
+        "Krishna Das, Deva Premal. Used in yoga, meditation, spiritual gatherings.",
+        0.2f, 0.2f, 0.4f, 0.4f
+    };
+
+    // Native American
+    styleDatabase[StyleCategory::NativeAmerican] = {
+        "Native American", StyleCategory::NativeAmerican, "North America", "Ancient-Present",
+        {{0}, {0, 4}},  // Pentatonic, modal
+        {ChordGenius::Scale::MinorPentatonic, ChordGenius::Scale::MajorPentatonic},
+        {ChordGenius::ChordQuality::Power},
+        80.0f, 160.0f,
+        "Heartbeat drum, vocables", "Descending phrases, vocables",
+        {"Pow-wow Drum", "Flute (Native American)", "Rattle", "Voice"},
+        "Pow-wow songs, healing songs, prayer songs. Heartbeat drum rhythm. "
+        "R. Carlos Nakai (flute). Vocables (non-lexical syllables). Ceremonial and healing.",
+        0.1f, 0.2f, 0.5f, 0.3f
+    };
+
+    // African Tribal/Ceremonial
+    styleDatabase[StyleCategory::AfricanTribal] = {
+        "African Tribal/Ceremonial", StyleCategory::AfricanTribal, "Africa (Various)", "Ancient-Present",
+        {{0}, {0, 3}},  // Simple, rhythmically complex
+        {ChordGenius::Scale::MinorPentatonic, ChordGenius::Scale::MajorPentatonic},
+        {ChordGenius::ChordQuality::Power, ChordGenius::ChordQuality::Minor},
+        80.0f, 180.0f,
+        "Complex polyrhythms, call-and-response", "Repetitive, trance-inducing",
+        {"Djembe", "Talking Drum", "Shekere", "Balafon", "Mbira", "Voice"},
+        "Ceremonial, healing, trance rituals. Gnawa (Morocco), Vodou (Haiti/Benin). "
+        "Complex polyrhythms, interlocking patterns, ancestral communication.",
+        0.1f, 0.2f, 0.6f, 0.8f
+    };
+
+    // Shamanic/Healing Music
+    styleDatabase[StyleCategory::ShamanicHealing] = {
+        "Shamanic / Healing", StyleCategory::ShamanicHealing, "Worldwide", "Ancient-Present",
+        {{0}, {0, 4}},  // Drone, repetitive
+        {ChordGenius::Scale::MinorPentatonic, ChordGenius::Scale::Phrygian},
+        {ChordGenius::ChordQuality::Power},
+        60.0f, 120.0f,
+        "Repetitive drumming (3-7 Hz theta range)", "Monotonic, trance-inducing",
+        {"Frame Drum", "Rattle", "Voice", "Didgeridoo", "Singing Bowls"},
+        "Theta brainwave entrainment (3-7 Hz). Michael Harner, Sandra Ingerman. "
+        "Monotonous drumming, journeying, healing ceremonies, plant medicine rituals.",
+        0.0f, 0.1f, 0.3f, 0.1f
+    };
+
+    // Throat Singing (Overtone Singing)
+    styleDatabase[StyleCategory::ThroatSinging] = {
+        "Throat Singing / Overtone", StyleCategory::ThroatSinging, "Mongolia/Tuva/Inuit", "Ancient-Present",
+        {{0}, {0, 4}},  // Drone with overtones
+        {ChordGenius::Scale::MajorPentatonic, ChordGenius::Scale::MinorPentatonic},
+        {ChordGenius::ChordQuality::Power},
+        60.0f, 100.0f,
+        "Sustained drones, rhythmic breathing", "Overtone melodies over drone",
+        {"Voice (Khoomei/Sygyt/Kargyraa)", "Igil (Fiddle)", "Jaw Harp"},
+        "Khoomei (Tuvan), Khöömii (Mongolian), Inuit throat games. "
+        "Multiple pitches simultaneously from one voice. Huun-Huur-Tu, Chirgilchin.",
+        0.1f, 0.2f, 0.7f, 0.1f
+    };
+
+    // New Age / Meditation Music
+    styleDatabase[StyleCategory::NewAge] = {
+        "New Age / Meditation", StyleCategory::NewAge, "Global", "1970s-Present",
+        {{0, 3}, {0, 4, 0}},  // Simple, floating
+        {ChordGenius::Scale::Major, ChordGenius::Scale::MajorPentatonic, ChordGenius::Scale::Lydian},
+        {ChordGenius::ChordQuality::Major7, ChordGenius::ChordQuality::Add9},
+        60.0f, 100.0f,
+        "Floating, spacious, slow", "Gentle, stepwise, suspended",
+        {"Synth Pads", "Piano", "Flute", "Harp", "Nature Sounds", "Singing Bowls"},
+        "Enya, Kitaro, Deuter, Steven Halpern. Binaural beats, isochronic tones. "
+        "Used for meditation, yoga, massage, relaxation. 432 Hz tuning popular.",
+        0.2f, 0.1f, 0.4f, 0.0f
+    };
+}
+
+//==============================================================================
+// Modern Electronic Styles (Extended)
+
+void WorldMusicDatabase::addModernElectronicStyles()
+{
+    // Lo-Fi Hip-Hop / Chillhop
+    styleDatabase[StyleCategory::LoFiHipHop] = {
+        "Lo-Fi Hip-Hop / Chillhop", StyleCategory::LoFiHipHop, "Global (Internet)", "2010s-Present",
+        {{1, 4, 0}, {5, 3, 0, 4}},  // Jazz-influenced
+        {ChordGenius::Scale::Dorian, ChordGenius::Scale::NaturalMinor},
+        {ChordGenius::ChordQuality::Minor7, ChordGenius::ChordQuality::Major7, ChordGenius::ChordQuality::Dominant9},
+        70.0f, 90.0f,
+        "Relaxed, swung, imperfect", "Jazz-influenced, mellow",
+        {"Vinyl Crackle", "Rhodes/Wurlitzer", "Muted Guitar", "Soft Drums", "Ambient Samples"},
+        "Nujabes, J Dilla influence. Study beats, YouTube/Spotify playlists. "
+        "Intentionally degraded sound (bit-crush, vinyl noise). Aesthetic nostalgia.",
+        0.3f, 0.2f, 0.4f, 0.3f
+    };
+
+    // Vaporwave
+    styleDatabase[StyleCategory::Vaporwave] = {
+        "Vaporwave", StyleCategory::Vaporwave, "Internet", "2010s-Present",
+        {{0, 3}, {5, 0}},  // Slowed, chopped
+        {ChordGenius::Scale::Major, ChordGenius::Scale::Dorian},
+        {ChordGenius::ChordQuality::Major7, ChordGenius::ChordQuality::Minor7},
+        60.0f, 100.0f,
+        "Slowed down, chopped, looped", "Nostalgic, surreal",
+        {"Slowed Samples", "Synth Pads", "Saxophones", "80s Drums"},
+        "Macintosh Plus, Saint Pepsi. Slowed-down 80s/90s samples, corporate muzak. "
+        "A E S T H E T I C. Critique of capitalism, nostalgia, consumerism. Glitch art.",
+        0.2f, 0.2f, 0.3f, 0.2f
+    };
+
+    // Hyperpop
+    styleDatabase[StyleCategory::Hyperpop] = {
+        "Hyperpop", StyleCategory::Hyperpop, "Internet/UK", "2010s-Present",
+        {{0, 4, 5, 3}, {5, 3, 0, 4}},  // Pop but extreme
+        {ChordGenius::Scale::Major, ChordGenius::Scale::NaturalMinor},
+        {ChordGenius::ChordQuality::Major, ChordGenius::ChordQuality::Minor},
+        140.0f, 180.0f,
+        "Chaotic, maximalist, glitchy", "Pitch-shifted vocals, extreme autotune",
+        {"Pitch-shifted Vocals", "Distorted 808s", "Synth Leads", "Glitchy FX"},
+        "PC Music, 100 gecs, SOPHIE, Charli XCX. Deliberately abrasive, deconstructed pop. "
+        "Extreme vocal processing, distortion, glitch, genre-blending. Post-ironic.",
+        0.5f, 0.6f, 0.6f, 0.5f
+    };
+
+    // Drill
+    styleDatabase[StyleCategory::Drill] = {
+        "Drill", StyleCategory::Drill, "Chicago/UK/NY", "2010s-Present",
+        {{5, 3}, {0, 5}},  // Dark, minor
+        {ChordGenius::Scale::NaturalMinor, ChordGenius::Scale::Phrygian},
+        {ChordGenius::ChordQuality::Minor, ChordGenius::ChordQuality::Minor7},
+        135.0f, 145.0f,
+        "Sliding 808s, hi-hat rolls", "Dark, ominous",
+        {"808 Bass (Sliding)", "Hi-hats", "Dark Pads", "Piano"},
+        "UK Drill: 67, Pop Smoke. Chicago Drill: Chief Keef, King Von. "
+        "Aggressive, dark, sliding 808 bass, rapid hi-hats. Street narratives.",
+        0.3f, 0.5f, 0.4f, 0.6f
+    };
+
+    // Dark Ambient / Drone
+    styleDatabase[StyleCategory::DarkAmbient] = {
+        "Dark Ambient / Drone", StyleCategory::DarkAmbient, "Europe/USA", "1970s-Present",
+        {{0}, {5}},  // Minimal harmonic movement
+        {ChordGenius::Scale::NaturalMinor, ChordGenius::Scale::Phrygian, ChordGenius::Scale::Locrian},
+        {ChordGenius::ChordQuality::Minor, ChordGenius::ChordQuality::Diminished},
+        0.0f, 60.0f,  // Very slow or no tempo
+        "Atmospheric, droning", "Static, evolving textures",
+        {"Drones", "Field Recordings", "Granular Synths", "Processed Instruments"},
+        "Lustmord, Atrium Carceri, Sunn O))), Stars of the Lid. "
+        "Horror soundtracks, meditation (dark), industrial spaces. Textural evolution.",
+        0.4f, 0.7f, 0.5f, 0.0f
+    };
+
+    // Chiptune / 8-bit
+    styleDatabase[StyleCategory::Chiptune] = {
+        "Chiptune / 8-bit", StyleCategory::Chiptune, "Japan/USA", "1980s-Present",
+        {{0, 4, 5, 3}, {0, 3, 4, 0}},  // Pop progressions
+        {ChordGenius::Scale::Major, ChordGenius::Scale::MinorPentatonic},
+        {ChordGenius::ChordQuality::Major, ChordGenius::ChordQuality::Minor},
+        120.0f, 180.0f,
+        "Energetic, precise", "Arpeggiated, melodic",
+        {"Square Wave", "Triangle Wave", "Noise (Drums)", "Pulse Width Mod"},
+        "NES, Game Boy, C64 sound chips. Anamanaguchi, Chipzel. "
+        "Video game music, demoscene. 4 channels, limited polyphony = creative constraints.",
+        0.2f, 0.2f, 0.5f, 0.3f
+    };
+
+    // IDM (Intelligent Dance Music)
+    styleDatabase[StyleCategory::IDM] = {
+        "IDM", StyleCategory::IDM, "UK/USA", "1990s-Present",
+        {{0}, {0, 3, 4}},  // Experimental
+        {ChordGenius::Scale::Dorian, ChordGenius::Scale::WholeTone, ChordGenius::Scale::Chromatic},
+        {ChordGenius::ChordQuality::Major7, ChordGenius::ChordQuality::Minor7, ChordGenius::ChordQuality::Augmented},
+        90.0f, 160.0f,
+        "Complex, polyrhythmic, glitchy", "Experimental, unpredictable",
+        {"Complex Drums", "Glitchy FX", "Synths", "Processed Samples"},
+        "Aphex Twin, Autechre, Boards of Canada, Squarepusher. "
+        "Experimental electronic, complex rhythms, Warp Records. 'Braindance'.",
+        0.6f, 0.5f, 0.9f, 0.7f
+    };
+
+    // Glitch
+    styleDatabase[StyleCategory::Glitch] = {
+        "Glitch", StyleCategory::Glitch, "Germany/Japan", "1990s-Present",
+        {{0}, {0, 4}},  // Minimal
+        {ChordGenius::Scale::Chromatic, ChordGenius::Scale::WholeTone},
+        {ChordGenius::ChordQuality::Augmented, ChordGenius::ChordQuality::Diminished},
+        80.0f, 140.0f,
+        "Stuttering, cut-up, granular", "Fragmented, deconstructed",
+        {"Digital Errors", "Granular", "Cut-up Samples", "Microsounds"},
+        "Oval, Alva Noto, Fennesz, Ryoji Ikeda. "
+        "Digital errors as aesthetic. CD skipping, data corruption, microsounds.",
+        0.7f, 0.6f, 0.7f, 0.4f
+    };
+
+    // Microhouse / Minimal
+    styleDatabase[StyleCategory::Microhouse] = {
+        "Microhouse / Minimal", StyleCategory::Microhouse, "Germany", "1990s-Present",
+        {{0}, {5, 0}},  // Minimal chord changes
+        {ChordGenius::Scale::NaturalMinor, ChordGenius::Scale::Dorian},
+        {ChordGenius::ChordQuality::Minor7},
+        118.0f, 128.0f,
+        "Hypnotic, repetitive, subtle", "Minimal, micro-variations",
+        {"Micro-samples", "Clicks", "Soft Kicks", "Subtle Synths"},
+        "Villalobos, Richie Hawtin, Akufen. Berlin minimal scene. "
+        "Microscopic samples, subtle evolution, hypnotic repetition. Less is more.",
+        0.2f, 0.2f, 0.6f, 0.3f
+    };
+
+    // World Fusion
+    styleDatabase[StyleCategory::WorldFusion] = {
+        "World Fusion", StyleCategory::WorldFusion, "Global", "1980s-Present",
+        {{0, 3, 4}, {1, 4, 0}},  // Varied
+        {ChordGenius::Scale::Dorian, ChordGenius::Scale::Mixolydian, ChordGenius::Scale::Arabic},
+        {ChordGenius::ChordQuality::Major7, ChordGenius::ChordQuality::Minor7, ChordGenius::ChordQuality::Dominant9},
+        80.0f, 140.0f,
+        "Blended traditions", "Cross-cultural melodic elements",
+        {"Traditional + Electronic", "World Percussion", "Global Instruments"},
+        "Dead Can Dance, Nils Petter Molvær, Anoushka Shankar, Trilok Gurtu. "
+        "Cross-cultural collaboration, East meets West, traditional + electronic.",
+        0.5f, 0.4f, 0.7f, 0.5f
+    };
 }
 
 //==============================================================================

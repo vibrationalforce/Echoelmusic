@@ -121,6 +121,29 @@ public:
         Slavic,
         Flamenco,           // Spanish
         Fado,               // Portuguese
+        Balkan,             // Balkan traditional
+
+        // Sacred/Spiritual/Ritual
+        GregorianChant,     // Medieval church music
+        TibetanBuddhist,    // Tibetan chanting, singing bowls
+        SufiMusic,          // Sufi/Dervish whirling, Qawwali
+        HinduDevotional,    // Kirtan, Bhajan, Vedic chanting
+        NativeAmerican,     // Indigenous North American
+        AfricanTribal,      // Traditional African ceremonial
+        ShamanicHealing,    // Shamanic/healing traditions worldwide
+        ThroatSinging,      // Tuvan, Mongolian, Inuit overtone singing
+        NewAge,             // Modern spiritual/meditation music
+
+        // Modern Electronic (Extended)
+        LoFiHipHop,         // Chillhop, study beats
+        Vaporwave,          // Aesthetic, nostalgic electronic
+        Hyperpop,           // Experimental pop, PC Music style
+        Drill,              // UK Drill, NY Drill
+        DarkAmbient,        // Drone, dark atmospheric
+        Chiptune,           // 8-bit, video game music
+        IDM,                // Intelligent Dance Music
+        Glitch,             // Glitch electronic
+        Microhouse,         // Minimal house
 
         // Other
         Gospel,
@@ -128,7 +151,8 @@ public:
         Punk,
         Grunge,
         Indie,
-        Alternative
+        Alternative,
+        WorldFusion         // Cross-cultural fusion
     };
 
     //==============================================================================
@@ -215,6 +239,8 @@ private:
     void addAsianStyles();
     void addMiddleEasternStyles();
     void addEuropeanFolkStyles();
+    void addSacredSpiritualStyles();    // NEW: Sacred/Ritual/Healing music
+    void addModernElectronicStyles();   // NEW: Extended electronic genres
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WorldMusicDatabase)
 };
