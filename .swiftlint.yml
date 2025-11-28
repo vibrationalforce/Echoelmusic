@@ -1,0 +1,51 @@
+# SwiftLint Configuration - Zero Cost Local Linting
+# Runs automatically on every save (Xcode) and commit (pre-commit hook)
+
+disabled_rules:
+  - trailing_whitespace
+  - line_length  # We have longer lines for readability
+
+opt_in_rules:
+  - empty_count
+  - empty_string
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - legacy_random
+  - multiline_parameters
+  - private_outlet
+  - private_action
+  - unowned_variable_capture
+  - unused_import
+  - vertical_parameter_alignment_on_call
+
+excluded:
+  - Pods
+  - .build
+  - Package.swift
+  - Tests
+
+# Custom rules for Echoelmusic
+custom_rules:
+  no_print_in_production:
+    name: "No print() in production code"
+    regex: "print\\("
+    message: "Use EchoelLogger instead of print()"
+    severity: warning
+
+  no_fatalError:
+    name: "No fatalError in production"
+    regex: "fatalError\\("
+    message: "Use throws/Result instead of fatalError()"
+    severity: error
+
+  no_force_cast:
+    name: "No force cast"
+    regex: "as!"
+    message: "Use safe casting (as?) with proper error handling"
+    severity: error
+
+force_cast: error
+force_try: warning
+force_unwrapping: warning
+
+reporter: "xcode"
