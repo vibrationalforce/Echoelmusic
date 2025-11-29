@@ -3,6 +3,8 @@
 #include <JuceHeader.h>
 #include "../Audio/AudioEngine.h"
 #include "../Audio/Track.h"
+#include "../Audio/SessionManager.h"
+#include "../Audio/AudioExporter.h"
 
 /**
  * Echoelmusic Main Window
@@ -49,6 +51,11 @@ private:
     // Core References
     //==========================================================================
     std::unique_ptr<AudioEngine> audioEngine;
+    std::unique_ptr<SessionManager> sessionManager;
+    std::unique_ptr<AudioExporter> audioExporter;
+
+    void saveProject();
+    void exportAudio();
 
     //==========================================================================
     // UI Sections
@@ -138,7 +145,7 @@ class MainWindow::MainComponent::TransportBar : public juce::Component,
                                                  public juce::Button::Listener
 {
 public:
-    TransportBar(AudioEngine& engine);
+    TransportBar(AudioEngine& engine, std::function<void()> saveCallback, std::function<void()> exportCallback);
 
     void paint(juce::Graphics& g) override;
     void resized() override;
@@ -171,6 +178,9 @@ private:
     void onRecordClicked();
 
     void drawMasterMeter(juce::Graphics& g, juce::Rectangle<int> bounds);
+
+    std::function<void()> onSaveProject;
+    std::function<void()> onExportAudio;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportBar)
 };

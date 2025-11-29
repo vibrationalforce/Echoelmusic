@@ -6,6 +6,7 @@
 #include <JuceHeader.h>
 #include <atomic>
 #include <queue>
+#include <set>
 
 namespace Echoel {
 
@@ -237,13 +238,40 @@ private:
     }
 };
 
-// ==================== TELEMETRY SYSTEM ====================
+// ==================== PRIVACY-FIRST TELEMETRY (CCC-KONFORM) ====================
+/**
+ * TelemetrySystem - CCC-Philosophy Compliant
+ *
+ * Prinzipien:
+ * 1. 100% OPT-IN - Standardmäßig AUS, User muss explizit zustimmen
+ * 2. LOCAL-FIRST - Kann komplett lokal bleiben (keine Daten nach extern)
+ * 3. TRANSPARENT - User sieht exakt was gesammelt wird
+ * 4. MINIMAL - Nur technische Daten, keine PII
+ * 5. EXPORTIERBAR - User kann alle Daten exportieren/löschen
+ */
 class TelemetrySystem {
 public:
+    enum class ConsentLevel {
+        None,           // Keine Telemetrie (Default!)
+        LocalOnly,      // Nur lokale Statistiken, nichts wird gesendet
+        Anonymous,      // Anonymisierte Daten, kein User-Identifier
+        Full            // Volle Telemetrie (nur wenn User explizit will)
+    };
+
     struct Event {
         juce::String name;
         std::map<juce::String, juce::String> properties;
         int64_t timestamp;
+        bool sentExternally{false};
+    };
+
+    struct PrivacyDashboard {
+        int totalEventsCollected{0};
+        int eventsSentExternally{0};
+        int eventsKeptLocal{0};
+        juce::Time lastDataSent;
+        std::vector<juce::String> collectedDataTypes;
+        ConsentLevel currentConsent{ConsentLevel::None};
     };
 
     static TelemetrySystem& getInstance() {
@@ -251,45 +279,143 @@ public:
         return instance;
     }
 
-    void initialize(const juce::String& apiKey, bool enableInDebug = false) {
-        this->apiKey = apiKey;
-        this->enableInDebug = enableInDebug;
-        enabled = true;
+    //==========================================================================
+    // CCC-KONFORM: Explizites Opt-In erforderlich!
+    //==========================================================================
 
-#ifdef NDEBUG
-        // Always enabled in release
-#else
-        // Only enabled in debug if explicitly requested
-        if (!enableInDebug) {
-            enabled = false;
-        }
-#endif
+    /**
+     * Telemetrie ist standardmäßig AUS!
+     * User muss explizit setConsent() aufrufen.
+     */
+    void initialize(const juce::String& apiKey = "") {
+        this->apiKey = apiKey;
+        // WICHTIG: enabled bleibt FALSE bis User explizit zustimmt!
+        enabled = false;
+        consentLevel = ConsentLevel::None;
+        loadConsentFromDisk();
     }
+
+    /**
+     * Explizites Opt-In - User muss aktiv zustimmen
+     */
+    void setConsent(ConsentLevel level) {
+        consentLevel = level;
+        enabled = (level != ConsentLevel::None);
+        saveConsentToDisk();
+
+        // Log für Transparenz
+        DBG("🔒 Telemetry Consent Changed: " << consentLevelToString(level));
+    }
+
+    ConsentLevel getConsentLevel() const { return consentLevel; }
+    bool isEnabled() const { return enabled && consentLevel != ConsentLevel::None; }
+
+    //==========================================================================
+    // Transparenz: Was wird gesammelt?
+    //==========================================================================
+
+    PrivacyDashboard getPrivacyDashboard() const {
+        std::lock_guard<std::mutex> lock(mutex);
+        PrivacyDashboard dashboard;
+        dashboard.totalEventsCollected = static_cast<int>(localEventLog.size());
+        dashboard.eventsSentExternally = eventsSentExternally;
+        dashboard.eventsKeptLocal = dashboard.totalEventsCollected - eventsSentExternally;
+        dashboard.lastDataSent = lastExternalSend;
+        dashboard.currentConsent = consentLevel;
+
+        // Liste der gesammelten Datentypen
+        std::set<juce::String> types;
+        for (const auto& event : localEventLog) {
+            types.insert(event.name);
+        }
+        for (const auto& t : types) {
+            dashboard.collectedDataTypes.push_back(t);
+        }
+
+        return dashboard;
+    }
+
+    /**
+     * Exportiere alle gesammelten Daten (GDPR Right to Access)
+     */
+    juce::String exportAllData() const {
+        std::lock_guard<std::mutex> lock(mutex);
+        juce::String json = "{\n  \"telemetry_data\": [\n";
+
+        for (size_t i = 0; i < localEventLog.size(); ++i) {
+            const auto& event = localEventLog[i];
+            json << "    {\n";
+            json << "      \"event\": \"" << event.name << "\",\n";
+            json << "      \"timestamp\": " << event.timestamp << ",\n";
+            json << "      \"sent_externally\": " << (event.sentExternally ? "true" : "false") << ",\n";
+            json << "      \"properties\": {\n";
+
+            size_t propIndex = 0;
+            for (const auto& [key, value] : event.properties) {
+                json << "        \"" << key << "\": \"" << value << "\"";
+                if (++propIndex < event.properties.size()) json << ",";
+                json << "\n";
+            }
+            json << "      }\n";
+            json << "    }";
+            if (i < localEventLog.size() - 1) json << ",";
+            json << "\n";
+        }
+
+        json << "  ]\n}";
+        return json;
+    }
+
+    /**
+     * Lösche alle gesammelten Daten (GDPR Right to Erasure)
+     */
+    void deleteAllData() {
+        std::lock_guard<std::mutex> lock(mutex);
+        localEventLog.clear();
+        while (!eventQueue.empty()) eventQueue.pop();
+        eventsSentExternally = 0;
+        DBG("🗑️ All telemetry data deleted");
+    }
+
+    //==========================================================================
+    // Event Tracking (nur wenn Consent gegeben)
+    //==========================================================================
 
     void trackEvent(const juce::String& eventName,
                    const std::map<juce::String, juce::String>& properties = {}) {
-        if (!enabled) return;
+        // STRIKT: Kein Tracking ohne expliziten Consent!
+        if (!enabled || consentLevel == ConsentLevel::None) return;
 
         Event event;
         event.name = eventName;
         event.properties = properties;
         event.timestamp = juce::Time::currentTimeMillis();
 
-        // Add common properties
+        // NUR technische Daten, keine PII!
         event.properties["version"] = VersionManager::getCurrentVersion().toString();
         event.properties["platform"] = getPlatformString();
+        // KEINE User-ID, Email, IP-Adresse, etc.!
 
         std::lock_guard<std::mutex> lock(mutex);
-        eventQueue.push(event);
 
-        // Process queue asynchronously
-        if (!processingEvents) {
-            processingEvents = true;
-            juce::Thread::launch([this]() { processEventQueue(); });
+        // Immer lokal speichern für Transparenz
+        localEventLog.push_back(event);
+
+        // Nur bei Anonymous/Full nach extern senden
+        if (consentLevel == ConsentLevel::Anonymous ||
+            consentLevel == ConsentLevel::Full) {
+            eventQueue.push(event);
+            if (!processingEvents) {
+                processingEvents = true;
+                juce::Thread::launch([this]() { processEventQueue(); });
+            }
         }
     }
 
     void flush() {
+        if (consentLevel == ConsentLevel::None ||
+            consentLevel == ConsentLevel::LocalOnly) return;
+
         std::lock_guard<std::mutex> lock(mutex);
         while (!eventQueue.empty()) {
             sendEvent(eventQueue.front());
@@ -300,12 +426,15 @@ public:
 private:
     TelemetrySystem() = default;
 
-    std::mutex mutex;
-    bool enabled{false};
-    bool enableInDebug{false};
+    mutable std::mutex mutex;
+    bool enabled{false};  // Default: AUS!
     bool processingEvents{false};
+    ConsentLevel consentLevel{ConsentLevel::None};  // Default: KEIN Consent!
     juce::String apiKey;
     std::queue<Event> eventQueue;
+    std::vector<Event> localEventLog;  // Für Transparenz
+    int eventsSentExternally{0};
+    juce::Time lastExternalSend;
 
     static juce::String getPlatformString() {
 #if JUCE_WINDOWS
@@ -323,6 +452,46 @@ private:
 #endif
     }
 
+    static juce::String consentLevelToString(ConsentLevel level) {
+        switch (level) {
+            case ConsentLevel::None: return "None (Telemetry OFF)";
+            case ConsentLevel::LocalOnly: return "Local Only (no external data)";
+            case ConsentLevel::Anonymous: return "Anonymous (no user ID)";
+            case ConsentLevel::Full: return "Full";
+        }
+        return "Unknown";
+    }
+
+    void loadConsentFromDisk() {
+        auto file = getConsentFile();
+        if (file.existsAsFile()) {
+            auto content = file.loadFileAsString();
+            if (content == "none") consentLevel = ConsentLevel::None;
+            else if (content == "local") consentLevel = ConsentLevel::LocalOnly;
+            else if (content == "anonymous") consentLevel = ConsentLevel::Anonymous;
+            else if (content == "full") consentLevel = ConsentLevel::Full;
+            enabled = (consentLevel != ConsentLevel::None);
+        }
+    }
+
+    void saveConsentToDisk() {
+        auto file = getConsentFile();
+        juce::String content;
+        switch (consentLevel) {
+            case ConsentLevel::None: content = "none"; break;
+            case ConsentLevel::LocalOnly: content = "local"; break;
+            case ConsentLevel::Anonymous: content = "anonymous"; break;
+            case ConsentLevel::Full: content = "full"; break;
+        }
+        file.replaceWithText(content);
+    }
+
+    juce::File getConsentFile() {
+        return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                   .getChildFile("Echoelmusic")
+                   .getChildFile("telemetry_consent.txt");
+    }
+
     void processEventQueue() {
         while (true) {
             Event event;
@@ -337,51 +506,147 @@ private:
             }
 
             sendEvent(event);
-            juce::Thread::sleep(100);  // Rate limiting
+            juce::Thread::sleep(100);
         }
     }
 
     void sendEvent(const Event& event) {
-        // Would send to analytics server
-        DBG("Telemetry Event: " << event.name);
-        for (const auto& [key, value] : event.properties) {
-            DBG("  " << key << ": " << value);
+        // Markiere als extern gesendet
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            eventsSentExternally++;
+            lastExternalSend = juce::Time::getCurrentTime();
+            for (auto& e : localEventLog) {
+                if (e.timestamp == event.timestamp && e.name == event.name) {
+                    e.sentExternally = true;
+                    break;
+                }
+            }
         }
+
+        DBG("📤 Telemetry Event Sent: " << event.name);
     }
 };
 
-// ==================== FEATURE FLAGS ====================
+// ==================== LOCAL-FIRST FEATURE FLAGS (CCC-KONFORM) ====================
+/**
+ * FeatureFlags - CCC-Philosophy Compliant
+ *
+ * Prinzipien:
+ * 1. LOCAL-FIRST - Alle Flags werden lokal gespeichert
+ * 2. USER-CONTROLLED - Keine Remote-Steuerung ohne Zustimmung
+ * 3. TRANSPARENT - User sieht alle aktiven Flags
+ * 4. PERSISTENT - Flags bleiben nach Neustart erhalten
+ */
 class FeatureFlags {
 public:
+    struct FlagInfo {
+        bool enabled{false};
+        juce::String description;
+        juce::String category;
+        bool isExperimental{false};
+    };
+
     static FeatureFlags& getInstance() {
         static FeatureFlags instance;
         return instance;
     }
 
-    void loadFromServer(const juce::String& endpoint) {
-        // Would fetch feature flags from server
-        // For now, use defaults
-        ECHOEL_UNUSED(endpoint);
+    /**
+     * LOCAL ONLY: Remote-Fetch ist deaktiviert (CCC-konform)
+     * User kann manuell Flags setzen, keine Remote-Kontrolle
+     */
+    void loadFromDisk() {
+        auto file = getFlagsFile();
+        if (file.existsAsFile()) {
+            auto content = juce::JSON::parse(file);
+            if (auto* obj = content.getDynamicObject()) {
+                for (const auto& prop : obj->getProperties()) {
+                    if (prop.value.isBool()) {
+                        std::lock_guard<std::mutex> lock(mutex);
+                        if (flags.find(prop.name.toString()) != flags.end()) {
+                            flags[prop.name.toString()].enabled = prop.value;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void saveToDisk() {
+        auto file = getFlagsFile();
+        file.getParentDirectory().createDirectory();
+
+        juce::DynamicObject::Ptr obj = new juce::DynamicObject();
+        std::lock_guard<std::mutex> lock(mutex);
+        for (const auto& [name, info] : flags) {
+            obj->setProperty(name, info.enabled);
+        }
+
+        file.replaceWithText(juce::JSON::toString(juce::var(obj.get()), true));
     }
 
     void setFlag(const juce::String& name, bool enabled) {
         std::lock_guard<std::mutex> lock(mutex);
-        flags[name] = enabled;
+        flags[name].enabled = enabled;
+        // Auto-save (local-first)
+        saveToDiskUnlocked();
     }
 
     bool isEnabled(const juce::String& name) const {
         std::lock_guard<std::mutex> lock(mutex);
         auto it = flags.find(name);
-        return it != flags.end() ? it->second : false;
+        return it != flags.end() ? it->second.enabled : false;
+    }
+
+    /**
+     * Transparenz: Zeige alle Flags
+     */
+    std::map<juce::String, FlagInfo> getAllFlags() const {
+        std::lock_guard<std::mutex> lock(mutex);
+        return flags;
+    }
+
+    /**
+     * Export für User (Transparenz)
+     */
+    juce::String exportFlags() const {
+        juce::String report = "Feature Flags (Local-First)\n";
+        report << "============================\n\n";
+
+        std::lock_guard<std::mutex> lock(mutex);
+        for (const auto& [name, info] : flags) {
+            report << (info.enabled ? "✅" : "❌") << " " << name;
+            if (info.isExperimental) report << " [EXPERIMENTAL]";
+            report << "\n   " << info.description << "\n\n";
+        }
+
+        return report;
     }
 
     void setDefaultFlags() {
-        setFlag("video_sync", true);
-        setFlag("lighting_control", true);
-        setFlag("biofeedback", true);
-        setFlag("advanced_dsp", true);
-        setFlag("experimental_features", false);
-        setFlag("beta_features", false);
+        // Core Features
+        registerFlag("video_sync", true, "Video synchronization with audio", "Core");
+        registerFlag("lighting_control", true, "DMX/ArtNet lighting control", "Core");
+        registerFlag("biofeedback", true, "HRV/EEG biometric integration", "Core");
+        registerFlag("advanced_dsp", true, "Spectral and advanced DSP effects", "Core");
+
+        // Collaboration
+        registerFlag("p2p_sharing", true, "Peer-to-peer file sharing", "Collaboration");
+        registerFlag("collaboration_hub", true, "Real-time collaboration", "Collaboration");
+        registerFlag("split_sheets", true, "GEMA/PRO split sheet management", "Collaboration");
+
+        // Privacy (all enabled by default)
+        registerFlag("local_processing", true, "Process all audio locally", "Privacy");
+        registerFlag("e2e_encryption", true, "End-to-end encryption for sync", "Privacy");
+
+        // Experimental (off by default, user must enable)
+        registerFlag("experimental_features", false, "Unstable experimental features", "Experimental", true);
+        registerFlag("beta_features", false, "Beta features for testing", "Experimental", true);
+        registerFlag("quantum_optimization", false, "Quantum-inspired optimization", "Experimental", true);
+
+        // Load user overrides from disk
+        loadFromDisk();
     }
 
 private:
@@ -390,7 +655,36 @@ private:
     }
 
     mutable std::mutex mutex;
-    std::map<juce::String, bool> flags;
+    std::map<juce::String, FlagInfo> flags;
+
+    void registerFlag(const juce::String& name, bool defaultEnabled,
+                      const juce::String& description, const juce::String& category,
+                      bool experimental = false) {
+        FlagInfo info;
+        info.enabled = defaultEnabled;
+        info.description = description;
+        info.category = category;
+        info.isExperimental = experimental;
+        flags[name] = info;
+    }
+
+    juce::File getFlagsFile() {
+        return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                   .getChildFile("Echoelmusic")
+                   .getChildFile("feature_flags.json");
+    }
+
+    void saveToDiskUnlocked() {
+        auto file = getFlagsFile();
+        file.getParentDirectory().createDirectory();
+
+        juce::DynamicObject::Ptr obj = new juce::DynamicObject();
+        for (const auto& [name, info] : flags) {
+            obj->setProperty(name, info.enabled);
+        }
+
+        file.replaceWithText(juce::JSON::toString(juce::var(obj.get()), true));
+    }
 };
 
 // ==================== UPDATE CHECKER ====================

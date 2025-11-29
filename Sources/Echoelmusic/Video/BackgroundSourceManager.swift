@@ -39,7 +39,7 @@ class BackgroundSourceManager: ObservableObject {
 
     // MARK: - Echoelmusic Visual Integration
 
-    private var blabVisualRenderer: EchoelmusicVisualRenderer?
+    private var echoelmusicVisualRenderer: EchoelmusicVisualRenderer?
 
     // MARK: - Current Texture Cache
 
@@ -54,7 +54,7 @@ class BackgroundSourceManager: ObservableObject {
         case image(URL)
         case video(URL, looping: Bool)
         case liveCamera(cameraPosition: AVCaptureDevice.Position)
-        case blabVisual(EchoelmusicVisualType)
+        case echoelmusicVisual(EchoelmusicVisualType)
         case blur(BlurType, intensity: Float)
         case virtualBackground(VirtualType)
 
@@ -65,7 +65,7 @@ class BackgroundSourceManager: ObservableObject {
             case .image(let url): return "image_\(url.lastPathComponent)"
             case .video(let url, _): return "video_\(url.lastPathComponent)"
             case .liveCamera(let pos): return "camera_\(pos == .front ? "front" : "back")"
-            case .blabVisual(let type): return "blab_\(type.rawValue)"
+            case .echoelmusicVisual(let type): return "echoelmusic_\(type.rawValue)"
             case .blur(let type, _): return "blur_\(type.rawValue)"
             case .virtualBackground(let type): return "virtual_\(type.rawValue)"
             }
@@ -78,7 +78,7 @@ class BackgroundSourceManager: ObservableObject {
             case .image(let url): return url.deletingPathExtension().lastPathComponent
             case .video(let url, _): return url.deletingPathExtension().lastPathComponent
             case .liveCamera(let pos): return "\(pos == .front ? "Front" : "Back") Camera"
-            case .blabVisual(let type): return "Echoelmusic: \(type.displayName)"
+            case .echoelmusicVisual(let type): return "Echoelmusic: \(type.displayName)"
             case .blur(let type, _): return "\(type.rawValue) Blur"
             case .virtualBackground(let type): return "Virtual: \(type.rawValue)"
             }
@@ -176,11 +176,11 @@ class BackgroundSourceManager: ObservableObject {
             .gradient(.bioreactive, [.red, .green, .blue]),  // HRV-driven
 
             // Echoelmusic Visuals (all bio-reactive)
-            .blabVisual(.cymatics),
-            .blabVisual(.mandala),
-            .blabVisual(.particles),
-            .blabVisual(.waveform),
-            .blabVisual(.spectral),
+            .echoelmusicVisual(.cymatics),
+            .echoelmusicVisual(.mandala),
+            .echoelmusicVisual(.particles),
+            .echoelmusicVisual(.waveform),
+            .echoelmusicVisual(.spectral),
 
             // Blur backgrounds
             .blur(.gaussian, intensity: 0.5),
@@ -220,7 +220,7 @@ class BackgroundSourceManager: ObservableObject {
             case .liveCamera(let position):
                 try await startCameraCapture(position: position)
 
-            case .blabVisual(let type):
+            case .echoelmusicVisual(let type):
                 try await startEchoelmusicVisual(type: type)
 
             case .blur(let type, let intensity):
@@ -243,7 +243,7 @@ class BackgroundSourceManager: ObservableObject {
     func getCurrentTexture(size: CGSize) async throws -> MTLTexture {
         // Check if we need to update (for animated sources)
         switch currentSource {
-        case .video, .liveCamera, .blabVisual, .gradient(.bioreactive, _):
+        case .video, .liveCamera, .echoelmusicVisual, .gradient(.bioreactive, _):
             // These sources need continuous updates
             return try await updateAnimatedSource(size: size)
 
@@ -555,7 +555,7 @@ class BackgroundSourceManager: ObservableObject {
         // (CymaticsRenderer, MandalaRenderer, ParticleSystem, etc.)
 
         // For now, create placeholder
-        blabVisualRenderer = EchoelmusicVisualRenderer(device: device, type: type)
+        echoelmusicVisualRenderer = EchoelmusicVisualRenderer(device: device, type: type)
 
         print("🎨 BackgroundSourceManager: Started Echoelmusic visual '\(type.displayName)'")
     }
@@ -575,7 +575,7 @@ class BackgroundSourceManager: ObservableObject {
         case .video:
             return try await updateVideoFrame(size: size)
 
-        case .blabVisual(let type):
+        case .echoelmusicVisual(let type):
             return try await updateEchoelmusicVisual(type: type, size: size)
 
         case .gradient(.bioreactive, _):
@@ -608,8 +608,8 @@ class BackgroundSourceManager: ObservableObject {
     }
 
     private func updateEchoelmusicVisual(type: EchoelmusicVisualType, size: CGSize) async throws -> MTLTexture {
-        guard let renderer = blabVisualRenderer else {
-            throw BackgroundError.blabVisualNotActive
+        guard let renderer = echoelmusicVisualRenderer else {
+            throw BackgroundError.echoelmusicVisualNotActive
         }
 
         // Update bio parameters
@@ -623,7 +623,7 @@ class BackgroundSourceManager: ObservableObject {
 
     private func stopCurrentSource() async {
         stopVideoPlayback()
-        blabVisualRenderer = nil
+        echoelmusicVisualRenderer = nil
         currentTexture = nil
         cachedImage = nil
     }
@@ -708,7 +708,7 @@ enum BackgroundError: LocalizedError {
     case imageLoadingFailed(URL)
     case videoPlaybackNotActive
     case videoFrameExtractionFailed
-    case blabVisualNotActive
+    case echoelmusicVisualNotActive
     case textureCreationFailed
 
     var errorDescription: String? {
@@ -727,7 +727,7 @@ enum BackgroundError: LocalizedError {
             return "Video playback is not active"
         case .videoFrameExtractionFailed:
             return "Failed to extract video frame"
-        case .blabVisualNotActive:
+        case .echoelmusicVisualNotActive:
             return "Echoelmusic visual renderer is not active"
         case .textureCreationFailed:
             return "Failed to create Metal texture"

@@ -418,6 +418,10 @@ private:
     juce::String serverName = "Echoelmusic Studio";
     int maxPeers = 16;
 
+    // Thread synchronization
+    juce::CriticalSection connectionLock;  // For thread-safe connection operations
+    bool connected = false;
+
     // Protocol implementations
     struct AbletonLinkImpl;
     std::unique_ptr<AbletonLinkImpl> abletonLink;

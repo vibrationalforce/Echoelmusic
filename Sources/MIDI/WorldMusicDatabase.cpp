@@ -546,7 +546,120 @@ std::vector<ChordGenius::Chord> WorldMusicDatabase::getProgressionForStyle(
     WorldMusicDatabase::StyleCategory category, int key, int length)
 {
     std::vector<ChordGenius::Chord> chords;
-    // Implementation would use ChordGenius to generate progression based on style
+
+    // Get style info
+    MusicStyle style = getStyle(category);
+
+    if (style.typicalProgressions.empty())
+        return chords;
+
+    // Pick a typical progression for this style
+    const std::vector<int>& progression = style.typicalProgressions[0];
+
+    // Scale degree to semitone offset mapping (major scale)
+    // 0=I, 1=ii, 2=iii, 3=IV, 4=V, 5=vi, 6=vii°
+    const int scaleOffsets[] = { 0, 2, 4, 5, 7, 9, 11 };
+
+    // Determine chord qualities for each scale degree based on style
+    auto getQualityForDegree = [&](int degree) -> ChordGenius::ChordQuality {
+        if (!style.preferredChords.empty()) {
+            // Use style's preferred chord quality
+            return style.preferredChords[degree % style.preferredChords.size()];
+        }
+        // Default diatonic chord qualities for major key
+        switch (degree) {
+            case 0: return ChordGenius::ChordQuality::Major;     // I
+            case 1: return ChordGenius::ChordQuality::Minor;     // ii
+            case 2: return ChordGenius::ChordQuality::Minor;     // iii
+            case 3: return ChordGenius::ChordQuality::Major;     // IV
+            case 4: return ChordGenius::ChordQuality::Major;     // V (or Dom7)
+            case 5: return ChordGenius::ChordQuality::Minor;     // vi
+            case 6: return ChordGenius::ChordQuality::Diminished;// vii°
+            default: return ChordGenius::ChordQuality::Major;
+        }
+    };
+
+    // Note names for chord naming
+    const char* noteNames[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+
+    // Generate requested number of chords
+    for (int i = 0; i < length; ++i) {
+        int progressionIndex = i % static_cast<int>(progression.size());
+        int degree = progression[progressionIndex];
+
+        // Clamp degree to valid range
+        degree = std::max(0, std::min(6, degree));
+
+        // Calculate root note (MIDI note number in middle octave)
+        int rootNote = (key + scaleOffsets[degree]) % 12;
+        int midiRoot = 60 + rootNote;  // Middle C octave
+
+        ChordGenius::Chord chord;
+        chord.root = rootNote;
+        chord.quality = getQualityForDegree(degree);
+        chord.voicing = ChordGenius::VoicingType::Close;
+        chord.inversion = 0;
+
+        // Build chord notes based on quality
+        chord.notes.push_back(midiRoot);
+
+        switch (chord.quality) {
+            case ChordGenius::ChordQuality::Major:
+                chord.notes.push_back(midiRoot + 4);  // Major 3rd
+                chord.notes.push_back(midiRoot + 7);  // Perfect 5th
+                break;
+            case ChordGenius::ChordQuality::Minor:
+                chord.notes.push_back(midiRoot + 3);  // Minor 3rd
+                chord.notes.push_back(midiRoot + 7);  // Perfect 5th
+                break;
+            case ChordGenius::ChordQuality::Dominant7:
+                chord.notes.push_back(midiRoot + 4);  // Major 3rd
+                chord.notes.push_back(midiRoot + 7);  // Perfect 5th
+                chord.notes.push_back(midiRoot + 10); // Minor 7th
+                break;
+            case ChordGenius::ChordQuality::Major7:
+                chord.notes.push_back(midiRoot + 4);  // Major 3rd
+                chord.notes.push_back(midiRoot + 7);  // Perfect 5th
+                chord.notes.push_back(midiRoot + 11); // Major 7th
+                break;
+            case ChordGenius::ChordQuality::Minor7:
+                chord.notes.push_back(midiRoot + 3);  // Minor 3rd
+                chord.notes.push_back(midiRoot + 7);  // Perfect 5th
+                chord.notes.push_back(midiRoot + 10); // Minor 7th
+                break;
+            case ChordGenius::ChordQuality::Diminished:
+                chord.notes.push_back(midiRoot + 3);  // Minor 3rd
+                chord.notes.push_back(midiRoot + 6);  // Diminished 5th
+                break;
+            case ChordGenius::ChordQuality::Augmented:
+                chord.notes.push_back(midiRoot + 4);  // Major 3rd
+                chord.notes.push_back(midiRoot + 8);  // Augmented 5th
+                break;
+            case ChordGenius::ChordQuality::Power:
+                chord.notes.push_back(midiRoot + 7);  // Perfect 5th
+                break;
+            default:
+                chord.notes.push_back(midiRoot + 4);
+                chord.notes.push_back(midiRoot + 7);
+                break;
+        }
+
+        // Generate chord name
+        chord.name = std::string(noteNames[rootNote]);
+        switch (chord.quality) {
+            case ChordGenius::ChordQuality::Minor: chord.name += "m"; break;
+            case ChordGenius::ChordQuality::Dominant7: chord.name += "7"; break;
+            case ChordGenius::ChordQuality::Major7: chord.name += "maj7"; break;
+            case ChordGenius::ChordQuality::Minor7: chord.name += "m7"; break;
+            case ChordGenius::ChordQuality::Diminished: chord.name += "dim"; break;
+            case ChordGenius::ChordQuality::Augmented: chord.name += "aug"; break;
+            case ChordGenius::ChordQuality::Power: chord.name += "5"; break;
+            default: break;
+        }
+
+        chords.push_back(chord);
+    }
+
     return chords;
 }
 

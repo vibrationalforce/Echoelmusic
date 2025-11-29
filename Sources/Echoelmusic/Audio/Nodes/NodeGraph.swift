@@ -29,7 +29,7 @@ class NodeGraph: ObservableObject {
 
     /// Processing queue (audio thread)
     private let audioQueue = DispatchQueue(
-        label: "com.blab.nodegraph.audio",
+        label: "com.echoelmusic.nodegraph.audio",
         qos: .userInteractive
     )
 

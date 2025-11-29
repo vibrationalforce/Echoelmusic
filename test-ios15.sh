@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# BLAB iOS 15 Compatibility Test Script
+# Echoelmusic iOS 15 Compatibility Test Script
 # Tests the app on iOS 15.0+ simulators (requires Xcode)
 
 set -e  # Exit on error
@@ -12,9 +12,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}  BLAB - iOS 15 Compatibility Test${NC}"
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}  Echoelmusic - iOS 15 Compatibility Test${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
 # Check if Xcode is installed
@@ -57,7 +57,7 @@ echo ""
 # Step 3: Build for iOS 15 Simulator
 echo -e "${YELLOW}→ Building for iOS 15.0 Simulator...${NC}"
 xcodebuild clean build \
-    -scheme Blab \
+    -scheme Echoelmusic \
     -sdk iphonesimulator \
     -destination 'platform=iOS Simulator,name=iPhone 13,OS=15.0' \
     -configuration Debug \
@@ -67,9 +67,9 @@ xcodebuild clean build \
 
 if [ ${PIPESTATUS[0]} -eq 0 ]; then
     echo ""
-    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${GREEN}  ✓ iOS 15 build successful!${NC}"
-    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
     echo -e "Build log: ${BLUE}build-ios15.log${NC}"
     echo ""
@@ -80,9 +80,9 @@ if [ ${PIPESTATUS[0]} -eq 0 ]; then
     echo ""
 else
     echo ""
-    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${RED}  ✗ iOS 15 build failed${NC}"
-    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
     echo -e "Build log: ${BLUE}build-ios15.log${NC}"
     echo ""
@@ -93,7 +93,7 @@ fi
 # Step 4: Run unit tests
 echo -e "${YELLOW}→ Running unit tests on iOS 15...${NC}"
 xcodebuild test \
-    -scheme Blab \
+    -scheme Echoelmusic \
     -sdk iphonesimulator \
     -destination 'platform=iOS Simulator,name=iPhone 13,OS=15.0' \
     CODE_SIGNING_ALLOWED=NO \
@@ -101,17 +101,17 @@ xcodebuild test \
 
 if [ ${PIPESTATUS[0]} -eq 0 ]; then
     echo ""
-    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${GREEN}  ✓ iOS 15 tests passed!${NC}"
-    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
     echo -e "Test log: ${BLUE}test-ios15.log${NC}"
     echo ""
 else
     echo ""
-    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${YELLOW}  ⚠ Some tests failed${NC}"
-    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
     echo -e "Test log: ${BLUE}test-ios15.log${NC}"
 fi
