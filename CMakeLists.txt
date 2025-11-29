@@ -311,6 +311,14 @@ target_sources(Echoelmusic
         # Sources/DSP/SpectralSculptor.cpp      # TODO: Fix FFT API
 
         # =====================================================================
+        # =====================================================================
+        # PHASE 3: CORE INTEGRATION (ENABLED)
+        # =====================================================================
+        Sources/Hardware/OSCManager.cpp           # OSC network protocol - iOS/Desktop sync
+        Sources/Hardware/HardwareSyncManager.cpp  # Hardware synchronization
+        Sources/Sync/EchoelSync.cpp               # EchoelSync - Universal sync technology
+
+        # =====================================================================
         # PHASE 3: ADVANCED FEATURES (Later)
         # =====================================================================
         # Sources/AI/SmartMixer.cpp               # AI mixing assistant
@@ -328,8 +336,6 @@ target_sources(Echoelmusic
         # Sources/Hardware/MIDIHardwareManager.cpp
         # Sources/Hardware/ModularIntegration.cpp
         # Sources/Hardware/DJEquipmentIntegration.cpp
-        # Sources/Hardware/OSCManager.cpp
-        # Sources/Hardware/HardwareSyncManager.cpp
         # Sources/Audio/SpatialForge.cpp
         # Sources/Platform/CreatorManager.cpp
         # Sources/Platform/AgencyManager.cpp
