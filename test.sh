@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# test.sh - VS Code friendly test script for BLAB
+# test.sh - VS Code friendly test script for Echoelmusic
 # Runs Swift unit tests with nice output
 #
 # Usage:
@@ -18,9 +18,9 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Banner
-echo -e "${BLUE}╔═══════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║  🧪 BLAB - Running Tests            ║${NC}"
-echo -e "${BLUE}╚═══════════════════════════════════════╝${NC}"
+echo -e "${BLUE}╔═══════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║  🧪 Echoelmusic - Running Tests                  ║${NC}"
+echo -e "${BLUE}╚═══════════════════════════════════════════════════╝${NC}"
 echo ""
 
 # Check if we're in the right directory
@@ -47,15 +47,15 @@ swift test $VERBOSE
 # Check if tests succeeded
 if [ $? -eq 0 ]; then
     echo ""
-    echo -e "${GREEN}╔═══════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║  ✅ All Tests Passed!                ║${NC}"
-    echo -e "${GREEN}╚═══════════════════════════════════════╝${NC}"
+    echo -e "${GREEN}╔═══════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║  ✅ All Tests Passed!                            ║${NC}"
+    echo -e "${GREEN}╚═══════════════════════════════════════════════════╝${NC}"
     echo ""
 else
     echo ""
-    echo -e "${RED}╔═══════════════════════════════════════╗${NC}"
-    echo -e "${RED}║  ❌ Tests Failed!                    ║${NC}"
-    echo -e "${RED}╚═══════════════════════════════════════╝${NC}"
+    echo -e "${RED}╔═══════════════════════════════════════════════════╗${NC}"
+    echo -e "${RED}║  ❌ Tests Failed!                                ║${NC}"
+    echo -e "${RED}╚═══════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${YELLOW}💡 Tips:${NC}"
     echo "  1. Check the error messages above"
