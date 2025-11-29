@@ -64,28 +64,124 @@ MainWindow::MainComponent::MainComponent()
     // Create audio engine
     audioEngine = std::make_unique<AudioEngine>();
     audioEngine->prepare(48000.0, 512);  // Default: 48kHz, 512 samples
-    
+
+    // Create session manager and audio exporter
+    sessionManager = std::make_unique<SessionManager>();
+    audioExporter = std::make_unique<AudioExporter>();
+
     // Add some default tracks
     audioEngine->addAudioTrack("Kick");
     audioEngine->addAudioTrack("Snare");
     audioEngine->addAudioTrack("Bass");
     audioEngine->addAudioTrack("Synth");
     audioEngine->addAudioTrack("Vocal");
-    
+
     // Create UI sections
     topBar = std::make_unique<TopBar>(*audioEngine);
     addAndMakeVisible(topBar.get());
-    
+
     trackView = std::make_unique<TrackView>(*audioEngine);
     addAndMakeVisible(trackView.get());
-    
-    transportBar = std::make_unique<TransportBar>(*audioEngine);
+
+    transportBar = std::make_unique<TransportBar>(*audioEngine,
+        [this]() { saveProject(); },
+        [this]() { exportAudio(); });
     addAndMakeVisible(transportBar.get());
-    
+
     // Start UI update timer (30 FPS)
     startTimer(33);
-    
+
     setSize(1200, 800);
+}
+
+void MainWindow::MainComponent::saveProject()
+{
+    auto fileChooser = std::make_shared<juce::FileChooser>(
+        "Save Project",
+        juce::File::getSpecialLocation(juce::File::userDocumentsDirectory),
+        "*.echoelmusic;*.xml"
+    );
+
+    fileChooser->launchAsync(juce::FileBrowserComponent::saveMode,
+        [this, fileChooser](const juce::FileChooser& fc)
+        {
+            auto file = fc.getResult();
+            if (file != juce::File{})
+            {
+                if (sessionManager->saveToFile(file, *audioEngine))
+                {
+                    juce::AlertWindow::showMessageBoxAsync(
+                        juce::AlertWindow::InfoIcon,
+                        "Saved",
+                        "Project saved successfully to:\n" + file.getFullPathName(),
+                        "OK"
+                    );
+                }
+                else
+                {
+                    juce::AlertWindow::showMessageBoxAsync(
+                        juce::AlertWindow::WarningIcon,
+                        "Save Failed",
+                        "Could not save project.",
+                        "OK"
+                    );
+                }
+            }
+        });
+}
+
+void MainWindow::MainComponent::exportAudio()
+{
+    auto fileChooser = std::make_shared<juce::FileChooser>(
+        "Export Audio",
+        juce::File::getSpecialLocation(juce::File::userDocumentsDirectory),
+        "*.wav;*.flac;*.ogg"
+    );
+
+    fileChooser->launchAsync(juce::FileBrowserComponent::saveMode,
+        [this, fileChooser](const juce::FileChooser& fc)
+        {
+            auto file = fc.getResult();
+            if (file != juce::File{})
+            {
+                AudioExporter::ExportSettings settings;
+                settings.outputFile = file;
+                settings.sampleRate = audioEngine->getSampleRate();
+                settings.bitDepth = 24;
+
+                // Determine format from extension
+                juce::String ext = file.getFileExtension().toLowerCase();
+                if (ext == ".flac")
+                    settings.format = "FLAC";
+                else if (ext == ".ogg")
+                    settings.format = "OGG";
+                else
+                    settings.format = "WAV";
+
+                // Get audio from engine (render master mix)
+                juce::AudioBuffer<float> exportBuffer(2, static_cast<int>(settings.sampleRate * 60.0));
+                audioEngine->renderToBuffer(exportBuffer);
+
+                if (audioExporter->exportAudioToFile(exportBuffer, settings))
+                {
+                    juce::AlertWindow::showMessageBoxAsync(
+                        juce::AlertWindow::InfoIcon,
+                        "Export Complete",
+                        "Audio exported successfully to:\n" + file.getFullPathName(),
+                        "OK"
+                    );
+                }
+                else
+                {
+                    juce::AlertWindow::showMessageBoxAsync(
+                        juce::AlertWindow::WarningIcon,
+                        "Export Failed",
+                        "Could not export audio.",
+                        "OK"
+                    );
+                }
+            }
+        });
 }
 
 MainWindow::MainComponent::~MainComponent()
@@ -460,8 +556,9 @@ void MainWindow::MainComponent::TrackView::drawPlayhead(juce::Graphics& g, juce:
 // TransportBar
 //==============================================================================
 
-MainWindow::MainComponent::TransportBar::TransportBar(AudioEngine& engine)
-    : audioEngine(engine)
+MainWindow::MainComponent::TransportBar::TransportBar(AudioEngine& engine,
+    std::function<void()> saveCallback, std::function<void()> exportCallback)
+    : audioEngine(engine), onSaveProject(saveCallback), onExportAudio(exportCallback)
 {
     // Previous button
     previousButton.setButtonText("⏮️");
@@ -567,15 +664,13 @@ void MainWindow::MainComponent::TransportBar::buttonClicked(juce::Button* button
         onRecordClicked();
     else if (button == &saveButton)
     {
-        // TODO: Save project
-        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
-            "Save", "Project save coming soon!", "OK");
+        if (onSaveProject)
+            onSaveProject();
     }
     else if (button == &exportButton)
     {
-        // TODO: Export audio
-        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
-            "Export", "Audio export coming soon!", "OK");
+        if (onExportAudio)
+            onExportAudio();
     }
 }
 

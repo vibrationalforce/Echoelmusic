@@ -22,7 +22,13 @@ void Track::prepare(double sampleRate, int maximumBlockSize)
         playbackBuffer.setSize(2, maximumBlockSize * 100); // 100 blocks of audio
         playbackBuffer.clear();
 
-        recordedAudio.setSize(2, 0); // Will grow during recording
+        // Pre-allocate recording buffer to avoid audio thread allocation
+        // 10 minutes at sample rate (lock-free audio thread safety)
+        int maxRecordingSamples = static_cast<int>(sampleRate * kMaxRecordingSeconds);
+        recordedAudio.setSize(2, maxRecordingSamples, false, true, false);
+        recordedAudio.clear();
+        recordedSampleCount.store(0);
+        recordingBufferInitialized = true;
     }
 }
 
@@ -81,20 +87,24 @@ void Track::recordInput(const float* const* input, int numInputs, int numSamples
     if (type != Type::Audio)
         return;
 
-    // Ensure we have space in recorded buffer
-    int currentSize = recordedAudio.getNumSamples();
-    int requiredSize = (int)(position - recordingStartPosition) + numSamples;
+    // Calculate write position (lock-free, no allocation in audio thread)
+    int writePos = static_cast<int>(position - recordingStartPosition);
+    int bufferSize = recordedAudio.getNumSamples();
 
-    if (requiredSize > currentSize)
+    // Bounds check - if we exceed pre-allocated buffer, clip to available space
+    // This avoids any allocation in the audio thread
+    if (writePos < 0)
+        return;
+
+    int samplesToWrite = numSamples;
+    if (writePos + samplesToWrite > bufferSize)
     {
-        // Grow buffer (this happens outside audio thread ideally, but simplified here)
-        int newSize = juce::nextPowerOfTwo(requiredSize);
-        recordedAudio.setSize(2, newSize, true, true, false);
+        samplesToWrite = bufferSize - writePos;
+        if (samplesToWrite <= 0)
+            return;  // Buffer full - no allocation, just stop recording
     }
 
-    // Copy input to recorded buffer
-    int writePos = (int)(position - recordingStartPosition);
-
+    // Copy input to pre-allocated buffer (lock-free)
     for (int channel = 0; channel < juce::jmin(2, numInputs); ++channel)
     {
         if (input[channel] != nullptr)
@@ -102,9 +112,18 @@ void Track::recordInput(const float* const* input, int numInputs, int numSamples
             juce::FloatVectorOperations::copy(
                 recordedAudio.getWritePointer(channel, writePos),
                 input[channel],
-                numSamples
+                samplesToWrite
             );
         }
+    }
+
+    // Update recorded sample count atomically (lock-free)
+    int newCount = writePos + samplesToWrite;
+    int currentCount = recordedSampleCount.load();
+    while (newCount > currentCount)
+    {
+        if (recordedSampleCount.compare_exchange_weak(currentCount, newCount))
+            break;
     }
 }
 

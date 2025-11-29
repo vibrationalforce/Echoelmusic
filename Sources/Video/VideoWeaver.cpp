@@ -1,4 +1,5 @@
 #include "VideoWeaver.h"
+#include "VideoAnalyzer.h"
 #include <algorithm>
 #include <cmath>
 
@@ -1123,44 +1124,32 @@ std::vector<double> VideoWeaver::detectBeats(const juce::File& audioFile)
 {
     std::vector<double> beatTimes;
 
-    // In a real implementation, this would:
-    // 1. Load audio file
-    // 2. Analyze spectral flux or onset detection
-    // 3. Find peaks in onset strength
-    // 4. Return beat times
+    // Use real BeatDetector from VideoAnalyzer
+    Echoel::BeatDetector detector;
+    auto beats = detector.detectBeats(audioFile);
 
-    // For now, generate regular beats at 120 BPM
-    double bpm = 120.0;
-    double secondsPerBeat = 60.0 / bpm;
-
-    // Assume audio is 60 seconds long
-    for (double t = 0.0; t < 60.0; t += secondsPerBeat)
+    // Convert BeatInfo to simple time list
+    for (const auto& beat : beats)
     {
-        beatTimes.push_back(t);
+        beatTimes.push_back(beat.time);
     }
 
-    DBG("VideoWeaver: Detected " << beatTimes.size() << " beats");
+    // Get tempo info for logging
+    auto tempoInfo = detector.getTempoInfo();
+    DBG("VideoWeaver: Detected " << beatTimes.size() << " beats at "
+        << tempoInfo.bpm << " BPM (confidence: " << (tempoInfo.confidence * 100.0) << "%)");
 
     return beatTimes;
 }
 
 std::vector<double> VideoWeaver::detectSceneChanges(const juce::File& videoFile)
 {
-    std::vector<double> sceneTimes;
+    // Use real SceneDetector from VideoAnalyzer
+    Echoel::SceneDetector detector(0.3, 64);  // threshold=0.3, 64 histogram bins
+    std::vector<double> sceneTimes = detector.detectSceneChangeTimes(videoFile, frameRate);
 
-    // In a real implementation, this would:
-    // 1. Open video file
-    // 2. Analyze frame-to-frame differences (histogram, pixel diff)
-    // 3. Find large changes (scene cuts)
-    // 4. Return scene change times
-
-    // For now, generate scenes every 5 seconds
-    for (double t = 0.0; t < 60.0; t += 5.0)
-    {
-        sceneTimes.push_back(t);
-    }
-
-    DBG("VideoWeaver: Detected " << sceneTimes.size() << " scene changes");
+    DBG("VideoWeaver: Detected " << sceneTimes.size() << " scene changes in "
+        << videoFile.getFileName());
 
     return sceneTimes;
 }

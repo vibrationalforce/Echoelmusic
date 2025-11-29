@@ -442,11 +442,17 @@ public:
         int id = nextPluginId++;
         plugin->prepare(sampleRate, blockSize);
         plugins[id] = std::move(plugin);
+        processingOrder.push_back(id);  // Add to end of processing chain
         return id;
     }
 
     void removePluginFromChain(int id) {
         plugins.erase(id);
+        // Also remove from processing order
+        auto it = std::find(processingOrder.begin(), processingOrder.end(), id);
+        if (it != processingOrder.end()) {
+            processingOrder.erase(it);
+        }
     }
 
     PluginInstance* getPlugin(int id) {
@@ -456,8 +462,21 @@ public:
 
     void movePlugin(int id, int newPosition) {
         // Reorder plugins in processing chain
-        // Implementation depends on chain structure
+        // First, find and remove the id from current position
+        auto it = std::find(processingOrder.begin(), processingOrder.end(), id);
+        if (it == processingOrder.end()) return;  // Plugin not found
+
+        processingOrder.erase(it);
+
+        // Clamp new position to valid range
+        newPosition = std::max(0, std::min(newPosition, static_cast<int>(processingOrder.size())));
+
+        // Insert at new position
+        processingOrder.insert(processingOrder.begin() + newPosition, id);
     }
+
+    /** Get current processing order */
+    const std::vector<int>& getProcessingOrder() const { return processingOrder; }
 
     //==========================================================================
     // Processing
@@ -474,9 +493,11 @@ public:
 
     void processChain(juce::AudioBuffer<float>& buffer,
                      juce::MidiBuffer& midiMessages) {
-        for (auto& [id, plugin] : plugins) {
-            if (!plugin->isBypassed()) {
-                plugin->process(buffer, midiMessages);
+        // Process in defined order (not arbitrary map order)
+        for (int id : processingOrder) {
+            auto it = plugins.find(id);
+            if (it != plugins.end() && !it->second->isBypassed()) {
+                it->second->process(buffer, midiMessages);
             }
         }
     }
@@ -608,6 +629,7 @@ private:
     PluginScanner scanner;
 
     std::unordered_map<int, std::unique_ptr<PluginInstance>> plugins;
+    std::vector<int> processingOrder;  // Ordered list of plugin IDs for processing
     std::vector<PluginDescription> availablePlugins;
 
     double sampleRate = 48000.0;

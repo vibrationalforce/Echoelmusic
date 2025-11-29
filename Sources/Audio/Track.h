@@ -109,6 +109,11 @@ private:
     juce::AudioBuffer<float> recordedAudio;   // Currently recording
     int64_t recordingStartPosition = 0;
 
+    // Lock-free recording buffer (pre-allocated to avoid audio thread allocation)
+    static constexpr int kMaxRecordingSeconds = 600;  // 10 minutes max recording
+    std::atomic<int> recordedSampleCount { 0 };
+    bool recordingBufferInitialized = false;
+
     // MIDI data
     juce::MidiBuffer midiSequence;
 

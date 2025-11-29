@@ -61,12 +61,13 @@ EchoelSync::SyncSource EchoelSync::getActiveSyncSource() const
 
 bool EchoelSync::connectToSource(const SyncSource& source)
 {
-    juce::ScopedLock sl(statistics.sessionStartTime); // Use critical section pattern
+    juce::ScopedLock sl(connectionLock);  // Proper CriticalSection lock
 
     DBG("EchoelSync: Connecting to " << source.deviceName << " (" << source.ipAddress << ")");
 
     activeSyncSource = source;
     activeSyncSource.connected = true;
+    connected = true;
 
     if (onPeerConnected)
         onPeerConnected(source);
