@@ -1,11 +1,11 @@
-# BLAB - iOS Kompatibilität & Features
+# Echoelmusic - iOS Kompatibilität & Features
 
 ## 📱 Unterstützte iOS Versionen
 
 ### Minimum: iOS 15.0+ ✅
-BLAB läuft auf **iOS 15.0 und höher**.
+Echoelmusic läuft auf **iOS 15.0 und höher**.
 
-Das bedeutet BLAB funktioniert auf:
+Das bedeutet Echoelmusic funktioniert auf:
 - iPhone 6s und neuer (2015+)
 - iPad Air 2 und neuer (2014+)
 - iPad mini 4 und neuer (2015+)
@@ -87,7 +87,7 @@ Für vollständige Apple Spatial Audio Features.
 
 #### iPhone 16 Serie (iOS 19+) 🔥
 **Pro Max, Pro, Plus, Standard**
-- ✅ Alle BLAB Features
+- ✅ Alle Echoelmusic Features
 - ✅ ASAF Support
 - ✅ 60Hz Head Tracking
 - ✅ A18 Chip (schnellste DSP)
@@ -142,7 +142,7 @@ Für vollständige Apple Spatial Audio Features.
 
 ## 🔧 Feature Detection zur Laufzeit
 
-BLAB erkennt automatisch, welche Features verfügbar sind:
+Echoelmusic erkennt automatisch, welche Features verfügbar sind:
 
 ```swift
 // In DeviceCapabilities.swift
@@ -163,7 +163,7 @@ var canUseSpatialAudioEngine: Bool {
 
 ### Automatische Fallbacks
 
-Wenn Features nicht verfügbar sind, nutzt BLAB automatisch Fallback-Modi:
+Wenn Features nicht verfügbar sind, nutzt Echoelmusic automatisch Fallback-Modi:
 
 | Feature nicht verfügbar | Fallback Modus |
 |-------------------------|----------------|
@@ -309,7 +309,7 @@ xcodebuild test \
 
 ### Alle Versionen
 **Issue:** Mikrophone Permission muss bei jedem Start erneut gewährt werden
-**Workaround:** In iOS Settings → BLAB → Microphone → "Always Allow"
+**Workaround:** In iOS Settings → Echoelmusic → Microphone → "Always Allow"
 
 ---
 
@@ -378,7 +378,7 @@ Vor jedem Release prüfen:
 - [HealthKit Availability](https://developer.apple.com/documentation/healthkit)
 - [CoreMotion Head Tracking](https://developer.apple.com/documentation/coremotion/cmheadphonemotionmanager)
 
-**BLAB Docs:**
+**Echoelmusic Docs:**
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment Guide
 - [TESTFLIGHT_SETUP.md](TESTFLIGHT_SETUP.md) - TestFlight Setup
 - [INTEGRATION_SUCCESS.md](INTEGRATION_SUCCESS.md) - Architecture Overview
@@ -387,11 +387,11 @@ Vor jedem Release prüfen:
 
 ## 🎉 Summary
 
-**BLAB läuft auf iOS 15.0+**
+**Echoelmusic läuft auf iOS 15.0+**
 - ✅ Breite Kompatibilität (iPhone 6s+)
 - ✅ Automatische Feature Detection
 - ✅ Graceful Fallbacks
 - ✅ Optimized für jede iOS Version
 - ✅ Future-proof für iOS 19+ ASAF
 
-**Bottom Line:** Jeder mit iOS 15+ kann BLAB nutzen, aber neuere Versionen bekommen mehr Features! 🚀
+**Bottom Line:** Jeder mit iOS 15+ kann Echoelmusic nutzen, aber neuere Versionen bekommen mehr Features! 🚀

@@ -3,7 +3,7 @@
 ## ✅ Audit durchgeführt: 2025-10-20
 
 ### Ziel
-Sicherstellen, dass BLAB auf iOS 15.0+ ohne Crashes oder Feature-Failures läuft.
+Sicherstellen, dass Echoelmusic auf iOS 15.0+ ohne Crashes oder Feature-Failures läuft.
 
 ---
 
@@ -18,7 +18,7 @@ Sicherstellen, dass BLAB auf iOS 15.0+ ohne Crashes oder Feature-Failures läuft
 | `.onChange(of:)` | iOS 14.0 | ContentView | ✅ OK |
 | `Task { }` | iOS 15.0 | ContentView (HealthKit auth) | ✅ OK |
 | `async/await` | iOS 15.0 | HealthKitManager | ✅ OK |
-| `.preferredColorScheme()` | iOS 13.0 | BlabApp | ✅ OK |
+| `.preferredColorScheme()` | iOS 13.0 | EchoelmusicApp | ✅ OK |
 | `LinearGradient` | iOS 13.0 | ContentView | ✅ OK |
 | `Canvas` | iOS 15.0 | ParticleView | ✅ OK |
 | `Toggle` | iOS 13.0 | ContentView | ✅ OK |
@@ -100,7 +100,7 @@ var canUseHeadTracking: Bool {
 
 ## 🎯 Runtime Feature Detection
 
-BLAB verwendet Runtime Feature Detection für iOS version-spezifische Features:
+Echoelmusic verwendet Runtime Feature Detection für iOS version-spezifische Features:
 
 ### 1. Spatial Audio Engine (iOS 15+)
 
@@ -326,7 +326,7 @@ xcodebuild test \
 
 ### Summary
 
-**BLAB is iOS 15.0+ Compatible!** ✅
+**Echoelmusic is iOS 15.0+ Compatible!** ✅
 
 - ✅ All core features work on iOS 15.0
 - ✅ Runtime feature detection prevents crashes
