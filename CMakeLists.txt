@@ -319,6 +319,21 @@ target_sources(Echoelmusic
         Sources/Sync/EchoelSync.cpp               # EchoelSync - Universal sync technology
 
         # =====================================================================
+        # PHASE 5: BIOFEEDBACK INTEGRATION (NEW! 2025-11-29) 🧬
+        # =====================================================================
+        # Note: Bridge files are Objective-C++ for iOS/macOS Swift integration
+        # These are compiled separately via Xcode/SPM for the iOS app
+        # C++ biofeedback headers are used directly in the desktop plugin:
+        #   - Sources/Biofeedback/AdvancedBiofeedbackProcessor.h
+        #   - Sources/DAW/DAWOptimizer.h
+        #   - Sources/Video/VideoSyncEngine.h
+        #   - Sources/Lighting/LightController.h
+        #   - Sources/Development/AdvancedDiagnostics.h
+        #   - Sources/Development/AutomatedTesting.h
+        #   - Sources/Development/DeploymentAutomation.h
+        #   - Sources/Examples/IntegratedProcessor.h
+
+        # =====================================================================
         # PHASE 3: ADVANCED FEATURES (Later)
         # =====================================================================
         # Sources/AI/SmartMixer.cpp               # AI mixing assistant
