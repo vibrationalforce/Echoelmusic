@@ -385,6 +385,20 @@ target_sources(Echoelmusic
         #
         # TESTS:
         #   - Tests/EchoelmusicTests/ComprehensiveTests.swift  # ✅ 50+ tests for all components
+
+        # =====================================================================
+        # PHASE 8: SELF-EVOLVING ARCHITECTURE (NEW! 2025-11-29) 🧬
+        # =====================================================================
+        # Quantum Science Health Code - Self-Healing & Auto-Update System
+        #
+        # SELF-UPDATE:
+        #   - Sources/Development/SelfUpdateManager.h    # 🔄 GitHub Releases API, Delta Updates, Staged Rollout
+        #
+        # SELF-HEALING:
+        #   - Sources/Development/AutoHealingCode.h      # 🏥 Exception Recovery, State Checkpointing, Memory Leak Detection
+        #
+        # ADAPTIVE OPTIMIZATION:
+        #   - Sources/Development/QuantumEnergyFlow.h    # ⚡ Resource Allocation, Bio-Reactive Tuning, Quantum Optimization
 )
 
 # ===========================
