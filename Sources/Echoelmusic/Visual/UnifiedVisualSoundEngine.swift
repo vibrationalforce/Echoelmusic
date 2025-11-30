@@ -34,6 +34,7 @@ class UnifiedVisualSoundEngine: ObservableObject {
 
     enum VisualMode: String, CaseIterable, Identifiable {
         case liquidLight = "Liquid Light"      // Flüssiges Licht - Nia9ara style
+        case rainbow = "Rainbow"               // Oktav-analoges Regenbogen-Spektrum
         case particles = "Particles"           // Bio-reactive particles
         case spectrum = "Spectrum"             // FFT analyzer
         case waveform = "Waveform"            // Oscilloscope
@@ -43,12 +44,14 @@ class UnifiedVisualSoundEngine: ObservableObject {
         case nebula = "Nebula"                // Space clouds
         case kaleidoscope = "Kaleidoscope"    // Mirror symmetry
         case flowField = "Flow Field"         // Vector field particles
+        case octaveMap = "Octave Map"         // Bio→Audio→Licht Transposition
 
         var id: String { rawValue }
 
         var icon: String {
             switch self {
             case .liquidLight: return "drop.fill"
+            case .rainbow: return "rainbow"
             case .particles: return "sparkles"
             case .spectrum: return "chart.bar.fill"
             case .waveform: return "waveform.path"
@@ -58,12 +61,14 @@ class UnifiedVisualSoundEngine: ObservableObject {
             case .nebula: return "cloud.fill"
             case .kaleidoscope: return "camera.filters"
             case .flowField: return "wind"
+            case .octaveMap: return "arrow.up.arrow.down"
             }
         }
 
         var description: String {
             switch self {
             case .liquidLight: return "Flowing light streams synced to coherence"
+            case .rainbow: return "Physikalisch korrektes Regenbogen-Spektrum"
             case .particles: return "Bio-reactive particle physics"
             case .spectrum: return "Real-time frequency analyzer"
             case .waveform: return "Audio oscilloscope display"
@@ -73,6 +78,7 @@ class UnifiedVisualSoundEngine: ObservableObject {
             case .nebula: return "Cosmic gas clouds"
             case .kaleidoscope: return "Mirrored audio-reactive patterns"
             case .flowField: return "Particles following vector fields"
+            case .octaveMap: return "Bio→Audio→Licht Oktav-Transposition"
             }
         }
     }
@@ -143,6 +149,208 @@ class UnifiedVisualSoundEngine: ObservableObject {
         // Timing
         var time: Double = 0                    // Animation time
         var deltaTime: Double = 0               // Frame delta
+    }
+
+    // MARK: - Oktav-Analoge Frequenz-Übersetzung
+
+    /// Physikalisch korrekte Oktav-Transposition zwischen Frequenzbereichen
+    /// Basierend auf dem Prinzip: Oktave = Frequenz × 2
+    struct OctaveTransposition {
+
+        // === Frequenzbereiche ===
+
+        // Bio-Frequenzen (Infraschall)
+        static let breathMin: Float = 0.1        // ~6 Atemzüge/min
+        static let breathMax: Float = 0.5        // ~30 Atemzüge/min
+        static let heartRateMin: Float = 0.5     // ~30 BPM
+        static let heartRateMax: Float = 3.5     // ~210 BPM
+        static let hrvMin: Float = 0.04          // 0.04-0.4 Hz HRV Band
+        static let hrvMax: Float = 0.4
+
+        // Audio-Frequenzen
+        static let audioMin: Float = 20          // Untere Hörgrenze
+        static let audioMax: Float = 20000       // Obere Hörgrenze
+        static let audioOctaves: Float = 9.97    // log2(20000/20) ≈ 10 Oktaven
+
+        // Sichtbares Licht (Elektromagnetisches Spektrum)
+        static let lightMinTHz: Float = 400      // Rot (750 nm)
+        static let lightMaxTHz: Float = 750      // Violett (400 nm)
+        static let lightOctaves: Float = 0.91    // log2(750/400) ≈ 1 Oktave
+
+        // Wellenlängen in nm
+        static let redWavelength: Float = 700
+        static let violetWavelength: Float = 400
+
+        // === Bio → Audio Transposition ===
+
+        /// Transponiert eine Bio-Frequenz in den hörbaren Bereich
+        /// Heart Rate 1 Hz → ~64 Hz (6 Oktaven hoch) = tiefes C
+        static func bioToAudio(bioFrequency: Float, targetOctave: Int = 6) -> Float {
+            // Oktaven nach oben transponieren
+            return bioFrequency * pow(2.0, Float(targetOctave))
+        }
+
+        /// Heart Rate (BPM) zu Audio-Frequenz
+        /// 60 BPM = 1 Hz → 64 Hz (tiefes Sub-Bass C)
+        /// 120 BPM = 2 Hz → 128 Hz (tiefes C)
+        static func heartRateToAudio(bpm: Float) -> Float {
+            let heartFrequency = bpm / 60.0  // BPM zu Hz
+            return bioToAudio(bioFrequency: heartFrequency, targetOctave: 6)
+        }
+
+        /// Atem-Frequenz zu Audio
+        /// 12 Atemzüge/min = 0.2 Hz → 51.2 Hz (6 Oktaven hoch)
+        static func breathToAudio(breathsPerMinute: Float) -> Float {
+            let breathFrequency = breathsPerMinute / 60.0
+            return bioToAudio(bioFrequency: breathFrequency, targetOctave: 8)
+        }
+
+        /// HRV-Frequenz zu Audio (für Modulation)
+        /// HRV 0.1 Hz → 409.6 Hz (12 Oktaven hoch, im Vocal-Bereich)
+        static func hrvToAudio(hrvFrequency: Float) -> Float {
+            return bioToAudio(bioFrequency: hrvFrequency, targetOctave: 12)
+        }
+
+        // === Audio → Licht (Regenbogen) Transposition ===
+
+        /// Konvertiert Audio-Frequenz zu sichtbarer Licht-Frequenz
+        /// 20 Hz - 20 kHz (~10 Oktaven) → 400-750 THz (~1 Oktave)
+        /// Die 10 Audio-Oktaven werden auf die 1 Licht-Oktave komprimiert
+        static func audioToLight(audioFrequency: Float) -> Float {
+            // Position im Audio-Spektrum (0-1, logarithmisch)
+            let audioPosition = log2(audioFrequency / audioMin) / audioOctaves
+            let clampedPosition = max(0, min(1, audioPosition))
+
+            // Auf Licht-Spektrum mappen (logarithmisch)
+            return lightMinTHz * pow(lightMaxTHz / lightMinTHz, clampedPosition)
+        }
+
+        /// Konvertiert Licht-Frequenz (THz) zu Wellenlänge (nm)
+        static func frequencyToWavelength(thz: Float) -> Float {
+            // c = λ × f → λ = c / f
+            // c = 299792458 m/s, f in THz = 10^12 Hz
+            return 299792.458 / thz  // Ergebnis in nm
+        }
+
+        /// Konvertiert Audio-Frequenz direkt zu Wellenlänge (nm)
+        static func audioToWavelength(audioFrequency: Float) -> Float {
+            let lightFreq = audioToLight(audioFrequency: audioFrequency)
+            return frequencyToWavelength(thz: lightFreq)
+        }
+
+        // === Wellenlänge → Farbe (Regenbogen) ===
+
+        /// Konvertiert Wellenlänge (380-780 nm) zu RGB
+        /// Basierend auf CIE 1931 Farbwahrnehmung
+        static func wavelengthToRGB(wavelength: Float) -> (r: Float, g: Float, b: Float) {
+            var r: Float = 0, g: Float = 0, b: Float = 0
+
+            let wl = wavelength
+
+            if wl >= 380 && wl < 440 {
+                r = -(wl - 440) / (440 - 380)
+                g = 0
+                b = 1
+            } else if wl >= 440 && wl < 490 {
+                r = 0
+                g = (wl - 440) / (490 - 440)
+                b = 1
+            } else if wl >= 490 && wl < 510 {
+                r = 0
+                g = 1
+                b = -(wl - 510) / (510 - 490)
+            } else if wl >= 510 && wl < 580 {
+                r = (wl - 510) / (580 - 510)
+                g = 1
+                b = 0
+            } else if wl >= 580 && wl < 645 {
+                r = 1
+                g = -(wl - 645) / (645 - 580)
+                b = 0
+            } else if wl >= 645 && wl <= 780 {
+                r = 1
+                g = 0
+                b = 0
+            }
+
+            // Intensitätsanpassung an den Rändern des sichtbaren Spektrums
+            var intensity: Float = 1.0
+            if wl >= 380 && wl < 420 {
+                intensity = 0.3 + 0.7 * (wl - 380) / (420 - 380)
+            } else if wl >= 700 && wl <= 780 {
+                intensity = 0.3 + 0.7 * (780 - wl) / (780 - 700)
+            }
+
+            return (r * intensity, g * intensity, b * intensity)
+        }
+
+        /// Audio-Frequenz direkt zu RGB Farbe (Regenbogen-Mapping)
+        static func audioToRGB(audioFrequency: Float) -> (r: Float, g: Float, b: Float) {
+            let wavelength = audioToWavelength(audioFrequency: audioFrequency)
+            return wavelengthToRGB(wavelength: wavelength)
+        }
+
+        /// Audio-Frequenz zu SwiftUI Color
+        static func audioToColor(audioFrequency: Float) -> Color {
+            let rgb = audioToRGB(audioFrequency: audioFrequency)
+            return Color(red: Double(rgb.r), green: Double(rgb.g), blue: Double(rgb.b))
+        }
+
+        // === Regenbogen-Farbpalette für Frequenzbänder ===
+
+        /// Gibt die physikalisch korrekte Regenbogenfarbe für ein Frequenzband zurück
+        static func bandToRainbowColor(bandCenterFrequency: Float) -> Color {
+            return audioToColor(audioFrequency: bandCenterFrequency)
+        }
+
+        /// Standard-Frequenzband Mitten mit ihren Regenbogenfarben
+        static let bandCenters: [(name: String, freq: Float, wavelength: Float)] = [
+            ("Sub-Bass", 40, 695),     // 20-60 Hz → Rot
+            ("Bass", 125, 640),        // 60-250 Hz → Orange
+            ("Low-Mid", 355, 585),     // 250-500 Hz → Gelb
+            ("Mid", 1000, 530),        // 500-2000 Hz → Grün
+            ("Upper-Mid", 2830, 485),  // 2000-4000 Hz → Cyan
+            ("High", 5660, 450),       // 4000-8000 Hz → Blau
+            ("Air", 12650, 415)        // 8000-20000 Hz → Violett
+        ]
+
+        // === Bio zu Regenbogen (über Audio-Transposition) ===
+
+        /// Heart Rate zu Regenbogenfarbe
+        /// Niedriger Puls (60 BPM) → Rot (ruhig)
+        /// Hoher Puls (180 BPM) → Violett (aktiv)
+        static func heartRateToColor(bpm: Float) -> Color {
+            // Normalisiere BPM auf 0-1 (40-200 BPM Bereich)
+            let normalized = (bpm - 40) / 160
+            let clamped = max(0, min(1, normalized))
+
+            // Mappe auf Wellenlänge (Rot → Violett)
+            let wavelength = redWavelength - clamped * (redWavelength - violetWavelength)
+            let rgb = wavelengthToRGB(wavelength: wavelength)
+            return Color(red: Double(rgb.r), green: Double(rgb.g), blue: Double(rgb.b))
+        }
+
+        /// Coherence zu Regenbogenfarbe
+        /// Niedrige Coherence (0) → Rot (Stress)
+        /// Hohe Coherence (1) → Grün (Flow)
+        static func coherenceToColor(coherence: Float) -> Color {
+            // Mappe 0-1 auf Rot-Gelb-Grün
+            let wavelength = 650 - coherence * 120  // 650nm (rot) → 530nm (grün)
+            let rgb = wavelengthToRGB(wavelength: wavelength)
+            return Color(red: Double(rgb.r), green: Double(rgb.g), blue: Double(rgb.b))
+        }
+
+        // === Oktaven-Rechner ===
+
+        /// Berechnet die Anzahl der Oktaven zwischen zwei Frequenzen
+        static func octavesBetween(freq1: Float, freq2: Float) -> Float {
+            return log2(freq2 / freq1)
+        }
+
+        /// Transponiert eine Frequenz um n Oktaven
+        static func transpose(frequency: Float, octaves: Float) -> Float {
+            return frequency * pow(2.0, octaves)
+        }
     }
 
     // MARK: - Physikalische Frequenzband-Definitionen
@@ -579,6 +787,8 @@ struct UnifiedVisualizer: View {
                 switch engine.currentMode {
                 case .liquidLight:
                     LiquidLightVisualizer(params: engine.visualParams)
+                case .rainbow:
+                    RainbowSpectrumVisualizer(params: engine.visualParams, spectrum: engine.spectrumData)
                 case .particles:
                     ParticleVisualizer(params: engine.visualParams)
                 case .spectrum:
@@ -597,6 +807,8 @@ struct UnifiedVisualizer: View {
                     KaleidoscopeVisualizer(params: engine.visualParams)
                 case .flowField:
                     FlowFieldVisualizer(params: engine.visualParams)
+                case .octaveMap:
+                    OctaveTranspositionVisualizer(params: engine.visualParams)
                 }
             }
 
