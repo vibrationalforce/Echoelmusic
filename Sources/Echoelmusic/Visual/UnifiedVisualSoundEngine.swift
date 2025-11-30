@@ -80,14 +80,52 @@ class UnifiedVisualSoundEngine: ObservableObject {
     // MARK: - Visual Parameters
 
     struct VisualParameters {
-        // From Audio
+        // From Audio - Physikalisch korrekte Frequenzbänder
         var audioLevel: Float = 0               // 0-1 RMS level
-        var bassLevel: Float = 0                // 0-1 low frequency energy
-        var midLevel: Float = 0                 // 0-1 mid frequency energy
-        var highLevel: Float = 0                // 0-1 high frequency energy
-        var frequency: Float = 0                // Dominant frequency Hz
+
+        // === Detaillierte Frequenzbänder (physikalisch korrekt) ===
+        // Basierend auf menschlicher Hörwahrnehmung und Musikproduktion
+
+        // Sub-Bass: 20-60 Hz - Wird mehr gefühlt als gehört
+        // Kick Drum Fundament, 808 Sub, Erdbeben-artige Vibrationen
+        var subBassLevel: Float = 0
+
+        // Bass: 60-250 Hz - Musikalisches Fundament
+        // Kick Body, Bass-Gitarre, Synth Bass, tiefe Vocals
+        var bassLevel: Float = 0
+
+        // Low-Mid: 250-500 Hz - Wärme und Körper
+        // Instrument-Body, männliche Vocals, Snare Body
+        var lowMidLevel: Float = 0
+
+        // Mid: 500-2000 Hz - Kernbereich der Musik
+        // Vocals, Gitarren, Keyboards, die meisten Instrumente
+        var midLevel: Float = 0
+
+        // Upper-Mid: 2000-4000 Hz - Präsenz und Klarheit
+        // Vocal Presence, Gitarren-Attack, Snare Crack
+        var upperMidLevel: Float = 0
+
+        // High: 4000-8000 Hz - Brillanz und Definition
+        // Hi-Hats, Becken Attack, Vocal Sibilanz, Synth Sparkle
+        var highLevel: Float = 0
+
+        // Air: 8000-20000 Hz - Luft und Glanz
+        // Becken Shimmer, Raum-Ambience, "Air", Obertöne
+        var airLevel: Float = 0
+
+        // === Vereinfachte 3-Band Zusammenfassung ===
+        var bassTotal: Float = 0                // Sub-Bass + Bass (20-250 Hz)
+        var midTotal: Float = 0                 // Low-Mid + Mid + Upper-Mid (250-4000 Hz)
+        var highTotal: Float = 0                // High + Air (4000-20000 Hz)
+
+        // === Musikalische Analyse ===
+        var frequency: Float = 0                // Dominante Frequenz Hz
+        var pitch: Float = 0                    // Geschätzte Tonhöhe (MIDI Note)
         var tempo: Float = 120                  // Detected BPM
         var beatPhase: Float = 0                // 0-1 beat cycle
+        var spectralCentroid: Float = 0         // "Helligkeit" des Sounds (Hz)
+        var spectralFlatness: Float = 0         // 0=tonal, 1=noise
 
         // From Bio
         var hrv: Float = 0.5                    // 0-1 heart rate variability
@@ -105,6 +143,53 @@ class UnifiedVisualSoundEngine: ObservableObject {
         // Timing
         var time: Double = 0                    // Animation time
         var deltaTime: Double = 0               // Frame delta
+    }
+
+    // MARK: - Physikalische Frequenzband-Definitionen
+
+    /// Standard-Frequenzbänder basierend auf Psychoakustik und Musikproduktion
+    struct FrequencyBands {
+        // Untere Grenze jedes Bandes in Hz
+        static let subBassMin: Float = 20
+        static let subBassMax: Float = 60
+
+        static let bassMin: Float = 60
+        static let bassMax: Float = 250
+
+        static let lowMidMin: Float = 250
+        static let lowMidMax: Float = 500
+
+        static let midMin: Float = 500
+        static let midMax: Float = 2000
+
+        static let upperMidMin: Float = 2000
+        static let upperMidMax: Float = 4000
+
+        static let highMin: Float = 4000
+        static let highMax: Float = 8000
+
+        static let airMin: Float = 8000
+        static let airMax: Float = 20000
+
+        /// Berechnet den FFT-Bin-Index für eine Frequenz
+        static func binForFrequency(_ freq: Float, fftSize: Int, sampleRate: Float) -> Int {
+            return Int(freq * Float(fftSize) / sampleRate)
+        }
+
+        /// A-Gewichtung für wahrgenommene Lautstärke (vereinfacht)
+        /// Basierend auf ISO 226:2003 Equal-Loudness Contours
+        static func aWeighting(frequency: Float) -> Float {
+            // Vereinfachte A-Gewichtung Kurve
+            let f2 = frequency * frequency
+            let numerator = 12194.0 * 12194.0 * f2 * f2
+            let denominator = (f2 + 20.6 * 20.6) *
+                             sqrt((f2 + 107.7 * 107.7) * (f2 + 737.9 * 737.9)) *
+                             (f2 + 12194.0 * 12194.0)
+            let ra = numerator / Float(denominator)
+            // Normalisieren auf 0dB bei 1kHz
+            let ra1k: Float = 0.7943  // A(1000Hz)
+            return 20 * log10(ra / ra1k + 1e-10)
+        }
     }
 
     // MARK: - Private State
@@ -184,7 +269,7 @@ class UnifiedVisualSoundEngine: ObservableObject {
     private func performFFT(_ buffer: [Float]) {
         guard let setup = fftSetup, buffer.count >= fftSize else { return }
 
-        // Copy and window
+        // Copy and window (Hann-Window reduziert Spectral Leakage)
         var windowedBuffer = Array(buffer.prefix(fftSize))
         vDSP_vmul(windowedBuffer, 1, hannWindow, 1, &windowedBuffer, 1, vDSP_Length(fftSize))
 
@@ -197,33 +282,135 @@ class UnifiedVisualSoundEngine: ObservableObject {
         // Perform DFT
         vDSP_DFT_Execute(setup, &realIn, &imagIn, &realOut, &imagOut)
 
-        // Calculate magnitudes
+        // Calculate magnitudes (Power Spectrum)
         var magnitudes = [Float](repeating: 0, count: fftSize/2)
         for i in 0..<fftSize/2 {
             magnitudes[i] = sqrt(realOut[i] * realOut[i] + imagOut[i] * imagOut[i])
         }
 
-        // Normalize
-        var maxMag: Float = 0
-        vDSP_maxv(magnitudes, 1, &maxMag, vDSP_Length(magnitudes.count))
-        if maxMag > 0 {
-            var scale = 1.0 / maxMag
-            vDSP_vsmul(magnitudes, 1, &scale, &magnitudes, 1, vDSP_Length(magnitudes.count))
+        // === Physikalisch korrekte Frequenzband-Berechnung ===
+
+        let sampleRate: Float = 44100
+        let binWidth = sampleRate / Float(fftSize)  // Hz pro Bin (~21.5 Hz bei 2048/44100)
+
+        // Berechne Energie pro Band mit korrekten Frequenzgrenzen
+        visualParams.subBassLevel = calculateBandEnergy(
+            magnitudes: magnitudes,
+            minFreq: FrequencyBands.subBassMin,
+            maxFreq: FrequencyBands.subBassMax,
+            binWidth: binWidth
+        )
+
+        visualParams.bassLevel = calculateBandEnergy(
+            magnitudes: magnitudes,
+            minFreq: FrequencyBands.bassMin,
+            maxFreq: FrequencyBands.bassMax,
+            binWidth: binWidth
+        )
+
+        visualParams.lowMidLevel = calculateBandEnergy(
+            magnitudes: magnitudes,
+            minFreq: FrequencyBands.lowMidMin,
+            maxFreq: FrequencyBands.lowMidMax,
+            binWidth: binWidth
+        )
+
+        visualParams.midLevel = calculateBandEnergy(
+            magnitudes: magnitudes,
+            minFreq: FrequencyBands.midMin,
+            maxFreq: FrequencyBands.midMax,
+            binWidth: binWidth
+        )
+
+        visualParams.upperMidLevel = calculateBandEnergy(
+            magnitudes: magnitudes,
+            minFreq: FrequencyBands.upperMidMin,
+            maxFreq: FrequencyBands.upperMidMax,
+            binWidth: binWidth
+        )
+
+        visualParams.highLevel = calculateBandEnergy(
+            magnitudes: magnitudes,
+            minFreq: FrequencyBands.highMin,
+            maxFreq: FrequencyBands.highMax,
+            binWidth: binWidth
+        )
+
+        visualParams.airLevel = calculateBandEnergy(
+            magnitudes: magnitudes,
+            minFreq: FrequencyBands.airMin,
+            maxFreq: FrequencyBands.airMax,
+            binWidth: binWidth
+        )
+
+        // Zusammenfassung für 3-Band Visualisierung
+        visualParams.bassTotal = (visualParams.subBassLevel + visualParams.bassLevel) / 2.0
+        visualParams.midTotal = (visualParams.lowMidLevel + visualParams.midLevel + visualParams.upperMidLevel) / 3.0
+        visualParams.highTotal = (visualParams.highLevel + visualParams.airLevel) / 2.0
+
+        // Normalisierung auf 0-1 Bereich
+        let maxBand = max(visualParams.bassTotal, max(visualParams.midTotal, visualParams.highTotal))
+        if maxBand > 0 {
+            let normalizer = 1.0 / maxBand
+            visualParams.bassTotal = min(1.0, visualParams.bassTotal * normalizer)
+            visualParams.midTotal = min(1.0, visualParams.midTotal * normalizer)
+            visualParams.highTotal = min(1.0, visualParams.highTotal * normalizer)
         }
 
-        // Map to 64 bands (logarithmic scale)
+        // Map to 64 bands (logarithmic scale für Spektrum-Anzeige)
         spectrumData = mapToLogBands(magnitudes, bandCount: 64)
 
-        // Calculate band energies
-        let bandSize = spectrumData.count / 3
-        visualParams.bassLevel = spectrumData[0..<bandSize].reduce(0, +) / Float(bandSize)
-        visualParams.midLevel = spectrumData[bandSize..<bandSize*2].reduce(0, +) / Float(bandSize)
-        visualParams.highLevel = spectrumData[bandSize*2..<spectrumData.count].reduce(0, +) / Float(bandSize)
+        // === Erweiterte Spektralanalyse ===
 
-        // Find dominant frequency
-        if let maxIndex = magnitudes.indices.max(by: { magnitudes[$0] < magnitudes[$1] }) {
-            visualParams.frequency = Float(maxIndex) * 44100.0 / Float(fftSize)
+        // Dominante Frequenz (mit parabolischer Interpolation für Genauigkeit)
+        if let maxIndex = magnitudes.indices.max(by: { magnitudes[$0] < magnitudes[$1] }), maxIndex > 0 && maxIndex < magnitudes.count - 1 {
+            // Parabolische Interpolation für sub-bin Genauigkeit
+            let alpha = magnitudes[maxIndex - 1]
+            let beta = magnitudes[maxIndex]
+            let gamma = magnitudes[maxIndex + 1]
+            let p = 0.5 * (alpha - gamma) / (alpha - 2 * beta + gamma)
+            visualParams.frequency = (Float(maxIndex) + p) * binWidth
         }
+
+        // Pitch-Schätzung (Frequenz zu MIDI-Note)
+        if visualParams.frequency > 20 {
+            visualParams.pitch = 69 + 12 * log2(visualParams.frequency / 440.0)
+        }
+
+        // Spectral Centroid - "Helligkeit" des Sounds
+        var weightedSum: Float = 0
+        var magnitudeSum: Float = 0
+        for i in 0..<magnitudes.count {
+            let freq = Float(i) * binWidth
+            weightedSum += freq * magnitudes[i]
+            magnitudeSum += magnitudes[i]
+        }
+        if magnitudeSum > 0 {
+            visualParams.spectralCentroid = weightedSum / magnitudeSum
+        }
+
+        // Spectral Flatness - Tonalität vs. Rauschen (Wiener Entropy)
+        let geometricMean = exp(magnitudes.map { log($0 + 1e-10) }.reduce(0, +) / Float(magnitudes.count))
+        let arithmeticMean = magnitudes.reduce(0, +) / Float(magnitudes.count)
+        if arithmeticMean > 0 {
+            visualParams.spectralFlatness = geometricMean / arithmeticMean
+        }
+    }
+
+    /// Berechnet die Energie in einem Frequenzband
+    private func calculateBandEnergy(magnitudes: [Float], minFreq: Float, maxFreq: Float, binWidth: Float) -> Float {
+        let minBin = max(0, Int(minFreq / binWidth))
+        let maxBin = min(magnitudes.count - 1, Int(maxFreq / binWidth))
+
+        guard maxBin > minBin else { return 0 }
+
+        // RMS der Magnitudes im Band
+        var sumSquares: Float = 0
+        for i in minBin...maxBin {
+            sumSquares += magnitudes[i] * magnitudes[i]
+        }
+
+        return sqrt(sumSquares / Float(maxBin - minBin + 1))
     }
 
     private func mapToLogBands(_ linear: [Float], bandCount: Int) -> [Float] {
@@ -314,24 +501,64 @@ class UnifiedVisualSoundEngine: ObservableObject {
 
     // MARK: - OSC Output
 
-    /// Get OSC-ready parameter dictionary
+    /// Get OSC-ready parameter dictionary - Alle Parameter für externe Software
     func getOSCParameters() -> [String: Float] {
         return [
-            "audioLevel": visualParams.audioLevel,
-            "bassLevel": visualParams.bassLevel,
-            "midLevel": visualParams.midLevel,
-            "highLevel": visualParams.highLevel,
-            "frequency": visualParams.frequency,
-            "beatPhase": visualParams.beatPhase,
-            "hrv": visualParams.hrv,
-            "coherence": visualParams.coherence,
-            "heartRate": visualParams.heartRate,
-            "stress": visualParams.stress,
-            "energy": visualParams.energy,
-            "flow": visualParams.flow,
-            "intensity": visualParams.intensity,
-            "colorHue": visualParams.colorHue,
+            // === Audio Level ===
+            "audio/level": visualParams.audioLevel,
+
+            // === 7-Band Frequenzanalyse (physikalisch korrekt) ===
+            "audio/bands/subBass": visualParams.subBassLevel,    // 20-60 Hz
+            "audio/bands/bass": visualParams.bassLevel,          // 60-250 Hz
+            "audio/bands/lowMid": visualParams.lowMidLevel,      // 250-500 Hz
+            "audio/bands/mid": visualParams.midLevel,            // 500-2000 Hz
+            "audio/bands/upperMid": visualParams.upperMidLevel,  // 2000-4000 Hz
+            "audio/bands/high": visualParams.highLevel,          // 4000-8000 Hz
+            "audio/bands/air": visualParams.airLevel,            // 8000-20000 Hz
+
+            // === 3-Band Zusammenfassung ===
+            "audio/bassTotal": visualParams.bassTotal,           // 20-250 Hz
+            "audio/midTotal": visualParams.midTotal,             // 250-4000 Hz
+            "audio/highTotal": visualParams.highTotal,           // 4000-20000 Hz
+
+            // === Spektralanalyse ===
+            "audio/frequency": visualParams.frequency,           // Dominante Frequenz Hz
+            "audio/pitch": visualParams.pitch,                   // MIDI Note (69 = A4)
+            "audio/centroid": visualParams.spectralCentroid,     // Helligkeit Hz
+            "audio/flatness": visualParams.spectralFlatness,     // 0=tonal, 1=noise
+
+            // === Rhythmus ===
+            "audio/beatPhase": visualParams.beatPhase,           // 0-1 Beat Zyklus
+            "audio/tempo": visualParams.tempo,                   // BPM
+
+            // === Bio-Daten ===
+            "bio/hrv": visualParams.hrv,                         // 0-1 HRV normalisiert
+            "bio/coherence": visualParams.coherence,             // 0-1 HeartMath Score
+            "bio/heartRate": visualParams.heartRate,             // BPM
+            "bio/stress": visualParams.stress,                   // 0-1 Stress Index
+            "bio/breathPhase": visualParams.breathPhase,         // 0-1 Atem Zyklus
+
+            // === Kombinierte Parameter ===
+            "combined/energy": visualParams.energy,              // Audio × Bio Energie
+            "combined/flow": visualParams.flow,                  // Flow State
+            "combined/intensity": visualParams.intensity,        // Visual Intensität
+            "combined/colorHue": visualParams.colorHue,          // 0-1 Farbe
+
+            // === Timing ===
             "time": Float(visualParams.time)
+        ]
+    }
+
+    /// Get detailed frequency band data for visualization
+    func getFrequencyBandData() -> [(name: String, range: String, level: Float, color: String)] {
+        return [
+            ("Sub-Bass", "20-60 Hz", visualParams.subBassLevel, "#FF0066"),      // Magenta
+            ("Bass", "60-250 Hz", visualParams.bassLevel, "#FF3366"),            // Pink
+            ("Low-Mid", "250-500 Hz", visualParams.lowMidLevel, "#FF6600"),      // Orange
+            ("Mid", "500-2k Hz", visualParams.midLevel, "#FFCC00"),              // Gold
+            ("Upper-Mid", "2k-4k Hz", visualParams.upperMidLevel, "#66FF00"),    // Lime
+            ("High", "4k-8k Hz", visualParams.highLevel, "#00FFCC"),             // Cyan
+            ("Air", "8k-20k Hz", visualParams.airLevel, "#00CCFF")               // Sky Blue
         ]
     }
 }
