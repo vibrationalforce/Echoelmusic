@@ -17,8 +17,13 @@ struct VaporwavePalace: View {
     @State private var selectedMode: PalaceMode = .focus
     @State private var isActive = false
     @State private var showSettings = false
+    @State private var showVisualizer = false
     @State private var pulseAnimation = false
     @State private var glowIntensity: CGFloat = 0.5
+
+    // MARK: - Visual Engine
+
+    @StateObject private var visualEngine = UnifiedVisualSoundEngine()
 
     // MARK: - Modes
 
@@ -88,6 +93,16 @@ struct VaporwavePalace: View {
         }
         .onAppear {
             startAnimations()
+        }
+        .sheet(isPresented: $showSettings) {
+            VaporwaveSettings()
+        }
+        .fullScreenCover(isPresented: $showVisualizer) {
+            VisualizerContainerView(
+                visualEngine: visualEngine,
+                isActive: $isActive
+            )
+            .ignoresSafeArea()
         }
     }
 
@@ -181,68 +196,98 @@ struct VaporwavePalace: View {
                 .stroke(VaporwaveColors.hrv.opacity(0.3), lineWidth: 2)
                 .frame(width: 240, height: 240)
 
-            // Inner glow
-            Circle()
-                .fill(
-                    RadialGradient(
-                        gradient: Gradient(colors: [
-                            selectedMode.color.opacity(0.3),
-                            selectedMode.color.opacity(0.1),
-                            Color.clear
-                        ]),
-                        center: .center,
-                        startRadius: 20,
-                        endRadius: 100
+            // Inner content - Mini visualizer when active, bio data when inactive
+            if isActive {
+                // Mini visualizer preview
+                Circle()
+                    .fill(Color.black)
+                    .frame(width: 200, height: 200)
+                    .overlay(
+                        UnifiedVisualizer(engine: visualEngine)
+                            .clipShape(Circle())
                     )
-                )
-                .frame(width: 200, height: 200)
-                .scaleEffect(pulseAnimation ? 1.1 : 0.9)
-                .animation(VaporwaveAnimation.breathing, value: pulseAnimation)
+                    .overlay(
+                        Circle()
+                            .stroke(selectedMode.color.opacity(0.5), lineWidth: 2)
+                    )
+                    .neonGlow(color: selectedMode.color, radius: 15)
+                    .onTapGesture {
+                        showVisualizer = true
+                    }
+                    .overlay(
+                        VStack {
+                            Spacer()
+                            Text("TAP TO EXPAND")
+                                .font(.system(size: 8, weight: .medium))
+                                .foregroundColor(VaporwaveColors.textTertiary)
+                                .tracking(2)
+                                .padding(.bottom, 20)
+                        }
+                    )
+            } else {
+                // Inner glow
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            gradient: Gradient(colors: [
+                                selectedMode.color.opacity(0.3),
+                                selectedMode.color.opacity(0.1),
+                                Color.clear
+                            ]),
+                            center: .center,
+                            startRadius: 20,
+                            endRadius: 100
+                        )
+                    )
+                    .frame(width: 200, height: 200)
+                    .scaleEffect(pulseAnimation ? 1.1 : 0.9)
+                    .animation(VaporwaveAnimation.breathing, value: pulseAnimation)
 
-            // Bio data display
-            VStack(spacing: VaporwaveSpacing.md) {
-                // Heart Rate
-                VStack(spacing: 2) {
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text("\(Int(healthKitManager.heartRate))")
-                            .font(VaporwaveTypography.data())
-                            .foregroundColor(VaporwaveColors.heartRate)
-                            .neonGlow(color: VaporwaveColors.heartRate, radius: 8)
+                // Bio data display
+                VStack(spacing: VaporwaveSpacing.md) {
+                    // Heart Rate
+                    VStack(spacing: 2) {
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Text("\(Int(healthKitManager.heartRate))")
+                                .font(VaporwaveTypography.data())
+                                .foregroundColor(VaporwaveColors.heartRate)
+                                .neonGlow(color: VaporwaveColors.heartRate, radius: 8)
 
-                        Image(systemName: "heart.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(VaporwaveColors.heartRate)
-                            .scaleEffect(pulseAnimation ? 1.2 : 1.0)
-                            .animation(VaporwaveAnimation.pulse, value: pulseAnimation)
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(VaporwaveColors.heartRate)
+                                .scaleEffect(pulseAnimation ? 1.2 : 1.0)
+                                .animation(VaporwaveAnimation.pulse, value: pulseAnimation)
+                        }
+
+                        Text("BPM")
+                            .font(VaporwaveTypography.label())
+                            .foregroundColor(VaporwaveColors.textTertiary)
                     }
 
-                    Text("BPM")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.textTertiary)
-                }
+                    // Coherence Score
+                    VStack(spacing: 2) {
+                        Text("\(Int(healthKitManager.hrvCoherence))")
+                            .font(.system(size: 56, weight: .ultraLight, design: .rounded))
+                            .foregroundColor(coherenceColor)
+                            .neonGlow(color: coherenceColor, radius: 15)
 
-                // Coherence Score
-                VStack(spacing: 2) {
-                    Text("\(Int(healthKitManager.hrvCoherence))")
-                        .font(.system(size: 56, weight: .ultraLight, design: .rounded))
-                        .foregroundColor(coherenceColor)
-                        .neonGlow(color: coherenceColor, radius: 15)
+                        Text(coherenceLabel)
+                            .font(VaporwaveTypography.caption())
+                            .foregroundColor(coherenceColor)
+                            .tracking(2)
+                    }
 
-                    Text(coherenceLabel)
-                        .font(VaporwaveTypography.caption())
-                        .foregroundColor(coherenceColor)
-                        .tracking(2)
-                }
+                    // HRV
+                    VStack(spacing: 2) {
+                        Text(String(format: "%.0f", healthKitManager.hrvRMSSD))
+                            .font(VaporwaveTypography.dataSmall())
+                            .foregroundColor(VaporwaveColors.hrv)
 
-                // HRV
-                VStack(spacing: 2) {
-                    Text(String(format: "%.0f", healthKitManager.hrvRMSSD))
-                        .font(VaporwaveTypography.dataSmall())
-                        .foregroundColor(VaporwaveColors.hrv)
-
-                    Text("HRV ms")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        Text("HRV ms")
+                            .font(VaporwaveTypography.label())
+                            .foregroundColor(VaporwaveColors.textTertiary)
+                    }
                 }
             }
         }
@@ -387,6 +432,9 @@ struct VaporwavePalace: View {
             if healthKitManager.isAuthorized {
                 healthKitManager.startMonitoring()
             }
+
+            // Set initial visualization mode based on palace mode
+            visualEngine.currentMode = mapPalaceModeToVisualMode(selectedMode)
         } else {
             audioEngine.stop()
             healthKitManager.stopMonitoring()
@@ -400,11 +448,34 @@ struct VaporwavePalace: View {
     private func startAnimations() {
         pulseAnimation = true
 
-        // Update glow based on coherence
+        // Update glow and visual engine based on bio data
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
             withAnimation(.easeInOut(duration: 0.5)) {
                 glowIntensity = CGFloat(healthKitManager.hrvCoherence / 100.0)
             }
+
+            // Feed bio data to visual engine
+            visualEngine.updateBioData(
+                hrv: healthKitManager.hrvRMSSD,
+                coherence: healthKitManager.hrvCoherence,
+                heartRate: healthKitManager.heartRate
+            )
+        }
+    }
+
+    // MARK: - Mode Mapping
+
+    /// Maps Palace mode to default visualization mode
+    private func mapPalaceModeToVisualMode(_ palaceMode: PalaceMode) -> UnifiedVisualSoundEngine.VisualMode {
+        switch palaceMode {
+        case .focus:
+            return .liquidLight
+        case .create:
+            return .vaporwave
+        case .heal:
+            return .mandala
+        case .live:
+            return .spectrum
         }
     }
 }
