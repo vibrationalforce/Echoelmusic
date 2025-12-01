@@ -41,11 +41,11 @@ struct EchoelmusicApp: App {
 
         // INSTRUMENT PIPELINE (NEU!)
         _ = InstrumentOrchestrator.shared   // UI→Synthesis→Audio Pipeline
-        _ = WorldMusicBridge.shared         // 58 Global Music Styles
+        _ = WorldMusicBridge.shared         // 42 Global Music Styles
 
         print("⚛️ Echoelmusic Core Systems Initialized")
         print("🎹 InstrumentOrchestrator: 54+ Instruments Ready")
-        print("🌍 WorldMusicBridge: 58 Music Styles Loaded")
+        print("🌍 WorldMusicBridge: 42 Music Styles Loaded")
     }
 
     var body: some Scene {

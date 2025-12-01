@@ -3,7 +3,7 @@ import Combine
 
 /// WorldMusicBridge - Swift interface to C++ WorldMusicDatabase
 ///
-/// Provides access to 58 global music styles with:
+/// Provides access to 42 global music styles with:
 /// - Chord progressions
 /// - Scales/modes
 /// - Tempo ranges
