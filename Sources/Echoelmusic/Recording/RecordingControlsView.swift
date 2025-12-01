@@ -430,18 +430,26 @@ struct RecordingControlsView: View {
 
     private func startBioDataCapture() {
         // Capture bio-data every 0.5 seconds while recording
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
-            if !recordingEngine.isRecording {
+        // Memory Leak Fix: Capture weak references zu EnvironmentObjects
+        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak recordingEngine, weak healthKitManager, weak microphoneManager] timer in
+            guard let recEngine = recordingEngine,
+                  let hkManager = healthKitManager,
+                  let micManager = microphoneManager else {
                 timer.invalidate()
                 return
             }
 
-            recordingEngine.addBioDataPoint(
-                hrv: healthKitManager.hrv,
-                heartRate: healthKitManager.heartRate,
-                coherence: healthKitManager.hrvCoherence,
-                audioLevel: microphoneManager.audioLevel,
-                frequency: microphoneManager.frequency
+            if !recEngine.isRecording {
+                timer.invalidate()
+                return
+            }
+
+            recEngine.addBioDataPoint(
+                hrv: hkManager.hrv,
+                heartRate: hkManager.heartRate,
+                coherence: hkManager.hrvCoherence,
+                audioLevel: micManager.audioLevel,
+                frequency: micManager.frequency
             )
         }
     }

@@ -29,6 +29,9 @@ struct VaporwavePalace: View {
     /// System Status für UI-Anzeige
     @State private var systemStatus: EchoelUniversalCore.SystemStatus?
 
+    /// Timer für Bio-Daten Updates (wird in onDisappear invalidiert)
+    @State private var bioDataTimer: Timer?
+
     // MARK: - Modes
 
     enum PalaceMode: String, CaseIterable {
@@ -452,22 +455,34 @@ struct VaporwavePalace: View {
     private func startAnimations() {
         pulseAnimation = true
 
+        // Invalidiere vorherigen Timer falls vorhanden (Memory Leak Prevention)
+        bioDataTimer?.invalidate()
+
         // Update glow and feed bio data through UNIVERSAL CORE (not directly to visualEngine!)
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
+        // Timer wird gespeichert für sauberes Cleanup in stopAnimations()
+        bioDataTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak healthKitManager] _ in
+            guard let hkManager = healthKitManager else { return }
+
             withAnimation(.easeInOut(duration: 0.5)) {
-                glowIntensity = CGFloat(healthKitManager.hrvCoherence / 100.0)
+                glowIntensity = CGFloat(hkManager.hrvCoherence / 100.0)
             }
 
-            // NEU: Route Bio-Daten durch UniversalCore - verteilt automatisch an ALLE Systeme
+            // Route Bio-Daten durch UniversalCore - verteilt automatisch an ALLE Systeme
             EchoelUniversalCore.shared.receiveBioData(
-                heartRate: healthKitManager.heartRate,
-                hrv: healthKitManager.hrvRMSSD,
-                coherence: healthKitManager.hrvCoherence
+                heartRate: hkManager.heartRate,
+                hrv: hkManager.hrvRMSSD,
+                coherence: hkManager.hrvCoherence
             )
 
             // Update System Status für UI
             systemStatus = EchoelUniversalCore.shared.getSystemStatus()
         }
+    }
+
+    private func stopAnimations() {
+        pulseAnimation = false
+        bioDataTimer?.invalidate()
+        bioDataTimer = nil
     }
 
     // MARK: - Mode Mapping

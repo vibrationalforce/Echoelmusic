@@ -30,6 +30,16 @@ struct EchoelmusicApp: App {
         _audioEngine = StateObject(wrappedValue: audioEng)
 
         _unifiedControlHub = StateObject(wrappedValue: UnifiedControlHub(audioEngine: audioEng))
+
+        // KRITISCH: Initialisiere alle Core-Systeme (Singletons)
+        // Diese müssen beim App-Start aktiviert werden!
+        _ = EchoelUniversalCore.shared      // Master Integration Hub
+        _ = SelfHealingEngine.shared        // Auto-Recovery System
+        _ = VideoAICreativeHub.shared       // Video/AI Integration
+        _ = MultiPlatformBridge.shared      // MIDI/OSC/DMX/CV Bridge
+        _ = EchoelTools.shared              // Intelligent Creative Tools
+
+        print("⚛️ Echoelmusic Core Systems Initialized")
     }
 
     var body: some Scene {

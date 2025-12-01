@@ -18,6 +18,9 @@ struct VisualizerContainerView: View {
     @State private var isFullscreen = false
     @Binding var isActive: Bool
 
+    /// Timer für Bio-Daten Updates (Memory Leak Prevention)
+    @State private var bioDataTimer: Timer?
+
     // MARK: - Body
 
     var body: some View {
@@ -63,6 +66,9 @@ struct VisualizerContainerView: View {
         }
         .onAppear {
             connectEngines()
+        }
+        .onDisappear {
+            disconnectEngines()
         }
     }
 
@@ -262,15 +268,24 @@ struct VisualizerContainerView: View {
     // MARK: - Engine Connection
 
     private func connectEngines() {
+        // Invalidiere vorherigen Timer (Memory Leak Prevention)
+        bioDataTimer?.invalidate()
+
         // WICHTIG: Route bio data durch UniversalCore - verteilt automatisch an ALLE Systeme
         // (VisualEngine, SelfHealingEngine, MultiPlatformBridge, VideoAIHub, etc.)
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
+        bioDataTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak healthKitManager] _ in
+            guard let hkManager = healthKitManager else { return }
             EchoelUniversalCore.shared.receiveBioData(
-                heartRate: healthKitManager.heartRate,
-                hrv: healthKitManager.hrvRMSSD,
-                coherence: healthKitManager.hrvCoherence
+                heartRate: hkManager.heartRate,
+                hrv: hkManager.hrvRMSSD,
+                coherence: hkManager.hrvCoherence
             )
         }
+    }
+
+    private func disconnectEngines() {
+        bioDataTimer?.invalidate()
+        bioDataTimer = nil
     }
 
     // MARK: - Haptic Feedback
