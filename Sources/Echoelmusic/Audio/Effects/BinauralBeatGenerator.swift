@@ -67,8 +67,10 @@ class BinauralBeatGenerator: ObservableObject {
     /// Amplitude (volume) of the generated tone (0.0 - 1.0)
     private(set) var amplitude: Float = 0.3
 
-    /// Sample rate for audio generation
-    private let sampleRate: Double = 44100.0
+    /// Sample rate for audio generation - uses system rate for proper sync
+    private var sampleRate: Double {
+        AVAudioSession.sharedInstance().sampleRate
+    }
 
     /// Current audio mode (automatically detected)
     @Published private(set) var audioMode: AudioMode = .binaural
