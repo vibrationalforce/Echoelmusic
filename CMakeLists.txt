@@ -311,12 +311,16 @@ target_sources(Echoelmusic
         # Sources/DSP/SpectralSculptor.cpp      # TODO: Fix FFT API
 
         # =====================================================================
-        # PHASE 3: ADVANCED FEATURES (Later)
+        # PHASE 3: SYNTHESIS & ADVANCED FEATURES
         # =====================================================================
+
+        # DRUM SYNTHESIZER - ENABLED! (808/909 style)
+        Sources/Synthesis/DrumSynthesizer.cpp
+
+        # Pending (needs JUCE 7 fixes or later integration)
         # Sources/AI/SmartMixer.cpp               # AI mixing assistant
         # Sources/Visualization/SpectrumAnalyzer.cpp
         # Sources/Visualization/BioReactiveVisualizer.cpp
-        # Sources/Synthesis/DrumSynthesizer.cpp
         # Sources/Healing/ResonanceHealer.cpp
         # Sources/Instrument/RhythmMatrix.cpp
         # Sources/Sequencer/ArpWeaver.cpp

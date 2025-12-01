@@ -39,7 +39,13 @@ struct EchoelmusicApp: App {
         _ = MultiPlatformBridge.shared      // MIDI/OSC/DMX/CV Bridge
         _ = EchoelTools.shared              // Intelligent Creative Tools
 
+        // INSTRUMENT PIPELINE (NEU!)
+        _ = InstrumentOrchestrator.shared   // UI→Synthesis→Audio Pipeline
+        _ = WorldMusicBridge.shared         // 58 Global Music Styles
+
         print("⚛️ Echoelmusic Core Systems Initialized")
+        print("🎹 InstrumentOrchestrator: 54+ Instruments Ready")
+        print("🌍 WorldMusicBridge: 58 Music Styles Loaded")
     }
 
     var body: some Scene {
