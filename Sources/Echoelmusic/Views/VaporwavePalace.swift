@@ -21,9 +21,13 @@ struct VaporwavePalace: View {
     @State private var pulseAnimation = false
     @State private var glowIntensity: CGFloat = 0.5
 
-    // MARK: - Visual Engine
+    // MARK: - Central Systems (VERBUNDEN MIT UNIVERSAL CORE)
 
-    @StateObject private var visualEngine = UnifiedVisualSoundEngine()
+    /// Verwendet die zentrale Visual Engine vom UniversalCore (nicht eigene Instanz!)
+    @ObservedObject private var visualEngine = EchoelUniversalCore.shared.visualEngine
+
+    /// System Status für UI-Anzeige
+    @State private var systemStatus: EchoelUniversalCore.SystemStatus?
 
     // MARK: - Modes
 
@@ -448,18 +452,21 @@ struct VaporwavePalace: View {
     private func startAnimations() {
         pulseAnimation = true
 
-        // Update glow and visual engine based on bio data
+        // Update glow and feed bio data through UNIVERSAL CORE (not directly to visualEngine!)
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
             withAnimation(.easeInOut(duration: 0.5)) {
                 glowIntensity = CGFloat(healthKitManager.hrvCoherence / 100.0)
             }
 
-            // Feed bio data to visual engine
-            visualEngine.updateBioData(
+            // NEU: Route Bio-Daten durch UniversalCore - verteilt automatisch an ALLE Systeme
+            EchoelUniversalCore.shared.receiveBioData(
+                heartRate: healthKitManager.heartRate,
                 hrv: healthKitManager.hrvRMSSD,
-                coherence: healthKitManager.hrvCoherence,
-                heartRate: healthKitManager.heartRate
+                coherence: healthKitManager.hrvCoherence
             )
+
+            // Update System Status für UI
+            systemStatus = EchoelUniversalCore.shared.getSystemStatus()
         }
     }
 

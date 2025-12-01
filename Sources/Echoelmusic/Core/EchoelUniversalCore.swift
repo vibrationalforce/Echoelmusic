@@ -73,6 +73,18 @@ final class EchoelUniversalCore: ObservableObject {
     /// AI Creative Engine
     private var aiEngine = AICreativeEngine()
 
+    /// Self-Healing Engine - NEU VERBUNDEN
+    private let selfHealing = SelfHealingEngine.shared
+
+    /// Multi-Platform Bridge - NEU VERBUNDEN
+    private let platformBridge = MultiPlatformBridge.shared
+
+    /// Video AI Hub - NEU VERBUNDEN
+    private let videoAIHub = VideoAICreativeHub.shared
+
+    /// EchoelTools - NEU VERBUNDEN
+    private let tools = EchoelTools.shared
+
     // MARK: - Private State
 
     private var cancellables = Set<AnyCancellable>()
@@ -82,6 +94,7 @@ final class EchoelUniversalCore: ObservableObject {
 
     private init() {
         setupSubsystems()
+        setupCrossSystemConnections()
         startUniversalLoop()
     }
 
@@ -96,7 +109,44 @@ final class EchoelUniversalCore: ObservableObject {
         aiEngine.delegate = self
 
         // Register all modules
-        connectedModules = [.audio, .visual, .bio, .quantum, .sync, .analog, .ai]
+        connectedModules = [.audio, .visual, .bio, .quantum, .sync, .analog, .ai, .selfHealing, .video, .tools]
+    }
+
+    /// NEU: Verbindet alle Systeme bidirektional
+    private func setupCrossSystemConnections() {
+        // Self-Healing → Universal Core
+        selfHealing.$flowState
+            .sink { [weak self] flowState in
+                self?.handleFlowStateChange(flowState)
+            }
+            .store(in: &cancellables)
+
+        selfHealing.$systemHealth
+            .sink { [weak self] health in
+                self?.systemState.systemHealth = health
+            }
+            .store(in: &cancellables)
+
+        // Tools sind bereits verbunden via EchoelTools.shared
+
+        print("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden")
+    }
+
+    /// Reagiert auf Flow-State Änderungen vom Self-Healing System
+    private func handleFlowStateChange(_ flowState: FlowState) {
+        switch flowState {
+        case .ultraFlow:
+            // Maximale Leistung
+            systemState.performanceMode = .maximum
+        case .flow:
+            systemState.performanceMode = .high
+        case .neutral:
+            systemState.performanceMode = .balanced
+        case .stressed:
+            systemState.performanceMode = .reduced
+        case .recovery, .emergency:
+            systemState.performanceMode = .minimal
+        }
     }
 
     private func startUniversalLoop() {
@@ -162,6 +212,51 @@ final class EchoelUniversalCore: ObservableObject {
         quantumProcessor.setCoherence(globalCoherence)
         aiEngine.setCreativeState(systemState)
         analogBridge.setControlVoltages(from: systemState)
+
+        // NEU: Broadcast zu allen externen Plattformen
+        platformBridge.broadcastState(systemState)
+    }
+
+    // MARK: - Public API für externe Systeme
+
+    /// Wird von HealthKitManager aufgerufen um Bio-Daten zu empfangen
+    public func receiveBioData(heartRate: Double, hrv: Double, coherence: Double) {
+        bioProcessor.updateFromHealthKit(heartRate: heartRate, hrv: hrv)
+
+        // Direktes Update der globalen Coherence
+        globalCoherence = Float(coherence / 100.0)
+
+        // Propagiere sofort
+        propagateUniversalState()
+    }
+
+    /// Wird von AudioEngine aufgerufen um Audio-Daten zu empfangen
+    public func receiveAudioData(buffer: [Float]) {
+        visualEngine.processAudioBuffer(buffer)
+
+        // Update system energy basierend auf Audio
+        systemEnergy = visualEngine.visualParams.energy
+    }
+
+    /// Gibt den aktuellen System-Status für UI zurück
+    public func getSystemStatus() -> SystemStatus {
+        return SystemStatus(
+            health: selfHealing.systemHealth,
+            flowState: selfHealing.flowState,
+            coherence: globalCoherence,
+            energy: systemEnergy,
+            connectedModules: connectedModules.count,
+            isHealing: selfHealing.systemHealth != .optimal
+        )
+    }
+
+    public struct SystemStatus {
+        var health: SystemHealth
+        var flowState: FlowState
+        var coherence: Float
+        var energy: Float
+        var connectedModules: Int
+        var isHealing: Bool
     }
 }
 
@@ -190,6 +285,10 @@ extension EchoelUniversalCore {
         var connectedDevices: Int = 0
         var syncLatency: Double = 0
 
+        // NEU: System Health & Performance
+        var systemHealth: SystemHealth = .optimal
+        var performanceMode: PerformanceMode = .balanced
+
         mutating func update(coherence: Float, energy: Float, quantumField: QuantumField) {
             self.coherence = coherence
             self.energy = energy
@@ -200,6 +299,14 @@ extension EchoelUniversalCore {
         }
     }
 
+    enum PerformanceMode: String {
+        case maximum = "Maximum"
+        case high = "High"
+        case balanced = "Balanced"
+        case reduced = "Reduced"
+        case minimal = "Minimal"
+    }
+
     enum ModuleType: String, CaseIterable {
         case audio = "Audio Engine"
         case visual = "Visual Engine"
@@ -208,6 +315,9 @@ extension EchoelUniversalCore {
         case sync = "Device Sync"
         case analog = "Analog Bridge"
         case ai = "AI Creative"
+        case selfHealing = "Self-Healing"
+        case video = "Video AI"
+        case tools = "EchoelTools"
     }
 }
 
