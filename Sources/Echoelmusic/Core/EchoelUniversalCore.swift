@@ -555,27 +555,93 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
                                 AnalogBridgeDelegate,
                                 AIEngineDelegate {
     func bioDataUpdated(_ state: BioState) {
-        // Handle bio updates
+        // FIXED: Verarbeite Bio-Updates und propagiere
+        bioProcessor.updateState(state)
+        globalCoherence = state.coherence
+        systemEnergy = state.energy
+        propagateUniversalState()
+
+        #if DEBUG
+        print("[UniversalCore] Bio update: Coherence=\(String(format: "%.2f", state.coherence))")
+        #endif
     }
 
     func quantumStateCollapsed(to choice: Int) {
-        // Handle quantum collapse events
+        // FIXED: Reagiere auf Quantum-Kollaps
+        quantumField.recordCollapse(choice: choice)
+        systemState.lastQuantumChoice = choice
+
+        // Nutze Quantum-Entscheidung für kreative Richtung
+        if choice % 2 == 0 {
+            systemState.creativeDirection = .harmonic
+        } else {
+            systemState.creativeDirection = .rhythmic
+        }
+
+        #if DEBUG
+        print("[UniversalCore] Quantum collapsed to choice: \(choice)")
+        #endif
     }
 
     func deviceConnected(_ device: String) {
         systemState.connectedDevices += 1
+        connectedModules.insert(.sync)
+
+        #if DEBUG
+        print("[UniversalCore] Device connected: \(device) (Total: \(systemState.connectedDevices))")
+        #endif
     }
 
     func deviceDisconnected(_ device: String) {
         systemState.connectedDevices = max(0, systemState.connectedDevices - 1)
+
+        #if DEBUG
+        print("[UniversalCore] Device disconnected: \(device) (Total: \(systemState.connectedDevices))")
+        #endif
     }
 
     func analogGearResponded(_ response: [Float]) {
-        // Handle analog gear feedback
+        // FIXED: Integriere Analog-Feedback ins System
+        systemState.analogFeedback = response
+
+        // Nutze CV-Feedback für Systemmodulation
+        if response.count >= 2 {
+            globalCoherence = globalCoherence * 0.9 + response[0] * 0.1
+            systemEnergy = systemEnergy * 0.9 + response[1] * 0.1
+        }
+
+        propagateUniversalState()
+
+        #if DEBUG
+        print("[UniversalCore] Analog gear response: \(response.count) channels")
+        #endif
     }
 
     func aiSuggestionGenerated(_ suggestion: AICreativeEngine.CreativeSuggestion) {
-        // Handle AI suggestions
+        // FIXED: Nutze AI-Vorschläge für kreative Richtung
+        systemState.aiSuggestion = suggestion
+
+        // Bei hoher Confidence automatisch anwenden
+        if suggestion.confidence > 0.8 {
+            applyAISuggestion(suggestion)
+        }
+
+        #if DEBUG
+        print("[UniversalCore] AI suggestion: \(suggestion.type) (confidence: \(suggestion.confidence))")
+        #endif
+    }
+
+    private func applyAISuggestion(_ suggestion: AICreativeEngine.CreativeSuggestion) {
+        switch suggestion.type {
+        case .harmonic:
+            systemState.creativeDirection = .harmonic
+        case .rhythmic:
+            systemState.creativeDirection = .rhythmic
+        case .textural:
+            systemState.creativeDirection = .textural
+        case .structural:
+            systemState.creativeDirection = .structural
+        }
     }
 }
 
