@@ -42,10 +42,16 @@ class CollaborationEngine: ObservableObject {
     // MARK: - Group Bio-Sync
 
     func updateGroupBio(participantBio: [(id: UUID, hrv: Float, coherence: Float)]) {
-        averageHRV = participantBio.map { $0.hrv }.reduce(0, +) / Float(participantBio.count)
+        // KRITISCH: Verhindere Division durch Null
+        guard !participantBio.isEmpty else {
+            averageHRV = 0.0
+            groupCoherence = 0.0
+            return
+        }
 
-        let avgCoherence = participantBio.map { $0.coherence }.reduce(0, +) / Float(participantBio.count)
-        groupCoherence = avgCoherence
+        let count = Float(participantBio.count)
+        averageHRV = participantBio.map { $0.hrv }.reduce(0, +) / count
+        groupCoherence = participantBio.map { $0.coherence }.reduce(0, +) / count
 
         print("🧠 CollaborationEngine: Group HRV: \(averageHRV), Group Coherence: \(groupCoherence)")
     }

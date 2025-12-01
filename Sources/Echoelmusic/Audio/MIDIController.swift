@@ -189,7 +189,8 @@ class MIDIController: ObservableObject {
     }
 
     private func handleMIDIPacket(_ packet: UnsafePointer<MIDIPacket>) {
-        let data = Mirror(reflecting: packet.pointee.data).children.map { $0.value as! UInt8 }
+        // KRITISCH: Safe cast statt force unwrap - verhindert Crash bei ungültigen Daten
+        let data = Mirror(reflecting: packet.pointee.data).children.compactMap { $0.value as? UInt8 }
 
         guard data.count >= 3 else { return }
 

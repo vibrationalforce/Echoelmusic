@@ -76,6 +76,13 @@ class InstrumentOrchestrator: ObservableObject {
         print("🎛️ Synthesis Engines: \(soundLibrary.availableSynthEngines.count)")
     }
 
+    deinit {
+        // KRITISCH: NotificationCenter Observer entfernen um Memory Leak zu verhindern
+        NotificationCenter.default.removeObserver(self)
+        audioEngine?.stop()
+        cancellables.removeAll()
+    }
+
     // MARK: - Audio Engine Setup
 
     private func setupAudioEngine() {
@@ -90,14 +97,18 @@ class InstrumentOrchestrator: ObservableObject {
         playerNode = AVAudioPlayerNode()
         mixerNode = engine.mainMixerNode
 
-        guard let player = playerNode else { return }
+        guard let player = playerNode,
+              let mixer = mixerNode else { return }
 
         // Attach player to engine
         engine.attach(player)
 
-        // Connect player → mixer → output
-        let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2)!
-        engine.connect(player, to: mixerNode!, format: format)
+        // Connect player → mixer → output (SAFE: ohne force unwrap)
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) else {
+            print("❌ InstrumentOrchestrator: Failed to create audio format")
+            return
+        }
+        engine.connect(player, to: mixer, format: format)
 
         // Start the engine
         do {
