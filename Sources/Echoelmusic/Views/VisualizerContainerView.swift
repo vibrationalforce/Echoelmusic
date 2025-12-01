@@ -262,12 +262,13 @@ struct VisualizerContainerView: View {
     // MARK: - Engine Connection
 
     private func connectEngines() {
-        // Connect bio data from HealthKit
+        // WICHTIG: Route bio data durch UniversalCore - verteilt automatisch an ALLE Systeme
+        // (VisualEngine, SelfHealingEngine, MultiPlatformBridge, VideoAIHub, etc.)
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
-            visualEngine.updateBioData(
+            EchoelUniversalCore.shared.receiveBioData(
+                heartRate: healthKitManager.heartRate,
                 hrv: healthKitManager.hrvRMSSD,
-                coherence: healthKitManager.hrvCoherence,
-                heartRate: healthKitManager.heartRate
+                coherence: healthKitManager.hrvCoherence
             )
         }
     }
