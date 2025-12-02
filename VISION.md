@@ -1,6 +1,6 @@
 # ECHOELMUSIC VISION & STATUS
 
-> **Last Updated:** 2024 | **Total Files:** 133 Swift + Desktop Plugins
+> **Last Updated:** 2024-12-02 | **Total Files:** 133 Swift + Desktop Plugins
 > **Mission:** The Best of Reaper + FL Studio + Ableton + DaVinci Resolve + CapCut + Resolume Arena + TouchDesigner
 
 ---
@@ -9,12 +9,12 @@
 
 | Category | Progress | Critical Missing |
 |----------|----------|------------------|
-| **DAW Core** | 60% | Undo/Redo, Piano Roll, Clip Editor |
-| **Video Editing** | 70% | Text/Titles, Multi-Cam, Stabilization |
+| **DAW Core** | 75% | Piano Roll, AU/VST Hosting |
+| **Video Editing** | 75% | Text/Titles, Multi-Cam, Stabilization |
 | **VJ/Visuals** | 62% | Syphon/NDI, Node Graph, Blend Modes |
 | **Social Media** | 85% | Analytics, Scheduling |
 | **Export** | 95% | PNG Sequence, GIF |
-| **Live Streaming** | 50% | RTMP Protocol, WebRTC |
+| **Live Streaming** | 70% | WebRTC |
 | **Bio-Reactive** | 100% | UNIQUE FEATURE |
 
 ---
@@ -112,23 +112,29 @@ Sources/
 
 ### TIER 1: ESSENTIAL (Blocks Professional Use)
 
-#### 1. Undo/Redo System
+#### 1. ~~Undo/Redo System~~ ✅ IMPLEMENTED
 ```
-Location: RecordingEngine.swift, VideoEditingEngine.swift
-Status: NOT IMPLEMENTED
-Impact: Cannot recover from mistakes
-Solution: Command pattern with history stack
-```
-
-#### 2. Audio Timeline View with Clip Editing
-```
-Location: NEW FILE NEEDED - AudioTimelineView.swift
-Status: NOT IMPLEMENTED
-Impact: No visual clip arrangement
-Solution: SwiftUI timeline with drag/drop clips
+Location: Core/UndoRedoManager.swift
+Status: IMPLEMENTED (1000-step history, command pattern)
+Integration: VideoEditingEngine, RecordingEngine
+Features: Track operations, clip operations, parameter changes
 ```
 
-#### 3. Piano Roll / MIDI Editor
+#### 2. ~~Audio Timeline~~ ✅ ALREADY EXISTS
+```
+Location: VideoEditingEngine.swift has audioTracks + videoTracks
+Status: IMPLEMENTED - Timeline supports both audio and video
+Features: Magnetic snap, beat sync, all edit modes
+```
+
+#### 3. ~~Retrospective Capture~~ ✅ IMPLEMENTED
+```
+Location: RecordingEngine.swift (RetrospectiveBuffer)
+Status: IMPLEMENTED - Ableton-style capture
+Features: 60s circular buffer, O(1) operations, mobile-friendly
+```
+
+#### 4. Piano Roll / MIDI Editor
 ```
 Location: NEW FILE NEEDED - PianoRollView.swift
 Status: NOT IMPLEMENTED
@@ -136,7 +142,7 @@ Impact: No MIDI note editing
 Solution: Grid view with note blocks, velocity lanes
 ```
 
-#### 4. Text/Titles Rendering
+#### 5. Text/Titles Rendering
 ```
 Location: VideoEditingEngine.swift (infrastructure only)
 Status: NOT IMPLEMENTED
@@ -144,17 +150,16 @@ Impact: No text overlays or titles
 Solution: CoreText/CoreGraphics text rendering pipeline
 ```
 
-#### 5. Complete RTMP Protocol
+#### 6. ~~Complete RTMP Protocol~~ ✅ IMPLEMENTED
 ```
-Location: RTMPClient.swift
-Status: 30% - Missing handshake and packet framing
-Impact: Streaming doesn't work
-Solution: Implement C0/C1/C2 exchange, FLV packets
+Location: Stream/RTMPClient.swift
+Status: IMPLEMENTED - Full RTMP handshake + streaming
+Features: C0/C1/S0/S1/C2/S2, AMF0, chunk framing, video/audio frames
 ```
 
 ### TIER 2: IMPORTANT (Professional Features)
 
-#### 6. Advanced Blend Modes
+#### 7. Advanced Blend Modes
 ```
 Location: Metal shaders
 Status: Basic alpha only
@@ -289,25 +294,28 @@ make -j8
 
 ## ROADMAP
 
-### v1.0 - Foundation (Current)
+### v1.0 - Foundation (Current) ✅ COMPLETE
 - [x] Core audio engine
 - [x] Bio-reactive system
 - [x] Basic recording
 - [x] Export pipeline
-- [ ] **Undo/Redo** ← NEXT
-- [ ] **Clip Editor** ← NEXT
+- [x] **Undo/Redo** ✅ DONE
+- [x] **Clip Editor** ✅ (VideoEditingEngine has audioTracks)
+- [x] **Retrospective Capture** ✅ DONE (Ableton-style)
+- [x] **RTMP Streaming** ✅ DONE
 
-### v1.5 - Professional
-- [ ] Piano Roll
-- [ ] Complete RTMP
-- [ ] Text/Titles
+### v1.5 - Professional ← NEXT
+- [ ] **Piano Roll** ← PRIORITY
+- [ ] **Text/Titles** ← PRIORITY
 - [ ] Multi-Cam
+- [ ] Stabilization
 
 ### v2.0 - Feature Parity
 - [ ] Syphon/NDI
 - [ ] Node Graph VJ
 - [ ] AU/VST Hosting
 - [ ] WebRTC Collaboration
+- [ ] Advanced Blend Modes
 
 ---
 

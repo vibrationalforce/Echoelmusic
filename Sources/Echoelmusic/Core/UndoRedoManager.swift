@@ -404,6 +404,31 @@ struct MIDINoteCommand: UndoableCommand {
     }
 }
 
+// MARK: - Generic Track Command
+
+/// Generic command for track operations
+struct GenericTrackCommand: UndoableCommand {
+    let actionName: String
+    let trackID: UUID
+    let execute_: () -> Void
+    let undo_: () -> Void
+
+    func execute() {
+        execute_()
+    }
+
+    func undo() {
+        undo_()
+    }
+
+    init(actionName: String, trackID: UUID, execute: @escaping () -> Void, undo: @escaping () -> Void) {
+        self.actionName = actionName
+        self.trackID = trackID
+        self.execute_ = execute
+        self.undo_ = undo
+    }
+}
+
 // MARK: - Compound Command
 
 /// Groups multiple commands into one undoable action

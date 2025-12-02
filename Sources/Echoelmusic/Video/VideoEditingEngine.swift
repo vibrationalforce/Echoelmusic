@@ -17,6 +17,9 @@ class VideoEditingEngine: ObservableObject {
     @Published var selectedClips: Set<UUID> = []
     @Published var editMode: EditMode = .select
 
+    // MARK: - Undo/Redo Integration
+    private let undoManager = UndoRedoManager.shared
+
     // MARK: - Playback
 
     private var player: AVPlayer?
@@ -51,7 +54,39 @@ class VideoEditingEngine: ObservableObject {
 
     init(timeline: Timeline = Timeline()) {
         self.timeline = timeline
-        print("✅ VideoEditingEngine: Initialized")
+        print("✅ VideoEditingEngine: Initialized with Undo/Redo support")
+    }
+
+    // MARK: - Undo/Redo Convenience Methods
+
+    /// Undo last action (Cmd+Z)
+    func undo() {
+        undoManager.undo()
+    }
+
+    /// Redo last undone action (Cmd+Shift+Z)
+    func redo() {
+        undoManager.redo()
+    }
+
+    /// Whether undo is available
+    var canUndo: Bool {
+        undoManager.canUndo
+    }
+
+    /// Whether redo is available
+    var canRedo: Bool {
+        undoManager.canRedo
+    }
+
+    /// Name of action that will be undone
+    var undoActionName: String {
+        undoManager.undoActionName
+    }
+
+    /// Name of action that will be redone
+    var redoActionName: String {
+        undoManager.redoActionName
     }
 
     deinit {
@@ -64,38 +99,80 @@ class VideoEditingEngine: ObservableObject {
         // Magnetic timeline - snap to nearest clip or beat
         let snappedTime = timeline.magneticSnap(time: time)
 
-        // Insert clip
-        var mutableClip = clip
-        mutableClip.startTime = snappedTime
-        track.clips.append(mutableClip)
+        // Create undoable command
+        let command = VideoClipCommand(
+            operation: .add,
+            clipData: (clip: clip, trackID: track.id, time: snappedTime),
+            execute_: { [weak self, weak track] in
+                guard let track = track else { return }
+                var mutableClip = clip
+                mutableClip.startTime = snappedTime
+                track.clips.append(mutableClip)
+                track.clips.sort { $0.startTime < $1.startTime }
+            },
+            undo_: { [weak track] in
+                guard let track = track else { return }
+                track.clips.removeAll { $0.id == clip.id }
+            }
+        )
 
-        // Sort clips by start time
-        track.clips.sort { $0.startTime < $1.startTime }
-
+        undoManager.execute(command)
         print("➕ VideoEditingEngine: Added clip '\(clip.name)' to track '\(track.name)' at \(snappedTime.seconds)s")
     }
 
     func removeClip(_ clipID: UUID, from track: Track) {
         guard let index = track.clips.firstIndex(where: { $0.id == clipID }) else { return }
         let clip = track.clips[index]
+        let clipIndex = index
 
-        track.clips.remove(at: index)
+        // Create undoable command
+        let command = VideoClipCommand(
+            operation: .delete,
+            clipData: (clip: clip, trackID: track.id, index: clipIndex),
+            execute_: { [weak track] in
+                guard let track = track else { return }
+                track.clips.removeAll { $0.id == clipID }
+            },
+            undo_: { [weak track] in
+                guard let track = track else { return }
+                track.clips.insert(clip, at: min(clipIndex, track.clips.count))
+                track.clips.sort { $0.startTime < $1.startTime }
+            }
+        )
 
+        undoManager.execute(command)
         print("➖ VideoEditingEngine: Removed clip '\(clip.name)' from track '\(track.name)'")
     }
 
     func moveClip(_ clipID: UUID, from sourceTrack: Track, to destinationTrack: Track, at time: CMTime) {
         guard let index = sourceTrack.clips.firstIndex(where: { $0.id == clipID }) else { return }
-        var clip = sourceTrack.clips[index]
+        let clip = sourceTrack.clips[index]
+        let originalTime = clip.startTime
+        let originalIndex = index
 
-        // Remove from source
-        sourceTrack.clips.remove(at: index)
+        // Create undoable command
+        let command = VideoClipCommand(
+            operation: .move,
+            clipData: (clip: clip, sourceTrackID: sourceTrack.id, destTrackID: destinationTrack.id, time: time),
+            execute_: { [weak sourceTrack, weak destinationTrack] in
+                guard let sourceTrack = sourceTrack, let destinationTrack = destinationTrack else { return }
+                sourceTrack.clips.removeAll { $0.id == clipID }
+                var movedClip = clip
+                movedClip.startTime = time
+                destinationTrack.clips.append(movedClip)
+                destinationTrack.clips.sort { $0.startTime < $1.startTime }
+            },
+            undo_: { [weak sourceTrack, weak destinationTrack] in
+                guard let sourceTrack = sourceTrack, let destinationTrack = destinationTrack else { return }
+                destinationTrack.clips.removeAll { $0.id == clipID }
+                var restoredClip = clip
+                restoredClip.startTime = originalTime
+                sourceTrack.clips.insert(restoredClip, at: min(originalIndex, sourceTrack.clips.count))
+                sourceTrack.clips.sort { $0.startTime < $1.startTime }
+            }
+        )
 
-        // Add to destination
-        clip.startTime = time
-        destinationTrack.clips.append(clip)
-        destinationTrack.clips.sort { $0.startTime < $1.startTime }
-
+        undoManager.execute(command)
         print("🔀 VideoEditingEngine: Moved clip '\(clip.name)' to track '\(destinationTrack.name)'")
     }
 
@@ -188,13 +265,35 @@ class VideoEditingEngine: ObservableObject {
         rightClip.duration = originalClip.endTime - time
         rightClip.inPoint = leftClip.outPoint
 
-        // Replace original with two new clips
-        track.clips[index] = leftClip
-        track.clips.insert(rightClip, at: index + 1)
+        let leftID = leftClip.id
+        let rightID = rightClip.id
+        let originalIndex = index
 
+        // Create undoable command
+        let command = VideoClipCommand(
+            operation: .split,
+            clipData: (original: originalClip, left: leftClip, right: rightClip, trackID: track.id),
+            execute_: { [weak track] in
+                guard let track = track else { return }
+                guard let idx = track.clips.firstIndex(where: { $0.id == originalClip.id }) else {
+                    // Already split - use stored clips
+                    return
+                }
+                track.clips[idx] = leftClip
+                track.clips.insert(rightClip, at: idx + 1)
+            },
+            undo_: { [weak track] in
+                guard let track = track else { return }
+                track.clips.removeAll { $0.id == leftID || $0.id == rightID }
+                track.clips.insert(originalClip, at: min(originalIndex, track.clips.count))
+                track.clips.sort { $0.startTime < $1.startTime }
+            }
+        )
+
+        undoManager.execute(command)
         print("✂️ VideoEditingEngine: Split clip '\(originalClip.name)' at \(time.seconds)s")
 
-        return (leftClip.id, rightClip.id)
+        return (leftID, rightID)
     }
 
     // MARK: - Keyframe Animation
