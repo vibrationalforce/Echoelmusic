@@ -214,12 +214,66 @@ jobs:
           path: android/app/build/outputs/apk/release/*.apk
 
   # ============================================
-  # Create GitHub Release
+  # Create Nightly/Dev Release (auto on every push)
+  # ============================================
+  nightly-release:
+    needs: [build-windows, build-macos, build-linux, build-android]
+    runs-on: ubuntu-latest
+    if: "!startsWith(github.ref, 'refs/tags/v')"
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display Structure
+        run: ls -R artifacts
+
+      - name: Get Short SHA
+        id: sha
+        run: echo "short=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Create Nightly Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: nightly-${{ steps.sha.outputs.short }}
+          name: "Development Build (${{ steps.sha.outputs.short }})"
+          body: |
+            ## Automatic Development Build
+
+            **Branch:** ${{ github.ref_name }}
+            **Commit:** ${{ github.sha }}
+            **Date:** ${{ github.event.head_commit.timestamp }}
+
+            ### Downloads
+            - **Windows:** VST3, CLAP, Standalone EXE
+            - **macOS:** VST3, AU, CLAP, Standalone, DMG
+            - **Linux:** VST3, CLAP, Standalone, AppImage, Deb
+            - **Android:** APK
+
+            ⚠️ This is a development build - may contain bugs.
+          files: |
+            artifacts/Echoelmusic-Windows/**/*
+            artifacts/Echoelmusic-macOS/**/*
+            artifacts/Echoelmusic-Linux/**/*
+            artifacts/Echoelmusic-Android/**/*
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================
+  # Create Official Release (on version tags)
   # ============================================
   release:
     needs: [build-windows, build-macos, build-linux, build-android]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
 
     steps:
       - name: Download All Artifacts
