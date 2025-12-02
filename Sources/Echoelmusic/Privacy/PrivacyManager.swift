@@ -1,6 +1,7 @@
 import Foundation
 import CryptoKit
 import Combine
+import Security
 
 /// Privacy Manager - Local-First, Privacy-Preserving Architecture
 /// Zero-knowledge design: Your data never leaves your device without explicit consent
@@ -197,13 +198,51 @@ class PrivacyManager: ObservableObject {
     }
 
     private func loadKeyFromKeychain() -> Data? {
-        // Simplified - in production use proper Keychain API
-        return UserDefaults.standard.data(forKey: "encryptionKey")
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "com.echoelmusic.encryption",
+            kSecAttrAccount as String: "masterKey",
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        guard status == errSecSuccess else {
+            print("🔐 Keychain load failed or key not found: \(status)")
+            return nil
+        }
+
+        return result as? Data
     }
 
     private func saveKeyToKeychain(_ key: SymmetricKey) {
-        // Simplified - in production use proper Keychain API
-        UserDefaults.standard.set(key.withUnsafeBytes { Data($0) }, forKey: "encryptionKey")
+        let keyData = key.withUnsafeBytes { Data($0) }
+
+        // Delete existing key first
+        let deleteQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "com.echoelmusic.encryption",
+            kSecAttrAccount as String: "masterKey"
+        ]
+        SecItemDelete(deleteQuery as CFDictionary)
+
+        // Add new key
+        let addQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "com.echoelmusic.encryption",
+            kSecAttrAccount as String: "masterKey",
+            kSecValueData as String: keyData,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+
+        let status = SecItemAdd(addQuery as CFDictionary, nil)
+        if status == errSecSuccess {
+            print("🔐 Encryption key saved to Keychain securely")
+        } else {
+            print("⚠️ Keychain save failed: \(status)")
+        }
     }
 
     // MARK: - Data Encryption

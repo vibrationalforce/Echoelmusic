@@ -1,6 +1,6 @@
-# BLAB - Quick Start Guide
+# Echoelmusic - Quick Start Guide
 
-This guide will help you build and install the Blab app on your iPhone **without needing the full Xcode application**.
+This guide will help you build and install the Echoelmusic app on your iPhone **without needing the full Xcode application**.
 
 ## ✅ Prerequisites (Already Done!)
 
@@ -29,7 +29,7 @@ brew --version
 Once Homebrew is ready, run:
 
 ```bash
-cd /Users/michpack/BlabStudio
+cd ~/Echoelmusic
 make setup
 ```
 
@@ -139,7 +139,7 @@ On your iPhone:
 
 Check microphone permissions:
 1. iPhone Settings → Privacy → Microphone
-2. Enable for "Blab"
+2. Enable for "Echoelmusic"
 
 ---
 
@@ -147,11 +147,11 @@ Check microphone permissions:
 
 After installation, you should see:
 
-1. **App Icon** - "Blab" on your home screen
+1. **App Icon** - "Echoelmusic" on your home screen
 2. **Permission Dialog** - "Allow microphone access?" → Tap **Allow**
 3. **Main Screen:**
    - Dark purple/blue gradient background
-   - "BLAB" title at top
+   - "Echoelmusic" title at top
    - Particle visualization in center
    - Large green "Start" button at bottom
 
@@ -170,7 +170,7 @@ Once the app is working, you can:
 
 ### 1. Customize Colors
 
-Edit [ContentView.swift](Sources/Blab/ContentView.swift):
+Edit [ContentView.swift](Sources/Echoelmusic/ContentView.swift):
 
 ```swift
 // Change background gradient (lines ~25-30)
@@ -179,7 +179,7 @@ Color(red: 0.05, green: 0.05, blue: 0.15),  // Your custom color here
 
 ### 2. Modify Particles
 
-Edit [ParticleView.swift](Sources/Blab/ParticleView.swift):
+Edit [ParticleView.swift](Sources/Echoelmusic/ParticleView.swift):
 
 ```swift
 // Change particle colors (lines ~35-40)
@@ -188,7 +188,7 @@ Color.cyan.opacity(0.6),  // Change to your preferred color
 
 ### 3. Adjust Audio Sensitivity
 
-Edit [MicrophoneManager.swift](Sources/Blab/MicrophoneManager.swift):
+Edit [MicrophoneManager.swift](Sources/Echoelmusic/MicrophoneManager.swift):
 
 ```swift
 // Line ~135 - adjust the multiplier (currently 20)
@@ -223,7 +223,7 @@ idevicepair pair           # Re-pair device
 
 ```bash
 make clean
-rm -rf Blab.xcodeproj
+rm -rf Echoelmusic.xcodeproj
 make run
 ```
 
@@ -232,7 +232,7 @@ make run
 ## 📚 File Structure
 
 ```
-BlabStudio/
+EchoelmusicStudio/
 ├── Package.swift           # Swift package config
 ├── project.yml             # Xcode project template
 ├── Makefile                # Build automation
@@ -240,8 +240,8 @@ BlabStudio/
 ├── README.md               # Full documentation
 ├── QUICKSTART.md           # This file
 ├── .gitignore              # Git ignore rules
-└── Sources/Blab/
-    ├── BlabApp.swift       # App entry point
+└── Sources/Echoelmusic/
+    ├── EchoelmusicApp.swift       # App entry point
     ├── ContentView.swift   # Main UI
     ├── MicrophoneManager.swift  # Audio capture
     └── ParticleView.swift  # Visualization
@@ -265,7 +265,7 @@ BlabStudio/
 **Ready to build? Start with:**
 
 ```bash
-cd /Users/michpack/BlabStudio
+cd ~/Echoelmusic
 make setup
 ```
 

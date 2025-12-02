@@ -2,6 +2,9 @@ import Foundation
 import AVFoundation
 import VideoToolbox
 import Combine
+import ImageIO
+import MobileCoreServices
+import UIKit
 
 /// Video Export Manager with H.264/H.265/ProRes/Dolby Vision HDR support
 /// Optimized for hardware encoding on A12+ chips
@@ -28,6 +31,8 @@ class VideoExportManager: ObservableObject {
         case prores4444 = "ProRes 4444"
         case spatial_video = "Spatial Video (MV-HEVC)"
         case dolby_vision = "Dolby Vision HDR"
+        case png_sequence = "PNG Sequence"
+        case gif_animated = "Animated GIF"
 
         var fileExtension: String {
             switch self {
@@ -41,10 +46,18 @@ class VideoExportManager: ObservableObject {
                 return "mov"
             case .dolby_vision:
                 return "mp4"
+            case .png_sequence:
+                return "png"
+            case .gif_animated:
+                return "gif"
             }
         }
 
-        var codecType: AVVideoCodecType {
+        var isImageSequence: Bool {
+            self == .png_sequence || self == .gif_animated
+        }
+
+        var codecType: AVVideoCodecType? {
             switch self {
             case .h264_baseline, .h264_main, .h264_high:
                 return .h264
@@ -58,6 +71,8 @@ class VideoExportManager: ObservableObject {
                 return .hevc // MV-HEVC
             case .dolby_vision:
                 return .hevc // With Dolby Vision metadata
+            case .png_sequence, .gif_animated:
+                return nil // Not video codecs
             }
         }
 
@@ -82,6 +97,8 @@ class VideoExportManager: ObservableObject {
                 return false // Software only
             case .spatial_video, .dolby_vision:
                 return true // iOS 19+
+            case .png_sequence, .gif_animated:
+                return false // Image export
             }
         }
 
@@ -96,6 +113,8 @@ class VideoExportManager: ObservableObject {
             case .prores4444: return "ProRes 4444 (alpha channel support)"
             case .spatial_video: return "Spatial Video for Vision Pro"
             case .dolby_vision: return "Dolby Vision HDR with PQ curve"
+            case .png_sequence: return "PNG Sequence (lossless, with alpha)"
+            case .gif_animated: return "Animated GIF (8-bit, up to 256 colors)"
             }
         }
     }
@@ -515,6 +534,145 @@ class VideoExportManager: ObservableObject {
         currentExportSession = nil
 
         print("❌ VideoExportManager: Export cancelled")
+    }
+
+    // MARK: - PNG Sequence Export
+
+    /// Export video as PNG image sequence
+    func exportPNGSequence(
+        composition: AVMutableComposition,
+        to outputDirectory: URL,
+        frameRate: FrameRate = .fps30,
+        resolution: Resolution = .hd1920x1080
+    ) async throws {
+        guard !isExporting else {
+            throw ExportError.exportAlreadyInProgress
+        }
+
+        isExporting = true
+        exportProgress = 0.0
+
+        // Create output directory
+        try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+
+        // Setup image generator
+        let imageGenerator = AVAssetImageGenerator(asset: composition)
+        let targetSize = resolution.size ?? composition.naturalSize
+        imageGenerator.maximumSize = targetSize
+        imageGenerator.appliesPreferredTrackTransform = true
+        imageGenerator.requestedTimeToleranceBefore = .zero
+        imageGenerator.requestedTimeToleranceAfter = .zero
+
+        // Calculate frame times
+        let duration = composition.duration.seconds
+        let frameInterval = 1.0 / Double(frameRate.rawValue)
+        let totalFrames = Int(duration / frameInterval)
+
+        for frameIndex in 0..<totalFrames {
+            let time = CMTime(seconds: Double(frameIndex) * frameInterval, preferredTimescale: 600)
+
+            do {
+                let cgImage = try imageGenerator.copyCGImage(at: time, actualTime: nil)
+
+                // Create UIImage and save as PNG
+                let uiImage = UIImage(cgImage: cgImage)
+                let filename = String(format: "frame_%06d.png", frameIndex)
+                let fileURL = outputDirectory.appendingPathComponent(filename)
+
+                if let pngData = uiImage.pngData() {
+                    try pngData.write(to: fileURL)
+                }
+
+                // Update progress
+                exportProgress = Double(frameIndex + 1) / Double(totalFrames)
+            } catch {
+                print("⚠️ VideoExportManager: Failed to export frame \(frameIndex)")
+            }
+        }
+
+        isExporting = false
+        exportProgress = 1.0
+        print("✅ VideoExportManager: PNG sequence exported - \(totalFrames) frames to \(outputDirectory.lastPathComponent)")
+    }
+
+    // MARK: - Animated GIF Export
+
+    /// Export video as animated GIF
+    func exportAnimatedGIF(
+        composition: AVMutableComposition,
+        to outputURL: URL,
+        frameRate: Int = 15, // Lower FPS for GIF
+        resolution: Resolution = .hd1280x720, // Lower res for GIF
+        loopCount: Int = 0 // 0 = infinite loop
+    ) async throws {
+        guard !isExporting else {
+            throw ExportError.exportAlreadyInProgress
+        }
+
+        isExporting = true
+        exportProgress = 0.0
+
+        // Setup image generator
+        let imageGenerator = AVAssetImageGenerator(asset: composition)
+        let targetSize = resolution.size ?? CGSize(width: 480, height: 270) // Default small for GIF
+        imageGenerator.maximumSize = targetSize
+        imageGenerator.appliesPreferredTrackTransform = true
+
+        // Calculate frame times
+        let duration = composition.duration.seconds
+        let frameInterval = 1.0 / Double(frameRate)
+        let totalFrames = Int(duration / frameInterval)
+
+        // GIF properties
+        let fileProperties: [String: Any] = [
+            kCGImagePropertyGIFDictionary as String: [
+                kCGImagePropertyGIFLoopCount as String: loopCount
+            ]
+        ]
+
+        let frameProperties: [String: Any] = [
+            kCGImagePropertyGIFDictionary as String: [
+                kCGImagePropertyGIFDelayTime as String: frameInterval
+            ]
+        ]
+
+        // Create GIF destination
+        guard let destination = CGImageDestinationCreateWithURL(
+            outputURL as CFURL,
+            kUTTypeGIF,
+            totalFrames,
+            nil
+        ) else {
+            isExporting = false
+            throw ExportError.exportFailed
+        }
+
+        CGImageDestinationSetProperties(destination, fileProperties as CFDictionary)
+
+        // Generate frames
+        for frameIndex in 0..<totalFrames {
+            let time = CMTime(seconds: Double(frameIndex) * frameInterval, preferredTimescale: 600)
+
+            do {
+                let cgImage = try imageGenerator.copyCGImage(at: time, actualTime: nil)
+                CGImageDestinationAddImage(destination, cgImage, frameProperties as CFDictionary)
+
+                // Update progress
+                exportProgress = Double(frameIndex + 1) / Double(totalFrames)
+            } catch {
+                print("⚠️ VideoExportManager: Failed to add frame \(frameIndex) to GIF")
+            }
+        }
+
+        // Finalize GIF
+        guard CGImageDestinationFinalize(destination) else {
+            isExporting = false
+            throw ExportError.exportFailed
+        }
+
+        isExporting = false
+        exportProgress = 1.0
+        print("✅ VideoExportManager: Animated GIF exported - \(totalFrames) frames to \(outputURL.lastPathComponent)")
     }
 }
 

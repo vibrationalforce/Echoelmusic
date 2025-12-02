@@ -29,9 +29,19 @@ class NodeGraph: ObservableObject {
 
     /// Processing queue (audio thread)
     private let audioQueue = DispatchQueue(
-        label: "com.blab.nodegraph.audio",
+        label: "com.echoelmusic.nodegraph.audio",
         qos: .userInteractive
     )
+
+    // MARK: - Cached Processing Order (PERFORMANCE)
+    /// Cached topological sort result - invalidated when graph changes
+    /// Avoids recalculating processing order every audio frame
+    private var cachedProcessingOrder: [UUID]?
+
+    /// Invalidate cached processing order when graph structure changes
+    private func invalidateCache() {
+        cachedProcessingOrder = nil
+    }
 
 
     // MARK: - Node Management
@@ -39,6 +49,7 @@ class NodeGraph: ObservableObject {
     /// Add a node to the graph
     func addNode(_ node: EchoelmusicNode) {
         nodes.append(node)
+        invalidateCache() // Graph structure changed
         print("📊 Added node: \(node.name) (\(node.type.rawValue))")
     }
 
@@ -51,6 +62,7 @@ class NodeGraph: ObservableObject {
 
         // Remove node
         nodes.removeAll { $0.id == id }
+        invalidateCache() // Graph structure changed
     }
 
     /// Get node by ID
@@ -79,6 +91,7 @@ class NodeGraph: ObservableObject {
         )
 
         connections.append(connection)
+        invalidateCache() // Graph structure changed
 
         print("📊 Connected: \(source.name) → \(destination.name)")
     }
@@ -89,6 +102,7 @@ class NodeGraph: ObservableObject {
             connection.sourceNodeID == sourceID &&
             connection.destinationNodeID == destinationID
         }
+        invalidateCache() // Graph structure changed
     }
 
     /// Check if connecting two nodes would create a cycle
@@ -125,11 +139,16 @@ class NodeGraph: ObservableObject {
     // MARK: - Audio Processing
 
     /// Process audio buffer through the node graph
+    /// PERFORMANCE: Uses cached topological sort instead of recalculating every frame
     func process(_ buffer: AVAudioPCMBuffer, time: AVAudioTime) -> AVAudioPCMBuffer {
         guard isProcessing else { return buffer }
 
-        // Get processing order (topological sort)
-        let orderedNodes = topologicalSort()
+        // Get cached processing order (only recalculate when graph changes)
+        if cachedProcessingOrder == nil {
+            cachedProcessingOrder = topologicalSort()
+        }
+
+        let orderedNodes = cachedProcessingOrder ?? []
 
         var currentBuffer = buffer
 

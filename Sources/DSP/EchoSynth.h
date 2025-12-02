@@ -196,10 +196,30 @@ private:
         float driftPhase = 0.0f;
 
         // Helper methods
-        float generateOscillator(Waveform waveform, float phase, float pulseWidth);
+        float generateOscillator(Waveform waveform, float phase, float pulseWidth, float phaseIncrement = 0.0f);
         float processFilter(float sample);
         void updateEnvelope(EnvelopeState& env, float attack, float decay, float sustain, float release);
         float getEnvelopeLevel(EnvelopeState& env);
+
+        // PolyBLEP anti-aliasing for alias-free oscillators
+        // Returns correction value for discontinuities in sawtooth/square waves
+        float polyBLEP(float t, float dt)
+        {
+            // t = phase position [0,1), dt = phase increment per sample
+            if (t < dt)
+            {
+                // Start of period - rising edge
+                t /= dt;
+                return t + t - t * t - 1.0f;
+            }
+            else if (t > 1.0f - dt)
+            {
+                // End of period - falling edge
+                t = (t - 1.0f) / dt;
+                return t * t + t + t + 1.0f;
+            }
+            return 0.0f;
+        }
     };
 
     //==============================================================================

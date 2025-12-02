@@ -17,6 +17,9 @@ class VideoEditingEngine: ObservableObject {
     @Published var selectedClips: Set<UUID> = []
     @Published var editMode: EditMode = .select
 
+    // MARK: - Undo/Redo Integration
+    private let undoManager = UndoRedoManager.shared
+
     // MARK: - Playback
 
     private var player: AVPlayer?
@@ -51,7 +54,39 @@ class VideoEditingEngine: ObservableObject {
 
     init(timeline: Timeline = Timeline()) {
         self.timeline = timeline
-        print("✅ VideoEditingEngine: Initialized")
+        print("✅ VideoEditingEngine: Initialized with Undo/Redo support")
+    }
+
+    // MARK: - Undo/Redo Convenience Methods
+
+    /// Undo last action (Cmd+Z)
+    func undo() {
+        undoManager.undo()
+    }
+
+    /// Redo last undone action (Cmd+Shift+Z)
+    func redo() {
+        undoManager.redo()
+    }
+
+    /// Whether undo is available
+    var canUndo: Bool {
+        undoManager.canUndo
+    }
+
+    /// Whether redo is available
+    var canRedo: Bool {
+        undoManager.canRedo
+    }
+
+    /// Name of action that will be undone
+    var undoActionName: String {
+        undoManager.undoActionName
+    }
+
+    /// Name of action that will be redone
+    var redoActionName: String {
+        undoManager.redoActionName
     }
 
     deinit {
@@ -64,38 +99,80 @@ class VideoEditingEngine: ObservableObject {
         // Magnetic timeline - snap to nearest clip or beat
         let snappedTime = timeline.magneticSnap(time: time)
 
-        // Insert clip
-        var mutableClip = clip
-        mutableClip.startTime = snappedTime
-        track.clips.append(mutableClip)
+        // Create undoable command
+        let command = VideoClipCommand(
+            operation: .add,
+            clipData: (clip: clip, trackID: track.id, time: snappedTime),
+            execute_: { [weak self, weak track] in
+                guard let track = track else { return }
+                var mutableClip = clip
+                mutableClip.startTime = snappedTime
+                track.clips.append(mutableClip)
+                track.clips.sort { $0.startTime < $1.startTime }
+            },
+            undo_: { [weak track] in
+                guard let track = track else { return }
+                track.clips.removeAll { $0.id == clip.id }
+            }
+        )
 
-        // Sort clips by start time
-        track.clips.sort { $0.startTime < $1.startTime }
-
+        undoManager.execute(command)
         print("➕ VideoEditingEngine: Added clip '\(clip.name)' to track '\(track.name)' at \(snappedTime.seconds)s")
     }
 
     func removeClip(_ clipID: UUID, from track: Track) {
         guard let index = track.clips.firstIndex(where: { $0.id == clipID }) else { return }
         let clip = track.clips[index]
+        let clipIndex = index
 
-        track.clips.remove(at: index)
+        // Create undoable command
+        let command = VideoClipCommand(
+            operation: .delete,
+            clipData: (clip: clip, trackID: track.id, index: clipIndex),
+            execute_: { [weak track] in
+                guard let track = track else { return }
+                track.clips.removeAll { $0.id == clipID }
+            },
+            undo_: { [weak track] in
+                guard let track = track else { return }
+                track.clips.insert(clip, at: min(clipIndex, track.clips.count))
+                track.clips.sort { $0.startTime < $1.startTime }
+            }
+        )
 
+        undoManager.execute(command)
         print("➖ VideoEditingEngine: Removed clip '\(clip.name)' from track '\(track.name)'")
     }
 
     func moveClip(_ clipID: UUID, from sourceTrack: Track, to destinationTrack: Track, at time: CMTime) {
         guard let index = sourceTrack.clips.firstIndex(where: { $0.id == clipID }) else { return }
-        var clip = sourceTrack.clips[index]
+        let clip = sourceTrack.clips[index]
+        let originalTime = clip.startTime
+        let originalIndex = index
 
-        // Remove from source
-        sourceTrack.clips.remove(at: index)
+        // Create undoable command
+        let command = VideoClipCommand(
+            operation: .move,
+            clipData: (clip: clip, sourceTrackID: sourceTrack.id, destTrackID: destinationTrack.id, time: time),
+            execute_: { [weak sourceTrack, weak destinationTrack] in
+                guard let sourceTrack = sourceTrack, let destinationTrack = destinationTrack else { return }
+                sourceTrack.clips.removeAll { $0.id == clipID }
+                var movedClip = clip
+                movedClip.startTime = time
+                destinationTrack.clips.append(movedClip)
+                destinationTrack.clips.sort { $0.startTime < $1.startTime }
+            },
+            undo_: { [weak sourceTrack, weak destinationTrack] in
+                guard let sourceTrack = sourceTrack, let destinationTrack = destinationTrack else { return }
+                destinationTrack.clips.removeAll { $0.id == clipID }
+                var restoredClip = clip
+                restoredClip.startTime = originalTime
+                sourceTrack.clips.insert(restoredClip, at: min(originalIndex, sourceTrack.clips.count))
+                sourceTrack.clips.sort { $0.startTime < $1.startTime }
+            }
+        )
 
-        // Add to destination
-        clip.startTime = time
-        destinationTrack.clips.append(clip)
-        destinationTrack.clips.sort { $0.startTime < $1.startTime }
-
+        undoManager.execute(command)
         print("🔀 VideoEditingEngine: Moved clip '\(clip.name)' to track '\(destinationTrack.name)'")
     }
 
@@ -188,13 +265,35 @@ class VideoEditingEngine: ObservableObject {
         rightClip.duration = originalClip.endTime - time
         rightClip.inPoint = leftClip.outPoint
 
-        // Replace original with two new clips
-        track.clips[index] = leftClip
-        track.clips.insert(rightClip, at: index + 1)
+        let leftID = leftClip.id
+        let rightID = rightClip.id
+        let originalIndex = index
 
+        // Create undoable command
+        let command = VideoClipCommand(
+            operation: .split,
+            clipData: (original: originalClip, left: leftClip, right: rightClip, trackID: track.id),
+            execute_: { [weak track] in
+                guard let track = track else { return }
+                guard let idx = track.clips.firstIndex(where: { $0.id == originalClip.id }) else {
+                    // Already split - use stored clips
+                    return
+                }
+                track.clips[idx] = leftClip
+                track.clips.insert(rightClip, at: idx + 1)
+            },
+            undo_: { [weak track] in
+                guard let track = track else { return }
+                track.clips.removeAll { $0.id == leftID || $0.id == rightID }
+                track.clips.insert(originalClip, at: min(originalIndex, track.clips.count))
+                track.clips.sort { $0.startTime < $1.startTime }
+            }
+        )
+
+        undoManager.execute(command)
         print("✂️ VideoEditingEngine: Split clip '\(originalClip.name)' at \(time.seconds)s")
 
-        return (leftClip.id, rightClip.id)
+        return (leftID, rightID)
     }
 
     // MARK: - Keyframe Animation
@@ -598,6 +697,222 @@ struct StylizeEffect {
         case sketch
         case oilPaint
     }
+}
+
+// MARK: - Text Overlay System (Titles, Captions, Lower Thirds)
+
+/// Text overlay for video titles, captions, and lower thirds
+struct TextOverlay: Identifiable {
+    var id = UUID()
+    var text: String
+    var font: TextFont
+    var color: CGColor
+    var backgroundColor: CGColor?
+    var position: CGPoint // Normalized 0-1
+    var alignment: TextAlignment
+    var startTime: CMTime
+    var duration: CMTime
+    var animation: TextAnimation?
+    var style: TextStyle
+
+    enum TextFont {
+        case system(size: CGFloat, weight: FontWeight)
+        case custom(name: String, size: CGFloat)
+
+        enum FontWeight {
+            case regular, medium, semibold, bold, heavy
+        }
+    }
+
+    enum TextAlignment {
+        case left, center, right
+    }
+
+    enum TextAnimation {
+        case fadeIn(duration: Double)
+        case fadeOut(duration: Double)
+        case slideIn(from: Direction, duration: Double)
+        case slideOut(to: Direction, duration: Double)
+        case typewriter(charDelay: Double)
+        case scale(from: CGFloat, to: CGFloat, duration: Double)
+        case bounce
+
+        enum Direction {
+            case left, right, top, bottom
+        }
+    }
+
+    struct TextStyle {
+        var shadow: Shadow?
+        var outline: Outline?
+        var letterSpacing: CGFloat = 0
+        var lineHeight: CGFloat = 1.2
+
+        struct Shadow {
+            var color: CGColor
+            var offset: CGSize
+            var blur: CGFloat
+        }
+
+        struct Outline {
+            var color: CGColor
+            var width: CGFloat
+        }
+    }
+}
+
+/// Text layer preset types
+enum TextPreset: String, CaseIterable {
+    case title = "Title"
+    case subtitle = "Subtitle"
+    case lowerThird = "Lower Third"
+    case caption = "Caption"
+    case endCredits = "End Credits"
+    case callout = "Callout"
+    case watermark = "Watermark"
+
+    func createOverlay(text: String, at time: CMTime, duration: CMTime) -> TextOverlay {
+        switch self {
+        case .title:
+            return TextOverlay(
+                text: text,
+                font: .system(size: 72, weight: .bold),
+                color: CGColor(red: 1, green: 1, blue: 1, alpha: 1),
+                backgroundColor: nil,
+                position: CGPoint(x: 0.5, y: 0.5),
+                alignment: .center,
+                startTime: time,
+                duration: duration,
+                animation: .fadeIn(duration: 0.5),
+                style: TextOverlay.TextStyle(
+                    shadow: TextOverlay.TextStyle.Shadow(
+                        color: CGColor(red: 0, green: 0, blue: 0, alpha: 0.5),
+                        offset: CGSize(width: 2, height: 2),
+                        blur: 4
+                    ),
+                    outline: nil
+                )
+            )
+        case .subtitle:
+            return TextOverlay(
+                text: text,
+                font: .system(size: 36, weight: .medium),
+                color: CGColor(red: 1, green: 1, blue: 1, alpha: 0.9),
+                backgroundColor: nil,
+                position: CGPoint(x: 0.5, y: 0.65),
+                alignment: .center,
+                startTime: time,
+                duration: duration,
+                animation: .fadeIn(duration: 0.3),
+                style: TextOverlay.TextStyle()
+            )
+        case .lowerThird:
+            return TextOverlay(
+                text: text,
+                font: .system(size: 28, weight: .semibold),
+                color: CGColor(red: 1, green: 1, blue: 1, alpha: 1),
+                backgroundColor: CGColor(red: 0, green: 0, blue: 0, alpha: 0.7),
+                position: CGPoint(x: 0.05, y: 0.85),
+                alignment: .left,
+                startTime: time,
+                duration: duration,
+                animation: .slideIn(from: .left, duration: 0.4),
+                style: TextOverlay.TextStyle()
+            )
+        case .caption:
+            return TextOverlay(
+                text: text,
+                font: .system(size: 24, weight: .regular),
+                color: CGColor(red: 1, green: 1, blue: 1, alpha: 1),
+                backgroundColor: CGColor(red: 0, green: 0, blue: 0, alpha: 0.6),
+                position: CGPoint(x: 0.5, y: 0.9),
+                alignment: .center,
+                startTime: time,
+                duration: duration,
+                animation: nil,
+                style: TextOverlay.TextStyle()
+            )
+        case .endCredits:
+            return TextOverlay(
+                text: text,
+                font: .system(size: 32, weight: .regular),
+                color: CGColor(red: 1, green: 1, blue: 1, alpha: 1),
+                backgroundColor: nil,
+                position: CGPoint(x: 0.5, y: 1.2),
+                alignment: .center,
+                startTime: time,
+                duration: duration,
+                animation: .slideIn(from: .bottom, duration: duration.seconds),
+                style: TextOverlay.TextStyle(lineHeight: 2.0)
+            )
+        case .callout:
+            return TextOverlay(
+                text: text,
+                font: .system(size: 20, weight: .medium),
+                color: CGColor(red: 0, green: 0, blue: 0, alpha: 1),
+                backgroundColor: CGColor(red: 1, green: 0.8, blue: 0, alpha: 1),
+                position: CGPoint(x: 0.5, y: 0.3),
+                alignment: .center,
+                startTime: time,
+                duration: duration,
+                animation: .scale(from: 0.8, to: 1.0, duration: 0.3),
+                style: TextOverlay.TextStyle()
+            )
+        case .watermark:
+            return TextOverlay(
+                text: text,
+                font: .system(size: 16, weight: .regular),
+                color: CGColor(red: 1, green: 1, blue: 1, alpha: 0.5),
+                backgroundColor: nil,
+                position: CGPoint(x: 0.95, y: 0.95),
+                alignment: .right,
+                startTime: .zero,
+                duration: CMTime(seconds: 86400, preferredTimescale: 1), // All day
+                animation: nil,
+                style: TextOverlay.TextStyle()
+            )
+        }
+    }
+}
+
+// MARK: - Text Overlay Extension for VideoEditingEngine
+
+extension VideoEditingEngine {
+
+    /// Add text overlay to timeline
+    func addTextOverlay(_ overlay: TextOverlay) {
+        timeline.textOverlays.append(overlay)
+        print("📝 VideoEditingEngine: Added text overlay '\(overlay.text)' at \(overlay.startTime.seconds)s")
+    }
+
+    /// Add text overlay from preset
+    func addTextFromPreset(_ preset: TextPreset, text: String, at time: CMTime, duration: CMTime) {
+        let overlay = preset.createOverlay(text: text, at: time, duration: duration)
+        addTextOverlay(overlay)
+    }
+
+    /// Remove text overlay
+    func removeTextOverlay(id: UUID) {
+        timeline.textOverlays.removeAll { $0.id == id }
+    }
+
+    /// Update text overlay
+    func updateTextOverlay(id: UUID, newText: String) {
+        if let index = timeline.textOverlays.firstIndex(where: { $0.id == id }) {
+            timeline.textOverlays[index].text = newText
+        }
+    }
+}
+
+// MARK: - Timeline Text Support
+
+extension Timeline {
+    /// Text overlays on the timeline
+    var textOverlays: [TextOverlay] {
+        get { _textOverlays }
+        set { _textOverlays = newValue }
+    }
+    private var _textOverlays: [TextOverlay] = []
 }
 
 // MARK: - Errors

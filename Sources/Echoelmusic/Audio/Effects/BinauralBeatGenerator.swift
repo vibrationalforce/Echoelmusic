@@ -67,8 +67,10 @@ class BinauralBeatGenerator: ObservableObject {
     /// Amplitude (volume) of the generated tone (0.0 - 1.0)
     private(set) var amplitude: Float = 0.3
 
-    /// Sample rate for audio generation
-    private let sampleRate: Double = 44100.0
+    /// Sample rate for audio generation - uses system rate for proper sync
+    private var sampleRate: Double {
+        AVAudioSession.sharedInstance().sampleRate
+    }
 
     /// Current audio mode (automatically detected)
     @Published private(set) var audioMode: AudioMode = .binaural
@@ -87,11 +89,15 @@ class BinauralBeatGenerator: ObservableObject {
 
     /// Audio format (stereo, 44.1 kHz)
     private lazy var audioFormat: AVAudioFormat = {
-        AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2) else {
+            fatalError("Failed to create audio format with sample rate \(sampleRate). This indicates an invalid audio configuration.")
+        }
+        return format
     }()
 
-    /// Buffer size for generation (larger = less CPU, more latency)
-    private let bufferSize: AVAudioFrameCount = 4096
+    /// Buffer size for generation (smaller = lower latency, more CPU)
+    /// Reduced from 4096 to 1024 for lower latency (85ms → 21ms at 48kHz)
+    private let bufferSize: AVAudioFrameCount = 1024
 
     /// Whether the generator is currently playing
     private(set) var isPlaying: Bool = false
@@ -158,9 +164,11 @@ class BinauralBeatGenerator: ObservableObject {
         guard !isPlaying else { return }
 
         do {
-            // Configure audio session for playback
+            // Configure audio session for low-latency playback
+            // .measurement mode disables audio processing for lower latency
             let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playback, mode: .default)
+            try audioSession.setCategory(.playback, mode: .measurement)
+            try audioSession.setPreferredIOBufferDuration(0.005) // 5ms buffer
             try audioSession.setActive(true)
 
             // Detect audio output type and choose optimal mode
@@ -268,10 +276,14 @@ class BinauralBeatGenerator: ObservableObject {
 
     /// Generate a pure sine wave tone buffer at specified frequency
     /// - Parameter frequency: Frequency in Hz
-    /// - Returns: Audio buffer containing the sine wave
+    /// - Returns: Audio buffer containing the sine wave, or empty buffer on failure
     private func generateToneBuffer(frequency: Float) -> AVAudioPCMBuffer {
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: bufferSize)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: bufferSize) else {
+            // Return a minimal valid buffer on failure
+            let fallbackFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 1, interleaved: false)!
+            return AVAudioPCMBuffer(pcmFormat: fallbackFormat, frameCapacity: 1) ?? AVAudioPCMBuffer()
+        }
         buffer.frameLength = bufferSize
 
         guard let channelData = buffer.floatChannelData?[0] else {
@@ -322,8 +334,12 @@ class BinauralBeatGenerator: ObservableObject {
     /// Works on mono speakers, Bluetooth, spatial audio - no stereo required
     /// - Returns: Audio buffer containing pulsed tone
     private func generateIsochronicBuffer() -> AVAudioPCMBuffer {
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: bufferSize)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: bufferSize) else {
+            // Return a minimal valid buffer on failure
+            let fallbackFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 1, interleaved: false)!
+            return AVAudioPCMBuffer(pcmFormat: fallbackFormat, frameCapacity: 1) ?? AVAudioPCMBuffer()
+        }
         buffer.frameLength = bufferSize
 
         guard let channelData = buffer.floatChannelData?[0] else {

@@ -102,10 +102,49 @@ option(ENABLE_ANDROID_OBOE "Enable Oboe (Android)" ON)
 option(ENABLE_ANDROID_AAUDIO "Enable AAudio (Android)" ON)
 
 # ===========================
-# JUCE Framework
+# JUCE Framework (Optional - Not needed for iOS Swift-only builds)
 # ===========================
 
-add_subdirectory(ThirdParty/JUCE)
+option(USE_JUCE "Use JUCE framework (required for desktop plugins)" OFF)
+
+if(USE_JUCE)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/JUCE")
+        add_subdirectory(ThirdParty/JUCE)
+        message(STATUS "JUCE Framework: ENABLED (Desktop Plugins)")
+    else()
+        message(WARNING "JUCE not found in ThirdParty/JUCE - Desktop plugins disabled")
+        set(USE_JUCE OFF)
+    endif()
+else()
+    message(STATUS "JUCE Framework: DISABLED (iOS Swift-only build)")
+    message(STATUS "  → Using native AVFoundation + Accelerate for DSP")
+    message(STATUS "  → No licensing fees required!")
+endif()
+
+# Future: iPlug2 integration for JUCE-free desktop plugins
+option(USE_IPLUG2 "Use iPlug2 framework (MIT license, JUCE-free)" OFF)
+if(USE_IPLUG2)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/iPlug2")
+        message(STATUS "iPlug2 Framework: ENABLED (MIT License - Free!)")
+        # Add Desktop plugin build
+        add_subdirectory(Sources/Desktop)
+    else()
+        message(STATUS "")
+        message(STATUS "╔══════════════════════════════════════════════════════════╗")
+        message(STATUS "║  iPlug2 not found! To enable desktop plugins:            ║")
+        message(STATUS "║                                                          ║")
+        message(STATUS "║  git clone https://github.com/iPlug2/iPlug2 \\            ║")
+        message(STATUS "║            ThirdParty/iPlug2                             ║")
+        message(STATUS "║                                                          ║")
+        message(STATUS "║  Benefits:                                               ║")
+        message(STATUS "║  • MIT License (100% FREE for commercial use)            ║")
+        message(STATUS "║  • VST3, AU, AAX, CLAP, Standalone                        ║")
+        message(STATUS "║  • No JUCE dependency                                    ║")
+        message(STATUS "║  • Professional audio quality                            ║")
+        message(STATUS "╚══════════════════════════════════════════════════════════╝")
+        message(STATUS "")
+    endif()
+endif()
 
 # ===========================
 # Plugin Formats
@@ -311,12 +350,16 @@ target_sources(Echoelmusic
         # Sources/DSP/SpectralSculptor.cpp      # TODO: Fix FFT API
 
         # =====================================================================
-        # PHASE 3: ADVANCED FEATURES (Later)
+        # PHASE 3: SYNTHESIS & ADVANCED FEATURES
         # =====================================================================
+
+        # DRUM SYNTHESIZER - ENABLED! (808/909 style)
+        Sources/Synthesis/DrumSynthesizer.cpp
+
+        # Pending (needs JUCE 7 fixes or later integration)
         # Sources/AI/SmartMixer.cpp               # AI mixing assistant
         # Sources/Visualization/SpectrumAnalyzer.cpp
         # Sources/Visualization/BioReactiveVisualizer.cpp
-        # Sources/Synthesis/DrumSynthesizer.cpp
         # Sources/Healing/ResonanceHealer.cpp
         # Sources/Instrument/RhythmMatrix.cpp
         # Sources/Sequencer/ArpWeaver.cpp

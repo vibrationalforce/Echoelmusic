@@ -30,6 +30,32 @@ struct EchoelmusicApp: App {
         _audioEngine = StateObject(wrappedValue: audioEng)
 
         _unifiedControlHub = StateObject(wrappedValue: UnifiedControlHub(audioEngine: audioEng))
+
+        // PERFORMANCE: Defer non-critical singleton initialization to background
+        // This prevents 2-5 second startup blocking on main thread
+        Task.detached(priority: .userInitiated) {
+            // KRITISCH: Initialisiere alle Core-Systeme (Singletons)
+            // Diese werden jetzt async geladen für schnelleren App-Start!
+            _ = await MainActor.run { EchoelUniversalCore.shared }      // Master Integration Hub
+            _ = await MainActor.run { SelfHealingEngine.shared }        // Auto-Recovery System
+            _ = await MainActor.run { VideoAICreativeHub.shared }       // Video/AI Integration
+            _ = await MainActor.run { MultiPlatformBridge.shared }      // MIDI/OSC/DMX/CV Bridge
+            _ = await MainActor.run { EchoelTools.shared }              // Intelligent Creative Tools
+
+            // INSTRUMENT PIPELINE
+            _ = await MainActor.run { InstrumentOrchestrator.shared }   // UI→Synthesis→Audio Pipeline
+            _ = await MainActor.run { WorldMusicBridge.shared }         // 42 Global Music Styles
+
+            // STREAMING PIPELINE
+            _ = await MainActor.run { SocialMediaManager.shared }       // One-Click Multi-Platform Publishing
+            // Note: StreamEngine requires Metal device - initialized lazily in StreamingView
+
+            await MainActor.run {
+                print("⚛️ Echoelmusic Core Systems Initialized (async)")
+                print("🎹 InstrumentOrchestrator: 54+ Instruments Ready")
+                print("🌍 WorldMusicBridge: 42 Music Styles Loaded")
+            }
+        }
     }
 
     var body: some Scene {

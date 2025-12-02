@@ -58,7 +58,7 @@ public class UnifiedControlHub: ObservableObject {
 
     private var controlLoopTimer: AnyCancellable?
     private let controlQueue = DispatchQueue(
-        label: "com.blab.control",
+        label: "com.echoelmusic.control",
         qos: .userInteractive
     )
 
@@ -149,7 +149,7 @@ public class UnifiedControlHub: ObservableObject {
 
         guard healthKit.isAuthorized else {
             throw NSError(
-                domain: "com.blab.healthkit",
+                domain: "com.echoelmusic.healthkit",
                 code: 2,
                 userInfo: [NSLocalizedDescriptionKey: "HealthKit authorization denied"]
             )
@@ -355,8 +355,10 @@ public class UnifiedControlHub: ObservableObject {
         // Get current biometric data
         let hrvCoherence = healthKit.hrvCoherence
         let heartRate = healthKit.heartRate
-        let voicePitch: Float = 0.0  // TODO: Get from audio analysis
-        let audioLevel: Float = 0.5  // TODO: Get from audio engine
+
+        // FIXED: Hole echte Audio-Analyse-Daten
+        let voicePitch: Float = audioEngine?.getCurrentPitch?() ?? 0.0
+        let audioLevel: Float = audioEngine?.currentLevel ?? 0.5
 
         // Update bio parameter mapping
         mapper.updateParameters(
@@ -372,21 +374,24 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply bio-derived audio parameters to audio engine and spatial mapping
     private func applyBioAudioParameters(_ mapper: BioParameterMapper) {
-        // Apply filter cutoff
-        // TODO: Apply to actual AudioEngine filter node
-        // print("[Bio→Audio] Filter Cutoff: \(Int(mapper.filterCutoff)) Hz")
+        guard let engine = audioEngine else { return }
 
-        // Apply reverb wetness
-        // TODO: Apply to actual AudioEngine reverb node
-        // print("[Bio→Audio] Reverb Wet: \(Int(mapper.reverbWet * 100))%")
+        // FIXED: Apply filter cutoff
+        engine.setFilterCutoff(mapper.filterCutoff)
 
-        // Apply amplitude
-        // TODO: Apply to actual AudioEngine master volume
-        // print("[Bio→Audio] Amplitude: \(Int(mapper.amplitude * 100))%")
+        // FIXED: Apply reverb wetness
+        engine.setReverbWetness(mapper.reverbWet)
 
-        // Apply tempo
-        // TODO: Apply to tempo-synced effects (delay, arpeggiator)
-        // print("[Bio→Audio] Tempo: \(String(format: "%.1f", mapper.tempo)) BPM")
+        // FIXED: Apply amplitude to master volume
+        engine.setMasterVolume(mapper.amplitude)
+
+        // FIXED: Apply tempo
+        engine.setTempo(mapper.tempo)
+
+        // Log bio→audio mapping (nur bei Debug)
+        #if DEBUG
+        print("[Bio→Audio] Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Tempo: \(Int(mapper.tempo))BPM")
+        #endif
 
         // Apply bio-reactive spatial field (AFA)
         if let mpe = mpeZoneManager, let spatialMapper = midiToSpatialMapper {
@@ -509,33 +514,34 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply gesture-derived audio parameters to audio engine
     private func applyGestureAudioParameters(_ params: GestureToAudioMapper.AudioParameters) {
-        // Apply filter parameters
+        guard let engine = audioEngine else { return }
+
+        // FIXED: Apply filter parameters
         if let cutoff = params.filterCutoff {
-            // TODO: Apply to actual AudioEngine filter node
-            // print("[Gesture→Audio] Filter Cutoff: \(Int(cutoff)) Hz")
+            engine.setFilterCutoff(cutoff)
         }
 
         if let resonance = params.filterResonance {
-            // TODO: Apply to actual AudioEngine filter node
-            // print("[Gesture→Audio] Filter Resonance: \(String(format: "%.2f", resonance))")
+            engine.setFilterResonance(resonance)
         }
 
-        // Apply reverb parameters
+        // FIXED: Apply reverb parameters
         if let size = params.reverbSize {
-            // TODO: Apply to actual AudioEngine reverb node
-            // print("[Gesture→Audio] Reverb Size: \(String(format: "%.2f", size))")
+            engine.setReverbSize(size)
         }
 
         if let wetness = params.reverbWetness {
-            // TODO: Apply to actual AudioEngine reverb node
-            // print("[Gesture→Audio] Reverb Wetness: \(String(format: "%.2f", wetness))")
+            engine.setReverbWetness(wetness)
         }
 
-        // Apply delay parameters
+        // FIXED: Apply delay parameters
         if let delayTime = params.delayTime {
-            // TODO: Apply to actual AudioEngine delay node
-            // print("[Gesture→Audio] Delay Time: \(String(format: "%.3f", delayTime)) s")
+            engine.setDelayTime(delayTime)
         }
+
+        #if DEBUG
+        print("[Gesture→Audio] Applied: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)")
+        #endif
 
         // Trigger MIDI notes via MPE
         if let midiNote = params.midiNoteOn {

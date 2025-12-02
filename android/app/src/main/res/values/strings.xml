@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Echoelmusic</string>
+
+    <!-- Health permissions descriptions -->
+    <string-array name="health_permissions">
+        <item>android.permission.health.READ_HEART_RATE</item>
+        <item>android.permission.health.READ_HEART_RATE_VARIABILITY</item>
+        <item>android.permission.health.READ_RESPIRATORY_RATE</item>
+    </string-array>
+</resources>

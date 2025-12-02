@@ -1,0 +1,245 @@
+# Echoelmusic Multi-Platform Build & Release
+# Builds for Windows, macOS, Linux, and Android
+
+name: Build & Release
+
+on:
+  push:
+    branches: [main, master, develop, 'claude/**']
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:  # Manual trigger
+
+env:
+  BUILD_TYPE: Release
+  IPLUG2_VERSION: master
+
+jobs:
+  # ============================================
+  # Windows Build (VST3, CLAP, Standalone)
+  # ============================================
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSVC
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: Cache iPlug2
+        uses: actions/cache@v3
+        with:
+          path: ThirdParty/iPlug2
+          key: iplug2-windows-${{ env.IPLUG2_VERSION }}
+
+      - name: Clone iPlug2
+        run: |
+          if (!(Test-Path "ThirdParty/iPlug2")) {
+            git clone https://github.com/iPlug2/iPlug2 ThirdParty/iPlug2
+            cd ThirdParty/iPlug2
+            git submodule update --init --recursive
+          }
+
+      - name: Build Desktop Plugins
+        run: |
+          cd Sources/Desktop
+          mkdir build
+          cd build
+          cmake -G "Visual Studio 17 2022" -A x64 ..
+          cmake --build . --config Release
+
+      - name: Create Windows Installer
+        run: |
+          choco install nsis -y
+          makensis installers/windows/installer.nsi
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Windows
+          path: |
+            Sources/Desktop/build/Release/*.vst3
+            Sources/Desktop/build/Release/*.clap
+            Sources/Desktop/build/Release/*.exe
+            installers/windows/*.exe
+
+  # ============================================
+  # macOS Build (VST3, AU, CLAP, Standalone)
+  # ============================================
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Cache iPlug2
+        uses: actions/cache@v3
+        with:
+          path: ThirdParty/iPlug2
+          key: iplug2-macos-${{ env.IPLUG2_VERSION }}
+
+      - name: Clone iPlug2
+        run: |
+          if [ ! -d "ThirdParty/iPlug2" ]; then
+            git clone https://github.com/iPlug2/iPlug2 ThirdParty/iPlug2
+            cd ThirdParty/iPlug2
+            git submodule update --init --recursive
+          fi
+
+      - name: Build Desktop Plugins
+        run: |
+          cd Sources/Desktop
+          mkdir -p build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build . --config Release
+
+      - name: Create DMG Installer
+        run: |
+          chmod +x installers/macos/create-dmg.sh
+          ./installers/macos/create-dmg.sh
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-macOS
+          path: |
+            Sources/Desktop/build/*.vst3
+            Sources/Desktop/build/*.component
+            Sources/Desktop/build/*.clap
+            Sources/Desktop/build/Echoelmusic_Standalone
+            installers/macos/*.dmg
+
+  # ============================================
+  # Linux Build (VST3, CLAP, Standalone)
+  # ============================================
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake git \
+            libasound2-dev libjack-jackd2-dev \
+            libfreetype6-dev libx11-dev libxcomposite-dev \
+            libxcursor-dev libxext-dev libxinerama-dev \
+            libxrandr-dev libxrender-dev libglu1-mesa-dev \
+            libcurl4-openssl-dev
+
+      - name: Cache iPlug2
+        uses: actions/cache@v3
+        with:
+          path: ThirdParty/iPlug2
+          key: iplug2-linux-${{ env.IPLUG2_VERSION }}
+
+      - name: Clone iPlug2
+        run: |
+          if [ ! -d "ThirdParty/iPlug2" ]; then
+            git clone https://github.com/iPlug2/iPlug2 ThirdParty/iPlug2
+            cd ThirdParty/iPlug2
+            git submodule update --init --recursive
+          fi
+
+      - name: Build Desktop Plugins
+        run: |
+          cd Sources/Desktop
+          mkdir -p build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build .
+
+      - name: Create AppImage
+        run: |
+          chmod +x installers/linux/create-appimage.sh
+          ./installers/linux/create-appimage.sh
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Linux
+          path: |
+            Sources/Desktop/build/*.vst3
+            Sources/Desktop/build/*.clap
+            Sources/Desktop/build/Echoelmusic_Standalone
+            installers/linux/*.AppImage
+            installers/linux/*.deb
+
+  # ============================================
+  # Android Build (APK)
+  # ============================================
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Build Android APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Android
+          path: android/app/build/outputs/apk/release/*.apk
+
+  # ============================================
+  # Create GitHub Release
+  # ============================================
+  release:
+    needs: [build-windows, build-macos, build-linux, build-android]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display Structure
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/Echoelmusic-Windows/**/*
+            artifacts/Echoelmusic-macOS/**/*
+            artifacts/Echoelmusic-Linux/**/*
+            artifacts/Echoelmusic-Android/**/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

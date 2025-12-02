@@ -1,10 +1,10 @@
-# XcodeGen Project Configuration for Blab
+# XcodeGen Project Configuration for Echoelmusic
 # This file defines how to generate the Xcode project
 
-name: Blab
+name: Echoelmusic
 
 options:
-  bundleIdPrefix: com.blab
+  bundleIdPrefix: com.echoelmusic
   deploymentTarget:
     iOS: "16.0"
   # Generate Info.plist automatically
@@ -12,24 +12,33 @@ options:
 
 settings:
   base:
-    SWIFT_VERSION: "5.7"
+    SWIFT_VERSION: "5.9"
     PRODUCT_NAME: $(TARGET_NAME)
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
 
 targets:
-  Blab:
+  Echoelmusic:
     type: application
     platform: iOS
 
     # Source files location
     sources:
-      - path: Sources/Blab
+      - path: Sources/Echoelmusic
         type: group
+      - path: Echoelmusic
+        type: group
+
+    # Resources
+    resources:
+      - path: Resources
+        type: folder
+      - path: PrivacyInfo.xcprivacy
+        type: file
 
     # Info.plist configuration (inline)
     info:
-      path: Info.plist
+      path: Resources/Info.plist
       properties:
         CFBundleDevelopmentRegion: en
         CFBundleExecutable: $(EXECUTABLE_NAME)
@@ -39,18 +48,34 @@ targets:
         CFBundlePackageType: APPL
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        CFBundleDisplayName: Blab
+        CFBundleDisplayName: Echoelmusic
         LSRequiresIPhoneOS: true
 
-        # Microphone permission
-        NSMicrophoneUsageDescription: "Blab needs microphone access to create music from your voice and breath"
+        # Permissions
+        NSMicrophoneUsageDescription: "Echoelmusic needs microphone access to create music from your voice and breath"
+        NSHealthShareUsageDescription: "Echoelmusic uses heart rate data to create bio-reactive music that responds to your body"
+        NSHealthUpdateUsageDescription: "Echoelmusic can save your coherence scores to Health"
+        NSBluetoothAlwaysUsageDescription: "Echoelmusic connects to Bluetooth MIDI controllers and audio devices"
+        NSBluetoothPeripheralUsageDescription: "Echoelmusic connects to Bluetooth audio devices for ultra-low latency monitoring"
+
+        # Background modes
+        UIBackgroundModes:
+          - audio
+          - bluetooth-central
 
         # UI Configuration
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         UIUserInterfaceStyle: Dark
+        UIRequiresFullScreen: false
 
         # SwiftUI support
         UIApplicationSceneManifest:
@@ -80,3 +105,83 @@ targets:
         ENABLE_BITCODE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+
+    # Dependencies
+    dependencies:
+      - target: EchoelmusicAUv3
+        embed: true
+
+    # Entitlements
+    entitlements:
+      path: Echoelmusic.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.echoelmusic.audio
+        inter-app-audio: true
+
+  # ===========================================
+  # AUv3 Audio Unit Extension
+  # ===========================================
+  EchoelmusicAUv3:
+    type: app-extension
+    platform: iOS
+
+    # Source files
+    sources:
+      - path: Sources/EchoelmusicAUv3
+        type: group
+      - path: Sources/Echoelmusic/Sound/TR808BassSynth.swift
+        type: file
+
+    # Info.plist
+    info:
+      path: Sources/EchoelmusicAUv3/Info.plist
+
+    # Extension settings
+    settings:
+      base:
+        PRODUCT_NAME: EchoelmusicAUv3
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.auv3
+        INFOPLIST_FILE: Sources/EchoelmusicAUv3/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+
+        # Code signing
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "Apple Development"
+        CODE_SIGN_ENTITLEMENTS: Sources/EchoelmusicAUv3/EchoelmusicAUv3.entitlements
+
+        # Build settings
+        TARGETED_DEVICE_FAMILY: "1,2"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        SWIFT_VERSION: "5.9"
+        ENABLE_BITCODE: NO
+
+        # Extension settings
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+        SKIP_INSTALL: YES
+
+    # Frameworks
+    dependencies:
+      - framework: AudioToolbox.framework
+      - framework: AVFoundation.framework
+      - framework: CoreAudioKit.framework
+      - framework: Accelerate.framework
+
+  # ===========================================
+  # Unit Tests
+  # ===========================================
+  EchoelmusicTests:
+    type: bundle.unit-test
+    platform: iOS
+
+    sources:
+      - path: Tests/EchoelmusicTests
+        type: group
+
+    dependencies:
+      - target: Echoelmusic
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.tests
+        SWIFT_VERSION: "5.9"

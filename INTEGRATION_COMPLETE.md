@@ -1,8 +1,8 @@
-# 🎉 BLAB - Integration Complete!
+# 🎉 Echoelmusic - Integration Complete!
 
 ## ✅ PHASE 2 & 3 - Spatial Audio + Bio-Parameter Mapping
 
-All components have been successfully integrated into BLAB!
+All components have been successfully integrated into Echoelmusic!
 
 ---
 
@@ -11,7 +11,7 @@ All components have been successfully integrated into BLAB!
 ### Spatial Audio (ASAF) - PHASE 2
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 ├── Utils/
 │   ├── DeviceCapabilities.swift       ✨ NEW - Device & ASAF detection
 │   └── HeadTrackingManager.swift      ✨ NEW - CoreMotion head tracking
@@ -22,7 +22,7 @@ Sources/Blab/
 ### Bio-Parameter Mapping - PHASE 3
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 └── Biofeedback/
     └── BioParameterMapper.swift       ✨ NEW - HRV/HR → Audio mapping
 ```
@@ -30,7 +30,7 @@ Sources/Blab/
 ### UI Components
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 └── Views/Components/
     ├── SpatialAudioControlsView.swift ✨ NEW - Spatial audio UI
     └── HeadTrackingVisualization.swift ✨ NEW - 3D position indicator
@@ -39,7 +39,7 @@ Sources/Blab/
 ### Updated Files
 
 ```
-Sources/Blab/
+Sources/Echoelmusic/
 ├── Audio/
 │   └── AudioEngine.swift              ✏️ UPDATED - Full integration
 └── Package.swift                      ✏️ UPDATED - Resources added
@@ -166,7 +166,7 @@ Follow on-screen instructions to:
 ## 📱 Usage on iPhone
 
 ### Basic Flow
-1. Launch BLAB
+1. Launch Echoelmusic
 2. Grant permissions (Microphone, HealthKit, Motion)
 3. Connect AirPods Pro/Max
 4. Tap "Start Recording"
@@ -372,4 +372,4 @@ https://github.com/vibrationalforce/blab-ios-app/issues
 
 ---
 
-🎵 **BLAB V15 - Biofeedback Music Creation with Spatial Audio** 🎵
+🎵 **Echoelmusic V15 - Biofeedback Music Creation with Spatial Audio** 🎵

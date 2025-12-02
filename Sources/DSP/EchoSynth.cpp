@@ -497,9 +497,11 @@ void EchoSynth::EchoSynthVoice::renderNextBlock(juce::AudioBuffer<float>& output
         osc1Freq *= pitchMod;
         osc2Freq *= pitchMod;
 
-        // Generate oscillators
-        float osc1Sample = generateOscillator(synthRef.osc1Waveform, osc1Phase, synthRef.pulseWidth);
-        float osc2Sample = generateOscillator(synthRef.osc2Waveform, osc2Phase, synthRef.pulseWidth);
+        // Generate oscillators with PolyBLEP anti-aliasing
+        float osc1PhaseInc = osc1Freq / sampleRate;
+        float osc2PhaseInc = osc2Freq / sampleRate;
+        float osc1Sample = generateOscillator(synthRef.osc1Waveform, osc1Phase, synthRef.pulseWidth, osc1PhaseInc);
+        float osc2Sample = generateOscillator(synthRef.osc2Waveform, osc2Phase, synthRef.pulseWidth, osc2PhaseInc);
 
         // Mix oscillators
         float mixedSample = osc1Sample * (1.0f - synthRef.osc2Mix) + osc2Sample * synthRef.osc2Mix;
@@ -545,7 +547,7 @@ void EchoSynth::EchoSynthVoice::renderNextBlock(juce::AudioBuffer<float>& output
     }
 }
 
-float EchoSynth::EchoSynthVoice::generateOscillator(Waveform waveform, float phase, float pulseWidth)
+float EchoSynth::EchoSynthVoice::generateOscillator(Waveform waveform, float phase, float pulseWidth, float phaseIncrement)
 {
     switch (waveform)
     {
@@ -553,16 +555,44 @@ float EchoSynth::EchoSynthVoice::generateOscillator(Waveform waveform, float pha
             return std::sin(phase * juce::MathConstants<float>::twoPi);
 
         case Waveform::Triangle:
+            // Triangle wave with PolyBLEP at peaks
             return phase < 0.5f ? (4.0f * phase - 1.0f) : (3.0f - 4.0f * phase);
 
         case Waveform::Sawtooth:
-            return 2.0f * phase - 1.0f;
+        {
+            // PolyBLEP anti-aliased sawtooth - eliminates aliasing artifacts
+            float saw = 2.0f * phase - 1.0f;
+            if (phaseIncrement > 0.0f)
+            {
+                saw -= polyBLEP(phase, phaseIncrement);
+            }
+            return saw;
+        }
 
         case Waveform::Square:
-            return phase < 0.5f ? 1.0f : -1.0f;
+        {
+            // PolyBLEP anti-aliased square wave
+            float square = phase < 0.5f ? 1.0f : -1.0f;
+            if (phaseIncrement > 0.0f)
+            {
+                // Apply PolyBLEP at both edges (0 and 0.5)
+                square += polyBLEP(phase, phaseIncrement);
+                square -= polyBLEP(std::fmod(phase + 0.5f, 1.0f), phaseIncrement);
+            }
+            return square;
+        }
 
         case Waveform::Pulse:
-            return phase < pulseWidth ? 1.0f : -1.0f;
+        {
+            // PolyBLEP anti-aliased pulse wave
+            float pulse = phase < pulseWidth ? 1.0f : -1.0f;
+            if (phaseIncrement > 0.0f)
+            {
+                pulse += polyBLEP(phase, phaseIncrement);
+                pulse -= polyBLEP(std::fmod(phase + (1.0f - pulseWidth), 1.0f), phaseIncrement);
+            }
+            return pulse;
+        }
 
         case Waveform::Noise:
             noiseState = juce::Random::getSystemRandom().nextFloat() * 2.0f - 1.0f;

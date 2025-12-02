@@ -3,6 +3,49 @@ import AVFoundation
 import Combine
 import Accelerate
 
+// MARK: - Circular Buffer for O(1) Performance
+/// High-performance circular buffer replacing Array.removeFirst() O(n) with O(1)
+private struct CircularBuffer<T> {
+    private var buffer: [T]
+    private var writeIndex: Int = 0
+    private var readIndex: Int = 0
+    private(set) var count: Int = 0
+    let capacity: Int
+
+    init(capacity: Int, defaultValue: T) {
+        self.capacity = capacity
+        self.buffer = [T](repeating: defaultValue, count: capacity)
+    }
+
+    mutating func append(_ element: T) {
+        buffer[writeIndex] = element
+        writeIndex = (writeIndex + 1) % capacity
+        if count < capacity {
+            count += 1
+        } else {
+            // Buffer is full, advance read index (oldest element is overwritten)
+            readIndex = (readIndex + 1) % capacity
+        }
+    }
+
+    /// Returns contents in order (oldest to newest)
+    func toArray() -> [T] {
+        guard count > 0 else { return [] }
+        var result = [T]()
+        result.reserveCapacity(count)
+        for i in 0..<count {
+            result.append(buffer[(readIndex + i) % capacity])
+        }
+        return result
+    }
+
+    mutating func removeAll() {
+        writeIndex = 0
+        readIndex = 0
+        count = 0
+    }
+}
+
 /// Manages multi-track audio recording with bio-signal integration
 /// Coordinates recording, playback, and real-time monitoring
 @MainActor
@@ -12,6 +55,9 @@ class RecordingEngine: ObservableObject {
 
     /// Current session being recorded/played
     @Published var currentSession: Session?
+
+    // MARK: - Undo/Redo Integration
+    private let undoManager = UndoRedoManager.shared
 
     /// Is currently recording
     @Published var isRecording: Bool = false
@@ -47,7 +93,8 @@ class RecordingEngine: ObservableObject {
     private var timer: Timer?
 
     /// Waveform buffer for real-time display (max 1000 samples)
-    private var waveformBuffer: [Float] = []
+    /// Uses CircularBuffer for O(1) append instead of Array.removeFirst() O(n)
+    private var waveformBuffer = CircularBuffer<Float>(capacity: 1000, defaultValue: 0.0)
 
     /// Reference to main audio engine for audio routing
     private weak var mainAudioEngine: AudioEngine?
@@ -60,6 +107,20 @@ class RecordingEngine: ObservableObject {
 
     /// Audio format for recording
     private let recordingFormat: AVAudioFormat
+
+    // MARK: - Retrospective Capture (Ableton-style)
+
+    /// Enable/disable retrospective capture
+    @Published var isRetrospectiveCaptureEnabled: Bool = true
+
+    /// Duration of retrospective buffer (seconds) - configurable for mobile
+    private let retrospectiveBufferDuration: TimeInterval = 60.0
+
+    /// Retrospective audio buffer (circular, O(1) operations)
+    private var retrospectiveBuffer: RetrospectiveBuffer?
+
+    /// Whether there's content available to capture
+    @Published var hasRetrospectiveContent: Bool = false
 
 
     // MARK: - Initialization
@@ -195,7 +256,8 @@ class RecordingEngine: ObservableObject {
         let inputFormat = input.outputFormat(forBus: 0)
 
         // Install tap to capture audio data
-        input.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] buffer, time in
+        // Reduced from 4096 to 1024 for lower latency (85ms → 21ms at 48kHz)
+        input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] buffer, time in
             Task { @MainActor [weak self] in
                 self?.processRecordingBuffer(buffer)
             }
@@ -232,20 +294,17 @@ class RecordingEngine: ObservableObject {
     }
 
     /// Update waveform buffer for real-time visualization
+    /// PERFORMANCE: Uses O(1) CircularBuffer instead of O(n) removeFirst()
     private func updateWaveformBuffer(_ data: UnsafePointer<Float>, frameLength: Int) {
-        // Downsample to max 1000 points
-        let maxPoints = 1000
-        let stride = max(1, frameLength / maxPoints)
+        // Downsample to fit in circular buffer
+        let strideValue = max(1, frameLength / waveformBuffer.capacity)
 
-        for i in stride(from: 0, to: frameLength, by: stride) {
-            if waveformBuffer.count >= maxPoints {
-                waveformBuffer.removeFirst()
-            }
+        for i in Swift.stride(from: 0, to: frameLength, by: strideValue) {
             waveformBuffer.append(data[i])
         }
 
-        // Update published waveform
-        recordingWaveform = waveformBuffer
+        // Update published waveform (converts circular buffer to array)
+        recordingWaveform = waveformBuffer.toArray()
     }
 
     /// Stop recording current track
@@ -355,47 +414,102 @@ class RecordingEngine: ObservableObject {
         currentSession = session
     }
 
-    /// Mute/unmute track
+    /// Mute/unmute track (undoable)
     func setTrackMuted(_ trackID: UUID, muted: Bool) {
         guard var session = currentSession else { return }
+        guard let index = session.tracks.firstIndex(where: { $0.id == trackID }) else { return }
 
-        if let index = session.tracks.firstIndex(where: { $0.id == trackID }) {
-            session.tracks[index].isMuted = muted
-            currentSession = session
-        }
+        let oldValue = session.tracks[index].isMuted
+        guard oldValue != muted else { return }
+
+        let command = TrackMuteCommand(
+            trackID: trackID,
+            isMuted: muted,
+            applyChange: { [weak self] id, value in
+                guard var session = self?.currentSession,
+                      let idx = session.tracks.firstIndex(where: { $0.id == id }) else { return }
+                session.tracks[idx].isMuted = value
+                self?.currentSession = session
+            }
+        )
+
+        undoManager.execute(command)
     }
 
-    /// Solo track
+    /// Solo track (undoable)
     func setTrackSoloed(_ trackID: UUID, soloed: Bool) {
         guard var session = currentSession else { return }
+        guard let index = session.tracks.firstIndex(where: { $0.id == trackID }) else { return }
 
-        if let index = session.tracks.firstIndex(where: { $0.id == trackID }) {
-            session.tracks[index].isSoloed = soloed
-            currentSession = session
-        }
+        let oldValue = session.tracks[index].isSoloed
+
+        let command = GenericTrackCommand(
+            actionName: soloed ? "Solo Track" : "Unsolo Track",
+            trackID: trackID,
+            execute: { [weak self] in
+                guard var session = self?.currentSession,
+                      let idx = session.tracks.firstIndex(where: { $0.id == trackID }) else { return }
+                session.tracks[idx].isSoloed = soloed
+                self?.currentSession = session
+            },
+            undo: { [weak self] in
+                guard var session = self?.currentSession,
+                      let idx = session.tracks.firstIndex(where: { $0.id == trackID }) else { return }
+                session.tracks[idx].isSoloed = oldValue
+                self?.currentSession = session
+            }
+        )
+
+        undoManager.execute(command)
     }
 
-    /// Set track volume
+    /// Set track volume (undoable)
     func setTrackVolume(_ trackID: UUID, volume: Float) {
         guard var session = currentSession else { return }
+        guard let index = session.tracks.firstIndex(where: { $0.id == trackID }) else { return }
 
-        if let index = session.tracks.firstIndex(where: { $0.id == trackID }) {
-            session.tracks[index].volume = max(0, min(1, volume))
-            currentSession = session
-        }
+        let oldValue = session.tracks[index].volume
+        let newValue = max(0, min(1, volume))
+
+        let command = TrackVolumeCommand(
+            trackID: trackID,
+            oldValue: oldValue,
+            newValue: newValue,
+            applyChange: { [weak self] id, value in
+                guard var session = self?.currentSession,
+                      let idx = session.tracks.firstIndex(where: { $0.id == id }) else { return }
+                session.tracks[idx].volume = value
+                self?.currentSession = session
+            }
+        )
+
+        undoManager.execute(command)
     }
 
-    /// Set track pan
+    /// Set track pan (undoable)
     func setTrackPan(_ trackID: UUID, pan: Float) {
         guard var session = currentSession else { return }
+        guard let index = session.tracks.firstIndex(where: { $0.id == trackID }) else { return }
 
-        if let index = session.tracks.firstIndex(where: { $0.id == trackID }) {
-            session.tracks[index].pan = max(-1, min(1, pan))
-            currentSession = session
-        }
+        let oldValue = session.tracks[index].pan
+        let newValue = max(-1, min(1, pan))
+
+        let command = TrackPanCommand(
+            trackID: trackID,
+            oldValue: oldValue,
+            newValue: newValue,
+            applyChange: { [weak self] id, value in
+                guard var session = self?.currentSession,
+                      let idx = session.tracks.firstIndex(where: { $0.id == id }) else { return }
+                session.tracks[idx].pan = value
+                self?.currentSession = session
+            }
+        )
+
+        undoManager.execute(command)
     }
 
-    /// Delete track
+    /// Delete track (undoable - file deletion is NOT undone for safety)
     func deleteTrack(_ trackID: UUID) throws {
         guard var session = currentSession else {
             throw RecordingError.noActiveSession
@@ -405,15 +519,50 @@ class RecordingEngine: ObservableObject {
             throw RecordingError.trackNotFound
         }
 
-        // Delete audio file
-        if let url = session.tracks[index].url {
-            try? FileManager.default.removeItem(at: url)
-        }
+        let track = session.tracks[index]
+        let trackIndex = index
 
-        session.tracks.remove(at: index)
-        currentSession = session
+        let command = DeleteTrackCommand(
+            track: track,
+            index: trackIndex,
+            addTrack: { [weak self] restoredTrack, idx in
+                guard var session = self?.currentSession else { return }
+                session.tracks.insert(restoredTrack, at: min(idx, session.tracks.count))
+                self?.currentSession = session
+            },
+            removeTrack: { [weak self] id in
+                guard var session = self?.currentSession,
+                      let idx = session.tracks.firstIndex(where: { $0.id == id }) else { return }
+                // Note: We don't delete the audio file here to allow undo
+                session.tracks.remove(at: idx)
+                self?.currentSession = session
+            }
+        )
 
-        print("🗑️ Deleted track")
+        undoManager.execute(command)
+        print("🗑️ Deleted track (undoable)")
+    }
+
+    // MARK: - Undo/Redo Convenience Methods
+
+    /// Undo last action (Cmd+Z)
+    func undo() {
+        undoManager.undo()
+    }
+
+    /// Redo last undone action (Cmd+Shift+Z)
+    func redo() {
+        undoManager.redo()
+    }
+
+    /// Whether undo is available
+    var canUndo: Bool {
+        undoManager.canUndo
+    }
+
+    /// Whether redo is available
+    var canRedo: Bool {
+        undoManager.canRedo
     }
 
 
@@ -459,6 +608,162 @@ class RecordingEngine: ObservableObject {
     }
 }
 
+
+// MARK: - Retrospective Capture
+
+extension RecordingEngine {
+
+    /// Initialize retrospective buffer for always-on capture
+    func enableRetrospectiveCapture(sampleRate: Double = 48000, channels: Int = 2) {
+        guard isRetrospectiveCaptureEnabled else { return }
+
+        let samplesNeeded = Int(sampleRate * retrospectiveBufferDuration) * channels
+        retrospectiveBuffer = RetrospectiveBuffer(
+            capacity: samplesNeeded,
+            sampleRate: sampleRate,
+            channels: channels
+        )
+        print("📼 Retrospective capture enabled (\(Int(retrospectiveBufferDuration))s buffer)")
+    }
+
+    /// Feed audio to retrospective buffer (call from audio tap)
+    func feedRetrospectiveBuffer(_ buffer: AVAudioPCMBuffer) {
+        guard isRetrospectiveCaptureEnabled,
+              !isRecording, // Don't buffer while actively recording
+              let retrospective = retrospectiveBuffer,
+              let channelData = buffer.floatChannelData else { return }
+
+        let frameLength = Int(buffer.frameLength)
+
+        // Interleave and add to circular buffer
+        for frame in 0..<frameLength {
+            for channel in 0..<Int(buffer.format.channelCount) {
+                retrospective.append(channelData[channel][frame])
+            }
+        }
+
+        // Update UI state
+        if retrospective.count > Int(buffer.format.sampleRate) { // At least 1 second
+            hasRetrospectiveContent = true
+        }
+    }
+
+    /// Capture retrospective buffer as a new track (like Ableton's Capture)
+    func captureRetrospective() throws {
+        guard isRetrospectiveCaptureEnabled else {
+            throw RecordingError.exportFailed("Retrospective capture not enabled")
+        }
+
+        guard let retrospective = retrospectiveBuffer, retrospective.count > 0 else {
+            throw RecordingError.exportFailed("No retrospective content available")
+        }
+
+        guard var session = currentSession else {
+            throw RecordingError.noActiveSession
+        }
+
+        // Create new track from buffer
+        var track = Track(
+            name: "Captured \(session.tracks.count + 1)",
+            type: .audio
+        )
+
+        let trackURL = trackFileURL(sessionID: session.id, trackID: track.id)
+
+        // Write buffer to file
+        try retrospective.writeToFile(url: trackURL, format: recordingFormat)
+
+        track.url = trackURL
+        track.duration = retrospective.duration
+
+        // Add track to session
+        session.tracks.append(track)
+        currentSession = session
+
+        // Clear buffer after capture
+        retrospective.clear()
+        hasRetrospectiveContent = false
+
+        print("✨ Captured retrospective audio as '\(track.name)' (\(String(format: "%.1f", track.duration))s)")
+    }
+
+    /// Clear retrospective buffer without capturing
+    func clearRetrospectiveBuffer() {
+        retrospectiveBuffer?.clear()
+        hasRetrospectiveContent = false
+    }
+}
+
+// MARK: - Retrospective Buffer
+
+/// Lightweight circular buffer for retrospective audio capture
+/// O(1) append/read operations, fixed memory footprint
+class RetrospectiveBuffer {
+    private var buffer: [Float]
+    private var writeIndex: Int = 0
+    private(set) var count: Int = 0
+    let capacity: Int
+    let sampleRate: Double
+    let channels: Int
+
+    var duration: TimeInterval {
+        Double(count / channels) / sampleRate
+    }
+
+    init(capacity: Int, sampleRate: Double, channels: Int) {
+        self.capacity = capacity
+        self.sampleRate = sampleRate
+        self.channels = channels
+        self.buffer = [Float](repeating: 0, count: capacity)
+    }
+
+    func append(_ sample: Float) {
+        buffer[writeIndex] = sample
+        writeIndex = (writeIndex + 1) % capacity
+        if count < capacity {
+            count += 1
+        }
+    }
+
+    func clear() {
+        writeIndex = 0
+        count = 0
+    }
+
+    /// Write buffer contents to audio file
+    func writeToFile(url: URL, format: AVAudioFormat) throws {
+        guard count > 0 else { return }
+
+        let audioFile = try AVAudioFile(
+            forWriting: url,
+            settings: format.settings,
+            commonFormat: format.commonFormat,
+            interleaved: format.isInterleaved
+        )
+
+        let frameCount = AVAudioFrameCount(count / channels)
+        guard let pcmBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
+            throw RecordingError.exportFailed("Failed to create PCM buffer")
+        }
+
+        pcmBuffer.frameLength = frameCount
+
+        guard let channelData = pcmBuffer.floatChannelData else {
+            throw RecordingError.exportFailed("Failed to get channel data")
+        }
+
+        // De-interleave from circular buffer
+        let startIndex = count < capacity ? 0 : writeIndex
+        for i in 0..<Int(frameCount) {
+            let bufferIndex = (startIndex + i * channels) % capacity
+            for ch in 0..<channels {
+                channelData[ch][i] = buffer[(bufferIndex + ch) % capacity]
+            }
+        }
+
+        try audioFile.write(from: pcmBuffer)
+    }
+}
 
 // MARK: - Recording Errors
 

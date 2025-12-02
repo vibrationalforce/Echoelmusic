@@ -162,6 +162,7 @@ class AccessibilityManager: ObservableObject {
     }
 
     private var labels: [String: AccessibilityLabel] = [:]
+    private var accessibilityObservers: [NSObjectProtocol] = []
 
     // MARK: - Audio Descriptions
 
@@ -207,6 +208,14 @@ class AccessibilityManager: ObservableObject {
         print("🌐 Universal Design Principles Applied")
     }
 
+    deinit {
+        // CRITICAL: Remove all accessibility observers to prevent memory leaks
+        for observer in accessibilityObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        accessibilityObservers.removeAll()
+    }
+
     // MARK: - Detect System Settings
 
     private func detectSystemAccessibilitySettings() {
@@ -249,7 +258,7 @@ class AccessibilityManager: ObservableObject {
 
     private func setupAccessibilityNotifications() {
         #if os(iOS)
-        NotificationCenter.default.addObserver(
+        let voiceOverObserver = NotificationCenter.default.addObserver(
             forName: UIAccessibility.voiceOverStatusDidChangeNotification,
             object: nil,
             queue: .main
@@ -261,8 +270,9 @@ class AccessibilityManager: ObservableObject {
                 }
             }
         }
+        accessibilityObservers.append(voiceOverObserver)
 
-        NotificationCenter.default.addObserver(
+        let reduceMotionObserver = NotificationCenter.default.addObserver(
             forName: UIAccessibility.reduceMotionStatusDidChangeNotification,
             object: nil,
             queue: .main
@@ -274,6 +284,7 @@ class AccessibilityManager: ObservableObject {
                 }
             }
         }
+        accessibilityObservers.append(reduceMotionObserver)
         #endif
     }
 

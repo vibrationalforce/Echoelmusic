@@ -49,7 +49,12 @@ class AdaptiveQualityManager {
     // MARK: - Private Properties
 
     private var cancellables = Set<AnyCancellable>()
-    private var frameTimestamps: [TimeInterval] = []
+
+    // OPTIMIERT: Circular Buffer statt Array für O(1) Performance
+    private var frameTimestampBuffer: [TimeInterval]
+    private var frameBufferIndex: Int = 0
+    private var frameBufferCount: Int = 0
+
     private var lastQualityChange: Date = Date()
     private let qualityChangePublisher = PassthroughSubject<QualityLevel, Never>()
 
@@ -58,6 +63,11 @@ class AdaptiveQualityManager {
 
     /// Bewegter Durchschnitt für FPS (letzte 60 Frames)
     private let fpsWindowSize: Int = 60
+
+    init() {
+        // Pre-allocate circular buffer
+        frameTimestampBuffer = [TimeInterval](repeating: 0, count: fpsWindowSize)
+    }
 
     /// Schwellenwerte für Qualitätsanpassungen
     private let thresholds = QualityThresholds()
@@ -317,38 +327,43 @@ class AdaptiveQualityManager {
     }
 
     func recordFrame(timestamp: TimeInterval) {
-        frameTimestamps.append(timestamp)
-
-        // Behalte nur die letzten N Frames
-        if frameTimestamps.count > fpsWindowSize {
-            frameTimestamps.removeFirst()
-        }
+        // OPTIMIERT: O(1) Circular Buffer Insert statt O(n) removeFirst()
+        frameTimestampBuffer[frameBufferIndex] = timestamp
+        frameBufferIndex = (frameBufferIndex + 1) % fpsWindowSize
+        frameBufferCount = min(frameBufferCount + 1, fpsWindowSize)
     }
 
     private func updateFPS() {
-        guard frameTimestamps.count > 1 else {
+        guard frameBufferCount > 1 else {
             return
         }
 
-        // Berechne FPS aus Zeitstempeln
-        let totalTime = frameTimestamps.last! - frameTimestamps.first!
-        let frameCount = frameTimestamps.count - 1
+        // Berechne FPS aus Circular Buffer
+        let oldestIndex = (frameBufferIndex - frameBufferCount + fpsWindowSize) % fpsWindowSize
+        let newestIndex = (frameBufferIndex - 1 + fpsWindowSize) % fpsWindowSize
+
+        let oldestTime = frameTimestampBuffer[oldestIndex]
+        let newestTime = frameTimestampBuffer[newestIndex]
+        let totalTime = newestTime - oldestTime
+        let frameCount = frameBufferCount - 1
 
         if totalTime > 0 {
             metrics.currentFPS = Float(frameCount) / Float(totalTime)
 
-            // Gleitender Durchschnitt
-            metrics.averageFPS = metrics.averageFPS * 0.9 + metrics.currentFPS * 0.1
+            // Gleitender Durchschnitt (nutze AudioConstants)
+            metrics.averageFPS = metrics.averageFPS * Float(AudioConstants.Smoothing.fps) + metrics.currentFPS * Float(1.0 - AudioConstants.Smoothing.fps)
 
             // Min/Max
             metrics.minFPS = min(metrics.minFPS, metrics.currentFPS)
             metrics.maxFPS = max(metrics.maxFPS, metrics.currentFPS)
         }
 
-        // Frame Drop Detection
-        let targetFrameTime = 1.0 / Double(currentQuality.targetFPS)
-        for i in 1..<frameTimestamps.count {
-            let frameTime = frameTimestamps[i] - frameTimestamps[i-1]
+        // Frame Drop Detection (optimiert: nur letzte 2 Frames prüfen)
+        if frameBufferCount >= 2 {
+            let prevIndex = (frameBufferIndex - 2 + fpsWindowSize) % fpsWindowSize
+            let currIndex = (frameBufferIndex - 1 + fpsWindowSize) % fpsWindowSize
+            let frameTime = frameTimestampBuffer[currIndex] - frameTimestampBuffer[prevIndex]
+            let targetFrameTime = 1.0 / Double(currentQuality.targetFPS)
             if frameTime > targetFrameTime * 1.5 {
                 metrics.frameDrops += 1
             }
@@ -500,7 +515,9 @@ class AdaptiveQualityManager {
 
         // Reset Metriken
         metrics.frameDrops = 0
-        frameTimestamps.removeAll()
+        // OPTIMIERT: Reset circular buffer indices statt removeAll()
+        frameBufferIndex = 0
+        frameBufferCount = 0
     }
 
     private func updateVisualSettings() {

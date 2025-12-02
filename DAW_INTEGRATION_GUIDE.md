@@ -1,13 +1,13 @@
-# 🎹 DAW Integration Guide - BLAB iOS App
+# 🎹 DAW Integration Guide - Echoelmusic iOS App
 
-Complete guide for integrating BLAB's MIDI 2.0 + MPE output with professional DAWs and MPE synths.
+Complete guide for integrating Echoelmusic's MIDI 2.0 + MPE output with professional DAWs and MPE synths.
 
 ---
 
 ## 🎯 Quick Start
 
-### **BLAB is now broadcasting:**
-- **MIDI 2.0 Virtual Source:** "BLAB MIDI 2.0 Output"
+### **Echoelmusic is now broadcasting:**
+- **MIDI 2.0 Virtual Source:** "Echoelmusic MIDI 2.0 Output"
 - **Protocol:** MIDI 2.0 UMP (Universal MIDI Packet)
 - **Channels:** 1-15 (MPE member channels), 16 (master channel)
 - **Resolution:** 32-bit parameter control
@@ -19,7 +19,7 @@ Complete guide for integrating BLAB's MIDI 2.0 + MPE output with professional DA
 
 ### **1. Check MIDI Virtual Source**
 
-After launching BLAB, you should see in console:
+After launching Echoelmusic, you should see in console:
 ```
 ✅ MIDI 2.0 initialized (UMP protocol)
 ✅ MIDI 2.0 + MPE enabled via UnifiedControlHub
@@ -29,7 +29,7 @@ After launching BLAB, you should see in console:
 ### **2. Verify MIDI Connection (iOS Settings)**
 
 **Settings → Music (or Audio MIDI Setup on Mac)**
-- BLAB should appear as "BLAB MIDI 2.0 Output"
+- Echoelmusic should appear as "Echoelmusic MIDI 2.0 Output"
 - Protocol: MIDI 2.0
 - Status: Active
 
@@ -40,8 +40,8 @@ After launching BLAB, you should see in console:
 ### **Setup (Ableton Live 11.3+)**
 
 1. **Preferences → Link, Tempo & MIDI**
-   - **Track:** Enable "BLAB MIDI 2.0 Output"
-   - **Remote:** Enable "BLAB MIDI 2.0 Output"
+   - **Track:** Enable "Echoelmusic MIDI 2.0 Output"
+   - **Remote:** Enable "Echoelmusic MIDI 2.0 Output"
    - **MPE:** Enable MPE mode
 
 2. **Load MPE Instrument**
@@ -50,7 +50,7 @@ After launching BLAB, you should see in console:
    - Third-party: Equator 2, Cypher2, Surge XT
 
 3. **Create MIDI Track**
-   - **MIDI From:** BLAB MIDI 2.0 Output
+   - **MIDI From:** Echoelmusic MIDI 2.0 Output
    - **Monitor:** In
    - **Channel:** Any (MPE uses all 15 channels)
 
@@ -62,7 +62,7 @@ After launching BLAB, you should see in console:
 
 ### **Gesture → Ableton Mapping**
 
-| BLAB Gesture | MPE Control | Ableton Parameter |
+| Echoelmusic Gesture | MPE Control | Ableton Parameter |
 |--------------|-------------|-------------------|
 | Fist | Note On | Trigger note on channel 1-15 |
 | Pinch | Per-note pitch bend | ±4 octaves per note |
@@ -83,12 +83,12 @@ After launching BLAB, you should see in console:
 ### **Setup (Logic Pro 11+)**
 
 1. **Preferences → MIDI**
-   - **Inputs:** Enable "BLAB MIDI 2.0 Output"
+   - **Inputs:** Enable "Echoelmusic MIDI 2.0 Output"
    - **MPE Mode:** Enabled
    - **Pitch Bend Range:** ±4800 cents (48 semitones)
 
 2. **Create Software Instrument Track**
-   - **Input:** BLAB MIDI 2.0 Output
+   - **Input:** Echoelmusic MIDI 2.0 Output
    - **Channel:** All (MPE)
 
 3. **Load MPE Instrument**
@@ -103,7 +103,7 @@ After launching BLAB, you should see in console:
 
 ### **Smart Controls Mapping**
 
-Map BLAB gestures to Logic Smart Controls:
+Map Echoelmusic gestures to Logic Smart Controls:
 - **CC 74 (Brightness)** → Filter Cutoff
 - **CC 71 (Timbre)** → Resonance
 - **Pitch Bend** → Pitch (per-note)
@@ -116,7 +116,7 @@ Map BLAB gestures to Logic Smart Controls:
 
 1. **Settings → Controllers**
    - **Add Controller:** Generic MIDI Keyboard
-   - **MIDI Input:** BLAB MIDI 2.0 Output
+   - **MIDI Input:** Echoelmusic MIDI 2.0 Output
    - **MPE:** Enabled
 
 2. **Configure MPE**
@@ -132,12 +132,12 @@ Map BLAB gestures to Logic Smart Controls:
 
 4. **Track Setup**
    - Create Instrument Track
-   - **Input:** BLAB MIDI 2.0 Output
+   - **Input:** Echoelmusic MIDI 2.0 Output
    - Enable **MPE** in track settings
 
 ### **Modulation Mapping**
 
-Bitwig's modulation system works perfectly with BLAB:
+Bitwig's modulation system works perfectly with Echoelmusic:
 - **Per-note Pitch Bend** → Oscillator pitch
 - **Per-note CC 74** → Filter cutoff
 - **Per-note CC 71** → Wavetable position
@@ -146,25 +146,25 @@ Bitwig's modulation system works perfectly with BLAB:
 
 ## 🎸 **MPE Hardware Synth Integration**
 
-### **Roli Seaboard (Receiving BLAB MIDI)**
+### **Roli Seaboard (Receiving Echoelmusic MIDI)**
 
-**BLAB can control Seaboard synth module:**
+**Echoelmusic can control Seaboard synth module:**
 
 1. **Connect via USB (Mac) or Bluetooth MIDI (iOS)**
 2. **Seaboard Dashboard:**
    - **MIDI Mode:** MPE
-   - **Input:** BLAB MIDI 2.0 Output
+   - **Input:** Echoelmusic MIDI 2.0 Output
    - **Channels:** 1-15
 
 **Mapping:**
-- BLAB Fist → Seaboard Note On
-- BLAB Pinch → Seaboard Glide (pitch bend)
-- BLAB Spread → Seaboard Press (brightness)
+- Echoelmusic Fist → Seaboard Note On
+- Echoelmusic Pinch → Seaboard Glide (pitch bend)
+- Echoelmusic Spread → Seaboard Press (brightness)
 
 ### **Expressive E Osmose**
 
 1. **Osmose Plugin or Hardware:**
-   - **MIDI Input:** BLAB MIDI 2.0 Output
+   - **MIDI Input:** Echoelmusic MIDI 2.0 Output
    - **MPE:** Enabled
    - **Channels:** 1-15
 
@@ -176,10 +176,10 @@ Bitwig's modulation system works perfectly with BLAB:
 
 1. **LinnStrument Control Panel:**
    - **MIDI Mode:** MPE
-   - **Receiving:** BLAB MIDI 2.0 Output
+   - **Receiving:** Echoelmusic MIDI 2.0 Output
    - **Channels:** 1-15
 
-**Use Case:** BLAB triggers notes, LinnStrument lights follow
+**Use Case:** Echoelmusic triggers notes, LinnStrument lights follow
 
 ---
 
@@ -187,7 +187,7 @@ Bitwig's modulation system works perfectly with BLAB:
 
 ### **Setup for Spatial Rendering**
 
-BLAB generates spatial positions based on MIDI notes:
+Echoelmusic generates spatial positions based on MIDI notes:
 
 **Stereo Mode:**
 - Note number → L/R pan
@@ -214,7 +214,7 @@ BLAB generates spatial positions based on MIDI notes:
    - Enable **Spatial Audio**
    - Enable **Head Tracking** (AirPods Pro/Max only)
 
-2. **BLAB will automatically use:**
+2. **Echoelmusic will automatically use:**
    - `AVAudioEnvironmentNode` for 3D positioning
    - Head tracking data for dynamic spatialization
 
@@ -242,7 +242,7 @@ BLAB generates spatial positions based on MIDI notes:
 
 ### **Setup**
 
-BLAB sends SysEx to Push 3 for LED feedback:
+Echoelmusic sends SysEx to Push 3 for LED feedback:
 
 **LED Mapping:**
 - HRV Coherence → LED Brightness (30-100%)
@@ -253,7 +253,7 @@ BLAB sends SysEx to Push 3 for LED feedback:
 ### **Push 3 Configuration**
 
 1. **Connect Push 3 via USB**
-2. **BLAB sends SysEx:** `F0 00 21 1D 01 01 0A ...`
+2. **Echoelmusic sends SysEx:** `F0 00 21 1D 01 01 0A ...`
 3. **8x8 Grid = 64 LEDs** (RGB control)
 
 ---
@@ -268,7 +268,7 @@ BLAB sends SysEx to Push 3 for LED feedback:
 ```
 
 **Fix:**
-- Restart BLAB
+- Restart Echoelmusic
 - Check iOS MIDI permissions
 - Verify CoreMIDI availability
 
@@ -287,7 +287,7 @@ BLAB sends SysEx to Push 3 for LED feedback:
 
 **Checklist:**
 1. ✅ MPE mode enabled in DAW
-2. ✅ BLAB MIDI 2.0 Output selected
+2. ✅ Echoelmusic MIDI 2.0 Output selected
 3. ✅ Channels 1-15 assigned to lower zone
 4. ✅ Pitch bend range = ±48 semitones
 5. ✅ MPE-compatible instrument loaded
@@ -317,8 +317,8 @@ MIDI 2.0 Per-Note Pitch Bend: Channel 1, Note 60, Bend: +0.5
 ### **Workflow 1: Live Performance**
 - **DAW:** Ableton Live
 - **Instrument:** Wavetable (MPE mode)
-- **Control:** BLAB gestures → Live looping
-- **Visual:** Projected visuals from BLAB
+- **Control:** Echoelmusic gestures → Live looping
+- **Visual:** Projected visuals from Echoelmusic
 
 ### **Workflow 2: Sound Design**
 - **DAW:** Bitwig Studio
