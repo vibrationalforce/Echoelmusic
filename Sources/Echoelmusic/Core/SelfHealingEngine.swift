@@ -619,7 +619,8 @@ class ErrorPredictor {
         }
 
         let avgInterval = intervals.reduce(0, +) / Double(intervals.count)
-        let timeSinceLast = Date().timeIntervalSince(dates.last!)
+        guard let lastDate = dates.last else { return nil }
+        let timeSinceLast = Date().timeIntervalSince(lastDate)
 
         if timeSinceLast > avgInterval * 0.8 {
             // Likely to occur soon

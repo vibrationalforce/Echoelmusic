@@ -43,6 +43,10 @@ struct EchoelmusicApp: App {
         _ = InstrumentOrchestrator.shared   // UI→Synthesis→Audio Pipeline
         _ = WorldMusicBridge.shared         // 42 Global Music Styles
 
+        // STREAMING PIPELINE (KRITISCH!)
+        _ = SocialMediaManager.shared       // One-Click Multi-Platform Publishing
+        // Note: StreamEngine requires Metal device - initialized lazily in StreamingView
+
         print("⚛️ Echoelmusic Core Systems Initialized")
         print("🎹 InstrumentOrchestrator: 54+ Instruments Ready")
         print("🌍 WorldMusicBridge: 42 Music Styles Loaded")

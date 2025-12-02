@@ -141,6 +141,8 @@ class EnergyEfficiencyManager: ObservableObject {
 
     private var sessionStartTime: Date?
     private var accumulatedEnergy: Double = 0.0  // Joules
+    private var batteryObserver: NSObjectProtocol?
+    private var monitoringTimer: Timer?
 
     // MARK: - Initialization
 
@@ -152,6 +154,15 @@ class EnergyEfficiencyManager: ObservableObject {
         print("✅ Energy Efficiency Manager: Initialized")
         print("🌱 Eco Mode: \(ecoModeEnabled ? "Enabled" : "Disabled")")
         print("⚡️ Efficiency Level: \(currentEnergyEfficiency.rawValue)")
+    }
+
+    deinit {
+        // CRITICAL: Remove observer to prevent memory leaks
+        if let observer = batteryObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        monitoringTimer?.invalidate()
+        monitoringTimer = nil
     }
 
     // MARK: - Detect Power Source
@@ -192,7 +203,7 @@ class EnergyEfficiencyManager: ObservableObject {
 
     private func setupPowerMonitoring() {
         #if os(iOS)
-        NotificationCenter.default.addObserver(
+        batteryObserver = NotificationCenter.default.addObserver(
             forName: UIDevice.batteryStateDidChangeNotification,
             object: nil,
             queue: .main
@@ -205,7 +216,7 @@ class EnergyEfficiencyManager: ObservableObject {
         #endif
 
         // Monitor every 10 seconds
-        Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
+        monitoringTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updateEnergyMetrics()
             }

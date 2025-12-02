@@ -31,6 +31,16 @@ public:
 
 private:
     //==============================================================================
+    // Denormal Protection Constant (prevents CPU performance issues)
+    static constexpr float kDenormalThreshold = 1.0e-15f;
+
+    // Flush denormals to zero for optimal CPU performance
+    static inline float flushDenormals(float value)
+    {
+        return (std::abs(value) < kDenormalThreshold) ? 0.0f : value;
+    }
+
+    //==============================================================================
     // Filter (State Variable Filter)
     struct StateVariableFilter
     {
@@ -53,6 +63,12 @@ private:
             lowpass += f * bandpass;
             highpass = input - lowpass - q * bandpass;
             bandpass += f * highpass;
+
+            // CRITICAL: Flush denormals to prevent CPU performance degradation
+            // Denormal numbers (< 1e-38) cause massive slowdowns in FPU
+            lowpass = BioReactiveDSP::flushDenormals(lowpass);
+            bandpass = BioReactiveDSP::flushDenormals(bandpass);
+            highpass = BioReactiveDSP::flushDenormals(highpass);
 
             return lowpass; // Return lowpass output
         }
