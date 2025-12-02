@@ -410,17 +410,191 @@ class IntelligentAudioAnalyzer {
     }
 
     private func estimateDanceability(_ samples: [Float]) -> Float {
-        // Simple rhythm regularity estimation
-        // In production, this would use beat tracking
-        return Float.random(in: 0.4...0.8)
+        // Real danceability estimation using rhythm regularity analysis
+        guard samples.count > 4096 else { return 0.5 }
+
+        let sampleRate: Float = 44100
+        let hopSize = 512
+        let frameSize = 1024
+
+        // 1. Calculate onset strength envelope
+        var onsetStrengths: [Float] = []
+        var prevSpectralFlux: Float = 0
+
+        for i in stride(from: 0, to: samples.count - frameSize, by: hopSize) {
+            // Simple spectral flux (sum of positive differences)
+            var spectralFlux: Float = 0
+            var energy: Float = 0
+
+            for j in 0..<frameSize {
+                let sample = samples[i + j]
+                energy += sample * sample
+            }
+
+            let currentFlux = sqrt(energy / Float(frameSize))
+            let diff = max(0, currentFlux - prevSpectralFlux)
+            spectralFlux = diff
+            prevSpectralFlux = currentFlux
+
+            onsetStrengths.append(spectralFlux)
+        }
+
+        guard onsetStrengths.count > 16 else { return 0.5 }
+
+        // 2. Autocorrelation to find beat periodicity
+        let maxLag = min(onsetStrengths.count / 2, 200)  // ~4 seconds at 44.1kHz/512hop
+        var autocorr = [Float](repeating: 0, count: maxLag)
+
+        for lag in 0..<maxLag {
+            var sum: Float = 0
+            for i in 0..<(onsetStrengths.count - lag) {
+                sum += onsetStrengths[i] * onsetStrengths[i + lag]
+            }
+            autocorr[lag] = sum / Float(onsetStrengths.count - lag)
+        }
+
+        // 3. Find peaks in autocorrelation (beat periodicity)
+        var peakStrength: Float = 0
+        var peakCount = 0
+
+        for i in 10..<maxLag-1 {  // Skip very short lags
+            if autocorr[i] > autocorr[i-1] && autocorr[i] > autocorr[i+1] {
+                peakStrength += autocorr[i]
+                peakCount += 1
+            }
+        }
+
+        // 4. Calculate rhythm regularity score
+        let avgPeakStrength = peakCount > 0 ? peakStrength / Float(peakCount) : 0
+        let maxAutocorr = autocorr.max() ?? 1
+        let regularityScore = maxAutocorr > 0 ? avgPeakStrength / maxAutocorr : 0
+
+        // 5. Calculate low-frequency energy ratio (bass presence = more danceable)
+        var lowEnergy: Float = 0
+        var totalEnergy: Float = 0
+        let lowFreqBins = frameSize / 8  // ~0-700Hz at 44.1kHz
+
+        for sample in samples {
+            totalEnergy += sample * sample
+        }
+
+        // Simplified low-freq estimation using sample smoothing
+        for i in stride(from: 0, to: samples.count - 4, by: 4) {
+            let avg = (samples[i] + samples[i+1] + samples[i+2] + samples[i+3]) / 4
+            lowEnergy += avg * avg
+        }
+        lowEnergy *= 4
+
+        let bassRatio = totalEnergy > 0 ? min(1.0, lowEnergy / totalEnergy) : 0.5
+
+        // 6. Combine factors into danceability score
+        let danceability = regularityScore * 0.6 + bassRatio * 0.4
+
+        return max(0.1, min(0.95, danceability))
     }
 
     private func estimateKey(_ samples: [Float]) -> String {
-        // Simplified key estimation
-        // In production, this would use chromagram analysis
-        let keys = ["C Major", "G Major", "D Major", "A Major", "E Major",
-                    "A Minor", "E Minor", "B Minor", "D Minor", "G Minor"]
-        return keys.randomElement() ?? "C Major"
+        // Real key estimation using chromagram analysis
+        guard samples.count > 4096 else { return "C Major" }
+
+        let sampleRate: Float = 44100
+        let frameSize = 4096
+        let hopSize = 2048
+
+        // Pitch class frequencies (A4 = 440Hz, calculate for octave 4)
+        let pitchClassFreqs: [Float] = [
+            261.63, 277.18, 293.66, 311.13, 329.63, 349.23,  // C4, C#4, D4, D#4, E4, F4
+            369.99, 392.00, 415.30, 440.00, 466.16, 493.88   // F#4, G4, G#4, A4, A#4, B4
+        ]
+
+        // Initialize chromagram (12 pitch classes)
+        var chromagram = [Float](repeating: 0, count: 12)
+
+        // Process frames
+        var frameCount = 0
+        for frameStart in stride(from: 0, to: samples.count - frameSize, by: hopSize) {
+            // Extract frame and apply Hann window
+            var frame = [Float](repeating: 0, count: frameSize)
+            for i in 0..<frameSize {
+                let window = 0.5 * (1 - cos(2 * Float.pi * Float(i) / Float(frameSize - 1)))
+                frame[i] = samples[frameStart + i] * window
+            }
+
+            // Simple DFT-based pitch class detection
+            for pitchClass in 0..<12 {
+                let baseFreq = pitchClassFreqs[pitchClass]
+
+                // Check multiple octaves (2-5)
+                for octave in 2...5 {
+                    let freq = baseFreq * pow(2, Float(octave - 4))
+                    let bin = Int(freq * Float(frameSize) / sampleRate)
+
+                    if bin > 0 && bin < frameSize / 2 {
+                        // Goertzel-like magnitude estimation
+                        var sumReal: Float = 0
+                        var sumImag: Float = 0
+                        let omega = 2 * Float.pi * Float(bin) / Float(frameSize)
+
+                        for i in 0..<frameSize {
+                            sumReal += frame[i] * cos(omega * Float(i))
+                            sumImag += frame[i] * sin(omega * Float(i))
+                        }
+
+                        let magnitude = sqrt(sumReal * sumReal + sumImag * sumImag)
+                        chromagram[pitchClass] += magnitude
+                    }
+                }
+            }
+            frameCount += 1
+        }
+
+        // Normalize chromagram
+        if frameCount > 0 {
+            let maxChroma = chromagram.max() ?? 1
+            if maxChroma > 0 {
+                for i in 0..<12 {
+                    chromagram[i] /= maxChroma
+                }
+            }
+        }
+
+        // Key profiles (Krumhansl-Kessler)
+        let majorProfile: [Float] = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
+        let minorProfile: [Float] = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17]
+
+        let keyNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
+        var bestKey = "C Major"
+        var bestCorrelation: Float = -Float.infinity
+
+        // Test all 24 keys (12 major + 12 minor)
+        for root in 0..<12 {
+            // Rotate chromagram to align with this root
+            var rotatedChroma = [Float](repeating: 0, count: 12)
+            for i in 0..<12 {
+                rotatedChroma[i] = chromagram[(i + root) % 12]
+            }
+
+            // Correlation with major profile
+            var majorCorr: Float = 0
+            var minorCorr: Float = 0
+
+            for i in 0..<12 {
+                majorCorr += rotatedChroma[i] * majorProfile[i]
+                minorCorr += rotatedChroma[i] * minorProfile[i]
+            }
+
+            if majorCorr > bestCorrelation {
+                bestCorrelation = majorCorr
+                bestKey = "\(keyNames[root]) Major"
+            }
+            if minorCorr > bestCorrelation {
+                bestCorrelation = minorCorr
+                bestKey = "\(keyNames[root]) Minor"
+            }
+        }
+
+        return bestKey
     }
 
     private func estimateBPM(_ samples: [Float], sampleRate: Float) -> Double {

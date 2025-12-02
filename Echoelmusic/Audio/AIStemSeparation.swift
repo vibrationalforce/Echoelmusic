@@ -252,7 +252,13 @@ public struct SeparationProgress: Sendable {
 // MARK: - Deep Neural Network Architecture
 
 /// U-Net inspired encoder-decoder architecture for mask estimation
+/// Thread Safety: Uses NSLock for all mutable state access. Safe for concurrent use.
 final class DeepMaskEstimator: @unchecked Sendable {
+
+    // Thread-safety: All mutable state access is protected by `lock`
+    // Immutable after init: inputChannels, encoderChannels, bottleneckChannels,
+    //                       decoderChannels, outputChannels, stemCount, frequencyBins
+    // Mutable (lock-protected): skipConnections, weight arrays during forward pass
 
     // Network architecture parameters
     private let inputChannels: Int
@@ -601,7 +607,11 @@ final class DeepMaskEstimator: @unchecked Sendable {
 // MARK: - Advanced Spectral Processor
 
 /// High-quality spectral analysis with optimized FFT
+/// Thread Safety: Uses NSLock for all mutable state access. Safe for concurrent use.
 final class AdvancedSpectralProcessor: @unchecked Sendable {
+
+    // Thread-safety: All mutable state access is protected by `lock`
+    // Mutable (lock-protected): inputBuffer, outputBuffer, bufferPosition
 
     private let fftSize: Int
     private let hopSize: Int
@@ -862,7 +872,8 @@ final class AdvancedSpectralProcessor: @unchecked Sendable {
 // MARK: - Harmonic-Percussive-Residual Separator
 
 /// Advanced HPRS using median filtering with iterative refinement
-final class HPRSeparator: @unchecked Sendable {
+/// Thread Safety: Immutable after initialization - safe for concurrent use.
+final class HPRSeparator: Sendable {
 
     private let harmonicKernelSize: Int
     private let percussiveKernelSize: Int
@@ -958,7 +969,8 @@ final class HPRSeparator: @unchecked Sendable {
 // MARK: - Post-Processing Pipeline
 
 /// Advanced post-processing for separated stems
-final class StemPostProcessor: @unchecked Sendable {
+/// Thread Safety: Stateless - all methods are pure functions. Safe for concurrent use.
+final class StemPostProcessor: Sendable {
 
     /// Apply Wiener filtering for bleed reduction
     func wienerFilter(
