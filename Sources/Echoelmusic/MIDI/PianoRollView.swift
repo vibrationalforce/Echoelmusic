@@ -3,10 +3,20 @@ import AVFoundation
 
 // MARK: - Piano Roll MIDI Editor
 /// Professional piano roll for MIDI note editing
-/// Features: Note drawing, velocity editing, quantization, snap-to-grid
+/// Full MIDI 2.0 + MPE Integration for expressive playback
+/// Features: Note drawing, velocity editing, per-note expression, quantization
 
 struct PianoRollView: View {
     @StateObject private var viewModel = PianoRollViewModel()
+
+    // MIDI 2.0 + MPE Integration
+    var midi2Manager: MIDI2Manager?
+    var mpeZoneManager: MPEZoneManager?
+
+    init(midi2Manager: MIDI2Manager? = nil, mpeZoneManager: MPEZoneManager? = nil) {
+        self.midi2Manager = midi2Manager
+        self.mpeZoneManager = mpeZoneManager
+    }
     @State private var scale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
 
@@ -95,6 +105,31 @@ struct PianoRollView: View {
                 Slider(value: $viewModel.defaultVelocity, in: 0...127)
                     .frame(width: 100)
                 Text("Vel: \(Int(viewModel.defaultVelocity))")
+
+                Divider()
+
+                // MIDI 2.0 + MPE Toggle
+                Toggle("MPE", isOn: $viewModel.useMPE)
+                    .toggleStyle(.button)
+                    .tint(viewModel.useMPE ? .green : .gray)
+
+                // Expression Lane Selector
+                Menu {
+                    Button("Hide") { viewModel.expressionLane = nil }
+                    Divider()
+                    ForEach(PerNoteExpression.allCases, id: \.self) { expr in
+                        Button {
+                            viewModel.expressionLane = expr
+                        } label: {
+                            Label(expr.rawValue, systemImage: expr.icon)
+                        }
+                    }
+                } label: {
+                    Label(
+                        viewModel.expressionLane?.rawValue ?? "Expression",
+                        systemImage: viewModel.expressionLane?.icon ?? "slider.horizontal.3"
+                    )
+                }
 
                 Divider()
 
@@ -304,6 +339,18 @@ class PianoRollViewModel: ObservableObject {
     @Published var isPlaying: Bool = false
     @Published var playheadPosition: Double = 0 // In beats
 
+    // MARK: - MIDI 2.0 + MPE
+
+    @Published var expressionLane: PerNoteExpression? = nil // nil = hidden
+    @Published var useMPE: Bool = true // Use MPE for polyphonic expression
+    @Published var pitchBendRange: Int = 48 // Semitones (MPE default: 48)
+
+    var midi2Manager: MIDI2Manager?
+    var mpeZoneManager: MPEZoneManager?
+
+    // Active MPE voices during playback
+    private var activeVoices: [UUID: MPEZoneManager.MPEVoice] = [:]
+
     // MARK: - Configuration
 
     let lowestNote: Int = 24  // C1
@@ -316,6 +363,19 @@ class PianoRollViewModel: ObservableObject {
 
     var gridWidth: CGFloat {
         CGFloat(duration / (60.0 / tempo)) * beatWidth
+    }
+
+    // MARK: - MIDI 2.0 + MPE Connection
+
+    func connect(midi2: MIDI2Manager, mpe: MPEZoneManager) {
+        self.midi2Manager = midi2
+        self.mpeZoneManager = mpe
+
+        // Configure MPE zone
+        mpe.sendMPEConfiguration(memberChannels: 15)
+        mpe.setPitchBendRange(semitones: UInt8(pitchBendRange))
+
+        print("🎹 PianoRoll: Connected to MIDI 2.0 + MPE")
     }
 
     // MARK: - Edit Modes
@@ -429,7 +489,7 @@ class PianoRollViewModel: ObservableObject {
         selectedNotes.removeAll()
     }
 
-    // MARK: - Playback
+    // MARK: - Playback with MIDI 2.0 + MPE
 
     func togglePlayback() {
         isPlaying.toggle()
@@ -441,15 +501,54 @@ class PianoRollViewModel: ObservableObject {
     }
 
     private var playbackTimer: Timer?
+    private var lastPlayheadPosition: Double = 0
+    private var triggeredNotes: Set<UUID> = []
 
     private func startPlayback() {
+        lastPlayheadPosition = playheadPosition
+        triggeredNotes.removeAll()
+
         let beatsPerSecond = tempo / 60.0
-        playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { [weak self] _ in
+        let updateInterval = 0.005 // 5ms for accurate timing
+
+        playbackTimer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self = self else { return }
-                self.playheadPosition += beatsPerSecond * 0.016
-                if self.playheadPosition >= self.duration / (60.0 / self.tempo) {
+
+                let previousPosition = self.playheadPosition
+                self.playheadPosition += beatsPerSecond * updateInterval
+
+                // Check for notes to trigger
+                for note in self.notes {
+                    let noteID = note.id
+
+                    // Note On
+                    if note.startBeat >= previousPosition && note.startBeat < self.playheadPosition {
+                        if !self.triggeredNotes.contains(noteID) {
+                            self.triggerNoteOn(note)
+                            self.triggeredNotes.insert(noteID)
+                        }
+                    }
+
+                    // Note Off
+                    let noteEnd = note.startBeat + note.duration
+                    if noteEnd >= previousPosition && noteEnd < self.playheadPosition {
+                        self.triggerNoteOff(note)
+                        self.triggeredNotes.remove(noteID)
+                    }
+
+                    // Update per-note expression during playback
+                    if self.triggeredNotes.contains(noteID) {
+                        self.updateNoteExpression(note)
+                    }
+                }
+
+                // Loop
+                let totalBeats = self.duration / (60.0 / self.tempo)
+                if self.playheadPosition >= totalBeats {
                     self.playheadPosition = 0
+                    self.releaseAllVoices()
+                    self.triggeredNotes.removeAll()
                 }
             }
         }
@@ -458,6 +557,157 @@ class PianoRollViewModel: ObservableObject {
     private func stopPlayback() {
         playbackTimer?.invalidate()
         playbackTimer = nil
+        releaseAllVoices()
+        triggeredNotes.removeAll()
+    }
+
+    // MARK: - MIDI 2.0 + MPE Note Triggering
+
+    private func triggerNoteOn(_ note: MIDINote) {
+        if useMPE, let mpe = mpeZoneManager {
+            // Allocate MPE voice for polyphonic per-note expression
+            if let voice = mpe.allocateVoice(note: UInt8(note.pitch), velocity: note.velocity32bit) {
+                activeVoices[note.id] = voice
+
+                // Apply initial per-note expression
+                mpe.setVoicePitchBend(voice: voice, bend: note.pitchBend)
+                mpe.setVoicePressure(voice: voice, pressure: note.pressure)
+                mpe.setVoiceBrightness(voice: voice, brightness: note.brightness)
+                mpe.setVoiceTimbre(voice: voice, timbre: note.timbre)
+
+                print("🎹 MPE Note On: \(note.pitch) vel=\(note.velocity) ch=\(voice.channel + 1)")
+            }
+        } else if let midi2 = midi2Manager {
+            // MIDI 2.0 without MPE (single channel)
+            midi2.sendNoteOn(channel: 0, note: UInt8(note.pitch), velocity: note.velocity32bit)
+            print("🎹 MIDI2 Note On: \(note.pitch) vel=\(note.velocity)")
+        }
+    }
+
+    private func triggerNoteOff(_ note: MIDINote) {
+        if useMPE, let mpe = mpeZoneManager {
+            if let voice = activeVoices[note.id] {
+                mpe.deallocateVoice(voice: voice)
+                activeVoices.removeValue(forKey: note.id)
+                print("🎹 MPE Note Off: \(note.pitch)")
+            }
+        } else if let midi2 = midi2Manager {
+            midi2.sendNoteOff(channel: 0, note: UInt8(note.pitch))
+            print("🎹 MIDI2 Note Off: \(note.pitch)")
+        }
+    }
+
+    private func updateNoteExpression(_ note: MIDINote) {
+        guard useMPE, let mpe = mpeZoneManager, let voice = activeVoices[note.id] else { return }
+
+        // Get expression value at current playhead position
+        let currentBeat = playheadPosition
+        let relativePosition = currentBeat - note.startBeat
+
+        // Apply automation if present
+        if !note.pitchBendAutomation.isEmpty {
+            let value = interpolateAutomation(note.pitchBendAutomation, at: relativePosition)
+            mpe.setVoicePitchBend(voice: voice, bend: value)
+        }
+
+        if !note.pressureAutomation.isEmpty {
+            let value = interpolateAutomation(note.pressureAutomation, at: relativePosition)
+            mpe.setVoicePressure(voice: voice, pressure: value)
+        }
+
+        if !note.brightnessAutomation.isEmpty {
+            let value = interpolateAutomation(note.brightnessAutomation, at: relativePosition)
+            mpe.setVoiceBrightness(voice: voice, brightness: value)
+        }
+    }
+
+    private func interpolateAutomation(_ points: [MIDINote.AutomationPoint], at beat: Double) -> Float {
+        guard !points.isEmpty else { return 0.5 }
+
+        let sorted = points.sorted { $0.beat < $1.beat }
+
+        // Find surrounding points
+        var before: MIDINote.AutomationPoint?
+        var after: MIDINote.AutomationPoint?
+
+        for point in sorted {
+            if point.beat <= beat {
+                before = point
+            } else {
+                after = point
+                break
+            }
+        }
+
+        // Interpolate
+        if let b = before, let a = after {
+            let t = Float((beat - b.beat) / (a.beat - b.beat))
+            return b.value + (a.value - b.value) * t
+        } else if let b = before {
+            return b.value
+        } else if let a = after {
+            return a.value
+        }
+
+        return 0.5
+    }
+
+    private func releaseAllVoices() {
+        if let mpe = mpeZoneManager {
+            for (noteID, voice) in activeVoices {
+                mpe.deallocateVoice(voice: voice)
+            }
+        }
+        activeVoices.removeAll()
+    }
+
+    // MARK: - Per-Note Expression Editing
+
+    func setNoteExpression(_ noteID: UUID, expression: PerNoteExpression, value: Float) {
+        guard let index = notes.firstIndex(where: { $0.id == noteID }) else { return }
+
+        switch expression {
+        case .pitchBend:
+            notes[index].pitchBend = max(-1, min(1, value))
+        case .pressure:
+            notes[index].pressure = max(0, min(1, value))
+        case .brightness:
+            notes[index].brightness = max(0, min(1, value))
+        case .timbre:
+            notes[index].timbre = max(0, min(1, value))
+        }
+
+        // Update live if playing
+        if isPlaying, let voice = activeVoices[noteID], let mpe = mpeZoneManager {
+            switch expression {
+            case .pitchBend:
+                mpe.setVoicePitchBend(voice: voice, bend: notes[index].pitchBend)
+            case .pressure:
+                mpe.setVoicePressure(voice: voice, pressure: notes[index].pressure)
+            case .brightness:
+                mpe.setVoiceBrightness(voice: voice, brightness: notes[index].brightness)
+            case .timbre:
+                mpe.setVoiceTimbre(voice: voice, timbre: notes[index].timbre)
+            }
+        }
+    }
+
+    func addExpressionAutomation(_ noteID: UUID, expression: PerNoteExpression, beat: Double, value: Float) {
+        guard let index = notes.firstIndex(where: { $0.id == noteID }) else { return }
+
+        let point = MIDINote.AutomationPoint(beat: beat, value: value)
+
+        switch expression {
+        case .pitchBend:
+            notes[index].pitchBendAutomation.append(point)
+        case .pressure:
+            notes[index].pressureAutomation.append(point)
+        case .brightness:
+            notes[index].brightnessAutomation.append(point)
+        case .timbre:
+            // Would need to add timbreAutomation to MIDINote
+            break
+        }
     }
 
     // MARK: - Export
@@ -476,14 +726,64 @@ class PianoRollViewModel: ObservableObject {
     }
 }
 
-// MARK: - MIDI Note Model
+// MARK: - MIDI Note Model (MIDI 2.0 + MPE)
 
 struct MIDINote: Identifiable {
     var id = UUID()
     var pitch: Int       // MIDI note number (0-127)
-    var velocity: Int    // 0-127
+    var velocity: Int    // 0-127 (displayed), internally 0.0-1.0 for MIDI 2.0
     var startBeat: Double
     var duration: Double // In beats
+
+    // MIDI 2.0 Per-Note Expression
+    var pitchBend: Float = 0.0      // -1.0 to +1.0 (MIDI 2.0: 32-bit resolution)
+    var pressure: Float = 0.0       // 0.0 to 1.0 (aftertouch)
+    var brightness: Float = 0.5     // 0.0 to 1.0 (CC74 / MPE Y-axis)
+    var timbre: Float = 0.5         // 0.0 to 1.0 (CC71)
+
+    // MPE Voice tracking
+    var mpeVoiceID: UUID?
+
+    // MIDI 2.0 32-bit velocity
+    var velocity32bit: Float {
+        Float(velocity) / 127.0
+    }
+
+    // Expression automation points
+    var pitchBendAutomation: [AutomationPoint] = []
+    var pressureAutomation: [AutomationPoint] = []
+    var brightnessAutomation: [AutomationPoint] = []
+
+    struct AutomationPoint: Identifiable {
+        let id = UUID()
+        var beat: Double
+        var value: Float
+    }
+}
+
+// MARK: - Per-Note Controller Type
+
+enum PerNoteExpression: String, CaseIterable {
+    case pitchBend = "Pitch Bend"
+    case pressure = "Pressure"
+    case brightness = "Brightness (Y)"
+    case timbre = "Timbre"
+
+    var icon: String {
+        switch self {
+        case .pitchBend: return "arrow.up.arrow.down"
+        case .pressure: return "hand.point.down.fill"
+        case .brightness: return "sun.max.fill"
+        case .timbre: return "waveform"
+        }
+    }
+
+    var range: ClosedRange<Float> {
+        switch self {
+        case .pitchBend: return -1.0...1.0
+        case .pressure, .brightness, .timbre: return 0.0...1.0
+        }
+    }
 }
 
 // MARK: - Preview
