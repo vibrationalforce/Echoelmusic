@@ -52,6 +52,8 @@ Sources/
 - [x] **Effects Chain** - FilterNode, ReverbNode, DelayNode, CompressorNode (bio-reactive)
 - [x] **Advanced DSP** - 32-band EQ, Multiband Compressor, Limiter, Convolution Reverb
 - [x] **MIDI 2.0** - MIDI2Manager.swift (UMP, per-note controllers, 32-bit resolution)
+- [x] **MPE** - MPEZoneManager.swift (15 voices, Roli/LinnStrument/Seaboard compatible)
+- [x] **Touch Instruments** - TouchInstruments.swift (ChordPad, DrumPad, MelodyXY, Keyboard)
 - [x] **Pitch Detection** - PitchDetector.swift (YIN algorithm, pre-allocated buffers)
 - [x] **Vocal Alignment** - AutomaticVocalAligner.swift (DTW, WSOLA, formant-preserving)
 - [x] **Loop Engine** - LoopEngine.swift (tempo-sync, quantization, overdub)
