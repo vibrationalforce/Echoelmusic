@@ -3,6 +3,49 @@ import AVFoundation
 import Combine
 import Accelerate
 
+// MARK: - Circular Buffer for O(1) Performance
+/// High-performance circular buffer replacing Array.removeFirst() O(n) with O(1)
+private struct CircularBuffer<T> {
+    private var buffer: [T]
+    private var writeIndex: Int = 0
+    private var readIndex: Int = 0
+    private(set) var count: Int = 0
+    let capacity: Int
+
+    init(capacity: Int, defaultValue: T) {
+        self.capacity = capacity
+        self.buffer = [T](repeating: defaultValue, count: capacity)
+    }
+
+    mutating func append(_ element: T) {
+        buffer[writeIndex] = element
+        writeIndex = (writeIndex + 1) % capacity
+        if count < capacity {
+            count += 1
+        } else {
+            // Buffer is full, advance read index (oldest element is overwritten)
+            readIndex = (readIndex + 1) % capacity
+        }
+    }
+
+    /// Returns contents in order (oldest to newest)
+    func toArray() -> [T] {
+        guard count > 0 else { return [] }
+        var result = [T]()
+        result.reserveCapacity(count)
+        for i in 0..<count {
+            result.append(buffer[(readIndex + i) % capacity])
+        }
+        return result
+    }
+
+    mutating func removeAll() {
+        writeIndex = 0
+        readIndex = 0
+        count = 0
+    }
+}
+
 /// Manages multi-track audio recording with bio-signal integration
 /// Coordinates recording, playback, and real-time monitoring
 @MainActor
@@ -47,7 +90,8 @@ class RecordingEngine: ObservableObject {
     private var timer: Timer?
 
     /// Waveform buffer for real-time display (max 1000 samples)
-    private var waveformBuffer: [Float] = []
+    /// Uses CircularBuffer for O(1) append instead of Array.removeFirst() O(n)
+    private var waveformBuffer = CircularBuffer<Float>(capacity: 1000, defaultValue: 0.0)
 
     /// Reference to main audio engine for audio routing
     private weak var mainAudioEngine: AudioEngine?
@@ -195,7 +239,8 @@ class RecordingEngine: ObservableObject {
         let inputFormat = input.outputFormat(forBus: 0)
 
         // Install tap to capture audio data
-        input.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] buffer, time in
+        // Reduced from 4096 to 1024 for lower latency (85ms → 21ms at 48kHz)
+        input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] buffer, time in
             Task { @MainActor [weak self] in
                 self?.processRecordingBuffer(buffer)
             }
@@ -232,20 +277,17 @@ class RecordingEngine: ObservableObject {
     }
 
     /// Update waveform buffer for real-time visualization
+    /// PERFORMANCE: Uses O(1) CircularBuffer instead of O(n) removeFirst()
     private func updateWaveformBuffer(_ data: UnsafePointer<Float>, frameLength: Int) {
-        // Downsample to max 1000 points
-        let maxPoints = 1000
-        let stride = max(1, frameLength / maxPoints)
+        // Downsample to fit in circular buffer
+        let strideValue = max(1, frameLength / waveformBuffer.capacity)
 
-        for i in stride(from: 0, to: frameLength, by: stride) {
-            if waveformBuffer.count >= maxPoints {
-                waveformBuffer.removeFirst()
-            }
+        for i in Swift.stride(from: 0, to: frameLength, by: strideValue) {
             waveformBuffer.append(data[i])
         }
 
-        // Update published waveform
-        recordingWaveform = waveformBuffer
+        // Update published waveform (converts circular buffer to array)
+        recordingWaveform = waveformBuffer.toArray()
     }
 
     /// Stop recording current track

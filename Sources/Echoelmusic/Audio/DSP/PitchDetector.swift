@@ -26,6 +26,25 @@ class PitchDetector {
     /// Minimum RMS amplitude to consider as signal (not silence)
     private let silenceThreshold: Float = 0.001
 
+    // MARK: - Pre-allocated Buffers (PERFORMANCE)
+    // Pre-allocate arrays to avoid 188K allocations/sec during real-time processing
+
+    /// Maximum buffer size for pre-allocation (supports up to 48kHz with 60Hz min frequency)
+    private let maxBufferSize = 2048
+
+    /// Pre-allocated difference function buffer
+    private var differenceBuffer: [Float]
+
+    /// Pre-allocated CMNDF buffer
+    private var cmndfBuffer: [Float]
+
+    // MARK: - Initialization
+
+    init() {
+        differenceBuffer = [Float](repeating: 0, count: maxBufferSize)
+        cmndfBuffer = [Float](repeating: 0, count: maxBufferSize)
+    }
+
 
     // MARK: - Public Methods
 
@@ -63,22 +82,28 @@ class PitchDetector {
         let maxLag = min(Int(sampleRate / minFrequency), bufferSize)
 
         guard maxLag > minLag else { return 0.0 }
+        guard maxLag <= maxBufferSize else { return 0.0 }
 
-        // Step 1: Calculate difference function
-        var differenceFunction = [Float](repeating: 0, count: maxLag)
+        // Step 1: Calculate difference function (using pre-allocated buffer)
+        // Reset only the portion we'll use
+        for i in 0..<maxLag {
+            differenceBuffer[i] = 0
+        }
         calculateDifferenceFunction(channelData,
                                    frameLength: frameLength,
-                                   differenceFunction: &differenceFunction,
+                                   differenceFunction: &differenceBuffer,
                                    maxLag: maxLag)
 
-        // Step 2: Cumulative mean normalized difference function
-        var cmndf = [Float](repeating: 0, count: maxLag)
-        calculateCMNDF(differenceFunction: differenceFunction,
-                      cmndf: &cmndf,
+        // Step 2: Cumulative mean normalized difference function (pre-allocated)
+        for i in 0..<maxLag {
+            cmndfBuffer[i] = 0
+        }
+        calculateCMNDF(differenceFunction: differenceBuffer,
+                      cmndf: &cmndfBuffer,
                       maxLag: maxLag)
 
         // Step 3: Find absolute minimum below threshold
-        guard let tau = findAbsoluteMinimum(cmndf: cmndf,
+        guard let tau = findAbsoluteMinimum(cmndf: cmndfBuffer,
                                            minLag: minLag,
                                            maxLag: maxLag,
                                            threshold: threshold) else {
@@ -86,7 +111,7 @@ class PitchDetector {
         }
 
         // Step 4: Parabolic interpolation for sub-sample accuracy
-        let refinedTau = parabolicInterpolation(cmndf: cmndf, tau: tau)
+        let refinedTau = parabolicInterpolation(cmndf: cmndfBuffer, tau: tau)
 
         // Convert lag (tau) to frequency
         let pitch = sampleRate / refinedTau

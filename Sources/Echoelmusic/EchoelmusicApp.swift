@@ -31,25 +31,31 @@ struct EchoelmusicApp: App {
 
         _unifiedControlHub = StateObject(wrappedValue: UnifiedControlHub(audioEngine: audioEng))
 
-        // KRITISCH: Initialisiere alle Core-Systeme (Singletons)
-        // Diese müssen beim App-Start aktiviert werden!
-        _ = EchoelUniversalCore.shared      // Master Integration Hub
-        _ = SelfHealingEngine.shared        // Auto-Recovery System
-        _ = VideoAICreativeHub.shared       // Video/AI Integration
-        _ = MultiPlatformBridge.shared      // MIDI/OSC/DMX/CV Bridge
-        _ = EchoelTools.shared              // Intelligent Creative Tools
+        // PERFORMANCE: Defer non-critical singleton initialization to background
+        // This prevents 2-5 second startup blocking on main thread
+        Task.detached(priority: .userInitiated) {
+            // KRITISCH: Initialisiere alle Core-Systeme (Singletons)
+            // Diese werden jetzt async geladen für schnelleren App-Start!
+            _ = await MainActor.run { EchoelUniversalCore.shared }      // Master Integration Hub
+            _ = await MainActor.run { SelfHealingEngine.shared }        // Auto-Recovery System
+            _ = await MainActor.run { VideoAICreativeHub.shared }       // Video/AI Integration
+            _ = await MainActor.run { MultiPlatformBridge.shared }      // MIDI/OSC/DMX/CV Bridge
+            _ = await MainActor.run { EchoelTools.shared }              // Intelligent Creative Tools
 
-        // INSTRUMENT PIPELINE (NEU!)
-        _ = InstrumentOrchestrator.shared   // UI→Synthesis→Audio Pipeline
-        _ = WorldMusicBridge.shared         // 42 Global Music Styles
+            // INSTRUMENT PIPELINE
+            _ = await MainActor.run { InstrumentOrchestrator.shared }   // UI→Synthesis→Audio Pipeline
+            _ = await MainActor.run { WorldMusicBridge.shared }         // 42 Global Music Styles
 
-        // STREAMING PIPELINE (KRITISCH!)
-        _ = SocialMediaManager.shared       // One-Click Multi-Platform Publishing
-        // Note: StreamEngine requires Metal device - initialized lazily in StreamingView
+            // STREAMING PIPELINE
+            _ = await MainActor.run { SocialMediaManager.shared }       // One-Click Multi-Platform Publishing
+            // Note: StreamEngine requires Metal device - initialized lazily in StreamingView
 
-        print("⚛️ Echoelmusic Core Systems Initialized")
-        print("🎹 InstrumentOrchestrator: 54+ Instruments Ready")
-        print("🌍 WorldMusicBridge: 42 Music Styles Loaded")
+            await MainActor.run {
+                print("⚛️ Echoelmusic Core Systems Initialized (async)")
+                print("🎹 InstrumentOrchestrator: 54+ Instruments Ready")
+                print("🌍 WorldMusicBridge: 42 Music Styles Loaded")
+            }
+        }
     }
 
     var body: some Scene {

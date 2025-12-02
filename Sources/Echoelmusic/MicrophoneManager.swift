@@ -42,7 +42,9 @@ class MicrophoneManager: NSObject, ObservableObject {
     private var fftSetup: vDSP_DFT_Setup?
 
     /// Buffer size for FFT (power of 2)
-    private let fftSize = 2048
+    /// Reduced from 2048 to 1024 for lower latency (46ms → 23ms)
+    /// Trade-off: frequency resolution 21.5Hz → 43Hz per bin (still acceptable)
+    private let fftSize = 1024
 
     /// Sample rate (will be set from audio format)
     private var sampleRate: Double = 44100.0

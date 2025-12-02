@@ -92,8 +92,9 @@ class BinauralBeatGenerator: ObservableObject {
         AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)!
     }()
 
-    /// Buffer size for generation (larger = less CPU, more latency)
-    private let bufferSize: AVAudioFrameCount = 4096
+    /// Buffer size for generation (smaller = lower latency, more CPU)
+    /// Reduced from 4096 to 1024 for lower latency (85ms → 21ms at 48kHz)
+    private let bufferSize: AVAudioFrameCount = 1024
 
     /// Whether the generator is currently playing
     private(set) var isPlaying: Bool = false
@@ -160,9 +161,11 @@ class BinauralBeatGenerator: ObservableObject {
         guard !isPlaying else { return }
 
         do {
-            // Configure audio session for playback
+            // Configure audio session for low-latency playback
+            // .measurement mode disables audio processing for lower latency
             let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playback, mode: .default)
+            try audioSession.setCategory(.playback, mode: .measurement)
+            try audioSession.setPreferredIOBufferDuration(0.005) // 5ms buffer
             try audioSession.setActive(true)
 
             // Detect audio output type and choose optimal mode
