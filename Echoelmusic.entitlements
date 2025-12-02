@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App Groups for shared data between main app and AUv3 extension -->
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.com.echoelmusic.audio</string>
+    </array>
+
+    <!-- Inter-App Audio -->
+    <key>inter-app-audio</key>
+    <true/>
+
+    <!-- HealthKit for bio-reactive features -->
+    <key>com.apple.developer.healthkit</key>
+    <true/>
+    <key>com.apple.developer.healthkit.access</key>
+    <array>
+        <string>health-records</string>
+    </array>
+
+    <!-- iCloud for preset sync -->
+    <key>com.apple.developer.icloud-container-identifiers</key>
+    <array>
+        <string>iCloud.com.echoelmusic.app</string>
+    </array>
+    <key>com.apple.developer.icloud-services</key>
+    <array>
+        <string>CloudDocuments</string>
+        <string>CloudKit</string>
+    </array>
+
+    <!-- Background audio -->
+    <key>com.apple.developer.coremedia.allow-alternate-audio-track-policy</key>
+    <true/>
+
+    <!-- Bluetooth for MIDI controllers -->
+    <key>com.apple.developer.bluetooth.central</key>
+    <true/>
+</dict>
+</plist>
