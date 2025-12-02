@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App Groups for shared data between main app and extension -->
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.com.echoelmusic.audio</string>
+    </array>
+
+    <!-- Audio component registration -->
+    <key>inter-app-audio</key>
+    <true/>
+
+    <!-- Allow audio in background -->
+    <key>com.apple.developer.coremedia.allow-alternate-audio-track-policy</key>
+    <true/>
+</dict>
+</plist>
