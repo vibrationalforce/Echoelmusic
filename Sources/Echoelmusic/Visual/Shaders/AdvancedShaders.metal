@@ -110,6 +110,218 @@ float3 hsv2rgb(float3 c) {
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
+// MARK: - Blend Modes (Photoshop/After Effects Compatible)
+
+/// Blend mode enumeration
+constant int BLEND_NORMAL = 0;
+constant int BLEND_MULTIPLY = 1;
+constant int BLEND_SCREEN = 2;
+constant int BLEND_OVERLAY = 3;
+constant int BLEND_HARD_LIGHT = 4;
+constant int BLEND_SOFT_LIGHT = 5;
+constant int BLEND_COLOR_DODGE = 6;
+constant int BLEND_COLOR_BURN = 7;
+constant int BLEND_DARKEN = 8;
+constant int BLEND_LIGHTEN = 9;
+constant int BLEND_DIFFERENCE = 10;
+constant int BLEND_EXCLUSION = 11;
+constant int BLEND_ADD = 12;
+constant int BLEND_SUBTRACT = 13;
+constant int BLEND_DIVIDE = 14;
+constant int BLEND_HUE = 15;
+constant int BLEND_SATURATION = 16;
+constant int BLEND_COLOR = 17;
+constant int BLEND_LUMINOSITY = 18;
+
+/// Per-channel blend operations
+float blendMultiply(float base, float blend) { return base * blend; }
+float blendScreen(float base, float blend) { return 1.0 - (1.0 - base) * (1.0 - blend); }
+float blendOverlay(float base, float blend) {
+    return base < 0.5 ? (2.0 * base * blend) : (1.0 - 2.0 * (1.0 - base) * (1.0 - blend));
+}
+float blendHardLight(float base, float blend) { return blendOverlay(blend, base); }
+float blendSoftLight(float base, float blend) {
+    return blend < 0.5
+        ? base - (1.0 - 2.0 * blend) * base * (1.0 - base)
+        : base + (2.0 * blend - 1.0) * (base <= 0.25
+            ? ((16.0 * base - 12.0) * base + 4.0) * base
+            : sqrt(base) - base);
+}
+float blendColorDodge(float base, float blend) {
+    return blend == 1.0 ? blend : min(base / (1.0 - blend), 1.0);
+}
+float blendColorBurn(float base, float blend) {
+    return blend == 0.0 ? blend : max(1.0 - (1.0 - base) / blend, 0.0);
+}
+float blendDarken(float base, float blend) { return min(base, blend); }
+float blendLighten(float base, float blend) { return max(base, blend); }
+float blendDifference(float base, float blend) { return abs(base - blend); }
+float blendExclusion(float base, float blend) { return base + blend - 2.0 * base * blend; }
+float blendAdd(float base, float blend) { return min(base + blend, 1.0); }
+float blendSubtract(float base, float blend) { return max(base - blend, 0.0); }
+float blendDivide(float base, float blend) { return blend == 0.0 ? 1.0 : min(base / blend, 1.0); }
+
+/// RGB to HSL conversion
+float3 rgb2hsl(float3 rgb) {
+    float maxC = max(rgb.r, max(rgb.g, rgb.b));
+    float minC = min(rgb.r, min(rgb.g, rgb.b));
+    float l = (maxC + minC) / 2.0;
+    float s = 0.0, h = 0.0;
+
+    if (maxC != minC) {
+        float d = maxC - minC;
+        s = l > 0.5 ? d / (2.0 - maxC - minC) : d / (maxC + minC);
+
+        if (maxC == rgb.r) h = (rgb.g - rgb.b) / d + (rgb.g < rgb.b ? 6.0 : 0.0);
+        else if (maxC == rgb.g) h = (rgb.b - rgb.r) / d + 2.0;
+        else h = (rgb.r - rgb.g) / d + 4.0;
+        h /= 6.0;
+    }
+    return float3(h, s, l);
+}
+
+/// HSL to RGB conversion
+float hue2rgb(float p, float q, float t) {
+    if (t < 0.0) t += 1.0;
+    if (t > 1.0) t -= 1.0;
+    if (t < 1.0/6.0) return p + (q - p) * 6.0 * t;
+    if (t < 1.0/2.0) return q;
+    if (t < 2.0/3.0) return p + (q - p) * (2.0/3.0 - t) * 6.0;
+    return p;
+}
+
+float3 hsl2rgb(float3 hsl) {
+    if (hsl.y == 0.0) return float3(hsl.z);
+    float q = hsl.z < 0.5 ? hsl.z * (1.0 + hsl.y) : hsl.z + hsl.y - hsl.z * hsl.y;
+    float p = 2.0 * hsl.z - q;
+    return float3(hue2rgb(p, q, hsl.x + 1.0/3.0),
+                  hue2rgb(p, q, hsl.x),
+                  hue2rgb(p, q, hsl.x - 1.0/3.0));
+}
+
+/// Apply blend mode to RGB colors with opacity
+float4 applyBlendMode(float4 base, float4 blend, int mode, float opacity) {
+    float3 result;
+
+    switch (mode) {
+        case BLEND_MULTIPLY:
+            result = float3(blendMultiply(base.r, blend.r),
+                           blendMultiply(base.g, blend.g),
+                           blendMultiply(base.b, blend.b));
+            break;
+        case BLEND_SCREEN:
+            result = float3(blendScreen(base.r, blend.r),
+                           blendScreen(base.g, blend.g),
+                           blendScreen(base.b, blend.b));
+            break;
+        case BLEND_OVERLAY:
+            result = float3(blendOverlay(base.r, blend.r),
+                           blendOverlay(base.g, blend.g),
+                           blendOverlay(base.b, blend.b));
+            break;
+        case BLEND_HARD_LIGHT:
+            result = float3(blendHardLight(base.r, blend.r),
+                           blendHardLight(base.g, blend.g),
+                           blendHardLight(base.b, blend.b));
+            break;
+        case BLEND_SOFT_LIGHT:
+            result = float3(blendSoftLight(base.r, blend.r),
+                           blendSoftLight(base.g, blend.g),
+                           blendSoftLight(base.b, blend.b));
+            break;
+        case BLEND_COLOR_DODGE:
+            result = float3(blendColorDodge(base.r, blend.r),
+                           blendColorDodge(base.g, blend.g),
+                           blendColorDodge(base.b, blend.b));
+            break;
+        case BLEND_COLOR_BURN:
+            result = float3(blendColorBurn(base.r, blend.r),
+                           blendColorBurn(base.g, blend.g),
+                           blendColorBurn(base.b, blend.b));
+            break;
+        case BLEND_DARKEN:
+            result = float3(blendDarken(base.r, blend.r),
+                           blendDarken(base.g, blend.g),
+                           blendDarken(base.b, blend.b));
+            break;
+        case BLEND_LIGHTEN:
+            result = float3(blendLighten(base.r, blend.r),
+                           blendLighten(base.g, blend.g),
+                           blendLighten(base.b, blend.b));
+            break;
+        case BLEND_DIFFERENCE:
+            result = float3(blendDifference(base.r, blend.r),
+                           blendDifference(base.g, blend.g),
+                           blendDifference(base.b, blend.b));
+            break;
+        case BLEND_EXCLUSION:
+            result = float3(blendExclusion(base.r, blend.r),
+                           blendExclusion(base.g, blend.g),
+                           blendExclusion(base.b, blend.b));
+            break;
+        case BLEND_ADD:
+            result = float3(blendAdd(base.r, blend.r),
+                           blendAdd(base.g, blend.g),
+                           blendAdd(base.b, blend.b));
+            break;
+        case BLEND_SUBTRACT:
+            result = float3(blendSubtract(base.r, blend.r),
+                           blendSubtract(base.g, blend.g),
+                           blendSubtract(base.b, blend.b));
+            break;
+        case BLEND_DIVIDE:
+            result = float3(blendDivide(base.r, blend.r),
+                           blendDivide(base.g, blend.g),
+                           blendDivide(base.b, blend.b));
+            break;
+        case BLEND_HUE: {
+            float3 baseHSL = rgb2hsl(base.rgb);
+            float3 blendHSL = rgb2hsl(blend.rgb);
+            result = hsl2rgb(float3(blendHSL.x, baseHSL.y, baseHSL.z));
+            break;
+        }
+        case BLEND_SATURATION: {
+            float3 baseHSL = rgb2hsl(base.rgb);
+            float3 blendHSL = rgb2hsl(blend.rgb);
+            result = hsl2rgb(float3(baseHSL.x, blendHSL.y, baseHSL.z));
+            break;
+        }
+        case BLEND_COLOR: {
+            float3 baseHSL = rgb2hsl(base.rgb);
+            float3 blendHSL = rgb2hsl(blend.rgb);
+            result = hsl2rgb(float3(blendHSL.x, blendHSL.y, baseHSL.z));
+            break;
+        }
+        case BLEND_LUMINOSITY: {
+            float3 baseHSL = rgb2hsl(base.rgb);
+            float3 blendHSL = rgb2hsl(blend.rgb);
+            result = hsl2rgb(float3(baseHSL.x, baseHSL.y, blendHSL.z));
+            break;
+        }
+        default: // BLEND_NORMAL
+            result = blend.rgb;
+            break;
+    }
+
+    // Apply opacity and premultiplied alpha
+    float3 blended = mix(base.rgb, result, opacity * blend.a);
+    float outAlpha = base.a + blend.a * (1.0 - base.a);
+    return float4(blended, outAlpha);
+}
+
+/// Blend kernel for compositing layers
+kernel void blendLayers(texture2d<float, access::read> baseTexture [[texture(0)]],
+                        texture2d<float, access::read> blendTexture [[texture(1)]],
+                        texture2d<float, access::write> outputTexture [[texture(2)]],
+                        constant int& blendMode [[buffer(0)]],
+                        constant float& opacity [[buffer(1)]],
+                        uint2 gid [[thread_position_in_grid]]) {
+    float4 base = baseTexture.read(gid);
+    float4 blend = blendTexture.read(gid);
+    float4 result = applyBlendMode(base, blend, blendMode, opacity);
+    outputTexture.write(result, gid);
+}
+
 // MARK: - Particle System
 
 kernel void updateParticles(device ParticleData* particles [[buffer(0)]],

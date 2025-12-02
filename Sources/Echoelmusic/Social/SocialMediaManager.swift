@@ -439,6 +439,214 @@ class SocialMediaManager: ObservableObject {
         // Speichere in Keychain
     }
 
+    // MARK: - Scheduling System
+
+    /// Scheduled posts queue
+    @Published var scheduledPosts: [ScheduledPost] = []
+
+    /// Scheduler timer
+    private var schedulerTimer: Timer?
+
+    /// Scheduled post model
+    struct ScheduledPost: Identifiable, Codable {
+        let id: UUID
+        var content: ScheduledContent
+        var scheduledTime: Date
+        var platforms: [String] // Platform raw values
+        var status: ScheduledStatus
+
+        enum ScheduledStatus: String, Codable {
+            case pending
+            case posting
+            case completed
+            case failed
+        }
+
+        struct ScheduledContent: Codable {
+            var title: String
+            var description: String
+            var hashtags: [String]
+            var videoPath: String?
+            var audioPath: String?
+            var visibility: String
+        }
+    }
+
+    /// Schedule a post for later
+    func schedulePost(
+        content: Content,
+        at scheduledTime: Date,
+        platforms: Set<Platform>
+    ) throws {
+        guard scheduledTime > Date() else {
+            throw SocialMediaError.uploadFailed("Scheduled time must be in the future")
+        }
+
+        guard !platforms.isEmpty else {
+            throw SocialMediaError.noPlatformsConnected
+        }
+
+        let scheduledContent = ScheduledPost.ScheduledContent(
+            title: content.title,
+            description: content.description,
+            hashtags: content.hashtags,
+            videoPath: content.videoURL?.path,
+            audioPath: content.audioURL?.path,
+            visibility: content.visibility.rawValue
+        )
+
+        let scheduledPost = ScheduledPost(
+            id: UUID(),
+            content: scheduledContent,
+            scheduledTime: scheduledTime,
+            platforms: platforms.map { $0.rawValue },
+            status: .pending
+        )
+
+        scheduledPosts.append(scheduledPost)
+        scheduledPosts.sort { $0.scheduledTime < $1.scheduledTime }
+
+        saveScheduledPosts()
+        startSchedulerIfNeeded()
+
+        print("📅 Scheduled post for \(scheduledTime) on \(platforms.count) platforms")
+    }
+
+    /// Cancel a scheduled post
+    func cancelScheduledPost(id: UUID) {
+        scheduledPosts.removeAll { $0.id == id }
+        saveScheduledPosts()
+        print("❌ Cancelled scheduled post \(id)")
+    }
+
+    /// Start the scheduler timer
+    private func startSchedulerIfNeeded() {
+        guard schedulerTimer == nil else { return }
+
+        schedulerTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.processScheduledPosts()
+            }
+        }
+
+        print("⏰ Scheduler started")
+    }
+
+    /// Stop the scheduler timer
+    func stopScheduler() {
+        schedulerTimer?.invalidate()
+        schedulerTimer = nil
+        print("⏰ Scheduler stopped")
+    }
+
+    /// Process due scheduled posts
+    private func processScheduledPosts() {
+        let now = Date()
+        let duePosts = scheduledPosts.filter { $0.status == .pending && $0.scheduledTime <= now }
+
+        for post in duePosts {
+            Task {
+                await processScheduledPost(post)
+            }
+        }
+    }
+
+    /// Process a single scheduled post
+    private func processScheduledPost(_ post: ScheduledPost) async {
+        guard let index = scheduledPosts.firstIndex(where: { $0.id == post.id }) else { return }
+
+        scheduledPosts[index].status = .posting
+
+        // Convert back to Content
+        let content = Content(
+            videoURL: post.content.videoPath.flatMap { URL(fileURLWithPath: $0) },
+            audioURL: post.content.audioPath.flatMap { URL(fileURLWithPath: $0) },
+            thumbnailImage: nil,
+            title: post.content.title,
+            description: post.content.description,
+            hashtags: post.content.hashtags,
+            scheduledTime: nil,
+            visibility: Content.Visibility(rawValue: post.content.visibility) ?? .public
+        )
+
+        // Get platforms
+        let platforms = Set(post.platforms.compactMap { Platform(rawValue: $0) })
+
+        do {
+            // Temporarily set connected platforms to the scheduled ones
+            let previousConnected = connectedPlatforms
+            connectedPlatforms = platforms.intersection(connectedPlatforms)
+
+            try await postEverywhere(content: content)
+
+            connectedPlatforms = previousConnected
+
+            scheduledPosts[index].status = .completed
+            print("✅ Scheduled post \(post.id) completed")
+        } catch {
+            scheduledPosts[index].status = .failed
+            print("❌ Scheduled post \(post.id) failed: \(error)")
+        }
+
+        saveScheduledPosts()
+    }
+
+    /// Save scheduled posts to storage
+    private func saveScheduledPosts() {
+        guard let data = try? JSONEncoder().encode(scheduledPosts) else { return }
+        UserDefaults.standard.set(data, forKey: "scheduledPosts")
+    }
+
+    /// Load scheduled posts from storage
+    private func loadScheduledPosts() {
+        guard let data = UserDefaults.standard.data(forKey: "scheduledPosts"),
+              let posts = try? JSONDecoder().decode([ScheduledPost].self, from: data) else { return }
+        scheduledPosts = posts.filter { $0.status == .pending }
+        startSchedulerIfNeeded()
+    }
+
+    // MARK: - Analytics
+
+    /// Analytics data for posts
+    @Published var analytics: [Platform: PostAnalytics] = [:]
+
+    struct PostAnalytics {
+        var totalViews: Int = 0
+        var totalLikes: Int = 0
+        var totalComments: Int = 0
+        var totalShares: Int = 0
+        var engagementRate: Double = 0.0
+        var recentPosts: [PostPerformance] = []
+    }
+
+    struct PostPerformance: Identifiable {
+        let id: UUID
+        let postURL: String
+        let platform: Platform
+        let postedAt: Date
+        var views: Int
+        var likes: Int
+        var comments: Int
+        var shares: Int
+    }
+
+    /// Fetch analytics for all connected platforms
+    func fetchAnalytics() async {
+        for platform in connectedPlatforms {
+            // In production: Call platform APIs
+            // Simulated analytics:
+            analytics[platform] = PostAnalytics(
+                totalViews: Int.random(in: 1000...100000),
+                totalLikes: Int.random(in: 100...10000),
+                totalComments: Int.random(in: 10...1000),
+                totalShares: Int.random(in: 5...500),
+                engagementRate: Double.random(in: 1.0...15.0),
+                recentPosts: []
+            )
+        }
+        print("📊 Analytics fetched for \(connectedPlatforms.count) platforms")
+    }
+
     // MARK: - Errors
 
     enum SocialMediaError: LocalizedError {
