@@ -1,0 +1,23 @@
+#!/bin/bash
+# Gradle wrapper script
+export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$HOME/.gradle}"
+
+# Download gradle if needed
+GRADLE_VERSION="8.5"
+GRADLE_HOME="$GRADLE_USER_HOME/wrapper/dists/gradle-$GRADLE_VERSION-bin"
+
+if [ ! -d "$GRADLE_HOME" ]; then
+    echo "Downloading Gradle $GRADLE_VERSION..."
+    mkdir -p "$GRADLE_HOME"
+    curl -L "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip" -o "$GRADLE_HOME/gradle.zip"
+    unzip -q "$GRADLE_HOME/gradle.zip" -d "$GRADLE_HOME"
+fi
+
+GRADLE_BIN=$(find "$GRADLE_HOME" -name "gradle" -type f -executable | head -1)
+
+if [ -z "$GRADLE_BIN" ]; then
+    echo "Error: Gradle not found. Please install Gradle manually."
+    exit 1
+fi
+
+exec "$GRADLE_BIN" "$@"

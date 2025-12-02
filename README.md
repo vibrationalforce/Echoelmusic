@@ -1,12 +1,35 @@
-# Echoelmusic 🫧
+# Echoelmusic
 
-**Breath → Sound → Light → Consciousness**
+**Bio-Reactive Audio-Visual Platform with Quantum AI**
 
+[![Build](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](../../actions)
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
-[![iOS](https://img.shields.io/badge/iOS-15.0+-blue.svg)](https://developer.apple.com/ios/)
-[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](https://kotlinlang.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > Bio-reactive music creation and performance system combining voice, biofeedback, spatial audio, and light control
+
+---
+
+## Downloads
+
+| Platform | Download | Formats |
+|----------|----------|---------|
+| **Windows** | [Installer](../../releases/latest) | VST3, CLAP, Standalone |
+| **macOS** | [DMG](../../releases/latest) | VST3, AU, CLAP, Standalone |
+| **Linux** | [AppImage](../../releases/latest) | VST3, CLAP, Standalone, Deb |
+| **Android** | [APK](../../releases/latest) | Standalone App |
+| **iOS** | App Store (coming) | AUv3, Standalone |
+
+---
+
+## One-Command Setup
+
+```bash
+git clone https://github.com/vibrationalforce/Echoelmusic.git
+cd Echoelmusic
+./setup.sh
+```
 
 ---
 
