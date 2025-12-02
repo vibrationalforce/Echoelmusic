@@ -102,10 +102,35 @@ option(ENABLE_ANDROID_OBOE "Enable Oboe (Android)" ON)
 option(ENABLE_ANDROID_AAUDIO "Enable AAudio (Android)" ON)
 
 # ===========================
-# JUCE Framework
+# JUCE Framework (Optional - Not needed for iOS Swift-only builds)
 # ===========================
 
-add_subdirectory(ThirdParty/JUCE)
+option(USE_JUCE "Use JUCE framework (required for desktop plugins)" OFF)
+
+if(USE_JUCE)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/JUCE")
+        add_subdirectory(ThirdParty/JUCE)
+        message(STATUS "JUCE Framework: ENABLED (Desktop Plugins)")
+    else()
+        message(WARNING "JUCE not found in ThirdParty/JUCE - Desktop plugins disabled")
+        set(USE_JUCE OFF)
+    endif()
+else()
+    message(STATUS "JUCE Framework: DISABLED (iOS Swift-only build)")
+    message(STATUS "  → Using native AVFoundation + Accelerate for DSP")
+    message(STATUS "  → No licensing fees required!")
+endif()
+
+# Future: iPlug2 integration for JUCE-free desktop plugins
+option(USE_IPLUG2 "Use iPlug2 framework (MIT license, JUCE-free)" OFF)
+if(USE_IPLUG2)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/iPlug2")
+        add_subdirectory(ThirdParty/iPlug2)
+        message(STATUS "iPlug2 Framework: ENABLED (MIT License - Free!)")
+    else()
+        message(STATUS "iPlug2 not found - run: git clone https://github.com/iPlug2/iPlug2 ThirdParty/iPlug2")
+    endif()
+endif()
 
 # ===========================
 # Plugin Formats
