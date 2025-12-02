@@ -5,7 +5,7 @@ name: Build & Release
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main, master, develop, 'claude/**']
     tags:
       - 'v*'
   pull_request:
