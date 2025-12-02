@@ -369,8 +369,8 @@ class InstrumentOrchestrator: ObservableObject {
     }
 
     private func createAudioBuffer(from samples: [Float], sampleRate: Double) -> AVAudioPCMBuffer? {
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)!
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count)) else {
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count)) else {
             return nil
         }
 

@@ -101,7 +101,9 @@ class AutomaticVocalAligner: ObservableObject {
         audioEngine.attach(player)
         audioEngine.attach(timePitch)
 
-        let format = AVAudioFormat(standardFormatWithSampleRate: Double(sampleRate), channels: 2)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: Double(sampleRate), channels: 2) else {
+            return
+        }
 
         audioEngine.connect(player, to: timePitch, format: format)
         audioEngine.connect(timePitch, to: audioEngine.mainMixerNode, format: format)

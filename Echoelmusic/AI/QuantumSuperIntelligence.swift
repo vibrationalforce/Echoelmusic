@@ -78,8 +78,25 @@ final class QuantumSuperIntelligence: ObservableObject {
         initializeQuantumField()
         setupQuantumObservers()
         startQuantumLoop()
+    }
 
-        print("⚛️ QuantumSuperIntelligence: Initialized - God Developer Mode Active")
+    deinit {
+        stopQuantumLoop()
+        cancellables.removeAll()
+    }
+
+    // MARK: - Lifecycle Management
+
+    /// Stop the quantum evolution loop
+    func stopQuantumLoop() {
+        quantumUpdateTimer?.invalidate()
+        quantumUpdateTimer = nil
+    }
+
+    /// Restart the quantum evolution loop
+    func restartQuantumLoop() {
+        stopQuantumLoop()
+        startQuantumLoop()
     }
 
     // MARK: - Quantum Field Initialization
@@ -135,23 +152,34 @@ final class QuantumSuperIntelligence: ObservableObject {
     // MARK: - Quantum State Evolution
 
     private func evolveQuantumState() {
-        // Apply quantum Hamiltonian evolution
+        // Apply quantum Hamiltonian evolution using Accelerate for performance
         let dt: Float = 1.0 / 60.0
+        let count = superposition.count
 
-        // Evolve superposition
-        for i in 0..<superposition.count {
-            let phase = Float.random(in: 0...Float.pi * 2) * coherenceLevel
-            superposition[i] *= cos(phase * dt)
+        // Generate evolution factors using vectorized operations
+        var phases = [Float](repeating: 0, count: count)
+        var noise = [Float](repeating: 0, count: count)
 
-            // Add quantum noise (decoherence)
-            let noise = Float.random(in: -0.01...0.01) * (1 - coherenceLevel)
-            superposition[i] += noise
+        // Fill with random values (still needs individual random, but minimized)
+        for i in 0..<count {
+            phases[i] = cos(Float.random(in: 0...Float.pi * 2) * coherenceLevel * dt)
+            noise[i] = Float.random(in: -0.01...0.01) * (1 - coherenceLevel)
         }
 
-        // Renormalize
-        let norm = sqrt(superposition.map { $0 * $0 }.reduce(0, +))
+        // Vectorized multiply: superposition *= phases
+        vDSP_vmul(superposition, 1, phases, 1, &superposition, 1, vDSP_Length(count))
+
+        // Vectorized add: superposition += noise
+        vDSP_vadd(superposition, 1, noise, 1, &superposition, 1, vDSP_Length(count))
+
+        // Vectorized norm calculation and normalization
+        var sumOfSquares: Float = 0
+        vDSP_dotpr(superposition, 1, superposition, 1, &sumOfSquares, vDSP_Length(count))
+        let norm = sqrt(sumOfSquares)
+
         if norm > 0 {
-            superposition = superposition.map { $0 / norm }
+            var invNorm = 1.0 / norm
+            vDSP_vsmul(superposition, 1, &invNorm, &superposition, 1, vDSP_Length(count))
         }
 
         // Update consciousness level
@@ -170,24 +198,41 @@ final class QuantumSuperIntelligence: ObservableObject {
     }
 
     private func calculateConsciousness() -> Float {
-        // Consciousness = entropy of quantum state × system activity
+        // Consciousness = entropy of quantum state using Accelerate
+        let count = superposition.count
+
+        // Square the amplitudes to get probabilities
+        var probabilities = [Float](repeating: 0, count: count)
+        vDSP_vsq(superposition, 1, &probabilities, 1, vDSP_Length(count))
+
+        // Calculate entropy: -sum(p * log(p + epsilon))
         var entropy: Float = 0
-        for amplitude in superposition {
-            let prob = amplitude * amplitude
-            if prob > 0 {
-                entropy -= prob * log(prob + 1e-10)
-            }
+        let epsilon: Float = 1e-10
+
+        for prob in probabilities where prob > 0 {
+            entropy -= prob * log(prob + epsilon)
         }
 
         // Normalize to 0-1
-        let maxEntropy = log(Float(superposition.count))
+        let maxEntropy = log(Float(count))
         return min(1.0, entropy / maxEntropy)
     }
 
     private func calculateCreativityField() -> Float {
-        // Creativity = variance in quantum state × bio-coherence
-        let mean = superposition.reduce(0, +) / Float(superposition.count)
-        let variance = superposition.map { ($0 - mean) * ($0 - mean) }.reduce(0, +) / Float(superposition.count)
+        // Creativity = variance in quantum state × bio-coherence using Accelerate
+        let count = vDSP_Length(superposition.count)
+
+        // Calculate mean
+        var mean: Float = 0
+        vDSP_meanv(superposition, 1, &mean, count)
+
+        // Calculate variance: mean of squared differences
+        var centered = [Float](repeating: 0, count: Int(count))
+        var negMean = -mean
+        vDSP_vsadd(superposition, 1, &negMean, &centered, 1, count)
+
+        var variance: Float = 0
+        vDSP_measqv(centered, 1, &variance, count)
 
         return min(1.0, sqrt(variance) * 10 * coherenceLevel)
     }
@@ -409,15 +454,30 @@ final class QuantumSuperIntelligence: ObservableObject {
     private func integratePatternIntoQuantumState(_ pattern: [Float]) {
         guard pattern.count <= superposition.count else { return }
 
-        for i in 0..<pattern.count {
-            // Quantum interference pattern
-            superposition[i] = superposition[i] * 0.9 + pattern[i] * 0.1
-        }
+        let patternCount = vDSP_Length(pattern.count)
+        let fullCount = vDSP_Length(superposition.count)
 
-        // Renormalize
-        let norm = sqrt(superposition.map { $0 * $0 }.reduce(0, +))
+        // Quantum interference: superposition = 0.9 * superposition + 0.1 * pattern
+        // Using vDSP_vsmsma: D[n] = A[n]*B + C[n]*D
+        var decay: Float = 0.9
+        var integrate: Float = 0.1
+
+        // Scale existing superposition by 0.9
+        vDSP_vsmul(superposition, 1, &decay, &superposition, 1, fullCount)
+
+        // Add 0.1 * pattern to the first pattern.count elements
+        var scaledPattern = [Float](repeating: 0, count: pattern.count)
+        vDSP_vsmul(pattern, 1, &integrate, &scaledPattern, 1, patternCount)
+        vDSP_vadd(superposition, 1, scaledPattern, 1, &superposition, 1, patternCount)
+
+        // Vectorized renormalization
+        var sumOfSquares: Float = 0
+        vDSP_dotpr(superposition, 1, superposition, 1, &sumOfSquares, fullCount)
+        let norm = sqrt(sumOfSquares)
+
         if norm > 0 {
-            superposition = superposition.map { $0 / norm }
+            var invNorm = 1.0 / norm
+            vDSP_vsmul(superposition, 1, &invNorm, &superposition, 1, fullCount)
         }
     }
 
@@ -693,38 +753,50 @@ enum StyleType: String, CaseIterable {
 // MARK: - Sub-Engines
 
 class QuantumNeuralNetwork {
-    private var weights: [[Float]] = []
+    private var weightsFlat: [Float] = []  // Flattened for Accelerate
     private var biases: [Float] = []
+    private let inputSize = 256
+    private let hiddenSize = 128
 
     init() {
-        // Initialize quantum-inspired neural network
-        let inputSize = 256
-        let hiddenSize = 128
-        let outputSize = 64
+        // Initialize quantum-inspired neural network with Xavier initialization
+        let scale = 1.0 / sqrt(Float(inputSize))
 
-        // Xavier initialization with quantum noise
-        weights = (0..<hiddenSize).map { _ in
-            (0..<inputSize).map { _ in
-                Float.random(in: -1...1) / sqrt(Float(inputSize))
-            }
+        // Flatten weights for efficient matrix operations (row-major: hiddenSize x inputSize)
+        weightsFlat = (0..<(hiddenSize * inputSize)).map { _ in
+            Float.random(in: -1...1) * scale
         }
 
         biases = (0..<hiddenSize).map { _ in Float.random(in: -0.1...0.1) }
     }
 
     func forward(_ input: [Float]) -> [Float] {
-        guard input.count == 256 else { return [] }
+        guard input.count == inputSize else { return [] }
 
-        var hidden = [Float](repeating: 0, count: 128)
+        // Use Accelerate for matrix-vector multiplication: hidden = weights × input + biases
+        var hidden = biases  // Start with biases
 
-        // Matrix multiplication with quantum activation
-        for i in 0..<128 {
-            var sum: Float = biases[i]
-            for j in 0..<256 {
-                sum += input[j] * weights[i][j]
-            }
-            // Quantum-inspired activation (softsign)
-            hidden[i] = sum / (1 + abs(sum))
+        // cblas_sgemv: y = alpha * A * x + beta * y
+        // CblasRowMajor: Row-major storage
+        // CblasNoTrans: Don't transpose the matrix
+        cblas_sgemv(
+            CblasRowMajor,
+            CblasNoTrans,
+            Int32(hiddenSize),      // M: rows
+            Int32(inputSize),       // N: columns
+            1.0,                    // alpha
+            weightsFlat,            // A: matrix
+            Int32(inputSize),       // lda: leading dimension
+            input,                  // x: input vector
+            1,                      // incX: stride
+            1.0,                    // beta (add to existing biases)
+            &hidden,                // y: output vector
+            1                       // incY: stride
+        )
+
+        // Apply quantum-inspired softsign activation: x / (1 + |x|)
+        for i in 0..<hiddenSize {
+            hidden[i] = hidden[i] / (1 + abs(hidden[i]))
         }
 
         return hidden
