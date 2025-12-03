@@ -21,6 +21,10 @@ class AudioEngine(private val context: Context) {
 
     companion object {
         private const val TAG = "AudioEngine"
+
+        init {
+            System.loadLibrary("echoelmusic")
+        }
     }
 
     // State
