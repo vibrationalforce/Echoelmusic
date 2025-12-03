@@ -1,5 +1,6 @@
 # Echoelmusic Multi-Platform Build & Release
 # Builds for Windows, macOS, Linux, and Android
+# Auto-triggered on push to main, develop, or claude/* branches
 
 name: Build & Release
 
