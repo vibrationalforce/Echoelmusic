@@ -16,7 +16,7 @@
 // Plugin URLs
 #define PLUG_URL_STR "https://echoelmusic.com"
 #define PLUG_EMAIL_STR "support@echoelmusic.com"
-#define PLUG_COPYRIGHT_STR "Copyright 2024 Echoelmusic"
+#define PLUG_COPYRIGHT_STR "Copyright 2024-2025 Echoelmusic"
 
 // Plugin type configuration
 #define PLUG_TYPE 1  // 0 = effect, 1 = instrument
@@ -36,7 +36,6 @@
 #define PLUG_WIDTH 800
 #define PLUG_HEIGHT 600
 #define PLUG_FPS 60
-#define PLUG_SHARED_RESOURCES 0
 
 // VST3 specific
 #define VST3_SUBCATEGORY "Instrument|Synth"

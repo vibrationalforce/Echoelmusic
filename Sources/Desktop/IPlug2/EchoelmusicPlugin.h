@@ -121,9 +121,32 @@ private:
     float mCurrentCoherence = 0.5f;
     float mCurrentHeartRate = 70.0f;
 
-    // Parameter smoothing
-    float mFilterCutoffSmooth = 1000.0f;
-    float mFilterResonanceSmooth = 0.5f;
+    // Parameter smoothing (exponential smoothing for anti-clicking)
+    struct SmoothedParameter
+    {
+        float current = 0.0f;
+        float target = 0.0f;
+        float smoothingCoeff = 0.99f;  // Higher = slower smoothing
+
+        void reset(float value)
+        {
+            current = target = value;
+        }
+
+        void setTarget(float newTarget)
+        {
+            target = newTarget;
+        }
+
+        float getNextValue()
+        {
+            current = current * smoothingCoeff + target * (1.0f - smoothingCoeff);
+            return current;
+        }
+    };
+
+    SmoothedParameter mFilterCutoffSmooth;
+    SmoothedParameter mFilterResonanceSmooth;
 
     // Metering
     float mOutputLevelL = 0.0f;

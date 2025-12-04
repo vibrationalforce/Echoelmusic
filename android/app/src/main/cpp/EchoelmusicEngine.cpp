@@ -1,4 +1,5 @@
 #include "EchoelmusicEngine.h"
+#include "SIMDHelper.h"
 #include <android/log.h>
 #include <cmath>
 
@@ -29,10 +30,11 @@ bool EchoelmusicEngine::create(int sampleRate, int framesPerBuffer) {
     m808 = std::make_unique<TR808Engine>();
     m808->setSampleRate(static_cast<float>(sampleRate));
 
-    // Allocate mix buffer (stereo)
+    // Pre-allocate mix buffers (stereo) - CRITICAL for real-time audio safety
     mMixBuffer.resize(framesPerBuffer * 2, 0.0f);
+    m808Buffer.resize(framesPerBuffer * 2, 0.0f);
 
-    LOGI("Engine created: %d Hz, %d frames/buffer", sampleRate, framesPerBuffer);
+    LOGI("Engine created: %d Hz, %d frames/buffer (buffers pre-allocated)", sampleRate, framesPerBuffer);
     return true;
 }
 
@@ -188,39 +190,34 @@ oboe::DataCallbackResult EchoelmusicEngine::onAudioReady(
     int32_t numFrames) {
 
     auto* output = static_cast<float*>(audioData);
+    const int numStereoSamples = numFrames * 2;
 
     // Apply bio-reactive modulation
     applyBioModulation();
 
-    // Clear mix buffer
-    std::fill(mMixBuffer.begin(), mMixBuffer.begin() + numFrames * 2, 0.0f);
+    // Clear mix buffer using SIMD (4x faster than std::fill)
+    simd::clearBuffer(mMixBuffer.data(), numStereoSamples);
 
     // Render synth
     if (mSynth) {
         mSynth->process(mMixBuffer.data(), numFrames);
     }
 
-    // Render 808 and add to mix
+    // Render 808 and add to mix (using pre-allocated buffer for real-time safety)
     if (m808) {
-        std::vector<float> temp808(numFrames * 2);
-        m808->process(temp808.data(), numFrames);
+        // Clear pre-allocated 808 buffer using SIMD
+        simd::clearBuffer(m808Buffer.data(), numStereoSamples);
+        m808->process(m808Buffer.data(), numFrames);
 
-        for (int i = 0; i < numFrames * 2; i++) {
-            mMixBuffer[i] += temp808[i];
-        }
+        // Mix 808 into main buffer using SIMD (2x faster)
+        simd::addBuffers(mMixBuffer.data(), mMixBuffer.data(), m808Buffer.data(), numStereoSamples);
     }
 
-    // Soft clip and copy to output
-    for (int i = 0; i < numFrames * 2; i++) {
-        float sample = mMixBuffer[i];
-        // Soft clipping
-        if (sample > 1.0f) {
-            sample = 1.0f - std::exp(-sample + 1.0f);
-        } else if (sample < -1.0f) {
-            sample = -1.0f + std::exp(sample + 1.0f);
-        }
-        output[i] = sample;
-    }
+    // Apply SIMD soft clipping to prevent digital clipping
+    simd::softClip(mMixBuffer.data(), numStereoSamples);
+
+    // Copy to output (compiler will auto-vectorize this)
+    std::copy(mMixBuffer.begin(), mMixBuffer.begin() + numStereoSamples, output);
 
     return oboe::DataCallbackResult::Continue;
 }

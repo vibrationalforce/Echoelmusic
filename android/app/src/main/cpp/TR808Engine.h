@@ -62,7 +62,16 @@ private:
     float mGlideCoeff = 0.0f;
     float mClickAmount = 0.3f;
 
+    // Thread-safe noise generator (replaces unsafe rand())
+    uint32_t mNoiseState = 12345;  // Fast LCG seed
+
     void updateGlideCoeff();
+
+    // Fast thread-safe noise (-1 to +1)
+    inline float generateNoise() {
+        mNoiseState = mNoiseState * 1664525u + 1013904223u;  // LCG
+        return static_cast<float>(static_cast<int32_t>(mNoiseState)) / 2147483648.0f;
+    }
     float processSine(float freq);
     float applyDrive(float sample);
     float applyFilter(float sample);

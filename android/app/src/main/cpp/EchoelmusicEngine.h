@@ -70,8 +70,9 @@ private:
     std::atomic<float> mHRV{50.0f};
     std::atomic<float> mCoherence{0.5f};
 
-    // Mixing buffer
+    // Mixing buffers (pre-allocated for real-time safety)
     std::vector<float> mMixBuffer;
+    std::vector<float> m808Buffer;  // Pre-allocated to avoid allocation in audio callback
 
     // State
     std::atomic<bool> mIsRunning{false};

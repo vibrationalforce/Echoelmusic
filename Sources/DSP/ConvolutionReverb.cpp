@@ -112,6 +112,9 @@ void ConvolutionReverb::prepare(double sampleRate, int maxBlockSize)
     // Allocate filter states
     filterStates.resize(2);
 
+    // Pre-allocate dry buffer to avoid allocations in audio thread
+    dryBuffer.setSize(2, maxBlockSize, false, false, true);
+
     reset();
 }
 
@@ -143,8 +146,7 @@ void ConvolutionReverb::process(juce::AudioBuffer<float>& buffer)
     const int numSamples = buffer.getNumSamples();
     const int numChannels = buffer.getNumChannels();
 
-    // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
+    // Store dry signal using pre-allocated buffer (NO ALLOCATION!)
     for (int ch = 0; ch < numChannels; ++ch)
     {
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
@@ -164,16 +166,18 @@ void ConvolutionReverb::process(juce::AudioBuffer<float>& buffer)
     // Apply filtering
     applyFiltering(buffer);
 
-    // Mix dry/wet
+    // Mix dry/wet with SIMD-optimized FloatVectorOperations
+    const float dryGain = 1.0f - mix;
+    const float wetGain = mix;
+
     for (int ch = 0; ch < numChannels; ++ch)
     {
-        float* channelData = buffer.getWritePointer(ch);
+        float* wetData = buffer.getWritePointer(ch);
         const float* dryData = dryBuffer.getReadPointer(ch);
 
-        for (int i = 0; i < numSamples; ++i)
-        {
-            channelData[i] = dryData[i] * (1.0f - mix) + channelData[i] * mix;
-        }
+        // SIMD-optimized mixing (uses SSE/NEON/AVX under the hood)
+        juce::FloatVectorOperations::multiply(wetData, wetGain, numSamples);
+        juce::FloatVectorOperations::addWithMultiply(wetData, dryData, dryGain, numSamples);
     }
 }
 

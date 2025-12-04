@@ -118,6 +118,10 @@ private:
     }
 
     //==============================================================================
+    // Dry Buffer (pre-allocated to avoid allocations in audio thread)
+    juce::AudioBuffer<float> dryBuffer;
+
+    //==============================================================================
     // Parameters
     float currentBitDepth = 12.0f;  // bits
     float currentSRReduction = 0.3f;

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.Collections
 
 /**
  * Echoelmusic Bio-Reactive Engine
@@ -59,8 +60,8 @@ class BioReactiveEngine(private val context: Context) {
     // Callbacks
     private var heartRateCallback: ((Float, Float, Float) -> Unit)? = null
 
-    // HRV analysis
-    private val hrvWindow = mutableListOf<Float>()
+    // HRV analysis (thread-safe synchronized list)
+    private val hrvWindow: MutableList<Float> = Collections.synchronizedList(mutableListOf())
     private val hrvWindowSize = 60 // 1 minute of data
 
     init {
@@ -260,5 +261,13 @@ class BioReactiveEngine(private val context: Context) {
 
     fun shutdown() {
         scope.cancel()
+        // Clear callback to prevent memory leaks
+        heartRateCallback = null
+        hrvWindow.clear()
+        Log.i(TAG, "BioReactiveEngine shutdown complete")
+    }
+
+    fun clearCallback() {
+        heartRateCallback = null
     }
 }
