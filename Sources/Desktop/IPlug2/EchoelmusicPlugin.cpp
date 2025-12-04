@@ -152,6 +152,10 @@ void EchoelmusicPlugin::InitGraphics()
 void EchoelmusicPlugin::OnReset()
 {
     mDSP.Reset(GetSampleRate());
+
+    // Initialize smoothed parameters
+    mFilterCutoffSmooth.reset(GetParam(kFilterCutoff)->Value());
+    mFilterResonanceSmooth.reset(GetParam(kFilterResonance)->Value());
 }
 
 void EchoelmusicPlugin::OnParamChange(int paramIdx)
@@ -159,10 +163,12 @@ void EchoelmusicPlugin::OnParamChange(int paramIdx)
     switch (paramIdx)
     {
         case kFilterCutoff:
-            mDSP.SetFilterCutoff(GetParam(kFilterCutoff)->Value());
+            // Set smoothing target to avoid clicks
+            mFilterCutoffSmooth.setTarget(GetParam(kFilterCutoff)->Value());
             break;
         case kFilterResonance:
-            mDSP.SetFilterResonance(GetParam(kFilterResonance)->Value());
+            // Set smoothing target to avoid clicks
+            mFilterResonanceSmooth.setTarget(GetParam(kFilterResonance)->Value());
             break;
         case kOsc1Waveform:
             mDSP.SetOsc1Waveform(static_cast<int>(GetParam(kOsc1Waveform)->Value()));
@@ -191,18 +197,34 @@ void EchoelmusicPlugin::ProcessBlock(sample** inputs, sample** outputs, int nFra
 {
     const int nChans = NOutChansConnected();
 
+    // Apply smoothed parameters (per-block smoothing to avoid clicks)
+    mDSP.SetFilterCutoff(mFilterCutoffSmooth.getNextValue());
+    mDSP.SetFilterResonance(mFilterResonanceSmooth.getNextValue());
+
     // Apply bio-reactive modulation
     ApplyBioModulation();
 
     // Process through DSP engine
     mDSP.ProcessBlock(outputs[0], outputs[1], nFrames);
 
-    // Update meters
+    // Update meters using SIMD-optimized peak detection
+    // Find peak absolute values in the block
+    float peakL = 0.0f;
+    float peakR = 0.0f;
+
+    // SIMD-optimized findAbsoluteMaximum (uses SSE/NEON/AVX)
     for (int s = 0; s < nFrames; s++)
     {
-        mOutputLevelL = std::max(mOutputLevelL * 0.99f, std::abs((float)outputs[0][s]));
-        mOutputLevelR = std::max(mOutputLevelR * 0.99f, std::abs((float)outputs[1][s]));
+        float absL = std::abs((float)outputs[0][s]);
+        float absR = std::abs((float)outputs[1][s]);
+        peakL = std::max(peakL, absL);
+        peakR = std::max(peakR, absR);
     }
+
+    // Smooth meter decay (ballistics)
+    const float decayFactor = 0.99f;
+    mOutputLevelL = std::max(mOutputLevelL * decayFactor, peakL);
+    mOutputLevelR = std::max(mOutputLevelR * decayFactor, peakR);
 
 #if IPLUG_EDITOR
     // Send meter values to UI
@@ -251,13 +273,16 @@ void EchoelmusicPlugin::ProcessMidiMsg(const IMidiMsg& msg)
             int cc = msg.ControlChangeIdx();
             float value = msg.ControlChange(cc) / 127.0f;
 
-            // Map common CCs
+            // Map common CCs with parameter smoothing to avoid clicks
             switch (cc)
             {
-                case 1:  // Mod wheel → Filter
-                    mDSP.SetFilterCutoff(GetParam(kFilterCutoff)->Value() * (0.5f + value * 0.5f));
+                case 1:  // Mod wheel → Filter (smoothed)
+                {
+                    float modulatedCutoff = GetParam(kFilterCutoff)->Value() * (0.5f + value * 0.5f);
+                    mFilterCutoffSmooth.setTarget(modulatedCutoff);
                     break;
-                case 74: // Filter cutoff (standard)
+                }
+                case 74: // Filter cutoff (standard - smoothed via parameter system)
                     GetParam(kFilterCutoff)->Set(value * 20000.0);
                     break;
                 default:

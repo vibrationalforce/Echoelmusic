@@ -30,6 +30,9 @@ void LofiBitcrusher::prepare(double sampleRate, int maximumBlockSize)
     wowFlutterDelay.prepare(spec);
     wowFlutterDelay.setMaximumDelayInSamples(static_cast<int>(0.05f * sampleRate));  // 50ms
 
+    // Pre-allocate dry buffer to avoid allocations in audio thread
+    dryBuffer.setSize(2, maximumBlockSize, false, false, true);
+
     reset();
 }
 
@@ -50,8 +53,7 @@ void LofiBitcrusher::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0)
         return;
 
-    // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
+    // Store dry signal using pre-allocated buffer (NO ALLOCATION!)
     for (int ch = 0; ch < numChannels; ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
@@ -117,15 +119,18 @@ void LofiBitcrusher::process(juce::AudioBuffer<float>& buffer)
         }
     }
 
-    // Mix dry/wet
+    // Mix dry/wet with SIMD-optimized FloatVectorOperations
+    const float dryGain = 1.0f - currentMix;
+    const float wetGain = currentMix;
+
     for (int ch = 0; ch < numChannels; ++ch)
     {
-        auto* wet = buffer.getReadPointer(ch);
-        auto* dry = dryBuffer.getReadPointer(ch);
-        auto* out = buffer.getWritePointer(ch);
+        float* wetData = buffer.getWritePointer(ch);
+        const float* dryData = dryBuffer.getReadPointer(ch);
 
-        for (int i = 0; i < numSamples; ++i)
-            out[i] = dry[i] * (1.0f - currentMix) + wet[i] * currentMix;
+        // SIMD-optimized mixing (uses SSE/NEON/AVX under the hood)
+        juce::FloatVectorOperations::multiply(wetData, wetGain, numSamples);
+        juce::FloatVectorOperations::addWithMultiply(wetData, dryData, dryGain, numSamples);
     }
 }
 

@@ -39,22 +39,25 @@ void ParametricEQ::reset()
 
 void ParametricEQ::process(juce::AudioBuffer<float>& buffer)
 {
-    int numSamples = buffer.getNumSamples();
-    int numChannels = buffer.getNumChannels();
+    const int numSamples = buffer.getNumSamples();
+    const int numChannels = buffer.getNumChannels();
 
+    // Process each enabled band using block processing (MUCH faster than sample-by-sample!)
     for (int bandIndex = 0; bandIndex < numBands; ++bandIndex)
     {
         if (!bands[bandIndex].enabled)
             continue;
 
+        // Process stereo channels with block processing
         for (int channel = 0; channel < juce::jmin(2, numChannels); ++channel)
         {
-            auto* data = buffer.getWritePointer(channel);
-            int filterIndex = bandIndex * 2 + channel;
+            const int filterIndex = bandIndex * 2 + channel;
+            auto* channelData = buffer.getWritePointer(channel);
 
-            // JUCE 7: processSamples() removed, use processSample() in loop
-            for (int sample = 0; sample < numSamples; ++sample)
-                data[sample] = filters[filterIndex].processSample(data[sample]);
+            // Block-based processing using JUCE DSP (uses SIMD internally)
+            juce::dsp::AudioBlock<float> block(&channelData, 1, numSamples);
+            juce::dsp::ProcessContextReplacing<float> context(block);
+            filters[filterIndex].process(context);
         }
     }
 }

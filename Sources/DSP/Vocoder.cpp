@@ -37,6 +37,9 @@ void Vocoder::prepare(double sampleRate, int maximumBlockSize)
     oscillatorR.setFrequency(carrierFrequency);
     oscillatorR.setType(carrierType);
 
+    // Pre-allocate dry buffer to avoid allocations in audio thread
+    dryBuffer.setSize(2, maximumBlockSize, false, false, true);
+
     // Update band frequencies
     updateBandFrequencies();
 
@@ -66,8 +69,7 @@ void Vocoder::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0)
         return;
 
-    // Store dry signal (modulator)
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
+    // Store dry signal (modulator) using pre-allocated buffer (NO ALLOCATION!)
     for (int ch = 0; ch < numChannels; ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 

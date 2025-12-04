@@ -205,6 +205,10 @@ private:
     }
 
     //==============================================================================
+    // Dry Buffer (pre-allocated to avoid allocations in audio thread)
+    juce::AudioBuffer<float> dryBuffer;
+
+    //==============================================================================
     // Parameters
     int currentBandCount = 16;
     int carrierType = 0;  // 0=saw, 1=square, 2=noise, 3=external

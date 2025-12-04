@@ -36,27 +36,36 @@ void EchoelmusicApp::initialise(const juce::String& commandLine)
     if (device != nullptr)
     {
         auto bufferSizes = device->getAvailableBufferSizes();
-        if (bufferSizes.size() > 0)
+        if (!bufferSizes.isEmpty())
         {
-            // Try to set 64 samples, fallback to smallest available
-            int targetSize = 64;
-            int closestSize = bufferSizes[0];
+            // Optimized buffer size selection: try 64 first, then smallest available
+            constexpr int targetSize = 64;
+            int selectedSize = bufferSizes[0];  // Default to first (usually smallest)
 
-            for (int size : bufferSizes)
+            // Check if target size is available (early exit optimization)
+            if (bufferSizes.contains(targetSize))
             {
-                if (size == targetSize)
+                selectedSize = targetSize;
+            }
+            else
+            {
+                // Find closest size to target
+                int minDiff = std::abs(bufferSizes[0] - targetSize);
+                for (int i = 1; i < bufferSizes.size(); ++i)
                 {
-                    closestSize = size;
-                    break;
+                    int diff = std::abs(bufferSizes[i] - targetSize);
+                    if (diff < minDiff)
+                    {
+                        minDiff = diff;
+                        selectedSize = bufferSizes[i];
+                    }
                 }
-                if (std::abs(size - targetSize) < std::abs(closestSize - targetSize))
-                    closestSize = size;
             }
 
-            device->setBufferSize(closestSize);
+            device->setBufferSize(selectedSize);
 
-            DBG("Audio buffer size set to: " << closestSize << " samples");
-            DBG("Latency: ~" << juce::String(closestSize * 1000.0 / device->getCurrentSampleRate(), 1) << "ms");
+            DBG("Audio buffer size set to: " << selectedSize << " samples");
+            DBG("Latency: ~" << juce::String(selectedSize * 1000.0 / device->getCurrentSampleRate(), 1) << "ms");
         }
     }
 
