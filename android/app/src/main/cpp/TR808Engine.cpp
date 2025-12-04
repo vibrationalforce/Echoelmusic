@@ -112,11 +112,10 @@ void TR808Engine::process(float* output, int numFrames) {
         sample *= mEnvLevel;
         mEnvLevel *= mEnvDecayRate;
 
-        // Add click transient
+        // Add click transient (using thread-safe noise generator)
         if (mClickLevel > 0.001f) {
             // Click is white noise burst
-            float click = (static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f);
-            click *= mClickLevel;
+            float click = generateNoise() * mClickLevel;
             sample += click;
             mClickLevel *= mClickDecayRate;
         }

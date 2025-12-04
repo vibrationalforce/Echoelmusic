@@ -29,10 +29,11 @@ bool EchoelmusicEngine::create(int sampleRate, int framesPerBuffer) {
     m808 = std::make_unique<TR808Engine>();
     m808->setSampleRate(static_cast<float>(sampleRate));
 
-    // Allocate mix buffer (stereo)
+    // Pre-allocate mix buffers (stereo) - CRITICAL for real-time audio safety
     mMixBuffer.resize(framesPerBuffer * 2, 0.0f);
+    m808Buffer.resize(framesPerBuffer * 2, 0.0f);
 
-    LOGI("Engine created: %d Hz, %d frames/buffer", sampleRate, framesPerBuffer);
+    LOGI("Engine created: %d Hz, %d frames/buffer (buffers pre-allocated)", sampleRate, framesPerBuffer);
     return true;
 }
 
@@ -200,13 +201,15 @@ oboe::DataCallbackResult EchoelmusicEngine::onAudioReady(
         mSynth->process(mMixBuffer.data(), numFrames);
     }
 
-    // Render 808 and add to mix
+    // Render 808 and add to mix (using pre-allocated buffer for real-time safety)
     if (m808) {
-        std::vector<float> temp808(numFrames * 2);
-        m808->process(temp808.data(), numFrames);
+        // Clear pre-allocated 808 buffer
+        std::fill(m808Buffer.begin(), m808Buffer.begin() + numFrames * 2, 0.0f);
+        m808->process(m808Buffer.data(), numFrames);
 
+        // Mix 808 into main buffer
         for (int i = 0; i < numFrames * 2; i++) {
-            mMixBuffer[i] += temp808[i];
+            mMixBuffer[i] += m808Buffer[i];
         }
     }
 
