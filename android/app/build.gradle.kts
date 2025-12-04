@@ -39,17 +39,17 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false  // Disabled for faster builds - enable for Play Store
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug") // Replace with release key
+            signingConfig = signingConfigs.getByName("debug") // Uses debug key for easy install
         }
         debug {
             isDebuggable = true
-            applicationIdSuffix = ".debug"
+            // No suffix - same app ID as release for easier testing
         }
     }
 

@@ -209,40 +209,25 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
-      - name: Build Debug APK (No Signature Required)
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
-
       - name: Build Release APK
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleRelease --stacktrace
-        continue-on-error: true  # Release may fail without signing key
 
-      - name: List APK files
+      - name: Rename APK for easy download
         run: |
-          echo "=== Debug APKs ==="
-          find android -name "*.apk" -type f
-          echo "=== APK sizes ==="
-          ls -lh android/app/build/outputs/apk/debug/*.apk 2>/dev/null || echo "No debug APK"
-          ls -lh android/app/build/outputs/apk/release/*.apk 2>/dev/null || echo "No release APK"
+          mkdir -p android/output
+          cp android/app/build/outputs/apk/release/app-release.apk android/output/Echoelmusic-v1.0.0.apk 2>/dev/null || true
+          echo "=== APK Ready for Download ==="
+          ls -lh android/output/*.apk 2>/dev/null || echo "APK not found"
 
-      - name: Upload Debug APK
+      - name: Upload Echoelmusic APK
         uses: actions/upload-artifact@v4
         with:
-          name: Echoelmusic-Android-Debug
-          path: android/app/build/outputs/apk/debug/*.apk
+          name: Echoelmusic-Android-APK
+          path: android/output/Echoelmusic-v1.0.0.apk
           if-no-files-found: error
-
-      - name: Upload Release APK (if exists)
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: Echoelmusic-Android-Release
-          path: android/app/build/outputs/apk/release/*.apk
-          if-no-files-found: ignore
 
   # ============================================
   # Create GitHub Release
