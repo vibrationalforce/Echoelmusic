@@ -104,3 +104,16 @@ iOSInjectionProject/
 
 # Third-party dependencies (users should clone these)
 ThirdParty/JUCE/
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+*.apk
+*.aab
+*.keystore
+
+# Generated files
+*.generated.*
+compile_commands.json
