@@ -181,7 +181,7 @@ jobs:
             installers/linux/*.deb
 
   # ============================================
-  # Android Build (APK)
+  # Android Build (APK) - INDEPENDENT BUILD
   # ============================================
   build-android:
     runs-on: ubuntu-latest
@@ -201,17 +201,48 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
 
-      - name: Build Android APK
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: Build Debug APK (No Signature Required)
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleDebug --stacktrace
 
-      - name: Upload Android Artifacts
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease --stacktrace
+        continue-on-error: true  # Release may fail without signing key
+
+      - name: List APK files
+        run: |
+          echo "=== Debug APKs ==="
+          find android -name "*.apk" -type f
+          echo "=== APK sizes ==="
+          ls -lh android/app/build/outputs/apk/debug/*.apk 2>/dev/null || echo "No debug APK"
+          ls -lh android/app/build/outputs/apk/release/*.apk 2>/dev/null || echo "No release APK"
+
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: Echoelmusic-Android
+          name: Echoelmusic-Android-Debug
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload Release APK (if exists)
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: Echoelmusic-Android-Release
           path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: ignore
 
   # ============================================
   # Create GitHub Release
