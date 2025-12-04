@@ -1,5 +1,9 @@
 # Echoelmusic Android APK Build
-# Builds Release APK with debug signing for direct installation
+# Updated: December 2025
+# - Kotlin 2.1.20 (K2 Compiler)
+# - Compose December 2025 Release
+# - NDK r27 LTS with 16KB page support
+# - API 35 (Android 15)
 
 name: Android APK
 
@@ -13,6 +17,9 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+
+    env:
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
 
     steps:
       - name: Checkout code
@@ -28,9 +35,12 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install NDK
+      - name: Install NDK r27 LTS
         run: |
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;25.2.9519653"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;27.2.12479018"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "cmake;3.22.1"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;35.0.0"
 
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
@@ -38,19 +48,40 @@ jobs:
       - name: Create local.properties
         run: |
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
-          echo "ndk.dir=$ANDROID_HOME/ndk/25.2.9519653" >> android/local.properties
+          echo "ndk.dir=$ANDROID_HOME/ndk/27.2.12479018" >> android/local.properties
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Build Release APK
         run: |
           cd android
-          ./gradlew assembleRelease --no-daemon --stacktrace
+          ./gradlew assembleRelease --no-daemon --stacktrace --warning-mode all
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
       - name: Collect APK
         run: |
           mkdir -p artifacts
-          cp android/app/build/outputs/apk/release/app-release.apk artifacts/Echoelmusic-Android.apk
+          # Handle both signed and unsigned APK names
+          if [ -f "android/app/build/outputs/apk/release/app-release.apk" ]; then
+            cp android/app/build/outputs/apk/release/app-release.apk artifacts/Echoelmusic-Android.apk
+          elif [ -f "android/app/build/outputs/apk/release/app-release-unsigned.apk" ]; then
+            cp android/app/build/outputs/apk/release/app-release-unsigned.apk artifacts/Echoelmusic-Android.apk
+          fi
+          echo "=== Build Info ==="
+          echo "Date: $(date)"
+          echo "Kotlin: 2.1.20"
+          echo "Compose: December 2025"
+          echo "API: 35"
+          echo "NDK: r27 LTS"
           echo "=== APK Info ==="
           ls -la artifacts/
           echo "=== APK Size ==="

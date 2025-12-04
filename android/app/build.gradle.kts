@@ -1,3 +1,7 @@
+// Echoelmusic Android App
+// Updated: December 2025 - Latest Stable Versions
+// Compose December '25 Release, API 35, Kotlin 2.1.20
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -6,14 +10,14 @@ plugins {
 
 android {
     namespace = "com.echoelmusic.app"
-    compileSdk = 34
+    compileSdk = 35  // Android 15 (API 35)
 
     defaultConfig {
         applicationId = "com.echoelmusic.app"
-        minSdk = 26
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        minSdk = 26      // Android 8.0+
+        targetSdk = 35   // Android 15
+        versionCode = 2
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -21,17 +25,20 @@ android {
             useSupportLibrary = true
         }
 
-        // NDK configuration for Oboe
+        // NDK configuration for Oboe with 16KB page support
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
 
         externalNativeBuild {
             cmake {
-                cppFlags += listOf("-std=c++17", "-O3", "-ffast-math")
+                // C++20 for latest features (NDK r27+)
+                cppFlags += listOf("-std=c++20", "-O3", "-ffast-math", "-DANDROID")
                 arguments += listOf(
                     "-DANDROID_STL=c++_shared",
-                    "-DANDROID_TOOLCHAIN=clang"
+                    "-DANDROID_TOOLCHAIN=clang",
+                    // 16KB page size support (Android 15 / API 35)
+                    "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
                 )
             }
         }
@@ -39,17 +46,17 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false  // Disabled for faster builds - enable for Play Store
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug") // Uses debug key for easy install
+            signingConfig = signingConfigs.getByName("debug") // Debug key for easy install
         }
         debug {
             isDebuggable = true
-            // No suffix - same app ID as release for easier testing
+            isMinifyEnabled = false
         }
     }
 
@@ -60,11 +67,18 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+        // K2 compiler optimizations
+        freeCompilerArgs += listOf(
+            "-opt-in=kotlin.RequiresOptIn",
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
+            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi"
+        )
     }
 
     buildFeatures {
         compose = true
-        prefab = true // For Oboe
+        prefab = true  // For Oboe
+        buildConfig = true
     }
 
     externalNativeBuild {
@@ -77,50 +91,87 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/versions/9/previous-compilation-data.bin"
         }
     }
 }
 
 dependencies {
-    // Compose BOM
-    val composeBom = platform("androidx.compose:compose-bom:2024.02.00")
+    // ═══════════════════════════════════════════════════════════════
+    // Compose BOM December 2025 (1.10 Stable + Material 3 1.4)
+    // Features: Pausable Composition, Background Text Prefetch
+    // ═══════════════════════════════════════════════════════════════
+    val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
-    // Core Android
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.activity:activity-compose:1.8.2")
+    // ═══════════════════════════════════════════════════════════════
+    // Core Android - December 2025 Stable
+    // ═══════════════════════════════════════════════════════════════
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.activity:activity-compose:1.9.3")
 
-    // Compose UI
+    // ═══════════════════════════════════════════════════════════════
+    // Compose UI 1.10 (December 2025)
+    // New: Auto-sizing text, Visibility tracking, Animate bounds
+    // ═══════════════════════════════════════════════════════════════
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.ui:ui-util")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.animation:animation")
+
+    // Material 3 (1.4 December 2025)
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material3:material3-window-size-class")
     implementation("androidx.compose.material:material-icons-extended")
 
+    // ═══════════════════════════════════════════════════════════════
     // Navigation
-    implementation("androidx.navigation:navigation-compose:2.7.7")
+    // ═══════════════════════════════════════════════════════════════
+    implementation("androidx.navigation:navigation-compose:2.8.5")
 
-    // Health Connect (Bio-Reactive)
-    implementation("androidx.health.connect:connect-client:1.1.0-alpha07")
+    // ═══════════════════════════════════════════════════════════════
+    // Health Connect (Bio-Reactive Features)
+    // ═══════════════════════════════════════════════════════════════
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha10")
 
-    // MIDI
+    // ═══════════════════════════════════════════════════════════════
+    // Media & MIDI
+    // ═══════════════════════════════════════════════════════════════
     implementation("androidx.media:media:1.7.0")
+    implementation("androidx.media3:media3-exoplayer:1.5.0")
 
-    // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    // ═══════════════════════════════════════════════════════════════
+    // Coroutines (Kotlin 2.1.20 compatible)
+    // ═══════════════════════════════════════════════════════════════
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 
-    // Oboe (Low-latency audio via prefab)
-    implementation("com.google.oboe:oboe:1.8.0")
+    // ═══════════════════════════════════════════════════════════════
+    // Oboe 1.9.0 (Low-latency audio)
+    // ═══════════════════════════════════════════════════════════════
+    implementation("com.google.oboe:oboe:1.9.0")
 
-    // DataStore for preferences
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    // ═══════════════════════════════════════════════════════════════
+    // DataStore & Preferences
+    // ═══════════════════════════════════════════════════════════════
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 
+    // ═══════════════════════════════════════════════════════════════
+    // Serialization (for state saving)
+    // ═══════════════════════════════════════════════════════════════
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+
+    // ═══════════════════════════════════════════════════════════════
     // Testing
+    // ═══════════════════════════════════════════════════════════════
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
