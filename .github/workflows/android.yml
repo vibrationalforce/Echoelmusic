@@ -1,5 +1,5 @@
 # Echoelmusic Android APK Build
-# Simple, fast Android-only build
+# Builds Release APK with debug signing for direct installation
 
 name: Android APK
 
@@ -40,18 +40,21 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
           echo "ndk.dir=$ANDROID_HOME/ndk/25.2.9519653" >> android/local.properties
 
-      - name: Build Debug APK
+      - name: Build Release APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleRelease --no-daemon --stacktrace
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
-      - name: Rename APK
+      - name: Collect APK
         run: |
           mkdir -p artifacts
-          cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/Echoelmusic-Android.apk
+          cp android/app/build/outputs/apk/release/app-release.apk artifacts/Echoelmusic-Android.apk
+          echo "=== APK Info ==="
           ls -la artifacts/
+          echo "=== APK Size ==="
+          du -h artifacts/Echoelmusic-Android.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
