@@ -95,17 +95,78 @@ final class SIMDSpatialProcessor {
     }
 
     private func loadHRTFData() {
-        // Load simplified HRTF impulse responses
-        // In production, use MIT KEMAR or CIPIC database
+        // Generate HRTF impulse responses based on spherical head model
+        // Models interaural time difference (ITD) and interaural level difference (ILD)
         let azimuthSteps = 72  // 5° resolution
         let elevationSteps = 18  // 10° resolution
+        let sampleRate: Float = 48000
+        let headRadius: Float = 0.0875  // meters (average human head)
+        let speedOfSound: Float = 343.0  // m/s
 
-        for _ in 0..<(azimuthSteps * elevationSteps) {
-            // Placeholder HRTF filters (would be loaded from asset)
-            let filterL = [Float](repeating: 0, count: hrtfFilterLength)
-            let filterR = [Float](repeating: 0, count: hrtfFilterLength)
-            hrtfFiltersLeft.append(filterL)
-            hrtfFiltersRight.append(filterR)
+        for elevationIndex in 0..<elevationSteps {
+            let elevation = Float(elevationIndex - 9) * 10.0 * Float.pi / 180.0  // -90° to +80°
+
+            for azimuthIndex in 0..<azimuthSteps {
+                let azimuth = Float(azimuthIndex) * 5.0 * Float.pi / 180.0  // 0° to 355°
+
+                var filterL = [Float](repeating: 0, count: hrtfFilterLength)
+                var filterR = [Float](repeating: 0, count: hrtfFilterLength)
+
+                // Calculate ITD (Woodworth formula)
+                let itd = headRadius / speedOfSound * (azimuth + sin(azimuth))
+                let itdSamples = Int(abs(itd) * sampleRate)
+
+                // Calculate ILD (frequency-dependent, simplified)
+                let ildLeft = azimuth > 0 ? 1.0 - 0.3 * sin(azimuth) : 1.0
+                let ildRight = azimuth < 0 ? 1.0 - 0.3 * sin(-azimuth) : 1.0
+
+                // Generate minimum-phase HRIR approximation
+                // Using exponential decay with head shadow
+                let decayRate: Float = 0.85
+                let headShadowL = max(0.3, cos(azimuth / 2))
+                let headShadowR = max(0.3, cos((Float.pi - azimuth) / 2))
+
+                // Left ear filter
+                let delayL = azimuth < 0 ? itdSamples : 0
+                for i in delayL..<hrtfFilterLength {
+                    let t = Float(i - delayL)
+                    // Impulse response: attack + exponential decay
+                    let envelope = exp(-t * (1.0 - decayRate) * 0.1)
+                    // Add high-frequency rolloff for head shadow
+                    let hfRolloff = 1.0 - 0.3 * sin(Float.pi * t / Float(hrtfFilterLength))
+                    filterL[i] = Float(ildLeft) * headShadowL * envelope * hfRolloff
+                    if i == delayL { filterL[i] *= 2.0 }  // Initial impulse
+                }
+
+                // Right ear filter
+                let delayR = azimuth > 0 ? itdSamples : 0
+                for i in delayR..<hrtfFilterLength {
+                    let t = Float(i - delayR)
+                    let envelope = exp(-t * (1.0 - decayRate) * 0.1)
+                    let hfRolloff = 1.0 - 0.3 * sin(Float.pi * t / Float(hrtfFilterLength))
+                    filterR[i] = Float(ildRight) * headShadowR * envelope * hfRolloff
+                    if i == delayR { filterR[i] *= 2.0 }
+                }
+
+                // Apply elevation-dependent pinna filtering (notch around 8kHz)
+                let pinnaNotchFreq = 8000.0 + Float(elevation) * 1000.0
+                let pinnaNotchWidth = 2000.0
+                for i in 0..<hrtfFilterLength {
+                    let freq = Float(i) * sampleRate / Float(hrtfFilterLength * 2)
+                    let notchFactor = 1.0 - 0.3 * exp(-pow((freq - pinnaNotchFreq) / pinnaNotchWidth, 2))
+                    filterL[i] *= notchFactor
+                    filterR[i] *= notchFactor
+                }
+
+                // Normalize filters
+                let maxL = filterL.max() ?? 1.0
+                let maxR = filterR.max() ?? 1.0
+                if maxL > 0 { filterL = filterL.map { $0 / maxL } }
+                if maxR > 0 { filterR = filterR.map { $0 / maxR } }
+
+                hrtfFiltersLeft.append(filterL)
+                hrtfFiltersRight.append(filterR)
+            }
         }
     }
 

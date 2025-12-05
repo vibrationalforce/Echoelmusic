@@ -448,13 +448,49 @@ class AdvancedDSPEffects {
         }
 
         private func detectSibilance(_ input: [Float]) -> [Float] {
-            // Bandpass filter around sibilance frequencies (6-8 kHz)
-            // Simplified implementation
-            var output = [Float](repeating: 0, count: input.count)
+            // Bandpass filter around sibilance frequencies (4-10 kHz)
+            // Using cascaded biquad filters for steep response
+            let sampleRate: Float = 48000
+            var output = input
 
-            for i in 0..<input.count {
-                // Placeholder: in production use proper bandpass filter
-                output[i] = input[i]
+            // High-pass at 4kHz
+            let hpOmega = 2.0 * Float.pi * 4000.0 / sampleRate
+            let hpAlpha = sin(hpOmega) / (2.0 * 0.707)
+            let hpCosOmega = cos(hpOmega)
+
+            let hpB0 = ((1.0 + hpCosOmega) / 2.0) / (1.0 + hpAlpha)
+            let hpB1 = (-(1.0 + hpCosOmega)) / (1.0 + hpAlpha)
+            let hpB2 = ((1.0 + hpCosOmega) / 2.0) / (1.0 + hpAlpha)
+            let hpA1 = (-2.0 * hpCosOmega) / (1.0 + hpAlpha)
+            let hpA2 = (1.0 - hpAlpha) / (1.0 + hpAlpha)
+
+            // Low-pass at 10kHz
+            let lpOmega = 2.0 * Float.pi * 10000.0 / sampleRate
+            let lpAlpha = sin(lpOmega) / (2.0 * 0.707)
+            let lpCosOmega = cos(lpOmega)
+
+            let lpB0 = ((1.0 - lpCosOmega) / 2.0) / (1.0 + lpAlpha)
+            let lpB1 = (1.0 - lpCosOmega) / (1.0 + lpAlpha)
+            let lpB2 = ((1.0 - lpCosOmega) / 2.0) / (1.0 + lpAlpha)
+            let lpA1 = (-2.0 * lpCosOmega) / (1.0 + lpAlpha)
+            let lpA2 = (1.0 - lpAlpha) / (1.0 + lpAlpha)
+
+            // Apply high-pass
+            var hpX1: Float = 0, hpX2: Float = 0, hpY1: Float = 0, hpY2: Float = 0
+            for i in 0..<output.count {
+                let x0 = output[i]
+                let y0 = hpB0 * x0 + hpB1 * hpX1 + hpB2 * hpX2 - hpA1 * hpY1 - hpA2 * hpY2
+                output[i] = y0
+                hpX2 = hpX1; hpX1 = x0; hpY2 = hpY1; hpY1 = y0
+            }
+
+            // Apply low-pass
+            var lpX1: Float = 0, lpX2: Float = 0, lpY1: Float = 0, lpY2: Float = 0
+            for i in 0..<output.count {
+                let x0 = output[i]
+                let y0 = lpB0 * x0 + lpB1 * lpX1 + lpB2 * lpX2 - lpA1 * lpY1 - lpA2 * lpY2
+                output[i] = y0
+                lpX2 = lpX1; lpX1 = x0; lpY2 = lpY1; lpY1 = y0
             }
 
             return output

@@ -284,8 +284,63 @@ class ChromaKeyEngine: ObservableObject {
         // Higher variance = uneven lighting
         // Returns variance in RGB space
 
-        // Placeholder implementation
-        return SIMD3<Float>(0.05, 0.05, 0.05)
+        let regionSize = 16  // 16x16 pixel region
+        let centerX = Int(position.x * Float(texture.width))
+        let centerY = Int(position.y * Float(texture.height))
+
+        // Clamp region to texture bounds
+        let startX = max(0, centerX - regionSize / 2)
+        let startY = max(0, centerY - regionSize / 2)
+        let endX = min(texture.width, centerX + regionSize / 2)
+        let endY = min(texture.height, centerY + regionSize / 2)
+
+        let width = endX - startX
+        let height = endY - startY
+        guard width > 0 && height > 0 else {
+            return SIMD3<Float>(0.05, 0.05, 0.05)
+        }
+
+        // Read pixel data from texture
+        let bytesPerPixel = 4
+        let bytesPerRow = texture.width * bytesPerPixel
+        var pixelData = [UInt8](repeating: 0, count: width * height * bytesPerPixel)
+
+        let region = MTLRegion(origin: MTLOrigin(x: startX, y: startY, z: 0),
+                               size: MTLSize(width: width, height: height, depth: 1))
+
+        texture.getBytes(&pixelData,
+                        bytesPerRow: width * bytesPerPixel,
+                        from: region,
+                        mipmapLevel: 0)
+
+        // Calculate mean RGB
+        var sumR: Float = 0, sumG: Float = 0, sumB: Float = 0
+        let pixelCount = Float(width * height)
+
+        for i in stride(from: 0, to: pixelData.count, by: bytesPerPixel) {
+            sumR += Float(pixelData[i]) / 255.0
+            sumG += Float(pixelData[i + 1]) / 255.0
+            sumB += Float(pixelData[i + 2]) / 255.0
+        }
+
+        let meanR = sumR / pixelCount
+        let meanG = sumG / pixelCount
+        let meanB = sumB / pixelCount
+
+        // Calculate variance
+        var varR: Float = 0, varG: Float = 0, varB: Float = 0
+
+        for i in stride(from: 0, to: pixelData.count, by: bytesPerPixel) {
+            let r = Float(pixelData[i]) / 255.0
+            let g = Float(pixelData[i + 1]) / 255.0
+            let b = Float(pixelData[i + 2]) / 255.0
+
+            varR += (r - meanR) * (r - meanR)
+            varG += (g - meanG) * (g - meanG)
+            varB += (b - meanB) * (b - meanB)
+        }
+
+        return SIMD3<Float>(varR / pixelCount, varG / pixelCount, varB / pixelCount)
     }
 
     // MARK: - Main Processing Pipeline (6 Passes)
