@@ -1,0 +1,176 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "app.name": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Echoelmusic" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Echoelmusic" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Echoelmusic" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Echoelmusic" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "Echoelmusic" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Echoelmusic" } }
+      }
+    },
+    "tab.create": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Create" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Erstellen" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Crear" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Créer" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "作成" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "创建" } }
+      }
+    },
+    "tab.ai": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "AI" } },
+        "de": { "stringUnit": { "state": "translated", "value": "KI" } },
+        "es": { "stringUnit": { "state": "translated", "value": "IA" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "IA" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "AI" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "人工智能" } }
+      }
+    },
+    "tab.visual": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Visual" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Visuell" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Visual" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Visuel" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ビジュアル" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "视觉" } }
+      }
+    },
+    "tab.tools": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Tools" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Werkzeuge" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Herramientas" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Outils" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ツール" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "工具" } }
+      }
+    },
+    "tab.cloud": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Cloud" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Cloud" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Nube" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Cloud" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "クラウド" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "云端" } }
+      }
+    },
+    "harmonizer.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Harmonizer" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Harmonisierer" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Armonizador" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Harmoniseur" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ハーモナイザー" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "和声器" } }
+      }
+    },
+    "ai.agents.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "AI Agents" } },
+        "de": { "stringUnit": { "state": "translated", "value": "KI-Agenten" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Agentes IA" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Agents IA" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "AIエージェント" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "AI代理" } }
+      }
+    },
+    "stem.separator.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Stem Separator" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Stem-Trenner" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Separador de Stems" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Séparateur de Stems" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ステム分離" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "音轨分离器" } }
+      }
+    },
+    "physics.visualizer.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Physics Visualizer" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Physik-Visualisierer" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Visualizador de Física" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Visualiseur Physique" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "物理ビジュアライザー" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "物理可视化器" } }
+      }
+    },
+    "vj.mode.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "VJ Mode" } },
+        "de": { "stringUnit": { "state": "translated", "value": "VJ-Modus" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Modo VJ" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Mode VJ" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "VJモード" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "VJ模式" } }
+      }
+    },
+    "plugins.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Plugins" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Plugins" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Plugins" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Plugins" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "プラグイン" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "插件" } }
+      }
+    },
+    "automation.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Automation" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Automatisierung" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Automatización" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Automatisation" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "オートメーション" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "自动化" } }
+      }
+    },
+    "button.connect": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Connect" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Verbinden" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Conectar" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Connecter" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "接続" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "连接" } }
+      }
+    },
+    "button.export": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Export" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Exportieren" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Exportar" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Exporter" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "エクスポート" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "导出" } }
+      }
+    },
+    "button.done": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Done" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Fertig" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Listo" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Terminé" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "完了" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "完成" } }
+      }
+    },
+    "button.cancel": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Cancel" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Abbrechen" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Cancelar" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Annuler" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "キャンセル" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "取消" } }
+      }
+    }
+  },
+  "version": "1.0"
+}
