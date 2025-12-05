@@ -1,0 +1,82 @@
+{
+  "$schema": "https://claude.ai/schemas/claude-settings.json",
+  "project": {
+    "name": "Echoelmusic",
+    "description": "Quantum Audio-Visual Music Production Platform",
+    "version": "2.0.0",
+    "type": "swift-application"
+  },
+  "preferences": {
+    "language": "swift",
+    "style": {
+      "indentation": "spaces",
+      "indentSize": 4,
+      "lineWidth": 120,
+      "trailingComma": false
+    },
+    "naming": {
+      "files": "PascalCase",
+      "types": "PascalCase",
+      "functions": "camelCase",
+      "variables": "camelCase",
+      "constants": "camelCase"
+    }
+  },
+  "codeGeneration": {
+    "includeDocComments": true,
+    "includeMarks": true,
+    "preferAsyncAwait": true,
+    "preferCombine": true,
+    "preferSIMD": true,
+    "realTimeSafe": true,
+    "testGeneration": "XCTest"
+  },
+  "safety": {
+    "avoidForceUnwrap": true,
+    "preferGuardLet": true,
+    "requireErrorHandling": true,
+    "realTimeAudioRules": {
+      "noAllocationInCallback": true,
+      "noBlockingCalls": true,
+      "usePreallocatedBuffers": true,
+      "useLockFreeStructures": true
+    }
+  },
+  "optimization": {
+    "defaultLevel": "performance",
+    "simdOptimization": true,
+    "metalGPU": true,
+    "lazyLoading": true,
+    "bufferPooling": true
+  },
+  "permissions": {
+    "allowBash": true,
+    "allowFileWrite": true,
+    "allowNetworkAccess": true,
+    "allowGitOperations": true
+  },
+  "mcpServers": {
+    "audio-analyzer": {
+      "description": "Real-time audio analysis MCP server",
+      "capabilities": ["fft", "spectrum", "loudness", "pitch"]
+    },
+    "bio-bridge": {
+      "description": "HealthKit bio-data bridge",
+      "capabilities": ["hrv", "heartRate", "coherence", "breathing"]
+    },
+    "cloud-sync": {
+      "description": "CRDT-based cloud synchronization",
+      "capabilities": ["sync", "merge", "conflict-resolution"]
+    },
+    "ai-composer": {
+      "description": "AI music composition assistant",
+      "capabilities": ["melody", "harmony", "rhythm", "arrangement"]
+    }
+  },
+  "memory": {
+    "projectContext": "CLAUDE.md",
+    "persistConversation": true,
+    "rememberPreferences": true,
+    "trackTodos": true
+  }
+}

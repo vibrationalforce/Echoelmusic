@@ -1,0 +1,281 @@
+# Echoelmusic - Claude Project Memory
+
+> **Quantum Audio-Visual Music Production Platform**
+> Bio-Reactive | AI-Powered | Cross-Platform | Real-Time Collaboration
+
+---
+
+## Project Identity
+
+**Name:** Echoelmusic
+**Type:** Professional Music Production Software
+**Philosophy:** Chaos Computer Club Mind - Open, Decentralized, Hacker Ethics
+**Target:** Musicians, Producers, VJs, Live Performers, Wellness Practitioners
+
+---
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      ECHOELMUSIC CORE                           │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
+│  │  Audio   │  │  Visual  │  │   Bio    │  │   AI     │        │
+│  │  Engine  │  │  Engine  │  │  Engine  │  │  Engine  │        │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘        │
+│       └─────────────┴─────────────┴─────────────┘              │
+│                         │                                       │
+│              ┌──────────┴──────────┐                           │
+│              │  EchoelUniversalCore │                           │
+│              │   (Central Brain)    │                           │
+│              └──────────────────────┘                           │
+├─────────────────────────────────────────────────────────────────┤
+│  Platforms: iOS | macOS | visionOS | Linux | Windows | Android │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Key Systems
+
+### 1. Audio Engine
+- **Location:** `Sources/Echoelmusic/Audio/`
+- **Key Files:**
+  - `AudioEngine.swift` - Core audio processing
+  - `DSP/RealTimeDSPEngine.swift` - Real-time DSP effects
+  - `DSP/SIMDAudioProcessor.swift` - SIMD-optimized processing
+- **Constraints:** Real-time safe, no allocation in audio thread
+- **Sample Rates:** 44.1k, 48k, 96k, 192k
+- **Buffer Sizes:** 64, 128, 256, 512, 1024, 2048
+
+### 2. Visual Engine
+- **Location:** `Sources/Echoelmusic/Visual/`
+- **Key Files:**
+  - `QuantumVisualEngine.swift` - Bio-reactive visuals
+  - `UnifiedVisualSoundEngine.swift` - Audio-visual sync
+  - `NeuralStyleTransfer.swift` - AI style transfer
+- **Renderer:** Metal GPU
+- **Target FPS:** 60-120
+
+### 3. Bio Engine
+- **Location:** `Sources/Echoelmusic/Biofeedback/`
+- **Key Files:**
+  - `HealthKitManager.swift` - Apple Health integration
+  - `BioParameterMapper.swift` - Bio → Audio/Visual mapping
+- **Data:** HRV, Heart Rate, Coherence, Breathing
+
+### 4. AI Engine
+- **Location:** `Sources/Echoelmusic/AI/`
+- **Key Files:**
+  - `AIComposer.swift` - Melody/rhythm generation
+  - `MLClassifiers.swift` - Audio classification
+  - `EnhancedMLModels.swift` - Pattern recognition
+- **Framework:** Core ML, Create ML
+
+### 5. Cloud & Collaboration
+- **Location:** `Sources/Echoelmusic/Cloud/`, `Collaboration/`
+- **Key Files:**
+  - `CRDTSyncEngine.swift` - Conflict-free sync
+  - `WebRTCCollaborationEngine.swift` - Real-time collab
+- **Protocol:** CRDT (ORSet, LWW-Register)
+
+### 6. Self-Healing System
+- **Location:** `Sources/Echoelmusic/Core/`
+- **Key Files:**
+  - `SelfHealingEngine.swift` - Auto-recovery
+  - `QuantumSelfHealingEngine.swift` - Platform adaptation
+  - `UniversalOptimizationEngine.swift` - Performance optimization
+
+---
+
+## Code Statistics
+
+```
+Total Files:     278
+Total Lines:     91,784
+Swift Files:     250+
+Commands:        24
+Languages:       Swift, Metal, GLSL
+```
+
+---
+
+## Critical Patterns
+
+### Real-Time Audio Rules
+```swift
+// ✅ DO: Pre-allocate buffers
+let bufferPool = LockFreeBufferPool<Float>(bufferSize: 4096, poolSize: 8)
+
+// ❌ DON'T: Allocate in audio callback
+func processAudio() {
+    var buffer = [Float](repeating: 0, count: 1024) // BAD!
+}
+```
+
+### CRDT Usage
+```swift
+// Use FixedORSet for collaborative data
+var tracks = FixedORSet<Track>(nodeID: deviceID)
+tracks.add(newTrack)
+tracks.merge(with: remoteState) // Automatic conflict resolution
+```
+
+### SwiftUI Performance
+```swift
+// Use .equatable() for expensive views
+struct WaveformView: View, Equatable {
+    let samples: [Float]
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.samples == rhs.samples
+    }
+}
+```
+
+---
+
+## File Naming Conventions
+
+| Type | Pattern | Example |
+|------|---------|---------|
+| View | `*View.swift` | `MixerView.swift` |
+| Engine | `*Engine.swift` | `AudioEngine.swift` |
+| Manager | `*Manager.swift` | `HealthKitManager.swift` |
+| Processor | `*Processor.swift` | `SIMDAudioProcessor.swift` |
+| Node | `*Node.swift` | `ReverbNode.swift` |
+
+---
+
+## Dependencies
+
+### Apple Frameworks
+- AVFoundation (Audio)
+- Metal (GPU)
+- Core ML (AI)
+- HealthKit (Bio)
+- CloudKit (Sync)
+- Combine (Reactive)
+
+### Audio Specific
+- vDSP (Accelerate)
+- AudioToolbox
+- CoreMIDI
+
+---
+
+## Environment
+
+### Supported Platforms
+- iOS 17.0+
+- macOS 14.0+
+- visionOS 1.0+
+- Linux (via Swift)
+- Windows (via Swift)
+- Android (via Kotlin bridge)
+
+### Build System
+- Swift Package Manager
+- Xcode 15+
+
+---
+
+## Testing
+
+```bash
+# Run all tests
+swift test
+
+# Run specific test
+swift test --filter AudioEngineTests
+
+# Performance tests
+swift test --filter PerformanceTests
+```
+
+---
+
+## Common Tasks
+
+### Adding a New Effect
+1. Create `Sources/Echoelmusic/Audio/Effects/NewEffect.swift`
+2. Implement `AudioEffect` protocol
+3. Register in `EffectsChainView.swift`
+4. Add to node graph in `NodeGraph.swift`
+
+### Adding a New Visualizer
+1. Create `Sources/Echoelmusic/Visual/Visualizers/NewVisualizer.swift`
+2. Implement `Visualizer` protocol
+3. Add Metal shader if needed
+4. Register in `AllVisualizers.swift`
+
+### Adding a New CRDT Type
+1. Extend `CRDTSyncEngine.swift`
+2. Implement merge semantics
+3. Add vector clock tracking
+4. Test conflict resolution
+
+---
+
+## Known Issues & TODOs
+
+### Critical
+- [ ] GPU compute for large FFTs
+- [ ] WebRTC TURN server support
+- [ ] Offline queue persistence
+
+### High Priority
+- [ ] Lazy ML model loading
+- [ ] SwiftUI .equatable() audit
+- [ ] Actor-based concurrency migration
+
+### Medium Priority
+- [ ] Neural stem separation
+- [ ] Multi-platform sync optimization
+- [ ] Conflict resolution UI
+
+---
+
+## Contact & Resources
+
+- **Repository:** This repo
+- **Documentation:** `/docs/` (coming soon)
+- **Claude Commands:** `/.claude/commands/`
+- **Optimization Report:** `/OPTIMIZATION_REPORT.md`
+
+---
+
+## Quick Reference
+
+### Start Audio Engine
+```swift
+let engine = AudioEngine.shared
+try await engine.start()
+```
+
+### Process Bio Data
+```swift
+EchoelUniversalCore.shared.receiveBioData(
+    hrv: hrvValue,
+    heartRate: bpm,
+    coherence: coherenceLevel
+)
+```
+
+### Enable Optimization
+```swift
+UniversalOptimizationEngine.shared.setOptimizationLevel(.universal)
+```
+
+### Use Claude Skills
+```
+/optimize-performance  - CPU/GPU/Memory optimization
+/audio-engineer        - DSP and mastering
+/debug-doctor          - Bug hunting
+/quantum-science       - Quantum-inspired algorithms
+```
+
+---
+
+*Last Updated: 2025-12-05*
+*Optimized by: Universal Deep Space Analysis*
