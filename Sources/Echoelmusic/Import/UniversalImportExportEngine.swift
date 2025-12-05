@@ -886,13 +886,98 @@ public final class UniversalImportExportEngine: ObservableObject {
     }
 
     private func normalizeAudio(_ data: AudioData, to level: Float) async throws -> AudioData {
-        // Normalize audio implementation
-        return data  // Placeholder
+        // Peak normalization to target level (dB)
+        guard !data.samples.isEmpty else { return data }
+
+        // Find peak amplitude
+        var peak: Float = 0
+        for sample in data.samples {
+            peak = max(peak, abs(sample))
+        }
+
+        guard peak > 0 else { return data }
+
+        // Calculate gain to reach target level
+        let targetLinear = pow(10.0, level / 20.0)  // Convert dB to linear
+        let gain = targetLinear / peak
+
+        // Apply normalization
+        var normalizedSamples = [Float](repeating: 0, count: data.samples.count)
+        for i in 0..<data.samples.count {
+            normalizedSamples[i] = data.samples[i] * gain
+        }
+
+        return AudioData(
+            name: data.name,
+            url: data.url,
+            samples: normalizedSamples,
+            sampleRate: data.sampleRate,
+            channels: data.channels,
+            bitDepth: data.bitDepth,
+            duration: data.duration,
+            metadata: data.metadata
+        )
     }
 
     private func applyDithering(_ data: AudioData, type: DitheringType) async throws -> AudioData {
-        // Dithering implementation
-        return data  // Placeholder
+        // Apply dithering for bit depth reduction
+        guard !data.samples.isEmpty else { return data }
+
+        var ditheredSamples = [Float](repeating: 0, count: data.samples.count)
+        var errorFeedback: Float = 0
+
+        for i in 0..<data.samples.count {
+            var sample = data.samples[i]
+
+            switch type {
+            case .triangular:
+                // TPDF (Triangular Probability Density Function) dithering
+                let noise1 = Float.random(in: -1...1)
+                let noise2 = Float.random(in: -1...1)
+                let tpdfNoise = (noise1 + noise2) / 2.0
+
+                // Scale noise to LSB of target bit depth
+                let lsb = 1.0 / pow(2.0, Float(data.bitDepth - 1))
+                sample += tpdfNoise * lsb
+
+            case .rectangular:
+                // RPDF (Rectangular) dithering - simpler
+                let noise = Float.random(in: -1...1)
+                let lsb = 1.0 / pow(2.0, Float(data.bitDepth - 1))
+                sample += noise * lsb * 0.5
+
+            case .noiseShaping:
+                // Noise shaping with error feedback
+                let noise = Float.random(in: -1...1)
+                let lsb = 1.0 / pow(2.0, Float(data.bitDepth - 1))
+
+                // Add dither and error feedback
+                sample += noise * lsb + errorFeedback * 0.5
+
+                // Quantize and calculate error
+                let quantized = round(sample * pow(2.0, Float(data.bitDepth - 1))) / pow(2.0, Float(data.bitDepth - 1))
+                errorFeedback = sample - quantized
+
+                sample = quantized
+
+            case .none:
+                break
+            }
+
+            // Clamp to prevent overflow
+            ditheredSamples[i] = max(-1.0, min(1.0, sample))
+        }
+
+        return AudioData(
+            name: data.name,
+            url: data.url,
+            samples: ditheredSamples,
+            sampleRate: data.sampleRate,
+            channels: data.channels,
+            bitDepth: data.bitDepth,
+            duration: data.duration,
+            metadata: data.metadata
+        )
     }
 }
 

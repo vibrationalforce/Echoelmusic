@@ -3,6 +3,11 @@ import Combine
 import SwiftUI
 import CoreML
 import os.log
+import SystemConfiguration
+
+#if canImport(Network)
+import Network
+#endif
 
 #if os(iOS) || os(tvOS)
 import UIKit
@@ -639,8 +644,45 @@ public final class UIFeedbackLearningEngine: ObservableObject {
     }
 
     private func getCurrentScreenName() -> String {
-        // Get from navigation controller or scene
-        return "Main"  // Placeholder
+        // Track current screen from recent interactions
+        // Find most recent screen-related interaction
+        if let lastScreenInteraction = interactionHistory
+            .reversed()
+            .first(where: { $0.type == .screenView || $0.type == .navigation }) {
+            return lastScreenInteraction.details["screenName"] as? String ?? "Main"
+        }
+
+        #if os(iOS)
+        // Fallback: try to get from UIKit scene
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = scene.windows.first?.rootViewController {
+            // Get view controller name
+            let vcName = String(describing: type(of: rootVC))
+                .replacingOccurrences(of: "ViewController", with: "")
+                .replacingOccurrences(of: "HostingController", with: "")
+            return vcName.isEmpty ? "Main" : vcName
+        }
+        #elseif os(macOS)
+        // Get from NSApplication
+        if let window = NSApplication.shared.mainWindow {
+            let windowName = window.title
+            return windowName.isEmpty ? "Main" : windowName
+        }
+        #endif
+
+        return "Main"
+    }
+
+    /// Call this to track screen navigation for analytics
+    public func trackScreenView(_ screenName: String) {
+        let interaction = UIInteraction(
+            type: .screenView,
+            timestamp: Date(),
+            location: .zero,
+            duration: 0,
+            details: ["screenName": screenName]
+        )
+        interactionHistory.append(interaction)
     }
 
     private func getDeviceOrientation() -> String {
@@ -656,7 +698,33 @@ public final class UIFeedbackLearningEngine: ObservableObject {
     }
 
     private func getNetworkStatus() -> String {
-        return "connected"  // Placeholder - integrate with Reachability
+        // Check network connectivity using NWPathMonitor result
+        // This is synchronous fallback - for real-time monitoring, use NetworkMonitor
+        #if canImport(Network)
+        // Quick sync check using URLSession configuration
+        let config = URLSessionConfiguration.default
+        config.allowsCellularAccess = true
+
+        // Check if we have any network interfaces
+        var flags = SCNetworkReachabilityFlags()
+        let reachability = SCNetworkReachabilityCreateWithName(nil, "apple.com")
+
+        if let reachability = reachability,
+           SCNetworkReachabilityGetFlags(reachability, &flags) {
+            let isReachable = flags.contains(.reachable)
+            let needsConnection = flags.contains(.connectionRequired)
+            let isWiFi = !flags.contains(.isWWAN)
+
+            if isReachable && !needsConnection {
+                return isWiFi ? "wifi" : "cellular"
+            } else if needsConnection {
+                return "connecting"
+            }
+        }
+        #endif
+
+        // Fallback: assume connected (most common state)
+        return "connected"
     }
 
     // MARK: - Preferences Inference

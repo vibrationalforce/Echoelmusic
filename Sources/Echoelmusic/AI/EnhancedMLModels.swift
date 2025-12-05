@@ -551,9 +551,49 @@ class EnhancedMLModels {
         }
 
         private func estimateTempo(audioBuffer: [Float], sampleRate: Float) -> Float {
-            // Vereinfachte Tempo-Schätzung via Onset Detection
-            // In Produktion: Autocorrelation oder Beat-Tracking-Algorithmus
-            return 120.0 // Placeholder
+            // Tempo estimation via onset detection + autocorrelation
+            let hopSize = 512
+            let windowSize = 1024
+            guard audioBuffer.count >= windowSize * 2 else { return 120.0 }
+
+            // 1. Calculate onset strength envelope
+            var onsetStrength: [Float] = []
+            var prevSpectralFlux: Float = 0
+
+            for i in stride(from: 0, to: audioBuffer.count - windowSize, by: hopSize) {
+                let frame = Array(audioBuffer[i..<i+windowSize])
+                let energy = frame.reduce(0) { $0 + $1 * $1 }
+
+                // Simple spectral flux (energy difference)
+                let flux = max(0, energy - prevSpectralFlux)
+                onsetStrength.append(flux)
+                prevSpectralFlux = energy
+            }
+
+            guard onsetStrength.count > 100 else { return 120.0 }
+
+            // 2. Autocorrelation to find periodicity
+            let minLag = Int(60.0 / 200.0 * sampleRate / Float(hopSize))  // 200 BPM
+            let maxLag = Int(60.0 / 60.0 * sampleRate / Float(hopSize))   // 60 BPM
+
+            var bestCorr: Float = 0
+            var bestLag = minLag
+
+            for lag in minLag..<min(maxLag, onsetStrength.count / 2) {
+                var correlation: Float = 0
+                for i in 0..<(onsetStrength.count - lag) {
+                    correlation += onsetStrength[i] * onsetStrength[i + lag]
+                }
+
+                if correlation > bestCorr {
+                    bestCorr = correlation
+                    bestLag = lag
+                }
+            }
+
+            // Convert lag to BPM
+            let tempo = 60.0 * sampleRate / Float(hopSize * bestLag)
+            return max(60, min(200, tempo))  // Clamp to reasonable range
         }
 
         private func calculateSpectralCentroid(audioBuffer: [Float]) -> Float {
@@ -574,8 +614,40 @@ class EnhancedMLModels {
         }
 
         private func calculateSpectralRolloff(audioBuffer: [Float]) -> Float {
-            // Vereinfacht: Frequenz unter der 85% der Energie liegt
-            return 0.5 // Placeholder
+            // Frequency below which 85% of spectral energy is contained
+            let fftSize = 1024
+            guard audioBuffer.count >= fftSize else { return 0.5 }
+
+            // Calculate magnitude spectrum (simplified DFT)
+            var magnitudes = [Float](repeating: 0, count: fftSize / 2)
+            for k in 0..<(fftSize / 2) {
+                var sumReal: Float = 0
+                var sumImag: Float = 0
+                let omega = 2.0 * Float.pi * Float(k) / Float(fftSize)
+
+                for n in 0..<fftSize {
+                    let sample = audioBuffer[n]
+                    sumReal += sample * cos(omega * Float(n))
+                    sumImag += sample * sin(omega * Float(n))
+                }
+
+                magnitudes[k] = sqrt(sumReal * sumReal + sumImag * sumImag)
+            }
+
+            // Calculate total energy
+            let totalEnergy = magnitudes.reduce(0) { $0 + $1 * $1 }
+            let threshold = totalEnergy * 0.85
+
+            // Find rolloff point
+            var cumulativeEnergy: Float = 0
+            for k in 0..<magnitudes.count {
+                cumulativeEnergy += magnitudes[k] * magnitudes[k]
+                if cumulativeEnergy >= threshold {
+                    return Float(k) / Float(magnitudes.count)
+                }
+            }
+
+            return 1.0
         }
 
         private func calculateZeroCrossingRate(audioBuffer: [Float]) -> Float {
@@ -590,19 +662,141 @@ class EnhancedMLModels {
         }
 
         private func calculateMFCC(audioBuffer: [Float], coefficients: Int) -> [Float] {
-            // Vereinfachte MFCC-Berechnung
-            // In Produktion: Vollständige Mel-Filterbank + DCT
-            return [Float](repeating: 0.5, count: coefficients) // Placeholder
+            // MFCC: Mel-Frequency Cepstral Coefficients
+            let fftSize = 1024
+            let numMelBands = 26
+            guard audioBuffer.count >= fftSize else {
+                return [Float](repeating: 0.5, count: coefficients)
+            }
+
+            // 1. Calculate power spectrum
+            var powerSpectrum = [Float](repeating: 0, count: fftSize / 2)
+            for k in 0..<(fftSize / 2) {
+                var sumReal: Float = 0
+                var sumImag: Float = 0
+                let omega = 2.0 * Float.pi * Float(k) / Float(fftSize)
+
+                for n in 0..<fftSize {
+                    let sample = audioBuffer[n]
+                    sumReal += sample * cos(omega * Float(n))
+                    sumImag += sample * sin(omega * Float(n))
+                }
+
+                powerSpectrum[k] = (sumReal * sumReal + sumImag * sumImag) / Float(fftSize)
+            }
+
+            // 2. Apply Mel filterbank (triangular filters on Mel scale)
+            var melEnergies = [Float](repeating: 0, count: numMelBands)
+            let melMin: Float = 0
+            let melMax: Float = 2595.0 * log10(1.0 + 22050.0 / 700.0)
+
+            for m in 0..<numMelBands {
+                let melCenter = melMin + Float(m + 1) * (melMax - melMin) / Float(numMelBands + 1)
+                let freqCenter = 700.0 * (pow(10.0, melCenter / 2595.0) - 1.0)
+                let binCenter = Int(freqCenter * Float(fftSize) / 44100.0)
+
+                // Triangular filter
+                let bandwidth = Int(Float(fftSize) / Float(numMelBands))
+                let binStart = max(0, binCenter - bandwidth / 2)
+                let binEnd = min(fftSize / 2, binCenter + bandwidth / 2)
+
+                for k in binStart..<binEnd {
+                    let weight = 1.0 - abs(Float(k - binCenter)) / Float(bandwidth / 2)
+                    melEnergies[m] += powerSpectrum[k] * max(0, weight)
+                }
+
+                // Log compression
+                melEnergies[m] = log(melEnergies[m] + 1e-10)
+            }
+
+            // 3. DCT to get MFCCs
+            var mfcc = [Float](repeating: 0, count: coefficients)
+            for i in 0..<coefficients {
+                for j in 0..<numMelBands {
+                    mfcc[i] += melEnergies[j] * cos(Float.pi * Float(i) * (Float(j) + 0.5) / Float(numMelBands))
+                }
+                mfcc[i] *= sqrt(2.0 / Float(numMelBands))
+            }
+
+            return mfcc
         }
 
         private func calculateRhythmComplexity(audioBuffer: [Float]) -> Float {
-            // Vereinfacht: Variabilität der Onset-Intervalle
-            return 0.5 // Placeholder
+            // Rhythm complexity via variability of inter-onset intervals
+            let hopSize = 512
+            let windowSize = 1024
+            guard audioBuffer.count >= windowSize * 4 else { return 0.5 }
+
+            // Detect onsets via spectral flux
+            var onsetTimes: [Int] = []
+            var prevEnergy: Float = 0
+            let threshold: Float = 0.1
+
+            for i in stride(from: 0, to: audioBuffer.count - windowSize, by: hopSize) {
+                let frame = Array(audioBuffer[i..<i+windowSize])
+                let energy = frame.reduce(0) { $0 + $1 * $1 } / Float(windowSize)
+
+                // Peak detection
+                if energy > prevEnergy + threshold && energy > 0.01 {
+                    onsetTimes.append(i)
+                }
+                prevEnergy = energy
+            }
+
+            guard onsetTimes.count > 2 else { return 0.5 }
+
+            // Calculate inter-onset intervals
+            var intervals: [Int] = []
+            for i in 1..<onsetTimes.count {
+                intervals.append(onsetTimes[i] - onsetTimes[i-1])
+            }
+
+            // Calculate coefficient of variation (std / mean)
+            let mean = Float(intervals.reduce(0, +)) / Float(intervals.count)
+            let variance = intervals.reduce(Float(0)) { $0 + pow(Float($1) - mean, 2) } / Float(intervals.count)
+            let std = sqrt(variance)
+
+            // Normalize to 0-1 range (higher = more complex)
+            let cv = mean > 0 ? std / mean : 0
+            return min(1.0, cv)
         }
 
         private func calculateHarmonicComplexity(audioBuffer: [Float]) -> Float {
-            // Vereinfacht: Anzahl signifikanter Frequenzkomponenten
-            return 0.5 // Placeholder
+            // Harmonic complexity via spectral flatness and peak count
+            let fftSize = 1024
+            guard audioBuffer.count >= fftSize else { return 0.5 }
+
+            // Calculate magnitude spectrum
+            var magnitudes = [Float](repeating: 0, count: fftSize / 2)
+            for k in 0..<(fftSize / 2) {
+                var sumReal: Float = 0
+                var sumImag: Float = 0
+                let omega = 2.0 * Float.pi * Float(k) / Float(fftSize)
+
+                for n in 0..<fftSize {
+                    sumReal += audioBuffer[n] * cos(omega * Float(n))
+                    sumImag += audioBuffer[n] * sin(omega * Float(n))
+                }
+
+                magnitudes[k] = sqrt(sumReal * sumReal + sumImag * sumImag)
+            }
+
+            // Count significant peaks (local maxima above threshold)
+            let maxMag = magnitudes.max() ?? 1
+            let threshold = maxMag * 0.1
+            var peakCount = 0
+
+            for i in 1..<(magnitudes.count - 1) {
+                if magnitudes[i] > magnitudes[i-1] &&
+                   magnitudes[i] > magnitudes[i+1] &&
+                   magnitudes[i] > threshold {
+                    peakCount += 1
+                }
+            }
+
+            // Normalize: more peaks = more harmonic complexity
+            // Typical music has 5-50 significant peaks
+            return min(1.0, Float(peakCount) / 50.0)
         }
     }
 

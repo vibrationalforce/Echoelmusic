@@ -134,8 +134,32 @@ class AdvancedDSPEffects {
                 a1 = -2.0 * cosOmega
                 a2 = 1.0 - alpha
 
-            default:
-                return input  // Not implemented
+            case .bandPass:
+                // BPF with constant skirt gain (peak gain = Q)
+                b0 = alpha
+                b1 = 0
+                b2 = -alpha
+                a0 = 1.0 + alpha
+                a1 = -2.0 * cosOmega
+                a2 = 1.0 - alpha
+
+            case .notch:
+                // Notch filter (band-reject)
+                b0 = 1.0
+                b1 = -2.0 * cosOmega
+                b2 = 1.0
+                a0 = 1.0 + alpha
+                a1 = -2.0 * cosOmega
+                a2 = 1.0 - alpha
+
+            case .allPass:
+                // All-pass filter (phase shift only)
+                b0 = 1.0 - alpha
+                b1 = -2.0 * cosOmega
+                b2 = 1.0 + alpha
+                a0 = 1.0 + alpha
+                a1 = -2.0 * cosOmega
+                a2 = 1.0 - alpha
             }
 
             // Normalize coefficients
@@ -244,9 +268,70 @@ class AdvancedDSPEffects {
         }
 
         private func filterBand(_ input: [Float], lowFreq: Float, highFreq: Float) -> [Float] {
-            // Simplified bandpass filter
-            // In production, use proper Linkwitz-Riley crossovers
-            return input  // Placeholder
+            // Linkwitz-Riley 4th order bandpass (LR4 = 2x Butterworth 2nd order)
+            // This provides -24dB/octave slopes with flat magnitude response at crossover
+
+            var output = input
+
+            // High-pass at lowFreq (2 cascaded 2nd order Butterworth)
+            if lowFreq > 0 {
+                output = applyHighPass(output, cutoff: lowFreq)
+                output = applyHighPass(output, cutoff: lowFreq)  // Cascade for LR4
+            }
+
+            // Low-pass at highFreq (2 cascaded 2nd order Butterworth)
+            if highFreq < sampleRate / 2 {
+                output = applyLowPass(output, cutoff: highFreq)
+                output = applyLowPass(output, cutoff: highFreq)  // Cascade for LR4
+            }
+
+            return output
+        }
+
+        private func applyHighPass(_ input: [Float], cutoff: Float) -> [Float] {
+            let omega = 2.0 * Float.pi * cutoff / sampleRate
+            let sinOmega = sin(omega)
+            let cosOmega = cos(omega)
+            let alpha = sinOmega / (2.0 * 0.7071)  // Q = 0.7071 for Butterworth
+
+            let b0 = ((1.0 + cosOmega) / 2.0) / (1.0 + alpha)
+            let b1 = (-(1.0 + cosOmega)) / (1.0 + alpha)
+            let b2 = ((1.0 + cosOmega) / 2.0) / (1.0 + alpha)
+            let a1 = (-2.0 * cosOmega) / (1.0 + alpha)
+            let a2 = (1.0 - alpha) / (1.0 + alpha)
+
+            return applyBiquadMB(input, b0: b0, b1: b1, b2: b2, a1: a1, a2: a2)
+        }
+
+        private func applyLowPass(_ input: [Float], cutoff: Float) -> [Float] {
+            let omega = 2.0 * Float.pi * cutoff / sampleRate
+            let sinOmega = sin(omega)
+            let cosOmega = cos(omega)
+            let alpha = sinOmega / (2.0 * 0.7071)  // Q = 0.7071 for Butterworth
+
+            let b0 = ((1.0 - cosOmega) / 2.0) / (1.0 + alpha)
+            let b1 = (1.0 - cosOmega) / (1.0 + alpha)
+            let b2 = ((1.0 - cosOmega) / 2.0) / (1.0 + alpha)
+            let a1 = (-2.0 * cosOmega) / (1.0 + alpha)
+            let a2 = (1.0 - alpha) / (1.0 + alpha)
+
+            return applyBiquadMB(input, b0: b0, b1: b1, b2: b2, a1: a1, a2: a2)
+        }
+
+        private func applyBiquadMB(_ input: [Float], b0: Float, b1: Float, b2: Float, a1: Float, a2: Float) -> [Float] {
+            var output = [Float](repeating: 0, count: input.count)
+            var x1: Float = 0, x2: Float = 0
+            var y1: Float = 0, y2: Float = 0
+
+            for i in 0..<input.count {
+                let x0 = input[i]
+                let y0 = b0 * x0 + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+                output[i] = y0
+                x2 = x1; x1 = x0
+                y2 = y1; y1 = y0
+            }
+
+            return output
         }
 
         private func compressBand(_ input: [Float], band: Band) -> [Float] {
