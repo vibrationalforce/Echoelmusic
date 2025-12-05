@@ -68,16 +68,29 @@ final class ChatModerationEngine: ObservableObject {
         self.languageRecognizer = NLLanguageRecognizer()
         self.tagger = NLTagger(tagSchemes: [.lexicalClass, .sentimentScore])
 
-        // Try to load sentiment model (built into NaturalLanguage framework)
-        self.sentimentAnalyzer = try? NLModel(mlModel: createSentimentMLModel())
+        // Use built-in NLTagger sentiment analysis - no custom model needed
+        // The analyzeToxicity() method uses NLTagger directly which provides
+        // excellent sentiment analysis via Apple's NaturalLanguage framework
+        self.sentimentAnalyzer = Self.loadSentimentModel()
 
         loadProfanityList()
     }
 
-    private func createSentimentMLModel() -> MLModel {
-        // In production, this would load a trained CoreML model
-        // For now, we use the built-in NLTagger sentiment analysis
-        fatalError("Would load trained model here")
+    /// Load custom sentiment model if available, otherwise return nil
+    /// The engine works without this - NLTagger provides built-in sentiment analysis
+    private static func loadSentimentModel() -> NLModel? {
+        // Try to load custom CoreML sentiment model from bundle
+        if let modelURL = Bundle.main.url(forResource: "SentimentClassifier", withExtension: "mlmodelc") {
+            do {
+                let mlModel = try MLModel(contentsOf: modelURL)
+                return try NLModel(mlModel: mlModel)
+            } catch {
+                // Fall back to NLTagger's built-in sentiment analysis
+                print("[ChatModeration] Custom model not found, using NLTagger: \(error.localizedDescription)")
+            }
+        }
+        // NLTagger provides excellent built-in sentiment analysis
+        return nil
     }
 
     private func loadProfanityList() {
