@@ -169,12 +169,37 @@ public struct AmbisonicsEncoder {
             coeffs[8] = sqrt(3.0/4.0) * cos2a * cosE * cosE
         }
 
-        // Higher orders follow similar pattern...
+        // Order 3 spherical harmonics (ACN ordering, SN3D normalization)
         if order.rawValue >= 3 {
-            // Simplified order 3
-            for i in 9..<16 {
-                coeffs[i] = Double.random(in: -0.3...0.3)  // Placeholder
-            }
+            let cosE = cos(elevation)
+            let sinE = sin(elevation)
+            let cos2E = cos(2 * elevation)
+            let sin2E = sin(2 * elevation)
+            let cos3A = cos(3 * azimuth)
+            let sin3A = sin(3 * azimuth)
+            let cos2A = cos(2 * azimuth)
+            let sin2A = sin(2 * azimuth)
+
+            // Y_3^-3: sin(3φ) * cos³(θ) * √(5/8)
+            coeffs[9] = sqrt(5.0/8.0) * sin3A * pow(cosE, 3)
+
+            // Y_3^-2: sin(2φ) * sin(θ) * cos(θ) * √(15/2)
+            coeffs[10] = sqrt(15.0/2.0) * sin2A * sinE * cosE
+
+            // Y_3^-1: sin(φ) * (5sin²(θ) - 1) * cos(θ) * √(3/8)
+            coeffs[11] = sqrt(3.0/8.0) * sin(azimuth) * (5 * sinE * sinE - 1) * cosE
+
+            // Y_3^0: (5sin³(θ) - 3sin(θ)) / 2 = sin(θ)(5cos²(θ) - 3) * 0.5
+            coeffs[12] = 0.5 * sinE * (5 * cosE * cosE - 3)
+
+            // Y_3^1: cos(φ) * (5sin²(θ) - 1) * cos(θ) * √(3/8)
+            coeffs[13] = sqrt(3.0/8.0) * cos(azimuth) * (5 * sinE * sinE - 1) * cosE
+
+            // Y_3^2: cos(2φ) * sin(θ) * cos(θ) * √(15/2)
+            coeffs[14] = sqrt(15.0/2.0) * cos2A * sinE * cosE
+
+            // Y_3^3: cos(3φ) * cos³(θ) * √(5/8)
+            coeffs[15] = sqrt(5.0/8.0) * cos3A * pow(cosE, 3)
         }
 
         return coeffs

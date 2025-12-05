@@ -551,15 +551,43 @@ class HealthMonitor {
     }
 
     private func getCPUUsage() -> Float {
-        // Simplified CPU check
-        var info = mach_task_basic_info()
-        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
-        let result = withUnsafeMutablePointer(to: &info) {
-            $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
-                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+        // Get CPU usage via thread_info for all threads
+        var threadList: thread_act_array_t?
+        var threadCount = mach_msg_type_number_t(0)
+
+        let result = task_threads(mach_task_self_, &threadList, &threadCount)
+        guard result == KERN_SUCCESS, let threads = threadList else {
+            return 0.3  // Fallback if we can't get thread info
+        }
+
+        defer {
+            // Deallocate thread list
+            let listSize = vm_size_t(MemoryLayout<thread_t>.size * Int(threadCount))
+            vm_deallocate(mach_task_self_, vm_address_t(bitPattern: threads), listSize)
+        }
+
+        var totalCPU: Double = 0
+
+        for i in 0..<Int(threadCount) {
+            var threadInfo = thread_basic_info()
+            var infoCount = mach_msg_type_number_t(THREAD_INFO_MAX)
+
+            let threadResult = withUnsafeMutablePointer(to: &threadInfo) {
+                $0.withMemoryRebound(to: integer_t.self, capacity: Int(infoCount)) {
+                    thread_info(threads[i], thread_flavor_t(THREAD_BASIC_INFO), $0, &infoCount)
+                }
+            }
+
+            if threadResult == KERN_SUCCESS && threadInfo.flags != TH_FLAGS_IDLE {
+                totalCPU += Double(threadInfo.cpu_usage) / Double(TH_USAGE_SCALE)
             }
         }
-        return result == KERN_SUCCESS ? 0.5 : 0.3  // Placeholder
+
+        // Normalize by number of CPU cores
+        let coreCount = Double(ProcessInfo.processInfo.activeProcessorCount)
+        let normalizedCPU = totalCPU / max(coreCount, 1.0)
+
+        return Float(min(1.0, normalizedCPU))
     }
 
     private func getMemoryUsage() -> Float {

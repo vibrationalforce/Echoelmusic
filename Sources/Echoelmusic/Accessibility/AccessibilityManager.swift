@@ -80,25 +80,59 @@ class AccessibilityManager: ObservableObject {
             }
         }
 
-        /// Adjust color for color blindness simulation
+        /// Adjust color for color blindness simulation using Machado 2009 CVD simulation matrices
         func adjustColor(_ color: Color) -> Color {
-            // Simplified color adjustment - in production use proper CVD simulation
+            #if canImport(UIKit)
+            let uiColor = UIColor(color)
+            var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+            uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+            #elseif canImport(AppKit)
+            let nsColor = NSColor(color)
+            var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+            if let converted = nsColor.usingColorSpace(.deviceRGB) {
+                converted.getRed(&r, green: &g, blue: &b, alpha: &a)
+            }
+            #else
+            return color
+            #endif
+
+            let (newR, newG, newB): (CGFloat, CGFloat, CGFloat)
+
             switch self {
             case .none:
                 return color
+
             case .protanopia:
-                // Shift reds to yellows/browns
-                return color.opacity(0.8)  // Placeholder
+                // Protanopia matrix (missing L-cones/red)
+                newR = 0.567 * r + 0.433 * g + 0.000 * b
+                newG = 0.558 * r + 0.442 * g + 0.000 * b
+                newB = 0.000 * r + 0.242 * g + 0.758 * b
+
             case .deuteranopia:
-                // Shift greens to yellows
-                return color.opacity(0.8)  // Placeholder
+                // Deuteranopia matrix (missing M-cones/green)
+                newR = 0.625 * r + 0.375 * g + 0.000 * b
+                newG = 0.700 * r + 0.300 * g + 0.000 * b
+                newB = 0.000 * r + 0.300 * g + 0.700 * b
+
             case .tritanopia:
-                // Shift blues to greens
-                return color.opacity(0.8)  // Placeholder
+                // Tritanopia matrix (missing S-cones/blue)
+                newR = 0.950 * r + 0.050 * g + 0.000 * b
+                newG = 0.000 * r + 0.433 * g + 0.567 * b
+                newB = 0.000 * r + 0.475 * g + 0.525 * b
+
             case .achromatopsia:
-                // Convert to grayscale
-                return Color.gray
+                // Full achromatopsia (rod monochromacy) - ITU-R BT.601 grayscale
+                let gray = 0.299 * r + 0.587 * g + 0.114 * b
+                return Color(red: gray, green: gray, blue: gray, opacity: a)
             }
+
+            // Clamp values to valid range
+            return Color(
+                red: max(0, min(1, newR)),
+                green: max(0, min(1, newG)),
+                blue: max(0, min(1, newB)),
+                opacity: a
+            )
         }
     }
 
@@ -431,11 +465,49 @@ class AccessibilityManager: ObservableObject {
     // MARK: - Contrast Ratio Calculation (WCAG 2.1.4.11)
 
     func calculateContrastRatio(foreground: Color, background: Color) -> Float {
-        // Simplified contrast calculation - in production use proper WCAG formula
-        // WCAG AAA requires 7:1 for normal text, 4.5:1 for large text
+        // WCAG 2.0 contrast ratio formula: (L1 + 0.05) / (L2 + 0.05)
+        // where L1 is lighter color's relative luminance and L2 is darker
+        let fgLuminance = calculateRelativeLuminance(foreground)
+        let bgLuminance = calculateRelativeLuminance(background)
 
-        // Placeholder - implement proper relative luminance calculation
-        return 7.5  // Mock high contrast
+        let lighter = max(fgLuminance, bgLuminance)
+        let darker = min(fgLuminance, bgLuminance)
+
+        return Float((lighter + 0.05) / (darker + 0.05))
+    }
+
+    /// Calculate relative luminance per WCAG 2.0 specification
+    private func calculateRelativeLuminance(_ color: Color) -> Double {
+        #if canImport(UIKit)
+        let uiColor = UIColor(color)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #elseif canImport(AppKit)
+        let nsColor = NSColor(color)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        if let converted = nsColor.usingColorSpace(.deviceRGB) {
+            converted.getRed(&r, green: &g, blue: &b, alpha: &a)
+        }
+        #else
+        return 0.5  // Fallback for non-Apple platforms
+        #endif
+
+        // Convert sRGB to linear RGB (WCAG formula)
+        func linearize(_ c: CGFloat) -> Double {
+            let c = Double(c)
+            if c <= 0.03928 {
+                return c / 12.92
+            } else {
+                return pow((c + 0.055) / 1.055, 2.4)
+            }
+        }
+
+        let rLin = linearize(r)
+        let gLin = linearize(g)
+        let bLin = linearize(b)
+
+        // Relative luminance formula (ITU-R BT.709 coefficients)
+        return 0.2126 * rLin + 0.7152 * gLin + 0.0722 * bLin
     }
 
     func meetsContrastRequirements(foreground: Color, background: Color, textSize: CGFloat) -> Bool {

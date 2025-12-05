@@ -698,9 +698,110 @@ enum DrumKit: String, CaseIterable {
                 DrumPadModel(name: "Shaker", midiNote: 70, color: .brown),
                 DrumPadModel(name: "Perc", midiNote: 75, color: .gray)
             ]
-        case .tr808, .tr909, .electronic, .hiphop, .percussion:
-            // Similar structure, different note mappings
-            return DrumKit.acoustic.pads // Placeholder
+        case .tr808:
+            // Classic Roland TR-808 drum machine mapping
+            return [
+                DrumPadModel(name: "808 Kick", midiNote: 36, color: .red),
+                DrumPadModel(name: "808 Snare", midiNote: 38, color: .orange),
+                DrumPadModel(name: "808 Clap", midiNote: 39, color: .orange),
+                DrumPadModel(name: "808 Rim", midiNote: 37, color: .yellow),
+                DrumPadModel(name: "808 HH C", midiNote: 42, color: .yellow),
+                DrumPadModel(name: "808 HH O", midiNote: 46, color: .yellow),
+                DrumPadModel(name: "808 Tom L", midiNote: 41, color: .green),
+                DrumPadModel(name: "808 Tom M", midiNote: 45, color: .green),
+                DrumPadModel(name: "808 Tom H", midiNote: 48, color: .green),
+                DrumPadModel(name: "808 Conga L", midiNote: 63, color: .cyan),
+                DrumPadModel(name: "808 Conga M", midiNote: 62, color: .cyan),
+                DrumPadModel(name: "808 Conga H", midiNote: 64, color: .cyan),
+                DrumPadModel(name: "808 Clave", midiNote: 75, color: .blue),
+                DrumPadModel(name: "808 Maracas", midiNote: 70, color: .purple),
+                DrumPadModel(name: "808 Cowbell", midiNote: 56, color: .brown),
+                DrumPadModel(name: "808 Cymbal", midiNote: 49, color: .gray)
+            ]
+
+        case .tr909:
+            // Roland TR-909 drum machine mapping
+            return [
+                DrumPadModel(name: "909 Kick", midiNote: 36, color: .red),
+                DrumPadModel(name: "909 Snare", midiNote: 38, color: .orange),
+                DrumPadModel(name: "909 Clap", midiNote: 39, color: .orange),
+                DrumPadModel(name: "909 Rim", midiNote: 37, color: .yellow),
+                DrumPadModel(name: "909 HH C", midiNote: 42, color: .yellow),
+                DrumPadModel(name: "909 HH O", midiNote: 46, color: .yellow),
+                DrumPadModel(name: "909 Tom L", midiNote: 41, color: .green),
+                DrumPadModel(name: "909 Tom M", midiNote: 45, color: .green),
+                DrumPadModel(name: "909 Tom H", midiNote: 48, color: .green),
+                DrumPadModel(name: "909 Crash", midiNote: 49, color: .cyan),
+                DrumPadModel(name: "909 Ride", midiNote: 51, color: .cyan),
+                DrumPadModel(name: "909 Perc 1", midiNote: 60, color: .blue),
+                DrumPadModel(name: "909 Perc 2", midiNote: 61, color: .blue),
+                DrumPadModel(name: "909 Perc 3", midiNote: 62, color: .purple),
+                DrumPadModel(name: "909 Perc 4", midiNote: 63, color: .purple),
+                DrumPadModel(name: "909 FX", midiNote: 82, color: .gray)
+            ]
+
+        case .electronic:
+            // Modern electronic/EDM kit
+            return [
+                DrumPadModel(name: "Sub Kick", midiNote: 36, color: .red),
+                DrumPadModel(name: "Hard Kick", midiNote: 35, color: .red),
+                DrumPadModel(name: "Snare", midiNote: 38, color: .orange),
+                DrumPadModel(name: "Snare 2", midiNote: 40, color: .orange),
+                DrumPadModel(name: "Clap", midiNote: 39, color: .yellow),
+                DrumPadModel(name: "HiHat C", midiNote: 42, color: .yellow),
+                DrumPadModel(name: "HiHat O", midiNote: 46, color: .yellow),
+                DrumPadModel(name: "Crash", midiNote: 49, color: .green),
+                DrumPadModel(name: "Ride", midiNote: 51, color: .green),
+                DrumPadModel(name: "Perc 1", midiNote: 60, color: .cyan),
+                DrumPadModel(name: "Perc 2", midiNote: 61, color: .cyan),
+                DrumPadModel(name: "FX Rise", midiNote: 82, color: .blue),
+                DrumPadModel(name: "FX Down", midiNote: 83, color: .blue),
+                DrumPadModel(name: "Vox Hit", midiNote: 84, color: .purple),
+                DrumPadModel(name: "Synth Hit", midiNote: 85, color: .purple),
+                DrumPadModel(name: "Noise", midiNote: 86, color: .gray)
+            ]
+
+        case .hiphop:
+            // Hip-hop/Trap kit (MPC-style mapping)
+            return [
+                DrumPadModel(name: "808 Sub", midiNote: 36, color: .red),
+                DrumPadModel(name: "Punch Kick", midiNote: 35, color: .red),
+                DrumPadModel(name: "Snare", midiNote: 38, color: .orange),
+                DrumPadModel(name: "Rim Shot", midiNote: 37, color: .orange),
+                DrumPadModel(name: "Clap", midiNote: 39, color: .yellow),
+                DrumPadModel(name: "Snap", midiNote: 40, color: .yellow),
+                DrumPadModel(name: "HiHat C", midiNote: 42, color: .green),
+                DrumPadModel(name: "HiHat O", midiNote: 46, color: .green),
+                DrumPadModel(name: "HiHat Roll", midiNote: 44, color: .green),
+                DrumPadModel(name: "Shaker", midiNote: 70, color: .cyan),
+                DrumPadModel(name: "Perc", midiNote: 75, color: .cyan),
+                DrumPadModel(name: "Vox", midiNote: 84, color: .blue),
+                DrumPadModel(name: "FX", midiNote: 82, color: .blue),
+                DrumPadModel(name: "Bell", midiNote: 56, color: .purple),
+                DrumPadModel(name: "808 Open", midiNote: 41, color: .purple),
+                DrumPadModel(name: "Fill", midiNote: 87, color: .gray)
+            ]
+
+        case .percussion:
+            // World percussion kit
+            return [
+                DrumPadModel(name: "Djembe Lo", midiNote: 36, color: .red),
+                DrumPadModel(name: "Djembe Hi", midiNote: 38, color: .red),
+                DrumPadModel(name: "Conga Lo", midiNote: 63, color: .orange),
+                DrumPadModel(name: "Conga Slap", midiNote: 64, color: .orange),
+                DrumPadModel(name: "Conga Hi", midiNote: 62, color: .orange),
+                DrumPadModel(name: "Bongo Lo", midiNote: 61, color: .yellow),
+                DrumPadModel(name: "Bongo Hi", midiNote: 60, color: .yellow),
+                DrumPadModel(name: "Timbale Lo", midiNote: 66, color: .green),
+                DrumPadModel(name: "Timbale Hi", midiNote: 65, color: .green),
+                DrumPadModel(name: "Shaker", midiNote: 70, color: .cyan),
+                DrumPadModel(name: "Cabasa", midiNote: 69, color: .cyan),
+                DrumPadModel(name: "Guiro", midiNote: 73, color: .blue),
+                DrumPadModel(name: "Claves", midiNote: 75, color: .blue),
+                DrumPadModel(name: "Cowbell", midiNote: 56, color: .purple),
+                DrumPadModel(name: "Triangle", midiNote: 81, color: .purple),
+                DrumPadModel(name: "Tambourine", midiNote: 54, color: .gray)
+            ]
         }
     }
 }
