@@ -23,15 +23,20 @@ import Combine
 
 /// CRDT-based sync engine for conflict-free collaborative editing
 @MainActor
-final class CRDTSyncEngine: ObservableObject {
+public final class CRDTSyncEngine: ObservableObject {
+
+    // MARK: - Singleton
+
+    public static let shared = CRDTSyncEngine()
 
     // MARK: - Published State
 
-    @Published var syncState: SyncState = .idle
-    @Published var connectedPeers: [PeerInfo] = []
-    @Published var pendingChanges: Int = 0
-    @Published var lastSyncTime: Date?
-    @Published var conflictResolutions: [ConflictResolution] = []
+    @Published public var syncState: SyncState = .idle
+    @Published public var connectedPeers: [PeerInfo] = []
+    @Published public var pendingChanges: Int = 0
+    @Published public var lastSyncTime: Date?
+    @Published public var conflictResolutions: [CRDTConflictResolution] = []
+    @Published public internal(set) var _pendingConflicts: [SyncConflict] = []
 
     // MARK: - Private Properties
 
