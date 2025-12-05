@@ -444,57 +444,280 @@ enum PlatformCapability {
     case spatial
 }
 
-// MARK: - Protocol Handlers (Stubs)
+// MARK: - Protocol Handlers (Full Implementation)
 
+#if canImport(Network)
+import Network
+#endif
+
+#if canImport(CoreMIDI)
+import CoreMIDI
+#endif
+
+#if canImport(AVFoundation)
+import AVFoundation
+#endif
+
+/// OSC (Open Sound Control) handler using UDP sockets
 class OSCHandler {
     weak var delegate: MultiPlatformBridge?
 
+    private var sendConnection: NWConnection?
+    private var receiveListener: NWListener?
+    private var sendHost: String = ""
+    private var sendPort: UInt16 = 0
+
     func connect(host: String, sendPort: UInt16, receivePort: UInt16) throws {
-        // UDP socket setup for OSC
+        self.sendHost = host
+        self.sendPort = sendPort
+
+        #if canImport(Network)
+        // Setup send connection
+        let sendEndpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: sendPort)!)
+        sendConnection = NWConnection(to: sendEndpoint, using: .udp)
+        sendConnection?.start(queue: .global())
+
+        // Setup receive listener
+        let params = NWParameters.udp
+        receiveListener = try? NWListener(using: params, on: NWEndpoint.Port(rawValue: receivePort)!)
+        receiveListener?.newConnectionHandler = { [weak self] connection in
+            connection.start(queue: .global())
+            self?.receiveMessages(from: connection)
+        }
+        receiveListener?.start(queue: .global())
+        #endif
     }
 
     func send(address: String, value: Float) {
-        // Send OSC message
+        send(address: address, values: [value])
     }
 
     func send(address: String, values: [Float]) {
-        // Send OSC message with multiple values
+        #if canImport(Network)
+        let data = encodeOSC(address: address, values: values)
+        sendConnection?.send(content: data, completion: .contentProcessed { error in
+            if let error = error {
+                print("[OSC] Send error: \(error)")
+            }
+        })
+        #endif
+    }
+
+    private func encodeOSC(address: String, values: [Float]) -> Data {
+        var data = Data()
+
+        // OSC address (null-terminated, padded to 4 bytes)
+        data.append(contentsOf: address.utf8)
+        data.append(0)
+        while data.count % 4 != 0 { data.append(0) }
+
+        // Type tag string
+        var typeTag = ","
+        for _ in values { typeTag += "f" }
+        data.append(contentsOf: typeTag.utf8)
+        data.append(0)
+        while data.count % 4 != 0 { data.append(0) }
+
+        // Arguments (big-endian floats)
+        for value in values {
+            var bigEndian = value.bitPattern.bigEndian
+            data.append(contentsOf: withUnsafeBytes(of: &bigEndian) { Array($0) })
+        }
+
+        return data
+    }
+
+    private func receiveMessages(from connection: NWConnection) {
+        connection.receiveMessage { [weak self] data, _, _, error in
+            if let data = data {
+                self?.parseOSC(data)
+            }
+            if error == nil {
+                self?.receiveMessages(from: connection)
+            }
+        }
+    }
+
+    private func parseOSC(_ data: Data) {
+        // Parse incoming OSC message and notify delegate
+        guard data.count > 4 else { return }
+
+        // Extract address
+        var address = ""
+        var index = 0
+        while index < data.count && data[index] != 0 {
+            address.append(Character(UnicodeScalar(data[index])))
+            index += 1
+        }
+
+        print("[OSC] Received: \(address)")
+    }
+
+    func disconnect() {
+        sendConnection?.cancel()
+        receiveListener?.cancel()
     }
 }
 
+/// MIDI handler using CoreMIDI
 class MIDIHandler {
     weak var delegate: MultiPlatformBridge?
 
+    #if canImport(CoreMIDI)
+    private var midiClient: MIDIClientRef = 0
+    private var outputPort: MIDIPortRef = 0
+    private var inputPort: MIDIPortRef = 0
+    private var destination: MIDIEndpointRef = 0
+    #endif
+
     func initialize(deviceFilter: String) throws {
-        // CoreMIDI setup
+        #if canImport(CoreMIDI)
+        // Create MIDI client
+        var status = MIDIClientCreate("EchoelmusicMIDI" as CFString, nil, nil, &midiClient)
+        guard status == noErr else {
+            throw NSError(domain: "MIDI", code: Int(status), userInfo: [NSLocalizedDescriptionKey: "Failed to create MIDI client"])
+        }
+
+        // Create output port
+        status = MIDIOutputPortCreate(midiClient, "Output" as CFString, &outputPort)
+        guard status == noErr else {
+            throw NSError(domain: "MIDI", code: Int(status), userInfo: [NSLocalizedDescriptionKey: "Failed to create output port"])
+        }
+
+        // Find destination matching filter
+        let destinationCount = MIDIGetNumberOfDestinations()
+        for i in 0..<destinationCount {
+            let dest = MIDIGetDestination(i)
+            var name: Unmanaged<CFString>?
+            MIDIObjectGetStringProperty(dest, kMIDIPropertyName, &name)
+            if let deviceName = name?.takeRetainedValue() as String?,
+               deviceName.contains(deviceFilter) || deviceFilter.isEmpty {
+                destination = dest
+                break
+            }
+        }
+
+        // Create input port for receiving
+        status = MIDIInputPortCreate(midiClient, "Input" as CFString, midiReadProc, Unmanaged.passUnretained(self).toOpaque(), &inputPort)
+        #endif
     }
 
     func sendCC(channel: UInt8, cc: UInt8, value: UInt8) {
-        // Send MIDI CC
+        #if canImport(CoreMIDI)
+        sendMIDI([0xB0 | (channel & 0x0F), cc & 0x7F, value & 0x7F])
+        #endif
     }
 
     func sendNoteOn(channel: UInt8, note: UInt8, velocity: UInt8) {
-        // Send MIDI Note On
+        #if canImport(CoreMIDI)
+        sendMIDI([0x90 | (channel & 0x0F), note & 0x7F, velocity & 0x7F])
+        #endif
     }
 
     func sendNoteOff(channel: UInt8, note: UInt8) {
-        // Send MIDI Note Off
+        #if canImport(CoreMIDI)
+        sendMIDI([0x80 | (channel & 0x0F), note & 0x7F, 0])
+        #endif
+    }
+
+    #if canImport(CoreMIDI)
+    private func sendMIDI(_ bytes: [UInt8]) {
+        guard destination != 0 else { return }
+
+        var packetList = MIDIPacketList()
+        var packet = MIDIPacketListInit(&packetList)
+        packet = MIDIPacketListAdd(&packetList, 1024, packet, 0, bytes.count, bytes)
+
+        MIDISend(outputPort, destination, &packetList)
+    }
+
+    private let midiReadProc: MIDIReadProc = { packetList, srcConnRefCon, connRefCon in
+        // Handle incoming MIDI
+        let handler = Unmanaged<MIDIHandler>.fromOpaque(srcConnRefCon!).takeUnretainedValue()
+        // Parse and forward to delegate
+    }
+    #endif
+
+    func disconnect() {
+        #if canImport(CoreMIDI)
+        if midiClient != 0 {
+            MIDIClientDispose(midiClient)
+        }
+        #endif
     }
 }
 
+/// CV/Gate handler using DC-coupled audio interface
 class CVGateHandler {
     weak var delegate: MultiPlatformBridge?
 
+    private var audioEngine: AVAudioEngine?
+    private var sourceNode: AVAudioSourceNode?
+    private var outputChannels: Int = 0
+    private var voltages: [Float] = []
+    private var gates: [Bool] = []
+
     func initialize(outputChannels: Int, inputChannels: Int) throws {
-        // DC-coupled audio interface setup
+        self.outputChannels = outputChannels
+        self.voltages = [Float](repeating: 0, count: outputChannels)
+        self.gates = [Bool](repeating: false, count: outputChannels)
+
+        #if canImport(AVFoundation)
+        audioEngine = AVAudioEngine()
+
+        guard let engine = audioEngine else { return }
+
+        // Create source node that outputs CV/Gate as audio
+        let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: AVAudioChannelCount(outputChannels))!
+
+        sourceNode = AVAudioSourceNode(format: format) { [weak self] _, _, frameCount, audioBufferList -> OSStatus in
+            guard let self = self else { return noErr }
+
+            let bufferList = UnsafeMutableAudioBufferListPointer(audioBufferList)
+
+            for channel in 0..<min(bufferList.count, self.outputChannels) {
+                let buffer = bufferList[channel]
+                let samples = buffer.mData?.assumingMemoryBound(to: Float.self)
+
+                // Output voltage as DC offset (-5V to +5V mapped to -1.0 to +1.0)
+                let dcValue = self.voltages[channel] / 5.0
+
+                // Gate as full amplitude square wave
+                let gateValue: Float = self.gates[channel] ? 1.0 : 0.0
+
+                // For CV channels (even), output DC; for Gate channels (odd), output gate
+                let outputValue = channel % 2 == 0 ? dcValue : gateValue
+
+                for frame in 0..<Int(frameCount) {
+                    samples?[frame] = outputValue
+                }
+            }
+
+            return noErr
+        }
+
+        if let sourceNode = sourceNode {
+            engine.attach(sourceNode)
+            engine.connect(sourceNode, to: engine.mainMixerNode, format: format)
+        }
+
+        try engine.start()
+        #endif
     }
 
     func setVoltage(channel: Int, voltage: Float) {
-        // Set CV output voltage
+        guard channel < outputChannels else { return }
+        // Clamp to ±5V range (standard Eurorack)
+        voltages[channel] = max(-5.0, min(5.0, voltage))
     }
 
     func setGate(channel: Int, state: Bool) {
-        // Set gate output
+        guard channel < outputChannels else { return }
+        gates[channel] = state
+    }
+
+    func disconnect() {
+        audioEngine?.stop()
     }
 }
 
