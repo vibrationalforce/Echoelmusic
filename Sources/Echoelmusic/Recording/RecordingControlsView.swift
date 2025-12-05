@@ -458,11 +458,11 @@ struct RecordingControlsView: View {
         guard let session = recordingEngine.currentSession else { return }
 
         let exportManager = ExportManager()
-        Task {
+        Task { @MainActor in
             do {
                 let url = try await exportManager.exportAudio(session: session, format: format)
                 print("📤 Exported to: \(url.path)")
-                // TODO: Show share sheet
+                showShareSheet(for: url)
             } catch {
                 print("❌ Export failed: \(error)")
             }
@@ -476,7 +476,7 @@ struct RecordingControlsView: View {
         do {
             let url = try exportManager.exportBioData(session: session, format: format)
             print("📤 Exported bio-data to: \(url.path)")
-            // TODO: Show share sheet
+            showShareSheet(for: url)
         } catch {
             print("❌ Export failed: \(error)")
         }
@@ -486,11 +486,11 @@ struct RecordingControlsView: View {
         guard let session = recordingEngine.currentSession else { return }
 
         let exportManager = ExportManager()
-        Task {
+        Task { @MainActor in
             do {
                 let url = try await exportManager.exportSessionPackage(session: session)
                 print("📦 Exported package to: \(url.path)")
-                // TODO: Show share sheet
+                showShareSheet(for: url)
             } catch {
                 print("❌ Export failed: \(error)")
             }
@@ -498,6 +498,30 @@ struct RecordingControlsView: View {
     }
 
     // MARK: - Helpers
+
+    private func showShareSheet(for url: URL) {
+        #if os(iOS)
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first,
+              let rootVC = window.rootViewController else { return }
+
+        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+
+        // For iPad, configure popover presentation
+        if let popover = activityVC.popoverPresentationController {
+            popover.sourceView = window
+            popover.sourceRect = CGRect(x: window.bounds.midX, y: window.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+
+        rootVC.present(activityVC, animated: true)
+        #elseif os(macOS)
+        let picker = NSSharingServicePicker(items: [url])
+        if let contentView = NSApp.keyWindow?.contentView {
+            picker.show(relativeTo: .zero, of: contentView, preferredEdge: .minY)
+        }
+        #endif
+    }
 
     private func timeString(_ time: TimeInterval) -> String {
         let minutes = Int(time) / 60

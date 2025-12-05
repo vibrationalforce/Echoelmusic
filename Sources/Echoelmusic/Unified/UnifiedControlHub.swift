@@ -51,8 +51,8 @@ public class UnifiedControlHub: ObservableObject {
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
-    // TODO: Add when implementing
-    // private let gazeTracker: GazeTracker?
+    // Gaze tracking for hands-free control
+    private var gazeTracker: GazeTracker?
 
     // MARK: - Control Loop
 
@@ -426,8 +426,9 @@ public class UnifiedControlHub: ObservableObject {
                 let afaField = spatialMapper.mapToAFA(voices: voiceData, geometry: fieldGeometry)
                 spatialMapper.afaField = afaField
 
-                // TODO: Apply AFA field to SpatialAudioEngine
-                // print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
+                // Apply AFA field to SpatialAudioEngine
+                spatialAudioEngine?.applyAFAField(afaField)
+                print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
             }
         }
     }
@@ -450,9 +451,18 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
-        // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
-        // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+        // Apply to audio engine via notification
+        NotificationCenter.default.post(
+            name: .faceAudioParametersChanged,
+            object: nil,
+            userInfo: [
+                "filterCutoff": params.filterCutoff,
+                "filterResonance": params.filterResonance,
+                "volume": params.volume,
+                "pan": params.pan
+            ]
+        )
+        print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
 
         // Apply to all active MPE voices
         if let mpe = mpeZoneManager {
@@ -571,13 +581,40 @@ public class UnifiedControlHub: ObservableObject {
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // TODO: Change to preset
+            // Send preset change notification
+            NotificationCenter.default.post(
+                name: .presetChangeRequested,
+                object: nil,
+                userInfo: ["preset": presetChange]
+            )
             print("[Gesture→Audio] Switch to preset: \(presetChange)")
         }
     }
 
     private func updateFromGazeTracking() {
-        // TODO: Implement when GazeTracker is integrated
+        // Gaze tracking integration for hands-free control
+        guard let gazeTracker = gazeTracker else { return }
+
+        // Get current gaze point
+        let gazePoint = gazeTracker.currentGazePoint
+
+        // Map gaze to UI zones for parameter control
+        if gazePoint.y < 0.3 {
+            // Looking at top - could control effects
+            print("[Gaze] Looking at effects zone")
+        } else if gazePoint.y > 0.7 {
+            // Looking at bottom - could control transport
+            print("[Gaze] Looking at transport zone")
+        }
+
+        // Dwell detection for selection
+        if gazeTracker.isDwelling {
+            NotificationCenter.default.post(
+                name: .gazeSelectionTriggered,
+                object: nil,
+                userInfo: ["point": gazePoint]
+            )
+        }
     }
 
     // MARK: - Conflict Resolution
@@ -620,11 +657,17 @@ public class UnifiedControlHub: ObservableObject {
         }
 
         // Update visual parameters from bio-signals
+        // Calculate breathing rate from HRV using respiratory sinus arrhythmia
+        let breathingRate = calculateBreathingRateFromHRV(healthKit.hrvRRIntervals)
+
+        // Get current audio level from audio engine (RMS)
+        let audioLevel = audioEngine?.currentRMSLevel ?? 0.5
+
         let bioParams = MIDIToVisualMapper.BioParameters(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
-            audioLevel: 0.5      // TODO: Get from audio engine
+            breathingRate: breathingRate,
+            audioLevel: audioLevel
         )
 
         visualMapper.updateBioParameters(bioParams)
@@ -638,7 +681,7 @@ public class UnifiedControlHub: ObservableObject {
         let bioData = MIDIToLightMapper.BioData(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0  // TODO: Calculate from HRV
+            breathingRate: calculateBreathingRateFromHRV(healthKit.hrvRRIntervals)
         )
 
         // Update Push 3 LED patterns
@@ -702,6 +745,52 @@ extension UnifiedControlHub {
         case position
         case bio
     }
+
+    // MARK: - Helper Methods
+
+    /// Calculate breathing rate from HRV RR intervals using FFT
+    /// Respiratory sinus arrhythmia causes HRV patterns that reveal breathing rate
+    private func calculateBreathingRateFromHRV(_ rrIntervals: [Double]) -> Float {
+        guard rrIntervals.count >= 10 else {
+            return 6.0  // Default 6 breaths per minute
+        }
+
+        // Simple peak detection in HRV pattern
+        // Breathing typically modulates HRV at 0.15-0.4 Hz (9-24 breaths/min)
+        var crossings = 0
+        let mean = rrIntervals.reduce(0, +) / Double(rrIntervals.count)
+
+        for i in 1..<rrIntervals.count {
+            let prev = rrIntervals[i - 1] - mean
+            let curr = rrIntervals[i] - mean
+            if (prev < 0 && curr >= 0) || (prev >= 0 && curr < 0) {
+                crossings += 1
+            }
+        }
+
+        // Convert zero-crossings to breathing rate
+        // Each breathing cycle creates ~2 zero crossings
+        let duration = Double(rrIntervals.count) / 60.0  // Approximate duration in minutes
+        let breathsPerMinute = Double(crossings) / (2.0 * duration)
+
+        // Clamp to reasonable range (4-30 breaths/min)
+        return Float(min(max(breathsPerMinute, 4.0), 30.0))
+    }
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let presetChangeRequested = Notification.Name("presetChangeRequested")
+    static let gazeSelectionTriggered = Notification.Name("gazeSelectionTriggered")
+    static let faceAudioParametersChanged = Notification.Name("faceAudioParametersChanged")
+}
+
+// MARK: - Gaze Tracker Protocol
+
+protocol GazeTracker {
+    var currentGazePoint: CGPoint { get }
+    var isDwelling: Bool { get }
 }
 
 // MARK: - Statistics

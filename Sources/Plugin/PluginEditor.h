@@ -3,8 +3,8 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "../UI/SimpleMainUI.h"
-// #include "../Visualization/BioReactiveVisualizer.h"  // TODO: Enable in Phase 2
-// #include "../Visualization/SpectrumAnalyzer.h"  // TODO: Enable in Phase 2
+#include "../Visualization/BioReactiveVisualizer.h"
+#include "../Visualization/SpectrumAnalyzer.h"
 
 /**
  * Echoelmusic Plugin Editor

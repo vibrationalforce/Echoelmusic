@@ -198,14 +198,33 @@ void EchoelmusicApp::handleAudioSessionInterruption(bool interrupted)
         DBG("Audio session interrupted (phone call, etc.)");
 
         // Pause playback/recording
-        // TODO: Implement transport control
+        if (audioEngine != nullptr) {
+            wasPlayingBeforeInterruption = audioEngine->isPlaying();
+            wasRecordingBeforeInterruption = audioEngine->isRecording();
+
+            if (wasPlayingBeforeInterruption) {
+                audioEngine->pause();
+            }
+            if (wasRecordingBeforeInterruption) {
+                audioEngine->pauseRecording();
+            }
+        }
     }
     else
     {
         DBG("Audio session interruption ended");
 
-        // Resume if user was playing before interruption
-        // TODO: Implement resume logic
+        // Resume if user was playing/recording before interruption
+        if (audioEngine != nullptr) {
+            if (wasPlayingBeforeInterruption) {
+                audioEngine->play();
+            }
+            if (wasRecordingBeforeInterruption) {
+                audioEngine->resumeRecording();
+            }
+        }
+        wasPlayingBeforeInterruption = false;
+        wasRecordingBeforeInterruption = false;
     }
 }
 
@@ -214,7 +233,32 @@ void EchoelmusicApp::handleAudioSessionRouteChange()
     DBG("Audio route changed (headphones plugged/unplugged, etc.)");
 
     // Update UI to reflect new audio route
-    // TODO: Show notification to user
+    juce::String routeDescription;
+
+    #if JUCE_IOS
+    // Get current audio route from AVAudioSession
+    if (auto* currentRoute = [AVAudioSession sharedInstance].currentRoute) {
+        for (AVAudioSessionPortDescription* output in currentRoute.outputs) {
+            if ([output.portType isEqualToString:AVAudioSessionPortHeadphones]) {
+                routeDescription = "Headphones connected";
+            } else if ([output.portType isEqualToString:AVAudioSessionPortBluetoothA2DP] ||
+                       [output.portType isEqualToString:AVAudioSessionPortBluetoothLE]) {
+                routeDescription = "Bluetooth audio: " + juce::String([output.portName UTF8String]);
+            } else if ([output.portType isEqualToString:AVAudioSessionPortBuiltInSpeaker]) {
+                routeDescription = "Built-in speaker";
+            } else if ([output.portType isEqualToString:AVAudioSessionPortAirPlay]) {
+                routeDescription = "AirPlay: " + juce::String([output.portName UTF8String]);
+            }
+        }
+    }
+    #endif
+
+    // Show notification to user via main window
+    if (mainWindow != nullptr && !routeDescription.isEmpty()) {
+        juce::MessageManager::callAsync([this, routeDescription]() {
+            mainWindow->showNotification(routeDescription, 3000);  // Show for 3 seconds
+        });
+    }
 }
 
 //==============================================================================

@@ -361,15 +361,48 @@ public:
                 break;
 
             case SourceType::BluetoothHR:
-                // TODO: Initialize Bluetooth
+                // Initialize Bluetooth LE heart rate monitor
+                if (bluetoothManager != nullptr) {
+                    bluetoothManager->startScanning(BluetoothManager::ServiceUUID::HeartRate);
+                    bluetoothManager->onDeviceConnected = [this](const BluetoothDevice& device) {
+                        juce::Logger::writeToLog("HRV: Connected to " + device.name);
+                    };
+                    bluetoothManager->onHeartRateReceived = [this](int bpm, const std::vector<uint16_t>& rrIntervals) {
+                        processRRIntervals(rrIntervals);
+                    };
+                }
                 break;
 
             case SourceType::AppleWatch:
-                // TODO: Initialize HealthKit
+                // Initialize HealthKit connection for Apple Watch data
+                #if JUCE_MAC || JUCE_IOS
+                if (healthKitBridge != nullptr) {
+                    healthKitBridge->requestAuthorization([this](bool granted) {
+                        if (granted) {
+                            healthKitBridge->startHeartRateQuery([this](double hrv, double bpm) {
+                                addHRVMeasurement(static_cast<float>(hrv));
+                            });
+                        }
+                    });
+                }
+                #endif
                 break;
 
             case SourceType::WebSocket:
-                // TODO: Start WebSocket server
+                // Start WebSocket server for external bio-data sources
+                if (webSocketServer != nullptr) {
+                    webSocketServer->start(7780);
+                    webSocketServer->onMessage = [this](const juce::var& message) {
+                        if (message.hasProperty("rrIntervals")) {
+                            auto intervals = message["rrIntervals"].getArray();
+                            std::vector<uint16_t> rr;
+                            for (const auto& val : *intervals) {
+                                rr.push_back(static_cast<uint16_t>(static_cast<int>(val)));
+                            }
+                            processRRIntervals(rr);
+                        }
+                    };
+                }
                 break;
 
             default:

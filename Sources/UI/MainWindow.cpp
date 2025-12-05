@@ -230,16 +230,31 @@ void MainWindow::MainComponent::TopBar::buttonClicked(juce::Button* button)
     }
     else if (button == &aiButton)
     {
-        // TODO: Toggle AI panel
-        juce::AlertWindow::showMessageBoxAsync(
-            juce::AlertWindow::InfoIcon,
-            "EchoelAI™",
-            "Super Intelligence Tools\n\nComing soon: 12 modular AI assistants with full user control!",
-            "OK");
+        // Toggle AI panel visibility
+        if (aiPanel == nullptr) {
+            aiPanel = std::make_unique<AIAssistantPanel>(audioEngine);
+            addAndMakeVisible(*aiPanel);
+            aiPanel->setBounds(getWidth() - 350, 60, 340, getHeight() - 120);
+        } else if (aiPanel->isVisible()) {
+            aiPanel->setVisible(false);
+        } else {
+            aiPanel->setVisible(true);
+        }
+        resized();
     }
     else if (button == &settingsButton)
     {
-        // TODO: Open settings
+        // Open settings dialog
+        auto* settingsDialog = new SettingsDialog(audioEngine);
+        settingsDialog->setSize(600, 500);
+        juce::DialogWindow::LaunchOptions options;
+        options.dialogTitle = "Echoelmusic Settings";
+        options.content.setOwned(settingsDialog);
+        options.componentToCentreAround = this;
+        options.escapeKeyTriggersCloseButton = true;
+        options.useNativeTitleBar = true;
+        options.resizable = false;
+        options.launchAsync();
     }
 }
 
@@ -399,19 +414,39 @@ void MainWindow::MainComponent::TrackView::drawTracks(juce::Graphics& g, juce::R
         g.drawText(track->getName(), trackBounds.reduced(10, 5).toNearestInt(), 
                   juce::Justification::topLeft);
         
-        // Waveform placeholder (TODO: actual waveform rendering)
+        // Render actual waveform from audio data
         auto waveformBounds = trackBounds.reduced(10, 25);
         g.setColour(VaporwaveColors::Cyan.withAlpha(0.3f));
-        
-        // Draw simplified waveform (random for now - will be real audio data)
+
+        // Get audio thumbnail from track for waveform visualization
         juce::Path waveformPath;
         bool started = false;
-        for (float x = waveformBounds.getX(); x < waveformBounds.getRight(); x += 2.0f)
-        {
-            float y = waveformBounds.getCentreY() + (juce::Random::getSystemRandom().nextFloat() * 20.0f - 10.0f);
-            if (!started)
+
+        if (track->getAudioThumbnail() != nullptr && track->getAudioThumbnail()->getTotalLength() > 0) {
+            // Draw actual waveform from audio thumbnail
+            auto& thumbnail = *track->getAudioThumbnail();
+            const double totalLength = thumbnail.getTotalLength();
+            const float width = waveformBounds.getWidth();
+
+            for (float x = 0; x < width; x += 2.0f) {
+                float minLevel, maxLevel;
+                double startTime = (x / width) * totalLength;
+                double endTime = ((x + 2.0f) / width) * totalLength;
+                thumbnail.getApproximateMinMax(startTime, endTime - startTime, 0, minLevel, maxLevel);
+
+                float yMin = waveformBounds.getCentreY() + (minLevel * waveformBounds.getHeight() * 0.5f);
+                float yMax = waveformBounds.getCentreY() + (maxLevel * waveformBounds.getHeight() * 0.5f);
+
+                g.drawVerticalLine(static_cast<int>(waveformBounds.getX() + x), yMin, yMax);
+            }
+        } else {
+            // Fallback: draw placeholder waveform
+            for (float x = waveformBounds.getX(); x < waveformBounds.getRight(); x += 2.0f)
             {
-                waveformPath.startNewSubPath(x, y);
+                float y = waveformBounds.getCentreY() + (juce::Random::getSystemRandom().nextFloat() * 20.0f - 10.0f);
+                if (!started)
+                {
+                    waveformPath.startNewSubPath(x, y);
                 started = true;
             }
             else
@@ -567,15 +602,32 @@ void MainWindow::MainComponent::TransportBar::buttonClicked(juce::Button* button
         onRecordClicked();
     else if (button == &saveButton)
     {
-        // TODO: Save project
-        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
-            "Save", "Project save coming soon!", "OK");
+        // Save project to file
+        juce::FileChooser chooser("Save Project", juce::File::getSpecialLocation(juce::File::userDocumentsDirectory), "*.echoelproj");
+        if (chooser.browseForFileToSave(true)) {
+            auto file = chooser.getResult();
+            if (audioEngine.saveProject(file)) {
+                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
+                    "Saved", "Project saved successfully to:\n" + file.getFullPathName(), "OK");
+            } else {
+                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                    "Save Failed", "Could not save project. Please try again.", "OK");
+            }
+        }
     }
     else if (button == &exportButton)
     {
-        // TODO: Export audio
-        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
-            "Export", "Audio export coming soon!", "OK");
+        // Open export dialog
+        auto* exportDialog = new ExportDialog(audioExporter);
+        exportDialog->setSize(500, 400);
+        juce::DialogWindow::LaunchOptions options;
+        options.dialogTitle = "Export Audio";
+        options.content.setOwned(exportDialog);
+        options.componentToCentreAround = this;
+        options.escapeKeyTriggersCloseButton = true;
+        options.useNativeTitleBar = true;
+        options.resizable = false;
+        options.launchAsync();
     }
 }
 

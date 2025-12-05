@@ -244,19 +244,40 @@ private:
             return;
         }
 
-        // TODO: Actually import files into project
-        // This would typically call AudioEngine::addAudioClip() for each file
+        // Import files into project using AudioEngine
+        if (auto* engine = AudioEngine::getInstance()) {
+            int imported = 0;
+            juce::StringArray failedFiles;
 
-        juce::String message;
-        message << "Importing " << selectedFiles.size() << " file(s)...\n\n";
-        for (const auto& file : selectedFiles)
-            message << file.getFileName() << "\n";
+            for (const auto& file : selectedFiles) {
+                if (engine->addAudioClip(file)) {
+                    imported++;
+                } else {
+                    failedFiles.add(file.getFileName());
+                }
+            }
 
-        juce::AlertWindow::showMessageBoxAsync(
-            juce::AlertWindow::InfoIcon,
-            "Import Started",
-            message
-        );
+            juce::String message;
+            message << "Successfully imported " << imported << " of " << selectedFiles.size() << " file(s).\n";
+
+            if (!failedFiles.isEmpty()) {
+                message << "\nFailed to import:\n";
+                for (const auto& name : failedFiles)
+                    message << "  - " << name << "\n";
+            }
+
+            juce::AlertWindow::showMessageBoxAsync(
+                failedFiles.isEmpty() ? juce::AlertWindow::InfoIcon : juce::AlertWindow::WarningIcon,
+                "Import Complete",
+                message
+            );
+        } else {
+            juce::AlertWindow::showMessageBoxAsync(
+                juce::AlertWindow::WarningIcon,
+                "Import Failed",
+                "Audio engine not available. Please try again."
+            );
+        }
 
         // Close dialog
         if (auto* parent = findParentComponentOfClass<juce::DialogWindow>())

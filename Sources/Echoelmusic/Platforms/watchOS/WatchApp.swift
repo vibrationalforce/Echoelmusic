@@ -2,6 +2,7 @@ import Foundation
 import WatchKit
 import HealthKit
 import Combine
+import WatchConnectivity
 
 #if os(watchOS)
 
@@ -246,8 +247,44 @@ class WatchApp {
             date: Date()
         )
 
-        // TODO: Sync with iPhone via WatchConnectivity
+        // Sync with iPhone via WatchConnectivity
+        await syncSessionWithiPhone(session)
         print("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+    }
+
+    private func syncSessionWithiPhone(_ session: SessionData) async {
+        guard WCSession.default.isReachable else {
+            // Store locally for later sync
+            storeSessionLocally(session)
+            return
+        }
+
+        do {
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(session)
+            let message: [String: Any] = [
+                "type": "sessionData",
+                "data": data
+            ]
+            WCSession.default.sendMessage(message, replyHandler: nil) { error in
+                print("❌ WatchConnectivity sync failed: \(error.localizedDescription)")
+            }
+            print("📱 Session synced to iPhone via WatchConnectivity")
+        } catch {
+            print("❌ Failed to encode session: \(error)")
+            storeSessionLocally(session)
+        }
+    }
+
+    private func storeSessionLocally(_ session: SessionData) {
+        // Store in UserDefaults for later sync
+        let key = "pendingSessions"
+        var pendingSessions = UserDefaults.standard.array(forKey: key) as? [Data] ?? []
+        if let data = try? JSONEncoder().encode(session) {
+            pendingSessions.append(data)
+            UserDefaults.standard.set(pendingSessions, forKey: key)
+            print("💾 Session stored locally for later sync")
+        }
     }
 
     struct SessionData: Codable {

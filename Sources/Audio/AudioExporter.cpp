@@ -295,13 +295,43 @@ void AudioExporter::startBackgroundExport(const juce::AudioBuffer<float>& audioB
                                          const ExportSettings& settings,
                                          ProgressCallback progressCallback)
 {
-    // Background export not implemented yet
-    // For now, just do synchronous export
-    (void)audioBuffer;
-    (void)settings;
-    (void)progressCallback;
+    // Launch background export thread
+    exportThread = std::thread([this, audioBuffer, settings, progressCallback]() {
+        shouldCancel.store(false);
 
-    // TODO: Implement proper background thread export
+        // Report start
+        if (progressCallback) progressCallback(0.0f, "Starting export...");
+
+        // Calculate total samples
+        const int totalSamples = audioBuffer.getNumSamples();
+        const int blockSize = 8192;
+        int processedSamples = 0;
+
+        // Process in blocks
+        while (processedSamples < totalSamples && !shouldCancel.load()) {
+            int samplesToProcess = std::min(blockSize, totalSamples - processedSamples);
+
+            // Export block (actual encoding happens in derived methods)
+            exportBlock(audioBuffer, processedSamples, samplesToProcess, settings);
+
+            processedSamples += samplesToProcess;
+
+            // Report progress
+            float progress = static_cast<float>(processedSamples) / static_cast<float>(totalSamples);
+            if (progressCallback) {
+                progressCallback(progress, "Exporting... " + std::to_string(static_cast<int>(progress * 100)) + "%");
+            }
+        }
+
+        // Report completion
+        if (progressCallback) {
+            if (shouldCancel.load()) {
+                progressCallback(1.0f, "Export cancelled");
+            } else {
+                progressCallback(1.0f, "Export complete");
+            }
+        }
+    });
 }
 
 void AudioExporter::backgroundExportThread()

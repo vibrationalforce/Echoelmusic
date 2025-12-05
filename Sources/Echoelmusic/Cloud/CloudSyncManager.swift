@@ -111,8 +111,16 @@ class CloudSyncManager: ObservableObject {
     }
 
     private func autoBackup() async throws {
-        // TODO: Backup current session automatically
-        print("☁️ CloudSyncManager: Auto backup triggered")
+        // Backup current active session automatically
+        guard syncEnabled else { return }
+
+        // Get current session from notification center or shared state
+        if let currentSession = NotificationCenter.default.currentSession {
+            try await saveSession(currentSession)
+            print("☁️ CloudSyncManager: Auto backup completed for session '\(currentSession.name)'")
+        } else {
+            print("☁️ CloudSyncManager: Auto backup triggered (no active session)")
+        }
     }
 }
 
@@ -144,4 +152,18 @@ struct Session {
     let duration: TimeInterval
     let avgHRV: Float
     let avgCoherence: Float
+}
+
+// Extension for accessing current session from NotificationCenter
+extension NotificationCenter {
+    private static var _currentSession: Session?
+
+    var currentSession: Session? {
+        get { NotificationCenter._currentSession }
+        set { NotificationCenter._currentSession = newValue }
+    }
+
+    func setCurrentSession(_ session: Session?) {
+        NotificationCenter._currentSession = session
+    }
 }

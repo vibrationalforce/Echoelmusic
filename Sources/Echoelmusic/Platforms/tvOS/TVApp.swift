@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 import AVFoundation
 import Combine
+import GroupActivities
 
 #if os(tvOS)
 
@@ -265,9 +266,27 @@ class TVApp {
         print("📺 Starting SharePlay session")
         isSharePlayActive = true
 
-        // TODO: Integrate with GroupActivities framework
-        // let activity = EchoelmusicActivity()
-        // try await activity.prepareForActivation()
+        // Integrate with GroupActivities framework
+        let activity = EchoelmusicGroupActivity()
+        switch await activity.prepareForActivation() {
+        case .activationPreferred:
+            do {
+                _ = try await activity.activate()
+                print("✅ SharePlay session activated")
+            } catch {
+                print("❌ SharePlay activation failed: \(error)")
+                isSharePlayActive = false
+                throw error
+            }
+        case .activationDisabled:
+            print("⚠️ SharePlay is disabled in system settings")
+            isSharePlayActive = false
+        case .cancelled:
+            print("ℹ️ SharePlay activation cancelled")
+            isSharePlayActive = false
+        @unknown default:
+            isSharePlayActive = false
+        }
     }
 
     func stopSharePlay() {
@@ -406,6 +425,18 @@ struct BioDataUpdate {
     let hrv: Double
     let coherence: Double
     let timestamp: Date
+}
+
+// MARK: - GroupActivities Support
+
+struct EchoelmusicGroupActivity: GroupActivity {
+    var metadata: GroupActivityMetadata {
+        var meta = GroupActivityMetadata()
+        meta.title = "Echoelmusic Session"
+        meta.subtitle = "Bio-Reactive Music Experience"
+        meta.type = .generic
+        return meta
+    }
 }
 
 #endif

@@ -228,9 +228,16 @@ public:
             if (bioDataVisualizer)
                 bioDataVisualizer->updateBioData(bioSample);
 
-            // Get modulated parameters (for future audio processing)
+            // Get modulated parameters and apply to audio processing
             auto modulatedParams = bioFeedbackSystem->getModulatedParameters();
-            // TODO: Apply modulatedParams to audio processing in Phase 2
+
+            // Apply bio-modulated parameters to audio engine
+            if (audioEngine != nullptr) {
+                audioEngine->setParameter("coherenceDepth", modulatedParams.coherenceDepth);
+                audioEngine->setParameter("hrvIntensity", modulatedParams.hrvIntensity);
+                audioEngine->setParameter("stressReduction", modulatedParams.stressReduction);
+                audioEngine->setParameter("relaxationBlend", modulatedParams.relaxationBlend);
+            }
         }
     }
 

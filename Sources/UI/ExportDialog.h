@@ -278,14 +278,26 @@ private:
             settings.title = titleEditor.getText();
             settings.artist = artistEditor.getText();
 
-            // For now, we need to get the audio buffer from somewhere
-            // This would typically come from the AudioEngine
-            // TODO: Connect to actual audio engine
-            juce::AlertWindow::showMessageBoxAsync(
-                juce::AlertWindow::InfoIcon,
-                "Export Started",
-                "Export settings configured. (Integration with AudioEngine needed)"
-            );
+            // Get audio buffer from the AudioEngine singleton
+            if (auto* engine = AudioEngine::getInstance()) {
+                auto audioBuffer = engine->getMasterBuffer();
+                if (audioBuffer.getNumSamples() > 0) {
+                    audioExporter.exportAsync(audioBuffer, settings, [](float progress, const juce::String& status) {
+                        DBG("Export progress: " << (int)(progress * 100) << "% - " << status);
+                    });
+                    juce::AlertWindow::showMessageBoxAsync(
+                        juce::AlertWindow::InfoIcon,
+                        "Export Started",
+                        "Exporting audio with the configured settings..."
+                    );
+                } else {
+                    juce::AlertWindow::showMessageBoxAsync(
+                        juce::AlertWindow::WarningIcon,
+                        "No Audio",
+                        "No audio buffer available for export. Please record or import audio first."
+                    );
+                }
+            }
         });
     }
 
