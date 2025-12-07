@@ -38,6 +38,9 @@ class NodeGraph: ObservableObject {
     /// Avoids recalculating processing order every audio frame
     private var cachedProcessingOrder: [UUID]?
 
+    /// OPTIMIZATION: O(1) adjacency lookup for cycle detection
+    private var adjacency = GraphAdjacency()
+
     /// Invalidate cached processing order when graph structure changes
     private func invalidateCache() {
         cachedProcessingOrder = nil
@@ -60,9 +63,12 @@ class NodeGraph: ObservableObject {
             connection.sourceNodeID == id || connection.destinationNodeID == id
         }
 
+        // OPTIMIZATION: Update adjacency structure
+        adjacency.removeNode(id)
+
         // Remove node
         nodes.removeAll { $0.id == id }
-        invalidateCache() // Graph structure changed
+        invalidateCache()
     }
 
     /// Get node by ID
@@ -80,8 +86,8 @@ class NodeGraph: ObservableObject {
             throw NodeGraphError.nodeNotFound
         }
 
-        // Check for circular dependencies
-        if wouldCreateCycle(connecting: sourceID, to: destinationID) {
+        // OPTIMIZED: Check for circular dependencies using O(1) adjacency lookup
+        if adjacency.wouldCreateCycle(from: sourceID, to: destinationID) {
             throw NodeGraphError.circularDependency
         }
 
@@ -91,7 +97,8 @@ class NodeGraph: ObservableObject {
         )
 
         connections.append(connection)
-        invalidateCache() // Graph structure changed
+        adjacency.addEdge(from: sourceID, to: destinationID)  // OPTIMIZATION: Update adjacency
+        invalidateCache()
 
         print("📊 Connected: \(source.name) → \(destination.name)")
     }
@@ -102,7 +109,8 @@ class NodeGraph: ObservableObject {
             connection.sourceNodeID == sourceID &&
             connection.destinationNodeID == destinationID
         }
-        invalidateCache() // Graph structure changed
+        adjacency.removeEdge(from: sourceID, to: destinationID)  // OPTIMIZATION: Update adjacency
+        invalidateCache()
     }
 
     /// Check if connecting two nodes would create a cycle

@@ -166,6 +166,9 @@ public final class GranularSynthesizer {
     /// Grain pool
     private var grains: [Grain] = []
 
+    /// OPTIMIZATION: O(1) active grain tracking (replaces O(n) linear scan)
+    private var activeGrainTracker = ActiveIndexTracker(capacity: 256)
+
     /// Active grain count
     private var activeGrainCount: Int = 0
 
@@ -359,8 +362,15 @@ public final class GranularSynthesizer {
 
     /// Spawn a new grain
     private func spawnGrain() {
-        // Find inactive grain slot
-        guard let grainIndex = grains.firstIndex(where: { !$0.isActive }) else { return }
+        // OPTIMIZED: Find inactive grain slot using tracker
+        var grainIndex: Int? = nil
+        for i in 0..<maxGrains {
+            if !activeGrainTracker.contains(i) {
+                grainIndex = i
+                break
+            }
+        }
+        guard let grainIndex = grainIndex else { return }
 
         var grain = Grain()
         grain.isActive = true
@@ -434,7 +444,8 @@ public final class GranularSynthesizer {
         }
 
         grains[grainIndex] = grain
-        activeGrainCount += 1
+        activeGrainTracker.activate(grainIndex)
+        activeGrainCount = activeGrainTracker.count
     }
 
     // MARK: - Audio Processing
@@ -461,23 +472,28 @@ public final class GranularSynthesizer {
                 nextGrainTime = calculateNextGrainTime()
             }
 
-            // Sum all active grains
+            // Sum all active grains - OPTIMIZED: O(activeGrains) instead of O(maxGrains)
             var sumL: Float = 0
             var sumR: Float = 0
+            var indicesToDeactivate: [Int] = []
 
-            for i in 0..<maxGrains {
-                guard grains[i].isActive else { continue }
-
+            for i in activeGrainTracker.getActiveIndices() {
                 let grainOutput = processGrain(&grains[i])
 
                 if grainOutput.isFinished {
                     grains[i].reset()
-                    activeGrainCount = max(0, activeGrainCount - 1)
+                    indicesToDeactivate.append(i)
                 } else {
                     sumL += grainOutput.left
                     sumR += grainOutput.right
                 }
             }
+
+            // Batch deactivate finished grains
+            for i in indicesToDeactivate {
+                activeGrainTracker.deactivate(i)
+            }
+            activeGrainCount = activeGrainTracker.count
 
             outputLeft[sample] = sumL
             outputRight[sample] = sumR
@@ -520,26 +536,31 @@ public final class GranularSynthesizer {
 
             var sumL: Float = 0
             var sumR: Float = 0
+            var indicesToDeactivate: [Int] = []
 
-            for i in 0..<maxGrains {
-                guard grains[i].isActive else { continue }
-
+            // OPTIMIZED: Only iterate active grains
+            for i in activeGrainTracker.getActiveIndices() {
                 let grainOutput = processGrain(&grains[i])
 
                 if grainOutput.isFinished {
                     grains[i].reset()
-                    activeGrainCount = max(0, activeGrainCount - 1)
+                    indicesToDeactivate.append(i)
                 } else {
                     sumL += grainOutput.left
                     sumR += grainOutput.right
                 }
             }
 
+            for i in indicesToDeactivate {
+                activeGrainTracker.deactivate(i)
+            }
+            activeGrainCount = activeGrainTracker.count
+
             outputLeft[sample] = sumL
             outputRight[sample] = sumR
         }
 
-        // Apply volume
+        // Apply volume using SIMD
         var vol = volume
         vDSP_vsmul(&outputLeft, 1, &vol, left, 1, vDSP_Length(frameCount))
         vDSP_vsmul(&outputRight, 1, &vol, right, 1, vDSP_Length(frameCount))
@@ -633,6 +654,7 @@ public final class GranularSynthesizer {
         for i in 0..<maxGrains {
             grains[i].reset()
         }
+        activeGrainTracker.clear()
         activeGrainCount = 0
         grainTimer = 0
     }

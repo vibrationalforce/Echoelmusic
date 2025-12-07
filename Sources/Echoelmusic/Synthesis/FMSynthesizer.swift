@@ -52,6 +52,13 @@ public final class FMSynthesizer: ObservableObject {
 
     public var lfo: FMLFO
 
+    // OPTIMIZATION: Pre-allocated LFO buffer (avoids per-frame allocation)
+    private var lfoBuffer: [Float] = []
+    private var lfoBufferCapacity: Int = 0
+
+    // OPTIMIZATION: Pre-allocated operator output buffer
+    private var opOutputs: [Float] = [Float](repeating: 0, count: 6)
+
     // MARK: - Initialization
 
     public init(sampleRate: Double = 48000) {
@@ -69,6 +76,10 @@ public final class FMSynthesizer: ObservableObject {
         for i in 0..<Self.maxVoices {
             voices.append(FMVoice(id: i, operatorCount: Self.operatorCount, sampleRate: sampleRate))
         }
+
+        // OPTIMIZATION: Pre-allocate LFO buffer for common sizes
+        lfoBufferCapacity = 4096
+        lfoBuffer = [Float](repeating: 0, count: lfoBufferCapacity)
 
         // Load classic E.Piano preset
         loadPreset(.ePiano1)
@@ -125,21 +136,26 @@ public final class FMSynthesizer: ObservableObject {
             return
         }
 
-        // Process LFO
-        var lfoValues = [Float](repeating: 0, count: frameCount)
+        // OPTIMIZATION: Resize LFO buffer if needed (rare, avoids per-frame allocation)
+        if frameCount > lfoBufferCapacity {
+            lfoBufferCapacity = frameCount
+            lfoBuffer = [Float](repeating: 0, count: lfoBufferCapacity)
+        }
+
+        // Process LFO into pre-allocated buffer
         for i in 0..<frameCount {
-            lfoValues[i] = lfo.process()
+            lfoBuffer[i] = lfo.process()
         }
 
         // Process each voice
         for voiceIndex in activeVoices {
-            processVoice(voiceIndex, buffer: buffer, frameCount: frameCount, lfoValues: lfoValues)
+            processVoice(voiceIndex, buffer: buffer, frameCount: frameCount, lfoValues: lfoBuffer)
         }
 
         // Remove finished voices
         activeVoices = activeVoices.filter { voices[$0].isActive }
 
-        // Apply master volume
+        // Apply master volume using SIMD
         var volume = masterVolume
         vDSP_vsmul(buffer, 1, &volume, buffer, 1, vDSP_Length(frameCount))
     }

@@ -97,6 +97,9 @@ class LoopEngine: ObservableObject {
     /// Audio players for each loop
     private var players: [UUID: AVAudioPlayerNode] = [:]
 
+    /// OPTIMIZATION: O(1) lookup for loop indices (replaces O(n) firstIndex)
+    private var loopIndexMap: [UUID: Int] = [:]
+
     /// Timer for loop position updates
     private var timer: Timer?
 
@@ -140,6 +143,7 @@ class LoopEngine: ObservableObject {
         )
 
         loops.append(loop)
+        loopIndexMap[loop.id] = loops.count - 1  // OPTIMIZATION: Track index
         isRecordingLoop = true
         loopStartTime = Date()
 
@@ -178,7 +182,7 @@ class LoopEngine: ObservableObject {
     /// Start overdubbing on existing loop
     func startOverdub(loopID: UUID) {
         guard !isOverdubbing, !isRecordingLoop else { return }
-        guard let loopIndex = loops.firstIndex(where: { $0.id == loopID }) else { return }
+        guard let loopIndex = loopIndexMap[loopID] else { return }  // OPTIMIZED: O(1)
 
         isOverdubbing = true
         overdubLoopID = loopID
@@ -195,7 +199,7 @@ class LoopEngine: ObservableObject {
     /// Stop overdubbing and merge with original loop
     func stopOverdub() {
         guard isOverdubbing, let loopID = overdubLoopID else { return }
-        guard let loopIndex = loops.firstIndex(where: { $0.id == loopID }) else { return }
+        guard let loopIndex = loopIndexMap[loopID] else { return }  // OPTIMIZED: O(1)
 
         isOverdubbing = false
 
@@ -272,6 +276,9 @@ class LoopEngine: ObservableObject {
     func deleteLoop(_ loopID: UUID) {
         loops.removeAll { $0.id == loopID }
 
+        // OPTIMIZATION: Rebuild index map after deletion
+        rebuildLoopIndexMap()
+
         // Delete audio file
         if let player = players[loopID] {
             player.stop()
@@ -281,32 +288,36 @@ class LoopEngine: ObservableObject {
         print("🗑️ Deleted loop")
     }
 
-    /// Mute/unmute loop
+    /// Rebuild loop index map after structural changes
+    private func rebuildLoopIndexMap() {
+        loopIndexMap.removeAll(keepingCapacity: true)
+        for (index, loop) in loops.enumerated() {
+            loopIndexMap[loop.id] = index
+        }
+    }
+
+    /// Mute/unmute loop - OPTIMIZED: O(1) lookup
     func setLoopMuted(_ loopID: UUID, muted: Bool) {
-        if let index = loops.firstIndex(where: { $0.id == loopID }) {
-            loops[index].isMuted = muted
-        }
+        guard let index = loopIndexMap[loopID] else { return }
+        loops[index].isMuted = muted
     }
 
-    /// Solo loop
+    /// Solo loop - OPTIMIZED: O(1) lookup
     func setLoopSoloed(_ loopID: UUID, soloed: Bool) {
-        if let index = loops.firstIndex(where: { $0.id == loopID }) {
-            loops[index].isSoloed = soloed
-        }
+        guard let index = loopIndexMap[loopID] else { return }
+        loops[index].isSoloed = soloed
     }
 
-    /// Set loop volume
+    /// Set loop volume - OPTIMIZED: O(1) lookup
     func setLoopVolume(_ loopID: UUID, volume: Float) {
-        if let index = loops.firstIndex(where: { $0.id == loopID }) {
-            loops[index].volume = max(0, min(1, volume))
-        }
+        guard let index = loopIndexMap[loopID] else { return }
+        loops[index].volume = max(0, min(1, volume))
     }
 
-    /// Set loop pan
+    /// Set loop pan - OPTIMIZED: O(1) lookup
     func setLoopPan(_ loopID: UUID, pan: Float) {
-        if let index = loops.firstIndex(where: { $0.id == loopID }) {
-            loops[index].pan = max(-1, min(1, pan))
-        }
+        guard let index = loopIndexMap[loopID] else { return }
+        loops[index].pan = max(-1, min(1, pan))
     }
 
     /// Clear all loops
@@ -314,6 +325,7 @@ class LoopEngine: ObservableObject {
         stopPlayback()
         loops.removeAll()
         players.removeAll()
+        loopIndexMap.removeAll()  // OPTIMIZATION: Clear index map
 
         print("🗑️ Cleared all loops")
     }
