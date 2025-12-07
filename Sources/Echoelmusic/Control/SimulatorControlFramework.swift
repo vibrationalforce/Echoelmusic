@@ -418,18 +418,35 @@ public class NetworkMotorController: ObservableObject {
     }
 
     /// Scan local network for controllable motors
+    ///
+    /// ⚠️ IMPLEMENTATION STATUS: SIMULATION MODE
+    /// This returns simulated motor endpoints for development/testing.
+    /// Real network discovery requires:
+    /// - Network.framework for mDNS/Bonjour discovery
+    /// - UDP broadcast scanning
+    /// - Platform-specific permissions
+    ///
+    /// TODO: Implement real discovery using NWBrowser for mDNS
     public func scanNetwork(subnet: String = "192.168.1") async -> [MotorEndpoint] {
         isScanning = true
         var discovered: [MotorEndpoint] = []
 
-        // Scan common ports for motor controllers
+        // ════════════════════════════════════════════════════════════════
+        // ⚠️ SIMULATION MODE - Returns fake motors for development
+        // In production, use Network.framework NWBrowser for real discovery
+        // ════════════════════════════════════════════════════════════════
+        #if DEBUG
+        print("⚠️ NetworkMotorController: Running in SIMULATION mode")
+        print("   Real network discovery not implemented")
+        #endif
+
         let ports = [80, 8080, 1883, 9090, 502, 5000]
 
-        // Simulated discovery (real implementation would use network scanning)
+        // SIMULATED: Generate fake motor endpoints
         for i in 1...10 {
             let endpoint = MotorEndpoint(
                 id: UUID(),
-                name: "Motor_\(i)",
+                name: "SimulatedMotor_\(i)",  // Clearly marked as simulated
                 ipAddress: "\(subnet).\(100 + i)",
                 port: ports[i % ports.count],
                 protocol: .websocket,
@@ -515,38 +532,75 @@ public class NetworkMotorController: ObservableObject {
         }
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // NETWORK PROTOCOL IMPLEMENTATIONS
+    // Status: HTTP is REAL, others are STUBS (print only)
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// ⚠️ STUB: WebSocket not implemented
+    /// Requires: URLSessionWebSocketTask or third-party library
     private func sendWebSocketCommand(_ command: MotorCommand, to motor: MotorEndpoint) async throws {
-        // WebSocket implementation
+        #if DEBUG
         let url = URL(string: "ws://\(motor.ipAddress):\(motor.port)/motor")!
         let data = try JSONEncoder().encode(command)
-        // URLSessionWebSocketTask would be used here
-        print("WebSocket command sent to \(url): \(data.count) bytes")
+        print("⚠️ STUB: WebSocket command to \(url): \(data.count) bytes (not actually sent)")
+        #endif
+        // TODO: Implement with URLSessionWebSocketTask
+        throw MotorError.protocolNotImplemented("WebSocket")
     }
 
+    /// ⚠️ STUB: MQTT not implemented
+    /// Requires: External MQTT library (e.g., CocoaMQTT, swift-mqtt)
     private func sendMQTTCommand(_ command: MotorCommand, to motor: MotorEndpoint) async throws {
-        // MQTT implementation for IoT devices
+        #if DEBUG
         let topic = "echoelmusic/motor/\(motor.id)"
-        print("MQTT publish to \(topic)")
+        print("⚠️ STUB: MQTT publish to \(topic) (not actually sent)")
+        #endif
+        // TODO: Implement with MQTT library
+        throw MotorError.protocolNotImplemented("MQTT")
     }
 
+    /// ✅ IMPLEMENTED: HTTP REST API
+    /// Uses native URLSession - fully functional
     private func sendHTTPCommand(_ command: MotorCommand, to motor: MotorEndpoint) async throws {
-        // REST API implementation
         let url = URL(string: "http://\(motor.ipAddress):\(motor.port)/api/motor/control")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(command)
-        // URLSession.shared.data(for: request) would be used here
+        request.timeoutInterval = 5.0
+
+        // ✅ REAL IMPLEMENTATION
+        let (_, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw MotorError.connectionFailed
+        }
+
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw MotorError.commandFailed(statusCode: httpResponse.statusCode)
+        }
     }
 
+    /// ⚠️ STUB: MAVLink not implemented
+    /// Requires: MAVLink Swift bindings and drone protocol implementation
     private func sendMAVLinkCommand(_ command: MotorCommand, to motor: MotorEndpoint) async throws {
-        // MAVLink protocol for drones
-        // Uses standardized drone communication
-        print("MAVLink command sent to \(motor.ipAddress)")
+        #if DEBUG
+        print("⚠️ STUB: MAVLink command to \(motor.ipAddress) (not actually sent)")
+        #endif
+        // TODO: Implement with MAVLink library
+        // MAVLink is complex: https://mavlink.io/en/
+        throw MotorError.protocolNotImplemented("MAVLink")
     }
 
+    /// ⚠️ STUB: Raw TCP not implemented
+    /// Requires: Network.framework NWConnection
     private func sendTCPCommand(_ command: MotorCommand, to motor: MotorEndpoint) async throws {
-        // Raw TCP for industrial motors
-        print("TCP command sent to \(motor.ipAddress):\(motor.port)")
+        #if DEBUG
+        print("⚠️ STUB: TCP command to \(motor.ipAddress):\(motor.port) (not actually sent)")
+        #endif
+        // TODO: Implement with Network.framework NWConnection
+        throw MotorError.protocolNotImplemented("TCP")
     }
 
     private func broadcastEmergencyStop() async {
@@ -585,12 +639,33 @@ public class NetworkMotorController: ObservableObject {
         public var emergency: Bool = false
     }
 
-    public enum MotorError: Error {
+    public enum MotorError: LocalizedError {
         case motorNotFound
         case connectionFailed
         case commandTimeout
         case invalidPower
         case emergencyStopped
+        case protocolNotImplemented(String)
+        case commandFailed(statusCode: Int)
+
+        public var errorDescription: String? {
+            switch self {
+            case .motorNotFound:
+                return "Motor not found in connected devices"
+            case .connectionFailed:
+                return "Failed to connect to motor endpoint"
+            case .commandTimeout:
+                return "Command timed out waiting for response"
+            case .invalidPower:
+                return "Invalid power value (must be 0.0-1.0)"
+            case .emergencyStopped:
+                return "Motor is in emergency stop state"
+            case .protocolNotImplemented(let proto):
+                return "Protocol '\(proto)' not yet implemented - use HTTP"
+            case .commandFailed(let code):
+                return "Command failed with HTTP status \(code)"
+            }
+        }
     }
 }
 

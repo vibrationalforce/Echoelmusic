@@ -2,18 +2,27 @@ import Foundation
 import Accelerate
 import simd
 
-// MARK: - Quantum Science Engine
-// Evidence-based audio processing with peer-reviewed research backing
-// References: PubMed, MIT Media Lab, Fraunhofer IIS, HeartMath Institute
-
-/// QuantumScienceEngine: Ultra-high-precision audio processing
-/// Based on quantum-inspired algorithms and peer-reviewed scientific research
-///
-/// Research Citations:
-/// - HeartMath Institute: HRV Coherence (McCraty et al., 2009)
-/// - MIT Media Lab: Spatial Audio Processing (Algazi et al., 2001)
-/// - Fraunhofer IIS: Psychoacoustic Models (Brandenburg et al., 1994)
-/// - PubMed: Binaural Beats Meta-Analysis (Garcia-Argibay et al., 2019)
+// MARK: - Advanced Audio Science Engine
+// ════════════════════════════════════════════════════════════════════════════
+// IMPORTANT TERMINOLOGY NOTE:
+// The name "Quantum" in this engine is METAPHORICAL, not literal.
+// This is NOT quantum computing. Standard computers cannot perform quantum operations.
+// "Quantum-inspired" means: high-precision, wave-based, probabilistic algorithms.
+// ════════════════════════════════════════════════════════════════════════════
+//
+// This engine implements CLASSICAL signal processing algorithms.
+// Some are inspired by quantum mechanics concepts but run on classical hardware.
+//
+// VALIDATED Research Citations:
+// - McCraty et al. (2009): HRV and cardiac coherence - HeartMath Institute
+// - Algazi et al. (2001): HRTF for spatial audio - UC Davis CIPIC
+// - Brandenburg et al. (1994): Psychoacoustic models - Fraunhofer IIS (MP3)
+// - Garcia-Argibay et al. (2019): Binaural beats meta-analysis - PubMed
+// - Oster, G. (1973): Auditory beats in the brain - Scientific American
+//
+// UNVALIDATED/Speculative (marked in code):
+// - "Cellular resonance" - Adey's work is controversial, not replicated
+// - "Water memory" effects - No peer-reviewed support
 @MainActor
 final class QuantumScienceEngine: ObservableObject {
 
@@ -61,20 +70,38 @@ final class QuantumScienceEngine: ObservableObject {
         var description: String {
             switch self {
             case .quantumCoherence:
-                return "Quantum-inspired coherence optimization using Schrödinger-based wave function collapse"
+                return "High-precision wave coherence optimization (classical algorithm, 'quantum' is metaphorical)"
             case .schumannResonance:
-                return "Earth's 7.83 Hz electromagnetic resonance for grounding (König, 1974)"
+                return "✅ Earth's ~7.83 Hz EM resonance - measurable phenomenon (König, 1974)"
             case .goldenHarmonics:
-                return "Phi-based harmonic series found in nature and music (Livio, 2002)"
+                return "✅ Phi-based harmonic series - mathematical (Livio, 2002)"
             case .hydroCymatics:
-                return "Water-based frequency visualization patterns (Jenny, 1967)"
+                return "⚠️ Frequency-water visualization - aesthetic, not therapeutic (Jenny, 1967)"
             case .spaceVibration:
-                return "3D spatial harmonic field processing (Algazi et al., 2001)"
+                return "✅ 3D spatial audio processing - validated HRTF (Algazi et al., 2001)"
             case .neuralEntrainment:
-                return "Brainwave synchronization via binaural beats (Oster, 1973)"
+                return "✅ Binaural beats brainwave effects - peer-reviewed (Oster, 1973; Garcia-Argibay, 2019)"
             case .cellularResonance:
-                return "Cellular frequency response optimization (Adey, 1981)"
+                return "❌ UNVALIDATED - Adey's work is controversial and not replicated"
             }
+        }
+
+        /// Evidence level for this processing mode
+        var evidenceLevel: EvidenceLevel {
+            switch self {
+            case .schumannResonance, .goldenHarmonics, .spaceVibration, .neuralEntrainment:
+                return .peerReviewed
+            case .quantumCoherence, .hydroCymatics:
+                return .theoretical
+            case .cellularResonance:
+                return .unvalidated
+            }
+        }
+
+        enum EvidenceLevel: String {
+            case peerReviewed = "✅ Peer-Reviewed"
+            case theoretical = "⚠️ Theoretical/Limited Evidence"
+            case unvalidated = "❌ Unvalidated/Controversial"
         }
 
         var pubmedID: String? {

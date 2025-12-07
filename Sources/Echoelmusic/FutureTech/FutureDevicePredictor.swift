@@ -2,22 +2,35 @@ import Foundation
 import Combine
 
 /// Future Device Predictor
-/// Analyzes technology trends and prepares Echoelmusic for upcoming devices (2025-2035)
+/// Analyzes technology trends and prepares Echoelmusic for upcoming devices
 ///
-/// Data Sources:
-/// - Moore's Law projections (transistor density doubles every ~2 years)
-/// - Industry roadmaps (Apple, Google, Samsung, Tesla, etc.)
-/// - Research papers (IEEE, ACM, Nature)
-/// - Patent filings (USPTO, EPO, WIPO)
-/// - CES/WWDC/Google I/O announcements
+/// ════════════════════════════════════════════════════════════════════════════
+/// ⚠️ IMPORTANT DISCLAIMER:
+/// These predictions are SPECULATIVE and for PLANNING purposes only.
+/// Technology timelines are inherently uncertain. Use low confidence values
+/// for decisions. Update predictions as new information becomes available.
+/// ════════════════════════════════════════════════════════════════════════════
 ///
-/// Predictions:
-/// 2025: iPhone 17, Apple Vision Pro 2, foldable devices mainstream
-/// 2026: Apple Car, 6G early deployment, neural interfaces (Neuralink clinical trials)
-/// 2027: AR glasses mainstream (Apple, Meta, Google)
-/// 2028: Quantum computers for consumers (>1000 qubits)
-/// 2030: Brain-computer interfaces widespread
-/// 2035: Quantum smartphones, holographic displays, ambient computing
+/// Data Sources (when available):
+/// - Published industry roadmaps (Apple, Google, etc.)
+/// - Academic research (IEEE, ACM, Nature)
+/// - Patent filings (as indicators of research direction, not release dates)
+///
+/// REALISTIC Assessment (as of Dec 2024):
+/// ✅ HIGH CONFIDENCE (2025-2026):
+///    - iPhone iterations, Apple Watch updates
+///    - Vision Pro improvements
+///    - Foldable phones mainstream
+///
+/// ⚠️ MEDIUM CONFIDENCE (2027-2028):
+///    - AR glasses more common
+///    - Advanced wearable sensors
+///
+/// ❌ LOW CONFIDENCE (speculative):
+///    - Apple Car (project reportedly cancelled Feb 2024)
+///    - Consumer quantum computing (IBM roadmap: 2033+)
+///    - Brain-computer interfaces (Neuralink Phase 1 ongoing, years from consumer)
+///    - Holographic displays (no consumer timeline)
 @MainActor
 class FutureDevicePredictor: ObservableObject {
 

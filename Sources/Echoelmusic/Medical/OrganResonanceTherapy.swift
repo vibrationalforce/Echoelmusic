@@ -1,23 +1,39 @@
 // OrganResonanceTherapy.swift
-// Echoelmusic - Frequency-Based Organ Resonance Therapy
+// Echoelmusic - Frequency-Based Wellness Exploration
 //
-// Scientific foundation for using sound and light frequencies
-// to support organ health and healing processes.
+// CRITICAL SCIENTIFIC DISCLAIMER:
+// ════════════════════════════════════════════════════════════════════════════
+// This module explores frequency-based approaches to wellness.
+// The evidence base varies significantly:
 //
-// IMPORTANT MEDICAL DISCLAIMER:
-// This system is designed for RESEARCH and WELLNESS purposes only.
-// It is NOT a medical device and does NOT diagnose or treat diseases.
-// Always consult qualified medical professionals for health concerns.
+// ✅ VALIDATED SCIENCE:
+//    - Photobiomodulation (red/NIR light therapy) - FDA-cleared for some uses
+//    - Binaural beats affecting brainwave states - peer-reviewed evidence
+//    - Music therapy for mood/anxiety - Cochrane review supported
 //
-// Scientific References:
-// - Rife, R. (1934): Resonant frequency effects on microorganisms
-// - Oschman, J. (2000): Energy Medicine: The Scientific Basis
-// - Rubik, B. (2002): The biofield hypothesis
-// - Hunt, V. (1996): Infinite Mind: Science of Human Vibrations
-// - Lipton, B. (2005): The Biology of Belief
-// - Becker, R. (1985): The Body Electric
-// - Popp, F.A. (1989): Biophoton emission and coherent systems
-// - Fröhlich, H. (1988): Biological Coherence and Response to External Stimuli
+// ⚠️ PRELIMINARY/MIXED EVIDENCE:
+//    - Specific frequency effects on physiology - limited studies
+//    - Heart coherence training - proprietary (HeartMath), not universally accepted
+//
+// ❌ UNVALIDATED/TRADITIONAL:
+//    - Solfeggio frequencies (528Hz "DNA repair", etc.) - NO scientific evidence
+//    - Organ-specific healing frequencies - NOT supported by peer-reviewed research
+//    - "Chakra" frequencies - spiritual tradition, not science
+//
+// This is NOT a medical device. Does NOT diagnose, treat, or cure any condition.
+// Always consult qualified healthcare professionals.
+// ════════════════════════════════════════════════════════════════════════════
+//
+// PEER-REVIEWED References (validated research only):
+// - Hamblin, M.R. (2016): Photobiomodulation - mechanisms and applications
+// - Chaieb, L. et al. (2015): Auditory beat stimulation - neural entrainment
+// - Thaut, M.H. (2015): Rhythm, Music, and the Brain - Scientific Foundations
+// - Goldberger, A.L. (2002): Fractal dynamics in physiology - variability as health
+// - Malik, M. (1996): Heart rate variability - Standards of measurement
+//
+// NOTE: Earlier versions cited Rife (1934) - this has been REMOVED as his
+// "frequency therapy" claims were never scientifically validated and his
+// devices were ruled fraudulent by the FDA.
 
 import Foundation
 import simd
@@ -109,50 +125,67 @@ public enum Organ: String, CaseIterable, Codable {
     case joints = "Joints"
     case skin = "Skin"
 
-    /// Resonant frequency range in Hz (based on research literature)
-    public var resonantFrequencyRange: ClosedRange<Float> {
+    /// Physiological rhythm ranges - these are MEASURED biological rhythms,
+    /// NOT therapeutic frequencies. Used for synchronization/biofeedback only.
+    ///
+    /// Evidence levels:
+    /// ✅ = Peer-reviewed, measured physiological rhythm
+    /// ⚠️ = Estimated/derived, needs individual calibration
+    /// ❌ = Traditional/unvalidated - included for exploration only
+    public var physiologicalRhythmRange: ClosedRange<Float> {
         switch self {
-        case .heart: return 1.0...2.0           // Heart rhythm
-        case .bloodVessels: return 5.0...10.0
-        case .lungs: return 0.2...0.5           // Breathing rate
-        case .bronchi: return 10.0...20.0
-        case .diaphragm: return 0.2...0.4
-        case .stomach: return 0.05...0.1        // Peristalsis
-        case .liver: return 5.0...8.0
-        case .gallbladder: return 6.0...10.0
-        case .pancreas: return 5.0...7.0
-        case .smallIntestine: return 0.1...0.3
-        case .largeIntestine: return 0.05...0.1
-        case .brain: return 0.5...100.0         // Brainwaves (delta to gamma)
-        case .spinalCord: return 7.83...14.1    // Schumann + alpha
-        case .nerves: return 20.0...1000.0
-        case .thyroid: return 62.0...68.0       // Thyroid specific
-        case .adrenals: return 50.0...55.0
-        case .pituitary: return 635.0...640.0
-        case .pineal: return 963.0...972.0      // "Crown" frequency
-        case .spleen: return 45.0...50.0
-        case .thymus: return 55.0...60.0
-        case .lymphNodes: return 15.0...25.0
-        case .kidneys: return 319.88...320.0    // Kidney meridian
-        case .bladder: return 352.0...356.0
-        case .gonads: return 288.0...295.0
-        case .bones: return 25.0...50.0         // Bone healing frequencies
-        case .muscles: return 10.0...100.0
-        case .joints: return 8.0...15.0
-        case .skin: return 250.0...300.0
+        // ✅ VALIDATED - Measurable physiological rhythms
+        case .heart: return 0.8...2.0           // ✅ Heart rate 48-120 BPM
+        case .lungs: return 0.15...0.4          // ✅ Respiration 9-24 breaths/min
+        case .brain: return 0.5...100.0         // ✅ EEG: delta(0.5-4) to gamma(30-100)
+        case .diaphragm: return 0.15...0.4      // ✅ Matches respiration
+
+        // ⚠️ ESTIMATED - Based on physiology but individual variation high
+        case .stomach: return 0.03...0.1        // ⚠️ Gastric slow waves ~3 cycles/min
+        case .smallIntestine: return 0.15...0.2 // ⚠️ ~9-12 cycles/min
+        case .largeIntestine: return 0.05...0.1 // ⚠️ ~3-6 cycles/min
+        case .bloodVessels: return 0.01...0.1   // ⚠️ Vasomotion waves
+        case .muscles: return 8.0...30.0        // ⚠️ EMG tremor frequencies
+
+        // ❌ UNVALIDATED - Traditional/alternative sources, no peer-reviewed evidence
+        // Included for experimental exploration only - NOT therapeutic claims
+        case .bronchi: return 10.0...20.0       // ❌ Unvalidated
+        case .liver: return 5.0...8.0           // ❌ Unvalidated
+        case .gallbladder: return 6.0...10.0    // ❌ Unvalidated
+        case .pancreas: return 5.0...7.0        // ❌ Unvalidated
+        case .spinalCord: return 7.0...14.0     // ❌ Unvalidated
+        case .nerves: return 20.0...1000.0      // ⚠️ Action potential range
+        case .thyroid: return 60.0...70.0       // ❌ Unvalidated
+        case .adrenals: return 50.0...55.0      // ❌ Unvalidated
+        case .pituitary: return 600.0...650.0   // ❌ Unvalidated
+        case .pineal: return 900.0...1000.0     // ❌ Unvalidated
+        case .spleen: return 45.0...50.0        // ❌ Unvalidated
+        case .thymus: return 55.0...60.0        // ❌ Unvalidated
+        case .lymphNodes: return 15.0...25.0    // ❌ Unvalidated
+        case .kidneys: return 300.0...350.0     // ❌ Unvalidated
+        case .bladder: return 350.0...400.0     // ❌ Unvalidated
+        case .gonads: return 280.0...300.0      // ❌ Unvalidated
+        case .bones: return 20.0...50.0         // ⚠️ LIPUS uses 20-100Hz (some evidence)
+        case .joints: return 8.0...15.0         // ❌ Unvalidated
+        case .skin: return 250.0...300.0        // ❌ Unvalidated
         }
     }
 
-    /// Associated Solfeggio frequency (ancient healing tones)
+    /// Solfeggio frequencies - TRADITIONAL/SPIRITUAL, NOT SCIENTIFICALLY VALIDATED
+    ///
+    /// ⚠️ WARNING: These frequencies have NO peer-reviewed evidence for health effects.
+    /// Claims like "DNA repair" or "healing" are NOT supported by science.
+    /// Included for historical/cultural interest and sonic exploration only.
+    /// DO NOT use as medical treatment.
     public var solfeggioFrequency: Float? {
         switch self {
-        case .heart: return 639.0      // FA - Connecting/Relationships
-        case .liver: return 528.0      // MI - Transformation/DNA repair
-        case .stomach: return 417.0    // RE - Undoing situations
-        case .thyroid: return 741.0    // SOL - Awakening intuition
-        case .pineal: return 963.0     // TI - Divine consciousness
-        case .kidneys: return 396.0    // UT - Liberating fear
-        case .lungs: return 852.0      // LA - Returning to spiritual order
+        case .heart: return 639.0      // Traditional: "Connection" - NO EVIDENCE
+        case .liver: return 528.0      // Traditional: "Transformation" - NO EVIDENCE for "DNA repair"
+        case .stomach: return 417.0    // Traditional - NO EVIDENCE
+        case .thyroid: return 741.0    // Traditional - NO EVIDENCE
+        case .pineal: return 963.0     // Traditional - NO EVIDENCE
+        case .kidneys: return 396.0    // Traditional - NO EVIDENCE
+        case .lungs: return 852.0      // Traditional - NO EVIDENCE
         default: return nil
         }
     }
