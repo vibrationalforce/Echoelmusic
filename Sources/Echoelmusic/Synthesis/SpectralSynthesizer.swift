@@ -220,6 +220,45 @@ public final class SpectralSynthesizer {
     private var realBuffer: [Float] = []
     private var imagBuffer: [Float] = []
 
+    // MARK: - ULTRA OPTIMIZATION: Pre-allocated processing buffers
+
+    /// Pre-allocated frame buffer for FFT input (avoids per-frame allocation)
+    private var frameBuffer: [Float] = []
+
+    /// Pre-allocated imaginary input buffer
+    private var imagInBuffer: [Float] = []
+
+    /// Pre-allocated real/imag output buffers for inverse FFT
+    private var realOutBuffer: [Float] = []
+    private var imagOutBuffer: [Float] = []
+
+    /// Pre-allocated shifted magnitude buffer for pitch/formant shift
+    private var shiftedMagnitudes: [Float] = []
+    private var shiftedPhases: [Float] = []
+    private var shiftedFrequencies: [Float] = []
+
+    /// Sine/Cosine LUT for fast mag/phase conversion
+    private static let trigLUTSize: Int = 4096
+    private static let trigLUT: (sin: [Float], cos: [Float]) = {
+        var sinTable = [Float](repeating: 0, count: 4096)
+        var cosTable = [Float](repeating: 0, count: 4096)
+        for i in 0..<4096 {
+            let phase = Float(i) / 4096.0 * 2.0 * .pi
+            sinTable[i] = sin(phase)
+            cosTable[i] = cos(phase)
+        }
+        return (sinTable, cosTable)
+    }()
+
+    @inline(__always)
+    private static func fastSinCos(_ phase: Float) -> (sin: Float, cos: Float) {
+        var normalizedPhase = phase / (2.0 * .pi)
+        normalizedPhase = normalizedPhase - Float(Int(normalizedPhase))
+        if normalizedPhase < 0 { normalizedPhase += 1.0 }
+        let index = Int(normalizedPhase * Float(trigLUTSize)) & (trigLUTSize - 1)
+        return (trigLUT.sin[index], trigLUT.cos[index])
+    }
+
     // MARK: - Initialization
 
     public init(sampleRate: Float = 44100, fftSize: FFTSize = .fft2048) {
@@ -279,6 +318,15 @@ public final class SpectralSynthesizer {
         realBuffer = [Float](repeating: 0, count: size)
         imagBuffer = [Float](repeating: 0, count: size)
 
+        // ULTRA OPTIMIZATION: Pre-allocate all processing buffers
+        frameBuffer = [Float](repeating: 0, count: size)
+        imagInBuffer = [Float](repeating: 0, count: size)
+        realOutBuffer = [Float](repeating: 0, count: size)
+        imagOutBuffer = [Float](repeating: 0, count: size)
+        shiftedMagnitudes = [Float](repeating: 0, count: size / 2 + 1)
+        shiftedPhases = [Float](repeating: 0, count: size / 2 + 1)
+        shiftedFrequencies = [Float](repeating: 0, count: size / 2 + 1)
+
         inputWritePos = 0
         outputReadPos = 0
         hopCounter = 0
@@ -325,24 +373,23 @@ public final class SpectralSynthesizer {
         }
     }
 
-    /// Perform FFT analysis
+    /// OPTIMIZED: Perform FFT analysis using pre-allocated buffers
     private func performAnalysis() {
         let size = fftSize.rawValue
 
-        // Extract windowed frame from input buffer
-        var frame = [Float](repeating: 0, count: size)
+        // OPTIMIZED: Extract windowed frame using pre-allocated buffer
         for i in 0..<size {
             let bufferIndex = (inputWritePos - size + i + inputBuffer.count) % inputBuffer.count
-            frame[i] = inputBuffer[bufferIndex] * window[i]
+            frameBuffer[i] = inputBuffer[bufferIndex] * window[i]
         }
+
+        // Clear imaginary input buffer
+        vDSP_vclr(&imagInBuffer, 1, vDSP_Length(size))
 
         // Perform FFT
         guard let setup = fftSetup else { return }
 
-        var realIn = frame
-        var imagIn = [Float](repeating: 0, count: size)
-
-        vDSP_DFT_Execute(setup, &realIn, &imagIn, &realBuffer, &imagBuffer)
+        vDSP_DFT_Execute(setup, &frameBuffer, &imagInBuffer, &realBuffer, &imagBuffer)
 
         // Convert to magnitude/phase
         let binCount = size / 2 + 1
@@ -429,28 +476,35 @@ public final class SpectralSynthesizer {
         }
     }
 
-    /// Pitch shift processing
+    /// OPTIMIZED: Pitch shift processing using pre-allocated buffers
     private func processPitchShift() {
         let binCount = analysisFrame.magnitudes.count
         let shiftRatio = pow(2.0, pitchShift / 12.0)
 
-        // Clear synthesis frame
-        synthesisFrame.magnitudes = [Float](repeating: 0, count: binCount)
-        synthesisFrame.phases = [Float](repeating: 0, count: binCount)
-        synthesisFrame.frequencies = [Float](repeating: 0, count: binCount)
+        // OPTIMIZED: Clear using pre-allocated buffers instead of allocating new arrays
+        vDSP_vclr(&shiftedMagnitudes, 1, vDSP_Length(binCount))
+        vDSP_vclr(&shiftedPhases, 1, vDSP_Length(binCount))
+        vDSP_vclr(&shiftedFrequencies, 1, vDSP_Length(binCount))
 
         // Shift bins
         for bin in 0..<binCount {
             let newBin = Int(Float(bin) * shiftRatio)
             guard newBin >= 0 && newBin < binCount else { continue }
 
-            synthesisFrame.magnitudes[newBin] += analysisFrame.magnitudes[bin]
-            synthesisFrame.frequencies[newBin] = analysisFrame.frequencies[bin] * shiftRatio
+            shiftedMagnitudes[newBin] += analysisFrame.magnitudes[bin]
+            shiftedFrequencies[newBin] = analysisFrame.frequencies[bin] * shiftRatio
 
             // Accumulate phase
-            let phaseInc = (synthesisFrame.frequencies[newBin] / sampleRate) * 2 * .pi * Float(fftSize.rawValue / overlapFactor)
+            let phaseInc = (shiftedFrequencies[newBin] / sampleRate) * 2 * .pi * Float(fftSize.rawValue / overlapFactor)
             phaseCumulative[newBin] += phaseInc
-            synthesisFrame.phases[newBin] = phaseCumulative[newBin]
+            shiftedPhases[newBin] = phaseCumulative[newBin]
+        }
+
+        // Copy to synthesis frame
+        for i in 0..<binCount {
+            synthesisFrame.magnitudes[i] = shiftedMagnitudes[i]
+            synthesisFrame.phases[i] = shiftedPhases[i]
+            synthesisFrame.frequencies[i] = shiftedFrequencies[i]
         }
     }
 
@@ -550,21 +604,25 @@ public final class SpectralSynthesizer {
         }
     }
 
-    /// Formant shift
+    /// OPTIMIZED: Formant shift using pre-allocated buffer
     private func processFormantShift() {
         let binCount = analysisFrame.magnitudes.count
         let shiftRatio = pow(2.0, formantShift / 12.0)
 
-        // Clear synthesis frame
-        synthesisFrame.magnitudes = [Float](repeating: 0, count: binCount)
+        // OPTIMIZED: Clear using pre-allocated buffer
+        vDSP_vclr(&shiftedMagnitudes, 1, vDSP_Length(binCount))
 
         // Shift spectral envelope
         for bin in 0..<binCount {
             let newBin = Int(Float(bin) * shiftRatio)
             guard newBin >= 0 && newBin < binCount else { continue }
-            synthesisFrame.magnitudes[newBin] += analysisFrame.magnitudes[bin]
+            shiftedMagnitudes[newBin] += analysisFrame.magnitudes[bin]
         }
 
+        // Copy to synthesis frame
+        for i in 0..<binCount {
+            synthesisFrame.magnitudes[i] = shiftedMagnitudes[i]
+        }
         synthesisFrame.phases = analysisFrame.phases
         synthesisFrame.frequencies = analysisFrame.frequencies
     }
@@ -590,18 +648,20 @@ public final class SpectralSynthesizer {
         }
     }
 
-    /// Perform inverse FFT synthesis
+    /// OPTIMIZED: Perform inverse FFT synthesis using pre-allocated buffers + LUT
     private func performSynthesis() {
         let size = fftSize.rawValue
         let binCount = size / 2 + 1
 
-        // Convert magnitude/phase back to real/imaginary
+        // OPTIMIZED: Convert magnitude/phase back to real/imaginary using LUT
         for bin in 0..<binCount {
             let mag = synthesisFrame.magnitudes[bin]
             let phase = synthesisFrame.phases[bin]
 
-            realBuffer[bin] = mag * cos(phase)
-            imagBuffer[bin] = mag * sin(phase)
+            // Use fast sin/cos LUT instead of transcendentals
+            let sc = Self.fastSinCos(phase)
+            realBuffer[bin] = mag * sc.cos
+            imagBuffer[bin] = mag * sc.sin
 
             // Mirror for negative frequencies (conjugate symmetry)
             if bin > 0 && bin < binCount - 1 {
@@ -610,25 +670,22 @@ public final class SpectralSynthesizer {
             }
         }
 
-        // Perform inverse FFT
+        // Perform inverse FFT using pre-allocated buffers
         guard let setup = fftSetupInverse else { return }
 
-        var realOut = [Float](repeating: 0, count: size)
-        var imagOut = [Float](repeating: 0, count: size)
+        vDSP_DFT_Execute(setup, &realBuffer, &imagBuffer, &realOutBuffer, &imagOutBuffer)
 
-        vDSP_DFT_Execute(setup, &realBuffer, &imagBuffer, &realOut, &imagOut)
-
-        // Scale and window
+        // Scale and window in-place
         var scale = 1.0 / Float(size)
-        vDSP_vsmul(&realOut, 1, &scale, &realOut, 1, vDSP_Length(size))
+        vDSP_vsmul(&realOutBuffer, 1, &scale, &realOutBuffer, 1, vDSP_Length(size))
 
         // Apply window
-        vDSP_vmul(&realOut, 1, &window, 1, &realOut, 1, vDSP_Length(size))
+        vDSP_vmul(&realOutBuffer, 1, &window, 1, &realOutBuffer, 1, vDSP_Length(size))
 
         // Copy to output buffer
         for i in 0..<size {
             let outIndex = (outputReadPos + i) % outputBuffer.count
-            outputBuffer[outIndex] = realOut[i]
+            outputBuffer[outIndex] = realOutBuffer[i]
         }
     }
 

@@ -6,6 +6,50 @@ import simd
 // Karplus-Strong, waveguide synthesis, and modal synthesis
 // Based on: Stanford CCRMA waveguide synthesis research (Smith, 1992)
 
+// MARK: - ULTRA OPTIMIZATION: Sine LUT for Physical Modeling
+
+/// High-precision sine LUT for physical modeling synthesis
+fileprivate enum PMSineLUT {
+    static let size: Int = 4096
+    static let mask: Int = 4095
+    static let twoPi: Float = 2.0 * .pi
+
+    static let table: [Float] = {
+        var t = [Float](repeating: 0, count: 4096)
+        for i in 0..<4096 {
+            t[i] = sin(Float(i) / 4096.0 * 2.0 * .pi)
+        }
+        return t
+    }()
+
+    /// Cosine table (phase-shifted sine)
+    static let cosTable: [Float] = {
+        var t = [Float](repeating: 0, count: 4096)
+        for i in 0..<4096 {
+            t[i] = cos(Float(i) / 4096.0 * 2.0 * .pi)
+        }
+        return t
+    }()
+
+    @inline(__always)
+    static func sin(_ phase: Float) -> Float {
+        var normalizedPhase = phase / twoPi
+        normalizedPhase = normalizedPhase - Float(Int(normalizedPhase))
+        if normalizedPhase < 0 { normalizedPhase += 1.0 }
+        let index = Int(normalizedPhase * Float(size)) & mask
+        return table[index]
+    }
+
+    @inline(__always)
+    static func cos(_ phase: Float) -> Float {
+        var normalizedPhase = phase / twoPi
+        normalizedPhase = normalizedPhase - Float(Int(normalizedPhase))
+        if normalizedPhase < 0 { normalizedPhase += 1.0 }
+        let index = Int(normalizedPhase * Float(size)) & mask
+        return cosTable[index]
+    }
+}
+
 /// PhysicalModelingSynth: Realistic physical modeling synthesis
 /// Implements digital waveguide models for strings, tubes, and percussion
 ///
@@ -215,6 +259,25 @@ public final class PhysicalModelingSynth {
     public init(sampleRate: Float = 44100) {
         self.sampleRate = sampleRate
         voices = [PMVoice](repeating: PMVoice(), count: maxVoices)
+
+        // ULTRA OPTIMIZATION: Pre-allocate voice output buffer
+        voiceOutputBuffer = [Float](repeating: 0, count: 8192)
+        voiceOutputBufferCapacity = 8192
+    }
+
+    // MARK: - ULTRA OPTIMIZATION: Pre-allocated buffers
+
+    /// Pre-allocated voice output buffer to avoid per-frame allocation
+    private var voiceOutputBuffer: [Float] = []
+    private var voiceOutputBufferCapacity: Int = 0
+
+    /// Ensure buffer capacity
+    @inline(__always)
+    private func ensureVoiceOutputCapacity(_ frameCount: Int) {
+        if frameCount > voiceOutputBufferCapacity {
+            voiceOutputBuffer = [Float](repeating: 0, count: frameCount)
+            voiceOutputBufferCapacity = frameCount
+        }
     }
 
     // MARK: - Note Control
@@ -474,17 +537,17 @@ public final class PhysicalModelingSynth {
         // Clear buffer
         vDSP_vclr(buffer, 1, vDSP_Length(frameCount))
 
-        // Process each active voice
+        // OPTIMIZED: Process each active voice using pre-allocated buffer
         var voicesToRemove: [Int] = []
 
         for voiceIndex in activeVoices {
-            let voiceOutput = processVoice(&voices[voiceIndex], frameCount: frameCount)
+            processVoice(&voices[voiceIndex], frameCount: frameCount)
 
-            // Mix to buffer
-            vDSP_vadd(buffer, 1, voiceOutput, 1, buffer, 1, vDSP_Length(frameCount))
+            // Mix to buffer using pre-allocated voice output
+            vDSP_vadd(buffer, 1, voiceOutputBuffer, 1, buffer, 1, vDSP_Length(frameCount))
 
             // Check if voice is done (energy below threshold)
-            if voiceOutput.max() ?? 0 < 0.0001 && !voices[voiceIndex].isActive {
+            if voiceOutputBuffer.prefix(frameCount).max() ?? 0 < 0.0001 && !voices[voiceIndex].isActive {
                 voicesToRemove.append(voiceIndex)
             }
 
@@ -507,31 +570,31 @@ public final class PhysicalModelingSynth {
         vDSP_vsmul(buffer, 1, &vol, buffer, 1, vDSP_Length(frameCount))
     }
 
-    /// Process single voice
-    private func processVoice(_ voice: inout PMVoice, frameCount: Int) -> [Float] {
-        var output = [Float](repeating: 0, count: frameCount)
+    /// OPTIMIZED: Process single voice using pre-allocated buffer
+    private func processVoice(_ voice: inout PMVoice, frameCount: Int) {
+        // OPTIMIZED: Use pre-allocated buffer instead of creating new array
+        ensureVoiceOutputCapacity(frameCount)
+        vDSP_vclr(&voiceOutputBuffer, 1, vDSP_Length(frameCount))
 
         switch modelType {
         case .karplusStrong, .extendedKS, .pluckedString:
-            processKarplusStrong(&voice, output: &output, frameCount: frameCount)
+            processKarplusStrong(&voice, output: &voiceOutputBuffer, frameCount: frameCount)
 
         case .bowedString:
-            processBowedString(&voice, output: &output, frameCount: frameCount)
+            processBowedString(&voice, output: &voiceOutputBuffer, frameCount: frameCount)
 
         case .struckString:
-            processStruckString(&voice, output: &output, frameCount: frameCount)
+            processStruckString(&voice, output: &voiceOutputBuffer, frameCount: frameCount)
 
         case .brass, .woodwind, .flute:
-            processWindModel(&voice, output: &output, frameCount: frameCount)
+            processWindModel(&voice, output: &voiceOutputBuffer, frameCount: frameCount)
 
         case .marimba, .bell, .bar:
-            processModalSynth(&voice, output: &output, frameCount: frameCount)
+            processModalSynth(&voice, output: &voiceOutputBuffer, frameCount: frameCount)
 
         case .membrane:
-            processMembrane(&voice, output: &output, frameCount: frameCount)
+            processMembrane(&voice, output: &voiceOutputBuffer, frameCount: frameCount)
         }
-
-        return output
     }
 
     /// Process Karplus-Strong algorithm
@@ -678,21 +741,23 @@ public final class PhysicalModelingSynth {
         }
     }
 
-    /// Process modal synthesis (percussion)
+    /// OPTIMIZED: Process modal synthesis using LUT (percussion)
     private func processModalSynth(_ voice: inout PMVoice, output: inout [Float], frameCount: Int) {
         let (frequencies, _, _) = getModalParameters(for: modelType, baseFreq: voice.frequency)
+        let twoPi = PMSineLUT.twoPi
 
         for i in 0..<frameCount {
             var sample: Float = 0
 
             for m in 0..<min(voice.modalAmplitudes.count, frequencies.count) {
                 // Oscillator for each mode
-                voice.modalPhases[m] += frequencies[m] / sampleRate * 2 * .pi
-                if voice.modalPhases[m] > 2 * .pi {
-                    voice.modalPhases[m] -= 2 * .pi
+                voice.modalPhases[m] += frequencies[m] / sampleRate * twoPi
+                if voice.modalPhases[m] > twoPi {
+                    voice.modalPhases[m] -= twoPi
                 }
 
-                sample += sin(voice.modalPhases[m]) * voice.modalAmplitudes[m]
+                // OPTIMIZED: Use LUT instead of sin()
+                sample += PMSineLUT.sin(voice.modalPhases[m]) * voice.modalAmplitudes[m]
 
                 // Apply decay
                 voice.modalAmplitudes[m] *= voice.modalDecays[m]
@@ -725,17 +790,18 @@ public final class PhysicalModelingSynth {
         }
     }
 
-    /// Apply body resonance filter
+    /// OPTIMIZED: Apply body resonance filter using LUT
     private func applyBodyResonance(_ buffer: UnsafeMutablePointer<Float>, frameCount: Int) {
         // Two resonant filters simulating body resonances
         let freq1: Float = 250
         let freq2: Float = 450
         let q: Float = 5
 
-        let w1 = 2 * .pi * freq1 / sampleRate
-        let w2 = 2 * .pi * freq2 / sampleRate
-        let alpha1 = sin(w1) / (2 * q)
-        let alpha2 = sin(w2) / (2 * q)
+        let w1 = PMSineLUT.twoPi * freq1 / sampleRate
+        let w2 = PMSineLUT.twoPi * freq2 / sampleRate
+        // OPTIMIZED: Use LUT instead of sin()
+        let alpha1 = PMSineLUT.sin(w1) / (2 * q)
+        let alpha2 = PMSineLUT.sin(w2) / (2 * q)
 
         for i in 0..<frameCount {
             let input = buffer[i]

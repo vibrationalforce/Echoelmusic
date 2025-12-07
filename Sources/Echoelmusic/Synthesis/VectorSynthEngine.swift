@@ -6,6 +6,42 @@ import simd
 // Based on Sequential Prophet VS and Korg Wavestation architecture
 // Cross-platform: iOS, macOS, Windows, Linux, Android
 
+// MARK: - ULTRA OPTIMIZATION: Shared Sine LUT for Vector Synthesis
+
+/// Global sine LUT for all vector synthesis components - avoids per-instance allocation
+fileprivate enum VectorSineLUT {
+    static let size: Int = 4096
+    static let mask: Int = 4095
+    static let twoPi: Float = 2.0 * .pi
+
+    static let table: [Float] = {
+        var t = [Float](repeating: 0, count: 4096)
+        for i in 0..<4096 {
+            t[i] = sin(Float(i) / 4096.0 * 2.0 * .pi)
+        }
+        return t
+    }()
+
+    @inline(__always)
+    static func sin(_ phase: Float) -> Float {
+        var normalizedPhase = phase / twoPi
+        normalizedPhase = normalizedPhase - Float(Int(normalizedPhase))
+        if normalizedPhase < 0 { normalizedPhase += 1.0 }
+        let index = Int(normalizedPhase * Float(size)) & mask
+        return table[index]
+    }
+
+    @inline(__always)
+    static func sinNormalized(_ normalizedPhase: Float) -> Float {
+        // For phases already in 0-1 range
+        var p = normalizedPhase
+        if p < 0 { p += 1.0 }
+        if p >= 1.0 { p -= Float(Int(p)) }
+        let index = Int(p * Float(size)) & mask
+        return table[index]
+    }
+}
+
 /// VectorSynthEngine: Professional vector synthesis with joystick morphing
 /// Combines 4 oscillator sources with 2D vector mixing (X/Y joystick control)
 ///
@@ -102,7 +138,26 @@ public final class VectorSynthEngine: ObservableObject {
             voices.append(VectorVoice(id: i, sampleRate: sampleRate))
         }
 
+        // ULTRA OPTIMIZATION: Pre-allocate voice processing buffer
+        voiceProcessingBuffer = [Float](repeating: 0, count: 8192)
+        voiceBufferCapacity = 8192
+
         setupDefaultPatch()
+    }
+
+    // MARK: - ULTRA OPTIMIZATION: Pre-allocated buffers
+
+    /// Pre-allocated voice buffer to avoid per-frame allocation
+    private var voiceProcessingBuffer: [Float] = []
+    private var voiceBufferCapacity: Int = 0
+
+    /// Ensure buffer capacity
+    @inline(__always)
+    private func ensureVoiceBufferCapacity(_ frameCount: Int) {
+        if frameCount > voiceBufferCapacity {
+            voiceProcessingBuffer = [Float](repeating: 0, count: frameCount)
+            voiceBufferCapacity = frameCount
+        }
     }
 
     private func setupDefaultPatch() {
@@ -207,8 +262,9 @@ public final class VectorSynthEngine: ObservableObject {
     private func processVoice(_ voiceIndex: Int, buffer: UnsafeMutablePointer<Float>, frameCount: Int) {
         let voice = voices[voiceIndex]
 
-        // Temp buffer for voice output
-        var voiceBuffer = [Float](repeating: 0, count: frameCount)
+        // OPTIMIZED: Use pre-allocated buffer instead of allocating new one
+        ensureVoiceBufferCapacity(frameCount)
+        vDSP_vclr(&voiceProcessingBuffer, 1, vDSP_Length(frameCount))
 
         for i in 0..<frameCount {
             // Update vector position from envelope + LFO
@@ -247,14 +303,14 @@ public final class VectorSynthEngine: ObservableObject {
             // Apply velocity
             let output = mixed * envelope * voice.velocity
 
-            voiceBuffer[i] = output
+            voiceProcessingBuffer[i] = output
 
             // Update voice phases
             voices[voiceIndex].updatePhases(sampleRate: sampleRate)
         }
 
-        // Add to main buffer
-        vDSP_vadd(buffer, 1, voiceBuffer, 1, buffer, 1, vDSP_Length(frameCount))
+        // Add to main buffer using pre-allocated buffer
+        vDSP_vadd(buffer, 1, voiceProcessingBuffer, 1, buffer, 1, vDSP_Length(frameCount))
     }
 
     /// Calculate bilinear interpolation weights for vector position
@@ -373,7 +429,7 @@ public class VectorSource {
         }
     }
 
-    /// Generate a sample at given frequency and phase
+    /// OPTIMIZED: Generate a sample at given frequency and phase using LUT
     public func generateSample(frequency: Float, phase: Double) -> Float {
         // Apply detune
         let detuneRatio = pow(2.0, Double(detune) / 1200.0)
@@ -381,7 +437,8 @@ public class VectorSource {
 
         switch waveform {
         case .sine:
-            return sin(Float(phase) * 2 * .pi) * amplitude
+            // OPTIMIZED: Use LUT instead of sin()
+            return VectorSineLUT.sin(Float(phase) * VectorSineLUT.twoPi) * amplitude
 
         case .saw:
             return generatePolyBLEPSaw(phase: phase, frequency: detunedFreq) * amplitude
@@ -506,6 +563,7 @@ public class VectorSource {
         return generatePolyBLEPSaw(phase: slavePhase, frequency: frequency * ratio)
     }
 
+    /// OPTIMIZED: Formant generation using LUT
     private func generateFormant(phase: Double, frequency: Float) -> Float {
         // Formant frequencies for vowels (Hz)
         let formants: [[Float]] = [
@@ -524,11 +582,10 @@ public class VectorSource {
 
         for i in 0..<5 {
             let formantPhase = t * f[i] / frequency
-            let bandwidth: Float = 100 + Float(i) * 50
-            let q = f[i] / bandwidth
             let amplitude = 1.0 / Float(i + 1)
 
-            output += sin(formantPhase * 2 * .pi) * amplitude * exp(-Float(i) * 0.3)
+            // OPTIMIZED: Use LUT instead of sin()
+            output += VectorSineLUT.sin(formantPhase * VectorSineLUT.twoPi) * amplitude * exp(-Float(i) * 0.3)
         }
 
         return output / 3
@@ -784,6 +841,8 @@ public class LFOGenerator {
         self.sampleRate = sampleRate
     }
 
+    /// OPTIMIZED: Process using LUT for sine
+    @inline(__always)
     public func process() -> Float {
         let phaseIncrement = rate / Float(sampleRate)
         phase += phaseIncrement
@@ -791,7 +850,8 @@ public class LFOGenerator {
 
         switch waveform {
         case .sine:
-            return sin(phase * 2 * .pi)
+            // OPTIMIZED: Use LUT instead of sin()
+            return VectorSineLUT.sinNormalized(phase)
         case .triangle:
             return phase < 0.5 ? 4 * phase - 1 : 3 - 4 * phase
         case .saw:
@@ -890,14 +950,15 @@ public class ChorusEffect {
         delayBuffer = [Float](repeating: 0, count: bufferSize)
     }
 
+    /// OPTIMIZED: Process using LUT for LFO
     public func process(buffer: UnsafeMutablePointer<Float>, frameCount: Int) {
         for i in 0..<frameCount {
             let input = buffer[i]
 
-            // LFO modulates delay time
+            // LFO modulates delay time - OPTIMIZED with LUT
             lfoPhase += rate / Float(sampleRate)
             if lfoPhase >= 1 { lfoPhase -= 1 }
-            let lfo = sin(lfoPhase * 2 * .pi)
+            let lfo = VectorSineLUT.sinNormalized(lfoPhase)
 
             // Calculate delay in samples (5-25ms)
             let delayMs = 15 + lfo * 10 * depth

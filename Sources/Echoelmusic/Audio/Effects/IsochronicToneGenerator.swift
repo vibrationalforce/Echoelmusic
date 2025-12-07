@@ -53,6 +53,37 @@ public class IsochronicToneGenerator: ObservableObject {
 
     private var efxChain: [EntrainmentEffect] = []
 
+    // MARK: - ULTRA OPTIMIZATION: Inline Effect Chain (no protocol overhead)
+    private var inlineEffectsEnabled: Bool = false
+    private var compressorEnvelope: Float = 0
+    private var compressorThreshold: Float = 0.7
+    private var compressorRatio: Float = 3.0
+    private var harmonizerAmount: Float = 0.2
+    private var widenerBuffer: [Float] = [Float](repeating: 0, count: 100)
+    private var widenerIndex: Int = 0
+    private var widenerWidth: Float = 0.3
+
+    // MARK: - ULTRA OPTIMIZATION: Pre-computed lookup tables
+    private static let sineLUT: [Float] = {
+        var table = [Float](repeating: 0, count: 4096)
+        for i in 0..<4096 {
+            table[i] = sin(Float(i) / 4096.0 * 2.0 * .pi)
+        }
+        return table
+    }()
+
+    private static let gaussianLUT: [Float] = {
+        var table = [Float](repeating: 0, count: 1024)
+        let center: Float = 0.25
+        let sigma: Float = 0.15
+        for i in 0..<1024 {
+            let phase = Float(i) / 1024.0
+            let x = phase - center
+            table[i] = exp(-x * x / (2.0 * sigma * sigma))
+        }
+        return table
+    }()
+
     // MARK: - Presets
 
     public static let presets: [IsochronicPreset] = [
@@ -124,21 +155,26 @@ public class IsochronicToneGenerator: ObservableObject {
         }
     }
 
-    // MARK: - Sample Generation
+    // MARK: - Sample Generation (ULTRA OPTIMIZED)
 
+    @inline(__always)
     private func generateSample() -> Float {
-        // 1. Carrier-Waveform generieren
-        let carrierSample = generateCarrierWaveform()
+        // 1. Carrier-Waveform generieren (LUT-optimiert)
+        let carrierSample = generateCarrierWaveformOptimized()
 
-        // 2. Puls-Envelope generieren
-        let pulseEnvelope = generatePulseEnvelope()
+        // 2. Puls-Envelope generieren (LUT-optimiert)
+        let pulseEnvelope = generatePulseEnvelopeOptimized()
 
         // 3. Modulieren
         var sample = carrierSample * pulseEnvelope * amplitude
 
-        // 4. EFx Chain anwenden
-        for effect in efxChain {
-            sample = effect.process(sample)
+        // 4. EFx Chain anwenden - ULTRA OPTIMIZED: Inline statt Protocol
+        if inlineEffectsEnabled {
+            sample = processInlineEffects(sample)
+        } else if !efxChain.isEmpty {
+            for effect in efxChain {
+                sample = effect.process(sample)
+            }
         }
 
         // 5. Phasen aktualisieren
@@ -151,6 +187,99 @@ public class IsochronicToneGenerator: ObservableObject {
         if pulsePhase >= 1.0 { pulsePhase -= 1.0 }
 
         return sample
+    }
+
+    /// ULTRA OPTIMIZED: Inline effect processing (no protocol dispatch)
+    @inline(__always)
+    private func processInlineEffects(_ input: Float) -> Float {
+        var sample = input
+
+        // 1. Soft Compressor (inline)
+        let abs = Swift.abs(sample)
+        let coeff: Float = abs > compressorEnvelope ? 0.01 : 0.1
+        compressorEnvelope += coeff * (abs - compressorEnvelope)
+
+        if compressorEnvelope > compressorThreshold {
+            let over = compressorEnvelope - compressorThreshold
+            let gain = compressorThreshold + over / compressorRatio
+            sample *= gain / max(compressorEnvelope, 0.0001)
+        }
+
+        // 2. Harmonic Enhancer (inline tanh approximation)
+        let x = sample * 1.5
+        let x2 = x * x
+        let saturated = x * (27.0 + x2) / (27.0 + 9.0 * x2)  // Fast tanh
+        sample = sample * (1.0 - harmonizerAmount) + saturated * 0.8 * harmonizerAmount
+
+        // 3. Spatial Widener (inline)
+        let delayed = widenerBuffer[widenerIndex]
+        widenerBuffer[widenerIndex] = sample
+        widenerIndex = (widenerIndex + 1) % 100
+        sample = sample * (1.0 - widenerWidth * 0.5) + delayed * widenerWidth * 0.3
+
+        return sample
+    }
+
+    /// ULTRA OPTIMIZED: LUT-based carrier waveform
+    @inline(__always)
+    private func generateCarrierWaveformOptimized() -> Float {
+        switch waveformType {
+        case .sine:
+            // LUT lookup instead of sin()
+            let index = Int(phase * 4096.0) & 4095
+            return Self.sineLUT[index]
+
+        case .triangle:
+            let t = Float(phase)
+            if t < 0.25 {
+                return t * 4.0
+            } else if t < 0.75 {
+                return 2.0 - t * 4.0
+            } else {
+                return t * 4.0 - 4.0
+            }
+
+        case .square:
+            return phase < 0.5 ? 1.0 : -1.0
+
+        case .sawtooth:
+            return Float(2.0 * phase - 1.0)
+
+        case .harmonic:
+            // Optimized: nur 3 Harmonische statt 5
+            let p = Float(phase)
+            let idx1 = Int(phase * 4096.0) & 4095
+            let idx2 = Int(phase * 2.0 * 4096.0) & 4095
+            let idx3 = Int(phase * 3.0 * 4096.0) & 4095
+            return (Self.sineLUT[idx1] + Self.sineLUT[idx2] * 0.5 + Self.sineLUT[idx3] * 0.333) * 0.545
+        }
+    }
+
+    /// ULTRA OPTIMIZED: LUT-based pulse envelope
+    @inline(__always)
+    private func generatePulseEnvelopeOptimized() -> Float {
+        switch pulseShape {
+        case .sharp:
+            return pulsePhase < 0.5 ? 1.0 : 0.0
+
+        case .smooth:
+            let index = Int(pulsePhase * 4096.0) & 4095
+            return (Self.sineLUT[index] + 1.0) * 0.5
+
+        case .exponential:
+            if pulsePhase < 0.1 {
+                return Float(pulsePhase / 0.1)
+            } else {
+                return Float(exp(-5.0 * (pulsePhase - 0.1)))
+            }
+
+        case .gaussian:
+            let index = Int(pulsePhase * 1024.0) & 1023
+            return Self.gaussianLUT[index]
+
+        case .ramp:
+            return Float(1.0 - pulsePhase)
+        }
     }
 
     private func generateCarrierWaveform() -> Float {
@@ -291,19 +420,38 @@ public class IsochronicToneGenerator: ObservableObject {
     }
 
     /// Konfiguriere Standard-EFx-Chain für Entrainment
+    /// ULTRA OPTIMIZED: Uses inline processing by default
     public func setupEntrainmentEFxChain() {
+        // ULTRA OPTIMIZATION: Use inline effects (no protocol overhead)
+        inlineEffectsEnabled = true
+        compressorThreshold = 0.7
+        compressorRatio = 3.0
+        harmonizerAmount = 0.2
+        widenerWidth = 0.3
+
+        // Clear protocol-based chain (not used when inline enabled)
         clearEffects()
 
-        // Sanfter Kompressor für konsistenten Pegel
-        addEffect(SoftCompressorEffect(threshold: 0.7, ratio: 3.0))
+        print("[Isochronic] ⚡ ULTRA EFx chain configured (inline mode)")
+    }
 
-        // Harmonischer Enhancer für Wärme
-        addEffect(HarmonicEnhancerEffect(amount: 0.2))
+    /// Configure effects with custom parameters
+    public func configureInlineEffects(
+        compressorThreshold: Float = 0.7,
+        compressorRatio: Float = 3.0,
+        harmonizerAmount: Float = 0.2,
+        widenerWidth: Float = 0.3
+    ) {
+        inlineEffectsEnabled = true
+        self.compressorThreshold = compressorThreshold
+        self.compressorRatio = compressorRatio
+        self.harmonizerAmount = harmonizerAmount
+        self.widenerWidth = widenerWidth
+    }
 
-        // Spatial Widener für Immersion
-        addEffect(SpatialWidenerEffect(width: 0.3))
-
-        print("[Isochronic] EFx chain configured with 3 effects")
+    /// Disable inline effects (use protocol-based chain)
+    public func disableInlineEffects() {
+        inlineEffectsEnabled = false
     }
 }
 
