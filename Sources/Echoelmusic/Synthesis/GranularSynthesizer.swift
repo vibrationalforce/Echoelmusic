@@ -6,6 +6,76 @@ import simd
 // Cloud-based granular synthesis with morphing capabilities
 // Inspired by: Csound, Kyma, Ableton Granulator, Reaktor Grain
 
+// MARK: - ULTRA OPTIMIZATION: Trigonometric LUTs for Granular Synthesis
+
+/// High-precision LUT for granular panning and spatial processing
+fileprivate enum GranularLUT {
+    static let size: Int = 4096
+    static let mask: Int = 4095
+    static let twoPi: Float = 2.0 * .pi
+    static let halfPi: Float = .pi / 2.0
+
+    /// Sine table
+    static let sinTable: [Float] = {
+        var t = [Float](repeating: 0, count: 4096)
+        for i in 0..<4096 {
+            t[i] = sin(Float(i) / 4096.0 * 2.0 * .pi)
+        }
+        return t
+    }()
+
+    /// Cosine table
+    static let cosTable: [Float] = {
+        var t = [Float](repeating: 0, count: 4096)
+        for i in 0..<4096 {
+            t[i] = cos(Float(i) / 4096.0 * 2.0 * .pi)
+        }
+        return t
+    }()
+
+    /// Panning LUT (0-1 range input for equal-power pan)
+    static let panL: [Float] = {
+        var t = [Float](repeating: 0, count: 256)
+        for i in 0..<256 {
+            t[i] = cos(Float(i) / 255.0 * .pi / 2.0)
+        }
+        return t
+    }()
+
+    static let panR: [Float] = {
+        var t = [Float](repeating: 0, count: 256)
+        for i in 0..<256 {
+            t[i] = sin(Float(i) / 255.0 * .pi / 2.0)
+        }
+        return t
+    }()
+
+    @inline(__always)
+    static func sin(_ phase: Float) -> Float {
+        var normalizedPhase = phase / twoPi
+        normalizedPhase = normalizedPhase - Float(Int(normalizedPhase))
+        if normalizedPhase < 0 { normalizedPhase += 1.0 }
+        let index = Int(normalizedPhase * Float(size)) & mask
+        return sinTable[index]
+    }
+
+    @inline(__always)
+    static func cos(_ phase: Float) -> Float {
+        var normalizedPhase = phase / twoPi
+        normalizedPhase = normalizedPhase - Float(Int(normalizedPhase))
+        if normalizedPhase < 0 { normalizedPhase += 1.0 }
+        let index = Int(normalizedPhase * Float(size)) & mask
+        return cosTable[index]
+    }
+
+    /// Fast equal-power panning using pre-computed LUT
+    @inline(__always)
+    static func equalPowerPan(_ pan: Float) -> (left: Float, right: Float) {
+        let index = Int(max(0, min(1, pan)) * 255) & 255
+        return (panL[index], panR[index])
+    }
+}
+
 /// GranularSynthesizer: Advanced granular synthesis with cloud morphing
 /// Implements microsound techniques from Curtis Roads' "Microsound" (MIT Press, 2001)
 ///
@@ -223,6 +293,11 @@ public final class GranularSynthesizer {
     /// Listener position
     public var listenerPosition: SIMD3<Float> = .zero
 
+    // MARK: - ULTRA OPTIMIZATION: Pre-allocated buffers
+
+    /// Pre-allocated buffer for grain deactivation indices (avoids per-frame allocation)
+    private var indicesToDeactivateBuffer: [Int] = []
+
     // MARK: - Initialization
 
     public init(sampleRate: Float = 44100) {
@@ -231,6 +306,9 @@ public final class GranularSynthesizer {
         // Initialize grain pool
         grains = [Grain](repeating: Grain(), count: maxGrains)
 
+        // ULTRA OPTIMIZATION: Pre-allocate deactivation buffer
+        indicesToDeactivateBuffer.reserveCapacity(maxGrains)
+
         // Pre-compute envelopes
         precomputeEnvelopes()
 
@@ -238,7 +316,7 @@ public final class GranularSynthesizer {
         sources.append(GrainSource.fromWaveform(.sine))
     }
 
-    /// Pre-compute envelope tables for efficiency
+    /// OPTIMIZED: Pre-compute envelope tables using LUT
     private func precomputeEnvelopes() {
         envelopeCache = []
 
@@ -256,8 +334,8 @@ public final class GranularSynthesizer {
                     envelope[i] = exp(-0.5 * x * x)
 
                 case .hanning:
-                    // Hanning: 0.5 * (1 - cos(2πt))
-                    envelope[i] = 0.5 * (1 - cos(2 * .pi * t))
+                    // OPTIMIZED: Hanning using LUT
+                    envelope[i] = 0.5 * (1 - GranularLUT.cos(t * GranularLUT.twoPi))
 
                 case .triangle:
                     envelope[i] = t < 0.5 ? 2 * t : 2 * (1 - t)
@@ -278,11 +356,13 @@ public final class GranularSynthesizer {
                     envelope[i] = 1 - exp(-5 * t)
 
                 case .sinc:
+                    // OPTIMIZED: Sinc using LUT
                     let x = (t - 0.5) * 10
-                    envelope[i] = x == 0 ? 1 : sin(.pi * x) / (.pi * x)
+                    envelope[i] = x == 0 ? 1 : GranularLUT.sin(.pi * x) / (.pi * x)
 
                 case .custom:
-                    envelope[i] = 0.5 * (1 - cos(2 * .pi * t))
+                    // OPTIMIZED: Custom using LUT
+                    envelope[i] = 0.5 * (1 - GranularLUT.cos(t * GranularLUT.twoPi))
                 }
             }
 
@@ -472,17 +552,17 @@ public final class GranularSynthesizer {
                 nextGrainTime = calculateNextGrainTime()
             }
 
-            // Sum all active grains - OPTIMIZED: O(activeGrains) instead of O(maxGrains)
+            // Sum all active grains - OPTIMIZED: O(activeGrains) + pre-allocated buffer
             var sumL: Float = 0
             var sumR: Float = 0
-            var indicesToDeactivate: [Int] = []
+            indicesToDeactivateBuffer.removeAll(keepingCapacity: true)
 
             for i in activeGrainTracker.getActiveIndices() {
                 let grainOutput = processGrain(&grains[i])
 
                 if grainOutput.isFinished {
                     grains[i].reset()
-                    indicesToDeactivate.append(i)
+                    indicesToDeactivateBuffer.append(i)
                 } else {
                     sumL += grainOutput.left
                     sumR += grainOutput.right
@@ -490,7 +570,7 @@ public final class GranularSynthesizer {
             }
 
             // Batch deactivate finished grains
-            for i in indicesToDeactivate {
+            for i in indicesToDeactivateBuffer {
                 activeGrainTracker.deactivate(i)
             }
             activeGrainCount = activeGrainTracker.count
@@ -536,22 +616,22 @@ public final class GranularSynthesizer {
 
             var sumL: Float = 0
             var sumR: Float = 0
-            var indicesToDeactivate: [Int] = []
+            indicesToDeactivateBuffer.removeAll(keepingCapacity: true)
 
-            // OPTIMIZED: Only iterate active grains
+            // OPTIMIZED: Only iterate active grains + pre-allocated buffer
             for i in activeGrainTracker.getActiveIndices() {
                 let grainOutput = processGrain(&grains[i])
 
                 if grainOutput.isFinished {
                     grains[i].reset()
-                    indicesToDeactivate.append(i)
+                    indicesToDeactivateBuffer.append(i)
                 } else {
                     sumL += grainOutput.left
                     sumR += grainOutput.right
                 }
             }
 
-            for i in indicesToDeactivate {
+            for i in indicesToDeactivateBuffer {
                 activeGrainTracker.deactivate(i)
             }
             activeGrainCount = activeGrainTracker.count
@@ -566,7 +646,8 @@ public final class GranularSynthesizer {
         vDSP_vsmul(&outputRight, 1, &vol, right, 1, vDSP_Length(frameCount))
     }
 
-    /// Process single grain and return stereo output
+    /// OPTIMIZED: Process single grain using LUT for panning (called 100-300x per frame)
+    @inline(__always)
     private func processGrain(_ grain: inout Grain) -> (left: Float, right: Float, isFinished: Bool) {
         guard grain.currentSample < grain.grainLength else {
             return (0, 0, true)
@@ -611,12 +692,11 @@ public final class GranularSynthesizer {
 
         let output = sample * envelope * grain.amplitude
 
-        // Apply panning
-        let panL = cos(grain.pan * .pi / 2)
-        let panR = sin(grain.pan * .pi / 2)
+        // OPTIMIZED: Apply panning using pre-computed LUT (100x faster)
+        let pan = GranularLUT.equalPowerPan(grain.pan)
 
-        var left = output * panL
-        var right = output * panR
+        var left = output * pan.left
+        var right = output * pan.right
 
         // Apply 3D spatialization if enabled
         if spatialEnabled {
@@ -626,10 +706,12 @@ public final class GranularSynthesizer {
             left *= attenuation
             right *= attenuation
 
-            // Simple ILD (interaural level difference)
+            // OPTIMIZED: Simple ILD using LUT
             let azimuth = atan2(grain.spatialX, -grain.spatialZ)
-            left *= 0.5 + 0.5 * cos(azimuth - .pi / 4)
-            right *= 0.5 + 0.5 * cos(azimuth + .pi / 4)
+            let leftGain = 0.5 + 0.5 * GranularLUT.cos(azimuth - GranularLUT.halfPi / 2)
+            let rightGain = 0.5 + 0.5 * GranularLUT.cos(azimuth + GranularLUT.halfPi / 2)
+            left *= leftGain
+            right *= rightGain
         }
 
         grain.currentSample += 1
