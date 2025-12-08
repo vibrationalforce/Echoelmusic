@@ -41,10 +41,12 @@ class ChatAggregator: ObservableObject {
     }
 
     private func isToxic(_ text: String) -> Bool {
-        // TODO: Implement CoreML toxic comment detection
-        // Placeholder simple filter
-        let keywords = ["spam", "scam", "hate"]
-        return keywords.contains { text.lowercased().contains($0) }
+        // Multi-layer toxicity detection using AIContentModerator
+        let moderator = AIContentModerator()
+        let result = moderator.moderate(text, username: nil)
+
+        // Block if any high-severity category detected
+        return result.shouldBlock || result.overallScore > 0.7
     }
 }
 

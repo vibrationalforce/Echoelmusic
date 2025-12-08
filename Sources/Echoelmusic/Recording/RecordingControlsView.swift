@@ -462,7 +462,9 @@ struct RecordingControlsView: View {
             do {
                 let url = try await exportManager.exportAudio(session: session, format: format)
                 print("📤 Exported to: \(url.path)")
-                // TODO: Show share sheet
+                await MainActor.run {
+                    showShareSheet(for: url)
+                }
             } catch {
                 print("❌ Export failed: \(error)")
             }
@@ -476,7 +478,7 @@ struct RecordingControlsView: View {
         do {
             let url = try exportManager.exportBioData(session: session, format: format)
             print("📤 Exported bio-data to: \(url.path)")
-            // TODO: Show share sheet
+            showShareSheet(for: url)
         } catch {
             print("❌ Export failed: \(error)")
         }
@@ -490,11 +492,28 @@ struct RecordingControlsView: View {
             do {
                 let url = try await exportManager.exportSessionPackage(session: session)
                 print("📦 Exported package to: \(url.path)")
-                // TODO: Show share sheet
+                await MainActor.run {
+                    showShareSheet(for: url)
+                }
             } catch {
                 print("❌ Export failed: \(error)")
             }
         }
+    }
+
+    private func showShareSheet(for url: URL) {
+        #if os(iOS)
+        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            rootVC.present(activityVC, animated: true)
+        }
+        #elseif os(macOS)
+        let picker = NSSharingServicePicker(items: [url])
+        if let window = NSApp.keyWindow, let contentView = window.contentView {
+            picker.show(relativeTo: .zero, of: contentView, preferredEdge: .minY)
+        }
+        #endif
     }
 
     // MARK: - Helpers

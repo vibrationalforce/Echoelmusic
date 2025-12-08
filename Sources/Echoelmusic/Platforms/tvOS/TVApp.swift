@@ -265,9 +265,23 @@ class TVApp {
         print("📺 Starting SharePlay session")
         isSharePlayActive = true
 
-        // TODO: Integrate with GroupActivities framework
-        // let activity = EchoelmusicActivity()
-        // try await activity.prepareForActivation()
+        #if canImport(GroupActivities)
+        // Integrate with GroupActivities framework for SharePlay
+        let activity = EchoelmusicGroupActivity()
+        switch await activity.prepareForActivation() {
+        case .activationPreferred:
+            _ = try await activity.activate()
+            print("📺 SharePlay activated successfully")
+        case .activationDisabled:
+            print("📺 SharePlay disabled by user")
+            isSharePlayActive = false
+        case .cancelled:
+            print("📺 SharePlay cancelled")
+            isSharePlayActive = false
+        @unknown default:
+            break
+        }
+        #endif
     }
 
     func stopSharePlay() {

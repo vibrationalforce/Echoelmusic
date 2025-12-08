@@ -246,8 +246,34 @@ class WatchApp {
             date: Date()
         )
 
-        // TODO: Sync with iPhone via WatchConnectivity
+        // Sync with iPhone via WatchConnectivity
+        syncToiPhone(sessionData: session)
         print("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+    }
+
+    private func syncToiPhone(sessionData: SessionData) {
+        #if os(watchOS)
+        guard WCSession.isSupported() else { return }
+
+        let session = WCSession.default
+        guard session.isReachable else {
+            // Queue for later sync
+            session.transferUserInfo(["sessionData": try? JSONEncoder().encode(sessionData)])
+            return
+        }
+
+        // Send immediately if iPhone is reachable
+        do {
+            let data = try JSONEncoder().encode(sessionData)
+            session.sendMessageData(data, replyHandler: { _ in
+                print("📱 Session synced to iPhone")
+            }, errorHandler: { error in
+                print("❌ Sync failed: \(error.localizedDescription)")
+            })
+        } catch {
+            print("❌ Encoding failed: \(error)")
+        }
+        #endif
     }
 
     struct SessionData: Codable {

@@ -427,7 +427,10 @@ public class UnifiedControlHub: ObservableObject {
                 let afaField = spatialMapper.mapToAFA(voices: voiceData, geometry: fieldGeometry)
                 spatialMapper.afaField = afaField
 
-                // TODO: Apply AFA field to SpatialAudioEngine
+                // Apply AFA field to SpatialAudioEngine
+                if let spatialEngine = audioEngine?.spatialEngine {
+                    spatialEngine.applyAFAField(afaField)
+                }
                 // print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
             }
         }
@@ -452,7 +455,9 @@ public class UnifiedControlHub: ObservableObject {
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
         // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
+        audioEngine?.setFilterCutoff(params.filterCutoff)
+        audioEngine?.setFilterResonance(params.filterResonance)
+        audioEngine?.setReverbMix(params.reverbMix)
         // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
 
         // Apply to all active MPE voices
@@ -572,7 +577,8 @@ public class UnifiedControlHub: ObservableObject {
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // TODO: Change to preset
+            // Apply preset change to audio engine
+            audioEngine?.loadPreset(named: presetChange)
             print("[Gesture→Audio] Switch to preset: \(presetChange)")
         }
     }

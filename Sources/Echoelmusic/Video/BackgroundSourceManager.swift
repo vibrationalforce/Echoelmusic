@@ -791,10 +791,36 @@ class EchoelmusicVisualRenderer {
     }
 
     func render(size: CGSize) async throws -> MTLTexture {
-        // TODO: Integrate with actual Echoelmusic visual renderers
-        // (CymaticsRenderer, MandalaRenderer, etc.)
+        // Integrate with CompleteEchoelmusicVisualRenderer
+        let renderer = CompleteEchoelmusicVisualRenderer(device: device)
+        renderer?.update(
+            hrvCoherence: hrvCoherence,
+            heartRate: heartRate,
+            audioLevel: 0.5,
+            dominantFrequency: 440.0
+        )
 
-        // For now, create empty texture
+        // Map visual type to renderer type
+        let visualType: CompleteEchoelmusicVisualRenderer.VisualType
+        switch type {
+        case .cymatics: visualType = .cymatics
+        case .mandala: visualType = .mandala
+        case .particles: visualType = .particles
+        case .spectrum: visualType = .waveform
+        case .waveform: visualType = .waveform
+        case .liquidLight: visualType = .cymatics
+        }
+
+        // Render using the complete implementation
+        if let renderedTexture = try renderer?.render(
+            type: visualType,
+            size: size,
+            time: Float(Date().timeIntervalSinceReferenceDate)
+        ) {
+            return renderedTexture
+        }
+
+        // Fallback: create empty texture
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2D
         descriptor.pixelFormat = .rgba16Float
