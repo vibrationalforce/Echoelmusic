@@ -51,8 +51,9 @@ public class UnifiedControlHub: ObservableObject {
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
-    // TODO: Add when implementing
-    // private let gazeTracker: GazeTracker?
+    // MARK: - Gaze & Breathing Integration (COMPLETE)
+    private var gazeTracker: GazeTracker?
+    private var breathingAnalyzer: BreathingRateAnalyzer?
 
     // MARK: - Control Loop
 
@@ -577,7 +578,54 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     private func updateFromGazeTracking() {
-        // TODO: Implement when GazeTracker is integrated
+        guard let tracker = gazeTracker, tracker.isTracking else { return }
+
+        // Get audio parameters from gaze
+        let audioParams = tracker.mapToAudioParameters()
+
+        // Apply gaze-based audio control
+        if audioParams.isActive {
+            // Pan audio based on horizontal gaze position
+            audioEngine?.setPan(audioParams.panPosition)
+
+            // Modulate filter cutoff based on vertical gaze
+            let filterFreq = 200.0 + Double(audioParams.filterFrequency) * 10000.0
+            audioEngine?.setFilterCutoff(Float(filterFreq))
+
+            // Attention-based reverb
+            let reverbMix = 0.2 + (1.0 - audioParams.attentionModulation) * 0.3
+            audioEngine?.setReverbMix(reverbMix)
+        }
+
+        // Update visual parameters from gaze
+        if let visualMapper = midiToVisualMapper {
+            let visualParams = tracker.mapToVisualParameters()
+            visualMapper.updateGazeParameters(
+                focusPoint: visualParams.focusPoint,
+                blurAmount: visualParams.blurAmount,
+                brightness: visualParams.brightnessModulation
+            )
+        }
+    }
+
+    /// Enable gaze tracking for audio/visual control
+    public func enableGazeTracking() {
+        gazeTracker = GazeTracker()
+        gazeTracker?.start()
+        print("[UnifiedControlHub] Gaze tracking enabled")
+    }
+
+    /// Disable gaze tracking
+    public func disableGazeTracking() {
+        gazeTracker?.stop()
+        gazeTracker = nil
+        print("[UnifiedControlHub] Gaze tracking disabled")
+    }
+
+    /// Enable breathing analysis from HRV
+    public func enableBreathingAnalysis() {
+        breathingAnalyzer = BreathingRateAnalyzer()
+        print("[UnifiedControlHub] Breathing analysis enabled")
     }
 
     // MARK: - Conflict Resolution
@@ -619,15 +667,36 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        // Update breathing analyzer with current HRV data
+        if let rrInterval = healthKit.latestRRInterval {
+            breathingAnalyzer?.updateWithRRInterval(rrInterval)
+        }
+
+        // Get breathing rate from analyzer or use default
+        let currentBreathingRate = breathingAnalyzer?.breathingRate ?? 6.0
+
+        // Get audio level from audio engine
+        let currentAudioLevel = audioEngine?.currentOutputLevel ?? 0.5
+
         // Update visual parameters from bio-signals
         let bioParams = MIDIToVisualMapper.BioParameters(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
-            audioLevel: 0.5      // TODO: Get from audio engine
+            breathingRate: currentBreathingRate,
+            audioLevel: currentAudioLevel
         )
 
         visualMapper.updateBioParameters(bioParams)
+
+        // Apply breathing-synchronized visual effects
+        if let analyzer = breathingAnalyzer {
+            let breathingVisuals = analyzer.mapToVisualParameters()
+            visualMapper.updateBreathingParameters(
+                expansionFactor: breathingVisuals.expansionFactor,
+                brightness: breathingVisuals.brightness,
+                pulseIntensity: breathingVisuals.pulseIntensity
+            )
+        }
     }
 
     private func updateLightSystems() {
@@ -635,10 +704,13 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        // Get breathing rate from analyzer
+        let currentBreathingRate = breathingAnalyzer?.breathingRate ?? 6.0
+
         let bioData = MIDIToLightMapper.BioData(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0  // TODO: Calculate from HRV
+            breathingRate: currentBreathingRate
         )
 
         // Update Push 3 LED patterns
