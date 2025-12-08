@@ -275,6 +275,16 @@ extension EchoelUniversalCore {
         var quantumField: QuantumField = QuantumField()
         var superpositionState: [Float] = []
         var entanglementStrength: Float = 0
+        var lastQuantumChoice: Int = 0
+
+        // Creative Direction (from AI/Quantum decisions)
+        var creativeDirection: CreativeDirection = .harmonic
+
+        // AI Suggestion (from AICreativeEngine)
+        var aiSuggestion: AICreativeEngine.CreativeSuggestion?
+
+        // Analog Feedback (CV/Gate responses from hardware)
+        var analogFeedback: [Float] = []
 
         // Timing
         var globalTime: Double = 0
@@ -297,6 +307,14 @@ extension EchoelUniversalCore {
             self.creativity = quantumField.creativity
             self.globalTime += 1.0/120.0
         }
+    }
+
+    /// Creative direction types for system state
+    enum CreativeDirection: String {
+        case harmonic = "Harmonic"
+        case rhythmic = "Rhythmic"
+        case textural = "Textural"
+        case structural = "Structural"
     }
 
     enum PerformanceMode: String {
@@ -408,6 +426,29 @@ struct QuantumField {
         }
         return options - 1
     }
+
+    /// Record a wave function collapse event (when a quantum decision is made)
+    /// - Parameters:
+    ///   - choiceIndex: The index of the chosen option
+    ///   - timestamp: Time of the collapse event
+    mutating func recordCollapse(choiceIndex: Int, timestamp: Date = Date()) {
+        // Wave function collapse - amplitudes "collapse" toward the chosen state
+        for i in 0..<amplitudes.count {
+            if i == choiceIndex % amplitudes.count {
+                // Chosen state gets amplified
+                amplitudes[i] = simd_float4(0.9, 0.9, 0.9, 0.9)
+            } else {
+                // Other states get suppressed (but not eliminated - quantum decoherence)
+                amplitudes[i] *= 0.5
+            }
+        }
+
+        // Collapse resets superposition (temporarily more "classical")
+        collapseProbability = 1.0
+
+        // Creativity temporarily decreases after collapse (decision made)
+        creativity *= 0.7
+    }
 }
 
 // MARK: - Bio-Reactive Processor
@@ -419,6 +460,16 @@ struct BioState {
     var stress: Float = 0.5
     var breathRate: Float = 12
     var breathPhase: Float = 0
+    var energy: Float = 0.5  // Derived from HR + HRV
+
+    /// Calculate energy level from bio metrics
+    mutating func updateEnergy() {
+        // Energy is high when HR is elevated and coherent
+        let hrNormalized = (heartRate - 50) / 100  // 50-150 BPM → 0-1
+        let hrvNormalized = hrv / 100  // 0-100ms → 0-1
+        energy = (hrNormalized * 0.4 + hrvNormalized * 0.3 + coherence * 0.3)
+        energy = max(0, min(1, energy))
+    }
 }
 
 struct AudioState {
@@ -445,6 +496,16 @@ class BioReactiveProcessor {
         // Calculate coherence using HeartMath algorithm
         currentState.coherence = calculateCoherence()
         currentState.stress = 1.0 - currentState.coherence
+        currentState.updateEnergy()
+    }
+
+    /// Update state with new bio values (called from protocol delegate)
+    func updateState(heartRate: Float, hrv: Float, coherence: Float) {
+        currentState.heartRate = heartRate
+        currentState.hrv = hrv
+        currentState.coherence = coherence
+        currentState.stress = 1.0 - coherence
+        currentState.updateEnergy()
     }
 
     private func calculateCoherence() -> Float {

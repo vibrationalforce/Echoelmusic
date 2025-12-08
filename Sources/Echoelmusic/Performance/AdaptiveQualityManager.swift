@@ -64,11 +64,6 @@ class AdaptiveQualityManager {
     /// Bewegter Durchschnitt für FPS (letzte 60 Frames)
     private let fpsWindowSize: Int = 60
 
-    init() {
-        // Pre-allocate circular buffer
-        frameTimestampBuffer = [TimeInterval](repeating: 0, count: fpsWindowSize)
-    }
-
     /// Schwellenwerte für Qualitätsanpassungen
     private let thresholds = QualityThresholds()
 
@@ -271,6 +266,8 @@ class AdaptiveQualityManager {
     // MARK: - Initialization
 
     init() {
+        // Pre-allocate circular buffer for FPS tracking
+        frameTimestampBuffer = [TimeInterval](repeating: 0, count: fpsWindowSize)
         startMonitoring()
     }
 
