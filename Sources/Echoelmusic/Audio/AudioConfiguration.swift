@@ -1,5 +1,8 @@
 import Foundation
 import AVFoundation
+import os.log
+
+private let audioConfigLogger = Logger(subsystem: "com.echoelmusic", category: "AudioConfiguration")
 
 /// Audio configuration constants and optimization settings
 /// Target: < 5ms latency for real-time performance
@@ -84,12 +87,7 @@ enum AudioConfiguration {
         // Activate session
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
 
-        print("🎵 Audio Session Configured:")
-        print("   Sample Rate: \(audioSession.sampleRate) Hz")
-        print("   IO Buffer Duration: \(audioSession.ioBufferDuration * 1000) ms")
-        print("   Input Latency: \(audioSession.inputLatency * 1000) ms")
-        print("   Output Latency: \(audioSession.outputLatency * 1000) ms")
-        print("   Total Latency: \((audioSession.inputLatency + audioSession.outputLatency + audioSession.ioBufferDuration) * 1000) ms")
+        audioConfigLogger.info("🎵 Audio Session Configured: \(audioSession.sampleRate) Hz, IO Buffer: \(audioSession.ioBufferDuration * 1000) ms, Total Latency: \((audioSession.inputLatency + audioSession.outputLatency + audioSession.ioBufferDuration) * 1000) ms")
     }
 
 
@@ -121,7 +119,7 @@ enum AudioConfiguration {
     static func setLatencyMode(_ mode: LatencyMode) throws {
         currentBufferSize = mode.bufferSize
         try configureAudioSession()
-        print("🎵 Latency mode set to: \(mode.description)")
+        audioConfigLogger.info("🎵 Latency mode set to: \(mode.description)")
     }
 
 
@@ -167,9 +165,9 @@ enum AudioConfiguration {
         }
 
         if result == KERN_SUCCESS {
-            print("✅ Real-time audio thread priority set")
+            audioConfigLogger.info("✅ Real-time audio thread priority set")
         } else {
-            print("⚠️  Failed to set audio thread priority: \(result)")
+            audioConfigLogger.warning("⚠️  Failed to set audio thread priority: \(result)")
         }
     }
 
