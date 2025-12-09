@@ -1,6 +1,7 @@
 import AVFoundation
 import SwiftUI
 import Accelerate
+import os.log
 
 /// Manages microphone access and advanced audio processing
 /// Now includes FFT for frequency detection and professional-grade DSP
@@ -29,8 +30,14 @@ class MicrophoneManager: NSObject, ObservableObject {
     /// FFT magnitudes for spectral visualization (256 bins)
     @Published var fftMagnitudes: [Float]? = nil
 
+    /// Error message for UI display
+    @Published var errorMessage: String?
+
 
     // MARK: - Private Properties
+
+    /// Logger for microphone operations
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "Microphone")
 
     /// The audio engine that processes audio input
     private var audioEngine: AVAudioEngine?
@@ -79,11 +86,14 @@ class MicrophoneManager: NSObject, ObservableObject {
     func requestPermission() {
         AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
             DispatchQueue.main.async {
-                self?.hasPermission = granted
+                guard let self = self else { return }
+                self.hasPermission = granted
                 if granted {
-                    print("✅ Microphone permission granted")
+                    self.logger.info("✅ Microphone permission granted")
+                    self.errorMessage = nil
                 } else {
-                    print("❌ Microphone permission denied")
+                    self.logger.warning("❌ Microphone permission denied")
+                    self.errorMessage = "Microphone access denied. Enable in Settings."
                 }
             }
         }
@@ -95,7 +105,8 @@ class MicrophoneManager: NSObject, ObservableObject {
     /// Start recording audio from the microphone
     func startRecording() {
         guard hasPermission else {
-            print("⚠️ Cannot start recording: No microphone permission")
+            logger.warning("⚠️ Cannot start recording: No microphone permission")
+            errorMessage = "No microphone permission"
             requestPermission()
             return
         }
@@ -108,23 +119,37 @@ class MicrophoneManager: NSObject, ObservableObject {
 
             // Create and configure the audio engine
             audioEngine = AVAudioEngine()
-            guard let audioEngine = audioEngine else { return }
+            guard let audioEngine = audioEngine else {
+                logger.error("❌ Failed to create audio engine")
+                errorMessage = "Failed to create audio engine"
+                return
+            }
 
             inputNode = audioEngine.inputNode
 
             // Get the input format from the microphone
             let recordingFormat = inputNode?.outputFormat(forBus: 0)
-            guard let format = recordingFormat else { return }
+            guard let format = recordingFormat else {
+                logger.error("❌ Failed to get recording format")
+                errorMessage = "Failed to get recording format"
+                return
+            }
 
             // Store sample rate for frequency calculation
             sampleRate = format.sampleRate
 
-            // Setup FFT
-            fftSetup = vDSP_DFT_zop_CreateSetup(
+            // Setup FFT with error handling
+            guard let setup = vDSP_DFT_zop_CreateSetup(
                 nil,
                 vDSP_Length(fftSize),
                 vDSP_DFT_Direction.FORWARD
-            )
+            ) else {
+                logger.error("❌ Failed to create FFT setup")
+                errorMessage = "FFT initialization failed"
+                // Continue without FFT - audio level detection will still work
+                fftSetup = nil
+            }
+            fftSetup = setup
 
             // Install a tap to capture audio data
             inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { [weak self] buffer, _ in
@@ -137,14 +162,16 @@ class MicrophoneManager: NSObject, ObservableObject {
 
             DispatchQueue.main.async {
                 self.isRecording = true
+                self.errorMessage = nil
             }
 
-            print("🎙️ Recording started with FFT enabled")
+            logger.info("🎙️ Recording started with FFT enabled (sample rate: \(self.sampleRate) Hz)")
 
         } catch {
-            print("❌ Failed to start recording: \(error.localizedDescription)")
+            logger.error("❌ Failed to start recording: \(error.localizedDescription)")
             DispatchQueue.main.async {
                 self.isRecording = false
+                self.errorMessage = "Recording failed: \(error.localizedDescription)"
             }
         }
     }
@@ -160,23 +187,29 @@ class MicrophoneManager: NSObject, ObservableObject {
         audioEngine = nil
         inputNode = nil
 
-        // Destroy FFT setup
+        // Destroy FFT setup safely
         if let setup = fftSetup {
             vDSP_DFT_DestroySetup(setup)
             fftSetup = nil
         }
 
         // Deactivate the audio session
-        try? AVAudioSession.sharedInstance().setActive(false)
+        do {
+            try AVAudioSession.sharedInstance().setActive(false)
+        } catch {
+            logger.warning("⚠️ Failed to deactivate audio session: \(error.localizedDescription)")
+        }
 
         DispatchQueue.main.async {
             self.isRecording = false
             self.audioLevel = 0.0
             self.frequency = 0.0
             self.currentPitch = 0.0
+            self.audioBuffer = nil
+            self.fftMagnitudes = nil
         }
 
-        print("⏹️ Recording stopped")
+        logger.info("⏹️ Recording stopped")
     }
 
 

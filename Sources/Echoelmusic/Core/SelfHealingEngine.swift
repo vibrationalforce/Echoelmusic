@@ -346,10 +346,35 @@ final class SelfHealingEngine: ObservableObject {
         let event = HealingEvent(type: type, timestamp: Date(), wasSuccessful: true)
         healingEvents.append(event)
 
-        // Keep only last 1000 events
+        // Keep only last 1000 events (efficient removal)
         if healingEvents.count > 1000 {
-            healingEvents.removeFirst(healingEvents.count - 1000)
+            healingEvents = Array(healingEvents.suffix(1000))
         }
+    }
+
+    // MARK: - Cleanup
+
+    /// Explicitly stop all self-healing timers and cleanup resources
+    func shutdown() {
+        logger.info("🛑 Self-Healing Engine shutting down...")
+
+        // Cancel all Combine subscriptions (stops timers)
+        cancellables.forEach { $0.cancel() }
+        cancellables.removeAll()
+
+        // Clear healing events to free memory
+        healingEvents.removeAll()
+
+        // Reset to safe state
+        resetToSafeState()
+
+        logger.info("✅ Self-Healing Engine shutdown complete")
+    }
+
+    deinit {
+        // Ensure all subscriptions are cancelled
+        cancellables.forEach { $0.cancel() }
+        cancellables.removeAll()
     }
 }
 
@@ -592,11 +617,17 @@ class ErrorPredictor {
     weak var delegate: ErrorPredictorDelegate?
     private var errorHistory: [ErrorType: [Date]] = [:]
 
+    /// Maximum age for error history entries (1 hour)
+    private let maxHistoryAge: TimeInterval = 3600
+
     init(delegate: ErrorPredictorDelegate?) {
         self.delegate = delegate
     }
 
     func predictErrors() -> [ErrorPrediction] {
+        // Clean up old history entries first
+        cleanupOldHistory()
+
         var predictions: [ErrorPrediction] = []
 
         // Analyze patterns and predict
@@ -640,10 +671,29 @@ class ErrorPredictor {
         }
         errorHistory[type]?.append(Date())
 
-        // Keep only last 20 occurrences
+        // Keep only last 20 occurrences (efficient removal)
         if let count = errorHistory[type]?.count, count > 20 {
-            errorHistory[type]?.removeFirst(count - 20)
+            errorHistory[type] = Array(errorHistory[type]!.suffix(20))
         }
+    }
+
+    /// Remove old history entries to prevent memory buildup
+    private func cleanupOldHistory() {
+        let cutoffDate = Date().addingTimeInterval(-maxHistoryAge)
+
+        for (type, dates) in errorHistory {
+            let filteredDates = dates.filter { $0 > cutoffDate }
+            if filteredDates.isEmpty {
+                errorHistory.removeValue(forKey: type)
+            } else {
+                errorHistory[type] = filteredDates
+            }
+        }
+    }
+
+    /// Clear all history
+    func clearHistory() {
+        errorHistory.removeAll()
     }
 }
 

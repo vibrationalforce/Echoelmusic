@@ -2,6 +2,7 @@ import Foundation
 import HealthKit
 import Combine
 import Accelerate
+import os.log
 
 /// Manages HealthKit integration for real-time HRV and heart rate monitoring
 /// Implements HeartMath Institute's coherence algorithm for biofeedback
@@ -33,6 +34,9 @@ class HealthKitManager: ObservableObject {
 
     // MARK: - Private Properties
 
+    /// Logger for HealthKit operations
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "HealthKit")
+
     /// The HealthKit store for querying health data
     private let healthStore = HKHealthStore()
 
@@ -47,16 +51,40 @@ class HealthKitManager: ObservableObject {
     private var rrIntervalBuffer: [Double] = []
     private let maxBufferSize = 120 // 120 RR intervals ≈ 60 seconds at 60 BPM
 
-    /// Types we need to read from HealthKit
-    private let typesToRead: Set<HKObjectType> = [
-        HKObjectType.quantityType(forIdentifier: .heartRate)!,
-        HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
-    ]
+    /// Heart rate type - safely initialized
+    private let heartRateType: HKQuantityType?
+
+    /// HRV type - safely initialized
+    private let hrvType: HKQuantityType?
+
+    /// Types we need to read from HealthKit (safely constructed)
+    private var typesToRead: Set<HKObjectType> {
+        var types = Set<HKObjectType>()
+        if let hrType = heartRateType {
+            types.insert(hrType)
+        }
+        if let hrvSDNNType = hrvType {
+            types.insert(hrvSDNNType)
+        }
+        return types
+    }
 
 
     // MARK: - Initialization
 
     init() {
+        // Safely initialize HealthKit types (no force unwraps!)
+        self.heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate)
+        self.hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN)
+
+        // Log initialization status
+        if heartRateType == nil {
+            logger.error("❌ Failed to create heart rate type - HealthKit may not be available")
+        }
+        if hrvType == nil {
+            logger.error("❌ Failed to create HRV type - HealthKit may not be available")
+        }
+
         checkAvailability()
     }
 
@@ -67,14 +95,21 @@ class HealthKitManager: ObservableObject {
     private func checkAvailability() {
         guard HKHealthStore.isHealthDataAvailable() else {
             errorMessage = "HealthKit is not available on this device"
+            logger.warning("⚠️ HealthKit not available on this device")
             return
         }
 
-        // Check authorization status
-        let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
-        let status = healthStore.authorizationStatus(for: heartRateType)
+        // Check authorization status (safely)
+        guard let hrType = heartRateType else {
+            errorMessage = "Heart rate type not available"
+            logger.error("❌ Heart rate type not initialized")
+            return
+        }
 
+        let status = healthStore.authorizationStatus(for: hrType)
         isAuthorized = (status == .sharingAuthorized)
+
+        logger.info("🫀 HealthKit availability checked - authorized: \(self.isAuthorized)")
     }
 
 
@@ -89,6 +124,18 @@ class HealthKitManager: ObservableObject {
                 code: 1,
                 userInfo: [NSLocalizedDescriptionKey: "HealthKit not available"]
             )
+            logger.error("❌ HealthKit not available for authorization")
+            throw error
+        }
+
+        // Ensure we have valid types to request
+        guard !typesToRead.isEmpty else {
+            let error = NSError(
+                domain: "com.echoelmusic.healthkit",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "No valid HealthKit types available"]
+            )
+            logger.error("❌ No valid HealthKit types to request authorization")
             throw error
         }
 
@@ -96,21 +143,27 @@ class HealthKitManager: ObservableObject {
             // Request read access for heart rate and HRV
             try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
 
-            // Check if actually authorized
-            let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
-            let status = healthStore.authorizationStatus(for: heartRateType)
+            // Check if actually authorized (safely)
+            guard let hrType = heartRateType else {
+                errorMessage = "Heart rate type not available"
+                logger.error("❌ Heart rate type not available after authorization")
+                return
+            }
 
+            let status = healthStore.authorizationStatus(for: hrType)
             isAuthorized = (status == .sharingAuthorized)
 
             if isAuthorized {
-                print("✅ HealthKit authorized")
+                logger.info("✅ HealthKit authorized successfully")
                 errorMessage = nil
             } else {
                 errorMessage = "HealthKit access denied. Enable in Settings."
+                logger.warning("⚠️ HealthKit access denied by user")
             }
 
         } catch {
             errorMessage = "HealthKit authorization failed: \(error.localizedDescription)"
+            logger.error("❌ HealthKit authorization failed: \(error.localizedDescription)")
             throw error
         }
     }
@@ -122,13 +175,14 @@ class HealthKitManager: ObservableObject {
     func startMonitoring() {
         guard isAuthorized else {
             errorMessage = "HealthKit not authorized. Please grant access."
+            logger.warning("⚠️ Cannot start monitoring - not authorized")
             return
         }
 
         startHeartRateMonitoring()
         startHRVMonitoring()
 
-        print("🫀 HealthKit monitoring started")
+        logger.info("🫀 HealthKit monitoring started")
     }
 
     /// Stop all HealthKit monitoring
@@ -145,7 +199,7 @@ class HealthKitManager: ObservableObject {
 
         rrIntervalBuffer.removeAll()
 
-        print("⏹️ HealthKit monitoring stopped")
+        logger.info("⏹️ HealthKit monitoring stopped")
     }
 
 
@@ -153,7 +207,9 @@ class HealthKitManager: ObservableObject {
 
     /// Start continuous heart rate monitoring
     private func startHeartRateMonitoring() {
-        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+        guard let heartRateType = self.heartRateType else {
+            logger.error("❌ Cannot start heart rate monitoring - type not available")
+            errorMessage = "Heart rate monitoring not available"
             return
         }
 
@@ -214,7 +270,9 @@ class HealthKitManager: ObservableObject {
 
     /// Start continuous HRV monitoring
     private func startHRVMonitoring() {
-        guard let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else {
+        guard let hrvType = self.hrvType else {
+            logger.error("❌ Cannot start HRV monitoring - type not available")
+            errorMessage = "HRV monitoring not available"
             return
         }
 
