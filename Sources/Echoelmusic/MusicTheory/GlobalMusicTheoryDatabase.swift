@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import os.log
 
 /// Global Music Theory Database
 /// Comprehensive music theory knowledge from ALL world cultures
@@ -26,6 +27,10 @@ import Combine
 /// - Field recordings & analysis
 @MainActor
 class GlobalMusicTheoryDatabase: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "MusicTheoryDB")
 
     // MARK: - Published State
 
@@ -166,10 +171,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
         loadModeDatabase()
         loadRhythmDatabase()
 
-        print("✅ Global Music Theory Database: Initialized")
-        print("🌍 Scales: \(scaleDatabase.count)")
-        print("🎵 Modes: \(modeDatabase.count)")
-        print("🥁 Rhythm Patterns: \(rhythmDatabase.count)")
+        logger.info("✅ MusicTheoryDB initialized - Scales: \(self.scaleDatabase.count), Modes: \(self.modeDatabase.count), Rhythms: \(self.rhythmDatabase.count)")
     }
 
     // MARK: - Load Scale Database
@@ -373,7 +375,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             )
         ]
 
-        print("📚 Loaded \(scaleDatabase.count) scales from global music traditions")
+        logger.debug("📚 Loaded \(self.scaleDatabase.count) scales from global music traditions")
     }
 
     // MARK: - Load Mode Database
@@ -423,7 +425,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             )
         ]
 
-        print("🎭 Loaded \(modeDatabase.count) modal systems")
+        logger.debug("🎭 Loaded \(self.modeDatabase.count) modal systems")
     }
 
     // MARK: - Load Rhythm Database
@@ -476,7 +478,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             )
         ]
 
-        print("🥁 Loaded \(rhythmDatabase.count) rhythm patterns")
+        logger.debug("🥁 Loaded \(self.rhythmDatabase.count) rhythm patterns")
     }
 
     // MARK: - Query Functions

@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import os.log
 
 // MARK: - Command Protocol
 /// Base protocol for all undoable/redoable actions
@@ -19,6 +20,9 @@ protocol UndoableCommand {
 /// Supports audio editing, video editing, MIDI, and all other operations
 @MainActor
 final class UndoRedoManager: ObservableObject {
+
+    // MARK: - Logger
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "UndoRedo")
 
     // MARK: - Singleton
     static let shared = UndoRedoManager()
@@ -57,7 +61,7 @@ final class UndoRedoManager: ObservableObject {
         }
 
         updateState()
-        print("✅ Executed: \(command.actionName)")
+        logger.debug("✅ Executed: \(command.actionName)")
     }
 
     /// Undo the last action
@@ -68,7 +72,7 @@ final class UndoRedoManager: ObservableObject {
         redoStack.append(command)
 
         updateState()
-        print("↩️ Undo: \(command.actionName)")
+        logger.debug("↩️ Undo: \(command.actionName)")
     }
 
     /// Redo the last undone action
@@ -79,7 +83,7 @@ final class UndoRedoManager: ObservableObject {
         undoStack.append(command)
 
         updateState()
-        print("↪️ Redo: \(command.actionName)")
+        logger.debug("↪️ Redo: \(command.actionName)")
     }
 
     /// Clear all history

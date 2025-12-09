@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import os.log
 
 /// WorldMusicBridge - Swift interface to C++ WorldMusicDatabase
 ///
@@ -15,6 +16,10 @@ import Combine
 /// for native iOS integration until full C++ bridging is implemented.
 @MainActor
 class WorldMusicBridge: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "WorldMusicBridge")
 
     // MARK: - Singleton
 
@@ -90,7 +95,7 @@ class WorldMusicBridge: ObservableObject {
 
     private init() {
         loadMusicStyles()
-        print("✅ WorldMusicBridge: Loaded \(availableStyles.count) music styles")
+        logger.info("✅ WorldMusicBridge: Loaded \(self.availableStyles.count) music styles")
     }
 
     // MARK: - Load Music Styles (Mirror of WorldMusicDatabase.cpp)

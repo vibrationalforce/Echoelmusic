@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import os.log
 
 /// InstrumentOrchestrator - The Missing Link
 /// Connects: UI Selection → Sound Library → Synthesis Engines → Audio Output
@@ -18,6 +19,10 @@ import Combine
 /// - Real-time parameter automation
 @MainActor
 class InstrumentOrchestrator: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "InstrumentOrchestrator")
 
     // MARK: - Singleton
 
@@ -71,9 +76,7 @@ class InstrumentOrchestrator: ObservableObject {
         setupDefaultInstrument()
         connectToBioData()
 
-        print("✅ InstrumentOrchestrator: Initialized")
-        print("🎹 Available Instruments: \(soundLibrary.availableInstruments.count)")
-        print("🎛️ Synthesis Engines: \(soundLibrary.availableSynthEngines.count)")
+        logger.info("✅ InstrumentOrchestrator: Initialized - \(self.soundLibrary.availableInstruments.count) Instruments, \(self.soundLibrary.availableSynthEngines.count) Synth Engines")
     }
 
     deinit {
@@ -89,7 +92,7 @@ class InstrumentOrchestrator: ObservableObject {
         audioEngine = AVAudioEngine()
 
         guard let engine = audioEngine else {
-            print("❌ InstrumentOrchestrator: Failed to create AVAudioEngine")
+            logger.error("❌ InstrumentOrchestrator: Failed to create AVAudioEngine")
             return
         }
 
@@ -105,7 +108,7 @@ class InstrumentOrchestrator: ObservableObject {
 
         // Connect player → mixer → output (SAFE: ohne force unwrap)
         guard let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) else {
-            print("❌ InstrumentOrchestrator: Failed to create audio format")
+            logger.error("❌ InstrumentOrchestrator: Failed to create audio format")
             return
         }
         engine.connect(player, to: mixer, format: format)
@@ -114,9 +117,9 @@ class InstrumentOrchestrator: ObservableObject {
         do {
             try engine.start()
             isPlaying = true
-            print("🎵 InstrumentOrchestrator: Audio engine started")
+            logger.info("🎵 InstrumentOrchestrator: Audio engine started")
         } catch {
-            print("❌ InstrumentOrchestrator: Failed to start audio engine: \(error)")
+            logger.error("❌ InstrumentOrchestrator: Failed to start audio engine: \(error)")
         }
     }
 
@@ -165,7 +168,7 @@ class InstrumentOrchestrator: ObservableObject {
     func selectInstrument(name: String) {
         if let instrument = soundLibrary.availableInstruments.first(where: { $0.name == name }) {
             currentInstrument = instrument
-            print("🎹 Selected: \(instrument.name)")
+            logger.debug("🎹 Selected: \(instrument.name)")
         }
     }
 
@@ -173,14 +176,14 @@ class InstrumentOrchestrator: ObservableObject {
     func selectInstrument(index: Int) {
         guard index < soundLibrary.availableInstruments.count else { return }
         currentInstrument = soundLibrary.availableInstruments[index]
-        print("🎹 Selected: \(currentInstrument?.name ?? "Unknown")")
+        logger.debug("🎹 Selected: \(self.currentInstrument?.name ?? "Unknown")")
     }
 
     /// Select synthesis engine
     func selectSynthEngine(_ type: UniversalSoundLibrary.SynthEngine.SynthType) {
         if let engine = soundLibrary.availableSynthEngines.first(where: { $0.type == type }) {
             currentSynthEngine = engine
-            print("🎛️ Synth Engine: \(engine.name)")
+            logger.debug("🎛️ Synth Engine: \(engine.name)")
         }
     }
 
@@ -189,7 +192,7 @@ class InstrumentOrchestrator: ObservableObject {
     /// Play a MIDI note
     func noteOn(midiNote: Int, velocity: Float = 0.8) {
         guard let synthEngine = currentSynthEngine else {
-            print("⚠️ No synthesis engine selected")
+            logger.warning("⚠️ No synthesis engine selected")
             return
         }
 
@@ -242,7 +245,7 @@ class InstrumentOrchestrator: ObservableObject {
                 playerNode?.play()
             }
 
-            print("🎵 Note On: MIDI \(midiNote) @ \(Int(velocity * 100))% velocity")
+            logger.debug("🎵 Note On: MIDI \(midiNote) @ \(Int(velocity * 100))% velocity")
         }
     }
 
@@ -251,7 +254,7 @@ class InstrumentOrchestrator: ObservableObject {
         // Mark voice as inactive (will release with envelope)
         if let index = voices.firstIndex(where: { $0.midiNote == midiNote && $0.isActive }) {
             voices[index].isActive = false
-            print("🎵 Note Off: MIDI \(midiNote)")
+            logger.debug("🎵 Note Off: MIDI \(midiNote)")
         }
     }
 
@@ -260,7 +263,7 @@ class InstrumentOrchestrator: ObservableObject {
         playerNode?.stop()
         voices.removeAll()
         activeVoices = 0
-        print("🛑 All Notes Off")
+        logger.debug("🛑 All Notes Off")
     }
 
     // MARK: - Drum Playback (808/909 Style)
@@ -269,7 +272,7 @@ class InstrumentOrchestrator: ObservableObject {
     func triggerDrum(_ drumType: DrumType, velocity: Float = 0.8) {
         // Use physical modeling for drums
         guard let physicalEngine = soundLibrary.availableSynthEngines.first(where: { $0.type == .physicalModeling }) else {
-            print("⚠️ Physical modeling engine not available")
+            logger.warning("⚠️ Physical modeling engine not available")
             return
         }
 
@@ -332,7 +335,7 @@ class InstrumentOrchestrator: ObservableObject {
             if playerNode?.isPlaying == false {
                 playerNode?.play()
             }
-            print("🥁 Drum: \(drumType) @ \(Int(velocity * 100))%")
+            logger.debug("🥁 Drum: \(drumType) @ \(Int(velocity * 100))%")
         }
     }
 

@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import os.log
 
 /// Localization Manager für globale Multi-Language-Unterstützung
 ///
@@ -24,6 +25,10 @@ import Combine
 @Observable
 class LocalizationManager {
 
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "Localization")
+
     // MARK: - Published Properties
 
     /// Aktuelle Sprache
@@ -31,7 +36,7 @@ class LocalizationManager {
         didSet {
             if currentLanguage != oldValue {
                 languageDidChange.send(currentLanguage)
-                print("🌍 Language changed to: \(currentLanguage.displayName)")
+                logger.info("🌍 Language changed to: \(self.currentLanguage.displayName)")
             }
         }
     }

@@ -2,6 +2,7 @@ import SwiftUI
 import Combine
 import Accelerate
 import simd
+import os.log
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ECHOELMUSIC UNIVERSAL CORE
@@ -31,6 +32,10 @@ import simd
 
 @MainActor
 final class EchoelUniversalCore: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "UniversalCore")
 
     // MARK: - Singleton
 
@@ -129,7 +134,7 @@ final class EchoelUniversalCore: ObservableObject {
 
         // Tools sind bereits verbunden via EchoelTools.shared
 
-        print("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden")
+        logger.info("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden")
     }
 
     /// Reagiert auf Flow-State Änderungen vom Self-Healing System
@@ -561,9 +566,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         systemEnergy = state.energy
         propagateUniversalState()
 
-        #if DEBUG
-        print("[UniversalCore] Bio update: Coherence=\(String(format: "%.2f", state.coherence))")
-        #endif
+        logger.debug("Bio update: Coherence=\(String(format: "%.2f", state.coherence))")
     }
 
     func quantumStateCollapsed(to choice: Int) {
@@ -578,26 +581,20 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
             systemState.creativeDirection = .rhythmic
         }
 
-        #if DEBUG
-        print("[UniversalCore] Quantum collapsed to choice: \(choice)")
-        #endif
+        logger.debug("Quantum collapsed to choice: \(choice)")
     }
 
     func deviceConnected(_ device: String) {
         systemState.connectedDevices += 1
         connectedModules.insert(.sync)
 
-        #if DEBUG
-        print("[UniversalCore] Device connected: \(device) (Total: \(systemState.connectedDevices))")
-        #endif
+        logger.debug("Device connected: \(device) (Total: \(self.systemState.connectedDevices))")
     }
 
     func deviceDisconnected(_ device: String) {
         systemState.connectedDevices = max(0, systemState.connectedDevices - 1)
 
-        #if DEBUG
-        print("[UniversalCore] Device disconnected: \(device) (Total: \(systemState.connectedDevices))")
-        #endif
+        logger.debug("Device disconnected: \(device) (Total: \(self.systemState.connectedDevices))")
     }
 
     func analogGearResponded(_ response: [Float]) {
@@ -612,9 +609,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
 
         propagateUniversalState()
 
-        #if DEBUG
-        print("[UniversalCore] Analog gear response: \(response.count) channels")
-        #endif
+        logger.debug("Analog gear response: \(response.count) channels")
     }
 
     func aiSuggestionGenerated(_ suggestion: AICreativeEngine.CreativeSuggestion) {
@@ -626,9 +621,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
             applyAISuggestion(suggestion)
         }
 
-        #if DEBUG
-        print("[UniversalCore] AI suggestion: \(suggestion.type) (confidence: \(suggestion.confidence))")
-        #endif
+        logger.debug("AI suggestion: \(suggestion.type) (confidence: \(suggestion.confidence))")
     }
 
     private func applyAISuggestion(_ suggestion: AICreativeEngine.CreativeSuggestion) {

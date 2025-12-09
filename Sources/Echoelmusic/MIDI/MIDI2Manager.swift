@@ -1,6 +1,7 @@
 import Foundation
 import CoreMIDI
 import Combine
+import os.log
 
 /// MIDI 2.0 Manager with Universal MIDI Packet (UMP) support
 ///
@@ -24,6 +25,10 @@ import Combine
 /// ```
 @MainActor
 class MIDI2Manager: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "MIDI2Manager")
 
     // MARK: - Published State
 
@@ -97,7 +102,7 @@ class MIDI2Manager: ObservableObject {
             outputPort = port
 
             isInitialized = true
-            print("✅ MIDI 2.0 initialized (UMP protocol)")
+            logger.info("✅ MIDI 2.0 initialized (UMP protocol)")
 
         } catch {
             errorMessage = "MIDI 2.0 initialization failed: \(error.localizedDescription)"
@@ -124,7 +129,7 @@ class MIDI2Manager: ObservableObject {
 
         isInitialized = false
         activeNotes.removeAll()
-        print("🛑 MIDI 2.0 cleaned up")
+        logger.info("🛑 MIDI 2.0 cleaned up")
     }
 
     // MARK: - MIDI Notification Handling
@@ -134,16 +139,16 @@ class MIDI2Manager: ObservableObject {
 
         switch notif.messageID {
         case .msgSetupChanged:
-            print("[MIDI2] Setup changed")
+            logger.debug("[MIDI2] Setup changed")
             // Rescan endpoints
             scanEndpoints()
 
         case .msgObjectAdded:
-            print("[MIDI2] Object added")
+            logger.debug("[MIDI2] Object added")
             scanEndpoints()
 
         case .msgObjectRemoved:
-            print("[MIDI2] Object removed")
+            logger.debug("[MIDI2] Object removed")
             scanEndpoints()
 
         case .msgPropertyChanged:
@@ -180,7 +185,7 @@ class MIDI2Manager: ObservableObject {
     ///   - velocity: Velocity (0.0-1.0)
     func sendNoteOn(channel: UInt8, note: UInt8, velocity: Float) {
         guard isInitialized else {
-            print("⚠️ MIDI 2.0 not initialized")
+            logger.warning("⚠️ MIDI 2.0 not initialized")
             return
         }
 
@@ -217,7 +222,7 @@ class MIDI2Manager: ObservableObject {
         // Check if note is active
         let noteId = NoteIdentifier(channel: channel, note: note)
         guard activeNotes.contains(noteId) else {
-            print("⚠️ Per-note controller sent for inactive note \(note) on channel \(channel)")
+            logger.warning("⚠️ Per-note controller sent for inactive note \(note) on channel \(channel)")
             return
         }
 
@@ -241,7 +246,7 @@ class MIDI2Manager: ObservableObject {
 
         let noteId = NoteIdentifier(channel: channel, note: note)
         guard activeNotes.contains(noteId) else {
-            print("⚠️ Per-note pitch bend sent for inactive note \(note)")
+            logger.warning("⚠️ Per-note pitch bend sent for inactive note \(note)")
             return
         }
 
@@ -272,7 +277,7 @@ class MIDI2Manager: ObservableObject {
     /// Send a 64-bit UMP packet
     private func sendUMPPacket(_ packet: UMPPacket64) {
         guard virtualSource != 0 else {
-            print("⚠️ Virtual source not created")
+            logger.warning("⚠️ Virtual source not created")
             return
         }
 
@@ -297,7 +302,7 @@ class MIDI2Manager: ObservableObject {
         // Send via virtual source
         let status = MIDIReceivedEventList(virtualSource, &packetList)
         if status != noErr {
-            print("⚠️ Failed to send UMP packet: \(status)")
+            logger.warning("⚠️ Failed to send UMP packet: \(status)")
         }
     }
 

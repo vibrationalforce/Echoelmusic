@@ -1,11 +1,16 @@
 import Foundation
 import Vision
 import Combine
+import os.log
 
 /// Recognizes hand gestures from HandTrackingManager data
 /// Supports: Pinch, Spread, Fist, Point, Swipe
 @MainActor
 class GestureRecognizer: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "GestureRecognizer")
 
     // MARK: - Published Properties
 
@@ -63,7 +68,7 @@ class GestureRecognizer: ObservableObject {
 
     init(handTracker: HandTrackingManager) {
         self.handTracker = handTracker
-        print("✋ GestureRecognizer initialized")
+        logger.info("✋ GestureRecognizer initialized")
     }
 
 

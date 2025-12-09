@@ -1,11 +1,14 @@
 import Foundation
 import CloudKit
 import Combine
+import os.log
 
 /// Cloud Sync Manager - CloudKit Integration
 /// Session sync across devices, collaborative cloud sessions, automatic backup
 @MainActor
 class CloudSyncManager: ObservableObject {
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "CloudSync")
 
     @Published var isSyncing: Bool = false
     @Published var syncEnabled: Bool = false
@@ -20,7 +23,7 @@ class CloudSyncManager: ObservableObject {
         self.container = CKContainer(identifier: "iCloud.com.echoelmusic.app")
         self.privateDatabase = container.privateCloudDatabase
         self.sharedDatabase = container.sharedCloudDatabase
-        print("✅ CloudSyncManager: Initialized")
+        logger.info("✅ CloudSyncManager initialized")
     }
 
     // MARK: - Enable/Disable Sync
@@ -34,12 +37,12 @@ class CloudSyncManager: ObservableObject {
         }
 
         syncEnabled = true
-        print("☁️ CloudSyncManager: Sync enabled")
+        logger.info("☁️ Sync enabled")
     }
 
     func disableSync() {
         syncEnabled = false
-        print("☁️ CloudSyncManager: Sync disabled")
+        logger.info("☁️ Sync disabled")
     }
 
     // MARK: - Save Session
@@ -61,7 +64,7 @@ class CloudSyncManager: ObservableObject {
         try await privateDatabase.save(record)
 
         lastSyncDate = Date()
-        print("☁️ CloudSyncManager: Saved session '\(session.name)'")
+        logger.info("☁️ Saved session '\(session.name)'")
     }
 
     // MARK: - Fetch Sessions
@@ -94,7 +97,7 @@ class CloudSyncManager: ObservableObject {
         cloudSessions = sessions
         lastSyncDate = Date()
 
-        print("☁️ CloudSyncManager: Fetched \(sessions.count) sessions")
+        logger.info("☁️ Fetched \(sessions.count) sessions")
         return sessions
     }
 
@@ -107,12 +110,12 @@ class CloudSyncManager: ObservableObject {
                 try? await self?.autoBackup()
             }
         }
-        print("☁️ CloudSyncManager: Auto backup enabled (every \(Int(interval))s)")
+        logger.info("☁️ Auto backup enabled (every \(Int(interval))s)")
     }
 
     private func autoBackup() async throws {
         // TODO: Backup current session automatically
-        print("☁️ CloudSyncManager: Auto backup triggered")
+        logger.debug("☁️ Auto backup triggered")
     }
 }
 

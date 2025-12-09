@@ -1,4 +1,5 @@
 import Foundation
+import os.log
 
 /// Recording session containing multiple tracks and settings
 struct Session: Identifiable, Codable {
@@ -119,7 +120,8 @@ struct Session: Identifiable, Codable {
         let data = try encoder.encode(self)
         try data.write(to: sessionFile)
 
-        print("💾 Session saved: \(name)")
+        let logger = Logger(subsystem: "com.echoelmusic", category: "Session")
+        logger.info("💾 Session saved: \(self.name)")
     }
 
     /// Load session from disk
