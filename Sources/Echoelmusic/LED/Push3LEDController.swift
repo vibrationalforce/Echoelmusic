@@ -1,6 +1,7 @@
 import Foundation
 import CoreMIDI
 import Combine
+import os.log
 
 /// Ableton Push 3 LED Controller
 /// Bio-reactive LED feedback via SysEx messages
@@ -8,6 +9,10 @@ import Combine
 /// Integrates with biofeedback system for real-time LED visualization
 @MainActor
 class Push3LEDController: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "Push3LEDController")
 
     // MARK: - Published State
 
@@ -96,7 +101,7 @@ class Push3LEDController: ObservableObject {
         ) { _ in }
 
         guard clientStatus == noErr else {
-            print("⚠️ Failed to create MIDI client for Push 3")
+            logger.warning("⚠️ Failed to create MIDI client for Push 3")
             return
         }
         midiClient = client
@@ -110,7 +115,7 @@ class Push3LEDController: ObservableObject {
         )
 
         guard portStatus == noErr else {
-            print("⚠️ Failed to create MIDI output port for Push 3")
+            logger.warning("⚠️ Failed to create MIDI output port for Push 3")
             return
         }
         outputPort = port
@@ -132,13 +137,13 @@ class Push3LEDController: ObservableObject {
                 if deviceName.contains("Ableton Push 3") || deviceName.contains("Push 3") {
                     push3Endpoint = endpoint
                     isConnected = true
-                    print("✅ Found Push 3: \(deviceName)")
+                    logger.info("✅ Found Push 3: \(deviceName)")
                     return
                 }
             }
         }
 
-        print("⚠️ Push 3 not found. Connect via USB and retry.")
+        logger.warning("⚠️ Push 3 not found. Connect via USB and retry.")
     }
 
     // MARK: - Connection Management
@@ -171,7 +176,7 @@ class Push3LEDController: ObservableObject {
     /// Set entire grid
     func setGrid(_ grid: [[RGB]]) {
         guard grid.count == 8, grid.allSatisfy({ $0.count == 8 }) else {
-            print("⚠️ Invalid grid dimensions (must be 8x8)")
+            logger.warning("⚠️ Invalid grid dimensions (must be 8x8)")
             return
         }
         ledGrid = grid
@@ -225,7 +230,7 @@ class Push3LEDController: ObservableObject {
 
         let status = MIDISend(outputPort, push3Endpoint, &packetList)
         if status != noErr {
-            print("⚠️ Failed to send SysEx to Push 3: \(status)")
+            logger.warning("⚠️ Failed to send SysEx to Push 3: \(status)")
         }
     }
 
@@ -397,14 +402,14 @@ class Push3LEDController: ObservableObject {
             applyPattern(currentPattern)
         }
 
-        print("⚡ Gesture flash: \(gesture)")
+        logger.debug("⚡ Gesture flash: \(gesture)")
     }
 
     // MARK: - Pattern Management
 
     func applyPattern(_ pattern: LEDPattern) {
         currentPattern = pattern
-        print("💡 Push 3 pattern: \(pattern.rawValue)")
+        logger.info("💡 Push 3 pattern: \(pattern.rawValue)")
     }
 
     // MARK: - Utility Functions

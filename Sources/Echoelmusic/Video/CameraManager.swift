@@ -3,12 +3,17 @@ import AVFoundation
 import Metal
 import CoreImage
 import Combine
+import os.log
 
 /// Camera Manager for Real-Time Video Capture
 /// Optimized for 120 FPS @ 1080p on iPhone 16 Pro
 /// Zero-copy texture pipeline from camera to Metal
 @MainActor
 class CameraManager: NSObject, ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "CameraManager")
 
     // MARK: - Published State
 
@@ -125,7 +130,6 @@ class CameraManager: NSObject, ObservableObject {
         )
 
         guard result == kCVReturnSuccess, let textureCache = textureCacheRef else {
-            print("❌ CameraManager: Failed to create texture cache")
             return nil
         }
         self.textureCache = textureCache
@@ -135,7 +139,7 @@ class CameraManager: NSObject, ObservableObject {
         // Discover available cameras
         discoverCameras()
 
-        print("✅ CameraManager: Initialized")
+        logger.info("✅ CameraManager: Initialized")
     }
 
     deinit {
@@ -177,7 +181,7 @@ class CameraManager: NSObject, ObservableObject {
             }
         }
 
-        print("📷 CameraManager: Found \(availableCameras.count) cameras: \(availableCameras.map { $0.rawValue }.joined(separator: ", "))")
+        logger.info("📷 CameraManager: Found \(self.availableCameras.count) cameras: \(self.availableCameras.map { $0.rawValue }.joined(separator: ", "))")
     }
 
     // MARK: - Start Capture
@@ -260,9 +264,9 @@ class CameraManager: NSObject, ObservableObject {
             device.activeFormat = format
             device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrameRate))
             device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrameRate))
-            print("📷 CameraManager: Set format to \(currentResolution.rawValue) @ \(targetFrameRate) FPS")
+            logger.info("📷 CameraManager: Set format to \(self.currentResolution.rawValue) @ \(targetFrameRate) FPS")
         } else {
-            print("⚠️ CameraManager: Could not set target frame rate, using default")
+            logger.warning("⚠️ CameraManager: Could not set target frame rate, using default")
         }
 
         device.unlockForConfiguration()
@@ -329,7 +333,7 @@ class CameraManager: NSObject, ObservableObject {
         // Start FPS monitoring
         startFPSMonitoring()
 
-        print("▶️ CameraManager: Started capture with \(currentCamera.rawValue) camera at \(currentResolution.rawValue) @ \(currentFrameRate) FPS")
+        logger.info("▶️ CameraManager: Started capture with \(self.currentCamera.rawValue) camera at \(self.currentResolution.rawValue) @ \(self.currentFrameRate) FPS")
     }
 
     // MARK: - Stop Capture
@@ -342,7 +346,7 @@ class CameraManager: NSObject, ObservableObject {
 
         stopFPSMonitoring()
 
-        print("⏹️ CameraManager: Stopped capture")
+        logger.info("⏹️ CameraManager: Stopped capture")
     }
 
     // MARK: - Switch Camera
