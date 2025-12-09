@@ -1,10 +1,15 @@
 import Foundation
 import AVFoundation
+import os.log
 
 /// Manages export of recording sessions to various formats
 /// Handles audio mixdown, bio-data export, and format conversion
 @MainActor
 class ExportManager {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "ExportManager")
 
     // MARK: - Export Formats
 
@@ -81,7 +86,7 @@ class ExportManager {
             throw RecordingError.fileNotFound
         }
 
-        print("📤 Exported audio: \(exportURL.lastPathComponent)")
+        logger.info("📤 Exported audio: \(exportURL.lastPathComponent)")
         return exportURL
     }
 
@@ -105,7 +110,7 @@ class ExportManager {
             try exportBioDataCSV(session: session, outputURL: exportURL)
         }
 
-        print("📤 Exported bio-data: \(exportURL.lastPathComponent)")
+        logger.info("📤 Exported bio-data: \(exportURL.lastPathComponent)")
         return exportURL
     }
 
@@ -146,7 +151,7 @@ class ExportManager {
             }
         }
 
-        print("📦 Exported session package: \(packageURL.lastPathComponent)")
+        logger.info("📦 Exported session package: \(packageURL.lastPathComponent)")
         return packageURL
     }
 

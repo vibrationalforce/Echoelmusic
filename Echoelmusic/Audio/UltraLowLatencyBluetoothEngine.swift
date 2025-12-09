@@ -16,6 +16,7 @@ import CoreBluetooth
 import CoreAudio
 import Combine
 import Accelerate
+import os.log
 
 // MARK: - Bluetooth Audio Codec
 
@@ -489,6 +490,10 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
     // MARK: - Singleton
     public static let shared = UltraLowLatencyBluetoothEngine()
 
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "BluetoothEngine")
+
     // MARK: - Published State
     @Published public var isScanning = false
     @Published public var discoveredDevices: [BluetoothAudioDevice] = []
@@ -637,7 +642,7 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
         do {
             try audioSession.configureForBluetooth(codec: codec)
         } catch {
-            print("Failed to configure audio session: \(error)")
+            logger.error("Failed to configure audio session: \(error.localizedDescription)")
         }
 
         // Update connected devices
@@ -866,17 +871,17 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
 extension UltraLowLatencyBluetoothEngine: CBCentralManagerDelegate {
 
     public nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        Task { @MainActor in
+        Task { @MainActor [logger] in
             switch central.state {
             case .poweredOn:
-                print("Bluetooth is powered on")
+                logger.info("Bluetooth is powered on")
             case .poweredOff:
-                print("Bluetooth is powered off")
+                logger.info("Bluetooth is powered off")
                 isScanning = false
             case .unauthorized:
-                print("Bluetooth is unauthorized")
+                logger.warning("Bluetooth is unauthorized")
             case .unsupported:
-                print("Bluetooth is unsupported")
+                logger.warning("Bluetooth is unsupported")
             default:
                 break
             }

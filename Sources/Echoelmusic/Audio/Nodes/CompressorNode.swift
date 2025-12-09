@@ -1,5 +1,8 @@
 import Foundation
 import AVFoundation
+import os.log
+
+private let compressorNodeLogger = Logger(subsystem: "com.echoelmusic", category: "CompressorNode")
 
 /// Dynamic range compressor node with bio-reactive parameters
 /// Respiratory Rate → Threshold (breath controls compression)
@@ -205,11 +208,11 @@ class CompressorNode: BaseEchoelmusicNode {
 
     override func start() {
         super.start()
-        print("🎵 CompressorNode started")
+        compressorNodeLogger.info("🎵 CompressorNode started")
     }
 
     override func stop() {
         super.stop()
-        print("🎵 CompressorNode stopped")
+        compressorNodeLogger.info("🎵 CompressorNode stopped")
     }
 }

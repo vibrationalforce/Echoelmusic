@@ -3,6 +3,7 @@ import AVFoundation
 import CoreML
 import Vision
 import Combine
+import os.log
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ECHOELMUSIC VIDEO & AI CREATIVE HUB
@@ -24,6 +25,10 @@ import Combine
 
 @MainActor
 final class VideoAICreativeHub: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "VideoAICreativeHub")
 
     // MARK: - Singleton
 
@@ -53,7 +58,7 @@ final class VideoAICreativeHub: ObservableObject {
 
     private init() {
         setupConnections()
-        print("🎬 VideoAICreativeHub: Initialized - Ultra Liquid Light Flow")
+        logger.info("VideoAICreativeHub: Initialized - Ultra Liquid Light Flow")
     }
 
     private func setupConnections() {
@@ -128,6 +133,10 @@ struct CreativeProject: Identifiable {
 @MainActor
 class GenerativeAIEngine: ObservableObject {
 
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "GenerativeAIEngine")
+
     // MARK: - Published State
 
     @Published var isGenerating: Bool = false
@@ -149,7 +158,7 @@ class GenerativeAIEngine: ObservableObject {
 
     private func loadModels() {
         // Note: In production, load actual CoreML models
-        print("🤖 GenerativeAI: Models loading...")
+        logger.info("GenerativeAI: Models loading...")
     }
 
     // MARK: - Creativity Level
@@ -202,7 +211,7 @@ class GenerativeAIEngine: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎨 GenerativeAI: Generating from prompt: '\(prompt)'")
+        logger.info("GenerativeAI: Generating from prompt: '\(prompt)'")
 
         // In production: Use Stable Diffusion or similar
         let visual = GeneratedVisual(
@@ -227,7 +236,7 @@ class GenerativeAIEngine: ObservableObject {
         styleTransferActive = true
         defer { styleTransferActive = false }
 
-        print("🎭 GenerativeAI: Applying \(style.rawValue) style transfer")
+        logger.info("GenerativeAI: Applying \(style.rawValue) style transfer")
 
         // In production: Process video frames through CoreML model
         return nil
@@ -243,7 +252,7 @@ class GenerativeAIEngine: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎵 GenerativeAI: Analyzing video for music generation")
+        logger.info("GenerativeAI: Analyzing video for music generation")
 
         // Analyze video motion, colors, pace
         let videoFeatures = await analyzeVideo(videoURL)

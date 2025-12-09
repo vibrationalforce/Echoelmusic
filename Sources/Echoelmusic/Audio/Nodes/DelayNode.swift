@@ -1,5 +1,8 @@
 import Foundation
 import AVFoundation
+import os.log
+
+private let delayNodeLogger = Logger(subsystem: "com.echoelmusic", category: "DelayNode")
 
 /// Delay effect node with bio-reactive parameters
 /// HRV → Delay Time (coherence creates rhythmic echoes)
@@ -186,12 +189,12 @@ class DelayNode: BaseEchoelmusicNode {
 
     override func start() {
         super.start()
-        print("🎵 DelayNode started")
+        delayNodeLogger.info("🎵 DelayNode started")
     }
 
     override func stop() {
         super.stop()
-        print("🎵 DelayNode stopped")
+        delayNodeLogger.info("🎵 DelayNode stopped")
     }
 
 

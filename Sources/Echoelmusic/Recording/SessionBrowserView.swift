@@ -1,7 +1,12 @@
 import SwiftUI
+import os.log
 
 /// Session browser and manager for loading/organizing recording sessions
 struct SessionBrowserView: View {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "SessionBrowserView")
     @EnvironmentObject var recordingEngine: RecordingEngine
     @Environment(\.dismiss) var dismiss
 
@@ -214,14 +219,14 @@ struct SessionBrowserView: View {
             try recordingEngine.loadSession(id: id)
             dismiss()
         } catch {
-            print("❌ Failed to load session: \(error)")
+            logger.error("❌ Failed to load session: \(error.localizedDescription)")
         }
     }
 
     private func deleteSession(_ id: UUID) {
         sessions.removeAll { $0.id == id }
         // In real implementation, delete from disk
-        print("🗑️ Deleted session: \(id)")
+        logger.info("🗑️ Deleted session: \(id)")
     }
 }
 

@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import os.log
 
 /// Future Device Predictor
 /// Analyzes technology trends and prepares Echoelmusic for upcoming devices (2025-2035)
@@ -20,6 +21,10 @@ import Combine
 /// 2035: Quantum smartphones, holographic displays, ambient computing
 @MainActor
 class FutureDevicePredictor: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "FutureDevicePredictor")
 
     // MARK: - Published State
 
@@ -85,10 +90,10 @@ class FutureDevicePredictor: ObservableObject {
         analyzeTechnologyTrends()
         calculateReadinessScore()
 
-        print("✅ Future Device Predictor: Initialized")
-        print("🔮 Predictions generated: \(predictions.count)")
-        print("📈 Technology trends tracked: \(technologyTrends.count)")
-        print("🎯 Readiness score: \(String(format: "%.1f", readinessScore))%")
+        logger.info("✅ Future Device Predictor: Initialized")
+        logger.info("🔮 Predictions generated: \(self.predictions.count)")
+        logger.info("📈 Technology trends tracked: \(self.technologyTrends.count)")
+        logger.info("🎯 Readiness score: \(String(format: "%.1f", self.readinessScore))%")
     }
 
     // MARK: - Generate Predictions
@@ -333,7 +338,7 @@ class FutureDevicePredictor: ObservableObject {
             )
         ]
 
-        print("🔮 Generated \(predictions.count) device predictions (2025-2035)")
+        logger.info("🔮 Generated \(self.predictions.count) device predictions (2025-2035)")
     }
 
     // MARK: - Analyze Technology Trends
@@ -431,7 +436,7 @@ class FutureDevicePredictor: ObservableObject {
             )
         ]
 
-        print("📈 Analyzed \(technologyTrends.count) technology trends")
+        logger.info("📈 Analyzed \(self.technologyTrends.count) technology trends")
     }
 
     // MARK: - Calculate Readiness Score
@@ -453,7 +458,7 @@ class FutureDevicePredictor: ObservableObject {
 
         readinessScore = (score / totalPredictions) * 100.0
 
-        print("🎯 Readiness Score: \(String(format: "%.1f", readinessScore))%")
+        logger.info("🎯 Readiness Score: \(String(format: "%.1f", self.readinessScore))%")
     }
 
     // MARK: - Get Predictions By Year

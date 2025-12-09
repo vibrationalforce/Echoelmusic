@@ -1,6 +1,7 @@
 import Foundation
 import Network
 import Combine
+import os.log
 
 // MARK: - RTMP Constants
 private enum RTMPConstants {
@@ -35,6 +36,9 @@ private enum RTMPConstants {
 /// Complete RTMP Client for live streaming to Twitch, YouTube, Facebook, Custom servers
 /// Implements full RTMP handshake, connection, AMF commands, and FLV transmission
 class RTMPClient: ObservableObject {
+
+    // MARK: - Logger
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "RTMPClient")
 
     // MARK: - Published State
     @Published private(set) var connectionState: ConnectionState = .disconnected
@@ -172,7 +176,7 @@ class RTMPClient: ObservableObject {
         // C2: Echo back S1
         try await send(s1)
 
-        print("🤝 RTMP Handshake completed successfully")
+        logger.info("RTMP Handshake completed successfully")
     }
 
     // MARK: - RTMP Commands
@@ -233,7 +237,7 @@ class RTMPClient: ObservableObject {
             streamID = 1
         }
 
-        print("📺 Stream created with ID: \(streamID)")
+        logger.info("Stream created with ID: \(self.streamID)")
     }
 
     /// Publish stream
@@ -250,7 +254,7 @@ class RTMPClient: ObservableObject {
         try await sendRTMPMessage(type: RTMPConstants.msgAMF0Command, data: amf, streamID: UInt32(streamID))
 
         connectionState = .streaming
-        print("🎬 Publishing to stream: \(streamKey)")
+        logger.info("Publishing to stream: \(self.streamKey)")
     }
 
     // MARK: - Send Media

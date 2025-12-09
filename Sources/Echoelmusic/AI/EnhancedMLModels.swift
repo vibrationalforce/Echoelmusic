@@ -2,6 +2,7 @@ import Foundation
 import CoreML
 import Accelerate
 import Combine
+import os.log
 
 /// Enhanced ML Models für bio-reaktive Intelligenz
 ///
@@ -18,6 +19,10 @@ import Combine
 @MainActor
 @Observable
 class EnhancedMLModels {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "EnhancedMLModels")
 
     // MARK: - Published Properties
 
@@ -233,7 +238,6 @@ class EnhancedMLModels {
 
         func train(data: [EmotionTrainingData]) {
             trainingData.append(contentsOf: data)
-            print("📚 Trained emotion classifier with \(trainingData.count) samples")
         }
     }
 
@@ -614,6 +618,7 @@ class EnhancedMLModels {
         parameterPredictor = ParameterPredictor()
         patternRecognizer = PatternRecognizer()
         audioFeatureExtractor = AudioFeatureExtractor()
+        logger.info("EnhancedMLModels initialized")
     }
 
     // MARK: - Public Methods
@@ -633,7 +638,7 @@ class EnhancedMLModels {
         currentEmotion = result?.emotion ?? .neutral
         predictions.emotionConfidence = result?.confidence ?? 0.0
 
-        print("🎭 Emotion: \(currentEmotion.rawValue) (Confidence: \(String(format: "%.2f", predictions.emotionConfidence)))")
+        logger.info("Emotion: \(currentEmotion.rawValue) (Confidence: \(String(format: "%.2f", predictions.emotionConfidence)))")
     }
 
     func classifyMusicStyle(audioBuffer: [Float], sampleRate: Float) {
@@ -645,7 +650,7 @@ class EnhancedMLModels {
         detectedMusicStyle = result?.style ?? .unknown
         predictions.styleConfidence = result?.confidence ?? 0.0
 
-        print("🎵 Music Style: \(detectedMusicStyle.rawValue) (Confidence: \(String(format: "%.2f", predictions.styleConfidence)))")
+        logger.info("Music Style: \(detectedMusicStyle.rawValue) (Confidence: \(String(format: "%.2f", predictions.styleConfidence)))")
     }
 
     func generateRecommendations(emotion: Emotion, style: MusicStyle) -> [Recommendation] {

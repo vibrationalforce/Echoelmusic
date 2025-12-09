@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 import CoreHaptics
+import os.log
 
 // MARK: - Touch Instruments Hub
 /// Collection of professional touch interfaces for iOS/iPadOS
@@ -10,6 +11,10 @@ import CoreHaptics
 
 @MainActor
 class TouchInstrumentsHub: ObservableObject {
+
+    // MARK: - Logger
+
+    private let midiLogger = Logger(subsystem: "com.echoelmusic", category: "TouchInstruments")
 
     // MARK: - Published State
 
@@ -44,7 +49,7 @@ class TouchInstrumentsHub: ObservableObject {
     func connect(midi2: MIDI2Manager, mpe: MPEZoneManager) {
         self.midi2Manager = midi2
         self.mpeZoneManager = mpe
-        print("TouchInstruments: Connected to MIDI 2.0 + MPE")
+        midiLogger.info("Connected to MIDI 2.0 + MPE")
     }
 
     private func setupHaptics() {
@@ -54,7 +59,7 @@ class TouchInstrumentsHub: ObservableObject {
             hapticEngine = try CHHapticEngine()
             try hapticEngine?.start()
         } catch {
-            print("TouchInstruments: Haptics not available")
+            midiLogger.debug("Haptics not available")
         }
     }
 

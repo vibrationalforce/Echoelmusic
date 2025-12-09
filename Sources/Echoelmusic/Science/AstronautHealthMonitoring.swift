@@ -1,6 +1,7 @@
 import Foundation
 import HealthKit
 import Combine
+import os.log
 
 /// Astronaut Health Monitoring Protocols
 /// Based on NASA, ESA, JAXA public research for space medicine
@@ -14,6 +15,10 @@ import Combine
 /// - ESA Space Medicine Office - Cardiovascular Deconditioning Countermeasures
 @MainActor
 class AstronautHealthMonitoring: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "AstronautHealthMonitoring")
 
     // MARK: - Published State
 
@@ -127,9 +132,9 @@ class AstronautHealthMonitoring: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Astronaut Health Monitoring: Initialized")
-        print("🚀 Based on NASA/ESA/JAXA public research protocols")
-        print("⚠️ Educational purposes - not for actual spaceflight")
+        logger.info("✅ Astronaut Health Monitoring: Initialized")
+        logger.info("🚀 Based on NASA/ESA/JAXA public research protocols")
+        logger.warning("⚠️ Educational purposes - not for actual spaceflight")
     }
 
     // MARK: - Start Monitoring
@@ -138,9 +143,9 @@ class AstronautHealthMonitoring: ObservableObject {
         currentProtocol = protocolType
         monitoringActive = true
 
-        print("▶️ Astronaut Health: \(protocolType.rawValue)")
-        print("📊 Key Metrics: \(protocolType.keyMetrics.joined(separator: ", "))")
-        print("📚 Evidence: \(protocolType.evidenceBase)")
+        logger.info("▶️ Astronaut Health: \(protocolType.rawValue)")
+        logger.info("📊 Key Metrics: \(protocolType.keyMetrics.joined(separator: ", "))")
+        logger.info("📚 Evidence: \(protocolType.evidenceBase)")
 
         // Start data collection
         startDataCollection()
@@ -150,7 +155,7 @@ class AstronautHealthMonitoring: ObservableObject {
 
     func stopMonitoring() {
         monitoringActive = false
-        print("⏹️ Astronaut Health: Monitoring stopped")
+        logger.info("⏹️ Astronaut Health: Monitoring stopped")
     }
 
     // MARK: - Data Collection

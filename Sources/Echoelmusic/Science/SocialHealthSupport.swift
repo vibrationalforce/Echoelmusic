@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import os.log
 
 /// Social Health & Community Wellness Support
 /// Evidence-based social determinants of health tracking
@@ -12,6 +13,10 @@ import Combine
 /// - Kawachi & Berkman (2001). "Social ties and mental health" - Journal of Urban Health
 @MainActor
 class SocialHealthSupport: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "SocialHealthSupport")
 
     // MARK: - Published State
 
@@ -151,8 +156,8 @@ class SocialHealthSupport: ObservableObject {
 
     init() {
         loadCommunityResources()
-        print("✅ Social Health Support: Initialized")
-        print("🌍 Based on WHO Social Determinants of Health")
+        logger.info("✅ Social Health Support: Initialized")
+        logger.info("🌍 Based on WHO Social Determinants of Health")
     }
 
     private func loadCommunityResources() {
@@ -212,10 +217,10 @@ class SocialHealthSupport: ObservableObject {
 
         socialConnectionScore = min(100, max(0, score))
 
-        print("📊 Social Health Assessment:")
-        print("   - Social Connection Score: \(String(format: "%.1f", socialConnectionScore))/100")
-        print("   - Social Support: \(socialSupport.rawValue) (-\(String(format: "%.0f", socialSupport.mortalityRiskReduction))% mortality risk)")
-        print("   - Loneliness: \(lonelinessSeverity.rawValue)")
+        logger.debug("📊 Social Health Assessment:")
+        logger.debug("   - Social Connection Score: \(String(format: "%.1f", socialConnectionScore))/100")
+        logger.debug("   - Social Support: \(socialSupport.rawValue) (-\(String(format: "%.0f", socialSupport.mortalityRiskReduction))% mortality risk)")
+        logger.debug("   - Loneliness: \(lonelinessSeverity.rawValue)")
     }
 
     // MARK: - Get Recommendations

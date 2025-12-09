@@ -1,10 +1,14 @@
 import Foundation
 import Combine
+import os.log
 
 /// Chat Aggregator for Twitch, YouTube, Facebook Live
 /// Aggregates chat messages from multiple platforms with AI moderation
 @MainActor
 class ChatAggregator: ObservableObject {
+
+    // MARK: - Logger
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "ChatAggregator")
 
     @Published var messages: [ChatMessage] = []
     @Published var isActive: Bool = false
@@ -18,26 +22,26 @@ class ChatAggregator: ObservableObject {
     func start() {
         guard !isActive else { return }
         isActive = true
-        print("💬 ChatAggregator: Started")
+        logger.info("ChatAggregator: Started")
     }
 
     func stop() {
         guard isActive else { return }
         isActive = false
         cancellables.removeAll()
-        print("💬 ChatAggregator: Stopped")
+        logger.info("ChatAggregator: Stopped")
     }
 
     func addMessage(_ message: ChatMessage) {
         // AI Moderation check
         if moderationEnabled && isToxic(message.text) {
             toxicMessagesBlocked += 1
-            print("🚫 ChatAggregator: Blocked toxic message from \(message.username)")
+            logger.warning("ChatAggregator: Blocked toxic message from \(message.username)")
             return
         }
 
         messages.append(message)
-        print("💬 [\(message.platform.rawValue)] \(message.username): \(message.text)")
+        logger.info("[\(message.platform.rawValue)] \(message.username): \(message.text)")
     }
 
     private func isToxic(_ text: String) -> Bool {

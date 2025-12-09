@@ -1,7 +1,12 @@
 import SwiftUI
+import os.log
 
 /// Main recording controls view with session management
 struct RecordingControlsView: View {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "RecordingControlsView")
     @EnvironmentObject var recordingEngine: RecordingEngine
     @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var microphoneManager: MicrophoneManager
@@ -461,10 +466,10 @@ struct RecordingControlsView: View {
         Task {
             do {
                 let url = try await exportManager.exportAudio(session: session, format: format)
-                print("📤 Exported to: \(url.path)")
+                logger.info("📤 Exported to: \(url.path)")
                 // TODO: Show share sheet
             } catch {
-                print("❌ Export failed: \(error)")
+                logger.error("❌ Export failed: \(error.localizedDescription)")
             }
         }
     }
@@ -475,10 +480,10 @@ struct RecordingControlsView: View {
         let exportManager = ExportManager()
         do {
             let url = try exportManager.exportBioData(session: session, format: format)
-            print("📤 Exported bio-data to: \(url.path)")
+            logger.info("📤 Exported bio-data to: \(url.path)")
             // TODO: Show share sheet
         } catch {
-            print("❌ Export failed: \(error)")
+            logger.error("❌ Export failed: \(error.localizedDescription)")
         }
     }
 
@@ -489,10 +494,10 @@ struct RecordingControlsView: View {
         Task {
             do {
                 let url = try await exportManager.exportSessionPackage(session: session)
-                print("📦 Exported package to: \(url.path)")
+                logger.info("📦 Exported package to: \(url.path)")
                 // TODO: Show share sheet
             } catch {
-                print("❌ Export failed: \(error)")
+                logger.error("❌ Export failed: \(error.localizedDescription)")
             }
         }
     }

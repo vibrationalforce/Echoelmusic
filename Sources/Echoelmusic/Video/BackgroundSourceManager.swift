@@ -5,12 +5,17 @@ import MetalKit
 import CoreImage
 import SwiftUI
 import Combine
+import os.log
 
 /// Background Source Manager for Chroma Key Compositing
 /// Supports multiple background types: images, videos, Echoelmusic visuals, virtual backgrounds
 /// Bio-reactive backgrounds driven by HRV coherence and heart rate
 @MainActor
 class BackgroundSourceManager: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "BackgroundSourceManager")
 
     // MARK: - Published State
 
@@ -152,7 +157,7 @@ class BackgroundSourceManager: ObservableObject {
         // Initialize available sources
         initializeDefaultSources()
 
-        print("✅ BackgroundSourceManager: Initialized")
+        logger.info("BackgroundSourceManager: Initialized")
     }
 
     deinit {
@@ -228,12 +233,12 @@ class BackgroundSourceManager: ObservableObject {
             }
 
             isLoading = false
-            print("✅ BackgroundSourceManager: Set source to '\(source.displayName)'")
+            logger.info("BackgroundSourceManager: Set source to '\(source.displayName)'")
 
         } catch {
             isLoading = false
             errorMessage = error.localizedDescription
-            print("❌ BackgroundSourceManager: Failed to set source - \(error)")
+            logger.error("BackgroundSourceManager: Failed to set source - \(error.localizedDescription)")
             throw error
         }
     }
@@ -507,7 +512,7 @@ class BackgroundSourceManager: ObservableObject {
         // Start display link for frame updates
         startDisplayLink()
 
-        print("▶️ BackgroundSourceManager: Started video playback")
+        logger.info("BackgroundSourceManager: Started video playback")
     }
 
     private func stopVideoPlayback() {
@@ -545,7 +550,7 @@ class BackgroundSourceManager: ObservableObject {
         // TODO: Implement live camera capture using AVCaptureSession
         // For now, use solid color as placeholder
         try await setSource(.solidColor(.blue))
-        print("⚠️ BackgroundSourceManager: Live camera not yet implemented")
+        logger.warning("BackgroundSourceManager: Live camera not yet implemented")
     }
 
     // MARK: - Echoelmusic Visual Integration
@@ -557,7 +562,7 @@ class BackgroundSourceManager: ObservableObject {
         // For now, create placeholder
         echoelmusicVisualRenderer = EchoelmusicVisualRenderer(device: device, type: type)
 
-        print("🎨 BackgroundSourceManager: Started Echoelmusic visual '\(type.displayName)'")
+        logger.info("BackgroundSourceManager: Started Echoelmusic visual '\(type.displayName)'")
     }
 
     // MARK: - Blur Background
@@ -565,7 +570,7 @@ class BackgroundSourceManager: ObservableObject {
     private func renderBlurBackground(type: BlurType, intensity: Float) async throws {
         // TODO: Implement blur using CIFilter
         try await setSource(.solidColor(.gray))
-        print("⚠️ BackgroundSourceManager: Blur backgrounds not yet fully implemented")
+        logger.warning("BackgroundSourceManager: Blur backgrounds not yet fully implemented")
     }
 
     // MARK: - Update Animated Source

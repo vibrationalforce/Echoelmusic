@@ -1,10 +1,14 @@
 import Foundation
 import Combine
+import os.log
 
 /// Stream Analytics Dashboard
 /// Tracks viewers, chat activity, bio-data correlation, engagement metrics
 @MainActor
 class StreamAnalytics: ObservableObject {
+
+    // MARK: - Logger
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "StreamAnalytics")
 
     // MARK: - Real-Time Metrics
 
@@ -32,7 +36,7 @@ class StreamAnalytics: ObservableObject {
     func startSession() {
         sessionStartTime = Date()
         resetMetrics()
-        print("📊 StreamAnalytics: Started session")
+        logger.info("StreamAnalytics: Started session")
     }
 
     func endSession() {
@@ -54,7 +58,7 @@ class StreamAnalytics: ObservableObject {
             avgHeartRate = hrSum / Float(bioSamples.count)
         }
 
-        print("📊 StreamAnalytics: Session ended - Duration: \(Int(sessionDuration))s, Peak Viewers: \(peakViewers), Avg HRV: \(avgHRV)")
+        logger.info("StreamAnalytics: Session ended - Duration: \(Int(sessionDuration))s, Peak Viewers: \(self.peakViewers), Avg HRV: \(self.avgHRV)")
     }
 
     func recordFrame() {
@@ -77,7 +81,7 @@ class StreamAnalytics: ObservableObject {
     }
 
     func recordSceneSwitch(to scene: Scene) {
-        print("📊 StreamAnalytics: Scene switched to '\(scene.name)'")
+        logger.info("StreamAnalytics: Scene switched to '\(scene.name)'")
     }
 
     private func resetMetrics() {
