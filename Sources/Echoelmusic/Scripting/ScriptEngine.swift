@@ -1,11 +1,16 @@
 import Foundation
 import Combine
+import os.log
 
 /// Script Engine - Swift-based Scripting with Hot Reload
 /// Community marketplace for sharing custom tools and effects
 /// Full API access to audio, visual, bio, stream, MIDI, spatial systems
 @MainActor
 class ScriptEngine: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "ScriptEngine")
 
     // MARK: - Published State
 
@@ -44,7 +49,7 @@ class ScriptEngine: ObservableObject {
         self.spatialAPI = spatialAPI
         self.marketplace = ScriptMarketplace()
 
-        print("✅ ScriptEngine: Initialized")
+        logger.info("✅ ScriptEngine initialized")
     }
 
     // MARK: - Load Script
@@ -73,7 +78,7 @@ class ScriptEngine: ObservableObject {
         do {
             try await compileScript(script)
             loadedScripts.append(script)
-            print("✅ ScriptEngine: Loaded script '\(script.name)'")
+            logger.info("✅ Loaded script '\(script.name)'")
         } catch {
             compilationErrors.append(CompilationError(
                 script: script.name,
@@ -94,7 +99,7 @@ class ScriptEngine: ObservableObject {
             throw ScriptError.missingProcessFunction
         }
 
-        print("🔨 ScriptEngine: Compiled '\(script.name)'")
+        logger.debug("🔨 Compiled '\(script.name)'")
     }
 
     // MARK: - Hot Reload
@@ -104,7 +109,7 @@ class ScriptEngine: ObservableObject {
             throw ScriptError.scriptNotFound
         }
 
-        print("🔥 ScriptEngine: Hot reloading '\(script.name)'...")
+        logger.info("🔥 Hot reloading '\(script.name)'...")
 
         // Recompile
         try await compileScript(script)
@@ -112,7 +117,7 @@ class ScriptEngine: ObservableObject {
         // Replace in loaded scripts
         loadedScripts[index] = script
 
-        print("✅ ScriptEngine: Hot reload completed in <1s")
+        logger.info("✅ Hot reload completed")
     }
 
     // MARK: - Execute Script
@@ -124,7 +129,7 @@ class ScriptEngine: ObservableObject {
 
         // TODO: Execute compiled script
         // Placeholder
-        print("▶️ ScriptEngine: Executing '\(script.name)'")
+        logger.debug("▶️ Executing '\(script.name)'")
         return nil
     }
 
@@ -135,12 +140,12 @@ class ScriptEngine: ObservableObject {
     }
 
     func installScript(from marketplace: MarketplaceScript) async throws {
-        print("📦 ScriptEngine: Installing '\(marketplace.name)' from marketplace...")
+        logger.info("📦 Installing '\(marketplace.name)' from marketplace...")
 
         // TODO: Git clone, compile, install
         try await Task.sleep(nanoseconds: 1_000_000_000)
 
-        print("✅ ScriptEngine: Installed '\(marketplace.name)'")
+        logger.info("✅ Installed '\(marketplace.name)'")
     }
 }
 
@@ -166,7 +171,7 @@ class AudioScriptAPI {
     }
 
     func setParameter(_ name: String, value: Float) {
-        print("🎵 AudioAPI: Set \(name) = \(value)")
+        // Set audio parameter
     }
 
     func getFFT() -> [Float] {
@@ -174,17 +179,17 @@ class AudioScriptAPI {
     }
 
     func applyEffect(_ effect: String) {
-        print("🎵 AudioAPI: Applied effect '\(effect)'")
+        // Apply audio effect
     }
 }
 
 class VisualScriptAPI {
     func renderFrame() {
-        print("🎨 VisualAPI: Rendered frame")
+        // Render visual frame
     }
 
     func setShader(_ shader: String) {
-        print("🎨 VisualAPI: Set shader '\(shader)'")
+        // Set shader
     }
 
     func getParticles() -> [(x: Float, y: Float, z: Float)] {
@@ -192,7 +197,7 @@ class VisualScriptAPI {
     }
 
     func applyTransform(_ transform: String) {
-        print("🎨 VisualAPI: Applied transform '\(transform)'")
+        // Apply transform
     }
 }
 
@@ -224,25 +229,25 @@ class StreamScriptAPI {
     }
 
     func switchScene(_ sceneName: String) {
-        print("🎬 StreamAPI: Switched to scene '\(sceneName)'")
+        // Switch scene
     }
 
     func setOverlay(_ overlayName: String) {
-        print("🎬 StreamAPI: Set overlay '\(overlayName)'")
+        // Set overlay
     }
 }
 
 class MIDIScriptAPI {
     func sendNote(_ note: Int, velocity: Int, channel: Int) {
-        print("🎹 MIDIAPI: Send note \(note) velocity \(velocity) ch \(channel)")
+        // Send MIDI note
     }
 
     func sendCC(_ cc: Int, value: Int, channel: Int) {
-        print("🎹 MIDIAPI: Send CC\(cc) = \(value) ch \(channel)")
+        // Send MIDI CC
     }
 
     func sendSysEx(_ data: Data) {
-        print("🎹 MIDIAPI: Send SysEx (\(data.count) bytes)")
+        // Send SysEx
     }
 
     func receiveMIDI() -> [(type: String, data: Any)] {
@@ -252,15 +257,15 @@ class MIDIScriptAPI {
 
 class SpatialScriptAPI {
     func setListenerPosition(x: Float, y: Float, z: Float) {
-        print("🎧 SpatialAPI: Set listener position (\(x), \(y), \(z))")
+        // Set listener position
     }
 
     func setSourcePosition(id: UUID, x: Float, y: Float, z: Float) {
-        print("🎧 SpatialAPI: Set source position (\(x), \(y), \(z))")
+        // Set source position
     }
 
     func setSpatialMode(_ mode: String) {
-        print("🎧 SpatialAPI: Set spatial mode '\(mode)'")
+        // Set spatial mode
     }
 
     func getHeadTracking() -> (yaw: Float, pitch: Float, roll: Float) {
