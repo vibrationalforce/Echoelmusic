@@ -374,6 +374,12 @@ class HealthKitManager: ObservableObject {
         let fftSize = nextPowerOf2(windowed.count)
         let powerSpectrum = performFFTForCoherence(windowed, fftSize: fftSize)
 
+        // Validate FFT result
+        guard !powerSpectrum.isEmpty else {
+            logger.warning("⚠️ FFT returned empty spectrum")
+            return 0.0
+        }
+
         // Step 4: Calculate coherence score
         // HeartMath coherence band: 0.04-0.26 Hz, with peak typically at 0.1 Hz
         // Assuming 1 Hz sampling rate (1 RR interval per second)
@@ -384,8 +390,17 @@ class HealthKitManager: ObservableObject {
         let binLow = Int(coherenceBandLow * Double(fftSize) / samplingRate)
         let binHigh = Int(coherenceBandHigh * Double(fftSize) / samplingRate)
 
-        // Find peak power in coherence band
-        let coherenceBandPower = powerSpectrum[binLow...binHigh]
+        // Validate array bounds before slicing (CRITICAL FIX)
+        let safeBinLow = max(0, min(binLow, powerSpectrum.count - 1))
+        let safeBinHigh = max(safeBinLow, min(binHigh, powerSpectrum.count - 1))
+
+        guard safeBinLow < safeBinHigh else {
+            logger.warning("⚠️ Invalid coherence band range: \(binLow)-\(binHigh) for spectrum size \(powerSpectrum.count)")
+            return 0.0
+        }
+
+        // Find peak power in coherence band (with validated bounds)
+        let coherenceBandPower = powerSpectrum[safeBinLow...safeBinHigh]
         let peakPower = coherenceBandPower.max() ?? 0.0
 
         // Calculate total power across all frequencies
