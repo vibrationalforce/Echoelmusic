@@ -3,6 +3,7 @@ import Metal
 import AVFoundation
 import CoreMotion
 import Combine
+import os.log
 
 /// Universal Device Testing Framework
 /// Simulates and tests Echoelmusic on ALL device types:
@@ -22,6 +23,10 @@ import Combine
 /// 5. Future-Proofing Testing (upcoming hardware capabilities)
 @MainActor
 class DeviceTestingFramework: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "DeviceTestingFramework")
 
     // MARK: - Published State
 
@@ -184,8 +189,7 @@ class DeviceTestingFramework: ObservableObject {
         loadDeviceDatabase()
         detectCurrentDevice()
 
-        print("✅ Device Testing Framework: Initialized")
-        print("📱 Device Database: \(deviceDatabase.count) profiles")
+        logger.info("✅ Device Testing Framework: Initialized - \(self.deviceDatabase.count) profiles")
     }
 
     // MARK: - Load Device Database
@@ -233,10 +237,7 @@ class DeviceTestingFramework: ObservableObject {
             createQuantumDevice2035()
         ]
 
-        print("📊 Device Database loaded: \(deviceDatabase.count) devices")
-        print("   - Smartphones: \(deviceDatabase.filter { $0.category == DeviceCategory.smartphone.rawValue }.count)")
-        print("   - Vehicles: \(deviceDatabase.filter { $0.category == DeviceCategory.vehicle.rawValue }.count)")
-        print("   - Future devices: \(deviceDatabase.filter { $0.releaseYear > 2025 }.count)")
+        logger.info("📊 Device Database loaded: \(self.deviceDatabase.count) devices - Smartphones: \(self.deviceDatabase.filter { $0.category == DeviceCategory.smartphone.rawValue }.count), Vehicles: \(self.deviceDatabase.filter { $0.category == DeviceCategory.vehicle.rawValue }.count)")
     }
 
     // MARK: - Device Profiles (Current)
@@ -508,7 +509,7 @@ class DeviceTestingFramework: ObservableObject {
         currentDeviceProfile = createiPhone15ProMax()
         #endif
 
-        print("📱 Current Device: \(currentDeviceProfile?.name ?? "Unknown")")
+        logger.info("📱 Current Device: \(self.currentDeviceProfile?.name ?? "Unknown")")
     }
 
     private func getDeviceModelIdentifier() -> String {
@@ -566,8 +567,7 @@ class DeviceTestingFramework: ObservableObject {
         isTestingInProgress = true
         testResults = []
 
-        print("🧪 Starting Complete Test Suite...")
-        print("   Testing \(deviceDatabase.count) device profiles")
+        logger.info("🧪 Starting Complete Test Suite - Testing \(self.deviceDatabase.count) device profiles")
 
         for device in deviceDatabase {
             await testDevice(device)
@@ -576,14 +576,13 @@ class DeviceTestingFramework: ObservableObject {
         calculateOverallCompatibility()
         isTestingInProgress = false
 
-        print("✅ Test Suite Complete")
-        print("   Overall Compatibility: \(String(format: "%.1f", compatibilityScore))%")
+        logger.info("✅ Test Suite Complete - Overall Compatibility: \(String(format: "%.1f", self.compatibilityScore))%")
     }
 
     // MARK: - Test Individual Device
 
     func testDevice(_ device: DeviceProfile) async {
-        print("   Testing: \(device.name)...")
+        logger.debug("   Testing: \(device.name)...")
 
         // Performance Test
         let perfResult = await testPerformance(device)

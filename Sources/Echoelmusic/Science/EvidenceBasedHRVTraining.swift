@@ -1,6 +1,7 @@
 import Foundation
 import HealthKit
 import Combine
+import os.log
 
 /// Evidence-Based HRV Training System
 /// Based on peer-reviewed research from PubMed, validated clinical protocols
@@ -13,6 +14,10 @@ import Combine
 /// - Gevirtz (2013). "The promise of heart rate variability biofeedback" - Biofeedback 41(3)
 @MainActor
 class EvidenceBasedHRVTraining: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "EvidenceBasedHRVTraining")
 
     // MARK: - Published State
 
@@ -116,8 +121,7 @@ class EvidenceBasedHRVTraining: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Evidence-Based HRV Training: Initialized")
-        print("📚 Based on peer-reviewed research - Educational purposes only")
+        logger.info("✅ Evidence-Based HRV Training: Initialized - Educational purposes only")
     }
 
     // MARK: - Start Training Session
@@ -133,10 +137,7 @@ class EvidenceBasedHRVTraining: ObservableObject {
         // Calculate baseline
         baselineHRV = try await measureBaselineHRV()
 
-        print("▶️ HRV Training: \(protocolType.rawValue)")
-        print("📊 Evidence Level: \(protocolType.evidenceLevel.rawValue)")
-        print("🫁 Target Breathing Rate: \(protocolType.targetBreathingRate) breaths/min")
-        print("⏱️ Duration: \(Int(protocolType.sessionDuration / 60)) minutes")
+        logger.info("▶️ HRV Training: \(protocolType.rawValue) - Evidence Level: \(protocolType.evidenceLevel.rawValue), Target: \(protocolType.targetBreathingRate) breaths/min, Duration: \(Int(protocolType.sessionDuration / 60)) min")
 
         // Start monitoring
         startMonitoring()
@@ -151,15 +152,10 @@ class EvidenceBasedHRVTraining: ObservableObject {
 
         // Calculate results
         let finalHRV = sessionData.last?.hrv ?? 0.0
-        let avgCoherence = sessionData.map { $0.coherence }.reduce(0, +) / Float(sessionData.count)
+        let avgCoherence = sessionData.map { $0.coherence }.reduce(0, +) / Float(max(1, sessionData.count))
         let hrvChange = finalHRV - baselineHRV
 
-        print("⏹️ HRV Training: Session Ended")
-        print("📊 Results:")
-        print("   - Baseline HRV: \(String(format: "%.1f", baselineHRV)) ms")
-        print("   - Final HRV: \(String(format: "%.1f", finalHRV)) ms")
-        print("   - Change: \(hrvChange >= 0 ? "+" : "")\(String(format: "%.1f", hrvChange)) ms (\(String(format: "%.1f", (hrvChange / baselineHRV) * 100))%)")
-        print("   - Avg Coherence: \(String(format: "%.1f", avgCoherence))")
+        logger.info("⏹️ HRV Training Session Ended - Baseline: \(String(format: "%.1f", self.baselineHRV))ms, Final: \(String(format: "%.1f", finalHRV))ms, Change: \(hrvChange >= 0 ? "+" : "")\(String(format: "%.1f", hrvChange))ms, Avg Coherence: \(String(format: "%.1f", avgCoherence))")
 
         currentProtocol = nil
     }

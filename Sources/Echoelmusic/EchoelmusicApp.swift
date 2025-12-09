@@ -1,4 +1,8 @@
 import SwiftUI
+import os.log
+
+/// Logger for main app
+private let appLogger = Logger(subsystem: "com.echoelmusic", category: "EchoelmusicApp")
 
 /// Main entry point for the Echoelmusic app
 /// Bio-reactive audio-visual experiences platform
@@ -51,9 +55,7 @@ struct EchoelmusicApp: App {
             // Note: StreamEngine requires Metal device - initialized lazily in StreamingView
 
             await MainActor.run {
-                print("⚛️ Echoelmusic Core Systems Initialized (async)")
-                print("🎹 InstrumentOrchestrator: 54+ Instruments Ready")
-                print("🌍 WorldMusicBridge: 42 Music Styles Loaded")
+                appLogger.info("⚛️ Echoelmusic Core Systems Initialized (async) - 54+ Instruments, 42 Music Styles")
             }
         }
     }
@@ -78,26 +80,24 @@ struct EchoelmusicApp: App {
                     Task {
                         do {
                             try await unifiedControlHub.enableBiometricMonitoring()
-                            print("✅ Biometric monitoring enabled via UnifiedControlHub")
+                            appLogger.info("✅ Biometric monitoring enabled via UnifiedControlHub")
                         } catch {
-                            print("⚠️ Biometric monitoring not available: \(error.localizedDescription)")
+                            appLogger.warning("⚠️ Biometric monitoring not available: \(error.localizedDescription)")
                         }
 
                         // Enable MIDI 2.0 + MPE
                         do {
                             try await unifiedControlHub.enableMIDI2()
-                            print("✅ MIDI 2.0 + MPE enabled via UnifiedControlHub")
+                            appLogger.info("✅ MIDI 2.0 + MPE enabled via UnifiedControlHub")
                         } catch {
-                            print("⚠️ MIDI 2.0 not available: \(error.localizedDescription)")
+                            appLogger.warning("⚠️ MIDI 2.0 not available: \(error.localizedDescription)")
                         }
                     }
 
                     // Start UnifiedControlHub
                     unifiedControlHub.start()
 
-                    print("🎵 Echoelmusic Started - All Systems Connected!")
-                    print("🎹 MIDI 2.0 + MPE + Spatial Audio Ready")
-                    print("🌊 Bio-Reactive Audio-Visual Platform Ready")
+                    appLogger.info("🎵 Echoelmusic Started - All Systems Connected! MIDI 2.0 + MPE + Spatial Audio + Bio-Reactive Platform Ready")
                 }
         }
     }

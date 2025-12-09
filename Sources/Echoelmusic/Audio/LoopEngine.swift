@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import os.log
 
 /// Manages audio looping functionality with tempo-sync and quantization
 /// Supports loop recording, overdubbing, and playback
@@ -112,6 +113,9 @@ class LoopEngine: ObservableObject {
     /// Loop directory
     private let loopsDirectory: URL
 
+    /// Logger
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "LoopEngine")
+
 
     // MARK: - Initialization
 
@@ -123,7 +127,7 @@ class LoopEngine: ObservableObject {
         // Create directory if needed
         try? FileManager.default.createDirectory(at: loopsDirectory, withIntermediateDirectories: true)
 
-        print("🔄 Loop engine initialized")
+        logger.info("🔄 Loop engine initialized")
     }
 
 
@@ -143,7 +147,7 @@ class LoopEngine: ObservableObject {
         isRecordingLoop = true
         loopStartTime = Date()
 
-        print("🔴 Started loop recording: \(loop.name) (\(bars) bars)")
+        logger.info("🔴 Started loop recording: \(loop.name) (\(bars) bars)")
     }
 
     /// Stop recording current loop
@@ -166,7 +170,7 @@ class LoopEngine: ObservableObject {
 
             loops[lastLoopIndex].duration = quantizedDuration
 
-            print("⏹️ Stopped loop recording: \(quantizedDuration)s")
+            logger.info("⏹️ Stopped loop recording: \(quantizedDuration)s")
         }
 
         loopStartTime = nil
@@ -189,7 +193,7 @@ class LoopEngine: ObservableObject {
             startPlayback()
         }
 
-        print("🎙️ Started overdub on loop: \(loops[loopIndex].name)")
+        logger.info("🎙️ Started overdub on loop: \(loops[loopIndex].name)")
     }
 
     /// Stop overdubbing and merge with original loop
@@ -217,7 +221,7 @@ class LoopEngine: ObservableObject {
         overdubLoopID = nil
         loopStartTime = nil
 
-        print("⏹️ Stopped overdub, created: \(overdubName)")
+        logger.info("⏹️ Stopped overdub, created: \(overdubName)")
     }
 
     /// Cancel overdub without saving
@@ -228,7 +232,7 @@ class LoopEngine: ObservableObject {
         overdubLoopID = nil
         loopStartTime = nil
 
-        print("❌ Cancelled overdub")
+        logger.info("❌ Cancelled overdub")
     }
 
 
@@ -244,7 +248,7 @@ class LoopEngine: ObservableObject {
         // Start position timer
         startTimer()
 
-        print("▶️ Started loop playback")
+        logger.info("▶️ Started loop playback")
     }
 
     /// Stop playing loops
@@ -253,7 +257,7 @@ class LoopEngine: ObservableObject {
         loopPosition = 0.0
         stopTimer()
 
-        print("⏹️ Stopped loop playback")
+        logger.info("⏹️ Stopped loop playback")
     }
 
     /// Toggle playback
@@ -278,7 +282,7 @@ class LoopEngine: ObservableObject {
             players.removeValue(forKey: loopID)
         }
 
-        print("🗑️ Deleted loop")
+        logger.debug("🗑️ Deleted loop")
     }
 
     /// Mute/unmute loop
@@ -315,7 +319,7 @@ class LoopEngine: ObservableObject {
         loops.removeAll()
         players.removeAll()
 
-        print("🗑️ Cleared all loops")
+        logger.info("🗑️ Cleared all loops")
     }
 
 
@@ -363,12 +367,7 @@ class LoopEngine: ObservableObject {
     /// Toggle metronome
     func toggleMetronome() {
         metronomeEnabled.toggle()
-
-        if metronomeEnabled {
-            print("🎵 Metronome enabled")
-        } else {
-            print("🎵 Metronome disabled")
-        }
+        logger.debug("🎵 Metronome \(self.metronomeEnabled ? "enabled" : "disabled")")
     }
 
 
@@ -416,7 +415,7 @@ class LoopEngine: ObservableObject {
         let saveURL = loopsDirectory.appendingPathComponent("loops.json")
         try data.write(to: saveURL)
 
-        print("💾 Saved \(loops.count) loops")
+        logger.info("💾 Saved \(self.loops.count) loops")
     }
 
     /// Load loops from disk
@@ -427,7 +426,7 @@ class LoopEngine: ObservableObject {
         let decoder = JSONDecoder()
         loops = try decoder.decode([Loop].self, from: data)
 
-        print("📂 Loaded \(loops.count) loops")
+        logger.info("📂 Loaded \(self.loops.count) loops")
     }
 }
 

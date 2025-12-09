@@ -3,6 +3,7 @@ import Metal
 import MetalPerformanceShaders
 import Accelerate
 import Combine
+import os.log
 
 /// Quality Assurance & Performance Monitoring System
 /// Ensures professional-grade quality across ALL aspects of Echoelmusic
@@ -24,6 +25,10 @@ import Combine
 /// - Streaming: Netflix, YouTube, Spotify specs
 @MainActor
 class QualityAssuranceSystem: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "QualityAssuranceSystem")
 
     // MARK: - Published State
 
@@ -321,14 +326,13 @@ class QualityAssuranceSystem: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Quality Assurance System: Initialized")
-        print("🔍 Ready for comprehensive quality testing")
+        logger.info("✅ Quality Assurance System: Initialized - Ready for comprehensive quality testing")
     }
 
     // MARK: - Run Complete Test Suite
 
     func runCompleteTestSuite() async {
-        print("🧪 Starting Complete Quality Test Suite...")
+        logger.info("🧪 Starting Complete Quality Test Suite...")
 
         activeTests = []
         issues = []
@@ -363,16 +367,14 @@ class QualityAssuranceSystem: ObservableObject {
         // Calculate overall metrics
         calculateOverallQuality()
 
-        print("✅ Test Suite Complete")
-        print("📊 Overall Quality Score: \(String(format: "%.1f", overallQualityScore))%")
-        print("⚠️ Issues Found: \(issues.count)")
+        logger.info("✅ Test Suite Complete - Quality Score: \(String(format: "%.1f", self.overallQualityScore))%, Issues: \(self.issues.count)")
     }
 
     private func runTest(name: String, category: QualityTest.TestCategory, duration: Double) async {
         var test = QualityTest(name: name, category: category, duration: duration, status: .running, result: nil)
         activeTests.append(test)
 
-        print("   Running: \(name)...")
+        logger.debug("   Running: \(name)...")
 
         // Simulate test execution
         try? await Task.sleep(nanoseconds: UInt64(min(duration, 1.0) * 1_000_000_000))
@@ -399,7 +401,7 @@ class QualityAssuranceSystem: ObservableObject {
             addIssue(for: test, score: score)
         }
 
-        print("   ✓ \(name): \(String(format: "%.1f", score))% [\(test.status.rawValue)]")
+        logger.debug("   ✓ \(name): \(String(format: "%.1f", score))% [\(test.status.rawValue)]")
     }
 
     private func generateTestDetails(for testName: String) -> String {
