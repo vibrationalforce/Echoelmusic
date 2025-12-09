@@ -38,7 +38,7 @@ class MIDIToSpatialMapper: ObservableObject {
         case surround_3d    // X/Y/Z (azimuth/elevation/distance)
         case surround_4d    // X/Y/Z + temporal evolution
         case afa            // Algorithmic Field Array (multi-source)
-        case binaural       // HRTF-based binaural
+        case hrtf           // HRTF-based spatial (3D positioning)
         case ambisonics     // Higher-order ambisonics (HOA)
     }
 

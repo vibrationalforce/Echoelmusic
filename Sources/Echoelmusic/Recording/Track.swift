@@ -24,8 +24,8 @@ struct Track: Identifiable, Codable {
     enum TrackType: String, Codable {
         case audio = "Audio"
         case voice = "Voice"
-        case binaural = "Binaural"
         case spatial = "Spatial"
+        case modulation = "Modulation"  // For brainwave entrainment via audio/visual modulations
         case master = "Master"
     }
 
@@ -149,10 +149,10 @@ extension Track {
         return track
     }
 
-    /// Create binaural beats track
-    static func binauralTrack() -> Track {
-        var track = Track(name: "Binaural Beats", type: .binaural)
-        track.volume = 0.3
+    /// Create modulation track for brainwave entrainment (via audio/visual modulations)
+    static func modulationTrack() -> Track {
+        var track = Track(name: "Modulation", type: .modulation)
+        track.volume = 0.5
         return track
     }
 

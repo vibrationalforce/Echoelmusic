@@ -125,7 +125,7 @@ class VisionApp {
             var volume: Float = 1.0
 
             enum SoundType {
-                case binauralBeat(frequency: Float)
+                case entrainmentPulse(frequency: Float)  // Modulation-based entrainment
                 case tone(frequency: Float)
                 case ambient(type: String)
                 case heartbeat(bpm: Float)
@@ -442,15 +442,15 @@ class SpatialAudioEngine {
 
         switch sceneType {
         case .meditation:
-            // Binaurale Beats in 3D positioniert
+            // Entrainment pulses in 3D positioned (modulation-based)
             sources.append(VisionApp.ImmersiveScene.SpatialAudioSource(
                 position: SIMD3(-2, 0, -2),
-                soundType: .binauralBeat(frequency: 7.83) // Schumann-Resonanz
+                soundType: .entrainmentPulse(frequency: 7.83) // Schumann resonance
             ))
 
             sources.append(VisionApp.ImmersiveScene.SpatialAudioSource(
                 position: SIMD3(2, 0, -2),
-                soundType: .binauralBeat(frequency: 7.83)
+                soundType: .entrainmentPulse(frequency: 7.83)
             ))
 
         case .cosmos:

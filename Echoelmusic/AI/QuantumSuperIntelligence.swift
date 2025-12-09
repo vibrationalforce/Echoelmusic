@@ -586,7 +586,7 @@ final class QuantumSuperIntelligence: ObservableObject {
     }
 
     private func generatePulsePattern(duration: TimeInterval) -> [Float] {
-        // Generate binaural/isochronic pulse pattern
+        // Generate isochronic/modulation pulse pattern for entrainment
         var pattern: [Float] = []
         let sampleRate: Double = 100  // 100 Hz resolution
         let totalSamples = Int(duration * sampleRate)

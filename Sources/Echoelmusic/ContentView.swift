@@ -22,8 +22,8 @@ struct ContentView: View {
     /// Show recording controls
     @State private var showRecordingControls = false
 
-    /// Show binaural beat controls
-    @State private var showBinauralControls = false
+    /// Show entrainment controls (modulation-based)
+    @State private var showEntrainmentControls = false
 
     /// Show spatial audio controls
     @State private var showSpatialControls = false
@@ -33,12 +33,6 @@ struct ContentView: View {
 
     /// Currently selected visualization mode
     @State private var selectedVisualizationMode: VisualizationMode = .particles
-
-    /// Currently selected brainwave state
-    @State private var selectedBrainwaveState: BinauralBeatGenerator.BrainwaveState = .alpha
-
-    /// Binaural beat amplitude
-    @State private var binauralAmplitude: Float = 0.3
 
     /// Computed property - single source of truth for recording state
     private var isRecording: Bool {
@@ -66,7 +60,7 @@ struct ContentView: View {
                     .foregroundColor(.white)
                     .padding(.top, 60)
 
-                Text("breath → sound")
+                Text("breath \u{2192} sound")
                     .font(.system(size: 14, weight: .light))
                     .foregroundColor(.white.opacity(0.5))
                     .tracking(3)
@@ -203,29 +197,29 @@ struct ContentView: View {
 
                 // Control Buttons
                 HStack(spacing: 30) {
-                    // Binaural beats toggle
-                    Button(action: toggleBinauralBeats) {
+                    // Modulation entrainment toggle (audio/visual)
+                    Button(action: toggleModulationEntrainment) {
                         VStack(spacing: 8) {
                             ZStack {
                                 Circle()
-                                    .fill(audioEngine.binauralBeatsEnabled ? Color.purple : Color.gray.opacity(0.3))
+                                    .fill(audioEngine.modulationEntrainmentEnabled ? Color.purple : Color.gray.opacity(0.3))
                                     .frame(width: 60, height: 60)
                                     .shadow(
-                                        color: audioEngine.binauralBeatsEnabled ? .purple.opacity(0.5) : .clear,
+                                        color: audioEngine.modulationEntrainmentEnabled ? .purple.opacity(0.5) : .clear,
                                         radius: 15
                                     )
 
-                                Image(systemName: audioEngine.binauralBeatsEnabled ? "waveform.circle.fill" : "waveform.circle")
+                                Image(systemName: audioEngine.modulationEntrainmentEnabled ? "waveform.circle.fill" : "waveform.circle")
                                     .font(.system(size: 28))
                                     .foregroundColor(.white)
                             }
 
-                            if audioEngine.binauralBeatsEnabled {
-                                Text("Binaural ON")
+                            if audioEngine.modulationEntrainmentEnabled {
+                                Text("Entrain ON")
                                     .font(.system(size: 10, weight: .light))
                                     .foregroundColor(.white.opacity(0.7))
                             } else {
-                                Text("Beats OFF")
+                                Text("Entrain OFF")
                                     .font(.system(size: 10, weight: .light))
                                     .foregroundColor(.white.opacity(0.7))
                             }
@@ -298,8 +292,8 @@ struct ContentView: View {
                         }
                     }
 
-                    // Binaural controls toggle
-                    Button(action: { showBinauralControls.toggle() }) {
+                    // Entrainment settings toggle
+                    Button(action: { showEntrainmentControls.toggle() }) {
                         VStack(spacing: 8) {
                             ZStack {
                                 Circle()
@@ -319,7 +313,7 @@ struct ContentView: View {
                 }
                 .padding(.bottom, 20)
 
-                // Spatial Audio Controls (NEW!)
+                // Spatial Audio Controls
                 if showSpatialControls && audioEngine.spatialAudioEngine != nil {
                     VStack(spacing: 15) {
                         HStack {
@@ -364,11 +358,11 @@ struct ContentView: View {
                                 }
 
                                 if capabilities.supportsASAF {
-                                    Text("✅ ASAF Supported (iOS 19+)")
+                                    Text("\u{2705} ASAF Supported (iOS 19+)")
                                         .font(.system(size: 11))
                                         .foregroundColor(.green.opacity(0.7))
                                 } else {
-                                    Text("⚠️ ASAF requires iOS 19+ & iPhone 16+")
+                                    Text("\u{26A0}\u{FE0F} ASAF requires iOS 19+ & iPhone 16+")
                                         .font(.system(size: 10))
                                         .foregroundColor(.yellow.opacity(0.6))
                                 }
@@ -387,45 +381,49 @@ struct ContentView: View {
                     .padding(.bottom, 10)
                 }
 
-                // Binaural beat controls (expandable)
-                if showBinauralControls {
+                // Modulation Entrainment Controls (audio + visual modulations)
+                if showEntrainmentControls {
                     VStack(spacing: 15) {
-                        Text("Binaural Beat Controls")
+                        Text("Brainwave Entrainment")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
 
-                        // Brainwave state picker
-                        Picker("Brainwave State", selection: Binding(
-                            get: { audioEngine.currentBrainwaveState },
-                            set: { audioEngine.setBrainwaveState($0) }
+                        Text("via Audio/Visual Modulations")
+                            .font(.system(size: 10, weight: .light))
+                            .foregroundColor(.white.opacity(0.5))
+
+                        // Brainwave target picker
+                        Picker("Brainwave Target", selection: Binding(
+                            get: { audioEngine.currentBrainwaveTarget },
+                            set: { audioEngine.setBrainwaveTarget($0) }
                         )) {
-                            ForEach(BinauralBeatGenerator.BrainwaveState.allCases, id: \.self) { state in
-                                Text(state.rawValue.capitalized).tag(state)
+                            ForEach(AudioEngine.BrainwaveTarget.allCases, id: \.self) { target in
+                                Text(target.rawValue).tag(target)
                             }
                         }
                         .pickerStyle(.segmented)
 
-                        // State description
-                        Text(audioEngine.currentBrainwaveState.description)
+                        // Target description
+                        Text(audioEngine.currentBrainwaveTarget.description)
                             .font(.system(size: 12, weight: .light))
                             .foregroundColor(.white.opacity(0.6))
 
-                        // Amplitude control
-                        VStack(spacing: 5) {
-                            HStack {
-                                Text("Volume")
-                                    .font(.system(size: 12, weight: .light))
-                                Spacer()
-                                Text(String(format: "%.0f%%", audioEngine.binauralAmplitude * 100))
-                                    .font(.system(size: 12, weight: .light, design: .monospaced))
-                            }
-                            .foregroundColor(.white.opacity(0.7))
-
-                            Slider(value: Binding(
-                                get: { audioEngine.binauralAmplitude },
-                                set: { audioEngine.setBinauralAmplitude($0) }
-                            ), in: 0.0...0.6)
+                        // Current entrainment frequency display
+                        HStack {
+                            Text("Entrainment Frequency:")
+                                .font(.system(size: 12, weight: .light))
+                            Spacer()
+                            Text(String(format: "%.1f Hz", audioEngine.entrainmentFrequency))
+                                .font(.system(size: 12, weight: .medium, design: .monospaced))
                         }
+                        .foregroundColor(.white.opacity(0.7))
+
+                        // Info text
+                        Text("Modulations applied to instruments, effects, and visuals for brainwave entrainment")
+                            .font(.system(size: 10, weight: .light))
+                            .foregroundColor(.white.opacity(0.4))
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 4)
                     }
                     .padding(20)
                     .background(
@@ -593,7 +591,7 @@ struct ContentView: View {
         guard frequency > 0 else { return "-" }
 
         // Note names in chromatic scale
-        let noteNames = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"]
+        let noteNames = ["C", "C\u{266F}", "D", "D\u{266F}", "E", "F", "F\u{266F}", "G", "G\u{266F}", "A", "A\u{266F}", "B"]
 
         // Calculate semitones from A4 (440 Hz)
         let semitonesFromA4 = 12.0 * log2(frequency / 440.0)
@@ -644,10 +642,10 @@ struct ContentView: View {
         }
     }
 
-    /// Toggle binaural beats on/off
-    private func toggleBinauralBeats() {
+    /// Toggle modulation-based entrainment on/off
+    private func toggleModulationEntrainment() {
         // Use AudioEngine to toggle (handles configuration)
-        audioEngine.toggleBinauralBeats()
+        audioEngine.toggleModulationEntrainment()
 
         // Haptic feedback
         let impactFeedback = UIImpactFeedbackGenerator(style: .light)

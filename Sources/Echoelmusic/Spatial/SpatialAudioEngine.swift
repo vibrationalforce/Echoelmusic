@@ -40,7 +40,7 @@ class SpatialAudioEngine: ObservableObject {
         case surround_3d = "3D Spatial"
         case surround_4d = "4D Orbital"
         case afa = "AFA Field"
-        case binaural = "Binaural"
+        case hrtf = "HRTF Spatial"
         case ambisonics = "Ambisonics"
 
         var description: String {
@@ -49,7 +49,7 @@ class SpatialAudioEngine: ObservableObject {
             case .surround_3d: return "3D positioning (X/Y/Z)"
             case .surround_4d: return "3D + temporal evolution"
             case .afa: return "Algorithmic Field Array"
-            case .binaural: return "HRTF binaural rendering"
+            case .hrtf: return "HRTF-based 3D spatial audio"
             case .ambisonics: return "Higher-order ambisonics"
             }
         }
@@ -285,7 +285,7 @@ class SpatialAudioEngine: ObservableObject {
                 applyStereoPosition(node: playerNode, position: position)
             }
 
-        case .binaural:
+        case .hrtf:
             if #available(iOS 19.0, *), let environment = environmentNode {
                 apply3DPosition(node: playerNode, environment: environment, position: position)
                 environment.renderingAlgorithm = .HRTFHQ

@@ -32,7 +32,7 @@ enum AudioConstants {
     /// Synthesis Buffer - für Instrument-Synthese
     static let synthesisBuffer: AVAudioFrameCount = 4096
 
-    // MARK: - Binaural Beat Frequencies
+    // MARK: - Modulation Entrainment Frequencies
 
     /// Healing Carrier Frequency (432 Hz - "Natürliche Frequenz")
     static let healingCarrierFrequency: Float = 432.0
@@ -40,7 +40,8 @@ enum AudioConstants {
     /// Standard Carrier Frequency (440 Hz - A4)
     static let standardCarrierFrequency: Float = 440.0
 
-    /// Brainwave Beat Frequencies
+    /// Brainwave Target Frequencies for modulation-based entrainment
+    /// Applied via audio/visual modulations (instruments, effects, lighting)
     enum Brainwave {
         /// Delta (2 Hz) - Tiefschlaf, Heilung
         static let delta: Float = 2.0
@@ -68,8 +69,8 @@ enum AudioConstants {
 
     // MARK: - Amplitude Ranges
 
-    /// Default Amplitude für Binaural Beats
-    static let defaultBinauralAmplitude: Float = 0.3
+    /// Default Amplitude für Entrainment Modulations
+    static let defaultEntrainmentAmplitude: Float = 0.3
 
     /// Minimum Amplitude
     static let minAmplitude: Float = 0.0

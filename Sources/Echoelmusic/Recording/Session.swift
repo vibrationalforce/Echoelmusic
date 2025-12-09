@@ -238,19 +238,23 @@ extension Session {
         case custom
     }
     /// Create meditation session template
+    /// Uses audio/visual modulations for brainwave entrainment
     static func meditationTemplate() -> Session {
         var session = Session(name: "Meditation Session", tempo: 60)
-        session.addTrack(.binauralTrack())
+        session.addTrack(.modulationTrack())
+        session.addTrack(.spatialTrack())
         session.metadata.genre = "Meditation"
         session.metadata.mood = "Calm"
         return session
     }
 
     /// Create healing session template
+    /// Uses modulation-based entrainment (audio + visual)
     static func healingTemplate() -> Session {
         var session = Session(name: "Healing Session", tempo: 72)
         session.addTrack(.voiceTrack())
-        session.addTrack(.binauralTrack())
+        session.addTrack(.modulationTrack())
+        session.addTrack(.spatialTrack())
         session.metadata.genre = "Healing"
         session.metadata.mood = "Peaceful"
         return session
@@ -260,7 +264,7 @@ extension Session {
     static func creativeTemplate() -> Session {
         var session = Session(name: "Creative Session", tempo: 120)
         session.addTrack(.voiceTrack())
-        session.addTrack(.binauralTrack())
+        session.addTrack(.modulationTrack())
         session.addTrack(.spatialTrack())
         session.metadata.genre = "Experimental"
         session.metadata.mood = "Inspired"

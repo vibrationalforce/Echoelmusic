@@ -86,7 +86,7 @@ class ProfessionalSoundDesignStudio: ObservableObject {
             case atmos = "Dolby Atmos"
             case dtsX = "DTS:X"
             case ambisonics = "Ambisonics"
-            case binaural = "Binaural"
+            case hrtf3D = "HRTF 3D"  // Head-related transfer function for 3D spatial
         }
 
         struct Timeline {
