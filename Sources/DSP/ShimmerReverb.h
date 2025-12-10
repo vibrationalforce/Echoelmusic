@@ -142,5 +142,9 @@ private:
 
     double currentSampleRate = 44100.0;
 
+    // ✅ OPTIMIZATION: Pre-allocated buffers to avoid audio thread allocation
+    juce::AudioBuffer<float> dryBuffer;
+    juce::AudioBuffer<float> shimmerBuffer;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ShimmerReverb)
 };

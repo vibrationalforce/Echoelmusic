@@ -171,6 +171,11 @@ private:
     std::array<float, 3> bandThresholdOffsets {{0.0f, 0.0f, 0.0f}};
 
     double currentSampleRate = 48000.0;
+    int maxBlockSize = 512;
+
+    // ✅ OPTIMIZATION: Pre-allocated buffers to avoid audio thread allocation
+    juce::AudioBuffer<float> dryBuffer;
+    juce::AudioBuffer<float> oversampledBuffer;
 
     //==========================================================================
     // Metering

@@ -188,6 +188,11 @@ private:
     // Visualization
     mutable std::mutex spectrumMutex;
 
+    // ✅ OPTIMIZATION: Pre-allocated buffers to avoid audio thread allocation
+    std::array<juce::AudioBuffer<float>, 4> multibandBuffers;
+    juce::AudioBuffer<float> dryBuffer;
+    int maxBlockSize = 512;
+
     //==========================================================================
     // Internal Methods
     //==========================================================================

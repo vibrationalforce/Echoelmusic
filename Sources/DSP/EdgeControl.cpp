@@ -108,9 +108,10 @@ void EdgeControl::setTruePeakMode(bool enabled)
 // Processing
 //==============================================================================
 
-void EdgeControl::prepare(double sampleRate, int maxBlockSize)
+void EdgeControl::prepare(double sampleRate, int maxBlockSizeParam)
 {
     currentSampleRate = sampleRate;
+    maxBlockSize = maxBlockSizeParam;
 
     // Prepare oversampling
     if (oversamplingFactor > 1)
@@ -128,6 +129,13 @@ void EdgeControl::prepare(double sampleRate, int maxBlockSize)
 
         oversampling->initProcessing(static_cast<size_t>(maxBlockSize));
     }
+
+    // ✅ OPTIMIZATION: Pre-allocate buffers to avoid audio thread allocation
+    dryBuffer.setSize(2, maxBlockSize);
+    dryBuffer.clear();
+    // Pre-allocate oversampled buffer (worst case: 8x oversampling)
+    oversampledBuffer.setSize(2, maxBlockSize * 8);
+    oversampledBuffer.clear();
 
     reset();
 }
@@ -152,14 +160,17 @@ void EdgeControl::reset()
 
 void EdgeControl::process(juce::AudioBuffer<float>& buffer)
 {
+    const int numSamples = buffer.getNumSamples();
+    const int numChannels = buffer.getNumChannels();
+    const int safeChannels = juce::jmin(numChannels, 2);
+
     // Update input meters
     updateMeters(buffer, true);
 
-    // Store dry signal for mixing
-    juce::AudioBuffer<float> dryBuffer(buffer.getNumChannels(), buffer.getNumSamples());
-    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+    // ✅ OPTIMIZATION: Use pre-allocated buffer (no audio thread allocation)
+    for (int ch = 0; ch < safeChannels; ++ch)
     {
-        dryBuffer.copyFrom(ch, 0, buffer, ch, 0, buffer.getNumSamples());
+        dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
     }
 
     // Apply input gain
@@ -174,32 +185,33 @@ void EdgeControl::process(juce::AudioBuffer<float>& buffer)
         juce::dsp::AudioBlock<float> block(buffer);
         auto oversampledBlock = oversampling->processSamplesUp(block);
 
-        // Create temporary buffer for oversampled audio
-        juce::AudioBuffer<float> oversampledBuffer(
-            static_cast<int>(oversampledBlock.getNumChannels()),
-            static_cast<int>(oversampledBlock.getNumSamples())
-        );
+        // ✅ OPTIMIZATION: Use pre-allocated oversampled buffer
+        const int oversampledSamples = static_cast<int>(oversampledBlock.getNumSamples());
 
         for (size_t ch = 0; ch < oversampledBlock.getNumChannels(); ++ch)
         {
             oversampledBuffer.copyFrom(static_cast<int>(ch), 0,
                                       oversampledBlock.getChannelPointer(ch),
-                                      static_cast<int>(oversampledBlock.getNumSamples()));
+                                      oversampledSamples);
         }
+
+        // Create a view into the pre-allocated buffer with correct size
+        juce::AudioBuffer<float> oversampledView(oversampledBuffer.getArrayOfWritePointers(),
+                                                  safeChannels, oversampledSamples);
 
         // Process based on mode
         switch (processingMode)
         {
             case ProcessingMode::Stereo:
-                processStereo(oversampledBuffer);
+                processStereo(oversampledView);
                 break;
 
             case ProcessingMode::MidSide:
-                processMidSide(oversampledBuffer);
+                processMidSide(oversampledView);
                 break;
 
             case ProcessingMode::Multiband:
-                processMultiband(oversampledBuffer);
+                processMultiband(oversampledView);
                 break;
         }
 
@@ -207,8 +219,7 @@ void EdgeControl::process(juce::AudioBuffer<float>& buffer)
         for (size_t ch = 0; ch < oversampledBlock.getNumChannels(); ++ch)
         {
             std::copy(oversampledBuffer.getReadPointer(static_cast<int>(ch)),
-                     oversampledBuffer.getReadPointer(static_cast<int>(ch)) +
-                     oversampledBlock.getNumSamples(),
+                     oversampledBuffer.getReadPointer(static_cast<int>(ch)) + oversampledSamples,
                      oversampledBlock.getChannelPointer(ch));
         }
 
@@ -246,32 +257,32 @@ void EdgeControl::process(juce::AudioBuffer<float>& buffer)
         buffer.applyGain(juce::Decibels::decibelsToGain(outputGainDb));
     }
 
-    // Apply ceiling
+    // Apply ceiling with SIMD-friendly loop
     if (truePeakMode && ceilingDb < 0.0f)
     {
-        float ceilingGain = juce::Decibels::decibelsToGain(ceilingDb);
-        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        const float ceilingGain = juce::Decibels::decibelsToGain(ceilingDb);
+        for (int ch = 0; ch < numChannels; ++ch)
         {
             float* channelData = buffer.getWritePointer(ch);
-            for (int i = 0; i < buffer.getNumSamples(); ++i)
-            {
-                channelData[i] = juce::jlimit(-ceilingGain, ceilingGain, channelData[i]);
-            }
+            // ✅ OPTIMIZATION: Use SIMD clip
+            juce::FloatVectorOperations::clip(channelData, channelData,
+                                               -ceilingGain, ceilingGain, numSamples);
         }
     }
 
-    // Mix dry/wet
+    // Mix dry/wet with SIMD optimization
     if (mix < 0.999f)
     {
-        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        for (int ch = 0; ch < safeChannels; ++ch)
         {
             float* wetData = buffer.getWritePointer(ch);
             const float* dryData = dryBuffer.getReadPointer(ch);
 
-            for (int i = 0; i < buffer.getNumSamples(); ++i)
-            {
-                wetData[i] = dryData[i] * (1.0f - mix) + wetData[i] * mix;
-            }
+            // ✅ OPTIMIZATION: SIMD wet/dry mixing
+            const float wetGain = mix;
+            const float dryGain = 1.0f - mix;
+            juce::FloatVectorOperations::multiply(wetData, wetGain, numSamples);
+            juce::FloatVectorOperations::addWithMultiply(wetData, dryData, dryGain, numSamples);
         }
     }
 

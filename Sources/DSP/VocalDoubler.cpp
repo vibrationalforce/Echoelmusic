@@ -38,6 +38,12 @@ void VocalDoubler::prepare(double sampleRate, int maximumBlockSize)
     voices[3].timingOffset = 0.028f * static_cast<float>(sampleRate);  // 28ms
     voices[3].panPosition = 0.6f;    // Further right
 
+    // ✅ OPTIMIZATION: Pre-allocate buffers to avoid audio thread allocation
+    dryBuffer.setSize(2, maximumBlockSize);
+    dryBuffer.clear();
+    doublerBuffer.setSize(2, maximumBlockSize);
+    doublerBuffer.clear();
+
     reset();
 }
 
@@ -55,13 +61,12 @@ void VocalDoubler::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0 || currentVoices == 0)
         return;
 
-    // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
-    for (int ch = 0; ch < numChannels; ++ch)
+    // ✅ OPTIMIZATION: Use pre-allocated buffers (no audio thread allocation)
+    const int safeChannels = juce::jmin(numChannels, 2);
+    for (int ch = 0; ch < safeChannels; ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
-    // Create doubled buffer
-    juce::AudioBuffer<float> doublerBuffer(numChannels, numSamples);
+    // Clear doubled buffer
     doublerBuffer.clear();
 
     // Process each voice

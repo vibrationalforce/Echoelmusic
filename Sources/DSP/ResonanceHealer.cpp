@@ -47,6 +47,10 @@ void ResonanceHealer::prepare(double sr, int maxBlockSize)
     inputFifoWritePos = 0;
     outputFifoReadPos = 0;
 
+    // ✅ OPTIMIZATION: Pre-allocate buffer to avoid audio thread allocation
+    dryBuffer.setSize(2, maxBlockSize);
+    dryBuffer.clear();
+
     reset();
 }
 
@@ -78,9 +82,9 @@ void ResonanceHealer::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0)
         return;
 
-    // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
-    for (int ch = 0; ch < numChannels; ++ch)
+    // ✅ OPTIMIZATION: Use pre-allocated buffer (no audio thread allocation)
+    const int safeChannels = juce::jmin(numChannels, 2);
+    for (int ch = 0; ch < safeChannels; ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
     // Process each channel

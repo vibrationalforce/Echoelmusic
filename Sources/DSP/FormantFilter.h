@@ -230,5 +230,8 @@ private:
     double currentSampleRate = 44100.0;
     int updateCounter = 0;  // Update formants every N samples
 
+    // ✅ OPTIMIZATION: Pre-allocated buffer to avoid audio thread allocation
+    juce::AudioBuffer<float> dryBuffer;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FormantFilter)
 };

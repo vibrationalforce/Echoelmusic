@@ -38,6 +38,12 @@ void ShimmerReverb::prepare(double sampleRate, int maximumBlockSize)
     preDelayLine.prepare(spec);
     preDelayLine.setMaximumDelayInSamples(static_cast<int>(0.2f * sampleRate));  // 200ms max
 
+    // ✅ OPTIMIZATION: Pre-allocate buffers to avoid audio thread allocation
+    dryBuffer.setSize(2, maximumBlockSize);
+    dryBuffer.clear();
+    shimmerBuffer.setSize(2, maximumBlockSize);
+    shimmerBuffer.clear();
+
     reset();
 }
 
@@ -57,14 +63,16 @@ void ShimmerReverb::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0)
         return;
 
+    // ✅ OPTIMIZATION: Use pre-allocated buffer (no audio thread allocation)
+    const int safeChannels = juce::jmin(numChannels, 2);
+
     // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
-    for (int ch = 0; ch < numChannels; ++ch)
+    for (int ch = 0; ch < safeChannels; ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
     // 1. Apply pre-delay
-    float preDelaySamples = currentPreDelay * 0.001f * static_cast<float>(currentSampleRate);
-    for (int channel = 0; channel < juce::jmin(2, numChannels); ++channel)
+    const float preDelaySamples = currentPreDelay * 0.001f * static_cast<float>(currentSampleRate);
+    for (int channel = 0; channel < safeChannels; ++channel)
     {
         auto* data = buffer.getWritePointer(channel);
         for (int i = 0; i < numSamples; ++i)
@@ -88,11 +96,10 @@ void ShimmerReverb::process(juce::AudioBuffer<float>& buffer)
         pitchShifterL.setPitchRatio(pitchRatio);
         pitchShifterR.setPitchRatio(pitchRatio);
 
-        juce::AudioBuffer<float> shimmerBuffer(numChannels, numSamples);
-
-        for (int channel = 0; channel < juce::jmin(2, numChannels); ++channel)
+        // ✅ OPTIMIZATION: Use pre-allocated shimmer buffer
+        for (int channel = 0; channel < safeChannels; ++channel)
         {
-            auto* reverbData = buffer.getReadPointer(channel);
+            const auto* reverbData = buffer.getReadPointer(channel);
             auto* shimmerData = shimmerBuffer.getWritePointer(channel);
             auto& shifter = (channel == 0) ? pitchShifterL : pitchShifterR;
 
@@ -102,22 +109,26 @@ void ShimmerReverb::process(juce::AudioBuffer<float>& buffer)
             }
         }
 
-        // Mix shimmer back into reverb
-        for (int ch = 0; ch < numChannels; ++ch)
+        // Mix shimmer back into reverb using SIMD
+        for (int ch = 0; ch < safeChannels; ++ch)
         {
-            buffer.addFrom(ch, 0, shimmerBuffer, ch, 0, numSamples, currentShimmer);
+            juce::FloatVectorOperations::addWithMultiply(buffer.getWritePointer(ch),
+                                                         shimmerBuffer.getReadPointer(ch),
+                                                         currentShimmer, numSamples);
         }
     }
 
-    // 4. Mix dry/wet
-    for (int ch = 0; ch < numChannels; ++ch)
+    // 4. Mix dry/wet with SIMD optimization
+    for (int ch = 0; ch < safeChannels; ++ch)
     {
-        auto* wet = buffer.getReadPointer(ch);
-        auto* dry = dryBuffer.getReadPointer(ch);
-        auto* out = buffer.getWritePointer(ch);
+        auto* wet = buffer.getWritePointer(ch);
+        const auto* dry = dryBuffer.getReadPointer(ch);
 
-        for (int i = 0; i < numSamples; ++i)
-            out[i] = dry[i] * (1.0f - currentMix) + wet[i] * currentMix;
+        // ✅ OPTIMIZATION: SIMD wet/dry mixing
+        const float wetGain = currentMix;
+        const float dryGain = 1.0f - currentMix;
+        juce::FloatVectorOperations::multiply(wet, wetGain, numSamples);
+        juce::FloatVectorOperations::addWithMultiply(wet, dry, dryGain, numSamples);
     }
 }
 

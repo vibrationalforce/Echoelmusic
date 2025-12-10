@@ -148,9 +148,10 @@ void HarmonicForge::setCrossoverFrequencies(float low, float mid1, float mid2)
 // Processing
 //==============================================================================
 
-void HarmonicForge::prepare(double sampleRate, int maxBlockSize)
+void HarmonicForge::prepare(double sampleRate, int maxBlockSizeParam)
 {
     currentSampleRate = sampleRate;
+    maxBlockSize = maxBlockSizeParam;
 
     // Prepare oversampling
     if (oversamplingFactor > 1)
@@ -168,6 +169,15 @@ void HarmonicForge::prepare(double sampleRate, int maxBlockSize)
 
         oversampling->initProcessing(static_cast<size_t>(maxBlockSize));
     }
+
+    // ✅ OPTIMIZATION: Pre-allocate buffers to avoid audio thread allocation
+    for (auto& bandBuf : multibandBuffers)
+    {
+        bandBuf.setSize(2, maxBlockSize);
+        bandBuf.clear();
+    }
+    dryBuffer.setSize(2, maxBlockSize);
+    dryBuffer.clear();
 
     updateCrossoverCoefficients();
     reset();

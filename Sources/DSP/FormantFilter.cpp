@@ -23,6 +23,10 @@ void FormantFilter::prepare(double sampleRate, int maximumBlockSize)
     lfo.setSampleRate(static_cast<float>(sampleRate));
     lfo.setRate(lfoRate);
 
+    // ✅ OPTIMIZATION: Pre-allocate buffer to avoid audio thread allocation
+    dryBuffer.setSize(2, maximumBlockSize);
+    dryBuffer.clear();
+
     // Update formant coefficients
     updateFormants();
 
@@ -49,9 +53,8 @@ void FormantFilter::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0)
         return;
 
-    // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
-    for (int ch = 0; ch < numChannels; ++ch)
+    // ✅ OPTIMIZATION: Use pre-allocated buffer (no audio thread allocation)
+    for (int ch = 0; ch < juce::jmin(numChannels, dryBuffer.getNumChannels()); ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
     // Process each channel
@@ -85,15 +88,17 @@ void FormantFilter::process(juce::AudioBuffer<float>& buffer)
         }
     }
 
-    // Mix dry/wet
-    for (int ch = 0; ch < numChannels; ++ch)
+    // Mix dry/wet with SIMD optimization
+    for (int ch = 0; ch < juce::jmin(numChannels, dryBuffer.getNumChannels()); ++ch)
     {
-        auto* wet = buffer.getReadPointer(ch);
-        auto* dry = dryBuffer.getReadPointer(ch);
-        auto* out = buffer.getWritePointer(ch);
+        auto* wet = buffer.getWritePointer(ch);
+        const auto* dry = dryBuffer.getReadPointer(ch);
 
-        for (int i = 0; i < numSamples; ++i)
-            out[i] = dry[i] * (1.0f - currentMix) + wet[i] * currentMix;
+        // ✅ OPTIMIZATION: SIMD wet/dry mixing
+        const float wetGain = currentMix;
+        const float dryGain = 1.0f - currentMix;
+        juce::FloatVectorOperations::multiply(wet, wetGain, numSamples);
+        juce::FloatVectorOperations::addWithMultiply(wet, dry, dryGain, numSamples);
     }
 }
 

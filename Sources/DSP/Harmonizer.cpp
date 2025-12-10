@@ -41,6 +41,17 @@ void Harmonizer::prepare(double sampleRate, int maximumBlockSize)
     for (auto& voice : voices)
         voice.prepare(spec);
 
+    // ✅ OPTIMIZATION: Pre-allocate buffers to avoid audio thread allocation
+    dryBuffer.setSize(2, maximumBlockSize);
+    dryBuffer.clear();
+    harmonyBuffer.setSize(2, maximumBlockSize);
+    harmonyBuffer.clear();
+    for (auto& voiceBuf : voiceBuffers)
+    {
+        voiceBuf.setSize(2, maximumBlockSize);
+        voiceBuf.clear();
+    }
+
     reset();
 }
 
@@ -58,13 +69,14 @@ void Harmonizer::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0 || voiceCount == 0)
         return;
 
+    // ✅ OPTIMIZATION: Use pre-allocated buffers (no audio thread allocation)
+    const int safeChannels = juce::jmin(numChannels, 2);
+
     // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
-    for (int ch = 0; ch < numChannels; ++ch)
+    for (int ch = 0; ch < safeChannels; ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
-    // Create harmony buffer
-    juce::AudioBuffer<float> harmonyBuffer(numChannels, numSamples);
+    // Clear harmony buffer
     harmonyBuffer.clear();
 
     // Process each voice
@@ -77,11 +89,12 @@ void Harmonizer::process(juce::AudioBuffer<float>& buffer)
         // Quantize interval to scale if needed
         int quantizedInterval = intervalQuantizer.quantizeInterval(voice.semitones);
 
-        juce::AudioBuffer<float> voiceBuffer(numChannels, numSamples);
+        // ✅ OPTIMIZATION: Use pre-allocated voice buffer
+        auto& voiceBuffer = voiceBuffers[v];
 
-        for (int channel = 0; channel < juce::jmin(2, numChannels); ++channel)
+        for (int channel = 0; channel < safeChannels; ++channel)
         {
-            auto* dryData = dryBuffer.getReadPointer(channel);
+            const auto* dryData = dryBuffer.getReadPointer(channel);
             auto* voiceData = voiceBuffer.getWritePointer(channel);
 
             // Temporarily update voice semitones
@@ -97,20 +110,28 @@ void Harmonizer::process(juce::AudioBuffer<float>& buffer)
             voice.semitones = originalSemitones;
         }
 
-        // Mix voice into harmony buffer
-        for (int ch = 0; ch < numChannels; ++ch)
-            harmonyBuffer.addFrom(ch, 0, voiceBuffer, ch, 0, numSamples);
+        // Mix voice into harmony buffer using SIMD
+        for (int ch = 0; ch < safeChannels; ++ch)
+            juce::FloatVectorOperations::add(harmonyBuffer.getWritePointer(ch),
+                                              voiceBuffer.getReadPointer(ch), numSamples);
     }
 
-    // Mix dry and harmony
-    for (int ch = 0; ch < numChannels; ++ch)
+    // Mix dry and harmony with SIMD optimization
+    for (int ch = 0; ch < safeChannels; ++ch)
     {
-        auto* dry = dryBuffer.getReadPointer(ch);
-        auto* harmony = harmonyBuffer.getReadPointer(ch);
+        const auto* dry = dryBuffer.getReadPointer(ch);
+        const auto* harmony = harmonyBuffer.getReadPointer(ch);
         auto* out = buffer.getWritePointer(ch);
 
-        for (int i = 0; i < numSamples; ++i)
-            out[i] = dry[i] * (1.0f - currentMix) + (dry[i] * 0.3f + harmony[i]) * currentMix;
+        // ✅ OPTIMIZATION: SIMD mixing
+        // out = dry * (1-mix) + (dry * 0.3 + harmony) * mix
+        //     = dry * (1-mix + 0.3*mix) + harmony * mix
+        //     = dry * (1 - 0.7*mix) + harmony * mix
+        const float dryGain = 1.0f - 0.7f * currentMix;
+        const float harmonyGain = currentMix;
+
+        juce::FloatVectorOperations::copyWithMultiply(out, dry, dryGain, numSamples);
+        juce::FloatVectorOperations::addWithMultiply(out, harmony, harmonyGain, numSamples);
     }
 }
 
