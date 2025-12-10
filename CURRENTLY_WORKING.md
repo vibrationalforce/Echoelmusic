@@ -1,14 +1,37 @@
 # 🔒 Current Work Status
 
-**Last Updated:** 2025-10-21 20:30 UTC
+**Last Updated:** 2025-12-10 UTC
 
 ## Active Development
 
 | AI System | Status | Branch | Working On | ETA |
 |-----------|--------|--------|------------|-----|
-| Claude Code (Mac) | 🟢 IDLE | `main` | - | - |
+| Claude Code | 🟢 ACTIVE | `claude/persistent-chat-state-01JaeSpxowjLhsYUQmPdA7Tf` | Persistent State System | Done |
 | GPT Codex | 🟢 IDLE | `main` | - | - |
 | Claude (iPhone) | 🟢 IDLE | - | - | - |
+
+---
+
+## ZAUBERWORT: "wise save"
+
+Wenn "wise save" gesagt wird:
+1. Alle Aenderungen zusammenfassen
+2. CLAUDE.md updaten
+3. PROJECT_STATE.md updaten
+4. Git commit mit klarer Message
+5. Git push zum Branch
+6. Bestaetigung senden
+
+---
+
+## Wichtige Dateien fuer Persistenz
+
+| Datei | Zweck | Auto-Read? |
+|-------|-------|------------|
+| `CLAUDE.md` | Memory-Datei - wird automatisch gelesen | JA |
+| `PROJECT_STATE.md` | Detaillierter Status | Nein, manuell |
+| `CURRENTLY_WORKING.md` | Wer macht was | Nein, manuell |
+| `.github/CLAUDE_TODO.md` | Feature-Roadmap | Nein, bei Bedarf |
 
 ## Rules
 
