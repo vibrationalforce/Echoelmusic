@@ -135,7 +135,12 @@ Echoelmusic/
 
 ## LETZTE AENDERUNGEN (Changelog)
 
-### 2025-12-10
+### 2025-12-10 (Session 2)
+- "wise save" erfolgreich getestet
+- System funktioniert wie erwartet
+- Naechste Aufgabe: Phase 3 starten
+
+### 2025-12-10 (Session 1)
 - Persistent Chat State System eingerichtet
 - CLAUDE.md erstellt (wird automatisch gelesen)
 - PROJECT_STATE.md erstellt

@@ -21,7 +21,8 @@
 - [x] Persistent Chat State System einrichten
 - [x] CLAUDE.md erstellen
 - [x] PROJECT_STATE.md erstellen
-- [ ] Weitere Aufgaben...
+- [x] "wise save" Workflow getestet - funktioniert!
+- [ ] Phase 3: Spatial Audio Rendering (naechste Aufgabe)
 
 ### Offene Fragen / Blocker
 - Keine aktuellen Blocker
