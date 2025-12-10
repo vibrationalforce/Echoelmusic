@@ -517,6 +517,12 @@ class ChordPadViewModel: ObservableObject {
         arpTimer = nil
         currentArpPad = nil
     }
+
+    // MARK: - Deinit (Memory Leak Prevention)
+
+    deinit {
+        arpTimer?.invalidate()
+    }
 }
 
 // MARK: - Arpeggiator Controls

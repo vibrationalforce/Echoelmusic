@@ -727,6 +727,12 @@ class PianoRollViewModel: ObservableObject {
         // In production: Parse MIDI data
         pianoRollLogger.info("📥 Importing MIDI data")
     }
+
+    // MARK: - Deinit (Memory Leak Prevention)
+
+    deinit {
+        playbackTimer?.invalidate()
+    }
 }
 
 // MARK: - MIDI Note Model (MIDI 2.0 + MPE)
