@@ -119,10 +119,10 @@ class AutomaticVocalAligner: ObservableObject {
         guideTrack = track
 
         // Analyze guide track
-        if var guide = guideTrack {
-            guide.onsetTimes = await detectOnsets(buffer: guide.audioBuffer!)
-            guide.energyProfile = await computeEnergyEnvelope(buffer: guide.audioBuffer!)
-            guide.pitchProfile = await detectPitch(buffer: guide.audioBuffer!)
+        if var guide = guideTrack, let audioBuffer = guide.audioBuffer {
+            guide.onsetTimes = await detectOnsets(buffer: audioBuffer)
+            guide.energyProfile = await computeEnergyEnvelope(buffer: audioBuffer)
+            guide.pitchProfile = await detectPitch(buffer: audioBuffer)
             guideTrack = guide
         }
 
@@ -133,9 +133,11 @@ class AutomaticVocalAligner: ObservableObject {
         let track = try await loadAudioFile(url: url, name: "Dub \(dubTracks.count + 1)")
 
         var analyzedTrack = track
-        analyzedTrack.onsetTimes = await detectOnsets(buffer: track.audioBuffer!)
-        analyzedTrack.energyProfile = await computeEnergyEnvelope(buffer: track.audioBuffer!)
-        analyzedTrack.pitchProfile = await detectPitch(buffer: track.audioBuffer!)
+        if let audioBuffer = track.audioBuffer {
+            analyzedTrack.onsetTimes = await detectOnsets(buffer: audioBuffer)
+            analyzedTrack.energyProfile = await computeEnergyEnvelope(buffer: audioBuffer)
+            analyzedTrack.pitchProfile = await detectPitch(buffer: audioBuffer)
+        }
 
         dubTracks.append(analyzedTrack)
 
@@ -199,6 +201,10 @@ class AutomaticVocalAligner: ObservableObject {
 
     /// Align a single dub track to the guide
     func alignTrack(dub: VocalTrack, to guide: VocalTrack) async throws -> AlignmentResult {
+        guard let dubBuffer = dub.audioBuffer else {
+            throw EchoelmusicError.audioBufferEmpty
+        }
+
         let startTime = Date()
 
         // Step 1: Dynamic Time Warping (DTW) to find optimal alignment path
@@ -222,7 +228,7 @@ class AutomaticVocalAligner: ObservableObject {
 
         // Step 4: Time-stretch the dub track
         let alignedBuffer = try await applyTimeWarp(
-            buffer: dub.audioBuffer!,
+            buffer: dubBuffer,
             warpMap: adjustedWarpMap,
             preserveFormants: preserveFormants
         )

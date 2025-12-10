@@ -28,6 +28,12 @@ class PerformanceOptimizer: ObservableObject {
     private var lastFrameTime: CFAbsoluteTime = 0
     private let logger = Logger(subsystem: "com.echoelmusic.performance", category: "Optimization")
 
+    // MARK: - Timer & Observer References (Memory Leak Prevention)
+
+    private var fpsTimer: Timer?
+    private var batteryTimer: Timer?
+    private var thermalStateObserver: NSObjectProtocol?
+
     // MARK: - Thermal State
 
     enum ThermalState: String {
@@ -178,7 +184,7 @@ class PerformanceOptimizer: ObservableObject {
 
     private func startMonitoring() {
         // Monitor FPS
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+        fpsTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updateMetrics()
             }
@@ -186,11 +192,11 @@ class PerformanceOptimizer: ObservableObject {
 
         // Monitor thermal state
         #if os(iOS)
-        NotificationCenter.default.addObserver(
+        thermalStateObserver = NotificationCenter.default.addObserver(
             forName: ProcessInfo.thermalStateDidChangeNotification,
             object: nil,
             queue: .main
-        ) { [weak self] notification in
+        ) { [weak self] _ in
             Task { @MainActor in
                 self?.updateThermalState()
             }
@@ -200,13 +206,26 @@ class PerformanceOptimizer: ObservableObject {
         // Monitor battery
         #if os(iOS)
         UIDevice.current.isBatteryMonitoringEnabled = true
-        Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+        batteryTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.batteryLevel = UIDevice.current.batteryLevel
                 self?.adjustForBattery()
             }
         }
         #endif
+    }
+
+    // MARK: - Deinit (Memory Leak Prevention)
+
+    deinit {
+        // Invalidate timers
+        fpsTimer?.invalidate()
+        batteryTimer?.invalidate()
+
+        // Remove NotificationCenter observer
+        if let observer = thermalStateObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     // MARK: - Update Metrics

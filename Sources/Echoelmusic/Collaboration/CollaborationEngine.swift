@@ -204,7 +204,18 @@ class CollaborationEngine: ObservableObject {
 
     private func generateRoomCode() -> String {
         let letters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // No I, O, 0, 1
-        return String((0..<6).map { _ in letters.randomElement()! })
+        return String((0..<6).compactMap { _ in letters.randomElement() })
+    }
+
+    func stopLatencyMeasurement() {
+        pingTimer?.invalidate()
+        pingTimer = nil
+    }
+
+    // MARK: - Deinit (Memory Leak Prevention)
+
+    deinit {
+        pingTimer?.invalidate()
     }
 }
 

@@ -19,6 +19,10 @@ class CloudSyncManager: ObservableObject {
     private let privateDatabase: CKDatabase
     private let sharedDatabase: CKDatabase
 
+    // MARK: - Timer Reference (Memory Leak Prevention)
+
+    private var autoBackupTimer: Timer?
+
     init() {
         self.container = CKContainer(identifier: "iCloud.com.echoelmusic.app")
         self.privateDatabase = container.privateCloudDatabase
@@ -105,12 +109,25 @@ class CloudSyncManager: ObservableObject {
 
     func enableAutoBackup(interval: TimeInterval = 300) {
         // Backup every 5 minutes
-        Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        autoBackupTimer?.invalidate()
+        autoBackupTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task {
                 try? await self?.autoBackup()
             }
         }
         logger.info("☁️ Auto backup enabled (every \(Int(interval))s)")
+    }
+
+    func disableAutoBackup() {
+        autoBackupTimer?.invalidate()
+        autoBackupTimer = nil
+        logger.info("☁️ Auto backup disabled")
+    }
+
+    // MARK: - Deinit (Memory Leak Prevention)
+
+    deinit {
+        autoBackupTimer?.invalidate()
     }
 
     private func autoBackup() async throws {

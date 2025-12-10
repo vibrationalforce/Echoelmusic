@@ -35,6 +35,23 @@ class LegacyDeviceSupport: ObservableObject {
 
     private let logger = Logger(subsystem: "com.echoelmusic", category: "LegacyDeviceSupport")
 
+    // MARK: - Notification Observers (for cleanup)
+
+    private var memoryWarningObserver: NSObjectProtocol?
+    private var thermalStateObserver: NSObjectProtocol?
+
+    // MARK: - Deinit (Memory Leak Fix)
+
+    deinit {
+        // WISE MODE FIX: Remove NotificationCenter observers to prevent memory leaks
+        if let memoryObserver = memoryWarningObserver {
+            NotificationCenter.default.removeObserver(memoryObserver)
+        }
+        if let thermalObserver = thermalStateObserver {
+            NotificationCenter.default.removeObserver(thermalObserver)
+        }
+    }
+
     // MARK: - Published State
 
     @Published var currentDevice: DeviceProfile?
@@ -527,7 +544,8 @@ class LegacyDeviceSupport: ObservableObject {
     // MARK: - Memory Warning Observer
 
     private func setupMemoryWarningObserver() {
-        NotificationCenter.default.addObserver(
+        // WISE MODE FIX: Store observer for cleanup in deinit
+        memoryWarningObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.didReceiveMemoryWarningNotification,
             object: nil,
             queue: .main
@@ -572,7 +590,8 @@ class LegacyDeviceSupport: ObservableObject {
     // MARK: - Thermal State Observer
 
     private func setupThermalStateObserver() {
-        NotificationCenter.default.addObserver(
+        // WISE MODE FIX: Store observer for cleanup in deinit
+        thermalStateObserver = NotificationCenter.default.addObserver(
             forName: ProcessInfo.thermalStateDidChangeNotification,
             object: nil,
             queue: .main

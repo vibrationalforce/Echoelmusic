@@ -610,6 +610,13 @@ class RecordingEngine: ObservableObject {
         try? FileManager.default.createDirectory(at: sessionDir, withIntermediateDirectories: true)
         return sessionDir.appendingPathComponent("\(trackID.uuidString).caf")
     }
+
+    // MARK: - Deinit (Memory Leak Prevention)
+
+    deinit {
+        stopTimer()
+        audioEngine?.stop()
+    }
 }
 
 
