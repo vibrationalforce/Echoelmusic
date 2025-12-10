@@ -138,12 +138,11 @@ float EchoSynth::getLFOValue()
 
         case LFOWaveform::SampleAndHold:
         {
-            static float lastValue = 0.0f;
-            static float lastPhase = 0.0f;
-            if (phase < lastPhase)  // Reset detected
-                lastValue = juce::Random::getSystemRandom().nextFloat() * 2.0f - 1.0f;
-            lastPhase = phase;
-            return lastValue;
+            // ✅ THREAD SAFETY: Using member variables instead of static (race condition fix)
+            if (phase < sampleHoldLastPhase)  // Reset detected
+                sampleHoldValue = juce::Random::getSystemRandom().nextFloat() * 2.0f - 1.0f;
+            sampleHoldLastPhase = phase;
+            return sampleHoldValue;
         }
 
         default:

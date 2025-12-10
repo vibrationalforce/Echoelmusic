@@ -488,9 +488,7 @@ void StyleAwareMastering::processLimiter(juce::AudioBuffer<float>& buffer)
     float* left = buffer.getWritePointer(0);
     float* right = (buffer.getNumChannels() > 1) ? buffer.getWritePointer(1) : nullptr;
 
-    static float limiterEnvelopeL = 0.0f;
-    static float limiterEnvelopeR = 0.0f;
-
+    // ✅ THREAD SAFETY: Using member variables instead of static (race condition fix)
     for (int i = 0; i < numSamples; ++i)
     {
         left[i] = processLimiterSample(left[i], limiterEnvelopeL, limiterSettings);

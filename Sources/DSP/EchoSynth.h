@@ -278,6 +278,10 @@ private:
     float lfoPhase = 0.0f;
     float lfoPhaseAccumulator = 0.0f;
 
+    // ✅ THREAD SAFETY: Sample&Hold state (was static - race condition fix)
+    float sampleHoldValue = 0.0f;
+    float sampleHoldLastPhase = 0.0f;
+
     // Unison
     int unisonVoices = 1;
     float unisonDetune = 10.0f;

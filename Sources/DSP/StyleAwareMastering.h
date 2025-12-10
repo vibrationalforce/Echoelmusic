@@ -309,6 +309,10 @@ private:
 
     CompressorState compressorL, compressorR;
 
+    // ✅ THREAD SAFETY: Limiter envelope state (was static - race condition fix)
+    float limiterEnvelopeL = 0.0f;
+    float limiterEnvelopeR = 0.0f;
+
     float processCompressorSample(float input, CompressorState& state, const CompressionSettings& settings);
     float processLimiterSample(float input, float& envelope, const LimiterSettings& settings);
 
