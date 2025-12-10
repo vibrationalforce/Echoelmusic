@@ -55,9 +55,15 @@ void SpectralSculptor::learnNoiseProfile(const juce::AudioBuffer<float>& buffer)
         auto& state = channelStates[ch];
         const float* channelData = buffer.getReadPointer(ch);
 
-        // Copy to FFT buffer
-        std::copy(channelData, channelData + juce::jmin(numSamples, fftSize),
-                  state.fftData.begin());
+        // Copy to FFT buffer (with bounds checking)
+        const int copySize = juce::jmin(numSamples, fftSize);
+        std::copy(channelData, channelData + copySize, state.fftData.begin());
+
+        // Zero-pad if buffer is smaller than FFT size
+        if (copySize < fftSize)
+        {
+            std::fill(state.fftData.begin() + copySize, state.fftData.end(), 0.0f);
+        }
 
         // Apply window
         window.multiplyWithWindowingTable(state.fftData.data(), fftSize);
@@ -68,8 +74,7 @@ void SpectralSculptor::learnNoiseProfile(const juce::AudioBuffer<float>& buffer)
         // Accumulate magnitude
         for (size_t i = 0; i < noiseProfile.size(); ++i)
         {
-            float magnitude = std::abs(state.freqData[i]);
-            noiseProfile[i] += magnitude;
+            noiseProfile[i] += std::abs(state.freqData[i]);
         }
     }
 
@@ -78,21 +83,26 @@ void SpectralSculptor::learnNoiseProfile(const juce::AudioBuffer<float>& buffer)
     // Average after collecting enough frames
     if (noiseLearnFrames >= numNoiseLearnFrames)
     {
+        const float divisor = static_cast<float>(noiseLearnFrames * numChannels);
         for (auto& mag : noiseProfile)
         {
-            mag /= static_cast<float>(noiseLearnFrames * numChannels);
+            mag /= divisor;
         }
 
         noiseProfileLearned = true;
         noiseLearnFrames = 0;
 
-        // Update visualization
-        std::lock_guard<std::mutex> lock(spectrumMutex);
-        const float scale = 1024.0f / static_cast<float>(noiseProfile.size());
-        for (size_t i = 0; i < visualNoiseProfile.size(); ++i)
+        // ✅ OPTIMIZATION: Use try_lock to avoid blocking if mutex is held
+        // Noise learning is typically not on audio thread, but be safe
+        if (spectrumMutex.try_lock())
         {
-            int bin = static_cast<int>(i / scale);
-            visualNoiseProfile[i] = noiseProfile[bin];
+            const float scale = 1024.0f / static_cast<float>(noiseProfile.size());
+            for (size_t i = 0; i < visualNoiseProfile.size(); ++i)
+            {
+                const int bin = static_cast<int>(i / scale);
+                visualNoiseProfile[i] = noiseProfile[bin];
+            }
+            spectrumMutex.unlock();
         }
     }
 }
@@ -621,17 +631,28 @@ int SpectralSculptor::frequencyToBin(float freq) const
 
 void SpectralSculptor::updateVisualization(const std::vector<std::complex<float>>& freqData)
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    // ✅ OPTIMIZATION: Use try_lock to avoid blocking audio thread
+    // If visualization mutex is locked, skip this update (UI will catch next frame)
+    // This prevents audio dropouts from mutex contention
+    if (!spectrumMutex.try_lock())
+    {
+        return;  // Skip visualization update rather than block audio thread
+    }
+
+    // RAII unlock via scope guard
+    struct ScopeUnlock {
+        std::mutex& m;
+        ~ScopeUnlock() { m.unlock(); }
+    } unlock{spectrumMutex};
 
     const float scale = 1024.0f / static_cast<float>(freqData.size());
 
     for (size_t i = 0; i < visualSpectrum.size(); ++i)
     {
-        int bin = static_cast<int>(i / scale);
+        const int bin = static_cast<int>(i / scale);
         if (bin < static_cast<int>(freqData.size()))
         {
-            float magnitude = std::abs(freqData[bin]);
-            visualSpectrum[i] = magnitude;
+            visualSpectrum[i] = std::abs(freqData[bin]);
         }
     }
 }

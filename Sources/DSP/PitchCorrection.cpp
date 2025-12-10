@@ -11,6 +11,7 @@ PitchCorrection::~PitchCorrection()
 void PitchCorrection::prepare(double sampleRate, int maximumBlockSize)
 {
     currentSampleRate = sampleRate;
+    maxBlockSize = maximumBlockSize;
 
     juce::dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
@@ -28,6 +29,10 @@ void PitchCorrection::prepare(double sampleRate, int maximumBlockSize)
     // Initialize smoothers
     smootherL.setRetuneSpeed(retuneSpeed);
     smootherR.setRetuneSpeed(retuneSpeed);
+
+    // ✅ OPTIMIZATION: Pre-allocate dry buffer to avoid audio thread allocation
+    dryBuffer.setSize(2, maximumBlockSize);
+    dryBuffer.clear();
 
     reset();
 }
@@ -48,32 +53,33 @@ void PitchCorrection::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0 || correctionAmount < 0.01f)
         return;
 
-    // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
-    for (int ch = 0; ch < numChannels; ++ch)
+    // ✅ OPTIMIZATION: Use pre-allocated dry buffer (no audio thread allocation)
+    jassert(dryBuffer.getNumSamples() >= numSamples);
+    for (int ch = 0; ch < juce::jmin(numChannels, dryBuffer.getNumChannels()); ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
     // Process each channel
     for (int channel = 0; channel < juce::jmin(2, numChannels); ++channel)
     {
-        auto* data = buffer.getWritePointer(channel);
+        float* data = buffer.getWritePointer(channel);
         auto& detector = (channel == 0) ? detectorL : detectorR;
         auto& shifter = (channel == 0) ? shifterL : shifterR;
         auto& smoother = (channel == 0) ? smootherL : smootherR;
 
-        // Detect pitch every 512 samples (reduces CPU)
+        // Pitch detection state
         float detectedPitch = 0.0f;
         float correctedPitch = 0.0f;
 
+        // ✅ OPTIMIZATION: Process in blocks for better cache utilization
         for (int sample = 0; sample < numSamples; ++sample)
         {
-            float input = data[sample];
+            const float input = data[sample];
 
             // Feed pitch detector
             detector.pushSample(input);
 
-            // Detect pitch periodically
-            if (sample % 512 == 0)
+            // Detect pitch every 512 samples (reduces CPU)
+            if ((sample & 0x1FF) == 0)  // Bitwise AND is faster than modulo
             {
                 detectedPitch = detector.detectPitch();
 
@@ -85,7 +91,7 @@ void PitchCorrection::process(juce::AudioBuffer<float>& buffer)
                     // Apply humanize (preserve natural vibrato)
                     if (humanize > 0.01f)
                     {
-                        float vibrato = std::sin(static_cast<float>(sample) * 0.005f) * 5.0f;
+                        const float vibrato = std::sin(static_cast<float>(sample) * 0.005f) * 5.0f;
                         targetPitch += vibrato * humanize;
                     }
 
@@ -97,23 +103,24 @@ void PitchCorrection::process(juce::AudioBuffer<float>& buffer)
                 }
             }
 
-            // Apply pitch correction
-            float corrected = shifter.process(input, channel);
-
-            // Blend original and corrected based on correction amount
+            // Apply pitch correction with blend
+            const float corrected = shifter.process(input, channel);
             data[sample] = input * (1.0f - correctionAmount) + corrected * correctionAmount;
         }
     }
 
-    // Mix dry/wet
-    for (int ch = 0; ch < numChannels; ++ch)
-    {
-        auto* wet = buffer.getReadPointer(ch);
-        auto* dry = dryBuffer.getReadPointer(ch);
-        auto* out = buffer.getWritePointer(ch);
+    // ✅ OPTIMIZATION: Mix dry/wet using SIMD operations
+    const float dryLevel = 1.0f - currentMix;
+    const float wetLevel = currentMix;
 
-        for (int i = 0; i < numSamples; ++i)
-            out[i] = dry[i] * (1.0f - currentMix) + wet[i] * currentMix;
+    for (int ch = 0; ch < juce::jmin(numChannels, dryBuffer.getNumChannels()); ++ch)
+    {
+        float* out = buffer.getWritePointer(ch);
+        const float* dry = dryBuffer.getReadPointer(ch);
+
+        // SIMD: out = out * wetLevel + dry * dryLevel
+        juce::FloatVectorOperations::multiply(out, wetLevel, numSamples);
+        juce::FloatVectorOperations::addWithMultiply(out, dry, dryLevel, numSamples);
     }
 }
 

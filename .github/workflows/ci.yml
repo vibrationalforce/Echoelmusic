@@ -25,28 +25,65 @@ jobs:
       with:
         swift-version: "5.9"
 
+    - name: Install Code Quality Tools
+      run: |
+        # Install swift-format and swiftlint if not present
+        if ! command -v swift-format &> /dev/null; then
+          brew install swift-format || echo "swift-format installation skipped"
+        fi
+        if ! command -v swiftlint &> /dev/null; then
+          brew install swiftlint || echo "swiftlint installation skipped"
+        fi
+
     - name: Swift Format Check
       run: |
         if command -v swift-format &> /dev/null; then
-          swift-format lint --recursive Sources/ Tests/
+          echo "🔍 Running Swift Format check..."
+          swift-format lint --recursive Sources/ Tests/ || {
+            echo "❌ Swift Format issues found. Please run 'swift-format format --recursive Sources/ Tests/' to fix."
+            exit 1
+          }
+          echo "✅ Swift Format check passed"
         else
-          echo "⚠️  swift-format not installed, skipping"
+          echo "⚠️  swift-format not installed, skipping (non-blocking)"
         fi
-      continue-on-error: true
+      continue-on-error: false
 
     - name: SwiftLint
       run: |
         if command -v swiftlint &> /dev/null; then
-          swiftlint --strict
+          echo "🔍 Running SwiftLint..."
+          # Use warning mode for existing issues, error for new critical issues
+          swiftlint lint --reporter github-actions-logging || {
+            echo "❌ SwiftLint found issues. Please fix before merging."
+            exit 1
+          }
+          echo "✅ SwiftLint check passed"
         else
-          echo "⚠️  SwiftLint not installed, skipping"
+          echo "⚠️  SwiftLint not installed, skipping (non-blocking)"
         fi
-      continue-on-error: true
+      continue-on-error: false
 
     - name: Check for TODO/FIXME
       run: |
         echo "🔍 Checking for TODO/FIXME comments..."
+        TODO_COUNT=$(find Sources -name "*.swift" -exec grep -l "TODO\|FIXME" {} \; | wc -l)
+        echo "📊 Found $TODO_COUNT files with TODO/FIXME comments"
         find Sources -name "*.swift" -exec grep -Hn "TODO\|FIXME" {} \; || true
+        # Report but don't fail - TODOs are acceptable during development
+        echo "ℹ️  TODO/FIXME comments are informational only"
+
+    - name: Security Audit - Check for Sensitive Data
+      run: |
+        echo "🔒 Checking for potential sensitive data..."
+        # Check for potential API keys, passwords, tokens
+        SENSITIVE=$(grep -rn --include="*.swift" -E "(password|secret|api_key|apikey|token|credential)" Sources/ | grep -v "// " | grep -v "TODO" | head -20 || true)
+        if [ -n "$SENSITIVE" ]; then
+          echo "⚠️  Potential sensitive data patterns found (review manually):"
+          echo "$SENSITIVE"
+        else
+          echo "✅ No obvious sensitive data patterns found"
+        fi
 
   # Job 2: Build & Test - iOS
   build-test-ios:

@@ -30,11 +30,21 @@ MultibandCompressor::MultibandCompressor()
 void MultibandCompressor::prepare(double sampleRate, int maxBlockSize)
 {
     currentSampleRate = sampleRate;
+    this->maxBlockSize = maxBlockSize;
 
     // Allocate band buffers
     for (auto& buffer : bandBuffers)
     {
         buffer.resize(maxBlockSize);
+    }
+
+    // ✅ OPTIMIZATION: Pre-allocate band signal storage to avoid audio thread allocation
+    for (int ch = 0; ch < 2; ++ch)
+    {
+        for (int band = 0; band < 4; ++band)
+        {
+            preallocatedBandSignals[ch][band].resize(maxBlockSize);
+        }
     }
 
     // Update coefficients
@@ -77,13 +87,21 @@ void MultibandCompressor::process(juce::AudioBuffer<float>& buffer)
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
+    // ✅ OPTIMIZATION: Verify pre-allocated buffers are sufficient
+    jassert(numSamples <= maxBlockSize);
+
     // Process each channel independently
     for (int channel = 0; channel < numChannels && channel < 2; ++channel)
     {
-        // 1. Split into frequency bands
-        std::array<std::vector<float>, 4> bandSignals;
+        // ✅ OPTIMIZATION: Use pre-allocated band signal storage (no audio thread allocation)
+        auto& bandSignals = preallocatedBandSignals[channel];
+
+        // Ensure correct size (should already be allocated in prepare())
         for (auto& sig : bandSignals)
-            sig.resize(numSamples);
+        {
+            if (static_cast<int>(sig.size()) < numSamples)
+                sig.resize(numSamples);  // Fallback, should rarely happen
+        }
 
         splitIntoBands(buffer, bandSignals, channel);
 
