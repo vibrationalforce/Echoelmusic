@@ -8,7 +8,7 @@
 
 **Letzte Aktualisierung:** 2025-12-10
 **Aktueller Branch:** `claude/persistent-chat-state-01JaeSpxowjLhsYUQmPdA7Tf`
-**Phase:** Phase 3 abgeschlossen - Spatial Audio, LED Control, Desktop UI
+**Phase:** Phase 4 - MIDI Engine, Project Manager, ~90% MVP
 
 ---
 
@@ -49,22 +49,42 @@
 - 12 LED-Effekte (Rainbow, Breathe, BioReactive, etc.)
 - Auto-Discovery fuer WLED Geraete
 
-### Desktop UI (80%) - NEU!
+### Desktop UI (100%) - NEU!
 - MainWindow.cpp (684 Zeilen, komplett)
 - TrackView (integriert in MainWindow)
 - MixerView.cpp (550+ Zeilen, komplett)
 - VisualizerBridge.cpp (700+ Zeilen, 12 Modi)
+- MIDIPanel.cpp (400+ Zeilen, komplett)
 - Vaporwave Aesthetic (Cyan/Magenta/Purple)
+
+### MIDI Engine (100%) - NEU!
+- MIDIEngine.h/.cpp (600+ Zeilen)
+  - MIDI 2.0 mit UMP Packets (32-bit Resolution)
+  - Device Management, Virtual MIDI Ports
+  - MIDI Learn Mode
+  - Callbacks fuer Note/CC/PitchBend
+- MPEVoiceManager.h/.cpp (500+ Zeilen)
+  - 15-Channel Voice Allocation
+  - Voice Stealing Strategies
+  - Per-Voice Expression Tracking
+  - Roli Seaboard / LinnStrument / Osmose Support
+
+### Project Manager (100%) - NEU!
+- ProjectManager.h/.cpp (700+ Zeilen)
+  - Project Save/Load mit XML
+  - Auto-Save (konfigurierbar)
+  - Recent Projects Liste
+  - Track Audio/MIDI Serialization
+  - Plugin State Persistence (Struktur)
 
 ---
 
 ## WAS ALS NAECHSTES KOMMT
 
-1. **MIDI Engine Integration** (Desktop)
-2. **Project Save/Load System**
-3. **VST3/AUv3 Plugin Hosting**
-4. **TestFlight Build**
-5. **Final Polish & Testing**
+1. **VST3/AUv3 Plugin Hosting**
+2. **TestFlight Build**
+3. **Final Polish & Testing**
+4. **App Store Submission**
 
 ---
 
@@ -153,6 +173,18 @@ Echoelmusic/
 ---
 
 ## LETZTE AENDERUNGEN (Changelog)
+
+### 2025-12-10 (Session 5) - MIDI Engine & Project Manager
+- MIDI Engine Implementation:
+  - MIDIEngine.h/.cpp (600+ Zeilen) - MIDI 2.0 mit UMP
+  - MPEVoiceManager.h/.cpp (500+ Zeilen) - 15-Voice MPE
+  - MIDIPanel.h/.cpp (400+ Zeilen) - Desktop UI
+- Project Manager Implementation:
+  - ProjectManager.h/.cpp (700+ Zeilen)
+  - XML-basiertes Projektformat
+  - Auto-Save, Recent Projects
+- CMakeLists.txt aktualisiert mit neuen Dateien
+- Progress: ~90% MVP
 
 ### 2025-12-10 (Session 4) - Desktop UI Complete
 - Desktop UI Implementation:

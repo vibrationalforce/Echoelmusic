@@ -256,11 +256,19 @@ target_sources(Echoelmusic
         Sources/Audio/Track.cpp
         Sources/Audio/AudioExporter.cpp         # ✅ Audio export system (WAV, FLAC, OGG)
         Sources/Audio/SessionManager.cpp        # ✅ Session save/load system
+        Sources/Audio/ProjectManager.cpp        # 📁 Project save/load orchestration
 
         # UI - Main Window (NEW! 2025-11-12) ✅ TESTED
         Sources/UI/MainWindow.cpp
         Sources/UI/MixerView.cpp              # 🎚️ Professional mixer console
         Sources/UI/VisualizerBridge.cpp       # 🎨 Desktop visualizer (12 modes)
+        Sources/UI/MIDIPanel.cpp              # 🎹 MIDI control panel
+
+        # =====================================================================
+        # MIDI Engine (NEW! 2025-12-10) 🎹✨
+        # =====================================================================
+        Sources/Desktop/MIDI/MIDIEngine.cpp     # 🎹 MIDI 2.0 Engine with UMP
+        Sources/Desktop/MIDI/MPEVoiceManager.cpp # 🎵 MPE 15-voice polyphonic
 
         # =====================================================================
         # PHASE 2: DSP EFFECTS (All JUCE 7 Compatible! 🎉)
@@ -391,6 +399,7 @@ target_include_directories(Echoelmusic
         Sources
         Sources/Plugin
         Sources/UI
+        Sources/Desktop/MIDI
         Sources/MIDI
         Sources/DSP
         Sources/DSP/Effects
