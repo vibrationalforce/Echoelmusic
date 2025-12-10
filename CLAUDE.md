@@ -135,6 +135,18 @@ Echoelmusic/
 
 ## LETZTE AENDERUNGEN (Changelog)
 
+### 2025-12-10 (Session 3) - MAJOR UPDATE
+- Phase 3 Implementation abgeschlossen:
+  - SpatialAudioRenderer.swift erstellt (Bio-reactive spatial rendering)
+  - UnifiedLEDController.swift erstellt (WLED, Art-Net, DMX, Hue)
+  - VisualizerBridge.h/.cpp erstellt (Desktop visualizer mit 12 Modi)
+  - UnifiedControlHub erweitert mit neuen Komponenten
+- Neue Features:
+  - Multi-Protocol LED Support (Art-Net, WLED, sACN)
+  - Bio-reactive spatial field morphing (AFA)
+  - C++ Desktop Visualizer Bridge
+  - 12 Visualization Modes (Spectrum, Cymatics, Mandala, Vaporwave, etc.)
+
 ### 2025-12-10 (Session 2)
 - "wise save" erfolgreich getestet
 - System funktioniert wie erwartet

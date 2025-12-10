@@ -47,9 +47,11 @@ public class UnifiedControlHub: ObservableObject {
 
     // Phase 3: Spatial Audio + Visual + LED Integration
     private var spatialAudioEngine: SpatialAudioEngine?
+    private var spatialAudioRenderer: SpatialAudioRenderer?
     private var midiToVisualMapper: MIDIToVisualMapper?
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
+    private var unifiedLEDController: UnifiedLEDController?
 
     // TODO: Add when implementing
     // private let gazeTracker: GazeTracker?
@@ -283,6 +285,39 @@ public class UnifiedControlHub: ObservableObject {
         midiToLightMapper?.disconnect()
         midiToLightMapper = nil
         print("[UnifiedControlHub] DMX lighting disabled")
+    }
+
+    /// Enable Spatial Audio Renderer (advanced spatial rendering with bio-reactive control)
+    public func enableSpatialRenderer() throws {
+        self.spatialAudioRenderer = SpatialAudioRenderer.shared
+        try spatialAudioRenderer?.start()
+        print("[UnifiedControlHub] Spatial Audio Renderer enabled")
+    }
+
+    /// Disable Spatial Audio Renderer
+    public func disableSpatialRenderer() {
+        spatialAudioRenderer?.stop()
+        spatialAudioRenderer = nil
+        print("[UnifiedControlHub] Spatial Audio Renderer disabled")
+    }
+
+    /// Enable Unified LED Controller (WLED, Art-Net, DMX, Hue)
+    public func enableUnifiedLED() {
+        self.unifiedLEDController = UnifiedLEDController.shared
+        unifiedLEDController?.start()
+        print("[UnifiedControlHub] Unified LED Controller enabled")
+    }
+
+    /// Disable Unified LED Controller
+    public func disableUnifiedLED() {
+        unifiedLEDController?.stop()
+        unifiedLEDController = nil
+        print("[UnifiedControlHub] Unified LED Controller disabled")
+    }
+
+    /// Discover WLED devices on network
+    public func discoverWLEDDevices() async {
+        await unifiedLEDController?.discoverWLEDDevices()
     }
 
     // MARK: - Lifecycle
@@ -653,6 +688,25 @@ public class UnifiedControlHub: ObservableObject {
         // Update DMX/LED strip lighting
         if let lighting = midiToLightMapper {
             lighting.updateBioReactive(bioData)
+        }
+
+        // Update Unified LED Controller (WLED, Art-Net, etc.)
+        if let unified = unifiedLEDController {
+            unified.updateBioData(
+                hrv: healthKit.hrv,
+                heartRate: healthKit.heartRate,
+                coherence: healthKit.hrvCoherence
+            )
+        }
+
+        // Update Spatial Audio Renderer with bio data
+        if let renderer = spatialAudioRenderer {
+            renderer.updateBioData(
+                hrv: healthKit.hrv,
+                heartRate: healthKit.heartRate,
+                coherence: healthKit.hrvCoherence,
+                breathPhase: 0.0  // TODO: Calculate from HRV
+            )
         }
     }
 

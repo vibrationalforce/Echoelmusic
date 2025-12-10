@@ -22,7 +22,11 @@
 - [x] CLAUDE.md erstellen
 - [x] PROJECT_STATE.md erstellen
 - [x] "wise save" Workflow getestet - funktioniert!
-- [ ] Phase 3: Spatial Audio Rendering (naechste Aufgabe)
+- [x] Phase 3: Spatial Audio Renderer implementiert
+- [x] Phase 3: Unified LED Controller implementiert (WLED, Art-Net, DMX)
+- [x] Desktop Visualizer Bridge erstellt (C++ mit 12 Modi)
+- [x] UnifiedControlHub Integration aktualisiert
+- [ ] Naechste Aufgabe: Desktop UI (MainWindow, TrackView, MixerView)
 
 ### Offene Fragen / Blocker
 - Keine aktuellen Blocker
