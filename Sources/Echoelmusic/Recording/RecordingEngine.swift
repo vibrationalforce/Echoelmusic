@@ -698,13 +698,21 @@ extension RecordingEngine {
 
 /// Lightweight circular buffer for retrospective audio capture
 /// O(1) append/read operations, fixed memory footprint
+/// ✅ THREAD SAFETY: Uses lock for synchronization between audio and main threads
 class RetrospectiveBuffer {
     private var buffer: [Float]
     private var writeIndex: Int = 0
-    private(set) var count: Int = 0
+    private var _count: Int = 0
+    private let lock = NSLock()
     let capacity: Int
     let sampleRate: Double
     let channels: Int
+
+    var count: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return _count
+    }
 
     var duration: TimeInterval {
         Double(count / channels) / sampleRate
@@ -718,16 +726,20 @@ class RetrospectiveBuffer {
     }
 
     func append(_ sample: Float) {
+        lock.lock()
+        defer { lock.unlock() }
         buffer[writeIndex] = sample
         writeIndex = (writeIndex + 1) % capacity
-        if count < capacity {
-            count += 1
+        if _count < capacity {
+            _count += 1
         }
     }
 
     func clear() {
+        lock.lock()
+        defer { lock.unlock() }
         writeIndex = 0
-        count = 0
+        _count = 0
     }
 
     /// Write buffer contents to audio file

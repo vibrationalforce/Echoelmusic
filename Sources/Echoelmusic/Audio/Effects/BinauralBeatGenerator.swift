@@ -55,17 +55,32 @@ class BinauralBeatGenerator: ObservableObject {
 
 
     // MARK: - Configuration
+    // ✅ THREAD SAFETY: Private backing storage with lock protection
+
+    private let configLock = NSLock()
 
     /// Carrier frequency in Hz (the base tone, often 432 Hz for healing)
     /// 432 Hz is considered the "natural frequency" in some healing traditions
-    private(set) var carrierFrequency: Float = 432.0
+    private var _carrierFrequency: Float = 432.0
+    var carrierFrequency: Float {
+        get { configLock.lock(); defer { configLock.unlock() }; return _carrierFrequency }
+        set { configLock.lock(); defer { configLock.unlock() }; _carrierFrequency = newValue }
+    }
 
     /// Beat frequency in Hz (difference between left and right ear)
     /// This is what entrains the brain to the target brainwave state
-    private(set) var beatFrequency: Float = 10.0  // Alpha by default
+    private var _beatFrequency: Float = 10.0  // Alpha by default
+    var beatFrequency: Float {
+        get { configLock.lock(); defer { configLock.unlock() }; return _beatFrequency }
+        set { configLock.lock(); defer { configLock.unlock() }; _beatFrequency = newValue }
+    }
 
     /// Amplitude (volume) of the generated tone (0.0 - 1.0)
-    private(set) var amplitude: Float = 0.3
+    private var _amplitude: Float = 0.3
+    var amplitude: Float {
+        get { configLock.lock(); defer { configLock.unlock() }; return _amplitude }
+        set { configLock.lock(); defer { configLock.unlock() }; _amplitude = min(max(newValue, 0.0), 1.0) }
+    }
 
     /// Sample rate for audio generation - uses system rate for proper sync
     private var sampleRate: Double {
@@ -125,9 +140,12 @@ class BinauralBeatGenerator: ObservableObject {
     ///   - beat: Beat frequency in Hz (0.5-40 Hz for different brainwave states)
     ///   - amplitude: Volume (0.0-1.0, default 0.3)
     func configure(carrier: Float, beat: Float, amplitude: Float) {
-        self.carrierFrequency = carrier
-        self.beatFrequency = beat
-        self.amplitude = min(max(amplitude, 0.0), 1.0)  // Clamp to 0-1
+        // ✅ THREAD SAFETY: Atomic update of all configuration parameters
+        configLock.lock()
+        defer { configLock.unlock() }
+        _carrierFrequency = carrier
+        _beatFrequency = beat
+        _amplitude = min(max(amplitude, 0.0), 1.0)  // Clamp to 0-1
     }
 
     /// Configure using a brainwave preset
