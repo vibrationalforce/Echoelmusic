@@ -953,7 +953,7 @@ public final class EchoelScan: ObservableObject {
                 title: "Strengthen Mental Wellness",
                 category: .mental,
                 priority: scan.mentalWellbeing < 40 ? .urgent : .high,
-                description: scan.emotionalState.healingRecommendation,
+                description: scan.emotionalState.wellbeingRecommendation,
                 evidenceBase: "Mindfulness reduces anxiety by 40% (Goessl 2017)",
                 actionSteps: ["Try HRV breathing (6 breaths/min)", "Practice 5-min daily meditation", "Consider professional support"],
                 expectedOutcome: "Reduced stress, improved mood",

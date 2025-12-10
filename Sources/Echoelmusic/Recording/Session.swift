@@ -231,7 +231,7 @@ extension Session {
     /// Session template types
     enum SessionTemplate {
         case meditation
-        case healing
+        case wellbeing
         case creative
         case custom
     }
@@ -244,12 +244,12 @@ extension Session {
         return session
     }
 
-    /// Create healing session template
-    static func healingTemplate() -> Session {
-        var session = Session(name: "Healing Session", tempo: 72)
+    /// Create well-being session template
+    static func wellbeingTemplate() -> Session {
+        var session = Session(name: "Well-being Session", tempo: 72)
         session.addTrack(.voiceTrack())
         session.addTrack(.binauralTrack())
-        session.metadata.genre = "Healing"
+        session.metadata.genre = "Well-being"
         session.metadata.mood = "Peaceful"
         return session
     }

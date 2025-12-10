@@ -362,7 +362,7 @@ class MIDIToVisualMapper: ObservableObject {
             cymaticsParameters.amplitude = 0.8
             particleParameters.emissionRate = 20.0
 
-        case .healing:
+        case .wellbeing:
             // Harmonious, balanced visuals
             mandalaParameters.rotationSpeed = 1.0
             cymaticsParameters.amplitude = 0.5
@@ -380,7 +380,7 @@ class MIDIToVisualMapper: ObservableObject {
     enum VisualPreset: String, CaseIterable {
         case meditation = "Meditation"
         case energizing = "Energizing"
-        case healing = "Healing"
+        case wellbeing = "Well-being"
         case psychedelic = "Psychedelic"
     }
 

@@ -279,7 +279,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         bioAudioBridge?.startBioReactiveLoop()
     }
 
-    // MARK: - Start Healing Session
+    // MARK: - Start Well-being Session
 
     public func startWellbeingSession() async -> EchoelScan.LifeScan {
         guard isInitialized else {
@@ -303,7 +303,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         // Update career matches
         await echoelworks.updateFromScan(scan)
 
-        print("[EchoelmusicHub] Healing session complete")
+        print("[EchoelmusicHub] Well-being session complete")
         print("   Overall Wellbeing: \(String(format: "%.1f", scan.overallWellbeing))%")
         print("   Recommendations: \(scan.recommendations.count)")
         print("   Job Matches: \(scan.jobMatches.count)")
@@ -360,7 +360,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
         ├── AudioEngine (C++ Core)
         ├── AudioEffectController (Bio-Reactive)
         ├── SpatialAudioEngine (3D/Ambisonics)
-        ├── BinauralBeatGenerator (432Hz Healing)
+        ├── BinauralBeatGenerator (432Hz Well-being)
         ├── NodeGraph (Effect Chain)
         └── 30+ DSP Effects
 
@@ -433,7 +433,7 @@ public final class EchoelmusicIntegrationHub: ObservableObject {
 
         3. RECORDING ↔ HEALTH BRIDGE
            Session → HRV Capture
-           Healing Progress → Session Metadata
+           Well-being Progress → Session Metadata
            Bio-Metrics → Cloud Sync
 
         ╚══════════════════════════════════════════════════════════════╝
@@ -699,7 +699,7 @@ public class RecordingHealthBridge {
         var averageCoherence: Float
         var peakCoherence: Float
         var hrvSamples: [Float]
-        var healingProgress: Float
+        var wellbeingProgress: Float
     }
 
     private var currentSessionHealth: SessionHealthData?
@@ -718,7 +718,7 @@ public class RecordingHealthBridge {
             averageCoherence: 0,
             peakCoherence: 0,
             hrvSamples: [],
-            healingProgress: 0
+            wellbeingProgress: 0
         )
 
         // In production: Start HealthKit observation
@@ -738,13 +738,13 @@ public class RecordingHealthBridge {
             health.endHRV = health.hrvSamples.last ?? health.startHRV
         }
 
-        // Calculate healing progress
-        health.healingProgress = calculateHealingProgress(start: health.startHRV, end: health.endHRV)
+        // Calculate well-being progress
+        health.wellbeingProgress = calculateWellbeingProgress(start: health.startHRV, end: health.endHRV)
 
         print("[RecordingHealthBridge] Session health capture complete")
         print("   Average Coherence: \(String(format: "%.2f", health.averageCoherence))")
         print("   Peak Coherence: \(String(format: "%.2f", health.peakCoherence))")
-        print("   Healing Progress: \(String(format: "%.1f", health.healingProgress))%")
+        print("   Well-being Progress: \(String(format: "%.1f", health.wellbeingProgress))%")
 
         let result = health
         currentSessionHealth = nil
@@ -759,7 +759,7 @@ public class RecordingHealthBridge {
         }
     }
 
-    private func calculateHealingProgress(start: Float, end: Float) -> Float {
+    private func calculateWellbeingProgress(start: Float, end: Float) -> Float {
         guard start > 0 else { return 0 }
         let improvement = (end - start) / start * 100
         return max(0, min(100, improvement + 50)) // Normalize around 50%
@@ -800,7 +800,7 @@ extension EchoelmusicIntegrationHub {
         return """
         \(getSystemReport())
 
-        \(getHealingReport())
+        \(getWellbeingReport())
 
         \(getPotentialReport())
 

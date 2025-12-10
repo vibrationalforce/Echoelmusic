@@ -191,7 +191,7 @@ struct SessionBrowserView: View {
                 name: "Evening Flow",
                 duration: 900,
                 trackCount: 2,
-                genre: "Healing",
+                genre: "Well-being",
                 mood: "Peaceful",
                 createdAt: Date().addingTimeInterval(-86400 * 3),
                 modifiedAt: Date().addingTimeInterval(-86400)

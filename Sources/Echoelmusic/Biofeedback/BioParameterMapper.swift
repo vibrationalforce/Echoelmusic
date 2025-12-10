@@ -111,7 +111,7 @@ class BioParameterMapper: ObservableObject {
         let targetAmplitude = mapToAmplitude(hrvCoherence: hrvCoherence, audioLevel: audioLevel)
         amplitude = smooth(current: amplitude, target: targetAmplitude, factor: smoothingFactor)
 
-        // Map Voice Pitch → Base Frequency (snap to healing scale)
+        // Map Voice Pitch → Base Frequency (snap to well-being scale)
         let targetFrequency = mapVoicePitchToScale(voicePitch: voicePitch)
         baseFrequency = smooth(current: baseFrequency, target: targetFrequency, factor: fastSmoothingFactor)
 

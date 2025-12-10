@@ -349,14 +349,14 @@ public final class WellbeingTracker: ObservableObject {
         public let id: UUID
         public var name: String
         public var instrument: String           // Validated instrument name
-        public var category: HealingGoal.GoalCategory
+        public var category: WellbeingGoal.GoalCategory
         public var baseline: Float
         public var measurements: [TimedMeasurement]
         public var targetImprovement: Float     // % improvement goal
         public var mcid: Float                  // Minimal Clinically Important Difference
         public var reliableChangeIndex: Float   // RCI threshold
 
-        public init(name: String, instrument: String, category: HealingGoal.GoalCategory, baseline: Float) {
+        public init(name: String, instrument: String, category: WellbeingGoal.GoalCategory, baseline: Float) {
             self.id = UUID()
             self.name = name
             self.instrument = instrument
@@ -614,7 +614,7 @@ public final class WellbeingTracker: ObservableObject {
 
     // MARK: - Record Outcome
 
-    private func recordOutcome(name: String, category: HealingGoal.GoalCategory, value: Float) {
+    private func recordOutcome(name: String, category: WellbeingGoal.GoalCategory, value: Float) {
         if let index = outcomes.firstIndex(where: { $0.name == name }) {
             outcomes[index].measurements.append(
                 OutcomeMeasure.TimedMeasurement(value: value)
@@ -698,7 +698,7 @@ public final class WellbeingTracker: ObservableObject {
         }
 
         // Goals
-        if let journey = healingJourney {
+        if let journey = wellbeingJourney {
             report.goalsAchieved = journey.primaryGoals.filter { $0.isAchieved }.count
             report.goalsInProgress = journey.primaryGoals.filter { !$0.isAchieved }.count
             report.totalSessions = journey.totalSessions

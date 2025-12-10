@@ -290,7 +290,7 @@ struct RecordingControlsView: View {
                         .foregroundColor(.secondary)
 
                     templateButton(title: "Meditation", icon: "leaf.fill", template: .meditation)
-                    templateButton(title: "Healing", icon: "heart.fill", template: .healing)
+                    templateButton(title: "Well-being", icon: "heart.fill", template: .wellbeing)
                     templateButton(title: "Creative", icon: "sparkles", template: .creative)
                     templateButton(title: "Custom", icon: "wand.and.stars", template: .custom)
                 }

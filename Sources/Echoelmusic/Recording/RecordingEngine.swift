@@ -103,8 +103,8 @@ class RecordingEngine: ObservableObject {
         switch template {
         case .meditation:
             session = Session.meditationTemplate()
-        case .healing:
-            session = Session.healingTemplate()
+        case .wellbeing:
+            session = Session.wellbeingTemplate()
         case .creative:
             session = Session.creativeTemplate()
         case .custom:
