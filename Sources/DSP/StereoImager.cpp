@@ -43,9 +43,14 @@ void StereoImager::setMonoOutput(bool mono)
 
 void StereoImager::prepare(double sampleRate, int maxBlockSize)
 {
-    juce::ignoreUnused(maxBlockSize);
-
     currentSampleRate = sampleRate;
+
+    // ✅ SIMD OPTIMIZATION: Pre-allocate buffers for vectorized M/S processing
+    midBuffer.setSize(1, maxBlockSize);
+    sideBuffer.setSize(1, maxBlockSize);
+    midBuffer.clear();
+    sideBuffer.clear();
+
     reset();
 }
 
@@ -69,60 +74,69 @@ void StereoImager::process(juce::AudioBuffer<float>& buffer)
 
     float* leftChannel = buffer.getWritePointer(0);
     float* rightChannel = buffer.getWritePointer(1);
+    float* midData = midBuffer.getWritePointer(0);
+    float* sideData = sideBuffer.getWritePointer(0);
 
-    float maxMid = 0.0f;
-    float maxSide = 0.0f;
+    // ✅ SIMD OPTIMIZATION: Vectorized M/S encoding
+    // Mid = (L + R) * 0.5
+    juce::FloatVectorOperations::copy(midData, leftChannel, numSamples);
+    juce::FloatVectorOperations::add(midData, rightChannel, numSamples);
+    juce::FloatVectorOperations::multiply(midData, 0.5f, numSamples);
 
-    for (int i = 0; i < numSamples; ++i)
+    // Side = (L - R) * 0.5
+    juce::FloatVectorOperations::copy(sideData, leftChannel, numSamples);
+    juce::FloatVectorOperations::subtract(sideData, rightChannel, numSamples);
+    juce::FloatVectorOperations::multiply(sideData, 0.5f, numSamples);
+
+    // ✅ SIMD: Apply width to side channel
+    juce::FloatVectorOperations::multiply(sideData, width, numSamples);
+
+    // ✅ SIMD: Apply mid/side gains
+    juce::FloatVectorOperations::multiply(midData, midGain, numSamples);
+    juce::FloatVectorOperations::multiply(sideData, sideGain, numSamples);
+
+    // ✅ SIMD: Get levels for metering (vectorized magnitude)
+    float maxMid = juce::FloatVectorOperations::findMaximum(midData, numSamples);
+    float maxSide = juce::FloatVectorOperations::findMaximum(sideData, numSamples);
+    float minMid = juce::FloatVectorOperations::findMinimum(midData, numSamples);
+    float minSide = juce::FloatVectorOperations::findMinimum(sideData, numSamples);
+    maxMid = std::max(maxMid, -minMid);  // Absolute max
+    maxSide = std::max(maxSide, -minSide);
+
+    // ✅ SIMD OPTIMIZATION: Vectorized M/S decoding to L/R
+    // Left = Mid + Side
+    juce::FloatVectorOperations::copy(leftChannel, midData, numSamples);
+    juce::FloatVectorOperations::add(leftChannel, sideData, numSamples);
+
+    // Right = Mid - Side
+    juce::FloatVectorOperations::copy(rightChannel, midData, numSamples);
+    juce::FloatVectorOperations::subtract(rightChannel, sideData, numSamples);
+
+    // Handle balance (requires per-sample only when balance != 0)
+    if (balance < -0.001f)
     {
-        float left = leftChannel[i];
-        float right = rightChannel[i];
+        // ✅ SIMD: Pan left - attenuate right channel
+        juce::FloatVectorOperations::multiply(rightChannel, (1.0f + balance), numSamples);
+    }
+    else if (balance > 0.001f)
+    {
+        // ✅ SIMD: Pan right - attenuate left channel
+        juce::FloatVectorOperations::multiply(leftChannel, (1.0f - balance), numSamples);
+    }
 
-        // Convert to Mid/Side
-        float mid = (left + right) * 0.5f;
-        float side = (left - right) * 0.5f;
+    // Handle mono output mode
+    if (monoOutput)
+    {
+        // ✅ SIMD: Convert to mono
+        juce::FloatVectorOperations::add(leftChannel, rightChannel, numSamples);
+        juce::FloatVectorOperations::multiply(leftChannel, 0.5f, numSamples);
+        juce::FloatVectorOperations::copy(rightChannel, leftChannel, numSamples);
+    }
 
-        // Apply width control
-        side *= width;
-
-        // Apply mid/side gains
-        mid *= midGain;
-        side *= sideGain;
-
-        // Track levels for metering
-        maxMid = std::max(maxMid, std::abs(mid));
-        maxSide = std::max(maxSide, std::abs(side));
-
-        // Convert back to Left/Right
-        left = mid + side;
-        right = mid - side;
-
-        // Apply balance
-        if (balance < 0.0f)
-        {
-            // Pan left
-            right *= (1.0f + balance);
-        }
-        else if (balance > 0.0f)
-        {
-            // Pan right
-            left *= (1.0f - balance);
-        }
-
-        // Mono output (for compatibility check)
-        if (monoOutput)
-        {
-            float mono = (left + right) * 0.5f;
-            left = mono;
-            right = mono;
-        }
-
-        // Update metering
-        updateMetering(left, right);
-
-        // Write output
-        leftChannel[i] = left;
-        rightChannel[i] = right;
+    // Update correlation metering (sample every few samples for efficiency)
+    for (int i = 0; i < numSamples; i += 4)  // Sample every 4th for efficiency
+    {
+        updateMetering(leftChannel[i], rightChannel[i]);
     }
 
     // Update level meters (smoothed)

@@ -41,9 +41,11 @@ void VocalChain::prepare(double sampleRate, int maximumBlockSize)
     delayLine.prepare(spec);
     delayLine.setMaximumDelayInSamples(static_cast<int>(2.0f * sampleRate));  // 2s max
 
-    // ✅ OPTIMIZATION: Pre-allocate reverb buffer to avoid audio thread allocation
+    // ✅ OPTIMIZATION: Pre-allocate buffers to avoid audio thread allocation
     reverbBuffer.setSize(2, maximumBlockSize);
     reverbBuffer.clear();
+    dryBuffer.setSize(2, maximumBlockSize);
+    dryBuffer.clear();
 
     reset();
 }

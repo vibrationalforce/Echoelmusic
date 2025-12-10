@@ -101,6 +101,10 @@ private:
 
     void updateMetering(float left, float right);
 
+    // ✅ SIMD optimization buffers
+    juce::AudioBuffer<float> midBuffer;
+    juce::AudioBuffer<float> sideBuffer;
+
     //==========================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StereoImager)
 };

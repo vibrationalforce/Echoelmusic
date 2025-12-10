@@ -284,6 +284,11 @@ private:
     float delayMix = 0.15f;
 
     double currentSampleRate = 44100.0;
+    int maxBlockSize = 512;
+
+    // ✅ OPTIMIZATION: Pre-allocated buffers for SIMD operations
+    juce::AudioBuffer<float> reverbBuffer;
+    juce::AudioBuffer<float> dryBuffer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VocalChain)
 };
