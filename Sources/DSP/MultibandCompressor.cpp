@@ -47,6 +47,9 @@ void MultibandCompressor::prepare(double sampleRate, int maxBlockSize)
         }
     }
 
+    // ✅ OPTIMIZATION: Pre-allocate temp buffer for crossover processing
+    tempCrossoverBuffer.resize(maxBlockSize);
+
     // Update coefficients
     updateCoefficients();
 
@@ -239,21 +242,21 @@ void MultibandCompressor::splitIntoBands(const juce::AudioBuffer<float>& input,
     const int numSamples = input.getNumSamples();
     const float* inputData = input.getReadPointer(channel);
 
-    // Copy input to temporary buffer
-    std::vector<float> signal(inputData, inputData + numSamples);
+    // ✅ OPTIMIZATION: Use pre-allocated buffer instead of std::vector allocation
+    juce::FloatVectorOperations::copy(tempCrossoverBuffer.data(), inputData, numSamples);
 
     // Crossover frequencies (100Hz, 1kHz, 8kHz)
     const std::array<float, 3> crossoverFreqs = {100.0f, 1000.0f, 8000.0f};
 
     // Band 0: LP @ 100Hz
-    bandSignals[0] = signal;
+    juce::FloatVectorOperations::copy(bandSignals[0].data(), tempCrossoverBuffer.data(), numSamples);
     applyButterworth(bandSignals[0].data(), numSamples, crossoverFreqs[0], false,
                      crossovers[0][channel].lowpass[0]);
     applyButterworth(bandSignals[0].data(), numSamples, crossoverFreqs[0], false,
                      crossovers[0][channel].lowpass[1]);
 
     // Band 1: BP 100Hz - 1kHz (HP @ 100Hz, LP @ 1kHz)
-    bandSignals[1] = signal;
+    juce::FloatVectorOperations::copy(bandSignals[1].data(), tempCrossoverBuffer.data(), numSamples);
     applyButterworth(bandSignals[1].data(), numSamples, crossoverFreqs[0], true,
                      crossovers[0][channel].highpass[0]);
     applyButterworth(bandSignals[1].data(), numSamples, crossoverFreqs[0], true,
@@ -264,7 +267,7 @@ void MultibandCompressor::splitIntoBands(const juce::AudioBuffer<float>& input,
                      crossovers[1][channel].lowpass[1]);
 
     // Band 2: BP 1kHz - 8kHz
-    bandSignals[2] = signal;
+    juce::FloatVectorOperations::copy(bandSignals[2].data(), tempCrossoverBuffer.data(), numSamples);
     applyButterworth(bandSignals[2].data(), numSamples, crossoverFreqs[1], true,
                      crossovers[1][channel].highpass[0]);
     applyButterworth(bandSignals[2].data(), numSamples, crossoverFreqs[1], true,
@@ -275,7 +278,7 @@ void MultibandCompressor::splitIntoBands(const juce::AudioBuffer<float>& input,
                      crossovers[2][channel].lowpass[1]);
 
     // Band 3: HP @ 8kHz
-    bandSignals[3] = signal;
+    juce::FloatVectorOperations::copy(bandSignals[3].data(), tempCrossoverBuffer.data(), numSamples);
     applyButterworth(bandSignals[3].data(), numSamples, crossoverFreqs[2], true,
                      crossovers[2][channel].highpass[0]);
     applyButterworth(bandSignals[3].data(), numSamples, crossoverFreqs[2], true,

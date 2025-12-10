@@ -154,6 +154,9 @@ private:
     // Temporary buffers for band signals
     std::array<std::vector<float>, 4> bandBuffers;  // One buffer per band
 
+    // ✅ OPTIMIZATION: Pre-allocated temp buffer for crossover processing
+    std::vector<float> tempCrossoverBuffer;
+
     //==========================================================================
     // Internal Methods
     //==========================================================================

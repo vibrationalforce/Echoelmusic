@@ -55,9 +55,12 @@ void TransientDesigner::setClippingProtection(bool enabled)
 
 void TransientDesigner::prepare(double sampleRate, int maxBlockSize)
 {
-    juce::ignoreUnused(maxBlockSize);
-
     currentSampleRate = sampleRate;
+
+    // ✅ OPTIMIZATION: Pre-allocate buffer to avoid audio thread allocation
+    dryBuffer.setSize(2, maxBlockSize);
+    dryBuffer.clear();
+
     updateCoefficients();
     reset();
 }
@@ -98,9 +101,11 @@ void TransientDesigner::process(juce::AudioBuffer<float>& buffer)
     float* leftChannel = buffer.getWritePointer(0);
     float* rightChannel = buffer.getWritePointer(1);
 
-    // Store dry signal for mixing
-    std::vector<float> dryLeft(leftChannel, leftChannel + numSamples);
-    std::vector<float> dryRight(rightChannel, rightChannel + numSamples);
+    // ✅ OPTIMIZATION: Use pre-allocated buffer instead of std::vector allocation
+    const float* dryLeft = dryBuffer.getReadPointer(0);
+    const float* dryRight = dryBuffer.getReadPointer(1);
+    juce::FloatVectorOperations::copy(dryBuffer.getWritePointer(0), leftChannel, numSamples);
+    juce::FloatVectorOperations::copy(dryBuffer.getWritePointer(1), rightChannel, numSamples);
 
     // Process based on mode
     switch (mode)
@@ -115,25 +120,24 @@ void TransientDesigner::process(juce::AudioBuffer<float>& buffer)
             break;
     }
 
-    // Apply mix (dry/wet)
+    // ✅ SIMD OPTIMIZATION: Apply mix (dry/wet) using vectorized operations
     if (mix < 1.0f || mode == Mode::Parallel)
     {
-        for (int i = 0; i < numSamples; ++i)
-        {
-            leftChannel[i] = dryLeft[i] * (1.0f - mix) + leftChannel[i] * mix;
-            rightChannel[i] = dryRight[i] * (1.0f - mix) + rightChannel[i] * mix;
-        }
+        const float dryGain = 1.0f - mix;
+        // Left: wet * mix + dry * (1-mix)
+        juce::FloatVectorOperations::multiply(leftChannel, mix, numSamples);
+        juce::FloatVectorOperations::addWithMultiply(leftChannel, dryLeft, dryGain, numSamples);
+        // Right: wet * mix + dry * (1-mix)
+        juce::FloatVectorOperations::multiply(rightChannel, mix, numSamples);
+        juce::FloatVectorOperations::addWithMultiply(rightChannel, dryRight, dryGain, numSamples);
     }
 
-    // Clipping protection
+    // ✅ SIMD OPTIMIZATION: Clipping protection using vectorized clip
     if (clippingProtection)
     {
         const float ceiling = 0.99f;
-        for (int i = 0; i < numSamples; ++i)
-        {
-            leftChannel[i] = juce::jlimit(-ceiling, ceiling, leftChannel[i]);
-            rightChannel[i] = juce::jlimit(-ceiling, ceiling, rightChannel[i]);
-        }
+        juce::FloatVectorOperations::clip(leftChannel, leftChannel, -ceiling, ceiling, numSamples);
+        juce::FloatVectorOperations::clip(rightChannel, rightChannel, -ceiling, ceiling, numSamples);
     }
 }
 
