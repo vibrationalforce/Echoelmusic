@@ -427,24 +427,32 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
         guard let format = Self.defaultFormat else { return }
 
         // Output bus (all types have output)
-        let outputBus = try? AUAudioUnitBus(format: format)
-        if let bus = outputBus {
+        // ✅ ERROR HANDLING: Log audio bus creation failures instead of silently ignoring
+        do {
+            let outputBus = try AUAudioUnitBus(format: format)
             _outputBusArray = AUAudioUnitBusArray(
                 audioUnit: self,
                 busType: .output,
-                busses: [bus]
+                busses: [outputBus]
             )
+        } catch {
+            print("❌ EchoelmusicAudioUnit: Failed to create output bus: \(error.localizedDescription)")
+            // Create empty bus array as fallback - host will see the issue
+            _outputBusArray = AUAudioUnitBusArray(audioUnit: self, busType: .output, busses: [])
         }
 
         // Input bus (effects have input)
         if auType == .effect {
-            let inputBus = try? AUAudioUnitBus(format: format)
-            if let bus = inputBus {
+            do {
+                let inputBus = try AUAudioUnitBus(format: format)
                 _inputBusArray = AUAudioUnitBusArray(
                     audioUnit: self,
                     busType: .input,
-                    busses: [bus]
+                    busses: [inputBus]
                 )
+            } catch {
+                print("❌ EchoelmusicAudioUnit: Failed to create input bus: \(error.localizedDescription)")
+                _inputBusArray = AUAudioUnitBusArray(audioUnit: self, busType: .input, busses: [])
             }
         } else {
             _inputBusArray = AUAudioUnitBusArray(

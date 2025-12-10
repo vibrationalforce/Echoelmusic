@@ -851,9 +851,18 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
                 audioEngine.pause()
             }
         case .ended:
-            // Resume audio
+            // Resume audio - ✅ ERROR HANDLING: Log restart failures
             if !audioEngine.isRunning {
-                try? audioEngine.start()
+                do {
+                    try audioEngine.start()
+                    print("✅ UltraLowLatencyBluetoothEngine: Audio resumed after interruption")
+                } catch {
+                    print("❌ UltraLowLatencyBluetoothEngine: Failed to restart after interruption: \(error.localizedDescription)")
+                    // Notify delegate/observers of critical failure
+                    Task { @MainActor in
+                        self.connectionState = .error
+                    }
+                }
             }
         @unknown default:
             break
