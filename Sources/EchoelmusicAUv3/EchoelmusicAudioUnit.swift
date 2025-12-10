@@ -560,22 +560,22 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
                 }
             }
 
-            // Process MIDI events
-            var event = realtimeEventListHead?.pointee
-            while event != nil {
-                switch event!.head.eventType {
+            // Process MIDI events - ✅ SAFETY: Replaced force unwraps with guard let
+            var eventPtr = realtimeEventListHead?.pointee
+            while let event = eventPtr {
+                switch event.head.eventType {
                 case .MIDI:
-                    let midiEvent = event!.MIDI
+                    let midiEvent = event.MIDI
                     kernel.handleMIDI(
                         status: midiEvent.data.0,
                         data1: midiEvent.data.1,
                         data2: midiEvent.data.2,
-                        sampleOffset: AUEventSampleTime(event!.head.eventSampleTime)
+                        sampleOffset: AUEventSampleTime(event.head.eventSampleTime)
                     )
                 case .midiSysEx:
                     break
                 case .parameter:
-                    let paramEvent = event!.parameter
+                    let paramEvent = event.parameter
                     kernel.setParameter(
                         address: paramEvent.parameterAddress,
                         value: paramEvent.value
@@ -583,7 +583,7 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
                 default:
                     break
                 }
-                event = event!.head.next?.pointee
+                eventPtr = event.head.next?.pointee
             }
 
             // Render audio

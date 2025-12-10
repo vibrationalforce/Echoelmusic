@@ -111,7 +111,8 @@ class GestureToAudioMapper {
                     target: Float(targetCutoff),
                     factor: smoothingFactor
                 )
-                lastFilterCutoff = result.filterCutoff!
+                // ✅ SAFETY: Use nil-coalescing instead of force unwrap
+                lastFilterCutoff = result.filterCutoff ?? lastFilterCutoff
             }
 
         case .spread:
@@ -123,7 +124,8 @@ class GestureToAudioMapper {
                     target: targetSize,
                     factor: smoothingFactor
                 )
-                lastReverbSize = result.reverbSize!
+                // ✅ SAFETY: Use nil-coalescing instead of force unwrap
+                lastReverbSize = result.reverbSize ?? lastReverbSize
             }
 
         case .fist:
@@ -173,7 +175,8 @@ class GestureToAudioMapper {
                     target: Float(targetResonance),
                     factor: smoothingFactor
                 )
-                lastFilterResonance = result.filterResonance!
+                // ✅ SAFETY: Use nil-coalescing instead of force unwrap
+                lastFilterResonance = result.filterResonance ?? lastFilterResonance
             }
 
         case .spread:
@@ -185,7 +188,8 @@ class GestureToAudioMapper {
                     target: targetWetness,
                     factor: smoothingFactor
                 )
-                lastReverbWetness = result.reverbWetness!
+                // ✅ SAFETY: Use nil-coalescing instead of force unwrap
+                lastReverbWetness = result.reverbWetness ?? lastReverbWetness
             }
 
         case .fist:

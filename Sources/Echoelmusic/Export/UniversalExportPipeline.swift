@@ -560,9 +560,14 @@ class UniversalExportPipeline: ObservableObject {
         currentExport = job
         exportProgress = 1.0
 
-        let duration = job.endTime!.timeIntervalSince(job.startTime!)
-        print("✅ Export completed in \(String(format: "%.1f", duration))s")
-        print("📁 File size: \(ByteCountFormatter.string(fromByteCount: job.fileSize!, countStyle: .file))")
+        // ✅ SAFETY: Use nil-coalescing instead of force unwrap
+        if let endTime = job.endTime, let startTime = job.startTime {
+            let duration = endTime.timeIntervalSince(startTime)
+            print("✅ Export completed in \(String(format: "%.1f", duration))s")
+        }
+        if let fileSize = job.fileSize {
+            print("📁 File size: \(ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file))")
+        }
 
         return true
     }

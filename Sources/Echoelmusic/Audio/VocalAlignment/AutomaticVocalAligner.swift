@@ -115,11 +115,11 @@ class AutomaticVocalAligner: ObservableObject {
         let track = try await loadAudioFile(url: url, name: "Guide")
         guideTrack = track
 
-        // Analyze guide track
-        if var guide = guideTrack {
-            guide.onsetTimes = await detectOnsets(buffer: guide.audioBuffer!)
-            guide.energyProfile = await computeEnergyEnvelope(buffer: guide.audioBuffer!)
-            guide.pitchProfile = await detectPitch(buffer: guide.audioBuffer!)
+        // Analyze guide track - ✅ SAFETY: Replaced force unwraps with guard let
+        if var guide = guideTrack, let audioBuffer = guide.audioBuffer {
+            guide.onsetTimes = await detectOnsets(buffer: audioBuffer)
+            guide.energyProfile = await computeEnergyEnvelope(buffer: audioBuffer)
+            guide.pitchProfile = await detectPitch(buffer: audioBuffer)
             guideTrack = guide
         }
 
@@ -130,9 +130,12 @@ class AutomaticVocalAligner: ObservableObject {
         let track = try await loadAudioFile(url: url, name: "Dub \(dubTracks.count + 1)")
 
         var analyzedTrack = track
-        analyzedTrack.onsetTimes = await detectOnsets(buffer: track.audioBuffer!)
-        analyzedTrack.energyProfile = await computeEnergyEnvelope(buffer: track.audioBuffer!)
-        analyzedTrack.pitchProfile = await detectPitch(buffer: track.audioBuffer!)
+        // ✅ SAFETY: Replaced force unwraps with guard let
+        if let audioBuffer = track.audioBuffer {
+            analyzedTrack.onsetTimes = await detectOnsets(buffer: audioBuffer)
+            analyzedTrack.energyProfile = await computeEnergyEnvelope(buffer: audioBuffer)
+            analyzedTrack.pitchProfile = await detectPitch(buffer: audioBuffer)
+        }
 
         dubTracks.append(analyzedTrack)
 
@@ -217,9 +220,12 @@ class AutomaticVocalAligner: ObservableObject {
             tightness: tightness
         )
 
-        // Step 4: Time-stretch the dub track
+        // Step 4: Time-stretch the dub track - ✅ SAFETY: Guard against nil buffer
+        guard let dubBuffer = dub.audioBuffer else {
+            throw AlignmentError.bufferCreationFailed
+        }
         let alignedBuffer = try await applyTimeWarp(
-            buffer: dub.audioBuffer!,
+            buffer: dubBuffer,
             warpMap: adjustedWarpMap,
             preserveFormants: preserveFormants
         )
