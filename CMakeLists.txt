@@ -259,6 +259,8 @@ target_sources(Echoelmusic
 
         # UI - Main Window (NEW! 2025-11-12) ✅ TESTED
         Sources/UI/MainWindow.cpp
+        Sources/UI/MixerView.cpp              # 🎚️ Professional mixer console
+        Sources/UI/VisualizerBridge.cpp       # 🎨 Desktop visualizer (12 modes)
 
         # =====================================================================
         # PHASE 2: DSP EFFECTS (All JUCE 7 Compatible! 🎉)
@@ -388,6 +390,7 @@ target_include_directories(Echoelmusic
     PUBLIC
         Sources
         Sources/Plugin
+        Sources/UI
         Sources/MIDI
         Sources/DSP
         Sources/DSP/Effects
