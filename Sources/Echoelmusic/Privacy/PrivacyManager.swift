@@ -2,6 +2,7 @@ import Foundation
 import CryptoKit
 import Combine
 import Security
+import os.log
 
 /// Privacy Manager - Local-First, Privacy-Preserving Architecture
 /// Zero-knowledge design: Your data never leaves your device without explicit consent
@@ -17,6 +18,10 @@ import Security
 /// 7. No Third-Party Trackers: Zero analytics SDKs, zero ad networks
 @MainActor
 class PrivacyManager: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "Privacy")
 
     // MARK: - Published State
 
@@ -126,10 +131,7 @@ class PrivacyManager: ObservableObject {
         loadPrivacySettings()
         generateEncryptionKey()
 
-        print("✅ Privacy Manager: Initialized")
-        print("🔒 Privacy Mode: \(privacyMode.rawValue)")
-        print("🏠 All data stored locally first")
-        print("🚫 Zero third-party trackers")
+        logger.info("Privacy Manager: Initialized - Mode: \(self.privacyMode.rawValue, privacy: .public), Local-first, Zero trackers")
     }
 
     // MARK: - Load Privacy Settings
@@ -172,12 +174,12 @@ class PrivacyManager: ObservableObject {
         // Apply mode constraints
         if !mode.allowsCloudSync {
             cloudSyncEnabled = false
-            print("🔒 Cloud sync disabled (privacy mode: \(mode.rawValue))")
+            logger.info("Cloud sync disabled (privacy mode: \(mode.rawValue, privacy: .public))")
         }
 
         if !mode.allowsAnalytics {
             analyticsEnabled = false
-            print("🔒 Analytics disabled (privacy mode: \(mode.rawValue))")
+            logger.info("Analytics disabled (privacy mode: \(mode.rawValue, privacy: .public))")
         }
 
         savePrivacySettings()
@@ -189,11 +191,11 @@ class PrivacyManager: ObservableObject {
         // Generate or load encryption key from Keychain
         if let keyData = loadKeyFromKeychain() {
             encryptionKey = SymmetricKey(data: keyData)
-            print("🔑 Encryption key loaded from Keychain")
+            logger.info("Encryption key loaded from Keychain")
         } else {
             encryptionKey = SymmetricKey(size: .bits256)
             saveKeyToKeychain(encryptionKey!)
-            print("🔑 New encryption key generated")
+            logger.info("New encryption key generated")
         }
     }
 
@@ -210,7 +212,7 @@ class PrivacyManager: ObservableObject {
         let status = SecItemCopyMatching(query as CFDictionary, &result)
 
         guard status == errSecSuccess else {
-            print("🔐 Keychain load failed or key not found: \(status)")
+            logger.debug("Keychain load failed or key not found: \(status, privacy: .public)")
             return nil
         }
 
@@ -239,9 +241,9 @@ class PrivacyManager: ObservableObject {
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
         if status == errSecSuccess {
-            print("🔐 Encryption key saved to Keychain securely")
+            logger.info("Encryption key saved to Keychain securely")
         } else {
-            print("⚠️ Keychain save failed: \(status)")
+            logger.warning("Keychain save failed: \(status, privacy: .public)")
         }
     }
 
@@ -280,7 +282,7 @@ class PrivacyManager: ObservableObject {
     // MARK: - Data Export (GDPR Right to Data Portability)
 
     func exportAllUserData() async throws -> URL {
-        print("📦 Exporting all user data...")
+        logger.info("Exporting all user data...")
 
         var exportData: [String: Any] = [:]
 
@@ -305,7 +307,7 @@ class PrivacyManager: ObservableObject {
 
         try jsonData.write(to: tempURL)
 
-        print("✅ User data exported to: \(tempURL.path)")
+        logger.info("User data exported to: \(tempURL.path, privacy: .public)")
         return tempURL
     }
 
@@ -341,7 +343,7 @@ class PrivacyManager: ObservableObject {
     // MARK: - Data Deletion (GDPR Right to be Forgotten)
 
     func deleteAllUserData() async throws {
-        print("🗑️ Deleting all user data...")
+        logger.info("Deleting all user data...")
 
         // Delete local database
         try await deleteLocalDatabase()
@@ -358,22 +360,22 @@ class PrivacyManager: ObservableObject {
         // Delete Keychain
         deleteEncryptionKeyFromKeychain()
 
-        print("✅ All user data deleted")
+        logger.info("All user data deleted")
     }
 
     private func deleteLocalDatabase() async throws {
         // Delete local SQLite/CoreData database
-        print("   Deleted local database")
+        logger.debug("Deleted local database")
     }
 
     private func deleteCloudData() async throws {
         // Delete iCloud data
-        print("   Deleted cloud data")
+        logger.debug("Deleted cloud data")
     }
 
     private func deleteEncryptionKeyFromKeychain() {
         UserDefaults.standard.removeObject(forKey: "encryptionKey")
-        print("   Deleted encryption key")
+        logger.debug("Deleted encryption key")
     }
 
     // MARK: - Privacy Nutrition Label Data
@@ -488,11 +490,7 @@ class PrivacyManager: ObservableObject {
             cloudStorageUsed = await calculateCloudStorageSize()
         }
 
-        print("💾 Storage Usage:")
-        print("   Local: \(ByteCountFormatter.string(fromByteCount: localStorageUsed, countStyle: .file))")
-        if cloudSyncEnabled {
-            print("   Cloud: \(ByteCountFormatter.string(fromByteCount: cloudStorageUsed, countStyle: .file))")
-        }
+        logger.info("Storage Usage - Local: \(ByteCountFormatter.string(fromByteCount: self.localStorageUsed, countStyle: .file), privacy: .public)\(self.cloudSyncEnabled ? ", Cloud: \(ByteCountFormatter.string(fromByteCount: self.cloudStorageUsed, countStyle: .file))" : "", privacy: .public)")
     }
 
     private func calculateLocalStorageSize() async -> Int64 {
