@@ -22,6 +22,13 @@ public enum LogCategory: String, CaseIterable {
     case system = "System"
     case ui = "UI"
     case security = "Security"
+    case export = "Export"
+    case social = "Social"
+    case cloud = "Cloud"
+    case privacy = "Privacy"
+    case business = "Business"
+    case integration = "Integration"
+    case accessibility = "A11y"
 }
 
 // MARK: - Log Level
@@ -310,5 +317,122 @@ extension Logger {
         case .error: error(message, category: .performance)
         case .critical: critical(message, category: .performance)
         }
+    }
+
+    /// Log visual/rendering message
+    public static func visual(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .visual, file: #file, function: #function, line: #line)
+    }
+
+    /// Log biofeedback message
+    public static func bio(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .biofeedback, file: #file, function: #function, line: #line)
+    }
+
+    /// Log network message
+    public static func network(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .network, file: #file, function: #function, line: #line)
+    }
+
+    /// Log recording message
+    public static func recording(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .recording, file: #file, function: #function, line: #line)
+    }
+
+    /// Log video message
+    public static func video(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .video, file: #file, function: #function, line: #line)
+    }
+
+    /// Log security message
+    public static func security(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .security, file: #file, function: #function, line: #line)
+    }
+
+    /// Log export message
+    public static func export(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .export, file: #file, function: #function, line: #line)
+    }
+
+    /// Log social/sharing message
+    public static func social(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .social, file: #file, function: #function, line: #line)
+    }
+
+    /// Log cloud sync message
+    public static func cloud(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .cloud, file: #file, function: #function, line: #line)
+    }
+
+    /// Log privacy message
+    public static func privacy(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .privacy, file: #file, function: #function, line: #line)
+    }
+
+    /// Log business/subscription message
+    public static func business(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .business, file: #file, function: #function, line: #line)
+    }
+
+    /// Log device integration message
+    public static func integration(_ message: String, level: LogLevel = .info) {
+        log(level: level, message: message, category: .integration, file: #file, function: #function, line: #line)
+    }
+
+    /// Log spatial audio message
+    public static func spatial(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .spatial, file: #file, function: #function, line: #line)
+    }
+
+    /// Log UI message
+    public static func ui(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .ui, file: #file, function: #function, line: #line)
+    }
+
+    /// Log system message
+    public static func system(_ message: String, level: LogLevel = .info) {
+        log(level: level, message: message, category: .system, file: #file, function: #function, line: #line)
+    }
+
+    /// Log LED message
+    public static func led(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .led, file: #file, function: #function, line: #line)
+    }
+
+    /// Log accessibility message
+    public static func a11y(_ message: String, level: LogLevel = .debug) {
+        log(level: level, message: message, category: .accessibility, file: #file, function: #function, line: #line)
+    }
+
+    // MARK: - Emoji-free logging (production style)
+
+    /// Log success message
+    public static func success(_ message: String, category: LogCategory) {
+        info("SUCCESS: \(message)", category: category)
+    }
+
+    /// Log failure message
+    public static func failure(_ message: String, category: LogCategory, error: Error? = nil) {
+        self.error("FAILURE: \(message)", category: category, error: error)
+    }
+
+    /// Log connection status
+    public static func connected(_ device: String, category: LogCategory = .integration) {
+        info("Connected: \(device)", category: category)
+    }
+
+    /// Log disconnection
+    public static func disconnected(_ device: String, category: LogCategory = .integration) {
+        info("Disconnected: \(device)", category: category)
+    }
+
+    /// Log initialization
+    public static func initialized(_ component: String, category: LogCategory = .system) {
+        info("Initialized: \(component)", category: category)
+    }
+
+    /// Log configuration
+    public static func configured(_ setting: String, value: Any, category: LogCategory = .system) {
+        debug("Configured \(setting) = \(value)", category: category)
     }
 }
