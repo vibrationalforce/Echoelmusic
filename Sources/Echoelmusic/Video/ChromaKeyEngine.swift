@@ -5,12 +5,17 @@ import CoreImage
 import AVFoundation
 import Combine
 import SwiftUI
+import os.log
 
 /// Chroma Key Engine with 6-Pass Metal Pipeline for Real-Time Greenscreen/Bluescreen
 /// Supports iOS 15+ with optimized performance for 120 FPS @ 1080p on iPhone 16 Pro
 /// Features: Auto-Calibration, Multi-Color Key, Bio-Reactive Backgrounds
 @MainActor
 class ChromaKeyEngine: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "ChromaKeyEngine")
 
     // MARK: - Published State
 
@@ -125,21 +130,19 @@ class ChromaKeyEngine: ObservableObject {
     init?() {
         // Initialize Metal device
         guard let device = MTLCreateSystemDefaultDevice() else {
-            print("❌ ChromaKeyEngine: Metal not supported on this device")
+            // Cannot use logger in init before self is fully initialized
             return nil
         }
         self.device = device
 
         // Create command queue
         guard let queue = device.makeCommandQueue() else {
-            print("❌ ChromaKeyEngine: Failed to create command queue")
             return nil
         }
         self.commandQueue = queue
 
         // Load Metal library
         guard let library = device.makeDefaultLibrary() else {
-            print("❌ ChromaKeyEngine: Failed to load Metal library")
             return nil
         }
         self.library = library
@@ -153,9 +156,9 @@ class ChromaKeyEngine: ObservableObject {
         // Compile shader pipeline
         do {
             try compilePipeline()
-            print("✅ ChromaKeyEngine: Initialized successfully")
+            logger.info("Initialized successfully")
         } catch {
-            print("❌ ChromaKeyEngine: Failed to compile shaders - \(error)")
+            logger.error("Failed to compile shaders - \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
@@ -174,7 +177,7 @@ class ChromaKeyEngine: ObservableObject {
 
             let pipelineState = try device.makeComputePipelineState(function: function)
             pipelineStates[pass] = pipelineState
-            print("✅ ChromaKeyEngine: Compiled shader pass '\(pass.rawValue)'")
+            logger.debug("Compiled shader pass '\(pass.rawValue, privacy: .public)'")
         }
     }
 
@@ -183,7 +186,7 @@ class ChromaKeyEngine: ObservableObject {
     func start() {
         guard !isActive else { return }
         isActive = true
-        print("▶️ ChromaKeyEngine: Started")
+        logger.info("Started")
     }
 
     func stop() {
@@ -197,7 +200,7 @@ class ChromaKeyEngine: ObservableObject {
         despilledTexture = nil
         compositedTexture = nil
 
-        print("⏹️ ChromaKeyEngine: Stopped")
+        logger.info("Stopped")
     }
 
     // MARK: - Auto-Calibration (9-Point Sampling)
@@ -247,9 +250,7 @@ class ChromaKeyEngine: ObservableObject {
 
         isCalibrated = true
         let elapsedTime = (CFAbsoluteTimeGetCurrent() - startTime) * 1000.0
-        print("✅ ChromaKeyEngine: Auto-calibration completed in \(String(format: "%.1f", elapsedTime))ms")
-        print("   - Tolerance: \(String(format: "%.3f", tolerance))")
-        print("   - Sampled \(calibrationPoints.count) points")
+        logger.info("Auto-calibration completed in \(String(format: "%.1f", elapsedTime), privacy: .public)ms - Tolerance: \(String(format: "%.3f", tolerance), privacy: .public) - Sampled \(calibrationPoints.count, privacy: .public) points")
     }
 
     // MARK: - Color Sampling
@@ -353,7 +354,7 @@ class ChromaKeyEngine: ObservableObject {
         processingTimeMs = elapsedTime
         currentFPS = 1000.0 / elapsedTime
 
-        print("🎬 ChromaKeyEngine: Processed frame in \(String(format: "%.1f", elapsedTime))ms (\(String(format: "%.0f", currentFPS)) FPS)")
+        logger.debug("Processed frame in \(String(format: "%.1f", elapsedTime), privacy: .public)ms (\(String(format: "%.0f", currentFPS), privacy: .public) FPS)")
 
         // Store for reuse
         self.sourceTexture = sourceTexture
@@ -494,7 +495,7 @@ class ChromaKeyEngine: ObservableObject {
         despillStrength = preset.despillStrength
         lightWrapAmount = preset.lightWrapAmount
 
-        print("🎨 ChromaKeyEngine: Applied preset '\(preset.name)'")
+        logger.info("Applied preset '\(preset.name, privacy: .public)'")
     }
 
     // MARK: - Shader Parameters (C-compatible struct)

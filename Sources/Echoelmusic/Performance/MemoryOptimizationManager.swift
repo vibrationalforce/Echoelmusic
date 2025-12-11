@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import Accelerate
+import os.log
 
 /// Memory Optimization Manager für Low-RAM-Geräte
 ///
@@ -20,6 +21,10 @@ import Accelerate
 @MainActor
 @Observable
 class MemoryOptimizationManager {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "MemoryOptimization")
 
     // MARK: - Published Properties
 
@@ -205,7 +210,7 @@ class MemoryOptimizationManager {
                 return nil
             }
 
-            print("🗜️ Compressed \(data.count) → \(compressedSize) bytes (ratio: \(String(format: "%.2f", Float(compressedSize) / Float(data.count))))")
+            // Note: Cannot log here as this is in a nested class without logger access
 
             return compressedData
         }
@@ -394,13 +399,13 @@ class MemoryOptimizationManager {
         guard isMemoryOptimizationEnabled else { return }
 
         if memoryUsage.isPressured {
-            print("⚠️ Memory pressure detected: \(String(format: "%.1f%%", memoryUsage.usagePercentage * 100))")
+            logger.warning("Memory pressure detected: \(String(format: "%.1f%%", memoryUsage.usagePercentage * 100), privacy: .public)")
             reduceCacheSize(by: 0.5) // Reduziere Cache um 50%
         }
     }
 
     private func handleMemoryWarning() {
-        print("🚨 Memory Warning! Performing aggressive cleanup...")
+        logger.error("Memory Warning! Performing aggressive cleanup...")
 
         // Sofortige Notfall-Maßnahmen
         clearAllCaches()
@@ -408,7 +413,7 @@ class MemoryOptimizationManager {
         releaseUnusedPools()
 
         updateMemoryUsage()
-        print("✅ Cleanup completed. Memory usage: \(String(format: "%.1f%%", memoryUsage.usagePercentage * 100))")
+        logger.info("Cleanup completed. Memory usage: \(String(format: "%.1f%%", memoryUsage.usagePercentage * 100), privacy: .public)")
     }
 
     // MARK: - Cache Management
@@ -462,7 +467,7 @@ class MemoryOptimizationManager {
             cacheStats.totalItems -= 1
         }
 
-        print("🧹 Evicted \(cacheStats.evictions) items, freed \(freedSpace / 1024) KB")
+        logger.debug("Evicted \(cacheStats.evictions, privacy: .public) items, freed \(freedSpace / 1024, privacy: .public) KB")
     }
 
     func clearCache(priority: CachedItem.Priority? = nil) {
@@ -510,7 +515,7 @@ class MemoryOptimizationManager {
 
         if let mmFile = MemoryMappedFile(path: path) {
             memoryMappedFiles[path] = mmFile
-            print("📂 Memory-mapped file: \(path) (\(mmFile.size / 1024) KB)")
+            logger.debug("Memory-mapped file: \(path, privacy: .public) (\(mmFile.size / 1024, privacy: .public) KB)")
             return true
         }
 
@@ -550,7 +555,7 @@ class MemoryOptimizationManager {
                 let savings = item.data.count - compressed.count
                 if savings > 0 {
                     item.data = compressed
-                    print("🗜️ Compressed \(item.key): saved \(savings / 1024) KB")
+                    logger.debug("Compressed \(item.key, privacy: .public): saved \(savings / 1024, privacy: .public) KB")
                 }
             }
         }
