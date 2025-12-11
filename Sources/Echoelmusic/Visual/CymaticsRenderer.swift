@@ -1,11 +1,16 @@
 import Foundation
 import MetalKit
 import SwiftUI
+import os.log
 
 /// Metal-based Cymatics Renderer
 /// Renders real-time audio-reactive cymatics patterns using GPU shaders
 @MainActor
 class CymaticsRenderer: NSObject, MTKViewDelegate {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "CymaticsRenderer")
 
     // MARK: - Metal Components
 
@@ -72,7 +77,7 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
     private func setupMetal() {
         // Get default Metal device
         guard let device = MTLCreateSystemDefaultDevice() else {
-            print("❌ Metal is not supported on this device")
+            logger.error("Metal is not supported on this device")
             return
         }
 
@@ -83,9 +88,9 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
         do {
             try createPipeline()
             createVertexBuffer()
-            print("✅ Metal Cymatics Renderer initialized")
+            logger.info("Metal Cymatics Renderer initialized")
         } catch {
-            print("❌ Failed to setup Metal pipeline: \(error)")
+            logger.error("Failed to setup Metal pipeline: \(error.localizedDescription, privacy: .public)")
         }
     }
 
