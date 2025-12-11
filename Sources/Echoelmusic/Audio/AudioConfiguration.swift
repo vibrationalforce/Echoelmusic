@@ -1,9 +1,14 @@
 import Foundation
 import AVFoundation
+import os.log
 
 /// Audio configuration constants and optimization settings
 /// Target: < 5ms latency for real-time performance
 enum AudioConfiguration {
+
+    // MARK: - Logger
+
+    private static let logger = Logger(subsystem: "com.echoelmusic", category: "AudioConfiguration")
 
     // MARK: - Sample Rate
 
@@ -84,12 +89,7 @@ enum AudioConfiguration {
         // Activate session
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
 
-        print("🎵 Audio Session Configured:")
-        print("   Sample Rate: \(audioSession.sampleRate) Hz")
-        print("   IO Buffer Duration: \(audioSession.ioBufferDuration * 1000) ms")
-        print("   Input Latency: \(audioSession.inputLatency * 1000) ms")
-        print("   Output Latency: \(audioSession.outputLatency * 1000) ms")
-        print("   Total Latency: \((audioSession.inputLatency + audioSession.outputLatency + audioSession.ioBufferDuration) * 1000) ms")
+        logger.info("Audio Session Configured: Sample Rate: \(audioSession.sampleRate, privacy: .public) Hz | IO Buffer: \(audioSession.ioBufferDuration * 1000, privacy: .public) ms | Total Latency: \((audioSession.inputLatency + audioSession.outputLatency + audioSession.ioBufferDuration) * 1000, privacy: .public) ms")
     }
 
 
@@ -121,7 +121,7 @@ enum AudioConfiguration {
     static func setLatencyMode(_ mode: LatencyMode) throws {
         currentBufferSize = mode.bufferSize
         try configureAudioSession()
-        print("🎵 Latency mode set to: \(mode.description)")
+        logger.info("Latency mode set to: \(mode.description, privacy: .public)")
     }
 
 
@@ -167,9 +167,9 @@ enum AudioConfiguration {
         }
 
         if result == KERN_SUCCESS {
-            print("✅ Real-time audio thread priority set")
+            logger.info("Real-time audio thread priority set")
         } else {
-            print("⚠️  Failed to set audio thread priority: \(result)")
+            logger.warning("Failed to set audio thread priority: \(result, privacy: .public)")
         }
     }
 

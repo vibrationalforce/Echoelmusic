@@ -5,12 +5,17 @@ import Combine
 import ImageIO
 import MobileCoreServices
 import UIKit
+import os.log
 
 /// Video Export Manager with H.264/H.265/ProRes/Dolby Vision HDR support
 /// Optimized for hardware encoding on A12+ chips
 /// Batch export to multiple resolutions simultaneously
 @MainActor
 class VideoExportManager: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "VideoExportManager")
 
     // MARK: - Published State
 
@@ -283,7 +288,7 @@ class VideoExportManager: ObservableObject {
             // Check result
             switch exportSession.status {
             case .completed:
-                print("✅ VideoExportManager: Export completed - \(outputURL.lastPathComponent)")
+                logger.info("Export completed - \(outputURL.lastPathComponent, privacy: .public)")
             case .failed:
                 throw exportSession.error ?? ExportError.exportFailed
             case .cancelled:
@@ -386,7 +391,7 @@ class VideoExportManager: ObservableObject {
             }
         }
 
-        print("✅ VideoExportManager: Hardware export completed")
+        logger.info("Hardware export completed")
     }
 
     // MARK: - Build Video Settings
@@ -515,12 +520,12 @@ class VideoExportManager: ObservableObject {
             } catch {
                 job.status = .failed(error)
                 exportQueue[index] = job
-                print("❌ VideoExportManager: Batch export failed for job \(index) - \(error)")
+                logger.error("Batch export failed for job \(index, privacy: .public) - \(error.localizedDescription, privacy: .public)")
             }
         }
 
         currentExport = nil
-        print("✅ VideoExportManager: Batch export completed - \(exportQueue.count) jobs")
+        logger.info("Batch export completed - \(exportQueue.count, privacy: .public) jobs")
     }
 
     // MARK: - Cancel Export
@@ -533,7 +538,7 @@ class VideoExportManager: ObservableObject {
         exportProgress = 0.0
         currentExportSession = nil
 
-        print("❌ VideoExportManager: Export cancelled")
+        logger.warning("Export cancelled")
     }
 
     // MARK: - PNG Sequence Export
@@ -586,13 +591,13 @@ class VideoExportManager: ObservableObject {
                 // Update progress
                 exportProgress = Double(frameIndex + 1) / Double(totalFrames)
             } catch {
-                print("⚠️ VideoExportManager: Failed to export frame \(frameIndex)")
+                logger.warning("Failed to export frame \(frameIndex, privacy: .public)")
             }
         }
 
         isExporting = false
         exportProgress = 1.0
-        print("✅ VideoExportManager: PNG sequence exported - \(totalFrames) frames to \(outputDirectory.lastPathComponent)")
+        logger.info("PNG sequence exported - \(totalFrames, privacy: .public) frames to \(outputDirectory.lastPathComponent, privacy: .public)")
     }
 
     // MARK: - Animated GIF Export
@@ -660,7 +665,7 @@ class VideoExportManager: ObservableObject {
                 // Update progress
                 exportProgress = Double(frameIndex + 1) / Double(totalFrames)
             } catch {
-                print("⚠️ VideoExportManager: Failed to add frame \(frameIndex) to GIF")
+                logger.warning("Failed to add frame \(frameIndex, privacy: .public) to GIF")
             }
         }
 
@@ -672,7 +677,7 @@ class VideoExportManager: ObservableObject {
 
         isExporting = false
         exportProgress = 1.0
-        print("✅ VideoExportManager: Animated GIF exported - \(totalFrames) frames to \(outputURL.lastPathComponent)")
+        logger.info("Animated GIF exported - \(totalFrames, privacy: .public) frames to \(outputURL.lastPathComponent, privacy: .public)")
     }
 }
 
