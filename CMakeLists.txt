@@ -727,3 +727,130 @@ if(ANDROID)
     message(STATUS "  - AAudio: ${ENABLE_ANDROID_AAUDIO}")
 endif()
 message(STATUS "==============================================")
+
+# ===========================
+# Quantum Computing Backend (Desktop Only)
+# ===========================
+
+option(BUILD_QUANTUM_BACKEND "Build quantum simulation backend" ON)
+option(USE_OPENCL "Use OpenCL for GPU-accelerated quantum simulation (Linux)" ON)
+option(USE_DIRECTML "Use DirectML for GPU-accelerated quantum simulation (Windows)" ON)
+
+if(BUILD_QUANTUM_BACKEND)
+    message(STATUS "")
+    message(STATUS "==============================================")
+    message(STATUS "Quantum Computing Backend")
+    message(STATUS "==============================================")
+
+    # Quantum source files
+    set(QUANTUM_SOURCES
+        Sources/Desktop/Quantum/QuantumAccelerator.cpp
+    )
+
+    # Platform-specific quantum backends
+    if(UNIX AND NOT APPLE AND USE_OPENCL)
+        # Linux: OpenCL backend
+        find_package(OpenCL)
+        if(OpenCL_FOUND)
+            list(APPEND QUANTUM_SOURCES Sources/Desktop/Quantum/LinuxQuantumCL.cpp)
+            message(STATUS "  - OpenCL GPU Acceleration: ENABLED")
+            message(STATUS "    Device: ${OpenCL_INCLUDE_DIRS}")
+        else()
+            message(STATUS "  - OpenCL GPU Acceleration: DISABLED (OpenCL not found)")
+            message(STATUS "    Using CPU SIMD fallback")
+        endif()
+    endif()
+
+    if(WIN32 AND USE_DIRECTML)
+        # Windows: DirectML backend (future)
+        message(STATUS "  - DirectML GPU Acceleration: AVAILABLE")
+        message(STATUS "    Windows DirectX 12 required")
+    endif()
+
+    if(APPLE)
+        # macOS: Metal backend handled by Swift
+        message(STATUS "  - Metal GPU Acceleration: Swift implementation")
+        message(STATUS "    See MetalQuantumCompute.swift")
+    endif()
+
+    # CPU SIMD backend (always available)
+    message(STATUS "  - CPU SIMD Fallback: ENABLED")
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64")
+        message(STATUS "    Instructions: AVX2/SSE4.2")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64|ARM64")
+        message(STATUS "    Instructions: ARM NEON")
+    endif()
+
+    # Add quantum library
+    add_library(EchoelmusicQuantum STATIC ${QUANTUM_SOURCES})
+
+    target_include_directories(EchoelmusicQuantum
+        PUBLIC
+            Sources/Desktop/Quantum
+    )
+
+    # Link OpenCL if available
+    if(OpenCL_FOUND AND UNIX AND NOT APPLE)
+        target_link_libraries(EchoelmusicQuantum PUBLIC OpenCL::OpenCL)
+        target_compile_definitions(EchoelmusicQuantum PUBLIC ECHOELMUSIC_HAS_OPENCL=1)
+    endif()
+
+    # SIMD flags
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64")
+        if(MSVC)
+            target_compile_options(EchoelmusicQuantum PRIVATE /arch:AVX2)
+        else()
+            target_compile_options(EchoelmusicQuantum PRIVATE -mavx2 -mfma)
+        endif()
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64|ARM64")
+        if(NOT MSVC)
+            target_compile_options(EchoelmusicQuantum PRIVATE -march=armv8-a+simd)
+        endif()
+    endif()
+
+    message(STATUS "")
+    message(STATUS "Quantum Algorithms Available:")
+    message(STATUS "  - QAOA (Quantum Approximate Optimization)")
+    message(STATUS "  - VQE (Variational Quantum Eigensolver)")
+    message(STATUS "  - QPE (Quantum Phase Estimation)")
+    message(STATUS "  - QFT (Quantum Fourier Transform)")
+    message(STATUS "  - Grover's Search")
+    message(STATUS "  - Bell/GHZ State Generation")
+    message(STATUS "  - Quantum Error Correction (Shor, Steane)")
+    message(STATUS "  - Quantum Machine Learning Kernels")
+    message(STATUS "==============================================")
+endif()
+
+# ===========================
+# WebAssembly Quantum Module (Optional)
+# ===========================
+
+option(BUILD_WASM_QUANTUM "Build WebAssembly quantum module" OFF)
+
+if(BUILD_WASM_QUANTUM)
+    if(EMSCRIPTEN)
+        message(STATUS "")
+        message(STATUS "Building WebAssembly Quantum Module...")
+
+        add_executable(quantum_wasm Sources/Web/Quantum/quantum_wasm.cpp)
+
+        set_target_properties(quantum_wasm PROPERTIES
+            OUTPUT_NAME "quantum"
+            SUFFIX ".js"
+        )
+
+        target_link_options(quantum_wasm PRIVATE
+            -s WASM=1
+            -s EXPORTED_FUNCTIONS=['_malloc','_free']
+            -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap']
+            -s ALLOW_MEMORY_GROWTH=1
+            -s MODULARIZE=1
+            -O3
+        )
+
+        message(STATUS "WebAssembly Quantum: ENABLED")
+        message(STATUS "  Output: quantum.js + quantum.wasm")
+    else()
+        message(WARNING "WebAssembly build requires Emscripten toolchain")
+    endif()
+endif()

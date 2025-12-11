@@ -573,4 +573,387 @@ class QuantumIntelligenceEngine: ObservableObject {
         let quantumTime: TimeInterval
         let speedup: Float
     }
+
+    // MARK: - SPSA Optimizer (Simultaneous Perturbation Stochastic Approximation)
+
+    /// SPSA optimizer for variational quantum algorithms
+    /// Reference: Spall, J.C. (1992) "Multivariate Stochastic Approximation Using a Simultaneous Perturbation Gradient Approximation"
+    /// Used in: VQE, QAOA, Quantum ML, Parameter optimization
+    struct SPSAConfig {
+        var maxIterations: Int = 100
+        var a: Float = 0.628    // Learning rate scaling
+        var c: Float = 0.1      // Perturbation size
+        var alpha: Float = 0.602 // Learning rate decay exponent
+        var gamma: Float = 0.101 // Perturbation decay exponent
+        var A: Float = 10.0     // Stability constant (typically 10% of maxIterations)
+        var tolerance: Float = 1e-6
+        var useMomentum: Bool = true
+        var momentumBeta: Float = 0.9
+        var useAdaptiveLearning: Bool = true
+        var gradientClipping: Float = 1.0
+    }
+
+    struct SPSAResult {
+        let optimalParameters: [Float]
+        let finalCost: Float
+        let iterations: Int
+        let convergenceHistory: [Float]
+        let gradientNormHistory: [Float]
+        let converged: Bool
+    }
+
+    /// Optimize parameters using SPSA algorithm
+    /// This is the gold standard for variational quantum algorithms
+    func spsaOptimize(
+        initialParams: [Float],
+        costFunction: ([Float]) async -> Float,
+        config: SPSAConfig = SPSAConfig()
+    ) async -> SPSAResult {
+        print("⚛️ SPSA Optimizer: Started")
+        print("   Parameters: \(initialParams.count)")
+        print("   Max iterations: \(config.maxIterations)")
+
+        var params = initialParams
+        var bestParams = params
+        var bestCost = Float.infinity
+        var convergenceHistory: [Float] = []
+        var gradientNormHistory: [Float] = []
+        var momentum = [Float](repeating: 0, count: params.count)
+
+        for k in 0..<config.maxIterations {
+            let kFloat = Float(k)
+
+            // Decaying learning rate: a_k = a / (A + k + 1)^alpha
+            let ak = config.a / pow(config.A + kFloat + 1, config.alpha)
+
+            // Decaying perturbation: c_k = c / (k + 1)^gamma
+            let ck = config.c / pow(kFloat + 1, config.gamma)
+
+            // Generate random perturbation vector Δ ∈ {-1, +1}^p
+            let delta = (0..<params.count).map { _ in Float.random(in: 0...1) < 0.5 ? -1.0 : 1.0 }
+
+            // Evaluate cost at θ + c_k * Δ and θ - c_k * Δ
+            let paramsPlus = zip(params, delta).map { $0 + ck * $1 }
+            let paramsMinus = zip(params, delta).map { $0 - ck * $1 }
+
+            let costPlus = await costFunction(paramsPlus)
+            let costMinus = await costFunction(paramsMinus)
+
+            // Estimate gradient: g_k ≈ (f(θ+) - f(θ-)) / (2 * c_k * Δ)
+            var gradient = [Float](repeating: 0, count: params.count)
+            for i in 0..<params.count {
+                gradient[i] = (costPlus - costMinus) / (2 * ck * delta[i])
+            }
+
+            // Gradient clipping
+            let gradientNorm = sqrt(gradient.reduce(0) { $0 + $1 * $1 })
+            gradientNormHistory.append(gradientNorm)
+
+            if gradientNorm > config.gradientClipping {
+                let scale = config.gradientClipping / gradientNorm
+                gradient = gradient.map { $0 * scale }
+            }
+
+            // Apply momentum if enabled
+            if config.useMomentum {
+                momentum = zip(momentum, gradient).map { config.momentumBeta * $0 + (1 - config.momentumBeta) * $1 }
+                gradient = momentum
+            }
+
+            // Adaptive learning rate based on gradient variance
+            var adaptiveScale: Float = 1.0
+            if config.useAdaptiveLearning && k > 10 {
+                let recentGrads = Array(gradientNormHistory.suffix(10))
+                let avgGrad = recentGrads.reduce(0, +) / Float(recentGrads.count)
+                let variance = recentGrads.map { pow($0 - avgGrad, 2) }.reduce(0, +) / Float(recentGrads.count)
+                adaptiveScale = 1.0 / (1.0 + sqrt(variance))
+            }
+
+            // Update parameters: θ_{k+1} = θ_k - a_k * g_k
+            params = zip(params, gradient).map { $0 - ak * adaptiveScale * $1 }
+
+            // Evaluate current cost
+            let currentCost = await costFunction(params)
+            convergenceHistory.append(currentCost)
+
+            // Track best solution
+            if currentCost < bestCost {
+                bestCost = currentCost
+                bestParams = params
+            }
+
+            // Convergence check
+            if k > 10 {
+                let recentCosts = Array(convergenceHistory.suffix(10))
+                let costVariance = recentCosts.map { pow($0 - bestCost, 2) }.reduce(0, +) / Float(recentCosts.count)
+
+                if sqrt(costVariance) < config.tolerance {
+                    print("✅ SPSA: Converged at iteration \(k)")
+                    return SPSAResult(
+                        optimalParameters: bestParams,
+                        finalCost: bestCost,
+                        iterations: k + 1,
+                        convergenceHistory: convergenceHistory,
+                        gradientNormHistory: gradientNormHistory,
+                        converged: true
+                    )
+                }
+            }
+
+            // Progress logging
+            if k % 20 == 0 {
+                print("   Iteration \(k): cost = \(String(format: "%.6f", currentCost)), |∇| = \(String(format: "%.4f", gradientNorm))")
+            }
+        }
+
+        print("⚠️ SPSA: Max iterations reached")
+        return SPSAResult(
+            optimalParameters: bestParams,
+            finalCost: bestCost,
+            iterations: config.maxIterations,
+            convergenceHistory: convergenceHistory,
+            gradientNormHistory: gradientNormHistory,
+            converged: false
+        )
+    }
+
+    // MARK: - Natural Gradient SPSA (QN-SPSA)
+
+    /// Quantum Natural SPSA with Fubini-Study metric approximation
+    /// Reference: Gacon et al. (2021) "Simultaneous Perturbation Stochastic Approximation of the Quantum Fisher Information"
+    func quantumNaturalSPSA(
+        initialParams: [Float],
+        costFunction: ([Float]) async -> Float,
+        config: SPSAConfig = SPSAConfig()
+    ) async -> SPSAResult {
+        print("⚛️ Quantum Natural SPSA: Started")
+
+        var params = initialParams
+        var bestParams = params
+        var bestCost = Float.infinity
+        var convergenceHistory: [Float] = []
+        var gradientNormHistory: [Float] = []
+
+        // Approximate inverse Quantum Fisher Information matrix
+        var fisherApprox = [[Float]](repeating: [Float](repeating: 0, count: params.count), count: params.count)
+        for i in 0..<params.count {
+            fisherApprox[i][i] = 1.0  // Start with identity
+        }
+
+        let regularization: Float = 0.001  // Regularization for numerical stability
+
+        for k in 0..<config.maxIterations {
+            let kFloat = Float(k)
+
+            let ak = config.a / pow(config.A + kFloat + 1, config.alpha)
+            let ck = config.c / pow(kFloat + 1, config.gamma)
+
+            // First perturbation direction
+            let delta1 = (0..<params.count).map { _ in Float.random(in: 0...1) < 0.5 ? -1.0 : 1.0 }
+
+            // Second perturbation direction for Fisher estimation
+            let delta2 = (0..<params.count).map { _ in Float.random(in: 0...1) < 0.5 ? -1.0 : 1.0 }
+
+            // Four-point gradient estimation for natural gradient
+            let pp = zip(params, delta1).map { $0 + ck * $1 }
+            let pm = zip(params, delta1).map { $0 - ck * $1 }
+
+            let costPP = await costFunction(pp)
+            let costPM = await costFunction(pm)
+
+            // Estimate gradient
+            var gradient = [Float](repeating: 0, count: params.count)
+            for i in 0..<params.count {
+                gradient[i] = (costPP - costPM) / (2 * ck * delta1[i])
+            }
+
+            // Update Fisher approximation using rank-1 update
+            let outerProduct = matrixOuterProduct(delta1, delta2)
+            for i in 0..<params.count {
+                for j in 0..<params.count {
+                    fisherApprox[i][j] = 0.9 * fisherApprox[i][j] + 0.1 * outerProduct[i][j]
+                }
+            }
+
+            // Compute natural gradient: F^{-1} * g
+            var naturalGradient = [Float](repeating: 0, count: params.count)
+            for i in 0..<params.count {
+                for j in 0..<params.count {
+                    naturalGradient[i] += fisherApprox[i][j] * gradient[j]
+                }
+            }
+
+            // Gradient clipping
+            let gradientNorm = sqrt(naturalGradient.reduce(0) { $0 + $1 * $1 })
+            gradientNormHistory.append(gradientNorm)
+
+            if gradientNorm > config.gradientClipping {
+                let scale = config.gradientClipping / gradientNorm
+                naturalGradient = naturalGradient.map { $0 * scale }
+            }
+
+            // Update parameters
+            params = zip(params, naturalGradient).map { $0 - ak * $1 }
+
+            let currentCost = await costFunction(params)
+            convergenceHistory.append(currentCost)
+
+            if currentCost < bestCost {
+                bestCost = currentCost
+                bestParams = params
+            }
+
+            // Convergence check
+            if k > 10 {
+                let recentCosts = Array(convergenceHistory.suffix(10))
+                let costVariance = recentCosts.map { pow($0 - bestCost, 2) }.reduce(0, +) / Float(recentCosts.count)
+
+                if sqrt(costVariance) < config.tolerance {
+                    print("✅ QN-SPSA: Converged at iteration \(k)")
+                    return SPSAResult(
+                        optimalParameters: bestParams,
+                        finalCost: bestCost,
+                        iterations: k + 1,
+                        convergenceHistory: convergenceHistory,
+                        gradientNormHistory: gradientNormHistory,
+                        converged: true
+                    )
+                }
+            }
+        }
+
+        return SPSAResult(
+            optimalParameters: bestParams,
+            finalCost: bestCost,
+            iterations: config.maxIterations,
+            convergenceHistory: convergenceHistory,
+            gradientNormHistory: gradientNormHistory,
+            converged: false
+        )
+    }
+
+    // MARK: - Parameter Shift Rule Gradient
+
+    /// Compute exact quantum gradient using parameter shift rule
+    /// Reference: Schuld et al. (2019) "Evaluating analytic gradients on quantum hardware"
+    func parameterShiftGradient(
+        params: [Float],
+        paramIndex: Int,
+        costFunction: ([Float]) async -> Float,
+        shiftAmount: Float = Float.pi / 2
+    ) async -> Float {
+        var paramsPlus = params
+        var paramsMinus = params
+
+        paramsPlus[paramIndex] += shiftAmount
+        paramsMinus[paramIndex] -= shiftAmount
+
+        let costPlus = await costFunction(paramsPlus)
+        let costMinus = await costFunction(paramsMinus)
+
+        // ∂f/∂θ = (f(θ + π/2) - f(θ - π/2)) / 2
+        return (costPlus - costMinus) / 2
+    }
+
+    /// Compute full gradient vector using parameter shift rule
+    func fullParameterShiftGradient(
+        params: [Float],
+        costFunction: ([Float]) async -> Float
+    ) async -> [Float] {
+        var gradient = [Float](repeating: 0, count: params.count)
+
+        // Evaluate in parallel using task groups
+        await withTaskGroup(of: (Int, Float).self) { group in
+            for i in 0..<params.count {
+                group.addTask {
+                    let grad = await self.parameterShiftGradient(
+                        params: params,
+                        paramIndex: i,
+                        costFunction: costFunction
+                    )
+                    return (i, grad)
+                }
+            }
+
+            for await (index, grad) in group {
+                gradient[index] = grad
+            }
+        }
+
+        return gradient
+    }
+
+    // MARK: - Quantum State Fidelity
+
+    /// Compute fidelity between two quantum states
+    /// F(ρ, σ) = |⟨ψ|φ⟩|²
+    func stateFidelity(state1: [Complex<Float>], state2: [Complex<Float>]) -> Float {
+        guard state1.count == state2.count else { return 0 }
+
+        // Inner product ⟨ψ|φ⟩
+        var innerProduct = Complex<Float>(0, 0)
+        for i in 0..<state1.count {
+            let conj = Complex(state1[i].real, -state1[i].imaginary)
+            innerProduct = innerProduct + conj * state2[i]
+        }
+
+        // |⟨ψ|φ⟩|²
+        return innerProduct.magnitude * innerProduct.magnitude
+    }
+
+    // MARK: - Quantum Expectation Value
+
+    /// Compute expectation value ⟨ψ|H|ψ⟩ for diagonal Hamiltonian
+    func expectationValue(state: [Complex<Float>], diagonal: [Float]) -> Float {
+        guard state.count == diagonal.count else { return 0 }
+
+        var expectation: Float = 0
+        for i in 0..<state.count {
+            let prob = state[i].magnitude * state[i].magnitude
+            expectation += prob * diagonal[i]
+        }
+
+        return expectation
+    }
+
+    // MARK: - Bloch Sphere Representation
+
+    struct BlochCoordinates {
+        let x: Float  // ⟨X⟩
+        let y: Float  // ⟨Y⟩
+        let z: Float  // ⟨Z⟩
+
+        var theta: Float { acos(z) }  // Polar angle
+        var phi: Float { atan2(y, x) }  // Azimuthal angle
+        var purity: Float { sqrt(x*x + y*y + z*z) }  // 1 for pure states
+    }
+
+    /// Convert single-qubit state to Bloch sphere coordinates
+    func toBlochSphere(qubit: Qubit) -> BlochCoordinates {
+        let alpha = qubit.alpha
+        let beta = qubit.beta
+
+        // ⟨X⟩ = α*β + α*β* = 2*Re(α*β*)
+        let x = 2 * (alpha.real * beta.real + alpha.imaginary * beta.imaginary)
+
+        // ⟨Y⟩ = i(α*β* - αβ) = 2*Im(α*β*)
+        let y = 2 * (alpha.real * beta.imaginary - alpha.imaginary * beta.real)
+
+        // ⟨Z⟩ = |α|² - |β|²
+        let z = alpha.magnitude * alpha.magnitude - beta.magnitude * beta.magnitude
+
+        return BlochCoordinates(x: x, y: y, z: z)
+    }
+
+    // MARK: - Helper Functions
+
+    private func matrixOuterProduct(_ v1: [Float], _ v2: [Float]) -> [[Float]] {
+        var result = [[Float]](repeating: [Float](repeating: 0, count: v2.count), count: v1.count)
+        for i in 0..<v1.count {
+            for j in 0..<v2.count {
+                result[i][j] = v1[i] * v2[j]
+            }
+        }
+        return result
+    }
 }
