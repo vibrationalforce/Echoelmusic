@@ -208,7 +208,7 @@ class iPadOptimizations {
 
         supportsProMotion = iPadModel?.supportsProMotion ?? false
 
-        print("📱 Detected iPad: \(iPadModel?.rawValue ?? "Unknown")")
+        Logger.log("Detected iPad: \(iPadModel?.rawValue ?? "Unknown")", category: .system)
     }
 
     private func setupObservers() {
@@ -275,7 +275,7 @@ class iPadOptimizations {
     // MARK: - Split View Configuration
 
     func configureSplitView(config: SplitViewConfiguration) {
-        print("📱 Configuring Split View: \(config.primaryPane) | \(config.secondaryPane)")
+        Logger.log("Configuring Split View: \(config.primaryPane) | \(config.secondaryPane)", category: .system)
         // Konfiguriere UI basierend auf Split View Setup
     }
 
@@ -368,7 +368,7 @@ class iPadOptimizations {
     // MARK: - Apple Pencil Support
 
     func enablePencilControl(for parameter: ControlParameter) {
-        print("✏️ Apple Pencil control enabled for: \(parameter)")
+        Logger.log("Apple Pencil control enabled for: \(parameter)", category: .system)
         pencilInteractionManager.bindParameter(parameter)
     }
 
@@ -390,7 +390,7 @@ class iPadOptimizations {
         externalDisplayConnected = true
         layoutMode = .externalDisplay
 
-        print("📺 External display connected: \(screen.bounds.size)")
+        Logger.log("External display connected: \(screen.bounds.size)", category: .system)
 
         externalDisplayManager.setupExternalDisplay(screen: screen)
     }
@@ -416,7 +416,7 @@ class iPadOptimizations {
         if let displayLink = CADisplayLink(target: self, selector: #selector(updateFor120Hz)) {
             displayLink.preferredFramesPerSecond = 120
             displayLink.add(to: .main, forMode: .default)
-            print("⚡ ProMotion 120Hz enabled")
+            Logger.log("ProMotion 120Hz enabled", category: .system)
         }
     }
 
@@ -430,7 +430,7 @@ class iPadOptimizations {
 @MainActor
 class WindowSceneManager {
     func createNewWindow(for content: iPadOptimizations.SplitViewConfiguration.PaneContent) {
-        print("🪟 Creating new window for: \(content)")
+        Logger.log("Creating new window for: \(content)", category: .system)
     }
 }
 
@@ -454,7 +454,7 @@ class PencilInteractionManager {
     }
 
     func bindParameter(_ parameter: iPadOptimizations.ControlParameter) {
-        print("✏️ Bound parameter: \(parameter)")
+        Logger.log("Bound parameter: \(parameter)", category: .system)
     }
 }
 
@@ -466,11 +466,11 @@ class KeyboardShortcutManager {
 
     func registerShortcuts(_ shortcuts: [iPadOptimizations.KeyboardShortcut]) {
         self.shortcuts = shortcuts
-        print("⌨️ Registered \(shortcuts.count) keyboard shortcuts")
+        Logger.log("Registered \(shortcuts.count) keyboard shortcuts", category: .system)
     }
 
     func handleShortcut(_ shortcut: iPadOptimizations.KeyboardShortcut) {
-        print("⌨️ Executing: \(shortcut.action)")
+        Logger.log("Executing keyboard shortcut: \(shortcut.action)", category: .system)
     }
 }
 
@@ -492,11 +492,11 @@ class ExternalDisplayManager {
         window.isHidden = false
         externalWindow = window
 
-        print("📺 External display setup complete")
+        Logger.log("External display setup complete", category: .system)
     }
 
     func setMode(_ mode: iPadOptimizations.ExternalDisplayMode) {
-        print("📺 External display mode: \(mode)")
+        Logger.log("External display mode: \(mode)", category: .system)
     }
 }
 

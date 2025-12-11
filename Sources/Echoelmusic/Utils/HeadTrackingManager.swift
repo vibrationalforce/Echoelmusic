@@ -74,10 +74,9 @@ class HeadTrackingManager: ObservableObject {
         isAvailable = motionManager.isDeviceMotionAvailable
 
         if isAvailable {
-            print("✅ Head tracking available")
+            Logger.audio("Head tracking available", level: .info)
         } else {
-            print("⚠️  Head tracking not available")
-            print("   Requires: AirPods Pro/Max with iOS 14+")
+            Logger.audio("Head tracking not available - Requires: AirPods Pro/Max with iOS 14+", level: .warning)
         }
     }
 
@@ -87,12 +86,12 @@ class HeadTrackingManager: ObservableObject {
     /// Start head tracking
     func startTracking() {
         guard isAvailable else {
-            print("❌ Cannot start head tracking: Not available")
+            Logger.audio("Cannot start head tracking: Not available", level: .error)
             return
         }
 
         guard !isTracking else {
-            print("⚠️  Head tracking already active")
+            Logger.audio("Head tracking already active", level: .warning)
             return
         }
 
@@ -104,7 +103,7 @@ class HeadTrackingManager: ObservableObject {
             guard let self = self else { return }
 
             if let error = error {
-                print("❌ Head tracking error: \(error.localizedDescription)")
+                Logger.audio("Head tracking error: \(error.localizedDescription)", level: .error)
                 self.stopTracking()
                 return
             }
@@ -116,7 +115,7 @@ class HeadTrackingManager: ObservableObject {
         }
 
         isTracking = true
-        print("🎧 Head tracking started (\(updateFrequency) Hz)")
+        Logger.audio("Head tracking started (\(updateFrequency) Hz)", level: .info)
     }
 
     /// Stop head tracking
@@ -130,7 +129,7 @@ class HeadTrackingManager: ObservableObject {
         headRotation = HeadRotation()
         normalizedPosition = NormalizedPosition()
 
-        print("🎧 Head tracking stopped")
+        Logger.audio("Head tracking stopped")
     }
 
 
@@ -157,7 +156,7 @@ class HeadTrackingManager: ObservableObject {
         #if DEBUG
         if Int(Date().timeIntervalSince1970 * 2) % 2 == 0 {  // Every 0.5 seconds
             let degrees = headRotation.degrees
-            print("🎧 Head: Y:\(Int(degrees.yaw))° P:\(Int(degrees.pitch))° R:\(Int(degrees.roll))°")
+            Logger.audio("Head: Y:\(Int(degrees.yaw))° P:\(Int(degrees.pitch))° R:\(Int(degrees.roll))°", level: .debug)
         }
         #endif
     }
@@ -201,7 +200,7 @@ class HeadTrackingManager: ObservableObject {
             guard let self = self else { return }
 
             if let error = error {
-                print("❌ Head tracking error: \(error.localizedDescription)")
+                Logger.audio("Head tracking error: \(error.localizedDescription)", level: .error)
                 return
             }
 
@@ -209,7 +208,7 @@ class HeadTrackingManager: ObservableObject {
             self.updateHeadRotation(from: motion)
         }
 
-        print("🔄 Head tracking orientation reset")
+        Logger.audio("Head tracking orientation reset")
     }
 
     /// Get human-readable status

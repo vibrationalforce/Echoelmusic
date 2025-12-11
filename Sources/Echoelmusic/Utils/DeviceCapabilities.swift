@@ -74,7 +74,7 @@ class DeviceCapabilities: ObservableObject {
 
         deviceModel = mapDeviceIdentifier(identifier)
 
-        print("📱 Device: \(deviceModel) (\(identifier))")
+        Logger.log("Device: \(deviceModel) (\(identifier))", category: .system)
     }
 
     /// Map device identifier to human-readable name
@@ -109,7 +109,7 @@ class DeviceCapabilities: ObservableObject {
         let version = UIDevice.current.systemVersion
         iOSVersion = version
 
-        print("🔧 iOS Version: \(version)")
+        Logger.log("iOS Version: \(version)", category: .system)
     }
 
     /// Check if device supports ASAF (Apple Spatial Audio Features)
@@ -140,10 +140,9 @@ class DeviceCapabilities: ObservableObject {
         supportsASAF = hasRequiredOS && hasCapableHardware
 
         if supportsASAF {
-            print("✅ ASAF Supported (iOS \(majorVersion)+ with \(deviceModel))")
+            Logger.log("ASAF Supported (iOS \(majorVersion)+ with \(deviceModel))", category: .system, level: .info)
         } else {
-            print("⚠️  ASAF Not Supported (Need iOS 19+ and iPhone 16+)")
-            print("   Current: iOS \(iOSVersion), \(deviceModel)")
+            Logger.log("ASAF Not Supported (Need iOS 19+ and iPhone 16+) - Current: iOS \(iOSVersion), \(deviceModel)", category: .system, level: .warning)
         }
     }
 
@@ -181,10 +180,7 @@ class DeviceCapabilities: ObservableObject {
                     airPodsModel = "Bluetooth Audio Device"
                 }
 
-                print("🎧 Audio Output: \(airPodsModel ?? "Unknown")")
-                if supportsAPACCodec {
-                    print("✅ APAC Codec Available")
-                }
+                Logger.audio("Audio Output: \(airPodsModel ?? "Unknown")\(supportsAPACCodec ? " (APAC Codec Available)" : "")")
 
                 return
             }
@@ -195,7 +191,7 @@ class DeviceCapabilities: ObservableObject {
         airPodsModel = nil
         supportsAPACCodec = false
 
-        print("🔇 No AirPods detected")
+        Logger.audio("No AirPods detected")
     }
 
 
@@ -250,7 +246,7 @@ class DeviceCapabilities: ObservableObject {
             object: nil
         )
 
-        print("🔊 Started monitoring audio route changes")
+        Logger.audio("Started monitoring audio route changes")
     }
 
     /// Stop monitoring audio route changes
@@ -261,12 +257,12 @@ class DeviceCapabilities: ObservableObject {
             object: nil
         )
 
-        print("🔇 Stopped monitoring audio route changes")
+        Logger.audio("Stopped monitoring audio route changes")
     }
 
     /// Handle audio route changes
     @objc private func audioRouteChanged(notification: Notification) {
-        print("🔄 Audio route changed, re-detecting AirPods...")
+        Logger.audio("Audio route changed, re-detecting AirPods...")
         detectAirPods()
     }
 
