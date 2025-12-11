@@ -1,6 +1,7 @@
 import Foundation
 import CoreMIDI
 import Combine
+import os.log
 
 /// MPE (MIDI Polyphonic Expression) Zone Manager
 ///
@@ -28,6 +29,10 @@ import Combine
 /// ```
 @MainActor
 class MPEZoneManager: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "MPEZoneManager")
 
     // MARK: - Published State
 
@@ -90,7 +95,7 @@ class MPEZoneManager: ObservableObject {
         if voices.count >= maxVoices {
             // Need to steal a voice
             guard let stolenVoice = selectVoiceToSteal() else {
-                print("⚠️ MPE: Failed to steal voice")
+                logger.warning("MPE: Failed to steal voice")
                 return nil
             }
 
@@ -100,7 +105,7 @@ class MPEZoneManager: ObservableObject {
 
         // Find available channel
         guard let channel = findAvailableChannel() else {
-            print("⚠️ MPE: No available channel")
+            logger.warning("MPE: No available channel")
             return nil
         }
 
@@ -120,7 +125,7 @@ class MPEZoneManager: ObservableObject {
         // Send MIDI 2.0 Note On
         midi2Manager.sendNoteOn(channel: channel, note: note, velocity: velocity)
 
-        print("[MPE] Allocated voice: Note \(note) on channel \(channel + 1)")
+        logger.debug("Allocated voice: Note \(note, privacy: .public) on channel \(channel + 1, privacy: .public)")
 
         return voice
     }
@@ -134,7 +139,7 @@ class MPEZoneManager: ObservableObject {
         voices.removeValue(forKey: voice.id)
         updatePublishedState()
 
-        print("[MPE] Deallocated voice: Note \(voice.note) from channel \(voice.channel + 1)")
+        logger.debug("Deallocated voice: Note \(voice.note, privacy: .public) from channel \(voice.channel + 1, privacy: .public)")
     }
 
     /// Find next available channel
@@ -279,7 +284,7 @@ class MPEZoneManager: ObservableObject {
         voices.removeAll()
         updatePublishedState()
 
-        print("[MPE] Released all voices")
+        logger.info("Released all voices")
     }
 
     // MARK: - MPE Configuration Messages
@@ -306,7 +311,7 @@ class MPEZoneManager: ObservableObject {
         // Data Entry LSB (CC 38) = 0
         midi2Manager.sendControlChange(channel: channel, controller: 38, value: 0.0)
 
-        print("[MPE] Sent configuration: \(memberChannels) member channels")
+        logger.info("Sent configuration: \(memberChannels, privacy: .public) member channels")
     }
 
     /// Send MPE pitch bend range configuration
@@ -326,7 +331,7 @@ class MPEZoneManager: ObservableObject {
         // Data Entry LSB (CC 38) = 0
         midi2Manager.sendControlChange(channel: channel, controller: 38, value: 0.0)
 
-        print("[MPE] Set pitch bend range: ±\(semitones) semitones")
+        logger.info("Set pitch bend range: ±\(semitones, privacy: .public) semitones")
     }
 }
 

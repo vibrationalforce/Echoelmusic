@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import os.log
 
 // MARK: - Piano Roll MIDI Editor
 /// Professional piano roll for MIDI note editing
@@ -329,6 +330,10 @@ struct PlayheadView: View {
 @MainActor
 class PianoRollViewModel: ObservableObject {
 
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "PianoRoll")
+
     // MARK: - Published Properties
 
     @Published var notes: [MIDINote] = []
@@ -375,7 +380,7 @@ class PianoRollViewModel: ObservableObject {
         mpe.sendMPEConfiguration(memberChannels: 15)
         mpe.setPitchBendRange(semitones: UInt8(pitchBendRange))
 
-        print("🎹 PianoRoll: Connected to MIDI 2.0 + MPE")
+        logger.info("Connected to MIDI 2.0 + MPE")
     }
 
     // MARK: - Edit Modes
@@ -437,7 +442,7 @@ class PianoRollViewModel: ObservableObject {
         )
 
         notes.append(note)
-        print("🎹 Added note: \(note.pitch) at beat \(note.startBeat)")
+        logger.debug("Added note: \(note.pitch, privacy: .public) at beat \(note.startBeat, privacy: .public)")
     }
 
     func deleteNote(_ id: UUID) {
@@ -575,12 +580,12 @@ class PianoRollViewModel: ObservableObject {
                 mpe.setVoiceBrightness(voice: voice, brightness: note.brightness)
                 mpe.setVoiceTimbre(voice: voice, timbre: note.timbre)
 
-                print("🎹 MPE Note On: \(note.pitch) vel=\(note.velocity) ch=\(voice.channel + 1)")
+                logger.debug("MPE Note On: \(note.pitch, privacy: .public) vel=\(note.velocity, privacy: .public) ch=\(voice.channel + 1, privacy: .public)")
             }
         } else if let midi2 = midi2Manager {
             // MIDI 2.0 without MPE (single channel)
             midi2.sendNoteOn(channel: 0, note: UInt8(note.pitch), velocity: note.velocity32bit)
-            print("🎹 MIDI2 Note On: \(note.pitch) vel=\(note.velocity)")
+            logger.debug("MIDI2 Note On: \(note.pitch, privacy: .public) vel=\(note.velocity, privacy: .public)")
         }
     }
 
@@ -589,11 +594,11 @@ class PianoRollViewModel: ObservableObject {
             if let voice = activeVoices[note.id] {
                 mpe.deallocateVoice(voice: voice)
                 activeVoices.removeValue(forKey: note.id)
-                print("🎹 MPE Note Off: \(note.pitch)")
+                logger.debug("MPE Note Off: \(note.pitch, privacy: .public)")
             }
         } else if let midi2 = midi2Manager {
             midi2.sendNoteOff(channel: 0, note: UInt8(note.pitch))
-            print("🎹 MIDI2 Note Off: \(note.pitch)")
+            logger.debug("MIDI2 Note Off: \(note.pitch, privacy: .public)")
         }
     }
 
@@ -715,14 +720,14 @@ class PianoRollViewModel: ObservableObject {
     func exportToMIDI() -> Data? {
         // Generate MIDI file data
         // In production: Use AudioToolbox MusicSequence
-        print("📤 Exporting \(notes.count) notes to MIDI")
+        logger.info("Exporting \(notes.count, privacy: .public) notes to MIDI")
         return nil
     }
 
     func importFromMIDI(_ data: Data) {
         // Import MIDI file
         // In production: Parse MIDI data
-        print("📥 Importing MIDI data")
+        logger.info("Importing MIDI data")
     }
 }
 
