@@ -742,6 +742,138 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
         ]
     }
 
+    // MARK: - Wise Mode Integration
+
+    /// Reference to WiseModeOrchestrator for intelligent latency adaptation
+    private var wiseMode: WiseModeOrchestrator?
+
+    /// Configure with Wise Mode orchestrator
+    public func configureWiseMode(_ orchestrator: WiseModeOrchestrator) {
+        self.wiseMode = orchestrator
+        logger.info("UltraLowLatencyBluetoothEngine configured with Wise Mode")
+    }
+
+    /// Apply Wise Mode settings to Bluetooth audio
+    public func applyWiseModeSettings() {
+        guard let wise = wiseMode, wise.isActive else { return }
+
+        switch wise.currentMode {
+        case .performance:
+            // Maximum low latency, prioritize speed
+            preferLowLatency = true
+            directMonitoring.bufferSize = .ultraLow  // 32 samples
+            directMonitoring.lowLatencyMode = true
+            directMonitoring.bypassEffects = true
+            preferredCodec = .lc3plus
+            logger.debug("BT Wise Mode: Performance - Ultra-low latency")
+
+        case .balanced:
+            // Good balance of latency and quality
+            preferLowLatency = true
+            directMonitoring.bufferSize = .low  // 128 samples
+            directMonitoring.lowLatencyMode = true
+            directMonitoring.bypassEffects = false
+            preferredCodec = .lc3
+            logger.debug("BT Wise Mode: Balanced - Low latency with quality")
+
+        case .healing:
+            // Quality over latency for therapeutic listening
+            preferLowLatency = false
+            directMonitoring.bufferSize = .medium  // 256 samples
+            directMonitoring.lowLatencyMode = false
+            directMonitoring.bypassEffects = false
+            preferredCodec = .ldac  // Hi-Res for healing
+            logger.debug("BT Wise Mode: Healing - Hi-Res quality")
+
+        case .creative:
+            // Low latency for real-time creativity
+            preferLowLatency = true
+            directMonitoring.bufferSize = .veryLow  // 64 samples
+            directMonitoring.lowLatencyMode = true
+            directMonitoring.bypassEffects = false
+            preferredCodec = .aptxLL
+            logger.debug("BT Wise Mode: Creative - Very low latency")
+
+        case .meditative:
+            // Quality and stability for meditation
+            preferLowLatency = false
+            directMonitoring.bufferSize = .high  // 512 samples
+            directMonitoring.lowLatencyMode = false
+            directMonitoring.bypassEffects = false
+            preferredCodec = .ldac  // Hi-Res
+            logger.debug("BT Wise Mode: Meditative - Stable high quality")
+
+        case .energizing:
+            // Responsive for active movement
+            preferLowLatency = true
+            directMonitoring.bufferSize = .low  // 128 samples
+            directMonitoring.lowLatencyMode = true
+            directMonitoring.bypassEffects = true
+            preferredCodec = .aptxAdaptive
+            logger.debug("BT Wise Mode: Energizing - Adaptive responsive")
+        }
+
+        // Apply to connected devices
+        for device in connectedDevices {
+            if device.supportedCodecs.contains(preferredCodec) {
+                // Would renegotiate codec here
+                logger.debug("Applying preferred codec \(self.preferredCodec.rawValue, privacy: .public) to \(device.name, privacy: .public)")
+            }
+        }
+    }
+
+    /// Get Wise Mode recommended buffer size
+    var wiseModeBufferSize: DirectMonitoringConfig.BufferSize {
+        guard let wise = wiseMode, wise.isActive else { return .low }
+
+        switch wise.currentMode {
+        case .performance: return .ultraLow
+        case .balanced: return .low
+        case .healing: return .medium
+        case .creative: return .veryLow
+        case .meditative: return .high
+        case .energizing: return .low
+        }
+    }
+
+    /// Get Wise Mode recommended codec
+    var wiseModeRecommendedCodec: BluetoothAudioCodec {
+        guard let wise = wiseMode, wise.isActive else { return .lc3 }
+
+        switch wise.currentMode {
+        case .performance: return .lc3plus
+        case .balanced: return .lc3
+        case .healing: return .ldac
+        case .creative: return .aptxLL
+        case .meditative: return .ldac
+        case .energizing: return .aptxAdaptive
+        }
+    }
+
+    /// Check if Wise Mode recommends low latency
+    var wiseModeRecommendsLowLatency: Bool {
+        guard let wise = wiseMode, wise.isActive else { return true }
+
+        switch wise.currentMode {
+        case .performance, .balanced, .creative, .energizing: return true
+        case .healing, .meditative: return false
+        }
+    }
+
+    /// Get latency target based on Wise Mode
+    var wiseModeLatencyTarget: Double {
+        guard let wise = wiseMode, wise.isActive else { return 40.0 }
+
+        switch wise.currentMode {
+        case .performance: return 15.0   // Ultra-low target
+        case .balanced: return 30.0      // Good balance
+        case .healing: return 100.0      // Quality matters more
+        case .creative: return 20.0      // Low for real-time
+        case .meditative: return 100.0   // Stability matters
+        case .energizing: return 40.0    // Responsive
+        }
+    }
+
     // MARK: - Private Methods
 
     private func scanSystemAudioDevices() {

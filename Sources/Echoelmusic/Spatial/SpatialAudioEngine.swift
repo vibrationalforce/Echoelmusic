@@ -475,16 +475,129 @@ class SpatialAudioEngine: ObservableObject {
         logger.info("Spatial mode: \(mode.rawValue, privacy: .public)")
     }
 
+    // MARK: - Wise Mode Integration
+
+    /// Reference to WiseModeOrchestrator for intelligent adaptation
+    private weak var wiseMode: WiseModeOrchestrator?
+
+    /// Configure with Wise Mode orchestrator
+    func configureWiseMode(_ orchestrator: WiseModeOrchestrator) {
+        self.wiseMode = orchestrator
+        logger.info("SpatialAudioEngine configured with Wise Mode")
+    }
+
+    /// Apply Wise Mode settings to spatial audio
+    func applyWiseModeSettings() {
+        guard let wise = wiseMode, wise.isActive else { return }
+
+        switch wise.currentMode {
+        case .performance:
+            // Maximum precision, high update rate
+            setMode(.surround_3d)
+            motionManager?.deviceMotionUpdateInterval = 1.0 / 120.0  // 120 Hz
+            logger.debug("Wise Mode: Performance - 3D spatial at 120Hz")
+
+        case .balanced:
+            // Good quality, moderate CPU usage
+            setMode(.surround_3d)
+            motionManager?.deviceMotionUpdateInterval = 1.0 / 60.0  // 60 Hz
+            logger.debug("Wise Mode: Balanced - 3D spatial at 60Hz")
+
+        case .healing:
+            // Binaural focus for therapeutic applications
+            setMode(.binaural)
+            motionManager?.deviceMotionUpdateInterval = 1.0 / 30.0  // 30 Hz (smooth)
+            applyHealingSpatialization()
+            logger.debug("Wise Mode: Healing - Binaural with gentle movement")
+
+        case .creative:
+            // Full spatial features, 4D orbital available
+            setMode(.surround_4d)
+            motionManager?.deviceMotionUpdateInterval = 1.0 / 60.0
+            logger.debug("Wise Mode: Creative - 4D orbital enabled")
+
+        case .meditative:
+            // Gentle, slow-moving spatial field
+            setMode(.afa)
+            motionManager?.deviceMotionUpdateInterval = 1.0 / 20.0  // 20 Hz (very smooth)
+            applyMeditativeSpatialization()
+            logger.debug("Wise Mode: Meditative - AFA field with slow movement")
+
+        case .energizing:
+            // Dynamic spatial movement
+            setMode(.surround_4d)
+            motionManager?.deviceMotionUpdateInterval = 1.0 / 90.0  // 90 Hz
+            applyEnergizingSpatialization()
+            logger.debug("Wise Mode: Energizing - 4D dynamic at 90Hz")
+        }
+    }
+
+    /// Apply healing-focused spatialization
+    private func applyHealingSpatialization() {
+        // Position sources in therapeutic patterns (432 Hz aligned)
+        for i in 0..<spatialSources.count {
+            let angle = Float(i) * (2 * Float.pi / Float(spatialSources.count))
+            let radius: Float = 2.0  // Comfortable distance
+
+            let x = radius * cos(angle)
+            let y = 0.0  // Ear level
+            let z = radius * sin(angle)
+
+            updateSourcePosition(id: spatialSources[i].id, position: SIMD3(x, Float(y), z))
+
+            // Slow orbital for gentle movement
+            updateSourceOrbital(
+                id: spatialSources[i].id,
+                radius: radius,
+                speed: 0.1,  // Very slow rotation
+                phase: Float(i) * Float.pi / 3
+            )
+        }
+    }
+
+    /// Apply meditative spatialization with AFA field
+    private func applyMeditativeSpatialization() {
+        // Fibonacci sphere pattern for natural distribution
+        applyAFAField(
+            geometry: .fibonacci(count: max(spatialSources.count, 8)),
+            coherence: Double(wiseMode?.wisdomLevel ?? 0.5) * 100
+        )
+    }
+
+    /// Apply energizing spatialization with dynamic movement
+    private func applyEnergizingSpatialization() {
+        // Fast orbital movement for energy
+        for i in 0..<spatialSources.count {
+            let angle = Float(i) * (2 * Float.pi / Float(spatialSources.count))
+            let radius: Float = 1.5
+
+            updateSourceOrbital(
+                id: spatialSources[i].id,
+                radius: radius,
+                speed: 0.5 + Float.random(in: 0...0.3),  // Varied fast rotation
+                phase: angle
+            )
+        }
+    }
+
+    /// Get Wise Mode adapted update frequency
+    var wiseModeUpdateFrequency: Double {
+        guard let wise = wiseMode, wise.isActive else { return 60.0 }
+        return wise.currentMode.updateFrequency
+    }
+
     // MARK: - Debug Info
 
     var debugInfo: String {
-        """
+        let wiseModeStatus = wiseMode?.isActive == true ? "✅ \(wiseMode?.currentMode.rawValue ?? "?")" : "❌"
+        return """
         SpatialAudioEngine:
         - Mode: \(currentMode.rawValue)
         - Active: \(isActive)
         - Sources: \(spatialSources.count)
         - Head Tracking: \(headTrackingEnabled ? "✅" : "❌")
         - iOS 19+ Features: \(environmentNode != nil ? "✅" : "❌")
+        - Wise Mode: \(wiseModeStatus)
         """
     }
 }

@@ -771,6 +771,154 @@ class UnifiedVisualSoundEngine: ObservableObject {
     }
 }
 
+// MARK: - Wise Mode Integration
+
+extension UnifiedVisualSoundEngine {
+
+    /// Reference to WiseModeOrchestrator for intelligent visual adaptation
+    /// Call configureWiseMode() to set this up
+    private static var _wiseMode: WiseModeOrchestrator?
+
+    /// Configure with Wise Mode orchestrator
+    func configureWiseMode(_ orchestrator: WiseModeOrchestrator) {
+        Self._wiseMode = orchestrator
+    }
+
+    /// Get current wise mode (if configured)
+    var wiseMode: WiseModeOrchestrator? {
+        Self._wiseMode
+    }
+
+    /// Apply Wise Mode settings to visual engine
+    func applyWiseModeSettings() {
+        guard let wise = wiseMode, wise.isActive else { return }
+
+        switch wise.currentMode {
+        case .performance:
+            // Maximum frame rate, minimal effects
+            visualParams.intensity = 0.8
+            currentMode = .spectrum  // Simple, efficient visualization
+
+        case .balanced:
+            // Good visuals with moderate CPU usage
+            visualParams.intensity = 0.7
+            // Keep current mode
+
+        case .healing:
+            // Soft, calming visuals with coherence-based colors
+            visualParams.intensity = 0.5
+            visualParams.colorHue = wise.wisdomLevel * 0.4  // Green tones for healing
+            currentMode = .mandala  // Sacred geometry for healing
+
+        case .creative:
+            // Full visual expression, all effects available
+            visualParams.intensity = 0.9
+            currentMode = .liquidLight  // Flowing creative visuals
+
+        case .meditative:
+            // Very soft, slow transitions
+            visualParams.intensity = 0.3
+            visualParams.colorHue = 0.6  // Blue-purple for calm
+            currentMode = .cymatics  // Geometric patterns
+
+        case .energizing:
+            // Bright, dynamic visuals
+            visualParams.intensity = 1.0
+            visualParams.colorHue = 0.1  // Warm, energizing colors
+            currentMode = .rainbow  // Energizing spectrum
+        }
+    }
+
+    /// Get recommended visual mode for current Wise Mode
+    var wiseModeRecommendedVisualMode: VisualMode {
+        guard let wise = wiseMode, wise.isActive else { return .liquidLight }
+
+        switch wise.currentMode {
+        case .performance: return .spectrum
+        case .balanced: return .liquidLight
+        case .healing: return .mandala
+        case .creative: return .flowField
+        case .meditative: return .cymatics
+        case .energizing: return .rainbow
+        }
+    }
+
+    /// Get Wise Mode adapted visual intensity
+    var wiseModeIntensity: Float {
+        guard let wise = wiseMode, wise.isActive else { return 0.7 }
+
+        switch wise.currentMode {
+        case .performance: return 0.8
+        case .balanced: return 0.7
+        case .healing: return 0.5
+        case .creative: return 0.9
+        case .meditative: return 0.3
+        case .energizing: return 1.0
+        }
+    }
+
+    /// Get Wise Mode adapted color hue based on coherence
+    var wiseModeColorHue: Float {
+        guard let wise = wiseMode, wise.isActive else { return visualParams.colorHue }
+
+        // Coherence-based coloring
+        let coherenceColor = wise.wisdomLevel * 0.4  // 0 = red (low), 0.4 = green (high)
+
+        switch wise.currentMode {
+        case .healing: return coherenceColor  // Coherence colors
+        case .meditative: return 0.6 + coherenceColor * 0.2  // Blue-purple range
+        case .energizing: return 0.05 + (1 - wise.wisdomLevel) * 0.1  // Orange-yellow
+        default: return visualParams.colorHue
+        }
+    }
+
+    /// Get Wise Mode adapted transition speed
+    var wiseModeTransitionSpeed: Double {
+        guard let wise = wiseMode, wise.isActive else { return 1.0 }
+
+        switch wise.currentMode {
+        case .performance: return 0.5    // Fast transitions
+        case .balanced: return 1.0       // Normal speed
+        case .healing: return 2.0        // Slow, smooth
+        case .creative: return 0.8       // Quick but artistic
+        case .meditative: return 3.0     // Very slow
+        case .energizing: return 0.3     // Rapid changes
+        }
+    }
+
+    /// Update visuals with Wise Mode awareness
+    func updateWithWiseMode() {
+        guard let wise = wiseMode, wise.isActive else { return }
+
+        // Apply intensity
+        visualParams.intensity = wiseModeIntensity
+
+        // Apply color hue
+        visualParams.colorHue = wiseModeColorHue
+
+        // Apply flow based on wisdom level
+        visualParams.flow = wise.wisdomLevel * 0.8 + 0.2
+    }
+
+    /// Get OSC parameters with Wise Mode additions
+    func getWiseModeOSCParameters() -> [String: Float] {
+        var params = getOSCParameters()
+
+        // Add Wise Mode parameters
+        if let wise = wiseMode, wise.isActive {
+            params["wise/active"] = 1.0
+            params["wise/wisdomLevel"] = wise.wisdomLevel
+            params["wise/modeIndex"] = Float(WiseModeOrchestrator.WiseMode.allCases.firstIndex(of: wise.currentMode) ?? 0)
+            params["wise/transitionProgress"] = wise.transitionProgress
+            params["wise/isTransitioning"] = wise.isTransitioning ? 1.0 : 0.0
+        } else {
+            params["wise/active"] = 0.0
+        }
+
+        return params
+    }
+}
+
 // MARK: - Unified Visualizer View
 
 /// Master visualizer that renders the current mode
