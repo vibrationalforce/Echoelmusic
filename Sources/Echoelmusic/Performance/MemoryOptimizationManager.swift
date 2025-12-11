@@ -205,7 +205,7 @@ class MemoryOptimizationManager {
                 return nil
             }
 
-            print("🗜️ Compressed \(data.count) → \(compressedSize) bytes (ratio: \(String(format: "%.2f", Float(compressedSize) / Float(data.count))))")
+            Logger.log("Compressed \(data.count) → \(compressedSize) bytes (ratio: \(String(format: "%.2f", Float(compressedSize) / Float(data.count))))", category: .system)
 
             return compressedData
         }
@@ -394,13 +394,13 @@ class MemoryOptimizationManager {
         guard isMemoryOptimizationEnabled else { return }
 
         if memoryUsage.isPressured {
-            print("⚠️ Memory pressure detected: \(String(format: "%.1f%%", memoryUsage.usagePercentage * 100))")
+            Logger.log("Memory pressure detected: \(String(format: "%.1f%%", memoryUsage.usagePercentage * 100))", category: .system, level: .warning)
             reduceCacheSize(by: 0.5) // Reduziere Cache um 50%
         }
     }
 
     private func handleMemoryWarning() {
-        print("🚨 Memory Warning! Performing aggressive cleanup...")
+        Logger.log("Memory Warning! Performing aggressive cleanup...", category: .system, level: .warning)
 
         // Sofortige Notfall-Maßnahmen
         clearAllCaches()
@@ -408,7 +408,7 @@ class MemoryOptimizationManager {
         releaseUnusedPools()
 
         updateMemoryUsage()
-        print("✅ Cleanup completed. Memory usage: \(String(format: "%.1f%%", memoryUsage.usagePercentage * 100))")
+        Logger.log("Cleanup completed. Memory usage: \(String(format: "%.1f%%", memoryUsage.usagePercentage * 100))", category: .system)
     }
 
     // MARK: - Cache Management
@@ -462,7 +462,7 @@ class MemoryOptimizationManager {
             cacheStats.totalItems -= 1
         }
 
-        print("🧹 Evicted \(cacheStats.evictions) items, freed \(freedSpace / 1024) KB")
+        Logger.log("Evicted \(cacheStats.evictions) items, freed \(freedSpace / 1024) KB", category: .system)
     }
 
     func clearCache(priority: CachedItem.Priority? = nil) {
@@ -510,7 +510,7 @@ class MemoryOptimizationManager {
 
         if let mmFile = MemoryMappedFile(path: path) {
             memoryMappedFiles[path] = mmFile
-            print("📂 Memory-mapped file: \(path) (\(mmFile.size / 1024) KB)")
+            Logger.log("Memory-mapped file: \(path) (\(mmFile.size / 1024) KB)", category: .system)
             return true
         }
 
@@ -550,7 +550,7 @@ class MemoryOptimizationManager {
                 let savings = item.data.count - compressed.count
                 if savings > 0 {
                     item.data = compressed
-                    print("🗜️ Compressed \(item.key): saved \(savings / 1024) KB")
+                    Logger.log("Compressed \(item.key): saved \(savings / 1024) KB", category: .system)
                 }
             }
         }

@@ -148,7 +148,7 @@ class FirstTimeExperience: ObservableObject {
             demoMode = false
         }
 
-        print("✅ First-Time Experience: Initialized")
+        Logger.log("First-Time Experience: Initialized", category: .system, level: .info)
     }
 
     // MARK: - Navigation
@@ -172,7 +172,7 @@ class FirstTimeExperience: ObservableObject {
         hasCompletedOnboarding = true
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         demoMode = false
-        print("✅ Onboarding completed")
+        Logger.log("Onboarding completed", category: .system, level: .info)
     }
 
     // MARK: - Demo Actions
@@ -180,12 +180,12 @@ class FirstTimeExperience: ObservableObject {
     func startInstantDemo() {
         // Launch instant demo (touch-reactive audio-visual)
         // No permissions required - uses touch input only
-        print("▶️ Instant Demo: Touch-reactive mode")
+        Logger.log("Instant Demo: Touch-reactive mode", category: .system)
     }
 
     func launchPreset(_ preset: QuickStartPreset) {
         // Launch selected preset
-        print("🚀 Launching preset: \(preset.name)")
+        Logger.log("Launching preset: \(preset.name)", category: .system)
     }
 
     // MARK: - Permission Flow
@@ -195,20 +195,20 @@ class FirstTimeExperience: ObservableObject {
         // Always offer "Skip" option - app works without permissions
 
         // HealthKit (optional)
-        print("📱 Requesting HealthKit permission (optional)")
+        Logger.log("Requesting HealthKit permission (optional)", category: .system)
 
         // Microphone (optional)
-        print("🎤 Requesting Microphone permission (optional)")
+        Logger.log("Requesting Microphone permission (optional)", category: .system)
 
         // Camera (optional)
-        print("📷 Requesting Camera permission (optional)")
+        Logger.log("Requesting Camera permission (optional)", category: .system)
     }
 
     // MARK: - Accessibility
 
     func enableAccessibilityMode() {
         // Enable enhanced accessibility (VoiceOver, larger text, etc.)
-        print("♿️ Accessibility mode enabled")
+        Logger.log("Accessibility mode enabled", category: .system)
     }
 }
 

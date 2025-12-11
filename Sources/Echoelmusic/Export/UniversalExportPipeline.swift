@@ -239,8 +239,7 @@ class UniversalExportPipeline: ObservableObject {
 
     init() {
         loadExportPresets()
-        print("✅ Universal Export Pipeline: Initialized")
-        print("📦 Presets: \(availablePresets.count)")
+        Logger.log("Universal Export Pipeline: Initialized - \(availablePresets.count) presets", category: .system, level: .info)
     }
 
     // MARK: - Load Export Presets
@@ -507,13 +506,13 @@ class UniversalExportPipeline: ObservableObject {
             )
         ]
 
-        print("📦 Loaded \(availablePresets.count) export presets")
+        Logger.log("Loaded \(availablePresets.count) export presets", category: .system)
     }
 
     // MARK: - Start Export
 
     func startExport(preset: ExportPreset, inputDuration: Double, outputPath: URL) async -> Bool {
-        print("🚀 Starting export: \(preset.name)")
+        Logger.log("Starting export: \(preset.name)", category: .system, level: .info)
 
         var job = ExportJob(
             preset: preset,
@@ -529,7 +528,7 @@ class UniversalExportPipeline: ObservableObject {
         currentExport = job
 
         // Preparation phase
-        print("   Preparing export...")
+        Logger.log("Preparing export...", category: .system)
         try? await Task.sleep(nanoseconds: 500_000_000)
         job.status = .exporting
         currentExport = job
@@ -543,13 +542,13 @@ class UniversalExportPipeline: ObservableObject {
             // Simulate processing time
             try? await Task.sleep(nanoseconds: 200_000_000)
 
-            print("   Progress: \(Int(progress * 100))%")
+            Logger.log("Export Progress: \(Int(progress * 100))%", category: .system)
         }
 
         // Finalization
         job.status = .finalizing
         currentExport = job
-        print("   Finalizing...")
+        Logger.log("Finalizing export...", category: .system)
         try? await Task.sleep(nanoseconds: 500_000_000)
 
         // Complete
@@ -562,10 +561,8 @@ class UniversalExportPipeline: ObservableObject {
 
         if let endTime = job.endTime, let startTime = job.startTime {
             let duration = endTime.timeIntervalSince(startTime)
-            print("✅ Export completed in \(String(format: "%.1f", duration))s")
-        }
-        if let fileSize = job.fileSize {
-            print("📁 File size: \(ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file))")
+            let fileSizeStr = job.fileSize != nil ? ", Size: \(ByteCountFormatter.string(fromByteCount: job.fileSize!, countStyle: .file))" : ""
+            Logger.log("Export completed in \(String(format: "%.1f", duration))s\(fileSizeStr)", category: .system, level: .info)
         }
 
         return true
