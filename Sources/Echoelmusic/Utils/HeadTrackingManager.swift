@@ -1,12 +1,17 @@
 import Foundation
 import CoreMotion
 import Combine
+import os.log
 
 /// Manages head tracking using CMHeadphoneMotionManager
 /// Provides real-time head orientation data for spatial audio
 /// Requires: AirPods Pro/Max with iOS 14+
 @MainActor
 class HeadTrackingManager: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "HeadTrackingManager")
 
     // MARK: - Published Properties
 
@@ -74,10 +79,9 @@ class HeadTrackingManager: ObservableObject {
         isAvailable = motionManager.isDeviceMotionAvailable
 
         if isAvailable {
-            print("✅ Head tracking available")
+            logger.info("Head tracking available")
         } else {
-            print("⚠️  Head tracking not available")
-            print("   Requires: AirPods Pro/Max with iOS 14+")
+            logger.warning("Head tracking not available - Requires AirPods Pro/Max with iOS 14+")
         }
     }
 
@@ -87,12 +91,12 @@ class HeadTrackingManager: ObservableObject {
     /// Start head tracking
     func startTracking() {
         guard isAvailable else {
-            print("❌ Cannot start head tracking: Not available")
+            logger.error("Cannot start head tracking: Not available")
             return
         }
 
         guard !isTracking else {
-            print("⚠️  Head tracking already active")
+            logger.warning("Head tracking already active")
             return
         }
 
@@ -104,7 +108,7 @@ class HeadTrackingManager: ObservableObject {
             guard let self = self else { return }
 
             if let error = error {
-                print("❌ Head tracking error: \(error.localizedDescription)")
+                self.logger.error("Head tracking error: \(error.localizedDescription, privacy: .public)")
                 self.stopTracking()
                 return
             }
@@ -116,7 +120,7 @@ class HeadTrackingManager: ObservableObject {
         }
 
         isTracking = true
-        print("🎧 Head tracking started (\(updateFrequency) Hz)")
+        logger.info("Head tracking started (\(self.updateFrequency, privacy: .public) Hz)")
     }
 
     /// Stop head tracking
@@ -130,7 +134,7 @@ class HeadTrackingManager: ObservableObject {
         headRotation = HeadRotation()
         normalizedPosition = NormalizedPosition()
 
-        print("🎧 Head tracking stopped")
+        logger.info("Head tracking stopped")
     }
 
 
@@ -157,7 +161,7 @@ class HeadTrackingManager: ObservableObject {
         #if DEBUG
         if Int(Date().timeIntervalSince1970 * 2) % 2 == 0 {  // Every 0.5 seconds
             let degrees = headRotation.degrees
-            print("🎧 Head: Y:\(Int(degrees.yaw))° P:\(Int(degrees.pitch))° R:\(Int(degrees.roll))°")
+            logger.debug("Head: Y:\(Int(degrees.yaw), privacy: .public)° P:\(Int(degrees.pitch), privacy: .public)° R:\(Int(degrees.roll), privacy: .public)°")
         }
         #endif
     }
@@ -201,7 +205,7 @@ class HeadTrackingManager: ObservableObject {
             guard let self = self else { return }
 
             if let error = error {
-                print("❌ Head tracking error: \(error.localizedDescription)")
+                self.logger.error("Head tracking error: \(error.localizedDescription, privacy: .public)")
                 return
             }
 
@@ -209,7 +213,7 @@ class HeadTrackingManager: ObservableObject {
             self.updateHeadRotation(from: motion)
         }
 
-        print("🔄 Head tracking orientation reset")
+        logger.info("Head tracking orientation reset")
     }
 
     /// Get human-readable status

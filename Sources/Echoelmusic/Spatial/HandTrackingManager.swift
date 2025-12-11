@@ -2,11 +2,16 @@ import Foundation
 import Vision
 import AVFoundation
 import Combine
+import os.log
 
 /// Manages hand tracking using Vision framework
 /// Provides 21-point skeleton detection per hand at 30 Hz
 @MainActor
 class HandTrackingManager: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "HandTrackingManager")
 
     // MARK: - Published Properties
 
@@ -63,7 +68,7 @@ class HandTrackingManager: ObservableObject {
 
     init() {
         setupHandPoseRequest()
-        print("👋 HandTrackingManager initialized")
+        logger.info("HandTrackingManager initialized")
     }
 
 
@@ -88,7 +93,7 @@ class HandTrackingManager: ObservableObject {
         guard !isTracking else { return }
 
         isTracking = true
-        print("👋 Started hand tracking")
+        logger.info("Started hand tracking")
     }
 
     /// Stop hand tracking
@@ -102,7 +107,7 @@ class HandTrackingManager: ObservableObject {
         rightHandLandmarks.removeAll()
         trackingConfidence = 0.0
 
-        print("👋 Stopped hand tracking")
+        logger.info("Stopped hand tracking")
     }
 
     /// Process video frame for hand detection
@@ -112,7 +117,7 @@ class HandTrackingManager: ObservableObject {
         do {
             try sequenceHandler.perform([request], on: pixelBuffer)
         } catch {
-            print("❌ Hand tracking error: \(error)")
+            logger.error("Hand tracking error: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -121,7 +126,7 @@ class HandTrackingManager: ObservableObject {
 
     private func handleHandPoseRequest(request: VNRequest, error: Error?) {
         if let error = error {
-            print("❌ Hand pose request error: \(error)")
+            logger.error("Hand pose request error: \(error.localizedDescription, privacy: .public)")
             return
         }
 
@@ -298,7 +303,7 @@ extension HandTrackingManager {
 
         guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
               let input = try? AVCaptureDeviceInput(device: camera) else {
-            print("❌ Failed to create camera input")
+            logger.error("Failed to create camera input")
             return nil
         }
 

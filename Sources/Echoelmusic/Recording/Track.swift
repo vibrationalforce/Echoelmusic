@@ -1,5 +1,8 @@
 import Foundation
 import AVFoundation
+import os.log
+
+private let trackLogger = Logger(subsystem: "com.echoelmusic", category: "Track")
 
 /// Represents a single audio track in a recording session
 struct Track: Identifiable, Codable {
@@ -104,7 +107,7 @@ struct Track: Identifiable, Codable {
             self.waveformData = waveform
 
         } catch {
-            print("❌ Failed to generate waveform: \(error)")
+            trackLogger.error("Failed to generate waveform: \(error.localizedDescription, privacy: .public)")
         }
     }
 

@@ -16,6 +16,7 @@ import Vision
 import Combine
 import Accelerate
 import simd
+import os.log
 
 // MARK: - Quantum Super Intelligence
 
@@ -23,6 +24,10 @@ import simd
 /// neural networks for unprecedented creative generation
 @MainActor
 final class QuantumSuperIntelligence: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "QuantumSuperIntelligence")
 
     // MARK: - Singleton
 
@@ -251,7 +256,7 @@ final class QuantumSuperIntelligence: ObservableObject {
         // Entangle all systems
         entangleAudioVideoSystems()
 
-        print("🌟 GOD MODE ACTIVATED - Universal Energy Flow")
+        logger.info("GOD MODE ACTIVATED - Universal Energy Flow")
     }
 
     func deactivateGodMode() {

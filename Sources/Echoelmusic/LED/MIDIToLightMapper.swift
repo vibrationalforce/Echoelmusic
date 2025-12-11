@@ -2,6 +2,7 @@ import Foundation
 import Network
 import CoreMIDI
 import Combine
+import os.log
 
 /// MIDI to DMX/LED Strip Controller
 /// Maps MIDI/MPE parameters to DMX lighting and addressable LED strips
@@ -9,6 +10,10 @@ import Combine
 /// Bio-reactive lighting for live performances and installations
 @MainActor
 class MIDIToLightMapper: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "MIDIToLightMapper")
 
     // MARK: - Published State
 
@@ -145,7 +150,7 @@ class MIDIToLightMapper: ObservableObject {
 
     func addFixture(_ fixture: DMXFixture) {
         fixtures.append(fixture)
-        print("💡 Added fixture: \(fixture.name) @ DMX \(fixture.startAddress)")
+        logger.info("Added fixture: \(fixture.name, privacy: .public) @ DMX \(fixture.startAddress, privacy: .public)")
     }
 
     // MARK: - Biometric Data Structure
@@ -166,7 +171,7 @@ class MIDIToLightMapper: ObservableObject {
         // Initialize Art-Net socket
         artNetSocket = try UDPSocket(address: artNetAddress, port: artNetPort)
         isActive = true
-        print("✅ DMX/LED Mapper connected (Art-Net → \(artNetAddress):\(artNetPort))")
+        logger.info("DMX/LED Mapper connected (Art-Net → \(self.artNetAddress, privacy: .public):\(self.artNetPort, privacy: .public))")
     }
 
     /// Disconnect from Art-Net network
@@ -178,7 +183,7 @@ class MIDIToLightMapper: ObservableObject {
         artNetSocket = nil
         isActive = false
 
-        print("🛑 DMX/LED Mapper disconnected")
+        logger.info("DMX/LED Mapper disconnected")
     }
 
     // MARK: - Start/Stop (Legacy)
@@ -447,7 +452,7 @@ class MIDIToLightMapper: ObservableObject {
 
     func setScene(_ scene: LightScene) {
         currentScene = scene
-        print("💡 Light scene: \(scene.rawValue)")
+        logger.info("Light scene: \(scene.rawValue, privacy: .public)")
     }
 
     // MARK: - Debug Info
@@ -467,6 +472,7 @@ class MIDIToLightMapper: ObservableObject {
 // MARK: - UDP Socket (Art-Net UDP Implementation)
 
 class UDPSocket {
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "UDPSocket")
     private let address: String
     private let port: UInt16
     private var connection: NWConnection?
@@ -489,11 +495,11 @@ class UDPSocket {
         connection?.stateUpdateHandler = { [weak self] state in
             switch state {
             case .ready:
-                print("💡 UDP Socket connected: \(address):\(port)")
+                self?.logger.info("UDP Socket connected: \(address, privacy: .public):\(port.rawValue, privacy: .public)")
             case .failed(let error):
-                print("❌ UDP Socket failed: \(error)")
+                self?.logger.error("UDP Socket failed: \(error.localizedDescription, privacy: .public)")
             case .cancelled:
-                print("🔌 UDP Socket cancelled")
+                self?.logger.info("UDP Socket cancelled")
             default:
                 break
             }
@@ -505,15 +511,15 @@ class UDPSocket {
 
     func send(data: Data) {
         guard let connection = connection else {
-            print("⚠️ UDP Socket not connected")
+            logger.warning("UDP Socket not connected")
             return
         }
 
         connection.send(
             content: data,
-            completion: .contentProcessed { error in
+            completion: .contentProcessed { [weak self] error in
                 if let error = error {
-                    print("❌ UDP send error: \(error)")
+                    self?.logger.error("UDP send error: \(error.localizedDescription, privacy: .public)")
                 }
             }
         )
@@ -522,6 +528,6 @@ class UDPSocket {
     func close() {
         connection?.cancel()
         connection = nil
-        print("🔌 UDP Socket closed")
+        logger.info("UDP Socket closed")
     }
 }

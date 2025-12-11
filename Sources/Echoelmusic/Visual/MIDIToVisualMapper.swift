@@ -1,12 +1,17 @@
 import Foundation
 import SwiftUI
 import Combine
+import os.log
 
 /// Maps MIDI/MPE parameters to visual system parameters
 /// Cymatics, Mandala, Waveform, Spectral visualizations
 /// Integrates with Metal shaders and SwiftUI Canvas
 @MainActor
 class MIDIToVisualMapper: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "MIDIToVisualMapper")
 
     // MARK: - Published Visual Parameters
 
@@ -117,7 +122,7 @@ class MIDIToVisualMapper: ObservableObject {
         // Emit particles
         emitParticlesFromNote(note: note, velocity: velocity)
 
-        print("🎨 Visual mapped: Note \(note), Vel \(Int(velocity * 127))")
+        logger.debug("Visual mapped: Note \(note, privacy: .public), Vel \(Int(velocity * 127), privacy: .public)")
     }
 
     /// Map MIDI note off to visual parameters
@@ -374,7 +379,7 @@ class MIDIToVisualMapper: ObservableObject {
             particleParameters.emissionRate = 30.0
         }
 
-        print("🎨 Visual preset: \(preset.rawValue)")
+        logger.info("Visual preset: \(preset.rawValue, privacy: .public)")
     }
 
     enum VisualPreset: String, CaseIterable {

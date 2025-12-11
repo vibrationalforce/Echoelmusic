@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import VideoToolbox
 import CoreMedia
+import os.log
 
 /// Universal Export Pipeline
 /// Supports ALL formats for ALL platforms and use cases
@@ -28,6 +29,10 @@ import CoreMedia
 /// - Timecode: SMPTE, LTC, MTC
 @MainActor
 class UniversalExportPipeline: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "UniversalExportPipeline")
 
     // MARK: - Published State
 
@@ -239,8 +244,8 @@ class UniversalExportPipeline: ObservableObject {
 
     init() {
         loadExportPresets()
-        print("✅ Universal Export Pipeline: Initialized")
-        print("📦 Presets: \(availablePresets.count)")
+        logger.info("Universal Export Pipeline initialized")
+        logger.info("Presets: \(self.availablePresets.count, privacy: .public)")
     }
 
     // MARK: - Load Export Presets
@@ -507,13 +512,13 @@ class UniversalExportPipeline: ObservableObject {
             )
         ]
 
-        print("📦 Loaded \(availablePresets.count) export presets")
+        logger.info("Loaded \(self.availablePresets.count, privacy: .public) export presets")
     }
 
     // MARK: - Start Export
 
     func startExport(preset: ExportPreset, inputDuration: Double, outputPath: URL) async -> Bool {
-        print("🚀 Starting export: \(preset.name)")
+        logger.info("Starting export: \(preset.name, privacy: .public)")
 
         var job = ExportJob(
             preset: preset,
@@ -529,7 +534,7 @@ class UniversalExportPipeline: ObservableObject {
         currentExport = job
 
         // Preparation phase
-        print("   Preparing export...")
+        logger.debug("Preparing export...")
         try? await Task.sleep(nanoseconds: 500_000_000)
         job.status = .exporting
         currentExport = job
@@ -543,13 +548,13 @@ class UniversalExportPipeline: ObservableObject {
             // Simulate processing time
             try? await Task.sleep(nanoseconds: 200_000_000)
 
-            print("   Progress: \(Int(progress * 100))%")
+            logger.debug("Progress: \(Int(progress * 100), privacy: .public)%")
         }
 
         // Finalization
         job.status = .finalizing
         currentExport = job
-        print("   Finalizing...")
+        logger.debug("Finalizing...")
         try? await Task.sleep(nanoseconds: 500_000_000)
 
         // Complete
@@ -561,8 +566,8 @@ class UniversalExportPipeline: ObservableObject {
         exportProgress = 1.0
 
         let duration = job.endTime!.timeIntervalSince(job.startTime!)
-        print("✅ Export completed in \(String(format: "%.1f", duration))s")
-        print("📁 File size: \(ByteCountFormatter.string(fromByteCount: job.fileSize!, countStyle: .file))")
+        logger.info("Export completed in \(String(format: "%.1f", duration), privacy: .public)s")
+        logger.info("File size: \(ByteCountFormatter.string(fromByteCount: job.fileSize!, countStyle: .file), privacy: .public)")
 
         return true
     }

@@ -1,10 +1,15 @@
 import Foundation
 import AVFoundation
 import UniformTypeIdentifiers
+import os.log
 
 /// Handles importing audio files into sessions
 @MainActor
 class AudioFileImporter: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "AudioFileImporter")
 
     // MARK: - Published Properties
 
@@ -86,7 +91,7 @@ class AudioFileImporter: ObservableObject {
 
         importProgress = 1.0
 
-        print("📥 Imported audio file: \(track.name)")
+        logger.info("Imported audio file: \(track.name, privacy: .public)")
         return track
     }
 
@@ -167,7 +172,7 @@ class AudioFileImporter: ObservableObject {
                 let overallProgress = Double(index + 1) / Double(urls.count)
                 importProgress = overallProgress
             } catch {
-                print("❌ Failed to import \(url.lastPathComponent): \(error)")
+                logger.error("Failed to import \(url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
                 // Continue with other files
             }
         }

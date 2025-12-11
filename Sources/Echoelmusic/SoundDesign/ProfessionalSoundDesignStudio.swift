@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import Accelerate
 import Combine
+import os.log
 
 /// Professional Sound Design Studio
 /// Film-grade, broadcast-quality sound design for:
@@ -22,6 +23,10 @@ import Combine
 /// - Broadcast loudness standards (EBU R128, ATSC A/85)
 @MainActor
 class ProfessionalSoundDesignStudio: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "ProfessionalSoundDesignStudio")
 
     // MARK: - Published State
 
@@ -442,8 +447,8 @@ class ProfessionalSoundDesignStudio: ObservableObject {
 
     init() {
         setupDefaultExportFormats()
-        print("✅ Professional Sound Design Studio: Initialized")
-        print("🎬 Ready for film, TV, content creation")
+        logger.info("Professional Sound Design Studio initialized")
+        logger.info("Ready for film, TV, content creation")
     }
 
     private func setupDefaultExportFormats() {
@@ -503,7 +508,7 @@ class ProfessionalSoundDesignStudio: ObservableObject {
         )
 
         currentProject = project
-        print("🎬 Created project: \(name) (\(type.rawValue))")
+        logger.info("Created project: \(name, privacy: .public) (\(type.rawValue, privacy: .public))")
 
         return project
     }
@@ -517,10 +522,7 @@ class ProfessionalSoundDesignStudio: ObservableObject {
         let gainDB = targetLoudness - currentLoudness
         let gain = pow(10.0, gainDB / 20.0)
 
-        print("🔊 Normalizing loudness:")
-        print("   Current: \(String(format: "%.1f", currentLoudness)) LUFS")
-        print("   Target: \(String(format: "%.1f", targetLoudness)) LUFS")
-        print("   Gain: \(String(format: "%.1f", gainDB)) dB")
+        logger.info("Normalizing loudness: Current: \(String(format: "%.1f", currentLoudness), privacy: .public) LUFS → Target: \(String(format: "%.1f", targetLoudness), privacy: .public) LUFS, Gain: \(String(format: "%.1f", gainDB), privacy: .public) dB")
 
         return audio.map { $0 * gain }
     }
@@ -535,14 +537,14 @@ class ProfessionalSoundDesignStudio: ObservableObject {
     // MARK: - Generate Foley
 
     func generateFoley(_ type: FoleyGenerator.FoleyType, duration: Float, intensity: Float = 1.0) -> [Float] {
-        print("🎤 Generating foley: \(type.rawValue)")
+        logger.info("Generating foley: \(type.rawValue, privacy: .public)")
         return FoleyGenerator.synthesize(type, duration: duration, intensity: intensity, sampleRate: 48000)
     }
 
     // MARK: - Generate Ambience
 
     func generateAmbience(_ type: AmbienceDesigner.AmbienceType, duration: Float, density: Float = 0.5) -> AmbienceDesigner.AmbienceLayers {
-        print("🌊 Generating ambience: \(type.rawValue)")
+        logger.info("Generating ambience: \(type.rawValue, privacy: .public)")
         return AmbienceDesigner.generate(type, duration: duration, density: density, sampleRate: 48000)
     }
 

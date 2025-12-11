@@ -1,12 +1,17 @@
 import SwiftUI
 import AVFoundation
 import Combine
+import os.log
 
 /// First-Time Experience - 30 Second "Aha Moment"
 /// Goal: User experiences bio-reactive audio-visual magic within 30 seconds
 /// No signup, no permissions required initially - instant gratification
 @MainActor
 class FirstTimeExperience: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "FirstTimeExperience")
 
     // MARK: - Published State
 
@@ -148,7 +153,7 @@ class FirstTimeExperience: ObservableObject {
             demoMode = false
         }
 
-        print("✅ First-Time Experience: Initialized")
+        logger.info("First-Time Experience initialized")
     }
 
     // MARK: - Navigation
@@ -172,7 +177,7 @@ class FirstTimeExperience: ObservableObject {
         hasCompletedOnboarding = true
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         demoMode = false
-        print("✅ Onboarding completed")
+        logger.info("Onboarding completed")
     }
 
     // MARK: - Demo Actions
@@ -180,12 +185,12 @@ class FirstTimeExperience: ObservableObject {
     func startInstantDemo() {
         // Launch instant demo (touch-reactive audio-visual)
         // No permissions required - uses touch input only
-        print("▶️ Instant Demo: Touch-reactive mode")
+        logger.info("Instant Demo: Touch-reactive mode")
     }
 
     func launchPreset(_ preset: QuickStartPreset) {
         // Launch selected preset
-        print("🚀 Launching preset: \(preset.name)")
+        logger.info("Launching preset: \(preset.name, privacy: .public)")
     }
 
     // MARK: - Permission Flow
@@ -195,20 +200,20 @@ class FirstTimeExperience: ObservableObject {
         // Always offer "Skip" option - app works without permissions
 
         // HealthKit (optional)
-        print("📱 Requesting HealthKit permission (optional)")
+        logger.info("Requesting HealthKit permission (optional)")
 
         // Microphone (optional)
-        print("🎤 Requesting Microphone permission (optional)")
+        logger.info("Requesting Microphone permission (optional)")
 
         // Camera (optional)
-        print("📷 Requesting Camera permission (optional)")
+        logger.info("Requesting Camera permission (optional)")
     }
 
     // MARK: - Accessibility
 
     func enableAccessibilityMode() {
         // Enable enhanced accessibility (VoiceOver, larger text, etc.)
-        print("♿️ Accessibility mode enabled")
+        logger.info("Accessibility mode enabled")
     }
 }
 

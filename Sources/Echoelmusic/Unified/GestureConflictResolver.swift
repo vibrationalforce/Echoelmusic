@@ -1,10 +1,15 @@
 import Foundation
 import Combine
+import os.log
 
 /// Resolves conflicts between gestures and other input sources
 /// Prevents accidental triggers and ensures intentional control
 @MainActor
 class GestureConflictResolver: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "GestureConflictResolver")
 
     // MARK: - Published Properties
 
@@ -48,7 +53,7 @@ class GestureConflictResolver: ObservableObject {
         self.handTracker = handTracker
         self.faceTracker = faceTracker
 
-        print("🔀 GestureConflictResolver initialized")
+        logger.info("GestureConflictResolver initialized")
     }
 
 
@@ -150,14 +155,14 @@ class GestureConflictResolver: ObservableObject {
     /// Notify when gesture starts
     func gestureDidStart(_ gesture: GestureRecognizer.Gesture) {
         gestureStartTimes[gesture] = Date()
-        print("✋ Gesture started: \(gesture.rawValue)")
+        logger.debug("Gesture started: \(gesture.rawValue, privacy: .public)")
     }
 
     /// Notify when gesture ends
     func gestureDidEnd(_ gesture: GestureRecognizer.Gesture) {
         gestureStartTimes[gesture] = nil
         lastGestureEndTime = Date()
-        print("✋ Gesture ended: \(gesture.rawValue)")
+        logger.debug("Gesture ended: \(gesture.rawValue, privacy: .public)")
     }
 
     /// Reset all gesture state
@@ -209,19 +214,19 @@ class GestureConflictResolver: ObservableObject {
         if !enabled {
             reset()
         }
-        print("✋ Gestures \(enabled ? "enabled" : "disabled")")
+        logger.info("Gestures \(enabled ? "enabled" : "disabled", privacy: .public)")
     }
 
     /// Update confidence threshold
     func setConfidenceThreshold(_ threshold: Float) {
         minimumConfidenceThreshold = max(0.1, min(1.0, threshold))
-        print("✋ Confidence threshold: \(minimumConfidenceThreshold)")
+        logger.debug("Confidence threshold: \(self.minimumConfidenceThreshold, privacy: .public)")
     }
 
     /// Update minimum hold time
     func setMinimumHoldTime(_ time: TimeInterval) {
         minimumGestureHoldTime = max(0.05, min(1.0, time))
-        print("✋ Minimum hold time: \(minimumGestureHoldTime)s")
+        logger.debug("Minimum hold time: \(self.minimumGestureHoldTime, privacy: .public)s")
     }
 
 
