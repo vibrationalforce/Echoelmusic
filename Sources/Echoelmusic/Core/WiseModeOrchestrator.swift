@@ -50,6 +50,44 @@ public final class WiseModeOrchestrator: ObservableObject {
     /// Suggested actions for the user
     @Published public private(set) var suggestions: [WiseSuggestion] = []
 
+    // MARK: - Transition State
+
+    /// Whether a mode transition is in progress
+    @Published public private(set) var isTransitioning: Bool = false
+
+    /// Current transition progress (0.0 - 1.0)
+    @Published public private(set) var transitionProgress: Float = 0.0
+
+    /// Source mode during transition
+    @Published public private(set) var transitionSourceMode: WiseMode?
+
+    // MARK: - Circadian State
+
+    /// Current time of day period
+    @Published public private(set) var currentCircadianPhase: CircadianPhase = .day
+
+    /// Recommended mode based on circadian rhythm
+    @Published public private(set) var circadianRecommendedMode: WiseMode = .balanced
+
+    // MARK: - Group Session
+
+    /// Whether group mode is active
+    @Published public private(set) var isGroupSessionActive: Bool = false
+
+    /// Number of connected participants
+    @Published public private(set) var groupParticipantCount: Int = 0
+
+    /// Group coherence average
+    @Published public private(set) var groupCoherenceAverage: Float = 0.0
+
+    // MARK: - Prediction State
+
+    /// Predicted optimal mode for next hour
+    @Published public private(set) var predictedNextMode: WiseMode?
+
+    /// Prediction confidence (0.0 - 1.0)
+    @Published public private(set) var predictionConfidence: Float = 0.0
+
     // MARK: - Wise Modes
 
     public enum WiseMode: String, CaseIterable {
@@ -104,6 +142,54 @@ public final class WiseModeOrchestrator: ObservableObject {
         case spatialOptimization = "Spatial Optimization"
         case visualSmoothing = "Visual Smoothing"
         case gestureCalibration = "Gesture Calibration"
+        case circadianAlignment = "Circadian Alignment"
+        case groupSync = "Group Synchronization"
+        case predictiveMode = "Predictive Mode Selection"
+    }
+
+    // MARK: - Circadian Phases
+
+    public enum CircadianPhase: String, CaseIterable {
+        case earlyMorning = "Early Morning"   // 5:00 - 8:00
+        case morning = "Morning"               // 8:00 - 12:00
+        case afternoon = "Afternoon"           // 12:00 - 17:00
+        case evening = "Evening"               // 17:00 - 21:00
+        case night = "Night"                   // 21:00 - 0:00
+        case lateNight = "Late Night"          // 0:00 - 5:00
+
+        var recommendedMode: WiseMode {
+            switch self {
+            case .earlyMorning: return .balanced      // Waking up
+            case .morning: return .energizing         // Peak alertness
+            case .afternoon: return .creative         // Creative window
+            case .evening: return .healing            // Wind down
+            case .night: return .meditative           // Prepare for sleep
+            case .lateNight: return .meditative       // Deep rest
+            }
+        }
+
+        var description: String {
+            switch self {
+            case .earlyMorning: return "Gentle awakening, building energy"
+            case .morning: return "Peak alertness, best for active work"
+            case .afternoon: return "Creative window, good for flow states"
+            case .evening: return "Wind down, transition to relaxation"
+            case .night: return "Prepare for sleep, deep calming"
+            case .lateNight: return "Deep rest and recovery"
+            }
+        }
+
+        static func current() -> CircadianPhase {
+            let hour = Calendar.current.component(.hour, from: Date())
+            switch hour {
+            case 5..<8: return .earlyMorning
+            case 8..<12: return .morning
+            case 12..<17: return .afternoon
+            case 17..<21: return .evening
+            case 21..<24: return .night
+            default: return .lateNight  // 0-5
+            }
+        }
     }
 
     // MARK: - Suggestions
@@ -146,12 +232,33 @@ public final class WiseModeOrchestrator: ObservableObject {
     private var modeTransitionHistory: [(from: WiseMode, to: WiseMode, timestamp: Date)] = []
     private var cancellables = Set<AnyCancellable>()
     private var wisdomUpdateTimer: Timer?
+    private var transitionTimer: Timer?
+    private var circadianTimer: Timer?
+    private var predictionTimer: Timer?
+
+    // Transition parameters
+    private var transitionDuration: TimeInterval = 3.0
+    private var transitionTargetMode: WiseMode?
+    private var transitionStartTime: Date?
+
+    // Mode usage tracking for prediction
+    private var modeUsageHistory: [(mode: WiseMode, hour: Int, coherence: Double, duration: TimeInterval)] = []
 
     private struct BioStateSnapshot {
         let timestamp: Date
         let hrvCoherence: Double
         let heartRate: Double
         let activeInputs: Int
+    }
+
+    // Group session participants
+    private var groupParticipants: [GroupParticipant] = []
+
+    public struct GroupParticipant: Identifiable {
+        public let id: UUID
+        public let name: String
+        public var coherence: Float
+        public var isConnected: Bool
     }
 
     // MARK: - Initialization
@@ -201,18 +308,129 @@ public final class WiseModeOrchestrator: ObservableObject {
         logger.info("Wise Mode deactivated")
     }
 
-    /// Set the current wise mode
-    public func setMode(_ mode: WiseMode) {
-        let previousMode = currentMode
-        currentMode = mode
+    /// Set the current wise mode with optional smooth transition
+    /// - Parameters:
+    ///   - mode: Target wise mode
+    ///   - animated: Whether to animate the transition (default: true)
+    ///   - duration: Transition duration in seconds (default: 3.0)
+    public func setMode(_ mode: WiseMode, animated: Bool = true, duration: TimeInterval = 3.0) {
+        guard mode != currentMode else { return }
 
+        let previousMode = currentMode
         modeTransitionHistory.append((from: previousMode, to: mode, timestamp: Date()))
 
-        if isActive {
-            applyCurrentMode()
+        if animated && isActive {
+            startSmoothTransition(to: mode, duration: duration)
+        } else {
+            currentMode = mode
+            if isActive {
+                applyCurrentMode()
+            }
         }
 
         logger.info("Wise Mode changed: \(previousMode.rawValue, privacy: .public) → \(mode.rawValue, privacy: .public)")
+    }
+
+    // MARK: - Smooth Transitions
+
+    /// Start a smooth transition to a new mode
+    private func startSmoothTransition(to targetMode: WiseMode, duration: TimeInterval) {
+        // Cancel any existing transition
+        transitionTimer?.invalidate()
+
+        transitionSourceMode = currentMode
+        transitionTargetMode = targetMode
+        transitionDuration = duration
+        transitionStartTime = Date()
+        isTransitioning = true
+        transitionProgress = 0.0
+
+        logger.info("Starting smooth transition: \(self.currentMode.rawValue, privacy: .public) → \(targetMode.rawValue, privacy: .public) (\(duration, privacy: .public)s)")
+
+        // Update transition at 60 Hz
+        transitionTimer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.updateTransition()
+            }
+        }
+    }
+
+    /// Update the ongoing transition
+    private func updateTransition() {
+        guard isTransitioning,
+              let startTime = transitionStartTime,
+              let targetMode = transitionTargetMode else {
+            return
+        }
+
+        let elapsed = Date().timeIntervalSince(startTime)
+        let progress = Float(min(1.0, elapsed / transitionDuration))
+
+        // Use easeInOut curve for smoother feel
+        let smoothProgress = easeInOutCubic(progress)
+        transitionProgress = smoothProgress
+
+        // Interpolate parameters between modes
+        interpolateModeParameters(progress: smoothProgress)
+
+        // Complete transition when done
+        if progress >= 1.0 {
+            completeTransition(to: targetMode)
+        }
+    }
+
+    /// Complete the transition
+    private func completeTransition(to targetMode: WiseMode) {
+        transitionTimer?.invalidate()
+        transitionTimer = nil
+
+        currentMode = targetMode
+        isTransitioning = false
+        transitionProgress = 1.0
+        transitionSourceMode = nil
+        transitionTargetMode = nil
+        transitionStartTime = nil
+
+        applyCurrentMode()
+
+        logger.info("Transition complete: \(targetMode.rawValue, privacy: .public)")
+    }
+
+    /// Interpolate parameters between source and target modes
+    private func interpolateModeParameters(progress: Float) {
+        guard let sourceMode = transitionSourceMode,
+              let targetMode = transitionTargetMode else { return }
+
+        // Interpolate update frequency
+        let sourceFreq = Float(sourceMode.updateFrequency)
+        let targetFreq = Float(targetMode.updateFrequency)
+        let interpolatedFreq = sourceFreq + (targetFreq - sourceFreq) * progress
+
+        // Interpolate target coherence
+        let sourceCoherence = sourceMode.targetCoherence
+        let targetCoherence = targetMode.targetCoherence
+        _ = sourceCoherence + (targetCoherence - sourceCoherence) * progress
+
+        // Apply interpolated values to audio engine if available
+        if let audio = audioEngine {
+            // Interpolate binaural amplitude
+            let sourceAmplitude: Float = sourceMode == .meditative || sourceMode == .healing ? 0.3 : 0.0
+            let targetAmplitude: Float = targetMode == .meditative || targetMode == .healing ? 0.3 : 0.0
+            let interpolatedAmplitude = sourceAmplitude + (targetAmplitude - sourceAmplitude) * progress
+            audio.setBinauralAmplitude(interpolatedAmplitude)
+        }
+
+        logger.debug("Transition progress: \(Int(progress * 100), privacy: .public)% (freq: \(Int(interpolatedFreq), privacy: .public) Hz)")
+    }
+
+    /// Ease-in-out cubic function for smooth animation
+    private func easeInOutCubic(_ t: Float) -> Float {
+        if t < 0.5 {
+            return 4 * t * t * t
+        } else {
+            let f = (2 * t) - 2
+            return 0.5 * f * f * f + 1
+        }
     }
 
     // MARK: - Wisdom Loop
@@ -513,6 +731,263 @@ public final class WiseModeOrchestrator: ObservableObject {
 
     public func clearSuggestions() {
         suggestions.removeAll()
+    }
+
+    // MARK: - Circadian Rhythm Integration
+
+    /// Start circadian rhythm monitoring
+    public func enableCircadianAlignment() {
+        activeOptimizations.insert(.circadianAlignment)
+
+        // Update immediately
+        updateCircadianPhase()
+
+        // Check every 15 minutes
+        circadianTimer = Timer.scheduledTimer(withTimeInterval: 900, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.updateCircadianPhase()
+            }
+        }
+
+        logger.info("Circadian alignment enabled")
+    }
+
+    /// Stop circadian rhythm monitoring
+    public func disableCircadianAlignment() {
+        activeOptimizations.remove(.circadianAlignment)
+        circadianTimer?.invalidate()
+        circadianTimer = nil
+        logger.info("Circadian alignment disabled")
+    }
+
+    /// Update the current circadian phase and recommendation
+    private func updateCircadianPhase() {
+        let newPhase = CircadianPhase.current()
+
+        if newPhase != currentCircadianPhase {
+            currentCircadianPhase = newPhase
+            circadianRecommendedMode = newPhase.recommendedMode
+
+            // Suggest mode change if significantly different
+            if currentMode != circadianRecommendedMode && currentMode != .performance {
+                addSuggestion(
+                    type: .modeChange,
+                    message: "Based on time of day (\(newPhase.rawValue)), \(circadianRecommendedMode.rawValue) mode is recommended.",
+                    priority: .low
+                )
+            }
+
+            logger.info("Circadian phase updated: \(newPhase.rawValue, privacy: .public) → recommends \(self.circadianRecommendedMode.rawValue, privacy: .public)")
+        }
+    }
+
+    /// Automatically switch to circadian-recommended mode
+    public func applyCircadianMode(animated: Bool = true) {
+        setMode(circadianRecommendedMode, animated: animated)
+    }
+
+    // MARK: - Predictive Mode Selection
+
+    /// Enable predictive mode selection
+    public func enablePredictiveMode() {
+        activeOptimizations.insert(.predictiveMode)
+
+        // Update prediction every 10 minutes
+        predictionTimer = Timer.scheduledTimer(withTimeInterval: 600, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.updateModePrediction()
+            }
+        }
+
+        // Initial prediction
+        updateModePrediction()
+
+        logger.info("Predictive mode selection enabled")
+    }
+
+    /// Disable predictive mode selection
+    public func disablePredictiveMode() {
+        activeOptimizations.remove(.predictiveMode)
+        predictionTimer?.invalidate()
+        predictionTimer = nil
+        predictedNextMode = nil
+        predictionConfidence = 0.0
+        logger.info("Predictive mode selection disabled")
+    }
+
+    /// Record current mode usage for learning
+    private func recordModeUsage() {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let coherence = healthKitManager?.hrvCoherence ?? 50.0
+
+        modeUsageHistory.append((
+            mode: currentMode,
+            hour: hour,
+            coherence: coherence,
+            duration: 60.0  // Recorded every minute
+        ))
+
+        // Keep only last 7 days of history
+        if modeUsageHistory.count > 7 * 24 * 60 {
+            modeUsageHistory.removeFirst(modeUsageHistory.count - 7 * 24 * 60)
+        }
+    }
+
+    /// Update mode prediction based on historical data
+    private func updateModePrediction() {
+        let nextHour = (Calendar.current.component(.hour, from: Date()) + 1) % 24
+
+        // Find most common mode for next hour
+        let relevantHistory = modeUsageHistory.filter { $0.hour == nextHour }
+
+        guard !relevantHistory.isEmpty else {
+            // Fall back to circadian recommendation
+            predictedNextMode = CircadianPhase.current().recommendedMode
+            predictionConfidence = 0.3
+            return
+        }
+
+        // Count mode occurrences
+        var modeCounts: [WiseMode: Int] = [:]
+        for entry in relevantHistory {
+            modeCounts[entry.mode, default: 0] += 1
+        }
+
+        // Find most common
+        if let (mode, count) = modeCounts.max(by: { $0.value < $1.value }) {
+            predictedNextMode = mode
+            predictionConfidence = Float(count) / Float(relevantHistory.count)
+
+            logger.debug("Predicted mode for hour \(nextHour, privacy: .public): \(mode.rawValue, privacy: .public) (confidence: \(Int(self.predictionConfidence * 100), privacy: .public)%)")
+        }
+    }
+
+    /// Apply predicted mode
+    public func applyPredictedMode(animated: Bool = true) {
+        guard let predicted = predictedNextMode else { return }
+        setMode(predicted, animated: animated)
+    }
+
+    // MARK: - Group Session
+
+    /// Start a group session
+    public func startGroupSession() {
+        isGroupSessionActive = true
+        activeOptimizations.insert(.groupSync)
+        groupParticipants = []
+        groupParticipantCount = 1  // Self
+        groupCoherenceAverage = wisdomLevel
+
+        logger.info("Group session started")
+    }
+
+    /// End the group session
+    public func endGroupSession() {
+        isGroupSessionActive = false
+        activeOptimizations.remove(.groupSync)
+        groupParticipants = []
+        groupParticipantCount = 0
+        groupCoherenceAverage = 0.0
+
+        logger.info("Group session ended")
+    }
+
+    /// Add a participant to the group session
+    public func addGroupParticipant(id: UUID, name: String, coherence: Float) {
+        guard isGroupSessionActive else { return }
+
+        let participant = GroupParticipant(id: id, name: name, coherence: coherence, isConnected: true)
+        groupParticipants.append(participant)
+        groupParticipantCount = groupParticipants.count + 1  // +1 for self
+
+        updateGroupCoherence()
+
+        logger.info("Participant added: \(name, privacy: .public) (coherence: \(Int(coherence * 100), privacy: .public)%)")
+    }
+
+    /// Remove a participant from the group session
+    public func removeGroupParticipant(id: UUID) {
+        groupParticipants.removeAll { $0.id == id }
+        groupParticipantCount = groupParticipants.count + 1
+
+        updateGroupCoherence()
+    }
+
+    /// Update a participant's coherence
+    public func updateParticipantCoherence(id: UUID, coherence: Float) {
+        if let index = groupParticipants.firstIndex(where: { $0.id == id }) {
+            groupParticipants[index].coherence = coherence
+            updateGroupCoherence()
+        }
+    }
+
+    /// Calculate and update group coherence average
+    private func updateGroupCoherence() {
+        let selfCoherence = wisdomLevel
+        let participantCoherences = groupParticipants.map { $0.coherence }
+
+        let totalCoherence = selfCoherence + participantCoherences.reduce(0, +)
+        let count = Float(groupParticipants.count + 1)
+
+        groupCoherenceAverage = totalCoherence / count
+
+        // Suggest mode if group coherence is high
+        if groupCoherenceAverage > 0.8 && currentMode != .meditative {
+            addSuggestion(
+                type: .modeChange,
+                message: "Group coherence is high (\(Int(groupCoherenceAverage * 100))%). Consider Meditative mode for collective experience.",
+                priority: .medium
+            )
+        }
+    }
+
+    /// Synchronize mode across group
+    public func synchronizeGroupMode(_ mode: WiseMode) {
+        guard isGroupSessionActive else { return }
+
+        setMode(mode, animated: true)
+
+        // In real implementation, would broadcast to other participants
+        logger.info("Group mode synchronized: \(mode.rawValue, privacy: .public)")
+    }
+
+    // MARK: - Wisdom Visualization Data
+
+    /// Get visualization data for wisdom dashboard
+    public var wisdomVisualizationData: WisdomVisualizationData {
+        WisdomVisualizationData(
+            wisdomLevel: wisdomLevel,
+            systemHealth: systemHealth,
+            currentMode: currentMode,
+            isTransitioning: isTransitioning,
+            transitionProgress: transitionProgress,
+            circadianPhase: currentCircadianPhase,
+            circadianRecommendedMode: circadianRecommendedMode,
+            predictedNextMode: predictedNextMode,
+            predictionConfidence: predictionConfidence,
+            isGroupActive: isGroupSessionActive,
+            groupParticipantCount: groupParticipantCount,
+            groupCoherence: groupCoherenceAverage,
+            activeOptimizations: Array(activeOptimizations),
+            recentCoherenceHistory: bioStateHistory.suffix(30).map { Float($0.hrvCoherence) / 100.0 }
+        )
+    }
+
+    public struct WisdomVisualizationData {
+        public let wisdomLevel: Float
+        public let systemHealth: Int
+        public let currentMode: WiseMode
+        public let isTransitioning: Bool
+        public let transitionProgress: Float
+        public let circadianPhase: CircadianPhase
+        public let circadianRecommendedMode: WiseMode
+        public let predictedNextMode: WiseMode?
+        public let predictionConfidence: Float
+        public let isGroupActive: Bool
+        public let groupParticipantCount: Int
+        public let groupCoherence: Float
+        public let activeOptimizations: [Optimization]
+        public let recentCoherenceHistory: [Float]
     }
 
     // MARK: - Status
