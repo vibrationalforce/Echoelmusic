@@ -47,6 +47,11 @@ public final class EchoelWisdom: ObservableObject {
     /// Quality metrics
     @Published public var responseQuality: Float = 0.0
 
+    // MARK: - Sub-Systems
+
+    /// Empathy Mode for human, professional emotional support
+    private let empathyMode = EmpathyMode.shared
+
     // MARK: - Private State
 
     private var cancellables = Set<AnyCancellable>()
@@ -78,7 +83,11 @@ public final class EchoelWisdom: ObservableObject {
 
         currentState = .active
 
+        // Activate Empathy Mode
+        empathyMode.activate()
+
         logger.info("✨ EchoelWisdom™: ACTIVE")
+        logger.info("💜 Empathy Mode: Integrated")
         printWelcomeMessage()
     }
 
@@ -86,6 +95,9 @@ public final class EchoelWisdom: ObservableObject {
         guard currentState == .active else { return }
 
         currentState = .inactive
+
+        // Deactivate Empathy Mode
+        empathyMode.deactivate()
 
         // Save session data
         saveSessionData()
@@ -370,40 +382,48 @@ public final class EchoelWisdom: ObservableObject {
         ]
     }
 
-    // MARK: - Supportive Responses
+    // MARK: - Supportive Responses (Empathy Mode Integration)
 
     private func generateSupportiveResponse(
         query: WisdomQuery,
         intent: QueryIntent,
         sources: [WisdomSource]
     ) -> String {
-        if intent == .emotional {
-            return """
-            I hear you. What you're experiencing sounds challenging. 💜
+        // Use EmpathyMode for human, professional empathetic responses
+        let empathicResponse = empathyMode.processWithEmpathy(query.text)
 
-            First, let me say: Your feelings are valid. Creative work is vulnerable work, and it makes sense to feel this way sometimes.
+        // Build response with empathy + optional neuroscience backing
+        var response = empathicResponse.message
 
-            When we're in the midst of something difficult, our brains can convince us that the feeling will last forever. But emotions are like weather - they pass.
+        // Add follow-up if available
+        if let followUp = empathicResponse.followUp {
+            response += "\n\n" + followUp
+        }
 
-            You're not alone in this. Many creators experience exactly what you're describing.
+        // If emotional intent and we have relevant neuroscience, offer it gently
+        if intent == .emotional && !sources.isEmpty {
+            response += """
 
-            What would feel most helpful right now?
-            • Talking through what's happening
-            • Some neuroscience perspective on why this happens
-            • Practical strategies others have found useful
-            • Just being heard without advice
 
-            I'm here. No judgment.
+            ---
+
+            Wenn es dir hilft, kann ich auch die Neurowissenschaft dahinter teilen -
+            manchmal hilft es zu verstehen, was im Gehirn passiert.
+            Aber nur, wenn du möchtest. 🧠
+
+            Was wäre gerade am hilfreichsten für dich?
             """
         }
 
-        return """
-        Thank you for sharing this with me. 💜
+        // Add action suggestions if available
+        if !empathicResponse.actionSuggestions.isEmpty {
+            response += "\n\n💡 Mögliche nächste Schritte:\n"
+            for suggestion in empathicResponse.actionSuggestions.prefix(3) {
+                response += "• \(suggestion)\n"
+            }
+        }
 
-        I want to make sure I understand what you're experiencing before offering anything.
-
-        Can you tell me more about what's happening? I'm listening.
-        """
+        return response
     }
 
     private func generateSupportiveFollowUps(query: WisdomQuery) -> [String] {
