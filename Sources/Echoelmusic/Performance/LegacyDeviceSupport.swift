@@ -236,9 +236,7 @@ class LegacyDeviceSupport: ObservableObject {
         setupThermalStateObserver()
         applyAdaptiveSettings()
 
-        print("✅ Legacy Device Support: Initialized")
-        print("📱 Current Device: \(currentDevice?.deviceName ?? "Unknown")")
-        print("⚡️ Performance Level: \(performanceLevel.rawValue)")
+        Logger.log("Legacy Device Support: Initialized, Device=\(currentDevice?.deviceName ?? "Unknown"), Performance=\(performanceLevel.rawValue)", category: .system, level: .info)
     }
 
     // MARK: - Load Device Database
@@ -460,7 +458,7 @@ class LegacyDeviceSupport: ObservableObject {
             )
         ]
 
-        print("📊 Device Database: \(deviceDatabase.count) profiles")
+        Logger.log("Device Database: \(deviceDatabase.count) profiles", category: .system)
     }
 
     // MARK: - Detect Current Device
@@ -538,7 +536,7 @@ class LegacyDeviceSupport: ObservableObject {
 
     private func handleMemoryWarning() {
         memoryWarningReceived = true
-        print("⚠️ Memory Warning Received - Degrading Performance")
+        Logger.log("Memory Warning Received - Degrading Performance", category: .system, level: .warning)
 
         // Emergency performance reduction
         switch performanceLevel {
@@ -557,14 +555,14 @@ class LegacyDeviceSupport: ObservableObject {
         // Clear caches
         clearCaches()
 
-        print("   Reduced to: \(performanceLevel.rawValue)")
+        Logger.log("Performance reduced to: \(performanceLevel.rawValue)", category: .system)
     }
 
     private func clearCaches() {
         // Clear texture cache
         // Clear audio sample cache
         // Clear any other memory-heavy caches
-        print("   Caches cleared")
+        Logger.log("Caches cleared", category: .system)
     }
 
     // MARK: - Thermal State Observer
@@ -584,7 +582,7 @@ class LegacyDeviceSupport: ObservableObject {
     private func handleThermalStateChange() {
         thermalState = ProcessInfo.processInfo.thermalState
 
-        print("🌡️ Thermal State Changed: \(thermalState)")
+        Logger.log("Thermal State Changed: \(thermalState)", category: .system)
 
         switch thermalState {
         case .nominal:
@@ -595,20 +593,20 @@ class LegacyDeviceSupport: ObservableObject {
             // Slight throttling
             if performanceLevel == .ultra {
                 performanceLevel = .high
-                print("   Throttling: Ultra → High")
+                Logger.log("Throttling: Ultra → High", category: .system)
             }
 
         case .serious:
             // Significant throttling
             if performanceLevel > .medium {
                 performanceLevel = .medium
-                print("   Throttling: → Medium")
+                Logger.log("Throttling: → Medium", category: .system, level: .warning)
             }
 
         case .critical:
             // Emergency throttling
             performanceLevel = .low
-            print("   Emergency Throttling: → Low")
+            Logger.log("Emergency Throttling: → Low", category: .system, level: .error)
 
         @unknown default:
             break
@@ -622,12 +620,7 @@ class LegacyDeviceSupport: ObservableObject {
 
         let settings = device.recommendedSettings
 
-        print("🎛️ Applying Adaptive Settings:")
-        print("   Target FPS: \(settings.targetFPS)")
-        print("   Particles: \(settings.maxParticles)")
-        print("   Audio Sample Rate: \(settings.audioSampleRate) Hz")
-        print("   Texture Quality: \(settings.textureQuality.rawValue)")
-        print("   Effects Quality: \(settings.effectsQuality.rawValue)")
+        Logger.log("Adaptive Settings: FPS=\(settings.targetFPS), Particles=\(settings.maxParticles), Audio=\(settings.audioSampleRate)Hz, Textures=\(settings.textureQuality.rawValue), Effects=\(settings.effectsQuality.rawValue)", category: .system, level: .info)
     }
 
     // MARK: - Get Optimal Settings
