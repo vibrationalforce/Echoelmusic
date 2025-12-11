@@ -1,5 +1,6 @@
 import Foundation
 import HealthKit
+import os.log
 
 /// Clinical Evidence-Based Therapies
 /// Validated interventions from systematic reviews and meta-analyses
@@ -12,6 +13,10 @@ import HealthKit
 /// - Evidence levels per Oxford Centre for Evidence-Based Medicine
 @MainActor
 class ClinicalEvidenceBase: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "ClinicalEvidence")
 
     // MARK: - Published State
 
@@ -84,8 +89,8 @@ class ClinicalEvidenceBase: ObservableObject {
 
     init() {
         loadEvidenceBasedInterventions()
-        print("✅ Clinical Evidence Base: Initialized")
-        print("📚 All interventions backed by peer-reviewed research")
+        logger.info("Clinical Evidence Base: Initialized")
+        logger.info("All interventions backed by peer-reviewed research")
     }
 
     private func loadEvidenceBasedInterventions() {

@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import os.log
 
 // MARK: - Command Protocol
 /// Base protocol for all undoable/redoable actions
@@ -36,6 +37,9 @@ final class UndoRedoManager: ObservableObject {
     /// Maximum number of undo steps (like Reaper's 32,768)
     private let maxUndoSteps = 1000
 
+    /// Logger
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "UndoRedo")
+
     // MARK: - Initialization
     private init() {}
 
@@ -57,7 +61,7 @@ final class UndoRedoManager: ObservableObject {
         }
 
         updateState()
-        print("✅ Executed: \(command.actionName)")
+        logger.debug("✅ Executed: \(command.actionName, privacy: .public)")
     }
 
     /// Undo the last action
@@ -68,7 +72,7 @@ final class UndoRedoManager: ObservableObject {
         redoStack.append(command)
 
         updateState()
-        print("↩️ Undo: \(command.actionName)")
+        logger.debug("↩️ Undo: \(command.actionName, privacy: .public)")
     }
 
     /// Redo the last undone action
@@ -79,7 +83,7 @@ final class UndoRedoManager: ObservableObject {
         undoStack.append(command)
 
         updateState()
-        print("↪️ Redo: \(command.actionName)")
+        logger.debug("↪️ Redo: \(command.actionName, privacy: .public)")
     }
 
     /// Clear all history

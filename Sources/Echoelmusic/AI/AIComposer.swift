@@ -1,11 +1,16 @@
 import Foundation
 import CoreML
+import os.log
 
 /// AI Composer - CoreML-powered Music Generation
 /// Melody generation, chord progression suggestions, drum patterns
 /// Bio-Data → Music Style mapping
 @MainActor
 class AIComposer: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "AIComposer")
 
     @Published var isGenerating: Bool = false
     @Published var generatedMelody: [Note] = []
@@ -19,7 +24,7 @@ class AIComposer: ObservableObject {
 
     init() {
         // TODO: Load CoreML models
-        print("✅ AIComposer: Initialized")
+        logger.info("AIComposer: Initialized")
     }
 
     // MARK: - Melody Generation
@@ -29,7 +34,7 @@ class AIComposer: ObservableObject {
         defer { isGenerating = false }
 
         // TODO: Implement LSTM-based melody generation
-        print("🎼 AIComposer: Generating melody in \(key) \(scale) (\(bars) bars)")
+        logger.info("AIComposer: Generating melody in \(key, privacy: .public) \(scale, privacy: .public) (\(bars, privacy: .public) bars)")
 
         let notes = (0..<bars*4).map { _ in
             Note(pitch: Int.random(in: 60...72), duration: 0.25, velocity: 80)
@@ -45,7 +50,7 @@ class AIComposer: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎹 AIComposer: Suggesting chords for \(key) \(mood)")
+        logger.info("AIComposer: Suggesting chords for \(key, privacy: .public) \(mood, privacy: .public)")
 
         let chords = [
             Chord(root: "C", type: .major),

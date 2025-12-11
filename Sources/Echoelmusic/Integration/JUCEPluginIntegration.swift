@@ -1,4 +1,5 @@
 import Foundation
+import os.log
 
 #if canImport(BioDataBridge)
 import BioDataBridge
@@ -18,6 +19,10 @@ import BioDataBridge
 @MainActor
 @Observable
 class JUCEPluginIntegration {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "JUCEPlugin")
 
     // MARK: - Singleton
 
@@ -48,7 +53,7 @@ class JUCEPluginIntegration {
         checkPluginStatus()
         #endif
 
-        print("🎸 JUCE Plugin Integration initialized")
+        logger.info("JUCE Plugin Integration initialized")
     }
 
     // MARK: - Bio-Data Updates
@@ -74,9 +79,9 @@ class JUCEPluginIntegration {
             timestamp: Date().timeIntervalSince1970
         )
 
-        print("🎸 Bio-data sent to JUCE plugin: HRV=\(hrv), Coherence=\(coherence), HR=\(heartRate)")
+        logger.info("Bio-data sent to JUCE plugin: HRV=\(hrv, privacy: .public), Coherence=\(coherence, privacy: .public), HR=\(heartRate, privacy: .public)")
         #else
-        print("⚠️ BioDataBridge not available - JUCE plugin not compiled")
+        logger.warning("BioDataBridge not available - JUCE plugin not compiled")
         #endif
     }
 
@@ -107,8 +112,8 @@ class JUCEPluginIntegration {
         isPluginLoaded = bridge.isPluginLoaded()
         pluginVersion = bridge.getPluginVersion() ?? "Unknown"
 
-        print("🎸 JUCE Plugin Status: \(isPluginLoaded ? "Loaded" : "Not Loaded")")
-        print("🎸 Plugin Version: \(pluginVersion)")
+        logger.info("JUCE Plugin Status: \(self.isPluginLoaded ? "Loaded" : "Not Loaded", privacy: .public)")
+        logger.info("Plugin Version: \(self.pluginVersion, privacy: .public)")
         #endif
     }
 
@@ -195,7 +200,7 @@ extension JUCEPluginIntegration {
     /// Example: Connect to HealthKit manager
     func connectToHealthKit(manager: AnyObject) {
         // This would be called from the main app to connect HealthKit data
-        print("🎸 Connecting JUCE plugin to HealthKit manager")
+        logger.info("Connecting JUCE plugin to HealthKit manager")
 
         // In practice, you would set up a Combine pipeline:
         // healthKitManager.$currentHRV

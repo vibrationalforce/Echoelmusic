@@ -2,11 +2,16 @@ import Foundation
 import HealthKit
 import Combine
 import Accelerate
+import os.log
 
 /// Manages HealthKit integration for real-time HRV and heart rate monitoring
 /// Implements HeartMath Institute's coherence algorithm for biofeedback
 @MainActor
 class HealthKitManager: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "HealthKit")
 
     // MARK: - Published Properties
 
@@ -103,7 +108,7 @@ class HealthKitManager: ObservableObject {
             isAuthorized = (status == .sharingAuthorized)
 
             if isAuthorized {
-                print("✅ HealthKit authorized")
+                logger.info("HealthKit authorized")
                 errorMessage = nil
             } else {
                 errorMessage = "HealthKit access denied. Enable in Settings."
@@ -128,7 +133,7 @@ class HealthKitManager: ObservableObject {
         startHeartRateMonitoring()
         startHRVMonitoring()
 
-        print("🫀 HealthKit monitoring started")
+        logger.info("HealthKit monitoring started")
     }
 
     /// Stop all HealthKit monitoring
@@ -145,7 +150,7 @@ class HealthKitManager: ObservableObject {
 
         rrIntervalBuffer.removeAll()
 
-        print("⏹️ HealthKit monitoring stopped")
+        logger.info("HealthKit monitoring stopped")
     }
 
 

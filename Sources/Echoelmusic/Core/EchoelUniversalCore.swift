@@ -2,6 +2,7 @@ import SwiftUI
 import Combine
 import Accelerate
 import simd
+import os.log
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ECHOELMUSIC UNIVERSAL CORE
@@ -91,6 +92,7 @@ final class EchoelUniversalCore: ObservableObject {
 
     // MARK: - Private State
 
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "UniversalCore")
     private var cancellables = Set<AnyCancellable>()
     private var updateTimer: Timer?
 
@@ -146,8 +148,8 @@ final class EchoelUniversalCore: ObservableObject {
             }
             .store(in: &cancellables)
 
-        print("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden")
-        print("🌌 Wise Complete Mode: Integrated")
+        logger.info("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden")
+        logger.info("🌌 Wise Complete Mode: Integrated")
     }
 
     /// Reagiert auf Flow-State Änderungen vom Self-Healing System
@@ -175,7 +177,7 @@ final class EchoelUniversalCore: ObservableObject {
         case .wiseComplete:
             // Activate full wisdom integration
             systemState.wisdomIntegrationLevel = 1.0
-            print("🌌 Universal Core: Wise Complete Mode ACTIVE")
+            logger.info("🌌 Universal Core: Wise Complete Mode ACTIVE")
         case .activating:
             systemState.wisdomIntegrationLevel = 0.5
         case .deactivating, .inactive:
@@ -184,7 +186,7 @@ final class EchoelUniversalCore: ObservableObject {
             systemState.wisdomIntegrationLevel = 0.1
         case .error:
             systemState.wisdomIntegrationLevel = 0.0
-            print("⚠️ Universal Core: Wise Complete Mode ERROR")
+            logger.error("⚠️ Universal Core: Wise Complete Mode ERROR")
         }
     }
 
@@ -640,9 +642,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         systemEnergy = state.energy
         propagateUniversalState()
 
-        #if DEBUG
-        print("[UniversalCore] Bio update: Coherence=\(String(format: "%.2f", state.coherence))")
-        #endif
+        logger.debug("Bio update: Coherence=\(String(format: "%.2f", state.coherence), privacy: .public)")
     }
 
     func quantumStateCollapsed(to choice: Int) {
@@ -657,26 +657,20 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
             systemState.creativeDirection = .rhythmic
         }
 
-        #if DEBUG
-        print("[UniversalCore] Quantum collapsed to choice: \(choice)")
-        #endif
+        logger.debug("Quantum collapsed to choice: \(choice, privacy: .public)")
     }
 
     func deviceConnected(_ device: String) {
         systemState.connectedDevices += 1
         connectedModules.insert(.sync)
 
-        #if DEBUG
-        print("[UniversalCore] Device connected: \(device) (Total: \(systemState.connectedDevices))")
-        #endif
+        logger.debug("Device connected: \(device, privacy: .public) (Total: \(self.systemState.connectedDevices, privacy: .public))")
     }
 
     func deviceDisconnected(_ device: String) {
         systemState.connectedDevices = max(0, systemState.connectedDevices - 1)
 
-        #if DEBUG
-        print("[UniversalCore] Device disconnected: \(device) (Total: \(systemState.connectedDevices))")
-        #endif
+        logger.debug("Device disconnected: \(device, privacy: .public) (Total: \(self.systemState.connectedDevices, privacy: .public))")
     }
 
     func analogGearResponded(_ response: [Float]) {
@@ -691,9 +685,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
 
         propagateUniversalState()
 
-        #if DEBUG
-        print("[UniversalCore] Analog gear response: \(response.count) channels")
-        #endif
+        logger.debug("Analog gear response: \(response.count, privacy: .public) channels")
     }
 
     func aiSuggestionGenerated(_ suggestion: AICreativeEngine.CreativeSuggestion) {
@@ -705,9 +697,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
             applyAISuggestion(suggestion)
         }
 
-        #if DEBUG
-        print("[UniversalCore] AI suggestion: \(suggestion.type) (confidence: \(suggestion.confidence))")
-        #endif
+        logger.debug("AI suggestion: \(String(describing: suggestion.type), privacy: .public) (confidence: \(suggestion.confidence, privacy: .public))")
     }
 
     private func applyAISuggestion(_ suggestion: AICreativeEngine.CreativeSuggestion) {
