@@ -2,6 +2,7 @@ import Foundation
 import CoreML
 import Accelerate
 import Combine
+import os.log
 
 /// Intelligent Automation Engine
 /// AI assists with track effects & automation - HUMANS COMPOSE, AI ENHANCES
@@ -31,6 +32,10 @@ import Combine
 /// 🎸 Performance: Real-time intelligent effects
 @MainActor
 class IntelligentAutomationEngine: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "AutomationEngine")
 
     // MARK: - Published State
 
@@ -305,15 +310,15 @@ class IntelligentAutomationEngine: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Intelligent Automation Engine: Initialized")
-        print("🎚️ Mode: \(automationMode.rawValue)")
-        print("🧠 Learning: \(learningFromUser ? "Enabled" : "Disabled")")
+        logger.info("Intelligent Automation Engine: Initialized")
+        logger.info("Mode: \(automationMode.rawValue, privacy: .public)")
+        logger.info("Learning: \(learningFromUser ? "Enabled" : "Disabled", privacy: .public)")
     }
 
     // MARK: - Analyze Mix
 
     func analyzeMix(tracks: [AudioTrack]) -> MixAnalysis {
-        print("🔍 Analyzing mix...")
+        logger.info("Analyzing mix...")
 
         // Simulate mix analysis
         let loudness: Float = -14.0  // Target for streaming: -14 LUFS
@@ -358,7 +363,7 @@ class IntelligentAutomationEngine: ObservableObject {
             ))
         }
 
-        print("✅ Mix analysis complete: \(issues.count) issues found")
+        logger.info("Mix analysis complete: \(issues.count, privacy: .public) issues found")
 
         return MixAnalysis(
             overallLoudness: loudness,
@@ -382,7 +387,7 @@ class IntelligentAutomationEngine: ObservableObject {
     func generateSuggestions(for track: AudioTrack, context: MusicalContext) -> [AutomationSuggestion] {
         var suggestions: [AutomationSuggestion] = []
 
-        print("💡 Generating automation suggestions for: \(track.name)")
+        logger.info("Generating automation suggestions for: \(track.name, privacy: .public)")
 
         // Suggest filter sweep for introduction
         if context.section == .intro {
@@ -459,7 +464,7 @@ class IntelligentAutomationEngine: ObservableObject {
             }
         }
 
-        print("✅ Generated \(suggestions.count) suggestions (avg confidence: \(Int(suggestions.map { $0.confidence }.reduce(0, +) / Float(suggestions.count) * 100))%)")
+        logger.info("Generated \(suggestions.count, privacy: .public) suggestions (avg confidence: \(Int(suggestions.map { $0.confidence }.reduce(0, +) / Float(suggestions.count) * 100), privacy: .public)%)")
 
         return suggestions
     }
@@ -493,7 +498,7 @@ class IntelligentAutomationEngine: ObservableObject {
     // MARK: - Bio-Reactive Automation
 
     func generateBioReactiveAutomation(hrv: Float, coherence: Float, parameter: TrackAutomation.AutomationParameter, duration: Double) -> TrackAutomation {
-        print("🧠 Generating bio-reactive automation...")
+        logger.info("Generating bio-reactive automation...")
 
         var points: [TrackAutomation.AutomationPoint] = []
 
@@ -545,7 +550,7 @@ class IntelligentAutomationEngine: ObservableObject {
             points.append(TrackAutomation.AutomationPoint(time: duration, value: 0.5, tension: 0.0))
         }
 
-        print("✅ Bio-reactive automation generated: \(points.count) points")
+        logger.info("Bio-reactive automation generated: \(points.count, privacy: .public) points")
 
         return TrackAutomation(
             trackID: "bio-track",
@@ -571,16 +576,14 @@ class IntelligentAutomationEngine: ObservableObject {
 
         userProfile.learn(from: decision)
 
-        print("📚 Learned from user decision: \(parameter.rawValue) = \(value) in \(context)")
+        logger.info("Learned from user decision: \(parameter.rawValue, privacy: .public) = \(value, privacy: .public) in \(context, privacy: .public)")
     }
 
     // MARK: - Apply Automation
 
     func applyAutomation(_ automation: TrackAutomation, to track: AudioTrack) {
         activeAutomations.append(automation)
-        print("✅ Applied automation: \(automation.parameter.rawValue) to \(track.name)")
-        print("   Source: \(automation.source.rawValue)")
-        print("   Points: \(automation.points.count)")
+        logger.info("Applied automation: \(automation.parameter.rawValue, privacy: .public) to \(track.name, privacy: .public) - Source: \(automation.source.rawValue, privacy: .public), Points: \(automation.points.count, privacy: .public)")
     }
 
     // MARK: - Cinematic Automation Presets
@@ -648,7 +651,7 @@ class IntelligentAutomationEngine: ObservableObject {
             ))
         }
 
-        print("🎬 Generated cinematic automation: \(style.rawValue)")
+        logger.info("Generated cinematic automation: \(style.rawValue, privacy: .public)")
 
         return automations
     }

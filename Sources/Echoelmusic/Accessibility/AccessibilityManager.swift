@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import AVFoundation
 import Combine
+import os.log
 
 /// Accessibility Manager - WCAG 2.1 AAA Compliance
 /// Ensures Echoelmusic is usable by everyone, regardless of ability
@@ -14,6 +15,10 @@ import Combine
 /// - Robust: Compatible with assistive technologies
 @MainActor
 class AccessibilityManager: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "Accessibility")
 
     // MARK: - Published State
 
@@ -203,9 +208,9 @@ class AccessibilityManager: ObservableObject {
         setupAccessibilityNotifications()
         loadAccessibilityLabels()
 
-        print("✅ Accessibility Manager: Initialized")
-        print("♿️ WCAG 2.1 AAA Compliance Active")
-        print("🌐 Universal Design Principles Applied")
+        logger.info("Accessibility Manager: Initialized")
+        logger.info("WCAG 2.1 AAA Compliance Active")
+        logger.info("Universal Design Principles Applied")
     }
 
     deinit {
@@ -230,12 +235,7 @@ class AccessibilityManager: ObservableObject {
         let uiCategory = UIApplication.shared.preferredContentSizeCategory
         preferredContentSizeCategory = ContentSizeCategory(uiCategory)
 
-        print("📱 System Accessibility Settings:")
-        print("   - VoiceOver: \(isVoiceOverEnabled)")
-        print("   - Switch Control: \(isSwitchControlEnabled)")
-        print("   - Reduce Motion: \(isReduceMotionEnabled)")
-        print("   - Increase Contrast: \(isIncreasedContrastEnabled)")
-        print("   - Text Size: \(preferredContentSizeCategory)")
+        logger.info("System Accessibility Settings: VoiceOver=\(isVoiceOverEnabled, privacy: .public), SwitchControl=\(isSwitchControlEnabled, privacy: .public), ReduceMotion=\(isReduceMotionEnabled, privacy: .public), IncreaseContrast=\(isIncreasedContrastEnabled, privacy: .public)")
         #endif
 
         // Auto-enable accessibility mode based on system settings
@@ -411,7 +411,7 @@ class AccessibilityManager: ObservableObject {
 
     func setFocus(to element: String) {
         currentFocusElement = element
-        print("♿️ Focus set to: \(element)")
+        logger.debug("Focus set to: \(element, privacy: .public)")
     }
 
     // MARK: - Seizure Prevention (WCAG 2.3.1)
@@ -421,7 +421,7 @@ class AccessibilityManager: ObservableObject {
         let issSafe = flashesPerSecond <= 3.0
 
         if !issSafe {
-            print("⚠️ SEIZURE RISK: Flash rate \(flashesPerSecond) Hz exceeds 3 Hz limit")
+            logger.warning("SEIZURE RISK: Flash rate \(flashesPerSecond, privacy: .public) Hz exceeds 3 Hz limit")
             announce("Warning: Flashing content disabled for safety", priority: .high)
         }
 
@@ -483,7 +483,7 @@ class AccessibilityManager: ObservableObject {
         isReduceTransparencyEnabled = true
         animationSpeed = .slow
 
-        print("🧠 Simplified Mode: Enabled")
+        logger.info("Simplified Mode: Enabled")
         announce("Simplified mode activated. Interface complexity reduced.", priority: .normal)
     }
 
@@ -493,7 +493,7 @@ class AccessibilityManager: ObservableObject {
         liveAudioCaptionsEnabled = true
         audioDescriptionsEnabled = true
 
-        print("👂 Live Captions: Enabled")
+        logger.info("Live Captions: Enabled")
         announce("Live captions enabled. All audio will be transcribed.", priority: .normal)
     }
 
