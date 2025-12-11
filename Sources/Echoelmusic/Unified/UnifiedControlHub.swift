@@ -429,9 +429,30 @@ public class UnifiedControlHub: ObservableObject {
                 let afaField = spatialMapper.mapToAFA(voices: voiceData, geometry: fieldGeometry)
                 spatialMapper.afaField = afaField
 
-                // TODO: Apply AFA field to SpatialAudioEngine
+                // Apply AFA field to SpatialAudioEngine
+                if let spatial = spatialAudioEngine {
+                    let spatialGeometry = convertToSpatialGeometry(fieldGeometry, sourceCount: afaField.sources.count)
+                    spatial.applyAFAField(geometry: spatialGeometry, coherence: hrvCoherence)
+                }
+
                 logger.debug("[Bio→AFA] Field geometry: \(fieldGeometry, privacy: .public), Sources: \(afaField.sources.count, privacy: .public)")
             }
+        }
+    }
+
+    /// Convert AFAField.FieldGeometry to SpatialAudioEngine.AFAFieldGeometry
+    private func convertToSpatialGeometry(_ geometry: AFAField.FieldGeometry, sourceCount: Int) -> SpatialAudioEngine.AFAFieldGeometry {
+        switch geometry {
+        case .circle(let radius, _):
+            return .circle(radius: radius)
+        case .sphere(let radius, _):
+            return .sphere(radius: radius)
+        case .fibonacci(_):
+            return .fibonacci(count: sourceCount)
+        case .grid(let rows, let cols, _):
+            return .grid(rows: rows, cols: cols)
+        case .spiral(_, _):
+            return .circle(radius: 1.5)  // Fallback for spiral
         }
     }
 
@@ -621,11 +642,14 @@ public class UnifiedControlHub: ObservableObject {
         }
 
         // Update visual parameters from bio-signals
+        let breathingRate = calculateBreathingRate(heartRate: healthKit.heartRate, hrvCoherence: healthKit.hrvCoherence)
+        let audioLevel = audioEngine?.getCurrentLevel() ?? 0.5
+
         let bioParams = MIDIToVisualMapper.BioParameters(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
-            audioLevel: 0.5      // TODO: Get from audio engine
+            breathingRate: breathingRate,
+            audioLevel: Float(audioLevel)
         )
 
         visualMapper.updateBioParameters(bioParams)
@@ -636,10 +660,12 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        let breathingRate = calculateBreathingRate(heartRate: healthKit.heartRate, hrvCoherence: healthKit.hrvCoherence)
+
         let bioData = MIDIToLightMapper.BioData(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0  // TODO: Calculate from HRV
+            breathingRate: breathingRate
         )
 
         // Update Push 3 LED patterns
@@ -668,6 +694,38 @@ public class UnifiedControlHub: ObservableObject {
         let normalized = (value - from.lowerBound) / (from.upperBound - from.lowerBound)
         let clamped = max(0, min(1, normalized))
         return to.lowerBound + clamped * (to.upperBound - to.lowerBound)
+    }
+
+    /// Calculate breathing rate from heart rate and HRV coherence
+    /// Uses RSA (Respiratory Sinus Arrhythmia) principle:
+    /// - High HRV coherence → slower, deeper breathing (4-6 breaths/min)
+    /// - Low HRV coherence → faster, shallower breathing (12-18 breaths/min)
+    /// - Heart rate also influences (higher HR → faster breathing)
+    private func calculateBreathingRate(heartRate: Double, hrvCoherence: Double) -> Double {
+        // Normalize HRV coherence (0-100 → 0-1)
+        let normalizedCoherence = min(1.0, max(0.0, hrvCoherence / 100.0))
+
+        // Base breathing rate from heart rate (HR/10 is typical resting ratio)
+        // Normal: 60 BPM HR → ~6 breaths/min for coherent state
+        let hrBasedRate = heartRate / 10.0
+
+        // Coherence modifier: high coherence → slower breathing (optimal 6 breaths/min)
+        // Low coherence → faster breathing (up to 18 breaths/min)
+        let coherenceModifier = 1.0 + (1.0 - normalizedCoherence) * 2.0
+
+        // Calculate final breathing rate
+        var breathingRate = hrBasedRate * coherenceModifier
+
+        // Clamp to physiological range (4-20 breaths/min)
+        breathingRate = min(20.0, max(4.0, breathingRate))
+
+        // For high coherence (>70%), guide toward optimal 6 breaths/min
+        if normalizedCoherence > 0.7 {
+            let optimalRate = 6.0
+            breathingRate = breathingRate * 0.3 + optimalRate * 0.7
+        }
+
+        return breathingRate
     }
 }
 

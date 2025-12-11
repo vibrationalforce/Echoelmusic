@@ -213,6 +213,20 @@ class AudioEngine: ObservableObject {
         }
     }
 
+    /// Get current audio output level (0.0 - 1.0)
+    /// Returns the average level from microphone input or generated audio
+    func getCurrentLevel() -> Double {
+        // Get level from microphone manager if available
+        let micLevel = microphoneManager.audioLevel
+
+        // If binaural beats are playing, factor in their amplitude
+        if binauralBeatsEnabled {
+            return Double(max(micLevel, binauralAmplitude * 0.5))
+        }
+
+        return Double(micLevel)
+    }
+
     /// Toggle spatial audio on/off
     func toggleSpatialAudio() {
         spatialAudioEnabled.toggle()
