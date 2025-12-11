@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import Metal
 import MetalKit
+import os.log
 
 /// Adaptive Quality Manager für automatische Performance-Optimierung
 ///
@@ -22,6 +23,10 @@ import MetalKit
 @Observable
 class AdaptiveQualityManager {
 
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "AdaptiveQuality")
+
     // MARK: - Published Properties
 
     /// Aktuelle Qualitätsstufe
@@ -29,7 +34,7 @@ class AdaptiveQualityManager {
         didSet {
             if currentQuality != oldValue {
                 qualityChangePublisher.send(currentQuality)
-                print("📊 Quality Level changed: \(oldValue.rawValue) → \(currentQuality.rawValue)")
+                logger.info("Quality Level changed: \(oldValue.rawValue, privacy: .public) → \(currentQuality.rawValue, privacy: .public)")
             }
         }
     }
@@ -503,8 +508,7 @@ class AdaptiveQualityManager {
     // MARK: - Quality Transition
 
     private func transitionToQuality(_ newQuality: QualityLevel) {
-        print("🔄 Transitioning quality: \(currentQuality.rawValue) → \(newQuality.rawValue)")
-        print("   FPS: \(String(format: "%.1f", metrics.averageFPS)) | CPU: \(String(format: "%.1f%%", metrics.cpuUsage * 100)) | GPU: \(String(format: "%.1f%%", metrics.gpuUsage * 100))")
+        logger.info("Transitioning quality: \(currentQuality.rawValue, privacy: .public) → \(newQuality.rawValue, privacy: .public) | FPS: \(String(format: "%.1f", metrics.averageFPS), privacy: .public) | CPU: \(String(format: "%.1f%%", metrics.cpuUsage * 100), privacy: .public) | GPU: \(String(format: "%.1f%%", metrics.gpuUsage * 100), privacy: .public)")
 
         currentQuality = newQuality
         lastQualityChange = Date()
@@ -626,7 +630,7 @@ class AdaptiveQualityManager {
     // MARK: - Emergency Handlers
 
     private func handleMemoryWarning() {
-        print("⚠️ Memory Warning! Degrading quality immediately.")
+        logger.warning("Memory Warning! Degrading quality immediately.")
 
         // Sofortige Qualitätsreduzierung
         if currentQuality > .minimal {
@@ -640,7 +644,7 @@ class AdaptiveQualityManager {
 
     private func clearCaches() {
         // Implementierung würde hier Caches leeren
-        print("🧹 Clearing caches to free memory")
+        logger.debug("Clearing caches to free memory")
     }
 
     // MARK: - Manual Control
