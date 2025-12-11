@@ -9,10 +9,11 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 
     // MARK: - Metal Components
 
-    private var device: MTLDevice!
-    private var commandQueue: MTLCommandQueue!
-    private var pipelineState: MTLRenderPipelineState!
-    private var vertexBuffer: MTLBuffer!
+    private var device: MTLDevice?
+    private var commandQueue: MTLCommandQueue?
+    private var pipelineState: MTLRenderPipelineState?
+    private var vertexBuffer: MTLBuffer?
+    private var isInitialized: Bool = false
 
 
     // MARK: - Uniforms
@@ -83,6 +84,7 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
         do {
             try createPipeline()
             createVertexBuffer()
+            isInitialized = true
             print("✅ Metal Cymatics Renderer initialized")
         } catch {
             print("❌ Failed to setup Metal pipeline: \(error)")
@@ -93,6 +95,10 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
     // MARK: - Pipeline Setup
 
     private func createPipeline() throws {
+        guard let device = device else {
+            throw RendererError.libraryCreationFailed
+        }
+
         // Load Metal library
         guard let library = device.makeDefaultLibrary() else {
             throw RendererError.libraryCreationFailed
@@ -115,6 +121,8 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
     }
 
     private func createVertexBuffer() {
+        guard let device = device else { return }
+
         // Full-screen quad vertices
         let vertices: [Float] = [
             // Position (x, y)  TexCoord (u, v)
@@ -137,6 +145,14 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
     }
 
     func draw(in view: MTKView) {
+        // Ensure we're initialized
+        guard isInitialized,
+              let commandQueue = commandQueue,
+              let pipelineState = pipelineState,
+              let vertexBuffer = vertexBuffer else {
+            return
+        }
+
         // Update time
         uniforms.time = Float(Date().timeIntervalSince(startTime))
 

@@ -48,10 +48,16 @@ class HealthKitManager: ObservableObject {
     private let maxBufferSize = 120 // 120 RR intervals ≈ 60 seconds at 60 BPM
 
     /// Types we need to read from HealthKit
-    private let typesToRead: Set<HKObjectType> = [
-        HKObjectType.quantityType(forIdentifier: .heartRate)!,
-        HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
-    ]
+    private var typesToRead: Set<HKObjectType> {
+        var types = Set<HKObjectType>()
+        if let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) {
+            types.insert(heartRateType)
+        }
+        if let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) {
+            types.insert(hrvType)
+        }
+        return types
+    }
 
 
     // MARK: - Initialization
@@ -71,7 +77,10 @@ class HealthKitManager: ObservableObject {
         }
 
         // Check authorization status
-        let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
+        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            errorMessage = "Heart rate type not available"
+            return
+        }
         let status = healthStore.authorizationStatus(for: heartRateType)
 
         isAuthorized = (status == .sharingAuthorized)
@@ -97,7 +106,10 @@ class HealthKitManager: ObservableObject {
             try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
 
             // Check if actually authorized
-            let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
+            guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+                errorMessage = "Heart rate type not available"
+                return
+            }
             let status = healthStore.authorizationStatus(for: heartRateType)
 
             isAuthorized = (status == .sharingAuthorized)

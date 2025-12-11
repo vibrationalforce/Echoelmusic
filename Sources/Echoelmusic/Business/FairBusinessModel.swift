@@ -264,7 +264,10 @@ class FairBusinessModel: ObservableObject {
         }
 
         let startDate = Date()
-        let endDate = Calendar.current.date(byAdding: .day, value: 14, to: startDate)!
+        guard let endDate = Calendar.current.date(byAdding: .day, value: 14, to: startDate) else {
+            print("❌ Failed to calculate trial end date")
+            return
+        }
 
         activeTrial = TrialInfo(
             tier: tier,
@@ -304,7 +307,7 @@ class FairBusinessModel: ObservableObject {
                 byAdding: billingPeriod == .monthly ? .month : .year,
                 value: 1,
                 to: Date()
-            )!
+            ) ?? Date().addingTimeInterval(billingPeriod == .monthly ? 30 * 24 * 3600 : 365 * 24 * 3600)
             subscriptionStatus = .active(tier: tier, renewalDate: renewalDate)
             print("✅ Subscription active until: \(renewalDate.formatted(date: .long, time: .omitted))")
         }
