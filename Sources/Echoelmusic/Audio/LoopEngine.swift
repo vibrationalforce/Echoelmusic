@@ -1,11 +1,16 @@
 import Foundation
 import AVFoundation
 import Combine
+import os.log
 
 /// Manages audio looping functionality with tempo-sync and quantization
 /// Supports loop recording, overdubbing, and playback
 @MainActor
 class LoopEngine: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "LoopEngine")
 
     // MARK: - Published Properties
 
@@ -123,7 +128,7 @@ class LoopEngine: ObservableObject {
         // Create directory if needed
         try? FileManager.default.createDirectory(at: loopsDirectory, withIntermediateDirectories: true)
 
-        print("🔄 Loop engine initialized")
+        logger.info("Loop engine initialized")
     }
 
 
@@ -143,7 +148,7 @@ class LoopEngine: ObservableObject {
         isRecordingLoop = true
         loopStartTime = Date()
 
-        print("🔴 Started loop recording: \(loop.name) (\(bars) bars)")
+        logger.info("Started loop recording: \(loop.name, privacy: .public) (\(bars, privacy: .public) bars)")
     }
 
     /// Stop recording current loop
@@ -166,7 +171,7 @@ class LoopEngine: ObservableObject {
 
             loops[lastLoopIndex].duration = quantizedDuration
 
-            print("⏹️ Stopped loop recording: \(quantizedDuration)s")
+            logger.info("Stopped loop recording: \(quantizedDuration, privacy: .public)s")
         }
 
         loopStartTime = nil
@@ -189,7 +194,7 @@ class LoopEngine: ObservableObject {
             startPlayback()
         }
 
-        print("🎙️ Started overdub on loop: \(loops[loopIndex].name)")
+        logger.info("Started overdub on loop: \(loops[loopIndex].name, privacy: .public)")
     }
 
     /// Stop overdubbing and merge with original loop
@@ -217,7 +222,7 @@ class LoopEngine: ObservableObject {
         overdubLoopID = nil
         loopStartTime = nil
 
-        print("⏹️ Stopped overdub, created: \(overdubName)")
+        logger.info("Stopped overdub, created: \(overdubName, privacy: .public)")
     }
 
     /// Cancel overdub without saving
@@ -228,7 +233,7 @@ class LoopEngine: ObservableObject {
         overdubLoopID = nil
         loopStartTime = nil
 
-        print("❌ Cancelled overdub")
+        logger.info("Cancelled overdub")
     }
 
 
@@ -244,7 +249,7 @@ class LoopEngine: ObservableObject {
         // Start position timer
         startTimer()
 
-        print("▶️ Started loop playback")
+        logger.info("Started loop playback")
     }
 
     /// Stop playing loops
@@ -253,7 +258,7 @@ class LoopEngine: ObservableObject {
         loopPosition = 0.0
         stopTimer()
 
-        print("⏹️ Stopped loop playback")
+        logger.info("Stopped loop playback")
     }
 
     /// Toggle playback
@@ -278,7 +283,7 @@ class LoopEngine: ObservableObject {
             players.removeValue(forKey: loopID)
         }
 
-        print("🗑️ Deleted loop")
+        logger.info("Deleted loop")
     }
 
     /// Mute/unmute loop
@@ -315,7 +320,7 @@ class LoopEngine: ObservableObject {
         loops.removeAll()
         players.removeAll()
 
-        print("🗑️ Cleared all loops")
+        logger.info("Cleared all loops")
     }
 
 
@@ -365,9 +370,9 @@ class LoopEngine: ObservableObject {
         metronomeEnabled.toggle()
 
         if metronomeEnabled {
-            print("🎵 Metronome enabled")
+            logger.info("Metronome enabled")
         } else {
-            print("🎵 Metronome disabled")
+            logger.info("Metronome disabled")
         }
     }
 
@@ -416,7 +421,7 @@ class LoopEngine: ObservableObject {
         let saveURL = loopsDirectory.appendingPathComponent("loops.json")
         try data.write(to: saveURL)
 
-        print("💾 Saved \(loops.count) loops")
+        logger.info("Saved \(loops.count, privacy: .public) loops")
     }
 
     /// Load loops from disk
@@ -427,7 +432,7 @@ class LoopEngine: ObservableObject {
         let decoder = JSONDecoder()
         loops = try decoder.decode([Loop].self, from: data)
 
-        print("📂 Loaded \(loops.count) loops")
+        logger.info("Loaded \(loops.count, privacy: .public) loops")
     }
 }
 

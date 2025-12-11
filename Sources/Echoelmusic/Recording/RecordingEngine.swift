@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import Combine
 import Accelerate
+import os.log
 
 // MARK: - Circular Buffer for O(1) Performance
 /// High-performance circular buffer replacing Array.removeFirst() O(n) with O(1)
@@ -50,6 +51,10 @@ private struct CircularBuffer<T> {
 /// Coordinates recording, playback, and real-time monitoring
 @MainActor
 class RecordingEngine: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "RecordingEngine")
 
     // MARK: - Published Properties
 
@@ -141,8 +146,8 @@ class RecordingEngine: ObservableObject {
             interleaved: false
         )!
 
-        print("📁 Recording engine initialized")
-        print("   Sessions directory: \(sessionsDirectory.path)")
+        logger.info("Recording engine initialized")
+        logger.info("Sessions directory: \(sessionsDirectory.path, privacy: .public)")
     }
 
 
@@ -151,7 +156,7 @@ class RecordingEngine: ObservableObject {
     /// Connect to main audio engine for audio routing
     func connectAudioEngine(_ audioEngine: AudioEngine) {
         self.mainAudioEngine = audioEngine
-        print("🔌 Connected to main audio engine")
+        logger.info("Connected to main audio engine")
     }
 
 
@@ -175,7 +180,7 @@ class RecordingEngine: ObservableObject {
         session.name = name
         currentSession = session
 
-        print("🎵 Created session: \(name)")
+        logger.info("Created session: \(name, privacy: .public)")
         return session
     }
 
@@ -183,7 +188,7 @@ class RecordingEngine: ObservableObject {
     func loadSession(id: UUID) throws {
         let session = try Session.load(id: id)
         currentSession = session
-        print("📂 Loaded session: \(session.name)")
+        logger.info("Loaded session: \(session.name, privacy: .public)")
     }
 
     /// Save current session
@@ -193,7 +198,7 @@ class RecordingEngine: ObservableObject {
         }
 
         try session.save()
-        print("💾 Saved session: \(session.name)")
+        logger.info("Saved session: \(session.name, privacy: .public)")
     }
 
 
@@ -242,7 +247,7 @@ class RecordingEngine: ObservableObject {
         // Start timer for position updates
         startTimer()
 
-        print("🔴 Started recording: \(track.name)")
+        logger.info("Started recording: \(track.name, privacy: .public)")
     }
 
     /// Setup audio engine tap for recording
@@ -264,7 +269,7 @@ class RecordingEngine: ObservableObject {
         }
 
         try engine.start()
-        print("🎙️ Audio recording engine started")
+        logger.info("Audio recording engine started")
     }
 
     /// Process incoming audio buffer during recording
@@ -341,7 +346,7 @@ class RecordingEngine: ObservableObject {
         recordingLevel = 0.0
         currentTrackID = nil
 
-        print("⏹️ Stopped recording")
+        logger.info("Stopped recording")
     }
 
 
@@ -360,7 +365,7 @@ class RecordingEngine: ObservableObject {
         isPlaying = true
         startTimer()
 
-        print("▶️ Started playback: \(session.name)")
+        logger.info("Started playback: \(session.name, privacy: .public)")
     }
 
     /// Stop playback
@@ -369,7 +374,7 @@ class RecordingEngine: ObservableObject {
         stopTimer()
         currentTime = 0.0
 
-        print("⏹️ Stopped playback")
+        logger.info("Stopped playback")
     }
 
     /// Pause playback
@@ -377,7 +382,7 @@ class RecordingEngine: ObservableObject {
         isPlaying = false
         stopTimer()
 
-        print("⏸️ Paused playback at \(currentTime)s")
+        logger.info("Paused playback at \(currentTime, privacy: .public)s")
     }
 
     /// Seek to position
@@ -385,7 +390,7 @@ class RecordingEngine: ObservableObject {
         guard let session = currentSession else { return }
 
         currentTime = max(0, min(time, session.duration))
-        print("⏩ Seeked to \(currentTime)s")
+        logger.debug("Seeked to \(currentTime, privacy: .public)s")
     }
 
 
@@ -540,7 +545,7 @@ class RecordingEngine: ObservableObject {
         )
 
         undoManager.execute(command)
-        print("🗑️ Deleted track (undoable)")
+        logger.info("Deleted track (undoable)")
     }
 
     // MARK: - Undo/Redo Convenience Methods
@@ -623,7 +628,7 @@ extension RecordingEngine {
             sampleRate: sampleRate,
             channels: channels
         )
-        print("📼 Retrospective capture enabled (\(Int(retrospectiveBufferDuration))s buffer)")
+        logger.info("Retrospective capture enabled (\(Int(retrospectiveBufferDuration), privacy: .public)s buffer)")
     }
 
     /// Feed audio to retrospective buffer (call from audio tap)
@@ -684,7 +689,7 @@ extension RecordingEngine {
         retrospective.clear()
         hasRetrospectiveContent = false
 
-        print("✨ Captured retrospective audio as '\(track.name)' (\(String(format: "%.1f", track.duration))s)")
+        logger.info("Captured retrospective audio as '\(track.name, privacy: .public)' (\(String(format: "%.1f", track.duration), privacy: .public)s)")
     }
 
     /// Clear retrospective buffer without capturing
