@@ -250,6 +250,38 @@ class AudioEngine: ObservableObject {
         }
     }
 
+    // MARK: - Filter Control
+
+    /// Current filter cutoff frequency
+    @Published var filterCutoff: Float = 2000.0
+
+    /// Current filter resonance (Q factor)
+    @Published var filterResonance: Float = 1.0
+
+    /// Set filter cutoff frequency
+    /// - Parameter cutoff: Frequency in Hz (20-20000)
+    func setFilterCutoff(_ cutoff: Float) {
+        filterCutoff = max(20, min(20000, cutoff))
+        // Apply to audio processing chain
+        bioParameterMapper.filterCutoff = filterCutoff
+        logger.debug("Filter cutoff set to \(Int(self.filterCutoff), privacy: .public) Hz")
+    }
+
+    /// Set filter resonance
+    /// - Parameter resonance: Q factor (0.5-10.0)
+    func setFilterResonance(_ resonance: Float) {
+        filterResonance = max(0.5, min(10.0, resonance))
+        logger.debug("Filter resonance set to \(self.filterResonance, privacy: .public)")
+    }
+
+    /// Set reverb wet/dry mix
+    /// - Parameter wet: Wet amount (0.0-1.0)
+    func setReverbWet(_ wet: Float) {
+        let clampedWet = max(0, min(1, wet))
+        bioParameterMapper.reverbWet = clampedWet
+        logger.debug("Reverb wet set to \(Int(clampedWet * 100), privacy: .public)%")
+    }
+
     /// Connect to HealthKit manager for HRV-based adaptations
     /// - Parameter healthKitManager: HealthKit manager instance
     func connectHealthKit(_ healthKitManager: HealthKitManager) {

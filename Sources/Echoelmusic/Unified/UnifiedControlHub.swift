@@ -56,8 +56,11 @@ public class UnifiedControlHub: ObservableObject {
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
-    // TODO: Add when implementing
-    // private let gazeTracker: GazeTracker?
+    // Phase 4: Wise Mode Integration
+    private var wiseModeOrchestrator: WiseModeOrchestrator?
+
+    // Future: Gaze Tracking (requires ARKit eye tracking permission)
+    // private var gazeTracker: GazeTracker?
 
     // MARK: - Control Loop
 
@@ -213,6 +216,53 @@ public class UnifiedControlHub: ObservableObject {
         mpe.setPitchBendRange(semitones: 48)  // ±4 octaves
 
         logger.info("MIDI 2.0 + MPE enabled")
+    }
+
+    // MARK: - Wise Mode
+
+    /// Enable Wise Mode for intelligent system coordination
+    /// - Parameter mode: Initial wise mode (default: .balanced)
+    public func enableWiseMode(mode: WiseModeOrchestrator.WiseMode = .balanced) {
+        let orchestrator = WiseModeOrchestrator.shared
+
+        // Configure with dependencies
+        orchestrator.configure(
+            controlHub: self,
+            healthKitManager: healthKitManager,
+            audioEngine: audioEngine
+        )
+
+        // Set mode and activate
+        orchestrator.setMode(mode)
+        orchestrator.activate()
+
+        self.wiseModeOrchestrator = orchestrator
+
+        logger.info("Wise Mode enabled: \(mode.rawValue, privacy: .public)")
+    }
+
+    /// Disable Wise Mode
+    public func disableWiseMode() {
+        wiseModeOrchestrator?.deactivate()
+        wiseModeOrchestrator = nil
+        logger.info("Wise Mode disabled")
+    }
+
+    /// Set Wise Mode
+    /// - Parameter mode: Target wise mode
+    public func setWiseMode(_ mode: WiseModeOrchestrator.WiseMode) {
+        wiseModeOrchestrator?.setMode(mode)
+        logger.info("Wise Mode set to: \(mode.rawValue, privacy: .public)")
+    }
+
+    /// Current Wise Mode status
+    public var isWiseModeActive: Bool {
+        wiseModeOrchestrator?.isActive ?? false
+    }
+
+    /// Current wisdom level (0.0 - 1.0)
+    public var currentWisdomLevel: Float {
+        wiseModeOrchestrator?.wisdomLevel ?? 0.0
     }
 
     /// Disable MIDI 2.0
@@ -475,7 +525,10 @@ public class UnifiedControlHub: ObservableObject {
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
         // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
+        if let engine = audioEngine {
+            engine.setFilterCutoff(params.filterCutoff)
+            engine.setFilterResonance(params.filterResonance)
+        }
         logger.debug("[Face→Audio] Cutoff: \(Int(params.filterCutoff), privacy: .public) Hz, Q: \(params.filterResonance, privacy: .public)")
 
         // Apply to all active MPE voices
@@ -593,13 +646,56 @@ public class UnifiedControlHub: ObservableObject {
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // TODO: Change to preset
+            applyPresetChange(presetChange)
             logger.debug("[Gesture→Audio] Switch to preset: \(presetChange, privacy: .public)")
         }
     }
 
+    /// Apply a preset change from gesture input
+    private func applyPresetChange(_ presetName: String) {
+        // Map gesture preset names to BioParameterMapper presets
+        if let bioMapper = bioParameterMapper {
+            switch presetName.lowercased() {
+            case "meditation", "calm":
+                bioMapper.applyPreset(.meditation)
+            case "focus", "concentrate":
+                bioMapper.applyPreset(.focus)
+            case "relax", "relaxation":
+                bioMapper.applyPreset(.relaxation)
+            case "energy", "energize":
+                bioMapper.applyPreset(.energize)
+            default:
+                logger.warning("Unknown preset: \(presetName, privacy: .public)")
+            }
+        }
+
+        // Also apply to visual mapper
+        if let visualMapper = midiToVisualMapper {
+            switch presetName.lowercased() {
+            case "meditation", "calm":
+                visualMapper.applyPreset(.meditation)
+            case "energy", "energize":
+                visualMapper.applyPreset(.energizing)
+            case "healing", "heal":
+                visualMapper.applyPreset(.healing)
+            default:
+                break
+            }
+        }
+    }
+
     private func updateFromGazeTracking() {
-        // TODO: Implement when GazeTracker is integrated
+        // Gaze tracking integration ready for ARKit eye tracking
+        // When GazeTracker is available, it will provide:
+        // - Gaze point (x, y) on screen
+        // - Eye openness for blink detection
+        // - Pupil dilation for arousal measurement
+        //
+        // Planned mappings:
+        // - Gaze X position → Stereo pan
+        // - Gaze Y position → Filter brightness
+        // - Blink → Trigger effects
+        // - Dilation → Intensity scaling
     }
 
     // MARK: - Conflict Resolution
