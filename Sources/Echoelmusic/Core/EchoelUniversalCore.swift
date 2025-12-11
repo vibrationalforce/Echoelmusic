@@ -85,6 +85,10 @@ final class EchoelUniversalCore: ObservableObject {
     /// EchoelTools - NEU VERBUNDEN
     private let tools = EchoelTools.shared
 
+    /// Wise Complete Mode - NEU VERBUNDEN
+    /// Integrates EchoelWisdom™ knowledge architecture with complete system harmony
+    private let wiseCompleteMode = WiseCompleteMode.shared
+
     // MARK: - Private State
 
     private var cancellables = Set<AnyCancellable>()
@@ -109,7 +113,7 @@ final class EchoelUniversalCore: ObservableObject {
         aiEngine.delegate = self
 
         // Register all modules
-        connectedModules = [.audio, .visual, .bio, .quantum, .sync, .analog, .ai, .selfHealing, .video, .tools]
+        connectedModules = [.audio, .visual, .bio, .quantum, .sync, .analog, .ai, .selfHealing, .video, .tools, .wisdom]
     }
 
     /// NEU: Verbindet alle Systeme bidirektional
@@ -129,7 +133,21 @@ final class EchoelUniversalCore: ObservableObject {
 
         // Tools sind bereits verbunden via EchoelTools.shared
 
+        // Wise Complete Mode → Universal Core
+        wiseCompleteMode.$state
+            .sink { [weak self] wisdomState in
+                self?.handleWisdomModeChange(wisdomState)
+            }
+            .store(in: &cancellables)
+
+        wiseCompleteMode.$wellbeingScore
+            .sink { [weak self] wellbeing in
+                self?.systemState.wellbeingScore = wellbeing
+            }
+            .store(in: &cancellables)
+
         print("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden")
+        print("🌌 Wise Complete Mode: Integrated")
     }
 
     /// Reagiert auf Flow-State Änderungen vom Self-Healing System
@@ -146,6 +164,27 @@ final class EchoelUniversalCore: ObservableObject {
             systemState.performanceMode = .reduced
         case .recovery, .emergency:
             systemState.performanceMode = .minimal
+        }
+    }
+
+    /// Reagiert auf Wise Complete Mode Zustandsänderungen
+    private func handleWisdomModeChange(_ wisdomState: WiseCompleteMode.WisdomState) {
+        systemState.wisdomModeActive = (wisdomState == .wiseComplete)
+
+        switch wisdomState {
+        case .wiseComplete:
+            // Activate full wisdom integration
+            systemState.wisdomIntegrationLevel = 1.0
+            print("🌌 Universal Core: Wise Complete Mode ACTIVE")
+        case .activating:
+            systemState.wisdomIntegrationLevel = 0.5
+        case .deactivating, .inactive:
+            systemState.wisdomIntegrationLevel = 0.0
+        case .initializing:
+            systemState.wisdomIntegrationLevel = 0.1
+        case .error:
+            systemState.wisdomIntegrationLevel = 0.0
+            print("⚠️ Universal Core: Wise Complete Mode ERROR")
         }
     }
 
@@ -289,6 +328,21 @@ extension EchoelUniversalCore {
         var systemHealth: SystemHealth = .optimal
         var performanceMode: PerformanceMode = .balanced
 
+        // NEU: Wise Complete Mode Integration
+        var wisdomModeActive: Bool = false
+        var wisdomIntegrationLevel: Float = 0.0
+        var wellbeingScore: Float = 0.5
+
+        // Extended state for delegate methods
+        var lastQuantumChoice: Int = 0
+        var creativeDirection: CreativeDirection = .harmonic
+        var analogFeedback: [Float] = []
+        var aiSuggestion: AICreativeEngine.CreativeSuggestion?
+
+        enum CreativeDirection {
+            case harmonic, rhythmic, textural, structural
+        }
+
         mutating func update(coherence: Float, energy: Float, quantumField: QuantumField) {
             self.coherence = coherence
             self.energy = energy
@@ -318,6 +372,7 @@ extension EchoelUniversalCore {
         case selfHealing = "Self-Healing"
         case video = "Video AI"
         case tools = "EchoelTools"
+        case wisdom = "Wise Complete Mode"
     }
 }
 
@@ -408,6 +463,25 @@ struct QuantumField {
         }
         return options - 1
     }
+
+    /// Record a collapse event (when quantum state collapses to classical)
+    mutating func recordCollapse(choice: Int) {
+        // Collapse reduces superposition strength
+        superpositionStrength *= 0.8
+
+        // Increase collapse probability threshold for next measurement
+        collapseProbability = min(collapseProbability + 0.1, 1.0)
+
+        // The chosen amplitude gets reinforced
+        if choice < amplitudes.count {
+            amplitudes[choice] *= 1.2
+            // Normalize
+            let norm = simd_length(amplitudes[choice])
+            if norm > 0 {
+                amplitudes[choice] /= norm
+            }
+        }
+    }
 }
 
 // MARK: - Bio-Reactive Processor
@@ -419,6 +493,7 @@ struct BioState {
     var stress: Float = 0.5
     var breathRate: Float = 12
     var breathPhase: Float = 0
+    var energy: Float = 0.5
 }
 
 struct AudioState {
@@ -445,6 +520,10 @@ class BioReactiveProcessor {
         // Calculate coherence using HeartMath algorithm
         currentState.coherence = calculateCoherence()
         currentState.stress = 1.0 - currentState.coherence
+    }
+
+    func updateState(_ state: BioState) {
+        currentState = state
     }
 
     private func calculateCoherence() -> Float {
