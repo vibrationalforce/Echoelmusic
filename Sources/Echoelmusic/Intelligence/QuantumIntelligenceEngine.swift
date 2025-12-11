@@ -4,6 +4,8 @@ import Accelerate
 import simd
 import Combine
 
+// Using Logger for structured quantum intelligence logging
+
 /// Quantum Intelligence Engine - Quantum-Inspired AI for Bio-Reactive Creativity
 /// Simulates quantum computing principles for exponentially faster pattern recognition
 ///
@@ -202,10 +204,7 @@ class QuantumIntelligenceEngine: ObservableObject {
 
     init() {
         initializeQuantumRegister()
-        print("✅ Quantum Intelligence Engine: Initialized")
-        print("⚛️ Quantum Mode: \(quantumMode.rawValue)")
-        print("🔬 Simulated Qubits: \(qubitSimulationCount)")
-        print("🌌 Entanglement Strength: \(entanglementStrength)")
+        Logger.log("Quantum Intelligence Engine initialized: Mode=\(quantumMode.rawValue), Qubits=\(qubitSimulationCount), Entanglement=\(entanglementStrength)", category: .system, level: .info)
     }
 
     // MARK: - Initialize Quantum Register
@@ -218,7 +217,7 @@ class QuantumIntelligenceEngine: ObservableObject {
         stateVector = Array(repeating: Complex(0, 0), count: stateCount)
         stateVector[0] = Complex(1, 0)  // Ground state
 
-        print("🌌 Quantum state initialized: |\(String(repeating: "0", count: qubitSimulationCount))⟩")
+        Logger.log("Quantum state initialized: |\(String(repeating: "0", count: qubitSimulationCount))⟩", category: .system)
     }
 
     // MARK: - Apply Quantum Gate
@@ -245,7 +244,7 @@ class QuantumIntelligenceEngine: ObservableObject {
         // Apply CNOT gate to create entanglement
         // CNOT|00⟩ = |00⟩, CNOT|01⟩ = |01⟩, CNOT|10⟩ = |11⟩, CNOT|11⟩ = |10⟩
 
-        print("🔗 Creating entanglement between qubits \(qubit1) and \(qubit2)")
+        Logger.log("Creating entanglement between qubits \(qubit1) and \(qubit2)", category: .system)
     }
 
     // MARK: - Quantum Annealing (Optimization)
@@ -253,9 +252,7 @@ class QuantumIntelligenceEngine: ObservableObject {
     /// Quantum annealing for global optimization
     /// Used for: Music composition, bio-data pattern matching, preset optimization
     func quantumAnneal(energyFunction: ([Float]) -> Float, dimensions: Int, iterations: Int = 1000) async -> [Float] {
-        print("🧊 Quantum Annealing: Started")
-        print("   Dimensions: \(dimensions)")
-        print("   Iterations: \(iterations)")
+        Logger.log("Quantum Annealing: Started, Dimensions=\(dimensions), Iterations=\(iterations)", category: .system)
 
         var currentState = (0..<dimensions).map { _ in Float.random(in: -1...1) }
         var currentEnergy = energyFunction(currentState)
@@ -294,15 +291,9 @@ class QuantumIntelligenceEngine: ObservableObject {
 
             // Cool down
             temperature *= coolingRate
-
-            // Progress update
-            if iteration % 100 == 0 {
-                print("   Iteration \(iteration): Energy = \(bestEnergy)")
-            }
         }
 
-        print("✅ Quantum Annealing: Complete")
-        print("   Best Energy: \(bestEnergy)")
+        Logger.log("Quantum Annealing: Complete, Best Energy=\(bestEnergy)", category: .system, level: .info)
 
         return bestState
     }
@@ -317,9 +308,7 @@ class QuantumIntelligenceEngine: ObservableObject {
 
         guard n > 0 else { return nil }
 
-        print("🔍 Grover's Search: Started")
-        print("   Database size: \(n)")
-        print("   Target: \(target)")
+        Logger.log("Grover's Search: Started, Database size=\(n), Target=\(target)", category: .system)
 
         // Number of iterations: π/4 * √N
         let iterations = Int(Double.pi / 4.0 * sqrt(Double(n)))
@@ -330,19 +319,18 @@ class QuantumIntelligenceEngine: ObservableObject {
 
         quantumAdvantage = Float(classicalComplexity) / Float(quantumComplexity)
 
-        print("   Iterations needed: \(iterations) (vs \(n) classical)")
-        print("   Quantum advantage: \(quantumAdvantage)x speedup")
+        Logger.log("Grover's Search: Iterations=\(iterations) (vs \(n) classical), Advantage=\(quantumAdvantage)x", category: .system)
 
         // Simulate search (in real quantum computer, this would be exponentially faster)
         try? await Task.sleep(nanoseconds: UInt64(iterations * 1_000_000))  // Simulate quantum time
 
         // Find target
         if let index = database.firstIndex(of: target) {
-            print("✅ Grover's Search: Found at index \(index)")
+            Logger.log("Grover's Search: Found at index \(index)", category: .system, level: .info)
             return index
         }
 
-        print("❌ Grover's Search: Not found")
+        Logger.log("Grover's Search: Not found", category: .system, level: .warning)
         return nil
     }
 
@@ -351,13 +339,11 @@ class QuantumIntelligenceEngine: ObservableObject {
     /// Variational Quantum Eigensolver (VQE) inspired neural network
     /// Used for: Bio-data prediction, music generation, pattern recognition
     func quantumNeuralNetwork(input: [Float], layers: Int = 4) async -> [Float] {
-        print("🧠 Quantum Neural Network: Processing")
-        print("   Input size: \(input.count)")
-        print("   Quantum layers: \(layers)")
+        Logger.log("Quantum Neural Network: Processing, Input size=\(input.count), Layers=\(layers)", category: .system)
 
         var state = input
 
-        for layer in 0..<layers {
+        for _ in 0..<layers {
             // Apply quantum-inspired transformation
             state = state.map { value in
                 // Quantum superposition-like transformation
@@ -376,7 +362,7 @@ class QuantumIntelligenceEngine: ObservableObject {
             }
         }
 
-        print("✅ Quantum Neural Network: Complete")
+        Logger.log("Quantum Neural Network: Complete", category: .system, level: .info)
 
         return state
     }
@@ -385,7 +371,7 @@ class QuantumIntelligenceEngine: ObservableObject {
 
     /// Use quantum algorithms to compose music from bio-data
     func composeFromBioData(hrv: Float, coherence: Float, breathing: Float) async -> QuantumComposition {
-        print("🎵 Quantum Music Composition: Started")
+        Logger.log("Quantum Music Composition: Started", category: .audio)
 
         // Encode bio-data into quantum state
         let bioVector = [hrv / 100.0, coherence, breathing / 20.0]
@@ -407,7 +393,7 @@ class QuantumIntelligenceEngine: ObservableObject {
         // Quantum rhythm generation (prime factorization inspired)
         let rhythm = generateQuantumRhythm(tempo: Int(60 + hrv))
 
-        print("✅ Quantum Music Composition: Complete")
+        Logger.log("Quantum Music Composition: Complete", category: .audio, level: .info)
 
         return QuantumComposition(
             melody: melody,
@@ -441,8 +427,7 @@ class QuantumIntelligenceEngine: ObservableObject {
 
     /// Use quantum entanglement principles to sync multiple users' bio-data
     func quantumBioSync(users: [UserBioData]) async -> GroupCoherence {
-        print("🔗 Quantum Bio-Sync: Started")
-        print("   Users: \(users.count)")
+        Logger.log("Quantum Bio-Sync: Started, Users=\(users.count)", category: .biofeedback)
 
         // Create entangled state representing all users
         var entangledState: [Float] = []
@@ -460,9 +445,7 @@ class QuantumIntelligenceEngine: ObservableObject {
         let variance = groupState.map { pow($0 - avgCoherence, 2) }.reduce(0, +) / Float(groupState.count)
         let synchronization = 1.0 - sqrt(variance)  // 0-1, higher is better
 
-        print("✅ Quantum Bio-Sync: Complete")
-        print("   Group coherence: \(avgCoherence)")
-        print("   Synchronization: \(synchronization)")
+        Logger.log("Quantum Bio-Sync: Complete, Coherence=\(avgCoherence), Sync=\(synchronization)", category: .biofeedback, level: .info)
 
         return GroupCoherence(
             averageCoherence: avgCoherence,
@@ -533,7 +516,7 @@ class QuantumIntelligenceEngine: ObservableObject {
     // MARK: - Quantum Advantage Benchmark
 
     func benchmarkQuantumAdvantage(problemSize: Int) async -> QuantumBenchmark {
-        print("⚡️ Benchmarking Quantum Advantage...")
+        Logger.log("Benchmarking Quantum Advantage, Problem size=\(problemSize)", category: .system)
 
         let startClassical = Date()
         // Classical algorithm: O(N)
@@ -542,6 +525,7 @@ class QuantumIntelligenceEngine: ObservableObject {
             classicalResult += i
         }
         let classicalTime = Date().timeIntervalSince(startClassical)
+        _ = classicalResult  // Silence unused warning
 
         let startQuantum = Date()
         // Quantum-inspired algorithm: O(√N)
@@ -551,13 +535,11 @@ class QuantumIntelligenceEngine: ObservableObject {
             quantumResult += i * i
         }
         let quantumTime = Date().timeIntervalSince(startQuantum)
+        _ = quantumResult  // Silence unused warning
 
         let speedup = classicalTime / max(quantumTime, 0.000001)
 
-        print("✅ Benchmark complete:")
-        print("   Classical time: \(String(format: "%.6f", classicalTime))s")
-        print("   Quantum time: \(String(format: "%.6f", quantumTime))s")
-        print("   Speedup: \(String(format: "%.1f", speedup))x")
+        Logger.log("Benchmark complete: Classical=\(String(format: "%.6f", classicalTime))s, Quantum=\(String(format: "%.6f", quantumTime))s, Speedup=\(String(format: "%.1f", speedup))x", category: .system, level: .info)
 
         return QuantumBenchmark(
             problemSize: problemSize,

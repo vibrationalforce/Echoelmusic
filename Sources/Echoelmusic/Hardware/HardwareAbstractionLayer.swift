@@ -3,6 +3,8 @@ import CoreMotion
 import AVFoundation
 import Combine
 
+// Using Logger for structured hardware logging
+
 /// Hardware Abstraction Layer (HAL)
 /// Universal hardware interface for ALL device types
 /// Abstracts differences between: iOS, macOS, watchOS, tvOS, CarPlay, IoT, Vehicles, Drones
@@ -205,12 +207,12 @@ class HardwareAbstractionLayer: ObservableObject {
         func startHeartRate(handler: @escaping (Float) -> Void) {
             // Platform-specific: Use HealthKit on Apple platforms
             // For other platforms, use device-specific APIs
-            print("⚠️ Heart rate monitoring requires HealthKit integration")
+            Logger.log("Heart rate monitoring requires HealthKit integration", category: .biofeedback, level: .warning)
         }
 
         func startBrainWaves(handler: @escaping ([Float]) -> Void) {
             // Future: Neural interface support (Neuralink, etc.)
-            print("⚠️ Brain wave monitoring not yet available (future feature)")
+            Logger.log("Brain wave monitoring not yet available (future feature)", category: .biofeedback, level: .warning)
         }
 
         func stopAll() {
@@ -241,9 +243,9 @@ class HardwareAbstractionLayer: ObservableObject {
                 try AVAudioSession.sharedInstance().setPreferredSampleRate(sampleRate)
                 try AVAudioSession.sharedInstance().setPreferredIOBufferDuration(Double(bufferSize) / sampleRate)
                 try AVAudioSession.sharedInstance().setActive(true)
-                print("✅ Audio configured: \(sampleRate) Hz, \(bufferSize) samples")
+                Logger.audio("Audio configured: \(sampleRate) Hz, \(bufferSize) samples", level: .info)
             } catch {
-                print("❌ Audio configuration failed: \(error)")
+                Logger.audio("Audio configuration failed: \(error)", level: .error)
             }
             #endif
         }
@@ -252,15 +254,15 @@ class HardwareAbstractionLayer: ObservableObject {
             guard let engine = audioEngine else { return }
             do {
                 try engine.start()
-                print("✅ Audio engine started")
+                Logger.audio("Audio engine started", level: .info)
             } catch {
-                print("❌ Audio engine start failed: \(error)")
+                Logger.audio("Audio engine start failed: \(error)", level: .error)
             }
         }
 
         func stopAudio() {
             audioEngine?.stop()
-            print("⏸️ Audio engine stopped")
+            Logger.audio("Audio engine stopped")
         }
 
         func setVolume(_ volume: Float) {
@@ -314,7 +316,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
         func setRefreshRate(_ fps: Int) {
             // Platform-specific refresh rate control
-            print("🖥️ Setting refresh rate to \(fps) Hz")
+            Logger.log("Setting refresh rate to \(fps) Hz", category: .visual)
         }
 
         func setBrightness(_ brightness: Float) {
@@ -331,9 +333,7 @@ class HardwareAbstractionLayer: ObservableObject {
         detectCapabilities()
         initializeInterfaces()
 
-        print("✅ Hardware Abstraction Layer: Initialized")
-        print("🖥️ Platform: \(currentPlatform.rawValue)")
-        print("💪 Capabilities detected")
+        Logger.log("Hardware Abstraction Layer initialized: Platform=\(currentPlatform.rawValue)", category: .system, level: .info)
     }
 
     // MARK: - Detect Platform
@@ -421,13 +421,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
         capabilities = caps
 
-        print("📊 Hardware Capabilities:")
-        print("   CPU Cores: \(caps.cpuCores)")
-        print("   RAM: \(String(format: "%.1f", caps.ramGB)) GB")
-        print("   Max FPS: \(caps.maxFPS)")
-        print("   Accelerometer: \(caps.hasAccelerometer)")
-        print("   Gyroscope: \(caps.hasGyroscope)")
-        print("   Heart Rate: \(caps.hasHeartRateSensor)")
+        Logger.log("Hardware Capabilities: CPU=\(caps.cpuCores) cores, RAM=\(String(format: "%.1f", caps.ramGB))GB, FPS=\(caps.maxFPS), Accel=\(caps.hasAccelerometer), Gyro=\(caps.hasGyroscope), HR=\(caps.hasHeartRateSensor)", category: .system)
     }
 
     // MARK: - Initialize Interfaces
@@ -442,7 +436,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
     /// Vehicle Platform Adapter
     func initializeVehiclePlatform(vehicleType: VehicleType) {
-        print("🚗 Initializing vehicle platform: \(vehicleType.rawValue)")
+        Logger.integration("Initializing vehicle platform: \(vehicleType.rawValue)")
 
         // Configure for vehicle environment
         capabilities.supportsCarPlay = true
@@ -456,7 +450,7 @@ class HardwareAbstractionLayer: ObservableObject {
         capabilities.hasAccelerometer = true
         capabilities.hasGyroscope = true
 
-        print("✅ Vehicle platform initialized")
+        Logger.integration("Vehicle platform initialized", level: .info)
     }
 
     enum VehicleType: String {
@@ -468,7 +462,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
     /// Drone Platform Adapter
     func initializeDronePlatform(droneType: DroneType) {
-        print("🚁 Initializing drone platform: \(droneType.rawValue)")
+        Logger.integration("Initializing drone platform: \(droneType.rawValue)")
 
         // Configure for drone environment
         capabilities.supportsFlight = true
@@ -484,7 +478,7 @@ class HardwareAbstractionLayer: ObservableObject {
         // Low-latency audio critical for drones
         audioInterface?.configureAudio(sampleRate: 48000, bufferSize: 64)
 
-        print("✅ Drone platform initialized")
+        Logger.integration("Drone platform initialized", level: .info)
     }
 
     enum DroneType: String {
@@ -495,7 +489,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
     /// IoT Platform Adapter
     func initializeIoTPlatform(deviceType: IoTDeviceType) {
-        print("📡 Initializing IoT platform: \(deviceType.rawValue)")
+        Logger.integration("Initializing IoT platform: \(deviceType.rawValue)")
 
         // Configure for IoT environment
         switch deviceType {
@@ -515,7 +509,7 @@ class HardwareAbstractionLayer: ObservableObject {
             capabilities.hasHeartRateSensor = true
         }
 
-        print("✅ IoT platform initialized")
+        Logger.integration("IoT platform initialized", level: .info)
     }
 
     enum IoTDeviceType: String {
@@ -526,7 +520,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
     /// Future Platform Adapter
     func initializeFuturePlatform(platformType: FuturePlatform) {
-        print("🚀 Initializing future platform: \(platformType.rawValue)")
+        Logger.integration("Initializing future platform: \(platformType.rawValue)")
 
         switch platformType {
         case .neuralInterface:
@@ -544,7 +538,7 @@ class HardwareAbstractionLayer: ObservableObject {
             capabilities.maxFPS = 240
         }
 
-        print("✅ Future platform initialized")
+        Logger.integration("Future platform initialized", level: .info)
     }
 
     enum FuturePlatform: String {
