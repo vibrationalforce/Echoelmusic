@@ -545,7 +545,8 @@ public enum QuantumResult<Success, Failure: Error>: Sendable where Success: Send
     }
 
     /// Collapse superposition to single result
-    public func collapse() -> Result<Success, Failure> {
+    /// - Note: Returns first result if superposition contains any, preferring successes
+    public func collapse() -> Result<Success, Failure>? {
         switch self {
         case .success(let value):
             return .success(value)
@@ -556,7 +557,8 @@ public enum QuantumResult<Success, Failure: Error>: Sendable where Success: Send
             if let success = results.first(where: { if case .success = $0 { return true }; return false }) {
                 return success
             }
-            return results.first ?? .failure(superpositionFailures.first!)
+            // Return first failure if no successes, or nil if empty
+            return results.first
         }
     }
 }
