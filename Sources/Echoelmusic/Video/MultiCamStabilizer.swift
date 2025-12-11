@@ -5,6 +5,7 @@ import CoreImage
 import Vision
 import Combine
 import Accelerate
+import os.log
 
 // MARK: - Multi-Camera Manager
 /// Professional multi-camera recording with synchronization
@@ -13,6 +14,10 @@ import Accelerate
 
 @MainActor
 class MultiCamManager: NSObject, ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "MultiCamManager")
 
     // MARK: - Published State
 
@@ -78,7 +83,7 @@ class MultiCamManager: NSObject, ObservableObject {
         let result = CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, device, nil, &textureCacheRef)
 
         guard result == kCVReturnSuccess, let cache = textureCacheRef else {
-            print("MultiCamManager: Failed to create texture cache")
+            // Cannot use logger before self is initialized
             return nil
         }
         self.textureCache = cache
@@ -88,7 +93,7 @@ class MultiCamManager: NSObject, ObservableObject {
         // Check multi-cam support
         isMultiCamSupported = AVCaptureMultiCamSession.isMultiCamSupported
 
-        print("MultiCamManager: Initialized (Multi-Cam supported: \(isMultiCamSupported))")
+        logger.info("Initialized (Multi-Cam supported: \(isMultiCamSupported, privacy: .public))")
     }
 
     // MARK: - Configure Multi-Cam Session
@@ -127,7 +132,7 @@ class MultiCamManager: NSObject, ObservableObject {
                 activeAngles.append(angle)
 
             } catch {
-                print("MultiCamManager: Failed to add \(camera.rawValue): \(error)")
+                logger.error("Failed to add \(camera.rawValue, privacy: .public): \(error.localizedDescription, privacy: .public)")
             }
         }
 
@@ -140,7 +145,7 @@ class MultiCamManager: NSObject, ObservableObject {
             primaryAngle = first
         }
 
-        print("MultiCamManager: Configured \(activeAngles.count) cameras")
+        logger.info("Configured \(activeAngles.count, privacy: .public) cameras")
     }
 
     private func addCamera(_ camera: CameraManager.CameraPosition, to session: AVCaptureMultiCamSession) throws {
@@ -202,7 +207,7 @@ class MultiCamManager: NSObject, ObservableObject {
         session.startRunning()
         isCapturing = true
 
-        print("MultiCamManager: Started capture with \(activeAngles.count) cameras")
+        logger.info("Started capture with \(activeAngles.count, privacy: .public) cameras")
     }
 
     func stopCapture() {
@@ -211,7 +216,7 @@ class MultiCamManager: NSObject, ObservableObject {
         session.stopRunning()
         isCapturing = false
 
-        print("MultiCamManager: Stopped capture")
+        logger.info("Stopped capture")
     }
 
     // MARK: - Recording
@@ -265,7 +270,7 @@ class MultiCamManager: NSObject, ObservableObject {
             }
         }
 
-        print("MultiCamManager: Started recording \(activeAngles.count) angles")
+        logger.info("Started recording \(activeAngles.count, privacy: .public) angles")
     }
 
     func stopRecording() async throws -> [URL] {
@@ -294,7 +299,7 @@ class MultiCamManager: NSObject, ObservableObject {
         pixelBufferAdaptors.removeAll()
         recordingStartTime = nil
 
-        print("MultiCamManager: Stopped recording, saved \(outputURLs.count) files")
+        logger.info("Stopped recording, saved \(outputURLs.count, privacy: .public) files")
 
         return outputURLs
     }
@@ -303,7 +308,7 @@ class MultiCamManager: NSObject, ObservableObject {
 
     func setPrimaryAngle(_ angle: CameraAngle) {
         primaryAngle = angle
-        print("MultiCamManager: Switched primary to \(angle.camera.rawValue)")
+        logger.debug("Switched primary to \(angle.camera.rawValue, privacy: .public)")
     }
 
     func getPrimaryTexture() -> MTLTexture? {
@@ -399,6 +404,10 @@ extension MultiCamManager: AVCaptureVideoDataOutputSampleBufferDelegate {
 
 @MainActor
 class VideoStabilizer: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "VideoStabilizer")
 
     // MARK: - Published State
 
@@ -794,7 +803,7 @@ class VideoStabilizer: ObservableObject {
             }
         }
 
-        print("VideoStabilizer: Completed stabilization of \(totalFrames) frames")
+        logger.info("Completed stabilization of \(totalFrames, privacy: .public) frames")
     }
 
     private func calculateSmoothedPath(mode: StabilizationMode) {
@@ -971,13 +980,13 @@ extension VideoEditingEngine {
 
         videoTracks.append(track)
 
-        print("VideoEditingEngine: Added multi-cam clip with \(clip.angleURLs.count) angles")
+        // Note: Logger not available in extension - consider refactoring
     }
 
     /// Switch angle at specific time
     func switchMultiCamAngle(clipID: UUID, at time: CMTime, to angle: CameraManager.CameraPosition) {
         // In production: Handle angle switch in timeline
-        print("VideoEditingEngine: Switching to \(angle.rawValue) at \(CMTimeGetSeconds(time))s")
+        // Note: Logger not available in extension - consider refactoring
     }
 }
 
