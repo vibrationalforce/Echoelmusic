@@ -31,6 +31,10 @@ import os.log
 @MainActor
 class LegacyDeviceSupport: ObservableObject {
 
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "LegacyDeviceSupport")
+
     // MARK: - Published State
 
     @Published var currentDevice: DeviceProfile?
@@ -236,9 +240,9 @@ class LegacyDeviceSupport: ObservableObject {
         setupThermalStateObserver()
         applyAdaptiveSettings()
 
-        print("✅ Legacy Device Support: Initialized")
-        print("📱 Current Device: \(currentDevice?.deviceName ?? "Unknown")")
-        print("⚡️ Performance Level: \(performanceLevel.rawValue)")
+        logger.info("Legacy Device Support: Initialized")
+        logger.info("Current Device: \(currentDevice?.deviceName ?? "Unknown", privacy: .public)")
+        logger.info("Performance Level: \(performanceLevel.rawValue, privacy: .public)")
     }
 
     // MARK: - Load Device Database
@@ -460,7 +464,7 @@ class LegacyDeviceSupport: ObservableObject {
             )
         ]
 
-        print("📊 Device Database: \(deviceDatabase.count) profiles")
+        logger.info("Device Database: \(deviceDatabase.count, privacy: .public) profiles")
     }
 
     // MARK: - Detect Current Device
@@ -538,7 +542,7 @@ class LegacyDeviceSupport: ObservableObject {
 
     private func handleMemoryWarning() {
         memoryWarningReceived = true
-        print("⚠️ Memory Warning Received - Degrading Performance")
+        logger.warning("Memory Warning Received - Degrading Performance")
 
         // Emergency performance reduction
         switch performanceLevel {
@@ -557,14 +561,14 @@ class LegacyDeviceSupport: ObservableObject {
         // Clear caches
         clearCaches()
 
-        print("   Reduced to: \(performanceLevel.rawValue)")
+        logger.info("Reduced to: \(performanceLevel.rawValue, privacy: .public)")
     }
 
     private func clearCaches() {
         // Clear texture cache
         // Clear audio sample cache
         // Clear any other memory-heavy caches
-        print("   Caches cleared")
+        logger.info("Caches cleared")
     }
 
     // MARK: - Thermal State Observer
@@ -584,7 +588,7 @@ class LegacyDeviceSupport: ObservableObject {
     private func handleThermalStateChange() {
         thermalState = ProcessInfo.processInfo.thermalState
 
-        print("🌡️ Thermal State Changed: \(thermalState)")
+        logger.info("Thermal State Changed: \(String(describing: thermalState), privacy: .public)")
 
         switch thermalState {
         case .nominal:
@@ -595,20 +599,20 @@ class LegacyDeviceSupport: ObservableObject {
             // Slight throttling
             if performanceLevel == .ultra {
                 performanceLevel = .high
-                print("   Throttling: Ultra → High")
+                logger.info("Throttling: Ultra → High")
             }
 
         case .serious:
             // Significant throttling
             if performanceLevel > .medium {
                 performanceLevel = .medium
-                print("   Throttling: → Medium")
+                logger.warning("Throttling: → Medium")
             }
 
         case .critical:
             // Emergency throttling
             performanceLevel = .low
-            print("   Emergency Throttling: → Low")
+            logger.error("Emergency Throttling: → Low")
 
         @unknown default:
             break
@@ -622,12 +626,7 @@ class LegacyDeviceSupport: ObservableObject {
 
         let settings = device.recommendedSettings
 
-        print("🎛️ Applying Adaptive Settings:")
-        print("   Target FPS: \(settings.targetFPS)")
-        print("   Particles: \(settings.maxParticles)")
-        print("   Audio Sample Rate: \(settings.audioSampleRate) Hz")
-        print("   Texture Quality: \(settings.textureQuality.rawValue)")
-        print("   Effects Quality: \(settings.effectsQuality.rawValue)")
+        logger.info("Applying Adaptive Settings: FPS=\(settings.targetFPS, privacy: .public), Particles=\(settings.maxParticles, privacy: .public), AudioRate=\(settings.audioSampleRate, privacy: .public)Hz, Textures=\(settings.textureQuality.rawValue, privacy: .public), Effects=\(settings.effectsQuality.rawValue, privacy: .public)")
     }
 
     // MARK: - Get Optimal Settings

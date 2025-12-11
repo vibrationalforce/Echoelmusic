@@ -2,12 +2,17 @@ import Foundation
 import AVFoundation
 import CoreData
 import Combine
+import os.log
 
 /// Video Editing Engine - Non-Linear Editor with Magnetic Timeline
 /// Supports unlimited tracks, keyframe animation, nested sequences
 /// Bio-reactive effects driven by HRV coherence and heart rate
 @MainActor
 class VideoEditingEngine: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "VideoEditingEngine")
 
     // MARK: - Published State
 
@@ -54,7 +59,7 @@ class VideoEditingEngine: ObservableObject {
 
     init(timeline: Timeline = Timeline()) {
         self.timeline = timeline
-        print("✅ VideoEditingEngine: Initialized with Undo/Redo support")
+        logger.info("VideoEditingEngine: Initialized with Undo/Redo support")
     }
 
     // MARK: - Undo/Redo Convenience Methods
@@ -117,7 +122,7 @@ class VideoEditingEngine: ObservableObject {
         )
 
         undoManager.execute(command)
-        print("➕ VideoEditingEngine: Added clip '\(clip.name)' to track '\(track.name)' at \(snappedTime.seconds)s")
+        logger.info("VideoEditingEngine: Added clip '\(clip.name, privacy: .public)' to track '\(track.name, privacy: .public)' at \(snappedTime.seconds, privacy: .public)s")
     }
 
     func removeClip(_ clipID: UUID, from track: Track) {
@@ -141,7 +146,7 @@ class VideoEditingEngine: ObservableObject {
         )
 
         undoManager.execute(command)
-        print("➖ VideoEditingEngine: Removed clip '\(clip.name)' from track '\(track.name)'")
+        logger.info("VideoEditingEngine: Removed clip '\(clip.name, privacy: .public)' from track '\(track.name, privacy: .public)'")
     }
 
     func moveClip(_ clipID: UUID, from sourceTrack: Track, to destinationTrack: Track, at time: CMTime) {
@@ -173,7 +178,7 @@ class VideoEditingEngine: ObservableObject {
         )
 
         undoManager.execute(command)
-        print("🔀 VideoEditingEngine: Moved clip '\(clip.name)' to track '\(destinationTrack.name)'")
+        logger.info("VideoEditingEngine: Moved clip '\(clip.name, privacy: .public)' to track '\(destinationTrack.name, privacy: .public)'")
     }
 
     // MARK: - Edit Operations
@@ -191,7 +196,7 @@ class VideoEditingEngine: ObservableObject {
             track.clips[i].startTime = track.clips[i].startTime + delta
         }
 
-        print("✂️ VideoEditingEngine: Ripple edit - shifted \(track.clips.count - index - 1) clips by \(delta.seconds)s")
+        logger.info("VideoEditingEngine: Ripple edit - shifted \(track.clips.count - index - 1, privacy: .public) clips by \(delta.seconds, privacy: .public)s")
     }
 
     func rollEdit(leftClipID: UUID, rightClipID: UUID, track: Track, newCutPoint: CMTime) {
@@ -211,7 +216,7 @@ class VideoEditingEngine: ObservableObject {
         track.clips[rightIndex].startTime = rightNewStart
         track.clips[rightIndex].duration = rightNewDuration
 
-        print("🎞️ VideoEditingEngine: Roll edit - moved cut point to \(newCutPoint.seconds)s")
+        logger.info("VideoEditingEngine: Roll edit - moved cut point to \(newCutPoint.seconds, privacy: .public)s")
     }
 
     func slipEdit(clipID: UUID, track: Track, newInPoint: CMTime) {
@@ -221,7 +226,7 @@ class VideoEditingEngine: ObservableObject {
         track.clips[index].inPoint = newInPoint
         track.clips[index].outPoint = newInPoint + track.clips[index].duration
 
-        print("🔄 VideoEditingEngine: Slip edit - new in point: \(newInPoint.seconds)s")
+        logger.info("VideoEditingEngine: Slip edit - new in point: \(newInPoint.seconds, privacy: .public)s")
     }
 
     func slideEdit(clipID: UUID, track: Track, newStartTime: CMTime) {
@@ -243,7 +248,7 @@ class VideoEditingEngine: ObservableObject {
             track.clips[index + 1].startTime = newStartTime + clip.duration
         }
 
-        print("↔️ VideoEditingEngine: Slide edit - moved clip to \(newStartTime.seconds)s")
+        logger.info("VideoEditingEngine: Slide edit - moved clip to \(newStartTime.seconds, privacy: .public)s")
     }
 
     func splitClip(clipID: UUID, track: Track, at time: CMTime) -> (UUID, UUID)? {
@@ -291,7 +296,7 @@ class VideoEditingEngine: ObservableObject {
         )
 
         undoManager.execute(command)
-        print("✂️ VideoEditingEngine: Split clip '\(originalClip.name)' at \(time.seconds)s")
+        logger.info("VideoEditingEngine: Split clip '\(originalClip.name, privacy: .public)' at \(time.seconds, privacy: .public)s")
 
         return (leftID, rightID)
     }
@@ -305,7 +310,7 @@ class VideoEditingEngine: ObservableObject {
         track.clips[index].keyframes[property, default: []].append(keyframe)
         track.clips[index].keyframes[property]?.sort { $0.time < $1.time }
 
-        print("🎯 VideoEditingEngine: Added keyframe for \(property.rawValue) at \(time.seconds)s")
+        logger.info("VideoEditingEngine: Added keyframe for \(property.rawValue, privacy: .public) at \(time.seconds, privacy: .public)s")
     }
 
     func removeKeyframe(clipID: UUID, track: Track, property: KeyframeProperty, at time: CMTime) {
@@ -313,7 +318,7 @@ class VideoEditingEngine: ObservableObject {
 
         track.clips[index].keyframes[property]?.removeAll { abs($0.time.seconds - time.seconds) < 0.01 }
 
-        print("🗑️ VideoEditingEngine: Removed keyframe for \(property.rawValue)")
+        logger.info("VideoEditingEngine: Removed keyframe for \(property.rawValue, privacy: .public)")
     }
 
     func evaluateKeyframe(clipID: UUID, track: Track, property: KeyframeProperty, at time: CMTime) -> Float? {
@@ -379,9 +384,9 @@ class VideoEditingEngine: ObservableObject {
             // Observe time
             startTimeObserver()
 
-            print("▶️ VideoEditingEngine: Started playback")
+            logger.info("VideoEditingEngine: Started playback")
         } catch {
-            print("❌ VideoEditingEngine: Failed to build composition - \(error)")
+            logger.error("VideoEditingEngine: Failed to build composition - \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -393,7 +398,7 @@ class VideoEditingEngine: ObservableObject {
 
         stopTimeObserver()
 
-        print("⏸️ VideoEditingEngine: Paused playback")
+        logger.info("VideoEditingEngine: Paused playback")
     }
 
     func stopPlayback() {
@@ -406,7 +411,7 @@ class VideoEditingEngine: ObservableObject {
 
         playhead = .zero
 
-        print("⏹️ VideoEditingEngine: Stopped playback")
+        logger.info("VideoEditingEngine: Stopped playback")
     }
 
     func seek(to time: CMTime) {
@@ -494,7 +499,7 @@ class VideoEditingEngine: ObservableObject {
         timeline.markers.append(marker)
         timeline.markers.sort { $0.time < $1.time }
 
-        print("📍 VideoEditingEngine: Added marker '\(label)' at \(time.seconds)s")
+        logger.info("VideoEditingEngine: Added marker '\(label, privacy: .public)' at \(time.seconds, privacy: .public)s")
     }
 
     func removeMarker(at time: CMTime) {
@@ -882,7 +887,7 @@ extension VideoEditingEngine {
     /// Add text overlay to timeline
     func addTextOverlay(_ overlay: TextOverlay) {
         timeline.textOverlays.append(overlay)
-        print("📝 VideoEditingEngine: Added text overlay '\(overlay.text)' at \(overlay.startTime.seconds)s")
+        logger.info("VideoEditingEngine: Added text overlay '\(overlay.text, privacy: .public)' at \(overlay.startTime.seconds, privacy: .public)s")
     }
 
     /// Add text overlay from preset

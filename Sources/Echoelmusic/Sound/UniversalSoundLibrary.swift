@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import AudioToolbox
 import Combine
+import os.log
 
 /// Universal Sound Library & Advanced Synthesis Engine
 /// Complete sound design system for ALL instruments worldwide + synthesis
@@ -25,6 +26,10 @@ import Combine
 /// - Spectral (FFT-based resynthesis)
 @MainActor
 class UniversalSoundLibrary: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "SoundLibrary")
 
     // MARK: - Published State
 
@@ -379,9 +384,9 @@ class UniversalSoundLibrary: ObservableObject {
         loadSynthEngines()
         loadPresets()
 
-        print("✅ Universal Sound Library: Initialized")
-        print("🎹 Instruments: \(availableInstruments.count)")
-        print("🎛️ Synthesis Engines: \(availableSynthEngines.count)")
+        logger.info("Universal Sound Library: Initialized")
+        logger.info("Instruments: \(availableInstruments.count, privacy: .public)")
+        logger.info("Synthesis Engines: \(availableSynthEngines.count, privacy: .public)")
     }
 
     // MARK: - Load Instrument Database
@@ -648,7 +653,7 @@ class UniversalSoundLibrary: ObservableObject {
             )
         ]
 
-        print("🎹 Loaded \(availableInstruments.count) instruments from global traditions")
+        logger.info("Loaded \(availableInstruments.count, privacy: .public) instruments from global traditions")
     }
 
     // MARK: - Load Synthesis Engines
@@ -723,14 +728,14 @@ class UniversalSoundLibrary: ObservableObject {
             )
         ]
 
-        print("🎛️ Loaded \(availableSynthEngines.count) synthesis engines")
+        logger.info("Loaded \(availableSynthEngines.count, privacy: .public) synthesis engines")
     }
 
     // MARK: - Load Presets
 
     private func loadPresets() {
         // Presets would be loaded here
-        print("💾 Preset system ready")
+        logger.info("Preset system ready")
     }
 
     // MARK: - Query Functions
