@@ -116,8 +116,7 @@ class EvidenceBasedHRVTraining: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Evidence-Based HRV Training: Initialized")
-        print("📚 Based on peer-reviewed research - Educational purposes only")
+        Logger.log("Evidence-Based HRV Training: Initialized - Based on peer-reviewed research, educational purposes only", category: .biofeedback, level: .info)
     }
 
     // MARK: - Start Training Session
@@ -133,10 +132,7 @@ class EvidenceBasedHRVTraining: ObservableObject {
         // Calculate baseline
         baselineHRV = try await measureBaselineHRV()
 
-        print("▶️ HRV Training: \(protocolType.rawValue)")
-        print("📊 Evidence Level: \(protocolType.evidenceLevel.rawValue)")
-        print("🫁 Target Breathing Rate: \(protocolType.targetBreathingRate) breaths/min")
-        print("⏱️ Duration: \(Int(protocolType.sessionDuration / 60)) minutes")
+        Logger.log("HRV Training: \(protocolType.rawValue) - Evidence Level: \(protocolType.evidenceLevel.rawValue), Breathing Rate: \(protocolType.targetBreathingRate) breaths/min, Duration: \(Int(protocolType.sessionDuration / 60)) min", category: .biofeedback, level: .info)
 
         // Start monitoring
         startMonitoring()
@@ -154,12 +150,7 @@ class EvidenceBasedHRVTraining: ObservableObject {
         let avgCoherence = sessionData.map { $0.coherence }.reduce(0, +) / Float(sessionData.count)
         let hrvChange = finalHRV - baselineHRV
 
-        print("⏹️ HRV Training: Session Ended")
-        print("📊 Results:")
-        print("   - Baseline HRV: \(String(format: "%.1f", baselineHRV)) ms")
-        print("   - Final HRV: \(String(format: "%.1f", finalHRV)) ms")
-        print("   - Change: \(hrvChange >= 0 ? "+" : "")\(String(format: "%.1f", hrvChange)) ms (\(String(format: "%.1f", (hrvChange / baselineHRV) * 100))%)")
-        print("   - Avg Coherence: \(String(format: "%.1f", avgCoherence))")
+        Logger.log("HRV Training: Session Ended - Baseline: \(String(format: "%.1f", baselineHRV))ms, Final: \(String(format: "%.1f", finalHRV))ms, Change: \(hrvChange >= 0 ? "+" : "")\(String(format: "%.1f", hrvChange))ms (\(String(format: "%.1f", (hrvChange / baselineHRV) * 100))%), Avg Coherence: \(String(format: "%.1f", avgCoherence))", category: .biofeedback, level: .info)
 
         currentProtocol = nil
     }

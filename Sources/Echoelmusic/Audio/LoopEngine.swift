@@ -123,7 +123,7 @@ class LoopEngine: ObservableObject {
         // Create directory if needed
         try? FileManager.default.createDirectory(at: loopsDirectory, withIntermediateDirectories: true)
 
-        print("🔄 Loop engine initialized")
+        Logger.audio("Loop engine initialized", level: .info)
     }
 
 
@@ -143,7 +143,7 @@ class LoopEngine: ObservableObject {
         isRecordingLoop = true
         loopStartTime = Date()
 
-        print("🔴 Started loop recording: \(loop.name) (\(bars) bars)")
+        Logger.audio("Started loop recording: \(loop.name) (\(bars) bars)", level: .info)
     }
 
     /// Stop recording current loop
@@ -166,7 +166,7 @@ class LoopEngine: ObservableObject {
 
             loops[lastLoopIndex].duration = quantizedDuration
 
-            print("⏹️ Stopped loop recording: \(quantizedDuration)s")
+            Logger.audio("Stopped loop recording: \(quantizedDuration)s")
         }
 
         loopStartTime = nil
@@ -189,7 +189,7 @@ class LoopEngine: ObservableObject {
             startPlayback()
         }
 
-        print("🎙️ Started overdub on loop: \(loops[loopIndex].name)")
+        Logger.audio("Started overdub on loop: \(loops[loopIndex].name)")
     }
 
     /// Stop overdubbing and merge with original loop
@@ -217,7 +217,7 @@ class LoopEngine: ObservableObject {
         overdubLoopID = nil
         loopStartTime = nil
 
-        print("⏹️ Stopped overdub, created: \(overdubName)")
+        Logger.audio("Stopped overdub, created: \(overdubName)")
     }
 
     /// Cancel overdub without saving
@@ -228,7 +228,7 @@ class LoopEngine: ObservableObject {
         overdubLoopID = nil
         loopStartTime = nil
 
-        print("❌ Cancelled overdub")
+        Logger.audio("Cancelled overdub")
     }
 
 
@@ -244,7 +244,7 @@ class LoopEngine: ObservableObject {
         // Start position timer
         startTimer()
 
-        print("▶️ Started loop playback")
+        Logger.audio("Started loop playback", level: .info)
     }
 
     /// Stop playing loops
@@ -253,7 +253,7 @@ class LoopEngine: ObservableObject {
         loopPosition = 0.0
         stopTimer()
 
-        print("⏹️ Stopped loop playback")
+        Logger.audio("Stopped loop playback")
     }
 
     /// Toggle playback
@@ -278,7 +278,7 @@ class LoopEngine: ObservableObject {
             players.removeValue(forKey: loopID)
         }
 
-        print("🗑️ Deleted loop")
+        Logger.audio("Deleted loop")
     }
 
     /// Mute/unmute loop
@@ -315,7 +315,7 @@ class LoopEngine: ObservableObject {
         loops.removeAll()
         players.removeAll()
 
-        print("🗑️ Cleared all loops")
+        Logger.audio("Cleared all loops")
     }
 
 
@@ -365,9 +365,9 @@ class LoopEngine: ObservableObject {
         metronomeEnabled.toggle()
 
         if metronomeEnabled {
-            print("🎵 Metronome enabled")
+            Logger.audio("Metronome enabled")
         } else {
-            print("🎵 Metronome disabled")
+            Logger.audio("Metronome disabled")
         }
     }
 
@@ -416,7 +416,7 @@ class LoopEngine: ObservableObject {
         let saveURL = loopsDirectory.appendingPathComponent("loops.json")
         try data.write(to: saveURL)
 
-        print("💾 Saved \(loops.count) loops")
+        Logger.audio("Saved \(loops.count) loops", level: .info)
     }
 
     /// Load loops from disk
@@ -427,7 +427,7 @@ class LoopEngine: ObservableObject {
         let decoder = JSONDecoder()
         loops = try decoder.decode([Loop].self, from: data)
 
-        print("📂 Loaded \(loops.count) loops")
+        Logger.audio("Loaded \(loops.count) loops", level: .info)
     }
 }
 

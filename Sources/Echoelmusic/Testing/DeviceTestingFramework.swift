@@ -184,8 +184,7 @@ class DeviceTestingFramework: ObservableObject {
         loadDeviceDatabase()
         detectCurrentDevice()
 
-        print("✅ Device Testing Framework: Initialized")
-        print("📱 Device Database: \(deviceDatabase.count) profiles")
+        Logger.log("Device Testing Framework: Initialized - Database: \(deviceDatabase.count) profiles", category: .system, level: .info)
     }
 
     // MARK: - Load Device Database
@@ -233,10 +232,7 @@ class DeviceTestingFramework: ObservableObject {
             createQuantumDevice2035()
         ]
 
-        print("📊 Device Database loaded: \(deviceDatabase.count) devices")
-        print("   - Smartphones: \(deviceDatabase.filter { $0.category == DeviceCategory.smartphone.rawValue }.count)")
-        print("   - Vehicles: \(deviceDatabase.filter { $0.category == DeviceCategory.vehicle.rawValue }.count)")
-        print("   - Future devices: \(deviceDatabase.filter { $0.releaseYear > 2025 }.count)")
+        Logger.log("Device Database loaded: \(deviceDatabase.count) devices (Smartphones: \(deviceDatabase.filter { $0.category == DeviceCategory.smartphone.rawValue }.count), Vehicles: \(deviceDatabase.filter { $0.category == DeviceCategory.vehicle.rawValue }.count), Future: \(deviceDatabase.filter { $0.releaseYear > 2025 }.count))", category: .system)
     }
 
     // MARK: - Device Profiles (Current)
@@ -508,7 +504,7 @@ class DeviceTestingFramework: ObservableObject {
         currentDeviceProfile = createiPhone15ProMax()
         #endif
 
-        print("📱 Current Device: \(currentDeviceProfile?.name ?? "Unknown")")
+        Logger.log("Current Device: \(currentDeviceProfile?.name ?? "Unknown")", category: .system)
     }
 
     private func getDeviceModelIdentifier() -> String {
@@ -566,8 +562,7 @@ class DeviceTestingFramework: ObservableObject {
         isTestingInProgress = true
         testResults = []
 
-        print("🧪 Starting Complete Test Suite...")
-        print("   Testing \(deviceDatabase.count) device profiles")
+        Logger.log("Starting Complete Test Suite - Testing \(deviceDatabase.count) device profiles", category: .system, level: .info)
 
         for device in deviceDatabase {
             await testDevice(device)
@@ -576,14 +571,13 @@ class DeviceTestingFramework: ObservableObject {
         calculateOverallCompatibility()
         isTestingInProgress = false
 
-        print("✅ Test Suite Complete")
-        print("   Overall Compatibility: \(String(format: "%.1f", compatibilityScore))%")
+        Logger.log("Test Suite Complete - Overall Compatibility: \(String(format: "%.1f", compatibilityScore))%", category: .system, level: .info)
     }
 
     // MARK: - Test Individual Device
 
     func testDevice(_ device: DeviceProfile) async {
-        print("   Testing: \(device.name)...")
+        Logger.log("Testing: \(device.name)...", category: .system)
 
         // Performance Test
         let perfResult = await testPerformance(device)

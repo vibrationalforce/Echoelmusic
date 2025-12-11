@@ -203,9 +203,7 @@ class AccessibilityManager: ObservableObject {
         setupAccessibilityNotifications()
         loadAccessibilityLabels()
 
-        print("✅ Accessibility Manager: Initialized")
-        print("♿️ WCAG 2.1 AAA Compliance Active")
-        print("🌐 Universal Design Principles Applied")
+        Logger.log("Accessibility Manager: Initialized - WCAG 2.1 AAA Compliance Active, Universal Design Principles Applied", category: .system, level: .info)
     }
 
     deinit {
@@ -230,12 +228,7 @@ class AccessibilityManager: ObservableObject {
         let uiCategory = UIApplication.shared.preferredContentSizeCategory
         preferredContentSizeCategory = ContentSizeCategory(uiCategory)
 
-        print("📱 System Accessibility Settings:")
-        print("   - VoiceOver: \(isVoiceOverEnabled)")
-        print("   - Switch Control: \(isSwitchControlEnabled)")
-        print("   - Reduce Motion: \(isReduceMotionEnabled)")
-        print("   - Increase Contrast: \(isIncreasedContrastEnabled)")
-        print("   - Text Size: \(preferredContentSizeCategory)")
+        Logger.log("System Accessibility: VoiceOver=\(isVoiceOverEnabled), SwitchControl=\(isSwitchControlEnabled), ReduceMotion=\(isReduceMotionEnabled), IncreaseContrast=\(isIncreasedContrastEnabled), TextSize=\(preferredContentSizeCategory)", category: .system)
         #endif
 
         // Auto-enable accessibility mode based on system settings
@@ -411,7 +404,7 @@ class AccessibilityManager: ObservableObject {
 
     func setFocus(to element: String) {
         currentFocusElement = element
-        print("♿️ Focus set to: \(element)")
+        Logger.log("Focus set to: \(element)", category: .system)
     }
 
     // MARK: - Seizure Prevention (WCAG 2.3.1)
@@ -421,7 +414,7 @@ class AccessibilityManager: ObservableObject {
         let issSafe = flashesPerSecond <= 3.0
 
         if !issSafe {
-            print("⚠️ SEIZURE RISK: Flash rate \(flashesPerSecond) Hz exceeds 3 Hz limit")
+            Logger.log("SEIZURE RISK: Flash rate \(flashesPerSecond) Hz exceeds 3 Hz limit", category: .system, level: .warning)
             announce("Warning: Flashing content disabled for safety", priority: .high)
         }
 
@@ -483,7 +476,7 @@ class AccessibilityManager: ObservableObject {
         isReduceTransparencyEnabled = true
         animationSpeed = .slow
 
-        print("🧠 Simplified Mode: Enabled")
+        Logger.log("Simplified Mode: Enabled", category: .system)
         announce("Simplified mode activated. Interface complexity reduced.", priority: .normal)
     }
 
@@ -493,7 +486,7 @@ class AccessibilityManager: ObservableObject {
         liveAudioCaptionsEnabled = true
         audioDescriptionsEnabled = true
 
-        print("👂 Live Captions: Enabled")
+        Logger.log("Live Captions: Enabled", category: .system)
         announce("Live captions enabled. All audio will be transcribed.", priority: .normal)
     }
 
