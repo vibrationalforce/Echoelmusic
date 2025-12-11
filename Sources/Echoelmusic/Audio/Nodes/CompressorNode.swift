@@ -1,11 +1,16 @@
 import Foundation
 import AVFoundation
+import os.log
 
 /// Dynamic range compressor node with bio-reactive parameters
 /// Respiratory Rate → Threshold (breath controls compression)
 /// HRV → Attack/Release (coherence controls dynamics)
 @MainActor
 class CompressorNode: BaseEchoelmusicNode {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "CompressorNode")
 
     // MARK: - AVAudioUnit Compressor
 
@@ -205,11 +210,11 @@ class CompressorNode: BaseEchoelmusicNode {
 
     override func start() {
         super.start()
-        print("🎵 CompressorNode started")
+        logger.info("CompressorNode started")
     }
 
     override func stop() {
         super.stop()
-        print("🎵 CompressorNode stopped")
+        logger.info("CompressorNode stopped")
     }
 }

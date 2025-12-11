@@ -1,11 +1,16 @@
 import Foundation
 import AVFoundation
 import Combine
+import os.log
 
 /// Manages a graph of interconnected audio processing nodes
 /// Handles signal routing, parameter automation, and bio-reactivity
 @MainActor
 class NodeGraph: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "NodeGraph")
 
     // MARK: - Published Properties
 
@@ -50,7 +55,7 @@ class NodeGraph: ObservableObject {
     func addNode(_ node: EchoelmusicNode) {
         nodes.append(node)
         invalidateCache() // Graph structure changed
-        print("📊 Added node: \(node.name) (\(node.type.rawValue))")
+        logger.info("Added node: \(node.name, privacy: .public) (\(node.type.rawValue, privacy: .public))")
     }
 
     /// Remove a node from the graph
@@ -93,7 +98,7 @@ class NodeGraph: ObservableObject {
         connections.append(connection)
         invalidateCache() // Graph structure changed
 
-        print("📊 Connected: \(source.name) → \(destination.name)")
+        logger.info("Connected: \(source.name, privacy: .public) → \(destination.name, privacy: .public)")
     }
 
     /// Disconnect two nodes
@@ -233,7 +238,7 @@ class NodeGraph: ObservableObject {
         }
 
         isProcessing = true
-        print("📊 NodeGraph started (\(nodes.count) nodes)")
+        logger.info("NodeGraph started (\(self.nodes.count, privacy: .public) nodes)")
     }
 
     /// Stop processing
@@ -244,7 +249,7 @@ class NodeGraph: ObservableObject {
         }
 
         isProcessing = false
-        print("📊 NodeGraph stopped")
+        logger.info("NodeGraph stopped")
     }
 
     /// Reset all nodes
@@ -270,7 +275,7 @@ class NodeGraph: ObservableObject {
             // For now, placeholder
         }
 
-        print("📊 Loaded preset: \(preset.name)")
+        logger.info("Loaded preset: \(preset.name, privacy: .public)")
     }
 
     /// Save current configuration as preset

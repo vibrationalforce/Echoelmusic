@@ -3,6 +3,7 @@ import SwiftUI
 import RealityKit
 import AVFoundation
 import Combine
+import os.log
 
 #if os(visionOS)
 
@@ -26,6 +27,10 @@ import Combine
 @MainActor
 @Observable
 class VisionApp {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "VisionApp")
 
     // MARK: - Published Properties
 
@@ -216,7 +221,7 @@ class VisionApp {
     // MARK: - Scene Management
 
     func loadScene(type: ImmersiveScene.SceneType) async throws {
-        print("👁️ Loading scene: \(type.rawValue)")
+        logger.info("Loading scene: \(type.rawValue, privacy: .public)")
 
         // Create scene
         var scene = ImmersiveScene(type: type)
@@ -235,7 +240,7 @@ class VisionApp {
     }
 
     func unloadScene() async {
-        print("👁️ Unloading scene")
+        logger.info("Unloading scene")
 
         await realityKitEngine.stopRendering()
         await spatialAudioEngine.stopAudio()
@@ -246,7 +251,7 @@ class VisionApp {
     // MARK: - Immersion Control
 
     func setImmersionLevel(_ level: ImmersionLevel) async {
-        print("👁️ Setting immersion level: \(level.rawValue)")
+        logger.info("Setting immersion level: \(level.rawValue, privacy: .public)")
         immersionLevel = level
 
         await immersionController.transitionTo(level)
@@ -295,7 +300,7 @@ class VisionApp {
     private func handleHandTrackingUpdate(_ data: HandTrackingData) {
         // Erkennung von Meditations-Geste
         if data.isMeditationGesture {
-            print("🙏 Meditation gesture detected")
+            logger.info("Meditation gesture detected")
             // Starte automatisch Meditations-Session
             Task {
                 try? await loadScene(type: .meditation)
@@ -313,7 +318,7 @@ class VisionApp {
     }
 
     private func handleGesture(_ gesture: HandTrackingData.HandPose.Gesture, hand: HandSide) {
-        print("👋 Gesture: \(gesture) (\(hand))")
+        logger.debug("Gesture: \(String(describing: gesture), privacy: .public) (\(String(describing: hand), privacy: .public))")
 
         switch gesture {
         case .pinch:
@@ -343,11 +348,12 @@ class VisionApp {
 @MainActor
 class RealityKitEngine {
 
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "RealityKitEngine")
     private var isRendering: Bool = false
     private var intensity: Float = 1.0
 
     func createEntities(for sceneType: VisionApp.ImmersiveScene.SceneType) async -> [Entity] {
-        print("🎨 Creating 3D entities for: \(sceneType.rawValue)")
+        logger.info("Creating 3D entities for: \(sceneType.rawValue, privacy: .public)")
 
         var entities: [Entity] = []
 
@@ -398,12 +404,12 @@ class RealityKitEngine {
     }
 
     func startRendering(scene: VisionApp.ImmersiveScene) async {
-        print("🎨 RealityKit rendering started")
+        logger.info("RealityKit rendering started")
         isRendering = true
     }
 
     func stopRendering() async {
-        print("🎨 RealityKit rendering stopped")
+        logger.info("RealityKit rendering stopped")
         isRendering = false
     }
 
@@ -426,10 +432,11 @@ class RealityKitEngine {
 @MainActor
 class SpatialAudioEngine {
 
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "SpatialAudioEngine")
     private var isPlaying: Bool = false
 
     func createAudioSources(for sceneType: VisionApp.ImmersiveScene.SceneType) async -> [VisionApp.ImmersiveScene.SpatialAudioSource] {
-        print("🔊 Creating spatial audio sources for: \(sceneType.rawValue)")
+        logger.info("Creating spatial audio sources for: \(sceneType.rawValue, privacy: .public)")
 
         var sources: [VisionApp.ImmersiveScene.SpatialAudioSource] = []
 
@@ -461,12 +468,12 @@ class SpatialAudioEngine {
     }
 
     func startAudio(sources: [VisionApp.ImmersiveScene.SpatialAudioSource]) async {
-        print("🔊 Spatial Audio started with \(sources.count) sources")
+        logger.info("Spatial Audio started with \(sources.count, privacy: .public) sources")
         isPlaying = true
     }
 
     func stopAudio() async {
-        print("🔊 Spatial Audio stopped")
+        logger.info("Spatial Audio stopped")
         isPlaying = false
     }
 
@@ -483,19 +490,20 @@ class SpatialAudioEngine {
 @MainActor
 class EyeTracker {
 
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "EyeTracker")
     let dataPublisher = PassthroughSubject<VisionApp.EyeTrackingData, Never>()
 
     func requestAuthorization() async {
-        print("👁️ Requesting eye tracking authorization")
+        logger.info("Requesting eye tracking authorization")
     }
 
     func startTracking() {
-        print("👁️ Eye tracking started")
+        logger.info("Eye tracking started")
         // Start sending updates via dataPublisher
     }
 
     func stopTracking() {
-        print("👁️ Eye tracking stopped")
+        logger.info("Eye tracking stopped")
     }
 }
 
@@ -504,19 +512,20 @@ class EyeTracker {
 @MainActor
 class HandTracker {
 
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "HandTracker")
     let dataPublisher = PassthroughSubject<VisionApp.HandTrackingData, Never>()
 
     func requestAuthorization() async {
-        print("👋 Requesting hand tracking authorization")
+        logger.info("Requesting hand tracking authorization")
     }
 
     func startTracking() {
-        print("👋 Hand tracking started")
+        logger.info("Hand tracking started")
         // Start sending updates via dataPublisher
     }
 
     func stopTracking() {
-        print("👋 Hand tracking stopped")
+        logger.info("Hand tracking stopped")
     }
 }
 
@@ -525,8 +534,10 @@ class HandTracker {
 @MainActor
 class ImmersionController {
 
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "ImmersionController")
+
     func transitionTo(_ level: VisionApp.ImmersionLevel) async {
-        print("🌐 Transitioning to immersion level: \(level.rawValue)")
+        logger.info("Transitioning to immersion level: \(level.rawValue, privacy: .public)")
 
         switch level {
         case .windowed:

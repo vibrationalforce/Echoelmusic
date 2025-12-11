@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import Accelerate
 import Combine
+import os.log
 
 /// Automatic Vocal Alignment Tool - Professional Multi-Track Vocal Sync
 /// Similar to VocAlign Pro, Synchro Arts Revoice Pro, and Melodyne ARA
@@ -21,6 +22,10 @@ import Combine
 /// - Choir/ensemble tightening
 @MainActor
 class AutomaticVocalAligner: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "AutomaticVocalAligner")
 
     // MARK: - Published State
 
@@ -82,8 +87,7 @@ class AutomaticVocalAligner: ObservableObject {
 
     init() {
         setupAudioEngine()
-        print("✅ AutomaticVocalAligner: Initialized")
-        print("🎤 Professional Vocal Alignment Ready")
+        logger.info("AutomaticVocalAligner initialized - Professional Vocal Alignment Ready")
     }
 
     deinit {
@@ -123,7 +127,7 @@ class AutomaticVocalAligner: ObservableObject {
             guideTrack = guide
         }
 
-        print("🎤 Guide track loaded: \(track.name) (\(String(format: "%.1f", track.duration))s)")
+        logger.info("Guide track loaded: \(track.name, privacy: .public) (\(String(format: "%.1f", track.duration), privacy: .public)s)")
     }
 
     func addDubTrack(from url: URL) async throws {
@@ -136,7 +140,7 @@ class AutomaticVocalAligner: ObservableObject {
 
         dubTracks.append(analyzedTrack)
 
-        print("🎤 Dub track added: \(track.name) (\(String(format: "%.1f", track.duration))s)")
+        logger.info("Dub track added: \(track.name, privacy: .public) (\(String(format: "%.1f", track.duration), privacy: .public)s)")
     }
 
     private func loadAudioFile(url: URL, name: String) async throws -> VocalTrack {
@@ -184,14 +188,14 @@ class AutomaticVocalAligner: ObservableObject {
             let result = try await alignTrack(dub: dubTrack, to: guide)
             alignmentResults[dubTrack.id] = result
 
-            print("✅ Aligned: \(dubTrack.name) (Quality: \(String(format: "%.1f", result.qualityScore))%)")
+            logger.info("Aligned: \(dubTrack.name, privacy: .public) (Quality: \(String(format: "%.1f", result.qualityScore), privacy: .public)%)")
         }
 
         progress = 1.0
         isProcessing = false
 
         let totalTime = Date().timeIntervalSince(startTime)
-        print("🎤 All tracks aligned in \(String(format: "%.2f", totalTime))s")
+        logger.info("All tracks aligned in \(String(format: "%.2f", totalTime), privacy: .public)s")
     }
 
     /// Align a single dub track to the guide
@@ -659,7 +663,7 @@ class AutomaticVocalAligner: ObservableObject {
         let audioFile = try AVAudioFile(forWriting: url, settings: settings)
         try audioFile.write(from: buffer)
 
-        print("✅ Exported aligned track to: \(url.lastPathComponent)")
+        logger.info("Exported aligned track to: \(url.lastPathComponent, privacy: .public)")
     }
 
     // MARK: - Errors

@@ -1,9 +1,11 @@
 import SwiftUI
 import AVFoundation
+import os.log
 
 /// Professional Vocal Alignment UI
 /// Touch-optimized interface for multi-track vocal alignment
 struct VocalAlignmentView: View {
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "VocalAlignmentView")
     @StateObject private var aligner = AutomaticVocalAligner()
     @State private var showGuideFilePicker = false
     @State private var showDubFilePicker = false
@@ -302,11 +304,11 @@ struct VocalAlignmentView: View {
                     defer { url.stopAccessingSecurityScopedResource() }
                     try await aligner.loadGuideTrack(from: url)
                 } catch {
-                    print("Failed to load guide: \(error)")
+                    logger.error("Failed to load guide: \(error.localizedDescription, privacy: .public)")
                 }
             }
         case .failure(let error):
-            print("File picker error: \(error)")
+            logger.error("File picker error: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -320,12 +322,12 @@ struct VocalAlignmentView: View {
                         defer { url.stopAccessingSecurityScopedResource() }
                         try await aligner.addDubTrack(from: url)
                     } catch {
-                        print("Failed to load dub: \(error)")
+                        logger.error("Failed to load dub: \(error.localizedDescription, privacy: .public)")
                     }
                 }
             }
         case .failure(let error):
-            print("File picker error: \(error)")
+            logger.error("File picker error: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -334,7 +336,7 @@ struct VocalAlignmentView: View {
             do {
                 try await aligner.alignAllTracks()
             } catch {
-                print("Alignment failed: \(error)")
+                logger.error("Alignment failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -344,7 +346,7 @@ struct VocalAlignmentView: View {
             do {
                 try await aligner.previewAlignedTrack(id)
             } catch {
-                print("Preview failed: \(error)")
+                logger.error("Preview failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }

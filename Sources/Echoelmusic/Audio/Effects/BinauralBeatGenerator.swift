@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Accelerate
+import os.log
 
 /// Generates binaural beats for brainwave entrainment and healing frequencies
 ///
@@ -11,6 +12,10 @@ import Accelerate
 /// Scientific basis: Oster, G. (1973). "Auditory beats in the brain"
 @MainActor
 class BinauralBeatGenerator: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "BinauralBeatGenerator")
 
     // MARK: - Audio Mode
 
@@ -135,7 +140,7 @@ class BinauralBeatGenerator: ObservableObject {
     func configure(state: BrainwaveState) {
         self.beatFrequency = state.beatFrequency
         // Keep current carrier frequency and amplitude
-        print("🧠 Configured for \(state.rawValue) state: \(state.description)")
+        logger.info("Configured for \(state.rawValue, privacy: .public) state: \(state.description, privacy: .public)")
     }
 
     /// Set beat frequency dynamically based on HRV coherence
@@ -156,7 +161,7 @@ class BinauralBeatGenerator: ObservableObject {
             // High coherence: maintain focus
             beatFrequency = 20.0  // Beta
         }
-        print("💓 HRV coherence \(Int(coherence)) → \(beatFrequency) Hz beat")
+        logger.info("HRV coherence \(Int(coherence), privacy: .public) → \(self.beatFrequency, privacy: .public) Hz beat")
     }
 
     /// Start generating and playing binaural/isochronic beats
@@ -193,10 +198,10 @@ class BinauralBeatGenerator: ObservableObject {
 
             isPlaying = true
             let modeStr = audioMode == .binaural ? "Binaural (stereo)" : "Isochronic (mono)"
-            print("▶️ \(modeStr) beats started: \(carrierFrequency) Hz @ \(beatFrequency) Hz")
+            logger.info("\(modeStr, privacy: .public) beats started: \(self.carrierFrequency, privacy: .public) Hz @ \(self.beatFrequency, privacy: .public) Hz")
 
         } catch {
-            print("❌ Failed to start beats: \(error.localizedDescription)")
+            logger.error("Failed to start beats: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -219,7 +224,7 @@ class BinauralBeatGenerator: ObservableObject {
         try? AVAudioSession.sharedInstance().setActive(false)
 
         isPlaying = false
-        print("⏹️ Binaural beats stopped")
+        logger.info("Binaural beats stopped")
     }
 
 
@@ -402,10 +407,10 @@ class BinauralBeatGenerator: ObservableObject {
         // Set mode based on output
         if hasIsolatedHeadphones {
             audioMode = .binaural
-            print("🎧 Isolated headphones detected → Binaural mode (true stereo)")
+            logger.info("Isolated headphones detected → Binaural mode (true stereo)")
         } else {
             audioMode = .isochronic
-            print("🔊 Speaker/Open-air detected → Isochronic mode (mono pulsed, works anywhere)")
+            logger.info("Speaker/Open-air detected → Isochronic mode (mono pulsed, works anywhere)")
         }
     }
 }

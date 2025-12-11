@@ -2,6 +2,7 @@ import Foundation
 import WatchKit
 import HealthKit
 import Combine
+import os.log
 
 #if os(watchOS)
 
@@ -25,6 +26,10 @@ import Combine
 @MainActor
 @Observable
 class WatchApp {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "WatchApp")
 
     // MARK: - Published Properties
 
@@ -109,7 +114,7 @@ class WatchApp {
     func startSession(type: SessionType) async throws {
         guard !isSessionActive else { return }
 
-        print("⌚ Starting \(type.rawValue) session on Apple Watch")
+        logger.info("Starting \(type.rawValue, privacy: .public) session on Apple Watch")
 
         // Starte HealthKit Workout
         try await startWorkoutSession(type: type)
@@ -130,7 +135,7 @@ class WatchApp {
     func stopSession() async {
         guard isSessionActive else { return }
 
-        print("⌚ Stopping session on Apple Watch")
+        logger.info("Stopping session on Apple Watch")
 
         // Stoppe Workout
         workoutSession?.end()
@@ -177,7 +182,7 @@ class WatchApp {
                                                    configuration: configuration)
             workoutSession?.startActivity(with: Date())
         } catch {
-            print("❌ Failed to start workout session: \(error)")
+            logger.error("Failed to start workout session: \(error.localizedDescription, privacy: .public)")
             throw error
         }
     }
@@ -247,7 +252,7 @@ class WatchApp {
         )
 
         // TODO: Sync with iPhone via WatchConnectivity
-        print("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        logger.info("Session saved: \(duration, privacy: .public)s, HRV: \(metrics.hrv, privacy: .public), Coherence: \(metrics.coherence, privacy: .public)")
     }
 
     struct SessionData: Codable {
@@ -427,26 +432,27 @@ class HapticEngine {
 @MainActor
 class WatchAudioEngine {
 
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "WatchAudioEngine")
     private var isPlaying: Bool = false
 
     func start(breathingRate: Double) async {
         isPlaying = true
-        print("🔊 Watch Audio Engine started")
+        logger.info("Watch Audio Engine started")
     }
 
     func stop() async {
         isPlaying = false
-        print("🔊 Watch Audio Engine stopped")
+        logger.info("Watch Audio Engine stopped")
     }
 
     func playInhaleTone() async {
         // Spiele sanften aufsteigenden Ton
-        print("🎵 Inhale tone")
+        logger.debug("Inhale tone")
     }
 
     func playExhaleTone() async {
         // Spiele sanften absteigenden Ton
-        print("🎵 Exhale tone")
+        logger.debug("Exhale tone")
     }
 }
 

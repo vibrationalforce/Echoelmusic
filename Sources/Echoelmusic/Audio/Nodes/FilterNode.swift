@@ -1,10 +1,15 @@
 import Foundation
 import AVFoundation
+import os.log
 
 /// Low-pass filter node with bio-reactive cutoff
 /// Heart Rate → Filter Cutoff (higher HR = brighter/more open sound)
 @MainActor
 class FilterNode: BaseEchoelmusicNode {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "FilterNode")
 
     // MARK: - AVAudioUnit EQ
 
@@ -138,12 +143,12 @@ class FilterNode: BaseEchoelmusicNode {
 
     override func start() {
         super.start()
-        print("🎵 FilterNode started")
+        logger.info("FilterNode started")
     }
 
     override func stop() {
         super.stop()
-        print("🎵 FilterNode stopped")
+        logger.info("FilterNode stopped")
     }
 
 

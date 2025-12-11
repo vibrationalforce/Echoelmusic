@@ -1,10 +1,15 @@
 import Foundation
 import AVFoundation
+import os.log
 
 /// Reverb effect node with bio-reactive parameters
 /// HRV Coherence → Reverb Wetness (higher coherence = more reverb = spacious feeling)
 @MainActor
 class ReverbNode: BaseEchoelmusicNode {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "ReverbNode")
 
     // MARK: - AVAudioUnit Reverb
 
@@ -148,11 +153,11 @@ class ReverbNode: BaseEchoelmusicNode {
 
     override func start() {
         super.start()
-        print("🎵 ReverbNode started")
+        logger.info("ReverbNode started")
     }
 
     override func stop() {
         super.stop()
-        print("🎵 ReverbNode stopped")
+        logger.info("ReverbNode stopped")
     }
 }
