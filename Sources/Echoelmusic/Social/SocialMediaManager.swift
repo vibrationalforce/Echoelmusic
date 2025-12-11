@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import UIKit
 import AuthenticationServices
+import os.log
 
 /// SocialMediaManager - One-Click Multi-Platform Publishing
 ///
@@ -21,6 +22,10 @@ class SocialMediaManager: ObservableObject {
     // MARK: - Singleton
 
     static let shared = SocialMediaManager()
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "SocialMedia")
 
     // MARK: - Published State
 
@@ -179,8 +184,8 @@ class SocialMediaManager: ObservableObject {
 
     private init() {
         loadCredentials()
-        print("✅ SocialMediaManager: Initialized")
-        print("📱 Supported Platforms: \(Platform.allCases.count)")
+        logger.info("SocialMediaManager: Initialized")
+        logger.info("Supported Platforms: \(Platform.allCases.count, privacy: .public)")
     }
 
     // MARK: - One-Click Live
@@ -216,16 +221,16 @@ class SocialMediaManager: ObservableObject {
                     switch result {
                     case .success:
                         self.liveStatus[platform] = .live(viewers: 0, duration: 0)
-                        print("🔴 LIVE auf \(platform.rawValue)")
+                        self.logger.info("LIVE auf \(platform.rawValue, privacy: .public)")
                     case .failure(let error):
                         self.liveStatus[platform] = .failed(error: error.localizedDescription)
-                        print("❌ Live fehlgeschlagen auf \(platform.rawValue): \(error)")
+                        self.logger.error("Live fehlgeschlagen auf \(platform.rawValue, privacy: .public): \(error.localizedDescription, privacy: .public)")
                     }
                 }
             }
         }
 
-        print("🔴 LIVE AUF \(livePlatforms.count) PLATTFORMEN!")
+        logger.info("LIVE AUF \(livePlatforms.count, privacy: .public) PLATTFORMEN!")
     }
 
     /// Beende Live auf allen Plattformen
@@ -234,7 +239,7 @@ class SocialMediaManager: ObservableObject {
             await endLive(on: platform)
         }
         isLive = false
-        print("⬛ Live beendet auf allen Plattformen")
+        logger.info("Live beendet auf allen Plattformen")
     }
 
     // MARK: - One-Click Post
@@ -267,17 +272,17 @@ class SocialMediaManager: ObservableObject {
                     switch result {
                     case .success(let url):
                         self.postProgress[platform] = .completed(url: url)
-                        print("✅ Gepostet auf \(platform.rawValue): \(url)")
+                        self.logger.info("Gepostet auf \(platform.rawValue, privacy: .public): \(url, privacy: .public)")
                     case .failure(let error):
                         self.postProgress[platform] = .failed(error: error.localizedDescription)
-                        print("❌ Post fehlgeschlagen auf \(platform.rawValue): \(error)")
+                        self.logger.error("Post fehlgeschlagen auf \(platform.rawValue, privacy: .public): \(error.localizedDescription, privacy: .public)")
                     }
                 }
             }
         }
 
         isPosting = false
-        print("📤 GEPOSTET AUF \(connectedPlatforms.count) PLATTFORMEN!")
+        logger.info("GEPOSTET AUF \(connectedPlatforms.count, privacy: .public) PLATTFORMEN!")
     }
 
     // MARK: - Platform Connection
@@ -285,7 +290,7 @@ class SocialMediaManager: ObservableObject {
     /// Verbinde mit einer Plattform (OAuth)
     func connect(to platform: Platform) async throws {
         // Simuliere OAuth Flow
-        print("🔗 Verbinde mit \(platform.rawValue)...")
+        logger.info("Verbinde mit \(platform.rawValue, privacy: .public)...")
 
         // In echter Implementierung: OAuth Flow mit ASWebAuthenticationSession
         // Hier: Simulierte Verbindung
@@ -294,7 +299,7 @@ class SocialMediaManager: ObservableObject {
         postProgress[platform] = .idle
         liveStatus[platform] = .offline
 
-        print("✅ Verbunden mit \(platform.rawValue)")
+        logger.info("Verbunden mit \(platform.rawValue, privacy: .public)")
     }
 
     /// Trenne Verbindung zu einer Plattform
@@ -305,7 +310,7 @@ class SocialMediaManager: ObservableObject {
         liveStatus.removeValue(forKey: platform)
         saveCredentials()
 
-        print("🔌 Getrennt von \(platform.rawValue)")
+        logger.info("Getrennt von \(platform.rawValue, privacy: .public)")
     }
 
     // MARK: - Private Methods
@@ -509,14 +514,14 @@ class SocialMediaManager: ObservableObject {
         saveScheduledPosts()
         startSchedulerIfNeeded()
 
-        print("📅 Scheduled post for \(scheduledTime) on \(platforms.count) platforms")
+        logger.info("Scheduled post for \(scheduledTime, privacy: .public) on \(platforms.count, privacy: .public) platforms")
     }
 
     /// Cancel a scheduled post
     func cancelScheduledPost(id: UUID) {
         scheduledPosts.removeAll { $0.id == id }
         saveScheduledPosts()
-        print("❌ Cancelled scheduled post \(id)")
+        logger.info("Cancelled scheduled post \(id, privacy: .public)")
     }
 
     /// Start the scheduler timer
@@ -529,14 +534,14 @@ class SocialMediaManager: ObservableObject {
             }
         }
 
-        print("⏰ Scheduler started")
+        logger.info("Scheduler started")
     }
 
     /// Stop the scheduler timer
     func stopScheduler() {
         schedulerTimer?.invalidate()
         schedulerTimer = nil
-        print("⏰ Scheduler stopped")
+        logger.info("Scheduler stopped")
     }
 
     /// Process due scheduled posts
@@ -582,10 +587,10 @@ class SocialMediaManager: ObservableObject {
             connectedPlatforms = previousConnected
 
             scheduledPosts[index].status = .completed
-            print("✅ Scheduled post \(post.id) completed")
+            logger.info("Scheduled post \(post.id, privacy: .public) completed")
         } catch {
             scheduledPosts[index].status = .failed
-            print("❌ Scheduled post \(post.id) failed: \(error)")
+            logger.error("Scheduled post \(post.id, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
         }
 
         saveScheduledPosts()
@@ -644,7 +649,7 @@ class SocialMediaManager: ObservableObject {
                 recentPosts: []
             )
         }
-        print("📊 Analytics fetched for \(connectedPlatforms.count) platforms")
+        logger.info("Analytics fetched for \(connectedPlatforms.count, privacy: .public) platforms")
     }
 
     // MARK: - Errors

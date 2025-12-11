@@ -1,11 +1,16 @@
 import Foundation
 import Combine
+import os.log
 
 /// Script Engine - Swift-based Scripting with Hot Reload
 /// Community marketplace for sharing custom tools and effects
 /// Full API access to audio, visual, bio, stream, MIDI, spatial systems
 @MainActor
 class ScriptEngine: ObservableObject {
+
+    // MARK: - Logger
+
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "ScriptEngine")
 
     // MARK: - Published State
 
@@ -44,7 +49,7 @@ class ScriptEngine: ObservableObject {
         self.spatialAPI = spatialAPI
         self.marketplace = ScriptMarketplace()
 
-        print("✅ ScriptEngine: Initialized")
+        logger.info("ScriptEngine: Initialized")
     }
 
     // MARK: - Load Script
@@ -73,7 +78,7 @@ class ScriptEngine: ObservableObject {
         do {
             try await compileScript(script)
             loadedScripts.append(script)
-            print("✅ ScriptEngine: Loaded script '\(script.name)'")
+            logger.info("ScriptEngine: Loaded script '\(script.name, privacy: .public)'")
         } catch {
             compilationErrors.append(CompilationError(
                 script: script.name,
@@ -94,7 +99,7 @@ class ScriptEngine: ObservableObject {
             throw ScriptError.missingProcessFunction
         }
 
-        print("🔨 ScriptEngine: Compiled '\(script.name)'")
+        logger.info("ScriptEngine: Compiled '\(script.name, privacy: .public)'")
     }
 
     // MARK: - Hot Reload
@@ -104,7 +109,7 @@ class ScriptEngine: ObservableObject {
             throw ScriptError.scriptNotFound
         }
 
-        print("🔥 ScriptEngine: Hot reloading '\(script.name)'...")
+        logger.info("ScriptEngine: Hot reloading '\(script.name, privacy: .public)'...")
 
         // Recompile
         try await compileScript(script)
@@ -112,7 +117,7 @@ class ScriptEngine: ObservableObject {
         // Replace in loaded scripts
         loadedScripts[index] = script
 
-        print("✅ ScriptEngine: Hot reload completed in <1s")
+        logger.info("ScriptEngine: Hot reload completed in <1s")
     }
 
     // MARK: - Execute Script
@@ -124,7 +129,7 @@ class ScriptEngine: ObservableObject {
 
         // TODO: Execute compiled script
         // Placeholder
-        print("▶️ ScriptEngine: Executing '\(script.name)'")
+        logger.info("ScriptEngine: Executing '\(script.name, privacy: .public)'")
         return nil
     }
 
@@ -135,12 +140,12 @@ class ScriptEngine: ObservableObject {
     }
 
     func installScript(from marketplace: MarketplaceScript) async throws {
-        print("📦 ScriptEngine: Installing '\(marketplace.name)' from marketplace...")
+        logger.info("ScriptEngine: Installing '\(marketplace.name, privacy: .public)' from marketplace...")
 
         // TODO: Git clone, compile, install
         try await Task.sleep(nanoseconds: 1_000_000_000)
 
-        print("✅ ScriptEngine: Installed '\(marketplace.name)'")
+        logger.info("ScriptEngine: Installed '\(marketplace.name, privacy: .public)'")
     }
 }
 
@@ -161,12 +166,14 @@ struct CompilationError {
 // MARK: - Script APIs
 
 class AudioScriptAPI {
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "AudioScriptAPI")
+
     func processBuffer(_ buffer: [Float]) -> [Float] {
         return buffer
     }
 
     func setParameter(_ name: String, value: Float) {
-        print("🎵 AudioAPI: Set \(name) = \(value)")
+        logger.debug("AudioAPI: Set \(name, privacy: .public) = \(value, privacy: .public)")
     }
 
     func getFFT() -> [Float] {
@@ -174,17 +181,19 @@ class AudioScriptAPI {
     }
 
     func applyEffect(_ effect: String) {
-        print("🎵 AudioAPI: Applied effect '\(effect)'")
+        logger.debug("AudioAPI: Applied effect '\(effect, privacy: .public)'")
     }
 }
 
 class VisualScriptAPI {
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "VisualScriptAPI")
+
     func renderFrame() {
-        print("🎨 VisualAPI: Rendered frame")
+        logger.debug("VisualAPI: Rendered frame")
     }
 
     func setShader(_ shader: String) {
-        print("🎨 VisualAPI: Set shader '\(shader)'")
+        logger.debug("VisualAPI: Set shader '\(shader, privacy: .public)'")
     }
 
     func getParticles() -> [(x: Float, y: Float, z: Float)] {
@@ -192,7 +201,7 @@ class VisualScriptAPI {
     }
 
     func applyTransform(_ transform: String) {
-        print("🎨 VisualAPI: Applied transform '\(transform)'")
+        logger.debug("VisualAPI: Applied transform '\(transform, privacy: .public)'")
     }
 }
 
@@ -215,6 +224,8 @@ class BioScriptAPI {
 }
 
 class StreamScriptAPI {
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "StreamScriptAPI")
+
     func getViewerCount() -> Int {
         return 0
     }
@@ -224,25 +235,27 @@ class StreamScriptAPI {
     }
 
     func switchScene(_ sceneName: String) {
-        print("🎬 StreamAPI: Switched to scene '\(sceneName)'")
+        logger.debug("StreamAPI: Switched to scene '\(sceneName, privacy: .public)'")
     }
 
     func setOverlay(_ overlayName: String) {
-        print("🎬 StreamAPI: Set overlay '\(overlayName)'")
+        logger.debug("StreamAPI: Set overlay '\(overlayName, privacy: .public)'")
     }
 }
 
 class MIDIScriptAPI {
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "MIDIScriptAPI")
+
     func sendNote(_ note: Int, velocity: Int, channel: Int) {
-        print("🎹 MIDIAPI: Send note \(note) velocity \(velocity) ch \(channel)")
+        logger.debug("MIDIAPI: Send note \(note, privacy: .public) velocity \(velocity, privacy: .public) ch \(channel, privacy: .public)")
     }
 
     func sendCC(_ cc: Int, value: Int, channel: Int) {
-        print("🎹 MIDIAPI: Send CC\(cc) = \(value) ch \(channel)")
+        logger.debug("MIDIAPI: Send CC\(cc, privacy: .public) = \(value, privacy: .public) ch \(channel, privacy: .public)")
     }
 
     func sendSysEx(_ data: Data) {
-        print("🎹 MIDIAPI: Send SysEx (\(data.count) bytes)")
+        logger.debug("MIDIAPI: Send SysEx (\(data.count, privacy: .public) bytes)")
     }
 
     func receiveMIDI() -> [(type: String, data: Any)] {
@@ -251,16 +264,18 @@ class MIDIScriptAPI {
 }
 
 class SpatialScriptAPI {
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "SpatialScriptAPI")
+
     func setListenerPosition(x: Float, y: Float, z: Float) {
-        print("🎧 SpatialAPI: Set listener position (\(x), \(y), \(z))")
+        logger.debug("SpatialAPI: Set listener position (\(x, privacy: .public), \(y, privacy: .public), \(z, privacy: .public))")
     }
 
     func setSourcePosition(id: UUID, x: Float, y: Float, z: Float) {
-        print("🎧 SpatialAPI: Set source position (\(x), \(y), \(z))")
+        logger.debug("SpatialAPI: Set source position (\(x, privacy: .public), \(y, privacy: .public), \(z, privacy: .public))")
     }
 
     func setSpatialMode(_ mode: String) {
-        print("🎧 SpatialAPI: Set spatial mode '\(mode)'")
+        logger.debug("SpatialAPI: Set spatial mode '\(mode, privacy: .public)'")
     }
 
     func getHeadTracking() -> (yaw: Float, pitch: Float, roll: Float) {
