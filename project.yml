@@ -88,8 +88,8 @@ targets:
     # App settings
     settings:
       base:
-        PRODUCT_NAME: Blab
-        PRODUCT_BUNDLE_IDENTIFIER: com.blab.studio
+        PRODUCT_NAME: Echoelmusic
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         INFOPLIST_FILE: Info.plist
         GENERATE_INFOPLIST_FILE: NO
 

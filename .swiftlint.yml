@@ -1,0 +1,312 @@
+# SwiftLint Configuration for Echoelmusic
+# Wise Mode Implementation
+# https://github.com/realm/SwiftLint
+
+# ============================================
+# INCLUDED/EXCLUDED PATHS
+# ============================================
+
+included:
+  - Sources
+  - Tests
+
+excluded:
+  - .build
+  - DerivedData
+  - Pods
+  - Carthage
+  - vendor
+  - Package.swift
+  - "*/Generated/*"
+
+# ============================================
+# DISABLED RULES
+# ============================================
+
+disabled_rules:
+  - trailing_whitespace     # Too noisy
+  - todo                    # We have TODOs tracked separately
+  - opening_brace           # Conflicts with some formatting
+
+# ============================================
+# OPT-IN RULES
+# ============================================
+
+opt_in_rules:
+  # Safety
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - discouraged_optional_boolean
+  - discouraged_optional_collection
+  - fatal_error_message
+
+  # Code Quality
+  - overridden_super_call
+  - empty_count
+  - first_where
+  - sorted_first_last
+  - contains_over_first_not_nil
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - flatmap_over_map_reduce
+  - last_where
+
+  # Style
+  - closure_end_indentation
+  - closure_spacing
+  - explicit_init
+  - operator_usage_whitespace
+  - redundant_nil_coalescing
+  - unneeded_parentheses_in_closure_argument
+  - vertical_parameter_alignment_on_call
+  - multiline_parameters
+  - multiline_arguments
+  - prefer_self_in_static_references
+
+  # Testing
+  - single_test_class
+  - quick_discouraged_call
+  - quick_discouraged_focused_test
+  - quick_discouraged_pending_test
+
+  # Documentation
+  - missing_docs
+
+  # Performance
+  - empty_string
+  - reduce_into
+
+  # Concurrency
+  - unavailable_function
+
+# ============================================
+# RULE CONFIGURATIONS
+# ============================================
+
+# Force unwrapping is an error
+force_unwrapping:
+  severity: warning
+
+# Implicit unwrapping is a warning
+implicitly_unwrapped_optional:
+  severity: warning
+
+# File length limits
+file_length:
+  warning: 500
+  error: 800
+  ignore_comment_only_lines: true
+
+# Type body length
+type_body_length:
+  warning: 300
+  error: 500
+
+# Function body length
+function_body_length:
+  warning: 50
+  error: 100
+
+# Function parameter count
+function_parameter_count:
+  warning: 6
+  error: 10
+  ignores_default_parameters: true
+
+# Cyclomatic complexity
+cyclomatic_complexity:
+  warning: 15
+  error: 25
+  ignores_case_statements: true
+
+# Nesting depth
+nesting:
+  type_level:
+    warning: 2
+    error: 3
+  function_level:
+    warning: 3
+    error: 5
+
+# Line length
+line_length:
+  warning: 150
+  error: 200
+  ignores_urls: true
+  ignores_function_declarations: true
+  ignores_comments: true
+  ignores_interpolated_strings: true
+
+# Identifier naming
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  max_length:
+    warning: 50
+    error: 60
+  excluded:
+    - id
+    - ID
+    - x
+    - y
+    - z
+    - i
+    - j
+    - k
+    - r
+    - g
+    - b
+    - a
+    - db
+    - hz
+    - ms
+    - bpm
+    - cc
+    - ch
+    - fn
+    - fs
+    - io
+    - ip
+    - ok
+    - to
+    - up
+    - ui
+    - ux
+    - fft
+    - dsp
+    - led
+    - dmx
+    - hue
+    - rgb
+    - udp
+    - tcp
+    - api
+    - url
+    - uri
+    - hrv
+    - lfo
+
+# Type naming
+type_name:
+  min_length:
+    warning: 3
+    error: 2
+  max_length:
+    warning: 50
+    error: 60
+  excluded:
+    - ID
+
+# Large tuple
+large_tuple:
+  warning: 3
+  error: 4
+
+# Trailing comma
+trailing_comma:
+  mandatory_comma: false
+
+# Vertical whitespace
+vertical_whitespace:
+  max_empty_lines: 2
+
+# Number separator
+number_separator:
+  minimum_length: 5
+
+# Statement position
+statement_position:
+  statement_mode: default
+
+# Colon
+colon:
+  flexible_right_spacing: false
+  apply_to_dictionaries: true
+
+# Comma
+comma:
+  severity: warning
+
+# ============================================
+# CUSTOM RULES
+# ============================================
+
+custom_rules:
+  # Warn about print statements (use Logger instead)
+  no_print_statements:
+    name: "No Print Statements"
+    regex: "\\bprint\\s*\\("
+    message: "Use Logger instead of print() for production code"
+    severity: warning
+    match_kinds:
+      - identifier
+
+  # Require GitHub issue reference for TODOs
+  todo_requires_issue:
+    name: "TODO Requires Issue"
+    regex: "//\\s*TODO(?!\\s*\\[#\\d+\\])"
+    message: "TODOs should reference a GitHub issue: // TODO [#123]"
+    severity: warning
+    match_kinds:
+      - comment
+
+  # Avoid using NSLog
+  no_nslog:
+    name: "No NSLog"
+    regex: "\\bNSLog\\s*\\("
+    message: "Use Logger instead of NSLog()"
+    severity: warning
+    match_kinds:
+      - identifier
+
+  # Avoid DispatchQueue.main.sync (potential deadlock)
+  no_main_sync:
+    name: "No Main Sync"
+    regex: "DispatchQueue\\.main\\.sync"
+    message: "Avoid DispatchQueue.main.sync - potential deadlock. Use .async or @MainActor"
+    severity: warning
+
+  # Avoid force try
+  no_force_try:
+    name: "No Force Try"
+    regex: "try!"
+    message: "Avoid force try. Use do-catch or try? instead"
+    severity: warning
+
+  # Avoid using fatalError without message
+  fatal_error_with_message:
+    name: "Fatal Error Message"
+    regex: "fatalError\\(\\)"
+    message: "fatalError() should include a descriptive message"
+    severity: error
+
+  # Mark @MainActor on view models
+  main_actor_view_model:
+    name: "MainActor ViewModel"
+    regex: "class\\s+\\w*ViewModel\\s*:"
+    message: "ViewModels should be marked with @MainActor"
+    severity: warning
+    match_kinds:
+      - keyword
+
+  # Avoid using sleep in production code
+  no_sleep:
+    name: "No Sleep"
+    regex: "\\bThread\\.sleep\\b|\\bsleep\\s*\\("
+    message: "Avoid Thread.sleep - use async/await or timers instead"
+    severity: warning
+
+# ============================================
+# ANALYZER RULES
+# ============================================
+
+analyzer_rules:
+  - unused_import
+  - unused_declaration
+
+# ============================================
+# REPORTER
+# ============================================
+
+reporter: "xcode"  # or "json", "csv", "checkstyle", "codeclimate", "junit", "html", "emoji", "sonarqube", "markdown", "github-actions-logging"
