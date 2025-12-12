@@ -205,12 +205,12 @@ class HardwareAbstractionLayer: ObservableObject {
         func startHeartRate(handler: @escaping (Float) -> Void) {
             // Platform-specific: Use HealthKit on Apple platforms
             // For other platforms, use device-specific APIs
-            print("⚠️ Heart rate monitoring requires HealthKit integration")
+            EchoelLogger.warning("Heart rate monitoring requires HealthKit integration", category: EchoelLogger.system)
         }
 
         func startBrainWaves(handler: @escaping ([Float]) -> Void) {
             // Future: Neural interface support (Neuralink, etc.)
-            print("⚠️ Brain wave monitoring not yet available (future feature)")
+            EchoelLogger.warning("Brain wave monitoring not yet available (future feature)", category: EchoelLogger.system)
         }
 
         func stopAll() {
@@ -241,9 +241,9 @@ class HardwareAbstractionLayer: ObservableObject {
                 try AVAudioSession.sharedInstance().setPreferredSampleRate(sampleRate)
                 try AVAudioSession.sharedInstance().setPreferredIOBufferDuration(Double(bufferSize) / sampleRate)
                 try AVAudioSession.sharedInstance().setActive(true)
-                print("✅ Audio configured: \(sampleRate) Hz, \(bufferSize) samples")
+                EchoelLogger.success("Audio configured: \(sampleRate) Hz, \(bufferSize) samples", category: EchoelLogger.system)
             } catch {
-                print("❌ Audio configuration failed: \(error)")
+                EchoelLogger.error("Audio configuration failed: \(error)", category: EchoelLogger.system)
             }
             #endif
         }
@@ -252,15 +252,15 @@ class HardwareAbstractionLayer: ObservableObject {
             guard let engine = audioEngine else { return }
             do {
                 try engine.start()
-                print("✅ Audio engine started")
+                EchoelLogger.success("Audio engine started", category: EchoelLogger.system)
             } catch {
-                print("❌ Audio engine start failed: \(error)")
+                EchoelLogger.error("Audio engine start failed: \(error)", category: EchoelLogger.system)
             }
         }
 
         func stopAudio() {
             audioEngine?.stop()
-            print("⏸️ Audio engine stopped")
+            EchoelLogger.info("Audio engine stopped", category: EchoelLogger.system)
         }
 
         func setVolume(_ volume: Float) {
@@ -314,7 +314,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
         func setRefreshRate(_ fps: Int) {
             // Platform-specific refresh rate control
-            print("🖥️ Setting refresh rate to \(fps) Hz")
+            EchoelLogger.info("Setting refresh rate to \(fps) Hz", category: EchoelLogger.system)
         }
 
         func setBrightness(_ brightness: Float) {
@@ -331,9 +331,9 @@ class HardwareAbstractionLayer: ObservableObject {
         detectCapabilities()
         initializeInterfaces()
 
-        print("✅ Hardware Abstraction Layer: Initialized")
-        print("🖥️ Platform: \(currentPlatform.rawValue)")
-        print("💪 Capabilities detected")
+        EchoelLogger.success("Hardware Abstraction Layer: Initialized", category: EchoelLogger.system)
+        EchoelLogger.info("Platform: \(currentPlatform.rawValue)", category: EchoelLogger.system)
+        EchoelLogger.success("Capabilities detected", category: EchoelLogger.system)
     }
 
     // MARK: - Detect Platform
@@ -421,13 +421,13 @@ class HardwareAbstractionLayer: ObservableObject {
 
         capabilities = caps
 
-        print("📊 Hardware Capabilities:")
-        print("   CPU Cores: \(caps.cpuCores)")
-        print("   RAM: \(String(format: "%.1f", caps.ramGB)) GB")
-        print("   Max FPS: \(caps.maxFPS)")
-        print("   Accelerometer: \(caps.hasAccelerometer)")
-        print("   Gyroscope: \(caps.hasGyroscope)")
-        print("   Heart Rate: \(caps.hasHeartRateSensor)")
+        EchoelLogger.info("Hardware Capabilities:", category: EchoelLogger.system)
+        EchoelLogger.info("   CPU Cores: \(caps.cpuCores)", category: EchoelLogger.system)
+        EchoelLogger.info("   RAM: \(String(format: "%.1f", caps.ramGB)) GB", category: EchoelLogger.system)
+        EchoelLogger.info("   Max FPS: \(caps.maxFPS)", category: EchoelLogger.system)
+        EchoelLogger.info("   Accelerometer: \(caps.hasAccelerometer)", category: EchoelLogger.system)
+        EchoelLogger.info("   Gyroscope: \(caps.hasGyroscope)", category: EchoelLogger.system)
+        EchoelLogger.info("   Heart Rate: \(caps.hasHeartRateSensor)", category: EchoelLogger.system)
     }
 
     // MARK: - Initialize Interfaces
@@ -442,7 +442,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
     /// Vehicle Platform Adapter
     func initializeVehiclePlatform(vehicleType: VehicleType) {
-        print("🚗 Initializing vehicle platform: \(vehicleType.rawValue)")
+        EchoelLogger.info("Initializing vehicle platform: \(vehicleType.rawValue)", category: EchoelLogger.system)
 
         // Configure for vehicle environment
         capabilities.supportsCarPlay = true
@@ -456,7 +456,7 @@ class HardwareAbstractionLayer: ObservableObject {
         capabilities.hasAccelerometer = true
         capabilities.hasGyroscope = true
 
-        print("✅ Vehicle platform initialized")
+        EchoelLogger.success("Vehicle platform initialized", category: EchoelLogger.system)
     }
 
     enum VehicleType: String {
@@ -468,7 +468,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
     /// Drone Platform Adapter
     func initializeDronePlatform(droneType: DroneType) {
-        print("🚁 Initializing drone platform: \(droneType.rawValue)")
+        EchoelLogger.info("Initializing drone platform: \(droneType.rawValue)", category: EchoelLogger.system)
 
         // Configure for drone environment
         capabilities.supportsFlight = true
@@ -484,7 +484,7 @@ class HardwareAbstractionLayer: ObservableObject {
         // Low-latency audio critical for drones
         audioInterface?.configureAudio(sampleRate: 48000, bufferSize: 64)
 
-        print("✅ Drone platform initialized")
+        EchoelLogger.success("Drone platform initialized", category: EchoelLogger.system)
     }
 
     enum DroneType: String {
@@ -495,7 +495,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
     /// IoT Platform Adapter
     func initializeIoTPlatform(deviceType: IoTDeviceType) {
-        print("📡 Initializing IoT platform: \(deviceType.rawValue)")
+        EchoelLogger.info("Initializing IoT platform: \(deviceType.rawValue)", category: EchoelLogger.system)
 
         // Configure for IoT environment
         switch deviceType {
@@ -515,7 +515,7 @@ class HardwareAbstractionLayer: ObservableObject {
             capabilities.hasHeartRateSensor = true
         }
 
-        print("✅ IoT platform initialized")
+        EchoelLogger.success("IoT platform initialized", category: EchoelLogger.system)
     }
 
     enum IoTDeviceType: String {
@@ -526,7 +526,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
     /// Future Platform Adapter
     func initializeFuturePlatform(platformType: FuturePlatform) {
-        print("🚀 Initializing future platform: \(platformType.rawValue)")
+        EchoelLogger.info("Initializing future platform: \(platformType.rawValue)", category: EchoelLogger.system)
 
         switch platformType {
         case .neuralInterface:
@@ -544,7 +544,7 @@ class HardwareAbstractionLayer: ObservableObject {
             capabilities.maxFPS = 240
         }
 
-        print("✅ Future platform initialized")
+        EchoelLogger.success("Future platform initialized", category: EchoelLogger.system)
     }
 
     enum FuturePlatform: String {
