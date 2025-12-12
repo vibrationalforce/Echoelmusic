@@ -74,11 +74,11 @@ public class ARFaceTrackingManager: NSObject, ObservableObject {
     /// Start face tracking
     public func start() {
         guard ARFaceTrackingConfiguration.isSupported else {
-            print("[ARFaceTrackingManager] ❌ Face tracking not supported on this device")
+            EchoelLogger.error("ARFaceTrackingManager: Face tracking not supported on this device", category: EchoelLogger.spatial)
             return
         }
 
-        print("[ARFaceTrackingManager] ▶️ Starting face tracking...")
+        EchoelLogger.log("▶️", "ARFaceTrackingManager: Starting face tracking...", category: EchoelLogger.spatial)
 
         let config = ARFaceTrackingConfiguration()
         config.isLightEstimationEnabled = false  // Not needed for blend shapes
@@ -92,7 +92,7 @@ public class ARFaceTrackingManager: NSObject, ObservableObject {
 
     /// Stop face tracking
     public func stop() {
-        print("[ARFaceTrackingManager] ⏹️ Stopping face tracking...")
+        EchoelLogger.log("⏹️", "ARFaceTrackingManager: Stopping face tracking...", category: EchoelLogger.spatial)
         arSession?.pause()
         isTracking = false
         blendShapes = [:]
@@ -102,7 +102,7 @@ public class ARFaceTrackingManager: NSObject, ObservableObject {
 
     /// Reset tracking (useful if tracking is lost)
     public func reset() {
-        print("[ARFaceTrackingManager] 🔄 Resetting face tracking...")
+        EchoelLogger.log("🔄", "ARFaceTrackingManager: Resetting face tracking...", category: EchoelLogger.spatial)
         stop()
         start()
     }
@@ -201,7 +201,7 @@ extension ARFaceTrackingManager: ARSessionDelegate {
     }
 
     public func session(_ session: ARSession, didFailWithError error: Error) {
-        print("[ARFaceTrackingManager] ❌ Session failed: \(error.localizedDescription)")
+        EchoelLogger.error("ARFaceTrackingManager: Session failed: \(error.localizedDescription)", category: EchoelLogger.spatial)
 
         Task { @MainActor in
             self.isTracking = false
@@ -209,7 +209,7 @@ extension ARFaceTrackingManager: ARSessionDelegate {
     }
 
     public func sessionWasInterrupted(_ session: ARSession) {
-        print("[ARFaceTrackingManager] ⚠️ Session interrupted")
+        EchoelLogger.warning("ARFaceTrackingManager: Session interrupted", category: EchoelLogger.spatial)
 
         Task { @MainActor in
             self.isTracking = false
@@ -217,7 +217,7 @@ extension ARFaceTrackingManager: ARSessionDelegate {
     }
 
     public func sessionInterruptionEnded(_ session: ARSession) {
-        print("[ARFaceTrackingManager] ✅ Session interruption ended, restarting...")
+        EchoelLogger.success("ARFaceTrackingManager: Session interruption ended, restarting...", category: EchoelLogger.spatial)
         reset()
     }
 }
