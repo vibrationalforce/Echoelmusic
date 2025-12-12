@@ -32,17 +32,17 @@ enum AudioConstants {
     /// Synthesis Buffer - für Instrument-Synthese
     static let synthesisBuffer: AVAudioFrameCount = 4096
 
-    // MARK: - Binaural Beat Frequencies
+    // MARK: - Carrier Frequencies
 
-    /// Healing Carrier Frequency (432 Hz - "Natürliche Frequenz")
-    static let healingCarrierFrequency: Float = 432.0
+    /// Alternative Tuning Frequency (432 Hz - A4 alternative tuning)
+    static let alternativeTuningFrequency: Float = 432.0
 
     /// Standard Carrier Frequency (440 Hz - A4)
     static let standardCarrierFrequency: Float = 440.0
 
-    /// Brainwave Beat Frequencies
-    enum Brainwave {
-        /// Delta (2 Hz) - Tiefschlaf, Heilung
+    /// Modulation Frequencies for Aesthetic Effects
+    enum ModulationRate {
+        /// Delta (2 Hz) - Slow modulation
         static let delta: Float = 2.0
         /// Theta (6 Hz) - Meditation, Kreativität
         static let theta: Float = 6.0

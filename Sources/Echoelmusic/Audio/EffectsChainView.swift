@@ -192,8 +192,8 @@ struct EffectsChainView: View {
                     nodeGraph = NodeGraph.createBiofeedbackChain()
                 }
 
-                presetButton("Healing", icon: "leaf.fill") {
-                    nodeGraph = NodeGraph.createHealingPreset()
+                presetButton("Ambient", icon: "leaf.fill") {
+                    nodeGraph = NodeGraph.createAmbientPreset()
                 }
 
                 presetButton("Energizing", icon: "bolt.fill") {
@@ -298,8 +298,8 @@ struct EffectsChainView: View {
                         showPresets = false
                     }
 
-                    presetRow("Healing", description: "Deep reverb with gentle compression") {
-                        nodeGraph = NodeGraph.createHealingPreset()
+                    presetRow("Ambient", description: "Deep reverb with gentle compression") {
+                        nodeGraph = NodeGraph.createAmbientPreset()
                         showPresets = false
                     }
 

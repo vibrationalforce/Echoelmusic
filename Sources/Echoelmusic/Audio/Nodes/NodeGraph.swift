@@ -353,8 +353,8 @@ extension NodeGraph {
         return graph
     }
 
-    /// Create ambient healing preset
-    static func createHealingPreset() -> NodeGraph {
+    /// Create ambient soundscape preset
+    static func createAmbientPreset() -> NodeGraph {
         let graph = NodeGraph()
 
         let reverb = ReverbNode()

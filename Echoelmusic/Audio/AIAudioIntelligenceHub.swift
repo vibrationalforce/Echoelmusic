@@ -791,9 +791,9 @@ extension AIAudioIntelligenceHub {
         return firstStem // In production, would mix all stems together
     }
 
-    /// Generate 40Hz Gamma healing music
-    func generateGammaHealing() async -> GeneratedPhrase {
-        // Configure for 40Hz gamma entrainment (MIT research)
+    /// Generate 40Hz Gamma ambient music for focus
+    func generateGammaAmbient() async -> GeneratedPhrase {
+        // Configure for 40Hz gamma aesthetic (ambient soundscape)
         bioComposer.config.energy = 0.3
         bioComposer.config.complexity = 0.2
         bioComposer.config.creativity = 0.4
