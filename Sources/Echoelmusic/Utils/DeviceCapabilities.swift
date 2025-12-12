@@ -74,7 +74,7 @@ class DeviceCapabilities: ObservableObject {
 
         deviceModel = mapDeviceIdentifier(identifier)
 
-        print("📱 Device: \(deviceModel) (\(identifier))")
+        EchoelLogger.log("📱", "Device: \(deviceModel) (\(identifier))", category: EchoelLogger.system)
     }
 
     /// Map device identifier to human-readable name
@@ -109,7 +109,7 @@ class DeviceCapabilities: ObservableObject {
         let version = UIDevice.current.systemVersion
         iOSVersion = version
 
-        print("🔧 iOS Version: \(version)")
+        EchoelLogger.log("🔧", "iOS Version: \(version)", category: EchoelLogger.system)
     }
 
     /// Check if device supports ASAF (Apple Spatial Audio Features)
@@ -140,10 +140,9 @@ class DeviceCapabilities: ObservableObject {
         supportsASAF = hasRequiredOS && hasCapableHardware
 
         if supportsASAF {
-            print("✅ ASAF Supported (iOS \(majorVersion)+ with \(deviceModel))")
+            EchoelLogger.success("ASAF Supported (iOS \(majorVersion)+ with \(deviceModel))", category: EchoelLogger.system)
         } else {
-            print("⚠️  ASAF Not Supported (Need iOS 19+ and iPhone 16+)")
-            print("   Current: iOS \(iOSVersion), \(deviceModel)")
+            EchoelLogger.warning("ASAF Not Supported (Need iOS 19+ and iPhone 16+) - Current: iOS \(iOSVersion), \(deviceModel)", category: EchoelLogger.system)
         }
     }
 
@@ -181,9 +180,9 @@ class DeviceCapabilities: ObservableObject {
                     airPodsModel = "Bluetooth Audio Device"
                 }
 
-                print("🎧 Audio Output: \(airPodsModel ?? "Unknown")")
+                EchoelLogger.log("🎧", "Audio Output: \(airPodsModel ?? "Unknown")", category: EchoelLogger.audio)
                 if supportsAPACCodec {
-                    print("✅ APAC Codec Available")
+                    EchoelLogger.success("APAC Codec Available", category: EchoelLogger.audio)
                 }
 
                 return
@@ -195,7 +194,7 @@ class DeviceCapabilities: ObservableObject {
         airPodsModel = nil
         supportsAPACCodec = false
 
-        print("🔇 No AirPods detected")
+        EchoelLogger.log("🔇", "No AirPods detected", category: EchoelLogger.audio)
     }
 
 
@@ -250,7 +249,7 @@ class DeviceCapabilities: ObservableObject {
             object: nil
         )
 
-        print("🔊 Started monitoring audio route changes")
+        EchoelLogger.log("🔊", "Started monitoring audio route changes", category: EchoelLogger.audio)
     }
 
     /// Stop monitoring audio route changes
@@ -261,12 +260,12 @@ class DeviceCapabilities: ObservableObject {
             object: nil
         )
 
-        print("🔇 Stopped monitoring audio route changes")
+        EchoelLogger.log("🔇", "Stopped monitoring audio route changes", category: EchoelLogger.audio)
     }
 
     /// Handle audio route changes
     @objc private func audioRouteChanged(notification: Notification) {
-        print("🔄 Audio route changed, re-detecting AirPods...")
+        EchoelLogger.log("🔄", "Audio route changed, re-detecting AirPods...", category: EchoelLogger.audio)
         detectAirPods()
     }
 
