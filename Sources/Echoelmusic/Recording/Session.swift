@@ -231,25 +231,25 @@ extension Session {
     /// Session template types
     enum SessionTemplate {
         case meditation
-        case healing
+        case relaxation  // Formerly "healing" - renamed for scientific accuracy
         case creative
         case custom
     }
     /// Create meditation session template
     static func meditationTemplate() -> Session {
         var session = Session(name: "Meditation Session", tempo: 60)
-        session.addTrack(.binauralTrack())
+        session.addTrack(.ambientTrack())
         session.metadata.genre = "Meditation"
         session.metadata.mood = "Calm"
         return session
     }
 
-    /// Create healing session template
-    static func healingTemplate() -> Session {
-        var session = Session(name: "Healing Session", tempo: 72)
+    /// Create relaxation session template
+    static func relaxationTemplate() -> Session {
+        var session = Session(name: "Relaxation Session", tempo: 72)
         session.addTrack(.voiceTrack())
-        session.addTrack(.binauralTrack())
-        session.metadata.genre = "Healing"
+        session.addTrack(.ambientTrack())
+        session.metadata.genre = "Ambient"
         session.metadata.mood = "Peaceful"
         return session
     }
@@ -258,7 +258,7 @@ extension Session {
     static func creativeTemplate() -> Session {
         var session = Session(name: "Creative Session", tempo: 120)
         session.addTrack(.voiceTrack())
-        session.addTrack(.binauralTrack())
+        session.addTrack(.ambientTrack())
         session.addTrack(.spatialTrack())
         session.metadata.genre = "Experimental"
         session.metadata.mood = "Inspired"

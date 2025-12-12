@@ -3,40 +3,40 @@ import Combine
 import os.log
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ECHOELMUSIC SELF-HEALING ENGINE
+// ECHOELMUSIC SYSTEM RECOVERY ENGINE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// "Flüssiges Licht heilt sich selbst"
-//
-// Ultra High Intelligence System mit:
-// • Selbstheilender Code (Auto-Recovery, Error Prediction)
-// • Adaptive Optimierung (Performance, Memory, Energy)
-// • Quantum Flow State Machine
-// • Bio-Adaptive Learning
+// Ultra High Intelligence System for automatic error recovery and optimization:
+// • Auto-Recovery (Error Prediction, Graceful Degradation)
+// • Adaptive Optimization (Performance, Memory, Energy)
+// • Flow State Machine (Quality of Service)
 // • Predictive Maintenance
 //
+// Technical Note: This engine handles SOFTWARE system recovery (crashes, memory
+// pressure, performance issues) - not medical/health recovery.
+//
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// MARK: - Self-Healing Engine
+// MARK: - System Recovery Engine
 
 @MainActor
-final class SelfHealingEngine: ObservableObject {
+final class SystemRecoveryEngine: ObservableObject {
 
     // MARK: - Singleton
 
-    static let shared = SelfHealingEngine()
+    static let shared = SystemRecoveryEngine()
 
     // MARK: - Published State
 
     @Published var systemHealth: SystemHealth = .optimal
-    @Published var healingEvents: [HealingEvent] = []
+    @Published var recoveryEvents: [RecoveryEvent] = []
     @Published var flowState: FlowState = .neutral
     @Published var intelligenceLevel: Float = 1.0
     @Published var adaptiveParameters: AdaptiveParameters = AdaptiveParameters()
 
     // MARK: - Logger
 
-    private let logger = Logger(subsystem: "com.echoelmusic", category: "SelfHealing")
+    private let logger = Logger(subsystem: "com.echoelmusic", category: "SystemRecovery")
 
     // MARK: - Private State
 
@@ -51,8 +51,8 @@ final class SelfHealingEngine: ObservableObject {
 
     private init() {
         setupSubsystems()
-        startSelfHealingLoop()
-        logger.info("🌊 Self-Healing Engine activated - Ultra Liquid Light Flow")
+        startRecoveryLoop()
+        logger.info("System Recovery Engine activated")
     }
 
     // MARK: - Setup
@@ -65,12 +65,12 @@ final class SelfHealingEngine: ObservableObject {
         flowStateMachine = FlowStateMachine(delegate: self)
     }
 
-    private func startSelfHealingLoop() {
-        // 10 Hz self-healing check
+    private func startRecoveryLoop() {
+        // 10 Hz recovery check
         Timer.publish(every: 0.1, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
-                self?.selfHealingCycle()
+                self?.recoveryCycle()
             }
             .store(in: &cancellables)
 
@@ -83,18 +83,18 @@ final class SelfHealingEngine: ObservableObject {
             .store(in: &cancellables)
     }
 
-    // MARK: - Self-Healing Cycle
+    // MARK: - Recovery Cycle
 
-    private func selfHealingCycle() {
+    private func recoveryCycle() {
         // 1. Monitor system health
         let health = healthMonitor?.checkHealth() ?? .unknown
 
         // 2. Predict potential errors
         let predictions = errorPredictor?.predictErrors() ?? []
 
-        // 3. Auto-heal if needed
+        // 3. Auto-recover if needed
         if health != .optimal || !predictions.isEmpty {
-            performAutoHealing(health: health, predictions: predictions)
+            performAutoRecovery(health: health, predictions: predictions)
         }
 
         // 4. Update flow state
@@ -117,14 +117,14 @@ final class SelfHealingEngine: ObservableObject {
         learnFromHistory()
     }
 
-    // MARK: - Auto-Healing
+    // MARK: - Auto-Recovery
 
-    private func performAutoHealing(health: SystemHealth, predictions: [ErrorPrediction]) {
+    private func performAutoRecovery(health: SystemHealth, predictions: [ErrorPrediction]) {
         for prediction in predictions {
-            let healing = attemptHealing(for: prediction)
-            if healing.success {
-                logHealingEvent(.autoHealed(prediction.type, healing.action))
-                logger.info("✨ Auto-healed: \(prediction.type.rawValue)")
+            let recovery = attemptRecovery(for: prediction)
+            if recovery.success {
+                logRecoveryEvent(.autoRecovered(prediction.type, recovery.action))
+                logger.info("Auto-recovered: \(prediction.type.rawValue)")
             }
         }
 
@@ -135,143 +135,96 @@ final class SelfHealingEngine: ObservableObject {
         }
     }
 
-    private func attemptHealing(for prediction: ErrorPrediction) -> HealingResult {
+    private func attemptRecovery(for prediction: ErrorPrediction) -> RecoveryResult {
         switch prediction.type {
         case .memoryPressure:
-            return healMemoryPressure()
+            return recoverFromMemoryPressure()
         case .audioDropout:
-            return healAudioDropout()
+            return recoverFromAudioDropout()
         case .bioDataLoss:
-            return healBioDataLoss()
+            return recoverFromBioDataLoss()
         case .networkLatency:
-            return healNetworkLatency()
+            return recoverFromNetworkLatency()
         case .visualStutter:
-            return healVisualStutter()
+            return recoverFromVisualStutter()
         case .cpuOverload:
-            return healCPUOverload()
+            return recoverFromCPUOverload()
         case .batteryDrain:
-            return healBatteryDrain()
+            return recoverFromBatteryDrain()
         case .syncDrift:
-            return healSyncDrift()
+            return recoverFromSyncDrift()
         }
     }
 
-    // MARK: - Specific Healings
+    // MARK: - Specific Recovery Actions
 
-    private func healMemoryPressure() -> HealingResult {
-        // Release cached data
+    private func recoverFromMemoryPressure() -> RecoveryResult {
         memoryGuardian?.releaseNonEssentialCache()
-
-        // Reduce visual quality temporarily
         adaptiveParameters.visualQuality = min(adaptiveParameters.visualQuality, 0.7)
-
-        // Force garbage collection hints
         autoreleasepool { }
-
-        return HealingResult(success: true, action: "Released cache, reduced visual quality")
+        return RecoveryResult(success: true, action: "Released cache, reduced visual quality")
     }
 
-    private func healAudioDropout() -> HealingResult {
-        // Increase audio buffer size
+    private func recoverFromAudioDropout() -> RecoveryResult {
         adaptiveParameters.audioBufferSize = min(adaptiveParameters.audioBufferSize * 2, 4096)
-
-        // Reduce audio processing complexity
         adaptiveParameters.audioProcessingLevel = max(adaptiveParameters.audioProcessingLevel - 0.2, 0.5)
-
-        return HealingResult(success: true, action: "Increased buffer, reduced processing")
+        return RecoveryResult(success: true, action: "Increased buffer, reduced processing")
     }
 
-    private func healBioDataLoss() -> HealingResult {
-        // Use predictive interpolation
+    private func recoverFromBioDataLoss() -> RecoveryResult {
         adaptiveParameters.bioInterpolationEnabled = true
-
-        // Increase sample rate tolerance
         adaptiveParameters.bioSampleTolerance = min(adaptiveParameters.bioSampleTolerance * 1.5, 5.0)
-
-        return HealingResult(success: true, action: "Enabled interpolation, increased tolerance")
+        return RecoveryResult(success: true, action: "Enabled interpolation, increased tolerance")
     }
 
-    private func healNetworkLatency() -> HealingResult {
-        // Enable local caching
+    private func recoverFromNetworkLatency() -> RecoveryResult {
         adaptiveParameters.networkCacheEnabled = true
-
-        // Reduce sync frequency
         adaptiveParameters.syncFrequency = max(adaptiveParameters.syncFrequency * 0.5, 5.0)
-
-        return HealingResult(success: true, action: "Enabled cache, reduced sync frequency")
+        return RecoveryResult(success: true, action: "Enabled cache, reduced sync frequency")
     }
 
-    private func healVisualStutter() -> HealingResult {
-        // Reduce frame rate temporarily
+    private func recoverFromVisualStutter() -> RecoveryResult {
         adaptiveParameters.targetFrameRate = max(adaptiveParameters.targetFrameRate - 15, 30)
-
-        // Simplify visual effects
         adaptiveParameters.visualComplexity = max(adaptiveParameters.visualComplexity - 0.3, 0.3)
-
-        return HealingResult(success: true, action: "Reduced framerate, simplified visuals")
+        return RecoveryResult(success: true, action: "Reduced framerate, simplified visuals")
     }
 
-    private func healCPUOverload() -> HealingResult {
-        // Reduce all processing
+    private func recoverFromCPUOverload() -> RecoveryResult {
         adaptiveParameters.globalProcessingLevel = max(adaptiveParameters.globalProcessingLevel - 0.2, 0.4)
-
-        // Enable aggressive batching
         adaptiveParameters.aggressiveBatching = true
-
-        return HealingResult(success: true, action: "Reduced processing, enabled batching")
+        return RecoveryResult(success: true, action: "Reduced processing, enabled batching")
     }
 
-    private func healBatteryDrain() -> HealingResult {
-        // Enable battery saver mode
+    private func recoverFromBatteryDrain() -> RecoveryResult {
         adaptiveParameters.batterySaverMode = true
-
-        // Reduce update frequencies
         adaptiveParameters.updateFrequency = max(adaptiveParameters.updateFrequency * 0.6, 30)
-
-        return HealingResult(success: true, action: "Battery saver enabled")
+        return RecoveryResult(success: true, action: "Battery saver enabled")
     }
 
-    private func healSyncDrift() -> HealingResult {
-        // Force re-sync
+    private func recoverFromSyncDrift() -> RecoveryResult {
         adaptiveParameters.forceSyncOnNextCycle = true
-
-        // Increase sync precision
         adaptiveParameters.syncPrecision = min(adaptiveParameters.syncPrecision * 1.5, 1.0)
-
-        return HealingResult(success: true, action: "Forced re-sync, increased precision")
+        return RecoveryResult(success: true, action: "Forced re-sync, increased precision")
     }
 
     // MARK: - Recovery Modes
 
     private func performDegradedModeRecovery() {
-        logger.warning("⚠️ Entering degraded mode recovery")
-
-        // Reduce all non-essential features
+        logger.warning("Entering degraded mode recovery")
         adaptiveParameters.enableNonEssentialFeatures = false
-
-        // Focus on core functionality
         adaptiveParameters.coreOnlyMode = true
-
-        logHealingEvent(.degradedModeActivated)
+        logRecoveryEvent(.degradedModeActivated)
     }
 
     private func performCriticalRecovery() {
-        logger.error("🚨 Critical recovery initiated")
-
-        // Emergency mode
+        logger.error("Critical recovery initiated")
         adaptiveParameters = AdaptiveParameters.emergency()
-
-        // Clear all caches
         memoryGuardian?.emergencyClear()
-
-        // Reset to safe state
         resetToSafeState()
-
-        logHealingEvent(.criticalRecoveryPerformed)
+        logRecoveryEvent(.criticalRecoveryPerformed)
     }
 
     private func resetToSafeState() {
-        // Reset all parameters to safe defaults
         adaptiveParameters = AdaptiveParameters.safe()
         flowState = .recovery
         intelligenceLevel = 0.5
@@ -280,61 +233,45 @@ final class SelfHealingEngine: ObservableObject {
     // MARK: - Intelligence & Learning
 
     private func adjustIntelligenceLevel() {
-        // Intelligence grows with successful healings
-        let successRate = calculateHealingSuccessRate()
+        let successRate = calculateRecoverySuccessRate()
         let flowQuality = flowStateMachine?.flowQuality ?? 0.5
-
         intelligenceLevel = (successRate * 0.4 + flowQuality * 0.4 + intelligenceLevel * 0.2)
-        intelligenceLevel = min(max(intelligenceLevel, 0.1), 2.0)  // Cap at 2x
+        intelligenceLevel = min(max(intelligenceLevel, 0.1), 2.0)
     }
 
-    private func calculateHealingSuccessRate() -> Float {
-        let recentEvents = healingEvents.suffix(100)
+    private func calculateRecoverySuccessRate() -> Float {
+        let recentEvents = recoveryEvents.suffix(100)
         guard !recentEvents.isEmpty else { return 1.0 }
-
         let successes = recentEvents.filter { $0.wasSuccessful }.count
         return Float(successes) / Float(recentEvents.count)
     }
 
     private func learnFromHistory() {
-        // Analyze patterns in healing events
-        let patterns = analyzeHealingPatterns()
-
-        // Pre-emptively adjust parameters based on learned patterns
+        let patterns = analyzeRecoveryPatterns()
         for pattern in patterns {
             applyPreemptiveAdjustment(for: pattern)
         }
     }
 
-    private func analyzeHealingPatterns() -> [HealingPattern] {
-        // Group events by type and time
-        var patterns: [HealingPattern] = []
-
-        let typeGroups = Dictionary(grouping: healingEvents) { $0.type }
+    private func analyzeRecoveryPatterns() -> [RecoveryPattern] {
+        var patterns: [RecoveryPattern] = []
+        let typeGroups = Dictionary(grouping: recoveryEvents) { $0.type }
         for (type, events) in typeGroups {
             if events.count >= 3 {
-                // Recurring issue detected
-                patterns.append(HealingPattern(type: type, frequency: events.count, trend: .increasing))
+                patterns.append(RecoveryPattern(type: type, frequency: events.count, trend: .increasing))
             }
         }
-
         return patterns
     }
 
-    private func applyPreemptiveAdjustment(for pattern: HealingPattern) {
+    private func applyPreemptiveAdjustment(for pattern: RecoveryPattern) {
         switch pattern.type {
         case .memoryWarning, .memoryCritical:
-            // Pre-emptively reduce memory usage
             adaptiveParameters.preemptiveMemoryReduction = true
-
         case .audioDropout:
-            // Increase buffer before issues occur
             adaptiveParameters.preemptiveBufferIncrease = true
-
         case .visualStutter:
-            // Reduce visual complexity proactively
             adaptiveParameters.preemptiveVisualReduction = true
-
         default:
             break
         }
@@ -342,13 +279,11 @@ final class SelfHealingEngine: ObservableObject {
 
     // MARK: - Logging
 
-    private func logHealingEvent(_ type: HealingEventType) {
-        let event = HealingEvent(type: type, timestamp: Date(), wasSuccessful: true)
-        healingEvents.append(event)
-
-        // Keep only last 1000 events
-        if healingEvents.count > 1000 {
-            healingEvents.removeFirst(healingEvents.count - 1000)
+    private func logRecoveryEvent(_ type: RecoveryEventType) {
+        let event = RecoveryEvent(type: type, timestamp: Date(), wasSuccessful: true)
+        recoveryEvents.append(event)
+        if recoveryEvents.count > 1000 {
+            recoveryEvents.removeFirst(recoveryEvents.count - 1000)
         }
     }
 }
@@ -374,43 +309,32 @@ enum SystemHealth: String {
 }
 
 enum FlowState: String {
-    case ultraFlow = "Ultra Flow"      // Peak performance
-    case flow = "Flow"                 // Optimal
-    case neutral = "Neutral"           // Normal
-    case stressed = "Stressed"         // Under load
-    case recovery = "Recovery"         // Healing
-    case emergency = "Emergency"       // Critical
+    case ultraFlow = "Ultra Flow"
+    case flow = "Flow"
+    case neutral = "Neutral"
+    case stressed = "Stressed"
+    case recovery = "Recovery"
+    case emergency = "Emergency"
 }
 
 struct AdaptiveParameters {
-    // Visual
     var visualQuality: Float = 1.0
     var visualComplexity: Float = 1.0
     var targetFrameRate: Float = 60
-
-    // Audio
     var audioBufferSize: Int = 1024
     var audioProcessingLevel: Float = 1.0
-
-    // Bio
     var bioInterpolationEnabled: Bool = false
     var bioSampleTolerance: Float = 1.0
-
-    // Network
     var networkCacheEnabled: Bool = false
     var syncFrequency: Float = 60
     var syncPrecision: Float = 0.5
     var forceSyncOnNextCycle: Bool = false
-
-    // System
     var globalProcessingLevel: Float = 1.0
     var aggressiveBatching: Bool = false
     var batterySaverMode: Bool = false
     var updateFrequency: Float = 120
     var enableNonEssentialFeatures: Bool = true
     var coreOnlyMode: Bool = false
-
-    // Preemptive
     var preemptiveMemoryReduction: Bool = false
     var preemptiveBufferIncrease: Bool = false
     var preemptiveVisualReduction: Bool = false
@@ -441,14 +365,14 @@ struct AdaptiveParameters {
     }
 }
 
-struct HealingEvent: Identifiable {
+struct RecoveryEvent: Identifiable {
     let id = UUID()
-    var type: HealingEventType
+    var type: RecoveryEventType
     var timestamp: Date
     var wasSuccessful: Bool
 }
 
-enum HealingEventType: String {
+enum RecoveryEventType: String {
     case memoryWarning = "Memory Warning"
     case memoryCritical = "Memory Critical"
     case audioDropout = "Audio Dropout"
@@ -457,17 +381,17 @@ enum HealingEventType: String {
     case cpuOverload = "CPU Overload"
     case networkTimeout = "Network Timeout"
     case syncLost = "Sync Lost"
-    case autoHealed = "Auto Healed"
+    case autoRecovered = "Auto Recovered"
     case degradedModeActivated = "Degraded Mode"
     case criticalRecoveryPerformed = "Critical Recovery"
     case flowStateChanged = "Flow State Changed"
 
-    static func autoHealed(_ errorType: ErrorType, _ action: String) -> HealingEventType {
-        return .autoHealed
+    static func autoRecovered(_ errorType: ErrorType, _ action: String) -> RecoveryEventType {
+        return .autoRecovered
     }
 }
 
-struct HealingResult {
+struct RecoveryResult {
     var success: Bool
     var action: String
 }
@@ -489,14 +413,11 @@ enum ErrorType: String {
     case syncDrift = "Sync Drift"
 }
 
-struct HealingPattern {
-    var type: HealingEventType
+struct RecoveryPattern {
+    var type: RecoveryEventType
     var frequency: Int
     var trend: Trend
-
-    enum Trend {
-        case increasing, stable, decreasing
-    }
+    enum Trend { case increasing, stable, decreasing }
 }
 
 // MARK: - Subsystem Protocols
@@ -521,37 +442,24 @@ protocol FlowStateMachineDelegate: AnyObject {
     func flowStateChanged(_ state: FlowState)
 }
 
-enum MemoryWarningLevel {
-    case low, medium, high, critical
-}
+enum MemoryWarningLevel { case low, medium, high, critical }
 
 // MARK: - Subsystem Implementations
 
 class HealthMonitor {
     weak var delegate: HealthMonitorDelegate?
-
-    init(delegate: HealthMonitorDelegate?) {
-        self.delegate = delegate
-    }
+    init(delegate: HealthMonitorDelegate?) { self.delegate = delegate }
 
     func checkHealth() -> SystemHealth {
-        // Check various system metrics
         let cpuUsage = getCPUUsage()
         let memoryUsage = getMemoryUsage()
-        let batteryLevel = getBatteryLevel()
-
-        if cpuUsage > 0.95 || memoryUsage > 0.95 {
-            return .critical
-        } else if cpuUsage > 0.8 || memoryUsage > 0.8 {
-            return .degraded
-        } else if cpuUsage > 0.6 || memoryUsage > 0.6 {
-            return .good
-        }
+        if cpuUsage > 0.95 || memoryUsage > 0.95 { return .critical }
+        else if cpuUsage > 0.8 || memoryUsage > 0.8 { return .degraded }
+        else if cpuUsage > 0.6 || memoryUsage > 0.6 { return .good }
         return .optimal
     }
 
     private func getCPUUsage() -> Float {
-        // Simplified CPU check
         var info = mach_task_basic_info()
         var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
         let result = withUnsafeMutablePointer(to: &info) {
@@ -559,7 +467,7 @@ class HealthMonitor {
                 task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
             }
         }
-        return result == KERN_SUCCESS ? 0.5 : 0.3  // Placeholder
+        return result == KERN_SUCCESS ? 0.5 : 0.3
     }
 
     private func getMemoryUsage() -> Float {
@@ -577,70 +485,43 @@ class HealthMonitor {
         }
         return 0.5
     }
-
-    private func getBatteryLevel() -> Float {
-        #if os(iOS)
-        UIDevice.current.isBatteryMonitoringEnabled = true
-        return UIDevice.current.batteryLevel
-        #else
-        return 1.0
-        #endif
-    }
 }
 
 class ErrorPredictor {
     weak var delegate: ErrorPredictorDelegate?
     private var errorHistory: [ErrorType: [Date]] = [:]
-
-    init(delegate: ErrorPredictorDelegate?) {
-        self.delegate = delegate
-    }
+    init(delegate: ErrorPredictorDelegate?) { self.delegate = delegate }
 
     func predictErrors() -> [ErrorPrediction] {
         var predictions: [ErrorPrediction] = []
-
-        // Analyze patterns and predict
         for (type, dates) in errorHistory {
             if let prediction = predictFromHistory(type: type, dates: dates) {
                 predictions.append(prediction)
             }
         }
-
         return predictions
     }
 
     private func predictFromHistory(type: ErrorType, dates: [Date]) -> ErrorPrediction? {
         guard dates.count >= 2 else { return nil }
-
-        // Calculate average interval
         var intervals: [TimeInterval] = []
-        for i in 1..<dates.count {
-            intervals.append(dates[i].timeIntervalSince(dates[i-1]))
-        }
-
+        for i in 1..<dates.count { intervals.append(dates[i].timeIntervalSince(dates[i-1])) }
         let avgInterval = intervals.reduce(0, +) / Double(intervals.count)
         guard let lastDate = dates.last else { return nil }
         let timeSinceLast = Date().timeIntervalSince(lastDate)
-
         if timeSinceLast > avgInterval * 0.8 {
-            // Likely to occur soon
             return ErrorPrediction(
                 type: type,
                 probability: Float(min(timeSinceLast / avgInterval, 1.0)),
                 timeToError: max(avgInterval - timeSinceLast, 0)
             )
         }
-
         return nil
     }
 
     func recordError(_ type: ErrorType) {
-        if errorHistory[type] == nil {
-            errorHistory[type] = []
-        }
+        if errorHistory[type] == nil { errorHistory[type] = [] }
         errorHistory[type]?.append(Date())
-
-        // Keep only last 20 occurrences
         if let count = errorHistory[type]?.count, count > 20 {
             errorHistory[type]?.removeFirst(count - 20)
         }
@@ -649,174 +530,97 @@ class ErrorPredictor {
 
 class PerformanceOptimizer {
     weak var delegate: PerformanceOptimizerDelegate?
-
-    init(delegate: PerformanceOptimizerDelegate?) {
-        self.delegate = delegate
-    }
-
-    func optimize(for flowState: FlowState) {
-        switch flowState {
-        case .ultraFlow:
-            // Maximum quality
-            break
-        case .flow:
-            // High quality with some optimizations
-            break
-        case .neutral:
-            // Balanced
-            break
-        case .stressed:
-            // Reduce non-essentials
-            break
-        case .recovery:
-            // Minimal processing
-            break
-        case .emergency:
-            // Survival mode
-            break
-        }
-    }
+    init(delegate: PerformanceOptimizerDelegate?) { self.delegate = delegate }
+    func optimize(for flowState: FlowState) { /* Optimization logic based on flow state */ }
 }
 
 class MemoryGuardian {
     weak var delegate: MemoryGuardianDelegate?
     private var lastCleanup = Date()
-
-    init(delegate: MemoryGuardianDelegate?) {
-        self.delegate = delegate
-    }
+    init(delegate: MemoryGuardianDelegate?) { self.delegate = delegate }
 
     func cleanupIfNeeded() {
-        let timeSinceCleanup = Date().timeIntervalSince(lastCleanup)
-        if timeSinceCleanup > 30 {
+        if Date().timeIntervalSince(lastCleanup) > 30 {
             releaseNonEssentialCache()
             lastCleanup = Date()
         }
     }
-
-    func releaseNonEssentialCache() {
-        // Release image caches, audio buffers, etc.
-        autoreleasepool { }
-    }
-
-    func emergencyClear() {
-        releaseNonEssentialCache()
-        // Additional emergency cleanup
-    }
+    func releaseNonEssentialCache() { autoreleasepool { } }
+    func emergencyClear() { releaseNonEssentialCache() }
 }
 
 class FlowStateMachine {
     weak var delegate: FlowStateMachineDelegate?
     private(set) var currentState: FlowState = .neutral
     private(set) var flowQuality: Float = 0.5
-
-    private var stateHistory: [FlowState] = []
     private var optimalStreak: Int = 0
-
-    init(delegate: FlowStateMachineDelegate?) {
-        self.delegate = delegate
-    }
+    init(delegate: FlowStateMachineDelegate?) { self.delegate = delegate }
 
     func updateState(health: SystemHealth, predictions: [ErrorPrediction]) {
         let newState = calculateNewState(health: health, predictions: predictions)
-
         if newState != currentState {
             currentState = newState
-            stateHistory.append(newState)
             delegate?.flowStateChanged(newState)
         }
-
-        // Update flow quality
         updateFlowQuality()
     }
 
     private func calculateNewState(health: SystemHealth, predictions: [ErrorPrediction]) -> FlowState {
-        // Critical conditions
-        if health == .critical || predictions.contains(where: { $0.probability > 0.9 }) {
-            return .emergency
-        }
-
-        if health == .degraded || predictions.contains(where: { $0.probability > 0.7 }) {
-            return .recovery
-        }
-
-        if predictions.contains(where: { $0.probability > 0.5 }) {
-            return .stressed
-        }
-
-        // Positive conditions
+        if health == .critical || predictions.contains(where: { $0.probability > 0.9 }) { return .emergency }
+        if health == .degraded || predictions.contains(where: { $0.probability > 0.7 }) { return .recovery }
+        if predictions.contains(where: { $0.probability > 0.5 }) { return .stressed }
         if health == .optimal && predictions.isEmpty {
             optimalStreak += 1
-
-            if optimalStreak > 100 {
-                return .ultraFlow
-            } else if optimalStreak > 20 {
-                return .flow
-            }
-        } else {
-            optimalStreak = max(0, optimalStreak - 5)
-        }
-
+            if optimalStreak > 100 { return .ultraFlow }
+            else if optimalStreak > 20 { return .flow }
+        } else { optimalStreak = max(0, optimalStreak - 5) }
         return .neutral
     }
 
     private func updateFlowQuality() {
         let stateValues: [FlowState: Float] = [
-            .ultraFlow: 1.0,
-            .flow: 0.85,
-            .neutral: 0.6,
-            .stressed: 0.4,
-            .recovery: 0.2,
-            .emergency: 0.0
+            .ultraFlow: 1.0, .flow: 0.85, .neutral: 0.6,
+            .stressed: 0.4, .recovery: 0.2, .emergency: 0.0
         ]
-
         let currentValue = stateValues[currentState] ?? 0.5
-
-        // Smooth transition
         flowQuality = flowQuality * 0.9 + currentValue * 0.1
     }
 }
 
 // MARK: - Delegate Conformance
 
-extension SelfHealingEngine: HealthMonitorDelegate {
+extension SystemRecoveryEngine: HealthMonitorDelegate {
     nonisolated func healthChanged(_ health: SystemHealth) {
-        Task { @MainActor in
-            self.systemHealth = health
-        }
+        Task { @MainActor in self.systemHealth = health }
     }
 }
 
-extension SelfHealingEngine: ErrorPredictorDelegate {
+extension SystemRecoveryEngine: ErrorPredictorDelegate {
     nonisolated func errorPredicted(_ prediction: ErrorPrediction) {
         Task { @MainActor in
-            self.logger.warning("⚡ Error predicted: \(prediction.type.rawValue) (\(Int(prediction.probability * 100))%)")
+            self.logger.warning("Error predicted: \(prediction.type.rawValue) (\(Int(prediction.probability * 100))%)")
         }
     }
 }
 
-extension SelfHealingEngine: PerformanceOptimizerDelegate {
+extension SystemRecoveryEngine: PerformanceOptimizerDelegate {
     nonisolated func optimizationApplied(_ description: String) {
-        Task { @MainActor in
-            self.logger.info("🔧 Optimization: \(description)")
-        }
+        Task { @MainActor in self.logger.info("Optimization: \(description)") }
     }
 }
 
-extension SelfHealingEngine: MemoryGuardianDelegate {
+extension SystemRecoveryEngine: MemoryGuardianDelegate {
     nonisolated func memoryWarning(_ level: MemoryWarningLevel) {
-        Task { @MainActor in
-            self.logHealingEvent(.memoryWarning)
-        }
+        Task { @MainActor in self.logRecoveryEvent(.memoryWarning) }
     }
 }
 
-extension SelfHealingEngine: FlowStateMachineDelegate {
+extension SystemRecoveryEngine: FlowStateMachineDelegate {
     nonisolated func flowStateChanged(_ state: FlowState) {
         Task { @MainActor in
             self.flowState = state
-            self.logHealingEvent(.flowStateChanged)
-            self.logger.info("🌊 Flow state: \(state.rawValue)")
+            self.logRecoveryEvent(.flowStateChanged)
+            self.logger.info("Flow state: \(state.rawValue)")
         }
     }
 }

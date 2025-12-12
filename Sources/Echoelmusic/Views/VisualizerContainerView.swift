@@ -272,7 +272,7 @@ struct VisualizerContainerView: View {
         bioDataTimer?.invalidate()
 
         // WICHTIG: Route bio data durch UniversalCore - verteilt automatisch an ALLE Systeme
-        // (VisualEngine, SelfHealingEngine, MultiPlatformBridge, VideoAIHub, etc.)
+        // (VisualEngine, SystemRecoveryEngine, MultiPlatformBridge, VideoAIHub, etc.)
         bioDataTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak healthKitManager] _ in
             guard let hkManager = healthKitManager else { return }
             EchoelUniversalCore.shared.receiveBioData(

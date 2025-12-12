@@ -73,8 +73,8 @@ final class EchoelUniversalCore: ObservableObject {
     /// AI Creative Engine
     private var aiEngine = AICreativeEngine()
 
-    /// Self-Healing Engine - NEU VERBUNDEN
-    private let selfHealing = SelfHealingEngine.shared
+    /// System Recovery Engine - Auto-Recovery System
+    private let systemRecovery = SystemRecoveryEngine.shared
 
     /// Multi-Platform Bridge - NEU VERBUNDEN
     private let platformBridge = MultiPlatformBridge.shared
@@ -109,19 +109,19 @@ final class EchoelUniversalCore: ObservableObject {
         aiEngine.delegate = self
 
         // Register all modules
-        connectedModules = [.audio, .visual, .bio, .quantum, .sync, .analog, .ai, .selfHealing, .video, .tools]
+        connectedModules = [.audio, .visual, .bio, .quantum, .sync, .analog, .ai, .systemRecovery, .video, .tools]
     }
 
-    /// NEU: Verbindet alle Systeme bidirektional
+    /// Connect all systems bidirectionally
     private func setupCrossSystemConnections() {
-        // Self-Healing → Universal Core
-        selfHealing.$flowState
+        // System Recovery → Universal Core
+        systemRecovery.$flowState
             .sink { [weak self] flowState in
                 self?.handleFlowStateChange(flowState)
             }
             .store(in: &cancellables)
 
-        selfHealing.$systemHealth
+        systemRecovery.$systemHealth
             .sink { [weak self] health in
                 self?.systemState.systemHealth = health
             }
@@ -129,10 +129,10 @@ final class EchoelUniversalCore: ObservableObject {
 
         // Tools sind bereits verbunden via EchoelTools.shared
 
-        print("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden")
+        print("EchoelUniversalCore: All systems connected bidirectionally")
     }
 
-    /// Reagiert auf Flow-State Änderungen vom Self-Healing System
+    /// Reacts to flow state changes from System Recovery
     private func handleFlowStateChange(_ flowState: FlowState) {
         switch flowState {
         case .ultraFlow:
@@ -238,15 +238,15 @@ final class EchoelUniversalCore: ObservableObject {
         systemEnergy = visualEngine.visualParams.energy
     }
 
-    /// Gibt den aktuellen System-Status für UI zurück
+    /// Returns current system status for UI
     public func getSystemStatus() -> SystemStatus {
         return SystemStatus(
-            health: selfHealing.systemHealth,
-            flowState: selfHealing.flowState,
+            health: systemRecovery.systemHealth,
+            flowState: systemRecovery.flowState,
             coherence: globalCoherence,
             energy: systemEnergy,
             connectedModules: connectedModules.count,
-            isHealing: selfHealing.systemHealth != .optimal
+            isRecovering: systemRecovery.systemHealth != .optimal
         )
     }
 
@@ -256,7 +256,7 @@ final class EchoelUniversalCore: ObservableObject {
         var coherence: Float
         var energy: Float
         var connectedModules: Int
-        var isHealing: Bool
+        var isRecovering: Bool
     }
 }
 
@@ -315,7 +315,7 @@ extension EchoelUniversalCore {
         case sync = "Device Sync"
         case analog = "Analog Bridge"
         case ai = "AI Creative"
-        case selfHealing = "Self-Healing"
+        case systemRecovery = "System Recovery"
         case video = "Video AI"
         case tools = "EchoelTools"
     }

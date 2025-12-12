@@ -8,7 +8,7 @@ import Combine
 // "Ultra Liquid Light Flow - Kreativität auf Quantenebene"
 //
 // Eine Suite von intelligenten Tools, die:
-// • Sich selbst heilen und optimieren
+// • Automatische Fehlerkorrektur und Optimierung
 // • Von deinem Bio-Feedback lernen
 // • Kreative Entscheidungen mit Quantum-Sampling treffen
 // • Über alle Geräte synchronisiert sind
@@ -45,7 +45,7 @@ final class EchoelTools: ObservableObject {
     // MARK: - System References
 
     private let universalCore = EchoelUniversalCore.shared
-    private let selfHealing = SelfHealingEngine.shared
+    private let systemRecovery = SystemRecoveryEngine.shared
 
     // MARK: - Private State
 
@@ -66,8 +66,8 @@ final class EchoelTools: ObservableObject {
             }
             .store(in: &cancellables)
 
-        // Connect to self-healing
-        selfHealing.$flowState
+        // Connect to system recovery
+        systemRecovery.$flowState
             .sink { [weak self] flowState in
                 self?.adjustToolsForFlowState(flowState)
             }

@@ -23,7 +23,7 @@ struct Track: Identifiable, Codable {
     enum TrackType: String, Codable {
         case audio = "Audio"
         case voice = "Voice"
-        case binaural = "Binaural"
+        case ambient = "Ambient"
         case spatial = "Spatial"
         case master = "Master"
     }
@@ -147,9 +147,9 @@ extension Track {
         return track
     }
 
-    /// Create binaural beats track
-    static func binauralTrack() -> Track {
-        var track = Track(name: "Binaural Beats", type: .binaural)
+    /// Create ambient soundscape track
+    static func ambientTrack() -> Track {
+        var track = Track(name: "Ambient", type: .ambient)
         track.volume = 0.3
         return track
     }

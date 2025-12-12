@@ -37,7 +37,7 @@ struct EchoelmusicApp: App {
             // KRITISCH: Initialisiere alle Core-Systeme (Singletons)
             // Diese werden jetzt async geladen für schnelleren App-Start!
             _ = await MainActor.run { EchoelUniversalCore.shared }      // Master Integration Hub
-            _ = await MainActor.run { SelfHealingEngine.shared }        // Auto-Recovery System
+            _ = await MainActor.run { SystemRecoveryEngine.shared }      // Auto-Recovery System
             _ = await MainActor.run { VideoAICreativeHub.shared }       // Video/AI Integration
             _ = await MainActor.run { MultiPlatformBridge.shared }      // MIDI/OSC/DMX/CV Bridge
             _ = await MainActor.run { EchoelTools.shared }              // Intelligent Creative Tools

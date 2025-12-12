@@ -326,7 +326,7 @@ extension Track.TrackType {
         switch self {
         case .audio: return "waveform"
         case .voice: return "mic.fill"
-        case .binaural: return "headphones"
+        case .ambient: return "leaf.fill"
         case .spatial: return "airpodspro"
         case .master: return "slider.horizontal.3"
         }
@@ -336,7 +336,7 @@ extension Track.TrackType {
         switch self {
         case .audio: return .cyan
         case .voice: return .green
-        case .binaural: return .purple
+        case .ambient: return .purple
         case .spatial: return .blue
         case .master: return .orange
         }

@@ -435,15 +435,15 @@ class SpatialAudioEngine {
 
         switch sceneType {
         case .meditation:
-            // Binaurale Beats in 3D positioniert
+            // Ambient sounds positioned in 3D space
             sources.append(VisionApp.ImmersiveScene.SpatialAudioSource(
                 position: SIMD3(-2, 0, -2),
-                soundType: .binauralBeat(frequency: 7.83) // Schumann-Resonanz
+                soundType: .ambient(type: "nature")
             ))
 
             sources.append(VisionApp.ImmersiveScene.SpatialAudioSource(
                 position: SIMD3(2, 0, -2),
-                soundType: .binauralBeat(frequency: 7.83)
+                soundType: .ambient(type: "water")
             ))
 
         case .cosmos:
