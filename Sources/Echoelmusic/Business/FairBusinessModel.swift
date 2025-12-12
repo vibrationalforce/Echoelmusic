@@ -231,9 +231,9 @@ class FairBusinessModel: ObservableObject {
 
     init() {
         loadSubscriptionStatus()
-        print("✅ Fair Business Model: Initialized")
-        print("💰 Current Tier: \(currentTier.rawValue)")
-        print("🤝 Ethical commitments loaded")
+        EchoelLogger.success("Fair Business Model: Initialized", category: EchoelLogger.system)
+        EchoelLogger.info("Current Tier: \(currentTier.rawValue)", category: EchoelLogger.system)
+        EchoelLogger.info("Ethical commitments loaded", category: EchoelLogger.system)
     }
 
     // MARK: - Load Subscription Status
@@ -259,7 +259,7 @@ class FairBusinessModel: ObservableObject {
     func startFreeTrial(tier: PricingTier) {
         guard tier != .free && tier != .lifetime else { return }
         guard activeTrial == nil else {
-            print("⚠️ Trial already active")
+            EchoelLogger.warning("Trial already active", category: EchoelLogger.system)
             return
         }
 
@@ -276,9 +276,9 @@ class FairBusinessModel: ObservableObject {
 
         currentTier = tier
 
-        print("🎉 Free trial started: \(tier.rawValue)")
-        print("📅 Trial ends: \(endDate.formatted(date: .long, time: .omitted))")
-        print("💡 No credit card required. No auto-renewal.")
+        EchoelLogger.info("Free trial started: \(tier.rawValue)", category: EchoelLogger.system)
+        EchoelLogger.info("Trial ends: \(endDate.formatted(date: .long, time: .omitted))", category: EchoelLogger.system)
+        EchoelLogger.info("No credit card required. No auto-renewal.", category: EchoelLogger.system)
     }
 
     // MARK: - Purchase Subscription
@@ -287,7 +287,7 @@ class FairBusinessModel: ObservableObject {
         guard tier != .free else { return }
 
         // In production, use StoreKit 2
-        print("💳 Purchasing: \(tier.rawValue) (\(billingPeriod.rawValue))")
+        EchoelLogger.info("Purchasing: \(tier.rawValue) (\(billingPeriod.rawValue))", category: EchoelLogger.system)
 
         // Simulate purchase
         try await Task.sleep(nanoseconds: 1_000_000_000)  // 1 second
@@ -298,7 +298,7 @@ class FairBusinessModel: ObservableObject {
             lifetimePurchased = true
             UserDefaults.standard.set(true, forKey: "lifetimePurchased")
             subscriptionStatus = .lifetime
-            print("✅ Lifetime purchase complete!")
+            EchoelLogger.success("Lifetime purchase complete!", category: EchoelLogger.system)
         } else {
             let renewalDate = Calendar.current.date(
                 byAdding: billingPeriod == .monthly ? .month : .year,
@@ -306,7 +306,7 @@ class FairBusinessModel: ObservableObject {
                 to: Date()
             )!
             subscriptionStatus = .active(tier: tier, renewalDate: renewalDate)
-            print("✅ Subscription active until: \(renewalDate.formatted(date: .long, time: .omitted))")
+            EchoelLogger.success("Subscription active until: \(renewalDate.formatted(date: .long, time: .omitted))", category: EchoelLogger.system)
         }
     }
 
@@ -319,25 +319,25 @@ class FairBusinessModel: ObservableObject {
 
     func cancelSubscription() async throws {
         guard case .active(let tier, let renewalDate) = subscriptionStatus else {
-            print("⚠️ No active subscription to cancel")
+            EchoelLogger.warning("No active subscription to cancel", category: EchoelLogger.system)
             return
         }
 
         // In production, use StoreKit 2 to cancel
-        print("🚫 Cancelling subscription...")
+        EchoelLogger.info("Cancelling subscription...", category: EchoelLogger.system)
 
         // No retention tactics, no "are you sure?" spam
         subscriptionStatus = .cancelled(expiresOn: renewalDate)
 
-        print("✅ Subscription cancelled")
-        print("📅 Access continues until: \(renewalDate.formatted(date: .long, time: .omitted))")
-        print("💾 Your data remains accessible. Export anytime.")
+        EchoelLogger.success("Subscription cancelled", category: EchoelLogger.system)
+        EchoelLogger.info("Access continues until: \(renewalDate.formatted(date: .long, time: .omitted))", category: EchoelLogger.system)
+        EchoelLogger.info("Your data remains accessible. Export anytime.", category: EchoelLogger.system)
     }
 
     // MARK: - Restore Purchases
 
     func restorePurchases() async throws {
-        print("🔄 Restoring purchases...")
+        EchoelLogger.info("Restoring purchases...", category: EchoelLogger.system)
 
         // In production, use StoreKit 2 to restore
         try await Task.sleep(nanoseconds: 500_000_000)
@@ -345,9 +345,9 @@ class FairBusinessModel: ObservableObject {
         if lifetimePurchased {
             currentTier = .lifetime
             subscriptionStatus = .lifetime
-            print("✅ Lifetime purchase restored")
+            EchoelLogger.success("Lifetime purchase restored", category: EchoelLogger.system)
         } else {
-            print("ℹ️ No purchases to restore")
+            EchoelLogger.info("No purchases to restore", category: EchoelLogger.system)
         }
     }
 
@@ -357,12 +357,12 @@ class FairBusinessModel: ObservableObject {
         // In production, verify token with backend
         guard discount.verificationRequired else { return false }
 
-        print("🎓 Discount applied: \(discount.rawValue)")
+        EchoelLogger.info("Discount applied: \(discount.rawValue)", category: EchoelLogger.system)
 
         if discount == .accessibility {
             currentTier = .professional
             subscriptionStatus = .lifetime  // Free forever
-            print("♿️ Accessibility tier activated. Free Professional forever.")
+            EchoelLogger.info("Accessibility tier activated. Free Professional forever.", category: EchoelLogger.system)
         }
 
         return true
