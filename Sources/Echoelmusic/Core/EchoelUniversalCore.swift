@@ -672,9 +672,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         systemEnergy = state.energy
         propagateUniversalState()
 
-        #if DEBUG
-        print("[UniversalCore] Bio update: Coherence=\(String(format: "%.2f", state.coherence))")
-        #endif
+        EchoelLogger.debug("Bio update: Coherence=\(String(format: "%.2f", state.coherence))", category: EchoelLogger.bio)
     }
 
     func quantumStateCollapsed(to choice: Int) {
@@ -689,26 +687,20 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
             systemState.creativeDirection = .rhythmic
         }
 
-        #if DEBUG
-        print("[UniversalCore] Quantum collapsed to choice: \(choice)")
-        #endif
+        EchoelLogger.debug("Quantum collapsed to choice: \(choice)", category: EchoelLogger.quantum)
     }
 
     func deviceConnected(_ device: String) {
         systemState.connectedDevices += 1
         connectedModules.insert(.sync)
 
-        #if DEBUG
-        print("[UniversalCore] Device connected: \(device) (Total: \(systemState.connectedDevices))")
-        #endif
+        EchoelLogger.debug("Device connected: \(device) (Total: \(systemState.connectedDevices))", category: EchoelLogger.system)
     }
 
     func deviceDisconnected(_ device: String) {
         systemState.connectedDevices = max(0, systemState.connectedDevices - 1)
 
-        #if DEBUG
-        print("[UniversalCore] Device disconnected: \(device) (Total: \(systemState.connectedDevices))")
-        #endif
+        EchoelLogger.debug("Device disconnected: \(device) (Total: \(systemState.connectedDevices))", category: EchoelLogger.system)
     }
 
     func analogGearResponded(_ response: [Float]) {
@@ -723,9 +715,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
 
         propagateUniversalState()
 
-        #if DEBUG
-        print("[UniversalCore] Analog gear response: \(response.count) channels")
-        #endif
+        EchoelLogger.debug("Analog gear response: \(response.count) channels", category: EchoelLogger.system)
     }
 
     func aiSuggestionGenerated(_ suggestion: AICreativeEngine.CreativeSuggestion) {
@@ -737,9 +727,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
             applyAISuggestion(suggestion)
         }
 
-        #if DEBUG
-        print("[UniversalCore] AI suggestion: \(suggestion.type) (confidence: \(suggestion.confidence))")
-        #endif
+        EchoelLogger.debug("AI suggestion: \(suggestion.type) (confidence: \(suggestion.confidence))", category: EchoelLogger.ai)
     }
 
     private func applyAISuggestion(_ suggestion: AICreativeEngine.CreativeSuggestion) {
