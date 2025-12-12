@@ -151,8 +151,8 @@ class SocialHealthSupport: ObservableObject {
 
     init() {
         loadCommunityResources()
-        print("✅ Social Health Support: Initialized")
-        print("🌍 Based on WHO Social Determinants of Health")
+        EchoelLogger.success("Social Health Support: Initialized", category: EchoelLogger.bio)
+        EchoelLogger.log("🌍", "Based on WHO Social Determinants of Health", category: EchoelLogger.bio)
     }
 
     private func loadCommunityResources() {
@@ -212,10 +212,10 @@ class SocialHealthSupport: ObservableObject {
 
         socialConnectionScore = min(100, max(0, score))
 
-        print("📊 Social Health Assessment:")
-        print("   - Social Connection Score: \(String(format: "%.1f", socialConnectionScore))/100")
-        print("   - Social Support: \(socialSupport.rawValue) (-\(String(format: "%.0f", socialSupport.mortalityRiskReduction))% mortality risk)")
-        print("   - Loneliness: \(lonelinessSeverity.rawValue)")
+        EchoelLogger.log("📊", "Social Health Assessment:", category: EchoelLogger.bio)
+        EchoelLogger.log("📊", "   - Social Connection Score: \(String(format: "%.1f", socialConnectionScore))/100", category: EchoelLogger.bio)
+        EchoelLogger.log("📊", "   - Social Support: \(socialSupport.rawValue) (-\(String(format: "%.0f", socialSupport.mortalityRiskReduction))% mortality risk)", category: EchoelLogger.bio)
+        EchoelLogger.log("📊", "   - Loneliness: \(lonelinessSeverity.rawValue)", category: EchoelLogger.bio)
     }
 
     // MARK: - Get Recommendations

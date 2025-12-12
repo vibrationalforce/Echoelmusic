@@ -305,15 +305,15 @@ class IntelligentAutomationEngine: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Intelligent Automation Engine: Initialized")
-        print("🎚️ Mode: \(automationMode.rawValue)")
-        print("🧠 Learning: \(learningFromUser ? "Enabled" : "Disabled")")
+        EchoelLogger.success("Intelligent Automation Engine: Initialized", category: EchoelLogger.ai)
+        EchoelLogger.log("🎚️", "Mode: \(automationMode.rawValue)", category: EchoelLogger.ai)
+        EchoelLogger.log("🧠", "Learning: \(learningFromUser ? "Enabled" : "Disabled")", category: EchoelLogger.ai)
     }
 
     // MARK: - Analyze Mix
 
     func analyzeMix(tracks: [AudioTrack]) -> MixAnalysis {
-        print("🔍 Analyzing mix...")
+        EchoelLogger.log("🔍", "Analyzing mix...", category: EchoelLogger.ai)
 
         // Simulate mix analysis
         let loudness: Float = -14.0  // Target for streaming: -14 LUFS
@@ -358,7 +358,7 @@ class IntelligentAutomationEngine: ObservableObject {
             ))
         }
 
-        print("✅ Mix analysis complete: \(issues.count) issues found")
+        EchoelLogger.success("Mix analysis complete: \(issues.count) issues found", category: EchoelLogger.ai)
 
         return MixAnalysis(
             overallLoudness: loudness,
@@ -382,7 +382,7 @@ class IntelligentAutomationEngine: ObservableObject {
     func generateSuggestions(for track: AudioTrack, context: MusicalContext) -> [AutomationSuggestion] {
         var suggestions: [AutomationSuggestion] = []
 
-        print("💡 Generating automation suggestions for: \(track.name)")
+        EchoelLogger.log("💡", "Generating automation suggestions for: \(track.name)", category: EchoelLogger.ai)
 
         // Suggest filter sweep for introduction
         if context.section == .intro {
@@ -459,7 +459,7 @@ class IntelligentAutomationEngine: ObservableObject {
             }
         }
 
-        print("✅ Generated \(suggestions.count) suggestions (avg confidence: \(Int(suggestions.map { $0.confidence }.reduce(0, +) / Float(suggestions.count) * 100))%)")
+        EchoelLogger.success("Generated \(suggestions.count) suggestions (avg confidence: \(Int(suggestions.map { $0.confidence }.reduce(0, +) / Float(suggestions.count) * 100))%)", category: EchoelLogger.ai)
 
         return suggestions
     }
@@ -493,7 +493,7 @@ class IntelligentAutomationEngine: ObservableObject {
     // MARK: - Bio-Reactive Automation
 
     func generateBioReactiveAutomation(hrv: Float, coherence: Float, parameter: TrackAutomation.AutomationParameter, duration: Double) -> TrackAutomation {
-        print("🧠 Generating bio-reactive automation...")
+        EchoelLogger.log("🧠", "Generating bio-reactive automation...", category: EchoelLogger.ai)
 
         var points: [TrackAutomation.AutomationPoint] = []
 
@@ -545,7 +545,7 @@ class IntelligentAutomationEngine: ObservableObject {
             points.append(TrackAutomation.AutomationPoint(time: duration, value: 0.5, tension: 0.0))
         }
 
-        print("✅ Bio-reactive automation generated: \(points.count) points")
+        EchoelLogger.success("Bio-reactive automation generated: \(points.count) points", category: EchoelLogger.ai)
 
         return TrackAutomation(
             trackID: "bio-track",
@@ -571,16 +571,16 @@ class IntelligentAutomationEngine: ObservableObject {
 
         userProfile.learn(from: decision)
 
-        print("📚 Learned from user decision: \(parameter.rawValue) = \(value) in \(context)")
+        EchoelLogger.log("📚", "Learned from user decision: \(parameter.rawValue) = \(value) in \(context)", category: EchoelLogger.ai)
     }
 
     // MARK: - Apply Automation
 
     func applyAutomation(_ automation: TrackAutomation, to track: AudioTrack) {
         activeAutomations.append(automation)
-        print("✅ Applied automation: \(automation.parameter.rawValue) to \(track.name)")
-        print("   Source: \(automation.source.rawValue)")
-        print("   Points: \(automation.points.count)")
+        EchoelLogger.success("Applied automation: \(automation.parameter.rawValue) to \(track.name)", category: EchoelLogger.ai)
+        EchoelLogger.debug("Source: \(automation.source.rawValue)", category: EchoelLogger.ai)
+        EchoelLogger.debug("Points: \(automation.points.count)", category: EchoelLogger.ai)
     }
 
     // MARK: - Cinematic Automation Presets
@@ -648,7 +648,7 @@ class IntelligentAutomationEngine: ObservableObject {
             ))
         }
 
-        print("🎬 Generated cinematic automation: \(style.rawValue)")
+        EchoelLogger.log("🎬", "Generated cinematic automation: \(style.rawValue)", category: EchoelLogger.ai)
 
         return automations
     }

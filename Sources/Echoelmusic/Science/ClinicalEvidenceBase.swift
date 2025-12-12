@@ -84,8 +84,8 @@ class ClinicalEvidenceBase: ObservableObject {
 
     init() {
         loadEvidenceBasedInterventions()
-        print("✅ Clinical Evidence Base: Initialized")
-        print("📚 All interventions backed by peer-reviewed research")
+        EchoelLogger.success("Clinical Evidence Base: Initialized", category: EchoelLogger.bio)
+        EchoelLogger.log("📚", "All interventions backed by peer-reviewed research", category: EchoelLogger.bio)
     }
 
     private func loadEvidenceBasedInterventions() {

@@ -177,17 +177,17 @@ class TVApp {
 
             // Check for Dolby Atmos support
             if audioSession.availableCategories.contains(.ambient) {
-                print("📺 Dolby Atmos supported")
+                EchoelLogger.info("Dolby Atmos supported", category: EchoelLogger.system)
             }
         } catch {
-            print("❌ Audio session setup failed: \(error)")
+            EchoelLogger.error("Audio session setup failed: \(error)", category: EchoelLogger.system)
         }
     }
 
     // MARK: - Session Management
 
     func startSession(type: Session.SessionType) async {
-        print("📺 Starting \(type.rawValue) session on Apple TV")
+        EchoelLogger.info("Starting \(type.rawValue) session on Apple TV", category: EchoelLogger.system)
 
         let session = Session(type: type, startTime: Date())
         activeSession = session
@@ -205,7 +205,7 @@ class TVApp {
     func stopSession() async {
         guard activeSession != nil else { return }
 
-        print("📺 Stopping session on Apple TV")
+        EchoelLogger.info("Stopping session on Apple TV", category: EchoelLogger.system)
 
         await visualEngine.stop()
         await audioEngine.stop()
@@ -216,7 +216,7 @@ class TVApp {
     // MARK: - Device Connection
 
     private func handleDeviceConnected(_ device: ConnectedDevice) {
-        print("📱 Device connected: \(device.name) (\(device.type))")
+        EchoelLogger.info("Device connected: \(device.name) (\(device.type))", category: EchoelLogger.system)
         connectedDevices.append(device)
 
         // Füge als Participant zur Session hinzu
@@ -262,7 +262,7 @@ class TVApp {
     // MARK: - SharePlay
 
     func startSharePlay() async throws {
-        print("📺 Starting SharePlay session")
+        EchoelLogger.info("Starting SharePlay session", category: EchoelLogger.system)
         isSharePlayActive = true
 
         // TODO: Integrate with GroupActivities framework
@@ -271,7 +271,7 @@ class TVApp {
     }
 
     func stopSharePlay() {
-        print("📺 Stopping SharePlay session")
+        EchoelLogger.info("Stopping SharePlay session", category: EchoelLogger.system)
         isSharePlayActive = false
     }
 
@@ -297,7 +297,7 @@ class TVVisualizationEngine {
     private var intensity: Float = 1.0
 
     func start(mode: TVApp.VisualizationMode) async {
-        print("🎨 TV Visualization Engine started: \(mode.rawValue)")
+        EchoelLogger.info("TV Visualization Engine started: \(mode.rawValue)", category: EchoelLogger.system)
         isRunning = true
         currentMode = mode
 
@@ -306,12 +306,12 @@ class TVVisualizationEngine {
     }
 
     func stop() async {
-        print("🎨 TV Visualization Engine stopped")
+        EchoelLogger.info("TV Visualization Engine stopped", category: EchoelLogger.system)
         isRunning = false
     }
 
     func changeMode(_ mode: TVApp.VisualizationMode) async {
-        print("🎨 Changing mode to: \(mode.rawValue)")
+        EchoelLogger.info("Changing mode to: \(mode.rawValue)", category: EchoelLogger.system)
         currentMode = mode
     }
 
@@ -321,13 +321,13 @@ class TVVisualizationEngine {
 
     func updateWithBioData(hrv: Double, coherence: Double) async {
         // Update visualization based on bio-data
-        print("💓 Updating visualization with HRV: \(hrv), Coherence: \(coherence)")
+        EchoelLogger.debug("Updating visualization with HRV: \(hrv), Coherence: \(coherence)", category: EchoelLogger.system)
     }
 
     private func setupMetalRenderer() {
         // Setup Metal for high-performance rendering
         // Target: 4K @ 60fps, 8K @ 30fps
-        print("⚡ Metal renderer initialized for tvOS")
+        EchoelLogger.info("Metal renderer initialized for tvOS", category: EchoelLogger.system)
     }
 }
 
@@ -339,7 +339,7 @@ class TVAudioEngine {
     private var isRunning: Bool = false
 
     func start() async {
-        print("🔊 TV Audio Engine started")
+        EchoelLogger.info("TV Audio Engine started", category: EchoelLogger.system)
         isRunning = true
 
         // Setup Dolby Atmos if available
@@ -347,13 +347,13 @@ class TVAudioEngine {
     }
 
     func stop() async {
-        print("🔊 TV Audio Engine stopped")
+        EchoelLogger.info("TV Audio Engine stopped", category: EchoelLogger.system)
         isRunning = false
     }
 
     private func setupDolbyAtmos() {
         // Configure Dolby Atmos for 3D spatial audio
-        print("🎧 Dolby Atmos configured")
+        EchoelLogger.info("Dolby Atmos configured", category: EchoelLogger.system)
     }
 }
 
@@ -362,19 +362,19 @@ class TVAudioEngine {
 class TVFocusEngine {
 
     func setupFocusEnvironment() {
-        print("🎮 Focus Engine setup for Siri Remote")
+        EchoelLogger.info("Focus Engine setup for Siri Remote", category: EchoelLogger.system)
     }
 
     func handleMenuPress() {
-        print("🎮 Menu button pressed")
+        EchoelLogger.debug("Menu button pressed", category: EchoelLogger.system)
     }
 
     func handlePlayPause() {
-        print("🎮 Play/Pause button pressed")
+        EchoelLogger.debug("Play/Pause button pressed", category: EchoelLogger.system)
     }
 
     func handleSwipe(direction: Direction) {
-        print("🎮 Swipe: \(direction)")
+        EchoelLogger.debug("Swipe: \(direction)", category: EchoelLogger.system)
     }
 
     enum Direction {
@@ -395,7 +395,7 @@ class AirPlayReceiver {
     }
 
     private func setupAirPlayReceiver() {
-        print("📡 AirPlay Receiver initialized")
+        EchoelLogger.info("AirPlay Receiver initialized", category: EchoelLogger.system)
         // Listen for incoming AirPlay connections
     }
 }

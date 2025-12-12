@@ -216,7 +216,7 @@ class VisionApp {
     // MARK: - Scene Management
 
     func loadScene(type: ImmersiveScene.SceneType) async throws {
-        print("👁️ Loading scene: \(type.rawValue)")
+        EchoelLogger.info("Loading scene: \(type.rawValue)", category: EchoelLogger.system)
 
         // Create scene
         var scene = ImmersiveScene(type: type)
@@ -235,7 +235,7 @@ class VisionApp {
     }
 
     func unloadScene() async {
-        print("👁️ Unloading scene")
+        EchoelLogger.info("Unloading scene", category: EchoelLogger.system)
 
         await realityKitEngine.stopRendering()
         await spatialAudioEngine.stopAudio()
@@ -246,7 +246,7 @@ class VisionApp {
     // MARK: - Immersion Control
 
     func setImmersionLevel(_ level: ImmersionLevel) async {
-        print("👁️ Setting immersion level: \(level.rawValue)")
+        EchoelLogger.info("Setting immersion level: \(level.rawValue)", category: EchoelLogger.system)
         immersionLevel = level
 
         await immersionController.transitionTo(level)
@@ -295,7 +295,7 @@ class VisionApp {
     private func handleHandTrackingUpdate(_ data: HandTrackingData) {
         // Erkennung von Meditations-Geste
         if data.isMeditationGesture {
-            print("🙏 Meditation gesture detected")
+            EchoelLogger.info("Meditation gesture detected", category: EchoelLogger.system)
             // Starte automatisch Meditations-Session
             Task {
                 try? await loadScene(type: .meditation)
@@ -313,7 +313,7 @@ class VisionApp {
     }
 
     private func handleGesture(_ gesture: HandTrackingData.HandPose.Gesture, hand: HandSide) {
-        print("👋 Gesture: \(gesture) (\(hand))")
+        EchoelLogger.debug("Gesture: \(gesture) (\(hand))", category: EchoelLogger.system)
 
         switch gesture {
         case .pinch:
@@ -347,7 +347,7 @@ class RealityKitEngine {
     private var intensity: Float = 1.0
 
     func createEntities(for sceneType: VisionApp.ImmersiveScene.SceneType) async -> [Entity] {
-        print("🎨 Creating 3D entities for: \(sceneType.rawValue)")
+        EchoelLogger.info("Creating 3D entities for: \(sceneType.rawValue)", category: EchoelLogger.system)
 
         var entities: [Entity] = []
 
@@ -398,12 +398,12 @@ class RealityKitEngine {
     }
 
     func startRendering(scene: VisionApp.ImmersiveScene) async {
-        print("🎨 RealityKit rendering started")
+        EchoelLogger.info("RealityKit rendering started", category: EchoelLogger.system)
         isRendering = true
     }
 
     func stopRendering() async {
-        print("🎨 RealityKit rendering stopped")
+        EchoelLogger.info("RealityKit rendering stopped", category: EchoelLogger.system)
         isRendering = false
     }
 
@@ -429,7 +429,7 @@ class SpatialAudioEngine {
     private var isPlaying: Bool = false
 
     func createAudioSources(for sceneType: VisionApp.ImmersiveScene.SceneType) async -> [VisionApp.ImmersiveScene.SpatialAudioSource] {
-        print("🔊 Creating spatial audio sources for: \(sceneType.rawValue)")
+        EchoelLogger.info("Creating spatial audio sources for: \(sceneType.rawValue)", category: EchoelLogger.system)
 
         var sources: [VisionApp.ImmersiveScene.SpatialAudioSource] = []
 
@@ -461,12 +461,12 @@ class SpatialAudioEngine {
     }
 
     func startAudio(sources: [VisionApp.ImmersiveScene.SpatialAudioSource]) async {
-        print("🔊 Spatial Audio started with \(sources.count) sources")
+        EchoelLogger.info("Spatial Audio started with \(sources.count) sources", category: EchoelLogger.system)
         isPlaying = true
     }
 
     func stopAudio() async {
-        print("🔊 Spatial Audio stopped")
+        EchoelLogger.info("Spatial Audio stopped", category: EchoelLogger.system)
         isPlaying = false
     }
 
@@ -486,16 +486,16 @@ class EyeTracker {
     let dataPublisher = PassthroughSubject<VisionApp.EyeTrackingData, Never>()
 
     func requestAuthorization() async {
-        print("👁️ Requesting eye tracking authorization")
+        EchoelLogger.info("Requesting eye tracking authorization", category: EchoelLogger.system)
     }
 
     func startTracking() {
-        print("👁️ Eye tracking started")
+        EchoelLogger.info("Eye tracking started", category: EchoelLogger.system)
         // Start sending updates via dataPublisher
     }
 
     func stopTracking() {
-        print("👁️ Eye tracking stopped")
+        EchoelLogger.info("Eye tracking stopped", category: EchoelLogger.system)
     }
 }
 
@@ -507,16 +507,16 @@ class HandTracker {
     let dataPublisher = PassthroughSubject<VisionApp.HandTrackingData, Never>()
 
     func requestAuthorization() async {
-        print("👋 Requesting hand tracking authorization")
+        EchoelLogger.info("Requesting hand tracking authorization", category: EchoelLogger.system)
     }
 
     func startTracking() {
-        print("👋 Hand tracking started")
+        EchoelLogger.info("Hand tracking started", category: EchoelLogger.system)
         // Start sending updates via dataPublisher
     }
 
     func stopTracking() {
-        print("👋 Hand tracking stopped")
+        EchoelLogger.info("Hand tracking stopped", category: EchoelLogger.system)
     }
 }
 
@@ -526,7 +526,7 @@ class HandTracker {
 class ImmersionController {
 
     func transitionTo(_ level: VisionApp.ImmersionLevel) async {
-        print("🌐 Transitioning to immersion level: \(level.rawValue)")
+        EchoelLogger.info("Transitioning to immersion level: \(level.rawValue)", category: EchoelLogger.system)
 
         switch level {
         case .windowed:
