@@ -45,9 +45,9 @@ public class UnifiedControlHub: ObservableObject {
     private var mpeZoneManager: MPEZoneManager?
     private var midiToSpatialMapper: MIDIToSpatialMapper?
 
-    // Phase 3: Spatial Audio + Visual + LED Integration
+    // Phase 3: Spatial Audio + OSC/EchoelSync + LED Integration
     private var spatialAudioEngine: SpatialAudioEngine?
-    private var midiToVisualMapper: MIDIToVisualMapper?
+    private var echoelSync: EchoelSync?  // OSC routing to external visual tools
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
@@ -242,17 +242,22 @@ public class UnifiedControlHub: ObservableObject {
         print("[UnifiedControlHub] Spatial audio disabled")
     }
 
-    /// Enable MIDI to visual mapping
+    /// Enable EchoelSync for OSC routing to external visual tools
+    /// (Resolume, TouchDesigner, etc.)
     public func enableVisualMapping() {
-        let visualMapper = MIDIToVisualMapper()
-        self.midiToVisualMapper = visualMapper
-        print("[UnifiedControlHub] Visual mapping enabled")
+        echoelSync = EchoelSync.shared
+        echoelSync?.connect(to: .resolume)
+        echoelSync?.connect(to: .touchDesigner)
+        echoelSync?.startStreaming(rate: 30.0)
+        print("[UnifiedControlHub] EchoelSync OSC routing enabled")
     }
 
-    /// Disable visual mapping
+    /// Disable EchoelSync visual routing
     public func disableVisualMapping() {
-        midiToVisualMapper = nil
-        print("[UnifiedControlHub] Visual mapping disabled")
+        echoelSync?.stopStreaming()
+        echoelSync?.disconnectAll()
+        echoelSync = nil
+        print("[UnifiedControlHub] EchoelSync OSC routing disabled")
     }
 
     /// Enable Push 3 LED controller
@@ -614,20 +619,17 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     private func updateVisualEngine() {
-        guard let visualMapper = midiToVisualMapper,
+        guard let sync = echoelSync,
               let healthKit = healthKitManager else {
             return
         }
 
-        // Update visual parameters from bio-signals
-        let bioParams = MIDIToVisualMapper.BioParameters(
-            hrvCoherence: healthKit.hrvCoherence,
+        // Update EchoelSync bio state (OSC will be broadcast automatically)
+        sync.updateFromHealthKit(
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
-            audioLevel: 0.5      // TODO: Get from audio engine
+            hrvSDNN: healthKit.hrvSDNN
         )
-
-        visualMapper.updateBioParameters(bioParams)
+        sync.updateCoherence(Float(healthKit.hrvCoherence / 100.0))
     }
 
     private func updateLightSystems() {
