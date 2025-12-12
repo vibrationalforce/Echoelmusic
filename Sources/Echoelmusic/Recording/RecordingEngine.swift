@@ -141,8 +141,8 @@ class RecordingEngine: ObservableObject {
             interleaved: false
         )!
 
-        print("📁 Recording engine initialized")
-        print("   Sessions directory: \(sessionsDirectory.path)")
+        EchoelLogger.log("📁", "Recording engine initialized", category: EchoelLogger.audio)
+        EchoelLogger.info("Sessions directory: \(sessionsDirectory.path)", category: EchoelLogger.audio)
     }
 
 
@@ -151,7 +151,7 @@ class RecordingEngine: ObservableObject {
     /// Connect to main audio engine for audio routing
     func connectAudioEngine(_ audioEngine: AudioEngine) {
         self.mainAudioEngine = audioEngine
-        print("🔌 Connected to main audio engine")
+        EchoelLogger.log("🔌", "Connected to main audio engine", category: EchoelLogger.audio)
     }
 
 
@@ -175,7 +175,7 @@ class RecordingEngine: ObservableObject {
         session.name = name
         currentSession = session
 
-        print("🎵 Created session: \(name)")
+        EchoelLogger.log("🎵", "Created session: \(name)", category: EchoelLogger.audio)
         return session
     }
 
@@ -183,7 +183,7 @@ class RecordingEngine: ObservableObject {
     func loadSession(id: UUID) throws {
         let session = try Session.load(id: id)
         currentSession = session
-        print("📂 Loaded session: \(session.name)")
+        EchoelLogger.log("📂", "Loaded session: \(session.name)", category: EchoelLogger.audio)
     }
 
     /// Save current session
@@ -193,7 +193,7 @@ class RecordingEngine: ObservableObject {
         }
 
         try session.save()
-        print("💾 Saved session: \(session.name)")
+        EchoelLogger.log("💾", "Saved session: \(session.name)", category: EchoelLogger.audio)
     }
 
 
@@ -242,7 +242,7 @@ class RecordingEngine: ObservableObject {
         // Start timer for position updates
         startTimer()
 
-        print("🔴 Started recording: \(track.name)")
+        EchoelLogger.log("🔴", "Started recording: \(track.name)", category: EchoelLogger.audio)
     }
 
     /// Setup audio engine tap for recording
@@ -264,7 +264,7 @@ class RecordingEngine: ObservableObject {
         }
 
         try engine.start()
-        print("🎙️ Audio recording engine started")
+        EchoelLogger.log("🎙️", "Audio recording engine started", category: EchoelLogger.audio)
     }
 
     /// Process incoming audio buffer during recording
@@ -341,7 +341,7 @@ class RecordingEngine: ObservableObject {
         recordingLevel = 0.0
         currentTrackID = nil
 
-        print("⏹️ Stopped recording")
+        EchoelLogger.log("⏹️", "Stopped recording", category: EchoelLogger.audio)
     }
 
 
@@ -360,7 +360,7 @@ class RecordingEngine: ObservableObject {
         isPlaying = true
         startTimer()
 
-        print("▶️ Started playback: \(session.name)")
+        EchoelLogger.log("▶️", "Started playback: \(session.name)", category: EchoelLogger.audio)
     }
 
     /// Stop playback
@@ -369,7 +369,7 @@ class RecordingEngine: ObservableObject {
         stopTimer()
         currentTime = 0.0
 
-        print("⏹️ Stopped playback")
+        EchoelLogger.log("⏹️", "Stopped playback", category: EchoelLogger.audio)
     }
 
     /// Pause playback
@@ -377,7 +377,7 @@ class RecordingEngine: ObservableObject {
         isPlaying = false
         stopTimer()
 
-        print("⏸️ Paused playback at \(currentTime)s")
+        EchoelLogger.log("⏸️", "Paused playback at \(currentTime)s", category: EchoelLogger.audio)
     }
 
     /// Seek to position
@@ -385,7 +385,7 @@ class RecordingEngine: ObservableObject {
         guard let session = currentSession else { return }
 
         currentTime = max(0, min(time, session.duration))
-        print("⏩ Seeked to \(currentTime)s")
+        EchoelLogger.log("⏩", "Seeked to \(currentTime)s", category: EchoelLogger.audio)
     }
 
 
@@ -540,7 +540,7 @@ class RecordingEngine: ObservableObject {
         )
 
         undoManager.execute(command)
-        print("🗑️ Deleted track (undoable)")
+        EchoelLogger.log("🗑️", "Deleted track (undoable)", category: EchoelLogger.audio)
     }
 
     // MARK: - Undo/Redo Convenience Methods
@@ -623,7 +623,7 @@ extension RecordingEngine {
             sampleRate: sampleRate,
             channels: channels
         )
-        print("📼 Retrospective capture enabled (\(Int(retrospectiveBufferDuration))s buffer)")
+        EchoelLogger.log("📼", "Retrospective capture enabled (\(Int(retrospectiveBufferDuration))s buffer)", category: EchoelLogger.audio)
     }
 
     /// Feed audio to retrospective buffer (call from audio tap)
@@ -684,7 +684,7 @@ extension RecordingEngine {
         retrospective.clear()
         hasRetrospectiveContent = false
 
-        print("✨ Captured retrospective audio as '\(track.name)' (\(String(format: "%.1f", track.duration))s)")
+        EchoelLogger.log("✨", "Captured retrospective audio as '\(track.name)' (\(String(format: "%.1f", track.duration))s)", category: EchoelLogger.audio)
     }
 
     /// Clear retrospective buffer without capturing

@@ -101,7 +101,7 @@ class SpatialAudioEngine: ObservableObject {
         if #available(iOS 19.0, *) {
             setupEnvironmentNode()
         } else {
-            print("⚠️ iOS 19+ required for full spatial audio. Using stereo fallback.")
+            EchoelLogger.warning("iOS 19+ required for full spatial audio. Using stereo fallback.", category: EchoelLogger.spatial)
         }
     }
 
@@ -146,7 +146,7 @@ class SpatialAudioEngine: ObservableObject {
         try audioEngine.start()
         isActive = true
 
-        print("✅ SpatialAudioEngine started (mode: \(currentMode.rawValue))")
+        EchoelLogger.success("SpatialAudioEngine started (mode: \(currentMode.rawValue))", category: EchoelLogger.spatial)
 
         // Enable head tracking if available
         if headTrackingEnabled {
@@ -161,7 +161,7 @@ class SpatialAudioEngine: ObservableObject {
         audioEngine.stop()
         isActive = false
 
-        print("🛑 SpatialAudioEngine stopped")
+        EchoelLogger.log("🛑", "SpatialAudioEngine stopped", category: EchoelLogger.spatial)
     }
 
     // MARK: - Source Management
@@ -347,7 +347,7 @@ class SpatialAudioEngine: ObservableObject {
             }
         }
 
-        print("🌊 AFA field applied: \(geometry) (coherence: \(Int(coherence)))")
+        EchoelLogger.log("🌊", "AFA field applied: \(geometry) (coherence: \(Int(coherence)))", category: EchoelLogger.spatial)
     }
 
     enum AFAFieldGeometry {
@@ -422,7 +422,7 @@ class SpatialAudioEngine: ObservableObject {
         manager.deviceMotionUpdateInterval = 1.0 / 60.0  // 60 Hz
 
         guard manager.isDeviceMotionAvailable else {
-            print("⚠️ Device motion not available")
+            EchoelLogger.warning("Device motion not available", category: EchoelLogger.spatial)
             return
         }
 
@@ -433,7 +433,7 @@ class SpatialAudioEngine: ObservableObject {
             self.updateListenerOrientation(attitude: motion.attitude)
         }
 
-        print("✅ Head tracking started")
+        EchoelLogger.success("Head tracking started", category: EchoelLogger.spatial)
     }
 
     private func stopHeadTracking() {
@@ -467,7 +467,7 @@ class SpatialAudioEngine: ObservableObject {
             applyPositionToNode(id: source.id, position: source.position)
         }
 
-        print("🎚️ Spatial mode: \(mode.rawValue)")
+        EchoelLogger.log("🎚️", "Spatial mode: \(mode.rawValue)", category: EchoelLogger.spatial)
     }
 
     // MARK: - Debug Info

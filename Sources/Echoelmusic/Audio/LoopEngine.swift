@@ -123,7 +123,7 @@ class LoopEngine: ObservableObject {
         // Create directory if needed
         try? FileManager.default.createDirectory(at: loopsDirectory, withIntermediateDirectories: true)
 
-        print("🔄 Loop engine initialized")
+        EchoelLogger.log("🔄", "Loop engine initialized", category: EchoelLogger.audio)
     }
 
 
@@ -143,7 +143,7 @@ class LoopEngine: ObservableObject {
         isRecordingLoop = true
         loopStartTime = Date()
 
-        print("🔴 Started loop recording: \(loop.name) (\(bars) bars)")
+        EchoelLogger.log("🔴", "Started loop recording: \(loop.name) (\(bars) bars)", category: EchoelLogger.audio)
     }
 
     /// Stop recording current loop
@@ -166,7 +166,7 @@ class LoopEngine: ObservableObject {
 
             loops[lastLoopIndex].duration = quantizedDuration
 
-            print("⏹️ Stopped loop recording: \(quantizedDuration)s")
+            EchoelLogger.log("⏹️", "Stopped loop recording: \(quantizedDuration)s", category: EchoelLogger.audio)
         }
 
         loopStartTime = nil
@@ -189,7 +189,7 @@ class LoopEngine: ObservableObject {
             startPlayback()
         }
 
-        print("🎙️ Started overdub on loop: \(loops[loopIndex].name)")
+        EchoelLogger.log("🎙️", "Started overdub on loop: \(loops[loopIndex].name)", category: EchoelLogger.audio)
     }
 
     /// Stop overdubbing and merge with original loop
@@ -217,7 +217,7 @@ class LoopEngine: ObservableObject {
         overdubLoopID = nil
         loopStartTime = nil
 
-        print("⏹️ Stopped overdub, created: \(overdubName)")
+        EchoelLogger.log("⏹️", "Stopped overdub, created: \(overdubName)", category: EchoelLogger.audio)
     }
 
     /// Cancel overdub without saving
@@ -228,7 +228,7 @@ class LoopEngine: ObservableObject {
         overdubLoopID = nil
         loopStartTime = nil
 
-        print("❌ Cancelled overdub")
+        EchoelLogger.warning("Cancelled overdub", category: EchoelLogger.audio)
     }
 
 
@@ -244,7 +244,7 @@ class LoopEngine: ObservableObject {
         // Start position timer
         startTimer()
 
-        print("▶️ Started loop playback")
+        EchoelLogger.log("▶️", "Started loop playback", category: EchoelLogger.audio)
     }
 
     /// Stop playing loops
@@ -253,7 +253,7 @@ class LoopEngine: ObservableObject {
         loopPosition = 0.0
         stopTimer()
 
-        print("⏹️ Stopped loop playback")
+        EchoelLogger.log("⏹️", "Stopped loop playback", category: EchoelLogger.audio)
     }
 
     /// Toggle playback
@@ -278,7 +278,7 @@ class LoopEngine: ObservableObject {
             players.removeValue(forKey: loopID)
         }
 
-        print("🗑️ Deleted loop")
+        EchoelLogger.log("🗑️", "Deleted loop", category: EchoelLogger.audio)
     }
 
     /// Mute/unmute loop
@@ -315,7 +315,7 @@ class LoopEngine: ObservableObject {
         loops.removeAll()
         players.removeAll()
 
-        print("🗑️ Cleared all loops")
+        EchoelLogger.log("🗑️", "Cleared all loops", category: EchoelLogger.audio)
     }
 
 
@@ -365,9 +365,9 @@ class LoopEngine: ObservableObject {
         metronomeEnabled.toggle()
 
         if metronomeEnabled {
-            print("🎵 Metronome enabled")
+            EchoelLogger.log("🎵", "Metronome enabled", category: EchoelLogger.audio)
         } else {
-            print("🎵 Metronome disabled")
+            EchoelLogger.log("🎵", "Metronome disabled", category: EchoelLogger.audio)
         }
     }
 
@@ -416,7 +416,7 @@ class LoopEngine: ObservableObject {
         let saveURL = loopsDirectory.appendingPathComponent("loops.json")
         try data.write(to: saveURL)
 
-        print("💾 Saved \(loops.count) loops")
+        EchoelLogger.log("💾", "Saved \(loops.count) loops", category: EchoelLogger.audio)
     }
 
     /// Load loops from disk
@@ -427,7 +427,7 @@ class LoopEngine: ObservableObject {
         let decoder = JSONDecoder()
         loops = try decoder.decode([Loop].self, from: data)
 
-        print("📂 Loaded \(loops.count) loops")
+        EchoelLogger.log("📂", "Loaded \(loops.count) loops", category: EchoelLogger.audio)
     }
 }
 
