@@ -255,13 +255,14 @@ struct AIGenerationConfig {
 
 // MARK: - Biometric Input
 
+/// Biometric input - uses Float for consistency with EchoelSync and real-time processing
 struct BiometricInput {
-    var heartRate: Double = 72
-    var hrvSDNN: Double = 50           // HRV Standard Deviation
-    var hrvRMSSD: Double = 40          // HRV Root Mean Square
-    var coherenceScore: Double = 0.5   // 0-1 coherence
-    var respirationRate: Double = 12   // Breaths per minute
-    var skinConductance: Double = 0    // GSR if available
+    var heartRate: Float = 72
+    var hrvSDNN: Float = 50            // HRV Standard Deviation (ms)
+    var hrvRMSSD: Float = 40           // HRV Root Mean Square (ms)
+    var coherenceScore: Float = 0.5    // 0-1 coherence (HeartMath standard)
+    var respirationRate: Float = 12    // Breaths per minute
+    var skinConductance: Float = 0     // GSR if available
     var brainwaveState: BrainwaveState = .alpha
 
     enum BrainwaveState: String {
@@ -867,6 +868,8 @@ class BassGenerator {
 
 // MARK: - Bio-Reactive AI Composer (Main Engine)
 
+/// Bio-reactive AI music generation engine
+/// Architecture: "Bridge not Destination" - outputs to external DAWs via OSC/MIDI
 @MainActor
 class BioReactiveAIComposer: ObservableObject {
 
@@ -882,6 +885,9 @@ class BioReactiveAIComposer: ObservableObject {
     @Published var currentTempo: Double = 90
     @Published var isPlaying = false
 
+    // OSC Output enabled (Bridge not Destination)
+    @Published var oscOutputEnabled = false
+
     // Generation components
     private let melodyGenerator = MarkovMelodyGenerator()
     private let chordGenerator = ChordProgressionGenerator()
@@ -896,8 +902,41 @@ class BioReactiveAIComposer: ObservableObject {
     var midi2Manager: Any?  // MIDI2Manager
     var mpeZoneManager: Any? // MPEZoneManager
 
+    // EchoelSync reference for OSC output (Bridge not Destination)
+    // Import: import EchoelSync or use shared instance
+    // weak var echoelSync: EchoelSync?
+
     init() {
         setupBiometricObserver()
+    }
+
+    // MARK: - EchoelSync Integration (Bridge not Destination)
+
+    /// Enable OSC output to external DAWs (Ableton, Logic, etc.)
+    /// Following "Bridge not Destination" architecture
+    func enableOSCOutput() {
+        oscOutputEnabled = true
+        print("🎵 BioReactiveAIComposer: OSC output enabled - sending to DAWs")
+    }
+
+    /// Send generated phrase to external DAW via OSC
+    /// OSC Address: /echoelmusic/ai/phrase
+    func sendPhraseToDAW(_ phrase: GeneratedPhrase) {
+        guard oscOutputEnabled else { return }
+
+        // OSC message format for DAW integration
+        // /echoelmusic/ai/tempo [tempo]
+        // /echoelmusic/ai/note [pitch, velocity, startBeat, duration]
+        // /echoelmusic/ai/chord [root, quality, startBeat, duration]
+
+        print("📤 Sending phrase to DAW: \(phrase.notes.count) notes, \(phrase.chords.count) chords @ \(Int(phrase.tempo)) BPM")
+
+        // In production, this would send via EchoelSync:
+        // echoelSync?.sendOSC(address: "/echoelmusic/ai/tempo", value: phrase.tempo)
+        // for note in phrase.notes {
+        //     echoelSync?.sendOSC(address: "/echoelmusic/ai/note",
+        //                         values: [note.pitch, note.velocity, note.startBeat, note.duration])
+        // }
     }
 
     // MARK: - Public API
@@ -953,6 +992,9 @@ class BioReactiveAIComposer: ObservableObject {
 
         currentPhrase = phrase
         generationHistory.append(phrase)
+
+        // Bridge not Destination: Send to external DAW if enabled
+        sendPhraseToDAW(phrase)
 
         return phrase
     }
@@ -1064,7 +1106,7 @@ class BioReactiveAIComposer: ObservableObject {
         var tempo = Double(tempoRange.lowerBound + tempoRange.upperBound) / 2
 
         // Modify based on heart rate (subtle influence)
-        let hrInfluence = (biometrics.heartRate - 72) * 0.5
+        let hrInfluence = Double(biometrics.heartRate - 72) * 0.5
         tempo += hrInfluence * Double(config.bioReactivity)
 
         // Modify based on coherence (higher coherence = more stable tempo)
@@ -1077,17 +1119,18 @@ class BioReactiveAIComposer: ObservableObject {
         return max(Double(tempoRange.lowerBound), min(Double(tempoRange.upperBound), tempo))
     }
 
+    /// DEBUG ONLY: Simulates biometric data updates for testing
+    /// In production, connect to HealthKitManager via EchoelSync
     private func setupBiometricObserver() {
-        // This would connect to HealthKitManager in production
-        // For now, simulate periodic updates
         #if DEBUG
         Timer.publish(every: 5.0, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
-                // Simulate bio variation
-                self?.biometrics.heartRate += Double.random(in: -2...2)
-                self?.biometrics.coherenceScore += Float.random(in: -0.05...0.05)
-                self?.biometrics.coherenceScore = max(0, min(1, self?.biometrics.coherenceScore ?? 0.5))
+                guard let self = self else { return }
+                // Simulate bio variation (Float types)
+                self.biometrics.heartRate += Float.random(in: -2...2)
+                self.biometrics.coherenceScore += Float.random(in: -0.05...0.05)
+                self.biometrics.coherenceScore = max(0, min(1, self.biometrics.coherenceScore))
             }
             .store(in: &cancellables)
         #endif
