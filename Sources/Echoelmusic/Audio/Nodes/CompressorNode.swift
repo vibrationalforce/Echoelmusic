@@ -205,11 +205,11 @@ class CompressorNode: BaseEchoelmusicNode {
 
     override func start() {
         super.start()
-        print("🎵 CompressorNode started")
+        EchoelLogger.log("🎵", "CompressorNode started", category: EchoelLogger.audio)
     }
 
     override func stop() {
         super.stop()
-        print("🎵 CompressorNode stopped")
+        EchoelLogger.log("🎵", "CompressorNode stopped", category: EchoelLogger.audio)
     }
 }

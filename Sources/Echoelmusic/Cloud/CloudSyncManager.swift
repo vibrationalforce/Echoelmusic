@@ -20,7 +20,7 @@ class CloudSyncManager: ObservableObject {
         self.container = CKContainer(identifier: "iCloud.com.echoelmusic.app")
         self.privateDatabase = container.privateCloudDatabase
         self.sharedDatabase = container.sharedCloudDatabase
-        print("✅ CloudSyncManager: Initialized")
+        EchoelLogger.success("CloudSyncManager: Initialized", category: EchoelLogger.system)
     }
 
     // MARK: - Enable/Disable Sync
@@ -34,12 +34,12 @@ class CloudSyncManager: ObservableObject {
         }
 
         syncEnabled = true
-        print("☁️ CloudSyncManager: Sync enabled")
+        EchoelLogger.log("☁️", "CloudSyncManager: Sync enabled", category: EchoelLogger.system)
     }
 
     func disableSync() {
         syncEnabled = false
-        print("☁️ CloudSyncManager: Sync disabled")
+        EchoelLogger.log("☁️", "CloudSyncManager: Sync disabled", category: EchoelLogger.system)
     }
 
     // MARK: - Save Session
@@ -61,7 +61,7 @@ class CloudSyncManager: ObservableObject {
         try await privateDatabase.save(record)
 
         lastSyncDate = Date()
-        print("☁️ CloudSyncManager: Saved session '\(session.name)'")
+        EchoelLogger.log("☁️", "CloudSyncManager: Saved session '\(session.name)'", category: EchoelLogger.system)
     }
 
     // MARK: - Fetch Sessions
@@ -94,7 +94,7 @@ class CloudSyncManager: ObservableObject {
         cloudSessions = sessions
         lastSyncDate = Date()
 
-        print("☁️ CloudSyncManager: Fetched \(sessions.count) sessions")
+        EchoelLogger.log("☁️", "CloudSyncManager: Fetched \(sessions.count) sessions", category: EchoelLogger.system)
         return sessions
     }
 
@@ -107,12 +107,12 @@ class CloudSyncManager: ObservableObject {
                 try? await self?.autoBackup()
             }
         }
-        print("☁️ CloudSyncManager: Auto backup enabled (every \(Int(interval))s)")
+        EchoelLogger.log("☁️", "CloudSyncManager: Auto backup enabled (every \(Int(interval))s)", category: EchoelLogger.system)
     }
 
     private func autoBackup() async throws {
         // TODO: Backup current session automatically
-        print("☁️ CloudSyncManager: Auto backup triggered")
+        EchoelLogger.log("☁️", "CloudSyncManager: Auto backup triggered", category: EchoelLogger.system)
     }
 }
 

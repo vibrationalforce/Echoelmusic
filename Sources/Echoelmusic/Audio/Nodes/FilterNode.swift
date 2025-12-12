@@ -138,12 +138,12 @@ class FilterNode: BaseEchoelmusicNode {
 
     override func start() {
         super.start()
-        print("🎵 FilterNode started")
+        EchoelLogger.log("🎵", "FilterNode started", category: EchoelLogger.audio)
     }
 
     override func stop() {
         super.stop()
-        print("🎵 FilterNode stopped")
+        EchoelLogger.log("🎵", "FilterNode stopped", category: EchoelLogger.audio)
     }
 
 

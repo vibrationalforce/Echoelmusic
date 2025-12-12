@@ -184,8 +184,8 @@ class DeviceTestingFramework: ObservableObject {
         loadDeviceDatabase()
         detectCurrentDevice()
 
-        print("✅ Device Testing Framework: Initialized")
-        print("📱 Device Database: \(deviceDatabase.count) profiles")
+        EchoelLogger.info("Device Testing Framework: Initialized", category: EchoelLogger.system)
+        EchoelLogger.debug("Device Database: \(deviceDatabase.count) profiles", category: EchoelLogger.system)
     }
 
     // MARK: - Load Device Database
@@ -233,10 +233,10 @@ class DeviceTestingFramework: ObservableObject {
             createQuantumDevice2035()
         ]
 
-        print("📊 Device Database loaded: \(deviceDatabase.count) devices")
-        print("   - Smartphones: \(deviceDatabase.filter { $0.category == DeviceCategory.smartphone.rawValue }.count)")
-        print("   - Vehicles: \(deviceDatabase.filter { $0.category == DeviceCategory.vehicle.rawValue }.count)")
-        print("   - Future devices: \(deviceDatabase.filter { $0.releaseYear > 2025 }.count)")
+        EchoelLogger.info("Device Database loaded: \(deviceDatabase.count) devices", category: EchoelLogger.system)
+        EchoelLogger.debug("- Smartphones: \(deviceDatabase.filter { $0.category == DeviceCategory.smartphone.rawValue }.count)", category: EchoelLogger.system)
+        EchoelLogger.debug("- Vehicles: \(deviceDatabase.filter { $0.category == DeviceCategory.vehicle.rawValue }.count)", category: EchoelLogger.system)
+        EchoelLogger.debug("- Future devices: \(deviceDatabase.filter { $0.releaseYear > 2025 }.count)", category: EchoelLogger.system)
     }
 
     // MARK: - Device Profiles (Current)
@@ -508,7 +508,7 @@ class DeviceTestingFramework: ObservableObject {
         currentDeviceProfile = createiPhone15ProMax()
         #endif
 
-        print("📱 Current Device: \(currentDeviceProfile?.name ?? "Unknown")")
+        EchoelLogger.info("Current Device: \(currentDeviceProfile?.name ?? "Unknown")", category: EchoelLogger.system)
     }
 
     private func getDeviceModelIdentifier() -> String {
@@ -566,8 +566,8 @@ class DeviceTestingFramework: ObservableObject {
         isTestingInProgress = true
         testResults = []
 
-        print("🧪 Starting Complete Test Suite...")
-        print("   Testing \(deviceDatabase.count) device profiles")
+        EchoelLogger.info("Starting Complete Test Suite...", category: EchoelLogger.system)
+        EchoelLogger.debug("Testing \(deviceDatabase.count) device profiles", category: EchoelLogger.system)
 
         for device in deviceDatabase {
             await testDevice(device)
@@ -576,14 +576,14 @@ class DeviceTestingFramework: ObservableObject {
         calculateOverallCompatibility()
         isTestingInProgress = false
 
-        print("✅ Test Suite Complete")
-        print("   Overall Compatibility: \(String(format: "%.1f", compatibilityScore))%")
+        EchoelLogger.success("Test Suite Complete", category: EchoelLogger.system)
+        EchoelLogger.info("Overall Compatibility: \(String(format: "%.1f", compatibilityScore))%", category: EchoelLogger.system)
     }
 
     // MARK: - Test Individual Device
 
     func testDevice(_ device: DeviceProfile) async {
-        print("   Testing: \(device.name)...")
+        EchoelLogger.debug("Testing: \(device.name)...", category: EchoelLogger.system)
 
         // Performance Test
         let perfResult = await testPerformance(device)

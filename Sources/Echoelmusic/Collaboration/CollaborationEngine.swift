@@ -75,7 +75,7 @@ class CollaborationEngine: ObservableObject {
             try await webRTCClient?.createOffer()
         }
 
-        print("✅ CollaborationEngine: Created session (host: \(host), code: \(session.roomCode))")
+        EchoelLogger.success("CollaborationEngine: Created session (host: \(host), code: \(session.roomCode))", category: EchoelLogger.system)
     }
 
     func joinSession(sessionID: UUID) async throws {
@@ -93,7 +93,7 @@ class CollaborationEngine: ObservableObject {
         // Request to join session
         try await signalingClient?.joinRoom(sessionID: sessionID)
 
-        print("🔗 CollaborationEngine: Joining session \(sessionID)")
+        EchoelLogger.log("🔗", "CollaborationEngine: Joining session \(sessionID)", category: EchoelLogger.system)
     }
 
     func joinWithCode(_ code: String) async throws {
@@ -108,7 +108,7 @@ class CollaborationEngine: ObservableObject {
 
         try await signalingClient?.joinWithCode(code)
 
-        print("🔗 CollaborationEngine: Joining with code \(code)")
+        EchoelLogger.log("🔗", "CollaborationEngine: Joining with code \(code)", category: EchoelLogger.system)
     }
 
     func leaveSession() {
@@ -120,7 +120,7 @@ class CollaborationEngine: ObservableObject {
         isActive = false
         connectionState = .disconnected
 
-        print("👋 CollaborationEngine: Left session")
+        EchoelLogger.log("👋", "CollaborationEngine: Left session", category: EchoelLogger.system)
     }
 
     // MARK: - Data Channels
@@ -164,7 +164,7 @@ class CollaborationEngine: ObservableObject {
         averageHRV = participantBio.map { $0.hrv }.reduce(0, +) / count
         groupCoherence = participantBio.map { $0.coherence }.reduce(0, +) / count
 
-        print("🧠 CollaborationEngine: Group HRV: \(averageHRV), Group Coherence: \(groupCoherence)")
+        EchoelLogger.log("🧠", "CollaborationEngine: Group HRV: \(averageHRV), Group Coherence: \(groupCoherence)", category: EchoelLogger.bio)
     }
 
     func identifyFlowLeader() -> UUID? {
@@ -222,11 +222,11 @@ extension CollaborationEngine: WebRTCClientDelegate {
         case .bio:
             if let bioData = try? JSONDecoder().decode(BioSyncData.self, from: data) {
                 // Update participant bio
-                print("📡 Received bio data: HRV=\(bioData.hrv), Coherence=\(bioData.coherence)")
+                EchoelLogger.debug("Received bio data: HRV=\(bioData.hrv), Coherence=\(bioData.coherence)", category: EchoelLogger.bio)
             }
         case .chat:
             if let chatMessage = try? JSONDecoder().decode(ChatMessage.self, from: data) {
-                print("💬 \(chatMessage.text)")
+                EchoelLogger.log("💬", chatMessage.text, category: EchoelLogger.system)
             }
         case .control:
             if String(data: data, encoding: .utf8) == "pong" {
@@ -336,36 +336,36 @@ class WebRTCClient {
 
     init(iceServers: [ICEServer]) {
         self.iceServers = iceServers
-        print("🔌 WebRTCClient: Initialized with \(iceServers.count) ICE servers")
+        EchoelLogger.log("🔌", "WebRTCClient: Initialized with \(iceServers.count) ICE servers", category: EchoelLogger.system)
     }
 
     func createOffer() async throws {
         // In production: Create WebRTC offer SDP
-        print("📤 WebRTCClient: Creating offer")
+        EchoelLogger.debug("WebRTCClient: Creating offer", category: EchoelLogger.system)
     }
 
     func handleOffer(sdp: String) async throws {
         // In production: Set remote description, create answer
-        print("📥 WebRTCClient: Handling offer")
+        EchoelLogger.debug("WebRTCClient: Handling offer", category: EchoelLogger.system)
     }
 
     func handleAnswer(sdp: String) async throws {
         // In production: Set remote description
-        print("📥 WebRTCClient: Handling answer")
+        EchoelLogger.debug("WebRTCClient: Handling answer", category: EchoelLogger.system)
     }
 
     func addCandidate(_ candidate: ICECandidate) {
         // In production: Add ICE candidate
-        print("🧊 WebRTCClient: Adding ICE candidate")
+        EchoelLogger.debug("WebRTCClient: Adding ICE candidate", category: EchoelLogger.system)
     }
 
     func sendData(_ data: Data, channel: DataChannel) {
         // In production: Send via data channel
-        print("📡 WebRTCClient: Sending \(data.count) bytes on \(channel.rawValue)")
+        EchoelLogger.debug("WebRTCClient: Sending \(data.count) bytes on \(channel.rawValue)", category: EchoelLogger.system)
     }
 
     func disconnect() {
-        print("🔌 WebRTCClient: Disconnecting")
+        EchoelLogger.log("🔌", "WebRTCClient: Disconnecting", category: EchoelLogger.system)
     }
 }
 
@@ -385,35 +385,35 @@ class SignalingClient {
 
     init(url: String) {
         self.url = url
-        print("📡 SignalingClient: Initialized with \(url)")
+        EchoelLogger.log("📡", "SignalingClient: Initialized with \(url)", category: EchoelLogger.system)
     }
 
     func connect() async throws {
         // In production: Connect to WebSocket
-        print("🔌 SignalingClient: Connecting to \(url)")
+        EchoelLogger.debug("SignalingClient: Connecting to \(url)", category: EchoelLogger.system)
     }
 
     func joinRoom(sessionID: UUID) async throws {
-        print("🚪 SignalingClient: Joining room \(sessionID)")
+        EchoelLogger.debug("SignalingClient: Joining room \(sessionID)", category: EchoelLogger.system)
     }
 
     func joinWithCode(_ code: String) async throws {
-        print("🚪 SignalingClient: Joining room with code \(code)")
+        EchoelLogger.debug("SignalingClient: Joining room with code \(code)", category: EchoelLogger.system)
     }
 
     func sendOffer(sdp: String) async throws {
-        print("📤 SignalingClient: Sending offer")
+        EchoelLogger.debug("SignalingClient: Sending offer", category: EchoelLogger.system)
     }
 
     func sendAnswer(sdp: String) async throws {
-        print("📤 SignalingClient: Sending answer")
+        EchoelLogger.debug("SignalingClient: Sending answer", category: EchoelLogger.system)
     }
 
     func sendCandidate(_ candidate: ICECandidate) async throws {
-        print("📤 SignalingClient: Sending ICE candidate")
+        EchoelLogger.debug("SignalingClient: Sending ICE candidate", category: EchoelLogger.system)
     }
 
     func disconnect() {
-        print("🔌 SignalingClient: Disconnecting")
+        EchoelLogger.log("🔌", "SignalingClient: Disconnecting", category: EchoelLogger.system)
     }
 }

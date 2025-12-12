@@ -151,9 +151,9 @@ class EnergyEfficiencyManager: ObservableObject {
         setupPowerMonitoring()
         loadUserPreferences()
 
-        print("✅ Energy Efficiency Manager: Initialized")
-        print("🌱 Eco Mode: \(ecoModeEnabled ? "Enabled" : "Disabled")")
-        print("⚡️ Efficiency Level: \(currentEnergyEfficiency.rawValue)")
+        EchoelLogger.success("Energy Efficiency Manager: Initialized", category: .performance)
+        EchoelLogger.info("Eco Mode: \(ecoModeEnabled ? "Enabled" : "Disabled")", category: .performance)
+        EchoelLogger.info("Efficiency Level: \(currentEnergyEfficiency.rawValue)", category: .performance)
     }
 
     deinit {
@@ -181,14 +181,14 @@ class EnergyEfficiencyManager: ObservableObject {
 
             if isRenewable {
                 carbonIntensity = .renewableEstimate
-                print("♻️ Plugged in to renewable energy source")
+                EchoelLogger.success("Plugged in to renewable energy source", category: .performance)
             } else {
-                print("🔌 Plugged in to grid power")
+                EchoelLogger.info("Plugged in to grid power", category: .performance)
             }
 
         case .unplugged:
             currentPowerSource = .battery(level: batteryLevel)
-            print("🔋 Running on battery (\(Int(batteryLevel * 100))%)")
+            EchoelLogger.info("Running on battery (\(Int(batteryLevel * 100))%)", category: .performance)
 
         @unknown default:
             currentPowerSource = .battery(level: batteryLevel)
@@ -248,12 +248,12 @@ class EnergyEfficiencyManager: ObservableObject {
         // Apply eco-friendly settings
         applyEcoSettings()
 
-        print("🌱 Eco Mode: Enabled")
-        print("   - CPU throttle: 30%")
-        print("   - GPU throttle: 40%")
-        print("   - Target FPS: 30")
-        print("   - Dark mode: Enabled")
-        print("   - Background processing: Disabled")
+        EchoelLogger.success("Eco Mode: Enabled", category: .performance)
+        EchoelLogger.debug("- CPU throttle: 30%", category: .performance)
+        EchoelLogger.debug("- GPU throttle: 40%", category: .performance)
+        EchoelLogger.debug("- Target FPS: 30", category: .performance)
+        EchoelLogger.debug("- Dark mode: Enabled", category: .performance)
+        EchoelLogger.debug("- Background processing: Disabled", category: .performance)
 
         UserDefaults.standard.set(true, forKey: "ecoModeEnabled")
     }
@@ -262,7 +262,7 @@ class EnergyEfficiencyManager: ObservableObject {
         ecoModeEnabled = false
         currentEnergyEfficiency = .balanced
 
-        print("🌱 Eco Mode: Disabled")
+        EchoelLogger.info("Eco Mode: Disabled", category: .performance)
         UserDefaults.standard.set(false, forKey: "ecoModeEnabled")
     }
 
@@ -284,17 +284,17 @@ class EnergyEfficiencyManager: ObservableObject {
         switch currentPowerSource {
         case .battery(let level):
             if level < 0.2 {  // < 20%
-                print("🔋 Low battery - enabling eco mode")
+                EchoelLogger.warning("Low battery - enabling eco mode", category: .performance)
                 enableEcoMode()
             } else if level < 0.5 && !ecoModeEnabled {
-                print("🔋 Battery moderate - recommending eco mode")
+                EchoelLogger.warning("Battery moderate - recommending eco mode", category: .performance)
             }
 
         case .pluggedIn(let isRenewable):
             if isRenewable {
                 // Renewable energy - can use more power guilt-free
                 currentEnergyEfficiency = .performance
-                print("♻️ Renewable energy detected - performance mode enabled")
+                EchoelLogger.success("Renewable energy detected - performance mode enabled", category: .performance)
             } else {
                 // Grid power - stay balanced
                 currentEnergyEfficiency = .balanced
@@ -372,7 +372,7 @@ class EnergyEfficiencyManager: ObservableObject {
     func startSession() {
         sessionStartTime = Date()
         accumulatedEnergy = 0.0
-        print("🌱 Energy tracking: Session started")
+        EchoelLogger.info("Energy tracking: Session started", category: .performance)
     }
 
     func endSession() -> EnergyMetrics {
@@ -410,10 +410,10 @@ class EnergyEfficiencyManager: ObservableObject {
         )
 
         sessionStartTime = nil
-        print("🌱 Energy tracking: Session ended")
-        print("   Duration: \(Int(duration)) seconds")
-        print("   Energy: \(String(format: "%.2f", metrics.totalEnergyKWh)) kWh")
-        print("   Carbon: \(String(format: "%.2f", estimatedCarbonFootprint)) g CO2e")
+        EchoelLogger.info("Energy tracking: Session ended", category: .performance)
+        EchoelLogger.debug("Duration: \(Int(duration)) seconds", category: .performance)
+        EchoelLogger.debug("Energy: \(String(format: "%.2f", metrics.totalEnergyKWh)) kWh", category: .performance)
+        EchoelLogger.debug("Carbon: \(String(format: "%.2f", estimatedCarbonFootprint)) g CO2e", category: .performance)
 
         return metrics
     }
@@ -425,11 +425,11 @@ class EnergyEfficiencyManager: ObservableObject {
 
         if isRenewable {
             carbonIntensity = .renewableEstimate
-            print("♻️ Renewable energy mode: Enabled")
-            print("   Your carbon footprint is ~12x lower!")
+            EchoelLogger.success("Renewable energy mode: Enabled", category: .performance)
+            EchoelLogger.info("Your carbon footprint is ~12x lower!", category: .performance)
         } else {
             carbonIntensity = .defaultUS
-            print("🔌 Grid energy mode: Enabled")
+            EchoelLogger.info("Grid energy mode: Enabled", category: .performance)
         }
 
         detectPowerSource()

@@ -125,7 +125,7 @@ class CameraManager: NSObject, ObservableObject {
         )
 
         guard result == kCVReturnSuccess, let textureCache = textureCacheRef else {
-            print("❌ CameraManager: Failed to create texture cache")
+            EchoelLogger.error("CameraManager: Failed to create texture cache", category: EchoelLogger.system)
             return nil
         }
         self.textureCache = textureCache
@@ -135,7 +135,7 @@ class CameraManager: NSObject, ObservableObject {
         // Discover available cameras
         discoverCameras()
 
-        print("✅ CameraManager: Initialized")
+        EchoelLogger.success("CameraManager: Initialized", category: EchoelLogger.system)
     }
 
     deinit {
@@ -177,7 +177,7 @@ class CameraManager: NSObject, ObservableObject {
             }
         }
 
-        print("📷 CameraManager: Found \(availableCameras.count) cameras: \(availableCameras.map { $0.rawValue }.joined(separator: ", "))")
+        EchoelLogger.log("📷", "CameraManager: Found \(availableCameras.count) cameras: \(availableCameras.map { $0.rawValue }.joined(separator: ", "))", category: EchoelLogger.system)
     }
 
     // MARK: - Start Capture
@@ -260,9 +260,9 @@ class CameraManager: NSObject, ObservableObject {
             device.activeFormat = format
             device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrameRate))
             device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrameRate))
-            print("📷 CameraManager: Set format to \(currentResolution.rawValue) @ \(targetFrameRate) FPS")
+            EchoelLogger.log("📷", "CameraManager: Set format to \(currentResolution.rawValue) @ \(targetFrameRate) FPS", category: EchoelLogger.system)
         } else {
-            print("⚠️ CameraManager: Could not set target frame rate, using default")
+            EchoelLogger.warning("CameraManager: Could not set target frame rate, using default", category: EchoelLogger.system)
         }
 
         device.unlockForConfiguration()
@@ -329,7 +329,7 @@ class CameraManager: NSObject, ObservableObject {
         // Start FPS monitoring
         startFPSMonitoring()
 
-        print("▶️ CameraManager: Started capture with \(currentCamera.rawValue) camera at \(currentResolution.rawValue) @ \(currentFrameRate) FPS")
+        EchoelLogger.log("▶️", "CameraManager: Started capture with \(currentCamera.rawValue) camera at \(currentResolution.rawValue) @ \(currentFrameRate) FPS", category: EchoelLogger.system)
     }
 
     // MARK: - Stop Capture
@@ -342,7 +342,7 @@ class CameraManager: NSObject, ObservableObject {
 
         stopFPSMonitoring()
 
-        print("⏹️ CameraManager: Stopped capture")
+        EchoelLogger.log("⏹️", "CameraManager: Stopped capture", category: EchoelLogger.system)
     }
 
     // MARK: - Switch Camera

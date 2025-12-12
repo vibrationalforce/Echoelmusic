@@ -50,7 +50,7 @@ class NodeGraph: ObservableObject {
     func addNode(_ node: EchoelmusicNode) {
         nodes.append(node)
         invalidateCache() // Graph structure changed
-        print("📊 Added node: \(node.name) (\(node.type.rawValue))")
+        EchoelLogger.log("📊", "Added node: \(node.name) (\(node.type.rawValue))", category: EchoelLogger.audio)
     }
 
     /// Remove a node from the graph
@@ -93,7 +93,7 @@ class NodeGraph: ObservableObject {
         connections.append(connection)
         invalidateCache() // Graph structure changed
 
-        print("📊 Connected: \(source.name) → \(destination.name)")
+        EchoelLogger.log("📊", "Connected: \(source.name) → \(destination.name)", category: EchoelLogger.audio)
     }
 
     /// Disconnect two nodes
@@ -233,7 +233,7 @@ class NodeGraph: ObservableObject {
         }
 
         isProcessing = true
-        print("📊 NodeGraph started (\(nodes.count) nodes)")
+        EchoelLogger.log("📊", "NodeGraph started (\(nodes.count) nodes)", category: EchoelLogger.audio)
     }
 
     /// Stop processing
@@ -244,7 +244,7 @@ class NodeGraph: ObservableObject {
         }
 
         isProcessing = false
-        print("📊 NodeGraph stopped")
+        EchoelLogger.log("📊", "NodeGraph stopped", category: EchoelLogger.audio)
     }
 
     /// Reset all nodes
@@ -270,7 +270,7 @@ class NodeGraph: ObservableObject {
             // For now, placeholder
         }
 
-        print("📊 Loaded preset: \(preset.name)")
+        EchoelLogger.log("📊", "Loaded preset: \(preset.name)", category: EchoelLogger.audio)
     }
 
     /// Save current configuration as preset

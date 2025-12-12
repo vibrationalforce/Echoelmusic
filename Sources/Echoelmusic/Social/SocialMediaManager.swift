@@ -179,8 +179,8 @@ class SocialMediaManager: ObservableObject {
 
     private init() {
         loadCredentials()
-        print("✅ SocialMediaManager: Initialized")
-        print("📱 Supported Platforms: \(Platform.allCases.count)")
+        EchoelLogger.success("SocialMediaManager: Initialized", category: .network)
+        EchoelLogger.info("Supported Platforms: \(Platform.allCases.count)", category: .network)
     }
 
     // MARK: - One-Click Live
@@ -216,16 +216,16 @@ class SocialMediaManager: ObservableObject {
                     switch result {
                     case .success:
                         self.liveStatus[platform] = .live(viewers: 0, duration: 0)
-                        print("🔴 LIVE auf \(platform.rawValue)")
+                        EchoelLogger.success("LIVE auf \(platform.rawValue)", category: .network)
                     case .failure(let error):
                         self.liveStatus[platform] = .failed(error: error.localizedDescription)
-                        print("❌ Live fehlgeschlagen auf \(platform.rawValue): \(error)")
+                        EchoelLogger.error("Live fehlgeschlagen auf \(platform.rawValue): \(error)", category: .network)
                     }
                 }
             }
         }
 
-        print("🔴 LIVE AUF \(livePlatforms.count) PLATTFORMEN!")
+        EchoelLogger.success("LIVE AUF \(livePlatforms.count) PLATTFORMEN!", category: .network)
     }
 
     /// Beende Live auf allen Plattformen
@@ -234,7 +234,7 @@ class SocialMediaManager: ObservableObject {
             await endLive(on: platform)
         }
         isLive = false
-        print("⬛ Live beendet auf allen Plattformen")
+        EchoelLogger.info("Live beendet auf allen Plattformen", category: .network)
     }
 
     // MARK: - One-Click Post
@@ -267,17 +267,17 @@ class SocialMediaManager: ObservableObject {
                     switch result {
                     case .success(let url):
                         self.postProgress[platform] = .completed(url: url)
-                        print("✅ Gepostet auf \(platform.rawValue): \(url)")
+                        EchoelLogger.success("Gepostet auf \(platform.rawValue): \(url)", category: .network)
                     case .failure(let error):
                         self.postProgress[platform] = .failed(error: error.localizedDescription)
-                        print("❌ Post fehlgeschlagen auf \(platform.rawValue): \(error)")
+                        EchoelLogger.error("Post fehlgeschlagen auf \(platform.rawValue): \(error)", category: .network)
                     }
                 }
             }
         }
 
         isPosting = false
-        print("📤 GEPOSTET AUF \(connectedPlatforms.count) PLATTFORMEN!")
+        EchoelLogger.success("GEPOSTET AUF \(connectedPlatforms.count) PLATTFORMEN!", category: .network)
     }
 
     // MARK: - Platform Connection
@@ -285,7 +285,7 @@ class SocialMediaManager: ObservableObject {
     /// Verbinde mit einer Plattform (OAuth)
     func connect(to platform: Platform) async throws {
         // Simuliere OAuth Flow
-        print("🔗 Verbinde mit \(platform.rawValue)...")
+        EchoelLogger.info("Verbinde mit \(platform.rawValue)...", category: .network)
 
         // In echter Implementierung: OAuth Flow mit ASWebAuthenticationSession
         // Hier: Simulierte Verbindung
@@ -294,7 +294,7 @@ class SocialMediaManager: ObservableObject {
         postProgress[platform] = .idle
         liveStatus[platform] = .offline
 
-        print("✅ Verbunden mit \(platform.rawValue)")
+        EchoelLogger.success("Verbunden mit \(platform.rawValue)", category: .network)
     }
 
     /// Trenne Verbindung zu einer Plattform
@@ -305,7 +305,7 @@ class SocialMediaManager: ObservableObject {
         liveStatus.removeValue(forKey: platform)
         saveCredentials()
 
-        print("🔌 Getrennt von \(platform.rawValue)")
+        EchoelLogger.info("Getrennt von \(platform.rawValue)", category: .network)
     }
 
     // MARK: - Private Methods
@@ -509,14 +509,14 @@ class SocialMediaManager: ObservableObject {
         saveScheduledPosts()
         startSchedulerIfNeeded()
 
-        print("📅 Scheduled post for \(scheduledTime) on \(platforms.count) platforms")
+        EchoelLogger.info("Scheduled post for \(scheduledTime) on \(platforms.count) platforms", category: .network)
     }
 
     /// Cancel a scheduled post
     func cancelScheduledPost(id: UUID) {
         scheduledPosts.removeAll { $0.id == id }
         saveScheduledPosts()
-        print("❌ Cancelled scheduled post \(id)")
+        EchoelLogger.warning("Cancelled scheduled post \(id)", category: .network)
     }
 
     /// Start the scheduler timer
@@ -529,14 +529,14 @@ class SocialMediaManager: ObservableObject {
             }
         }
 
-        print("⏰ Scheduler started")
+        EchoelLogger.info("Scheduler started", category: .network)
     }
 
     /// Stop the scheduler timer
     func stopScheduler() {
         schedulerTimer?.invalidate()
         schedulerTimer = nil
-        print("⏰ Scheduler stopped")
+        EchoelLogger.info("Scheduler stopped", category: .network)
     }
 
     /// Process due scheduled posts
@@ -582,10 +582,10 @@ class SocialMediaManager: ObservableObject {
             connectedPlatforms = previousConnected
 
             scheduledPosts[index].status = .completed
-            print("✅ Scheduled post \(post.id) completed")
+            EchoelLogger.success("Scheduled post \(post.id) completed", category: .network)
         } catch {
             scheduledPosts[index].status = .failed
-            print("❌ Scheduled post \(post.id) failed: \(error)")
+            EchoelLogger.error("Scheduled post \(post.id) failed: \(error)", category: .network)
         }
 
         saveScheduledPosts()
@@ -644,7 +644,7 @@ class SocialMediaManager: ObservableObject {
                 recentPosts: []
             )
         }
-        print("📊 Analytics fetched for \(connectedPlatforms.count) platforms")
+        EchoelLogger.info("Analytics fetched for \(connectedPlatforms.count) platforms", category: .network)
     }
 
     // MARK: - Errors

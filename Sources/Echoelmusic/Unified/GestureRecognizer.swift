@@ -63,7 +63,7 @@ class GestureRecognizer: ObservableObject {
 
     init(handTracker: HandTrackingManager) {
         self.handTracker = handTracker
-        print("✋ GestureRecognizer initialized")
+        EchoelLogger.info("GestureRecognizer initialized", category: EchoelLogger.gesture)
     }
 
 

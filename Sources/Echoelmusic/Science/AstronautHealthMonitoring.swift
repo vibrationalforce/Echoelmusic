@@ -127,9 +127,9 @@ class AstronautHealthMonitoring: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Astronaut Health Monitoring: Initialized")
-        print("🚀 Based on NASA/ESA/JAXA public research protocols")
-        print("⚠️ Educational purposes - not for actual spaceflight")
+        EchoelLogger.success("Astronaut Health Monitoring: Initialized", category: EchoelLogger.bio)
+        EchoelLogger.log("🚀", "Based on NASA/ESA/JAXA public research protocols", category: EchoelLogger.bio)
+        EchoelLogger.warning("Educational purposes - not for actual spaceflight", category: EchoelLogger.bio)
     }
 
     // MARK: - Start Monitoring
@@ -138,9 +138,9 @@ class AstronautHealthMonitoring: ObservableObject {
         currentProtocol = protocolType
         monitoringActive = true
 
-        print("▶️ Astronaut Health: \(protocolType.rawValue)")
-        print("📊 Key Metrics: \(protocolType.keyMetrics.joined(separator: ", "))")
-        print("📚 Evidence: \(protocolType.evidenceBase)")
+        EchoelLogger.log("▶️", "Astronaut Health: \(protocolType.rawValue)", category: EchoelLogger.bio)
+        EchoelLogger.log("📊", "Key Metrics: \(protocolType.keyMetrics.joined(separator: ", "))", category: EchoelLogger.bio)
+        EchoelLogger.log("📚", "Evidence: \(protocolType.evidenceBase)", category: EchoelLogger.bio)
 
         // Start data collection
         startDataCollection()
@@ -150,7 +150,7 @@ class AstronautHealthMonitoring: ObservableObject {
 
     func stopMonitoring() {
         monitoringActive = false
-        print("⏹️ Astronaut Health: Monitoring stopped")
+        EchoelLogger.log("⏹️", "Astronaut Health: Monitoring stopped", category: EchoelLogger.bio)
     }
 
     // MARK: - Data Collection

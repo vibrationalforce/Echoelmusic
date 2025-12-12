@@ -88,14 +88,14 @@ public class UnifiedControlHub: ObservableObject {
             }
             .store(in: &cancellables)
 
-        print("[UnifiedControlHub] Face tracking enabled")
+        EchoelLogger.info("[UnifiedControlHub] Face tracking enabled", category: EchoelLogger.system)
     }
 
     /// Disable face tracking
     public func disableFaceTracking() {
         faceTrackingManager?.stop()
         faceTrackingManager = nil
-        print("[UnifiedControlHub] Face tracking disabled")
+        EchoelLogger.info("[UnifiedControlHub] Face tracking disabled", category: EchoelLogger.system)
     }
 
     /// Enable hand tracking and gesture recognition
@@ -126,7 +126,7 @@ public class UnifiedControlHub: ObservableObject {
             }
             .store(in: &cancellables)
 
-        print("[UnifiedControlHub] Hand tracking enabled")
+        EchoelLogger.info("[UnifiedControlHub] Hand tracking enabled", category: EchoelLogger.system)
     }
 
     /// Disable hand tracking
@@ -136,7 +136,7 @@ public class UnifiedControlHub: ObservableObject {
         gestureRecognizer = nil
         gestureConflictResolver = nil
         gestureToAudioMapper = nil
-        print("[UnifiedControlHub] Hand tracking disabled")
+        EchoelLogger.info("[UnifiedControlHub] Hand tracking disabled", category: EchoelLogger.system)
     }
 
     /// Enable biometric monitoring (HealthKit)
@@ -174,7 +174,7 @@ public class UnifiedControlHub: ObservableObject {
         // Start monitoring
         healthKit.startMonitoring()
 
-        print("[UnifiedControlHub] Biometric monitoring enabled")
+        EchoelLogger.info("[UnifiedControlHub] Biometric monitoring enabled", category: EchoelLogger.bio)
     }
 
     /// Disable biometric monitoring
@@ -182,7 +182,7 @@ public class UnifiedControlHub: ObservableObject {
         healthKitManager?.stopMonitoring()
         healthKitManager = nil
         bioParameterMapper = nil
-        print("[UnifiedControlHub] Biometric monitoring disabled")
+        EchoelLogger.info("[UnifiedControlHub] Biometric monitoring disabled", category: EchoelLogger.bio)
     }
 
     /// Handle bio signal updates from HealthKit
@@ -207,7 +207,7 @@ public class UnifiedControlHub: ObservableObject {
         mpe.sendMPEConfiguration(memberChannels: 15)
         mpe.setPitchBendRange(semitones: 48)  // ±4 octaves
 
-        print("[UnifiedControlHub] MIDI 2.0 + MPE enabled")
+        EchoelLogger.info("[UnifiedControlHub] MIDI 2.0 + MPE enabled", category: EchoelLogger.midi)
     }
 
     /// Disable MIDI 2.0
@@ -222,7 +222,7 @@ public class UnifiedControlHub: ObservableObject {
         mpeZoneManager = nil
         midiToSpatialMapper = nil
 
-        print("[UnifiedControlHub] MIDI 2.0 disabled")
+        EchoelLogger.info("[UnifiedControlHub] MIDI 2.0 disabled", category: EchoelLogger.midi)
     }
 
     // MARK: - Phase 3 Integration
@@ -232,27 +232,27 @@ public class UnifiedControlHub: ObservableObject {
         let spatial = SpatialAudioEngine()
         try spatial.start()
         self.spatialAudioEngine = spatial
-        print("[UnifiedControlHub] Spatial audio enabled")
+        EchoelLogger.info("[UnifiedControlHub] Spatial audio enabled", category: EchoelLogger.spatial)
     }
 
     /// Disable spatial audio
     public func disableSpatialAudio() {
         spatialAudioEngine?.stop()
         spatialAudioEngine = nil
-        print("[UnifiedControlHub] Spatial audio disabled")
+        EchoelLogger.info("[UnifiedControlHub] Spatial audio disabled", category: EchoelLogger.spatial)
     }
 
     /// Enable MIDI to visual mapping
     public func enableVisualMapping() {
         let visualMapper = MIDIToVisualMapper()
         self.midiToVisualMapper = visualMapper
-        print("[UnifiedControlHub] Visual mapping enabled")
+        EchoelLogger.info("[UnifiedControlHub] Visual mapping enabled", category: EchoelLogger.system)
     }
 
     /// Disable visual mapping
     public func disableVisualMapping() {
         midiToVisualMapper = nil
-        print("[UnifiedControlHub] Visual mapping disabled")
+        EchoelLogger.info("[UnifiedControlHub] Visual mapping disabled", category: EchoelLogger.system)
     }
 
     /// Enable Push 3 LED controller
@@ -260,14 +260,14 @@ public class UnifiedControlHub: ObservableObject {
         let push3 = Push3LEDController()
         try push3.connect()
         self.push3LEDController = push3
-        print("[UnifiedControlHub] Push 3 LED controller enabled")
+        EchoelLogger.info("[UnifiedControlHub] Push 3 LED controller enabled", category: EchoelLogger.system)
     }
 
     /// Disable Push 3 LED
     public func disablePush3LED() {
         push3LEDController?.disconnect()
         push3LEDController = nil
-        print("[UnifiedControlHub] Push 3 LED controller disabled")
+        EchoelLogger.info("[UnifiedControlHub] Push 3 LED controller disabled", category: EchoelLogger.system)
     }
 
     /// Enable DMX/LED strip lighting
@@ -275,21 +275,21 @@ public class UnifiedControlHub: ObservableObject {
         let lighting = MIDIToLightMapper()
         try lighting.connect()
         self.midiToLightMapper = lighting
-        print("[UnifiedControlHub] DMX lighting enabled")
+        EchoelLogger.info("[UnifiedControlHub] DMX lighting enabled", category: EchoelLogger.system)
     }
 
     /// Disable lighting
     public func disableLighting() {
         midiToLightMapper?.disconnect()
         midiToLightMapper = nil
-        print("[UnifiedControlHub] DMX lighting disabled")
+        EchoelLogger.info("[UnifiedControlHub] DMX lighting disabled", category: EchoelLogger.system)
     }
 
     // MARK: - Lifecycle
 
     /// Start the unified control system
     public func start() {
-        print("[UnifiedControlHub] Starting control system...")
+        EchoelLogger.info("[UnifiedControlHub] Starting control system...", category: EchoelLogger.system)
 
         // Start face tracking if enabled
         faceTrackingManager?.start()
@@ -305,7 +305,7 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Stop the unified control system
     public func stop() {
-        print("[UnifiedControlHub] Stopping control system...")
+        EchoelLogger.info("[UnifiedControlHub] Stopping control system...", category: EchoelLogger.system)
         controlLoopTimer?.cancel()
         controlLoopTimer = nil
     }
@@ -390,7 +390,7 @@ public class UnifiedControlHub: ObservableObject {
 
         // Log bio→audio mapping (nur bei Debug)
         #if DEBUG
-        print("[Bio→Audio] Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Tempo: \(Int(mapper.tempo))BPM")
+        EchoelLogger.debug("[Bio→Audio] Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Tempo: \(Int(mapper.tempo))BPM", category: EchoelLogger.performance)
         #endif
 
         // Apply bio-reactive spatial field (AFA)
@@ -540,7 +540,7 @@ public class UnifiedControlHub: ObservableObject {
         }
 
         #if DEBUG
-        print("[Gesture→Audio] Applied: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)")
+        EchoelLogger.debug("[Gesture→Audio] Applied: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)", category: EchoelLogger.performance)
         #endif
 
         // Trigger MIDI notes via MPE
@@ -551,7 +551,7 @@ public class UnifiedControlHub: ObservableObject {
                     note: midiNote.note,
                     velocity: Float(midiNote.velocity) / 127.0
                 ) {
-                    print("[Gesture→MPE] Voice allocated: Note \(midiNote.note), Channel \(voice.channel + 1)")
+                    EchoelLogger.info("[Gesture→MPE] Voice allocated: Note \(midiNote.note), Channel \(voice.channel + 1)", category: EchoelLogger.midi)
 
                     // Apply initial per-note expression from gestures
                     if let gestureRec = gestureRecognizer {
@@ -565,14 +565,14 @@ public class UnifiedControlHub: ObservableObject {
                 }
             } else {
                 // Fallback to MIDI 1.0 if MPE not enabled
-                print("[Gesture→MIDI] Note On: \(midiNote.note), Velocity: \(midiNote.velocity)")
+                EchoelLogger.info("[Gesture→MIDI] Note On: \(midiNote.note), Velocity: \(midiNote.velocity)", category: EchoelLogger.midi)
             }
         }
 
         // Handle preset changes
         if let presetChange = params.presetChange {
             // TODO: Change to preset
-            print("[Gesture→Audio] Switch to preset: \(presetChange)")
+            EchoelLogger.info("[Gesture→Audio] Switch to preset: \(presetChange)", category: EchoelLogger.audio)
         }
     }
 

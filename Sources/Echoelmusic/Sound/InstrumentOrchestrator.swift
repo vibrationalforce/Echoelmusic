@@ -71,9 +71,9 @@ class InstrumentOrchestrator: ObservableObject {
         setupDefaultInstrument()
         connectToBioData()
 
-        print("✅ InstrumentOrchestrator: Initialized")
-        print("🎹 Available Instruments: \(soundLibrary.availableInstruments.count)")
-        print("🎛️ Synthesis Engines: \(soundLibrary.availableSynthEngines.count)")
+        EchoelLogger.success("InstrumentOrchestrator: Initialized", category: EchoelLogger.audio)
+        EchoelLogger.log("🎹", "Available Instruments: \(soundLibrary.availableInstruments.count)", category: EchoelLogger.audio)
+        EchoelLogger.log("🎛️", "Synthesis Engines: \(soundLibrary.availableSynthEngines.count)", category: EchoelLogger.audio)
     }
 
     deinit {
@@ -89,7 +89,7 @@ class InstrumentOrchestrator: ObservableObject {
         audioEngine = AVAudioEngine()
 
         guard let engine = audioEngine else {
-            print("❌ InstrumentOrchestrator: Failed to create AVAudioEngine")
+            EchoelLogger.error("InstrumentOrchestrator: Failed to create AVAudioEngine", category: EchoelLogger.audio)
             return
         }
 
@@ -105,7 +105,7 @@ class InstrumentOrchestrator: ObservableObject {
 
         // Connect player → mixer → output (SAFE: ohne force unwrap)
         guard let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) else {
-            print("❌ InstrumentOrchestrator: Failed to create audio format")
+            EchoelLogger.error("InstrumentOrchestrator: Failed to create audio format", category: EchoelLogger.audio)
             return
         }
         engine.connect(player, to: mixer, format: format)
@@ -114,9 +114,9 @@ class InstrumentOrchestrator: ObservableObject {
         do {
             try engine.start()
             isPlaying = true
-            print("🎵 InstrumentOrchestrator: Audio engine started")
+            EchoelLogger.log("🎵", "InstrumentOrchestrator: Audio engine started", category: EchoelLogger.audio)
         } catch {
-            print("❌ InstrumentOrchestrator: Failed to start audio engine: \(error)")
+            EchoelLogger.error("InstrumentOrchestrator: Failed to start audio engine: \(error)", category: EchoelLogger.audio)
         }
     }
 
@@ -165,7 +165,7 @@ class InstrumentOrchestrator: ObservableObject {
     func selectInstrument(name: String) {
         if let instrument = soundLibrary.availableInstruments.first(where: { $0.name == name }) {
             currentInstrument = instrument
-            print("🎹 Selected: \(instrument.name)")
+            EchoelLogger.log("🎹", "Selected: \(instrument.name)", category: EchoelLogger.audio)
         }
     }
 
@@ -173,14 +173,14 @@ class InstrumentOrchestrator: ObservableObject {
     func selectInstrument(index: Int) {
         guard index < soundLibrary.availableInstruments.count else { return }
         currentInstrument = soundLibrary.availableInstruments[index]
-        print("🎹 Selected: \(currentInstrument?.name ?? "Unknown")")
+        EchoelLogger.log("🎹", "Selected: \(currentInstrument?.name ?? "Unknown")", category: EchoelLogger.audio)
     }
 
     /// Select synthesis engine
     func selectSynthEngine(_ type: UniversalSoundLibrary.SynthEngine.SynthType) {
         if let engine = soundLibrary.availableSynthEngines.first(where: { $0.type == type }) {
             currentSynthEngine = engine
-            print("🎛️ Synth Engine: \(engine.name)")
+            EchoelLogger.log("🎛️", "Synth Engine: \(engine.name)", category: EchoelLogger.audio)
         }
     }
 
@@ -189,7 +189,7 @@ class InstrumentOrchestrator: ObservableObject {
     /// Play a MIDI note
     func noteOn(midiNote: Int, velocity: Float = 0.8) {
         guard let synthEngine = currentSynthEngine else {
-            print("⚠️ No synthesis engine selected")
+            EchoelLogger.warning("No synthesis engine selected", category: EchoelLogger.audio)
             return
         }
 
@@ -242,7 +242,7 @@ class InstrumentOrchestrator: ObservableObject {
                 playerNode?.play()
             }
 
-            print("🎵 Note On: MIDI \(midiNote) @ \(Int(velocity * 100))% velocity")
+            EchoelLogger.log("🎵", "Note On: MIDI \(midiNote) @ \(Int(velocity * 100))% velocity", category: EchoelLogger.midi)
         }
     }
 
@@ -251,7 +251,7 @@ class InstrumentOrchestrator: ObservableObject {
         // Mark voice as inactive (will release with envelope)
         if let index = voices.firstIndex(where: { $0.midiNote == midiNote && $0.isActive }) {
             voices[index].isActive = false
-            print("🎵 Note Off: MIDI \(midiNote)")
+            EchoelLogger.log("🎵", "Note Off: MIDI \(midiNote)", category: EchoelLogger.midi)
         }
     }
 
@@ -260,7 +260,7 @@ class InstrumentOrchestrator: ObservableObject {
         playerNode?.stop()
         voices.removeAll()
         activeVoices = 0
-        print("🛑 All Notes Off")
+        EchoelLogger.log("🛑", "All Notes Off", category: EchoelLogger.midi)
     }
 
     // MARK: - Drum Playback (808/909 Style)
@@ -269,7 +269,7 @@ class InstrumentOrchestrator: ObservableObject {
     func triggerDrum(_ drumType: DrumType, velocity: Float = 0.8) {
         // Use physical modeling for drums
         guard let physicalEngine = soundLibrary.availableSynthEngines.first(where: { $0.type == .physicalModeling }) else {
-            print("⚠️ Physical modeling engine not available")
+            EchoelLogger.warning("Physical modeling engine not available", category: EchoelLogger.audio)
             return
         }
 
@@ -332,7 +332,7 @@ class InstrumentOrchestrator: ObservableObject {
             if playerNode?.isPlaying == false {
                 playerNode?.play()
             }
-            print("🥁 Drum: \(drumType) @ \(Int(velocity * 100))%")
+            EchoelLogger.log("🥁", "Drum: \(drumType) @ \(Int(velocity * 100))%", category: EchoelLogger.audio)
         }
     }
 

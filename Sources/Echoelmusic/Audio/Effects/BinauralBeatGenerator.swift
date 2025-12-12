@@ -135,7 +135,7 @@ class BinauralBeatGenerator: ObservableObject {
     func configure(state: BrainwaveState) {
         self.beatFrequency = state.beatFrequency
         // Keep current carrier frequency and amplitude
-        print("🧠 Configured for \(state.rawValue) state: \(state.description)")
+        EchoelLogger.log("🧠", "Configured for \(state.rawValue) state: \(state.description)", category: EchoelLogger.audio)
     }
 
     /// Set beat frequency dynamically based on HRV coherence
@@ -156,7 +156,7 @@ class BinauralBeatGenerator: ObservableObject {
             // High coherence: maintain focus
             beatFrequency = 20.0  // Beta
         }
-        print("💓 HRV coherence \(Int(coherence)) → \(beatFrequency) Hz beat")
+        EchoelLogger.log("💓", "HRV coherence \(Int(coherence)) → \(beatFrequency) Hz beat", category: EchoelLogger.bio)
     }
 
     /// Start generating and playing binaural/isochronic beats
@@ -193,10 +193,10 @@ class BinauralBeatGenerator: ObservableObject {
 
             isPlaying = true
             let modeStr = audioMode == .binaural ? "Binaural (stereo)" : "Isochronic (mono)"
-            print("▶️ \(modeStr) beats started: \(carrierFrequency) Hz @ \(beatFrequency) Hz")
+            EchoelLogger.log("▶️", "\(modeStr) beats started: \(carrierFrequency) Hz @ \(beatFrequency) Hz", category: EchoelLogger.audio)
 
         } catch {
-            print("❌ Failed to start beats: \(error.localizedDescription)")
+            EchoelLogger.error("Failed to start beats: \(error.localizedDescription)", category: EchoelLogger.audio)
         }
     }
 
@@ -219,7 +219,7 @@ class BinauralBeatGenerator: ObservableObject {
         try? AVAudioSession.sharedInstance().setActive(false)
 
         isPlaying = false
-        print("⏹️ Binaural beats stopped")
+        EchoelLogger.log("⏹️", "Binaural beats stopped", category: EchoelLogger.audio)
     }
 
 
@@ -402,10 +402,10 @@ class BinauralBeatGenerator: ObservableObject {
         // Set mode based on output
         if hasIsolatedHeadphones {
             audioMode = .binaural
-            print("🎧 Isolated headphones detected → Binaural mode (true stereo)")
+            EchoelLogger.log("🎧", "Isolated headphones detected → Binaural mode (true stereo)", category: EchoelLogger.audio)
         } else {
             audioMode = .isochronic
-            print("🔊 Speaker/Open-air detected → Isochronic mode (mono pulsed, works anywhere)")
+            EchoelLogger.log("🔊", "Speaker/Open-air detected → Isochronic mode (mono pulsed, works anywhere)", category: EchoelLogger.audio)
         }
     }
 }

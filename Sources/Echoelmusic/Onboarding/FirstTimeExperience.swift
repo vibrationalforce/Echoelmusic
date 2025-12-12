@@ -148,7 +148,7 @@ class FirstTimeExperience: ObservableObject {
             demoMode = false
         }
 
-        print("✅ First-Time Experience: Initialized")
+        EchoelLogger.success("First-Time Experience: Initialized", category: EchoelLogger.system)
     }
 
     // MARK: - Navigation
@@ -172,7 +172,7 @@ class FirstTimeExperience: ObservableObject {
         hasCompletedOnboarding = true
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         demoMode = false
-        print("✅ Onboarding completed")
+        EchoelLogger.success("Onboarding completed", category: EchoelLogger.system)
     }
 
     // MARK: - Demo Actions
@@ -180,12 +180,12 @@ class FirstTimeExperience: ObservableObject {
     func startInstantDemo() {
         // Launch instant demo (touch-reactive audio-visual)
         // No permissions required - uses touch input only
-        print("▶️ Instant Demo: Touch-reactive mode")
+        EchoelLogger.log("▶️", "Instant Demo: Touch-reactive mode", category: EchoelLogger.system)
     }
 
     func launchPreset(_ preset: QuickStartPreset) {
         // Launch selected preset
-        print("🚀 Launching preset: \(preset.name)")
+        EchoelLogger.log("🚀", "Launching preset: \(preset.name)", category: EchoelLogger.system)
     }
 
     // MARK: - Permission Flow
@@ -195,20 +195,20 @@ class FirstTimeExperience: ObservableObject {
         // Always offer "Skip" option - app works without permissions
 
         // HealthKit (optional)
-        print("📱 Requesting HealthKit permission (optional)")
+        EchoelLogger.log("📱", "Requesting HealthKit permission (optional)", category: EchoelLogger.system)
 
         // Microphone (optional)
-        print("🎤 Requesting Microphone permission (optional)")
+        EchoelLogger.log("🎤", "Requesting Microphone permission (optional)", category: EchoelLogger.system)
 
         // Camera (optional)
-        print("📷 Requesting Camera permission (optional)")
+        EchoelLogger.log("📷", "Requesting Camera permission (optional)", category: EchoelLogger.system)
     }
 
     // MARK: - Accessibility
 
     func enableAccessibilityMode() {
         // Enable enhanced accessibility (VoiceOver, larger text, etc.)
-        print("♿️ Accessibility mode enabled")
+        EchoelLogger.log("♿️", "Accessibility mode enabled", category: EchoelLogger.system)
     }
 }
 

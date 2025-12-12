@@ -53,7 +53,7 @@ final class VideoAICreativeHub: ObservableObject {
 
     private init() {
         setupConnections()
-        print("🎬 VideoAICreativeHub: Initialized - Ultra Liquid Light Flow")
+        EchoelLogger.log("🎬", "VideoAICreativeHub: Initialized - Ultra Liquid Light Flow", category: EchoelLogger.system)
     }
 
     private func setupConnections() {
@@ -149,7 +149,7 @@ class GenerativeAIEngine: ObservableObject {
 
     private func loadModels() {
         // Note: In production, load actual CoreML models
-        print("🤖 GenerativeAI: Models loading...")
+        EchoelLogger.log("🤖", "GenerativeAI: Models loading...", category: EchoelLogger.ai)
     }
 
     // MARK: - Creativity Level
@@ -202,7 +202,7 @@ class GenerativeAIEngine: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎨 GenerativeAI: Generating from prompt: '\(prompt)'")
+        EchoelLogger.log("🎨", "GenerativeAI: Generating from prompt: '\(prompt)'", category: EchoelLogger.ai)
 
         // In production: Use Stable Diffusion or similar
         let visual = GeneratedVisual(
@@ -227,7 +227,7 @@ class GenerativeAIEngine: ObservableObject {
         styleTransferActive = true
         defer { styleTransferActive = false }
 
-        print("🎭 GenerativeAI: Applying \(style.rawValue) style transfer")
+        EchoelLogger.log("🎭", "GenerativeAI: Applying \(style.rawValue) style transfer", category: EchoelLogger.ai)
 
         // In production: Process video frames through CoreML model
         return nil
@@ -243,7 +243,7 @@ class GenerativeAIEngine: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎵 GenerativeAI: Analyzing video for music generation")
+        EchoelLogger.log("🎵", "GenerativeAI: Analyzing video for music generation", category: EchoelLogger.ai)
 
         // Analyze video motion, colors, pace
         let videoFeatures = await analyzeVideo(videoURL)

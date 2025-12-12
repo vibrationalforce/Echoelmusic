@@ -302,11 +302,11 @@ struct VocalAlignmentView: View {
                     defer { url.stopAccessingSecurityScopedResource() }
                     try await aligner.loadGuideTrack(from: url)
                 } catch {
-                    print("Failed to load guide: \(error)")
+                    EchoelLogger.error("Failed to load guide: \(error)", category: EchoelLogger.audio)
                 }
             }
         case .failure(let error):
-            print("File picker error: \(error)")
+            EchoelLogger.error("File picker error: \(error)", category: EchoelLogger.audio)
         }
     }
 
@@ -320,12 +320,12 @@ struct VocalAlignmentView: View {
                         defer { url.stopAccessingSecurityScopedResource() }
                         try await aligner.addDubTrack(from: url)
                     } catch {
-                        print("Failed to load dub: \(error)")
+                        EchoelLogger.error("Failed to load dub: \(error)", category: EchoelLogger.audio)
                     }
                 }
             }
         case .failure(let error):
-            print("File picker error: \(error)")
+            EchoelLogger.error("File picker error: \(error)", category: EchoelLogger.audio)
         }
     }
 
@@ -334,7 +334,7 @@ struct VocalAlignmentView: View {
             do {
                 try await aligner.alignAllTracks()
             } catch {
-                print("Alignment failed: \(error)")
+                EchoelLogger.error("Alignment failed: \(error)", category: EchoelLogger.audio)
             }
         }
     }
@@ -344,7 +344,7 @@ struct VocalAlignmentView: View {
             do {
                 try await aligner.previewAlignedTrack(id)
             } catch {
-                print("Preview failed: \(error)")
+                EchoelLogger.error("Preview failed: \(error)", category: EchoelLogger.audio)
             }
         }
     }

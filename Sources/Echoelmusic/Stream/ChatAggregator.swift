@@ -18,26 +18,26 @@ class ChatAggregator: ObservableObject {
     func start() {
         guard !isActive else { return }
         isActive = true
-        print("💬 ChatAggregator: Started")
+        EchoelLogger.log("💬", "ChatAggregator: Started", category: EchoelLogger.system)
     }
 
     func stop() {
         guard isActive else { return }
         isActive = false
         cancellables.removeAll()
-        print("💬 ChatAggregator: Stopped")
+        EchoelLogger.log("💬", "ChatAggregator: Stopped", category: EchoelLogger.system)
     }
 
     func addMessage(_ message: ChatMessage) {
         // AI Moderation check
         if moderationEnabled && isToxic(message.text) {
             toxicMessagesBlocked += 1
-            print("🚫 ChatAggregator: Blocked toxic message from \(message.username)")
+            EchoelLogger.log("🚫", "ChatAggregator: Blocked toxic message from \(message.username)", category: EchoelLogger.system)
             return
         }
 
         messages.append(message)
-        print("💬 [\(message.platform.rawValue)] \(message.username): \(message.text)")
+        EchoelLogger.log("💬", "[\(message.platform.rawValue)] \(message.username): \(message.text)", category: EchoelLogger.system)
     }
 
     private func isToxic(_ text: String) -> Bool {

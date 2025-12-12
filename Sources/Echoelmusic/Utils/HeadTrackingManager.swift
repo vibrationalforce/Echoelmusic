@@ -74,10 +74,9 @@ class HeadTrackingManager: ObservableObject {
         isAvailable = motionManager.isDeviceMotionAvailable
 
         if isAvailable {
-            print("✅ Head tracking available")
+            EchoelLogger.success("Head tracking available", category: EchoelLogger.spatial)
         } else {
-            print("⚠️  Head tracking not available")
-            print("   Requires: AirPods Pro/Max with iOS 14+")
+            EchoelLogger.warning("Head tracking not available - Requires: AirPods Pro/Max with iOS 14+", category: EchoelLogger.spatial)
         }
     }
 
@@ -87,12 +86,12 @@ class HeadTrackingManager: ObservableObject {
     /// Start head tracking
     func startTracking() {
         guard isAvailable else {
-            print("❌ Cannot start head tracking: Not available")
+            EchoelLogger.error("Cannot start head tracking: Not available", category: EchoelLogger.spatial)
             return
         }
 
         guard !isTracking else {
-            print("⚠️  Head tracking already active")
+            EchoelLogger.warning("Head tracking already active", category: EchoelLogger.spatial)
             return
         }
 
@@ -104,7 +103,7 @@ class HeadTrackingManager: ObservableObject {
             guard let self = self else { return }
 
             if let error = error {
-                print("❌ Head tracking error: \(error.localizedDescription)")
+                EchoelLogger.error("Head tracking error: \(error.localizedDescription)", category: EchoelLogger.spatial)
                 self.stopTracking()
                 return
             }
@@ -116,7 +115,7 @@ class HeadTrackingManager: ObservableObject {
         }
 
         isTracking = true
-        print("🎧 Head tracking started (\(updateFrequency) Hz)")
+        EchoelLogger.log("🎧", "Head tracking started (\(updateFrequency) Hz)", category: EchoelLogger.spatial)
     }
 
     /// Stop head tracking
@@ -130,7 +129,7 @@ class HeadTrackingManager: ObservableObject {
         headRotation = HeadRotation()
         normalizedPosition = NormalizedPosition()
 
-        print("🎧 Head tracking stopped")
+        EchoelLogger.log("🎧", "Head tracking stopped", category: EchoelLogger.spatial)
     }
 
 
@@ -157,7 +156,7 @@ class HeadTrackingManager: ObservableObject {
         #if DEBUG
         if Int(Date().timeIntervalSince1970 * 2) % 2 == 0 {  // Every 0.5 seconds
             let degrees = headRotation.degrees
-            print("🎧 Head: Y:\(Int(degrees.yaw))° P:\(Int(degrees.pitch))° R:\(Int(degrees.roll))°")
+            EchoelLogger.debug("Head: Y:\(Int(degrees.yaw))° P:\(Int(degrees.pitch))° R:\(Int(degrees.roll))°", category: EchoelLogger.spatial)
         }
         #endif
     }
@@ -201,7 +200,7 @@ class HeadTrackingManager: ObservableObject {
             guard let self = self else { return }
 
             if let error = error {
-                print("❌ Head tracking error: \(error.localizedDescription)")
+                EchoelLogger.error("Head tracking error: \(error.localizedDescription)", category: EchoelLogger.spatial)
                 return
             }
 
@@ -209,7 +208,7 @@ class HeadTrackingManager: ObservableObject {
             self.updateHeadRotation(from: motion)
         }
 
-        print("🔄 Head tracking orientation reset")
+        EchoelLogger.log("🔄", "Head tracking orientation reset", category: EchoelLogger.spatial)
     }
 
     /// Get human-readable status

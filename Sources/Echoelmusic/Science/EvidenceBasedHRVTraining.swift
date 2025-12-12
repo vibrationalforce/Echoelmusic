@@ -116,8 +116,8 @@ class EvidenceBasedHRVTraining: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Evidence-Based HRV Training: Initialized")
-        print("📚 Based on peer-reviewed research - Educational purposes only")
+        EchoelLogger.success("Evidence-Based HRV Training: Initialized", category: EchoelLogger.bio)
+        EchoelLogger.log("📚", "Based on peer-reviewed research - Educational purposes only", category: EchoelLogger.bio)
     }
 
     // MARK: - Start Training Session
@@ -133,10 +133,10 @@ class EvidenceBasedHRVTraining: ObservableObject {
         // Calculate baseline
         baselineHRV = try await measureBaselineHRV()
 
-        print("▶️ HRV Training: \(protocolType.rawValue)")
-        print("📊 Evidence Level: \(protocolType.evidenceLevel.rawValue)")
-        print("🫁 Target Breathing Rate: \(protocolType.targetBreathingRate) breaths/min")
-        print("⏱️ Duration: \(Int(protocolType.sessionDuration / 60)) minutes")
+        EchoelLogger.log("▶️", "HRV Training: \(protocolType.rawValue)", category: EchoelLogger.bio)
+        EchoelLogger.log("📊", "Evidence Level: \(protocolType.evidenceLevel.rawValue)", category: EchoelLogger.bio)
+        EchoelLogger.log("🫁", "Target Breathing Rate: \(protocolType.targetBreathingRate) breaths/min", category: EchoelLogger.bio)
+        EchoelLogger.log("⏱️", "Duration: \(Int(protocolType.sessionDuration / 60)) minutes", category: EchoelLogger.bio)
 
         // Start monitoring
         startMonitoring()
@@ -154,12 +154,12 @@ class EvidenceBasedHRVTraining: ObservableObject {
         let avgCoherence = sessionData.map { $0.coherence }.reduce(0, +) / Float(sessionData.count)
         let hrvChange = finalHRV - baselineHRV
 
-        print("⏹️ HRV Training: Session Ended")
-        print("📊 Results:")
-        print("   - Baseline HRV: \(String(format: "%.1f", baselineHRV)) ms")
-        print("   - Final HRV: \(String(format: "%.1f", finalHRV)) ms")
-        print("   - Change: \(hrvChange >= 0 ? "+" : "")\(String(format: "%.1f", hrvChange)) ms (\(String(format: "%.1f", (hrvChange / baselineHRV) * 100))%)")
-        print("   - Avg Coherence: \(String(format: "%.1f", avgCoherence))")
+        EchoelLogger.log("⏹️", "HRV Training: Session Ended", category: EchoelLogger.bio)
+        EchoelLogger.log("📊", "Results:", category: EchoelLogger.bio)
+        EchoelLogger.log("📊", "   - Baseline HRV: \(String(format: "%.1f", baselineHRV)) ms", category: EchoelLogger.bio)
+        EchoelLogger.log("📊", "   - Final HRV: \(String(format: "%.1f", finalHRV)) ms", category: EchoelLogger.bio)
+        EchoelLogger.log("📊", "   - Change: \(hrvChange >= 0 ? "+" : "")\(String(format: "%.1f", hrvChange)) ms (\(String(format: "%.1f", (hrvChange / baselineHRV) * 100))%)", category: EchoelLogger.bio)
+        EchoelLogger.log("📊", "   - Avg Coherence: \(String(format: "%.1f", avgCoherence))", category: EchoelLogger.bio)
 
         currentProtocol = nil
     }

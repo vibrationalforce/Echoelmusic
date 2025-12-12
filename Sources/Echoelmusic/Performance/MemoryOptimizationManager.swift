@@ -205,7 +205,7 @@ class MemoryOptimizationManager {
                 return nil
             }
 
-            print("🗜️ Compressed \(data.count) → \(compressedSize) bytes (ratio: \(String(format: "%.2f", Float(compressedSize) / Float(data.count))))")
+            EchoelLogger.debug("Compressed \(data.count) → \(compressedSize) bytes (ratio: \(String(format: "%.2f", Float(compressedSize) / Float(data.count))))", category: EchoelLogger.performance)
 
             return compressedData
         }
@@ -394,13 +394,13 @@ class MemoryOptimizationManager {
         guard isMemoryOptimizationEnabled else { return }
 
         if memoryUsage.isPressured {
-            print("⚠️ Memory pressure detected: \(String(format: "%.1f%%", memoryUsage.usagePercentage * 100))")
+            EchoelLogger.warning("Memory pressure detected: \(String(format: "%.1f%%", memoryUsage.usagePercentage * 100))", category: EchoelLogger.performance)
             reduceCacheSize(by: 0.5) // Reduziere Cache um 50%
         }
     }
 
     private func handleMemoryWarning() {
-        print("🚨 Memory Warning! Performing aggressive cleanup...")
+        EchoelLogger.error("Memory Warning! Performing aggressive cleanup...", category: EchoelLogger.performance)
 
         // Sofortige Notfall-Maßnahmen
         clearAllCaches()
@@ -408,7 +408,7 @@ class MemoryOptimizationManager {
         releaseUnusedPools()
 
         updateMemoryUsage()
-        print("✅ Cleanup completed. Memory usage: \(String(format: "%.1f%%", memoryUsage.usagePercentage * 100))")
+        EchoelLogger.info("Cleanup completed. Memory usage: \(String(format: "%.1f%%", memoryUsage.usagePercentage * 100))", category: EchoelLogger.performance)
     }
 
     // MARK: - Cache Management
@@ -462,7 +462,7 @@ class MemoryOptimizationManager {
             cacheStats.totalItems -= 1
         }
 
-        print("🧹 Evicted \(cacheStats.evictions) items, freed \(freedSpace / 1024) KB")
+        EchoelLogger.debug("Evicted \(cacheStats.evictions) items, freed \(freedSpace / 1024) KB", category: EchoelLogger.performance)
     }
 
     func clearCache(priority: CachedItem.Priority? = nil) {
@@ -510,7 +510,7 @@ class MemoryOptimizationManager {
 
         if let mmFile = MemoryMappedFile(path: path) {
             memoryMappedFiles[path] = mmFile
-            print("📂 Memory-mapped file: \(path) (\(mmFile.size / 1024) KB)")
+            EchoelLogger.debug("Memory-mapped file: \(path) (\(mmFile.size / 1024) KB)", category: EchoelLogger.performance)
             return true
         }
 
@@ -550,7 +550,7 @@ class MemoryOptimizationManager {
                 let savings = item.data.count - compressed.count
                 if savings > 0 {
                     item.data = compressed
-                    print("🗜️ Compressed \(item.key): saved \(savings / 1024) KB")
+                    EchoelLogger.debug("Compressed \(item.key): saved \(savings / 1024) KB", category: EchoelLogger.performance)
                 }
             }
         }

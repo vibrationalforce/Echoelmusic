@@ -122,7 +122,7 @@ class StreamEngine: ObservableObject {
         self.device = device
 
         guard let queue = device.makeCommandQueue() else {
-            print("❌ StreamEngine: Failed to create command queue")
+            EchoelLogger.error("StreamEngine: Failed to create command queue", category: EchoelLogger.system)
             return nil
         }
         self.commandQueue = queue
@@ -143,7 +143,7 @@ class StreamEngine: ObservableObject {
         self.availableScenes = sceneManager.loadScenes()
         self.currentScene = availableScenes.first
 
-        print("✅ StreamEngine: Initialized")
+        EchoelLogger.success("StreamEngine: Initialized", category: EchoelLogger.system)
     }
 
     deinit {
@@ -186,7 +186,7 @@ class StreamEngine: ObservableObject {
                 error: nil
             )
 
-            print("🔗 StreamEngine: Connected to \(destination.rawValue)")
+            EchoelLogger.log("🔗", "StreamEngine: Connected to \(destination.rawValue)", category: EchoelLogger.system)
         }
 
         // Start encoding
@@ -207,7 +207,7 @@ class StreamEngine: ObservableObject {
 
         isStreaming = true
 
-        print("▶️ StreamEngine: Started streaming to \(destinations.count) destination(s)")
+        EchoelLogger.log("▶️", "StreamEngine: Started streaming to \(destinations.count) destination(s)", category: EchoelLogger.system)
     }
 
     // MARK: - Stop Streaming
@@ -224,7 +224,7 @@ class StreamEngine: ObservableObject {
         // Disconnect RTMP clients
         for (destination, client) in rtmpClients {
             client.disconnect()
-            print("🔌 StreamEngine: Disconnected from \(destination.rawValue)")
+            EchoelLogger.log("🔌", "StreamEngine: Disconnected from \(destination.rawValue)", category: EchoelLogger.system)
         }
         rtmpClients.removeAll()
         activeStreams.removeAll()
@@ -239,7 +239,7 @@ class StreamEngine: ObservableObject {
         droppedFrames = 0
         actualFrameRate = 0.0
 
-        print("⏹️ StreamEngine: Stopped streaming")
+        EchoelLogger.log("⏹️", "StreamEngine: Stopped streaming", category: EchoelLogger.system)
     }
 
     // MARK: - Capture Loop
@@ -294,7 +294,7 @@ class StreamEngine: ObservableObject {
                         self.activeStreams[destination] = status
                     }
                 } catch {
-                    print("❌ StreamEngine: Failed to send frame to \(destination.rawValue) - \(error)")
+                    EchoelLogger.error("StreamEngine: Failed to send frame to \(destination.rawValue) - \(error)", category: EchoelLogger.system)
 
                     // Update status
                     if var status = self.activeStreams[destination] {
@@ -349,7 +349,7 @@ class StreamEngine: ObservableObject {
         // Record in analytics
         analytics.recordSceneSwitch(to: scene)
 
-        print("🎬 StreamEngine: Switched to scene '\(scene.name)' with \(transition.rawValue) transition")
+        EchoelLogger.log("🎬", "StreamEngine: Switched to scene '\(scene.name)' with \(transition.rawValue) transition", category: EchoelLogger.system)
     }
 
     private func applyTransition(from: Scene?, to: Scene, transition: SceneTransition) async {
@@ -385,7 +385,7 @@ class StreamEngine: ObservableObject {
         sceneManager.bioReactiveEnabled = enabled
         sceneManager.bioSceneRules = rules
 
-        print("🧠 StreamEngine: Bio-reactive scene switching \(enabled ? "enabled" : "disabled") with \(rules.count) rules")
+        EchoelLogger.log("🧠", "StreamEngine: Bio-reactive scene switching \(enabled ? "enabled" : "disabled") with \(rules.count) rules", category: EchoelLogger.bio)
     }
 
     func updateBioParameters(coherence: Float, heartRate: Float, hrv: Float) {
@@ -408,7 +408,7 @@ class StreamEngine: ObservableObject {
 
     func enableAdaptiveBitrate(_ enabled: Bool) {
         encodingManager.adaptiveBitrateEnabled = enabled
-        print("📊 StreamEngine: Adaptive bitrate \(enabled ? "enabled" : "disabled")")
+        EchoelLogger.log("📊", "StreamEngine: Adaptive bitrate \(enabled ? "enabled" : "disabled")", category: EchoelLogger.system)
     }
 
     func updateNetworkConditions(packetLoss: Double, rtt: TimeInterval) {
@@ -419,13 +419,13 @@ class StreamEngine: ObservableObject {
                 let newBitrate = Int(Double(bitrate) * 0.8)
                 bitrate = max(1000, newBitrate)
                 encodingManager.updateBitrate(bitrate)
-                print("⚠️ StreamEngine: Reduced bitrate to \(bitrate) kbps due to packet loss")
+                EchoelLogger.warning("StreamEngine: Reduced bitrate to \(bitrate) kbps due to packet loss", category: EchoelLogger.system)
             } else if packetLoss < 0.005 && bitrate < resolution.recommendedBitrate {
                 // Good network - increase bitrate by 10%
                 let newBitrate = Int(Double(bitrate) * 1.1)
                 bitrate = min(resolution.recommendedBitrate, newBitrate)
                 encodingManager.updateBitrate(bitrate)
-                print("✅ StreamEngine: Increased bitrate to \(bitrate) kbps")
+                EchoelLogger.success("StreamEngine: Increased bitrate to \(bitrate) kbps", category: EchoelLogger.system)
             }
         }
     }
@@ -533,7 +533,7 @@ class EncodingManager {
 
         self.compressionSession = session
 
-        print("✅ EncodingManager: Started encoding at \(resolution.rawValue) @ \(frameRate) FPS, \(bitrate) kbps")
+        EchoelLogger.success("EncodingManager: Started encoding at \(resolution.rawValue) @ \(frameRate) FPS, \(bitrate) kbps", category: EchoelLogger.system)
     }
 
     func stopEncoding() {

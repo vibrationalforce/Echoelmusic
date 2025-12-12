@@ -82,8 +82,8 @@ class AutomaticVocalAligner: ObservableObject {
 
     init() {
         setupAudioEngine()
-        print("✅ AutomaticVocalAligner: Initialized")
-        print("🎤 Professional Vocal Alignment Ready")
+        EchoelLogger.success("AutomaticVocalAligner: Initialized", category: EchoelLogger.audio)
+        EchoelLogger.info("Professional Vocal Alignment Ready", category: EchoelLogger.audio)
     }
 
     deinit {
@@ -123,7 +123,7 @@ class AutomaticVocalAligner: ObservableObject {
             guideTrack = guide
         }
 
-        print("🎤 Guide track loaded: \(track.name) (\(String(format: "%.1f", track.duration))s)")
+        EchoelLogger.info("Guide track loaded: \(track.name) (\(String(format: "%.1f", track.duration))s)", category: EchoelLogger.audio)
     }
 
     func addDubTrack(from url: URL) async throws {
@@ -136,7 +136,7 @@ class AutomaticVocalAligner: ObservableObject {
 
         dubTracks.append(analyzedTrack)
 
-        print("🎤 Dub track added: \(track.name) (\(String(format: "%.1f", track.duration))s)")
+        EchoelLogger.info("Dub track added: \(track.name) (\(String(format: "%.1f", track.duration))s)", category: EchoelLogger.audio)
     }
 
     private func loadAudioFile(url: URL, name: String) async throws -> VocalTrack {
@@ -184,14 +184,14 @@ class AutomaticVocalAligner: ObservableObject {
             let result = try await alignTrack(dub: dubTrack, to: guide)
             alignmentResults[dubTrack.id] = result
 
-            print("✅ Aligned: \(dubTrack.name) (Quality: \(String(format: "%.1f", result.qualityScore))%)")
+            EchoelLogger.success("Aligned: \(dubTrack.name) (Quality: \(String(format: "%.1f", result.qualityScore))%)", category: EchoelLogger.audio)
         }
 
         progress = 1.0
         isProcessing = false
 
         let totalTime = Date().timeIntervalSince(startTime)
-        print("🎤 All tracks aligned in \(String(format: "%.2f", totalTime))s")
+        EchoelLogger.success("All tracks aligned in \(String(format: "%.2f", totalTime))s", category: EchoelLogger.audio)
     }
 
     /// Align a single dub track to the guide
@@ -659,7 +659,7 @@ class AutomaticVocalAligner: ObservableObject {
         let audioFile = try AVAudioFile(forWriting: url, settings: settings)
         try audioFile.write(from: buffer)
 
-        print("✅ Exported aligned track to: \(url.lastPathComponent)")
+        EchoelLogger.success("Exported aligned track to: \(url.lastPathComponent)", category: EchoelLogger.audio)
     }
 
     // MARK: - Errors

@@ -81,9 +81,9 @@ class MicrophoneManager: NSObject, ObservableObject {
             DispatchQueue.main.async {
                 self?.hasPermission = granted
                 if granted {
-                    print("✅ Microphone permission granted")
+                    EchoelLogger.success("Microphone permission granted", category: EchoelLogger.audio)
                 } else {
-                    print("❌ Microphone permission denied")
+                    EchoelLogger.error("Microphone permission denied", category: EchoelLogger.audio)
                 }
             }
         }
@@ -95,7 +95,7 @@ class MicrophoneManager: NSObject, ObservableObject {
     /// Start recording audio from the microphone
     func startRecording() {
         guard hasPermission else {
-            print("⚠️ Cannot start recording: No microphone permission")
+            EchoelLogger.warning("Cannot start recording: No microphone permission", category: EchoelLogger.audio)
             requestPermission()
             return
         }
@@ -139,10 +139,10 @@ class MicrophoneManager: NSObject, ObservableObject {
                 self.isRecording = true
             }
 
-            print("🎙️ Recording started with FFT enabled")
+            EchoelLogger.log("🎙️", "Recording started with FFT enabled", category: EchoelLogger.audio)
 
         } catch {
-            print("❌ Failed to start recording: \(error.localizedDescription)")
+            EchoelLogger.error("Failed to start recording: \(error.localizedDescription)", category: EchoelLogger.audio)
             DispatchQueue.main.async {
                 self.isRecording = false
             }
@@ -176,7 +176,7 @@ class MicrophoneManager: NSObject, ObservableObject {
             self.currentPitch = 0.0
         }
 
-        print("⏹️ Recording stopped")
+        EchoelLogger.log("⏹️", "Recording stopped", category: EchoelLogger.audio)
     }
 
 

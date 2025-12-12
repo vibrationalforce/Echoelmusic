@@ -126,10 +126,10 @@ class PrivacyManager: ObservableObject {
         loadPrivacySettings()
         generateEncryptionKey()
 
-        print("✅ Privacy Manager: Initialized")
-        print("🔒 Privacy Mode: \(privacyMode.rawValue)")
-        print("🏠 All data stored locally first")
-        print("🚫 Zero third-party trackers")
+        EchoelLogger.success("Privacy Manager: Initialized", category: EchoelLogger.system)
+        EchoelLogger.info("Privacy Mode: \(privacyMode.rawValue)", category: EchoelLogger.system)
+        EchoelLogger.info("All data stored locally first", category: EchoelLogger.system)
+        EchoelLogger.info("Zero third-party trackers", category: EchoelLogger.system)
     }
 
     // MARK: - Load Privacy Settings
@@ -172,12 +172,12 @@ class PrivacyManager: ObservableObject {
         // Apply mode constraints
         if !mode.allowsCloudSync {
             cloudSyncEnabled = false
-            print("🔒 Cloud sync disabled (privacy mode: \(mode.rawValue))")
+            EchoelLogger.info("Cloud sync disabled (privacy mode: \(mode.rawValue))", category: EchoelLogger.system)
         }
 
         if !mode.allowsAnalytics {
             analyticsEnabled = false
-            print("🔒 Analytics disabled (privacy mode: \(mode.rawValue))")
+            EchoelLogger.info("Analytics disabled (privacy mode: \(mode.rawValue))", category: EchoelLogger.system)
         }
 
         savePrivacySettings()
@@ -189,11 +189,11 @@ class PrivacyManager: ObservableObject {
         // Generate or load encryption key from Keychain
         if let keyData = loadKeyFromKeychain() {
             encryptionKey = SymmetricKey(data: keyData)
-            print("🔑 Encryption key loaded from Keychain")
+            EchoelLogger.info("Encryption key loaded from Keychain", category: EchoelLogger.system)
         } else {
             encryptionKey = SymmetricKey(size: .bits256)
             saveKeyToKeychain(encryptionKey!)
-            print("🔑 New encryption key generated")
+            EchoelLogger.info("New encryption key generated", category: EchoelLogger.system)
         }
     }
 
@@ -210,7 +210,7 @@ class PrivacyManager: ObservableObject {
         let status = SecItemCopyMatching(query as CFDictionary, &result)
 
         guard status == errSecSuccess else {
-            print("🔐 Keychain load failed or key not found: \(status)")
+            EchoelLogger.warning("Keychain load failed or key not found: \(status)", category: EchoelLogger.system)
             return nil
         }
 
@@ -239,9 +239,9 @@ class PrivacyManager: ObservableObject {
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
         if status == errSecSuccess {
-            print("🔐 Encryption key saved to Keychain securely")
+            EchoelLogger.success("Encryption key saved to Keychain securely", category: EchoelLogger.system)
         } else {
-            print("⚠️ Keychain save failed: \(status)")
+            EchoelLogger.warning("Keychain save failed: \(status)", category: EchoelLogger.system)
         }
     }
 
@@ -280,7 +280,7 @@ class PrivacyManager: ObservableObject {
     // MARK: - Data Export (GDPR Right to Data Portability)
 
     func exportAllUserData() async throws -> URL {
-        print("📦 Exporting all user data...")
+        EchoelLogger.info("Exporting all user data...", category: EchoelLogger.system)
 
         var exportData: [String: Any] = [:]
 
@@ -305,7 +305,7 @@ class PrivacyManager: ObservableObject {
 
         try jsonData.write(to: tempURL)
 
-        print("✅ User data exported to: \(tempURL.path)")
+        EchoelLogger.success("User data exported to: \(tempURL.path)", category: EchoelLogger.system)
         return tempURL
     }
 
@@ -341,7 +341,7 @@ class PrivacyManager: ObservableObject {
     // MARK: - Data Deletion (GDPR Right to be Forgotten)
 
     func deleteAllUserData() async throws {
-        print("🗑️ Deleting all user data...")
+        EchoelLogger.info("Deleting all user data...", category: EchoelLogger.system)
 
         // Delete local database
         try await deleteLocalDatabase()
@@ -358,22 +358,22 @@ class PrivacyManager: ObservableObject {
         // Delete Keychain
         deleteEncryptionKeyFromKeychain()
 
-        print("✅ All user data deleted")
+        EchoelLogger.success("All user data deleted", category: EchoelLogger.system)
     }
 
     private func deleteLocalDatabase() async throws {
         // Delete local SQLite/CoreData database
-        print("   Deleted local database")
+        EchoelLogger.debug("Deleted local database", category: EchoelLogger.system)
     }
 
     private func deleteCloudData() async throws {
         // Delete iCloud data
-        print("   Deleted cloud data")
+        EchoelLogger.debug("Deleted cloud data", category: EchoelLogger.system)
     }
 
     private func deleteEncryptionKeyFromKeychain() {
         UserDefaults.standard.removeObject(forKey: "encryptionKey")
-        print("   Deleted encryption key")
+        EchoelLogger.debug("Deleted encryption key", category: EchoelLogger.system)
     }
 
     // MARK: - Privacy Nutrition Label Data
@@ -488,10 +488,10 @@ class PrivacyManager: ObservableObject {
             cloudStorageUsed = await calculateCloudStorageSize()
         }
 
-        print("💾 Storage Usage:")
-        print("   Local: \(ByteCountFormatter.string(fromByteCount: localStorageUsed, countStyle: .file))")
+        EchoelLogger.info("Storage Usage:", category: EchoelLogger.system)
+        EchoelLogger.info("Local: \(ByteCountFormatter.string(fromByteCount: localStorageUsed, countStyle: .file))", category: EchoelLogger.system)
         if cloudSyncEnabled {
-            print("   Cloud: \(ByteCountFormatter.string(fromByteCount: cloudStorageUsed, countStyle: .file))")
+            EchoelLogger.info("Cloud: \(ByteCountFormatter.string(fromByteCount: cloudStorageUsed, countStyle: .file))", category: EchoelLogger.system)
         }
     }
 

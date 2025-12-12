@@ -19,7 +19,7 @@ class AIComposer: ObservableObject {
 
     init() {
         // TODO: Load CoreML models
-        print("✅ AIComposer: Initialized")
+        EchoelLogger.success("AIComposer: Initialized", category: EchoelLogger.ai)
     }
 
     // MARK: - Melody Generation
@@ -29,7 +29,7 @@ class AIComposer: ObservableObject {
         defer { isGenerating = false }
 
         // TODO: Implement LSTM-based melody generation
-        print("🎼 AIComposer: Generating melody in \(key) \(scale) (\(bars) bars)")
+        EchoelLogger.log("🎼", "AIComposer: Generating melody in \(key) \(scale) (\(bars) bars)", category: EchoelLogger.ai)
 
         let notes = (0..<bars*4).map { _ in
             Note(pitch: Int.random(in: 60...72), duration: 0.25, velocity: 80)
@@ -45,7 +45,7 @@ class AIComposer: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎹 AIComposer: Suggesting chords for \(key) \(mood)")
+        EchoelLogger.log("🎹", "AIComposer: Suggesting chords for \(key) \(mood)", category: EchoelLogger.ai)
 
         let chords = [
             Chord(root: "C", type: .major),

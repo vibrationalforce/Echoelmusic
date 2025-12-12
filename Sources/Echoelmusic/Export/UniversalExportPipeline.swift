@@ -239,8 +239,8 @@ class UniversalExportPipeline: ObservableObject {
 
     init() {
         loadExportPresets()
-        print("✅ Universal Export Pipeline: Initialized")
-        print("📦 Presets: \(availablePresets.count)")
+        EchoelLogger.success("Universal Export Pipeline: Initialized", category: EchoelLogger.system)
+        EchoelLogger.info("Presets: \(availablePresets.count)", category: EchoelLogger.system)
     }
 
     // MARK: - Load Export Presets
@@ -507,13 +507,13 @@ class UniversalExportPipeline: ObservableObject {
             )
         ]
 
-        print("📦 Loaded \(availablePresets.count) export presets")
+        EchoelLogger.info("Loaded \(availablePresets.count) export presets", category: EchoelLogger.system)
     }
 
     // MARK: - Start Export
 
     func startExport(preset: ExportPreset, inputDuration: Double, outputPath: URL) async -> Bool {
-        print("🚀 Starting export: \(preset.name)")
+        EchoelLogger.info("Starting export: \(preset.name)", category: EchoelLogger.system)
 
         var job = ExportJob(
             preset: preset,
@@ -529,7 +529,7 @@ class UniversalExportPipeline: ObservableObject {
         currentExport = job
 
         // Preparation phase
-        print("   Preparing export...")
+        EchoelLogger.debug("Preparing export...", category: EchoelLogger.system)
         try? await Task.sleep(nanoseconds: 500_000_000)
         job.status = .exporting
         currentExport = job
@@ -543,13 +543,13 @@ class UniversalExportPipeline: ObservableObject {
             // Simulate processing time
             try? await Task.sleep(nanoseconds: 200_000_000)
 
-            print("   Progress: \(Int(progress * 100))%")
+            EchoelLogger.debug("Progress: \(Int(progress * 100))%", category: EchoelLogger.system)
         }
 
         // Finalization
         job.status = .finalizing
         currentExport = job
-        print("   Finalizing...")
+        EchoelLogger.debug("Finalizing...", category: EchoelLogger.system)
         try? await Task.sleep(nanoseconds: 500_000_000)
 
         // Complete
@@ -561,8 +561,8 @@ class UniversalExportPipeline: ObservableObject {
         exportProgress = 1.0
 
         let duration = job.endTime!.timeIntervalSince(job.startTime!)
-        print("✅ Export completed in \(String(format: "%.1f", duration))s")
-        print("📁 File size: \(ByteCountFormatter.string(fromByteCount: job.fileSize!, countStyle: .file))")
+        EchoelLogger.success("Export completed in \(String(format: "%.1f", duration))s", category: EchoelLogger.system)
+        EchoelLogger.info("File size: \(ByteCountFormatter.string(fromByteCount: job.fileSize!, countStyle: .file))", category: EchoelLogger.system)
 
         return true
     }

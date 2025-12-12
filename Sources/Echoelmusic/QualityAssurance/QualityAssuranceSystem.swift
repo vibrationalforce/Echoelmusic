@@ -321,14 +321,14 @@ class QualityAssuranceSystem: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Quality Assurance System: Initialized")
-        print("🔍 Ready for comprehensive quality testing")
+        EchoelLogger.info("Quality Assurance System: Initialized", category: EchoelLogger.system)
+        EchoelLogger.debug("Ready for comprehensive quality testing", category: EchoelLogger.system)
     }
 
     // MARK: - Run Complete Test Suite
 
     func runCompleteTestSuite() async {
-        print("🧪 Starting Complete Quality Test Suite...")
+        EchoelLogger.info("Starting Complete Quality Test Suite...", category: EchoelLogger.system)
 
         activeTests = []
         issues = []
@@ -363,16 +363,16 @@ class QualityAssuranceSystem: ObservableObject {
         // Calculate overall metrics
         calculateOverallQuality()
 
-        print("✅ Test Suite Complete")
-        print("📊 Overall Quality Score: \(String(format: "%.1f", overallQualityScore))%")
-        print("⚠️ Issues Found: \(issues.count)")
+        EchoelLogger.success("Test Suite Complete", category: EchoelLogger.system)
+        EchoelLogger.info("Overall Quality Score: \(String(format: "%.1f", overallQualityScore))%", category: EchoelLogger.system)
+        EchoelLogger.info("Issues Found: \(issues.count)", category: EchoelLogger.system)
     }
 
     private func runTest(name: String, category: QualityTest.TestCategory, duration: Double) async {
         var test = QualityTest(name: name, category: category, duration: duration, status: .running, result: nil)
         activeTests.append(test)
 
-        print("   Running: \(name)...")
+        EchoelLogger.debug("Running: \(name)...", category: EchoelLogger.system)
 
         // Simulate test execution
         try? await Task.sleep(nanoseconds: UInt64(min(duration, 1.0) * 1_000_000_000))
@@ -399,7 +399,7 @@ class QualityAssuranceSystem: ObservableObject {
             addIssue(for: test, score: score)
         }
 
-        print("   ✓ \(name): \(String(format: "%.1f", score))% [\(test.status.rawValue)]")
+        EchoelLogger.debug("\(name): \(String(format: "%.1f", score))% [\(test.status.rawValue)]", category: EchoelLogger.system)
     }
 
     private func generateTestDetails(for testName: String) -> String {

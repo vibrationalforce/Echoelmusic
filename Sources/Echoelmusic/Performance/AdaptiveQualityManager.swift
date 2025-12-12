@@ -29,7 +29,7 @@ class AdaptiveQualityManager {
         didSet {
             if currentQuality != oldValue {
                 qualityChangePublisher.send(currentQuality)
-                print("📊 Quality Level changed: \(oldValue.rawValue) → \(currentQuality.rawValue)")
+                EchoelLogger.info("Quality Level changed: \(oldValue.rawValue) → \(currentQuality.rawValue)", category: EchoelLogger.performance)
             }
         }
     }
@@ -503,8 +503,8 @@ class AdaptiveQualityManager {
     // MARK: - Quality Transition
 
     private func transitionToQuality(_ newQuality: QualityLevel) {
-        print("🔄 Transitioning quality: \(currentQuality.rawValue) → \(newQuality.rawValue)")
-        print("   FPS: \(String(format: "%.1f", metrics.averageFPS)) | CPU: \(String(format: "%.1f%%", metrics.cpuUsage * 100)) | GPU: \(String(format: "%.1f%%", metrics.gpuUsage * 100))")
+        EchoelLogger.info("Transitioning quality: \(currentQuality.rawValue) → \(newQuality.rawValue)", category: EchoelLogger.performance)
+        EchoelLogger.debug("FPS: \(String(format: "%.1f", metrics.averageFPS)) | CPU: \(String(format: "%.1f%%", metrics.cpuUsage * 100)) | GPU: \(String(format: "%.1f%%", metrics.gpuUsage * 100))", category: EchoelLogger.performance)
 
         currentQuality = newQuality
         lastQualityChange = Date()
@@ -626,7 +626,7 @@ class AdaptiveQualityManager {
     // MARK: - Emergency Handlers
 
     private func handleMemoryWarning() {
-        print("⚠️ Memory Warning! Degrading quality immediately.")
+        EchoelLogger.warning("Memory Warning! Degrading quality immediately.", category: EchoelLogger.performance)
 
         // Sofortige Qualitätsreduzierung
         if currentQuality > .minimal {
@@ -640,7 +640,7 @@ class AdaptiveQualityManager {
 
     private func clearCaches() {
         // Implementierung würde hier Caches leeren
-        print("🧹 Clearing caches to free memory")
+        EchoelLogger.debug("Clearing caches to free memory", category: EchoelLogger.performance)
     }
 
     // MARK: - Manual Control

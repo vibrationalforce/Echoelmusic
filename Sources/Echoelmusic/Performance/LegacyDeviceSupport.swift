@@ -236,9 +236,9 @@ class LegacyDeviceSupport: ObservableObject {
         setupThermalStateObserver()
         applyAdaptiveSettings()
 
-        print("✅ Legacy Device Support: Initialized")
-        print("📱 Current Device: \(currentDevice?.deviceName ?? "Unknown")")
-        print("⚡️ Performance Level: \(performanceLevel.rawValue)")
+        EchoelLogger.success("Legacy Device Support: Initialized", category: EchoelLogger.performance)
+        EchoelLogger.log("📱", "Current Device: \(currentDevice?.deviceName ?? "Unknown")", category: EchoelLogger.performance)
+        EchoelLogger.log("⚡️", "Performance Level: \(performanceLevel.rawValue)", category: EchoelLogger.performance)
     }
 
     // MARK: - Load Device Database
@@ -460,7 +460,7 @@ class LegacyDeviceSupport: ObservableObject {
             )
         ]
 
-        print("📊 Device Database: \(deviceDatabase.count) profiles")
+        EchoelLogger.debug("Device Database: \(deviceDatabase.count) profiles", category: EchoelLogger.performance)
     }
 
     // MARK: - Detect Current Device
@@ -538,7 +538,7 @@ class LegacyDeviceSupport: ObservableObject {
 
     private func handleMemoryWarning() {
         memoryWarningReceived = true
-        print("⚠️ Memory Warning Received - Degrading Performance")
+        EchoelLogger.warning("Memory Warning Received - Degrading Performance", category: EchoelLogger.performance)
 
         // Emergency performance reduction
         switch performanceLevel {
@@ -557,14 +557,14 @@ class LegacyDeviceSupport: ObservableObject {
         // Clear caches
         clearCaches()
 
-        print("   Reduced to: \(performanceLevel.rawValue)")
+        EchoelLogger.warning("Reduced to: \(performanceLevel.rawValue)", category: EchoelLogger.performance)
     }
 
     private func clearCaches() {
         // Clear texture cache
         // Clear audio sample cache
         // Clear any other memory-heavy caches
-        print("   Caches cleared")
+        EchoelLogger.debug("Caches cleared", category: EchoelLogger.performance)
     }
 
     // MARK: - Thermal State Observer
@@ -584,7 +584,7 @@ class LegacyDeviceSupport: ObservableObject {
     private func handleThermalStateChange() {
         thermalState = ProcessInfo.processInfo.thermalState
 
-        print("🌡️ Thermal State Changed: \(thermalState)")
+        EchoelLogger.log("🌡️", "Thermal State Changed: \(thermalState)", category: EchoelLogger.performance)
 
         switch thermalState {
         case .nominal:
@@ -595,20 +595,20 @@ class LegacyDeviceSupport: ObservableObject {
             // Slight throttling
             if performanceLevel == .ultra {
                 performanceLevel = .high
-                print("   Throttling: Ultra → High")
+                EchoelLogger.warning("Throttling: Ultra → High", category: EchoelLogger.performance)
             }
 
         case .serious:
             // Significant throttling
             if performanceLevel > .medium {
                 performanceLevel = .medium
-                print("   Throttling: → Medium")
+                EchoelLogger.warning("Throttling: → Medium", category: EchoelLogger.performance)
             }
 
         case .critical:
             // Emergency throttling
             performanceLevel = .low
-            print("   Emergency Throttling: → Low")
+            EchoelLogger.warning("Emergency Throttling: → Low", category: EchoelLogger.performance)
 
         @unknown default:
             break
@@ -622,12 +622,12 @@ class LegacyDeviceSupport: ObservableObject {
 
         let settings = device.recommendedSettings
 
-        print("🎛️ Applying Adaptive Settings:")
-        print("   Target FPS: \(settings.targetFPS)")
-        print("   Particles: \(settings.maxParticles)")
-        print("   Audio Sample Rate: \(settings.audioSampleRate) Hz")
-        print("   Texture Quality: \(settings.textureQuality.rawValue)")
-        print("   Effects Quality: \(settings.effectsQuality.rawValue)")
+        EchoelLogger.debug("Applying Adaptive Settings:", category: EchoelLogger.performance)
+        EchoelLogger.debug("Target FPS: \(settings.targetFPS)", category: EchoelLogger.performance)
+        EchoelLogger.debug("Particles: \(settings.maxParticles)", category: EchoelLogger.performance)
+        EchoelLogger.debug("Audio Sample Rate: \(settings.audioSampleRate) Hz", category: EchoelLogger.performance)
+        EchoelLogger.debug("Texture Quality: \(settings.textureQuality.rawValue)", category: EchoelLogger.performance)
+        EchoelLogger.debug("Effects Quality: \(settings.effectsQuality.rawValue)", category: EchoelLogger.performance)
     }
 
     // MARK: - Get Optimal Settings

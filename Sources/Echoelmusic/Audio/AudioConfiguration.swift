@@ -84,12 +84,14 @@ enum AudioConfiguration {
         // Activate session
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
 
-        print("🎵 Audio Session Configured:")
-        print("   Sample Rate: \(audioSession.sampleRate) Hz")
-        print("   IO Buffer Duration: \(audioSession.ioBufferDuration * 1000) ms")
-        print("   Input Latency: \(audioSession.inputLatency * 1000) ms")
-        print("   Output Latency: \(audioSession.outputLatency * 1000) ms")
-        print("   Total Latency: \((audioSession.inputLatency + audioSession.outputLatency + audioSession.ioBufferDuration) * 1000) ms")
+        EchoelLogger.info("""
+            Audio Session Configured:
+               Sample Rate: \(audioSession.sampleRate) Hz
+               IO Buffer Duration: \(audioSession.ioBufferDuration * 1000) ms
+               Input Latency: \(audioSession.inputLatency * 1000) ms
+               Output Latency: \(audioSession.outputLatency * 1000) ms
+               Total Latency: \((audioSession.inputLatency + audioSession.outputLatency + audioSession.ioBufferDuration) * 1000) ms
+            """, category: EchoelLogger.audio)
     }
 
 
@@ -121,7 +123,7 @@ enum AudioConfiguration {
     static func setLatencyMode(_ mode: LatencyMode) throws {
         currentBufferSize = mode.bufferSize
         try configureAudioSession()
-        print("🎵 Latency mode set to: \(mode.description)")
+        EchoelLogger.info("Latency mode set to: \(mode.description)", category: EchoelLogger.audio)
     }
 
 
@@ -167,9 +169,9 @@ enum AudioConfiguration {
         }
 
         if result == KERN_SUCCESS {
-            print("✅ Real-time audio thread priority set")
+            EchoelLogger.success("Real-time audio thread priority set", category: EchoelLogger.audio)
         } else {
-            print("⚠️  Failed to set audio thread priority: \(result)")
+            EchoelLogger.warning("Failed to set audio thread priority: \(result)", category: EchoelLogger.audio)
         }
     }
 

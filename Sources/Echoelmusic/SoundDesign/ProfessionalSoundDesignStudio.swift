@@ -442,8 +442,8 @@ class ProfessionalSoundDesignStudio: ObservableObject {
 
     init() {
         setupDefaultExportFormats()
-        print("✅ Professional Sound Design Studio: Initialized")
-        print("🎬 Ready for film, TV, content creation")
+        EchoelLogger.success("Professional Sound Design Studio: Initialized", category: EchoelLogger.audio)
+        EchoelLogger.log("🎬", "Ready for film, TV, content creation", category: EchoelLogger.audio)
     }
 
     private func setupDefaultExportFormats() {
@@ -503,7 +503,7 @@ class ProfessionalSoundDesignStudio: ObservableObject {
         )
 
         currentProject = project
-        print("🎬 Created project: \(name) (\(type.rawValue))")
+        EchoelLogger.log("🎬", "Created project: \(name) (\(type.rawValue))", category: EchoelLogger.audio)
 
         return project
     }
@@ -517,10 +517,10 @@ class ProfessionalSoundDesignStudio: ObservableObject {
         let gainDB = targetLoudness - currentLoudness
         let gain = pow(10.0, gainDB / 20.0)
 
-        print("🔊 Normalizing loudness:")
-        print("   Current: \(String(format: "%.1f", currentLoudness)) LUFS")
-        print("   Target: \(String(format: "%.1f", targetLoudness)) LUFS")
-        print("   Gain: \(String(format: "%.1f", gainDB)) dB")
+        EchoelLogger.log("🔊", "Normalizing loudness:", category: EchoelLogger.audio)
+        EchoelLogger.info("   Current: \(String(format: "%.1f", currentLoudness)) LUFS", category: EchoelLogger.audio)
+        EchoelLogger.info("   Target: \(String(format: "%.1f", targetLoudness)) LUFS", category: EchoelLogger.audio)
+        EchoelLogger.info("   Gain: \(String(format: "%.1f", gainDB)) dB", category: EchoelLogger.audio)
 
         return audio.map { $0 * gain }
     }
@@ -535,14 +535,14 @@ class ProfessionalSoundDesignStudio: ObservableObject {
     // MARK: - Generate Foley
 
     func generateFoley(_ type: FoleyGenerator.FoleyType, duration: Float, intensity: Float = 1.0) -> [Float] {
-        print("🎤 Generating foley: \(type.rawValue)")
+        EchoelLogger.log("🎤", "Generating foley: \(type.rawValue)", category: EchoelLogger.audio)
         return FoleyGenerator.synthesize(type, duration: duration, intensity: intensity, sampleRate: 48000)
     }
 
     // MARK: - Generate Ambience
 
     func generateAmbience(_ type: AmbienceDesigner.AmbienceType, duration: Float, density: Float = 0.5) -> AmbienceDesigner.AmbienceLayers {
-        print("🌊 Generating ambience: \(type.rawValue)")
+        EchoelLogger.log("🌊", "Generating ambience: \(type.rawValue)", category: EchoelLogger.audio)
         return AmbienceDesigner.generate(type, duration: duration, density: density, sampleRate: 48000)
     }
 

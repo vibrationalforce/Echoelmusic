@@ -104,7 +104,7 @@ struct Track: Identifiable, Codable {
             self.waveformData = waveform
 
         } catch {
-            print("❌ Failed to generate waveform: \(error)")
+            EchoelLogger.error("Failed to generate waveform: \(error)", category: EchoelLogger.audio)
         }
     }
 
