@@ -1,0 +1,418 @@
+# SwiftLint Configuration for Echoelmusic
+# Swift 5.7+ | SwiftUI + Combine | Multi-platform Audio/Visual Application
+# Targets: iOS 15+, macOS 12+, watchOS 8+, tvOS 15+, visionOS 1+
+
+# MARK: - Paths Configuration
+
+included:
+  - Sources
+  - Tests
+
+excluded:
+  - .build
+  - .swiftpm
+  - DerivedData
+  - build
+  - Packages
+  - .git
+  - android
+  - installers
+  - Prompts
+  - Resources
+  - Echoelmusic # Old directory structure if present
+
+# MARK: - Reporter
+
+reporter: "xcode"
+
+# MARK: - Rule Configurations
+
+line_length:
+  warning: 120
+  error: 200
+  ignores_function_declarations: true
+  ignores_comments: true
+  ignores_urls: true
+
+file_length:
+  warning: 500
+  error: 1000
+  ignore_comment_only_lines: true
+
+function_body_length:
+  warning: 50
+  error: 100
+
+type_body_length:
+  warning: 300
+  error: 500
+
+cyclomatic_complexity:
+  warning: 10
+  error: 20
+  ignores_case_statements: true
+
+nesting:
+  type_level:
+    warning: 3
+  function_level:
+    warning: 5
+
+type_name:
+  min_length: 3
+  max_length: 50
+  excluded:
+    - TR808BassSynth
+    - TR808DSPKernel
+
+function_parameter_count:
+  warning: 6
+  error: 8
+
+large_tuple:
+  warning: 3
+  error: 4
+
+# MARK: - Opt-In Rules
+# Enable additional rules beyond defaults
+
+opt_in_rules:
+  - attributes
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - contains_over_first_not_nil
+  - contains_over_range_nil_comparison
+  - convenience_type
+  - discouraged_object_literal
+  - empty_collection_literal
+  - empty_count
+  - empty_string
+  - empty_xctest_method
+  - explicit_init
+  - extension_access_modifier
+  - fallthrough
+  - fatal_error_message
+  - file_header
+  - first_where
+  - flatmap_over_map_reduce
+  - force_unwrapping
+  - identical_operands
+  - implicit_return
+  - implicitly_unwrapped_optional
+  - joined_default_parameter
+  - last_where
+  - legacy_multiple
+  - legacy_random
+  - literal_expression_end_indentation
+  - lower_acl_than_parent
+  - modifier_order
+  - multiline_arguments
+  - multiline_function_chains
+  - multiline_literal_brackets
+  - multiline_parameters
+  - multiline_parameters_brackets
+  - operator_usage_whitespace
+  - overridden_super_call
+  - override_in_extension
+  - pattern_matching_keywords
+  - prefer_self_type_over_type_of_self
+  - prefer_zero_over_explicit_init
+  - private_action
+  - private_outlet
+  - prohibited_super_call
+  - reduce_into
+  - redundant_nil_coalescing
+  - redundant_type_annotation
+  - single_test_class
+  - sorted_first_last
+  - static_operator
+  - toggle_bool
+  - trailing_closure
+  - unavailable_function
+  - unneeded_parentheses_in_closure_argument
+  - unowned_variable_capture
+  - vertical_parameter_alignment_on_call
+  - vertical_whitespace_closing_braces
+  - vertical_whitespace_opening_braces
+  - weak_delegate
+  - yoda_condition
+
+# MARK: - Disabled Rules
+
+disabled_rules:
+  - todo # Intentional TODOs are acceptable in development
+  - blanket_disable_command # Allow disabling rules where needed
+  - identifier_name # Short names like 'x', 'y', 'id', 'db' are acceptable for audio/visual code
+  - line_length # Handled by configuration above, not disabled
+  - multiple_closures_with_trailing_closure # SwiftUI patterns use this extensively
+  - trailing_comma # Can be useful in SwiftUI view builders
+  - unused_closure_parameter # Sometimes needed for protocol conformance
+
+# MARK: - Warning Thresholds
+
+force_cast: warning
+force_try: warning
+force_unwrapping: warning
+
+# MARK: - Custom Rules
+# Audio/Visual specific patterns and best practices
+
+custom_rules:
+
+  # Audio Engine Safety
+  audio_engine_start_try:
+    name: "Audio Engine Start with Try"
+    regex: '(audioEngine\.start\(\))'
+    message: "Audio engine start should be wrapped in try/catch"
+    severity: warning
+
+  # HealthKit Authorization
+  healthkit_authorization:
+    name: "HealthKit Authorization Check"
+    regex: '(HealthKit.*\.requestAuthorization)'
+    message: "Ensure HealthKit authorization is properly handled"
+    severity: warning
+
+  # Main Thread Audio UI
+  main_thread_ui_update:
+    name: "Main Thread UI Update"
+    regex: '(DispatchQueue\.main\.async)'
+    message: "Good practice: UI updates on main thread"
+    severity: none
+
+  # Spatial Audio Compatibility
+  spatial_audio_availability:
+    name: "Spatial Audio Availability Check"
+    regex: '(@available\(iOS 15|@available\(macOS 12)'
+    message: "Ensure spatial audio features check availability"
+    severity: none
+
+  # AVAudioSession Configuration
+  audio_session_category:
+    name: "Audio Session Category"
+    regex: '(AVAudioSession\.sharedInstance\(\)\.setCategory)'
+    message: "Ensure audio session category is appropriate for use case"
+    severity: none
+
+  # Buffer Safety
+  unsafe_buffer_pointer:
+    name: "Unsafe Buffer Pointer Usage"
+    regex: '(UnsafeBufferPointer|UnsafeMutableBufferPointer)'
+    message: "Review unsafe buffer pointer usage for memory safety"
+    severity: warning
+
+  # MIDI Thread Safety
+  midi_packet_list:
+    name: "MIDI Packet List Thread Safety"
+    regex: '(MIDIPacketList|MIDI2Packet)'
+    message: "Ensure MIDI packet processing is thread-safe"
+    severity: warning
+
+  # SwiftUI Performance
+  unnecessary_body_property:
+    name: "Unnecessary @State in body"
+    regex: '(@State.*var.*:.*=.*)\s*\n\s*(var body: some View)'
+    message: "Avoid @State declarations inside body property"
+    severity: error
+
+  # DSP Algorithm Documentation
+  dsp_algorithm_comment:
+    name: "DSP Algorithm Documentation"
+    regex: '(func.*DSP|func.*Filter|func.*Process.*Audio).*\{'
+    message: "Consider adding documentation for DSP algorithms"
+    severity: none
+
+  # Real-time Audio Processing
+  realtime_audio_allocation:
+    name: "Avoid Allocations in Real-time Audio"
+    regex: '(\.map\(|\.filter\(|\.reduce\().*AudioBuffer'
+    message: "Avoid allocations in real-time audio processing"
+    severity: warning
+
+  # visionOS Immersive Space
+  immersive_space_check:
+    name: "visionOS Immersive Space Check"
+    regex: '(@available\(visionOS)'
+    message: "Ensure visionOS immersive features check availability"
+    severity: none
+
+  # Energy Efficiency
+  background_audio_task:
+    name: "Background Audio Task"
+    regex: '(beginBackgroundTask)'
+    message: "Ensure background tasks are properly ended to save energy"
+    severity: warning
+
+  # Combine Memory Management
+  combine_cancellable_storage:
+    name: "Combine Cancellable Storage"
+    regex: '(\.sink\()'
+    message: "Ensure Combine subscriptions are stored to prevent premature cancellation"
+    severity: warning
+
+# MARK: - File Header Template
+# Uncomment and customize if you want to enforce file headers
+
+# file_header:
+#   required_pattern: |
+#                     \/\/
+#                     \/\/ .*?\.swift
+#                     \/\/ Echoelmusic
+#                     \/\/
+#                     \/\/ Created by .* on \d{1,2}\/\d{1,2}\/\d{2,4}\.
+#                     \/\/
+
+# MARK: - Analyzer Rules
+# Rules that require the full build process (slower but more thorough)
+
+analyzer_rules:
+  - unused_import
+  - unused_declaration
+
+# MARK: - Attributes Configuration
+
+attributes:
+  always_on_same_line:
+    - "@IBAction"
+    - "@NSManaged"
+    - "@objc"
+    - "@available"
+  always_on_line_above:
+    - "@discardableResult"
+    - "@MainActor"
+    - "@Published"
+    - "@ObservedObject"
+    - "@StateObject"
+    - "@State"
+    - "@Binding"
+    - "@Environment"
+    - "@EnvironmentObject"
+
+# MARK: - Modifier Order
+
+modifier_order:
+  preferred_modifier_order:
+    - override
+    - acl
+    - setteracl
+    - dynamic
+    - mutators
+    - lazy
+    - final
+    - required
+    - convenience
+    - typeMethods
+    - owned
+
+# MARK: - SwiftUI Specific Configurations
+
+# Allow implicit returns for SwiftUI views
+implicit_return:
+  included:
+    - closure
+    - function
+    - getter
+
+# Multiline parameters for SwiftUI views
+multiline_parameters:
+  allowsSingleLine: true
+
+# MARK: - Performance and Memory
+
+# Encourage value types over reference types where appropriate
+class_delegate_protocol:
+  severity: warning
+
+# MARK: - Documentation
+
+# Encourage documentation for public APIs
+missing_docs:
+  warning:
+    - public
+  excludes_extensions: true
+  excludes_inherited_types: true
+
+# MARK: - Code Organization
+
+vertical_whitespace:
+  max_empty_lines: 2
+
+trailing_whitespace:
+  ignores_empty_lines: false
+  ignores_comments: false
+
+# MARK: - Naming Conventions
+
+# Allow audio-specific abbreviations
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  max_length:
+    warning: 50
+    error: 60
+  excluded:
+    - id
+    - db # Decibels
+    - hz # Hertz
+    - x
+    - y
+    - z
+    - q # Quality factor in filters
+    - f0 # Fundamental frequency
+    - fc # Cutoff frequency
+    - t # Time
+    - dt # Delta time
+    - fft # Fast Fourier Transform
+    - dft # Discrete Fourier Transform
+    - bpm # Beats per minute
+    - lpf # Low-pass filter
+    - hpf # High-pass filter
+    - bpf # Band-pass filter
+    - mpe # MIDI Polyphonic Expression
+    - osc # Oscillator
+    - env # Envelope
+    - lfo # Low-frequency oscillator
+    - vca # Voltage-controlled amplifier
+    - vcf # Voltage-controlled filter
+    - adsr # Attack-Decay-Sustain-Release
+    - rms # Root mean square
+    - ui # User interface
+    - ar # Augmented reality
+    - vr # Virtual reality
+    - xr # Extended reality
+    - ai # Artificial intelligence
+    - ml # Machine learning
+    - rgb # Red-Green-Blue
+    - hsb # Hue-Saturation-Brightness
+
+# MARK: - Build Performance
+
+compilation_conditions:
+  - DEBUG
+  - RELEASE
+  - TEST
+
+# MARK: - Project-Specific Allowances
+
+# Allow longer function bodies for DSP algorithms and SwiftUI views
+function_body_length:
+  warning: 50
+  error: 100
+
+# Allow longer type bodies for comprehensive engines and managers
+type_body_length:
+  warning: 300
+  error: 500
+
+# Allow slightly higher cyclomatic complexity for audio routing and state machines
+cyclomatic_complexity:
+  warning: 10
+  error: 20
+  ignores_case_statements: true
+
+# MARK: - SwiftLint Version
+# This configuration is optimized for SwiftLint 0.50.0+
