@@ -152,7 +152,7 @@ class BackgroundSourceManager: ObservableObject {
         // Initialize available sources
         initializeDefaultSources()
 
-        print("✅ BackgroundSourceManager: Initialized")
+        EchoelLogger.success("BackgroundSourceManager: Initialized", category: EchoelLogger.system)
     }
 
     deinit {
@@ -228,12 +228,12 @@ class BackgroundSourceManager: ObservableObject {
             }
 
             isLoading = false
-            print("✅ BackgroundSourceManager: Set source to '\(source.displayName)'")
+            EchoelLogger.success("BackgroundSourceManager: Set source to '\(source.displayName)'", category: EchoelLogger.system)
 
         } catch {
             isLoading = false
             errorMessage = error.localizedDescription
-            print("❌ BackgroundSourceManager: Failed to set source - \(error)")
+            EchoelLogger.error("BackgroundSourceManager: Failed to set source - \(error)", category: EchoelLogger.system)
             throw error
         }
     }
@@ -507,7 +507,7 @@ class BackgroundSourceManager: ObservableObject {
         // Start display link for frame updates
         startDisplayLink()
 
-        print("▶️ BackgroundSourceManager: Started video playback")
+        EchoelLogger.log("▶️", "BackgroundSourceManager: Started video playback", category: EchoelLogger.system)
     }
 
     private func stopVideoPlayback() {
@@ -545,7 +545,7 @@ class BackgroundSourceManager: ObservableObject {
         // TODO: Implement live camera capture using AVCaptureSession
         // For now, use solid color as placeholder
         try await setSource(.solidColor(.blue))
-        print("⚠️ BackgroundSourceManager: Live camera not yet implemented")
+        EchoelLogger.warning("BackgroundSourceManager: Live camera not yet implemented", category: EchoelLogger.system)
     }
 
     // MARK: - Echoelmusic Visual Integration
@@ -557,7 +557,7 @@ class BackgroundSourceManager: ObservableObject {
         // For now, create placeholder
         echoelmusicVisualRenderer = EchoelmusicVisualRenderer(device: device, type: type)
 
-        print("🎨 BackgroundSourceManager: Started Echoelmusic visual '\(type.displayName)'")
+        EchoelLogger.log("🎨", "BackgroundSourceManager: Started Echoelmusic visual '\(type.displayName)'", category: EchoelLogger.system)
     }
 
     // MARK: - Blur Background
@@ -565,7 +565,7 @@ class BackgroundSourceManager: ObservableObject {
     private func renderBlurBackground(type: BlurType, intensity: Float) async throws {
         // TODO: Implement blur using CIFilter
         try await setSource(.solidColor(.gray))
-        print("⚠️ BackgroundSourceManager: Blur backgrounds not yet fully implemented")
+        EchoelLogger.warning("BackgroundSourceManager: Blur backgrounds not yet fully implemented", category: EchoelLogger.system)
     }
 
     // MARK: - Update Animated Source

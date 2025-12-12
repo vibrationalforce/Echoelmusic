@@ -78,7 +78,7 @@ class MultiCamManager: NSObject, ObservableObject {
         let result = CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, device, nil, &textureCacheRef)
 
         guard result == kCVReturnSuccess, let cache = textureCacheRef else {
-            print("MultiCamManager: Failed to create texture cache")
+            EchoelLogger.error("MultiCamManager: Failed to create texture cache", category: EchoelLogger.system)
             return nil
         }
         self.textureCache = cache
@@ -88,7 +88,7 @@ class MultiCamManager: NSObject, ObservableObject {
         // Check multi-cam support
         isMultiCamSupported = AVCaptureMultiCamSession.isMultiCamSupported
 
-        print("MultiCamManager: Initialized (Multi-Cam supported: \(isMultiCamSupported))")
+        EchoelLogger.success("MultiCamManager: Initialized (Multi-Cam supported: \(isMultiCamSupported))", category: EchoelLogger.system)
     }
 
     // MARK: - Configure Multi-Cam Session
@@ -127,7 +127,7 @@ class MultiCamManager: NSObject, ObservableObject {
                 activeAngles.append(angle)
 
             } catch {
-                print("MultiCamManager: Failed to add \(camera.rawValue): \(error)")
+                EchoelLogger.error("MultiCamManager: Failed to add \(camera.rawValue): \(error)", category: EchoelLogger.system)
             }
         }
 
@@ -140,7 +140,7 @@ class MultiCamManager: NSObject, ObservableObject {
             primaryAngle = first
         }
 
-        print("MultiCamManager: Configured \(activeAngles.count) cameras")
+        EchoelLogger.success("MultiCamManager: Configured \(activeAngles.count) cameras", category: EchoelLogger.system)
     }
 
     private func addCamera(_ camera: CameraManager.CameraPosition, to session: AVCaptureMultiCamSession) throws {
@@ -202,7 +202,7 @@ class MultiCamManager: NSObject, ObservableObject {
         session.startRunning()
         isCapturing = true
 
-        print("MultiCamManager: Started capture with \(activeAngles.count) cameras")
+        EchoelLogger.log("▶️", "MultiCamManager: Started capture with \(activeAngles.count) cameras", category: EchoelLogger.system)
     }
 
     func stopCapture() {
@@ -211,7 +211,7 @@ class MultiCamManager: NSObject, ObservableObject {
         session.stopRunning()
         isCapturing = false
 
-        print("MultiCamManager: Stopped capture")
+        EchoelLogger.log("⏹️", "MultiCamManager: Stopped capture", category: EchoelLogger.system)
     }
 
     // MARK: - Recording
@@ -265,7 +265,7 @@ class MultiCamManager: NSObject, ObservableObject {
             }
         }
 
-        print("MultiCamManager: Started recording \(activeAngles.count) angles")
+        EchoelLogger.log("🎬", "MultiCamManager: Started recording \(activeAngles.count) angles", category: EchoelLogger.system)
     }
 
     func stopRecording() async throws -> [URL] {
@@ -294,7 +294,7 @@ class MultiCamManager: NSObject, ObservableObject {
         pixelBufferAdaptors.removeAll()
         recordingStartTime = nil
 
-        print("MultiCamManager: Stopped recording, saved \(outputURLs.count) files")
+        EchoelLogger.success("MultiCamManager: Stopped recording, saved \(outputURLs.count) files", category: EchoelLogger.system)
 
         return outputURLs
     }
@@ -303,7 +303,7 @@ class MultiCamManager: NSObject, ObservableObject {
 
     func setPrimaryAngle(_ angle: CameraAngle) {
         primaryAngle = angle
-        print("MultiCamManager: Switched primary to \(angle.camera.rawValue)")
+        EchoelLogger.log("📷", "MultiCamManager: Switched primary to \(angle.camera.rawValue)", category: EchoelLogger.system)
     }
 
     func getPrimaryTexture() -> MTLTexture? {
@@ -794,7 +794,7 @@ class VideoStabilizer: ObservableObject {
             }
         }
 
-        print("VideoStabilizer: Completed stabilization of \(totalFrames) frames")
+        EchoelLogger.success("VideoStabilizer: Completed stabilization of \(totalFrames) frames", category: EchoelLogger.system)
     }
 
     private func calculateSmoothedPath(mode: StabilizationMode) {
@@ -971,13 +971,13 @@ extension VideoEditingEngine {
 
         videoTracks.append(track)
 
-        print("VideoEditingEngine: Added multi-cam clip with \(clip.angleURLs.count) angles")
+        EchoelLogger.log("🎬", "VideoEditingEngine: Added multi-cam clip with \(clip.angleURLs.count) angles", category: EchoelLogger.system)
     }
 
     /// Switch angle at specific time
     func switchMultiCamAngle(clipID: UUID, at time: CMTime, to angle: CameraManager.CameraPosition) {
         // In production: Handle angle switch in timeline
-        print("VideoEditingEngine: Switching to \(angle.rawValue) at \(CMTimeGetSeconds(time))s")
+        EchoelLogger.log("🔀", "VideoEditingEngine: Switching to \(angle.rawValue) at \(CMTimeGetSeconds(time))s", category: EchoelLogger.system)
     }
 }
 

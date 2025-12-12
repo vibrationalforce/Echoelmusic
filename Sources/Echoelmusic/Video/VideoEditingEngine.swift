@@ -54,7 +54,7 @@ class VideoEditingEngine: ObservableObject {
 
     init(timeline: Timeline = Timeline()) {
         self.timeline = timeline
-        print("✅ VideoEditingEngine: Initialized with Undo/Redo support")
+        EchoelLogger.success("VideoEditingEngine: Initialized with Undo/Redo support", category: EchoelLogger.system)
     }
 
     // MARK: - Undo/Redo Convenience Methods
@@ -117,7 +117,7 @@ class VideoEditingEngine: ObservableObject {
         )
 
         undoManager.execute(command)
-        print("➕ VideoEditingEngine: Added clip '\(clip.name)' to track '\(track.name)' at \(snappedTime.seconds)s")
+        EchoelLogger.log("➕", "VideoEditingEngine: Added clip '\(clip.name)' to track '\(track.name)' at \(snappedTime.seconds)s", category: EchoelLogger.system)
     }
 
     func removeClip(_ clipID: UUID, from track: Track) {
@@ -141,7 +141,7 @@ class VideoEditingEngine: ObservableObject {
         )
 
         undoManager.execute(command)
-        print("➖ VideoEditingEngine: Removed clip '\(clip.name)' from track '\(track.name)'")
+        EchoelLogger.log("➖", "VideoEditingEngine: Removed clip '\(clip.name)' from track '\(track.name)'", category: EchoelLogger.system)
     }
 
     func moveClip(_ clipID: UUID, from sourceTrack: Track, to destinationTrack: Track, at time: CMTime) {
@@ -173,7 +173,7 @@ class VideoEditingEngine: ObservableObject {
         )
 
         undoManager.execute(command)
-        print("🔀 VideoEditingEngine: Moved clip '\(clip.name)' to track '\(destinationTrack.name)'")
+        EchoelLogger.log("🔀", "VideoEditingEngine: Moved clip '\(clip.name)' to track '\(destinationTrack.name)'", category: EchoelLogger.system)
     }
 
     // MARK: - Edit Operations
@@ -191,7 +191,7 @@ class VideoEditingEngine: ObservableObject {
             track.clips[i].startTime = track.clips[i].startTime + delta
         }
 
-        print("✂️ VideoEditingEngine: Ripple edit - shifted \(track.clips.count - index - 1) clips by \(delta.seconds)s")
+        EchoelLogger.log("✂️", "VideoEditingEngine: Ripple edit - shifted \(track.clips.count - index - 1) clips by \(delta.seconds)s", category: EchoelLogger.system)
     }
 
     func rollEdit(leftClipID: UUID, rightClipID: UUID, track: Track, newCutPoint: CMTime) {
@@ -211,7 +211,7 @@ class VideoEditingEngine: ObservableObject {
         track.clips[rightIndex].startTime = rightNewStart
         track.clips[rightIndex].duration = rightNewDuration
 
-        print("🎞️ VideoEditingEngine: Roll edit - moved cut point to \(newCutPoint.seconds)s")
+        EchoelLogger.log("🎞️", "VideoEditingEngine: Roll edit - moved cut point to \(newCutPoint.seconds)s", category: EchoelLogger.system)
     }
 
     func slipEdit(clipID: UUID, track: Track, newInPoint: CMTime) {
@@ -221,7 +221,7 @@ class VideoEditingEngine: ObservableObject {
         track.clips[index].inPoint = newInPoint
         track.clips[index].outPoint = newInPoint + track.clips[index].duration
 
-        print("🔄 VideoEditingEngine: Slip edit - new in point: \(newInPoint.seconds)s")
+        EchoelLogger.log("🔄", "VideoEditingEngine: Slip edit - new in point: \(newInPoint.seconds)s", category: EchoelLogger.system)
     }
 
     func slideEdit(clipID: UUID, track: Track, newStartTime: CMTime) {
@@ -243,7 +243,7 @@ class VideoEditingEngine: ObservableObject {
             track.clips[index + 1].startTime = newStartTime + clip.duration
         }
 
-        print("↔️ VideoEditingEngine: Slide edit - moved clip to \(newStartTime.seconds)s")
+        EchoelLogger.log("↔️", "VideoEditingEngine: Slide edit - moved clip to \(newStartTime.seconds)s", category: EchoelLogger.system)
     }
 
     func splitClip(clipID: UUID, track: Track, at time: CMTime) -> (UUID, UUID)? {
@@ -291,7 +291,7 @@ class VideoEditingEngine: ObservableObject {
         )
 
         undoManager.execute(command)
-        print("✂️ VideoEditingEngine: Split clip '\(originalClip.name)' at \(time.seconds)s")
+        EchoelLogger.log("✂️", "VideoEditingEngine: Split clip '\(originalClip.name)' at \(time.seconds)s", category: EchoelLogger.system)
 
         return (leftID, rightID)
     }
@@ -305,7 +305,7 @@ class VideoEditingEngine: ObservableObject {
         track.clips[index].keyframes[property, default: []].append(keyframe)
         track.clips[index].keyframes[property]?.sort { $0.time < $1.time }
 
-        print("🎯 VideoEditingEngine: Added keyframe for \(property.rawValue) at \(time.seconds)s")
+        EchoelLogger.log("🎯", "VideoEditingEngine: Added keyframe for \(property.rawValue) at \(time.seconds)s", category: EchoelLogger.system)
     }
 
     func removeKeyframe(clipID: UUID, track: Track, property: KeyframeProperty, at time: CMTime) {
@@ -313,7 +313,7 @@ class VideoEditingEngine: ObservableObject {
 
         track.clips[index].keyframes[property]?.removeAll { abs($0.time.seconds - time.seconds) < 0.01 }
 
-        print("🗑️ VideoEditingEngine: Removed keyframe for \(property.rawValue)")
+        EchoelLogger.log("🗑️", "VideoEditingEngine: Removed keyframe for \(property.rawValue)", category: EchoelLogger.system)
     }
 
     func evaluateKeyframe(clipID: UUID, track: Track, property: KeyframeProperty, at time: CMTime) -> Float? {
@@ -379,9 +379,9 @@ class VideoEditingEngine: ObservableObject {
             // Observe time
             startTimeObserver()
 
-            print("▶️ VideoEditingEngine: Started playback")
+            EchoelLogger.log("▶️", "VideoEditingEngine: Started playback", category: EchoelLogger.system)
         } catch {
-            print("❌ VideoEditingEngine: Failed to build composition - \(error)")
+            EchoelLogger.error("VideoEditingEngine: Failed to build composition - \(error)", category: EchoelLogger.system)
         }
     }
 
@@ -393,7 +393,7 @@ class VideoEditingEngine: ObservableObject {
 
         stopTimeObserver()
 
-        print("⏸️ VideoEditingEngine: Paused playback")
+        EchoelLogger.log("⏸️", "VideoEditingEngine: Paused playback", category: EchoelLogger.system)
     }
 
     func stopPlayback() {
@@ -406,7 +406,7 @@ class VideoEditingEngine: ObservableObject {
 
         playhead = .zero
 
-        print("⏹️ VideoEditingEngine: Stopped playback")
+        EchoelLogger.log("⏹️", "VideoEditingEngine: Stopped playback", category: EchoelLogger.system)
     }
 
     func seek(to time: CMTime) {
@@ -494,7 +494,7 @@ class VideoEditingEngine: ObservableObject {
         timeline.markers.append(marker)
         timeline.markers.sort { $0.time < $1.time }
 
-        print("📍 VideoEditingEngine: Added marker '\(label)' at \(time.seconds)s")
+        EchoelLogger.log("📍", "VideoEditingEngine: Added marker '\(label)' at \(time.seconds)s", category: EchoelLogger.system)
     }
 
     func removeMarker(at time: CMTime) {
@@ -882,7 +882,7 @@ extension VideoEditingEngine {
     /// Add text overlay to timeline
     func addTextOverlay(_ overlay: TextOverlay) {
         timeline.textOverlays.append(overlay)
-        print("📝 VideoEditingEngine: Added text overlay '\(overlay.text)' at \(overlay.startTime.seconds)s")
+        EchoelLogger.log("📝", "VideoEditingEngine: Added text overlay '\(overlay.text)' at \(overlay.startTime.seconds)s", category: EchoelLogger.system)
     }
 
     /// Add text overlay from preset
