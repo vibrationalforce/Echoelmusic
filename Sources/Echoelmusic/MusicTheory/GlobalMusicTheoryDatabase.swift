@@ -166,10 +166,10 @@ class GlobalMusicTheoryDatabase: ObservableObject {
         loadModeDatabase()
         loadRhythmDatabase()
 
-        print("✅ Global Music Theory Database: Initialized")
-        print("🌍 Scales: \(scaleDatabase.count)")
-        print("🎵 Modes: \(modeDatabase.count)")
-        print("🥁 Rhythm Patterns: \(rhythmDatabase.count)")
+        EchoelLogger.success("Global Music Theory Database: Initialized", category: EchoelLogger.system)
+        EchoelLogger.log("🌍", "Scales: \(scaleDatabase.count)", category: EchoelLogger.system)
+        EchoelLogger.log("🎵", "Modes: \(modeDatabase.count)", category: EchoelLogger.system)
+        EchoelLogger.log("🥁", "Rhythm Patterns: \(rhythmDatabase.count)", category: EchoelLogger.system)
     }
 
     // MARK: - Load Scale Database
@@ -373,7 +373,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             )
         ]
 
-        print("📚 Loaded \(scaleDatabase.count) scales from global music traditions")
+        EchoelLogger.log("📚", "Loaded \(scaleDatabase.count) scales from global music traditions", category: EchoelLogger.system)
     }
 
     // MARK: - Load Mode Database
@@ -423,7 +423,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             )
         ]
 
-        print("🎭 Loaded \(modeDatabase.count) modal systems")
+        EchoelLogger.log("🎭", "Loaded \(modeDatabase.count) modal systems", category: EchoelLogger.system)
     }
 
     // MARK: - Load Rhythm Database
@@ -476,7 +476,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             )
         ]
 
-        print("🥁 Loaded \(rhythmDatabase.count) rhythm patterns")
+        EchoelLogger.log("🥁", "Loaded \(rhythmDatabase.count) rhythm patterns", category: EchoelLogger.system)
     }
 
     // MARK: - Query Functions

@@ -461,10 +461,10 @@ struct RecordingControlsView: View {
         Task {
             do {
                 let url = try await exportManager.exportAudio(session: session, format: format)
-                print("📤 Exported to: \(url.path)")
+                EchoelLogger.success("Exported to: \(url.path)", category: EchoelLogger.recording)
                 // TODO: Show share sheet
             } catch {
-                print("❌ Export failed: \(error)")
+                EchoelLogger.error("Export failed: \(error)", category: EchoelLogger.recording)
             }
         }
     }
@@ -475,10 +475,10 @@ struct RecordingControlsView: View {
         let exportManager = ExportManager()
         do {
             let url = try exportManager.exportBioData(session: session, format: format)
-            print("📤 Exported bio-data to: \(url.path)")
+            EchoelLogger.success("Exported bio-data to: \(url.path)", category: EchoelLogger.recording)
             // TODO: Show share sheet
         } catch {
-            print("❌ Export failed: \(error)")
+            EchoelLogger.error("Export failed: \(error)", category: EchoelLogger.recording)
         }
     }
 
@@ -489,10 +489,10 @@ struct RecordingControlsView: View {
         Task {
             do {
                 let url = try await exportManager.exportSessionPackage(session: session)
-                print("📦 Exported package to: \(url.path)")
+                EchoelLogger.success("Exported package to: \(url.path)", category: EchoelLogger.recording)
                 // TODO: Show share sheet
             } catch {
-                print("❌ Export failed: \(error)")
+                EchoelLogger.error("Export failed: \(error)", category: EchoelLogger.recording)
             }
         }
     }

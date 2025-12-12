@@ -85,10 +85,10 @@ class FutureDevicePredictor: ObservableObject {
         analyzeTechnologyTrends()
         calculateReadinessScore()
 
-        print("✅ Future Device Predictor: Initialized")
-        print("🔮 Predictions generated: \(predictions.count)")
-        print("📈 Technology trends tracked: \(technologyTrends.count)")
-        print("🎯 Readiness score: \(String(format: "%.1f", readinessScore))%")
+        EchoelLogger.success("Future Device Predictor: Initialized", category: EchoelLogger.system)
+        EchoelLogger.log("🔮", "Predictions generated: \(predictions.count)", category: EchoelLogger.system)
+        EchoelLogger.log("📈", "Technology trends tracked: \(technologyTrends.count)", category: EchoelLogger.system)
+        EchoelLogger.log("🎯", "Readiness score: \(String(format: "%.1f", readinessScore))%", category: EchoelLogger.system)
     }
 
     // MARK: - Generate Predictions
@@ -333,7 +333,7 @@ class FutureDevicePredictor: ObservableObject {
             )
         ]
 
-        print("🔮 Generated \(predictions.count) device predictions (2025-2035)")
+        EchoelLogger.log("🔮", "Generated \(predictions.count) device predictions (2025-2035)", category: EchoelLogger.system)
     }
 
     // MARK: - Analyze Technology Trends
@@ -431,7 +431,7 @@ class FutureDevicePredictor: ObservableObject {
             )
         ]
 
-        print("📈 Analyzed \(technologyTrends.count) technology trends")
+        EchoelLogger.log("📈", "Analyzed \(technologyTrends.count) technology trends", category: EchoelLogger.system)
     }
 
     // MARK: - Calculate Readiness Score
@@ -453,7 +453,7 @@ class FutureDevicePredictor: ObservableObject {
 
         readinessScore = (score / totalPredictions) * 100.0
 
-        print("🎯 Readiness Score: \(String(format: "%.1f", readinessScore))%")
+        EchoelLogger.log("🎯", "Readiness Score: \(String(format: "%.1f", readinessScore))%", category: EchoelLogger.system)
     }
 
     // MARK: - Get Predictions By Year

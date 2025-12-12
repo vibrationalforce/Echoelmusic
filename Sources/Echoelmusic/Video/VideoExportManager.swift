@@ -283,7 +283,7 @@ class VideoExportManager: ObservableObject {
             // Check result
             switch exportSession.status {
             case .completed:
-                print("✅ VideoExportManager: Export completed - \(outputURL.lastPathComponent)")
+                EchoelLogger.success("VideoExportManager: Export completed - \(outputURL.lastPathComponent)", category: EchoelLogger.visual)
             case .failed:
                 throw exportSession.error ?? ExportError.exportFailed
             case .cancelled:
@@ -386,7 +386,7 @@ class VideoExportManager: ObservableObject {
             }
         }
 
-        print("✅ VideoExportManager: Hardware export completed")
+        EchoelLogger.success("VideoExportManager: Hardware export completed", category: EchoelLogger.visual)
     }
 
     // MARK: - Build Video Settings
@@ -515,12 +515,12 @@ class VideoExportManager: ObservableObject {
             } catch {
                 job.status = .failed(error)
                 exportQueue[index] = job
-                print("❌ VideoExportManager: Batch export failed for job \(index) - \(error)")
+                EchoelLogger.error("VideoExportManager: Batch export failed for job \(index) - \(error)", category: EchoelLogger.visual)
             }
         }
 
         currentExport = nil
-        print("✅ VideoExportManager: Batch export completed - \(exportQueue.count) jobs")
+        EchoelLogger.success("VideoExportManager: Batch export completed - \(exportQueue.count) jobs", category: EchoelLogger.visual)
     }
 
     // MARK: - Cancel Export
@@ -533,7 +533,7 @@ class VideoExportManager: ObservableObject {
         exportProgress = 0.0
         currentExportSession = nil
 
-        print("❌ VideoExportManager: Export cancelled")
+        EchoelLogger.error("VideoExportManager: Export cancelled", category: EchoelLogger.visual)
     }
 
     // MARK: - PNG Sequence Export
@@ -586,13 +586,13 @@ class VideoExportManager: ObservableObject {
                 // Update progress
                 exportProgress = Double(frameIndex + 1) / Double(totalFrames)
             } catch {
-                print("⚠️ VideoExportManager: Failed to export frame \(frameIndex)")
+                EchoelLogger.warning("VideoExportManager: Failed to export frame \(frameIndex)", category: EchoelLogger.visual)
             }
         }
 
         isExporting = false
         exportProgress = 1.0
-        print("✅ VideoExportManager: PNG sequence exported - \(totalFrames) frames to \(outputDirectory.lastPathComponent)")
+        EchoelLogger.success("VideoExportManager: PNG sequence exported - \(totalFrames) frames to \(outputDirectory.lastPathComponent)", category: EchoelLogger.visual)
     }
 
     // MARK: - Animated GIF Export
@@ -660,7 +660,7 @@ class VideoExportManager: ObservableObject {
                 // Update progress
                 exportProgress = Double(frameIndex + 1) / Double(totalFrames)
             } catch {
-                print("⚠️ VideoExportManager: Failed to add frame \(frameIndex) to GIF")
+                EchoelLogger.warning("VideoExportManager: Failed to add frame \(frameIndex) to GIF", category: EchoelLogger.visual)
             }
         }
 
@@ -672,7 +672,7 @@ class VideoExportManager: ObservableObject {
 
         isExporting = false
         exportProgress = 1.0
-        print("✅ VideoExportManager: Animated GIF exported - \(totalFrames) frames to \(outputURL.lastPathComponent)")
+        EchoelLogger.success("VideoExportManager: Animated GIF exported - \(totalFrames) frames to \(outputURL.lastPathComponent)", category: EchoelLogger.visual)
     }
 }
 

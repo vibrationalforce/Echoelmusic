@@ -86,7 +86,7 @@ class AudioFileImporter: ObservableObject {
 
         importProgress = 1.0
 
-        print("📥 Imported audio file: \(track.name)")
+        EchoelLogger.success("Imported audio file: \(track.name)", category: EchoelLogger.recording)
         return track
     }
 
@@ -167,7 +167,7 @@ class AudioFileImporter: ObservableObject {
                 let overallProgress = Double(index + 1) / Double(urls.count)
                 importProgress = overallProgress
             } catch {
-                print("❌ Failed to import \(url.lastPathComponent): \(error)")
+                EchoelLogger.error("Failed to import \(url.lastPathComponent): \(error)", category: EchoelLogger.recording)
                 // Continue with other files
             }
         }

@@ -390,7 +390,7 @@ public class UnifiedControlHub: ObservableObject {
 
         // Log bio→audio mapping (nur bei Debug)
         #if DEBUG
-        print("[Bio→Audio] Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Tempo: \(Int(mapper.tempo))BPM")
+        EchoelLogger.debug("[Bio→Audio] Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Tempo: \(Int(mapper.tempo))BPM", category: EchoelLogger.performance)
         #endif
 
         // Apply bio-reactive spatial field (AFA)
@@ -540,7 +540,7 @@ public class UnifiedControlHub: ObservableObject {
         }
 
         #if DEBUG
-        print("[Gesture→Audio] Applied: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)")
+        EchoelLogger.debug("[Gesture→Audio] Applied: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)", category: EchoelLogger.performance)
         #endif
 
         // Trigger MIDI notes via MPE
@@ -551,7 +551,7 @@ public class UnifiedControlHub: ObservableObject {
                     note: midiNote.note,
                     velocity: Float(midiNote.velocity) / 127.0
                 ) {
-                    print("[Gesture→MPE] Voice allocated: Note \(midiNote.note), Channel \(voice.channel + 1)")
+                    EchoelLogger.info("[Gesture→MPE] Voice allocated: Note \(midiNote.note), Channel \(voice.channel + 1)", category: EchoelLogger.midi)
 
                     // Apply initial per-note expression from gestures
                     if let gestureRec = gestureRecognizer {
@@ -565,14 +565,14 @@ public class UnifiedControlHub: ObservableObject {
                 }
             } else {
                 // Fallback to MIDI 1.0 if MPE not enabled
-                print("[Gesture→MIDI] Note On: \(midiNote.note), Velocity: \(midiNote.velocity)")
+                EchoelLogger.info("[Gesture→MIDI] Note On: \(midiNote.note), Velocity: \(midiNote.velocity)", category: EchoelLogger.midi)
             }
         }
 
         // Handle preset changes
         if let presetChange = params.presetChange {
             // TODO: Change to preset
-            print("[Gesture→Audio] Switch to preset: \(presetChange)")
+            EchoelLogger.info("[Gesture→Audio] Switch to preset: \(presetChange)", category: EchoelLogger.audio)
         }
     }
 

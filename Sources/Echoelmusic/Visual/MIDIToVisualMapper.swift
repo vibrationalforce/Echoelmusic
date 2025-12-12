@@ -117,7 +117,7 @@ class MIDIToVisualMapper: ObservableObject {
         // Emit particles
         emitParticlesFromNote(note: note, velocity: velocity)
 
-        print("🎨 Visual mapped: Note \(note), Vel \(Int(velocity * 127))")
+        EchoelLogger.debug("Visual mapped: Note \(note), Vel \(Int(velocity * 127))", category: EchoelLogger.visual)
     }
 
     /// Map MIDI note off to visual parameters
@@ -374,7 +374,7 @@ class MIDIToVisualMapper: ObservableObject {
             particleParameters.emissionRate = 30.0
         }
 
-        print("🎨 Visual preset: \(preset.rawValue)")
+        EchoelLogger.info("Visual preset: \(preset.rawValue)", category: EchoelLogger.visual)
     }
 
     enum VisualPreset: String, CaseIterable {

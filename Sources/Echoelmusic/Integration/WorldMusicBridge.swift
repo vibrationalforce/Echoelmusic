@@ -90,7 +90,7 @@ class WorldMusicBridge: ObservableObject {
 
     private init() {
         loadMusicStyles()
-        print("✅ WorldMusicBridge: Loaded \(availableStyles.count) music styles")
+        EchoelLogger.success("WorldMusicBridge: Loaded \(availableStyles.count) music styles", category: EchoelLogger.system)
     }
 
     // MARK: - Load Music Styles (Mirror of WorldMusicDatabase.cpp)

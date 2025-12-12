@@ -96,7 +96,7 @@ class Push3LEDController: ObservableObject {
         ) { _ in }
 
         guard clientStatus == noErr else {
-            print("⚠️ Failed to create MIDI client for Push 3")
+            EchoelLogger.error("Failed to create MIDI client for Push 3", category: EchoelLogger.midi)
             return
         }
         midiClient = client
@@ -110,7 +110,7 @@ class Push3LEDController: ObservableObject {
         )
 
         guard portStatus == noErr else {
-            print("⚠️ Failed to create MIDI output port for Push 3")
+            EchoelLogger.error("Failed to create MIDI output port for Push 3", category: EchoelLogger.midi)
             return
         }
         outputPort = port
@@ -132,13 +132,13 @@ class Push3LEDController: ObservableObject {
                 if deviceName.contains("Ableton Push 3") || deviceName.contains("Push 3") {
                     push3Endpoint = endpoint
                     isConnected = true
-                    print("✅ Found Push 3: \(deviceName)")
+                    EchoelLogger.success("Found Push 3: \(deviceName)", category: EchoelLogger.midi)
                     return
                 }
             }
         }
 
-        print("⚠️ Push 3 not found. Connect via USB and retry.")
+        EchoelLogger.warning("Push 3 not found. Connect via USB and retry.", category: EchoelLogger.midi)
     }
 
     // MARK: - Connection Management
@@ -171,7 +171,7 @@ class Push3LEDController: ObservableObject {
     /// Set entire grid
     func setGrid(_ grid: [[RGB]]) {
         guard grid.count == 8, grid.allSatisfy({ $0.count == 8 }) else {
-            print("⚠️ Invalid grid dimensions (must be 8x8)")
+            EchoelLogger.warning("Invalid grid dimensions (must be 8x8)", category: EchoelLogger.visual)
             return
         }
         ledGrid = grid
@@ -225,7 +225,7 @@ class Push3LEDController: ObservableObject {
 
         let status = MIDISend(outputPort, push3Endpoint, &packetList)
         if status != noErr {
-            print("⚠️ Failed to send SysEx to Push 3: \(status)")
+            EchoelLogger.error("Failed to send SysEx to Push 3: \(status)", category: EchoelLogger.midi)
         }
     }
 
@@ -397,14 +397,14 @@ class Push3LEDController: ObservableObject {
             applyPattern(currentPattern)
         }
 
-        print("⚡ Gesture flash: \(gesture)")
+        EchoelLogger.debug("Gesture flash: \(gesture)", category: EchoelLogger.visual)
     }
 
     // MARK: - Pattern Management
 
     func applyPattern(_ pattern: LEDPattern) {
         currentPattern = pattern
-        print("💡 Push 3 pattern: \(pattern.rawValue)")
+        EchoelLogger.info("Push 3 pattern: \(pattern.rawValue)", category: EchoelLogger.visual)
     }
 
     // MARK: - Utility Functions

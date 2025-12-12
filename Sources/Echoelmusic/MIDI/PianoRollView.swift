@@ -375,7 +375,7 @@ class PianoRollViewModel: ObservableObject {
         mpe.sendMPEConfiguration(memberChannels: 15)
         mpe.setPitchBendRange(semitones: UInt8(pitchBendRange))
 
-        print("🎹 PianoRoll: Connected to MIDI 2.0 + MPE")
+        EchoelLogger.success("PianoRoll: Connected to MIDI 2.0 + MPE", category: EchoelLogger.midi)
     }
 
     // MARK: - Edit Modes
@@ -437,7 +437,7 @@ class PianoRollViewModel: ObservableObject {
         )
 
         notes.append(note)
-        print("🎹 Added note: \(note.pitch) at beat \(note.startBeat)")
+        EchoelLogger.debug("Added note: \(note.pitch) at beat \(note.startBeat)", category: EchoelLogger.midi)
     }
 
     func deleteNote(_ id: UUID) {
@@ -575,12 +575,12 @@ class PianoRollViewModel: ObservableObject {
                 mpe.setVoiceBrightness(voice: voice, brightness: note.brightness)
                 mpe.setVoiceTimbre(voice: voice, timbre: note.timbre)
 
-                print("🎹 MPE Note On: \(note.pitch) vel=\(note.velocity) ch=\(voice.channel + 1)")
+                EchoelLogger.debug("MPE Note On: \(note.pitch) vel=\(note.velocity) ch=\(voice.channel + 1)", category: EchoelLogger.midi)
             }
         } else if let midi2 = midi2Manager {
             // MIDI 2.0 without MPE (single channel)
             midi2.sendNoteOn(channel: 0, note: UInt8(note.pitch), velocity: note.velocity32bit)
-            print("🎹 MIDI2 Note On: \(note.pitch) vel=\(note.velocity)")
+            EchoelLogger.debug("MIDI2 Note On: \(note.pitch) vel=\(note.velocity)", category: EchoelLogger.midi)
         }
     }
 
@@ -589,11 +589,11 @@ class PianoRollViewModel: ObservableObject {
             if let voice = activeVoices[note.id] {
                 mpe.deallocateVoice(voice: voice)
                 activeVoices.removeValue(forKey: note.id)
-                print("🎹 MPE Note Off: \(note.pitch)")
+                EchoelLogger.debug("MPE Note Off: \(note.pitch)", category: EchoelLogger.midi)
             }
         } else if let midi2 = midi2Manager {
             midi2.sendNoteOff(channel: 0, note: UInt8(note.pitch))
-            print("🎹 MIDI2 Note Off: \(note.pitch)")
+            EchoelLogger.debug("MIDI2 Note Off: \(note.pitch)", category: EchoelLogger.midi)
         }
     }
 
@@ -715,14 +715,14 @@ class PianoRollViewModel: ObservableObject {
     func exportToMIDI() -> Data? {
         // Generate MIDI file data
         // In production: Use AudioToolbox MusicSequence
-        print("📤 Exporting \(notes.count) notes to MIDI")
+        EchoelLogger.info("Exporting \(notes.count) notes to MIDI", category: EchoelLogger.midi)
         return nil
     }
 
     func importFromMIDI(_ data: Data) {
         // Import MIDI file
         // In production: Parse MIDI data
-        print("📥 Importing MIDI data")
+        EchoelLogger.info("Importing MIDI data", category: EchoelLogger.midi)
     }
 }
 

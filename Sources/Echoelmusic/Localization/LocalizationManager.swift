@@ -31,7 +31,7 @@ class LocalizationManager {
         didSet {
             if currentLanguage != oldValue {
                 languageDidChange.send(currentLanguage)
-                print("🌍 Language changed to: \(currentLanguage.displayName)")
+                EchoelLogger.log("🌍", "Language changed to: \(currentLanguage.displayName)", category: EchoelLogger.system)
             }
         }
     }

@@ -48,7 +48,7 @@ class GestureConflictResolver: ObservableObject {
         self.handTracker = handTracker
         self.faceTracker = faceTracker
 
-        print("🔀 GestureConflictResolver initialized")
+        EchoelLogger.info("GestureConflictResolver initialized", category: EchoelLogger.gesture)
     }
 
 
@@ -150,14 +150,14 @@ class GestureConflictResolver: ObservableObject {
     /// Notify when gesture starts
     func gestureDidStart(_ gesture: GestureRecognizer.Gesture) {
         gestureStartTimes[gesture] = Date()
-        print("✋ Gesture started: \(gesture.rawValue)")
+        EchoelLogger.debug("Gesture started: \(gesture.rawValue)", category: EchoelLogger.gesture)
     }
 
     /// Notify when gesture ends
     func gestureDidEnd(_ gesture: GestureRecognizer.Gesture) {
         gestureStartTimes[gesture] = nil
         lastGestureEndTime = Date()
-        print("✋ Gesture ended: \(gesture.rawValue)")
+        EchoelLogger.debug("Gesture ended: \(gesture.rawValue)", category: EchoelLogger.gesture)
     }
 
     /// Reset all gesture state
@@ -209,19 +209,19 @@ class GestureConflictResolver: ObservableObject {
         if !enabled {
             reset()
         }
-        print("✋ Gestures \(enabled ? "enabled" : "disabled")")
+        EchoelLogger.info("Gestures \(enabled ? "enabled" : "disabled")", category: EchoelLogger.gesture)
     }
 
     /// Update confidence threshold
     func setConfidenceThreshold(_ threshold: Float) {
         minimumConfidenceThreshold = max(0.1, min(1.0, threshold))
-        print("✋ Confidence threshold: \(minimumConfidenceThreshold)")
+        EchoelLogger.debug("Confidence threshold: \(minimumConfidenceThreshold)", category: EchoelLogger.gesture)
     }
 
     /// Update minimum hold time
     func setMinimumHoldTime(_ time: TimeInterval) {
         minimumGestureHoldTime = max(0.05, min(1.0, time))
-        print("✋ Minimum hold time: \(minimumGestureHoldTime)s")
+        EchoelLogger.debug("Minimum hold time: \(minimumGestureHoldTime)s", category: EchoelLogger.gesture)
     }
 
 

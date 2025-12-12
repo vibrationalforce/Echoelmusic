@@ -81,7 +81,7 @@ class ExportManager {
             throw RecordingError.fileNotFound
         }
 
-        print("📤 Exported audio: \(exportURL.lastPathComponent)")
+        EchoelLogger.success("Exported audio: \(exportURL.lastPathComponent)", category: EchoelLogger.recording)
         return exportURL
     }
 
@@ -105,7 +105,7 @@ class ExportManager {
             try exportBioDataCSV(session: session, outputURL: exportURL)
         }
 
-        print("📤 Exported bio-data: \(exportURL.lastPathComponent)")
+        EchoelLogger.success("Exported bio-data: \(exportURL.lastPathComponent)", category: EchoelLogger.recording)
         return exportURL
     }
 
@@ -146,7 +146,7 @@ class ExportManager {
             }
         }
 
-        print("📦 Exported session package: \(packageURL.lastPathComponent)")
+        EchoelLogger.success("Exported session package: \(packageURL.lastPathComponent)", category: EchoelLogger.recording)
         return packageURL
     }
 

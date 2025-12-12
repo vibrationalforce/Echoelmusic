@@ -145,7 +145,7 @@ class MIDIToLightMapper: ObservableObject {
 
     func addFixture(_ fixture: DMXFixture) {
         fixtures.append(fixture)
-        print("💡 Added fixture: \(fixture.name) @ DMX \(fixture.startAddress)")
+        EchoelLogger.info("Added fixture: \(fixture.name) @ DMX \(fixture.startAddress)", category: EchoelLogger.visual)
     }
 
     // MARK: - Biometric Data Structure
@@ -166,7 +166,7 @@ class MIDIToLightMapper: ObservableObject {
         // Initialize Art-Net socket
         artNetSocket = try UDPSocket(address: artNetAddress, port: artNetPort)
         isActive = true
-        print("✅ DMX/LED Mapper connected (Art-Net → \(artNetAddress):\(artNetPort))")
+        EchoelLogger.success("DMX/LED Mapper connected (Art-Net → \(artNetAddress):\(artNetPort))", category: EchoelLogger.visual)
     }
 
     /// Disconnect from Art-Net network
@@ -178,7 +178,7 @@ class MIDIToLightMapper: ObservableObject {
         artNetSocket = nil
         isActive = false
 
-        print("🛑 DMX/LED Mapper disconnected")
+        EchoelLogger.info("DMX/LED Mapper disconnected", category: EchoelLogger.visual)
     }
 
     // MARK: - Start/Stop (Legacy)
@@ -447,7 +447,7 @@ class MIDIToLightMapper: ObservableObject {
 
     func setScene(_ scene: LightScene) {
         currentScene = scene
-        print("💡 Light scene: \(scene.rawValue)")
+        EchoelLogger.info("Light scene: \(scene.rawValue)", category: EchoelLogger.visual)
     }
 
     // MARK: - Debug Info
@@ -489,11 +489,11 @@ class UDPSocket {
         connection?.stateUpdateHandler = { [weak self] state in
             switch state {
             case .ready:
-                print("💡 UDP Socket connected: \(address):\(port)")
+                EchoelLogger.success("UDP Socket connected: \(address):\(port)", category: EchoelLogger.network)
             case .failed(let error):
-                print("❌ UDP Socket failed: \(error)")
+                EchoelLogger.error("UDP Socket failed: \(error)", category: EchoelLogger.network)
             case .cancelled:
-                print("🔌 UDP Socket cancelled")
+                EchoelLogger.info("UDP Socket cancelled", category: EchoelLogger.network)
             default:
                 break
             }
@@ -505,7 +505,7 @@ class UDPSocket {
 
     func send(data: Data) {
         guard let connection = connection else {
-            print("⚠️ UDP Socket not connected")
+            EchoelLogger.warning("UDP Socket not connected", category: EchoelLogger.network)
             return
         }
 
@@ -513,7 +513,7 @@ class UDPSocket {
             content: data,
             completion: .contentProcessed { error in
                 if let error = error {
-                    print("❌ UDP send error: \(error)")
+                    EchoelLogger.error("UDP send error: \(error)", category: EchoelLogger.network)
                 }
             }
         )
@@ -522,6 +522,6 @@ class UDPSocket {
     func close() {
         connection?.cancel()
         connection = nil
-        print("🔌 UDP Socket closed")
+        EchoelLogger.info("UDP Socket closed", category: EchoelLogger.network)
     }
 }
