@@ -2,33 +2,52 @@ import SwiftUI
 
 /// Main entry point for the Echoelmusic app
 /// Bio-reactive audio-visual experiences platform
+///
+/// Architecture:
+/// - Single MicrophoneManager instance shared across app
+/// - AudioEngine coordinates all audio components
+/// - UnifiedControlHub orchestrates multimodal input at 60Hz
+/// - Background initialization of singletons for fast startup
 @main
 struct EchoelmusicApp: App {
 
-    /// StateObject ensures the MicrophoneManager stays alive
-    /// throughout the app's lifetime
-    @StateObject private var microphoneManager = MicrophoneManager()
+    // MARK: - Core State Objects
+
+    /// Microphone manager for voice/breath input (single instance)
+    @StateObject private var microphoneManager: MicrophoneManager
 
     /// Central AudioEngine coordinates all audio components
     @StateObject private var audioEngine: AudioEngine
 
     /// HealthKit manager for biofeedback
-    @StateObject private var healthKitManager = HealthKitManager()
+    @StateObject private var healthKitManager: HealthKitManager
 
     /// Recording engine for multi-track recording
-    @StateObject private var recordingEngine = RecordingEngine()
+    @StateObject private var recordingEngine: RecordingEngine
 
     /// UnifiedControlHub for multimodal input
     @StateObject private var unifiedControlHub: UnifiedControlHub
 
+    // MARK: - Initialization
+
     init() {
-        // Initialize AudioEngine with MicrophoneManager
+        // FIXED: Create single MicrophoneManager instance (was creating duplicate)
         let micManager = MicrophoneManager()
         _microphoneManager = StateObject(wrappedValue: micManager)
 
+        // Initialize AudioEngine with the single MicrophoneManager instance
         let audioEng = AudioEngine(microphoneManager: micManager)
         _audioEngine = StateObject(wrappedValue: audioEng)
 
+        // Initialize HealthKit manager
+        let healthKit = HealthKitManager()
+        _healthKitManager = StateObject(wrappedValue: healthKit)
+
+        // Initialize Recording engine
+        let recording = RecordingEngine()
+        _recordingEngine = StateObject(wrappedValue: recording)
+
+        // Initialize UnifiedControlHub with AudioEngine reference
         _unifiedControlHub = StateObject(wrappedValue: UnifiedControlHub(audioEngine: audioEng))
 
         // PERFORMANCE: Defer non-critical singleton initialization to background
@@ -51,9 +70,9 @@ struct EchoelmusicApp: App {
             // Note: StreamEngine requires Metal device - initialized lazily in StreamingView
 
             await MainActor.run {
-                print("⚛️ Echoelmusic Core Systems Initialized (async)")
-                print("🎹 InstrumentOrchestrator: 54+ Instruments Ready")
-                print("🌍 WorldMusicBridge: 42 Music Styles Loaded")
+                EchoelLogger.log("⚛️", "Echoelmusic Core Systems Initialized (async)", category: EchoelLogger.system)
+                EchoelLogger.log("🎹", "InstrumentOrchestrator: 54+ Instruments Ready", category: EchoelLogger.audio)
+                EchoelLogger.log("🌍", "WorldMusicBridge: 42 Music Styles Loaded", category: EchoelLogger.audio)
             }
         }
     }
@@ -78,26 +97,26 @@ struct EchoelmusicApp: App {
                     Task {
                         do {
                             try await unifiedControlHub.enableBiometricMonitoring()
-                            print("✅ Biometric monitoring enabled via UnifiedControlHub")
+                            EchoelLogger.success("Biometric monitoring enabled via UnifiedControlHub", category: EchoelLogger.bio)
                         } catch {
-                            print("⚠️ Biometric monitoring not available: \(error.localizedDescription)")
+                            EchoelLogger.warning("Biometric monitoring not available: \(error.localizedDescription)", category: EchoelLogger.bio)
                         }
 
                         // Enable MIDI 2.0 + MPE
                         do {
                             try await unifiedControlHub.enableMIDI2()
-                            print("✅ MIDI 2.0 + MPE enabled via UnifiedControlHub")
+                            EchoelLogger.success("MIDI 2.0 + MPE enabled via UnifiedControlHub", category: EchoelLogger.midi)
                         } catch {
-                            print("⚠️ MIDI 2.0 not available: \(error.localizedDescription)")
+                            EchoelLogger.warning("MIDI 2.0 not available: \(error.localizedDescription)", category: EchoelLogger.midi)
                         }
                     }
 
                     // Start UnifiedControlHub
                     unifiedControlHub.start()
 
-                    print("🎵 Echoelmusic Started - All Systems Connected!")
-                    print("🎹 MIDI 2.0 + MPE + Spatial Audio Ready")
-                    print("🌊 Bio-Reactive Audio-Visual Platform Ready")
+                    EchoelLogger.log("🎵", "Echoelmusic Started - All Systems Connected!", category: EchoelLogger.system)
+                    EchoelLogger.log("🎹", "MIDI 2.0 + MPE + Spatial Audio Ready", category: EchoelLogger.midi)
+                    EchoelLogger.log("🌊", "Bio-Reactive Audio-Visual Platform Ready", category: EchoelLogger.system)
                 }
         }
     }

@@ -98,6 +98,41 @@ final class EchoelUniversalCore: ObservableObject {
         startUniversalLoop()
     }
 
+    // MARK: - Lifecycle
+
+    /// Shutdown the Universal Core and release all resources
+    /// Call this method when the app is terminating or for testing cleanup
+    public func shutdown() {
+        EchoelLogger.info("Shutting down EchoelUniversalCore...", category: EchoelLogger.system)
+
+        // Stop update timer
+        updateTimer?.invalidate()
+        updateTimer = nil
+
+        // Cancel all subscriptions
+        cancellables.removeAll()
+
+        // Reset state
+        systemState = SystemState()
+        globalCoherence = 0.5
+        systemEnergy = 0.5
+        quantumField = QuantumField()
+
+        EchoelLogger.success("EchoelUniversalCore shutdown complete", category: EchoelLogger.system)
+    }
+
+    /// Check if the core is running
+    public var isRunning: Bool {
+        updateTimer != nil
+    }
+
+    /// Restart the universal loop if stopped
+    public func restart() {
+        guard !isRunning else { return }
+        startUniversalLoop()
+        EchoelLogger.info("EchoelUniversalCore restarted", category: EchoelLogger.system)
+    }
+
     // MARK: - Setup
 
     private func setupSubsystems() {
@@ -129,7 +164,7 @@ final class EchoelUniversalCore: ObservableObject {
 
         // Tools sind bereits verbunden via EchoelTools.shared
 
-        print("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden")
+        EchoelLogger.success("EchoelUniversalCore: All systems bidirectionally connected", category: EchoelLogger.system)
     }
 
     /// Reagiert auf Flow-State Änderungen vom Self-Healing System
@@ -275,6 +310,7 @@ extension EchoelUniversalCore {
         var quantumField: QuantumField = QuantumField()
         var superpositionState: [Float] = []
         var entanglementStrength: Float = 0
+        var lastQuantumChoice: Int = 0
 
         // Timing
         var globalTime: Double = 0
@@ -285,9 +321,18 @@ extension EchoelUniversalCore {
         var connectedDevices: Int = 0
         var syncLatency: Double = 0
 
-        // NEU: System Health & Performance
+        // System Health & Performance
         var systemHealth: SystemHealth = .optimal
         var performanceMode: PerformanceMode = .balanced
+
+        // Creative Direction
+        var creativeDirection: CreativeDirection = .harmonic
+
+        // AI Integration
+        var aiSuggestion: AICreativeEngine.CreativeSuggestion?
+
+        // Analog Gear Feedback
+        var analogFeedback: [Float] = []
 
         mutating func update(coherence: Float, energy: Float, quantumField: QuantumField) {
             self.coherence = coherence
@@ -295,8 +340,16 @@ extension EchoelUniversalCore {
             self.quantumField = quantumField
             self.flow = (coherence + energy) / 2
             self.creativity = quantumField.creativity
-            self.globalTime += 1.0/120.0
+            self.globalTime += ControlLoopConstants.interval(forFrequency: ControlLoopConstants.universalCoreFrequency)
         }
+    }
+
+    /// Creative direction for AI-guided composition
+    enum CreativeDirection: String, CaseIterable {
+        case harmonic = "Harmonic"
+        case rhythmic = "Rhythmic"
+        case textural = "Textural"
+        case structural = "Structural"
     }
 
     enum PerformanceMode: String {
@@ -408,6 +461,40 @@ struct QuantumField {
         }
         return options - 1
     }
+
+    /// Record a wave function collapse event
+    /// Called when a quantum choice is made/observed
+    /// - Parameter choice: The index of the collapsed state
+    mutating func recordCollapse(choice: Int) {
+        guard choice >= 0 && choice < amplitudes.count else { return }
+
+        // Collapse increases probability at chosen state
+        // Other states decay toward zero
+        for i in 0..<amplitudes.count {
+            if i == choice {
+                // Strengthen the collapsed state
+                amplitudes[i] = simd_float4(1.0, 0.0, 0.0, 0.0)
+            } else {
+                // Decay other states
+                amplitudes[i] *= 0.5
+            }
+        }
+
+        // Reset collapse probability after observation
+        collapseProbability = 0
+
+        // Record that collapse occurred (can be used for learning)
+        EchoelLogger.debug("Quantum field collapsed to state \(choice)", category: EchoelLogger.quantum)
+    }
+
+    /// Reset the quantum field to maximum superposition
+    mutating func reset() {
+        amplitudes = Array(repeating: simd_float4(0.5, 0.5, 0.5, 0.5), count: 16)
+        superpositionStrength = 0.5
+        creativity = 0.5
+        collapseProbability = 0
+        entanglementMatrix = []
+    }
 }
 
 // MARK: - Bio-Reactive Processor
@@ -419,6 +506,14 @@ struct BioState {
     var stress: Float = 0.5
     var breathRate: Float = 12
     var breathPhase: Float = 0
+
+    /// Energy level derived from heart rate and HRV
+    var energy: Float {
+        // Higher heart rate = higher energy, but modulated by HRV
+        let hrEnergy = (heartRate - 50) / 100.0  // Normalize HR to roughly 0-1
+        let hrvModifier = hrv / 100.0  // HRV as a modifier
+        return (hrEnergy.clamped(to: 0...1) * 0.7 + hrvModifier * 0.3).clamped(to: 0...1)
+    }
 }
 
 struct AudioState {
@@ -438,6 +533,7 @@ class BioReactiveProcessor {
     weak var delegate: EchoelUniversalCore?
     var currentState = BioState()
 
+    /// Update from HealthKit data
     func updateFromHealthKit(heartRate: Double, hrv: Double) {
         currentState.heartRate = Float(heartRate)
         currentState.hrv = Float(hrv)
@@ -447,14 +543,29 @@ class BioReactiveProcessor {
         currentState.stress = 1.0 - currentState.coherence
     }
 
+    /// Update the entire state from external source
+    /// Used when bio data is received via delegate callbacks
+    func updateState(_ state: BioState) {
+        currentState = state
+
+        // Recalculate dependent values
+        currentState.coherence = calculateCoherence()
+        currentState.stress = 1.0 - currentState.coherence
+    }
+
+    /// Update breath phase (called from breathing detection)
+    func updateBreathPhase(_ phase: Float) {
+        currentState.breathPhase = phase.clamped(to: 0...1)
+    }
+
     private func calculateCoherence() -> Float {
         // Simplified HeartMath coherence calculation
         // Real implementation would use power spectral density in 0.04-0.4 Hz band
         let normalizedHRV = currentState.hrv / 100.0
-        let optimalHR: Float = 60
+        let optimalHR = BioConstants.optimalHeartRate
         let hrDeviation = abs(currentState.heartRate - optimalHR) / optimalHR
 
-        return max(0, min(1, normalizedHRV * (1.0 - hrDeviation * 0.5)))
+        return (normalizedHRV * (1.0 - hrDeviation * 0.5)).clamped(to: 0...1)
     }
 }
 

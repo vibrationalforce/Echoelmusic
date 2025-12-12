@@ -74,9 +74,9 @@ class AudioEngine: ObservableObject {
         // Configure audio session for optimal performance
         do {
             try AudioConfiguration.configureAudioSession()
-            print(AudioConfiguration.latencyStats())
+            EchoelLogger.info(AudioConfiguration.latencyStats(), category: EchoelLogger.audio)
         } catch {
-            print("⚠️  Failed to configure audio session: \(error)")
+            EchoelLogger.warning("Failed to configure audio session: \(error)", category: EchoelLogger.audio)
         }
 
         // Set real-time audio thread priority
@@ -104,7 +104,7 @@ class AudioEngine: ObservableObject {
                 deviceCapabilities: capabilities
             )
         } else {
-            print("⚠️  Spatial audio engine requires iOS 15+")
+            EchoelLogger.warning("Spatial audio engine requires iOS 15+", category: EchoelLogger.spatial)
         }
 
         // Start monitoring device capabilities
@@ -113,10 +113,10 @@ class AudioEngine: ObservableObject {
         // Initialize node graph with default biofeedback chain
         nodeGraph = NodeGraph.createBiofeedbackChain()
 
-        print("🎵 AudioEngine initialized")
-        print("   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "✅" : "❌")")
-        print("   Head Tracking: \(headTrackingManager?.isAvailable == true ? "✅" : "❌")")
-        print("   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")
+        EchoelLogger.log("🎵", "AudioEngine initialized", category: EchoelLogger.audio)
+        EchoelLogger.debug("Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "Available" : "Unavailable")", category: EchoelLogger.audio)
+        EchoelLogger.debug("Head Tracking: \(headTrackingManager?.isAvailable == true ? "Available" : "Unavailable")", category: EchoelLogger.audio)
+        EchoelLogger.debug("Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded", category: EchoelLogger.audio)
     }
 
 
@@ -136,9 +136,9 @@ class AudioEngine: ObservableObject {
         if spatialAudioEnabled, let spatial = spatialAudioEngine {
             do {
                 try spatial.start()
-                print("🎵 Spatial audio started")
+                EchoelLogger.success("Spatial audio started", category: EchoelLogger.spatial)
             } catch {
-                print("❌ Failed to start spatial audio: \(error)")
+                EchoelLogger.error("Failed to start spatial audio: \(error)", category: EchoelLogger.spatial)
                 spatialAudioEnabled = false
             }
         }
@@ -147,7 +147,7 @@ class AudioEngine: ObservableObject {
         startBioParameterMapping()
 
         isRunning = true
-        print("🎵 AudioEngine started")
+        EchoelLogger.log("🎵", "AudioEngine started", category: EchoelLogger.audio)
     }
 
     /// Stop the audio engine
@@ -165,7 +165,7 @@ class AudioEngine: ObservableObject {
         stopBioParameterMapping()
 
         isRunning = false
-        print("🎵 AudioEngine stopped")
+        EchoelLogger.log("🎵", "AudioEngine stopped", category: EchoelLogger.audio)
     }
 
     /// Toggle binaural beats on/off
@@ -174,10 +174,10 @@ class AudioEngine: ObservableObject {
 
         if binauralBeatsEnabled {
             binauralGenerator.start()
-            print("🔊 Binaural beats enabled")
+            EchoelLogger.log("🔊", "Binaural beats enabled", category: EchoelLogger.audio)
         } else {
             binauralGenerator.stop()
-            print("🔇 Binaural beats disabled")
+            EchoelLogger.log("🔇", "Binaural beats disabled", category: EchoelLogger.audio)
         }
     }
 
@@ -219,18 +219,18 @@ class AudioEngine: ObservableObject {
             if let spatial = spatialAudioEngine {
                 do {
                     try spatial.start()
-                    print("🎵 Spatial audio enabled")
+                    EchoelLogger.success("Spatial audio enabled", category: EchoelLogger.spatial)
                 } catch {
-                    print("❌ Failed to enable spatial audio: \(error)")
+                    EchoelLogger.error("Failed to enable spatial audio: \(error)", category: EchoelLogger.spatial)
                     spatialAudioEnabled = false
                 }
             } else {
-                print("⚠️  Spatial audio not available")
+                EchoelLogger.warning("Spatial audio not available", category: EchoelLogger.spatial)
                 spatialAudioEnabled = false
             }
         } else {
             spatialAudioEngine?.stop()
-            print("🎵 Spatial audio disabled")
+            EchoelLogger.info("Spatial audio disabled", category: EchoelLogger.spatial)
         }
     }
 
@@ -273,26 +273,27 @@ class AudioEngine: ObservableObject {
 
     /// Start bio-parameter mapping (HRV/HR → Audio)
     private func startBioParameterMapping() {
-        guard let healthKit = healthKitManager else {
-            print("⚠️  Bio-parameter mapping: HealthKit not connected")
+        guard healthKitManager != nil else {
+            EchoelLogger.warning("Bio-parameter mapping: HealthKit not connected", category: EchoelLogger.bio)
             return
         }
 
-        // Update bio-parameters every 100ms
-        Timer.publish(every: 0.1, on: .main, in: .common)
+        // Update bio-parameters at configured frequency
+        let interval = ControlLoopConstants.interval(forFrequency: ControlLoopConstants.bioParameterUpdateFrequency)
+        Timer.publish(every: interval, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 self?.updateBioParameters()
             }
             .store(in: &cancellables)
 
-        print("🎛️  Bio-parameter mapping started")
+        EchoelLogger.log("🎛️", "Bio-parameter mapping started", category: EchoelLogger.bio)
     }
 
     /// Stop bio-parameter mapping
     private func stopBioParameterMapping() {
         // Cancellables will be cleared when engine stops
-        print("🎛️  Bio-parameter mapping stopped")
+        EchoelLogger.log("🎛️", "Bio-parameter mapping stopped", category: EchoelLogger.bio)
     }
 
     /// Update bio-parameters from current biometric data
