@@ -3,17 +3,22 @@ import CoreML
 import Accelerate
 import Combine
 
-/// Enhanced ML Models für bio-reaktive Intelligenz
+/// Enhanced ML Models for Bio-Reactive Intelligence
 ///
-/// Dieses System erweitert die ML-Funktionen von Echoelmusic mit fortgeschrittenen
-/// Machine Learning-Modellen für:
-/// - Emotionserkennung aus Bio-Daten
-/// - Musikstil-Erkennung und -Klassifizierung
-/// - Intelligente Parametervorhersage
-/// - Adaptive Recommendation Engine
-/// - Pattern Recognition in HRV/Coherence
-/// - Audio Feature Extraction
-/// - User Behavior Prediction
+/// This system provides intelligent analysis and classification using
+/// evidence-based heuristics derived from HRV research (HeartMath, Porges).
+///
+/// Features:
+/// - Emotion classification from bio-data (rule-based, research-grounded)
+/// - Music style recognition and classification
+/// - Intelligent parameter prediction
+/// - Adaptive recommendation engine
+/// - Pattern recognition in HRV/Coherence data
+/// - Audio feature extraction
+///
+/// Architecture Note: Uses rule-based classifiers optimized for real-time
+/// performance. For CoreML model integration, see AIStemSeparation.swift
+/// which demonstrates neural network mask estimation.
 ///
 @MainActor
 @Observable

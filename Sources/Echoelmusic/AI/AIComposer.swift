@@ -1,9 +1,13 @@
 import Foundation
 import CoreML
 
-/// AI Composer - CoreML-powered Music Generation
-/// Melody generation, chord progression suggestions, drum patterns
-/// Bio-Data → Music Style mapping
+/// AI Composer - Basic CoreML-powered Music Generation
+///
+/// NOTE: For full bio-reactive composition with Markov chains, chord progressions,
+/// and OSC output to DAWs, use `BioReactiveAIComposer` instead.
+/// This class provides simpler placeholder functionality.
+///
+/// See: Echoelmusic/Audio/BioReactiveAIComposer.swift for production implementation
 @MainActor
 class AIComposer: ObservableObject {
 
