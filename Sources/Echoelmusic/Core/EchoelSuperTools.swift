@@ -8,7 +8,7 @@ import Accelerate
 // ║                    ECHOEL SUPER TOOLS - QUANTUM CONSOLIDATED                  ║
 // ║═══════════════════════════════════════════════════════════════════════════════║
 // ║                                                                               ║
-// ║  200+ Components → 5 SUPER TOOLS                                              ║
+// ║  200+ Components → 5 SUPER TOOLS + INCLUSIVE INTELLIGENCE                    ║
 // ║                                                                               ║
 // ║  1. EchoelSynthesis  - Ultimate Sound Creation (All Instruments)             ║
 // ║  2. EchoelProcess    - Ultimate Sound Processing (All Effects/DSP)           ║
@@ -16,7 +16,11 @@ import Accelerate
 // ║  4. EchoelLife       - Ultimate Wellbeing (All Bio/Health)                   ║
 // ║  5. EchoelVision     - Ultimate Visual (All Video/Visual)                    ║
 // ║                                                                               ║
-// ║  "Production. Kreativität. Wellbeing."                                       ║
+// ║  + EchoelWisdom      - Super Wise Integration (Inclusive Intelligence)       ║
+// ║  + EchoelInclusive   - Universal Accessibility (80+ Languages, All Minds)    ║
+// ║                                                                               ║
+// ║  "Production. Kreativität. Wellbeing. Inklusion."                            ║
+// ║  "Music for Every Soul - Musik für Jede Seele"                               ║
 // ║                                                                               ║
 // ╚═══════════════════════════════════════════════════════════════════════════════╝
 
@@ -35,6 +39,10 @@ public final class EchoelSuperTools: ObservableObject {
     public let life = EchoelLife.shared                // Wellbeing
     public let vision = EchoelVision.shared            // Visual/Video
 
+    // MARK: - Inclusive Intelligence (Super Wise Mode)
+    public let wisdom = EchoelWisdom.shared            // Integration Hub
+    public let inclusive = EchoelInclusive.shared      // Universal Access
+
     // MARK: - Global State
     @Published public var activeTool: SuperTool = .synthesis
     @Published public var globalBioState: GlobalBioState = GlobalBioState()
@@ -45,6 +53,7 @@ public final class EchoelSuperTools: ObservableObject {
 
     private init() {
         setupCrossToolConnections()
+        setupInclusiveIntelligence()
         print("═══════════════════════════════════════════════════════════════")
         print("║        ECHOEL SUPER TOOLS - QUANTUM CONSOLIDATED            ║")
         print("║                                                             ║")
@@ -54,8 +63,52 @@ public final class EchoelSuperTools: ObservableObject {
         print("║  EchoelLife       │ HRV, Coherence, Therapeutic Audio      ║")
         print("║  EchoelVision     │ 12 Modes, Streaming, AR/VR             ║")
         print("║                                                             ║")
-        print("║  Production. Kreativität. Wellbeing.                       ║")
+        print("║  + EchoelWisdom   │ 80+ Languages, All Minds, All Ages    ║")
+        print("║  + EchoelInclusive│ WCAG AAA, Universal Accessibility     ║")
+        print("║                                                             ║")
+        print("║  Production. Kreativität. Wellbeing. INKLUSION.            ║")
+        print("║  \"Music for Every Soul - Musik für Jede Seele\"            ║")
         print("═══════════════════════════════════════════════════════════════")
+    }
+
+    private func setupInclusiveIntelligence() {
+        // Start wise session
+        wisdom.beginWiseSession()
+
+        // Connect inclusive features to all tools
+        inclusive.$activeLanguage
+            .sink { [weak self] language in
+                print("🌍 Language changed: \(language.nativeName)")
+                self?.updateToolsForLanguage(language)
+            }
+            .store(in: &cancellables)
+
+        inclusive.$cognitiveMode
+            .sink { [weak self] mode in
+                print("🧠 Cognitive mode: \(mode.rawValue)")
+                self?.updateToolsForCognitiveMode(mode)
+            }
+            .store(in: &cancellables)
+
+        inclusive.$ageMode
+            .sink { [weak self] age in
+                print("👤 Age mode: \(age.rawValue)")
+                self?.updateToolsForAgeMode(age)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func updateToolsForLanguage(_ language: WorldLanguage) {
+        // Update cultural music suggestions based on language
+        // (Arabic → Maqam, Hindi → Raga, etc.)
+    }
+
+    private func updateToolsForCognitiveMode(_ mode: CognitiveMode) {
+        // Adapt UI complexity based on cognitive mode
+    }
+
+    private func updateToolsForAgeMode(_ age: AgeMode) {
+        // Adapt content safety and complexity based on age
     }
 
     private func setupCrossToolConnections() {
