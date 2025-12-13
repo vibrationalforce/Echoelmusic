@@ -2,7 +2,7 @@ import SwiftUI
 import Combine
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ECHOELTOOLS - SUPER HIGH INTELLIGENCE CREATIVE TOOLS
+// ECHOELTOOLS - NIARA CREATIVE INTELLIGENCE SUITE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // "Ultra Liquid Light Flow - Kreativität auf Quantenebene"
@@ -13,6 +13,16 @@ import Combine
 // • Kreative Entscheidungen mit Quantum-Sampling treffen
 // • Über alle Geräte synchronisiert sind
 // • Analog und Digital nahtlos verbinden
+//
+// NIARA TOOLS:
+// • NiaraSense    - Harmonic resonance intelligence
+// • HeartWeave    - Rhythm patterns from your pulse
+// • SpectraMorph  - Frequency sculpting with bio-feedback
+// • VitalVoice    - Transform life data into sound
+// • InfiniFold    - Quantum creative decisions
+// • AuroraFlow    - Ultra liquid light activation
+// • VoidSphere    - 3D spatial positioning
+// • ChronoBreath  - Time manipulation synced to breath
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -31,16 +41,16 @@ final class EchoelTools: ObservableObject {
     @Published var toolState: ToolState = ToolState()
     @Published var flowMultiplier: Float = 1.0
 
-    // MARK: - Tool References
+    // MARK: - Niara Tool References
 
-    let harmonicIntelligence = HarmonicIntelligence()
-    let rhythmicIntelligence = RhythmicIntelligence()
-    let spectralSculptor = SpectralSculptor()
-    let bioSonifier = BioSonifier()
-    let quantumComposer = QuantumComposer()
-    let flowEngine = FlowEngine()
-    let spatializer = Spatializer()
-    let timeStretcher = TimeStretcher()
+    let niaraSense = NiaraSense()           // Harmonic resonance intelligence
+    let heartWeave = HeartWeave()           // Rhythm patterns from pulse
+    let spectraMorph = SpectraMorph()       // Frequency sculpting
+    let vitalVoice = VitalVoice()           // Life data to sound
+    let infiniFold = InfiniFold()           // Quantum creative decisions
+    let auroraFlow = AuroraFlow()           // Ultra liquid light flow
+    let voidSphere = VoidSphere()           // 3D spatial positioning
+    let chronoBreath = ChronoBreath()       // Time manipulation
 
     // MARK: - System References
 
@@ -87,11 +97,11 @@ final class EchoelTools: ObservableObject {
         let energy = state.energy
         let creativity = state.creativity
 
-        // Scale all tools based on bio-state
-        harmonicIntelligence.setCoherence(coherence)
-        rhythmicIntelligence.setEnergy(energy)
-        quantumComposer.setCreativity(creativity)
-        flowEngine.setFlowState(coherence: coherence, energy: energy)
+        // Scale all Niara tools based on bio-state
+        niaraSense.setCoherence(coherence)
+        heartWeave.setEnergy(energy)
+        infiniFold.setCreativity(creativity)
+        auroraFlow.setFlowState(coherence: coherence, energy: energy)
     }
 
     private func adjustToolsForFlowState(_ flowState: FlowState) {
@@ -141,42 +151,42 @@ extension EchoelTools {
 
     enum Tool: String, CaseIterable, Identifiable {
         case none = "None"
-        case harmonicIntelligence = "Harmonic Intelligence"
-        case rhythmicIntelligence = "Rhythmic Intelligence"
-        case spectralSculptor = "Spectral Sculptor"
-        case bioSonifier = "Bio Sonifier"
-        case quantumComposer = "Quantum Composer"
-        case flowEngine = "Flow Engine"
-        case spatializer = "Spatializer"
-        case timeStretcher = "Time Stretcher"
+        case niaraSense = "NiaraSense"
+        case heartWeave = "HeartWeave"
+        case spectraMorph = "SpectraMorph"
+        case vitalVoice = "VitalVoice"
+        case infiniFold = "InfiniFold"
+        case auroraFlow = "AuroraFlow"
+        case voidSphere = "VoidSphere"
+        case chronoBreath = "ChronoBreath"
 
         var id: String { rawValue }
 
         var icon: String {
             switch self {
             case .none: return "circle.slash"
-            case .harmonicIntelligence: return "music.quarternote.3"
-            case .rhythmicIntelligence: return "metronome"
-            case .spectralSculptor: return "waveform.path.badge.plus"
-            case .bioSonifier: return "heart.text.square"
-            case .quantumComposer: return "atom"
-            case .flowEngine: return "drop.fill"
-            case .spatializer: return "cube.transparent"
-            case .timeStretcher: return "clock.arrow.2.circlepath"
+            case .niaraSense: return "music.quarternote.3"
+            case .heartWeave: return "heart.circle.fill"
+            case .spectraMorph: return "waveform.path.badge.plus"
+            case .vitalVoice: return "waveform.and.person.filled"
+            case .infiniFold: return "infinity"
+            case .auroraFlow: return "sparkles"
+            case .voidSphere: return "cube.transparent.fill"
+            case .chronoBreath: return "lungs.fill"
             }
         }
 
         var description: String {
             switch self {
-            case .none: return "Kein Tool aktiv"
-            case .harmonicIntelligence: return "KI-gestützte Harmonie-Vorschläge basierend auf Coherence"
-            case .rhythmicIntelligence: return "Rhythmus-Patterns die mit deinem Herzschlag synchron sind"
-            case .spectralSculptor: return "Forme das Frequenzspektrum mit Bio-Feedback"
-            case .bioSonifier: return "Verwandele Bio-Daten in Klang (Oktav-Transposition)"
-            case .quantumComposer: return "Quantum-Sampling für kreative Entscheidungen"
-            case .flowEngine: return "Ultra Liquid Light Flow Aktivierung"
-            case .spatializer: return "3D Audio Positionierung basierend auf Coherence"
-            case .timeStretcher: return "Zeit-Manipulation synchron zum Atem"
+            case .none: return "No tool active"
+            case .niaraSense: return "Harmonic resonance intelligence - suggests chords aligned with your coherence"
+            case .heartWeave: return "Weaves rhythm patterns synchronized to your heartbeat"
+            case .spectraMorph: return "Sculpt the frequency spectrum with bio-feedback"
+            case .vitalVoice: return "Transform life data into audible frequencies (octave transposition)"
+            case .infiniFold: return "Quantum-field sampling for infinite creative decisions"
+            case .auroraFlow: return "Ultra Liquid Light Flow activation - peak creativity state"
+            case .voidSphere: return "3D spatial audio positioning based on coherence"
+            case .chronoBreath: return "Time manipulation synchronized to your breath"
             }
         }
     }
@@ -189,9 +199,9 @@ extension EchoelTools {
     }
 }
 
-// MARK: - Harmonic Intelligence
+// MARK: - NiaraSense (Harmonic Resonance Intelligence)
 
-class HarmonicIntelligence: ObservableObject {
+class NiaraSense: ObservableObject {
     @Published var suggestedChord: Chord?
     @Published var suggestedScale: Scale?
     @Published var harmonicTension: Float = 0.5
@@ -267,9 +277,9 @@ class HarmonicIntelligence: ObservableObject {
     ]
 }
 
-// MARK: - Rhythmic Intelligence
+// MARK: - HeartWeave (Rhythm from Heartbeat)
 
-class RhythmicIntelligence: ObservableObject {
+class HeartWeave: ObservableObject {
     @Published var suggestedPattern: RhythmPattern?
     @Published var syncedToHeartbeat: Bool = true
     @Published var patternDensity: Float = 0.5
@@ -310,9 +320,9 @@ class RhythmicIntelligence: ObservableObject {
     ]
 }
 
-// MARK: - Spectral Sculptor
+// MARK: - SpectraMorph (Frequency Sculpting)
 
-class SpectralSculptor: ObservableObject {
+class SpectraMorph: ObservableObject {
     @Published var frequencyMask: [Float] = Array(repeating: 1.0, count: 64)
     @Published var coherenceInfluence: Float = 0.5
 
@@ -337,9 +347,9 @@ class SpectralSculptor: ObservableObject {
     }
 }
 
-// MARK: - Bio Sonifier
+// MARK: - VitalVoice (Life Data to Sound)
 
-class BioSonifier: ObservableObject {
+class VitalVoice: ObservableObject {
     @Published var heartbeatFrequency: Float = 64  // Hz (after transposition)
     @Published var breathFrequency: Float = 51     // Hz (after transposition)
     @Published var hrvModulation: Float = 410      // Hz (after transposition)
@@ -394,9 +404,9 @@ class BioSonifier: ObservableObject {
     }
 }
 
-// MARK: - Quantum Composer
+// MARK: - InfiniFold (Quantum Creative Decisions)
 
-class QuantumComposer: ObservableObject {
+class InfiniFold: ObservableObject {
     @Published var creativityLevel: Float = 0.5
     @Published var superpositionStrength: Float = 0.5
     @Published var lastCollapsedChoice: Int = 0
@@ -429,9 +439,9 @@ class QuantumComposer: ObservableObject {
     }
 }
 
-// MARK: - Flow Engine
+// MARK: - AuroraFlow (Ultra Liquid Light)
 
-class FlowEngine: ObservableObject {
+class AuroraFlow: ObservableObject {
     @Published var flowIntensity: Float = 0.5
     @Published var liquidLightLevel: Float = 0.5
     @Published var ultraFlowActive: Bool = false
@@ -459,9 +469,9 @@ class FlowEngine: ObservableObject {
     }
 }
 
-// MARK: - Spatializer
+// MARK: - VoidSphere (3D Spatial Positioning)
 
-class Spatializer: ObservableObject {
+class VoidSphere: ObservableObject {
     @Published var position: SIMD3<Float> = SIMD3(0, 0, -1)
     @Published var rotation: Float = 0
     @Published var coherenceBasedWidth: Float = 1.0
@@ -488,9 +498,9 @@ class Spatializer: ObservableObject {
     }
 }
 
-// MARK: - Time Stretcher
+// MARK: - ChronoBreath (Time Synced to Breath)
 
-class TimeStretcher: ObservableObject {
+class ChronoBreath: ObservableObject {
     @Published var stretchFactor: Float = 1.0
     @Published var breathSynced: Bool = true
     @Published var currentPhase: Float = 0
@@ -520,7 +530,7 @@ struct EchoelToolsView: View {
         VStack(spacing: 16) {
             // Header
             HStack {
-                Text("ECHOELTOOLS")
+                Text("NIARA TOOLS")
                     .font(.system(size: 14, weight: .bold, design: .monospaced))
                     .foregroundColor(.cyan)
 
