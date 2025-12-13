@@ -14,6 +14,7 @@
 // - EchoelSuperTools (Production/Kreativität/Wellbeing)
 // - EchoelVoice/EchoelVox (Voice Intelligence)
 // - EchoelVisualWisdom (Light/Video/Visual Intelligence)
+// - EchoelLife (Health Sciences/Biofeedback/Clinical Evidence)
 // - Bio-Reactive Systems
 // ============================================================================
 
@@ -36,6 +37,7 @@ public final class EchoelWisdom: ObservableObject {
     public let localization = LocalizationManager.shared
     public let musicTheory = GlobalMusicTheoryDatabase()
     public let visualWisdom = EchoelVisualWisdom.shared
+    public let lifeScience = EchoelLife.shared  // Health Sciences Hub
 
     // MARK: - Wisdom State
     @Published public var wisdomLevel: WisdomLevel = .awakening
@@ -120,6 +122,20 @@ public final class EchoelWisdom: ObservableObject {
         visualWisdom.$currentBioModulation
             .sink { [weak self] modulation in
                 self?.handleBioVisualChange(modulation)
+            }
+            .store(in: &cancellables)
+
+        // Observe health science bio state
+        lifeScience.$bioState
+            .sink { [weak self] bioState in
+                self?.handleBioStateChange(bioState)
+            }
+            .store(in: &cancellables)
+
+        // Observe wellbeing mode changes
+        lifeScience.$activeMode
+            .sink { [weak self] mode in
+                self?.handleWellbeingModeChange(mode)
             }
             .store(in: &cancellables)
     }
@@ -786,6 +802,147 @@ public final class EchoelWisdom: ObservableObject {
     }
 
     // MARK: - ═══════════════════════════════════════════════════════════════════
+    // MARK: HEALTH SCIENCE INTEGRATION (EchoelLife)
+    // MARK: - ═══════════════════════════════════════════════════════════════════
+
+    /// Handle bio state changes from health sensors
+    private func handleBioStateChange(_ bioState: EchoelLife.BioState) {
+        // Sync bio data with visual system
+        visualWisdom.currentBioModulation.updateFromBioData(
+            hr: bioState.heartRate,
+            hrvValue: bioState.hrv / 100.0,  // Normalize to 0-1
+            coherenceValue: bioState.coherence,
+            stress: bioState.stress
+        )
+
+        // Record as bio-reactive interaction
+        recordInteraction(.bioReactive, context: "health_sync")
+
+        // Update profile based on coherence level
+        switch bioState.coherenceLevel {
+        case .high:
+            currentProfile.emotionalPreference = .balanced
+        case .medium:
+            currentProfile.emotionalPreference = .calming
+        case .low:
+            currentProfile.emotionalPreference = .calming
+        }
+
+        print("💓 Bio State Updated: HR=\(Int(bioState.heartRate)) HRV=\(Int(bioState.hrv))ms Coherence=\(bioState.coherenceLevel.rawValue)")
+    }
+
+    /// Handle wellbeing mode changes
+    private func handleWellbeingModeChange(_ mode: EchoelLife.WellbeingMode) {
+        // Sync visual mode with wellbeing mode
+        switch mode {
+        case .monitor:
+            visualWisdom.setVisualMode(.adaptive)
+        case .train:
+            visualWisdom.setVisualMode(.meditation)
+        case .heal:
+            visualWisdom.setVisualMode(.meditation)
+            visualWisdom.setColorScheme(.warm)
+        case .optimize:
+            visualWisdom.setVisualMode(.performance)
+        }
+        print("🏥 Wellbeing Mode: \(mode.rawValue)")
+    }
+
+    /// Get evidence-based health recommendation
+    public func getHealthRecommendation() -> HealthRecommendation {
+        let bioState = lifeScience.bioState
+
+        // Determine recommended protocol based on current state
+        var protocol_: EchoelLife.TrainingProtocol = .resonanceFrequency
+        var frequency: EchoelLife.TherapeuticFrequency = .focus
+        var message = translate("Maintain your current state")
+
+        if bioState.coherence < 0.4 {
+            // Low coherence - need calming
+            protocol_ = .heartMathCoherence
+            frequency = .creativity  // Theta for relaxation
+            message = translate("Low coherence detected. Try HeartMath breathing.")
+        } else if bioState.stress > 0.6 {
+            // High stress
+            protocol_ = .slowBreathing
+            frequency = .deepSleep  // Delta for deep relaxation
+            message = translate("Elevated stress. Slow breathing recommended.")
+        } else if bioState.hrv < 30 {
+            // Low HRV - autonomic imbalance
+            protocol_ = .resonanceFrequency
+            frequency = .creativity
+            message = translate("HRV below optimal. Resonance frequency training suggested.")
+        } else if bioState.coherence >= 0.7 && bioState.hrv >= 50 {
+            // Excellent state - optimize
+            frequency = .gammaHealing
+            message = translate("Excellent state! Try 40Hz gamma for peak performance.")
+        }
+
+        return HealthRecommendation(
+            currentState: HealthState(
+                heartRate: bioState.heartRate,
+                hrv: bioState.hrv,
+                coherence: bioState.coherence,
+                coherenceLevel: bioState.coherenceLevel.rawValue,
+                stress: bioState.stress,
+                energy: bioState.energy
+            ),
+            recommendedProtocol: protocol_,
+            recommendedFrequency: frequency,
+            message: message,
+            evidenceLevel: protocol_.evidenceLevel
+        )
+    }
+
+    /// Start health training session
+    public func startHealthSession(mode: HealthSessionMode) {
+        switch mode {
+        case .hrvTraining(let protocol_):
+            lifeScience.startSession(protocol: protocol_)
+            visualWisdom.setVisualMode(.meditation)
+        case .brainwaveEntrainment(let frequency):
+            lifeScience.startSession(frequency: frequency)
+            visualWisdom.setVisualMode(.meditation)
+        case .autoOptimize:
+            let recommendation = getHealthRecommendation()
+            lifeScience.startSession(protocol: recommendation.recommendedProtocol)
+        }
+        print("🏥 Health Session Started")
+    }
+
+    /// Stop health session
+    public func stopHealthSession() {
+        lifeScience.stopSession()
+        visualWisdom.setVisualMode(.adaptive)
+        print("⏹️ Health Session Stopped")
+    }
+
+    // MARK: - Health Types
+
+    public enum HealthSessionMode {
+        case hrvTraining(EchoelLife.TrainingProtocol)
+        case brainwaveEntrainment(EchoelLife.TherapeuticFrequency)
+        case autoOptimize
+    }
+
+    public struct HealthRecommendation {
+        public let currentState: HealthState
+        public let recommendedProtocol: EchoelLife.TrainingProtocol
+        public let recommendedFrequency: EchoelLife.TherapeuticFrequency
+        public let message: String
+        public let evidenceLevel: String
+    }
+
+    public struct HealthState {
+        public let heartRate: Float
+        public let hrv: Float
+        public let coherence: Float
+        public let coherenceLevel: String
+        public let stress: Float
+        public let energy: Float
+    }
+
+    // MARK: - ═══════════════════════════════════════════════════════════════════
     // MARK: VISUAL WISDOM INTEGRATION
     // MARK: - ═══════════════════════════════════════════════════════════════════
 
@@ -1031,6 +1188,10 @@ public final class EchoelWisdom: ObservableObject {
         ✓ DMX/Art-Net/Hue/WLED Lighting
         ✓ Physics Pattern Visualization
         ✓ Color Blindness Correction
+        ✓ Health Sciences (EchoelLife)
+        ✓ HealthKit HRV/HR Integration
+        ✓ Evidence-Based Protocols (Level 1a)
+        ✓ Binaural/Isochronic Entrainment
 
         ═══════════════════════════════════════════════════
 
@@ -1122,6 +1283,13 @@ public struct WiseTranslated: DynamicProperty {
  ║     • Physics Patterns (Chladni, Lissajous, Interference)               ║
  ║     • Color Blindness Correction (Daltonization)                        ║
  ║     • Bio-Reactive Visual Modulation                                     ║
+ ║                                                                           ║
+ ║  🏥 Health Sciences → EchoelLife                                        ║
+ ║     • HealthKit (HRV RMSSD, HeartMath Coherence)                        ║
+ ║     • Evidence-Based Protocols (Oxford CEBM Level 1a)                   ║
+ ║     • Binaural/Isochronic Entrainment (Delta→Gamma)                     ║
+ ║     • Clinical Interventions (Cochrane-backed)                          ║
+ ║     • Bio→Audio/Visual Parameter Mapping                                 ║
  ║                                                                           ║
  ║  WISDOM GROWS WITH EVERY INTERACTION                                     ║
  ║                                                                           ║
