@@ -111,8 +111,35 @@ class CloudSyncManager: ObservableObject {
     }
 
     private func autoBackup() async throws {
-        // TODO: Backup current session automatically
         print("☁️ CloudSyncManager: Auto backup triggered")
+
+        // Get current session data from UserDefaults (lightweight backup)
+        let defaults = UserDefaults.standard
+
+        // Backup session state
+        let backupData: [String: Any] = [
+            "timestamp": Date().timeIntervalSince1970,
+            "lastHRV": defaults.double(forKey: "lastHRV"),
+            "lastCoherence": defaults.double(forKey: "lastCoherence"),
+            "totalSessionTime": defaults.double(forKey: "totalSessionTime"),
+            "sessionCount": defaults.integer(forKey: "sessionCount")
+        ]
+
+        // Save to iCloud key-value store
+        let ubiquitousStore = NSUbiquitousKeyValueStore.default
+
+        for (key, value) in backupData {
+            if let doubleValue = value as? Double {
+                ubiquitousStore.set(doubleValue, forKey: "backup_\(key)")
+            } else if let intValue = value as? Int {
+                ubiquitousStore.set(intValue, forKey: "backup_\(key)")
+            }
+        }
+
+        // Force sync
+        ubiquitousStore.synchronize()
+
+        print("☁️ CloudSyncManager: Backup completed at \(Date())")
     }
 }
 

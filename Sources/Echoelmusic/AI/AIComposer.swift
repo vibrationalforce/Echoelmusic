@@ -17,9 +17,27 @@ class AIComposer: ObservableObject {
     private var chordModel: MLModel?
     private var drumModel: MLModel?
 
+    // Scale patterns (semitones from root)
+    private let scalePatterns: [String: [Int]] = [
+        "major": [0, 2, 4, 5, 7, 9, 11],
+        "minor": [0, 2, 3, 5, 7, 8, 10],
+        "dorian": [0, 2, 3, 5, 7, 9, 10],
+        "mixolydian": [0, 2, 4, 5, 7, 9, 10],
+        "pentatonic": [0, 2, 4, 7, 9],
+        "blues": [0, 3, 5, 6, 7, 10]
+    ]
+
+    // Root note MIDI values
+    private let rootNotes: [String: Int] = [
+        "C": 60, "C#": 61, "Db": 61, "D": 62, "D#": 63, "Eb": 63,
+        "E": 64, "F": 65, "F#": 66, "Gb": 66, "G": 67, "G#": 68,
+        "Ab": 68, "A": 69, "A#": 70, "Bb": 70, "B": 71
+    ]
+
     init() {
-        // TODO: Load CoreML models
-        print("✅ AIComposer: Initialized")
+        // Rule-based generation (CoreML can be added later for enhanced quality)
+        // Current implementation uses Markov-chain-style transitions
+        print("✅ AIComposer: Initialized with rule-based generation")
     }
 
     // MARK: - Melody Generation
@@ -28,15 +46,70 @@ class AIComposer: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        // TODO: Implement LSTM-based melody generation
         print("🎼 AIComposer: Generating melody in \(key) \(scale) (\(bars) bars)")
 
-        let notes = (0..<bars*4).map { _ in
-            Note(pitch: Int.random(in: 60...72), duration: 0.25, velocity: 80)
+        let rootNote = rootNotes[key] ?? 60
+        let scaleIntervals = scalePatterns[scale.lowercased()] ?? scalePatterns["major"]!
+
+        // Build scale notes across 2 octaves
+        var scaleNotes: [Int] = []
+        for octave in 0..<2 {
+            for interval in scaleIntervals {
+                scaleNotes.append(rootNote + interval + (octave * 12))
+            }
+        }
+
+        // Generate melodic contour using Markov-style transitions
+        var notes: [Note] = []
+        var currentIndex = scaleNotes.count / 2  // Start in middle
+        let notesPerBar = 4
+        let totalNotes = bars * notesPerBar
+
+        for i in 0..<totalNotes {
+            // Melodic motion preferences (step-wise more likely than leaps)
+            let motionProbabilities: [(Int, Double)] = [
+                (-2, 0.1),   // Down 2 scale steps
+                (-1, 0.25),  // Down 1 step
+                (0, 0.3),    // Same note
+                (1, 0.25),   // Up 1 step
+                (2, 0.1)     // Up 2 steps
+            ]
+
+            // Choose motion based on weighted random
+            let motion = weightedRandomChoice(motionProbabilities)
+            currentIndex = max(0, min(scaleNotes.count - 1, currentIndex + motion))
+
+            // Rhythmic variety
+            let duration: Double
+            if i % notesPerBar == 0 {
+                duration = 0.5  // Longer on beat 1
+            } else if i % 2 == 0 {
+                duration = 0.25  // Quarter notes on beats
+            } else {
+                duration = Double.random(in: 0.125...0.25)  // Eighth or sixteenth
+            }
+
+            // Velocity variation (accents on beats)
+            let velocity = (i % notesPerBar == 0) ? Int.random(in: 90...110) : Int.random(in: 70...90)
+
+            notes.append(Note(pitch: scaleNotes[currentIndex], duration: duration, velocity: velocity))
         }
 
         generatedMelody = notes
         return notes
+    }
+
+    private func weightedRandomChoice(_ choices: [(Int, Double)]) -> Int {
+        let total = choices.reduce(0.0) { $0 + $1.1 }
+        var random = Double.random(in: 0..<total)
+
+        for (value, weight) in choices {
+            random -= weight
+            if random <= 0 {
+                return value
+            }
+        }
+        return choices.first?.0 ?? 0
     }
 
     // MARK: - Chord Suggestions
