@@ -1229,7 +1229,7 @@ struct BiometricVisualization: View {
             Gauge(value: biometrics.hrvSDNN, in: 0...100) {
                 Text("HRV")
             } currentValueLabel: {
-                Text(String(format: "%.0f", biometrics.hrvSDNN))
+                Text(String(format: "%.1f", biometrics.hrvSDNN))
             }
             .gaugeStyle(.accessoryCircular)
             .tint(.blue)

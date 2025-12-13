@@ -287,7 +287,7 @@ struct VaporwavePalace: View {
 
                     // HRV
                     VStack(spacing: 2) {
-                        Text(String(format: "%.0f", healthKitManager.hrvRMSSD))
+                        Text(String(format: "%.1f", healthKitManager.hrvRMSSD))
                             .font(VaporwaveTypography.dataSmall())
                             .foregroundColor(VaporwaveColors.hrv)
 
