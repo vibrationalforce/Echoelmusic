@@ -2,7 +2,7 @@ import SwiftUI
 import Combine
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ECHOELTOOLS - NIARA CREATIVE INTELLIGENCE SUITE
+// ECHOELTOOLS - ECHOEL CREATIVE INTELLIGENCE SUITE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // "Ultra Liquid Light Flow - Kreativität auf Quantenebene"
@@ -14,15 +14,15 @@ import Combine
 // • Über alle Geräte synchronisiert sind
 // • Analog und Digital nahtlos verbinden
 //
-// NIARA TOOLS:
-// • NiaraSense    - Harmonic resonance intelligence
-// • HeartWeave    - Rhythm patterns from your pulse
-// • SpectraMorph  - Frequency sculpting with bio-feedback
-// • VitalVoice    - Transform life data into sound
-// • InfiniFold    - Quantum creative decisions
-// • AuroraFlow    - Ultra liquid light activation
-// • VoidSphere    - 3D spatial positioning
-// • ChronoBreath  - Time manipulation synced to breath
+// ECHOEL TOOLS:
+// • EchoelSense     - Harmonic resonance intelligence
+// • EchoelWeave     - Rhythm patterns from your pulse
+// • EchoelSculpture - Frequency sculpting with bio-feedback
+// • EchoelAudible   - Transform life data into sound
+// • EchoelFold      - Quantum creative decisions
+// • EchoelVisible   - Ultra liquid light visual activation
+// • EchoelSpace     - Multi-dimensional spatial positioning (3D+Time+Bio)
+// • EchoelBreath    - Time manipulation synced to breath
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -41,16 +41,16 @@ final class EchoelTools: ObservableObject {
     @Published var toolState: ToolState = ToolState()
     @Published var flowMultiplier: Float = 1.0
 
-    // MARK: - Niara Tool References
+    // MARK: - Echoel Tool References
 
-    let niaraSense = NiaraSense()           // Harmonic resonance intelligence
-    let heartWeave = HeartWeave()           // Rhythm patterns from pulse
-    let spectraMorph = SpectraMorph()       // Frequency sculpting
-    let vitalVoice = VitalVoice()           // Life data to sound
-    let infiniFold = InfiniFold()           // Quantum creative decisions
-    let auroraFlow = AuroraFlow()           // Ultra liquid light flow
-    let voidSphere = VoidSphere()           // 3D spatial positioning
-    let chronoBreath = ChronoBreath()       // Time manipulation
+    let echoelSense = EchoelSense()         // Harmonic resonance intelligence
+    let echoelWeave = EchoelWeave()         // Rhythm patterns from pulse
+    let echoelSculpture = EchoelSculpture() // Frequency sculpting
+    let echoelAudible = EchoelAudible()     // Life data to sound
+    let echoelFold = EchoelFold()           // Quantum creative decisions
+    let echoelVisible = EchoelVisible()     // Ultra liquid light visual
+    let echoelSpace = EchoelSpace()         // Multi-dimensional spatial
+    let echoelBreath = EchoelBreath()       // Time manipulation
 
     // MARK: - System References
 
@@ -97,11 +97,12 @@ final class EchoelTools: ObservableObject {
         let energy = state.energy
         let creativity = state.creativity
 
-        // Scale all Niara tools based on bio-state
-        niaraSense.setCoherence(coherence)
-        heartWeave.setEnergy(energy)
-        infiniFold.setCreativity(creativity)
-        auroraFlow.setFlowState(coherence: coherence, energy: energy)
+        // Scale all Echoel tools based on bio-state
+        echoelSense.setCoherence(coherence)
+        echoelWeave.setEnergy(energy)
+        echoelFold.setCreativity(creativity)
+        echoelVisible.setFlowState(coherence: coherence, energy: energy)
+        echoelSpace.updateFromBio(coherence: coherence, energy: energy, creativity: creativity)
     }
 
     private func adjustToolsForFlowState(_ flowState: FlowState) {
@@ -151,42 +152,42 @@ extension EchoelTools {
 
     enum Tool: String, CaseIterable, Identifiable {
         case none = "None"
-        case niaraSense = "NiaraSense"
-        case heartWeave = "HeartWeave"
-        case spectraMorph = "SpectraMorph"
-        case vitalVoice = "VitalVoice"
-        case infiniFold = "InfiniFold"
-        case auroraFlow = "AuroraFlow"
-        case voidSphere = "VoidSphere"
-        case chronoBreath = "ChronoBreath"
+        case echoelSense = "EchoelSense"
+        case echoelWeave = "EchoelWeave"
+        case echoelSculpture = "EchoelSculpture"
+        case echoelAudible = "EchoelAudible"
+        case echoelFold = "EchoelFold"
+        case echoelVisible = "EchoelVisible"
+        case echoelSpace = "EchoelSpace"
+        case echoelBreath = "EchoelBreath"
 
         var id: String { rawValue }
 
         var icon: String {
             switch self {
             case .none: return "circle.slash"
-            case .niaraSense: return "music.quarternote.3"
-            case .heartWeave: return "heart.circle.fill"
-            case .spectraMorph: return "waveform.path.badge.plus"
-            case .vitalVoice: return "waveform.and.person.filled"
-            case .infiniFold: return "infinity"
-            case .auroraFlow: return "sparkles"
-            case .voidSphere: return "cube.transparent.fill"
-            case .chronoBreath: return "lungs.fill"
+            case .echoelSense: return "music.quarternote.3"
+            case .echoelWeave: return "heart.circle.fill"
+            case .echoelSculpture: return "waveform.path.badge.plus"
+            case .echoelAudible: return "waveform.and.person.filled"
+            case .echoelFold: return "infinity"
+            case .echoelVisible: return "eye.fill"
+            case .echoelSpace: return "cube.transparent.fill"
+            case .echoelBreath: return "lungs.fill"
             }
         }
 
         var description: String {
             switch self {
             case .none: return "No tool active"
-            case .niaraSense: return "Harmonic resonance intelligence - suggests chords aligned with your coherence"
-            case .heartWeave: return "Weaves rhythm patterns synchronized to your heartbeat"
-            case .spectraMorph: return "Sculpt the frequency spectrum with bio-feedback"
-            case .vitalVoice: return "Transform life data into audible frequencies (octave transposition)"
-            case .infiniFold: return "Quantum-field sampling for infinite creative decisions"
-            case .auroraFlow: return "Ultra Liquid Light Flow activation - peak creativity state"
-            case .voidSphere: return "3D spatial audio positioning based on coherence"
-            case .chronoBreath: return "Time manipulation synchronized to your breath"
+            case .echoelSense: return "Harmonic resonance intelligence - suggests chords aligned with your coherence"
+            case .echoelWeave: return "Weaves rhythm patterns synchronized to your heartbeat"
+            case .echoelSculpture: return "Sculpt the frequency spectrum with bio-feedback"
+            case .echoelAudible: return "Transform life data into audible frequencies (octave transposition)"
+            case .echoelFold: return "Quantum-field sampling for infinite creative decisions"
+            case .echoelVisible: return "Ultra Liquid Light visual activation - see your creativity flow"
+            case .echoelSpace: return "Multi-dimensional spatial positioning (3D + Time + Bio dimensions)"
+            case .echoelBreath: return "Time manipulation synchronized to your breath"
             }
         }
     }
@@ -199,9 +200,9 @@ extension EchoelTools {
     }
 }
 
-// MARK: - NiaraSense (Harmonic Resonance Intelligence)
+// MARK: - EchoelSense (Harmonic Resonance Intelligence)
 
-class NiaraSense: ObservableObject {
+class EchoelSense: ObservableObject {
     @Published var suggestedChord: Chord?
     @Published var suggestedScale: Scale?
     @Published var harmonicTension: Float = 0.5
@@ -277,9 +278,9 @@ class NiaraSense: ObservableObject {
     ]
 }
 
-// MARK: - HeartWeave (Rhythm from Heartbeat)
+// MARK: - EchoelWeave (Rhythm from Heartbeat)
 
-class HeartWeave: ObservableObject {
+class EchoelWeave: ObservableObject {
     @Published var suggestedPattern: RhythmPattern?
     @Published var syncedToHeartbeat: Bool = true
     @Published var patternDensity: Float = 0.5
@@ -320,9 +321,9 @@ class HeartWeave: ObservableObject {
     ]
 }
 
-// MARK: - SpectraMorph (Frequency Sculpting)
+// MARK: - EchoelSculpture (Frequency Sculpting)
 
-class SpectraMorph: ObservableObject {
+class EchoelSculpture: ObservableObject {
     @Published var frequencyMask: [Float] = Array(repeating: 1.0, count: 64)
     @Published var coherenceInfluence: Float = 0.5
 
@@ -347,9 +348,9 @@ class SpectraMorph: ObservableObject {
     }
 }
 
-// MARK: - VitalVoice (Life Data to Sound)
+// MARK: - EchoelAudible (Life Data to Sound)
 
-class VitalVoice: ObservableObject {
+class EchoelAudible: ObservableObject {
     @Published var heartbeatFrequency: Float = 64  // Hz (after transposition)
     @Published var breathFrequency: Float = 51     // Hz (after transposition)
     @Published var hrvModulation: Float = 410      // Hz (after transposition)
@@ -404,9 +405,9 @@ class VitalVoice: ObservableObject {
     }
 }
 
-// MARK: - InfiniFold (Quantum Creative Decisions)
+// MARK: - EchoelFold (Quantum Creative Decisions)
 
-class InfiniFold: ObservableObject {
+class EchoelFold: ObservableObject {
     @Published var creativityLevel: Float = 0.5
     @Published var superpositionStrength: Float = 0.5
     @Published var lastCollapsedChoice: Int = 0
@@ -439,9 +440,9 @@ class InfiniFold: ObservableObject {
     }
 }
 
-// MARK: - AuroraFlow (Ultra Liquid Light)
+// MARK: - EchoelVisible (Ultra Liquid Light Visual)
 
-class AuroraFlow: ObservableObject {
+class EchoelVisible: ObservableObject {
     @Published var flowIntensity: Float = 0.5
     @Published var liquidLightLevel: Float = 0.5
     @Published var ultraFlowActive: Bool = false
@@ -469,38 +470,147 @@ class AuroraFlow: ObservableObject {
     }
 }
 
-// MARK: - VoidSphere (3D Spatial Positioning)
+// MARK: - EchoelSpace (Multi-Dimensional Spatial Positioning)
 
-class VoidSphere: ObservableObject {
+class EchoelSpace: ObservableObject {
+
+    // MARK: - 3D Spatial Position
     @Published var position: SIMD3<Float> = SIMD3(0, 0, -1)
     @Published var rotation: Float = 0
     @Published var coherenceBasedWidth: Float = 1.0
 
-    func updateFromCoherence(_ coherence: Float) {
-        // High coherence = focused center
-        // Low coherence = wide stereo spread
-        coherenceBasedWidth = 1.0 + (1.0 - coherence)
+    // MARK: - Extended Dimensions
+    @Published var timeDimension: Float = 0        // 4th dimension: temporal position
+    @Published var bioDimension: Float = 0.5       // 5th dimension: bio-coherence depth
+    @Published var creativeDimension: Float = 0.5  // 6th dimension: creative energy field
+    @Published var quantumDimension: Float = 0     // 7th dimension: quantum superposition state
 
-        // Rotation based on time and coherence
-        rotation += 0.01 * (1.0 - coherence)
+    // MARK: - Dimension Blending
+    @Published var dimensionBlend: DimensionBlend = DimensionBlend()
+
+    struct DimensionBlend {
+        var spatial3D: Float = 0.4      // Weight of XYZ
+        var temporal: Float = 0.2       // Weight of time
+        var bioField: Float = 0.2       // Weight of bio
+        var creative: Float = 0.1       // Weight of creativity
+        var quantum: Float = 0.1        // Weight of quantum
     }
 
+    // MARK: - Spatial Modes
+    enum SpatialMode: String, CaseIterable {
+        case standard3D = "3D Standard"
+        case binaural = "Binaural"
+        case ambisonics = "Ambisonics"
+        case hyperdimensional = "Hyperdimensional"
+        case bioReactive = "Bio-Reactive"
+    }
+
+    @Published var spatialMode: SpatialMode = .hyperdimensional
+
+    // MARK: - Update from Bio Data
+
+    func updateFromBio(coherence: Float, energy: Float, creativity: Float) {
+        // Bio dimension reflects coherence depth
+        bioDimension = coherence
+
+        // Creative dimension reflects energy field
+        creativeDimension = creativity
+
+        // High coherence = focused center, low = wide spread
+        coherenceBasedWidth = 1.0 + (1.0 - coherence)
+
+        // Rotation influenced by energy
+        rotation += 0.01 * energy
+
+        // Quantum dimension fluctuates with creativity
+        quantumDimension = sin(Float(Date().timeIntervalSince1970) * creativity * 2) * 0.5 + 0.5
+    }
+
+    func updateFromCoherence(_ coherence: Float) {
+        coherenceBasedWidth = 1.0 + (1.0 - coherence)
+        rotation += 0.01 * (1.0 - coherence)
+        bioDimension = coherence
+    }
+
+    // MARK: - Multi-Dimensional Position Calculation
+
     func positionForFrequency(_ frequency: Float) -> SIMD3<Float> {
-        // Map frequency to spatial position
-        // Low = front/center, High = sides/back
         let normalizedFreq = log2(frequency / 20) / 10  // 0-1
 
-        let angle = normalizedFreq * Float.pi  // 0 to π
-        let x = sin(angle) * coherenceBasedWidth
-        let z = -cos(angle)
+        let angle = normalizedFreq * Float.pi
+        var x = sin(angle) * coherenceBasedWidth
+        var z = -cos(angle)
 
-        return SIMD3(x, 0, z)
+        // Apply dimension modulations
+        switch spatialMode {
+        case .hyperdimensional:
+            // Fold higher dimensions into 3D
+            x += sin(timeDimension * .pi * 2) * bioDimension * 0.3
+            z += cos(creativeDimension * .pi) * quantumDimension * 0.3
+
+        case .bioReactive:
+            // Bio data directly influences position
+            x *= (1.0 + bioDimension * 0.5)
+            z *= (1.0 + creativeDimension * 0.5)
+
+        case .ambisonics:
+            // Full sphere positioning
+            let elevation = (bioDimension - 0.5) * Float.pi
+            x *= cos(elevation)
+            z *= cos(elevation)
+
+        default:
+            break
+        }
+
+        return SIMD3(x, bioDimension - 0.5, z)
+    }
+
+    // MARK: - Hyperdimensional Vector
+
+    /// Returns a 7-dimensional position vector
+    func hyperPosition() -> [Float] {
+        return [
+            position.x,
+            position.y,
+            position.z,
+            timeDimension,
+            bioDimension,
+            creativeDimension,
+            quantumDimension
+        ]
+    }
+
+    /// Distance in hyperdimensional space
+    func hyperDistance(to other: [Float]) -> Float {
+        let selfPos = hyperPosition()
+        guard selfPos.count == other.count else { return 0 }
+
+        var sumSquares: Float = 0
+        for (i, dim) in dimensionBlend.weights.enumerated() where i < selfPos.count {
+            let diff = selfPos[i] - other[i]
+            sumSquares += diff * diff * dim
+        }
+        return sqrt(sumSquares)
+    }
+
+    // MARK: - Time Dimension Update
+
+    func updateTimeDimension(bpm: Float, beatPosition: Float) {
+        // Sync time dimension to music
+        timeDimension = beatPosition
     }
 }
 
-// MARK: - ChronoBreath (Time Synced to Breath)
+extension EchoelSpace.DimensionBlend {
+    var weights: [Float] {
+        return [spatial3D, spatial3D, spatial3D, temporal, bioField, creative, quantum]
+    }
+}
 
-class ChronoBreath: ObservableObject {
+// MARK: - EchoelBreath (Time Synced to Breath)
+
+class EchoelBreath: ObservableObject {
     @Published var stretchFactor: Float = 1.0
     @Published var breathSynced: Bool = true
     @Published var currentPhase: Float = 0
@@ -530,7 +640,7 @@ struct EchoelToolsView: View {
         VStack(spacing: 16) {
             // Header
             HStack {
-                Text("NIARA TOOLS")
+                Text("ECHOEL TOOLS")
                     .font(.system(size: 14, weight: .bold, design: .monospaced))
                     .foregroundColor(.cyan)
 
