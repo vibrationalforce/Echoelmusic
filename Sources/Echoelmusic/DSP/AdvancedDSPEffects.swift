@@ -28,6 +28,49 @@ import AVFoundation
 @MainActor
 class AdvancedDSPEffects {
 
+    // MARK: - Fast Math Approximations (SIMD-friendly)
+
+    /// Fast approximation of 20 * log10(x) for dB conversion
+    /// Uses: dB = 20 * log10(x) ≈ 8.6858896 * ln(x)
+    /// Accuracy: ~0.01 dB for typical audio range
+    @inline(__always)
+    static func fastLinearToDb(_ linear: Float) -> Float {
+        // Protect against log(0)
+        let safeLinear = max(linear, 1e-10)
+        // 20 / ln(10) ≈ 8.685889638
+        return 8.685889638 * log(safeLinear)
+    }
+
+    /// Fast approximation of pow(10, dB/20) for linear conversion
+    /// Uses: linear = 10^(dB/20) = e^(dB * ln(10) / 20)
+    @inline(__always)
+    static func fastDbToLinear(_ dB: Float) -> Float {
+        // ln(10) / 20 ≈ 0.11512925465
+        return exp(dB * 0.11512925465)
+    }
+
+    /// Vectorized linear to dB conversion using Accelerate
+    static func vectorLinearToDb(_ input: [Float]) -> [Float] {
+        var output = [Float](repeating: 0, count: input.count)
+        var count = Int32(input.count)
+        var safeInput = input.map { max($0, 1e-10) }
+        vvlogf(&output, &safeInput, &count)
+        var scale: Float = 8.685889638
+        vDSP_vsmul(output, 1, &scale, &output, 1, vDSP_Length(input.count))
+        return output
+    }
+
+    /// Vectorized dB to linear conversion using Accelerate
+    static func vectorDbToLinear(_ input: [Float]) -> [Float] {
+        var output = [Float](repeating: 0, count: input.count)
+        var count = Int32(input.count)
+        var scaledInput = [Float](repeating: 0, count: input.count)
+        var scale: Float = 0.11512925465
+        vDSP_vsmul(input, 1, &scale, &scaledInput, 1, vDSP_Length(input.count))
+        vvexpf(&output, &scaledInput, &count)
+        return output
+    }
+
     // MARK: - Parametric EQ
 
     class ParametricEQ {
@@ -268,8 +311,8 @@ class AdvancedDSPEffects {
                     envelope = releaseCoeff * envelope + (1.0 - releaseCoeff) * inputLevel
                 }
 
-                // Convert to dB
-                let envelopeDB = 20.0 * log10(envelope + 0.00001)
+                // Convert to dB (fast approximation)
+                let envelopeDB = AdvancedDSPEffects.fastLinearToDb(envelope)
 
                 // Calculate gain reduction
                 var gainReduction: Float = 0.0
@@ -288,9 +331,9 @@ class AdvancedDSPEffects {
                     }
                 }
 
-                // Apply compression + makeup gain
+                // Apply compression + makeup gain (fast approximation)
                 let totalGain = -gainReduction + band.makeupGain
-                let linearGain = pow(10.0, totalGain / 20.0)
+                let linearGain = AdvancedDSPEffects.fastDbToLinear(totalGain)
 
                 output[i] = input[i] * linearGain
             }
@@ -346,8 +389,8 @@ class AdvancedDSPEffects {
                     envelope = releaseCoeff * envelope + (1.0 - releaseCoeff) * sibilanceLevel
                 }
 
-                // Calculate gain reduction for sibilance
-                let envelopeDB = 20.0 * log10(envelope + 0.00001)
+                // Calculate gain reduction for sibilance (using fast math)
+                let envelopeDB = AdvancedDSPEffects.fastLinearToDb(envelope)
                 var gainReduction: Float = 0.0
 
                 if envelopeDB > threshold {
@@ -355,7 +398,7 @@ class AdvancedDSPEffects {
                     gainReduction = excess * (1.0 - 1.0 / ratio)
                 }
 
-                let linearGain = pow(10.0, -gainReduction / 20.0)
+                let linearGain = AdvancedDSPEffects.fastDbToLinear(-gainReduction)
                 output[i] = input[i] * linearGain
             }
 
@@ -397,7 +440,7 @@ class AdvancedDSPEffects {
             var output = [Float](repeating: 0, count: input.count)
             var gainReduction: Float = 0.0
             let releaseCoeff = exp(-1000.0 / (release * sampleRate))
-            let ceilingLinear = pow(10.0, ceiling / 20.0)
+            let ceilingLinear = AdvancedDSPEffects.fastDbToLinear(ceiling)
 
             // Add lookahead
             var extended = lookaheadBuffer + input
@@ -410,17 +453,17 @@ class AdvancedDSPEffects {
                 // True peak detection (simple approximation)
                 let truePeakLevel = peakLevel * 1.2  // Oversample estimate
 
-                // Calculate required gain reduction
+                // Calculate required gain reduction (fast math)
                 if truePeakLevel > ceilingLinear {
-                    let required = 20.0 * log10(ceilingLinear / truePeakLevel)
+                    let required = AdvancedDSPEffects.fastLinearToDb(ceilingLinear / truePeakLevel)
                     gainReduction = min(gainReduction, required)
                 }
 
                 // Release
                 gainReduction = releaseCoeff * gainReduction + (1.0 - releaseCoeff) * 0.0
 
-                // Apply limiting
-                let linearGain = pow(10.0, gainReduction / 20.0)
+                // Apply limiting (fast math)
+                let linearGain = AdvancedDSPEffects.fastDbToLinear(gainReduction)
                 output[i] = sample * linearGain
 
                 // Hard clip as safety
@@ -459,16 +502,72 @@ class AdvancedDSPEffects {
         }
 
         private func convolve(_ signal: [Float], with ir: [Float]) -> [Float] {
-            // Simplified direct convolution (slow but accurate)
-            // In production, use overlap-add FFT convolution
-            let outputLength = signal.count + ir.count - 1
-            var output = [Float](repeating: 0, count: outputLength)
+            // FFT-based convolution using Accelerate framework
+            // Much faster than O(n²) direct convolution: O(n log n)
+            guard !signal.isEmpty && !ir.isEmpty else { return signal }
 
-            for i in 0..<signal.count {
-                for j in 0..<ir.count {
-                    output[i + j] += signal[i] * ir[j]
-                }
+            // Calculate FFT size (power of 2, at least signal + ir - 1)
+            let outputLength = signal.count + ir.count - 1
+            let fftLength = Int(pow(2.0, ceil(log2(Double(outputLength)))))
+            let log2n = vDSP_Length(log2(Double(fftLength)))
+
+            // Create FFT setup
+            guard let fftSetup = vDSP_create_fftsetup(log2n, FFTRadix(kFFTRadix2)) else {
+                return signal  // Fallback to input if FFT setup fails
             }
+            defer { vDSP_destroy_fftsetup(fftSetup) }
+
+            // Zero-pad signal and IR to FFT length
+            var paddedSignal = [Float](repeating: 0, count: fftLength)
+            var paddedIR = [Float](repeating: 0, count: fftLength)
+            paddedSignal.replaceSubrange(0..<signal.count, with: signal)
+            paddedIR.replaceSubrange(0..<ir.count, with: ir)
+
+            // Allocate split complex buffers
+            var signalReal = [Float](repeating: 0, count: fftLength / 2)
+            var signalImag = [Float](repeating: 0, count: fftLength / 2)
+            var irReal = [Float](repeating: 0, count: fftLength / 2)
+            var irImag = [Float](repeating: 0, count: fftLength / 2)
+            var resultReal = [Float](repeating: 0, count: fftLength / 2)
+            var resultImag = [Float](repeating: 0, count: fftLength / 2)
+
+            // Convert to split complex format
+            paddedSignal.withUnsafeBufferPointer { signalPtr in
+                var splitSignal = DSPSplitComplex(realp: &signalReal, imagp: &signalImag)
+                vDSP_ctoz(UnsafePointer<DSPComplex>(OpaquePointer(signalPtr.baseAddress!)),
+                          2, &splitSignal, 1, vDSP_Length(fftLength / 2))
+            }
+
+            paddedIR.withUnsafeBufferPointer { irPtr in
+                var splitIR = DSPSplitComplex(realp: &irReal, imagp: &irImag)
+                vDSP_ctoz(UnsafePointer<DSPComplex>(OpaquePointer(irPtr.baseAddress!)),
+                          2, &splitIR, 1, vDSP_Length(fftLength / 2))
+            }
+
+            // Forward FFT
+            var splitSignal = DSPSplitComplex(realp: &signalReal, imagp: &signalImag)
+            var splitIR = DSPSplitComplex(realp: &irReal, imagp: &irImag)
+            vDSP_fft_zrip(fftSetup, &splitSignal, 1, log2n, FFTDirection(kFFTDirection_Forward))
+            vDSP_fft_zrip(fftSetup, &splitIR, 1, log2n, FFTDirection(kFFTDirection_Forward))
+
+            // Complex multiplication (frequency domain convolution)
+            var splitResult = DSPSplitComplex(realp: &resultReal, imagp: &resultImag)
+            vDSP_zvmul(&splitSignal, 1, &splitIR, 1, &splitResult, 1, vDSP_Length(fftLength / 2), 1)
+
+            // Inverse FFT
+            vDSP_fft_zrip(fftSetup, &splitResult, 1, log2n, FFTDirection(kFFTDirection_Inverse))
+
+            // Convert back to interleaved format
+            var output = [Float](repeating: 0, count: fftLength)
+            output.withUnsafeMutableBufferPointer { outputPtr in
+                vDSP_ztoc(&splitResult, 1,
+                          UnsafeMutablePointer<DSPComplex>(OpaquePointer(outputPtr.baseAddress!)),
+                          2, vDSP_Length(fftLength / 2))
+            }
+
+            // Scale by FFT length and return only valid portion
+            var scale = Float(1.0 / Float(fftLength))
+            vDSP_vsmul(output, 1, &scale, &output, 1, vDSP_Length(fftLength))
 
             return Array(output.prefix(signal.count))
         }

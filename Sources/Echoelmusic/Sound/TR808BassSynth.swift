@@ -312,8 +312,8 @@ public final class TR808BassSynth: ObservableObject {
         isPlaying = false
 
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         voices.removeAll()
-        voiceLock.unlock()
 
         activeVoiceCount = 0
         currentNote = nil
@@ -382,8 +382,8 @@ public final class TR808BassSynth: ObservableObject {
     /// All notes off (panic)
     public func allNotesOff() {
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         voices.removeAll()
-        voiceLock.unlock()
 
         activeVoiceCount = 0
         currentNote = nil
