@@ -177,8 +177,32 @@ class AdvancedDSPEffects {
                 a1 = -2.0 * cosOmega
                 a2 = 1.0 - alpha
 
-            default:
-                return input  // Not implemented
+            case .bandPass:
+                // Constant-skirt bandpass (H(s) = s/Q)
+                b0 = alpha
+                b1 = 0.0
+                b2 = -alpha
+                a0 = 1.0 + alpha
+                a1 = -2.0 * cosOmega
+                a2 = 1.0 - alpha
+
+            case .notch:
+                // Notch filter (reject band)
+                b0 = 1.0
+                b1 = -2.0 * cosOmega
+                b2 = 1.0
+                a0 = 1.0 + alpha
+                a1 = -2.0 * cosOmega
+                a2 = 1.0 - alpha
+
+            case .allPass:
+                // All-pass filter (phase shift only)
+                b0 = 1.0 - alpha
+                b1 = -2.0 * cosOmega
+                b2 = 1.0 + alpha
+                a0 = 1.0 + alpha
+                a1 = -2.0 * cosOmega
+                a2 = 1.0 - alpha
             }
 
             // Normalize coefficients
@@ -287,9 +311,68 @@ class AdvancedDSPEffects {
         }
 
         private func filterBand(_ input: [Float], lowFreq: Float, highFreq: Float) -> [Float] {
-            // Simplified bandpass filter
-            // In production, use proper Linkwitz-Riley crossovers
-            return input  // Placeholder
+            // Linkwitz-Riley 4th order crossover (2x 2nd order Butterworth)
+            // LR4 provides -24dB/octave slope and flat summed response
+            guard !input.isEmpty else { return input }
+
+            // Apply highpass at low cutoff (2x for LR4)
+            var filtered = applyButterworthFilter(input, cutoff: lowFreq, type: .highPass)
+            filtered = applyButterworthFilter(filtered, cutoff: lowFreq, type: .highPass)
+
+            // Apply lowpass at high cutoff (2x for LR4)
+            filtered = applyButterworthFilter(filtered, cutoff: highFreq, type: .lowPass)
+            filtered = applyButterworthFilter(filtered, cutoff: highFreq, type: .lowPass)
+
+            return filtered
+        }
+
+        private enum ButterworthFilterType {
+            case lowPass, highPass
+        }
+
+        private func applyButterworthFilter(_ input: [Float], cutoff: Float, type: ButterworthFilterType) -> [Float] {
+            guard cutoff > 0 && cutoff < sampleRate / 2 else { return input }
+
+            let omega = 2.0 * Float.pi * cutoff / sampleRate
+            let sinOmega = sin(omega)
+            let cosOmega = cos(omega)
+            let alpha = sinOmega / (2.0 * 0.7071) // Q = 0.7071 for Butterworth
+
+            var b0: Float, b1: Float, b2: Float, a0: Float, a1: Float, a2: Float
+
+            switch type {
+            case .lowPass:
+                b0 = (1.0 - cosOmega) / 2.0
+                b1 = 1.0 - cosOmega
+                b2 = (1.0 - cosOmega) / 2.0
+            case .highPass:
+                b0 = (1.0 + cosOmega) / 2.0
+                b1 = -(1.0 + cosOmega)
+                b2 = (1.0 + cosOmega) / 2.0
+            }
+
+            a0 = 1.0 + alpha
+            a1 = -2.0 * cosOmega
+            a2 = 1.0 - alpha
+
+            // Normalize
+            b0 /= a0; b1 /= a0; b2 /= a0
+            a1 /= a0; a2 /= a0
+
+            // Apply biquad
+            var output = [Float](repeating: 0, count: input.count)
+            var x1: Float = 0, x2: Float = 0
+            var y1: Float = 0, y2: Float = 0
+
+            for i in 0..<input.count {
+                let x0 = input[i]
+                let y0 = b0 * x0 + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+                output[i] = y0
+                x2 = x1; x1 = x0
+                y2 = y1; y1 = y0
+            }
+
+            return output
         }
 
         private func compressBand(_ input: [Float], band: Band) -> [Float] {
@@ -406,13 +489,68 @@ class AdvancedDSPEffects {
         }
 
         private func detectSibilance(_ input: [Float]) -> [Float] {
-            // Bandpass filter around sibilance frequencies (6-8 kHz)
-            // Simplified implementation
+            // 4th order Linkwitz-Riley bandpass around sibilance frequencies (4-10 kHz)
+            guard !input.isEmpty else { return input }
+
+            // Bandpass center frequency around 6-8 kHz for typical sibilance detection
+            let lowCutoff = frequency - bandwidth / 2  // Typically ~4000 Hz
+            let highCutoff = frequency + bandwidth / 2 // Typically ~10000 Hz
+
+            // Apply highpass at low cutoff (2x for steep slope)
+            var filtered = applySibilanceFilter(input, cutoff: lowCutoff, type: .highPass)
+            filtered = applySibilanceFilter(filtered, cutoff: lowCutoff, type: .highPass)
+
+            // Apply lowpass at high cutoff (2x for steep slope)
+            filtered = applySibilanceFilter(filtered, cutoff: highCutoff, type: .lowPass)
+            filtered = applySibilanceFilter(filtered, cutoff: highCutoff, type: .lowPass)
+
+            return filtered
+        }
+
+        private enum SibilanceFilterType {
+            case lowPass, highPass
+        }
+
+        private func applySibilanceFilter(_ input: [Float], cutoff: Float, type: SibilanceFilterType) -> [Float] {
+            guard cutoff > 0 && cutoff < sampleRate / 2 else { return input }
+
+            let omega = 2.0 * Float.pi * cutoff / sampleRate
+            let sinOmega = sin(omega)
+            let cosOmega = cos(omega)
+            let alpha = sinOmega / (2.0 * 0.7071) // Butterworth Q
+
+            var b0: Float, b1: Float, b2: Float, a0: Float, a1: Float, a2: Float
+
+            switch type {
+            case .lowPass:
+                b0 = (1.0 - cosOmega) / 2.0
+                b1 = 1.0 - cosOmega
+                b2 = (1.0 - cosOmega) / 2.0
+            case .highPass:
+                b0 = (1.0 + cosOmega) / 2.0
+                b1 = -(1.0 + cosOmega)
+                b2 = (1.0 + cosOmega) / 2.0
+            }
+
+            a0 = 1.0 + alpha
+            a1 = -2.0 * cosOmega
+            a2 = 1.0 - alpha
+
+            // Normalize
+            b0 /= a0; b1 /= a0; b2 /= a0
+            a1 /= a0; a2 /= a0
+
+            // Apply biquad
             var output = [Float](repeating: 0, count: input.count)
+            var x1: Float = 0, x2: Float = 0
+            var y1: Float = 0, y2: Float = 0
 
             for i in 0..<input.count {
-                // Placeholder: in production use proper bandpass filter
-                output[i] = input[i]
+                let x0 = input[i]
+                let y0 = b0 * x0 + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+                output[i] = y0
+                x2 = x1; x1 = x0
+                y2 = y1; y1 = y0
             }
 
             return output
