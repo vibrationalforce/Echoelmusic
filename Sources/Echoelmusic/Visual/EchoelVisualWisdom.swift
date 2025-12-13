@@ -36,6 +36,7 @@ public final class EchoelVisualWisdom: ObservableObject {
     public let lightController = LightControllerSwift.shared
     public let physicsPatternEngine = PhysicsPatternEngine.shared
     public let regenerationScience = VisualRegenerationScience.shared  // Evidence-based visual regeneration
+    public let videoAIHub = VideoAICreativeHub.shared  // Video Editing + AI Generation
 
     // MARK: - Visual State
     @Published public var visualMode: VisualMode = .adaptive
