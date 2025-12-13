@@ -471,6 +471,231 @@ class HealthKitManager: ObservableObject {
     }
 
 
+    // MARK: - HKHeartbeatSeriesSample Support (Actual RR Intervals)
+
+    /// Start monitoring actual RR intervals using HKHeartbeatSeriesSample
+    /// Available on watchOS and iOS with Apple Watch
+    @available(iOS 13.0, watchOS 6.0, *)
+    func startHeartbeatSeriesMonitoring() {
+        guard isAuthorized else { return }
+
+        guard let heartbeatType = HKObjectType.seriesType(forIdentifier: HKDataTypeIdentifierHeartbeatSeries.self) else {
+            print("⚠️ Heartbeat series not available")
+            return
+        }
+
+        let query = HKAnchoredObjectQuery(
+            type: heartbeatType,
+            predicate: nil,
+            anchor: nil,
+            limit: HKObjectQueryNoLimit
+        ) { [weak self] _, samples, _, _, error in
+            guard let self = self, error == nil else { return }
+            self.processHeartbeatSeries(samples)
+        }
+
+        query.updateHandler = { [weak self] _, samples, _, _, error in
+            guard let self = self, error == nil else { return }
+            self.processHeartbeatSeries(samples)
+        }
+
+        healthStore.execute(query)
+    }
+
+    /// Process heartbeat series to extract actual RR intervals
+    private func processHeartbeatSeries(_ samples: [HKSample]?) {
+        guard let series = samples as? [HKHeartbeatSeriesSample] else { return }
+
+        for sample in series {
+            let query = HKHeartbeatSeriesQuery(heartbeatSeries: sample) { [weak self] _, time, precedes, done, error in
+                guard let self = self, error == nil else { return }
+
+                if !precedes {
+                    // This is an actual heartbeat with time since last beat
+                    let rrInterval = time * 1000  // Convert to milliseconds
+                    self.addRRInterval(rrInterval)
+
+                    Task { @MainActor in
+                        if self.rrIntervalBuffer.count >= 30 {
+                            self.hrvCoherence = self.calculateCoherence(rrIntervals: self.rrIntervalBuffer)
+                            self.breathingRate = self.calculateBreathingRate(rrIntervals: self.rrIntervalBuffer)
+                            self.hrvRMSSD = self.calculateRMSSD(rrIntervals: self.rrIntervalBuffer)
+                        }
+                    }
+                }
+            }
+            healthStore.execute(query)
+        }
+    }
+
+    /// Calculate RMSSD from actual RR intervals
+    /// RMSSD = Root Mean Square of Successive Differences
+    /// Formula: sqrt(mean((RR[i+1] - RR[i])²))
+    func calculateRMSSD(rrIntervals: [Double]) -> Double {
+        guard rrIntervals.count > 1 else { return 0.0 }
+
+        var sumSquaredDiff: Double = 0.0
+        for i in 0..<(rrIntervals.count - 1) {
+            let diff = rrIntervals[i + 1] - rrIntervals[i]
+            sumSquaredDiff += diff * diff
+        }
+
+        let meanSquaredDiff = sumSquaredDiff / Double(rrIntervals.count - 1)
+        return sqrt(meanSquaredDiff)
+    }
+
+    // MARK: - Background Delivery
+
+    /// Enable background delivery for heart rate updates
+    func enableBackgroundDelivery() async throws {
+        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            return
+        }
+
+        try await healthStore.enableBackgroundDelivery(
+            for: heartRateType,
+            frequency: .immediate
+        )
+
+        print("✅ Background delivery enabled for heart rate")
+    }
+
+    /// Disable background delivery
+    func disableBackgroundDelivery() async throws {
+        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            return
+        }
+
+        try await healthStore.disableBackgroundDelivery(for: heartRateType)
+        print("⏹️ Background delivery disabled")
+    }
+
+    // MARK: - Fetch Historical Data
+
+    /// Fetch heart rate samples from a specific time range
+    /// - Parameters:
+    ///   - startDate: Start of the time range
+    ///   - endDate: End of the time range
+    /// - Returns: Array of heart rate samples with timestamps
+    func fetchHeartRateSamples(from startDate: Date, to endDate: Date) async throws -> [(date: Date, bpm: Double)] {
+        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            return []
+        }
+
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: heartRateType,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                guard let quantitySamples = samples as? [HKQuantitySample] else {
+                    continuation.resume(returning: [])
+                    return
+                }
+
+                let results = quantitySamples.map { sample -> (date: Date, bpm: Double) in
+                    let bpm = sample.quantity.doubleValue(for: HKUnit(from: "count/min"))
+                    return (date: sample.startDate, bpm: bpm)
+                }
+
+                continuation.resume(returning: results)
+            }
+
+            healthStore.execute(query)
+        }
+    }
+
+    /// Fetch HRV samples from a specific time range
+    /// - Parameters:
+    ///   - startDate: Start of the time range
+    ///   - endDate: End of the time range
+    /// - Returns: Array of HRV samples (SDNN in ms) with timestamps
+    func fetchHRVSamples(from startDate: Date, to endDate: Date) async throws -> [(date: Date, sdnn: Double)] {
+        guard let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else {
+            return []
+        }
+
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: hrvType,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                guard let quantitySamples = samples as? [HKQuantitySample] else {
+                    continuation.resume(returning: [])
+                    return
+                }
+
+                let results = quantitySamples.map { sample -> (date: Date, sdnn: Double) in
+                    let sdnn = sample.quantity.doubleValue(for: HKUnit.secondUnit(with: .milli))
+                    return (date: sample.startDate, sdnn: sdnn)
+                }
+
+                continuation.resume(returning: results)
+            }
+
+            healthStore.execute(query)
+        }
+    }
+
+    // MARK: - Statistics
+
+    /// Get average heart rate for today
+    func getTodayAverageHeartRate() async throws -> Double? {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: Date())
+        let samples = try await fetchHeartRateSamples(from: startOfDay, to: Date())
+
+        guard !samples.isEmpty else { return nil }
+
+        let sum = samples.reduce(0.0) { $0 + $1.bpm }
+        return sum / Double(samples.count)
+    }
+
+    /// Get average HRV for today
+    func getTodayAverageHRV() async throws -> Double? {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: Date())
+        let samples = try await fetchHRVSamples(from: startOfDay, to: Date())
+
+        guard !samples.isEmpty else { return nil }
+
+        let sum = samples.reduce(0.0) { $0 + $1.sdnn }
+        return sum / Double(samples.count)
+    }
+
+    // MARK: - Integration with EchoelLife
+
+    /// Sync current bio state to EchoelLife
+    func syncToEchoelLife() {
+        Task { @MainActor in
+            EchoelLife.shared.updateBioData(
+                heartRate: Float(heartRate),
+                hrv: Float(hrvRMSSD),
+                coherence: Float(hrvCoherence / 100.0),  // Normalize to 0-1
+                breathingRate: Float(breathingRate)
+            )
+        }
+    }
+
     // MARK: - Cleanup
 
     deinit {
