@@ -15,6 +15,9 @@
 // - EchoelVoice/EchoelVox (Voice Intelligence)
 // - EchoelVisualWisdom (Light/Video/Visual Intelligence)
 // - EchoelLife (Health Sciences/Biofeedback/Clinical Evidence)
+// - VisualRegenerationScience (Evidence-Based Visual Healing)
+// - AudioVisualRegenerationSync (Multi-Sensory Entrainment)
+// - PresetSystem (Universal Preset Management)
 // - Bio-Reactive Systems
 // ============================================================================
 
@@ -38,6 +41,9 @@ public final class EchoelWisdom: ObservableObject {
     public let musicTheory = GlobalMusicTheoryDatabase()
     public let visualWisdom = EchoelVisualWisdom.shared
     public let lifeScience = EchoelLife.shared  // Health Sciences Hub
+    public let regenerationScience = VisualRegenerationScience.shared  // Visual Healing
+    public let audioVisualSync = AudioVisualRegenerationSync.shared    // Multi-Sensory Entrainment
+    public let presets = PresetSystem.shared  // Universal Presets
 
     // MARK: - Wisdom State
     @Published public var wisdomLevel: WisdomLevel = .awakening
