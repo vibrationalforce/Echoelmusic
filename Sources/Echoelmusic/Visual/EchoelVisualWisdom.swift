@@ -9,7 +9,7 @@
 // - LightController (DMX512, Art-Net, Philips Hue, WLED, ILDA Laser)
 // - Bio-Reactive Visual Modulation
 // - Accessibility Visual Adaptations
-// - Cymatics & Sacred Geometry
+// - Scientific Visualization (Fractals, Physics Patterns)
 // ============================================================================
 
 import Foundation
@@ -33,8 +33,7 @@ public final class EchoelVisualWisdom: ObservableObject {
     public let visualForge = VisualForgeSwift.shared
     public let videoWeaver = VideoWeaverSwift.shared
     public let lightController = LightControllerSwift.shared
-    public let cymaticsEngine = CymaticsEngine.shared
-    public let sacredGeometry = SacredGeometryEngine.shared
+    public let physicsPatternEngine = PhysicsPatternEngine.shared
 
     // MARK: - Visual State
     @Published public var visualMode: VisualMode = .adaptive
@@ -125,10 +124,10 @@ public final class EchoelVisualWisdom: ObservableObject {
         case pastel = "Pastel"
         case monochrome = "Monochrome"
         case highContrast = "High Contrast"
-        case chakra = "Chakra"
         case nature = "Nature"
-        case cosmic = "Cosmic"
-        case cultural = "Cultural"  // Adapts to user's cultural preferences
+        case spectrum = "Spectrum"       // Full color spectrum
+        case professional = "Professional" // Clean studio look
+        case cultural = "Cultural"       // Adapts to user's cultural preferences
 
         var primaryHue: Float {
             switch self {
@@ -140,9 +139,9 @@ public final class EchoelVisualWisdom: ObservableObject {
             case .pastel: return 0.3        // Green-ish soft
             case .monochrome: return 0.0
             case .highContrast: return 0.15 // Yellow
-            case .chakra: return 0.0        // Full spectrum
             case .nature: return 0.35       // Green
-            case .cosmic: return 0.75       // Purple
+            case .spectrum: return 0.0      // Full spectrum
+            case .professional: return 0.6  // Blue professional
             case .cultural: return 0.5      // Varies
             }
         }
@@ -157,9 +156,9 @@ public final class EchoelVisualWisdom: ObservableObject {
             case .pastel: return 0.4
             case .monochrome: return 0.0
             case .highContrast: return 1.0
-            case .chakra: return 0.9
             case .nature: return 0.65
-            case .cosmic: return 0.85
+            case .spectrum: return 0.9
+            case .professional: return 0.5
             case .cultural: return 0.7
             }
         }
@@ -413,15 +412,17 @@ public final class EchoelVisualWisdom: ObservableObject {
         case circularSpectrum = "Circular Spectrum"
         case spectrogram = "Spectrogram"
 
-        // Sacred Geometry
-        case flowerOfLife = "Flower of Life"
-        case sriYantra = "Sri Yantra"
-        case metatronsCube = "Metatron's Cube"
-        case goldenSpiral = "Golden Spiral"
+        // Physics Patterns (Scientific)
+        case chladniPattern = "Chladni Figures"      // Ernst Chladni - physics of vibration
+        case standingWave = "Standing Wave"          // Wave physics
+        case interference = "Interference Pattern"   // Wave interference physics
+        case lissajous = "Lissajous Curve"          // Mathematical oscillation
+        case harmonograph = "Harmonograph"           // Pendulum physics
 
-        // Cymatics
-        case cymaticPattern = "Cymatics"
-        case chladniPattern = "Chladni Figures"
+        // Data Visualization
+        case dataGrid = "Data Grid"
+        case heatmap = "Heatmap"
+        case vectorField = "Vector Field"
 
         public var id: String { rawValue }
 
@@ -434,8 +435,8 @@ public final class EchoelVisualWisdom: ObservableObject {
             case .spirals, .tunnel, .kaleidoscope, .plasma: return "Patterns"
             case .cube3D, .sphere3D, .torus3D, .pointCloud3D: return "3D"
             case .waveform, .spectrum, .circularSpectrum, .spectrogram: return "Audio"
-            case .flowerOfLife, .sriYantra, .metatronsCube, .goldenSpiral: return "Sacred"
-            case .cymaticPattern, .chladniPattern: return "Cymatics"
+            case .chladniPattern, .standingWave, .interference, .lissajous, .harmonograph: return "Physics"
+            case .dataGrid, .heatmap, .vectorField: return "Data"
             }
         }
     }
@@ -717,10 +718,10 @@ public final class EchoelVisualWisdom: ObservableObject {
 
         public static let meditation = WiseVisualPreset(
             id: UUID(),
-            name: "Deep Meditation",
+            name: "Deep Focus",
             visualMode: "meditation",
             colorScheme: "cool",
-            generators: ["flowField", "goldenSpiral"],
+            generators: ["flowField", "lissajous"],
             effects: ["bloom", "gaussianBlur"],
             bioReactive: true,
             lightingEnabled: true
@@ -830,16 +831,20 @@ public class LightControllerSwift {
     private init() {}
 }
 
-/// Cymatics pattern generator
-public class CymaticsEngine {
-    public static let shared = CymaticsEngine()
+/// Scientific physics pattern generator
+public class PhysicsPatternEngine {
+    public static let shared = PhysicsPatternEngine()
     private init() {}
 
-    /// Generate Chladni pattern for frequency
+    // MARK: - Chladni Patterns (Ernst Chladni - Acoustics Physics)
+
+    /// Generate Chladni pattern for frequency - real physics of vibrating plates
+    /// Based on Ernst Chladni's 1787 experiments
     public func generateChladniPattern(frequency: Float, resolution: Int = 512) -> [[Float]] {
         var pattern = [[Float]](repeating: [Float](repeating: 0, count: resolution), count: resolution)
 
         // Chladni formula: cos(n*pi*x/L) * cos(m*pi*y/L) - cos(m*pi*x/L) * cos(n*pi*y/L) = 0
+        // This is the mathematical model for nodal patterns on vibrating plates
         let n = Int(frequency / 100) + 1
         let m = Int(frequency / 150) + 1
 
@@ -857,53 +862,135 @@ public class CymaticsEngine {
 
         return pattern
     }
-}
 
-/// Sacred geometry pattern generator
-public class SacredGeometryEngine {
-    public static let shared = SacredGeometryEngine()
-    private init() {}
+    // MARK: - Lissajous Curves (Jules Antoine Lissajous - Harmonic Motion)
 
-    /// Golden ratio
-    public let phi: Float = 1.618033988749895
+    /// Generate Lissajous curve - parametric curves from harmonic oscillation
+    /// Used in oscilloscopes and signal analysis
+    public func generateLissajousCurve(
+        freqA: Float = 3,
+        freqB: Float = 2,
+        phase: Float = Float.pi / 2,
+        points: Int = 1000
+    ) -> [CGPoint] {
+        var result: [CGPoint] = []
+        let amplitude: CGFloat = 100
 
-    /// Generate Flower of Life pattern
-    public func generateFlowerOfLife(circles: Int = 7) -> [CGPoint] {
-        var points: [CGPoint] = []
-        let radius: CGFloat = 50
+        for i in 0..<points {
+            let t = Float(i) / Float(points) * Float.pi * 2
+            let x = CGFloat(sin(freqA * t + phase)) * amplitude
+            let y = CGFloat(sin(freqB * t)) * amplitude
+            result.append(CGPoint(x: x, y: y))
+        }
 
-        // Center circle
-        points.append(CGPoint(x: 0, y: 0))
+        return result
+    }
 
-        // Surrounding circles
-        for ring in 1...circles {
-            let count = ring * 6
-            for i in 0..<count {
-                let angle = CGFloat(i) / CGFloat(count) * CGFloat.pi * 2
-                let x = cos(angle) * radius * CGFloat(ring)
-                let y = sin(angle) * radius * CGFloat(ring)
-                points.append(CGPoint(x: x, y: y))
+    // MARK: - Standing Wave Pattern (Wave Physics)
+
+    /// Generate standing wave interference pattern
+    public func generateStandingWave(
+        wavelength: Float,
+        amplitude: Float = 1.0,
+        resolution: Int = 512
+    ) -> [Float] {
+        var wave = [Float](repeating: 0, count: resolution)
+        let k = 2 * Float.pi / wavelength  // Wave number
+
+        for i in 0..<resolution {
+            let x = Float(i) / Float(resolution) * wavelength * 4
+            // Standing wave: 2 * A * cos(kx) * cos(ωt) - simplified at t=0
+            wave[i] = 2 * amplitude * cos(k * x)
+        }
+
+        return wave
+    }
+
+    // MARK: - Interference Pattern (Wave Physics)
+
+    /// Generate two-source interference pattern (Young's double slit analog)
+    public func generateInterferencePattern(
+        wavelength: Float,
+        sourceSpacing: Float,
+        resolution: Int = 512
+    ) -> [[Float]] {
+        var pattern = [[Float]](repeating: [Float](repeating: 0, count: resolution), count: resolution)
+
+        let centerX = Float(resolution) / 2
+        let centerY = Float(resolution) / 2
+        let source1 = (centerX - sourceSpacing / 2, centerY)
+        let source2 = (centerX + sourceSpacing / 2, centerY)
+
+        for y in 0..<resolution {
+            for x in 0..<resolution {
+                let fx = Float(x)
+                let fy = Float(y)
+
+                // Distance from each source
+                let r1 = sqrt(pow(fx - source1.0, 2) + pow(fy - source1.1, 2))
+                let r2 = sqrt(pow(fx - source2.0, 2) + pow(fy - source2.1, 2))
+
+                // Phase difference creates interference
+                let phase1 = 2 * Float.pi * r1 / wavelength
+                let phase2 = 2 * Float.pi * r2 / wavelength
+
+                // Superposition of two waves
+                let intensity = pow(cos(phase1) + cos(phase2), 2) / 4
+                pattern[y][x] = intensity
             }
         }
 
-        return points
+        return pattern
     }
 
-    /// Generate Golden Spiral points
-    public func generateGoldenSpiral(turns: Int = 5, pointsPerTurn: Int = 100) -> [CGPoint] {
-        var points: [CGPoint] = []
-        let totalPoints = turns * pointsPerTurn
+    // MARK: - Harmonograph (Pendulum Physics)
 
-        for i in 0..<totalPoints {
-            let t = Float(i) / Float(pointsPerTurn)
-            let r = pow(phi, t * 2 / Float.pi) * 10
-            let theta = t * Float.pi * 2
+    /// Generate harmonograph pattern - damped pendulum physics
+    public func generateHarmonograph(
+        freqX: Float = 2,
+        freqY: Float = 3,
+        phaseX: Float = 0,
+        phaseY: Float = Float.pi / 2,
+        dampingX: Float = 0.002,
+        dampingY: Float = 0.002,
+        points: Int = 5000
+    ) -> [CGPoint] {
+        var result: [CGPoint] = []
+        let amplitude: CGFloat = 100
 
-            let x = CGFloat(r * cos(theta))
-            let y = CGFloat(r * sin(theta))
-            points.append(CGPoint(x: x, y: y))
+        for i in 0..<points {
+            let t = Float(i) * 0.02
+
+            // Damped harmonic oscillation
+            let x = CGFloat(sin(freqX * t + phaseX) * exp(-dampingX * t)) * amplitude
+            let y = CGFloat(sin(freqY * t + phaseY) * exp(-dampingY * t)) * amplitude
+            result.append(CGPoint(x: x, y: y))
         }
 
-        return points
+        return result
+    }
+
+    // MARK: - Fourier Transform Visualization
+
+    /// Generate frequency spectrum from time-domain signal
+    public func generateSpectrumVisualization(samples: [Float], bands: Int = 64) -> [Float] {
+        // Simplified DFT for visualization
+        var spectrum = [Float](repeating: 0, count: bands)
+        let n = samples.count
+
+        for k in 0..<bands {
+            var real: Float = 0
+            var imag: Float = 0
+
+            for i in 0..<n {
+                let angle = 2 * Float.pi * Float(k) * Float(i) / Float(n)
+                real += samples[i] * cos(angle)
+                imag -= samples[i] * sin(angle)
+            }
+
+            spectrum[k] = sqrt(real * real + imag * imag) / Float(n)
+        }
+
+        return spectrum
     }
 }

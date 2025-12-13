@@ -832,7 +832,7 @@ public final class EchoelWisdom: ObservableObject {
             intensity = 0.9
         case .introspective:
             visualMode = .meditation
-            colorScheme = .cosmic
+            colorScheme = .cool
             intensity = 0.5
         case .joyful:
             visualMode = .performance
@@ -900,7 +900,7 @@ public final class EchoelWisdom: ObservableObject {
             visualWisdom.setBioReactiveEnabled(false)
         case .immersive:
             visualWisdom.visualMode = .immersive
-            visualWisdom.setColorScheme(.cosmic)
+            visualWisdom.setColorScheme(.spectrum)
             visualWisdom.setBioReactiveEnabled(true)
         }
         print("🎨 Applied Wise Visual Preset: \(preset)")
@@ -953,7 +953,7 @@ public final class EchoelWisdom: ObservableObject {
                 mode: .reflection,
                 breathingPattern: .boxBreathing,
                 musicMood: "Contemplative",
-                visualMode: "SacredGeometry",
+                visualMode: "FlowField",
                 message: translate("Look within")
             )
         default:
@@ -1029,7 +1029,7 @@ public final class EchoelWisdom: ObservableObject {
         ✓ Bio-Reactive Integration
         ✓ Visual Wisdom (Light/Video/Effects)
         ✓ DMX/Art-Net/Hue/WLED Lighting
-        ✓ Cymatics & Sacred Geometry
+        ✓ Physics Pattern Visualization
         ✓ Color Blindness Correction
 
         ═══════════════════════════════════════════════════
@@ -1119,7 +1119,7 @@ public struct WiseTranslated: DynamicProperty {
  ║     • VisualForge (50+ Generators, 30+ Effects)                         ║
  ║     • VideoWeaver (AI Edit, HDR, Color Grading)                         ║
  ║     • LightController (DMX/Art-Net/Hue/WLED/ILDA)                       ║
- ║     • Cymatics & Sacred Geometry                                         ║
+ ║     • Physics Patterns (Chladni, Lissajous, Interference)               ║
  ║     • Color Blindness Correction (Daltonization)                        ║
  ║     • Bio-Reactive Visual Modulation                                     ║
  ║                                                                           ║
