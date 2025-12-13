@@ -392,14 +392,42 @@ class LocalizationManager {
             return spanishTranslations
         case .french:
             return frenchTranslations
+        case .italian:
+            return italianTranslations
+        case .portuguese:
+            return portugueseTranslations
+        case .russian:
+            return russianTranslations
+        case .polish:
+            return polishTranslations
+        case .turkish:
+            return turkishTranslations
         case .chineseSimplified:
             return chineseSimplifiedTranslations
+        case .chineseTraditional:
+            return chineseTraditionalTranslations
         case .japanese:
             return japaneseTranslations
+        case .korean:
+            return koreanTranslations
+        case .hindi:
+            return hindiTranslations
+        case .bengali:
+            return bengaliTranslations
+        case .tamil:
+            return tamilTranslations
+        case .indonesian:
+            return indonesianTranslations
+        case .thai:
+            return thaiTranslations
+        case .vietnamese:
+            return vietnameseTranslations
         case .arabic:
             return arabicTranslations
-        default:
-            return englishTranslations // Fallback
+        case .hebrew:
+            return hebrewTranslations
+        case .persian:
+            return persianTranslations
         }
     }
 
@@ -622,16 +650,646 @@ class LocalizationManager {
             "general.ok": "موافق",
             "general.cancel": "إلغاء",
             "general.save": "حفظ",
+            "general.delete": "حذف",
+            "general.edit": "تحرير",
+            "general.done": "تم",
+            "general.close": "إغلاق",
             "general.settings": "الإعدادات",
 
             "bio.hrv": "تقلب معدل ضربات القلب",
             "bio.coherence": "التماسك",
             "bio.heart_rate": "معدل ضربات القلب",
+            "bio.breathing_rate": "معدل التنفس",
+            "bio.stress": "التوتر",
+            "bio.relaxation": "الاسترخاء",
+            "bio.meditation": "التأمل",
 
+            "music.scale": "السلم الموسيقي",
+            "music.chord": "الوتر",
+            "music.rhythm": "الإيقاع",
+            "music.tempo": "الإيقاع",
+
+            "emotion.neutral": "محايد",
             "emotion.happy": "سعيد",
             "emotion.sad": "حزين",
             "emotion.calm": "هادئ",
-            "emotion.energetic": "نشيط"
+            "emotion.energetic": "نشيط",
+            "emotion.anxious": "قلق",
+            "emotion.focused": "مركز",
+            "emotion.relaxed": "مسترخي"
+        ]
+    }
+
+    // MARK: - Additional Language Translations (Complete 22 Languages)
+
+    private var italianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Benvenuto",
+            "general.ok": "OK",
+            "general.cancel": "Annulla",
+            "general.save": "Salva",
+            "general.delete": "Elimina",
+            "general.edit": "Modifica",
+            "general.done": "Fatto",
+            "general.close": "Chiudi",
+            "general.settings": "Impostazioni",
+
+            "bio.hrv": "Variabilità della Frequenza Cardiaca",
+            "bio.coherence": "Coerenza",
+            "bio.heart_rate": "Frequenza Cardiaca",
+            "bio.breathing_rate": "Frequenza Respiratoria",
+            "bio.stress": "Stress",
+            "bio.relaxation": "Rilassamento",
+            "bio.meditation": "Meditazione",
+
+            "music.scale": "Scala",
+            "music.chord": "Accordo",
+            "music.rhythm": "Ritmo",
+            "music.tempo": "Tempo",
+            "music.key": "Tonalità",
+            "music.mode": "Modo",
+            "music.interval": "Intervallo",
+
+            "emotion.neutral": "Neutrale",
+            "emotion.happy": "Felice",
+            "emotion.sad": "Triste",
+            "emotion.energetic": "Energico",
+            "emotion.calm": "Calmo",
+            "emotion.anxious": "Ansioso",
+            "emotion.focused": "Concentrato",
+            "emotion.relaxed": "Rilassato",
+
+            "effect.reverb": "Riverbero",
+            "effect.delay": "Ritardo",
+            "effect.distortion": "Distorsione",
+            "effect.compressor": "Compressore",
+            "effect.eq": "Equalizzatore",
+            "effect.filter": "Filtro",
+
+            "error.generic": "Si è verificato un errore",
+            "error.network": "Errore di rete",
+            "error.permission": "Permesso richiesto"
+        ]
+    }
+
+    private var portugueseTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Bem-vindo",
+            "general.ok": "OK",
+            "general.cancel": "Cancelar",
+            "general.save": "Salvar",
+            "general.delete": "Excluir",
+            "general.edit": "Editar",
+            "general.done": "Concluído",
+            "general.close": "Fechar",
+            "general.settings": "Configurações",
+
+            "bio.hrv": "Variabilidade da Frequência Cardíaca",
+            "bio.coherence": "Coerência",
+            "bio.heart_rate": "Frequência Cardíaca",
+            "bio.breathing_rate": "Frequência Respiratória",
+            "bio.stress": "Estresse",
+            "bio.relaxation": "Relaxamento",
+            "bio.meditation": "Meditação",
+
+            "music.scale": "Escala",
+            "music.chord": "Acorde",
+            "music.rhythm": "Ritmo",
+            "music.tempo": "Andamento",
+
+            "emotion.neutral": "Neutro",
+            "emotion.happy": "Feliz",
+            "emotion.sad": "Triste",
+            "emotion.energetic": "Energético",
+            "emotion.calm": "Calmo",
+            "emotion.anxious": "Ansioso",
+            "emotion.focused": "Focado",
+            "emotion.relaxed": "Relaxado",
+
+            "error.generic": "Ocorreu um erro",
+            "error.network": "Erro de rede"
+        ]
+    }
+
+    private var russianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Добро пожаловать",
+            "general.ok": "ОК",
+            "general.cancel": "Отмена",
+            "general.save": "Сохранить",
+            "general.delete": "Удалить",
+            "general.edit": "Редактировать",
+            "general.done": "Готово",
+            "general.close": "Закрыть",
+            "general.settings": "Настройки",
+
+            "bio.hrv": "Вариабельность сердечного ритма",
+            "bio.coherence": "Когерентность",
+            "bio.heart_rate": "Частота сердечных сокращений",
+            "bio.breathing_rate": "Частота дыхания",
+            "bio.stress": "Стресс",
+            "bio.relaxation": "Расслабление",
+            "bio.meditation": "Медитация",
+
+            "music.scale": "Гамма",
+            "music.chord": "Аккорд",
+            "music.rhythm": "Ритм",
+            "music.tempo": "Темп",
+
+            "emotion.neutral": "Нейтральный",
+            "emotion.happy": "Счастливый",
+            "emotion.sad": "Грустный",
+            "emotion.energetic": "Энергичный",
+            "emotion.calm": "Спокойный",
+            "emotion.anxious": "Тревожный",
+            "emotion.focused": "Сосредоточенный",
+            "emotion.relaxed": "Расслабленный",
+
+            "error.generic": "Произошла ошибка",
+            "error.network": "Ошибка сети"
+        ]
+    }
+
+    private var polishTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Witaj",
+            "general.ok": "OK",
+            "general.cancel": "Anuluj",
+            "general.save": "Zapisz",
+            "general.delete": "Usuń",
+            "general.edit": "Edytuj",
+            "general.done": "Gotowe",
+            "general.close": "Zamknij",
+            "general.settings": "Ustawienia",
+
+            "bio.hrv": "Zmienność rytmu serca",
+            "bio.coherence": "Koherencja",
+            "bio.heart_rate": "Tętno",
+            "bio.breathing_rate": "Częstość oddechów",
+            "bio.stress": "Stres",
+            "bio.relaxation": "Relaksacja",
+            "bio.meditation": "Medytacja",
+
+            "music.scale": "Skala",
+            "music.chord": "Akord",
+            "music.rhythm": "Rytm",
+            "music.tempo": "Tempo",
+
+            "emotion.neutral": "Neutralny",
+            "emotion.happy": "Szczęśliwy",
+            "emotion.sad": "Smutny",
+            "emotion.energetic": "Energiczny",
+            "emotion.calm": "Spokojny",
+            "emotion.anxious": "Niespokojny",
+            "emotion.focused": "Skupiony",
+            "emotion.relaxed": "Zrelaksowany",
+
+            "error.generic": "Wystąpił błąd",
+            "error.network": "Błąd sieci"
+        ]
+    }
+
+    private var turkishTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Hoş geldiniz",
+            "general.ok": "Tamam",
+            "general.cancel": "İptal",
+            "general.save": "Kaydet",
+            "general.delete": "Sil",
+            "general.edit": "Düzenle",
+            "general.done": "Bitti",
+            "general.close": "Kapat",
+            "general.settings": "Ayarlar",
+
+            "bio.hrv": "Kalp Atış Hızı Değişkenliği",
+            "bio.coherence": "Tutarlılık",
+            "bio.heart_rate": "Kalp Atış Hızı",
+            "bio.breathing_rate": "Solunum Hızı",
+            "bio.stress": "Stres",
+            "bio.relaxation": "Rahatlama",
+            "bio.meditation": "Meditasyon",
+
+            "music.scale": "Dizi",
+            "music.chord": "Akor",
+            "music.rhythm": "Ritim",
+            "music.tempo": "Tempo",
+
+            "emotion.neutral": "Nötr",
+            "emotion.happy": "Mutlu",
+            "emotion.sad": "Üzgün",
+            "emotion.energetic": "Enerjik",
+            "emotion.calm": "Sakin",
+            "emotion.anxious": "Endişeli",
+            "emotion.focused": "Odaklanmış",
+            "emotion.relaxed": "Rahat",
+
+            "error.generic": "Bir hata oluştu",
+            "error.network": "Ağ hatası"
+        ]
+    }
+
+    private var chineseTraditionalTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "歡迎",
+            "general.ok": "確定",
+            "general.cancel": "取消",
+            "general.save": "儲存",
+            "general.delete": "刪除",
+            "general.edit": "編輯",
+            "general.done": "完成",
+            "general.close": "關閉",
+            "general.settings": "設定",
+
+            "bio.hrv": "心率變異性",
+            "bio.coherence": "一致性",
+            "bio.heart_rate": "心率",
+            "bio.breathing_rate": "呼吸頻率",
+            "bio.stress": "壓力",
+            "bio.relaxation": "放鬆",
+            "bio.meditation": "冥想",
+
+            "music.scale": "音階",
+            "music.chord": "和弦",
+            "music.rhythm": "節奏",
+            "music.tempo": "速度",
+
+            "emotion.neutral": "中性",
+            "emotion.happy": "快樂",
+            "emotion.sad": "悲傷",
+            "emotion.energetic": "有活力",
+            "emotion.calm": "平靜",
+            "emotion.anxious": "焦慮",
+            "emotion.focused": "專注",
+            "emotion.relaxed": "放鬆",
+
+            "error.generic": "發生錯誤",
+            "error.network": "網路錯誤"
+        ]
+    }
+
+    private var koreanTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "환영합니다",
+            "general.ok": "확인",
+            "general.cancel": "취소",
+            "general.save": "저장",
+            "general.delete": "삭제",
+            "general.edit": "편집",
+            "general.done": "완료",
+            "general.close": "닫기",
+            "general.settings": "설정",
+
+            "bio.hrv": "심박변이도",
+            "bio.coherence": "일관성",
+            "bio.heart_rate": "심박수",
+            "bio.breathing_rate": "호흡수",
+            "bio.stress": "스트레스",
+            "bio.relaxation": "이완",
+            "bio.meditation": "명상",
+
+            "music.scale": "음계",
+            "music.chord": "화음",
+            "music.rhythm": "리듬",
+            "music.tempo": "템포",
+
+            "emotion.neutral": "중립",
+            "emotion.happy": "행복한",
+            "emotion.sad": "슬픈",
+            "emotion.energetic": "활기찬",
+            "emotion.calm": "차분한",
+            "emotion.anxious": "불안한",
+            "emotion.focused": "집중하는",
+            "emotion.relaxed": "편안한",
+
+            "error.generic": "오류가 발생했습니다",
+            "error.network": "네트워크 오류"
+        ]
+    }
+
+    private var hindiTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "स्वागत है",
+            "general.ok": "ठीक है",
+            "general.cancel": "रद्द करें",
+            "general.save": "सहेजें",
+            "general.delete": "हटाएं",
+            "general.edit": "संपादित करें",
+            "general.done": "हो गया",
+            "general.close": "बंद करें",
+            "general.settings": "सेटिंग्स",
+
+            "bio.hrv": "हृदय गति परिवर्तनशीलता",
+            "bio.coherence": "सुसंगतता",
+            "bio.heart_rate": "हृदय गति",
+            "bio.breathing_rate": "श्वास दर",
+            "bio.stress": "तनाव",
+            "bio.relaxation": "विश्राम",
+            "bio.meditation": "ध्यान",
+
+            "music.scale": "स्वर",
+            "music.chord": "राग",
+            "music.rhythm": "ताल",
+            "music.tempo": "लय",
+
+            "emotion.neutral": "तटस्थ",
+            "emotion.happy": "खुश",
+            "emotion.sad": "उदास",
+            "emotion.energetic": "ऊर्जावान",
+            "emotion.calm": "शांत",
+            "emotion.anxious": "चिंतित",
+            "emotion.focused": "केंद्रित",
+            "emotion.relaxed": "तनावमुक्त",
+
+            "error.generic": "एक त्रुटि हुई",
+            "error.network": "नेटवर्क त्रुटि"
+        ]
+    }
+
+    private var bengaliTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "স্বাগতম",
+            "general.ok": "ঠিক আছে",
+            "general.cancel": "বাতিল",
+            "general.save": "সংরক্ষণ করুন",
+            "general.delete": "মুছুন",
+            "general.edit": "সম্পাদনা করুন",
+            "general.done": "সম্পন্ন",
+            "general.close": "বন্ধ করুন",
+            "general.settings": "সেটিংস",
+
+            "bio.hrv": "হৃদস্পন্দন পরিবর্তনশীলতা",
+            "bio.coherence": "সামঞ্জস্য",
+            "bio.heart_rate": "হৃদস্পন্দন",
+            "bio.breathing_rate": "শ্বাস-প্রশ্বাসের হার",
+            "bio.stress": "চাপ",
+            "bio.relaxation": "শিথিলতা",
+            "bio.meditation": "ধ্যান",
+
+            "music.scale": "স্বরগ্রাম",
+            "music.chord": "সুর",
+            "music.rhythm": "তাল",
+            "music.tempo": "লয়",
+
+            "emotion.neutral": "নিরপেক্ষ",
+            "emotion.happy": "সুখী",
+            "emotion.sad": "দুঃখী",
+            "emotion.energetic": "শক্তিশালী",
+            "emotion.calm": "শান্ত",
+            "emotion.anxious": "উদ্বিগ্ন",
+            "emotion.focused": "মনোযোগী",
+            "emotion.relaxed": "স্বস্তিপূর্ণ",
+
+            "error.generic": "একটি ত্রুটি ঘটেছে",
+            "error.network": "নেটওয়ার্ক ত্রুটি"
+        ]
+    }
+
+    private var tamilTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "வரவேற்பு",
+            "general.ok": "சரி",
+            "general.cancel": "ரத்து",
+            "general.save": "சேமி",
+            "general.delete": "நீக்கு",
+            "general.edit": "திருத்து",
+            "general.done": "முடிந்தது",
+            "general.close": "மூடு",
+            "general.settings": "அமைப்புகள்",
+
+            "bio.hrv": "இதய துடிப்பு மாறுபாடு",
+            "bio.coherence": "ஒத்திசைவு",
+            "bio.heart_rate": "இதய துடிப்பு",
+            "bio.breathing_rate": "சுவாச விகிதம்",
+            "bio.stress": "மன அழுத்தம்",
+            "bio.relaxation": "தளர்வு",
+            "bio.meditation": "தியானம்",
+
+            "music.scale": "ராகம்",
+            "music.chord": "சுரம்",
+            "music.rhythm": "தாளம்",
+            "music.tempo": "லயம்",
+
+            "emotion.neutral": "நடுநிலை",
+            "emotion.happy": "மகிழ்ச்சி",
+            "emotion.sad": "சோகம்",
+            "emotion.energetic": "ஆற்றல்மிக்க",
+            "emotion.calm": "அமைதி",
+            "emotion.anxious": "பதட்டம்",
+            "emotion.focused": "கவனம்",
+            "emotion.relaxed": "நிம்மதி",
+
+            "error.generic": "பிழை ஏற்பட்டது",
+            "error.network": "நெட்வொர்க் பிழை"
+        ]
+    }
+
+    private var indonesianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Selamat datang",
+            "general.ok": "OK",
+            "general.cancel": "Batal",
+            "general.save": "Simpan",
+            "general.delete": "Hapus",
+            "general.edit": "Edit",
+            "general.done": "Selesai",
+            "general.close": "Tutup",
+            "general.settings": "Pengaturan",
+
+            "bio.hrv": "Variabilitas Detak Jantung",
+            "bio.coherence": "Koherensi",
+            "bio.heart_rate": "Detak Jantung",
+            "bio.breathing_rate": "Laju Pernapasan",
+            "bio.stress": "Stres",
+            "bio.relaxation": "Relaksasi",
+            "bio.meditation": "Meditasi",
+
+            "music.scale": "Tangga Nada",
+            "music.chord": "Akor",
+            "music.rhythm": "Irama",
+            "music.tempo": "Tempo",
+
+            "emotion.neutral": "Netral",
+            "emotion.happy": "Bahagia",
+            "emotion.sad": "Sedih",
+            "emotion.energetic": "Energik",
+            "emotion.calm": "Tenang",
+            "emotion.anxious": "Cemas",
+            "emotion.focused": "Fokus",
+            "emotion.relaxed": "Rileks",
+
+            "error.generic": "Terjadi kesalahan",
+            "error.network": "Kesalahan jaringan"
+        ]
+    }
+
+    private var thaiTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "ยินดีต้อนรับ",
+            "general.ok": "ตกลง",
+            "general.cancel": "ยกเลิก",
+            "general.save": "บันทึก",
+            "general.delete": "ลบ",
+            "general.edit": "แก้ไข",
+            "general.done": "เสร็จสิ้น",
+            "general.close": "ปิด",
+            "general.settings": "การตั้งค่า",
+
+            "bio.hrv": "ความแปรปรวนของอัตราการเต้นของหัวใจ",
+            "bio.coherence": "ความสอดคล้อง",
+            "bio.heart_rate": "อัตราการเต้นของหัวใจ",
+            "bio.breathing_rate": "อัตราการหายใจ",
+            "bio.stress": "ความเครียด",
+            "bio.relaxation": "การผ่อนคลาย",
+            "bio.meditation": "การทำสมาธิ",
+
+            "music.scale": "สเกล",
+            "music.chord": "คอร์ด",
+            "music.rhythm": "จังหวะ",
+            "music.tempo": "เทมโป",
+
+            "emotion.neutral": "เป็นกลาง",
+            "emotion.happy": "มีความสุข",
+            "emotion.sad": "เศร้า",
+            "emotion.energetic": "กระฉับกระเฉง",
+            "emotion.calm": "สงบ",
+            "emotion.anxious": "วิตกกังวล",
+            "emotion.focused": "มีสมาธิ",
+            "emotion.relaxed": "ผ่อนคลาย",
+
+            "error.generic": "เกิดข้อผิดพลาด",
+            "error.network": "ข้อผิดพลาดเครือข่าย"
+        ]
+    }
+
+    private var vietnameseTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Chào mừng",
+            "general.ok": "OK",
+            "general.cancel": "Hủy",
+            "general.save": "Lưu",
+            "general.delete": "Xóa",
+            "general.edit": "Chỉnh sửa",
+            "general.done": "Xong",
+            "general.close": "Đóng",
+            "general.settings": "Cài đặt",
+
+            "bio.hrv": "Biến thiên nhịp tim",
+            "bio.coherence": "Sự nhất quán",
+            "bio.heart_rate": "Nhịp tim",
+            "bio.breathing_rate": "Nhịp thở",
+            "bio.stress": "Căng thẳng",
+            "bio.relaxation": "Thư giãn",
+            "bio.meditation": "Thiền định",
+
+            "music.scale": "Âm giai",
+            "music.chord": "Hợp âm",
+            "music.rhythm": "Nhịp điệu",
+            "music.tempo": "Nhịp độ",
+
+            "emotion.neutral": "Trung lập",
+            "emotion.happy": "Vui vẻ",
+            "emotion.sad": "Buồn",
+            "emotion.energetic": "Tràn đầy năng lượng",
+            "emotion.calm": "Bình tĩnh",
+            "emotion.anxious": "Lo lắng",
+            "emotion.focused": "Tập trung",
+            "emotion.relaxed": "Thoải mái",
+
+            "error.generic": "Đã xảy ra lỗi",
+            "error.network": "Lỗi mạng"
+        ]
+    }
+
+    private var hebrewTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "ברוך הבא",
+            "general.ok": "אישור",
+            "general.cancel": "ביטול",
+            "general.save": "שמור",
+            "general.delete": "מחק",
+            "general.edit": "ערוך",
+            "general.done": "סיום",
+            "general.close": "סגור",
+            "general.settings": "הגדרות",
+
+            "bio.hrv": "שונות קצב הלב",
+            "bio.coherence": "קוהרנטיות",
+            "bio.heart_rate": "קצב לב",
+            "bio.breathing_rate": "קצב נשימה",
+            "bio.stress": "לחץ",
+            "bio.relaxation": "הרפיה",
+            "bio.meditation": "מדיטציה",
+
+            "music.scale": "סולם",
+            "music.chord": "אקורד",
+            "music.rhythm": "קצב",
+            "music.tempo": "טמפו",
+
+            "emotion.neutral": "ניטרלי",
+            "emotion.happy": "שמח",
+            "emotion.sad": "עצוב",
+            "emotion.energetic": "אנרגטי",
+            "emotion.calm": "רגוע",
+            "emotion.anxious": "חרד",
+            "emotion.focused": "ממוקד",
+            "emotion.relaxed": "רגוע",
+
+            "error.generic": "אירעה שגיאה",
+            "error.network": "שגיאת רשת"
+        ]
+    }
+
+    private var persianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "خوش آمدید",
+            "general.ok": "تایید",
+            "general.cancel": "لغو",
+            "general.save": "ذخیره",
+            "general.delete": "حذف",
+            "general.edit": "ویرایش",
+            "general.done": "انجام شد",
+            "general.close": "بستن",
+            "general.settings": "تنظیمات",
+
+            "bio.hrv": "تغییرات ضربان قلب",
+            "bio.coherence": "انسجام",
+            "bio.heart_rate": "ضربان قلب",
+            "bio.breathing_rate": "نرخ تنفس",
+            "bio.stress": "استرس",
+            "bio.relaxation": "آرامش",
+            "bio.meditation": "مدیتیشن",
+
+            "music.scale": "گام",
+            "music.chord": "آکورد",
+            "music.rhythm": "ریتم",
+            "music.tempo": "تمپو",
+
+            "emotion.neutral": "خنثی",
+            "emotion.happy": "شاد",
+            "emotion.sad": "غمگین",
+            "emotion.energetic": "پرانرژی",
+            "emotion.calm": "آرام",
+            "emotion.anxious": "مضطرب",
+            "emotion.focused": "متمرکز",
+            "emotion.relaxed": "راحت",
+
+            "error.generic": "خطایی رخ داد",
+            "error.network": "خطای شبکه"
         ]
     }
 
