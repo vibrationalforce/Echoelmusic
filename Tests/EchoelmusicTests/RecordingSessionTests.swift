@@ -297,17 +297,17 @@ final class BioMappingPresetTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(mapper.harmonicCount, 1)
     }
 
-    func testBinauralStatePresets() throws {
+    func testBrainwaveBandPresets() throws {
         let library = BioMappingPresetLibrary.shared
 
-        // Verify different brainwave states are covered
-        let states = library.presets.map { $0.binauralState }
+        // Verify different brainwave bands are covered (EEG-based classification)
+        let bands = library.presets.map { $0.brainwaveBand }
 
-        XCTAssertTrue(states.contains(.delta), "Should have delta preset")
-        XCTAssertTrue(states.contains(.theta), "Should have theta preset")
-        XCTAssertTrue(states.contains(.alpha), "Should have alpha preset")
-        XCTAssertTrue(states.contains(.beta), "Should have beta preset")
-        XCTAssertTrue(states.contains(.gamma), "Should have gamma preset")
+        XCTAssertTrue(bands.contains(.delta), "Should have delta preset (0.5-4 Hz)")
+        XCTAssertTrue(bands.contains(.theta), "Should have theta preset (4-8 Hz)")
+        XCTAssertTrue(bands.contains(.alpha), "Should have alpha preset (8-13 Hz)")
+        XCTAssertTrue(bands.contains(.beta), "Should have beta preset (13-30 Hz)")
+        XCTAssertTrue(bands.contains(.gamma), "Should have gamma preset (30-100 Hz)")
     }
 
     func testHarmonicProfiles() throws {
