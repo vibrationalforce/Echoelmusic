@@ -551,9 +551,60 @@ class EnhancedMLModels {
         }
 
         private func estimateTempo(audioBuffer: [Float], sampleRate: Float) -> Float {
-            // Vereinfachte Tempo-Schätzung via Onset Detection
-            // In Produktion: Autocorrelation oder Beat-Tracking-Algorithmus
-            return 120.0 // Placeholder
+            // Onset Detection + Autocorrelation based tempo estimation
+            // Based on: Scheirer ED. "Tempo and beat analysis of acoustic musical signals" JASA 1998
+            guard audioBuffer.count >= 4096 else { return 120.0 }
+
+            // Step 1: Compute onset strength envelope
+            let hopSize = 512
+            let frameSize = 1024
+            var onsetEnvelope: [Float] = []
+
+            var prevEnergy: Float = 0
+            for i in stride(from: 0, to: audioBuffer.count - frameSize, by: hopSize) {
+                let frame = Array(audioBuffer[i..<(i + frameSize)])
+
+                // Compute spectral flux (energy difference)
+                var energy: Float = 0
+                vDSP_svesq(frame, 1, &energy, vDSP_Length(frameSize))
+                energy = sqrt(energy / Float(frameSize))
+
+                // Half-wave rectified difference (onset detection)
+                let onset = max(0, energy - prevEnergy)
+                onsetEnvelope.append(onset)
+                prevEnergy = energy
+            }
+
+            guard onsetEnvelope.count > 100 else { return 120.0 }
+
+            // Step 2: Autocorrelation to find periodicity
+            let minLag = Int(60.0 / 200.0 * sampleRate / Float(hopSize))  // 200 BPM max
+            let maxLag = Int(60.0 / 40.0 * sampleRate / Float(hopSize))   // 40 BPM min
+            let searchRange = min(maxLag, onsetEnvelope.count / 2)
+
+            var bestLag = minLag
+            var bestCorrelation: Float = 0
+
+            for lag in minLag..<searchRange {
+                var correlation: Float = 0
+                let len = onsetEnvelope.count - lag
+                vDSP_dotpr(onsetEnvelope, 1,
+                           Array(onsetEnvelope[lag...]), 1,
+                           &correlation, vDSP_Length(len))
+                correlation /= Float(len)
+
+                if correlation > bestCorrelation {
+                    bestCorrelation = correlation
+                    bestLag = lag
+                }
+            }
+
+            // Convert lag to BPM
+            let beatPeriodSeconds = Float(bestLag * hopSize) / sampleRate
+            let bpm = 60.0 / beatPeriodSeconds
+
+            // Clamp to reasonable range
+            return max(40, min(200, bpm))
         }
 
         private func calculateSpectralCentroid(audioBuffer: [Float]) -> Float {
@@ -574,8 +625,47 @@ class EnhancedMLModels {
         }
 
         private func calculateSpectralRolloff(audioBuffer: [Float]) -> Float {
-            // Vereinfacht: Frequenz unter der 85% der Energie liegt
-            return 0.5 // Placeholder
+            // Spectral Rolloff: Frequency below which 85% of spectral energy is contained
+            // Standard audio feature used in genre classification and timbre analysis
+            let fftSize = 1024
+            guard audioBuffer.count >= fftSize else { return 0.5 }
+
+            // Compute magnitude spectrum using simple DFT approximation
+            var magnitudes = [Float](repeating: 0, count: fftSize / 2)
+            for k in 0..<(fftSize / 2) {
+                var real: Float = 0
+                var imag: Float = 0
+                let omega = 2.0 * Float.pi * Float(k) / Float(fftSize)
+
+                for n in 0..<fftSize {
+                    let sample = audioBuffer[n]
+                    real += sample * cos(omega * Float(n))
+                    imag += sample * sin(omega * Float(n))
+                }
+                magnitudes[k] = sqrt(real * real + imag * imag)
+            }
+
+            // Compute total energy
+            var totalEnergy: Float = 0
+            vDSP_sve(magnitudes, 1, &totalEnergy, vDSP_Length(magnitudes.count))
+
+            guard totalEnergy > 0 else { return 0.5 }
+
+            // Find rolloff frequency (85% threshold)
+            let threshold = totalEnergy * 0.85
+            var cumulativeEnergy: Float = 0
+            var rolloffBin = 0
+
+            for i in 0..<magnitudes.count {
+                cumulativeEnergy += magnitudes[i]
+                if cumulativeEnergy >= threshold {
+                    rolloffBin = i
+                    break
+                }
+            }
+
+            // Normalize to 0-1 range
+            return Float(rolloffBin) / Float(magnitudes.count)
         }
 
         private func calculateZeroCrossingRate(audioBuffer: [Float]) -> Float {
@@ -590,19 +680,205 @@ class EnhancedMLModels {
         }
 
         private func calculateMFCC(audioBuffer: [Float], coefficients: Int) -> [Float] {
-            // Vereinfachte MFCC-Berechnung
-            // In Produktion: Vollständige Mel-Filterbank + DCT
-            return [Float](repeating: 0.5, count: coefficients) // Placeholder
+            // Mel-Frequency Cepstral Coefficients (MFCC)
+            // Based on: Davis & Mermelstein, "Comparison of Parametric Representations" 1980
+            // Standard feature for speech/music recognition
+            let fftSize = 1024
+            let numMelBands = 26
+            guard audioBuffer.count >= fftSize else {
+                return [Float](repeating: 0, count: coefficients)
+            }
+
+            // Step 1: Compute power spectrum
+            var powerSpectrum = [Float](repeating: 0, count: fftSize / 2)
+            for k in 0..<(fftSize / 2) {
+                var real: Float = 0
+                var imag: Float = 0
+                let omega = 2.0 * Float.pi * Float(k) / Float(fftSize)
+
+                for n in 0..<min(fftSize, audioBuffer.count) {
+                    let sample = audioBuffer[n]
+                    real += sample * cos(omega * Float(n))
+                    imag += sample * sin(omega * Float(n))
+                }
+                powerSpectrum[k] = (real * real + imag * imag) / Float(fftSize)
+            }
+
+            // Step 2: Apply Mel filterbank
+            // Mel scale: m = 2595 * log10(1 + f/700)
+            // Inverse: f = 700 * (10^(m/2595) - 1)
+            let sampleRate: Float = 44100
+            let lowFreq: Float = 0
+            let highFreq = sampleRate / 2
+
+            func hzToMel(_ hz: Float) -> Float {
+                return 2595.0 * log10(1.0 + hz / 700.0)
+            }
+
+            func melToHz(_ mel: Float) -> Float {
+                return 700.0 * (pow(10.0, mel / 2595.0) - 1.0)
+            }
+
+            let lowMel = hzToMel(lowFreq)
+            let highMel = hzToMel(highFreq)
+            let melPoints = (0...numMelBands + 1).map { i in
+                melToHz(lowMel + Float(i) * (highMel - lowMel) / Float(numMelBands + 1))
+            }
+
+            // Convert to FFT bins
+            let binPoints = melPoints.map { freq in
+                Int(floor((Float(fftSize) + 1) * freq / sampleRate))
+            }
+
+            // Apply triangular filters
+            var melEnergies = [Float](repeating: 0, count: numMelBands)
+            for m in 0..<numMelBands {
+                let startBin = binPoints[m]
+                let centerBin = binPoints[m + 1]
+                let endBin = binPoints[m + 2]
+
+                for k in startBin..<centerBin {
+                    guard k < powerSpectrum.count else { break }
+                    let weight = Float(k - startBin) / Float(centerBin - startBin)
+                    melEnergies[m] += powerSpectrum[k] * weight
+                }
+                for k in centerBin..<endBin {
+                    guard k < powerSpectrum.count else { break }
+                    let weight = Float(endBin - k) / Float(endBin - centerBin)
+                    melEnergies[m] += powerSpectrum[k] * weight
+                }
+            }
+
+            // Step 3: Log compression
+            let logMelEnergies = melEnergies.map { max(log($0 + 1e-10), -50) }
+
+            // Step 4: DCT (Type-II) to get MFCCs
+            var mfcc = [Float](repeating: 0, count: coefficients)
+            for i in 0..<coefficients {
+                var sum: Float = 0
+                for j in 0..<numMelBands {
+                    sum += logMelEnergies[j] * cos(Float.pi * Float(i) * (Float(j) + 0.5) / Float(numMelBands))
+                }
+                mfcc[i] = sum * sqrt(2.0 / Float(numMelBands))
+            }
+
+            // Normalize MFCCs to roughly 0-1 range
+            let maxVal = mfcc.map { abs($0) }.max() ?? 1
+            if maxVal > 0 {
+                mfcc = mfcc.map { ($0 / maxVal + 1) / 2 }
+            }
+
+            return mfcc
         }
 
         private func calculateRhythmComplexity(audioBuffer: [Float]) -> Float {
-            // Vereinfacht: Variabilität der Onset-Intervalle
-            return 0.5 // Placeholder
+            // Rhythm Complexity: Variability of inter-onset intervals
+            // Based on: Lartillot & Toiviainen, "A Matlab Toolbox for Musical Feature Extraction" 2007
+            guard audioBuffer.count >= 2048 else { return 0.5 }
+
+            // Step 1: Detect onsets via energy envelope
+            let hopSize = 256
+            let frameSize = 512
+            var onsetTimes: [Int] = []
+            var prevEnergy: Float = 0
+            let threshold: Float = 0.1
+
+            for i in stride(from: 0, to: audioBuffer.count - frameSize, by: hopSize) {
+                let frame = Array(audioBuffer[i..<(i + frameSize)])
+                var energy: Float = 0
+                vDSP_svesq(frame, 1, &energy, vDSP_Length(frameSize))
+                energy = sqrt(energy / Float(frameSize))
+
+                // Onset detected when energy increases significantly
+                if energy - prevEnergy > threshold * prevEnergy + 0.01 {
+                    onsetTimes.append(i)
+                }
+                prevEnergy = energy
+            }
+
+            guard onsetTimes.count > 2 else { return 0.0 }
+
+            // Step 2: Calculate inter-onset intervals (IOI)
+            var intervals: [Float] = []
+            for i in 1..<onsetTimes.count {
+                intervals.append(Float(onsetTimes[i] - onsetTimes[i-1]))
+            }
+
+            guard !intervals.isEmpty else { return 0.0 }
+
+            // Step 3: Calculate coefficient of variation (CV) of IOIs
+            // Higher CV = more rhythmic complexity (irregular timing)
+            var mean: Float = 0
+            vDSP_meanv(intervals, 1, &mean, vDSP_Length(intervals.count))
+
+            guard mean > 0 else { return 0.0 }
+
+            var variance: Float = 0
+            let deviations = intervals.map { ($0 - mean) * ($0 - mean) }
+            vDSP_meanv(deviations, 1, &variance, vDSP_Length(deviations.count))
+            let stdDev = sqrt(variance)
+
+            let cv = stdDev / mean
+
+            // Normalize to 0-1 (CV typically ranges from 0 to ~1.5 for music)
+            return min(1.0, cv / 1.5)
         }
 
         private func calculateHarmonicComplexity(audioBuffer: [Float]) -> Float {
-            // Vereinfacht: Anzahl signifikanter Frequenzkomponenten
-            return 0.5 // Placeholder
+            // Harmonic Complexity: Ratio of significant spectral peaks
+            // Measures how many distinct frequency components are present
+            guard audioBuffer.count >= 1024 else { return 0.5 }
+
+            let fftSize = 1024
+
+            // Compute magnitude spectrum
+            var magnitudes = [Float](repeating: 0, count: fftSize / 2)
+            for k in 0..<(fftSize / 2) {
+                var real: Float = 0
+                var imag: Float = 0
+                let omega = 2.0 * Float.pi * Float(k) / Float(fftSize)
+
+                for n in 0..<fftSize {
+                    let sample = audioBuffer[n]
+                    real += sample * cos(omega * Float(n))
+                    imag += sample * sin(omega * Float(n))
+                }
+                magnitudes[k] = sqrt(real * real + imag * imag)
+            }
+
+            // Find maximum magnitude
+            var maxMag: Float = 0
+            vDSP_maxv(magnitudes, 1, &maxMag, vDSP_Length(magnitudes.count))
+
+            guard maxMag > 0 else { return 0.0 }
+
+            // Count significant peaks (above 10% of max)
+            let threshold = maxMag * 0.1
+            var significantPeaks = 0
+            var totalEnergy: Float = 0
+            var peakEnergy: Float = 0
+
+            for i in 1..<(magnitudes.count - 1) {
+                let mag = magnitudes[i]
+                totalEnergy += mag * mag
+
+                // Local maximum above threshold
+                if mag > threshold &&
+                   mag > magnitudes[i-1] &&
+                   mag > magnitudes[i+1] {
+                    significantPeaks += 1
+                    peakEnergy += mag * mag
+                }
+            }
+
+            // Combine two metrics:
+            // 1. Number of significant peaks (normalized)
+            // 2. Ratio of peak energy to total energy (spectral flatness inverse)
+            let peakRatio = Float(significantPeaks) / Float(magnitudes.count / 2)
+            let energyConcentration = totalEnergy > 0 ? peakEnergy / totalEnergy : 0
+
+            // Higher values = more harmonic complexity
+            return min(1.0, peakRatio * 10 + (1 - energyConcentration) * 0.5)
         }
     }
 
