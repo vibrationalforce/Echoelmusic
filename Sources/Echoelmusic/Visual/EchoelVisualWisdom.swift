@@ -45,6 +45,11 @@ public final class EchoelVisualWisdom: ObservableObject {
     @Published public var bioReactiveEnabled: Bool = true
     @Published public var currentBioModulation: BioVisualModulation = BioVisualModulation()
 
+    // MARK: - Immersive Formats State
+    @Published public var immersiveFormat: ImmersiveFormat = .standard
+    @Published public var contentMode: ContentCreationMode = .visualizer
+    @Published public var exportFormat: ExportVideoFormat = .hd1080p
+
     // MARK: - Accessibility Visual State
     @Published public var accessibilityVisualMode: AccessibilityVisualMode = .standard
     @Published public var reducedMotion: Bool = false
@@ -992,5 +997,181 @@ public class PhysicsPatternEngine {
         }
 
         return spectrum
+    }
+}
+
+// MARK: - ═══════════════════════════════════════════════════════════════════
+// MARK: IMMERSIVE FORMATS
+// MARK: - ═══════════════════════════════════════════════════════════════════
+
+/// Immersive video/visual formats for VR/XR/360
+public enum ImmersiveFormat: String, CaseIterable, Identifiable {
+    case standard = "Standard"                    // 16:9 HD/4K
+    case ultrawide = "Ultra Wide"                 // 21:9 Cinematic
+    case square = "Square"                        // 1:1 Social
+    case vertical = "Vertical"                    // 9:16 Stories/TikTok
+    case vr360Mono = "360° Mono"                  // Equirectangular mono
+    case vr360Stereo = "360° Stereo"              // Equirectangular stereo (top-bottom)
+    case vr180Stereo = "VR180 Stereo"             // 180° side-by-side stereo
+    case dome = "Dome/Fulldome"                   // Fisheye projection
+    case cubeMap = "Cube Map"                     // 6-face cube projection
+
+    public var id: String { rawValue }
+
+    /// Resolution for each format
+    var recommendedResolution: CGSize {
+        switch self {
+        case .standard: return CGSize(width: 1920, height: 1080)
+        case .ultrawide: return CGSize(width: 2560, height: 1080)
+        case .square: return CGSize(width: 1080, height: 1080)
+        case .vertical: return CGSize(width: 1080, height: 1920)
+        case .vr360Mono: return CGSize(width: 4096, height: 2048)       // 2:1 equirect
+        case .vr360Stereo: return CGSize(width: 4096, height: 4096)    // Stacked
+        case .vr180Stereo: return CGSize(width: 4096, height: 2048)    // SBS
+        case .dome: return CGSize(width: 4096, height: 4096)
+        case .cubeMap: return CGSize(width: 4096, height: 3072)        // 6x faces
+        }
+    }
+
+    /// Projection type
+    var projectionType: String {
+        switch self {
+        case .standard, .ultrawide, .square, .vertical: return "Rectilinear"
+        case .vr360Mono, .vr360Stereo: return "Equirectangular"
+        case .vr180Stereo: return "Fisheye (180°)"
+        case .dome: return "Fisheye (Fulldome)"
+        case .cubeMap: return "Cube Map"
+        }
+    }
+
+    /// DAW/export compatibility
+    var spatialAudioFormat: String {
+        switch self {
+        case .standard, .ultrawide, .square, .vertical: return "Stereo/5.1/Atmos"
+        case .vr360Mono, .vr360Stereo, .vr180Stereo: return "Ambisonics (1st-3rd order)"
+        case .dome: return "Ambisonics/Multi-channel"
+        case .cubeMap: return "Object-based spatial"
+        }
+    }
+}
+
+// MARK: - ═══════════════════════════════════════════════════════════════════
+// MARK: CONTENT CREATION MODES
+// MARK: - ═══════════════════════════════════════════════════════════════════
+
+/// Content creation workflow modes
+public enum ContentCreationMode: String, CaseIterable, Identifiable {
+    case visualizer = "Visualizer"            // Real-time audio-reactive
+    case musicVideo = "Music Video"           // Timeline-based video
+    case liveStream = "Live Stream"           // Multi-platform streaming
+    case vjPerformance = "VJ Performance"     // Live VJ mixing
+    case projectionMapping = "Projection Mapping"  // Surface mapping
+    case coverArt = "Cover Art"               // Static album artwork
+    case animatedCover = "Animated Cover"     // Animated artwork (GIF/MP4)
+    case socialContent = "Social Content"     // Stories/Reels/TikTok
+    case immersiveVR = "Immersive VR"         // 360/VR content
+    case installation = "Installation"        // Art installation
+
+    public var id: String { rawValue }
+
+    /// Output format recommendations
+    var recommendedFormat: ImmersiveFormat {
+        switch self {
+        case .visualizer, .musicVideo, .liveStream: return .standard
+        case .vjPerformance, .projectionMapping: return .ultrawide
+        case .coverArt, .animatedCover: return .square
+        case .socialContent: return .vertical
+        case .immersiveVR: return .vr360Stereo
+        case .installation: return .dome
+        }
+    }
+
+    /// Real-time vs rendered
+    var isRealTime: Bool {
+        switch self {
+        case .visualizer, .liveStream, .vjPerformance, .projectionMapping:
+            return true
+        case .musicVideo, .coverArt, .animatedCover, .socialContent, .immersiveVR, .installation:
+            return false
+        }
+    }
+}
+
+// MARK: - ═══════════════════════════════════════════════════════════════════
+// MARK: EXPORT VIDEO FORMATS
+// MARK: - ═══════════════════════════════════════════════════════════════════
+
+/// Video export format presets
+public enum ExportVideoFormat: String, CaseIterable, Identifiable {
+    // Standard
+    case hd720p = "HD 720p"
+    case hd1080p = "Full HD 1080p"
+    case uhd4k = "4K UHD"
+    case uhd8k = "8K UHD"
+
+    // Professional
+    case prores422 = "ProRes 422"
+    case prores4444 = "ProRes 4444"
+    case dnxhr = "DNxHR"
+
+    // Streaming
+    case youtubeOptimal = "YouTube Optimal"
+    case twitchOptimal = "Twitch Optimal"
+    case tiktokVertical = "TikTok Vertical"
+    case instagramReels = "Instagram Reels"
+
+    // Immersive
+    case vr360_4k = "360° 4K"
+    case vr360_8k = "360° 8K"
+    case vr180_4k = "VR180 4K"
+    case fulldome_4k = "Fulldome 4K"
+
+    public var id: String { rawValue }
+
+    /// Resolution
+    var resolution: CGSize {
+        switch self {
+        case .hd720p: return CGSize(width: 1280, height: 720)
+        case .hd1080p: return CGSize(width: 1920, height: 1080)
+        case .uhd4k: return CGSize(width: 3840, height: 2160)
+        case .uhd8k: return CGSize(width: 7680, height: 4320)
+        case .prores422, .prores4444, .dnxhr: return CGSize(width: 3840, height: 2160)
+        case .youtubeOptimal: return CGSize(width: 3840, height: 2160)
+        case .twitchOptimal: return CGSize(width: 1920, height: 1080)
+        case .tiktokVertical, .instagramReels: return CGSize(width: 1080, height: 1920)
+        case .vr360_4k, .vr180_4k: return CGSize(width: 4096, height: 2048)
+        case .vr360_8k: return CGSize(width: 8192, height: 4096)
+        case .fulldome_4k: return CGSize(width: 4096, height: 4096)
+        }
+    }
+
+    /// Codec
+    var codec: String {
+        switch self {
+        case .prores422: return "Apple ProRes 422"
+        case .prores4444: return "Apple ProRes 4444"
+        case .dnxhr: return "Avid DNxHR"
+        case .vr360_4k, .vr360_8k, .vr180_4k, .fulldome_4k: return "H.265/HEVC"
+        default: return "H.264/AVC"
+        }
+    }
+
+    /// Bitrate (Mbps)
+    var bitrate: Int {
+        switch self {
+        case .hd720p: return 8
+        case .hd1080p: return 15
+        case .uhd4k: return 50
+        case .uhd8k: return 100
+        case .prores422: return 150
+        case .prores4444: return 300
+        case .dnxhr: return 200
+        case .youtubeOptimal: return 50
+        case .twitchOptimal: return 8
+        case .tiktokVertical, .instagramReels: return 10
+        case .vr360_4k, .vr180_4k: return 60
+        case .vr360_8k: return 120
+        case .fulldome_4k: return 80
+        }
     }
 }
