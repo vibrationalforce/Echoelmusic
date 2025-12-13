@@ -10,6 +10,7 @@
 // - Bio-Reactive Visual Modulation
 // - Accessibility Visual Adaptations
 // - Scientific Visualization (Fractals, Physics Patterns)
+// - VisualRegenerationScience (Evidence-Based Regeneration Protocols)
 // ============================================================================
 
 import Foundation
@@ -34,6 +35,7 @@ public final class EchoelVisualWisdom: ObservableObject {
     public let videoWeaver = VideoWeaverSwift.shared
     public let lightController = LightControllerSwift.shared
     public let physicsPatternEngine = PhysicsPatternEngine.shared
+    public let regenerationScience = VisualRegenerationScience.shared  // Evidence-based visual regeneration
 
     // MARK: - Visual State
     @Published public var visualMode: VisualMode = .adaptive
