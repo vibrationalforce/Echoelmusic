@@ -149,16 +149,19 @@ class EvidenceBasedHRVTraining: ObservableObject {
 
         isTraining = false
 
+        // Stop HealthKit monitoring
+        stopMonitoring()
+
         // Calculate results
         let finalHRV = sessionData.last?.hrv ?? 0.0
-        let avgCoherence = sessionData.map { $0.coherence }.reduce(0, +) / Float(sessionData.count)
+        let avgCoherence = sessionData.isEmpty ? 0.0 : sessionData.map { $0.coherence }.reduce(0, +) / Float(sessionData.count)
         let hrvChange = finalHRV - baselineHRV
 
         print("⏹️ HRV Training: Session Ended")
         print("📊 Results:")
         print("   - Baseline HRV: \(String(format: "%.1f", baselineHRV)) ms")
         print("   - Final HRV: \(String(format: "%.1f", finalHRV)) ms")
-        print("   - Change: \(hrvChange >= 0 ? "+" : "")\(String(format: "%.1f", hrvChange)) ms (\(String(format: "%.1f", (hrvChange / baselineHRV) * 100))%)")
+        print("   - Change: \(hrvChange >= 0 ? "+" : "")\(String(format: "%.1f", hrvChange)) ms (\(String(format: "%.1f", baselineHRV > 0 ? (hrvChange / baselineHRV) * 100 : 0))%)")
         print("   - Avg Coherence: \(String(format: "%.1f", avgCoherence))")
 
         currentProtocol = nil
@@ -168,43 +171,113 @@ class EvidenceBasedHRVTraining: ObservableObject {
 
     private func measureBaselineHRV() async throws -> Float {
         // Request HRV from HealthKit (last 5 minutes average)
-        // This is a placeholder - real implementation would query HealthKit
+        let healthKit = HealthKitManager()
 
-        // Simulate baseline measurement
-        try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+        // Check authorization
+        do {
+            try await healthKit.requestAuthorization()
+        } catch {
+            print("⚠️ HealthKit not authorized, using simulated baseline")
+            try await Task.sleep(nanoseconds: 2_000_000_000)
+            return 50.0  // Default baseline
+        }
 
-        // Typical resting HRV: 20-100 ms (age-dependent)
+        // Fetch recent HRV data (last 5 minutes)
+        let endDate = Date()
+        let startDate = Calendar.current.date(byAdding: .minute, value: -5, to: endDate)!
+
+        do {
+            let samples = try await healthKit.fetchHRVSamples(from: startDate, to: endDate)
+
+            if !samples.isEmpty {
+                // Calculate average SDNN from samples
+                let avgHRV = samples.reduce(0.0) { $0 + $1.sdnn } / Double(samples.count)
+                return Float(avgHRV)
+            } else {
+                // No recent data, try today's average
+                if let todayAvg = try await healthKit.getTodayAverageHRV() {
+                    return Float(todayAvg)
+                }
+            }
+        } catch {
+            print("⚠️ Failed to fetch HRV data: \(error.localizedDescription)")
+        }
+
+        // Fallback: Typical resting HRV: 20-100 ms (age-dependent)
         return 50.0
     }
 
     // MARK: - Start Monitoring
 
-    private func startMonitoring() {
-        // Monitor HRV, Heart Rate, Breathing Rate continuously
-        // This would integrate with HealthKitManager for real data
+    private var healthKitManager: HealthKitManager?
+    private var monitoringTimer: Timer?
 
-        // For now, simulate monitoring
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+    private func startMonitoring() {
+        // Initialize HealthKitManager for real data
+        healthKitManager = HealthKitManager()
+
+        Task {
+            do {
+                try await healthKitManager?.requestAuthorization()
+                healthKitManager?.startMonitoring()
+                print("✅ HealthKit monitoring started for HRV training")
+            } catch {
+                print("⚠️ HealthKit not available, using simulated data")
+            }
+        }
+
+        // Monitor HRV, Heart Rate, Breathing Rate continuously
+        monitoringTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
             guard let self = self, self.isTraining else {
                 timer.invalidate()
                 return
             }
 
-            // Simulate data point
-            let dataPoint = SessionDataPoint(
-                timestamp: Date(),
-                hrv: self.currentHRV,
-                heartRate: 70.0,
-                coherence: self.coherenceScore,
-                breathingRate: self.currentProtocol?.targetBreathingRate ?? 6.0,
-                lfHfRatio: 1.5
-            )
-
             Task { @MainActor in
+                // Use real HealthKit data if available
+                let heartRate: Float
+                let hrv: Float
+                let coherence: Float
+                let breathingRate: Float
+
+                if let hk = self.healthKitManager, hk.isAuthorized {
+                    heartRate = Float(hk.heartRate)
+                    hrv = Float(hk.hrvRMSSD)
+                    coherence = Float(hk.hrvCoherence)
+                    breathingRate = Float(hk.breathingRate)
+
+                    // Update published values
+                    self.currentHRV = hrv
+                    self.coherenceScore = coherence
+                    self.respiratoryRate = breathingRate
+                } else {
+                    // Fallback to current values (simulated)
+                    heartRate = 70.0
+                    hrv = self.currentHRV
+                    coherence = self.coherenceScore
+                    breathingRate = self.currentProtocol?.targetBreathingRate ?? 6.0
+                }
+
+                let dataPoint = SessionDataPoint(
+                    timestamp: Date(),
+                    hrv: hrv,
+                    heartRate: heartRate,
+                    coherence: coherence,
+                    breathingRate: breathingRate,
+                    lfHfRatio: 1.5
+                )
+
                 self.sessionData.append(dataPoint)
                 self.updateProgress()
             }
         }
+    }
+
+    private func stopMonitoring() {
+        monitoringTimer?.invalidate()
+        monitoringTimer = nil
+        healthKitManager?.stopMonitoring()
+        healthKitManager = nil
     }
 
     // MARK: - Update Progress

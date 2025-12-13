@@ -340,13 +340,63 @@ public class DeepScienceHub: ObservableObject {
     // MARK: - Scientific Calculations
 
     /// HeartMath HRV Coherence (validated research)
+    /// Based on: McCraty R, Shaffer F. "Heart Rate Variability" Glob Adv Health Med. 2015
+    /// Coherence band: 0.04-0.26 Hz, peak at ~0.1 Hz indicates high coherence
     public func calculateHRVCoherence(rrIntervals: [Double]) -> Double {
         guard rrIntervals.count >= 30 else { return 0 }
 
-        // Power spectral density in coherence band (0.04-0.26 Hz)
-        // Peak at ~0.1 Hz indicates high coherence
+        // Step 1: Detrend the data (remove linear trend)
+        let n = Double(rrIntervals.count)
+        let xSum = (0..<rrIntervals.count).reduce(0.0) { $0 + Double($1) }
+        let ySum = rrIntervals.reduce(0.0, +)
+        let xySum = rrIntervals.enumerated().reduce(0.0) { $0 + Double($1.offset) * $1.element }
+        let xxSum = (0..<rrIntervals.count).reduce(0.0) { $0 + Double($1 * $1) }
 
-        return 75.0 // Placeholder
+        let slope = (n * xySum - xSum * ySum) / (n * xxSum - xSum * xSum)
+        let intercept = (ySum - slope * xSum) / n
+
+        let detrended = rrIntervals.enumerated().map { index, value in
+            value - (slope * Double(index) + intercept)
+        }
+
+        // Step 2: Apply Hamming window
+        let windowed = detrended.enumerated().map { i, val in
+            let window = 0.54 - 0.46 * cos(2.0 * .pi * Double(i) / Double(detrended.count - 1))
+            return val * window
+        }
+
+        // Step 3: Calculate power spectrum via DFT
+        let fftSize = Int(pow(2, ceil(log2(Double(windowed.count)))))
+        var powerSpectrum = [Double](repeating: 0, count: fftSize / 2)
+
+        for k in 0..<(fftSize / 2) {
+            var realPart: Double = 0
+            var imagPart: Double = 0
+
+            for i in 0..<windowed.count {
+                let angle = -2.0 * .pi * Double(k * i) / Double(fftSize)
+                realPart += windowed[i] * cos(angle)
+                imagPart += windowed[i] * sin(angle)
+            }
+
+            powerSpectrum[k] = realPart * realPart + imagPart * imagPart
+        }
+
+        // Step 4: Find peak in coherence band (0.04-0.26 Hz)
+        // Assuming 1 Hz sampling rate (1 RR interval per second)
+        let samplingRate = 1.0
+        let binLow = max(1, Int(0.04 * Double(fftSize) / samplingRate))
+        let binHigh = min(fftSize / 2 - 1, Int(0.26 * Double(fftSize) / samplingRate))
+
+        guard binLow < binHigh else { return 0 }
+
+        let coherenceBandPower = powerSpectrum[binLow...binHigh]
+        let peakPower = coherenceBandPower.max() ?? 0.0
+        let totalPower = powerSpectrum.reduce(0.0, +)
+
+        // Step 5: Calculate coherence ratio and normalize to 0-100
+        let coherenceRatio = totalPower > 0 ? peakPower / totalPower : 0.0
+        return min(coherenceRatio * 500.0, 100.0)
     }
 
     /// Binaural Beat Frequency (Oster, 1973)

@@ -551,15 +551,39 @@ class HealthMonitor {
     }
 
     private func getCPUUsage() -> Float {
-        // Simplified CPU check
-        var info = mach_task_basic_info()
-        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
-        let result = withUnsafeMutablePointer(to: &info) {
-            $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
-                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+        // Get actual CPU usage using thread info
+        var threadList: thread_act_array_t?
+        var threadCount: mach_msg_type_number_t = 0
+
+        let result = task_threads(mach_task_self_, &threadList, &threadCount)
+        guard result == KERN_SUCCESS, let threads = threadList else {
+            return 0.3  // Default on failure
+        }
+
+        defer {
+            vm_deallocate(mach_task_self_, vm_address_t(bitPattern: threads), vm_size_t(Int(threadCount) * MemoryLayout<thread_t>.stride))
+        }
+
+        var totalCPU: Float = 0.0
+
+        for i in 0..<Int(threadCount) {
+            var threadInfo = thread_basic_info()
+            var threadInfoCount = mach_msg_type_number_t(THREAD_INFO_MAX)
+
+            let infoResult = withUnsafeMutablePointer(to: &threadInfo) {
+                $0.withMemoryRebound(to: integer_t.self, capacity: Int(threadInfoCount)) {
+                    thread_info(threads[i], thread_flavor_t(THREAD_BASIC_INFO), $0, &threadInfoCount)
+                }
+            }
+
+            if infoResult == KERN_SUCCESS && threadInfo.flags & TH_FLAGS_IDLE == 0 {
+                totalCPU += Float(threadInfo.cpu_usage) / Float(TH_USAGE_SCALE)
             }
         }
-        return result == KERN_SUCCESS ? 0.5 : 0.3  // Placeholder
+
+        // Normalize to 0-1 range (totalCPU can exceed 1.0 on multi-core)
+        let numCPUs = Float(ProcessInfo.processInfo.processorCount)
+        return min(totalCPU / numCPUs, 1.0)
     }
 
     private func getMemoryUsage() -> Float {
