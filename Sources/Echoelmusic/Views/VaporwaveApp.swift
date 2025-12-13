@@ -24,6 +24,7 @@ struct VaporwaveApp: View {
         case palace = "palace"
         case sessions = "sessions"
         case create = "create"
+        case studio = "studio"
         case profile = "profile"
 
         var icon: String {
@@ -31,6 +32,7 @@ struct VaporwaveApp: View {
             case .palace: return "waveform.circle"
             case .sessions: return "clock.arrow.circlepath"
             case .create: return "plus.circle"
+            case .studio: return "cube.transparent"
             case .profile: return "person.circle"
             }
         }
@@ -40,6 +42,7 @@ struct VaporwaveApp: View {
             case .palace: return "waveform.circle.fill"
             case .sessions: return "clock.arrow.circlepath"
             case .create: return "plus.circle.fill"
+            case .studio: return "cube.transparent.fill"
             case .profile: return "person.circle.fill"
             }
         }
@@ -49,6 +52,7 @@ struct VaporwaveApp: View {
             case .palace: return "Palace"
             case .sessions: return "Sessions"
             case .create: return "Create"
+            case .studio: return "Studio"
             case .profile: return "Profile"
             }
         }
@@ -58,6 +62,7 @@ struct VaporwaveApp: View {
             case .palace: return VaporwaveColors.neonPink
             case .sessions: return VaporwaveColors.neonCyan
             case .create: return VaporwaveColors.neonPurple
+            case .studio: return VaporwaveColors.coral
             case .profile: return VaporwaveColors.lavender
             }
         }
@@ -109,6 +114,10 @@ struct VaporwaveApp: View {
             CreateView()
                 .environmentObject(audioEngine)
                 .environmentObject(microphoneManager)
+
+        case .studio:
+            StudioHubView()
+                .environmentObject(audioEngine)
 
         case .profile:
             ProfileView()
