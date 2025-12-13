@@ -242,10 +242,12 @@ private:
     float mix = 1.0f;
     bool zeroLatency = false;
 
-    // Visualization
-    mutable std::mutex spectrumMutex;
-    std::vector<float> visualSpectrum;
-    std::vector<float> visualNoiseProfile;
+    // Visualization - ✅ LOCK-FREE FIFO for thread-safe spectrum transfer
+    static constexpr int visualFifoSize = 4;
+    juce::AbstractFifo visualFifo {visualFifoSize};
+    std::array<std::vector<float>, visualFifoSize> visualSpectrumBuffer;
+    mutable std::vector<float> visualSpectrumForUI;
+    std::vector<float> visualNoiseProfile;  // Only updated in learnNoiseProfile (external call)
 
     //==========================================================================
     // Internal Methods

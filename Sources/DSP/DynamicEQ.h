@@ -156,6 +156,7 @@ private:
     static constexpr int fftOrder = 11;  // 2048 samples
     static constexpr int fftSize = 1 << fftOrder;
     static constexpr int spectrumBins = 64;
+    static constexpr int spectrumFifoSize = 4;  // Ring buffer for lock-free transfer
 
     juce::dsp::FFT fft {fftOrder};
     juce::dsp::WindowingFunction<float> window {fftSize, juce::dsp::WindowingFunction<float>::hann};
@@ -163,8 +164,10 @@ private:
     std::array<float, fftSize * 2> fftData;
     int fftDataIndex = 0;
 
-    std::array<float, spectrumBins> spectrumData;
-    mutable std::mutex spectrumMutex;
+    // ✅ LOCK-FREE: Replace mutex with FIFO for thread-safe spectrum data
+    juce::AbstractFifo spectrumFifo {spectrumFifoSize};
+    std::array<std::array<float, spectrumBins>, spectrumFifoSize> spectrumBuffer;
+    mutable std::array<float, spectrumBins> spectrumDataForUI;  // UI thread reads this
 
     //==========================================================================
     // Internal Methods
