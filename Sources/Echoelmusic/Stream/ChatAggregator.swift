@@ -41,10 +41,34 @@ class ChatAggregator: ObservableObject {
     }
 
     private func isToxic(_ text: String) -> Bool {
-        // TODO: Implement CoreML toxic comment detection
-        // Placeholder simple filter
-        let keywords = ["spam", "scam", "hate"]
-        return keywords.contains { text.lowercased().contains($0) }
+        let lowercased = text.lowercased()
+
+        // Multi-tier toxicity detection
+        // Tier 1: Explicit blocked terms
+        let blockedTerms = ["spam", "scam", "hate", "kill", "die", "nazi", "racist"]
+        if blockedTerms.contains(where: { lowercased.contains($0) }) {
+            return true
+        }
+
+        // Tier 2: Excessive caps (shouting)
+        let uppercaseRatio = Double(text.filter { $0.isUppercase }.count) / Double(max(text.count, 1))
+        if text.count > 10 && uppercaseRatio > 0.7 {
+            return true
+        }
+
+        // Tier 3: Repeated characters (spam pattern)
+        let repeatedPattern = try? NSRegularExpression(pattern: "(.)\\1{4,}")
+        if let matches = repeatedPattern?.numberOfMatches(in: text, range: NSRange(text.startIndex..., in: text)), matches > 0 {
+            return true
+        }
+
+        // Tier 4: URL spam (multiple links)
+        let urlCount = text.components(separatedBy: "http").count - 1
+        if urlCount > 2 {
+            return true
+        }
+
+        return false
     }
 }
 

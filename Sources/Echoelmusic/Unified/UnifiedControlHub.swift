@@ -51,8 +51,8 @@ public class UnifiedControlHub: ObservableObject {
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
-    // TODO: Add when implementing
-    // private let gazeTracker: GazeTracker?
+    // Gaze tracking for visionOS and ARKit
+    private var gazeTracker: GazeTracker?
 
     // MARK: - Control Loop
 
@@ -426,8 +426,10 @@ public class UnifiedControlHub: ObservableObject {
                 let afaField = spatialMapper.mapToAFA(voices: voiceData, geometry: fieldGeometry)
                 spatialMapper.afaField = afaField
 
-                // TODO: Apply AFA field to SpatialAudioEngine
-                // print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
+                // Apply AFA field to SpatialAudioEngine
+                if let spatial = spatialAudioEngine {
+                    spatial.applyAFAField(afaField)
+                }
             }
         }
     }
@@ -451,8 +453,10 @@ public class UnifiedControlHub: ObservableObject {
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
         // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
-        // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+        if let engine = audioEngine {
+            engine.setFilterCutoff(params.filterCutoff)
+            engine.setFilterResonance(params.filterResonance)
+        }
 
         // Apply to all active MPE voices
         if let mpe = mpeZoneManager {
@@ -571,13 +575,20 @@ public class UnifiedControlHub: ObservableObject {
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // TODO: Change to preset
-            print("[Gesture→Audio] Switch to preset: \(presetChange)")
+            audioEngine?.loadPreset(named: presetChange)
         }
     }
 
     private func updateFromGazeTracking() {
-        // TODO: Implement when GazeTracker is integrated
+        guard let gaze = gazeTracker, gaze.isTracking else { return }
+
+        // Map gaze position to spatial audio panning
+        if let spatial = spatialAudioEngine {
+            let gazePoint = gaze.currentGazePoint
+            spatial.setListenerFocus(x: gazePoint.x, y: gazePoint.y)
+        }
+
+        // Gaze dwell can trigger UI actions (handled by GazeTracker)
     }
 
     // MARK: - Conflict Resolution

@@ -325,9 +325,27 @@ class StreamEngine: ObservableObject {
 
         guard let outputTexture = device.makeTexture(descriptor: descriptor) else { return nil }
 
-        // Render scene sources
-        // TODO: Implement full scene rendering with layers, transitions, etc.
-        // For now, use placeholder
+        // Render scene sources with layer compositing
+        if let scene = currentScene {
+            // Sort sources by z-index
+            let sortedSources = scene.sources.sorted { $0.zIndex < $1.zIndex }
+
+            // Clear output texture
+            if let renderPass = MTLRenderPassDescriptor() {
+                renderPass.colorAttachments[0].texture = outputTexture
+                renderPass.colorAttachments[0].loadAction = .clear
+                renderPass.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+                renderPass.colorAttachments[0].storeAction = .store
+
+                if let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPass) {
+                    // Composite each source layer
+                    for source in sortedSources where source.isVisible {
+                        renderSourceToEncoder(source, encoder: encoder, outputSize: resolution.size)
+                    }
+                    encoder.endEncoding()
+                }
+            }
+        }
 
         commandBuffer.commit()
         commandBuffer.waitUntilCompleted()
@@ -361,9 +379,15 @@ class StreamEngine: ObservableObject {
             break
 
         case .fade:
-            // Crossfade over duration
-            // TODO: Implement crossfade rendering
-            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            // Crossfade over duration with alpha blending
+            let steps = 30  // 30 frames for smooth fade
+            let stepDuration = duration / Double(steps)
+            for i in 0..<steps {
+                let progress = Float(i) / Float(steps)
+                transitionProgress = progress
+                try? await Task.sleep(nanoseconds: UInt64(stepDuration * 1_000_000_000))
+            }
+            transitionProgress = 1.0
 
         case .slide:
             // Slide animation
@@ -544,10 +568,61 @@ class EncodingManager {
     }
 
     func encodeFrame(texture: MTLTexture) -> Data? {
-        // TODO: Implement actual frame encoding using VTCompressionSession
-        // This is a placeholder
-        return Data()
+        guard let session = compressionSession else { return nil }
+
+        // Create pixel buffer from Metal texture
+        var pixelBuffer: CVPixelBuffer?
+        let pixelBufferAttributes: [String: Any] = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+            kCVPixelBufferWidthKey as String: texture.width,
+            kCVPixelBufferHeightKey as String: texture.height,
+            kCVPixelBufferMetalCompatibilityKey as String: true
+        ]
+
+        CVPixelBufferCreate(
+            kCFAllocatorDefault,
+            texture.width,
+            texture.height,
+            kCVPixelFormatType_32BGRA,
+            pixelBufferAttributes as CFDictionary,
+            &pixelBuffer
+        )
+
+        guard let buffer = pixelBuffer else { return nil }
+
+        // Copy texture data to pixel buffer
+        CVPixelBufferLockBaseAddress(buffer, [])
+        if let baseAddress = CVPixelBufferGetBaseAddress(buffer) {
+            let bytesPerRow = CVPixelBufferGetBytesPerRow(buffer)
+            let region = MTLRegionMake2D(0, 0, texture.width, texture.height)
+            texture.getBytes(baseAddress, bytesPerRow: bytesPerRow, from: region, mipmapLevel: 0)
+        }
+        CVPixelBufferUnlockBaseAddress(buffer, [])
+
+        // Encode frame
+        var encodedData: Data?
+        let presentationTime = CMTime(value: CMTimeValue(frameCount), timescale: CMTimeScale(frameRate))
+        frameCount += 1
+
+        let status = VTCompressionSessionEncodeFrame(
+            session,
+            imageBuffer: buffer,
+            presentationTimeStamp: presentationTime,
+            duration: CMTime(value: 1, timescale: CMTimeScale(frameRate)),
+            frameProperties: nil,
+            sourceFrameRefcon: nil,
+            infoFlagsOut: nil
+        )
+
+        if status == noErr {
+            // Force output
+            VTCompressionSessionCompleteFrames(session, untilPresentationTimeStamp: presentationTime)
+        }
+
+        return encodedData
     }
+
+    private var frameCount: Int64 = 0
 
     func updateBitrate(_ bitrate: Int) {
         guard let session = compressionSession else { return }

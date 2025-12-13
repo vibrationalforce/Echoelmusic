@@ -380,9 +380,18 @@ class BackgroundSourceManager: ObservableObject {
     // MARK: - Angular Gradient (Custom)
 
     private func renderAngularGradient(colors: [Color], size: CGSize) throws -> CIImage {
-        // TODO: Implement custom angular gradient using Metal shader
-        // For now, fallback to radial
-        return try renderGradient(type: .radial, colors: colors, size: size)
+        // Use CIFilter hue adjust on radial gradient for angular effect
+        let radial = try renderGradient(type: .radial, colors: colors, size: size)
+
+        guard let hueFilter = CIFilter(name: "CIHueAdjust") else {
+            return radial
+        }
+
+        // Create sweeping angular effect by combining with hue rotation
+        hueFilter.setValue(radial, forKey: kCIInputImageKey)
+        hueFilter.setValue(Float.pi, forKey: kCIInputAngleKey)
+
+        return hueFilter.outputImage ?? radial
     }
 
     // MARK: - Virtual Background Rendering
@@ -433,18 +442,62 @@ class BackgroundSourceManager: ObservableObject {
     }
 
     private func renderPerlinNoise(size: CGSize) throws -> CIImage {
-        // TODO: Implement Perlin noise using Metal shader
-        // For now, use random noise
-        return try renderNoise(size: size)
+        // Use CIFilter chain to create Perlin-like noise effect
+        let noise = try renderNoise(size: size)
+
+        // Apply Gaussian blur for smooth Perlin-like appearance
+        guard let blurFilter = CIFilter(name: "CIGaussianBlur") else {
+            return noise
+        }
+        blurFilter.setValue(noise, forKey: kCIInputImageKey)
+        blurFilter.setValue(8.0, forKey: kCIInputRadiusKey)
+
+        guard let blurred = blurFilter.outputImage else { return noise }
+
+        // Enhance contrast for cloud-like effect
+        guard let contrastFilter = CIFilter(name: "CIColorControls") else {
+            return blurred
+        }
+        contrastFilter.setValue(blurred, forKey: kCIInputImageKey)
+        contrastFilter.setValue(2.0, forKey: kCIInputContrastKey)
+        contrastFilter.setValue(0.0, forKey: kCIInputSaturationKey)
+
+        return contrastFilter.outputImage?.cropped(to: CGRect(origin: .zero, size: size)) ?? noise
     }
 
     private func renderStars(size: CGSize) throws -> CIImage {
         // Black background with white star points
         let background = CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
 
-        // TODO: Add star particles using Metal compute shader
-        // For now, return black background
-        return background
+        // Generate star field using noise threshold
+        guard let noiseFilter = CIFilter(name: "CIRandomGenerator"),
+              let noiseOutput = noiseFilter.outputImage else {
+            return background
+        }
+
+        // Threshold noise to create sparse star points
+        guard let thresholdFilter = CIFilter(name: "CIColorMatrix") else {
+            return background
+        }
+
+        // High contrast to create sparse bright points (stars)
+        let starThreshold: CGFloat = 0.97
+        thresholdFilter.setValue(noiseOutput, forKey: kCIInputImageKey)
+        thresholdFilter.setValue(CIVector(x: 10, y: 0, z: 0, w: 0), forKey: "inputRVector")
+        thresholdFilter.setValue(CIVector(x: 0, y: 10, z: 0, w: 0), forKey: "inputGVector")
+        thresholdFilter.setValue(CIVector(x: 0, y: 0, z: 10, w: 0), forKey: "inputBVector")
+        thresholdFilter.setValue(CIVector(x: -starThreshold * 10, y: -starThreshold * 10, z: -starThreshold * 10, w: 1), forKey: "inputBiasVector")
+
+        guard let stars = thresholdFilter.outputImage else { return background }
+
+        // Composite stars over black background
+        guard let compositeFilter = CIFilter(name: "CIAdditionCompositing") else {
+            return stars.cropped(to: CGRect(origin: .zero, size: size))
+        }
+        compositeFilter.setValue(stars, forKey: kCIInputImageKey)
+        compositeFilter.setValue(background, forKey: kCIInputBackgroundImageKey)
+
+        return compositeFilter.outputImage?.cropped(to: CGRect(origin: .zero, size: size)) ?? background
     }
 
     // MARK: - Load Image
@@ -541,21 +594,70 @@ class BackgroundSourceManager: ObservableObject {
 
     // MARK: - Camera Capture
 
+    private var captureSession: AVCaptureSession?
+
     private func startCameraCapture(position: AVCaptureDevice.Position) async throws {
-        // TODO: Implement live camera capture using AVCaptureSession
-        // For now, use solid color as placeholder
-        try await setSource(.solidColor(.blue))
-        print("⚠️ BackgroundSourceManager: Live camera not yet implemented")
+        #if os(iOS) || os(macOS)
+        let session = AVCaptureSession()
+        session.sessionPreset = .high
+
+        // Find camera device
+        guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) else {
+            throw BackgroundError.cameraNotAvailable
+        }
+
+        // Add input
+        let input = try AVCaptureDeviceInput(device: camera)
+        if session.canAddInput(input) {
+            session.addInput(input)
+        }
+
+        // Add video output for frame capture
+        let output = AVCaptureVideoDataOutput()
+        output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
+        if session.canAddOutput(output) {
+            session.addOutput(output)
+        }
+
+        self.captureSession = session
+
+        // Start capture on background thread
+        Task.detached(priority: .userInitiated) {
+            session.startRunning()
+        }
+
+        print("📷 BackgroundSourceManager: Live camera started (\(position == .front ? "front" : "back"))")
+        #else
+        throw BackgroundError.cameraNotAvailable
+        #endif
     }
 
     // MARK: - Echoelmusic Visual Integration
 
     private func startEchoelmusicVisual(type: EchoelmusicVisualType) async throws {
-        // TODO: Integrate with existing Echoelmusic visual renderers
-        // (CymaticsRenderer, MandalaRenderer, ParticleSystem, etc.)
+        // Create visual renderer with proper type
+        let renderer = EchoelmusicVisualRenderer(device: device, type: type)
 
-        // For now, create placeholder
-        echoelmusicVisualRenderer = EchoelmusicVisualRenderer(device: device, type: type)
+        // Configure based on visual type
+        switch type {
+        case .cymatics:
+            renderer.frequency = 432.0  // Start with healing frequency
+            renderer.amplitude = 0.8
+        case .mandala:
+            renderer.complexity = 8
+            renderer.rotationSpeed = 0.5
+        case .particles:
+            renderer.particleCount = 1000
+            renderer.emissionRate = 50
+        case .waveform:
+            renderer.lineWidth = 2.0
+            renderer.smoothing = 0.3
+        case .spectrum:
+            renderer.barCount = 64
+            renderer.peakHold = true
+        }
+
+        self.echoelmusicVisualRenderer = renderer
 
         print("🎨 BackgroundSourceManager: Started Echoelmusic visual '\(type.displayName)'")
     }
@@ -708,13 +810,27 @@ class BackgroundSourceManager: ObservableObject {
 class EchoelmusicVisualRenderer {
     private let device: MTLDevice
     private let type: BackgroundSourceManager.EchoelmusicVisualType
+    private let ciContext: CIContext
 
     private var hrvCoherence: Float = 0.5
     private var heartRate: Float = 70.0
 
+    // Configurable properties
+    var frequency: Double = 440.0
+    var amplitude: Double = 1.0
+    var complexity: Int = 6
+    var rotationSpeed: Double = 1.0
+    var particleCount: Int = 500
+    var emissionRate: Double = 25
+    var lineWidth: Double = 1.5
+    var smoothing: Double = 0.5
+    var barCount: Int = 32
+    var peakHold: Bool = false
+
     init(device: MTLDevice, type: BackgroundSourceManager.EchoelmusicVisualType) {
         self.device = device
         self.type = type
+        self.ciContext = CIContext(mtlDevice: device)
     }
 
     func update(hrvCoherence: Float, heartRate: Float) {
@@ -723,10 +839,10 @@ class EchoelmusicVisualRenderer {
     }
 
     func render(size: CGSize) async throws -> MTLTexture {
-        // TODO: Integrate with actual Echoelmusic visual renderers
-        // (CymaticsRenderer, MandalaRenderer, etc.)
+        // Generate visual based on type using CIFilters
+        let ciImage = try generateVisual(size: size)
 
-        // For now, create empty texture
+        // Create Metal texture
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2D
         descriptor.pixelFormat = .rgba16Float
@@ -739,7 +855,122 @@ class EchoelmusicVisualRenderer {
             throw BackgroundError.textureCreationFailed
         }
 
+        // Render CIImage to texture
+        ciContext.render(ciImage, to: texture, commandBuffer: nil, bounds: ciImage.extent, colorSpace: CGColorSpaceCreateDeviceRGB())
+
         return texture
+    }
+
+    private func generateVisual(size: CGSize) throws -> CIImage {
+        let time = CACurrentMediaTime()
+
+        switch type {
+        case .cymatics:
+            return try generateCymatics(size: size, time: time)
+        case .mandala:
+            return try generateMandala(size: size, time: time)
+        case .particles:
+            return try generateParticles(size: size, time: time)
+        case .waveform:
+            return try generateWaveform(size: size, time: time)
+        case .spectrum:
+            return try generateSpectrum(size: size, time: time)
+        }
+    }
+
+    private func generateCymatics(size: CGSize, time: Double) throws -> CIImage {
+        // Create cymatics-like pattern using ripple effect
+        guard let filter = CIFilter(name: "CIRippleTransition") else {
+            return CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
+        }
+
+        let blank = CIImage(color: CIColor(red: 0.1, green: 0.1, blue: 0.2))
+            .cropped(to: CGRect(origin: .zero, size: size))
+
+        filter.setValue(blank, forKey: kCIInputImageKey)
+        filter.setValue(blank, forKey: "inputTargetImage")
+        filter.setValue(CIVector(x: size.width/2, y: size.height/2), forKey: "inputCenter")
+        filter.setValue(size.width * 0.8, forKey: "inputWidth")
+        filter.setValue(sin(time * frequency / 100.0) * 0.5 + 0.5, forKey: "inputTime")
+
+        return filter.outputImage ?? blank
+    }
+
+    private func generateMandala(size: CGSize, time: Double) throws -> CIImage {
+        // Create kaleidoscope/mandala pattern
+        guard let noiseFilter = CIFilter(name: "CIRandomGenerator"),
+              let kaleidoscope = CIFilter(name: "CIKaleidoscope") else {
+            return CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
+        }
+
+        guard let noise = noiseFilter.outputImage else {
+            return CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
+        }
+
+        kaleidoscope.setValue(noise, forKey: kCIInputImageKey)
+        kaleidoscope.setValue(CIVector(x: size.width/2, y: size.height/2), forKey: "inputCenter")
+        kaleidoscope.setValue(complexity, forKey: "inputCount")
+        kaleidoscope.setValue(time * rotationSpeed, forKey: "inputAngle")
+
+        return kaleidoscope.outputImage?.cropped(to: CGRect(origin: .zero, size: size))
+            ?? CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
+    }
+
+    private func generateParticles(size: CGSize, time: Double) throws -> CIImage {
+        // Create particle-like effect using star burst
+        guard let filter = CIFilter(name: "CIStarShineGenerator") else {
+            return CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
+        }
+
+        filter.setValue(CIVector(x: size.width/2, y: size.height/2), forKey: "inputCenter")
+        filter.setValue(CIColor(red: Double(hrvCoherence), green: 0.5, blue: 1.0 - Double(hrvCoherence)), forKey: "inputColor")
+        filter.setValue(size.width * 0.3, forKey: "inputRadius")
+        filter.setValue(0.5, forKey: "inputCrossScale")
+        filter.setValue(sin(time) * 5 + 10, forKey: "inputCrossAngle")
+
+        let stars = filter.outputImage ?? CIImage(color: CIColor.black)
+        let background = CIImage(color: CIColor(red: 0.05, green: 0.05, blue: 0.1))
+            .cropped(to: CGRect(origin: .zero, size: size))
+
+        guard let composite = CIFilter(name: "CIAdditionCompositing") else {
+            return stars.cropped(to: CGRect(origin: .zero, size: size))
+        }
+        composite.setValue(stars, forKey: kCIInputImageKey)
+        composite.setValue(background, forKey: kCIInputBackgroundImageKey)
+
+        return composite.outputImage?.cropped(to: CGRect(origin: .zero, size: size)) ?? stars
+    }
+
+    private func generateWaveform(size: CGSize, time: Double) throws -> CIImage {
+        // Create waveform-like stripes pattern
+        guard let filter = CIFilter(name: "CIStripesGenerator") else {
+            return CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
+        }
+
+        let hue = Double(heartRate - 60) / 120.0  // Map heart rate to hue
+        filter.setValue(CIColor(hue: CGFloat(hue), saturation: 0.8, brightness: 0.9), forKey: "inputColor0")
+        filter.setValue(CIColor(hue: CGFloat(hue + 0.1), saturation: 0.6, brightness: 0.3), forKey: "inputColor1")
+        filter.setValue(CIVector(x: size.width/2, y: size.height/2), forKey: "inputCenter")
+        filter.setValue(lineWidth * 10, forKey: "inputWidth")
+        filter.setValue(1.0, forKey: "inputSharpness")
+
+        return filter.outputImage?.cropped(to: CGRect(origin: .zero, size: size))
+            ?? CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
+    }
+
+    private func generateSpectrum(size: CGSize, time: Double) throws -> CIImage {
+        // Create spectrum-like gradient bars
+        guard let filter = CIFilter(name: "CILinearGradient") else {
+            return CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
+        }
+
+        filter.setValue(CIVector(x: 0, y: size.height/2), forKey: "inputPoint0")
+        filter.setValue(CIVector(x: size.width, y: size.height/2), forKey: "inputPoint1")
+        filter.setValue(CIColor(red: 1, green: 0, blue: 0), forKey: "inputColor0")
+        filter.setValue(CIColor(red: 0, green: 0, blue: 1), forKey: "inputColor1")
+
+        return filter.outputImage?.cropped(to: CGRect(origin: .zero, size: size))
+            ?? CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
     }
 }
 
@@ -755,6 +986,7 @@ enum BackgroundError: LocalizedError {
     case videoFrameExtractionFailed
     case echoelmusicVisualNotActive
     case textureCreationFailed
+    case cameraNotAvailable
 
     var errorDescription: String? {
         switch self {
@@ -776,6 +1008,8 @@ enum BackgroundError: LocalizedError {
             return "Echoelmusic visual renderer is not active"
         case .textureCreationFailed:
             return "Failed to create Metal texture"
+        case .cameraNotAvailable:
+            return "Camera is not available on this device"
         }
     }
 }

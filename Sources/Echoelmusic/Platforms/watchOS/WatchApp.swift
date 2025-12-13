@@ -2,6 +2,7 @@ import Foundation
 import WatchKit
 import HealthKit
 import Combine
+import WatchConnectivity
 
 #if os(watchOS)
 
@@ -246,7 +247,20 @@ class WatchApp {
             date: Date()
         )
 
-        // TODO: Sync with iPhone via WatchConnectivity
+        // Sync with iPhone via WatchConnectivity
+        #if os(watchOS)
+        if WCSession.default.isReachable {
+            let data = try? JSONEncoder().encode(session)
+            WCSession.default.sendMessageData(data ?? Data(), replyHandler: nil) { error in
+                print("⚠️ WatchConnectivity sync failed: \(error.localizedDescription)")
+            }
+        } else {
+            // Transfer in background when iPhone becomes reachable
+            if let data = try? JSONEncoder().encode(session) {
+                WCSession.default.transferUserInfo(["session": data])
+            }
+        }
+        #endif
         print("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
     }
 
