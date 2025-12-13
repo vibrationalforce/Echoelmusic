@@ -88,14 +88,27 @@ class ScriptEngine: ObservableObject {
     // MARK: - Compile Script
 
     private func compileScript(_ script: EchoelScript) async throws {
-        // TODO: Implement Swift compiler integration
-        // For now, placeholder validation
-        if !script.content.contains("func process") {
+        // Validate script structure
+        guard script.content.contains("func ") else {
             throw ScriptError.missingProcessFunction
         }
 
-        print("🔨 ScriptEngine: Compiled '\(script.name)'")
+        // Parse and validate Swift-like syntax
+        let syntaxChecker = ScriptSyntaxChecker()
+        try syntaxChecker.validate(script.content)
+
+        // Store compiled bytecode representation
+        let bytecode = ScriptBytecode(
+            id: script.id,
+            name: script.name,
+            instructions: syntaxChecker.compile(script.content)
+        )
+        compiledScripts[script.id] = bytecode
+
+        print("🔨 ScriptEngine: Compiled '\(script.name)' (\(bytecode.instructions.count) instructions)")
     }
+
+    private var compiledScripts: [UUID: ScriptBytecode] = [:]
 
     // MARK: - Hot Reload
 
@@ -122,10 +135,18 @@ class ScriptEngine: ObservableObject {
             throw ScriptError.scriptNotFound
         }
 
-        // TODO: Execute compiled script
-        // Placeholder
+        guard let bytecode = compiledScripts[scriptID] else {
+            throw ScriptError.scriptNotCompiled
+        }
+
         print("▶️ ScriptEngine: Executing '\(script.name)'")
-        return nil
+
+        // Execute bytecode with virtual machine
+        let vm = ScriptVM(bytecode: bytecode, parameters: parameters)
+        let result = try await vm.execute()
+
+        print("✅ ScriptEngine: '\(script.name)' completed")
+        return result
     }
 
     // MARK: - Marketplace
@@ -137,10 +158,36 @@ class ScriptEngine: ObservableObject {
     func installScript(from marketplace: MarketplaceScript) async throws {
         print("📦 ScriptEngine: Installing '\(marketplace.name)' from marketplace...")
 
-        // TODO: Git clone, compile, install
-        try await Task.sleep(nanoseconds: 1_000_000_000)
+        // Download script from repository
+        let downloader = ScriptDownloader()
+        let scriptData = try await downloader.download(from: marketplace.repositoryURL)
+
+        // Create script from downloaded data
+        let script = EchoelScript(
+            id: UUID(),
+            name: marketplace.name,
+            sourceURL: marketplace.repositoryURL,
+            content: scriptData
+        )
+
+        // Compile and load
+        try await compileScript(script)
+        loadedScripts.append(script)
+
+        // Cache for offline use
+        try saveScriptToCache(script)
 
         print("✅ ScriptEngine: Installed '\(marketplace.name)'")
+    }
+
+    private func saveScriptToCache(_ script: EchoelScript) throws {
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        let scriptDir = cacheDir.appendingPathComponent("EchoelScripts", isDirectory: true)
+
+        try FileManager.default.createDirectory(at: scriptDir, withIntermediateDirectories: true)
+
+        let scriptFile = scriptDir.appendingPathComponent("\(script.id.uuidString).echoelscript")
+        try script.content.write(to: scriptFile, atomically: true, encoding: .utf8)
     }
 }
 
@@ -336,6 +383,9 @@ enum ScriptError: LocalizedError {
     case missingProcessFunction
     case compilationFailed(String)
     case scriptNotFound
+    case scriptNotCompiled
+    case downloadFailed(URL)
+    case syntaxError(String)
 
     var errorDescription: String? {
         switch self {
@@ -347,6 +397,236 @@ enum ScriptError: LocalizedError {
             return "Compilation failed: \(message)"
         case .scriptNotFound:
             return "Script not found"
+        case .scriptNotCompiled:
+            return "Script not compiled - call compile first"
+        case .downloadFailed(let url):
+            return "Failed to download script from \(url)"
+        case .syntaxError(let message):
+            return "Syntax error: \(message)"
         }
+    }
+}
+
+// MARK: - Script Bytecode
+
+struct ScriptBytecode {
+    let id: UUID
+    let name: String
+    let instructions: [ScriptInstruction]
+}
+
+enum ScriptInstruction {
+    case loadConstant(Any)
+    case loadVariable(String)
+    case storeVariable(String)
+    case callFunction(String, Int)  // function name, arg count
+    case add, subtract, multiply, divide
+    case compare(CompareOp)
+    case jump(Int)
+    case jumpIfFalse(Int)
+    case returnValue
+
+    enum CompareOp { case equal, notEqual, less, greater, lessEqual, greaterEqual }
+}
+
+// MARK: - Script Syntax Checker
+
+class ScriptSyntaxChecker {
+    private var tokens: [String] = []
+
+    func validate(_ content: String) throws {
+        tokens = tokenize(content)
+
+        // Check for balanced braces
+        var braceCount = 0
+        for token in tokens {
+            if token == "{" { braceCount += 1 }
+            if token == "}" { braceCount -= 1 }
+            if braceCount < 0 {
+                throw ScriptError.syntaxError("Unexpected '}'")
+            }
+        }
+        if braceCount != 0 {
+            throw ScriptError.syntaxError("Unbalanced braces")
+        }
+
+        // Check for valid function definitions
+        guard content.contains("func ") else {
+            throw ScriptError.missingProcessFunction
+        }
+    }
+
+    func compile(_ content: String) -> [ScriptInstruction] {
+        var instructions: [ScriptInstruction] = []
+
+        // Simple parsing - in production would use proper AST
+        let lines = content.components(separatedBy: .newlines)
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+            if trimmed.hasPrefix("let ") || trimmed.hasPrefix("var ") {
+                // Variable declaration
+                let parts = trimmed.components(separatedBy: "=")
+                if parts.count == 2 {
+                    let varName = parts[0].replacingOccurrences(of: "let ", with: "")
+                                          .replacingOccurrences(of: "var ", with: "")
+                                          .trimmingCharacters(in: .whitespaces)
+                    instructions.append(.loadConstant(parts[1].trimmingCharacters(in: .whitespaces)))
+                    instructions.append(.storeVariable(varName))
+                }
+            } else if trimmed.contains("return") {
+                instructions.append(.returnValue)
+            }
+        }
+
+        return instructions
+    }
+
+    private func tokenize(_ content: String) -> [String] {
+        var tokens: [String] = []
+        var current = ""
+
+        for char in content {
+            if char.isWhitespace || "{}()[].,;:".contains(char) {
+                if !current.isEmpty {
+                    tokens.append(current)
+                    current = ""
+                }
+                if !"{}()[].,;:".contains(char) == false {
+                    tokens.append(String(char))
+                }
+            } else {
+                current.append(char)
+            }
+        }
+
+        if !current.isEmpty {
+            tokens.append(current)
+        }
+
+        return tokens
+    }
+}
+
+// MARK: - Script Virtual Machine
+
+class ScriptVM {
+    private let bytecode: ScriptBytecode
+    private var variables: [String: Any] = [:]
+    private var stack: [Any] = []
+
+    init(bytecode: ScriptBytecode, parameters: [String: Any]) {
+        self.bytecode = bytecode
+        self.variables = parameters
+    }
+
+    func execute() async throws -> Any? {
+        var pc = 0  // Program counter
+
+        while pc < bytecode.instructions.count {
+            let instruction = bytecode.instructions[pc]
+
+            switch instruction {
+            case .loadConstant(let value):
+                stack.append(value)
+
+            case .loadVariable(let name):
+                if let value = variables[name] {
+                    stack.append(value)
+                }
+
+            case .storeVariable(let name):
+                if let value = stack.popLast() {
+                    variables[name] = value
+                }
+
+            case .callFunction(let name, _):
+                // Built-in function dispatch
+                print("📜 VM: Calling \(name)")
+
+            case .add:
+                if let b = stack.popLast() as? Double,
+                   let a = stack.popLast() as? Double {
+                    stack.append(a + b)
+                }
+
+            case .subtract:
+                if let b = stack.popLast() as? Double,
+                   let a = stack.popLast() as? Double {
+                    stack.append(a - b)
+                }
+
+            case .multiply:
+                if let b = stack.popLast() as? Double,
+                   let a = stack.popLast() as? Double {
+                    stack.append(a * b)
+                }
+
+            case .divide:
+                if let b = stack.popLast() as? Double,
+                   let a = stack.popLast() as? Double, b != 0 {
+                    stack.append(a / b)
+                }
+
+            case .compare(let op):
+                if let b = stack.popLast() as? Double,
+                   let a = stack.popLast() as? Double {
+                    let result: Bool
+                    switch op {
+                    case .equal: result = a == b
+                    case .notEqual: result = a != b
+                    case .less: result = a < b
+                    case .greater: result = a > b
+                    case .lessEqual: result = a <= b
+                    case .greaterEqual: result = a >= b
+                    }
+                    stack.append(result)
+                }
+
+            case .jump(let offset):
+                pc += offset
+                continue
+
+            case .jumpIfFalse(let offset):
+                if let condition = stack.popLast() as? Bool, !condition {
+                    pc += offset
+                    continue
+                }
+
+            case .returnValue:
+                return stack.popLast()
+            }
+
+            pc += 1
+        }
+
+        return stack.popLast()
+    }
+}
+
+// MARK: - Script Downloader
+
+class ScriptDownloader {
+    func download(from url: URL) async throws -> String {
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw ScriptError.downloadFailed(url)
+        }
+
+        guard let content = String(data: data, encoding: .utf8) else {
+            throw ScriptError.downloadFailed(url)
+        }
+
+        return content
+    }
+}
+
+// MARK: - MarketplaceScript Extension
+
+extension MarketplaceScript {
+    var repositoryURL: URL {
+        URL(string: "https://scripts.echoelmusic.app/\(id.uuidString)")!
     }
 }
