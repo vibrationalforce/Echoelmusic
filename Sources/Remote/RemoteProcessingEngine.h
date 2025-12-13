@@ -4,6 +4,8 @@
 #include <atomic>
 #include <memory>
 #include <functional>
+#include <thread>
+#include <chrono>
 
 /**
  * RemoteProcessingEngine
@@ -65,7 +67,17 @@ public:
         AIInference,        // ML models
         Synthesis,          // Synth/sampler
         Mixing,             // Final mix/master
-        Recording           // Direct-to-disk recording
+        Recording,          // Direct-to-disk recording
+        BioReactive,        // Bio-reactive processing
+        SpatialAudio        // Spatial audio/Atmos
+    };
+
+    enum class ConnectionState
+    {
+        Disconnected,
+        Connecting,
+        Connected,
+        Reconnecting
     };
 
     //==========================================================================
@@ -172,6 +184,31 @@ public:
 
     /** Enable auto-reconnect */
     void setAutoReconnect(bool enable);
+
+    /** Set max reconnect attempts before giving up */
+    void setMaxReconnectAttempts(int maxAttempts);
+
+    /** Get current connection state */
+    ConnectionState getConnectionState() const;
+
+    //==========================================================================
+    // Connection Callbacks
+    //==========================================================================
+
+    /** Callback when a server is discovered */
+    std::function<void(const RemoteServer&)> onServerDiscovered;
+
+    /** Callback when all servers have been discovered */
+    std::function<void(const juce::Array<RemoteServer>&)> onServersDiscovered;
+
+    /** Callback when connection is lost */
+    std::function<void(const RemoteServer&)> onConnectionLost;
+
+    /** Callback when reconnected successfully */
+    std::function<void(const RemoteServer&)> onReconnected;
+
+    /** Callback when reconnection failed permanently */
+    std::function<void(const RemoteServer&)> onReconnectFailed;
 
     //==========================================================================
     // Processing Mode
@@ -423,6 +460,54 @@ private:
     // Network discovery (mDNS/Bonjour)
     void startServerDiscovery();
     void stopServerDiscovery();
+
+    // mDNS Discovery Implementation
+    void startMDNSDiscovery();
+    void stopMDNSDiscovery();
+
+    #if JUCE_MAC || JUCE_IOS
+    void startBonjourDiscovery(const juce::String& serviceType);
+    void stopBonjourDiscovery();
+    #endif
+
+    #if JUCE_WINDOWS
+    void startWindowsDNSSDDiscovery(const juce::String& serviceType);
+    void stopWindowsDNSSDDiscovery();
+    #endif
+
+    #if JUCE_LINUX
+    void startAvahiDiscovery(const juce::String& serviceType);
+    void stopAvahiDiscovery();
+    #endif
+
+    // UDP Broadcast Discovery (Cross-Platform Fallback)
+    void startUDPBroadcastDiscovery();
+    void stopUDPBroadcastDiscovery();
+    void listenForDiscoveryResponses();
+    void parseDiscoveryResponse(const juce::String& response, const juce::String& hostIP);
+    void simulateDiscovery();
+
+    // Auto-Reconnect Implementation
+    void startConnectionHealthMonitor();
+    void stopConnectionHealthMonitor();
+    void runConnectionHealthMonitor();
+    bool performConnectionHealthCheck(int timeoutMs);
+    bool attemptReconnection();
+    void handleConnectionLost();
+
+    // mDNS Discovery State
+    std::atomic<bool> isDiscovering { false };
+    std::unique_ptr<juce::DatagramSocket> udpDiscoverySocket;
+    std::unique_ptr<std::thread> udpDiscoveryThread;
+    std::unique_ptr<juce::Timer> discoveryTimeoutTimer;
+
+    // Auto-Reconnect State
+    std::atomic<bool> autoReconnectEnabled { false };
+    std::atomic<bool> healthMonitorRunning { false };
+    std::unique_ptr<std::thread> healthMonitorThread;
+    RemoteServer lastConnectedServer;
+    ConnectionState connectionState = ConnectionState::Disconnected;
+    int maxReconnectAttempts = 10;
 
     // Codec selection based on network quality
     enum class AudioCodec { Opus, AAC_LD, FLAC, PCM };
