@@ -8,11 +8,13 @@ class ExportManager {
 
     // MARK: - Export Formats
 
-    enum ExportFormat {
+    enum ExportFormat: CaseIterable {
         case wav
         case m4a
         case aiff
         case caf
+        case aac       // AAC audio (256 kbps)
+        case alac      // Apple Lossless
 
         var fileExtension: String {
             switch self {
@@ -20,6 +22,8 @@ class ExportManager {
             case .m4a: return "m4a"
             case .aiff: return "aiff"
             case .caf: return "caf"
+            case .aac: return "aac"
+            case .alac: return "m4a"
             }
         }
 
@@ -29,6 +33,8 @@ class ExportManager {
             case .m4a: return kAudioFormatMPEG4AAC
             case .aiff: return kAudioFormatLinearPCM
             case .caf: return kAudioFormatAppleLossless
+            case .aac: return kAudioFormatMPEG4AAC
+            case .alac: return kAudioFormatAppleLossless
             }
         }
 
@@ -38,6 +44,34 @@ class ExportManager {
             case .m4a: return .m4a
             case .aiff: return .aiff
             case .caf: return .caf
+            case .aac: return .m4a
+            case .alac: return .m4a
+            }
+        }
+
+        var displayName: String {
+            switch self {
+            case .wav: return "WAV (Uncompressed)"
+            case .m4a: return "M4A (AAC)"
+            case .aiff: return "AIFF (Uncompressed)"
+            case .caf: return "CAF (Core Audio)"
+            case .aac: return "AAC (256 kbps)"
+            case .alac: return "Apple Lossless"
+            }
+        }
+
+        var bitRate: Int? {
+            switch self {
+            case .aac: return 256_000  // 256 kbps
+            case .m4a: return 128_000  // 128 kbps default
+            default: return nil        // Lossless formats
+            }
+        }
+
+        var isLossless: Bool {
+            switch self {
+            case .wav, .aiff, .alac, .caf: return true
+            case .m4a, .aac: return false
             }
         }
     }

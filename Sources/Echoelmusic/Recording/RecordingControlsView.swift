@@ -462,7 +462,7 @@ struct RecordingControlsView: View {
             do {
                 let url = try await exportManager.exportAudio(session: session, format: format)
                 print("📤 Exported to: \(url.path)")
-                // TODO: Show share sheet
+                await presentShareSheet(for: url)
             } catch {
                 print("❌ Export failed: \(error)")
             }
@@ -476,7 +476,9 @@ struct RecordingControlsView: View {
         do {
             let url = try exportManager.exportBioData(session: session, format: format)
             print("📤 Exported bio-data to: \(url.path)")
-            // TODO: Show share sheet
+            Task { @MainActor in
+                presentShareSheet(for: url)
+            }
         } catch {
             print("❌ Export failed: \(error)")
         }
@@ -490,11 +492,44 @@ struct RecordingControlsView: View {
             do {
                 let url = try await exportManager.exportSessionPackage(session: session)
                 print("📦 Exported package to: \(url.path)")
-                // TODO: Show share sheet
+                await presentShareSheet(for: url)
             } catch {
                 print("❌ Export failed: \(error)")
             }
         }
+    }
+
+    /// Present platform-specific share sheet
+    @MainActor
+    private func presentShareSheet(for url: URL) {
+        #if os(iOS)
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController else {
+            print("⚠️ Could not find root view controller for share sheet")
+            return
+        }
+
+        let activityVC = UIActivityViewController(
+            activityItems: [url],
+            applicationActivities: nil
+        )
+
+        // iPad support
+        if let popover = activityVC.popoverPresentationController {
+            popover.sourceView = rootViewController.view
+            popover.sourceRect = CGRect(
+                x: rootViewController.view.bounds.midX,
+                y: rootViewController.view.bounds.midY,
+                width: 0,
+                height: 0
+            )
+            popover.permittedArrowDirections = []
+        }
+
+        rootViewController.present(activityVC, animated: true)
+        #elseif os(macOS)
+        NSWorkspace.shared.activateFileViewerSelecting([url])
+        #endif
     }
 
     // MARK: - Helpers
