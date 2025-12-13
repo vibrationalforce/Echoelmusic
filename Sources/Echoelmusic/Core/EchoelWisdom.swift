@@ -13,6 +13,7 @@
 // - GlobalMusicTheoryDatabase (World Music)
 // - EchoelSuperTools (Production/Kreativität/Wellbeing)
 // - EchoelVoice/EchoelVox (Voice Intelligence)
+// - EchoelVisualWisdom (Light/Video/Visual Intelligence)
 // - Bio-Reactive Systems
 // ============================================================================
 
@@ -34,6 +35,7 @@ public final class EchoelWisdom: ObservableObject {
     public let accessibility = AccessibilityManager()
     public let localization = LocalizationManager.shared
     public let musicTheory = GlobalMusicTheoryDatabase()
+    public let visualWisdom = EchoelVisualWisdom.shared
 
     // MARK: - Wisdom State
     @Published public var wisdomLevel: WisdomLevel = .awakening
@@ -104,6 +106,20 @@ public final class EchoelWisdom: ObservableObject {
         inclusive.$userProfile
             .sink { [weak self] profile in
                 self?.handleProfileChange(profile)
+            }
+            .store(in: &cancellables)
+
+        // Observe visual mode changes
+        visualWisdom.$visualMode
+            .sink { [weak self] mode in
+                self?.handleVisualModeChange(mode)
+            }
+            .store(in: &cancellables)
+
+        // Observe bio-reactive visual modulation
+        visualWisdom.$currentBioModulation
+            .sink { [weak self] modulation in
+                self?.handleBioVisualChange(modulation)
             }
             .store(in: &cancellables)
     }
@@ -770,6 +786,146 @@ public final class EchoelWisdom: ObservableObject {
     }
 
     // MARK: - ═══════════════════════════════════════════════════════════════════
+    // MARK: VISUAL WISDOM INTEGRATION
+    // MARK: - ═══════════════════════════════════════════════════════════════════
+
+    /// Handle visual mode changes
+    private func handleVisualModeChange(_ mode: EchoelVisualWisdom.VisualMode) {
+        // Sync visual mode with accessibility needs
+        if currentProfile.accessibilityNeeds.contains(.reduceMotion) {
+            visualWisdom.setAccessibilityMode(EchoelVisualWisdom.AccessibilityVisualMode(
+                reduceMotion: true,
+                highContrast: currentProfile.accessibilityNeeds.contains(.highContrast),
+                colorBlindnessMode: .normal,
+                minFontSize: 16.0
+            ))
+        }
+        print("🎨 Visual Mode Changed: \(mode)")
+    }
+
+    /// Handle bio-visual modulation changes
+    private func handleBioVisualChange(_ modulation: EchoelVisualWisdom.BioVisualModulation) {
+        // Record as bio-reactive interaction
+        if modulation.heartRate > 0 {
+            recordInteraction(.bioReactive, context: "visual_modulation")
+        }
+    }
+
+    /// Get wise visual suggestion based on current state
+    public func getWiseVisualSuggestion() -> WiseVisualSuggestion {
+        let wellbeing = getWellbeingRecommendation()
+        let cognitive = getCognitiveAdaptations()
+
+        // Determine optimal visual mode based on user state
+        var visualMode: EchoelVisualWisdom.VisualMode = .adaptive
+        var colorScheme: EchoelVisualWisdom.UniversalColorScheme = .adaptive
+        var intensity: Float = 0.7
+
+        switch currentProfile.emotionalPreference {
+        case .calming:
+            visualMode = .meditation
+            colorScheme = .warm
+            intensity = 0.4
+        case .energizing:
+            visualMode = .energetic
+            colorScheme = .vibrant
+            intensity = 0.9
+        case .introspective:
+            visualMode = .meditation
+            colorScheme = .cosmic
+            intensity = 0.5
+        case .joyful:
+            visualMode = .performance
+            colorScheme = .vibrant
+            intensity = 0.8
+        case .balanced:
+            visualMode = .adaptive
+            colorScheme = .adaptive
+            intensity = 0.6
+        }
+
+        // Adjust for cognitive needs
+        if cognitive.calmColors {
+            intensity = min(intensity, 0.5)
+        }
+        if cognitive.gentleAnimations {
+            visualMode = .minimal
+        }
+
+        // Adjust for accessibility
+        if currentProfile.accessibilityNeeds.contains(.reduceMotion) {
+            visualMode = .accessible
+            intensity = min(intensity, 0.3)
+        }
+
+        return WiseVisualSuggestion(
+            visualMode: visualMode,
+            colorScheme: colorScheme,
+            intensity: intensity,
+            bioReactiveEnabled: !cognitive.sensoryControls,
+            lightingMode: determineLightingMode(),
+            message: translate("Visual harmony for your state")
+        )
+    }
+
+    /// Determine optimal lighting mode
+    private func determineLightingMode() -> String {
+        switch currentProfile.emotionalPreference {
+        case .calming: return "warm_dim"
+        case .energizing: return "bright_dynamic"
+        case .introspective: return "ambient_soft"
+        case .joyful: return "colorful_active"
+        case .balanced: return "natural_adaptive"
+        }
+    }
+
+    /// Apply wise visual preset
+    public func applyWiseVisualPreset(_ preset: WiseVisualPresetType) {
+        switch preset {
+        case .meditation:
+            visualWisdom.visualMode = .meditation
+            visualWisdom.setColorScheme(.warm)
+            visualWisdom.setBioReactiveEnabled(true)
+        case .performance:
+            visualWisdom.visualMode = .performance
+            visualWisdom.setColorScheme(.vibrant)
+            visualWisdom.setBioReactiveEnabled(true)
+        case .accessible:
+            visualWisdom.visualMode = .accessible
+            visualWisdom.setColorScheme(.adaptive)
+            visualWisdom.setBioReactiveEnabled(false)
+        case .studio:
+            visualWisdom.visualMode = .studio
+            visualWisdom.setColorScheme(.cool)
+            visualWisdom.setBioReactiveEnabled(false)
+        case .immersive:
+            visualWisdom.visualMode = .immersive
+            visualWisdom.setColorScheme(.cosmic)
+            visualWisdom.setBioReactiveEnabled(true)
+        }
+        print("🎨 Applied Wise Visual Preset: \(preset)")
+    }
+
+    /// Wise visual preset types
+    public enum WiseVisualPresetType {
+        case meditation
+        case performance
+        case accessible
+        case studio
+        case immersive
+    }
+
+    /// Wise visual suggestion structure
+    public struct WiseVisualSuggestion {
+        public let visualMode: EchoelVisualWisdom.VisualMode
+        public let colorScheme: EchoelVisualWisdom.UniversalColorScheme
+        public let intensity: Float
+        public let bioReactiveEnabled: Bool
+        public let lightingMode: String
+        public let message: String
+    }
+
+    // MARK: - ═══════════════════════════════════════════════════════════════════
     // MARK: WELLBEING INTEGRATION
     // MARK: - ═══════════════════════════════════════════════════════════════════
 
@@ -871,6 +1027,10 @@ public final class EchoelWisdom: ObservableObject {
         ✓ Universal Accessibility
         ✓ Emotional Intelligence
         ✓ Bio-Reactive Integration
+        ✓ Visual Wisdom (Light/Video/Effects)
+        ✓ DMX/Art-Net/Hue/WLED Lighting
+        ✓ Cymatics & Sacred Geometry
+        ✓ Color Blindness Correction
 
         ═══════════════════════════════════════════════════
 
@@ -955,6 +1115,13 @@ public struct WiseTranslated: DynamicProperty {
  ║  🧠 All Minds → CognitiveAdaptations                                    ║
  ║  👶👴 All Ages → AgeInterfaceConfig                                     ║
  ║  💜 All Hearts → WellbeingRecommendation                                ║
+ ║  🎨 Visual Wisdom → EchoelVisualWisdom                                  ║
+ ║     • VisualForge (50+ Generators, 30+ Effects)                         ║
+ ║     • VideoWeaver (AI Edit, HDR, Color Grading)                         ║
+ ║     • LightController (DMX/Art-Net/Hue/WLED/ILDA)                       ║
+ ║     • Cymatics & Sacred Geometry                                         ║
+ ║     • Color Blindness Correction (Daltonization)                        ║
+ ║     • Bio-Reactive Visual Modulation                                     ║
  ║                                                                           ║
  ║  WISDOM GROWS WITH EVERY INTERACTION                                     ║
  ║                                                                           ║
