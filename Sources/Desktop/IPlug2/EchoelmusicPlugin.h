@@ -15,8 +15,8 @@
 #include "IPlug_include_in_plug_hdr.h"
 #include "IControls.h"
 
-// Include our JUCE-free DSP
-#include "../DSP/EchoelmusicDSP.h"
+// Include our JUCE-free DSP core
+#include "../../DSP/EchoelmusicDSP.h"
 
 // Plugin configuration
 const int kNumPresets = 64;

@@ -7,6 +7,27 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ===========================
+# Framework Selection
+# ===========================
+# Options: JUCE (default), IPLUG2, PURE_CPP
+option(USE_JUCE "Use JUCE framework" ON)
+option(USE_IPLUG2 "Use iPlug2 framework (MIT License, no JUCE)" OFF)
+option(PURE_CPP "Pure C++ build, no framework dependency" OFF)
+
+if(USE_IPLUG2)
+    set(USE_JUCE OFF)
+    add_compile_definitions(ECHOELMUSIC_USE_IPLUG2=1)
+    message(STATUS "Framework: iPlug2 (JUCE-free, MIT License)")
+elseif(PURE_CPP)
+    set(USE_JUCE OFF)
+    add_compile_definitions(ECHOELMUSIC_PURE_CPP=1)
+    message(STATUS "Framework: Pure C++ (no framework dependency)")
+else()
+    add_compile_definitions(ECHOELMUSIC_USE_JUCE=1)
+    message(STATUS "Framework: JUCE")
+endif()
+
+# ===========================
 # Performance Optimizations
 # ===========================
 
