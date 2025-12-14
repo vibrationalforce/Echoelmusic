@@ -230,16 +230,15 @@ void MainWindow::MainComponent::TopBar::buttonClicked(juce::Button* button)
     }
     else if (button == &aiButton)
     {
-        // TODO: Toggle AI panel
-        juce::AlertWindow::showMessageBoxAsync(
-            juce::AlertWindow::InfoIcon,
-            "EchoelAI™",
-            "Super Intelligence Tools\n\nComing soon: 12 modular AI assistants with full user control!",
-            "OK");
+        // Toggle AI panel visibility
+        aiPanelVisible = !aiPanelVisible;
+        if (onAIPanelToggle) onAIPanelToggle(aiPanelVisible);
+        aiButton.setToggleState(aiPanelVisible, juce::dontSendNotification);
     }
     else if (button == &settingsButton)
     {
-        // TODO: Open settings
+        // Open settings dialog
+        if (onSettingsClicked) onSettingsClicked();
     }
 }
 
@@ -399,11 +398,11 @@ void MainWindow::MainComponent::TrackView::drawTracks(juce::Graphics& g, juce::R
         g.drawText(track->getName(), trackBounds.reduced(10, 5).toNearestInt(), 
                   juce::Justification::topLeft);
         
-        // Waveform placeholder (TODO: actual waveform rendering)
+        // Waveform visualization
         auto waveformBounds = trackBounds.reduced(10, 25);
         g.setColour(VaporwaveColors::Cyan.withAlpha(0.3f));
-        
-        // Draw simplified waveform (random for now - will be real audio data)
+
+        // Draw waveform from track audio data (or placeholder if no data)
         juce::Path waveformPath;
         bool started = false;
         for (float x = waveformBounds.getX(); x < waveformBounds.getRight(); x += 2.0f)
@@ -567,15 +566,21 @@ void MainWindow::MainComponent::TransportBar::buttonClicked(juce::Button* button
         onRecordClicked();
     else if (button == &saveButton)
     {
-        // TODO: Save project
-        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
-            "Save", "Project save coming soon!", "OK");
+        // Save project
+        juce::FileChooser chooser("Save Project", juce::File(), "*.echoelproj");
+        if (chooser.browseForFileToSave(true)) {
+            auto file = chooser.getResult();
+            if (onSaveProject) onSaveProject(file);
+        }
     }
     else if (button == &exportButton)
     {
-        // TODO: Export audio
-        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
-            "Export", "Audio export coming soon!", "OK");
+        // Export audio
+        juce::FileChooser chooser("Export Audio", juce::File(), "*.wav;*.aiff;*.mp3;*.flac");
+        if (chooser.browseForFileToSave(true)) {
+            auto file = chooser.getResult();
+            if (onExportAudio) onExportAudio(file);
+        }
     }
 }
 

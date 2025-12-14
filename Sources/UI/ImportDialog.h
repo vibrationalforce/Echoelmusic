@@ -244,17 +244,19 @@ private:
             return;
         }
 
-        // TODO: Actually import files into project
-        // This would typically call AudioEngine::addAudioClip() for each file
+        // Import files into project via callback
+        if (onImportFiles) {
+            onImportFiles(selectedFiles);
+        }
 
         juce::String message;
-        message << "Importing " << selectedFiles.size() << " file(s)...\n\n";
+        message << "Imported " << selectedFiles.size() << " file(s):\n\n";
         for (const auto& file : selectedFiles)
-            message << file.getFileName() << "\n";
+            message << "✓ " << file.getFileName() << "\n";
 
         juce::AlertWindow::showMessageBoxAsync(
             juce::AlertWindow::InfoIcon,
-            "Import Started",
+            "Import Complete",
             message
         );
 

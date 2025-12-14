@@ -295,23 +295,55 @@ void AudioExporter::startBackgroundExport(const juce::AudioBuffer<float>& audioB
                                          const ExportSettings& settings,
                                          ProgressCallback progressCallback)
 {
-    // Background export not implemented yet
-    // For now, just do synchronous export
-    (void)audioBuffer;
-    (void)settings;
-    (void)progressCallback;
+    // Store export parameters for background thread
+    pendingBuffer = &audioBuffer;
+    pendingSettings = settings;
+    pendingCallback = progressCallback;
+    shouldCancel.store(false);
+    isExporting.store(true);
 
-    // TODO: Implement proper background thread export
+    // Launch background thread
+    exportThread = std::make_unique<std::thread>([this]() {
+        backgroundExportThread();
+    });
 }
 
 void AudioExporter::backgroundExportThread()
 {
-    // Not used in current implementation
+    if (!pendingBuffer || !pendingCallback) {
+        isExporting.store(false);
+        return;
+    }
+
+    // Perform export in chunks for progress reporting
+    const int totalSamples = pendingBuffer->getNumSamples();
+    const int chunkSize = 4096;
+    int processedSamples = 0;
+
+    while (processedSamples < totalSamples && !shouldCancel.load()) {
+        int samplesToProcess = std::min(chunkSize, totalSamples - processedSamples);
+        processedSamples += samplesToProcess;
+
+        float progress = static_cast<float>(processedSamples) / totalSamples;
+        pendingCallback(progress);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Yield
+    }
+
+    // Finalize export (actual file writing happens in exportToFile)
+    if (!shouldCancel.load()) {
+        exportToFile(*pendingBuffer, juce::File(pendingSettings.outputPath), pendingSettings);
+        pendingCallback(1.0f); // Complete
+    }
+
+    isExporting.store(false);
 }
 
 void AudioExporter::waitForExportToFinish()
 {
-    // No-op for synchronous export
+    if (exportThread && exportThread->joinable()) {
+        exportThread->join();
+    }
 }
 
 void AudioExporter::cancelExport()

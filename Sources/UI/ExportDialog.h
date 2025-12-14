@@ -278,14 +278,19 @@ private:
             settings.title = titleEditor.getText();
             settings.artist = artistEditor.getText();
 
-            // For now, we need to get the audio buffer from somewhere
-            // This would typically come from the AudioEngine
-            // TODO: Connect to actual audio engine
-            juce::AlertWindow::showMessageBoxAsync(
-                juce::AlertWindow::InfoIcon,
-                "Export Started",
-                "Export settings configured. (Integration with AudioEngine needed)"
-            );
+            // Trigger export via callback
+            if (onExportRequested) {
+                onExportRequested(settings);
+                juce::AlertWindow::showMessageBoxAsync(
+                    juce::AlertWindow::InfoIcon,
+                    "Export Started",
+                    "Exporting to: " + settings.outputPath.getFullPathName()
+                );
+            }
+
+            // Close dialog
+            if (auto* parent = findParentComponentOfClass<juce::DialogWindow>())
+                parent->exitModalState(1);
         });
     }
 
