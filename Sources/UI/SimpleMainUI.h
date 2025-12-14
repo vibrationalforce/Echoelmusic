@@ -200,6 +200,49 @@ public:
 
     void prepareToPlay(double, int) {}
 
+    /**
+     * @brief Apply bio-reactive modulation to audio buffer
+     * Uses HRV coherence, breathing rate, and stress level to modulate audio
+     */
+    void applyBioModulation(const BioReactiveModulator::ModulatedParameters& params,
+                            juce::AudioBuffer<float>& buffer)
+    {
+        const int numChannels = buffer.getNumChannels();
+        const int numSamples = buffer.getNumSamples();
+
+        // Apply gain modulation based on coherence (calm = stable, stressed = subtle ducking)
+        float gainMod = juce::jmap(params.filterCutoff, 200.0f, 8000.0f, 0.85f, 1.0f);
+
+        // Apply subtle stereo width modulation based on relaxation
+        float stereoWidth = juce::jmap(params.reverbMix, 0.0f, 0.6f, 0.8f, 1.2f);
+
+        for (int channel = 0; channel < numChannels; ++channel)
+        {
+            float* data = buffer.getWritePointer(channel);
+
+            // Apply gain modulation
+            for (int sample = 0; sample < numSamples; ++sample)
+            {
+                data[sample] *= gainMod;
+            }
+
+            // Apply stereo width (M/S processing for stereo)
+            if (numChannels == 2 && channel == 0)
+            {
+                float* left = buffer.getWritePointer(0);
+                float* right = buffer.getWritePointer(1);
+
+                for (int sample = 0; sample < numSamples; ++sample)
+                {
+                    float mid = (left[sample] + right[sample]) * 0.5f;
+                    float side = (left[sample] - right[sample]) * 0.5f * stereoWidth;
+                    left[sample] = mid + side;
+                    right[sample] = mid - side;
+                }
+            }
+        }
+    }
+
     void processBlock(juce::AudioBuffer<float>& buffer)
     {
         // Push audio data to all visualizers
@@ -228,9 +271,9 @@ public:
             if (bioDataVisualizer)
                 bioDataVisualizer->updateBioData(bioSample);
 
-            // Get modulated parameters (for future audio processing)
+            // Get modulated parameters and apply to audio processing
             auto modulatedParams = bioFeedbackSystem->getModulatedParameters();
-            // TODO: Apply modulatedParams to audio processing in Phase 2
+            applyBioModulation(modulatedParams, buffer);
         }
     }
 

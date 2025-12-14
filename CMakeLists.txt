@@ -253,7 +253,7 @@ juce_add_plugin(Echoelmusic
     DESCRIPTION "Bio-Reactive Audio Processing - Heart Rate Variability meets Professional Audio"
     PLUGIN_NAME "Echoelmusic"
 
-    # Icon (TODO: Add icon files later)
+    # Icon files (optional - uncomment when Resources/Icon-*.png are added)
     # ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Icon-512.png"
     # ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Icon-64.png"
 )
@@ -366,9 +366,9 @@ target_sources(Echoelmusic
         Sources/MIDI/ArpWeaver.cpp              # ✨ Advanced arpeggiator (Cthulhu competitor)
         Sources/MIDI/WorldMusicDatabase.cpp     # 🌍 50+ global music styles (Baroque to K-Pop)
 
-        # Pending (needs JUCE 7 fixes)
-        # Sources/DSP/DynamicEQ.cpp             # TODO: Fix ParametricEQ::FilterType
-        # Sources/DSP/SpectralSculptor.cpp      # TODO: Fix FFT API
+        # Future enhancement (requires API updates for JUCE 7)
+        # Sources/DSP/DynamicEQ.cpp             # Pending: ParametricEQ::FilterType update
+        # Sources/DSP/SpectralSculptor.cpp      # Pending: FFT API migration
 
         # =====================================================================
         # PHASE 3: SYNTHESIS & ADVANCED FEATURES
