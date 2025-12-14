@@ -47,9 +47,17 @@ public:
     /** Handle route changes (headphones plugged/unplugged) */
     void handleAudioSessionRouteChange();
 
+    /** Get main window for notifications */
+    class MainWindow* getMainWindow() const { return mainWindow.get(); }
+
 private:
     std::unique_ptr<juce::AudioDeviceManager> audioDeviceManager;
     std::unique_ptr<class MainWindow> mainWindow;
+    std::unique_ptr<class AudioEngine> audioEngine;
+
+    // Transport state
+    bool isPlaying = false;
+    bool wasPlayingBeforeInterrupt = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoelmusicApp)
 };

@@ -727,3 +727,32 @@ if(ANDROID)
     message(STATUS "  - AAudio: ${ENABLE_ANDROID_AAUDIO}")
 endif()
 message(STATUS "==============================================")
+
+#==============================================================================
+# Testing
+#==============================================================================
+option(BUILD_TESTS "Build unit tests" ON)
+
+if(BUILD_TESTS)
+    enable_testing()
+
+    # DSP Test Suite
+    add_executable(EchoelmusicTests
+        Tests/DSP/DSPTestSuite.cpp
+    )
+
+    target_include_directories(EchoelmusicTests PRIVATE
+        ${CMAKE_SOURCE_DIR}/Tests/DSP
+        ${CMAKE_SOURCE_DIR}/Sources
+    )
+
+    target_compile_features(EchoelmusicTests PRIVATE cxx_std_17)
+
+    # Add test to CTest
+    add_test(NAME DSPTests COMMAND EchoelmusicTests)
+
+    message(STATUS "==============================================")
+    message(STATUS "Tests: ENABLED")
+    message(STATUS "  - DSP Test Suite: EchoelmusicTests")
+    message(STATUS "==============================================")
+endif()

@@ -198,14 +198,24 @@ void EchoelmusicApp::handleAudioSessionInterruption(bool interrupted)
         DBG("Audio session interrupted (phone call, etc.)");
 
         // Pause playback/recording
-        // TODO: Implement transport control
+        wasPlayingBeforeInterrupt = isPlaying;
+        if (audioEngine != nullptr && isPlaying)
+        {
+            audioEngine->pause();
+            isPlaying = false;
+        }
     }
     else
     {
         DBG("Audio session interruption ended");
 
         // Resume if user was playing before interruption
-        // TODO: Implement resume logic
+        if (audioEngine != nullptr && wasPlayingBeforeInterrupt)
+        {
+            audioEngine->resume();
+            isPlaying = true;
+        }
+        wasPlayingBeforeInterrupt = false;
     }
 }
 
@@ -214,7 +224,11 @@ void EchoelmusicApp::handleAudioSessionRouteChange()
     DBG("Audio route changed (headphones plugged/unplugged, etc.)");
 
     // Update UI to reflect new audio route
-    // TODO: Show notification to user
+    juce::String routeMessage = "Audio output changed";
+    if (auto* mainWindow = getMainWindow())
+    {
+        mainWindow->showNotification(routeMessage, 2000);  // 2 second toast
+    }
 }
 
 //==============================================================================
