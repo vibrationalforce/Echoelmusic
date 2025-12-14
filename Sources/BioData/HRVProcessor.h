@@ -361,15 +361,33 @@ public:
                 break;
 
             case SourceType::BluetoothHR:
-                // TODO: Initialize Bluetooth
+                #if ECHOELMUSIC_HAS_BLUETOOTH
+                initializeBluetooth();
+                #else
+                DBG("Bluetooth HR: SDK not available, falling back to simulation");
+                sourceType = SourceType::Simulated;
+                startSimulation();
+                #endif
                 break;
 
             case SourceType::AppleWatch:
-                // TODO: Initialize HealthKit
+                #if ECHOELMUSIC_HAS_HEALTHKIT
+                initializeHealthKit();
+                #else
+                DBG("Apple Watch: HealthKit not available, falling back to simulation");
+                sourceType = SourceType::Simulated;
+                startSimulation();
+                #endif
                 break;
 
             case SourceType::WebSocket:
-                // TODO: Start WebSocket server
+                #if ECHOELMUSIC_HAS_WEBSOCKET
+                startWebSocketServer();
+                #else
+                DBG("WebSocket: Server not available, falling back to simulation");
+                sourceType = SourceType::Simulated;
+                startSimulation();
+                #endif
                 break;
 
             default:
