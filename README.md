@@ -233,26 +233,39 @@ swift test
 - **Target:** >80%
 
 ### Test Suites:
-- Audio Engine Tests
-- Biofeedback Tests
-- Pitch Detection Tests
-- Phase 3 Integration Tests (recommended to add)
+- **ComprehensiveTestSuite.swift** - Performance, DSP, Synthesis, ML, Music Theory
+- **LaserForceTests.swift** - ILDA/DMX laser control, safety systems, bio-reactive
+- **BinauralBeatTests.swift** - Brainwave states, HRV coherence
+- **PitchDetectorTests.swift** - YIN algorithm, pitch accuracy
+- **FaceToAudioMapperTests.swift** - Face tracking to audio
+- **HealthKitManagerTests.swift** - Bio-data integration
+- **UnifiedControlHubTests.swift** - Central control system
 
 ---
 
 ## 📖 Documentation
 
 ### Quick References:
-- **[XCODE_HANDOFF.md](XCODE_HANDOFF.md)** - Xcode development guide (MUST READ)
-- **[PHASE_3_OPTIMIZED.md](PHASE_3_OPTIMIZED.md)** - Phase 3 optimization details
-- **[DAW_INTEGRATION_GUIDE.md](DAW_INTEGRATION_GUIDE.md)** - DAW integration
-- **[ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md](ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md)** - Full roadmap
-- **[ECHOELMUSIC_90_DAY_ROADMAP.md](ECHOELMUSIC_90_DAY_ROADMAP.md)** - 90-day plan
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
+- **[BUILD.md](BUILD.md)** - Build instructions
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment guide
 
-### Additional Docs:
-- `COMPATIBILITY.md` - iOS compatibility notes
-- `DEPLOYMENT.md` - Deployment guide
-- `TESTFLIGHT_SETUP.md` - TestFlight configuration
+### Architecture:
+- `docs/architecture/ECHOEL_AI_ARCHITECTURE.md` - AI system design
+- `docs/architecture/ECHOEL_OS_ARCHITECTURE.md` - OS integration
+- `docs/architecture/ARCHITECTURE_SCIENTIFIC.md` - Scientific foundations
+
+### Guides:
+- `docs/guides/iOS_DEVELOPMENT_GUIDE.md` - iOS development
+- `docs/guides/ANDROID_BUILD_GUIDE.md` - Android build
+- `docs/guides/DAW_INTEGRATION_GUIDE.md` - DAW integration
+- `docs/guides/HARDWARE_INTEGRATION_GUIDE.md` - Hardware setup
+- `docs/guides/TESTFLIGHT_SETUP.md` - TestFlight configuration
+- `docs/guides/XCODE_HANDOFF.md` - Xcode handoff
+
+### Strategy:
+- `docs/strategy/AI_OPTIMIZATION.md` - AI optimization
+- `docs/strategy/ECHOEL_BRAND_STRATEGY.md` - Brand strategy
 
 ---
 

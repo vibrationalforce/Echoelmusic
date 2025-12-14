@@ -545,9 +545,43 @@ std::vector<LaserForce::ILDAPoint> LaserForce::renderAudioWaveform(const Beam& b
 bool LaserForce::checkSafetyZones(const std::vector<ILDAPoint>& points,
                                   const LaserOutput& output)
 {
-    juce::ignoreUnused(points, output);
-    // Would check if any points fall within restricted zones
-    return true;
+    if (output.safeZones.empty())
+        return true;  // No safe zones defined, allow all
+
+    for (const auto& point : points)
+    {
+        // Convert ILDA coordinates to normalized (-1.0 to 1.0)
+        float normalizedX = static_cast<float>(point.x) / 32767.0f;
+        float normalizedY = static_cast<float>(point.y) / 32767.0f;
+
+        // Apply output calibration
+        normalizedX = (normalizedX * output.xScale) + output.xOffset;
+        normalizedY = (normalizedY * output.yScale) + output.yOffset;
+
+        // Apply rotation if any
+        if (output.rotation != 0.0f)
+        {
+            float cosR = std::cos(output.rotation);
+            float sinR = std::sin(output.rotation);
+            float rotX = normalizedX * cosR - normalizedY * sinR;
+            float rotY = normalizedX * sinR + normalizedY * cosR;
+            normalizedX = rotX;
+            normalizedY = rotY;
+        }
+
+        // Check against all safe zones (restricted areas)
+        for (const auto& zone : output.safeZones)
+        {
+            if (normalizedX >= zone.getX() && normalizedX <= zone.getRight() &&
+                normalizedY >= zone.getY() && normalizedY <= zone.getBottom())
+            {
+                // Point falls within restricted zone - unsafe!
+                return false;
+            }
+        }
+    }
+
+    return true;  // All points are outside restricted zones
 }
 
 void LaserForce::applySafetyLimits(std::vector<ILDAPoint>& points)
