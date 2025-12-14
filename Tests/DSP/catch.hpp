@@ -92,10 +92,16 @@ inline int runTests() {
 
 } // namespace Catch
 
-#define TEST_CASE(name, tags) \
-    static void CATCH_FUNC_##__LINE__(); \
-    static Catch::AutoReg CATCH_REG_##__LINE__(name, tags, CATCH_FUNC_##__LINE__); \
-    static void CATCH_FUNC_##__LINE__()
+#define CATCH_CONCAT_(a, b) a##b
+#define CATCH_CONCAT(a, b) CATCH_CONCAT_(a, b)
+#define CATCH_UNIQUE(prefix) CATCH_CONCAT(prefix, __COUNTER__)
+
+#define TEST_CASE_IMPL(name, tags, unique) \
+    static void CATCH_CONCAT(CATCH_FUNC_, unique)(); \
+    static Catch::AutoReg CATCH_CONCAT(CATCH_REG_, unique)(name, tags, CATCH_CONCAT(CATCH_FUNC_, unique)); \
+    static void CATCH_CONCAT(CATCH_FUNC_, unique)()
+
+#define TEST_CASE(name, tags) TEST_CASE_IMPL(name, tags, __COUNTER__)
 
 #define REQUIRE(expr) Catch::require((expr), #expr, __FILE__, __LINE__)
 #define REQUIRE_FALSE(expr) Catch::require(!(expr), "NOT " #expr, __FILE__, __LINE__)
