@@ -403,9 +403,11 @@ int UltraSampler::selectVelocityLayer(const Zone& zone, float velocity)
     for (int i = 0; i < zone.numVelocityLayers; ++i) {
         auto& layer = zone.velocityLayers[i];
         if (vel127 >= layer.velocityLow && vel127 <= layer.velocityHigh) {
-            // Handle round-robin
+            // Handle round-robin cycling
             if (zone.numRoundRobin > 0 && layer.roundRobinGroup > 0) {
-                // TODO: Implement round-robin cycling
+                int rrIndex = roundRobinCounters[layer.roundRobinGroup % MAX_ROUND_ROBIN_GROUPS]++;
+                roundRobinCounters[layer.roundRobinGroup % MAX_ROUND_ROBIN_GROUPS] %= zone.numRoundRobin;
+                return i + (rrIndex % zone.numRoundRobin);
             }
             return i;
         }
@@ -882,8 +884,8 @@ float UltraSampler::processLFO(Voice& voice, int lfoIndex)
     // Calculate rate
     float rate = lfo.rate;
     if (lfo.tempoSync) {
-        // TODO: Get tempo from host
-        rate = 120.0f / 60.0f * lfo.beatDivision;
+        float tempo = hostTempo > 0.0f ? hostTempo : 120.0f;
+        rate = tempo / 60.0f * lfo.beatDivision;
     }
 
     // Advance phase
@@ -906,8 +908,12 @@ float UltraSampler::processLFO(Voice& voice, int lfoIndex)
             value = phase < 0.5f ? 1.0f : -1.0f;
             break;
         case LFO::Shape::SampleHold:
-            // TODO: Implement sample & hold
-            value = 0.0f;
+            // Sample & hold: new random value at each cycle
+            if (phase < lastSampleHoldPhase[lfoIndex]) {
+                sampleHoldValues[lfoIndex] = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f;
+            }
+            lastSampleHoldPhase[lfoIndex] = phase;
+            value = sampleHoldValues[lfoIndex];
             break;
         case LFO::Shape::Random:
             value = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f;

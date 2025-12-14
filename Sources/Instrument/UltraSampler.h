@@ -467,6 +467,7 @@ public:
     void setMasterTune(float cents);
     void setPolyphony(int voices);
     void setGlideTime(float ms);
+    void setHostTempo(float bpm) { hostTempo = bpm > 0.0f ? bpm : 120.0f; }
 
     // Interpolation
     void setInterpolationMode(InterpolationMode mode);
@@ -595,6 +596,15 @@ private:
 
     // LFOs
     std::array<LFO, 4> lfos;
+
+    // Round-robin and tempo tracking
+    static constexpr int MAX_ROUND_ROBIN_GROUPS = 16;
+    std::array<int, MAX_ROUND_ROBIN_GROUPS> roundRobinCounters{};
+    float hostTempo = 120.0f;
+
+    // Sample & Hold LFO state
+    std::array<float, 4> lastSampleHoldPhase{};
+    std::array<float, 4> sampleHoldValues{};
 
     // Modulation
     std::array<ModSlot, kMaxModSlots> modSlots;
