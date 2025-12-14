@@ -246,8 +246,117 @@ class WatchApp {
             date: Date()
         )
 
-        // TODO: Sync with iPhone via WatchConnectivity
-        print("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        // Sync with iPhone via WatchConnectivity
+        await WatchConnectivityManager.shared.sendSession(session)
+        print("💾 Session saved & synced: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+    }
+}
+
+// MARK: - WatchConnectivity Manager
+
+import WatchConnectivity
+
+@MainActor
+class WatchConnectivityManager: NSObject, WCSessionDelegate {
+    static let shared = WatchConnectivityManager()
+
+    private var session: WCSession?
+    @Published var isReachable = false
+
+    override init() {
+        super.init()
+        if WCSession.isSupported() {
+            session = WCSession.default
+            session?.delegate = self
+            session?.activate()
+        }
+    }
+
+    // MARK: - Send Session Data to iPhone
+
+    func sendSession(_ sessionData: WatchApp.SessionData) async {
+        guard let session = session, session.isReachable else {
+            // Store for later transfer
+            saveToTransferQueue(sessionData)
+            return
+        }
+
+        do {
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(sessionData)
+
+            // Send as message for immediate delivery
+            try await session.sendMessageData(data, replyHandler: nil)
+            print("📱 WatchConnectivity: Session sent to iPhone")
+        } catch {
+            print("⚠️ WatchConnectivity: Failed to send - \(error)")
+            saveToTransferQueue(sessionData)
+        }
+    }
+
+    private func saveToTransferQueue(_ sessionData: WatchApp.SessionData) {
+        // Store in UserDefaults for later transfer
+        var queue = UserDefaults.standard.array(forKey: "SessionTransferQueue") as? [Data] ?? []
+
+        if let data = try? JSONEncoder().encode(sessionData) {
+            queue.append(data)
+            UserDefaults.standard.set(queue, forKey: "SessionTransferQueue")
+            print("📦 WatchConnectivity: Session queued for transfer")
+        }
+    }
+
+    // MARK: - Send Real-time Bio Updates
+
+    func sendBioUpdate(heartRate: Double, hrv: Double, coherence: Double) {
+        guard let session = session, session.isReachable else { return }
+
+        let message: [String: Any] = [
+            "type": "bioUpdate",
+            "heartRate": heartRate,
+            "hrv": hrv,
+            "coherence": coherence,
+            "timestamp": Date().timeIntervalSince1970
+        ]
+
+        session.sendMessage(message, replyHandler: nil)
+    }
+
+    // MARK: - WCSessionDelegate
+
+    nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        Task { @MainActor in
+            if activationState == .activated {
+                print("⌚ WatchConnectivity: Activated")
+                self.isReachable = session.isReachable
+                self.transferQueuedSessions()
+            }
+        }
+    }
+
+    nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
+        Task { @MainActor in
+            self.isReachable = session.isReachable
+            if session.isReachable {
+                self.transferQueuedSessions()
+            }
+        }
+    }
+
+    // Transfer any queued sessions when connection is available
+    private func transferQueuedSessions() {
+        guard let queue = UserDefaults.standard.array(forKey: "SessionTransferQueue") as? [Data],
+              !queue.isEmpty else { return }
+
+        Task {
+            for data in queue {
+                if let sessionData = try? JSONDecoder().decode(WatchApp.SessionData.self, from: data) {
+                    await sendSession(sessionData)
+                }
+            }
+            // Clear queue after successful transfer
+            UserDefaults.standard.removeObject(forKey: "SessionTransferQueue")
+            print("✅ WatchConnectivity: Transferred \(queue.count) queued sessions")
+        }
     }
 
     struct SessionData: Codable {

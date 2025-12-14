@@ -51,8 +51,8 @@ public class UnifiedControlHub: ObservableObject {
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
-    // TODO: Add when implementing
-    // private let gazeTracker: GazeTracker?
+    // Gaze Tracking (Vision framework on iOS 15+)
+    private var gazeTracker: GazeTracker?
 
     // MARK: - Control Loop
 
@@ -426,8 +426,13 @@ public class UnifiedControlHub: ObservableObject {
                 let afaField = spatialMapper.mapToAFA(voices: voiceData, geometry: fieldGeometry)
                 spatialMapper.afaField = afaField
 
-                // TODO: Apply AFA field to SpatialAudioEngine
-                // print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
+                    // Apply AFA field to SpatialAudioEngine
+                if let spatial = spatialAudioEngine {
+                    spatial.updateAFAField(afaField)
+                }
+                #if DEBUG
+                print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
+                #endif
             }
         }
     }
@@ -451,8 +456,13 @@ public class UnifiedControlHub: ObservableObject {
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
         // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
-        // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+        if let engine = audioEngine {
+            engine.setFilterCutoff(params.filterCutoff)
+            engine.setFilterResonance(params.filterResonance)
+            #if DEBUG
+            print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+            #endif
+        }
 
         // Apply to all active MPE voices
         if let mpe = mpeZoneManager {
@@ -571,13 +581,62 @@ public class UnifiedControlHub: ObservableObject {
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // TODO: Change to preset
+            // Change to preset
+            engine.loadPreset(named: presetChange)
             print("[Gesture→Audio] Switch to preset: \(presetChange)")
         }
     }
 
+    // MARK: - Gaze Tracking Integration
+
+    /// Enable gaze tracking for parameter control
+    public func enableGazeTracking() {
+        let tracker = GazeTracker()
+        self.gazeTracker = tracker
+
+        // Subscribe to gaze position updates
+        tracker.$gazePosition
+            .sink { [weak self] position in
+                self?.handleGazeUpdate(position)
+            }
+            .store(in: &cancellables)
+
+        tracker.start()
+        print("[UnifiedControlHub] Gaze tracking enabled")
+    }
+
+    /// Disable gaze tracking
+    public func disableGazeTracking() {
+        gazeTracker?.stop()
+        gazeTracker = nil
+        print("[UnifiedControlHub] Gaze tracking disabled")
+    }
+
     private func updateFromGazeTracking() {
-        // TODO: Implement when GazeTracker is integrated
+        guard let tracker = gazeTracker, tracker.isTracking else { return }
+
+        // Map gaze position to audio parameters
+        let gazePosition = tracker.gazePosition
+
+        // X position → Stereo pan
+        if let engine = audioEngine {
+            let pan = (gazePosition.x * 2.0) - 1.0 // Map 0-1 to -1...1
+            engine.setStereoPan(Float(pan))
+        }
+
+        // Y position → Effect depth
+        if let engine = audioEngine {
+            let depth = Float(gazePosition.y)
+            engine.setEffectDepth(depth)
+        }
+    }
+
+    private func handleGazeUpdate(_ position: CGPoint) {
+        // Update spatial audio based on gaze direction
+        if let spatial = spatialAudioEngine {
+            let angle = atan2(position.y - 0.5, position.x - 0.5)
+            spatial.setListenerFocusAngle(Float(angle))
+        }
     }
 
     // MARK: - Conflict Resolution
@@ -619,12 +678,18 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        // Calculate breathing rate from HRV (approximate using RR intervals)
+        let breathingRate = calculateBreathingRateFromHRV(hrv: healthKit.hrv)
+
+        // Get audio level from engine
+        let audioLevel = audioEngine?.currentLevel ?? 0.5
+
         // Update visual parameters from bio-signals
         let bioParams = MIDIToVisualMapper.BioParameters(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
-            audioLevel: 0.5      // TODO: Get from audio engine
+            breathingRate: breathingRate,
+            audioLevel: audioLevel
         )
 
         visualMapper.updateBioParameters(bioParams)
@@ -635,10 +700,12 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        let breathingRate = calculateBreathingRateFromHRV(hrv: healthKit.hrv)
+
         let bioData = MIDIToLightMapper.BioData(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0  // TODO: Calculate from HRV
+            breathingRate: breathingRate
         )
 
         // Update Push 3 LED patterns
@@ -657,6 +724,19 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     // MARK: - Utilities
+
+    /// Calculate breathing rate from HRV (respiratory sinus arrhythmia)
+    private func calculateBreathingRateFromHRV(hrv: Float) -> Double {
+        // HRV is influenced by breathing - higher HRV often correlates with slower breathing
+        // Typical range: 4-20 breaths/minute
+        // Higher HRV (>50ms) → slower breathing (~6 bpm)
+        // Lower HRV (<30ms) → faster breathing (~12 bpm)
+
+        let normalizedHRV = min(max(hrv, 20), 100) // Clamp to 20-100ms range
+        let breathingRate = 18.0 - (Double(normalizedHRV - 20) / 80.0 * 12.0) // Map to 6-18 bpm
+
+        return max(4.0, min(20.0, breathingRate))
+    }
 
     /// Map a value from one range to another
     public func mapRange(

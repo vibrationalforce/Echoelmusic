@@ -454,6 +454,9 @@ struct RecordingControlsView: View {
         }
     }
 
+    @State private var shareURL: URL?
+    @State private var showShareSheet = false
+
     private func exportAudio(format: ExportManager.ExportFormat) {
         guard let session = recordingEngine.currentSession else { return }
 
@@ -462,7 +465,10 @@ struct RecordingControlsView: View {
             do {
                 let url = try await exportManager.exportAudio(session: session, format: format)
                 print("📤 Exported to: \(url.path)")
-                // TODO: Show share sheet
+                await MainActor.run {
+                    shareURL = url
+                    showShareSheet = true
+                }
             } catch {
                 print("❌ Export failed: \(error)")
             }
@@ -476,7 +482,8 @@ struct RecordingControlsView: View {
         do {
             let url = try exportManager.exportBioData(session: session, format: format)
             print("📤 Exported bio-data to: \(url.path)")
-            // TODO: Show share sheet
+            shareURL = url
+            showShareSheet = true
         } catch {
             print("❌ Export failed: \(error)")
         }
@@ -490,12 +497,46 @@ struct RecordingControlsView: View {
             do {
                 let url = try await exportManager.exportSessionPackage(session: session)
                 print("📦 Exported package to: \(url.path)")
-                // TODO: Show share sheet
+                await MainActor.run {
+                    shareURL = url
+                    showShareSheet = true
+                }
             } catch {
                 print("❌ Export failed: \(error)")
             }
         }
     }
+}
+
+// MARK: - Share Sheet
+
+#if os(iOS)
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    let applicationActivities: [UIActivity]? = nil
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+#endif
+
+extension RecordingControlsView {
+    @ViewBuilder
+    var shareSheetModifier: some View {
+        #if os(iOS)
+        self.sheet(isPresented: $showShareSheet) {
+            if let url = shareURL {
+                ShareSheet(activityItems: [url])
+            }
+        }
+        #else
+        self
+        #endif
+    }
+}
 
     // MARK: - Helpers
 

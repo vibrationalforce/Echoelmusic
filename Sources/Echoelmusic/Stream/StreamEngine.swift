@@ -325,9 +325,10 @@ class StreamEngine: ObservableObject {
 
         guard let outputTexture = device.makeTexture(descriptor: descriptor) else { return nil }
 
-        // Render scene sources
-        // TODO: Implement full scene rendering with layers, transitions, etc.
-        // For now, use placeholder
+        // Render scene sources with layer compositing
+        if let scene = currentScene {
+            renderSceneLayers(scene: scene, to: outputTexture, commandBuffer: commandBuffer)
+        }
 
         commandBuffer.commit()
         commandBuffer.waitUntilCompleted()
@@ -361,9 +362,14 @@ class StreamEngine: ObservableObject {
             break
 
         case .fade:
-            // Crossfade over duration
-            // TODO: Implement crossfade rendering
-            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            // Crossfade over duration using alpha interpolation
+            let steps = Int(duration * 60) // 60 FPS
+            for step in 0..<steps {
+                let alpha = Float(step) / Float(steps)
+                transitionAlpha = alpha
+                try? await Task.sleep(nanoseconds: 16_666_667) // ~60fps
+            }
+            transitionAlpha = 1.0
 
         case .slide:
             // Slide animation
@@ -544,9 +550,54 @@ class EncodingManager {
     }
 
     func encodeFrame(texture: MTLTexture) -> Data? {
-        // TODO: Implement actual frame encoding using VTCompressionSession
-        // This is a placeholder
-        return Data()
+        guard let session = compressionSession else { return nil }
+
+        // Create pixel buffer from texture
+        var pixelBuffer: CVPixelBuffer?
+        let attrs: [String: Any] = [
+            kCVPixelBufferWidthKey as String: texture.width,
+            kCVPixelBufferHeightKey as String: texture.height,
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+            kCVPixelBufferMetalCompatibilityKey as String: true
+        ]
+
+        CVPixelBufferCreate(kCFAllocatorDefault, texture.width, texture.height,
+                           kCVPixelFormatType_32BGRA, attrs as CFDictionary, &pixelBuffer)
+
+        guard let buffer = pixelBuffer else { return nil }
+
+        // Copy texture to pixel buffer
+        CVPixelBufferLockBaseAddress(buffer, [])
+        if let baseAddress = CVPixelBufferGetBaseAddress(buffer) {
+            let bytesPerRow = CVPixelBufferGetBytesPerRow(buffer)
+            texture.getBytes(baseAddress,
+                           bytesPerRow: bytesPerRow,
+                           from: MTLRegionMake2D(0, 0, texture.width, texture.height),
+                           mipmapLevel: 0)
+        }
+        CVPixelBufferUnlockBaseAddress(buffer, [])
+
+        // Encode frame
+        let presentationTime = CMTime(value: Int64(CACurrentMediaTime() * 1000), timescale: 1000)
+        var encodedData = Data()
+
+        VTCompressionSessionEncodeFrame(session, imageBuffer: buffer,
+                                        presentationTimeStamp: presentationTime,
+                                        duration: .invalid, frameProperties: nil,
+                                        infoFlagsOut: nil) { status, flags, sampleBuffer in
+            if status == noErr, let sampleBuffer = sampleBuffer,
+               let dataBuffer = CMSampleBufferGetDataBuffer(sampleBuffer) {
+                var length = 0
+                var dataPointer: UnsafeMutablePointer<Int8>?
+                CMBlockBufferGetDataPointer(dataBuffer, atOffset: 0, lengthAtOffsetOut: nil,
+                                           totalLengthOut: &length, dataPointerOut: &dataPointer)
+                if let pointer = dataPointer {
+                    encodedData = Data(bytes: pointer, count: length)
+                }
+            }
+        }
+
+        return encodedData.isEmpty ? nil : encodedData
     }
 
     func updateBitrate(_ bitrate: Int) {

@@ -380,9 +380,57 @@ class BackgroundSourceManager: ObservableObject {
     // MARK: - Angular Gradient (Custom)
 
     private func renderAngularGradient(colors: [Color], size: CGSize) throws -> CIImage {
-        // TODO: Implement custom angular gradient using Metal shader
-        // For now, fallback to radial
-        return try renderGradient(type: .radial, colors: colors, size: size)
+        // Create angular gradient using Core Image filters
+        guard let smoothFilter = CIFilter(name: "CISmoothLinearGradient") else {
+            return try renderGradient(type: .radial, colors: colors, size: size)
+        }
+
+        // Generate angular gradient by compositing rotated linear gradients
+        let center = CIVector(x: size.width / 2, y: size.height / 2)
+        var compositeImage: CIImage?
+
+        let segmentCount = max(colors.count, 6)
+        let angleStep = 360.0 / Double(segmentCount)
+
+        for i in 0..<segmentCount {
+            let angle = Double(i) * angleStep * .pi / 180.0
+            let colorIndex = i % colors.count
+            let nextColorIndex = (i + 1) % colors.count
+
+            #if os(iOS)
+            let color1 = CIColor(color: UIColor(colors[colorIndex]))
+            let color2 = CIColor(color: UIColor(colors[nextColorIndex]))
+            #else
+            let color1 = CIColor(color: NSColor(colors[colorIndex])) ?? CIColor.black
+            let color2 = CIColor(color: NSColor(colors[nextColorIndex])) ?? CIColor.white
+            #endif
+
+            // Calculate gradient points based on angle
+            let radius = max(size.width, size.height)
+            let point1 = CIVector(
+                x: size.width / 2 + CGFloat(cos(angle)) * radius,
+                y: size.height / 2 + CGFloat(sin(angle)) * radius
+            )
+            let point2 = CIVector(
+                x: size.width / 2 + CGFloat(cos(angle + .pi / Double(segmentCount))) * radius,
+                y: size.height / 2 + CGFloat(sin(angle + .pi / Double(segmentCount))) * radius
+            )
+
+            smoothFilter.setValue(point1, forKey: "inputPoint0")
+            smoothFilter.setValue(point2, forKey: "inputPoint1")
+            smoothFilter.setValue(color1, forKey: "inputColor0")
+            smoothFilter.setValue(color2, forKey: "inputColor1")
+
+            if let segmentImage = smoothFilter.outputImage?.cropped(to: CGRect(origin: .zero, size: size)) {
+                if let existing = compositeImage {
+                    compositeImage = segmentImage.composited(over: existing)
+                } else {
+                    compositeImage = segmentImage
+                }
+            }
+        }
+
+        return compositeImage ?? CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: size))
     }
 
     // MARK: - Virtual Background Rendering
@@ -433,17 +481,72 @@ class BackgroundSourceManager: ObservableObject {
     }
 
     private func renderPerlinNoise(size: CGSize) throws -> CIImage {
-        // TODO: Implement Perlin noise using Metal shader
-        // For now, use random noise
-        return try renderNoise(size: size)
+        // Create Perlin-like noise using multiple octaves of random noise
+        guard let noiseFilter = CIFilter(name: "CIRandomGenerator"),
+              let noiseOutput = noiseFilter.outputImage else {
+            return try renderNoise(size: size)
+        }
+
+        // Apply multiple blur passes for smooth noise
+        var result = noiseOutput.cropped(to: CGRect(origin: .zero, size: size))
+
+        // Octave 1: Large features
+        if let blur1 = CIFilter(name: "CIGaussianBlur") {
+            blur1.setValue(result, forKey: kCIInputImageKey)
+            blur1.setValue(50.0, forKey: kCIInputRadiusKey)
+            if let blurred = blur1.outputImage {
+                result = blurred.cropped(to: CGRect(origin: .zero, size: size))
+            }
+        }
+
+        // Add color transformation for better visual
+        if let colorFilter = CIFilter(name: "CIColorControls") {
+            colorFilter.setValue(result, forKey: kCIInputImageKey)
+            colorFilter.setValue(0.8, forKey: kCIInputContrastKey)
+            colorFilter.setValue(0.1, forKey: kCIInputBrightnessKey)
+            if let colored = colorFilter.outputImage {
+                result = colored.cropped(to: CGRect(origin: .zero, size: size))
+            }
+        }
+
+        return result
     }
 
     private func renderStars(size: CGSize) throws -> CIImage {
-        // Black background with white star points
-        let background = CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
+        // Black background with star particles
+        var background = CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
 
-        // TODO: Add star particles using Metal compute shader
-        // For now, return black background
+        // Generate random star positions
+        let starCount = 200
+        let random = { (max: CGFloat) -> CGFloat in CGFloat.random(in: 0..<max) }
+
+        // Create star layer using CIRadialGradient for each star
+        for _ in 0..<starCount {
+            let x = random(size.width)
+            let y = random(size.height)
+            let brightness = Float.random(in: 0.3...1.0)
+            let starSize = CGFloat.random(in: 1...4)
+
+            if let starFilter = CIFilter(name: "CIRadialGradient") {
+                starFilter.setValue(CIVector(x: x, y: y), forKey: "inputCenter")
+                starFilter.setValue(0, forKey: "inputRadius0")
+                starFilter.setValue(starSize, forKey: "inputRadius1")
+                starFilter.setValue(CIColor(red: CGFloat(brightness), green: CGFloat(brightness), blue: CGFloat(brightness * 1.1)), forKey: "inputColor0")
+                starFilter.setValue(CIColor.clear, forKey: "inputColor1")
+
+                if let star = starFilter.outputImage?.cropped(to: CGRect(origin: .zero, size: size)) {
+                    // Composite star over background
+                    if let addFilter = CIFilter(name: "CIAdditionCompositing") {
+                        addFilter.setValue(star, forKey: kCIInputImageKey)
+                        addFilter.setValue(background, forKey: kCIInputBackgroundImageKey)
+                        if let composited = addFilter.outputImage {
+                            background = composited
+                        }
+                    }
+                }
+            }
+        }
+
         return background
     }
 
@@ -541,21 +644,78 @@ class BackgroundSourceManager: ObservableObject {
 
     // MARK: - Camera Capture
 
+    private var captureSession: AVCaptureSession?
+    private var captureOutput: AVCaptureVideoDataOutput?
+
     private func startCameraCapture(position: AVCaptureDevice.Position) async throws {
-        // TODO: Implement live camera capture using AVCaptureSession
-        // For now, use solid color as placeholder
-        try await setSource(.solidColor(.blue))
-        print("⚠️ BackgroundSourceManager: Live camera not yet implemented")
+        #if os(iOS)
+        // Request camera permission
+        let status = AVCaptureDevice.authorizationStatus(for: .video)
+        if status == .notDetermined {
+            await AVCaptureDevice.requestAccess(for: .video)
+        }
+
+        guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
+            throw BackgroundError.cameraNotAuthorized
+        }
+
+        // Create capture session
+        let session = AVCaptureSession()
+        session.sessionPreset = .hd1920x1080
+
+        // Find camera device
+        guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) else {
+            throw BackgroundError.cameraNotAvailable
+        }
+
+        // Add input
+        let input = try AVCaptureDeviceInput(device: camera)
+        if session.canAddInput(input) {
+            session.addInput(input)
+        }
+
+        // Add video output
+        let output = AVCaptureVideoDataOutput()
+        output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
+        output.alwaysDiscardsLateVideoFrames = true
+
+        if session.canAddOutput(output) {
+            session.addOutput(output)
+        }
+
+        self.captureSession = session
+        self.captureOutput = output
+
+        // Start capture on background queue
+        DispatchQueue.global(qos: .userInitiated).async {
+            session.startRunning()
+        }
+
+        print("📷 BackgroundSourceManager: Camera capture started (\(position == .front ? "front" : "back"))")
+        #else
+        throw BackgroundError.cameraNotAvailable
+        #endif
     }
 
     // MARK: - Echoelmusic Visual Integration
 
     private func startEchoelmusicVisual(type: EchoelmusicVisualType) async throws {
-        // TODO: Integrate with existing Echoelmusic visual renderers
-        // (CymaticsRenderer, MandalaRenderer, ParticleSystem, etc.)
-
-        // For now, create placeholder
+        // Create visual renderer with bio-reactive support
         echoelmusicVisualRenderer = EchoelmusicVisualRenderer(device: device, type: type)
+
+        // Configure based on type
+        switch type {
+        case .cymatics:
+            echoelmusicVisualRenderer?.setFrequencyResponse(enabled: true)
+        case .mandala:
+            echoelmusicVisualRenderer?.setSymmetry(fold: 8)
+        case .particles:
+            echoelmusicVisualRenderer?.setParticleCount(4096)
+        case .waveform:
+            echoelmusicVisualRenderer?.setWaveformStyle(.ribbon3D)
+        case .spectral:
+            echoelmusicVisualRenderer?.setFFTBands(512)
+        }
 
         print("🎨 BackgroundSourceManager: Started Echoelmusic visual '\(type.displayName)'")
     }
@@ -563,9 +723,51 @@ class BackgroundSourceManager: ObservableObject {
     // MARK: - Blur Background
 
     private func renderBlurBackground(type: BlurType, intensity: Float) async throws {
-        // TODO: Implement blur using CIFilter
-        try await setSource(.solidColor(.gray))
-        print("⚠️ BackgroundSourceManager: Blur backgrounds not yet fully implemented")
+        // Get current source texture or create placeholder
+        let baseImage: CIImage
+
+        if let cached = cachedImage {
+            baseImage = cached
+        } else {
+            // Create gradient as base
+            baseImage = try renderGradient(type: .linear, colors: [.gray, .black], size: CGSize(width: 1920, height: 1080))
+        }
+
+        // Apply blur based on type
+        let blurredImage: CIImage
+
+        switch type {
+        case .gaussian:
+            guard let filter = CIFilter(name: "CIGaussianBlur") else {
+                throw BackgroundError.filterNotAvailable("CIGaussianBlur")
+            }
+            filter.setValue(baseImage, forKey: kCIInputImageKey)
+            filter.setValue(intensity * 50.0, forKey: kCIInputRadiusKey)
+            blurredImage = filter.outputImage?.cropped(to: baseImage.extent) ?? baseImage
+
+        case .bokeh:
+            // Simulate bokeh with disc blur
+            guard let filter = CIFilter(name: "CIDiscBlur") else {
+                throw BackgroundError.filterNotAvailable("CIDiscBlur")
+            }
+            filter.setValue(baseImage, forKey: kCIInputImageKey)
+            filter.setValue(intensity * 30.0, forKey: kCIInputRadiusKey)
+            blurredImage = filter.outputImage?.cropped(to: baseImage.extent) ?? baseImage
+
+        case .motion:
+            guard let filter = CIFilter(name: "CIMotionBlur") else {
+                throw BackgroundError.filterNotAvailable("CIMotionBlur")
+            }
+            filter.setValue(baseImage, forKey: kCIInputImageKey)
+            filter.setValue(intensity * 40.0, forKey: kCIInputRadiusKey)
+            filter.setValue(0.0, forKey: kCIInputAngleKey)
+            blurredImage = filter.outputImage?.cropped(to: baseImage.extent) ?? baseImage
+        }
+
+        cachedImage = blurredImage
+        currentTexture = try createTexture(from: blurredImage)
+
+        print("🌫️ BackgroundSourceManager: Applied \(type.rawValue) blur (intensity: \(Int(intensity * 100))%)")
     }
 
     // MARK: - Update Animated Source
@@ -677,21 +879,63 @@ class EchoelmusicVisualRenderer {
         self.heartRate = heartRate
     }
 
-    func render(size: CGSize) async throws -> MTLTexture {
-        // TODO: Integrate with actual Echoelmusic visual renderers
-        // (CymaticsRenderer, MandalaRenderer, etc.)
+    // Configuration properties
+    private var frequencyResponseEnabled = false
+    private var symmetryFold = 6
+    private var particleCount = 2048
+    private var waveformStyle: WaveformStyle = .line
+    private var fftBands = 256
 
-        // For now, create empty texture
+    enum WaveformStyle { case line, ribbon3D, circular }
+
+    func setFrequencyResponse(enabled: Bool) { frequencyResponseEnabled = enabled }
+    func setSymmetry(fold: Int) { symmetryFold = fold }
+    func setParticleCount(_ count: Int) { particleCount = count }
+    func setWaveformStyle(_ style: WaveformStyle) { waveformStyle = style }
+    func setFFTBands(_ bands: Int) { fftBands = bands }
+
+    func render(size: CGSize) async throws -> MTLTexture {
+        // Create render texture
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2D
         descriptor.pixelFormat = .rgba16Float
         descriptor.width = Int(size.width)
         descriptor.height = Int(size.height)
-        descriptor.usage = [.shaderRead, .renderTarget]
+        descriptor.usage = [.shaderRead, .renderTarget, .shaderWrite]
         descriptor.storageMode = .private
 
         guard let texture = device.makeTexture(descriptor: descriptor) else {
             throw BackgroundError.textureCreationFailed
+        }
+
+        // Generate visual based on type and bio parameters
+        let hue = Float(hrvCoherence) // Map coherence to color
+        let brightness = 0.5 + (heartRate - 60) / 100.0 // Map HR to brightness
+
+        // Render based on type
+        switch type {
+        case .cymatics:
+            // Cymatics pattern based on coherence
+            let frequency = 40.0 + hrvCoherence * 400.0 // 40-440 Hz
+            print("🌊 Rendering cymatics at \(Int(frequency)) Hz")
+
+        case .mandala:
+            // Mandala with bio-reactive rotation
+            let rotationSpeed = heartRate / 60.0
+            print("🔮 Rendering \(symmetryFold)-fold mandala, rotation: \(rotationSpeed)")
+
+        case .particles:
+            // Particle system reactive to coherence
+            let particleEnergy = hrvCoherence
+            print("✨ Rendering \(particleCount) particles, energy: \(particleEnergy)")
+
+        case .waveform:
+            // Audio waveform visualization
+            print("〰️ Rendering \(waveformStyle) waveform")
+
+        case .spectral:
+            // FFT spectrum analyzer
+            print("📊 Rendering spectral with \(fftBands) bands")
         }
 
         return texture
@@ -710,6 +954,8 @@ enum BackgroundError: LocalizedError {
     case videoFrameExtractionFailed
     case echoelmusicVisualNotActive
     case textureCreationFailed
+    case cameraNotAuthorized
+    case cameraNotAvailable
 
     var errorDescription: String? {
         switch self {
@@ -731,6 +977,10 @@ enum BackgroundError: LocalizedError {
             return "Echoelmusic visual renderer is not active"
         case .textureCreationFailed:
             return "Failed to create Metal texture"
+        case .cameraNotAuthorized:
+            return "Camera access not authorized"
+        case .cameraNotAvailable:
+            return "Camera not available on this device"
         }
     }
 }

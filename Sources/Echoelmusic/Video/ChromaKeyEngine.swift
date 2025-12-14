@@ -425,15 +425,113 @@ class ChromaKeyEngine: ObservableObject {
         case .keyOnly:
             return matteTexture ?? outputTexture
         case .splitScreen:
-            // TODO: Implement split screen composite
-            return outputTexture
+            return renderSplitScreen(original: sourceTexture, keyed: outputTexture) ?? outputTexture
         case .edgeOverlay:
-            // TODO: Implement edge quality overlay
-            return outputTexture
+            return renderEdgeOverlay(matte: matteTexture, output: outputTexture) ?? outputTexture
         case .spillMap:
-            // TODO: Implement spill map visualization
-            return outputTexture
+            return renderSpillMap(original: sourceTexture, despilled: despilledTexture) ?? outputTexture
         }
+    }
+
+    // MARK: - Preview Mode Renderers
+
+    private func renderSplitScreen(original: MTLTexture?, keyed: MTLTexture) -> MTLTexture? {
+        guard let original = original,
+              let commandBuffer = commandQueue.makeCommandBuffer() else {
+            return nil
+        }
+
+        // Create output texture
+        guard let splitTexture = try? createTexture(width: keyed.width, height: keyed.height, label: "SplitScreen") else {
+            return nil
+        }
+
+        // Use blit encoder to copy left half from original, right half from keyed
+        if let blitEncoder = commandBuffer.makeBlitCommandEncoder() {
+            let halfWidth = keyed.width / 2
+
+            // Left side: original
+            blitEncoder.copy(
+                from: original,
+                sourceSlice: 0, sourceLevel: 0,
+                sourceOrigin: MTLOrigin(x: 0, y: 0, z: 0),
+                sourceSize: MTLSize(width: halfWidth, height: keyed.height, depth: 1),
+                to: splitTexture,
+                destinationSlice: 0, destinationLevel: 0,
+                destinationOrigin: MTLOrigin(x: 0, y: 0, z: 0)
+            )
+
+            // Right side: keyed
+            blitEncoder.copy(
+                from: keyed,
+                sourceSlice: 0, sourceLevel: 0,
+                sourceOrigin: MTLOrigin(x: halfWidth, y: 0, z: 0),
+                sourceSize: MTLSize(width: halfWidth, height: keyed.height, depth: 1),
+                to: splitTexture,
+                destinationSlice: 0, destinationLevel: 0,
+                destinationOrigin: MTLOrigin(x: halfWidth, y: 0, z: 0)
+            )
+
+            blitEncoder.endEncoding()
+        }
+
+        commandBuffer.commit()
+        commandBuffer.waitUntilCompleted()
+
+        return splitTexture
+    }
+
+    private func renderEdgeOverlay(matte: MTLTexture?, output: MTLTexture) -> MTLTexture? {
+        guard let matte = matte else { return nil }
+
+        // Edge quality visualization: Green = good edges, Red = problematic edges
+        // Uses the edge-detected matte to show quality
+
+        guard let commandBuffer = commandQueue.makeCommandBuffer(),
+              let overlayTexture = try? createTexture(width: output.width, height: output.height, label: "EdgeOverlay") else {
+            return nil
+        }
+
+        // For now, return the matte texture as edge visualization
+        // In production: Apply color mapping shader to highlight edge quality
+
+        if let blitEncoder = commandBuffer.makeBlitCommandEncoder() {
+            blitEncoder.copy(from: matte, to: overlayTexture)
+            blitEncoder.endEncoding()
+        }
+
+        commandBuffer.commit()
+        commandBuffer.waitUntilCompleted()
+
+        return overlayTexture
+    }
+
+    private func renderSpillMap(original: MTLTexture?, despilled: MTLTexture?) -> MTLTexture? {
+        guard let original = original,
+              let despilled = despilled,
+              let commandBuffer = commandQueue.makeCommandBuffer() else {
+            return nil
+        }
+
+        // Spill map shows the difference between original and despilled
+        // Highlights where green/blue spill was removed
+
+        guard let spillTexture = try? createTexture(width: original.width, height: original.height, label: "SpillMap") else {
+            return nil
+        }
+
+        // In production: Use compute shader to calculate |original - despilled|
+        // For now, return the despilled texture
+
+        if let blitEncoder = commandBuffer.makeBlitCommandEncoder() {
+            blitEncoder.copy(from: despilled, to: spillTexture)
+            blitEncoder.endEncoding()
+        }
+
+        commandBuffer.commit()
+        commandBuffer.waitUntilCompleted()
+
+        return spillTexture
     }
 
     // MARK: - Texture Creation

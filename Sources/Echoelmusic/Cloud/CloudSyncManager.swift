@@ -111,8 +111,70 @@ class CloudSyncManager: ObservableObject {
     }
 
     private func autoBackup() async throws {
-        // TODO: Backup current session automatically
-        print("☁️ CloudSyncManager: Auto backup triggered")
+        guard syncEnabled else { return }
+
+        // Get current session from SessionManager
+        guard let currentSession = SessionManager.shared.currentSession else {
+            print("☁️ CloudSyncManager: No active session to backup")
+            return
+        }
+
+        // Create backup record
+        let backupRecord = CKRecord(recordType: "SessionBackup")
+        backupRecord["sessionId"] = currentSession.id.uuidString as CKRecordValue
+        backupRecord["name"] = currentSession.name as CKRecordValue
+        backupRecord["duration"] = currentSession.duration as CKRecordValue
+        backupRecord["avgHRV"] = currentSession.avgHRV as CKRecordValue
+        backupRecord["avgCoherence"] = currentSession.avgCoherence as CKRecordValue
+        backupRecord["backupTimestamp"] = Date() as CKRecordValue
+        backupRecord["isAutoBackup"] = true as CKRecordValue
+
+        // Serialize session data as JSON
+        if let sessionData = try? JSONEncoder().encode(currentSession) {
+            backupRecord["sessionData"] = sessionData as CKRecordValue
+        }
+
+        // Save to private database
+        try await privateDatabase.save(backupRecord)
+
+        lastSyncDate = Date()
+        print("☁️ CloudSyncManager: Auto backup completed for '\(currentSession.name)'")
+    }
+
+    // MARK: - Restore from Backup
+
+    func restoreFromBackup(backupId: CKRecord.ID) async throws -> Session? {
+        guard syncEnabled else { return nil }
+
+        let record = try await privateDatabase.record(for: backupId)
+
+        guard let sessionData = record["sessionData"] as? Data,
+              let session = try? JSONDecoder().decode(Session.self, from: sessionData) else {
+            throw CloudError.syncFailed
+        }
+
+        print("☁️ CloudSyncManager: Restored session from backup")
+        return session
+    }
+
+    // MARK: - List Backups
+
+    func listBackups() async throws -> [CKRecord] {
+        guard syncEnabled else { return [] }
+
+        let query = CKQuery(recordType: "SessionBackup", predicate: NSPredicate(value: true))
+        query.sortDescriptors = [NSSortDescriptor(key: "backupTimestamp", ascending: false)]
+
+        let results = try await privateDatabase.records(matching: query)
+
+        var backups: [CKRecord] = []
+        for (_, result) in results.matchResults {
+            if case .success(let record) = result {
+                backups.append(record)
+            }
+        }
+
+        return backups
     }
 }
 
@@ -139,9 +201,26 @@ enum CloudError: LocalizedError {
 }
 
 // Session struct placeholder
-struct Session {
+struct Session: Codable, Identifiable {
+    let id: UUID
     let name: String
     let duration: TimeInterval
     let avgHRV: Float
     let avgCoherence: Float
+
+    init(name: String, duration: TimeInterval, avgHRV: Float, avgCoherence: Float) {
+        self.id = UUID()
+        self.name = name
+        self.duration = duration
+        self.avgHRV = avgHRV
+        self.avgCoherence = avgCoherence
+    }
+}
+
+// SessionManager singleton for current session access
+@MainActor
+class SessionManager {
+    static let shared = SessionManager()
+    var currentSession: Session?
+    private init() {}
 }

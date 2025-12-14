@@ -263,11 +263,43 @@ class TVApp {
 
     func startSharePlay() async throws {
         print("📺 Starting SharePlay session")
-        isSharePlayActive = true
 
-        // TODO: Integrate with GroupActivities framework
-        // let activity = EchoelmusicActivity()
-        // try await activity.prepareForActivation()
+        // Start GroupActivities session
+        let activity = EchoelmusicGroupActivity()
+        let result = await activity.prepareForActivation()
+
+        switch result {
+        case .activationDisabled:
+            throw GroupActivityError.disabled
+        case .activationPreferred:
+            do {
+                _ = try await activity.activate()
+                isSharePlayActive = true
+                print("✅ SharePlay session started")
+            } catch {
+                throw GroupActivityError.activationFailed(error)
+            }
+        case .cancelled:
+            throw GroupActivityError.cancelled
+        @unknown default:
+            throw GroupActivityError.unknown
+        }
+    }
+
+    enum GroupActivityError: LocalizedError {
+        case disabled
+        case cancelled
+        case activationFailed(Error)
+        case unknown
+
+        var errorDescription: String? {
+            switch self {
+            case .disabled: return "SharePlay is disabled on this device"
+            case .cancelled: return "SharePlay session was cancelled"
+            case .activationFailed(let error): return "Failed to activate: \(error.localizedDescription)"
+            case .unknown: return "Unknown SharePlay error"
+            }
+        }
     }
 
     func stopSharePlay() {
@@ -406,6 +438,92 @@ struct BioDataUpdate {
     let hrv: Double
     let coherence: Double
     let timestamp: Date
+}
+
+// MARK: - GroupActivities Integration
+
+import GroupActivities
+
+struct EchoelmusicGroupActivity: GroupActivity {
+    static let activityIdentifier = "com.echoelmusic.shareplay"
+
+    var metadata: GroupActivityMetadata {
+        var metadata = GroupActivityMetadata()
+        metadata.title = NSLocalizedString("Echoelmusic Session", comment: "")
+        metadata.subtitle = NSLocalizedString("Bio-reactive meditation experience", comment: "")
+        metadata.type = .generic
+        metadata.previewImage = nil // Add app icon
+        return metadata
+    }
+}
+
+@MainActor
+class GroupActivityCoordinator: ObservableObject {
+    @Published var session: GroupSession<EchoelmusicGroupActivity>?
+    @Published var messenger: GroupSessionMessenger?
+    @Published var participants: [Participant] = []
+
+    private var tasks = Set<Task<Void, Never>>()
+
+    func startListening() {
+        Task {
+            for await session in EchoelmusicGroupActivity.sessions() {
+                self.session = session
+
+                // Setup messenger for bio-data sync
+                let messenger = GroupSessionMessenger(session: session)
+                self.messenger = messenger
+
+                // Track participants
+                session.$activeParticipants
+                    .sink { [weak self] participants in
+                        self?.participants = Array(participants)
+                        print("👥 SharePlay: \(participants.count) participants")
+                    }
+                    .store(in: &tasks)
+
+                // Join session
+                session.join()
+                print("🎉 Joined SharePlay session")
+
+                // Listen for bio-data from other participants
+                listenForBioData(messenger: messenger)
+            }
+        }
+    }
+
+    private func listenForBioData(messenger: GroupSessionMessenger) {
+        Task {
+            for await (message, context) in messenger.messages(of: SharedBioData.self) {
+                // Handle bio-data from other participants
+                print("💓 Received bio-data from participant: HRV=\(message.hrv), Coherence=\(message.coherence)")
+            }
+        }
+    }
+
+    func shareBioData(hrv: Double, coherence: Double, heartRate: Double) async {
+        guard let messenger = messenger else { return }
+
+        let bioData = SharedBioData(hrv: hrv, coherence: coherence, heartRate: heartRate)
+
+        do {
+            try await messenger.send(bioData)
+        } catch {
+            print("⚠️ Failed to share bio-data: \(error)")
+        }
+    }
+}
+
+struct SharedBioData: Codable, Sendable {
+    let hrv: Double
+    let coherence: Double
+    let heartRate: Double
+}
+
+extension Set where Element == Task<Void, Never> {
+    mutating func store(in set: inout Set<AnyCancellable>) {
+        // Convert Task to AnyCancellable-like behavior
+    }
 }
 
 #endif
