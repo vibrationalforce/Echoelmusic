@@ -70,6 +70,11 @@ struct VaporwaveSettings: View {
                             visualSettings
                         }
 
+                        // Diagnostics
+                        settingsSection(title: "DIAGNOSTICS", icon: "chart.xyaxis.line") {
+                            diagnosticsSection
+                        }
+
                         // About
                         settingsSection(title: "ABOUT", icon: "info.circle") {
                             aboutSection
@@ -411,6 +416,77 @@ struct VaporwaveSettings: View {
                     .fill(Color.white.opacity(0.05))
             )
         }
+    }
+
+    // MARK: - Diagnostics Section
+
+    private var diagnosticsSection: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            // System Health
+            NavigationLink(destination: SystemHealthView().environmentObject(SelfHealingEngine.shared)) {
+                diagnosticsRow(
+                    icon: "heart.circle",
+                    title: "System Health",
+                    subtitle: "Auto-healing status & flow state",
+                    color: VaporwaveColors.coherenceHigh
+                )
+            }
+
+            // Performance Dashboard
+            NavigationLink(destination: PerformanceDashboardView().environmentObject(audioEngine)) {
+                diagnosticsRow(
+                    icon: "speedometer",
+                    title: "Performance Monitor",
+                    subtitle: "CPU, memory, FPS & SIMD metrics",
+                    color: VaporwaveColors.neonCyan
+                )
+            }
+
+            // Info Card
+            HStack(spacing: VaporwaveSpacing.sm) {
+                Image(systemName: "info.circle.fill")
+                    .foregroundColor(VaporwaveColors.lavender)
+
+                Text("Real-time system metrics and auto-healing events")
+                    .font(VaporwaveTypography.caption())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .padding(VaporwaveSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(VaporwaveColors.lavender.opacity(0.1))
+            )
+        }
+    }
+
+    private func diagnosticsRow(icon: String, title: String, subtitle: String, color: Color) -> some View {
+        HStack(spacing: VaporwaveSpacing.md) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundColor(color)
+                .frame(width: 32)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(VaporwaveTypography.body())
+                    .foregroundColor(VaporwaveColors.textPrimary)
+
+                Text(subtitle)
+                    .font(VaporwaveTypography.caption())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12))
+                .foregroundColor(VaporwaveColors.textTertiary)
+        }
+        .padding(VaporwaveSpacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.white.opacity(0.05))
+        )
     }
 
     // MARK: - About Section
