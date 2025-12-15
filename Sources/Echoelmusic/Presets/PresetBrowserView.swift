@@ -11,7 +11,7 @@ struct PresetBrowserView: View {
 
     // MARK: - Properties
 
-    @StateObject private var presetManager = PresetManager()
+    @EnvironmentObject var presetManager: PresetManager
     @State private var searchText = ""
     @State private var selectedCategory: PresetCategory?
     @State private var showingFactoryOnly = false
@@ -360,5 +360,6 @@ struct ShareSheet: UIViewControllerRepresentable {
 struct PresetBrowserView_Previews: PreviewProvider {
     static var previews: some View {
         PresetBrowserView()
+            .environmentObject(PresetManager())
     }
 }

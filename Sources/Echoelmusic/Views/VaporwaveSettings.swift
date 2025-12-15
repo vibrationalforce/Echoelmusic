@@ -9,6 +9,7 @@ struct VaporwaveSettings: View {
 
     @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var audioEngine: AudioEngine
+    @EnvironmentObject var presetManager: PresetManager
     @Environment(\.dismiss) var dismiss
 
     // MARK: - State
@@ -47,6 +48,11 @@ struct VaporwaveSettings: View {
                         // Bio-Reactive Mappings
                         settingsSection(title: "BIO-REACTIVE", icon: "heart.circle") {
                             bioReactiveSettings
+                        }
+
+                        // Presets
+                        settingsSection(title: "PRESETS", icon: "waveform.badge.magnifyingglass") {
+                            presetsSection
                         }
 
                         // OSC Output
@@ -294,6 +300,119 @@ struct VaporwaveSettings: View {
         }
     }
 
+    // MARK: - Presets Section
+
+    private var presetsSection: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            // Quick Stats
+            HStack(spacing: VaporwaveSpacing.lg) {
+                VStack(spacing: 4) {
+                    Text("\(presetManager.factoryPresets.count)")
+                        .font(VaporwaveTypography.dataSmall())
+                        .foregroundColor(VaporwaveColors.neonPurple)
+                    Text("Factory")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+
+                Divider()
+                    .frame(height: 30)
+                    .background(Color.white.opacity(0.1))
+
+                VStack(spacing: 4) {
+                    Text("\(presetManager.userPresets.count)")
+                        .font(VaporwaveTypography.dataSmall())
+                        .foregroundColor(VaporwaveColors.neonCyan)
+                    Text("Saved")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+
+                Divider()
+                    .frame(height: 30)
+                    .background(Color.white.opacity(0.1))
+
+                VStack(spacing: 4) {
+                    Text("\(presetManager.favoritePresets.count)")
+                        .font(VaporwaveTypography.dataSmall())
+                        .foregroundColor(VaporwaveColors.heartRate)
+                    Text("Favorites")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .padding(.vertical, VaporwaveSpacing.sm)
+
+            // Browse Button
+            NavigationLink(destination: PresetBrowserView().environmentObject(presetManager).environmentObject(audioEngine)) {
+                HStack {
+                    Image(systemName: "square.grid.2x2")
+                        .font(.system(size: 16))
+                        .foregroundColor(VaporwaveColors.neonPurple)
+
+                    Text("Browse All Presets")
+                        .font(VaporwaveTypography.body())
+                        .foregroundColor(VaporwaveColors.textPrimary)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .padding(VaporwaveSpacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(VaporwaveColors.neonPurple.opacity(0.1))
+                )
+            }
+
+            // Quick Actions
+            HStack(spacing: VaporwaveSpacing.sm) {
+                quickActionButton(
+                    icon: "square.and.arrow.down",
+                    title: "Import",
+                    action: { /* Import preset */ }
+                )
+
+                quickActionButton(
+                    icon: "square.and.arrow.up",
+                    title: "Export",
+                    action: { /* Export preset */ }
+                )
+
+                quickActionButton(
+                    icon: "icloud.and.arrow.up",
+                    title: "Sync",
+                    action: { presetManager.syncFromCloud() }
+                )
+            }
+        }
+    }
+
+    private func quickActionButton(icon: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: VaporwaveSpacing.xs) {
+                Image(systemName: icon)
+                    .font(.system(size: 18))
+                    .foregroundColor(VaporwaveColors.neonCyan)
+
+                Text(title)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(VaporwaveColors.textSecondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(VaporwaveSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.white.opacity(0.05))
+            )
+        }
+    }
+
     // MARK: - About Section
 
     private var aboutSection: some View {
@@ -373,4 +492,5 @@ struct VaporwaveSettings: View {
     VaporwaveSettings()
         .environmentObject(HealthKitManager())
         .environmentObject(AudioEngine())
+        .environmentObject(PresetManager())
 }

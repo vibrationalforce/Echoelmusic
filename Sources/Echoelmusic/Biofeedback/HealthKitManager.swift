@@ -504,4 +504,119 @@ class HealthKitManager: ObservableObject {
     deinit {
         stopMonitoring()
     }
+
+
+    // MARK: - Test Mode Support (For Integration Tests)
+
+    #if DEBUG
+    /// Test mode flag - when true, uses injected test data instead of HealthKit
+    var testMode: Bool = false
+
+    /// Injected test data (used when testMode = true)
+    private var testHeartRate: Double = 75.0
+    private var testHRV: Double = 50.0
+    private var testBreathingRateValue: Double = 12.0
+    private var testCoherence: Double = 50.0
+    private var testPermissionsGranted: Bool = true
+    private var testError: HealthKitError?
+
+    /// Current heart rate (supports test mode)
+    var currentHeartRate: Double {
+        return testMode ? testHeartRate : heartRate
+    }
+
+    /// Current HRV (supports test mode)
+    var currentHRV: Double {
+        return testMode ? testHRV : hrvRMSSD
+    }
+
+    /// Inject test heart rate data (for integration tests)
+    func injectTestHRV(value: Double) {
+        testHRV = value
+        if testMode {
+            Task { @MainActor in
+                self.hrvRMSSD = value
+            }
+        }
+    }
+
+    /// Inject test breathing rate (for integration tests)
+    func injectTestBreathingRate(rate: Double) {
+        testBreathingRateValue = rate
+        if testMode {
+            Task { @MainActor in
+                self.breathingRate = rate
+            }
+        }
+    }
+
+    /// Set test permissions (for integration tests)
+    func setTestPermissions(granted: Bool) {
+        testPermissionsGranted = granted
+        if testMode {
+            Task { @MainActor in
+                self.isAuthorized = granted
+            }
+        }
+    }
+
+    /// Clear test cache (for integration tests)
+    func clearTestCache() {
+        if testMode {
+            rrIntervalBuffer.removeAll()
+        }
+    }
+
+    /// Simulate HealthKit error (for integration tests)
+    func simulateError(_ error: HealthKitError) {
+        testError = error
+        if testMode {
+            Task { @MainActor in
+                self.errorMessage = error.description
+            }
+        }
+    }
+
+    /// Clear simulated error (for integration tests)
+    func clearError() {
+        testError = nil
+        if testMode {
+            Task { @MainActor in
+                self.errorMessage = nil
+            }
+        }
+    }
+
+    /// Inject mock heart rate (for integration tests)
+    func injectMockHeartRate(_ bpm: Double) {
+        testHeartRate = bpm
+        if testMode {
+            Task { @MainActor in
+                self.heartRate = bpm
+            }
+        }
+    }
+    #endif
 }
+
+
+// MARK: - HealthKit Test Error Types
+
+#if DEBUG
+enum HealthKitError: Error, CustomStringConvertible {
+    case dataUnavailable
+    case permissionDenied
+    case queryFailed
+
+    var description: String {
+        switch self {
+        case .dataUnavailable:
+            return "HealthKit data unavailable"
+        case .permissionDenied:
+            return "HealthKit permission denied"
+        case .queryFailed:
+            return "HealthKit query failed"
+        }
+    }
+}
+#endif

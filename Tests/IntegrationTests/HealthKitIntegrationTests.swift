@@ -361,40 +361,18 @@ class HealthKitIntegrationTests: IntegrationTestBase {
     }
 }
 
-// MARK: - HealthKitManager Test Extensions
+// MARK: - Test Configuration
 
-extension HealthKitManager {
-    func injectTestHRV(value: Double) {
-        // Test implementation
+extension HealthKitIntegrationTests {
+    override func setUp() {
+        super.setUp()
+        // Enable test mode for HealthKitManager
+        healthKitManager.testMode = true
     }
 
-    func injectTestBreathingRate(rate: Double) {
-        // Test implementation
+    override func tearDown() {
+        // Disable test mode
+        healthKitManager.testMode = false
+        super.tearDown()
     }
-
-    func setTestPermissions(granted: Bool) {
-        // Test implementation
-    }
-
-    func clearTestCache() {
-        // Test implementation
-    }
-
-    func simulateError(_ error: HealthKitError) {
-        // Test implementation
-    }
-
-    func clearError() {
-        // Test implementation
-    }
-
-    var currentHeartRate: Double {
-        return 0.0 // Test implementation
-    }
-}
-
-enum HealthKitError {
-    case dataUnavailable
-    case permissionDenied
-    case queryFailed
 }

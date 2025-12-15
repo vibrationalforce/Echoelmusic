@@ -21,6 +21,9 @@ struct EchoelmusicApp: App {
     /// UnifiedControlHub for multimodal input
     @StateObject private var unifiedControlHub: UnifiedControlHub
 
+    /// Preset manager for saving/loading audio configurations
+    @StateObject private var presetManager = PresetManager()
+
     init() {
         // Initialize AudioEngine with MicrophoneManager
         let micManager = MicrophoneManager()
@@ -66,6 +69,7 @@ struct EchoelmusicApp: App {
                 .environmentObject(healthKitManager)        // Makes health data available
                 .environmentObject(recordingEngine)         // Makes recording engine available
                 .environmentObject(unifiedControlHub)       // Makes unified control available
+                .environmentObject(presetManager)           // Makes preset management available
                 .preferredColorScheme(.dark)                // Force dark theme
                 .onAppear {
                     // Connect HealthKit to AudioEngine for bio-parameter mapping
