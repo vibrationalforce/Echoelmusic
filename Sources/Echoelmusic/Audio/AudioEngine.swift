@@ -376,4 +376,10 @@ class AudioEngine: ObservableObject {
     var bioParameterSummary: String {
         bioParameterMapper.parameterSummary
     }
+
+    /// Get current audio level from microphone input
+    /// - Returns: Audio level from 0.0 (silence) to 1.0 (maximum)
+    func getCurrentLevel() -> Double {
+        return Double(microphoneManager.audioLevel)
+    }
 }

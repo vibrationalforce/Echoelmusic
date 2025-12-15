@@ -623,8 +623,8 @@ public class UnifiedControlHub: ObservableObject {
         let bioParams = MIDIToVisualMapper.BioParameters(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
-            audioLevel: 0.5      // TODO: Get from audio engine
+            breathingRate: healthKit.breathingRate,  // ✅ Real-time breathing rate from HRV spectral analysis
+            audioLevel: audioEngine?.getCurrentLevel() ?? 0.5  // ✅ Live audio level from engine
         )
 
         visualMapper.updateBioParameters(bioParams)
@@ -638,7 +638,7 @@ public class UnifiedControlHub: ObservableObject {
         let bioData = MIDIToLightMapper.BioData(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0  // TODO: Calculate from HRV
+            breathingRate: healthKit.breathingRate  // ✅ Real-time breathing rate from HRV
         )
 
         // Update Push 3 LED patterns
