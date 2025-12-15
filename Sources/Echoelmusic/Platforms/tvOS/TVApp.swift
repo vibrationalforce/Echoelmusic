@@ -2,6 +2,8 @@ import Foundation
 import UIKit
 import AVFoundation
 import Combine
+import GroupActivities
+import os.log
 
 #if os(tvOS)
 
@@ -47,7 +49,13 @@ class TVApp {
     private let focusEngine: TVFocusEngine
     private let airPlayReceiver: AirPlayReceiver
 
+    // SharePlay / GroupActivities
+    private var groupSession: GroupSession<EchoelmusicActivity>?
+    private var groupStateObserver: Task<Void, Never>?
+
     private var cancellables = Set<AnyCancellable>()
+
+    private static let logger = Logger(subsystem: "com.echoelmusic.tv", category: "TVApp")
 
     // MARK: - Visualization Mode
 
@@ -262,17 +270,78 @@ class TVApp {
     // MARK: - SharePlay
 
     func startSharePlay() async throws {
-        print("📺 Starting SharePlay session")
-        isSharePlayActive = true
+        Self.logger.info("Starting SharePlay session")
 
-        // TODO: Integrate with GroupActivities framework
-        // let activity = EchoelmusicActivity()
-        // try await activity.prepareForActivation()
+        // Create GroupActivity
+        let activity = EchoelmusicActivity()
+
+        // Prepare for activation
+        switch await activity.prepareForActivation() {
+        case .activationPreferred:
+            do {
+                _ = try await activity.activate()
+                Self.logger.info("SharePlay activity activated successfully")
+            } catch {
+                Self.logger.error("Failed to activate SharePlay: \(error.localizedDescription)")
+                throw error
+            }
+
+        case .activationDisabled:
+            Self.logger.warning("SharePlay activation disabled")
+            return
+
+        case .cancelled:
+            Self.logger.info("SharePlay activation cancelled by user")
+            return
+
+        @unknown default:
+            Self.logger.warning("Unknown SharePlay activation state")
+            return
+        }
+
+        // Configure GroupSession
+        configureGroupSession()
+
+        isSharePlayActive = true
     }
 
     func stopSharePlay() {
-        print("📺 Stopping SharePlay session")
+        Self.logger.info("Stopping SharePlay session")
+
+        groupSession?.leave()
+        groupSession = nil
+        groupStateObserver?.cancel()
+        groupStateObserver = nil
+
         isSharePlayActive = false
+    }
+
+    private func configureGroupSession() {
+        // Observe GroupSession changes
+        groupStateObserver = Task {
+            for await session in EchoelmusicActivity.sessions() {
+                groupSession = session
+
+                Self.logger.info("GroupSession joined with \(session.activeParticipants.count) participants")
+
+                // Listen for state changes
+                session.$state
+                    .sink { state in
+                        Self.logger.debug("GroupSession state: \(String(describing: state))")
+                    }
+                    .store(in: &self.cancellables)
+
+                // Listen for participant changes
+                session.$activeParticipants
+                    .sink { participants in
+                        Self.logger.info("Active participants: \(participants.count)")
+                    }
+                    .store(in: &self.cancellables)
+
+                // Join the session
+                session.join()
+            }
+        }
     }
 
     // MARK: - Visualization Control
@@ -296,8 +365,10 @@ class TVVisualizationEngine {
     private var currentMode: TVApp.VisualizationMode = .spectrum
     private var intensity: Float = 1.0
 
+    private static let logger = Logger(subsystem: "com.echoelmusic.tv", category: "VisualizationEngine")
+
     func start(mode: TVApp.VisualizationMode) async {
-        print("🎨 TV Visualization Engine started: \(mode.rawValue)")
+        Self.logger.info("TV Visualization Engine started: \(mode.rawValue)")
         isRunning = true
         currentMode = mode
 
@@ -406,6 +477,23 @@ struct BioDataUpdate {
     let hrv: Double
     let coherence: Double
     let timestamp: Date
+}
+
+// MARK: - GroupActivity for SharePlay
+
+/// GroupActivity for SharePlay meditation/therapy sessions
+struct EchoelmusicActivity: GroupActivity {
+    static let activityIdentifier = "com.echoelmusic.tv.shareplay"
+
+    var metadata: GroupActivityMetadata {
+        var metadata = GroupActivityMetadata()
+        metadata.type = .generic
+        metadata.title = "Echoelmusic Session"
+        metadata.subtitle = "Group Meditation & Bio-Reactive Audio"
+        metadata.previewImage = nil // TODO: Add preview image
+        metadata.supportsContinuationOnTV = true
+        return metadata
+    }
 }
 
 #endif
