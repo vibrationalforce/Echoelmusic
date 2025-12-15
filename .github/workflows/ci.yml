@@ -201,11 +201,42 @@ jobs:
           -enableCodeCoverage YES \
           | xcpretty
 
-  # Job 4: Performance Tests (Swift)
+  # Job 4: Integration Tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: macos-14
+    needs: [build-test-ios, build-test-macos]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Xcode
+      run: sudo xcode-select -s /Applications/Xcode_15.2.app
+
+    - name: Run Integration Tests
+      run: |
+        echo "🔗 Running integration test suite..."
+        xcodebuild test \
+          -scheme Echoelmusic \
+          -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+          -only-testing:IntegrationTests \
+          -resultBundlePath IntegrationTestResults \
+          | xcpretty
+      continue-on-error: false  # BLOCKING
+
+    - name: Upload Integration Test Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: integration-test-results
+        path: IntegrationTestResults
+
+  # Job 5: Performance Tests (Swift)
   performance-tests:
     name: Performance & Memory Tests
     runs-on: macos-14
-    needs: [build-test-ios, build-test-macos]
+    needs: [build-test-ios, build-test-macos, integration-tests]
 
     steps:
     - name: Checkout code
@@ -259,7 +290,7 @@ jobs:
           swift_perf_results.txt
           PerformanceBenchmarkResults
 
-  # Job 5: C++ SIMD Benchmarks
+  # Job 6: C++ SIMD Benchmarks
   cpp-benchmarks:
     name: C++ SIMD Performance Benchmarks
     runs-on: macos-14
@@ -306,7 +337,7 @@ jobs:
         name: cpp-benchmark-results
         path: cpp_benchmark_output.txt
 
-  # Job 6: Performance Validation
+  # Job 7: Performance Validation
   validate-performance:
     name: Validate Performance Against Baseline
     runs-on: ubuntu-latest
@@ -352,7 +383,7 @@ jobs:
         echo "Review the validation report above for details."
         exit 1
 
-  # Job 7: Legacy Device Compatibility
+  # Job 8: Legacy Device Compatibility
   legacy-device-tests:
     name: Legacy Device Compatibility
     runs-on: macos-14
@@ -378,7 +409,7 @@ jobs:
           -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testLegacyDeviceDetection \
           | xcpretty
 
-  # Job 8: Security Scan
+  # Job 9: Security Scan
   security-scan:
     name: Security Vulnerability Scan
     runs-on: macos-14
@@ -422,7 +453,7 @@ jobs:
         echo "✅ Security scan completed"
       continue-on-error: false  # BLOCKING
 
-  # Job 9: Build Archive (Release)
+  # Job 10: Build Archive (Release)
   build-archive:
     name: Build Archive (Release)
     runs-on: macos-14
@@ -464,7 +495,7 @@ jobs:
         path: build/Echoelmusic.xcarchive
         retention-days: 30
 
-  # Job 10: Documentation Generation
+  # Job 11: Documentation Generation
   generate-docs:
     name: Generate Documentation
     runs-on: macos-14
@@ -488,7 +519,7 @@ jobs:
         fi
       continue-on-error: true
 
-  # Job 11: Deployment (TestFlight)
+  # Job 12: Deployment (TestFlight)
   deploy-testflight:
     name: Deploy to TestFlight
     runs-on: macos-14
@@ -506,11 +537,11 @@ jobs:
         echo "This is a placeholder for actual deployment"
       continue-on-error: true
 
-  # Job 12: Notification
+  # Job 13: Notification
   notify:
     name: Send Notifications
     runs-on: ubuntu-latest
-    needs: [build-test-ios, build-test-macos, performance-tests, cpp-benchmarks, validate-performance]
+    needs: [build-test-ios, build-test-macos, integration-tests, performance-tests, cpp-benchmarks, validate-performance]
     if: always()
 
     steps:
@@ -519,15 +550,17 @@ jobs:
         echo "📊 Build Summary:"
         echo "iOS Tests: ${{ needs.build-test-ios.result }}"
         echo "macOS Tests: ${{ needs.build-test-macos.result }}"
+        echo "Integration Tests: ${{ needs.integration-tests.result }}"
         echo "Swift Performance Tests: ${{ needs.performance-tests.result }}"
         echo "C++ SIMD Benchmarks: ${{ needs.cpp-benchmarks.result }}"
         echo "Performance Validation: ${{ needs.validate-performance.result }}"
 
         if [ "${{ needs.build-test-ios.result }}" == "success" ] && \
            [ "${{ needs.build-test-macos.result }}" == "success" ] && \
+           [ "${{ needs.integration-tests.result }}" == "success" ] && \
            [ "${{ needs.validate-performance.result }}" == "success" ]; then
-          echo "✅ All builds and performance tests passed!"
+          echo "✅ All builds, integration tests, and performance tests passed!"
         else
-          echo "❌ Some builds or performance tests failed"
+          echo "❌ Some builds or tests failed"
           exit 1
         fi
