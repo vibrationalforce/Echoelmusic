@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import os.log
 
 /// Maps biometric parameters to audio synthesis parameters
 /// HRV Coherence → Reverb, Filter, Amplitude
@@ -47,6 +48,8 @@ class BioParameterMapper: ObservableObject {
 
     /// Fast smoothing for quick changes (e.g., voice pitch)
     private let fastSmoothingFactor: Float = 0.7
+
+    private static let logger = Logger(subsystem: "com.echoelmusic.biofeedback", category: "BioParameterMapper")
 
 
     // MARK: - Mapping Ranges
@@ -283,7 +286,7 @@ class BioParameterMapper: ObservableObject {
     private func logParameters() {
         let timestamp = Int(Date().timeIntervalSince1970)
         if timestamp % 5 == 0 {  // Every 5 seconds
-            print("🎛️  BioParams: Rev:\(Int(reverbWet*100))% Filt:\(Int(filterCutoff))Hz Amp:\(Int(amplitude*100))% Freq:\(Int(baseFrequency))Hz")
+            Self.logger.debug("BioParams: Reverb=\(Int(self.reverbWet*100))%, Filter=\(Int(self.filterCutoff))Hz, Amplitude=\(Int(self.amplitude*100))%, Freq=\(Int(self.baseFrequency))Hz")
         }
     }
 
@@ -322,7 +325,7 @@ class BioParameterMapper: ObservableObject {
             tempo = 8.0
         }
 
-        print("🎛️  Applied preset: \(preset.rawValue)")
+        Self.logger.info("Applied bio-parameter preset: \(preset.rawValue)")
     }
 
     enum BioPreset: String, CaseIterable {

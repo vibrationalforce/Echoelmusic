@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import Combine
 import CoreMotion
+import os.log
 
 /// Spatial Audio Engine with 3D/4D positioning and head tracking
 /// Supports iOS 15+ with runtime feature detection for iOS 19+ spatial audio
@@ -27,6 +28,8 @@ class SpatialAudioEngine: ObservableObject {
 
     private var motionManager: CMMotionManager?
     private var headTrackingCancellable: AnyCancellable?
+
+    private static let logger = Logger(subsystem: "com.echoelmusic.spatial", category: "SpatialAudioEngine")
 
     // MARK: - Spatial Modes
 
@@ -101,7 +104,7 @@ class SpatialAudioEngine: ObservableObject {
         if #available(iOS 19.0, *) {
             setupEnvironmentNode()
         } else {
-            print("⚠️ iOS 19+ required for full spatial audio. Using stereo fallback.")
+            Self.logger.warning("iOS 19+ required for full spatial audio - using stereo fallback")
         }
     }
 
@@ -146,7 +149,7 @@ class SpatialAudioEngine: ObservableObject {
         try audioEngine.start()
         isActive = true
 
-        print("✅ SpatialAudioEngine started (mode: \(currentMode.rawValue))")
+        Self.logger.info("SpatialAudioEngine started - mode: \(self.currentMode.rawValue)")
 
         // Enable head tracking if available
         if headTrackingEnabled {
@@ -161,7 +164,7 @@ class SpatialAudioEngine: ObservableObject {
         audioEngine.stop()
         isActive = false
 
-        print("🛑 SpatialAudioEngine stopped")
+        Self.logger.info("SpatialAudioEngine stopped")
     }
 
     // MARK: - Source Management
@@ -347,7 +350,7 @@ class SpatialAudioEngine: ObservableObject {
             }
         }
 
-        print("🌊 AFA field applied: \(geometry) (coherence: \(Int(coherence)))")
+        Self.logger.info("AFA field applied: \(String(describing: geometry)), coherence: \(Int(coherence))")
     }
 
     enum AFAFieldGeometry {
@@ -422,7 +425,7 @@ class SpatialAudioEngine: ObservableObject {
         manager.deviceMotionUpdateInterval = 1.0 / 60.0  // 60 Hz
 
         guard manager.isDeviceMotionAvailable else {
-            print("⚠️ Device motion not available")
+            Self.logger.warning("Device motion not available - head tracking disabled")
             return
         }
 
@@ -433,7 +436,7 @@ class SpatialAudioEngine: ObservableObject {
             self.updateListenerOrientation(attitude: motion.attitude)
         }
 
-        print("✅ Head tracking started")
+        Self.logger.info("Head tracking started (60 Hz)")
     }
 
     private func stopHeadTracking() {
@@ -467,7 +470,7 @@ class SpatialAudioEngine: ObservableObject {
             applyPositionToNode(id: source.id, position: source.position)
         }
 
-        print("🎚️ Spatial mode: \(mode.rawValue)")
+        Self.logger.info("Spatial mode changed: \(mode.rawValue)")
     }
 
     // MARK: - Debug Info
