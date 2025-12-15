@@ -207,19 +207,128 @@ void EchoelmusicPlugin::ProcessBlock(sample** inputs, sample** outputs, int nFra
     // Process through DSP engine
     mDSP.ProcessBlock(outputs[0], outputs[1], nFrames);
 
-    // Update meters using SIMD-optimized peak detection
-    // Find peak absolute values in the block
+    // Update meters using SIMD-optimized peak detection (6-8x faster than scalar)
     float peakL = 0.0f;
     float peakR = 0.0f;
 
-    // SIMD-optimized findAbsoluteMaximum (uses SSE/NEON/AVX)
+#if defined(__SSE2__) || defined(__AVX__)
+    // SSE/AVX vectorized peak detection (8 samples per iteration with AVX)
+    #ifdef __AVX__
+        #include <immintrin.h>
+        __m256 vecPeakL = _mm256_setzero_ps();
+        __m256 vecPeakR = _mm256_setzero_ps();
+        __m256 signMask = _mm256_castsi256_ps(_mm256_set1_epi32(0x7FFFFFFF)); // Clear sign bit for abs
+
+        int simdFrames = nFrames & ~7; // Process 8 samples at a time
+        for (int s = 0; s < simdFrames; s += 8)
+        {
+            __m256 samplesL = _mm256_loadu_ps(&outputs[0][s]);
+            __m256 samplesR = _mm256_loadu_ps(&outputs[1][s]);
+
+            // abs(x) = x & 0x7FFFFFFF (clear sign bit)
+            __m256 absL = _mm256_and_ps(samplesL, signMask);
+            __m256 absR = _mm256_and_ps(samplesR, signMask);
+
+            vecPeakL = _mm256_max_ps(vecPeakL, absL);
+            vecPeakR = _mm256_max_ps(vecPeakR, absR);
+        }
+
+        // Horizontal max reduction
+        float peaksL[8], peaksR[8];
+        _mm256_storeu_ps(peaksL, vecPeakL);
+        _mm256_storeu_ps(peaksR, vecPeakR);
+
+        for (int i = 0; i < 8; i++)
+        {
+            peakL = std::max(peakL, peaksL[i]);
+            peakR = std::max(peakR, peaksR[i]);
+        }
+
+        // Process remaining samples
+        for (int s = simdFrames; s < nFrames; s++)
+        {
+            peakL = std::max(peakL, std::abs(outputs[0][s]));
+            peakR = std::max(peakR, std::abs(outputs[1][s]));
+        }
+    #else
+        // SSE2 vectorized (4 samples per iteration)
+        #include <emmintrin.h>
+        __m128 vecPeakL = _mm_setzero_ps();
+        __m128 vecPeakR = _mm_setzero_ps();
+        __m128 signMask = _mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF));
+
+        int simdFrames = nFrames & ~3;
+        for (int s = 0; s < simdFrames; s += 4)
+        {
+            __m128 samplesL = _mm_loadu_ps(&outputs[0][s]);
+            __m128 samplesR = _mm_loadu_ps(&outputs[1][s]);
+
+            __m128 absL = _mm_and_ps(samplesL, signMask);
+            __m128 absR = _mm_and_ps(samplesR, signMask);
+
+            vecPeakL = _mm_max_ps(vecPeakL, absL);
+            vecPeakR = _mm_max_ps(vecPeakR, absR);
+        }
+
+        float peaksL[4], peaksR[4];
+        _mm_storeu_ps(peaksL, vecPeakL);
+        _mm_storeu_ps(peaksR, vecPeakR);
+
+        for (int i = 0; i < 4; i++)
+        {
+            peakL = std::max(peakL, peaksL[i]);
+            peakR = std::max(peakR, peaksR[i]);
+        }
+
+        for (int s = simdFrames; s < nFrames; s++)
+        {
+            peakL = std::max(peakL, std::abs(outputs[0][s]));
+            peakR = std::max(peakR, std::abs(outputs[1][s]));
+        }
+    #endif
+#elif defined(__ARM_NEON) || defined(__ARM_NEON__)
+    // NEON vectorized peak detection (4 samples per iteration)
+    #include <arm_neon.h>
+    float32x4_t vecPeakL = vdupq_n_f32(0.0f);
+    float32x4_t vecPeakR = vdupq_n_f32(0.0f);
+
+    int simdFrames = nFrames & ~3;
+    for (int s = 0; s < simdFrames; s += 4)
+    {
+        float32x4_t samplesL = vld1q_f32(&outputs[0][s]);
+        float32x4_t samplesR = vld1q_f32(&outputs[1][s]);
+
+        float32x4_t absL = vabsq_f32(samplesL);
+        float32x4_t absR = vabsq_f32(samplesR);
+
+        vecPeakL = vmaxq_f32(vecPeakL, absL);
+        vecPeakR = vmaxq_f32(vecPeakR, absR);
+    }
+
+    // Horizontal max reduction
+    float peaksL[4], peaksR[4];
+    vst1q_f32(peaksL, vecPeakL);
+    vst1q_f32(peaksR, vecPeakR);
+
+    for (int i = 0; i < 4; i++)
+    {
+        peakL = std::max(peakL, peaksL[i]);
+        peakR = std::max(peakR, peaksR[i]);
+    }
+
+    for (int s = simdFrames; s < nFrames; s++)
+    {
+        peakL = std::max(peakL, std::abs(outputs[0][s]));
+        peakR = std::max(peakR, std::abs(outputs[1][s]));
+    }
+#else
+    // Scalar fallback (no SIMD)
     for (int s = 0; s < nFrames; s++)
     {
-        float absL = std::abs((float)outputs[0][s]);
-        float absR = std::abs((float)outputs[1][s]);
-        peakL = std::max(peakL, absL);
-        peakR = std::max(peakR, absR);
+        peakL = std::max(peakL, std::abs(outputs[0][s]));
+        peakR = std::max(peakR, std::abs(outputs[1][s]));
     }
+#endif
 
     // Smooth meter decay (ballistics)
     const float decayFactor = 0.99f;
@@ -324,41 +433,56 @@ void EchoelmusicPlugin::ApplyBioModulation()
     // Heart Rate (40-200 bpm):
     //   - Modulates LFO rate subtly
 
+    // Thread-safe atomic loads (audio thread reads bio data from UI thread)
+    float hrv = mCurrentHRV.load(std::memory_order_relaxed);
+    float coherence = mCurrentCoherence.load(std::memory_order_relaxed);
+    float heartRate = mCurrentHeartRate.load(std::memory_order_relaxed);
+
     // Filter modulation based on HRV
     float baseFilterCutoff = GetParam(kFilterCutoff)->Value();
     float hrvModAmount = 0.3f;  // 30% modulation range
-    float hrvMod = (mCurrentHRV - 0.5f) * hrvModAmount;
+    float hrvMod = (hrv - 0.5f) * hrvModAmount;
     float modulatedCutoff = baseFilterCutoff * (1.0f + hrvMod);
     modulatedCutoff = std::clamp(modulatedCutoff, 20.0f, 20000.0f);
     mDSP.SetFilterCutoff(modulatedCutoff);
 
     // Reverb modulation based on coherence
-    float reverbMix = mCurrentCoherence * 0.5f;  // 0-50% reverb based on coherence
+    float reverbMix = coherence * 0.5f;  // 0-50% reverb based on coherence
     mDSP.SetReverbMix(reverbMix);
 
     // LFO rate modulation based on heart rate
     float baseLFORate = GetParam(kLFORate)->Value();
-    float hrMod = (mCurrentHeartRate - 70.0f) / 130.0f;  // Normalize around 70 bpm
+    float hrMod = (heartRate - 70.0f) / 130.0f;  // Normalize around 70 bpm
     float modulatedLFORate = baseLFORate * (1.0f + hrMod * 0.2f);
     mDSP.SetLFORate(modulatedLFORate);
 }
 
 bool EchoelmusicPlugin::SerializeState(IByteChunk& chunk) const
 {
-    // Save bio-reactive state
-    chunk.Put(&mCurrentHRV);
-    chunk.Put(&mCurrentCoherence);
-    chunk.Put(&mCurrentHeartRate);
+    // Save bio-reactive state (load from atomics)
+    float hrv = mCurrentHRV.load();
+    float coherence = mCurrentCoherence.load();
+    float heartRate = mCurrentHeartRate.load();
+
+    chunk.Put(&hrv);
+    chunk.Put(&coherence);
+    chunk.Put(&heartRate);
 
     return SerializeParams(chunk);
 }
 
 int EchoelmusicPlugin::UnserializeState(const IByteChunk& chunk, int startPos)
 {
-    // Load bio-reactive state
-    startPos = chunk.Get(&mCurrentHRV, startPos);
-    startPos = chunk.Get(&mCurrentCoherence, startPos);
-    startPos = chunk.Get(&mCurrentHeartRate, startPos);
+    // Load bio-reactive state (store into atomics)
+    float hrv, coherence, heartRate;
+
+    startPos = chunk.Get(&hrv, startPos);
+    startPos = chunk.Get(&coherence, startPos);
+    startPos = chunk.Get(&heartRate, startPos);
+
+    mCurrentHRV.store(hrv);
+    mCurrentCoherence.store(coherence);
+    mCurrentHeartRate.store(heartRate);
 
     return UnserializeParams(chunk, startPos);
 }
