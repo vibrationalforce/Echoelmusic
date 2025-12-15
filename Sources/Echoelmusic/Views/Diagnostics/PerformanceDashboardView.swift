@@ -32,7 +32,7 @@ struct PerformanceDashboardView: View {
 
                     // CPU Usage Graph
                     metricsGraphCard(
-                        title: "CPU USAGE",
+                        title: "CPU USAGE (ESTIMATED)",
                         icon: "cpu",
                         color: VaporwaveColors.neonCyan,
                         data: metricsCollector.cpuHistory,
@@ -115,7 +115,7 @@ struct PerformanceDashboardView: View {
             // Metrics Grid
             HStack(spacing: VaporwaveSpacing.lg) {
                 metricBox(
-                    title: "CPU",
+                    title: "CPU (Est.)",
                     value: "\(Int(metricsCollector.currentCPU))%",
                     color: cpuColor
                 )
@@ -142,6 +142,22 @@ struct PerformanceDashboardView: View {
             }
             .padding(VaporwaveSpacing.md)
             .glassCard()
+
+            // CPU Estimation Notice
+            HStack(spacing: VaporwaveSpacing.sm) {
+                Image(systemName: "info.circle.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(.orange)
+
+                Text("CPU usage is estimated - actual values may vary")
+                    .font(.system(size: 11))
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .padding(VaporwaveSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.orange.opacity(0.1))
+            )
         }
     }
 

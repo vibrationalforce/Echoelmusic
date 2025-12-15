@@ -94,7 +94,7 @@ struct DeveloperPanelView: View {
         )
     }
 
-    // MARK: - Test Runner Card
+    // MARK: - Test Simulator Card
 
     private var testRunnerCard: some View {
         VStack(alignment: .leading, spacing: VaporwaveSpacing.md) {
@@ -104,13 +104,34 @@ struct DeveloperPanelView: View {
                     .font(.system(size: 16))
                     .foregroundColor(VaporwaveColors.neonCyan)
 
-                Text("TEST RUNNER")
+                Text("TEST SIMULATOR")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(VaporwaveColors.neonCyan)
                     .tracking(2)
 
                 Spacer()
+
+                // Info badge
+                Image(systemName: "info.circle.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(.orange)
             }
+
+            // Warning: Simulator not real runner
+            HStack(spacing: VaporwaveSpacing.sm) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(.orange)
+
+                Text("Simulated output - use Xcode or terminal for real tests")
+                    .font(.system(size: 11))
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .padding(VaporwaveSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.orange.opacity(0.1))
+            )
 
             // Test Suite Picker
             Picker("Test Suite", selection: $selectedTestSuite) {
@@ -127,7 +148,7 @@ struct DeveloperPanelView: View {
                     Image(systemName: isRunningTests ? "hourglass" : "play.fill")
                         .font(.system(size: 16))
 
-                    Text(isRunningTests ? "Running..." : "Run \(selectedTestSuite.rawValue)")
+                    Text(isRunningTests ? "Simulating..." : "Simulate \(selectedTestSuite.rawValue)")
                         .font(.system(size: 15, weight: .semibold))
 
                     Spacer()
