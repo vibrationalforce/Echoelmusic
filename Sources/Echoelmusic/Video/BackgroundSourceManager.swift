@@ -30,6 +30,7 @@ class BackgroundSourceManager: ObservableObject {
     private let device: MTLDevice
     private let ciContext: CIContext
     private let textureLoader: MTKTextureLoader
+    private let metalRenderer: MetalBackgroundRenderer?
 
     // MARK: - Video Playback
 
@@ -148,6 +149,9 @@ class BackgroundSourceManager: ObservableObject {
 
         // Create texture loader
         self.textureLoader = MTKTextureLoader(device: device)
+
+        // Initialize Metal background renderer
+        self.metalRenderer = MetalBackgroundRenderer()
 
         // Initialize available sources
         initializeDefaultSources()
@@ -380,8 +384,36 @@ class BackgroundSourceManager: ObservableObject {
     // MARK: - Angular Gradient (Custom)
 
     private func renderAngularGradient(colors: [Color], size: CGSize) throws -> CIImage {
-        // TODO: Implement custom angular gradient using Metal shader
-        // For now, fallback to radial
+        // Use Metal shader for high-performance angular gradient
+        guard let metalRenderer = metalRenderer else {
+            // Fallback to radial gradient if Metal not available
+            return try renderGradient(type: .radial, colors: colors, size: size)
+        }
+
+        // Convert SwiftUI colors to SIMD4<Float>
+        let metalColors = colors.map { color -> SIMD4<Float> in
+            let cgColor = CGColor(colorSpace: CGColorSpaceCreateDeviceRGB(), components: [
+                Double(color.components.red),
+                Double(color.components.green),
+                Double(color.components.blue),
+                Double(color.components.opacity)
+            ]) ?? CGColor(red: 0, green: 0, blue: 0, alpha: 1)
+
+            return MetalBackgroundRenderer.colorToFloat4(cgColor)
+        }
+
+        // Render using Metal shader
+        if let ciImage = metalRenderer.renderAngularGradient(
+            colors: metalColors,
+            positions: nil,  // Auto-distribute colors
+            center: SIMD2<Float>(0.5, 0.5),
+            rotation: 0.0,
+            size: size
+        ) {
+            return ciImage
+        }
+
+        // Final fallback
         return try renderGradient(type: .radial, colors: colors, size: size)
     }
 
@@ -433,18 +465,63 @@ class BackgroundSourceManager: ObservableObject {
     }
 
     private func renderPerlinNoise(size: CGSize) throws -> CIImage {
-        // TODO: Implement Perlin noise using Metal shader
-        // For now, use random noise
+        // Use Metal shader for high-quality Perlin noise
+        guard let metalRenderer = metalRenderer else {
+            // Fallback to random noise if Metal not available
+            return try renderNoise(size: size)
+        }
+
+        // Bio-reactive parameters for animated noise
+        let time = bioReactivityEnabled ? Float(Date().timeIntervalSince1970) : 0.0
+        let scale = 5.0 + (hrvCoherence * 5.0)  // 5-10 based on HRV coherence
+
+        // Render multi-octave Perlin noise
+        if let ciImage = metalRenderer.renderPerlinNoise(
+            scale: scale,
+            octaves: 4,
+            persistence: 0.5,
+            lacunarity: 2.0,
+            time: time,
+            speed: 0.2,
+            size: size
+        ) {
+            return ciImage
+        }
+
+        // Fallback to random noise
         return try renderNoise(size: size)
     }
 
     private func renderStars(size: CGSize) throws -> CIImage {
-        // Black background with white star points
-        let background = CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
+        // Use Metal compute shader for GPU-accelerated star particles
+        guard let metalRenderer = metalRenderer else {
+            // Fallback to black background if Metal not available
+            return CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
+        }
 
-        // TODO: Add star particles using Metal compute shader
-        // For now, return black background
-        return background
+        // Bio-reactive parameters
+        let time = Float(Date().timeIntervalSince1970)
+        let starCount: UInt32 = bioReactivityEnabled ? UInt32(50 + Int(hrvCoherence * 450)) : 200  // 50-500 stars
+        let twinkleSpeed = bioReactivityEnabled ? 1.0 + (heartRate / 100.0) : 2.0  // Faster with higher HR
+
+        // Render star field with twinkling
+        if let ciImage = metalRenderer.renderStarParticles(
+            starCount: starCount,
+            time: time,
+            twinkleSpeed: twinkleSpeed,
+            minSize: 1.0,
+            maxSize: 3.0,
+            minBrightness: 0.3,
+            maxBrightness: 1.0,
+            starColor: SIMD4<Float>(1.0, 1.0, 1.0, 1.0),  // White stars
+            size: size,
+            useFastPath: starCount > 200  // Tile-based optimization for many stars
+        ) {
+            return ciImage
+        }
+
+        // Fallback to black background
+        return CIImage(color: CIColor.black).cropped(to: CGRect(origin: .zero, size: size))
     }
 
     // MARK: - Load Image
