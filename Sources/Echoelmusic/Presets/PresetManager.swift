@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 import CloudKit
+import os.log
 
 class PresetManager: ObservableObject {
 
@@ -26,6 +27,7 @@ class PresetManager: ObservableObject {
     private let cloudKitContainer: CKContainer
     private let cloudKitDatabase: CKDatabase
     private var cancellables = Set<AnyCancellable>()
+    private let logger = Logger(subsystem: "com.echoelmusic.presets", category: "PresetManager")
 
     // MARK: - Initialization
 
@@ -92,7 +94,7 @@ class PresetManager: ObservableObject {
             return true
 
         } catch {
-            print("Error saving preset: \(error)")
+            logger.error("Error saving preset: \(error.localizedDescription)")
             return false
         }
     }
@@ -120,7 +122,7 @@ class PresetManager: ObservableObject {
             let preset = try JSONDecoder().decode(Preset.self, from: data)
             return preset
         } catch {
-            print("Error loading preset: \(error)")
+            logger.error("Error loading preset: \(error.localizedDescription)")
             return nil
         }
     }
@@ -147,7 +149,7 @@ class PresetManager: ObservableObject {
             return true
 
         } catch {
-            print("Error deleting preset: \(error)")
+            logger.error("Error deleting preset: \(error.localizedDescription)")
             return false
         }
     }
@@ -188,7 +190,7 @@ class PresetManager: ObservableObject {
             return tempURL
 
         } catch {
-            print("Error exporting preset: \(error)")
+            logger.error("Error exporting preset: \(error.localizedDescription)")
             return nil
         }
     }
@@ -207,7 +209,7 @@ class PresetManager: ObservableObject {
             return savePreset(preset)
 
         } catch {
-            print("Error importing preset: \(error)")
+            logger.error("Error importing preset: \(error.localizedDescription)")
             return false
         }
     }
@@ -242,7 +244,7 @@ class PresetManager: ObservableObject {
                     }
                 }
             case .failure(let error):
-                print("Error sharing preset: \(error)")
+                logger.error("Error sharing preset: \(error.localizedDescription)")
                 DispatchQueue.main.async {
                     completion(nil)
                 }
@@ -291,7 +293,7 @@ class PresetManager: ObservableObject {
 
                 if let error = error {
                     self?.syncError = error
-                    print("CloudKit sync error: \(error)")
+                    self?.logger.error("CloudKit sync error: \(error.localizedDescription)")
                 } else if let recordID = savedRecord?.recordID.recordName {
                     // Update preset with CloudKit record ID
                     if let index = self?.userPresets.firstIndex(where: { $0.id == preset.id }) {
@@ -317,7 +319,7 @@ class PresetManager: ObservableObject {
                     fetchedPresets.append(preset)
                 }
             case .failure(let error):
-                print("Error fetching record: \(error)")
+                logger.error("Error fetching record: \(error.localizedDescription)")
             }
         }
 
@@ -331,7 +333,7 @@ class PresetManager: ObservableObject {
                     self?.mergeCloudPresets(fetchedPresets)
                 case .failure(let error):
                     self?.syncError = error
-                    print("CloudKit query error: \(error)")
+                    self?.logger.error("CloudKit query error: \(error.localizedDescription)")
                 }
             }
         }
@@ -348,9 +350,9 @@ class PresetManager: ObservableObject {
 
         let recordID = CKRecord.ID(recordName: recordIDString)
 
-        cloudKitDatabase.delete(withRecordID: recordID) { recordID, error in
+        cloudKitDatabase.delete(withRecordID: recordID) { [weak self] recordID, error in
             if let error = error {
-                print("Error deleting from CloudKit: \(error)")
+                self?.logger.error("Error deleting from CloudKit: \(error.localizedDescription)")
             }
         }
     }
@@ -387,13 +389,13 @@ class PresetManager: ObservableObject {
                     let data = try Data(contentsOf: url)
                     return try JSONDecoder().decode(Preset.self, from: data)
                 } catch {
-                    print("Error loading preset file \(url): \(error)")
+                    logger.error("Error loading preset file \(url): \(error.localizedDescription)")
                     return nil
                 }
             }
 
         } catch {
-            print("Error loading user presets: \(error)")
+            logger.error("Error loading user presets: \(error.localizedDescription)")
         }
     }
 
@@ -412,7 +414,7 @@ class PresetManager: ObservableObject {
             record["category"] = preset.category.rawValue as CKRecordValue
             record["modifiedDate"] = preset.modifiedDate as CKRecordValue
         } catch {
-            print("Error encoding preset for CloudKit: \(error)")
+            logger.error("Error encoding preset for CloudKit: \(error.localizedDescription)")
         }
 
         return record
@@ -428,7 +430,7 @@ class PresetManager: ObservableObject {
             preset.cloudKitRecordID = record.recordID.recordName
             return preset
         } catch {
-            print("Error decoding preset from CloudKit: \(error)")
+            logger.error("Error decoding preset from CloudKit: \(error.localizedDescription)")
             return nil
         }
     }

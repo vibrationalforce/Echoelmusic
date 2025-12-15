@@ -6,10 +6,13 @@
 //
 
 import SwiftUI
+import os.log
 
 struct PresetBrowserView: View {
 
     // MARK: - Properties
+
+    private static let logger = Logger(subsystem: "com.echoelmusic.presets", category: "PresetBrowserView")
 
     @EnvironmentObject var presetManager: PresetManager
     @State private var searchText = ""
@@ -208,7 +211,7 @@ struct PresetBrowserView: View {
             _ = presetManager.importPreset(from: url)
 
         case .failure(let error):
-            print("Import error: \(error)")
+            Self.logger.error("Import error: \(error.localizedDescription)")
         }
     }
 }
