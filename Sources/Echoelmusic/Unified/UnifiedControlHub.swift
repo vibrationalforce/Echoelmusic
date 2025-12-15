@@ -457,17 +457,39 @@ public class UnifiedControlHub: ObservableObject {
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
         // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
+        if let engine = audioEngine {
+            // Jaw open → Filter cutoff (brightness)
+            if let cutoff = params.filterCutoff {
+                engine.setFilterCutoff(cutoff)
+            }
+
+            // Smile → Filter resonance (timbre)
+            if let resonance = params.filterResonance {
+                engine.setFilterResonance(resonance)
+            }
+
+            // Eyebrows → Reverb wetness (space/depth)
+            if let reverb = params.reverbWetness {
+                engine.setReverbWet(reverb)
+            }
+
+            // Eye openness → Delay time (temporal depth)
+            if let delay = params.delayTime {
+                engine.setDelayTime(delay)
+            }
+
+            Self.logger.debug("Face→Audio: Cutoff=\(params.filterCutoff ?? 0)Hz, Resonance=\(params.filterResonance ?? 0), Reverb=\(params.reverbWetness ?? 0)")
+        }
 
         // Apply to all active MPE voices
         if let mpe = mpeZoneManager {
             for voice in mpe.activeVoices {
                 // Jaw open → Per-note brightness (CC 74)
-                let jawOpen = params.filterCutoff / 8000.0  // Normalize cutoff to 0-1
+                let jawOpen = (params.filterCutoff ?? 0) / 8000.0  // Normalize cutoff to 0-1
                 mpe.setVoiceBrightness(voice: voice, brightness: jawOpen)
 
                 // Smile → Per-note timbre (CC 71)
-                let smile = params.filterResonance / 5.0  // Normalize resonance to 0-1
+                let smile = (params.filterResonance ?? 0) / 5.0  // Normalize resonance to 0-1
                 mpe.setVoiceTimbre(voice: voice, timbre: smile)
             }
         }
