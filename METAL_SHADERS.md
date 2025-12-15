@@ -3,7 +3,11 @@
 ## 🎨 Overview
 
 **Status:** ✅ **100% Complete** - All 3 critical Metal shaders implemented
-**Performance:** GPU-accelerated @ 120 FPS on iPhone 16 Pro
+**Performance:** GPU-accelerated @ 120 FPS target (projected; validation in progress)
+
+⚠️ **Note:** Performance claims are based on theoretical analysis and algorithm complexity.
+Actual performance may vary based on device thermal state, background processes, and iOS power management.
+Instruments profiling data to be added.
 **Platform:** iOS 14+, macOS 11+ (Metal 2.0+)
 
 This document details the professional-grade Metal shader implementations for background effects in Echoelmusic's video compositing system.
@@ -74,10 +78,15 @@ let gradient = metalRenderer.renderAngularGradient(
 
 ---
 
-## 2. Perlin Noise Shader
+## 2. Perlin-Style Noise Shader
 
 ### Purpose
-Generates procedural noise using multi-octave Perlin algorithm for organic, natural-looking textures.
+Generates procedural noise using hash-based gradient noise with multi-octave fBm for organic, natural-looking textures.
+
+**Algorithm Clarification:**
+This is a hash-based gradient noise implementation with Hermite smoothstep interpolation,
+not Ken Perlin's original 1983 permutation-table algorithm, but produces visually similar
+organic patterns.
 
 ### Metal Implementation
 **File:** `Sources/Echoelmusic/Video/Shaders/BackgroundEffects.metal:99-173`
@@ -87,6 +96,11 @@ Generates procedural noise using multi-octave Perlin algorithm for organic, natu
 - Configurable scale, persistence, and lacunarity
 - Time-based animation
 - Deterministic pseudo-random hash function
+
+**Scientific References:**
+- Perlin, K. (2002). "Improving Noise" - ACM SIGGRAPH 2002 (Hermite smoothstep)
+- Quilez, I. (2013). "Value Noise Derivatives" - iquilezles.org/articles
+- Ebert et al. (2003). "Texturing & Modeling: A Procedural Approach" (fBm)
 
 **Algorithm:**
 ```metal

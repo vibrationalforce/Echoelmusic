@@ -118,7 +118,16 @@ kernel void angularGradient(
     output.write(color, gid);
 }
 
-// MARK: - Perlin Noise Shader
+// MARK: - Perlin-Style Noise Shader
+
+/// Hash-based gradient noise with multi-octave fBm
+/// Uses Hermite smoothstep (Perlin 2002) for smooth interpolation
+/// Not Ken Perlin's original 1983 algorithm (which uses permutation tables),
+/// but produces similar organic, band-limited noise
+///
+/// References:
+/// - Perlin, K. (2002). "Improving Noise" - ACM SIGGRAPH 2002
+/// - Quilez, I. (2013). "Value Noise" - iquilezles.org
 
 /// Hash function for pseudo-random values (deterministic)
 float hash(float2 p) {

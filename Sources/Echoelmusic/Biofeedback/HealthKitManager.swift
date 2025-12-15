@@ -4,7 +4,12 @@ import Combine
 import Accelerate
 
 /// Manages HealthKit integration for real-time HRV and heart rate monitoring
-/// Implements HeartMath Institute's coherence algorithm for biofeedback
+/// HeartMath-inspired coherence estimation for biofeedback
+/// Based on published research from HeartMath Institute (McCraty et al. 2009)
+///
+/// ⚠️ DISCLAIMER: This is an open-source approximation inspired by HeartMath's research.
+/// It is NOT the proprietary HeartMath coherence algorithm used in their commercial products.
+/// For validated HeartMath measurements, use the official Inner Balance app.
 @MainActor
 class HealthKitManager: ObservableObject {
 
@@ -18,10 +23,13 @@ class HealthKitManager: ObservableObject {
     /// Normal range: 20-100 ms (higher = better autonomic function)
     @Published var hrvRMSSD: Double = 0.0
 
-    /// HeartMath coherence score (0-100)
-    /// 0-40: Low coherence (stress/anxiety)
-    /// 40-60: Medium coherence (transitional)
-    /// 60-100: High coherence (optimal/flow state)
+    /// Coherence score (0-100) - HeartMath-inspired estimation
+    /// Approximate zones (not validated against official HeartMath thresholds):
+    /// 0-40: Low coherence (may indicate stress/anxiety)
+    /// 40-60: Medium coherence (transitional state)
+    /// 60-100: High coherence (optimal/flow state potential)
+    ///
+    /// ⚠️ For research/educational use only. Not a medical device.
     @Published var hrvCoherence: Double = 0.0
 
     /// Calculated breathing rate in breaths per minute
@@ -295,18 +303,26 @@ class HealthKitManager: ObservableObject {
     }
 
 
-    // MARK: - HeartMath Coherence Algorithm
+    // MARK: - Coherence Estimation (HeartMath-Inspired)
 
-    /// Calculate HeartMath coherence score from RR intervals
-    /// Based on HeartMath Institute's research on heart-brain coherence
+    /// Estimate coherence score from RR intervals using spectral analysis
+    /// Inspired by HeartMath Institute's research on heart-brain coherence
     ///
-    /// Algorithm steps:
+    /// **Method:**
     /// 1. Detrend RR intervals (remove linear trend)
     /// 2. Apply Hamming window
     /// 3. Perform FFT
     /// 4. Calculate power spectral density
     /// 5. Measure peak power in coherence band (0.04-0.26 Hz, centered at 0.1 Hz)
     /// 6. Normalize to 0-100 scale
+    ///
+    /// **Research Basis:**
+    /// - McCraty et al. (2009). "The coherent heart" - HeartMath Institute
+    /// - Lehrer & Gevirtz (2014). "Heart rate variability biofeedback" - Biofeedback 42(1):26-37
+    /// - 0.1 Hz resonance maximizes baroreflex gain and vagal tone
+    ///
+    /// ⚠️ **Limitation:** This is an approximation. The exact HeartMath algorithm is proprietary.
+    /// Coherence scores may not match official HeartMath devices (Inner Balance, emWave).
     ///
     /// - Parameter rrIntervals: Array of RR intervals in milliseconds
     /// - Returns: Coherence score from 0 (low) to 100 (high)
@@ -428,6 +444,16 @@ class HealthKitManager: ObservableObject {
     ///
     /// Respiratory Sinus Arrhythmia (RSA) causes HRV oscillations at breathing frequency.
     /// The high-frequency (HF) component of HRV (0.15-0.4 Hz) corresponds to breathing.
+    ///
+    /// **Scientific References:**
+    /// - Task Force ESC/NASPE (1996). "Heart rate variability: standards of measurement"
+    ///   Circulation 93(5):1043-1065. DOI: 10.1161/01.CIR.93.5.1043
+    /// - Hirsch & Bishop (1981). "Respiratory sinus arrhythmia in humans"
+    ///   Am J Physiol 241(4):H620-H629
+    /// - Berntson et al. (1997). "Heart rate variability: Origins, methods, and interpretive caveats"
+    ///   Psychophysiology 34(6):623-648
+    ///
+    /// **Method:** FFT of windowed RR intervals, peak detection in respiratory band (0.15-0.4 Hz)
     ///
     /// - Parameter rrIntervals: Array of RR intervals in milliseconds
     /// - Returns: Estimated breathing rate in breaths per minute

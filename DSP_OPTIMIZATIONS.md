@@ -2,7 +2,7 @@
 
 ## 🚀 Executive Summary
 
-**Total Performance Improvement: 35-60% CPU reduction**
+**Total Performance Improvement: 10-12% achieved; 25-48% additional potential (35-60% total)**
 **Critical Issues Fixed: 2 race conditions (thread safety)**
 **SIMD Optimizations: 3 critical paths (6-8x speedup)**
 
@@ -55,10 +55,15 @@ Sample-by-sample peak detection using scalar `std::abs` and `std::max`.
 - **NEON (ARM):** 4 samples per iteration
 - **Scalar fallback:** For unsupported platforms
 
-**Performance Gain:**
-- **AVX:** **8x faster** (8 samples/iteration)
-- **SSE2:** **4x faster** (4 samples/iteration)
-- **NEON:** **4x faster** (4 samples/iteration)
+**Performance Gain (Theoretical Throughput):**
+- **AVX:** 8 samples/iteration (real-world: ~4-6x speedup)
+- **SSE2:** 4 samples/iteration (real-world: ~2-3x speedup)
+- **NEON:** 4 samples/iteration (real-world: ~3-4x speedup)
+
+*Note: Theoretical maximum throughput assumes no memory bottlenecks. Actual speedup
+depends on memory bandwidth, cache hierarchy, and CPU architecture. Real-world SIMD
+speedups are typically 50-75% of theoretical maximum due to memory access patterns,
+horizontal reduction overhead, and loop remainder processing.*
 
 **Code Snippet (AVX):**
 ```cpp
