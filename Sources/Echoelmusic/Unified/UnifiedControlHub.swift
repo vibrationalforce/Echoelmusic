@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import AVFoundation
+import os.log
 
 /// Central orchestrator for all input modalities in Echoelmusic
 ///
@@ -69,6 +70,10 @@ public class UnifiedControlHub: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
 
+    // MARK: - Logging
+
+    private static let logger = Logger(subsystem: "com.echoelmusic.unified", category: "ControlHub")
+
     // MARK: - Initialization
 
     public init(audioEngine: AudioEngine? = nil) {
@@ -88,14 +93,14 @@ public class UnifiedControlHub: ObservableObject {
             }
             .store(in: &cancellables)
 
-        print("[UnifiedControlHub] Face tracking enabled")
+        Self.logger.info("Face tracking enabled")
     }
 
     /// Disable face tracking
     public func disableFaceTracking() {
         faceTrackingManager?.stop()
         faceTrackingManager = nil
-        print("[UnifiedControlHub] Face tracking disabled")
+        Self.logger.info("Face tracking disabled")
     }
 
     /// Enable hand tracking and gesture recognition
@@ -126,7 +131,7 @@ public class UnifiedControlHub: ObservableObject {
             }
             .store(in: &cancellables)
 
-        print("[UnifiedControlHub] Hand tracking enabled")
+        Self.logger.info("Hand tracking enabled")
     }
 
     /// Disable hand tracking
@@ -136,7 +141,7 @@ public class UnifiedControlHub: ObservableObject {
         gestureRecognizer = nil
         gestureConflictResolver = nil
         gestureToAudioMapper = nil
-        print("[UnifiedControlHub] Hand tracking disabled")
+        Self.logger.info("Hand tracking disabled")
     }
 
     /// Enable biometric monitoring (HealthKit)
@@ -174,7 +179,7 @@ public class UnifiedControlHub: ObservableObject {
         // Start monitoring
         healthKit.startMonitoring()
 
-        print("[UnifiedControlHub] Biometric monitoring enabled")
+        Self.logger.info(" Biometric monitoring enabled")
     }
 
     /// Disable biometric monitoring
@@ -182,7 +187,7 @@ public class UnifiedControlHub: ObservableObject {
         healthKitManager?.stopMonitoring()
         healthKitManager = nil
         bioParameterMapper = nil
-        print("[UnifiedControlHub] Biometric monitoring disabled")
+        Self.logger.info(" Biometric monitoring disabled")
     }
 
     /// Handle bio signal updates from HealthKit
@@ -207,7 +212,7 @@ public class UnifiedControlHub: ObservableObject {
         mpe.sendMPEConfiguration(memberChannels: 15)
         mpe.setPitchBendRange(semitones: 48)  // ±4 octaves
 
-        print("[UnifiedControlHub] MIDI 2.0 + MPE enabled")
+        Self.logger.info(" MIDI 2.0 + MPE enabled")
     }
 
     /// Disable MIDI 2.0
@@ -222,7 +227,7 @@ public class UnifiedControlHub: ObservableObject {
         mpeZoneManager = nil
         midiToSpatialMapper = nil
 
-        print("[UnifiedControlHub] MIDI 2.0 disabled")
+        Self.logger.info(" MIDI 2.0 disabled")
     }
 
     // MARK: - Phase 3 Integration
@@ -232,27 +237,27 @@ public class UnifiedControlHub: ObservableObject {
         let spatial = SpatialAudioEngine()
         try spatial.start()
         self.spatialAudioEngine = spatial
-        print("[UnifiedControlHub] Spatial audio enabled")
+        Self.logger.info(" Spatial audio enabled")
     }
 
     /// Disable spatial audio
     public func disableSpatialAudio() {
         spatialAudioEngine?.stop()
         spatialAudioEngine = nil
-        print("[UnifiedControlHub] Spatial audio disabled")
+        Self.logger.info(" Spatial audio disabled")
     }
 
     /// Enable MIDI to visual mapping
     public func enableVisualMapping() {
         let visualMapper = MIDIToVisualMapper()
         self.midiToVisualMapper = visualMapper
-        print("[UnifiedControlHub] Visual mapping enabled")
+        Self.logger.info(" Visual mapping enabled")
     }
 
     /// Disable visual mapping
     public func disableVisualMapping() {
         midiToVisualMapper = nil
-        print("[UnifiedControlHub] Visual mapping disabled")
+        Self.logger.info(" Visual mapping disabled")
     }
 
     /// Enable Push 3 LED controller
@@ -260,14 +265,14 @@ public class UnifiedControlHub: ObservableObject {
         let push3 = Push3LEDController()
         try push3.connect()
         self.push3LEDController = push3
-        print("[UnifiedControlHub] Push 3 LED controller enabled")
+        Self.logger.info(" Push 3 LED controller enabled")
     }
 
     /// Disable Push 3 LED
     public func disablePush3LED() {
         push3LEDController?.disconnect()
         push3LEDController = nil
-        print("[UnifiedControlHub] Push 3 LED controller disabled")
+        Self.logger.info(" Push 3 LED controller disabled")
     }
 
     /// Enable DMX/LED strip lighting
@@ -275,21 +280,21 @@ public class UnifiedControlHub: ObservableObject {
         let lighting = MIDIToLightMapper()
         try lighting.connect()
         self.midiToLightMapper = lighting
-        print("[UnifiedControlHub] DMX lighting enabled")
+        Self.logger.info(" DMX lighting enabled")
     }
 
     /// Disable lighting
     public func disableLighting() {
         midiToLightMapper?.disconnect()
         midiToLightMapper = nil
-        print("[UnifiedControlHub] DMX lighting disabled")
+        Self.logger.info(" DMX lighting disabled")
     }
 
     // MARK: - Lifecycle
 
     /// Start the unified control system
     public func start() {
-        print("[UnifiedControlHub] Starting control system...")
+        Self.logger.info(" Starting control system...")
 
         // Start face tracking if enabled
         faceTrackingManager?.start()
@@ -305,7 +310,7 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Stop the unified control system
     public func stop() {
-        print("[UnifiedControlHub] Stopping control system...")
+        Self.logger.info(" Stopping control system...")
         controlLoopTimer?.cancel()
         controlLoopTimer = nil
     }
@@ -388,10 +393,8 @@ public class UnifiedControlHub: ObservableObject {
         // FIXED: Apply tempo
         engine.setTempo(mapper.tempo)
 
-        // Log bio→audio mapping (nur bei Debug)
-        #if DEBUG
-        print("[Bio→Audio] Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Tempo: \(Int(mapper.tempo))BPM")
-        #endif
+        // Log bio→audio mapping
+        Self.logger.debug("Bio→Audio: Filter=\(Int(mapper.filterCutoff))Hz, Reverb=\(Int(mapper.reverbWet * 100))%, Tempo=\(Int(mapper.tempo))BPM")
 
         // Apply bio-reactive spatial field (AFA)
         if let mpe = mpeZoneManager, let spatialMapper = midiToSpatialMapper {
@@ -426,7 +429,11 @@ public class UnifiedControlHub: ObservableObject {
                 let afaField = spatialMapper.mapToAFA(voices: voiceData, geometry: fieldGeometry)
                 spatialMapper.afaField = afaField
 
-                // TODO: Apply AFA field to SpatialAudioEngine
+                // Apply AFA field to SpatialAudioEngine
+                if let spatialEngine = spatialAudioEngine {
+                    let spatialGeometry = convertToSpatialGeometry(fieldGeometry, sourceCount: voiceData.count)
+                    spatialEngine.applyAFAField(geometry: spatialGeometry, coherence: coherence)
+                }
             }
         }
     }
@@ -537,9 +544,7 @@ public class UnifiedControlHub: ObservableObject {
             engine.setDelayTime(delayTime)
         }
 
-        #if DEBUG
-        print("[Gesture→Audio] Applied: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)")
-        #endif
+        Self.logger.debug("Gesture→Audio: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)")
 
         // Trigger MIDI notes via MPE
         if let midiNote = params.midiNoteOn {
@@ -549,7 +554,7 @@ public class UnifiedControlHub: ObservableObject {
                     note: midiNote.note,
                     velocity: Float(midiNote.velocity) / 127.0
                 ) {
-                    print("[Gesture→MPE] Voice allocated: Note \(midiNote.note), Channel \(voice.channel + 1)")
+                    Self.logger.debug("Gesture→MPE: Voice allocated - Note \(midiNote.note), Channel \(voice.channel + 1)")
 
                     // Apply initial per-note expression from gestures
                     if let gestureRec = gestureRecognizer {
@@ -563,14 +568,14 @@ public class UnifiedControlHub: ObservableObject {
                 }
             } else {
                 // Fallback to MIDI 1.0 if MPE not enabled
-                print("[Gesture→MIDI] Note On: \(midiNote.note), Velocity: \(midiNote.velocity)")
+                Self.logger.debug("Gesture→MIDI: Note On - \(midiNote.note), Velocity \(midiNote.velocity)")
             }
         }
 
         // Handle preset changes
         if let presetChange = params.presetChange {
             // TODO: Change to preset
-            print("[Gesture→Audio] Switch to preset: \(presetChange)")
+            Self.logger.debug("Gesture→Audio: Switch to preset \(presetChange)")
         }
     }
 
@@ -665,6 +670,34 @@ public class UnifiedControlHub: ObservableObject {
         let normalized = (value - from.lowerBound) / (from.upperBound - from.lowerBound)
         let clamped = max(0, min(1, normalized))
         return to.lowerBound + clamped * (to.upperBound - to.lowerBound)
+    }
+
+    /// Convert MIDI mapper field geometry to SpatialAudioEngine geometry
+    private func convertToSpatialGeometry(
+        _ fieldGeometry: MIDIToSpatialMapper.AFAField.FieldGeometry,
+        sourceCount: Int
+    ) -> SpatialAudioEngine.AFAFieldGeometry {
+        switch fieldGeometry {
+        case .grid(let rows, let cols, _):
+            return .grid(rows: rows, cols: cols)
+
+        case .circle(let radius, _):
+            return .circle(radius: Float(radius))
+
+        case .fibonacci(_):
+            return .fibonacci(count: sourceCount)
+
+        case .sphere(let radius, _):
+            return .sphere(radius: Float(radius))
+
+        case .line(_, _, _):
+            // Line geometry maps to circle for spatial audio
+            return .circle(radius: 1.5)
+
+        case .helix(_, _, _, _, _):
+            // Helix geometry maps to sphere for 3D spatial audio
+            return .sphere(radius: 1.5)
+        }
     }
 }
 
