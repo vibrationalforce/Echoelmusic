@@ -53,7 +53,7 @@ class IntegrationTestBase: XCTestCase {
         audioEngine.bufferSize = 256
 
         // Disable real HealthKit queries in tests
-        healthKitManager.isTestMode = true
+        healthKitManager.testMode = true
 
         // Use temporary directory for recordings
         recordingEngine.outputDirectory = FileManager.default.temporaryDirectory

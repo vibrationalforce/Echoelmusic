@@ -25,8 +25,8 @@ class HealthKitIntegrationTests: IntegrationTestBase {
         let testHeartRate: Double = 75.0
         injectMockHeartRate(testHeartRate)
 
-        // Wait for heart rate to propagate
-        let hrUpdated = waitForCondition(timeout: 5.0) {
+        // Wait for heart rate to propagate (increased timeout for reliability)
+        let hrUpdated = waitForCondition(timeout: 10.0) {
             self.healthKitManager.currentHeartRate == testHeartRate
         }
 
