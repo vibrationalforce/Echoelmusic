@@ -1,0 +1,162 @@
+name: Generate Documentation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  generate-docs:
+    name: Generate Swift & C++ Documentation
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install Jazzy (Swift Docs)
+        run: gem install jazzy
+
+      - name: Install Doxygen (C++ Docs)
+        run: brew install doxygen graphviz
+
+      - name: Generate Swift Documentation
+        run: |
+          echo "📚 Generating Swift documentation with Jazzy..."
+          jazzy \
+            --config .jazzy.yml \
+            --output docs/swift
+
+      - name: Generate C++ Documentation
+        run: |
+          echo "📚 Generating C++ documentation with Doxygen..."
+          doxygen Doxyfile
+          mv html docs/cpp
+
+      - name: Create Documentation Index
+        run: |
+          cat > docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Echoelmusic Documentation</title>
+              <style>
+                  * { margin: 0; padding: 0; box-sizing: border-box; }
+                  body {
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      min-height: 100vh;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      padding: 20px;
+                  }
+                  .container {
+                      background: white;
+                      border-radius: 20px;
+                      padding: 60px;
+                      max-width: 800px;
+                      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                  }
+                  h1 {
+                      font-size: 3em;
+                      color: #667eea;
+                      margin-bottom: 20px;
+                  }
+                  p {
+                      color: #666;
+                      font-size: 1.2em;
+                      margin-bottom: 40px;
+                      line-height: 1.6;
+                  }
+                  .docs-grid {
+                      display: grid;
+                      grid-template-columns: 1fr 1fr;
+                      gap: 30px;
+                  }
+                  .doc-card {
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      padding: 40px 30px;
+                      border-radius: 15px;
+                      text-decoration: none;
+                      color: white;
+                      transition: transform 0.3s, box-shadow 0.3s;
+                  }
+                  .doc-card:hover {
+                      transform: translateY(-5px);
+                      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+                  }
+                  .doc-card h2 {
+                      font-size: 2em;
+                      margin-bottom: 15px;
+                  }
+                  .doc-card p {
+                      color: rgba(255,255,255,0.9);
+                      font-size: 1em;
+                      margin: 0;
+                  }
+                  .footer {
+                      margin-top: 60px;
+                      text-align: center;
+                      color: #999;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>🎵 Echoelmusic</h1>
+                  <p>Bio-Reactive Audio Platform Documentation</p>
+
+                  <div class="docs-grid">
+                      <a href="swift/index.html" class="doc-card">
+                          <h2>Swift</h2>
+                          <p>iOS app, SwiftUI views, and Swift DSP components</p>
+                      </a>
+
+                      <a href="cpp/index.html" class="doc-card">
+                          <h2>C++</h2>
+                          <p>DSP core, audio processing, and SIMD optimizations</p>
+                      </a>
+                  </div>
+
+                  <div class="footer">
+                      <p>Generated automatically from source code</p>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Documentation Status
+        run: |
+          echo "✅ Documentation generated successfully!"
+          echo "📚 Swift docs: https://<username>.github.io/Echoelmusic/swift"
+          echo "📚 C++ docs: https://<username>.github.io/Echoelmusic/cpp"
