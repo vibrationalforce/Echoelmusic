@@ -25,28 +25,52 @@ jobs:
       with:
         swift-version: "5.9"
 
-    - name: Swift Format Check
+    - name: Install Code Quality Tools
       run: |
-        if command -v swift-format &> /dev/null; then
-          swift-format lint --recursive Sources/ Tests/
-        else
-          echo "⚠️  swift-format not installed, skipping"
-        fi
-      continue-on-error: true
+        echo "📦 Installing code quality tools..."
+        # Install SwiftLint
+        brew install swiftlint
+        # Install swift-format
+        brew install swift-format
+        # Install clang-tidy and clang-format
+        brew install llvm
+        # Verify installations
+        swiftlint version
+        swift-format --version
+        /usr/local/opt/llvm/bin/clang-tidy --version
+        /usr/local/opt/llvm/bin/clang-format --version
 
     - name: SwiftLint
       run: |
-        if command -v swiftlint &> /dev/null; then
-          swiftlint --strict
-        else
-          echo "⚠️  SwiftLint not installed, skipping"
-        fi
-      continue-on-error: true
+        echo "🔍 Running SwiftLint..."
+        swiftlint lint --reporter github-actions-logging
+      continue-on-error: false  # BLOCKING
+
+    - name: Swift Format Check
+      run: |
+        echo "🔍 Checking Swift formatting..."
+        swift-format lint --recursive Sources/ Tests/
+      continue-on-error: false  # BLOCKING
+
+    - name: clang-tidy (C++ DSP Code)
+      run: |
+        echo "🔍 Running clang-tidy on C++ DSP code..."
+        find Sources/DSP -name "*.cpp" -exec /usr/local/opt/llvm/bin/clang-tidy {} -- -std=c++17 \; || true
+      continue-on-error: true  # Warning only for now
+
+    - name: clang-format Check (C++ DSP Code)
+      run: |
+        echo "🔍 Checking C++ formatting..."
+        find Sources/DSP Tests/DSPTests -name "*.cpp" -o -name "*.h" | while read file; do
+          /usr/local/opt/llvm/bin/clang-format --dry-run --Werror "$file" || echo "❌ $file needs formatting"
+        done
+      continue-on-error: true  # Warning only for now
 
     - name: Check for TODO/FIXME
       run: |
         echo "🔍 Checking for TODO/FIXME comments..."
         find Sources -name "*.swift" -exec grep -Hn "TODO\|FIXME" {} \; || true
+      continue-on-error: true
 
   # Job 2: Build & Test - iOS
   build-test-ios:
@@ -250,27 +274,17 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Clone JUCE (Required Dependency)
-      run: |
-        echo "📦 Cloning JUCE framework..."
-        mkdir -p ThirdParty
-        if [ ! -d "ThirdParty/JUCE" ]; then
-          git clone --depth 1 --branch 7.0.9 https://github.com/juce-framework/JUCE.git ThirdParty/JUCE
-        fi
-
-    - name: Cache JUCE Build
+    - name: Cache DSP Test Build
       uses: actions/cache@v3
       with:
-        path: |
-          ThirdParty/JUCE
-          Tests/DSPTests/build
-        key: ${{ runner.os }}-juce-dsp-${{ hashFiles('Tests/DSPTests/CMakeLists.txt') }}
+        path: Tests/DSPTests/build
+        key: ${{ runner.os }}-dsp-simd-${{ hashFiles('Tests/DSPTests/CMakeLists.txt') }}
         restore-keys: |
-          ${{ runner.os }}-juce-dsp-
+          ${{ runner.os }}-dsp-simd-
 
-    - name: Build DSP Tests
+    - name: Build DSP Tests (JUCE-free)
       run: |
-        echo "🔨 Building C++ DSP tests with SIMD benchmarks..."
+        echo "🔨 Building standalone SIMD benchmarks (no JUCE/IPlug2)..."
         cd Tests/DSPTests
         mkdir -p build
         cd build
@@ -373,13 +387,40 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Run Security Scan
+    - name: Security Pattern Scan
       run: |
-        echo "🔒 Running security scan..."
-        # Check for common security issues
-        find Sources -name "*.swift" -exec grep -Hn "TODO.*security\|FIXME.*security" {} \; || true
+        echo "🔒 Scanning for security vulnerabilities..."
+
+        # Check for hardcoded credentials
+        echo "→ Checking for hardcoded credentials..."
+        if grep -r -i --include="*.swift" --include="*.h" --include="*.cpp" \
+          -e "password\s*=\s*['\"]" \
+          -e "api[_-]?key\s*=\s*['\"]" \
+          -e "secret\s*=\s*['\"]" \
+          -e "token\s*=\s*['\"]" \
+          Sources/; then
+          echo "❌ Hardcoded credentials found!"
+          exit 1
+        fi
+
+        # Check for insecure functions
+        echo "→ Checking for insecure C functions..."
+        if grep -r --include="*.cpp" --include="*.h" \
+          -e "\bstrcpy\b" \
+          -e "\bsprintf\b" \
+          -e "\bgets\b" \
+          Sources/DSP/; then
+          echo "⚠️  Insecure C functions found (use secure alternatives)"
+        fi
+
+        # Check for force unwrapping in critical paths
+        echo "→ Checking for force unwrapping..."
+        if grep -r --include="*.swift" "!" Sources/ | grep -v "// swiftlint:disable" | wc -l | grep -v "^0$"; then
+          echo "⚠️  Force unwrapping detected (review for safety)"
+        fi
+
         echo "✅ Security scan completed"
-      continue-on-error: true
+      continue-on-error: false  # BLOCKING
 
   # Job 9: Build Archive (Release)
   build-archive:

@@ -1,0 +1,332 @@
+# SwiftLint Configuration for Echoelmusic
+# Production-grade Swift code quality rules
+# Version: 1.0.0
+
+# Paths to include/exclude
+included:
+  - Sources
+  - Tests
+
+excluded:
+  - .build
+  - Pods
+  - Carthage
+  - ThirdParty
+  - DerivedData
+  - .swiftpm
+  - vendor
+
+# Reporter type (xcode, json, csv, checkstyle, junit, html, emoji, sonarqube, markdown)
+reporter: "xcode"
+
+# =============================================================================
+# ENABLED RULES
+# =============================================================================
+
+opt_in_rules:
+  # Performance
+  - empty_count
+  - first_where
+  - last_where
+  - contains_over_first_not_nil
+  - contains_over_range_nil_comparison
+  - reduce_into
+  - sorted_first_last
+
+  # Code Quality
+  - array_init
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - conditional_returns_on_newline
+  - empty_string
+  - explicit_init
+  - fatal_error_message
+  - file_header
+  - file_name
+  - force_unwrapping
+  - implicit_return
+  - joined_default_parameter
+  - literal_expression_end_indentation
+  - lower_acl_than_parent
+  - modifier_order
+  - multiline_arguments
+  - multiline_function_chains
+  - multiline_literal_brackets
+  - multiline_parameters
+  - multiline_parameters_brackets
+  - nimble_operator
+  - operator_usage_whitespace
+  - overridden_super_call
+  - override_in_extension
+  - pattern_matching_keywords
+  - prefer_self_type_over_type_of_self
+  - private_action
+  - private_outlet
+  - prohibited_super_call
+  - redundant_nil_coalescing
+  - redundant_type_annotation
+  - single_test_class
+  - sorted_imports
+  - static_operator
+  - toggle_bool
+  - trailing_closure
+  - unneeded_parentheses_in_closure_argument
+  - vertical_parameter_alignment_on_call
+  - vertical_whitespace_closing_braces
+  - vertical_whitespace_opening_braces
+  - yoda_condition
+
+  # Documentation
+  - missing_docs
+
+  # Strictness
+  - strict_fileprivate
+  - unavailable_function
+  - untyped_error_in_catch
+
+disabled_rules:
+  # Disabled because of SwiftUI patterns
+  - multiple_closures_with_trailing_closure
+
+  # Disabled because of bio-reactive DSP code
+  - identifier_name  # Allow single-letter math variables (x, y, z)
+
+  # Disabled to allow flexibility
+  - todo  # Allow TODO comments
+  - line_length  # Configured separately
+  - function_body_length  # Configured separately
+  - type_body_length  # Configured separately
+  - file_length  # Configured separately
+
+# =============================================================================
+# RULE CONFIGURATIONS
+# =============================================================================
+
+# Line Length
+line_length:
+  warning: 120
+  error: 200
+  ignores_urls: true
+  ignores_comments: true
+  ignores_function_declarations: true
+  ignores_interpolated_strings: true
+
+# Function Body Length
+function_body_length:
+  warning: 60
+  error: 100
+
+# Function Parameter Count
+function_parameter_count:
+  warning: 6
+  error: 8
+
+# Type Body Length
+type_body_length:
+  warning: 300
+  error: 500
+
+# File Length
+file_length:
+  warning: 500
+  error: 1000
+  ignore_comment_only_lines: true
+
+# Cyclomatic Complexity
+cyclomatic_complexity:
+  warning: 15
+  error: 25
+  ignores_case_statements: true
+
+# Nesting
+nesting:
+  type_level:
+    warning: 2
+    error: 3
+  statement_level:
+    warning: 5
+    error: 10
+
+# Type Name
+type_name:
+  min_length: 3
+  max_length: 50
+  excluded:
+    - ID
+    - AR
+    - TR
+    - EQ
+    - UI
+    - XR
+    - LFO
+    - VCA
+    - FX
+
+# Identifier Name (relaxed for DSP code)
+identifier_name:
+  min_length: 1  # Allow single-letter variables
+  max_length: 50
+  excluded:
+    - id
+    - x
+    - y
+    - z
+    - db
+    - hz
+    - ms
+    - bpm
+    - lfo
+    - fft
+    - dsp
+    - fps
+    - rgb
+    - hsv
+    - xyz
+    - rms
+    - snr
+    - thd
+
+# Large Tuple
+large_tuple:
+  warning: 3
+  error: 4
+
+# Force Unwrapping
+force_unwrapping:
+  severity: warning  # Warning instead of error for development
+
+# Missing Docs
+missing_docs:
+  warning: public
+  excludes_extensions: true
+  excludes_inherited_types: true
+
+# File Header
+file_header:
+  required_pattern: |
+                    \/\/
+                    \/\/ .*\.swift
+                    \/\/ Echoelmusic
+                    \/\/
+  forbidden_pattern: |
+                     \/\/ Copyright
+
+# Trailing Whitespace
+trailing_whitespace:
+  ignores_empty_lines: true
+  ignores_comments: false
+
+# Colon Spacing
+colon:
+  flexible_right_spacing: false
+  apply_to_dictionaries: true
+
+# Opening Brace Spacing
+opening_brace:
+  allow_multiline_func: true
+
+# Multiline Arguments
+multiline_arguments:
+  first_argument_location: next_line
+  only_enforce_after_first_closure_on_first_line: true
+
+# Multiline Parameters
+multiline_parameters:
+  allows_single_line: true
+
+# Vertical Whitespace
+vertical_whitespace:
+  max_empty_lines: 2
+
+# =============================================================================
+# CUSTOM RULES
+# =============================================================================
+
+custom_rules:
+  # Ensure MARK comments follow standard format
+  mark_comment_format:
+    name: "MARK Comment Format"
+    regex: '\/\/\s*MARK:\s*(?!-\s)[\w\s]+(?<!\s)$'
+    message: "MARK comments should follow format: // MARK: - Section Name"
+    severity: warning
+
+  # Prevent print statements in production code
+  no_print:
+    name: "No Print Statements"
+    regex: '\bprint\('
+    match_kinds:
+      - identifier
+    message: "Use Logger or os_log instead of print()"
+    severity: warning
+
+  # Prevent force casts in production
+  no_force_cast:
+    name: "No Force Casts"
+    regex: 'as!'
+    message: "Use safe casting (as? or guard let) instead of force cast"
+    severity: warning
+
+  # Ensure TODO comments have associated ticket
+  todo_with_ticket:
+    name: "TODO with Ticket"
+    regex: '\/\/\s*TODO:(?!\s*\[)'
+    message: "TODO comments should include ticket: // TODO: [TICKET-123] Description"
+    severity: warning
+
+  # Prevent magic numbers in DSP code
+  magic_number_comment:
+    name: "Magic Number Comment"
+    regex: '(?<!\.)(?<![a-zA-Z_])[0-9]{5,}(?!\.[0-9])'
+    message: "Large numbers should have explanatory comments"
+    severity: warning
+
+  # Ensure SwiftUI previews are present
+  swiftui_preview:
+    name: "SwiftUI Preview"
+    regex: 'struct\s+\w+:\s+View\s*\{(?![\s\S]*struct\s+\w+_Previews)'
+    message: "SwiftUI views should include PreviewProvider"
+    severity: warning
+    included: "Sources/.*/Views/.*\\.swift"
+
+# =============================================================================
+# ANALYZER RULES
+# =============================================================================
+
+analyzer_rules:
+  - unused_declaration
+  - unused_import
+
+# =============================================================================
+# SWIFTLINT SETTINGS
+# =============================================================================
+
+# Ignore warnings from SwiftUI generated code
+swiftui_state_private: true
+
+# Strict mode for production
+strict: true
+
+# =============================================================================
+# NOTES
+# =============================================================================
+
+# This configuration is optimized for:
+# 1. SwiftUI apps with complex UI hierarchies
+# 2. Audio/DSP code with mathematical computations
+# 3. Bio-reactive systems with sensor integration
+# 4. Real-time performance requirements
+# 5. Production-grade code quality
+#
+# Adjust rules as needed for specific modules or features.
+#
+# To run SwiftLint:
+#   swiftlint lint
+#   swiftlint lint --strict  # Warnings treated as errors
+#   swiftlint autocorrect    # Auto-fix violations
+#
+# To run on specific paths:
+#   swiftlint lint --path Sources/Echoelmusic/DSP
+#
+# To generate HTML report:
+#   swiftlint lint --reporter html > swiftlint-report.html
