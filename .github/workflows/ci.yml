@@ -177,7 +177,7 @@ jobs:
           -enableCodeCoverage YES \
           | xcpretty
 
-  # Job 4: Performance Tests
+  # Job 4: Performance Tests (Swift)
   performance-tests:
     name: Performance & Memory Tests
     runs-on: macos-14
@@ -190,15 +190,30 @@ jobs:
     - name: Setup Xcode
       run: sudo xcode-select -s /Applications/Xcode_15.2.app
 
-    - name: Run Performance Tests
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Run Performance Benchmarks
       run: |
+        echo "📊 Running performance benchmark suite..."
         xcodebuild test \
           -scheme Echoelmusic \
           -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
-          -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testAdaptiveQualityAdjustment \
-          -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testMemoryOptimizationCaching \
+          -only-testing:EchoelmusicTests/PerformanceBenchmarks \
+          -resultBundlePath PerformanceBenchmarkResults \
+          | tee swift_performance_output.txt \
           | xcpretty
-      continue-on-error: true
+      continue-on-error: false
+
+    - name: Extract Performance Metrics
+      if: always()
+      run: |
+        echo "📈 Extracting performance metrics..."
+        # Extract XCTest performance metrics from output
+        grep "measured \[Time, seconds\] average:" swift_performance_output.txt > swift_perf_results.txt || true
+        cat swift_perf_results.txt
 
     - name: Memory Leak Detection
       run: |
@@ -206,11 +221,124 @@ jobs:
         xcodebuild test \
           -scheme Echoelmusic \
           -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+          -only-testing:EchoelmusicTests/PerformanceBenchmarks/testMemoryAllocationOverhead \
           -enableAddressSanitizer YES \
-          | xcpretty || true
+          | xcpretty
+      continue-on-error: false
+
+    - name: Upload Performance Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: swift-performance-results
+        path: |
+          swift_perf_results.txt
+          PerformanceBenchmarkResults
+
+  # Job 5: C++ SIMD Benchmarks
+  cpp-benchmarks:
+    name: C++ SIMD Performance Benchmarks
+    runs-on: macos-14
+    needs: code-quality
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Clone JUCE (Required Dependency)
+      run: |
+        echo "📦 Cloning JUCE framework..."
+        mkdir -p ThirdParty
+        if [ ! -d "ThirdParty/JUCE" ]; then
+          git clone --depth 1 --branch 7.0.9 https://github.com/juce-framework/JUCE.git ThirdParty/JUCE
+        fi
+
+    - name: Cache JUCE Build
+      uses: actions/cache@v3
+      with:
+        path: |
+          ThirdParty/JUCE
+          Tests/DSPTests/build
+        key: ${{ runner.os }}-juce-dsp-${{ hashFiles('Tests/DSPTests/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-juce-dsp-
+
+    - name: Build DSP Tests
+      run: |
+        echo "🔨 Building C++ DSP tests with SIMD benchmarks..."
+        cd Tests/DSPTests
+        mkdir -p build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_CXX_FLAGS="-O3 -march=native -mavx2 -mfma" \
+              ..
+        make -j$(sysctl -n hw.ncpu)
+
+    - name: Run SIMD Benchmarks
+      run: |
+        echo "⚡ Running SIMD micro-benchmarks..."
+        cd Tests/DSPTests/build
+        ./DSPTests "[performance][simd]" -r compact | tee ../../../cpp_benchmark_output.txt
+
+    - name: Upload C++ Benchmark Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: cpp-benchmark-results
+        path: cpp_benchmark_output.txt
+
+  # Job 6: Performance Validation
+  validate-performance:
+    name: Validate Performance Against Baseline
+    runs-on: ubuntu-latest
+    needs: [performance-tests, cpp-benchmarks]
+    if: always()
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Download Swift Results
+      uses: actions/download-artifact@v3
+      with:
+        name: swift-performance-results
+        path: ./results/swift
       continue-on-error: true
 
-  # Job 5: Legacy Device Compatibility
+    - name: Download C++ Results
+      uses: actions/download-artifact@v3
+      with:
+        name: cpp-benchmark-results
+        path: ./results/cpp
+      continue-on-error: true
+
+    - name: Run Performance Validation
+      run: |
+        echo "🎯 Validating performance against baseline metrics..."
+        python3 Scripts/validate_performance.py \
+          --baseline baseline-performance.json \
+          --swift-results results/swift/swift_perf_results.txt \
+          --cpp-results results/cpp/cpp_benchmark_output.txt \
+          --verbose
+
+    - name: Performance Status
+      if: failure()
+      run: |
+        echo "❌ Performance regression detected!"
+        echo "Review the validation report above for details."
+        exit 1
+
+  # Job 7: Legacy Device Compatibility
   legacy-device-tests:
     name: Legacy Device Compatibility
     runs-on: macos-14
@@ -236,7 +364,7 @@ jobs:
           -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testLegacyDeviceDetection \
           | xcpretty
 
-  # Job 6: Security Scan
+  # Job 8: Security Scan
   security-scan:
     name: Security Vulnerability Scan
     runs-on: macos-14
@@ -253,11 +381,11 @@ jobs:
         echo "✅ Security scan completed"
       continue-on-error: true
 
-  # Job 7: Build Archive (Release)
+  # Job 9: Build Archive (Release)
   build-archive:
     name: Build Archive (Release)
     runs-on: macos-14
-    needs: [build-test-ios, build-test-macos]
+    needs: [build-test-ios, build-test-macos, validate-performance]
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
 
     steps:
@@ -295,7 +423,7 @@ jobs:
         path: build/Echoelmusic.xcarchive
         retention-days: 30
 
-  # Job 8: Documentation Generation
+  # Job 10: Documentation Generation
   generate-docs:
     name: Generate Documentation
     runs-on: macos-14
@@ -319,11 +447,11 @@ jobs:
         fi
       continue-on-error: true
 
-  # Job 9: Deployment (TestFlight)
+  # Job 11: Deployment (TestFlight)
   deploy-testflight:
     name: Deploy to TestFlight
     runs-on: macos-14
-    needs: [build-archive, performance-tests, security-scan]
+    needs: [build-archive, validate-performance, security-scan]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
@@ -337,11 +465,11 @@ jobs:
         echo "This is a placeholder for actual deployment"
       continue-on-error: true
 
-  # Job 10: Notification
+  # Job 12: Notification
   notify:
     name: Send Notifications
     runs-on: ubuntu-latest
-    needs: [build-test-ios, build-test-macos, performance-tests]
+    needs: [build-test-ios, build-test-macos, performance-tests, cpp-benchmarks, validate-performance]
     if: always()
 
     steps:
@@ -350,12 +478,15 @@ jobs:
         echo "📊 Build Summary:"
         echo "iOS Tests: ${{ needs.build-test-ios.result }}"
         echo "macOS Tests: ${{ needs.build-test-macos.result }}"
-        echo "Performance Tests: ${{ needs.performance-tests.result }}"
+        echo "Swift Performance Tests: ${{ needs.performance-tests.result }}"
+        echo "C++ SIMD Benchmarks: ${{ needs.cpp-benchmarks.result }}"
+        echo "Performance Validation: ${{ needs.validate-performance.result }}"
 
         if [ "${{ needs.build-test-ios.result }}" == "success" ] && \
-           [ "${{ needs.build-test-macos.result }}" == "success" ]; then
-          echo "✅ All builds passed!"
+           [ "${{ needs.build-test-macos.result }}" == "success" ] && \
+           [ "${{ needs.validate-performance.result }}" == "success" ]; then
+          echo "✅ All builds and performance tests passed!"
         else
-          echo "❌ Some builds failed"
+          echo "❌ Some builds or performance tests failed"
           exit 1
         fi

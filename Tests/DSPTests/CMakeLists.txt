@@ -46,6 +46,7 @@ add_subdirectory(${JUCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/JUCE)
 add_executable(DSPTests
     BioReactiveDSPTests.cpp
     CompressorEQTests.cpp
+    SIMDBenchmarks.cpp
     ../../Sources/DSP/BioReactiveDSP.cpp
     ../../Sources/DSP/Compressor.cpp
     ../../Sources/DSP/ParametricEQ.cpp
