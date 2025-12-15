@@ -75,6 +75,13 @@ struct VaporwaveSettings: View {
                             diagnosticsSection
                         }
 
+                        #if DEBUG
+                        // Developer Tools (DEBUG only)
+                        settingsSection(title: "DEVELOPER", icon: "wrench.and.screwdriver.fill") {
+                            developerSection
+                        }
+                        #endif
+
                         // About
                         settingsSection(title: "ABOUT", icon: "info.circle") {
                             aboutSection
@@ -488,6 +495,39 @@ struct VaporwaveSettings: View {
                     .fill(Color.white.opacity(0.05))
         )
     }
+
+    // MARK: - Developer Section
+
+    #if DEBUG
+    private var developerSection: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            // Warning Banner
+            HStack(spacing: VaporwaveSpacing.sm) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+
+                Text("Debug tools for development only")
+                    .font(VaporwaveTypography.caption())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .padding(VaporwaveSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.orange.opacity(0.1))
+            )
+
+            // Developer Panel
+            NavigationLink(destination: DeveloperPanelView().environmentObject(audioEngine).environmentObject(healthKitManager).environmentObject(presetManager)) {
+                diagnosticsRow(
+                    icon: "wrench.and.screwdriver",
+                    title: "Developer Panel",
+                    subtitle: "Tests, state inspection & debugging",
+                    color: .orange
+                )
+            }
+        }
+    }
+    #endif
 
     // MARK: - About Section
 
