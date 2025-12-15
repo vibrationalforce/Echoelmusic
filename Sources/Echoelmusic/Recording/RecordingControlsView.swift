@@ -1,4 +1,5 @@
 import SwiftUI
+import os.log
 
 /// Main recording controls view with session management
 struct RecordingControlsView: View {
@@ -11,6 +12,10 @@ struct RecordingControlsView: View {
     @State private var showTrackList = false
     @State private var showMixer = false
     @State private var showExportOptions = false
+    @State private var showShareSheet = false
+    @State private var shareURL: URL?
+
+    private static let logger = Logger(subsystem: "com.echoelmusic.recording", category: "RecordingControlsView")
 
     var body: some View {
         VStack(spacing: 20) {
@@ -86,6 +91,11 @@ struct RecordingControlsView: View {
         }
         .sheet(isPresented: $showExportOptions) {
             exportOptionsView
+        }
+        .sheet(isPresented: $showShareSheet) {
+            if let url = shareURL {
+                ShareSheet(items: [url])
+            }
         }
     }
 
@@ -461,10 +471,13 @@ struct RecordingControlsView: View {
         Task {
             do {
                 let url = try await exportManager.exportAudio(session: session, format: format)
-                print("📤 Exported to: \(url.path)")
-                // TODO: Show share sheet
+                Self.logger.info("Exported audio to: \(url.path)")
+                await MainActor.run {
+                    shareURL = url
+                    showShareSheet = true
+                }
             } catch {
-                print("❌ Export failed: \(error)")
+                Self.logger.error("Export failed: \(error.localizedDescription)")
             }
         }
     }
@@ -475,10 +488,11 @@ struct RecordingControlsView: View {
         let exportManager = ExportManager()
         do {
             let url = try exportManager.exportBioData(session: session, format: format)
-            print("📤 Exported bio-data to: \(url.path)")
-            // TODO: Show share sheet
+            Self.logger.info("Exported bio-data to: \(url.path)")
+            shareURL = url
+            showShareSheet = true
         } catch {
-            print("❌ Export failed: \(error)")
+            Self.logger.error("Export failed: \(error.localizedDescription)")
         }
     }
 
@@ -489,10 +503,13 @@ struct RecordingControlsView: View {
         Task {
             do {
                 let url = try await exportManager.exportSessionPackage(session: session)
-                print("📦 Exported package to: \(url.path)")
-                // TODO: Show share sheet
+                Self.logger.info("Exported package to: \(url.path)")
+                await MainActor.run {
+                    shareURL = url
+                    showShareSheet = true
+                }
             } catch {
-                print("❌ Export failed: \(error)")
+                Self.logger.error("Export failed: \(error.localizedDescription)")
             }
         }
     }
@@ -504,5 +521,26 @@ struct RecordingControlsView: View {
         let seconds = Int(time) % 60
         let milliseconds = Int((time.truncatingRemainder(dividingBy: 1)) * 10)
         return String(format: "%02d:%02d.%01d", minutes, seconds, milliseconds)
+    }
+}
+
+// MARK: - ShareSheet
+
+/// UIActivityViewController wrapper for SwiftUI
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    var excludedActivityTypes: [UIActivity.ActivityType]? = nil
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(
+            activityItems: items,
+            applicationActivities: nil
+        )
+        controller.excludedActivityTypes = excludedActivityTypes
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
+        // No updates needed
     }
 }

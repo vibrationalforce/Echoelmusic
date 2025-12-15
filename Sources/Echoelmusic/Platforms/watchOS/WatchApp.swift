@@ -2,6 +2,8 @@ import Foundation
 import WatchKit
 import HealthKit
 import Combine
+import WatchConnectivity
+import os.log
 
 #if os(watchOS)
 
@@ -45,10 +47,12 @@ class WatchApp {
     private let healthKitManager: WatchHealthKitManager
     private let hapticEngine: HapticEngine
     private let audioEngine: WatchAudioEngine
+    private let connectivityManager: WatchConnectivityManager
     private var workoutSession: HKWorkoutSession?
     private var sessionStartTime: Date?
 
     private var cancellables = Set<AnyCancellable>()
+    private static let logger = Logger(subsystem: "com.echoelmusic.watch", category: "WatchApp")
 
     // MARK: - Bio Metrics
 
@@ -90,8 +94,10 @@ class WatchApp {
         self.healthKitManager = WatchHealthKitManager()
         self.hapticEngine = HapticEngine()
         self.audioEngine = WatchAudioEngine()
+        self.connectivityManager = WatchConnectivityManager()
 
         setupObservers()
+        connectivityManager.activate()
     }
 
     private func setupObservers() {
@@ -109,7 +115,7 @@ class WatchApp {
     func startSession(type: SessionType) async throws {
         guard !isSessionActive else { return }
 
-        print("⌚ Starting \(type.rawValue) session on Apple Watch")
+        Self.logger.info("Starting \(type.rawValue) session on Apple Watch")
 
         // Starte HealthKit Workout
         try await startWorkoutSession(type: type)
@@ -130,7 +136,7 @@ class WatchApp {
     func stopSession() async {
         guard isSessionActive else { return }
 
-        print("⌚ Stopping session on Apple Watch")
+        Self.logger.info("Stopping session on Apple Watch")
 
         // Stoppe Workout
         workoutSession?.end()
@@ -177,7 +183,7 @@ class WatchApp {
                                                    configuration: configuration)
             workoutSession?.startActivity(with: Date())
         } catch {
-            print("❌ Failed to start workout session: \(error)")
+            Self.logger.error("Failed to start workout session: \(error.localizedDescription)")
             throw error
         }
     }
@@ -246,8 +252,15 @@ class WatchApp {
             date: Date()
         )
 
-        // TODO: Sync with iPhone via WatchConnectivity
-        print("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        // Sync with iPhone via WatchConnectivity
+        do {
+            try connectivityManager.sendSessionData(session)
+            Self.logger.info("Session saved and synced: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        } catch {
+            Self.logger.error("Failed to sync session with iPhone: \(error.localizedDescription)")
+            // Save locally for later sync
+            connectivityManager.queueForLaterSync(session)
+        }
     }
 
     struct SessionData: Codable {
@@ -428,25 +441,137 @@ class HapticEngine {
 class WatchAudioEngine {
 
     private var isPlaying: Bool = false
+    private static let logger = Logger(subsystem: "com.echoelmusic.watch", category: "AudioEngine")
 
     func start(breathingRate: Double) async {
         isPlaying = true
-        print("🔊 Watch Audio Engine started")
+        Self.logger.info("Watch Audio Engine started with breathing rate: \(breathingRate)")
     }
 
     func stop() async {
         isPlaying = false
-        print("🔊 Watch Audio Engine stopped")
+        Self.logger.info("Watch Audio Engine stopped")
     }
 
     func playInhaleTone() async {
         // Spiele sanften aufsteigenden Ton
-        print("🎵 Inhale tone")
+        Self.logger.debug("Playing inhale tone")
     }
 
     func playExhaleTone() async {
         // Spiele sanften absteigenden Ton
-        print("🎵 Exhale tone")
+        Self.logger.debug("Playing exhale tone")
+    }
+}
+
+// MARK: - WatchConnectivity Manager
+
+/// Manages WatchConnectivity session for syncing data with iPhone
+class WatchConnectivityManager: NSObject, WCSessionDelegate {
+
+    private var session: WCSession?
+    private var pendingSessionData: [WatchApp.SessionData] = []
+    private static let logger = Logger(subsystem: "com.echoelmusic.watch", category: "WatchConnectivity")
+
+    func activate() {
+        guard WCSession.isSupported() else {
+            Self.logger.warning("WatchConnectivity not supported on this device")
+            return
+        }
+
+        session = WCSession.default
+        session?.delegate = self
+        session?.activate()
+        Self.logger.info("WatchConnectivity session activated")
+    }
+
+    // MARK: - Send Session Data
+
+    func sendSessionData(_ sessionData: WatchApp.SessionData) throws {
+        guard let session = session, session.isReachable else {
+            throw WatchConnectivityError.notReachable
+        }
+
+        do {
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(sessionData)
+
+            let message: [String: Any] = [
+                "type": "sessionData",
+                "data": data,
+                "timestamp": Date().timeIntervalSince1970
+            ]
+
+            session.sendMessage(message, replyHandler: { reply in
+                Self.logger.info("Session data sent successfully to iPhone")
+            }, errorHandler: { error in
+                Self.logger.error("Failed to send session data: \(error.localizedDescription)")
+            })
+        } catch {
+            Self.logger.error("Failed to encode session data: \(error.localizedDescription)")
+            throw error
+        }
+    }
+
+    func queueForLaterSync(_ sessionData: WatchApp.SessionData) {
+        pendingSessionData.append(sessionData)
+        Self.logger.info("Session data queued for later sync (queue size: \(self.pendingSessionData.count))")
+
+        // Try to transfer as user info for background transfer
+        transferPendingData()
+    }
+
+    private func transferPendingData() {
+        guard !pendingSessionData.isEmpty else { return }
+
+        do {
+            let encoder = JSONEncoder()
+            let dataArray = try encoder.encode(pendingSessionData)
+
+            let userInfo: [String: Any] = [
+                "type": "batchSessionData",
+                "sessions": dataArray,
+                "count": pendingSessionData.count
+            ]
+
+            session?.transferUserInfo(userInfo)
+            Self.logger.info("Transferred \(self.pendingSessionData.count) pending sessions via background transfer")
+
+            // Clear pending data after successful transfer
+            pendingSessionData.removeAll()
+        } catch {
+            Self.logger.error("Failed to transfer pending data: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - WCSessionDelegate
+
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        if let error = error {
+            Self.logger.error("WCSession activation failed: \(error.localizedDescription)")
+        } else {
+            Self.logger.info("WCSession activated with state: \(String(describing: activationState))")
+
+            // Try to send any pending data
+            if activationState == .activated && !pendingSessionData.isEmpty {
+                transferPendingData()
+            }
+        }
+    }
+
+    func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
+        Self.logger.info("Received message from iPhone: \(message.keys.joined(separator: ", "))")
+    }
+
+    func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
+        Self.logger.info("Received message with reply handler from iPhone")
+        replyHandler(["status": "received"])
+    }
+
+    enum WatchConnectivityError: Error {
+        case notReachable
+        case sessionNotActivated
+        case encodingFailed
     }
 }
 
