@@ -427,7 +427,6 @@ public class UnifiedControlHub: ObservableObject {
                 spatialMapper.afaField = afaField
 
                 // TODO: Apply AFA field to SpatialAudioEngine
-                // print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
             }
         }
     }
@@ -452,7 +451,6 @@ public class UnifiedControlHub: ObservableObject {
     private func applyFaceAudioParameters(_ params: AudioParameters) {
         // Apply to audio engine
         // TODO: Apply to actual AudioEngine once extended
-        // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
 
         // Apply to all active MPE voices
         if let mpe = mpeZoneManager {
