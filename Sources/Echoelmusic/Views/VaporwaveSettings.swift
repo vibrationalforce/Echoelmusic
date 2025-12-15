@@ -55,6 +55,11 @@ struct VaporwaveSettings: View {
                             presetsSection
                         }
 
+                        // World Music Styles
+                        settingsSection(title: "WORLD MUSIC", icon: "globe") {
+                            worldMusicSection
+                        }
+
                         // OSC Output
                         settingsSection(title: "OSC OUTPUT", icon: "antenna.radiowaves.left.and.right") {
                             oscSettings
@@ -421,6 +426,93 @@ struct VaporwaveSettings: View {
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.white.opacity(0.05))
+            )
+        }
+    }
+
+    // MARK: - World Music Section
+
+    private var worldMusicSection: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            // Quick Stats
+            HStack(spacing: VaporwaveSpacing.lg) {
+                VStack(spacing: 4) {
+                    Text("42")
+                        .font(VaporwaveTypography.dataSmall())
+                        .foregroundColor(VaporwaveColors.neonPink)
+                    Text("Styles")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+
+                Divider()
+                    .frame(height: 30)
+                    .background(Color.white.opacity(0.1))
+
+                VStack(spacing: 4) {
+                    Text("11")
+                        .font(VaporwaveTypography.dataSmall())
+                        .foregroundColor(VaporwaveColors.neonCyan)
+                    Text("Categories")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+
+                Divider()
+                    .frame(height: 30)
+                    .background(Color.white.opacity(0.1))
+
+                VStack(spacing: 4) {
+                    Image(systemName: "globe")
+                        .font(.system(size: 20))
+                        .foregroundColor(VaporwaveColors.lavender)
+                    Text("Global")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .padding(.vertical, VaporwaveSpacing.sm)
+
+            // Browse Button
+            NavigationLink(destination: WorldMusicSelectorView()) {
+                HStack {
+                    Image(systemName: "square.grid.3x3")
+                        .font(.system(size: 16))
+                        .foregroundColor(VaporwaveColors.neonPink)
+
+                    Text("Browse World Music Styles")
+                        .font(VaporwaveTypography.body())
+                        .foregroundColor(VaporwaveColors.textPrimary)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .padding(VaporwaveSpacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(VaporwaveColors.neonPink.opacity(0.1))
+                )
+            }
+
+            // Description
+            HStack(spacing: VaporwaveSpacing.sm) {
+                Image(systemName: "info.circle.fill")
+                    .foregroundColor(VaporwaveColors.lavender)
+
+                Text("Explore chord progressions, scales, and rhythms from 42 global music traditions")
+                    .font(VaporwaveTypography.caption())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .padding(VaporwaveSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(VaporwaveColors.lavender.opacity(0.1))
             )
         }
     }
