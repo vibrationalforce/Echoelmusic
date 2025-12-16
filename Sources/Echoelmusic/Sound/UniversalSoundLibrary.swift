@@ -194,6 +194,10 @@ class UniversalSoundLibrary: ObservableObject {
                 buffer = synthesizeAdditive(frequency: frequency, samples: samples, sampleRate: sampleRate)
             case .physicalModeling:
                 buffer = synthesizePhysicalModel(frequency: frequency, samples: samples, sampleRate: sampleRate)
+            case .vectorSynth:
+                buffer = synthesizeVector(frequency: frequency, samples: samples, sampleRate: sampleRate)
+            case .modalSynth:
+                buffer = synthesizeModal(frequency: frequency, samples: samples, sampleRate: sampleRate)
             default:
                 // Basic sine wave fallback
                 for i in 0..<samples {
@@ -327,6 +331,138 @@ class UniversalSoundLibrary: ObservableObject {
                 delayLine[index] = 0.996 * (delayLine[index] + delayLine[next]) / 2.0
 
                 index = next
+            }
+
+            return buffer
+        }
+
+        private func synthesizeVector(frequency: Float, samples: Int, sampleRate: Float) -> [Float] {
+            // Vector Synthesis: 2D joystick morphing between 4 oscillator sources
+            var buffer = [Float](repeating: 0, count: samples)
+
+            // Get joystick position parameters (0.0 to 1.0)
+            let xPosition = parameters.first { $0.name == "X Position" }?.value ?? 0.5
+            let yPosition = parameters.first { $0.name == "Y Position" }?.value ?? 0.5
+
+            // Calculate bilinear interpolation weights for 4 sources
+            // A = Top-Left, B = Top-Right, C = Bottom-Left, D = Bottom-Right
+            let mixA = (1.0 - xPosition) * yPosition           // Top-left
+            let mixB = xPosition * yPosition                   // Top-right
+            let mixC = (1.0 - xPosition) * (1.0 - yPosition)   // Bottom-left
+            let mixD = xPosition * (1.0 - yPosition)           // Bottom-right
+
+            // Generate 4 different oscillator sources
+            // Source A: Sawtooth (warm analog)
+            var sourceA = [Float](repeating: 0, count: samples)
+            for i in 0..<samples {
+                let phase = Float(i) / sampleRate * frequency
+                sourceA[i] = 2.0 * (phase - floor(phase)) - 1.0  // Sawtooth
+            }
+
+            // Source B: Square wave (hollow)
+            var sourceB = [Float](repeating: 0, count: samples)
+            for i in 0..<samples {
+                let phase = Float(i) / sampleRate * frequency
+                sourceB[i] = phase - floor(phase) < 0.5 ? 1.0 : -1.0  // Square
+            }
+
+            // Source C: Sine wave (pure)
+            var sourceC = [Float](repeating: 0, count: samples)
+            for i in 0..<samples {
+                let phase = Float(i) / sampleRate * frequency * 2.0 * .pi
+                sourceC[i] = sin(phase)  // Sine
+            }
+
+            // Source D: FM bell (bright)
+            var sourceD = [Float](repeating: 0, count: samples)
+            let modIndex: Float = 3.0
+            let modRatio: Float = 3.5
+            for i in 0..<samples {
+                let time = Float(i) / sampleRate
+                let modulator = modIndex * sin(2.0 * .pi * frequency * modRatio * time)
+                sourceD[i] = sin(2.0 * .pi * frequency * time + modulator)  // FM
+            }
+
+            // Mix all sources using bilinear interpolation
+            for i in 0..<samples {
+                buffer[i] = mixA * sourceA[i] +
+                           mixB * sourceB[i] +
+                           mixC * sourceC[i] +
+                           mixD * sourceD[i]
+            }
+
+            return buffer
+        }
+
+        private func synthesizeModal(frequency: Float, samples: Int, sampleRate: Float) -> [Float] {
+            // Modal Synthesis: Resonant mode bank for metallic/bell sounds
+            var buffer = [Float](repeating: 0, count: samples)
+
+            // Get synthesis mode (bell, vibraphone, or metallic)
+            let modeType = parameters.first { $0.name == "Mode Type" }?.value ?? 0.0
+
+            // Define resonant modes based on mode type
+            struct ResonantMode {
+                let frequencyRatio: Float  // Ratio to fundamental
+                let amplitude: Float       // Initial amplitude
+                let decay: Float          // Decay time in seconds
+            }
+
+            var modes: [ResonantMode] = []
+
+            if modeType < 0.33 {
+                // Bell modes (harmonic partials with inharmonicity)
+                modes = [
+                    ResonantMode(frequencyRatio: 1.0,   amplitude: 1.0,  decay: 2.0),   // Fundamental
+                    ResonantMode(frequencyRatio: 2.76,  amplitude: 0.8,  decay: 1.5),   // 2nd partial
+                    ResonantMode(frequencyRatio: 5.40,  amplitude: 0.6,  decay: 1.2),   // 3rd partial
+                    ResonantMode(frequencyRatio: 8.93,  amplitude: 0.4,  decay: 0.9),   // 4th partial
+                    ResonantMode(frequencyRatio: 13.34, amplitude: 0.3,  decay: 0.7),   // 5th partial
+                    ResonantMode(frequencyRatio: 18.64, amplitude: 0.2,  decay: 0.5),   // 6th partial
+                ]
+            } else if modeType < 0.66 {
+                // Vibraphone modes (bar modes, more harmonic)
+                modes = [
+                    ResonantMode(frequencyRatio: 1.0,   amplitude: 1.0,  decay: 3.0),   // Fundamental
+                    ResonantMode(frequencyRatio: 2.76,  amplitude: 0.6,  decay: 2.5),   // 2nd mode
+                    ResonantMode(frequencyRatio: 5.40,  amplitude: 0.3,  decay: 2.0),   // 3rd mode
+                    ResonantMode(frequencyRatio: 8.93,  amplitude: 0.15, decay: 1.5),   // 4th mode
+                ]
+            } else {
+                // Metallic/Alien modes (highly inharmonic)
+                modes = [
+                    ResonantMode(frequencyRatio: 1.0,   amplitude: 1.0,  decay: 4.0),
+                    ResonantMode(frequencyRatio: 3.14,  amplitude: 0.7,  decay: 3.0),   // π ratio
+                    ResonantMode(frequencyRatio: 7.89,  amplitude: 0.5,  decay: 2.5),   // Non-harmonic
+                    ResonantMode(frequencyRatio: 11.31, amplitude: 0.3,  decay: 1.8),   // √128
+                    ResonantMode(frequencyRatio: 15.71, amplitude: 0.2,  decay: 1.2),   // 5π
+                    ResonantMode(frequencyRatio: 21.09, amplitude: 0.15, decay: 0.8),   // Arbitrary
+                ]
+            }
+
+            // Generate each resonant mode
+            for mode in modes {
+                let modeFrequency = frequency * mode.frequencyRatio
+
+                for i in 0..<samples {
+                    let time = Float(i) / sampleRate
+
+                    // Exponential decay envelope
+                    let envelope = mode.amplitude * exp(-time / mode.decay)
+
+                    // Sinusoidal oscillator
+                    let phase = time * modeFrequency * 2.0 * .pi
+                    let sample = sin(phase) * envelope
+
+                    // Add to output buffer
+                    buffer[i] += sample
+                }
+            }
+
+            // Normalize to prevent clipping
+            let maxAmplitude = buffer.max(by: { abs($0) < abs($1) }) ?? 1.0
+            if abs(maxAmplitude) > 0.01 {
+                buffer = buffer.map { $0 / abs(maxAmplitude) * 0.8 }
             }
 
             return buffer
