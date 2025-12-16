@@ -271,10 +271,24 @@ extension EchoelUniversalCore {
         var flow: Float = 0.5
         var creativity: Float = 0.5
 
-        // Quantum Parameters
+        // Quantum Parameters (legacy - for backward compatibility)
         var quantumField: QuantumField = QuantumField()
         var superpositionState: [Float] = []
         var entanglementStrength: Float = 0
+
+        // System Computational State (evidence-based replacements)
+        var systemCoherence: Float = 0.5
+        var generativeComplexity: Float = 0.5
+
+        // HRV Metrics (Task Force ESC/NASPE 1996)
+        var hrvRMSSD: Double = 0.0      // Root mean square of successive differences (ms)
+        var hrvSDNN: Double = 0.0        // Standard deviation of NN intervals (ms)
+        var hrvPNN50: Double = 0.0       // Percentage successive differences >50ms (%)
+        var hrvLF: Double = 0.0          // Low frequency power 0.04-0.15 Hz (ms²)
+        var hrvHF: Double = 0.0          // High frequency power 0.15-0.4 Hz (ms²)
+        var hrvLFHFRatio: Double = 1.0   // LF/HF autonomic balance ratio
+        var hrvCoherence: Double = 0.0   // HeartMath-inspired coherence (0-100)
+        var breathingRate: Double = 12.0 // Breaths per minute
 
         // Timing
         var globalTime: Double = 0
