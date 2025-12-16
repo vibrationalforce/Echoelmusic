@@ -1,13 +1,41 @@
 # Echoelmusic
 
-**Bio-Reactive Audio-Visual Platform with Quantum AI**
+**Evidence-Based Bio-Reactive Audio-Visual Platform**
 
 [![Build](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](../../actions)
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](https://kotlinlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Science](https://img.shields.io/badge/Approach-Evidence_Only-blue.svg)](#-scientific-approach)
 
 > Bio-reactive music creation and performance system combining voice, biofeedback, spatial audio, and light control
+
+---
+
+## 🔬 Scientific Approach
+
+**Echoelmusic uses evidence-based terminology and peer-reviewed methodologies.**
+
+### What We Use:
+- ✅ **HRV (Heart Rate Variability)** - clinically validated biosignal analysis
+- ✅ **Task Force ESC/NASPE (1996)** - gold-standard HRV metrics (RMSSD, SDNN, pNN50, LF/HF)
+- ✅ **HeartMath-inspired coherence** - based on published research (McCraty et al. 2009)
+- ✅ **FFT spectral analysis** - standard signal processing (vDSP/Accelerate framework)
+- ✅ **Adaptive neural networks** - classical machine learning (no quantum computer required)
+- ✅ **Respiratory sinus arrhythmia** - established psychophysiology (Hirsch & Bishop 1981)
+
+### What We Don't Claim:
+- ❌ No "quantum consciousness" or "quantum biosignals" (we don't have a quantum computer)
+- ❌ No "chakras," "auras," or "energy fields" (no scientific evidence)
+- ❌ No medical diagnosis or therapeutic claims (for creative/research use only)
+
+### Research-Ready:
+- 📊 CSV export with 9 HRV metrics (publication-quality data)
+- 🔬 OSC API with Task Force 1996 compliant biosignal streaming
+- 📚 Inline citations to peer-reviewed research
+- ⚠️ Clear disclaimers on approximations vs. validated algorithms
+
+**For scientific citations, see:** [ADVANCED_NEUROSCIENCE_EVIDENCE_BASE.md](ADVANCED_NEUROSCIENCE_EVIDENCE_BASE.md)
 
 ---
 
