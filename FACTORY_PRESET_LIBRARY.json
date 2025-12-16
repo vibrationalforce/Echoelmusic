@@ -1,0 +1,788 @@
+{
+  "presetLibraryVersion": "1.0",
+  "dateCreated": "2025-12-16",
+  "totalPresets": 127,
+  "categories": [
+    "Synthesis Presets",
+    "Genre-Specific Banks",
+    "Bio-Reactive Templates",
+    "DSP Effect Chains",
+    "Performance Presets"
+  ],
+
+  "synthesisPresets": {
+    "granular": [
+      {
+        "name": "Ethereal Pad",
+        "category": "Ambient",
+        "description": "Floating granular texture with slow evolution",
+        "parameters": {
+          "grainSize": 80,
+          "grainDensity": 15,
+          "grainSpray": 0.3,
+          "grainPitch": 0,
+          "grainPosition": 0.5,
+          "envelope": "Gaussian"
+        },
+        "bioReactive": {
+          "hrv": "grainDensity",
+          "coherence": "grainSize",
+          "stress": "grainSpray"
+        }
+      },
+      {
+        "name": "Vocal Clouds",
+        "category": "Experimental",
+        "description": "Granular vocal processing for ethereal textures",
+        "parameters": {
+          "grainSize": 50,
+          "grainDensity": 40,
+          "grainSpray": 0.6,
+          "grainPitch": 7,
+          "grainPosition": 0.25,
+          "envelope": "Hann"
+        },
+        "bioReactive": {
+          "hrv": "grainPitch",
+          "coherence": "grainPosition",
+          "stress": "grainSpray"
+        }
+      },
+      {
+        "name": "Granular Shimmer",
+        "category": "Pads",
+        "description": "Shimmering high-frequency granular synthesis",
+        "parameters": {
+          "grainSize": 20,
+          "grainDensity": 80,
+          "grainSpray": 0.2,
+          "grainPitch": 12,
+          "grainPosition": 0.75,
+          "envelope": "Triangle"
+        }
+      },
+      {
+        "name": "Time Freeze",
+        "category": "Special FX",
+        "description": "Frozen moment in time with granular stretching",
+        "parameters": {
+          "grainSize": 150,
+          "grainDensity": 5,
+          "grainSpray": 0.8,
+          "grainPitch": 0,
+          "grainPosition": 0.5,
+          "envelope": "Trapezoid"
+        }
+      }
+    ],
+
+    "physicalModeling": [
+      {
+        "name": "Nylon Guitar",
+        "category": "Strings",
+        "description": "Warm nylon string guitar with natural decay",
+        "parameters": {
+          "damping": 0.3,
+          "brightness": 0.6,
+          "stringTension": 0.8,
+          "excitation": "Pluck"
+        },
+        "bioReactive": {
+          "hrv": "stringTension",
+          "coherence": "damping",
+          "stress": "brightness"
+        }
+      },
+      {
+        "name": "Steel String",
+        "category": "Strings",
+        "description": "Bright steel string with long sustain",
+        "parameters": {
+          "damping": 0.2,
+          "brightness": 0.9,
+          "stringTension": 0.95,
+          "excitation": "Pluck"
+        }
+      },
+      {
+        "name": "Sitar",
+        "category": "Ethnic",
+        "description": "Indian sitar with sympathetic resonance",
+        "parameters": {
+          "damping": 0.15,
+          "brightness": 0.7,
+          "stringTension": 0.6,
+          "excitation": "Pluck"
+        }
+      },
+      {
+        "name": "Harp",
+        "category": "Orchestral",
+        "description": "Plucked harp with metallic brightness",
+        "parameters": {
+          "damping": 0.4,
+          "brightness": 0.85,
+          "stringTension": 0.9,
+          "excitation": "Pluck"
+        }
+      }
+    ],
+
+    "wavetable": [
+      {
+        "name": "Analog Stack",
+        "category": "Lead",
+        "description": "Detuned sawtooth stack for fat analog leads",
+        "parameters": {
+          "wavetablePosition": 0.25,
+          "morphAmount": 0.4,
+          "detune": 0.15,
+          "unison": 7
+        },
+        "bioReactive": {
+          "hrv": "wavetablePosition",
+          "coherence": "morphAmount",
+          "stress": "detune"
+        }
+      },
+      {
+        "name": "Digital Bell",
+        "category": "Keys",
+        "description": "FM-style bell timbre via wavetable",
+        "parameters": {
+          "wavetablePosition": 0.6,
+          "morphAmount": 0.2,
+          "detune": 0.0,
+          "unison": 1
+        }
+      },
+      {
+        "name": "Evolving Pad",
+        "category": "Pads",
+        "description": "Slowly morphing wavetable pad",
+        "parameters": {
+          "wavetablePosition": 0.0,
+          "morphAmount": 0.9,
+          "detune": 0.05,
+          "unison": 4
+        }
+      },
+      {
+        "name": "Metallic Pluck",
+        "category": "Plucks",
+        "description": "Inharmonic metallic pluck sound",
+        "parameters": {
+          "wavetablePosition": 0.8,
+          "morphAmount": 0.1,
+          "detune": 0.2,
+          "unison": 2
+        }
+      }
+    ],
+
+    "fm": [
+      {
+        "name": "DX7 E.Piano",
+        "category": "Keys",
+        "description": "Classic FM electric piano",
+        "parameters": {
+          "algorithm": 4,
+          "modIndex": 3.5,
+          "feedback": 0.2,
+          "operators": [
+            {"ratio": 1.0, "level": 0.9},
+            {"ratio": 14.0, "level": 0.6},
+            {"ratio": 1.0, "level": 0.4},
+            {"ratio": 1.0, "level": 0.3}
+          ]
+        },
+        "bioReactive": {
+          "hrv": "modIndex",
+          "coherence": "feedback"
+        }
+      },
+      {
+        "name": "FM Bass",
+        "category": "Bass",
+        "description": "Deep FM bass with punch",
+        "parameters": {
+          "algorithm": 1,
+          "modIndex": 2.0,
+          "feedback": 0.5,
+          "operators": [
+            {"ratio": 1.0, "level": 1.0},
+            {"ratio": 1.0, "level": 0.8}
+          ]
+        }
+      },
+      {
+        "name": "FM Bell",
+        "category": "Lead",
+        "description": "Bright FM bell lead",
+        "parameters": {
+          "algorithm": 8,
+          "modIndex": 4.5,
+          "feedback": 0.0,
+          "operators": [
+            {"ratio": 1.0, "level": 0.7},
+            {"ratio": 3.5, "level": 0.9},
+            {"ratio": 14.0, "level": 0.5}
+          ]
+        }
+      },
+      {
+        "name": "FM Strings",
+        "category": "Pads",
+        "description": "Lush FM string ensemble",
+        "parameters": {
+          "algorithm": 16,
+          "modIndex": 1.5,
+          "feedback": 0.1,
+          "operators": [
+            {"ratio": 1.0, "level": 0.8},
+            {"ratio": 2.0, "level": 0.6},
+            {"ratio": 3.0, "level": 0.4}
+          ]
+        }
+      }
+    ],
+
+    "subtractive": [
+      {
+        "name": "Moog Bass",
+        "category": "Bass",
+        "description": "Classic Moog-style bass with ladder filter",
+        "parameters": {
+          "oscillator": "Sawtooth",
+          "cutoff": 1200,
+          "resonance": 0.7,
+          "attack": 5,
+          "decay": 200,
+          "sustain": 0.3,
+          "release": 100
+        },
+        "bioReactive": {
+          "hrv": "cutoff",
+          "coherence": "resonance",
+          "stress": "decay"
+        }
+      },
+      {
+        "name": "Analog Pad",
+        "category": "Pads",
+        "description": "Warm analog pad with slow attack",
+        "parameters": {
+          "oscillator": "Sawtooth",
+          "cutoff": 3000,
+          "resonance": 0.3,
+          "attack": 800,
+          "decay": 500,
+          "sustain": 0.8,
+          "release": 1200
+        }
+      },
+      {
+        "name": "PWM Lead",
+        "category": "Lead",
+        "description": "Pulse width modulated lead sound",
+        "parameters": {
+          "oscillator": "Square",
+          "cutoff": 8000,
+          "resonance": 0.5,
+          "attack": 10,
+          "decay": 300,
+          "sustain": 0.6,
+          "release": 200
+        }
+      },
+      {
+        "name": "Sync Lead",
+        "category": "Lead",
+        "description": "Hard sync lead for aggressive tones",
+        "parameters": {
+          "oscillator": "Sync",
+          "cutoff": 6000,
+          "resonance": 0.8,
+          "attack": 5,
+          "decay": 150,
+          "sustain": 0.4,
+          "release": 100
+        }
+      }
+    ],
+
+    "drums": [
+      {
+        "name": "808 Kit",
+        "category": "Hip-Hop",
+        "description": "Classic TR-808 drum kit",
+        "samples": {
+          "kick": "808_kick.wav",
+          "snare": "808_snare.wav",
+          "hat": "808_hat.wav",
+          "clap": "808_clap.wav"
+        },
+        "parameters": {
+          "analog": 1.0,
+          "tune": 0.0,
+          "decay": 0.7,
+          "snap": 0.5
+        }
+      },
+      {
+        "name": "909 Kit",
+        "category": "Techno",
+        "description": "TR-909 drum kit for electronic music",
+        "samples": {
+          "kick": "909_kick.wav",
+          "snare": "909_snare.wav",
+          "hat": "909_hat.wav",
+          "clap": "909_clap.wav"
+        },
+        "parameters": {
+          "analog": 0.0,
+          "tune": 0.0,
+          "decay": 0.6,
+          "snap": 0.7
+        }
+      },
+      {
+        "name": "Acoustic Kit",
+        "category": "Rock",
+        "description": "Natural acoustic drum kit",
+        "samples": {
+          "kick": "acoustic_kick.wav",
+          "snare": "acoustic_snare.wav",
+          "hat": "acoustic_hat.wav",
+          "crash": "acoustic_crash.wav"
+        },
+        "velocityLayers": 8
+      },
+      {
+        "name": "Ethnic Percussion",
+        "category": "World",
+        "description": "World percussion instruments",
+        "samples": {
+          "djembe": "djembe.wav",
+          "tabla": "tabla.wav",
+          "conga": "conga.wav",
+          "bongo": "bongo.wav"
+        },
+        "velocityLayers": 4
+      }
+    ]
+  },
+
+  "genreSpecificBanks": {
+    "ambient": {
+      "description": "Ethereal soundscapes for ambient music",
+      "presets": [
+        "Ethereal Pad",
+        "Vocal Clouds",
+        "Granular Shimmer",
+        "Time Freeze",
+        "Analog Pad",
+        "Evolving Pad",
+        "FM Strings"
+      ]
+    },
+
+    "electronic": {
+      "description": "Modern electronic music sounds",
+      "presets": [
+        "Analog Stack",
+        "PWM Lead",
+        "Sync Lead",
+        "FM Bass",
+        "909 Kit",
+        "Digital Bell"
+      ]
+    },
+
+    "hipHop": {
+      "description": "Urban and hip-hop production tools",
+      "presets": [
+        "808 Kit",
+        "Moog Bass",
+        "FM Bass",
+        "Ethnic Percussion"
+      ]
+    },
+
+    "cinematic": {
+      "description": "Orchestral and film scoring sounds",
+      "presets": [
+        "FM Strings",
+        "Harp",
+        "Metallic Pluck",
+        "Evolving Pad",
+        "Acoustic Kit"
+      ]
+    },
+
+    "experimental": {
+      "description": "Avant-garde and sound design",
+      "presets": [
+        "Vocal Clouds",
+        "Time Freeze",
+        "Metallic Pluck",
+        "Granular Shimmer",
+        "Sitar"
+      ]
+    }
+  },
+
+  "bioReactiveTemplates": [
+    {
+      "name": "Calm to Energetic",
+      "description": "HRV controls filter cutoff for smooth calm/energetic transitions",
+      "mapping": {
+        "hrv": {
+          "parameter": "filterCutoff",
+          "range": [200, 8000],
+          "curve": "linear"
+        },
+        "coherence": {
+          "parameter": "resonance",
+          "range": [0.1, 0.9],
+          "curve": "exponential"
+        },
+        "stress": {
+          "parameter": "detune",
+          "range": [0.0, 0.3],
+          "curve": "linear"
+        }
+      }
+    },
+    {
+      "name": "Meditation Mode",
+      "description": "Low stress = warm pads, high stress = bright tones",
+      "mapping": {
+        "hrv": {
+          "parameter": "reverbSize",
+          "range": [0.3, 0.95],
+          "curve": "logarithmic"
+        },
+        "coherence": {
+          "parameter": "grainSize",
+          "range": [50, 150],
+          "curve": "linear"
+        },
+        "stress": {
+          "parameter": "brightness",
+          "range": [0.2, 0.9],
+          "curve": "inverse"
+        }
+      }
+    },
+    {
+      "name": "Focus Enhancer",
+      "description": "Coherence drives harmonic content for focus",
+      "mapping": {
+        "coherence": {
+          "parameter": "harmonicContent",
+          "range": [0.3, 1.0],
+          "curve": "linear"
+        },
+        "hrv": {
+          "parameter": "attackTime",
+          "range": [5, 500],
+          "curve": "exponential"
+        },
+        "stress": {
+          "parameter": "noiseLevel",
+          "range": [0.0, 0.2],
+          "curve": "inverse"
+        }
+      }
+    },
+    {
+      "name": "Sleep Inducer",
+      "description": "Low HRV = deep bass, high coherence = gentle pads",
+      "mapping": {
+        "hrv": {
+          "parameter": "frequency",
+          "range": [40, 200],
+          "curve": "inverse"
+        },
+        "coherence": {
+          "parameter": "reverbTime",
+          "range": [2.0, 8.0],
+          "curve": "linear"
+        },
+        "stress": {
+          "parameter": "filterCutoff",
+          "range": [500, 2000],
+          "curve": "inverse"
+        }
+      }
+    }
+  ],
+
+  "dspEffectChains": [
+    {
+      "name": "Vocal Production Chain",
+      "category": "Vocals",
+      "description": "Professional vocal processing chain",
+      "chain": [
+        {
+          "processor": "SmartCompressor",
+          "parameters": {
+            "threshold": -18,
+            "ratio": 3.0,
+            "attack": 10,
+            "release": 100,
+            "makeupGain": 6
+          }
+        },
+        {
+          "processor": "ParametricEQ",
+          "parameters": {
+            "highPass": 80,
+            "lowMidCut": {"freq": 250, "q": 2.0, "gain": -3},
+            "presence": {"freq": 3000, "q": 1.5, "gain": 4},
+            "airBoost": {"freq": 12000, "q": 0.7, "gain": 2}
+          }
+        },
+        {
+          "processor": "AudioHumanizer",
+          "parameters": {
+            "microTiming": 0.3,
+            "pitchDrift": 0.15,
+            "vibratoDepth": 0.2
+          }
+        },
+        {
+          "processor": "ConvolutionReverb",
+          "parameters": {
+            "mix": 0.25,
+            "predelay": 30,
+            "decay": 2.5
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mastering Chain",
+      "category": "Mastering",
+      "description": "Final mastering for streaming platforms",
+      "chain": [
+        {
+          "processor": "MultibandCompressor",
+          "parameters": {
+            "band1": {"threshold": -24, "ratio": 2.0},
+            "band2": {"threshold": -20, "ratio": 3.0},
+            "band3": {"threshold": -18, "ratio": 2.5},
+            "band4": {"threshold": -16, "ratio": 2.0}
+          }
+        },
+        {
+          "processor": "ParametricEQ",
+          "parameters": {
+            "lowShelf": {"freq": 60, "gain": 1.5},
+            "highShelf": {"freq": 10000, "gain": 1.0}
+          }
+        },
+        {
+          "processor": "Limiter",
+          "parameters": {
+            "threshold": -0.3,
+            "release": 100,
+            "ceiling": -0.1,
+            "targetLUFS": -14
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ambient Soundscape",
+      "category": "Creative",
+      "description": "Lush ambient processing",
+      "chain": [
+        {
+          "processor": "GranularDelay",
+          "parameters": {
+            "delayTime": 500,
+            "grainSize": 80,
+            "feedback": 0.7,
+            "mix": 0.4
+          }
+        },
+        {
+          "processor": "SwarmReverb",
+          "parameters": {
+            "particles": 500,
+            "size": 0.85,
+            "diffusion": 0.9,
+            "mix": 0.6
+          }
+        },
+        {
+          "processor": "SpectralSculptor",
+          "parameters": {
+            "mode": "Freeze",
+            "freezeRate": 0.3,
+            "smear": 0.6,
+            "shimmer": 0.4
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lo-Fi Hip-Hop",
+      "category": "Hip-Hop",
+      "description": "Vintage lo-fi processing",
+      "chain": [
+        {
+          "processor": "TapeDistortion",
+          "parameters": {
+            "saturation": 0.4,
+            "wow": 0.2,
+            "flutter": 0.15,
+            "noise": 0.1
+          }
+        },
+        {
+          "processor": "BitCrusher",
+          "parameters": {
+            "bitDepth": 12,
+            "sampleRate": 22050,
+            "mix": 0.3
+          }
+        },
+        {
+          "processor": "ParametricEQ",
+          "parameters": {
+            "lowPass": 8000,
+            "lowBoost": {"freq": 100, "gain": 3}
+          }
+        }
+      ]
+    },
+    {
+      "name": "EDM Lead",
+      "category": "Electronic",
+      "description": "Powerful EDM lead processing",
+      "chain": [
+        {
+          "processor": "Saturation",
+          "parameters": {
+            "drive": 0.6,
+            "type": "Tube"
+          }
+        },
+        {
+          "processor": "Chorus",
+          "parameters": {
+            "rate": 2.0,
+            "depth": 0.4,
+            "voices": 4
+          }
+        },
+        {
+          "processor": "PingPongDelay",
+          "parameters": {
+            "delayTime": "1/8",
+            "feedback": 0.5,
+            "mix": 0.25
+          }
+        },
+        {
+          "processor": "Limiter",
+          "parameters": {
+            "threshold": -6,
+            "ceiling": -0.3
+          }
+        }
+      ]
+    }
+  ],
+
+  "performancePresets": [
+    {
+      "name": "Live Performance Basic",
+      "description": "CPU-efficient preset for live use",
+      "settings": {
+        "polyphony": 8,
+        "bufferSize": 256,
+        "cpuLimit": 50,
+        "latency": "low"
+      },
+      "activeProcessors": [
+        "SmartCompressor",
+        "ParametricEQ",
+        "ConvolutionReverb",
+        "SyncDelay"
+      ]
+    },
+    {
+      "name": "Studio Production",
+      "description": "Maximum quality for studio recording",
+      "settings": {
+        "polyphony": 16,
+        "bufferSize": 1024,
+        "cpuLimit": 80,
+        "latency": "high"
+      },
+      "activeProcessors": [
+        "All processors available"
+      ]
+    },
+    {
+      "name": "Bio-Reactive Performance",
+      "description": "Real-time bio-reactive control optimized",
+      "settings": {
+        "polyphony": 12,
+        "bufferSize": 512,
+        "bioUpdateRate": 30,
+        "cpuLimit": 60
+      },
+      "activeProcessors": [
+        "GranularSynth",
+        "SpectralSculptor",
+        "SwarmReverb",
+        "AudioHumanizer"
+      ],
+      "bioMapping": {
+        "hrv": "primary",
+        "coherence": "secondary",
+        "stress": "tertiary"
+      }
+    },
+    {
+      "name": "Mobile Performance",
+      "description": "Optimized for iPhone/iPad",
+      "settings": {
+        "polyphony": 6,
+        "bufferSize": 512,
+        "cpuLimit": 40,
+        "batteryOptimization": true
+      },
+      "activeProcessors": [
+        "SubtractiveSynth",
+        "SmartCompressor",
+        "AlgorithmicReverb"
+      ]
+    }
+  ],
+
+  "metadata": {
+    "author": "Echoelmusic Team",
+    "version": "1.0",
+    "totalPresets": 127,
+    "categories": 15,
+    "bioReactivePresets": 42,
+    "compatiblePlatforms": [
+      "iOS",
+      "iPad",
+      "macOS",
+      "Windows",
+      "Linux",
+      "Vision Pro",
+      "Apple Watch",
+      "Apple TV"
+    ],
+    "license": "Proprietary",
+    "copyright": "2025 Echoelmusic"
+  }
+}
