@@ -149,23 +149,21 @@ class AdvancedDSPEffects {
             return applyBiquad(input, b0: b0, b1: b1, b2: b2, a1: a1, a2: a2)
         }
 
+        // Filter state storage
+        private var filterStates: [[Float]] = []
+
         private func applyBiquad(_ input: [Float], b0: Float, b1: Float, b2: Float, a1: Float, a2: Float) -> [Float] {
-            var output = [Float](repeating: 0, count: input.count)
-            var x1: Float = 0, x2: Float = 0
-            var y1: Float = 0, y2: Float = 0
+            // SIMD-optimized biquad using vDSP
+            // Create coefficient structure
+            let coeff = BiquadCoefficients(b0: b0, b1: b1, b2: b2, a0: 1.0, a1: a1, a2: a2)
 
-            for i in 0..<input.count {
-                let x0 = input[i]
-                let y0 = b0 * x0 + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
-
-                output[i] = y0
-
-                // Shift delays
-                x2 = x1
-                x1 = x0
-                y2 = y1
-                y1 = y0
+            // Ensure we have filter state
+            if filterStates.isEmpty {
+                filterStates = [[0, 0, 0, 0]]
             }
+
+            // Apply using SIMD helper
+            let output = SIMDHelpers.applyBiquadsSIMD(input, coefficients: [coeff], state: &filterStates)
 
             return output
         }
@@ -258,42 +256,46 @@ class AdvancedDSPEffects {
             let attackCoeff = exp(-1000.0 / (band.attack * sampleRate))
             let releaseCoeff = exp(-1000.0 / (band.release * sampleRate))
 
+            // SIMD-optimized envelope following
+            let envelopeBuffer = SIMDHelpers.calculateEnvelopeSIMD(
+                input,
+                envelope: &envelope,
+                attackCoeff: attackCoeff,
+                releaseCoeff: releaseCoeff
+            )
+
+            // Prepare gain reduction array for vectorized processing
+            var gainReductionDB = [Float](repeating: 0, count: input.count)
+
+            // Convert envelope to dB and calculate gain reduction
             for i in 0..<input.count {
-                let inputLevel = abs(input[i])
-
-                // Envelope follower
-                if inputLevel > envelope {
-                    envelope = attackCoeff * envelope + (1.0 - attackCoeff) * inputLevel
-                } else {
-                    envelope = releaseCoeff * envelope + (1.0 - releaseCoeff) * inputLevel
-                }
-
-                // Convert to dB
-                let envelopeDB = 20.0 * log10(envelope + 0.00001)
+                let envelopeDB = 20.0 * log10(envelopeBuffer[i] + 0.00001)
 
                 // Calculate gain reduction
-                var gainReduction: Float = 0.0
                 if envelopeDB > band.threshold {
                     let excess = envelopeDB - band.threshold
 
                     // Apply knee
                     let kneeRange = band.knee
                     if excess < kneeRange {
-                        // Soft knee
+                        // Soft knee (parabolic)
                         let kneeRatio = excess / kneeRange
-                        gainReduction = kneeRatio * kneeRatio * excess * (1.0 - 1.0 / band.ratio) / 2.0
+                        gainReductionDB[i] = kneeRatio * kneeRatio * excess * (1.0 - 1.0 / band.ratio) / 2.0
                     } else {
-                        // Above knee
-                        gainReduction = (excess - kneeRange / 2.0) * (1.0 - 1.0 / band.ratio)
+                        // Above knee (linear)
+                        gainReductionDB[i] = (excess - kneeRange / 2.0) * (1.0 - 1.0 / band.ratio)
                     }
                 }
 
-                // Apply compression + makeup gain
-                let totalGain = -gainReduction + band.makeupGain
-                let linearGain = pow(10.0, totalGain / 20.0)
-
-                output[i] = input[i] * linearGain
+                // Add makeup gain
+                gainReductionDB[i] = -gainReductionDB[i] + band.makeupGain
             }
+
+            // SIMD: Convert dB to linear gain
+            let linearGains = SIMDHelpers.dBToLinearSIMD(gainReductionDB)
+
+            // SIMD: Apply gain to input
+            vDSP_vmul(input, 1, linearGains, 1, &output, 1, vDSP_Length(input.count))
 
             return output
         }
