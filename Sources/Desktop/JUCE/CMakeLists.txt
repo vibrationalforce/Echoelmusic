@@ -72,6 +72,8 @@ target_sources(EchoelmusicPro PRIVATE
     PluginProcessor.h
     PluginEditor.cpp
     PluginEditor.h
+    ModernLookAndFeel.cpp
+    ModernLookAndFeel.h
 )
 
 # DSP Processors - Full integration

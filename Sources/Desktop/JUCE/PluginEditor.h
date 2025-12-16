@@ -10,6 +10,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "PluginProcessor.h"
+#include "ModernLookAndFeel.h"
 
 //==============================================================================
 /**
@@ -22,7 +23,8 @@
  * - Bio-reactive visualization
  * - Real-time spectrum analyzer
  */
-class EchoelmusicProEditor  : public juce::AudioProcessorEditor
+class EchoelmusicProEditor  : public juce::AudioProcessorEditor,
+                               public juce::Timer
 {
 public:
     EchoelmusicProEditor (EchoelmusicProProcessor&);
@@ -31,10 +33,20 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    void timerCallback() override;
 
 private:
     // Reference to the processor
     EchoelmusicProProcessor& audioProcessor;
+
+    // Modern look and feel
+    ModernLookAndFeel modernLookAndFeel;
+
+    // UI Components (to be added)
+    // TODO: Add SpectrumAnalyzer
+    // TODO: Add PresetBrowser
+    // TODO: Add ProcessorRack
+    // TODO: Add BioReactiveVisualizer
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EchoelmusicProEditor)
 };

@@ -13,64 +13,131 @@
 EchoelmusicProEditor::EchoelmusicProEditor (EchoelmusicProProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    // Set editor size
-    setSize (800, 600);
+    // Apply modern look and feel
+    setLookAndFeel(&modernLookAndFeel);
+
+    // Set initial size (larger for professional plugin)
+    setSize (1200, 800);
+
+    // Set resizable with constraints (min: 800x600, max: 1920x1080)
+    setResizable(true, true);
+    setResizeLimits(800, 600, 1920, 1080);
+
+    // Start timer for animations (60 FPS)
+    startTimerHz(60);
 }
 
 EchoelmusicProEditor::~EchoelmusicProEditor()
 {
+    // Remove look and feel
+    setLookAndFeel(nullptr);
+
+    // Stop timer
+    stopTimer();
 }
 
 //==============================================================================
 void EchoelmusicProEditor::paint (juce::Graphics& g)
 {
-    // Fill background
-    g.fillAll (juce::Colour (0xff1a1a1a));
+    // Draw gradient background using modern look and feel
+    ModernLookAndFeel::drawGradientBackground(g, getLocalBounds().toFloat(),
+                                               juce::Colour(ModernLookAndFeel::ColorBackgroundDark),
+                                               juce::Colour(ModernLookAndFeel::ColorBackground));
 
-    // Draw title
-    g.setColour (juce::Colours::white);
-    g.setFont (32.0f);
-    g.drawFittedText ("Echoelmusic Pro", getLocalBounds().removeFromTop(80), juce::Justification::centred, 1);
+    // Header area
+    auto headerBounds = getLocalBounds().removeFromTop(100).toFloat().reduced(20.0f);
 
-    // Draw subtitle
-    g.setFont (16.0f);
-    g.setColour (juce::Colour (0xff00d4ff)); // Echoelmusic blue
+    // Draw header background with glow
+    ModernLookAndFeel::drawRoundedRectangleWithGlow(g, headerBounds, 8.0f,
+                                                     juce::Colour(ModernLookAndFeel::ColorSurface),
+                                                     juce::Colour(ModernLookAndFeel::ColorPrimary),
+                                                     0.3f);
+
+    // Title
+    g.setColour (juce::Colour(ModernLookAndFeel::ColorText));
+    g.setFont (juce::Font(36.0f, juce::Font::bold));
+    auto titleBounds = headerBounds.removeFromTop(50.0f);
+    g.drawFittedText ("Echoelmusic Pro", titleBounds.toNearestInt(), juce::Justification::centred, 1);
+
+    // Subtitle with accent color
+    g.setFont (juce::Font(14.0f));
+    g.setColour (juce::Colour(ModernLookAndFeel::ColorPrimary));
     g.drawFittedText ("96 Professional DSP Processors • 202 Presets • Bio-Reactive Audio",
-                      getLocalBounds().removeFromTop(120).removeFromBottom(40),
+                      headerBounds.toNearestInt(),
                       juce::Justification::centred, 1);
 
-    // Draw feature list
-    g.setFont (14.0f);
-    g.setColour (juce::Colours::lightgrey);
-    int y = 180;
-    auto features = {
-        "✓ 11 Synthesis Methods (Vector, Modal, Granular, FM, etc.)",
-        "✓ Advanced Spectral Processing (SpectralSculptor, SwarmReverb)",
-        "✓ ML-Based Tone Matching (NeuralToneMatch)",
-        "✓ Bio-Reactive DSP (HRV, Coherence, Stress)",
-        "✓ SIMD Optimizations (AVX2/NEON)",
-        "✓ Professional Audio Quality (96kHz Support)"
+    // Main content area
+    auto contentBounds = getLocalBounds().reduced(20).removeFromTop(getHeight() - 160);
+
+    // Feature cards
+    auto cardHeight = 60.0f;
+    auto cardSpacing = 15.0f;
+    auto cardY = contentBounds.getY() + 20.0f;
+
+    const char* features[] = {
+        "11 Synthesis Methods",
+        "Vector, Modal, Granular, FM",
+        "Advanced Spectral Processing",
+        "SpectralSculptor, SwarmReverb, DynamicEQ",
+        "ML-Based Processing",
+        "NeuralToneMatch, StyleAwareMastering",
+        "Bio-Reactive DSP",
+        "HRV, Coherence, Stress Modulation",
+        "SIMD Optimizations",
+        "AVX2/NEON - 3× Performance"
     };
 
-    for (const auto& feature : features)
+    for (int i = 0; i < 5; ++i)
     {
-        g.drawText (feature, 50, y, getWidth() - 100, 30, juce::Justification::left);
-        y += 35;
+        auto cardBounds = juce::Rectangle<float>(contentBounds.getX() + 10.0f, cardY,
+                                                   contentBounds.getWidth() - 20.0f, cardHeight);
+
+        // Card background
+        g.setColour(juce::Colour(ModernLookAndFeel::ColorSurface));
+        g.fillRoundedRectangle(cardBounds, 6.0f);
+
+        // Card border with accent
+        g.setColour(juce::Colour(ModernLookAndFeel::ColorBorder));
+        g.drawRoundedRectangle(cardBounds, 6.0f, 1.0f);
+
+        // Feature title
+        g.setFont(juce::Font(16.0f, juce::Font::bold));
+        g.setColour(juce::Colour(ModernLookAndFeel::ColorPrimary));
+        g.drawText(features[i * 2], cardBounds.removeFromTop(30.0f).reduced(15.0f, 5.0f).toNearestInt(),
+                   juce::Justification::centredLeft);
+
+        // Feature description
+        g.setFont(juce::Font(12.0f));
+        g.setColour(juce::Colour(ModernLookAndFeel::ColorTextDimmed));
+        g.drawText(features[i * 2 + 1], cardBounds.reduced(15.0f, 0.0f).toNearestInt(),
+                   juce::Justification::centredLeft);
+
+        cardY += cardHeight + cardSpacing;
     }
 
-    // Draw status
-    g.setFont (12.0f);
-    g.setColour (juce::Colour (0xff00ff00));
-    g.drawFittedText ("Build Status: ✅ JUCE Framework Active • Ready for Production",
-                      getLocalBounds().removeFromBottom(40),
-                      juce::Justification::centred, 1);
+    // Footer status bar
+    auto footerBounds = getLocalBounds().removeFromBottom(50).toFloat().reduced(20.0f, 10.0f);
 
-    // Draw border
-    g.setColour (juce::Colour (0xff00d4ff));
-    g.drawRect (getLocalBounds(), 2);
+    g.setColour(juce::Colour(ModernLookAndFeel::ColorSurface).withAlpha(0.5f));
+    g.fillRoundedRectangle(footerBounds, 4.0f);
+
+    g.setFont (juce::Font(12.0f));
+    g.setColour (juce::Colour(ModernLookAndFeel::ColorSuccess));
+    g.drawFittedText ("Status: Ready • JUCE Framework Active • 96 Processors Loaded",
+                      footerBounds.toNearestInt(),
+                      juce::Justification::centred, 1);
 }
 
 void EchoelmusicProEditor::resized()
 {
     // Layout components here
+    // TODO: Layout SpectrumAnalyzer, PresetBrowser, ProcessorRack, BioReactiveVisualizer
+}
+
+void EchoelmusicProEditor::timerCallback()
+{
+    // Update animations and real-time visualizations
+    // TODO: Update spectrum analyzer
+    // TODO: Update bio-reactive visualization
+    // TODO: Update any animated UI elements
 }
