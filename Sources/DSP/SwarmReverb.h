@@ -89,6 +89,13 @@ public:
 
         // Pitch shift amount (for shimmer mode)
         float pitchShift = 1.0f;
+
+        // Constructors
+        Particle() = default;
+        Particle(const Particle&) = delete;              // No copy
+        Particle& operator=(const Particle&) = delete;   // No copy assignment
+        Particle(Particle&&) = default;                  // Allow move
+        Particle& operator=(Particle&&) = default;       // Allow move assignment
     };
 
     //==========================================================================

@@ -74,31 +74,29 @@ target_sources(EchoelmusicPro PRIVATE
     PluginEditor.h
 )
 
-# DSP Processors - Gradual integration (commented out for MVP)
-# file(GLOB_RECURSE DSP_SOURCES
-#     "${CMAKE_CURRENT_SOURCE_DIR}/../../DSP/*.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/../../DSP/*.h"
-# )
+# DSP Processors - Full integration
+file(GLOB_RECURSE DSP_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../DSP/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../DSP/*.h"
+)
 
 # Audio Engine
-# file(GLOB_RECURSE AUDIO_SOURCES
-#     "${CMAKE_CURRENT_SOURCE_DIR}/../../Audio/*.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/../../Audio/*.h"
-# )
+file(GLOB_RECURSE AUDIO_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../Audio/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../Audio/*.h"
+)
 
 # Synthesis
-# file(GLOB_RECURSE SYNTH_SOURCES
-#     "${CMAKE_CURRENT_SOURCE_DIR}/../../Synthesis/*.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/../../Synthesis/*.h"
-# )
+file(GLOB_RECURSE SYNTH_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../Synthesis/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../Synthesis/*.h"
+)
 
-# target_sources(EchoelmusicPro PRIVATE
-#     ${DSP_SOURCES}
-#     ${AUDIO_SOURCES}
-#     ${SYNTH_SOURCES}
-# )
-
-# MVP: Just the plugin wrapper for now (DSP integration in next phase)
+target_sources(EchoelmusicPro PRIVATE
+    ${DSP_SOURCES}
+    ${AUDIO_SOURCES}
+    ${SYNTH_SOURCES}
+)
 
 # ===========================
 # Include Directories

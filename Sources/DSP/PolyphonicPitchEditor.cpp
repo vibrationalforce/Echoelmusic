@@ -24,7 +24,7 @@ void PolyphonicPitchEditor::analyzeAudio(const juce::AudioBuffer<float>& audioBu
     DBG("Polyphonic Pitch Editor: Analyzed audio, detected " + juce::String(detectedNotes.size()) + " notes");
 }
 
-DetectedNote* PolyphonicPitchEditor::getNote(int noteID)
+PolyphonicPitchEditor::DetectedNote* PolyphonicPitchEditor::getNote(int noteID)
 {
     for (auto& note : detectedNotes)
     {

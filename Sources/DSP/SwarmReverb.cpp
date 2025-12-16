@@ -346,7 +346,9 @@ void SwarmReverb::initializeParticles()
 
     for (int i = 0; i < targetParticleCount; ++i)
     {
-        Particle particle;
+        // Construct particle in-place
+        particles.emplace_back();
+        auto& particle = particles.back();
 
         // Random initial position within room (centered at origin)
         float halfRoom = roomSize * 0.5f;
@@ -361,8 +363,6 @@ void SwarmReverb::initializeParticles()
 
         // Random initial age
         particle.age = uniformDist(rng) * decayTime * 0.5f;
-
-        particles.push_back(particle);
     }
 
     DBG("Swarm Reverb: Initialized " + juce::String(particles.size()) + " particles");

@@ -232,7 +232,7 @@ public:
     float getCPUUsage() const { return cpuUsage; }
 
     /** Enable auto-bypass (disable processors if CPU > threshold) */
-    void setAutoBypAssEnabled(bool enable);
+    void setAutoBypassEnabled(bool enable);
 
     /** Set CPU threshold for auto-bypass (0.0 to 1.0) */
     void setAutoBypassThreshold(float threshold);

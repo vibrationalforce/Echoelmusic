@@ -47,7 +47,7 @@ public:
         float frequency = 1000.0f;                      // Hz
         float gain = 0.0f;                              // dB
         float q = 1.0f;                                 // Quality factor
-        ParametricEQ::FilterType filterType = ParametricEQ::FilterType::Peak;
+        ParametricEQ::Band::Type filterType = ParametricEQ::Band::Type::Bell;
 
         // Dynamics Parameters
         DynamicMode dynamicMode = DynamicMode::Static;
@@ -127,11 +127,8 @@ private:
 
     struct BandState
     {
-        // Parametric EQ filter
-        ParametricEQ::BiquadCoefficients eqCoeffs;
-
-        // Biquad filter state per channel
-        std::array<ParametricEQ::Band, 2> filterStates;  // [L/R]
+        // Parametric EQ filter (using JUCE's IIR filter)
+        std::array<juce::dsp::IIR::Filter<float>, 2> filters;  // [L/R]
 
         // Dynamics state per channel
         std::array<float, 2> envelope {{0.0f, 0.0f}};
