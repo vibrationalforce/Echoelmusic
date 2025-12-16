@@ -122,3 +122,4 @@ android/local.properties
 # Generated files
 *.generated.*
 compile_commands.json
+ThirdParty/visage/
