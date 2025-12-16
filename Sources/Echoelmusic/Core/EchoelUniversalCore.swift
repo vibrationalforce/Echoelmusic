@@ -708,14 +708,38 @@ struct EchoelProtocol {
         static let visualIntensity = "/echoelmusic/visual/intensity"
         static let visualColor = "/echoelmusic/visual/color"
 
-        // Quantum
-        static let quantumCoherence = "/echoelmusic/quantum/coherence"
-        static let quantumCreativity = "/echoelmusic/quantum/creativity"
-        static let quantumCollapse = "/echoelmusic/quantum/collapse"
-
-        // System
+        // System Computational State (Evidence-Based)
+        static let systemCoherence = "/echoelmusic/system/coherence"
+        static let generativeComplexity = "/echoelmusic/system/generative_complexity"
+        static let stateResolution = "/echoelmusic/system/state_resolution"
         static let systemState = "/echoelmusic/system/state"
         static let systemSync = "/echoelmusic/system/sync"
+
+        // HRV Metrics - Granular (Evidence-Based per Task Force 1996)
+        static let hrvRMSSD = "/echoelmusic/hrv/rmssd"            // Root mean square of successive differences (ms)
+        static let hrvSDNN = "/echoelmusic/hrv/sdnn"              // Standard deviation of NN intervals (ms)
+        static let hrvPNN50 = "/echoelmusic/hrv/pnn50"            // Percentage of successive intervals >50ms different
+        static let hrvLF = "/echoelmusic/hrv/lf_power"            // Low frequency power (0.04-0.15 Hz)
+        static let hrvHF = "/echoelmusic/hrv/hf_power"            // High frequency power (0.15-0.4 Hz)
+        static let hrvLFHF = "/echoelmusic/hrv/lf_hf_ratio"       // LF/HF ratio (autonomic balance)
+        static let hrvCoherence = "/echoelmusic/hrv/coherence"    // HeartMath-inspired coherence (0-1)
+
+        // Respiration (Evidence-Based per RSA research)
+        static let respRate = "/echoelmusic/resp/rate"            // Breaths per minute
+        static let respPhase = "/echoelmusic/resp/phase"          // Breath cycle position (0-1)
+        static let respDepth = "/echoelmusic/resp/depth"          // Relative breath depth (0-1)
+
+        // EDA (Electrodermal Activity) - Future implementation
+        // static let edaSCL = "/echoelmusic/eda/scl"             // Skin Conductance Level (tonic)
+        // static let edaSCR = "/echoelmusic/eda/scr"             // Skin Conductance Response (phasic)
+        // static let edaArousal = "/echoelmusic/eda/arousal"     // Computed arousal index (0-1)
+
+        // EEG Bands - Future implementation if hardware added
+        // static let eegDelta = "/echoelmusic/eeg/delta"         // 0.5-4 Hz
+        // static let eegTheta = "/echoelmusic/eeg/theta"         // 4-8 Hz
+        // static let eegAlpha = "/echoelmusic/eeg/alpha"         // 8-13 Hz
+        // static let eegBeta = "/echoelmusic/eeg/beta"           // 13-30 Hz
+        // static let eegGamma = "/echoelmusic/eeg/gamma"         // 30-100 Hz
     }
 
     // MARK: - MIDI Mapping
