@@ -24,6 +24,33 @@ class HealthKitManager: ObservableObject {
     /// Normal range: 20-100 ms (higher = better autonomic function)
     @Published var hrvRMSSD: Double = 0.0
 
+    /// Heart Rate Variability SDNN in milliseconds
+    /// SDNN = Standard Deviation of NN intervals
+    /// Normal range: 50-100 ms (higher = better overall HRV)
+    /// Reference: Task Force ESC/NASPE (1996)
+    @Published var hrvSDNN: Double = 0.0
+
+    /// pNN50 - Percentage of successive intervals >50ms different
+    /// Normal range: 5-20% (higher = better parasympathetic function)
+    /// Reference: Task Force ESC/NASPE (1996)
+    @Published var hrvPNN50: Double = 0.0
+
+    /// Low Frequency power (0.04-0.15 Hz) in ms²
+    /// Reflects sympathetic and parasympathetic activity
+    /// Reference: Task Force ESC/NASPE (1996)
+    @Published var hrvLF: Double = 0.0
+
+    /// High Frequency power (0.15-0.4 Hz) in ms²
+    /// Reflects parasympathetic (vagal) activity
+    /// Reference: Task Force ESC/NASPE (1996)
+    @Published var hrvHF: Double = 0.0
+
+    /// LF/HF Ratio - Autonomic balance indicator
+    /// Low ratio (<1): Parasympathetic dominance (relaxed)
+    /// High ratio (>2): Sympathetic dominance (stressed/alert)
+    /// Reference: Task Force ESC/NASPE (1996)
+    @Published var hrvLFHFRatio: Double = 1.0
+
     /// Coherence score (0-100) - HeartMath-inspired estimation
     /// Approximate zones (not validated against official HeartMath thresholds):
     /// 0-40: Low coherence (may indicate stress/anxiety)
@@ -287,10 +314,23 @@ class HealthKitManager: ObservableObject {
             Task { @MainActor in
                 self.hrvRMSSD = rmssd
 
-                // Calculate coherence from buffered RR intervals
+                // Calculate all HRV metrics from buffered RR intervals
                 if self.rrIntervalBuffer.count >= 30 { // Need minimum data
+                    // HeartMath-inspired coherence
                     self.hrvCoherence = self.calculateCoherence(rrIntervals: self.rrIntervalBuffer)
+
+                    // Respiratory rate extraction
                     self.breathingRate = self.calculateBreathingRate(rrIntervals: self.rrIntervalBuffer)
+
+                    // Time-domain metrics (Task Force 1996)
+                    self.hrvSDNN = self.calculateSDNN(rrIntervals: self.rrIntervalBuffer)
+                    self.hrvPNN50 = self.calculatePNN50(rrIntervals: self.rrIntervalBuffer)
+
+                    // Frequency-domain metrics (LF, HF, LF/HF ratio)
+                    let (lf, hf, ratio) = self.calculateLFHF(rrIntervals: self.rrIntervalBuffer)
+                    self.hrvLF = lf
+                    self.hrvHF = hf
+                    self.hrvLFHFRatio = ratio
                 }
             }
         }
@@ -500,6 +540,137 @@ class HealthKitManager: ObservableObject {
 
         // Clamp to physiological range (4-30 breaths/min)
         return min(max(breathsPerMinute, 4.0), 30.0)
+    }
+
+    /// Calculate SDNN (Standard Deviation of NN intervals)
+    ///
+    /// SDNN is a fundamental HRV time-domain metric representing overall variability.
+    /// It reflects all cyclic components of HRV (circadian rhythms, respiration, baroreflex).
+    ///
+    /// **Scientific Reference:**
+    /// - Task Force ESC/NASPE (1996). "Heart rate variability: standards of measurement, physiological interpretation, and clinical use"
+    ///   Circulation 93(5):1043-1065. DOI: 10.1161/01.CIR.93.5.1043
+    ///
+    /// **Normal Values:**
+    /// - Healthy adults: 50-100 ms
+    /// - Athletes: >100 ms
+    /// - Stressed/fatigued: <50 ms
+    ///
+    /// **Calculation:** Standard deviation of all NN (normal-to-normal) intervals
+    ///
+    /// - Parameter rrIntervals: Array of RR intervals in milliseconds
+    /// - Returns: SDNN in milliseconds
+    func calculateSDNN(rrIntervals: [Double]) -> Double {
+        guard rrIntervals.count >= 2 else { return 0.0 }
+
+        // Calculate mean
+        let mean = rrIntervals.reduce(0.0, +) / Double(rrIntervals.count)
+
+        // Calculate variance
+        let variance = rrIntervals.reduce(0.0) { $0 + pow($1 - mean, 2) } / Double(rrIntervals.count)
+
+        // Return standard deviation
+        return sqrt(variance)
+    }
+
+    /// Calculate pNN50 (Percentage of successive intervals >50ms different)
+    ///
+    /// pNN50 is a time-domain measure of parasympathetic (vagal) activity.
+    /// Higher values indicate better vagal tone and stress resilience.
+    ///
+    /// **Scientific Reference:**
+    /// - Task Force ESC/NASPE (1996). "Heart rate variability: standards of measurement"
+    ///   Circulation 93(5):1043-1065. DOI: 10.1161/01.CIR.93.5.1043
+    ///
+    /// **Normal Values:**
+    /// - Healthy adults: 5-20%
+    /// - Athletes: >20%
+    /// - Stressed/fatigued: <5%
+    ///
+    /// **Calculation:** (Number of successive interval differences >50ms) / (Total number of intervals - 1) * 100%
+    ///
+    /// - Parameter rrIntervals: Array of RR intervals in milliseconds
+    /// - Returns: pNN50 as percentage (0-100)
+    func calculatePNN50(rrIntervals: [Double]) -> Double {
+        guard rrIntervals.count >= 2 else { return 0.0 }
+
+        // Calculate successive differences
+        var countOver50ms = 0
+        for i in 0..<(rrIntervals.count - 1) {
+            let difference = abs(rrIntervals[i + 1] - rrIntervals[i])
+            if difference > 50.0 {
+                countOver50ms += 1
+            }
+        }
+
+        // Calculate percentage
+        let percentage = Double(countOver50ms) / Double(rrIntervals.count - 1) * 100.0
+        return percentage
+    }
+
+    /// Calculate LF and HF power, and LF/HF ratio
+    ///
+    /// Frequency-domain HRV analysis provides insight into autonomic nervous system balance:
+    /// - LF (0.04-0.15 Hz): Sympathetic + Parasympathetic activity, baroreflex
+    /// - HF (0.15-0.4 Hz): Parasympathetic (vagal) activity, respiratory sinus arrhythmia
+    /// - LF/HF Ratio: Autonomic balance (sympatho-vagal balance)
+    ///
+    /// **Scientific References:**
+    /// - Task Force ESC/NASPE (1996). "Heart rate variability: standards of measurement"
+    ///   Circulation 93(5):1043-1065. DOI: 10.1161/01.CIR.93.5.1043
+    /// - Akselrod et al. (1981). "Power spectrum analysis of heart rate fluctuation"
+    ///   Science 213(4504):220-222. DOI: 10.1126/science.6166045
+    ///
+    /// **Interpretation:**
+    /// - LF/HF < 1: Parasympathetic dominance (relaxed, recovery)
+    /// - LF/HF 1-2: Balanced autonomic state
+    /// - LF/HF > 2: Sympathetic dominance (stressed, alert, exercise)
+    ///
+    /// **Calculation:** FFT-based power spectral density in LF and HF bands
+    ///
+    /// - Parameter rrIntervals: Array of RR intervals in milliseconds
+    /// - Returns: Tuple of (LF power in ms², HF power in ms², LF/HF ratio)
+    func calculateLFHF(rrIntervals: [Double]) -> (lf: Double, hf: Double, ratio: Double) {
+        guard rrIntervals.count >= 30 else { return (0.0, 0.0, 1.0) }
+
+        // Step 1: Detrend and window the data
+        let detrended = detrend(rrIntervals)
+        let windowed = applyHammingWindow(detrended)
+
+        // Step 2: Perform FFT
+        let fftSize = nextPowerOf2(windowed.count)
+        let powerSpectrum = performFFTForCoherence(windowed, fftSize: fftSize)
+
+        // Step 3: Calculate power in frequency bands
+        let samplingRate = 1.0  // 1 RR interval per second
+
+        // LF band: 0.04-0.15 Hz
+        let lfBandLow = 0.04
+        let lfBandHigh = 0.15
+        let lfBinLow = Int(lfBandLow * Double(fftSize) / samplingRate)
+        let lfBinHigh = Int(lfBandHigh * Double(fftSize) / samplingRate)
+
+        // HF band: 0.15-0.4 Hz
+        let hfBandLow = 0.15
+        let hfBandHigh = 0.4
+        let hfBinLow = Int(hfBandLow * Double(fftSize) / samplingRate)
+        let hfBinHigh = Int(hfBandHigh * Double(fftSize) / samplingRate)
+
+        // Sum power in each band
+        var lfPower = 0.0
+        for bin in lfBinLow...min(lfBinHigh, powerSpectrum.count - 1) {
+            lfPower += powerSpectrum[bin]
+        }
+
+        var hfPower = 0.0
+        for bin in hfBinLow...min(hfBinHigh, powerSpectrum.count - 1) {
+            hfPower += powerSpectrum[bin]
+        }
+
+        // Calculate LF/HF ratio (avoid division by zero)
+        let ratio = hfPower > 0 ? lfPower / hfPower : 1.0
+
+        return (lfPower, hfPower, ratio)
     }
 
 
