@@ -59,6 +59,9 @@ class AudioEngine: ObservableObject {
     /// Node graph for effects processing
     private var nodeGraph: NodeGraph?
 
+    /// DC blocker for professional audio quality (removes DC offset)
+    /// Applied to all audio inputs before any processing
+    private let dcBlocker = DCBlocker(cutoffFrequency: 10.0)
 
     // MARK: - Private Properties
 
