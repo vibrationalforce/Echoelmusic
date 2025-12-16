@@ -104,6 +104,11 @@ iOSInjectionProject/
 
 # Third-party dependencies (users should clone these)
 ThirdParty/JUCE/
+ThirdParty/iPlug2/
+
+# Build directories
+Build/
+build/
 
 # Android
 android/.gradle/
