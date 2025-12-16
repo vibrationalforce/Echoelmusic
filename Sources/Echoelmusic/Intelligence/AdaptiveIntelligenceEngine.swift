@@ -4,73 +4,73 @@ import Accelerate
 import simd
 import Combine
 
-/// computational Intelligence Engine - computational-Inspired AI for Bio-Reactive Creativity
-/// Simulates computational computing principles for exponentially faster pattern recognition
+/// Adaptive Intelligence Engine - Quantum-Inspired AI for Bio-Reactive Creativity
+/// Simulates quantum computing principles for exponentially faster pattern recognition
 ///
-/// computational-Inspired Algorithms:
-/// 1. computational Annealing - Global optimization for music composition
-/// 2. computational Superposition - Parallel state exploration
-/// 3. computational Entanglement - Correlated bio-data patterns
-/// 4. computational Tunneling - Escape local minima in creative space
-/// 5. computational Interference - Wave function collapse for decision making
+/// Quantum-Inspired Algorithms (Classical Simulation):
+/// 1. Quantum Annealing - Global optimization for music composition
+/// 2. Quantum Superposition - Parallel state exploration
+/// 3. Quantum Entanglement - Correlated bio-data patterns
+/// 4. Quantum Tunneling - Escape local minima in creative space
+/// 5. Quantum Interference - Wave function collapse for decision making
 /// 6. Grover's Algorithm - Quadratic speedup for pattern search
 /// 7. Shor's Algorithm Analog - Prime factorization for rhythm generation
 ///
 /// References:
-/// - IBM computational Computing (2024)
-/// - Google computational AI - Sycamore Processor
-/// - Microsoft Azure computational
-/// - D-Wave computational Annealing
+/// - IBM Quantum Computing (2024)
+/// - Google Quantum AI - Sycamore Processor
+/// - Microsoft Azure Quantum
+/// - D-Wave Quantum Annealing
 /// - IonQ Trapped Ion Systems
 ///
-/// Note: This is computational-INSPIRED classical computing until true computational hardware is available
+/// Note: This is quantum-INSPIRED classical computing until true quantum hardware is available
 @MainActor
 class AdaptiveIntelligenceEngine: ObservableObject {
 
     // MARK: - Published State
 
-    @Published var computationalMode: computationalMode = .hybrid
+    @Published var adaptiveMode: AdaptiveMode = .hybrid
     @Published var qubitSimulationCount: Int = 32  // Simulated qubits
     @Published var entanglementStrength: Float = 0.8
     @Published var coherenceTime: TimeInterval = 100.0  // microseconds (simulated)
-    @Published var computationalAdvantage: Float = 1.0  // Speedup factor vs classical
+    @Published var quantumAdvantage: Float = 1.0  // Speedup factor vs classical
 
-    // MARK: - computational Modes
+    // MARK: - Adaptive Modes
 
-    enum computationalMode: String, CaseIterable {
+    enum AdaptiveMode: String, CaseIterable {
         case classical = "Classical"
-        case hybrid = "Hybrid computational-Classical"
-        case computationalSimulation = "computational Simulation"
-        case futurecomputationalHardware = "Future computational Hardware Ready"
+        case hybrid = "Hybrid Quantum-Classical"
+        case quantumSimulation = "Quantum Simulation"
+        case futureQuantumHardware = "Future Quantum Hardware Ready"
 
         var description: String {
             switch self {
             case .classical:
                 return "Standard CPU/GPU computation. Deterministic, proven algorithms."
             case .hybrid:
-                return "computational-inspired algorithms on classical hardware. 10-100x speedup for specific tasks."
-            case .computationalSimulation:
-                return "Full computational simulation (up to ~32 qubits). Exponential complexity but accurate."
-            case .futurecomputationalHardware:
-                return "Architecture ready for IBM/Google/IonQ computational processors. Future-proof API."
+                return "Quantum-inspired algorithms on classical hardware. 10-100x speedup for specific tasks."
+            case .quantumSimulation:
+                return "Full quantum simulation (up to ~32 qubits). Exponential complexity but accurate."
+            case .futureQuantumHardware:
+                return "Architecture ready for IBM/Google/IonQ quantum processors. Future-proof API."
             }
         }
 
-        var supportscomputationalAlgorithms: Bool {
+        var supportsQuantumAlgorithms: Bool {
             switch self {
             case .classical: return false
-            case .hybrid, .computationalSimulation, .futurecomputationalHardware: return true
+            case .hybrid, .quantumSimulation, .futureQuantumHardware: return true
             }
         }
     }
 
-    // MARK: - computational State
+    // MARK: - Quantum State
 
-    /// Simulated computational state vector (2^n complex amplitudes for n qubits)
+    /// Simulated quantum state vector (2^n complex amplitudes for n qubits)
     private var stateVector: [Complex<Float>] = []
 
-    /// computational register (qubit states)
-    private var computationalRegister: [Qubit] = []
+    /// Quantum register (qubit states)
+    private var quantumRegister: [Qubit] = []
 
     struct Qubit {
         var alpha: Complex<Float>  // |0⟩ amplitude
@@ -141,9 +141,9 @@ class AdaptiveIntelligenceEngine: ObservableObject {
         }
     }
 
-    // MARK: - computational Gates
+    // MARK: - Quantum Gates
 
-    enum computationalGate {
+    enum QuantumGate {
         case hadamard    // H gate - creates superposition
         case pauliX      // X gate - NOT gate
         case pauliY      // Y gate
@@ -202,45 +202,45 @@ class AdaptiveIntelligenceEngine: ObservableObject {
 
     init() {
         initializeAdaptiveRegister()
-        print("✅ computational Intelligence Engine: Initialized")
-        print("⚛️ computational Mode: \(computationalMode.rawValue)")
+        print("✅ Adaptive Intelligence Engine: Initialized")
+        print("⚛️ Adaptive Mode: \(adaptiveMode.rawValue)")
         print("🔬 Simulated Qubits: \(qubitSimulationCount)")
         print("🌌 Entanglement Strength: \(entanglementStrength)")
     }
 
-    // MARK: - Initialize computational Register
+    // MARK: - Initialize Quantum Register
 
     private func initializeAdaptiveRegister() {
-        computationalRegister = (0..<qubitSimulationCount).map { _ in Qubit() }
+        quantumRegister = (0..<qubitSimulationCount).map { _ in Qubit() }
 
         // Initialize state vector |000...0⟩
         let stateCount = Int(pow(2.0, Double(qubitSimulationCount)))
         stateVector = Array(repeating: Complex(0, 0), count: stateCount)
         stateVector[0] = Complex(1, 0)  // Ground state
 
-        print("🌌 computational state initialized: |\(String(repeating: "0", count: qubitSimulationCount))⟩")
+        print("🌌 quantum state initialized: |\(String(repeating: "0", count: qubitSimulationCount))⟩")
     }
 
-    // MARK: - Apply computational Gate
+    // MARK: - Apply Quantum Gate
 
-    func applyGate(_ gate: computationalGate, to qubitIndex: Int) {
-        guard qubitIndex < computationalRegister.count else { return }
+    func applyQuantumGate(_ gate: QuantumGate, to qubitIndex: Int) {
+        guard qubitIndex < quantumRegister.count else { return }
 
         let matrix = gate.matrix
-        let qubit = computationalRegister[qubitIndex]
+        let qubit = quantumRegister[qubitIndex]
 
         // Matrix multiplication: |ψ'⟩ = U|ψ⟩
         let newAlpha = matrix[0][0] * qubit.alpha + matrix[0][1] * qubit.beta
         let newBeta = matrix[1][0] * qubit.alpha + matrix[1][1] * qubit.beta
 
-        computationalRegister[qubitIndex].alpha = newAlpha
-        computationalRegister[qubitIndex].beta = newBeta
+        quantumRegister[qubitIndex].alpha = newAlpha
+        quantumRegister[qubitIndex].beta = newBeta
     }
 
     // MARK: - Create Entanglement
 
     func createEntanglement(between qubit1: Int, and qubit2: Int) {
-        guard qubit1 < computationalRegister.count, qubit2 < computationalRegister.count else { return }
+        guard qubit1 < quantumRegister.count, qubit2 < quantumRegister.count else { return }
 
         // Apply CNOT gate to create entanglement
         // CNOT|00⟩ = |00⟩, CNOT|01⟩ = |01⟩, CNOT|10⟩ = |11⟩, CNOT|11⟩ = |10⟩
@@ -248,12 +248,12 @@ class AdaptiveIntelligenceEngine: ObservableObject {
         print("🔗 Creating entanglement between qubits \(qubit1) and \(qubit2)")
     }
 
-    // MARK: - computational Annealing (Optimization)
+    // MARK: - Quantum Annealing (Optimization)
 
-    /// computational annealing for global optimization
+    /// quantum annealing for global optimization
     /// Used for: Music composition, bio-data pattern matching, preset optimization
-    func computationalAnneal(energyFunction: ([Float]) -> Float, dimensions: Int, iterations: Int = 1000) async -> [Float] {
-        print("🧊 computational Annealing: Started")
+    func quantumAnneal(energyFunction: ([Float]) -> Float, dimensions: Int, iterations: Int = 1000) async -> [Float] {
+        print("🧊 Quantum Annealing: Started")
         print("   Dimensions: \(dimensions)")
         print("   Iterations: \(iterations)")
 
@@ -262,12 +262,12 @@ class AdaptiveIntelligenceEngine: ObservableObject {
         var bestState = currentState
         var bestEnergy = currentEnergy
 
-        // Simulated annealing with computational tunneling
+        // Simulated annealing with quantum tunneling
         var temperature: Float = 1.0
         let coolingRate: Float = 0.99
 
         for iteration in 0..<iterations {
-            // computational tunneling probability (can escape local minima)
+            // quantum tunneling probability (can escape local minima)
             let tunnelingProbability = exp(-temperature * 10.0)
 
             // Generate neighbor state
@@ -301,7 +301,7 @@ class AdaptiveIntelligenceEngine: ObservableObject {
             }
         }
 
-        print("✅ computational Annealing: Complete")
+        print("✅ Quantum Annealing: Complete")
         print("   Best Energy: \(bestEnergy)")
 
         return bestState
@@ -310,7 +310,7 @@ class AdaptiveIntelligenceEngine: ObservableObject {
     // MARK: - Grover's Search (Pattern Matching)
 
     /// Grover's algorithm - quadratic speedup for unstructured search
-    /// Classical: O(N), computational: O(√N)
+    /// Classical: O(N), Quantum: O(√N)
     /// Used for: Finding optimal bio-data patterns, preset search, sample matching
     func groversSearch(database: [String], target: String) async -> Int? {
         let n = database.count
@@ -324,17 +324,17 @@ class AdaptiveIntelligenceEngine: ObservableObject {
         // Number of iterations: π/4 * √N
         let iterations = Int(Double.pi / 4.0 * sqrt(Double(n)))
 
-        // Simulate computational speedup
+        // Simulate quantum speedup
         let classicalComplexity = n
-        let computationalComplexity = Int(sqrt(Double(n)))
+        let quantumComplexity = Int(sqrt(Double(n)))
 
-        computationalAdvantage = Float(classicalComplexity) / Float(computationalComplexity)
+        quantumAdvantage = Float(classicalComplexity) / Float(quantumComplexity)
 
         print("   Iterations needed: \(iterations) (vs \(n) classical)")
-        print("   computational advantage: \(computationalAdvantage)x speedup")
+        print("   quantum advantage: \(quantumAdvantage)x speedup")
 
-        // Simulate search (in real computational computer, this would be exponentially faster)
-        try? await Task.sleep(nanoseconds: UInt64(iterations * 1_000_000))  // Simulate computational time
+        // Simulate search (in real quantum computer, this would be exponentially faster)
+        try? await Task.sleep(nanoseconds: UInt64(iterations * 1_000_000))  // Simulate quantum time
 
         // Find target
         if let index = database.firstIndex(of: target) {
@@ -346,21 +346,21 @@ class AdaptiveIntelligenceEngine: ObservableObject {
         return nil
     }
 
-    // MARK: - computational Neural Network
+    // MARK: - Quantum Neural Network
 
-    /// Variational computational Eigensolver (VQE) inspired neural network
+    /// Variational Quantum Eigensolver (VQE) inspired neural network
     /// Used for: Bio-data prediction, music generation, pattern recognition
-    func computationalNeuralNetwork(input: [Float], layers: Int = 4) async -> [Float] {
-        print("🧠 computational Neural Network: Processing")
+    func quantumNeuralNetwork(input: [Float], layers: Int = 4) async -> [Float] {
+        print("🧠 Quantum Neural Network: Processing")
         print("   Input size: \(input.count)")
-        print("   computational layers: \(layers)")
+        print("   quantum layers: \(layers)")
 
         var state = input
 
         for layer in 0..<layers {
-            // Apply computational-inspired transformation
+            // Apply quantum-inspired transformation
             state = state.map { value in
-                // computational superposition-like transformation
+                // quantum superposition-like transformation
                 let angle = value * .pi
                 return cos(angle) + sin(angle) * entanglementStrength
             }
@@ -376,22 +376,22 @@ class AdaptiveIntelligenceEngine: ObservableObject {
             }
         }
 
-        print("✅ computational Neural Network: Complete")
+        print("✅ Quantum Neural Network: Complete")
 
         return state
     }
 
-    // MARK: - computational-Enhanced Music Composition
+    // MARK: - Quantum-Enhanced Music Composition
 
-    /// Use computational algorithms to compose music from bio-data
-    func composeFromBioData(hrv: Float, coherence: Float, breathing: Float) async -> computationalComposition {
-        print("🎵 computational Music Composition: Started")
+    /// Use quantum algorithms to compose music from bio-data
+    func composeFromBioData(hrv: Float, coherence: Float, breathing: Float) async -> QuantumComposition {
+        print("🎵 Quantum Music Composition: Started")
 
-        // Encode bio-data into computational state
+        // Encode bio-data into quantum state
         let bioVector = [hrv / 100.0, coherence, breathing / 20.0]
 
-        // Use computational annealing to find optimal melody
-        let melody = await computationalAnneal(energyFunction: { notes in
+        // Use quantum annealing to find optimal melody
+        let melody = await quantumAnneal(energyFunction: { notes in
             // Energy function: harmony with bio-data
             var energy: Float = 0.0
             for (i, note) in notes.enumerated() {
@@ -401,31 +401,31 @@ class AdaptiveIntelligenceEngine: ObservableObject {
             return energy
         }, dimensions: 16, iterations: 500)
 
-        // Use computational neural network to generate harmony
-        let harmony = await computationalNeuralNetwork(input: melody, layers: 3)
+        // Use quantum neural network to generate harmony
+        let harmony = await quantumNeuralNetwork(input: melody, layers: 3)
 
-        // computational rhythm generation (prime factorization inspired)
-        let rhythm = generatecomputationalRhythm(tempo: Int(60 + hrv))
+        // quantum rhythm generation (prime factorization inspired)
+        let rhythm = generateQuantumRhythm(tempo: Int(60 + hrv))
 
-        print("✅ computational Music Composition: Complete")
+        print("✅ Quantum Music Composition: Complete")
 
-        return computationalComposition(
+        return QuantumComposition(
             melody: melody,
             harmony: harmony,
             rhythm: rhythm,
-            computationalAdvantage: computationalAdvantage
+            quantumAdvantage: quantumAdvantage
         )
     }
 
-    struct computationalComposition {
+    struct QuantumComposition {
         let melody: [Float]
         let harmony: [Float]
         let rhythm: [Float]
-        let computationalAdvantage: Float
+        let quantumAdvantage: Float
     }
 
-    private func generatecomputationalRhythm(tempo: Int) -> [Float] {
-        // Use computational-inspired prime factorization for rhythm patterns
+    private func generateQuantumRhythm(tempo: Int) -> [Float] {
+        // Use quantum-inspired prime factorization for rhythm patterns
         let primes = [2, 3, 5, 7, 11, 13]
         var rhythm: [Float] = []
 
@@ -437,11 +437,11 @@ class AdaptiveIntelligenceEngine: ObservableObject {
         return rhythm
     }
 
-    // MARK: - computational Entanglement for Bio-Sync
+    // MARK: - Quantum Entanglement for Bio-Sync
 
-    /// Use computational entanglement principles to sync multiple users' bio-data
-    func computationalBioSync(users: [UserBioData]) async -> GroupCoherence {
-        print("🔗 computational Bio-Sync: Started")
+    /// Use quantum entanglement principles to sync multiple users' bio-data
+    func quantumBioSync(users: [UserBioData]) async -> GroupCoherence {
+        print("🔗 Quantum Bio-Sync: Started")
         print("   Users: \(users.count)")
 
         // Create entangled state representing all users
@@ -452,15 +452,15 @@ class AdaptiveIntelligenceEngine: ObservableObject {
             entangledState.append(contentsOf: userState)
         }
 
-        // Apply computational interference to find group coherence
-        let groupState = await computationalNeuralNetwork(input: entangledState, layers: 2)
+        // Apply quantum interference to find group coherence
+        let groupState = await quantumNeuralNetwork(input: entangledState, layers: 2)
 
         // Calculate group metrics
         let avgCoherence = groupState.reduce(0, +) / Float(groupState.count)
         let variance = groupState.map { pow($0 - avgCoherence, 2) }.reduce(0, +) / Float(groupState.count)
         let synchronization = 1.0 - sqrt(variance)  // 0-1, higher is better
 
-        print("✅ computational Bio-Sync: Complete")
+        print("✅ Quantum Bio-Sync: Complete")
         print("   Group coherence: \(avgCoherence)")
         print("   Synchronization: \(synchronization)")
 
@@ -485,32 +485,32 @@ class AdaptiveIntelligenceEngine: ObservableObject {
         let participants: Int
     }
 
-    // MARK: - computational State Report
+    // MARK: - Quantum State Report
 
-    func getcomputationalStateReport() -> String {
+    func getQuantumStateReport() -> String {
         return """
         ⚛️ QUANTUM INTELLIGENCE ENGINE REPORT
 
-        computational Mode: \(computationalMode.rawValue)
+        Adaptive Mode: \(adaptiveMode.rawValue)
         Simulated Qubits: \(qubitSimulationCount)
         Entanglement Strength: \(String(format: "%.2f", entanglementStrength))
         Coherence Time: \(String(format: "%.1f", coherenceTime)) μs
-        computational Advantage: \(String(format: "%.1f", computationalAdvantage))x speedup
+        Quantum Advantage: \(String(format: "%.1f", quantumAdvantage))x speedup
 
-        computational Algorithms Available:
-        ✓ computational Annealing (Global optimization)
+        Quantum Algorithms Available:
+        ✓ Quantum Annealing (Global optimization)
         ✓ Grover's Search (√N speedup)
-        ✓ computational Neural Networks (VQE-inspired)
-        ✓ computational Entanglement (Multi-user sync)
-        ✓ computational Interference (Decision making)
-        ✓ computational Tunneling (Escape local minima)
+        ✓ Quantum Neural Networks (VQE-inspired)
+        ✓ Quantum Entanglement (Multi-user sync)
+        ✓ Quantum Interference (Decision making)
+        ✓ Quantum Tunneling (Escape local minima)
 
         Future Hardware Support:
-        • IBM computational (Qiskit ready)
-        • Google computational AI (Cirq ready)
+        • IBM Quantum (Qiskit ready)
+        • Google Quantum AI (Cirq ready)
         • IonQ Trapped Ion
-        • D-Wave computational Annealer
-        • Microsoft Azure computational
+        • D-Wave Quantum Annealer
+        • Microsoft Azure Quantum
 
         Current Applications:
         🎵 Music composition from bio-data
@@ -519,21 +519,21 @@ class AdaptiveIntelligenceEngine: ObservableObject {
         🧠 Predictive bio-response modeling
         🎨 Creative parameter optimization
 
-        Note: Currently using computational-INSPIRED algorithms on classical hardware.
-        True computational speedup requires computational processor (2025-2030 timeline).
+        Note: Currently using quantum-INSPIRED algorithms on classical hardware.
+        True quantum speedup requires quantum processor (2025-2030 timeline).
 
         References:
-        - IBM computational Experience (ibm.com/computational)
-        - Google computational AI (computationalai.google)
-        - Nature: "computational Supremacy" (2019)
-        - Science: "computational Advantage" (2023)
+        - IBM Quantum Experience (ibm.com/quantum)
+        - Google Quantum AI (quantumai.google)
+        - Nature: "Quantum Supremacy" (2019)
+        - Science: "Quantum Advantage" (2023)
         """
     }
 
-    // MARK: - computational Advantage Benchmark
+    // MARK: - Quantum Advantage Benchmark
 
-    func benchmarkcomputationalAdvantage(problemSize: Int) async -> computationalBenchmark {
-        print("⚡️ Benchmarking computational Advantage...")
+    func benchmarkQuantumAdvantage(problemSize: Int) async -> QuantumBenchmark {
+        print("⚡️ Benchmarking Quantum Advantage...")
 
         let startClassical = Date()
         // Classical algorithm: O(N)
@@ -543,34 +543,34 @@ class AdaptiveIntelligenceEngine: ObservableObject {
         }
         let classicalTime = Date().timeIntervalSince(startClassical)
 
-        let startcomputational = Date()
-        // computational-inspired algorithm: O(√N)
-        let computationalIterations = Int(sqrt(Double(problemSize)))
-        var computationalResult = 0
-        for i in 0..<computationalIterations {
-            computationalResult += i * i
+        let startQuantum = Date()
+        // quantum-inspired algorithm: O(√N)
+        let quantumIterations = Int(sqrt(Double(problemSize)))
+        var quantumResult = 0
+        for i in 0..<quantumIterations {
+            quantumResult += i * i
         }
-        let computationalTime = Date().timeIntervalSince(startcomputational)
+        let quantumTime = Date().timeIntervalSince(startQuantum)
 
-        let speedup = classicalTime / max(computationalTime, 0.000001)
+        let speedup = classicalTime / max(quantumTime, 0.000001)
 
         print("✅ Benchmark complete:")
         print("   Classical time: \(String(format: "%.6f", classicalTime))s")
-        print("   computational time: \(String(format: "%.6f", computationalTime))s")
+        print("   quantum time: \(String(format: "%.6f", quantumTime))s")
         print("   Speedup: \(String(format: "%.1f", speedup))x")
 
-        return computationalBenchmark(
+        return QuantumBenchmark(
             problemSize: problemSize,
             classicalTime: classicalTime,
-            computationalTime: computationalTime,
+            quantumTime: quantumTime,
             speedup: Float(speedup)
         )
     }
 
-    struct computationalBenchmark {
+    struct QuantumBenchmark {
         let problemSize: Int
         let classicalTime: TimeInterval
-        let computationalTime: TimeInterval
+        let quantumTime: TimeInterval
         let speedup: Float
     }
 }

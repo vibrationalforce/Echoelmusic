@@ -303,9 +303,9 @@ final class MultiPlatformBridge: ObservableObject {
         oscHandler.send(address: "/echoelmusic/flow", value: state.flow)
         oscHandler.send(address: "/echoelmusic/creativity", value: state.creativity)
 
-        // Quantum field
-        oscHandler.send(address: "/echoelmusic/quantum/superposition", value: state.quantumField.superpositionStrength)
-        oscHandler.send(address: "/echoelmusic/quantum/creativity", value: state.quantumField.creativity)
+        // System computational state (evidence-based)
+        oscHandler.send(address: "/echoelmusic/system/coherence", value: state.systemCoherence)
+        oscHandler.send(address: "/echoelmusic/system/generative_complexity", value: state.generativeComplexity)
 
         // Timing
         oscHandler.send(address: "/echoelmusic/beat/phase", value: state.beatPhase)
@@ -318,9 +318,9 @@ final class MultiPlatformBridge: ObservableObject {
             "energy": state.energy,
             "flow": state.flow,
             "creativity": state.creativity,
-            "quantum": [
-                "superposition": state.quantumField.superpositionStrength,
-                "creativity": state.quantumField.creativity
+            "system": [
+                "coherence": state.systemCoherence,
+                "generativeComplexity": state.generativeComplexity
             ],
             "timing": [
                 "beatPhase": state.beatPhase,
