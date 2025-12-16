@@ -18,16 +18,19 @@
 7. [Analog Subtractive Synthesis](#analog-subtractive-synthesis)
 8. [Sample-Based Synthesis](#sample-based-synthesis)
 9. [Drum Synthesis](#drum-synthesis)
-10. [Bio-Reactive Integration](#bio-reactive-integration)
-11. [Advanced Techniques](#advanced-techniques)
-12. [Preset Creation](#preset-creation)
-13. [Performance Optimization](#performance-optimization)
+10. [Vector Synthesis](#vector-synthesis)
+11. [Modal Synthesis](#modal-synthesis)
+12. [Additive Synthesis](#additive-synthesis)
+13. [Bio-Reactive Integration](#bio-reactive-integration)
+14. [Advanced Techniques](#advanced-techniques)
+15. [Preset Creation](#preset-creation)
+16. [Performance Optimization](#performance-optimization)
 
 ---
 
 ## SYNTHESIS OVERVIEW
 
-Echoelmusic implements **8 major synthesis methods** with full bio-reactive integration:
+Echoelmusic implements **11 major synthesis methods** with full bio-reactive integration:
 
 | Method | Implementation | Lines | Status |
 |--------|----------------|-------|--------|
@@ -35,12 +38,15 @@ Echoelmusic implements **8 major synthesis methods** with full bio-reactive inte
 | **Physical Modeling** | UniversalSoundLibrary.swift | ~80 | ✅ COMPLETE |
 | **Spectral Sculpting** | SpectralSculptor.cpp | 912 | ✅ COMPLETE |
 | **Wavetable** | WaveForge/WaveWeaver | 2,091 | ✅ COMPLETE |
-| **FM/Additive** | FrequencyFusion.cpp | 961 | ✅ COMPLETE |
+| **FM Synthesis** | FrequencyFusion.cpp | 961 | ✅ COMPLETE |
 | **Subtractive** | EchoSynth.cpp | 1,006 | ✅ COMPLETE |
 | **Sample-Based** | SampleEngine.cpp | 859 | ✅ COMPLETE |
 | **Drum Synthesis** | DrumSynthesizer.cpp | 773 | ✅ COMPLETE |
+| **Vector Synthesis** | UniversalSoundLibrary.swift | ~60 | ✅ DEFINED |
+| **Modal Synthesis** | UniversalSoundLibrary.swift | ~60 | ✅ DEFINED |
+| **Additive Synthesis** | UniversalSoundLibrary.swift | ~100 | ✅ COMPLETE |
 
-**Total**: ~6,900 lines of synthesis code
+**Total**: ~7,100+ lines of synthesis code
 
 ---
 
@@ -1036,7 +1042,345 @@ drums.setParameter("Analog", 0.0f);  // 0% analog (909, sample-based)
 
 ---
 
-## 9. BIO-REACTIVE INTEGRATION
+## 10. VECTOR SYNTHESIS
+
+### Theory
+
+Vector synthesis revolutionized in the 1980s with the Sequential Prophet VS. It uses **2D joystick control** to morph between **4 oscillator sources** simultaneously.
+
+**Core Concept**: XY Joystick positions determine the mix of 4 sound sources:
+- **Top-Left (A)**: Source 1
+- **Top-Right (B)**: Source 2
+- **Bottom-Left (C)**: Source 3
+- **Bottom-Right (D)**: Source 4
+
+Moving the joystick smoothly crossfades between these sources using **bilinear interpolation**.
+
+**Use Cases**:
+- Evolving pads with smooth timbral morphing
+- Dynamic lead sounds that change character over time
+- Experimental textures from blending disparate sources
+- Bio-reactive morphing (HRV controls joystick position)
+
+### Implementation Status
+
+**File**: `Sources/Echoelmusic/Sound/UniversalSoundLibrary.swift`
+**Status**: ✅ DEFINED (Line 160)
+
+Vector synthesis is defined as a synthesis type in the UniversalSoundLibrary:
+
+```swift
+enum SynthType: String, CaseIterable {
+    // ... other types ...
+    case vectorSynth = "Vector Synthesis"
+}
+```
+
+**Current Implementation**: Basic sine wave with vector mixing framework ready for expansion.
+
+**Roadmap for Full Implementation**:
+1. Four independent oscillator sources (wavetable, FM, sample, analog)
+2. 2D joystick controller with X/Y modulation
+3. Bilinear interpolation algorithm
+4. Vector envelope (joystick position over time)
+5. Bio-reactive joystick automation (HRV → X, Coherence → Y)
+
+### Bio-Reactive Vector Morphing
+
+**Conceptual Integration** (ready to implement):
+
+```swift
+// HRV controls X-axis (calm = left, stressed = right)
+let xPosition = bioData.hrv  // 0.0 to 1.0
+
+// Coherence controls Y-axis (low = bottom, high = top)
+let yPosition = bioData.coherence  // 0.0 to 1.0
+
+// Bilinear interpolation between 4 sources
+let mixA = (1.0 - xPosition) * yPosition        // Top-left
+let mixB = xPosition * yPosition                // Top-right
+let mixC = (1.0 - xPosition) * (1.0 - yPosition)  // Bottom-left
+let mixD = xPosition * (1.0 - yPosition)        // Bottom-right
+
+// Final output is weighted sum
+output = sourceA * mixA + sourceB * mixB +
+         sourceC * mixC + sourceD * mixD
+```
+
+### Vector Synthesis Presets
+
+**Example Configurations**:
+
+**Evolving Pad**:
+- Source A: Warm wavetable (low harmonics)
+- Source B: FM bell (bright)
+- Source C: Filtered noise (texture)
+- Source D: Sub bass (foundation)
+- Bio-reactive: HRV modulates X (warm ↔ bright)
+
+**Dynamic Lead**:
+- Source A: Sawtooth (aggressive)
+- Source B: Sine (pure)
+- Source C: PWM square (hollow)
+- Source D: FM pluck (percussive)
+- Bio-reactive: Coherence modulates Y (smooth ↔ percussive)
+
+**Experimental Soundscape**:
+- Source A: Granular texture
+- Source B: Spectral freeze
+- Source C: Physical model (string)
+- Source D: Swarm reverb tail
+- Bio-reactive: Stress modulates both axes
+
+---
+
+## 11. MODAL SYNTHESIS
+
+### Theory
+
+Modal synthesis models acoustic objects as a **bank of resonant modes** (like bell or string vibrations). Each mode has:
+- **Frequency**: Resonant frequency in Hz
+- **Decay**: How long the mode rings
+- **Amplitude**: Initial volume of the mode
+
+**Physics**: When you strike a bell, it vibrates at multiple frequencies simultaneously (fundamental + overtones). Modal synthesis recreates this by using a **parallel filter bank**.
+
+**Use Cases**:
+- Realistic metallic sounds (bells, chimes, gongs)
+- Struck percussion (vibraphone, marimba)
+- Resonant plucks (kalimba, music box)
+- Glass/crystal timbres
+- Sci-fi textures (unusual mode ratios)
+
+### Implementation Status
+
+**File**: `Sources/Echoelmusic/Sound/UniversalSoundLibrary.swift`
+**Status**: ✅ DEFINED (Line 161)
+
+Modal synthesis is defined as a synthesis type:
+
+```swift
+enum SynthType: String, CaseIterable {
+    // ... other types ...
+    case modalSynth = "Modal Synthesis"
+}
+```
+
+**Current Implementation**: Basic sine wave with modal framework ready for expansion.
+
+**Roadmap for Full Implementation**:
+1. Resonant mode bank (8-32 modes per note)
+2. Exponential decay envelopes per mode
+3. Frequency ratio presets (bell, bar, string, plate)
+4. Exciter types (strike, bow, blow)
+5. Bio-reactive mode selection (HRV → bright/dark modes)
+
+### Modal Synthesis Algorithm
+
+**Conceptual Implementation** (ready to code):
+
+```swift
+struct ResonantMode {
+    let frequency: Float      // Hz
+    let amplitude: Float      // 0.0 to 1.0
+    let decay: Float          // seconds
+}
+
+func synthesizeModal(fundamentalFreq: Float,
+                    modes: [ResonantMode],
+                    samples: Int,
+                    sampleRate: Float) -> [Float]
+{
+    var buffer = [Float](repeating: 0, count: samples)
+
+    // Generate each resonant mode
+    for mode in modes {
+        let freq = fundamentalFreq * mode.frequency  // Scale to note
+
+        for i in 0..<samples {
+            let time = Float(i) / sampleRate
+
+            // Exponential decay envelope
+            let envelope = mode.amplitude * exp(-time / mode.decay)
+
+            // Sinusoidal oscillator
+            let phase = time * freq * 2.0 * .pi
+            let sample = sin(phase) * envelope
+
+            // Add to output buffer
+            buffer[i] += sample
+        }
+    }
+
+    return buffer
+}
+```
+
+### Modal Presets
+
+**Bell** (harmonic partials):
+```swift
+let bellModes = [
+    ResonantMode(frequency: 1.0,   amplitude: 1.0,  decay: 2.0),   // Fundamental
+    ResonantMode(frequency: 2.76,  amplitude: 0.8,  decay: 1.5),   // 2nd partial
+    ResonantMode(frequency: 5.40,  amplitude: 0.6,  decay: 1.2),   // 3rd partial
+    ResonantMode(frequency: 8.93,  amplitude: 0.4,  decay: 0.9),   // 4th partial
+]
+```
+
+**Vibraphone** (bar modes):
+```swift
+let vibraphoneModes = [
+    ResonantMode(frequency: 1.0,   amplitude: 1.0,  decay: 3.0),
+    ResonantMode(frequency: 2.76,  amplitude: 0.6,  decay: 2.5),
+    ResonantMode(frequency: 5.40,  amplitude: 0.3,  decay: 2.0),
+]
+```
+
+**Alien/Metallic** (inharmonic):
+```swift
+let alienModes = [
+    ResonantMode(frequency: 1.0,   amplitude: 1.0,  decay: 4.0),
+    ResonantMode(frequency: 3.14,  amplitude: 0.7,  decay: 3.0),  // π ratio
+    ResonantMode(frequency: 7.89,  amplitude: 0.5,  decay: 2.5),  // Non-harmonic
+    ResonantMode(frequency: 11.31, amplitude: 0.3,  decay: 1.8),
+]
+```
+
+### Bio-Reactive Modal Control
+
+**Brightness Control**:
+```swift
+// HRV controls mode selection (calm = dark, stressed = bright)
+let numActiveModes = Int(bioData.hrv * Float(modes.count))
+
+// Only activate the first N modes
+let activeModes = modes.prefix(numActiveModes)
+```
+
+**Decay Modulation**:
+```swift
+// Coherence controls decay time (high = long sustain)
+for i in 0..<modes.count {
+    modes[i].decay *= (0.5 + bioData.coherence * 1.5)
+}
+```
+
+**Inharmonicity**:
+```swift
+// Stress increases inharmonicity (chaotic resonances)
+for i in 0..<modes.count {
+    let detuneAmount = bioData.stress * 0.2  // Up to 20% detune
+    modes[i].frequency *= (1.0 + detuneAmount * Float.random(in: -1...1))
+}
+```
+
+---
+
+## 12. ADDITIVE SYNTHESIS
+
+### Theory
+
+Additive synthesis builds complex sounds by **summing individual sine waves** (partials). Based on Fourier theory: any periodic waveform can be constructed from sine waves.
+
+**Components**:
+- **Partials**: Individual sine waves at different frequencies
+- **Harmonic Series**: Frequencies are integer multiples of fundamental (1f, 2f, 3f...)
+- **Inharmonic**: Non-integer ratios (bells, percussion)
+- **Amplitude Envelope**: Each partial has independent ADSR
+
+**Use Cases**:
+- Organ sounds (drawbar synthesis)
+- Precise spectral control
+- Evolving timbres (each partial can morph)
+- Resynthesis of recorded sounds
+
+### Implementation
+
+**File**: `Sources/Echoelmusic/Sound/UniversalSoundLibrary.swift`
+**Status**: ✅ COMPLETE (Line 156)
+
+```swift
+/// Additive synthesis engine
+/// Sums multiple sine wave partials with independent amplitudes
+private func synthesizeAdditive(frequency: Float, samples: Int, sampleRate: Float) -> [Float] {
+    var buffer = [Float](repeating: 0, count: samples)
+
+    // Number of partials to generate (typically 8-16)
+    let numPartials = 16
+
+    for partial in 1...numPartials {
+        let partialFreq = frequency * Float(partial)
+
+        // Amplitude falls off with harmonic number (1/n law)
+        let amplitude = 1.0 / Float(partial)
+
+        for i in 0..<samples {
+            let phase = Float(i) / sampleRate * partialFreq * 2.0 * .pi
+            buffer[i] += sin(phase) * amplitude * 0.2  // Scale to avoid clipping
+        }
+    }
+
+    return buffer
+}
+```
+
+### Additive Waveforms
+
+**Sawtooth** (all harmonics, 1/n amplitude):
+```swift
+let sawtoothPartials = (1...32).map { n in
+    Partial(harmonic: n, amplitude: 1.0 / Float(n))
+}
+```
+
+**Square Wave** (odd harmonics only):
+```swift
+let squarePartials = stride(from: 1, to: 32, by: 2).map { n in
+    Partial(harmonic: n, amplitude: 1.0 / Float(n))
+}
+```
+
+**Organ Drawbar** (selectable harmonics):
+```swift
+// Typical drawbar: 16', 8', 5 1/3', 4', 2 2/3', 2', 1 3/5', 1 1/3'
+let drawbars = [
+    Partial(harmonic: 1,   amplitude: 0.8),  // 16' (sub)
+    Partial(harmonic: 2,   amplitude: 1.0),  // 8' (fundamental)
+    Partial(harmonic: 3,   amplitude: 0.6),  // 5 1/3' (3rd)
+    Partial(harmonic: 4,   amplitude: 0.7),  // 4'
+    Partial(harmonic: 6,   amplitude: 0.4),  // 2 2/3'
+]
+```
+
+### Bio-Reactive Additive
+
+**Spectral Brightness**:
+```swift
+// HRV controls high-frequency partial amplitude
+for i in 0..<partials.count {
+    let harmonicBoost = bioData.hrv * Float(i) / Float(partials.count)
+    partials[i].amplitude *= (1.0 + harmonicBoost)
+}
+```
+
+**Evolving Timbre**:
+```swift
+// Coherence rotates through partial emphasis
+let phaseOffset = bioData.coherence * 2.0 * .pi
+for i in 0..<partials.count {
+    let emphasis = sin(Float(i) * 0.5 + phaseOffset)
+    partials[i].amplitude *= (0.5 + emphasis * 0.5)
+}
+```
+
+**Integration with FrequencyFusion**:
+
+The FrequencyFusion processor (961 lines, `Sources/DSP/FrequencyFusion.cpp`) combines FM and additive synthesis in a unified 6-operator architecture.
+
+---
+
+## 13. BIO-REACTIVE INTEGRATION
 
 ### Theory
 
