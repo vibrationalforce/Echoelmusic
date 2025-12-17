@@ -363,8 +363,7 @@ target_sources(Echoelmusic
         Sources/Healing/ResonanceHealer.cpp        # ✅ Binaural beats & Solfeggio frequencies
         # Sources/Instrument/RhythmMatrix.cpp
         # Sources/Sequencer/ArpWeaver.cpp
-        Sources/Video/VideoWeaver.cpp              # ✅ ENABLED with Metal GPU acceleration
-        Sources/Video/MetalColorGrader.mm          # ✅ GPU color grading (10-50x faster)
+        Sources/Video/VideoWeaver.cpp              # ✅ ENABLED with GPU acceleration (Metal on macOS/iOS)
         Sources/Visual/VisualForge.cpp             # ✅ Visual effects engine
         Sources/Visual/LaserForce.cpp              # ✅ Laser show generator
         # Sources/Remote/RemoteProcessingEngine.cpp  # Deferred: Complex networking
@@ -380,6 +379,20 @@ target_sources(Echoelmusic
         Sources/Platform/GlobalReachOptimizer.cpp  # ✅ Multi-region CDN optimization
         Sources/Platform/EchoHub.cpp               # ✅ Community & collaboration hub
 )
+
+# ===========================
+# Platform-Specific Sources
+# ===========================
+
+# Metal GPU acceleration (macOS/iOS only)
+if(APPLE)
+    target_sources(Echoelmusic PRIVATE
+        Sources/Video/MetalColorGrader.mm      # Metal GPU color grading
+    )
+    message(STATUS "Metal GPU acceleration: ENABLED")
+else()
+    message(STATUS "Metal GPU acceleration: DISABLED (macOS/iOS only, using CPU fallback)")
+endif()
 
 # ===========================
 # Include Directories

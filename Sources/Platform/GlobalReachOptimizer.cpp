@@ -65,9 +65,11 @@ juce::Colour GlobalReachOptimizer::adjustColorForColorBlindness(juce::Colour ori
             break;
 
         case ColorBlindnessType::Achromatopsia:  // Total color blindness
+        {
             // Convert to grayscale
             float gray = 0.299f * r + 0.587f * g + 0.114f * b;
             return juce::Colour::fromFloatRGBA(gray, gray, gray, original.getFloatAlpha());
+        }
 
         default:
             break;

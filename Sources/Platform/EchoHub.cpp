@@ -466,7 +466,7 @@ juce::String EchoHub::createInvoice(const Invoice& invoice)
     DBG("  Items: " << invoice.items.size());
 
     // Generate invoice number
-    juce::String invoiceNumber = "INV-" + juce::Time::getCurrentTime().toString(false, false).replaceCharacter('-', "").substring(0, 8)
+    juce::String invoiceNumber = "INV-" + juce::Time::getCurrentTime().toString(false, false).removeCharacters("-").substring(0, 8)
                                 + "-" + juce::String(invoices.size() + 1).paddedLeft('0', 4);
 
     Invoice newInvoice = invoice;
