@@ -4,6 +4,9 @@
 #include <vector>
 #include <memory>
 
+// Forward declarations
+namespace Echoel { class ColorGrader; }
+
 /**
  * VideoWeaver
  *
@@ -260,6 +263,9 @@ private:
 
     // HDR
     HDRMode hdrMode = HDRMode::SDR;
+
+    // GPU Color Grading
+    std::unique_ptr<Echoel::ColorGrader> colorGrader;
 
     //==========================================================================
     // Rendering Methods

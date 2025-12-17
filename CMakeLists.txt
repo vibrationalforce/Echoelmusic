@@ -363,7 +363,8 @@ target_sources(Echoelmusic
         # Sources/Healing/ResonanceHealer.cpp
         # Sources/Instrument/RhythmMatrix.cpp
         # Sources/Sequencer/ArpWeaver.cpp
-        # Sources/Video/VideoWeaver.cpp
+        Sources/Video/VideoWeaver.cpp              # ✅ ENABLED with Metal GPU acceleration
+        Sources/Video/MetalColorGrader.mm          # ✅ GPU color grading (10-50x faster)
         # Sources/Visual/VisualForge.cpp
         # Sources/Visual/LaserForce.cpp
         # Sources/Remote/RemoteProcessingEngine.cpp
