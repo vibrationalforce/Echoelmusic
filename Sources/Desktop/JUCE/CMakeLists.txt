@@ -38,7 +38,7 @@ juce_add_plugin(EchoelmusicPro
     COMPANY_NAME "Echoelmusic"
     PLUGIN_MANUFACTURER_CODE Echo
     PLUGIN_CODE EcPr
-    FORMATS VST3 AU Standalone
+    FORMATS VST3 AU Standalone CLAP
     PRODUCT_NAME "Echoelmusic Pro"
 
     # Plugin characteristics
@@ -222,6 +222,14 @@ if(APPLE)
         COMPONENT AU
     )
 
+    # Install CLAP (if target exists)
+    if(TARGET EchoelmusicPro_CLAP)
+        install(TARGETS EchoelmusicPro_CLAP
+            LIBRARY DESTINATION ~/Library/Audio/Plug-Ins/CLAP
+            COMPONENT CLAP
+        )
+    endif()
+
     # Install Standalone
     install(TARGETS EchoelmusicPro_Standalone
         BUNDLE DESTINATION /Applications
@@ -233,6 +241,13 @@ elseif(WIN32)
         COMPONENT VST3
     )
 
+    if(TARGET EchoelmusicPro_CLAP)
+        install(TARGETS EchoelmusicPro_CLAP
+            RUNTIME DESTINATION "C:/Program Files/Common Files/CLAP"
+            COMPONENT CLAP
+        )
+    endif()
+
     install(TARGETS EchoelmusicPro_Standalone
         RUNTIME DESTINATION "C:/Program Files/Echoelmusic"
         COMPONENT Standalone
@@ -242,6 +257,13 @@ else() # Linux
         LIBRARY DESTINATION /usr/lib/vst3
         COMPONENT VST3
     )
+
+    if(TARGET EchoelmusicPro_CLAP)
+        install(TARGETS EchoelmusicPro_CLAP
+            LIBRARY DESTINATION /usr/lib/clap
+            COMPONENT CLAP
+        )
+    endif()
 
     install(TARGETS EchoelmusicPro_Standalone
         RUNTIME DESTINATION /usr/local/bin
@@ -260,7 +282,7 @@ message(STATUS "╠════════════════════�
 message(STATUS "║  Framework:    JUCE 7.x                                  ║")
 message(STATUS "║  License:      Commercial ($900/year) or GPL v3          ║")
 message(STATUS "║  Processors:   96 professional DSP processors            ║")
-message(STATUS "║  Formats:      VST3, AU, Standalone                      ║")
+message(STATUS "║  Formats:      VST3, AU, CLAP, Standalone                ║")
 message(STATUS "║  Platform:     ${CMAKE_SYSTEM_NAME}                      ║")
 message(STATUS "║  Compiler:     ${CMAKE_CXX_COMPILER_ID}                  ║")
 message(STATUS "║  Build Type:   ${CMAKE_BUILD_TYPE}                       ║")
