@@ -14,6 +14,7 @@
 #include "../../Visualization/SpectrumAnalyzer.h"
 #include "../../Visualization/BioReactiveVisualizer.h"
 #include "../../UI/PresetBrowserUI.h"
+#include "../../UI/AdvancedDSPManagerUI.h"
 
 //==============================================================================
 /**
@@ -51,8 +52,7 @@ private:
 
     // UI Components
     PresetBrowserUI presetBrowser;
-
-    // TODO: Add ProcessorRack (AdvancedDSPManagerUI or custom)
+    AdvancedDSPManagerUI processorRack;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EchoelmusicProEditor)
 };

@@ -124,7 +124,7 @@ void AdvancedDSPManagerUI::timerCallback()
         return;
 
     // Update CPU usage
-    currentCPUUsage = dspManager->getCurrentCPUUsage();
+    currentCPUUsage = dspManager->getCPUUsage();
 
     // Update bio-reactive status
     // (In production, this would come from bio-data feed)
@@ -455,7 +455,7 @@ void AdvancedDSPManagerUI::MidSideToneMatchingPanel::paint(juce::Graphics& g)
     // Mid spectrum
     auto midSpectrumBounds = spectrumBounds.removeFromLeft(spectrumBounds.getWidth() / 2).reduced(10);
     g.setColour(juce::Colour(0xffe8e8e8));
-    g.setFont(14.0f);
+    g.setFont(juce::Font(14.0f));
     g.drawText("Mid Spectrum", midSpectrumBounds.removeFromTop(20), juce::Justification::centred);
 
     // Draw bars
@@ -715,11 +715,11 @@ void AdvancedDSPManagerUI::AudioHumanizerPanel::paint(juce::Graphics& g)
     g.fillRoundedRectangle(infoBounds.toFloat(), 8.0f);
 
     g.setColour(juce::Colour(0xffe8e8e8));
-    g.setFont(16.0f, juce::Font::bold);
+    g.setFont(juce::Font(16.0f, juce::Font::bold));
     g.drawText("Audio Humanizer - Organic Movement Engine", infoBounds.removeFromTop(30),
                juce::Justification::centred);
 
-    g.setFont(13.0f);
+    g.setFont(juce::Font(13.0f));
     g.setColour(juce::Colour(0xffa8a8a8));
     juce::String infoText = "Adds time-sliced organic variations to make audio feel more natural and alive.\n"
                             "Inspired by Rast Sound Naturaliser 2 (August 2025)\n\n"
@@ -877,8 +877,8 @@ AdvancedDSPManagerUI::SwarmReverbPanel::SwarmReverbPanel(AdvancedDSPManagerUI& p
     roomSizeSlider.onValueChange = [&]()
     {
         if (owner.dspManager)
-            owner.dspManager->getSwarmReverb().setRoomSize(
-                static_cast<float>(roomSizeSlider.getValue()));
+            owner.dspManager->getSwarmReverb().setSize(
+                static_cast<float>(roomSizeSlider.getValue()) / 100.0f);
     };
 
     // Damping
@@ -957,7 +957,7 @@ void AdvancedDSPManagerUI::SwarmReverbPanel::paint(juce::Graphics& g)
     g.fillRoundedRectangle(vizBounds.toFloat(), 8.0f);
 
     g.setColour(juce::Colour(0xffe8e8e8));
-    g.setFont(14.0f, juce::Font::bold);
+    g.setFont(juce::Font(14.0f, juce::Font::bold));
     auto titleBounds = vizBounds.removeFromTop(30);
     g.drawText("3D Particle Swarm", titleBounds, juce::Justification::centred);
 
@@ -1104,8 +1104,8 @@ AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::PolyphonicPitchEditorPanel(Adv
     formantPreservationSlider.onValueChange = [&]()
     {
         if (owner.dspManager)
-            owner.dspManager->getPolyphonicPitchEditor().setFormantPreservation(
-                static_cast<float>(formantPreservationSlider.getValue()));
+            owner.dspManager->getPolyphonicPitchEditor().setFormantPreservationEnabled(
+                formantPreservationSlider.getValue() > 50.0);
     };
 
     // Vibrato correction
@@ -1222,7 +1222,7 @@ void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::paint(juce::Graphics& g)
     g.fillRoundedRectangle(noteBounds.toFloat(), 8.0f);
 
     g.setColour(juce::Colour(0xffe8e8e8));
-    g.setFont(14.0f, juce::Font::bold);
+    g.setFont(juce::Font(14.0f, juce::Font::bold));
     auto titleBounds = noteBounds.removeFromTop(30);
     g.drawText("Detected Notes (Piano Roll)", titleBounds, juce::Justification::centred);
 
@@ -1287,7 +1287,7 @@ void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::paint(juce::Graphics& g)
     if (detectedNotes.empty())
     {
         g.setColour(juce::Colour(0xffa8a8a8));
-        g.setFont(13.0f);
+        g.setFont(juce::Font(13.0f));
         g.drawText("Click 'Analyze Audio' to detect notes", rollBounds,
                    juce::Justification::centred);
     }

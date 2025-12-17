@@ -24,6 +24,10 @@ EchoelmusicProEditor::EchoelmusicProEditor (EchoelmusicProProcessor& p)
     addAndMakeVisible(presetBrowser);
     presetBrowser.setDSPManager(&audioProcessor.getAdvancedDSPManager());
 
+    // Add processor rack (4 advanced processors: MidSide, Humanizer, Swarm, PitchEditor)
+    addAndMakeVisible(processorRack);
+    processorRack.setDSPManager(&audioProcessor.getAdvancedDSPManager());
+
     // Set initial size (larger for professional plugin)
     setSize (1200, 800);
 
@@ -151,7 +155,7 @@ void EchoelmusicProEditor::resized()
 
     // Create visualization area at bottom (300px height)
     auto visualizationArea = bounds.removeFromBottom(300);
-    visualizationArea.removeFromTop(10); // Spacing from preset browser
+    visualizationArea.removeFromTop(10); // Spacing from main content
 
     // Split visualization area: Spectrum Analyzer (left 60%) + Bio Visualizer (right 40%)
     auto spectrumBounds = visualizationArea.removeFromLeft(static_cast<int>(visualizationArea.getWidth() * 0.6f));
@@ -164,10 +168,18 @@ void EchoelmusicProEditor::resized()
     spectrumAnalyzer.setBounds(spectrumBounds);
     bioVisualizer.setBounds(bioVisualizerBounds);
 
-    // Use remaining area for preset browser (main content area)
-    presetBrowser.setBounds(bounds);
+    // Split remaining main content area between processor rack and preset browser
+    // Processor Rack: Top 60% (DSP control panel with 4 tabbed processors)
+    auto processorRackBounds = bounds.removeFromTop(static_cast<int>(bounds.getHeight() * 0.6f));
+    processorRackBounds.removeFromBottom(10); // Spacing
 
-    // TODO: Add ProcessorRack (could be tabbed view or separate window)
+    // Preset Browser: Bottom 40% (202 presets organized by category)
+    bounds.removeFromTop(10); // Spacing
+    auto presetBrowserBounds = bounds;
+
+    // Position main UI components
+    processorRack.setBounds(processorRackBounds);
+    presetBrowser.setBounds(presetBrowserBounds);
 }
 
 void EchoelmusicProEditor::timerCallback()

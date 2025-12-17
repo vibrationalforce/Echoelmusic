@@ -104,6 +104,8 @@ file(GLOB_RECURSE VISUALIZATION_SOURCES
 set(UI_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/PresetBrowserUI.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/PresetBrowserUI.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/AdvancedDSPManagerUI.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/AdvancedDSPManagerUI.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/ResponsiveLayout.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/UIComponents.h"
 )
