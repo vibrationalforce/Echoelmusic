@@ -10,10 +10,12 @@
 // #include "../UI/AdvancedDSPManagerUI.h"  // 63K LOC - needs AdvancedDSPManagerUI.cpp
 // #include "../UI/ModulationMatrixUI.h"  // 17K LOC - needs ModulationMatrixUI.cpp
 // #include "../UI/ParameterAutomationUI.h"  // 31K LOC - needs ParameterAutomationUI.cpp
-// #include "../UI/AdvancedSculptingUI.h"  // 35K LOC - needs JUCE 7 compatibility
+
+// ✅ JUCE 7 Compatible Components (Working):
+// #include "../UI/AdvancedSculptingUI.h"  // TODO: Fix SpectralSculptor API mismatches (Gate→SpectralGate, etc.)
 #include "../UI/EchoSynthUI.h"  // Header-only ✅
-// #include "../UI/PhaseAnalyzerUI.h"  // TODO: Fix JUCE 7 API compatibility (setFont)
-// #include "../UI/StyleAwareMasteringUI.h"  // TODO: Fix JUCE 7 API compatibility
+#include "../UI/PhaseAnalyzerUI.h"  // Header-only ✅ (JUCE 7 fixed)
+#include "../UI/StyleAwareMasteringUI.h"  // Header-only ✅ (JUCE 7 fixed)
 #include "../UI/BioFeedbackDashboard.h"  // Header-only ✅
 #include "../UI/CreativeToolsPanel.h"  // Header-only ✅
 #include "../UI/WellnessControlPanel.h"  // Header-only ✅
@@ -58,8 +60,11 @@ private:
     // std::unique_ptr<ModulationMatrixUI> modulationMatrix;      // 17K LOC - needs ModulationMatrixUI.cpp
     // std::unique_ptr<ParameterAutomationUI> automationEditor;   // 31K LOC - needs ParameterAutomationUI.cpp
 
-    // Secondary UI Panels (Header-only - Working ✅)
+    // ✅ JUCE 7 Compatible UI Panels (Working):
+    // std::unique_ptr<AdvancedSculptingUI> sculptingUI;      // TODO: Fix API mismatches
     std::unique_ptr<EchoSynthUI> synthUI;                      // Header-only ✅
+    std::unique_ptr<PhaseAnalyzerUI> phaseAnalyzer;            // Header-only ✅ (JUCE 7 fixed)
+    std::unique_ptr<StyleAwareMasteringUI> masteringUI;        // Header-only ✅ (JUCE 7 fixed)
     std::unique_ptr<BioFeedbackDashboard> bioFeedback;         // Header-only ✅
     std::unique_ptr<CreativeToolsPanel> creativeTools;         // Header-only ✅
     std::unique_ptr<WellnessControlPanel> wellnessPanel;       // Header-only ✅
@@ -78,11 +83,14 @@ private:
         // PresetBrowser,  // TODO: Needs PresetBrowserUI.cpp
         // Automation,  // TODO: Needs ParameterAutomationUI.cpp
         // Modulation,  // TODO: Needs ModulationMatrixUI.cpp
-        Synthesizer,
-        BioFeedback,
-        CreativeTools,
-        Wellness,
-        Main  // SimpleMainUI fallback
+        // Sculpting,   // TODO: Fix SpectralSculptor API mismatches
+        Synthesizer,    // ✅ EchoSynthUI
+        PhaseAnalysis,  // ✅ PhaseAnalyzerUI
+        Mastering,      // ✅ StyleAwareMasteringUI
+        BioFeedback,    // ✅ BioFeedbackDashboard
+        CreativeTools,  // ✅ CreativeToolsPanel
+        Wellness,       // ✅ WellnessControlPanel
+        Main            // ✅ SimpleMainUI fallback
     };
 
     ActivePanel currentPanel = ActivePanel::Main;
@@ -92,7 +100,10 @@ private:
     // juce::TextButton presetBrowserButton{"Presets"};  // TODO: Needs .cpp
     // juce::TextButton automationButton{"Automation"};  // TODO: Needs .cpp
     // juce::TextButton modulationButton{"Modulation"};  // TODO: Needs .cpp
+    // juce::TextButton sculptingButton{"Sculpting"};    // TODO: Fix API mismatches
     juce::TextButton synthButton{"Synth"};
+    juce::TextButton phaseButton{"Phase"};            // ✅ New
+    juce::TextButton masteringButton{"Mastering"};    // ✅ New
     juce::TextButton bioButton{"Bio"};
     juce::TextButton creativeButton{"Creative"};
     juce::TextButton wellnessButton{"Wellness"};

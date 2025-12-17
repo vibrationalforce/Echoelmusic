@@ -259,6 +259,7 @@ target_sources(Echoelmusic
 
         # UI - Main Window (NEW! 2025-11-12) ✅ TESTED
         Sources/UI/MainWindow.cpp
+        # Sources/UI/AdvancedSculptingUI.cpp      # TODO: Fix SpectralSculptor API mismatches
 
         # =====================================================================
         # PHASE 2: DSP EFFECTS (All JUCE 7 Compatible! 🎉)

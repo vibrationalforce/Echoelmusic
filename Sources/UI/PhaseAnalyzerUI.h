@@ -202,7 +202,7 @@ public:
                   juce::Justification::centredLeft);
 
         // Value display
-        g.setFont(18.0f, juce::Font::bold);
+        g.setFont(juce::Font(18.0f, juce::Font::bold));
         juce::String correlationText = juce::String(correlation, 3);
         g.drawText(correlationText, bounds.removeFromTop(40).toNearestInt(),
                   juce::Justification::centred);
@@ -327,7 +327,7 @@ private:
         if (!phaseAnalyzer)
             return;
 
-        auto suggestions = phaseAnalyzer->getSuggestedFixes();
+        auto suggestions = phaseAnalyzer->getAutoFixSuggestions();
 
         if (suggestions.empty())
         {

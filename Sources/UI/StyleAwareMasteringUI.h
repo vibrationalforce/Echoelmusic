@@ -79,7 +79,7 @@ public:
         // Loudness Range indicator
         auto lraY = bounds.getBottom() - 60;
         g.setColour(juce::Colour(0xffe8e8e8));
-        g.setFont(14.0f, juce::Font::bold);
+        g.setFont(juce::Font(14.0f, juce::Font::bold));
         g.drawText("LRA: " + juce::String(loudnessRange, 1) + " LU",
                   bounds.withY(static_cast<int>(lraY)).withHeight(20).toNearestInt(),
                   juce::Justification::centred);
@@ -135,7 +135,7 @@ private:
 
         // Value text
         g.setColour(juce::Colour(0xffe8e8e8));
-        g.setFont(16.0f, juce::Font::bold);
+        g.setFont(juce::Font(16.0f, juce::Font::bold));
         g.drawText(juce::String(lufsValue, 1),
                   barBounds.withY(barBounds.getY() - 25).withHeight(20).toNearestInt(),
                   juce::Justification::centred);
@@ -365,7 +365,7 @@ private:
         auto targets = masteringEngine->getGenreTargets();
         juce::String info = "Target: " + juce::String(targets.targetLUFS, 1) + " LUFS | ";
         info += "Range: " + juce::String(targets.targetLRA, 1) + " LU | ";
-        info += targets.tonalBalance + " | " + targets.dynamicRange;
+        info += juce::String(targets.tonalBalance) + " | " + juce::String(targets.dynamicRange);
 
         targetInfoLabel.setText(info, juce::dontSendNotification);
     }
@@ -378,7 +378,7 @@ private:
         auto report = masteringEngine->generateReport();
 
         juce::String message;
-        message += "Genre: " + report.genre + "\n\n";
+        message += "Genre: " + juce::String(report.genre) + "\n\n";
         message += "BEFORE:\n";
         message += "  LUFS: " + juce::String(report.before.integratedLUFS, 1) + " LUFS\n";
         message += "  LRA: " + juce::String(report.before.loudnessRange, 1) + " LU\n";

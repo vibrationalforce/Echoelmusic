@@ -47,10 +47,12 @@ void EchoelmusicAudioProcessorEditor::resized()
 
     // Tab bar at top (40px height)
     auto tabArea = bounds.removeFromTop(40);
-    const int numTabs = 5;  // Synth, Bio, Creative, Wellness, Main
+    const int numTabs = 7;  // Synth, Phase, Mastering, Bio, Creative, Wellness, Main
     const int tabWidth = tabArea.getWidth() / numTabs;
 
     synthButton.setBounds(tabArea.removeFromLeft(tabWidth));
+    phaseButton.setBounds(tabArea.removeFromLeft(tabWidth));
+    masteringButton.setBounds(tabArea.removeFromLeft(tabWidth));
     bioButton.setBounds(tabArea.removeFromLeft(tabWidth));
     creativeButton.setBounds(tabArea.removeFromLeft(tabWidth));
     wellnessButton.setBounds(tabArea.removeFromLeft(tabWidth));
@@ -58,6 +60,8 @@ void EchoelmusicAudioProcessorEditor::resized()
 
     // Content area for panels (remaining space)
     if (synthUI) synthUI->setBounds(bounds);
+    if (phaseAnalyzer) phaseAnalyzer->setBounds(bounds);
+    if (masteringUI) masteringUI->setBounds(bounds);
     if (bioFeedback) bioFeedback->setBounds(bounds);
     if (creativeTools) creativeTools->setBounds(bounds);
     if (wellnessPanel) wellnessPanel->setBounds(bounds);
@@ -70,11 +74,19 @@ void EchoelmusicAudioProcessorEditor::resized()
 
 void EchoelmusicAudioProcessorEditor::createUIComponents()
 {
-    // ⭐ HEADER-ONLY UI COMPONENTS (Working ✅)
+    // ✅ JUCE 7 COMPATIBLE UI COMPONENTS (Working)
 
     // Synthesizer UI
     synthUI = std::make_unique<EchoSynthUI>();
     addChildComponent(*synthUI);
+
+    // Phase Analyzer UI (JUCE 7 fixed)
+    phaseAnalyzer = std::make_unique<PhaseAnalyzerUI>();
+    addChildComponent(*phaseAnalyzer);
+
+    // Style-Aware Mastering UI (JUCE 7 fixed)
+    masteringUI = std::make_unique<StyleAwareMasteringUI>();
+    addChildComponent(*masteringUI);
 
     // Bio-Feedback Dashboard
     bioFeedback = std::make_unique<BioFeedbackDashboard>();
@@ -92,8 +104,10 @@ void EchoelmusicAudioProcessorEditor::createUIComponents()
     mainUI = std::make_unique<SimpleMainUI>();
     addAndMakeVisible(*mainUI);
 
-    // ⭐ SETUP TAB BUTTONS
+    // ⭐ SETUP TAB BUTTONS (7 panels total: 2 newly activated!)
     addAndMakeVisible(synthButton);
+    addAndMakeVisible(phaseButton);
+    addAndMakeVisible(masteringButton);
     addAndMakeVisible(bioButton);
     addAndMakeVisible(creativeButton);
     addAndMakeVisible(wellnessButton);
@@ -101,6 +115,8 @@ void EchoelmusicAudioProcessorEditor::createUIComponents()
 
     // Wire button clicks
     synthButton.onClick = [this] { switchToPanel(ActivePanel::Synthesizer); };
+    phaseButton.onClick = [this] { switchToPanel(ActivePanel::PhaseAnalysis); };
+    masteringButton.onClick = [this] { switchToPanel(ActivePanel::Mastering); };
     bioButton.onClick = [this] { switchToPanel(ActivePanel::BioFeedback); };
     creativeButton.onClick = [this] { switchToPanel(ActivePanel::CreativeTools); };
     wellnessButton.onClick = [this] { switchToPanel(ActivePanel::Wellness); };
@@ -109,7 +125,7 @@ void EchoelmusicAudioProcessorEditor::createUIComponents()
     // Set initial button states
     mainButton.setToggleState(true, juce::dontSendNotification);
 
-    DBG("UI Components created: 5 working panels + SimpleMainUI");
+    DBG("UI Components created: 7 working panels (2 newly activated!)");
 }
 
 void EchoelmusicAudioProcessorEditor::wireUIComponents()
@@ -140,6 +156,8 @@ void EchoelmusicAudioProcessorEditor::switchToPanel(ActivePanel panel)
 
     // Hide all panels
     if (synthUI) synthUI->setVisible(false);
+    if (phaseAnalyzer) phaseAnalyzer->setVisible(false);
+    if (masteringUI) masteringUI->setVisible(false);
     if (bioFeedback) bioFeedback->setVisible(false);
     if (creativeTools) creativeTools->setVisible(false);
     if (wellnessPanel) wellnessPanel->setVisible(false);
@@ -147,6 +165,8 @@ void EchoelmusicAudioProcessorEditor::switchToPanel(ActivePanel panel)
 
     // Reset all button states
     synthButton.setToggleState(false, juce::dontSendNotification);
+    phaseButton.setToggleState(false, juce::dontSendNotification);
+    masteringButton.setToggleState(false, juce::dontSendNotification);
     bioButton.setToggleState(false, juce::dontSendNotification);
     creativeButton.setToggleState(false, juce::dontSendNotification);
     wellnessButton.setToggleState(false, juce::dontSendNotification);
@@ -157,6 +177,12 @@ void EchoelmusicAudioProcessorEditor::switchToPanel(ActivePanel panel)
     {
         case ActivePanel::Synthesizer:
             if (synthUI) { synthUI->setVisible(true); synthButton.setToggleState(true, juce::dontSendNotification); }
+            break;
+        case ActivePanel::PhaseAnalysis:
+            if (phaseAnalyzer) { phaseAnalyzer->setVisible(true); phaseButton.setToggleState(true, juce::dontSendNotification); }
+            break;
+        case ActivePanel::Mastering:
+            if (masteringUI) { masteringUI->setVisible(true); masteringButton.setToggleState(true, juce::dontSendNotification); }
             break;
         case ActivePanel::BioFeedback:
             if (bioFeedback) { bioFeedback->setVisible(true); bioButton.setToggleState(true, juce::dontSendNotification); }
