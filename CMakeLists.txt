@@ -345,9 +345,9 @@ target_sources(Echoelmusic
         Sources/MIDI/ArpWeaver.cpp              # ✨ Advanced arpeggiator (Cthulhu competitor)
         Sources/MIDI/WorldMusicDatabase.cpp     # 🌍 50+ global music styles (Baroque to K-Pop)
 
-        # Pending (needs JUCE 7 fixes)
-        # Sources/DSP/DynamicEQ.cpp             # TODO: Fix ParametricEQ::FilterType
-        # Sources/DSP/SpectralSculptor.cpp      # TODO: Fix FFT API
+        # Previously disabled - Testing if JUCE 7 compatible now
+        Sources/DSP/DynamicEQ.cpp             # Dynamic EQ with per-band compression
+        Sources/DSP/SpectralSculptor.cpp      # FFT-based spectral processing
 
         # =====================================================================
         # PHASE 3: SYNTHESIS & ADVANCED FEATURES
