@@ -5,7 +5,7 @@
 #include <map>
 
 /**
- * EchoHub
+ * EchoelHub
  *
  * Complete business management, collaboration, and distribution platform.
  * All-in-one solution replacing multiple services.
@@ -53,7 +53,7 @@
  *    - EPK (Electronic Press Kit)
  *    - Radio plugging
  */
-class EchoHub
+class EchoelHub
 {
 public:
     //==========================================================================
@@ -401,8 +401,8 @@ public:
     // Constructor / Destructor
     //==========================================================================
 
-    EchoHub();
-    ~EchoHub() = default;
+    EchoelHub();
+    ~EchoelHub() = default;
 
 private:
     //==========================================================================
@@ -430,5 +430,5 @@ private:
                     const juce::String& data);
 
     //==========================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EchoHub)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EchoelHub)
 };

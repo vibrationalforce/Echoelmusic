@@ -5,7 +5,7 @@
 #include "ModernLookAndFeel.h"
 #include "PhaseAnalyzerUI.h"
 #include "StyleAwareMasteringUI.h"
-#include "EchoSynthUI.h"
+#include "EchoelSynthUI.h"
 
 //==============================================================================
 /**
@@ -25,7 +25,7 @@ public:
     {
         PhaseAnalyzer,
         StyleAwareMastering,
-        EchoSynth,
+        EchoelSynth,
         Effects,
         Mixer
     };
@@ -40,7 +40,7 @@ public:
         addAndMakeVisible(tabBar);
         tabBar.addTab("Phase Analyzer", modernLookAndFeel->getColors().backgroundDark, 0);
         tabBar.addTab("Mastering", modernLookAndFeel->getColors().backgroundDark, 1);
-        tabBar.addTab("EchoSynth", modernLookAndFeel->getColors().backgroundDark, 2);
+        tabBar.addTab("EchoelSynth", modernLookAndFeel->getColors().backgroundDark, 2);
         tabBar.addTab("Effects", modernLookAndFeel->getColors().backgroundDark, 3);
         tabBar.addTab("Mixer", modernLookAndFeel->getColors().backgroundDark, 4);
 
@@ -50,7 +50,7 @@ public:
         // Create views
         phaseAnalyzerUI = std::make_unique<PhaseAnalyzerUI>();
         styleAwareMasteringUI = std::make_unique<StyleAwareMasteringUI>();
-        echoSynthUI = std::make_unique<EchoSynthUI>();
+        echoSynthUI = std::make_unique<EchoelSynthUI>();
 
         // Show initial view
         showView(View::PhaseAnalyzer);
@@ -97,7 +97,7 @@ public:
                 styleAwareMasteringUI->setVisible(true);
                 break;
 
-            case View::EchoSynth:
+            case View::EchoelSynth:
                 if (!echoSynthUI->isOnDesktop() && echoSynthUI->getParentComponent() == nullptr)
                     addAndMakeVisible(echoSynthUI.get());
                 echoSynthUI->setVisible(true);
@@ -188,7 +188,7 @@ private:
 
     std::unique_ptr<PhaseAnalyzerUI> phaseAnalyzerUI;
     std::unique_ptr<StyleAwareMasteringUI> styleAwareMasteringUI;
-    std::unique_ptr<EchoSynthUI> echoSynthUI;
+    std::unique_ptr<EchoelSynthUI> echoSynthUI;
 
     View currentView = View::PhaseAnalyzer;
 

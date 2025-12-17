@@ -13,7 +13,7 @@
 
 // ✅ JUCE 7 Compatible Components (Working):
 // #include "../UI/AdvancedSculptingUI.h"  // TODO: Fix SpectralSculptor API mismatches (Gate→SpectralGate, etc.)
-#include "../UI/EchoSynthUI.h"  // Header-only ✅
+#include "../UI/EchoelSynthUI.h"  // Header-only ✅
 #include "../UI/PhaseAnalyzerUI.h"  // Header-only ✅ (JUCE 7 fixed)
 #include "../UI/StyleAwareMasteringUI.h"  // Header-only ✅ (JUCE 7 fixed)
 #include "../UI/BioFeedbackDashboard.h"  // Header-only ✅
@@ -29,7 +29,7 @@
  * - Cross-platform responsive UI (Desktop/Tablet/Phone)
  * - Phase Analyzer (Goniometer + Correlation Meter)
  * - Style-Aware Mastering (Genre-specific LUFS mastering)
- * - EchoSynth (Analog synthesizer)
+ * - EchoelSynth (Analog synthesizer)
  * - Real-time bio-data visualization
  * - Modern dark/light themes
  * - Touch-optimized controls
@@ -62,7 +62,7 @@ private:
 
     // ✅ JUCE 7 Compatible UI Panels (Working):
     // std::unique_ptr<AdvancedSculptingUI> sculptingUI;      // TODO: Fix API mismatches
-    std::unique_ptr<EchoSynthUI> synthUI;                      // Header-only ✅
+    std::unique_ptr<EchoelSynthUI> synthUI;                      // Header-only ✅
     std::unique_ptr<PhaseAnalyzerUI> phaseAnalyzer;            // Header-only ✅ (JUCE 7 fixed)
     std::unique_ptr<StyleAwareMasteringUI> masteringUI;        // Header-only ✅ (JUCE 7 fixed)
     std::unique_ptr<BioFeedbackDashboard> bioFeedback;         // Header-only ✅
@@ -84,7 +84,7 @@ private:
         // Automation,  // TODO: Needs ParameterAutomationUI.cpp
         // Modulation,  // TODO: Needs ModulationMatrixUI.cpp
         // Sculpting,   // TODO: Fix SpectralSculptor API mismatches
-        Synthesizer,    // ✅ EchoSynthUI
+        Synthesizer,    // ✅ EchoelSynthUI
         PhaseAnalysis,  // ✅ PhaseAnalyzerUI
         Mastering,      // ✅ StyleAwareMasteringUI
         BioFeedback,    // ✅ BioFeedbackDashboard

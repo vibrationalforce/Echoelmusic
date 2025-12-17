@@ -5,7 +5,7 @@
 #include <cmath>
 
 /**
- * EchoConsole - SSL G-Series Channel Strip Emulation
+ * EchoelConsole - SSL G-Series Channel Strip Emulation
  *
  * Professional channel strip featuring:
  * - High-Pass Filter (16Hz-350Hz)
@@ -22,11 +22,11 @@
  *
  * Used by: Abbey Road, Electric Lady Studios, countless hit records
  */
-class EchoConsole
+class EchoelConsole
 {
 public:
-    EchoConsole();
-    ~EchoConsole();
+    EchoelConsole();
+    ~EchoelConsole();
 
     //==============================================================================
     // Processing
@@ -201,5 +201,5 @@ private:
     // Analog saturation (subtle transformer coloration)
     float transformerSaturation(float sample, float amount);
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoConsole)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoelConsole)
 };

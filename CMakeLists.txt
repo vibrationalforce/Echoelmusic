@@ -317,7 +317,7 @@ target_sources(Echoelmusic
         # =====================================================================
         # PHASE 4C: HARDWARE EMULATIONS (NEW! 2025-11-13) 🎛️✨
         # =====================================================================
-        Sources/DSP/EchoConsole.cpp             # 🎚️ SSL G-Series Channel Strip
+        Sources/DSP/EchoelConsole.cpp             # 🎚️ SSL G-Series Channel Strip
         Sources/DSP/ClassicPreamp.cpp           # 🎙️ Neve 1073 Preamp/EQ
         Sources/DSP/OptoCompressor.cpp          # 💡 Teletronix LA-2A (Optical)
         Sources/DSP/FETCompressor.cpp           # ⚡ UREI 1176 (FET)
@@ -334,7 +334,7 @@ target_sources(Echoelmusic
         # =====================================================================
         # PHASE 4D: ADVANCED INSTRUMENTS (NEW! 2025-11-13) 🎹🎛️✨
         # =====================================================================
-        Sources/DSP/EchoSynth.cpp               # 🎹 Analog Subtractive Synthesizer (Minimoog/Juno-60 style)
+        Sources/DSP/EchoelSynth.cpp               # 🎹 Analog Subtractive Synthesizer (Minimoog/Juno-60 style)
         Sources/DSP/WaveForge.cpp               # 🌊 Advanced Wavetable Synthesizer (Serum/Vital competitor)
         Sources/DSP/SampleEngine.cpp            # 🎵 Advanced Sampler with Time-Stretching (Kontakt-style)
 
@@ -392,7 +392,7 @@ target_sources(Echoelmusic
         Sources/Platform/CreatorManager.cpp        # ✅ Creator monetization platform
         # Sources/Platform/AgencyManager.cpp         # Deferred: Depends on CreatorManager testing
         Sources/Platform/GlobalReachOptimizer.cpp  # ✅ Multi-region CDN optimization
-        Sources/Platform/EchoHub.cpp               # ✅ Community & collaboration hub
+        Sources/Platform/EchoelHub.cpp               # ✅ Community & collaboration hub
 )
 
 # ===========================

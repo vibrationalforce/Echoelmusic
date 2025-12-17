@@ -24,7 +24,7 @@
  * This is part of the EchoCalculator suite - making professional
  * studio calculations accessible in real-time audio processing.
  */
-class EchoCalculatorDelay
+class EchoelCalculatorDelay
 {
 public:
     //==============================================================================
@@ -46,7 +46,7 @@ public:
     };
 
     //==============================================================================
-    EchoCalculatorDelay()
+    EchoelCalculatorDelay()
     {
         // Initialize delay buffers
         maxDelaySamples = static_cast<int>(48000 * 2.0);  // Max 2 seconds at 48kHz
@@ -263,5 +263,5 @@ private:
     float dampingStateL = 0.0f;
     float dampingStateR = 0.0f;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoCalculatorDelay)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoelCalculatorDelay)
 };

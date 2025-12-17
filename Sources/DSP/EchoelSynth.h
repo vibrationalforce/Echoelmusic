@@ -5,7 +5,7 @@
 #include <vector>
 
 /**
- * EchoSynth - Analog Subtractive Synthesizer
+ * EchoelSynth - Analog Subtractive Synthesizer
  *
  * Classic analog-style polyphonic synthesizer with:
  * - Dual oscillators with multiple waveforms
@@ -17,11 +17,11 @@
  *
  * Inspired by: Moog Minimoog, Roland Juno-60, Prophet-5
  */
-class EchoSynth : public juce::Synthesiser
+class EchoelSynth : public juce::Synthesiser
 {
 public:
-    EchoSynth();
-    ~EchoSynth() override;
+    EchoelSynth();
+    ~EchoelSynth() override;
 
     //==============================================================================
     // Processing
@@ -146,10 +146,10 @@ private:
     //==============================================================================
     // Voice Class
 
-    class EchoSynthVoice : public juce::SynthesiserVoice
+    class EchoelSynthVoice : public juce::SynthesiserVoice
     {
     public:
-        EchoSynthVoice(EchoSynth& parent);
+        EchoelSynthVoice(EchoelSynth& parent);
 
         bool canPlaySound(juce::SynthesiserSound*) override;
         void startNote(int midiNoteNumber, float velocity,
@@ -161,7 +161,7 @@ private:
                            int startSample, int numSamples) override;
 
     private:
-        EchoSynth& synthRef;
+        EchoelSynth& synthRef;
 
         // Note state
         int currentMidiNote = 0;
@@ -225,7 +225,7 @@ private:
     //==============================================================================
     // Sound Class
 
-    class EchoSynthSound : public juce::SynthesiserSound
+    class EchoelSynthSound : public juce::SynthesiserSound
     {
     public:
         bool appliesToNote(int) override { return true; }
@@ -297,7 +297,7 @@ private:
     float getLFOValue();
     float applyAnalogWarmth(float sample);
 
-    friend class EchoSynthVoice;
+    friend class EchoelSynthVoice;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoSynth)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoelSynth)
 };

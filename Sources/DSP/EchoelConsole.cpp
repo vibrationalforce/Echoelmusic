@@ -1,17 +1,17 @@
-#include "EchoConsole.h"
+#include "EchoelConsole.h"
 
-EchoConsole::EchoConsole()
+EchoelConsole::EchoelConsole()
 {
 }
 
-EchoConsole::~EchoConsole()
+EchoelConsole::~EchoelConsole()
 {
 }
 
 //==============================================================================
 // Processing
 
-void EchoConsole::prepare(double sampleRate, int samplesPerBlock, int numChannels)
+void EchoelConsole::prepare(double sampleRate, int samplesPerBlock, int numChannels)
 {
     currentSampleRate = sampleRate;
     currentNumChannels = numChannels;
@@ -37,7 +37,7 @@ void EchoConsole::prepare(double sampleRate, int samplesPerBlock, int numChannel
     updateCompressorCoefficients();
 }
 
-void EchoConsole::reset()
+void EchoelConsole::reset()
 {
     // Reset HPF
     for (auto& state : hpfState)
@@ -72,7 +72,7 @@ void EchoConsole::reset()
     gainReductionSmooth = 0.0f;
 }
 
-void EchoConsole::process(juce::AudioBuffer<float>& buffer)
+void EchoelConsole::process(juce::AudioBuffer<float>& buffer)
 {
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
@@ -88,7 +88,7 @@ void EchoConsole::process(juce::AudioBuffer<float>& buffer)
     }
 }
 
-float EchoConsole::processSample(float sample, int channel)
+float EchoelConsole::processSample(float sample, int channel)
 {
     if (channel >= 2) return sample;
 
@@ -146,18 +146,18 @@ float EchoConsole::processSample(float sample, int channel)
 //==============================================================================
 // High-Pass Filter
 
-void EchoConsole::setHPFFrequency(float frequency)
+void EchoelConsole::setHPFFrequency(float frequency)
 {
     hpfFrequency = juce::jlimit(16.0f, 350.0f, frequency);
     updateHPFCoefficients();
 }
 
-void EchoConsole::setHPFEnabled(bool enabled)
+void EchoelConsole::setHPFEnabled(bool enabled)
 {
     hpfEnabled = enabled;
 }
 
-void EchoConsole::updateHPFCoefficients()
+void EchoelConsole::updateHPFCoefficients()
 {
     // 12dB/oct Butterworth High-Pass
     float omega = 2.0f * juce::MathConstants<float>::pi * hpfFrequency / static_cast<float>(currentSampleRate);
@@ -182,7 +182,7 @@ void EchoConsole::updateHPFCoefficients()
     }
 }
 
-float EchoConsole::processHPF(float sample, int channel)
+float EchoelConsole::processHPF(float sample, int channel)
 {
     auto& state = hpfState[channel];
 
@@ -198,7 +198,7 @@ float EchoConsole::processHPF(float sample, int channel)
 //==============================================================================
 // 4-Band EQ
 
-void EchoConsole::setEQGain(EQBand band, float gainDb)
+void EchoelConsole::setEQGain(EQBand band, float gainDb)
 {
     gainDb = juce::jlimit(-15.0f, 15.0f, gainDb);
 
@@ -209,7 +209,7 @@ void EchoConsole::setEQGain(EQBand band, float gainDb)
     }
 }
 
-void EchoConsole::setEQFrequency(EQBand band, float frequency)
+void EchoelConsole::setEQFrequency(EQBand band, float frequency)
 {
     for (int ch = 0; ch < 2; ++ch)
     {
@@ -218,7 +218,7 @@ void EchoConsole::setEQFrequency(EQBand band, float frequency)
     }
 }
 
-void EchoConsole::setEQQ(EQBand band, float q)
+void EchoelConsole::setEQQ(EQBand band, float q)
 {
     q = juce::jlimit(0.5f, 4.0f, q);
 
@@ -229,7 +229,7 @@ void EchoConsole::setEQQ(EQBand band, float q)
     }
 }
 
-void EchoConsole::setEQEnabled(EQBand band, bool enabled)
+void EchoelConsole::setEQEnabled(EQBand band, bool enabled)
 {
     for (int ch = 0; ch < 2; ++ch)
     {
@@ -237,7 +237,7 @@ void EchoConsole::setEQEnabled(EQBand band, bool enabled)
     }
 }
 
-void EchoConsole::setEQBellMode(bool bellMode)
+void EchoelConsole::setEQBellMode(bool bellMode)
 {
     eqBellMode = bellMode;
 
@@ -249,7 +249,7 @@ void EchoConsole::setEQBellMode(bool bellMode)
     }
 }
 
-void EchoConsole::updateEQCoefficients(int channel, EQBand band)
+void EchoelConsole::updateEQCoefficients(int channel, EQBand band)
 {
     auto& eq = eqState[channel][static_cast<int>(band)];
 
@@ -282,7 +282,7 @@ void EchoConsole::updateEQCoefficients(int channel, EQBand band)
     }
 }
 
-float EchoConsole::processEQ(float sample, int channel)
+float EchoelConsole::processEQ(float sample, int channel)
 {
     for (int band = 0; band < 4; ++band)
     {
@@ -299,39 +299,39 @@ float EchoConsole::processEQ(float sample, int channel)
 //==============================================================================
 // Gate/Expander
 
-void EchoConsole::setGateThreshold(float thresholdDb)
+void EchoelConsole::setGateThreshold(float thresholdDb)
 {
     gateThreshold = juce::jlimit(-80.0f, 0.0f, thresholdDb);
 }
 
-void EchoConsole::setGateRange(float rangeDb)
+void EchoelConsole::setGateRange(float rangeDb)
 {
     gateRange = juce::jlimit(-80.0f, 0.0f, rangeDb);
 }
 
-void EchoConsole::setGateAttack(float attackMs)
+void EchoelConsole::setGateAttack(float attackMs)
 {
     attackMs = juce::jlimit(0.1f, 100.0f, attackMs);
     updateGateCoefficients();
 }
 
-void EchoConsole::setGateRelease(float releaseMs)
+void EchoelConsole::setGateRelease(float releaseMs)
 {
     releaseMs = juce::jlimit(10.0f, 4000.0f, releaseMs);
     updateGateCoefficients();
 }
 
-void EchoConsole::setGateRatio(float ratio)
+void EchoelConsole::setGateRatio(float ratio)
 {
     gateRatio = juce::jlimit(1.0f, 10.0f, ratio);
 }
 
-void EchoConsole::setGateEnabled(bool enabled)
+void EchoelConsole::setGateEnabled(bool enabled)
 {
     gateEnabled = enabled;
 }
 
-void EchoConsole::updateGateCoefficients()
+void EchoelConsole::updateGateCoefficients()
 {
     // Exponential envelope followers
     float attackTimeSeconds = 0.001f;  // Will be set dynamically
@@ -344,7 +344,7 @@ void EchoConsole::updateGateCoefficients()
     }
 }
 
-float EchoConsole::processGate(float sample, int channel)
+float EchoelConsole::processGate(float sample, int channel)
 {
     auto& state = gateState[channel];
 
@@ -376,44 +376,44 @@ float EchoConsole::processGate(float sample, int channel)
 //==============================================================================
 // VCA Compressor (SSL-Style)
 
-void EchoConsole::setCompThreshold(float thresholdDb)
+void EchoelConsole::setCompThreshold(float thresholdDb)
 {
     compThreshold = juce::jlimit(-40.0f, 20.0f, thresholdDb);
 }
 
-void EchoConsole::setCompRatio(float ratio)
+void EchoelConsole::setCompRatio(float ratio)
 {
     compRatio = juce::jlimit(1.0f, 20.0f, ratio);
 }
 
-void EchoConsole::setCompAttack(float attackMs)
+void EchoelConsole::setCompAttack(float attackMs)
 {
     attackMs = juce::jlimit(0.1f, 30.0f, attackMs);
     updateCompressorCoefficients();
 }
 
-void EchoConsole::setCompRelease(float releaseMs)
+void EchoelConsole::setCompRelease(float releaseMs)
 {
     compReleaseMs = juce::jlimit(100.0f, 4000.0f, releaseMs);
     updateCompressorCoefficients();
 }
 
-void EchoConsole::setCompAutoRelease(bool autoRelease)
+void EchoelConsole::setCompAutoRelease(bool autoRelease)
 {
     compAutoRelease = autoRelease;
 }
 
-void EchoConsole::setCompMakeupGain(float gainDb)
+void EchoelConsole::setCompMakeupGain(float gainDb)
 {
     compMakeupGain = juce::jlimit(0.0f, 20.0f, gainDb);
 }
 
-void EchoConsole::setCompEnabled(bool enabled)
+void EchoelConsole::setCompEnabled(bool enabled)
 {
     compEnabled = enabled;
 }
 
-void EchoConsole::updateCompressorCoefficients()
+void EchoelConsole::updateCompressorCoefficients()
 {
     float attackTimeSeconds = 0.003f;  // SSL-style fast attack (3ms default)
     float releaseTimeSeconds = compReleaseMs / 1000.0f;
@@ -425,7 +425,7 @@ void EchoConsole::updateCompressorCoefficients()
     }
 }
 
-float EchoConsole::processCompressor(float sample, int channel)
+float EchoelConsole::processCompressor(float sample, int channel)
 {
     auto& state = compState[channel];
 
@@ -460,7 +460,7 @@ float EchoConsole::processCompressor(float sample, int channel)
     return sample * totalGain;
 }
 
-float EchoConsole::sslCompressorCurve(float inputDb, float threshold, float ratio)
+float EchoelConsole::sslCompressorCurve(float inputDb, float threshold, float ratio)
 {
     if (inputDb <= threshold)
         return 0.0f;  // No compression below threshold
@@ -484,22 +484,22 @@ float EchoConsole::sslCompressorCurve(float inputDb, float threshold, float rati
 //==============================================================================
 // Output Section
 
-void EchoConsole::setOutputGain(float gainDb)
+void EchoelConsole::setOutputGain(float gainDb)
 {
     outputGain = juce::jlimit(-20.0f, 20.0f, gainDb);
 }
 
-void EchoConsole::setPhaseInvert(bool invert)
+void EchoelConsole::setPhaseInvert(bool invert)
 {
     phaseInvert = invert;
 }
 
-void EchoConsole::setAnalogSaturation(float amount)
+void EchoelConsole::setAnalogSaturation(float amount)
 {
     analogSaturation = juce::jlimit(0.0f, 1.0f, amount);
 }
 
-float EchoConsole::processSaturation(float sample)
+float EchoelConsole::processSaturation(float sample)
 {
     if (analogSaturation < 0.01f)
         return sample;
@@ -507,7 +507,7 @@ float EchoConsole::processSaturation(float sample)
     return transformerSaturation(sample, analogSaturation);
 }
 
-float EchoConsole::transformerSaturation(float sample, float amount)
+float EchoelConsole::transformerSaturation(float sample, float amount)
 {
     // SSL transformer saturation (subtle harmonic enhancement)
     // Emulates iron core transformer saturation
@@ -531,17 +531,17 @@ float EchoConsole::transformerSaturation(float sample, float amount)
 //==============================================================================
 // Metering
 
-float EchoConsole::getInputLevel(int channel) const
+float EchoelConsole::getInputLevel(int channel) const
 {
     return (channel < 2) ? inputLevelSmooth[channel] : 0.0f;
 }
 
-float EchoConsole::getOutputLevel(int channel) const
+float EchoelConsole::getOutputLevel(int channel) const
 {
     return (channel < 2) ? outputLevelSmooth[channel] : 0.0f;
 }
 
-float EchoConsole::getGainReduction() const
+float EchoelConsole::getGainReduction() const
 {
     return gainReductionSmooth;
 }
@@ -549,7 +549,7 @@ float EchoConsole::getGainReduction() const
 //==============================================================================
 // Presets
 
-void EchoConsole::loadPreset(Preset preset)
+void EchoelConsole::loadPreset(Preset preset)
 {
     switch (preset)
     {

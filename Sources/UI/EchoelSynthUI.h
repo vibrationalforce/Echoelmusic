@@ -4,11 +4,11 @@
 #include "ResponsiveLayout.h"
 #include "ModernLookAndFeel.h"
 #include "UIComponents.h"
-#include "../DSP/EchoSynth.h"
+#include "../DSP/EchoelSynth.h"
 
 //==============================================================================
 /**
- * @brief Analog Synthesizer UI for EchoSynth
+ * @brief Analog Synthesizer UI for EchoelSynth
  *
  * Features:
  * - Oscillator controls (2 oscillators)
@@ -21,17 +21,17 @@
  *
  * Inspired by: Minimoog, Juno-60, Serum
  */
-class EchoSynthUI : public ResponsiveComponent
+class EchoelSynthUI : public ResponsiveComponent
 {
 public:
-    EchoSynthUI()
+    EchoelSynthUI()
     {
         // Create synth engine
-        synthEngine = std::make_unique<EchoSynth>();
+        synthEngine = std::make_unique<EchoelSynth>();
 
         // Title
         addAndMakeVisible(titleLabel);
-        titleLabel.setText("EchoSynth - Analog Synthesizer", juce::dontSendNotification);
+        titleLabel.setText("EchoelSynth - Analog Synthesizer", juce::dontSendNotification);
         titleLabel.setJustificationType(juce::Justification::centred);
         titleLabel.setFont(juce::Font(22.0f, juce::Font::bold));
 
@@ -52,7 +52,7 @@ public:
         presetBrowser.onPresetSelected = [this](int presetIndex)
         {
             if (synthEngine)
-                synthEngine->loadPreset(static_cast<EchoSynth::Preset>(presetIndex));
+                synthEngine->loadPreset(static_cast<EchoelSynth::Preset>(presetIndex));
         };
 
         // Oscillator section
@@ -270,7 +270,7 @@ private:
         // (shortened for brevity - would continue for all controls)
     }
 
-    std::unique_ptr<EchoSynth> synthEngine;
+    std::unique_ptr<EchoelSynth> synthEngine;
 
     juce::Label titleLabel;
     PresetBrowser presetBrowser;
@@ -291,5 +291,5 @@ private:
     // Modulation controls
     std::unique_ptr<ModernKnob> unisonVoices, unisonDetune, chorusMix, delayMix;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoSynthUI)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoelSynthUI)
 };

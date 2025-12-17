@@ -1,14 +1,14 @@
-#include "EchoHub.h"
+#include "EchoelHub.h"
 
 //==============================================================================
 // Constructor / Destructor
 //==============================================================================
 
-EchoHub::EchoHub()
+EchoelHub::EchoelHub()
 {
     authToken = "";
 
-    DBG("EchoHub: Complete business & distribution platform initialized");
+    DBG("EchoelHub: Complete business & distribution platform initialized");
     DBG("Features: Distribution, Social Media, Collaboration, Marketplace, Business, Marketing, Streaming");
 }
 
@@ -16,9 +16,9 @@ EchoHub::EchoHub()
 // 1. MUSIC DISTRIBUTION
 //==============================================================================
 
-bool EchoHub::submitRelease(const Release& release)
+bool EchoelHub::submitRelease(const Release& release)
 {
-    DBG("EchoHub: Submitting release for distribution");
+    DBG("EchoelHub: Submitting release for distribution");
     DBG("  Title: " << release.title);
     DBG("  Artist: " << release.artist);
     DBG("  Release Date: " << release.releaseDate);
@@ -81,13 +81,13 @@ bool EchoHub::submitRelease(const Release& release)
     // Save release to local database
     releases.push_back(processedRelease);
 
-    DBG("EchoHub: Release submitted successfully");
+    DBG("EchoelHub: Release submitted successfully");
     return true;
 }
 
-juce::String EchoHub::getDistributionStatus(const juce::String& releaseId)
+juce::String EchoelHub::getDistributionStatus(const juce::String& releaseId)
 {
-    DBG("EchoHub: Checking distribution status for " << releaseId);
+    DBG("EchoelHub: Checking distribution status for " << releaseId);
 
     // Possible statuses:
     // - "Pending" - Awaiting approval
@@ -100,9 +100,9 @@ juce::String EchoHub::getDistributionStatus(const juce::String& releaseId)
     return "Live";
 }
 
-EchoHub::RoyaltyReport EchoHub::getRoyaltyReport(const juce::String& period)
+EchoelHub::RoyaltyReport EchoelHub::getRoyaltyReport(const juce::String& period)
 {
-    DBG("EchoHub: Fetching royalty report for " << period);
+    DBG("EchoelHub: Fetching royalty report for " << period);
 
     RoyaltyReport report;
     report.period = period;
@@ -129,9 +129,9 @@ EchoHub::RoyaltyReport EchoHub::getRoyaltyReport(const juce::String& period)
     return report;
 }
 
-std::vector<juce::String> EchoHub::suggestPlaylists(const juce::String& trackId)
+std::vector<juce::String> EchoelHub::suggestPlaylists(const juce::String& trackId)
 {
-    DBG("EchoHub: AI-powered playlist suggestions for " << trackId);
+    DBG("EchoelHub: AI-powered playlist suggestions for " << trackId);
 
     // In real implementation:
     // - Analyze track features (tempo, key, genre, mood)
@@ -151,9 +151,9 @@ std::vector<juce::String> EchoHub::suggestPlaylists(const juce::String& trackId)
     return playlists;
 }
 
-bool EchoHub::pitchToPlaylist(const juce::String& playlistId, const juce::String& trackId)
+bool EchoelHub::pitchToPlaylist(const juce::String& playlistId, const juce::String& trackId)
 {
-    DBG("EchoHub: Pitching track " << trackId << " to playlist " << playlistId);
+    DBG("EchoelHub: Pitching track " << trackId << " to playlist " << playlistId);
 
     // In real implementation:
     // - Submit pitch through Spotify for Artists
@@ -166,9 +166,9 @@ bool EchoHub::pitchToPlaylist(const juce::String& playlistId, const juce::String
 // 2. SOCIAL MEDIA MANAGEMENT
 //==============================================================================
 
-bool EchoHub::postToSocialMedia(const SocialPost& post)
+bool EchoelHub::postToSocialMedia(const SocialPost& post)
 {
-    DBG("EchoHub: Posting to social media");
+    DBG("EchoelHub: Posting to social media");
     DBG("  Caption: " << post.caption.substring(0, 50) << "...");
     DBG("  Hashtags: " << post.hashtags.size());
 
@@ -214,13 +214,13 @@ bool EchoHub::postToSocialMedia(const SocialPost& post)
         sendRequest("/api/facebook/post", "POST", "post_data");
     }
 
-    DBG("EchoHub: Posted successfully");
+    DBG("EchoelHub: Posted successfully");
     return true;
 }
 
-juce::String EchoHub::generateCaption(const juce::File& mediaFile, const juce::String& context)
+juce::String EchoelHub::generateCaption(const juce::File& mediaFile, const juce::String& context)
 {
-    DBG("EchoHub: Generating AI caption");
+    DBG("EchoelHub: Generating AI caption");
     DBG("  Context: " << context);
 
     // In real implementation:
@@ -237,9 +237,9 @@ juce::String EchoHub::generateCaption(const juce::File& mediaFile, const juce::S
     return caption;
 }
 
-std::vector<juce::String> EchoHub::optimizeHashtags(const juce::String& caption, int maxCount)
+std::vector<juce::String> EchoelHub::optimizeHashtags(const juce::String& caption, int maxCount)
 {
-    DBG("EchoHub: Optimizing hashtags");
+    DBG("EchoelHub: Optimizing hashtags");
     DBG("  Max count: " << maxCount);
 
     // In real implementation:
@@ -265,9 +265,9 @@ std::vector<juce::String> EchoHub::optimizeHashtags(const juce::String& caption,
     return hashtags;
 }
 
-EchoHub::SocialAnalytics EchoHub::getSocialAnalytics(const juce::String& platform)
+EchoelHub::SocialAnalytics EchoelHub::getSocialAnalytics(const juce::String& platform)
 {
-    DBG("EchoHub: Fetching social analytics for " << platform);
+    DBG("EchoelHub: Fetching social analytics for " << platform);
 
     SocialAnalytics analytics;
 
@@ -291,9 +291,9 @@ EchoHub::SocialAnalytics EchoHub::getSocialAnalytics(const juce::String& platfor
 // 3. COLLABORATION PLATFORM
 //==============================================================================
 
-juce::String EchoHub::createSharedProject(const CollabProject& project)
+juce::String EchoelHub::createSharedProject(const CollabProject& project)
 {
-    DBG("EchoHub: Creating shared project");
+    DBG("EchoelHub: Creating shared project");
     DBG("  Name: " << project.projectName);
     DBG("  Owner: " << project.owner);
 
@@ -316,9 +316,9 @@ juce::String EchoHub::createSharedProject(const CollabProject& project)
     return projectId;
 }
 
-bool EchoHub::inviteCollaborator(const juce::String& projectId, const juce::String& email)
+bool EchoelHub::inviteCollaborator(const juce::String& projectId, const juce::String& email)
 {
-    DBG("EchoHub: Inviting collaborator");
+    DBG("EchoelHub: Inviting collaborator");
     DBG("  Project: " << projectId);
     DBG("  Email: " << email);
 
@@ -341,9 +341,9 @@ bool EchoHub::inviteCollaborator(const juce::String& projectId, const juce::Stri
     return false;
 }
 
-std::vector<EchoHub::CollaboratorProfile> EchoHub::findCollaborators(const juce::String& searchQuery)
+std::vector<EchoelHub::CollaboratorProfile> EchoelHub::findCollaborators(const juce::String& searchQuery)
 {
-    DBG("EchoHub: Searching for collaborators: " << searchQuery);
+    DBG("EchoelHub: Searching for collaborators: " << searchQuery);
 
     std::vector<CollaboratorProfile> profiles;
 
@@ -378,9 +378,9 @@ std::vector<EchoHub::CollaboratorProfile> EchoHub::findCollaborators(const juce:
 // 4. MARKETPLACE / SAMPLE TRADING
 //==============================================================================
 
-juce::String EchoHub::listItem(const MarketItem& item)
+juce::String EchoelHub::listItem(const MarketItem& item)
 {
-    DBG("EchoHub: Listing item on marketplace");
+    DBG("EchoelHub: Listing item on marketplace");
     DBG("  Title: " << item.title);
     DBG("  Type: " << (int)item.type);
     DBG("  Price: $" << item.price);
@@ -409,9 +409,9 @@ juce::String EchoHub::listItem(const MarketItem& item)
     return itemId;
 }
 
-std::vector<EchoHub::MarketItem> EchoHub::searchMarketplace(const juce::String& query, MarketItem::Type type)
+std::vector<EchoelHub::MarketItem> EchoelHub::searchMarketplace(const juce::String& query, MarketItem::Type type)
 {
-    DBG("EchoHub: Searching marketplace");
+    DBG("EchoelHub: Searching marketplace");
     DBG("  Query: " << query);
     DBG("  Type: " << (int)type);
 
@@ -440,9 +440,9 @@ std::vector<EchoHub::MarketItem> EchoHub::searchMarketplace(const juce::String& 
     return results;
 }
 
-bool EchoHub::purchaseItem(const juce::String& itemId)
+bool EchoelHub::purchaseItem(const juce::String& itemId)
 {
-    DBG("EchoHub: Purchasing item " << itemId);
+    DBG("EchoelHub: Purchasing item " << itemId);
 
     // In real implementation:
     // - Process payment (Stripe, PayPal)
@@ -459,9 +459,9 @@ bool EchoHub::purchaseItem(const juce::String& itemId)
 // 5. BUSINESS MANAGEMENT
 //==============================================================================
 
-juce::String EchoHub::createInvoice(const Invoice& invoice)
+juce::String EchoelHub::createInvoice(const Invoice& invoice)
 {
-    DBG("EchoHub: Creating invoice");
+    DBG("EchoelHub: Creating invoice");
     DBG("  Client: " << invoice.clientName);
     DBG("  Items: " << invoice.items.size());
 
@@ -492,9 +492,9 @@ juce::String EchoHub::createInvoice(const Invoice& invoice)
     return invoiceNumber;
 }
 
-bool EchoHub::exportInvoice(const juce::String& invoiceId, const juce::File& outputFile)
+bool EchoelHub::exportInvoice(const juce::String& invoiceId, const juce::File& outputFile)
 {
-    DBG("EchoHub: Exporting invoice " << invoiceId);
+    DBG("EchoelHub: Exporting invoice " << invoiceId);
     DBG("  Output: " << outputFile.getFullPathName());
 
     // In real implementation:
@@ -507,9 +507,9 @@ bool EchoHub::exportInvoice(const juce::String& invoiceId, const juce::File& out
     return true;
 }
 
-EchoHub::TaxReport EchoHub::calculateTaxes(const juce::String& year, const juce::String& country)
+EchoelHub::TaxReport EchoelHub::calculateTaxes(const juce::String& year, const juce::String& country)
 {
-    DBG("EchoHub: Calculating taxes");
+    DBG("EchoelHub: Calculating taxes");
     DBG("  Year: " << year);
     DBG("  Country: " << country);
 
@@ -563,19 +563,19 @@ EchoHub::TaxReport EchoHub::calculateTaxes(const juce::String& year, const juce:
     return report;
 }
 
-void EchoHub::addExpense(const Expense& expense)
+void EchoelHub::addExpense(const Expense& expense)
 {
     expenses.push_back(expense);
 
-    DBG("EchoHub: Expense added");
+    DBG("EchoelHub: Expense added");
     DBG("  Category: " << expense.category);
     DBG("  Amount: $" << expense.amount);
     DBG("  Description: " << expense.description);
 }
 
-std::vector<EchoHub::Expense> EchoHub::getExpenses(const juce::String& period)
+std::vector<EchoelHub::Expense> EchoelHub::getExpenses(const juce::String& period)
 {
-    DBG("EchoHub: Fetching expenses for " << period);
+    DBG("EchoelHub: Fetching expenses for " << period);
 
     // Filter expenses by period
     std::vector<Expense> filtered;
@@ -595,9 +595,9 @@ std::vector<EchoHub::Expense> EchoHub::getExpenses(const juce::String& period)
 // 6. PROMO & MARKETING
 //==============================================================================
 
-bool EchoHub::generateEPK(const EPK& epk, const juce::File& outputFile)
+bool EchoelHub::generateEPK(const EPK& epk, const juce::File& outputFile)
 {
-    DBG("EchoHub: Generating EPK (Electronic Press Kit)");
+    DBG("EchoelHub: Generating EPK (Electronic Press Kit)");
     DBG("  Artist: " << epk.artistName);
     DBG("  Output: " << outputFile.getFullPathName());
 
@@ -621,9 +621,9 @@ bool EchoHub::generateEPK(const EPK& epk, const juce::File& outputFile)
     return true;
 }
 
-bool EchoHub::sendEmailCampaign(const EmailCampaign& campaign)
+bool EchoelHub::sendEmailCampaign(const EmailCampaign& campaign)
 {
-    DBG("EchoHub: Sending email campaign");
+    DBG("EchoelHub: Sending email campaign");
     DBG("  Subject: " << campaign.subject);
     DBG("  Recipients: " << campaign.recipients.size());
 
@@ -644,9 +644,9 @@ bool EchoHub::sendEmailCampaign(const EmailCampaign& campaign)
     return true;
 }
 
-EchoHub::FanData EchoHub::getFanAnalytics()
+EchoelHub::FanData EchoelHub::getFanAnalytics()
 {
-    DBG("EchoHub: Fetching fan analytics");
+    DBG("EchoelHub: Fetching fan analytics");
 
     FanData data;
 
@@ -673,9 +673,9 @@ EchoHub::FanData EchoHub::getFanAnalytics()
 // 7. STREAMING/BROADCAST
 //==============================================================================
 
-bool EchoHub::startStream(const StreamConfig& config)
+bool EchoelHub::startStream(const StreamConfig& config)
 {
-    DBG("EchoHub: Starting stream");
+    DBG("EchoelHub: Starting stream");
     DBG("  Platform: " << (int)config.platform);
     DBG("  Resolution: " << config.width << "x" << config.height);
     DBG("  FPS: " << config.fps);
@@ -716,9 +716,9 @@ bool EchoHub::startStream(const StreamConfig& config)
     return true;
 }
 
-void EchoHub::stopStream()
+void EchoelHub::stopStream()
 {
-    DBG("EchoHub: Stopping stream");
+    DBG("EchoelHub: Stopping stream");
 
     // Close RTMP connection
     // Stop encoders
@@ -727,7 +727,7 @@ void EchoHub::stopStream()
     DBG("  Stream stopped");
 }
 
-EchoHub::StreamStats EchoHub::getStreamStats()
+EchoelHub::StreamStats EchoelHub::getStreamStats()
 {
     StreamStats stats;
 
@@ -745,9 +745,9 @@ EchoHub::StreamStats EchoHub::getStreamStats()
 // Network
 //==============================================================================
 
-bool EchoHub::sendRequest(const juce::String& endpoint, const juce::String& method, const juce::String& data)
+bool EchoelHub::sendRequest(const juce::String& endpoint, const juce::String& method, const juce::String& data)
 {
-    DBG("EchoHub: Network request");
+    DBG("EchoelHub: Network request");
     DBG("  Endpoint: " << endpoint);
     DBG("  Method: " << method);
 

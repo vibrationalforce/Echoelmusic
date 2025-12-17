@@ -29,7 +29,7 @@
  * This is part of the EchoCalculator suite - making professional
  * studio calculations accessible in real-time audio processing.
  */
-class EchoCalculatorReverb
+class EchoelCalculatorReverb
 {
 public:
     //==============================================================================
@@ -54,7 +54,7 @@ public:
     };
 
     //==============================================================================
-    EchoCalculatorReverb()
+    EchoelCalculatorReverb()
     {
         // Initialize Freeverb-style comb filters
         initializeCombFilters();
@@ -331,5 +331,5 @@ private:
 
     double currentSampleRate = 48000.0;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoCalculatorReverb)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoelCalculatorReverb)
 };

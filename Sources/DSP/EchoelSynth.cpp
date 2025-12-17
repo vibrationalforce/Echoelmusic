@@ -1,22 +1,22 @@
-#include "EchoSynth.h"
+#include "EchoelSynth.h"
 #include <cmath>
 
 //==============================================================================
-// EchoSynth Implementation
+// EchoelSynth Implementation
 
-EchoSynth::EchoSynth()
+EchoelSynth::EchoelSynth()
 {
     // Add voices
     for (int i = 0; i < 8; ++i)
-        addVoice(new EchoSynthVoice(*this));
+        addVoice(new EchoelSynthVoice(*this));
 
     // Add sound
-    addSound(new EchoSynthSound());
+    addSound(new EchoelSynthSound());
 }
 
-EchoSynth::~EchoSynth() {}
+EchoelSynth::~EchoelSynth() {}
 
-void EchoSynth::prepare(double sr, int samplesPerBlock, int numChannels)
+void EchoelSynth::prepare(double sr, int samplesPerBlock, int numChannels)
 {
     currentSampleRate = sr;
     currentSamplesPerBlock = samplesPerBlock;
@@ -25,7 +25,7 @@ void EchoSynth::prepare(double sr, int samplesPerBlock, int numChannels)
     setCurrentPlaybackSampleRate(sr);
 }
 
-void EchoSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void EchoelSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     // Update LFO
     lfoPhaseAccumulator += lfoRate * buffer.getNumSamples() / currentSampleRate;
@@ -49,75 +49,75 @@ void EchoSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&
 //==============================================================================
 // Oscillator Controls
 
-void EchoSynth::setOsc1Waveform(Waveform waveform) { osc1Waveform = waveform; }
-void EchoSynth::setOsc2Waveform(Waveform waveform) { osc2Waveform = waveform; }
-void EchoSynth::setOsc1Octave(int octave) { osc1Octave = juce::jlimit(-2, 2, octave); }
-void EchoSynth::setOsc2Octave(int octave) { osc2Octave = juce::jlimit(-2, 2, octave); }
-void EchoSynth::setOsc1Semitones(int semitones) { osc1Semitones = juce::jlimit(-12, 12, semitones); }
-void EchoSynth::setOsc2Semitones(int semitones) { osc2Semitones = juce::jlimit(-12, 12, semitones); }
-void EchoSynth::setOsc1Detune(float cents) { osc1Detune = juce::jlimit(-100.0f, 100.0f, cents); }
-void EchoSynth::setOsc2Detune(float cents) { osc2Detune = juce::jlimit(-100.0f, 100.0f, cents); }
-void EchoSynth::setOsc2Mix(float mix) { osc2Mix = juce::jlimit(0.0f, 1.0f, mix); }
-void EchoSynth::setPulseWidth(float width) { pulseWidth = juce::jlimit(0.1f, 0.9f, width); }
+void EchoelSynth::setOsc1Waveform(Waveform waveform) { osc1Waveform = waveform; }
+void EchoelSynth::setOsc2Waveform(Waveform waveform) { osc2Waveform = waveform; }
+void EchoelSynth::setOsc1Octave(int octave) { osc1Octave = juce::jlimit(-2, 2, octave); }
+void EchoelSynth::setOsc2Octave(int octave) { osc2Octave = juce::jlimit(-2, 2, octave); }
+void EchoelSynth::setOsc1Semitones(int semitones) { osc1Semitones = juce::jlimit(-12, 12, semitones); }
+void EchoelSynth::setOsc2Semitones(int semitones) { osc2Semitones = juce::jlimit(-12, 12, semitones); }
+void EchoelSynth::setOsc1Detune(float cents) { osc1Detune = juce::jlimit(-100.0f, 100.0f, cents); }
+void EchoelSynth::setOsc2Detune(float cents) { osc2Detune = juce::jlimit(-100.0f, 100.0f, cents); }
+void EchoelSynth::setOsc2Mix(float mix) { osc2Mix = juce::jlimit(0.0f, 1.0f, mix); }
+void EchoelSynth::setPulseWidth(float width) { pulseWidth = juce::jlimit(0.1f, 0.9f, width); }
 
 //==============================================================================
 // Filter Controls
 
-void EchoSynth::setFilterType(FilterType type) { filterType = type; }
-void EchoSynth::setFilterCutoff(float frequency) { filterCutoff = juce::jlimit(20.0f, 20000.0f, frequency); }
-void EchoSynth::setFilterResonance(float resonance) { filterResonance = juce::jlimit(0.0f, 1.0f, resonance); }
-void EchoSynth::setFilterEnvAmount(float amount) { filterEnvAmount = juce::jlimit(-1.0f, 1.0f, amount); }
+void EchoelSynth::setFilterType(FilterType type) { filterType = type; }
+void EchoelSynth::setFilterCutoff(float frequency) { filterCutoff = juce::jlimit(20.0f, 20000.0f, frequency); }
+void EchoelSynth::setFilterResonance(float resonance) { filterResonance = juce::jlimit(0.0f, 1.0f, resonance); }
+void EchoelSynth::setFilterEnvAmount(float amount) { filterEnvAmount = juce::jlimit(-1.0f, 1.0f, amount); }
 
 //==============================================================================
 // Envelope Controls
 
-void EchoSynth::setAmpAttack(float timeMs) { ampAttack = juce::jlimit(0.1f, 5000.0f, timeMs); }
-void EchoSynth::setAmpDecay(float timeMs) { ampDecay = juce::jlimit(1.0f, 5000.0f, timeMs); }
-void EchoSynth::setAmpSustain(float level) { ampSustain = juce::jlimit(0.0f, 1.0f, level); }
-void EchoSynth::setAmpRelease(float timeMs) { ampRelease = juce::jlimit(1.0f, 10000.0f, timeMs); }
+void EchoelSynth::setAmpAttack(float timeMs) { ampAttack = juce::jlimit(0.1f, 5000.0f, timeMs); }
+void EchoelSynth::setAmpDecay(float timeMs) { ampDecay = juce::jlimit(1.0f, 5000.0f, timeMs); }
+void EchoelSynth::setAmpSustain(float level) { ampSustain = juce::jlimit(0.0f, 1.0f, level); }
+void EchoelSynth::setAmpRelease(float timeMs) { ampRelease = juce::jlimit(1.0f, 10000.0f, timeMs); }
 
-void EchoSynth::setFilterAttack(float timeMs) { filterAttack = juce::jlimit(0.1f, 5000.0f, timeMs); }
-void EchoSynth::setFilterDecay(float timeMs) { filterDecay = juce::jlimit(1.0f, 5000.0f, timeMs); }
-void EchoSynth::setFilterSustain(float level) { filterSustain = juce::jlimit(0.0f, 1.0f, level); }
-void EchoSynth::setFilterRelease(float timeMs) { filterRelease = juce::jlimit(1.0f, 10000.0f, timeMs); }
+void EchoelSynth::setFilterAttack(float timeMs) { filterAttack = juce::jlimit(0.1f, 5000.0f, timeMs); }
+void EchoelSynth::setFilterDecay(float timeMs) { filterDecay = juce::jlimit(1.0f, 5000.0f, timeMs); }
+void EchoelSynth::setFilterSustain(float level) { filterSustain = juce::jlimit(0.0f, 1.0f, level); }
+void EchoelSynth::setFilterRelease(float timeMs) { filterRelease = juce::jlimit(1.0f, 10000.0f, timeMs); }
 
 //==============================================================================
 // LFO Controls
 
-void EchoSynth::setLFOWaveform(LFOWaveform waveform) { lfoWaveform = waveform; }
-void EchoSynth::setLFORate(float hz) { lfoRate = juce::jlimit(0.01f, 20.0f, hz); }
-void EchoSynth::setLFOToPitch(float amount) { lfoToPitch = juce::jlimit(0.0f, 1.0f, amount); }
-void EchoSynth::setLFOToFilter(float amount) { lfoToFilter = juce::jlimit(0.0f, 1.0f, amount); }
-void EchoSynth::setLFOToAmp(float amount) { lfoToAmp = juce::jlimit(0.0f, 1.0f, amount); }
-void EchoSynth::setLFOPhase(float phase) { lfoPhase = juce::jlimit(0.0f, 1.0f, phase); }
+void EchoelSynth::setLFOWaveform(LFOWaveform waveform) { lfoWaveform = waveform; }
+void EchoelSynth::setLFORate(float hz) { lfoRate = juce::jlimit(0.01f, 20.0f, hz); }
+void EchoelSynth::setLFOToPitch(float amount) { lfoToPitch = juce::jlimit(0.0f, 1.0f, amount); }
+void EchoelSynth::setLFOToFilter(float amount) { lfoToFilter = juce::jlimit(0.0f, 1.0f, amount); }
+void EchoelSynth::setLFOToAmp(float amount) { lfoToAmp = juce::jlimit(0.0f, 1.0f, amount); }
+void EchoelSynth::setLFOPhase(float phase) { lfoPhase = juce::jlimit(0.0f, 1.0f, phase); }
 
 //==============================================================================
 // Unison & Character
 
-void EchoSynth::setUnisonVoices(int voices) { unisonVoices = juce::jlimit(1, 8, voices); }
-void EchoSynth::setUnisonDetune(float cents) { unisonDetune = juce::jlimit(0.0f, 50.0f, cents); }
-void EchoSynth::setUnisonSpread(float amount) { unisonSpread = juce::jlimit(0.0f, 1.0f, amount); }
-void EchoSynth::setAnalogDrift(float amount) { analogDrift = juce::jlimit(0.0f, 1.0f, amount); }
-void EchoSynth::setAnalogWarmth(float amount) { analogWarmth = juce::jlimit(0.0f, 1.0f, amount); }
+void EchoelSynth::setUnisonVoices(int voices) { unisonVoices = juce::jlimit(1, 8, voices); }
+void EchoelSynth::setUnisonDetune(float cents) { unisonDetune = juce::jlimit(0.0f, 50.0f, cents); }
+void EchoelSynth::setUnisonSpread(float amount) { unisonSpread = juce::jlimit(0.0f, 1.0f, amount); }
+void EchoelSynth::setAnalogDrift(float amount) { analogDrift = juce::jlimit(0.0f, 1.0f, amount); }
+void EchoelSynth::setAnalogWarmth(float amount) { analogWarmth = juce::jlimit(0.0f, 1.0f, amount); }
 
 //==============================================================================
 // Master Controls
 
-void EchoSynth::setMasterVolume(float volume) { masterVolume = juce::jlimit(0.0f, 1.0f, volume); }
-void EchoSynth::setGlideTime(float timeMs) { glideTime = juce::jlimit(0.0f, 2000.0f, timeMs); }
+void EchoelSynth::setMasterVolume(float volume) { masterVolume = juce::jlimit(0.0f, 1.0f, volume); }
+void EchoelSynth::setGlideTime(float timeMs) { glideTime = juce::jlimit(0.0f, 2000.0f, timeMs); }
 
-void EchoSynth::setPolyphony(int voices)
+void EchoelSynth::setPolyphony(int voices)
 {
     voices = juce::jlimit(1, 16, voices);
     clearVoices();
     for (int i = 0; i < voices; ++i)
-        addVoice(new EchoSynthVoice(*this));
+        addVoice(new EchoelSynthVoice(*this));
 }
 
 //==============================================================================
 // Internal Helpers
 
-float EchoSynth::getLFOValue()
+float EchoelSynth::getLFOValue()
 {
     float phase = lfoPhaseAccumulator + lfoPhase;
     if (phase >= 1.0f) phase -= 1.0f;
@@ -151,7 +151,7 @@ float EchoSynth::getLFOValue()
     }
 }
 
-float EchoSynth::applyAnalogWarmth(float sample)
+float EchoelSynth::applyAnalogWarmth(float sample)
 {
     if (analogWarmth < 0.01f)
         return sample;
@@ -170,7 +170,7 @@ float EchoSynth::applyAnalogWarmth(float sample)
 //==============================================================================
 // Presets
 
-void EchoSynth::loadPreset(Preset preset)
+void EchoelSynth::loadPreset(Preset preset)
 {
     switch (preset)
     {
@@ -394,19 +394,19 @@ void EchoSynth::loadPreset(Preset preset)
 }
 
 //==============================================================================
-// EchoSynthVoice Implementation
+// EchoelSynthVoice Implementation
 
-EchoSynth::EchoSynthVoice::EchoSynthVoice(EchoSynth& parent)
+EchoelSynth::EchoelSynthVoice::EchoelSynthVoice(EchoelSynth& parent)
     : synthRef(parent)
 {
 }
 
-bool EchoSynth::EchoSynthVoice::canPlaySound(juce::SynthesiserSound* sound)
+bool EchoelSynth::EchoelSynthVoice::canPlaySound(juce::SynthesiserSound* sound)
 {
-    return dynamic_cast<EchoSynthSound*>(sound) != nullptr;
+    return dynamic_cast<EchoelSynthSound*>(sound) != nullptr;
 }
 
-void EchoSynth::EchoSynthVoice::startNote(int midiNoteNumber, float velocity,
+void EchoelSynth::EchoelSynthVoice::startNote(int midiNoteNumber, float velocity,
                                          juce::SynthesiserSound*, int /*currentPitchWheelPosition*/)
 {
     currentMidiNote = midiNoteNumber;
@@ -434,7 +434,7 @@ void EchoSynth::EchoSynthVoice::startNote(int midiNoteNumber, float velocity,
     driftOffset = (juce::Random::getSystemRandom().nextFloat() * 2.0f - 1.0f) * synthRef.analogDrift * 0.02f;
 }
 
-void EchoSynth::EchoSynthVoice::stopNote(float /*velocity*/, bool allowTailOff)
+void EchoelSynth::EchoelSynthVoice::stopNote(float /*velocity*/, bool allowTailOff)
 {
     if (allowTailOff)
     {
@@ -449,17 +449,17 @@ void EchoSynth::EchoSynthVoice::stopNote(float /*velocity*/, bool allowTailOff)
     }
 }
 
-void EchoSynth::EchoSynthVoice::pitchWheelMoved(int /*newPitchWheelValue*/)
+void EchoelSynth::EchoelSynthVoice::pitchWheelMoved(int /*newPitchWheelValue*/)
 {
     // Could implement pitch bend here
 }
 
-void EchoSynth::EchoSynthVoice::controllerMoved(int /*controllerNumber*/, int /*newControllerValue*/)
+void EchoelSynth::EchoelSynthVoice::controllerMoved(int /*controllerNumber*/, int /*newControllerValue*/)
 {
     // Could implement CC mapping here
 }
 
-void EchoSynth::EchoSynthVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
+void EchoelSynth::EchoelSynthVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                                                int startSample, int numSamples)
 {
     if (ampEnv.stage == EnvelopeState::Stage::Idle)
@@ -547,7 +547,7 @@ void EchoSynth::EchoSynthVoice::renderNextBlock(juce::AudioBuffer<float>& output
     }
 }
 
-float EchoSynth::EchoSynthVoice::generateOscillator(Waveform waveform, float phase, float pulseWidth, float phaseIncrement)
+float EchoelSynth::EchoelSynthVoice::generateOscillator(Waveform waveform, float phase, float pulseWidth, float phaseIncrement)
 {
     switch (waveform)
     {
@@ -603,7 +603,7 @@ float EchoSynth::EchoSynthVoice::generateOscillator(Waveform waveform, float pha
     }
 }
 
-float EchoSynth::EchoSynthVoice::processFilter(float sample)
+float EchoelSynth::EchoelSynthVoice::processFilter(float sample)
 {
     // Moog-style 4-pole ladder filter (24dB/oct lowpass)
     auto sampleRate = static_cast<float>(getSampleRate());
@@ -651,7 +651,7 @@ float EchoSynth::EchoSynthVoice::processFilter(float sample)
     }
 }
 
-void EchoSynth::EchoSynthVoice::updateEnvelope(EnvelopeState& env, float attack, float decay, float sustain, float release)
+void EchoelSynth::EchoelSynthVoice::updateEnvelope(EnvelopeState& env, float attack, float decay, float sustain, float release)
 {
     auto sampleRate = static_cast<float>(getSampleRate());
 
@@ -697,7 +697,7 @@ void EchoSynth::EchoSynthVoice::updateEnvelope(EnvelopeState& env, float attack,
     }
 }
 
-float EchoSynth::EchoSynthVoice::getEnvelopeLevel(EnvelopeState& env)
+float EchoelSynth::EchoelSynthVoice::getEnvelopeLevel(EnvelopeState& env)
 {
     return env.level;
 }

@@ -77,7 +77,7 @@ void EchoelmusicAudioProcessorEditor::createUIComponents()
     // ✅ JUCE 7 COMPATIBLE UI COMPONENTS (Working)
 
     // Synthesizer UI
-    synthUI = std::make_unique<EchoSynthUI>();
+    synthUI = std::make_unique<EchoelSynthUI>();
     addChildComponent(*synthUI);
 
     // Phase Analyzer UI (JUCE 7 fixed)

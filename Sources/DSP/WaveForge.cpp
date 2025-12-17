@@ -630,7 +630,7 @@ float WaveForge::WaveForgeVoice::readWavetable(float position, int frame)
 
 float WaveForge::WaveForgeVoice::processFilter(float sample)
 {
-    // Simplified filter (reuses EchoSynth filter logic)
+    // Simplified filter (reuses EchoelSynth filter logic)
     auto sampleRate = static_cast<float>(getSampleRate());
     float lfoValue = synthRef.getLFOValue();
 
