@@ -408,6 +408,14 @@ target_sources(Echoelmusic
         Sources/Quantum/EchoelBioDataAdapters.cpp       # 💓 Hardware bio-sensor integration (Apple Watch, Polar, Muse, Emotiv)
         Sources/Quantum/EchoelNetworkSync.cpp           # 🌐 <20ms global latency sync with Laser Scanner Mode
         Sources/Network/EchoelDanteAdapter.cpp          # 🎵 Dante audio-over-IP (<1ms latency, AES67 compatible)
+
+        # =====================================================================
+        # CREATIVE STUDIO - "Canva in die Tasche" 🎨
+        # =====================================================================
+        # Professional design studio for musicians - Canva-level capabilities
+        # AI-powered templates, audio-reactive design, bio-reactive colors
+
+        Sources/Creative/EchoelDesignStudio.cpp         # 🎨 Professional design studio (300+ templates, AI design, export all formats)
 )
 
 # ===========================
