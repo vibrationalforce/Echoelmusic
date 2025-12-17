@@ -10,6 +10,9 @@ AdvancedDSPManager::AdvancedDSPManager()
     // Load factory presets
     loadFactoryPresets();
 
+    // Load user presets from disk (Phase 3)
+    loadUserPresetsFromDisk();
+
     DBG("Advanced DSP Manager initialized");
     DBG("  - Mid/Side Tone Matching: Ready");
     DBG("  - Audio Humanizer: Ready");
@@ -280,6 +283,10 @@ bool AdvancedDSPManager::savePreset(const juce::String& presetName, PresetCatego
     presets.push_back(newPreset);
 
     DBG("Saved preset: " + presetName);
+
+    // Also save to disk (Phase 3)
+    savePresetToDisk(presetName);
+
     return true;
 }
 
@@ -354,6 +361,140 @@ void AdvancedDSPManager::loadFactoryPresets()
     }
 
     DBG("Loaded " + juce::String(presets.size()) + " factory presets");
+}
+
+juce::File AdvancedDSPManager::getPresetsDirectory() const
+{
+    // Get user's Documents folder
+    auto documentsDir = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory);
+
+    // Create Echoelmusic/Presets subdirectory
+    auto presetsDir = documentsDir.getChildFile("Echoelmusic").getChildFile("Presets");
+
+    // Create directory if it doesn't exist
+    if (!presetsDir.exists())
+        presetsDir.createDirectory();
+
+    return presetsDir;
+}
+
+bool AdvancedDSPManager::savePresetToDisk(const juce::String& presetName)
+{
+    // Find preset in memory
+    Preset* presetToSave = nullptr;
+    for (auto& preset : presets)
+    {
+        if (preset.name == presetName)
+        {
+            presetToSave = &preset;
+            break;
+        }
+    }
+
+    if (presetToSave == nullptr)
+    {
+        DBG("Preset not found in memory: " + presetName);
+        return false;
+    }
+
+    // Create JSON object
+    juce::DynamicObject::Ptr jsonObject = new juce::DynamicObject();
+    jsonObject->setProperty("name", presetToSave->name);
+    jsonObject->setProperty("category", static_cast<int>(presetToSave->category));
+    jsonObject->setProperty("midSideEnabled", presetToSave->state.midSideEnabled);
+    jsonObject->setProperty("humanizerEnabled", presetToSave->state.humanizerEnabled);
+    jsonObject->setProperty("swarmEnabled", presetToSave->state.swarmEnabled);
+    jsonObject->setProperty("pitchEditorEnabled", presetToSave->state.pitchEditorEnabled);
+
+    // Convert to JSON string
+    juce::var jsonVar(jsonObject.get());
+    juce::String jsonString = juce::JSON::toString(jsonVar, true);
+
+    // Save to file
+    auto presetsDir = getPresetsDirectory();
+    auto presetFile = presetsDir.getChildFile(presetName + ".json");
+
+    if (presetFile.replaceWithText(jsonString))
+    {
+        DBG("Saved preset to disk: " + presetFile.getFullPathName());
+        return true;
+    }
+    else
+    {
+        DBG("Failed to save preset to disk: " + presetFile.getFullPathName());
+        return false;
+    }
+}
+
+bool AdvancedDSPManager::loadPresetFromDisk(const juce::String& presetName)
+{
+    auto presetsDir = getPresetsDirectory();
+    auto presetFile = presetsDir.getChildFile(presetName + ".json");
+
+    if (!presetFile.existsAsFile())
+    {
+        DBG("Preset file not found: " + presetFile.getFullPathName());
+        return false;
+    }
+
+    // Read JSON file
+    juce::String jsonString = presetFile.loadFileAsString();
+    juce::var jsonVar = juce::JSON::parse(jsonString);
+
+    if (!jsonVar.isObject())
+    {
+        DBG("Invalid JSON in preset file: " + presetFile.getFullPathName());
+        return false;
+    }
+
+    juce::DynamicObject* jsonObject = jsonVar.getDynamicObject();
+
+    // Create preset from JSON
+    Preset loadedPreset;
+    loadedPreset.name = jsonObject->getProperty("name").toString();
+    loadedPreset.category = static_cast<PresetCategory>(static_cast<int>(jsonObject->getProperty("category")));
+    loadedPreset.state.midSideEnabled = jsonObject->getProperty("midSideEnabled");
+    loadedPreset.state.humanizerEnabled = jsonObject->getProperty("humanizerEnabled");
+    loadedPreset.state.swarmEnabled = jsonObject->getProperty("swarmEnabled");
+    loadedPreset.state.pitchEditorEnabled = jsonObject->getProperty("pitchEditorEnabled");
+
+    // Check if preset already exists in memory
+    bool found = false;
+    for (auto& preset : presets)
+    {
+        if (preset.name == loadedPreset.name)
+        {
+            preset = loadedPreset;
+            found = true;
+            break;
+        }
+    }
+
+    // Add to presets if not found
+    if (!found)
+        presets.push_back(loadedPreset);
+
+    // Apply the preset
+    return loadPreset(loadedPreset.name);
+}
+
+void AdvancedDSPManager::loadUserPresetsFromDisk()
+{
+    auto presetsDir = getPresetsDirectory();
+
+    // Get all .json files in presets directory
+    juce::Array<juce::File> presetFiles;
+    presetsDir.findChildFiles(presetFiles, juce::File::findFiles, false, "*.json");
+
+    int loadedCount = 0;
+    for (const auto& file : presetFiles)
+    {
+        juce::String presetName = file.getFileNameWithoutExtension();
+        if (loadPresetFromDisk(presetName))
+            loadedCount++;
+    }
+
+    DBG("Loaded " + juce::String(loadedCount) + " user presets from disk");
 }
 
 //==============================================================================

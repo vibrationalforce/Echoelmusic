@@ -187,6 +187,9 @@ void EchoelmusicProProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     juce::dsp::AudioBlock<float> block (buffer);
     juce::dsp::ProcessContextReplacing<float> context (block);
     // lowPassFilter.process(context);  // Disabled for now to hear raw synth
+
+    // Copy audio buffer for visualization (thread-safe)
+    latestAudioBuffer.makeCopyOf(buffer);
 }
 
 //==============================================================================

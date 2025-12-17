@@ -15,6 +15,7 @@
 #include "../../Visualization/BioReactiveVisualizer.h"
 #include "../../UI/PresetBrowserUI.h"
 #include "../../UI/AdvancedDSPManagerUI.h"
+#include "../../UI/ModulationMatrixUI.h"
 
 //==============================================================================
 /**
@@ -53,6 +54,7 @@ private:
     // UI Components
     PresetBrowserUI presetBrowser;
     AdvancedDSPManagerUI processorRack;
+    ModulationMatrixUI modulationMatrix;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EchoelmusicProEditor)
 };

@@ -28,6 +28,11 @@ EchoelmusicProEditor::EchoelmusicProEditor (EchoelmusicProProcessor& p)
     addAndMakeVisible(processorRack);
     processorRack.setDSPManager(&audioProcessor.getAdvancedDSPManager());
 
+    // Add modulation matrix (Phase 5 - initially hidden, can be shown via button)
+    addChildComponent(modulationMatrix);
+    modulationMatrix.setDSPManager(&audioProcessor.getAdvancedDSPManager());
+    modulationMatrix.setVisible(false);
+
     // Set initial size (larger for professional plugin)
     setSize (1200, 800);
 
@@ -180,23 +185,32 @@ void EchoelmusicProEditor::resized()
     // Position main UI components
     processorRack.setBounds(processorRackBounds);
     presetBrowser.setBounds(presetBrowserBounds);
+
+    // Position modulation matrix (overlays main content when visible - Phase 5)
+    if (modulationMatrix.isVisible())
+    {
+        auto matrixBounds = getLocalBounds().reduced(50);
+        matrixBounds.removeFromTop(100);
+        matrixBounds.removeFromBottom(50);
+        modulationMatrix.setBounds(matrixBounds);
+    }
 }
 
 void EchoelmusicProEditor::timerCallback()
 {
+    // Feed live audio buffer to spectrum analyzer for real-time FFT (Phase 3)
+    const auto& audioBuffer = audioProcessor.getLatestAudioBuffer();
+    if (audioBuffer.getNumSamples() > 0)
+    {
+        spectrumAnalyzer.processAudioBuffer(audioBuffer);
+    }
+
+    // Feed live bio-data to visualizer (Phase 3)
+    float hrv = audioProcessor.getCurrentHRV();
+    float coherence = audioProcessor.getCurrentCoherence();
+    bioVisualizer.updateBioData(hrv, coherence);
+
     // Update visualizations (60 FPS)
-    // Both components have internal timers that update their state
     spectrumAnalyzer.repaint();
     bioVisualizer.repaint();
-
-    // TODO: Feed audio buffer to spectrum analyzer
-    // Need to add getAudioBuffer() method to processor:
-    // auto buffer = audioProcessor.getLatestAudioBuffer();
-    // spectrumAnalyzer.processAudioBuffer(buffer);
-
-    // TODO: Feed bio-data to visualizer
-    // Need to connect to bio-reactive system:
-    // float hrv = audioProcessor.getCurrentHRV();
-    // float coherence = audioProcessor.getCurrentCoherence();
-    // bioVisualizer.updateBioData(hrv, coherence);
 }

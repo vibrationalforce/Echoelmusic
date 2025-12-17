@@ -106,6 +106,8 @@ set(UI_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/PresetBrowserUI.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/AdvancedDSPManagerUI.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/AdvancedDSPManagerUI.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/ModulationMatrixUI.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/ModulationMatrixUI.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/ResponsiveLayout.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/UIComponents.h"
 )

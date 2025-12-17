@@ -74,6 +74,15 @@ public:
     // Advanced DSP Manager Access
     AdvancedDSPManager& getAdvancedDSPManager() { return advancedDSPManager; }
 
+    //==============================================================================
+    // Audio Data Access (for visualization)
+    const juce::AudioBuffer<float>& getLatestAudioBuffer() const { return latestAudioBuffer; }
+
+    // Bio-Data Access (for visualization)
+    float getCurrentHRV() const { return advancedDSPManager.getCurrentHRV(); }
+    float getCurrentCoherence() const { return advancedDSPManager.getCurrentCoherence(); }
+    float getCurrentStress() const { return advancedDSPManager.getCurrentStress(); }
+
 private:
     //==============================================================================
     // Audio Processing State
@@ -86,6 +95,9 @@ private:
 
     // Advanced DSP Manager (96 processors + presets)
     AdvancedDSPManager advancedDSPManager;
+
+    // Audio buffer for visualization (thread-safe copy)
+    juce::AudioBuffer<float> latestAudioBuffer;
 
     // Synthesis Engine (will be connected to actual synthesis modules)
     struct SynthVoice {

@@ -205,6 +205,15 @@ public:
     /** Check if bio-reactive mode is enabled */
     bool isBioReactiveEnabled() const { return bioReactiveEnabled; }
 
+    /** Get current HRV value (0.0 to 1.0) */
+    float getCurrentHRV() const { return currentHRV; }
+
+    /** Get current coherence value (0.0 to 1.0) */
+    float getCurrentCoherence() const { return currentCoherence; }
+
+    /** Get current stress level (0.0 to 1.0) */
+    float getCurrentStress() const { return currentStress; }
+
     //==========================================================================
     // Processing Order
     //==========================================================================
@@ -233,6 +242,18 @@ public:
 
     /** Load factory presets (built-in professional presets) */
     void loadFactoryPresets();
+
+    /** Save preset to disk as JSON file */
+    bool savePresetToDisk(const juce::String& presetName);
+
+    /** Load preset from disk JSON file */
+    bool loadPresetFromDisk(const juce::String& presetName);
+
+    /** Load all user presets from disk */
+    void loadUserPresetsFromDisk();
+
+    /** Get presets directory path */
+    juce::File getPresetsDirectory() const;
 
     //==========================================================================
     // A/B Comparison
