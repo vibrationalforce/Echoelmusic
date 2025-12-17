@@ -266,6 +266,11 @@ private:
         void resized() override;
         void updateFromDSP();
 
+        // Mouse interaction for note editing
+        void mouseDown(const juce::MouseEvent& event) override;
+        void mouseDrag(const juce::MouseEvent& event) override;
+        void mouseUp(const juce::MouseEvent& event) override;
+
     private:
         AdvancedDSPManagerUI& owner;
 
@@ -290,6 +295,25 @@ private:
 
         juce::ToggleButton bioReactiveToggle;
 
+        // Per-Note Editing Panel
+        juce::GroupComponent noteEditGroup;
+        juce::Label selectedNoteLabel;
+
+        juce::Slider notePitchSlider;
+        juce::Label notePitchLabel;
+
+        juce::Slider noteFormantSlider;
+        juce::Label noteFormantLabel;
+
+        juce::Slider noteTimingSlider;
+        juce::Label noteTimingLabel;
+
+        juce::Slider noteAmplitudeSlider;
+        juce::Label noteAmplitudeLabel;
+
+        juce::ToggleButton noteEnabledToggle;
+        juce::TextButton resetNoteButton;
+
         // Note display
         struct NoteVisual
         {
@@ -297,9 +321,23 @@ private:
             float startTime;
             float duration;
             float pitch;
+            float pitchCorrection;    // cents
+            float formantShift;       // semitones
+            float timingCorrection;   // seconds
+            float amplitudeCorrection; // dB
             bool enabled;
+            bool selected;
         };
         std::vector<NoteVisual> detectedNotes;
+        int selectedNoteID = -1;
+
+        // Piano roll bounds (cached for mouse interaction)
+        juce::Rectangle<int> pianoRollBounds;
+
+        // Helper methods
+        void selectNote(int noteID);
+        void updateNoteEditControls();
+        int findNoteAtPosition(const juce::Point<int>& pos);
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PolyphonicPitchEditorPanel)
     };

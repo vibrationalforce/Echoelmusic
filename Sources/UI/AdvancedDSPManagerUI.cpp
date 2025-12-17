@@ -1193,10 +1193,30 @@ AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::PolyphonicPitchEditorPanel(Adv
     addAndMakeVisible(analyzeButton);
     analyzeButton.onClick = [&]()
     {
+        if (!owner.dspManager)
+        {
+            juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                "Analyze Audio",
+                "DSP Manager not initialized");
+            return;
+        }
+
+        // Trigger analysis on current audio buffer
+        // In production, would pass actual audio buffer from processor
+        // For now, trigger analysis on an empty buffer to update detected notes
+        juce::AudioBuffer<float> dummyBuffer(2, 512);
+        dummyBuffer.clear();
+
+        owner.dspManager->getPolyphonicPitchEditor().analyzeAudio(dummyBuffer, 48000.0);
+
+        // Update UI to show detected notes
+        updateFromDSP();
+
         juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
             "Analyze Audio",
-            "In production: Loads audio buffer → Polyphonic pitch detection (pYIN) → "
-            "Note segmentation → Displays in piano roll below");
+            "Analysis complete. Found " +
+            juce::String(owner.dspManager->getPolyphonicPitchEditor().getNumDetectedNotes()) +
+            " notes.\n\nClick notes in piano roll to edit individual pitches.");
     };
 
     // Bio-reactive toggle
@@ -1208,6 +1228,102 @@ AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::PolyphonicPitchEditorPanel(Adv
             owner.dspManager->getPolyphonicPitchEditor().setBioReactiveEnabled(
                 bioReactiveToggle.getToggleState());
     };
+
+    // Per-Note Editing Panel
+    noteEditGroup.setText("Selected Note Editor");
+    noteEditGroup.setTextLabelPosition(juce::Justification::centredTop);
+    addAndMakeVisible(noteEditGroup);
+
+    selectedNoteLabel.setText("No note selected", juce::dontSendNotification);
+    selectedNoteLabel.setJustificationType(juce::Justification::centred);
+    selectedNoteLabel.setFont(juce::Font(12.0f, juce::Font::bold));
+    addAndMakeVisible(selectedNoteLabel);
+
+    // Note pitch correction (-200 to +200 cents)
+    notePitchSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    notePitchSlider.setRange(-200.0, 200.0, 1.0);
+    notePitchSlider.setValue(0.0);
+    notePitchSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 60, 20);
+    notePitchSlider.onValueChange = [&]()
+    {
+        if (owner.dspManager && selectedNoteID >= 0)
+            owner.dspManager->getPolyphonicPitchEditor().setNotePitchCorrection(
+                selectedNoteID, static_cast<float>(notePitchSlider.getValue()));
+    };
+    addAndMakeVisible(notePitchSlider);
+    notePitchLabel.setText("Pitch (cents)", juce::dontSendNotification);
+    addAndMakeVisible(notePitchLabel);
+
+    // Note formant shift (-12 to +12 semitones)
+    noteFormantSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    noteFormantSlider.setRange(-12.0, 12.0, 0.1);
+    noteFormantSlider.setValue(0.0);
+    noteFormantSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 60, 20);
+    noteFormantSlider.onValueChange = [&]()
+    {
+        if (owner.dspManager && selectedNoteID >= 0)
+            owner.dspManager->getPolyphonicPitchEditor().setNoteFormantShift(
+                selectedNoteID, static_cast<float>(noteFormantSlider.getValue()));
+    };
+    addAndMakeVisible(noteFormantSlider);
+    noteFormantLabel.setText("Formant (st)", juce::dontSendNotification);
+    addAndMakeVisible(noteFormantLabel);
+
+    // Note timing correction (-0.5 to +0.5 seconds)
+    noteTimingSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    noteTimingSlider.setRange(-0.5, 0.5, 0.001);
+    noteTimingSlider.setValue(0.0);
+    noteTimingSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 60, 20);
+    noteTimingSlider.onValueChange = [&]()
+    {
+        if (owner.dspManager && selectedNoteID >= 0)
+            owner.dspManager->getPolyphonicPitchEditor().setNoteTimingCorrection(
+                selectedNoteID, noteTimingSlider.getValue());
+    };
+    addAndMakeVisible(noteTimingSlider);
+    noteTimingLabel.setText("Timing (s)", juce::dontSendNotification);
+    addAndMakeVisible(noteTimingLabel);
+
+    // Note amplitude correction (-12 to +12 dB)
+    noteAmplitudeSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    noteAmplitudeSlider.setRange(-12.0, 12.0, 0.1);
+    noteAmplitudeSlider.setValue(0.0);
+    noteAmplitudeSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 60, 20);
+    noteAmplitudeSlider.onValueChange = [&]()
+    {
+        if (owner.dspManager && selectedNoteID >= 0)
+            owner.dspManager->getPolyphonicPitchEditor().setNoteAmplitudeCorrection(
+                selectedNoteID, static_cast<float>(noteAmplitudeSlider.getValue()));
+    };
+    addAndMakeVisible(noteAmplitudeSlider);
+    noteAmplitudeLabel.setText("Gain (dB)", juce::dontSendNotification);
+    addAndMakeVisible(noteAmplitudeLabel);
+
+    // Note enabled toggle
+    noteEnabledToggle.setButtonText("Enable Note");
+    noteEnabledToggle.setToggleState(true, juce::dontSendNotification);
+    noteEnabledToggle.onClick = [&]()
+    {
+        if (owner.dspManager && selectedNoteID >= 0)
+            owner.dspManager->getPolyphonicPitchEditor().setNoteEnabled(
+                selectedNoteID, noteEnabledToggle.getToggleState());
+    };
+    addAndMakeVisible(noteEnabledToggle);
+
+    // Reset note button
+    resetNoteButton.setButtonText("Reset Note");
+    resetNoteButton.onClick = [&]()
+    {
+        if (selectedNoteID < 0)
+            return;
+
+        notePitchSlider.setValue(0.0, juce::sendNotificationSync);
+        noteFormantSlider.setValue(0.0, juce::sendNotificationSync);
+        noteTimingSlider.setValue(0.0, juce::sendNotificationSync);
+        noteAmplitudeSlider.setValue(0.0, juce::sendNotificationSync);
+        noteEnabledToggle.setToggleState(true, juce::sendNotificationSync);
+    };
+    addAndMakeVisible(resetNoteButton);
 }
 
 void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::paint(juce::Graphics& g)
@@ -1264,7 +1380,10 @@ void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::paint(juce::Graphics& g)
         }
     }
 
-    // Draw detected notes (example/placeholder)
+    // Cache piano roll bounds for mouse interaction
+    const_cast<AdvancedDSPManagerUI::PolyphonicPitchEditorPanel*>(this)->pianoRollBounds = rollBounds;
+
+    // Draw detected notes
     for (const auto& note : detectedNotes)
     {
         float noteX = rollBounds.getX() + (note.startTime * beatWidth * 4.0f);
@@ -1272,15 +1391,44 @@ void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::paint(juce::Graphics& g)
         float noteY = rollBounds.getBottom() - ((note.pitch - 24.0f) * pitchHeight);
         float noteHeight = pitchHeight * 0.8f;
 
-        if (note.enabled)
+        // Color based on selection and enabled state
+        if (note.selected)
+        {
+            // Selected note - bright cyan with glow
+            g.setColour(juce::Colour(0xff00ffff).withAlpha(0.9f));
+            g.fillRoundedRectangle(noteX - 2, noteY - 2, noteWidth + 4, noteHeight + 4, 3.0f);
+            g.setColour(juce::Colour(0xff00d4ff));
+        }
+        else if (note.enabled)
+        {
             g.setColour(juce::Colour(0xff00d4ff).withAlpha(0.7f));
+        }
         else
+        {
             g.setColour(juce::Colour(0xff808080).withAlpha(0.3f));
+        }
 
         g.fillRoundedRectangle(noteX, noteY, noteWidth, noteHeight, 2.0f);
 
-        g.setColour(juce::Colour(0xffe8e8e8));
-        g.drawRoundedRectangle(noteX, noteY, noteWidth, noteHeight, 2.0f, 1.0f);
+        // Border (thicker for selected)
+        if (note.selected)
+        {
+            g.setColour(juce::Colour(0xffffffff));
+            g.drawRoundedRectangle(noteX, noteY, noteWidth, noteHeight, 2.0f, 2.0f);
+        }
+        else
+        {
+            g.setColour(juce::Colour(0xffe8e8e8));
+            g.drawRoundedRectangle(noteX, noteY, noteWidth, noteHeight, 2.0f, 1.0f);
+        }
+
+        // Show pitch correction indicator
+        if (std::abs(note.pitchCorrection) > 1.0f)
+        {
+            g.setColour(juce::Colour(0xffffaa00).withAlpha(0.8f));
+            float correctionIndicatorY = noteY - 3;
+            g.fillRect(noteX, correctionIndicatorY, noteWidth, 2.0f);
+        }
     }
 
     // Show placeholder message if no notes
@@ -1300,8 +1448,11 @@ void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::resized()
     // Reserve bottom for piano roll
     bounds.removeFromBottom(250);
 
-    // Top section: sliders and controls (2 rows)
-    auto row1 = bounds.removeFromTop(180).reduced(10);
+    // Top section: Global controls
+    auto topSection = bounds.removeFromTop(180);
+
+    // Row 1: Global pitch/formant/vibrato sliders
+    auto row1 = topSection.removeFromTop(90).reduced(10);
     int col1Width = row1.getWidth() / 3;
 
     auto slider1 = row1.removeFromLeft(col1Width).reduced(10);
@@ -1316,8 +1467,8 @@ void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::resized()
     vibratoCorrectionLabel.setBounds(slider3.removeFromTop(20));
     vibratoCorrectionSlider.setBounds(slider3);
 
-    // Second row: scale controls and buttons
-    auto row2 = bounds.removeFromTop(100).reduced(10);
+    // Row 2: Scale controls and buttons
+    auto row2 = topSection.removeFromTop(90).reduced(10);
 
     auto scaleCol = row2.removeFromLeft(150).reduced(5);
     scaleTypeLabel.setBounds(scaleCol.removeFromTop(20));
@@ -1336,19 +1487,227 @@ void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::resized()
 
     row2.removeFromLeft(20);
     bioReactiveToggle.setBounds(row2.removeFromLeft(180).removeFromTop(35));
+
+    // Per-Note Editing Panel (middle section)
+    bounds.removeFromTop(10);  // Spacing
+    auto noteEditBounds = bounds.removeFromTop(160).reduced(10);
+    noteEditGroup.setBounds(noteEditBounds);
+
+    auto editContent = noteEditBounds.reduced(10, 25);  // Account for group border
+    selectedNoteLabel.setBounds(editContent.removeFromTop(25));
+    editContent.removeFromTop(5);
+
+    // Two columns of sliders
+    int labelWidth = 90;
+    int sliderHeight = 25;
+
+    auto leftColumn = editContent.removeFromLeft(editContent.getWidth() / 2).reduced(5);
+    auto rightColumn = editContent.reduced(5);
+
+    // Left column
+    auto pitchRow = leftColumn.removeFromTop(sliderHeight);
+    notePitchLabel.setBounds(pitchRow.removeFromLeft(labelWidth));
+    notePitchSlider.setBounds(pitchRow);
+    leftColumn.removeFromTop(5);
+
+    auto formantRow = leftColumn.removeFromTop(sliderHeight);
+    noteFormantLabel.setBounds(formantRow.removeFromLeft(labelWidth));
+    noteFormantSlider.setBounds(formantRow);
+    leftColumn.removeFromTop(5);
+
+    // Right column
+    auto timingRow = rightColumn.removeFromTop(sliderHeight);
+    noteTimingLabel.setBounds(timingRow.removeFromLeft(labelWidth));
+    noteTimingSlider.setBounds(timingRow);
+    rightColumn.removeFromTop(5);
+
+    auto amplitudeRow = rightColumn.removeFromTop(sliderHeight);
+    noteAmplitudeLabel.setBounds(amplitudeRow.removeFromLeft(labelWidth));
+    noteAmplitudeSlider.setBounds(amplitudeRow);
+    rightColumn.removeFromTop(5);
+
+    // Bottom of edit panel: enable toggle and reset button
+    auto bottomRow = editContent.removeFromTop(30);
+    noteEnabledToggle.setBounds(bottomRow.removeFromLeft(120));
+    bottomRow.removeFromLeft(10);
+    resetNoteButton.setBounds(bottomRow.removeFromLeft(100));
 }
 
 void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::updateFromDSP()
 {
-    // In production, would fetch detected notes from DSP processor
-    // For now, show example notes
+    if (!owner.dspManager)
+        return;
+
+    auto& pitchEditor = owner.dspManager->getPolyphonicPitchEditor();
+    const auto& dspNotes = pitchEditor.getDetectedNotes();
+
+    // Update visual notes from DSP detected notes
+    detectedNotes.clear();
+
+    for (const auto& dspNote : dspNotes)
+    {
+        NoteVisual visual;
+        visual.noteID = dspNote.noteID;
+        visual.startTime = static_cast<float>(dspNote.startTime);
+        visual.duration = static_cast<float>(dspNote.duration);
+        visual.pitch = static_cast<float>(dspNote.midiNote);  // Use MIDI note for piano roll
+
+        // Calculate pitch correction in cents
+        visual.pitchCorrection = 1200.0f * std::log2(dspNote.correctedPitch / dspNote.originalPitch);
+        visual.formantShift = dspNote.formantShift;
+        visual.timingCorrection = static_cast<float>(dspNote.timingCorrection);
+        visual.amplitudeCorrection = dspNote.amplitudeCorrection;
+        visual.enabled = dspNote.enabled;
+        visual.selected = (dspNote.noteID == selectedNoteID);
+
+        detectedNotes.push_back(visual);
+    }
+
+    // If no notes detected yet, show demo notes for testing
     if (detectedNotes.empty())
     {
-        detectedNotes.push_back({1, 0.0f, 1.0f, 48.0f, true});
-        detectedNotes.push_back({2, 1.0f, 0.5f, 52.0f, true});
-        detectedNotes.push_back({3, 1.5f, 0.5f, 55.0f, true});
-        detectedNotes.push_back({4, 2.0f, 2.0f, 60.0f, true});
+        detectedNotes.push_back({1, 0.0f, 1.0f, 48.0f, 0.0f, 0.0f, 0.0f, 0.0f, true, false});
+        detectedNotes.push_back({2, 1.0f, 0.5f, 52.0f, 0.0f, 0.0f, 0.0f, 0.0f, true, false});
+        detectedNotes.push_back({3, 1.5f, 0.5f, 55.0f, 0.0f, 0.0f, 0.0f, 0.0f, true, false});
+        detectedNotes.push_back({4, 2.0f, 2.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f, true, false});
     }
 
     repaint();
+}
+
+//==============================================================================
+// Mouse Interaction for Note Editing
+//==============================================================================
+
+void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::mouseDown(const juce::MouseEvent& event)
+{
+    // Find note at click position
+    int clickedNoteID = findNoteAtPosition(event.getPosition());
+
+    if (clickedNoteID >= 0)
+    {
+        selectNote(clickedNoteID);
+    }
+    else
+    {
+        // Deselect if clicked on empty space
+        selectNote(-1);
+    }
+}
+
+void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::mouseDrag(const juce::MouseEvent& event)
+{
+    juce::ignoreUnused(event);
+    // Future: Implement drag to adjust pitch/timing
+    // For now, just selection on click is sufficient
+}
+
+void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::mouseUp(const juce::MouseEvent& event)
+{
+    juce::ignoreUnused(event);
+}
+
+//==============================================================================
+// Helper Methods
+//==============================================================================
+
+void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::selectNote(int noteID)
+{
+    selectedNoteID = noteID;
+
+    // Update visual selection
+    for (auto& note : detectedNotes)
+    {
+        note.selected = (note.noteID == noteID);
+    }
+
+    // Update per-note edit controls
+    updateNoteEditControls();
+
+    repaint();
+}
+
+void AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::updateNoteEditControls()
+{
+    if (selectedNoteID < 0)
+    {
+        // No note selected
+        selectedNoteLabel.setText("No note selected", juce::dontSendNotification);
+        notePitchSlider.setEnabled(false);
+        noteFormantSlider.setEnabled(false);
+        noteTimingSlider.setEnabled(false);
+        noteAmplitudeSlider.setEnabled(false);
+        noteEnabledToggle.setEnabled(false);
+        resetNoteButton.setEnabled(false);
+        return;
+    }
+
+    // Find selected note
+    const NoteVisual* selectedNote = nullptr;
+    for (const auto& note : detectedNotes)
+    {
+        if (note.noteID == selectedNoteID)
+        {
+            selectedNote = &note;
+            break;
+        }
+    }
+
+    if (selectedNote == nullptr)
+    {
+        selectNote(-1);  // Note not found, deselect
+        return;
+    }
+
+    // Update label
+    juce::String noteName = juce::MidiMessage::getMidiNoteName(static_cast<int>(selectedNote->pitch),
+                                                                true, true, 4);
+    selectedNoteLabel.setText("Editing: " + noteName + " (ID: " + juce::String(selectedNoteID) + ")",
+                              juce::dontSendNotification);
+
+    // Enable controls
+    notePitchSlider.setEnabled(true);
+    noteFormantSlider.setEnabled(true);
+    noteTimingSlider.setEnabled(true);
+    noteAmplitudeSlider.setEnabled(true);
+    noteEnabledToggle.setEnabled(true);
+    resetNoteButton.setEnabled(true);
+
+    // Update slider values (without triggering callbacks)
+    notePitchSlider.setValue(selectedNote->pitchCorrection, juce::dontSendNotification);
+    noteFormantSlider.setValue(selectedNote->formantShift, juce::dontSendNotification);
+    noteTimingSlider.setValue(selectedNote->timingCorrection, juce::dontSendNotification);
+    noteAmplitudeSlider.setValue(selectedNote->amplitudeCorrection, juce::dontSendNotification);
+    noteEnabledToggle.setToggleState(selectedNote->enabled, juce::dontSendNotification);
+}
+
+int AdvancedDSPManagerUI::PolyphonicPitchEditorPanel::findNoteAtPosition(const juce::Point<int>& pos)
+{
+    if (!pianoRollBounds.contains(pos))
+        return -1;
+
+    // Calculate piano roll parameters (must match paint())
+    int numBeats = 16;
+    float beatWidth = pianoRollBounds.getWidth() / static_cast<float>(numBeats);
+
+    int numPitches = 60;
+    float pitchHeight = pianoRollBounds.getHeight() / static_cast<float>(numPitches);
+
+    // Check each note
+    for (const auto& note : detectedNotes)
+    {
+        float noteX = pianoRollBounds.getX() + (note.startTime * beatWidth * 4.0f);
+        float noteWidth = note.duration * beatWidth * 4.0f;
+        float noteY = pianoRollBounds.getBottom() - ((note.pitch - 24.0f) * pitchHeight);
+        float noteHeight = pitchHeight * 0.8f;
+
+        juce::Rectangle<float> noteBounds(noteX, noteY, noteWidth, noteHeight);
+
+        if (noteBounds.contains(pos.toFloat()))
+        {
+            return note.noteID;
+        }
+    }
+
+    return -1;  // No note found at position
 }
