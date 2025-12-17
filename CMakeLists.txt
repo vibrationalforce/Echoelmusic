@@ -105,7 +105,7 @@ option(ENABLE_ANDROID_AAUDIO "Enable AAudio (Android)" ON)
 # JUCE Framework (Optional - Not needed for iOS Swift-only builds)
 # ===========================
 
-option(USE_JUCE "Use JUCE framework (required for desktop plugins)" OFF)
+option(USE_JUCE "Use JUCE framework (required for desktop plugins)" ON)
 
 if(USE_JUCE)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/JUCE")
