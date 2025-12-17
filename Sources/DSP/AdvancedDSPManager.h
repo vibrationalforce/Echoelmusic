@@ -174,17 +174,11 @@ public:
     // Direct Processor Access (for parameter control)
     //==========================================================================
 
-    /** Get Mid/Side Tone Matching processor */
-    MidSideToneMatching& getMidSideToneMatching() { return midSideToneMatching; }
-
-    /** Get Audio Humanizer processor */
-    AudioHumanizer& getAudioHumanizer() { return audioHumanizer; }
-
-    /** Get Swarm Reverb processor */
-    SwarmReverb& getSwarmReverb() { return swarmReverb; }
-
-    /** Get Polyphonic Pitch Editor processor */
-    PolyphonicPitchEditor& getPolyphonicPitchEditor() { return polyphonicPitchEditor; }
+    /** TODO: Uncomment these once 4 processors are implemented */
+    // MidSideToneMatching& getMidSideToneMatching() { return midSideToneMatching; }
+    // AudioHumanizer& getAudioHumanizer() { return audioHumanizer; }
+    // SwarmReverb& getSwarmReverb() { return swarmReverb; }
+    // PolyphonicPitchEditor& getPolyphonicPitchEditor() { return polyphonicPitchEditor; }
 
     /** Get existing Bio-Reactive DSP */
     BioReactiveDSP& getBioReactiveDSP() { return bioReactiveDSP; }
@@ -327,10 +321,11 @@ private:
     // Processor Instances
     //==========================================================================
 
-    MidSideToneMatching midSideToneMatching;
-    AudioHumanizer audioHumanizer;
-    SwarmReverb swarmReverb;
-    PolyphonicPitchEditor polyphonicPitchEditor;
+    // TODO: These 4 processors need .cpp implementations before they can be instantiated
+    // MidSideToneMatching midSideToneMatching;
+    // AudioHumanizer audioHumanizer;
+    // SwarmReverb swarmReverb;
+    // PolyphonicPitchEditor polyphonicPitchEditor;
 
     // Existing bio-reactive processors
     BioReactiveDSP bioReactiveDSP;

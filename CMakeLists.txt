@@ -348,6 +348,7 @@ target_sources(Echoelmusic
         # Previously disabled - Testing if JUCE 7 compatible now
         Sources/DSP/DynamicEQ.cpp             # Dynamic EQ with per-band compression
         Sources/DSP/SpectralSculptor.cpp      # FFT-based spectral processing
+        Sources/DSP/AdvancedDSPManager.cpp    # ✅ Advanced DSP Manager - Integration layer
 
         # =====================================================================
         # PHASE 3: SYNTHESIS & ADVANCED FEATURES

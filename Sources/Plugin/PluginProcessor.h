@@ -4,6 +4,7 @@
 #include "../DSP/BioReactiveDSP.h"  // ✅ Ported to JUCE 7 (2025-11-12)
 #include "../DSP/BioReactiveAudioProcessor.h"  // ✅ NEW: Bio-reactive audio processing (2025-11-13)
 #include "../BioData/BioReactiveModulator.h"  // ✅ NEW: Bio-feedback system (2025-11-13)
+#include "../DSP/AdvancedDSPManager.h"  // ✅ NEW: Advanced DSP processors (2025-12-17)
 
 /**
  * Echoelmusic Audio Processor
@@ -94,6 +95,11 @@ public:
     juce::AudioProcessorValueTreeState& getAPVTS() { return parameters; }
 
     /**
+     * Get Advanced DSP Manager for UI components
+     */
+    AdvancedDSPManager* getAdvancedDSPManager() { return advancedDSPManager.get(); }
+
+    /**
      * Get spectrum data for visualization
      * Returns normalized magnitude values (0.0 to 1.0) for frequency bins
      */
@@ -125,6 +131,7 @@ private:
     std::unique_ptr<BioReactiveDSP> bioReactiveDSP;  // ✅ Ported to JUCE 7 (2025-11-12)
     std::unique_ptr<BioReactiveAudioProcessor> bioReactiveAudioProcessor;  // ✅ NEW: Bio-reactive audio (2025-11-13)
     std::unique_ptr<BioFeedbackSystem> bioFeedbackSystem;  // ✅ NEW: Bio-feedback (2025-11-13)
+    std::unique_ptr<AdvancedDSPManager> advancedDSPManager;  // ✅ NEW: Advanced DSP processors (2025-12-17)
 
     //==============================================================================
     // Bio-Data
