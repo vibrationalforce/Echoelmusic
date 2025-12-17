@@ -1,4 +1,5 @@
 #include "EchoelBioDataAdapters.h"
+#include <juce_osc/juce_osc.h>
 
 //==============================================================================
 // 1. APPLE WATCH / HEALTHKIT ADAPTER (iOS/macOS)
@@ -633,221 +634,217 @@ void EchoelWebSocketAdapter::processMessage(const juce::String& jsonMessage)
             currentState.gamma = static_cast<float>(obj->getProperty("gamma"));
     }
 }
-// 
-// //==============================================================================
-// // 6. OSC BIO-DATA ADAPTER
-// //==============================================================================
-// // 
-// // EchoelOSCAdapter::EchoelOSCAdapter()
-// // {
-// //     // currentState.source = EchoelQuantumCore::BioDataSource::OSC;
-// //     oscReceiver = std::make_unique<juce::OSCReceiver>();
-// // }
-// // 
-// // EchoelOSCAdapter::~EchoelOSCAdapter()
-// // {
-// //     disconnect();
-// // }
-// 
-// bool EchoelOSCAdapter::connect(const juce::String& config)
-// {
-//     // Config format: "port:8000"
-//     port = config.fromFirstOccurrenceOf("port:", false, true).getIntValue();
-// 
-//     if (port == 0)
-//         port = 8000;  // Default port
-// 
-//     DBG("EchoelOSCAdapter: Binding to OSC port " + juce::String(port));
-// 
-//     if (oscReceiver->connect(port))
-//     {
-//         oscReceiver->addListener(this);
-//         connected = true;
-// 
-//         DBG("EchoelOSCAdapter: Successfully bound to port " + juce::String(port));
-//         return true;
-//     }
-// 
-//     DBG("EchoelOSCAdapter: Failed to bind to port " + juce::String(port));
-//     return false;
-// }
-// 
-// void EchoelOSCAdapter::disconnect()
-// {
-//     if (!connected)
-//         return;
-// 
-//     stopStreaming();
-// 
-//     if (// oscReceiver)
-//     {
-//         // oscReceiver->removeListener(this);
-//         // oscReceiver->disconnect();
-//     }
-// 
-//     connected = false;
-// 
-//     DBG("EchoelOSCAdapter: Disconnected from OSC port " + juce::String(port));
-// }
-// 
-// EchoelQuantumCore::QuantumBioState EchoelOSCAdapter::getCurrentState() const
-// {
-//     return currentState;
-// }
-// 
-// void EchoelOSCAdapter::startStreaming()
-// {
-//     streaming = true;
-//     DBG("EchoelOSCAdapter: Started streaming");
-// }
-// 
-// void EchoelOSCAdapter::stopStreaming()
-// {
-//     streaming = false;
-//     DBG("EchoelOSCAdapter: Stopped streaming");
-// }
-// 
-// void EchoelOSCAdapter::oscMessageReceived(const juce::OSCMessage& message)
-// {
-//     if (!streaming)
-//         return;
-// 
-//     auto address = message.getAddressPattern().toString();
-// 
-//     // HRV
-//     if (address == "/bio/hrv" && message.size() >= 1)
-//     {
-//         if (message[0].isFloat32())
-//             currentState.hrv = message[0].getFloat32();
-//     }
-// 
-//     // Coherence
-//     else if (address == "/bio/coherence" && message.size() >= 1)
-//     {
-//         if (message[0].isFloat32())
-//             currentState.coherence = message[0].getFloat32();
-//     }
-// 
-//     // Stress
-//     else if (address == "/bio/stress" && message.size() >= 1)
-//     {
-//         if (message[0].isFloat32())
-//             currentState.stress = message[0].getFloat32();
-//     }
-// 
-//     // EEG bands
-//     else if (address == "/bio/delta" && message.size() >= 1)
-//     {
-//         if (message[0].isFloat32())
-//             currentState.delta = message[0].getFloat32();
-//     }
-// 
-//     else if (address == "/bio/theta" && message.size() >= 1)
-//     {
-//         if (message[0].isFloat32())
-//             currentState.theta = message[0].getFloat32();
-//     }
-// 
-//     else if (address == "/bio/alpha" && message.size() >= 1)
-//     {
-//         if (message[0].isFloat32())
-//             currentState.alpha = message[0].getFloat32();
-//     }
-// 
-//     else if (address == "/bio/beta" && message.size() >= 1)
-//     {
-//         if (message[0].isFloat32())
-//             currentState.beta = message[0].getFloat32();
-//     }
-// 
-//     else if (address == "/bio/gamma" && message.size() >= 1)
-//     {
-//         if (message[0].isFloat32())
-//             currentState.gamma = message[0].getFloat32();
-//     }
-// }
-// 
-// //==============================================================================
-// // 7. MIDI CC BIO-DATA ADAPTER
-// //==============================================================================
-// 
-// EchoelMIDIAdapter::EchoelMIDIAdapter()
-// {
-//     // currentState.source = EchoelQuantumCore::BioDataSource::MIDI_CC;
-// }
-//
-// EchoelMIDIAdapter::~EchoelMIDIAdapter()
-// {
-//     disconnect();
-// }
-//
-// bool EchoelMIDIAdapter::connect(const juce::String& config)
-// {
-//     // Config = MIDI device name
-//     midiDeviceName = config;
-//
-//     DBG("EchoelMIDIAdapter: Opening MIDI device: " + midiDeviceName);
-//
-//     // Find MIDI input device
-//     auto devices = juce::MidiInput::getAvailableDevices();
-// 
-//     for (auto& device : devices)
-//     {
-//         if (device.name == midiDeviceName || midiDeviceName.isEmpty())
-//         {
-//             midiInput = juce::MidiInput::openDevice(device.identifier, this);
-// 
-//             if (midiInput)
-//             {
-//                 midiInput->start();
-//                 midiDeviceName = device.name;
-//                 connected = true;
-// 
-//                 DBG("EchoelMIDIAdapter: Connected to " + midiDeviceName);
-//                 return true;
-//             }
-//         }
-//     }
-// 
-//     DBG("EchoelMIDIAdapter: Failed to open MIDI device");
-//     return false;
-// }
-// 
-// void EchoelMIDIAdapter::disconnect()
-// {
-//     if (!connected)
-//         return;
-// 
-//     stopStreaming();
-// 
-//     if (midiInput)
-//     {
-//         midiInput->stop();
-//         midiInput.reset();
-//     }
-// 
-//     connected = false;
-// 
-//     DBG("EchoelMIDIAdapter: Disconnected from " + midiDeviceName);
-// }
-// 
-// EchoelQuantumCore::QuantumBioState EchoelMIDIAdapter::getCurrentState() const
-// {
-//     return currentState;
-// }
-// 
-// void EchoelMIDIAdapter::startStreaming()
-// {
-//     streaming = true;
-//     DBG("EchoelMIDIAdapter: Started streaming");
-// }
-// 
-// void EchoelMIDIAdapter::stopStreaming()
-// {
-//     streaming = false;
-//     DBG("EchoelMIDIAdapter: Stopped streaming");
-// }
-// 
+//==============================================================================
+// 6. OSC BIO-DATA ADAPTER
+//==============================================================================
+
+EchoelOSCAdapter::EchoelOSCAdapter()
+{
+    oscReceiver = std::make_unique<juce::OSCReceiver>();
+}
+
+EchoelOSCAdapter::~EchoelOSCAdapter()
+{
+    disconnect();
+}
+
+bool EchoelOSCAdapter::connect(const juce::String& config)
+{
+    // Config format: "port:8000"
+    port = config.fromFirstOccurrenceOf("port:", false, true).getIntValue();
+
+    if (port == 0)
+        port = 8000;  // Default port
+
+    DBG("EchoelOSCAdapter: Binding to OSC port " + juce::String(port));
+
+    if (oscReceiver->connect(port))
+    {
+        oscReceiver->addListener(this);
+        connected = true;
+
+        DBG("EchoelOSCAdapter: Successfully bound to port " + juce::String(port));
+        return true;
+    }
+
+    DBG("EchoelOSCAdapter: Failed to bind to port " + juce::String(port));
+    return false;
+}
+
+void EchoelOSCAdapter::disconnect()
+{
+    if (!connected)
+        return;
+
+    stopStreaming();
+
+    if (oscReceiver)
+    {
+        oscReceiver->removeListener(this);
+        oscReceiver->disconnect();
+    }
+
+    connected = false;
+
+    DBG("EchoelOSCAdapter: Disconnected from OSC port " + juce::String(port));
+}
+
+EchoelQuantumCore::QuantumBioState EchoelOSCAdapter::getCurrentState() const
+{
+    return currentState;
+}
+
+void EchoelOSCAdapter::startStreaming()
+{
+    streaming = true;
+    DBG("EchoelOSCAdapter: Started streaming");
+}
+
+void EchoelOSCAdapter::stopStreaming()
+{
+    streaming = false;
+    DBG("EchoelOSCAdapter: Stopped streaming");
+}
+
+void EchoelOSCAdapter::oscMessageReceived(const juce::OSCMessage& message)
+{
+    if (!streaming)
+        return;
+
+    auto address = message.getAddressPattern().toString();
+
+    // HRV
+    if (address == "/bio/hrv" && message.size() >= 1)
+    {
+        if (message[0].isFloat32())
+            currentState.hrv = message[0].getFloat32();
+    }
+
+    // Coherence
+    else if (address == "/bio/coherence" && message.size() >= 1)
+    {
+        if (message[0].isFloat32())
+            currentState.coherence = message[0].getFloat32();
+    }
+
+    // Stress
+    else if (address == "/bio/stress" && message.size() >= 1)
+    {
+        if (message[0].isFloat32())
+            currentState.stress = message[0].getFloat32();
+    }
+
+    // EEG bands
+    else if (address == "/bio/delta" && message.size() >= 1)
+    {
+        if (message[0].isFloat32())
+            currentState.delta = message[0].getFloat32();
+    }
+
+    else if (address == "/bio/theta" && message.size() >= 1)
+    {
+        if (message[0].isFloat32())
+            currentState.theta = message[0].getFloat32();
+    }
+
+    else if (address == "/bio/alpha" && message.size() >= 1)
+    {
+        if (message[0].isFloat32())
+            currentState.alpha = message[0].getFloat32();
+    }
+
+    else if (address == "/bio/beta" && message.size() >= 1)
+    {
+        if (message[0].isFloat32())
+            currentState.beta = message[0].getFloat32();
+    }
+
+    else if (address == "/bio/gamma" && message.size() >= 1)
+    {
+        if (message[0].isFloat32())
+            currentState.gamma = message[0].getFloat32();
+    }
+}
+//==============================================================================
+// 7. MIDI CC BIO-DATA ADAPTER
+//==============================================================================
+
+EchoelMIDIAdapter::EchoelMIDIAdapter()
+{
+}
+
+EchoelMIDIAdapter::~EchoelMIDIAdapter()
+{
+    disconnect();
+}
+
+bool EchoelMIDIAdapter::connect(const juce::String& config)
+{
+    // Config = MIDI device name
+    midiDeviceName = config;
+
+    DBG("EchoelMIDIAdapter: Opening MIDI device: " + midiDeviceName);
+
+    // Find MIDI input device
+    auto devices = juce::MidiInput::getAvailableDevices();
+
+    for (auto& device : devices)
+    {
+        if (device.name == midiDeviceName || midiDeviceName.isEmpty())
+        {
+            midiInput = juce::MidiInput::openDevice(device.identifier, this);
+
+            if (midiInput)
+            {
+                midiInput->start();
+                midiDeviceName = device.name;
+                connected = true;
+
+                DBG("EchoelMIDIAdapter: Connected to " + midiDeviceName);
+                return true;
+            }
+        }
+    }
+
+    DBG("EchoelMIDIAdapter: Failed to open MIDI device");
+    return false;
+}
+
+void EchoelMIDIAdapter::disconnect()
+{
+    if (!connected)
+        return;
+
+    stopStreaming();
+
+    if (midiInput)
+    {
+        midiInput->stop();
+        midiInput.reset();
+    }
+
+    connected = false;
+
+    DBG("EchoelMIDIAdapter: Disconnected from " + midiDeviceName);
+}
+
+EchoelQuantumCore::QuantumBioState EchoelMIDIAdapter::getCurrentState() const
+{
+    return currentState;
+}
+
+void EchoelMIDIAdapter::startStreaming()
+{
+    streaming = true;
+    DBG("EchoelMIDIAdapter: Started streaming");
+}
+
+void EchoelMIDIAdapter::stopStreaming()
+{
+    streaming = false;
+    DBG("EchoelMIDIAdapter: Stopped streaming");
+}
+
 void EchoelMIDIAdapter::mapCC(int ccNumber, const juce::String& bioParameter)
 {
     ccMappings[ccNumber] = bioParameter;
@@ -918,12 +915,10 @@ std::unique_ptr<IBioDataAdapter> EchoelBioDataAdapterFactory::createAdapter(
             return std::make_unique<EchoelWebSocketAdapter>();
 
         case EchoelQuantumCore::BioDataSource::OSC:
-            // OSC adapter temporarily disabled - needs proper JUCE OSC setup
-            return nullptr;  // return std::make_unique<EchoelOSCAdapter>();
+            return std::make_unique<EchoelOSCAdapter>();
 
         case EchoelQuantumCore::BioDataSource::MIDI_CC:
-            // MIDI adapter temporarily disabled
-            return nullptr;  // return std::make_unique<EchoelMIDIAdapter>();
+            return std::make_unique<EchoelMIDIAdapter>();
 
         default:
             return nullptr;
@@ -946,9 +941,8 @@ std::vector<EchoelQuantumCore::BioDataSource> EchoelBioDataAdapterFactory::getAv
 
     // Network adapters (all platforms)
     adapters.push_back(EchoelQuantumCore::BioDataSource::WebSocket);
-    // OSC and MIDI temporarily disabled
-    // adapters.push_back(EchoelQuantumCore::BioDataSource::OSC);
-    // adapters.push_back(EchoelQuantumCore::BioDataSource::MIDI_CC);
+    adapters.push_back(EchoelQuantumCore::BioDataSource::OSC);
+    adapters.push_back(EchoelQuantumCore::BioDataSource::MIDI_CC);
 
     return adapters;
 }
@@ -980,13 +974,13 @@ std::unique_ptr<IBioDataAdapter> EchoelBioDataAdapterFactory::autoDetect()
         }
     }
 
-    // Try OSC (default port 8000) - temporarily disabled
-    // auto osc = std::make_unique<EchoelOSCAdapter>();
-    // if (osc->connect("port:8000"))
-    // {
-    //     DBG("EchoelBioDataAdapterFactory: Auto-detected OSC stream on port 8000");
-    //     return osc;
-    // }
+    // Try OSC (default port 8000)
+    auto osc = std::make_unique<EchoelOSCAdapter>();
+    if (osc->connect("port:8000"))
+    {
+        DBG("EchoelBioDataAdapterFactory: Auto-detected OSC stream on port 8000");
+        return osc;
+    }
 
     DBG("EchoelBioDataAdapterFactory: No bio-data sources detected");
     return nullptr;

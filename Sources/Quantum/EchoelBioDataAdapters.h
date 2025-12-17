@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <juce_osc/juce_osc.h>
 #include "EchoelQuantumCore.h"
 
 /**
@@ -324,7 +325,8 @@ private:
 // 6. OSC Bio-Data Adapter
 //==============================================================================
 
-class EchoelOSCAdapter : public IBioDataAdapter
+class EchoelOSCAdapter : public IBioDataAdapter,
+                          public juce::OSCReceiver::Listener<juce::OSCReceiver::MessageLoopCallback>
 {
 public:
     EchoelOSCAdapter();
@@ -351,7 +353,7 @@ public:
      * /bio/beta <float>
      * etc.
      */
-    void oscMessageReceived(const juce::String& address, float value);
+    void oscMessageReceived(const juce::OSCMessage& message) override;
 
 private:
     bool connected = false;
@@ -360,8 +362,7 @@ private:
 
     EchoelQuantumCore::QuantumBioState currentState;
 
-    // OSC receiver implementation (to be added with proper JUCE OSC module setup)
-    // std::unique_ptr<juce::OSCReceiver> oscReceiver;
+    std::unique_ptr<juce::OSCReceiver> oscReceiver;
 };
 
 //==============================================================================
