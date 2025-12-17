@@ -14,6 +14,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
+#include "../../DSP/AdvancedDSPManager.h"
 
 //==============================================================================
 /**
@@ -69,6 +70,10 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    //==============================================================================
+    // Advanced DSP Manager Access
+    AdvancedDSPManager& getAdvancedDSPManager() { return advancedDSPManager; }
+
 private:
     //==============================================================================
     // Audio Processing State
@@ -78,6 +83,9 @@ private:
     // SIMD Processing
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>,
                                      juce::dsp::IIR::Coefficients<float>> lowPassFilter;
+
+    // Advanced DSP Manager (96 processors + presets)
+    AdvancedDSPManager advancedDSPManager;
 
     // Synthesis Engine (will be connected to actual synthesis modules)
     struct SynthVoice {

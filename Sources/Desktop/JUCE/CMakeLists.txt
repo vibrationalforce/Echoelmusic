@@ -94,10 +94,25 @@ file(GLOB_RECURSE SYNTH_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/../../Synthesis/*.h"
 )
 
+# Visualization
+file(GLOB_RECURSE VISUALIZATION_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../Visualization/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../Visualization/*.h"
+)
+
+# UI Components - Only include working components
+# PresetBrowserUI excluded: needs JUCE 7.x API compatibility fixes
+set(UI_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/ResponsiveLayout.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/UIComponents.h"
+)
+
 target_sources(EchoelmusicPro PRIVATE
     ${DSP_SOURCES}
     ${AUDIO_SOURCES}
     ${SYNTH_SOURCES}
+    ${VISUALIZATION_SOURCES}
+    ${UI_SOURCES}
 )
 
 # ===========================
@@ -110,6 +125,8 @@ target_include_directories(EchoelmusicPro PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../../DSP
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Audio
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Synthesis
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Visualization
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../UI
 )
 
 # ===========================

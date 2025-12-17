@@ -91,6 +91,7 @@ public:
 
     enum class PresetCategory
     {
+        All,            // All presets (no filter)
         Mastering,      // Professional mastering chains
         Mixing,         // Mix bus processing
         Creative,       // Experimental/artistic
@@ -99,6 +100,31 @@ public:
         Ambient,        // Atmospheric/cinematic
         BioReactive,    // Bio-data-driven presets
         Custom          // User-created
+    };
+
+    //==========================================================================
+    // Processor State Structure
+    //==========================================================================
+
+    struct ProcessorState
+    {
+        bool midSideEnabled;
+        bool humanizerEnabled;
+        bool swarmEnabled;
+        bool pitchEditorEnabled;
+        // Additional parameters would be stored here
+    };
+
+    //==========================================================================
+    // Preset Structure
+    //==========================================================================
+
+    struct Preset
+    {
+        juce::String name;
+        PresetCategory category;
+        ProcessorState state;
+        juce::StringPairArray parameters;
     };
 
     //==========================================================================
@@ -321,15 +347,6 @@ private:
     // A/B State
     //==========================================================================
 
-    struct ProcessorState
-    {
-        bool midSideEnabled;
-        bool humanizerEnabled;
-        bool swarmEnabled;
-        bool pitchEditorEnabled;
-        // Additional parameters would be stored here
-    };
-
     ProcessorState stateA;
     ProcessorState stateB;
     bool currentlyOnA = true;
@@ -347,14 +364,6 @@ private:
     //==========================================================================
     // Preset Storage
     //==========================================================================
-
-    struct Preset
-    {
-        juce::String name;
-        PresetCategory category;
-        ProcessorState state;
-        juce::StringPairArray parameters;
-    };
 
     std::vector<Preset> presets;
 

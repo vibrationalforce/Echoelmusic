@@ -16,6 +16,10 @@ EchoelmusicProEditor::EchoelmusicProEditor (EchoelmusicProProcessor& p)
     // Apply modern look and feel
     setLookAndFeel(&modernLookAndFeel);
 
+    // Add visualization components
+    addAndMakeVisible(spectrumAnalyzer);
+    addAndMakeVisible(bioVisualizer);
+
     // Set initial size (larger for professional plugin)
     setSize (1200, 800);
 
@@ -130,14 +134,50 @@ void EchoelmusicProEditor::paint (juce::Graphics& g)
 
 void EchoelmusicProEditor::resized()
 {
-    // Layout components here
-    // TODO: Layout SpectrumAnalyzer, PresetBrowser, ProcessorRack, BioReactiveVisualizer
+    auto bounds = getLocalBounds();
+
+    // Reserve header area (100px)
+    bounds.removeFromTop(100);
+
+    // Reserve footer area (50px)
+    bounds.removeFromBottom(50);
+
+    // Add padding
+    bounds.reduce(20, 20);
+
+    // Create visualization area at bottom (300px height)
+    auto visualizationArea = bounds.removeFromBottom(300);
+
+    // Split visualization area: Spectrum Analyzer (left 60%) + Bio Visualizer (right 40%)
+    auto spectrumBounds = visualizationArea.removeFromLeft(static_cast<int>(visualizationArea.getWidth() * 0.6f));
+    spectrumBounds.removeFromRight(10); // Spacing
+
+    visualizationArea.removeFromLeft(10); // Spacing
+    auto bioVisualizerBounds = visualizationArea;
+
+    // Position visualization components
+    spectrumAnalyzer.setBounds(spectrumBounds);
+    bioVisualizer.setBounds(bioVisualizerBounds);
+
+    // TODO: Use remaining 'bounds' area for PresetBrowserUI when JUCE API compatibility is resolved
+    // TODO: Add ProcessorRack (could be tabbed view or separate window)
 }
 
 void EchoelmusicProEditor::timerCallback()
 {
-    // Update animations and real-time visualizations
-    // TODO: Update spectrum analyzer
-    // TODO: Update bio-reactive visualization
-    // TODO: Update any animated UI elements
+    // Update visualizations (60 FPS)
+    // Both components have internal timers that update their state
+    spectrumAnalyzer.repaint();
+    bioVisualizer.repaint();
+
+    // TODO: Feed audio buffer to spectrum analyzer
+    // Need to add getAudioBuffer() method to processor:
+    // auto buffer = audioProcessor.getLatestAudioBuffer();
+    // spectrumAnalyzer.processAudioBuffer(buffer);
+
+    // TODO: Feed bio-data to visualizer
+    // Need to connect to bio-reactive system:
+    // float hrv = audioProcessor.getCurrentHRV();
+    // float coherence = audioProcessor.getCurrentCoherence();
+    // bioVisualizer.updateBioData(hrv, coherence);
 }

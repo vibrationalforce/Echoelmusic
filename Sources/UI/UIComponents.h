@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 #include "ResponsiveLayout.h"
-#include "ModernLookAndFeel.h"
+// Note: ModernLookAndFeel is provided by the Desktop/JUCE version
 
 //==============================================================================
 /**

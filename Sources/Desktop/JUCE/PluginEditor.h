@@ -11,6 +11,9 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "PluginProcessor.h"
 #include "ModernLookAndFeel.h"
+#include "../../Visualization/SpectrumAnalyzer.h"
+#include "../../Visualization/BioReactiveVisualizer.h"
+// PresetBrowserUI: JUCE API compatibility fixes needed (see WISE_MODE_UI_ANALYSIS.md)
 
 //==============================================================================
 /**
@@ -42,11 +45,12 @@ private:
     // Modern look and feel
     ModernLookAndFeel modernLookAndFeel;
 
-    // UI Components (to be added)
-    // TODO: Add SpectrumAnalyzer
-    // TODO: Add PresetBrowser
-    // TODO: Add ProcessorRack
-    // TODO: Add BioReactiveVisualizer
+    // Visualization Components
+    SpectrumAnalyzer spectrumAnalyzer;
+    BioReactiveVisualizer bioVisualizer;
+
+    // TODO: Add PresetBrowserUI (needs JUCE API compatibility fixes)
+    // TODO: Add ProcessorRack (AdvancedDSPManagerUI or custom)
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EchoelmusicProEditor)
 };

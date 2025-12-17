@@ -2,7 +2,6 @@
 
 #include <JuceHeader.h>
 #include "ResponsiveLayout.h"
-#include "ModernLookAndFeel.h"
 #include "UIComponents.h"
 #include "../DSP/AdvancedDSPManager.h"
 
