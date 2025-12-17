@@ -12,37 +12,24 @@ PresetBrowserUI::PresetBrowserUI()
     presetGrid = std::make_unique<PresetGrid>(*this);
     addAndMakeVisible(*presetGrid);
     
-    presetInfoPanel = std::make_unique<PresetInfoPanel>(*this);
-    addAndMakeVisible(*presetInfoPanel);
-    
-    saveButton.setButtonText("Save Preset");
-    addAndMakeVisible(saveButton);
-    
-    loadButton.setButtonText("Load");
-    addAndMakeVisible(loadButton);
-    
-    deleteButton.setButtonText("Delete");
-    addAndMakeVisible(deleteButton);
-    
-    favoriteButton.setButtonText("★ Favorite");
-    addAndMakeVisible(favoriteButton);
-    
+    infoPanel = std::make_unique<PresetInfoPanel>(*this);
+    addAndMakeVisible(*infoPanel);
+
     categoryBar->onCategoryChanged = [this](AdvancedDSPManager::PresetCategory cat)
     {
         currentCategory = cat;
         updateFilteredPresets();
     };
-    
+
     searchBar->onSearchTextChanged = [this](const juce::String& text)
     {
-        searchText = text;
+        currentSearchText = text;
         updateFilteredPresets();
     };
-    
+
     presetGrid->onPresetSelected = [this](const AdvancedDSPManager::Preset& preset)
     {
-        currentPreset = preset;
-        presetInfoPanel->setPreset(&currentPreset);
+        infoPanel->setPreset(&preset);
         if (onPresetSelected)
             onPresetSelected(preset.name);
     };
@@ -65,23 +52,16 @@ void PresetBrowserUI::paint(juce::Graphics& g)
 void PresetBrowserUI::resized()
 {
     auto bounds = getLocalBounds().reduced(10);
-    
+
     if (categoryBar)
         categoryBar->setBounds(bounds.removeFromTop(50));
-    
+
     if (searchBar)
         searchBar->setBounds(bounds.removeFromTop(40));
-    
-    auto bottomBar = bounds.removeFromBottom(50);
-    int buttonWidth = bottomBar.getWidth() / 4;
-    saveButton.setBounds(bottomBar.removeFromLeft(buttonWidth).reduced(5));
-    loadButton.setBounds(bottomBar.removeFromLeft(buttonWidth).reduced(5));
-    deleteButton.setBounds(bottomBar.removeFromLeft(buttonWidth).reduced(5));
-    favoriteButton.setBounds(bottomBar.reduced(5));
-    
-    if (presetInfoPanel)
-        presetInfoPanel->setBounds(bounds.removeFromRight(250));
-    
+
+    if (infoPanel)
+        infoPanel->setBounds(bounds.removeFromRight(250));
+
     if (presetGrid)
         presetGrid->setBounds(bounds);
 }
@@ -89,25 +69,42 @@ void PresetBrowserUI::resized()
 void PresetBrowserUI::updateFilteredPresets()
 {
     if (!dspManager) return;
-    
-    filteredPresets = dspManager->getPresets(currentCategory);
-    
-    if (!searchText.isEmpty())
+
+    // Start with all presets
+    filteredPresets = allPresets;
+
+    // Filter by category
+    if (currentCategory != AdvancedDSPManager::PresetCategory::All)
     {
-        std::vector<AdvancedDSPManager::Preset> filtered;
+        std::vector<AdvancedDSPManager::Preset> categoryFiltered;
         for (const auto& preset : filteredPresets)
         {
-            if (preset.name.containsIgnoreCase(searchText))
-                filtered.push_back(preset);
+            if (preset.category == currentCategory)
+                categoryFiltered.push_back(preset);
         }
-        filteredPresets = filtered;
+        filteredPresets = categoryFiltered;
     }
-    
+
+    // Filter by search text
+    if (!currentSearchText.isEmpty())
+    {
+        std::vector<AdvancedDSPManager::Preset> searchFiltered;
+        for (const auto& preset : filteredPresets)
+        {
+            if (preset.name.containsIgnoreCase(currentSearchText))
+                searchFiltered.push_back(preset);
+        }
+        filteredPresets = searchFiltered;
+    }
+
     presetGrid->updatePresetList(filteredPresets);
 }
 
 void PresetBrowserUI::loadPresetsFromDSP()
 {
+    if (!dspManager) return;
+
+    allPresets = dspManager->getAllPresets();
     updateFilteredPresets();
 }
 
@@ -148,13 +145,7 @@ PresetBrowserUI::CategoryBar::CategoryBar(PresetBrowserUI& parent) : owner(paren
     customButton.setButtonText("Custom");
     addAndMakeVisible(customButton);
     customButton.onClick = [this]() {
-        setCurrentCategory(AdvancedDSPManager::PresetCategory::User);
-    };
-    
-    favoritesButton.setButtonText("★ Favorites");
-    addAndMakeVisible(favoritesButton);
-    favoritesButton.onClick = [this]() {
-        setCurrentCategory(AdvancedDSPManager::PresetCategory::Favorites);
+        setCurrentCategory(AdvancedDSPManager::PresetCategory::Custom);
     };
 }
 
@@ -166,30 +157,28 @@ void PresetBrowserUI::CategoryBar::paint(juce::Graphics& g)
 void PresetBrowserUI::CategoryBar::resized()
 {
     auto bounds = getLocalBounds().reduced(5);
-    int numButtons = 7;
+    int numButtons = 6;
     int buttonWidth = bounds.getWidth() / numButtons;
-    
+
     allButton.setBounds(bounds.removeFromLeft(buttonWidth).reduced(2));
     masteringButton.setBounds(bounds.removeFromLeft(buttonWidth).reduced(2));
     vocalButton.setBounds(bounds.removeFromLeft(buttonWidth).reduced(2));
     ambientButton.setBounds(bounds.removeFromLeft(buttonWidth).reduced(2));
     bioReactiveButton.setBounds(bounds.removeFromLeft(buttonWidth).reduced(2));
-    customButton.setBounds(bounds.removeFromLeft(buttonWidth).reduced(2));
-    favoritesButton.setBounds(bounds.reduced(2));
+    customButton.setBounds(bounds.reduced(2));
 }
 
 void PresetBrowserUI::CategoryBar::setCurrentCategory(AdvancedDSPManager::PresetCategory category)
 {
     currentCategory = category;
-    
+
     allButton.setToggleState(category == AdvancedDSPManager::PresetCategory::All, juce::dontSendNotification);
     masteringButton.setToggleState(category == AdvancedDSPManager::PresetCategory::Mastering, juce::dontSendNotification);
     vocalButton.setToggleState(category == AdvancedDSPManager::PresetCategory::Vocal, juce::dontSendNotification);
     ambientButton.setToggleState(category == AdvancedDSPManager::PresetCategory::Ambient, juce::dontSendNotification);
     bioReactiveButton.setToggleState(category == AdvancedDSPManager::PresetCategory::BioReactive, juce::dontSendNotification);
-    customButton.setToggleState(category == AdvancedDSPManager::PresetCategory::User, juce::dontSendNotification);
-    favoritesButton.setToggleState(category == AdvancedDSPManager::PresetCategory::Favorites, juce::dontSendNotification);
-    
+    customButton.setToggleState(category == AdvancedDSPManager::PresetCategory::Custom, juce::dontSendNotification);
+
     if (onCategoryChanged)
         onCategoryChanged(category);
 }
@@ -272,8 +261,7 @@ void PresetBrowserUI::PresetCard::paint(juce::Graphics& g)
         case AdvancedDSPManager::PresetCategory::Vocal: categoryText = "Vocal"; break;
         case AdvancedDSPManager::PresetCategory::Ambient: categoryText = "Ambient"; break;
         case AdvancedDSPManager::PresetCategory::BioReactive: categoryText = "Bio"; break;
-        case AdvancedDSPManager::PresetCategory::User: categoryText = "User"; break;
-        case AdvancedDSPManager::PresetCategory::Favorites: categoryText = "★"; break;
+        case AdvancedDSPManager::PresetCategory::Custom: categoryText = "Custom"; break;
         default: break;
     }
     g.drawText(categoryText, categoryBounds.toNearestInt(), juce::Justification::centredBottom);
@@ -317,11 +305,8 @@ juce::Path PresetBrowserUI::PresetCard::getCategoryIcon()
 // PresetGrid Implementation
 PresetBrowserUI::PresetGrid::PresetGrid(PresetBrowserUI& parent) : owner(parent)
 {
-    viewport = std::make_unique<juce::Viewport>();
-    addAndMakeVisible(*viewport);
-    
-    container = std::make_unique<juce::Component>();
-    viewport->setViewedComponent(container.get(), false);
+    addAndMakeVisible(viewport);
+    viewport.setViewedComponent(&contentComponent, false);
 }
 
 void PresetBrowserUI::PresetGrid::paint(juce::Graphics& g)
@@ -331,26 +316,26 @@ void PresetBrowserUI::PresetGrid::paint(juce::Graphics& g)
 
 void PresetBrowserUI::PresetGrid::resized()
 {
-    viewport->setBounds(getLocalBounds());
-    
+    viewport.setBounds(getLocalBounds());
+
     // Layout preset cards in grid
     const int cardWidth = 180;
     const int cardHeight = 120;
     const int spacing = 10;
-    
+
     int numColumns = jmax(1, getWidth() / (cardWidth + spacing));
-    int numRows = (presetCards.size() + numColumns - 1) / numColumns;
-    
-    container->setBounds(0, 0, getWidth(), numRows * (cardHeight + spacing));
-    
-    for (int i = 0; i < presetCards.size(); ++i)
+    int numRows = (static_cast<int>(presetCards.size()) + numColumns - 1) / numColumns;
+
+    contentComponent.setBounds(0, 0, getWidth(), numRows * (cardHeight + spacing));
+
+    for (size_t i = 0; i < presetCards.size(); ++i)
     {
-        int col = i % numColumns;
-        int row = i / numColumns;
-        
+        int col = static_cast<int>(i) % numColumns;
+        int row = static_cast<int>(i) / numColumns;
+
         int x = col * (cardWidth + spacing) + spacing;
         int y = row * (cardHeight + spacing) + spacing;
-        
+
         presetCards[i]->setBounds(x, y, cardWidth, cardHeight);
     }
 }
@@ -358,36 +343,38 @@ void PresetBrowserUI::PresetGrid::resized()
 void PresetBrowserUI::PresetGrid::updatePresetList(const std::vector<AdvancedDSPManager::Preset>& presets)
 {
     presetCards.clear();
-    container->removeAllChildren();
-    
+    contentComponent.removeAllChildren();
+
     for (const auto& preset : presets)
     {
-        auto* card = new PresetCard(owner, preset);
-        card->onClicked = [this](PresetCard* clicked)
+        auto card = std::make_unique<PresetCard>(owner, preset);
+        auto* cardPtr = card.get();
+
+        cardPtr->onClicked = [this](PresetCard* clicked)
         {
             clearSelection();
             clicked->setSelected(true);
             if (onPresetSelected)
                 onPresetSelected(clicked->getPreset());
         };
-        
-        container->addAndMakeVisible(card);
-        presetCards.add(card);
+
+        contentComponent.addAndMakeVisible(cardPtr);
+        presetCards.push_back(std::move(card));
     }
-    
+
     resized();
 }
 
 void PresetBrowserUI::PresetGrid::clearSelection()
 {
-    for (auto* card : presetCards)
+    for (auto& card : presetCards)
         card->setSelected(false);
 }
 
 void PresetBrowserUI::PresetGrid::selectPreset(const juce::String& presetName)
 {
     clearSelection();
-    for (auto* card : presetCards)
+    for (auto& card : presetCards)
     {
         if (card->getPreset().name == presetName)
         {
@@ -475,8 +462,7 @@ void PresetBrowserUI::PresetInfoPanel::setPreset(const AdvancedDSPManager::Prese
         case AdvancedDSPManager::PresetCategory::Vocal: categoryName += "Vocal"; break;
         case AdvancedDSPManager::PresetCategory::Ambient: categoryName += "Ambient"; break;
         case AdvancedDSPManager::PresetCategory::BioReactive: categoryName += "Bio-Reactive"; break;
-        case AdvancedDSPManager::PresetCategory::User: categoryName += "User"; break;
-        case AdvancedDSPManager::PresetCategory::Favorites: categoryName += "Favorites"; break;
+        case AdvancedDSPManager::PresetCategory::Custom: categoryName += "Custom"; break;
         default: categoryName += "Unknown"; break;
     }
     categoryLabel.setText(categoryName, juce::dontSendNotification);

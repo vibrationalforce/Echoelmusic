@@ -73,7 +73,6 @@ private:
         juce::TextButton ambientButton;
         juce::TextButton bioReactiveButton;
         juce::TextButton customButton;
-        juce::TextButton favoritesButton;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CategoryBar)
     };
