@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "EchoelPoint3D.h"
 #include "EchoelQuantumCore.h"
 
 /**
@@ -75,8 +76,8 @@ public:
     struct GameState
     {
         // Player state
-        juce::Point3D<float> playerPosition;
-        juce::Point3D<float> playerRotation;
+        EchoelPoint3D<float> playerPosition;
+        EchoelPoint3D<float> playerRotation;
         float playerHealth = 100.0f;
         float playerEnergy = 100.0f;
 
@@ -321,17 +322,17 @@ public:
         } platform = Platform::MetaQuest;
 
         // Hand tracking
-        juce::Point3D<float> leftHandPosition;
-        juce::Point3D<float> rightHandPosition;
-        juce::Point3D<float> leftHandRotation;
-        juce::Point3D<float> rightHandRotation;
+        EchoelPoint3D<float> leftHandPosition;
+        EchoelPoint3D<float> rightHandPosition;
+        EchoelPoint3D<float> leftHandRotation;
+        EchoelPoint3D<float> rightHandRotation;
 
         bool leftGrabbing = false;
         bool rightGrabbing = false;
 
         // Head tracking
-        juce::Point3D<float> headPosition;
-        juce::Point3D<float> headRotation;
+        EchoelPoint3D<float> headPosition;
+        EchoelPoint3D<float> headRotation;
 
         // Gestures
         enum class Gesture
@@ -370,15 +371,15 @@ public:
             Pad3D          // 3D drum pads
         } type;
 
-        juce::Point3D<float> position;
-        juce::Point3D<float> scale;
+        EchoelPoint3D<float> position;
+        EchoelPoint3D<float> scale;
         juce::Colour color;
 
         bool interactable = true;
         float value = 0.0f;
     };
 
-    juce::String createVRUIElement(VRUIElement::Type type, const juce::Point3D<float>& position);
+    juce::String createVRUIElement(VRUIElement::Type type, const EchoelPoint3D<float>& position);
     void updateVRUIElement(const juce::String& elementID, float value);
 
     //==========================================================================
@@ -492,9 +493,10 @@ private:
 
     VRInterface vrInterface;
 
-    // Network
-    std::unique_ptr<juce::OSCSender> oscSender;
-    std::unique_ptr<juce::OSCReceiver> oscReceiver;
+    // Network (OSC communication for game engines)
+    // Note: OSC implementation will be added when needed
+    // std::unique_ptr<juce::OSCSender> oscSender;
+    // std::unique_ptr<juce::OSCReceiver> oscReceiver;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EchoelGameEngine)
 };

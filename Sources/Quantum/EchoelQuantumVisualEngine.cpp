@@ -204,7 +204,7 @@ void EchoelQuantumVisualEngine::enableXR(XRPlatform platform)
     // TODO: Initialize AR/VR platform
 }
 
-juce::String EchoelQuantumVisualEngine::createSpatialAnchor(const juce::Point3D<float>& position)
+juce::String EchoelQuantumVisualEngine::createSpatialAnchor(const EchoelPoint3D<float>& position)
 {
     SpatialAnchor anchor;
     anchor.anchorID = juce::Uuid().toString();

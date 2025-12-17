@@ -160,7 +160,7 @@ EchoelGameEngine::VRInterface EchoelGameEngine::getVRState() const
     return vrInterface;
 }
 
-juce::String EchoelGameEngine::createVRUIElement(VRUIElement::Type type, const juce::Point3D<float>& pos)
+juce::String EchoelGameEngine::createVRUIElement(VRUIElement::Type type, const EchoelPoint3D<float>& pos)
 {
     VRUIElement element;
     element.elementID = juce::Uuid().toString();

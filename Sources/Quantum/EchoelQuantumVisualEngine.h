@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "EchoelPoint3D.h"
 #include "EchoelQuantumCore.h"
 
 /**
@@ -54,9 +55,9 @@ public:
         juce::File meshFile;                       // .obj file for complex shapes
 
         // Transform
-        juce::Point3D<float> position;
-        juce::Point3D<float> rotation;
-        juce::Point3D<float> scale;
+        EchoelPoint3D<float> position;
+        EchoelPoint3D<float> rotation;
+        EchoelPoint3D<float> scale;
 
         // Content
         juce::Image contentImage;
@@ -101,7 +102,7 @@ public:
     struct HologramLayer
     {
         juce::String layerID;
-        juce::Point3D<float> position;
+        EchoelPoint3D<float> position;
         float depth = 1.0f;            // Z-depth in hologram
         juce::Colour color;
         float opacity = 1.0f;
@@ -294,15 +295,15 @@ public:
     struct SpatialAnchor
     {
         juce::String anchorID;
-        juce::Point3D<float> worldPosition;
-        juce::Point3D<float> rotation;
+        EchoelPoint3D<float> worldPosition;
+        EchoelPoint3D<float> rotation;
 
         // Content
         juce::String hologramLayerID;
         juce::String audioObjectID;
     };
 
-    juce::String createSpatialAnchor(const juce::Point3D<float>& position);
+    juce::String createSpatialAnchor(const EchoelPoint3D<float>& position);
     void attachContentToAnchor(const juce::String& anchorID, const juce::String& contentID);
 
     //==========================================================================
@@ -446,8 +447,8 @@ private:
     HologramType currentHologramType = HologramType::Pepper;
     AIVisualStyle currentAIStyle = AIVisualStyle::Abstract;
 
-    // GPU-accelerated rendering
-    std::unique_ptr<juce::OpenGLContext> openGLContext;
+    // GPU-accelerated rendering (OpenGL to be added later)
+    // std::unique_ptr<juce::OpenGLContext> openGLContext;
 
     // Internal rendering
     void renderProjectionMapping(juce::Image& output);

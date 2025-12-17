@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "EchoelPoint3D.h"
 #include <vector>
 #include <complex>
 #include <map>
@@ -68,13 +69,7 @@ public:
     };
 
     /**
-     * Set current bio-state (from Apple Watch, Polar H10, EEG headset, etc.)
-     */
-    void setBioState(const QuantumBioState& state);
-    QuantumBioState getBioState() const { return currentBioState; }
-
-    /**
-     * Connect to bio-data source
+     * Bio-data source types
      */
     enum class BioDataSource
     {
@@ -87,6 +82,12 @@ public:
         OSC,               // OSC protocol
         MIDI_CC            // MIDI Control Change
     };
+
+    /**
+     * Set current bio-state (from Apple Watch, Polar H10, EEG headset, etc.)
+     */
+    void setBioState(const QuantumBioState& state);
+    QuantumBioState getBioState() const { return currentBioState; }
 
     bool connectBioDataSource(BioDataSource source, const juce::String& config);
 

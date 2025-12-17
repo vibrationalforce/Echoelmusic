@@ -405,6 +405,8 @@ target_sources(Echoelmusic
         Sources/Quantum/EchoelBrainwaveScience.cpp      # 🧠 Evidence-based brainwave entrainment
         Sources/Quantum/EchoelQuantumVisualEngine.cpp   # 🎨 Holographic/laser/mapping system
         Sources/Quantum/EchoelGameEngine.cpp            # 🎮 Game engine integration & gamification
+        Sources/Quantum/EchoelBioDataAdapters.cpp       # 💓 Hardware bio-sensor integration (Apple Watch, Polar, Muse, Emotiv)
+        Sources/Quantum/EchoelNetworkSync.cpp           # 🌐 <20ms global latency sync with Laser Scanner Mode
 )
 
 # ===========================
