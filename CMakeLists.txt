@@ -261,7 +261,7 @@ target_sources(Echoelmusic
         Sources/UI/MainWindow.cpp
 
         # Advanced DSP Manager UI Suite (NEW! 2025-11-17) ✅ JUCE 7 Compatible
-        # Sources/UI/AdvancedDSPManagerUI.cpp      # TODO: Requires 4 processors to be implemented first
+        Sources/UI/AdvancedDSPManagerUI.cpp      # ✅ Complete DSP management interface
         Sources/UI/PresetBrowserUI.cpp           # ✅ Preset management browser
         Sources/UI/ModulationMatrixUI.cpp        # ✅ Modulation routing matrix
         Sources/UI/ParameterAutomationUI.cpp     # ✅ Timeline automation editor
@@ -357,6 +357,12 @@ target_sources(Echoelmusic
         Sources/DSP/DynamicEQ.cpp             # Dynamic EQ with per-band compression
         Sources/DSP/SpectralSculptor.cpp      # FFT-based spectral processing
         Sources/DSP/AdvancedDSPManager.cpp    # ✅ Advanced DSP Manager - Integration layer
+
+        # Advanced DSP Processors (NEW! 2025-11-17) - Super Wise Mode 🔥
+        Sources/DSP/MidSideToneMatching.cpp   # ✅ M/S spectral matching (Rast Sound MS Studio-inspired)
+        Sources/DSP/AudioHumanizer.cpp        # ✅ 6-dimension humanization (Rast Sound Naturaliser 2)
+        Sources/DSP/SwarmReverb.cpp           # ✅ Particle-based reverb (Soundtoys SpaceBlender)
+        Sources/DSP/PolyphonicPitchEditor.cpp # ✅ Per-note pitch correction (Melodyne-inspired)
 
         # =====================================================================
         # PHASE 3: SYNTHESIS & ADVANCED FEATURES

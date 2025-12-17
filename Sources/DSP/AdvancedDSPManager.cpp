@@ -16,11 +16,11 @@ AdvancedDSPManager::AdvancedDSPManager()
 
 void AdvancedDSPManager::prepare(double sampleRate, int maxBlockSize)
 {
-    // TODO: Prepare 4 advanced processors once .cpp files are implemented
-    // midSideToneMatching.prepare(sampleRate, maxBlockSize);
-    // audioHumanizer.prepare(sampleRate, maxBlockSize);
-    // swarmReverb.prepare(sampleRate, maxBlockSize);
-    // polyphonicPitchEditor.prepare(sampleRate, maxBlockSize);
+    // Prepare 4 advanced processors
+    midSideToneMatching.prepare(sampleRate, maxBlockSize);
+    audioHumanizer.prepare(sampleRate, maxBlockSize);
+    swarmReverb.prepare(sampleRate, maxBlockSize);
+    polyphonicPitchEditor.prepare(sampleRate, maxBlockSize);
 
     // Prepare bio-reactive processors
     juce::dsp::ProcessSpec spec;
@@ -33,11 +33,11 @@ void AdvancedDSPManager::prepare(double sampleRate, int maxBlockSize)
 
 void AdvancedDSPManager::reset()
 {
-    // TODO: Reset 4 advanced processors once implemented
-    // midSideToneMatching.reset();
-    // audioHumanizer.reset();
-    // swarmReverb.reset();
-    // polyphonicPitchEditor.reset();
+    // Reset 4 advanced processors
+    midSideToneMatching.reset();
+    audioHumanizer.reset();
+    swarmReverb.reset();
+    polyphonicPitchEditor.reset();
 
     bioReactiveDSP.reset();
     bioReactiveAudioProcessor.reset();
@@ -45,20 +45,19 @@ void AdvancedDSPManager::reset()
 
 void AdvancedDSPManager::process(juce::AudioBuffer<float>& buffer)
 {
-    // TODO: Process 4 advanced processors once implemented
     // Process only enabled processors (Selective mode)
 
-    // if (midSideMatchingEnabled)
-    //     midSideToneMatching.process(buffer);
+    if (midSideMatchingEnabled)
+        midSideToneMatching.process(buffer);
 
-    // if (humanizerEnabled)
-    //     audioHumanizer.process(buffer);
+    if (humanizerEnabled)
+        audioHumanizer.process(buffer);
 
-    // if (swarmReverbEnabled)
-    //     swarmReverb.process(buffer);
+    if (swarmReverbEnabled)
+        swarmReverb.process(buffer);
 
-    // if (pitchEditorEnabled)
-    //     polyphonicPitchEditor.process(buffer);
+    if (pitchEditorEnabled)
+        polyphonicPitchEditor.process(buffer);
 }
 
 //==============================================================================
