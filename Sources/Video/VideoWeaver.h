@@ -217,6 +217,17 @@ public:
 
     void exportVideo(const juce::File& outputFile, ExportPreset preset);
 
+    /** Export as PNG sequence (frame-by-frame) */
+    struct PNGSequenceOptions
+    {
+        int startFrame = 0;          // Start frame number
+        int endFrame = -1;           // End frame (-1 = all frames)
+        int quality = 100;           // PNG compression quality (0-100)
+        bool includeTimecode = true; // Include timecode in filename
+        juce::String filenamePattern = "frame_{frame:06d}.png"; // Filename pattern
+    };
+    bool exportPNGSequence(const juce::File& outputDirectory, const PNGSequenceOptions& options);
+
     /** Get current playback position */
     double getPlaybackPosition() const { return playbackPosition; }
     void setPlaybackPosition(double seconds);

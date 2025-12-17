@@ -28,18 +28,21 @@ To create minimal placeholder models for testing:
 
 ### Using Python + coremltools:
 
-```python
-import coremltools as ct
-from coremltools.models import MLModel
-import coremltools.proto.Model_pb2 as Model_pb2
-
-# Example: Shot Quality Model
-# Input: Image (224x224 RGB)
-# Output: Quality score (0.0 - 1.0)
-
-# This would normally be created from a trained model
-# For now, create a minimal stub
+**Automated Script (Recommended):**
+```bash
+cd Resources/Models
+pip install coremltools numpy
+python3 generate_dummy_models.py
 ```
+
+This will create all 5 dummy models:
+- ShotQuality.mlmodel
+- EmotionClassifier.mlmodel
+- SceneDetector.mlmodel
+- ColorGrading.mlmodel
+- BeatDetector.mlmodel
+
+**Note:** Requires macOS with Python 3.7+ and coremltools. On Linux, use algorithmic fallbacks (already implemented).
 
 ### Using CreateML on macOS:
 

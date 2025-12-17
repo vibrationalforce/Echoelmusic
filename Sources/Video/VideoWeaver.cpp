@@ -739,6 +739,147 @@ void VideoWeaver::exportVideo(const juce::File& outputFile, ExportPreset preset)
     DBG("VideoWeaver: Export complete!");
 }
 
+bool VideoWeaver::exportPNGSequence(const juce::File& outputDirectory, const PNGSequenceOptions& options)
+{
+    DBG("VideoWeaver: Exporting PNG sequence");
+    DBG("  Output directory: " << outputDirectory.getFullPathName());
+
+    // Validate output directory
+    if (!outputDirectory.exists())
+    {
+        if (!outputDirectory.createDirectory())
+        {
+            DBG("  ERROR: Failed to create output directory");
+            return false;
+        }
+    }
+
+    if (!outputDirectory.isDirectory())
+    {
+        DBG("  ERROR: Output path is not a directory");
+        return false;
+    }
+
+    // Calculate frame range
+    int totalFrames = static_cast<int>(totalDuration * frameRate);
+    int startFrame = juce::jmax(0, options.startFrame);
+    int endFrame = (options.endFrame < 0) ? totalFrames : juce::jmin(totalFrames, options.endFrame);
+
+    if (startFrame >= endFrame)
+    {
+        DBG("  ERROR: Invalid frame range");
+        return false;
+    }
+
+    int framesToExport = endFrame - startFrame;
+
+    DBG("  Frame range: " << startFrame << " - " << endFrame);
+    DBG("  Total frames to export: " << framesToExport);
+    DBG("  Resolution: " << projectWidth << "x" << projectHeight);
+    DBG("  Frame rate: " << frameRate << " fps");
+
+    // PNG writer options
+    juce::PNGImageFormat pngFormat;
+
+    // Export each frame
+    int successCount = 0;
+    int failCount = 0;
+
+    for (int frame = startFrame; frame < endFrame; ++frame)
+    {
+        double time = frame / frameRate;
+
+        // Render frame
+        juce::Image frameImage = renderFrame(time);
+
+        if (!frameImage.isValid())
+        {
+            DBG("  WARNING: Failed to render frame " << frame);
+            failCount++;
+            continue;
+        }
+
+        // Generate filename
+        juce::String filename = options.filenamePattern;
+
+        // Replace {frame} placeholder with frame number
+        if (filename.contains("{frame:"))
+        {
+            // Extract padding (e.g., "{frame:06d}" -> 6)
+            int padStart = filename.indexOf("{frame:");
+            int padEnd = filename.indexOfChar(padStart, '}');
+            if (padStart >= 0 && padEnd > padStart)
+            {
+                juce::String padSpec = filename.substring(padStart + 7, padEnd);
+                int padding = padSpec.getIntValue();
+
+                juce::String frameNumber = juce::String(frame).paddedLeft('0', padding);
+                filename = filename.replace("{frame:" + padSpec + "}", frameNumber);
+            }
+        }
+        else if (filename.contains("{frame}"))
+        {
+            filename = filename.replace("{frame}", juce::String(frame));
+        }
+
+        // Replace {timecode} placeholder (HH:MM:SS:FF)
+        if (filename.contains("{timecode}") && options.includeTimecode)
+        {
+            int hours = static_cast<int>(time / 3600);
+            int minutes = static_cast<int>((time - hours * 3600) / 60);
+            int seconds = static_cast<int>(time - hours * 3600 - minutes * 60);
+            int frames = static_cast<int>((time - static_cast<int>(time)) * frameRate);
+
+            juce::String timecode = juce::String(hours).paddedLeft('0', 2) + "-"
+                                  + juce::String(minutes).paddedLeft('0', 2) + "-"
+                                  + juce::String(seconds).paddedLeft('0', 2) + "-"
+                                  + juce::String(frames).paddedLeft('0', 2);
+
+            filename = filename.replace("{timecode}", timecode);
+        }
+
+        // Ensure .png extension
+        if (!filename.endsWithIgnoreCase(".png"))
+            filename += ".png";
+
+        juce::File outputFile = outputDirectory.getChildFile(filename);
+
+        // Write PNG file
+        juce::FileOutputStream outputStream(outputFile);
+
+        if (outputStream.openedOk())
+        {
+            if (pngFormat.writeImageToStream(frameImage, outputStream))
+            {
+                successCount++;
+
+                // Progress update every 30 frames
+                if (frame % 30 == 0)
+                {
+                    float progress = static_cast<float>(frame - startFrame) / framesToExport;
+                    DBG("  Progress: " << static_cast<int>(progress * 100) << "% (" << successCount << " frames)");
+                }
+            }
+            else
+            {
+                DBG("  WARNING: Failed to write PNG for frame " << frame);
+                failCount++;
+            }
+        }
+        else
+        {
+            DBG("  WARNING: Failed to create output file for frame " << frame);
+            failCount++;
+        }
+    }
+
+    DBG("VideoWeaver: PNG sequence export complete!");
+    DBG("  Success: " << successCount << " frames");
+    DBG("  Failed: " << failCount << " frames");
+
+    return (failCount == 0);
+}
+
 void VideoWeaver::setPlaybackPosition(double seconds)
 {
     playbackPosition = juce::jlimit(0.0, totalDuration, seconds);
