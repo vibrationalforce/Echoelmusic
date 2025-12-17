@@ -1,31 +1,28 @@
 #include "ParameterAutomationUI.h"
 
-//==============================================================================
-// ParameterAutomationUI Implementation
-//==============================================================================
-
+// ParameterAutomationUI - Main Implementation
 ParameterAutomationUI::ParameterAutomationUI()
 {
     // Create UI components
     transportBar = std::make_unique<TransportBar>(*this);
-    addAndMakeVisible(transportBar.get());
-
+    addAndMakeVisible(*transportBar);
+    
     laneList = std::make_unique<ParameterLaneList>(*this);
-    addAndMakeVisible(laneList.get());
-
+    addAndMakeVisible(*laneList);
+    
     timelineEditor = std::make_unique<TimelineEditor>(*this);
-    addAndMakeVisible(timelineEditor.get());
-
+    addAndMakeVisible(*timelineEditor);
+    
     editToolbar = std::make_unique<EditToolbar>(*this);
-    addAndMakeVisible(editToolbar.get());
-
-    // Transport callbacks
+    addAndMakeVisible(*editToolbar);
+    
+    // Wire transport callbacks
     transportBar->onPlay = [this]()
     {
         isPlaying = true;
         isRecording = false;
     };
-
+    
     transportBar->onStop = [this]()
     {
         isPlaying = false;
@@ -33,44 +30,57 @@ ParameterAutomationUI::ParameterAutomationUI()
         currentPlayheadBeat = 0.0;
         timelineEditor->setPlayheadPosition(0.0);
     };
-
+    
     transportBar->onRecord = [this]()
     {
-        isPlaying = true;
         isRecording = true;
-        currentPlayheadBeat = 0.0;
+        isPlaying = true;
     };
-
+    
     transportBar->onRewind = [this]()
     {
         currentPlayheadBeat = 0.0;
         timelineEditor->setPlayheadPosition(0.0);
     };
-
-    // Timeline callbacks
+    
+    // Wire lane list callbacks
+    laneList->onLaneSelected = [this](int laneIndex)
+    {
+        // Lane selected - could highlight in timeline
+    };
+    
+    laneList->onLaneArmChanged = [this](int laneIndex, bool armed)
+    {
+        if (laneIndex >= 0 && laneIndex < static_cast<int>(parameterLanes.size()))
+        {
+            parameterLanes[laneIndex].armed = armed;
+        }
+    };
+    
+    // Wire timeline callbacks
     timelineEditor->onPointAdded = [this](int laneIndex, const AutomationPoint& point)
     {
         if (laneIndex >= 0 && laneIndex < static_cast<int>(parameterLanes.size()))
         {
             parameterLanes[laneIndex].points.push_back(point);
-            std::sort(parameterLanes[laneIndex].points.begin(),
+            std::sort(parameterLanes[laneIndex].points.begin(), 
                      parameterLanes[laneIndex].points.end());
-            timelineEditor->updateLanes(parameterLanes);
+            updateAutomation();
         }
     };
-
+    
     timelineEditor->onPointMoved = [this](int laneIndex, int pointIndex, const AutomationPoint& newPoint)
     {
         if (laneIndex >= 0 && laneIndex < static_cast<int>(parameterLanes.size()) &&
             pointIndex >= 0 && pointIndex < static_cast<int>(parameterLanes[laneIndex].points.size()))
         {
             parameterLanes[laneIndex].points[pointIndex] = newPoint;
-            std::sort(parameterLanes[laneIndex].points.begin(),
+            std::sort(parameterLanes[laneIndex].points.begin(), 
                      parameterLanes[laneIndex].points.end());
-            timelineEditor->updateLanes(parameterLanes);
+            updateAutomation();
         }
     };
-
+    
     timelineEditor->onPointDeleted = [this](int laneIndex, int pointIndex)
     {
         if (laneIndex >= 0 && laneIndex < static_cast<int>(parameterLanes.size()) &&
@@ -78,23 +88,29 @@ ParameterAutomationUI::ParameterAutomationUI()
         {
             parameterLanes[laneIndex].points.erase(
                 parameterLanes[laneIndex].points.begin() + pointIndex);
-            timelineEditor->updateLanes(parameterLanes);
+            updateAutomation();
         }
     };
-
+    
+    // Wire toolbar callbacks
+    editToolbar->onSnapToGridChanged = [this](bool enabled)
+    {
+        // Update timeline snap setting
+    };
+    
+    editToolbar->onGridDivisionChanged = [this](double division)
+    {
+        // Update timeline grid division
+    };
+    
     // Initialize parameter lanes
     initializeParameterLanes();
-
-    // Start timer for playback (60 Hz)
-    startTimerHz(60);
-
-    setSize(1000, 600);
+    
+    // Start timer for playback updates
+    startTimerHz(30);
 }
 
-ParameterAutomationUI::~ParameterAutomationUI()
-{
-    stopTimer();
-}
+ParameterAutomationUI::~ParameterAutomationUI() = default;
 
 void ParameterAutomationUI::setDSPManager(AdvancedDSPManager* manager)
 {
@@ -104,107 +120,88 @@ void ParameterAutomationUI::setDSPManager(AdvancedDSPManager* manager)
 
 void ParameterAutomationUI::paint(juce::Graphics& g)
 {
-    // Background gradient
     g.fillAll(juce::Colour(0xff1a1a1f));
-
-    auto bounds = getLocalBounds();
-    juce::ColourGradient gradient(juce::Colour(0xff1a1a1f), 0.0f, 0.0f,
-                                  juce::Colour(0xff0d0d10), 0.0f, static_cast<float>(bounds.getHeight()),
-                                  false);
-    g.setGradientFill(gradient);
-    g.fillRect(bounds);
-
-    // Title
-    g.setColour(juce::Colour(0xffe8e8e8));
-    g.setFont(juce::Font(22.0f, juce::Font::bold));
-    g.drawText("Parameter Automation", bounds.removeFromTop(50).reduced(20, 10),
-               juce::Justification::centredLeft);
 }
 
 void ParameterAutomationUI::resized()
 {
     auto bounds = getLocalBounds();
-
-    // Top margin for title
-    bounds.removeFromTop(50);
-
-    // Transport bar
-    transportBar->setBounds(bounds.removeFromTop(60).reduced(10, 5));
-
-    // Edit toolbar
-    editToolbar->setBounds(bounds.removeFromTop(50).reduced(10, 5));
-
-    // Main content: lane list (left) + timeline editor (right)
-    auto contentBounds = bounds.reduced(10);
-
-    auto laneListBounds = contentBounds.removeFromLeft(200);
-    laneList->setBounds(laneListBounds);
-
-    contentBounds.removeFromLeft(5); // Spacing
-
-    timelineEditor->setBounds(contentBounds);
+    
+    // Transport bar at top
+    transportBar->setBounds(bounds.removeFromTop(60));
+    
+    // Edit toolbar below transport
+    editToolbar->setBounds(bounds.removeFromTop(40));
+    
+    // Lane list on left
+    laneList->setBounds(bounds.removeFromLeft(200));
+    
+    // Timeline editor takes remaining space
+    timelineEditor->setBounds(bounds);
 }
 
 void ParameterAutomationUI::timerCallback()
 {
     if (isPlaying)
     {
-        // Advance playhead (simplified - in production would sync with audio)
-        double beatsPerSecond = tempo / 60.0;
-        double beatsPerFrame = beatsPerSecond / 60.0; // 60 FPS
-
-        currentPlayheadBeat += beatsPerFrame;
-
+        // Update playhead position
+        double deltaBeats = (tempo / 60.0) * (1.0 / 30.0);  // 30 Hz timer
+        currentPlayheadBeat += deltaBeats;
+        
         timelineEditor->setPlayheadPosition(currentPlayheadBeat);
-
+        
+        // Apply automation
+        updateAutomation();
+        
         // Record automation if armed
         if (isRecording)
         {
-            for (size_t i = 0; i < parameterLanes.size(); ++i)
+            for (int i = 0; i < static_cast<int>(parameterLanes.size()); ++i)
             {
                 if (parameterLanes[i].armed)
                 {
-                    // In production: would read current parameter value from DSP
-                    float currentValue = 0.5f; // Placeholder
-                    recordAutomationPoint(static_cast<int>(i), currentPlayheadBeat, currentValue);
+                    // Get current parameter value from DSP
+                    float currentValue = 0.5f;  // Placeholder
+                    recordAutomationPoint(i, currentPlayheadBeat, currentValue);
                 }
             }
         }
-
-        // Apply automation
-        updateAutomation();
     }
 }
 
 void ParameterAutomationUI::initializeParameterLanes()
 {
     parameterLanes.clear();
-
-    // Create lanes for each automatable parameter
-    // Mid/Side Tone Matching
-    parameterLanes.push_back({"ms_matching_strength", "M/S: Matching Strength", 0.0f, 1.0f, {},
-                              true, false, juce::Colour(0xff00d4ff)});
-
-    // Audio Humanizer
-    parameterLanes.push_back({"humanizer_amount", "Humanizer: Amount", 0.0f, 1.0f, {},
-                              true, false, juce::Colour(0xff00ff88)});
-    parameterLanes.push_back({"humanizer_spectral", "Humanizer: Spectral", 0.0f, 1.0f, {},
-                              true, false, juce::Colour(0xff88ff00)});
-
-    // Swarm Reverb
-    parameterLanes.push_back({"swarm_cohesion", "Swarm: Cohesion", 0.0f, 1.0f, {},
-                              true, false, juce::Colour(0xffff00d4)});
-    parameterLanes.push_back({"swarm_chaos", "Swarm: Chaos", 0.0f, 1.0f, {},
-                              true, false, juce::Colour(0xffd400ff)});
-    parameterLanes.push_back({"swarm_mix", "Swarm: Mix", 0.0f, 1.0f, {},
-                              true, false, juce::Colour(0xffff8800)});
-
-    // Polyphonic Pitch Editor
-    parameterLanes.push_back({"pitch_correction", "Pitch: Correction", 0.0f, 1.0f, {},
-                              true, false, juce::Colour(0xff00ffff)});
-    parameterLanes.push_back({"pitch_formant", "Pitch: Formant", 0.0f, 1.0f, {},
-                              true, false, juce::Colour(0xffffff00)});
-
+    
+    // Create lanes for common parameters
+    const std::vector<juce::String> paramNames = {
+        "Filter Cutoff", "Filter Resonance", "Pitch", "Amplitude",
+        "Pan", "Reverb Mix", "Delay Time", "Distortion",
+        "Mid/Side Balance", "Humanizer Amount", "Swarm Density"
+    };
+    
+    const std::vector<juce::Colour> laneColors = {
+        juce::Colour(0xff00d4ff), juce::Colour(0xff00ff88), juce::Colour(0xffffaa00),
+        juce::Colour(0xffff4444), juce::Colour(0xffff00ff), juce::Colour(0xff88ff00),
+        juce::Colour(0xff00ffff), juce::Colour(0xffff8800), juce::Colour(0xff8800ff),
+        juce::Colour(0xffff0088), juce::Colour(0xff00ff44)
+    };
+    
+    for (size_t i = 0; i < paramNames.size(); ++i)
+    {
+        ParameterLane lane;
+        lane.parameterName = paramNames[i];
+        lane.displayName = paramNames[i];
+        lane.minValue = 0.0f;
+        lane.maxValue = 1.0f;
+        lane.visible = true;
+        lane.armed = false;
+        lane.laneColor = laneColors[i % laneColors.size()];
+        
+        parameterLanes.push_back(lane);
+    }
+    
+    // Update UI
     laneList->updateParameterList(parameterLanes);
     timelineEditor->updateLanes(parameterLanes);
 }
@@ -213,73 +210,61 @@ void ParameterAutomationUI::updateAutomation()
 {
     if (!dspManager)
         return;
-
-    // For each lane, interpolate value at current playhead position
+    
+    // Apply automation values to DSP manager based on playhead position
     for (const auto& lane : parameterLanes)
     {
-        if (lane.points.empty())
+        if (!lane.visible || lane.points.empty())
             continue;
-
+        
+        // Find automation value at current playhead position
+        float automationValue = 0.5f;
+        
         // Find surrounding points
-        const AutomationPoint* prevPoint = nullptr;
-        const AutomationPoint* nextPoint = nullptr;
-
         for (size_t i = 0; i < lane.points.size(); ++i)
         {
-            if (lane.points[i].timeInBeats <= currentPlayheadBeat)
-                prevPoint = &lane.points[i];
-
-            if (lane.points[i].timeInBeats > currentPlayheadBeat && !nextPoint)
+            if (lane.points[i].timeInBeats >= currentPlayheadBeat)
             {
-                nextPoint = &lane.points[i];
+                if (i == 0)
+                {
+                    automationValue = lane.points[i].value;
+                }
+                else
+                {
+                    // Interpolate between points
+                    const auto& p1 = lane.points[i - 1];
+                    const auto& p2 = lane.points[i];
+                    
+                    double t = (currentPlayheadBeat - p1.timeInBeats) / (p2.timeInBeats - p1.timeInBeats);
+                    t = juce::jlimit(0.0, 1.0, t);
+                    
+                    // Apply curve type
+                    switch (p1.curveType)
+                    {
+                        case AutomationPoint::CurveType::Linear:
+                            break;
+                            
+                        case AutomationPoint::CurveType::Exponential:
+                            t = t * t;
+                            break;
+                            
+                        case AutomationPoint::CurveType::Logarithmic:
+                            t = std::sqrt(t);
+                            break;
+                            
+                        case AutomationPoint::CurveType::SCurve:
+                            t = t * t * (3.0 - 2.0 * t);  // Smoothstep
+                            break;
+                    }
+                    
+                    automationValue = p1.value + static_cast<float>(t) * (p2.value - p1.value);
+                }
                 break;
             }
         }
-
-        float value = 0.5f;
-
-        if (prevPoint && nextPoint)
-        {
-            // Interpolate between points
-            double t = (currentPlayheadBeat - prevPoint->timeInBeats) /
-                      (nextPoint->timeInBeats - prevPoint->timeInBeats);
-            t = juce::jlimit(0.0, 1.0, t);
-
-            // Apply curve type
-            switch (prevPoint->curveType)
-            {
-                case AutomationPoint::CurveType::Linear:
-                    value = prevPoint->value + static_cast<float>(t) * (nextPoint->value - prevPoint->value);
-                    break;
-
-                case AutomationPoint::CurveType::Exponential:
-                    value = prevPoint->value + static_cast<float>(std::pow(t, 2.0)) * (nextPoint->value - prevPoint->value);
-                    break;
-
-                case AutomationPoint::CurveType::Logarithmic:
-                    value = prevPoint->value + static_cast<float>(std::sqrt(t)) * (nextPoint->value - prevPoint->value);
-                    break;
-
-                case AutomationPoint::CurveType::SCurve:
-                    {
-                        float sCurve = static_cast<float>(t < 0.5 ? 2.0 * t * t : 1.0 - std::pow(-2.0 * t + 2.0, 2.0) / 2.0);
-                        value = prevPoint->value + sCurve * (nextPoint->value - prevPoint->value);
-                    }
-                    break;
-            }
-        }
-        else if (prevPoint)
-        {
-            value = prevPoint->value;
-        }
-        else if (nextPoint)
-        {
-            value = nextPoint->value;
-        }
-
-        // Apply to DSP parameter (in production)
-        // For now, just demonstrate the concept
-        // Example: dspManager->setParameter(lane.parameterName, value);
+        
+        // Apply to DSP manager
+        // Example: dspManager->setParameterValue(lane.parameterName, automationValue);
     }
 }
 
@@ -287,224 +272,194 @@ void ParameterAutomationUI::recordAutomationPoint(int laneIndex, double beat, fl
 {
     if (laneIndex < 0 || laneIndex >= static_cast<int>(parameterLanes.size()))
         return;
-
+    
     AutomationPoint point;
     point.timeInBeats = beat;
     point.value = value;
     point.curveType = AutomationPoint::CurveType::Linear;
-
+    
     parameterLanes[laneIndex].points.push_back(point);
-
-    // Limit points during recording (thin out to avoid too many)
-    if (parameterLanes[laneIndex].points.size() > 1000)
-    {
-        // Thin out by removing every other point
-        std::vector<AutomationPoint> thinned;
-        for (size_t i = 0; i < parameterLanes[laneIndex].points.size(); i += 2)
-            thinned.push_back(parameterLanes[laneIndex].points[i]);
-        parameterLanes[laneIndex].points = thinned;
-    }
-
-    std::sort(parameterLanes[laneIndex].points.begin(),
+    std::sort(parameterLanes[laneIndex].points.begin(), 
              parameterLanes[laneIndex].points.end());
 }
 
 //==============================================================================
 // TransportBar Implementation
-//==============================================================================
 
 ParameterAutomationUI::TransportBar::TransportBar(ParameterAutomationUI& parent)
     : owner(parent)
 {
-    playButton.setButtonText("▶ Play");
+    // Play button
+    playButton.setButtonText("▶");
     addAndMakeVisible(playButton);
-    playButton.onClick = [&]()
+    playButton.onClick = [this]()
     {
-        if (!playing && onPlay)
-            onPlay();
         playing = true;
-        recording = false;
-        repaint();
+        if (onPlay)
+            onPlay();
     };
-
-    stopButton.setButtonText("■ Stop");
+    
+    // Stop button
+    stopButton.setButtonText("■");
     addAndMakeVisible(stopButton);
-    stopButton.onClick = [&]()
+    stopButton.onClick = [this]()
     {
         playing = false;
         recording = false;
         if (onStop)
             onStop();
-        repaint();
     };
-
-    recordButton.setButtonText("● Record");
+    
+    // Record button
+    recordButton.setButtonText("●");
     addAndMakeVisible(recordButton);
-    recordButton.onClick = [&]()
+    recordButton.onClick = [this]()
     {
-        if (!recording && onRecord)
-            onRecord();
-        playing = true;
         recording = true;
-        repaint();
+        playing = true;
+        if (onRecord)
+            onRecord();
     };
-
-    rewindButton.setButtonText("|◄ Rewind");
+    
+    // Rewind button
+    rewindButton.setButtonText("⏮");
     addAndMakeVisible(rewindButton);
-    rewindButton.onClick = [&]()
+    rewindButton.onClick = [this]()
     {
         if (onRewind)
             onRewind();
     };
-
+    
+    // Tempo controls
     tempoLabel.setText("Tempo:", juce::dontSendNotification);
-    tempoLabel.setColour(juce::Label::textColourId, juce::Colour(0xffe8e8e8));
     addAndMakeVisible(tempoLabel);
-
+    
     tempoSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-    tempoSlider.setRange(40.0, 240.0, 1.0);
-    tempoSlider.setValue(120.0);
+    tempoSlider.setRange(60, 200, 1);
+    tempoSlider.setValue(120);
     tempoSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 50, 20);
     addAndMakeVisible(tempoSlider);
-    tempoSlider.onValueChange = [&]()
+    
+    tempoSlider.onValueChange = [this]()
     {
         owner.tempo = tempoSlider.getValue();
     };
-
-    timecodeLabel.setText("00:00.000", juce::dontSendNotification);
+    
+    // Timecode display
+    timecodeLabel.setText("0:0:0", juce::dontSendNotification);
+    timecodeLabel.setJustificationType(juce::Justification::centred);
     timecodeLabel.setFont(juce::Font(16.0f, juce::Font::bold));
-    timecodeLabel.setColour(juce::Label::textColourId, juce::Colour(0xff00d4ff));
-    timecodeLabel.setJustificationType(juce::Justification::centredRight);
     addAndMakeVisible(timecodeLabel);
 }
 
 void ParameterAutomationUI::TransportBar::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colour(0xff252530));
-
+    
     // Update timecode
-    double seconds = (owner.currentPlayheadBeat / owner.tempo) * 60.0;
-    int mins = static_cast<int>(seconds) / 60;
-    double secs = seconds - (mins * 60);
-
-    juce::String timecode = juce::String::formatted("%02d:%06.3f", mins, secs);
+    double beats = owner.currentPlayheadBeat;
+    int bar = static_cast<int>(beats / 4.0) + 1;
+    int beat = static_cast<int>(beats) % 4 + 1;
+    int tick = static_cast<int>((beats - std::floor(beats)) * 100);
+    
+    juce::String timecode = juce::String(bar) + ":" + juce::String(beat) + ":" + juce::String(tick);
     timecodeLabel.setText(timecode, juce::dontSendNotification);
-
-    // Highlight record button when recording
-    if (recording)
-    {
-        auto recordBounds = recordButton.getBounds().toFloat().reduced(2);
-        g.setColour(juce::Colour(0xffff4444).withAlpha(0.3f));
-        g.fillRoundedRectangle(recordBounds, 4.0f);
-    }
 }
 
 void ParameterAutomationUI::TransportBar::resized()
 {
-    auto bounds = getLocalBounds().reduced(10, 5);
-
-    // Transport buttons
-    playButton.setBounds(bounds.removeFromLeft(80));
-    bounds.removeFromLeft(5);
-    stopButton.setBounds(bounds.removeFromLeft(80));
-    bounds.removeFromLeft(5);
-    recordButton.setBounds(bounds.removeFromLeft(90));
-    bounds.removeFromLeft(5);
-    rewindButton.setBounds(bounds.removeFromLeft(90));
-
+    auto bounds = getLocalBounds().reduced(10);
+    
+    // Transport buttons on left
+    int buttonSize = 40;
+    playButton.setBounds(bounds.removeFromLeft(buttonSize).reduced(2));
+    stopButton.setBounds(bounds.removeFromLeft(buttonSize).reduced(2));
+    recordButton.setBounds(bounds.removeFromLeft(buttonSize).reduced(2));
+    rewindButton.setBounds(bounds.removeFromLeft(buttonSize).reduced(2));
+    
     bounds.removeFromLeft(20);
-
-    // Tempo
+    
+    // Timecode in center-left
+    timecodeLabel.setBounds(bounds.removeFromLeft(120));
+    
+    bounds.removeFromLeft(20);
+    
+    // Tempo on right
     tempoLabel.setBounds(bounds.removeFromLeft(60));
-    bounds.removeFromLeft(5);
     tempoSlider.setBounds(bounds.removeFromLeft(150));
-
-    // Timecode (right aligned)
-    timecodeLabel.setBounds(bounds.removeFromRight(120));
 }
 
 //==============================================================================
 // ParameterLaneList Implementation
-//==============================================================================
 
 ParameterAutomationUI::ParameterLaneList::ParameterLaneList(ParameterAutomationUI& parent)
     : owner(parent)
 {
     addAndMakeVisible(viewport);
     viewport.setViewedComponent(&contentComponent, false);
-    viewport.setScrollBarsShown(true, false);
 }
 
 void ParameterAutomationUI::ParameterLaneList::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colour(0xff1f1f24));
-
-    // Border
-    g.setColour(juce::Colour(0xff3a3a40));
-    g.drawRect(getLocalBounds(), 1);
 }
 
 void ParameterAutomationUI::ParameterLaneList::resized()
 {
     viewport.setBounds(getLocalBounds());
-
-    // Layout lane items
+    
     int itemHeight = 40;
-    int y = 0;
-
-    contentComponent.setBounds(0, 0, getWidth() - 20, laneItems.size() * itemHeight);
-
-    for (auto& item : laneItems)
+    int totalHeight = static_cast<int>(laneItems.size()) * itemHeight;
+    
+    contentComponent.setBounds(0, 0, getWidth(), totalHeight);
+    
+    for (size_t i = 0; i < laneItems.size(); ++i)
     {
-        item->setBounds(0, y, getWidth() - 20, itemHeight);
-        y += itemHeight;
+        laneItems[i]->setBounds(0, static_cast<int>(i) * itemHeight, getWidth(), itemHeight);
     }
 }
 
 void ParameterAutomationUI::ParameterLaneList::updateParameterList(const std::vector<ParameterLane>& lanes)
 {
     laneItems.clear();
-
+    
     for (size_t i = 0; i < lanes.size(); ++i)
     {
-        auto item = std::make_unique<LaneListItem>(static_cast<int>(i), lanes[i]);
-
+        auto* item = new LaneListItem(static_cast<int>(i), lanes[i]);
+        
         item->onClicked = [this](int index)
         {
             selectedLaneIndex = index;
-            for (auto& laneItem : laneItems)
-                laneItem->selected = (laneItem->laneIndex == index);
-
             if (onLaneSelected)
                 onLaneSelected(index);
 
-            repaint();
-        };
+            for (auto& laneItem : laneItems)
+                laneItem->selected = (laneItem->laneIndex == index);
 
+            contentComponent.repaint();
+        };
+        
         item->onArmChanged = [this](int index, bool armed)
         {
             if (onLaneArmChanged)
                 onLaneArmChanged(index, armed);
         };
 
-        contentComponent.addAndMakeVisible(item.get());
-        laneItems.push_back(std::move(item));
+        laneItems.push_back(std::unique_ptr<LaneListItem>(item));
+        contentComponent.addAndMakeVisible(item);
     }
-
+    
     resized();
 }
 
-//==============================================================================
 // LaneListItem Implementation
-//==============================================================================
-
 ParameterAutomationUI::ParameterLaneList::LaneListItem::LaneListItem(int index, const ParameterLane& lane)
     : laneIndex(index), laneData(lane)
 {
     armButton.setButtonText("R");
-    armButton.setToggleState(lane.armed, juce::dontSendNotification);
+    armButton.setClickingTogglesState(true);
     addAndMakeVisible(armButton);
-
+    
     armButton.onClick = [this]()
     {
         if (onArmChanged)
@@ -514,37 +469,35 @@ ParameterAutomationUI::ParameterLaneList::LaneListItem::LaneListItem(int index, 
 
 void ParameterAutomationUI::ParameterLaneList::LaneListItem::paint(juce::Graphics& g)
 {
-    auto bounds = getLocalBounds().toFloat();
-
+    auto bounds = getLocalBounds();
+    
     // Background
     if (selected)
-        g.setColour(juce::Colour(0xff2a2a35));
+        g.setColour(juce::Colour(0xff35353f));
     else
-        g.setColour(juce::Colour(0xff1f1f24));
+        g.setColour(juce::Colour(0xff252530));
+    
     g.fillRect(bounds);
-
-    // Lane color indicator
+    
+    // Color indicator
     g.setColour(laneData.laneColor);
     g.fillRect(bounds.removeFromLeft(4));
-
-    bounds.removeFromLeft(5);
-
+    
     // Lane name
-    g.setColour(juce::Colour(0xffe8e8e8));
+    g.setColour(juce::Colours::white);
     g.setFont(12.0f);
-    auto textBounds = bounds.reduced(5);
-    textBounds.removeFromRight(40); // Space for arm button
-    g.drawText(laneData.displayName, textBounds.toNearestInt(), juce::Justification::centredLeft, true);
-
-    // Separator line
-    g.setColour(juce::Colour(0xff3a3a40));
-    g.drawHorizontalLine(static_cast<int>(getHeight() - 1), 0.0f, static_cast<float>(getWidth()));
+    g.drawText(laneData.displayName, bounds.reduced(8, 0).withTrimmedRight(40), 
+              juce::Justification::centredLeft);
+    
+    // Border
+    g.setColour(juce::Colour(0xff454550));
+    g.drawRect(getLocalBounds(), 1);
 }
 
 void ParameterAutomationUI::ParameterLaneList::LaneListItem::resized()
 {
-    auto bounds = getLocalBounds().reduced(5);
-    armButton.setBounds(bounds.removeFromRight(30));
+    auto bounds = getLocalBounds();
+    armButton.setBounds(bounds.removeFromRight(35).reduced(5));
 }
 
 void ParameterAutomationUI::ParameterLaneList::LaneListItem::mouseDown(const juce::MouseEvent&)
@@ -555,7 +508,6 @@ void ParameterAutomationUI::ParameterLaneList::LaneListItem::mouseDown(const juc
 
 //==============================================================================
 // TimelineEditor Implementation
-//==============================================================================
 
 ParameterAutomationUI::TimelineEditor::TimelineEditor(ParameterAutomationUI& parent)
     : owner(parent)
@@ -565,162 +517,123 @@ ParameterAutomationUI::TimelineEditor::TimelineEditor(ParameterAutomationUI& par
 void ParameterAutomationUI::TimelineEditor::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds();
-
+    
+    // Background
     g.fillAll(juce::Colour(0xff1a1a1f));
-
+    
     // Draw grid
     drawGrid(g, bounds);
-
+    
     // Draw lanes
-    if (!currentLanes.empty())
+    int laneHeight = currentLanes.empty() ? 0 : bounds.getHeight() / static_cast<int>(currentLanes.size());
+    
+    for (size_t i = 0; i < currentLanes.size(); ++i)
     {
-        int laneHeight = bounds.getHeight() / juce::jmax(1, static_cast<int>(currentLanes.size()));
-
-        for (size_t i = 0; i < currentLanes.size(); ++i)
-        {
-            if (!currentLanes[i].visible)
-                continue;
-
-            auto laneBounds = bounds.removeFromTop(laneHeight);
-            drawLane(g, currentLanes[i], static_cast<int>(i), laneBounds);
-        }
+        auto laneBounds = bounds.removeFromTop(laneHeight);
+        drawLane(g, currentLanes[i], static_cast<int>(i), laneBounds);
     }
-
+    
     // Draw playhead
-    if (playheadBeat >= visibleStartBeat && playheadBeat <= visibleEndBeat)
-    {
-        float playheadX = beatToX(playheadBeat);
-        g.setColour(juce::Colour(0xff00d4ff));
-        g.drawLine(playheadX, 0.0f, playheadX, static_cast<float>(getHeight()), 2.0f);
-
-        // Playhead triangle at top
-        juce::Path triangle;
-        triangle.addTriangle(playheadX - 6, 0, playheadX + 6, 0, playheadX, 10);
-        g.fillPath(triangle);
-    }
+    float playheadX = beatToX(playheadBeat);
+    g.setColour(juce::Colour(0xffff4444));
+    g.drawVerticalLine(static_cast<int>(playheadX), 0.0f, static_cast<float>(getHeight()));
 }
 
 void ParameterAutomationUI::TimelineEditor::resized()
 {
+    repaint();
 }
 
 void ParameterAutomationUI::TimelineEditor::mouseDown(const juce::MouseEvent& event)
 {
-    float x = static_cast<float>(event.x);
-    float y = static_cast<float>(event.y);
-    double beat = xToBeat(x);
-
-    // Find which lane was clicked
-    int laneHeight = getHeight() / juce::jmax(1, static_cast<int>(currentLanes.size()));
-    int clickedLaneIndex = event.y / laneHeight;
-
-    if (clickedLaneIndex < 0 || clickedLaneIndex >= static_cast<int>(currentLanes.size()))
+    double beat = xToBeat(static_cast<float>(event.x));
+    
+    // Determine which lane was clicked
+    int laneHeight = currentLanes.empty() ? 0 : getHeight() / static_cast<int>(currentLanes.size());
+    int laneIndex = event.y / laneHeight;
+    
+    if (laneIndex < 0 || laneIndex >= static_cast<int>(currentLanes.size()))
         return;
-
-    // Check if clicking on existing point
-    auto laneBounds = getLocalBounds().removeFromTop(laneHeight * (clickedLaneIndex + 1))
-                                       .removeFromBottom(laneHeight);
-
-    const auto& lane = currentLanes[clickedLaneIndex];
+    
+    float value = yToValue(static_cast<float>(event.y - laneIndex * laneHeight), laneIndex);
+    
+    // Check if clicking near existing point
+    bool clickedPoint = false;
+    const auto& lane = currentLanes[laneIndex];
+    
     for (size_t i = 0; i < lane.points.size(); ++i)
     {
         float pointX = beatToX(lane.points[i].timeInBeats);
-        float pointY = valueToY(lane.points[i].value, clickedLaneIndex);
-
-        if (std::abs(x - pointX) < 8.0f && std::abs(y - pointY) < 8.0f)
+        float pointY = valueToY(lane.points[i].value, laneIndex) + laneIndex * laneHeight;
+        
+        if (std::abs(event.x - pointX) < 8 && std::abs(event.y - pointY) < 8)
         {
-            // Clicked on existing point
-            if (event.mods.isRightButtonDown())
-            {
-                // Right click: delete point
-                if (onPointDeleted)
-                    onPointDeleted(clickedLaneIndex, static_cast<int>(i));
-                return;
-            }
-            else
-            {
-                // Left click: start dragging
-                selectedLaneIndex = clickedLaneIndex;
-                selectedPointIndex = static_cast<int>(i);
-                draggingPoint = true;
-                dragStartPosition = juce::Point<float>(x, y);
-                return;
-            }
+            selectedLaneIndex = laneIndex;
+            selectedPointIndex = static_cast<int>(i);
+            draggingPoint = true;
+            clickedPoint = true;
+            break;
         }
     }
-
-    // No point clicked: add new point
-    float value = yToValue(y, clickedLaneIndex);
-
-    if (snapToGrid)
-        beat = snapBeat(beat);
-
-    AutomationPoint newPoint;
-    newPoint.timeInBeats = beat;
-    newPoint.value = juce::jlimit(0.0f, 1.0f, value);
-    newPoint.curveType = AutomationPoint::CurveType::Linear;
-
-    if (onPointAdded)
-        onPointAdded(clickedLaneIndex, newPoint);
+    
+    // If not clicking point, add new point
+    if (!clickedPoint)
+    {
+        if (snapToGrid)
+            beat = snapBeat(beat);
+        
+        AutomationPoint newPoint;
+        newPoint.timeInBeats = beat;
+        newPoint.value = value;
+        newPoint.curveType = AutomationPoint::CurveType::Linear;
+        
+        if (onPointAdded)
+            onPointAdded(laneIndex, newPoint);
+    }
+    
+    repaint();
 }
 
 void ParameterAutomationUI::TimelineEditor::mouseDrag(const juce::MouseEvent& event)
 {
-    if (!draggingPoint || selectedLaneIndex < 0 || selectedPointIndex < 0)
-        return;
-
-    float x = static_cast<float>(event.x);
-    float y = static_cast<float>(event.y);
-
-    double newBeat = xToBeat(x);
-    if (snapToGrid)
-        newBeat = snapBeat(newBeat);
-
-    float newValue = yToValue(y, selectedLaneIndex);
-    newValue = juce::jlimit(0.0f, 1.0f, newValue);
-
-    AutomationPoint newPoint;
-    newPoint.timeInBeats = newBeat;
-    newPoint.value = newValue;
-    newPoint.curveType = currentLanes[selectedLaneIndex].points[selectedPointIndex].curveType;
-
-    if (onPointMoved)
-        onPointMoved(selectedLaneIndex, selectedPointIndex, newPoint);
+    if (draggingPoint && selectedLaneIndex >= 0 && selectedPointIndex >= 0)
+    {
+        double beat = xToBeat(static_cast<float>(event.x));
+        if (snapToGrid)
+            beat = snapBeat(beat);
+        
+        int laneHeight = currentLanes.empty() ? 0 : getHeight() / static_cast<int>(currentLanes.size());
+        float value = yToValue(static_cast<float>(event.y - selectedLaneIndex * laneHeight), selectedLaneIndex);
+        
+        AutomationPoint movedPoint;
+        movedPoint.timeInBeats = beat;
+        movedPoint.value = juce::jlimit(0.0f, 1.0f, value);
+        movedPoint.curveType = AutomationPoint::CurveType::Linear;
+        
+        if (onPointMoved)
+            onPointMoved(selectedLaneIndex, selectedPointIndex, movedPoint);
+        
+        repaint();
+    }
 }
 
 void ParameterAutomationUI::TimelineEditor::mouseUp(const juce::MouseEvent&)
 {
     draggingPoint = false;
-    selectedPointIndex = -1;
 }
 
-void ParameterAutomationUI::TimelineEditor::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
+void ParameterAutomationUI::TimelineEditor::mouseWheelMove(const juce::MouseEvent&, const juce::MouseWheelDetails& wheel)
 {
-    // Zoom with mouse wheel
-    if (event.mods.isCommandDown())
-    {
-        double zoomFactor = wheel.deltaY > 0 ? 1.1 : 0.9;
-        double visibleRange = visibleEndBeat - visibleStartBeat;
-        double newRange = visibleRange * zoomFactor;
-
-        double center = (visibleStartBeat + visibleEndBeat) / 2.0;
-        visibleStartBeat = center - newRange / 2.0;
-        visibleEndBeat = center + newRange / 2.0;
-
-        visibleStartBeat = juce::jmax(0.0, visibleStartBeat);
-        repaint();
-    }
-    else
-    {
-        // Pan horizontally
-        double panAmount = wheel.deltaY * (visibleEndBeat - visibleStartBeat) * 0.1;
-        visibleStartBeat -= panAmount;
-        visibleEndBeat -= panAmount;
-
-        visibleStartBeat = juce::jmax(0.0, visibleStartBeat);
-        visibleEndBeat = juce::jmax(visibleStartBeat + 1.0, visibleEndBeat);
-        repaint();
-    }
+    // Zoom timeline
+    double zoomFactor = wheel.deltaY > 0 ? 0.9 : 1.1;
+    double range = visibleEndBeat - visibleStartBeat;
+    double center = (visibleStartBeat + visibleEndBeat) / 2.0;
+    
+    double newRange = range * zoomFactor;
+    visibleStartBeat = center - newRange / 2.0;
+    visibleEndBeat = center + newRange / 2.0;
+    
+    repaint();
 }
 
 void ParameterAutomationUI::TimelineEditor::setVisibleRange(double startBeat, double endBeat)
@@ -744,120 +657,85 @@ void ParameterAutomationUI::TimelineEditor::updateLanes(const std::vector<Parame
 
 float ParameterAutomationUI::TimelineEditor::beatToX(double beat) const
 {
-    double normalized = (beat - visibleStartBeat) / (visibleEndBeat - visibleStartBeat);
-    return static_cast<float>(normalized * getWidth());
+    double normalizedPos = (beat - visibleStartBeat) / (visibleEndBeat - visibleStartBeat);
+    return static_cast<float>(normalizedPos * getWidth());
 }
 
 double ParameterAutomationUI::TimelineEditor::xToBeat(float x) const
 {
-    double normalized = x / getWidth();
-    return visibleStartBeat + normalized * (visibleEndBeat - visibleStartBeat);
+    double normalizedPos = x / getWidth();
+    return visibleStartBeat + normalizedPos * (visibleEndBeat - visibleStartBeat);
 }
 
 float ParameterAutomationUI::TimelineEditor::valueToY(float value, int laneIndex) const
 {
-    int laneHeight = getHeight() / juce::jmax(1, static_cast<int>(currentLanes.size()));
-    int laneY = laneIndex * laneHeight;
-
-    return laneY + laneHeight - (value * (laneHeight - 20)) - 10;
+    int laneHeight = currentLanes.empty() ? 0 : getHeight() / static_cast<int>(currentLanes.size());
+    return (1.0f - value) * laneHeight;
 }
 
 float ParameterAutomationUI::TimelineEditor::yToValue(float y, int laneIndex) const
 {
-    int laneHeight = getHeight() / juce::jmax(1, static_cast<int>(currentLanes.size()));
-    int laneY = laneIndex * laneHeight;
-
-    float relativeY = y - laneY - 10;
-    float normalizedY = 1.0f - (relativeY / (laneHeight - 20));
-
-    return juce::jlimit(0.0f, 1.0f, normalizedY);
+    int laneHeight = currentLanes.empty() ? 0 : getHeight() / static_cast<int>(currentLanes.size());
+    return 1.0f - (y / laneHeight);
 }
 
 double ParameterAutomationUI::TimelineEditor::snapBeat(double beat) const
 {
-    if (!snapToGrid)
-        return beat;
-
     return std::round(beat / gridDivision) * gridDivision;
 }
 
 void ParameterAutomationUI::TimelineEditor::drawGrid(juce::Graphics& g, juce::Rectangle<int> bounds)
 {
+    g.setColour(juce::Colour(0xff35353f));
+    
     // Vertical grid lines (beats)
-    g.setColour(juce::Colour(0xff2a2a30));
-
-    int startBeat = static_cast<int>(std::floor(visibleStartBeat));
-    int endBeat = static_cast<int>(std::ceil(visibleEndBeat));
-
-    for (int beat = startBeat; beat <= endBeat; ++beat)
+    for (double beat = std::floor(visibleStartBeat); beat <= visibleEndBeat; beat += gridDivision)
     {
-        float x = beatToX(static_cast<double>(beat));
-        g.drawVerticalLine(static_cast<int>(x), 0.0f, static_cast<float>(bounds.getHeight()));
-
-        // Beat number
-        g.setColour(juce::Colour(0xff808080));
-        g.setFont(10.0f);
-        g.drawText(juce::String(beat), static_cast<int>(x) - 20, 5, 40, 15, juce::Justification::centred);
-        g.setColour(juce::Colour(0xff2a2a30));
-
-        // Sub-divisions (16th notes)
-        for (double sub = 0.25; sub < 1.0; sub += 0.25)
+        float x = beatToX(beat);
+        if (x >= 0 && x <= bounds.getWidth())
         {
-            float subX = beatToX(beat + sub);
-            g.setColour(juce::Colour(0xff1a1a20).withAlpha(0.5f));
-            g.drawVerticalLine(static_cast<int>(subX), 0.0f, static_cast<float>(bounds.getHeight()));
-        }
-    }
-
-    // Horizontal lane separators
-    if (!currentLanes.empty())
-    {
-        int laneHeight = bounds.getHeight() / juce::jmax(1, static_cast<int>(currentLanes.size()));
-
-        g.setColour(juce::Colour(0xff3a3a40));
-        for (size_t i = 1; i < currentLanes.size(); ++i)
-        {
-            int y = i * laneHeight;
-            g.drawHorizontalLine(y, 0.0f, static_cast<float>(bounds.getWidth()));
+            bool isMajor = (std::fmod(beat, 1.0) < 0.001);
+            g.setColour(isMajor ? juce::Colour(0xff454550) : juce::Colour(0xff35353f));
+            g.drawVerticalLine(static_cast<int>(x), static_cast<float>(bounds.getY()), static_cast<float>(bounds.getBottom()));
         }
     }
 }
 
-void ParameterAutomationUI::TimelineEditor::drawLane(juce::Graphics& g, const ParameterLane& lane,
+void ParameterAutomationUI::TimelineEditor::drawLane(juce::Graphics& g, const ParameterLane& lane, 
                                                       int laneIndex, juce::Rectangle<int> bounds)
 {
-    // Lane background (subtle color)
-    g.setColour(lane.laneColor.withAlpha(0.05f));
+    // Lane background
+    g.setColour(juce::Colour(0xff252530));
     g.fillRect(bounds);
-
-    // Draw automation curve
-    drawAutomationCurve(g, lane, bounds);
-
-    // Draw automation points
-    drawAutomationPoints(g, lane, laneIndex, bounds);
-
-    // Lane label
-    g.setColour(juce::Colour(0xffa8a8a8));
-    g.setFont(11.0f);
-    g.drawText(lane.displayName, bounds.reduced(5), juce::Justification::topLeft);
+    
+    // Lane separator
+    g.setColour(juce::Colour(0xff1a1a1f));
+    g.drawHorizontalLine(bounds.getY(), static_cast<float>(bounds.getX()), static_cast<float>(bounds.getRight()));
+    
+    if (lane.visible)
+    {
+        // Draw automation curve
+        drawAutomationCurve(g, lane, bounds);
+        
+        // Draw automation points
+        drawAutomationPoints(g, lane, laneIndex, bounds);
+    }
 }
 
-void ParameterAutomationUI::TimelineEditor::drawAutomationCurve(juce::Graphics& g, const ParameterLane& lane,
-                                                                 juce::Rectangle<int> laneBounds)
+void ParameterAutomationUI::TimelineEditor::drawAutomationCurve(juce::Graphics& g, const ParameterLane& lane, 
+                                                                  juce::Rectangle<int> laneBounds)
 {
-    if (lane.points.empty())
+    if (lane.points.size() < 2)
         return;
-
+    
     juce::Path curvePath;
     bool firstPoint = true;
-
-    // Draw curve segments
-    for (size_t i = 0; i < lane.points.size(); ++i)
+    
+    for (const auto& point : lane.points)
     {
-        const auto& point = lane.points[i];
         float x = beatToX(point.timeInBeats);
-        float y = valueToY(point.value, static_cast<int>(&lane - currentLanes.data()));
-
+        float y = laneBounds.getY() + valueToY(point.value, 0);
+        
         if (firstPoint)
         {
             curvePath.startNewSubPath(x, y);
@@ -868,77 +746,87 @@ void ParameterAutomationUI::TimelineEditor::drawAutomationCurve(juce::Graphics& 
             curvePath.lineTo(x, y);
         }
     }
-
-    g.setColour(lane.laneColor.withAlpha(0.8f));
+    
+    g.setColour(lane.laneColor.withAlpha(0.6f));
     g.strokePath(curvePath, juce::PathStrokeType(2.0f));
 }
 
-void ParameterAutomationUI::TimelineEditor::drawAutomationPoints(juce::Graphics& g, const ParameterLane& lane,
-                                                                  int laneIndex, juce::Rectangle<int> laneBounds)
+void ParameterAutomationUI::TimelineEditor::drawAutomationPoints(juce::Graphics& g, const ParameterLane& lane, 
+                                                                   int laneIndex, juce::Rectangle<int> laneBounds)
 {
-    for (const auto& point : lane.points)
+    for (size_t i = 0; i < lane.points.size(); ++i)
     {
+        const auto& point = lane.points[i];
+        
         float x = beatToX(point.timeInBeats);
-        float y = valueToY(point.value, laneIndex);
-
+        float y = laneBounds.getY() + valueToY(point.value, 0);
+        
         // Point circle
+        bool isSelected = (laneIndex == selectedLaneIndex && static_cast<int>(i) == selectedPointIndex);
+        
         g.setColour(lane.laneColor);
-        g.fillEllipse(x - 5, y - 5, 10, 10);
-
-        g.setColour(juce::Colour(0xff1a1a1f));
-        g.drawEllipse(x - 5, y - 5, 10, 10, 2.0f);
+        g.fillEllipse(x - 4, y - 4, 8, 8);
+        
+        if (isSelected)
+        {
+            g.setColour(juce::Colour(0xffff4444));
+            g.drawEllipse(x - 6, y - 6, 12, 12, 2.0f);
+        }
     }
 }
 
 //==============================================================================
 // EditToolbar Implementation
-//==============================================================================
 
 ParameterAutomationUI::EditToolbar::EditToolbar(ParameterAutomationUI& parent)
     : owner(parent)
 {
-    snapToggle.setButtonText("Snap to Grid");
+    // Snap toggle
+    snapToggle.setButtonText("Snap");
     snapToggle.setToggleState(true, juce::dontSendNotification);
     addAndMakeVisible(snapToggle);
+    
     snapToggle.onClick = [this]()
     {
         snapToGrid = snapToggle.getToggleState();
         if (onSnapToGridChanged)
             onSnapToGridChanged(snapToGrid);
     };
-
+    
+    // Grid division
     gridLabel.setText("Grid:", juce::dontSendNotification);
-    gridLabel.setColour(juce::Label::textColourId, juce::Colour(0xffe8e8e8));
     addAndMakeVisible(gridLabel);
-
-    gridDivisionCombo.addItem("1/4 (Quarter)", 1);
-    gridDivisionCombo.addItem("1/8 (Eighth)", 2);
-    gridDivisionCombo.addItem("1/16 (Sixteenth)", 3);
-    gridDivisionCombo.addItem("1/32 (Thirty-second)", 4);
+    
+    gridDivisionCombo.addItem("1/4", 1);
+    gridDivisionCombo.addItem("1/8", 2);
+    gridDivisionCombo.addItem("1/16", 3);
+    gridDivisionCombo.addItem("1/32", 4);
     gridDivisionCombo.setSelectedId(3);
     addAndMakeVisible(gridDivisionCombo);
+    
     gridDivisionCombo.onChange = [this]()
     {
         if (onGridDivisionChanged)
             onGridDivisionChanged(getGridDivision());
     };
-
+    
+    // Clear buttons
+    clearLaneButton.setButtonText("Clear Lane");
+    addAndMakeVisible(clearLaneButton);
+    
+    clearAllButton.setButtonText("Clear All");
+    addAndMakeVisible(clearAllButton);
+    
+    // Curve type
     curveLabel.setText("Curve:", juce::dontSendNotification);
-    curveLabel.setColour(juce::Label::textColourId, juce::Colour(0xffe8e8e8));
     addAndMakeVisible(curveLabel);
-
+    
     curveTypeCombo.addItem("Linear", 1);
     curveTypeCombo.addItem("Exponential", 2);
     curveTypeCombo.addItem("Logarithmic", 3);
     curveTypeCombo.addItem("S-Curve", 4);
     curveTypeCombo.setSelectedId(1);
     addAndMakeVisible(curveTypeCombo);
-
-    clearAllButton.setButtonText("Clear All");
-    addAndMakeVisible(clearAllButton);
-
-    clearLaneButton.setButtonText("Clear Lane");
-    addAndMakeVisible(clearLaneButton);
 }
 
 void ParameterAutomationUI::EditToolbar::paint(juce::Graphics& g)
@@ -948,35 +836,30 @@ void ParameterAutomationUI::EditToolbar::paint(juce::Graphics& g)
 
 void ParameterAutomationUI::EditToolbar::resized()
 {
-    auto bounds = getLocalBounds().reduced(10, 5);
-
-    snapToggle.setBounds(bounds.removeFromLeft(120));
-    bounds.removeFromLeft(10);
-
-    gridLabel.setBounds(bounds.removeFromLeft(40));
-    bounds.removeFromLeft(5);
-    gridDivisionCombo.setBounds(bounds.removeFromLeft(140));
-
+    auto bounds = getLocalBounds().reduced(5);
+    
+    snapToggle.setBounds(bounds.removeFromLeft(80).reduced(2));
+    gridLabel.setBounds(bounds.removeFromLeft(45).reduced(2));
+    gridDivisionCombo.setBounds(bounds.removeFromLeft(80).reduced(2));
+    
     bounds.removeFromLeft(20);
-
-    curveLabel.setBounds(bounds.removeFromLeft(50));
-    bounds.removeFromLeft(5);
-    curveTypeCombo.setBounds(bounds.removeFromLeft(120));
-
-    // Right side
-    clearLaneButton.setBounds(bounds.removeFromRight(100));
-    bounds.removeFromRight(10);
-    clearAllButton.setBounds(bounds.removeFromRight(100));
+    
+    curveLabel.setBounds(bounds.removeFromLeft(50).reduced(2));
+    curveTypeCombo.setBounds(bounds.removeFromLeft(120).reduced(2));
+    
+    auto rightSection = bounds;
+    clearAllButton.setBounds(rightSection.removeFromRight(100).reduced(2));
+    clearLaneButton.setBounds(rightSection.removeFromRight(100).reduced(2));
 }
 
 double ParameterAutomationUI::EditToolbar::getGridDivision() const
 {
     switch (gridDivisionCombo.getSelectedId())
     {
-        case 1: return 1.0;    // Quarter
-        case 2: return 0.5;    // Eighth
-        case 3: return 0.25;   // Sixteenth
-        case 4: return 0.125;  // Thirty-second
+        case 1: return 1.0;      // 1/4 note
+        case 2: return 0.5;      // 1/8 note
+        case 3: return 0.25;     // 1/16 note
+        case 4: return 0.125;    // 1/32 note
         default: return 0.25;
     }
 }

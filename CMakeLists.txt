@@ -259,6 +259,13 @@ target_sources(Echoelmusic
 
         # UI - Main Window (NEW! 2025-11-12) ✅ TESTED
         Sources/UI/MainWindow.cpp
+
+        # Advanced DSP Manager UI Suite (NEW! 2025-11-17) ✅ JUCE 7 Compatible
+        # Sources/UI/AdvancedDSPManagerUI.cpp      # TODO: Requires 4 processors to be implemented first
+        # Sources/UI/PresetBrowserUI.cpp           # TODO: Fix API mismatches with AdvancedDSPManager
+        Sources/UI/ModulationMatrixUI.cpp        # ✅ Modulation routing matrix
+        Sources/UI/ParameterAutomationUI.cpp     # ✅ Timeline automation editor
+
         # Sources/UI/AdvancedSculptingUI.cpp      # TODO: Fix SpectralSculptor API mismatches
 
         # =====================================================================
