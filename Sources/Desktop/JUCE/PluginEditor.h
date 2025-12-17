@@ -13,7 +13,7 @@
 #include "ModernLookAndFeel.h"
 #include "../../Visualization/SpectrumAnalyzer.h"
 #include "../../Visualization/BioReactiveVisualizer.h"
-// PresetBrowserUI: JUCE API compatibility fixes needed (see WISE_MODE_UI_ANALYSIS.md)
+#include "../../UI/PresetBrowserUI.h"
 
 //==============================================================================
 /**
@@ -49,7 +49,9 @@ private:
     SpectrumAnalyzer spectrumAnalyzer;
     BioReactiveVisualizer bioVisualizer;
 
-    // TODO: Add PresetBrowserUI (needs JUCE API compatibility fixes)
+    // UI Components
+    PresetBrowserUI presetBrowser;
+
     // TODO: Add ProcessorRack (AdvancedDSPManagerUI or custom)
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EchoelmusicProEditor)

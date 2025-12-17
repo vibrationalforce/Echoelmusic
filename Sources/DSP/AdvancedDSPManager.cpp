@@ -298,6 +298,11 @@ juce::StringArray AdvancedDSPManager::getPresets(PresetCategory category) const
     return result;
 }
 
+std::vector<AdvancedDSPManager::Preset> AdvancedDSPManager::getAllPresets() const
+{
+    return presets;
+}
+
 void AdvancedDSPManager::loadFactoryPresets()
 {
     // Factory Preset 1: Mastering Chain

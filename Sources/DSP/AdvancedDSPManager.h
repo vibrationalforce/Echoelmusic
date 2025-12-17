@@ -228,6 +228,9 @@ public:
     /** Get available presets in category */
     juce::StringArray getPresets(PresetCategory category) const;
 
+    /** Get all preset objects (for UI browsing) */
+    std::vector<Preset> getAllPresets() const;
+
     /** Load factory presets (built-in professional presets) */
     void loadFactoryPresets();
 

@@ -100,9 +100,10 @@ file(GLOB_RECURSE VISUALIZATION_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/../../Visualization/*.h"
 )
 
-# UI Components - Only include working components
-# PresetBrowserUI excluded: needs JUCE 7.x API compatibility fixes
+# UI Components - JUCE 7.x compatible
 set(UI_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/PresetBrowserUI.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/PresetBrowserUI.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/ResponsiveLayout.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../UI/UIComponents.h"
 )

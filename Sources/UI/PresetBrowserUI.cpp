@@ -133,30 +133,8 @@ void PresetBrowserUI::loadPresetsFromDSP()
     if (!dspManager)
         return;
 
-    // Get all presets from DSP manager
-    auto presetNames = dspManager->getPresetNames();
-
-    for (const auto& name : presetNames)
-    {
-        // In production, would load full preset data
-        // For now, create placeholder
-        AdvancedDSPManager::Preset preset;
-        preset.name = name;
-
-        // Infer category from name (in production, would be stored in preset)
-        if (name.contains("Mastering"))
-            preset.category = AdvancedDSPManager::PresetCategory::Mastering;
-        else if (name.contains("Vocal"))
-            preset.category = AdvancedDSPManager::PresetCategory::Vocal;
-        else if (name.contains("Ambient") || name.contains("Space") || name.contains("Cinematic"))
-            preset.category = AdvancedDSPManager::PresetCategory::Ambient;
-        else if (name.contains("Bio"))
-            preset.category = AdvancedDSPManager::PresetCategory::BioReactive;
-        else
-            preset.category = AdvancedDSPManager::PresetCategory::Custom;
-
-        allPresets.push_back(preset);
-    }
+    // Get all presets from DSP manager (JUCE 7.x compatible)
+    allPresets = dspManager->getAllPresets();
 }
 
 //==============================================================================
@@ -379,7 +357,7 @@ void PresetBrowserUI::PresetCard::paint(juce::Graphics& g)
 
     // Preset name
     g.setColour(juce::Colour(0xffe8e8e8));
-    g.setFont(13.0f, juce::Font::bold);
+    g.setFont(juce::Font(13.0f, juce::Font::bold));
     g.drawText(presetData.name, contentBounds.toNearestInt(),
                juce::Justification::centred, true);
 }
@@ -633,21 +611,26 @@ PresetBrowserUI::PresetInfoPanel::PresetInfoPanel(PresetBrowserUI& parent)
         if (!owner.dspManager)
             return;
 
-        juce::AlertWindow window("Save Preset", "Enter preset name:", juce::AlertWindow::QuestionIcon);
-        window.addTextEditor("name", "My Preset", "Preset Name:");
-        window.addButton("Save", 1);
-        window.addButton("Cancel", 0);
+        // JUCE 7.x compatible: use async modal dialog
+        auto* window = new juce::AlertWindow("Save Preset", "Enter preset name:", juce::AlertWindow::QuestionIcon);
+        window->addTextEditor("name", "My Preset", "Preset Name:");
+        window->addButton("Save", 1);
+        window->addButton("Cancel", 0);
 
-        if (window.runModalLoop() == 1)
+        window->enterModalState(true, juce::ModalCallbackFunction::create([this, window](int result)
         {
-            juce::String name = window.getTextEditorContents("name");
-            if (name.isNotEmpty())
+            if (result == 1)
             {
-                owner.dspManager->savePreset(name, AdvancedDSPManager::PresetCategory::Custom);
-                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
-                    "Preset Saved", "Preset '" + name + "' has been saved.");
+                juce::String name = window->getTextEditorContents("name");
+                if (name.isNotEmpty())
+                {
+                    owner.dspManager->savePreset(name, AdvancedDSPManager::PresetCategory::Custom);
+                    juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
+                        "Preset Saved", "Preset '" + name + "' has been saved.");
+                }
             }
-        }
+            delete window;
+        }), true);
     };
 
     deleteButton.setButtonText("Delete");
@@ -657,8 +640,15 @@ PresetBrowserUI::PresetInfoPanel::PresetInfoPanel(PresetBrowserUI& parent)
         if (!currentPreset)
             return;
 
-        bool confirmed = juce::AlertWindow::showOkCancelBox(juce::AlertWindow::WarningIcon,
-            "Delete Preset", "Are you sure you want to delete '" + currentPreset->name + "'?");
+        // JUCE 7.x compatible: provide all parameters
+        bool confirmed = juce::AlertWindow::showOkCancelBox(
+            juce::AlertWindow::WarningIcon,
+            "Delete Preset",
+            "Are you sure you want to delete '" + currentPreset->name + "'?",
+            "Delete",
+            "Cancel",
+            nullptr,
+            nullptr);
 
         if (confirmed)
         {

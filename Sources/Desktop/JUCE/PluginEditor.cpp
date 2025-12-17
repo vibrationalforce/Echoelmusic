@@ -20,6 +20,10 @@ EchoelmusicProEditor::EchoelmusicProEditor (EchoelmusicProProcessor& p)
     addAndMakeVisible(spectrumAnalyzer);
     addAndMakeVisible(bioVisualizer);
 
+    // Add preset browser and connect to DSP manager
+    addAndMakeVisible(presetBrowser);
+    presetBrowser.setDSPManager(&audioProcessor.getAdvancedDSPManager());
+
     // Set initial size (larger for professional plugin)
     setSize (1200, 800);
 
@@ -147,6 +151,7 @@ void EchoelmusicProEditor::resized()
 
     // Create visualization area at bottom (300px height)
     auto visualizationArea = bounds.removeFromBottom(300);
+    visualizationArea.removeFromTop(10); // Spacing from preset browser
 
     // Split visualization area: Spectrum Analyzer (left 60%) + Bio Visualizer (right 40%)
     auto spectrumBounds = visualizationArea.removeFromLeft(static_cast<int>(visualizationArea.getWidth() * 0.6f));
@@ -159,7 +164,9 @@ void EchoelmusicProEditor::resized()
     spectrumAnalyzer.setBounds(spectrumBounds);
     bioVisualizer.setBounds(bioVisualizerBounds);
 
-    // TODO: Use remaining 'bounds' area for PresetBrowserUI when JUCE API compatibility is resolved
+    // Use remaining area for preset browser (main content area)
+    presetBrowser.setBounds(bounds);
+
     // TODO: Add ProcessorRack (could be tabbed view or separate window)
 }
 
