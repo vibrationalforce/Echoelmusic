@@ -407,6 +407,7 @@ target_sources(Echoelmusic
         Sources/Quantum/EchoelGameEngine.cpp            # 🎮 Game engine integration & gamification
         Sources/Quantum/EchoelBioDataAdapters.cpp       # 💓 Hardware bio-sensor integration (Apple Watch, Polar, Muse, Emotiv)
         Sources/Quantum/EchoelNetworkSync.cpp           # 🌐 <20ms global latency sync with Laser Scanner Mode
+        Sources/Network/EchoelDanteAdapter.cpp          # 🎵 Dante audio-over-IP (<1ms latency, AES67 compatible)
 )
 
 # ===========================
