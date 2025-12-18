@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "../BioData/BioReactiveModulator.h"
+#include "../BioData/HRVProcessor.h"
 #include "../Hardware/OSCManager.h"
 
 namespace Echoelmusic {
@@ -20,11 +21,16 @@ namespace Echoelmusic {
  * - Any OSC-capable software
  *
  * OSC Address Space:
- * /echoelmusic/bio/hrv          [float 0-1]     Heart Rate Variability
+ * /echoelmusic/bio/hrv          [float 0-1]     Heart Rate Variability (normalized)
  * /echoelmusic/bio/coherence    [float 0-1]     HeartMath Coherence
  * /echoelmusic/bio/heartrate    [float 40-200]  Heart Rate BPM
  * /echoelmusic/bio/stress       [float 0-1]     Stress Index
  * /echoelmusic/bio/breathing    [float 0-1]     Breathing Rate (normalized)
+ * /echoelmusic/bio/sdnn         [float ms]      Standard Deviation of NN intervals
+ * /echoelmusic/bio/rmssd        [float ms]      Root Mean Square of Successive Differences
+ * /echoelmusic/bio/lfpower      [float]         Low Frequency Power (0.04-0.15 Hz)
+ * /echoelmusic/bio/hfpower      [float]         High Frequency Power (0.15-0.4 Hz)
+ * /echoelmusic/bio/lfhf         [float]         LF/HF Ratio (autonomic balance)
  *
  * /echoelmusic/mod/filter       [float 20-20000] Filter Cutoff Hz
  * /echoelmusic/mod/reverb       [float 0-1]      Reverb Mix
@@ -118,6 +124,33 @@ public:
     void sendBioData(const BioDataInput::BioDataSample& sample)
     {
         sendBioData(sample.hrv, sample.coherence, sample.heartRate, sample.stressIndex);
+    }
+
+    /**
+     * @brief Send complete HRV metrics (including advanced time/frequency domain)
+     * @param metrics HRVMetrics from HRVProcessor
+     */
+    void sendHRVMetrics(const HRVProcessor::HRVMetrics& metrics)
+    {
+        if (!connected || !config.sendBioData)
+            return;
+
+        juce::String prefix = config.addressPrefix + "/bio/";
+
+        // Basic metrics
+        oscSender->send(juce::OSCMessage(juce::OSCAddressPattern(prefix + "hrv"), metrics.hrv));
+        oscSender->send(juce::OSCMessage(juce::OSCAddressPattern(prefix + "coherence"), metrics.coherence));
+        oscSender->send(juce::OSCMessage(juce::OSCAddressPattern(prefix + "heartrate"), metrics.heartRate));
+        oscSender->send(juce::OSCMessage(juce::OSCAddressPattern(prefix + "stress"), metrics.stressIndex));
+
+        // Time-domain metrics (ms)
+        oscSender->send(juce::OSCMessage(juce::OSCAddressPattern(prefix + "sdnn"), metrics.sdnn));
+        oscSender->send(juce::OSCMessage(juce::OSCAddressPattern(prefix + "rmssd"), metrics.rmssd));
+
+        // Frequency-domain metrics
+        oscSender->send(juce::OSCMessage(juce::OSCAddressPattern(prefix + "lfpower"), metrics.lfPower));
+        oscSender->send(juce::OSCMessage(juce::OSCAddressPattern(prefix + "hfpower"), metrics.hfPower));
+        oscSender->send(juce::OSCMessage(juce::OSCAddressPattern(prefix + "lfhf"), metrics.lfhfRatio));
     }
 
     //==========================================================================
