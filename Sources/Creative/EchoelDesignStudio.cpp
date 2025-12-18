@@ -16,6 +16,62 @@ EchoelDesignStudio::EchoelDesignStudio()
 }
 
 //==============================================================================
+// ERROR HANDLING IMPLEMENTATION
+//==============================================================================
+
+juce::String EchoelDesignStudio::getErrorMessage(ErrorCode code)
+{
+    switch (code)
+    {
+        case ErrorCode::Success:
+            return "Success";
+
+        // File errors
+        case ErrorCode::FileNotFound:
+            return "File not found";
+        case ErrorCode::FileTooBig:
+            return "File size exceeds maximum allowed (" + juce::String(MAX_FILE_SIZE_BYTES / (1024*1024)) + " MB)";
+        case ErrorCode::FileEmpty:
+            return "File is empty";
+        case ErrorCode::FileReadError:
+            return "Failed to read file";
+        case ErrorCode::FileWriteError:
+            return "Failed to write file";
+
+        // Resource errors
+        case ErrorCode::AssetLibraryFull:
+            return "Asset library full (max: " + juce::String(MAX_ASSETS) + " assets)";
+        case ErrorCode::ElementLimitReached:
+            return "Element limit reached (max: " + juce::String(MAX_ELEMENTS) + " elements per project)";
+        case ErrorCode::TemplateCacheFull:
+            return "Template cache full (max: " + juce::String(MAX_TEMPLATES) + " templates)";
+
+        // Validation errors
+        case ErrorCode::ImageTooLarge:
+            return "Image dimensions exceed maximum (" + juce::String(MAX_IMAGE_WIDTH) + "x" + juce::String(MAX_IMAGE_HEIGHT) + ")";
+        case ErrorCode::TooManyPixels:
+            return "Image has too many pixels (max: " + juce::String(MAX_PIXELS) + " pixels)";
+        case ErrorCode::OutOfMemory:
+            return "Out of memory - image requires too much RAM";
+        case ErrorCode::InvalidDimensions:
+            return "Invalid image dimensions";
+
+        // Project errors
+        case ErrorCode::ProjectNotFound:
+            return "Project not found";
+        case ErrorCode::ProjectCorrupted:
+            return "Project file is corrupted";
+        case ErrorCode::TemplateNotFound:
+            return "Template not found";
+
+        // Unknown
+        case ErrorCode::UnknownError:
+        default:
+            return "Unknown error occurred";
+    }
+}
+
+//==============================================================================
 // TEMPLATE SYSTEM IMPLEMENTATION
 //==============================================================================
 
@@ -99,6 +155,8 @@ juce::String EchoelDesignStudio::createProjectFromTemplate(const juce::String& t
     // Copy elements from template
     for (const auto* element : foundTemplate->elements)
     {
+        // TODO: Implement element cloning mechanism
+        juce::ignoreUnused(element);
         // Clone element (simplified - would need proper cloning in production)
         // currentProject->elements.push_back(element->clone());
     }
@@ -130,10 +188,10 @@ juce::String EchoelDesignStudio::createProject(const juce::String& name, Templat
 
 bool EchoelDesignStudio::openProject(const juce::String& projectID)
 {
-    // Load project from file system
-    // Implementation would load JSON/XML project file
-
+    // TODO: Implement project loading from file system (JSON/XML)
     DBG("Opening project: " + projectID);
+    juce::ignoreUnused(projectID);
+
     return true;
 }
 
@@ -264,7 +322,8 @@ void EchoelDesignStudio::ImageElement::render(juce::Graphics& g) const
     juce::Image processedImage = image.createCopy();
 
     // Apply brightness/contrast/saturation
-    if (brightness != 0.0f || contrast != 0.0f || saturation != 0.0f)
+    constexpr float epsilon = 0.0001f;
+    if (std::abs(brightness) > epsilon || std::abs(contrast) > epsilon || std::abs(saturation) > epsilon)
     {
         // 🔒 SECURITY: Prevent DoS on extremely large images during filter processing
         const int pixelCount = processedImage.getWidth() * processedImage.getHeight();
@@ -421,6 +480,36 @@ void EchoelDesignStudio::ShapeElement::render(juce::Graphics& g) const
             break;
         }
 
+        case ShapeType::Line:
+        {
+            path.startNewSubPath(bounds.getX(), bounds.getCentreY());
+            path.lineTo(bounds.getRight(), bounds.getCentreY());
+            break;
+        }
+
+        case ShapeType::Arrow:
+        {
+            // Simple arrow: line with triangle head
+            float headSize = 20.0f;
+            path.startNewSubPath(bounds.getX(), bounds.getCentreY());
+            path.lineTo(bounds.getRight() - headSize, bounds.getCentreY());
+            // Arrow head
+            path.lineTo(bounds.getRight() - headSize, bounds.getCentreY() - headSize / 2);
+            path.lineTo(bounds.getRight(), bounds.getCentreY());
+            path.lineTo(bounds.getRight() - headSize, bounds.getCentreY() + headSize / 2);
+            path.lineTo(bounds.getRight() - headSize, bounds.getCentreY());
+            break;
+        }
+
+        case ShapeType::Curve:
+        {
+            // Simple quadratic curve
+            path.startNewSubPath(bounds.getX(), bounds.getBottom());
+            path.quadraticTo(bounds.getCentreX(), bounds.getY(),
+                           bounds.getRight(), bounds.getBottom());
+            break;
+        }
+
         case ShapeType::Custom:
             path = customPath;
             break;
@@ -538,7 +627,7 @@ void EchoelDesignStudio::AudioSpectrumElement::render(juce::Graphics& g) const
 
     for (int i = 0; i < numBands && i < static_cast<int>(spectrumData.size()); ++i)
     {
-        float magnitude = spectrumData[i];
+        float magnitude = spectrumData[static_cast<size_t>(i)];
         float barHeight = magnitude * height;
 
         float x = bounds.getX() + i * (barWidth + barSpacing);
@@ -628,7 +717,10 @@ std::vector<juce::Colour> EchoelDesignStudio::generatePaletteFromAudio(const juc
     // Mid frequencies → Greens/Yellows
     // High frequencies → Oranges/Reds
 
-    // Simplified implementation
+    // TODO: Implement FFT analysis of audio buffer
+    juce::ignoreUnused(audio);
+
+    // Simplified implementation (random palette for now)
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> dis(0.0f, 1.0f);
@@ -663,6 +755,9 @@ void EchoelDesignStudio::autoLayout()
     float goldenY = height / phi;
 
     DBG("Auto-layout: Golden ratio at x=" + juce::String(goldenX) + ", y=" + juce::String(goldenY));
+
+    // TODO: Implement golden ratio positioning algorithm
+    juce::ignoreUnused(goldenX, goldenY);
 
     // Position elements at golden ratio points
     // Implementation would reposition all elements
@@ -739,7 +834,8 @@ void EchoelDesignStudio::applyBrandKit()
     // Apply brand colors to all elements
     for (auto& element : currentProject->elements)
     {
-        // Apply brand colors based on element type
+        // TODO: Implement brand color application based on element type
+        juce::ignoreUnused(element);
         // Implementation would update colors
     }
 
@@ -907,7 +1003,7 @@ std::vector<juce::Colour> EchoelDesignStudio::extractColorsFromSpectrum(const st
         float t = i / static_cast<float>(numColors - 1);
 
         // Sample spectrum at different points
-        int index = static_cast<int>(t * (spectrum.size() - 1));
+        size_t index = static_cast<size_t>(t * (spectrum.size() - 1));
         float magnitude = spectrum[index];
 
         // Map to hue (0.0 = red, 0.66 = blue)
@@ -1005,7 +1101,7 @@ juce::Image EchoelDesignStudio::renderDesign(int width, int height) const
     }
 
     // 🔒 SECURITY: Check integer overflow and total pixel count
-    const uint64_t totalPixels = static_cast<uint64_t>(width) * height;
+    const uint64_t totalPixels = static_cast<uint64_t>(width) * static_cast<uint64_t>(height);
     if (totalPixels > MAX_PIXELS)
     {
         DBG("EchoelDesignStudio: Image rejected - too many pixels ("
@@ -1140,6 +1236,9 @@ juce::String EchoelDesignStudio::shareDesign(const juce::String& projectID)
 void EchoelDesignStudio::addComment(const juce::Point<float>& position, const juce::String& comment)
 {
     DBG("Comment added at (" + juce::String(position.x) + ", " + juce::String(position.y) + "): " + comment);
+
+    // TODO: Implement comment storage system
+    juce::ignoreUnused(position, comment);
 }
 
 //==============================================================================

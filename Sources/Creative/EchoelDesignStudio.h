@@ -81,12 +81,63 @@ public:
     // SECURITY CONSTANTS (DoS Protection, Resource Limits)
     //==========================================================================
 
+    // Image constraints (prevent DoS attacks via resource exhaustion)
     static constexpr int MAX_IMAGE_WIDTH = 10000;       // 10K pixels max width
     static constexpr int MAX_IMAGE_HEIGHT = 10000;      // 10K pixels max height
     static constexpr int MAX_PIXELS = 25000000;         // 25 megapixels (5000x5000)
-    static constexpr int64_t MAX_FILE_SIZE_BYTES = 100LL * 1024 * 1024;  // 100 MB
+    static constexpr int64_t MAX_FILE_SIZE_BYTES = 100LL * 1024 * 1024;  // 100 MB per file
+
+    // Library constraints (prevent unbounded growth)
     static constexpr size_t MAX_ASSETS = 10000;         // Asset library limit
-    static constexpr size_t MAX_ELEMENTS = 1000;        // Elements per project
+    static constexpr size_t MAX_ELEMENTS = 1000;        // Elements per project limit
+    static constexpr size_t MAX_TEMPLATES = 500;        // Template cache limit
+
+    // Performance tuning
+    static constexpr int TARGET_FPS = 60;               // Target frame rate
+    static constexpr int GPU_THRESHOLD_PIXELS = 4000000; // 4MP (2000x2000) - switch to GPU
+
+    //==========================================================================
+    // ERROR HANDLING (Professional Error Management)
+    //==========================================================================
+
+    /**
+     * Error codes for professional error handling and logging
+     */
+    enum class ErrorCode
+    {
+        Success = 0,
+
+        // File errors (1xx)
+        FileNotFound = 100,
+        FileTooBig = 101,
+        FileEmpty = 102,
+        FileReadError = 103,
+        FileWriteError = 104,
+
+        // Resource errors (2xx)
+        AssetLibraryFull = 200,
+        ElementLimitReached = 201,
+        TemplateCacheFull = 202,
+
+        // Validation errors (3xx)
+        ImageTooLarge = 300,
+        TooManyPixels = 301,
+        OutOfMemory = 302,
+        InvalidDimensions = 303,
+
+        // Project errors (4xx)
+        ProjectNotFound = 400,
+        ProjectCorrupted = 401,
+        TemplateNotFound = 402,
+
+        // Unknown/Other
+        UnknownError = 999
+    };
+
+    /**
+     * Convert error code to human-readable message
+     */
+    static juce::String getErrorMessage(ErrorCode code);
 
     //==========================================================================
     // TEMPLATE SYSTEM
