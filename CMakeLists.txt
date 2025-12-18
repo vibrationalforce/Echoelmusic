@@ -260,6 +260,12 @@ target_sources(Echoelmusic
         # UI - Main Window (NEW! 2025-11-12) ✅ TESTED
         Sources/UI/MainWindow.cpp
 
+        # =====================================================================
+        # SECURITY INFRASTRUCTURE (NEW! 2025-12-18) 🔒✅
+        # =====================================================================
+        Sources/Security/UserAuthManager.cpp        # ✅ JWT authentication & session management
+        Sources/Security/EncryptionManager.cpp      # ✅ AES-256-GCM encryption & key derivation
+
         # Advanced DSP Manager UI Suite (NEW! 2025-11-17) ✅ JUCE 7 Compatible
         Sources/UI/AdvancedDSPManagerUI.cpp      # ✅ Complete DSP management interface
         Sources/UI/PresetBrowserUI.cpp           # ✅ Preset management browser
