@@ -7,11 +7,13 @@
 ## Overview
 
 Echoelmusic provides comprehensive OSC control for all major subsystems:
-- **Biofeedback** - Heart rate, HRV, coherence, stress metrics
-- **Session Management** - Save/load projects, tempo, project info
-- **Visual Engine** - Layers, generators, effects, rendering
-- **System Monitoring** - Health checks, metrics, platform info
-- **Audio Modulation** - Filter, reverb, compression, delay, distortion
+- **Biofeedback** - Heart rate, HRV, coherence, stress metrics (SDNN, RMSSD, LF/HF)
+- **Session Management** - Save/load projects, tempo, project info, autosave
+- **Visual Engine** - Layers, generators, effects, rendering, recording
+- **System Monitoring** - Health checks, Kubernetes probes, Prometheus metrics
+- **Audio Engine** - Transport control, tempo, recording, track management
+- **Audio Modulation** - Filter, reverb, compression, delay, distortion, LFO
+- **DMX Lighting** - Scene management, Art-Net, fixture control
 - **Triggers** - Heartbeat, breath, beat detection
 
 ## Default Configuration
