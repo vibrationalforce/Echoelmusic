@@ -266,9 +266,20 @@ void EchoelDesignStudio::ImageElement::render(juce::Graphics& g) const
     // Apply brightness/contrast/saturation
     if (brightness != 0.0f || contrast != 0.0f || saturation != 0.0f)
     {
-        juce::Image::BitmapData data(processedImage, juce::Image::BitmapData::readWrite);
+        // 🔒 SECURITY: Prevent DoS on extremely large images during filter processing
+        const int pixelCount = processedImage.getWidth() * processedImage.getHeight();
+        if (pixelCount > MAX_PIXELS)
+        {
+            DBG("EchoelDesignStudio: Skipping filter - image too large for CPU processing ("
+                + juce::String(pixelCount) + " pixels)");
+            DBG("  Use GPU shaders for images > " + juce::String(MAX_PIXELS) + " pixels");
+            // Return unfiltered image (safe fallback)
+        }
+        else
+        {
+            juce::Image::BitmapData data(processedImage, juce::Image::BitmapData::readWrite);
 
-        for (int y = 0; y < processedImage.getHeight(); ++y)
+            for (int y = 0; y < processedImage.getHeight(); ++y)
         {
             for (int x = 0; x < processedImage.getWidth(); ++x)
             {
@@ -284,6 +295,7 @@ void EchoelDesignStudio::ImageElement::render(juce::Graphics& g) const
                 processedImage.setPixelAt(x, y, newColor);
             }
         }
+        }  // End else block (security check)
     }
 
     // Draw image
@@ -769,6 +781,36 @@ std::vector<EchoelDesignStudio::Asset> EchoelDesignStudio::searchAssets(const ju
 
 juce::String EchoelDesignStudio::importAsset(const juce::File& file, AssetType type)
 {
+    // 🔒 SECURITY: Validate asset library size (prevent unbounded growth)
+    if (assetLibrary.size() >= MAX_ASSETS)
+    {
+        DBG("EchoelDesignStudio: Asset import rejected - library full ("
+            + juce::String(assetLibrary.size()) + " / " + juce::String(MAX_ASSETS) + ")");
+        DBG("  Please remove unused assets before importing new ones");
+        return {};  // Return empty string on failure
+    }
+
+    // 🔒 SECURITY: Validate file exists and size
+    if (!file.existsAsFile())
+    {
+        DBG("EchoelDesignStudio: Asset import rejected - file does not exist: " + file.getFullPathName());
+        return {};
+    }
+
+    const int64_t fileSize = file.getSize();
+    if (fileSize > MAX_FILE_SIZE_BYTES)
+    {
+        DBG("EchoelDesignStudio: Asset import rejected - file too large ("
+            + juce::String(fileSize / (1024*1024)) + " MB > " + juce::String(MAX_FILE_SIZE_BYTES / (1024*1024)) + " MB)");
+        return {};
+    }
+
+    if (fileSize <= 0)
+    {
+        DBG("EchoelDesignStudio: Asset import rejected - file is empty");
+        return {};
+    }
+
     Asset asset;
     asset.id = juce::Uuid().toString();
     asset.name = file.getFileNameWithoutExtension();
@@ -778,7 +820,7 @@ juce::String EchoelDesignStudio::importAsset(const juce::File& file, AssetType t
 
     assetLibrary.push_back(asset);
 
-    DBG("Imported asset: " + asset.name);
+    DBG("Imported asset: " + asset.name + " (" + juce::String(fileSize / 1024) + " KB)");
 
     return asset.id;
 }
@@ -952,6 +994,34 @@ juce::Image EchoelDesignStudio::renderDesign(int width, int height) const
         width = currentProject->size.width;
     if (height <= 0)
         height = currentProject->size.height;
+
+    // 🔒 SECURITY: Validate image dimensions (prevent DoS)
+    if (width > MAX_IMAGE_WIDTH || height > MAX_IMAGE_HEIGHT)
+    {
+        DBG("EchoelDesignStudio: Image size rejected - exceeds limits ("
+            + juce::String(width) + "x" + juce::String(height) + ")");
+        DBG("  Max allowed: " + juce::String(MAX_IMAGE_WIDTH) + "x" + juce::String(MAX_IMAGE_HEIGHT));
+        return juce::Image();
+    }
+
+    // 🔒 SECURITY: Check integer overflow and total pixel count
+    const uint64_t totalPixels = static_cast<uint64_t>(width) * height;
+    if (totalPixels > MAX_PIXELS)
+    {
+        DBG("EchoelDesignStudio: Image rejected - too many pixels ("
+            + juce::String(static_cast<int64_t>(totalPixels)) + " > " + juce::String(MAX_PIXELS) + ")");
+        return juce::Image();
+    }
+
+    // 🔒 SECURITY: Check memory allocation size (width * height * 4 bytes)
+    const uint64_t totalBytes = totalPixels * 4;  // ARGB = 4 bytes per pixel
+    const uint64_t MAX_MEMORY_BYTES = 4ULL * 1024 * 1024 * 1024;  // 4 GB
+    if (totalBytes > MAX_MEMORY_BYTES)
+    {
+        DBG("EchoelDesignStudio: Image rejected - requires too much memory ("
+            + juce::String(static_cast<int64_t>(totalBytes / (1024*1024))) + " MB)");
+        return juce::Image();
+    }
 
     juce::Image image(juce::Image::ARGB, width, height, true);
     juce::Graphics g(image);

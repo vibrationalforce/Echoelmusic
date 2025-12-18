@@ -78,6 +78,17 @@ class EchoelDesignStudio
 {
 public:
     //==========================================================================
+    // SECURITY CONSTANTS (DoS Protection, Resource Limits)
+    //==========================================================================
+
+    static constexpr int MAX_IMAGE_WIDTH = 10000;       // 10K pixels max width
+    static constexpr int MAX_IMAGE_HEIGHT = 10000;      // 10K pixels max height
+    static constexpr int MAX_PIXELS = 25000000;         // 25 megapixels (5000x5000)
+    static constexpr int64_t MAX_FILE_SIZE_BYTES = 100LL * 1024 * 1024;  // 100 MB
+    static constexpr size_t MAX_ASSETS = 10000;         // Asset library limit
+    static constexpr size_t MAX_ELEMENTS = 1000;        // Elements per project
+
+    //==========================================================================
     // TEMPLATE SYSTEM
     //==========================================================================
 
