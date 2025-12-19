@@ -183,8 +183,8 @@ public:
 
     void setFFTData(const float* magnitudes, int numBins, float newSampleRate)
     {
-        if (numBins != fftMagnitudes.size())
-            fftMagnitudes.resize(numBins);
+        if (static_cast<size_t>(numBins) != fftMagnitudes.size())
+            fftMagnitudes.resize(static_cast<size_t>(numBins));
 
         std::copy(magnitudes, magnitudes + numBins, fftMagnitudes.begin());
         sampleRate = newSampleRate;
@@ -213,9 +213,9 @@ public:
         juce::Path spectrumPath;
         spectrumPath.startNewSubPath(bounds.getX(), bounds.getBottom());
 
-        for (int i = 0; i < fftMagnitudes.size(); ++i)
+        for (size_t i = 0; i < fftMagnitudes.size(); ++i)
         {
-            float frequency = (i * sampleRate) / (fftMagnitudes.size() * 2);
+            float frequency = (static_cast<float>(i) * sampleRate) / (static_cast<float>(fftMagnitudes.size()) * 2.0f);
             float x = bounds.getX() + frequencyToX(frequency, bounds.getWidth());
             float magnitude = juce::jlimit(0.0f, 1.0f, fftMagnitudes[i]);
             float y = bounds.getBottom() - (magnitude * bounds.getHeight());

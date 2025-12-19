@@ -340,8 +340,8 @@ public:
     /**
      * Start/Join sync session
      */
-    bool startSession(const juce::String& sessionID, bool isHost);
-    bool joinSession(const juce::String& sessionID);
+    bool startSession(const juce::String& sessionId, bool isHost);
+    bool joinSession(const juce::String& sessionId);
     void leaveSession();
 
     /**

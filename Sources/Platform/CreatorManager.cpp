@@ -510,7 +510,7 @@ std::vector<CreatorManager::CreatorProfile> CreatorManager::findSimilarCreators(
         if (nicheOverlap > 0)
             similar.push_back(candidate);
 
-        if (similar.size() >= limit)
+        if (similar.size() >= static_cast<size_t>(limit))
             break;
     }
 

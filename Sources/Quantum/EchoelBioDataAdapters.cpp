@@ -230,10 +230,10 @@ std::vector<juce::String> EchoelPolarH10Adapter::getAvailableDevices() const
     return discoveredDevices;
 }
 
-bool EchoelPolarH10Adapter::connectToDevice(const juce::String& deviceId)
+bool EchoelPolarH10Adapter::connectToDevice(const juce::String& deviceID)
 {
-    this->deviceId = deviceId;
-    deviceName = deviceId;
+    this->deviceId = deviceID;
+    deviceName = deviceID;
 
     // Bluetooth connection
     // Subscribe to Heart Rate Measurement characteristic (UUID: 0x2A37)

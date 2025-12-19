@@ -83,6 +83,7 @@ public:
     //==========================================================================
 
     bool keyPressed(const juce::KeyPress& key, Component* originatingComponent) override;
+    using Component::keyPressed;  // Expose base class version
 
 private:
     friend class UnifiedWorkspaceView;  // Allow access to private TrackView

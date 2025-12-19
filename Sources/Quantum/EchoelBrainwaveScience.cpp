@@ -55,43 +55,43 @@ EchoelBrainwaveScience::getResearchProtocol(TherapeuticTarget target)
 //==============================================================================
 
 EchoelBrainwaveScience::HRVMetrics
-EchoelBrainwaveScience::calculateHRV(const std::vector<float>& rrIntervals)
+EchoelBrainwaveScience::calculateHRV(const std::vector<float>& rrIntervalsData)
 {
     HRVMetrics metrics;
 
-    if (rrIntervals.size() < 2)
+    if (rrIntervalsData.size() < 2)
         return metrics;
 
     // Calculate SDNN (standard deviation)
     float mean = 0.0f;
-    for (float rr : rrIntervals)
+    for (float rr : rrIntervalsData)
         mean += rr;
-    mean /= static_cast<float>(rrIntervals.size());
+    mean /= static_cast<float>(rrIntervalsData.size());
 
     float variance = 0.0f;
-    for (float rr : rrIntervals)
+    for (float rr : rrIntervalsData)
         variance += (rr - mean) * (rr - mean);
-    variance /= static_cast<float>(rrIntervals.size());
+    variance /= static_cast<float>(rrIntervalsData.size());
 
     metrics.SDNN = std::sqrt(variance);
 
     // Calculate RMSSD
     float sumSquaredDiffs = 0.0f;
-    for (size_t i = 1; i < rrIntervals.size(); ++i)
+    for (size_t i = 1; i < rrIntervalsData.size(); ++i)
     {
-        float diff = rrIntervals[i] - rrIntervals[i - 1];
+        float diff = rrIntervalsData[i] - rrIntervalsData[i - 1];
         sumSquaredDiffs += diff * diff;
     }
-    metrics.RMSSD = std::sqrt(sumSquaredDiffs / static_cast<float>(rrIntervals.size() - 1));
+    metrics.RMSSD = std::sqrt(sumSquaredDiffs / static_cast<float>(rrIntervalsData.size() - 1));
 
     // Calculate pNN50
     int count50 = 0;
-    for (size_t i = 1; i < rrIntervals.size(); ++i)
+    for (size_t i = 1; i < rrIntervalsData.size(); ++i)
     {
-        if (std::abs(rrIntervals[i] - rrIntervals[i - 1]) > 50.0f)
+        if (std::abs(rrIntervalsData[i] - rrIntervalsData[i - 1]) > 50.0f)
             count50++;
     }
-    metrics.pNN50 = (static_cast<float>(count50) / static_cast<float>(rrIntervals.size() - 1)) * 100.0f;
+    metrics.pNN50 = (static_cast<float>(count50) / static_cast<float>(rrIntervalsData.size() - 1)) * 100.0f;
 
     // Estimate coherence (simplified)
     metrics.coherence = juce::jlimit(0.0f, 1.0f, metrics.SDNN / 100.0f);

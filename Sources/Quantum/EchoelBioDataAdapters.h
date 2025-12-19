@@ -140,7 +140,7 @@ public:
      */
     void scanForDevices();
     std::vector<juce::String> getAvailableDevices() const;
-    bool connectToDevice(const juce::String& deviceId);
+    bool connectToDevice(const juce::String& deviceID);
 
 private:
     bool connected = false;

@@ -292,7 +292,7 @@ private:
         // Simple detrending: subtract moving average
         int windowSize = 30;  // ~1 second at 30 FPS
 
-        for (int i = 0; i < signal.size(); ++i)
+        for (size_t i = 0; i < signal.size(); ++i)
         {
             float sum = 0.0f;
             int count = 0;
@@ -322,7 +322,7 @@ private:
         std::vector<float> filtered(signal.size());
         int kernelSize = 5;
 
-        for (int i = 0; i < signal.size(); ++i)
+        for (size_t i = 0; i < signal.size(); ++i)
         {
             float sum = 0.0f;
             int count = 0;
@@ -330,7 +330,7 @@ private:
             for (int j = -kernelSize / 2; j <= kernelSize / 2; ++j)
             {
                 int idx = i + j;
-                if (idx >= 0 && idx < signal.size())
+                if (idx >= 0 && static_cast<size_t>(idx) < signal.size())
                 {
                     sum += signal[idx];
                     count++;
@@ -357,7 +357,7 @@ private:
         int minPeakDistance = 15;  // Minimum 15 samples between peaks (~0.5s at 30fps)
         int lastPeak = -minPeakDistance;
 
-        for (int i = 1; i < signal.size() - 1; ++i)
+        for (size_t i = 1; i < signal.size() - 1; ++i)
         {
             if (signal[i] > signal[i-1] &&
                 signal[i] > signal[i+1] &&
@@ -385,7 +385,7 @@ private:
         rrIntervals.clear();
         float fps = 30.0f;  // Assumed frame rate
 
-        for (int i = 1; i < peakIndices.size(); ++i)
+        for (size_t i = 1; i < peakIndices.size(); ++i)
         {
             int peakDistance = peakIndices[i] - peakIndices[i-1];
             float rrMs = (peakDistance / fps) * 1000.0f;
@@ -442,7 +442,7 @@ private:
         if (rrIntervals.size() >= 2)
         {
             float sumSquaredDiffs = 0.0f;
-            for (int i = 1; i < rrIntervals.size(); ++i)
+            for (size_t i = 1; i < rrIntervals.size(); ++i)
             {
                 float diff = rrIntervals[i] - rrIntervals[i-1];
                 sumSquaredDiffs += diff * diff;

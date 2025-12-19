@@ -27,12 +27,12 @@ EchoelNetworkSync::~EchoelNetworkSync()
 // SESSION MANAGEMENT
 //==============================================================================
 
-bool EchoelNetworkSync::startSession(const juce::String& sessionID, bool isHost)
+bool EchoelNetworkSync::startSession(const juce::String& sessionId, bool isHost)
 {
-    this->sessionID = sessionID;
+    this->sessionID = sessionId;
     this->host = isHost;
 
-    DBG("EchoelNetworkSync: " + juce::String(isHost ? "Starting" : "Joining") + " session: " + sessionID);
+    DBG("EchoelNetworkSync: " + juce::String(isHost ? "Starting" : "Joining") + " session: " + sessionId);
 
     // Initialize session
     if (isHost)
@@ -50,9 +50,9 @@ bool EchoelNetworkSync::startSession(const juce::String& sessionID, bool isHost)
     return true;
 }
 
-bool EchoelNetworkSync::joinSession(const juce::String& sessionID)
+bool EchoelNetworkSync::joinSession(const juce::String& sessionId)
 {
-    return startSession(sessionID, false);
+    return startSession(sessionId, false);
 }
 
 void EchoelNetworkSync::leaveSession()
@@ -743,6 +743,7 @@ float EchoelNetworkSync::calculateOptimalStretchRatio(const juce::String& nodeID
 
     // Calculate based on buffer fill level and sync state
     const auto& jitterBuffer = it->second.jitterBuffer;
+    (void)jitterBuffer;  // Reserved for future buffer monitoring
 
     // If buffer is too full, speed up slightly (ratio < 1.0)
     // If buffer is too empty, slow down slightly (ratio > 1.0)
