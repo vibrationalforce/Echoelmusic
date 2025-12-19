@@ -199,7 +199,7 @@ void ClipLauncherGrid::setBioData(float hrv, float coherence, float stress)
     updateBioModulation();
 }
 
-void ClipLauncherGrid::updateBioData(const BioFeedbackSystem::UnifiedBioData& bioData)
+void ClipLauncherGrid::updateBioData(const Echoelmusic::BioFeedbackSystem::UnifiedBioData& bioData)
 {
     currentHRV = bioData.hrv;
     currentCoherence = bioData.coherence;

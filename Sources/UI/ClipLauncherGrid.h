@@ -134,7 +134,7 @@ public:
     void setBioData(float hrv, float coherence, float stress);
 
     /** Update bio-data from BioFeedbackSystem */
-    void updateBioData(const BioFeedbackSystem::UnifiedBioData& bioData);
+    void updateBioData(const Echoelmusic::BioFeedbackSystem::UnifiedBioData& bioData);
 
     //==========================================================================
     // BPM & Quantization

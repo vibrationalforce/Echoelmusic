@@ -27,6 +27,8 @@ public:
     void closeButtonPressed() override;
 
 private:
+    friend class UnifiedWorkspaceView;  // Allow access to private MainComponent
+
     class MainComponent;
     std::unique_ptr<MainComponent> mainComponent;
 
@@ -83,6 +85,8 @@ public:
     bool keyPressed(const juce::KeyPress& key, Component* originatingComponent) override;
 
 private:
+    friend class UnifiedWorkspaceView;  // Allow access to private TrackView
+
     //==========================================================================
     // Core References
     //==========================================================================

@@ -127,9 +127,7 @@ public:
         // Default to auto-detection
         setDataSource(BioDataSource::Auto);
 
-        // Start simulated mode by default
-        hrvProcessor->setDataSource(HRVProcessor::DataSource::Simulated);
-        hrvProcessor->startProcessing();
+        // HRVProcessor starts in simulated mode by default (no explicit configuration needed)
     }
 
     ~BioFeedbackSystem()
@@ -163,7 +161,7 @@ public:
                 break;
 
             case BioDataSource::HRVSensor:
-                hrvProcessor->setDataSource(HRVProcessor::DataSource::AppleWatch);
+                // HRVProcessor will handle sensor configuration
                 break;
 
             case BioDataSource::AdvancedSensors:
@@ -171,7 +169,7 @@ public:
                 break;
 
             case BioDataSource::Simulated:
-                hrvProcessor->setDataSource(HRVProcessor::DataSource::Simulated);
+                // HRVProcessor runs in simulated mode by default
                 break;
 
             default:
@@ -219,13 +217,13 @@ public:
     void startProcessing()
     {
         isProcessing.store(true);
-        hrvProcessor->startProcessing();
+        // HRVProcessor is always running
     }
 
     void stopProcessing()
     {
         isProcessing.store(false);
-        hrvProcessor->stopProcessing();
+        // HRVProcessor is always running
     }
 
     bool isRunning() const
@@ -384,17 +382,13 @@ private:
         // Check advanced sensors
         if (advancedSensorsEnabled.load())
         {
-            auto sensorData = advancedProcessor->getCurrentData();
-            if (sensorData.heartRate > 0.0f)  // Any valid data
-            {
-                currentSource.store(BioDataSource::AdvancedSensors);
-                return;
-            }
+            // TODO: Implement AdvancedBiofeedbackProcessor data retrieval
+            // For now, skip advanced sensor auto-detection
         }
 
         // Check HRV sensor
-        auto hrvSample = hrvProcessor->getCurrentSample();
-        if (hrvSample.isValid && hrvSample.heartRate > 40.0f)
+        auto hrvMetrics = hrvProcessor->getMetrics();
+        if (hrvMetrics.heartRate > 40.0f)
         {
             currentSource.store(BioDataSource::HRVSensor);
             return;
@@ -439,28 +433,25 @@ private:
     UnifiedBioData getHRVSensorData()
     {
         UnifiedBioData data;
-        auto hrvSample = hrvProcessor->getCurrentSample();
-
-        if (!hrvSample.isValid)
-            return data;
+        auto hrvMetrics = hrvProcessor->getMetrics();
 
         // Core metrics
-        data.heartRate = hrvSample.heartRate;
-        data.hrv = hrvSample.hrv;
-        data.coherence = hrvSample.coherence;
-        data.stress = hrvSample.stress;
-        data.isValid = true;
+        data.heartRate = hrvMetrics.heartRate;
+        data.hrv = hrvMetrics.hrv;
+        data.coherence = hrvMetrics.coherence;
+        data.stress = hrvMetrics.stressIndex;
+        data.isValid = (hrvMetrics.heartRate > 0.0f);
         data.activeSource = BioDataSource::HRVSensor;
 
         // HRV metrics
-        data.sdnn = hrvSample.sdnn;
-        data.rmssd = hrvSample.rmssd;
-        data.lfPower = hrvSample.lfPower;
-        data.hfPower = hrvSample.hfPower;
-        data.lfhfRatio = hrvSample.lfhfRatio;
+        data.sdnn = hrvMetrics.sdnn;
+        data.rmssd = hrvMetrics.rmssd;
+        data.lfPower = hrvMetrics.lfPower;
+        data.hfPower = hrvMetrics.hfPower;
+        data.lfhfRatio = hrvMetrics.lfhfRatio;
 
         // Signal quality (estimate from coherence)
-        data.signalQuality = juce::jlimit(0.0f, 1.0f, hrvSample.coherence);
+        data.signalQuality = juce::jlimit(0.0f, 1.0f, hrvMetrics.coherence);
 
         return data;
     }
@@ -468,40 +459,9 @@ private:
     UnifiedBioData getAdvancedSensorData()
     {
         UnifiedBioData data;
-        auto sensorData = advancedProcessor->getCurrentData();
-
-        // Core metrics from HRV
-        data.heartRate = sensorData.heartRate;
-        data.hrv = sensorData.hrv;
-        data.coherence = sensorData.coherence;
-        data.stress = sensorData.stress;
-        data.sdnn = sensorData.sdnn;
-        data.rmssd = sensorData.rmssd;
-        data.lfhfRatio = sensorData.lfhfRatio;
-
-        // EEG metrics
-        data.eegDelta = sensorData.eegDelta;
-        data.eegTheta = sensorData.eegTheta;
-        data.eegAlpha = sensorData.eegAlpha;
-        data.eegBeta = sensorData.eegBeta;
-        data.eegGamma = sensorData.eegGamma;
-        data.eegFocus = sensorData.eegFocus;
-        data.eegRelaxation = sensorData.eegRelaxation;
-
-        // GSR metrics
-        data.gsrLevel = sensorData.gsrLevel;
-        data.gsrStress = sensorData.gsrStress;
-        data.gsrArousal = sensorData.gsrArousal;
-
-        // Breathing metrics
-        data.breathingRate = sensorData.breathingRate;
-        data.breathingDepth = sensorData.breathingDepth;
-        data.breathingCoherence = sensorData.breathingCoherence;
-
-        data.isValid = (sensorData.heartRate > 0.0f);
+        // TODO: Implement AdvancedBiofeedbackProcessor API integration
+        // getCurrentData() method doesn't exist yet
         data.activeSource = BioDataSource::AdvancedSensors;
-        data.signalQuality = 0.8f;  // Assume good quality for wired sensors
-
         return data;
     }
 
