@@ -491,7 +491,7 @@ private:
         float mean = calculateMedian(signal);
 
         // SNR approximation
-        float snr = (mean != 0.0f) ? (stdDev / std::abs(mean)) : 0.0f;
+        float snr = (std::abs(mean) > 0.0001f) ? (stdDev / std::abs(mean)) : 0.0f;
 
         // Quality metric (0-1)
         // Higher variance in physiological range = better signal
