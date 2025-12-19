@@ -17,6 +17,7 @@ EchoelAppleWatchAdapter::~EchoelAppleWatchAdapter()
 
 bool EchoelAppleWatchAdapter::connect(const juce::String& config)
 {
+    (void)config;
     // Platform check
     #if JUCE_IOS || JUCE_MAC
 
@@ -115,6 +116,7 @@ void EchoelAppleWatchAdapter::startHRVQuery()
 
 void EchoelAppleWatchAdapter::processHeartRateData(double timestamp, float bpm)
 {
+    (void)bpm;
     // Store timestamp for RR interval calculation
     heartbeatTimestamps.push_back(timestamp);
 
@@ -297,6 +299,7 @@ EchoelMuseAdapter::~EchoelMuseAdapter()
 
 bool EchoelMuseAdapter::connect(const juce::String& config)
 {
+    (void)config;
     // Connect via Bluetooth or Muse Direct API
 
     DBG("EchoelMuseAdapter: Connecting to Muse headband...");
@@ -427,6 +430,7 @@ EchoelEmotivAdapter::~EchoelEmotivAdapter()
 
 bool EchoelEmotivAdapter::connect(const juce::String& config)
 {
+    (void)config;
     // Connect via Emotiv SDK
 
     DBG("EchoelEmotivAdapter: Connecting to Emotiv EPOC+...");
@@ -853,6 +857,7 @@ void EchoelMIDIAdapter::mapCC(int ccNumber, const juce::String& bioParameter)
 
 void EchoelMIDIAdapter::handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message)
 {
+    (void)source;
     if (!streaming)
         return;
 
@@ -919,6 +924,10 @@ std::unique_ptr<IBioDataAdapter> EchoelBioDataAdapterFactory::createAdapter(
 
         case EchoelQuantumCore::BioDataSource::MIDI_CC:
             return std::make_unique<EchoelMIDIAdapter>();
+
+        case EchoelQuantumCore::BioDataSource::NeuroSkyMindWave:
+            // TODO: Implement NeuroSky adapter
+            return nullptr;
 
         default:
             return nullptr;

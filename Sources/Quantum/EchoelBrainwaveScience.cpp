@@ -42,7 +42,17 @@ EchoelBrainwaveScience::getResearchProtocol(TherapeuticTarget target)
             protocol.duration = 900.0f;  // 15 minutes
             break;
 
-        default:
+        case TherapeuticTarget::LightSleep:
+        case TherapeuticTarget::Relaxation:
+        case TherapeuticTarget::AlertFocus:
+        case TherapeuticTarget::HighPerformance:
+        case TherapeuticTarget::ProblemSolving:
+        case TherapeuticTarget::StressReduction:
+        case TherapeuticTarget::AnxietyRelief:
+        case TherapeuticTarget::PainManagement:
+        case TherapeuticTarget::DepressionRelief:
+        case TherapeuticTarget::LucidDreaming:
+            // TODO: Implement research protocols for these targets
             protocol.startFrequency = 10.0f;  // Alpha default
             break;
     }
@@ -138,6 +148,9 @@ void EchoelBrainwaveScience::addHeartbeat(double timestamp)
 EchoelBrainwaveScience::EEGPowers
 EchoelBrainwaveScience::calculateEEGPowers(const std::vector<float>& rawEEG, float sampleRate)
 {
+    (void)rawEEG;
+    (void)sampleRate;
+
     EEGPowers powers;
 
     // TODO: Implement FFT-based spectral analysis
@@ -247,6 +260,8 @@ void EchoelBrainwaveScience::process(juce::AudioBuffer<float>& buffer, double sa
 
 float EchoelBrainwaveScience::generateEntrainmentSignal(float frequency, float phase, EntrainmentProtocol::WaveShape shape)
 {
+    (void)frequency;
+
     switch (shape)
     {
         case EntrainmentProtocol::WaveShape::Sine:
@@ -284,11 +299,16 @@ void EchoelBrainwaveScience::updateSafetyMonitor(double deltaTime)
 
 void EchoelBrainwaveScience::enableResearchDataCollection(bool enable, bool anonymized)
 {
+    (void)anonymized;
+
     collectResearchData = enable;
 }
 
 void EchoelBrainwaveScience::saveResearchData(const ResearchData& data)
 {
+    (void)sampleRate;
+    (void)signal;
+    (void)spectrum;
     if (!collectResearchData)
         return;
 

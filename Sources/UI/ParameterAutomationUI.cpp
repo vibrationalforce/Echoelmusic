@@ -46,6 +46,7 @@ ParameterAutomationUI::ParameterAutomationUI()
     // Wire lane list callbacks
     laneList->onLaneSelected = [this](int laneIndex)
     {
+    (void)laneIndex;
         // Lane selected - could highlight in timeline
     };
     
@@ -95,11 +96,13 @@ ParameterAutomationUI::ParameterAutomationUI()
     // Wire toolbar callbacks
     editToolbar->onSnapToGridChanged = [this](bool enabled)
     {
+    (void)enabled;
         // Update timeline snap setting
     };
     
     editToolbar->onGridDivisionChanged = [this](double division)
     {
+    (void)division;
         // Update timeline grid division
     };
     
@@ -262,7 +265,9 @@ void ParameterAutomationUI::updateAutomation()
                 break;
             }
         }
-        
+
+        (void)automationValue;  // TODO: Apply automation value to parameter
+
         // Apply to DSP manager
         // Example: dspManager->setParameterValue(lane.parameterName, automationValue);
     }
@@ -669,12 +674,14 @@ double ParameterAutomationUI::TimelineEditor::xToBeat(float x) const
 
 float ParameterAutomationUI::TimelineEditor::valueToY(float value, int laneIndex) const
 {
+    (void)laneIndex;
     int laneHeight = currentLanes.empty() ? 0 : getHeight() / static_cast<int>(currentLanes.size());
     return (1.0f - value) * laneHeight;
 }
 
 float ParameterAutomationUI::TimelineEditor::yToValue(float y, int laneIndex) const
 {
+    (void)laneIndex;
     int laneHeight = currentLanes.empty() ? 0 : getHeight() / static_cast<int>(currentLanes.size());
     return 1.0f - (y / laneHeight);
 }

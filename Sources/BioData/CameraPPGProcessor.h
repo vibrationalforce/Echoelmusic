@@ -362,7 +362,7 @@ private:
             if (signal[i] > signal[i-1] &&
                 signal[i] > signal[i+1] &&
                 signal[i] > threshold &&
-                (i - lastPeak) > minPeakDistance)
+                (i - lastPeak) > static_cast<size_t>(minPeakDistance))
             {
                 peaks.push_back(i);
                 lastPeak = i;

@@ -367,6 +367,7 @@ juce::AudioBuffer<float> EchoelNetworkSync::predictFutureAudio(
 
 float EchoelNetworkSync::getPredictionConfidence(const juce::String& nodeID) const
 {
+    (void)nodeID;
     // In production: Calculate based on prediction error history
     return laserScanner.predictionConfidence;
 }
