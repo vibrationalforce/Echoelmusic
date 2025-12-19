@@ -340,8 +340,18 @@ public:
         float hrv = 0.0f;
         float coherence = 0.0f;
         float stressIndex = 0.0f;
+        float stress = 0.5f;  // Alias for stressIndex (0-1)
         double timestamp = 0.0;
         bool isValid = false;
+
+        // HRV time-domain metrics
+        float sdnn = 0.0f;
+        float rmssd = 0.0f;
+
+        // HRV frequency-domain metrics
+        float lfPower = 0.0f;
+        float hfPower = 0.0f;
+        float lfhfRatio = 1.0f;
     };
 
     //==============================================================================
@@ -356,6 +366,10 @@ public:
 
         switch (type)
         {
+            case SourceType::None:
+                // No source selected
+                break;
+
             case SourceType::Simulated:
                 startSimulation();
                 break;
@@ -372,7 +386,12 @@ public:
                 // TODO: Start WebSocket server
                 break;
 
-            default:
+            case SourceType::OSC:
+                // TODO: Initialize OSC listener
+                break;
+
+            case SourceType::Serial:
+                // TODO: Initialize serial port
                 break;
         }
     }

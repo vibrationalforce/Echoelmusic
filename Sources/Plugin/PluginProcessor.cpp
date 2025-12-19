@@ -20,6 +20,7 @@ EchoelmusicAudioProcessor::EchoelmusicAudioProcessor()
     bioReactiveDSP = std::make_unique<BioReactiveDSP>();  // ✅ Ported to JUCE 7
     bioReactiveAudioProcessor = std::make_unique<BioReactiveAudioProcessor>();  // ✅ NEW: Bio-reactive audio (2025-11-13)
     bioFeedbackSystem = std::make_unique<BioFeedbackSystem>();  // ✅ NEW: Bio-feedback (2025-11-13)
+    advancedDSPManager = std::make_unique<AdvancedDSPManager>();  // ✅ NEW: Advanced DSP processors (2025-12-17)
 
     // Initialize spectrum data (lock-free FIFO buffers)
     spectrumDataForUI.fill(0.0f);
@@ -211,6 +212,9 @@ void EchoelmusicAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     if (bioReactiveAudioProcessor)
         bioReactiveAudioProcessor->prepare(sampleRate, samplesPerBlock, 2);  // Stereo
 
+    if (advancedDSPManager)
+        advancedDSPManager->prepare(sampleRate, samplesPerBlock);
+
     // Reset heartbeat timing
     samplesUntilNextBeat = 0;
 }
@@ -274,6 +278,12 @@ void EchoelmusicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         auto bioData = bioFeedbackSystem->getCurrentBioData();
         parameters.getParameter(PARAM_ID_HRV)->setValueNotifyingHost(bioData.hrv);
         parameters.getParameter(PARAM_ID_COHERENCE)->setValueNotifyingHost(bioData.coherence);
+    }
+
+    // Advanced DSP Manager (4 cutting-edge processors)
+    if (advancedDSPManager)
+    {
+        advancedDSPManager->process(buffer);
     }
 
     // Legacy bio-reactive DSP (can be removed later or used as additional layer)

@@ -507,8 +507,8 @@ private:
         return outMin + deviation * (outMax - outMin);
     }
 
-    float mapStress(float gsr, float outMin, float outMax) const {
-        float deviation = (gsr - userProfile.gsrBaseline) * 2.0f;
+    float mapStress(float gsrValue, float outMin, float outMax) const {
+        float deviation = (gsrValue - userProfile.gsrBaseline) * 2.0f;
         deviation = juce::jlimit(0.0f, 1.0f, deviation);
         return outMin + deviation * (outMax - outMin);
     }

@@ -303,9 +303,21 @@ final class MultiPlatformBridge: ObservableObject {
         oscHandler.send(address: "/echoelmusic/flow", value: state.flow)
         oscHandler.send(address: "/echoelmusic/creativity", value: state.creativity)
 
-        // Quantum field
-        oscHandler.send(address: "/echoelmusic/quantum/superposition", value: state.quantumField.superpositionStrength)
-        oscHandler.send(address: "/echoelmusic/quantum/creativity", value: state.quantumField.creativity)
+        // System computational state (evidence-based)
+        oscHandler.send(address: "/echoelmusic/system/coherence", value: state.systemCoherence)
+        oscHandler.send(address: "/echoelmusic/system/generative_complexity", value: state.generativeComplexity)
+
+        // HRV Metrics (Task Force ESC/NASPE 1996 compliant)
+        oscHandler.send(address: "/echoelmusic/hrv/rmssd", value: Float(state.hrvRMSSD))
+        oscHandler.send(address: "/echoelmusic/hrv/sdnn", value: Float(state.hrvSDNN))
+        oscHandler.send(address: "/echoelmusic/hrv/pnn50", value: Float(state.hrvPNN50))
+        oscHandler.send(address: "/echoelmusic/hrv/lf_power", value: Float(state.hrvLF))
+        oscHandler.send(address: "/echoelmusic/hrv/hf_power", value: Float(state.hrvHF))
+        oscHandler.send(address: "/echoelmusic/hrv/lf_hf_ratio", value: Float(state.hrvLFHFRatio))
+        oscHandler.send(address: "/echoelmusic/hrv/coherence", value: Float(state.hrvCoherence))
+
+        // Respiration
+        oscHandler.send(address: "/echoelmusic/resp/rate", value: Float(state.breathingRate))
 
         // Timing
         oscHandler.send(address: "/echoelmusic/beat/phase", value: state.beatPhase)
@@ -318,9 +330,21 @@ final class MultiPlatformBridge: ObservableObject {
             "energy": state.energy,
             "flow": state.flow,
             "creativity": state.creativity,
-            "quantum": [
-                "superposition": state.quantumField.superpositionStrength,
-                "creativity": state.quantumField.creativity
+            "system": [
+                "coherence": state.systemCoherence,
+                "generativeComplexity": state.generativeComplexity
+            ],
+            "hrv": [
+                "rmssd": state.hrvRMSSD,
+                "sdnn": state.hrvSDNN,
+                "pnn50": state.hrvPNN50,
+                "lf": state.hrvLF,
+                "hf": state.hrvHF,
+                "lfhfRatio": state.hrvLFHFRatio,
+                "coherence": state.hrvCoherence
+            ],
+            "respiration": [
+                "rate": state.breathingRate
             ],
             "timing": [
                 "beatPhase": state.beatPhase,

@@ -63,7 +63,7 @@ void SpectralSculptor::learnNoiseProfile(const juce::AudioBuffer<float>& buffer)
         window.multiplyWithWindowingTable(state.fftData.data(), fftSize);
 
         // Forward FFT
-        forwardFFT.perform(state.fftData.data(), reinterpret_cast<float*>(state.freqData.data()), false);
+        forwardFFT.performRealOnlyForwardTransform(state.fftData.data(), true);
 
         // Accumulate magnitude
         for (size_t i = 0; i < noiseProfile.size(); ++i)
@@ -343,8 +343,12 @@ void SpectralSculptor::processFrame(ChannelState& state)
     std::vector<float> windowedData = state.fftData;
     window.multiplyWithWindowingTable(windowedData.data(), fftSize);
 
-    // Forward FFT
-    forwardFFT.perform(windowedData.data(), reinterpret_cast<float*>(state.freqData.data()), false);
+    // Forward FFT (in-place)
+    forwardFFT.performRealOnlyForwardTransform(windowedData.data(), true);
+
+    // Copy complex results to freqData
+    auto* complexData = reinterpret_cast<std::complex<float>*>(windowedData.data());
+    std::copy(complexData, complexData + (fftSize / 2 + 1), state.freqData.begin());
 
     // Process frequency domain based on mode
     switch (currentMode)
@@ -386,7 +390,11 @@ void SpectralSculptor::processFrame(ChannelState& state)
 
     // Inverse FFT
     std::vector<float> timeData(fftSize * 2);
-    inverseFFT.perform(reinterpret_cast<float*>(state.freqData.data()), timeData.data(), true);
+    // Copy complex data to timeData in interleaved format
+    auto* complexTimeData = reinterpret_cast<std::complex<float>*>(timeData.data());
+    std::copy(state.freqData.begin(), state.freqData.begin() + (fftSize / 2 + 1), complexTimeData);
+    // Perform inverse transform in-place
+    inverseFFT.performRealOnlyInverseTransform(timeData.data());
 
     // Apply window again for overlap-add
     window.multiplyWithWindowingTable(timeData.data(), fftSize);
@@ -587,7 +595,9 @@ void SpectralSculptor::updateFFTSize()
 {
     forwardFFT = juce::dsp::FFT(fftOrder);
     inverseFFT = juce::dsp::FFT(fftOrder);
-    window = juce::dsp::WindowingFunction<float>(fftSize, juce::dsp::WindowingFunction<float>::hann);
+    // Reconstruct window in place (copy assignment is deleted)
+    window.~WindowingFunction();
+    new (&window) juce::dsp::WindowingFunction<float>(fftSize, juce::dsp::WindowingFunction<float>::hann);
 
     noiseProfile.resize(fftSize / 2 + 1, 0.0f);
     gateEnvelopes.resize(fftSize / 2 + 1, 1.0f);

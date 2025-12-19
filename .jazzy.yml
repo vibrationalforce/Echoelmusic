@@ -1,0 +1,131 @@
+# Jazzy Configuration for Echoelmusic Swift Documentation
+# Generates beautiful documentation from Swift source code
+
+# Module name
+module: Echoelmusic
+module_version: 1.0.0
+
+# Author information
+author: Echoelmusic Team
+author_url: https://github.com/vibrationalforce/Echoelmusic
+
+# GitHub information
+github_url: https://github.com/vibrationalforce/Echoelmusic
+github_file_prefix: https://github.com/vibrationalforce/Echoelmusic/tree/main
+
+# Documentation title
+title: "Echoelmusic Documentation"
+description: "Bio-Reactive Audio Platform - Swift API Reference"
+
+# Swift version
+swift_version: 5.9
+xcodebuild_arguments:
+  - -scheme
+  - Echoelmusic
+
+# Source files
+source_directory: Sources/Echoelmusic
+exclude:
+  - "Tests/*"
+  - "ThirdParty/*"
+  - "Build/*"
+  - ".build/*"
+
+# Output directory
+output: docs/swift
+clean: true
+
+# Documentation coverage
+min_acl: public
+skip_undocumented: false
+
+# Theme
+theme: fullwidth
+
+# Custom categories
+custom_categories:
+  - name: Audio Engine
+    children:
+      - AudioEngine
+      - MicrophoneManager
+      - RecordingEngine
+      - SampleEngine
+
+  - name: DSP Processing
+    children:
+      - AdvancedDSPEffects
+      - BioReactiveDSP
+      - Compressor
+      - ParametricEQ
+      - StateVariableFilter
+
+  - name: HealthKit Integration
+    children:
+      - HealthKitManager
+      - BioMetrics
+      - HeartRateMonitor
+
+  - name: Preset System
+    children:
+      - Preset
+      - PresetManager
+      - PresetBrowserView
+
+  - name: Visualization
+    children:
+      - VisualizerContainerView
+      - MetalRenderer
+      - ShaderLibrary
+
+  - name: User Interface
+    children:
+      - VaporwaveApp
+      - VaporwavePalace
+      - VaporwaveSessions
+      - BioMetricsView
+      - SpatialAudioControlsView
+
+  - name: Spatial Audio
+    children:
+      - SpatialAudioEngine
+      - ARFaceTrackingManager
+      - HandTrackingManager
+      - HeadTrackingVisualization
+
+  - name: Quality Assurance
+    children:
+      - QualityAssuranceSystem
+
+  - name: Utilities
+    children:
+      - Extensions
+      - Helpers
+      - Constants
+
+# Hide implementation details
+hide_declarations:
+  - internal
+  - private
+  - fileprivate
+
+# Documentation structure
+documentation: "Documentation/*.md"
+
+# README
+readme: README.md
+
+# Generate Dash docset
+docset_platform: ios
+docset_icon: Resources/AppIcon.png
+
+# Additional options
+undocumented_text: "No documentation available"
+build_tool_arguments:
+  - -workspace
+  - Echoelmusic.xcworkspace
+
+# Root URL for documentation
+root_url: https://vibrationalforce.github.io/Echoelmusic/swift/
+
+# Copyright
+copyright: "© 2025 Echoelmusic. All rights reserved."

@@ -16,7 +16,7 @@ DynamicEQ::DynamicEQ()
         bands[i].frequency = frequencies[i];
         bands[i].gain = 0.0f;
         bands[i].q = 1.0f;
-        bands[i].filterType = ParametricEQ::FilterType::Peak;
+        bands[i].filterType = ParametricEQ::Band::Type::Bell;
         bands[i].dynamicMode = DynamicMode::Static;
         bands[i].threshold = -20.0f;
         bands[i].ratio = 3.0f;
@@ -56,10 +56,10 @@ void DynamicEQ::reset()
         state.envelope.fill(0.0f);
         state.gainReduction.fill(0.0f);
 
-        for (auto& fs : state.filterStates)
+        // Reset JUCE filters
+        for (auto& filter : state.filters)
         {
-            fs.x1 = fs.x2 = 0.0f;
-            fs.y1 = fs.y2 = 0.0f;
+            filter.reset();
         }
     }
 
@@ -377,29 +377,19 @@ void DynamicEQ::updateBandCoefficients(int bandIndex)
     state.attackCoeff = std::exp(-1000.0f / (band.attack * static_cast<float>(currentSampleRate)));
     state.releaseCoeff = std::exp(-1000.0f / (band.release * static_cast<float>(currentSampleRate)));
 
-    // Calculate EQ biquad coefficients (using ParametricEQ formulas)
-    const float omega = juce::MathConstants<float>::twoPi * band.frequency / static_cast<float>(currentSampleRate);
-    const float sinOmega = std::sin(omega);
-    const float cosOmega = std::cos(omega);
-    const float alpha = sinOmega / (2.0f * band.q);
-    const float A = std::pow(10.0f, band.gain / 40.0f);
+    // Create JUCE IIR coefficients for peak/bell filter
+    auto coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(
+        currentSampleRate,
+        band.frequency,
+        band.q,
+        juce::Decibels::decibelsToGain(band.gain)
+    );
 
-    float b0, b1, b2, a0, a1, a2;
-
-    // Peak filter (most common for dynamic EQ)
-    b0 = 1.0f + alpha * A;
-    b1 = -2.0f * cosOmega;
-    b2 = 1.0f - alpha * A;
-    a0 = 1.0f + alpha / A;
-    a1 = -2.0f * cosOmega;
-    a2 = 1.0f - alpha / A;
-
-    // Normalize
-    state.eqCoeffs.b0 = b0 / a0;
-    state.eqCoeffs.b1 = b1 / a0;
-    state.eqCoeffs.b2 = b2 / a0;
-    state.eqCoeffs.a1 = a1 / a0;
-    state.eqCoeffs.a2 = a2 / a0;
+    // Apply coefficients to both stereo filters
+    for (auto& filter : state.filters)
+    {
+        *filter.coefficients = *coefficients;
+    }
 }
 
 void DynamicEQ::updateSpectrumData(const juce::AudioBuffer<float>& buffer)

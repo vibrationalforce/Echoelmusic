@@ -339,17 +339,17 @@ final class ComprehensiveTestSuite: XCTestCase {
         XCTAssertGreaterThan(passRate, 0.8, "At least 80% of tests should pass")
     }
 
-    // MARK: - Quantum Intelligence Tests
+    // MARK: - Adaptive Intelligence Tests (Quantum-Inspired)
 
     func testQuantumSimulation() async throws {
-        let quantum = QuantumIntelligenceEngine()
+        let adaptive = AdaptiveIntelligenceEngine()
 
         // Test qubit initialization
-        var qubit = quantum.createQubit()
+        var qubit = adaptive.createQubit()
         XCTAssertNotNil(qubit, "Should create qubit")
 
         // Test Hadamard gate (superposition)
-        qubit = quantum.hadamard(qubit)
+        qubit = adaptive.hadamard(qubit)
         let prob0 = qubit.alpha.magnitude * qubit.alpha.magnitude
         let prob1 = qubit.beta.magnitude * qubit.beta.magnitude
         XCTAssertEqual(prob0 + prob1, 1.0, accuracy: 0.01, "Probabilities should sum to 1")
@@ -360,7 +360,7 @@ final class ComprehensiveTestSuite: XCTestCase {
     }
 
     func testQuantumAnnealing() async throws {
-        let quantum = QuantumIntelligenceEngine()
+        let adaptive = AdaptiveIntelligenceEngine()
 
         // Simple optimization: find minimum of quadratic function
         let energyFunction: ([Float]) -> Float = { params in
@@ -369,7 +369,7 @@ final class ComprehensiveTestSuite: XCTestCase {
             return (x - 2.0) * (x - 2.0)
         }
 
-        let result = await quantum.quantumAnneal(energyFunction: energyFunction, dimensions: 1)
+        let result = await adaptive.quantumAnneal(energyFunction: energyFunction, dimensions: 1)
 
         XCTAssertEqual(result.count, 1, "Should return 1D result")
         XCTAssertEqual(result[0], 2.0, accuracy: 0.5, "Should find minimum near x=2")

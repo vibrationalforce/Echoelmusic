@@ -25,28 +25,52 @@ jobs:
       with:
         swift-version: "5.9"
 
-    - name: Swift Format Check
+    - name: Install Code Quality Tools
       run: |
-        if command -v swift-format &> /dev/null; then
-          swift-format lint --recursive Sources/ Tests/
-        else
-          echo "⚠️  swift-format not installed, skipping"
-        fi
-      continue-on-error: true
+        echo "📦 Installing code quality tools..."
+        # Install SwiftLint
+        brew install swiftlint
+        # Install swift-format
+        brew install swift-format
+        # Install clang-tidy and clang-format
+        brew install llvm
+        # Verify installations
+        swiftlint version
+        swift-format --version
+        /usr/local/opt/llvm/bin/clang-tidy --version
+        /usr/local/opt/llvm/bin/clang-format --version
 
     - name: SwiftLint
       run: |
-        if command -v swiftlint &> /dev/null; then
-          swiftlint --strict
-        else
-          echo "⚠️  SwiftLint not installed, skipping"
-        fi
-      continue-on-error: true
+        echo "🔍 Running SwiftLint..."
+        swiftlint lint --reporter github-actions-logging
+      continue-on-error: false  # BLOCKING
+
+    - name: Swift Format Check
+      run: |
+        echo "🔍 Checking Swift formatting..."
+        swift-format lint --recursive Sources/ Tests/
+      continue-on-error: false  # BLOCKING
+
+    - name: clang-tidy (C++ DSP Code)
+      run: |
+        echo "🔍 Running clang-tidy on C++ DSP code..."
+        find Sources/DSP -name "*.cpp" -exec /usr/local/opt/llvm/bin/clang-tidy {} -- -std=c++17 \; || true
+      continue-on-error: true  # Warning only for now
+
+    - name: clang-format Check (C++ DSP Code)
+      run: |
+        echo "🔍 Checking C++ formatting..."
+        find Sources/DSP Tests/DSPTests -name "*.cpp" -o -name "*.h" | while read file; do
+          /usr/local/opt/llvm/bin/clang-format --dry-run --Werror "$file" || echo "❌ $file needs formatting"
+        done
+      continue-on-error: true  # Warning only for now
 
     - name: Check for TODO/FIXME
       run: |
         echo "🔍 Checking for TODO/FIXME comments..."
         find Sources -name "*.swift" -exec grep -Hn "TODO\|FIXME" {} \; || true
+      continue-on-error: true
 
   # Job 2: Build & Test - iOS
   build-test-ios:
@@ -177,9 +201,9 @@ jobs:
           -enableCodeCoverage YES \
           | xcpretty
 
-  # Job 4: Performance Tests
-  performance-tests:
-    name: Performance & Memory Tests
+  # Job 4: Integration Tests
+  integration-tests:
+    name: Integration Tests
     runs-on: macos-14
     needs: [build-test-ios, build-test-macos]
 
@@ -190,15 +214,61 @@ jobs:
     - name: Setup Xcode
       run: sudo xcode-select -s /Applications/Xcode_15.2.app
 
-    - name: Run Performance Tests
+    - name: Run Integration Tests
       run: |
+        echo "🔗 Running integration test suite..."
         xcodebuild test \
           -scheme Echoelmusic \
           -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
-          -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testAdaptiveQualityAdjustment \
-          -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testMemoryOptimizationCaching \
+          -only-testing:IntegrationTests \
+          -resultBundlePath IntegrationTestResults \
           | xcpretty
-      continue-on-error: true
+      continue-on-error: false  # BLOCKING
+
+    - name: Upload Integration Test Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: integration-test-results
+        path: IntegrationTestResults
+
+  # Job 5: Performance Tests (Swift)
+  performance-tests:
+    name: Performance & Memory Tests
+    runs-on: macos-14
+    needs: [build-test-ios, build-test-macos, integration-tests]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Xcode
+      run: sudo xcode-select -s /Applications/Xcode_15.2.app
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Run Performance Benchmarks
+      run: |
+        echo "📊 Running performance benchmark suite..."
+        xcodebuild test \
+          -scheme Echoelmusic \
+          -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+          -only-testing:EchoelmusicTests/PerformanceBenchmarks \
+          -resultBundlePath PerformanceBenchmarkResults \
+          | tee swift_performance_output.txt \
+          | xcpretty
+      continue-on-error: false
+
+    - name: Extract Performance Metrics
+      if: always()
+      run: |
+        echo "📈 Extracting performance metrics..."
+        # Extract XCTest performance metrics from output
+        grep "measured \[Time, seconds\] average:" swift_performance_output.txt > swift_perf_results.txt || true
+        cat swift_perf_results.txt
 
     - name: Memory Leak Detection
       run: |
@@ -206,11 +276,114 @@ jobs:
         xcodebuild test \
           -scheme Echoelmusic \
           -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+          -only-testing:EchoelmusicTests/PerformanceBenchmarks/testMemoryAllocationOverhead \
           -enableAddressSanitizer YES \
-          | xcpretty || true
+          | xcpretty
+      continue-on-error: false
+
+    - name: Upload Performance Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: swift-performance-results
+        path: |
+          swift_perf_results.txt
+          PerformanceBenchmarkResults
+
+  # Job 6: C++ SIMD Benchmarks
+  cpp-benchmarks:
+    name: C++ SIMD Performance Benchmarks
+    runs-on: macos-14
+    needs: code-quality
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache DSP Test Build
+      uses: actions/cache@v3
+      with:
+        path: Tests/DSPTests/build
+        key: ${{ runner.os }}-dsp-simd-${{ hashFiles('Tests/DSPTests/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-dsp-simd-
+
+    - name: Build DSP Tests (JUCE-free)
+      run: |
+        echo "🔨 Building standalone SIMD benchmarks (no JUCE/IPlug2)..."
+        cd Tests/DSPTests
+        mkdir -p build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_CXX_FLAGS="-O3 -march=native -mavx2 -mfma" \
+              ..
+        make -j$(sysctl -n hw.ncpu)
+
+    - name: Run SIMD Benchmarks
+      run: |
+        echo "⚡ Running SIMD micro-benchmarks..."
+        cd Tests/DSPTests/build
+        ./DSPTests "[performance][simd]" -r compact | tee ../../../cpp_benchmark_output.txt
+
+    - name: Upload C++ Benchmark Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: cpp-benchmark-results
+        path: cpp_benchmark_output.txt
+
+  # Job 7: Performance Validation
+  validate-performance:
+    name: Validate Performance Against Baseline
+    runs-on: ubuntu-latest
+    needs: [performance-tests, cpp-benchmarks]
+    if: always()
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Download Swift Results
+      uses: actions/download-artifact@v3
+      with:
+        name: swift-performance-results
+        path: ./results/swift
       continue-on-error: true
 
-  # Job 5: Legacy Device Compatibility
+    - name: Download C++ Results
+      uses: actions/download-artifact@v3
+      with:
+        name: cpp-benchmark-results
+        path: ./results/cpp
+      continue-on-error: true
+
+    - name: Run Performance Validation
+      run: |
+        echo "🎯 Validating performance against baseline metrics..."
+        python3 Scripts/validate_performance.py \
+          --baseline baseline-performance.json \
+          --swift-results results/swift/swift_perf_results.txt \
+          --cpp-results results/cpp/cpp_benchmark_output.txt \
+          --verbose
+
+    - name: Performance Status
+      if: failure()
+      run: |
+        echo "❌ Performance regression detected!"
+        echo "Review the validation report above for details."
+        exit 1
+
+  # Job 8: Legacy Device Compatibility
   legacy-device-tests:
     name: Legacy Device Compatibility
     runs-on: macos-14
@@ -236,7 +409,7 @@ jobs:
           -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testLegacyDeviceDetection \
           | xcpretty
 
-  # Job 6: Security Scan
+  # Job 9: Security Scan
   security-scan:
     name: Security Vulnerability Scan
     runs-on: macos-14
@@ -245,19 +418,46 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Run Security Scan
+    - name: Security Pattern Scan
       run: |
-        echo "🔒 Running security scan..."
-        # Check for common security issues
-        find Sources -name "*.swift" -exec grep -Hn "TODO.*security\|FIXME.*security" {} \; || true
-        echo "✅ Security scan completed"
-      continue-on-error: true
+        echo "🔒 Scanning for security vulnerabilities..."
 
-  # Job 7: Build Archive (Release)
+        # Check for hardcoded credentials
+        echo "→ Checking for hardcoded credentials..."
+        if grep -r -i --include="*.swift" --include="*.h" --include="*.cpp" \
+          -e "password\s*=\s*['\"]" \
+          -e "api[_-]?key\s*=\s*['\"]" \
+          -e "secret\s*=\s*['\"]" \
+          -e "token\s*=\s*['\"]" \
+          Sources/; then
+          echo "❌ Hardcoded credentials found!"
+          exit 1
+        fi
+
+        # Check for insecure functions
+        echo "→ Checking for insecure C functions..."
+        if grep -r --include="*.cpp" --include="*.h" \
+          -e "\bstrcpy\b" \
+          -e "\bsprintf\b" \
+          -e "\bgets\b" \
+          Sources/DSP/; then
+          echo "⚠️  Insecure C functions found (use secure alternatives)"
+        fi
+
+        # Check for force unwrapping in critical paths
+        echo "→ Checking for force unwrapping..."
+        if grep -r --include="*.swift" "!" Sources/ | grep -v "// swiftlint:disable" | wc -l | grep -v "^0$"; then
+          echo "⚠️  Force unwrapping detected (review for safety)"
+        fi
+
+        echo "✅ Security scan completed"
+      continue-on-error: false  # BLOCKING
+
+  # Job 10: Build Archive (Release)
   build-archive:
     name: Build Archive (Release)
     runs-on: macos-14
-    needs: [build-test-ios, build-test-macos]
+    needs: [build-test-ios, build-test-macos, validate-performance]
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
 
     steps:
@@ -295,7 +495,7 @@ jobs:
         path: build/Echoelmusic.xcarchive
         retention-days: 30
 
-  # Job 8: Documentation Generation
+  # Job 11: Documentation Generation
   generate-docs:
     name: Generate Documentation
     runs-on: macos-14
@@ -319,11 +519,11 @@ jobs:
         fi
       continue-on-error: true
 
-  # Job 9: Deployment (TestFlight)
+  # Job 12: Deployment (TestFlight)
   deploy-testflight:
     name: Deploy to TestFlight
     runs-on: macos-14
-    needs: [build-archive, performance-tests, security-scan]
+    needs: [build-archive, validate-performance, security-scan]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
@@ -337,11 +537,11 @@ jobs:
         echo "This is a placeholder for actual deployment"
       continue-on-error: true
 
-  # Job 10: Notification
+  # Job 13: Notification
   notify:
     name: Send Notifications
     runs-on: ubuntu-latest
-    needs: [build-test-ios, build-test-macos, performance-tests]
+    needs: [build-test-ios, build-test-macos, integration-tests, performance-tests, cpp-benchmarks, validate-performance]
     if: always()
 
     steps:
@@ -350,12 +550,17 @@ jobs:
         echo "📊 Build Summary:"
         echo "iOS Tests: ${{ needs.build-test-ios.result }}"
         echo "macOS Tests: ${{ needs.build-test-macos.result }}"
-        echo "Performance Tests: ${{ needs.performance-tests.result }}"
+        echo "Integration Tests: ${{ needs.integration-tests.result }}"
+        echo "Swift Performance Tests: ${{ needs.performance-tests.result }}"
+        echo "C++ SIMD Benchmarks: ${{ needs.cpp-benchmarks.result }}"
+        echo "Performance Validation: ${{ needs.validate-performance.result }}"
 
         if [ "${{ needs.build-test-ios.result }}" == "success" ] && \
-           [ "${{ needs.build-test-macos.result }}" == "success" ]; then
-          echo "✅ All builds passed!"
+           [ "${{ needs.build-test-macos.result }}" == "success" ] && \
+           [ "${{ needs.integration-tests.result }}" == "success" ] && \
+           [ "${{ needs.validate-performance.result }}" == "success" ]; then
+          echo "✅ All builds, integration tests, and performance tests passed!"
         else
-          echo "❌ Some builds failed"
+          echo "❌ Some builds or tests failed"
           exit 1
         fi

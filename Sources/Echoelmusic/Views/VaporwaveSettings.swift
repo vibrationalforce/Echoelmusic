@@ -9,6 +9,7 @@ struct VaporwaveSettings: View {
 
     @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var audioEngine: AudioEngine
+    @EnvironmentObject var presetManager: PresetManager
     @Environment(\.dismiss) var dismiss
 
     // MARK: - State
@@ -49,6 +50,16 @@ struct VaporwaveSettings: View {
                             bioReactiveSettings
                         }
 
+                        // Presets
+                        settingsSection(title: "PRESETS", icon: "waveform.badge.magnifyingglass") {
+                            presetsSection
+                        }
+
+                        // World Music Styles
+                        settingsSection(title: "WORLD MUSIC", icon: "globe") {
+                            worldMusicSection
+                        }
+
                         // OSC Output
                         settingsSection(title: "OSC OUTPUT", icon: "antenna.radiowaves.left.and.right") {
                             oscSettings
@@ -63,6 +74,18 @@ struct VaporwaveSettings: View {
                         settingsSection(title: "VISUALS", icon: "sparkles") {
                             visualSettings
                         }
+
+                        // Diagnostics
+                        settingsSection(title: "DIAGNOSTICS", icon: "chart.xyaxis.line") {
+                            diagnosticsSection
+                        }
+
+                        #if DEBUG
+                        // Developer Tools (DEBUG only)
+                        settingsSection(title: "DEVELOPER", icon: "wrench.and.screwdriver.fill") {
+                            developerSection
+                        }
+                        #endif
 
                         // About
                         settingsSection(title: "ABOUT", icon: "info.circle") {
@@ -294,6 +317,310 @@ struct VaporwaveSettings: View {
         }
     }
 
+    // MARK: - Presets Section
+
+    private var presetsSection: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            // Quick Stats
+            HStack(spacing: VaporwaveSpacing.lg) {
+                VStack(spacing: 4) {
+                    Text("\(presetManager.factoryPresets.count)")
+                        .font(VaporwaveTypography.dataSmall())
+                        .foregroundColor(VaporwaveColors.neonPurple)
+                    Text("Factory")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+
+                Divider()
+                    .frame(height: 30)
+                    .background(Color.white.opacity(0.1))
+
+                VStack(spacing: 4) {
+                    Text("\(presetManager.userPresets.count)")
+                        .font(VaporwaveTypography.dataSmall())
+                        .foregroundColor(VaporwaveColors.neonCyan)
+                    Text("Saved")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+
+                Divider()
+                    .frame(height: 30)
+                    .background(Color.white.opacity(0.1))
+
+                VStack(spacing: 4) {
+                    Text("\(presetManager.favoritePresets.count)")
+                        .font(VaporwaveTypography.dataSmall())
+                        .foregroundColor(VaporwaveColors.heartRate)
+                    Text("Favorites")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .padding(.vertical, VaporwaveSpacing.sm)
+
+            // Browse Button
+            NavigationLink(destination: PresetBrowserView().environmentObject(presetManager).environmentObject(audioEngine)) {
+                HStack {
+                    Image(systemName: "square.grid.2x2")
+                        .font(.system(size: 16))
+                        .foregroundColor(VaporwaveColors.neonPurple)
+
+                    Text("Browse All Presets")
+                        .font(VaporwaveTypography.body())
+                        .foregroundColor(VaporwaveColors.textPrimary)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .padding(VaporwaveSpacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(VaporwaveColors.neonPurple.opacity(0.1))
+                )
+            }
+
+            // Quick Actions
+            HStack(spacing: VaporwaveSpacing.sm) {
+                quickActionButton(
+                    icon: "square.and.arrow.down",
+                    title: "Import",
+                    action: { /* Import preset */ }
+                )
+
+                quickActionButton(
+                    icon: "square.and.arrow.up",
+                    title: "Export",
+                    action: { /* Export preset */ }
+                )
+
+                quickActionButton(
+                    icon: "icloud.and.arrow.up",
+                    title: "Sync",
+                    action: { presetManager.syncFromCloud() }
+                )
+            }
+        }
+    }
+
+    private func quickActionButton(icon: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: VaporwaveSpacing.xs) {
+                Image(systemName: icon)
+                    .font(.system(size: 18))
+                    .foregroundColor(VaporwaveColors.neonCyan)
+
+                Text(title)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(VaporwaveColors.textSecondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(VaporwaveSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.white.opacity(0.05))
+            )
+        }
+    }
+
+    // MARK: - World Music Section
+
+    private var worldMusicSection: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            // Quick Stats
+            HStack(spacing: VaporwaveSpacing.lg) {
+                VStack(spacing: 4) {
+                    Text("42")
+                        .font(VaporwaveTypography.dataSmall())
+                        .foregroundColor(VaporwaveColors.neonPink)
+                    Text("Styles")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+
+                Divider()
+                    .frame(height: 30)
+                    .background(Color.white.opacity(0.1))
+
+                VStack(spacing: 4) {
+                    Text("11")
+                        .font(VaporwaveTypography.dataSmall())
+                        .foregroundColor(VaporwaveColors.neonCyan)
+                    Text("Categories")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+
+                Divider()
+                    .frame(height: 30)
+                    .background(Color.white.opacity(0.1))
+
+                VStack(spacing: 4) {
+                    Image(systemName: "globe")
+                        .font(.system(size: 20))
+                        .foregroundColor(VaporwaveColors.lavender)
+                    Text("Global")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .padding(.vertical, VaporwaveSpacing.sm)
+
+            // Browse Button
+            NavigationLink(destination: WorldMusicSelectorView()) {
+                HStack {
+                    Image(systemName: "square.grid.3x3")
+                        .font(.system(size: 16))
+                        .foregroundColor(VaporwaveColors.neonPink)
+
+                    Text("Browse World Music Styles")
+                        .font(VaporwaveTypography.body())
+                        .foregroundColor(VaporwaveColors.textPrimary)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .padding(VaporwaveSpacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(VaporwaveColors.neonPink.opacity(0.1))
+                )
+            }
+
+            // Description
+            HStack(spacing: VaporwaveSpacing.sm) {
+                Image(systemName: "info.circle.fill")
+                    .foregroundColor(VaporwaveColors.lavender)
+
+                Text("Explore chord progressions, scales, and rhythms from 42 global music traditions")
+                    .font(VaporwaveTypography.caption())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .padding(VaporwaveSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(VaporwaveColors.lavender.opacity(0.1))
+            )
+        }
+    }
+
+    // MARK: - Diagnostics Section
+
+    private var diagnosticsSection: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            // System Health
+            NavigationLink(destination: SystemHealthView().environmentObject(SelfHealingEngine.shared)) {
+                diagnosticsRow(
+                    icon: "heart.circle",
+                    title: "System Health",
+                    subtitle: "Auto-healing status & flow state",
+                    color: VaporwaveColors.coherenceHigh
+                )
+            }
+
+            // Performance Dashboard
+            NavigationLink(destination: PerformanceDashboardView().environmentObject(audioEngine)) {
+                diagnosticsRow(
+                    icon: "speedometer",
+                    title: "Performance Monitor",
+                    subtitle: "CPU, memory, FPS & SIMD metrics",
+                    color: VaporwaveColors.neonCyan
+                )
+            }
+
+            // Info Card
+            HStack(spacing: VaporwaveSpacing.sm) {
+                Image(systemName: "info.circle.fill")
+                    .foregroundColor(VaporwaveColors.lavender)
+
+                Text("Real-time system metrics and auto-healing events")
+                    .font(VaporwaveTypography.caption())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .padding(VaporwaveSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(VaporwaveColors.lavender.opacity(0.1))
+            )
+        }
+    }
+
+    private func diagnosticsRow(icon: String, title: String, subtitle: String, color: Color) -> some View {
+        HStack(spacing: VaporwaveSpacing.md) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundColor(color)
+                .frame(width: 32)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(VaporwaveTypography.body())
+                    .foregroundColor(VaporwaveColors.textPrimary)
+
+                Text(subtitle)
+                    .font(VaporwaveTypography.caption())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12))
+                .foregroundColor(VaporwaveColors.textTertiary)
+        }
+        .padding(VaporwaveSpacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.white.opacity(0.05))
+        )
+    }
+
+    // MARK: - Developer Section
+
+    #if DEBUG
+    private var developerSection: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            // Warning Banner
+            HStack(spacing: VaporwaveSpacing.sm) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+
+                Text("Debug tools for development only")
+                    .font(VaporwaveTypography.caption())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .padding(VaporwaveSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.orange.opacity(0.1))
+            )
+
+            // Developer Panel
+            NavigationLink(destination: DeveloperPanelView().environmentObject(audioEngine).environmentObject(healthKitManager).environmentObject(presetManager)) {
+                diagnosticsRow(
+                    icon: "wrench.and.screwdriver",
+                    title: "Developer Panel",
+                    subtitle: "Tests, state inspection & debugging",
+                    color: .orange
+                )
+            }
+        }
+    }
+    #endif
+
     // MARK: - About Section
 
     private var aboutSection: some View {
@@ -373,4 +700,5 @@ struct VaporwaveSettings: View {
     VaporwaveSettings()
         .environmentObject(HealthKitManager())
         .environmentObject(AudioEngine())
+        .environmentObject(PresetManager())
 }

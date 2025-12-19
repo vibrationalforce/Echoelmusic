@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <atomic>
 
 /**
  * Compressor - Professional dynamics processor
@@ -11,6 +12,11 @@
  * - Auto-gain (makeup)
  * - Side-chain support (later)
  * - Multiple modes (transparent, vintage, aggressive)
+ *
+ * Thread Safety:
+ * - Double-buffered parameters (UI thread writes to pending, audio thread reads from current)
+ * - Atomic flag signals when updates are available
+ * - Safe parameter swap at block boundary (prevents audio glitches)
  */
 class Compressor
 {
@@ -30,7 +36,7 @@ public:
 
     void process(juce::AudioBuffer<float>& buffer);
 
-    // Parameters
+    // Parameters (thread-safe via double-buffering)
     void setThreshold(float dB);       // -60 to 0 dB
     void setRatio(float ratio);        // 1:1 to 20:1
     void setAttack(float ms);          // 0.1 to 100 ms
@@ -44,27 +50,35 @@ public:
 
 private:
     double currentSampleRate = 48000.0;
-    Mode currentMode = Mode::Transparent;
 
-    // Parameters
-    float threshold = -20.0f;
-    float ratio = 4.0f;
-    float attack = 5.0f;
-    float release = 100.0f;
-    float knee = 3.0f;
-    float makeupGain = 0.0f;
+    // THREAD-SAFE PARAMETER SYSTEM
+    // Double-buffered to prevent race conditions between UI and audio threads
+    struct CompressorParams
+    {
+        float threshold = -20.0f;
+        float ratio = 4.0f;
+        float attack = 5.0f;
+        float release = 100.0f;
+        float knee = 3.0f;
+        float makeupGain = 0.0f;
+        Mode mode = Mode::Transparent;
 
-    // State
+        // Derived coefficients (calculated from attack/release)
+        float attackCoeff = 0.0f;
+        float releaseCoeff = 0.0f;
+    };
+
+    CompressorParams currentParams;     // Audio thread (read-only)
+    CompressorParams pendingParams;     // UI thread (write-only)
+    std::atomic<bool> paramsNeedUpdate{false};
+
+    // State (audio thread only)
     float envelopeL = 0.0f;
     float envelopeR = 0.0f;
     float gainReduction = 0.0f;
 
-    // Coefficients (calculated from attack/release)
-    float attackCoeff = 0.0f;
-    float releaseCoeff = 0.0f;
-
-    void updateCoefficients();
-    float computeGain(float input);
+    void updatePendingCoefficients();
+    float computeGain(float input, const CompressorParams& params);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Compressor)
 };

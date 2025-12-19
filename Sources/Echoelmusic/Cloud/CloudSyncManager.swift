@@ -1,6 +1,7 @@
 import Foundation
 import CloudKit
 import Combine
+import os.log
 
 /// Cloud Sync Manager - CloudKit Integration
 /// Session sync across devices, collaborative cloud sessions, automatic backup
@@ -16,11 +17,16 @@ class CloudSyncManager: ObservableObject {
     private let privateDatabase: CKDatabase
     private let sharedDatabase: CKDatabase
 
+    // Session provider for auto-backup
+    weak var currentSessionProvider: SessionProvider?
+
+    private static let logger = Logger(subsystem: "com.echoelmusic.cloud", category: "CloudSyncManager")
+
     init() {
         self.container = CKContainer(identifier: "iCloud.com.echoelmusic.app")
         self.privateDatabase = container.privateCloudDatabase
         self.sharedDatabase = container.sharedCloudDatabase
-        print("✅ CloudSyncManager: Initialized")
+        Self.logger.info("CloudSyncManager initialized")
     }
 
     // MARK: - Enable/Disable Sync
@@ -34,12 +40,12 @@ class CloudSyncManager: ObservableObject {
         }
 
         syncEnabled = true
-        print("☁️ CloudSyncManager: Sync enabled")
+        Self.logger.info("Cloud sync enabled")
     }
 
     func disableSync() {
         syncEnabled = false
-        print("☁️ CloudSyncManager: Sync disabled")
+        Self.logger.info("Cloud sync disabled")
     }
 
     // MARK: - Save Session
@@ -61,7 +67,7 @@ class CloudSyncManager: ObservableObject {
         try await privateDatabase.save(record)
 
         lastSyncDate = Date()
-        print("☁️ CloudSyncManager: Saved session '\(session.name)'")
+        Self.logger.info("Saved session '\(session.name)' to iCloud")
     }
 
     // MARK: - Fetch Sessions
@@ -94,7 +100,7 @@ class CloudSyncManager: ObservableObject {
         cloudSessions = sessions
         lastSyncDate = Date()
 
-        print("☁️ CloudSyncManager: Fetched \(sessions.count) sessions")
+        Self.logger.info("Fetched \(sessions.count) sessions from iCloud")
         return sessions
     }
 
@@ -107,13 +113,25 @@ class CloudSyncManager: ObservableObject {
                 try? await self?.autoBackup()
             }
         }
-        print("☁️ CloudSyncManager: Auto backup enabled (every \(Int(interval))s)")
+        Self.logger.info("Auto backup enabled (every \(Int(interval))s)")
     }
 
     private func autoBackup() async throws {
-        // TODO: Backup current session automatically
-        print("☁️ CloudSyncManager: Auto backup triggered")
-    }
+        guard syncEnabled else {
+            Self.logger.debug("Auto backup skipped - sync not enabled")
+            return
+        }
+
+        // Get current session from provider
+        guard let sessionProvider = currentSessionProvider,
+              let currentSession = sessionProvider.getCurrentSession() else {
+            Self.logger.debug("Auto backup skipped - no active session")
+            return
+        }
+
+        // Save current session to iCloud
+        try await saveSession(currentSession)
+        Self.logger.info("Auto backup completed for session '\(currentSession.name)'")
 }
 
 struct CloudSession: Identifiable {
@@ -144,4 +162,9 @@ struct Session {
     let duration: TimeInterval
     let avgHRV: Float
     let avgCoherence: Float
+}
+
+/// Protocol for providing current session to CloudSyncManager
+protocol SessionProvider: AnyObject {
+    func getCurrentSession() -> Session?
 }

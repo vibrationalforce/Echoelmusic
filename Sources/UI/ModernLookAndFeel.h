@@ -86,7 +86,7 @@ public:
 
     void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
                           float sliderPosProportional, float rotaryStartAngle,
-                          float rotaryEndAngle, juce::Slider& slider) override
+                          float rotaryEndAngle, juce::Slider& /*slider*/) override
     {
         auto bounds = juce::Rectangle<int>(x, y, width, height).toFloat().reduced(10);
         auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
@@ -134,8 +134,8 @@ public:
     }
 
     void drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height,
-                          float sliderPos, float minSliderPos, float maxSliderPos,
-                          const juce::Slider::SliderStyle style, juce::Slider& slider) override
+                          float sliderPos, float /*minSliderPos*/, float /*maxSliderPos*/,
+                          const juce::Slider::SliderStyle style, juce::Slider& /*slider*/) override
     {
         auto bounds = juce::Rectangle<int>(x, y, width, height);
         auto isHorizontal = (style == juce::Slider::LinearHorizontal);
@@ -217,7 +217,7 @@ public:
     }
 
     void drawToggleButton(juce::Graphics& g, juce::ToggleButton& button,
-                         bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
+                         bool /*shouldDrawButtonAsHighlighted*/, bool /*shouldDrawButtonAsDown*/) override
     {
         auto bounds = button.getLocalBounds().toFloat();
         auto toggleWidth = juce::jmin(50.0f, bounds.getHeight() * 2.0f);

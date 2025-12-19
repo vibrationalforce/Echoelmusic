@@ -249,6 +249,7 @@ void CreatorManager::syncPlatform(const juce::String& creatorId, Platform platfo
 
 CreatorManager::SocialStats CreatorManager::fetchPlatformStats(const juce::String& creatorId, Platform platform)
 {
+    (void)creatorId;
     // Real implementation would call platform APIs
     // YouTube Data API, Instagram Graph API, TikTok API, etc.
 
@@ -430,6 +431,7 @@ double CreatorManager::calculateProjectedEarnings(const juce::String& creatorId,
 
 CreatorManager::GrowthMetrics CreatorManager::getGrowthMetrics(const juce::String& creatorId) const
 {
+    (void)creatorId;
     juce::ScopedLock sl(m_lock);
 
     GrowthMetrics metrics;
@@ -510,7 +512,7 @@ std::vector<CreatorManager::CreatorProfile> CreatorManager::findSimilarCreators(
         if (nicheOverlap > 0)
             similar.push_back(candidate);
 
-        if (similar.size() >= limit)
+        if (similar.size() >= static_cast<size_t>(limit))
             break;
     }
 
@@ -549,6 +551,7 @@ void CreatorManager::exportPortfolioHTML(const juce::String& creatorId, const ju
 
 void CreatorManager::exportAnalyticsReport(const juce::String& creatorId, const juce::File& outputFile)
 {
+    (void)outputFile;
     auto creator = getCreator(creatorId);
     auto analytics = analyzeContent(creatorId);
 
@@ -569,7 +572,7 @@ void CreatorManager::verifyCreator(const juce::String& creatorId, bool verified)
     if (it != m_creators.end())
     {
         it->second.verified = verified;
-        DBG("Creator verification: " << creatorId << " = " << verified);
+        DBG("Creator verification: " << creatorId << " = " << (verified ? "true" : "false"));
         saveToDatabase();
     }
 }

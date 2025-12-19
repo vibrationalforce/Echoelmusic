@@ -265,7 +265,7 @@ private:
     //==============================================================================
     // Delay Processing (with feedback)
 
-    void processDelay(juce::AudioBuffer<float>& buffer, float delayTimeMs)
+    void processDelay(juce::AudioBuffer<float>& buffer, float /*delayTimeMs*/)
     {
         const int numSamples = buffer.getNumSamples();
         const int numChannels = buffer.getNumChannels();

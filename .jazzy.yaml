@@ -1,0 +1,114 @@
+# Jazzy Configuration for Echoelmusic Swift API Documentation
+# Generate documentation: jazzy
+# Output: docs/swift-api/
+
+# Project Information
+module: Echoelmusic
+author: vibrationalforce
+author_url: https://github.com/vibrationalforce
+github_url: https://github.com/vibrationalforce/Echoelmusic
+github_file_prefix: https://github.com/vibrationalforce/Echoelmusic/tree/main
+
+# Build Settings
+swift_build_tool: spm
+clean: true
+xcodebuild_arguments:
+  - -scheme
+  - Echoelmusic
+  - -sdk
+  - iphonesimulator
+
+# Source Files
+source_directory: Sources/Echoelmusic
+exclude:
+  - "**/*Tests.swift"
+  - "**/Platforms/**"  # Exclude platform-specific code from main docs
+
+# Output
+output: docs/swift-api
+theme: fullwidth
+min_acl: public
+
+# Documentation Options
+documentation: "*.md"
+readme: README.md
+abstract: "*.md"
+
+# Customization
+custom_categories:
+  - name: Audio
+    children:
+      - AudioEngine
+      - MicrophoneManager
+      - BinauralBeatGenerator
+      - SpatialAudioEngine
+      - AudioConfiguration
+
+  - name: Biofeedback
+    children:
+      - HealthKitManager
+      - BioParameterMapper
+      - HeadTrackingManager
+
+  - name: Visual
+    children:
+      - MIDIToVisualMapper
+      - CymaticsRenderer
+      - ChromaKeyEngine
+      - BackgroundSourceManager
+
+  - name: MIDI
+    children:
+      - MIDI2Manager
+      - MPEZoneManager
+      - MIDIController
+      - TouchInstruments
+
+  - name: Unified Control
+    children:
+      - UnifiedControlHub
+      - GestureRecognizer
+      - GestureConflictResolver
+      - HandTrackingManager
+
+  - name: Video
+    children:
+      - VideoTimelineEngine
+      - MultiCamStabilizer
+      - ColorGradingEngine
+
+  - name: LED & Lighting
+    children:
+      - Push3LEDController
+      - MIDIToLightMapper
+      - DMXController
+
+  - name: Integration
+    children:
+      - UniversalDeviceIntegration
+      - WorldMusicBridge
+
+  - name: AI & Intelligence
+    children:
+      - AIComposer
+      - ChordSense
+      - QuantumIntelligenceEngine
+
+  - name: Performance
+    children:
+      - PerformanceOptimizer
+      - MemoryOptimizationManager
+      - DeviceCapabilities
+
+# Advanced Options
+hide_documentation_coverage: false
+undocumented_text: "No documentation available"
+skip_undocumented: false
+
+# Module Structure
+module_version: 1.0.0
+copyright: "© 2025 vibrationalforce. All rights reserved."
+
+# Warnings
+warn_undocumented: true
+warnings_as_errors: false

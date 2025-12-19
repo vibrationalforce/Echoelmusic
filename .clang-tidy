@@ -1,0 +1,160 @@
+# clang-tidy Configuration for Echoelmusic
+# Production-grade C++ code quality rules for audio DSP
+# Version: 1.0.0
+
+---
+# Checks to enable/disable
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -bugprone-narrowing-conversions,
+  cert-*,
+  -cert-err58-cpp,
+  -cert-dcl21-cpp,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-narrowing-conversions,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-union-access,
+  -cppcoreguidelines-special-member-functions,
+  hicpp-*,
+  -hicpp-avoid-c-arrays,
+  -hicpp-braces-around-statements,
+  -hicpp-named-parameter,
+  -hicpp-no-array-decay,
+  -hicpp-signed-bitwise,
+  -hicpp-special-member-functions,
+  -hicpp-uppercase-literal-suffix,
+  modernize-*,
+  -modernize-avoid-c-arrays,
+  -modernize-use-trailing-return-type,
+  performance-*,
+  readability-*,
+  -readability-braces-around-statements,
+  -readability-else-after-return,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-implicit-bool-conversion,
+  -readability-magic-numbers,
+  -readability-named-parameter,
+  -readability-uppercase-literal-suffix,
+
+# Warning options
+WarningsAsErrors: ''  # Don't treat warnings as errors for now
+HeaderFilterRegex: '.*'
+AnalyzeTemporaryDtors: false
+FormatStyle: 'file'  # Use .clang-format if present
+
+# Check-specific options
+CheckOptions:
+  # Naming conventions
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.MemberCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.ProtectedMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.PublicMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.ConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.ConstantPrefix
+    value: 'k'
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: 'k'
+  - key: readability-identifier-naming.StaticConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.StaticConstantPrefix
+    value: 'k'
+
+  # Function size limits (relaxed for DSP code)
+  - key: readability-function-size.LineThreshold
+    value: '150'
+  - key: readability-function-size.StatementThreshold
+    value: '100'
+  - key: readability-function-size.BranchThreshold
+    value: '20'
+  - key: readability-function-size.ParameterThreshold
+    value: '8'
+  - key: readability-function-size.NestingThreshold
+    value: '6'
+
+  # Performance
+  - key: performance-move-const-arg.CheckTriviallyCopyableMove
+    value: '1'
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: 'std::function'
+
+  # Modernize
+  - key: modernize-use-nullptr.NullMacros
+    value: 'NULL'
+  - key: modernize-use-override.AllowOverrideAndFinal
+    value: '0'
+  - key: modernize-loop-convert.MaxCopySize
+    value: '32'
+  - key: modernize-loop-convert.MinConfidence
+    value: 'reasonable'
+  - key: modernize-pass-by-value.IncludeStyle
+    value: 'llvm'
+  - key: modernize-replace-auto-ptr.IncludeStyle
+    value: 'llvm'
+
+  # Bug-prone checks
+  - key: bugprone-assert-side-effect.AssertMacros
+    value: 'assert,ASSERT'
+  - key: bugprone-dangling-handle.HandleClasses
+    value: 'std::basic_string_view;std::experimental::basic_string_view'
+  - key: bugprone-string-constructor.WarnOnLargeLength
+    value: '1'
+  - key: bugprone-string-constructor.LargeLengthThreshold
+    value: '8388608'  # 8 MB
+  - key: bugprone-unused-return-value.CheckedFunctions
+    value: '::std::async;::std::launder;::std::remove;::std::remove_if;::std::unique'
+
+  # Readability
+  - key: readability-simplify-boolean-expr.ChainedConditionalReturn
+    value: '1'
+  - key: readability-simplify-boolean-expr.ChainedConditionalAssignment
+    value: '1'
+  - key: readability-inconsistent-declaration-parameter-name.IgnoreMacros
+    value: '1'
+  - key: readability-inconsistent-declaration-parameter-name.Strict
+    value: '0'
+
+  # C++ Core Guidelines
+  - key: cppcoreguidelines-explicit-virtual-functions.IgnoreDestructors
+    value: '1'
+  - key: cppcoreguidelines-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
+    value: '1'
+
+# Exclude patterns (use with caution)
+# HeaderFilterRegex can be adjusted to exclude third-party headers
+# Example: '(?!.*(ThirdParty|External)/)'

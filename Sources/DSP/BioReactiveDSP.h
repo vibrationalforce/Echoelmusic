@@ -72,6 +72,36 @@ private:
 
             return lowpass; // Return lowpass output
         }
+
+        // Block processing version (faster - reduces function call overhead)
+        void processBlock(float* buffer, int numSamples)
+        {
+            // Cache coefficients (constant for entire block)
+            const float f = 2.0f * std::sin(juce::MathConstants<float>::pi * cutoff / sampleRate);
+            const float q = 1.0f - resonance;
+
+            for (int i = 0; i < numSamples; ++i)
+            {
+                lowpass += f * bandpass;
+                highpass = buffer[i] - lowpass - q * bandpass;
+                bandpass += f * highpass;
+
+                // Flush denormals every 8 samples (reduces overhead)
+                if ((i & 7) == 7)
+                {
+                    lowpass = BioReactiveDSP::flushDenormals(lowpass);
+                    bandpass = BioReactiveDSP::flushDenormals(bandpass);
+                    highpass = BioReactiveDSP::flushDenormals(highpass);
+                }
+
+                buffer[i] = lowpass;
+            }
+
+            // Final denormal flush
+            lowpass = BioReactiveDSP::flushDenormals(lowpass);
+            bandpass = BioReactiveDSP::flushDenormals(bandpass);
+            highpass = BioReactiveDSP::flushDenormals(highpass);
+        }
     };
 
     StateVariableFilter filterL, filterR;
@@ -104,6 +134,33 @@ private:
             return -threshold + (sample + threshold) / (1.0f + std::pow((sample + threshold) / (1.0f - threshold), 2.0f));
         else
             return sample;
+    }
+
+    // Block processing version (SIMD-friendly for distortion amount >= 0.01)
+    void softClipBlock(float* buffer, int numSamples)
+    {
+        if (distortionAmount < 0.01f)
+            return; // No processing needed
+
+        const float threshold = 1.0f - distortionAmount;
+        const float oneMinusThreshold = 1.0f - threshold;
+
+        for (int i = 0; i < numSamples; ++i)
+        {
+            float sample = buffer[i];
+
+            if (sample > threshold)
+            {
+                float excess = sample - threshold;
+                buffer[i] = threshold + excess / (1.0f + (excess * excess) / (oneMinusThreshold * oneMinusThreshold));
+            }
+            else if (sample < -threshold)
+            {
+                float excess = sample + threshold;
+                buffer[i] = -threshold + excess / (1.0f + (excess * excess) / (oneMinusThreshold * oneMinusThreshold));
+            }
+            // else: sample unchanged
+        }
     }
 
     //==============================================================================
@@ -142,6 +199,38 @@ private:
             // Apply gain reduction
             float outputGain = std::pow(10.0f, -gainReduction / 20.0f);
             return input * outputGain;
+        }
+
+        // Block processing version (optimizes coefficient calculation)
+        void processBlock(float* buffer, int numSamples)
+        {
+            // Pre-calculate attack/release coefficients (constant for block)
+            const float attackCoeff = std::exp(-1.0f / (attack * sampleRate));
+            const float releaseCoeff = std::exp(-1.0f / (release * sampleRate));
+            const float oneMinusAttack = 1.0f - attackCoeff;
+            const float oneMinusRelease = 1.0f - releaseCoeff;
+            const float invRatio = 1.0f / ratio;
+
+            for (int i = 0; i < numSamples; ++i)
+            {
+                float input = buffer[i];
+                float inputLevel = 20.0f * std::log10(std::abs(input) + 1e-10f);
+
+                // Envelope follower (state-dependent, cannot vectorize)
+                float targetEnvelope = inputLevel;
+                if (targetEnvelope > envelope)
+                    envelope = attackCoeff * envelope + oneMinusAttack * targetEnvelope;
+                else
+                    envelope = releaseCoeff * envelope + oneMinusRelease * targetEnvelope;
+
+                // Gain reduction (branchless when possible)
+                float excess = envelope - threshold;
+                float gainReduction = (excess > 0.0f) ? excess * (1.0f - invRatio) : 0.0f;
+
+                // Apply gain reduction
+                float outputGain = std::pow(10.0f, -gainReduction / 20.0f);
+                buffer[i] = input * outputGain;
+            }
         }
     };
 

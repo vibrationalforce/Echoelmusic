@@ -138,10 +138,21 @@ class NodeGraph: ObservableObject {
 
     // MARK: - Audio Processing
 
+    /// DC blocker for professional audio quality (Priority 2)
+    /// Applied at the start of all processing chains
+    private let dcBlocker = DCBlocker(cutoffFrequency: 10.0)
+
     /// Process audio buffer through the node graph
     /// PERFORMANCE: Uses cached topological sort instead of recalculating every frame
     func process(_ buffer: AVAudioPCMBuffer, time: AVAudioTime) -> AVAudioPCMBuffer {
         guard isProcessing else { return buffer }
+
+        // PRIORITY 2: Apply DC blocking FIRST (professional audio standard)
+        // Remove DC offset before any processing to prevent:
+        // - Speaker cone damage
+        // - Subsonic rumble
+        // - Compressor/limiter artifacts
+        let dcBlockedBuffer = dcBlocker.process(buffer)
 
         // Get cached processing order (only recalculate when graph changes)
         if cachedProcessingOrder == nil {
@@ -150,7 +161,8 @@ class NodeGraph: ObservableObject {
 
         let orderedNodes = cachedProcessingOrder ?? []
 
-        var currentBuffer = buffer
+        // Start with DC-blocked buffer (professional audio quality)
+        var currentBuffer = dcBlockedBuffer
 
         // Process through each node in order
         for nodeID in orderedNodes {

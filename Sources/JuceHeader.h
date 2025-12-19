@@ -30,5 +30,8 @@
 // MIDI
 #include <juce_midi_ci/juce_midi_ci.h>
 
+// Cryptography module (for Security components - SHA256, encryption)
+#include <juce_cryptography/juce_cryptography.h>
+
 // Use JUCE namespace
 using namespace juce;

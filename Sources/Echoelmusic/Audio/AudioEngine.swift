@@ -59,6 +59,9 @@ class AudioEngine: ObservableObject {
     /// Node graph for effects processing
     private var nodeGraph: NodeGraph?
 
+    /// DC blocker for professional audio quality (removes DC offset)
+    /// Applied to all audio inputs before any processing
+    private let dcBlocker = DCBlocker(cutoffFrequency: 10.0)
 
     // MARK: - Private Properties
 
@@ -375,5 +378,11 @@ class AudioEngine: ObservableObject {
     /// Get bio-parameter mapping summary
     var bioParameterSummary: String {
         bioParameterMapper.parameterSummary
+    }
+
+    /// Get current audio level from microphone input
+    /// - Returns: Audio level from 0.0 (silence) to 1.0 (maximum)
+    func getCurrentLevel() -> Double {
+        return Double(microphoneManager.audioLevel)
     }
 }
