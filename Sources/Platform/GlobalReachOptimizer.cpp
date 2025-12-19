@@ -30,10 +30,10 @@ void GlobalReachOptimizer::setAccessibilitySettings(const AccessibilitySettings&
     m_accessibilitySettings = settings;
 
     DBG("Accessibility settings updated:");
-    DBG("  Screen reader: " << settings.screenReaderEnabled);
-    DBG("  High contrast: " << settings.highContrastMode);
+    DBG("  Screen reader: " << (settings.screenReaderEnabled ? "true" : "false"));
+    DBG("  High contrast: " << (settings.highContrastMode ? "true" : "false"));
     DBG("  Font size: " << settings.fontSize);
-    DBG("  Reduced motion: " << settings.reducedMotion);
+    DBG("  Reduced motion: " << (settings.reducedMotion ? "true" : "false"));
 }
 
 juce::Colour GlobalReachOptimizer::adjustColorForColorBlindness(juce::Colour original) const
@@ -305,7 +305,7 @@ void GlobalReachOptimizer::setOfflineMode(bool enabled)
     if (enabled)
     {
         DBG("Offline mode ENABLED");
-        DBG("  Auto-sync: " << m_offlineSettings.autoSync);
+        DBG("  Auto-sync: " << (m_offlineSettings.autoSync ? "true" : "false"));
         DBG("  Sync interval: " << m_offlineSettings.syncInterval << "s");
     }
     else

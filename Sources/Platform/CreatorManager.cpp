@@ -569,7 +569,7 @@ void CreatorManager::verifyCreator(const juce::String& creatorId, bool verified)
     if (it != m_creators.end())
     {
         it->second.verified = verified;
-        DBG("Creator verification: " << creatorId << " = " << verified);
+        DBG("Creator verification: " << creatorId << " = " << (verified ? "true" : "false"));
         saveToDatabase();
     }
 }
