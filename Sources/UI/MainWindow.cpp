@@ -64,27 +64,42 @@ MainWindow::MainComponent::MainComponent()
     // Create audio engine
     audioEngine = std::make_unique<AudioEngine>();
     audioEngine->prepare(48000.0, 512);  // Default: 48kHz, 512 samples
-    
+
     // Add some default tracks
     audioEngine->addAudioTrack("Kick");
     audioEngine->addAudioTrack("Snare");
     audioEngine->addAudioTrack("Bass");
     audioEngine->addAudioTrack("Synth");
     audioEngine->addAudioTrack("Vocal");
-    
+
     // Create UI sections
     topBar = std::make_unique<TopBar>(*audioEngine);
     addAndMakeVisible(topBar.get());
-    
+
+    // Arrangement view (TrackView)
     trackView = std::make_unique<TrackView>(*audioEngine);
     addAndMakeVisible(trackView.get());
-    
+
+    // Session view (ClipLauncherGrid)
+    sessionView = std::make_unique<ClipLauncherGrid>();
+    addChildComponent(sessionView.get());  // Hidden initially
+
+    // View mode toggle button
+    addAndMakeVisible(viewModeButton);
+    viewModeButton.setButtonText("View: Arrangement");
+    viewModeButton.setTooltip("Toggle Arrangement/Session view (Tab key)");
+    viewModeButton.onClick = [this]() { toggleViewMode(); };
+
     transportBar = std::make_unique<TransportBar>(*audioEngine);
     addAndMakeVisible(transportBar.get());
-    
+
+    // Register keyboard listener
+    addKeyListener(this);
+    setWantsKeyboardFocus(true);
+
     // Start UI update timer (30 FPS)
     startTimer(33);
-    
+
     setSize(1200, 800);
 }
 
@@ -107,18 +122,25 @@ void MainWindow::MainComponent::paint(juce::Graphics& g)
 void MainWindow::MainComponent::resized()
 {
     auto bounds = getLocalBounds();
-    
+
     // Top bar: 50px
     if (topBar)
         topBar->setBounds(bounds.removeFromTop(50));
-    
+
+    // View mode button bar: 35px
+    auto viewModeBar = bounds.removeFromTop(35);
+    viewModeButton.setBounds(viewModeBar.removeFromLeft(200).reduced(5, 5));
+
     // Transport bar: 60px (bottom)
     if (transportBar)
         transportBar->setBounds(bounds.removeFromBottom(60));
-    
-    // Track view: remaining space
+
+    // Views: remaining space (both get same bounds, only one visible at a time)
     if (trackView)
         trackView->setBounds(bounds);
+
+    if (sessionView)
+        sessionView->setBounds(bounds);
 }
 
 void MainWindow::MainComponent::timerCallback()
@@ -130,6 +152,65 @@ void MainWindow::MainComponent::timerCallback()
     if (transportBar)
         transportBar->updatePosition(audioEngine->getPosition(),
                                     audioEngine->getSampleRate());
+}
+
+//==============================================================================
+// View Mode Management
+//==============================================================================
+
+void MainWindow::MainComponent::setViewMode(ViewMode mode)
+{
+    if (currentViewMode == mode)
+        return;
+
+    currentViewMode = mode;
+    updateViewVisibility();
+
+    // Update button text
+    if (mode == ViewMode::Arrangement)
+    {
+        viewModeButton.setButtonText("View: Arrangement");
+        viewModeButton.setColour(juce::TextButton::buttonColourId, VaporwaveColors::Cyan.withAlpha(0.3f));
+    }
+    else
+    {
+        viewModeButton.setButtonText("View: Session/Clip");
+        viewModeButton.setColour(juce::TextButton::buttonColourId, VaporwaveColors::Magenta.withAlpha(0.3f));
+    }
+
+    repaint();
+}
+
+void MainWindow::MainComponent::toggleViewMode()
+{
+    setViewMode(
+        currentViewMode == ViewMode::Arrangement
+            ? ViewMode::Session
+            : ViewMode::Arrangement
+    );
+}
+
+void MainWindow::MainComponent::updateViewVisibility()
+{
+    if (trackView)
+        trackView->setVisible(currentViewMode == ViewMode::Arrangement);
+
+    if (sessionView)
+        sessionView->setVisible(currentViewMode == ViewMode::Session);
+}
+
+bool MainWindow::MainComponent::keyPressed(const juce::KeyPress& key, Component* originatingComponent)
+{
+    juce::ignoreUnused(originatingComponent);
+
+    // Tab key toggles view mode
+    if (key == juce::KeyPress::tabKey && !key.getModifiers().isAnyModifierKeyDown())
+    {
+        toggleViewMode();
+        return true;
+    }
+
+    return false;
 }
 
 //==============================================================================
@@ -324,6 +405,73 @@ void MainWindow::MainComponent::TrackView::updateTracks()
     repaint();
 }
 
+//==============================================================================
+// Unified Track Management (EXTENDED)
+//==============================================================================
+
+void MainWindow::MainComponent::TrackView::addAudioTrack(const juce::String& name, juce::Colour color)
+{
+    UnifiedTrack track;
+    track.type = TrackType::Audio;
+    track.name = name;
+    track.waveformColor = color;
+    track.trackColor = color;
+    track.audioBuffer = std::make_shared<juce::AudioBuffer<float>>(2, 48000);  // Stereo, 1 sec @ 48kHz
+    unifiedTracks.push_back(track);
+    repaint();
+}
+
+void MainWindow::MainComponent::TrackView::addVideoTrack(const juce::String& name, const VideoWeaver::Clip& clip)
+{
+    UnifiedTrack track;
+    track.type = TrackType::Video;
+    track.name = name;
+    track.videoClip = clip;
+    track.trackColor = juce::Colour(0xffff00ff);  // Magenta for video
+    unifiedTracks.push_back(track);
+    repaint();
+}
+
+void MainWindow::MainComponent::TrackView::addAutomationTrack(const juce::String& parameter,
+                                                                const ParameterAutomationUI::ParameterLane& lane)
+{
+    UnifiedTrack track;
+    track.type = TrackType::Automation;
+    track.name = "Automation: " + parameter;
+    track.automationLane = lane;
+    track.trackColor = juce::Colour(0xff651fff);  // Purple for automation
+    track.height = 60.0f;  // Automation tracks are shorter
+    unifiedTracks.push_back(track);
+    repaint();
+}
+
+MainWindow::MainComponent::TrackView::UnifiedTrack&
+MainWindow::MainComponent::TrackView::getTrack(int index)
+{
+    return unifiedTracks[index];
+}
+
+const MainWindow::MainComponent::TrackView::UnifiedTrack&
+MainWindow::MainComponent::TrackView::getTrack(int index) const
+{
+    return unifiedTracks[index];
+}
+
+void MainWindow::MainComponent::TrackView::removeTrack(int index)
+{
+    if (index >= 0 && index < static_cast<int>(unifiedTracks.size()))
+    {
+        unifiedTracks.erase(unifiedTracks.begin() + index);
+        repaint();
+    }
+}
+
+void MainWindow::MainComponent::TrackView::clearTracks()
+{
+    unifiedTracks.clear();
+    repaint();
+}
+
 void MainWindow::MainComponent::TrackView::drawTimeline(juce::Graphics& g, juce::Rectangle<int> bounds)
 {
     // Timeline background
@@ -360,70 +508,146 @@ void MainWindow::MainComponent::TrackView::drawTimeline(juce::Graphics& g, juce:
 
 void MainWindow::MainComponent::TrackView::drawTracks(juce::Graphics& g, juce::Rectangle<int> bounds)
 {
-    int numTracks = audioEngine.getNumTracks();
+    // Check unified tracks first, fallback to engine tracks
+    int numTracks = !unifiedTracks.empty() ? static_cast<int>(unifiedTracks.size()) : audioEngine.getNumTracks();
+
     if (numTracks == 0)
     {
         g.setColour(VaporwaveColors::TextDim);
         g.setFont(juce::Font(16.0f));
-        g.drawText("No tracks yet. Click 'Add Track' to start!", bounds, juce::Justification::centred);
+        g.drawText("No tracks yet. Add audio, video, or automation tracks!", bounds, juce::Justification::centred);
         return;
     }
-    
-    // Draw tracks
-    float yOffset = -(float)verticalScrollBar->getCurrentRangeStart() * (float)trackHeight;
-    
-    for (int i = 0; i < numTracks; ++i)
+
+    // Draw unified tracks
+    float currentY = -(float)verticalScrollBar->getCurrentRangeStart() * (float)trackHeight;
+
+    if (!unifiedTracks.empty())
     {
-        auto track = audioEngine.getTrack(i);
-        if (!track)
-            continue;
-        
-        juce::Rectangle<float> trackBounds(
-            (float)bounds.getX(),
-            (float)bounds.getY() + yOffset + (i * (float)trackHeight),
-            (float)bounds.getWidth(),
-            (float)trackHeight
-        );
-        
-        // Skip if not visible
-        if (trackBounds.getBottom() < bounds.getY() || trackBounds.getY() > bounds.getBottom())
-            continue;
-        
-        // Track background (alternating colors)
-        g.setColour(i % 2 == 0 ? VaporwaveColors::Surface : VaporwaveColors::Background);
-        g.fillRect(trackBounds);
-        
-        // Track name
-        g.setColour(VaporwaveColors::Text);
-        g.setFont(juce::Font(14.0f, juce::Font::bold));
-        g.drawText(track->getName(), trackBounds.reduced(10, 5).toNearestInt(), 
-                  juce::Justification::topLeft);
-        
-        // Waveform placeholder (TODO: actual waveform rendering)
-        auto waveformBounds = trackBounds.reduced(10, 25);
-        g.setColour(VaporwaveColors::Cyan.withAlpha(0.3f));
-        
-        // Draw simplified waveform (random for now - will be real audio data)
-        juce::Path waveformPath;
-        bool started = false;
-        for (float x = waveformBounds.getX(); x < waveformBounds.getRight(); x += 2.0f)
+        // NEW: Draw unified tracks (audio + video + automation)
+        for (size_t i = 0; i < unifiedTracks.size(); ++i)
         {
-            float y = waveformBounds.getCentreY() + (juce::Random::getSystemRandom().nextFloat() * 20.0f - 10.0f);
-            if (!started)
+            const auto& track = unifiedTracks[i];
+
+            if (!track.visible)
+                continue;
+
+            juce::Rectangle<int> trackBounds(
+                bounds.getX(),
+                bounds.getY() + static_cast<int>(currentY),
+                bounds.getWidth(),
+                static_cast<int>(track.height)
+            );
+
+            // Skip if not visible
+            if (trackBounds.getBottom() < bounds.getY() || trackBounds.getY() > bounds.getBottom())
             {
-                waveformPath.startNewSubPath(x, y);
-                started = true;
+                currentY += track.height;
+                continue;
             }
-            else
+
+            // Track background (alternating colors)
+            g.setColour(i % 2 == 0 ? VaporwaveColors::Surface : VaporwaveColors::Background);
+            g.fillRect(trackBounds);
+
+            // Track name
+            g.setColour(VaporwaveColors::Text);
+            g.setFont(juce::Font(14.0f, juce::Font::bold));
+            g.drawText(track.name, trackBounds.reduced(10, 5), juce::Justification::topLeft);
+
+            // Draw track content based on type
+            auto contentBounds = trackBounds.reduced(10, 25);
+
+            switch (track.type)
             {
-                waveformPath.lineTo(x, y);
+                case TrackType::Audio:
+                    drawAudioWaveform(g, contentBounds, track);
+                    break;
+
+                case TrackType::Video:
+                    drawVideoClip(g, contentBounds, track);
+                    break;
+
+                case TrackType::Automation:
+                    drawAutomationLane(g, contentBounds, track);
+                    break;
             }
+
+            // Track border (color-coded by type)
+            g.setColour(track.trackColor.withAlpha(0.5f));
+            g.drawRect(trackBounds, 1.0f);
+
+            // Mute/Solo indicators
+            if (track.muted)
+            {
+                g.setColour(juce::Colours::red.withAlpha(0.3f));
+                g.fillRect(trackBounds);
+                g.setColour(juce::Colours::red);
+                g.drawText("M", trackBounds.getRight() - 30, trackBounds.getY() + 5, 20, 20, juce::Justification::centred);
+            }
+            if (track.solo)
+            {
+                g.setColour(juce::Colours::yellow);
+                g.drawText("S", trackBounds.getRight() - 50, trackBounds.getY() + 5, 20, 20, juce::Justification::centred);
+            }
+
+            currentY += track.height;
         }
-        g.strokePath(waveformPath, juce::PathStrokeType(1.5f));
-        
-        // Track border (glow)
-        g.setColour(VaporwaveColors::Cyan.withAlpha(0.3f));
-        g.drawRect(trackBounds, 1.0f);
+    }
+    else
+    {
+        // FALLBACK: Draw legacy audio tracks from engine
+        for (int i = 0; i < numTracks; ++i)
+        {
+            auto track = audioEngine.getTrack(i);
+            if (!track)
+                continue;
+
+            juce::Rectangle<float> trackBounds(
+                (float)bounds.getX(),
+                (float)bounds.getY() + currentY,
+                (float)bounds.getWidth(),
+                (float)trackHeight
+            );
+
+            if (trackBounds.getBottom() < bounds.getY() || trackBounds.getY() > bounds.getBottom())
+            {
+                currentY += (float)trackHeight;
+                continue;
+            }
+
+            g.setColour(i % 2 == 0 ? VaporwaveColors::Surface : VaporwaveColors::Background);
+            g.fillRect(trackBounds);
+
+            g.setColour(VaporwaveColors::Text);
+            g.setFont(juce::Font(14.0f, juce::Font::bold));
+            g.drawText(track->getName(), trackBounds.reduced(10, 5).toNearestInt(), juce::Justification::topLeft);
+
+            auto waveformBounds = trackBounds.reduced(10, 25);
+            g.setColour(VaporwaveColors::Cyan.withAlpha(0.3f));
+
+            juce::Path waveformPath;
+            bool started = false;
+            for (float x = waveformBounds.getX(); x < waveformBounds.getRight(); x += 2.0f)
+            {
+                float y = waveformBounds.getCentreY() + (juce::Random::getSystemRandom().nextFloat() * 20.0f - 10.0f);
+                if (!started)
+                {
+                    waveformPath.startNewSubPath(x, y);
+                    started = true;
+                }
+                else
+                {
+                    waveformPath.lineTo(x, y);
+                }
+            }
+            g.strokePath(waveformPath, juce::PathStrokeType(1.5f));
+
+            g.setColour(VaporwaveColors::Cyan.withAlpha(0.3f));
+            g.drawRect(trackBounds, 1.0f);
+
+            currentY += (float)trackHeight;
+        }
     }
 }
 
@@ -454,6 +678,193 @@ void MainWindow::MainComponent::TrackView::drawPlayhead(juce::Graphics& g, juce:
     triangle.addTriangle(x - 5.0f, (float)bounds.getY(), x + 5.0f, (float)bounds.getY(), x, (float)bounds.getY() + 10.0f);
     g.setColour(VaporwaveColors::Magenta);
     g.fillPath(triangle);
+}
+
+//==============================================================================
+// Extended Drawing Methods for Unified Tracks
+//==============================================================================
+
+void MainWindow::MainComponent::TrackView::drawAudioWaveform(juce::Graphics& g,
+                                                              juce::Rectangle<int> bounds,
+                                                              const UnifiedTrack& track)
+{
+    g.setColour(track.waveformColor.withAlpha(0.3f));
+
+    // Draw simplified waveform (will be replaced with real audio data)
+    juce::Path waveformPath;
+    bool started = false;
+
+    for (float x = static_cast<float>(bounds.getX()); x < bounds.getRight(); x += 2.0f)
+    {
+        float y = bounds.getCentreY() + (juce::Random::getSystemRandom().nextFloat() * 20.0f - 10.0f);
+
+        if (!started)
+        {
+            waveformPath.startNewSubPath(x, y);
+            started = true;
+        }
+        else
+        {
+            waveformPath.lineTo(x, y);
+        }
+    }
+
+    g.strokePath(waveformPath, juce::PathStrokeType(1.5f));
+
+    // Audio indicator
+    g.setColour(VaporwaveColors::Cyan.withAlpha(0.6f));
+    g.drawText("♪ AUDIO", bounds.getX() + 5, bounds.getY(), 60, 20, juce::Justification::centredLeft);
+}
+
+void MainWindow::MainComponent::TrackView::drawVideoClip(juce::Graphics& g,
+                                                           juce::Rectangle<int> bounds,
+                                                           const UnifiedTrack& track)
+{
+    // Video clip background
+    g.setColour(VaporwaveColors::Magenta.withAlpha(0.2f));
+    g.fillRect(bounds);
+
+    // Render video thumbnail if VideoWeaver is available
+    if (videoWeaver && track.videoClip.sourceFile.existsAsFile())
+    {
+        // Render video frame at clip start time
+        auto frameTime = track.videoClip.startTime;
+        auto thumbnail = videoWeaver->renderFrame(frameTime);
+
+        if (thumbnail.isValid())
+        {
+            g.drawImage(thumbnail, bounds.toFloat(),
+                       juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+        }
+    }
+    else
+    {
+        // Placeholder for video clip
+        g.setColour(VaporwaveColors::Magenta.withAlpha(0.5f));
+        g.drawRect(bounds, 2.0f);
+
+        g.setColour(VaporwaveColors::Text);
+        g.setFont(juce::Font(12.0f));
+        g.drawText("🎥 " + track.videoClip.name, bounds, juce::Justification::centred);
+    }
+
+    // Bio-reactive indicator
+    if (track.bioReactive)
+    {
+        g.setColour(juce::Colours::green);
+        g.fillEllipse(static_cast<float>(bounds.getRight() - 15), static_cast<float>(bounds.getY() + 5), 10.0f, 10.0f);
+
+        g.setColour(VaporwaveColors::Text);
+        g.setFont(juce::Font(10.0f));
+        g.drawText("💓", bounds.getRight() - 25, bounds.getY(), 20, 15, juce::Justification::centred);
+    }
+
+    // Video duration indicator
+    g.setColour(VaporwaveColors::Magenta.withAlpha(0.6f));
+    juce::String durationText = juce::String(track.videoClip.duration, 1) + "s";
+    g.drawText(durationText, bounds.getX() + 5, bounds.getBottom() - 20, 50, 15, juce::Justification::centredLeft);
+}
+
+void MainWindow::MainComponent::TrackView::drawAutomationLane(juce::Graphics& g,
+                                                                juce::Rectangle<int> bounds,
+                                                                const UnifiedTrack& track)
+{
+    const auto& lane = track.automationLane;
+
+    // Lane background
+    g.setColour(VaporwaveColors::Purple.withAlpha(0.1f));
+    g.fillRect(bounds);
+
+    // Draw automation curve
+    if (!lane.points.empty())
+    {
+        g.setColour(lane.laneColor);
+
+        juce::Path curvePath;
+        bool firstPoint = true;
+
+        for (const auto& point : lane.points)
+        {
+            float x = beatToX(point.timeInBeats);
+            float y = valueToY(point.value, bounds);
+
+            if (firstPoint)
+            {
+                curvePath.startNewSubPath(x, y);
+                firstPoint = false;
+            }
+            else
+            {
+                curvePath.lineTo(x, y);
+            }
+        }
+
+        g.strokePath(curvePath, juce::PathStrokeType(2.0f));
+
+        // Draw automation points
+        for (const auto& point : lane.points)
+        {
+            float x = beatToX(point.timeInBeats);
+            float y = valueToY(point.value, bounds);
+
+            g.fillEllipse(x - 4.0f, y - 4.0f, 8.0f, 8.0f);
+        }
+    }
+    else
+    {
+        // Placeholder for empty automation lane
+        g.setColour(VaporwaveColors::Purple.withAlpha(0.4f));
+        float centerY = static_cast<float>(bounds.getCentreY());
+        g.drawLine(static_cast<float>(bounds.getX()), centerY,
+                  static_cast<float>(bounds.getRight()), centerY, 1.0f);
+    }
+
+    // Automation parameter name
+    g.setColour(VaporwaveColors::Text);
+    g.setFont(juce::Font(11.0f));
+    g.drawText("⚙️ " + lane.displayName, bounds.getX() + 5, bounds.getY(), 100, 15, juce::Justification::centredLeft);
+}
+
+//==============================================================================
+// Helper Methods
+//==============================================================================
+
+float MainWindow::MainComponent::TrackView::beatToX(double beat) const
+{
+    double tempo = audioEngine.getTempo();
+    double beatsPerSecond = tempo / 60.0;
+    double timeInSeconds = beat / beatsPerSecond;
+
+    double startTime = horizontalScrollBar->getCurrentRangeStart();
+    double visibleDuration = horizontalScrollBar->getCurrentRangeSize();
+
+    if (timeInSeconds < startTime || timeInSeconds > startTime + visibleDuration)
+        return -1.0f;  // Out of visible range
+
+    double normalizedPos = (timeInSeconds - startTime) / visibleDuration;
+    return static_cast<float>(normalizedPos * getWidth());
+}
+
+double MainWindow::MainComponent::TrackView::xToBeat(float x) const
+{
+    double tempo = audioEngine.getTempo();
+    double beatsPerSecond = tempo / 60.0;
+
+    double startTime = horizontalScrollBar->getCurrentRangeStart();
+    double visibleDuration = horizontalScrollBar->getCurrentRangeSize();
+
+    double normalizedPos = x / getWidth();
+    double timeInSeconds = startTime + (normalizedPos * visibleDuration);
+
+    return timeInSeconds * beatsPerSecond;
+}
+
+float MainWindow::MainComponent::TrackView::valueToY(float value, juce::Rectangle<int> bounds) const
+{
+    // value is 0.0 to 1.0 (bottom to top)
+    // Invert so 0.0 is at bottom, 1.0 is at top
+    float invertedValue = 1.0f - value;
+    return bounds.getY() + (invertedValue * bounds.getHeight());
 }
 
 //==============================================================================
