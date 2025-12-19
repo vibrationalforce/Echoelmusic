@@ -342,6 +342,15 @@ public:
         float stressIndex = 0.0f;
         double timestamp = 0.0;
         bool isValid = false;
+
+        // HRV time-domain metrics
+        float sdnn = 0.0f;
+        float rmssd = 0.0f;
+
+        // HRV frequency-domain metrics
+        float lfPower = 0.0f;
+        float hfPower = 0.0f;
+        float lfhfRatio = 1.0f;
     };
 
     //==============================================================================

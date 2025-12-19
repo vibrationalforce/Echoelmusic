@@ -40,14 +40,8 @@ public:
     AdvancedDSPManager* getDSPManager() const { return dspManager; }
 
     //==========================================================================
-    // Component Methods
-
-    void paint(juce::Graphics& g) override;
-    void resized() override;
-
-private:
+    // Public Data Structures
     //==========================================================================
-    // Automation Point
 
     struct AutomationPoint
     {
@@ -70,9 +64,6 @@ private:
         }
     };
 
-    //==========================================================================
-    // Parameter Lane
-
     struct ParameterLane
     {
         juce::String parameterName;
@@ -84,6 +75,15 @@ private:
         bool armed = false;        // Recording armed
         juce::Colour laneColor;
     };
+
+    //==========================================================================
+    // Component Methods
+
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+
+private:
+    //==========================================================================
 
     //==========================================================================
     // Transport Bar

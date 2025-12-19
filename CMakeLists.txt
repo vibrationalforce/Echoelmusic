@@ -272,6 +272,10 @@ target_sources(Echoelmusic
         Sources/UI/ModulationMatrixUI.cpp        # ✅ Modulation routing matrix
         Sources/UI/ParameterAutomationUI.cpp     # ✅ Timeline automation editor
 
+        # Unified Timeline/Grid System (NEW! 2025-12-19) ✅ Complete
+        Sources/UI/ClipLauncherGrid.cpp          # ✅ Session/Clip view (Ableton-style)
+        Sources/UI/UnifiedWorkspaceView.cpp      # ✅ Unified workspace (Arrangement + Session)
+
         # Sources/UI/AdvancedSculptingUI.cpp      # TODO: Fix SpectralSculptor API mismatches
 
         # =====================================================================
