@@ -506,10 +506,8 @@ private:
         juce::String data = juce::String(event.timestamp) + event.userId +
                            event.action + event.resource;
 
-        juce::MemoryBlock hash;
-        juce::SHA256 sha256;
-        sha256.process(data.toUTF8(), data.getNumBytesAsUTF8());
-        hash.append(sha256.getResult(), sha256.getResultSize());
+        juce::SHA256 sha256(data.toUTF8(), data.getNumBytesAsUTF8());
+        juce::MemoryBlock hash = sha256.getRawData();
 
         return juce::Base64::toBase64(hash.getData(), hash.getSize());
     }

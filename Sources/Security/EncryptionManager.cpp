@@ -175,20 +175,21 @@ EncryptionKey EncryptionManager::deriveKeyFromPassword(const juce::String& passw
 
     // PBKDF2 using JUCE's built-in crypto
     // In production: Use proper PBKDF2 implementation
-    juce::SHA256 sha256;
 
-    // Initial hash
-    sha256.process(password.toRawUTF8(), password.getNumBytesAsUTF8());
-    sha256.process(salt.getData(), salt.getSize());
-
-    juce::MemoryBlock derived = sha256.getResult();
+    // Initial hash: combine password + salt
+    juce::MemoryBlock initialData;
+    initialData.append(password.toRawUTF8(), password.getNumBytesAsUTF8());
+    initialData.append(salt.getData(), salt.getSize());
+    juce::SHA256 sha256(initialData.getData(), initialData.getSize());
+    juce::MemoryBlock derived = sha256.getRawData();
 
     // Iterate to strengthen
     for (int i = 1; i < iterations; ++i) {
-        juce::SHA256 iterSha;
-        iterSha.process(derived.getData(), derived.getSize());
-        iterSha.process(password.toRawUTF8(), password.getNumBytesAsUTF8());
-        derived = iterSha.getResult();
+        juce::MemoryBlock iterData;
+        iterData.append(derived.getData(), derived.getSize());
+        iterData.append(password.toRawUTF8(), password.getNumBytesAsUTF8());
+        juce::SHA256 iterSha(iterData.getData(), iterData.getSize());
+        derived = iterSha.getRawData();
     }
 
     key.keyData = derived;
@@ -212,8 +213,8 @@ bool EncryptionManager::saveKey(const EncryptionKey& key,
     juce::DynamicObject::Ptr keyObj = new juce::DynamicObject();
     keyObj->setProperty("keyData", juce::Base64::toBase64(key.keyData.getData(), key.keyData.getSize()));
     keyObj->setProperty("keyId", key.keyId);
-    keyObj->setProperty("createdAt", key.createdAt);
-    keyObj->setProperty("expiresAt", key.expiresAt);
+    keyObj->setProperty("createdAt", static_cast<juce::int64>(key.createdAt));
+    keyObj->setProperty("expiresAt", static_cast<juce::int64>(key.expiresAt));
     keyObj->setProperty("purpose", key.purpose);
 
     juce::String jsonString = juce::JSON::toString(juce::var(keyObj.get()), false);
@@ -266,8 +267,8 @@ EncryptionKey EncryptionManager::loadKey(const juce::File& file,
     key.keyData = keyDataStream.getMemoryBlock();
 
     key.keyId = keyVar["keyId"].toString();
-    key.createdAt = keyVar["createdAt"];
-    key.expiresAt = keyVar["expiresAt"];
+    key.createdAt = static_cast<int64_t>(static_cast<juce::int64>(keyVar["createdAt"]));
+    key.expiresAt = static_cast<int64_t>(static_cast<juce::int64>(keyVar["expiresAt"]));
     key.purpose = keyVar["purpose"].toString();
 
     ECHOEL_TRACE("Key loaded from: " << file.getFullPathName());
@@ -388,18 +389,8 @@ bool EncryptionManager::decryptFile(const juce::File& inputFile,
 // Hashing
 
 juce::String EncryptionManager::sha256(const juce::MemoryBlock& data) {
-    juce::SHA256 sha;
-    sha.process(data.getData(), data.getSize());
-
-    juce::MemoryBlock digest = sha.getResult();
-
-    // Convert to hex string
-    juce::String hex;
-    for (size_t i = 0; i < digest.getSize(); ++i) {
-        hex += juce::String::toHexString(static_cast<int>(static_cast<const uint8_t*>(digest.getData())[i])).paddedLeft('0', 2);
-    }
-
-    return hex.toLowerCase();
+    juce::SHA256 sha(data.getData(), data.getSize());
+    return sha.toHexString();
 }
 
 juce::String EncryptionManager::sha256(const juce::String& str) {
@@ -418,12 +409,13 @@ juce::String EncryptionManager::sha256File(const juce::File& file) {
 juce::String EncryptionManager::hmacSHA256(const juce::MemoryBlock& data,
                                           const juce::MemoryBlock& key) {
     // Simplified HMAC (in production: use proper HMAC implementation)
-    juce::SHA256 sha;
-    sha.process(key.getData(), key.getSize());
-    sha.process(data.getData(), data.getSize());
+    // Concatenate key + data and hash
+    juce::MemoryBlock combined;
+    combined.append(key.getData(), key.getSize());
+    combined.append(data.getData(), data.getSize());
 
-    juce::MemoryBlock digest = sha.getResult();
-    return sha256(digest);
+    juce::SHA256 sha(combined.getData(), combined.getSize());
+    return sha.toHexString();
 }
 
 //==============================================================================

@@ -64,7 +64,7 @@ struct Session {
     }
 
     int64_t remainingTimeMs() const {
-        return std::max(int64_t(0), expiresAt - juce::Time::currentTimeMillis());
+        return std::max(int64_t(0), int64_t(expiresAt - juce::Time::currentTimeMillis()));
     }
 };
 

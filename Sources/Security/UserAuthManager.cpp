@@ -218,10 +218,9 @@ juce::String UserAuthManager::refreshToken(const juce::String& oldToken) {
 juce::String UserAuthManager::hashPassword(const juce::String& password) {
     // Simplified hash for now (in production, use bcrypt)
     // This is SHA-256 + salt
-    juce::SHA256 sha256;
-    sha256.process(password.toRawUTF8(), password.getNumBytesAsUTF8());
+    juce::SHA256 sha256(password.toRawUTF8(), password.getNumBytesAsUTF8());
 
-    juce::MemoryBlock digest = sha256.getResult();
+    juce::MemoryBlock digest = sha256.getRawData();
     return juce::Base64::toBase64(digest.getData(), digest.getSize());
 }
 
@@ -531,12 +530,11 @@ JWTToken UserAuthManager::generateJWT(const juce::String& userId,
     token.payload = juce::Base64::toBase64(payloadJson.toRawUTF8(), payloadJson.getNumBytesAsUTF8()).toStdString();
 
     // Signature: HMAC-SHA256(header.payload, secret)
-    juce::String signatureData = token.header + "." + token.payload;
-    juce::SHA256 sha256;
-    sha256.process(signatureData.toRawUTF8(), signatureData.getNumBytesAsUTF8());
-    sha256.process(jwtSecret.toRawUTF8(), jwtSecret.getNumBytesAsUTF8());
+    // Simplified HMAC: concatenate secret + data and hash
+    juce::String signatureData = jwtSecret + token.header + "." + token.payload;
+    juce::SHA256 sha256(signatureData.toRawUTF8(), signatureData.getNumBytesAsUTF8());
 
-    juce::MemoryBlock digest = sha256.getResult();
+    juce::MemoryBlock digest = sha256.getRawData();
     token.signature = juce::Base64::toBase64(digest.getData(), digest.getSize()).toStdString();
 
     return token;

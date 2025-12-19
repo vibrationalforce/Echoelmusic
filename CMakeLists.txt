@@ -508,6 +508,9 @@ target_link_libraries(Echoelmusic
         # OSC (for OSCManager)
         juce::juce_osc
 
+        # Cryptography (for Security files - SHA256, encryption)
+        juce::juce_cryptography
+
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

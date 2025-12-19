@@ -340,6 +340,7 @@ public:
         float hrv = 0.0f;
         float coherence = 0.0f;
         float stressIndex = 0.0f;
+        float stress = 0.5f;  // Alias for stressIndex (0-1)
         double timestamp = 0.0;
         bool isValid = false;
 

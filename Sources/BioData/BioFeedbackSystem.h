@@ -121,7 +121,7 @@ public:
         // Initialize processors
         hrvProcessor = std::make_unique<HRVProcessor>();
         cameraPPG = std::make_unique<CameraPPGProcessor>();
-        advancedProcessor = std::make_unique<AdvancedBiofeedbackProcessor>();
+        advancedProcessor = std::make_unique<Echoel::AdvancedBiofeedbackProcessor>();
         modulator = std::make_unique<BioReactiveModulator>();
 
         // Default to auto-detection
@@ -571,7 +571,7 @@ private:
     // Processors
     std::unique_ptr<HRVProcessor> hrvProcessor;
     std::unique_ptr<CameraPPGProcessor> cameraPPG;
-    std::unique_ptr<AdvancedBiofeedbackProcessor> advancedProcessor;
+    std::unique_ptr<Echoel::AdvancedBiofeedbackProcessor> advancedProcessor;
     std::unique_ptr<BioReactiveModulator> modulator;
 
     // State
