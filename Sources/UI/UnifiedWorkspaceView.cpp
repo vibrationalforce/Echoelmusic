@@ -86,7 +86,7 @@ void UnifiedWorkspaceView::setBioData(float hrv, float coherence, float stress)
     updateStatusBar();
 }
 
-void UnifiedWorkspaceView::updateBioData(const BioFeedbackSystem::UnifiedBioData& bioData)
+void UnifiedWorkspaceView::updateBioData(const Echoelmusic::BioFeedbackSystem::UnifiedBioData& bioData)
 {
     currentHRV = bioData.hrv;
     currentCoherence = bioData.coherence;
