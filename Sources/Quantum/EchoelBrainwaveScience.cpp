@@ -52,6 +52,12 @@ EchoelBrainwaveScience::getResearchProtocol(TherapeuticTarget target)
         case TherapeuticTarget::PainManagement:
         case TherapeuticTarget::DepressionRelief:
         case TherapeuticTarget::LucidDreaming:
+        case TherapeuticTarget::RemoteViewing:
+        case TherapeuticTarget::OutOfBody:
+        case TherapeuticTarget::Psychedelic:
+        case TherapeuticTarget::DNARepair:
+        case TherapeuticTarget::SpirituaLawakening:
+        case TherapeuticTarget::Manifestation:
             // TODO: Implement research protocols for these targets
             protocol.startFrequency = 10.0f;  // Alpha default
             break;
@@ -273,6 +279,14 @@ float EchoelBrainwaveScience::generateEntrainmentSignal(float frequency, float p
         case EntrainmentProtocol::WaveShape::Square:
             return std::sin(phase) > 0.0f ? 1.0f : -1.0f;
 
+        case EntrainmentProtocol::WaveShape::Pink:
+            // TODO: Implement pink noise generation
+            return std::sin(phase);
+
+        case EntrainmentProtocol::WaveShape::White:
+            // TODO: Implement white noise generation
+            return std::sin(phase);
+
         default:
             return std::sin(phase);
     }
@@ -306,9 +320,6 @@ void EchoelBrainwaveScience::enableResearchDataCollection(bool enable, bool anon
 
 void EchoelBrainwaveScience::saveResearchData(const ResearchData& data)
 {
-    (void)sampleRate;
-    (void)signal;
-    (void)spectrum;
     if (!collectResearchData)
         return;
 
@@ -320,5 +331,9 @@ void EchoelBrainwaveScience::saveResearchData(const ResearchData& data)
 void EchoelBrainwaveScience::performSpectralAnalysis(const std::vector<float>& signal, float sampleRate,
                                                       std::vector<float>& spectrum)
 {
+    (void)signal;
+    (void)sampleRate;
+    (void)spectrum;
+
     // TODO: Implement FFT-based spectral analysis using juce::dsp::FFT
 }
