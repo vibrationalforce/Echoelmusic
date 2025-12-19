@@ -316,9 +316,7 @@ private:
     {
         // Simple 2nd-order bandpass filter (0.7-3.5 Hz at 30 FPS)
         // This is a placeholder - production should use proper IIR filter
-
-        float lowCutoff = 0.7f / 15.0f;    // Normalized frequency (0-1)
-        float highCutoff = 3.5f / 15.0f;
+        // Target: lowCutoff = 0.7Hz, highCutoff = 3.5Hz
 
         // Simple moving average filter (approximation)
         std::vector<float> filtered(signal.size());

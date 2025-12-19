@@ -49,7 +49,6 @@ public:
     void performResponsiveLayout() override
     {
         auto bounds = getLocalBounds();
-        auto metrics = getLayoutMetrics();
 
         // Name at top
         nameLabel.setBounds(bounds.removeFromTop(20));
@@ -182,13 +181,13 @@ public:
         startTimerHz(60);  // 60 FPS refresh
     }
 
-    void setFFTData(const float* magnitudes, int numBins, float sampleRate)
+    void setFFTData(const float* magnitudes, int numBins, float newSampleRate)
     {
         if (numBins != fftMagnitudes.size())
             fftMagnitudes.resize(numBins);
 
         std::copy(magnitudes, magnitudes + numBins, fftMagnitudes.begin());
-        this->sampleRate = sampleRate;
+        sampleRate = newSampleRate;
         repaint();
     }
 
