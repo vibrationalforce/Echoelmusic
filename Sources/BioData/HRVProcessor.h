@@ -366,6 +366,10 @@ public:
 
         switch (type)
         {
+            case SourceType::None:
+                // No source selected
+                break;
+
             case SourceType::Simulated:
                 startSimulation();
                 break;
@@ -382,7 +386,12 @@ public:
                 // TODO: Start WebSocket server
                 break;
 
-            default:
+            case SourceType::OSC:
+                // TODO: Initialize OSC listener
+                break;
+
+            case SourceType::Serial:
+                // TODO: Initialize serial port
                 break;
         }
     }
