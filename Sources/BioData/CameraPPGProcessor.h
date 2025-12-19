@@ -297,12 +297,12 @@ private:
             float sum = 0.0f;
             int count = 0;
 
-            int start = juce::jmax(0, i - windowSize / 2);
-            int end = juce::jmin(static_cast<int>(signal.size()), i + windowSize / 2);
+            int start = juce::jmax(0, static_cast<int>(i) - windowSize / 2);
+            int end = juce::jmin(static_cast<int>(signal.size()), static_cast<int>(i) + windowSize / 2);
 
             for (int j = start; j < end; ++j)
             {
-                sum += signal[j];
+                sum += signal[static_cast<size_t>(j)];
                 count++;
             }
 

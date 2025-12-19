@@ -156,6 +156,10 @@ public:
         // Configure specific source
         switch (source)
         {
+            case BioDataSource::Auto:
+                // Auto-detection handled in update()
+                break;
+
             case BioDataSource::CameraPPG:
                 cameraPPGEnabled.store(true);
                 break;
@@ -168,11 +172,12 @@ public:
                 advancedSensorsEnabled.store(true);
                 break;
 
-            case BioDataSource::Simulated:
-                // HRVProcessor runs in simulated mode by default
+            case BioDataSource::NetworkStream:
+                // Network streaming configuration
                 break;
 
-            default:
+            case BioDataSource::Simulated:
+                // HRVProcessor runs in simulated mode by default
                 break;
         }
     }
@@ -301,6 +306,10 @@ public:
 
         switch (currentSource.load())
         {
+            case BioDataSource::Auto:
+                newData = getHRVSensorData();  // Fallback during auto-detection
+                break;
+
             case BioDataSource::CameraPPG:
                 newData = getCameraPPGData();
                 break;
@@ -313,12 +322,12 @@ public:
                 newData = getAdvancedSensorData();
                 break;
 
-            case BioDataSource::Simulated:
-                newData = getHRVSensorData();  // HRVProcessor handles simulated
+            case BioDataSource::NetworkStream:
+                newData = getHRVSensorData();  // Network stream handled by HRVProcessor
                 break;
 
-            default:
-                newData = getHRVSensorData();
+            case BioDataSource::Simulated:
+                newData = getHRVSensorData();  // HRVProcessor handles simulated
                 break;
         }
 
