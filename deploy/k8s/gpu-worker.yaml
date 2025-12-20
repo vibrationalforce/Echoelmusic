@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoelmusic-gpu-worker
+  namespace: echoelmusic
+  labels:
+    app: echoelmusic
+    component: gpu-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echoelmusic
+      component: gpu-worker
+  template:
+    metadata:
+      labels:
+        app: echoelmusic
+        component: gpu-worker
+    spec:
+      nodeSelector:
+        nvidia.com/gpu.present: "true"
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: worker
+          image: ghcr.io/echoelmusic/worker:latest
+          command: ["python3", "-m", "backend.videogen.worker"]
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: echoelmusic-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: echoelmusic-secrets
+                  key: redis-url
+            - name: CUDA_VISIBLE_DEVICES
+              value: "0"
+            - name: MODEL_PATH
+              value: "/models"
+          resources:
+            requests:
+              memory: "16Gi"
+              cpu: "4000m"
+              nvidia.com/gpu: 1
+            limits:
+              memory: "32Gi"
+              cpu: "8000m"
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: video-storage
+              mountPath: /app/data/videos
+            - name: model-cache
+              mountPath: /models
+            - name: shm
+              mountPath: /dev/shm
+      volumes:
+        - name: video-storage
+          persistentVolumeClaim:
+            claimName: video-storage-pvc
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: model-cache-pvc
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: "16Gi"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: video-storage-pvc
+  namespace: echoelmusic
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 500Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-cache-pvc
+  namespace: echoelmusic
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: fast-ssd

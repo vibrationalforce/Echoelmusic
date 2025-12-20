@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: echoelmusic-ingress
+  namespace: echoelmusic
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "500m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  tls:
+    - hosts:
+        - api.echoelmusic.com
+      secretName: echoelmusic-tls
+  rules:
+    - host: api.echoelmusic.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: echoelmusic-api
+                port:
+                  number: 80
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: echoelmusic-secrets
+  namespace: echoelmusic
+type: Opaque
+stringData:
+  database-url: "postgresql://echo:CHANGE_ME@postgres:5432/echoelmusic"
+  redis-url: "redis://redis:6379/0"
+  jwt-secret: "CHANGE_THIS_TO_A_SECURE_SECRET_AT_LEAST_32_CHARS"
