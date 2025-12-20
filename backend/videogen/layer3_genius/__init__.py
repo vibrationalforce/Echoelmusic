@@ -6,6 +6,8 @@ Layer 3: Genius Features
 - Adaptive configuration based on hardware
 - Style Morphing (inspired by Minimal Audio)
 - Stream Browser for cloud content discovery
+- Audio-Reactive Video Generation (S2V)
+- Video Warp Effects System
 """
 
 from .prompt_expander import PromptExpander, VideoGenre, ExpandedPrompt
@@ -25,6 +27,27 @@ from .stream_browser import (
     StreamFilter,
     StreamBrowser,
     stream_browser,
+)
+from .audio_reactive import (
+    AudioFeature,
+    VideoParameter,
+    ModulationRoute,
+    S2VConfig,
+    S2V_PRESETS,
+    AudioAnalysis,
+    AudioAnalyzer,
+    audio_analyzer,
+    S2VModulator,
+)
+from .warp_effects import (
+    WarpCategory,
+    WarpType,
+    WarpKeyframe,
+    WarpEffect,
+    WarpChain,
+    WarpProcessor,
+    warp_processor,
+    WARP_PRESETS,
 )
 
 __all__ = [
@@ -50,4 +73,23 @@ __all__ = [
     "StreamFilter",
     "StreamBrowser",
     "stream_browser",
+    # Audio-Reactive (S2V)
+    "AudioFeature",
+    "VideoParameter",
+    "ModulationRoute",
+    "S2VConfig",
+    "S2V_PRESETS",
+    "AudioAnalysis",
+    "AudioAnalyzer",
+    "audio_analyzer",
+    "S2VModulator",
+    # Warp Effects
+    "WarpCategory",
+    "WarpType",
+    "WarpKeyframe",
+    "WarpEffect",
+    "WarpChain",
+    "WarpProcessor",
+    "warp_processor",
+    "WARP_PRESETS",
 ]
