@@ -1,0 +1,810 @@
+openapi: 3.1.0
+info:
+  title: Echoelmusic Video Generation API
+  description: |
+    World-Class AI-Powered Video Generation Platform
+
+    Powered by Wan2.2-T2V-14B with 10 Super Genius AI Features:
+    - Model Orchestrator - Intelligent model selection
+    - Scene Orchestrator - Multi-shot video editing
+    - Batch Inference - VRAM-aware batch processing
+    - Progressive Streaming - Real-time frame preview
+    - Lip-Sync Engine - Audio-driven lip sync
+    - Video Inpainting - Object removal/replacement
+    - Speculative Decoder - 2-3x faster decoding
+    - Consistency Tracker - Character tracking
+    - SLA Monitor - Performance metrics
+    - V2V Pipeline - Video transformation
+  version: 1.0.0
+  contact:
+    name: Echoelmusic API Support
+    email: api-support@echoelmusic.com
+    url: https://echoelmusic.com/support
+  license:
+    name: Proprietary
+    url: https://echoelmusic.com/terms
+
+servers:
+  - url: https://api.echoelmusic.com/v1
+    description: Production server
+  - url: https://staging-api.echoelmusic.com/v1
+    description: Staging server
+  - url: http://localhost:8000
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Core
+    description: Core video generation endpoints
+  - name: Model Orchestrator
+    description: Intelligent model selection
+  - name: Scene Orchestrator
+    description: Multi-shot video editing
+  - name: Batch Inference
+    description: Batch processing
+  - name: Progressive Streaming
+    description: Real-time frame preview
+  - name: Lip-Sync
+    description: Audio-driven lip sync
+  - name: Inpainting
+    description: Video inpainting
+  - name: Decoder
+    description: Speculative decoder
+  - name: Consistency
+    description: Entity tracking
+  - name: SLA
+    description: Performance monitoring
+  - name: V2V
+    description: Video transformation
+
+paths:
+  /generate:
+    post:
+      tags: [Core]
+      summary: Generate Video
+      description: Start a video generation task from text prompt
+      operationId: generateVideo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerationRequest'
+      responses:
+        '200':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /status/{task_id}:
+    get:
+      tags: [Core]
+      summary: Get Task Status
+      description: Check the status of a generation task
+      operationId: getTaskStatus
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /result/{task_id}:
+    get:
+      tags: [Core]
+      summary: Get Task Result
+      description: Get the result of a completed generation task
+      operationId: getTaskResult
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResultResponse'
+        '400':
+          description: Task not completed
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /genius/orchestrator/select-model:
+    post:
+      tags: [Model Orchestrator]
+      summary: Select Optimal Model
+      description: Intelligently select the best model based on prompt complexity
+      operationId: selectModel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelSelectionRequest'
+      responses:
+        '200':
+          description: Model recommendation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelSelectionResponse'
+
+  /genius/scene/edit:
+    post:
+      tags: [Scene Orchestrator]
+      summary: Create Multi-Shot Edit
+      description: Create a multi-shot video with automatic transitions
+      operationId: createSceneEdit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SceneEditRequest'
+      responses:
+        '200':
+          description: Scene edit created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SceneEditResponse'
+
+  /genius/batch/submit:
+    post:
+      tags: [Batch Inference]
+      summary: Submit Batch
+      description: Submit multiple prompts for batch processing
+      operationId: submitBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchRequest'
+      responses:
+        '200':
+          description: Batch submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
+
+  /genius/stream/start:
+    post:
+      tags: [Progressive Streaming]
+      summary: Start Stream Session
+      description: Start a progressive frame streaming session
+      operationId: startStreamSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamSessionRequest'
+      responses:
+        '200':
+          description: Stream session started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamSessionResponse'
+
+  /genius/lipsync/generate:
+    post:
+      tags: [Lip-Sync]
+      summary: Generate Lip Sync
+      description: Generate lip sync animation from audio
+      operationId: generateLipSync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LipSyncRequest'
+      responses:
+        '200':
+          description: Lip sync generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LipSyncResponse'
+
+  /genius/inpaint/process:
+    post:
+      tags: [Inpainting]
+      summary: Inpaint Video
+      description: Apply inpainting to video frames
+      operationId: inpaintVideo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InpaintRequest'
+      responses:
+        '200':
+          description: Inpainting completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InpaintResponse'
+
+  /genius/decoder/stats:
+    get:
+      tags: [Decoder]
+      summary: Get Decoder Stats
+      description: Get speculative decoder performance statistics
+      operationId: getDecoderStats
+      responses:
+        '200':
+          description: Decoder statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecoderStatsResponse'
+
+  /genius/consistency/track/{task_id}:
+    post:
+      tags: [Consistency]
+      summary: Track Entities
+      description: Track registered entities across video frames
+      operationId: trackEntities
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tracking results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackingResultResponse'
+
+  /genius/sla/status:
+    get:
+      tags: [SLA]
+      summary: Get SLA Status
+      description: Get current SLA compliance status
+      operationId: getSlaStatus
+      responses:
+        '200':
+          description: SLA status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAStatusResponse'
+
+  /genius/v2v/transform:
+    post:
+      tags: [V2V]
+      summary: Transform Video
+      description: Apply video-to-video transformation
+      operationId: transformVideo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V2VTransformRequest'
+      responses:
+        '200':
+          description: Transformation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V2VTransformResponse'
+
+  /health:
+    get:
+      tags: [Core]
+      summary: Health Check
+      description: Check API health status
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  version:
+                    type: string
+                    example: 1.0.0
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    GenerationRequest:
+      type: object
+      required: [prompt]
+      properties:
+        prompt:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          example: A majestic dragon soaring over misty mountains
+        negative_prompt:
+          type: string
+          default: blurry, low quality, distorted
+        duration_seconds:
+          type: number
+          minimum: 1
+          maximum: 60
+          default: 4.0
+        fps:
+          type: integer
+          minimum: 12
+          maximum: 60
+          default: 24
+        resolution:
+          type: string
+          enum: [480p, 720p, 1080p, 1440p, 4k, 8k]
+          default: 720p
+        aspect_ratio:
+          type: string
+          enum: ['16:9', '9:16', '1:1', '4:3']
+          default: '16:9'
+        genre:
+          type: string
+          enum: [cinematic, anime, realistic, artistic, documentary, music_video, commercial, social_media, abstract, nature, scifi, fantasy]
+          default: cinematic
+        seed:
+          type: integer
+        guidance_scale:
+          type: number
+          minimum: 1
+          maximum: 20
+          default: 7.5
+        num_inference_steps:
+          type: integer
+          minimum: 10
+          maximum: 150
+          default: 50
+        webhook_url:
+          type: string
+          format: uri
+
+    GenerationResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        message:
+          type: string
+        estimated_time_seconds:
+          type: number
+        queue_position:
+          type: integer
+
+    TaskStatusResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+        status:
+          type: string
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        current_step:
+          type: string
+        elapsed_seconds:
+          type: number
+        eta_seconds:
+          type: number
+        preview_url:
+          type: string
+        error:
+          type: string
+
+    TaskResultResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+        status:
+          type: string
+        video_url:
+          type: string
+        thumbnail_url:
+          type: string
+        duration_seconds:
+          type: number
+        resolution:
+          type: string
+        file_size_mb:
+          type: number
+        generation_time_seconds:
+          type: number
+        metadata:
+          type: object
+
+    ModelSelectionRequest:
+      type: object
+      required: [prompt]
+      properties:
+        prompt:
+          type: string
+        duration_seconds:
+          type: number
+          default: 4.0
+        target_resolution:
+          type: string
+          default: 1080p
+        max_vram_gb:
+          type: number
+        prefer_quality:
+          type: boolean
+          default: true
+
+    ModelSelectionResponse:
+      type: object
+      properties:
+        recommended_model:
+          type: string
+        complexity:
+          type: string
+          enum: [simple, moderate, complex, expert]
+        confidence:
+          type: number
+        estimated_time_seconds:
+          type: number
+        vram_required_gb:
+          type: number
+        alternatives:
+          type: array
+          items:
+            type: object
+
+    SceneEditRequest:
+      type: object
+      required: [scenes]
+      properties:
+        scenes:
+          type: array
+          items:
+            type: object
+        enable_auto_transitions:
+          type: boolean
+          default: true
+        transition_duration_seconds:
+          type: number
+          default: 0.5
+        enable_character_consistency:
+          type: boolean
+          default: true
+
+    SceneEditResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+        total_scenes:
+          type: integer
+        total_duration_seconds:
+          type: number
+        transitions:
+          type: array
+          items:
+            type: object
+        estimated_time_seconds:
+          type: number
+
+    BatchRequest:
+      type: object
+      required: [prompts]
+      properties:
+        prompts:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 100
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+        enable_similarity_caching:
+          type: boolean
+          default: true
+        max_concurrent:
+          type: integer
+          default: 4
+
+    BatchResponse:
+      type: object
+      properties:
+        batch_id:
+          type: string
+        task_ids:
+          type: array
+          items:
+            type: string
+        total:
+          type: integer
+        estimated_time_seconds:
+          type: number
+        queue_position:
+          type: integer
+
+    StreamSessionRequest:
+      type: object
+      required: [task_id]
+      properties:
+        task_id:
+          type: string
+        initial_quality:
+          type: string
+          enum: [thumbnail, preview, standard, high]
+          default: preview
+        enable_adaptive:
+          type: boolean
+          default: true
+
+    StreamSessionResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+        websocket_url:
+          type: string
+        initial_quality:
+          type: string
+
+    LipSyncRequest:
+      type: object
+      required: [task_id]
+      properties:
+        task_id:
+          type: string
+        audio_url:
+          type: string
+        face_region:
+          type: array
+          items:
+            type: integer
+        expression:
+          type: string
+          enum: [neutral, happy, sad, angry, surprised]
+          default: neutral
+        intensity:
+          type: number
+          default: 1.0
+
+    LipSyncResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+        keyframes_generated:
+          type: integer
+        duration_seconds:
+          type: number
+        visemes_detected:
+          type: integer
+        processing_time_ms:
+          type: number
+
+    InpaintRequest:
+      type: object
+      required: [task_id]
+      properties:
+        task_id:
+          type: string
+        mode:
+          type: string
+          enum: [remove, replace, blend, background, extend]
+          default: remove
+        bbox:
+          type: array
+          items:
+            type: integer
+        feather_radius:
+          type: integer
+          default: 10
+
+    InpaintResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+        regions_processed:
+          type: integer
+        frames_processed:
+          type: integer
+        processing_time_ms:
+          type: number
+
+    DecoderStatsResponse:
+      type: object
+      properties:
+        total_tokens:
+          type: integer
+        accepted_tokens:
+          type: integer
+        acceptance_rate:
+          type: number
+        speedup_factor:
+          type: number
+        average_draft_time_ms:
+          type: number
+        average_verify_time_ms:
+          type: number
+
+    TrackingResultResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+        entities_tracked:
+          type: integer
+        frames_analyzed:
+          type: integer
+        consistency_score:
+          type: number
+        entity_timelines:
+          type: object
+
+    SLAStatusResponse:
+      type: object
+      properties:
+        target_level:
+          type: string
+          enum: [best_effort, standard, premium, critical]
+        meets_sla:
+          type: boolean
+        uptime_percent:
+          type: number
+        latency_p50_ms:
+          type: number
+        latency_p95_ms:
+          type: number
+        latency_p99_ms:
+          type: number
+        error_rate_percent:
+          type: number
+        current_throughput_rps:
+          type: number
+        violations:
+          type: array
+          items:
+            type: object
+
+    V2VTransformRequest:
+      type: object
+      required: [source_task_id, mode]
+      properties:
+        source_task_id:
+          type: string
+        mode:
+          type: string
+          enum: [style_transfer, motion_transfer, enhancement, upscale, interpolation, colorization]
+        strength:
+          type: number
+          default: 0.5
+        style_reference_url:
+          type: string
+        upscale_factor:
+          type: integer
+          default: 2
+        preserve_motion:
+          type: boolean
+          default: true
+        temporal_consistency:
+          type: number
+          default: 0.8
+
+    V2VTransformResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+        mode:
+          type: string
+        output_resolution:
+          type: string
+        frames_processed:
+          type: integer
+        processing_time_seconds:
+          type: number
+        quality_metrics:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              detail:
+                type: string
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Invalid API key
+
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Task not found
+
+    RateLimited:
+      description: Too Many Requests
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Rate limit exceeded
