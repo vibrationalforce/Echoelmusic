@@ -618,3 +618,172 @@ class NF4Quantizer:
         high = packed >> 4
         low = packed & 0x0F
         return torch.stack([high, low], dim=-1).view(-1)
+
+
+class ZeroCopyTransfer:
+    """
+    Zero-Copy GPU Transfer Manager
+
+    Enables efficient tensor sharing between processes and pipeline
+    stages without memory copies using CUDA IPC handles.
+
+    Features:
+    - CUDA IPC handle creation and restoration
+    - Pinned memory for fast CPU-GPU transfers
+    - Async transfer with CUDA streams
+    - Memory pool management
+    """
+
+    def __init__(self, device: str = "cuda"):
+        self.device = device
+        self._pinned_buffers: Dict[str, torch.Tensor] = {}
+        self._ipc_handles: Dict[str, bytes] = {}
+        self._transfer_stream: Optional[torch.cuda.Stream] = None
+
+        if torch.cuda.is_available() and device == "cuda":
+            self._transfer_stream = torch.cuda.Stream()
+
+    def create_pinned_buffer(
+        self,
+        name: str,
+        shape: Tuple[int, ...],
+        dtype: torch.dtype = torch.float16
+    ) -> torch.Tensor:
+        """
+        Create pinned CPU memory buffer for fast transfers.
+
+        Args:
+            name: Buffer name
+            shape: Tensor shape
+            dtype: Data type
+
+        Returns:
+            Pinned memory tensor
+        """
+        buffer = torch.zeros(shape, dtype=dtype, pin_memory=True)
+        self._pinned_buffers[name] = buffer
+        return buffer
+
+    def get_pinned_buffer(self, name: str) -> Optional[torch.Tensor]:
+        """Get existing pinned buffer"""
+        return self._pinned_buffers.get(name)
+
+    async def async_to_gpu(
+        self,
+        cpu_tensor: torch.Tensor,
+        stream: Optional[torch.cuda.Stream] = None
+    ) -> torch.Tensor:
+        """
+        Async transfer CPU tensor to GPU.
+
+        Args:
+            cpu_tensor: Source CPU tensor (ideally pinned)
+            stream: CUDA stream for async transfer
+
+        Returns:
+            GPU tensor
+        """
+        stream = stream or self._transfer_stream
+
+        if stream:
+            with torch.cuda.stream(stream):
+                gpu_tensor = cpu_tensor.to(self.device, non_blocking=True)
+            return gpu_tensor
+        else:
+            return cpu_tensor.to(self.device)
+
+    async def async_to_cpu(
+        self,
+        gpu_tensor: torch.Tensor,
+        pinned_buffer: Optional[torch.Tensor] = None,
+        stream: Optional[torch.cuda.Stream] = None
+    ) -> torch.Tensor:
+        """
+        Async transfer GPU tensor to CPU.
+
+        Args:
+            gpu_tensor: Source GPU tensor
+            pinned_buffer: Optional pinned CPU buffer to copy into
+            stream: CUDA stream for async transfer
+
+        Returns:
+            CPU tensor
+        """
+        stream = stream or self._transfer_stream
+
+        if pinned_buffer is not None:
+            if stream:
+                with torch.cuda.stream(stream):
+                    pinned_buffer.copy_(gpu_tensor, non_blocking=True)
+                stream.synchronize()
+            else:
+                pinned_buffer.copy_(gpu_tensor)
+            return pinned_buffer
+        else:
+            if stream:
+                with torch.cuda.stream(stream):
+                    cpu_tensor = gpu_tensor.cpu()
+                return cpu_tensor
+            else:
+                return gpu_tensor.cpu()
+
+    def create_ipc_handle(self, tensor: torch.Tensor, name: str) -> bytes:
+        """
+        Create CUDA IPC handle for zero-copy sharing.
+
+        Args:
+            tensor: GPU tensor to share
+            name: Handle name for tracking
+
+        Returns:
+            IPC handle bytes
+        """
+        if not tensor.is_cuda:
+            raise ValueError("Tensor must be on CUDA device")
+
+        try:
+            storage = tensor.storage()
+            handle = storage._share_cuda_()
+            self._ipc_handles[name] = handle
+            return handle
+        except Exception as e:
+            logger.error(f"Failed to create IPC handle: {e}")
+            raise
+
+    def tensor_from_ipc(
+        self,
+        handle: bytes,
+        shape: Tuple[int, ...],
+        dtype: torch.dtype
+    ) -> torch.Tensor:
+        """
+        Reconstruct tensor from IPC handle.
+
+        Args:
+            handle: IPC handle bytes
+            shape: Original tensor shape
+            dtype: Original dtype
+
+        Returns:
+            Reconstructed GPU tensor
+        """
+        try:
+            storage = torch.cuda.storage._CudaStorageBase._new_shared_cuda(*handle)
+            tensor = torch.tensor([], dtype=dtype, device="cuda")
+            tensor.set_(storage)
+            return tensor.view(shape)
+        except Exception as e:
+            logger.error(f"Failed to restore tensor from IPC: {e}")
+            raise
+
+    def synchronize(self) -> None:
+        """Synchronize transfer stream"""
+        if self._transfer_stream:
+            self._transfer_stream.synchronize()
+
+    def cleanup(self) -> None:
+        """Cleanup resources"""
+        self._pinned_buffers.clear()
+        self._ipc_handles.clear()
+        if self._transfer_stream:
+            self._transfer_stream.synchronize()

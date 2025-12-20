@@ -14,7 +14,7 @@ Features:
 """
 
 import torch
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
 import logging
@@ -54,6 +54,25 @@ class ExpandedPrompt:
     lighting_descriptors: List[str]
     style_tags: List[str]
     confidence: float
+
+    @property
+    def enhanced_prompt(self) -> str:
+        """Alias for expanded prompt (for API compatibility)"""
+        return self.expanded
+
+    def to_dict(self) -> Dict:
+        """Convert to dictionary for serialization"""
+        return {
+            "original": self.original,
+            "expanded": self.expanded,
+            "enhanced_prompt": self.expanded,
+            "negative_prompt": self.negative_prompt,
+            "genre": self.genre.value,
+            "camera_movements": self.camera_movements,
+            "lighting_descriptors": self.lighting_descriptors,
+            "style_tags": self.style_tags,
+            "confidence": self.confidence
+        }
 
 
 # Genre-specific style dictionaries

@@ -573,3 +573,151 @@ class VideoGenAPI:
             await asyncio.sleep(1)
 
         raise TimeoutError(f"Task {task_id} did not complete within {timeout}s")
+
+
+# ============================================================================
+# Additional API Endpoints
+# ============================================================================
+
+@app.get("/genres")
+async def list_genres():
+    """List all available video genres with descriptions"""
+    genre_descriptions = {
+        VideoGenre.CINEMATIC: "Hollywood-style dramatic visuals with high production value",
+        VideoGenre.ANIME: "Japanese animation style with vibrant colors and expressive characters",
+        VideoGenre.REALISTIC: "Photorealistic rendering with natural lighting and textures",
+        VideoGenre.ARTISTIC: "Abstract and creative visuals with artistic interpretations",
+        VideoGenre.DOCUMENTARY: "Educational and informative visual style",
+        VideoGenre.MUSIC_VIDEO: "Dynamic visuals synchronized with music and rhythm",
+        VideoGenre.COMMERCIAL: "Professional advertising-quality visuals",
+        VideoGenre.SOCIAL_MEDIA: "Vertical format optimized for social platforms",
+        VideoGenre.ABSTRACT: "Non-representational geometric and color explorations",
+        VideoGenre.NATURE: "Natural landscapes, wildlife, and environmental imagery",
+        VideoGenre.SCIFI: "Science fiction with futuristic technology and space themes",
+        VideoGenre.FANTASY: "Magical worlds with mythical creatures and enchanted settings",
+    }
+    return {
+        "genres": [
+            {"id": g.value, "name": g.name.replace("_", " ").title(), "description": genre_descriptions.get(g, "")}
+            for g in VideoGenre
+        ]
+    }
+
+
+@app.get("/system")
+async def system_info():
+    """Get system hardware and resource information"""
+    import torch
+    import platform
+
+    gpu_info = None
+    if torch.cuda.is_available():
+        gpu_info = {
+            "name": torch.cuda.get_device_name(0),
+            "memory_total_gb": torch.cuda.get_device_properties(0).total_memory / (1024**3),
+            "memory_free_gb": (torch.cuda.get_device_properties(0).total_memory - torch.cuda.memory_allocated()) / (1024**3),
+            "compute_capability": f"{torch.cuda.get_device_properties(0).major}.{torch.cuda.get_device_properties(0).minor}",
+        }
+
+    return {
+        "platform": platform.system(),
+        "python_version": platform.python_version(),
+        "torch_version": torch.__version__,
+        "cuda_available": torch.cuda.is_available(),
+        "cuda_version": torch.version.cuda if torch.cuda.is_available() else None,
+        "gpu": gpu_info,
+        "api_version": "1.0.0",
+    }
+
+
+@app.get("/download")
+async def download_video(path: str):
+    """Download generated video file"""
+    import os
+    from pathlib import Path
+
+    # Security: validate path
+    safe_path = Path(path).resolve()
+    output_dir = Path("/tmp/videogen/output").resolve()
+
+    # Allow paths in output directory only
+    if not str(safe_path).startswith(str(output_dir)):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    if not safe_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return FileResponse(
+        path=str(safe_path),
+        media_type="video/mp4",
+        filename=safe_path.name
+    )
+
+
+@app.get("/thumbnail")
+async def get_thumbnail(path: str):
+    """Get video thumbnail"""
+    import os
+    from pathlib import Path
+
+    safe_path = Path(path).resolve()
+    output_dir = Path("/tmp/videogen/output").resolve()
+
+    if not str(safe_path).startswith(str(output_dir)):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    if not safe_path.exists():
+        raise HTTPException(status_code=404, detail="Thumbnail not found")
+
+    return FileResponse(
+        path=str(safe_path),
+        media_type="image/jpeg",
+        filename=safe_path.name
+    )
+
+
+@app.post("/batch")
+async def batch_generate(requests: List[GenerationRequest], background_tasks: BackgroundTasks):
+    """Submit multiple generation requests as a batch"""
+    task_ids = []
+    for request in requests:
+        task_id = task_store.create_task(request)
+        task_ids.append(task_id)
+        background_tasks.add_task(process_generation_task, task_id)
+
+    return {
+        "batch_id": str(uuid.uuid4()),
+        "task_ids": task_ids,
+        "total": len(task_ids),
+        "message": f"Batch of {len(task_ids)} tasks queued"
+    }
+
+
+# ============================================================================
+# Error Handlers
+# ============================================================================
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    """Global exception handler for unhandled errors"""
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "detail": str(exc) if app.debug else "An unexpected error occurred",
+            "type": type(exc).__name__
+        }
+    )
+
+
+@app.exception_handler(ValueError)
+async def value_error_handler(request, exc):
+    """Handler for validation errors"""
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": "Validation error",
+            "detail": str(exc)
+        }
+    )

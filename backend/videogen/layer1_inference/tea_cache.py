@@ -16,7 +16,7 @@ Key Concepts:
 
 import torch
 import numpy as np
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple, Any
 from dataclasses import dataclass
 import logging
 
@@ -32,6 +32,18 @@ class CacheEntry:
     attention_output: Optional[torch.Tensor] = None
     hidden_state: Optional[torch.Tensor] = None
     similarity_score: float = 0.0
+
+
+@dataclass
+class TeaCacheConfig:
+    """Configuration for TeaCache optimization"""
+    threshold: float = 0.1  # Similarity threshold (0-1, lower = more aggressive caching)
+    adaptive_threshold: bool = True  # Adjust threshold based on denoising step
+    max_cached_frames: int = 100  # Maximum frames to keep in cache
+    skip_first_steps: int = 3  # Always compute first N steps
+    skip_last_steps: int = 3  # Always compute last N steps
+    layer_wise_caching: bool = True  # Enable per-layer caching
+    use_cosine_similarity: bool = False  # Use full cosine similarity (slower but more accurate)
 
 
 class TeaCache:

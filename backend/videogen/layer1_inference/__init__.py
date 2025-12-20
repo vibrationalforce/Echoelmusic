@@ -5,17 +5,45 @@ Layer 1: Inference Engine
 - Flash Attention 3 for memory efficiency
 - Tiled VAE Decoding for 4K output
 - NF4 Quantization for consumer GPUs
+- Zero-Copy GPU transfers
 """
 
-from .wan_inference import WanVideoGenerator
-from .tea_cache import TeaCache
-from .memory_manager import MemoryManager, TiledVAEDecoder
-from .attention import FlashAttention3Wrapper
+from .wan_inference import (
+    WanVideoGenerator,
+    GenerationConfig,
+    GenerationResult,
+    PrecisionMode,
+    VideoResolution,
+)
+from .tea_cache import TeaCache, TeaCacheConfig, TemporalRedundancyAnalyzer
+from .memory_manager import (
+    MemoryManager,
+    TiledVAEDecoder,
+    NF4Quantizer,
+    ZeroCopyTransfer,
+    MemoryStats,
+    OffloadStrategy,
+)
+from .attention import FlashAttention3Wrapper as FlashAttention3
 
 __all__ = [
+    # Inference
     "WanVideoGenerator",
+    "GenerationConfig",
+    "GenerationResult",
+    "PrecisionMode",
+    "VideoResolution",
+    # TeaCache
     "TeaCache",
+    "TeaCacheConfig",
+    "TemporalRedundancyAnalyzer",
+    # Memory Management
     "MemoryManager",
+    "MemoryStats",
     "TiledVAEDecoder",
-    "FlashAttention3Wrapper"
+    "NF4Quantizer",
+    "ZeroCopyTransfer",
+    "OffloadStrategy",
+    # Attention
+    "FlashAttention3",
 ]
