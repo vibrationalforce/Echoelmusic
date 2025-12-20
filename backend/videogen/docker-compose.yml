@@ -128,8 +128,9 @@ services:
       - "5555:5555"
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
-      # SECURITY: Set FLOWER_PASSWORD in .env file for production!
-      - FLOWER_BASIC_AUTH=admin:${FLOWER_PASSWORD:-changeme_insecure}
+      # SECURITY: FLOWER_PASSWORD MUST be set in production .env file
+      # Generate secure password: openssl rand -base64 32
+      - FLOWER_BASIC_AUTH=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:?FLOWER_PASSWORD must be set for security}
       - FLOWER_PORT=5555
       - FLOWER_PURGE_OFFLINE_WORKERS=60
     depends_on:

@@ -5,6 +5,7 @@ Layer 2: Workflow Logic & Orchestration
 - Two-stage generation pipeline (base + refine)
 - WebSocket progress streaming
 - Prometheus metrics & structured logging
+- Internationalization (i18n) support for 22+ languages
 """
 
 from .api import app, VideoGenAPI
@@ -34,6 +35,13 @@ from .webhooks import (
     WebhookEvent,
     webhook_manager,
     verify_webhook_signature,
+)
+from .i18n import (
+    Language,
+    MessageKey,
+    I18n,
+    i18n,
+    t,
 )
 
 __all__ = [
@@ -75,4 +83,10 @@ __all__ = [
     "WebhookEvent",
     "webhook_manager",
     "verify_webhook_signature",
+    # Internationalization
+    "Language",
+    "MessageKey",
+    "I18n",
+    "i18n",
+    "t",
 ]
