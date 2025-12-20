@@ -1,0 +1,185 @@
+# Echoelmusic Video Generation Pipeline
+# Docker Compose for full stack deployment
+#
+# Services:
+# - api: FastAPI server with WebSocket support
+# - worker: Celery worker for GPU tasks
+# - redis: Message broker and result backend
+# - flower: Celery task monitoring dashboard
+#
+# Usage:
+#   docker-compose up -d              # Start all services
+#   docker-compose up -d --scale worker=2  # Multiple workers (requires multiple GPUs)
+#   docker-compose logs -f worker     # Follow worker logs
+#   docker-compose down               # Stop all services
+
+version: "3.8"
+
+services:
+  # ============================================================
+  # Redis - Message Broker & Result Backend
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: videogen-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - videogen-network
+
+  # ============================================================
+  # API Server - FastAPI with WebSocket
+  # ============================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: videogen-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - VIDEO_OUTPUT_DIR=/app/output
+      - MODEL_CACHE_DIR=/app/models
+      - LOG_LEVEL=info
+      - CORS_ORIGINS=*
+    volumes:
+      - model_cache:/app/models
+      - video_output:/app/output
+      - ./logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    networks:
+      - videogen-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # ============================================================
+  # Worker - Celery GPU Worker
+  # ============================================================
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    container_name: videogen-worker
+    restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - VIDEO_OUTPUT_DIR=/app/output
+      - MODEL_CACHE_DIR=/app/models
+      - LOG_LEVEL=info
+      - CUDA_VISIBLE_DEVICES=0
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+    volumes:
+      - model_cache:/app/models
+      - video_output:/app/output
+      - ./logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - videogen-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        limits:
+          memory: 32G
+
+  # ============================================================
+  # Flower - Celery Monitoring Dashboard
+  # ============================================================
+  flower:
+    image: mher/flower:2.0
+    container_name: videogen-flower
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_BASIC_AUTH=admin:${FLOWER_PASSWORD:-videogen123}
+      - FLOWER_PORT=5555
+    depends_on:
+      - redis
+    networks:
+      - videogen-network
+
+  # ============================================================
+  # Model Downloader - One-time model cache warmup
+  # ============================================================
+  model-downloader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: videogen-model-downloader
+    profiles:
+      - setup
+    environment:
+      - HF_HOME=/app/cache/huggingface
+      - MODEL_CACHE_DIR=/app/models
+    volumes:
+      - model_cache:/app/models
+      - hf_cache:/app/cache/huggingface
+    command: >
+      python -c "
+      from huggingface_hub import snapshot_download;
+      print('Downloading Wan2.2-T2V-14B...');
+      snapshot_download('Wan-AI/Wan2.2-T2V-14B', local_dir='/app/models/wan2.2-t2v-14b');
+      print('Downloading IP-Adapter-FaceID...');
+      snapshot_download('h94/IP-Adapter-FaceID', local_dir='/app/models/ip-adapter-faceid');
+      print('Models downloaded successfully!');
+      "
+    networks:
+      - videogen-network
+
+# ============================================================
+# Networks
+# ============================================================
+networks:
+  videogen-network:
+    driver: bridge
+
+# ============================================================
+# Volumes
+# ============================================================
+volumes:
+  redis_data:
+    driver: local
+  model_cache:
+    driver: local
+  video_output:
+    driver: local
+  hf_cache:
+    driver: local

@@ -1,0 +1,83 @@
+# Echoelmusic Video Generation Pipeline
+# Requirements for state-of-the-art video generation
+
+# ===== Core ML Framework =====
+torch>=2.2.0
+torchvision>=0.17.0
+torchaudio>=2.2.0
+
+# ===== Diffusion & Generation =====
+diffusers>=0.27.0
+transformers>=4.38.0
+accelerate>=0.27.0
+safetensors>=0.4.0
+huggingface_hub>=0.21.0
+
+# ===== Quantization & Optimization =====
+bitsandbytes>=0.42.0
+optimum>=1.17.0
+
+# ===== Flash Attention =====
+# Install manually: pip install flash-attn --no-build-isolation
+# flash-attn>=2.5.0
+
+# ===== Video Processing =====
+opencv-python>=4.9.0
+imageio>=2.33.0
+imageio-ffmpeg>=0.4.9
+av>=11.0.0
+decord>=0.6.0
+
+# ===== API Framework =====
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.9
+websockets>=12.0
+pydantic>=2.6.0
+pydantic-settings>=2.1.0
+
+# ===== Task Queue =====
+celery>=5.3.6
+redis>=5.0.1
+flower>=2.0.1  # Celery monitoring
+
+# ===== System Utilities =====
+psutil>=5.9.0
+GPUtil>=1.4.0
+nvidia-ml-py3>=7.352.0
+
+# ===== Image Processing =====
+pillow>=10.2.0
+scikit-image>=0.22.0
+
+# ===== Face Detection (IP-Adapter) =====
+insightface>=0.7.3
+onnxruntime-gpu>=1.17.0
+
+# ===== LLM for Prompt Expansion =====
+# Choose one:
+# ollama  # For local LLM
+openai>=1.12.0  # For API fallback
+tiktoken>=0.6.0
+
+# ===== Monitoring & Logging =====
+loguru>=0.7.2
+prometheus-client>=0.19.0
+sentry-sdk>=1.40.0
+
+# ===== Configuration =====
+python-dotenv>=1.0.1
+pyyaml>=6.0.1
+tomli>=2.0.1
+
+# ===== Testing =====
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0
+httpx>=0.26.0
+
+# ===== Development =====
+black>=24.1.0
+isort>=5.13.0
+mypy>=1.8.0
+ruff>=0.2.0
