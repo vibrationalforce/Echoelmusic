@@ -101,7 +101,11 @@ RUN mkdir -p /app/models /app/output /app/cache /app/logs && \
     chown -R videogen:videogen /app
 
 # Copy application code
+# Note: Build context should be the videogen directory
 COPY --chown=videogen:videogen . /app/videogen
+
+# Create __init__.py if needed for package structure
+RUN touch /app/__init__.py 2>/dev/null || true
 
 # Environment variables
 ENV HF_HOME=/app/cache/huggingface
@@ -109,6 +113,7 @@ ENV TORCH_HOME=/app/cache/torch
 ENV TRANSFORMERS_CACHE=/app/cache/transformers
 ENV VIDEO_OUTPUT_DIR=/app/output
 ENV MODEL_CACHE_DIR=/app/models
+ENV CORS_ORIGINS="*"
 
 # CUDA settings
 ENV CUDA_DEVICE_ORDER=PCI_BUS_ID
@@ -121,15 +126,15 @@ ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
 # Switch to non-root user
 USER videogen
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+# Health check - increased start period for model loading
+HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Expose API port
 EXPOSE 8000
 
-# Default command - API server
-CMD ["uvicorn", "videogen.layer2_workflow.api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# Default command - API server with graceful shutdown
+CMD ["uvicorn", "videogen.layer2_workflow.api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--timeout-keep-alive", "30"]
 
 # ============================================================
 # Stage 3: Worker - Celery worker for background tasks

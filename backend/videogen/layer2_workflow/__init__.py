@@ -9,7 +9,7 @@ Layer 2: Workflow Logic & Orchestration
 from .api import app, VideoGenAPI
 from .queue import TaskQueue, VideoTask, TaskResult, TaskStatus, TaskPriority
 from .tasks import generate_video_task, refine_video_task, batch_generate_task
-from .refiner import VideoRefiner, RefineConfig
+from .refiner import VideoRefiner, RefineConfig, RefineResult
 
 __all__ = [
     "app",
@@ -23,5 +23,6 @@ __all__ = [
     "refine_video_task",
     "batch_generate_task",
     "VideoRefiner",
-    "RefineConfig"
+    "RefineConfig",
+    "RefineResult",
 ]

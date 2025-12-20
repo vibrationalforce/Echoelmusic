@@ -33,13 +33,16 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS middleware
+# CORS middleware - configure for production
+# Set CORS_ORIGINS env var to comma-separated list of allowed origins
+import os
+cors_origins = os.environ.get("CORS_ORIGINS", "http://localhost:3000,http://localhost:8080").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=cors_origins if cors_origins != ["*"] else ["*"],
+    allow_credentials=cors_origins != ["*"],  # Only allow credentials for specific origins
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
 )
 
 
@@ -630,22 +633,69 @@ async def system_info():
     }
 
 
+def _validate_file_path(path: str, allowed_dir: str) -> Path:
+    """
+    Securely validate file path to prevent path traversal attacks.
+
+    Args:
+        path: User-provided file path
+        allowed_dir: Directory path must be within
+
+    Returns:
+        Resolved Path object
+
+    Raises:
+        HTTPException: If path is invalid or outside allowed directory
+    """
+    from pathlib import Path
+
+    # Input validation
+    if not path or not isinstance(path, str):
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    if len(path) > 1000:
+        raise HTTPException(status_code=400, detail="Path too long")
+
+    if "\x00" in path:  # Null byte injection
+        raise HTTPException(status_code=400, detail="Invalid path characters")
+
+    try:
+        # Resolve to absolute path (follows symlinks)
+        safe_path = Path(path).resolve(strict=False)
+        output_dir = Path(allowed_dir).resolve()
+
+        # Use is_relative_to for secure check (Python 3.9+)
+        # Falls back to manual check for older Python
+        try:
+            safe_path.relative_to(output_dir)
+        except ValueError:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Verify file exists after validation
+        if not safe_path.exists():
+            raise HTTPException(status_code=404, detail="File not found")
+
+        # Additional check: ensure it's a file, not a directory
+        if not safe_path.is_file():
+            raise HTTPException(status_code=400, detail="Not a file")
+
+        return safe_path
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Path validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+
+# Get output directory from environment
+VIDEO_OUTPUT_DIR = os.environ.get("VIDEO_OUTPUT_DIR", "/tmp/videogen/output")
+
+
 @app.get("/download")
 async def download_video(path: str):
     """Download generated video file"""
-    import os
-    from pathlib import Path
-
-    # Security: validate path
-    safe_path = Path(path).resolve()
-    output_dir = Path("/tmp/videogen/output").resolve()
-
-    # Allow paths in output directory only
-    if not str(safe_path).startswith(str(output_dir)):
-        raise HTTPException(status_code=403, detail="Access denied")
-
-    if not safe_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
+    safe_path = _validate_file_path(path, VIDEO_OUTPUT_DIR)
 
     return FileResponse(
         path=str(safe_path),
@@ -657,17 +707,7 @@ async def download_video(path: str):
 @app.get("/thumbnail")
 async def get_thumbnail(path: str):
     """Get video thumbnail"""
-    import os
-    from pathlib import Path
-
-    safe_path = Path(path).resolve()
-    output_dir = Path("/tmp/videogen/output").resolve()
-
-    if not str(safe_path).startswith(str(output_dir)):
-        raise HTTPException(status_code=403, detail="Access denied")
-
-    if not safe_path.exists():
-        raise HTTPException(status_code=404, detail="Thumbnail not found")
+    safe_path = _validate_file_path(path, VIDEO_OUTPUT_DIR)
 
     return FileResponse(
         path=str(safe_path),

@@ -90,12 +90,22 @@ class GenerationConfig:
 @dataclass
 class GenerationResult:
     """Result of video generation"""
-    video_path: str
+    success: bool = True
+    output_path: str = ""
+    video_path: str = ""  # Alias for output_path
     frames: Optional[np.ndarray] = None
     generation_time: float = 0.0
     memory_peak_gb: float = 0.0
+    error_message: Optional[str] = None
     config: GenerationConfig = field(default_factory=GenerationConfig)
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        # Sync video_path with output_path
+        if self.output_path and not self.video_path:
+            self.video_path = self.output_path
+        elif self.video_path and not self.output_path:
+            self.output_path = self.video_path
 
 
 class WanVideoGenerator:

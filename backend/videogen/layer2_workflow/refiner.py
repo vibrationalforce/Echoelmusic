@@ -35,11 +35,34 @@ class UpscaleMethod(Enum):
 
 
 @dataclass
+class RefineResult:
+    """Result of video refinement"""
+    success: bool = True
+    output_path: str = ""
+    input_path: str = ""
+    refinement_time: float = 0.0
+    error_message: Optional[str] = None
+    upscale_factor: float = 1.0
+    final_resolution: Tuple[int, int] = (0, 0)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class RefineConfig:
     """Configuration for video refinement"""
+    # Input/Output paths (for convenience)
+    input_path: Optional[str] = None
+    output_path: Optional[str] = None
+
     # Target resolution
     target_width: int = 3840  # 4K
     target_height: int = 2160
+    target_resolution: Optional[Tuple[int, int]] = None  # Alternative to width/height
+
+    def __post_init__(self):
+        # If target_resolution is provided as tuple, use it
+        if self.target_resolution:
+            self.target_width, self.target_height = self.target_resolution
 
     # Upscale method
     upscale_method: UpscaleMethod = UpscaleMethod.ITERATIVE_LATENT
@@ -491,78 +514,116 @@ class VideoRefiner:
 
     async def refine(
         self,
-        video_path: str,
-        config: RefineConfig,
+        video_path: str = None,
+        config: RefineConfig = None,
         progress_callback: Optional[Callable[[float, str], None]] = None
-    ) -> str:
+    ) -> RefineResult:
         """
         Refine video with full pipeline.
 
         Args:
-            video_path: Input video path
+            video_path: Input video path (or use config.input_path)
             config: Refinement configuration
             progress_callback: Progress callback (progress, step_name)
 
         Returns:
-            Path to refined video
+            RefineResult with output path and metadata
         """
-        self._report(progress_callback, 0.0, "Loading video...")
+        import time
+        start_time = time.time()
 
-        # Load video frames
-        frames = await self._load_video(video_path)
+        # Use config paths if video_path not provided
+        if config is None:
+            config = RefineConfig()
+        if video_path is None:
+            video_path = config.input_path
 
-        # Step 1: Pyramid-Flow for motion consistency
-        if config.use_pyramid_flow:
-            self._report(progress_callback, 0.1, "Applying Pyramid-Flow...")
-            frames = self.pyramid_flow.apply_to_video(
-                frames, strength=config.flow_strength
+        if not video_path:
+            return RefineResult(
+                success=False,
+                error_message="No input video path provided"
             )
 
-        # Step 2: Face consistency (if enabled)
-        if config.enable_face_consistency and config.face_reference_image:
-            self._report(progress_callback, 0.2, "Applying face consistency...")
-            face_image = await self._load_image(config.face_reference_image)
-            self.face_adapter.set_reference_face(face_image)
+        try:
+            self._report(progress_callback, 0.0, "Loading video...")
 
-        # Step 3: Iterative upscaling
-        self._report(progress_callback, 0.3, "Upscaling video...")
+            # Load video frames
+            frames = await self._load_video(video_path)
 
-        target_latent_size = (
-            config.target_height // 8,
-            config.target_width // 8
-        )
+            # Step 1: Pyramid-Flow for motion consistency
+            if config.use_pyramid_flow:
+                self._report(progress_callback, 0.1, "Applying Pyramid-Flow...")
+                frames = self.pyramid_flow.apply_to_video(
+                    frames, strength=config.flow_strength
+                )
 
-        # Convert frames to latents (placeholder)
-        latents = await self._encode_to_latents(frames)
+            # Step 2: Face consistency (if enabled)
+            if config.enable_face_consistency and config.face_reference_image:
+                self._report(progress_callback, 0.2, "Applying face consistency...")
+                face_image = await self._load_image(config.face_reference_image)
+                self.face_adapter.set_reference_face(face_image)
 
-        # Upscale
-        def upscale_progress(p):
-            self._report(progress_callback, 0.3 + p * 0.4, f"Upscaling: {int(p*100)}%")
+            # Step 3: Iterative upscaling
+            self._report(progress_callback, 0.3, "Upscaling video...")
 
-        upscaled_latents = await self.upscaler.upscale(
-            latents,
-            target_latent_size,
-            prompt_embeds=torch.zeros(1, 77, 2048, device=self.device),
-            progress_callback=upscale_progress
-        )
+            target_latent_size = (
+                config.target_height // 8,
+                config.target_width // 8
+            )
 
-        # Step 4: Decode to video
-        self._report(progress_callback, 0.7, "Decoding video...")
-        upscaled_frames = await self._decode_from_latents(upscaled_latents)
+            # Convert frames to latents (placeholder)
+            latents = await self._encode_to_latents(frames)
 
-        # Step 5: Save intermediate
-        self._report(progress_callback, 0.8, "Encoding intermediate...")
-        temp_path = tempfile.mktemp(suffix=".mp4")
-        await self._save_video(upscaled_frames, temp_path)
+            # Upscale
+            def upscale_progress(p):
+                self._report(progress_callback, 0.3 + p * 0.4, f"Upscaling: {int(p*100)}%")
 
-        # Step 6: FFmpeg post-processing
-        self._report(progress_callback, 0.9, "Post-processing...")
-        output_path = video_path.replace(".mp4", f"_refined.{config.output_format}")
-        await self.ffmpeg.process(temp_path, output_path, config)
+            upscaled_latents = await self.upscaler.upscale(
+                latents,
+                target_latent_size,
+                prompt_embeds=torch.zeros(1, 77, 2048, device=self.device),
+                progress_callback=upscale_progress
+            )
 
-        self._report(progress_callback, 1.0, "Complete!")
+            # Step 4: Decode to video
+            self._report(progress_callback, 0.7, "Decoding video...")
+            upscaled_frames = await self._decode_from_latents(upscaled_latents)
 
-        return output_path
+            # Step 5: Save intermediate
+            self._report(progress_callback, 0.8, "Encoding intermediate...")
+            temp_path = tempfile.mktemp(suffix=".mp4")
+            await self._save_video(upscaled_frames, temp_path)
+
+            # Step 6: FFmpeg post-processing
+            self._report(progress_callback, 0.9, "Post-processing...")
+            output_path = config.output_path or video_path.replace(".mp4", f"_refined.{config.output_format}")
+            await self.ffmpeg.process(temp_path, output_path, config)
+
+            self._report(progress_callback, 1.0, "Complete!")
+
+            refinement_time = time.time() - start_time
+
+            return RefineResult(
+                success=True,
+                output_path=output_path,
+                input_path=video_path,
+                refinement_time=refinement_time,
+                upscale_factor=config.target_width / 1280,  # Assuming 720p input
+                final_resolution=(config.target_width, config.target_height),
+                metadata={
+                    "upscale_method": config.upscale_method.value,
+                    "pyramid_flow": config.use_pyramid_flow,
+                    "face_consistency": config.enable_face_consistency
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"Refinement failed: {e}")
+            return RefineResult(
+                success=False,
+                input_path=video_path or "",
+                error_message=str(e)
+            )
 
     async def _load_video(self, path: str) -> torch.Tensor:
         """Load video frames as tensor"""
