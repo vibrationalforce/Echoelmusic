@@ -629,11 +629,332 @@ class InputValidator:
         return ValidationResult(valid=len(all_errors) == 0, errors=all_errors)
 
 
+class SLALevel(str, Enum):
+    """SLA tier levels."""
+    CRITICAL = "critical"    # 99.99% uptime, <100ms p99
+    HIGH = "high"            # 99.9% uptime, <500ms p99
+    STANDARD = "standard"    # 99% uptime, <2s p99
+    BEST_EFFORT = "best_effort"  # No guarantees
+
+
+@dataclass
+class SLATarget:
+    """SLA target definition."""
+    level: SLALevel
+    uptime_percent: float
+    latency_p50_ms: float
+    latency_p95_ms: float
+    latency_p99_ms: float
+    error_rate_percent: float
+    throughput_rps: float
+
+
+@dataclass
+class SLAMetrics:
+    """Current SLA metrics."""
+    uptime_percent: float
+    latency_p50_ms: float
+    latency_p95_ms: float
+    latency_p99_ms: float
+    error_rate_percent: float
+    current_throughput_rps: float
+    requests_total: int
+    errors_total: int
+    period_start: datetime
+    period_end: datetime
+
+    def meets_sla(self, target: SLATarget) -> Tuple[bool, List[str]]:
+        """Check if metrics meet SLA target."""
+        violations = []
+
+        if self.uptime_percent < target.uptime_percent:
+            violations.append(
+                f"Uptime {self.uptime_percent:.2f}% < target {target.uptime_percent}%"
+            )
+        if self.latency_p50_ms > target.latency_p50_ms:
+            violations.append(
+                f"P50 latency {self.latency_p50_ms:.0f}ms > target {target.latency_p50_ms}ms"
+            )
+        if self.latency_p95_ms > target.latency_p95_ms:
+            violations.append(
+                f"P95 latency {self.latency_p95_ms:.0f}ms > target {target.latency_p95_ms}ms"
+            )
+        if self.latency_p99_ms > target.latency_p99_ms:
+            violations.append(
+                f"P99 latency {self.latency_p99_ms:.0f}ms > target {target.latency_p99_ms}ms"
+            )
+        if self.error_rate_percent > target.error_rate_percent:
+            violations.append(
+                f"Error rate {self.error_rate_percent:.2f}% > target {target.error_rate_percent}%"
+            )
+
+        return len(violations) == 0, violations
+
+
+@dataclass
+class SLAViolation:
+    """Record of an SLA violation."""
+    timestamp: datetime
+    violation_type: str
+    message: str
+    severity: str
+    duration_seconds: Optional[float] = None
+    resolved: bool = False
+
+
+class SLAMonitor:
+    """
+    SLA Monitoring System - Super Genius AI Feature #9
+
+    Monitors and enforces Service Level Agreements:
+    - Latency tracking (p50, p95, p99)
+    - Error rate monitoring
+    - Throughput measurement
+    - Uptime calculation
+    - Violation alerting
+    """
+
+    # Default SLA targets
+    DEFAULT_TARGETS = {
+        SLALevel.CRITICAL: SLATarget(
+            level=SLALevel.CRITICAL,
+            uptime_percent=99.99,
+            latency_p50_ms=50,
+            latency_p95_ms=100,
+            latency_p99_ms=200,
+            error_rate_percent=0.01,
+            throughput_rps=100,
+        ),
+        SLALevel.HIGH: SLATarget(
+            level=SLALevel.HIGH,
+            uptime_percent=99.9,
+            latency_p50_ms=200,
+            latency_p95_ms=500,
+            latency_p99_ms=1000,
+            error_rate_percent=0.1,
+            throughput_rps=50,
+        ),
+        SLALevel.STANDARD: SLATarget(
+            level=SLALevel.STANDARD,
+            uptime_percent=99.0,
+            latency_p50_ms=500,
+            latency_p95_ms=2000,
+            latency_p99_ms=5000,
+            error_rate_percent=1.0,
+            throughput_rps=20,
+        ),
+        SLALevel.BEST_EFFORT: SLATarget(
+            level=SLALevel.BEST_EFFORT,
+            uptime_percent=95.0,
+            latency_p50_ms=2000,
+            latency_p95_ms=10000,
+            latency_p99_ms=30000,
+            error_rate_percent=5.0,
+            throughput_rps=5,
+        ),
+    }
+
+    def __init__(
+        self,
+        target_level: SLALevel = SLALevel.STANDARD,
+        window_seconds: int = 3600,
+        alert_callback: Optional[Callable[[SLAViolation], None]] = None
+    ):
+        self.target = self.DEFAULT_TARGETS[target_level]
+        self.window_seconds = window_seconds
+        self.alert_callback = alert_callback
+
+        # Metrics storage
+        self._latencies: List[Tuple[datetime, float]] = []
+        self._errors: List[Tuple[datetime, str]] = []
+        self._requests: List[datetime] = []
+        self._violations: List[SLAViolation] = []
+
+        # State
+        self._start_time = datetime.now()
+        self._downtime_seconds = 0.0
+        self._is_healthy = True
+
+        logger.info(f"SLA Monitor initialized with target: {target_level.value}")
+
+    def record_request(self, latency_ms: float, success: bool, error_msg: Optional[str] = None):
+        """Record a request for SLA tracking."""
+        now = datetime.now()
+
+        self._requests.append(now)
+        self._latencies.append((now, latency_ms))
+
+        if not success:
+            self._errors.append((now, error_msg or "Unknown error"))
+
+        # Cleanup old data
+        self._cleanup_old_data()
+
+        # Check for violations
+        self._check_violations()
+
+    def record_downtime(self, duration_seconds: float, reason: str = ""):
+        """Record a downtime period."""
+        self._downtime_seconds += duration_seconds
+
+        violation = SLAViolation(
+            timestamp=datetime.now(),
+            violation_type="downtime",
+            message=f"Downtime of {duration_seconds:.1f}s: {reason}",
+            severity="critical" if duration_seconds > 60 else "warning",
+            duration_seconds=duration_seconds,
+        )
+        self._violations.append(violation)
+
+        if self.alert_callback:
+            self.alert_callback(violation)
+
+        logger.warning(f"SLA: Recorded downtime of {duration_seconds:.1f}s")
+
+    def get_current_metrics(self) -> SLAMetrics:
+        """Get current SLA metrics."""
+        now = datetime.now()
+        window_start = now - timedelta(seconds=self.window_seconds)
+
+        # Filter to window
+        window_latencies = [l for t, l in self._latencies if t >= window_start]
+        window_errors = [e for t, e in self._errors if t >= window_start]
+        window_requests = [r for r in self._requests if r >= window_start]
+
+        # Calculate latency percentiles
+        if window_latencies:
+            sorted_latencies = sorted(window_latencies)
+            p50 = sorted_latencies[int(len(sorted_latencies) * 0.5)]
+            p95 = sorted_latencies[int(len(sorted_latencies) * 0.95)]
+            p99 = sorted_latencies[int(len(sorted_latencies) * 0.99)]
+        else:
+            p50 = p95 = p99 = 0.0
+
+        # Calculate error rate
+        total_requests = len(window_requests)
+        error_rate = (len(window_errors) / total_requests * 100) if total_requests > 0 else 0.0
+
+        # Calculate uptime
+        total_time = (now - self._start_time).total_seconds()
+        uptime = ((total_time - self._downtime_seconds) / total_time * 100) if total_time > 0 else 100.0
+
+        # Calculate throughput
+        window_duration = min(self.window_seconds, total_time)
+        throughput = total_requests / window_duration if window_duration > 0 else 0.0
+
+        return SLAMetrics(
+            uptime_percent=uptime,
+            latency_p50_ms=p50,
+            latency_p95_ms=p95,
+            latency_p99_ms=p99,
+            error_rate_percent=error_rate,
+            current_throughput_rps=throughput,
+            requests_total=len(self._requests),
+            errors_total=len(self._errors),
+            period_start=self._start_time,
+            period_end=now,
+        )
+
+    def get_sla_status(self) -> Dict[str, Any]:
+        """Get comprehensive SLA status."""
+        metrics = self.get_current_metrics()
+        meets_sla, violations = metrics.meets_sla(self.target)
+
+        return {
+            "target_level": self.target.level.value,
+            "meets_sla": meets_sla,
+            "current_violations": violations,
+            "metrics": {
+                "uptime_percent": round(metrics.uptime_percent, 3),
+                "latency_p50_ms": round(metrics.latency_p50_ms, 1),
+                "latency_p95_ms": round(metrics.latency_p95_ms, 1),
+                "latency_p99_ms": round(metrics.latency_p99_ms, 1),
+                "error_rate_percent": round(metrics.error_rate_percent, 3),
+                "throughput_rps": round(metrics.current_throughput_rps, 2),
+            },
+            "targets": {
+                "uptime_percent": self.target.uptime_percent,
+                "latency_p50_ms": self.target.latency_p50_ms,
+                "latency_p95_ms": self.target.latency_p95_ms,
+                "latency_p99_ms": self.target.latency_p99_ms,
+                "error_rate_percent": self.target.error_rate_percent,
+            },
+            "historical_violations": len(self._violations),
+            "requests_total": metrics.requests_total,
+            "errors_total": metrics.errors_total,
+            "monitoring_since": self._start_time.isoformat(),
+        }
+
+    def _cleanup_old_data(self):
+        """Remove data outside the monitoring window."""
+        cutoff = datetime.now() - timedelta(seconds=self.window_seconds * 2)
+
+        self._latencies = [(t, l) for t, l in self._latencies if t >= cutoff]
+        self._errors = [(t, e) for t, e in self._errors if t >= cutoff]
+        self._requests = [r for r in self._requests if r >= cutoff]
+
+    def _check_violations(self):
+        """Check for SLA violations and alert if necessary."""
+        metrics = self.get_current_metrics()
+        meets_sla, violations = metrics.meets_sla(self.target)
+
+        if not meets_sla and self._is_healthy:
+            # Transition from healthy to unhealthy
+            self._is_healthy = False
+
+            for violation_msg in violations:
+                violation = SLAViolation(
+                    timestamp=datetime.now(),
+                    violation_type="threshold",
+                    message=violation_msg,
+                    severity="warning",
+                )
+                self._violations.append(violation)
+
+                if self.alert_callback:
+                    self.alert_callback(violation)
+
+                logger.warning(f"SLA Violation: {violation_msg}")
+
+        elif meets_sla and not self._is_healthy:
+            # Recovered
+            self._is_healthy = True
+            logger.info("SLA: Recovered from violation state")
+
+    def get_violation_history(
+        self,
+        limit: int = 100,
+        severity: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Get violation history."""
+        violations = self._violations
+
+        if severity:
+            violations = [v for v in violations if v.severity == severity]
+
+        violations = violations[-limit:]
+
+        return [
+            {
+                "timestamp": v.timestamp.isoformat(),
+                "type": v.violation_type,
+                "message": v.message,
+                "severity": v.severity,
+                "duration_seconds": v.duration_seconds,
+                "resolved": v.resolved,
+            }
+            for v in violations
+        ]
+
+
 # Global instances
 health_checker = ProductionHealthChecker(
     environment=os.environ.get("ENVIRONMENT", "production")
 )
 input_validator = InputValidator()
+sla_monitor = SLAMonitor(
+    target_level=SLALevel(os.environ.get("SLA_LEVEL", "standard"))
+)
 
 
 async def startup_check() -> bool:
@@ -659,18 +980,24 @@ __all__ = [
     # Status enums
     "HealthStatus",
     "ReadinessStatus",
+    "SLALevel",
     # Data classes
     "HealthCheckResult",
     "SystemHealth",
     "ValidationError",
     "ValidationResult",
+    "SLATarget",
+    "SLAMetrics",
+    "SLAViolation",
     # Classes
     "CircuitBreaker",
     "ProductionHealthChecker",
     "InputValidator",
+    "SLAMonitor",
     # Instances
     "health_checker",
     "input_validator",
+    "sla_monitor",
     # Functions
     "startup_check",
 ]

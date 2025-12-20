@@ -6,6 +6,10 @@ Layer 1: Inference Engine
 - Tiled VAE Decoding for 4K output
 - NF4 Quantization for consumer GPUs
 - Zero-Copy GPU transfers
+- Multi-Model Orchestration
+- Batch Inference Pipeline
+- Speculative Decoding
+- Video-to-Video Transformation
 """
 
 from .wan_inference import (
@@ -37,6 +41,48 @@ from .lora_controlnet import (
     ControlNetManager,
     IPAdapterManager,
     AdapterHook,
+)
+from .model_orchestrator import (
+    ModelTier,
+    ComplexityLevel,
+    ModelProfile,
+    PromptAnalysis,
+    OrchestrationDecision,
+    PromptAnalyzer,
+    ModelOrchestrator,
+    get_orchestrator,
+    select_optimal_model,
+)
+from .batch_inference import (
+    BatchPriority,
+    BatchStatus,
+    BatchItem,
+    Batch,
+    BatchConfig,
+    BatchProcessor,
+    get_batch_processor,
+    submit_batch_generation,
+)
+from .speculative_decoder import (
+    SpeculationStrategy,
+    SpeculationConfig,
+    SpeculationStats,
+    SpeculativeDecoder,
+    SpeculativeVideoDecoder,
+    get_speculative_decoder,
+    get_speculative_video_decoder,
+)
+from .video_to_video import (
+    V2VMode,
+    StructurePreservation,
+    V2VConfig,
+    V2VInput,
+    V2VOutput,
+    VideoToVideoPipeline,
+    StyleTransferPipeline,
+    EnhancementPipeline,
+    get_v2v_pipeline,
+    transform_video,
 )
 
 __all__ = [
@@ -71,4 +117,42 @@ __all__ = [
     "ControlNetManager",
     "IPAdapterManager",
     "AdapterHook",
+    # Model Orchestration
+    "ModelTier",
+    "ComplexityLevel",
+    "ModelProfile",
+    "PromptAnalysis",
+    "OrchestrationDecision",
+    "PromptAnalyzer",
+    "ModelOrchestrator",
+    "get_orchestrator",
+    "select_optimal_model",
+    # Batch Inference
+    "BatchPriority",
+    "BatchStatus",
+    "BatchItem",
+    "Batch",
+    "BatchConfig",
+    "BatchProcessor",
+    "get_batch_processor",
+    "submit_batch_generation",
+    # Speculative Decoding
+    "SpeculationStrategy",
+    "SpeculationConfig",
+    "SpeculationStats",
+    "SpeculativeDecoder",
+    "SpeculativeVideoDecoder",
+    "get_speculative_decoder",
+    "get_speculative_video_decoder",
+    # Video-to-Video
+    "V2VMode",
+    "StructurePreservation",
+    "V2VConfig",
+    "V2VInput",
+    "V2VOutput",
+    "VideoToVideoPipeline",
+    "StyleTransferPipeline",
+    "EnhancementPipeline",
+    "get_v2v_pipeline",
+    "transform_video",
 ]

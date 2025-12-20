@@ -6,6 +6,7 @@ Layer 2: Workflow Logic & Orchestration
 - WebSocket progress streaming
 - Prometheus metrics & structured logging
 - Internationalization (i18n) support for 22+ languages
+- Progressive Frame Streaming
 """
 
 from .api import app, VideoGenAPI
@@ -42,6 +43,19 @@ from .i18n import (
     I18n,
     i18n,
     t,
+)
+from .progressive_output import (
+    StreamQuality,
+    StreamEventType,
+    StreamConfig,
+    StreamEvent,
+    GenerationProgress,
+    FrameEncoder,
+    FrameCache,
+    ProgressiveOutputStream,
+    WebSocketStreamHandler,
+    get_progressive_stream,
+    stream_generation,
 )
 
 __all__ = [
@@ -89,4 +103,16 @@ __all__ = [
     "I18n",
     "i18n",
     "t",
+    # Progressive Streaming
+    "StreamQuality",
+    "StreamEventType",
+    "StreamConfig",
+    "StreamEvent",
+    "GenerationProgress",
+    "FrameEncoder",
+    "FrameCache",
+    "ProgressiveOutputStream",
+    "WebSocketStreamHandler",
+    "get_progressive_stream",
+    "stream_generation",
 ]
