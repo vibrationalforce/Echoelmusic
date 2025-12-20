@@ -619,12 +619,21 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        // Calculate breathing rate from HRV data
+        let breathingRate = calculateBreathingRate(
+            hrvCoherence: healthKit.hrvCoherence,
+            heartRate: healthKit.heartRate
+        )
+
+        // Get actual audio level from engine
+        let audioLevel = getCurrentAudioLevel()
+
         // Update visual parameters from bio-signals
         let bioParams = MIDIToVisualMapper.BioParameters(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
-            audioLevel: 0.5      // TODO: Get from audio engine
+            breathingRate: breathingRate,
+            audioLevel: Double(audioLevel)
         )
 
         visualMapper.updateBioParameters(bioParams)
@@ -635,10 +644,16 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        // Calculate breathing rate from HRV data
+        let breathingRate = calculateBreathingRate(
+            hrvCoherence: healthKit.hrvCoherence,
+            heartRate: healthKit.heartRate
+        )
+
         let bioData = MIDIToLightMapper.BioData(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0  // TODO: Calculate from HRV
+            breathingRate: breathingRate
         )
 
         // Update Push 3 LED patterns
@@ -667,6 +682,45 @@ public class UnifiedControlHub: ObservableObject {
         let normalized = (value - from.lowerBound) / (from.upperBound - from.lowerBound)
         let clamped = max(0, min(1, normalized))
         return to.lowerBound + clamped * (to.upperBound - to.lowerBound)
+    }
+
+    /// Calculate estimated breathing rate from HRV coherence and heart rate
+    ///
+    /// Uses the relationship between heart rate variability and respiratory sinus arrhythmia (RSA)
+    /// to estimate breathing rate. Higher coherence indicates more regular breathing patterns.
+    ///
+    /// - Parameters:
+    ///   - hrvCoherence: HRV coherence value (0-100)
+    ///   - heartRate: Current heart rate in BPM
+    /// - Returns: Estimated breathing rate in breaths per minute (typically 4-20)
+    private func calculateBreathingRate(hrvCoherence: Double, heartRate: Double) -> Double {
+        // Normal breathing range: 12-20 breaths/min at rest, 4-8 during meditation
+        // Higher coherence indicates slower, more controlled breathing
+
+        // Base breathing rate from heart rate (rough correlation)
+        // Heart rate / 4 gives approximate resting breathing rate
+        let baseRate = heartRate / 4.0
+
+        // Coherence adjustment: Higher coherence = slower, more relaxed breathing
+        // Scale coherence (0-100) to adjustment factor (-4 to +2)
+        let coherenceAdjustment = mapRange(hrvCoherence, from: 0...100, to: 2...(-4))
+
+        // Calculate final rate with bounds
+        let breathingRate = baseRate + coherenceAdjustment
+
+        // Clamp to realistic range (4-20 breaths per minute)
+        return max(4.0, min(20.0, breathingRate))
+    }
+
+    /// Get current audio level from audio engine
+    /// - Returns: Audio level (0.0 to 1.0)
+    private func getCurrentAudioLevel() -> Float {
+        // Try to get actual audio level from engine
+        if let engine = audioEngine {
+            return engine.currentLevel
+        }
+        // Fallback to default neutral level
+        return 0.5
     }
 }
 

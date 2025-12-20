@@ -19,6 +19,11 @@ struct RecordingControlsView: View {
     @State private var showShareSheet = false
     @State private var shareURL: URL?
 
+    // Export state
+    @State private var isExporting = false
+    @State private var exportError: String?
+    @State private var showExportError = false
+
     var body: some View {
         VStack(spacing: 20) {
             // Header
@@ -95,12 +100,58 @@ struct RecordingControlsView: View {
             exportOptionsView
         }
         #if os(iOS)
-        .sheet(isPresented: $showShareSheet) {
+        .sheet(isPresented: $showShareSheet, onDismiss: {
+            // Clear share URL when sheet is dismissed
+            shareURL = nil
+        }) {
             if let url = shareURL {
-                ShareSheet(activityItems: [url])
+                ShareSheet(
+                    activityItems: [url],
+                    onComplete: { activityType, completed, _, _ in
+                        if completed {
+                            print("📤 Shared via: \(activityType?.rawValue ?? "unknown")")
+                        }
+                    }
+                )
             }
         }
         #endif
+        .alert("Export Failed", isPresented: $showExportError) {
+            Button("OK", role: .cancel) {
+                exportError = nil
+            }
+        } message: {
+            Text(exportError ?? "An unknown error occurred")
+        }
+        .overlay {
+            if isExporting {
+                exportingOverlay
+            }
+        }
+    }
+
+    // MARK: - Exporting Overlay
+
+    private var exportingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+
+            VStack(spacing: 16) {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .tint(.white)
+
+                Text("Exporting...")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white)
+            }
+            .padding(30)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.black.opacity(0.8))
+            )
+        }
     }
 
     // MARK: - Recording Controls Section
@@ -471,14 +522,31 @@ struct RecordingControlsView: View {
     private func exportAudio(format: ExportManager.ExportFormat) {
         guard let session = recordingEngine.currentSession else { return }
 
+        isExporting = true
+        showExportOptions = false
+
         let exportManager = ExportManager()
         Task {
             do {
                 let url = try await exportManager.exportAudio(session: session, format: format)
                 print("📤 Exported to: \(url.path)")
+                isExporting = false
                 shareURL = url
+
+                #if os(iOS)
+                HapticFeedback.success.trigger()
+                #endif
+
                 showShareSheet = true
             } catch {
+                isExporting = false
+                exportError = error.localizedDescription
+                showExportError = true
+
+                #if os(iOS)
+                HapticFeedback.error.trigger()
+                #endif
+
                 print("❌ Export failed: \(error)")
             }
         }
@@ -487,13 +555,30 @@ struct RecordingControlsView: View {
     private func exportBioData(format: ExportManager.BioDataFormat) {
         guard let session = recordingEngine.currentSession else { return }
 
+        isExporting = true
+        showExportOptions = false
+
         let exportManager = ExportManager()
         do {
             let url = try exportManager.exportBioData(session: session, format: format)
             print("📤 Exported bio-data to: \(url.path)")
+            isExporting = false
             shareURL = url
+
+            #if os(iOS)
+            HapticFeedback.success.trigger()
+            #endif
+
             showShareSheet = true
         } catch {
+            isExporting = false
+            exportError = error.localizedDescription
+            showExportError = true
+
+            #if os(iOS)
+            HapticFeedback.error.trigger()
+            #endif
+
             print("❌ Export failed: \(error)")
         }
     }
@@ -501,14 +586,31 @@ struct RecordingControlsView: View {
     private func exportPackage() {
         guard let session = recordingEngine.currentSession else { return }
 
+        isExporting = true
+        showExportOptions = false
+
         let exportManager = ExportManager()
         Task {
             do {
                 let url = try await exportManager.exportSessionPackage(session: session)
                 print("📦 Exported package to: \(url.path)")
+                isExporting = false
                 shareURL = url
+
+                #if os(iOS)
+                HapticFeedback.success.trigger()
+                #endif
+
                 showShareSheet = true
             } catch {
+                isExporting = false
+                exportError = error.localizedDescription
+                showExportError = true
+
+                #if os(iOS)
+                HapticFeedback.error.trigger()
+                #endif
+
                 print("❌ Export failed: \(error)")
             }
         }
@@ -523,26 +625,3 @@ struct RecordingControlsView: View {
         return String(format: "%02d:%02d.%01d", minutes, seconds, milliseconds)
     }
 }
-
-// MARK: - Share Sheet
-
-#if os(iOS)
-/// UIViewControllerRepresentable wrapper for UIActivityViewController
-struct ShareSheet: UIViewControllerRepresentable {
-    let activityItems: [Any]
-    var excludedActivityTypes: [UIActivity.ActivityType]? = nil
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let controller = UIActivityViewController(
-            activityItems: activityItems,
-            applicationActivities: nil
-        )
-        controller.excludedActivityTypes = excludedActivityTypes
-        return controller
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
-        // No updates needed
-    }
-}
-#endif
