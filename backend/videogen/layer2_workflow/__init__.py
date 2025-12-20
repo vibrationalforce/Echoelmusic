@@ -57,6 +57,7 @@ from .progressive_output import (
     get_progressive_stream,
     stream_generation,
 )
+from .genius_routes import router as genius_router
 
 __all__ = [
     # API
@@ -115,4 +116,6 @@ __all__ = [
     "WebSocketStreamHandler",
     "get_progressive_stream",
     "stream_generation",
+    # Super Genius AI Routes
+    "genius_router",
 ]

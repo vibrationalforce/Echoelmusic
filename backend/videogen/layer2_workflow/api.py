@@ -44,6 +44,9 @@ from .rate_limiter import (
 # Import webhooks
 from .webhooks import webhook_manager, WebhookEvent
 
+# Import Super Genius AI routes
+from .genius_routes import router as genius_router
+
 logger = structured_logger
 
 # Initialize FastAPI app
@@ -91,6 +94,9 @@ rate_limit_config = RateLimitConfig(
     }
 )
 app.add_middleware(RateLimitMiddleware, config=rate_limit_config)
+
+# Include Super Genius AI feature routes
+app.include_router(genius_router)
 
 
 # ============================================================================
