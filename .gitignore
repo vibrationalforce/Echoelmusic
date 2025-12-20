@@ -132,3 +132,8 @@ build/
 .venv/
 venv/
 ENV/
+
+# Environment files
+.env
+.env.local
+.env.*.local

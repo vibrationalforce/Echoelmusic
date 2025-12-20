@@ -11,7 +11,7 @@ Endpoints:
 - GET /models - List available models
 """
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, BackgroundTasks
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
@@ -19,10 +19,32 @@ from typing import Optional, Dict, Any, List
 from enum import Enum
 import asyncio
 import uuid
-import logging
+import time
 from datetime import datetime
 
-logger = logging.getLogger(__name__)
+# Import observability stack
+from .observability import (
+    structured_logger,
+    metrics,
+    RequestLoggingMiddleware,
+    task_context,
+    log_operation,
+    get_health_details,
+    PROMETHEUS_AVAILABLE,
+)
+
+# Import rate limiting
+from .rate_limiter import (
+    RateLimitMiddleware,
+    RateLimitConfig,
+    RateLimitScope,
+    rate_limit,
+)
+
+# Import webhooks
+from .webhooks import webhook_manager, WebhookEvent
+
+logger = structured_logger
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -44,6 +66,31 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
 )
+
+# Add observability middleware for request logging and metrics
+app.add_middleware(RequestLoggingMiddleware)
+
+# Add rate limiting middleware
+# Configure via RATE_LIMIT_RPS and RATE_LIMIT_BURST env vars
+rate_limit_config = RateLimitConfig(
+    requests_per_second=float(os.environ.get("RATE_LIMIT_RPS", "10")),
+    burst_size=int(os.environ.get("RATE_LIMIT_BURST", "50")),
+    scope=RateLimitScope.IP,
+    exempt_paths={"/health", "/metrics", "/docs", "/redoc", "/openapi.json"},
+    endpoint_limits={
+        "/generate": RateLimitConfig(
+            requests_per_second=0.5,  # 1 request per 2 seconds
+            burst_size=5,
+            scope=RateLimitScope.IP
+        ),
+        "/batch": RateLimitConfig(
+            requests_per_second=0.1,  # 1 request per 10 seconds
+            burst_size=2,
+            scope=RateLimitScope.IP
+        ),
+    }
+)
+app.add_middleware(RateLimitMiddleware, config=rate_limit_config)
 
 
 # ============================================================================
@@ -244,13 +291,34 @@ ws_manager = ConnectionManager()
 # ============================================================================
 
 @app.get("/health")
-async def health_check():
-    """Health check endpoint"""
+async def health_check(detailed: bool = False):
+    """
+    Health check endpoint.
+
+    Args:
+        detailed: If True, returns extended health info with component checks
+    """
+    if detailed:
+        return await get_health_details()
+
     return {
         "status": "healthy",
         "version": "1.0.0",
         "timestamp": datetime.utcnow().isoformat()
     }
+
+
+@app.get("/metrics")
+async def prometheus_metrics():
+    """
+    Prometheus metrics endpoint.
+
+    Returns metrics in Prometheus exposition format for scraping.
+    """
+    return Response(
+        content=metrics.get_metrics(),
+        media_type=metrics.get_content_type()
+    )
 
 
 @app.get("/models", response_model=List[ModelInfo])
@@ -304,6 +372,14 @@ async def generate_video(request: GenerationRequest, background_tasks: Backgroun
 
     if request.enable_8k_upscale:
         estimated_time *= 2
+
+    # Register webhook if provided
+    if request.webhook_url:
+        await webhook_manager.notify_task_created(
+            task_id,
+            request.webhook_url,
+            request.model_dump()
+        )
 
     # Queue task for processing
     background_tasks.add_task(process_generation_task, task_id)
@@ -421,122 +497,145 @@ async def cancel_task(task_id: str):
 # ============================================================================
 
 async def process_generation_task(task_id: str):
-    """Process a video generation task"""
-    import time
-
+    """Process a video generation task with observability"""
     task = task_store.get_task(task_id)
     if not task:
         return
 
     request = GenerationRequest(**task["request"])
+    resolution = request.resolution.value
+    genre = request.genre.value
 
-    try:
-        # Update status
-        task_store.update_task(
-            task_id,
-            status=TaskStatus.PROCESSING,
-            started_at=datetime.utcnow().isoformat()
-        )
-
-        # Step 1: Prompt expansion
-        if request.use_prompt_expansion:
+    async with task_context(task_id, resolution, genre) as task_logger:
+        try:
+            # Update status
             task_store.update_task(
                 task_id,
-                status=TaskStatus.EXPANDING_PROMPT,
-                current_step="Expanding prompt with LLM",
-                progress=0.1
+                status=TaskStatus.PROCESSING,
+                started_at=datetime.utcnow().isoformat()
             )
-            await ws_manager.broadcast(task_id, {
-                "type": "progress",
-                "progress": 0.1,
-                "step": "Expanding prompt"
-            })
-            await asyncio.sleep(2)  # Simulate prompt expansion
+            task_logger.info("Task processing started", prompt=request.prompt[:100])
 
-        # Step 2: Base generation
-        task_store.update_task(
-            task_id,
-            status=TaskStatus.GENERATING_BASE,
-            current_step="Generating base video",
-            progress=0.2
-        )
+            # Send webhook notification for task started
+            await webhook_manager.notify_task_started(task_id)
 
-        # Simulate generation progress
-        for progress in range(20, 70, 5):
-            await asyncio.sleep(1)
-            task_store.update_task(task_id, progress=progress / 100)
-            await ws_manager.broadcast(task_id, {
-                "type": "progress",
-                "progress": progress / 100,
-                "step": f"Denoising step {progress - 20}/{50}"
-            })
+            # Step 1: Prompt expansion
+            if request.use_prompt_expansion:
+                task_store.update_task(
+                    task_id,
+                    status=TaskStatus.EXPANDING_PROMPT,
+                    current_step="Expanding prompt with LLM",
+                    progress=0.1
+                )
+                await ws_manager.broadcast(task_id, {
+                    "type": "progress",
+                    "progress": 0.1,
+                    "step": "Expanding prompt"
+                })
+                task_logger.debug("Prompt expansion started")
+                await asyncio.sleep(2)  # Simulate prompt expansion
 
-        # Step 3: Refinement
-        task_store.update_task(
-            task_id,
-            status=TaskStatus.REFINING,
-            current_step="Refining video quality",
-            progress=0.7
-        )
-        await asyncio.sleep(3)
-
-        # Step 4: Upscaling (if enabled)
-        if request.enable_8k_upscale:
+            # Step 2: Base generation
             task_store.update_task(
                 task_id,
-                status=TaskStatus.UPSCALING,
-                current_step="Upscaling to 8K",
-                progress=0.8
+                status=TaskStatus.GENERATING_BASE,
+                current_step="Generating base video",
+                progress=0.2
             )
-            await asyncio.sleep(5)
+            task_logger.info("Base generation started")
 
-        # Step 5: Encoding
-        task_store.update_task(
-            task_id,
-            status=TaskStatus.ENCODING,
-            current_step="Encoding video",
-            progress=0.95
-        )
-        await asyncio.sleep(2)
+            # Simulate generation progress
+            for progress in range(20, 70, 5):
+                await asyncio.sleep(1)
+                task_store.update_task(task_id, progress=progress / 100)
+                await ws_manager.broadcast(task_id, {
+                    "type": "progress",
+                    "progress": progress / 100,
+                    "step": f"Denoising step {progress - 20}/{50}"
+                })
 
-        # Complete
-        task_store.update_task(
-            task_id,
-            status=TaskStatus.COMPLETED,
-            progress=1.0,
-            current_step="Complete",
-            completed_at=datetime.utcnow().isoformat(),
-            result={
+            # Step 3: Refinement
+            task_store.update_task(
+                task_id,
+                status=TaskStatus.REFINING,
+                current_step="Refining video quality",
+                progress=0.7
+            )
+            task_logger.info("Refinement started")
+            await asyncio.sleep(3)
+
+            # Step 4: Upscaling (if enabled)
+            if request.enable_8k_upscale:
+                task_store.update_task(
+                    task_id,
+                    status=TaskStatus.UPSCALING,
+                    current_step="Upscaling to 8K",
+                    progress=0.8
+                )
+                task_logger.info("8K upscaling started")
+                await asyncio.sleep(5)
+
+            # Step 5: Encoding
+            task_store.update_task(
+                task_id,
+                status=TaskStatus.ENCODING,
+                current_step="Encoding video",
+                progress=0.95
+            )
+            task_logger.info("Video encoding started")
+            await asyncio.sleep(2)
+
+            # Complete
+            task_store.update_task(
+                task_id,
+                status=TaskStatus.COMPLETED,
+                progress=1.0,
+                current_step="Complete",
+                completed_at=datetime.utcnow().isoformat(),
+                result={
+                    "video_url": f"/videos/{task_id}.mp4",
+                    "thumbnail_url": f"/thumbnails/{task_id}.jpg",
+                    "duration_seconds": request.duration_seconds,
+                    "resolution": request.resolution.value,
+                    "file_size_mb": 25.0,
+                    "generation_time_seconds": 45.0,
+                    "metadata": {
+                        "prompt": request.prompt,
+                        "model": "wan2.2-t2v-14b",
+                        "seed": request.seed or 42
+                    }
+                }
+            )
+
+            await ws_manager.broadcast(task_id, {
+                "type": "complete",
+                "video_url": f"/videos/{task_id}.mp4"
+            })
+
+            # Send webhook notification for task completion
+            await webhook_manager.notify_task_completed(task_id, {
                 "video_url": f"/videos/{task_id}.mp4",
                 "thumbnail_url": f"/thumbnails/{task_id}.jpg",
                 "duration_seconds": request.duration_seconds,
                 "resolution": request.resolution.value,
-                "file_size_mb": 25.0,
-                "generation_time_seconds": 45.0,
-                "metadata": {
-                    "prompt": request.prompt,
-                    "model": "wan2.2-t2v-14b",
-                    "seed": request.seed or 42
-                }
-            }
-        )
+            })
 
-        await ws_manager.broadcast(task_id, {
-            "type": "complete",
-            "video_url": f"/videos/{task_id}.mp4"
-        })
+        except Exception as e:
+            task_logger.error(f"Task failed: {e}", exc_info=True)
+            task_store.update_task(
+                task_id,
+                status=TaskStatus.FAILED,
+                error=str(e)
+            )
+            await ws_manager.broadcast(task_id, {
+                "type": "error",
+                "error": str(e)
+            })
 
-    except Exception as e:
-        logger.error(f"Task {task_id} failed: {e}")
-        task_store.update_task(
-            task_id,
-            status=TaskStatus.FAILED,
-            error=str(e)
-        )
-        await ws_manager.broadcast(task_id, {
-            "type": "error",
-            "error": str(e)
-        })
+            # Send webhook notification for task failure
+            await webhook_manager.notify_task_failed(task_id, str(e))
+
+            raise  # Re-raise to let task_context record the failure
 
 
 # ============================================================================

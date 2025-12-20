@@ -14,6 +14,8 @@ from .wan_inference import (
     GenerationResult,
     PrecisionMode,
     VideoResolution,
+    GenerationMode,
+    I2VConfig,
 )
 from .tea_cache import TeaCache, TeaCacheConfig, TemporalRedundancyAnalyzer
 from .memory_manager import (
@@ -25,6 +27,17 @@ from .memory_manager import (
     OffloadStrategy,
 )
 from .attention import FlashAttention3Wrapper as FlashAttention3
+from .lora_controlnet import (
+    LoRAType,
+    ControlNetType,
+    LoRAConfig,
+    ControlNetConfig,
+    IPAdapterConfig,
+    LoRAManager,
+    ControlNetManager,
+    IPAdapterManager,
+    AdapterHook,
+)
 
 __all__ = [
     # Inference
@@ -33,6 +46,8 @@ __all__ = [
     "GenerationResult",
     "PrecisionMode",
     "VideoResolution",
+    "GenerationMode",
+    "I2VConfig",
     # TeaCache
     "TeaCache",
     "TeaCacheConfig",
@@ -46,4 +61,14 @@ __all__ = [
     "OffloadStrategy",
     # Attention
     "FlashAttention3",
+    # LoRA/ControlNet
+    "LoRAType",
+    "ControlNetType",
+    "LoRAConfig",
+    "ControlNetConfig",
+    "IPAdapterConfig",
+    "LoRAManager",
+    "ControlNetManager",
+    "IPAdapterManager",
+    "AdapterHook",
 ]

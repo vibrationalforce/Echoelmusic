@@ -4,25 +4,75 @@ Layer 2: Workflow Logic & Orchestration
 - Redis/Celery task queue
 - Two-stage generation pipeline (base + refine)
 - WebSocket progress streaming
+- Prometheus metrics & structured logging
 """
 
 from .api import app, VideoGenAPI
 from .queue import TaskQueue, VideoTask, TaskResult, TaskStatus, TaskPriority
 from .tasks import generate_video_task, refine_video_task, batch_generate_task
 from .refiner import VideoRefiner, RefineConfig, RefineResult
+from .observability import (
+    StructuredLogger,
+    LogContext,
+    structured_logger,
+    MetricsCollector,
+    metrics,
+    task_context,
+    log_operation,
+    RequestLoggingMiddleware,
+    get_health_details,
+)
+from .rate_limiter import (
+    RateLimiter,
+    RateLimitConfig,
+    RateLimitMiddleware,
+    rate_limit,
+)
+from .webhooks import (
+    WebhookClient,
+    WebhookManager,
+    WebhookEvent,
+    webhook_manager,
+    verify_webhook_signature,
+)
 
 __all__ = [
+    # API
     "app",
     "VideoGenAPI",
+    # Queue
     "TaskQueue",
     "VideoTask",
     "TaskResult",
     "TaskStatus",
     "TaskPriority",
+    # Tasks
     "generate_video_task",
     "refine_video_task",
     "batch_generate_task",
+    # Refiner
     "VideoRefiner",
     "RefineConfig",
     "RefineResult",
+    # Observability
+    "StructuredLogger",
+    "LogContext",
+    "structured_logger",
+    "MetricsCollector",
+    "metrics",
+    "task_context",
+    "log_operation",
+    "RequestLoggingMiddleware",
+    "get_health_details",
+    # Rate Limiting
+    "RateLimiter",
+    "RateLimitConfig",
+    "RateLimitMiddleware",
+    "rate_limit",
+    # Webhooks
+    "WebhookClient",
+    "WebhookManager",
+    "WebhookEvent",
+    "webhook_manager",
+    "verify_webhook_signature",
 ]

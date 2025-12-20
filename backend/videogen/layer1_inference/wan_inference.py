@@ -52,12 +52,35 @@ class VideoResolution(Enum):
         return self.value[1]
 
 
+class GenerationMode(Enum):
+    """Generation mode: text-to-video or image-to-video"""
+    TEXT_TO_VIDEO = "t2v"
+    IMAGE_TO_VIDEO = "i2v"
+
+
+@dataclass
+class I2VConfig:
+    """Configuration for Image-to-Video generation"""
+    input_image: Optional[Union[str, np.ndarray]] = None  # Path or numpy array
+    motion_bucket_id: int = 127  # 0-255, controls motion amount
+    noise_aug_strength: float = 0.02  # Noise augmentation for conditioning
+    fps_conditioning: int = 6  # FPS conditioning value (SVD-style)
+    image_strength: float = 1.0  # How much to preserve original image (0-1)
+    start_frame_only: bool = False  # Only use image for first frame vs all frames
+
+
 @dataclass
 class GenerationConfig:
     """Configuration for video generation"""
     # Core settings
     prompt: str = ""
     negative_prompt: str = "blurry, low quality, distorted, watermark"
+
+    # Generation mode
+    mode: GenerationMode = GenerationMode.TEXT_TO_VIDEO
+
+    # Image-to-Video settings
+    i2v_config: Optional[I2VConfig] = None
 
     # Video settings
     num_frames: int = 49  # ~2 seconds at 24fps
@@ -85,6 +108,11 @@ class GenerationConfig:
     # Advanced
     use_cfg_rescale: bool = True
     cfg_rescale_multiplier: float = 0.7
+
+    def __post_init__(self):
+        # Auto-detect mode if image provided
+        if self.i2v_config and self.i2v_config.input_image:
+            self.mode = GenerationMode.IMAGE_TO_VIDEO
 
 
 @dataclass
@@ -557,6 +585,345 @@ class WanVideoGenerator:
                 callback(progress, message, preview)
             except Exception as e:
                 logger.warning(f"Progress callback failed: {e}")
+
+    # =========================================================================
+    # Image-to-Video (I2V) Methods
+    # =========================================================================
+
+    async def generate_from_image(
+        self,
+        config: GenerationConfig,
+        progress_callback: Optional[Callable[[float, str, Optional[np.ndarray]], None]] = None
+    ) -> GenerationResult:
+        """
+        Generate video from an input image (Image-to-Video).
+
+        Args:
+            config: Generation configuration with i2v_config set
+            progress_callback: Progress callback
+
+        Returns:
+            GenerationResult with generated video
+        """
+        if not config.i2v_config or not config.i2v_config.input_image:
+            raise ValueError("I2V config with input_image is required for image-to-video generation")
+
+        if not self._is_loaded:
+            raise RuntimeError("Model not loaded. Call load_model() first.")
+
+        start_time = time.time()
+
+        # Set random seed
+        if config.seed is not None:
+            torch.manual_seed(config.seed)
+            np.random.seed(config.seed)
+
+        self._report_progress(progress_callback, 0.0, "Loading and processing input image...")
+
+        # Load and preprocess input image
+        input_image = await self._load_input_image(config.i2v_config.input_image, config)
+
+        self._report_progress(progress_callback, 0.1, "Encoding image to latent space...")
+
+        # Encode image to latent
+        image_latent = await self._encode_image(input_image, config)
+
+        self._report_progress(progress_callback, 0.15, "Encoding prompt...")
+
+        # Encode text prompt (for I2V, prompt guides the motion/style)
+        prompt_embeds = await self._encode_prompt(
+            config.prompt,
+            config.negative_prompt
+        )
+
+        self._report_progress(progress_callback, 0.2, "Initializing video latents from image...")
+
+        # Initialize latents from image (I2V specific)
+        latents = self._initialize_i2v_latents(image_latent, config)
+
+        # Add image conditioning
+        image_conditioning = self._compute_image_conditioning(
+            image_latent,
+            config.i2v_config
+        )
+
+        # Denoising loop with image conditioning
+        num_steps = config.num_inference_steps
+
+        for step in range(num_steps):
+            progress = 0.2 + (step / num_steps) * 0.6
+            self._report_progress(
+                progress_callback,
+                progress,
+                f"Generating motion (step {step + 1}/{num_steps})..."
+            )
+
+            # TeaCache optimization
+            if config.use_tea_cache and self._tea_cache:
+                should_compute = self._tea_cache.should_compute_frame(
+                    step, latents, threshold=config.tea_cache_threshold
+                )
+                if not should_compute:
+                    continue
+
+            # Denoise with image conditioning
+            latents = await self._denoise_step_i2v(
+                latents,
+                prompt_embeds,
+                image_conditioning,
+                step,
+                num_steps,
+                config.guidance_scale,
+                config.i2v_config
+            )
+
+            # Cache state
+            if config.use_tea_cache and self._tea_cache:
+                self._tea_cache.cache_state(step, latents)
+
+        self._report_progress(progress_callback, 0.85, "Decoding video frames...")
+
+        # Decode latents to video frames
+        if config.use_tiled_vae:
+            frames = await self._decode_tiled(latents, config.vae_tile_size)
+        else:
+            frames = await self._decode_latents(latents)
+
+        self._report_progress(progress_callback, 0.95, "Saving video...")
+
+        # Save video
+        output_path = await self._save_video(frames, config.fps)
+
+        generation_time = time.time() - start_time
+        memory_peak = self._memory_manager.get_peak_memory_gb() if self._memory_manager else 0
+
+        self._report_progress(progress_callback, 1.0, "I2V generation complete!")
+
+        return GenerationResult(
+            success=True,
+            video_path=output_path,
+            frames=frames,
+            generation_time=generation_time,
+            memory_peak_gb=memory_peak,
+            config=config,
+            metadata={
+                "model": self.model_name,
+                "mode": "i2v",
+                "precision": self._current_precision.value if self._current_precision else "unknown",
+                "device": self.device,
+                "motion_bucket_id": config.i2v_config.motion_bucket_id,
+                "tea_cache_enabled": config.use_tea_cache,
+            }
+        )
+
+    async def _load_input_image(
+        self,
+        image_input: Union[str, np.ndarray],
+        config: GenerationConfig
+    ) -> np.ndarray:
+        """
+        Load and preprocess input image for I2V.
+
+        Args:
+            image_input: Image path or numpy array
+            config: Generation config with target resolution
+
+        Returns:
+            Preprocessed image as numpy array [H, W, C]
+        """
+        from PIL import Image
+
+        if isinstance(image_input, str):
+            # Load from path
+            if not os.path.exists(image_input):
+                raise FileNotFoundError(f"Input image not found: {image_input}")
+            image = Image.open(image_input).convert("RGB")
+            image = np.array(image)
+        elif isinstance(image_input, np.ndarray):
+            image = image_input
+        else:
+            raise ValueError(f"Unsupported image input type: {type(image_input)}")
+
+        # Resize to target resolution
+        target_h = config.resolution.height
+        target_w = config.resolution.width
+
+        if image.shape[0] != target_h or image.shape[1] != target_w:
+            # Use PIL for high-quality resize
+            pil_image = Image.fromarray(image)
+            pil_image = pil_image.resize((target_w, target_h), Image.Resampling.LANCZOS)
+            image = np.array(pil_image)
+
+        logger.info(f"Input image loaded and resized to {target_w}x{target_h}")
+        return image
+
+    async def _encode_image(
+        self,
+        image: np.ndarray,
+        config: GenerationConfig
+    ) -> torch.Tensor:
+        """
+        Encode input image to latent space.
+
+        Args:
+            image: Input image [H, W, C] in uint8
+            config: Generation configuration
+
+        Returns:
+            Image latent tensor
+        """
+        dtype = self._get_torch_dtype(config.precision)
+
+        # Normalize to [-1, 1]
+        image_tensor = torch.from_numpy(image).float()
+        image_tensor = image_tensor / 127.5 - 1.0
+
+        # Reshape to [B, C, H, W]
+        image_tensor = image_tensor.permute(2, 0, 1).unsqueeze(0)
+        image_tensor = image_tensor.to(device=self.device, dtype=dtype)
+
+        # Encode with VAE (placeholder - in production use actual VAE encoder)
+        # latent = self._vae.encode(image_tensor).latent_dist.sample()
+        # latent = latent * self._vae.config.scaling_factor
+
+        # Placeholder: create mock latent from image
+        latent_h = image.shape[0] // 8
+        latent_w = image.shape[1] // 8
+        latent_channels = 16
+
+        # In production, this would be actual VAE encoding
+        latent = torch.randn(
+            1, latent_channels, latent_h, latent_w,
+            device=self.device, dtype=dtype
+        )
+
+        logger.debug(f"Image encoded to latent shape: {latent.shape}")
+        return latent
+
+    def _initialize_i2v_latents(
+        self,
+        image_latent: torch.Tensor,
+        config: GenerationConfig
+    ) -> torch.Tensor:
+        """
+        Initialize video latents from image latent.
+
+        Args:
+            image_latent: Encoded image [B, C, H, W]
+            config: Generation configuration
+
+        Returns:
+            Video latents [B, F, C, H, W]
+        """
+        batch, channels, height, width = image_latent.shape
+        num_frames = config.num_frames
+        dtype = image_latent.dtype
+
+        # Add noise augmentation
+        noise_aug = config.i2v_config.noise_aug_strength if config.i2v_config else 0.02
+        augmented_latent = image_latent + torch.randn_like(image_latent) * noise_aug
+
+        if config.i2v_config and config.i2v_config.start_frame_only:
+            # Only first frame from image, rest is noise
+            latents = torch.randn(
+                batch, num_frames, channels, height, width,
+                device=self.device, dtype=dtype
+            )
+            latents[:, 0] = augmented_latent.squeeze(0)
+        else:
+            # All frames start from image (gradual motion)
+            # Repeat image latent across frames with temporal noise
+            latents = augmented_latent.unsqueeze(1).repeat(1, num_frames, 1, 1, 1)
+
+            # Add temporal noise that increases with frame index
+            temporal_noise = torch.randn_like(latents)
+            frame_indices = torch.arange(num_frames, device=self.device, dtype=dtype)
+            noise_scale = frame_indices / num_frames * 0.5  # Gradual increase
+
+            for f in range(num_frames):
+                latents[:, f] += temporal_noise[:, f] * noise_scale[f]
+
+        logger.debug(f"I2V latents initialized: {latents.shape}")
+        return latents
+
+    def _compute_image_conditioning(
+        self,
+        image_latent: torch.Tensor,
+        i2v_config: I2VConfig
+    ) -> Dict[str, Any]:
+        """
+        Compute image conditioning for I2V generation.
+
+        Returns conditioning dict with:
+        - image_latent: The encoded image
+        - motion_bucket_embedding: Motion strength embedding
+        - fps_embedding: FPS conditioning
+        """
+        # Motion bucket embedding (SVD-style)
+        motion_bucket = i2v_config.motion_bucket_id / 255.0  # Normalize to [0, 1]
+
+        # FPS conditioning
+        fps_cond = i2v_config.fps_conditioning / 30.0  # Normalize
+
+        return {
+            "image_latent": image_latent,
+            "motion_bucket": motion_bucket,
+            "fps_condition": fps_cond,
+            "image_strength": i2v_config.image_strength,
+        }
+
+    async def _denoise_step_i2v(
+        self,
+        latents: torch.Tensor,
+        prompt_embeds: torch.Tensor,
+        image_conditioning: Dict[str, Any],
+        step: int,
+        total_steps: int,
+        guidance_scale: float,
+        i2v_config: I2VConfig
+    ) -> torch.Tensor:
+        """
+        Perform single denoising step with image conditioning.
+
+        Args:
+            latents: Current latent tensor
+            prompt_embeds: Text prompt embeddings
+            image_conditioning: Image conditioning dict
+            step: Current step
+            total_steps: Total steps
+            guidance_scale: CFG scale
+            i2v_config: I2V configuration
+
+        Returns:
+            Denoised latents
+        """
+        # In production, this would:
+        # 1. Concatenate image conditioning with latents
+        # 2. Apply motion bucket embedding
+        # 3. Run transformer with both text and image conditioning
+        # 4. Apply CFG with image-aware rescaling
+
+        image_latent = image_conditioning["image_latent"]
+        image_strength = image_conditioning["image_strength"]
+
+        # Simulate I2V denoising with image preservation
+        noise_scale = (total_steps - step) / total_steps
+
+        # Blend towards image latent based on image_strength
+        if i2v_config.start_frame_only:
+            # Only preserve first frame
+            latents[:, 0] = latents[:, 0] * (1 - image_strength * 0.1) + \
+                           image_latent.squeeze(0) * image_strength * 0.1
+        else:
+            # Preserve all frames proportionally
+            image_influence = image_strength * (1 - step / total_steps) * 0.1
+            latents = latents * (1 - image_influence) + \
+                     image_latent.unsqueeze(1) * image_influence
+
+        # Add denoising noise reduction
+        latents = latents * (1 - 0.02) + torch.randn_like(latents) * 0.02 * noise_scale
+
+        return latents
 
     def unload_model(self) -> None:
         """Unload model and free memory"""
