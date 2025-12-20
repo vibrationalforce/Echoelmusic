@@ -41,6 +41,13 @@ class BackgroundSourceManager: ObservableObject {
 
     private var echoelmusicVisualRenderer: EchoelmusicVisualRenderer?
 
+    // MARK: - Camera Capture
+
+    private var captureSession: AVCaptureSession?
+    private var captureOutput: AVCaptureVideoDataOutput?
+    private var captureQueue = DispatchQueue(label: "com.echoelmusic.camera.capture", qos: .userInteractive)
+    private var latestCameraFrame: CIImage?
+
     // MARK: - Current Texture Cache
 
     private var currentTexture: MTLTexture?
@@ -542,11 +549,111 @@ class BackgroundSourceManager: ObservableObject {
     // MARK: - Camera Capture
 
     private func startCameraCapture(position: AVCaptureDevice.Position) async throws {
-        // TODO: Implement live camera capture using AVCaptureSession
-        // For now, use solid color as placeholder
-        try await setSource(.solidColor(.blue))
-        print("⚠️ BackgroundSourceManager: Live camera not yet implemented")
+        // Stop any existing capture session
+        stopCameraCapture()
+
+        // Create capture session
+        let session = AVCaptureSession()
+        session.sessionPreset = .hd1920x1080
+
+        // Find camera device
+        guard let camera = AVCaptureDevice.default(
+            .builtInWideAngleCamera,
+            for: .video,
+            position: position
+        ) else {
+            throw BackgroundError.cameraNotAvailable
+        }
+
+        // Create input
+        let input = try AVCaptureDeviceInput(device: camera)
+        guard session.canAddInput(input) else {
+            throw BackgroundError.cameraConfigurationFailed
+        }
+        session.addInput(input)
+
+        // Create video output
+        let output = AVCaptureVideoDataOutput()
+        output.videoSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+        ]
+        output.alwaysDiscardsLateVideoFrames = true
+        output.setSampleBufferDelegate(
+            CameraDelegate(manager: self),
+            queue: captureQueue
+        )
+
+        guard session.canAddOutput(output) else {
+            throw BackgroundError.cameraConfigurationFailed
+        }
+        session.addOutput(output)
+
+        // Configure video orientation
+        if let connection = output.connection(with: .video) {
+            if connection.isVideoOrientationSupported {
+                connection.videoOrientation = .portrait
+            }
+            if connection.isVideoMirroringSupported && position == .front {
+                connection.isVideoMirrored = true
+            }
+        }
+
+        // Store references
+        self.captureSession = session
+        self.captureOutput = output
+
+        // Start capture on background thread
+        captureQueue.async {
+            session.startRunning()
+        }
+
+        print("📷 BackgroundSourceManager: Camera capture started (\(position == .front ? "front" : "back"))")
     }
+
+    /// Stop camera capture
+    private func stopCameraCapture() {
+        captureQueue.async { [weak self] in
+            self?.captureSession?.stopRunning()
+        }
+        captureSession = nil
+        captureOutput = nil
+        latestCameraFrame = nil
+    }
+
+    /// Handle new camera frame (called from delegate)
+    fileprivate func handleCameraFrame(_ sampleBuffer: CMSampleBuffer) {
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+        latestCameraFrame = ciImage
+
+        // Update texture on main thread
+        Task { @MainActor in
+            cachedImage = ciImage
+            if let texture = try? createTexture(from: ciImage) {
+                currentTexture = texture
+            }
+        }
+    }
+}
+
+// MARK: - Camera Delegate
+
+private class CameraDelegate: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
+    weak var manager: BackgroundSourceManager?
+
+    init(manager: BackgroundSourceManager) {
+        self.manager = manager
+    }
+
+    func captureOutput(
+        _ output: AVCaptureOutput,
+        didOutput sampleBuffer: CMSampleBuffer,
+        from connection: AVCaptureConnection
+    ) {
+        manager?.handleCameraFrame(sampleBuffer)
+    }
+}
 
     // MARK: - Echoelmusic Visual Integration
 
@@ -760,6 +867,8 @@ enum BackgroundError: LocalizedError {
     case videoFrameExtractionFailed
     case echoelmusicVisualNotActive
     case textureCreationFailed
+    case cameraNotAvailable
+    case cameraConfigurationFailed
 
     var errorDescription: String? {
         switch self {
@@ -781,6 +890,10 @@ enum BackgroundError: LocalizedError {
             return "Echoelmusic visual renderer is not active"
         case .textureCreationFailed:
             return "Failed to create Metal texture"
+        case .cameraNotAvailable:
+            return "Camera is not available on this device"
+        case .cameraConfigurationFailed:
+            return "Failed to configure camera capture session"
         }
     }
 }

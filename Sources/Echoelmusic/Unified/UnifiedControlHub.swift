@@ -426,9 +426,33 @@ public class UnifiedControlHub: ObservableObject {
                 let afaField = spatialMapper.mapToAFA(voices: voiceData, geometry: fieldGeometry)
                 spatialMapper.afaField = afaField
 
-                // TODO: Apply AFA field to SpatialAudioEngine
-                // print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
+                // Apply AFA field to SpatialAudioEngine
+                if let spatial = spatialAudioEngine {
+                    let spatialGeometry = convertToSpatialGeometry(fieldGeometry, sourceCount: afaField.sources.count)
+                    spatial.applyAFAField(geometry: spatialGeometry, coherence: coherence)
+                    print("[Bio→AFA] Field geometry applied: \(spatialGeometry), Sources: \(afaField.sources.count)")
+                }
             }
+        }
+    }
+
+    /// Convert MIDIToSpatialMapper field geometry to SpatialAudioEngine geometry
+    private func convertToSpatialGeometry(
+        _ mapperGeometry: MIDIToSpatialMapper.AFAField.FieldGeometry,
+        sourceCount: Int
+    ) -> SpatialAudioEngine.AFAFieldGeometry {
+        switch mapperGeometry {
+        case .circle(let radius, _):
+            return .circle(radius: radius)
+        case .sphere(let radius, _):
+            return .sphere(radius: radius)
+        case .grid(let rows, let cols, _):
+            return .grid(rows: rows, cols: cols)
+        case .fibonacci(let count):
+            return .fibonacci(count: count)
+        case .spiral(_, let count):
+            // Spiral maps to circle as approximation
+            return .circle(radius: 1.5)
         }
     }
 

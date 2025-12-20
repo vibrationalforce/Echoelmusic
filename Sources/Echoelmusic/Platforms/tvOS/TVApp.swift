@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 import AVFoundation
 import Combine
+import GroupActivities
 
 #if os(tvOS)
 
@@ -48,6 +49,12 @@ class TVApp {
     private let airPlayReceiver: AirPlayReceiver
 
     private var cancellables = Set<AnyCancellable>()
+
+    // MARK: - GroupActivities Properties
+
+    private var groupSession: GroupSession<EchoelmusicActivity>?
+    private var groupSessionMessenger: GroupSessionMessenger?
+    private var groupSessionTasks = Set<Task<Void, Never>>()
 
     // MARK: - Visualization Mode
 
@@ -263,16 +270,152 @@ class TVApp {
 
     func startSharePlay() async throws {
         print("📺 Starting SharePlay session")
-        isSharePlayActive = true
 
-        // TODO: Integrate with GroupActivities framework
-        // let activity = EchoelmusicActivity()
-        // try await activity.prepareForActivation()
+        // Create and activate the Echoelmusic activity
+        let activity = EchoelmusicActivity()
+
+        // Check if GroupActivities is available
+        switch await activity.prepareForActivation() {
+        case .activationDisabled:
+            throw SharePlayError.activationDisabled
+        case .activationPreferred:
+            // Activate the activity
+            do {
+                _ = try await activity.activate()
+            } catch {
+                throw SharePlayError.activationFailed(error)
+            }
+        case .cancelled:
+            throw SharePlayError.cancelled
+        @unknown default:
+            break
+        }
+
+        isSharePlayActive = true
     }
 
     func stopSharePlay() {
         print("📺 Stopping SharePlay session")
+
+        // End the group session
+        groupSession?.end()
+        groupSession = nil
+        groupSessionMessenger = nil
+
+        // Cancel all group session tasks
+        for task in groupSessionTasks {
+            task.cancel()
+        }
+        groupSessionTasks.removeAll()
+
         isSharePlayActive = false
+    }
+
+    /// Configure and join a group session
+    func configureGroupSession(_ session: GroupSession<EchoelmusicActivity>) {
+        self.groupSession = session
+
+        // Create messenger for syncing state
+        let messenger = GroupSessionMessenger(session: session)
+        self.groupSessionMessenger = messenger
+
+        // Listen for session state changes
+        let stateTask = Task { @MainActor in
+            for await state in session.$state.values {
+                switch state {
+                case .waiting:
+                    print("📺 SharePlay: Waiting for participants")
+                case .joined:
+                    print("📺 SharePlay: Session joined with \(session.activeParticipants.count) participants")
+                    isSharePlayActive = true
+                case .invalidated:
+                    print("📺 SharePlay: Session invalidated")
+                    isSharePlayActive = false
+                @unknown default:
+                    break
+                }
+            }
+        }
+        groupSessionTasks.insert(stateTask)
+
+        // Listen for participant changes
+        let participantTask = Task { @MainActor in
+            for await participants in session.$activeParticipants.values {
+                print("📺 SharePlay: Active participants: \(participants.count)")
+                await syncWithParticipants(participants)
+            }
+        }
+        groupSessionTasks.insert(participantTask)
+
+        // Listen for incoming messages
+        let messageTask = Task { @MainActor in
+            for await (message, _) in messenger.messages(of: SharePlayMessage.self) {
+                await handleSharePlayMessage(message)
+            }
+        }
+        groupSessionTasks.insert(messageTask)
+
+        // Join the session
+        session.join()
+    }
+
+    /// Sync session state with participants
+    private func syncWithParticipants(_ participants: Set<Participant>) async {
+        guard let session = activeSession else { return }
+
+        // Update connected devices from SharePlay participants
+        connectedDevices = participants.compactMap { participant in
+            ConnectedDevice(
+                id: participant.id.hashValue,
+                name: "SharePlay User",
+                type: .iPhone  // Default assumption
+            )
+        }
+
+        // Send current session state to new participants
+        if let messenger = groupSessionMessenger {
+            let stateMessage = SharePlayMessage.sessionState(
+                mode: visualizationMode.rawValue,
+                hrvCoherence: session.participants.first?.bioMetrics?.coherence ?? 0,
+                heartRate: session.participants.first?.bioMetrics?.heartRate ?? 0
+            )
+            try? await messenger.send(stateMessage)
+        }
+    }
+
+    /// Handle incoming SharePlay messages
+    private func handleSharePlayMessage(_ message: SharePlayMessage) async {
+        switch message {
+        case .sessionState(let mode, let hrvCoherence, let heartRate):
+            // Update visualization mode
+            if let newMode = VisualizationMode(rawValue: mode) {
+                await changeVisualizationMode(newMode)
+            }
+            // Update visual engine with bio data
+            await visualEngine.updateWithBioData(hrv: hrvCoherence, coherence: hrvCoherence)
+
+        case .modeChange(let mode):
+            if let newMode = VisualizationMode(rawValue: mode) {
+                await changeVisualizationMode(newMode)
+            }
+
+        case .bioUpdate(let hrvCoherence, let heartRate):
+            await visualEngine.updateWithBioData(hrv: hrvCoherence, coherence: hrvCoherence)
+        }
+    }
+
+    /// Broadcast mode change to all participants
+    func broadcastModeChange(_ mode: VisualizationMode) async {
+        guard let messenger = groupSessionMessenger else { return }
+        let message = SharePlayMessage.modeChange(mode: mode.rawValue)
+        try? await messenger.send(message)
+    }
+
+    /// Broadcast bio-data update to all participants
+    func broadcastBioUpdate(hrvCoherence: Double, heartRate: Double) async {
+        guard let messenger = groupSessionMessenger else { return }
+        let message = SharePlayMessage.bioUpdate(hrvCoherence: hrvCoherence, heartRate: heartRate)
+        try? await messenger.send(message)
     }
 
     // MARK: - Visualization Control
@@ -406,6 +549,102 @@ struct BioDataUpdate {
     let hrv: Double
     let coherence: Double
     let timestamp: Date
+}
+
+// MARK: - GroupActivities Integration
+
+/// Echoelmusic SharePlay Activity
+struct EchoelmusicActivity: GroupActivity {
+    static let activityIdentifier = "com.echoelmusic.shareplay"
+
+    var metadata: GroupActivityMetadata {
+        var meta = GroupActivityMetadata()
+        meta.title = "Echoelmusic Session"
+        meta.subtitle = "Bio-reactive meditation experience"
+        meta.type = .generic
+        return meta
+    }
+}
+
+/// Messages for syncing state between SharePlay participants
+enum SharePlayMessage: Codable {
+    case sessionState(mode: String, hrvCoherence: Double, heartRate: Double)
+    case modeChange(mode: String)
+    case bioUpdate(hrvCoherence: Double, heartRate: Double)
+
+    // Codable conformance
+    enum CodingKeys: String, CodingKey {
+        case type
+        case mode
+        case hrvCoherence
+        case heartRate
+    }
+
+    enum MessageType: String, Codable {
+        case sessionState
+        case modeChange
+        case bioUpdate
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let type = try container.decode(MessageType.self, forKey: .type)
+
+        switch type {
+        case .sessionState:
+            let mode = try container.decode(String.self, forKey: .mode)
+            let coherence = try container.decode(Double.self, forKey: .hrvCoherence)
+            let hr = try container.decode(Double.self, forKey: .heartRate)
+            self = .sessionState(mode: mode, hrvCoherence: coherence, heartRate: hr)
+        case .modeChange:
+            let mode = try container.decode(String.self, forKey: .mode)
+            self = .modeChange(mode: mode)
+        case .bioUpdate:
+            let coherence = try container.decode(Double.self, forKey: .hrvCoherence)
+            let hr = try container.decode(Double.self, forKey: .heartRate)
+            self = .bioUpdate(hrvCoherence: coherence, heartRate: hr)
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        switch self {
+        case .sessionState(let mode, let coherence, let hr):
+            try container.encode(MessageType.sessionState, forKey: .type)
+            try container.encode(mode, forKey: .mode)
+            try container.encode(coherence, forKey: .hrvCoherence)
+            try container.encode(hr, forKey: .heartRate)
+        case .modeChange(let mode):
+            try container.encode(MessageType.modeChange, forKey: .type)
+            try container.encode(mode, forKey: .mode)
+        case .bioUpdate(let coherence, let hr):
+            try container.encode(MessageType.bioUpdate, forKey: .type)
+            try container.encode(coherence, forKey: .hrvCoherence)
+            try container.encode(hr, forKey: .heartRate)
+        }
+    }
+}
+
+/// SharePlay errors
+enum SharePlayError: LocalizedError {
+    case activationDisabled
+    case activationFailed(Error)
+    case cancelled
+    case messagingFailed(Error)
+
+    var errorDescription: String? {
+        switch self {
+        case .activationDisabled:
+            return "SharePlay is not available. Make sure you're on a FaceTime call."
+        case .activationFailed(let error):
+            return "Failed to start SharePlay: \(error.localizedDescription)"
+        case .cancelled:
+            return "SharePlay activation was cancelled"
+        case .messagingFailed(let error):
+            return "Failed to sync with participants: \(error.localizedDescription)"
+        }
+    }
 }
 
 #endif
