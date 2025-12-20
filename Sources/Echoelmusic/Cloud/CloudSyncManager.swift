@@ -10,11 +10,17 @@ class CloudSyncManager: ObservableObject {
     @Published var isSyncing: Bool = false
     @Published var syncEnabled: Bool = false
     @Published var lastSyncDate: Date?
+    @Published var lastBackupDate: Date?
     @Published var cloudSessions: [CloudSession] = []
+    @Published var autoBackupEnabled: Bool = false
 
     private let container: CKContainer
     private let privateDatabase: CKDatabase
     private let sharedDatabase: CKDatabase
+
+    // Current session reference for auto-backup
+    private weak var currentSessionProvider: SessionProvider?
+    private var autoBackupTimer: Timer?
 
     init() {
         self.container = CKContainer(identifier: "iCloud.com.echoelmusic.app")
@@ -100,20 +106,73 @@ class CloudSyncManager: ObservableObject {
 
     // MARK: - Auto Backup
 
+    /// Set the session provider for auto-backup functionality
+    func setSessionProvider(_ provider: SessionProvider) {
+        self.currentSessionProvider = provider
+    }
+
+    /// Enable automatic backup of current session at specified interval
     func enableAutoBackup(interval: TimeInterval = 300) {
-        // Backup every 5 minutes
-        Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task {
+        // Cancel existing timer if any
+        autoBackupTimer?.invalidate()
+
+        // Backup every 5 minutes (default)
+        autoBackupTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
                 try? await self?.autoBackup()
             }
         }
+        autoBackupEnabled = true
         print("☁️ CloudSyncManager: Auto backup enabled (every \(Int(interval))s)")
     }
 
-    private func autoBackup() async throws {
-        // TODO: Backup current session automatically
-        print("☁️ CloudSyncManager: Auto backup triggered")
+    /// Disable automatic backup
+    func disableAutoBackup() {
+        autoBackupTimer?.invalidate()
+        autoBackupTimer = nil
+        autoBackupEnabled = false
+        print("☁️ CloudSyncManager: Auto backup disabled")
     }
+
+    /// Perform automatic backup of current session
+    private func autoBackup() async throws {
+        guard syncEnabled else {
+            print("☁️ CloudSyncManager: Skipping backup - sync not enabled")
+            return
+        }
+
+        guard let provider = currentSessionProvider,
+              let currentSession = provider.currentSession else {
+            print("☁️ CloudSyncManager: Skipping backup - no active session")
+            return
+        }
+
+        // Check if session has meaningful content
+        guard currentSession.duration > 0 else {
+            print("☁️ CloudSyncManager: Skipping backup - session is empty")
+            return
+        }
+
+        print("☁️ CloudSyncManager: Auto backup triggered for '\(currentSession.name)'")
+
+        // Save session to cloud
+        try await saveSession(currentSession)
+
+        lastBackupDate = Date()
+        print("☁️ CloudSyncManager: Auto backup completed successfully")
+    }
+
+    /// Force immediate backup of current session
+    func backupNow() async throws {
+        try await autoBackup()
+    }
+}
+
+// MARK: - Session Provider Protocol
+
+/// Protocol for providing current session for backup
+protocol SessionProvider: AnyObject {
+    var currentSession: Session? { get }
 }
 
 struct CloudSession: Identifiable {

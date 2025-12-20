@@ -571,8 +571,49 @@ public class UnifiedControlHub: ObservableObject {
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // TODO: Change to preset
-            print("[Gesture→Audio] Switch to preset: \(presetChange)")
+            applyAudioPreset(presetChange)
+        }
+    }
+
+    /// Apply audio preset based on gesture-triggered preset name
+    private func applyAudioPreset(_ presetName: String) {
+        guard let mapper = bioParameterMapper else {
+            print("[Gesture→Audio] Cannot apply preset - no mapper available")
+            return
+        }
+
+        // Map preset name to BioPreset
+        let preset: BioParameterMapper.BioPreset?
+        switch presetName.lowercased() {
+        case "meditation", "meditate", "calm":
+            preset = .meditation
+        case "focus", "concentrate", "work":
+            preset = .focus
+        case "relaxation", "relax", "chill":
+            preset = .relaxation
+        case "energize", "energy", "active":
+            preset = .energize
+        default:
+            // Try to match by rawValue directly
+            preset = BioParameterMapper.BioPreset.allCases.first {
+                $0.rawValue.lowercased().contains(presetName.lowercased())
+            }
+        }
+
+        if let validPreset = preset {
+            mapper.applyPreset(validPreset)
+
+            // Apply the new preset parameters to audio engine
+            if let engine = audioEngine {
+                engine.setFilterCutoff(mapper.filterCutoff)
+                engine.setReverbWetness(mapper.reverbWet)
+                engine.setMasterVolume(mapper.amplitude)
+                engine.setTempo(mapper.tempo)
+            }
+
+            print("[Gesture→Audio] Applied preset: \(validPreset.rawValue)")
+        } else {
+            print("[Gesture→Audio] Unknown preset: \(presetName)")
         }
     }
 

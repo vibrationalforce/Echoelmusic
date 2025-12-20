@@ -563,9 +563,59 @@ class BackgroundSourceManager: ObservableObject {
     // MARK: - Blur Background
 
     private func renderBlurBackground(type: BlurType, intensity: Float) async throws {
-        // TODO: Implement blur using CIFilter
-        try await setSource(.solidColor(.gray))
-        print("⚠️ BackgroundSourceManager: Blur backgrounds not yet fully implemented")
+        // Get current frame or use solid color as base
+        let baseImage: CIImage
+        if let cachedImage = cachedImage {
+            baseImage = cachedImage
+        } else {
+            // Create a solid gray base if no image is available
+            let size = CGSize(width: 1920, height: 1080)
+            baseImage = CIImage(color: CIColor(gray: 0.2, alpha: 1.0))
+                .cropped(to: CGRect(origin: .zero, size: size))
+        }
+
+        // Apply blur based on type
+        let blurredImage: CIImage
+        let normalizedIntensity = max(0.0, min(1.0, intensity))
+
+        switch type {
+        case .gaussian:
+            // Gaussian blur: radius 0-50 based on intensity
+            let radius = Double(normalizedIntensity * 50.0)
+            blurredImage = baseImage.applyingGaussianBlur(sigma: radius)
+
+        case .bokeh:
+            // Bokeh effect using disc blur
+            let radius = Double(normalizedIntensity * 30.0)
+            if let filter = CIFilter(name: "CIDiscBlur") {
+                filter.setValue(baseImage, forKey: kCIInputImageKey)
+                filter.setValue(radius, forKey: kCIInputRadiusKey)
+                blurredImage = filter.outputImage ?? baseImage.applyingGaussianBlur(sigma: radius)
+            } else {
+                // Fallback to gaussian
+                blurredImage = baseImage.applyingGaussianBlur(sigma: radius)
+            }
+
+        case .motion:
+            // Motion blur effect
+            let radius = Double(normalizedIntensity * 40.0)
+            let angle = Double.pi / 4.0 // 45 degrees
+            if let filter = CIFilter(name: "CIMotionBlur") {
+                filter.setValue(baseImage, forKey: kCIInputImageKey)
+                filter.setValue(radius, forKey: kCIInputRadiusKey)
+                filter.setValue(angle, forKey: kCIInputAngleKey)
+                blurredImage = filter.outputImage ?? baseImage.applyingGaussianBlur(sigma: radius)
+            } else {
+                // Fallback to gaussian
+                blurredImage = baseImage.applyingGaussianBlur(sigma: radius)
+            }
+        }
+
+        // Cache and convert to texture
+        cachedImage = blurredImage
+        currentTexture = try createTexture(from: blurredImage)
+
+        print("🔵 BackgroundSourceManager: Applied \(type.rawValue) blur (intensity: \(Int(normalizedIntensity * 100))%)")
     }
 
     // MARK: - Update Animated Source
