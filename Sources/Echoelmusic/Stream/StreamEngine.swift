@@ -28,6 +28,14 @@ class StreamEngine: ObservableObject {
     @Published var cpuUsage: Double = 0.0
     @Published var gpuUsage: Double = 0.0
 
+    // MARK: - Transition State
+
+    @Published var isTransitioning: Bool = false
+    @Published var transitionProgress: Float = 0.0
+    private var transitionFromScene: Scene?
+    private var transitionToScene: Scene?
+    private var transitionType: SceneTransition = .cut
+
     // MARK: - Components
 
     private let sceneManager: SceneManager
@@ -362,21 +370,151 @@ class StreamEngine: ObservableObject {
 
         case .fade:
             // Crossfade over duration
-            // TODO: Implement crossfade rendering
-            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            await performCrossfadeTransition(from: from, to: to, duration: duration)
 
         case .slide:
             // Slide animation
-            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            await performSlideTransition(from: from, to: to, duration: duration)
 
         case .zoom:
             // Zoom transition
-            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            await performZoomTransition(from: from, to: to, duration: duration)
 
         case .stinger:
             // Custom video transition
             try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
         }
+    }
+
+    // MARK: - Crossfade Transition
+
+    /// Perform smooth crossfade between two scenes
+    private func performCrossfadeTransition(from: Scene?, to: Scene, duration: TimeInterval) async {
+        guard duration > 0 else { return }
+
+        isTransitioning = true
+        transitionFromScene = from
+        transitionToScene = to
+        transitionType = .fade
+
+        let frameCount = Int(duration * Double(frameRate))
+        let frameInterval = duration / Double(frameCount)
+
+        for frame in 0..<frameCount {
+            transitionProgress = Float(frame) / Float(frameCount)
+
+            // Wait for next frame
+            try? await Task.sleep(nanoseconds: UInt64(frameInterval * 1_000_000_000))
+
+            // Check if we should cancel
+            if Task.isCancelled { break }
+        }
+
+        // Complete transition
+        transitionProgress = 1.0
+        isTransitioning = false
+        transitionFromScene = nil
+        transitionToScene = nil
+    }
+
+    /// Render crossfade frame between two scene textures
+    func renderCrossfadeFrame(fromTexture: MTLTexture, toTexture: MTLTexture, progress: Float) -> MTLTexture? {
+        guard let commandBuffer = commandQueue.makeCommandBuffer() else { return nil }
+
+        // Create output texture
+        let descriptor = MTLTextureDescriptor()
+        descriptor.textureType = .type2D
+        descriptor.pixelFormat = .bgra8Unorm
+        descriptor.width = fromTexture.width
+        descriptor.height = fromTexture.height
+        descriptor.usage = [.shaderRead, .renderTarget]
+        descriptor.storageMode = .shared
+
+        guard let outputTexture = device.makeTexture(descriptor: descriptor) else { return nil }
+
+        // Convert Metal textures to CIImages
+        guard let fromImage = CIImage(mtlTexture: fromTexture, options: nil),
+              let toImage = CIImage(mtlTexture: toTexture, options: nil) else {
+            return nil
+        }
+
+        // Use CIDissolveTransition for smooth crossfade
+        guard let dissolve = CIFilter(name: "CIDissolveTransition") else { return nil }
+        dissolve.setValue(fromImage, forKey: kCIInputImageKey)
+        dissolve.setValue(toImage, forKey: kCIInputTargetImageKey)
+        dissolve.setValue(progress, forKey: kCIInputTimeKey)
+
+        guard let output = dissolve.outputImage else { return nil }
+
+        // Render to Metal texture
+        ciContext.render(output, to: outputTexture, commandBuffer: commandBuffer, bounds: output.extent, colorSpace: CGColorSpaceCreateDeviceRGB())
+
+        commandBuffer.commit()
+        commandBuffer.waitUntilCompleted()
+
+        return outputTexture
+    }
+
+    // MARK: - Slide Transition
+
+    /// Perform slide transition from one scene to another
+    private func performSlideTransition(from: Scene?, to: Scene, duration: TimeInterval) async {
+        guard duration > 0 else { return }
+
+        isTransitioning = true
+        transitionFromScene = from
+        transitionToScene = to
+        transitionType = .slide
+
+        let frameCount = Int(duration * Double(frameRate))
+        let frameInterval = duration / Double(frameCount)
+
+        for frame in 0..<frameCount {
+            // Use easeInOut curve for smoother animation
+            let linearProgress = Float(frame) / Float(frameCount)
+            transitionProgress = easeInOut(linearProgress)
+
+            try? await Task.sleep(nanoseconds: UInt64(frameInterval * 1_000_000_000))
+            if Task.isCancelled { break }
+        }
+
+        transitionProgress = 1.0
+        isTransitioning = false
+        transitionFromScene = nil
+        transitionToScene = nil
+    }
+
+    // MARK: - Zoom Transition
+
+    /// Perform zoom transition from one scene to another
+    private func performZoomTransition(from: Scene?, to: Scene, duration: TimeInterval) async {
+        guard duration > 0 else { return }
+
+        isTransitioning = true
+        transitionFromScene = from
+        transitionToScene = to
+        transitionType = .zoom
+
+        let frameCount = Int(duration * Double(frameRate))
+        let frameInterval = duration / Double(frameCount)
+
+        for frame in 0..<frameCount {
+            let linearProgress = Float(frame) / Float(frameCount)
+            transitionProgress = easeInOut(linearProgress)
+
+            try? await Task.sleep(nanoseconds: UInt64(frameInterval * 1_000_000_000))
+            if Task.isCancelled { break }
+        }
+
+        transitionProgress = 1.0
+        isTransitioning = false
+        transitionFromScene = nil
+        transitionToScene = nil
+    }
+
+    /// Ease-in-out curve for smooth animations
+    private func easeInOut(_ t: Float) -> Float {
+        return t < 0.5 ? 2 * t * t : 1 - pow(-2 * t + 2, 2) / 2
     }
 
     // MARK: - Bio-Reactive Scene Switching

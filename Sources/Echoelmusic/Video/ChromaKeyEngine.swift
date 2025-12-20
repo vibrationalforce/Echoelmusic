@@ -425,15 +425,176 @@ class ChromaKeyEngine: ObservableObject {
         case .keyOnly:
             return matteTexture ?? outputTexture
         case .splitScreen:
-            // TODO: Implement split screen composite
-            return outputTexture
+            return renderSplitScreen(composite: outputTexture) ?? outputTexture
         case .edgeOverlay:
-            // TODO: Implement edge quality overlay
-            return outputTexture
+            return renderEdgeOverlay(composite: outputTexture) ?? outputTexture
         case .spillMap:
-            // TODO: Implement spill map visualization
-            return outputTexture
+            return renderSpillMap() ?? outputTexture
         }
+    }
+
+    // MARK: - Split Screen Preview
+
+    /// Renders a side-by-side comparison of original source and composited output
+    private func renderSplitScreen(composite: MTLTexture) -> MTLTexture? {
+        guard let source = sourceTexture else { return nil }
+
+        let width = composite.width
+        let height = composite.height
+
+        // Create output texture for split view
+        guard let splitTexture = try? createTexture(width: width, height: height, label: "SplitScreen") else {
+            return nil
+        }
+
+        // Convert textures to CIImage
+        let sourceImage = CIImage(mtlTexture: source, options: nil)
+        let compositeImage = CIImage(mtlTexture: composite, options: nil)
+
+        guard let src = sourceImage, let comp = compositeImage else { return nil }
+
+        // Crop each to half width
+        let halfWidth = CGFloat(width) / 2.0
+        let fullHeight = CGFloat(height)
+
+        let leftHalf = src.cropped(to: CGRect(x: 0, y: 0, width: halfWidth, height: fullHeight))
+        let rightHalf = comp.cropped(to: CGRect(x: halfWidth, y: 0, width: halfWidth, height: fullHeight))
+            .transformed(by: CGAffineTransform(translationX: -halfWidth, y: 0))
+
+        // Composite: left = original, right = keyed
+        let combined = rightHalf.transformed(by: CGAffineTransform(translationX: halfWidth, y: 0))
+            .composited(over: leftHalf)
+
+        // Add center divider line
+        let dividerRect = CGRect(x: halfWidth - 2, y: 0, width: 4, height: fullHeight)
+        let dividerColor = CIImage(color: CIColor(red: 1, green: 1, blue: 1, alpha: 0.8))
+            .cropped(to: dividerRect)
+        let withDivider = dividerColor.composited(over: combined)
+
+        // Render to Metal texture
+        ciContext.render(withDivider, to: splitTexture, commandBuffer: nil, bounds: withDivider.extent, colorSpace: CGColorSpaceCreateDeviceRGB())
+
+        return splitTexture
+    }
+
+    // MARK: - Edge Quality Overlay
+
+    /// Renders edge quality visualization: green = clean edges, red = problem areas
+    private func renderEdgeOverlay(composite: MTLTexture) -> MTLTexture? {
+        guard let matte = matteTexture, let source = sourceTexture else { return nil }
+
+        let width = composite.width
+        let height = composite.height
+
+        guard let overlayTexture = try? createTexture(width: width, height: height, label: "EdgeOverlay") else {
+            return nil
+        }
+
+        // Convert matte to CIImage
+        guard let matteImage = CIImage(mtlTexture: matte, options: nil),
+              let sourceImage = CIImage(mtlTexture: source, options: nil) else {
+            return nil
+        }
+
+        // Apply Sobel edge detection to find matte edges
+        guard let edgeFilter = CIFilter(name: "CIEdges") else { return nil }
+        edgeFilter.setValue(matteImage, forKey: kCIInputImageKey)
+        edgeFilter.setValue(5.0, forKey: kCIInputIntensityKey)
+
+        guard let edges = edgeFilter.outputImage else { return nil }
+
+        // Create red overlay for edges (areas that might have issues)
+        let redColor = CIImage(color: CIColor(red: 1, green: 0, blue: 0, alpha: 0.6))
+            .cropped(to: edges.extent)
+
+        // Create green overlay for clean areas
+        let greenColor = CIImage(color: CIColor(red: 0, green: 1, blue: 0, alpha: 0.3))
+            .cropped(to: edges.extent)
+
+        // Blend edges with red, clean areas with green over source
+        guard let blendFilter = CIFilter(name: "CIBlendWithMask") else { return nil }
+        blendFilter.setValue(redColor, forKey: kCIInputImageKey)
+        blendFilter.setValue(greenColor, forKey: kCIInputBackgroundImageKey)
+        blendFilter.setValue(edges, forKey: kCIInputMaskImageKey)
+
+        guard var overlay = blendFilter.outputImage else { return nil }
+
+        // Composite overlay on source
+        overlay = overlay.composited(over: sourceImage)
+
+        // Render to Metal texture
+        ciContext.render(overlay, to: overlayTexture, commandBuffer: nil, bounds: overlay.extent, colorSpace: CGColorSpaceCreateDeviceRGB())
+
+        return overlayTexture
+    }
+
+    // MARK: - Spill Map Visualization
+
+    /// Renders a heat map showing color spill (green/blue reflections on subject)
+    private func renderSpillMap() -> MTLTexture? {
+        guard let source = sourceTexture else { return nil }
+
+        let width = source.width
+        let height = source.height
+
+        guard let spillTexture = try? createTexture(width: width, height: height, label: "SpillMap") else {
+            return nil
+        }
+
+        guard let sourceImage = CIImage(mtlTexture: source, options: nil) else { return nil }
+
+        // Extract color channel based on key color
+        let channelToExtract: String
+        switch keyColor {
+        case .green, .multiColor:
+            channelToExtract = "CIMaximumComponent" // Use green emphasis
+        case .blue:
+            channelToExtract = "CIMaximumComponent"
+        }
+
+        // Create a false color visualization of spill
+        // High spill = bright magenta, low spill = dark
+        guard let colorMatrix = CIFilter(name: "CIColorMatrix") else { return nil }
+
+        // Matrix to isolate and emphasize the key color channel
+        let rVector: CIVector
+        let gVector: CIVector
+        let bVector: CIVector
+
+        switch keyColor {
+        case .green, .multiColor:
+            // Emphasize green channel, show as magenta (red + blue)
+            rVector = CIVector(x: 0, y: 1, z: 0, w: 0)  // R = G (spill amount)
+            gVector = CIVector(x: 0, y: 0, z: 0, w: 0)  // G = 0 (remove green)
+            bVector = CIVector(x: 0, y: 1, z: 0, w: 0)  // B = G (spill amount)
+        case .blue:
+            // Emphasize blue channel, show as yellow (red + green)
+            rVector = CIVector(x: 0, y: 0, z: 1, w: 0)  // R = B
+            gVector = CIVector(x: 0, y: 0, z: 1, w: 0)  // G = B
+            bVector = CIVector(x: 0, y: 0, z: 0, w: 0)  // B = 0
+        }
+
+        colorMatrix.setValue(sourceImage, forKey: kCIInputImageKey)
+        colorMatrix.setValue(rVector, forKey: "inputRVector")
+        colorMatrix.setValue(gVector, forKey: "inputGVector")
+        colorMatrix.setValue(bVector, forKey: "inputBVector")
+
+        guard var spillMap = colorMatrix.outputImage else { return nil }
+
+        // Boost contrast to make spill more visible
+        guard let contrastFilter = CIFilter(name: "CIColorControls") else { return nil }
+        contrastFilter.setValue(spillMap, forKey: kCIInputImageKey)
+        contrastFilter.setValue(2.0, forKey: kCIInputContrastKey)  // Boost contrast
+        contrastFilter.setValue(1.2, forKey: kCIInputSaturationKey)  // Boost saturation
+
+        if let contrasted = contrastFilter.outputImage {
+            spillMap = contrasted
+        }
+
+        // Render to Metal texture
+        ciContext.render(spillMap, to: spillTexture, commandBuffer: nil, bounds: spillMap.extent, colorSpace: CGColorSpaceCreateDeviceRGB())
+
+        return spillTexture
     }
 
     // MARK: - Texture Creation

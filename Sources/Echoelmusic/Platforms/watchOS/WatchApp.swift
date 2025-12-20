@@ -2,6 +2,7 @@ import Foundation
 import WatchKit
 import HealthKit
 import Combine
+import WatchConnectivity
 
 #if os(watchOS)
 
@@ -45,6 +46,7 @@ class WatchApp {
     private let healthKitManager: WatchHealthKitManager
     private let hapticEngine: HapticEngine
     private let audioEngine: WatchAudioEngine
+    private let connectivityManager: WatchConnectivityManager
     private var workoutSession: HKWorkoutSession?
     private var sessionStartTime: Date?
 
@@ -246,8 +248,15 @@ class WatchApp {
             date: Date()
         )
 
-        // TODO: Sync with iPhone via WatchConnectivity
-        print("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        // Sync with iPhone via WatchConnectivity
+        do {
+            try await connectivityManager.sendSessionToPhone(session)
+            print("📲 Session synced to iPhone: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        } catch {
+            // Store locally for later sync if phone is not reachable
+            connectivityManager.queueSessionForLaterSync(session)
+            print("💾 Session queued for later sync: \(error.localizedDescription)")
+        }
     }
 
     struct SessionData: Codable {
@@ -448,6 +457,196 @@ class WatchAudioEngine {
         // Spiele sanften absteigenden Ton
         print("🎵 Exhale tone")
     }
+}
+
+// MARK: - WatchConnectivity Manager
+
+/// Manages bidirectional communication between Watch and iPhone
+class WatchConnectivityManager: NSObject, WCSessionDelegate {
+
+    private var session: WCSession?
+    private var pendingSessions: [WatchApp.SessionData] = []
+    private let pendingSessionsKey = "PendingSessions"
+
+    override init() {
+        super.init()
+
+        if WCSession.isSupported() {
+            session = WCSession.default
+            session?.delegate = self
+            session?.activate()
+        }
+
+        // Load any pending sessions from storage
+        loadPendingSessions()
+    }
+
+    // MARK: - Send Session to iPhone
+
+    func sendSessionToPhone(_ sessionData: WatchApp.SessionData) async throws {
+        guard let session = session, session.isReachable else {
+            throw WatchConnectivityError.phoneNotReachable
+        }
+
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(sessionData)
+
+        let message: [String: Any] = [
+            "type": "session_sync",
+            "data": data,
+            "timestamp": Date().timeIntervalSince1970
+        ]
+
+        return try await withCheckedThrowingContinuation { continuation in
+            session.sendMessage(message, replyHandler: { reply in
+                if let success = reply["success"] as? Bool, success {
+                    continuation.resume()
+                } else {
+                    continuation.resume(throwing: WatchConnectivityError.syncFailed)
+                }
+            }, errorHandler: { error in
+                continuation.resume(throwing: error)
+            })
+        }
+    }
+
+    // MARK: - Queue for Later Sync
+
+    func queueSessionForLaterSync(_ sessionData: WatchApp.SessionData) {
+        pendingSessions.append(sessionData)
+        savePendingSessions()
+        print("📦 Queued session for later sync. Total pending: \(pendingSessions.count)")
+    }
+
+    /// Attempt to sync all pending sessions
+    func syncPendingSessions() async {
+        guard !pendingSessions.isEmpty else { return }
+
+        var successfullySync: [WatchApp.SessionData] = []
+
+        for session in pendingSessions {
+            do {
+                try await sendSessionToPhone(session)
+                successfullySync.append(session)
+            } catch {
+                // Stop trying if phone is not reachable
+                break
+            }
+        }
+
+        // Remove successfully synced sessions
+        pendingSessions.removeAll { session in
+            successfullySync.contains { $0.date == session.date }
+        }
+        savePendingSessions()
+
+        if !successfullySync.isEmpty {
+            print("📲 Synced \(successfullySync.count) pending sessions")
+        }
+    }
+
+    // MARK: - Real-time Metrics Streaming
+
+    func sendLiveMetrics(_ metrics: WatchApp.BioMetrics) {
+        guard let session = session, session.isReachable else { return }
+
+        let message: [String: Any] = [
+            "type": "live_metrics",
+            "heartRate": metrics.heartRate,
+            "hrv": metrics.hrv,
+            "coherence": metrics.coherence,
+            "breathingRate": metrics.breathingRate,
+            "stressLevel": metrics.stressLevel,
+            "timestamp": Date().timeIntervalSince1970
+        ]
+
+        // Use transferUserInfo for background transfer
+        session.transferUserInfo(message)
+    }
+
+    // MARK: - Persistence
+
+    private func savePendingSessions() {
+        let encoder = JSONEncoder()
+        if let data = try? encoder.encode(pendingSessions) {
+            UserDefaults.standard.set(data, forKey: pendingSessionsKey)
+        }
+    }
+
+    private func loadPendingSessions() {
+        if let data = UserDefaults.standard.data(forKey: pendingSessionsKey),
+           let sessions = try? JSONDecoder().decode([WatchApp.SessionData].self, from: data) {
+            pendingSessions = sessions
+        }
+    }
+
+    // MARK: - WCSessionDelegate
+
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        if activationState == .activated {
+            print("⌚ WatchConnectivity: Session activated")
+
+            // Try to sync pending sessions when connected
+            Task {
+                await syncPendingSessions()
+            }
+        } else if let error = error {
+            print("⌚ WatchConnectivity: Activation failed - \(error.localizedDescription)")
+        }
+    }
+
+    func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+        // Handle messages from iPhone (e.g., start/stop commands)
+        if let command = message["command"] as? String {
+            switch command {
+            case "start_session":
+                NotificationCenter.default.post(name: .startSessionFromPhone, object: nil)
+            case "stop_session":
+                NotificationCenter.default.post(name: .stopSessionFromPhone, object: nil)
+            case "update_breathing_rate":
+                if let rate = message["rate"] as? Double {
+                    NotificationCenter.default.post(name: .updateBreathingRate, object: nil, userInfo: ["rate": rate])
+                }
+            default:
+                break
+            }
+        }
+    }
+
+    func sessionReachabilityDidChange(_ session: WCSession) {
+        if session.isReachable {
+            print("⌚ WatchConnectivity: iPhone is now reachable")
+            Task {
+                await syncPendingSessions()
+            }
+        } else {
+            print("⌚ WatchConnectivity: iPhone is not reachable")
+        }
+    }
+}
+
+// MARK: - WatchConnectivity Errors
+
+enum WatchConnectivityError: LocalizedError {
+    case phoneNotReachable
+    case syncFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .phoneNotReachable:
+            return "iPhone is not reachable. Session will sync when connection is restored."
+        case .syncFailed:
+            return "Failed to sync session with iPhone."
+        }
+    }
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let startSessionFromPhone = Notification.Name("startSessionFromPhone")
+    static let stopSessionFromPhone = Notification.Name("stopSessionFromPhone")
+    static let updateBreathingRate = Notification.Name("updateBreathingRate")
 }
 
 #endif
