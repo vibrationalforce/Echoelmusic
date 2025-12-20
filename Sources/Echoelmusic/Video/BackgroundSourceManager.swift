@@ -387,9 +387,90 @@ class BackgroundSourceManager: ObservableObject {
     // MARK: - Angular Gradient (Custom)
 
     private func renderAngularGradient(colors: [Color], size: CGSize) throws -> CIImage {
-        // TODO: Implement custom angular gradient using Metal shader
-        // For now, fallback to radial
-        return try renderGradient(type: .radial, colors: colors, size: size)
+        // Use CISmoothLinearGradient in a radial pattern to simulate angular gradient
+        // CIHueSaturationValueGradient can create a smooth color wheel effect
+
+        let center = CIVector(x: size.width / 2, y: size.height / 2)
+        let radius = max(size.width, size.height) / 2
+
+        // For two or more colors, create angular sweep using hue rotation
+        if colors.count >= 2 {
+            // Create base hue wheel using CIHueSaturationValueGradient
+            guard let hueFilter = CIFilter(name: "CIHueSaturationValueGradient") else {
+                throw BackgroundError.filterNotAvailable("CIHueSaturationValueGradient")
+            }
+
+            hueFilter.setValue(radius, forKey: "inputRadius")
+            hueFilter.setValue(1.0, forKey: "inputSoftness")
+            hueFilter.setValue(1.0, forKey: "inputValue")  // Brightness
+
+            guard let hueWheel = hueFilter.outputImage else {
+                throw BackgroundError.gradientRenderingFailed
+            }
+
+            // Get the hue values from input colors to create color mapping
+            let uiColors = colors.map { uiColor(from: $0) }
+            let startHue = hueFromUIColor(uiColors.first ?? .red)
+            let endHue = hueFromUIColor(uiColors.last ?? .blue)
+
+            // Apply hue shift to match input colors
+            guard let hueAdjust = CIFilter(name: "CIHueAdjust") else {
+                throw BackgroundError.filterNotAvailable("CIHueAdjust")
+            }
+            hueAdjust.setValue(hueWheel, forKey: kCIInputImageKey)
+            hueAdjust.setValue(startHue * .pi * 2, forKey: kCIInputAngleKey)
+
+            guard var adjustedImage = hueAdjust.outputImage else {
+                throw BackgroundError.gradientRenderingFailed
+            }
+
+            // Apply saturation from input colors
+            let avgSaturation = uiColors.reduce(0.0) { $0 + saturationFromUIColor($1) } / Double(uiColors.count)
+            guard let satFilter = CIFilter(name: "CIColorControls") else {
+                throw BackgroundError.filterNotAvailable("CIColorControls")
+            }
+            satFilter.setValue(adjustedImage, forKey: kCIInputImageKey)
+            satFilter.setValue(avgSaturation, forKey: kCIInputSaturationKey)
+
+            if let saturated = satFilter.outputImage {
+                adjustedImage = saturated
+            }
+
+            // Center the gradient and crop to size
+            let translate = CGAffineTransform(translationX: size.width / 2 - radius, y: size.height / 2 - radius)
+            let transformed = adjustedImage.transformed(by: translate)
+
+            return transformed.cropped(to: CGRect(origin: .zero, size: size))
+        }
+
+        // Fallback for single color
+        let color = colors.first ?? .gray
+        let ciColor = CIColor(color: uiColor(from: color))
+        return CIImage(color: ciColor).cropped(to: CGRect(origin: .zero, size: size))
+    }
+
+    // MARK: - Color Helpers
+
+    private func uiColor(from swiftUIColor: Color) -> UIColor {
+        UIColor(swiftUIColor)
+    }
+
+    private func hueFromUIColor(_ color: UIColor) -> Double {
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var alpha: CGFloat = 0
+        color.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+        return Double(hue)
+    }
+
+    private func saturationFromUIColor(_ color: UIColor) -> Double {
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var alpha: CGFloat = 0
+        color.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+        return Double(saturation)
     }
 
     // MARK: - Virtual Background Rendering

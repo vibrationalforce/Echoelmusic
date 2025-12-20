@@ -475,8 +475,16 @@ public class UnifiedControlHub: ObservableObject {
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
         // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
-        // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+        if let engine = audioEngine {
+            engine.setFilterCutoff(params.filterCutoff)
+            engine.setFilterResonance(params.filterResonance)
+
+            // Map expression intensity to reverb (more expressive = more reverb)
+            let expressionIntensity = (params.filterCutoff / 8000.0 + params.filterResonance / 5.0) / 2.0
+            engine.setReverbWetness(Float(expressionIntensity * 0.5))
+
+            print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+        }
 
         // Apply to all active MPE voices
         if let mpe = mpeZoneManager {
