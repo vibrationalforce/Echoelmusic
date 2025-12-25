@@ -106,24 +106,28 @@ class GestureToAudioMapper {
                     from: 0...1,
                     to: 200...8000
                 )
-                result.filterCutoff = smooth(
+                let smoothedCutoff = smooth(
                     current: lastFilterCutoff,
                     target: Float(targetCutoff),
                     factor: smoothingFactor
                 )
-                lastFilterCutoff = result.filterCutoff!
+                result.filterCutoff = smoothedCutoff
+                // CRITICAL FIX: Use local variable instead of force unwrap
+                lastFilterCutoff = smoothedCutoff
             }
 
         case .spread:
             // Left Spread → Reverb Size (0-1)
             if spreadAmount > minimumGestureAmount {
                 let targetSize = spreadAmount
-                result.reverbSize = smooth(
+                let smoothedSize = smooth(
                     current: lastReverbSize,
                     target: targetSize,
                     factor: smoothingFactor
                 )
-                lastReverbSize = result.reverbSize!
+                result.reverbSize = smoothedSize
+                // CRITICAL FIX: Use local variable instead of force unwrap
+                lastReverbSize = smoothedSize
             }
 
         case .fist:
@@ -168,24 +172,28 @@ class GestureToAudioMapper {
                     from: 0...1,
                     to: 0.5...5.0
                 )
-                result.filterResonance = smooth(
+                let smoothedResonance = smooth(
                     current: lastFilterResonance,
                     target: Float(targetResonance),
                     factor: smoothingFactor
                 )
-                lastFilterResonance = result.filterResonance!
+                result.filterResonance = smoothedResonance
+                // CRITICAL FIX: Use local variable instead of force unwrap
+                lastFilterResonance = smoothedResonance
             }
 
         case .spread:
             // Right Spread → Reverb Wetness (0-1)
             if spreadAmount > minimumGestureAmount {
                 let targetWetness = spreadAmount
-                result.reverbWetness = smooth(
+                let smoothedWetness = smooth(
                     current: lastReverbWetness,
                     target: targetWetness,
                     factor: smoothingFactor
                 )
-                lastReverbWetness = result.reverbWetness!
+                result.reverbWetness = smoothedWetness
+                // CRITICAL FIX: Use local variable instead of force unwrap
+                lastReverbWetness = smoothedWetness
             }
 
         case .fist:

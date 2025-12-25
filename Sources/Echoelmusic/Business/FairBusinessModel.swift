@@ -264,7 +264,11 @@ class FairBusinessModel: ObservableObject {
         }
 
         let startDate = Date()
-        let endDate = Calendar.current.date(byAdding: .day, value: 14, to: startDate)!
+        // CRITICAL FIX: Safe unwrapping for Calendar date calculation
+        guard let endDate = Calendar.current.date(byAdding: .day, value: 14, to: startDate) else {
+            print("⚠️ Failed to calculate trial end date")
+            return
+        }
 
         activeTrial = TrialInfo(
             tier: tier,
@@ -300,11 +304,15 @@ class FairBusinessModel: ObservableObject {
             subscriptionStatus = .lifetime
             print("✅ Lifetime purchase complete!")
         } else {
-            let renewalDate = Calendar.current.date(
+            // CRITICAL FIX: Safe unwrapping for Calendar date calculation
+            guard let renewalDate = Calendar.current.date(
                 byAdding: billingPeriod == .monthly ? .month : .year,
                 value: 1,
                 to: Date()
-            )!
+            ) else {
+                print("⚠️ Failed to calculate renewal date")
+                return
+            }
             subscriptionStatus = .active(tier: tier, renewalDate: renewalDate)
             print("✅ Subscription active until: \(renewalDate.formatted(date: .long, time: .omitted))")
         }

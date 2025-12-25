@@ -12,6 +12,7 @@ class CloudSyncManager: ObservableObject {
     @Published var lastSyncDate: Date?
     @Published var cloudSessions: [CloudSession] = []
 
+    private var autoBackupTimer: Timer?  // CRITICAL FIX: Store timer to prevent deallocation
     private let container: CKContainer
     private let privateDatabase: CKDatabase
     private let sharedDatabase: CKDatabase
@@ -101,13 +102,22 @@ class CloudSyncManager: ObservableObject {
     // MARK: - Auto Backup
 
     func enableAutoBackup(interval: TimeInterval = 300) {
-        // Backup every 5 minutes
-        Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        // Cancel existing timer if any
+        autoBackupTimer?.invalidate()
+
+        // CRITICAL FIX: Store timer to prevent immediate deallocation
+        autoBackupTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task {
                 try? await self?.autoBackup()
             }
         }
         print("☁️ CloudSyncManager: Auto backup enabled (every \(Int(interval))s)")
+    }
+
+    func disableAutoBackup() {
+        autoBackupTimer?.invalidate()
+        autoBackupTimer = nil
+        print("☁️ CloudSyncManager: Auto backup disabled")
     }
 
     private func autoBackup() async throws {

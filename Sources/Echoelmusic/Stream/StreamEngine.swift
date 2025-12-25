@@ -46,6 +46,7 @@ class StreamEngine: ObservableObject {
 
     private let captureQueue = DispatchQueue(label: "com.echoelmusic.stream.capture", qos: .userInteractive)
     private var displayLink: CADisplayLink?
+    private var captureTimer: Timer?  // CRITICAL FIX: Store timer to prevent deallocation
 
     // MARK: - Stream Destinations
 
@@ -255,7 +256,8 @@ class StreamEngine: ObservableObject {
         )
         #else
         // macOS: Use CVDisplayLink or Timer
-        let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / Double(frameRate), repeats: true) { [weak self] _ in
+        // CRITICAL FIX: Store timer to prevent immediate deallocation
+        captureTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / Double(frameRate), repeats: true) { [weak self] _ in
             self?.captureFrame()
         }
         #endif
@@ -264,6 +266,8 @@ class StreamEngine: ObservableObject {
     private func stopCaptureLoop() {
         displayLink?.invalidate()
         displayLink = nil
+        captureTimer?.invalidate()  // CRITICAL FIX: Invalidate macOS timer
+        captureTimer = nil
     }
 
     @objc private func captureFrame() {

@@ -2825,7 +2825,8 @@ public class DrumForge: ObservableObject {
 
             // Add variation hits
             if Float.random(in: 0...100) < variation {
-                let voice: DrumVoice = [.clap, .tom, .perc].randomElement()!
+                // CRITICAL FIX: Safe unwrapping for randomElement
+                let voice: DrumVoice = [.clap, .tom, .perc].randomElement() ?? .clap
                 newHits.append(DrumHit(
                     voice: voice,
                     step: step * 4 + Int.random(in: 0...3),

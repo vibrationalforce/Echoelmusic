@@ -140,12 +140,15 @@ class PerformanceOptimizer: ObservableObject {
         }
 
         // Detect Metal GPU family
-        let metalDevice = MTLCreateSystemDefaultDevice()!
+        // CRITICAL FIX: Safe unwrapping for Metal device
         var gpuFamily = 1
-        for family in (1...9).reversed() {
-            if metalDevice.supportsFamily(MTLGPUFamily(rawValue: family)!) {
-                gpuFamily = family
-                break
+        if let metalDevice = MTLCreateSystemDefaultDevice() {
+            for family in (1...9).reversed() {
+                if let gpuFamilyEnum = MTLGPUFamily(rawValue: family),
+                   metalDevice.supportsFamily(gpuFamilyEnum) {
+                    gpuFamily = family
+                    break
+                }
             }
         }
 

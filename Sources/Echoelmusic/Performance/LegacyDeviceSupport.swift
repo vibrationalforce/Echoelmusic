@@ -59,7 +59,10 @@ class LegacyDeviceSupport: ObservableObject {
 
             static func < (lhs: DeviceGeneration, rhs: DeviceGeneration) -> Bool {
                 let order: [DeviceGeneration] = [.legacy, .midRange, .modern, .current]
-                return order.firstIndex(of: lhs)! < order.firstIndex(of: rhs)!
+                // CRITICAL FIX: Safe unwrapping with default values
+                let lhsIndex = order.firstIndex(of: lhs) ?? 0
+                let rhsIndex = order.firstIndex(of: rhs) ?? 0
+                return lhsIndex < rhsIndex
             }
 
             var performanceMultiplier: Float {
@@ -176,6 +179,28 @@ class LegacyDeviceSupport: ObservableObject {
                 case ultra = "Ultra"
             }
         }
+
+        // CRITICAL FIX: Static default profile for safe fallback
+        static let defaultProfile = DeviceProfile(
+            deviceName: "Unknown Device",
+            deviceGeneration: .midRange,
+            chip: .a12,
+            ramGB: 4.0,
+            gpuGeneration: .modern,
+            maxFPS: 60,
+            recommendedSettings: RecommendedSettings(
+                targetFPS: 60,
+                maxParticles: 2048,
+                audioSampleRate: 44100,
+                audioBufferSize: 512,
+                textureQuality: .medium,
+                shadowQuality: .medium,
+                effectsQuality: .medium,
+                enableBloom: true,
+                enableMotionBlur: false,
+                enableAO: false
+            )
+        )
     }
 
     // MARK: - Performance Level
@@ -496,16 +521,19 @@ class LegacyDeviceSupport: ObservableObject {
     private func detectByCapabilities() -> DeviceProfile {
         // Detect by RAM and processor count
         let ram = Float(ProcessInfo.processInfo.physicalMemory) / 1_073_741_824.0
-        let cpuCount = ProcessInfo.processInfo.processorCount
+        // let cpuCount = ProcessInfo.processInfo.processorCount  // Reserved for future use
+
+        // CRITICAL FIX: Safe unwrapping with fallback to first available or default profile
+        let fallbackProfile = deviceDatabase.first ?? DeviceProfile.defaultProfile
 
         if ram < 3.0 {
-            return deviceDatabase.first { $0.deviceName.contains("iPhone 7") }!
+            return deviceDatabase.first { $0.deviceName.contains("iPhone 7") } ?? fallbackProfile
         } else if ram < 4.0 {
-            return deviceDatabase.first { $0.deviceName.contains("iPhone XR") }!
+            return deviceDatabase.first { $0.deviceName.contains("iPhone XR") } ?? fallbackProfile
         } else if ram < 6.0 {
-            return deviceDatabase.first { $0.deviceName.contains("iPhone 12") }!
+            return deviceDatabase.first { $0.deviceName.contains("iPhone 12") } ?? fallbackProfile
         } else {
-            return deviceDatabase.first { $0.deviceName.contains("iPhone 13 Pro") }!
+            return deviceDatabase.first { $0.deviceName.contains("iPhone 13 Pro") } ?? fallbackProfile
         }
     }
 

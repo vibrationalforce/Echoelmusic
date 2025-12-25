@@ -87,12 +87,21 @@ class BinauralBeatGenerator: ObservableObject {
     /// Player node for right channel
     private let rightPlayerNode = AVAudioPlayerNode()
 
-    /// Audio format (stereo, 44.1 kHz)
+    /// Audio format (stereo, system sample rate with fallback to 44.1 kHz)
+    /// CRITICAL FIX: Replaced fatalError with graceful fallback
     private lazy var audioFormat: AVAudioFormat = {
-        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2) else {
-            fatalError("Failed to create audio format with sample rate \(sampleRate). This indicates an invalid audio configuration.")
+        // Try system sample rate first
+        if let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2) {
+            return format
         }
-        return format
+        // Fallback to 44.1 kHz if system rate fails
+        if let fallbackFormat = AVAudioFormat(standardFormatWithSampleRate: 44100.0, channels: 2) {
+            print("⚠️ BinauralBeatGenerator: Using fallback sample rate 44100 Hz")
+            return fallbackFormat
+        }
+        // Last resort: 48 kHz (standard rate)
+        return AVAudioFormat(standardFormatWithSampleRate: 48000.0, channels: 2)
+            ?? AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 48000.0, channels: 2, interleaved: false)!
     }()
 
     /// Buffer size for generation (smaller = lower latency, more CPU)

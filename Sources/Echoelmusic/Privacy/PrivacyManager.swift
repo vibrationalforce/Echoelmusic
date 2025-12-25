@@ -352,8 +352,10 @@ class PrivacyManager: ObservableObject {
         }
 
         // Delete UserDefaults
-        let domain = Bundle.main.bundleIdentifier!
-        UserDefaults.standard.removePersistentDomain(forName: domain)
+        // CRITICAL FIX: Safe unwrapping for bundle identifier
+        if let domain = Bundle.main.bundleIdentifier {
+            UserDefaults.standard.removePersistentDomain(forName: domain)
+        }
 
         // Delete Keychain
         deleteEncryptionKeyFromKeychain()

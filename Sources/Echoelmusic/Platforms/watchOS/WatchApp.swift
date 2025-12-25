@@ -298,16 +298,23 @@ class WatchHealthKitManager {
     private var hrvQuery: HKAnchoredObjectQuery?
 
     func requestAuthorization() async throws {
-        let typesToRead: Set<HKObjectType> = [
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
-            HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
-            HKObjectType.quantityType(forIdentifier: .respiratoryRate)!
-        ]
+        // CRITICAL FIX: Safe unwrapping instead of force unwraps
+        var typesToRead = Set<HKObjectType>()
+        if let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) {
+            typesToRead.insert(heartRateType)
+        }
+        if let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) {
+            typesToRead.insert(hrvType)
+        }
+        if let respiratoryType = HKObjectType.quantityType(forIdentifier: .respiratoryRate) {
+            typesToRead.insert(respiratoryType)
+        }
 
-        let typesToShare: Set<HKSampleType> = [
-            HKObjectType.workoutType(),
-            HKObjectType.quantityType(forIdentifier: .heartRate)!
-        ]
+        var typesToShare = Set<HKSampleType>()
+        typesToShare.insert(HKObjectType.workoutType())
+        if let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) {
+            typesToShare.insert(heartRateType)
+        }
 
         try await healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead)
     }
@@ -328,7 +335,11 @@ class WatchHealthKitManager {
     }
 
     private func startHeartRateQuery() {
-        let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate)!
+        // CRITICAL FIX: Safe unwrapping instead of force unwrap
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            print("⚠️ WatchApp: Heart rate type not available")
+            return
+        }
 
         let query = HKAnchoredObjectQuery(
             type: heartRateType,
@@ -368,7 +379,11 @@ class WatchHealthKitManager {
     }
 
     private func startHRVQuery() {
-        let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
+        // CRITICAL FIX: Safe unwrapping instead of force unwrap
+        guard let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else {
+            print("⚠️ WatchApp: HRV type not available")
+            return
+        }
 
         let query = HKAnchoredObjectQuery(
             type: hrvType,
