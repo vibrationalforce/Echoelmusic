@@ -275,10 +275,86 @@ class AdvancedDSPEffects {
             return bandSignals
         }
 
+        /// Linkwitz-Riley Crossover Filter for band splitting
+        /// 4th-order (24dB/octave) for clean band separation
         private func filterBand(_ input: [Float], lowFreq: Float, highFreq: Float) -> [Float] {
-            // Simplified bandpass filter
-            // In production, use proper Linkwitz-Riley crossovers
-            return input  // Placeholder
+            guard input.count > 0 else { return input }
+
+            var output = input
+
+            // Apply highpass at lowFreq (if > 0)
+            if lowFreq > 20 {
+                output = applyLinkwitzRileyHP(output, cutoff: lowFreq)
+            }
+
+            // Apply lowpass at highFreq (if < Nyquist)
+            if highFreq < sampleRate / 2.0 - 100 {
+                output = applyLinkwitzRileyLP(output, cutoff: highFreq)
+            }
+
+            return output
+        }
+
+        /// Linkwitz-Riley 4th-order Lowpass (2x cascaded Butterworth)
+        private func applyLinkwitzRileyLP(_ input: [Float], cutoff: Float) -> [Float] {
+            let omega = 2.0 * Float.pi * cutoff / sampleRate
+            let sinOmega = sin(omega)
+            let cosOmega = cos(omega)
+            let alpha = sinOmega / (2.0 * sqrt(2.0))
+
+            let b0 = (1.0 - cosOmega) / 2.0
+            let b1 = 1.0 - cosOmega
+            let b2 = (1.0 - cosOmega) / 2.0
+            let a0 = 1.0 + alpha
+            let a1 = -2.0 * cosOmega
+            let a2 = 1.0 - alpha
+
+            let nb0 = b0 / a0, nb1 = b1 / a0, nb2 = b2 / a0
+            let na1 = a1 / a0, na2 = a2 / a0
+
+            var pass1 = applyBiquadCrossover(input, b0: nb0, b1: nb1, b2: nb2, a1: na1, a2: na2)
+            pass1 = applyBiquadCrossover(pass1, b0: nb0, b1: nb1, b2: nb2, a1: na1, a2: na2)
+
+            return pass1
+        }
+
+        /// Linkwitz-Riley 4th-order Highpass
+        private func applyLinkwitzRileyHP(_ input: [Float], cutoff: Float) -> [Float] {
+            let omega = 2.0 * Float.pi * cutoff / sampleRate
+            let sinOmega = sin(omega)
+            let cosOmega = cos(omega)
+            let alpha = sinOmega / (2.0 * sqrt(2.0))
+
+            let b0 = (1.0 + cosOmega) / 2.0
+            let b1 = -(1.0 + cosOmega)
+            let b2 = (1.0 + cosOmega) / 2.0
+            let a0 = 1.0 + alpha
+            let a1 = -2.0 * cosOmega
+            let a2 = 1.0 - alpha
+
+            let nb0 = b0 / a0, nb1 = b1 / a0, nb2 = b2 / a0
+            let na1 = a1 / a0, na2 = a2 / a0
+
+            var pass1 = applyBiquadCrossover(input, b0: nb0, b1: nb1, b2: nb2, a1: na1, a2: na2)
+            pass1 = applyBiquadCrossover(pass1, b0: nb0, b1: nb1, b2: nb2, a1: na1, a2: na2)
+
+            return pass1
+        }
+
+        /// Biquad filter for crossover
+        private func applyBiquadCrossover(_ input: [Float], b0: Float, b1: Float, b2: Float, a1: Float, a2: Float) -> [Float] {
+            var output = [Float](repeating: 0, count: input.count)
+            var x1: Float = 0, x2: Float = 0
+            var y1: Float = 0, y2: Float = 0
+
+            for i in 0..<input.count {
+                let x0 = input[i]
+                let y0 = b0 * x0 + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+                output[i] = y0
+                x2 = x1; x1 = x0; y2 = y1; y1 = y0
+            }
+
+            return output
         }
 
         private func compressBand(_ input: [Float], band: Band) -> [Float] {
@@ -394,14 +470,75 @@ class AdvancedDSPEffects {
             return output
         }
 
+        /// Sibilance detection using bandpass filter (5-8 kHz)
+        /// Uses cascaded highpass/lowpass for clean band isolation
         private func detectSibilance(_ input: [Float]) -> [Float] {
-            // Bandpass filter around sibilance frequencies (6-8 kHz)
-            // Simplified implementation
+            guard input.count > 0 else { return input }
+
+            // Sibilance band: 5000-8000 Hz
+            let lowCutoff: Float = 5000.0
+            let highCutoff: Float = 8000.0
+
+            // Apply highpass at 5kHz
+            var output = applySibilanceHP(input, cutoff: lowCutoff)
+            // Apply lowpass at 8kHz
+            output = applySibilanceLP(output, cutoff: highCutoff)
+
+            // Take absolute value for envelope detection
+            for i in 0..<output.count {
+                output[i] = abs(output[i])
+            }
+
+            return output
+        }
+
+        private func applySibilanceHP(_ input: [Float], cutoff: Float) -> [Float] {
+            let omega = 2.0 * Float.pi * cutoff / sampleRate
+            let cosOmega = cos(omega)
+            let alpha = sin(omega) / (2.0 * 1.0)  // Q = 1.0
+
+            let b0 = (1.0 + cosOmega) / 2.0
+            let b1 = -(1.0 + cosOmega)
+            let b2 = (1.0 + cosOmega) / 2.0
+            let a0 = 1.0 + alpha
+            let a1 = -2.0 * cosOmega
+            let a2 = 1.0 - alpha
+
             var output = [Float](repeating: 0, count: input.count)
+            var x1: Float = 0, x2: Float = 0
+            var y1: Float = 0, y2: Float = 0
 
             for i in 0..<input.count {
-                // Placeholder: in production use proper bandpass filter
-                output[i] = input[i]
+                let x0 = input[i]
+                let y0 = (b0/a0) * x0 + (b1/a0) * x1 + (b2/a0) * x2 - (a1/a0) * y1 - (a2/a0) * y2
+                output[i] = y0
+                x2 = x1; x1 = x0; y2 = y1; y1 = y0
+            }
+
+            return output
+        }
+
+        private func applySibilanceLP(_ input: [Float], cutoff: Float) -> [Float] {
+            let omega = 2.0 * Float.pi * cutoff / sampleRate
+            let cosOmega = cos(omega)
+            let alpha = sin(omega) / (2.0 * 1.0)
+
+            let b0 = (1.0 - cosOmega) / 2.0
+            let b1 = 1.0 - cosOmega
+            let b2 = (1.0 - cosOmega) / 2.0
+            let a0 = 1.0 + alpha
+            let a1 = -2.0 * cosOmega
+            let a2 = 1.0 - alpha
+
+            var output = [Float](repeating: 0, count: input.count)
+            var x1: Float = 0, x2: Float = 0
+            var y1: Float = 0, y2: Float = 0
+
+            for i in 0..<input.count {
+                let x0 = input[i]
+                let y0 = (b0/a0) * x0 + (b1/a0) * x1 + (b2/a0) * x2 - (a1/a0) * y1 - (a2/a0) * y2
+                output[i] = y0
+                x2 = x1; x1 = x0; y2 = y1; y1 = y0
             }
 
             return output

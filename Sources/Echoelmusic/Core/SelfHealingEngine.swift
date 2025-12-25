@@ -55,6 +55,17 @@ final class SelfHealingEngine: ObservableObject {
         logger.info("🌊 Self-Healing Engine activated - Ultra Liquid Light Flow")
     }
 
+    // MARK: - Cleanup (Memory Leak Prevention)
+
+    deinit {
+        cancellables.removeAll()
+        healthMonitor = nil
+        errorPredictor = nil
+        performanceOptimizer = nil
+        memoryGuardian = nil
+        flowStateMachine = nil
+    }
+
     // MARK: - Setup
 
     private func setupSubsystems() {
