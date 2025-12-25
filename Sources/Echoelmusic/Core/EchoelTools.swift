@@ -115,6 +115,16 @@ public final class EchoelTools: ObservableObject {
         print("🎛️ EchoelTools: 16 Creative Tools + ToolChain initialized")
     }
 
+    // MARK: - Cleanup (CRITICAL FIX - Timer Leak Prevention)
+
+    deinit {
+        updateTimer?.invalidate()
+        updateTimer = nil
+        cancellables.removeAll()
+        deactivateAll()
+        print("🧹 EchoelTools: Cleanup complete - All timers invalidated")
+    }
+
     // MARK: - Setup
 
     private func setupToolConnections() {

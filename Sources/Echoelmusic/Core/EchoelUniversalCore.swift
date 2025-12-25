@@ -98,6 +98,15 @@ final class EchoelUniversalCore: ObservableObject {
         startUniversalLoop()
     }
 
+    // MARK: - Cleanup (CRITICAL FIX - Timer Leak Prevention)
+
+    deinit {
+        updateTimer?.invalidate()
+        updateTimer = nil
+        cancellables.removeAll()
+        print("🧹 EchoelUniversalCore: Cleanup complete - Timer invalidated")
+    }
+
     // MARK: - Setup
 
     private func setupSubsystems() {
