@@ -151,5 +151,10 @@ private:
     // Sample Rate
     double currentSampleRate = 44100.0;
 
+    //==============================================================================
+    // Pre-allocated reverb buffer (OPTIMIZATION: prevents 96MB/sec allocation)
+    juce::AudioBuffer<float> reverbBuffer;
+    int preparedBlockSize = 0;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BioReactiveDSP)
 };

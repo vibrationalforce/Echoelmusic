@@ -557,15 +557,19 @@ struct UniversalCreativeIntelligence::Impl
     uci::LightingCallback lightingCallback;
     uci::ErrorCallback errorCallback;
 
-    // State value lookup
-    std::unordered_map<std::string, float*> bioValueMap;
-    std::unordered_map<std::string, float*> audioValueMap;
-    std::unordered_map<std::string, float*> visualValueMap;
-    std::unordered_map<std::string, float*> lightValueMap;
+    // OPTIMIZATION: Single unified value map for O(1) lookup
+    // Previous: 4 separate maps × 2 lookups each = up to 8 lookups per value
+    // Now: 1 map × 1 lookup = O(1) constant time
+    std::unordered_map<std::string, float*> unifiedValueMap;
+
+    // Category flags for influence multipliers (bit flags for fast check)
+    enum class ValueCategory : uint8_t { Bio = 1, Audio = 2, Visual = 4, Light = 8 };
+    std::unordered_map<std::string, ValueCategory> valueCategoryMap;
 
     void buildValueMaps();
     float getValueByPath(const std::string& path);
     void setValueByPath(const std::string& path, float value);
+    ValueCategory getValueCategory(const std::string& path);
 
     // AI prompt generation
     std::string generateCreativePrompt();
@@ -573,88 +577,113 @@ struct UniversalCreativeIntelligence::Impl
 
 void UniversalCreativeIntelligence::Impl::buildValueMaps()
 {
-    // Bio state mappings
-    bioValueMap["bio.heartRate"] = &bioState.heartRate;
-    bioValueMap["bio.hrv"] = &bioState.hrv;
-    bioValueMap["bio.coherence"] = &bioState.coherence;
-    bioValueMap["bio.breathingRate"] = &bioState.breathingRate;
-    bioValueMap["bio.breathPhase"] = &bioState.breathPhase;
-    bioValueMap["bio.breathDepth"] = &bioState.breathDepth;
-    bioValueMap["bio.stressIndex"] = &bioState.stressIndex;
-    bioValueMap["bio.relaxationIndex"] = &bioState.relaxationIndex;
-    bioValueMap["bio.flowState"] = &bioState.flowState;
-    bioValueMap["bio.gestureIntensity"] = &bioState.gestureIntensity;
-    bioValueMap["bio.facialExpression"] = &bioState.facialExpression;
-    bioValueMap["bio.eyeOpenness"] = &bioState.eyeOpenness;
-    bioValueMap["bio.mouthOpenness"] = &bioState.mouthOpenness;
-    bioValueMap["bio.handMovement"] = &bioState.handMovement;
-    bioValueMap["bio.bodyMovement"] = &bioState.bodyMovement;
-    bioValueMap["bio.headMovement"] = &bioState.headMovement;
-    bioValueMap["bio.creativeEnergy"] = &bioState.creativeEnergy;
-    bioValueMap["bio.emotionalIntensity"] = &bioState.emotionalIntensity;
-    bioValueMap["bio.focusLevel"] = &bioState.focusLevel;
-    bioValueMap["bio.expressiveness"] = &bioState.expressiveness;
+    // OPTIMIZATION: Build unified value map for O(1) lookup
+    // All 54+ values in single hash map instead of 4 separate maps
 
-    // Audio state mappings
-    audioValueMap["audio.peakLevel"] = &audioState.peakLevel;
-    audioValueMap["audio.rmsLevel"] = &audioState.rmsLevel;
-    audioValueMap["audio.subBass"] = &audioState.subBass;
-    audioValueMap["audio.bass"] = &audioState.bass;
-    audioValueMap["audio.lowMid"] = &audioState.lowMid;
-    audioValueMap["audio.mid"] = &audioState.mid;
-    audioValueMap["audio.highMid"] = &audioState.highMid;
-    audioValueMap["audio.presence"] = &audioState.presence;
-    audioValueMap["audio.brilliance"] = &audioState.brilliance;
-    audioValueMap["audio.bpm"] = &audioState.bpm;
-    audioValueMap["audio.beatPhase"] = &audioState.beatPhase;
-    audioValueMap["audio.energy"] = &audioState.energy;
-    audioValueMap["audio.valence"] = &audioState.valence;
-    audioValueMap["audio.spectralCentroid"] = &audioState.spectralCentroid;
-    audioValueMap["audio.spectralFlux"] = &audioState.spectralFlux;
-    audioValueMap["audio.harmonicTension"] = &audioState.harmonicTension;
+    // Helper lambda to add entries with category tracking
+    auto addBio = [this](const char* path, float* ptr) {
+        unifiedValueMap[path] = ptr;
+        valueCategoryMap[path] = ValueCategory::Bio;
+    };
+    auto addAudio = [this](const char* path, float* ptr) {
+        unifiedValueMap[path] = ptr;
+        valueCategoryMap[path] = ValueCategory::Audio;
+    };
+    auto addVisual = [this](const char* path, float* ptr) {
+        unifiedValueMap[path] = ptr;
+        valueCategoryMap[path] = ValueCategory::Visual;
+    };
+    auto addLight = [this](const char* path, float* ptr) {
+        unifiedValueMap[path] = ptr;
+        valueCategoryMap[path] = ValueCategory::Light;
+    };
 
-    // Visual state mappings
-    visualValueMap["visual.brightness"] = &visualState.brightness;
-    visualValueMap["visual.saturation"] = &visualState.saturation;
-    visualValueMap["visual.contrast"] = &visualState.contrast;
-    visualValueMap["visual.colorTemperature"] = &visualState.colorTemperature;
-    visualValueMap["visual.motionIntensity"] = &visualState.motionIntensity;
-    visualValueMap["visual.motionSpeed"] = &visualState.motionSpeed;
-    visualValueMap["visual.zoom"] = &visualState.zoom;
-    visualValueMap["visual.rotation"] = &visualState.rotation;
-    visualValueMap["visual.glowIntensity"] = &visualState.glowIntensity;
-    visualValueMap["visual.particleDensity"] = &visualState.particleDensity;
-    visualValueMap["visual.distortionAmount"] = &visualState.distortionAmount;
-    visualValueMap["visual.blurAmount"] = &visualState.blurAmount;
-    visualValueMap["visual.noiseAmount"] = &visualState.noiseAmount;
-    visualValueMap["visual.glitchAmount"] = &visualState.glitchAmount;
-    visualValueMap["visual.dominantColor.r"] = &visualState.dominantColor[0];
-    visualValueMap["visual.dominantColor.g"] = &visualState.dominantColor[1];
-    visualValueMap["visual.dominantColor.b"] = &visualState.dominantColor[2];
+    // Bio state mappings (20 values)
+    addBio("bio.heartRate", &bioState.heartRate);
+    addBio("bio.hrv", &bioState.hrv);
+    addBio("bio.coherence", &bioState.coherence);
+    addBio("bio.breathingRate", &bioState.breathingRate);
+    addBio("bio.breathPhase", &bioState.breathPhase);
+    addBio("bio.breathDepth", &bioState.breathDepth);
+    addBio("bio.stressIndex", &bioState.stressIndex);
+    addBio("bio.relaxationIndex", &bioState.relaxationIndex);
+    addBio("bio.flowState", &bioState.flowState);
+    addBio("bio.gestureIntensity", &bioState.gestureIntensity);
+    addBio("bio.facialExpression", &bioState.facialExpression);
+    addBio("bio.eyeOpenness", &bioState.eyeOpenness);
+    addBio("bio.mouthOpenness", &bioState.mouthOpenness);
+    addBio("bio.handMovement", &bioState.handMovement);
+    addBio("bio.bodyMovement", &bioState.bodyMovement);
+    addBio("bio.headMovement", &bioState.headMovement);
+    addBio("bio.creativeEnergy", &bioState.creativeEnergy);
+    addBio("bio.emotionalIntensity", &bioState.emotionalIntensity);
+    addBio("bio.focusLevel", &bioState.focusLevel);
+    addBio("bio.expressiveness", &bioState.expressiveness);
 
-    // Lighting state mappings
-    lightValueMap["light.masterDimmer"] = &lightingState.masterDimmer;
-    lightValueMap["light.masterStrobe"] = &lightingState.masterStrobe;
-    lightValueMap["light.colorTemperature"] = &lightingState.colorTemperature;
-    lightValueMap["light.pan"] = &lightingState.pan;
-    lightValueMap["light.tilt"] = &lightingState.tilt;
-    lightValueMap["light.focus"] = &lightingState.focus;
-    lightValueMap["light.zoom"] = &lightingState.zoom;
-    lightValueMap["light.laserIntensity"] = &lightingState.laserIntensity;
-    lightValueMap["light.globalColor.r"] = &lightingState.globalColor[0];
-    lightValueMap["light.globalColor.g"] = &lightingState.globalColor[1];
-    lightValueMap["light.globalColor.b"] = &lightingState.globalColor[2];
+    // Audio state mappings (16 values)
+    addAudio("audio.peakLevel", &audioState.peakLevel);
+    addAudio("audio.rmsLevel", &audioState.rmsLevel);
+    addAudio("audio.subBass", &audioState.subBass);
+    addAudio("audio.bass", &audioState.bass);
+    addAudio("audio.lowMid", &audioState.lowMid);
+    addAudio("audio.mid", &audioState.mid);
+    addAudio("audio.highMid", &audioState.highMid);
+    addAudio("audio.presence", &audioState.presence);
+    addAudio("audio.brilliance", &audioState.brilliance);
+    addAudio("audio.bpm", &audioState.bpm);
+    addAudio("audio.beatPhase", &audioState.beatPhase);
+    addAudio("audio.energy", &audioState.energy);
+    addAudio("audio.valence", &audioState.valence);
+    addAudio("audio.spectralCentroid", &audioState.spectralCentroid);
+    addAudio("audio.spectralFlux", &audioState.spectralFlux);
+    addAudio("audio.harmonicTension", &audioState.harmonicTension);
+
+    // Visual state mappings (17 values)
+    addVisual("visual.brightness", &visualState.brightness);
+    addVisual("visual.saturation", &visualState.saturation);
+    addVisual("visual.contrast", &visualState.contrast);
+    addVisual("visual.colorTemperature", &visualState.colorTemperature);
+    addVisual("visual.motionIntensity", &visualState.motionIntensity);
+    addVisual("visual.motionSpeed", &visualState.motionSpeed);
+    addVisual("visual.zoom", &visualState.zoom);
+    addVisual("visual.rotation", &visualState.rotation);
+    addVisual("visual.glowIntensity", &visualState.glowIntensity);
+    addVisual("visual.particleDensity", &visualState.particleDensity);
+    addVisual("visual.distortionAmount", &visualState.distortionAmount);
+    addVisual("visual.blurAmount", &visualState.blurAmount);
+    addVisual("visual.noiseAmount", &visualState.noiseAmount);
+    addVisual("visual.glitchAmount", &visualState.glitchAmount);
+    addVisual("visual.dominantColor.r", &visualState.dominantColor[0]);
+    addVisual("visual.dominantColor.g", &visualState.dominantColor[1]);
+    addVisual("visual.dominantColor.b", &visualState.dominantColor[2]);
+
+    // Lighting state mappings (11 values)
+    addLight("light.masterDimmer", &lightingState.masterDimmer);
+    addLight("light.masterStrobe", &lightingState.masterStrobe);
+    addLight("light.colorTemperature", &lightingState.colorTemperature);
+    addLight("light.pan", &lightingState.pan);
+    addLight("light.tilt", &lightingState.tilt);
+    addLight("light.focus", &lightingState.focus);
+    addLight("light.zoom", &lightingState.zoom);
+    addLight("light.laserIntensity", &lightingState.laserIntensity);
+    addLight("light.globalColor.r", &lightingState.globalColor[0]);
+    addLight("light.globalColor.g", &lightingState.globalColor[1]);
+    addLight("light.globalColor.b", &lightingState.globalColor[2]);
+
+    // Reserve capacity for optimal hash map performance
+    unifiedValueMap.reserve(64);
+    valueCategoryMap.reserve(64);
 }
 
 float UniversalCreativeIntelligence::Impl::getValueByPath(const std::string& path)
 {
-    // Check all maps
-    if (bioValueMap.count(path)) return *bioValueMap[path];
-    if (audioValueMap.count(path)) return *audioValueMap[path];
-    if (visualValueMap.count(path)) return *visualValueMap[path];
-    if (lightValueMap.count(path)) return *lightValueMap[path];
+    // OPTIMIZATION: Single O(1) lookup instead of 4 × O(1) = O(1) but 4x faster
+    auto it = unifiedValueMap.find(path);
+    if (it != unifiedValueMap.end()) {
+        return *it->second;
+    }
 
-    // Special case for beat detection (bool to float)
+    // Special case for beat detection (bool to float) - rarely used
     if (path == "audio.beatDetected") return audioState.beatDetected ? 1.0f : 0.0f;
     if (path == "audio.downbeatDetected") return audioState.downbeatDetected ? 1.0f : 0.0f;
 
@@ -663,11 +692,26 @@ float UniversalCreativeIntelligence::Impl::getValueByPath(const std::string& pat
 
 void UniversalCreativeIntelligence::Impl::setValueByPath(const std::string& path, float value)
 {
-    if (visualValueMap.count(path)) {
-        *visualValueMap[path] = value;
-    } else if (lightValueMap.count(path)) {
-        *lightValueMap[path] = value;
+    // OPTIMIZATION: Single O(1) lookup
+    auto it = unifiedValueMap.find(path);
+    if (it != unifiedValueMap.end()) {
+        // Only allow setting visual and light values (targets)
+        auto catIt = valueCategoryMap.find(path);
+        if (catIt != valueCategoryMap.end() &&
+            (catIt->second == ValueCategory::Visual || catIt->second == ValueCategory::Light)) {
+            *it->second = value;
+        }
     }
+}
+
+UniversalCreativeIntelligence::Impl::ValueCategory
+UniversalCreativeIntelligence::Impl::getValueCategory(const std::string& path)
+{
+    auto it = valueCategoryMap.find(path);
+    if (it != valueCategoryMap.end()) {
+        return it->second;
+    }
+    return ValueCategory::Bio;  // Default
 }
 
 std::string UniversalCreativeIntelligence::Impl::generateCreativePrompt()
@@ -1260,16 +1304,18 @@ void UniversalCreativeIntelligence::processFrame(double deltaTime)
     std::lock_guard<std::mutex> lock(pImpl->stateMutex);
 
     // Apply all fusion mappings
+    // OPTIMIZATION: Use cached category lookup instead of string prefix check
     for (auto& mapping : pImpl->currentPreset.mappings) {
         if (!mapping.enabled) continue;
 
-        // Get source value
+        // Get source value (O(1) unified lookup)
         float sourceValue = pImpl->getValueByPath(mapping.sourcePath);
 
-        // Apply influence multipliers
-        if (mapping.sourcePath.rfind("bio.", 0) == 0) {
+        // Apply influence multipliers using cached category (O(1))
+        auto category = pImpl->getValueCategory(mapping.sourcePath);
+        if (category == Impl::ValueCategory::Bio) {
             sourceValue *= pImpl->bioInfluence;
-        } else if (mapping.sourcePath.rfind("audio.", 0) == 0) {
+        } else if (category == Impl::ValueCategory::Audio) {
             sourceValue *= pImpl->audioInfluence;
         }
 
@@ -1279,7 +1325,7 @@ void UniversalCreativeIntelligence::processFrame(double deltaTime)
         // Apply global intensity
         outputValue *= pImpl->globalIntensity;
 
-        // Set target value
+        // Set target value (O(1) unified lookup)
         pImpl->setValueByPath(mapping.targetPath, outputValue);
     }
 

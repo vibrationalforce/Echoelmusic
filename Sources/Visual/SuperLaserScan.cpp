@@ -281,7 +281,10 @@ void SuperLaserScan::renderFrame(double deltaTime)
     int maxPoints = laser::kMaxPointsPerFrame;
 
     // Render all enabled beams
+    // OPTIMIZATION: Add bounds checking to prevent out-of-bounds access
     int beamCount = numBeams_.load(std::memory_order_acquire);
+    beamCount = std::min(beamCount, static_cast<int>(laser::kMaxBeams));  // Safety clamp
+
     for (int i = 0; i < beamCount && totalPoints < maxPoints; ++i)
     {
         laser::BeamConfig beam = beams_[i];
