@@ -267,6 +267,40 @@ public:
     void setVoiceCount(int count);          // 1 to 32 (polyphony)
 
     //==========================================================================
+    // Preset System (NEW)
+    //==========================================================================
+
+    enum class Preset
+    {
+        Init,
+        Supersaw,          // Classic EDM supersaw
+        VocalChoir,        // Human choir-like
+        EvolvingPad,       // Slow morphing texture
+        BassReese,         // Reese bass
+        PluckLead,         // Plucked lead
+        Ambient,           // Atmospheric soundscape
+        Aggressive,        // Hard-hitting lead
+        Ethereal,          // Dreamy pad
+        Wobble,            // Dubstep wobble
+        Arp,               // Arpeggiated sequence
+        Keys               // Electric piano-like
+    };
+
+    void loadPreset(Preset preset);
+    void savePreset(const juce::File& file);
+    bool loadPresetFromFile(const juce::File& file);
+
+    //==========================================================================
+    // Bio-Reactive Modulation (NEW)
+    //==========================================================================
+
+    void setBioReactiveEnabled(bool enabled);
+    void setBioData(float hrv, float coherence, float breathPhase);
+    void setBioToWavetable(float amount);     // Bio → wavetable position
+    void setBioToFilter(float amount);        // Bio → filter cutoff
+    void setBioToLFORate(float amount);       // Bio → LFO speed
+
+    //==========================================================================
     // Processing
     //==========================================================================
 
@@ -306,6 +340,15 @@ private:
     float masterVolume = 0.7f;
     float masterTune = 0.0f;
     float portamentoTime = 0.0f;
+
+    // Bio-Reactive (NEW)
+    bool bioReactiveEnabled = false;
+    float bioHRV = 0.5f;
+    float bioCoherence = 0.5f;
+    float bioBreathPhase = 0.0f;
+    float bioToWavetable = 0.3f;
+    float bioToFilter = 0.3f;
+    float bioToLFORate = 0.2f;
 
     double currentSampleRate = 48000.0;
 

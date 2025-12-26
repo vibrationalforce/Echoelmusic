@@ -110,11 +110,47 @@ public:
     /** Reset all voices */
     void reset();
 
-    /** Process and fill audio buffer */
+    /** Process and fill audio buffer (stereo mix) */
     void process(juce::AudioBuffer<float>& buffer);
+
+    /** Process with individual outputs per drum (NEW) */
+    void processIndividualOutputs(juce::AudioBuffer<float>& buffer);
 
     /** Get single sample (for inline processing) */
     float processSample();
+
+    //==========================================================================
+    // Individual Outputs (NEW: 12 stereo pairs = 24 channels)
+    //==========================================================================
+
+    void setIndividualOutputsEnabled(bool enabled);
+    bool getIndividualOutputsEnabled() const { return individualOutputsEnabled; }
+
+    /** Get output channel index for drum type (0-23) */
+    int getOutputChannelForDrum(DrumType type) const;
+
+    //==========================================================================
+    // Preset System (NEW)
+    //==========================================================================
+
+    enum class Preset
+    {
+        Classic808,        // Roland TR-808 style
+        Classic909,        // Roland TR-909 style
+        ModernTrap,        // 808 with modern processing
+        Acoustic,          // Acoustic drum kit emulation
+        Electronic,        // Modern electronic kit
+        LoFi,              // Lo-fi hip-hop kit
+        Industrial,        // Harsh industrial sounds
+        Minimal,           // Minimal techno kit
+        DnB,               // Drum and bass kit
+        Reggaeton,         // Dembow-style kit
+        Custom             // User-defined
+    };
+
+    void loadPreset(Preset preset);
+    void savePreset(const juce::File& file);
+    bool loadPresetFromFile(const juce::File& file);
 
 private:
     //==========================================================================
@@ -156,6 +192,9 @@ private:
     std::array<Voice, maxVoices> voices;
 
     double currentSampleRate = 48000.0;
+
+    // Individual outputs (NEW)
+    bool individualOutputsEnabled = false;
 
     //==========================================================================
     // Parameter Storage

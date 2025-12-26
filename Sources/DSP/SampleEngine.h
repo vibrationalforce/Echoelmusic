@@ -85,6 +85,16 @@ public:
     void setFormantPreserve(bool preserve);   // Preserve formants when pitch-shifting
 
     //==============================================================================
+    // Granular Synthesis Mode
+
+    void setGranularEnabled(bool enabled);
+    void setGrainSize(float ms);              // 10 to 500 ms
+    void setGrainDensity(float density);      // 1 to 32 grains
+    void setGrainSpread(float spread);        // 0.0 to 1.0 (position randomization)
+    void setGrainPitchSpread(float cents);    // 0 to 100 cents randomization
+    void setGrainShape(int shape);            // 0=Hann, 1=Triangle, 2=Trapezoid, 3=Gaussian
+
+    //==============================================================================
     // Filter
 
     enum class FilterType
@@ -123,6 +133,14 @@ public:
 
     void setMasterVolume(float volume);
     void setPolyphony(int voices);
+
+    //==============================================================================
+    // MPE (MIDI Polyphonic Expression) Support
+
+    void setMPEEnabled(bool enabled);
+    void setMPEPitchBendRange(int semitones);   // Per-note pitch bend range
+    void setMPEPressureToFilter(float amount);  // Pressure → filter cutoff
+    void setMPESlideToTimbre(float amount);     // Slide → sample start/brightness
 
     //==============================================================================
     // Presets
@@ -225,6 +243,14 @@ private:
     float timeStretch = 1.0f;
     bool formantPreserve = false;
 
+    // Granular Synthesis
+    bool granularEnabled = false;
+    float grainSize = 50.0f;         // ms
+    float grainDensity = 8.0f;       // grains
+    float grainSpread = 0.2f;        // position randomization
+    float grainPitchSpread = 10.0f;  // cents
+    int grainShape = 0;              // 0=Hann
+
     // Filter
     FilterType filterType = FilterType::LowPass;
     float filterCutoff = 5000.0f;
@@ -252,6 +278,12 @@ private:
 
     // Master
     float masterVolume = 0.7f;
+
+    // MPE
+    bool mpeEnabled = false;
+    int mpePitchBendRange = 48;
+    float mpePressureToFilter = 0.5f;
+    float mpeSlideToTimbre = 0.5f;
 
     //==============================================================================
     // Internal Helpers

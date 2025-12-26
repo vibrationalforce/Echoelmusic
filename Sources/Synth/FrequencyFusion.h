@@ -178,6 +178,30 @@ public:
     void setBioData(float hrv, float coherence);
 
     //==========================================================================
+    // Preset System (NEW)
+    //==========================================================================
+
+    enum class Preset
+    {
+        Init,
+        ElectricPiano,     // DX7 E.Piano
+        FMBass,            // Deep FM bass
+        BellPad,           // Crystalline bells
+        BrassSection,      // FM brass
+        StringMachine,     // Evolving strings
+        SynthLead,         // Cutting lead
+        OrganTonewheel,    // B3 style
+        Marimba,           // Mallet percussion
+        HarpsiKeys,        // Harpsichord
+        VocalFormant,      // Voice-like
+        Atmosphere         // Ambient pad
+    };
+
+    void loadPreset(Preset preset);
+    void savePreset(const juce::File& file);
+    bool loadPresetFromFile(const juce::File& file);
+
+    //==========================================================================
     // Processing
     //==========================================================================
 

@@ -122,6 +122,39 @@ public:
     void setPolyphony(int voices);              // 1 to 16 voices
 
     //==============================================================================
+    // MPE (MIDI Polyphonic Expression) Support
+
+    void setMPEEnabled(bool enabled);
+    void setMPEPitchBendRange(int semitones);   // Per-note pitch bend range (default: 48)
+    void setMPEPressureToCutoff(float amount);  // Pressure → filter cutoff (0.0 to 1.0)
+    void setMPESlideToBrightness(float amount); // Slide (CC74) → filter (0.0 to 1.0)
+
+    //==============================================================================
+    // Modulation Matrix (8 slots)
+
+    enum class ModSource
+    {
+        None, LFO, AmpEnvelope, FilterEnvelope, Velocity,
+        ModWheel, Aftertouch, PitchBend, MPESlide, MPEPressure
+    };
+
+    enum class ModDestination
+    {
+        None, Osc1Pitch, Osc2Pitch, FilterCutoff, FilterResonance,
+        AmpLevel, PulseWidth, LFORate, Osc2Mix, UnisonDetune
+    };
+
+    struct ModSlot
+    {
+        ModSource source = ModSource::None;
+        ModDestination destination = ModDestination::None;
+        float amount = 0.0f;  // -1.0 to +1.0
+    };
+
+    void setModSlot(int index, const ModSlot& slot);  // 0-7
+    ModSlot getModSlot(int index) const;
+
+    //==============================================================================
     // Presets
 
     enum class Preset
@@ -169,6 +202,11 @@ private:
         float currentFrequency = 440.0f;
         float glideTargetFrequency = 440.0f;
         float glideCurrentFrequency = 440.0f;
+
+        // MPE per-voice state
+        float mpeNotePitchBend = 0.0f;   // -1.0 to +1.0 (per-note bend)
+        float mpePressure = 0.0f;         // 0.0 to 1.0 (channel pressure)
+        float mpeSlide = 0.5f;            // 0.0 to 1.0 (CC74 brightness)
 
         // Oscillator state
         float osc1Phase = 0.0f;
@@ -290,6 +328,15 @@ private:
     // Master
     float masterVolume = 0.7f;
     float glideTime = 0.0f;
+
+    // MPE
+    bool mpeEnabled = false;
+    int mpePitchBendRange = 48;  // semitones
+    float mpePressureToCutoff = 0.5f;
+    float mpeSlideToBrightness = 0.5f;
+
+    // Modulation Matrix
+    std::array<ModSlot, 8> modSlots;
 
     //==============================================================================
     // Internal Helpers
