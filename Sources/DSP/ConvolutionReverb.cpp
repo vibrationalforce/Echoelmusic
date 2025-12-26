@@ -26,11 +26,13 @@ void ConvolutionReverb::setPreDelay(float delayMs)
 void ConvolutionReverb::setLowCut(float freq)
 {
     lowCutFreq = juce::jlimit(20.0f, 500.0f, freq);
+    updateFilterCoefficients();  // OPTIMIZATION: Recalc on param change, not per-sample
 }
 
 void ConvolutionReverb::setHighCut(float freq)
 {
     highCutFreq = juce::jlimit(2000.0f, 20000.0f, freq);
+    updateFilterCoefficients();  // OPTIMIZATION: Recalc on param change, not per-sample
 }
 
 //==============================================================================
@@ -115,7 +117,22 @@ void ConvolutionReverb::prepare(double sampleRate, int maxBlockSize)
     // Pre-allocate dry buffer to avoid allocations in audio thread
     dryBuffer.setSize(2, maxBlockSize, false, false, true);
 
+    // OPTIMIZATION: Pre-compute filter coefficients
+    updateFilterCoefficients();
+
     reset();
+}
+
+void ConvolutionReverb::updateFilterCoefficients()
+{
+    // Pre-compute highpass coefficient
+    const float hpOmega = juce::MathConstants<float>::twoPi * lowCutFreq / static_cast<float>(currentSampleRate);
+    hpCoeff = 1.0f / (1.0f + hpOmega);
+
+    // Pre-compute lowpass coefficient
+    const float lpOmega = juce::MathConstants<float>::twoPi * highCutFreq / static_cast<float>(currentSampleRate);
+    lpCoeff = lpOmega / (1.0f + lpOmega);
+    lpOneMinusCoeff = 1.0f - lpCoeff;
 }
 
 void ConvolutionReverb::reset()
@@ -258,11 +275,8 @@ void ConvolutionReverb::applyFiltering(juce::AudioBuffer<float>& buffer)
 
 float ConvolutionReverb::applyHighpass(float input, FilterState& state)
 {
-    // Simple 1-pole highpass
-    const float omega = juce::MathConstants<float>::twoPi * lowCutFreq / static_cast<float>(currentSampleRate);
-    const float coeff = 1.0f / (1.0f + omega);
-
-    float output = coeff * (state.hpY1 + input - state.hpX1);
+    // OPTIMIZATION: Use pre-computed coefficient (saves twoPi division per sample)
+    float output = hpCoeff * (state.hpY1 + input - state.hpX1);
     state.hpX1 = input;
     state.hpY1 = output;
 
@@ -271,11 +285,8 @@ float ConvolutionReverb::applyHighpass(float input, FilterState& state)
 
 float ConvolutionReverb::applyLowpass(float input, FilterState& state)
 {
-    // Simple 1-pole lowpass
-    const float omega = juce::MathConstants<float>::twoPi * highCutFreq / static_cast<float>(currentSampleRate);
-    const float coeff = omega / (1.0f + omega);
-
-    float output = coeff * input + (1.0f - coeff) * state.lpY1;
+    // OPTIMIZATION: Use pre-computed coefficients (saves twoPi division per sample)
+    float output = lpCoeff * input + lpOneMinusCoeff * state.lpY1;
     state.lpY1 = output;
 
     return output;

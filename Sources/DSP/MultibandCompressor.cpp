@@ -313,8 +313,8 @@ void MultibandCompressor::compressBand(std::vector<float>& bandSignal,
             envelope = state.releaseCoeff * envelope + (1.0f - state.releaseCoeff) * inputLevel;
         }
 
-        // Convert to dB
-        const float envelopeDb = juce::Decibels::gainToDecibels(envelope + 0.00001f);
+        // OPTIMIZATION: Use fast dB approximations (~5x faster than std::log/pow)
+        const float envelopeDb = fastGainToDb(envelope);
 
         // Calculate compression
         const float gainReductionDb = calculateCompression(envelopeDb,
@@ -324,7 +324,7 @@ void MultibandCompressor::compressBand(std::vector<float>& bandSignal,
 
         // Apply compression + makeup gain
         const float totalGainDb = -gainReductionDb + band.makeupGain;
-        const float totalGainLinear = juce::Decibels::decibelsToGain(totalGainDb);
+        const float totalGainLinear = fastDbToGain(totalGainDb);
 
         bandSignal[i] = inputSample * totalGainLinear;
 

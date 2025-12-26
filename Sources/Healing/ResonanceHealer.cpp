@@ -538,10 +538,19 @@ void ResonanceHealer::process(juce::AudioBuffer<float>& buffer)
     }
 
     // Update visualization data
-    currentWaveform.clear();
-    for (int i = 0; i < juce::jmin(512, buffer.getNumSamples()); ++i)
-    {
-        currentWaveform.push_back(buffer.getSample(0, i));
+    // OPTIMIZATION: Pre-allocate to avoid dynamic allocations in audio callback
+    constexpr int kWaveformSize = 512;
+    if (currentWaveform.size() != kWaveformSize) {
+        currentWaveform.resize(kWaveformSize, 0.0f);
+    }
+    const int samplesToCopy = juce::jmin(kWaveformSize, buffer.getNumSamples());
+    const float* readPtr = buffer.getReadPointer(0);
+    for (int i = 0; i < samplesToCopy; ++i) {
+        currentWaveform[static_cast<size_t>(i)] = readPtr[i];
+    }
+    // Zero remaining if buffer was smaller
+    for (int i = samplesToCopy; i < kWaveformSize; ++i) {
+        currentWaveform[static_cast<size_t>(i)] = 0.0f;
     }
 }
 

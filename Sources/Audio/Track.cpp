@@ -22,7 +22,11 @@ void Track::prepare(double sampleRate, int maximumBlockSize)
         playbackBuffer.setSize(2, maximumBlockSize * 100); // 100 blocks of audio
         playbackBuffer.clear();
 
-        recordedAudio.setSize(2, 0); // Will grow during recording
+        // OPTIMIZATION: Pre-allocate recording buffer to avoid allocations in audio callback
+        // Default: 5 minutes at current sample rate (~14MB at 48kHz stereo)
+        const int fiveMinutesSamples = static_cast<int>(sampleRate * 60.0 * 5.0);
+        recordedAudio.setSize(2, fiveMinutesSamples, false, true, false);
+        recordedAudio.clear();
     }
 }
 
@@ -81,21 +85,23 @@ void Track::recordInput(const float* const* input, int numInputs, int numSamples
     if (type != Type::Audio)
         return;
 
-    // Ensure we have space in recorded buffer
-    int currentSize = recordedAudio.getNumSamples();
-    int requiredSize = (int)(position - recordingStartPosition) + numSamples;
+    // Calculate write position
+    const int writePos = static_cast<int>(position - recordingStartPosition);
+    const int requiredSize = writePos + numSamples;
+    const int currentSize = recordedAudio.getNumSamples();
 
+    // OPTIMIZATION: Only grow if we exceed pre-allocated buffer (rare case)
     if (requiredSize > currentSize)
     {
-        // Grow buffer (this happens outside audio thread ideally, but simplified here)
-        int newSize = juce::nextPowerOfTwo(requiredSize);
+        // Double the buffer size to minimize future reallocations
+        const int newSize = juce::jmax(juce::nextPowerOfTwo(requiredSize),
+                                       currentSize * 2);
         recordedAudio.setSize(2, newSize, true, true, false);
     }
 
-    // Copy input to recorded buffer
-    int writePos = (int)(position - recordingStartPosition);
-
-    for (int channel = 0; channel < juce::jmin(2, numInputs); ++channel)
+    // Copy input to recorded buffer using SIMD-optimized copy
+    const int channelsToCopy = juce::jmin(2, numInputs);
+    for (int channel = 0; channel < channelsToCopy; ++channel)
     {
         if (input[channel] != nullptr)
         {

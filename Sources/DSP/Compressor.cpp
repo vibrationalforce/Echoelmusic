@@ -19,15 +19,25 @@ void Compressor::reset()
 
 void Compressor::process(juce::AudioBuffer<float>& buffer)
 {
-    int numSamples = buffer.getNumSamples();
-    int numChannels = buffer.getNumChannels();
+    const int numSamples = buffer.getNumSamples();
+    const int numChannels = buffer.getNumChannels();
+    if (numSamples == 0 || numChannels == 0) return;
+
+    // OPTIMIZATION: Cache channel pointers (avoids per-sample getSample/setSample overhead)
+    float* channelData[2] = { nullptr, nullptr };
+    for (int ch = 0; ch < juce::jmin(numChannels, 2); ++ch) {
+        channelData[ch] = buffer.getWritePointer(ch);
+    }
+
+    // OPTIMIZATION: Pre-compute makeup gain (constant per block)
+    const float makeup = juce::Decibels::decibelsToGain(makeupGain);
 
     for (int i = 0; i < numSamples; ++i)
     {
-        // Stereo-link detection
-        float detectionL = numChannels > 0 ? std::abs(buffer.getSample(0, i)) : 0.0f;
-        float detectionR = numChannels > 1 ? std::abs(buffer.getSample(1, i)) : detectionL;
-        float detection = juce::jmax(detectionL, detectionR);
+        // Stereo-link detection using cached pointers
+        const float detectionL = channelData[0] ? std::abs(channelData[0][i]) : 0.0f;
+        const float detectionR = channelData[1] ? std::abs(channelData[1][i]) : detectionL;
+        const float detection = juce::jmax(detectionL, detectionR);
 
         // Envelope follower
         float envelope = envelopeL;
@@ -39,18 +49,21 @@ void Compressor::process(juce::AudioBuffer<float>& buffer)
         envelopeL = envelope;
 
         // Compute gain reduction
-        float gain = computeGain(envelope);
+        const float gain = computeGain(envelope);
         gainReduction = 1.0f - gain;
 
-        // Apply makeup gain
-        float makeup = juce::Decibels::decibelsToGain(makeupGain);
-        float totalGain = gain * makeup;
+        // Apply total gain (compression + makeup)
+        const float totalGain = gain * makeup;
 
-        // Apply to all channels
-        for (int channel = 0; channel < numChannels; ++channel)
+        // Apply to all channels using cached pointers
+        for (int ch = 0; ch < numChannels; ++ch)
         {
-            float sample = buffer.getSample(channel, i);
-            buffer.setSample(channel, i, sample * totalGain);
+            if (ch < 2 && channelData[ch]) {
+                channelData[ch][i] *= totalGain;
+            } else {
+                // Fallback for >2 channels (rare)
+                buffer.setSample(ch, i, buffer.getSample(ch, i) * totalGain);
+            }
         }
     }
 }
