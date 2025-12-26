@@ -258,6 +258,13 @@ private:
 
     float getLFOValue();
 
+    // OPTIMIZATION: Template helper for clamped setters (reduces code duplication)
+    template<typename T>
+    void setClampedValue(T& member, T value, T minVal, T maxVal)
+    {
+        member = juce::jlimit(minVal, maxVal, value);
+    }
+
     friend class SampleEngineVoice;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SampleEngine)

@@ -308,16 +308,15 @@ void AudioEngine::processAudioBlock(const float* const* input, float* const* out
 
 void AudioEngine::mixTracksToMaster(int numSamples)
 {
-    // This will be brief - just check if we can iterate safely
-    // In production, use a lock-free structure
-    const juce::ScopedTryLock sl(tracksLock);
-
-    if (!sl.isLocked())
-        return; // Track list is being modified, skip this block
+    // OPTIMIZATION: Changed from ScopedTryLock to ScopedLock
+    // ScopedTryLock silently skipped processing causing audio dropouts
+    // Trade-off: May block briefly but guarantees audio continuity
+    // Future: Replace with lock-free ring buffer for zero-blocking
+    const juce::ScopedLock sl(tracksLock);
 
     for (auto& track : tracks)
     {
-        if (track != nullptr && track->isMuted() == false && track->isSoloed() == false)
+        if (track != nullptr && !track->isMuted() && !track->isSoloed())
         {
             track->processBlock(masterBuffer, numSamples);
         }
@@ -326,16 +325,13 @@ void AudioEngine::mixTracksToMaster(int numSamples)
 
 void AudioEngine::recordInputToTracks(const float* const* input, int numInputs, int numSamples)
 {
-    const juce::ScopedTryLock sl(tracksLock);
-
-    if (!sl.isLocked())
-        return;
+    // OPTIMIZATION: Use proper lock instead of TryLock to prevent dropped recordings
+    const juce::ScopedLock sl(tracksLock);
 
     for (auto& track : tracks)
     {
         if (track != nullptr && track->isArmed() && track->getType() == Track::Type::Audio)
         {
-            // Record input to track
             track->recordInput(input, numInputs, numSamples, playheadPosition.load());
         }
     }

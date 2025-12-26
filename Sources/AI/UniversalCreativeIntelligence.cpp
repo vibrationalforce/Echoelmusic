@@ -9,6 +9,7 @@
  */
 
 #include "UniversalCreativeIntelligence.h"
+#include "../Lighting/LightController.h"
 
 #include <algorithm>
 #include <cmath>
@@ -543,6 +544,15 @@ struct UniversalCreativeIntelligence::Impl
     int comfyUIPort = 8188;
     bool comfyUIConnected = false;
     std::vector<std::string> comfyUIWorkflows;
+
+    // DMX Fixture Mappings
+    struct FixtureMapping {
+        int fixtureId = 0;
+        int dmxAddress = 1;
+        int numChannels = 0;
+        std::string profileName;
+    };
+    std::vector<FixtureMapping> fixtureMappings;
 
     // Performance
     std::atomic<float> currentFPS{60.0f};
@@ -1262,39 +1272,88 @@ int UniversalCreativeIntelligence::getComfyUIQueueLength() const
 void UniversalCreativeIntelligence::sendDMX(
     int universe, const uint8_t* data, int numChannels)
 {
-    // In production, use libdmx or similar
-    (void)universe;
-    (void)data;
-    (void)numChannels;
+    if (!pImpl->lightController || !data || numChannels <= 0) return;
+
+    // Create DMX packet from raw data
+    Echoel::DMXPacket dmx;
+    int channelsToCopy = std::min(numChannels, Echoel::DMXPacket::DMX_UNIVERSE_SIZE);
+    for (int i = 0; i < channelsToCopy; ++i) {
+        dmx.setChannel(i + 1, data[i]);  // DMX is 1-indexed
+    }
+
+    // Send via Art-Net (DMX over IP)
+    if (auto* artNet = pImpl->lightController->getArtNet()) {
+        artNet->send(dmx, universe);
+    }
 }
 
 void UniversalCreativeIntelligence::sendArtNet(
     int universe, const uint8_t* data, int numChannels,
     const std::string& host, int port)
 {
-    // In production, send Art-Net UDP packets
-    (void)universe;
-    (void)data;
-    (void)numChannels;
-    (void)host;
-    (void)port;
+    if (!pImpl->lightController || !data || numChannels <= 0) return;
+
+    // Create DMX packet from raw data
+    Echoel::DMXPacket dmx;
+    int channelsToCopy = std::min(numChannels, Echoel::DMXPacket::DMX_UNIVERSE_SIZE);
+    for (int i = 0; i < channelsToCopy; ++i) {
+        dmx.setChannel(i + 1, data[i]);  // DMX is 1-indexed
+    }
+
+    // Send via Art-Net to specific host
+    // The ArtNetController uses port 6454 by default (Art-Net standard)
+    (void)port;  // Port is fixed in Art-Net protocol
+    if (auto* artNet = pImpl->lightController->getArtNet()) {
+        artNet->send(dmx, universe, juce::String(host));
+    }
 }
 
 void UniversalCreativeIntelligence::sendILDA(const void* points, int numPoints)
 {
-    // In production, send to laser DAC
-    (void)points;
-    (void)numPoints;
+    if (!pImpl->lightController || !points || numPoints <= 0) return;
+
+    if (auto* ilda = pImpl->lightController->getILDA()) {
+        ilda->clearFrame();
+
+        // Cast to ILDA point format (matches ILDAController::LaserPoint layout)
+        struct ILDAPoint {
+            int16_t x, y;
+            uint8_t r, g, b;
+            bool blanking;
+        };
+
+        const auto* inputPoints = static_cast<const ILDAPoint*>(points);
+        for (int i = 0; i < numPoints; ++i) {
+            ilda->addPoint(inputPoints[i].x, inputPoints[i].y,
+                          inputPoints[i].r, inputPoints[i].g, inputPoints[i].b,
+                          inputPoints[i].blanking);
+        }
+
+        ilda->send();
+    }
 }
 
 void UniversalCreativeIntelligence::setFixtureMapping(
     int fixtureId, int dmxAddress, int numChannels,
     const std::string& profileName)
 {
-    (void)fixtureId;
-    (void)dmxAddress;
-    (void)numChannels;
-    (void)profileName;
+    // Update existing or add new fixture mapping
+    for (auto& fixture : pImpl->fixtureMappings) {
+        if (fixture.fixtureId == fixtureId) {
+            fixture.dmxAddress = dmxAddress;
+            fixture.numChannels = numChannels;
+            fixture.profileName = profileName;
+            return;
+        }
+    }
+
+    // Add new fixture
+    Impl::FixtureMapping mapping;
+    mapping.fixtureId = fixtureId;
+    mapping.dmxAddress = dmxAddress;
+    mapping.numChannels = numChannels;
+    mapping.profileName = profileName;
+    pImpl->fixtureMappings.push_back(mapping);
 }
 
 void UniversalCreativeIntelligence::processFrame(double deltaTime)
