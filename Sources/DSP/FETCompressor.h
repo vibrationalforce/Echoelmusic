@@ -83,6 +83,10 @@ private:
     float fetColoration = 0.7f;
     bool stereoLink = true;
 
+    // Cached linear gain values (avoid per-sample dB conversion)
+    float inputGainLinear = 1.0f;
+    float outputGainLinear = 1.0f;
+
     struct CompressorState
     {
         float envelope = 0.0f;

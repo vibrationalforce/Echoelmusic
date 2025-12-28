@@ -192,6 +192,7 @@ private:
     // BitCrusher
     float sampleRateReduction = 8000.0f;
     int bitDepth = 8;
+    float cachedBitMax = 255.0f;  // Cached pow(2, bitDepth) - 1
 
     // Vinyl
     float crackle = 0.3f;
@@ -243,6 +244,7 @@ private:
 
     float vinylPhase = 0.0f;
     int crackleTimer = 0;
+    juce::Random rng;  // Fast RNG for noise generation
 
     //==========================================================================
     // Effect Processing

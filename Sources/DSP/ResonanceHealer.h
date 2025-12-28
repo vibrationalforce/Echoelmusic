@@ -167,5 +167,19 @@ private:
     double sampleRate = 44100.0;
     int blockSize = 512;
 
+    //==============================================================================
+    // Pre-allocated Work Buffers (avoid per-frame allocations)
+    juce::AudioBuffer<float> dryBuffer;
+
+    // Pre-computed smoothed spectrum buffer
+    std::array<float, FFT_SIZE / 2> smoothedSpectrum;
+
+    // Cached attack/release coefficients (updated when params change)
+    float cachedAttackCoeff = 0.1f;
+    float cachedReleaseCoeff = 0.01f;
+
+    // Update coefficients when attack/release changes
+    void updateCoefficients();
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonanceHealer)
 };

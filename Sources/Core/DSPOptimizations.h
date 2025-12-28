@@ -54,6 +54,22 @@ public:
         return fastSinRad(radians + 1.5707963267948966f);  // +π/2
     }
 
+    // Fast tangent lookup (input: 0-1 normalized phase, maps to 0-π)
+    // Note: Returns tan(phase * π), useful for filter coefficients
+    inline float fastTan(float normalizedPhase) const noexcept {
+        // Clamp to avoid singularities near π/2
+        normalizedPhase = std::min(0.499f, std::max(-0.499f, normalizedPhase));
+        float s = fastSin(normalizedPhase);
+        float c = fastCos(normalizedPhase);
+        return (std::abs(c) > 1e-6f) ? (s / c) : (s > 0 ? 1000.0f : -1000.0f);
+    }
+
+    // Fast tangent for radians
+    inline float fastTanRad(float radians) const noexcept {
+        constexpr float INV_PI = 1.0f / 3.14159265358979323846f;
+        return fastTan(radians * INV_PI);
+    }
+
 private:
     std::array<float, TABLE_SIZE + 1> sinTable;
 

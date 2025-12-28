@@ -1,4 +1,5 @@
 #include "ModulationSuite.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -192,10 +193,13 @@ void ModulationSuite::updateLFO()
 
 float ModulationSuite::getLFOSample()
 {
+    // Get trig lookup tables for fast sin
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+
     switch (lfoShape)
     {
         case LFOShape::Sine:
-            return (std::sin(lfoPhase * juce::MathConstants<float>::twoPi) + 1.0f) * 0.5f;
+            return (trigTables.fastSin(lfoPhase) + 1.0f) * 0.5f;  // Fast sin lookup
 
         case LFOShape::Triangle:
             return (lfoPhase < 0.5f) ? (lfoPhase * 2.0f) : (2.0f - lfoPhase * 2.0f);
@@ -214,7 +218,8 @@ float ModulationSuite::getLFOSample()
             // Smooth random (sample & hold with interpolation)
             if (lfoPhase < 0.01f)
             {
-                randomTarget = std::rand() / static_cast<float>(RAND_MAX);
+                // Use fast random instead of std::rand()
+                randomTarget = rng.nextFloat();
             }
             randomCurrent += (randomTarget - randomCurrent) * 0.01f;
             return randomCurrent;
@@ -224,7 +229,7 @@ float ModulationSuite::getLFOSample()
             // Step random (sample & hold)
             if (lfoPhase < 0.01f)
             {
-                randomCurrent = std::rand() / static_cast<float>(RAND_MAX);
+                randomCurrent = rng.nextFloat();  // Use fast random
             }
             return randomCurrent;
 
@@ -259,12 +264,15 @@ void ModulationSuite::processChorus(juce::AudioBuffer<float>& buffer)
             // Read multiple delayed voices
             float chorusOut = 0.0f;
 
+            // Get trig lookup tables for fast sin
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+            const float voiceReciprocal = 1.0f / static_cast<float>(chorusVoices);
+
             for (int voice = 0; voice < chorusVoices; ++voice)
             {
                 // Offset each voice slightly in time and LFO phase
-                float voiceOffset = static_cast<float>(voice) / chorusVoices;
-                float lfoValue = std::sin((lfoPhase + voiceOffset) * juce::MathConstants<float>::twoPi);
-                lfoValue = (lfoValue + 1.0f) * 0.5f;  // 0 to 1
+                float voiceOffset = static_cast<float>(voice) * voiceReciprocal;
+                float lfoValue = (trigTables.fastSin(lfoPhase + voiceOffset) + 1.0f) * 0.5f;  // 0 to 1
 
                 // Delay time: 10-30ms modulated by LFO
                 float baseDelay = 15.0f + voiceOffset * 10.0f;  // Spread voices
@@ -275,7 +283,7 @@ void ModulationSuite::processChorus(juce::AudioBuffer<float>& buffer)
                 chorusOut += delayedSample;
             }
 
-            chorusOut /= chorusVoices;
+            chorusOut *= voiceReciprocal;
 
             // Mix dry/wet
             channelData[i] = input * (1.0f - mix) + chorusOut * mix;
@@ -331,6 +339,10 @@ void ModulationSuite::processPhaser(juce::AudioBuffer<float>& buffer)
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
+    // Get trig lookup tables for fast tan approximation
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    const float sampleRateRecip = 1.0f / static_cast<float>(currentSampleRate);
+
     for (int channel = 0; channel < numChannels && channel < 2; ++channel)
     {
         float* channelData = buffer.getWritePointer(channel);
@@ -345,9 +357,10 @@ void ModulationSuite::processPhaser(juce::AudioBuffer<float>& buffer)
             // Allpass center frequency modulated by LFO (200Hz - 2kHz)
             float centerFreq = 200.0f + currentLFOValue * depth * 1800.0f;
 
-            // Calculate allpass coefficient
-            float omega = juce::MathConstants<float>::twoPi * centerFreq / static_cast<float>(currentSampleRate);
-            float coefficient = (1.0f - std::tan(omega * 0.5f)) / (1.0f + std::tan(omega * 0.5f));
+            // Calculate allpass coefficient using fast tan approximation
+            float omega = juce::MathConstants<float>::twoPi * centerFreq * sampleRateRecip;
+            float tanHalfOmega = trigTables.fastTanRad(omega * 0.5f);
+            float coefficient = (1.0f - tanHalfOmega) / (1.0f + tanHalfOmega);
 
             // Pass through allpass filter cascade
             float output = input;
@@ -433,12 +446,16 @@ void ModulationSuite::processRingMod(juce::AudioBuffer<float>& buffer)
 {
     const int numSamples = buffer.getNumSamples();
 
+    // Get trig lookup tables for fast sin
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    const float phaseIncrement = ringModCarrier / static_cast<float>(currentSampleRate);
+
     for (int i = 0; i < numSamples; ++i)
     {
-        // Generate carrier (sine wave at carrier frequency)
-        float carrier = std::sin(ringModPhase * juce::MathConstants<float>::twoPi);
+        // Generate carrier (sine wave at carrier frequency) using fast sin lookup
+        float carrier = trigTables.fastSin(ringModPhase);
 
-        ringModPhase += ringModCarrier / static_cast<float>(currentSampleRate);
+        ringModPhase += phaseIncrement;
         if (ringModPhase >= 1.0f)
             ringModPhase -= 1.0f;
 
@@ -466,6 +483,10 @@ void ModulationSuite::processFrequencyShifter(juce::AudioBuffer<float>& buffer)
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
+    // Get trig lookup tables for fast sin/cos
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    const float phaseIncrement = std::abs(frequencyShift) / static_cast<float>(currentSampleRate);
+
     for (int channel = 0; channel < numChannels && channel < 2; ++channel)
     {
         float* channelData = buffer.getWritePointer(channel);
@@ -474,11 +495,11 @@ void ModulationSuite::processFrequencyShifter(juce::AudioBuffer<float>& buffer)
         {
             float input = channelData[i];
 
-            // Sine and cosine modulators
-            float sine = std::sin(shifterPhase * juce::MathConstants<float>::twoPi);
-            float cosine = std::cos(shifterPhase * juce::MathConstants<float>::twoPi);
+            // Sine and cosine modulators using fast lookup
+            float sine = trigTables.fastSin(shifterPhase);
+            float cosine = trigTables.fastCos(shifterPhase);
 
-            shifterPhase += std::abs(frequencyShift) / static_cast<float>(currentSampleRate);
+            shifterPhase += phaseIncrement;
             if (shifterPhase >= 1.0f)
                 shifterPhase -= 1.0f;
 

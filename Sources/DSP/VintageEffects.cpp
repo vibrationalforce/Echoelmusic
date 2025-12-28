@@ -1,4 +1,5 @@
 #include "VintageEffects.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -111,6 +112,7 @@ void VintageEffects::setSampleRateReduction(float sampleRate)
 void VintageEffects::setBitDepth(int bits)
 {
     bitDepth = juce::jlimit(1, 16, bits);
+    cachedBitMax = static_cast<float>((1 << bitDepth) - 1);  // Cache pow(2, bits) - 1
 }
 
 void VintageEffects::setCrackle(float amount)
@@ -292,8 +294,8 @@ void VintageEffects::processVHSLoFi(juce::AudioBuffer<float>& buffer)
             // Add noise
             lofi += generateNoise() * noise * 0.1f;
 
-            // Random dropout
-            if ((std::rand() / static_cast<float>(RAND_MAX)) < dropout * 0.001f)
+            // Random dropout - use fast RNG
+            if (rng.nextFloat() < dropout * 0.001f)
             {
                 lofi *= 0.1f;  // Dropout
             }
@@ -376,12 +378,15 @@ void VintageEffects::processVinylSimulator(juce::AudioBuffer<float>& buffer)
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
+    // Get trig lookup tables for fast sin
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+
     for (int i = 0; i < numSamples; ++i)
     {
-        // Crackle/pops
+        // Crackle/pops - use fast RNG
         crackleTimer++;
         float crackleNoise = 0.0f;
-        if (crackleTimer > 1000 && (std::rand() / static_cast<float>(RAND_MAX)) < crackle * 0.01f)
+        if (crackleTimer > 1000 && rng.nextFloat() < crackle * 0.01f)
         {
             crackleNoise = generateCrackle() * 0.3f;
             crackleTimer = 0;
@@ -390,8 +395,8 @@ void VintageEffects::processVinylSimulator(juce::AudioBuffer<float>& buffer)
         // Dust/scratches (high-frequency noise)
         float dustNoise = generateNoise() * dust * 0.01f;
 
-        // Wow (slow pitch variation)
-        vinylPhase += (1.0f + std::sin(vinylPhase * 0.1f) * wobble * 0.02f) / static_cast<float>(currentSampleRate);
+        // Wow (slow pitch variation) - use fast sin
+        vinylPhase += (1.0f + trigTables.fastSin(vinylPhase * 0.1f) * wobble * 0.02f) / static_cast<float>(currentSampleRate);
         if (vinylPhase >= 1.0f)
             vinylPhase -= 1.0f;
 
@@ -415,9 +420,10 @@ void VintageEffects::processVinylSimulator(juce::AudioBuffer<float>& buffer)
 
 float VintageEffects::applyBiquadFilter(float input, FilterState& state, float cutoff, float q, EnvelopeMode mode)
 {
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     const float omega = juce::MathConstants<float>::twoPi * cutoff / static_cast<float>(currentSampleRate);
-    const float sinOmega = std::sin(omega);
-    const float cosOmega = std::cos(omega);
+    const float sinOmega = trigTables.fastSinRad(omega);
+    const float cosOmega = trigTables.fastCosRad(omega);
     const float alpha = sinOmega / (2.0f * q);
 
     float b0, b1, b2, a0, a1, a2;
@@ -468,12 +474,12 @@ float VintageEffects::tapeSaturate(float input, float driveAmount, float type)
 {
     float driven = input * (1.0f + driveAmount * 5.0f);
 
-    // Soft saturation (vintage tape)
+    // Soft saturation (vintage tape) - use fast tanh
     if (type < 0.5f)
-        return std::tanh(driven);
+        return Echoel::DSP::FastMath::fastTanh(driven);
 
     // Hard saturation (overdriven tape)
-    return std::tanh(driven * 1.5f) * 0.8f;
+    return Echoel::DSP::FastMath::fastTanh(driven * 1.5f) * 0.8f;
 }
 
 float VintageEffects::tubeDistort(float input, float driveAmount, float biasAmount)
@@ -484,26 +490,26 @@ float VintageEffects::tubeDistort(float input, float driveAmount, float biasAmou
     // Tube-style asymmetric distortion
     float driven = biased * (1.0f + driveAmount * 10.0f);
 
-    // Asymmetric soft-clip
+    // Asymmetric soft-clip using fast tanh
     if (driven > 0.0f)
-        return std::tanh(driven * 1.2f);
+        return Echoel::DSP::FastMath::fastTanh(driven * 1.2f);
     else
-        return std::tanh(driven * 0.8f);
+        return Echoel::DSP::FastMath::fastTanh(driven * 0.8f);
 }
 
-float VintageEffects::quantize(float sample, int bits)
+float VintageEffects::quantize(float sample, int /* bits */)
 {
-    float maxValue = std::pow(2.0f, bits) - 1.0f;
-    return std::round(sample * maxValue) / maxValue;
+    // Use cached bit max instead of per-sample pow()
+    return std::round(sample * cachedBitMax) / cachedBitMax;
 }
 
 float VintageEffects::generateNoise()
 {
-    return (std::rand() / static_cast<float>(RAND_MAX)) * 2.0f - 1.0f;
+    return rng.nextFloat() * 2.0f - 1.0f;
 }
 
 float VintageEffects::generateCrackle()
 {
     // Sharp transient for vinyl crackle
-    return (std::rand() / static_cast<float>(RAND_MAX)) > 0.95f ? 1.0f : 0.0f;
+    return rng.nextFloat() > 0.95f ? 1.0f : 0.0f;
 }

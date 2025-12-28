@@ -179,6 +179,7 @@ private:
     float currentLFOValue = 0.0f;
     float randomTarget = 0.0f;      // For random LFO
     float randomCurrent = 0.0f;
+    juce::Random rng;               // Fast RNG for random LFO shapes
 
     //==========================================================================
     // Delay Lines (for Chorus/Flanger/Vibrato)
