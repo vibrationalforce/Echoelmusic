@@ -68,7 +68,6 @@ void OptoCompressor::process(juce::AudioBuffer<float>& buffer)
         for (int channel = 0; channel < maxChannels; ++channel)
         {
             float channelSample = channelPtrs[channel][sample];
-            float sidechain = (stereoLink > 0.01f) ? linkedSidechain : std::abs(channelSample);
             float processed = processSample(channelSample, channel);
             channelPtrs[channel][sample] = processed;
         }
