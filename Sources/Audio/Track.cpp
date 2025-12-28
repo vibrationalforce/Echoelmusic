@@ -1,4 +1,5 @@
 #include "Track.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 Track::Track(Type trackType, const juce::String& trackName)
@@ -43,7 +44,14 @@ void Track::setVolume(float newVolume)
 
 void Track::setPan(float newPan)
 {
-    pan.store(juce::jlimit(-1.0f, 1.0f, newPan));
+    float clampedPan = juce::jlimit(-1.0f, 1.0f, newPan);
+    pan.store(clampedPan);
+
+    // OPTIMIZATION: Pre-calculate pan gains (constant power) to avoid trig in audio thread
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    float normalizedAngle = (clampedPan + 1.0f) * 0.125f;  // Maps -1..1 to 0..0.25 (quarter circle)
+    cachedLeftGain.store(trigTables.fastCos(normalizedAngle));
+    cachedRightGain.store(trigTables.fastSin(normalizedAngle));
 }
 
 //==============================================================================
@@ -51,13 +59,10 @@ void Track::processBlock(juce::AudioBuffer<float>& outputBuffer, int numSamples)
 {
     if (type == Type::Audio)
     {
-        // Get volume and pan
+        // Get volume and cached pan gains (pre-calculated in setPan)
         float vol = volume.load();
-        float panValue = pan.load();
-
-        // Calculate pan gains (constant power)
-        float leftGain = std::cos((panValue + 1.0f) * juce::MathConstants<float>::pi * 0.25f);
-        float rightGain = std::sin((panValue + 1.0f) * juce::MathConstants<float>::pi * 0.25f);
+        float leftGain = cachedLeftGain.load();
+        float rightGain = cachedRightGain.load();
 
         // Mix playback buffer to output
         // (Simplified - in reality, we'd read from clips at current position)

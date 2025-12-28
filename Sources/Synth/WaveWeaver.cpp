@@ -1,4 +1,5 @@
 #include "WaveWeaver.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -592,15 +593,19 @@ float WaveWeaver::WaveWeaverVoice::processFilter(int filterIndex, int channel,
     cutoff = juce::jlimit(20.0f, 20000.0f, cutoff);
 
     // Simple biquad lowpass (placeholder - implement other types)
+    // OPTIMIZATION: Use fast trig lookup for filter coefficients
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     const float omega = juce::MathConstants<float>::twoPi * cutoff / static_cast<float>(getSampleRate());
     const float q = 0.707f + filter.resonance * 9.0f;  // Q: 0.707 to ~10
-    const float alpha = std::sin(omega) / (2.0f * q);
+    const float sinOmega = trigTables.fastSinRad(omega);
+    const float cosOmega = trigTables.fastCosRad(omega);
+    const float alpha = sinOmega / (2.0f * q);
 
-    const float b0 = (1.0f - std::cos(omega)) / 2.0f;
-    const float b1 = 1.0f - std::cos(omega);
-    const float b2 = (1.0f - std::cos(omega)) / 2.0f;
+    const float b0 = (1.0f - cosOmega) / 2.0f;
+    const float b1 = 1.0f - cosOmega;
+    const float b2 = (1.0f - cosOmega) / 2.0f;
     const float a0 = 1.0f + alpha;
-    const float a1 = -2.0f * std::cos(omega);
+    const float a1 = -2.0f * cosOmega;
     const float a2 = 1.0f - alpha;
 
     // Apply filter (direct form 2)

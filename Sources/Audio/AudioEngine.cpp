@@ -1,5 +1,6 @@
 #include "AudioEngine.h"
 #include "Track.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 AudioEngine::AudioEngine()
@@ -189,13 +190,13 @@ float AudioEngine::getMasterLevelLUFS() const
     if (peak < 0.00001f)
         return -80.0f;
 
-    return juce::Decibels::gainToDecibels(peak) - 23.0f; // Rough LUFS estimate
+    return Echoel::DSP::FastMath::gainToDb(peak) - 23.0f; // Rough LUFS estimate
 }
 
 float AudioEngine::getMasterPeakLevel() const
 {
     float peak = juce::jmax(masterPeakLeft.load(), masterPeakRight.load());
-    return juce::Decibels::gainToDecibels(peak);
+    return Echoel::DSP::FastMath::gainToDb(peak);
 }
 
 void AudioEngine::setMasterVolume(float volume)

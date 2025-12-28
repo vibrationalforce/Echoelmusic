@@ -1,4 +1,5 @@
 #include "FrequencyFusion.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -520,34 +521,46 @@ float FrequencyFusion::FrequencyFusionVoice::generateWaveform(Waveform waveform,
     while (phase >= 1.0f) phase -= 1.0f;
     while (phase < 0.0f) phase += 1.0f;
 
-    const float twoPi = juce::MathConstants<float>::twoPi;
-    float angle = phase * twoPi;
+    // OPTIMIZATION: Use fast trig lookup tables (~20x faster than std::sin)
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
 
     switch (waveform)
     {
         case Waveform::Sine:
-            return std::sin(angle);
+            return trigTables.fastSin(phase);
 
         case Waveform::HalfSine:
-            return (phase < 0.5f) ? std::sin(angle) : 0.0f;
+            return (phase < 0.5f) ? trigTables.fastSin(phase) : 0.0f;
 
         case Waveform::AbsSine:
-            return std::abs(std::sin(angle));
+            return std::abs(trigTables.fastSin(phase));
 
         case Waveform::PulseSine:
-            return (phase < 0.5f) ? std::sin(angle * 2.0f) : 0.0f;
+        {
+            float doublePhase = phase * 2.0f;
+            doublePhase -= std::floor(doublePhase);
+            return (phase < 0.5f) ? trigTables.fastSin(doublePhase) : 0.0f;
+        }
 
         case Waveform::EvenSine:
-            return std::sin(angle) + std::sin(angle * 2.0f) * 0.5f;
+        {
+            float phase2 = phase * 2.0f;
+            phase2 -= std::floor(phase2);
+            return trigTables.fastSin(phase) + trigTables.fastSin(phase2) * 0.5f;
+        }
 
         case Waveform::OddSine:
-            return std::sin(angle) + std::sin(angle * 3.0f) * 0.333f;
+        {
+            float phase3 = phase * 3.0f;
+            phase3 -= std::floor(phase3);
+            return trigTables.fastSin(phase) + trigTables.fastSin(phase3) * 0.333f;
+        }
 
         case Waveform::SquareSine:
-            return (std::sin(angle) > 0.0f) ? 1.0f : -1.0f;
+            return (trigTables.fastSin(phase) > 0.0f) ? 1.0f : -1.0f;
 
         default:
-            return std::sin(angle);
+            return trigTables.fastSin(phase);
     }
 }
 
