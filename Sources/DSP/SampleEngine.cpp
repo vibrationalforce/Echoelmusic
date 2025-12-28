@@ -492,16 +492,20 @@ float SampleEngine::SampleEngineVoice::readSample(const Sample& sample, double p
     float frac = static_cast<float>(position - pos1);
 
     float value = 0.0f;
-    for (int channel = 0; channel < sample.audioData.getNumChannels(); ++channel)
+    const int numChannels = sample.audioData.getNumChannels();
+
+    // OPTIMIZATION: Cache pointers for interpolation
+    for (int channel = 0; channel < numChannels; ++channel)
     {
-        float sample1 = sample.audioData.getSample(channel, pos1);
-        float sample2 = sample.audioData.getSample(channel, pos2);
+        const float* channelPtr = sample.audioData.getReadPointer(channel);
+        float sample1 = channelPtr[pos1];
+        float sample2 = channelPtr[pos2];
         value += sample1 + frac * (sample2 - sample1);
     }
 
     // Average channels if stereo
-    if (sample.audioData.getNumChannels() > 0)
-        value /= sample.audioData.getNumChannels();
+    if (numChannels > 0)
+        value /= static_cast<float>(numChannels);
 
     return value;
 }

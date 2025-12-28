@@ -24,9 +24,10 @@ void Compressor::process(juce::AudioBuffer<float>& buffer)
     const int numChannels = buffer.getNumChannels();
     if (numSamples == 0 || numChannels == 0) return;
 
-    // OPTIMIZATION: Cache channel pointers (avoids per-sample getSample/setSample overhead)
-    float* channelData[2] = { nullptr, nullptr };
-    for (int ch = 0; ch < juce::jmin(numChannels, 2); ++ch) {
+    // OPTIMIZATION: Cache channel pointers for all channels (up to 8 for surround)
+    float* channelData[8] = { nullptr };
+    const int maxChannels = juce::jmin(numChannels, 8);
+    for (int ch = 0; ch < maxChannels; ++ch) {
         channelData[ch] = buffer.getWritePointer(ch);
     }
 
@@ -57,14 +58,9 @@ void Compressor::process(juce::AudioBuffer<float>& buffer)
         const float totalGain = gain * makeup;
 
         // Apply to all channels using cached pointers
-        for (int ch = 0; ch < numChannels; ++ch)
+        for (int ch = 0; ch < maxChannels; ++ch)
         {
-            if (ch < 2 && channelData[ch]) {
-                channelData[ch][i] *= totalGain;
-            } else {
-                // Fallback for >2 channels (rare)
-                buffer.setSample(ch, i, buffer.getSample(ch, i) * totalGain);
-            }
+            channelData[ch][i] *= totalGain;
         }
     }
 }
