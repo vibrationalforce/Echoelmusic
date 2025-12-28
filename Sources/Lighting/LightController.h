@@ -372,12 +372,14 @@ public:
         int numPoints = static_cast<int>(64.0f * amplitude);  // More points = brighter
         float radius = 20000.0f * amplitude;
 
+        // OPTIMIZATION: Use fast trig lookup tables
+        const auto& trigTables = DSP::TrigLookupTables::getInstance();
         for (int i = 0; i < numPoints; ++i) {
             float angle = (i / static_cast<float>(numPoints)) * EchoelConstants::TWO_PI;
-            float freq_mod = std::sin(angle * frequency / 100.0f);  // Frequency modulates shape
+            float freq_mod = trigTables.fastSinRad(angle * frequency / 100.0f);  // Frequency modulates shape
 
-            int16_t x = static_cast<int16_t>(std::cos(angle) * radius * (1.0f + 0.3f * freq_mod));
-            int16_t y = static_cast<int16_t>(std::sin(angle) * radius * (1.0f + 0.3f * freq_mod));
+            int16_t x = static_cast<int16_t>(trigTables.fastCosRad(angle) * radius * (1.0f + 0.3f * freq_mod));
+            int16_t y = static_cast<int16_t>(trigTables.fastSinRad(angle) * radius * (1.0f + 0.3f * freq_mod));
 
             auto color = frequencyToColor(frequency);
 

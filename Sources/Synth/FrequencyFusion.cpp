@@ -653,12 +653,13 @@ void FrequencyFusion::FrequencyFusionVoice::updateLFO(float sampleRate)
     }
 
     // Calculate LFO value
-    const float twoPi = juce::MathConstants<float>::twoPi;
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
 
     switch (owner.lfo.shape)
     {
         case LFOShape::Sine:
-            lfoValue = std::sin(lfoPhase * twoPi);
+            // OPTIMIZATION: Use fast trig lookup for LFO
+            lfoValue = trigTables.fastSin(lfoPhase);
             break;
 
         case LFOShape::Triangle:

@@ -254,15 +254,19 @@ void PhaseAnalyzer::performFFTAnalysis(const juce::AudioBuffer<float>& buffer)
 {
     int numSamples = juce::jmin(buffer.getNumSamples(), fftSize);
 
+    // OPTIMIZATION: Cache read pointers to avoid per-sample virtual calls
+    const float* leftPtr = buffer.getReadPointer(0);
+    const float* rightPtr = buffer.getReadPointer(1);
+
     // Copy left channel
     leftFFTData.fill(0.0f);
     for (int i = 0; i < numSamples; ++i)
-        leftFFTData[i] = buffer.getSample(0, i);
+        leftFFTData[i] = leftPtr[i];
 
     // Copy right channel
     rightFFTData.fill(0.0f);
     for (int i = 0; i < numSamples; ++i)
-        rightFFTData[i] = buffer.getSample(1, i);
+        rightFFTData[i] = rightPtr[i];
 
     // Apply window to both
     window.multiplyWithWindowingTable(leftFFTData.data(), fftSize);
