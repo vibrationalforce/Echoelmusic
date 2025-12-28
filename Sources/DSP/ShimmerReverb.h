@@ -130,6 +130,10 @@ private:
     // Pre-Delay
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> preDelayLine;
 
+    // Pre-allocated buffers (avoid per-frame allocations)
+    juce::AudioBuffer<float> dryBuffer;
+    juce::AudioBuffer<float> shimmerBuffer;
+
     //==============================================================================
     // Parameters
     float currentShimmer = 0.5f;

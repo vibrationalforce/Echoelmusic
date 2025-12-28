@@ -116,9 +116,57 @@ private:
 
             return output * window * level * panGain;
         }
+
+        // Optimized version: no per-sample pan calculation (use cached pan gains)
+        float processNoPan(float input, int channel)
+        {
+            if (!active)
+                return 0.0f;
+
+            // Calculate pitch ratio
+            float pitchRatio = std::pow(2.0f, semitones / 12.0f);
+
+            // Push input to delay line
+            delayLine.pushSample(channel, input);
+
+            // Read with pitch shift
+            float delay = grainSize * (1.0f - pitchRatio);
+            if (delay < 0.0f) delay = 0.0f;
+
+            float output = delayLine.popSample(channel, delay);
+
+            // Apply window (Hann window for smooth crossfade)
+            float windowPhase = std::fmod(grainPhase, grainSize) / grainSize;
+            float window = 0.5f - 0.5f * std::cos(2.0f * juce::MathConstants<float>::pi * windowPhase);
+
+            grainPhase += pitchRatio;
+            if (grainPhase >= grainSize)
+                grainPhase -= grainSize;
+
+            return output * window;  // Pan and level applied externally
+        }
     };
 
     std::array<HarmonyVoice, 4> voices;
+
+    // Pre-allocated buffers (avoid per-frame allocations)
+    juce::AudioBuffer<float> dryBuffer;
+    juce::AudioBuffer<float> harmonyBuffer;
+    std::array<juce::AudioBuffer<float>, 4> voiceBuffers;
+
+    // Cached pan gains per voice (avoid per-sample sin/cos)
+    std::array<float, 4> voicePanGainsL;
+    std::array<float, 4> voicePanGainsR;
+
+    void updatePanGains()
+    {
+        for (int v = 0; v < 4; ++v)
+        {
+            float angle = (voices[static_cast<size_t>(v)].pan + 1.0f) * juce::MathConstants<float>::pi / 4.0f;
+            voicePanGainsL[static_cast<size_t>(v)] = std::cos(angle);
+            voicePanGainsR[static_cast<size_t>(v)] = std::sin(angle);
+        }
+    }
 
     //==============================================================================
     // Scale-Aware Interval Quantizer

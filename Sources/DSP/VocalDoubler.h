@@ -88,6 +88,16 @@ private:
 
     std::array<VoiceProcessor, 4> voices;
 
+    // Pre-allocated buffers (avoid per-frame allocations)
+    juce::AudioBuffer<float> dryBuffer;
+    juce::AudioBuffer<float> doublerBuffer;
+
+    // Cached pan gains per voice (avoid per-sample sin/cos)
+    std::array<float, 4> panGainsL;
+    std::array<float, 4> panGainsR;
+
+    void updatePanGains();  // Recache pan gains when stereo width changes
+
     //==============================================================================
     // Parameters
     int currentVoices = 2;

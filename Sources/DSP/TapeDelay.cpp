@@ -1,4 +1,5 @@
 #include "TapeDelay.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -86,8 +87,14 @@ void TapeDelay::reset()
 
 void TapeDelay::process(juce::AudioBuffer<float>& buffer)
 {
+    // Enable denormal prevention for this scope (prevents CPU spikes in feedback loops)
+    Echoel::DSP::DenormalPrevention::ScopedNoDenormals noDenormals;
+
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
+
+    // Get trig lookup tables for fast sin
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
 
     for (int channel = 0; channel < numChannels && channel < 2; ++channel)
     {
@@ -100,9 +107,9 @@ void TapeDelay::process(juce::AudioBuffer<float>& buffer)
         {
             float input = channelData[i];
 
-            // Calculate modulated delay time (wow/flutter)
+            // Calculate modulated delay time (wow/flutter) - using fast sin lookup
             updateLFO();
-            float lfoModulation = std::sin(lfoPhase * juce::MathConstants<float>::twoPi) * wowFlutter * 5.0f;  // +/- 5ms
+            float lfoModulation = trigTables.fastSin(lfoPhase) * wowFlutter * 5.0f;  // +/- 5ms
             float modulatedDelayMs = delayTime + channelDelayOffset + lfoModulation;
             float delaySamples = modulatedDelayMs * static_cast<float>(currentSampleRate) / 1000.0f;
 
@@ -113,7 +120,7 @@ void TapeDelay::process(juce::AudioBuffer<float>& buffer)
             delayedSignal = applyFiltering(delayedSignal, channel);
             delayedSignal = applySaturation(delayedSignal);
 
-            // Write to delay buffer (input + feedback)
+            // Write to delay buffer (input + feedback) - denormals already handled by ScopedNoDenormals
             delayBuffers[channel][writePositions[channel]] = input + delayedSignal * feedback;
 
             // Advance write position

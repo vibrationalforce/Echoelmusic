@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "../CreativeTools/IntelligentDelayCalculator.h"
+#include "../Core/DSPOptimizations.h"
 #include <vector>
 
 //==============================================================================
@@ -208,6 +209,9 @@ private:
     //==============================================================================
     void processMono(float* channel, int numSamples, int preDelaySamples, const Parameters& params)
     {
+        // Enable denormal prevention for reverb feedback loops
+        Echoel::DSP::DenormalPrevention::ScopedNoDenormals noDenormals;
+
         for (int i = 0; i < numSamples; ++i)
         {
             float input = channel[i];
@@ -244,6 +248,9 @@ private:
     void processStereo(float* channelL, float* channelR, int numSamples,
                       int preDelaySamples, const Parameters& params)
     {
+        // Enable denormal prevention for reverb feedback loops
+        Echoel::DSP::DenormalPrevention::ScopedNoDenormals noDenormals;
+
         for (int i = 0; i < numSamples; ++i)
         {
             float inputL = channelL[i];

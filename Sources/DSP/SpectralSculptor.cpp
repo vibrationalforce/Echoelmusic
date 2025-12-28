@@ -86,14 +86,18 @@ void SpectralSculptor::learnNoiseProfile(const juce::AudioBuffer<float>& buffer)
         noiseProfileLearned = true;
         noiseLearnFrames = 0;
 
-        // Update visualization
-        std::lock_guard<std::mutex> lock(spectrumMutex);
-        const float scale = 1024.0f / static_cast<float>(noiseProfile.size());
-        for (size_t i = 0; i < visualNoiseProfile.size(); ++i)
+        // Update visualization (use try_lock to avoid blocking audio thread)
+        std::unique_lock<std::mutex> lock(spectrumMutex, std::try_to_lock);
+        if (lock.owns_lock())
         {
-            int bin = static_cast<int>(i / scale);
-            visualNoiseProfile[i] = noiseProfile[bin];
+            const float scale = 1024.0f / static_cast<float>(noiseProfile.size());
+            for (size_t i = 0; i < visualNoiseProfile.size(); ++i)
+            {
+                int bin = static_cast<int>(i / scale);
+                visualNoiseProfile[i] = noiseProfile[bin];
+            }
         }
+        // If we couldn't get the lock, skip visualization update (non-critical)
     }
 }
 
@@ -621,7 +625,10 @@ int SpectralSculptor::frequencyToBin(float freq) const
 
 void SpectralSculptor::updateVisualization(const std::vector<std::complex<float>>& freqData)
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    // Use try_lock to avoid blocking audio thread (called from process loop)
+    std::unique_lock<std::mutex> lock(spectrumMutex, std::try_to_lock);
+    if (!lock.owns_lock())
+        return;  // Skip visualization update if UI is reading (non-critical)
 
     const float scale = 1024.0f / static_cast<float>(freqData.size());
 
