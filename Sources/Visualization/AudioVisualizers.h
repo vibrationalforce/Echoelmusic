@@ -32,13 +32,19 @@ public:
 
         // Downsample to display resolution
         const int stride = juce::jmax(1, buffer.getNumSamples() / 10);
+        const int numSamples = buffer.getNumSamples();
+        const int numChannels = buffer.getNumChannels();
 
-        for (int i = 0; i < buffer.getNumSamples(); i += stride)
+        // OPTIMIZATION: Cache read pointers to avoid per-sample virtual calls
+        const float* leftPtr = buffer.getReadPointer(0);
+        const float* rightPtr = (numChannels > 1) ? buffer.getReadPointer(1) : nullptr;
+
+        for (int i = 0; i < numSamples; i += stride)
         {
             // Average L+R channels
-            float sample = buffer.getSample(0, i);
-            if (buffer.getNumChannels() > 1)
-                sample = (sample + buffer.getSample(1, i)) * 0.5f;
+            float sample = leftPtr[i];
+            if (rightPtr != nullptr)
+                sample = (sample + rightPtr[i]) * 0.5f;
 
             // Add to circular buffer
             waveformBuffer[writePosition] = sample;
@@ -162,12 +168,19 @@ public:
             return;
 
         // Copy samples to FFT buffer
-        for (int i = 0; i < juce::jmin(buffer.getNumSamples(), fftSize); ++i)
+        const int numSamples = juce::jmin(buffer.getNumSamples(), fftSize);
+        const int numChannels = buffer.getNumChannels();
+
+        // OPTIMIZATION: Cache read pointers to avoid per-sample virtual calls
+        const float* leftPtr = buffer.getReadPointer(0);
+        const float* rightPtr = (numChannels > 1) ? buffer.getReadPointer(1) : nullptr;
+
+        for (int i = 0; i < numSamples; ++i)
         {
             // Average L+R channels
-            float sample = buffer.getSample(0, i);
-            if (buffer.getNumChannels() > 1)
-                sample = (sample + buffer.getSample(1, i)) * 0.5f;
+            float sample = leftPtr[i];
+            if (rightPtr != nullptr)
+                sample = (sample + rightPtr[i]) * 0.5f;
 
             fftData[i] = sample;
         }

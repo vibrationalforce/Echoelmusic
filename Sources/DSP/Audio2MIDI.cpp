@@ -187,16 +187,25 @@ void Audio2MIDI::loadPreset(Preset preset)
 void Audio2MIDI::performFFTAnalysis(const juce::AudioBuffer<float>& buffer)
 {
     int numSamples = juce::jmin(buffer.getNumSamples(), fftSize);
+    const int numChannels = buffer.getNumChannels();
+
+    // OPTIMIZATION: Cache read pointers to avoid per-sample virtual calls
+    const float* channelPtrs[8] = { nullptr };
+    const int maxChannels = juce::jmin(numChannels, 8);
+    for (int ch = 0; ch < maxChannels; ++ch)
+        channelPtrs[ch] = buffer.getReadPointer(ch);
+
+    const float invChannels = 1.0f / static_cast<float>(numChannels);
 
     // Mix to mono
     fftData.fill(0.0f);
     for (int i = 0; i < numSamples; ++i)
     {
         float sample = 0.0f;
-        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
-            sample += buffer.getSample(channel, i);
+        for (int channel = 0; channel < maxChannels; ++channel)
+            sample += channelPtrs[channel][i];
 
-        fftData[i] = sample / buffer.getNumChannels();
+        fftData[i] = sample * invChannels;
     }
 
     // Apply window

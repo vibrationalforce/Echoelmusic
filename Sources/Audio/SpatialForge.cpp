@@ -448,11 +448,17 @@ void SpatialForge::applyHRTF(const AudioObject& object, juce::AudioBuffer<float>
 
     if (output.getNumChannels() >= 2)
     {
+        // OPTIMIZATION: Cache pointers to avoid per-sample virtual calls
+        const float* inputPtr = object.audioData.getReadPointer(0);
+        float* leftOut = output.getWritePointer(0);
+        float* rightOut = output.getWritePointer(1);
+        const float gainVal = object.gain;
+
         for (int i = 0; i < numSamples; ++i)
         {
-            float sample = object.audioData.getSample(0, i) * object.gain;
-            output.addSample(0, i, sample * leftGain);   // Left
-            output.addSample(1, i, sample * rightGain);  // Right
+            float sample = inputPtr[i] * gainVal;
+            leftOut[i] += sample * leftGain;   // Left
+            rightOut[i] += sample * rightGain;  // Right
         }
     }
 }
