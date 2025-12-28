@@ -27,21 +27,27 @@ void FETCompressor::process(juce::AudioBuffer<float>& buffer)
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
+    // OPTIMIZATION: Cache channel pointers to avoid per-sample virtual calls
+    float* channelPtrs[2] = { nullptr, nullptr };
+    const int maxChannels = juce::jmin(numChannels, 2);
+    for (int ch = 0; ch < maxChannels; ++ch)
+        channelPtrs[ch] = buffer.getWritePointer(ch);
+
     for (int sample = 0; sample < numSamples; ++sample)
     {
         float linkedSidechain = 0.0f;
         if (numChannels >= 2 && stereoLink)
         {
-            float left = buffer.getSample(0, sample);
-            float right = buffer.getSample(1, sample);
+            float left = channelPtrs[0][sample];
+            float right = channelPtrs[1][sample];
             linkedSidechain = (std::abs(left) + std::abs(right)) * 0.5f;
         }
 
-        for (int channel = 0; channel < numChannels; ++channel)
+        for (int channel = 0; channel < maxChannels; ++channel)
         {
-            float channelSample = buffer.getSample(channel, sample);
+            float channelSample = channelPtrs[channel][sample];
             float processed = processSample(channelSample, channel);
-            buffer.setSample(channel, sample, processed);
+            channelPtrs[channel][sample] = processed;
         }
     }
 }

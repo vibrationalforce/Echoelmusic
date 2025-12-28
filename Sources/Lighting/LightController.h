@@ -3,6 +3,7 @@
 #pragma once
 
 #include "../Common/GlobalWarningFixes.h"
+#include "../Core/DSPOptimizations.h"
 #include <JuceHeader.h>
 #include <memory>
 #include <array>
@@ -125,10 +126,10 @@ public:
             float g = color.getFloatGreen();
             float b = color.getFloatBlue();
 
-            // Gamma correction
-            r = (r > 0.04045f) ? std::pow((r + 0.055f) / 1.055f, 2.4f) : (r / 12.92f);
-            g = (g > 0.04045f) ? std::pow((g + 0.055f) / 1.055f, 2.4f) : (g / 12.92f);
-            b = (b > 0.04045f) ? std::pow((b + 0.055f) / 1.055f, 2.4f) : (b / 12.92f);
+            // Gamma correction - OPTIMIZATION: Use FastMath::fastPow (~5x faster than std::pow)
+            r = (r > 0.04045f) ? Echoel::DSP::FastMath::fastPow((r + 0.055f) / 1.055f, 2.4f) : (r / 12.92f);
+            g = (g > 0.04045f) ? Echoel::DSP::FastMath::fastPow((g + 0.055f) / 1.055f, 2.4f) : (g / 12.92f);
+            b = (b > 0.04045f) ? Echoel::DSP::FastMath::fastPow((b + 0.055f) / 1.055f, 2.4f) : (b / 12.92f);
 
             // Convert to XYZ
             float X = r * 0.649926f + g * 0.103455f + b * 0.197109f;

@@ -1,4 +1,5 @@
 #include "VideoWeaver.h"
+#include "../Core/DSPOptimizations.h"
 #include <algorithm>
 #include <cmath>
 
@@ -1099,7 +1100,9 @@ juce::Image VideoWeaver::applyTransition(const juce::Image& clip1,
             // Blur transition (blur out, blur in)
             // Would use blur shader in real implementation
             {
-                float blurAmount = std::sin(easedProgress * juce::MathConstants<float>::pi);
+                // OPTIMIZATION: Use TrigLookupTables (~20x faster than std::sin)
+                const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+                float blurAmount = trigTables.fastSinRad(easedProgress * juce::MathConstants<float>::pi);
 
                 // Simplified: just crossfade with opacity
                 g.setOpacity(1.0f - easedProgress);

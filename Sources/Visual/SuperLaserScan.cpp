@@ -604,11 +604,14 @@ int SuperLaserScan::renderSpiral(const laser::BeamConfig& beam, laser::ILDAPoint
         float y = beam.y + laser::fastSin(angle, sinTable_.data()) * radius;
 
         // Color gradient along spiral (HSV to RGB approximation)
-        float hue = std::fmod(t + beam.phase * 0.1f, 1.0f);
+        // OPTIMIZATION: Use fast fmod/floor operations
+        float hueSum = t + beam.phase * 0.1f;
+        float hue = hueSum - static_cast<float>(static_cast<int>(hueSum));  // fast fmod for positive values
+        if (hue < 0.0f) hue += 1.0f;
         float r_val, g_val, b_val;
         float h6 = hue * 6.0f;
         int hi = static_cast<int>(h6) % 6;
-        float f = h6 - std::floor(h6);
+        float f = h6 - static_cast<float>(static_cast<int>(h6));  // fast floor
 
         switch (hi)
         {
@@ -647,7 +650,9 @@ int SuperLaserScan::renderTunnel(const laser::BeamConfig& beam, laser::ILDAPoint
     for (int ring = 0; ring < numRings && pointIdx < maxPoints; ++ring)
     {
         float z = (static_cast<float>(ring) / numRings) - 0.5f;
-        float radius = beam.size * (1.0f - std::abs(z)) * (0.5f + 0.5f * laser::fastCos(beam.phase * 2.0f + z * laser::kPi, sinTable_.data()));
+        // OPTIMIZATION: Use branchless abs (z is always small, bit manipulation not needed)
+        float absZ = (z >= 0.0f) ? z : -z;
+        float radius = beam.size * (1.0f - absZ) * (0.5f + 0.5f * laser::fastCos(beam.phase * 2.0f + z * laser::kPi, sinTable_.data()));
 
         for (int p = 0; p < pointsPerRing && pointIdx < maxPoints; ++p)
         {

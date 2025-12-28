@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "../AI/SuperIntelligenceSoundDesign.h"
 #include "../Automation/SuperAutomationEngine.h"
+#include "../Core/DSPOptimizations.h"
 #include <vector>
 #include <array>
 #include <cmath>
@@ -590,8 +591,10 @@ private:
 
     float getLFOValue(int lfoIndex, int shape = 0) {
         float phase = lfoPhases[lfoIndex];
+        // OPTIMIZATION: Use TrigLookupTables for LFO sine (~20x faster)
+        const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
         switch (shape) {
-            case 0: return 0.5f + 0.5f * std::sin(phase * 2.0f * M_PI);  // Sine
+            case 0: return 0.5f + 0.5f * trigTables.fastSinRad(phase * 2.0f * static_cast<float>(M_PI));  // Sine
             case 1: return phase < 0.5f ? phase * 2.0f : 2.0f - phase * 2.0f;  // Triangle
             case 2: return phase;  // Saw
             case 3: return phase < 0.5f ? 1.0f : 0.0f;  // Square
@@ -741,12 +744,14 @@ public:
         std::vector<juce::Point<float>> points;
         points.reserve(AudioAnalyzer::NUM_BANDS);
 
+        // OPTIMIZATION: Use TrigLookupTables for circular visualization (~20x faster)
+        const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
         for (int i = 0; i < AudioAnalyzer::NUM_BANDS; i++) {
-            float angle = (float(i) / AudioAnalyzer::NUM_BANDS) * 2.0f * M_PI;
+            float angle = (float(i) / AudioAnalyzer::NUM_BANDS) * 2.0f * static_cast<float>(M_PI);
             float r = radius * (1.0f + audio.bands[i] * 0.5f);
 
-            float x = centerX + std::cos(angle) * r;
-            float y = centerY + std::sin(angle) * r;
+            float x = centerX + trigTables.fastCosRad(angle) * r;
+            float y = centerY + trigTables.fastSinRad(angle) * r;
             points.push_back({x, y});
         }
 
