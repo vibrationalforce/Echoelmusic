@@ -30,8 +30,9 @@ void EchoSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&
 {
     // Update LFO
     lfoPhaseAccumulator += lfoRate * buffer.getNumSamples() / currentSampleRate;
+    // OPTIMIZATION: Fast floor for phase wrap
     if (lfoPhaseAccumulator >= 1.0f)
-        lfoPhaseAccumulator -= std::floor(lfoPhaseAccumulator);
+        lfoPhaseAccumulator -= static_cast<float>(static_cast<int>(lfoPhaseAccumulator));
 
     // Render voices
     renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
@@ -580,8 +581,11 @@ float EchoSynth::EchoSynthVoice::generateOscillator(Waveform waveform, float pha
             if (phaseIncrement > 0.0f)
             {
                 // Apply PolyBLEP at both edges (0 and 0.5)
+                // OPTIMIZATION: Fast fmod for phase wrap (phase is always 0-1)
+                float squarePhase = phase + 0.5f;
+                squarePhase -= static_cast<float>(static_cast<int>(squarePhase));
                 square += polyBLEP(phase, phaseIncrement);
-                square -= polyBLEP(std::fmod(phase + 0.5f, 1.0f), phaseIncrement);
+                square -= polyBLEP(squarePhase, phaseIncrement);
             }
             return square;
         }
@@ -592,8 +596,11 @@ float EchoSynth::EchoSynthVoice::generateOscillator(Waveform waveform, float pha
             float pulse = phase < pulseWidth ? 1.0f : -1.0f;
             if (phaseIncrement > 0.0f)
             {
+                // OPTIMIZATION: Fast fmod for phase wrap
+                float pulsePhase = phase + (1.0f - pulseWidth);
+                pulsePhase -= static_cast<float>(static_cast<int>(pulsePhase));
                 pulse += polyBLEP(phase, phaseIncrement);
-                pulse -= polyBLEP(std::fmod(phase + (1.0f - pulseWidth), 1.0f), phaseIncrement);
+                pulse -= polyBLEP(pulsePhase, phaseIncrement);
             }
             return pulse;
         }

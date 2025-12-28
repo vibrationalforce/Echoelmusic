@@ -148,9 +148,10 @@ float TapeDelay::readDelayInterpolated(int channel, float delaySamples)
         readPos += bufferSize;
 
     // Linear interpolation
+    // OPTIMIZATION: Fast floor for fractional interpolation
     int index1 = static_cast<int>(readPos) % bufferSize;
     int index2 = (index1 + 1) % bufferSize;
-    float frac = readPos - std::floor(readPos);
+    float frac = readPos - static_cast<float>(static_cast<int>(readPos));
 
     return buffer[index1] * (1.0f - frac) + buffer[index2] * frac;
 }

@@ -538,21 +538,24 @@ float FrequencyFusion::FrequencyFusionVoice::generateWaveform(Waveform waveform,
         case Waveform::PulseSine:
         {
             float doublePhase = phase * 2.0f;
-            doublePhase -= std::floor(doublePhase);
+            // OPTIMIZATION: Fast floor using integer truncation
+            doublePhase -= static_cast<float>(static_cast<int>(doublePhase));
             return (phase < 0.5f) ? trigTables.fastSin(doublePhase) : 0.0f;
         }
 
         case Waveform::EvenSine:
         {
             float phase2 = phase * 2.0f;
-            phase2 -= std::floor(phase2);
+            // OPTIMIZATION: Fast floor using integer truncation
+            phase2 -= static_cast<float>(static_cast<int>(phase2));
             return trigTables.fastSin(phase) + trigTables.fastSin(phase2) * 0.5f;
         }
 
         case Waveform::OddSine:
         {
             float phase3 = phase * 3.0f;
-            phase3 -= std::floor(phase3);
+            // OPTIMIZATION: Fast floor using integer truncation
+            phase3 -= static_cast<float>(static_cast<int>(phase3));
             return trigTables.fastSin(phase) + trigTables.fastSin(phase3) * 0.333f;
         }
 

@@ -107,8 +107,13 @@ private:
 
             // Crossfade between grains (triangular window)
             float grainSamples = grainSize * sampleRate;
-            float fade1 = 1.0f - std::abs(std::fmod(readPos1, grainSamples) / grainSamples - 0.5f) * 2.0f;
-            float fade2 = 1.0f - std::abs(std::fmod(readPos2, grainSamples) / grainSamples - 0.5f) * 2.0f;
+            // OPTIMIZATION: Fast fmod using subtraction and branchless abs
+            float mod1 = readPos1 - grainSamples * static_cast<float>(static_cast<int>(readPos1 / grainSamples));
+            float mod2 = readPos2 - grainSamples * static_cast<float>(static_cast<int>(readPos2 / grainSamples));
+            float diff1 = mod1 / grainSamples - 0.5f;
+            float diff2 = mod2 / grainSamples - 0.5f;
+            float fade1 = 1.0f - ((diff1 >= 0.0f) ? diff1 : -diff1) * 2.0f;
+            float fade2 = 1.0f - ((diff2 >= 0.0f) ? diff2 : -diff2) * 2.0f;
 
             float output = sample1 * fade1 + sample2 * fade2;
 

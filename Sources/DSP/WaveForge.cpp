@@ -30,8 +30,9 @@ void WaveForge::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&
 {
     // Update LFO
     lfoPhase += lfoRate * buffer.getNumSamples() / currentSampleRate;
+    // OPTIMIZATION: Fast floor for phase wrap
     if (lfoPhase >= 1.0f)
-        lfoPhase -= std::floor(lfoPhase);
+        lfoPhase -= static_cast<float>(static_cast<int>(lfoPhase));
 
     // Render voices
     renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
@@ -622,10 +623,11 @@ float WaveForge::WaveForgeVoice::readWavetable(float position, int frame)
         return 0.0f;
 
     // Linear interpolation between samples
+    // OPTIMIZATION: Fast floor for wavetable interpolation
     float indexFloat = position * WaveForge::WAVETABLE_SIZE;
     int index1 = static_cast<int>(indexFloat) % WaveForge::WAVETABLE_SIZE;
     int index2 = (index1 + 1) % WaveForge::WAVETABLE_SIZE;
-    float frac = indexFloat - std::floor(indexFloat);
+    float frac = indexFloat - static_cast<float>(static_cast<int>(indexFloat));
 
     return wavetable.frames[frame][index1] + frac * (wavetable.frames[frame][index2] - wavetable.frames[frame][index1]);
 }

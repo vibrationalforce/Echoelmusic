@@ -192,7 +192,8 @@ private:
 
             // Smooth crossfade between grains (Hann window) - using fast trig
             const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
-            float grainPhase = std::fmod(readPos, grainSize) / grainSize;
+            // OPTIMIZATION: Fast fmod for grain phase
+            float grainPhase = (readPos - grainSize * static_cast<float>(static_cast<int>(readPos / grainSize))) / grainSize;
             float window = 0.5f - 0.5f * trigTables.fastCosRad(2.0f * juce::MathConstants<float>::pi * grainPhase);
 
             readPos += pitchRatio;

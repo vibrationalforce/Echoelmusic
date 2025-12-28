@@ -28,8 +28,9 @@ void SampleEngine::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
 {
     // Update LFO
     lfoPhase += lfoRate * buffer.getNumSamples() / currentSampleRate;
+    // OPTIMIZATION: Fast floor for phase wrap
     if (lfoPhase >= 1.0f)
-        lfoPhase -= std::floor(lfoPhase);
+        lfoPhase -= static_cast<float>(static_cast<int>(lfoPhase));
 
     // Render voices
     renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());

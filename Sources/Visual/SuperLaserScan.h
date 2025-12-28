@@ -66,6 +66,7 @@ namespace laser {
 constexpr float kPi = 3.14159265358979323846f;
 constexpr float kTwoPi = 6.28318530717958647692f;
 constexpr float kHalfPi = 1.57079632679489661923f;
+constexpr float kInvTwoPi = 0.15915494309189533577f;  // 1 / (2 * pi)
 constexpr float kDenormalThreshold = 1.0e-15f;
 constexpr int kMaxPointsPerFrame = 4096;
 constexpr int kMaxBeams = 64;
@@ -88,14 +89,16 @@ inline float flushDenormal(float value) noexcept
 /** Fast approximation of sin using lookup table interpolation */
 inline float fastSin(float angle, const float* sinTable) noexcept
 {
-    // Normalize angle to [0, 2pi]
-    angle = std::fmod(angle, kTwoPi);
-    if (angle < 0.0f) angle += kTwoPi;
+    // OPTIMIZATION: Fast angle normalization to [0, 2pi]
+    float normalized = angle * kInvTwoPi;  // Convert to 0-1 range
+    normalized -= static_cast<float>(static_cast<int>(normalized));  // Fast fmod
+    if (normalized < 0.0f) normalized += 1.0f;
 
-    float indexF = (angle / kTwoPi) * static_cast<float>(kTrigTableSize);
+    float indexF = normalized * static_cast<float>(kTrigTableSize);
     int index0 = static_cast<int>(indexF) & (kTrigTableSize - 1);
     int index1 = (index0 + 1) & (kTrigTableSize - 1);
-    float frac = indexF - std::floor(indexF);
+    // OPTIMIZATION: Fast floor for fractional part
+    float frac = indexF - static_cast<float>(static_cast<int>(indexF));
 
     return sinTable[index0] * (1.0f - frac) + sinTable[index1] * frac;
 }
