@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../Core/DSPOptimizations.h"
 #include <vector>
 
 //==============================================================================
@@ -226,8 +227,8 @@ public:
             float x = bounds.getX() + frequencyToX(frequency, bounds.getWidth());
             float magnitude = spectrumData[i];
 
-            // Convert to dB
-            float db = juce::jlimit(-60.0f, 0.0f, juce::Decibels::gainToDecibels(magnitude + 0.0001f));
+            // Convert to dB using FastMath (~5x faster)
+            float db = juce::jlimit(-60.0f, 0.0f, Echoel::DSP::FastMath::gainToDb(magnitude + 0.0001f));
             float y = bounds.getY() + juce::jmap(db, -60.0f, 0.0f, bounds.getHeight(), 0.0f);
 
             spectrumPath.lineTo(x, y);
@@ -265,7 +266,8 @@ private:
         // Logarithmic frequency scale
         float minFreq = 20.0f;
         float maxFreq = 20000.0f;
-        float normalized = std::log(frequency / minFreq) / std::log(maxFreq / minFreq);
+        // OPTIMIZATION: Use FastMath::fastLog for frequency mapping
+        float normalized = Echoel::DSP::FastMath::fastLog(frequency / minFreq) / Echoel::DSP::FastMath::fastLog(maxFreq / minFreq);
         return normalized * width;
     }
 

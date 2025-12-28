@@ -104,17 +104,14 @@ void BioReactiveDSP::process(juce::AudioBuffer<float>& buffer, float hrv, float 
     // Apply reverb to entire buffer (JUCE 7 API)
     if (reverbMix > 0.01f)
     {
-        // OPTIMIZATION: Reuse pre-allocated buffer (saves ~96MB/sec allocation)
-        // Resize only if necessary (should never happen after prepare())
-        if (reverbBuffer.getNumChannels() < numChannels ||
-            reverbBuffer.getNumSamples() < numSamples)
-        {
-            reverbBuffer.setSize(numChannels, numSamples, false, false, true);
-        }
+        // OPTIMIZATION: No resize in audio thread - use pre-allocated buffer bounds
+        const int safeChannels = juce::jmin(numChannels, reverbBuffer.getNumChannels());
+        const int safeSamples = juce::jmin(numSamples, reverbBuffer.getNumSamples());
+        jassert(safeSamples >= numSamples);  // Buffer should be pre-allocated in prepare()
 
         // Copy dry signal to pre-allocated buffer
-        for (int ch = 0; ch < numChannels; ++ch)
-            reverbBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
+        for (int ch = 0; ch < safeChannels; ++ch)
+            reverbBuffer.copyFrom(ch, 0, buffer, ch, 0, safeSamples);
 
         // Process reverb using JUCE 7 AudioBlock API
         juce::dsp::AudioBlock<float> block(reverbBuffer);
@@ -125,13 +122,13 @@ void BioReactiveDSP::process(juce::AudioBuffer<float>& buffer, float hrv, float 
         float wetLevel = bioReverbMix;
         float dryLevel = 1.0f - wetLevel;
 
-        for (int ch = 0; ch < numChannels; ++ch)
+        for (int ch = 0; ch < safeChannels; ++ch)
         {
             auto* dry = buffer.getReadPointer(ch);
             auto* wet = reverbBuffer.getReadPointer(ch);
             auto* out = buffer.getWritePointer(ch);
 
-            for (int i = 0; i < numSamples; ++i)
+            for (int i = 0; i < safeSamples; ++i)
                 out[i] = dry[i] * dryLevel + wet[i] * wetLevel;
         }
     }

@@ -134,25 +134,26 @@ void VocalChain::process(juce::AudioBuffer<float>& buffer)
         }
     }
 
-    // 6. Reverb (uses pre-allocated buffer)
+    // 6. Reverb (uses pre-allocated buffer from prepare())
     if (reverbEnabled && reverbMix > 0.01f)
     {
-        // Ensure buffer is large enough (resize only if needed)
-        if (reverbBuffer.getNumSamples() < numSamples)
-            reverbBuffer.setSize(numChannels, numSamples, false, false, true);
+        // OPTIMIZATION: No resize in audio thread - use pre-allocated size
+        const int safeNumSamples = juce::jmin(numSamples, reverbBuffer.getNumSamples());
+        const int safeNumChannels = juce::jmin(numChannels, reverbBuffer.getNumChannels());
+        jassert(safeNumSamples >= numSamples);  // Buffer should be pre-allocated large enough
 
-        for (int ch = 0; ch < juce::jmin(numChannels, reverbBuffer.getNumChannels()); ++ch)
-            reverbBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
+        for (int ch = 0; ch < safeNumChannels; ++ch)
+            reverbBuffer.copyFrom(ch, 0, buffer, ch, 0, safeNumSamples);
 
         juce::dsp::AudioBlock<float> block(reverbBuffer.getArrayOfWritePointers(),
-                                           static_cast<size_t>(juce::jmin(numChannels, reverbBuffer.getNumChannels())),
-                                           static_cast<size_t>(numSamples));
+                                           static_cast<size_t>(safeNumChannels),
+                                           static_cast<size_t>(safeNumSamples));
         juce::dsp::ProcessContextReplacing<float> context(block);
         reverb.process(context);
 
         // Mix wet
-        for (int ch = 0; ch < juce::jmin(numChannels, reverbBuffer.getNumChannels()); ++ch)
-            buffer.addFrom(ch, 0, reverbBuffer, ch, 0, numSamples, reverbMix);
+        for (int ch = 0; ch < safeNumChannels; ++ch)
+            buffer.addFrom(ch, 0, reverbBuffer, ch, 0, safeNumSamples, reverbMix);
     }
 
     // 7. Delay

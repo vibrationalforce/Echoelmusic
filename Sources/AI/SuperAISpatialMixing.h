@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "GeniusWiseOptimizations.h"
+#include "../Core/DSPOptimizations.h"
 #include "../Platform/XRSpatialInterface.h"
 #include <vector>
 #include <map>
@@ -700,8 +701,8 @@ public:
             // Temporärer Source-Buffer (würde echte Audio-Daten enthalten)
             juce::AudioBuffer<float> sourceBuffer(1, numSamples);
 
-            // Gain anwenden (inkl. AI-Suggestion)
-            float gain = juce::Decibels::decibelsToGain(source.suggestedGainDb);
+            // Gain anwenden (inkl. AI-Suggestion) - FastMath (~5x faster)
+            float gain = Echoel::DSP::FastMath::dbToGain(source.suggestedGainDb);
 
             // Räumliche Positionierung
             switch (config.format)

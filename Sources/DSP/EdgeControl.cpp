@@ -162,11 +162,15 @@ void EdgeControl::process(juce::AudioBuffer<float>& buffer)
     // Store dry signal for mixing (using pre-allocated buffer - NO ALLOCATION)
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
-    if (dryBuffer.getNumChannels() < numChannels || dryBuffer.getNumSamples() < numSamples)
-        dryBuffer.setSize(numChannels, numSamples, false, false, true);
-    for (int ch = 0; ch < numChannels; ++ch)
+
+    // OPTIMIZATION: No resize in audio thread - use safe bounds
+    const int safeChannels = juce::jmin(numChannels, dryBuffer.getNumChannels());
+    const int safeSamples = juce::jmin(numSamples, dryBuffer.getNumSamples());
+    jassert(safeSamples >= numSamples && safeChannels >= numChannels);  // Buffer should be pre-allocated
+
+    for (int ch = 0; ch < safeChannels; ++ch)
     {
-        dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
+        dryBuffer.copyFrom(ch, 0, buffer, ch, 0, safeSamples);
     }
 
     // Apply input gain
