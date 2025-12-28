@@ -248,12 +248,12 @@ public:
         return (u.i & 0x7F800000) == 0 && (u.i & 0x007FFFFF) != 0;
     }
 
-    // Flush entire buffer
+    // Flush entire buffer (use ScopedNoDenormals for better performance)
     static void flushBuffer(float* buffer, int numSamples) noexcept {
+        // SIMD-friendly: add then subtract tiny DC offset using JUCE
         constexpr float DC = 1e-25f;
-        for (int i = 0; i < numSamples; ++i) {
-            buffer[i] = buffer[i] + DC - DC;
-        }
+        juce::FloatVectorOperations::add(buffer, DC, numSamples);
+        juce::FloatVectorOperations::add(buffer, -DC, numSamples);
     }
 
     // RAII class for CPU denormal mode
@@ -328,13 +328,29 @@ public:
         return std::max(std::abs(range.getStart()), std::abs(range.getEnd()));
     }
 
-    // Calculate RMS
+    // Calculate RMS (optimized with loop unrolling and fast sqrt)
     static float calculateRMS(const float* buffer, int numSamples) noexcept {
-        float sumSquares = 0.0f;
-        for (int i = 0; i < numSamples; ++i) {
+        if (numSamples <= 0) return 0.0f;
+
+        float sum0 = 0.0f, sum1 = 0.0f, sum2 = 0.0f, sum3 = 0.0f;
+        int i = 0;
+
+        // Process 4 samples at a time (loop unrolling)
+        const int unrollEnd = numSamples - 3;
+        for (; i < unrollEnd; i += 4) {
+            sum0 += buffer[i] * buffer[i];
+            sum1 += buffer[i + 1] * buffer[i + 1];
+            sum2 += buffer[i + 2] * buffer[i + 2];
+            sum3 += buffer[i + 3] * buffer[i + 3];
+        }
+
+        // Process remaining samples
+        float sumSquares = sum0 + sum1 + sum2 + sum3;
+        for (; i < numSamples; ++i) {
             sumSquares += buffer[i] * buffer[i];
         }
-        return std::sqrt(sumSquares / numSamples);
+
+        return FastMath::fastSqrt(sumSquares / static_cast<float>(numSamples));
     }
 
     // Apply gain ramp (for click-free gain changes)

@@ -647,7 +647,7 @@ int SuperLaserScan::renderTunnel(const laser::BeamConfig& beam, laser::ILDAPoint
     for (int ring = 0; ring < numRings && pointIdx < maxPoints; ++ring)
     {
         float z = (static_cast<float>(ring) / numRings) - 0.5f;
-        float radius = beam.size * (1.0f - std::abs(z)) * (0.5f + 0.5f * std::cos(beam.phase * 2.0f + z * laser::kPi));
+        float radius = beam.size * (1.0f - std::abs(z)) * (0.5f + 0.5f * laser::fastCos(beam.phase * 2.0f + z * laser::kPi, sinTable_.data()));
 
         for (int p = 0; p < pointsPerRing && pointIdx < maxPoints; ++p)
         {
@@ -746,11 +746,12 @@ int SuperLaserScan::renderHelix(const laser::BeamConfig& beam, laser::ILDAPoint*
         float x = beam.x + laser::fastCos(angle, sinTable_.data()) * radius;
         float y = beam.y + laser::fastSin(angle, sinTable_.data()) * radius;
 
-        // Color based on height
+        // Color based on height (using fast sin for rainbow)
         float hue = t;
-        uint8_t r_val = static_cast<uint8_t>((0.5f + 0.5f * std::sin(hue * laser::kTwoPi)) * beam.brightness * 255.0f);
-        uint8_t g_val = static_cast<uint8_t>((0.5f + 0.5f * std::sin(hue * laser::kTwoPi + 2.094f)) * beam.brightness * 255.0f);
-        uint8_t b_val = static_cast<uint8_t>((0.5f + 0.5f * std::sin(hue * laser::kTwoPi + 4.188f)) * beam.brightness * 255.0f);
+        float hueAngle = hue * laser::kTwoPi;
+        uint8_t r_val = static_cast<uint8_t>((0.5f + 0.5f * laser::fastSin(hueAngle, sinTable_.data())) * beam.brightness * 255.0f);
+        uint8_t g_val = static_cast<uint8_t>((0.5f + 0.5f * laser::fastSin(hueAngle + 2.094f, sinTable_.data())) * beam.brightness * 255.0f);
+        uint8_t b_val = static_cast<uint8_t>((0.5f + 0.5f * laser::fastSin(hueAngle + 4.188f, sinTable_.data())) * beam.brightness * 255.0f);
 
         outPoints[i].x = static_cast<int16_t>(laser::clamp(x, -1.0f, 1.0f) * 32767.0f);
         outPoints[i].y = static_cast<int16_t>(laser::clamp(y, -1.0f, 1.0f) * 32767.0f);
@@ -1510,13 +1511,13 @@ void SuperLaserScan::renderCircleSIMD_SSE2(const laser::BeamConfig& beam, laser:
         // Simple cos/sin approximation
         __m128 vCos, vSin;
 
-        // For now, use scalar sin/cos (full SIMD trig would need more code)
+        // Use fast lookup table sin/cos (SIMD trig would need more code)
         float angles[4], cosVals[4], sinVals[4];
         _mm_storeu_ps(angles, vAngle);
         for (int j = 0; j < 4; ++j)
         {
-            cosVals[j] = std::cos(angles[j]);
-            sinVals[j] = std::sin(angles[j]);
+            cosVals[j] = laser::fastCos(angles[j], sinTable_.data());
+            sinVals[j] = laser::fastSin(angles[j], sinTable_.data());
         }
         vCos = _mm_loadu_ps(cosVals);
         vSin = _mm_loadu_ps(sinVals);
@@ -1541,13 +1542,13 @@ void SuperLaserScan::renderCircleSIMD_SSE2(const laser::BeamConfig& beam, laser:
         }
     }
 
-    // Handle remaining points
+    // Handle remaining points (using fast lookup)
     for (int i = (numPoints / 4) * 4; i < numPoints; ++i)
     {
         float t = static_cast<float>(i) * invNumPoints;
         float angle = t * laser::kTwoPi + rotation;
-        float x = beam.x + std::cos(angle) * beam.size;
-        float y = beam.y + std::sin(angle) * beam.size;
+        float x = beam.x + laser::fastCos(angle, sinTable_.data()) * beam.size;
+        float y = beam.y + laser::fastSin(angle, sinTable_.data()) * beam.size;
 
         outPoints[i].x = static_cast<int16_t>(laser::clamp(x, -1.0f, 1.0f) * 32767.0f);
         outPoints[i].y = static_cast<int16_t>(laser::clamp(y, -1.0f, 1.0f) * 32767.0f);
@@ -1587,8 +1588,8 @@ void SuperLaserScan::renderCircleSIMD_AVX2(const laser::BeamConfig& beam, laser:
         _mm256_storeu_ps(angles, vAngle);
         for (int j = 0; j < 8; ++j)
         {
-            cosVals[j] = std::cos(angles[j]);
-            sinVals[j] = std::sin(angles[j]);
+            cosVals[j] = laser::fastCos(angles[j], sinTable_.data());
+            sinVals[j] = laser::fastSin(angles[j], sinTable_.data());
         }
 
         __m256 vCos = _mm256_loadu_ps(cosVals);
@@ -1612,13 +1613,13 @@ void SuperLaserScan::renderCircleSIMD_AVX2(const laser::BeamConfig& beam, laser:
         }
     }
 
-    // Handle remaining points
+    // Handle remaining points (using fast lookup)
     for (int i = (numPoints / 8) * 8; i < numPoints; ++i)
     {
         float t = static_cast<float>(i) * invNumPoints;
         float angle = t * laser::kTwoPi + rotation;
-        float x = beam.x + std::cos(angle) * beam.size;
-        float y = beam.y + std::sin(angle) * beam.size;
+        float x = beam.x + laser::fastCos(angle, sinTable_.data()) * beam.size;
+        float y = beam.y + laser::fastSin(angle, sinTable_.data()) * beam.size;
 
         outPoints[i].x = static_cast<int16_t>(laser::clamp(x, -1.0f, 1.0f) * 32767.0f);
         outPoints[i].y = static_cast<int16_t>(laser::clamp(y, -1.0f, 1.0f) * 32767.0f);
@@ -1681,13 +1682,13 @@ void SuperLaserScan::renderCircleSIMD_NEON(const laser::BeamConfig& beam, laser:
         }
     }
 
-    // Handle remaining points
+    // Handle remaining points (using fast lookup)
     for (int i = (numPoints / 4) * 4; i < numPoints; ++i)
     {
         float t = static_cast<float>(i) * invNumPoints;
         float angle = t * laser::kTwoPi + rotation;
-        float x = beam.x + std::cos(angle) * beam.size;
-        float y = beam.y + std::sin(angle) * beam.size;
+        float x = beam.x + laser::fastCos(angle, sinTable_.data()) * beam.size;
+        float y = beam.y + laser::fastSin(angle, sinTable_.data()) * beam.size;
 
         outPoints[i].x = static_cast<int16_t>(laser::clamp(x, -1.0f, 1.0f) * 32767.0f);
         outPoints[i].y = static_cast<int16_t>(laser::clamp(y, -1.0f, 1.0f) * 32767.0f);
@@ -1698,8 +1699,8 @@ void SuperLaserScan::renderCircleSIMD_NEON(const laser::BeamConfig& beam, laser:
 
 void SuperLaserScan::transformPointsSIMD(laser::ILDAPoint* points, int numPoints, float xOffset, float yOffset, float scale, float rotation)
 {
-    float cosR = std::cos(rotation);
-    float sinR = std::sin(rotation);
+    float cosR = laser::fastCos(rotation, sinTable_.data());
+    float sinR = laser::fastSin(rotation, sinTable_.data());
 
     for (int i = 0; i < numPoints; ++i)
     {

@@ -78,12 +78,15 @@ void MultibandCompressor::process(juce::AudioBuffer<float>& buffer)
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
-    // Ensure pre-allocated buffers are large enough (only resize if needed)
-    if (bandBuffers[0].size() < static_cast<size_t>(numSamples))
+    // OPTIMIZATION: Skip resize check - buffers pre-allocated in prepare()
+    // If block size exceeds allocation, limit processing (avoid allocation in audio thread)
+    const int safeSamples = juce::jmin(numSamples, static_cast<int>(bandBuffers[0].size()));
+    if (safeSamples < numSamples)
     {
-        for (auto& buf : bandBuffers)
-            buf.resize(numSamples);
+        // Buffer overflow - process what we can safely
+        jassertfalse;  // Debug warning: prepare() was called with too small block size
     }
+    const int processSize = safeSamples;
 
     // Process each channel independently
     for (int channel = 0; channel < numChannels && channel < 2; ++channel)
@@ -102,7 +105,7 @@ void MultibandCompressor::process(juce::AudioBuffer<float>& buffer)
 
         // 3. Sum bands back together
         float* channelData = buffer.getWritePointer(channel);
-        sumBands(bandBuffers, channelData, numSamples);
+        sumBands(bandBuffers, channelData, processSize);
     }
 }
 

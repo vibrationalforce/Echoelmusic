@@ -50,6 +50,7 @@ void SpatialForge::setSpatialFormat(SpatialFormat format)
     spatialFormat = format;
 
     speakers.clear();
+    speakers.reserve(16);  // Pre-allocate for max channels (Atmos 9.1.6)
 
     DBG("SpatialForge: Spatial format set to " << (int)format);
 
