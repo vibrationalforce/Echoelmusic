@@ -1,4 +1,5 @@
 #include "ResonanceHealer.h"
+#include "../Core/DSPOptimizations.h"
 #include <cmath>
 
 //==============================================================================
@@ -560,23 +561,34 @@ void ResonanceHealer::process(juce::AudioBuffer<float>& buffer)
 
 void ResonanceHealer::generateTone(juce::AudioBuffer<float>& buffer, float frequency, float amplitude)
 {
-    int numSamples = buffer.getNumSamples();
-    int numChannels = buffer.getNumChannels();
+    const int numSamples = buffer.getNumSamples();
+    const int numChannels = buffer.getNumChannels();
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
 
-    double phaseIncrement = TWO_PI * frequency / currentSampleRate;
+    // Phase increment normalized to 0-1 range for lookup table
+    const double phaseIncrement = static_cast<double>(frequency) / currentSampleRate;
+
+    // Get write pointers for all channels (avoid per-sample function calls)
+    float* channelPtrs[2] = { nullptr, nullptr };
+    for (int ch = 0; ch < numChannels && ch < 2; ++ch) {
+        channelPtrs[ch] = buffer.getWritePointer(ch);
+    }
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
-        float value = static_cast<float>(std::sin(oscillatorPhases[0]) * amplitude);
+        // Fast sine lookup (phase is 0-1 normalized)
+        float normalizedPhase = static_cast<float>(oscillatorPhases[0]);
+        float value = trigTables.fastSin(normalizedPhase) * amplitude;
 
-        for (int channel = 0; channel < numChannels; ++channel)
+        // Write to all channels using cached pointers
+        for (int channel = 0; channel < numChannels && channel < 2; ++channel)
         {
-            buffer.setSample(channel, sample, value);
+            channelPtrs[channel][sample] = value;
         }
 
         oscillatorPhases[0] += phaseIncrement;
-        if (oscillatorPhases[0] >= TWO_PI)
-            oscillatorPhases[0] -= TWO_PI;
+        if (oscillatorPhases[0] >= 1.0)
+            oscillatorPhases[0] -= 1.0;
     }
 }
 
@@ -589,58 +601,68 @@ void ResonanceHealer::generateBinauralBeat(juce::AudioBuffer<float>& buffer, flo
         return;
     }
 
-    int numSamples = buffer.getNumSamples();
+    const int numSamples = buffer.getNumSamples();
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
 
     // Left ear: carrier frequency
-    float leftFreq = carrierFreq;
     // Right ear: carrier + beat frequency
-    float rightFreq = carrierFreq + beatFreq;
+    // Phase increments normalized to 0-1 range
+    const double leftPhaseIncrement = static_cast<double>(carrierFreq) / currentSampleRate;
+    const double rightPhaseIncrement = static_cast<double>(carrierFreq + beatFreq) / currentSampleRate;
 
-    double leftPhaseIncrement = TWO_PI * leftFreq / currentSampleRate;
-    double rightPhaseIncrement = TWO_PI * rightFreq / currentSampleRate;
+    // Get write pointers (avoid per-sample function calls)
+    float* leftChannel = buffer.getWritePointer(0);
+    float* rightChannel = buffer.getWritePointer(1);
+    const float amp = currentProgram.amplitude;
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
-        // Left channel
-        float leftValue = static_cast<float>(std::sin(oscillatorPhases[0]) * currentProgram.amplitude);
-        buffer.setSample(0, sample, leftValue);
+        // Left channel - fast sine lookup
+        leftChannel[sample] = trigTables.fastSin(static_cast<float>(oscillatorPhases[0])) * amp;
 
-        // Right channel
-        float rightValue = static_cast<float>(std::sin(oscillatorPhases[1]) * currentProgram.amplitude);
-        buffer.setSample(1, sample, rightValue);
+        // Right channel - fast sine lookup
+        rightChannel[sample] = trigTables.fastSin(static_cast<float>(oscillatorPhases[1])) * amp;
 
         oscillatorPhases[0] += leftPhaseIncrement;
         oscillatorPhases[1] += rightPhaseIncrement;
 
-        if (oscillatorPhases[0] >= TWO_PI)
-            oscillatorPhases[0] -= TWO_PI;
-        if (oscillatorPhases[1] >= TWO_PI)
-            oscillatorPhases[1] -= TWO_PI;
+        if (oscillatorPhases[0] >= 1.0)
+            oscillatorPhases[0] -= 1.0;
+        if (oscillatorPhases[1] >= 1.0)
+            oscillatorPhases[1] -= 1.0;
     }
 }
 
 void ResonanceHealer::applyAmplitudeModulation(juce::AudioBuffer<float>& buffer, float modFreq)
 {
-    int numSamples = buffer.getNumSamples();
-    int numChannels = buffer.getNumChannels();
+    const int numSamples = buffer.getNumSamples();
+    const int numChannels = buffer.getNumChannels();
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
 
-    double modPhaseIncrement = TWO_PI * modFreq / currentSampleRate;
+    // Phase increment normalized to 0-1 range
+    const double modPhaseIncrement = static_cast<double>(modFreq) / currentSampleRate;
     static double modPhase = 0.0;
+
+    // Get write pointers for all channels
+    float* channelPtrs[2] = { nullptr, nullptr };
+    for (int ch = 0; ch < numChannels && ch < 2; ++ch) {
+        channelPtrs[ch] = buffer.getWritePointer(ch);
+    }
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
-        // Modulation envelope (0.5 to 1.0 for gentle breathing effect)
-        float modulation = 0.5f + 0.5f * static_cast<float>(std::sin(modPhase));
+        // Modulation envelope (0.5 to 1.0 for gentle breathing effect) - fast sine lookup
+        float modulation = 0.5f + 0.5f * trigTables.fastSin(static_cast<float>(modPhase));
 
-        for (int channel = 0; channel < numChannels; ++channel)
+        // Apply modulation using cached pointers
+        for (int channel = 0; channel < numChannels && channel < 2; ++channel)
         {
-            float currentValue = buffer.getSample(channel, sample);
-            buffer.setSample(channel, sample, currentValue * modulation);
+            channelPtrs[channel][sample] *= modulation;
         }
 
         modPhase += modPhaseIncrement;
-        if (modPhase >= TWO_PI)
-            modPhase -= TWO_PI;
+        if (modPhase >= 1.0)
+            modPhase -= 1.0;
     }
 }
 

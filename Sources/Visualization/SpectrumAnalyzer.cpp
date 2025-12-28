@@ -1,4 +1,36 @@
 #include "SpectrumAnalyzer.h"
+#include "../Core/DSPOptimizations.h"
+
+//==============================================================================
+// Pre-computed frequency bin lookup table
+//==============================================================================
+namespace {
+    // Pre-compute logarithmic frequency bins once at startup
+    struct FrequencyBinLUT {
+        static constexpr int NUM_BINS = 128;
+        std::array<int, NUM_BINS> minFFTBin;
+        std::array<int, NUM_BINS> maxFFTBin;
+
+        FrequencyBinLUT() {
+            constexpr float sampleRate = 44100.0f;
+            constexpr int fftSize = 2048;
+            constexpr float binWidth = sampleRate / fftSize;
+
+            for (int bin = 0; bin < NUM_BINS; ++bin) {
+                // Pre-compute: 20 * 1000^(bin/numBins) using FastMath
+                float minFreq = 20.0f * Echoel::DSP::FastMath::fastPow(1000.0f, static_cast<float>(bin) / NUM_BINS);
+                float maxFreq = 20.0f * Echoel::DSP::FastMath::fastPow(1000.0f, static_cast<float>(bin + 1) / NUM_BINS);
+                minFFTBin[bin] = static_cast<int>(minFreq / binWidth);
+                maxFFTBin[bin] = static_cast<int>(maxFreq / binWidth);
+            }
+        }
+
+        static const FrequencyBinLUT& getInstance() {
+            static FrequencyBinLUT instance;
+            return instance;
+        }
+    };
+}
 
 //==============================================================================
 // Constructor / Destructor
@@ -12,6 +44,9 @@ SpectrumAnalyzer::SpectrumAnalyzer()
     peakBins.fill (0.0f);
     peakHoldTimers.fill (0);
     fftData.fill (0.0f);
+
+    // Pre-warm the frequency bin LUT
+    (void)FrequencyBinLUT::getInstance();
 
     startTimer (30); // ~30 FPS for display updates
 }
@@ -90,18 +125,14 @@ void SpectrumAnalyzer::processAudioBuffer (const juce::AudioBuffer<float>& buffe
             window.multiplyWithWindowingTable (fftData.data(), fftSize);
             fft.performFrequencyOnlyForwardTransform (fftData.data());
 
-            // Convert FFT data to spectrum bins (logarithmic grouping)
-            const float sampleRate = 44100.0f; // Default, should be passed in
-            const float binWidth = sampleRate / fftSize;
+            // Convert FFT data to spectrum bins using pre-computed LUT
+            const auto& binLUT = FrequencyBinLUT::getInstance();
 
             for (int bin = 0; bin < numBins; ++bin)
             {
-                // Logarithmic frequency mapping (20Hz to 20kHz)
-                float minFreq = 20.0f * std::pow (1000.0f, (float)bin / numBins);
-                float maxFreq = 20.0f * std::pow (1000.0f, (float)(bin + 1) / numBins);
-
-                int minFFTBin = (int)(minFreq / binWidth);
-                int maxFFTBin = (int)(maxFreq / binWidth);
+                // Use pre-computed frequency bin mapping (avoids std::pow per-frame)
+                const int minFFTBin = binLUT.minFFTBin[bin];
+                const int maxFFTBin = binLUT.maxFFTBin[bin];
 
                 // Average magnitude in frequency range
                 float sum = 0.0f;
@@ -117,8 +148,8 @@ void SpectrumAnalyzer::processAudioBuffer (const juce::AudioBuffer<float>& buffe
                 {
                     float avgMagnitude = sum / count;
 
-                    // Convert to dB scale
-                    float db = juce::Decibels::gainToDecibels (avgMagnitude + 0.001f);
+                    // Convert to dB scale using FastMath (~5x faster)
+                    float db = Echoel::DSP::FastMath::gainToDb(avgMagnitude + 0.001f);
 
                     // Normalize to 0.0 to 1.0 range (-60dB to 0dB)
                     spectrumBins[bin] = juce::jmap (db, -60.0f, 0.0f, 0.0f, 1.0f);
@@ -253,11 +284,15 @@ void SpectrumAnalyzer::drawGrid (juce::Graphics& g)
     // Vertical grid lines (frequency markers)
     const std::array<float, 7> freqMarkers = {20.0f, 50.0f, 100.0f, 500.0f, 1000.0f, 5000.0f, 10000.0f};
 
+    // Pre-computed log constants for frequency markers
+    constexpr float INV_LOG_1000 = 0.14476482730108396f;  // 1/log(1000)
+    constexpr float LOG_20 = 2.995732273553991f;          // log(20)
+
     for (float freq : freqMarkers)
     {
-        // Find bin corresponding to frequency
-        float normalizedFreq = std::log (freq / 20.0f) / std::log (1000.0f);
-        int bin = (int)(normalizedFreq * numBins);
+        // Find bin corresponding to frequency using fast log
+        float normalizedFreq = (Echoel::DSP::FastMath::fastLog(freq) - LOG_20) * INV_LOG_1000;
+        int bin = static_cast<int>(normalizedFreq * numBins);
 
         if (bin >= 0 && bin < numBins)
         {
@@ -295,8 +330,8 @@ void SpectrumAnalyzer::drawLabels (juce::Graphics& g)
 
 float SpectrumAnalyzer::binToFrequency (int bin) const
 {
-    // Logarithmic frequency mapping (20Hz to 20kHz)
-    return 20.0f * std::pow (1000.0f, (float)bin / numBins);
+    // Logarithmic frequency mapping (20Hz to 20kHz) using FastMath
+    return 20.0f * Echoel::DSP::FastMath::fastPow(1000.0f, static_cast<float>(bin) / numBins);
 }
 
 juce::String SpectrumAnalyzer::formatFrequency (float freq) const

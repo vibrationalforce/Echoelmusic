@@ -1,4 +1,5 @@
 #include "DrumSynthesizer.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -152,8 +153,8 @@ float DrumSynthesizer::processSample()
         }
     }
 
-    // Soft clip
-    output = std::tanh(output * 0.5f);
+    // Soft clip using FastMath (~5x faster)
+    output = Echoel::DSP::FastMath::fastTanh(output * 0.5f);
 
     return output;
 }
@@ -238,27 +239,28 @@ float DrumSynthesizer::synthesizeVoice(Voice& voice)
 
 float DrumSynthesizer::synthesizeKick(Voice& voice)
 {
-    // Envelope decay
-    const float decayRate = std::exp(-10.0f * voice.params.decay / static_cast<float>(currentSampleRate));
+    // Envelope decay using FastMath (~5x faster)
+    const float decayRate = Echoel::DSP::FastMath::fastExp(-10.0f * voice.params.decay / static_cast<float>(currentSampleRate));
     voice.envelope *= decayRate;
 
     // Pitch envelope (starts high, drops to base pitch)
-    const float pitchDecayRate = std::exp(-20.0f * voice.params.kickPitchDecay / static_cast<float>(currentSampleRate));
+    const float pitchDecayRate = Echoel::DSP::FastMath::fastExp(-20.0f * voice.params.kickPitchDecay / static_cast<float>(currentSampleRate));
     voice.pitchEnvelope *= pitchDecayRate;
 
-    // Base frequency (typically 50-60 Hz)
-    const float baseFreq = 55.0f * std::pow(2.0f, voice.params.pitch / 12.0f);
+    // Base frequency (typically 50-60 Hz) using FastMath
+    const float baseFreq = 55.0f * Echoel::DSP::FastMath::fastPow(2.0f, voice.params.pitch / 12.0f);
 
     // Modulate frequency with pitch envelope
     const float currentFreq = baseFreq * (1.0f + voice.pitchEnvelope * 4.0f * voice.params.kickPitchDecay);
 
-    // Generate sine wave
+    // Generate sine wave using fast lookup table
     const float phaseIncrement = currentFreq / static_cast<float>(currentSampleRate);
     voice.osc1Phase += phaseIncrement;
     if (voice.osc1Phase >= 1.0f)
         voice.osc1Phase -= 1.0f;
 
-    float output = std::sin(voice.osc1Phase * juce::MathConstants<float>::twoPi);
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    float output = trigTables.fastSin(voice.osc1Phase);
 
     // Add click (high-frequency transient)
     if (voice.envelope > 0.9f)
@@ -270,8 +272,8 @@ float DrumSynthesizer::synthesizeKick(Voice& voice)
     // Apply envelope
     output *= voice.envelope * voice.velocity;
 
-    // Soft saturation (808 character)
-    output = std::tanh(output * (1.0f + voice.params.tone));
+    // Soft saturation (808 character) using FastMath
+    output = Echoel::DSP::FastMath::fastTanh(output * (1.0f + voice.params.tone));
 
     return output * 0.8f;
 }
@@ -282,12 +284,12 @@ float DrumSynthesizer::synthesizeKick(Voice& voice)
 
 float DrumSynthesizer::synthesizeSnare(Voice& voice)
 {
-    // Envelope decay
-    const float decayRate = std::exp(-12.0f * voice.params.decay / static_cast<float>(currentSampleRate));
+    // Envelope decay using FastMath
+    const float decayRate = Echoel::DSP::FastMath::fastExp(-12.0f * voice.params.decay / static_cast<float>(currentSampleRate));
     voice.envelope *= decayRate;
 
     // Body (tonal component - filtered triangle wave around 180Hz)
-    const float bodyFreq = 180.0f * std::pow(2.0f, voice.params.pitch / 12.0f);
+    const float bodyFreq = 180.0f * Echoel::DSP::FastMath::fastPow(2.0f, voice.params.pitch / 12.0f);
     const float phaseIncrement = bodyFreq / static_cast<float>(currentSampleRate);
     voice.osc1Phase += phaseIncrement;
     if (voice.osc1Phase >= 1.0f)
@@ -325,9 +327,9 @@ float DrumSynthesizer::synthesizeSnare(Voice& voice)
 
 float DrumSynthesizer::synthesizeHiHat(Voice& voice, bool open)
 {
-    // Envelope decay (faster for closed, slower for open)
+    // Envelope decay (faster for closed, slower for open) using FastMath
     const float decayTime = open ? voice.params.hiHatDecay : voice.params.decay;
-    const float decayRate = std::exp(-15.0f * decayTime / static_cast<float>(currentSampleRate));
+    const float decayRate = Echoel::DSP::FastMath::fastExp(-15.0f * decayTime / static_cast<float>(currentSampleRate));
     voice.envelope *= decayRate;
 
     // Generate metallic noise (sum of square waves at inharmonic ratios)
@@ -362,28 +364,29 @@ float DrumSynthesizer::synthesizeHiHat(Voice& voice, bool open)
 
 float DrumSynthesizer::synthesizeTom(Voice& voice)
 {
-    // Envelope decay
-    const float decayRate = std::exp(-8.0f * voice.params.decay / static_cast<float>(currentSampleRate));
+    // Envelope decay using FastMath
+    const float decayRate = Echoel::DSP::FastMath::fastExp(-8.0f * voice.params.decay / static_cast<float>(currentSampleRate));
     voice.envelope *= decayRate;
 
     // Pitch envelope (subtle)
     const float pitchDecayRate = 0.998f;
     voice.pitchEnvelope *= pitchDecayRate;
 
-    // Base frequency depends on tom type
+    // Base frequency depends on tom type using FastMath
     float baseFreq = 100.0f;  // Will be adjusted based on drumType
-    baseFreq *= std::pow(2.0f, voice.params.pitch / 12.0f);
+    baseFreq *= Echoel::DSP::FastMath::fastPow(2.0f, voice.params.pitch / 12.0f);
 
     // Modulate with pitch envelope
     const float currentFreq = baseFreq * (1.0f + voice.pitchEnvelope * 0.5f);
 
-    // Generate sine wave
+    // Generate sine wave using fast lookup
     const float phaseIncrement = currentFreq / static_cast<float>(currentSampleRate);
     voice.osc1Phase += phaseIncrement;
     if (voice.osc1Phase >= 1.0f)
         voice.osc1Phase -= 1.0f;
 
-    float output = std::sin(voice.osc1Phase * juce::MathConstants<float>::twoPi);
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    float output = trigTables.fastSin(voice.osc1Phase);
 
     // Apply envelope
     output *= voice.envelope * voice.velocity;
@@ -446,8 +449,9 @@ float DrumSynthesizer::synthesizeCowbell(Voice& voice)
     voice.envelope *= decayRate;
 
     // Two square wave oscillators at specific ratio (808 cowbell frequencies)
-    const float freq1 = 540.0f * std::pow(2.0f, voice.params.pitch / 12.0f);
-    const float freq2 = 800.0f * std::pow(2.0f, voice.params.pitch / 12.0f);
+    const float pitchMult = Echoel::DSP::FastMath::fastPow(2.0f, voice.params.pitch / 12.0f);
+    const float freq1 = 540.0f * pitchMult;
+    const float freq2 = 800.0f * pitchMult;
 
     // Oscillator 1
     voice.osc1Phase += freq1 / static_cast<float>(currentSampleRate);
@@ -483,13 +487,14 @@ float DrumSynthesizer::synthesizeRimShot(Voice& voice)
     const float decayRate = 0.992f;
     voice.envelope *= decayRate;
 
-    // High-frequency oscillator (2-4 kHz)
-    const float freq = 3000.0f * std::pow(2.0f, voice.params.pitch / 12.0f);
+    // High-frequency oscillator (2-4 kHz) using FastMath
+    const float freq = 3000.0f * Echoel::DSP::FastMath::fastPow(2.0f, voice.params.pitch / 12.0f);
     voice.osc1Phase += freq / static_cast<float>(currentSampleRate);
     if (voice.osc1Phase >= 1.0f)
         voice.osc1Phase -= 1.0f;
 
-    float output = std::sin(voice.osc1Phase * juce::MathConstants<float>::twoPi);
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    float output = trigTables.fastSin(voice.osc1Phase);
 
     // Add noise click
     output += generateNoise() * 0.3f;
@@ -506,9 +511,9 @@ float DrumSynthesizer::synthesizeRimShot(Voice& voice)
 
 float DrumSynthesizer::synthesizeCymbal(Voice& voice, bool crash)
 {
-    // Envelope decay (longer for crash, shorter for ride)
+    // Envelope decay (longer for crash, shorter for ride) using FastMath
     const float decayTime = crash ? 2.0f : 0.5f;
-    const float decayRate = std::exp(-1.0f * decayTime / static_cast<float>(currentSampleRate));
+    const float decayRate = Echoel::DSP::FastMath::fastExp(-1.0f * decayTime / static_cast<float>(currentSampleRate));
     voice.envelope *= decayRate;
 
     // Complex metallic sound (multiple inharmonic oscillators)
@@ -549,10 +554,11 @@ float DrumSynthesizer::generateNoise()
 
 float DrumSynthesizer::applyBiquadFilter(float input, Voice& voice, float cutoff, float resonance)
 {
-    // Biquad band-pass or low-pass filter
+    // Biquad band-pass or low-pass filter using fast trig
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     const float omega = juce::MathConstants<float>::twoPi * cutoff / static_cast<float>(currentSampleRate);
-    const float sinOmega = std::sin(omega);
-    const float cosOmega = std::cos(omega);
+    const float sinOmega = trigTables.fastSinRad(omega);
+    const float cosOmega = trigTables.fastCosRad(omega);
     const float alpha = sinOmega / (2.0f * resonance);
 
     // Low-pass coefficients

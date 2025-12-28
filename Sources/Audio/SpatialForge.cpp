@@ -1,4 +1,5 @@
 #include "SpatialForge.h"
+#include "../Core/DSPOptimizations.h"
 #include <cmath>
 
 //==============================================================================
@@ -413,9 +414,9 @@ void SpatialForge::applyHRTF(const AudioObject& object, juce::AudioBuffer<float>
     // This would involve rotating the vector by listener yaw/pitch/roll
     // For now, simplified calculation
 
-    float azimuth = std::atan2(dx, dy);  // Horizontal angle
-    float distance = std::sqrt(dx*dx + dy*dy);
-    float elevation = std::atan2(dz, distance);  // Vertical angle
+    float azimuth = Echoel::DSP::FastMath::fastAtan(dx / (dy + 1e-10f));  // Horizontal angle
+    float distance = Echoel::DSP::FastMath::fastSqrt(dx*dx + dy*dy);
+    float elevation = Echoel::DSP::FastMath::fastAtan(dz / (distance + 1e-10f));  // Vertical angle
 
     // Adjust for head tracking
     if (headTrackingEnabled)
@@ -431,12 +432,13 @@ void SpatialForge::applyHRTF(const AudioObject& object, juce::AudioBuffer<float>
     // 3. Add ITD (Interaural Time Difference)
     // 4. Add ILD (Interaural Level Difference)
 
-    // Simplified implementation: Pan based on azimuth
-    float leftGain = 0.5f * (1.0f - std::sin(azimuth));
-    float rightGain = 0.5f * (1.0f + std::sin(azimuth));
+    // Simplified implementation: Pan based on azimuth using fast trig
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    float leftGain = 0.5f * (1.0f - trigTables.fastSinRad(azimuth));
+    float rightGain = 0.5f * (1.0f + trigTables.fastSinRad(azimuth));
 
     // Apply elevation (reduces overall gain for high elevations)
-    float elevationFactor = std::cos(elevation);
+    float elevationFactor = trigTables.fastCosRad(elevation);
     leftGain *= elevationFactor;
     rightGain *= elevationFactor;
 
@@ -462,7 +464,7 @@ void SpatialForge::applyDistanceAttenuation(AudioObject& object)
     float dy = object.y - listenerY;
     float dz = object.z - listenerZ;
 
-    float distance = std::sqrt(dx*dx + dy*dy + dz*dz);
+    float distance = Echoel::DSP::FastMath::fastSqrt(dx*dx + dy*dy + dz*dz);
 
     // Inverse square law (with minimum distance to avoid division by zero)
     float minDistance = 0.1f;
@@ -482,7 +484,7 @@ void SpatialForge::applyDopplerEffect(AudioObject& object)
     float vy = object.velocityY;
     float vz = object.velocityZ;
 
-    float velocity = std::sqrt(vx*vx + vy*vy + vz*vz);
+    float velocity = Echoel::DSP::FastMath::fastSqrt(vx*vx + vy*vy + vz*vz);
 
     if (velocity < 0.1f)
         return;  // No significant Doppler
@@ -491,7 +493,7 @@ void SpatialForge::applyDopplerEffect(AudioObject& object)
     float dx = object.x - listenerX;
     float dy = object.y - listenerY;
     float dz = object.z - listenerZ;
-    float distance = std::sqrt(dx*dx + dy*dy + dz*dz);
+    float distance = Echoel::DSP::FastMath::fastSqrt(dx*dx + dy*dy + dz*dz);
 
     if (distance < 0.01f)
         return;
@@ -522,9 +524,9 @@ void SpatialForge::renderToSpeakers(const AudioObject& object, juce::AudioBuffer
     float dy = object.y - listenerY;
     float dz = object.z - listenerZ;
 
-    float objAzimuth = std::atan2(dx, dy);
-    float distance = std::sqrt(dx*dx + dy*dy);
-    float objElevation = std::atan2(dz, distance);
+    float objAzimuth = Echoel::DSP::FastMath::fastAtan(dx / (dy + 1e-10f));
+    float distance = Echoel::DSP::FastMath::fastSqrt(dx*dx + dy*dy);
+    float objElevation = Echoel::DSP::FastMath::fastAtan(dz / (distance + 1e-10f));
 
     // Vector Base Amplitude Panning (VBAP)
     // Find closest speaker pair/triplet and pan between them
@@ -545,8 +547,8 @@ void SpatialForge::renderToSpeakers(const AudioObject& object, juce::AudioBuffer
         while (azimuthDiff > PI) azimuthDiff -= TWO_PI;
         while (azimuthDiff < -PI) azimuthDiff += TWO_PI;
 
-        // Calculate angular distance
-        float angularDistance = std::sqrt(azimuthDiff*azimuthDiff +
+        // Calculate angular distance using FastMath
+        float angularDistance = Echoel::DSP::FastMath::fastSqrt(azimuthDiff*azimuthDiff +
                                          elevationDiff*elevationDiff);
 
         // Speaker gain (inverse of angular distance)
@@ -556,7 +558,8 @@ void SpatialForge::renderToSpeakers(const AudioObject& object, juce::AudioBuffer
 
         if (angularDistance < maxAngle)
         {
-            gain = std::cos(angularDistance * PI / (2.0f * maxAngle));
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+            gain = trigTables.fastCosRad(angularDistance * PI / (2.0f * maxAngle));
             gain *= gain;  // Square for better localization
         }
 
@@ -587,7 +590,7 @@ void SpatialForge::encodeAmbisonics(const AudioObject& object,
     float dy = object.y - listenerY;
     float dz = object.z - listenerZ;
 
-    float distance = std::sqrt(dx*dx + dy*dy + dz*dz);
+    float distance = Echoel::DSP::FastMath::fastSqrt(dx*dx + dy*dy + dz*dz);
     if (distance < 0.01f)
         distance = 0.01f;
 

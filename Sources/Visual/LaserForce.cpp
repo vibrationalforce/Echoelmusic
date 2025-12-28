@@ -1,4 +1,5 @@
 #include "LaserForce.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -377,19 +378,24 @@ std::vector<LaserForce::ILDAPoint> LaserForce::renderCircle(const Beam& beam)
         rotation += bioHRV * juce::MathConstants<float>::pi;
     }
 
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    const float radius = beam.size * sizeModulation;
+    const float brightness255 = beam.brightness * 255.0f;
+
     for (int i = 0; i <= numPoints; ++i)
     {
-        float angle = (i / static_cast<float>(numPoints)) * juce::MathConstants<float>::twoPi + rotation;
-        float radius = beam.size * sizeModulation;
+        // Normalize angle to 0-1 range for fast lookup
+        float normalizedAngle = (i / static_cast<float>(numPoints)) + rotation / juce::MathConstants<float>::twoPi;
+        normalizedAngle -= std::floor(normalizedAngle);  // Wrap to 0-1
 
         ILDAPoint point;
-        point.x = static_cast<int16_t>((beam.x + std::cos(angle) * radius) * 32767);
-        point.y = static_cast<int16_t>((beam.y + std::sin(angle) * radius) * 32767);
+        point.x = static_cast<int16_t>((beam.x + trigTables.fastCos(normalizedAngle) * radius) * 32767);
+        point.y = static_cast<int16_t>((beam.y + trigTables.fastSin(normalizedAngle) * radius) * 32767);
         point.z = 0;
 
-        point.r = static_cast<uint8_t>(beam.red * beam.brightness * 255);
-        point.g = static_cast<uint8_t>(beam.green * beam.brightness * 255);
-        point.b = static_cast<uint8_t>(beam.blue * beam.brightness * 255);
+        point.r = static_cast<uint8_t>(beam.red * brightness255);
+        point.g = static_cast<uint8_t>(beam.green * brightness255);
+        point.b = static_cast<uint8_t>(beam.blue * brightness255);
 
         point.status = (i == 0) ? 0x40 : 0x00;  // First point: blanking bit
 
@@ -406,13 +412,17 @@ std::vector<LaserForce::ILDAPoint> LaserForce::renderPolygon(const Beam& beam)
 
     float rotation = beam.rotation + beam.rotationSpeed * static_cast<float>(currentTime);
 
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+
     for (int i = 0; i <= sides; ++i)
     {
-        float angle = (i / static_cast<float>(sides)) * juce::MathConstants<float>::twoPi + rotation;
+        // Normalize angle to 0-1 range for fast lookup
+        float normalizedAngle = (i / static_cast<float>(sides)) + rotation / juce::MathConstants<float>::twoPi;
+        normalizedAngle -= std::floor(normalizedAngle);
 
         ILDAPoint point;
-        point.x = static_cast<int16_t>((beam.x + std::cos(angle) * beam.size) * 32767);
-        point.y = static_cast<int16_t>((beam.y + std::sin(angle) * beam.size) * 32767);
+        point.x = static_cast<int16_t>((beam.x + trigTables.fastCos(normalizedAngle) * beam.size) * 32767);
+        point.y = static_cast<int16_t>((beam.y + trigTables.fastSin(normalizedAngle) * beam.size) * 32767);
         point.z = 0;
 
         point.r = static_cast<uint8_t>(beam.red * beam.brightness * 255);
@@ -434,21 +444,21 @@ std::vector<LaserForce::ILDAPoint> LaserForce::renderSpiral(const Beam& beam)
 
     float rotation = beam.rotation + beam.rotationSpeed * static_cast<float>(currentTime);
 
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    const float bioMultiplier = (beam.bioReactive && bioReactiveEnabled) ? (0.5f + bioCoherence * 0.5f) : 1.0f;
+
     for (int i = 0; i < numPoints; ++i)
     {
         float t = i / static_cast<float>(numPoints);
-        float angle = t * juce::MathConstants<float>::twoPi * 5.0f + rotation;  // 5 rotations
-        float radius = beam.size * t;
+        // Normalize angle to 0-1 (5 full rotations = 5.0 in normalized space)
+        float normalizedAngle = t * 5.0f + rotation / juce::MathConstants<float>::twoPi;
+        normalizedAngle -= std::floor(normalizedAngle);  // Wrap to 0-1
 
-        // Bio-reactive spiral density
-        if (beam.bioReactive && bioReactiveEnabled)
-        {
-            radius *= (0.5f + bioCoherence * 0.5f);
-        }
+        float radius = beam.size * t * bioMultiplier;
 
         ILDAPoint point;
-        point.x = static_cast<int16_t>((beam.x + std::cos(angle) * radius) * 32767);
-        point.y = static_cast<int16_t>((beam.y + std::sin(angle) * radius) * 32767);
+        point.x = static_cast<int16_t>((beam.x + trigTables.fastCos(normalizedAngle) * radius) * 32767);
+        point.y = static_cast<int16_t>((beam.y + trigTables.fastSin(normalizedAngle) * radius) * 32767);
         point.z = 0;
 
         // Color gradient along spiral
@@ -475,6 +485,9 @@ std::vector<LaserForce::ILDAPoint> LaserForce::renderTunnel(const Beam& beam)
 
     float rotation = beam.rotation + beam.rotationSpeed * static_cast<float>(currentTime);
 
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    const float rotationNormalized = rotation / juce::MathConstants<float>::twoPi;
+
     for (int ring = 0; ring < numRings; ++ring)
     {
         float z = (ring / static_cast<float>(numRings)) - 0.5f;  // -0.5 to 0.5
@@ -482,11 +495,13 @@ std::vector<LaserForce::ILDAPoint> LaserForce::renderTunnel(const Beam& beam)
 
         for (int i = 0; i <= pointsPerRing; ++i)
         {
-            float angle = (i / static_cast<float>(pointsPerRing)) * juce::MathConstants<float>::twoPi + rotation;
+            // Normalize angle to 0-1 range for fast lookup
+            float normalizedAngle = (i / static_cast<float>(pointsPerRing)) + rotationNormalized;
+            normalizedAngle -= std::floor(normalizedAngle);
 
             ILDAPoint point;
-            point.x = static_cast<int16_t>((beam.x + std::cos(angle) * radius) * 32767);
-            point.y = static_cast<int16_t>((beam.y + std::sin(angle) * radius) * 32767);
+            point.x = static_cast<int16_t>((beam.x + trigTables.fastCos(normalizedAngle) * radius) * 32767);
+            point.y = static_cast<int16_t>((beam.y + trigTables.fastSin(normalizedAngle) * radius) * 32767);
             point.z = static_cast<int16_t>(z * 32767);
 
             point.r = static_cast<uint8_t>(beam.red * beam.brightness * 255);

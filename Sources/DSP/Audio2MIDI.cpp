@@ -19,6 +19,10 @@ void Audio2MIDI::prepare(double sampleRate, int samplesPerBlock, int numChannels
 {
     currentSampleRate = sampleRate;
     currentNumChannels = numChannels;
+
+    // Pre-allocate note vectors to avoid allocations in audio thread
+    activeNotes.reserve(static_cast<size_t>(maxPolyphony * 2));
+    detectedNotes.reserve(1024);  // Room for a full song's worth of notes
 }
 
 void Audio2MIDI::reset()

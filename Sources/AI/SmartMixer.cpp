@@ -1,4 +1,5 @@
 #include "SmartMixer.h"
+#include "../Core/DSPOptimizations.h"
 #include <cmath>
 #include <algorithm>
 
@@ -165,8 +166,8 @@ void SmartMixer::applySuggestions(
         const auto& sug = suggestions[i];
         auto& track = tracks[i];
 
-        // Apply gain
-        float linearGain = juce::Decibels::decibelsToGain(sug.suggestedGain);
+        // Apply gain using FastMath (~5x faster)
+        float linearGain = Echoel::DSP::FastMath::dbToGain(sug.suggestedGain);
         track.applyGain(linearGain);
 
         // Apply pan (would need stereo processing)
@@ -332,8 +333,8 @@ SmartMixer::DynamicsAnalysis SmartMixer::analyzeDynamics(
     analysis.rmsLevel = calculateRMS(audio);
     analysis.peakLevel = calculatePeak(audio);
 
-    float rmsLinear = juce::Decibels::decibelsToGain(analysis.rmsLevel);
-    float peakLinear = juce::Decibels::decibelsToGain(analysis.peakLevel);
+    float rmsLinear = Echoel::DSP::FastMath::dbToGain(analysis.rmsLevel);
+    float peakLinear = Echoel::DSP::FastMath::dbToGain(analysis.peakLevel);
 
     analysis.crestFactor = (rmsLinear > 0.0f) ? peakLinear / rmsLinear : 1.0f;
     analysis.dynamicRange = analysis.peakLevel - analysis.rmsLevel;
@@ -362,8 +363,8 @@ float SmartMixer::calculateRMS(const juce::AudioBuffer<float>& audio)
         }
     }
 
-    float rms = std::sqrt(sumSquares / totalSamples);
-    return juce::Decibels::gainToDecibels(rms);
+    float rms = Echoel::DSP::FastMath::fastSqrt(sumSquares / static_cast<float>(totalSamples));
+    return Echoel::DSP::FastMath::gainToDb(rms);
 }
 
 float SmartMixer::calculatePeak(const juce::AudioBuffer<float>& audio)
@@ -376,7 +377,7 @@ float SmartMixer::calculatePeak(const juce::AudioBuffer<float>& audio)
         peak = std::max(peak, channelPeak);
     }
 
-    return juce::Decibels::gainToDecibels(peak);
+    return Echoel::DSP::FastMath::gainToDb(peak);
 }
 
 float SmartMixer::calculateLUFS(const juce::AudioBuffer<float>& audio)
@@ -404,7 +405,7 @@ void SmartMixer::applyEQ(juce::AudioBuffer<float>& audio, const EQSettings& eq)
     // Apply high-shelf boost/cut
     if (std::abs(eq.highShelf) > 0.1f)
     {
-        float gain = juce::Decibels::decibelsToGain(eq.highShelf);
+        float gain = Echoel::DSP::FastMath::dbToGain(eq.highShelf);
 
         // Simplified: apply gain to entire signal
         // Real implementation would filter frequencies > 10kHz
@@ -416,7 +417,7 @@ void SmartMixer::applyCompression(juce::AudioBuffer<float>& audio,
                                   const CompressionSettings& comp)
 {
     // Simplified compression (would use proper envelope follower)
-    float threshold = juce::Decibels::decibelsToGain(comp.threshold);
+    float threshold = Echoel::DSP::FastMath::dbToGain(comp.threshold);
 
     for (int ch = 0; ch < audio.getNumChannels(); ++ch)
     {
@@ -440,7 +441,7 @@ void SmartMixer::applyCompression(juce::AudioBuffer<float>& audio,
 
 void SmartMixer::applyLimiter(juce::AudioBuffer<float>& audio, float ceiling)
 {
-    float ceilingLinear = juce::Decibels::decibelsToGain(ceiling);
+    float ceilingLinear = Echoel::DSP::FastMath::dbToGain(ceiling);
 
     for (int ch = 0; ch < audio.getNumChannels(); ++ch)
     {
@@ -461,7 +462,7 @@ void SmartMixer::normalizeLUFS(juce::AudioBuffer<float>& audio, float targetLUFS
     float currentLUFS = calculateLUFS(audio);
     float gainAdjustment = targetLUFS - currentLUFS;
 
-    float linearGain = juce::Decibels::decibelsToGain(gainAdjustment);
+    float linearGain = Echoel::DSP::FastMath::dbToGain(gainAdjustment);
     audio.applyGain(linearGain);
 
     DBG("SmartMixer: Normalized from " << currentLUFS << " to " << targetLUFS << " LUFS");
