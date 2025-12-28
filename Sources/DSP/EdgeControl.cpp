@@ -1,4 +1,5 @@
 #include "EdgeControl.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -417,9 +418,9 @@ float EdgeControl::softClip(float input, float threshold, float knee)
     }
     else
     {
-        // Above threshold - soft clip with tanh
+        // Above threshold - soft clip with fast tanh
         float excess = absInput - threshold;
-        return sign * (threshold + std::tanh(excess * 3.0f) * 0.3f);
+        return sign * (threshold + Echoel::DSP::FastMath::fastTanh(excess * 3.0f) * 0.3f);
     }
 }
 
@@ -444,7 +445,7 @@ float EdgeControl::tubeClip(float input, float threshold, float knee)
     }
     else
     {
-        output = (biased > 0.0f) ? std::tanh(biased * 1.5f) : std::tanh(biased * 0.8f);
+        output = (biased > 0.0f) ? Echoel::DSP::FastMath::fastTanh(biased * 1.5f) : Echoel::DSP::FastMath::fastTanh(biased * 0.8f);
     }
 
     return output * threshold;
@@ -498,8 +499,8 @@ float EdgeControl::analogClip(float input, float threshold, float knee)
     }
     else
     {
-        // Soft saturation
-        output = std::tanh(normalized * 1.2f) * 0.9f;
+        // Soft saturation using fast tanh
+        output = Echoel::DSP::FastMath::fastTanh(normalized * 1.2f) * 0.9f;
     }
 
     return output * threshold;
@@ -537,5 +538,5 @@ float EdgeControl::calculateMakeupGain() const
 {
     // Calculate makeup gain to compensate for threshold reduction
     float reduction = std::abs(thresholdDb);
-    return std::pow(10.0f, reduction / 40.0f);  // Conservative makeup
+    return Echoel::DSP::FastMath::fastPow(10.0f, reduction / 40.0f);  // Conservative makeup
 }

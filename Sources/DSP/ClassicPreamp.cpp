@@ -1,4 +1,5 @@
 #include "ClassicPreamp.h"
+#include "../Core/DSPOptimizations.h"
 
 ClassicPreamp::ClassicPreamp()
 {
@@ -152,12 +153,12 @@ float ClassicPreamp::inputTransformerSaturation(float sample)
     // Even harmonic distortion (transformer core saturation)
     float saturation = x + 0.15f * x * x;  // 2nd harmonic
 
-    // Soft clipping (magnetic saturation)
+    // Soft clipping (magnetic saturation) using fast tanh
     if (std::abs(saturation) > 0.8f)
     {
         saturation = (saturation > 0.0f) ?
-            0.8f + 0.2f * std::tanh((saturation - 0.8f) * 2.0f) :
-            -0.8f + 0.2f * std::tanh((saturation + 0.8f) * 2.0f);
+            0.8f + 0.2f * Echoel::DSP::FastMath::fastTanh((saturation - 0.8f) * 2.0f) :
+            -0.8f + 0.2f * Echoel::DSP::FastMath::fastTanh((saturation + 0.8f) * 2.0f);
     }
 
     return saturation / drive;
@@ -176,8 +177,8 @@ float ClassicPreamp::classAPreampSaturation(float sample, float drive)
 
     float saturated = x + harmonic2 + harmonic3;
 
-    // Soft clip
-    saturated = std::tanh(saturated);
+    // Soft clip using fast tanh
+    saturated = Echoel::DSP::FastMath::fastTanh(saturated);
 
     // Track harmonic content for metering
     float harmonicAmount = std::abs(harmonic2) + std::abs(harmonic3);
@@ -220,12 +221,13 @@ void ClassicPreamp::updateHPFCoefficients()
     float frequency = HPF_FREQUENCIES[hpfFrequencyIndex];
     float omega = 2.0f * juce::MathConstants<float>::pi * frequency / static_cast<float>(currentSampleRate);
 
-    // Simplified 3-pole filter approximation
+    // Simplified 3-pole filter approximation using fast trig
     // (Full implementation would use biquad cascade)
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     for (auto& state : hpfState)
     {
-        float alpha = std::sin(omega) / (2.0f * 0.707f);
-        float cosOmega = std::cos(omega);
+        float alpha = trigTables.fastSinRad(omega) / (2.0f * 0.707f);
+        float cosOmega = trigTables.fastCosRad(omega);
 
         float a0 = 1.0f + alpha;
         state.b[0] = ((1.0f + cosOmega) / 2.0f) / a0;

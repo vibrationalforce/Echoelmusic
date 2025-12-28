@@ -1,4 +1,5 @@
 #include "OptoCompressor.h"
+#include "../Core/DSPOptimizations.h"
 
 OptoCompressor::OptoCompressor()
 {
@@ -169,9 +170,9 @@ void OptoCompressor::updateOpticalCellCoefficients()
 
     for (auto& cell : opticalCell)
     {
-        // Exponential envelope followers
-        cell.attackCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * attackSeconds));
-        cell.releaseCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * releaseSeconds));
+        // Exponential envelope followers using fast exp
+        cell.attackCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * attackSeconds));
+        cell.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * releaseSeconds));
     }
 }
 
@@ -237,9 +238,9 @@ float OptoCompressor::opticalCellResponse(float inputDb, float& lightLevel, floa
     float baseResistance = 10.0f;  // Dark resistance (MΩ)
     float minResistance = 0.1f;    // Bright resistance (kΩ)
 
-    // Non-linear optical coupling (T4 characteristic)
+    // Non-linear optical coupling (T4 characteristic) using fast pow
     float coupling = opticalCharacter;
-    resistance = minResistance + (baseResistance - minResistance) * std::pow(1.0f - lightLevel, 2.0f + coupling);
+    resistance = minResistance + (baseResistance - minResistance) * Echoel::DSP::FastMath::fastPow(1.0f - lightLevel + 1e-6f, 2.0f + coupling);
 
     // Convert resistance to gain reduction
     // Lower resistance = more attenuation
@@ -294,11 +295,11 @@ float OptoCompressor::tubeSaturation(float sample, float warmth)
     // Soft clipping
     float saturated = x / (1.0f + 0.4f * std::abs(x));
 
-    // Tube "glow" on transients
+    // Tube "glow" on transients using fast tanh
     if (std::abs(x) > 0.7f)
     {
         float excess = std::abs(x) - 0.7f;
-        saturated += warmth * 0.1f * excess * std::tanh(excess * 5.0f);
+        saturated += warmth * 0.1f * excess * Echoel::DSP::FastMath::fastTanh(excess * 5.0f);
     }
 
     return saturated / drive;
@@ -343,10 +344,11 @@ void OptoCompressor::updateSidechainHPFCoefficients()
     if (sidechainHPF < 1.0f)
         return;
 
-    // 12dB/oct Butterworth High-Pass
+    // 12dB/oct Butterworth High-Pass using fast trig
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     float omega = 2.0f * juce::MathConstants<float>::pi * sidechainHPF / static_cast<float>(currentSampleRate);
-    float sinOmega = std::sin(omega);
-    float cosOmega = std::cos(omega);
+    float sinOmega = trigTables.fastSinRad(omega);
+    float cosOmega = trigTables.fastCosRad(omega);
     float alpha = sinOmega / (2.0f * 0.707f);
 
     float a0 = 1.0f + alpha;

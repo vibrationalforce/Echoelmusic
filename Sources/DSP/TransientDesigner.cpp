@@ -1,4 +1,5 @@
 #include "TransientDesigner.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -55,9 +56,11 @@ void TransientDesigner::setClippingProtection(bool enabled)
 
 void TransientDesigner::prepare(double sampleRate, int maxBlockSize)
 {
-    juce::ignoreUnused(maxBlockSize);
-
     currentSampleRate = sampleRate;
+
+    // Pre-allocate dry buffer
+    dryBuffer.setSize(2, maxBlockSize);
+
     updateCoefficients();
     reset();
 }
@@ -98,9 +101,15 @@ void TransientDesigner::process(juce::AudioBuffer<float>& buffer)
     float* leftChannel = buffer.getWritePointer(0);
     float* rightChannel = buffer.getWritePointer(1);
 
-    // Store dry signal for mixing
-    std::vector<float> dryLeft(leftChannel, leftChannel + numSamples);
-    std::vector<float> dryRight(rightChannel, rightChannel + numSamples);
+    // Ensure dry buffer is large enough (avoid per-frame allocation)
+    if (dryBuffer.getNumSamples() < numSamples)
+        dryBuffer.setSize(2, numSamples, false, false, true);
+
+    // Store dry signal using pre-allocated buffer
+    dryBuffer.copyFrom(0, 0, buffer, 0, 0, numSamples);
+    dryBuffer.copyFrom(1, 0, buffer, 1, 0, numSamples);
+    const float* dryLeft = dryBuffer.getReadPointer(0);
+    const float* dryRight = dryBuffer.getReadPointer(1);
 
     // Process based on mode
     switch (mode)
@@ -171,12 +180,12 @@ void TransientDesigner::updateCoefficients()
     for (auto& state : channelStates)
     {
         // Fast envelope (attack detection) - very fast attack, fast release
-        state.fastAttackCoeff = std::exp(-1000.0f / (attackSpeed * 0.1f * static_cast<float>(currentSampleRate)));
-        state.fastReleaseCoeff = std::exp(-1000.0f / (attackSpeed * static_cast<float>(currentSampleRate)));
+        state.fastAttackCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (attackSpeed * 0.1f * static_cast<float>(currentSampleRate)));
+        state.fastReleaseCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (attackSpeed * static_cast<float>(currentSampleRate)));
 
         // Slow envelope (sustain detection) - slow attack, slow release
-        state.slowAttackCoeff = std::exp(-1000.0f / (sustainSpeed * 0.5f * static_cast<float>(currentSampleRate)));
-        state.slowReleaseCoeff = std::exp(-1000.0f / (sustainSpeed * static_cast<float>(currentSampleRate)));
+        state.slowAttackCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (sustainSpeed * 0.5f * static_cast<float>(currentSampleRate)));
+        state.slowReleaseCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (sustainSpeed * static_cast<float>(currentSampleRate)));
     }
 }
 
@@ -297,10 +306,11 @@ void TransientDesigner::applyButterworthFilter(float& sample,
                                                 bool isHighpass,
                                                 MultibandState::BiquadState& state)
 {
-    // Butterworth 2nd order filter
+    // Butterworth 2nd order filter using fast trig
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     const float omega = juce::MathConstants<float>::twoPi * frequency / static_cast<float>(currentSampleRate);
-    const float cosOmega = std::cos(omega);
-    const float sinOmega = std::sin(omega);
+    const float cosOmega = trigTables.fastCosRad(omega);
+    const float sinOmega = trigTables.fastSinRad(omega);
     const float alpha = sinOmega / (2.0f * 0.707f);  // Q = 0.707
 
     float b0, b1, b2, a0, a1, a2;

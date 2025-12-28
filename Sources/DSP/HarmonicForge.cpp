@@ -1,4 +1,5 @@
 #include "HarmonicForge.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -219,7 +220,9 @@ void HarmonicForge::process(juce::AudioBuffer<float>& buffer)
 
 std::vector<float> HarmonicForge::getHarmonicSpectrum(int bandIndex) const
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    std::unique_lock<std::mutex> lock(spectrumMutex, std::try_to_lock);
+    if (!lock.owns_lock())
+        return std::vector<float>(128, -100.0f);  // Return empty if can't lock
 
     if (bandIndex >= 0 && bandIndex < 4)
     {
@@ -436,11 +439,11 @@ float HarmonicForge::tubeSaturation(float input, float drive)
     float bias = 0.1f * drive;
     driven += bias;
 
-    // Soft-clip with tanh
-    float output = std::tanh(driven);
+    // Soft-clip with fast tanh
+    float output = Echoel::DSP::FastMath::fastTanh(driven);
 
     // Remove DC offset
-    output -= std::tanh(bias);
+    output -= Echoel::DSP::FastMath::fastTanh(bias);
 
     return output;
 }
@@ -466,8 +469,8 @@ float HarmonicForge::tapeSaturation(float input, float drive)
     }
     else
     {
-        // Hard saturation
-        return std::tanh(driven);
+        // Hard saturation using fast tanh
+        return Echoel::DSP::FastMath::fastTanh(driven);
     }
 }
 
@@ -486,7 +489,7 @@ float HarmonicForge::transistorSaturation(float input, float drive)
     else
     {
         float sign = (driven > 0.0f) ? 1.0f : -1.0f;
-        return sign * (1.0f + std::tanh((std::abs(driven) - 1.0f) * 2.0f) * 0.3f);
+        return sign * (1.0f + Echoel::DSP::FastMath::fastTanh((std::abs(driven) - 1.0f) * 2.0f) * 0.3f);
     }
 }
 
@@ -500,11 +503,11 @@ float HarmonicForge::digitalSaturation(float input, float drive)
     // Hard clip
     float clipped = juce::jlimit(-1.0f, 1.0f, driven);
 
-    // Bit reduction (quantization)
+    // Bit reduction (quantization) - use bit shift instead of pow
     int bits = static_cast<int>(16 - drive * 12);  // 16-bit to 4-bit
     if (bits < 16)
     {
-        float maxValue = std::pow(2.0f, bits) - 1.0f;
+        float maxValue = static_cast<float>((1 << bits) - 1);
         clipped = std::round(clipped * maxValue) / maxValue;
     }
 
@@ -521,8 +524,9 @@ float HarmonicForge::transformerSaturation(float input, float drive)
     // Very soft saturation
     float output = driven / (1.0f + std::abs(driven) * 0.3f);
 
-    // Add subtle even harmonics
-    output += std::sin(driven * juce::MathConstants<float>::pi) * drive * 0.1f;
+    // Add subtle even harmonics using fast sin
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    output += trigTables.fastSinRad(driven * juce::MathConstants<float>::pi) * drive * 0.1f;
 
     return output;
 }
@@ -548,5 +552,5 @@ float HarmonicForge::calculateMakeupGain(float drive) const
     // Calculate makeup gain to compensate for saturation
     // Approximate: higher drive = more gain reduction
     float gainReduction = 1.0f + drive * 2.0f;
-    return std::sqrt(gainReduction);  // Compensate roughly
+    return Echoel::DSP::FastMath::fastSqrt(gainReduction);  // Compensate roughly
 }
