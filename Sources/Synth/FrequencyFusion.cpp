@@ -393,9 +393,10 @@ void FrequencyFusion::FrequencyFusionVoice::renderNextBlock(juce::AudioBuffer<fl
         }
 
         // Normalize by number of carriers
+        // OPTIMIZATION: Use fast sqrt approximation
         if (numCarriers > 0)
         {
-            finalOutput /= std::sqrt(static_cast<float>(numCarriers));
+            finalOutput /= Echoel::DSP::FastMath::fastSqrt(static_cast<float>(numCarriers));
         }
 
         // Apply master volume

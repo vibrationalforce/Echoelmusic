@@ -570,12 +570,15 @@ void SpatialForge::renderToSpeakers(const AudioObject& object, juce::AudioBuffer
         }
 
         // Apply to output channel
+        // OPTIMIZATION: Cache pointers and pre-compute combined gain
         if (static_cast<int>(spkIdx) < output.getNumChannels())
         {
+            const float* inputPtr = object.audioData.getReadPointer(0);
+            float* outputPtr = output.getWritePointer(static_cast<int>(spkIdx));
+            const float combinedGain = object.gain * gain;
             for (int i = 0; i < numSamples; ++i)
             {
-                float sample = object.audioData.getSample(0, i) * object.gain * gain;
-                output.addSample(static_cast<int>(spkIdx), i, sample);
+                outputPtr[i] += inputPtr[i] * combinedGain;
             }
         }
     }
