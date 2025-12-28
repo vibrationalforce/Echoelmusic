@@ -36,6 +36,9 @@ void VocalChain::prepare(double sampleRate, int maximumBlockSize)
     // Prepare reverb
     reverb.prepare(spec);
 
+    // Pre-allocate reverb buffer (avoid per-frame allocation)
+    reverbBuffer.setSize(2, maximumBlockSize);
+
     // Prepare delay
     delayLine.prepare(spec);
     delayLine.setMaximumDelayInSamples(static_cast<int>(2.0f * sampleRate));  // 2s max
@@ -66,6 +69,12 @@ void VocalChain::process(juce::AudioBuffer<float>& buffer)
 
     if (numChannels == 0 || numSamples == 0)
         return;
+
+    // Update cached coefficients ONCE per block (not per sample!)
+    hpfL.updateCoefficients();
+    hpfR.updateCoefficients();
+    compressorL.updateCoefficients();
+    compressorR.updateCoefficients();
 
     // Process each channel through the chain
     for (int channel = 0; channel < juce::jmin(2, numChannels); ++channel)
@@ -124,19 +133,24 @@ void VocalChain::process(juce::AudioBuffer<float>& buffer)
         }
     }
 
-    // 6. Reverb
+    // 6. Reverb (uses pre-allocated buffer)
     if (reverbEnabled && reverbMix > 0.01f)
     {
-        juce::AudioBuffer<float> reverbBuffer(numChannels, numSamples);
-        for (int ch = 0; ch < numChannels; ++ch)
+        // Ensure buffer is large enough (resize only if needed)
+        if (reverbBuffer.getNumSamples() < numSamples)
+            reverbBuffer.setSize(numChannels, numSamples, false, false, true);
+
+        for (int ch = 0; ch < juce::jmin(numChannels, reverbBuffer.getNumChannels()); ++ch)
             reverbBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
-        juce::dsp::AudioBlock<float> block(reverbBuffer);
+        juce::dsp::AudioBlock<float> block(reverbBuffer.getArrayOfWritePointers(),
+                                           static_cast<size_t>(juce::jmin(numChannels, reverbBuffer.getNumChannels())),
+                                           static_cast<size_t>(numSamples));
         juce::dsp::ProcessContextReplacing<float> context(block);
         reverb.process(context);
 
         // Mix wet
-        for (int ch = 0; ch < numChannels; ++ch)
+        for (int ch = 0; ch < juce::jmin(numChannels, reverbBuffer.getNumChannels()); ++ch)
             buffer.addFrom(ch, 0, reverbBuffer, ch, 0, numSamples, reverbMix);
     }
 
@@ -211,15 +225,15 @@ void VocalChain::setCompressorRatio(float ratio)
 void VocalChain::setCompressorAttack(float ms)
 {
     compAttack = ms;
-    compressorL.attack = ms;
-    compressorR.attack = ms;
+    compressorL.setAttack(ms);
+    compressorR.setAttack(ms);
 }
 
 void VocalChain::setCompressorRelease(float ms)
 {
     compRelease = ms;
-    compressorL.release = ms;
-    compressorR.release = ms;
+    compressorL.setRelease(ms);
+    compressorR.setRelease(ms);
 }
 
 void VocalChain::setCompressorMakeup(float dB)
