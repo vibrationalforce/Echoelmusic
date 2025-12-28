@@ -1,4 +1,5 @@
 #include "Audio2MIDI.h"
+#include "../Core/DSPOptimizations.h"
 #include <cmath>
 #include <algorithm>
 
@@ -420,7 +421,8 @@ float Audio2MIDI::calculateEnergy(const juce::AudioBuffer<float>& buffer)
         }
     }
 
-    return std::sqrt(energy / (numSamples * buffer.getNumChannels()));
+    // Using fast sqrt for energy calculation
+    return Echoel::DSP::FastMath::fastSqrt(energy / (numSamples * buffer.getNumChannels()));
 }
 
 int Audio2MIDI::frequencyToMidiNote(float frequency)
@@ -434,5 +436,6 @@ int Audio2MIDI::frequencyToMidiNote(float frequency)
 
 float Audio2MIDI::midiNoteToFrequency(int midiNote)
 {
-    return 440.0f * std::pow(2.0f, (midiNote - 69) / 12.0f);
+    // Using fast pow for MIDI to frequency conversion
+    return 440.0f * Echoel::DSP::FastMath::fastPow(2.0f, (midiNote - 69) / 12.0f);
 }

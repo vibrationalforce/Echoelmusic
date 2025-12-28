@@ -1,4 +1,5 @@
 #include "PassiveEQ.h"
+#include "../Core/DSPOptimizations.h"
 
 PassiveEQ::PassiveEQ() {}
 PassiveEQ::~PassiveEQ() {}
@@ -188,9 +189,9 @@ float PassiveEQ::processTubeStage(float sample)
     float drive = 1.0f + tubeWarmth * 1.5f;
     float x = sample * drive;
 
-    // Tube saturation (2nd harmonic emphasis)
+    // Tube saturation (2nd harmonic emphasis) - using fast tanh
     float saturated = x + 0.15f * tubeWarmth * x * x;
-    saturated = std::tanh(saturated);
+    saturated = Echoel::DSP::FastMath::fastTanh(saturated);
 
     return saturated / drive;
 }

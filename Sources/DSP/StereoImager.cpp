@@ -1,4 +1,5 @@
 #include "StereoImager.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -159,7 +160,8 @@ void StereoImager::updateMetering(float left, float right)
 
     if (leftSq > 0.00001f && rightSq > 0.00001f)
     {
-        float corr = product / std::sqrt(leftSq * rightSq);
+        // Using fast sqrt for metering (approximate is fine)
+        float corr = product / Echoel::DSP::FastMath::fastSqrt(leftSq * rightSq);
         correlationSum += corr;
         correlationSampleCount++;
     }

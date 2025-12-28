@@ -1,4 +1,5 @@
 #include "SpectrumMaster.h"
+#include "../Core/DSPOptimizations.h"
 
 SpectrumMaster::SpectrumMaster()
     : forwardFFT(fftOrder)
@@ -87,8 +88,8 @@ std::vector<SpectrumMaster::FrequencyBand> SpectrumMaster::getSpectrumData() con
     {
         float freqRatio = static_cast<float>(i) / static_cast<float>(numBands - 1);
 
-        // Logarithmic frequency distribution
-        float frequency = minFreq * std::pow(maxFreq / minFreq, freqRatio);
+        // Logarithmic frequency distribution - using fast pow
+        float frequency = minFreq * Echoel::DSP::FastMath::fastPow(maxFreq / minFreq, freqRatio);
 
         // Get magnitude at this frequency
         float magnitude = getMagnitudeAtFrequency(frequency, spectrumSmoothed);

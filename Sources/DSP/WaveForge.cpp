@@ -1,4 +1,5 @@
 #include "WaveForge.h"
+#include "../Core/DSPOptimizations.h"
 #include <cmath>
 
 //==============================================================================
@@ -281,8 +282,9 @@ void WaveForge::generateDigitalWavetables()
 
 float WaveForge::getLFOValue()
 {
-    // Morphing LFO shape
-    float sine = std::sin(lfoPhase * juce::MathConstants<float>::twoPi);
+    // Morphing LFO shape - using fast trig for audio thread
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    float sine = trigTables.fastSin(lfoPhase);
     float triangle = lfoPhase < 0.5f ? (4.0f * lfoPhase - 1.0f) : (3.0f - 4.0f * lfoPhase);
 
     return sine * (1.0f - lfoShape) + triangle * lfoShape;
@@ -295,8 +297,8 @@ float WaveForge::applyDistortion(float sample)
 
     switch (distortionType)
     {
-        case 0:  // Soft clip
-            return std::tanh(x) / drive;
+        case 0:  // Soft clip - using fast tanh
+            return Echoel::DSP::FastMath::fastTanh(x) / drive;
 
         case 1:  // Hard clip
             return juce::jlimit(-1.0f, 1.0f, x) / drive;
@@ -551,10 +553,10 @@ void WaveForge::WaveForgeVoice::renderNextBlock(juce::AudioBuffer<float>& output
 
     for (int i = 0; i < numSamples; ++i)
     {
-        // Calculate pitch with modulation
+        // Calculate pitch with modulation - using fast pow
         float lfoValue = synthRef.getLFOValue();
         float pitchMod = 1.0f + lfoValue * synthRef.lfoToPitch * 0.05f;
-        float frequency = currentFrequency * std::pow(2.0f, (synthRef.oscPitch + synthRef.oscFine / 100.0f) / 12.0f) * pitchMod;
+        float frequency = currentFrequency * Echoel::DSP::FastMath::fastPow(2.0f, (synthRef.oscPitch + synthRef.oscFine / 100.0f) / 12.0f) * pitchMod;
 
         // Update phase
         phase += frequency / sampleRate;
@@ -643,9 +645,9 @@ float WaveForge::WaveForgeVoice::processFilter(float sample)
     float f = fc * 1.16f;
     float fb = synthRef.filterResonance * 4.0f;
 
-    // Apply drive
+    // Apply drive - using fast tanh
     if (synthRef.filterDrive > 0.01f)
-        sample = std::tanh(sample * (1.0f + synthRef.filterDrive * 3.0f));
+        sample = Echoel::DSP::FastMath::fastTanh(sample * (1.0f + synthRef.filterDrive * 3.0f));
 
     // Ladder filter
     sample -= filterState[3] * fb;

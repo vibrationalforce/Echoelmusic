@@ -1,4 +1,5 @@
 #include "MultibandCompressor.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -375,11 +376,11 @@ void MultibandCompressor::updateCoefficients()
         const auto& band = bands[i];
         auto& state = bandStates[i];
 
-        // Attack coefficient (time to reach 63% of target)
-        state.attackCoeff = std::exp(-1000.0f / (band.attack * static_cast<float>(currentSampleRate)));
+        // Attack coefficient (time to reach 63% of target) - using fast exp
+        state.attackCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (band.attack * static_cast<float>(currentSampleRate)));
 
-        // Release coefficient
-        state.releaseCoeff = std::exp(-1000.0f / (band.release * static_cast<float>(currentSampleRate)));
+        // Release coefficient - using fast exp
+        state.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (band.release * static_cast<float>(currentSampleRate)));
     }
 }
 
@@ -389,10 +390,11 @@ void MultibandCompressor::applyButterworth(float* signal,
                                            bool isHighpass,
                                            ButterworthState& state)
 {
-    // Butterworth 2nd order coefficients
+    // Butterworth 2nd order coefficients - using fast trig
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     const float omega = juce::MathConstants<float>::twoPi * frequency / static_cast<float>(currentSampleRate);
-    const float cosOmega = std::cos(omega);
-    const float sinOmega = std::sin(omega);
+    const float cosOmega = trigTables.fastCosRad(omega);
+    const float sinOmega = trigTables.fastSinRad(omega);
     const float alpha = sinOmega / (2.0f * 0.707f);  // Q = 0.707 for Butterworth
 
     float b0, b1, b2, a0, a1, a2;

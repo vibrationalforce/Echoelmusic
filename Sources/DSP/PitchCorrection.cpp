@@ -1,4 +1,5 @@
 #include "PitchCorrection.h"
+#include "../Core/DSPOptimizations.h"
 
 PitchCorrection::PitchCorrection()
 {
@@ -86,10 +87,11 @@ void PitchCorrection::process(juce::AudioBuffer<float>& buffer)
                     // Quantize to scale
                     float targetPitch = quantizer.quantizePitch(detectedPitch);
 
-                    // Apply humanize (preserve natural vibrato)
+                    // Apply humanize (preserve natural vibrato) - using fast sin
                     if (humanize > 0.01f)
                     {
-                        float vibrato = std::sin(static_cast<float>(sample) * 0.005f) * 5.0f;
+                        const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+                        float vibrato = trigTables.fastSinRad(static_cast<float>(sample) * 0.005f) * 5.0f;
                         targetPitch += vibrato * humanize;
                     }
 

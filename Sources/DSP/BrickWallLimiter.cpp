@@ -1,4 +1,5 @@
 #include "BrickWallLimiter.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -321,7 +322,7 @@ float BrickWallLimiter::detectTruePeak(float sample, int channel)
 
 void BrickWallLimiter::updateReleaseCoeff()
 {
-    // Calculate coefficient for exponential release
+    // Calculate coefficient for exponential release - using fast exp
     // Time to reach 63% of target
-    releaseCoeff = std::exp(-1000.0f / (release * static_cast<float>(currentSampleRate)));
+    releaseCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (release * static_cast<float>(currentSampleRate)));
 }

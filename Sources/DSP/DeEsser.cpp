@@ -1,4 +1,5 @@
 #include "DeEsser.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -142,19 +143,20 @@ float DeEsser::getSibilanceLevel(int channel) const
 
 void DeEsser::updateCoefficients()
 {
-    // Fast attack, medium release
-    attackCoeff = std::exp(-1000.0f / (3.0f * static_cast<float>(currentSampleRate)));
-    releaseCoeff = std::exp(-1000.0f / (100.0f * static_cast<float>(currentSampleRate)));
+    // Fast attack, medium release - using fast exp
+    attackCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (3.0f * static_cast<float>(currentSampleRate)));
+    releaseCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (100.0f * static_cast<float>(currentSampleRate)));
 
     updateBandpassCoefficients();
 }
 
 void DeEsser::updateBandpassCoefficients()
 {
-    // Bandpass filter centered at frequency with given bandwidth
+    // Bandpass filter centered at frequency with given bandwidth - using fast trig
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     const float omega = juce::MathConstants<float>::twoPi * frequency / static_cast<float>(currentSampleRate);
-    const float sinOmega = std::sin(omega);
-    const float cosOmega = std::cos(omega);
+    const float sinOmega = trigTables.fastSinRad(omega);
+    const float cosOmega = trigTables.fastCosRad(omega);
     const float q = frequency / bandwidth;
     const float alpha = sinOmega / (2.0f * q);
 

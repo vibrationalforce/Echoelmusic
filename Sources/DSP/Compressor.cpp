@@ -1,4 +1,5 @@
 #include "Compressor.h"
+#include "../Core/DSPOptimizations.h"
 
 Compressor::Compressor() {}
 Compressor::~Compressor() {}
@@ -112,9 +113,9 @@ float Compressor::getGainReduction() const
 
 void Compressor::updateCoefficients()
 {
-    // Convert attack/release times to coefficients
-    attackCoeff = 1.0f - std::exp(-1.0f / (attack * 0.001f * (float)currentSampleRate));
-    releaseCoeff = 1.0f - std::exp(-1.0f / (release * 0.001f * (float)currentSampleRate));
+    // Convert attack/release times to coefficients using fast exp
+    attackCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (attack * 0.001f * (float)currentSampleRate));
+    releaseCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (release * 0.001f * (float)currentSampleRate));
 }
 
 float Compressor::computeGain(float input)

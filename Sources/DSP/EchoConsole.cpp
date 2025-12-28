@@ -1,4 +1,5 @@
 #include "EchoConsole.h"
+#include "../Core/DSPOptimizations.h"
 
 EchoConsole::EchoConsole()
 {
@@ -159,10 +160,11 @@ void EchoConsole::setHPFEnabled(bool enabled)
 
 void EchoConsole::updateHPFCoefficients()
 {
-    // 12dB/oct Butterworth High-Pass
+    // 12dB/oct Butterworth High-Pass - using fast trig
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     float omega = 2.0f * juce::MathConstants<float>::pi * hpfFrequency / static_cast<float>(currentSampleRate);
-    float sinOmega = std::sin(omega);
-    float cosOmega = std::cos(omega);
+    float sinOmega = trigTables.fastSinRad(omega);
+    float cosOmega = trigTables.fastCosRad(omega);
     float alpha = sinOmega / (2.0f * 0.707f);  // Q = 0.707 for Butterworth
 
     float a0 = 1.0f + alpha;
@@ -333,14 +335,14 @@ void EchoConsole::setGateEnabled(bool enabled)
 
 void EchoConsole::updateGateCoefficients()
 {
-    // Exponential envelope followers
+    // Exponential envelope followers - using fast exp
     float attackTimeSeconds = 0.001f;  // Will be set dynamically
     float releaseTimeSeconds = 0.4f;
 
     for (auto& state : gateState)
     {
-        state.attackCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * attackTimeSeconds));
-        state.releaseCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * releaseTimeSeconds));
+        state.attackCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * attackTimeSeconds));
+        state.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * releaseTimeSeconds));
     }
 }
 
@@ -415,13 +417,14 @@ void EchoConsole::setCompEnabled(bool enabled)
 
 void EchoConsole::updateCompressorCoefficients()
 {
-    float attackTimeSeconds = 0.003f;  // SSL-style fast attack (3ms default)
+    // SSL-style fast attack (3ms default) - using fast exp
+    float attackTimeSeconds = 0.003f;
     float releaseTimeSeconds = compReleaseMs / 1000.0f;
 
     for (auto& state : compState)
     {
-        state.attackCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * attackTimeSeconds));
-        state.releaseCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * releaseTimeSeconds));
+        state.attackCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * attackTimeSeconds));
+        state.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * releaseTimeSeconds));
     }
 }
 
