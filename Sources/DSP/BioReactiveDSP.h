@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../Core/DSPOptimizations.h"
 
 /**
  * Bio-Reactive DSP Module
@@ -57,7 +58,9 @@ private:
 
         float process(float input)
         {
-            float f = 2.0f * std::sin(juce::MathConstants<float>::pi * cutoff / sampleRate);
+            // Using fast sin for filter coefficient
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+            float f = 2.0f * trigTables.fastSinRad(juce::MathConstants<float>::pi * cutoff / sampleRate);
             float q = 1.0f - resonance;
 
             lowpass += f * bandpass;
@@ -98,10 +101,15 @@ private:
             return sample;
 
         float threshold = 1.0f - distortionAmount;
-        if (sample > threshold)
-            return threshold + (sample - threshold) / (1.0f + std::pow((sample - threshold) / (1.0f - threshold), 2.0f));
-        else if (sample < -threshold)
-            return -threshold + (sample + threshold) / (1.0f + std::pow((sample + threshold) / (1.0f - threshold), 2.0f));
+        float invThreshold = 1.0f / (1.0f - threshold + 1e-6f);
+        if (sample > threshold) {
+            float excess = (sample - threshold) * invThreshold;
+            return threshold + (sample - threshold) / (1.0f + excess * excess);
+        }
+        else if (sample < -threshold) {
+            float excess = (sample + threshold) * invThreshold;
+            return -threshold + (sample + threshold) / (1.0f + excess * excess);
+        }
         else
             return sample;
     }
@@ -121,13 +129,14 @@ private:
 
         float process(float input)
         {
-            float inputLevel = 20.0f * std::log10(std::abs(input) + 1e-10f);
+            // Using fast dB conversion
+            float inputLevel = Echoel::DSP::FastMath::gainToDb(std::abs(input) + 1e-10f);
 
-            // Envelope follower
+            // Envelope follower - using fast exp
             float targetEnvelope = inputLevel;
             float coeff = (targetEnvelope > envelope) ?
-                          std::exp(-1.0f / (attack * sampleRate)) :
-                          std::exp(-1.0f / (release * sampleRate));
+                          Echoel::DSP::FastMath::fastExp(-1.0f / (attack * sampleRate)) :
+                          Echoel::DSP::FastMath::fastExp(-1.0f / (release * sampleRate));
 
             envelope = coeff * envelope + (1.0f - coeff) * targetEnvelope;
 
@@ -139,8 +148,8 @@ private:
                 gainReduction = excess * (1.0f - 1.0f / ratio);
             }
 
-            // Apply gain reduction
-            float outputGain = std::pow(10.0f, -gainReduction / 20.0f);
+            // Apply gain reduction - using fast dB to gain
+            float outputGain = Echoel::DSP::FastMath::dbToGain(-gainReduction);
             return input * outputGain;
         }
     };

@@ -1,4 +1,5 @@
 #include "SampleEngine.h"
+#include "../Core/DSPOptimizations.h"
 #include <cmath>
 
 //==============================================================================
@@ -184,7 +185,9 @@ void SampleEngine::setPolyphony(int voices)
 
 float SampleEngine::getLFOValue()
 {
-    return std::sin(lfoPhase * juce::MathConstants<float>::twoPi);
+    // Using fast trig for audio-thread LFO
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    return trigTables.fastSin(lfoPhase);
 }
 
 //==============================================================================
@@ -332,9 +335,9 @@ void SampleEngine::SampleEngineVoice::startNote(int midiNoteNumber, float veloci
 
     const auto& sample = synthRef.samples[currentSampleIndex];
 
-    // Calculate playback speed (pitch shift)
+    // Calculate playback speed (pitch shift) - using fast pow
     int noteDiff = midiNoteNumber - sample.rootNote;
-    playbackSpeed = std::pow(2.0, (noteDiff + synthRef.pitchShift) / 12.0);
+    playbackSpeed = static_cast<double>(Echoel::DSP::FastMath::fastPow(2.0f, static_cast<float>(noteDiff + synthRef.pitchShift) / 12.0f));
 
     // Apply time-stretch (affects speed independently of pitch)
     playbackSpeed /= synthRef.timeStretch;

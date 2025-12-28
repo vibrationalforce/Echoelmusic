@@ -1,4 +1,5 @@
 #include "StyleAwareMastering.h"
+#include "../Core/DSPOptimizations.h"
 #include <cmath>
 #include <algorithm>
 
@@ -516,8 +517,8 @@ void StyleAwareMastering::analyzeMetrics(const juce::AudioBuffer<float>& buffer)
             sumSquares += data[i] * data[i];
     }
 
-    float rms = std::sqrt(sumSquares / (numSamples * buffer.getNumChannels()));
-    currentMetrics.integratedLUFS = -0.691f + 10.0f * std::log10(rms + 0.0001f);
+    float rms = Echoel::DSP::FastMath::fastSqrt(sumSquares / (numSamples * buffer.getNumChannels()));
+    currentMetrics.integratedLUFS = -0.691f + Echoel::DSP::FastMath::gainToDb(rms + 0.0001f);
     currentMetrics.shortTermLUFS = currentMetrics.integratedLUFS;
 
     // Simplified LRA
@@ -556,44 +557,49 @@ void StyleAwareMastering::autoAdjustParameters()
 
 void StyleAwareMastering::BiquadFilter::setLowShelf(float frequency, float gain, float sampleRate)
 {
-    float A = std::pow(10.0f, gain / 40.0f);
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    float A = Echoel::DSP::FastMath::fastPow(10.0f, gain / 40.0f);
     float w0 = 2.0f * juce::MathConstants<float>::pi * frequency / sampleRate;
-    float cosw0 = std::cos(w0);
-    float sinw0 = std::sin(w0);
-    float alpha = sinw0 / 2.0f * std::sqrt((A + 1.0f / A) * (1.0f / 0.707f - 1.0f) + 2.0f);
+    float cosw0 = trigTables.fastCosRad(w0);
+    float sinw0 = trigTables.fastSinRad(w0);
+    float sqrtA = Echoel::DSP::FastMath::fastSqrt(A);
+    float alpha = sinw0 / 2.0f * Echoel::DSP::FastMath::fastSqrt((A + 1.0f / A) * (1.0f / 0.707f - 1.0f) + 2.0f);
 
-    float a0 = (A + 1.0f) + (A - 1.0f) * cosw0 + 2.0f * std::sqrt(A) * alpha;
+    float a0 = (A + 1.0f) + (A - 1.0f) * cosw0 + 2.0f * sqrtA * alpha;
 
-    b0 = (A * ((A + 1.0f) - (A - 1.0f) * cosw0 + 2.0f * std::sqrt(A) * alpha)) / a0;
+    b0 = (A * ((A + 1.0f) - (A - 1.0f) * cosw0 + 2.0f * sqrtA * alpha)) / a0;
     b1 = (2.0f * A * ((A - 1.0f) - (A + 1.0f) * cosw0)) / a0;
-    b2 = (A * ((A + 1.0f) - (A - 1.0f) * cosw0 - 2.0f * std::sqrt(A) * alpha)) / a0;
+    b2 = (A * ((A + 1.0f) - (A - 1.0f) * cosw0 - 2.0f * sqrtA * alpha)) / a0;
     a1 = (-2.0f * ((A - 1.0f) + (A + 1.0f) * cosw0)) / a0;
-    a2 = ((A + 1.0f) + (A - 1.0f) * cosw0 - 2.0f * std::sqrt(A) * alpha) / a0;
+    a2 = ((A + 1.0f) + (A - 1.0f) * cosw0 - 2.0f * sqrtA * alpha) / a0;
 }
 
 void StyleAwareMastering::BiquadFilter::setHighShelf(float frequency, float gain, float sampleRate)
 {
-    float A = std::pow(10.0f, gain / 40.0f);
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    float A = Echoel::DSP::FastMath::fastPow(10.0f, gain / 40.0f);
     float w0 = 2.0f * juce::MathConstants<float>::pi * frequency / sampleRate;
-    float cosw0 = std::cos(w0);
-    float sinw0 = std::sin(w0);
-    float alpha = sinw0 / 2.0f * std::sqrt((A + 1.0f / A) * (1.0f / 0.707f - 1.0f) + 2.0f);
+    float cosw0 = trigTables.fastCosRad(w0);
+    float sinw0 = trigTables.fastSinRad(w0);
+    float sqrtA = Echoel::DSP::FastMath::fastSqrt(A);
+    float alpha = sinw0 / 2.0f * Echoel::DSP::FastMath::fastSqrt((A + 1.0f / A) * (1.0f / 0.707f - 1.0f) + 2.0f);
 
-    float a0 = (A + 1.0f) - (A - 1.0f) * cosw0 + 2.0f * std::sqrt(A) * alpha;
+    float a0 = (A + 1.0f) - (A - 1.0f) * cosw0 + 2.0f * sqrtA * alpha;
 
-    b0 = (A * ((A + 1.0f) + (A - 1.0f) * cosw0 + 2.0f * std::sqrt(A) * alpha)) / a0;
+    b0 = (A * ((A + 1.0f) + (A - 1.0f) * cosw0 + 2.0f * sqrtA * alpha)) / a0;
     b1 = (-2.0f * A * ((A - 1.0f) + (A + 1.0f) * cosw0)) / a0;
-    b2 = (A * ((A + 1.0f) + (A - 1.0f) * cosw0 - 2.0f * std::sqrt(A) * alpha)) / a0;
+    b2 = (A * ((A + 1.0f) + (A - 1.0f) * cosw0 - 2.0f * sqrtA * alpha)) / a0;
     a1 = (2.0f * ((A - 1.0f) - (A + 1.0f) * cosw0)) / a0;
-    a2 = ((A + 1.0f) - (A - 1.0f) * cosw0 - 2.0f * std::sqrt(A) * alpha) / a0;
+    a2 = ((A + 1.0f) - (A - 1.0f) * cosw0 - 2.0f * sqrtA * alpha) / a0;
 }
 
 void StyleAwareMastering::BiquadFilter::setPeak(float frequency, float gain, float Q, float sampleRate)
 {
-    float A = std::pow(10.0f, gain / 40.0f);
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    float A = Echoel::DSP::FastMath::fastPow(10.0f, gain / 40.0f);
     float w0 = 2.0f * juce::MathConstants<float>::pi * frequency / sampleRate;
-    float cosw0 = std::cos(w0);
-    float sinw0 = std::sin(w0);
+    float cosw0 = trigTables.fastCosRad(w0);
+    float sinw0 = trigTables.fastSinRad(w0);
     float alpha = sinw0 / (2.0f * Q);
 
     float a0 = 1.0f + alpha / A;
@@ -624,17 +630,17 @@ float StyleAwareMastering::processCompressorSample(float input, CompressorState&
 {
     float inputLevel = std::abs(input);
 
-    // Envelope follower
-    float attackCoeff = std::exp(-1.0f / (settings.attack * 0.001f * currentSampleRate));
-    float releaseCoeff = std::exp(-1.0f / (settings.release * 0.001f * currentSampleRate));
+    // Envelope follower - using fast exp
+    float attackCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (settings.attack * 0.001f * static_cast<float>(currentSampleRate)));
+    float releaseCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (settings.release * 0.001f * static_cast<float>(currentSampleRate)));
 
     if (inputLevel > state.envelope)
         state.envelope = attackCoeff * state.envelope + (1.0f - attackCoeff) * inputLevel;
     else
         state.envelope = releaseCoeff * state.envelope + (1.0f - releaseCoeff) * inputLevel;
 
-    // Convert to dB
-    float envelopeDB = 20.0f * std::log10(state.envelope + 0.0001f);
+    // Convert to dB - using fast dB conversion
+    float envelopeDB = Echoel::DSP::FastMath::gainToDb(state.envelope + 0.0001f);
 
     // Calculate gain reduction
     float gainReductionDB = 0.0f;
@@ -649,8 +655,8 @@ float StyleAwareMastering::processCompressorSample(float input, CompressorState&
         gainReductionDB = over * (1.0f - 1.0f / settings.ratio);
     }
 
-    // Convert to linear gain
-    state.gain = std::pow(10.0f, (-gainReductionDB + settings.makeupGain) / 20.0f);
+    // Convert to linear gain - using fast dB to gain
+    state.gain = Echoel::DSP::FastMath::dbToGain(-gainReductionDB + settings.makeupGain);
 
     return input * state.gain;
 }
@@ -658,11 +664,11 @@ float StyleAwareMastering::processCompressorSample(float input, CompressorState&
 float StyleAwareMastering::processLimiterSample(float input, float& envelope, const LimiterSettings& settings)
 {
     float inputLevel = std::abs(input);
-    float ceilingLinear = std::pow(10.0f, settings.ceiling / 20.0f);
+    float ceilingLinear = Echoel::DSP::FastMath::dbToGain(settings.ceiling);
 
-    // Fast attack, variable release
+    // Fast attack, variable release - using fast exp
     float attackCoeff = 0.999f;  // Very fast
-    float releaseCoeff = std::exp(-1.0f / (settings.release * 0.001f * currentSampleRate));
+    float releaseCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (settings.release * 0.001f * static_cast<float>(currentSampleRate)));
 
     if (inputLevel > envelope)
         envelope = attackCoeff * envelope + (1.0f - attackCoeff) * inputLevel;

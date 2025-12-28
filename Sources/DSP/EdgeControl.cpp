@@ -113,6 +113,9 @@ void EdgeControl::prepare(double sampleRate, int maxBlockSize)
 {
     currentSampleRate = sampleRate;
 
+    // Pre-allocate dry buffer (avoids per-frame allocation)
+    dryBuffer.setSize(2, maxBlockSize, false, false, true);
+
     // Prepare oversampling
     if (oversamplingFactor > 1)
     {
@@ -156,11 +159,14 @@ void EdgeControl::process(juce::AudioBuffer<float>& buffer)
     // Update input meters
     updateMeters(buffer, true);
 
-    // Store dry signal for mixing
-    juce::AudioBuffer<float> dryBuffer(buffer.getNumChannels(), buffer.getNumSamples());
-    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+    // Store dry signal for mixing (using pre-allocated buffer - NO ALLOCATION)
+    const int numChannels = buffer.getNumChannels();
+    const int numSamples = buffer.getNumSamples();
+    if (dryBuffer.getNumChannels() < numChannels || dryBuffer.getNumSamples() < numSamples)
+        dryBuffer.setSize(numChannels, numSamples, false, false, true);
+    for (int ch = 0; ch < numChannels; ++ch)
     {
-        dryBuffer.copyFrom(ch, 0, buffer, ch, 0, buffer.getNumSamples());
+        dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
     }
 
     // Apply input gain

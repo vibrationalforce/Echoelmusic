@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../Core/DSPOptimizations.h"
 
 /**
  * VocalChain - Professional Vocal Processing Chain
@@ -122,11 +123,12 @@ private:
         {
             if (!coeffsDirty) return;
 
-            // 2nd order Butterworth high-pass
+            // 2nd order Butterworth high-pass - using fast trig
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
             float w0 = 2.0f * juce::MathConstants<float>::pi * cutoff / sampleRate;
             float Q = 0.707f;
-            float alpha = std::sin(w0) / (2.0f * Q);
-            float cosw0 = std::cos(w0);
+            float alpha = trigTables.fastSinRad(w0) / (2.0f * Q);
+            float cosw0 = trigTables.fastCosRad(w0);
 
             float b0 = (1.0f + cosw0) / 2.0f;
             float b1 = -(1.0f + cosw0);
@@ -184,8 +186,8 @@ private:
         }
 
         void updateCoefficients() {
-            attackCoeff = 1.0f - std::exp(-1.0f / (0.001f * sampleRate));   // 1ms attack
-            releaseCoeff = 1.0f - std::exp(-1.0f / (0.1f * sampleRate));    // 100ms release
+            attackCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (0.001f * sampleRate));   // 1ms attack
+            releaseCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (0.1f * sampleRate));    // 100ms release
         }
 
         float process(float input)
@@ -240,8 +242,8 @@ private:
 
         void updateCoefficients() {
             if (!coeffsDirty) return;
-            attackCoeff = 1.0f - std::exp(-1.0f / (attack * 0.001f * sampleRate));
-            releaseCoeff = 1.0f - std::exp(-1.0f / (release * 0.001f * sampleRate));
+            attackCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (attack * 0.001f * sampleRate));
+            releaseCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (release * 0.001f * sampleRate));
             coeffsDirty = false;
         }
 
@@ -283,9 +285,9 @@ private:
 
         float process(float input)
         {
-            // Soft clipping with tone control
+            // Soft clipping with tone control - using fast tanh
             float driven = input * (1.0f + drive * 3.0f);
-            float saturated = std::tanh(driven);
+            float saturated = Echoel::DSP::FastMath::fastTanh(driven);
 
             // Tone: 0=dark (lowpass), 1=bright (highpass)
             return saturated * (0.5f + tone * 0.5f);
