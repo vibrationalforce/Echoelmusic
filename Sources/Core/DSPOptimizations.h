@@ -102,9 +102,10 @@ public:
         constexpr float LOG2E = 1.4426950408889634f;
         float t = x * LOG2E;
 
-        // IEEE754 trick for 2^t
-        int32_t i = static_cast<int32_t>(t + 127.0f) << 23;
-        float pow2 = *reinterpret_cast<float*>(&i);
+        // IEEE754 trick for 2^t (using union for strict aliasing compliance)
+        union { float f; int32_t i; } u;
+        u.i = static_cast<int32_t>(t + 127.0f) << 23;
+        float pow2 = u.f;
 
         // Polynomial correction for fractional part
         float frac = t - std::floor(t);

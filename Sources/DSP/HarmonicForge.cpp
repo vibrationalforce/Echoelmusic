@@ -194,7 +194,7 @@ void HarmonicForge::process(juce::AudioBuffer<float>& buffer)
     // Apply input gain
     if (std::abs(inputGainDb) > 0.1f)
     {
-        buffer.applyGain(juce::Decibels::decibelsToGain(inputGainDb));
+        buffer.applyGain(Echoel::DSP::FastMath::dbToGain(inputGainDb));
     }
 
     // Process based on mode
@@ -210,7 +210,7 @@ void HarmonicForge::process(juce::AudioBuffer<float>& buffer)
     // Apply output gain
     if (std::abs(outputGainDb) > 0.1f)
     {
-        buffer.applyGain(juce::Decibels::decibelsToGain(outputGainDb));
+        buffer.applyGain(Echoel::DSP::FastMath::dbToGain(outputGainDb));
     }
 }
 
@@ -236,7 +236,7 @@ float HarmonicForge::getInputLevel(int bandIndex) const
 {
     if (bandIndex >= 0 && bandIndex < 4)
     {
-        return juce::Decibels::gainToDecibels(bandStates[bandIndex].inputPeak);
+        return Echoel::DSP::FastMath::gainToDb(bandStates[bandIndex].inputPeak);
     }
     return -100.0f;
 }
@@ -245,7 +245,7 @@ float HarmonicForge::getOutputLevel(int bandIndex) const
 {
     if (bandIndex >= 0 && bandIndex < 4)
     {
-        return juce::Decibels::gainToDecibels(bandStates[bandIndex].outputPeak);
+        return Echoel::DSP::FastMath::gainToDb(bandStates[bandIndex].outputPeak);
     }
     return -100.0f;
 }

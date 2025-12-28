@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include <array>
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 /**
@@ -439,7 +440,7 @@ private:
             float rms = buffer.getRMSLevel(0, 0, buffer.getNumSamples());
 
             // Convert to dB SPL (calibration: 0 dBFS = 100 dB SPL)
-            float dbFS = juce::Decibels::gainToDecibels(rms);
+            float dbFS = Echoel::DSP::FastMath::gainToDb(rms);
             float dbSPL = dbFS + 100.0f;
 
             // Apply Fletcher-Munson weighting

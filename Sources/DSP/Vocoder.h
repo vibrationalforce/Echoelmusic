@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../Core/DSPOptimizations.h"
 
 /**
  * Vocoder - Classic Carrier/Modulator Synthesis
@@ -90,8 +91,8 @@ private:
 
         void setEnvelopeParams(float attack, float release, float sampleRate)
         {
-            attackCoeff = 1.0f - std::exp(-1.0f / (attack * 0.001f * sampleRate));
-            releaseCoeff = 1.0f - std::exp(-1.0f / (release * 0.001f * sampleRate));
+            attackCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (attack * 0.001f * sampleRate));
+            releaseCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (release * 0.001f * sampleRate));
         }
 
         float process(float carrierSample, float modulatorSample)

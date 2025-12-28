@@ -111,7 +111,7 @@ float EchoConsole::processSample(float sample, int channel)
     if (gateEnabled)
     {
         float gatedSample = processGate(sample, channel);
-        preGainReduction = juce::Decibels::gainToDecibels(std::abs(gatedSample) / (std::abs(sample) + 1e-6f));
+        preGainReduction = Echoel::DSP::FastMath::gainToDb(std::abs(gatedSample) / (std::abs(sample) + 1e-6f));
         sample = gatedSample;
     }
 
@@ -123,7 +123,7 @@ float EchoConsole::processSample(float sample, int channel)
     if (compEnabled)
     {
         float compressedSample = processCompressor(sample, channel);
-        compGainReduction = juce::Decibels::gainToDecibels(std::abs(compressedSample) / (std::abs(sample) + 1e-6f));
+        compGainReduction = Echoel::DSP::FastMath::gainToDb(std::abs(compressedSample) / (std::abs(sample) + 1e-6f));
         sample = compressedSample;
     }
 
@@ -131,7 +131,7 @@ float EchoConsole::processSample(float sample, int channel)
     sample = processSaturation(sample);
 
     // 6. Output Gain
-    sample *= juce::Decibels::decibelsToGain(outputGain);
+    sample *= Echoel::DSP::FastMath::dbToGain(outputGain);
 
     // Update gain reduction metering (gate + comp)
     float totalGR = preGainReduction + compGainReduction;
@@ -261,25 +261,25 @@ void EchoConsole::updateEQCoefficients(int channel, EQBand band)
         case EQBand::HF:   // 3kHz - 16kHz
             if (eqBellMode)
                 *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(
-                    currentSampleRate, eq.frequency, eq.q, juce::Decibels::decibelsToGain(eq.gain));
+                    currentSampleRate, eq.frequency, eq.q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             else
                 *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeHighShelf(
-                    currentSampleRate, eq.frequency, eq.q, juce::Decibels::decibelsToGain(eq.gain));
+                    currentSampleRate, eq.frequency, eq.q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             break;
 
         case EQBand::HMF:  // 600Hz - 7kHz (parametric)
         case EQBand::LMF:  // 200Hz - 2.5kHz (parametric)
             *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(
-                currentSampleRate, eq.frequency, eq.q, juce::Decibels::decibelsToGain(eq.gain));
+                currentSampleRate, eq.frequency, eq.q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             break;
 
         case EQBand::LF:   // 30Hz - 450Hz
             if (eqBellMode)
                 *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(
-                    currentSampleRate, eq.frequency, eq.q, juce::Decibels::decibelsToGain(eq.gain));
+                    currentSampleRate, eq.frequency, eq.q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             else
                 *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeLowShelf(
-                    currentSampleRate, eq.frequency, eq.q, juce::Decibels::decibelsToGain(eq.gain));
+                    currentSampleRate, eq.frequency, eq.q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             break;
     }
 }
@@ -352,7 +352,7 @@ float EchoConsole::processGate(float sample, int channel)
 
     // RMS detection
     float inputLevel = std::abs(sample);
-    float inputDb = juce::Decibels::gainToDecibels(inputLevel + 1e-6f);
+    float inputDb = Echoel::DSP::FastMath::gainToDb(inputLevel + 1e-6f);
 
     // Envelope follower
     if (inputLevel > state.envelope)
@@ -360,7 +360,7 @@ float EchoConsole::processGate(float sample, int channel)
     else
         state.envelope = inputLevel + state.releaseCoeff * (state.envelope - inputLevel);
 
-    float envelopeDb = juce::Decibels::gainToDecibels(state.envelope + 1e-6f);
+    float envelopeDb = Echoel::DSP::FastMath::gainToDb(state.envelope + 1e-6f);
 
     // Expander curve
     float gainReduction = 0.0f;
@@ -371,7 +371,7 @@ float EchoConsole::processGate(float sample, int channel)
         gainReduction = juce::jlimit(gateRange, 0.0f, -gainReduction);
     }
 
-    float gain = juce::Decibels::decibelsToGain(gainReduction);
+    float gain = Echoel::DSP::FastMath::dbToGain(gainReduction);
     return sample * gain;
 }
 
@@ -434,7 +434,7 @@ float EchoConsole::processCompressor(float sample, int channel)
 
     // Peak detection (SSL VCA style)
     float inputLevel = std::abs(sample);
-    float inputDb = juce::Decibels::gainToDecibels(inputLevel + 1e-6f);
+    float inputDb = Echoel::DSP::FastMath::gainToDb(inputLevel + 1e-6f);
 
     // Envelope follower
     if (inputLevel > state.envelope)
@@ -452,13 +452,13 @@ float EchoConsole::processCompressor(float sample, int channel)
         state.envelope = inputLevel + releaseCoeff * (state.envelope - inputLevel);
     }
 
-    float envelopeDb = juce::Decibels::gainToDecibels(state.envelope + 1e-6f);
+    float envelopeDb = Echoel::DSP::FastMath::gainToDb(state.envelope + 1e-6f);
 
     // SSL compression curve (soft knee at higher ratios)
     float gainReduction = sslCompressorCurve(envelopeDb, compThreshold, compRatio);
 
     // Apply makeup gain
-    float totalGain = juce::Decibels::decibelsToGain(gainReduction + compMakeupGain);
+    float totalGain = Echoel::DSP::FastMath::dbToGain(gainReduction + compMakeupGain);
 
     return sample * totalGain;
 }

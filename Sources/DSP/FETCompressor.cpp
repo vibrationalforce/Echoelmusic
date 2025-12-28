@@ -71,13 +71,13 @@ float FETCompressor::processSample(float sample, int channel)
 void FETCompressor::setInputGain(float gainDb)
 {
     inputGain = juce::jlimit(-20.0f, 40.0f, gainDb);
-    inputGainLinear = juce::Decibels::decibelsToGain(inputGain);  // Cache linear gain
+    inputGainLinear = Echoel::DSP::FastMath::dbToGain(inputGain);  // Cache linear gain
 }
 
 void FETCompressor::setOutputGain(float gainDb)
 {
     outputGain = juce::jlimit(-20.0f, 20.0f, gainDb);
-    outputGainLinear = juce::Decibels::decibelsToGain(outputGain);  // Cache linear gain
+    outputGainLinear = Echoel::DSP::FastMath::dbToGain(outputGain);  // Cache linear gain
 }
 
 void FETCompressor::setAttack(float attackUs)
@@ -123,8 +123,8 @@ void FETCompressor::updateCoefficients()
 
     for (auto& state : compState)
     {
-        state.attackCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * attackSeconds));
-        state.releaseCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * releaseSeconds));
+        state.attackCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * attackSeconds));
+        state.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * releaseSeconds));
     }
 }
 

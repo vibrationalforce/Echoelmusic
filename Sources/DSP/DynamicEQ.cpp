@@ -279,7 +279,7 @@ void DynamicEQ::processBand(int bandIndex,
                     state.envelope[0] = state.releaseCoeff * state.envelope[0] + (1.0f - state.releaseCoeff) * levelL;
 
                 // Calculate dynamic gain
-                float envelopeDb = juce::Decibels::gainToDecibels(state.envelope[0] + 0.00001f);
+                float envelopeDb = Echoel::DSP::FastMath::gainToDb(state.envelope[0] + 0.00001f);
                 float dynamicGainMod = calculateDynamicGain(envelopeDb, band, state.envelope[0]);
 
                 // Modulate EQ gain based on dynamics
@@ -457,7 +457,7 @@ void DynamicEQ::updateSpectrumData(const juce::AudioBuffer<float>& buffer)
                 if (count > 0)
                 {
                     float avgMagnitude = sum / count;
-                    float db = juce::Decibels::gainToDecibels(avgMagnitude + 0.001f);
+                    float db = Echoel::DSP::FastMath::gainToDb(avgMagnitude + 0.001f);
                     float normalized = juce::jmap(db, -60.0f, 0.0f, 0.0f, 1.0f);
                     spectrumData[bin] = juce::jlimit(0.0f, 1.0f, normalized);
                 }

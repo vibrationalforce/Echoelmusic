@@ -20,12 +20,12 @@ void StereoImager::setWidth(float widthAmount)
 
 void StereoImager::setMidGain(float gainDb)
 {
-    midGain = juce::Decibels::decibelsToGain(juce::jlimit(-12.0f, 12.0f, gainDb));
+    midGain = Echoel::DSP::FastMath::dbToGain(juce::jlimit(-12.0f, 12.0f, gainDb));
 }
 
 void StereoImager::setSideGain(float gainDb)
 {
-    sideGain = juce::Decibels::decibelsToGain(juce::jlimit(-12.0f, 12.0f, gainDb));
+    sideGain = Echoel::DSP::FastMath::dbToGain(juce::jlimit(-12.0f, 12.0f, gainDb));
 }
 
 void StereoImager::setBalance(float bal)
@@ -129,10 +129,10 @@ void StereoImager::process(juce::AudioBuffer<float>& buffer)
     // Update level meters (smoothed)
     const float meterSmoothing = 0.3f;
     midLevel = midLevel * (1.0f - meterSmoothing) +
-               juce::Decibels::gainToDecibels(maxMid + 0.00001f) * meterSmoothing;
+               Echoel::DSP::FastMath::gainToDb(maxMid + 0.00001f) * meterSmoothing;
 
     sideLevel = sideLevel * (1.0f - meterSmoothing) +
-                juce::Decibels::gainToDecibels(maxSide + 0.00001f) * meterSmoothing;
+                Echoel::DSP::FastMath::gainToDb(maxSide + 0.00001f) * meterSmoothing;
 
     // Update correlation meter (every 100 samples)
     if (correlationSampleCount >= 100)

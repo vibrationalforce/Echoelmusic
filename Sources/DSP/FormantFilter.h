@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../Core/DSPOptimizations.h"
 
 /**
  * FormantFilter - Talkbox/Vowel Morphing Effect
@@ -73,10 +74,11 @@ private:
 
         void updateCoefficients()
         {
-            // Bandpass filter (constant peak gain)
+            // Bandpass filter (constant peak gain) - using fast trig
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
             float w0 = 2.0f * juce::MathConstants<float>::pi * freq / sampleRate;
-            float alpha = std::sin(w0) / (2.0f * Q);
-            float cosw0 = std::cos(w0);
+            float alpha = trigTables.fastSinRad(w0) / (2.0f * Q);
+            float cosw0 = trigTables.fastCosRad(w0);
 
             float a0 = 1.0f + alpha;
             b0 = alpha * gain / a0;
@@ -158,7 +160,9 @@ private:
 
         float process()
         {
-            float output = std::sin(2.0f * juce::MathConstants<float>::pi * phase);
+            // Fast sine using lookup table (phase is already 0-1 normalized)
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+            float output = trigTables.fastSin(phase);
             phase += rate / sampleRate;
             if (phase >= 1.0f)
                 phase -= 1.0f;
@@ -188,8 +192,8 @@ private:
             float freq2 = vowelData[vowel2].frequencies[f];
             float freq = freq1 * (1.0f - morph) + freq2 * morph;
 
-            // Apply formant shift (gender)
-            freq *= std::pow(2.0f, currentFormantShift * 0.15f);  // ±15% shift
+            // Apply formant shift (gender) - using fast pow
+            freq *= Echoel::DSP::FastMath::fastPow(2.0f, currentFormantShift * 0.15f);  // ±15% shift
 
             // Apply LFO modulation if enabled
             if (lfoEnabled && lfoDepth > 0.01f)

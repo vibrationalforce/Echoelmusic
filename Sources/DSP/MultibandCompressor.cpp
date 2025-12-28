@@ -296,7 +296,7 @@ void MultibandCompressor::compressBand(std::vector<float>& bandSignal,
     float envelope = state.envelope[channel];
 
     // Pre-calculate makeup gain (linear)
-    const float makeupGainLinear = juce::Decibels::decibelsToGain(band.makeupGain);
+    const float makeupGainLinear = Echoel::DSP::FastMath::dbToGain(band.makeupGain);
 
     float maxInputDb = -100.0f;
     float maxOutputDb = -100.0f;

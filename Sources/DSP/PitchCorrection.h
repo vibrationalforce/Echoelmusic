@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../Core/DSPOptimizations.h"
 
 /**
  * PitchCorrection (Echoeltune) - Professional Pitch Correction/Autotune
@@ -189,9 +190,10 @@ private:
             float delay = grainSize * (1.0f - pitchRatio);
             float output = delayLine.popSample(channel, delay);
 
-            // Smooth crossfade between grains
+            // Smooth crossfade between grains (Hann window) - using fast trig
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
             float grainPhase = std::fmod(readPos, grainSize) / grainSize;
-            float window = 0.5f - 0.5f * std::cos(2.0f * juce::MathConstants<float>::pi * grainPhase);
+            float window = 0.5f - 0.5f * trigTables.fastCosRad(2.0f * juce::MathConstants<float>::pi * grainPhase);
 
             readPos += pitchRatio;
             if (readPos >= grainSize)
@@ -222,10 +224,10 @@ private:
             int noteNumber = static_cast<int>(std::round(midiNote));
             int noteInScale = (noteNumber - rootNote + 120) % 12;
 
-            // Quantize to scale
+            // Quantize to scale - using fast pow for MIDI-to-frequency conversion
             if (scaleMode == 0)  // Chromatic - all notes allowed
             {
-                return 440.0f * std::pow(2.0f, (noteNumber - 69.0f) / 12.0f);
+                return 440.0f * Echoel::DSP::FastMath::fastPow(2.0f, (static_cast<float>(noteNumber) - 69.0f) / 12.0f);
             }
             else if (scaleMode == 1)  // Major scale
             {
@@ -254,7 +256,7 @@ private:
                 }
             }
 
-            return 440.0f * std::pow(2.0f, (noteNumber - 69.0f) / 12.0f);
+            return 440.0f * Echoel::DSP::FastMath::fastPow(2.0f, (static_cast<float>(noteNumber) - 69.0f) / 12.0f);
         }
     };
 

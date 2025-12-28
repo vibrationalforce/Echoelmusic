@@ -114,7 +114,7 @@ void BrickWallLimiter::process(juce::AudioBuffer<float>& buffer)
     const int numSamples = buffer.getNumSamples();
 
     currentlyLimiting = false;
-    const float ceilingLinear = juce::Decibels::decibelsToGain(ceiling);
+    const float ceilingLinear = Echoel::DSP::FastMath::dbToGain(ceiling);
 
     for (int channel = 0; channel < numChannels && channel < 2; ++channel)
     {
@@ -144,7 +144,7 @@ void BrickWallLimiter::process(juce::AudioBuffer<float>& buffer)
             maxPeak = std::max(maxPeak, peakLevel);
 
             // Calculate required gain reduction
-            const float peakDb = juce::Decibels::gainToDecibels(peakLevel + 0.00001f);
+            const float peakDb = Echoel::DSP::FastMath::gainToDb(peakLevel + 0.00001f);
             float targetGainReduction = calculateGainReduction(peakDb);
 
             // Apply attack (instant) or release (gradual)
@@ -195,7 +195,7 @@ void BrickWallLimiter::process(juce::AudioBuffer<float>& buffer)
             maxOutput = std::max(maxOutput, std::abs(outputSample));
 
             // Track gain reduction
-            float currentGR = juce::Decibels::gainToDecibels(envelope);
+            float currentGR = Echoel::DSP::FastMath::gainToDb(envelope);
             maxGR = std::min(maxGR, currentGR);  // Most negative value
         }
 
@@ -203,10 +203,10 @@ void BrickWallLimiter::process(juce::AudioBuffer<float>& buffer)
         const float meterSmoothing = 0.2f;
 
         inputLevel[channel] = inputLevel[channel] * (1.0f - meterSmoothing) +
-                              juce::Decibels::gainToDecibels(maxInput + 0.00001f) * meterSmoothing;
+                              Echoel::DSP::FastMath::gainToDb(maxInput + 0.00001f) * meterSmoothing;
 
         outputLevel[channel] = outputLevel[channel] * (1.0f - meterSmoothing) +
-                               juce::Decibels::gainToDecibels(maxOutput + 0.00001f) * meterSmoothing;
+                               Echoel::DSP::FastMath::gainToDb(maxOutput + 0.00001f) * meterSmoothing;
 
         gainReduction[channel] = gainReduction[channel] * (1.0f - meterSmoothing) +
                                  maxGR * meterSmoothing;
@@ -245,7 +245,7 @@ bool BrickWallLimiter::isLimiting() const
 
 float BrickWallLimiter::getPeakSinceReset() const
 {
-    return juce::Decibels::gainToDecibels(maxPeak + 0.00001f);
+    return Echoel::DSP::FastMath::gainToDb(maxPeak + 0.00001f);
 }
 
 void BrickWallLimiter::resetPeakMeter()
@@ -277,7 +277,7 @@ float BrickWallLimiter::calculateGainReduction(float levelDb) const
                 // Soft knee curve
                 const float kneeFactor = 1.0f - (position * position);
                 const float targetDb = levelDb - (1.0f - kneeFactor) * excess;
-                return juce::Decibels::decibelsToGain(targetDb - levelDb);
+                return Echoel::DSP::FastMath::dbToGain(targetDb - levelDb);
             }
         }
 
@@ -286,7 +286,7 @@ float BrickWallLimiter::calculateGainReduction(float levelDb) const
 
     // Above ceiling - hard limiting
     const float targetDb = ceiling;
-    return juce::Decibels::decibelsToGain(targetDb - levelDb);
+    return Echoel::DSP::FastMath::dbToGain(targetDb - levelDb);
 }
 
 float BrickWallLimiter::detectTruePeak(float sample, int channel)

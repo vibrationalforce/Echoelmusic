@@ -143,8 +143,8 @@ void VintageEffects::prepare(double sampleRate, int maxBlockSize)
     // Update envelope coefficients
     for (auto& state : envelopeStates)
     {
-        state.attackCoeff = std::exp(-1000.0f / (attack * static_cast<float>(sampleRate)));
-        state.releaseCoeff = std::exp(-1000.0f / (release * static_cast<float>(sampleRate)));
+        state.attackCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (attack * static_cast<float>(sampleRate)));
+        state.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (release * static_cast<float>(sampleRate)));
     }
 
     reset();

@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "PsychoacousticAnalyzer.h"
+#include "../Core/DSPOptimizations.h"
 #include <vector>
 #include <array>
 #include <cmath>
@@ -121,7 +122,7 @@ public:
             if (maskerLevel > 0.0f)
             {
                 float maskingThreshold = calculateMaskingThreshold(targetBark, maskerBark, maskerLevel);
-                float maskingPower = std::pow(10.0f, maskingThreshold / 10.0f);
+                float maskingPower = Echoel::DSP::FastMath::fastPow(10.0f, maskingThreshold / 10.0f);
                 totalMaskingPower += maskingPower;
             }
         }

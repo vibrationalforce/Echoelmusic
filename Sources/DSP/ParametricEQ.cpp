@@ -1,4 +1,5 @@
 #include "ParametricEQ.h"
+#include "../Core/DSPOptimizations.h"
 
 ParametricEQ::ParametricEQ()
 {
@@ -105,7 +106,7 @@ void ParametricEQ::updateFilterCoefficients(int bandIndex)
 juce::dsp::IIR::Coefficients<float>::Ptr ParametricEQ::createCoefficients(const Band& band)
 {
     const float freq = juce::jlimit(20.0f, (float)currentSampleRate * 0.49f, band.frequency);
-    const float gain = juce::Decibels::decibelsToGain(band.gain);
+    const float gain = Echoel::DSP::FastMath::dbToGain(band.gain);
     const float Q = juce::jmax(0.1f, band.Q);
 
     switch (band.type)

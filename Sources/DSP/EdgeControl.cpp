@@ -172,7 +172,7 @@ void EdgeControl::process(juce::AudioBuffer<float>& buffer)
     // Apply input gain
     if (std::abs(inputGainDb) > 0.1f)
     {
-        buffer.applyGain(juce::Decibels::decibelsToGain(inputGainDb));
+        buffer.applyGain(Echoel::DSP::FastMath::dbToGain(inputGainDb));
     }
 
     // Oversample if enabled
@@ -250,13 +250,13 @@ void EdgeControl::process(juce::AudioBuffer<float>& buffer)
     // Apply output gain
     if (std::abs(outputGainDb) > 0.1f)
     {
-        buffer.applyGain(juce::Decibels::decibelsToGain(outputGainDb));
+        buffer.applyGain(Echoel::DSP::FastMath::dbToGain(outputGainDb));
     }
 
     // Apply ceiling
     if (truePeakMode && ceilingDb < 0.0f)
     {
-        float ceilingGain = juce::Decibels::decibelsToGain(ceilingDb);
+        float ceilingGain = Echoel::DSP::FastMath::dbToGain(ceilingDb);
         for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
         {
             float* channelData = buffer.getWritePointer(ch);
@@ -292,12 +292,12 @@ void EdgeControl::process(juce::AudioBuffer<float>& buffer)
 
 float EdgeControl::getInputLevel() const
 {
-    return juce::Decibels::gainToDecibels(inputLevel.load());
+    return Echoel::DSP::FastMath::gainToDb(inputLevel.load());
 }
 
 float EdgeControl::getOutputLevel() const
 {
-    return juce::Decibels::gainToDecibels(outputLevel.load());
+    return Echoel::DSP::FastMath::gainToDb(outputLevel.load());
 }
 
 float EdgeControl::getGainReduction() const
@@ -316,7 +316,7 @@ float EdgeControl::getClippingAmount() const
 
 void EdgeControl::processStereo(juce::AudioBuffer<float>& buffer)
 {
-    const float threshold = juce::Decibels::decibelsToGain(thresholdDb);
+    const float threshold = Echoel::DSP::FastMath::dbToGain(thresholdDb);
 
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
     {
@@ -350,7 +350,7 @@ void EdgeControl::processMidSide(juce::AudioBuffer<float>& buffer)
     float* leftData = buffer.getWritePointer(0);
     float* rightData = buffer.getWritePointer(1);
 
-    const float threshold = juce::Decibels::decibelsToGain(thresholdDb);
+    const float threshold = Echoel::DSP::FastMath::dbToGain(thresholdDb);
 
     for (int i = 0; i < numSamples; ++i)
     {
@@ -534,7 +534,7 @@ void EdgeControl::updateMeters(const juce::AudioBuffer<float>& buffer, bool isIn
         float inputPeak = inputLevel.load();
         if (inputPeak > 0.001f)
         {
-            float gr = juce::Decibels::gainToDecibels(peak / inputPeak);
+            float gr = Echoel::DSP::FastMath::gainToDb(peak / inputPeak);
             gainReduction.store(gr);
         }
     }

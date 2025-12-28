@@ -200,14 +200,14 @@ private:
             else
                 envelope += releaseCoeff * (detection - envelope);
 
-            float envelopeDB = juce::Decibels::gainToDecibels(envelope + 0.00001f);
+            float envelopeDB = Echoel::DSP::FastMath::gainToDb(envelope + 0.00001f);
 
             // Compute gain reduction
             float reduction = 1.0f;
             if (envelopeDB > threshold)
             {
                 float excess = envelopeDB - threshold;
-                reduction = juce::Decibels::decibelsToGain(-excess * 0.7f);  // 70% reduction
+                reduction = Echoel::DSP::FastMath::dbToGain(-excess * 0.7f);  // 70% reduction
             }
 
             return input * reduction;
@@ -249,7 +249,7 @@ private:
 
         float process(float input)
         {
-            float inputLevel = juce::Decibels::gainToDecibels(std::abs(input) + 0.00001f);
+            float inputLevel = Echoel::DSP::FastMath::gainToDb(std::abs(input) + 0.00001f);
 
             if (inputLevel > envelope)
                 envelope += attackCoeff * (inputLevel - envelope);
@@ -263,7 +263,7 @@ private:
                 gainReduction = excess * (1.0f - 1.0f / ratio);
             }
 
-            float gain = juce::Decibels::decibelsToGain(-gainReduction + makeup);
+            float gain = Echoel::DSP::FastMath::dbToGain(-gainReduction + makeup);
             return input * gain;
         }
 

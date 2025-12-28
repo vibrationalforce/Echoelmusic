@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../Core/DSPOptimizations.h"
 
 /**
  * LofiBitcrusher - LoFi/Retro Digital Degradation
@@ -49,10 +50,10 @@ public:
 
 private:
     //==============================================================================
-    // Bit Crusher
+    // Bit Crusher - using fast pow
     float quantize(float sample, int bits)
     {
-        float levels = std::pow(2.0f, bits) - 1.0f;
+        float levels = Echoel::DSP::FastMath::fastPow(2.0f, static_cast<float>(bits)) - 1.0f;
         return std::round(sample * levels) / levels;
     }
 
@@ -110,11 +111,11 @@ private:
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> wowFlutterDelay;
 
     //==============================================================================
-    // Analog Warmth (Soft Clipping)
+    // Analog Warmth (Soft Clipping) - using fast tanh
     float softClip(float sample, float drive)
     {
         float driven = sample * (1.0f + drive * 2.0f);
-        return std::tanh(driven);
+        return Echoel::DSP::FastMath::fastTanh(driven);
     }
 
     //==============================================================================

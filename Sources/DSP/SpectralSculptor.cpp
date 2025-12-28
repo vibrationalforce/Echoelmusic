@@ -1,4 +1,5 @@
 #include "SpectralSculptor.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -435,9 +436,9 @@ void SpectralSculptor::processDenoise(std::vector<std::complex<float>>& freqData
 
 void SpectralSculptor::processSpectralGate(std::vector<std::complex<float>>& freqData)
 {
-    const float threshold = juce::Decibels::decibelsToGain(gateThresholdDb);
-    const float attackCoeff = std::exp(-1000.0f / (gateAttackMs * static_cast<float>(currentSampleRate)));
-    const float releaseCoeff = std::exp(-1000.0f / (gateReleaseMs * static_cast<float>(currentSampleRate)));
+    const float threshold = Echoel::DSP::FastMath::dbToGain(gateThresholdDb);
+    const float attackCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (gateAttackMs * static_cast<float>(currentSampleRate)));
+    const float releaseCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (gateReleaseMs * static_cast<float>(currentSampleRate)));
 
     const int numBins = juce::jmin(static_cast<int>(freqData.size()), static_cast<int>(gateEnvelopes.size()));
 
@@ -568,7 +569,9 @@ void SpectralSculptor::processSpectralMorph(std::vector<std::complex<float>>& fr
         float magnitude = std::abs(freqData[i]);
         float phase = std::arg(freqData[i]);
 
-        float modulatedMagnitude = magnitude * (1.0f + magModulation * std::sin(i * 0.1f));
+        // Using fast sine for spectral modulation
+        const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+        float modulatedMagnitude = magnitude * (1.0f + magModulation * trigTables.fastSin(static_cast<float>(i) * 0.1f / (2.0f * juce::MathConstants<float>::pi)));
 
         morphedData[shiftedBin] = std::polar(modulatedMagnitude, phase);
     }

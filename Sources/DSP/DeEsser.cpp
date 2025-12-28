@@ -101,7 +101,7 @@ void DeEsser::process(juce::AudioBuffer<float>& buffer)
             }
 
             // Calculate gain reduction
-            float sibilanceDb = juce::Decibels::gainToDecibels(state.envelope + 0.00001f);
+            float sibilanceDb = Echoel::DSP::FastMath::gainToDb(state.envelope + 0.00001f);
             float gr = calculateGainReduction(sibilanceDb);
 
             // Apply gain reduction
@@ -109,7 +109,7 @@ void DeEsser::process(juce::AudioBuffer<float>& buffer)
 
             // Metering
             maxSibilance = std::max(maxSibilance, sibilanceDb);
-            maxGR = std::min(maxGR, juce::Decibels::gainToDecibels(gr));
+            maxGR = std::min(maxGR, Echoel::DSP::FastMath::gainToDb(gr));
         }
 
         // Update metering
@@ -196,5 +196,5 @@ float DeEsser::calculateGainReduction(float sibilanceDb)
     float excess = sibilanceDb - threshold;
     float reductionDb = excess * (1.0f - 1.0f / ratio);
 
-    return juce::Decibels::decibelsToGain(-reductionDb);
+    return Echoel::DSP::FastMath::dbToGain(-reductionDb);
 }

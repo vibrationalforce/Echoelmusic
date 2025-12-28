@@ -131,7 +131,7 @@ void ClassicPreamp::setPreampDrive(float amount)
 float ClassicPreamp::processInputStage(float sample, int channel)
 {
     // Apply input gain
-    sample *= juce::Decibels::decibelsToGain(inputGain);
+    sample *= Echoel::DSP::FastMath::dbToGain(inputGain);
 
     // Input transformer saturation (Marinair transformer characteristic)
     sample = inputTransformerSaturation(sample);
@@ -349,20 +349,20 @@ void ClassicPreamp::updateEQCoefficients(int channel, int band)
         case 0:  // High
             frequency = HIGH_FREQUENCIES[eq.frequencyIndex];
             *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeHighShelf(
-                currentSampleRate, frequency, q, juce::Decibels::decibelsToGain(eq.gain));
+                currentSampleRate, frequency, q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             break;
 
         case 1:  // Mid (parametric with fixed Q)
             frequency = MID_FREQUENCIES[eq.frequencyIndex];
             q = 1.0f;  // Neve 1073 mid band Q
             *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(
-                currentSampleRate, frequency, q, juce::Decibels::decibelsToGain(eq.gain));
+                currentSampleRate, frequency, q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             break;
 
         case 2:  // Low
             frequency = LOW_FREQUENCIES[eq.frequencyIndex];
             *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeLowShelf(
-                currentSampleRate, frequency, q, juce::Decibels::decibelsToGain(eq.gain));
+                currentSampleRate, frequency, q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             break;
     }
 }
@@ -407,7 +407,7 @@ float ClassicPreamp::processOutputStage(float sample, int channel)
     sample = outputTransformerSaturation(sample, transformerColoration);
 
     // Output gain
-    sample *= juce::Decibels::decibelsToGain(outputGain);
+    sample *= Echoel::DSP::FastMath::dbToGain(outputGain);
 
     return sample;
 }

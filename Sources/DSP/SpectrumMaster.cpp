@@ -62,7 +62,7 @@ void SpectrumMaster::performFFTAnalysis(const juce::AudioBuffer<float>& buffer)
     for (int i = 0; i < fftSize / 2; ++i)
     {
         float magnitude = fftData[i];
-        spectrumMagnitudes[i] = juce::Decibels::gainToDecibels(magnitude + 1e-6f);
+        spectrumMagnitudes[i] = Echoel::DSP::FastMath::gainToDb(magnitude + 1e-6f);
     }
 }
 

@@ -234,7 +234,7 @@ float TransientDesigner::processTransient(float input, EnvelopeState& state)
     // Update metering
     state.attackEnvelopeDisplay = state.fastEnvelope;
     state.sustainEnvelopeDisplay = state.slowEnvelope;
-    state.gainReduction = juce::Decibels::gainToDecibels(gain);
+    state.gainReduction = Echoel::DSP::FastMath::gainToDb(gain);
 
     // Apply gain
     return input * gain;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../Core/DSPOptimizations.h"
 
 /**
  * UnderwaterEffect - Aquatic/Submarine Audio Processing
@@ -109,12 +110,13 @@ private:
 
             nextBubbleTime -= 1.0f;
 
-            // Generate bubble pop (exponentially decaying sine)
+            // Generate bubble pop (exponentially decaying sine) - using fast math
             if (phase < 0.1f * sampleRate)  // 100ms bubble
             {
                 float freq = 400.0f + random.nextFloat() * 1600.0f;  // 400-2000 Hz
-                float envelope = std::exp(-phase / (0.03f * sampleRate));
-                float sine = std::sin(2.0f * juce::MathConstants<float>::pi * freq * phase / sampleRate);
+                float envelope = Echoel::DSP::FastMath::fastExp(-phase / (0.03f * sampleRate));
+                const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+                float sine = trigTables.fastSinRad(2.0f * juce::MathConstants<float>::pi * freq * phase / sampleRate);
                 phase += 1.0f;
                 return sine * envelope * 0.3f;
             }

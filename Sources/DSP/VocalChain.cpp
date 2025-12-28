@@ -1,4 +1,5 @@
 #include "VocalChain.h"
+#include "../Core/DSPOptimizations.h"
 
 VocalChain::VocalChain()
 {
@@ -248,7 +249,7 @@ void VocalChain::setEQLowGain(float dB)
     eqLowGain = dB;
     // Update filter coefficients for low shelf @ 200 Hz
     auto coeffs = juce::dsp::IIR::Coefficients<float>::makeLowShelf(
-        currentSampleRate, 200.0f, 0.7f, juce::Decibels::decibelsToGain(dB)
+        currentSampleRate, 200.0f, 0.7f, Echoel::DSP::FastMath::dbToGain(dB)
     );
     eqFilters[0].coefficients = coeffs;  // L
     eqFilters[3].coefficients = coeffs;  // R
@@ -259,7 +260,7 @@ void VocalChain::setEQMidGain(float dB)
     eqMidGain = dB;
     // Update filter coefficients for peak @ 2000 Hz
     auto coeffs = juce::dsp::IIR::Coefficients<float>::makePeakFilter(
-        currentSampleRate, 2000.0f, 1.0f, juce::Decibels::decibelsToGain(dB)
+        currentSampleRate, 2000.0f, 1.0f, Echoel::DSP::FastMath::dbToGain(dB)
     );
     eqFilters[1].coefficients = coeffs;  // L
     eqFilters[4].coefficients = coeffs;  // R
@@ -270,7 +271,7 @@ void VocalChain::setEQHighGain(float dB)
     eqHighGain = dB;
     // Update filter coefficients for high shelf @ 8000 Hz
     auto coeffs = juce::dsp::IIR::Coefficients<float>::makeHighShelf(
-        currentSampleRate, 8000.0f, 0.7f, juce::Decibels::decibelsToGain(dB)
+        currentSampleRate, 8000.0f, 0.7f, Echoel::DSP::FastMath::dbToGain(dB)
     );
     eqFilters[2].coefficients = coeffs;  // L
     eqFilters[5].coefficients = coeffs;  // R

@@ -31,7 +31,7 @@ void Compressor::process(juce::AudioBuffer<float>& buffer)
     }
 
     // OPTIMIZATION: Pre-compute makeup gain (constant per block)
-    const float makeup = juce::Decibels::decibelsToGain(makeupGain);
+    const float makeup = Echoel::DSP::FastMath::dbToGain(makeupGain);
 
     for (int i = 0; i < numSamples; ++i)
     {
@@ -120,7 +120,7 @@ void Compressor::updateCoefficients()
 
 float Compressor::computeGain(float input)
 {
-    float inputDB = juce::Decibels::gainToDecibels(input + 0.00001f);
+    float inputDB = Echoel::DSP::FastMath::gainToDb(input + 0.00001f);
 
     // Soft knee implementation
     float overThreshold = inputDB - threshold;
@@ -132,13 +132,13 @@ float Compressor::computeGain(float input)
         float kneeInput = overThreshold + knee * 0.5f;
         float kneeOutput = kneeInput * kneeInput / (2.0f * knee);
         float compressionDB = kneeOutput / ratio - kneeOutput;
-        gain = juce::Decibels::decibelsToGain(compressionDB);
+        gain = Echoel::DSP::FastMath::dbToGain(compressionDB);
     }
     else if (overThreshold > 0.0f)
     {
         // Above threshold
         float compressionDB = overThreshold / ratio - overThreshold;
-        gain = juce::Decibels::decibelsToGain(compressionDB);
+        gain = Echoel::DSP::FastMath::dbToGain(compressionDB);
     }
 
     return gain;

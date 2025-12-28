@@ -165,19 +165,19 @@ void PassiveEQ::updateFilters()
     {
         // Low boost (shelving)
         *eq.lowBoostFilter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeLowShelf(
-            currentSampleRate, lowBoostFreq, lowQ, juce::Decibels::decibelsToGain(lowBoost));
+            currentSampleRate, lowBoostFreq, lowQ, Echoel::DSP::FastMath::dbToGain(lowBoost));
 
         // Low cut (shelving - inverted)
         *eq.lowCutFilter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeLowShelf(
-            currentSampleRate, lowCutFreq, lowQ, juce::Decibels::decibelsToGain(-lowAttenuation));
+            currentSampleRate, lowCutFreq, lowQ, Echoel::DSP::FastMath::dbToGain(-lowAttenuation));
 
         // High boost (shelving)
         *eq.highBoostFilter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeHighShelf(
-            currentSampleRate, highBoostFreq, highQ, juce::Decibels::decibelsToGain(highBoost));
+            currentSampleRate, highBoostFreq, highQ, Echoel::DSP::FastMath::dbToGain(highBoost));
 
         // High cut (shelving)
         *eq.highCutFilter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeHighShelf(
-            currentSampleRate, 10000.0f, 0.7f, juce::Decibels::decibelsToGain(-highAttenuation));
+            currentSampleRate, 10000.0f, 0.7f, Echoel::DSP::FastMath::dbToGain(-highAttenuation));
     }
 }
 

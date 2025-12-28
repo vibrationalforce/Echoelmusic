@@ -181,7 +181,7 @@ float OptoCompressor::processOpticalCompression(float sample, int channel, float
     auto& cell = opticalCell[channel];
 
     // Convert to dB for processing
-    float inputDb = juce::Decibels::gainToDecibels(std::abs(sidechainSignal) + 1e-6f);
+    float inputDb = Echoel::DSP::FastMath::gainToDb(std::abs(sidechainSignal) + 1e-6f);
 
     // Determine threshold based on peak reduction amount
     float threshold = -20.0f + (peakReduction * 30.0f);  // -20dB to +10dB range
@@ -190,7 +190,7 @@ float OptoCompressor::processOpticalCompression(float sample, int channel, float
     float gainReduction = opticalCellResponse(inputDb, cell.lightLevel, cell.resistance, channel);
 
     // Apply gain reduction
-    float outputGain = juce::Decibels::decibelsToGain(gainReduction + makeupGain);
+    float outputGain = Echoel::DSP::FastMath::dbToGain(gainReduction + makeupGain);
     float compressed = sample * outputGain;
 
     // Update metering

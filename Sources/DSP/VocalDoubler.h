@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../Core/DSPOptimizations.h"
 
 /**
  * VocalDoubler - Professional Vocal Doubling/Thickening
@@ -71,9 +72,14 @@ private:
 
         float process(float input, int channel)
         {
-            // Pitch shift using delay modulation
-            float pitchRatio = std::pow(2.0f, pitchOffset / 1200.0f);  // cents to ratio
-            float modulation = std::sin(phase) * 0.001f * pitchRatio;  // Subtle LFO
+            // Pitch shift using delay modulation - using fast math
+            float pitchRatio = Echoel::DSP::FastMath::fastPow(2.0f, pitchOffset / 1200.0f);  // cents to ratio
+
+            // Convert phase to normalized 0-1 for lookup (phase is in radians)
+            constexpr float INV_TWO_PI = 1.0f / (2.0f * juce::MathConstants<float>::pi);
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+            float normalizedPhase = phase * INV_TWO_PI;
+            float modulation = trigTables.fastSin(normalizedPhase) * 0.001f * pitchRatio;  // Subtle LFO
 
             delayLine.pushSample(channel, input);
             float delayed = delayLine.popSample(channel, timingOffset + modulation * sampleRate);
