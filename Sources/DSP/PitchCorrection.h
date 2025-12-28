@@ -302,5 +302,8 @@ private:
 
     double currentSampleRate = 44100.0;
 
+    // Pre-allocated buffer for dry signal (avoids per-frame allocation)
+    juce::AudioBuffer<float> dryBuffer;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchCorrection)
 };

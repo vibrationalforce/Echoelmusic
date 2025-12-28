@@ -77,28 +77,31 @@ void MultibandCompressor::process(juce::AudioBuffer<float>& buffer)
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
+    // Ensure pre-allocated buffers are large enough (only resize if needed)
+    if (bandBuffers[0].size() < static_cast<size_t>(numSamples))
+    {
+        for (auto& buf : bandBuffers)
+            buf.resize(numSamples);
+    }
+
     // Process each channel independently
     for (int channel = 0; channel < numChannels && channel < 2; ++channel)
     {
-        // 1. Split into frequency bands
-        std::array<std::vector<float>, 4> bandSignals;
-        for (auto& sig : bandSignals)
-            sig.resize(numSamples);
-
-        splitIntoBands(buffer, bandSignals, channel);
+        // 1. Split into frequency bands (using pre-allocated bandBuffers)
+        splitIntoBands(buffer, bandBuffers, channel);
 
         // 2. Compress each band
         for (int bandIndex = 0; bandIndex < 4; ++bandIndex)
         {
             if (bands[bandIndex].enabled && !bands[bandIndex].bypass)
             {
-                compressBand(bandSignals[bandIndex], bandIndex, channel);
+                compressBand(bandBuffers[bandIndex], bandIndex, channel);
             }
         }
 
         // 3. Sum bands back together
         float* channelData = buffer.getWritePointer(channel);
-        sumBands(bandSignals, channelData, numSamples);
+        sumBands(bandBuffers, channelData, numSamples);
     }
 }
 

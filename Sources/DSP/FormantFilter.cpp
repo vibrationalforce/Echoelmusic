@@ -23,6 +23,9 @@ void FormantFilter::prepare(double sampleRate, int maximumBlockSize)
     lfo.setSampleRate(static_cast<float>(sampleRate));
     lfo.setRate(lfoRate);
 
+    // Pre-allocate dry buffer (OPTIMIZATION: avoids per-frame allocation)
+    dryBuffer.setSize(2, maximumBlockSize);
+
     // Update formant coefficients
     updateFormants();
 
@@ -49,8 +52,9 @@ void FormantFilter::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0)
         return;
 
-    // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
+    // Store dry signal using pre-allocated buffer (no allocation in audio thread)
+    if (dryBuffer.getNumChannels() < numChannels || dryBuffer.getNumSamples() < numSamples)
+        dryBuffer.setSize(numChannels, numSamples, false, false, true);
     for (int ch = 0; ch < numChannels; ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
