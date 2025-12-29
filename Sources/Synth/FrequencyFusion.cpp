@@ -136,6 +136,32 @@ void FrequencyFusion::reset()
 }
 
 //==============================================================================
+// Effects Parameters (NEW)
+//==============================================================================
+
+void FrequencyFusion::setChorusParams(float rate, float depth, float mix)
+{
+    chorus.rate = juce::jlimit(0.1f, 5.0f, rate);
+    chorus.depth = juce::jlimit(0.0f, 1.0f, depth);
+    chorus.mix = juce::jlimit(0.0f, 1.0f, mix);
+}
+
+void FrequencyFusion::setDelayParams(float timeL, float timeR, float feedback, float mix)
+{
+    delay.timeL = juce::jlimit(0.001f, 2.0f, timeL);
+    delay.timeR = juce::jlimit(0.001f, 2.0f, timeR);
+    delay.feedback = juce::jlimit(0.0f, 0.95f, feedback);
+    delay.mix = juce::jlimit(0.0f, 1.0f, mix);
+}
+
+void FrequencyFusion::setReverbParams(float size, float decay, float mix)
+{
+    reverb.size = juce::jlimit(0.0f, 1.0f, size);
+    reverb.decay = juce::jlimit(0.0f, 1.0f, decay);
+    reverb.mix = juce::jlimit(0.0f, 1.0f, mix);
+}
+
+//==============================================================================
 // Algorithm Initialization
 //==============================================================================
 

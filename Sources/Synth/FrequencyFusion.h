@@ -208,7 +208,53 @@ public:
     void prepare(double sampleRate, int maxBlockSize);
     void reset();
 
+    //==========================================================================
+    // Effects Chain (NEW - matches WaveWeaver)
+    //==========================================================================
+
+    struct ChorusEffect
+    {
+        bool enabled = false;
+        float rate = 0.5f;
+        float depth = 0.5f;
+        float mix = 0.5f;
+
+        ChorusEffect() = default;
+    };
+
+    struct DelayEffect
+    {
+        bool enabled = false;
+        float timeL = 0.25f;
+        float timeR = 0.375f;
+        float feedback = 0.4f;
+        float mix = 0.3f;
+
+        DelayEffect() = default;
+    };
+
+    struct ReverbEffect
+    {
+        bool enabled = false;
+        float size = 0.7f;
+        float decay = 0.5f;
+        float mix = 0.3f;
+
+        ReverbEffect() = default;
+    };
+
+    void setChorusEnabled(bool enabled) { chorus.enabled = enabled; }
+    void setChorusParams(float rate, float depth, float mix);
+    void setDelayEnabled(bool enabled) { delay.enabled = enabled; }
+    void setDelayParams(float timeL, float timeR, float feedback, float mix);
+    void setReverbEnabled(bool enabled) { reverb.enabled = enabled; }
+    void setReverbParams(float size, float decay, float mix);
+
 private:
+    // Effects
+    ChorusEffect chorus;
+    DelayEffect delay;
+    ReverbEffect reverb;
     //==========================================================================
     // Parameters
     //==========================================================================
