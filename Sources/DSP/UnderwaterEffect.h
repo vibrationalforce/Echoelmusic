@@ -54,22 +54,36 @@ private:
         float cutoff = 800.0f;
         float resonance = 0.7f;
         float sampleRate = 44100.0f;
+        float fCoeff = 0.1f;  // OPTIMIZATION: Cached coefficient
 
         float lowpass = 0.0f;
         float bandpass = 0.0f;
         float highpass = 0.0f;
 
-        void setSampleRate(float sr) { sampleRate = sr; }
-        void setCutoff(float freq) { cutoff = juce::jlimit(100.0f, 5000.0f, freq); }
+        void setSampleRate(float sr) {
+            sampleRate = sr;
+            updateCoefficient();
+        }
+
+        void setCutoff(float freq) {
+            cutoff = juce::jlimit(100.0f, 5000.0f, freq);
+            updateCoefficient();
+        }
+
+        // OPTIMIZATION: Pre-compute sin coefficient instead of per-sample
+        void updateCoefficient() {
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+            float normalizedCutoff = cutoff / sampleRate;  // Already 0-0.5 range
+            fCoeff = 2.0f * trigTables.fastSin(normalizedCutoff * 0.5f);  // sin(pi*x) via normalized
+        }
 
         float process(float input)
         {
-            float f = 2.0f * std::sin(juce::MathConstants<float>::pi * cutoff / sampleRate);
             float q = 1.0f - resonance;
 
-            lowpass += f * bandpass;
+            lowpass += fCoeff * bandpass;
             highpass = input - lowpass - q * bandpass;
-            bandpass += f * highpass;
+            bandpass += fCoeff * highpass;
 
             return lowpass;
         }

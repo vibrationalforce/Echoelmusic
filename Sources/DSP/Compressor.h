@@ -55,6 +55,10 @@ private:
     float knee = 3.0f;
     float makeupGain = 0.0f;
 
+    // OPTIMIZATION: Cached reciprocals for division-free per-sample processing
+    float invRatio = 0.25f;           // 1/ratio
+    float invTwoKnee = 0.1666667f;    // 1/(2*knee)
+
     // State
     float envelopeL = 0.0f;
     float envelopeR = 0.0f;

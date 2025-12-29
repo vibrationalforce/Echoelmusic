@@ -361,15 +361,21 @@ float MultibandCompressor::calculateCompression(float envelopeDb,
 
     const float excess = envelopeDb - threshold;
 
+    // OPTIMIZATION: Pre-compute constants (moved to updateCoefficients for per-sample use)
+    const float compressionFactor = 1.0f - 1.0f / ratio;
+    const float halfKnee = knee * 0.5f;
+
     // Soft knee
     if (excess < knee)
     {
-        const float kneeRatio = excess / knee;
-        return kneeRatio * kneeRatio * excess * (1.0f - 1.0f / ratio) / 2.0f;
+        // OPTIMIZATION: Use multiplication instead of division
+        const float invKnee = (knee > 0.01f) ? (1.0f / knee) : 100.0f;
+        const float kneeRatio = excess * invKnee;
+        return kneeRatio * kneeRatio * excess * compressionFactor * 0.5f;
     }
 
     // Above knee (linear compression)
-    return (excess - knee / 2.0f) * (1.0f - 1.0f / ratio);
+    return (excess - halfKnee) * compressionFactor;
 }
 
 void MultibandCompressor::updateCoefficients()
@@ -384,6 +390,14 @@ void MultibandCompressor::updateCoefficients()
 
         // Release coefficient - using fast exp
         state.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (band.release * static_cast<float>(currentSampleRate)));
+
+        // OPTIMIZATION: Cache compression constants for division-free per-sample processing
+        state.compressionFactor = 1.0f - 1.0f / band.ratio;
+        state.halfKnee = band.knee * 0.5f;
+        if (band.knee > 0.01f)
+            state.invKnee = 1.0f / band.knee;
+        else
+            state.invKnee = 100.0f;  // Large value for hard knee
     }
 }
 

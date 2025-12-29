@@ -146,6 +146,11 @@ private:
         // Attack/release coefficients (cached)
         float attackCoeff = 0.0f;
         float releaseCoeff = 0.0f;
+
+        // OPTIMIZATION: Cached compression constants
+        float compressionFactor = 0.75f;  // (1 - 1/ratio)
+        float invKnee = 0.1667f;          // 1/knee
+        float halfKnee = 3.0f;            // knee/2
     };
 
     //==========================================================================

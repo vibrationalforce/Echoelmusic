@@ -73,6 +73,8 @@ void Compressor::setThreshold(float dB)
 void Compressor::setRatio(float newRatio)
 {
     ratio = juce::jlimit(1.0f, 20.0f, newRatio);
+    // OPTIMIZATION: Cache reciprocal for division-free per-sample processing
+    invRatio = 1.0f / ratio;
 }
 
 void Compressor::setAttack(float ms)
@@ -90,6 +92,11 @@ void Compressor::setRelease(float ms)
 void Compressor::setKnee(float dB)
 {
     knee = juce::jlimit(0.0f, 12.0f, dB);
+    // OPTIMIZATION: Cache reciprocal for division-free per-sample processing
+    if (knee > 0.01f)
+        invTwoKnee = 1.0f / (2.0f * knee);
+    else
+        invTwoKnee = 50.0f;  // Large value for hard knee
 }
 
 void Compressor::setMakeupGain(float dB)
@@ -124,16 +131,16 @@ float Compressor::computeGain(float input)
 
     if (knee > 0.0f && overThreshold > -knee * 0.5f && overThreshold < knee * 0.5f)
     {
-        // Soft knee region
+        // Soft knee region - OPTIMIZATION: Use cached reciprocals
         float kneeInput = overThreshold + knee * 0.5f;
-        float kneeOutput = kneeInput * kneeInput / (2.0f * knee);
-        float compressionDB = kneeOutput / ratio - kneeOutput;
+        float kneeOutput = kneeInput * kneeInput * invTwoKnee;
+        float compressionDB = kneeOutput * invRatio - kneeOutput;
         gain = Echoel::DSP::FastMath::dbToGain(compressionDB);
     }
     else if (overThreshold > 0.0f)
     {
-        // Above threshold
-        float compressionDB = overThreshold / ratio - overThreshold;
+        // Above threshold - OPTIMIZATION: Use cached reciprocal
+        float compressionDB = overThreshold * invRatio - overThreshold;
         gain = Echoel::DSP::FastMath::dbToGain(compressionDB);
     }
 
