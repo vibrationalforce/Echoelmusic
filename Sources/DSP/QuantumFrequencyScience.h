@@ -7,77 +7,113 @@
 #include <map>
 
 /**
- * QuantumFrequencyScience - Physically Correct Frequency Systems
+ * QuantumFrequencyScience - Frequency Systems with Scientific Classification
  *
- * Based on:
- * - Hans Cousto's Cosmic Octave (f × 2ⁿ planetary octavation)
- * - Max Planck's Quantum Physics (E = hf)
- * - Scientific/Verdi Pitch (C = 256 Hz = 2⁸)
- * - Schumann Resonance (7.83 Hz Earth frequency)
- * - Pythagorean & Just Intonation tuning
- * - Brainwave frequency bands
- * - Golden Ratio (φ = 1.618) harmonics
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║  IMPORTANT: SCIENTIFIC vs ESOTERIC CONTENT CLASSIFICATION               ║
+ * ╠══════════════════════════════════════════════════════════════════════════╣
+ * ║                                                                          ║
+ * ║  [SCIENTIFIC] - Peer-reviewed, experimentally verified:                  ║
+ * ║    • Planck constant (E = hf) - Nobel Prize physics                      ║
+ * ║    • Schumann resonance - Measured EM phenomenon (Schumann 1952)         ║
+ * ║    • Pythagorean/Just Intonation tuning - Mathematical ratios            ║
+ * ║    • Brainwave EEG bands - Neuroscience (Berger 1924)                    ║
+ * ║    • Golden ratio - Pure mathematics                                     ║
+ * ║    • Harmonic series - Acoustic physics                                  ║
+ * ║    • Cymatics/Chladni patterns - Verified wave physics                   ║
+ * ║    • CIE color matching - Standardized colorimetry                       ║
+ * ║                                                                          ║
+ * ║  [ESOTERIC] - Traditional/spiritual beliefs, NOT scientifically proven:  ║
+ * ║    • Solfeggio frequencies "healing" claims - No peer-reviewed evidence  ║
+ * ║    • 528 Hz "DNA repair" - No scientific validation                      ║
+ * ║    • Chakra frequencies - Hindu spiritual tradition, not physics         ║
+ * ║    • Planetary frequency "healing" - Cousto's math is valid,             ║
+ * ║      but therapeutic claims are unproven                                 ║
+ * ║    • 432 Hz "natural tuning" benefits - Minimal scientific support       ║
+ * ║    • Binaural beat specific benefits - Limited/mixed research            ║
+ * ║                                                                          ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
  *
  * Sources:
- * - planetware.de/octave
- * - Planck relation (E = hν)
- * - EBU R128 / ITU-R BS.1770
+ * - [SCIENTIFIC] Planck relation: CODATA 2018, NIST
+ * - [SCIENTIFIC] Schumann resonance: Schumann, W.O. (1952) Z. Naturforsch
+ * - [SCIENTIFIC] EEG bands: Niedermeyer & da Silva, Electroencephalography
+ * - [ESOTERIC] Solfeggio: Puleo/Horowitz - No peer-reviewed validation
+ * - [MATH VALID, CLAIMS ESOTERIC] Cousto: planetware.de/octave
  */
 namespace Echoel::DSP
 {
 
 //==============================================================================
-// Physical Constants
+// Physical Constants [SCIENTIFIC - VERIFIED]
+// Source: CODATA 2018, NIST, ISO standards
 //==============================================================================
 
 namespace PhysicalConstants
 {
-    // Planck's constant
+    // [SCIENTIFIC] Planck's constant - CODATA 2018 exact value
     constexpr double h = 6.62607015e-34;              // J·Hz⁻¹ (Joule-seconds)
     constexpr double hbar = 1.054571817e-34;          // ℏ = h / 2π (reduced Planck)
 
-    // Speed of light
+    // [SCIENTIFIC] Speed of light - SI definition exact value
     constexpr double c = 299792458.0;                 // m/s
 
-    // Planck units
+    // [SCIENTIFIC] Planck units - derived from fundamental constants
     constexpr double planckTime = 5.391247e-44;       // seconds
     constexpr double planckLength = 1.616255e-35;     // meters
     constexpr double planckFrequency = 1.854858e43;   // Hz (1/planckTime)
 
-    // Golden ratio
+    // [SCIENTIFIC] Golden ratio - pure mathematics, irrational constant
     constexpr double phi = 1.6180339887498948482;     // φ = (1 + √5) / 2
     constexpr double phiInverse = 0.6180339887498948; // 1/φ = φ - 1
 
-    // Schumann resonances (Earth cavity resonances)
+    // [SCIENTIFIC] Schumann resonances - measured EM phenomenon
+    // Source: Schumann, W.O. (1952), measured by various geophysical stations
+    // NOTE: These are real electromagnetic cavity resonances, but claims about
+    // health benefits from exposure are [ESOTERIC] and not scientifically proven
     constexpr std::array<double, 8> schumannResonances = {
         7.83, 14.3, 20.8, 27.3, 33.8, 39.0, 45.0, 51.0  // Hz
     };
 
-    // Scientific pitch (Verdi tuning) - C4 = 256 Hz
+    // [SCIENTIFIC] Scientific pitch - mathematical definition (C = 2^n Hz)
+    // Historical use, convenient for calculations, but NOT "more natural"
     constexpr double scientificC4 = 256.0;            // 2⁸ Hz
     constexpr double scientificA4 = 430.539;          // Derived from C4 = 256 Hz
 
-    // Concert pitch standards
-    constexpr double concertA4_440 = 440.0;           // Modern standard
-    constexpr double concertA4_432 = 432.0;           // "Verdi" / natural tuning
-    constexpr double concertA4_415 = 415.0;           // Baroque pitch
-    constexpr double concertA4_435 = 435.0;           // French standard (1859)
+    // [SCIENTIFIC] Concert pitch standards - historical/conventional
+    constexpr double concertA4_440 = 440.0;           // ISO 16:1975 standard
+    constexpr double concertA4_432 = 432.0;           // Historical; [ESOTERIC] health claims unproven
+    constexpr double concertA4_415 = 415.0;           // Baroque pitch (historical)
+    constexpr double concertA4_435 = 435.0;           // French standard 1859
 
-    // Twelfth root of 2 (equal temperament semitone ratio)
+    // [SCIENTIFIC] Equal temperament - mathematical derivation
     constexpr double semitoneRatio = 1.0594630943592953;  // 2^(1/12)
 
-    // Speed of sound at 20°C, 1 atm
+    // [SCIENTIFIC] Speed of sound at 20°C, 1 atm - measured value
     constexpr double speedOfSound = 343.0;            // m/s
 }
 
 //==============================================================================
 // Cousto Cosmic Octave - Planetary Frequencies
+// [MATH: SCIENTIFIC] - Octave formula f × 2ⁿ is valid mathematics
+// [CLAIMS: ESOTERIC] - Therapeutic/healing claims are NOT scientifically proven
 //==============================================================================
 
 /**
- * Hans Cousto's Cosmic Octave system
- * Formula: f × 2ⁿ (octave doubling/halving)
- * Converts astronomical periods to audible frequencies
+ * Hans Cousto's Cosmic Octave system (1978)
+ *
+ * [SCIENTIFIC ASPECTS]:
+ * - The octave formula f × 2ⁿ is mathematically valid
+ * - Astronomical orbital periods are accurately measured
+ * - Frequency calculation from period (f = 1/T) is physics
+ *
+ * [ESOTERIC ASPECTS - NOT SCIENTIFICALLY PROVEN]:
+ * - Claims that planetary frequencies have healing properties
+ * - Chakra associations with planets
+ * - Color-frequency correspondences beyond visible light physics
+ * - Any therapeutic or spiritual benefits
+ *
+ * The math is correct; the metaphysical claims are belief-based.
  */
 class CosmicOctave
 {
@@ -101,7 +137,7 @@ public:
         // Associated properties
         double wavelengthNm;           // Color wavelength (visible light)
         juce::Colour colour;           // Associated color
-        int chakra;                    // Chakra association (1-7, 0=none)
+        int chakra;                    // [ESOTERIC] Chakra association - spiritual tradition, not science
 
         // MIDI note approximation
         int midiNote;
@@ -269,10 +305,18 @@ public:
 
 //==============================================================================
 // Tuning Systems - Physically Correct Intervals
+// [SCIENTIFIC] - Pure mathematics, acoustic physics, historical standards
 //==============================================================================
 
 /**
- * Different tuning systems based on mathematical ratios
+ * Tuning Systems [SCIENTIFIC]
+ *
+ * All tuning systems here are based on:
+ * - Mathematical ratios (Pythagorean: 3:2, Just: 5:4, etc.)
+ * - Acoustic physics (harmonic series, beat frequencies)
+ * - Historical musical practice
+ *
+ * These are NOT esoteric - they are verifiable mathematics and acoustics.
  */
 class TuningSystem
 {
@@ -464,18 +508,33 @@ public:
 
 //==============================================================================
 // Brainwave Frequencies
+// [SCIENTIFIC] - EEG frequency bands are measured and verified
+// Source: Hans Berger (1924), Niedermeyer & da Silva "Electroencephalography"
 //==============================================================================
 
+/**
+ * EEG Brainwave Bands
+ *
+ * [SCIENTIFIC]:
+ * - Frequency ranges are measured via electroencephalography
+ * - Correlation with sleep stages is well-documented
+ * - Band definitions are standardized in neuroscience
+ *
+ * [PARTIALLY ESOTERIC]:
+ * - Specific "benefits" listed are simplified; actual effects vary
+ * - Brainwave entrainment efficacy has mixed research results
+ * - Claims of specific healing/enhancement often exceed evidence
+ */
 class BrainwaveFrequencies
 {
 public:
     enum class Band
     {
-        Delta,      // < 4 Hz - Deep sleep, healing
-        Theta,      // 4-8 Hz - Meditation, creativity
-        Alpha,      // 8-13 Hz - Relaxation, calm focus
-        Beta,       // 13-30 Hz - Active thinking, concentration
-        Gamma       // 30-100+ Hz - Higher cognition, peak awareness
+        Delta,      // < 4 Hz - Deep sleep [SCIENTIFIC: verified in sleep studies]
+        Theta,      // 4-8 Hz - Drowsiness, light sleep [SCIENTIFIC]
+        Alpha,      // 8-13 Hz - Relaxed wakefulness [SCIENTIFIC]
+        Beta,       // 13-30 Hz - Active concentration [SCIENTIFIC]
+        Gamma       // 30-100+ Hz - High-level processing [SCIENTIFIC]
     };
 
     struct BandInfo
@@ -559,8 +618,32 @@ public:
 
 //==============================================================================
 // Solfeggio Frequencies
+// ⚠️ [ESOTERIC] - NO SCIENTIFIC EVIDENCE for healing claims
 //==============================================================================
 
+/**
+ * Solfeggio Frequencies
+ *
+ * ╔════════════════════════════════════════════════════════════════════════╗
+ * ║  ⚠️  WARNING: ESOTERIC CONTENT - NOT SCIENTIFICALLY VALIDATED  ⚠️     ║
+ * ╠════════════════════════════════════════════════════════════════════════╣
+ * ║                                                                        ║
+ * ║  These frequencies were popularized by Dr. Joseph Puleo and           ║
+ * ║  Dr. Leonard Horowitz based on numerological interpretation of        ║
+ * ║  biblical texts. There is NO peer-reviewed scientific evidence        ║
+ * ║  supporting claims of:                                                 ║
+ * ║                                                                        ║
+ * ║  • DNA repair (528 Hz)                                                 ║
+ * ║  • Healing properties                                                  ║
+ * ║  • Chakra activation                                                   ║
+ * ║  • Spiritual transformation                                            ║
+ * ║                                                                        ║
+ * ║  The frequencies themselves are just frequencies - any specific       ║
+ * ║  effects beyond normal audio perception are unproven.                 ║
+ * ║                                                                        ║
+ * ║  Included for: Creative/artistic use, user preference, completeness   ║
+ * ╚════════════════════════════════════════════════════════════════════════╝
+ */
 class SolfeggioFrequencies
 {
 public:
@@ -569,23 +652,24 @@ public:
         double frequencyHz;
         juce::String syllable;
         juce::String description;
-        juce::String benefit;
-        int digitSum;  // Pythagorean reduction (all reduce to 3, 6, or 9)
+        juce::String claimedBenefit;  // Renamed: these are CLAIMS, not proven benefits
+        int digitSum;  // Numerological property (not scientific)
     };
 
     static const std::array<SolfeggioTone, 9>& getTones()
     {
-        // Original 6 + 3 additional tones
+        // [ESOTERIC] Original 6 + 3 additional tones
+        // Benefits listed are TRADITIONAL CLAIMS, not scientific facts
         static const std::array<SolfeggioTone, 9> tones = {{
-            {174.0, "—", "Foundation", "Grounding, pain reduction", 3},
-            {285.0, "—", "Quantum Cognition", "Energy field healing", 6},
-            {396.0, "UT", "Liberating", "Release guilt and fear", 9},
-            {417.0, "RE", "Resonating", "Facilitate change, undo situations", 3},
-            {528.0, "MI", "Transformation", "DNA repair, miracles", 6},
-            {639.0, "FA", "Connecting", "Relationships, harmony", 9},
-            {741.0, "SOL", "Awakening", "Expression, solutions", 3},
-            {852.0, "LA", "Returning", "Spiritual order, intuition", 6},
-            {963.0, "SI", "Divine", "Pineal activation, oneness", 9}
+            {174.0, "—", "Foundation", "[CLAIM] Grounding, pain reduction", 3},
+            {285.0, "—", "Quantum Cognition", "[CLAIM] Energy field healing", 6},
+            {396.0, "UT", "Liberating", "[CLAIM] Release guilt and fear", 9},
+            {417.0, "RE", "Resonating", "[CLAIM] Facilitate change", 3},
+            {528.0, "MI", "Transformation", "[CLAIM] DNA repair - NO EVIDENCE", 6},
+            {639.0, "FA", "Connecting", "[CLAIM] Relationships, harmony", 9},
+            {741.0, "SOL", "Awakening", "[CLAIM] Expression, solutions", 3},
+            {852.0, "LA", "Returning", "[CLAIM] Spiritual order", 6},
+            {963.0, "SI", "Divine", "[CLAIM] Pineal activation", 9}
         }};
         return tones;
     }
@@ -637,13 +721,28 @@ public:
 
 //==============================================================================
 // Golden Ratio Harmonics
+// [SCIENTIFIC] - Pure mathematics (φ = (1+√5)/2 is an irrational constant)
 //==============================================================================
 
+/**
+ * Golden Ratio in Music [SCIENTIFIC MATH, MIXED APPLICATION]
+ *
+ * [SCIENTIFIC]:
+ * - Golden ratio φ = 1.618... is a mathematical constant
+ * - Fibonacci sequence is pure mathematics
+ * - φ does appear in nature (phyllotaxis, shell spirals)
+ * - Some composers have used φ for structural proportions
+ *
+ * [PARTIALLY ESOTERIC]:
+ * - Claims that φ creates "more pleasing" music are subjective
+ * - "Sacred geometry" associations are spiritual, not scientific
+ * - φ-based frequencies are not inherently "better" than others
+ */
 class GoldenRatioHarmonics
 {
 public:
     /**
-     * Generate Fibonacci sequence
+     * Generate Fibonacci sequence [SCIENTIFIC - pure math]
      */
     static std::vector<int> fibonacciSequence(int count)
     {
@@ -722,13 +821,27 @@ public:
 
 //==============================================================================
 // Planck Quantum Energy Calculator
+// [SCIENTIFIC] - Nobel Prize physics (Planck 1918, Einstein 1921)
 //==============================================================================
 
+/**
+ * Quantum Energy Relations [SCIENTIFIC]
+ *
+ * E = hf (Planck-Einstein relation) is fundamental physics:
+ * - Verified experimentally (photoelectric effect, blackbody radiation)
+ * - Foundation of quantum mechanics
+ * - Used in lasers, semiconductors, spectroscopy
+ *
+ * NOTE: E = hf applies to photons (EM radiation).
+ * Sound waves are mechanical, not electromagnetic - they don't have
+ * "quantum energy" in the same sense. The audio-to-color mapping
+ * here is an artistic visualization, not physics.
+ */
 class QuantumEnergyCalculator
 {
 public:
     /**
-     * Calculate photon energy from frequency (E = hf)
+     * [SCIENTIFIC] Calculate photon energy from frequency (E = hf)
      * @param frequencyHz - frequency in Hz
      * @return energy in Joules
      */
@@ -773,20 +886,135 @@ public:
     }
 
     /**
-     * Scale audio frequency to visible light spectrum
+     * [ARTISTIC/VISUALIZATION] Scale audio frequency to visible light spectrum
      * Maps audible range to visible wavelengths (380-780 nm)
+     *
+     * NOTE: This is an ARTISTIC mapping for visualization purposes.
+     * There is no physical connection between audio frequencies (20-20000 Hz)
+     * and visible light frequencies (430-750 THz). This is synesthesia
+     * simulation, not physics.
+     *
+     * For TRUE physical octavation, use audioToLightOctave() instead!
      */
     static double audioToVisibleWavelength(double audioHz,
                                             double minAudioHz = 20.0,
                                             double maxAudioHz = 20000.0)
     {
-        // Logarithmic mapping
+        // Logarithmic mapping - ARTISTIC, not physical
         double logPos = std::log2(audioHz / minAudioHz) /
                         std::log2(maxAudioHz / minAudioHz);
         logPos = juce::jlimit(0.0, 1.0, logPos);
 
         // Map to visible spectrum (780nm red to 380nm violet)
         return 780.0 - logPos * 400.0;  // nm
+    }
+
+    //==========================================================================
+    // TRUE PHYSICAL OCTAVATION (Cousto-style f × 2ⁿ)
+    // [SCIENTIFIC] - This is the mathematically correct octave relationship
+    //==========================================================================
+
+    /**
+     * [SCIENTIFIC] True octave relationship between audio and visible light
+     *
+     * This uses the Cousto formula f × 2ⁿ to find the TRUE octave of an
+     * audio frequency in the visible light spectrum.
+     *
+     * Visible light: ~430 THz (red, 700nm) to ~750 THz (violet, 400nm)
+     *
+     * Example: A4 = 440 Hz
+     *   440 Hz × 2^40 = 484 THz = 619 nm (orange-red)
+     *   This is the TRUE 40th octave of A4!
+     *
+     * Like sunlight through a prism - each frequency has ONE correct color.
+     */
+    struct AudioLightOctave
+    {
+        double audioFrequencyHz;
+        double lightFrequencyTHz;    // Terahertz
+        double wavelengthNm;         // Nanometers
+        int octavesUp;               // Number of doublings
+        bool inVisibleRange;         // 380-780 nm
+        juce::Colour colour;         // RGB color
+    };
+
+    static AudioLightOctave audioToLightOctave(double audioHz)
+    {
+        AudioLightOctave result;
+        result.audioFrequencyHz = audioHz;
+
+        // Visible light range in Hz
+        constexpr double visibleMinHz = 384e12;   // ~780nm (red)
+        constexpr double visibleMaxHz = 789e12;   // ~380nm (violet)
+
+        // Octave up until we reach visible range
+        double freq = audioHz;
+        int octaves = 0;
+
+        while (freq < visibleMinHz)
+        {
+            freq *= 2.0;
+            octaves++;
+        }
+
+        result.lightFrequencyTHz = freq / 1e12;
+        result.octavesUp = octaves;
+
+        // Calculate wavelength: λ = c / f
+        result.wavelengthNm = (PhysicalConstants::c / freq) * 1e9;
+
+        // Check if in visible range
+        result.inVisibleRange = (result.wavelengthNm >= 380.0 && result.wavelengthNm <= 780.0);
+
+        // Get color
+        result.colour = wavelengthToColour(result.wavelengthNm);
+
+        return result;
+    }
+
+    /**
+     * [SCIENTIFIC] Get the true octave color for any audio frequency
+     *
+     * This is physically correct - like a prism separating sunlight.
+     * Each audio frequency has exactly ONE corresponding visible color
+     * based on the octave relationship f × 2ⁿ.
+     */
+    static juce::Colour audioToTrueOctaveColour(double audioHz)
+    {
+        return audioToLightOctave(audioHz).colour;
+    }
+
+    /**
+     * [SCIENTIFIC] Musical note to true octave color
+     *
+     * Examples (using A4 = 440 Hz):
+     *   C4 (261.63 Hz) × 2^40 = 287 THz → ~1044nm (infrared, below visible)
+     *   C4 × 2^41 = 574 THz → 522nm (green)
+     *   A4 (440 Hz) × 2^40 = 484 THz → 619nm (orange)
+     *   A5 (880 Hz) × 2^39 = 484 THz → 619nm (same color - octave!)
+     */
+    static juce::Colour midiNoteToTrueOctaveColour(int midiNote, double refA4 = 440.0)
+    {
+        double freq = refA4 * std::pow(2.0, (midiNote - 69) / 12.0);
+        return audioToTrueOctaveColour(freq);
+    }
+
+    /**
+     * [SCIENTIFIC] Get octave-related notes for a color
+     *
+     * Since octaves produce the same color (just like they sound "the same"
+     * in music), this returns the base audio frequency for a wavelength.
+     */
+    static double wavelengthToAudioOctave(double wavelengthNm)
+    {
+        // Light frequency
+        double lightFreq = PhysicalConstants::c / (wavelengthNm * 1e-9);
+
+        // Octave down until we reach audio range
+        while (lightFreq > 20000.0)
+            lightFreq /= 2.0;
+
+        return lightFreq;
     }
 
     /**
@@ -863,13 +1091,23 @@ public:
 
 //==============================================================================
 // Harmonic Series Generator
+// [SCIENTIFIC] - Acoustic physics, verified by Fourier analysis
 //==============================================================================
 
+/**
+ * Harmonic Series [SCIENTIFIC]
+ *
+ * The harmonic series (f, 2f, 3f, 4f...) is fundamental acoustic physics:
+ * - Physically produced by vibrating strings, air columns, membranes
+ * - Mathematically described by Fourier analysis
+ * - Basis for musical intervals and timbre perception
+ * - Verified experimentally since antiquity (Pythagoras)
+ */
 class HarmonicSeries
 {
 public:
     /**
-     * Generate natural harmonic series
+     * [SCIENTIFIC] Generate natural harmonic series
      * @param fundamental - base frequency in Hz
      * @param numHarmonics - number of harmonics (including fundamental)
      * @return vector of {harmonic number, frequency, amplitude}

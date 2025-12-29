@@ -7,21 +7,34 @@
 #include <cmath>
 
 /**
- * BrainwaveEntrainment - Scientific Brainwave Synchronization
+ * BrainwaveEntrainment - Brainwave Frequency Tools
  *
- * Based on:
- * - Schumann Resonance (7.83 Hz Earth frequency)
- * - Brainwave bands (Delta, Theta, Alpha, Beta, Gamma)
- * - Binaural beat technology
- * - Isochronic tones
- * - Monaural beats
- * - Planetary frequency healing (Cousto)
- * - Solfeggio frequency integration
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║  SCIENTIFIC vs ESOTERIC CLASSIFICATION                                  ║
+ * ╠══════════════════════════════════════════════════════════════════════════╣
+ * ║                                                                          ║
+ * ║  [SCIENTIFIC]:                                                           ║
+ * ║    • EEG brainwave bands exist and are measurable                        ║
+ * ║    • Schumann resonance is a real EM phenomenon                          ║
+ * ║    • Binaural beats create perceived frequency difference                ║
+ * ║    • Isochronic pulses are real audio signals                            ║
+ * ║                                                                          ║
+ * ║  [LIMITED EVIDENCE]:                                                     ║
+ * ║    • Brainwave entrainment efficacy - mixed research results             ║
+ * ║    • Specific therapeutic claims - often exceed evidence                 ║
+ * ║                                                                          ║
+ * ║  [ESOTERIC - NO SCIENTIFIC PROOF]:                                       ║
+ * ║    • Planetary frequency "healing" effects                               ║
+ * ║    • Solfeggio frequency benefits                                        ║
+ * ║    • Chakra activation claims                                            ║
+ * ║                                                                          ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
  *
  * Sources:
- * - Hans Berger EEG discovery (1924)
- * - Monroe Institute binaural research
- * - Schumann resonance studies
+ * - [SCIENTIFIC] EEG: Hans Berger (1924)
+ * - [SCIENTIFIC] Schumann: W.O. Schumann (1952)
+ * - [LIMITED] Binaural beats: Oster (1973), mixed later studies
+ * - [ESOTERIC] Solfeggio/Planetary: Puleo, Cousto - no peer review
  */
 namespace Echoel::DSP
 {
