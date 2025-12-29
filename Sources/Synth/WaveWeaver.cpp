@@ -371,6 +371,9 @@ WaveWeaver::WaveWeaverVoice::WaveWeaverVoice(WaveWeaver& parent)
     {
         osc.phases.resize(16, 0.0f);
     }
+
+    // Cache sample rate reciprocal
+    invSampleRate = 1.0f / 48000.0f;  // Default, updated when setSampleRate is called
 }
 
 bool WaveWeaver::WaveWeaverVoice::canPlaySound(juce::SynthesiserSound* sound)
@@ -451,6 +454,8 @@ void WaveWeaver::WaveWeaverVoice::renderNextBlock(juce::AudioBuffer<float>& outp
         return;
 
     const float sampleRate = static_cast<float>(getSampleRate());
+    // OPTIMIZATION: Update cached reciprocal if sample rate changed
+    invSampleRate = 1.0f / sampleRate;
 
     for (int i = 0; i < numSamples; ++i)
     {
@@ -489,6 +494,8 @@ void WaveWeaver::WaveWeaverVoice::renderNextBlock(juce::AudioBuffer<float>& outp
 
             // Unison processing
             const int numVoices = juce::jlimit(1, 16, oscConfig.unisonVoices);
+            // OPTIMIZATION: Pre-compute reciprocal for division-free per-voice processing
+            const float invNumVoices = 1.0f / static_cast<float>(numVoices);
 
             for (int v = 0; v < numVoices; ++v)
             {
@@ -501,7 +508,8 @@ void WaveWeaver::WaveWeaverVoice::renderNextBlock(juce::AudioBuffer<float>& outp
                 }
 
                 float voiceFreq = freq * (1.0f + detune);
-                float phaseInc = voiceFreq / sampleRate;
+                // OPTIMIZATION: Use cached reciprocal instead of division
+                float phaseInc = voiceFreq * invSampleRate;
 
                 // Read wavetable
                 float sample = readWavetable(osc, oscState.phases[v], oscConfig.wavetablePosition);
@@ -519,8 +527,9 @@ void WaveWeaver::WaveWeaverVoice::renderNextBlock(juce::AudioBuffer<float>& outp
                     pan = juce::jlimit(0.0f, 1.0f, pan + spreadAmount * oscConfig.unisonSpread * 0.5f);
                 }
 
-                leftSample += sample * (1.0f - pan) * oscConfig.level / numVoices;
-                rightSample += sample * pan * oscConfig.level / numVoices;
+                // OPTIMIZATION: Use pre-computed reciprocal instead of division
+                leftSample += sample * (1.0f - pan) * oscConfig.level * invNumVoices;
+                rightSample += sample * pan * oscConfig.level * invNumVoices;
             }
         }
 
@@ -531,7 +540,8 @@ void WaveWeaver::WaveWeaverVoice::renderNextBlock(juce::AudioBuffer<float>& outp
             float subFreq = oscStates[0].baseFrequency * Echoel::DSP::FastMath::fastPow2(owner.subOctave);
             // OPTIMIZATION: Use lookup table instead of std::sin (~20x faster)
             float subSample = Echoel::DSP::TrigLookupTables::getInstance().fastSin(subPhase);
-            subPhase += subFreq / sampleRate;
+            // OPTIMIZATION: Use cached reciprocal instead of division
+            subPhase += subFreq * invSampleRate;
             while (subPhase >= 1.0f) subPhase -= 1.0f;
 
             leftSample += subSample * owner.subLevel;
@@ -1194,13 +1204,16 @@ void WaveWeaver::processChorus(float& left, float& right)
     float wetL = 0.0f, wetR = 0.0f;
 
     int numVoices = chorus.voices;
+    // OPTIMIZATION: Pre-compute reciprocals
+    const float invSampleRate = 1.0f / static_cast<float>(currentSampleRate);
+    const float invNumVoices = 1.0f / static_cast<float>(numVoices);
     float baseDelay = static_cast<float>(currentSampleRate) * 0.007f;  // 7ms base delay
     float modDepth = static_cast<float>(currentSampleRate) * 0.003f * chorus.depth;  // 3ms max mod
 
     for (int v = 0; v < numVoices; ++v)
     {
-        // Update LFO phase
-        chorusState.lfoPhases[v] += chorus.rate / static_cast<float>(currentSampleRate);
+        // Update LFO phase - OPTIMIZATION: Use pre-computed reciprocal
+        chorusState.lfoPhases[v] += chorus.rate * invSampleRate;
         while (chorusState.lfoPhases[v] >= 1.0f) chorusState.lfoPhases[v] -= 1.0f;
 
         float lfoVal = trigTables.fastSin(chorusState.lfoPhases[v]);
@@ -1224,11 +1237,11 @@ void WaveWeaver::processChorus(float& left, float& right)
         line[chorusState.writePos[v]] = input + delayed * chorus.feedback;
         chorusState.writePos[v] = (chorusState.writePos[v] + 1) % lineSize;
 
-        // Stereo spread
-        float panL = 0.5f - chorus.stereoSpread * 0.5f * (v - numVoices / 2.0f) / numVoices;
+        // Stereo spread - OPTIMIZATION: Use pre-computed reciprocal
+        float panL = 0.5f - chorus.stereoSpread * 0.5f * (v - numVoices * 0.5f) * invNumVoices;
         float panR = 1.0f - panL;
-        wetL += delayed * panL / numVoices;
-        wetR += delayed * panR / numVoices;
+        wetL += delayed * panL * invNumVoices;
+        wetR += delayed * panR * invNumVoices;
     }
 
     // Mix wet/dry

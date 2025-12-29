@@ -754,6 +754,9 @@ private:
         float pitchBend = 0.0f;
         float modWheel = 0.0f;
 
+        // OPTIMIZATION: Cached reciprocals for division-free per-sample processing
+        float invSampleRate = 1.0f / 48000.0f;  // Updated in prepare()
+
         // Oscillator state
         struct OscillatorState
         {
@@ -785,7 +788,7 @@ private:
         std::array<EnvelopeState, 4> envelopeStates;
 
         // LFO state
-        std::array<float, 8> lfoPhases;
+        std::array<float, 8> lfoPhases {{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}};
 
         // Helper methods
         float readWavetable(int oscIndex, float phase, float position);
