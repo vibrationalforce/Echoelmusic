@@ -500,5 +500,294 @@ private:
     std::array<std::array<float, MaxBlockSize>, MaxChannels> buffers;
 };
 
+//==============================================================================
+/**
+ * @brief Ralph Wiggum Optimal Mode Additions
+ *
+ * Extended optimizations for entrainment and real-time processing
+ */
+
+//==============================================================================
+/**
+ * @brief Branchless Min/Max Operations
+ *
+ * Avoid branch mispredictions in critical paths
+ */
+class BranchlessOps {
+public:
+    // Branchless min (no branches = no mispredictions)
+    static inline float min(float a, float b) noexcept {
+        return a < b ? a : b;  // Compiler optimizes to conditional move
+    }
+
+    // Branchless max
+    static inline float max(float a, float b) noexcept {
+        return a > b ? a : b;
+    }
+
+    // Branchless clamp
+    static inline float clamp(float x, float lo, float hi) noexcept {
+        return max(lo, min(x, hi));
+    }
+
+    // Branchless absolute value
+    static inline float abs(float x) noexcept {
+        union { float f; uint32_t i; } u;
+        u.f = x;
+        u.i &= 0x7FFFFFFF;  // Clear sign bit
+        return u.f;
+    }
+
+    // Branchless sign (-1, 0, or 1)
+    static inline float sign(float x) noexcept {
+        return static_cast<float>((x > 0.0f) - (x < 0.0f));
+    }
+
+    // Branchless step function (0 if x < edge, 1 otherwise)
+    static inline float step(float edge, float x) noexcept {
+        return static_cast<float>(x >= edge);
+    }
+
+    // Branchless smoothstep (cubic interpolation)
+    static inline float smoothstep(float edge0, float edge1, float x) noexcept {
+        float t = clamp((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+        return t * t * (3.0f - 2.0f * t);
+    }
+};
+
+//==============================================================================
+/**
+ * @brief Phase Accumulator with Sub-Sample Precision
+ *
+ * 64-bit precision for drift-free oscillators
+ */
+class PhaseAccumulator64 {
+public:
+    void setFrequency(double frequencyHz, double sampleRate) noexcept {
+        increment = frequencyHz / sampleRate;
+    }
+
+    // Advance and return normalized phase 0-1
+    inline double advance() noexcept {
+        double result = phase;
+        phase += increment;
+        // Branchless wrap using floor
+        phase -= static_cast<double>(static_cast<int64_t>(phase));
+        return result;
+    }
+
+    // Advance and return phase in radians
+    inline double advanceRadians() noexcept {
+        constexpr double TWO_PI = 6.283185307179586;
+        return advance() * TWO_PI;
+    }
+
+    void reset() noexcept { phase = 0.0; }
+    void setPhase(double newPhase) noexcept { phase = newPhase; }
+    double getPhase() const noexcept { return phase; }
+
+private:
+    double phase = 0.0;
+    double increment = 0.0;
+};
+
+//==============================================================================
+/**
+ * @brief Vectorized Envelope Generator
+ *
+ * ADSR with SIMD-friendly block processing
+ */
+class VectorizedADSR {
+public:
+    enum class Stage { Idle, Attack, Decay, Sustain, Release };
+
+    void setParameters(float attackMs, float decayMs, float sustainLevel, float releaseMs) {
+        attackTime = attackMs;
+        decayTime = decayMs;
+        sustain = sustainLevel;
+        releaseTime = releaseMs;
+    }
+
+    void prepare(double sampleRate) {
+        this->sampleRate = sampleRate;
+        updateCoefficients();
+    }
+
+    void noteOn() noexcept {
+        stage = Stage::Attack;
+        currentLevel = 0.0f;
+    }
+
+    void noteOff() noexcept {
+        stage = Stage::Release;
+        releaseStartLevel = currentLevel;
+    }
+
+    // Process entire block (SIMD-friendly)
+    void processBlock(float* buffer, int numSamples) noexcept {
+        for (int i = 0; i < numSamples; ++i) {
+            buffer[i] *= processSample();
+        }
+    }
+
+    float processSample() noexcept {
+        switch (stage) {
+            case Stage::Idle:
+                return 0.0f;
+
+            case Stage::Attack:
+                currentLevel += attackRate;
+                if (currentLevel >= 1.0f) {
+                    currentLevel = 1.0f;
+                    stage = Stage::Decay;
+                }
+                return currentLevel;
+
+            case Stage::Decay:
+                currentLevel -= decayRate;
+                if (currentLevel <= sustain) {
+                    currentLevel = sustain;
+                    stage = Stage::Sustain;
+                }
+                return currentLevel;
+
+            case Stage::Sustain:
+                return currentLevel;
+
+            case Stage::Release:
+                currentLevel -= releaseRate;
+                if (currentLevel <= 0.0f) {
+                    currentLevel = 0.0f;
+                    stage = Stage::Idle;
+                }
+                return currentLevel;
+        }
+        return 0.0f;
+    }
+
+    Stage getStage() const noexcept { return stage; }
+    float getLevel() const noexcept { return currentLevel; }
+
+private:
+    double sampleRate = 48000.0;
+    float attackTime = 10.0f;
+    float decayTime = 100.0f;
+    float sustain = 0.7f;
+    float releaseTime = 200.0f;
+
+    float attackRate = 0.0f;
+    float decayRate = 0.0f;
+    float releaseRate = 0.0f;
+
+    Stage stage = Stage::Idle;
+    float currentLevel = 0.0f;
+    float releaseStartLevel = 0.0f;
+
+    void updateCoefficients() {
+        float attackSamples = (attackTime / 1000.0f) * static_cast<float>(sampleRate);
+        float decaySamples = (decayTime / 1000.0f) * static_cast<float>(sampleRate);
+        float releaseSamples = (releaseTime / 1000.0f) * static_cast<float>(sampleRate);
+
+        attackRate = 1.0f / std::max(1.0f, attackSamples);
+        decayRate = (1.0f - sustain) / std::max(1.0f, decaySamples);
+        releaseRate = sustain / std::max(1.0f, releaseSamples);
+    }
+};
+
+//==============================================================================
+/**
+ * @brief Memory Pool for Real-Time Allocation
+ *
+ * Pre-allocated pool avoids malloc() in audio thread
+ */
+template<size_t PoolSize = 65536>
+class MemoryPool {
+public:
+    MemoryPool() {
+        reset();
+    }
+
+    // Allocate from pool (lock-free, O(1))
+    void* allocate(size_t bytes) noexcept {
+        // Align to 16 bytes
+        bytes = (bytes + 15) & ~15;
+
+        size_t current = offset.load(std::memory_order_acquire);
+        size_t newOffset = current + bytes;
+
+        if (newOffset > PoolSize)
+            return nullptr;  // Pool exhausted
+
+        // CAS loop for thread-safety
+        while (!offset.compare_exchange_weak(current, newOffset,
+                                             std::memory_order_acq_rel)) {
+            newOffset = current + bytes;
+            if (newOffset > PoolSize)
+                return nullptr;
+        }
+
+        return &pool[current];
+    }
+
+    // Reset pool (call between audio buffers if needed)
+    void reset() noexcept {
+        offset.store(0, std::memory_order_release);
+    }
+
+    size_t getUsed() const noexcept {
+        return offset.load(std::memory_order_acquire);
+    }
+
+    size_t getRemaining() const noexcept {
+        return PoolSize - getUsed();
+    }
+
+private:
+    alignas(64) std::array<uint8_t, PoolSize> pool;
+    std::atomic<size_t> offset{0};
+};
+
+//==============================================================================
+/**
+ * @brief Harmonic Series Generator (Optimized)
+ *
+ * Pre-computed harmonic ratios for additive synthesis
+ */
+class HarmonicSeriesOpt {
+public:
+    static constexpr int MAX_HARMONICS = 32;
+
+    // Get harmonic ratio (1, 2, 3, 4...)
+    static constexpr float getHarmonicRatio(int harmonic) {
+        return static_cast<float>(harmonic + 1);
+    }
+
+    // Get amplitude for natural harmonic decay (1/n rolloff)
+    static constexpr float getNaturalAmplitude(int harmonic) {
+        return 1.0f / static_cast<float>(harmonic + 1);
+    }
+
+    // Get odd harmonics only (square wave)
+    static constexpr float getOddHarmonicRatio(int index) {
+        return static_cast<float>(index * 2 + 1);
+    }
+
+    // Get even harmonics only (specific timbres)
+    static constexpr float getEvenHarmonicRatio(int index) {
+        return static_cast<float>((index + 1) * 2);
+    }
+
+    // Pre-computed table of first 32 harmonic amplitudes (natural decay)
+    static const std::array<float, MAX_HARMONICS>& getNaturalAmplitudes() {
+        static const auto amplitudes = []() {
+            std::array<float, MAX_HARMONICS> a{};
+            for (int i = 0; i < MAX_HARMONICS; ++i)
+                a[i] = 1.0f / static_cast<float>(i + 1);
+            return a;
+        }();
+        return amplitudes;
+    }
+};
+
 } // namespace DSP
 } // namespace Echoel
