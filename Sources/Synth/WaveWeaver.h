@@ -54,7 +54,176 @@ public:
         HighPass24dB,
         BandPass,
         Notch,
-        Comb
+        Comb,
+        // NEW: Advanced filter types inspired by Vectra/Circle2
+        MoogLadder,          // Classic Moog 4-pole ladder
+        StateVariable,       // Multimode state-variable filter
+        Formant,             // Vowel formant filter
+        Phaser,              // Phaser/allpass filter
+        DiodeLadder,         // MS-20 style diode ladder
+        OberheimSEM,         // Oberheim SEM 12dB multimode
+        AcidTB303            // Roland TB-303 style resonance
+    };
+
+    //==========================================================================
+    // Vector Synthesis Mode (NEW - Vectra-style)
+    //==========================================================================
+
+    struct VectorPad
+    {
+        float x = 0.5f;              // X position (0.0 to 1.0)
+        float y = 0.5f;              // Y position (0.0 to 1.0)
+        bool enabled = false;
+
+        // 4 wavetable sources at corners
+        std::array<int, 4> wavetableSlots {{0, 1, 2, 3}};  // A, B, C, D
+        std::array<float, 4> wavetablePositions {{0.0f, 0.0f, 0.0f, 0.0f}};
+
+        // LFO modulation of X/Y
+        float lfoToX = 0.0f;
+        float lfoToY = 0.0f;
+        int lfoIndexX = 0;
+        int lfoIndexY = 1;
+
+        VectorPad() = default;
+    };
+
+    //==========================================================================
+    // Macro Controls (NEW - 8 macros like Circle2)
+    //==========================================================================
+
+    static constexpr int numMacros = 8;
+
+    struct MacroTarget
+    {
+        ModDestination destination = ModDestination::None;
+        float amount = 0.0f;         // -1.0 to +1.0
+
+        MacroTarget() = default;
+    };
+
+    struct Macro
+    {
+        float value = 0.0f;          // Current macro value (0.0 to 1.0)
+        juce::String name;
+        std::array<MacroTarget, 8> targets;  // Up to 8 targets per macro
+        int numTargets = 0;
+
+        Macro() : name("Macro") {}
+    };
+
+    //==========================================================================
+    // Arpeggiator (NEW)
+    //==========================================================================
+
+    enum class ArpMode
+    {
+        Off,
+        Up,
+        Down,
+        UpDown,
+        DownUp,
+        Random,
+        Order,               // As played
+        Chord                // Play all notes together
+    };
+
+    enum class ArpOctaveMode
+    {
+        Single,              // Stay in played octave
+        OctaveUp,            // +1 octave
+        OctaveDown,          // -1 octave
+        OctaveUpDown,        // Ping-pong octaves
+        TwoOctavesUp,        // +2 octaves
+        ThreeOctavesUp       // +3 octaves
+    };
+
+    struct Arpeggiator
+    {
+        ArpMode mode = ArpMode::Off;
+        ArpOctaveMode octaveMode = ArpOctaveMode::Single;
+        float rate = 120.0f;         // BPM
+        float gate = 0.5f;           // Note length (0.1 to 1.0)
+        int swing = 0;               // Swing amount (-50 to +50)
+        bool sync = true;            // Sync to host tempo
+        float division = 0.25f;      // Note division (1/16 = 0.25, 1/8 = 0.5, etc.)
+
+        Arpeggiator() = default;
+    };
+
+    //==========================================================================
+    // Effects Chain (NEW - built-in effects)
+    //==========================================================================
+
+    struct ChorusEffect
+    {
+        bool enabled = false;
+        float rate = 0.5f;           // LFO rate (0.1 to 5.0 Hz)
+        float depth = 0.5f;          // Modulation depth (0.0 to 1.0)
+        float mix = 0.5f;            // Wet/dry mix (0.0 to 1.0)
+        int voices = 2;              // 2 or 4 voice chorus
+        float feedback = 0.0f;       // Feedback amount
+        float stereoSpread = 0.5f;   // Stereo width
+
+        ChorusEffect() = default;
+    };
+
+    struct DelayEffect
+    {
+        bool enabled = false;
+        float timeL = 0.25f;         // Left delay time (seconds)
+        float timeR = 0.375f;        // Right delay time (seconds)
+        bool sync = true;            // Sync to tempo
+        float syncDivL = 0.25f;      // Sync division left (1/16, 1/8, etc.)
+        float syncDivR = 0.375f;     // Sync division right
+        float feedback = 0.4f;       // Feedback amount (0.0 to 0.95)
+        float crossfeed = 0.2f;      // Ping-pong crossfeed
+        float mix = 0.3f;            // Wet/dry mix
+        float filter = 0.5f;         // Highcut filter (0=dark, 1=bright)
+
+        DelayEffect() = default;
+    };
+
+    struct ReverbEffect
+    {
+        bool enabled = false;
+        float size = 0.7f;           // Room size (0.0 to 1.0)
+        float decay = 0.5f;          // Decay time (0.0 to 1.0)
+        float damping = 0.5f;        // High frequency damping
+        float predelay = 0.02f;      // Pre-delay in seconds
+        float mix = 0.3f;            // Wet/dry mix
+        float modulation = 0.2f;     // Modulation amount
+        float width = 1.0f;          // Stereo width
+
+        ReverbEffect() = default;
+    };
+
+    struct DistortionEffect
+    {
+        bool enabled = false;
+
+        enum class Type { Soft, Hard, Fold, Asymmetric, Tube, Digital, Bitcrush };
+        Type type = Type::Soft;
+
+        float drive = 0.3f;          // Drive amount (0.0 to 1.0)
+        float mix = 1.0f;            // Wet/dry mix
+        float tone = 0.5f;           // Post-distortion tone
+        float bias = 0.0f;           // DC bias for asymmetric distortion
+
+        DistortionEffect() = default;
+    };
+
+    struct EffectsChain
+    {
+        DistortionEffect distortion;
+        ChorusEffect chorus;
+        DelayEffect delay;
+        ReverbEffect reverb;
+
+        // Effects order (can be reordered)
+        std::array<int, 4> order {{0, 1, 2, 3}};  // 0=dist, 1=chorus, 2=delay, 3=reverb
+
+        EffectsChain() = default;
     };
 
     //==========================================================================
@@ -69,7 +238,18 @@ public:
         Square,
         Random,
         SampleAndHold,
-        Wavetable  // Use custom wavetable
+        Wavetable,         // Use custom wavetable
+        // NEW: Additional shapes like Circle2
+        SawUp,
+        SawDown,
+        ExpRise,           // Exponential rise
+        ExpFall,           // Exponential fall
+        Pulse25,           // 25% duty cycle
+        Pulse75,           // 75% duty cycle
+        Staircase4,        // 4-step staircase
+        Staircase8,        // 8-step staircase
+        Smooth,            // Smoothed random
+        Chaos              // Lorenz attractor
     };
 
     //==========================================================================
@@ -156,25 +336,74 @@ public:
         Velocity,
         ModWheel,
         PitchBend,
-        Aftertouch
+        Aftertouch,
+        // NEW: Additional modulation sources
+        KeyTrack,            // Note number (C0 = 0, C5 = 1)
+        Random,              // Random value per note
+        Constant,            // Fixed value (use amount as value)
+        Macro1, Macro2, Macro3, Macro4, Macro5, Macro6, Macro7, Macro8,
+        VectorX, VectorY,    // Vector pad position
+        AmpEnvelope,         // Dedicated amp envelope
+        FilterEnvelope,      // Dedicated filter envelope
+        PolyAftertouch,      // Per-note aftertouch (MPE)
+        Slide,               // MPE slide (CC74)
+        Expression,          // Expression pedal (CC11)
+        BreathController,    // Breath controller (CC2)
+        NoteGate,            // Gate signal (0 or 1)
+        Legato               // Legato detection
     };
 
     enum class ModDestination
     {
         None,
+        // Oscillator 1
         Osc1_Pitch,
         Osc1_WavetablePosition,
         Osc1_Level,
+        Osc1_Pan,
+        Osc1_UnisonDetune,
+        Osc1_UnisonSpread,
+        Osc1_Phase,
+        // Oscillator 2
         Osc2_Pitch,
         Osc2_WavetablePosition,
         Osc2_Level,
+        Osc2_Pan,
+        Osc2_UnisonDetune,
+        Osc2_UnisonSpread,
+        Osc2_Phase,
+        // Filter 1
         Filter1_Cutoff,
         Filter1_Resonance,
+        Filter1_Drive,
+        Filter1_KeyTrack,
+        // Filter 2
         Filter2_Cutoff,
         Filter2_Resonance,
-        LFO1_Rate,
-        LFO2_Rate
+        Filter2_Drive,
+        Filter2_KeyTrack,
+        // LFOs
+        LFO1_Rate, LFO1_Depth, LFO1_Phase,
+        LFO2_Rate, LFO2_Depth, LFO2_Phase,
+        LFO3_Rate, LFO3_Depth,
+        LFO4_Rate, LFO4_Depth,
+        // Envelopes
+        Env1_Attack, Env1_Decay, Env1_Sustain, Env1_Release,
+        Env2_Attack, Env2_Decay, Env2_Sustain, Env2_Release,
+        // Vector
+        VectorX, VectorY,
+        // Sub/Noise
+        SubLevel, NoiseLevel, NoiseColor,
+        // Effects
+        ChorusDepth, ChorusMix,
+        DelayTime, DelayFeedback, DelayMix,
+        ReverbSize, ReverbDecay, ReverbMix,
+        DistortionDrive, DistortionMix,
+        // Master
+        MasterVolume, MasterPan
     };
+
+    static constexpr int numModDestinations = 54;  // Total destinations
 
     struct ModulationRoute
     {
@@ -267,6 +496,85 @@ public:
     void setVoiceCount(int count);          // 1 to 32 (polyphony)
 
     //==========================================================================
+    // Vector Synthesis (NEW)
+    //==========================================================================
+
+    /** Get/set vector pad configuration */
+    VectorPad& getVectorPad() { return vectorPad; }
+    const VectorPad& getVectorPad() const { return vectorPad; }
+    void setVectorPad(const VectorPad& pad);
+
+    /** Quick vector position control */
+    void setVectorPosition(float x, float y);
+    void setVectorWavetable(int corner, int wavetableIndex, float position);
+
+    //==========================================================================
+    // Macro Controls (NEW)
+    //==========================================================================
+
+    /** Get/set macro configuration */
+    Macro& getMacro(int index);
+    const Macro& getMacro(int index) const;
+    void setMacro(int index, const Macro& macro);
+
+    /** Quick macro value set (MIDI CC compatible) */
+    void setMacroValue(int index, float value);
+    float getMacroValue(int index) const;
+
+    /** Add modulation target to macro */
+    void addMacroTarget(int macroIndex, ModDestination dest, float amount);
+    void clearMacroTargets(int macroIndex);
+
+    //==========================================================================
+    // Arpeggiator (NEW)
+    //==========================================================================
+
+    Arpeggiator& getArpeggiator() { return arpeggiator; }
+    const Arpeggiator& getArpeggiator() const { return arpeggiator; }
+    void setArpeggiator(const Arpeggiator& arp);
+
+    void setArpMode(ArpMode mode);
+    void setArpRate(float bpm);
+    void setArpGate(float gate);
+    void setArpOctaveMode(ArpOctaveMode mode);
+
+    //==========================================================================
+    // Effects Chain (NEW)
+    //==========================================================================
+
+    EffectsChain& getEffectsChain() { return effectsChain; }
+    const EffectsChain& getEffectsChain() const { return effectsChain; }
+    void setEffectsChain(const EffectsChain& chain);
+
+    /** Chorus control */
+    void setChorusEnabled(bool enabled);
+    void setChorusRate(float hz);
+    void setChorusDepth(float depth);
+    void setChorusMix(float mix);
+
+    /** Delay control */
+    void setDelayEnabled(bool enabled);
+    void setDelayTime(float timeL, float timeR);
+    void setDelayFeedback(float feedback);
+    void setDelayMix(float mix);
+    void setDelaySync(bool sync);
+
+    /** Reverb control */
+    void setReverbEnabled(bool enabled);
+    void setReverbSize(float size);
+    void setReverbDecay(float decay);
+    void setReverbMix(float mix);
+
+    /** Distortion control */
+    void setDistortionEnabled(bool enabled);
+    void setDistortionType(DistortionEffect::Type type);
+    void setDistortionDrive(float drive);
+    void setDistortionMix(float mix);
+
+    /** Effects order */
+    void setEffectsOrder(const std::array<int, 4>& order);
+
+    //==========================================================================
     // Preset System (NEW)
     //==========================================================================
 
@@ -349,6 +657,73 @@ private:
     float bioToWavetable = 0.3f;
     float bioToFilter = 0.3f;
     float bioToLFORate = 0.2f;
+
+    // Vector Synthesis (NEW)
+    VectorPad vectorPad;
+
+    // Macro Controls (NEW)
+    std::array<Macro, numMacros> macros;
+
+    // Arpeggiator (NEW)
+    Arpeggiator arpeggiator;
+    std::vector<int> arpNotes;           // Currently held notes for arp
+    int arpCurrentStep = 0;
+    int arpCurrentOctave = 0;
+    double arpAccumulator = 0.0;         // Sample accumulator for timing
+    bool arpDirection = true;            // true = up, false = down
+
+    // Effects Chain (NEW)
+    EffectsChain effectsChain;
+
+    // Effects state (for processing)
+    struct ChorusState
+    {
+        std::array<std::vector<float>, 4> delayLines;  // 4 voices
+        std::array<int, 4> writePos {{0, 0, 0, 0}};
+        std::array<float, 4> lfoPhases {{0.0f, 0.25f, 0.5f, 0.75f}};
+
+        ChorusState() = default;
+    } chorusState;
+
+    struct DelayState
+    {
+        std::array<std::vector<float>, 2> delayLines;  // L/R
+        std::array<int, 2> writePos {{0, 0}};
+        std::array<float, 2> filterState {{0.0f, 0.0f}};  // Lowpass for feedback
+
+        DelayState() = default;
+    } delayState;
+
+    struct ReverbState
+    {
+        // Simple Schroeder reverb with 4 comb + 2 allpass
+        std::array<std::vector<float>, 4> combL, combR;
+        std::array<int, 4> combPosL {{0,0,0,0}}, combPosR {{0,0,0,0}};
+        std::array<float, 4> combFilterL {{0,0,0,0}}, combFilterR {{0,0,0,0}};
+        std::array<std::vector<float>, 2> allpassL, allpassR;
+        std::array<int, 2> allpassPosL {{0,0}}, allpassPosR {{0,0}};
+        std::vector<float> predelayL, predelayR;
+        int predelayPos = 0;
+        float modPhase = 0.0f;
+
+        ReverbState() = default;
+    } reverbState;
+
+    // Modulation values cache (computed per-block for efficiency)
+    struct ModulationCache
+    {
+        std::array<float, numModDestinations> values;  // Current modulation per destination
+        std::array<float, 8> lfoValues;                // Current LFO values
+        std::array<float, 4> envValues;                // Current envelope values
+        std::array<float, numMacros> macroValues;      // Current macro values
+
+        ModulationCache() {
+            values.fill(0.0f);
+            lfoValues.fill(0.0f);
+            envValues.fill(0.0f);
+            macroValues.fill(0.0f);
+        }
+    } modCache;
 
     double currentSampleRate = 48000.0;
 
@@ -437,6 +812,81 @@ private:
 
     void initializeDefaultWavetables();
     float interpolateWavetable(const Wavetable& wt, float phase, float position);
+
+    //==========================================================================
+    // Modulation Processing (NEW - replaces stub)
+    //==========================================================================
+
+    /** Compute all modulation values for current block */
+    void computeModulation();
+
+    /** Get modulation value for specific destination */
+    float getModulationValue(ModDestination dest) const;
+
+    /** Get modulation source value */
+    float getModSourceValue(ModSource source, float velocity, int noteNumber,
+                            float pitchBend, float modWheel, float aftertouch) const;
+
+    /** Apply all macro targets */
+    void applyMacroModulation();
+
+    //==========================================================================
+    // Vector Synthesis (NEW)
+    //==========================================================================
+
+    /** Compute vector mixing weights for 4 corners */
+    std::array<float, 4> computeVectorWeights(float x, float y) const;
+
+    /** Read interpolated sample from vector sources */
+    float readVectorSample(float phase, const std::array<float, 4>& weights) const;
+
+    //==========================================================================
+    // Effects Processing (NEW)
+    //==========================================================================
+
+    /** Initialize effects buffers */
+    void initializeEffects();
+
+    /** Process stereo through effects chain */
+    void processEffects(float& left, float& right);
+
+    /** Individual effect processors */
+    void processChorus(float& left, float& right);
+    void processDelay(float& left, float& right);
+    void processReverb(float& left, float& right);
+    void processDistortion(float& sample);
+
+    //==========================================================================
+    // Arpeggiator (NEW)
+    //==========================================================================
+
+    /** Process arpeggiator, returns note to play or -1 */
+    int processArpeggiator(double sampleRate);
+
+    /** Sort arp notes based on mode */
+    void sortArpNotes();
+
+    /** Get next arp note index */
+    int getNextArpNote();
+
+    //==========================================================================
+    // Advanced Filter Processing (NEW)
+    //==========================================================================
+
+    /** Moog ladder filter (4-pole) */
+    float processMoogLadder(float input, float cutoff, float resonance,
+                            std::array<float, 4>& state) const;
+
+    /** State-variable filter */
+    float processStateVariable(float input, float cutoff, float resonance,
+                               FilterType subType, std::array<float, 2>& state) const;
+
+    /** Formant filter (vowel sounds) */
+    float processFormant(float input, float morph, std::array<float, 10>& state) const;
+
+    /** TB-303 style acid filter */
+    float processAcidFilter(float input, float cutoff, float resonance,
+                            float accent, std::array<float, 4>& state) const;
 
     //==========================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveWeaver)

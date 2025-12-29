@@ -279,6 +279,15 @@ void WaveWeaver::prepare(double sampleRate, int maxBlockSize)
     juce::ignoreUnused(maxBlockSize);
     currentSampleRate = sampleRate;
     setCurrentPlaybackSampleRate(sampleRate);
+
+    // Initialize effects buffers
+    initializeEffects();
+
+    // Initialize macro names
+    for (int i = 0; i < numMacros; ++i)
+    {
+        macros[i].name = "Macro " + juce::String(i + 1);
+    }
 }
 
 void WaveWeaver::reset()
@@ -709,7 +718,960 @@ float WaveWeaver::WaveWeaverVoice::processLFO(int lfoIndex, float sampleRate)
 
 void WaveWeaver::WaveWeaverVoice::applyModulation(float& value, ModDestination dest)
 {
-    juce::ignoreUnused(value, dest);
-    // Implement modulation matrix routing
-    // (Placeholder for full implementation)
+    // Get cached modulation value from owner and apply
+    float modValue = owner.getModulationValue(dest);
+    value += modValue;
+}
+
+//==============================================================================
+// Modulation Matrix Implementation (NEW)
+//==============================================================================
+
+void WaveWeaver::computeModulation()
+{
+    // Reset modulation cache
+    modCache.values.fill(0.0f);
+
+    // Compute LFO values
+    for (int i = 0; i < 8; ++i)
+    {
+        if (lfos[i].enabled)
+        {
+            // LFO computation is done per-voice, but we cache master LFO for global modulation
+            modCache.lfoValues[i] = 0.0f;  // Will be overridden per-voice
+        }
+    }
+
+    // Compute macro modulation
+    for (int m = 0; m < numMacros; ++m)
+    {
+        modCache.macroValues[m] = macros[m].value;
+    }
+
+    // Apply modulation routes
+    for (const auto& route : modulationMatrix)
+    {
+        if (route.source == ModSource::None || route.destination == ModDestination::None)
+            continue;
+
+        float sourceValue = getModSourceValue(route.source, 1.0f, 60, 0.0f, 0.0f, 0.0f);
+        int destIndex = static_cast<int>(route.destination);
+        if (destIndex < numModDestinations)
+        {
+            modCache.values[destIndex] += sourceValue * route.amount;
+        }
+    }
+
+    // Apply macro targets
+    applyMacroModulation();
+}
+
+float WaveWeaver::getModulationValue(ModDestination dest) const
+{
+    int index = static_cast<int>(dest);
+    if (index >= 0 && index < numModDestinations)
+    {
+        return modCache.values[index];
+    }
+    return 0.0f;
+}
+
+float WaveWeaver::getModSourceValue(ModSource source, float velocity, int noteNumber,
+                                     float pitchBend, float modWheel, float aftertouch) const
+{
+    switch (source)
+    {
+        case ModSource::None:      return 0.0f;
+        case ModSource::LFO1:      return modCache.lfoValues[0];
+        case ModSource::LFO2:      return modCache.lfoValues[1];
+        case ModSource::LFO3:      return modCache.lfoValues[2];
+        case ModSource::LFO4:      return modCache.lfoValues[3];
+        case ModSource::LFO5:      return modCache.lfoValues[4];
+        case ModSource::LFO6:      return modCache.lfoValues[5];
+        case ModSource::LFO7:      return modCache.lfoValues[6];
+        case ModSource::LFO8:      return modCache.lfoValues[7];
+        case ModSource::Envelope1: return modCache.envValues[0];
+        case ModSource::Envelope2: return modCache.envValues[1];
+        case ModSource::Envelope3: return modCache.envValues[2];
+        case ModSource::Envelope4: return modCache.envValues[3];
+        case ModSource::Velocity:  return velocity;
+        case ModSource::ModWheel:  return modWheel;
+        case ModSource::PitchBend: return pitchBend;
+        case ModSource::Aftertouch: return aftertouch;
+        case ModSource::KeyTrack:  return (noteNumber - 60) / 60.0f;  // C4 = 0
+        case ModSource::Random:    return (std::rand() / static_cast<float>(RAND_MAX)) * 2.0f - 1.0f;
+        case ModSource::Constant:  return 1.0f;
+        case ModSource::Macro1:    return modCache.macroValues[0];
+        case ModSource::Macro2:    return modCache.macroValues[1];
+        case ModSource::Macro3:    return modCache.macroValues[2];
+        case ModSource::Macro4:    return modCache.macroValues[3];
+        case ModSource::Macro5:    return modCache.macroValues[4];
+        case ModSource::Macro6:    return modCache.macroValues[5];
+        case ModSource::Macro7:    return modCache.macroValues[6];
+        case ModSource::Macro8:    return modCache.macroValues[7];
+        case ModSource::VectorX:   return vectorPad.x * 2.0f - 1.0f;
+        case ModSource::VectorY:   return vectorPad.y * 2.0f - 1.0f;
+        default:                   return 0.0f;
+    }
+}
+
+void WaveWeaver::applyMacroModulation()
+{
+    for (int m = 0; m < numMacros; ++m)
+    {
+        const auto& macro = macros[m];
+        float macroVal = macro.value;
+
+        for (int t = 0; t < macro.numTargets; ++t)
+        {
+            const auto& target = macro.targets[t];
+            if (target.destination != ModDestination::None)
+            {
+                int destIndex = static_cast<int>(target.destination);
+                if (destIndex < numModDestinations)
+                {
+                    modCache.values[destIndex] += macroVal * target.amount;
+                }
+            }
+        }
+    }
+}
+
+//==============================================================================
+// Vector Synthesis Implementation (NEW)
+//==============================================================================
+
+std::array<float, 4> WaveWeaver::computeVectorWeights(float x, float y) const
+{
+    // Bilinear interpolation for 4 corners
+    // A(0,0), B(1,0), C(0,1), D(1,1)
+    float oneMinusX = 1.0f - x;
+    float oneMinusY = 1.0f - y;
+
+    return {{
+        oneMinusX * oneMinusY,  // A (bottom-left)
+        x * oneMinusY,          // B (bottom-right)
+        oneMinusX * y,          // C (top-left)
+        x * y                   // D (top-right)
+    }};
+}
+
+float WaveWeaver::readVectorSample(float phase, const std::array<float, 4>& weights) const
+{
+    float sample = 0.0f;
+
+    for (int corner = 0; corner < 4; ++corner)
+    {
+        if (weights[corner] > 0.001f)
+        {
+            int wtIndex = vectorPad.wavetableSlots[corner];
+            float wtPos = vectorPad.wavetablePositions[corner];
+
+            if (wtIndex >= 0 && wtIndex < static_cast<int>(wavetables.size()))
+            {
+                sample += interpolateWavetable(*wavetables[wtIndex], phase, wtPos) * weights[corner];
+            }
+        }
+    }
+
+    return sample;
+}
+
+void WaveWeaver::setVectorPosition(float x, float y)
+{
+    vectorPad.x = juce::jlimit(0.0f, 1.0f, x);
+    vectorPad.y = juce::jlimit(0.0f, 1.0f, y);
+}
+
+void WaveWeaver::setVectorWavetable(int corner, int wavetableIndex, float position)
+{
+    if (corner >= 0 && corner < 4)
+    {
+        vectorPad.wavetableSlots[corner] = wavetableIndex;
+        vectorPad.wavetablePositions[corner] = juce::jlimit(0.0f, 1.0f, position);
+    }
+}
+
+void WaveWeaver::setVectorPad(const VectorPad& pad)
+{
+    vectorPad = pad;
+}
+
+//==============================================================================
+// Macro Controls Implementation (NEW)
+//==============================================================================
+
+WaveWeaver::Macro& WaveWeaver::getMacro(int index)
+{
+    jassert(index >= 0 && index < numMacros);
+    return macros[index];
+}
+
+const WaveWeaver::Macro& WaveWeaver::getMacro(int index) const
+{
+    jassert(index >= 0 && index < numMacros);
+    return macros[index];
+}
+
+void WaveWeaver::setMacro(int index, const Macro& macro)
+{
+    if (index >= 0 && index < numMacros)
+    {
+        macros[index] = macro;
+    }
+}
+
+void WaveWeaver::setMacroValue(int index, float value)
+{
+    if (index >= 0 && index < numMacros)
+    {
+        macros[index].value = juce::jlimit(0.0f, 1.0f, value);
+    }
+}
+
+float WaveWeaver::getMacroValue(int index) const
+{
+    if (index >= 0 && index < numMacros)
+    {
+        return macros[index].value;
+    }
+    return 0.0f;
+}
+
+void WaveWeaver::addMacroTarget(int macroIndex, ModDestination dest, float amount)
+{
+    if (macroIndex >= 0 && macroIndex < numMacros)
+    {
+        auto& macro = macros[macroIndex];
+        if (macro.numTargets < 8)
+        {
+            macro.targets[macro.numTargets].destination = dest;
+            macro.targets[macro.numTargets].amount = amount;
+            macro.numTargets++;
+        }
+    }
+}
+
+void WaveWeaver::clearMacroTargets(int macroIndex)
+{
+    if (macroIndex >= 0 && macroIndex < numMacros)
+    {
+        macros[macroIndex].numTargets = 0;
+    }
+}
+
+//==============================================================================
+// Arpeggiator Implementation (NEW)
+//==============================================================================
+
+void WaveWeaver::setArpeggiator(const Arpeggiator& arp)
+{
+    arpeggiator = arp;
+}
+
+void WaveWeaver::setArpMode(ArpMode mode)
+{
+    arpeggiator.mode = mode;
+    if (mode == ArpMode::Off)
+    {
+        arpNotes.clear();
+        arpCurrentStep = 0;
+        arpCurrentOctave = 0;
+    }
+}
+
+void WaveWeaver::setArpRate(float bpm)
+{
+    arpeggiator.rate = juce::jlimit(20.0f, 300.0f, bpm);
+}
+
+void WaveWeaver::setArpGate(float gate)
+{
+    arpeggiator.gate = juce::jlimit(0.1f, 1.0f, gate);
+}
+
+void WaveWeaver::setArpOctaveMode(ArpOctaveMode mode)
+{
+    arpeggiator.octaveMode = mode;
+}
+
+void WaveWeaver::sortArpNotes()
+{
+    if (arpNotes.empty()) return;
+
+    switch (arpeggiator.mode)
+    {
+        case ArpMode::Up:
+        case ArpMode::UpDown:
+            std::sort(arpNotes.begin(), arpNotes.end());
+            break;
+
+        case ArpMode::Down:
+        case ArpMode::DownUp:
+            std::sort(arpNotes.begin(), arpNotes.end(), std::greater<int>());
+            break;
+
+        case ArpMode::Random:
+            std::random_shuffle(arpNotes.begin(), arpNotes.end());
+            break;
+
+        default:
+            break;  // Order mode keeps original order
+    }
+}
+
+int WaveWeaver::getNextArpNote()
+{
+    if (arpNotes.empty()) return -1;
+
+    int note = arpNotes[arpCurrentStep % arpNotes.size()];
+
+    // Apply octave offset
+    note += arpCurrentOctave * 12;
+
+    // Advance step
+    arpCurrentStep++;
+    if (arpCurrentStep >= static_cast<int>(arpNotes.size()))
+    {
+        arpCurrentStep = 0;
+
+        // Handle octave progression
+        switch (arpeggiator.octaveMode)
+        {
+            case ArpOctaveMode::OctaveUp:
+                arpCurrentOctave = (arpCurrentOctave + 1) % 2;
+                break;
+
+            case ArpOctaveMode::OctaveDown:
+                arpCurrentOctave = (arpCurrentOctave - 1 + 2) % 2 - 1;
+                break;
+
+            case ArpOctaveMode::OctaveUpDown:
+                if (arpDirection)
+                {
+                    arpCurrentOctave++;
+                    if (arpCurrentOctave >= 2)
+                    {
+                        arpDirection = false;
+                    }
+                }
+                else
+                {
+                    arpCurrentOctave--;
+                    if (arpCurrentOctave <= 0)
+                    {
+                        arpDirection = true;
+                    }
+                }
+                break;
+
+            case ArpOctaveMode::TwoOctavesUp:
+                arpCurrentOctave = (arpCurrentOctave + 1) % 3;
+                break;
+
+            case ArpOctaveMode::ThreeOctavesUp:
+                arpCurrentOctave = (arpCurrentOctave + 1) % 4;
+                break;
+
+            default:
+                arpCurrentOctave = 0;
+                break;
+        }
+    }
+
+    return note;
+}
+
+int WaveWeaver::processArpeggiator(double sampleRate)
+{
+    if (arpeggiator.mode == ArpMode::Off || arpNotes.empty())
+        return -1;
+
+    // Calculate samples per step
+    double beatsPerSecond = arpeggiator.rate / 60.0;
+    double stepsPerSecond = beatsPerSecond / arpeggiator.division;
+    double samplesPerStep = sampleRate / stepsPerSecond;
+
+    arpAccumulator++;
+    if (arpAccumulator >= samplesPerStep)
+    {
+        arpAccumulator -= samplesPerStep;
+        return getNextArpNote();
+    }
+
+    return -1;
+}
+
+//==============================================================================
+// Effects Chain Implementation (NEW)
+//==============================================================================
+
+void WaveWeaver::initializeEffects()
+{
+    // Initialize chorus delay lines (max 50ms at 48kHz = 2400 samples)
+    int maxChorusDelay = static_cast<int>(currentSampleRate * 0.05);
+    for (auto& line : chorusState.delayLines)
+    {
+        line.resize(maxChorusDelay, 0.0f);
+    }
+
+    // Initialize delay lines (max 2 seconds)
+    int maxDelayTime = static_cast<int>(currentSampleRate * 2.0);
+    for (auto& line : delayState.delayLines)
+    {
+        line.resize(maxDelayTime, 0.0f);
+    }
+
+    // Initialize reverb comb filters (different prime lengths)
+    const std::array<float, 4> combTimes = {{0.0297f, 0.0371f, 0.0411f, 0.0437f}};
+    for (int i = 0; i < 4; ++i)
+    {
+        int size = static_cast<int>(currentSampleRate * combTimes[i]);
+        reverbState.combL[i].resize(size, 0.0f);
+        reverbState.combR[i].resize(size + 23, 0.0f);  // Slightly different for stereo
+    }
+
+    // Initialize allpass filters
+    const std::array<float, 2> allpassTimes = {{0.005f, 0.0017f}};
+    for (int i = 0; i < 2; ++i)
+    {
+        int size = static_cast<int>(currentSampleRate * allpassTimes[i]);
+        reverbState.allpassL[i].resize(size, 0.0f);
+        reverbState.allpassR[i].resize(size + 7, 0.0f);
+    }
+
+    // Predelay (max 100ms)
+    int predelaySize = static_cast<int>(currentSampleRate * 0.1);
+    reverbState.predelayL.resize(predelaySize, 0.0f);
+    reverbState.predelayR.resize(predelaySize, 0.0f);
+}
+
+void WaveWeaver::processEffects(float& left, float& right)
+{
+    // Process effects in configured order
+    for (int i = 0; i < 4; ++i)
+    {
+        switch (effectsChain.order[i])
+        {
+            case 0:  // Distortion
+                if (effectsChain.distortion.enabled)
+                {
+                    processDistortion(left);
+                    processDistortion(right);
+                }
+                break;
+
+            case 1:  // Chorus
+                if (effectsChain.chorus.enabled)
+                {
+                    processChorus(left, right);
+                }
+                break;
+
+            case 2:  // Delay
+                if (effectsChain.delay.enabled)
+                {
+                    processDelay(left, right);
+                }
+                break;
+
+            case 3:  // Reverb
+                if (effectsChain.reverb.enabled)
+                {
+                    processReverb(left, right);
+                }
+                break;
+        }
+    }
+}
+
+void WaveWeaver::processChorus(float& left, float& right)
+{
+    const auto& chorus = effectsChain.chorus;
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+
+    float dryL = left, dryR = right;
+    float wetL = 0.0f, wetR = 0.0f;
+
+    int numVoices = chorus.voices;
+    float baseDelay = static_cast<float>(currentSampleRate) * 0.007f;  // 7ms base delay
+    float modDepth = static_cast<float>(currentSampleRate) * 0.003f * chorus.depth;  // 3ms max mod
+
+    for (int v = 0; v < numVoices; ++v)
+    {
+        // Update LFO phase
+        chorusState.lfoPhases[v] += chorus.rate / static_cast<float>(currentSampleRate);
+        while (chorusState.lfoPhases[v] >= 1.0f) chorusState.lfoPhases[v] -= 1.0f;
+
+        float lfoVal = trigTables.fastSin(chorusState.lfoPhases[v]);
+        float delay = baseDelay + lfoVal * modDepth;
+
+        // Read from delay line with linear interpolation
+        auto& line = chorusState.delayLines[v];
+        int lineSize = static_cast<int>(line.size());
+        if (lineSize == 0) continue;
+
+        float readPos = static_cast<float>(chorusState.writePos[v]) - delay;
+        while (readPos < 0) readPos += lineSize;
+        int idx0 = static_cast<int>(readPos) % lineSize;
+        int idx1 = (idx0 + 1) % lineSize;
+        float frac = readPos - std::floor(readPos);
+
+        float delayed = line[idx0] + frac * (line[idx1] - line[idx0]);
+
+        // Write to delay line
+        float input = (v % 2 == 0) ? left : right;
+        line[chorusState.writePos[v]] = input + delayed * chorus.feedback;
+        chorusState.writePos[v] = (chorusState.writePos[v] + 1) % lineSize;
+
+        // Stereo spread
+        float panL = 0.5f - chorus.stereoSpread * 0.5f * (v - numVoices / 2.0f) / numVoices;
+        float panR = 1.0f - panL;
+        wetL += delayed * panL / numVoices;
+        wetR += delayed * panR / numVoices;
+    }
+
+    // Mix wet/dry
+    left = dryL * (1.0f - chorus.mix) + wetL * chorus.mix;
+    right = dryR * (1.0f - chorus.mix) + wetR * chorus.mix;
+}
+
+void WaveWeaver::processDelay(float& left, float& right)
+{
+    const auto& delay = effectsChain.delay;
+
+    // Calculate delay times in samples
+    int delaySamplesL = static_cast<int>(delay.timeL * currentSampleRate);
+    int delaySamplesR = static_cast<int>(delay.timeR * currentSampleRate);
+
+    auto& lineL = delayState.delayLines[0];
+    auto& lineR = delayState.delayLines[1];
+    int lineSizeL = static_cast<int>(lineL.size());
+    int lineSizeR = static_cast<int>(lineR.size());
+
+    if (lineSizeL == 0 || lineSizeR == 0) return;
+
+    delaySamplesL = std::min(delaySamplesL, lineSizeL - 1);
+    delaySamplesR = std::min(delaySamplesR, lineSizeR - 1);
+
+    // Read delayed samples
+    int readPosL = (delayState.writePos[0] - delaySamplesL + lineSizeL) % lineSizeL;
+    int readPosR = (delayState.writePos[1] - delaySamplesR + lineSizeR) % lineSizeR;
+
+    float delayedL = lineL[readPosL];
+    float delayedR = lineR[readPosR];
+
+    // Apply feedback filter (tone control)
+    float filterCoeff = 0.3f + delay.filter * 0.6f;
+    delayState.filterState[0] = delayState.filterState[0] + filterCoeff * (delayedL - delayState.filterState[0]);
+    delayState.filterState[1] = delayState.filterState[1] + filterCoeff * (delayedR - delayState.filterState[1]);
+    delayedL = delayState.filterState[0];
+    delayedR = delayState.filterState[1];
+
+    // Write to delay line with crossfeed (ping-pong)
+    lineL[delayState.writePos[0]] = left + (delayedL * (1.0f - delay.crossfeed) + delayedR * delay.crossfeed) * delay.feedback;
+    lineR[delayState.writePos[1]] = right + (delayedR * (1.0f - delay.crossfeed) + delayedL * delay.crossfeed) * delay.feedback;
+
+    delayState.writePos[0] = (delayState.writePos[0] + 1) % lineSizeL;
+    delayState.writePos[1] = (delayState.writePos[1] + 1) % lineSizeR;
+
+    // Mix
+    left = left * (1.0f - delay.mix) + delayedL * delay.mix;
+    right = right * (1.0f - delay.mix) + delayedR * delay.mix;
+}
+
+void WaveWeaver::processReverb(float& left, float& right)
+{
+    const auto& reverb = effectsChain.reverb;
+    float dryL = left, dryR = right;
+
+    // Pre-delay
+    int predelaySamples = static_cast<int>(reverb.predelay * currentSampleRate);
+    int predelaySize = static_cast<int>(reverbState.predelayL.size());
+    if (predelaySize == 0) return;
+    predelaySamples = std::min(predelaySamples, predelaySize - 1);
+
+    int predelayRead = (reverbState.predelayPos - predelaySamples + predelaySize) % predelaySize;
+    float inputL = reverbState.predelayL[predelayRead];
+    float inputR = reverbState.predelayR[predelayRead];
+
+    reverbState.predelayL[reverbState.predelayPos] = left;
+    reverbState.predelayR[reverbState.predelayPos] = right;
+    reverbState.predelayPos = (reverbState.predelayPos + 1) % predelaySize;
+
+    // Comb filters (parallel)
+    float combOutL = 0.0f, combOutR = 0.0f;
+    float feedback = reverb.size * 0.85f + 0.1f;
+    float damp = reverb.damping * 0.4f;
+
+    for (int c = 0; c < 4; ++c)
+    {
+        auto& combL = reverbState.combL[c];
+        auto& combR = reverbState.combR[c];
+        int sizeL = static_cast<int>(combL.size());
+        int sizeR = static_cast<int>(combR.size());
+        if (sizeL == 0 || sizeR == 0) continue;
+
+        // Read
+        float outL = combL[reverbState.combPosL[c]];
+        float outR = combR[reverbState.combPosR[c]];
+
+        // Damping filter
+        reverbState.combFilterL[c] = outL + damp * (reverbState.combFilterL[c] - outL);
+        reverbState.combFilterR[c] = outR + damp * (reverbState.combFilterR[c] - outR);
+
+        // Write
+        combL[reverbState.combPosL[c]] = inputL + reverbState.combFilterL[c] * feedback;
+        combR[reverbState.combPosR[c]] = inputR + reverbState.combFilterR[c] * feedback;
+
+        reverbState.combPosL[c] = (reverbState.combPosL[c] + 1) % sizeL;
+        reverbState.combPosR[c] = (reverbState.combPosR[c] + 1) % sizeR;
+
+        combOutL += outL;
+        combOutR += outR;
+    }
+
+    combOutL *= 0.25f;
+    combOutR *= 0.25f;
+
+    // Allpass filters (series)
+    for (int a = 0; a < 2; ++a)
+    {
+        auto& apL = reverbState.allpassL[a];
+        auto& apR = reverbState.allpassR[a];
+        int sizeL = static_cast<int>(apL.size());
+        int sizeR = static_cast<int>(apR.size());
+        if (sizeL == 0 || sizeR == 0) continue;
+
+        const float g = 0.5f;
+
+        float bufL = apL[reverbState.allpassPosL[a]];
+        float bufR = apR[reverbState.allpassPosR[a]];
+
+        float newL = combOutL + bufL * g;
+        float newR = combOutR + bufR * g;
+
+        apL[reverbState.allpassPosL[a]] = combOutL - bufL * g;
+        apR[reverbState.allpassPosR[a]] = combOutR - bufR * g;
+
+        combOutL = newL;
+        combOutR = newR;
+
+        reverbState.allpassPosL[a] = (reverbState.allpassPosL[a] + 1) % sizeL;
+        reverbState.allpassPosR[a] = (reverbState.allpassPosR[a] + 1) % sizeR;
+    }
+
+    // Stereo width
+    float mid = (combOutL + combOutR) * 0.5f;
+    float side = (combOutL - combOutR) * 0.5f * reverb.width;
+    combOutL = mid + side;
+    combOutR = mid - side;
+
+    // Mix
+    left = dryL * (1.0f - reverb.mix) + combOutL * reverb.mix;
+    right = dryR * (1.0f - reverb.mix) + combOutR * reverb.mix;
+}
+
+void WaveWeaver::processDistortion(float& sample)
+{
+    const auto& dist = effectsChain.distortion;
+    float dry = sample;
+    float wet = sample;
+
+    // Apply drive
+    wet *= 1.0f + dist.drive * 10.0f;
+
+    // Apply DC bias for asymmetric
+    wet += dist.bias;
+
+    switch (dist.type)
+    {
+        case DistortionEffect::Type::Soft:
+            wet = Echoel::DSP::FastMath::fastTanh(wet);
+            break;
+
+        case DistortionEffect::Type::Hard:
+            wet = juce::jlimit(-1.0f, 1.0f, wet);
+            break;
+
+        case DistortionEffect::Type::Fold:
+            while (std::abs(wet) > 1.0f)
+            {
+                if (wet > 1.0f) wet = 2.0f - wet;
+                else if (wet < -1.0f) wet = -2.0f - wet;
+            }
+            break;
+
+        case DistortionEffect::Type::Asymmetric:
+            if (wet > 0) wet = Echoel::DSP::FastMath::fastTanh(wet);
+            else wet = Echoel::DSP::FastMath::fastTanh(wet * 0.5f) * 2.0f;
+            break;
+
+        case DistortionEffect::Type::Tube:
+            wet = (wet >= 0) ? (1.0f - std::exp(-wet)) : (-1.0f + std::exp(wet));
+            break;
+
+        case DistortionEffect::Type::Digital:
+            wet = std::floor(wet * 8.0f) / 8.0f;  // 3-bit quantization
+            break;
+
+        case DistortionEffect::Type::Bitcrush:
+            {
+                int bits = 4 + static_cast<int>((1.0f - dist.drive) * 12);
+                float levels = static_cast<float>(1 << bits);
+                wet = std::floor(wet * levels) / levels;
+            }
+            break;
+    }
+
+    // Remove DC bias
+    wet -= dist.bias;
+
+    // Mix
+    sample = dry * (1.0f - dist.mix) + wet * dist.mix;
+}
+
+//==============================================================================
+// Effects Control Methods (NEW)
+//==============================================================================
+
+void WaveWeaver::setEffectsChain(const EffectsChain& chain)
+{
+    effectsChain = chain;
+}
+
+void WaveWeaver::setChorusEnabled(bool enabled)
+{
+    effectsChain.chorus.enabled = enabled;
+}
+
+void WaveWeaver::setChorusRate(float hz)
+{
+    effectsChain.chorus.rate = juce::jlimit(0.1f, 5.0f, hz);
+}
+
+void WaveWeaver::setChorusDepth(float depth)
+{
+    effectsChain.chorus.depth = juce::jlimit(0.0f, 1.0f, depth);
+}
+
+void WaveWeaver::setChorusMix(float mix)
+{
+    effectsChain.chorus.mix = juce::jlimit(0.0f, 1.0f, mix);
+}
+
+void WaveWeaver::setDelayEnabled(bool enabled)
+{
+    effectsChain.delay.enabled = enabled;
+}
+
+void WaveWeaver::setDelayTime(float timeL, float timeR)
+{
+    effectsChain.delay.timeL = juce::jlimit(0.001f, 2.0f, timeL);
+    effectsChain.delay.timeR = juce::jlimit(0.001f, 2.0f, timeR);
+}
+
+void WaveWeaver::setDelayFeedback(float feedback)
+{
+    effectsChain.delay.feedback = juce::jlimit(0.0f, 0.95f, feedback);
+}
+
+void WaveWeaver::setDelayMix(float mix)
+{
+    effectsChain.delay.mix = juce::jlimit(0.0f, 1.0f, mix);
+}
+
+void WaveWeaver::setDelaySync(bool sync)
+{
+    effectsChain.delay.sync = sync;
+}
+
+void WaveWeaver::setReverbEnabled(bool enabled)
+{
+    effectsChain.reverb.enabled = enabled;
+}
+
+void WaveWeaver::setReverbSize(float size)
+{
+    effectsChain.reverb.size = juce::jlimit(0.0f, 1.0f, size);
+}
+
+void WaveWeaver::setReverbDecay(float decay)
+{
+    effectsChain.reverb.decay = juce::jlimit(0.0f, 1.0f, decay);
+}
+
+void WaveWeaver::setReverbMix(float mix)
+{
+    effectsChain.reverb.mix = juce::jlimit(0.0f, 1.0f, mix);
+}
+
+void WaveWeaver::setDistortionEnabled(bool enabled)
+{
+    effectsChain.distortion.enabled = enabled;
+}
+
+void WaveWeaver::setDistortionType(DistortionEffect::Type type)
+{
+    effectsChain.distortion.type = type;
+}
+
+void WaveWeaver::setDistortionDrive(float drive)
+{
+    effectsChain.distortion.drive = juce::jlimit(0.0f, 1.0f, drive);
+}
+
+void WaveWeaver::setDistortionMix(float mix)
+{
+    effectsChain.distortion.mix = juce::jlimit(0.0f, 1.0f, mix);
+}
+
+void WaveWeaver::setEffectsOrder(const std::array<int, 4>& order)
+{
+    effectsChain.order = order;
+}
+
+//==============================================================================
+// Advanced Filter Implementations (NEW)
+//==============================================================================
+
+float WaveWeaver::processMoogLadder(float input, float cutoff, float resonance,
+                                     std::array<float, 4>& state) const
+{
+    // Moog ladder filter (Antti Huovilainen model)
+    const float fc = cutoff / static_cast<float>(currentSampleRate);
+    const float fc2 = fc * fc;
+    const float fc3 = fc2 * fc;
+
+    // Compute coefficients
+    const float g = 0.9892f * fc - 0.4342f * fc2 + 0.1381f * fc3 - 0.0202f * fc3 * fc;
+    const float res = resonance * (1.0029f + 0.0526f * fc - 0.926f * fc2 + 0.0218f * fc3);
+
+    // Feedback
+    float feedback = res * 4.0f * (state[3] - input * 0.5f);
+    input -= feedback;
+
+    // Apply tanh saturation
+    input = Echoel::DSP::FastMath::fastTanh(input);
+
+    // 4-pole cascade
+    for (int i = 0; i < 4; ++i)
+    {
+        float s = state[i];
+        state[i] = s + g * (input - s);
+        input = state[i];
+    }
+
+    return state[3];
+}
+
+float WaveWeaver::processStateVariable(float input, float cutoff, float resonance,
+                                        FilterType subType, std::array<float, 2>& state) const
+{
+    // State-variable filter (Chamberlin)
+    const float f = 2.0f * Echoel::DSP::TrigLookupTables::getInstance().fastSinRad(
+        juce::MathConstants<float>::pi * cutoff / static_cast<float>(currentSampleRate));
+    const float q = 1.0f / (1.0f + resonance * 0.5f);
+    const float scale = Echoel::DSP::FastMath::fastSqrt(q);
+
+    // Low, band, high outputs
+    float low = state[0] + f * state[1];
+    float high = scale * input - low - q * state[1];
+    float band = f * high + state[1];
+
+    state[0] = low;
+    state[1] = band;
+
+    // Return based on filter type
+    switch (subType)
+    {
+        case FilterType::LowPass12dB:
+        case FilterType::LowPass24dB:
+            return low;
+        case FilterType::HighPass12dB:
+        case FilterType::HighPass24dB:
+            return high;
+        case FilterType::BandPass:
+            return band;
+        case FilterType::Notch:
+            return low + high;
+        default:
+            return low;
+    }
+}
+
+float WaveWeaver::processFormant(float input, float morph, std::array<float, 10>& state) const
+{
+    // 5 vowel formants: A, E, I, O, U
+    // Each vowel has 3 formant frequencies
+    static const float formants[5][3] = {
+        {800.0f, 1150.0f, 2900.0f},   // A
+        {350.0f, 2000.0f, 2800.0f},   // E
+        {270.0f, 2140.0f, 2950.0f},   // I
+        {450.0f, 800.0f, 2830.0f},    // O
+        {325.0f, 700.0f, 2700.0f}     // U
+    };
+
+    // Interpolate between vowels based on morph
+    int vowel1 = static_cast<int>(morph * 4.0f);
+    int vowel2 = std::min(vowel1 + 1, 4);
+    float blend = morph * 4.0f - vowel1;
+    vowel1 = std::max(0, std::min(vowel1, 4));
+
+    float output = 0.0f;
+
+    // Process 3 formant bands
+    for (int f = 0; f < 3; ++f)
+    {
+        float freq = formants[vowel1][f] * (1.0f - blend) + formants[vowel2][f] * blend;
+        float bw = freq * 0.1f;  // Bandwidth = 10% of frequency
+
+        // Simple resonant filter per formant
+        float w0 = 2.0f * juce::MathConstants<float>::pi * freq / static_cast<float>(currentSampleRate);
+        float alpha = Echoel::DSP::TrigLookupTables::getInstance().fastSinRad(w0) / (2.0f * (freq / bw));
+
+        float b0 = alpha;
+        float a0 = 1.0f + alpha;
+        float a1 = -2.0f * Echoel::DSP::TrigLookupTables::getInstance().fastCosRad(w0);
+        float a2 = 1.0f - alpha;
+
+        // Direct form 1
+        float y = (b0/a0) * input - (a1/a0) * state[f*2] - (a2/a0) * state[f*2+1];
+        state[f*2+1] = state[f*2];
+        state[f*2] = y;
+
+        output += y;
+    }
+
+    return output * 0.33f;  // Normalize
+}
+
+float WaveWeaver::processAcidFilter(float input, float cutoff, float resonance,
+                                     float accent, std::array<float, 4>& state) const
+{
+    // TB-303 style filter with accent-controlled resonance spike
+    float fc = cutoff / static_cast<float>(currentSampleRate);
+    fc = std::min(fc, 0.45f);
+
+    // Increase resonance with accent
+    float q = resonance + accent * 0.5f;
+    q = std::min(q, 0.99f);
+
+    const float k = 4.0f * q;
+    const float g = fc;
+
+    // Apply feedback with saturation
+    float feedback = k * Echoel::DSP::FastMath::fastTanh(state[3]);
+    float s = input - feedback;
+
+    // 4-pole cascade with per-stage saturation
+    for (int i = 0; i < 4; ++i)
+    {
+        float v = g * (Echoel::DSP::FastMath::fastTanh(s) - Echoel::DSP::FastMath::fastTanh(state[i]));
+        float y = v + state[i];
+        state[i] = y + v;
+        s = y;
+    }
+
+    return state[3];
 }
