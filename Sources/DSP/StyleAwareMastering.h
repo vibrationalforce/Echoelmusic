@@ -112,14 +112,14 @@ public:
 
     struct CurrentMetrics
     {
-        float integratedLUFS;
-        float shortTermLUFS;
-        float loudnessRange;
-        float truePeakL;
-        float truePeakR;
-        float stereoWidth;           // 0.0 to 1.0
+        float integratedLUFS = -23.0f;
+        float shortTermLUFS = -23.0f;
+        float loudnessRange = 8.0f;
+        float truePeakL = -1.0f;
+        float truePeakR = -1.0f;
+        float stereoWidth = 0.5f;     // 0.0 to 1.0
 
-        float distanceFromTarget;    // How far from genre targets (0.0 = perfect)
+        float distanceFromTarget = 0.0f;  // How far from genre targets (0.0 = perfect)
     };
 
     CurrentMetrics analyzeCurrentState() const;
@@ -132,9 +132,9 @@ public:
 
     struct ReferenceAnalysis
     {
-        float referenceLUFS;
-        float referenceLRA;
-        float referencePeak;
+        float referenceLUFS = -14.0f;
+        float referenceLRA = 8.0f;
+        float referencePeak = -1.0f;
         std::string estimatedGenre;
         std::vector<std::string> matchSuggestions;  // What to adjust
     };

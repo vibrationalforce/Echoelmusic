@@ -145,10 +145,10 @@ private:
     // Note tracking
     struct ActiveNote
     {
-        int midiNote;
-        float startTime;
-        float startAmplitude;
-        bool active;
+        int midiNote = 0;
+        float startTime = 0.0f;
+        float startAmplitude = 0.0f;
+        bool active = false;
     };
     std::vector<ActiveNote> activeNotes;
     std::vector<Note> detectedNotes;

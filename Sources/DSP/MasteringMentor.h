@@ -138,9 +138,9 @@ public:
     struct Comparison
     {
         std::string aspect;          // "Low-end", "Highs", "Loudness", etc.
-        float yourValue;
-        float referenceValue;
-        float difference;
+        float yourValue = 0.0f;
+        float referenceValue = 0.0f;
+        float difference = 0.0f;
         std::string recommendation;
     };
 
@@ -155,8 +155,8 @@ public:
     struct GenreGuidance
     {
         std::string genre;
-        float targetLUFS;
-        float targetDynamicRange;
+        float targetLUFS = -14.0f;
+        float targetDynamicRange = 8.0f;
         std::vector<std::string> frequencyFocus;  // "Boost 10kHz", "Control 200Hz"
         std::vector<std::string> commonMistakes;  // "Too much bass", "Harsh highs"
         std::vector<std::string> proTips;         // Genre-specific tricks
@@ -169,13 +169,13 @@ public:
 
     struct SessionSummary
     {
-        float startingScore;
-        float endingScore;
-        float improvement;
+        float startingScore = 0.0f;
+        float endingScore = 0.0f;
+        float improvement = 0.0f;
         std::vector<std::string> changesYouMade;
         std::vector<std::string> whatYouLearned;
         std::vector<std::string> nextSteps;
-        int minutesWorked;
+        int minutesWorked = 0;
     };
 
     void startSession();
