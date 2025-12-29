@@ -442,13 +442,13 @@ float FrequencyFusion::FrequencyFusionVoice::renderOperator(int opIndex, float m
     float baseFreq = juce::MidiMessage::getMidiNoteInHertz(currentNote);
     float opFreq = getOperatorFrequency(opIndex, baseFreq);
 
-    // Apply pitch bend
-    opFreq *= std::pow(2.0f, pitchBend * owner.pitchBendRange / 12.0f);
+    // OPTIMIZATION: Apply pitch bend with fastPow2
+    opFreq *= Echoel::DSP::FastMath::fastPow2(pitchBend * owner.pitchBendRange / 12.0f);
 
     // Apply LFO to pitch
     if (owner.lfo.enabled && owner.lfo.target == LFOTarget::Pitch)
     {
-        opFreq *= std::pow(2.0f, lfoValue * owner.lfo.depth * 0.1f);  // ±10% max
+        opFreq *= Echoel::DSP::FastMath::fastPow2(lfoValue * owner.lfo.depth * 0.1f);  // ±10% max
     }
 
     // Phase modulation (FM synthesis)
@@ -506,11 +506,9 @@ float FrequencyFusion::FrequencyFusionVoice::getOperatorFrequency(int opIndex, f
 
         float freq = baseFreq * ratio;
 
-        // Apply detune
-        freq *= std::pow(2.0f, op.detune / 1200.0f);
-
-        // Apply master tune
-        freq *= std::pow(2.0f, owner.masterTune / 1200.0f);
+        // OPTIMIZATION: Combine detune and master tune with single fastPow2
+        float tuning = (op.detune + owner.masterTune) / 1200.0f;
+        freq *= Echoel::DSP::FastMath::fastPow2(tuning);
 
         return freq;
     }

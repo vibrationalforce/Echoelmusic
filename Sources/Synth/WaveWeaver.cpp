@@ -378,8 +378,8 @@ void WaveWeaver::WaveWeaverVoice::startNote(int midiNoteNumber, float vel,
     // Calculate base frequency
     float baseFreq = juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber);
 
-    // Apply master tune
-    baseFreq *= std::pow(2.0f, owner.masterTune / 1200.0f);
+    // Apply master tune (OPTIMIZATION: fastPow2 instead of std::pow)
+    baseFreq *= Echoel::DSP::FastMath::fastPow2(owner.masterTune / 1200.0f);
 
     for (auto& osc : oscStates)
     {
@@ -473,11 +473,10 @@ void WaveWeaver::WaveWeaverVoice::renderNextBlock(juce::AudioBuffer<float>& outp
 
             auto& oscState = oscStates[osc];
 
-            // Calculate frequency with pitch modulation
-            float freq = oscState.baseFrequency;
-            freq *= std::pow(2.0f, oscConfig.semitones / 12.0f);
-            freq *= std::pow(2.0f, oscConfig.cents / 1200.0f);
-            freq *= std::pow(2.0f, pitchBend / 12.0f);  // ±1 semitone
+            // OPTIMIZATION: Calculate frequency with single combined pow2
+            // Combined: semitones/12 + cents/1200 + pitchBend/12
+            float pitchMod = oscConfig.semitones / 12.0f + oscConfig.cents / 1200.0f + pitchBend / 12.0f;
+            float freq = oscState.baseFrequency * Echoel::DSP::FastMath::fastPow2(pitchMod);
 
             // Unison processing
             const int numVoices = juce::jlimit(1, 16, oscConfig.unisonVoices);
@@ -519,7 +518,8 @@ void WaveWeaver::WaveWeaverVoice::renderNextBlock(juce::AudioBuffer<float>& outp
         // Sub oscillator
         if (owner.subEnabled)
         {
-            float subFreq = oscStates[0].baseFrequency * std::pow(2.0f, owner.subOctave);
+            // OPTIMIZATION: fastPow2 for octave shift
+            float subFreq = oscStates[0].baseFrequency * Echoel::DSP::FastMath::fastPow2(owner.subOctave);
             // OPTIMIZATION: Use lookup table instead of std::sin (~20x faster)
             float subSample = Echoel::DSP::TrigLookupTables::getInstance().fastSin(subPhase);
             subPhase += subFreq / sampleRate;

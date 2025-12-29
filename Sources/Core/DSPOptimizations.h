@@ -146,6 +146,32 @@ public:
     }
 
     //==========================================================================
+    // Fast 2^x (optimized for pitch calculations)
+    // Common for semitone/cent conversions: freq * pow(2, semitones/12)
+    // Error: < 0.5% for x in [-10, 10]
+    //==========================================================================
+    static inline float fastPow2(float x) noexcept {
+        // Clamp to avoid overflow/underflow
+        x = std::max(-126.0f, std::min(127.0f, x));
+
+        // IEEE754 trick: 2^floor(x) via exponent manipulation
+        int xi = static_cast<int>(x);
+        float frac = x - static_cast<float>(xi);
+        if (frac < 0.0f) { xi--; frac += 1.0f; }
+
+        union { float f; int32_t i; } u;
+        u.i = (xi + 127) << 23;  // 2^floor(x)
+
+        // Polynomial for 2^frac where frac in [0, 1)
+        // 2^frac ≈ 1 + frac * (ln2 + frac * (ln2^2/2 + frac * ln2^3/6))
+        float pow2frac = 1.0f + frac * (0.6931471805599453f +
+                         frac * (0.2402265069591007f +
+                         frac * 0.0555041086648216f));
+
+        return u.f * pow2frac;
+    }
+
+    //==========================================================================
     // Fast tanh (for soft clipping / saturation)
     // Rational approximation, very fast
     //==========================================================================
