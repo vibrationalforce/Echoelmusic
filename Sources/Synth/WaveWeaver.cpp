@@ -520,7 +520,8 @@ void WaveWeaver::WaveWeaverVoice::renderNextBlock(juce::AudioBuffer<float>& outp
         if (owner.subEnabled)
         {
             float subFreq = oscStates[0].baseFrequency * std::pow(2.0f, owner.subOctave);
-            float subSample = std::sin(subPhase * juce::MathConstants<float>::twoPi);
+            // OPTIMIZATION: Use lookup table instead of std::sin (~20x faster)
+            float subSample = Echoel::DSP::TrigLookupTables::getInstance().fastSin(subPhase);
             subPhase += subFreq / sampleRate;
             while (subPhase >= 1.0f) subPhase -= 1.0f;
 
@@ -678,7 +679,8 @@ float WaveWeaver::WaveWeaverVoice::processLFO(int lfoIndex, float sampleRate)
     switch (lfo.shape)
     {
         case LFOShape::Sine:
-            value = std::sin(phase * juce::MathConstants<float>::twoPi);
+            // OPTIMIZATION: Use lookup table instead of std::sin (~20x faster)
+            value = Echoel::DSP::TrigLookupTables::getInstance().fastSin(phase);
             break;
 
         case LFOShape::Triangle:

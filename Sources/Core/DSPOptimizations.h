@@ -172,6 +172,30 @@ public:
     }
 
     //==========================================================================
+    // Fast atan2 (for polar angle calculations)
+    //==========================================================================
+    static inline float fastAtan2(float y, float x) noexcept {
+        constexpr float PI = 3.14159265358979323846f;
+        constexpr float PI_2 = 1.5707963267948966f;
+
+        if (std::abs(x) < 1e-10f) {
+            if (y > 0.0f) return PI_2;
+            if (y < 0.0f) return -PI_2;
+            return 0.0f;
+        }
+
+        float angle = fastAtan(y / x);
+
+        // Adjust for quadrant
+        if (x < 0.0f) {
+            if (y >= 0.0f) angle += PI;
+            else angle -= PI;
+        }
+
+        return angle;
+    }
+
+    //==========================================================================
     // Fast dB to linear gain conversion
     //==========================================================================
     static inline float dbToGain(float db) noexcept {

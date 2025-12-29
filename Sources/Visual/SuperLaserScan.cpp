@@ -1660,10 +1660,11 @@ void SuperLaserScan::renderCircleSIMD_NEON(const laser::BeamConfig& beam, laser:
 
         float angles[4], cosVals[4], sinVals[4];
         vst1q_f32(angles, vAngle);
+        // OPTIMIZATION: Use lookup table instead of std::cos/sin
         for (int j = 0; j < 4; ++j)
         {
-            cosVals[j] = std::cos(angles[j]);
-            sinVals[j] = std::sin(angles[j]);
+            cosVals[j] = laser::fastCos(angles[j], sinTable_.data());
+            sinVals[j] = laser::fastSin(angles[j], sinTable_.data());
         }
 
         float32x4_t vCos = vld1q_f32(cosVals);

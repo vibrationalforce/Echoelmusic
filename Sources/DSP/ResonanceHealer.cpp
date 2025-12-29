@@ -117,12 +117,14 @@ void ResonanceHealer::process(juce::AudioBuffer<float>& buffer)
             // Process when we have enough samples
             if (inputFifoWritePos % HOP_SIZE == 0)
             {
-                // Copy to FFT buffer
+                // OPTIMIZATION: Copy to FFT buffer with cached pointer
+                const float* inputFifoPtr = inputFifo.getReadPointer(channel);
+                const int fifoSize = inputFifo.getNumSamples();
+                const int basePos = inputFifoWritePos - FFT_SIZE + fifoSize;
                 for (int i = 0; i < FFT_SIZE; ++i)
                 {
-                    int readPos = (inputFifoWritePos - FFT_SIZE + i + inputFifo.getNumSamples())
-                                 % inputFifo.getNumSamples();
-                    fftData[i] = inputFifo.getSample(channel, readPos);
+                    int readPos = (basePos + i) % fifoSize;
+                    fftData[i] = inputFifoPtr[readPos];
                     fftData[i + FFT_SIZE] = 0.0f;  // Zero imaginary part
                 }
 
@@ -160,12 +162,14 @@ void ResonanceHealer::process(juce::AudioBuffer<float>& buffer)
                 // Inverse FFT
                 fft.performRealOnlyInverseTransform(fftData.data());
 
-                // Overlap-add to output FIFO
+                // OPTIMIZATION: Overlap-add to output FIFO with cached pointer
+                float* outputFifoPtr = outputFifo.getWritePointer(channel);
+                const int outFifoSize = outputFifo.getNumSamples();
+                const float invFFT = 1.0f / FFT_SIZE;
                 for (int i = 0; i < FFT_SIZE; ++i)
                 {
-                    int writePos = (outputFifoReadPos + i) % outputFifo.getNumSamples();
-                    float existing = outputFifo.getSample(channel, writePos);
-                    outputFifo.setSample(channel, writePos, existing + fftData[i] / FFT_SIZE);
+                    int writePos = (outputFifoReadPos + i) % outFifoSize;
+                    outputFifoPtr[writePos] += fftData[i] * invFFT;
                 }
 
                 outputFifoReadPos = (outputFifoReadPos + HOP_SIZE) % outputFifo.getNumSamples();
