@@ -39,8 +39,8 @@ void OptoCompressor::reset()
 
     inputLevelSmooth.fill(0.0f);
     outputLevelSmooth.fill(0.0f);
-    gainReductionSmooth = 0.0f;
-    opticalCellStateSmooth = 0.0f;
+    gainReductionSmooth.store(0.0f);
+    opticalCellStateSmooth.store(0.0f);
 }
 
 void OptoCompressor::process(juce::AudioBuffer<float>& buffer)
@@ -198,9 +198,11 @@ float OptoCompressor::processOpticalCompression(float sample, int channel, float
     float outputGain = Echoel::DSP::FastMath::dbToGain(gainReduction + makeupGain);
     float compressed = sample * outputGain;
 
-    // Update metering
-    gainReductionSmooth = gainReduction * 0.1f + gainReductionSmooth * 0.9f;
-    opticalCellStateSmooth = cell.lightLevel * 0.1f + opticalCellStateSmooth * 0.9f;
+    // Update metering (atomic for thread-safe UI access)
+    float grSmooth = gainReduction * 0.1f + gainReductionSmooth.load() * 0.9f;
+    gainReductionSmooth.store(grSmooth);
+    float cellSmooth = cell.lightLevel * 0.1f + opticalCellStateSmooth.load() * 0.9f;
+    opticalCellStateSmooth.store(cellSmooth);
 
     return compressed;
 }
@@ -394,7 +396,7 @@ float OptoCompressor::processSidechainHPF(float sample, int channel)
 
 float OptoCompressor::getGainReduction() const
 {
-    return gainReductionSmooth;
+    return gainReductionSmooth.load();
 }
 
 float OptoCompressor::getInputLevel(int channel) const
@@ -409,7 +411,7 @@ float OptoCompressor::getOutputLevel(int channel) const
 
 float OptoCompressor::getOpticalCellState() const
 {
-    return opticalCellStateSmooth;
+    return opticalCellStateSmooth.load();
 }
 
 //==============================================================================

@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include <vector>
 #include <array>
+#include <atomic>
 
 /**
  * Brick-Wall Limiter
@@ -115,12 +116,12 @@ private:
     // Release coefficient
     float releaseCoeff = 0.999f;
 
-    // Metering
-    std::array<float, 2> gainReduction {{0.0f, 0.0f}};
-    std::array<float, 2> inputLevel {{-100.0f, -100.0f}};
-    std::array<float, 2> outputLevel {{-100.0f, -100.0f}};
-    float maxPeak = 0.0f;
-    bool currentlyLimiting = false;
+    // OPTIMIZATION: Atomic metering for thread-safe UI access
+    std::array<std::atomic<float>, 2> gainReduction;
+    std::array<std::atomic<float>, 2> inputLevel;
+    std::array<std::atomic<float>, 2> outputLevel;
+    std::atomic<float> maxPeak { 0.0f };
+    std::atomic<bool> currentlyLimiting { false };
 
     // True peak detection (4x oversampling approximation)
     std::array<std::array<float, 3>, 2> truePeakHistory;  // [channel][tap]

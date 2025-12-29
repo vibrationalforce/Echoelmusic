@@ -15,7 +15,7 @@ void Compressor::reset()
 {
     envelopeL = 0.0f;
     envelopeR = 0.0f;
-    gainReduction = 0.0f;
+    gainReduction.store(0.0f);
 }
 
 void Compressor::process(juce::AudioBuffer<float>& buffer)
@@ -52,7 +52,7 @@ void Compressor::process(juce::AudioBuffer<float>& buffer)
 
         // Compute gain reduction
         const float gain = computeGain(envelope);
-        gainReduction = 1.0f - gain;
+        gainReduction.store(1.0f - gain);
 
         // Apply total gain (compression + makeup)
         const float totalGain = gain * makeup;
@@ -104,7 +104,7 @@ void Compressor::setMode(Mode mode)
 
 float Compressor::getGainReduction() const
 {
-    return gainReduction;
+    return gainReduction.load();
 }
 
 void Compressor::updateCoefficients()

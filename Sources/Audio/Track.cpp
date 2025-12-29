@@ -24,10 +24,14 @@ void Track::prepare(double sampleRate, int maximumBlockSize)
         playbackBuffer.clear();
 
         // OPTIMIZATION: Pre-allocate recording buffer to avoid allocations in audio callback
-        // Default: 5 minutes at current sample rate (~14MB at 48kHz stereo)
-        const int fiveMinutesSamples = static_cast<int>(sampleRate * 60.0 * 5.0);
-        recordedAudio.setSize(2, fiveMinutesSamples, false, true, false);
+        // Default: 30 minutes at current sample rate (~83MB at 48kHz stereo)
+        // This is generous to prevent any reallocation during recording sessions
+        const int thirtyMinutesSamples = static_cast<int>(sampleRate * 60.0 * 30.0);
+        recordedAudio.setSize(2, thirtyMinutesSamples, false, true, false);
         recordedAudio.clear();
+
+        // OPTIMIZATION: Track maximum recording capacity
+        maxRecordingSamples = thirtyMinutesSamples;
     }
 }
 
@@ -92,16 +96,15 @@ void Track::recordInput(const float* const* input, int numInputs, int numSamples
 
     // Calculate write position
     const int writePos = static_cast<int>(position - recordingStartPosition);
-    const int requiredSize = writePos + numSamples;
-    const int currentSize = recordedAudio.getNumSamples();
 
-    // OPTIMIZATION: Only grow if we exceed pre-allocated buffer (rare case)
-    if (requiredSize > currentSize)
+    // OPTIMIZATION: Guard against exceeding pre-allocated buffer
+    // Never allocate in audio thread - just stop recording if exceeded
+    if (writePos < 0 || writePos + numSamples > maxRecordingSamples)
     {
-        // Double the buffer size to minimize future reallocations
-        const int newSize = juce::jmax(juce::nextPowerOfTwo(requiredSize),
-                                       currentSize * 2);
-        recordedAudio.setSize(2, newSize, true, true, false);
+        // Buffer overflow - would need allocation, so skip
+        // In practice, 30 minutes of recording should be enough
+        // A warning could be logged here (but not in RT thread)
+        return;
     }
 
     // Copy input to recorded buffer using SIMD-optimized copy

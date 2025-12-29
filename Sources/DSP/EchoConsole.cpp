@@ -70,7 +70,7 @@ void EchoConsole::reset()
     // Reset metering
     inputLevelSmooth.fill(0.0f);
     outputLevelSmooth.fill(0.0f);
-    gainReductionSmooth = 0.0f;
+    gainReductionSmooth.store(0.0f);
 }
 
 void EchoConsole::process(juce::AudioBuffer<float>& buffer)
@@ -133,9 +133,10 @@ float EchoConsole::processSample(float sample, int channel)
     // 6. Output Gain
     sample *= Echoel::DSP::FastMath::dbToGain(outputGain);
 
-    // Update gain reduction metering (gate + comp)
+    // OPTIMIZATION: Atomic smoothing for thread-safe UI metering
     float totalGR = preGainReduction + compGainReduction;
-    gainReductionSmooth = totalGR * 0.1f + gainReductionSmooth * 0.9f;
+    float grSmooth = totalGR * 0.1f + gainReductionSmooth.load() * 0.9f;
+    gainReductionSmooth.store(grSmooth);
 
     // Output metering
     float outputLevel = std::abs(sample);
@@ -546,7 +547,7 @@ float EchoConsole::getOutputLevel(int channel) const
 
 float EchoConsole::getGainReduction() const
 {
-    return gainReductionSmooth;
+    return gainReductionSmooth.load();
 }
 
 //==============================================================================

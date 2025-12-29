@@ -19,7 +19,7 @@ void FETCompressor::reset()
         state.envelope = 0.0f;
     inputLevelSmooth.fill(0.0f);
     outputLevelSmooth.fill(0.0f);
-    gainReductionSmooth = 0.0f;
+    gainReductionSmooth.store(0.0f);
 }
 
 void FETCompressor::process(juce::AudioBuffer<float>& buffer)
@@ -164,7 +164,9 @@ float FETCompressor::processFETCompression(float sample, int channel, float link
             gainReduction *= 1.3f;
     }
 
-    gainReductionSmooth = gainReduction * 0.1f + gainReductionSmooth * 0.9f;
+    // OPTIMIZATION: Atomic smoothing for thread-safe UI metering
+    float smoothed = gainReduction * 0.1f + gainReductionSmooth.load() * 0.9f;
+    gainReductionSmooth.store(smoothed);
 
     // Use fast dB to gain conversion
     float compGain = Echoel::DSP::FastMath::dbToGain(gainReduction);
@@ -192,7 +194,7 @@ float FETCompressor::fetSaturation(float sample, float amount)
     return saturated / drive;
 }
 
-float FETCompressor::getGainReduction() const { return gainReductionSmooth; }
+float FETCompressor::getGainReduction() const { return gainReductionSmooth.load(); }
 float FETCompressor::getInputLevel(int channel) const { return (channel < 2) ? inputLevelSmooth[channel] : 0.0f; }
 float FETCompressor::getOutputLevel(int channel) const { return (channel < 2) ? outputLevelSmooth[channel] : 0.0f; }
 

@@ -95,11 +95,14 @@ void BrickWallLimiter::reset()
 
     lookaheadWritePos.fill(0);
 
-    // Reset metering
-    gainReduction.fill(0.0f);
-    inputLevel.fill(-100.0f);
-    outputLevel.fill(-100.0f);
-    currentlyLimiting = false;
+    // Reset metering (atomic stores)
+    for (int i = 0; i < 2; ++i)
+    {
+        gainReduction[i].store(0.0f);
+        inputLevel[i].store(-100.0f);
+        outputLevel[i].store(-100.0f);
+    }
+    currentlyLimiting.store(false);
 
     // Reset true peak history
     for (auto& channelHistory : truePeakHistory)
@@ -113,7 +116,7 @@ void BrickWallLimiter::process(juce::AudioBuffer<float>& buffer)
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
-    currentlyLimiting = false;
+    currentlyLimiting.store(false);
     const float ceilingLinear = Echoel::DSP::FastMath::dbToGain(ceiling);
 
     for (int channel = 0; channel < numChannels && channel < 2; ++channel)
@@ -140,8 +143,10 @@ void BrickWallLimiter::process(juce::AudioBuffer<float>& buffer)
                 peakLevel = detectTruePeak(inputSample, channel);
             }
 
-            // Update maximum peak
-            maxPeak = std::max(maxPeak, peakLevel);
+            // Update maximum peak (atomic)
+            float currentMax = maxPeak.load();
+            while (peakLevel > currentMax && !maxPeak.compare_exchange_weak(currentMax, peakLevel))
+                ;
 
             // Calculate required gain reduction
             const float peakDb = Echoel::DSP::FastMath::gainToDb(peakLevel + 0.00001f);
@@ -152,7 +157,7 @@ void BrickWallLimiter::process(juce::AudioBuffer<float>& buffer)
             {
                 // Attack (instant) - limit immediately
                 envelope = targetGainReduction;
-                currentlyLimiting = true;
+                currentlyLimiting.store(true);
             }
             else
             {
@@ -199,17 +204,20 @@ void BrickWallLimiter::process(juce::AudioBuffer<float>& buffer)
             maxGR = std::min(maxGR, currentGR);  // Most negative value
         }
 
-        // Update metering (smoothed)
+        // Update metering (smoothed, atomic load/store)
         const float meterSmoothing = 0.2f;
 
-        inputLevel[channel] = inputLevel[channel] * (1.0f - meterSmoothing) +
+        float newInputLevel = inputLevel[channel].load() * (1.0f - meterSmoothing) +
                               Echoel::DSP::FastMath::gainToDb(maxInput + 0.00001f) * meterSmoothing;
+        inputLevel[channel].store(newInputLevel);
 
-        outputLevel[channel] = outputLevel[channel] * (1.0f - meterSmoothing) +
+        float newOutputLevel = outputLevel[channel].load() * (1.0f - meterSmoothing) +
                                Echoel::DSP::FastMath::gainToDb(maxOutput + 0.00001f) * meterSmoothing;
+        outputLevel[channel].store(newOutputLevel);
 
-        gainReduction[channel] = gainReduction[channel] * (1.0f - meterSmoothing) +
+        float newGainReduction = gainReduction[channel].load() * (1.0f - meterSmoothing) +
                                  maxGR * meterSmoothing;
+        gainReduction[channel].store(newGainReduction);
     }
 }
 
@@ -220,37 +228,37 @@ void BrickWallLimiter::process(juce::AudioBuffer<float>& buffer)
 float BrickWallLimiter::getGainReduction(int channel) const
 {
     if (channel >= 0 && channel < 2)
-        return gainReduction[channel];
+        return gainReduction[channel].load();
     return 0.0f;
 }
 
 float BrickWallLimiter::getInputLevel(int channel) const
 {
     if (channel >= 0 && channel < 2)
-        return inputLevel[channel];
+        return inputLevel[channel].load();
     return -100.0f;
 }
 
 float BrickWallLimiter::getOutputLevel(int channel) const
 {
     if (channel >= 0 && channel < 2)
-        return outputLevel[channel];
+        return outputLevel[channel].load();
     return -100.0f;
 }
 
 bool BrickWallLimiter::isLimiting() const
 {
-    return currentlyLimiting;
+    return currentlyLimiting.load();
 }
 
 float BrickWallLimiter::getPeakSinceReset() const
 {
-    return Echoel::DSP::FastMath::gainToDb(maxPeak + 0.00001f);
+    return Echoel::DSP::FastMath::gainToDb(maxPeak.load() + 0.00001f);
 }
 
 void BrickWallLimiter::resetPeakMeter()
 {
-    maxPeak = 0.0f;
+    maxPeak.store(0.0f);
 }
 
 //==============================================================================

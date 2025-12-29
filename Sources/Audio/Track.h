@@ -112,6 +112,7 @@ private:
     juce::AudioBuffer<float> playbackBuffer;  // Pre-loaded audio
     juce::AudioBuffer<float> recordedAudio;   // Currently recording
     int64_t recordingStartPosition = 0;
+    int maxRecordingSamples = 0;  // Pre-allocated capacity (avoids RT malloc)
 
     // MIDI data
     juce::MidiBuffer midiSequence;
