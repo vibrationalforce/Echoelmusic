@@ -5,16 +5,18 @@ import Combine
 /// Maps MIDI/MPE parameters to visual system parameters
 /// Cymatics, Mandala, Waveform, Spectral visualizations
 /// Integrates with Metal shaders and SwiftUI Canvas
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class MIDIToVisualMapper: ObservableObject {
+@Observable
+final class MIDIToVisualMapper {
 
-    // MARK: - Published Visual Parameters
+    // MARK: - Observable Visual Parameters
 
-    @Published var cymaticsParameters = CymaticsParameters()
-    @Published var mandalaParameters = MandalaParameters()
-    @Published var waveformParameters = WaveformParameters()
-    @Published var spectralParameters = SpectralParameters()
-    @Published var particleParameters = ParticleParameters()
+    var cymaticsParameters = CymaticsParameters()
+    var mandalaParameters = MandalaParameters()
+    var waveformParameters = WaveformParameters()
+    var spectralParameters = SpectralParameters()
+    var particleParameters = ParticleParameters()
 
     // MARK: - Active Notes Tracking
 
@@ -117,7 +119,9 @@ class MIDIToVisualMapper: ObservableObject {
         // Emit particles
         emitParticlesFromNote(note: note, velocity: velocity)
 
-        print("🎨 Visual mapped: Note \(note), Vel \(Int(velocity * 127))")
+        #if DEBUG
+        debugLog("🎨", "Visual mapped: Note \(note), Vel \(Int(velocity * 127))")
+        #endif
     }
 
     /// Map MIDI note off to visual parameters
@@ -374,7 +378,9 @@ class MIDIToVisualMapper: ObservableObject {
             particleParameters.emissionRate = 30.0
         }
 
-        print("🎨 Visual preset: \(preset.rawValue)")
+        #if DEBUG
+        debugLog("🎨", "Visual preset: \(preset.rawValue)")
+        #endif
     }
 
     enum VisualPreset: String, CaseIterable {
@@ -413,3 +419,8 @@ extension Color {
         return Color(hue: hue, saturation: 0.8, brightness: 0.9)
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows MIDIToVisualMapper to work with older SwiftUI code expecting ObservableObject
+extension MIDIToVisualMapper: ObservableObject { }

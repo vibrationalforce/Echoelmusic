@@ -22,14 +22,16 @@ import Combine
 /// // Send per-note controller
 /// midi2.sendPerNoteController(channel: 0, note: 60, controller: .brightness, value: 0.5)
 /// ```
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class MIDI2Manager: ObservableObject {
+@Observable
+final class MIDI2Manager {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isInitialized: Bool = false
-    @Published var connectedEndpoints: [MIDIEndpointRef] = []
-    @Published var errorMessage: String?
+    var isInitialized: Bool = false
+    var connectedEndpoints: [MIDIEndpointRef] = []
+    var errorMessage: String?
 
     // MARK: - Private Properties
 
@@ -97,7 +99,9 @@ class MIDI2Manager: ObservableObject {
             outputPort = port
 
             isInitialized = true
-            print("✅ MIDI 2.0 initialized (UMP protocol)")
+            #if DEBUG
+            debugLog("✅", "MIDI 2.0 initialized (UMP protocol)")
+            #endif
 
         } catch {
             errorMessage = "MIDI 2.0 initialization failed: \(error.localizedDescription)"
@@ -124,7 +128,9 @@ class MIDI2Manager: ObservableObject {
 
         isInitialized = false
         activeNotes.removeAll()
-        print("🛑 MIDI 2.0 cleaned up")
+        #if DEBUG
+        debugLog("🛑", "MIDI 2.0 cleaned up")
+        #endif
     }
 
     // MARK: - MIDI Notification Handling
@@ -134,16 +140,22 @@ class MIDI2Manager: ObservableObject {
 
         switch notif.messageID {
         case .msgSetupChanged:
-            print("[MIDI2] Setup changed")
+            #if DEBUG
+            debugLog("🎹", "[MIDI2] Setup changed")
+            #endif
             // Rescan endpoints
             scanEndpoints()
 
         case .msgObjectAdded:
-            print("[MIDI2] Object added")
+            #if DEBUG
+            debugLog("🎹", "[MIDI2] Object added")
+            #endif
             scanEndpoints()
 
         case .msgObjectRemoved:
-            print("[MIDI2] Object removed")
+            #if DEBUG
+            debugLog("🎹", "[MIDI2] Object removed")
+            #endif
             scanEndpoints()
 
         case .msgPropertyChanged:
@@ -180,7 +192,9 @@ class MIDI2Manager: ObservableObject {
     ///   - velocity: Velocity (0.0-1.0)
     func sendNoteOn(channel: UInt8, note: UInt8, velocity: Float) {
         guard isInitialized else {
-            print("⚠️ MIDI 2.0 not initialized")
+            #if DEBUG
+            debugLog("⚠️", "MIDI 2.0 not initialized")
+            #endif
             return
         }
 
@@ -217,7 +231,9 @@ class MIDI2Manager: ObservableObject {
         // Check if note is active
         let noteId = NoteIdentifier(channel: channel, note: note)
         guard activeNotes.contains(noteId) else {
-            print("⚠️ Per-note controller sent for inactive note \(note) on channel \(channel)")
+            #if DEBUG
+            debugLog("⚠️", "Per-note controller sent for inactive note \(note) on channel \(channel)")
+            #endif
             return
         }
 
@@ -241,7 +257,9 @@ class MIDI2Manager: ObservableObject {
 
         let noteId = NoteIdentifier(channel: channel, note: note)
         guard activeNotes.contains(noteId) else {
-            print("⚠️ Per-note pitch bend sent for inactive note \(note)")
+            #if DEBUG
+            debugLog("⚠️", "Per-note pitch bend sent for inactive note \(note)")
+            #endif
             return
         }
 
@@ -272,7 +290,9 @@ class MIDI2Manager: ObservableObject {
     /// Send a 64-bit UMP packet
     private func sendUMPPacket(_ packet: UMPPacket64) {
         guard virtualSource != 0 else {
-            print("⚠️ Virtual source not created")
+            #if DEBUG
+            debugLog("⚠️", "Virtual source not created")
+            #endif
             return
         }
 
@@ -297,7 +317,9 @@ class MIDI2Manager: ObservableObject {
         // Send via virtual source
         let status = MIDIReceivedEventList(virtualSource, &packetList)
         if status != noErr {
-            print("⚠️ Failed to send UMP packet: \(status)")
+            #if DEBUG
+            debugLog("⚠️", "Failed to send UMP packet: \(status)")
+            #endif
         }
     }
 
@@ -355,3 +377,8 @@ enum MIDI2Error: Error, LocalizedError {
         }
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows MIDI2Manager to work with older SwiftUI code expecting ObservableObject
+extension MIDI2Manager: ObservableObject { }
