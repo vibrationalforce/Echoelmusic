@@ -1,34 +1,38 @@
 import Foundation
 import HealthKit
-import Combine
 import Accelerate
 
 /// Manages HealthKit integration for real-time HRV and heart rate monitoring
 /// Implements HeartMath Institute's coherence algorithm for biofeedback
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class HealthKitManager: ObservableObject {
+@Observable
+final class HealthKitManager {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
     /// Current heart rate in beats per minute
-    @Published var heartRate: Double = 60.0
+    var heartRate: Double = 60.0
 
     /// Heart Rate Variability RMSSD in milliseconds
     /// RMSSD = Root Mean Square of Successive Differences
     /// Normal range: 20-100 ms (higher = better autonomic function)
-    @Published var hrvRMSSD: Double = 0.0
+    var hrvRMSSD: Double = 0.0
 
     /// HeartMath coherence score (0-100)
     /// 0-40: Low coherence (stress/anxiety)
     /// 40-60: Medium coherence (transitional)
     /// 60-100: High coherence (optimal/flow state)
-    @Published var hrvCoherence: Double = 0.0
+    var hrvCoherence: Double = 0.0
 
     /// Whether HealthKit authorization has been granted
-    @Published var isAuthorized: Bool = false
+    var isAuthorized: Bool = false
 
     /// Error message if authorization or monitoring fails
-    @Published var errorMessage: String?
+    var errorMessage: String?
+
+    /// Demo mode - simulates biofeedback when HealthKit unavailable
+    var isDemoMode: Bool = false
 
 
     // MARK: - Private Properties
@@ -46,6 +50,9 @@ class HealthKitManager: ObservableObject {
     /// Stores last 60 seconds of RR intervals
     private var rrIntervalBuffer: [Double] = []
     private let maxBufferSize = 120 // 120 RR intervals ≈ 60 seconds at 60 BPM
+
+    /// Timer for demo mode simulation
+    private var demoTimer: Timer?
 
     /// Types we need to read from HealthKit
     private let typesToRead: Set<HKObjectType> = [
@@ -103,7 +110,9 @@ class HealthKitManager: ObservableObject {
             isAuthorized = (status == .sharingAuthorized)
 
             if isAuthorized {
-                print("✅ HealthKit authorized")
+                #if DEBUG
+                debugLog("✅", "HealthKit authorized")
+                #endif
                 errorMessage = nil
             } else {
                 errorMessage = "HealthKit access denied. Enable in Settings."
@@ -128,7 +137,9 @@ class HealthKitManager: ObservableObject {
         startHeartRateMonitoring()
         startHRVMonitoring()
 
-        print("🫀 HealthKit monitoring started")
+        #if DEBUG
+        debugLog("🫀", "HealthKit monitoring started")
+        #endif
     }
 
     /// Stop all HealthKit monitoring
@@ -145,7 +156,13 @@ class HealthKitManager: ObservableObject {
 
         rrIntervalBuffer.removeAll()
 
-        print("⏹️ HealthKit monitoring stopped")
+        // Stop demo mode if active
+        demoTimer?.invalidate()
+        demoTimer = nil
+
+        #if DEBUG
+        debugLog("⏹️", "HealthKit monitoring stopped")
+        #endif
     }
 
 
@@ -418,9 +435,88 @@ class HealthKitManager: ObservableObject {
     }
 
 
+    // MARK: - Demo Mode
+
+    /// Enable demo mode with simulated biofeedback data
+    /// Use when HealthKit is unavailable or for testing
+    func enableDemoMode() {
+        isDemoMode = true
+        isAuthorized = true // Pretend we're authorized
+
+        // Stop real monitoring if active
+        if let query = heartRateQuery {
+            healthStore.stop(query)
+            heartRateQuery = nil
+        }
+        if let query = hrvQuery {
+            healthStore.stop(query)
+            hrvQuery = nil
+        }
+
+        // Start demo simulation
+        demoTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.updateDemoValues()
+            }
+        }
+
+        #if DEBUG
+        debugLog("🎭", "HealthKit demo mode enabled")
+        #endif
+    }
+
+    /// Disable demo mode
+    func disableDemoMode() {
+        isDemoMode = false
+        demoTimer?.invalidate()
+        demoTimer = nil
+
+        // Reset values
+        heartRate = 60.0
+        hrvRMSSD = 0.0
+        hrvCoherence = 0.0
+
+        #if DEBUG
+        debugLog("🎭", "HealthKit demo mode disabled")
+        #endif
+    }
+
+    /// Update demo values with realistic simulation
+    private func updateDemoValues() {
+        guard isDemoMode else { return }
+
+        // Simulate heart rate with natural variation (55-95 BPM)
+        let hrVariation = Double.random(in: -3...3)
+        heartRate = max(55, min(95, heartRate + hrVariation))
+
+        // Simulate HRV RMSSD (20-80 ms range)
+        let hrvVariation = Double.random(in: -5...5)
+        hrvRMSSD = max(20, min(80, hrvRMSSD + hrvVariation))
+        if hrvRMSSD == 0 { hrvRMSSD = 45 } // Initialize if zero
+
+        // Coherence follows HRV pattern with some randomness
+        // Higher HRV generally correlates with higher coherence
+        let baseCoherence = 30 + (hrvRMSSD / 80.0) * 50
+        let coherenceVariation = Double.random(in: -5...5)
+        hrvCoherence = max(0, min(100, baseCoherence + coherenceVariation))
+
+        // Add simulated RR intervals to buffer for coherence algorithm
+        let simulatedRR = 60000 / heartRate + Double.random(in: -50...50)
+        addRRInterval(simulatedRR)
+    }
+
+
     // MARK: - Cleanup
 
     deinit {
         stopMonitoring()
     }
+}
+
+// MARK: - ObservableObject Compatibility (for gradual migration)
+
+extension HealthKitManager: ObservableObject {
+    // This extension allows HealthKitManager to work with both
+    // @EnvironmentObject (legacy) and @Environment (new)
+    // Remove after full migration to @Observable
 }
