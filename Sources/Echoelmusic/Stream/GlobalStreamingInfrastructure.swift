@@ -9,16 +9,18 @@ import Combine
 
 /// SRT (Secure Reliable Transport) Protocol Engine
 /// Lower latency than RTMP, handles packet loss gracefully
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class SRTStreamEngine: ObservableObject {
+@Observable
+final class SRTStreamEngine {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isConnected: Bool = false
-    @Published var currentLatency: Int = 0 // milliseconds
-    @Published var packetLoss: Float = 0.0 // percentage
-    @Published var bitrate: Int = 0 // kbps
-    @Published var connectionQuality: ConnectionQuality = .unknown
+    var isConnected: Bool = false
+    var currentLatency: Int = 0 // milliseconds
+    var packetLoss: Float = 0.0 // percentage
+    var bitrate: Int = 0 // kbps
+    var connectionQuality: ConnectionQuality = .unknown
 
     // MARK: - SRT Configuration
 
@@ -65,7 +67,9 @@ class SRTStreamEngine: ObservableObject {
 
     init(config: SRTConfig = SRTConfig()) {
         self.config = config
-        print("📡 SRTStreamEngine: Initialized with \(config.latencyMs)ms latency buffer")
+        #if DEBUG
+        debugLog("📡", "SRTStreamEngine: Initialized with \(config.latencyMs)ms latency buffer")
+        #endif
     }
 
     // MARK: - Connection Management
@@ -91,10 +95,14 @@ class SRTStreamEngine: ObservableObject {
                 case .ready:
                     self?.isConnected = true
                     self?.startStatsCollection()
-                    print("✅ SRT: Connected to \(url)")
+                    #if DEBUG
+                    debugLog("✅", "SRT: Connected to \(url)")
+                    #endif
                 case .failed(let error):
                     self?.isConnected = false
-                    print("❌ SRT: Connection failed - \(error)")
+                    #if DEBUG
+                    debugLog("❌", "SRT: Connection failed - \(error)")
+                    #endif
                 case .cancelled:
                     self?.isConnected = false
                 default:
@@ -111,7 +119,9 @@ class SRTStreamEngine: ObservableObject {
         connection = nil
         isConnected = false
         statsTimer?.invalidate()
-        print("🔌 SRT: Disconnected")
+        #if DEBUG
+        debugLog("🔌", "SRT: Disconnected")
+        #endif
     }
 
     // MARK: - Data Transmission
@@ -126,7 +136,9 @@ class SRTStreamEngine: ObservableObject {
 
         connection?.send(content: packet, completion: .contentProcessed { error in
             if let error = error {
-                print("⚠️ SRT: Send error - \(error)")
+                #if DEBUG
+                debugLog("⚠️", "SRT: Send error - \(error)")
+                #endif
             }
         })
     }
@@ -188,16 +200,18 @@ enum SRTError: Error {
 // MARK: - HLS/DASH CDN Distribution System
 
 /// Adaptive Bitrate Streaming for global CDN distribution
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class AdaptiveBitrateDistribution: ObservableObject {
+@Observable
+final class AdaptiveBitrateDistribution {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isLive: Bool = false
-    @Published var currentProfile: EncodingProfile = .hd720
-    @Published var viewerCount: Int = 0
-    @Published var cdnEdges: [CDNEdge] = []
-    @Published var segmentDuration: Double = 2.0 // seconds
+    var isLive: Bool = false
+    var currentProfile: EncodingProfile = .hd720
+    var viewerCount: Int = 0
+    var cdnEdges: [CDNEdge] = []
+    var segmentDuration: Double = 2.0 // seconds
 
     // MARK: - Encoding Profiles (Multi-Bitrate Ladder)
 
@@ -300,7 +314,9 @@ class AdaptiveBitrateDistribution: ObservableObject {
 
     init() {
         cdnEdges = CDNEdge.globalEdges
-        print("🌐 AdaptiveBitrateDistribution: Initialized with \(cdnEdges.count) CDN edges")
+        #if DEBUG
+        debugLog("🌐", "AdaptiveBitrateDistribution: Initialized with \(cdnEdges.count) CDN edges")
+        #endif
     }
 
     // MARK: - Streaming Control
@@ -311,24 +327,29 @@ class AdaptiveBitrateDistribution: ObservableObject {
 
         // Generate master playlists
         let hlsPlaylist = generateHLSMasterPlaylist()
-        let dashManifest = generateDASHManifest()
+        _ = generateDASHManifest()
 
-        print("📺 HLS Master Playlist:\n\(hlsPlaylist)")
-        print("📺 DASH Manifest generated")
+        #if DEBUG
+        debugLog("📺", "HLS Master Playlist:\n\(hlsPlaylist)")
+        debugLog("📺", "DASH Manifest generated")
+        #endif
 
         isLive = true
 
         // Simulate pushing to CDN edges
+        #if DEBUG
         for edge in cdnEdges where edge.isActive {
-            print("📡 Pushing to CDN edge: \(edge.region)")
+            debugLog("📡", "Pushing to CDN edge: \(edge.region)")
         }
-
-        print("✅ Distribution started with \(activeProfiles.count) profiles")
+        debugLog("✅", "Distribution started with \(activeProfiles.count) profiles")
+        #endif
     }
 
     func stopDistribution() {
         isLive = false
-        print("⏹ Distribution stopped")
+        #if DEBUG
+        debugLog("⏹", "Distribution stopped")
+        #endif
     }
 
     // MARK: - Playlist Generation
@@ -409,7 +430,10 @@ class AdaptiveBitrateDistribution: ObservableObject {
 // MARK: - Multi-Bitrate Encoder
 
 /// Real-time multi-bitrate video encoder using VideoToolbox
-class MultiBitrateEncoder {
+/// Migrated to @Observable for better performance (Swift 5.9+)
+@MainActor
+@Observable
+final class MultiBitrateEncoder {
 
     // MARK: - Encoder State
 
@@ -420,7 +444,7 @@ class MultiBitrateEncoder {
         var cpuUsage: Float = 0
     }
 
-    @Published var state = EncoderState()
+    var state = EncoderState()
 
     // MARK: - Encoder Configuration
 
@@ -454,7 +478,9 @@ class MultiBitrateEncoder {
     init(config: EncoderConfig) {
         self.config = config
         setupEncoders()
-        print("🎬 MultiBitrateEncoder: Initialized with \(config.profiles.count) profiles")
+        #if DEBUG
+        debugLog("🎬", "MultiBitrateEncoder: Initialized with \(config.profiles.count) profiles")
+        #endif
     }
 
     private func setupEncoders() {
@@ -467,7 +493,9 @@ class MultiBitrateEncoder {
     private func createEncoder(for profile: AdaptiveBitrateDistribution.EncodingProfile) -> Any {
         let encoderConfig = profile.config
 
-        print("🎬 Creating encoder for \(profile.rawValue): \(encoderConfig.width)x\(encoderConfig.height) @ \(encoderConfig.videoBitrate)kbps")
+        #if DEBUG
+        debugLog("🎬", "Creating encoder for \(profile.rawValue): \(encoderConfig.width)x\(encoderConfig.height) @ \(encoderConfig.videoBitrate)kbps")
+        #endif
 
         // In production: Return actual VTCompressionSession
         return encoderConfig
@@ -489,19 +517,26 @@ class MultiBitrateEncoder {
 
     func start() {
         state.isEncoding = true
-        print("▶️ Encoding started")
+        #if DEBUG
+        debugLog("▶️", "Encoding started")
+        #endif
     }
 
     func stop() {
         state.isEncoding = false
-        print("⏹ Encoding stopped")
+        #if DEBUG
+        debugLog("⏹", "Encoding stopped")
+        #endif
     }
 }
 
 // MARK: - Low-Latency HLS (LL-HLS) Producer
 
 /// Apple's Low-Latency HLS implementation for sub-3-second latency
-class LowLatencyHLSProducer: ObservableObject {
+/// Migrated to @Observable for better performance (Swift 5.9+)
+@MainActor
+@Observable
+final class LowLatencyHLSProducer {
 
     // MARK: - LL-HLS Specific Settings
 
@@ -517,16 +552,18 @@ class LowLatencyHLSProducer: ObservableObject {
         var partsPerSegment: Int { Int(targetDuration / partDuration) }
     }
 
-    @Published var isProducing: Bool = false
-    @Published var currentPart: Int = 0
-    @Published var currentSegment: Int = 0
-    @Published var estimatedLatency: Double = 2.5 // seconds
+    var isProducing: Bool = false
+    var currentPart: Int = 0
+    var currentSegment: Int = 0
+    var estimatedLatency: Double = 2.5 // seconds
 
     private var config: LLHLSConfig
 
     init(config: LLHLSConfig = LLHLSConfig()) {
         self.config = config
-        print("⚡ LowLatencyHLSProducer: Initialized with \(config.partDuration)s part duration")
+        #if DEBUG
+        debugLog("⚡", "LowLatencyHLSProducer: Initialized with \(config.partDuration)s part duration")
+        #endif
     }
 
     // MARK: - Playlist Generation
@@ -587,23 +624,30 @@ class LowLatencyHLSProducer: ObservableObject {
             }
         }
 
-        print("▶️ LL-HLS production started")
+        #if DEBUG
+        debugLog("▶️", "LL-HLS production started")
+        #endif
     }
 
     func stopProduction() {
         isProducing = false
-        print("⏹ LL-HLS production stopped")
+        #if DEBUG
+        debugLog("⏹", "LL-HLS production stopped")
+        #endif
     }
 }
 
 // MARK: - Bandwidth Estimator
 
 /// Real-time bandwidth estimation for adaptive streaming
-class BandwidthEstimator: ObservableObject {
+/// Migrated to @Observable for better performance (Swift 5.9+)
+@MainActor
+@Observable
+final class BandwidthEstimator {
 
-    @Published var estimatedBandwidth: Int = 5000 // kbps
-    @Published var stability: Float = 1.0 // 0-1
-    @Published var trend: BandwidthTrend = .stable
+    var estimatedBandwidth: Int = 5000 // kbps
+    var stability: Float = 1.0 // 0-1
+    var trend: BandwidthTrend = .stable
 
     enum BandwidthTrend {
         case improving
@@ -679,8 +723,10 @@ class BandwidthEstimator: ObservableObject {
 // MARK: - Global Stream Coordinator
 
 /// Coordinates all streaming components for global distribution
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class GlobalStreamCoordinator: ObservableObject {
+@Observable
+final class GlobalStreamCoordinator {
 
     // MARK: - Sub-components
 
@@ -689,12 +735,12 @@ class GlobalStreamCoordinator: ObservableObject {
     let llhlsProducer = LowLatencyHLSProducer()
     let bandwidthEstimator = BandwidthEstimator()
 
-    // MARK: - State
+    // MARK: - Observable State
 
-    @Published var isStreaming: Bool = false
-    @Published var streamURL: String = ""
-    @Published var viewerCount: Int = 0
-    @Published var streamHealth: StreamHealth = .unknown
+    var isStreaming: Bool = false
+    var streamURL: String = ""
+    var viewerCount: Int = 0
+    var streamHealth: StreamHealth = .unknown
 
     enum StreamHealth: String {
         case unknown = "Unknown"
@@ -705,7 +751,9 @@ class GlobalStreamCoordinator: ObservableObject {
     }
 
     init() {
-        print("🌍 GlobalStreamCoordinator: Initialized")
+        #if DEBUG
+        debugLog("🌍", "GlobalStreamCoordinator: Initialized")
+        #endif
     }
 
     // MARK: - Stream Control
@@ -724,7 +772,9 @@ class GlobalStreamCoordinator: ObservableObject {
         isStreaming = true
         streamURL = "https://live.echoelmusic.com/\(UUID().uuidString.prefix(8))/master.m3u8"
 
-        print("🎬 Global stream started: \(streamURL)")
+        #if DEBUG
+        debugLog("🎬", "Global stream started: \(streamURL)")
+        #endif
     }
 
     func stopGlobalStream() {
@@ -735,7 +785,9 @@ class GlobalStreamCoordinator: ObservableObject {
         isStreaming = false
         streamURL = ""
 
-        print("⏹ Global stream stopped")
+        #if DEBUG
+        debugLog("⏹", "Global stream stopped")
+        #endif
     }
 
     // MARK: - Health Monitoring
@@ -756,3 +808,12 @@ class GlobalStreamCoordinator: ObservableObject {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension SRTStreamEngine: ObservableObject { }
+extension AdaptiveBitrateDistribution: ObservableObject { }
+extension MultiBitrateEncoder: ObservableObject { }
+extension LowLatencyHLSProducer: ObservableObject { }
+extension BandwidthEstimator: ObservableObject { }
+extension GlobalStreamCoordinator: ObservableObject { }

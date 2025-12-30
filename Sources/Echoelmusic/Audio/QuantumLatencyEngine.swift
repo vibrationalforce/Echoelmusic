@@ -490,23 +490,25 @@ final class VRSpatialLatencyOptimizer {
 // MARK: - Quantum Latency Engine
 
 /// Main engine for sub-millisecond latency audio processing
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-public final class QuantumLatencyEngine: ObservableObject {
+@Observable
+public final class QuantumLatencyEngine {
 
     // MARK: - Singleton
     public static let shared = QuantumLatencyEngine()
 
-    // MARK: - Published State
-    @Published public var metrics = QuantumLatencyMetrics()
-    @Published public var bufferConfig = QuantumBufferConfig.vr
-    @Published public var isRunning = false
-    @Published public var isQuantumMode = false
-    @Published public var currentPriority: RealtimeThreadPriority = .realtime
+    // MARK: - Observable State
+    public var metrics = QuantumLatencyMetrics()
+    public var bufferConfig = QuantumBufferConfig.vr
+    public var isRunning = false
+    public var isQuantumMode = false
+    public var currentPriority: RealtimeThreadPriority = .realtime
 
     // Direct monitoring
-    @Published public var directMonitoringEnabled = false
-    @Published public var directMonitoringGain: Float = 1.0
-    @Published public var directMonitoringPan: Float = 0.0
+    public var directMonitoringEnabled = false
+    public var directMonitoringGain: Float = 1.0
+    public var directMonitoringPan: Float = 0.0
 
     // MARK: - Private Properties
 
@@ -591,9 +593,11 @@ public final class QuantumLatencyEngine: ObservableObject {
         // Measure actual latency
         measureSystemLatency()
 
-        print("⚛️ Quantum Latency Engine started")
-        print("   Buffer: \(bufferConfig.inputBufferSize) samples (\(String(format: "%.2f", bufferConfig.inputLatencyMs))ms)")
-        print("   Target latency: <\(isQuantumMode ? "3" : "10")ms")
+        #if DEBUG
+        debugLog("⚛️", "Quantum Latency Engine started")
+        debugLog("⚛️", "   Buffer: \(bufferConfig.inputBufferSize) samples (\(String(format: "%.2f", bufferConfig.inputLatencyMs))ms)")
+        debugLog("⚛️", "   Target latency: <\(isQuantumMode ? "3" : "10")ms")
+        #endif
     }
 
     /// Stop engine
@@ -607,7 +611,9 @@ public final class QuantumLatencyEngine: ObservableObject {
 
         isRunning = false
 
-        print("⚛️ Quantum Latency Engine stopped")
+        #if DEBUG
+        debugLog("⚛️", "Quantum Latency Engine stopped")
+        #endif
     }
 
     /// Enable quantum mode (minimum latency, maximum CPU)
@@ -812,8 +818,10 @@ public final class QuantumLatencyEngine: ObservableObject {
         // Update VR optimizer
         vrOptimizer.calculateOptimalPrediction(systemLatencyMs: Float(metrics.totalLatencyMs))
 
-        print("⚛️ System Latency: \(String(format: "%.2f", metrics.totalLatencyMs))ms")
-        print("   Status: \(metrics.isQuantumLevel ? "🟢 QUANTUM" : metrics.isVRAcceptable ? "🟡 VR OK" : "🔴 HIGH")")
+        #if DEBUG
+        debugLog("⚛️", "System Latency: \(String(format: "%.2f", metrics.totalLatencyMs))ms")
+        debugLog("⚛️", "   Status: \(metrics.isQuantumLevel ? "🟢 QUANTUM" : metrics.isVRAcceptable ? "🟡 VR OK" : "🔴 HIGH")")
+        #endif
     }
 }
 
@@ -964,3 +972,7 @@ public struct QuantumLatencyView: View {
     QuantumLatencyView()
         .preferredColorScheme(.dark)
 }
+
+// MARK: - Backward Compatibility
+
+extension QuantumLatencyEngine: ObservableObject { }

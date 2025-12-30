@@ -8,15 +8,17 @@ import Network
 
 /// Global TURN Server Infrastructure
 /// Ensures NAT traversal for 99%+ of network configurations
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class GlobalTURNInfrastructure: ObservableObject {
+@Observable
+final class GlobalTURNInfrastructure {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var connectedServer: TURNServer?
-    @Published var connectionLatency: Int = 0 // ms
-    @Published var relayedData: Int = 0 // bytes
-    @Published var natType: NATType = .unknown
+    var connectedServer: TURNServer?
+    var connectionLatency: Int = 0 // ms
+    var relayedData: Int = 0 // bytes
+    var natType: NATType = .unknown
 
     // MARK: - TURN Server Configuration
 
@@ -120,7 +122,9 @@ class GlobalTURNInfrastructure: ObservableObject {
 
     init() {
         availableServers = Self.globalServers
-        print("🌐 GlobalTURNInfrastructure: Initialized with \(availableServers.count) servers worldwide")
+        #if DEBUG
+        debugLog("🌐", "GlobalTURNInfrastructure: Initialized with \(availableServers.count) servers worldwide")
+        #endif
     }
 
     // MARK: - Server Selection
@@ -138,7 +142,9 @@ class GlobalTURNInfrastructure: ObservableObject {
         connectedServer = best
         connectionLatency = best.latencyMs
 
-        print("✅ Selected TURN server: \(best.region) (\(best.hostname)) - \(best.latencyMs)ms")
+        #if DEBUG
+        debugLog("✅", "Selected TURN server: \(best.region) (\(best.hostname)) - \(best.latencyMs)ms")
+        #endif
         return best
     }
 
@@ -154,7 +160,9 @@ class GlobalTURNInfrastructure: ObservableObject {
         let types: [NATType] = [.fullCone, .restrictedCone, .portRestricted, .symmetric]
         natType = types.randomElement() ?? .unknown
 
-        print("🔍 Detected NAT type: \(natType.rawValue) - \(natType.description)")
+        #if DEBUG
+        debugLog("🔍", "Detected NAT type: \(natType.rawValue) - \(natType.description)")
+        #endif
         return natType
     }
 
@@ -206,15 +214,17 @@ struct ICEServerConfig {
 // MARK: - Audio Stem Sharing System
 
 /// Real-time stem sharing for collaborative music production
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class AudioStemSharing: ObservableObject {
+@Observable
+final class AudioStemSharing {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var availableStems: [AudioStem] = []
-    @Published var activeDownloads: [UUID: Float] = [:] // stemID: progress
-    @Published var sharedStems: [AudioStem] = []
-    @Published var networkUsage: NetworkUsage = NetworkUsage()
+    var availableStems: [AudioStem] = []
+    var activeDownloads: [UUID: Float] = [:] // stemID: progress
+    var sharedStems: [AudioStem] = []
+    var networkUsage: NetworkUsage = NetworkUsage()
 
     // MARK: - Stem Definition
 
@@ -287,7 +297,9 @@ class AudioStemSharing: ObservableObject {
     private let chunkSize = 64 * 1024 // 64KB chunks for smooth streaming
 
     init() {
-        print("🎼 AudioStemSharing: Initialized")
+        #if DEBUG
+        debugLog("🎼", "AudioStemSharing: Initialized")
+        #endif
     }
 
     // MARK: - Sharing Operations
@@ -318,7 +330,9 @@ class AudioStemSharing: ObservableObject {
         // Announce stem to network
         sharedStems.append(stem)
 
-        print("📤 Sharing stem: \(stem.name) (\(formatBytes(stem.fileSizeBytes)))")
+        #if DEBUG
+        debugLog("📤", "Sharing stem: \(stem.name) (\(formatBytes(stem.fileSizeBytes)))")
+        #endif
     }
 
     func requestStem(_ stemID: UUID) async throws -> URL {
@@ -350,13 +364,17 @@ class AudioStemSharing: ObservableObject {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(stemID).\(stem.format.rawValue.lowercased())")
         try receivedData.write(to: tempURL)
 
-        print("📥 Downloaded stem: \(stem.name)")
+        #if DEBUG
+        debugLog("📥", "Downloaded stem: \(stem.name)")
+        #endif
         return tempURL
     }
 
     func cancelDownload(_ stemID: UUID) {
         activeDownloads.removeValue(forKey: stemID)
-        print("❌ Cancelled download: \(stemID)")
+        #if DEBUG
+        debugLog("❌", "Cancelled download: \(stemID)")
+        #endif
     }
 
     // MARK: - Helpers
@@ -377,16 +395,18 @@ enum StemError: Error {
 // MARK: - Jam Session Matchmaking
 
 /// Global matchmaking for collaborative jam sessions
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class JamSessionMatchmaking: ObservableObject {
+@Observable
+final class JamSessionMatchmaking {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isSearching: Bool = false
-    @Published var searchProgress: Float = 0.0
-    @Published var foundSessions: [JamSession] = []
-    @Published var currentSession: JamSession?
-    @Published var matchedMusicians: [Musician] = []
+    var isSearching: Bool = false
+    var searchProgress: Float = 0.0
+    var foundSessions: [JamSession] = []
+    var currentSession: JamSession?
+    var matchedMusicians: [Musician] = []
 
     // MARK: - Session Definition
 
@@ -542,7 +562,9 @@ class JamSessionMatchmaking: ObservableObject {
     private var preferences = MatchPreferences()
 
     init() {
-        print("🎭 JamSessionMatchmaking: Initialized")
+        #if DEBUG
+        debugLog("🎭", "JamSessionMatchmaking: Initialized")
+        #endif
     }
 
     // MARK: - Session Discovery
@@ -562,7 +584,9 @@ class JamSessionMatchmaking: ObservableObject {
         foundSessions = generateMatchingSessions(count: 8)
 
         isSearching = false
-        print("🔍 Found \(foundSessions.count) matching sessions")
+        #if DEBUG
+        debugLog("🔍", "Found \(foundSessions.count) matching sessions")
+        #endif
         return foundSessions
     }
 
@@ -635,7 +659,9 @@ class JamSessionMatchmaking: ObservableObject {
         )
 
         currentSession = session
-        print("🎵 Created session: \(session.name)")
+        #if DEBUG
+        debugLog("🎵", "Created session: \(session.name)")
+        #endif
         return session
     }
 
@@ -651,12 +677,16 @@ class JamSessionMatchmaking: ObservableObject {
         }
 
         currentSession = session
-        print("🤝 Joined session: \(session.name)")
+        #if DEBUG
+        debugLog("🤝", "Joined session: \(session.name)")
+        #endif
     }
 
     func leaveSession() {
         currentSession = nil
-        print("👋 Left session")
+        #if DEBUG
+        debugLog("👋", "Left session")
+        #endif
     }
 }
 
@@ -669,8 +699,10 @@ enum MatchmakingError: Error {
 // MARK: - Collaborative Session Coordinator
 
 /// Coordinates all collaboration components for global jam sessions
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class GlobalCollaborationCoordinator: ObservableObject {
+@Observable
+final class GlobalCollaborationCoordinator {
 
     // MARK: - Sub-components
 
@@ -678,12 +710,12 @@ class GlobalCollaborationCoordinator: ObservableObject {
     let stemSharing = AudioStemSharing()
     let matchmaking = JamSessionMatchmaking()
 
-    // MARK: - State
+    // MARK: - Observable State
 
-    @Published var isConnected: Bool = false
-    @Published var sessionState: SessionState = .idle
-    @Published var participants: [JamSessionMatchmaking.Musician] = []
-    @Published var networkQuality: NetworkQuality = .unknown
+    var isConnected: Bool = false
+    var sessionState: SessionState = .idle
+    var participants: [JamSessionMatchmaking.Musician] = []
+    var networkQuality: NetworkQuality = .unknown
 
     enum SessionState: String {
         case idle = "Idle"
@@ -702,7 +734,9 @@ class GlobalCollaborationCoordinator: ObservableObject {
     }
 
     init() {
-        print("🌍 GlobalCollaborationCoordinator: Initialized")
+        #if DEBUG
+        debugLog("🌍", "GlobalCollaborationCoordinator: Initialized")
+        #endif
     }
 
     // MARK: - Quick Start Flow
@@ -712,13 +746,17 @@ class GlobalCollaborationCoordinator: ObservableObject {
 
         // 1. Detect NAT type
         let natType = await turnInfrastructure.detectNATType()
-        print("📡 NAT Type: \(natType.rawValue)")
+        #if DEBUG
+        debugLog("📡", "NAT Type: \(natType.rawValue)")
+        #endif
 
         // 2. Select optimal TURN server
         guard let server = await turnInfrastructure.selectOptimalServer(forLatitude: 0, forLongitude: 0) else {
             throw CollaborationError.noServersAvailable
         }
-        print("🌐 Selected server: \(server.region)")
+        #if DEBUG
+        debugLog("🌐", "Selected server: \(server.region)")
+        #endif
 
         // 3. Quick match to session
         sessionState = .connecting
@@ -746,7 +784,9 @@ class GlobalCollaborationCoordinator: ObservableObject {
         sessionState = .inSession
         isConnected = true
 
-        print("🎵 Quick jam started in: \(session.name)")
+        #if DEBUG
+        debugLog("🎵", "Quick jam started in: \(session.name)")
+        #endif
     }
 
     // MARK: - Session Control
@@ -757,7 +797,9 @@ class GlobalCollaborationCoordinator: ObservableObject {
         participants.removeAll()
         sessionState = .idle
         isConnected = false
-        print("👋 Disconnected from session")
+        #if DEBUG
+        debugLog("👋", "Disconnected from session")
+        #endif
     }
 
     // MARK: - Stem Operations
@@ -852,3 +894,10 @@ class RegionalLatencyOptimizer {
         return "US-East" // Default
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension GlobalTURNInfrastructure: ObservableObject { }
+extension AudioStemSharing: ObservableObject { }
+extension JamSessionMatchmaking: ObservableObject { }
+extension GlobalCollaborationCoordinator: ObservableObject { }

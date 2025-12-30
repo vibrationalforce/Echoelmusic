@@ -266,37 +266,39 @@ final class MotionPredictor {
 // MARK: - VR/XR Spatial Latency System
 
 /// Complete VR/XR spatial audio system with latency compensation
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-public final class VRXRSpatialLatencySystem: ObservableObject {
+@Observable
+public final class VRXRSpatialLatencySystem {
 
     // MARK: - Singleton
     public static let shared = VRXRSpatialLatencySystem()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published public var mode: VRXRAudioMode = .immersive
-    @Published public var trackingSource: HeadTrackingSource = .coreMotion
-    @Published public var hrtfProfile: HRTFProfile = .average
+    public var mode: VRXRAudioMode = .immersive
+    public var trackingSource: HeadTrackingSource = .coreMotion
+    public var hrtfProfile: HRTFProfile = .average
 
-    @Published public var isRunning = false
-    @Published public var isTrackingActive = false
+    public var isRunning = false
+    public var isTrackingActive = false
 
     // Listener state
-    @Published public var listenerPosition: simd_float3 = .zero
-    @Published public var listenerRotation: simd_quatf = simd_quatf(ix: 0, iy: 0, iz: 0, r: 1)
-    @Published public var listenerVelocity: simd_float3 = .zero
+    public var listenerPosition: simd_float3 = .zero
+    public var listenerRotation: simd_quatf = simd_quatf(ix: 0, iy: 0, iz: 0, r: 1)
+    public var listenerVelocity: simd_float3 = .zero
 
     // Predicted state (for rendering)
-    @Published public var predictedPosition: simd_float3 = .zero
-    @Published public var predictedRotation: simd_quatf = simd_quatf(ix: 0, iy: 0, iz: 0, r: 1)
+    public var predictedPosition: simd_float3 = .zero
+    public var predictedRotation: simd_quatf = simd_quatf(ix: 0, iy: 0, iz: 0, r: 1)
 
     // Latency metrics
-    @Published public var trackingLatencyMs: Double = 0
-    @Published public var renderLatencyMs: Double = 0
-    @Published public var totalMotionToSoundMs: Double = 0
+    public var trackingLatencyMs: Double = 0
+    public var renderLatencyMs: Double = 0
+    public var totalMotionToSoundMs: Double = 0
 
     // Audio sources
-    @Published public var sources: [SpatialAudioSource] = []
+    public var sources: [SpatialAudioSource] = []
 
     // MARK: - Private Properties
 
@@ -371,10 +373,12 @@ public final class VRXRSpatialLatencySystem: ObservableObject {
 
         isRunning = true
 
-        print("🥽 VR/XR Spatial System started")
-        print("   Mode: \(mode.rawValue)")
-        print("   Tracking: \(trackingSource.rawValue)")
-        print("   Target latency: <\(mode.targetLatencyMs)ms")
+        #if DEBUG
+        debugLog("🥽", "VR/XR Spatial System started")
+        debugLog("🥽", "   Mode: \(mode.rawValue)")
+        debugLog("🥽", "   Tracking: \(trackingSource.rawValue)")
+        debugLog("🥽", "   Target latency: <\(mode.targetLatencyMs)ms")
+        #endif
     }
 
     /// Stop the system
@@ -388,7 +392,9 @@ public final class VRXRSpatialLatencySystem: ObservableObject {
         audioEngine.stop()
         isRunning = false
 
-        print("🥽 VR/XR Spatial System stopped")
+        #if DEBUG
+        debugLog("🥽", "VR/XR Spatial System stopped")
+        #endif
     }
 
     /// Add a spatial audio source
@@ -455,7 +461,9 @@ public final class VRXRSpatialLatencySystem: ObservableObject {
 
     private func startCoreMotionTracking() {
         guard motionManager.isDeviceMotionAvailable else {
-            print("⚠️ Device motion not available")
+            #if DEBUG
+            debugLog("⚠️", "Device motion not available")
+            #endif
             return
         }
 
@@ -742,3 +750,7 @@ public struct VRXRSpatialView: View {
     VRXRSpatialView()
         .preferredColorScheme(.dark)
 }
+
+// MARK: - Backward Compatibility
+
+extension VRXRSpatialLatencySystem: ObservableObject { }
