@@ -27,23 +27,25 @@ import Combine
 
 /// Konvertiert Audio in Echtzeit zu haptischem Feedback
 /// Ermöglicht Gehörlosen, Musik zu "fühlen"
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-public final class AudioToHapticEngine: ObservableObject {
+@Observable
+public final class AudioToHapticEngine {
 
     public static let shared = AudioToHapticEngine()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published public var isEnabled: Bool = false
-    @Published public var hapticIntensity: Float = 1.0
-    @Published public var frequencyMapping: FrequencyMapping = .musical
-    @Published public var isPlaying: Bool = false
+    public var isEnabled: Bool = false
+    public var hapticIntensity: Float = 1.0
+    public var frequencyMapping: FrequencyMapping = .musical
+    public var isPlaying: Bool = false
 
     // Frequency bands felt on different body parts (with wearables)
-    @Published public var bassIntensity: Float = 0      // Low frequencies (20-250 Hz)
-    @Published public var midIntensity: Float = 0       // Mid frequencies (250-2000 Hz)
-    @Published public var trebleIntensity: Float = 0    // High frequencies (2000-20000 Hz)
-    @Published public var rhythmPulse: Bool = false     // Beat detection
+    public var bassIntensity: Float = 0      // Low frequencies (20-250 Hz)
+    public var midIntensity: Float = 0       // Mid frequencies (250-2000 Hz)
+    public var trebleIntensity: Float = 0    // High frequencies (2000-20000 Hz)
+    public var rhythmPulse: Bool = false     // Beat detection
 
     // MARK: - Haptic Engine
 
@@ -89,17 +91,18 @@ public final class AudioToHapticEngine: ObservableObject {
 
     private func setupHapticEngine() {
         guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
-            print("⚠️ AudioToHaptic: Device does not support haptics")
+            #if DEBUG
+            debugLog("⚠️", "AudioToHaptic: Device does not support haptics")
+            #endif
             return
         }
 
         do {
             hapticEngine = try CHHapticEngine()
-            hapticEngine?.stoppedHandler = { [weak self] reason in
-                print("⚠️ AudioToHaptic: Engine stopped - \(reason)")
-                Task { @MainActor in
-                    self?.isPlaying = false
-                }
+            hapticEngine?.stoppedHandler = { reason in
+                #if DEBUG
+                debugLog("⚠️", "AudioToHaptic: Engine stopped - \(reason)")
+                #endif
             }
             hapticEngine?.resetHandler = { [weak self] in
                 Task { @MainActor in
@@ -107,9 +110,13 @@ public final class AudioToHapticEngine: ObservableObject {
                 }
             }
             try hapticEngine?.start()
-            print("✅ AudioToHaptic: Haptic engine initialized")
+            #if DEBUG
+            debugLog("✅", "AudioToHaptic: Haptic engine initialized")
+            #endif
         } catch {
-            print("❌ AudioToHaptic: Failed to initialize - \(error)")
+            #if DEBUG
+            debugLog("❌", "AudioToHaptic: Failed to initialize - \(error)")
+            #endif
         }
     }
 
@@ -127,9 +134,13 @@ public final class AudioToHapticEngine: ObservableObject {
             try hapticEngine?.start()
             isPlaying = true
             isEnabled = true
-            print("▶️ AudioToHaptic: Started")
+            #if DEBUG
+            debugLog("▶️", "AudioToHaptic: Started")
+            #endif
         } catch {
-            print("❌ AudioToHaptic: Failed to start - \(error)")
+            #if DEBUG
+            debugLog("❌", "AudioToHaptic: Failed to start - \(error)")
+            #endif
         }
     }
 
@@ -137,7 +148,9 @@ public final class AudioToHapticEngine: ObservableObject {
     public func stop() {
         continuousPlayer?.stop(atTime: CHHapticTimeImmediate)
         isPlaying = false
-        print("⏹️ AudioToHaptic: Stopped")
+        #if DEBUG
+        debugLog("⏹️", "AudioToHaptic: Stopped")
+        #endif
     }
 
     /// Process audio buffer and generate haptic feedback
@@ -343,18 +356,20 @@ public final class AudioToHapticEngine: ObservableObject {
 // MARK: - Sign Language Avatar
 
 /// Animated avatar für Gebärdensprache-Übersetzung
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-public final class SignLanguageAvatar: ObservableObject {
+@Observable
+public final class SignLanguageAvatar {
 
     public static let shared = SignLanguageAvatar()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published public var isEnabled: Bool = false
-    @Published public var currentLanguage: SignLanguage = .asl
-    @Published public var avatarStyle: AvatarStyle = .realistic
-    @Published public var isAnimating: Bool = false
-    @Published public var currentPhrase: String = ""
+    public var isEnabled: Bool = false
+    public var currentLanguage: SignLanguage = .asl
+    public var avatarStyle: AvatarStyle = .realistic
+    public var isAnimating: Bool = false
+    public var currentPhrase: String = ""
 
     // MARK: - Sign Languages
 
@@ -485,7 +500,9 @@ public final class SignLanguageAvatar: ObservableObject {
             ]
         ]
 
-        print("✅ SignLanguageAvatar: Loaded \(signDictionary.count) signs")
+        #if DEBUG
+        debugLog("✅", "SignLanguageAvatar: Loaded \(signDictionary.count) signs")
+        #endif
     }
 
     // MARK: - Public API
@@ -548,19 +565,21 @@ public final class SignLanguageAvatar: ObservableObject {
 
 /// Eye-Tracking für Steuerung durch Augenbewegungen
 /// Für Nutzer mit eingeschränkter Motorik
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-public final class EyeTrackingController: ObservableObject {
+@Observable
+public final class EyeTrackingController {
 
     public static let shared = EyeTrackingController()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published public var isEnabled: Bool = false
-    @Published public var isCalibrated: Bool = false
-    @Published public var gazePoint: CGPoint = .zero
-    @Published public var dwellProgress: Float = 0        // 0-1 für Dwell-Click
-    @Published public var currentElement: String?
-    @Published public var sensitivity: Sensitivity = .medium
+    public var isEnabled: Bool = false
+    public var isCalibrated: Bool = false
+    public var gazePoint: CGPoint = .zero
+    public var dwellProgress: Float = 0        // 0-1 für Dwell-Click
+    public var currentElement: String?
+    public var sensitivity: Sensitivity = .medium
 
     // MARK: - Settings
 
@@ -604,7 +623,7 @@ public final class EyeTrackingController: ObservableObject {
         }
     }
 
-    @Published public var interactionMode: InteractionMode = .dwell
+    public var interactionMode: InteractionMode = .dwell
 
     // MARK: - Calibration
 
@@ -614,8 +633,8 @@ public final class EyeTrackingController: ObservableObject {
         var isCalibrated: Bool = false
     }
 
-    @Published public var calibrationPoints: [CalibrationPoint] = []
-    @Published public var calibrationProgress: Float = 0
+    public var calibrationPoints: [CalibrationPoint] = []
+    public var calibrationProgress: Float = 0
 
     // MARK: - Focusable Elements
 
@@ -658,7 +677,9 @@ public final class EyeTrackingController: ObservableObject {
     /// Start eye tracking
     public func start() {
         guard isCalibrated else {
-            print("⚠️ EyeTracking: Not calibrated")
+            #if DEBUG
+            debugLog("⚠️", "EyeTracking: Not calibrated")
+            #endif
             return
         }
 
@@ -669,14 +690,18 @@ public final class EyeTrackingController: ObservableObject {
             startHeadTracking()
         }
 
-        print("▶️ EyeTracking: Started with \(interactionMode.rawValue) mode")
+        #if DEBUG
+        debugLog("▶️", "EyeTracking: Started with \(interactionMode.rawValue) mode")
+        #endif
     }
 
     /// Stop eye tracking
     public func stop() {
         isEnabled = false
         motionManager.stopDeviceMotionUpdates()
-        print("⏹️ EyeTracking: Stopped")
+        #if DEBUG
+        debugLog("⏹️", "EyeTracking: Stopped")
+        #endif
     }
 
     /// Start calibration process
@@ -695,7 +720,9 @@ public final class EyeTrackingController: ObservableObject {
         }
 
         isCalibrated = true
-        print("✅ EyeTracking: Calibration complete")
+        #if DEBUG
+        debugLog("✅", "EyeTracking: Calibration complete")
+        #endif
     }
 
     /// Register a focusable UI element
@@ -783,7 +810,9 @@ public final class EyeTrackingController: ObservableObject {
             userInfo: ["elementId": elementId]
         )
 
-        print("👁️ EyeTracking: Click on \(elementId)")
+        #if DEBUG
+        debugLog("👁️", "EyeTracking: Click on \(elementId)")
+        #endif
     }
 
     // MARK: - Head Tracking
@@ -870,7 +899,9 @@ public struct BoneConductionSupport {
         eq.bands[2].gain = 2
 
         audioEngine.attach(eq)
-        print("✅ BoneConduction: Audio optimized")
+        #if DEBUG
+        debugLog("✅", "BoneConduction: Audio optimized")
+        #endif
     }
 }
 
@@ -1022,3 +1053,14 @@ public struct EyeTrackingView: View {
     EyeTrackingView()
         .preferredColorScheme(.dark)
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows AudioToHapticEngine to work with older SwiftUI code expecting ObservableObject
+extension AudioToHapticEngine: ObservableObject { }
+
+/// Allows SignLanguageAvatar to work with older SwiftUI code expecting ObservableObject
+extension SignLanguageAvatar: ObservableObject { }
+
+/// Allows EyeTrackingController to work with older SwiftUI code expecting ObservableObject
+extension EyeTrackingController: ObservableObject { }

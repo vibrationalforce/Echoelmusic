@@ -385,39 +385,41 @@ final class PsychoacousticShaper {
 // MARK: - Realtime Feeling Optimizer
 
 /// Main optimizer combining all perceptual latency techniques
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-public final class RealtimeFeelingOptimizer: ObservableObject {
+@Observable
+public final class RealtimeFeelingOptimizer {
 
     // MARK: - Singleton
     public static let shared = RealtimeFeelingOptimizer()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published public var enabledTechniques: Set<PerceptualLatencyTechnique> = [
+    public var enabledTechniques: Set<PerceptualLatencyTechnique> = [
         .transientPreEmphasis,
         .attackEnhancement,
         .psychoacousticShaping
     ]
 
-    @Published public var isRunning = false
+    public var isRunning = false
 
     // Metrics
-    @Published public var measuredLatencyMs: Double = 0
-    @Published public var perceivedLatencyMs: Double = 0
-    @Published public var perceptualImprovement: Double = 0
+    public var measuredLatencyMs: Double = 0
+    public var perceivedLatencyMs: Double = 0
+    public var perceptualImprovement: Double = 0
 
     // Transient detection
-    @Published public var transientDetected = false
-    @Published public var transientStrength: Float = 0
+    public var transientDetected = false
+    public var transientStrength: Float = 0
 
     // Prediction
-    @Published public var predictionConfidence: Float = 0
-    @Published public var estimatedTempo: Double = 120
+    public var predictionConfidence: Float = 0
+    public var estimatedTempo: Double = 120
 
     // Settings
-    @Published public var transientThreshold: Float = 0.3
-    @Published public var attackBoostdB: Float = 3.0
-    @Published public var emphasisFrequencyHz: Float = 2000
+    public var transientThreshold: Float = 0.3
+    public var attackBoostdB: Float = 3.0
+    public var emphasisFrequencyHz: Float = 2000
 
     // MARK: - Private Components
 
@@ -675,3 +677,8 @@ public struct RealtimeFeelingView: View {
     RealtimeFeelingView()
         .preferredColorScheme(.dark)
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows RealtimeFeelingOptimizer to work with older SwiftUI code expecting ObservableObject
+extension RealtimeFeelingOptimizer: ObservableObject { }

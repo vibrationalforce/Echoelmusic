@@ -7,26 +7,28 @@ import Combine
 /// Stream Engine - Native iOS/macOS OBS Replacement
 /// Multi-platform simultaneous streaming to Twitch, YouTube, Facebook, Custom RTMP
 /// Hardware encoding, bio-reactive scenes, real-time analytics
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class StreamEngine: ObservableObject {
+@Observable
+final class StreamEngine {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isStreaming: Bool = false
-    @Published var activeStreams: [StreamDestination: StreamStatus] = [:]
-    @Published var currentScene: Scene?
-    @Published var availableScenes: [Scene] = []
-    @Published var bitrate: Int = 6000 // kbps
-    @Published var resolution: Resolution = .hd1920x1080
-    @Published var frameRate: Int = 60
+    var isStreaming: Bool = false
+    var activeStreams: [StreamDestination: StreamStatus] = [:]
+    var currentScene: Scene?
+    var availableScenes: [Scene] = []
+    var bitrate: Int = 6000 // kbps
+    var resolution: Resolution = .hd1920x1080
+    var frameRate: Int = 60
 
     // MARK: - Performance Metrics
 
-    @Published var actualFrameRate: Double = 0.0
-    @Published var droppedFrames: Int = 0
-    @Published var bandwidth: Double = 0.0 // MB/s
-    @Published var cpuUsage: Double = 0.0
-    @Published var gpuUsage: Double = 0.0
+    var actualFrameRate: Double = 0.0
+    var droppedFrames: Int = 0
+    var bandwidth: Double = 0.0 // MB/s
+    var cpuUsage: Double = 0.0
+    var gpuUsage: Double = 0.0
 
     // MARK: - Components
 
@@ -122,7 +124,9 @@ class StreamEngine: ObservableObject {
         self.device = device
 
         guard let queue = device.makeCommandQueue() else {
-            print("❌ StreamEngine: Failed to create command queue")
+            #if DEBUG
+            debugLog("❌", "StreamEngine: Failed to create command queue")
+            #endif
             return nil
         }
         self.commandQueue = queue
@@ -143,7 +147,9 @@ class StreamEngine: ObservableObject {
         self.availableScenes = sceneManager.loadScenes()
         self.currentScene = availableScenes.first
 
-        print("✅ StreamEngine: Initialized")
+        #if DEBUG
+        debugLog("✅", "StreamEngine: Initialized")
+        #endif
     }
 
     deinit {
@@ -186,7 +192,9 @@ class StreamEngine: ObservableObject {
                 error: nil
             )
 
-            print("🔗 StreamEngine: Connected to \(destination.rawValue)")
+            #if DEBUG
+            debugLog("🔗", "StreamEngine: Connected to \(destination.rawValue)")
+            #endif
         }
 
         // Start encoding
@@ -207,7 +215,9 @@ class StreamEngine: ObservableObject {
 
         isStreaming = true
 
-        print("▶️ StreamEngine: Started streaming to \(destinations.count) destination(s)")
+        #if DEBUG
+        debugLog("▶️", "StreamEngine: Started streaming to \(destinations.count) destination(s)")
+        #endif
     }
 
     // MARK: - Stop Streaming
@@ -224,7 +234,9 @@ class StreamEngine: ObservableObject {
         // Disconnect RTMP clients
         for (destination, client) in rtmpClients {
             client.disconnect()
-            print("🔌 StreamEngine: Disconnected from \(destination.rawValue)")
+            #if DEBUG
+            debugLog("🔌", "StreamEngine: Disconnected from \(destination.rawValue)")
+            #endif
         }
         rtmpClients.removeAll()
         activeStreams.removeAll()
@@ -239,7 +251,9 @@ class StreamEngine: ObservableObject {
         droppedFrames = 0
         actualFrameRate = 0.0
 
-        print("⏹️ StreamEngine: Stopped streaming")
+        #if DEBUG
+        debugLog("⏹️", "StreamEngine: Stopped streaming")
+        #endif
     }
 
     // MARK: - Capture Loop
@@ -294,7 +308,9 @@ class StreamEngine: ObservableObject {
                         self.activeStreams[destination] = status
                     }
                 } catch {
-                    print("❌ StreamEngine: Failed to send frame to \(destination.rawValue) - \(error)")
+                    #if DEBUG
+                    debugLog("❌", "StreamEngine: Failed to send frame to \(destination.rawValue) - \(error)")
+                    #endif
 
                     // Update status
                     if var status = self.activeStreams[destination] {
@@ -412,7 +428,9 @@ class StreamEngine: ObservableObject {
 
     func enableAdaptiveBitrate(_ enabled: Bool) {
         encodingManager.adaptiveBitrateEnabled = enabled
-        print("📊 StreamEngine: Adaptive bitrate \(enabled ? "enabled" : "disabled")")
+        #if DEBUG
+        debugLog("📊", "StreamEngine: Adaptive bitrate \(enabled ? "enabled" : "disabled")")
+        #endif
     }
 
     func updateNetworkConditions(packetLoss: Double, rtt: TimeInterval) {
@@ -423,17 +441,26 @@ class StreamEngine: ObservableObject {
                 let newBitrate = Int(Double(bitrate) * 0.8)
                 bitrate = max(1000, newBitrate)
                 encodingManager.updateBitrate(bitrate)
-                print("⚠️ StreamEngine: Reduced bitrate to \(bitrate) kbps due to packet loss")
+                #if DEBUG
+                debugLog("⚠️", "StreamEngine: Reduced bitrate to \(bitrate) kbps due to packet loss")
+                #endif
             } else if packetLoss < 0.005 && bitrate < resolution.recommendedBitrate {
                 // Good network - increase bitrate by 10%
                 let newBitrate = Int(Double(bitrate) * 1.1)
                 bitrate = min(resolution.recommendedBitrate, newBitrate)
                 encodingManager.updateBitrate(bitrate)
-                print("✅ StreamEngine: Increased bitrate to \(bitrate) kbps")
+                #if DEBUG
+                debugLog("✅", "StreamEngine: Increased bitrate to \(bitrate) kbps")
+                #endif
             }
         }
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows StreamEngine to work with older SwiftUI code expecting ObservableObject
+extension StreamEngine: ObservableObject { }
 
 // MARK: - Scene Transition
 
