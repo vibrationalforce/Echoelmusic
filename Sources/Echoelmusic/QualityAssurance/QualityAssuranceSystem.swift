@@ -22,17 +22,19 @@ import Combine
 /// - Broadcast: EBU R128, ATSC A/85
 /// - Film: DCI (Digital Cinema Initiatives)
 /// - Streaming: Netflix, YouTube, Spotify specs
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class QualityAssuranceSystem: ObservableObject {
+@Observable
+final class QualityAssuranceSystem {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var overallQualityScore: Float = 0.0  // 0-100
-    @Published var performanceMetrics: PerformanceMetrics?
-    @Published var qualityMetrics: QualityMetrics?
-    @Published var usabilityMetrics: UsabilityMetrics?
-    @Published var activeTests: [QualityTest] = []
-    @Published var issues: [QualityIssue] = []
+    var overallQualityScore: Float = 0.0  // 0-100
+    var performanceMetrics: PerformanceMetrics?
+    var qualityMetrics: QualityMetrics?
+    var usabilityMetrics: UsabilityMetrics?
+    var activeTests: [QualityTest] = []
+    var issues: [QualityIssue] = []
 
     // MARK: - Performance Metrics
 
@@ -321,14 +323,18 @@ class QualityAssuranceSystem: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Quality Assurance System: Initialized")
-        print("🔍 Ready for comprehensive quality testing")
+        #if DEBUG
+        debugLog("✅", "Quality Assurance System: Initialized")
+        debugLog("🔍", "Ready for comprehensive quality testing")
+        #endif
     }
 
     // MARK: - Run Complete Test Suite
 
     func runCompleteTestSuite() async {
-        print("🧪 Starting Complete Quality Test Suite...")
+        #if DEBUG
+        debugLog("🧪", "Starting Complete Quality Test Suite...")
+        #endif
 
         activeTests = []
         issues = []
@@ -363,16 +369,20 @@ class QualityAssuranceSystem: ObservableObject {
         // Calculate overall metrics
         calculateOverallQuality()
 
-        print("✅ Test Suite Complete")
-        print("📊 Overall Quality Score: \(String(format: "%.1f", overallQualityScore))%")
-        print("⚠️ Issues Found: \(issues.count)")
+        #if DEBUG
+        debugLog("✅", "Test Suite Complete")
+        debugLog("📊", "Overall Quality Score: \(String(format: "%.1f", overallQualityScore))%")
+        debugLog("⚠️", "Issues Found: \(issues.count)")
+        #endif
     }
 
     private func runTest(name: String, category: QualityTest.TestCategory, duration: Double) async {
         var test = QualityTest(name: name, category: category, duration: duration, status: .running, result: nil)
         activeTests.append(test)
 
-        print("   Running: \(name)...")
+        #if DEBUG
+        debugLog("🔄", "Running: \(name)...")
+        #endif
 
         // Simulate test execution
         try? await Task.sleep(nanoseconds: UInt64(min(duration, 1.0) * 1_000_000_000))
@@ -399,7 +409,9 @@ class QualityAssuranceSystem: ObservableObject {
             addIssue(for: test, score: score)
         }
 
-        print("   ✓ \(name): \(String(format: "%.1f", score))% [\(test.status.rawValue)]")
+        #if DEBUG
+        debugLog("✓", "\(name): \(String(format: "%.1f", score))% [\(test.status.rawValue)]")
+        #endif
     }
 
     private func generateTestDetails(for testName: String) -> String {
@@ -626,3 +638,7 @@ class QualityAssuranceSystem: ObservableObject {
         return warnings
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension QualityAssuranceSystem: ObservableObject { }

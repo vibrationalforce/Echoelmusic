@@ -18,14 +18,16 @@ import Combine
 /// 2028: Quantum computers for consumers (>1000 qubits)
 /// 2030: Brain-computer interfaces widespread
 /// 2035: Quantum smartphones, holographic displays, ambient computing
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class FutureDevicePredictor: ObservableObject {
+@Observable
+final class FutureDevicePredictor {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var predictions: [DevicePrediction] = []
-    @Published var technologyTrends: [TechnologyTrend] = []
-    @Published var readinessScore: Float = 0.0  // 0-100, how ready is Echoelmusic for future
+    var predictions: [DevicePrediction] = []
+    var technologyTrends: [TechnologyTrend] = []
+    var readinessScore: Float = 0.0  // 0-100, how ready is Echoelmusic for future
 
     // MARK: - Device Prediction
 
@@ -85,10 +87,12 @@ class FutureDevicePredictor: ObservableObject {
         analyzeTechnologyTrends()
         calculateReadinessScore()
 
-        print("✅ Future Device Predictor: Initialized")
-        print("🔮 Predictions generated: \(predictions.count)")
-        print("📈 Technology trends tracked: \(technologyTrends.count)")
-        print("🎯 Readiness score: \(String(format: "%.1f", readinessScore))%")
+        #if DEBUG
+        debugLog("✅", "Future Device Predictor: Initialized")
+        debugLog("🔮", "Predictions generated: \(predictions.count)")
+        debugLog("📈", "Technology trends tracked: \(technologyTrends.count)")
+        debugLog("🎯", "Readiness score: \(String(format: "%.1f", readinessScore))%")
+        #endif
     }
 
     // MARK: - Generate Predictions
@@ -333,7 +337,9 @@ class FutureDevicePredictor: ObservableObject {
             )
         ]
 
-        print("🔮 Generated \(predictions.count) device predictions (2025-2035)")
+        #if DEBUG
+        debugLog("🔮", "Generated \(predictions.count) device predictions (2025-2035)")
+        #endif
     }
 
     // MARK: - Analyze Technology Trends
@@ -431,7 +437,9 @@ class FutureDevicePredictor: ObservableObject {
             )
         ]
 
-        print("📈 Analyzed \(technologyTrends.count) technology trends")
+        #if DEBUG
+        debugLog("📈", "Analyzed \(technologyTrends.count) technology trends")
+        #endif
     }
 
     // MARK: - Calculate Readiness Score
@@ -453,7 +461,9 @@ class FutureDevicePredictor: ObservableObject {
 
         readinessScore = (score / totalPredictions) * 100.0
 
-        print("🎯 Readiness Score: \(String(format: "%.1f", readinessScore))%")
+        #if DEBUG
+        debugLog("🎯", "Readiness Score: \(String(format: "%.1f", readinessScore))%")
+        #endif
     }
 
     // MARK: - Get Predictions By Year
@@ -627,3 +637,7 @@ class FutureDevicePredictor: ObservableObject {
         """
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension FutureDevicePredictor: ObservableObject { }

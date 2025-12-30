@@ -7,17 +7,19 @@ import CoreHaptics
 /// Collection of professional touch interfaces for iOS/iPadOS
 /// All instruments use MIDI 2.0 + MPE for maximum expressivity
 /// Mobile-first design optimized for finger and Apple Pencil input
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
 @MainActor
-class TouchInstrumentsHub: ObservableObject {
+@Observable
+final class TouchInstrumentsHub {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var activeInstrument: InstrumentType = .chordPad
-    @Published var isPlaying: Bool = false
-    @Published var currentScale: MusicalScale = .major
-    @Published var rootNote: UInt8 = 60 // Middle C
-    @Published var octave: Int = 4
+    var activeInstrument: InstrumentType = .chordPad
+    var isPlaying: Bool = false
+    var currentScale: MusicalScale = .major
+    var rootNote: UInt8 = 60 // Middle C
+    var octave: Int = 4
 
     // MARK: - Dependencies
 
@@ -44,7 +46,9 @@ class TouchInstrumentsHub: ObservableObject {
     func connect(midi2: MIDI2Manager, mpe: MPEZoneManager) {
         self.midi2Manager = midi2
         self.mpeZoneManager = mpe
-        print("TouchInstruments: Connected to MIDI 2.0 + MPE")
+        #if DEBUG
+        debugLog("🎹", "TouchInstruments: Connected to MIDI 2.0 + MPE")
+        #endif
     }
 
     private func setupHaptics() {
@@ -323,15 +327,17 @@ struct ChordPad: Identifiable {
 }
 
 // MARK: - Chord Pad View Model
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
 @MainActor
-class ChordPadViewModel: ObservableObject {
+@Observable
+final class ChordPadViewModel {
 
-    @Published var chordPads: [ChordPad] = []
-    @Published var pressedPads: Set<UUID> = []
-    @Published var playMode: PlayMode = .simultaneous
-    @Published var arpRate: Double = 120 // BPM
-    @Published var arpPattern: ArpPattern = .up
+    var chordPads: [ChordPad] = []
+    var pressedPads: Set<UUID> = []
+    var playMode: PlayMode = .simultaneous
+    var arpRate: Double = 120 // BPM
+    var arpPattern: ArpPattern = .up
 
     // Active voices for MPE
     private var activeVoices: [UUID: [MPEZoneManager.MPEVoice]] = [:]
@@ -706,18 +712,20 @@ enum DrumKit: String, CaseIterable {
 }
 
 // MARK: - Drum Pad View Model
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
 @MainActor
-class DrumPadViewModel: ObservableObject {
+@Observable
+final class DrumPadViewModel {
 
-    @Published var pads: [DrumPadModel] = []
-    @Published var pressedPads: Set<UUID> = []
-    @Published var currentKit: DrumKit = .acoustic {
+    var pads: [DrumPadModel] = []
+    var pressedPads: Set<UUID> = []
+    var currentKit: DrumKit = .acoustic {
         didSet {
             pads = currentKit.pads
         }
     }
-    @Published var velocityCurve: VelocityCurve = .linear
+    var velocityCurve: VelocityCurve = .linear
 
     enum VelocityCurve: String, CaseIterable {
         case soft = "Soft"
@@ -867,9 +875,11 @@ struct MelodyGridBackground: View {
 }
 
 // MARK: - Melody Pad View Model
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
 @MainActor
-class MelodyPadViewModel: ObservableObject {
+@Observable
+final class MelodyPadViewModel {
 
     struct TouchInfo {
         var location: CGPoint
@@ -877,10 +887,10 @@ class MelodyPadViewModel: ObservableObject {
         var voice: MPEZoneManager.MPEVoice?
     }
 
-    @Published var activeTouches: [Int: TouchInfo] = [:]
-    @Published var octaveRange: Int = 2
-    @Published var glideEnabled: Bool = false
-    @Published var glideTime: Double = 0.3
+    var activeTouches: [Int: TouchInfo] = [:]
+    var octaveRange: Int = 2
+    var glideEnabled: Bool = false
+    var glideTime: Double = 0.3
 
     private var lastNote: UInt8?
 
@@ -1106,13 +1116,15 @@ struct PianoKey: View {
 }
 
 // MARK: - Touch Keyboard View Model
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
 @MainActor
-class TouchKeyboardViewModel: ObservableObject {
+@Observable
+final class TouchKeyboardViewModel {
 
-    @Published var octave: Int = 4
-    @Published var keyWidth: Double = 55
-    @Published var pressedNotes: Set<UInt8> = []
+    var octave: Int = 4
+    var keyWidth: Double = 55
+    var pressedNotes: Set<UInt8> = []
 
     private var activeVoices: [UInt8: MPEZoneManager.MPEVoice] = [:]
 
@@ -1169,3 +1181,11 @@ extension TouchInstrumentsHub {
         return nil // This is set via connect()
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension TouchInstrumentsHub: ObservableObject { }
+extension ChordPadViewModel: ObservableObject { }
+extension DrumPadViewModel: ObservableObject { }
+extension MelodyPadViewModel: ObservableObject { }
+extension TouchKeyboardViewModel: ObservableObject { }

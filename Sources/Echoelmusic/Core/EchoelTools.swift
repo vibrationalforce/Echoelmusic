@@ -17,19 +17,21 @@ import Combine
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // MARK: - EchoelTools Suite
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
 @MainActor
-final class EchoelTools: ObservableObject {
+@Observable
+final class EchoelTools {
 
     // MARK: - Singleton
 
     static let shared = EchoelTools()
 
-    // MARK: - Published Tools
+    // MARK: - Observable State
 
-    @Published var activeTool: Tool = .none
-    @Published var toolState: ToolState = ToolState()
-    @Published var flowMultiplier: Float = 1.0
+    var activeTool: Tool = .none
+    var toolState: ToolState = ToolState()
+    var flowMultiplier: Float = 1.0
 
     // MARK: - Tool References
 
@@ -190,11 +192,14 @@ extension EchoelTools {
 }
 
 // MARK: - Harmonic Intelligence
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
-class HarmonicIntelligence: ObservableObject {
-    @Published var suggestedChord: Chord?
-    @Published var suggestedScale: Scale?
-    @Published var harmonicTension: Float = 0.5
+@MainActor
+@Observable
+final class HarmonicIntelligence {
+    var suggestedChord: Chord?
+    var suggestedScale: Scale?
+    var harmonicTension: Float = 0.5
 
     private var coherenceLevel: Float = 0.5
 
@@ -268,11 +273,14 @@ class HarmonicIntelligence: ObservableObject {
 }
 
 // MARK: - Rhythmic Intelligence
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
-class RhythmicIntelligence: ObservableObject {
-    @Published var suggestedPattern: RhythmPattern?
-    @Published var syncedToHeartbeat: Bool = true
-    @Published var patternDensity: Float = 0.5
+@MainActor
+@Observable
+final class RhythmicIntelligence {
+    var suggestedPattern: RhythmPattern?
+    var syncedToHeartbeat: Bool = true
+    var patternDensity: Float = 0.5
 
     private var energyLevel: Float = 0.5
 
@@ -311,10 +319,13 @@ class RhythmicIntelligence: ObservableObject {
 }
 
 // MARK: - Spectral Sculptor
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
-class SpectralSculptor: ObservableObject {
-    @Published var frequencyMask: [Float] = Array(repeating: 1.0, count: 64)
-    @Published var coherenceInfluence: Float = 0.5
+@MainActor
+@Observable
+final class SpectralSculptor {
+    var frequencyMask: [Float] = Array(repeating: 1.0, count: 64)
+    var coherenceInfluence: Float = 0.5
 
     func sculptWithCoherence(_ coherence: Float) {
         coherenceInfluence = coherence
@@ -338,15 +349,18 @@ class SpectralSculptor: ObservableObject {
 }
 
 // MARK: - Bio Sonifier
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
-class BioSonifier: ObservableObject {
-    @Published var heartbeatFrequency: Float = 64  // Hz (after transposition)
-    @Published var breathFrequency: Float = 51     // Hz (after transposition)
-    @Published var hrvModulation: Float = 410      // Hz (after transposition)
+@MainActor
+@Observable
+final class BioSonifier {
+    var heartbeatFrequency: Float = 64  // Hz (after transposition)
+    var breathFrequency: Float = 51     // Hz (after transposition)
+    var hrvModulation: Float = 410      // Hz (after transposition)
 
-    @Published var isHeartbeatAudible: Bool = true
-    @Published var isBreathAudible: Bool = true
-    @Published var isHRVAudible: Bool = false
+    var isHeartbeatAudible: Bool = true
+    var isBreathAudible: Bool = true
+    var isHRVAudible: Bool = false
 
     func updateFromBio(heartRate: Float, breathRate: Float, hrv: Float) {
         // Use octave transposition from UnifiedVisualSoundEngine
@@ -395,11 +409,14 @@ class BioSonifier: ObservableObject {
 }
 
 // MARK: - Quantum Composer
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
-class QuantumComposer: ObservableObject {
-    @Published var creativityLevel: Float = 0.5
-    @Published var superpositionStrength: Float = 0.5
-    @Published var lastCollapsedChoice: Int = 0
+@MainActor
+@Observable
+final class QuantumComposer {
+    var creativityLevel: Float = 0.5
+    var superpositionStrength: Float = 0.5
+    var lastCollapsedChoice: Int = 0
 
     func setCreativity(_ creativity: Float) {
         creativityLevel = creativity
@@ -430,11 +447,14 @@ class QuantumComposer: ObservableObject {
 }
 
 // MARK: - Flow Engine
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
-class FlowEngine: ObservableObject {
-    @Published var flowIntensity: Float = 0.5
-    @Published var liquidLightLevel: Float = 0.5
-    @Published var ultraFlowActive: Bool = false
+@MainActor
+@Observable
+final class FlowEngine {
+    var flowIntensity: Float = 0.5
+    var liquidLightLevel: Float = 0.5
+    var ultraFlowActive: Bool = false
 
     func setFlowState(coherence: Float, energy: Float) {
         // Calculate flow intensity
@@ -460,11 +480,14 @@ class FlowEngine: ObservableObject {
 }
 
 // MARK: - Spatializer
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
-class Spatializer: ObservableObject {
-    @Published var position: SIMD3<Float> = SIMD3(0, 0, -1)
-    @Published var rotation: Float = 0
-    @Published var coherenceBasedWidth: Float = 1.0
+@MainActor
+@Observable
+final class Spatializer {
+    var position: SIMD3<Float> = SIMD3(0, 0, -1)
+    var rotation: Float = 0
+    var coherenceBasedWidth: Float = 1.0
 
     func updateFromCoherence(_ coherence: Float) {
         // High coherence = focused center
@@ -489,11 +512,14 @@ class Spatializer: ObservableObject {
 }
 
 // MARK: - Time Stretcher
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
-class TimeStretcher: ObservableObject {
-    @Published var stretchFactor: Float = 1.0
-    @Published var breathSynced: Bool = true
-    @Published var currentPhase: Float = 0
+@MainActor
+@Observable
+final class TimeStretcher {
+    var stretchFactor: Float = 1.0
+    var breathSynced: Bool = true
+    var currentPhase: Float = 0
 
     func updateFromBreath(phase: Float) {
         currentPhase = phase
@@ -608,3 +634,15 @@ struct ToolCard: View {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension EchoelTools: ObservableObject { }
+extension HarmonicIntelligence: ObservableObject { }
+extension RhythmicIntelligence: ObservableObject { }
+extension SpectralSculptor: ObservableObject { }
+extension BioSonifier: ObservableObject { }
+extension QuantumComposer: ObservableObject { }
+extension FlowEngine: ObservableObject { }
+extension Spatializer: ObservableObject { }
+extension TimeStretcher: ObservableObject { }
