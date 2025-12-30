@@ -5,15 +5,17 @@ import Combine
 /// First-Time Experience - 30 Second "Aha Moment"
 /// Goal: User experiences bio-reactive audio-visual magic within 30 seconds
 /// No signup, no permissions required initially - instant gratification
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class FirstTimeExperience: ObservableObject {
+@Observable
+final class FirstTimeExperience {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var currentStep: OnboardingStep = .welcome
-    @Published var hasCompletedOnboarding: Bool = false
-    @Published var skipPermissions: Bool = false  // Allow usage without HealthKit
-    @Published var demoMode: Bool = true  // Start in demo mode
+    var currentStep: OnboardingStep = .welcome
+    var hasCompletedOnboarding: Bool = false
+    var skipPermissions: Bool = false  // Allow usage without HealthKit
+    var demoMode: Bool = true  // Start in demo mode
 
     // MARK: - Onboarding Steps (30 seconds total)
 
@@ -148,7 +150,9 @@ class FirstTimeExperience: ObservableObject {
             demoMode = false
         }
 
-        print("✅ First-Time Experience: Initialized")
+        #if DEBUG
+        debugLog("✅", "First-Time Experience: Initialized")
+        #endif
     }
 
     // MARK: - Navigation
@@ -172,7 +176,9 @@ class FirstTimeExperience: ObservableObject {
         hasCompletedOnboarding = true
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         demoMode = false
-        print("✅ Onboarding completed")
+        #if DEBUG
+        debugLog("✅", "Onboarding completed")
+        #endif
     }
 
     // MARK: - Demo Actions
@@ -180,12 +186,16 @@ class FirstTimeExperience: ObservableObject {
     func startInstantDemo() {
         // Launch instant demo (touch-reactive audio-visual)
         // No permissions required - uses touch input only
-        print("▶️ Instant Demo: Touch-reactive mode")
+        #if DEBUG
+        debugLog("▶️", "Instant Demo: Touch-reactive mode")
+        #endif
     }
 
     func launchPreset(_ preset: QuickStartPreset) {
         // Launch selected preset
-        print("🚀 Launching preset: \(preset.name)")
+        #if DEBUG
+        debugLog("🚀", "Launching preset: \(preset.name)")
+        #endif
     }
 
     // MARK: - Permission Flow
@@ -194,23 +204,31 @@ class FirstTimeExperience: ObservableObject {
         // Request permissions gracefully
         // Always offer "Skip" option - app works without permissions
 
+        #if DEBUG
         // HealthKit (optional)
-        print("📱 Requesting HealthKit permission (optional)")
+        debugLog("📱", "Requesting HealthKit permission (optional)")
 
         // Microphone (optional)
-        print("🎤 Requesting Microphone permission (optional)")
+        debugLog("🎤", "Requesting Microphone permission (optional)")
 
         // Camera (optional)
-        print("📷 Requesting Camera permission (optional)")
+        debugLog("📷", "Requesting Camera permission (optional)")
+        #endif
     }
 
     // MARK: - Accessibility
 
     func enableAccessibilityMode() {
         // Enable enhanced accessibility (VoiceOver, larger text, etc.)
-        print("♿️ Accessibility mode enabled")
+        #if DEBUG
+        debugLog("♿️", "Accessibility mode enabled")
+        #endif
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension FirstTimeExperience: ObservableObject { }
 
 // MARK: - SwiftUI Onboarding View
 
