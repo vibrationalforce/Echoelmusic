@@ -5,18 +5,20 @@ import Network
 /// Collaboration Engine - Ultra-Low-Latency Multiplayer with WebRTC
 /// Group Bio-Sync, Shared Metronome, Collective Coherence
 /// Target latency: <20ms LAN, <50ms Internet
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class CollaborationEngine: ObservableObject {
+@Observable
+final class CollaborationEngine {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isActive: Bool = false
-    @Published var currentSession: CollaborationSession?
-    @Published var participants: [Participant] = []
-    @Published var groupCoherence: Float = 0.0
-    @Published var averageHRV: Float = 0.0
-    @Published var connectionState: ConnectionState = .disconnected
-    @Published var latency: Int = 0 // milliseconds
+    var isActive: Bool = false
+    var currentSession: CollaborationSession?
+    var participants: [Participant] = []
+    var groupCoherence: Float = 0.0
+    var averageHRV: Float = 0.0
+    var connectionState: ConnectionState = .disconnected
+    var latency: Int = 0 // milliseconds
 
     // MARK: - WebRTC Configuration
 
@@ -75,7 +77,9 @@ class CollaborationEngine: ObservableObject {
             try await webRTCClient?.createOffer()
         }
 
-        print("✅ CollaborationEngine: Created session (host: \(host), code: \(session.roomCode))")
+        #if DEBUG
+        debugLog("✅", "CollaborationEngine: Created session (host: \(host), code: \(session.roomCode))")
+        #endif
     }
 
     func joinSession(sessionID: UUID) async throws {
@@ -93,7 +97,9 @@ class CollaborationEngine: ObservableObject {
         // Request to join session
         try await signalingClient?.joinRoom(sessionID: sessionID)
 
-        print("🔗 CollaborationEngine: Joining session \(sessionID)")
+        #if DEBUG
+        debugLog("🔗", "CollaborationEngine: Joining session \(sessionID)")
+        #endif
     }
 
     func joinWithCode(_ code: String) async throws {
@@ -108,7 +114,9 @@ class CollaborationEngine: ObservableObject {
 
         try await signalingClient?.joinWithCode(code)
 
-        print("🔗 CollaborationEngine: Joining with code \(code)")
+        #if DEBUG
+        debugLog("🔗", "CollaborationEngine: Joining with code \(code)")
+        #endif
     }
 
     func leaveSession() {
@@ -120,7 +128,9 @@ class CollaborationEngine: ObservableObject {
         isActive = false
         connectionState = .disconnected
 
-        print("👋 CollaborationEngine: Left session")
+        #if DEBUG
+        debugLog("👋", "CollaborationEngine: Left session")
+        #endif
     }
 
     // MARK: - Data Channels
@@ -164,7 +174,9 @@ class CollaborationEngine: ObservableObject {
         averageHRV = participantBio.map { $0.hrv }.reduce(0, +) / count
         groupCoherence = participantBio.map { $0.coherence }.reduce(0, +) / count
 
-        print("🧠 CollaborationEngine: Group HRV: \(averageHRV), Group Coherence: \(groupCoherence)")
+        #if DEBUG
+        debugLog("🧠", "CollaborationEngine: Group HRV: \(averageHRV), Group Coherence: \(groupCoherence)")
+        #endif
     }
 
     func identifyFlowLeader() -> UUID? {
@@ -222,11 +234,15 @@ extension CollaborationEngine: WebRTCClientDelegate {
         case .bio:
             if let bioData = try? JSONDecoder().decode(BioSyncData.self, from: data) {
                 // Update participant bio
-                print("📡 Received bio data: HRV=\(bioData.hrv), Coherence=\(bioData.coherence)")
+                #if DEBUG
+                debugLog("📡", "Received bio data: HRV=\(bioData.hrv), Coherence=\(bioData.coherence)")
+                #endif
             }
         case .chat:
             if let chatMessage = try? JSONDecoder().decode(ChatMessage.self, from: data) {
-                print("💬 \(chatMessage.text)")
+                #if DEBUG
+                debugLog("💬", chatMessage.text)
+                #endif
             }
         case .control:
             if String(data: data, encoding: .utf8) == "pong" {
@@ -336,36 +352,50 @@ class WebRTCClient {
 
     init(iceServers: [ICEServer]) {
         self.iceServers = iceServers
-        print("🔌 WebRTCClient: Initialized with \(iceServers.count) ICE servers")
+        #if DEBUG
+        debugLog("🔌", "WebRTCClient: Initialized with \(iceServers.count) ICE servers")
+        #endif
     }
 
     func createOffer() async throws {
         // In production: Create WebRTC offer SDP
-        print("📤 WebRTCClient: Creating offer")
+        #if DEBUG
+        debugLog("📤", "WebRTCClient: Creating offer")
+        #endif
     }
 
     func handleOffer(sdp: String) async throws {
         // In production: Set remote description, create answer
-        print("📥 WebRTCClient: Handling offer")
+        #if DEBUG
+        debugLog("📥", "WebRTCClient: Handling offer")
+        #endif
     }
 
     func handleAnswer(sdp: String) async throws {
         // In production: Set remote description
-        print("📥 WebRTCClient: Handling answer")
+        #if DEBUG
+        debugLog("📥", "WebRTCClient: Handling answer")
+        #endif
     }
 
     func addCandidate(_ candidate: ICECandidate) {
         // In production: Add ICE candidate
-        print("🧊 WebRTCClient: Adding ICE candidate")
+        #if DEBUG
+        debugLog("🧊", "WebRTCClient: Adding ICE candidate")
+        #endif
     }
 
     func sendData(_ data: Data, channel: DataChannel) {
         // In production: Send via data channel
-        print("📡 WebRTCClient: Sending \(data.count) bytes on \(channel.rawValue)")
+        #if DEBUG
+        debugLog("📡", "WebRTCClient: Sending \(data.count) bytes on \(channel.rawValue)")
+        #endif
     }
 
     func disconnect() {
-        print("🔌 WebRTCClient: Disconnecting")
+        #if DEBUG
+        debugLog("🔌", "WebRTCClient: Disconnecting")
+        #endif
     }
 }
 
@@ -385,35 +415,55 @@ class SignalingClient {
 
     init(url: String) {
         self.url = url
-        print("📡 SignalingClient: Initialized with \(url)")
+        #if DEBUG
+        debugLog("📡", "SignalingClient: Initialized with \(url)")
+        #endif
     }
 
     func connect() async throws {
         // In production: Connect to WebSocket
-        print("🔌 SignalingClient: Connecting to \(url)")
+        #if DEBUG
+        debugLog("🔌", "SignalingClient: Connecting to \(url)")
+        #endif
     }
 
     func joinRoom(sessionID: UUID) async throws {
-        print("🚪 SignalingClient: Joining room \(sessionID)")
+        #if DEBUG
+        debugLog("🚪", "SignalingClient: Joining room \(sessionID)")
+        #endif
     }
 
     func joinWithCode(_ code: String) async throws {
-        print("🚪 SignalingClient: Joining room with code \(code)")
+        #if DEBUG
+        debugLog("🚪", "SignalingClient: Joining room with code \(code)")
+        #endif
     }
 
     func sendOffer(sdp: String) async throws {
-        print("📤 SignalingClient: Sending offer")
+        #if DEBUG
+        debugLog("📤", "SignalingClient: Sending offer")
+        #endif
     }
 
     func sendAnswer(sdp: String) async throws {
-        print("📤 SignalingClient: Sending answer")
+        #if DEBUG
+        debugLog("📤", "SignalingClient: Sending answer")
+        #endif
     }
 
     func sendCandidate(_ candidate: ICECandidate) async throws {
-        print("📤 SignalingClient: Sending ICE candidate")
+        #if DEBUG
+        debugLog("📤", "SignalingClient: Sending ICE candidate")
+        #endif
     }
 
     func disconnect() {
-        print("🔌 SignalingClient: Disconnecting")
+        #if DEBUG
+        debugLog("🔌", "SignalingClient: Disconnecting")
+        #endif
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension CollaborationEngine: ObservableObject { }
