@@ -1,0 +1,52 @@
+/* Echoelmusic Localizable Strings - Swahili (Kiswahili) */
+
+/* App */
+"app.name" = "Echoelmusic";
+"app.tagline" = "pumzi → sauti";
+
+/* Onboarding */
+"onboarding.welcome" = "Karibu Echoelmusic";
+"onboarding.subtitle" = "Geuza majibu ya mwili kuwa muziki";
+"onboarding.getStarted" = "Anza";
+"onboarding.skip" = "Ruka";
+"onboarding.next" = "Ifuatayo";
+"onboarding.step1.title" = "Unganisha Mwili Wako";
+"onboarding.step1.description" = "Tumia Apple Watch, Polar H10, au pumzi yako kuunda muziki";
+"onboarding.step2.title" = "Hisi Mtiririko";
+"onboarding.step2.description" = "Kiwango cha moyo na HRV huunda sauti kwa wakati halisi";
+"onboarding.step3.title" = "Shiriki na Unganisha";
+"onboarding.step3.description" = "Tuma vikao vyako moja kwa moja au cheza na wanamuziki ulimwenguni";
+
+/* Session */
+"session.title" = "Kipindi";
+"session.start" = "Anza Kipindi";
+"session.stop" = "Simama";
+"session.pause" = "Simamisha";
+"session.resume" = "Endelea";
+"session.stats.duration" = "Muda";
+"session.stats.heartRate" = "Kiwango cha Moyo";
+"session.stats.hrv" = "HRV";
+"session.stats.coherence" = "Uwiano";
+"session.stats.bpm" = "BPM";
+"session.stats.ms" = "ms";
+
+/* Settings */
+"settings.title" = "Mipangilio";
+"settings.audio.title" = "Sauti";
+"settings.sensor.title" = "Sensori";
+"settings.accessibility.title" = "Ufikiaji";
+"settings.language.title" = "Lugha";
+
+/* Actions */
+"actions.ok" = "Sawa";
+"actions.cancel" = "Ghairi";
+"actions.save" = "Hifadhi";
+"actions.delete" = "Futa";
+"actions.done" = "Imekamilika";
+"actions.back" = "Rudi";
+"actions.close" = "Funga";
+"actions.settings" = "Mipangilio";
+
+/* Wellness */
+"wellness.disclaimer" = "Echoelmusic ni bidhaa ya ustawi, si kifaa cha matibabu. Haigundui, haitibu, au haizuii ugonjwa wowote. Wasiliana na mtoa huduma za afya kwa ushauri wa kimatibabu.";
+"wellness.notMedical" = "Si kifaa cha matibabu";
