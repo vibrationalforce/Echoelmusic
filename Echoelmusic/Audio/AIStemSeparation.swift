@@ -1076,13 +1076,15 @@ final class StemPostProcessor: Sendable {
 // MARK: - Main Stem Separation Engine
 
 /// Production-grade AI stem separation engine
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-public final class AIStemSeparationEngine: ObservableObject {
+@Observable
+public final class AIStemSeparationEngine {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published public var isProcessing = false
-    @Published public var progress = SeparationProgress(
+    public var isProcessing = false
+    public var progress = SeparationProgress(
         phase: .initializing,
         progress: 0,
         currentStem: nil,
@@ -1091,10 +1093,10 @@ public final class AIStemSeparationEngine: ObservableObject {
         totalSamples: 0,
         currentPassQuality: ""
     )
-    @Published public var separatedStems: [SeparatedStem] = []
-    @Published public var quality: SeparationQuality = .high
-    @Published public var selectedStems: Set<StemType> = [.vocals, .drums, .bass, .other]
-    @Published public var errorMessage: String?
+    public var separatedStems: [SeparatedStem] = []
+    public var quality: SeparationQuality = .high
+    public var selectedStems: Set<StemType> = [.vocals, .drums, .bass, .other]
+    public var errorMessage: String?
 
     // MARK: - Processing Components
 
@@ -2157,3 +2159,7 @@ struct MetricView: View {
         )
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension AIStemSeparationEngine: ObservableObject { }

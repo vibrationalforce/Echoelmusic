@@ -866,21 +866,23 @@ class BassGenerator {
 }
 
 // MARK: - Bio-Reactive AI Composer (Main Engine)
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
 @MainActor
-class BioReactiveAIComposer: ObservableObject {
+@Observable
+final class BioReactiveAIComposer {
 
-    // Published state
-    @Published var isGenerating = false
-    @Published var currentBioState: BioMusicalState = .flowState
-    @Published var currentPhrase: GeneratedPhrase?
-    @Published var generationHistory: [GeneratedPhrase] = []
-    @Published var config = AIGenerationConfig()
-    @Published var biometrics = BiometricInput()
+    // Observable state
+    var isGenerating = false
+    var currentBioState: BioMusicalState = .flowState
+    var currentPhrase: GeneratedPhrase?
+    var generationHistory: [GeneratedPhrase] = []
+    var config = AIGenerationConfig()
+    var biometrics = BiometricInput()
 
     // Tempo sync
-    @Published var currentTempo: Double = 90
-    @Published var isPlaying = false
+    var currentTempo: Double = 90
+    var isPlaying = false
 
     // Generation components
     private let melodyGenerator = MarkovMelodyGenerator()
@@ -1380,3 +1382,7 @@ struct ComposerSettingsView: View {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension BioReactiveAIComposer: ObservableObject { }

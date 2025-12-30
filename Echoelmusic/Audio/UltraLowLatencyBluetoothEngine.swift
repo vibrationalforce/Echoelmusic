@@ -323,14 +323,17 @@ public struct AudioRoute: Identifiable {
 // MARK: - Bluetooth Audio Session
 
 /// Audio session configuration for Bluetooth
-public class BluetoothAudioSession: ObservableObject {
+/// Migrated to @Observable for better performance (Swift 5.9+)
+@MainActor
+@Observable
+public final class BluetoothAudioSession {
 
-    @Published public var sampleRate: Double = 48000
-    @Published public var bufferSize: Int = 128
-    @Published public var inputChannels: Int = 2
-    @Published public var outputChannels: Int = 2
-    @Published public var isLowLatencyMode: Bool = true
-    @Published public var currentLatency: Double = 0
+    public var sampleRate: Double = 48000
+    public var bufferSize: Int = 128
+    public var inputChannels: Int = 2
+    public var outputChannels: Int = 2
+    public var isLowLatencyMode: Bool = true
+    public var currentLatency: Double = 0
 
     private var audioSession: AVAudioSession { AVAudioSession.sharedInstance() }
 
@@ -637,7 +640,9 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
         do {
             try audioSession.configureForBluetooth(codec: codec)
         } catch {
-            print("Failed to configure audio session: \(error)")
+            #if DEBUG
+            debugLog("❌", "Failed to configure audio session: \(error)")
+            #endif
         }
 
         // Update connected devices
@@ -869,14 +874,22 @@ extension UltraLowLatencyBluetoothEngine: CBCentralManagerDelegate {
         Task { @MainActor in
             switch central.state {
             case .poweredOn:
-                print("Bluetooth is powered on")
+                #if DEBUG
+                debugLog("✅", "Bluetooth is powered on")
+                #endif
             case .poweredOff:
-                print("Bluetooth is powered off")
+                #if DEBUG
+                debugLog("⚠️", "Bluetooth is powered off")
+                #endif
                 isScanning = false
             case .unauthorized:
-                print("Bluetooth is unauthorized")
+                #if DEBUG
+                debugLog("❌", "Bluetooth is unauthorized")
+                #endif
             case .unsupported:
-                print("Bluetooth is unsupported")
+                #if DEBUG
+                debugLog("❌", "Bluetooth is unsupported")
+                #endif
             default:
                 break
             }
@@ -959,14 +972,16 @@ extension UltraLowLatencyBluetoothEngine: CBCentralManagerDelegate {
 // MARK: - Bluetooth MIDI Controller
 
 /// Manages Bluetooth MIDI controllers
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-public final class BluetoothMIDIManager: ObservableObject {
+@Observable
+public final class BluetoothMIDIManager {
 
     public static let shared = BluetoothMIDIManager()
 
-    @Published public var discoveredControllers: [BluetoothAudioDevice] = []
-    @Published public var connectedControllers: [BluetoothAudioDevice] = []
-    @Published public var midiLatency: Double = 0
+    public var discoveredControllers: [BluetoothAudioDevice] = []
+    public var connectedControllers: [BluetoothAudioDevice] = []
+    public var midiLatency: Double = 0
 
     private var centralManager: CBCentralManager?
 
@@ -1439,3 +1454,8 @@ struct LatencySettingsView: View {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension BluetoothAudioSession: ObservableObject { }
+extension BluetoothMIDIManager: ObservableObject { }
