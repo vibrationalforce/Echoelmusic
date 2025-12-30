@@ -17,17 +17,19 @@ protocol UndoableCommand {
 // MARK: - Undo/Redo Manager
 /// Universal Undo/Redo system for Echoelmusic
 /// Supports audio editing, video editing, MIDI, and all other operations
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-final class UndoRedoManager: ObservableObject {
+@Observable
+final class UndoRedoManager {
 
     // MARK: - Singleton
     static let shared = UndoRedoManager()
 
-    // MARK: - Published State
-    @Published private(set) var canUndo: Bool = false
-    @Published private(set) var canRedo: Bool = false
-    @Published private(set) var undoActionName: String = ""
-    @Published private(set) var redoActionName: String = ""
+    // MARK: - Observable State
+    private(set) var canUndo: Bool = false
+    private(set) var canRedo: Bool = false
+    private(set) var undoActionName: String = ""
+    private(set) var redoActionName: String = ""
 
     // MARK: - Command Stacks
     private var undoStack: [UndoableCommand] = []
@@ -57,7 +59,9 @@ final class UndoRedoManager: ObservableObject {
         }
 
         updateState()
-        print("✅ Executed: \(command.actionName)")
+        #if DEBUG
+        debugLog("✅", "Executed: \(command.actionName)")
+        #endif
     }
 
     /// Undo the last action
@@ -68,7 +72,9 @@ final class UndoRedoManager: ObservableObject {
         redoStack.append(command)
 
         updateState()
-        print("↩️ Undo: \(command.actionName)")
+        #if DEBUG
+        debugLog("↩️", "Undo: \(command.actionName)")
+        #endif
     }
 
     /// Redo the last undone action
@@ -79,7 +85,9 @@ final class UndoRedoManager: ObservableObject {
         undoStack.append(command)
 
         updateState()
-        print("↪️ Redo: \(command.actionName)")
+        #if DEBUG
+        debugLog("↪️", "Redo: \(command.actionName)")
+        #endif
     }
 
     /// Clear all history
@@ -496,3 +504,8 @@ extension UndoRedoManager {
         updateState()
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows UndoRedoManager to work with older SwiftUI code expecting ObservableObject
+extension UndoRedoManager: ObservableObject { }

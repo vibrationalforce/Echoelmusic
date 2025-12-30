@@ -6,15 +6,17 @@ import CoreMotion
 /// Spatial Audio Engine with 3D/4D positioning and head tracking
 /// Supports iOS 15+ with runtime feature detection for iOS 19+ spatial audio
 /// Integrates with MIDIToSpatialMapper for bio-reactive spatial fields
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class SpatialAudioEngine: ObservableObject {
+@Observable
+final class SpatialAudioEngine {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isActive: Bool = false
-    @Published var currentMode: SpatialMode = .stereo
-    @Published var headTrackingEnabled: Bool = false
-    @Published var spatialSources: [SpatialSource] = []
+    var isActive: Bool = false
+    var currentMode: SpatialMode = .stereo
+    var headTrackingEnabled: Bool = false
+    var spatialSources: [SpatialSource] = []
 
     // MARK: - Audio Engine Components
 
@@ -101,7 +103,9 @@ class SpatialAudioEngine: ObservableObject {
         if #available(iOS 19.0, *) {
             setupEnvironmentNode()
         } else {
-            print("⚠️ iOS 19+ required for full spatial audio. Using stereo fallback.")
+            #if DEBUG
+            debugLog("⚠️", "iOS 19+ required for full spatial audio. Using stereo fallback.")
+            #endif
         }
     }
 
@@ -146,7 +150,9 @@ class SpatialAudioEngine: ObservableObject {
         try audioEngine.start()
         isActive = true
 
-        print("✅ SpatialAudioEngine started (mode: \(currentMode.rawValue))")
+        #if DEBUG
+        debugLog("✅", "SpatialAudioEngine started (mode: \(currentMode.rawValue))")
+        #endif
 
         // Enable head tracking if available
         if headTrackingEnabled {
@@ -161,7 +167,9 @@ class SpatialAudioEngine: ObservableObject {
         audioEngine.stop()
         isActive = false
 
-        print("🛑 SpatialAudioEngine stopped")
+        #if DEBUG
+        debugLog("🛑", "SpatialAudioEngine stopped")
+        #endif
     }
 
     // MARK: - Source Management
@@ -347,7 +355,9 @@ class SpatialAudioEngine: ObservableObject {
             }
         }
 
-        print("🌊 AFA field applied: \(geometry) (coherence: \(Int(coherence)))")
+        #if DEBUG
+        debugLog("🌊", "AFA field applied: \(geometry) (coherence: \(Int(coherence)))")
+        #endif
     }
 
     enum AFAFieldGeometry {
@@ -422,7 +432,9 @@ class SpatialAudioEngine: ObservableObject {
         manager.deviceMotionUpdateInterval = 1.0 / 60.0  // 60 Hz
 
         guard manager.isDeviceMotionAvailable else {
-            print("⚠️ Device motion not available")
+            #if DEBUG
+            debugLog("⚠️", "Device motion not available")
+            #endif
             return
         }
 
@@ -433,7 +445,9 @@ class SpatialAudioEngine: ObservableObject {
             self.updateListenerOrientation(attitude: motion.attitude)
         }
 
-        print("✅ Head tracking started")
+        #if DEBUG
+        debugLog("✅", "Head tracking started")
+        #endif
     }
 
     private func stopHeadTracking() {
@@ -467,7 +481,9 @@ class SpatialAudioEngine: ObservableObject {
             applyPositionToNode(id: source.id, position: source.position)
         }
 
-        print("🎚️ Spatial mode: \(mode.rawValue)")
+        #if DEBUG
+        debugLog("🎚️", "Spatial mode: \(mode.rawValue)")
+        #endif
     }
 
     // MARK: - Debug Info
@@ -483,3 +499,8 @@ class SpatialAudioEngine: ObservableObject {
         """
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows SpatialAudioEngine to work with older SwiftUI code expecting ObservableObject
+extension SpatialAudioEngine: ObservableObject { }
