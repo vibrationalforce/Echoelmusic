@@ -48,34 +48,36 @@ private struct CircularBuffer<T> {
 
 /// Manages multi-track audio recording with bio-signal integration
 /// Coordinates recording, playback, and real-time monitoring
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class RecordingEngine: ObservableObject {
+@Observable
+final class RecordingEngine {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
     /// Current session being recorded/played
-    @Published var currentSession: Session?
+    var currentSession: Session?
 
     // MARK: - Undo/Redo Integration
     private let undoManager = UndoRedoManager.shared
 
     /// Is currently recording
-    @Published var isRecording: Bool = false
+    var isRecording: Bool = false
 
     /// Is currently playing back
-    @Published var isPlaying: Bool = false
+    var isPlaying: Bool = false
 
     /// Current playback/recording position (seconds)
-    @Published var currentTime: TimeInterval = 0.0
+    var currentTime: TimeInterval = 0.0
 
     /// Recording level (0.0 - 1.0)
-    @Published var recordingLevel: Float = 0.0
+    var recordingLevel: Float = 0.0
 
     /// Real-time waveform data for current recording
-    @Published var recordingWaveform: [Float] = []
+    var recordingWaveform: [Float] = []
 
     /// Current track being recorded
-    @Published var currentTrackID: UUID?
+    var currentTrackID: UUID?
 
 
     // MARK: - Private Properties
@@ -111,7 +113,7 @@ class RecordingEngine: ObservableObject {
     // MARK: - Retrospective Capture (Ableton-style)
 
     /// Enable/disable retrospective capture
-    @Published var isRetrospectiveCaptureEnabled: Bool = true
+    var isRetrospectiveCaptureEnabled: Bool = true
 
     /// Duration of retrospective buffer (seconds) - configurable for mobile
     private let retrospectiveBufferDuration: TimeInterval = 60.0
@@ -120,7 +122,7 @@ class RecordingEngine: ObservableObject {
     private var retrospectiveBuffer: RetrospectiveBuffer?
 
     /// Whether there's content available to capture
-    @Published var hasRetrospectiveContent: Bool = false
+    var hasRetrospectiveContent: Bool = false
 
 
     // MARK: - Initialization
@@ -141,8 +143,10 @@ class RecordingEngine: ObservableObject {
             interleaved: false
         )!
 
-        print("📁 Recording engine initialized")
-        print("   Sessions directory: \(sessionsDirectory.path)")
+        #if DEBUG
+        debugLog("📁", "Recording engine initialized")
+        debugLog("📁", "   Sessions directory: \(sessionsDirectory.path)")
+        #endif
     }
 
 
@@ -151,7 +155,9 @@ class RecordingEngine: ObservableObject {
     /// Connect to main audio engine for audio routing
     func connectAudioEngine(_ audioEngine: AudioEngine) {
         self.mainAudioEngine = audioEngine
-        print("🔌 Connected to main audio engine")
+        #if DEBUG
+        debugLog("🔌", "Connected to main audio engine")
+        #endif
     }
 
 
@@ -175,7 +181,9 @@ class RecordingEngine: ObservableObject {
         session.name = name
         currentSession = session
 
-        print("🎵 Created session: \(name)")
+        #if DEBUG
+        debugLog("🎵", "Created session: \(name)")
+        #endif
         return session
     }
 
@@ -183,7 +191,9 @@ class RecordingEngine: ObservableObject {
     func loadSession(id: UUID) throws {
         let session = try Session.load(id: id)
         currentSession = session
-        print("📂 Loaded session: \(session.name)")
+        #if DEBUG
+        debugLog("📂", "Loaded session: \(session.name)")
+        #endif
     }
 
     /// Save current session
@@ -193,7 +203,9 @@ class RecordingEngine: ObservableObject {
         }
 
         try session.save()
-        print("💾 Saved session: \(session.name)")
+        #if DEBUG
+        debugLog("💾", "Saved session: \(session.name)")
+        #endif
     }
 
 
@@ -242,7 +254,9 @@ class RecordingEngine: ObservableObject {
         // Start timer for position updates
         startTimer()
 
-        print("🔴 Started recording: \(track.name)")
+        #if DEBUG
+        debugLog("🔴", "Started recording: \(track.name)")
+        #endif
     }
 
     /// Setup audio engine tap for recording
@@ -264,7 +278,9 @@ class RecordingEngine: ObservableObject {
         }
 
         try engine.start()
-        print("🎙️ Audio recording engine started")
+        #if DEBUG
+        debugLog("🎙️", "Audio recording engine started")
+        #endif
     }
 
     /// Process incoming audio buffer during recording
@@ -341,7 +357,9 @@ class RecordingEngine: ObservableObject {
         recordingLevel = 0.0
         currentTrackID = nil
 
-        print("⏹️ Stopped recording")
+        #if DEBUG
+        debugLog("⏹️", "Stopped recording")
+        #endif
     }
 
 
@@ -360,7 +378,9 @@ class RecordingEngine: ObservableObject {
         isPlaying = true
         startTimer()
 
-        print("▶️ Started playback: \(session.name)")
+        #if DEBUG
+        debugLog("▶️", "Started playback: \(session.name)")
+        #endif
     }
 
     /// Stop playback
@@ -369,7 +389,9 @@ class RecordingEngine: ObservableObject {
         stopTimer()
         currentTime = 0.0
 
-        print("⏹️ Stopped playback")
+        #if DEBUG
+        debugLog("⏹️", "Stopped playback")
+        #endif
     }
 
     /// Pause playback
@@ -377,7 +399,9 @@ class RecordingEngine: ObservableObject {
         isPlaying = false
         stopTimer()
 
-        print("⏸️ Paused playback at \(currentTime)s")
+        #if DEBUG
+        debugLog("⏸️", "Paused playback at \(currentTime)s")
+        #endif
     }
 
     /// Seek to position
@@ -385,7 +409,9 @@ class RecordingEngine: ObservableObject {
         guard let session = currentSession else { return }
 
         currentTime = max(0, min(time, session.duration))
-        print("⏩ Seeked to \(currentTime)s")
+        #if DEBUG
+        debugLog("⏩", "Seeked to \(currentTime)s")
+        #endif
     }
 
 
@@ -540,7 +566,9 @@ class RecordingEngine: ObservableObject {
         )
 
         undoManager.execute(command)
-        print("🗑️ Deleted track (undoable)")
+        #if DEBUG
+        debugLog("🗑️", "Deleted track (undoable)")
+        #endif
     }
 
     // MARK: - Undo/Redo Convenience Methods
@@ -623,7 +651,9 @@ extension RecordingEngine {
             sampleRate: sampleRate,
             channels: channels
         )
-        print("📼 Retrospective capture enabled (\(Int(retrospectiveBufferDuration))s buffer)")
+        #if DEBUG
+        debugLog("📼", "Retrospective capture enabled (\(Int(retrospectiveBufferDuration))s buffer)")
+        #endif
     }
 
     /// Feed audio to retrospective buffer (call from audio tap)
@@ -684,7 +714,9 @@ extension RecordingEngine {
         retrospective.clear()
         hasRetrospectiveContent = false
 
-        print("✨ Captured retrospective audio as '\(track.name)' (\(String(format: "%.1f", track.duration))s)")
+        #if DEBUG
+        debugLog("✨", "Captured retrospective audio as '\(track.name)' (\(String(format: "%.1f", track.duration))s)")
+        #endif
     }
 
     /// Clear retrospective buffer without capturing
@@ -792,3 +824,8 @@ enum RecordingError: LocalizedError {
         }
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows RecordingEngine to work with older SwiftUI code expecting ObservableObject
+extension RecordingEngine: ObservableObject { }

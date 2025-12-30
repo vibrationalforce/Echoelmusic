@@ -1,0 +1,122 @@
+/* Echoelmusic Localizable Strings - Chinese Simplified (简体中文) */
+
+/* App */
+"app.name" = "Echoelmusic";
+"app.tagline" = "呼吸 → 声音";
+
+/* Onboarding */
+"onboarding.welcome" = "欢迎使用 Echoelmusic";
+"onboarding.subtitle" = "将您的生物反馈转化为音乐";
+"onboarding.getStarted" = "开始使用";
+"onboarding.skip" = "跳过";
+"onboarding.next" = "下一步";
+"onboarding.step1.title" = "连接您的身体";
+"onboarding.step1.description" = "使用 Apple Watch、Polar H10 或您的呼吸来创作音乐";
+"onboarding.step2.title" = "感受心流";
+"onboarding.step2.description" = "您的心率和心率变异性实时塑造声音";
+"onboarding.step3.title" = "分享与连接";
+"onboarding.step3.description" = "直播您的创作或与全球音乐家即兴演奏";
+
+/* Permissions */
+"permissions.title" = "权限";
+"permissions.microphone.title" = "麦克风访问";
+"permissions.microphone.description" = "检测您的呼吸和声音来创作音乐";
+"permissions.microphone.denied" = "麦克风访问被拒绝。请在设置中启用。";
+"permissions.healthkit.title" = "健康访问";
+"permissions.healthkit.description" = "从 Apple Watch 读取心率和心率变异性";
+"permissions.healthkit.denied" = "健康访问被拒绝。请启用演示模式或在设置中授权。";
+"permissions.bluetooth.title" = "蓝牙访问";
+"permissions.bluetooth.description" = "连接 Polar H10 或其他心率传感器";
+
+/* Session */
+"session.title" = "会话";
+"session.start" = "开始会话";
+"session.stop" = "停止";
+"session.pause" = "暂停";
+"session.resume" = "继续";
+"session.stats.duration" = "时长";
+"session.stats.heartRate" = "心率";
+"session.stats.hrv" = "心率变异性";
+"session.stats.coherence" = "一致性";
+"session.stats.bpm" = "次/分";
+"session.stats.ms" = "毫秒";
+
+/* Settings */
+"settings.title" = "设置";
+"settings.audio.title" = "音频";
+"settings.audio.output" = "输出设备";
+"settings.audio.latency" = "延迟";
+"settings.audio.binauralBeats" = "双耳节拍";
+"settings.audio.spatialAudio" = "空间音频";
+"settings.sensor.title" = "传感器";
+"settings.sensor.appleWatch" = "Apple Watch";
+"settings.sensor.polarH10" = "Polar H10";
+"settings.sensor.microphone" = "麦克风（呼吸）";
+"settings.sensor.demoMode" = "演示模式";
+"settings.accessibility.title" = "辅助功能";
+"settings.accessibility.audioHaptic" = "音频转触觉";
+"settings.accessibility.signLanguage" = "手语";
+"settings.accessibility.eyeTracking" = "眼动追踪";
+"settings.accessibility.reduceMotion" = "减少动态效果";
+"settings.language.title" = "语言";
+"settings.language.systemDefault" = "系统默认";
+
+/* Streaming */
+"streaming.title" = "直播";
+"streaming.goLive" = "开始直播";
+"streaming.endStream" = "结束直播";
+"streaming.viewers" = "观众";
+"streaming.quality" = "质量";
+"streaming.platforms.youtube" = "YouTube";
+"streaming.platforms.twitch" = "Twitch";
+"streaming.platforms.facebook" = "Facebook";
+"streaming.platforms.tiktok" = "抖音";
+"streaming.platforms.custom" = "自定义 RTMP";
+
+/* Collaboration */
+"collaboration.title" = "即兴演奏";
+"collaboration.findSession" = "查找会话";
+"collaboration.createSession" = "创建会话";
+"collaboration.quickJoin" = "快速加入";
+"collaboration.leave" = "离开";
+"collaboration.participants" = "参与者";
+"collaboration.latency" = "延迟";
+"collaboration.genres.rock" = "摇滚";
+"collaboration.genres.jazz" = "爵士";
+"collaboration.genres.electronic" = "电子";
+"collaboration.genres.classical" = "古典";
+"collaboration.genres.world" = "世界音乐";
+"collaboration.genres.ambient" = "氛围";
+
+/* Visualization */
+"visualization.title" = "可视化";
+"visualization.particles" = "粒子";
+"visualization.cymatics" = "声波图形";
+"visualization.waveform" = "波形";
+"visualization.spectral" = "频谱";
+"visualization.mandala" = "曼陀罗";
+
+/* Errors */
+"errors.generic" = "出现错误";
+"errors.network" = "网络连接失败";
+"errors.audio" = "音频系统错误";
+"errors.healthkit" = "无法访问健康数据";
+"errors.bluetooth" = "蓝牙连接失败";
+"errors.tryAgain" = "重试";
+"errors.dismiss" = "关闭";
+
+/* Actions */
+"actions.ok" = "好";
+"actions.cancel" = "取消";
+"actions.save" = "保存";
+"actions.delete" = "删除";
+"actions.edit" = "编辑";
+"actions.share" = "分享";
+"actions.done" = "完成";
+"actions.back" = "返回";
+"actions.close" = "关闭";
+"actions.settings" = "设置";
+
+/* Wellness */
+"wellness.disclaimer" = "Echoelmusic 是一款健康产品，而非医疗设备。它不能诊断、治疗或预防任何疾病。如需医疗建议，请咨询医疗保健提供者。";
+"wellness.notMedical" = "非医疗设备";

@@ -12,25 +12,27 @@ import Combine
 /// - Real-time mixing and effects
 ///
 /// This class acts as the central hub for all audio processing in Echoelmusic
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class AudioEngine: ObservableObject {
+@Observable
+final class AudioEngine {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
     /// Whether the audio engine is currently running
-    @Published var isRunning: Bool = false
+    var isRunning: Bool = false
 
     /// Whether binaural beats are enabled
-    @Published var binauralBeatsEnabled: Bool = false
+    var binauralBeatsEnabled: Bool = false
 
     /// Whether spatial audio is enabled
-    @Published var spatialAudioEnabled: Bool = false
+    var spatialAudioEnabled: Bool = false
 
     /// Current binaural beat state
-    @Published var currentBrainwaveState: BinauralBeatGenerator.BrainwaveState = .alpha
+    var currentBrainwaveState: BinauralBeatGenerator.BrainwaveState = .alpha
 
     /// Binaural beat amplitude (0.0 - 1.0)
-    @Published var binauralAmplitude: Float = 0.3
+    var binauralAmplitude: Float = 0.3
 
 
     // MARK: - Audio Components
@@ -74,9 +76,13 @@ class AudioEngine: ObservableObject {
         // Configure audio session for optimal performance
         do {
             try AudioConfiguration.configureAudioSession()
-            print(AudioConfiguration.latencyStats())
+            #if DEBUG
+            debugLog("🎵", AudioConfiguration.latencyStats())
+            #endif
         } catch {
-            print("⚠️  Failed to configure audio session: \(error)")
+            #if DEBUG
+            debugLog("⚠️", "Failed to configure audio session: \(error)")
+            #endif
         }
 
         // Set real-time audio thread priority
@@ -104,7 +110,9 @@ class AudioEngine: ObservableObject {
                 deviceCapabilities: capabilities
             )
         } else {
-            print("⚠️  Spatial audio engine requires iOS 15+")
+            #if DEBUG
+            debugLog("⚠️", "Spatial audio engine requires iOS 15+")
+            #endif
         }
 
         // Start monitoring device capabilities
@@ -113,10 +121,12 @@ class AudioEngine: ObservableObject {
         // Initialize node graph with default biofeedback chain
         nodeGraph = NodeGraph.createBiofeedbackChain()
 
-        print("🎵 AudioEngine initialized")
-        print("   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "✅" : "❌")")
-        print("   Head Tracking: \(headTrackingManager?.isAvailable == true ? "✅" : "❌")")
-        print("   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")
+        #if DEBUG
+        debugLog("🎵", "AudioEngine initialized")
+        debugLog("🎵", "   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "✅" : "❌")")
+        debugLog("🎵", "   Head Tracking: \(headTrackingManager?.isAvailable == true ? "✅" : "❌")")
+        debugLog("🎵", "   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")
+        #endif
     }
 
 
@@ -136,9 +146,13 @@ class AudioEngine: ObservableObject {
         if spatialAudioEnabled, let spatial = spatialAudioEngine {
             do {
                 try spatial.start()
-                print("🎵 Spatial audio started")
+                #if DEBUG
+                debugLog("🎵", "Spatial audio started")
+                #endif
             } catch {
-                print("❌ Failed to start spatial audio: \(error)")
+                #if DEBUG
+                debugLog("❌", "Failed to start spatial audio: \(error)")
+                #endif
                 spatialAudioEnabled = false
             }
         }
@@ -147,7 +161,9 @@ class AudioEngine: ObservableObject {
         startBioParameterMapping()
 
         isRunning = true
-        print("🎵 AudioEngine started")
+        #if DEBUG
+        debugLog("🎵", "AudioEngine started")
+        #endif
     }
 
     /// Stop the audio engine
@@ -165,7 +181,9 @@ class AudioEngine: ObservableObject {
         stopBioParameterMapping()
 
         isRunning = false
-        print("🎵 AudioEngine stopped")
+        #if DEBUG
+        debugLog("🎵", "AudioEngine stopped")
+        #endif
     }
 
     /// Toggle binaural beats on/off
@@ -174,10 +192,14 @@ class AudioEngine: ObservableObject {
 
         if binauralBeatsEnabled {
             binauralGenerator.start()
-            print("🔊 Binaural beats enabled")
+            #if DEBUG
+            debugLog("🔊", "Binaural beats enabled")
+            #endif
         } else {
             binauralGenerator.stop()
-            print("🔇 Binaural beats disabled")
+            #if DEBUG
+            debugLog("🔇", "Binaural beats disabled")
+            #endif
         }
     }
 
@@ -219,18 +241,26 @@ class AudioEngine: ObservableObject {
             if let spatial = spatialAudioEngine {
                 do {
                     try spatial.start()
-                    print("🎵 Spatial audio enabled")
+                    #if DEBUG
+                    debugLog("🎵", "Spatial audio enabled")
+                    #endif
                 } catch {
-                    print("❌ Failed to enable spatial audio: \(error)")
+                    #if DEBUG
+                    debugLog("❌", "Failed to enable spatial audio: \(error)")
+                    #endif
                     spatialAudioEnabled = false
                 }
             } else {
-                print("⚠️  Spatial audio not available")
+                #if DEBUG
+                debugLog("⚠️", "Spatial audio not available")
+                #endif
                 spatialAudioEnabled = false
             }
         } else {
             spatialAudioEngine?.stop()
-            print("🎵 Spatial audio disabled")
+            #if DEBUG
+            debugLog("🎵", "Spatial audio disabled")
+            #endif
         }
     }
 
@@ -238,13 +268,11 @@ class AudioEngine: ObservableObject {
     /// - Parameter healthKitManager: HealthKit manager instance
     func connectHealthKit(_ healthKitManager: HealthKitManager) {
         self.healthKitManager = healthKitManager
-
-        // Subscribe to HRV coherence changes
-        healthKitManager.$hrvCoherence
-            .sink { [weak self] coherence in
-                self?.adaptToBiofeedback(coherence: coherence)
-            }
-            .store(in: &cancellables)
+        #if DEBUG
+        debugLog("🔗", "Connected HealthKit manager for biofeedback")
+        #endif
+        // Note: HRV coherence updates are now handled via polling in updateBioParameters()
+        // since @Observable doesn't use Combine $ publishers
     }
 
 
@@ -274,7 +302,9 @@ class AudioEngine: ObservableObject {
     /// Start bio-parameter mapping (HRV/HR → Audio)
     private func startBioParameterMapping() {
         guard let healthKit = healthKitManager else {
-            print("⚠️  Bio-parameter mapping: HealthKit not connected")
+            #if DEBUG
+            debugLog("⚠️", "Bio-parameter mapping: HealthKit not connected")
+            #endif
             return
         }
 
@@ -286,13 +316,17 @@ class AudioEngine: ObservableObject {
             }
             .store(in: &cancellables)
 
-        print("🎛️  Bio-parameter mapping started")
+        #if DEBUG
+        debugLog("🎛️", "Bio-parameter mapping started")
+        #endif
     }
 
     /// Stop bio-parameter mapping
     private func stopBioParameterMapping() {
         // Cancellables will be cleared when engine stops
-        print("🎛️  Bio-parameter mapping stopped")
+        #if DEBUG
+        debugLog("🎛️", "Bio-parameter mapping stopped")
+        #endif
     }
 
     /// Update bio-parameters from current biometric data
@@ -312,6 +346,9 @@ class AudioEngine: ObservableObject {
             voicePitch: voicePitch,
             audioLevel: audioLevel
         )
+
+        // Adapt binaural beats to coherence (replaces Combine subscription)
+        adaptToBiofeedback(coherence: hrvCoherence)
 
         // Apply mapped parameters to audio engine
         applyBioParameters()
@@ -377,3 +414,8 @@ class AudioEngine: ObservableObject {
         bioParameterMapper.parameterSummary
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows AudioEngine to work with older SwiftUI code expecting ObservableObject
+extension AudioEngine: ObservableObject { }

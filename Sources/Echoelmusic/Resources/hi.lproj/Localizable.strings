@@ -1,0 +1,122 @@
+/* Echoelmusic Localizable Strings - Hindi (हिंदी) */
+
+/* App */
+"app.name" = "Echoelmusic";
+"app.tagline" = "साँस → ध्वनि";
+
+/* Onboarding */
+"onboarding.welcome" = "Echoelmusic में आपका स्वागत है";
+"onboarding.subtitle" = "अपने बायोफीडबैक को संगीत में बदलें";
+"onboarding.getStarted" = "शुरू करें";
+"onboarding.skip" = "छोड़ें";
+"onboarding.next" = "अगला";
+"onboarding.step1.title" = "अपने शरीर को जोड़ें";
+"onboarding.step1.description" = "संगीत बनाने के लिए Apple Watch, Polar H10 या अपनी साँस का उपयोग करें";
+"onboarding.step2.title" = "प्रवाह महसूस करें";
+"onboarding.step2.description" = "आपकी हृदय गति और HRV वास्तविक समय में ध्वनि को आकार देते हैं";
+"onboarding.step3.title" = "साझा करें और जुड़ें";
+"onboarding.step3.description" = "अपने सत्र स्ट्रीम करें या दुनिया भर के संगीतकारों के साथ जैम करें";
+
+/* Permissions */
+"permissions.title" = "अनुमतियाँ";
+"permissions.microphone.title" = "माइक्रोफ़ोन एक्सेस";
+"permissions.microphone.description" = "संगीत बनाने के लिए अपनी साँस और आवाज़ का पता लगाएं";
+"permissions.microphone.denied" = "माइक्रोफ़ोन एक्सेस अस्वीकृत। कृपया सेटिंग्स में सक्षम करें।";
+"permissions.healthkit.title" = "स्वास्थ्य एक्सेस";
+"permissions.healthkit.description" = "Apple Watch से हृदय गति और HRV पढ़ें";
+"permissions.healthkit.denied" = "स्वास्थ्य एक्सेस अस्वीकृत। डेमो मोड सक्षम करें या सेटिंग्स में एक्सेस दें।";
+"permissions.bluetooth.title" = "ब्लूटूथ एक्सेस";
+"permissions.bluetooth.description" = "Polar H10 या अन्य हृदय गति सेंसर से कनेक्ट करें";
+
+/* Session */
+"session.title" = "सत्र";
+"session.start" = "सत्र शुरू करें";
+"session.stop" = "रोकें";
+"session.pause" = "विराम";
+"session.resume" = "जारी रखें";
+"session.stats.duration" = "अवधि";
+"session.stats.heartRate" = "हृदय गति";
+"session.stats.hrv" = "HRV";
+"session.stats.coherence" = "सामंजस्य";
+"session.stats.bpm" = "BPM";
+"session.stats.ms" = "मि.से.";
+
+/* Settings */
+"settings.title" = "सेटिंग्स";
+"settings.audio.title" = "ऑडियो";
+"settings.audio.output" = "आउटपुट डिवाइस";
+"settings.audio.latency" = "विलंबता";
+"settings.audio.binauralBeats" = "बाइनॉरल बीट्स";
+"settings.audio.spatialAudio" = "स्थानिक ऑडियो";
+"settings.sensor.title" = "सेंसर";
+"settings.sensor.appleWatch" = "Apple Watch";
+"settings.sensor.polarH10" = "Polar H10";
+"settings.sensor.microphone" = "माइक्रोफ़ोन (साँस)";
+"settings.sensor.demoMode" = "डेमो मोड";
+"settings.accessibility.title" = "पहुँच";
+"settings.accessibility.audioHaptic" = "ऑडियो-टू-हैप्टिक";
+"settings.accessibility.signLanguage" = "सांकेतिक भाषा";
+"settings.accessibility.eyeTracking" = "आई ट्रैकिंग";
+"settings.accessibility.reduceMotion" = "गति कम करें";
+"settings.language.title" = "भाषा";
+"settings.language.systemDefault" = "सिस्टम डिफ़ॉल्ट";
+
+/* Streaming */
+"streaming.title" = "लाइव स्ट्रीमिंग";
+"streaming.goLive" = "लाइव जाएं";
+"streaming.endStream" = "स्ट्रीम समाप्त करें";
+"streaming.viewers" = "दर्शक";
+"streaming.quality" = "गुणवत्ता";
+"streaming.platforms.youtube" = "YouTube";
+"streaming.platforms.twitch" = "Twitch";
+"streaming.platforms.facebook" = "Facebook";
+"streaming.platforms.tiktok" = "TikTok";
+"streaming.platforms.custom" = "कस्टम RTMP";
+
+/* Collaboration */
+"collaboration.title" = "जैम सत्र";
+"collaboration.findSession" = "सत्र खोजें";
+"collaboration.createSession" = "सत्र बनाएं";
+"collaboration.quickJoin" = "जल्दी जुड़ें";
+"collaboration.leave" = "छोड़ें";
+"collaboration.participants" = "प्रतिभागी";
+"collaboration.latency" = "विलंबता";
+"collaboration.genres.rock" = "रॉक";
+"collaboration.genres.jazz" = "जैज़";
+"collaboration.genres.electronic" = "इलेक्ट्रॉनिक";
+"collaboration.genres.classical" = "शास्त्रीय";
+"collaboration.genres.world" = "विश्व संगीत";
+"collaboration.genres.ambient" = "एम्बिएंट";
+
+/* Visualization */
+"visualization.title" = "विज़ुअलाइज़ेशन";
+"visualization.particles" = "कण";
+"visualization.cymatics" = "साइमैटिक्स";
+"visualization.waveform" = "तरंग";
+"visualization.spectral" = "स्पेक्ट्रल";
+"visualization.mandala" = "मंडला";
+
+/* Errors */
+"errors.generic" = "कुछ गलत हो गया";
+"errors.network" = "नेटवर्क कनेक्शन विफल";
+"errors.audio" = "ऑडियो सिस्टम त्रुटि";
+"errors.healthkit" = "स्वास्थ्य डेटा तक पहुँच नहीं हो सकी";
+"errors.bluetooth" = "ब्लूटूथ कनेक्शन विफल";
+"errors.tryAgain" = "पुनः प्रयास करें";
+"errors.dismiss" = "खारिज करें";
+
+/* Actions */
+"actions.ok" = "ठीक है";
+"actions.cancel" = "रद्द करें";
+"actions.save" = "सहेजें";
+"actions.delete" = "हटाएं";
+"actions.edit" = "संपादित करें";
+"actions.share" = "साझा करें";
+"actions.done" = "हो गया";
+"actions.back" = "वापस";
+"actions.close" = "बंद करें";
+"actions.settings" = "सेटिंग्स";
+
+/* Wellness */
+"wellness.disclaimer" = "Echoelmusic एक वेलनेस उत्पाद है, चिकित्सा उपकरण नहीं। यह किसी भी बीमारी का निदान, उपचार या रोकथाम नहीं करता। चिकित्सा सलाह के लिए स्वास्थ्य सेवा प्रदाता से परामर्श करें।";
+"wellness.notMedical" = "चिकित्सा उपकरण नहीं";
