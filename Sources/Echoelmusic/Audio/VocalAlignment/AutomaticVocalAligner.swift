@@ -19,24 +19,26 @@ import Combine
 /// - ADR (Automated Dialogue Replacement)
 /// - Podcast/interview alignment
 /// - Choir/ensemble tightening
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class AutomaticVocalAligner: ObservableObject {
+@Observable
+final class AutomaticVocalAligner {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isProcessing: Bool = false
-    @Published var progress: Float = 0.0
-    @Published var guideTrack: VocalTrack?
-    @Published var dubTracks: [VocalTrack] = []
-    @Published var alignmentResults: [UUID: AlignmentResult] = [:]
+    var isProcessing: Bool = false
+    var progress: Float = 0.0
+    var guideTrack: VocalTrack?
+    var dubTracks: [VocalTrack] = []
+    var alignmentResults: [UUID: AlignmentResult] = [:]
 
     // MARK: - Alignment Settings
 
-    @Published var tightness: Float = 0.8        // 0.0 = loose, 1.0 = tight
-    @Published var preserveFormants: Bool = true
-    @Published var maxStretch: Float = 2.0       // Maximum time-stretch ratio
-    @Published var analysisWindowMs: Float = 50  // Analysis window size
-    @Published var hopSizeMs: Float = 10         // Hop size between windows
+    var tightness: Float = 0.8        // 0.0 = loose, 1.0 = tight
+    var preserveFormants: Bool = true
+    var maxStretch: Float = 2.0       // Maximum time-stretch ratio
+    var analysisWindowMs: Float = 50  // Analysis window size
+    var hopSizeMs: Float = 10         // Hop size between windows
 
     // MARK: - Types
 
@@ -82,8 +84,10 @@ class AutomaticVocalAligner: ObservableObject {
 
     init() {
         setupAudioEngine()
-        print("✅ AutomaticVocalAligner: Initialized")
-        print("🎤 Professional Vocal Alignment Ready")
+        #if DEBUG
+        debugLog("✅", "AutomaticVocalAligner: Initialized")
+        debugLog("🎤", "Professional Vocal Alignment Ready")
+        #endif
     }
 
     deinit {
@@ -123,7 +127,9 @@ class AutomaticVocalAligner: ObservableObject {
             guideTrack = guide
         }
 
-        print("🎤 Guide track loaded: \(track.name) (\(String(format: "%.1f", track.duration))s)")
+        #if DEBUG
+        debugLog("🎤", "Guide track loaded: \(track.name) (\(String(format: "%.1f", track.duration))s)")
+        #endif
     }
 
     func addDubTrack(from url: URL) async throws {
@@ -136,7 +142,9 @@ class AutomaticVocalAligner: ObservableObject {
 
         dubTracks.append(analyzedTrack)
 
-        print("🎤 Dub track added: \(track.name) (\(String(format: "%.1f", track.duration))s)")
+        #if DEBUG
+        debugLog("🎤", "Dub track added: \(track.name) (\(String(format: "%.1f", track.duration))s)")
+        #endif
     }
 
     private func loadAudioFile(url: URL, name: String) async throws -> VocalTrack {
@@ -184,14 +192,18 @@ class AutomaticVocalAligner: ObservableObject {
             let result = try await alignTrack(dub: dubTrack, to: guide)
             alignmentResults[dubTrack.id] = result
 
-            print("✅ Aligned: \(dubTrack.name) (Quality: \(String(format: "%.1f", result.qualityScore))%)")
+            #if DEBUG
+            debugLog("✅", "Aligned: \(dubTrack.name) (Quality: \(String(format: "%.1f", result.qualityScore))%)")
+            #endif
         }
 
         progress = 1.0
         isProcessing = false
 
         let totalTime = Date().timeIntervalSince(startTime)
-        print("🎤 All tracks aligned in \(String(format: "%.2f", totalTime))s")
+        #if DEBUG
+        debugLog("🎤", "All tracks aligned in \(String(format: "%.2f", totalTime))s")
+        #endif
     }
 
     /// Align a single dub track to the guide
@@ -659,7 +671,9 @@ class AutomaticVocalAligner: ObservableObject {
         let audioFile = try AVAudioFile(forWriting: url, settings: settings)
         try audioFile.write(from: buffer)
 
-        print("✅ Exported aligned track to: \(url.lastPathComponent)")
+        #if DEBUG
+        debugLog("✅", "Exported aligned track to: \(url.lastPathComponent)")
+        #endif
     }
 
     // MARK: - Errors
@@ -690,3 +704,7 @@ class AutomaticVocalAligner: ObservableObject {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension AutomaticVocalAligner: ObservableObject { }
