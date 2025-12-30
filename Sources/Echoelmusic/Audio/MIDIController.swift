@@ -3,14 +3,16 @@ import CoreMIDI
 import Combine
 
 /// MIDI controller support for external hardware control
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class MIDIController: ObservableObject {
+@Observable
+final class MIDIController {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
-    @Published var isConnected: Bool = false
-    @Published var connectedDevices: [MIDIDevice] = []
-    @Published var lastMIDIMessage: MIDIMessage?
+    var isConnected: Bool = false
+    var connectedDevices: [MIDIDevice] = []
+    var lastMIDIMessage: MIDIMessage?
 
     // MARK: - MIDI Device Model
 
@@ -112,7 +114,9 @@ class MIDIController: ObservableObject {
         // Create MIDI client
         status = MIDIClientCreate("Echoelmusic" as CFString, nil, nil, &midiClient)
         guard status == noErr else {
-            print("❌ Failed to create MIDI client: \(status)")
+            #if DEBUG
+            debugLog("❌", "Failed to create MIDI client: \(status)")
+            #endif
             return
         }
 
@@ -132,14 +136,18 @@ class MIDIController: ObservableObject {
         )
 
         guard status == noErr else {
-            print("❌ Failed to create MIDI input port: \(status)")
+            #if DEBUG
+            debugLog("❌", "Failed to create MIDI input port: \(status)")
+            #endif
             return
         }
 
         // Connect to all sources
         connectToAllSources()
 
-        print("🎹 MIDI controller initialized")
+        #if DEBUG
+        debugLog("🎹", "MIDI controller initialized")
+        #endif
     }
 
     // MARK: - MIDI Connection
@@ -355,3 +363,8 @@ extension MIDIController {
         }
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows MIDIController to work with older SwiftUI code expecting ObservableObject
+extension MIDIController: ObservableObject { }

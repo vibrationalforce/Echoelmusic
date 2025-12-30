@@ -4,12 +4,14 @@ import CoreML
 /// AI Composer - CoreML-powered Music Generation
 /// Melody generation, chord progression suggestions, drum patterns
 /// Bio-Data → Music Style mapping
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class AIComposer: ObservableObject {
+@Observable
+final class AIComposer {
 
-    @Published var isGenerating: Bool = false
-    @Published var generatedMelody: [Note] = []
-    @Published var suggestedChords: [Chord] = []
+    var isGenerating: Bool = false
+    var generatedMelody: [Note] = []
+    var suggestedChords: [Chord] = []
 
     // MARK: - CoreML Models (placeholders)
 
@@ -19,7 +21,9 @@ class AIComposer: ObservableObject {
 
     init() {
         // TODO: Load CoreML models
-        print("✅ AIComposer: Initialized")
+        #if DEBUG
+        debugLog("✅", "AIComposer: Initialized")
+        #endif
     }
 
     // MARK: - Melody Generation
@@ -29,7 +33,9 @@ class AIComposer: ObservableObject {
         defer { isGenerating = false }
 
         // TODO: Implement LSTM-based melody generation
-        print("🎼 AIComposer: Generating melody in \(key) \(scale) (\(bars) bars)")
+        #if DEBUG
+        debugLog("🎼", "AIComposer: Generating melody in \(key) \(scale) (\(bars) bars)")
+        #endif
 
         let notes = (0..<bars*4).map { _ in
             Note(pitch: Int.random(in: 60...72), duration: 0.25, velocity: 80)
@@ -45,7 +51,9 @@ class AIComposer: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎹 AIComposer: Suggesting chords for \(key) \(mood)")
+        #if DEBUG
+        debugLog("🎹", "AIComposer: Suggesting chords for \(key) \(mood)")
+        #endif
 
         let chords = [
             Chord(root: "C", type: .major),
@@ -97,3 +105,8 @@ enum MusicStyle {
     case tense
     case balanced
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows AIComposer to work with older SwiftUI code expecting ObservableObject
+extension AIComposer: ObservableObject { }

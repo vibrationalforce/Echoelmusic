@@ -3,6 +3,7 @@ import AVFoundation
 import Accelerate
 
 /// Generates binaural beats for brainwave entrainment and healing frequencies
+/// Migrated to @Observable for better performance (Swift 5.9+)
 ///
 /// Binaural beats work by playing two slightly different frequencies (one per ear),
 /// causing the brain to perceive a "beat" at the difference frequency.
@@ -10,7 +11,8 @@ import Accelerate
 ///
 /// Scientific basis: Oster, G. (1973). "Auditory beats in the brain"
 @MainActor
-class BinauralBeatGenerator: ObservableObject {
+@Observable
+final class BinauralBeatGenerator {
 
     // MARK: - Audio Mode
 
@@ -73,7 +75,7 @@ class BinauralBeatGenerator: ObservableObject {
     }
 
     /// Current audio mode (automatically detected)
-    @Published private(set) var audioMode: AudioMode = .binaural
+    private(set) var audioMode: AudioMode = .binaural
 
 
     // MARK: - Audio Components
@@ -135,7 +137,9 @@ class BinauralBeatGenerator: ObservableObject {
     func configure(state: BrainwaveState) {
         self.beatFrequency = state.beatFrequency
         // Keep current carrier frequency and amplitude
-        print("🧠 Configured for \(state.rawValue) state: \(state.description)")
+        #if DEBUG
+        debugLog("🧠", "Configured for \(state.rawValue) state: \(state.description)")
+        #endif
     }
 
     /// Set beat frequency dynamically based on HRV coherence
@@ -156,7 +160,9 @@ class BinauralBeatGenerator: ObservableObject {
             // High coherence: maintain focus
             beatFrequency = 20.0  // Beta
         }
-        print("💓 HRV coherence \(Int(coherence)) → \(beatFrequency) Hz beat")
+        #if DEBUG
+        debugLog("💓", "HRV coherence \(Int(coherence)) → \(beatFrequency) Hz beat")
+        #endif
     }
 
     /// Start generating and playing binaural/isochronic beats
@@ -192,11 +198,15 @@ class BinauralBeatGenerator: ObservableObject {
             }
 
             isPlaying = true
+            #if DEBUG
             let modeStr = audioMode == .binaural ? "Binaural (stereo)" : "Isochronic (mono)"
-            print("▶️ \(modeStr) beats started: \(carrierFrequency) Hz @ \(beatFrequency) Hz")
+            debugLog("▶️", "\(modeStr) beats started: \(carrierFrequency) Hz @ \(beatFrequency) Hz")
+            #endif
 
         } catch {
-            print("❌ Failed to start beats: \(error.localizedDescription)")
+            #if DEBUG
+            debugLog("❌", "Failed to start beats: \(error.localizedDescription)")
+            #endif
         }
     }
 
@@ -219,7 +229,9 @@ class BinauralBeatGenerator: ObservableObject {
         try? AVAudioSession.sharedInstance().setActive(false)
 
         isPlaying = false
-        print("⏹️ Binaural beats stopped")
+        #if DEBUG
+        debugLog("⏹️", "Binaural beats stopped")
+        #endif
     }
 
 
@@ -402,10 +414,19 @@ class BinauralBeatGenerator: ObservableObject {
         // Set mode based on output
         if hasIsolatedHeadphones {
             audioMode = .binaural
-            print("🎧 Isolated headphones detected → Binaural mode (true stereo)")
+            #if DEBUG
+            debugLog("🎧", "Isolated headphones detected → Binaural mode (true stereo)")
+            #endif
         } else {
             audioMode = .isochronic
-            print("🔊 Speaker/Open-air detected → Isochronic mode (mono pulsed, works anywhere)")
+            #if DEBUG
+            debugLog("🔊", "Speaker/Open-air detected → Isochronic mode (mono pulsed, works anywhere)")
+            #endif
         }
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows BinauralBeatGenerator to work with older SwiftUI code expecting ObservableObject
+extension BinauralBeatGenerator: ObservableObject { }
