@@ -28,16 +28,18 @@ import os.log
 /// - iPhone 6s/7: 30 FPS, 512 particles, 22kHz audio
 /// - iPhone 8/X: 60 FPS, 2048 particles, 44.1kHz audio
 /// - iPhone 11+: 120 FPS, 8192 particles, 48kHz audio
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class LegacyDeviceSupport: ObservableObject {
+@Observable
+final class LegacyDeviceSupport {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var currentDevice: DeviceProfile?
-    @Published var performanceLevel: PerformanceLevel = .high
-    @Published var adaptiveQualityEnabled: Bool = true
-    @Published var thermalState: ProcessInfo.ThermalState = .nominal
-    @Published var memoryWarningReceived: Bool = false
+    var currentDevice: DeviceProfile?
+    var performanceLevel: PerformanceLevel = .high
+    var adaptiveQualityEnabled: Bool = true
+    var thermalState: ProcessInfo.ThermalState = .nominal
+    var memoryWarningReceived: Bool = false
 
     // MARK: - Device Profile
 
@@ -236,9 +238,11 @@ class LegacyDeviceSupport: ObservableObject {
         setupThermalStateObserver()
         applyAdaptiveSettings()
 
-        print("✅ Legacy Device Support: Initialized")
-        print("📱 Current Device: \(currentDevice?.deviceName ?? "Unknown")")
-        print("⚡️ Performance Level: \(performanceLevel.rawValue)")
+        #if DEBUG
+        debugLog("✅ Legacy Device Support: Initialized")
+        debugLog("📱 Current Device: \(currentDevice?.deviceName ?? "Unknown")")
+        debugLog("⚡️ Performance Level: \(performanceLevel.rawValue)")
+        #endif
     }
 
     // MARK: - Load Device Database
@@ -460,7 +464,9 @@ class LegacyDeviceSupport: ObservableObject {
             )
         ]
 
-        print("📊 Device Database: \(deviceDatabase.count) profiles")
+        #if DEBUG
+        debugLog("📊 Device Database: \(deviceDatabase.count) profiles")
+        #endif
     }
 
     // MARK: - Detect Current Device
@@ -538,7 +544,9 @@ class LegacyDeviceSupport: ObservableObject {
 
     private func handleMemoryWarning() {
         memoryWarningReceived = true
-        print("⚠️ Memory Warning Received - Degrading Performance")
+        #if DEBUG
+        debugLog("⚠️ Memory Warning Received - Degrading Performance")
+        #endif
 
         // Emergency performance reduction
         switch performanceLevel {
@@ -557,14 +565,18 @@ class LegacyDeviceSupport: ObservableObject {
         // Clear caches
         clearCaches()
 
-        print("   Reduced to: \(performanceLevel.rawValue)")
+        #if DEBUG
+        debugLog("   Reduced to: \(performanceLevel.rawValue)")
+        #endif
     }
 
     private func clearCaches() {
         // Clear texture cache
         // Clear audio sample cache
         // Clear any other memory-heavy caches
-        print("   Caches cleared")
+        #if DEBUG
+        debugLog("   Caches cleared")
+        #endif
     }
 
     // MARK: - Thermal State Observer
@@ -584,7 +596,9 @@ class LegacyDeviceSupport: ObservableObject {
     private func handleThermalStateChange() {
         thermalState = ProcessInfo.processInfo.thermalState
 
-        print("🌡️ Thermal State Changed: \(thermalState)")
+        #if DEBUG
+        debugLog("🌡️ Thermal State Changed: \(thermalState)")
+        #endif
 
         switch thermalState {
         case .nominal:
@@ -595,20 +609,26 @@ class LegacyDeviceSupport: ObservableObject {
             // Slight throttling
             if performanceLevel == .ultra {
                 performanceLevel = .high
-                print("   Throttling: Ultra → High")
+                #if DEBUG
+                debugLog("   Throttling: Ultra → High")
+                #endif
             }
 
         case .serious:
             // Significant throttling
             if performanceLevel > .medium {
                 performanceLevel = .medium
-                print("   Throttling: → Medium")
+                #if DEBUG
+                debugLog("   Throttling: → Medium")
+                #endif
             }
 
         case .critical:
             // Emergency throttling
             performanceLevel = .low
-            print("   Emergency Throttling: → Low")
+            #if DEBUG
+            debugLog("   Emergency Throttling: → Low")
+            #endif
 
         @unknown default:
             break
@@ -622,12 +642,14 @@ class LegacyDeviceSupport: ObservableObject {
 
         let settings = device.recommendedSettings
 
-        print("🎛️ Applying Adaptive Settings:")
-        print("   Target FPS: \(settings.targetFPS)")
-        print("   Particles: \(settings.maxParticles)")
-        print("   Audio Sample Rate: \(settings.audioSampleRate) Hz")
-        print("   Texture Quality: \(settings.textureQuality.rawValue)")
-        print("   Effects Quality: \(settings.effectsQuality.rawValue)")
+        #if DEBUG
+        debugLog("🎛️ Applying Adaptive Settings:")
+        debugLog("   Target FPS: \(settings.targetFPS)")
+        debugLog("   Particles: \(settings.maxParticles)")
+        debugLog("   Audio Sample Rate: \(settings.audioSampleRate) Hz")
+        debugLog("   Texture Quality: \(settings.textureQuality.rawValue)")
+        debugLog("   Effects Quality: \(settings.effectsQuality.rawValue)")
+        #endif
     }
 
     // MARK: - Get Optimal Settings
@@ -729,3 +751,8 @@ class LegacyDeviceSupport: ObservableObject {
         """
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension LegacyDeviceSupport: ObservableObject { }

@@ -326,24 +326,26 @@ struct PlayheadView: View {
 
 // MARK: - View Model
 
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class PianoRollViewModel: ObservableObject {
+@Observable
+final class PianoRollViewModel {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
-    @Published var notes: [MIDINote] = []
-    @Published var selectedNotes: Set<UUID> = []
-    @Published var editMode: EditMode = .select
-    @Published var quantize: Quantize = .sixteenth
-    @Published var defaultVelocity: Double = 100
-    @Published var isPlaying: Bool = false
-    @Published var playheadPosition: Double = 0 // In beats
+    var notes: [MIDINote] = []
+    var selectedNotes: Set<UUID> = []
+    var editMode: EditMode = .select
+    var quantize: Quantize = .sixteenth
+    var defaultVelocity: Double = 100
+    var isPlaying: Bool = false
+    var playheadPosition: Double = 0 // In beats
 
     // MARK: - MIDI 2.0 + MPE
 
-    @Published var expressionLane: PerNoteExpression? = nil // nil = hidden
-    @Published var useMPE: Bool = true // Use MPE for polyphonic expression
-    @Published var pitchBendRange: Int = 48 // Semitones (MPE default: 48)
+    var expressionLane: PerNoteExpression? = nil // nil = hidden
+    var useMPE: Bool = true // Use MPE for polyphonic expression
+    var pitchBendRange: Int = 48 // Semitones (MPE default: 48)
 
     var midi2Manager: MIDI2Manager?
     var mpeZoneManager: MPEZoneManager?
@@ -375,7 +377,9 @@ class PianoRollViewModel: ObservableObject {
         mpe.sendMPEConfiguration(memberChannels: 15)
         mpe.setPitchBendRange(semitones: UInt8(pitchBendRange))
 
-        print("🎹 PianoRoll: Connected to MIDI 2.0 + MPE")
+        #if DEBUG
+        debugLog("🎹 PianoRoll: Connected to MIDI 2.0 + MPE")
+        #endif
     }
 
     // MARK: - Edit Modes
@@ -437,7 +441,9 @@ class PianoRollViewModel: ObservableObject {
         )
 
         notes.append(note)
-        print("🎹 Added note: \(note.pitch) at beat \(note.startBeat)")
+        #if DEBUG
+        debugLog("🎹 Added note: \(note.pitch) at beat \(note.startBeat)")
+        #endif
     }
 
     func deleteNote(_ id: UUID) {
@@ -575,12 +581,16 @@ class PianoRollViewModel: ObservableObject {
                 mpe.setVoiceBrightness(voice: voice, brightness: note.brightness)
                 mpe.setVoiceTimbre(voice: voice, timbre: note.timbre)
 
-                print("🎹 MPE Note On: \(note.pitch) vel=\(note.velocity) ch=\(voice.channel + 1)")
+                #if DEBUG
+                debugLog("🎹 MPE Note On: \(note.pitch) vel=\(note.velocity) ch=\(voice.channel + 1)")
+                #endif
             }
         } else if let midi2 = midi2Manager {
             // MIDI 2.0 without MPE (single channel)
             midi2.sendNoteOn(channel: 0, note: UInt8(note.pitch), velocity: note.velocity32bit)
-            print("🎹 MIDI2 Note On: \(note.pitch) vel=\(note.velocity)")
+            #if DEBUG
+            debugLog("🎹 MIDI2 Note On: \(note.pitch) vel=\(note.velocity)")
+            #endif
         }
     }
 
@@ -589,11 +599,15 @@ class PianoRollViewModel: ObservableObject {
             if let voice = activeVoices[note.id] {
                 mpe.deallocateVoice(voice: voice)
                 activeVoices.removeValue(forKey: note.id)
-                print("🎹 MPE Note Off: \(note.pitch)")
+                #if DEBUG
+                debugLog("🎹 MPE Note Off: \(note.pitch)")
+                #endif
             }
         } else if let midi2 = midi2Manager {
             midi2.sendNoteOff(channel: 0, note: UInt8(note.pitch))
-            print("🎹 MIDI2 Note Off: \(note.pitch)")
+            #if DEBUG
+            debugLog("🎹 MIDI2 Note Off: \(note.pitch)")
+            #endif
         }
     }
 
@@ -715,14 +729,18 @@ class PianoRollViewModel: ObservableObject {
     func exportToMIDI() -> Data? {
         // Generate MIDI file data
         // In production: Use AudioToolbox MusicSequence
-        print("📤 Exporting \(notes.count) notes to MIDI")
+        #if DEBUG
+        debugLog("📤 Exporting \(notes.count) notes to MIDI")
+        #endif
         return nil
     }
 
     func importFromMIDI(_ data: Data) {
         // Import MIDI file
         // In production: Parse MIDI data
-        print("📥 Importing MIDI data")
+        #if DEBUG
+        debugLog("📥 Importing MIDI data")
+        #endif
     }
 }
 
@@ -787,6 +805,11 @@ enum PerNoteExpression: String, CaseIterable {
 }
 
 // MARK: - Preview
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension PianoRollViewModel: ObservableObject { }
 
 #Preview {
     PianoRollView()
