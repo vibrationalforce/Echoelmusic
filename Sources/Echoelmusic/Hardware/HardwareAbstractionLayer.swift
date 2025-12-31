@@ -18,16 +18,18 @@ import Combine
 /// - Drones: DJI, autonomous drones
 /// - IoT: Smart home, medical devices, embedded systems
 /// - Future: Neural interfaces, quantum devices, holographic displays
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class HardwareAbstractionLayer: ObservableObject {
+@Observable
+final class HardwareAbstractionLayer {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var currentPlatform: Platform = .unknown
-    @Published var capabilities: HardwareCapabilities = HardwareCapabilities()
-    @Published var sensorManager: SensorManager?
-    @Published var audioInterface: AudioInterface?
-    @Published var displayInterface: DisplayInterface?
+    var currentPlatform: Platform = .unknown
+    var capabilities: HardwareCapabilities = HardwareCapabilities()
+    var sensorManager: SensorManager?
+    var audioInterface: AudioInterface?
+    var displayInterface: DisplayInterface?
 
     // MARK: - Platform
 
@@ -205,12 +207,16 @@ class HardwareAbstractionLayer: ObservableObject {
         func startHeartRate(handler: @escaping (Float) -> Void) {
             // Platform-specific: Use HealthKit on Apple platforms
             // For other platforms, use device-specific APIs
-            print("⚠️ Heart rate monitoring requires HealthKit integration")
+            #if DEBUG
+            debugLog("⚠️", "Heart rate monitoring requires HealthKit integration")
+            #endif
         }
 
         func startBrainWaves(handler: @escaping ([Float]) -> Void) {
             // Future: Neural interface support (Neuralink, etc.)
-            print("⚠️ Brain wave monitoring not yet available (future feature)")
+            #if DEBUG
+            debugLog("⚠️", "Brain wave monitoring not yet available (future feature)")
+            #endif
         }
 
         func stopAll() {
@@ -241,9 +247,13 @@ class HardwareAbstractionLayer: ObservableObject {
                 try AVAudioSession.sharedInstance().setPreferredSampleRate(sampleRate)
                 try AVAudioSession.sharedInstance().setPreferredIOBufferDuration(Double(bufferSize) / sampleRate)
                 try AVAudioSession.sharedInstance().setActive(true)
-                print("✅ Audio configured: \(sampleRate) Hz, \(bufferSize) samples")
+                #if DEBUG
+                debugLog("✅", "Audio configured: \(sampleRate) Hz, \(bufferSize) samples")
+                #endif
             } catch {
-                print("❌ Audio configuration failed: \(error)")
+                #if DEBUG
+                debugLog("❌", "Audio configuration failed: \(error)")
+                #endif
             }
             #endif
         }
@@ -252,15 +262,21 @@ class HardwareAbstractionLayer: ObservableObject {
             guard let engine = audioEngine else { return }
             do {
                 try engine.start()
-                print("✅ Audio engine started")
+                #if DEBUG
+                debugLog("✅", "Audio engine started")
+                #endif
             } catch {
-                print("❌ Audio engine start failed: \(error)")
+                #if DEBUG
+                debugLog("❌", "Audio engine start failed: \(error)")
+                #endif
             }
         }
 
         func stopAudio() {
             audioEngine?.stop()
-            print("⏸️ Audio engine stopped")
+            #if DEBUG
+            debugLog("⏸️", "Audio engine stopped")
+            #endif
         }
 
         func setVolume(_ volume: Float) {
@@ -314,7 +330,9 @@ class HardwareAbstractionLayer: ObservableObject {
 
         func setRefreshRate(_ fps: Int) {
             // Platform-specific refresh rate control
-            print("🖥️ Setting refresh rate to \(fps) Hz")
+            #if DEBUG
+            debugLog("🖥️", "Setting refresh rate to \(fps) Hz")
+            #endif
         }
 
         func setBrightness(_ brightness: Float) {
@@ -331,9 +349,11 @@ class HardwareAbstractionLayer: ObservableObject {
         detectCapabilities()
         initializeInterfaces()
 
-        print("✅ Hardware Abstraction Layer: Initialized")
-        print("🖥️ Platform: \(currentPlatform.rawValue)")
-        print("💪 Capabilities detected")
+        #if DEBUG
+        debugLog("✅", "Hardware Abstraction Layer: Initialized")
+        debugLog("🖥️", "Platform: \(currentPlatform.rawValue)")
+        debugLog("💪", "Capabilities detected")
+        #endif
     }
 
     // MARK: - Detect Platform
@@ -421,13 +441,15 @@ class HardwareAbstractionLayer: ObservableObject {
 
         capabilities = caps
 
-        print("📊 Hardware Capabilities:")
-        print("   CPU Cores: \(caps.cpuCores)")
-        print("   RAM: \(String(format: "%.1f", caps.ramGB)) GB")
-        print("   Max FPS: \(caps.maxFPS)")
-        print("   Accelerometer: \(caps.hasAccelerometer)")
-        print("   Gyroscope: \(caps.hasGyroscope)")
-        print("   Heart Rate: \(caps.hasHeartRateSensor)")
+        #if DEBUG
+        debugLog("📊", "Hardware Capabilities:")
+        debugLog("📊", "   CPU Cores: \(caps.cpuCores)")
+        debugLog("📊", "   RAM: \(String(format: "%.1f", caps.ramGB)) GB")
+        debugLog("📊", "   Max FPS: \(caps.maxFPS)")
+        debugLog("📊", "   Accelerometer: \(caps.hasAccelerometer)")
+        debugLog("📊", "   Gyroscope: \(caps.hasGyroscope)")
+        debugLog("📊", "   Heart Rate: \(caps.hasHeartRateSensor)")
+        #endif
     }
 
     // MARK: - Initialize Interfaces
@@ -442,7 +464,9 @@ class HardwareAbstractionLayer: ObservableObject {
 
     /// Vehicle Platform Adapter
     func initializeVehiclePlatform(vehicleType: VehicleType) {
-        print("🚗 Initializing vehicle platform: \(vehicleType.rawValue)")
+        #if DEBUG
+        debugLog("🚗", "Initializing vehicle platform: \(vehicleType.rawValue)")
+        #endif
 
         // Configure for vehicle environment
         capabilities.supportsCarPlay = true
@@ -456,7 +480,9 @@ class HardwareAbstractionLayer: ObservableObject {
         capabilities.hasAccelerometer = true
         capabilities.hasGyroscope = true
 
-        print("✅ Vehicle platform initialized")
+        #if DEBUG
+        debugLog("✅", "Vehicle platform initialized")
+        #endif
     }
 
     enum VehicleType: String {
@@ -468,7 +494,9 @@ class HardwareAbstractionLayer: ObservableObject {
 
     /// Drone Platform Adapter
     func initializeDronePlatform(droneType: DroneType) {
-        print("🚁 Initializing drone platform: \(droneType.rawValue)")
+        #if DEBUG
+        debugLog("🚁", "Initializing drone platform: \(droneType.rawValue)")
+        #endif
 
         // Configure for drone environment
         capabilities.supportsFlight = true
@@ -484,7 +512,9 @@ class HardwareAbstractionLayer: ObservableObject {
         // Low-latency audio critical for drones
         audioInterface?.configureAudio(sampleRate: 48000, bufferSize: 64)
 
-        print("✅ Drone platform initialized")
+        #if DEBUG
+        debugLog("✅", "Drone platform initialized")
+        #endif
     }
 
     enum DroneType: String {
@@ -495,7 +525,9 @@ class HardwareAbstractionLayer: ObservableObject {
 
     /// IoT Platform Adapter
     func initializeIoTPlatform(deviceType: IoTDeviceType) {
-        print("📡 Initializing IoT platform: \(deviceType.rawValue)")
+        #if DEBUG
+        debugLog("📡", "Initializing IoT platform: \(deviceType.rawValue)")
+        #endif
 
         // Configure for IoT environment
         switch deviceType {
@@ -515,7 +547,9 @@ class HardwareAbstractionLayer: ObservableObject {
             capabilities.hasHeartRateSensor = true
         }
 
-        print("✅ IoT platform initialized")
+        #if DEBUG
+        debugLog("✅", "IoT platform initialized")
+        #endif
     }
 
     enum IoTDeviceType: String {
@@ -526,7 +560,9 @@ class HardwareAbstractionLayer: ObservableObject {
 
     /// Future Platform Adapter
     func initializeFuturePlatform(platformType: FuturePlatform) {
-        print("🚀 Initializing future platform: \(platformType.rawValue)")
+        #if DEBUG
+        debugLog("🚀", "Initializing future platform: \(platformType.rawValue)")
+        #endif
 
         switch platformType {
         case .neuralInterface:
@@ -544,7 +580,9 @@ class HardwareAbstractionLayer: ObservableObject {
             capabilities.maxFPS = 240
         }
 
-        print("✅ Future platform initialized")
+        #if DEBUG
+        debugLog("✅", "Future platform initialized")
+        #endif
     }
 
     enum FuturePlatform: String {
@@ -631,3 +669,7 @@ class HardwareAbstractionLayer: ObservableObject {
         """
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension HardwareAbstractionLayer: ObservableObject { }

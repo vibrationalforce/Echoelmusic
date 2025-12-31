@@ -24,16 +24,18 @@ import Combine
 /// - IonQ Trapped Ion Systems
 ///
 /// Note: This is quantum-INSPIRED classical computing until true quantum hardware is available
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class QuantumIntelligenceEngine: ObservableObject {
+@Observable
+final class QuantumIntelligenceEngine {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var quantumMode: QuantumMode = .hybrid
-    @Published var qubitSimulationCount: Int = 32  // Simulated qubits
-    @Published var entanglementStrength: Float = 0.8
-    @Published var coherenceTime: TimeInterval = 100.0  // microseconds (simulated)
-    @Published var quantumAdvantage: Float = 1.0  // Speedup factor vs classical
+    var quantumMode: QuantumMode = .hybrid
+    var qubitSimulationCount: Int = 32  // Simulated qubits
+    var entanglementStrength: Float = 0.8
+    var coherenceTime: TimeInterval = 100.0  // microseconds (simulated)
+    var quantumAdvantage: Float = 1.0  // Speedup factor vs classical
 
     // MARK: - Quantum Modes
 
@@ -202,10 +204,12 @@ class QuantumIntelligenceEngine: ObservableObject {
 
     init() {
         initializeQuantumRegister()
-        print("✅ Quantum Intelligence Engine: Initialized")
-        print("⚛️ Quantum Mode: \(quantumMode.rawValue)")
-        print("🔬 Simulated Qubits: \(qubitSimulationCount)")
-        print("🌌 Entanglement Strength: \(entanglementStrength)")
+        #if DEBUG
+        debugLog("✅ Quantum Intelligence Engine: Initialized")
+        debugLog("⚛️ Quantum Mode: \(quantumMode.rawValue)")
+        debugLog("🔬 Simulated Qubits: \(qubitSimulationCount)")
+        debugLog("🌌 Entanglement Strength: \(entanglementStrength)")
+        #endif
     }
 
     // MARK: - Initialize Quantum Register
@@ -218,7 +222,9 @@ class QuantumIntelligenceEngine: ObservableObject {
         stateVector = Array(repeating: Complex(0, 0), count: stateCount)
         stateVector[0] = Complex(1, 0)  // Ground state
 
-        print("🌌 Quantum state initialized: |\(String(repeating: "0", count: qubitSimulationCount))⟩")
+        #if DEBUG
+        debugLog("🌌 Quantum state initialized: |\(String(repeating: "0", count: qubitSimulationCount))⟩")
+        #endif
     }
 
     // MARK: - Apply Quantum Gate
@@ -245,7 +251,9 @@ class QuantumIntelligenceEngine: ObservableObject {
         // Apply CNOT gate to create entanglement
         // CNOT|00⟩ = |00⟩, CNOT|01⟩ = |01⟩, CNOT|10⟩ = |11⟩, CNOT|11⟩ = |10⟩
 
-        print("🔗 Creating entanglement between qubits \(qubit1) and \(qubit2)")
+        #if DEBUG
+        debugLog("🔗 Creating entanglement between qubits \(qubit1) and \(qubit2)")
+        #endif
     }
 
     // MARK: - Quantum Annealing (Optimization)
@@ -253,9 +261,11 @@ class QuantumIntelligenceEngine: ObservableObject {
     /// Quantum annealing for global optimization
     /// Used for: Music composition, bio-data pattern matching, preset optimization
     func quantumAnneal(energyFunction: ([Float]) -> Float, dimensions: Int, iterations: Int = 1000) async -> [Float] {
-        print("🧊 Quantum Annealing: Started")
-        print("   Dimensions: \(dimensions)")
-        print("   Iterations: \(iterations)")
+        #if DEBUG
+        debugLog("🧊 Quantum Annealing: Started")
+        debugLog("   Dimensions: \(dimensions)")
+        debugLog("   Iterations: \(iterations)")
+        #endif
 
         var currentState = (0..<dimensions).map { _ in Float.random(in: -1...1) }
         var currentEnergy = energyFunction(currentState)
@@ -297,12 +307,16 @@ class QuantumIntelligenceEngine: ObservableObject {
 
             // Progress update
             if iteration % 100 == 0 {
-                print("   Iteration \(iteration): Energy = \(bestEnergy)")
+                #if DEBUG
+                debugLog("   Iteration \(iteration): Energy = \(bestEnergy)")
+                #endif
             }
         }
 
-        print("✅ Quantum Annealing: Complete")
-        print("   Best Energy: \(bestEnergy)")
+        #if DEBUG
+        debugLog("✅ Quantum Annealing: Complete")
+        debugLog("   Best Energy: \(bestEnergy)")
+        #endif
 
         return bestState
     }
@@ -317,9 +331,11 @@ class QuantumIntelligenceEngine: ObservableObject {
 
         guard n > 0 else { return nil }
 
-        print("🔍 Grover's Search: Started")
-        print("   Database size: \(n)")
-        print("   Target: \(target)")
+        #if DEBUG
+        debugLog("🔍 Grover's Search: Started")
+        debugLog("   Database size: \(n)")
+        debugLog("   Target: \(target)")
+        #endif
 
         // Number of iterations: π/4 * √N
         let iterations = Int(Double.pi / 4.0 * sqrt(Double(n)))
@@ -330,19 +346,25 @@ class QuantumIntelligenceEngine: ObservableObject {
 
         quantumAdvantage = Float(classicalComplexity) / Float(quantumComplexity)
 
-        print("   Iterations needed: \(iterations) (vs \(n) classical)")
-        print("   Quantum advantage: \(quantumAdvantage)x speedup")
+        #if DEBUG
+        debugLog("   Iterations needed: \(iterations) (vs \(n) classical)")
+        debugLog("   Quantum advantage: \(quantumAdvantage)x speedup")
+        #endif
 
         // Simulate search (in real quantum computer, this would be exponentially faster)
         try? await Task.sleep(nanoseconds: UInt64(iterations * 1_000_000))  // Simulate quantum time
 
         // Find target
         if let index = database.firstIndex(of: target) {
-            print("✅ Grover's Search: Found at index \(index)")
+            #if DEBUG
+            debugLog("✅ Grover's Search: Found at index \(index)")
+            #endif
             return index
         }
 
-        print("❌ Grover's Search: Not found")
+        #if DEBUG
+        debugLog("❌ Grover's Search: Not found")
+        #endif
         return nil
     }
 
@@ -351,9 +373,11 @@ class QuantumIntelligenceEngine: ObservableObject {
     /// Variational Quantum Eigensolver (VQE) inspired neural network
     /// Used for: Bio-data prediction, music generation, pattern recognition
     func quantumNeuralNetwork(input: [Float], layers: Int = 4) async -> [Float] {
-        print("🧠 Quantum Neural Network: Processing")
-        print("   Input size: \(input.count)")
-        print("   Quantum layers: \(layers)")
+        #if DEBUG
+        debugLog("🧠 Quantum Neural Network: Processing")
+        debugLog("   Input size: \(input.count)")
+        debugLog("   Quantum layers: \(layers)")
+        #endif
 
         var state = input
 
@@ -376,7 +400,9 @@ class QuantumIntelligenceEngine: ObservableObject {
             }
         }
 
-        print("✅ Quantum Neural Network: Complete")
+        #if DEBUG
+        debugLog("✅ Quantum Neural Network: Complete")
+        #endif
 
         return state
     }
@@ -385,7 +411,9 @@ class QuantumIntelligenceEngine: ObservableObject {
 
     /// Use quantum algorithms to compose music from bio-data
     func composeFromBioData(hrv: Float, coherence: Float, breathing: Float) async -> QuantumComposition {
-        print("🎵 Quantum Music Composition: Started")
+        #if DEBUG
+        debugLog("🎵 Quantum Music Composition: Started")
+        #endif
 
         // Encode bio-data into quantum state
         let bioVector = [hrv / 100.0, coherence, breathing / 20.0]
@@ -407,7 +435,9 @@ class QuantumIntelligenceEngine: ObservableObject {
         // Quantum rhythm generation (prime factorization inspired)
         let rhythm = generateQuantumRhythm(tempo: Int(60 + hrv))
 
-        print("✅ Quantum Music Composition: Complete")
+        #if DEBUG
+        debugLog("✅ Quantum Music Composition: Complete")
+        #endif
 
         return QuantumComposition(
             melody: melody,
@@ -441,8 +471,10 @@ class QuantumIntelligenceEngine: ObservableObject {
 
     /// Use quantum entanglement principles to sync multiple users' bio-data
     func quantumBioSync(users: [UserBioData]) async -> GroupCoherence {
-        print("🔗 Quantum Bio-Sync: Started")
-        print("   Users: \(users.count)")
+        #if DEBUG
+        debugLog("🔗 Quantum Bio-Sync: Started")
+        debugLog("   Users: \(users.count)")
+        #endif
 
         // Create entangled state representing all users
         var entangledState: [Float] = []
@@ -460,9 +492,11 @@ class QuantumIntelligenceEngine: ObservableObject {
         let variance = groupState.map { pow($0 - avgCoherence, 2) }.reduce(0, +) / Float(groupState.count)
         let synchronization = 1.0 - sqrt(variance)  // 0-1, higher is better
 
-        print("✅ Quantum Bio-Sync: Complete")
-        print("   Group coherence: \(avgCoherence)")
-        print("   Synchronization: \(synchronization)")
+        #if DEBUG
+        debugLog("✅ Quantum Bio-Sync: Complete")
+        debugLog("   Group coherence: \(avgCoherence)")
+        debugLog("   Synchronization: \(synchronization)")
+        #endif
 
         return GroupCoherence(
             averageCoherence: avgCoherence,
@@ -533,7 +567,9 @@ class QuantumIntelligenceEngine: ObservableObject {
     // MARK: - Quantum Advantage Benchmark
 
     func benchmarkQuantumAdvantage(problemSize: Int) async -> QuantumBenchmark {
-        print("⚡️ Benchmarking Quantum Advantage...")
+        #if DEBUG
+        debugLog("⚡️ Benchmarking Quantum Advantage...")
+        #endif
 
         let startClassical = Date()
         // Classical algorithm: O(N)
@@ -554,10 +590,12 @@ class QuantumIntelligenceEngine: ObservableObject {
 
         let speedup = classicalTime / max(quantumTime, 0.000001)
 
-        print("✅ Benchmark complete:")
-        print("   Classical time: \(String(format: "%.6f", classicalTime))s")
-        print("   Quantum time: \(String(format: "%.6f", quantumTime))s")
-        print("   Speedup: \(String(format: "%.1f", speedup))x")
+        #if DEBUG
+        debugLog("✅ Benchmark complete:")
+        debugLog("   Classical time: \(String(format: "%.6f", classicalTime))s")
+        debugLog("   Quantum time: \(String(format: "%.6f", quantumTime))s")
+        debugLog("   Speedup: \(String(format: "%.1f", speedup))x")
+        #endif
 
         return QuantumBenchmark(
             problemSize: problemSize,
@@ -574,3 +612,8 @@ class QuantumIntelligenceEngine: ObservableObject {
         let speedup: Float
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension QuantumIntelligenceEngine: ObservableObject { }
