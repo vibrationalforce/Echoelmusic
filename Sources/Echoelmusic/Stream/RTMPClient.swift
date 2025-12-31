@@ -34,12 +34,15 @@ private enum RTMPConstants {
 // MARK: - RTMP Client
 /// Complete RTMP Client for live streaming to Twitch, YouTube, Facebook, Custom servers
 /// Implements full RTMP handshake, connection, AMF commands, and FLV transmission
-class RTMPClient: ObservableObject {
+/// Migrated to @Observable for better performance (Swift 5.9+)
+@MainActor
+@Observable
+final class RTMPClient {
 
-    // MARK: - Published State
-    @Published private(set) var connectionState: ConnectionState = .disconnected
-    @Published private(set) var bytesWritten: Int64 = 0
-    @Published private(set) var currentBitrate: Int = 0
+    // MARK: - Observable State
+    private(set) var connectionState: ConnectionState = .disconnected
+    private(set) var bytesWritten: Int64 = 0
+    private(set) var currentBitrate: Int = 0
 
     enum ConnectionState {
         case disconnected
@@ -172,7 +175,9 @@ class RTMPClient: ObservableObject {
         // C2: Echo back S1
         try await send(s1)
 
-        print("🤝 RTMP Handshake completed successfully")
+        #if DEBUG
+        debugLog("🤝 RTMP Handshake completed successfully")
+        #endif
     }
 
     // MARK: - RTMP Commands
@@ -233,7 +238,9 @@ class RTMPClient: ObservableObject {
             streamID = 1
         }
 
-        print("📺 Stream created with ID: \(streamID)")
+        #if DEBUG
+        debugLog("📺 Stream created with ID: \(streamID)")
+        #endif
     }
 
     /// Publish stream
@@ -250,7 +257,9 @@ class RTMPClient: ObservableObject {
         try await sendRTMPMessage(type: RTMPConstants.msgAMF0Command, data: amf, streamID: UInt32(streamID))
 
         connectionState = .streaming
-        print("🎬 Publishing to stream: \(streamKey)")
+        #if DEBUG
+        debugLog("🎬 Publishing to stream: \(streamKey)")
+        #endif
     }
 
     // MARK: - Send Media
@@ -505,3 +514,8 @@ enum RTMPError: LocalizedError {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension RTMPClient: ObservableObject { }

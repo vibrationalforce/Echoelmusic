@@ -5,31 +5,33 @@ import Combine
 
 /// Manages hand tracking using Vision framework
 /// Provides 21-point skeleton detection per hand at 30 Hz
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class HandTrackingManager: ObservableObject {
+@Observable
+final class HandTrackingManager {
 
-    // MARK: - Published Properties
+    // MARK: - Observable State
 
     /// Left hand detected
-    @Published var leftHandDetected: Bool = false
+    var leftHandDetected: Bool = false
 
     /// Right hand detected
-    @Published var rightHandDetected: Bool = false
+    var rightHandDetected: Bool = false
 
     /// Left hand landmarks (21 points)
-    @Published var leftHandLandmarks: [HandLandmark] = []
+    var leftHandLandmarks: [HandLandmark] = []
 
     /// Right hand landmarks (21 points)
-    @Published var rightHandLandmarks: [HandLandmark] = []
+    var rightHandLandmarks: [HandLandmark] = []
 
     /// Left hand position in 3D space (normalized -1 to 1)
-    @Published var leftHandPosition: SIMD3<Float> = .zero
+    var leftHandPosition: SIMD3<Float> = .zero
 
     /// Right hand position in 3D space (normalized -1 to 1)
-    @Published var rightHandPosition: SIMD3<Float> = .zero
+    var rightHandPosition: SIMD3<Float> = .zero
 
     /// Tracking confidence (0.0 - 1.0)
-    @Published var trackingConfidence: Float = 0.0
+    var trackingConfidence: Float = 0.0
 
 
     // MARK: - Hand Landmark Model
@@ -63,7 +65,9 @@ class HandTrackingManager: ObservableObject {
 
     init() {
         setupHandPoseRequest()
-        print("👋 HandTrackingManager initialized")
+        #if DEBUG
+        debugLog("👋 HandTrackingManager initialized")
+        #endif
     }
 
 
@@ -88,7 +92,9 @@ class HandTrackingManager: ObservableObject {
         guard !isTracking else { return }
 
         isTracking = true
-        print("👋 Started hand tracking")
+        #if DEBUG
+        debugLog("👋 Started hand tracking")
+        #endif
     }
 
     /// Stop hand tracking
@@ -102,7 +108,9 @@ class HandTrackingManager: ObservableObject {
         rightHandLandmarks.removeAll()
         trackingConfidence = 0.0
 
-        print("👋 Stopped hand tracking")
+        #if DEBUG
+        debugLog("👋 Stopped hand tracking")
+        #endif
     }
 
     /// Process video frame for hand detection
@@ -112,7 +120,9 @@ class HandTrackingManager: ObservableObject {
         do {
             try sequenceHandler.perform([request], on: pixelBuffer)
         } catch {
-            print("❌ Hand tracking error: \(error)")
+            #if DEBUG
+            debugLog("❌ Hand tracking error: \(error)")
+            #endif
         }
     }
 
@@ -121,7 +131,9 @@ class HandTrackingManager: ObservableObject {
 
     private func handleHandPoseRequest(request: VNRequest, error: Error?) {
         if let error = error {
-            print("❌ Hand pose request error: \(error)")
+            #if DEBUG
+            debugLog("❌ Hand pose request error: \(error)")
+            #endif
             return
         }
 
@@ -298,7 +310,9 @@ extension HandTrackingManager {
 
         guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
               let input = try? AVCaptureDeviceInput(device: camera) else {
-            print("❌ Failed to create camera input")
+            #if DEBUG
+            debugLog("❌ Failed to create camera input")
+            #endif
             return nil
         }
 
@@ -316,3 +330,8 @@ extension HandTrackingManager {
         return session
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension HandTrackingManager: ObservableObject { }
