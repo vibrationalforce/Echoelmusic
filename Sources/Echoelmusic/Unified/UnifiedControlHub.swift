@@ -16,19 +16,21 @@ import AVFoundation
 /// let hub = UnifiedControlHub(audioEngine: audioEngine)
 /// hub.start()
 /// ```
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-public class UnifiedControlHub: ObservableObject {
+@Observable
+public final class UnifiedControlHub {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
     /// Current active input mode
-    @Published public private(set) var activeInputMode: InputMode = .automatic
+    public private(set) var activeInputMode: InputMode = .automatic
 
     /// Whether conflict resolution successfully resolved ambiguous inputs
-    @Published public private(set) var conflictResolved: Bool = true
+    public private(set) var conflictResolved: Bool = true
 
     /// Current control loop frequency (Hz)
-    @Published public private(set) var controlLoopFrequency: Double = 0
+    public private(set) var controlLoopFrequency: Double = 0
 
     // MARK: - Dependencies (Injected)
 
@@ -88,14 +90,18 @@ public class UnifiedControlHub: ObservableObject {
             }
             .store(in: &cancellables)
 
-        print("[UnifiedControlHub] Face tracking enabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Face tracking enabled")
+        #endif
     }
 
     /// Disable face tracking
     public func disableFaceTracking() {
         faceTrackingManager?.stop()
         faceTrackingManager = nil
-        print("[UnifiedControlHub] Face tracking disabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Face tracking disabled")
+        #endif
     }
 
     /// Enable hand tracking and gesture recognition
@@ -126,7 +132,9 @@ public class UnifiedControlHub: ObservableObject {
             }
             .store(in: &cancellables)
 
-        print("[UnifiedControlHub] Hand tracking enabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Hand tracking enabled")
+        #endif
     }
 
     /// Disable hand tracking
@@ -136,7 +144,9 @@ public class UnifiedControlHub: ObservableObject {
         gestureRecognizer = nil
         gestureConflictResolver = nil
         gestureToAudioMapper = nil
-        print("[UnifiedControlHub] Hand tracking disabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Hand tracking disabled")
+        #endif
     }
 
     /// Enable biometric monitoring (HealthKit)
@@ -174,7 +184,9 @@ public class UnifiedControlHub: ObservableObject {
         // Start monitoring
         healthKit.startMonitoring()
 
-        print("[UnifiedControlHub] Biometric monitoring enabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Biometric monitoring enabled")
+        #endif
     }
 
     /// Disable biometric monitoring
@@ -182,7 +194,9 @@ public class UnifiedControlHub: ObservableObject {
         healthKitManager?.stopMonitoring()
         healthKitManager = nil
         bioParameterMapper = nil
-        print("[UnifiedControlHub] Biometric monitoring disabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Biometric monitoring disabled")
+        #endif
     }
 
     /// Handle bio signal updates from HealthKit
@@ -207,7 +221,9 @@ public class UnifiedControlHub: ObservableObject {
         mpe.sendMPEConfiguration(memberChannels: 15)
         mpe.setPitchBendRange(semitones: 48)  // ±4 octaves
 
-        print("[UnifiedControlHub] MIDI 2.0 + MPE enabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] MIDI 2.0 + MPE enabled")
+        #endif
     }
 
     /// Disable MIDI 2.0
@@ -222,7 +238,9 @@ public class UnifiedControlHub: ObservableObject {
         mpeZoneManager = nil
         midiToSpatialMapper = nil
 
-        print("[UnifiedControlHub] MIDI 2.0 disabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] MIDI 2.0 disabled")
+        #endif
     }
 
     // MARK: - Phase 3 Integration
@@ -232,27 +250,35 @@ public class UnifiedControlHub: ObservableObject {
         let spatial = SpatialAudioEngine()
         try spatial.start()
         self.spatialAudioEngine = spatial
-        print("[UnifiedControlHub] Spatial audio enabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Spatial audio enabled")
+        #endif
     }
 
     /// Disable spatial audio
     public func disableSpatialAudio() {
         spatialAudioEngine?.stop()
         spatialAudioEngine = nil
-        print("[UnifiedControlHub] Spatial audio disabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Spatial audio disabled")
+        #endif
     }
 
     /// Enable MIDI to visual mapping
     public func enableVisualMapping() {
         let visualMapper = MIDIToVisualMapper()
         self.midiToVisualMapper = visualMapper
-        print("[UnifiedControlHub] Visual mapping enabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Visual mapping enabled")
+        #endif
     }
 
     /// Disable visual mapping
     public func disableVisualMapping() {
         midiToVisualMapper = nil
-        print("[UnifiedControlHub] Visual mapping disabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Visual mapping disabled")
+        #endif
     }
 
     /// Enable Push 3 LED controller
@@ -260,14 +286,18 @@ public class UnifiedControlHub: ObservableObject {
         let push3 = Push3LEDController()
         try push3.connect()
         self.push3LEDController = push3
-        print("[UnifiedControlHub] Push 3 LED controller enabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Push 3 LED controller enabled")
+        #endif
     }
 
     /// Disable Push 3 LED
     public func disablePush3LED() {
         push3LEDController?.disconnect()
         push3LEDController = nil
-        print("[UnifiedControlHub] Push 3 LED controller disabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Push 3 LED controller disabled")
+        #endif
     }
 
     /// Enable DMX/LED strip lighting
@@ -275,21 +305,27 @@ public class UnifiedControlHub: ObservableObject {
         let lighting = MIDIToLightMapper()
         try lighting.connect()
         self.midiToLightMapper = lighting
-        print("[UnifiedControlHub] DMX lighting enabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] DMX lighting enabled")
+        #endif
     }
 
     /// Disable lighting
     public func disableLighting() {
         midiToLightMapper?.disconnect()
         midiToLightMapper = nil
-        print("[UnifiedControlHub] DMX lighting disabled")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] DMX lighting disabled")
+        #endif
     }
 
     // MARK: - Lifecycle
 
     /// Start the unified control system
     public func start() {
-        print("[UnifiedControlHub] Starting control system...")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Starting control system...")
+        #endif
 
         // Start face tracking if enabled
         faceTrackingManager?.start()
@@ -305,7 +341,9 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Stop the unified control system
     public func stop() {
-        print("[UnifiedControlHub] Stopping control system...")
+        #if DEBUG
+        debugLog("[UnifiedControlHub] Stopping control system...")
+        #endif
         controlLoopTimer?.cancel()
         controlLoopTimer = nil
     }
@@ -390,7 +428,7 @@ public class UnifiedControlHub: ObservableObject {
 
         // Log bio→audio mapping (nur bei Debug)
         #if DEBUG
-        print("[Bio→Audio] Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Tempo: \(Int(mapper.tempo))BPM")
+        debugLog("[Bio→Audio] Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Tempo: \(Int(mapper.tempo))BPM")
         #endif
 
         // Apply bio-reactive spatial field (AFA)
@@ -540,7 +578,7 @@ public class UnifiedControlHub: ObservableObject {
         }
 
         #if DEBUG
-        print("[Gesture→Audio] Applied: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)")
+        debugLog("[Gesture→Audio] Applied: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)")
         #endif
 
         // Trigger MIDI notes via MPE
@@ -551,7 +589,9 @@ public class UnifiedControlHub: ObservableObject {
                     note: midiNote.note,
                     velocity: Float(midiNote.velocity) / 127.0
                 ) {
-                    print("[Gesture→MPE] Voice allocated: Note \(midiNote.note), Channel \(voice.channel + 1)")
+                    #if DEBUG
+                    debugLog("[Gesture→MPE] Voice allocated: Note \(midiNote.note), Channel \(voice.channel + 1)")
+                    #endif
 
                     // Apply initial per-note expression from gestures
                     if let gestureRec = gestureRecognizer {
@@ -565,14 +605,18 @@ public class UnifiedControlHub: ObservableObject {
                 }
             } else {
                 // Fallback to MIDI 1.0 if MPE not enabled
-                print("[Gesture→MIDI] Note On: \(midiNote.note), Velocity: \(midiNote.velocity)")
+                #if DEBUG
+                debugLog("[Gesture→MIDI] Note On: \(midiNote.note), Velocity: \(midiNote.velocity)")
+                #endif
             }
         }
 
         // Handle preset changes
         if let presetChange = params.presetChange {
             // TODO: Change to preset
-            print("[Gesture→Audio] Switch to preset: \(presetChange)")
+            #if DEBUG
+            debugLog("[Gesture→Audio] Switch to preset: \(presetChange)")
+            #endif
         }
     }
 
@@ -729,3 +773,8 @@ extension UnifiedControlHub {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension UnifiedControlHub: ObservableObject { }
