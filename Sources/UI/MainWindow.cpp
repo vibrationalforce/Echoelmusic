@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "SettingsDialog.h"
 
 //==============================================================================
 // Vaporwave Color Palette
@@ -239,7 +240,15 @@ void MainWindow::MainComponent::TopBar::buttonClicked(juce::Button* button)
     }
     else if (button == &settingsButton)
     {
-        // TODO: Open settings
+        auto* dialog = new SettingsDialog(audioEngine);
+        juce::DialogWindow::LaunchOptions options;
+        options.content.setOwned(dialog);
+        options.dialogTitle = "Settings";
+        options.dialogBackgroundColour = juce::Colour(0xff1a1a2e);
+        options.escapeKeyTriggersCloseButton = true;
+        options.useNativeTitleBar = false;
+        options.resizable = false;
+        options.launchAsync();
     }
 }
 
