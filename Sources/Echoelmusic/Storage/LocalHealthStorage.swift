@@ -48,8 +48,8 @@ final class LocalHealthStorage {
         try? mutableURL.setResourceValues(resourceValues)
 
         #if DEBUG
-        print("🔒 LocalHealthStorage: Initialized at \(storageDirectory.path)")
-        print("🔒 LocalHealthStorage: iCloud backup EXCLUDED")
+        debugLog("🔒 LocalHealthStorage: Initialized at \(storageDirectory.path)")
+        debugLog("🔒 LocalHealthStorage: iCloud backup EXCLUDED")
         #endif
     }
 
@@ -98,7 +98,7 @@ final class LocalHealthStorage {
         try await persistToDisk()
 
         #if DEBUG
-        print("🔒 LocalHealthStorage: Saved session '\(session.name)'")
+        debugLog("🔒 LocalHealthStorage: Saved session '\(session.name)'")
         #endif
     }
 
@@ -108,7 +108,7 @@ final class LocalHealthStorage {
             try await persistToDisk()
 
             #if DEBUG
-            print("🔒 LocalHealthStorage: Updated session '\(session.name)'")
+            debugLog("🔒 LocalHealthStorage: Updated session '\(session.name)'")
             #endif
         }
     }
@@ -118,7 +118,7 @@ final class LocalHealthStorage {
         try await persistToDisk()
 
         #if DEBUG
-        print("🔒 LocalHealthStorage: Deleted session \(sessionID)")
+        debugLog("🔒 LocalHealthStorage: Deleted session \(sessionID)")
         #endif
     }
 
@@ -141,7 +141,7 @@ final class LocalHealthStorage {
         isLoaded = true
 
         #if DEBUG
-        print("🔒 LocalHealthStorage: Loaded \(sessions.count) sessions")
+        debugLog("🔒 LocalHealthStorage: Loaded \(sessions.count) sessions")
         #endif
     }
 
@@ -158,7 +158,7 @@ final class LocalHealthStorage {
         try encryptedData.write(to: sessionsFile, options: [.atomic, .completeFileProtection])
 
         #if DEBUG
-        print("🔒 LocalHealthStorage: Persisted to disk (encrypted)")
+        debugLog("🔒 LocalHealthStorage: Persisted to disk (encrypted)")
         #endif
     }
 
@@ -290,7 +290,7 @@ final class LocalHealthStorage {
         SecItemDelete(query as CFDictionary)
 
         #if DEBUG
-        print("🔒 LocalHealthStorage: ALL DATA DELETED (GDPR)")
+        debugLog("🔒 LocalHealthStorage: ALL DATA DELETED (GDPR)")
         #endif
     }
 }
@@ -324,7 +324,7 @@ extension CloudSyncManager {
         // NO: avgHRV, avgCoherence, heartRate, or any HealthKit data
 
         #if DEBUG
-        print("⚠️ CloudSyncManager: Health data excluded from sync (compliance)")
+        debugLog("⚠️ CloudSyncManager: Health data excluded from sync (compliance)")
         #endif
 
         // Only save metadata that doesn't contain health information
