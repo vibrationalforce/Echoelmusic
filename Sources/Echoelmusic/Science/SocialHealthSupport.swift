@@ -10,23 +10,25 @@ import Combine
 /// - Holt-Lunstad et al. (2010). "Social relationships and mortality risk" - PLOS Medicine
 /// - Cohen (2004). "Social relationships and health" - American Psychologist
 /// - Kawachi & Berkman (2001). "Social ties and mental health" - Journal of Urban Health
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class SocialHealthSupport: ObservableObject {
+@Observable
+final class SocialHealthSupport {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var socialConnectionScore: Float = 0.0  // 0-100
-    @Published var lonelinessSeverity: LonelinessSeverity = .none
-    @Published var communityEngagement: Float = 0.0  // 0-100
-    @Published var socialSupport: SocialSupportLevel = .moderate
+    var socialConnectionScore: Float = 0.0  // 0-100
+    var lonelinessSeverity: LonelinessSeverity = .none
+    var communityEngagement: Float = 0.0  // 0-100
+    var socialSupport: SocialSupportLevel = .moderate
 
     // MARK: - Social Determinants (WHO Framework)
 
-    @Published var housingStability: StabilityLevel = .stable
-    @Published var foodSecurity: SecurityLevel = .secure
-    @Published var employmentStatus: EmploymentStatus = .employed
-    @Published var educationAccess: AccessLevel = .adequate
-    @Published var healthcareAccess: AccessLevel = .adequate
+    var housingStability: StabilityLevel = .stable
+    var foodSecurity: SecurityLevel = .secure
+    var employmentStatus: EmploymentStatus = .employed
+    var educationAccess: AccessLevel = .adequate
+    var healthcareAccess: AccessLevel = .adequate
 
     // MARK: - Loneliness Severity (UCLA Loneliness Scale)
 
@@ -145,14 +147,16 @@ class SocialHealthSupport: ObservableObject {
         }
     }
 
-    @Published var nearbyResources: [CommunityResource] = []
+    var nearbyResources: [CommunityResource] = []
 
     // MARK: - Initialization
 
     init() {
         loadCommunityResources()
-        print("✅ Social Health Support: Initialized")
-        print("🌍 Based on WHO Social Determinants of Health")
+        #if DEBUG
+        debugLog("✅ Social Health Support: Initialized")
+        debugLog("🌍 Based on WHO Social Determinants of Health")
+        #endif
     }
 
     private func loadCommunityResources() {
@@ -212,10 +216,12 @@ class SocialHealthSupport: ObservableObject {
 
         socialConnectionScore = min(100, max(0, score))
 
-        print("📊 Social Health Assessment:")
-        print("   - Social Connection Score: \(String(format: "%.1f", socialConnectionScore))/100")
-        print("   - Social Support: \(socialSupport.rawValue) (-\(String(format: "%.0f", socialSupport.mortalityRiskReduction))% mortality risk)")
-        print("   - Loneliness: \(lonelinessSeverity.rawValue)")
+        #if DEBUG
+        debugLog("📊 Social Health Assessment:")
+        debugLog("   - Social Connection Score: \(String(format: "%.1f", socialConnectionScore))/100")
+        debugLog("   - Social Support: \(socialSupport.rawValue) (-\(String(format: "%.0f", socialSupport.mortalityRiskReduction))% mortality risk)")
+        debugLog("   - Loneliness: \(lonelinessSeverity.rawValue)")
+        #endif
     }
 
     // MARK: - Get Recommendations
@@ -286,3 +292,8 @@ class SocialHealthSupport: ObservableObject {
         """
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension SocialHealthSupport: ObservableObject { }

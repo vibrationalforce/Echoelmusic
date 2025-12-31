@@ -23,15 +23,17 @@ import Combine
 /// - Physical Modeling (Karplus-Strong, modal synthesis)
 /// - Sample-based (with advanced manipulation)
 /// - Spectral (FFT-based resynthesis)
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class UniversalSoundLibrary: ObservableObject {
+@Observable
+final class UniversalSoundLibrary {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var availableInstruments: [Instrument] = []
-    @Published var availableSynthEngines: [SynthEngine] = []
-    @Published var currentPreset: SoundPreset?
-    @Published var sampleRate: Double = 48000.0
+    var availableInstruments: [Instrument] = []
+    var availableSynthEngines: [SynthEngine] = []
+    var currentPreset: SoundPreset?
+    var sampleRate: Double = 48000.0
 
     // MARK: - Instrument
 
@@ -379,9 +381,11 @@ class UniversalSoundLibrary: ObservableObject {
         loadSynthEngines()
         loadPresets()
 
-        print("✅ Universal Sound Library: Initialized")
-        print("🎹 Instruments: \(availableInstruments.count)")
-        print("🎛️ Synthesis Engines: \(availableSynthEngines.count)")
+        #if DEBUG
+        debugLog("✅ Universal Sound Library: Initialized")
+        debugLog("🎹 Instruments: \(availableInstruments.count)")
+        debugLog("🎛️ Synthesis Engines: \(availableSynthEngines.count)")
+        #endif
     }
 
     // MARK: - Load Instrument Database
@@ -648,7 +652,9 @@ class UniversalSoundLibrary: ObservableObject {
             )
         ]
 
-        print("🎹 Loaded \(availableInstruments.count) instruments from global traditions")
+        #if DEBUG
+        debugLog("🎹 Loaded \(availableInstruments.count) instruments from global traditions")
+        #endif
     }
 
     // MARK: - Load Synthesis Engines
@@ -723,14 +729,18 @@ class UniversalSoundLibrary: ObservableObject {
             )
         ]
 
-        print("🎛️ Loaded \(availableSynthEngines.count) synthesis engines")
+        #if DEBUG
+        debugLog("🎛️ Loaded \(availableSynthEngines.count) synthesis engines")
+        #endif
     }
 
     // MARK: - Load Presets
 
     private func loadPresets() {
         // Presets would be loaded here
-        print("💾 Preset system ready")
+        #if DEBUG
+        debugLog("💾 Preset system ready")
+        #endif
     }
 
     // MARK: - Query Functions
@@ -807,3 +817,8 @@ class UniversalSoundLibrary: ObservableObject {
         return report
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension UniversalSoundLibrary: ObservableObject { }

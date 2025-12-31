@@ -74,11 +74,15 @@ public class ARFaceTrackingManager: NSObject, ObservableObject {
     /// Start face tracking
     public func start() {
         guard ARFaceTrackingConfiguration.isSupported else {
-            print("[ARFaceTrackingManager] ❌ Face tracking not supported on this device")
+            #if DEBUG
+            debugLog("[ARFaceTrackingManager] ❌ Face tracking not supported on this device")
+            #endif
             return
         }
 
-        print("[ARFaceTrackingManager] ▶️ Starting face tracking...")
+        #if DEBUG
+        debugLog("[ARFaceTrackingManager] ▶️ Starting face tracking...")
+        #endif
 
         let config = ARFaceTrackingConfiguration()
         config.isLightEstimationEnabled = false  // Not needed for blend shapes
@@ -92,7 +96,9 @@ public class ARFaceTrackingManager: NSObject, ObservableObject {
 
     /// Stop face tracking
     public func stop() {
-        print("[ARFaceTrackingManager] ⏹️ Stopping face tracking...")
+        #if DEBUG
+        debugLog("[ARFaceTrackingManager] ⏹️ Stopping face tracking...")
+        #endif
         arSession?.pause()
         isTracking = false
         blendShapes = [:]
@@ -102,7 +108,9 @@ public class ARFaceTrackingManager: NSObject, ObservableObject {
 
     /// Reset tracking (useful if tracking is lost)
     public func reset() {
-        print("[ARFaceTrackingManager] 🔄 Resetting face tracking...")
+        #if DEBUG
+        debugLog("[ARFaceTrackingManager] 🔄 Resetting face tracking...")
+        #endif
         stop()
         start()
     }
@@ -201,7 +209,9 @@ extension ARFaceTrackingManager: ARSessionDelegate {
     }
 
     public func session(_ session: ARSession, didFailWithError error: Error) {
-        print("[ARFaceTrackingManager] ❌ Session failed: \(error.localizedDescription)")
+        #if DEBUG
+        debugLog("[ARFaceTrackingManager] ❌ Session failed: \(error.localizedDescription)")
+        #endif
 
         Task { @MainActor in
             self.isTracking = false
@@ -209,7 +219,9 @@ extension ARFaceTrackingManager: ARSessionDelegate {
     }
 
     public func sessionWasInterrupted(_ session: ARSession) {
-        print("[ARFaceTrackingManager] ⚠️ Session interrupted")
+        #if DEBUG
+        debugLog("[ARFaceTrackingManager] ⚠️ Session interrupted")
+        #endif
 
         Task { @MainActor in
             self.isTracking = false
@@ -217,7 +229,9 @@ extension ARFaceTrackingManager: ARSessionDelegate {
     }
 
     public func sessionInterruptionEnded(_ session: ARSession) {
-        print("[ARFaceTrackingManager] ✅ Session interruption ended, restarting...")
+        #if DEBUG
+        debugLog("[ARFaceTrackingManager] ✅ Session interruption ended, restarting...")
+        #endif
         reset()
     }
 }
