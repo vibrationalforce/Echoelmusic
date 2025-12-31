@@ -15,20 +15,22 @@ import AuthenticationServices
 /// - Plattform-spezifische Optimierung (Format, Hashtags)
 /// - Scheduling (geplantes Posten)
 /// - Analytics Dashboard
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class SocialMediaManager: ObservableObject {
+@Observable
+final class SocialMediaManager {
 
     // MARK: - Singleton
 
     static let shared = SocialMediaManager()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var connectedPlatforms: Set<Platform> = []
-    @Published var isPosting: Bool = false
-    @Published var isLive: Bool = false
-    @Published var postProgress: [Platform: PostStatus] = [:]
-    @Published var liveStatus: [Platform: LiveStatus] = [:]
+    var connectedPlatforms: Set<Platform> = []
+    var isPosting: Bool = false
+    var isLive: Bool = false
+    var postProgress: [Platform: PostStatus] = [:]
+    var liveStatus: [Platform: LiveStatus] = [:]
 
     // MARK: - Platform Definition
 
@@ -179,8 +181,10 @@ class SocialMediaManager: ObservableObject {
 
     private init() {
         loadCredentials()
-        print("✅ SocialMediaManager: Initialized")
-        print("📱 Supported Platforms: \(Platform.allCases.count)")
+        #if DEBUG
+        debugLog("✅ SocialMediaManager: Initialized")
+        debugLog("📱 Supported Platforms: \(Platform.allCases.count)")
+        #endif
     }
 
     // MARK: - One-Click Live
@@ -216,16 +220,22 @@ class SocialMediaManager: ObservableObject {
                     switch result {
                     case .success:
                         self.liveStatus[platform] = .live(viewers: 0, duration: 0)
-                        print("🔴 LIVE auf \(platform.rawValue)")
+                        #if DEBUG
+                        debugLog("🔴 LIVE auf \(platform.rawValue)")
+                        #endif
                     case .failure(let error):
                         self.liveStatus[platform] = .failed(error: error.localizedDescription)
-                        print("❌ Live fehlgeschlagen auf \(platform.rawValue): \(error)")
+                        #if DEBUG
+                        debugLog("❌ Live fehlgeschlagen auf \(platform.rawValue): \(error)")
+                        #endif
                     }
                 }
             }
         }
 
-        print("🔴 LIVE AUF \(livePlatforms.count) PLATTFORMEN!")
+        #if DEBUG
+        debugLog("🔴 LIVE AUF \(livePlatforms.count) PLATTFORMEN!")
+        #endif
     }
 
     /// Beende Live auf allen Plattformen
@@ -234,7 +244,9 @@ class SocialMediaManager: ObservableObject {
             await endLive(on: platform)
         }
         isLive = false
-        print("⬛ Live beendet auf allen Plattformen")
+        #if DEBUG
+        debugLog("⬛ Live beendet auf allen Plattformen")
+        #endif
     }
 
     // MARK: - One-Click Post
@@ -267,17 +279,23 @@ class SocialMediaManager: ObservableObject {
                     switch result {
                     case .success(let url):
                         self.postProgress[platform] = .completed(url: url)
-                        print("✅ Gepostet auf \(platform.rawValue): \(url)")
+                        #if DEBUG
+                        debugLog("✅ Gepostet auf \(platform.rawValue): \(url)")
+                        #endif
                     case .failure(let error):
                         self.postProgress[platform] = .failed(error: error.localizedDescription)
-                        print("❌ Post fehlgeschlagen auf \(platform.rawValue): \(error)")
+                        #if DEBUG
+                        debugLog("❌ Post fehlgeschlagen auf \(platform.rawValue): \(error)")
+                        #endif
                     }
                 }
             }
         }
 
         isPosting = false
-        print("📤 GEPOSTET AUF \(connectedPlatforms.count) PLATTFORMEN!")
+        #if DEBUG
+        debugLog("📤 GEPOSTET AUF \(connectedPlatforms.count) PLATTFORMEN!")
+        #endif
     }
 
     // MARK: - Platform Connection
@@ -285,7 +303,9 @@ class SocialMediaManager: ObservableObject {
     /// Verbinde mit einer Plattform (OAuth)
     func connect(to platform: Platform) async throws {
         // Simuliere OAuth Flow
-        print("🔗 Verbinde mit \(platform.rawValue)...")
+        #if DEBUG
+        debugLog("🔗 Verbinde mit \(platform.rawValue)...")
+        #endif
 
         // In echter Implementierung: OAuth Flow mit ASWebAuthenticationSession
         // Hier: Simulierte Verbindung
@@ -294,7 +314,9 @@ class SocialMediaManager: ObservableObject {
         postProgress[platform] = .idle
         liveStatus[platform] = .offline
 
-        print("✅ Verbunden mit \(platform.rawValue)")
+        #if DEBUG
+        debugLog("✅ Verbunden mit \(platform.rawValue)")
+        #endif
     }
 
     /// Trenne Verbindung zu einer Plattform
@@ -305,7 +327,9 @@ class SocialMediaManager: ObservableObject {
         liveStatus.removeValue(forKey: platform)
         saveCredentials()
 
-        print("🔌 Getrennt von \(platform.rawValue)")
+        #if DEBUG
+        debugLog("🔌 Getrennt von \(platform.rawValue)")
+        #endif
     }
 
     // MARK: - Private Methods
@@ -442,7 +466,7 @@ class SocialMediaManager: ObservableObject {
     // MARK: - Scheduling System
 
     /// Scheduled posts queue
-    @Published var scheduledPosts: [ScheduledPost] = []
+    var scheduledPosts: [ScheduledPost] = []
 
     /// Scheduler timer
     private var schedulerTimer: Timer?
@@ -509,14 +533,18 @@ class SocialMediaManager: ObservableObject {
         saveScheduledPosts()
         startSchedulerIfNeeded()
 
-        print("📅 Scheduled post for \(scheduledTime) on \(platforms.count) platforms")
+        #if DEBUG
+        debugLog("📅 Scheduled post for \(scheduledTime) on \(platforms.count) platforms")
+        #endif
     }
 
     /// Cancel a scheduled post
     func cancelScheduledPost(id: UUID) {
         scheduledPosts.removeAll { $0.id == id }
         saveScheduledPosts()
-        print("❌ Cancelled scheduled post \(id)")
+        #if DEBUG
+        debugLog("❌ Cancelled scheduled post \(id)")
+        #endif
     }
 
     /// Start the scheduler timer
@@ -529,14 +557,18 @@ class SocialMediaManager: ObservableObject {
             }
         }
 
-        print("⏰ Scheduler started")
+        #if DEBUG
+        debugLog("⏰ Scheduler started")
+        #endif
     }
 
     /// Stop the scheduler timer
     func stopScheduler() {
         schedulerTimer?.invalidate()
         schedulerTimer = nil
-        print("⏰ Scheduler stopped")
+        #if DEBUG
+        debugLog("⏰ Scheduler stopped")
+        #endif
     }
 
     /// Process due scheduled posts
@@ -582,10 +614,14 @@ class SocialMediaManager: ObservableObject {
             connectedPlatforms = previousConnected
 
             scheduledPosts[index].status = .completed
-            print("✅ Scheduled post \(post.id) completed")
+            #if DEBUG
+            debugLog("✅ Scheduled post \(post.id) completed")
+            #endif
         } catch {
             scheduledPosts[index].status = .failed
-            print("❌ Scheduled post \(post.id) failed: \(error)")
+            #if DEBUG
+            debugLog("❌ Scheduled post \(post.id) failed: \(error)")
+            #endif
         }
 
         saveScheduledPosts()
@@ -608,7 +644,7 @@ class SocialMediaManager: ObservableObject {
     // MARK: - Analytics
 
     /// Analytics data for posts
-    @Published var analytics: [Platform: PostAnalytics] = [:]
+    var analytics: [Platform: PostAnalytics] = [:]
 
     struct PostAnalytics {
         var totalViews: Int = 0
@@ -644,7 +680,9 @@ class SocialMediaManager: ObservableObject {
                 recentPosts: []
             )
         }
-        print("📊 Analytics fetched for \(connectedPlatforms.count) platforms")
+        #if DEBUG
+        debugLog("📊 Analytics fetched for \(connectedPlatforms.count) platforms")
+        #endif
     }
 
     // MARK: - Errors
@@ -822,6 +860,11 @@ struct PlatformButton: View {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension SocialMediaManager: ObservableObject { }
 
 #Preview {
     OneClickPublishView()

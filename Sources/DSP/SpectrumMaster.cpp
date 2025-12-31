@@ -1,4 +1,5 @@
 #include "SpectrumMaster.h"
+#include "../Core/DSPOptimizations.h"
 
 SpectrumMaster::SpectrumMaster()
     : forwardFFT(fftOrder)
@@ -40,15 +41,22 @@ void SpectrumMaster::performFFTAnalysis(const juce::AudioBuffer<float>& buffer)
     const int numSamples = buffer.getNumSamples();
     const int numChannels = buffer.getNumChannels();
 
+    // OPTIMIZATION: Cache read pointers to avoid per-sample function calls
+    const float* channelPtrs[8] = { nullptr };
+    const int maxChannels = juce::jmin(numChannels, 8);
+    for (int ch = 0; ch < maxChannels; ++ch)
+        channelPtrs[ch] = buffer.getReadPointer(ch);
+
+    const float invNumChannels = 1.0f / static_cast<float>(numChannels);
+    const int samplesToProcess = juce::jmin(numSamples, fftSize);
+
     // Mix to mono and copy to FFT buffer
-    for (int i = 0; i < juce::jmin(numSamples, fftSize); ++i)
+    for (int i = 0; i < samplesToProcess; ++i)
     {
         float sample = 0.0f;
-        for (int ch = 0; ch < numChannels; ++ch)
-            sample += buffer.getSample(ch, i);
-        sample /= static_cast<float>(numChannels);
-
-        fftData[i] = sample;
+        for (int ch = 0; ch < maxChannels; ++ch)
+            sample += channelPtrs[ch][i];
+        fftData[i] = sample * invNumChannels;
     }
 
     // Apply window
@@ -61,7 +69,7 @@ void SpectrumMaster::performFFTAnalysis(const juce::AudioBuffer<float>& buffer)
     for (int i = 0; i < fftSize / 2; ++i)
     {
         float magnitude = fftData[i];
-        spectrumMagnitudes[i] = juce::Decibels::gainToDecibels(magnitude + 1e-6f);
+        spectrumMagnitudes[i] = Echoel::DSP::FastMath::gainToDb(magnitude + 1e-6f);
     }
 }
 
@@ -87,8 +95,8 @@ std::vector<SpectrumMaster::FrequencyBand> SpectrumMaster::getSpectrumData() con
     {
         float freqRatio = static_cast<float>(i) / static_cast<float>(numBands - 1);
 
-        // Logarithmic frequency distribution
-        float frequency = minFreq * std::pow(maxFreq / minFreq, freqRatio);
+        // Logarithmic frequency distribution - using fast pow
+        float frequency = minFreq * Echoel::DSP::FastMath::fastPow(maxFreq / minFreq, freqRatio);
 
         // Get magnitude at this frequency
         float magnitude = getMagnitudeAtFrequency(frequency, spectrumSmoothed);

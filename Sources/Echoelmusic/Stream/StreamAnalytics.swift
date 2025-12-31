@@ -3,24 +3,26 @@ import Combine
 
 /// Stream Analytics Dashboard
 /// Tracks viewers, chat activity, bio-data correlation, engagement metrics
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class StreamAnalytics: ObservableObject {
+@Observable
+final class StreamAnalytics {
 
     // MARK: - Real-Time Metrics
 
-    @Published var currentViewers: Int = 0
-    @Published var peakViewers: Int = 0
-    @Published var averageViewers: Double = 0.0
-    @Published var chatMessagesPerMinute: Double = 0.0
-    @Published var framesSent: Int = 0
-    @Published var droppedFrames: Int = 0
+    var currentViewers: Int = 0
+    var peakViewers: Int = 0
+    var averageViewers: Double = 0.0
+    var chatMessagesPerMinute: Double = 0.0
+    var framesSent: Int = 0
+    var droppedFrames: Int = 0
 
     // MARK: - Bio-Data Correlation
 
-    @Published var avgHRV: Float = 0.0
-    @Published var avgCoherence: Float = 0.0
-    @Published var avgHeartRate: Float = 0.0
-    @Published var timeInFlowState: TimeInterval = 0.0
+    var avgHRV: Float = 0.0
+    var avgCoherence: Float = 0.0
+    var avgHeartRate: Float = 0.0
+    var timeInFlowState: TimeInterval = 0.0
 
     // MARK: - Session Data
 
@@ -32,7 +34,9 @@ class StreamAnalytics: ObservableObject {
     func startSession() {
         sessionStartTime = Date()
         resetMetrics()
-        print("📊 StreamAnalytics: Started session")
+        #if DEBUG
+        debugLog("📊 StreamAnalytics: Started session")
+        #endif
     }
 
     func endSession() {
@@ -54,7 +58,9 @@ class StreamAnalytics: ObservableObject {
             avgHeartRate = hrSum / Float(bioSamples.count)
         }
 
-        print("📊 StreamAnalytics: Session ended - Duration: \(Int(sessionDuration))s, Peak Viewers: \(peakViewers), Avg HRV: \(avgHRV)")
+        #if DEBUG
+        debugLog("📊 StreamAnalytics: Session ended - Duration: \(Int(sessionDuration))s, Peak Viewers: \(peakViewers), Avg HRV: \(avgHRV)")
+        #endif
     }
 
     func recordFrame() {
@@ -77,7 +83,9 @@ class StreamAnalytics: ObservableObject {
     }
 
     func recordSceneSwitch(to scene: Scene) {
-        print("📊 StreamAnalytics: Scene switched to '\(scene.name)'")
+        #if DEBUG
+        debugLog("📊 StreamAnalytics: Scene switched to '\(scene.name)'")
+        #endif
     }
 
     private func resetMetrics() {
@@ -151,3 +159,8 @@ struct CorrelationResult {
     let correlation: Double
     let interpretation: String
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension StreamAnalytics: ObservableObject { }

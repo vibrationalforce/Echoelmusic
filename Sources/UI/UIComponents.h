@@ -3,19 +3,23 @@
 #include <JuceHeader.h>
 #include "ResponsiveLayout.h"
 #include "ModernLookAndFeel.h"
+#include "SuperIntelligenceTouch.h"
 
 //==============================================================================
 /**
- * @brief Modern Rotary Knob with Value Display
+ * @brief Modern Rotary Knob with Value Display + SuperIntelligenceTouch
  *
  * Features:
- * - Touch-optimized
+ * - Touch-optimized with tremor filtering
+ * - Automatic fine/fast morph detection
+ * - Phase-jump prevention
  * - Value label
  * - Parameter name
  * - Smooth animation
  * - Accessibility support
  */
-class ModernKnob : public ResponsiveComponent
+class ModernKnob : public ResponsiveComponent,
+                   public Echoel::Touch::SuperIntelligenceTouch::Listener
 {
 public:
     ModernKnob(const juce::String& parameterName = "",
@@ -23,7 +27,8 @@ public:
                float minValue = 0.0f,
                float maxValue = 1.0f,
                float defaultValue = 0.5f)
-        : paramName(parameterName), unitSuffix(unit)
+        : paramName(parameterName), unitSuffix(unit),
+          minVal(minValue), maxVal(maxValue), defaultVal(defaultValue)
     {
         // Setup slider
         addAndMakeVisible(slider);
@@ -44,12 +49,20 @@ public:
         valueLabel.setJustificationType(juce::Justification::centred);
         valueLabel.setFont(juce::Font(14.0f, juce::Font::bold));
         updateValueLabel();
+
+        // Initialize touch controller
+        touchController.addListener(this);
+        slider.addMouseListener(&touchController, false);
+    }
+
+    ~ModernKnob() override
+    {
+        touchController.removeListener(this);
     }
 
     void performResponsiveLayout() override
     {
         auto bounds = getLocalBounds();
-        auto metrics = getLayoutMetrics();
 
         // Name at top
         nameLabel.setBounds(bounds.removeFromTop(20));
@@ -73,6 +86,24 @@ public:
         return static_cast<float>(slider.getValue());
     }
 
+    // Touch intent feedback
+    Echoel::Touch::TouchIntent getCurrentIntent() const { return currentIntent; }
+    bool isFineAdjustMode() const { return currentIntent == Echoel::Touch::TouchIntent::FineAdjust; }
+
+    // SuperIntelligenceTouch::Listener callbacks
+    void onIntentChanged(int id, Echoel::Touch::TouchIntent oldIntent,
+                         Echoel::Touch::TouchIntent newIntent) override
+    {
+        currentIntent = newIntent;
+        updateIntentIndicator();
+    }
+
+    void onTouchMove(int id, juce::Point<float> position,
+                     Echoel::Touch::TouchIntent intent) override
+    {
+        currentIntent = intent;
+    }
+
 private:
     void updateValueLabel()
     {
@@ -91,20 +122,51 @@ private:
         valueLabel.setText(text, juce::dontSendNotification);
     }
 
+    void updateIntentIndicator()
+    {
+        // Visual feedback for touch intent
+        juce::Colour intentColour;
+        switch (currentIntent)
+        {
+            case Echoel::Touch::TouchIntent::FineAdjust:
+                intentColour = juce::Colours::cyan;
+                break;
+            case Echoel::Touch::TouchIntent::FastMorph:
+                intentColour = juce::Colours::orange;
+                break;
+            default:
+                intentColour = juce::Colours::white;
+                break;
+        }
+        valueLabel.setColour(juce::Label::textColourId, intentColour);
+        repaint();
+    }
+
     juce::Slider slider;
     juce::Label nameLabel;
     juce::Label valueLabel;
     juce::String paramName;
     juce::String unitSuffix;
+    float minVal, maxVal, defaultVal;
+
+    // Touch intelligence
+    Echoel::Touch::SuperIntelligenceTouch touchController;
+    Echoel::Touch::TouchIntent currentIntent = Echoel::Touch::TouchIntent::Unknown;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModernKnob)
 };
 
 //==============================================================================
 /**
- * @brief Modern Linear Slider with Label
+ * @brief Modern Linear Slider with Label + SuperIntelligenceTouch
+ *
+ * Features:
+ * - Touch-optimized with tremor filtering
+ * - Automatic fine/fast morph detection
+ * - Phase-jump prevention for smooth parameter changes
  */
-class ModernSlider : public ResponsiveComponent
+class ModernSlider : public ResponsiveComponent,
+                     public Echoel::Touch::SuperIntelligenceTouch::Listener
 {
 public:
     ModernSlider(const juce::String& parameterName = "",
@@ -132,6 +194,15 @@ public:
         valueLabel.setJustificationType(juce::Justification::centredRight);
         valueLabel.setFont(juce::Font(12.0f, juce::Font::bold));
         updateValueLabel();
+
+        // Initialize touch controller
+        touchController.addListener(this);
+        slider.addMouseListener(&touchController, false);
+    }
+
+    ~ModernSlider() override
+    {
+        touchController.removeListener(this);
     }
 
     void performResponsiveLayout() override
@@ -150,6 +221,24 @@ public:
 
     juce::Slider& getSlider() { return slider; }
 
+    // Touch intent feedback
+    Echoel::Touch::TouchIntent getCurrentIntent() const { return currentIntent; }
+    bool isFineAdjustMode() const { return currentIntent == Echoel::Touch::TouchIntent::FineAdjust; }
+
+    // SuperIntelligenceTouch::Listener callbacks
+    void onIntentChanged(int id, Echoel::Touch::TouchIntent oldIntent,
+                         Echoel::Touch::TouchIntent newIntent) override
+    {
+        currentIntent = newIntent;
+        updateIntentIndicator();
+    }
+
+    void onTouchMove(int id, juce::Point<float> position,
+                     Echoel::Touch::TouchIntent intent) override
+    {
+        currentIntent = intent;
+    }
+
 private:
     void updateValueLabel()
     {
@@ -158,11 +247,34 @@ private:
         valueLabel.setText(text, juce::dontSendNotification);
     }
 
+    void updateIntentIndicator()
+    {
+        juce::Colour intentColour;
+        switch (currentIntent)
+        {
+            case Echoel::Touch::TouchIntent::FineAdjust:
+                intentColour = juce::Colours::cyan;
+                break;
+            case Echoel::Touch::TouchIntent::FastMorph:
+                intentColour = juce::Colours::orange;
+                break;
+            default:
+                intentColour = juce::Colours::white;
+                break;
+        }
+        valueLabel.setColour(juce::Label::textColourId, intentColour);
+        repaint();
+    }
+
     juce::Slider slider;
     juce::Label nameLabel;
     juce::Label valueLabel;
     juce::String paramName;
     juce::String unitSuffix;
+
+    // Touch intelligence
+    Echoel::Touch::SuperIntelligenceTouch touchController;
+    Echoel::Touch::TouchIntent currentIntent = Echoel::Touch::TouchIntent::Unknown;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModernSlider)
 };

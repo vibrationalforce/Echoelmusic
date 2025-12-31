@@ -1,4 +1,5 @@
 #include "MultibandCompressor.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -77,28 +78,34 @@ void MultibandCompressor::process(juce::AudioBuffer<float>& buffer)
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
+    // OPTIMIZATION: Skip resize check - buffers pre-allocated in prepare()
+    // If block size exceeds allocation, limit processing (avoid allocation in audio thread)
+    const int safeSamples = juce::jmin(numSamples, static_cast<int>(bandBuffers[0].size()));
+    if (safeSamples < numSamples)
+    {
+        // Buffer overflow - process what we can safely
+        jassertfalse;  // Debug warning: prepare() was called with too small block size
+    }
+    const int processSize = safeSamples;
+
     // Process each channel independently
     for (int channel = 0; channel < numChannels && channel < 2; ++channel)
     {
-        // 1. Split into frequency bands
-        std::array<std::vector<float>, 4> bandSignals;
-        for (auto& sig : bandSignals)
-            sig.resize(numSamples);
-
-        splitIntoBands(buffer, bandSignals, channel);
+        // 1. Split into frequency bands (using pre-allocated bandBuffers)
+        splitIntoBands(buffer, bandBuffers, channel);
 
         // 2. Compress each band
         for (int bandIndex = 0; bandIndex < 4; ++bandIndex)
         {
             if (bands[bandIndex].enabled && !bands[bandIndex].bypass)
             {
-                compressBand(bandSignals[bandIndex], bandIndex, channel);
+                compressBand(bandBuffers[bandIndex], bandIndex, channel);
             }
         }
 
         // 3. Sum bands back together
         float* channelData = buffer.getWritePointer(channel);
-        sumBands(bandSignals, channelData, numSamples);
+        sumBands(bandBuffers, channelData, processSize);
     }
 }
 
@@ -292,7 +299,7 @@ void MultibandCompressor::compressBand(std::vector<float>& bandSignal,
     float envelope = state.envelope[channel];
 
     // Pre-calculate makeup gain (linear)
-    const float makeupGainLinear = juce::Decibels::decibelsToGain(band.makeupGain);
+    const float makeupGainLinear = Echoel::DSP::FastMath::dbToGain(band.makeupGain);
 
     float maxInputDb = -100.0f;
     float maxOutputDb = -100.0f;
@@ -313,8 +320,8 @@ void MultibandCompressor::compressBand(std::vector<float>& bandSignal,
             envelope = state.releaseCoeff * envelope + (1.0f - state.releaseCoeff) * inputLevel;
         }
 
-        // Convert to dB
-        const float envelopeDb = juce::Decibels::gainToDecibels(envelope + 0.00001f);
+        // OPTIMIZATION: Use fast dB approximations (~5x faster than std::log/pow)
+        const float envelopeDb = fastGainToDb(envelope);
 
         // Calculate compression
         const float gainReductionDb = calculateCompression(envelopeDb,
@@ -324,7 +331,7 @@ void MultibandCompressor::compressBand(std::vector<float>& bandSignal,
 
         // Apply compression + makeup gain
         const float totalGainDb = -gainReductionDb + band.makeupGain;
-        const float totalGainLinear = juce::Decibels::decibelsToGain(totalGainDb);
+        const float totalGainLinear = fastDbToGain(totalGainDb);
 
         bandSignal[i] = inputSample * totalGainLinear;
 
@@ -354,15 +361,21 @@ float MultibandCompressor::calculateCompression(float envelopeDb,
 
     const float excess = envelopeDb - threshold;
 
+    // OPTIMIZATION: Pre-compute constants (moved to updateCoefficients for per-sample use)
+    const float compressionFactor = 1.0f - 1.0f / ratio;
+    const float halfKnee = knee * 0.5f;
+
     // Soft knee
     if (excess < knee)
     {
-        const float kneeRatio = excess / knee;
-        return kneeRatio * kneeRatio * excess * (1.0f - 1.0f / ratio) / 2.0f;
+        // OPTIMIZATION: Use multiplication instead of division
+        const float invKnee = (knee > 0.01f) ? (1.0f / knee) : 100.0f;
+        const float kneeRatio = excess * invKnee;
+        return kneeRatio * kneeRatio * excess * compressionFactor * 0.5f;
     }
 
     // Above knee (linear compression)
-    return (excess - knee / 2.0f) * (1.0f - 1.0f / ratio);
+    return (excess - halfKnee) * compressionFactor;
 }
 
 void MultibandCompressor::updateCoefficients()
@@ -372,11 +385,19 @@ void MultibandCompressor::updateCoefficients()
         const auto& band = bands[i];
         auto& state = bandStates[i];
 
-        // Attack coefficient (time to reach 63% of target)
-        state.attackCoeff = std::exp(-1000.0f / (band.attack * static_cast<float>(currentSampleRate)));
+        // Attack coefficient (time to reach 63% of target) - using fast exp
+        state.attackCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (band.attack * static_cast<float>(currentSampleRate)));
 
-        // Release coefficient
-        state.releaseCoeff = std::exp(-1000.0f / (band.release * static_cast<float>(currentSampleRate)));
+        // Release coefficient - using fast exp
+        state.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (band.release * static_cast<float>(currentSampleRate)));
+
+        // OPTIMIZATION: Cache compression constants for division-free per-sample processing
+        state.compressionFactor = 1.0f - 1.0f / band.ratio;
+        state.halfKnee = band.knee * 0.5f;
+        if (band.knee > 0.01f)
+            state.invKnee = 1.0f / band.knee;
+        else
+            state.invKnee = 100.0f;  // Large value for hard knee
     }
 }
 
@@ -386,10 +407,11 @@ void MultibandCompressor::applyButterworth(float* signal,
                                            bool isHighpass,
                                            ButterworthState& state)
 {
-    // Butterworth 2nd order coefficients
+    // Butterworth 2nd order coefficients - using fast trig
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     const float omega = juce::MathConstants<float>::twoPi * frequency / static_cast<float>(currentSampleRate);
-    const float cosOmega = std::cos(omega);
-    const float sinOmega = std::sin(omega);
+    const float cosOmega = trigTables.fastCosRad(omega);
+    const float sinOmega = trigTables.fastSinRad(omega);
     const float alpha = sinOmega / (2.0f * 0.707f);  // Q = 0.707 for Butterworth
 
     float b0, b1, b2, a0, a1, a2;

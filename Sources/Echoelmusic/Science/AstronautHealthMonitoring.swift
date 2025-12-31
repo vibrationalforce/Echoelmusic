@@ -12,29 +12,31 @@ import Combine
 /// - Aubert et al. (2016). "Heart rate variability in astronauts" - Aviation Space Environmental Med
 /// - Baevsky et al. (2007). "Autonomic cardiovascular regulation in space" - Acta Astronautica
 /// - ESA Space Medicine Office - Cardiovascular Deconditioning Countermeasures
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class AstronautHealthMonitoring: ObservableObject {
+@Observable
+final class AstronautHealthMonitoring {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var monitoringActive: Bool = false
-    @Published var currentProtocol: MonitoringProtocol = .cardiovascular
-    @Published var physiologicalLoad: Float = 0.0  // 0-100 scale
-    @Published var adaptationStatus: AdaptationStatus = .nominal
+    var monitoringActive: Bool = false
+    var currentProtocol: MonitoringProtocol = .cardiovascular
+    var physiologicalLoad: Float = 0.0  // 0-100 scale
+    var adaptationStatus: AdaptationStatus = .nominal
 
     // MARK: - Cardiovascular Metrics (NASA Standards)
 
-    @Published var heartRate: Float = 0.0
-    @Published var hrvRMSSD: Float = 0.0
-    @Published var bloodPressureSystolic: Float = 0.0  // mmHg
-    @Published var bloodPressureDiastolic: Float = 0.0
-    @Published var strokeVolume: Float = 0.0  // ml/beat (estimated)
-    @Published var cardiacOutput: Float = 0.0  // L/min
+    var heartRate: Float = 0.0
+    var hrvRMSSD: Float = 0.0
+    var bloodPressureSystolic: Float = 0.0  // mmHg
+    var bloodPressureDiastolic: Float = 0.0
+    var strokeVolume: Float = 0.0  // ml/beat (estimated)
+    var cardiacOutput: Float = 0.0  // L/min
 
     // MARK: - Orthostatic Tolerance (Space Adaptation)
 
-    @Published var orthostaticScore: Float = 0.0  // 0-100
-    @Published var baroreflex Sensitivity: Float = 0.0  // ms/mmHg
+    var orthostaticScore: Float = 0.0  // 0-100
+    var baroreflex Sensitivity: Float = 0.0  // ms/mmHg
 
     // MARK: - Monitoring Protocols (Space Agencies)
 
@@ -127,9 +129,11 @@ class AstronautHealthMonitoring: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Astronaut Health Monitoring: Initialized")
-        print("🚀 Based on NASA/ESA/JAXA public research protocols")
-        print("⚠️ Educational purposes - not for actual spaceflight")
+        #if DEBUG
+        debugLog("✅ Astronaut Health Monitoring: Initialized")
+        debugLog("🚀 Based on NASA/ESA/JAXA public research protocols")
+        debugLog("⚠️ Educational purposes - not for actual spaceflight")
+        #endif
     }
 
     // MARK: - Start Monitoring
@@ -138,9 +142,11 @@ class AstronautHealthMonitoring: ObservableObject {
         currentProtocol = protocolType
         monitoringActive = true
 
-        print("▶️ Astronaut Health: \(protocolType.rawValue)")
-        print("📊 Key Metrics: \(protocolType.keyMetrics.joined(separator: ", "))")
-        print("📚 Evidence: \(protocolType.evidenceBase)")
+        #if DEBUG
+        debugLog("▶️ Astronaut Health: \(protocolType.rawValue)")
+        debugLog("📊 Key Metrics: \(protocolType.keyMetrics.joined(separator: ", "))")
+        debugLog("📚 Evidence: \(protocolType.evidenceBase)")
+        #endif
 
         // Start data collection
         startDataCollection()
@@ -150,7 +156,9 @@ class AstronautHealthMonitoring: ObservableObject {
 
     func stopMonitoring() {
         monitoringActive = false
-        print("⏹️ Astronaut Health: Monitoring stopped")
+        #if DEBUG
+        debugLog("⏹️ Astronaut Health: Monitoring stopped")
+        #endif
     }
 
     // MARK: - Data Collection
@@ -371,3 +379,8 @@ struct ResearchExport: Codable {
 }
 
 extension AstronautHealthMonitoring.PhysiologicalDataPoint: Codable {}
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension AstronautHealthMonitoring: ObservableObject { }

@@ -1,4 +1,5 @@
 #include "Track.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 Track::Track(Type trackType, const juce::String& trackName)
@@ -22,7 +23,15 @@ void Track::prepare(double sampleRate, int maximumBlockSize)
         playbackBuffer.setSize(2, maximumBlockSize * 100); // 100 blocks of audio
         playbackBuffer.clear();
 
-        recordedAudio.setSize(2, 0); // Will grow during recording
+        // OPTIMIZATION: Pre-allocate recording buffer to avoid allocations in audio callback
+        // Default: 30 minutes at current sample rate (~83MB at 48kHz stereo)
+        // This is generous to prevent any reallocation during recording sessions
+        const int thirtyMinutesSamples = static_cast<int>(sampleRate * 60.0 * 30.0);
+        recordedAudio.setSize(2, thirtyMinutesSamples, false, true, false);
+        recordedAudio.clear();
+
+        // OPTIMIZATION: Track maximum recording capacity
+        maxRecordingSamples = thirtyMinutesSamples;
     }
 }
 
@@ -39,7 +48,14 @@ void Track::setVolume(float newVolume)
 
 void Track::setPan(float newPan)
 {
-    pan.store(juce::jlimit(-1.0f, 1.0f, newPan));
+    float clampedPan = juce::jlimit(-1.0f, 1.0f, newPan);
+    pan.store(clampedPan);
+
+    // OPTIMIZATION: Pre-calculate pan gains (constant power) to avoid trig in audio thread
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    float normalizedAngle = (clampedPan + 1.0f) * 0.125f;  // Maps -1..1 to 0..0.25 (quarter circle)
+    cachedLeftGain.store(trigTables.fastCos(normalizedAngle));
+    cachedRightGain.store(trigTables.fastSin(normalizedAngle));
 }
 
 //==============================================================================
@@ -47,13 +63,10 @@ void Track::processBlock(juce::AudioBuffer<float>& outputBuffer, int numSamples)
 {
     if (type == Type::Audio)
     {
-        // Get volume and pan
+        // Get volume and cached pan gains (pre-calculated in setPan)
         float vol = volume.load();
-        float panValue = pan.load();
-
-        // Calculate pan gains (constant power)
-        float leftGain = std::cos((panValue + 1.0f) * juce::MathConstants<float>::pi * 0.25f);
-        float rightGain = std::sin((panValue + 1.0f) * juce::MathConstants<float>::pi * 0.25f);
+        float leftGain = cachedLeftGain.load();
+        float rightGain = cachedRightGain.load();
 
         // Mix playback buffer to output
         // (Simplified - in reality, we'd read from clips at current position)
@@ -81,21 +94,22 @@ void Track::recordInput(const float* const* input, int numInputs, int numSamples
     if (type != Type::Audio)
         return;
 
-    // Ensure we have space in recorded buffer
-    int currentSize = recordedAudio.getNumSamples();
-    int requiredSize = (int)(position - recordingStartPosition) + numSamples;
+    // Calculate write position
+    const int writePos = static_cast<int>(position - recordingStartPosition);
 
-    if (requiredSize > currentSize)
+    // OPTIMIZATION: Guard against exceeding pre-allocated buffer
+    // Never allocate in audio thread - just stop recording if exceeded
+    if (writePos < 0 || writePos + numSamples > maxRecordingSamples)
     {
-        // Grow buffer (this happens outside audio thread ideally, but simplified here)
-        int newSize = juce::nextPowerOfTwo(requiredSize);
-        recordedAudio.setSize(2, newSize, true, true, false);
+        // Buffer overflow - would need allocation, so skip
+        // In practice, 30 minutes of recording should be enough
+        // A warning could be logged here (but not in RT thread)
+        return;
     }
 
-    // Copy input to recorded buffer
-    int writePos = (int)(position - recordingStartPosition);
-
-    for (int channel = 0; channel < juce::jmin(2, numInputs); ++channel)
+    // Copy input to recorded buffer using SIMD-optimized copy
+    const int channelsToCopy = juce::jmin(2, numInputs);
+    for (int channel = 0; channel < channelsToCopy; ++channel)
     {
         if (input[channel] != nullptr)
         {

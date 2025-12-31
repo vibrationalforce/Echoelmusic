@@ -3,14 +3,16 @@ import CoreMIDI
 import Combine
 
 /// MIDI controller support for external hardware control
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class MIDIController: ObservableObject {
+@Observable
+final class MIDIController {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
-    @Published var isConnected: Bool = false
-    @Published var connectedDevices: [MIDIDevice] = []
-    @Published var lastMIDIMessage: MIDIMessage?
+    var isConnected: Bool = false
+    var connectedDevices: [MIDIDevice] = []
+    var lastMIDIMessage: MIDIMessage?
 
     // MARK: - MIDI Device Model
 
@@ -112,7 +114,9 @@ class MIDIController: ObservableObject {
         // Create MIDI client
         status = MIDIClientCreate("Echoelmusic" as CFString, nil, nil, &midiClient)
         guard status == noErr else {
-            print("❌ Failed to create MIDI client: \(status)")
+            #if DEBUG
+            debugLog("❌", "Failed to create MIDI client: \(status)")
+            #endif
             return
         }
 
@@ -132,14 +136,18 @@ class MIDIController: ObservableObject {
         )
 
         guard status == noErr else {
-            print("❌ Failed to create MIDI input port: \(status)")
+            #if DEBUG
+            debugLog("❌", "Failed to create MIDI input port: \(status)")
+            #endif
             return
         }
 
         // Connect to all sources
         connectToAllSources()
 
-        print("🎹 MIDI controller initialized")
+        #if DEBUG
+        debugLog("🎹", "MIDI controller initialized")
+        #endif
     }
 
     // MARK: - MIDI Connection
@@ -154,7 +162,9 @@ class MIDIController: ObservableObject {
             if status == noErr {
                 let device = getDeviceInfo(for: source)
                 connectedDevices.append(device)
-                print("🎹 Connected to MIDI device: \(device.name)")
+                #if DEBUG
+                debugLog("🎹 Connected to MIDI device: \(device.name)")
+                #endif
             }
         }
 
@@ -245,7 +255,9 @@ class MIDIController: ObservableObject {
     }
 
     private func handleParameterChange(parameter: MIDIParameter, value: Float) {
-        print("🎹 MIDI parameter: \(parameter) = \(value)")
+        #if DEBUG
+        debugLog("🎹 MIDI parameter: \(parameter) = \(value)")
+        #endif
         // This would be handled by specific parameter callbacks
     }
 
@@ -254,13 +266,17 @@ class MIDIController: ObservableObject {
     /// Add MIDI CC mapping
     func addMapping(_ mapping: MIDIMapping) {
         mappings.append(mapping)
-        print("🎹 Added MIDI mapping: CC\(mapping.controllerNumber) → \(mapping.parameter)")
+        #if DEBUG
+        debugLog("🎹 Added MIDI mapping: CC\(mapping.controllerNumber) → \(mapping.parameter)")
+        #endif
     }
 
     /// Remove all mappings
     func clearMappings() {
         mappings.removeAll()
-        print("🎹 Cleared all MIDI mappings")
+        #if DEBUG
+        debugLog("🎹 Cleared all MIDI mappings")
+        #endif
     }
 
     /// Register message handler
@@ -284,7 +300,9 @@ class MIDIController: ObservableObject {
         addMapping(MIDIMapping(controllerNumber: 92, parameter: .delayTime, minValue: 0.01, maxValue: 2))    // Delay Time
         addMapping(MIDIMapping(controllerNumber: 93, parameter: .delayFeedback, minValue: 0, maxValue: 0.9)) // Delay Feedback
 
-        print("🎹 Setup default MIDI mappings")
+        #if DEBUG
+        debugLog("🎹 Setup default MIDI mappings")
+        #endif
     }
 
     // MARK: - Cleanup
@@ -304,7 +322,9 @@ class MIDIController: ObservableObject {
 extension MIDIController {
     /// Start MIDI learn mode for parameter
     func startLearnMode(for parameter: MIDIParameter, minValue: Float, maxValue: Float, timeout: TimeInterval = 10.0) async -> UInt8? {
-        print("🎹 MIDI Learn: Waiting for controller input...")
+        #if DEBUG
+        debugLog("🎹 MIDI Learn: Waiting for controller input...")
+        #endif
 
         // Wait for next CC message
         return await withCheckedContinuation { continuation in
@@ -316,7 +336,9 @@ extension MIDIController {
                       let ccNumber = message.controllerNumber else { return }
 
                 // Found CC controller
-                print("🎹 MIDI Learn: Learned CC\(ccNumber)")
+                #if DEBUG
+                debugLog("🎹 MIDI Learn: Learned CC\(ccNumber)")
+                #endif
 
                 // Add mapping
                 let mapping = MIDIMapping(
@@ -343,7 +365,9 @@ extension MIDIController {
             timeoutTask = Task {
                 try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
 
-                print("🎹 MIDI Learn: Timeout")
+                #if DEBUG
+                debugLog("🎹 MIDI Learn: Timeout")
+                #endif
 
                 if let handler = handler,
                    let index = messageHandlers.firstIndex(where: { handler as AnyObject === $0 as AnyObject }) {
@@ -355,3 +379,8 @@ extension MIDIController {
         }
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows MIDIController to work with older SwiftUI code expecting ObservableObject
+extension MIDIController: ObservableObject { }

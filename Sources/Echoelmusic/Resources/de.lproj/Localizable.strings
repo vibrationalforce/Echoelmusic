@@ -1,0 +1,122 @@
+/* Echoelmusic Localizable Strings - German (Deutsch) */
+
+/* App */
+"app.name" = "Echoelmusic";
+"app.tagline" = "Atem → Klang";
+
+/* Onboarding */
+"onboarding.welcome" = "Willkommen bei Echoelmusic";
+"onboarding.subtitle" = "Verwandle dein Biofeedback in Musik";
+"onboarding.getStarted" = "Los geht's";
+"onboarding.skip" = "Überspringen";
+"onboarding.next" = "Weiter";
+"onboarding.step1.title" = "Verbinde deinen Körper";
+"onboarding.step1.description" = "Nutze Apple Watch, Polar H10 oder deinen Atem, um Musik zu erschaffen";
+"onboarding.step2.title" = "Spüre den Flow";
+"onboarding.step2.description" = "Deine Herzfrequenz und HRV formen den Klang in Echtzeit";
+"onboarding.step3.title" = "Teilen & Verbinden";
+"onboarding.step3.description" = "Streame deine Sessions oder jamme mit Musikern weltweit";
+
+/* Permissions */
+"permissions.title" = "Berechtigungen";
+"permissions.microphone.title" = "Mikrofonzugriff";
+"permissions.microphone.description" = "Erkenne deine Atmung und Stimme, um Musik zu kreieren";
+"permissions.microphone.denied" = "Mikrofonzugriff wurde verweigert. Bitte aktiviere ihn in den Einstellungen.";
+"permissions.healthkit.title" = "Gesundheitszugriff";
+"permissions.healthkit.description" = "Lese Herzfrequenz und HRV von Apple Watch";
+"permissions.healthkit.denied" = "Gesundheitszugriff wurde verweigert. Aktiviere den Demo-Modus oder erteile Zugriff in den Einstellungen.";
+"permissions.bluetooth.title" = "Bluetooth-Zugriff";
+"permissions.bluetooth.description" = "Verbinde mit Polar H10 oder anderen Herzfrequenzsensoren";
+
+/* Session */
+"session.title" = "Session";
+"session.start" = "Session starten";
+"session.stop" = "Stopp";
+"session.pause" = "Pause";
+"session.resume" = "Fortsetzen";
+"session.stats.duration" = "Dauer";
+"session.stats.heartRate" = "Herzfrequenz";
+"session.stats.hrv" = "HRV";
+"session.stats.coherence" = "Kohärenz";
+"session.stats.bpm" = "BPM";
+"session.stats.ms" = "ms";
+
+/* Settings */
+"settings.title" = "Einstellungen";
+"settings.audio.title" = "Audio";
+"settings.audio.output" = "Ausgabegerät";
+"settings.audio.latency" = "Latenz";
+"settings.audio.binauralBeats" = "Binaurale Beats";
+"settings.audio.spatialAudio" = "Räumliches Audio";
+"settings.sensor.title" = "Sensoren";
+"settings.sensor.appleWatch" = "Apple Watch";
+"settings.sensor.polarH10" = "Polar H10";
+"settings.sensor.microphone" = "Mikrofon (Atem)";
+"settings.sensor.demoMode" = "Demo-Modus";
+"settings.accessibility.title" = "Bedienungshilfen";
+"settings.accessibility.audioHaptic" = "Audio-zu-Haptik";
+"settings.accessibility.signLanguage" = "Gebärdensprache";
+"settings.accessibility.eyeTracking" = "Augensteuerung";
+"settings.accessibility.reduceMotion" = "Bewegung reduzieren";
+"settings.language.title" = "Sprache";
+"settings.language.systemDefault" = "Systemstandard";
+
+/* Streaming */
+"streaming.title" = "Live-Streaming";
+"streaming.goLive" = "Live gehen";
+"streaming.endStream" = "Stream beenden";
+"streaming.viewers" = "Zuschauer";
+"streaming.quality" = "Qualität";
+"streaming.platforms.youtube" = "YouTube";
+"streaming.platforms.twitch" = "Twitch";
+"streaming.platforms.facebook" = "Facebook";
+"streaming.platforms.tiktok" = "TikTok";
+"streaming.platforms.custom" = "Eigener RTMP";
+
+/* Collaboration */
+"collaboration.title" = "Jam-Session";
+"collaboration.findSession" = "Session finden";
+"collaboration.createSession" = "Session erstellen";
+"collaboration.quickJoin" = "Schnell beitreten";
+"collaboration.leave" = "Verlassen";
+"collaboration.participants" = "Teilnehmer";
+"collaboration.latency" = "Latenz";
+"collaboration.genres.rock" = "Rock";
+"collaboration.genres.jazz" = "Jazz";
+"collaboration.genres.electronic" = "Elektronisch";
+"collaboration.genres.classical" = "Klassik";
+"collaboration.genres.world" = "Weltmusik";
+"collaboration.genres.ambient" = "Ambient";
+
+/* Visualization */
+"visualization.title" = "Visualisierung";
+"visualization.particles" = "Partikel";
+"visualization.cymatics" = "Kymatik";
+"visualization.waveform" = "Wellenform";
+"visualization.spectral" = "Spektral";
+"visualization.mandala" = "Mandala";
+
+/* Errors */
+"errors.generic" = "Etwas ist schiefgelaufen";
+"errors.network" = "Netzwerkverbindung fehlgeschlagen";
+"errors.audio" = "Audio-Systemfehler";
+"errors.healthkit" = "Zugriff auf Gesundheitsdaten nicht möglich";
+"errors.bluetooth" = "Bluetooth-Verbindung fehlgeschlagen";
+"errors.tryAgain" = "Erneut versuchen";
+"errors.dismiss" = "Schließen";
+
+/* Actions */
+"actions.ok" = "OK";
+"actions.cancel" = "Abbrechen";
+"actions.save" = "Speichern";
+"actions.delete" = "Löschen";
+"actions.edit" = "Bearbeiten";
+"actions.share" = "Teilen";
+"actions.done" = "Fertig";
+"actions.back" = "Zurück";
+"actions.close" = "Schließen";
+"actions.settings" = "Einstellungen";
+
+/* Wellness */
+"wellness.disclaimer" = "Echoelmusic ist ein Wellness-Produkt, kein Medizinprodukt. Es diagnostiziert, behandelt oder verhindert keine Krankheiten. Konsultiere einen Arzt für medizinische Beratung.";
+"wellness.notMedical" = "Kein Medizinprodukt";

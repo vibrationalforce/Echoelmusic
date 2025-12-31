@@ -4,19 +4,21 @@ import Combine
 
 /// Manages a graph of interconnected audio processing nodes
 /// Handles signal routing, parameter automation, and bio-reactivity
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class NodeGraph: ObservableObject {
+@Observable
+final class NodeGraph {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
     /// All nodes in the graph
-    @Published var nodes: [EchoelmusicNode] = []
+    var nodes: [EchoelmusicNode] = []
 
     /// Active connections between nodes
-    @Published var connections: [NodeConnection] = []
+    var connections: [NodeConnection] = []
 
     /// Whether the graph is currently processing
-    @Published var isProcessing: Bool = false
+    var isProcessing: Bool = false
 
 
     // MARK: - Private Properties
@@ -50,7 +52,9 @@ class NodeGraph: ObservableObject {
     func addNode(_ node: EchoelmusicNode) {
         nodes.append(node)
         invalidateCache() // Graph structure changed
-        print("📊 Added node: \(node.name) (\(node.type.rawValue))")
+        #if DEBUG
+        debugLog("📊", "Added node: \(node.name) (\(node.type.rawValue))")
+        #endif
     }
 
     /// Remove a node from the graph
@@ -93,7 +97,9 @@ class NodeGraph: ObservableObject {
         connections.append(connection)
         invalidateCache() // Graph structure changed
 
-        print("📊 Connected: \(source.name) → \(destination.name)")
+        #if DEBUG
+        debugLog("📊", "Connected: \(source.name) → \(destination.name)")
+        #endif
     }
 
     /// Disconnect two nodes
@@ -233,7 +239,9 @@ class NodeGraph: ObservableObject {
         }
 
         isProcessing = true
-        print("📊 NodeGraph started (\(nodes.count) nodes)")
+        #if DEBUG
+        debugLog("📊", "NodeGraph started (\(nodes.count) nodes)")
+        #endif
     }
 
     /// Stop processing
@@ -244,7 +252,9 @@ class NodeGraph: ObservableObject {
         }
 
         isProcessing = false
-        print("📊 NodeGraph stopped")
+        #if DEBUG
+        debugLog("📊", "NodeGraph stopped")
+        #endif
     }
 
     /// Reset all nodes
@@ -270,7 +280,9 @@ class NodeGraph: ObservableObject {
             // For now, placeholder
         }
 
-        print("📊 Loaded preset: \(preset.name)")
+        #if DEBUG
+        debugLog("📊", "Loaded preset: \(preset.name)")
+        #endif
     }
 
     /// Save current configuration as preset
@@ -377,3 +389,8 @@ extension NodeGraph {
         return graph
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows NodeGraph to work with older SwiftUI code expecting ObservableObject
+extension NodeGraph: ObservableObject { }

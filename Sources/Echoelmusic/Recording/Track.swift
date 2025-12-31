@@ -104,7 +104,9 @@ struct Track: Identifiable, Codable {
             self.waveformData = waveform
 
         } catch {
-            print("❌ Failed to generate waveform: \(error)")
+            #if DEBUG
+            debugLog("❌ Failed to generate waveform: \(error)")
+            #endif
         }
     }
 

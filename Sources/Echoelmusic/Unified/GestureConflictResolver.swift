@@ -3,16 +3,18 @@ import Combine
 
 /// Resolves conflicts between gestures and other input sources
 /// Prevents accidental triggers and ensures intentional control
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class GestureConflictResolver: ObservableObject {
+@Observable
+final class GestureConflictResolver {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
     /// Whether gesture input is currently allowed
-    @Published var gesturesEnabled: Bool = true
+    var gesturesEnabled: Bool = true
 
     /// Reason for gesture blocking (for debugging)
-    @Published var blockingReason: String? = nil
+    var blockingReason: String? = nil
 
 
     // MARK: - Configuration
@@ -48,7 +50,9 @@ class GestureConflictResolver: ObservableObject {
         self.handTracker = handTracker
         self.faceTracker = faceTracker
 
-        print("🔀 GestureConflictResolver initialized")
+        #if DEBUG
+        debugLog("🔀 GestureConflictResolver initialized")
+        #endif
     }
 
 
@@ -150,14 +154,18 @@ class GestureConflictResolver: ObservableObject {
     /// Notify when gesture starts
     func gestureDidStart(_ gesture: GestureRecognizer.Gesture) {
         gestureStartTimes[gesture] = Date()
-        print("✋ Gesture started: \(gesture.rawValue)")
+        #if DEBUG
+        debugLog("✋ Gesture started: \(gesture.rawValue)")
+        #endif
     }
 
     /// Notify when gesture ends
     func gestureDidEnd(_ gesture: GestureRecognizer.Gesture) {
         gestureStartTimes[gesture] = nil
         lastGestureEndTime = Date()
-        print("✋ Gesture ended: \(gesture.rawValue)")
+        #if DEBUG
+        debugLog("✋ Gesture ended: \(gesture.rawValue)")
+        #endif
     }
 
     /// Reset all gesture state
@@ -209,19 +217,25 @@ class GestureConflictResolver: ObservableObject {
         if !enabled {
             reset()
         }
-        print("✋ Gestures \(enabled ? "enabled" : "disabled")")
+        #if DEBUG
+        debugLog("✋ Gestures \(enabled ? "enabled" : "disabled")")
+        #endif
     }
 
     /// Update confidence threshold
     func setConfidenceThreshold(_ threshold: Float) {
         minimumConfidenceThreshold = max(0.1, min(1.0, threshold))
-        print("✋ Confidence threshold: \(minimumConfidenceThreshold)")
+        #if DEBUG
+        debugLog("✋ Confidence threshold: \(minimumConfidenceThreshold)")
+        #endif
     }
 
     /// Update minimum hold time
     func setMinimumHoldTime(_ time: TimeInterval) {
         minimumGestureHoldTime = max(0.05, min(1.0, time))
-        print("✋ Minimum hold time: \(minimumGestureHoldTime)s")
+        #if DEBUG
+        debugLog("✋ Minimum hold time: \(minimumGestureHoldTime)s")
+        #endif
     }
 
 
@@ -244,3 +258,8 @@ class GestureConflictResolver: ObservableObject {
         let timeSinceLastGesture: TimeInterval?
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension GestureConflictResolver: ObservableObject { }

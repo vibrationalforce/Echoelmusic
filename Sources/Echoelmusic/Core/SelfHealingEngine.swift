@@ -18,21 +18,22 @@ import os.log
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // MARK: - Self-Healing Engine
-
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-final class SelfHealingEngine: ObservableObject {
+@Observable
+final class SelfHealingEngine {
 
     // MARK: - Singleton
 
     static let shared = SelfHealingEngine()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var systemHealth: SystemHealth = .optimal
-    @Published var healingEvents: [HealingEvent] = []
-    @Published var flowState: FlowState = .neutral
-    @Published var intelligenceLevel: Float = 1.0
-    @Published var adaptiveParameters: AdaptiveParameters = AdaptiveParameters()
+    var systemHealth: SystemHealth = .optimal
+    var healingEvents: [HealingEvent] = []
+    var flowState: FlowState = .neutral
+    var intelligenceLevel: Float = 1.0
+    var adaptiveParameters: AdaptiveParameters = AdaptiveParameters()
 
     // MARK: - Logger
 
@@ -820,3 +821,7 @@ extension SelfHealingEngine: FlowStateMachineDelegate {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension SelfHealingEngine: ObservableObject { }

@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 5.9
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,10 +6,10 @@ import PackageDescription
 let package = Package(
     name: "Echoelmusic",
     platforms: [
-        .iOS(.v15),        // iPhone & iPad - iOS 15+ for wide compatibility
-        .macOS(.v12),      // macOS Monterey+ for Apple Silicon & Intel
-        .watchOS(.v8),     // Apple Watch - Critical for bio-data collection
-        .tvOS(.v15),       // Apple TV - Large display visualizations
+        .iOS(.v17),        // iPhone & iPad - iOS 17+ for TimelineView, @Observable
+        .macOS(.v14),      // macOS Sonoma+ for @Observable
+        .watchOS(.v10),    // Apple Watch - watchOS 10+ for HKWorkoutSession Streaming
+        .tvOS(.v17),       // Apple TV - Large display visualizations
         .visionOS(.v1)     // Apple Vision Pro - Spatial Audio & Immersive
     ],
     products: [

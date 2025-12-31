@@ -5,12 +5,14 @@ import SwiftUI
 
 /// Scene Manager for Stream Engine
 /// Manages scenes, sources, transitions, and bio-reactive switching
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class SceneManager: ObservableObject {
+@Observable
+final class SceneManager {
 
-    @Published var scenes: [Scene] = []
-    @Published var bioReactiveEnabled: Bool = false
-    @Published var bioSceneRules: [BioSceneRule] = []
+    var scenes: [Scene] = []
+    var bioReactiveEnabled: Bool = false
+    var bioSceneRules: [BioSceneRule] = []
 
     func loadScenes() -> [Scene] {
         // Create default scenes
@@ -146,3 +148,8 @@ struct WebBrowserSource: Identifiable {
     var name: String
     var url: URL
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension SceneManager: ObservableObject { }

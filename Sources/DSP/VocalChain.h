@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../Core/DSPOptimizations.h"
 
 /**
  * VocalChain - Professional Vocal Processing Chain
@@ -99,7 +100,7 @@ public:
 
 private:
     //==============================================================================
-    // High-Pass Filter (State Variable)
+    // High-Pass Filter (State Variable) - OPTIMIZED: cached coefficients
     struct HighPassFilter
     {
         float cutoff = 80.0f;
@@ -107,16 +108,27 @@ private:
         float x1 = 0.0f, x2 = 0.0f;
         float y1 = 0.0f, y2 = 0.0f;
 
-        void setSampleRate(float sr) { sampleRate = sr; }
-        void setCutoff(float freq) { cutoff = juce::jlimit(20.0f, 500.0f, freq); }
+        // Cached coefficients (avoid per-sample sin/cos)
+        float b0_a0 = 0.0f, b1_a0 = 0.0f, b2_a0 = 0.0f;
+        float a1_a0 = 0.0f, a2_a0 = 0.0f;
+        bool coeffsDirty = true;
 
-        float process(float input)
+        void setSampleRate(float sr) { sampleRate = sr; coeffsDirty = true; }
+        void setCutoff(float freq) {
+            float newCutoff = juce::jlimit(20.0f, 500.0f, freq);
+            if (newCutoff != cutoff) { cutoff = newCutoff; coeffsDirty = true; }
+        }
+
+        void updateCoefficients()
         {
-            // 2nd order Butterworth high-pass
+            if (!coeffsDirty) return;
+
+            // 2nd order Butterworth high-pass - using fast trig
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
             float w0 = 2.0f * juce::MathConstants<float>::pi * cutoff / sampleRate;
             float Q = 0.707f;
-            float alpha = std::sin(w0) / (2.0f * Q);
-            float cosw0 = std::cos(w0);
+            float alpha = trigTables.fastSinRad(w0) / (2.0f * Q);
+            float cosw0 = trigTables.fastCosRad(w0);
 
             float b0 = (1.0f + cosw0) / 2.0f;
             float b1 = -(1.0f + cosw0);
@@ -125,8 +137,22 @@ private:
             float a1 = -2.0f * cosw0;
             float a2 = 1.0f - alpha;
 
-            float output = (b0/a0) * input + (b1/a0) * x1 + (b2/a0) * x2
-                          - (a1/a0) * y1 - (a2/a0) * y2;
+            // Pre-divide by a0
+            float invA0 = 1.0f / a0;
+            b0_a0 = b0 * invA0;
+            b1_a0 = b1 * invA0;
+            b2_a0 = b2 * invA0;
+            a1_a0 = a1 * invA0;
+            a2_a0 = a2 * invA0;
+
+            coeffsDirty = false;
+        }
+
+        float process(float input)
+        {
+            // Coefficients already cached - just apply filter
+            float output = b0_a0 * input + b1_a0 * x1 + b2_a0 * x2
+                          - a1_a0 * y1 - a2_a0 * y2;
 
             x2 = x1;
             x1 = input;
@@ -142,7 +168,7 @@ private:
     HighPassFilter hpfL, hpfR;
 
     //==============================================================================
-    // De-Esser (Dynamic EQ at high frequency)
+    // De-Esser (Dynamic EQ at high frequency) - OPTIMIZED: cached coefficients
     struct SimpleDeEsser
     {
         float threshold = -20.0f;  // dB
@@ -150,28 +176,38 @@ private:
         float sampleRate = 44100.0f;
         float envelope = 0.0f;
 
-        void setSampleRate(float sr) { sampleRate = sr; }
+        // Cached coefficients (avoid per-sample exp())
+        float attackCoeff = 0.0f;
+        float releaseCoeff = 0.0f;
+
+        void setSampleRate(float sr) {
+            sampleRate = sr;
+            updateCoefficients();
+        }
+
+        void updateCoefficients() {
+            attackCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (0.001f * sampleRate));   // 1ms attack
+            releaseCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (0.1f * sampleRate));    // 100ms release
+        }
 
         float process(float input)
         {
             // Detect high-frequency energy (simplified)
             float detection = std::abs(input);
-            float attackCoeff = 1.0f - std::exp(-1.0f / (0.001f * sampleRate));  // 1ms attack
-            float releaseCoeff = 1.0f - std::exp(-1.0f / (0.1f * sampleRate));  // 100ms release
 
             if (detection > envelope)
                 envelope += attackCoeff * (detection - envelope);
             else
                 envelope += releaseCoeff * (detection - envelope);
 
-            float envelopeDB = juce::Decibels::gainToDecibels(envelope + 0.00001f);
+            float envelopeDB = Echoel::DSP::FastMath::gainToDb(envelope + 0.00001f);
 
             // Compute gain reduction
             float reduction = 1.0f;
             if (envelopeDB > threshold)
             {
                 float excess = envelopeDB - threshold;
-                reduction = juce::Decibels::decibelsToGain(-excess * 0.7f);  // 70% reduction
+                reduction = Echoel::DSP::FastMath::dbToGain(-excess * 0.7f);  // 70% reduction
             }
 
             return input * reduction;
@@ -183,7 +219,7 @@ private:
     SimpleDeEsser deEsserL, deEsserR;
 
     //==============================================================================
-    // Compressor
+    // Compressor - OPTIMIZED: cached coefficients
     struct SimpleCompressor
     {
         float threshold = -20.0f;
@@ -194,13 +230,26 @@ private:
         float sampleRate = 44100.0f;
         float envelope = 0.0f;
 
-        void setSampleRate(float sr) { sampleRate = sr; }
+        // Cached coefficients (avoid per-sample exp())
+        float attackCoeff = 0.0f;
+        float releaseCoeff = 0.0f;
+        bool coeffsDirty = true;
+
+        void setSampleRate(float sr) { sampleRate = sr; coeffsDirty = true; }
+
+        void setAttack(float ms) { attack = ms; coeffsDirty = true; }
+        void setRelease(float ms) { release = ms; coeffsDirty = true; }
+
+        void updateCoefficients() {
+            if (!coeffsDirty) return;
+            attackCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (attack * 0.001f * sampleRate));
+            releaseCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (release * 0.001f * sampleRate));
+            coeffsDirty = false;
+        }
 
         float process(float input)
         {
-            float inputLevel = juce::Decibels::gainToDecibels(std::abs(input) + 0.00001f);
-            float attackCoeff = 1.0f - std::exp(-1.0f / (attack * 0.001f * sampleRate));
-            float releaseCoeff = 1.0f - std::exp(-1.0f / (release * 0.001f * sampleRate));
+            float inputLevel = Echoel::DSP::FastMath::gainToDb(std::abs(input) + 0.00001f);
 
             if (inputLevel > envelope)
                 envelope += attackCoeff * (inputLevel - envelope);
@@ -214,7 +263,7 @@ private:
                 gainReduction = excess * (1.0f - 1.0f / ratio);
             }
 
-            float gain = juce::Decibels::decibelsToGain(-gainReduction + makeup);
+            float gain = Echoel::DSP::FastMath::dbToGain(-gainReduction + makeup);
             return input * gain;
         }
 
@@ -236,9 +285,9 @@ private:
 
         float process(float input)
         {
-            // Soft clipping with tone control
+            // Soft clipping with tone control - using fast tanh
             float driven = input * (1.0f + drive * 3.0f);
-            float saturated = std::tanh(driven);
+            float saturated = Echoel::DSP::FastMath::fastTanh(driven);
 
             // Tone: 0=dark (lowpass), 1=bright (highpass)
             return saturated * (0.5f + tone * 0.5f);
@@ -251,6 +300,9 @@ private:
     // Reverb & Delay
     juce::dsp::Reverb reverb;
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine;
+
+    // Pre-allocated buffer for reverb (avoid per-frame allocation)
+    juce::AudioBuffer<float> reverbBuffer;
 
     //==============================================================================
     // Module Enables

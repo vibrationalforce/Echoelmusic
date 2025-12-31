@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../Core/DSPOptimizations.h"
 
 /**
  * Harmonizer - Intelligent Pitch-Shifted Harmony Generator
@@ -87,8 +88,8 @@ private:
             if (!active || level < 0.001f)
                 return 0.0f;
 
-            // Calculate pitch ratio
-            float pitchRatio = std::pow(2.0f, semitones / 12.0f);
+            // Calculate pitch ratio - using fast pow
+            float pitchRatio = Echoel::DSP::FastMath::fastPow(2.0f, semitones / 12.0f);
 
             // Push input to delay line
             delayLine.pushSample(channel, input);
@@ -99,26 +100,80 @@ private:
 
             float output = delayLine.popSample(channel, delay);
 
-            // Apply window (Hann window for smooth crossfade)
-            float windowPhase = std::fmod(grainPhase, grainSize) / grainSize;
-            float window = 0.5f - 0.5f * std::cos(2.0f * juce::MathConstants<float>::pi * windowPhase);
+            // Apply window (Hann window for smooth crossfade) - using fast trig
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+            // OPTIMIZATION: Fast fmod for grain window phase
+            float windowPhase = (grainPhase - grainSize * static_cast<float>(static_cast<int>(grainPhase / grainSize))) / grainSize;
+            float window = 0.5f - 0.5f * trigTables.fastCosRad(2.0f * juce::MathConstants<float>::pi * windowPhase);
 
             grainPhase += pitchRatio;
             if (grainPhase >= grainSize)
                 grainPhase -= grainSize;
 
-            // Apply pan (simple constant power panning)
+            // Apply pan (simple constant power panning) - using fast trig
             float panGain = 1.0f;
+            float panAngle = (pan + 1.0f) * juce::MathConstants<float>::pi / 4.0f;
             if (channel == 0)  // Left
-                panGain = std::cos((pan + 1.0f) * juce::MathConstants<float>::pi / 4.0f);
+                panGain = trigTables.fastCosRad(panAngle);
             else  // Right
-                panGain = std::sin((pan + 1.0f) * juce::MathConstants<float>::pi / 4.0f);
+                panGain = trigTables.fastSinRad(panAngle);
 
             return output * window * level * panGain;
+        }
+
+        // Optimized version: no per-sample pan calculation (use cached pan gains)
+        float processNoPan(float input, int channel)
+        {
+            if (!active)
+                return 0.0f;
+
+            // Calculate pitch ratio - using fast pow
+            float pitchRatio = Echoel::DSP::FastMath::fastPow(2.0f, semitones / 12.0f);
+
+            // Push input to delay line
+            delayLine.pushSample(channel, input);
+
+            // Read with pitch shift
+            float delay = grainSize * (1.0f - pitchRatio);
+            if (delay < 0.0f) delay = 0.0f;
+
+            float output = delayLine.popSample(channel, delay);
+
+            // Apply window (Hann window for smooth crossfade) - using fast trig
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+            // OPTIMIZATION: Fast fmod for grain window phase
+            float windowPhase = (grainPhase - grainSize * static_cast<float>(static_cast<int>(grainPhase / grainSize))) / grainSize;
+            float window = 0.5f - 0.5f * trigTables.fastCosRad(2.0f * juce::MathConstants<float>::pi * windowPhase);
+
+            grainPhase += pitchRatio;
+            if (grainPhase >= grainSize)
+                grainPhase -= grainSize;
+
+            return output * window;  // Pan and level applied externally
         }
     };
 
     std::array<HarmonyVoice, 4> voices;
+
+    // Pre-allocated buffers (avoid per-frame allocations)
+    juce::AudioBuffer<float> dryBuffer;
+    juce::AudioBuffer<float> harmonyBuffer;
+    std::array<juce::AudioBuffer<float>, 4> voiceBuffers;
+
+    // Cached pan gains per voice (avoid per-sample sin/cos)
+    std::array<float, 4> voicePanGainsL;
+    std::array<float, 4> voicePanGainsR;
+
+    void updatePanGains()
+    {
+        const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+        for (int v = 0; v < 4; ++v)
+        {
+            float angle = (voices[static_cast<size_t>(v)].pan + 1.0f) * juce::MathConstants<float>::pi / 4.0f;
+            voicePanGainsL[static_cast<size_t>(v)] = trigTables.fastCosRad(angle);
+            voicePanGainsR[static_cast<size_t>(v)] = trigTables.fastSinRad(angle);
+        }
+    }
 
     //==============================================================================
     // Scale-Aware Interval Quantizer

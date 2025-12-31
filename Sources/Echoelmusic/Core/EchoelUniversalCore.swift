@@ -28,30 +28,31 @@ import simd
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // MARK: - Universal Core
-
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-final class EchoelUniversalCore: ObservableObject {
+@Observable
+final class EchoelUniversalCore {
 
     // MARK: - Singleton
 
     static let shared = EchoelUniversalCore()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
     /// Unified system state
-    @Published var systemState = SystemState()
+    var systemState = SystemState()
 
     /// All connected modules
-    @Published var connectedModules: Set<ModuleType> = []
+    var connectedModules: Set<ModuleType> = []
 
     /// Global coherence level (0-1)
-    @Published var globalCoherence: Float = 0.5
+    var globalCoherence: Float = 0.5
 
     /// System energy level
-    @Published var systemEnergy: Float = 0.5
+    var systemEnergy: Float = 0.5
 
     /// Quantum probability field
-    @Published var quantumField = QuantumField()
+    var quantumField = QuantumField()
 
     // MARK: - Sub-Systems
 
@@ -129,7 +130,9 @@ final class EchoelUniversalCore: ObservableObject {
 
         // Tools sind bereits verbunden via EchoelTools.shared
 
-        print("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden")
+        #if DEBUG
+        debugLog("✅", "EchoelUniversalCore: Alle Systeme bidirektional verbunden")
+        #endif
     }
 
     /// Reagiert auf Flow-State Änderungen vom Self-Healing System
@@ -562,7 +565,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         propagateUniversalState()
 
         #if DEBUG
-        print("[UniversalCore] Bio update: Coherence=\(String(format: "%.2f", state.coherence))")
+        debugLog("🧬", "UniversalCore: Bio update - Coherence=\(String(format: "%.2f", state.coherence))")
         #endif
     }
 
@@ -579,7 +582,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         }
 
         #if DEBUG
-        print("[UniversalCore] Quantum collapsed to choice: \(choice)")
+        debugLog("⚛️", "UniversalCore: Quantum collapsed to choice: \(choice)")
         #endif
     }
 
@@ -588,7 +591,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         connectedModules.insert(.sync)
 
         #if DEBUG
-        print("[UniversalCore] Device connected: \(device) (Total: \(systemState.connectedDevices))")
+        debugLog("🔗", "UniversalCore: Device connected: \(device) (Total: \(systemState.connectedDevices))")
         #endif
     }
 
@@ -596,7 +599,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         systemState.connectedDevices = max(0, systemState.connectedDevices - 1)
 
         #if DEBUG
-        print("[UniversalCore] Device disconnected: \(device) (Total: \(systemState.connectedDevices))")
+        debugLog("🔌", "UniversalCore: Device disconnected: \(device) (Total: \(systemState.connectedDevices))")
         #endif
     }
 
@@ -613,7 +616,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         propagateUniversalState()
 
         #if DEBUG
-        print("[UniversalCore] Analog gear response: \(response.count) channels")
+        debugLog("🎛️", "UniversalCore: Analog gear response: \(response.count) channels")
         #endif
     }
 
@@ -627,7 +630,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         }
 
         #if DEBUG
-        print("[UniversalCore] AI suggestion: \(suggestion.type) (confidence: \(suggestion.confidence))")
+        debugLog("🤖", "UniversalCore: AI suggestion: \(suggestion.type) (confidence: \(suggestion.confidence))")
         #endif
     }
 
@@ -799,3 +802,7 @@ class EchoelDeviceDiscovery {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension EchoelUniversalCore: ObservableObject { }

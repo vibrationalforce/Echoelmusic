@@ -1,4 +1,5 @@
 #include "LofiBitcrusher.h"
+#include "../Core/DSPOptimizations.h"
 
 LofiBitcrusher::LofiBitcrusher()
 {
@@ -85,13 +86,15 @@ void LofiBitcrusher::process(juce::AudioBuffer<float>& buffer)
             // 3. Wow & Flutter (Tape Speed Variation)
             if (currentWowFlutter > 0.01f)
             {
-                // Wow: slow pitch modulation (0.5-2 Hz)
-                float wow = std::sin(2.0f * juce::MathConstants<float>::pi * wowPhase) * 0.002f;
+                const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+
+                // Wow: slow pitch modulation (0.5-2 Hz) - using fast sin
+                float wow = trigTables.fastSin(wowPhase) * 0.002f;
                 wowPhase += 1.5f / static_cast<float>(currentSampleRate);
                 if (wowPhase >= 1.0f) wowPhase -= 1.0f;
 
-                // Flutter: fast pitch modulation (5-15 Hz)
-                float flutter = std::sin(2.0f * juce::MathConstants<float>::pi * flutterPhase) * 0.001f;
+                // Flutter: fast pitch modulation (5-15 Hz) - using fast sin
+                float flutter = trigTables.fastSin(flutterPhase) * 0.001f;
                 flutterPhase += 10.0f / static_cast<float>(currentSampleRate);
                 if (flutterPhase >= 1.0f) flutterPhase -= 1.0f;
 

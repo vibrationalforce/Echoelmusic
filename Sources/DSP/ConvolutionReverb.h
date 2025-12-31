@@ -116,6 +116,12 @@ private:
 
     std::vector<FilterState> filterStates;
 
+    // OPTIMIZATION: Pre-computed filter coefficients (avoid per-sample trig)
+    float hpCoeff = 0.999f;    // Highpass coefficient
+    float lpCoeff = 0.001f;    // Lowpass coefficient
+    float lpOneMinusCoeff = 0.999f;  // 1 - lpCoeff (cached)
+    void updateFilterCoefficients();
+
     //==========================================================================
     // Internal Methods
     //==========================================================================

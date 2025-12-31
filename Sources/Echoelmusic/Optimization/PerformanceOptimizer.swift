@@ -8,19 +8,21 @@ import os.log
 /// Performance Optimizer - Guarantees 120 FPS on supported devices
 /// Adaptive quality, thermal management, battery optimization
 /// Targets: iPhone 13+ @ 120 FPS, iPhone 12 @ 60 FPS, older devices @ 30 FPS
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class PerformanceOptimizer: ObservableObject {
+@Observable
+final class PerformanceOptimizer {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var currentFPS: Double = 0.0
-    @Published var targetFPS: Int = 60
-    @Published var cpuUsage: Double = 0.0
-    @Published var gpuUsage: Double = 0.0
-    @Published var memoryUsage: Double = 0.0  // MB
-    @Published var batteryLevel: Float = 1.0
-    @Published var thermalState: ThermalState = .nominal
-    @Published var performanceMode: PerformanceMode = .balanced
+    var currentFPS: Double = 0.0
+    var targetFPS: Int = 60
+    var cpuUsage: Double = 0.0
+    var gpuUsage: Double = 0.0
+    var memoryUsage: Double = 0.0  // MB
+    var batteryLevel: Float = 1.0
+    var thermalState: ThermalState = .nominal
+    var performanceMode: PerformanceMode = .balanced
 
     // MARK: - Performance Metrics
 
@@ -395,3 +397,8 @@ struct PerformanceReport: Codable {
 }
 
 extension PerformanceOptimizer.DeviceCapabilities: Codable {}
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension PerformanceOptimizer: ObservableObject { }

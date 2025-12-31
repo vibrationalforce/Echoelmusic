@@ -1,4 +1,5 @@
 #include "DynamicEQ.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -194,7 +195,9 @@ void DynamicEQ::setBandRatio(int index, float ratio)
 
 std::vector<float> DynamicEQ::getSpectrumData() const
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    std::unique_lock<std::mutex> lock(spectrumMutex, std::try_to_lock);
+    if (!lock.owns_lock())
+        return std::vector<float>(spectrumBins, 0.0f);  // Return empty if can't lock
     return std::vector<float>(spectrumData.begin(), spectrumData.end());
 }
 
@@ -276,7 +279,7 @@ void DynamicEQ::processBand(int bandIndex,
                     state.envelope[0] = state.releaseCoeff * state.envelope[0] + (1.0f - state.releaseCoeff) * levelL;
 
                 // Calculate dynamic gain
-                float envelopeDb = juce::Decibels::gainToDecibels(state.envelope[0] + 0.00001f);
+                float envelopeDb = Echoel::DSP::FastMath::gainToDb(state.envelope[0] + 0.00001f);
                 float dynamicGainMod = calculateDynamicGain(envelopeDb, band, state.envelope[0]);
 
                 // Modulate EQ gain based on dynamics
@@ -373,16 +376,17 @@ void DynamicEQ::updateBandCoefficients(int bandIndex)
     auto& band = bands[bandIndex];
     auto& state = bandStates[bandIndex];
 
-    // Calculate attack/release coefficients
-    state.attackCoeff = std::exp(-1000.0f / (band.attack * static_cast<float>(currentSampleRate)));
-    state.releaseCoeff = std::exp(-1000.0f / (band.release * static_cast<float>(currentSampleRate)));
+    // Calculate attack/release coefficients using fast exp
+    state.attackCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (band.attack * static_cast<float>(currentSampleRate)));
+    state.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (band.release * static_cast<float>(currentSampleRate)));
 
-    // Calculate EQ biquad coefficients (using ParametricEQ formulas)
+    // Calculate EQ biquad coefficients using fast trig
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     const float omega = juce::MathConstants<float>::twoPi * band.frequency / static_cast<float>(currentSampleRate);
-    const float sinOmega = std::sin(omega);
-    const float cosOmega = std::cos(omega);
+    const float sinOmega = trigTables.fastSinRad(omega);
+    const float cosOmega = trigTables.fastCosRad(omega);
     const float alpha = sinOmega / (2.0f * band.q);
-    const float A = std::pow(10.0f, band.gain / 40.0f);
+    const float A = Echoel::DSP::FastMath::fastPow(10.0f, band.gain / 40.0f);
 
     float b0, b1, b2, a0, a1, a2;
 
@@ -425,13 +429,18 @@ void DynamicEQ::updateSpectrumData(const juce::AudioBuffer<float>& buffer)
             window.multiplyWithWindowingTable(fftData.data(), fftSize);
             fft.performFrequencyOnlyForwardTransform(fftData.data());
 
-            // Convert to spectrum bins
-            std::lock_guard<std::mutex> lock(spectrumMutex);
+            // Convert to spectrum bins - use try_lock for non-blocking
+            std::unique_lock<std::mutex> lock(spectrumMutex, std::try_to_lock);
+            if (!lock.owns_lock()) {
+                fftDataIndex = 0;
+                fftData.fill(0.0f);
+                return;  // Skip spectrum update if can't lock
+            }
 
             for (int bin = 0; bin < spectrumBins; ++bin)
             {
-                float minFreq = 20.0f * std::pow(1000.0f, static_cast<float>(bin) / spectrumBins);
-                float maxFreq = 20.0f * std::pow(1000.0f, static_cast<float>(bin + 1) / spectrumBins);
+                float minFreq = 20.0f * Echoel::DSP::FastMath::fastPow(1000.0f, static_cast<float>(bin) / spectrumBins);
+                float maxFreq = 20.0f * Echoel::DSP::FastMath::fastPow(1000.0f, static_cast<float>(bin + 1) / spectrumBins);
 
                 int minFFTBin = static_cast<int>(minFreq / (currentSampleRate / fftSize));
                 int maxFFTBin = static_cast<int>(maxFreq / (currentSampleRate / fftSize));
@@ -448,7 +457,7 @@ void DynamicEQ::updateSpectrumData(const juce::AudioBuffer<float>& buffer)
                 if (count > 0)
                 {
                     float avgMagnitude = sum / count;
-                    float db = juce::Decibels::gainToDecibels(avgMagnitude + 0.001f);
+                    float db = Echoel::DSP::FastMath::gainToDb(avgMagnitude + 0.001f);
                     float normalized = juce::jmap(db, -60.0f, 0.0f, 0.0f, 1.0f);
                     spectrumData[bin] = juce::jlimit(0.0f, 1.0f, normalized);
                 }

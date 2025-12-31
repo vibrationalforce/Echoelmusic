@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 EchoelmusicAudioProcessor::EchoelmusicAudioProcessor()
@@ -442,10 +443,10 @@ void EchoelmusicAudioProcessor::updateSpectrumData(const juce::AudioBuffer<float
             }
 
             if (endSample > startSample)
-                rms = std::sqrt(rms / (endSample - startSample));
+                rms = Echoel::DSP::FastMath::fastSqrt(rms / static_cast<float>(endSample - startSample));
 
-            // Convert to dB and normalize
-            float db = juce::Decibels::gainToDecibels(rms + 0.0001f);
+            // Convert to dB and normalize using FastMath (~5x faster)
+            float db = Echoel::DSP::FastMath::gainToDb(rms + 0.0001f);
             float normalized = juce::jmap(db, -60.0f, 0.0f, 0.0f, 1.0f);
 
             // Smooth with previous value (using UI thread's last read)

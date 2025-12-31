@@ -1,4 +1,5 @@
 #include "SpectralSculptor.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -86,14 +87,18 @@ void SpectralSculptor::learnNoiseProfile(const juce::AudioBuffer<float>& buffer)
         noiseProfileLearned = true;
         noiseLearnFrames = 0;
 
-        // Update visualization
-        std::lock_guard<std::mutex> lock(spectrumMutex);
-        const float scale = 1024.0f / static_cast<float>(noiseProfile.size());
-        for (size_t i = 0; i < visualNoiseProfile.size(); ++i)
+        // Update visualization (use try_lock to avoid blocking audio thread)
+        std::unique_lock<std::mutex> lock(spectrumMutex, std::try_to_lock);
+        if (lock.owns_lock())
         {
-            int bin = static_cast<int>(i / scale);
-            visualNoiseProfile[i] = noiseProfile[bin];
+            const float scale = 1024.0f / static_cast<float>(noiseProfile.size());
+            for (size_t i = 0; i < visualNoiseProfile.size(); ++i)
+            {
+                int bin = static_cast<int>(i / scale);
+                visualNoiseProfile[i] = noiseProfile[bin];
+            }
         }
+        // If we couldn't get the lock, skip visualization update (non-critical)
     }
 }
 
@@ -431,9 +436,9 @@ void SpectralSculptor::processDenoise(std::vector<std::complex<float>>& freqData
 
 void SpectralSculptor::processSpectralGate(std::vector<std::complex<float>>& freqData)
 {
-    const float threshold = juce::Decibels::decibelsToGain(gateThresholdDb);
-    const float attackCoeff = std::exp(-1000.0f / (gateAttackMs * static_cast<float>(currentSampleRate)));
-    const float releaseCoeff = std::exp(-1000.0f / (gateReleaseMs * static_cast<float>(currentSampleRate)));
+    const float threshold = Echoel::DSP::FastMath::dbToGain(gateThresholdDb);
+    const float attackCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (gateAttackMs * static_cast<float>(currentSampleRate)));
+    const float releaseCoeff = Echoel::DSP::FastMath::fastExp(-1000.0f / (gateReleaseMs * static_cast<float>(currentSampleRate)));
 
     const int numBins = juce::jmin(static_cast<int>(freqData.size()), static_cast<int>(gateEnvelopes.size()));
 
@@ -564,7 +569,9 @@ void SpectralSculptor::processSpectralMorph(std::vector<std::complex<float>>& fr
         float magnitude = std::abs(freqData[i]);
         float phase = std::arg(freqData[i]);
 
-        float modulatedMagnitude = magnitude * (1.0f + magModulation * std::sin(i * 0.1f));
+        // Using fast sine for spectral modulation
+        const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+        float modulatedMagnitude = magnitude * (1.0f + magModulation * trigTables.fastSin(static_cast<float>(i) * 0.1f / (2.0f * juce::MathConstants<float>::pi)));
 
         morphedData[shiftedBin] = std::polar(modulatedMagnitude, phase);
     }
@@ -621,7 +628,10 @@ int SpectralSculptor::frequencyToBin(float freq) const
 
 void SpectralSculptor::updateVisualization(const std::vector<std::complex<float>>& freqData)
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    // Use try_lock to avoid blocking audio thread (called from process loop)
+    std::unique_lock<std::mutex> lock(spectrumMutex, std::try_to_lock);
+    if (!lock.owns_lock())
+        return;  // Skip visualization update if UI is reading (non-critical)
 
     const float scale = 1024.0f / static_cast<float>(freqData.size());
 

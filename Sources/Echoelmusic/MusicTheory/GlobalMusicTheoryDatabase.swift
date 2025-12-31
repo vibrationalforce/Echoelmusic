@@ -24,15 +24,17 @@ import Combine
 /// - Grove Music Online
 /// - Traditional conservatories worldwide
 /// - Field recordings & analysis
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class GlobalMusicTheoryDatabase: ObservableObject {
+@Observable
+final class GlobalMusicTheoryDatabase {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var currentCulture: MusicCulture = .western
-    @Published var currentScale: Scale?
-    @Published var currentMode: Mode?
-    @Published var availableScales: [Scale] = []
+    var currentCulture: MusicCulture = .western
+    var currentScale: Scale?
+    var currentMode: Mode?
+    var availableScales: [Scale] = []
 
     // MARK: - Music Cultures
 
@@ -166,10 +168,12 @@ class GlobalMusicTheoryDatabase: ObservableObject {
         loadModeDatabase()
         loadRhythmDatabase()
 
-        print("✅ Global Music Theory Database: Initialized")
-        print("🌍 Scales: \(scaleDatabase.count)")
-        print("🎵 Modes: \(modeDatabase.count)")
-        print("🥁 Rhythm Patterns: \(rhythmDatabase.count)")
+        #if DEBUG
+        debugLog("✅ Global Music Theory Database: Initialized")
+        debugLog("🌍 Scales: \(scaleDatabase.count)")
+        debugLog("🎵 Modes: \(modeDatabase.count)")
+        debugLog("🥁 Rhythm Patterns: \(rhythmDatabase.count)")
+        #endif
     }
 
     // MARK: - Load Scale Database
@@ -373,7 +377,9 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             )
         ]
 
-        print("📚 Loaded \(scaleDatabase.count) scales from global music traditions")
+        #if DEBUG
+        debugLog("📚 Loaded \(scaleDatabase.count) scales from global music traditions")
+        #endif
     }
 
     // MARK: - Load Mode Database
@@ -423,7 +429,9 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             )
         ]
 
-        print("🎭 Loaded \(modeDatabase.count) modal systems")
+        #if DEBUG
+        debugLog("🎭 Loaded \(modeDatabase.count) modal systems")
+        #endif
     }
 
     // MARK: - Load Rhythm Database
@@ -476,7 +484,9 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             )
         ]
 
-        print("🥁 Loaded \(rhythmDatabase.count) rhythm patterns")
+        #if DEBUG
+        debugLog("🥁 Loaded \(rhythmDatabase.count) rhythm patterns")
+        #endif
     }
 
     // MARK: - Query Functions
@@ -558,3 +568,8 @@ class GlobalMusicTheoryDatabase: ObservableObject {
         return report
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension GlobalMusicTheoryDatabase: ObservableObject { }

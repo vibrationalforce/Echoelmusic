@@ -1,4 +1,5 @@
 #include "FETCompressor.h"
+#include "../Core/DSPOptimizations.h"
 
 FETCompressor::FETCompressor() {}
 FETCompressor::~FETCompressor() {}
@@ -18,7 +19,7 @@ void FETCompressor::reset()
         state.envelope = 0.0f;
     inputLevelSmooth.fill(0.0f);
     outputLevelSmooth.fill(0.0f);
-    gainReductionSmooth = 0.0f;
+    gainReductionSmooth.store(0.0f);
 }
 
 void FETCompressor::process(juce::AudioBuffer<float>& buffer)
@@ -26,21 +27,27 @@ void FETCompressor::process(juce::AudioBuffer<float>& buffer)
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
+    // OPTIMIZATION: Cache channel pointers to avoid per-sample virtual calls
+    float* channelPtrs[2] = { nullptr, nullptr };
+    const int maxChannels = juce::jmin(numChannels, 2);
+    for (int ch = 0; ch < maxChannels; ++ch)
+        channelPtrs[ch] = buffer.getWritePointer(ch);
+
     for (int sample = 0; sample < numSamples; ++sample)
     {
         float linkedSidechain = 0.0f;
         if (numChannels >= 2 && stereoLink)
         {
-            float left = buffer.getSample(0, sample);
-            float right = buffer.getSample(1, sample);
+            float left = channelPtrs[0][sample];
+            float right = channelPtrs[1][sample];
             linkedSidechain = (std::abs(left) + std::abs(right)) * 0.5f;
         }
 
-        for (int channel = 0; channel < numChannels; ++channel)
+        for (int channel = 0; channel < maxChannels; ++channel)
         {
-            float channelSample = buffer.getSample(channel, sample);
+            float channelSample = channelPtrs[channel][sample];
             float processed = processSample(channelSample, channel);
-            buffer.setSample(channel, sample, processed);
+            channelPtrs[channel][sample] = processed;
         }
     }
 }
@@ -52,14 +59,14 @@ float FETCompressor::processSample(float sample, int channel)
     float inputLevel = std::abs(sample);
     inputLevelSmooth[channel] = inputLevel * 0.1f + inputLevelSmooth[channel] * 0.9f;
 
-    // Input gain
-    sample *= juce::Decibels::decibelsToGain(inputGain);
+    // Input gain (use cached linear value)
+    sample *= inputGainLinear;
 
     // FET Compression
     sample = processFETCompression(sample, channel);
 
-    // Output gain
-    sample *= juce::Decibels::decibelsToGain(outputGain);
+    // Output gain (use cached linear value)
+    sample *= outputGainLinear;
 
     float outputLevel = std::abs(sample);
     outputLevelSmooth[channel] = outputLevel * 0.1f + outputLevelSmooth[channel] * 0.9f;
@@ -70,11 +77,13 @@ float FETCompressor::processSample(float sample, int channel)
 void FETCompressor::setInputGain(float gainDb)
 {
     inputGain = juce::jlimit(-20.0f, 40.0f, gainDb);
+    inputGainLinear = Echoel::DSP::FastMath::dbToGain(inputGain);  // Cache linear gain
 }
 
 void FETCompressor::setOutputGain(float gainDb)
 {
     outputGain = juce::jlimit(-20.0f, 20.0f, gainDb);
+    outputGainLinear = Echoel::DSP::FastMath::dbToGain(outputGain);  // Cache linear gain
 }
 
 void FETCompressor::setAttack(float attackUs)
@@ -120,8 +129,8 @@ void FETCompressor::updateCoefficients()
 
     for (auto& state : compState)
     {
-        state.attackCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * attackSeconds));
-        state.releaseCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * releaseSeconds));
+        state.attackCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * attackSeconds));
+        state.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * releaseSeconds));
     }
 }
 
@@ -130,7 +139,6 @@ float FETCompressor::processFETCompression(float sample, int channel, float link
     auto& state = compState[channel];
 
     float inputLevel = (stereoLink && linkedSidechain > 0.0f) ? linkedSidechain : std::abs(sample);
-    float inputDb = juce::Decibels::gainToDecibels(inputLevel + 1e-6f);
 
     // Peak detection (1176 style)
     if (inputLevel > state.envelope)
@@ -138,10 +146,11 @@ float FETCompressor::processFETCompression(float sample, int channel, float link
     else
         state.envelope = inputLevel + state.releaseCoeff * (state.envelope - inputLevel);
 
-    float envelopeDb = juce::Decibels::gainToDecibels(state.envelope + 1e-6f);
+    // Use fast dB conversion from DSPOptimizations
+    float envelopeDb = Echoel::DSP::FastMath::gainToDb(state.envelope + 1e-6f);
 
     // 1176 compression curve
-    float threshold = -10.0f;  // 1176 typical threshold
+    constexpr float threshold = -10.0f;  // 1176 typical threshold
     float actualRatio = allButtonsMode ? 12.0f : static_cast<float>(ratio);
 
     float gainReduction = 0.0f;
@@ -155,12 +164,15 @@ float FETCompressor::processFETCompression(float sample, int channel, float link
             gainReduction *= 1.3f;
     }
 
-    gainReductionSmooth = gainReduction * 0.1f + gainReductionSmooth * 0.9f;
+    // OPTIMIZATION: Atomic smoothing for thread-safe UI metering
+    float smoothed = gainReduction * 0.1f + gainReductionSmooth.load() * 0.9f;
+    gainReductionSmooth.store(smoothed);
 
-    float outputGain = juce::Decibels::decibelsToGain(gainReduction);
+    // Use fast dB to gain conversion
+    float compGain = Echoel::DSP::FastMath::dbToGain(gainReduction);
 
     // FET saturation
-    sample = fetSaturation(sample * outputGain, fetColoration);
+    sample = fetSaturation(sample * compGain, fetColoration);
 
     return sample;
 }
@@ -182,7 +194,7 @@ float FETCompressor::fetSaturation(float sample, float amount)
     return saturated / drive;
 }
 
-float FETCompressor::getGainReduction() const { return gainReductionSmooth; }
+float FETCompressor::getGainReduction() const { return gainReductionSmooth.load(); }
 float FETCompressor::getInputLevel(int channel) const { return (channel < 2) ? inputLevelSmooth[channel] : 0.0f; }
 float FETCompressor::getOutputLevel(int channel) const { return (channel < 2) ? outputLevelSmooth[channel] : 0.0f; }
 

@@ -51,17 +51,27 @@ public:
     //==============================================================================
     // Wavetable Position & Morphing
 
-    void setWavetablePosition(float position);    // 0.0 to 1.0 (scan through wavetable frames)
-    void setWavetableMorph(float amount);         // 0.0 to 1.0 (blend between wavetables)
-    void setWavetableBend(float amount);          // -1.0 to +1.0 (spectral warping)
+    void setWavetablePosition(int osc, float position);    // 0.0 to 1.0 (scan through frames)
+    void setWavetableMorph(float amount);                  // 0.0 to 1.0 (blend between wavetables)
+    void setWavetableBend(int osc, float amount);          // -1.0 to +1.0 (spectral warping)
 
     //==============================================================================
-    // Oscillators
+    // Dual Oscillators (NEW: Added 2nd oscillator)
 
-    void setOscPitch(float semitones);            // -24 to +24 semitones
-    void setOscFine(float cents);                 // -100 to +100 cents
-    void setOscPhase(float phase);                // 0.0 to 1.0 (initial phase offset)
-    void setOscLevel(float level);                // 0.0 to 1.0
+    void setOscEnabled(int osc, bool enabled);    // osc = 0 or 1
+    void setOscWavetable(int osc, WavetableType type, int index);
+    void setOscPitch(int osc, float semitones);   // -24 to +24 semitones
+    void setOscFine(int osc, float cents);        // -100 to +100 cents
+    void setOscPhase(int osc, float phase);       // 0.0 to 1.0
+    void setOscLevel(int osc, float level);       // 0.0 to 1.0
+    void setOscPan(int osc, float pan);           // 0.0 (L) to 1.0 (R)
+
+    //==============================================================================
+    // Wavetable Import (NEW: Load Serum-compatible .wav files)
+
+    bool loadWavetableFromFile(const juce::File& wavFile, int slot);
+    bool loadWavetableFromMemory(const float* data, int numFrames, int samplesPerFrame, int slot);
+    int getNumLoadedWavetables() const;
 
     //==============================================================================
     // Filter
@@ -116,6 +126,14 @@ public:
 
     void setMasterVolume(float volume);
     void setPolyphony(int voices);
+
+    //==============================================================================
+    // MPE (MIDI Polyphonic Expression) Support
+
+    void setMPEEnabled(bool enabled);
+    void setMPEPitchBendRange(int semitones);
+    void setMPEPressureToWavetable(float amount);  // Pressure → wavetable position
+    void setMPESlideToFilter(float amount);        // Slide → filter cutoff
 
     //==============================================================================
     // Presets
@@ -219,16 +237,29 @@ private:
     double currentSampleRate = 48000.0;
     int currentNumChannels = 2;
 
-    // Wavetable
-    float wavetablePosition = 0.5f;
-    float wavetableMorph = 0.0f;
-    float wavetableBend = 0.0f;
+    // Dual Oscillator Configuration (NEW)
+    struct OscillatorConfig
+    {
+        bool enabled = true;
+        int wavetableIndex = 0;
+        float wavetablePosition = 0.5f;
+        float wavetableBend = 0.0f;
+        float pitch = 0.0f;
+        float fine = 0.0f;
+        float phase = 0.0f;
+        float level = 1.0f;
+        float pan = 0.5f;
+    };
+    std::array<OscillatorConfig, 2> oscillators;
 
-    // Oscillator
-    float oscPitch = 0.0f;
-    float oscFine = 0.0f;
-    float oscPhase = 0.0f;
-    float oscLevel = 1.0f;
+    // Wavetable morphing
+    float wavetableMorph = 0.0f;
+
+    // MPE
+    bool mpeEnabled = false;
+    int mpePitchBendRange = 48;
+    float mpePressureToWavetable = 0.5f;
+    float mpeSlideToFilter = 0.5f;
 
     // Filter
     FilterType filterType = FilterType::LowPass;

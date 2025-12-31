@@ -19,16 +19,18 @@ import Combine
 /// - Green Software Foundation principles (greensoftware.foundation)
 /// - Energy Efficiency Index (EEI) methodology
 /// - Carbon intensity data from Electricity Maps API
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class EnergyEfficiencyManager: ObservableObject {
+@Observable
+final class EnergyEfficiencyManager {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var ecoModeEnabled: Bool = false
-    @Published var currentEnergyEfficiency: EnergyEfficiency = .balanced
-    @Published var estimatedCarbonFootprint: Double = 0.0  // grams CO2e per hour
-    @Published var batteryImpactScore: Int = 50  // 0-100 (0 = minimal impact)
-    @Published var powerConsumptionWatts: Double = 0.0
+    var ecoModeEnabled: Bool = false
+    var currentEnergyEfficiency: EnergyEfficiency = .balanced
+    var estimatedCarbonFootprint: Double = 0.0  // grams CO2e per hour
+    var batteryImpactScore: Int = 50  // 0-100 (0 = minimal impact)
+    var powerConsumptionWatts: Double = 0.0
 
     // MARK: - Energy Efficiency Levels
 
@@ -92,7 +94,7 @@ class EnergyEfficiencyManager: ObservableObject {
         }
     }
 
-    @Published var currentPowerSource: PowerSource = .battery(level: 1.0)
+    var currentPowerSource: PowerSource = .battery(level: 1.0)
 
     // MARK: - Carbon Intensity
 
@@ -117,7 +119,7 @@ class EnergyEfficiencyManager: ObservableObject {
         )
     }
 
-    @Published var carbonIntensity: CarbonIntensity = .defaultUS
+    var carbonIntensity: CarbonIntensity = .defaultUS
 
     // MARK: - Energy Metrics
 
@@ -151,9 +153,11 @@ class EnergyEfficiencyManager: ObservableObject {
         setupPowerMonitoring()
         loadUserPreferences()
 
-        print("✅ Energy Efficiency Manager: Initialized")
-        print("🌱 Eco Mode: \(ecoModeEnabled ? "Enabled" : "Disabled")")
-        print("⚡️ Efficiency Level: \(currentEnergyEfficiency.rawValue)")
+        #if DEBUG
+        debugLog("✅ Energy Efficiency Manager: Initialized")
+        debugLog("🌱 Eco Mode: \(ecoModeEnabled ? "Enabled" : "Disabled")")
+        debugLog("⚡️ Efficiency Level: \(currentEnergyEfficiency.rawValue)")
+        #endif
     }
 
     deinit {
@@ -181,14 +185,20 @@ class EnergyEfficiencyManager: ObservableObject {
 
             if isRenewable {
                 carbonIntensity = .renewableEstimate
-                print("♻️ Plugged in to renewable energy source")
+                #if DEBUG
+                debugLog("♻️ Plugged in to renewable energy source")
+                #endif
             } else {
-                print("🔌 Plugged in to grid power")
+                #if DEBUG
+                debugLog("🔌 Plugged in to grid power")
+                #endif
             }
 
         case .unplugged:
             currentPowerSource = .battery(level: batteryLevel)
-            print("🔋 Running on battery (\(Int(batteryLevel * 100))%)")
+            #if DEBUG
+            debugLog("🔋 Running on battery (\(Int(batteryLevel * 100))%)")
+            #endif
 
         @unknown default:
             currentPowerSource = .battery(level: batteryLevel)
@@ -248,12 +258,14 @@ class EnergyEfficiencyManager: ObservableObject {
         // Apply eco-friendly settings
         applyEcoSettings()
 
-        print("🌱 Eco Mode: Enabled")
-        print("   - CPU throttle: 30%")
-        print("   - GPU throttle: 40%")
-        print("   - Target FPS: 30")
-        print("   - Dark mode: Enabled")
-        print("   - Background processing: Disabled")
+        #if DEBUG
+        debugLog("🌱 Eco Mode: Enabled")
+        debugLog("   - CPU throttle: 30%")
+        debugLog("   - GPU throttle: 40%")
+        debugLog("   - Target FPS: 30")
+        debugLog("   - Dark mode: Enabled")
+        debugLog("   - Background processing: Disabled")
+        #endif
 
         UserDefaults.standard.set(true, forKey: "ecoModeEnabled")
     }
@@ -262,7 +274,9 @@ class EnergyEfficiencyManager: ObservableObject {
         ecoModeEnabled = false
         currentEnergyEfficiency = .balanced
 
-        print("🌱 Eco Mode: Disabled")
+        #if DEBUG
+        debugLog("🌱 Eco Mode: Disabled")
+        #endif
         UserDefaults.standard.set(false, forKey: "ecoModeEnabled")
     }
 
@@ -284,17 +298,23 @@ class EnergyEfficiencyManager: ObservableObject {
         switch currentPowerSource {
         case .battery(let level):
             if level < 0.2 {  // < 20%
-                print("🔋 Low battery - enabling eco mode")
+                #if DEBUG
+                debugLog("🔋 Low battery - enabling eco mode")
+                #endif
                 enableEcoMode()
             } else if level < 0.5 && !ecoModeEnabled {
-                print("🔋 Battery moderate - recommending eco mode")
+                #if DEBUG
+                debugLog("🔋 Battery moderate - recommending eco mode")
+                #endif
             }
 
         case .pluggedIn(let isRenewable):
             if isRenewable {
                 // Renewable energy - can use more power guilt-free
                 currentEnergyEfficiency = .performance
-                print("♻️ Renewable energy detected - performance mode enabled")
+                #if DEBUG
+                debugLog("♻️ Renewable energy detected - performance mode enabled")
+                #endif
             } else {
                 // Grid power - stay balanced
                 currentEnergyEfficiency = .balanced
@@ -372,7 +392,9 @@ class EnergyEfficiencyManager: ObservableObject {
     func startSession() {
         sessionStartTime = Date()
         accumulatedEnergy = 0.0
-        print("🌱 Energy tracking: Session started")
+        #if DEBUG
+        debugLog("🌱 Energy tracking: Session started")
+        #endif
     }
 
     func endSession() -> EnergyMetrics {
@@ -410,10 +432,12 @@ class EnergyEfficiencyManager: ObservableObject {
         )
 
         sessionStartTime = nil
-        print("🌱 Energy tracking: Session ended")
-        print("   Duration: \(Int(duration)) seconds")
-        print("   Energy: \(String(format: "%.2f", metrics.totalEnergyKWh)) kWh")
-        print("   Carbon: \(String(format: "%.2f", estimatedCarbonFootprint)) g CO2e")
+        #if DEBUG
+        debugLog("🌱 Energy tracking: Session ended")
+        debugLog("   Duration: \(Int(duration)) seconds")
+        debugLog("   Energy: \(String(format: "%.2f", metrics.totalEnergyKWh)) kWh")
+        debugLog("   Carbon: \(String(format: "%.2f", estimatedCarbonFootprint)) g CO2e")
+        #endif
 
         return metrics
     }
@@ -425,11 +449,15 @@ class EnergyEfficiencyManager: ObservableObject {
 
         if isRenewable {
             carbonIntensity = .renewableEstimate
-            print("♻️ Renewable energy mode: Enabled")
-            print("   Your carbon footprint is ~12x lower!")
+            #if DEBUG
+            debugLog("♻️ Renewable energy mode: Enabled")
+            debugLog("   Your carbon footprint is ~12x lower!")
+            #endif
         } else {
             carbonIntensity = .defaultUS
-            print("🔌 Grid energy mode: Enabled")
+            #if DEBUG
+            debugLog("🔌 Grid energy mode: Enabled")
+            #endif
         }
 
         detectPowerSource()
@@ -561,3 +589,8 @@ class EnergyEfficiencyManager: ObservableObject {
         return recommendations
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension EnergyEfficiencyManager: ObservableObject { }

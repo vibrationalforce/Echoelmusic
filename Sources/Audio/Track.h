@@ -101,6 +101,10 @@ private:
     std::atomic<float> volume { 1.0f };
     std::atomic<float> pan { 0.0f }; // -1.0 (left) to +1.0 (right)
 
+    // OPTIMIZATION: Pre-cached pan gains (calculated in setPan, used in processBlock)
+    std::atomic<float> cachedLeftGain { 0.707f };   // Default: center (cos(pi/4))
+    std::atomic<float> cachedRightGain { 0.707f };  // Default: center (sin(pi/4))
+
     double currentSampleRate = 48000.0;
     int currentBlockSize = 512;
 
@@ -108,6 +112,7 @@ private:
     juce::AudioBuffer<float> playbackBuffer;  // Pre-loaded audio
     juce::AudioBuffer<float> recordedAudio;   // Currently recording
     int64_t recordingStartPosition = 0;
+    int maxRecordingSamples = 0;  // Pre-allocated capacity (avoids RT malloc)
 
     // MIDI data
     juce::MidiBuffer midiSequence;

@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include <array>
+#include <atomic>
 #include <cmath>
 
 /**
@@ -179,7 +180,8 @@ private:
     // Metering
     std::array<float, 2> inputLevelSmooth = {0.0f, 0.0f};
     std::array<float, 2> outputLevelSmooth = {0.0f, 0.0f};
-    float gainReductionSmooth = 0.0f;
+    // OPTIMIZATION: Atomic for thread-safe UI metering access
+    std::atomic<float> gainReductionSmooth { 0.0f };
 
     //==============================================================================
     // Internal Helpers

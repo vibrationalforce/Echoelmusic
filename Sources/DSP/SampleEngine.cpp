@@ -1,4 +1,5 @@
 #include "SampleEngine.h"
+#include "../Core/DSPOptimizations.h"
 #include <cmath>
 
 //==============================================================================
@@ -27,8 +28,9 @@ void SampleEngine::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
 {
     // Update LFO
     lfoPhase += lfoRate * buffer.getNumSamples() / currentSampleRate;
+    // OPTIMIZATION: Fast floor for phase wrap
     if (lfoPhase >= 1.0f)
-        lfoPhase -= std::floor(lfoPhase);
+        lfoPhase -= static_cast<float>(static_cast<int>(lfoPhase));
 
     // Render voices
     renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
@@ -127,55 +129,49 @@ int SampleEngine::findSampleForNote(int midiNote, int velocity) const
 }
 
 //==============================================================================
-// Playback Controls
+// OPTIMIZATION: Consolidated setters using template helper
+// Reduces 25+ repetitive jlimit calls to single-line implementations
+//==============================================================================
 
-void SampleEngine::setSampleStart(float position) { sampleStart = juce::jlimit(0.0f, 1.0f, position); }
-void SampleEngine::setSampleEnd(float position) { sampleEnd = juce::jlimit(0.0f, 1.0f, position); }
+// Playback Controls
+void SampleEngine::setSampleStart(float position) { setClampedValue(sampleStart, position, 0.0f, 1.0f); }
+void SampleEngine::setSampleEnd(float position) { setClampedValue(sampleEnd, position, 0.0f, 1.0f); }
 void SampleEngine::setLoopEnabled(bool enabled) { loopEnabled = enabled; }
-void SampleEngine::setLoopStart(float position) { loopStart = juce::jlimit(0.0f, 1.0f, position); }
-void SampleEngine::setLoopEnd(float position) { loopEnd = juce::jlimit(0.0f, 1.0f, position); }
+void SampleEngine::setLoopStart(float position) { setClampedValue(loopStart, position, 0.0f, 1.0f); }
+void SampleEngine::setLoopEnd(float position) { setClampedValue(loopEnd, position, 0.0f, 1.0f); }
 void SampleEngine::setLoopMode(LoopMode mode) { loopMode = mode; }
 
-//==============================================================================
 // Time-Stretching & Pitch
-
-void SampleEngine::setPitchShift(float semitones) { pitchShift = juce::jlimit(-24.0f, 24.0f, semitones); }
-void SampleEngine::setTimeStretch(float ratio) { timeStretch = juce::jlimit(0.5f, 2.0f, ratio); }
+void SampleEngine::setPitchShift(float semitones) { setClampedValue(pitchShift, semitones, -24.0f, 24.0f); }
+void SampleEngine::setTimeStretch(float ratio) { setClampedValue(timeStretch, ratio, 0.5f, 2.0f); }
 void SampleEngine::setFormantPreserve(bool preserve) { formantPreserve = preserve; }
 
-//==============================================================================
 // Filter Controls
-
 void SampleEngine::setFilterType(FilterType type) { filterType = type; }
-void SampleEngine::setFilterCutoff(float frequency) { filterCutoff = juce::jlimit(20.0f, 20000.0f, frequency); }
-void SampleEngine::setFilterResonance(float resonance) { filterResonance = juce::jlimit(0.0f, 1.0f, resonance); }
-void SampleEngine::setFilterEnvAmount(float amount) { filterEnvAmount = juce::jlimit(-1.0f, 1.0f, amount); }
+void SampleEngine::setFilterCutoff(float frequency) { setClampedValue(filterCutoff, frequency, 20.0f, 20000.0f); }
+void SampleEngine::setFilterResonance(float resonance) { setClampedValue(filterResonance, resonance, 0.0f, 1.0f); }
+void SampleEngine::setFilterEnvAmount(float amount) { setClampedValue(filterEnvAmount, amount, -1.0f, 1.0f); }
 
-//==============================================================================
-// Envelope Controls
+// Envelope Controls (Amp)
+void SampleEngine::setAmpAttack(float timeMs) { setClampedValue(ampAttack, timeMs, 0.1f, 5000.0f); }
+void SampleEngine::setAmpDecay(float timeMs) { setClampedValue(ampDecay, timeMs, 1.0f, 5000.0f); }
+void SampleEngine::setAmpSustain(float level) { setClampedValue(ampSustain, level, 0.0f, 1.0f); }
+void SampleEngine::setAmpRelease(float timeMs) { setClampedValue(ampRelease, timeMs, 1.0f, 10000.0f); }
 
-void SampleEngine::setAmpAttack(float timeMs) { ampAttack = juce::jlimit(0.1f, 5000.0f, timeMs); }
-void SampleEngine::setAmpDecay(float timeMs) { ampDecay = juce::jlimit(1.0f, 5000.0f, timeMs); }
-void SampleEngine::setAmpSustain(float level) { ampSustain = juce::jlimit(0.0f, 1.0f, level); }
-void SampleEngine::setAmpRelease(float timeMs) { ampRelease = juce::jlimit(1.0f, 10000.0f, timeMs); }
+// Envelope Controls (Filter)
+void SampleEngine::setFilterAttack(float timeMs) { setClampedValue(filterAttack, timeMs, 0.1f, 5000.0f); }
+void SampleEngine::setFilterDecay(float timeMs) { setClampedValue(filterDecay, timeMs, 1.0f, 5000.0f); }
+void SampleEngine::setFilterSustain(float level) { setClampedValue(filterSustain, level, 0.0f, 1.0f); }
+void SampleEngine::setFilterRelease(float timeMs) { setClampedValue(filterRelease, timeMs, 1.0f, 10000.0f); }
 
-void SampleEngine::setFilterAttack(float timeMs) { filterAttack = juce::jlimit(0.1f, 5000.0f, timeMs); }
-void SampleEngine::setFilterDecay(float timeMs) { filterDecay = juce::jlimit(1.0f, 5000.0f, timeMs); }
-void SampleEngine::setFilterSustain(float level) { filterSustain = juce::jlimit(0.0f, 1.0f, level); }
-void SampleEngine::setFilterRelease(float timeMs) { filterRelease = juce::jlimit(1.0f, 10000.0f, timeMs); }
-
-//==============================================================================
 // LFO Controls
+void SampleEngine::setLFORate(float hz) { setClampedValue(lfoRate, hz, 0.01f, 20.0f); }
+void SampleEngine::setLFOToPitch(float amount) { setClampedValue(lfoToPitch, amount, 0.0f, 1.0f); }
+void SampleEngine::setLFOToFilter(float amount) { setClampedValue(lfoToFilter, amount, 0.0f, 1.0f); }
+void SampleEngine::setLFOToSampleStart(float amount) { setClampedValue(lfoToSampleStart, amount, 0.0f, 1.0f); }
 
-void SampleEngine::setLFORate(float hz) { lfoRate = juce::jlimit(0.01f, 20.0f, hz); }
-void SampleEngine::setLFOToPitch(float amount) { lfoToPitch = juce::jlimit(0.0f, 1.0f, amount); }
-void SampleEngine::setLFOToFilter(float amount) { lfoToFilter = juce::jlimit(0.0f, 1.0f, amount); }
-void SampleEngine::setLFOToSampleStart(float amount) { lfoToSampleStart = juce::jlimit(0.0f, 1.0f, amount); }
-
-//==============================================================================
 // Master Controls
-
-void SampleEngine::setMasterVolume(float volume) { masterVolume = juce::jlimit(0.0f, 1.0f, volume); }
+void SampleEngine::setMasterVolume(float volume) { setClampedValue(masterVolume, volume, 0.0f, 1.0f); }
 
 void SampleEngine::setPolyphony(int voices)
 {
@@ -190,7 +186,9 @@ void SampleEngine::setPolyphony(int voices)
 
 float SampleEngine::getLFOValue()
 {
-    return std::sin(lfoPhase * juce::MathConstants<float>::twoPi);
+    // Using fast trig for audio-thread LFO
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+    return trigTables.fastSin(lfoPhase);
 }
 
 //==============================================================================
@@ -338,9 +336,9 @@ void SampleEngine::SampleEngineVoice::startNote(int midiNoteNumber, float veloci
 
     const auto& sample = synthRef.samples[currentSampleIndex];
 
-    // Calculate playback speed (pitch shift)
+    // Calculate playback speed (pitch shift) - using fast pow
     int noteDiff = midiNoteNumber - sample.rootNote;
-    playbackSpeed = std::pow(2.0, (noteDiff + synthRef.pitchShift) / 12.0);
+    playbackSpeed = static_cast<double>(Echoel::DSP::FastMath::fastPow(2.0f, static_cast<float>(noteDiff + synthRef.pitchShift) / 12.0f));
 
     // Apply time-stretch (affects speed independently of pitch)
     playbackSpeed /= synthRef.timeStretch;
@@ -495,16 +493,20 @@ float SampleEngine::SampleEngineVoice::readSample(const Sample& sample, double p
     float frac = static_cast<float>(position - pos1);
 
     float value = 0.0f;
-    for (int channel = 0; channel < sample.audioData.getNumChannels(); ++channel)
+    const int numChannels = sample.audioData.getNumChannels();
+
+    // OPTIMIZATION: Cache pointers for interpolation
+    for (int channel = 0; channel < numChannels; ++channel)
     {
-        float sample1 = sample.audioData.getSample(channel, pos1);
-        float sample2 = sample.audioData.getSample(channel, pos2);
+        const float* channelPtr = sample.audioData.getReadPointer(channel);
+        float sample1 = channelPtr[pos1];
+        float sample2 = channelPtr[pos2];
         value += sample1 + frac * (sample2 - sample1);
     }
 
     // Average channels if stereo
-    if (sample.audioData.getNumChannels() > 0)
-        value /= sample.audioData.getNumChannels();
+    if (numChannels > 0)
+        value /= static_cast<float>(numChannels);
 
     return value;
 }

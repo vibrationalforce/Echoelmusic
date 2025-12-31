@@ -85,6 +85,15 @@ struct VaporwaveApp: View {
                 .environmentObject(healthKitManager)
                 .environmentObject(audioEngine)
         }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingView(hasCompletedOnboarding: .init(
+                get: { !showOnboarding },
+                set: { completed in
+                    if completed { showOnboarding = false }
+                }
+            ))
+            .environmentObject(healthKitManager)
+        }
         .onAppear {
             checkOnboarding()
         }

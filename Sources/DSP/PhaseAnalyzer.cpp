@@ -1,4 +1,5 @@
 #include "PhaseAnalyzer.h"
+#include "../Core/DSPOptimizations.h"
 #include <cmath>
 #include <algorithm>
 
@@ -22,6 +23,10 @@ void PhaseAnalyzer::prepare(double sampleRate, int samplesPerBlock, int numChann
     currentNumChannels = numChannels;
 
     correlationHistory.timePerSample = samplesPerBlock / sampleRate;
+
+    // OPTIMIZATION: Pre-allocate vectors to avoid RT allocations
+    correlationHistory.values.reserve(static_cast<size_t>(correlationHistory.maxSize + 16));
+    goniometerHistory.reserve(static_cast<size_t>(maxGoniometerPoints + 64));
 }
 
 void PhaseAnalyzer::reset()
@@ -214,10 +219,19 @@ void PhaseAnalyzer::calculatePhaseCorrelation(const juce::AudioBuffer<float>& bu
     minCorrelation = juce::jmin(minCorrelation, instantCorrelation);
     maxCorrelation = juce::jmax(maxCorrelation, instantCorrelation);
 
-    // Add to history
-    correlationHistory.values.push_back(instantCorrelation);
-    if (correlationHistory.values.size() > static_cast<size_t>(correlationHistory.maxSize))
-        correlationHistory.values.erase(correlationHistory.values.begin());
+    // Add to history (optimized: avoid erase by overwriting oldest if at capacity)
+    if (correlationHistory.values.size() < static_cast<size_t>(correlationHistory.maxSize))
+    {
+        correlationHistory.values.push_back(instantCorrelation);
+    }
+    else
+    {
+        // Shift values left by 1 using memmove (much faster than erase)
+        std::memmove(correlationHistory.values.data(),
+                     correlationHistory.values.data() + 1,
+                     (correlationHistory.values.size() - 1) * sizeof(float));
+        correlationHistory.values.back() = instantCorrelation;
+    }
 }
 
 void PhaseAnalyzer::updateGoniometer(const juce::AudioBuffer<float>& buffer)
@@ -238,31 +252,43 @@ void PhaseAnalyzer::updateGoniometer(const juce::AudioBuffer<float>& buffer)
         point.mid = (left[i] + right[i]) * 0.5f;
         point.side = (left[i] - right[i]) * 0.5f;
 
-        // Calculate polar coordinates
-        point.magnitude = std::sqrt(point.mid * point.mid + point.side * point.side);
-        point.angle = std::atan2(point.side, point.mid);
+        // OPTIMIZATION: Fast polar coordinate calculation
+        point.magnitude = Echoel::DSP::FastMath::fastSqrt(point.mid * point.mid + point.side * point.side);
+        point.angle = Echoel::DSP::FastMath::fastAtan2(point.side, point.mid);
 
-        goniometerHistory.push_back(point);
+        // OPTIMIZATION: Avoid erase by overwriting oldest if at capacity
+        if (goniometerHistory.size() < static_cast<size_t>(maxGoniometerPoints))
+        {
+            goniometerHistory.push_back(point);
+        }
+        else
+        {
+            // Rotate buffer: shift left and add new point at end
+            std::memmove(goniometerHistory.data(),
+                         goniometerHistory.data() + 1,
+                         (goniometerHistory.size() - 1) * sizeof(GoniometerPoint));
+            goniometerHistory.back() = point;
+        }
     }
-
-    // Limit history size
-    while (goniometerHistory.size() > static_cast<size_t>(maxGoniometerPoints))
-        goniometerHistory.erase(goniometerHistory.begin());
 }
 
 void PhaseAnalyzer::performFFTAnalysis(const juce::AudioBuffer<float>& buffer)
 {
     int numSamples = juce::jmin(buffer.getNumSamples(), fftSize);
 
+    // OPTIMIZATION: Cache read pointers to avoid per-sample virtual calls
+    const float* leftPtr = buffer.getReadPointer(0);
+    const float* rightPtr = buffer.getReadPointer(1);
+
     // Copy left channel
     leftFFTData.fill(0.0f);
     for (int i = 0; i < numSamples; ++i)
-        leftFFTData[i] = buffer.getSample(0, i);
+        leftFFTData[i] = leftPtr[i];
 
     // Copy right channel
     rightFFTData.fill(0.0f);
     for (int i = 0; i < numSamples; ++i)
-        rightFFTData[i] = buffer.getSample(1, i);
+        rightFFTData[i] = rightPtr[i];
 
     // Apply window to both
     window.multiplyWithWindowingTable(leftFFTData.data(), fftSize);

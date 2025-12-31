@@ -1,4 +1,5 @@
 #include "EchoSynth.h"
+#include "../Core/DSPOptimizations.h"
 #include <cmath>
 
 //==============================================================================
@@ -29,8 +30,9 @@ void EchoSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&
 {
     // Update LFO
     lfoPhaseAccumulator += lfoRate * buffer.getNumSamples() / currentSampleRate;
+    // OPTIMIZATION: Fast floor for phase wrap
     if (lfoPhaseAccumulator >= 1.0f)
-        lfoPhaseAccumulator -= std::floor(lfoPhaseAccumulator);
+        lfoPhaseAccumulator -= static_cast<float>(static_cast<int>(lfoPhaseAccumulator));
 
     // Render voices
     renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
@@ -122,10 +124,11 @@ float EchoSynth::getLFOValue()
     float phase = lfoPhaseAccumulator + lfoPhase;
     if (phase >= 1.0f) phase -= 1.0f;
 
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     switch (lfoWaveform)
     {
         case LFOWaveform::Sine:
-            return std::sin(phase * juce::MathConstants<float>::twoPi);
+            return trigTables.fastSin(phase);
 
         case LFOWaveform::Triangle:
             return phase < 0.5f ? (4.0f * phase - 1.0f) : (3.0f - 4.0f * phase);
@@ -469,10 +472,10 @@ void EchoSynth::EchoSynthVoice::renderNextBlock(juce::AudioBuffer<float>& output
 
     for (int i = 0; i < numSamples; ++i)
     {
-        // Glide (portamento)
+        // Glide (portamento) using fast exp
         if (synthRef.glideTime > 0.1f)
         {
-            float glideCoeff = 1.0f - std::exp(-1.0f / (synthRef.glideTime * 0.001f * sampleRate));
+            float glideCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (synthRef.glideTime * 0.001f * sampleRate));
             glideCurrentFrequency += glideCoeff * (glideTargetFrequency - glideCurrentFrequency);
         }
         else
@@ -480,19 +483,20 @@ void EchoSynth::EchoSynthVoice::renderNextBlock(juce::AudioBuffer<float>& output
             glideCurrentFrequency = glideTargetFrequency;
         }
 
-        // Analog drift (slow random pitch modulation)
+        // Analog drift (slow random pitch modulation) using fast sin
+        const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
         driftPhase += 0.5f / sampleRate;  // 0.5Hz drift rate
         if (driftPhase >= 1.0f) driftPhase -= 1.0f;
-        float drift = driftOffset * std::sin(driftPhase * juce::MathConstants<float>::twoPi);
+        float drift = driftOffset * trigTables.fastSin(driftPhase);
 
         // LFO modulation
         float lfoValue = synthRef.getLFOValue();
         float pitchMod = 1.0f + lfoValue * synthRef.lfoToPitch * 0.05f;  // ±5% pitch
         float ampMod = 1.0f - synthRef.lfoToAmp * 0.5f * (1.0f - lfoValue);
 
-        // Calculate oscillator frequencies
-        float osc1Freq = glideCurrentFrequency * std::pow(2.0f, synthRef.osc1Octave + synthRef.osc1Semitones / 12.0f + synthRef.osc1Detune / 1200.0f + drift);
-        float osc2Freq = glideCurrentFrequency * std::pow(2.0f, synthRef.osc2Octave + synthRef.osc2Semitones / 12.0f + synthRef.osc2Detune / 1200.0f + drift);
+        // Calculate oscillator frequencies using fast pow
+        float osc1Freq = glideCurrentFrequency * Echoel::DSP::FastMath::fastPow(2.0f, synthRef.osc1Octave + synthRef.osc1Semitones / 12.0f + synthRef.osc1Detune / 1200.0f + drift);
+        float osc2Freq = glideCurrentFrequency * Echoel::DSP::FastMath::fastPow(2.0f, synthRef.osc2Octave + synthRef.osc2Semitones / 12.0f + synthRef.osc2Detune / 1200.0f + drift);
 
         osc1Freq *= pitchMod;
         osc2Freq *= pitchMod;
@@ -549,10 +553,11 @@ void EchoSynth::EchoSynthVoice::renderNextBlock(juce::AudioBuffer<float>& output
 
 float EchoSynth::EchoSynthVoice::generateOscillator(Waveform waveform, float phase, float pulseWidth, float phaseIncrement)
 {
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     switch (waveform)
     {
         case Waveform::Sine:
-            return std::sin(phase * juce::MathConstants<float>::twoPi);
+            return trigTables.fastSin(phase);
 
         case Waveform::Triangle:
             // Triangle wave with PolyBLEP at peaks
@@ -576,8 +581,11 @@ float EchoSynth::EchoSynthVoice::generateOscillator(Waveform waveform, float pha
             if (phaseIncrement > 0.0f)
             {
                 // Apply PolyBLEP at both edges (0 and 0.5)
+                // OPTIMIZATION: Fast fmod for phase wrap (phase is always 0-1)
+                float squarePhase = phase + 0.5f;
+                squarePhase -= static_cast<float>(static_cast<int>(squarePhase));
                 square += polyBLEP(phase, phaseIncrement);
-                square -= polyBLEP(std::fmod(phase + 0.5f, 1.0f), phaseIncrement);
+                square -= polyBLEP(squarePhase, phaseIncrement);
             }
             return square;
         }
@@ -588,8 +596,11 @@ float EchoSynth::EchoSynthVoice::generateOscillator(Waveform waveform, float pha
             float pulse = phase < pulseWidth ? 1.0f : -1.0f;
             if (phaseIncrement > 0.0f)
             {
+                // OPTIMIZATION: Fast fmod for phase wrap
+                float pulsePhase = phase + (1.0f - pulseWidth);
+                pulsePhase -= static_cast<float>(static_cast<int>(pulsePhase));
                 pulse += polyBLEP(phase, phaseIncrement);
-                pulse -= polyBLEP(std::fmod(phase + (1.0f - pulseWidth), 1.0f), phaseIncrement);
+                pulse -= polyBLEP(pulsePhase, phaseIncrement);
             }
             return pulse;
         }

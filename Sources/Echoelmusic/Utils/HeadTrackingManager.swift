@@ -5,22 +5,24 @@ import Combine
 /// Manages head tracking using CMHeadphoneMotionManager
 /// Provides real-time head orientation data for spatial audio
 /// Requires: AirPods Pro/Max with iOS 14+
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class HeadTrackingManager: ObservableObject {
+@Observable
+final class HeadTrackingManager {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
     /// Whether head tracking is currently active
-    @Published var isTracking: Bool = false
+    var isTracking: Bool = false
 
     /// Whether head tracking is available (requires compatible AirPods)
-    @Published var isAvailable: Bool = false
+    var isAvailable: Bool = false
 
     /// Current head rotation (yaw, pitch, roll) in radians
-    @Published var headRotation: HeadRotation = HeadRotation()
+    var headRotation: HeadRotation = HeadRotation()
 
     /// Normalized head position (-1.0 to 1.0 for UI display)
-    @Published var normalizedPosition: NormalizedPosition = NormalizedPosition()
+    var normalizedPosition: NormalizedPosition = NormalizedPosition()
 
 
     // MARK: - Private Properties
@@ -73,12 +75,14 @@ class HeadTrackingManager: ObservableObject {
     private func checkAvailability() {
         isAvailable = motionManager.isDeviceMotionAvailable
 
+        #if DEBUG
         if isAvailable {
-            print("✅ Head tracking available")
+            debugLog("✅ Head tracking available")
         } else {
-            print("⚠️  Head tracking not available")
-            print("   Requires: AirPods Pro/Max with iOS 14+")
+            debugLog("⚠️  Head tracking not available")
+            debugLog("   Requires: AirPods Pro/Max with iOS 14+")
         }
+        #endif
     }
 
 
@@ -87,12 +91,16 @@ class HeadTrackingManager: ObservableObject {
     /// Start head tracking
     func startTracking() {
         guard isAvailable else {
-            print("❌ Cannot start head tracking: Not available")
+            #if DEBUG
+            debugLog("❌ Cannot start head tracking: Not available")
+            #endif
             return
         }
 
         guard !isTracking else {
-            print("⚠️  Head tracking already active")
+            #if DEBUG
+            debugLog("⚠️  Head tracking already active")
+            #endif
             return
         }
 
@@ -104,7 +112,9 @@ class HeadTrackingManager: ObservableObject {
             guard let self = self else { return }
 
             if let error = error {
-                print("❌ Head tracking error: \(error.localizedDescription)")
+                #if DEBUG
+                debugLog("❌ Head tracking error: \(error.localizedDescription)")
+                #endif
                 self.stopTracking()
                 return
             }
@@ -116,7 +126,9 @@ class HeadTrackingManager: ObservableObject {
         }
 
         isTracking = true
-        print("🎧 Head tracking started (\(updateFrequency) Hz)")
+        #if DEBUG
+        debugLog("🎧 Head tracking started (\(updateFrequency) Hz)")
+        #endif
     }
 
     /// Stop head tracking
@@ -130,7 +142,9 @@ class HeadTrackingManager: ObservableObject {
         headRotation = HeadRotation()
         normalizedPosition = NormalizedPosition()
 
-        print("🎧 Head tracking stopped")
+        #if DEBUG
+        debugLog("🎧 Head tracking stopped")
+        #endif
     }
 
 
@@ -157,7 +171,7 @@ class HeadTrackingManager: ObservableObject {
         #if DEBUG
         if Int(Date().timeIntervalSince1970 * 2) % 2 == 0 {  // Every 0.5 seconds
             let degrees = headRotation.degrees
-            print("🎧 Head: Y:\(Int(degrees.yaw))° P:\(Int(degrees.pitch))° R:\(Int(degrees.roll))°")
+            debugLog("🎧 Head: Y:\(Int(degrees.yaw))° P:\(Int(degrees.pitch))° R:\(Int(degrees.roll))°")
         }
         #endif
     }
@@ -201,7 +215,9 @@ class HeadTrackingManager: ObservableObject {
             guard let self = self else { return }
 
             if let error = error {
-                print("❌ Head tracking error: \(error.localizedDescription)")
+                #if DEBUG
+                debugLog("❌ Head tracking error: \(error.localizedDescription)")
+                #endif
                 return
             }
 
@@ -209,7 +225,9 @@ class HeadTrackingManager: ObservableObject {
             self.updateHeadRotation(from: motion)
         }
 
-        print("🔄 Head tracking orientation reset")
+        #if DEBUG
+        debugLog("🔄 Head tracking orientation reset")
+        #endif
     }
 
     /// Get human-readable status
@@ -296,3 +314,8 @@ extension HeadTrackingManager {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension HeadTrackingManager: ObservableObject { }

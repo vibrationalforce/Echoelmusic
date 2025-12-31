@@ -20,15 +20,17 @@ import Combine
 /// - Dialogue enhancement
 /// - Music stems for mixing
 /// - Broadcast loudness standards (EBU R128, ATSC A/85)
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class ProfessionalSoundDesignStudio: ObservableObject {
+@Observable
+final class ProfessionalSoundDesignStudio {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var currentProject: SoundDesignProject?
-    @Published var activeLayers: [SoundLayer] = []
-    @Published var exportFormats: [ExportFormat] = []
-    @Published var loudnessStandard: LoudnessStandard = .ebu_r128
+    var currentProject: SoundDesignProject?
+    var activeLayers: [SoundLayer] = []
+    var exportFormats: [ExportFormat] = []
+    var loudnessStandard: LoudnessStandard = .ebu_r128
 
     // MARK: - Sound Design Project
 
@@ -442,8 +444,10 @@ class ProfessionalSoundDesignStudio: ObservableObject {
 
     init() {
         setupDefaultExportFormats()
-        print("✅ Professional Sound Design Studio: Initialized")
-        print("🎬 Ready for film, TV, content creation")
+        #if DEBUG
+        debugLog("✅", "Professional Sound Design Studio: Initialized")
+        debugLog("🎬", "Ready for film, TV, content creation")
+        #endif
     }
 
     private func setupDefaultExportFormats() {
@@ -503,7 +507,9 @@ class ProfessionalSoundDesignStudio: ObservableObject {
         )
 
         currentProject = project
-        print("🎬 Created project: \(name) (\(type.rawValue))")
+        #if DEBUG
+        debugLog("🎬", "Created project: \(name) (\(type.rawValue))")
+        #endif
 
         return project
     }
@@ -517,10 +523,9 @@ class ProfessionalSoundDesignStudio: ObservableObject {
         let gainDB = targetLoudness - currentLoudness
         let gain = pow(10.0, gainDB / 20.0)
 
-        print("🔊 Normalizing loudness:")
-        print("   Current: \(String(format: "%.1f", currentLoudness)) LUFS")
-        print("   Target: \(String(format: "%.1f", targetLoudness)) LUFS")
-        print("   Gain: \(String(format: "%.1f", gainDB)) dB")
+        #if DEBUG
+        debugLog("🔊", "Normalizing loudness: Current=\(String(format: "%.1f", currentLoudness)) LUFS, Target=\(String(format: "%.1f", targetLoudness)) LUFS, Gain=\(String(format: "%.1f", gainDB)) dB")
+        #endif
 
         return audio.map { $0 * gain }
     }
@@ -535,14 +540,18 @@ class ProfessionalSoundDesignStudio: ObservableObject {
     // MARK: - Generate Foley
 
     func generateFoley(_ type: FoleyGenerator.FoleyType, duration: Float, intensity: Float = 1.0) -> [Float] {
-        print("🎤 Generating foley: \(type.rawValue)")
+        #if DEBUG
+        debugLog("🎤", "Generating foley: \(type.rawValue)")
+        #endif
         return FoleyGenerator.synthesize(type, duration: duration, intensity: intensity, sampleRate: 48000)
     }
 
     // MARK: - Generate Ambience
 
     func generateAmbience(_ type: AmbienceDesigner.AmbienceType, duration: Float, density: Float = 0.5) -> AmbienceDesigner.AmbienceLayers {
-        print("🌊 Generating ambience: \(type.rawValue)")
+        #if DEBUG
+        debugLog("🌊", "Generating ambience: \(type.rawValue)")
+        #endif
         return AmbienceDesigner.generate(type, duration: duration, density: density, sampleRate: 48000)
     }
 
@@ -587,3 +596,7 @@ class ProfessionalSoundDesignStudio: ObservableObject {
         """
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension ProfessionalSoundDesignStudio: ObservableObject { }

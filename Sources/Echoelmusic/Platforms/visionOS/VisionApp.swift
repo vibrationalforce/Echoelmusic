@@ -216,7 +216,9 @@ class VisionApp {
     // MARK: - Scene Management
 
     func loadScene(type: ImmersiveScene.SceneType) async throws {
-        print("👁️ Loading scene: \(type.rawValue)")
+        #if DEBUG
+        debugLog("👁️ Loading scene: \(type.rawValue)")
+        #endif
 
         // Create scene
         var scene = ImmersiveScene(type: type)
@@ -235,7 +237,9 @@ class VisionApp {
     }
 
     func unloadScene() async {
-        print("👁️ Unloading scene")
+        #if DEBUG
+        debugLog("👁️ Unloading scene")
+        #endif
 
         await realityKitEngine.stopRendering()
         await spatialAudioEngine.stopAudio()
@@ -246,7 +250,9 @@ class VisionApp {
     // MARK: - Immersion Control
 
     func setImmersionLevel(_ level: ImmersionLevel) async {
-        print("👁️ Setting immersion level: \(level.rawValue)")
+        #if DEBUG
+        debugLog("👁️ Setting immersion level: \(level.rawValue)")
+        #endif
         immersionLevel = level
 
         await immersionController.transitionTo(level)
@@ -295,7 +301,9 @@ class VisionApp {
     private func handleHandTrackingUpdate(_ data: HandTrackingData) {
         // Erkennung von Meditations-Geste
         if data.isMeditationGesture {
-            print("🙏 Meditation gesture detected")
+            #if DEBUG
+            debugLog("🙏 Meditation gesture detected")
+            #endif
             // Starte automatisch Meditations-Session
             Task {
                 try? await loadScene(type: .meditation)
@@ -313,7 +321,9 @@ class VisionApp {
     }
 
     private func handleGesture(_ gesture: HandTrackingData.HandPose.Gesture, hand: HandSide) {
-        print("👋 Gesture: \(gesture) (\(hand))")
+        #if DEBUG
+        debugLog("👋 Gesture: \(gesture) (\(hand))")
+        #endif
 
         switch gesture {
         case .pinch:
@@ -347,7 +357,9 @@ class RealityKitEngine {
     private var intensity: Float = 1.0
 
     func createEntities(for sceneType: VisionApp.ImmersiveScene.SceneType) async -> [Entity] {
-        print("🎨 Creating 3D entities for: \(sceneType.rawValue)")
+        #if DEBUG
+        debugLog("🎨 Creating 3D entities for: \(sceneType.rawValue)")
+        #endif
 
         var entities: [Entity] = []
 
@@ -398,12 +410,16 @@ class RealityKitEngine {
     }
 
     func startRendering(scene: VisionApp.ImmersiveScene) async {
-        print("🎨 RealityKit rendering started")
+        #if DEBUG
+        debugLog("🎨 RealityKit rendering started")
+        #endif
         isRendering = true
     }
 
     func stopRendering() async {
-        print("🎨 RealityKit rendering stopped")
+        #if DEBUG
+        debugLog("🎨 RealityKit rendering stopped")
+        #endif
         isRendering = false
     }
 
@@ -429,7 +445,9 @@ class SpatialAudioEngine {
     private var isPlaying: Bool = false
 
     func createAudioSources(for sceneType: VisionApp.ImmersiveScene.SceneType) async -> [VisionApp.ImmersiveScene.SpatialAudioSource] {
-        print("🔊 Creating spatial audio sources for: \(sceneType.rawValue)")
+        #if DEBUG
+        debugLog("🔊 Creating spatial audio sources for: \(sceneType.rawValue)")
+        #endif
 
         var sources: [VisionApp.ImmersiveScene.SpatialAudioSource] = []
 
@@ -461,12 +479,16 @@ class SpatialAudioEngine {
     }
 
     func startAudio(sources: [VisionApp.ImmersiveScene.SpatialAudioSource]) async {
-        print("🔊 Spatial Audio started with \(sources.count) sources")
+        #if DEBUG
+        debugLog("🔊 Spatial Audio started with \(sources.count) sources")
+        #endif
         isPlaying = true
     }
 
     func stopAudio() async {
-        print("🔊 Spatial Audio stopped")
+        #if DEBUG
+        debugLog("🔊 Spatial Audio stopped")
+        #endif
         isPlaying = false
     }
 
@@ -486,16 +508,22 @@ class EyeTracker {
     let dataPublisher = PassthroughSubject<VisionApp.EyeTrackingData, Never>()
 
     func requestAuthorization() async {
-        print("👁️ Requesting eye tracking authorization")
+        #if DEBUG
+        debugLog("👁️ Requesting eye tracking authorization")
+        #endif
     }
 
     func startTracking() {
-        print("👁️ Eye tracking started")
+        #if DEBUG
+        debugLog("👁️ Eye tracking started")
+        #endif
         // Start sending updates via dataPublisher
     }
 
     func stopTracking() {
-        print("👁️ Eye tracking stopped")
+        #if DEBUG
+        debugLog("👁️ Eye tracking stopped")
+        #endif
     }
 }
 
@@ -507,16 +535,22 @@ class HandTracker {
     let dataPublisher = PassthroughSubject<VisionApp.HandTrackingData, Never>()
 
     func requestAuthorization() async {
-        print("👋 Requesting hand tracking authorization")
+        #if DEBUG
+        debugLog("👋 Requesting hand tracking authorization")
+        #endif
     }
 
     func startTracking() {
-        print("👋 Hand tracking started")
+        #if DEBUG
+        debugLog("👋 Hand tracking started")
+        #endif
         // Start sending updates via dataPublisher
     }
 
     func stopTracking() {
-        print("👋 Hand tracking stopped")
+        #if DEBUG
+        debugLog("👋 Hand tracking stopped")
+        #endif
     }
 }
 
@@ -526,7 +560,9 @@ class HandTracker {
 class ImmersionController {
 
     func transitionTo(_ level: VisionApp.ImmersionLevel) async {
-        print("🌐 Transitioning to immersion level: \(level.rawValue)")
+        #if DEBUG
+        debugLog("🌐 Transitioning to immersion level: \(level.rawValue)")
+        #endif
 
         switch level {
         case .windowed:

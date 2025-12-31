@@ -197,20 +197,22 @@ private struct TR808Voice {
 // MARK: - TR808 Bass Synthesizer
 
 /// Professional 808 Bass Synthesizer with Pitch Glide
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-public final class TR808BassSynth: ObservableObject {
+@Observable
+public final class TR808BassSynth {
 
     // MARK: - Singleton
 
     public static let shared = TR808BassSynth()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published public var config = TR808BassConfig.classic808
-    @Published public var isPlaying: Bool = false
-    @Published public var activeVoiceCount: Int = 0
-    @Published public var currentNote: Int? = nil
-    @Published public var meterLevel: Float = 0.0
+    public var config = TR808BassConfig.classic808
+    public var isPlaying: Bool = false
+    public var activeVoiceCount: Int = 0
+    public var currentNote: Int? = nil
+    public var meterLevel: Float = 0.0
 
     // MARK: - Audio Engine
 
@@ -964,3 +966,8 @@ struct TR808BassSynthView_Previews: PreviewProvider {
     }
 }
 #endif
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows TR808BassSynth to work with older SwiftUI code expecting ObservableObject
+extension TR808BassSynth: ObservableObject { }

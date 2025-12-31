@@ -1,4 +1,5 @@
 #include "UnderwaterEffect.h"
+#include "../Core/DSPOptimizations.h"
 
 UnderwaterEffect::UnderwaterEffect()
 {
@@ -42,6 +43,9 @@ void UnderwaterEffect::prepare(double sampleRate, int maximumBlockSize)
     bubbleGenL.setSampleRate(static_cast<float>(sampleRate));
     bubbleGenR.setSampleRate(static_cast<float>(sampleRate));
 
+    // Pre-allocate dry buffer (avoids per-frame allocation)
+    dryBuffer.setSize(2, maximumBlockSize, false, false, true);
+
     reset();
 }
 
@@ -66,8 +70,9 @@ void UnderwaterEffect::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0)
         return;
 
-    // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
+    // Store dry signal using pre-allocated buffer (NO ALLOCATION)
+    if (dryBuffer.getNumChannels() < numChannels || dryBuffer.getNumSamples() < numSamples)
+        dryBuffer.setSize(numChannels, numSamples, false, false, true);
     for (int ch = 0; ch < numChannels; ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
@@ -95,8 +100,9 @@ void UnderwaterEffect::process(juce::AudioBuffer<float>& buffer)
             // 1. Lowpass filtering (water absorption)
             float filtered = filter.process(input);
 
-            // 2. Pitch wobble (Doppler-like effect)
-            float lfoValue = std::sin(2.0f * juce::MathConstants<float>::pi * lfoPhase);
+            // 2. Pitch wobble (Doppler-like effect) - using fast sin
+            const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+            float lfoValue = trigTables.fastSin(lfoPhase);
             float wobbleAmount = currentWobble * 0.02f;  // ±2% max pitch shift
             float delayTime = (1.0f + lfoValue * wobbleAmount) * 10.0f;  // 10ms base delay
 

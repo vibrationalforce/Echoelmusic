@@ -38,10 +38,10 @@ public:
 
     struct FrequencyBand
     {
-        float frequency;
-        float magnitude;          // Current level
-        float referenceMagnitude; // Reference track level
-        float idealMagnitude;     // Genre-ideal level
+        float frequency = 1000.0f;
+        float magnitude = 0.0f;           // Current level
+        float referenceMagnitude = 0.0f;  // Reference track level
+        float idealMagnitude = 0.0f;      // Genre-ideal level
 
         enum class Status
         {
@@ -49,7 +49,7 @@ public:
             Warning,     // Yellow - slight issue
             Problem      // Red - needs attention
         };
-        Status status;
+        Status status = Status::Good;
 
         std::string problemDescription;  // "Too much energy", "Masking detected", etc.
         std::string suggestion;          // "Reduce by 2-3dB", "Apply high-pass at 80Hz", etc.
@@ -72,6 +72,7 @@ public:
 
     enum class ProblemType
     {
+        None,               // No problem detected
         TooMuchLowEnd,      // <100Hz overload
         MuddyMidrange,      // 200-500Hz buildup
         HarshMidrange,      // 2-5kHz too aggressive
@@ -84,12 +85,12 @@ public:
 
     struct Problem
     {
-        ProblemType type;
-        float frequencyHz;
-        float severity;        // 0.0-1.0
+        ProblemType type = ProblemType::None;
+        float frequencyHz = 0.0f;
+        float severity = 0.0f;    // 0.0-1.0
         std::string description;
         std::string solution;
-        juce::Colour displayColor;
+        juce::Colour displayColor { 0xff888888 };
     };
 
     std::vector<Problem> detectProblems() const;
@@ -99,10 +100,10 @@ public:
 
     struct StereoInfo
     {
-        float width;              // 0.0-1.0 (mono to full stereo)
-        float correlation;        // -1.0 to 1.0
-        float leftRightBalance;   // -1.0 (left) to 1.0 (right)
-        bool monoCompatible;
+        float width = 0.5f;            // 0.0-1.0 (mono to full stereo)
+        float correlation = 1.0f;      // -1.0 to 1.0
+        float leftRightBalance = 0.0f; // -1.0 (left) to 1.0 (right)
+        bool monoCompatible = true;
         std::vector<float> stereoFieldPerBand;  // Stereo width per frequency
     };
 

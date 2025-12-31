@@ -7,26 +7,28 @@ import Combine
 /// Stream Engine - Native iOS/macOS OBS Replacement
 /// Multi-platform simultaneous streaming to Twitch, YouTube, Facebook, Custom RTMP
 /// Hardware encoding, bio-reactive scenes, real-time analytics
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class StreamEngine: ObservableObject {
+@Observable
+final class StreamEngine {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isStreaming: Bool = false
-    @Published var activeStreams: [StreamDestination: StreamStatus] = [:]
-    @Published var currentScene: Scene?
-    @Published var availableScenes: [Scene] = []
-    @Published var bitrate: Int = 6000 // kbps
-    @Published var resolution: Resolution = .hd1920x1080
-    @Published var frameRate: Int = 60
+    var isStreaming: Bool = false
+    var activeStreams: [StreamDestination: StreamStatus] = [:]
+    var currentScene: Scene?
+    var availableScenes: [Scene] = []
+    var bitrate: Int = 6000 // kbps
+    var resolution: Resolution = .hd1920x1080
+    var frameRate: Int = 60
 
     // MARK: - Performance Metrics
 
-    @Published var actualFrameRate: Double = 0.0
-    @Published var droppedFrames: Int = 0
-    @Published var bandwidth: Double = 0.0 // MB/s
-    @Published var cpuUsage: Double = 0.0
-    @Published var gpuUsage: Double = 0.0
+    var actualFrameRate: Double = 0.0
+    var droppedFrames: Int = 0
+    var bandwidth: Double = 0.0 // MB/s
+    var cpuUsage: Double = 0.0
+    var gpuUsage: Double = 0.0
 
     // MARK: - Components
 
@@ -122,7 +124,9 @@ class StreamEngine: ObservableObject {
         self.device = device
 
         guard let queue = device.makeCommandQueue() else {
-            print("❌ StreamEngine: Failed to create command queue")
+            #if DEBUG
+            debugLog("❌", "StreamEngine: Failed to create command queue")
+            #endif
             return nil
         }
         self.commandQueue = queue
@@ -143,7 +147,9 @@ class StreamEngine: ObservableObject {
         self.availableScenes = sceneManager.loadScenes()
         self.currentScene = availableScenes.first
 
-        print("✅ StreamEngine: Initialized")
+        #if DEBUG
+        debugLog("✅", "StreamEngine: Initialized")
+        #endif
     }
 
     deinit {
@@ -186,7 +192,9 @@ class StreamEngine: ObservableObject {
                 error: nil
             )
 
-            print("🔗 StreamEngine: Connected to \(destination.rawValue)")
+            #if DEBUG
+            debugLog("🔗", "StreamEngine: Connected to \(destination.rawValue)")
+            #endif
         }
 
         // Start encoding
@@ -207,7 +215,9 @@ class StreamEngine: ObservableObject {
 
         isStreaming = true
 
-        print("▶️ StreamEngine: Started streaming to \(destinations.count) destination(s)")
+        #if DEBUG
+        debugLog("▶️", "StreamEngine: Started streaming to \(destinations.count) destination(s)")
+        #endif
     }
 
     // MARK: - Stop Streaming
@@ -224,7 +234,9 @@ class StreamEngine: ObservableObject {
         // Disconnect RTMP clients
         for (destination, client) in rtmpClients {
             client.disconnect()
-            print("🔌 StreamEngine: Disconnected from \(destination.rawValue)")
+            #if DEBUG
+            debugLog("🔌", "StreamEngine: Disconnected from \(destination.rawValue)")
+            #endif
         }
         rtmpClients.removeAll()
         activeStreams.removeAll()
@@ -239,7 +251,9 @@ class StreamEngine: ObservableObject {
         droppedFrames = 0
         actualFrameRate = 0.0
 
-        print("⏹️ StreamEngine: Stopped streaming")
+        #if DEBUG
+        debugLog("⏹️", "StreamEngine: Stopped streaming")
+        #endif
     }
 
     // MARK: - Capture Loop
@@ -294,7 +308,9 @@ class StreamEngine: ObservableObject {
                         self.activeStreams[destination] = status
                     }
                 } catch {
-                    print("❌ StreamEngine: Failed to send frame to \(destination.rawValue) - \(error)")
+                    #if DEBUG
+                    debugLog("❌", "StreamEngine: Failed to send frame to \(destination.rawValue) - \(error)")
+                    #endif
 
                     // Update status
                     if var status = self.activeStreams[destination] {
@@ -349,7 +365,9 @@ class StreamEngine: ObservableObject {
         // Record in analytics
         analytics.recordSceneSwitch(to: scene)
 
-        print("🎬 StreamEngine: Switched to scene '\(scene.name)' with \(transition.rawValue) transition")
+        #if DEBUG
+        debugLog("🎬", "StreamEngine: Switched to scene '\(scene.name)' with \(transition.rawValue) transition")
+        #endif
     }
 
     private func applyTransition(from: Scene?, to: Scene, transition: SceneTransition) async {
@@ -385,7 +403,9 @@ class StreamEngine: ObservableObject {
         sceneManager.bioReactiveEnabled = enabled
         sceneManager.bioSceneRules = rules
 
-        print("🧠 StreamEngine: Bio-reactive scene switching \(enabled ? "enabled" : "disabled") with \(rules.count) rules")
+        #if DEBUG
+        debugLog("🧠", "StreamEngine: Bio-reactive scene switching \(enabled ? "enabled" : "disabled") with \(rules.count) rules")
+        #endif
     }
 
     func updateBioParameters(coherence: Float, heartRate: Float, hrv: Float) {
@@ -408,7 +428,9 @@ class StreamEngine: ObservableObject {
 
     func enableAdaptiveBitrate(_ enabled: Bool) {
         encodingManager.adaptiveBitrateEnabled = enabled
-        print("📊 StreamEngine: Adaptive bitrate \(enabled ? "enabled" : "disabled")")
+        #if DEBUG
+        debugLog("📊", "StreamEngine: Adaptive bitrate \(enabled ? "enabled" : "disabled")")
+        #endif
     }
 
     func updateNetworkConditions(packetLoss: Double, rtt: TimeInterval) {
@@ -419,17 +441,26 @@ class StreamEngine: ObservableObject {
                 let newBitrate = Int(Double(bitrate) * 0.8)
                 bitrate = max(1000, newBitrate)
                 encodingManager.updateBitrate(bitrate)
-                print("⚠️ StreamEngine: Reduced bitrate to \(bitrate) kbps due to packet loss")
+                #if DEBUG
+                debugLog("⚠️", "StreamEngine: Reduced bitrate to \(bitrate) kbps due to packet loss")
+                #endif
             } else if packetLoss < 0.005 && bitrate < resolution.recommendedBitrate {
                 // Good network - increase bitrate by 10%
                 let newBitrate = Int(Double(bitrate) * 1.1)
                 bitrate = min(resolution.recommendedBitrate, newBitrate)
                 encodingManager.updateBitrate(bitrate)
-                print("✅ StreamEngine: Increased bitrate to \(bitrate) kbps")
+                #if DEBUG
+                debugLog("✅", "StreamEngine: Increased bitrate to \(bitrate) kbps")
+                #endif
             }
         }
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows StreamEngine to work with older SwiftUI code expecting ObservableObject
+extension StreamEngine: ObservableObject { }
 
 // MARK: - Scene Transition
 
@@ -494,6 +525,11 @@ class EncodingManager {
     private var compressionSession: VTCompressionSession?
     var adaptiveBitrateEnabled: Bool = true
 
+    // Frame timing
+    private var frameCount: Int64 = 0
+    private var encodedData: Data?
+    private let encodingQueue = DispatchQueue(label: "com.echoelmusic.encoding", qos: .userInteractive)
+
     init(device: MTLDevice) {
         self.device = device
     }
@@ -528,30 +564,149 @@ class EncodingManager {
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AverageBitRate, value: bitrate * 1000 as CFNumber)
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ExpectedFrameRate, value: frameRate as CFNumber)
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_MaxKeyFrameInterval, value: frameRate * 2 as CFNumber)
+        VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AllowFrameReordering, value: kCFBooleanFalse)
 
         VTCompressionSessionPrepareToEncodeFrames(session)
 
         self.compressionSession = session
+        self.frameCount = 0
 
-        print("✅ EncodingManager: Started encoding at \(resolution.rawValue) @ \(frameRate) FPS, \(bitrate) kbps")
+        #if DEBUG
+        debugLog("✅", "EncodingManager: Started encoding at \(resolution.rawValue) @ \(frameRate) FPS, \(bitrate) kbps")
+        #endif
     }
 
     func stopEncoding() {
         if let session = compressionSession {
+            VTCompressionSessionCompleteFrames(session, untilPresentationTimeStamp: .invalid)
             VTCompressionSessionInvalidate(session)
             compressionSession = nil
         }
+        frameCount = 0
     }
 
     func encodeFrame(texture: MTLTexture) -> Data? {
-        // TODO: Implement actual frame encoding using VTCompressionSession
-        // This is a placeholder
-        return Data()
+        guard let session = compressionSession else { return nil }
+
+        // Convert Metal texture to CVPixelBuffer
+        guard let pixelBuffer = createPixelBuffer(from: texture) else {
+            #if DEBUG
+            debugLog("⚠️", "EncodingManager: Failed to create pixel buffer")
+            #endif
+            return nil
+        }
+
+        // Create timing info
+        let pts = CMTimeMake(value: frameCount, timescale: 30)
+        let duration = CMTimeMake(value: 1, timescale: 30)
+        frameCount += 1
+
+        var encodedDataResult: Data?
+        let semaphore = DispatchSemaphore(value: 0)
+
+        // Encode frame with callback
+        let encodeStatus = VTCompressionSessionEncodeFrame(
+            session,
+            imageBuffer: pixelBuffer,
+            presentationTimeStamp: pts,
+            duration: duration,
+            frameProperties: nil,
+            infoFlagsOut: nil
+        ) { [weak self] status, infoFlags, sampleBuffer in
+            defer { semaphore.signal() }
+
+            guard status == noErr, let sampleBuffer = sampleBuffer else {
+                #if DEBUG
+                debugLog("⚠️", "EncodingManager: Encode failed with status \(status)")
+                #endif
+                return
+            }
+
+            // Extract encoded data from sample buffer
+            encodedDataResult = self?.extractEncodedData(from: sampleBuffer)
+        }
+
+        guard encodeStatus == noErr else {
+            #if DEBUG
+            debugLog("⚠️", "EncodingManager: VTCompressionSessionEncodeFrame failed")
+            #endif
+            return nil
+        }
+
+        // Wait for encoding to complete (with timeout)
+        _ = semaphore.wait(timeout: .now() + 0.1)
+
+        return encodedDataResult
+    }
+
+    private func createPixelBuffer(from texture: MTLTexture) -> CVPixelBuffer? {
+        let width = texture.width
+        let height = texture.height
+
+        var pixelBuffer: CVPixelBuffer?
+        let attrs: [CFString: Any] = [
+            kCVPixelBufferMetalCompatibilityKey: true,
+            kCVPixelBufferIOSurfacePropertiesKey: [:] as CFDictionary
+        ]
+
+        let status = CVPixelBufferCreate(
+            kCFAllocatorDefault,
+            width,
+            height,
+            kCVPixelFormatType_32BGRA,
+            attrs as CFDictionary,
+            &pixelBuffer
+        )
+
+        guard status == kCVReturnSuccess, let buffer = pixelBuffer else {
+            return nil
+        }
+
+        CVPixelBufferLockBaseAddress(buffer, [])
+        defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
+
+        guard let baseAddress = CVPixelBufferGetBaseAddress(buffer) else {
+            return nil
+        }
+
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(buffer)
+        let region = MTLRegionMake2D(0, 0, width, height)
+
+        texture.getBytes(baseAddress, bytesPerRow: bytesPerRow, from: region, mipmapLevel: 0)
+
+        return buffer
+    }
+
+    private func extractEncodedData(from sampleBuffer: CMSampleBuffer) -> Data? {
+        guard let dataBuffer = CMSampleBufferGetDataBuffer(sampleBuffer) else {
+            return nil
+        }
+
+        var length: Int = 0
+        var dataPointer: UnsafeMutablePointer<Int8>?
+
+        let status = CMBlockBufferGetDataPointer(
+            dataBuffer,
+            atOffset: 0,
+            lengthAtOffsetOut: nil,
+            totalLengthOut: &length,
+            dataPointerOut: &dataPointer
+        )
+
+        guard status == kCMBlockBufferNoErr, let pointer = dataPointer else {
+            return nil
+        }
+
+        return Data(bytes: pointer, count: length)
     }
 
     func updateBitrate(_ bitrate: Int) {
         guard let session = compressionSession else { return }
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AverageBitRate, value: bitrate * 1000 as CFNumber)
+
+        #if DEBUG
+        debugLog("📊", "EncodingManager: Bitrate updated to \(bitrate) kbps")
+        #endif
     }
 }
 

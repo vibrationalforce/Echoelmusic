@@ -1,4 +1,5 @@
 #include "PassiveEQ.h"
+#include "../Core/DSPOptimizations.h"
 
 PassiveEQ::PassiveEQ() {}
 PassiveEQ::~PassiveEQ() {}
@@ -164,19 +165,19 @@ void PassiveEQ::updateFilters()
     {
         // Low boost (shelving)
         *eq.lowBoostFilter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeLowShelf(
-            currentSampleRate, lowBoostFreq, lowQ, juce::Decibels::decibelsToGain(lowBoost));
+            currentSampleRate, lowBoostFreq, lowQ, Echoel::DSP::FastMath::dbToGain(lowBoost));
 
         // Low cut (shelving - inverted)
         *eq.lowCutFilter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeLowShelf(
-            currentSampleRate, lowCutFreq, lowQ, juce::Decibels::decibelsToGain(-lowAttenuation));
+            currentSampleRate, lowCutFreq, lowQ, Echoel::DSP::FastMath::dbToGain(-lowAttenuation));
 
         // High boost (shelving)
         *eq.highBoostFilter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeHighShelf(
-            currentSampleRate, highBoostFreq, highQ, juce::Decibels::decibelsToGain(highBoost));
+            currentSampleRate, highBoostFreq, highQ, Echoel::DSP::FastMath::dbToGain(highBoost));
 
         // High cut (shelving)
         *eq.highCutFilter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeHighShelf(
-            currentSampleRate, 10000.0f, 0.7f, juce::Decibels::decibelsToGain(-highAttenuation));
+            currentSampleRate, 10000.0f, 0.7f, Echoel::DSP::FastMath::dbToGain(-highAttenuation));
     }
 }
 
@@ -188,9 +189,9 @@ float PassiveEQ::processTubeStage(float sample)
     float drive = 1.0f + tubeWarmth * 1.5f;
     float x = sample * drive;
 
-    // Tube saturation (2nd harmonic emphasis)
+    // Tube saturation (2nd harmonic emphasis) - using fast tanh
     float saturated = x + 0.15f * tubeWarmth * x * x;
-    saturated = std::tanh(saturated);
+    saturated = Echoel::DSP::FastMath::fastTanh(saturated);
 
     return saturated / drive;
 }

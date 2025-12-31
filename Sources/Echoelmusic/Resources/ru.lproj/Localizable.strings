@@ -1,0 +1,122 @@
+/* Echoelmusic Localizable Strings - Russian (Русский) */
+
+/* App */
+"app.name" = "Echoelmusic";
+"app.tagline" = "дыхание → звук";
+
+/* Onboarding */
+"onboarding.welcome" = "Добро пожаловать в Echoelmusic";
+"onboarding.subtitle" = "Преобразуйте биообратную связь в музыку";
+"onboarding.getStarted" = "Начать";
+"onboarding.skip" = "Пропустить";
+"onboarding.next" = "Далее";
+"onboarding.step1.title" = "Подключите своё тело";
+"onboarding.step1.description" = "Используйте Apple Watch, Polar H10 или дыхание для создания музыки";
+"onboarding.step2.title" = "Почувствуйте поток";
+"onboarding.step2.description" = "Ваш пульс и ВСР формируют звук в реальном времени";
+"onboarding.step3.title" = "Делитесь и объединяйтесь";
+"onboarding.step3.description" = "Транслируйте сессии или играйте с музыкантами со всего мира";
+
+/* Permissions */
+"permissions.title" = "Разрешения";
+"permissions.microphone.title" = "Доступ к микрофону";
+"permissions.microphone.description" = "Определение дыхания и голоса для создания музыки";
+"permissions.microphone.denied" = "Доступ к микрофону запрещён. Включите в Настройках.";
+"permissions.healthkit.title" = "Доступ к здоровью";
+"permissions.healthkit.description" = "Чтение пульса и ВСР с Apple Watch";
+"permissions.healthkit.denied" = "Доступ к здоровью запрещён. Включите демо-режим или предоставьте доступ в Настройках.";
+"permissions.bluetooth.title" = "Доступ к Bluetooth";
+"permissions.bluetooth.description" = "Подключение к Polar H10 или другим датчикам пульса";
+
+/* Session */
+"session.title" = "Сессия";
+"session.start" = "Начать сессию";
+"session.stop" = "Стоп";
+"session.pause" = "Пауза";
+"session.resume" = "Продолжить";
+"session.stats.duration" = "Длительность";
+"session.stats.heartRate" = "Пульс";
+"session.stats.hrv" = "ВСР";
+"session.stats.coherence" = "Когерентность";
+"session.stats.bpm" = "уд/мин";
+"session.stats.ms" = "мс";
+
+/* Settings */
+"settings.title" = "Настройки";
+"settings.audio.title" = "Аудио";
+"settings.audio.output" = "Устройство вывода";
+"settings.audio.latency" = "Задержка";
+"settings.audio.binauralBeats" = "Бинауральные ритмы";
+"settings.audio.spatialAudio" = "Пространственное аудио";
+"settings.sensor.title" = "Датчики";
+"settings.sensor.appleWatch" = "Apple Watch";
+"settings.sensor.polarH10" = "Polar H10";
+"settings.sensor.microphone" = "Микрофон (дыхание)";
+"settings.sensor.demoMode" = "Демо-режим";
+"settings.accessibility.title" = "Универсальный доступ";
+"settings.accessibility.audioHaptic" = "Аудио в тактильные";
+"settings.accessibility.signLanguage" = "Язык жестов";
+"settings.accessibility.eyeTracking" = "Отслеживание взгляда";
+"settings.accessibility.reduceMotion" = "Уменьшить движение";
+"settings.language.title" = "Язык";
+"settings.language.systemDefault" = "Системный по умолчанию";
+
+/* Streaming */
+"streaming.title" = "Прямая трансляция";
+"streaming.goLive" = "Начать эфир";
+"streaming.endStream" = "Завершить эфир";
+"streaming.viewers" = "Зрители";
+"streaming.quality" = "Качество";
+"streaming.platforms.youtube" = "YouTube";
+"streaming.platforms.twitch" = "Twitch";
+"streaming.platforms.facebook" = "Facebook";
+"streaming.platforms.tiktok" = "TikTok";
+"streaming.platforms.custom" = "Пользовательский RTMP";
+
+/* Collaboration */
+"collaboration.title" = "Джем-сессия";
+"collaboration.findSession" = "Найти сессию";
+"collaboration.createSession" = "Создать сессию";
+"collaboration.quickJoin" = "Быстрое подключение";
+"collaboration.leave" = "Выйти";
+"collaboration.participants" = "Участники";
+"collaboration.latency" = "Задержка";
+"collaboration.genres.rock" = "Рок";
+"collaboration.genres.jazz" = "Джаз";
+"collaboration.genres.electronic" = "Электроника";
+"collaboration.genres.classical" = "Классика";
+"collaboration.genres.world" = "Мировая музыка";
+"collaboration.genres.ambient" = "Эмбиент";
+
+/* Visualization */
+"visualization.title" = "Визуализация";
+"visualization.particles" = "Частицы";
+"visualization.cymatics" = "Киматика";
+"visualization.waveform" = "Волновая форма";
+"visualization.spectral" = "Спектр";
+"visualization.mandala" = "Мандала";
+
+/* Errors */
+"errors.generic" = "Что-то пошло не так";
+"errors.network" = "Ошибка сетевого подключения";
+"errors.audio" = "Ошибка аудиосистемы";
+"errors.healthkit" = "Не удалось получить данные о здоровье";
+"errors.bluetooth" = "Ошибка подключения Bluetooth";
+"errors.tryAgain" = "Повторить";
+"errors.dismiss" = "Закрыть";
+
+/* Actions */
+"actions.ok" = "ОК";
+"actions.cancel" = "Отмена";
+"actions.save" = "Сохранить";
+"actions.delete" = "Удалить";
+"actions.edit" = "Редактировать";
+"actions.share" = "Поделиться";
+"actions.done" = "Готово";
+"actions.back" = "Назад";
+"actions.close" = "Закрыть";
+"actions.settings" = "Настройки";
+
+/* Wellness */
+"wellness.disclaimer" = "Echoelmusic — продукт для здоровья, а не медицинское устройство. Оно не диагностирует, не лечит и не предотвращает заболевания. Для медицинской консультации обратитесь к врачу.";
+"wellness.notMedical" = "Не медицинское устройство";

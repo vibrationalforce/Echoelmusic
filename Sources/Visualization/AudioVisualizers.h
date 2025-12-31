@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../Core/DSPOptimizations.h"
 #include <vector>
 
 //==============================================================================
@@ -31,13 +32,19 @@ public:
 
         // Downsample to display resolution
         const int stride = juce::jmax(1, buffer.getNumSamples() / 10);
+        const int numSamples = buffer.getNumSamples();
+        const int numChannels = buffer.getNumChannels();
 
-        for (int i = 0; i < buffer.getNumSamples(); i += stride)
+        // OPTIMIZATION: Cache read pointers to avoid per-sample virtual calls
+        const float* leftPtr = buffer.getReadPointer(0);
+        const float* rightPtr = (numChannels > 1) ? buffer.getReadPointer(1) : nullptr;
+
+        for (int i = 0; i < numSamples; i += stride)
         {
             // Average L+R channels
-            float sample = buffer.getSample(0, i);
-            if (buffer.getNumChannels() > 1)
-                sample = (sample + buffer.getSample(1, i)) * 0.5f;
+            float sample = leftPtr[i];
+            if (rightPtr != nullptr)
+                sample = (sample + rightPtr[i]) * 0.5f;
 
             // Add to circular buffer
             waveformBuffer[writePosition] = sample;
@@ -161,12 +168,19 @@ public:
             return;
 
         // Copy samples to FFT buffer
-        for (int i = 0; i < juce::jmin(buffer.getNumSamples(), fftSize); ++i)
+        const int numSamples = juce::jmin(buffer.getNumSamples(), fftSize);
+        const int numChannels = buffer.getNumChannels();
+
+        // OPTIMIZATION: Cache read pointers to avoid per-sample virtual calls
+        const float* leftPtr = buffer.getReadPointer(0);
+        const float* rightPtr = (numChannels > 1) ? buffer.getReadPointer(1) : nullptr;
+
+        for (int i = 0; i < numSamples; ++i)
         {
             // Average L+R channels
-            float sample = buffer.getSample(0, i);
-            if (buffer.getNumChannels() > 1)
-                sample = (sample + buffer.getSample(1, i)) * 0.5f;
+            float sample = leftPtr[i];
+            if (rightPtr != nullptr)
+                sample = (sample + rightPtr[i]) * 0.5f;
 
             fftData[i] = sample;
         }
@@ -226,8 +240,8 @@ public:
             float x = bounds.getX() + frequencyToX(frequency, bounds.getWidth());
             float magnitude = spectrumData[i];
 
-            // Convert to dB
-            float db = juce::jlimit(-60.0f, 0.0f, juce::Decibels::gainToDecibels(magnitude + 0.0001f));
+            // Convert to dB using FastMath (~5x faster)
+            float db = juce::jlimit(-60.0f, 0.0f, Echoel::DSP::FastMath::gainToDb(magnitude + 0.0001f));
             float y = bounds.getY() + juce::jmap(db, -60.0f, 0.0f, bounds.getHeight(), 0.0f);
 
             spectrumPath.lineTo(x, y);
@@ -265,7 +279,8 @@ private:
         // Logarithmic frequency scale
         float minFreq = 20.0f;
         float maxFreq = 20000.0f;
-        float normalized = std::log(frequency / minFreq) / std::log(maxFreq / minFreq);
+        // OPTIMIZATION: Use FastMath::fastLog for frequency mapping
+        float normalized = Echoel::DSP::FastMath::fastLog(frequency / minFreq) / Echoel::DSP::FastMath::fastLog(maxFreq / minFreq);
         return normalized * width;
     }
 

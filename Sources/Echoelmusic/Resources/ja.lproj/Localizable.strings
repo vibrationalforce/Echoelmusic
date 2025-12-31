@@ -1,0 +1,52 @@
+/* Echoelmusic Localizable Strings - Japanese (日本語) */
+
+/* App */
+"app.name" = "Echoelmusic";
+"app.tagline" = "呼吸 → 音";
+
+/* Onboarding */
+"onboarding.welcome" = "Echoelmusicへようこそ";
+"onboarding.subtitle" = "バイオフィードバックを音楽に変える";
+"onboarding.getStarted" = "はじめる";
+"onboarding.skip" = "スキップ";
+"onboarding.next" = "次へ";
+"onboarding.step1.title" = "体をつなげる";
+"onboarding.step1.description" = "Apple Watch、Polar H10、または呼吸で音楽を作成";
+"onboarding.step2.title" = "フローを感じる";
+"onboarding.step2.description" = "心拍数とHRVがリアルタイムで音を形作る";
+"onboarding.step3.title" = "共有・接続";
+"onboarding.step3.description" = "セッションをストリーミングしたり、世界中のミュージシャンとジャム";
+
+/* Session */
+"session.title" = "セッション";
+"session.start" = "セッション開始";
+"session.stop" = "停止";
+"session.pause" = "一時停止";
+"session.resume" = "再開";
+"session.stats.duration" = "時間";
+"session.stats.heartRate" = "心拍数";
+"session.stats.hrv" = "HRV";
+"session.stats.coherence" = "コヒーレンス";
+"session.stats.bpm" = "BPM";
+"session.stats.ms" = "ms";
+
+/* Settings */
+"settings.title" = "設定";
+"settings.audio.title" = "オーディオ";
+"settings.sensor.title" = "センサー";
+"settings.accessibility.title" = "アクセシビリティ";
+"settings.language.title" = "言語";
+
+/* Actions */
+"actions.ok" = "OK";
+"actions.cancel" = "キャンセル";
+"actions.save" = "保存";
+"actions.delete" = "削除";
+"actions.done" = "完了";
+"actions.back" = "戻る";
+"actions.close" = "閉じる";
+"actions.settings" = "設定";
+
+/* Wellness */
+"wellness.disclaimer" = "Echoelmusicはウェルネス製品であり、医療機器ではありません。病気の診断、治療、予防は行いません。医療アドバイスについては医療提供者にご相談ください。";
+"wellness.notMedical" = "医療機器ではありません";

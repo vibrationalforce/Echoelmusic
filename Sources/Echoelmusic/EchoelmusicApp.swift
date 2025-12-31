@@ -21,6 +21,10 @@ struct EchoelmusicApp: App {
     /// UnifiedControlHub for multimodal input
     @StateObject private var unifiedControlHub: UnifiedControlHub
 
+    /// Integration Hub - Central coordinator for all platform systems
+    /// Using @State since IntegrationHub uses @Observable
+    @State private var integrationHub = IntegrationHub.shared
+
     init() {
         // Initialize AudioEngine with MicrophoneManager
         let micManager = MicrophoneManager()
@@ -50,11 +54,15 @@ struct EchoelmusicApp: App {
             _ = await MainActor.run { SocialMediaManager.shared }       // One-Click Multi-Platform Publishing
             // Note: StreamEngine requires Metal device - initialized lazily in StreamingView
 
-            await MainActor.run {
-                print("⚛️ Echoelmusic Core Systems Initialized (async)")
-                print("🎹 InstrumentOrchestrator: 54+ Instruments Ready")
-                print("🌍 WorldMusicBridge: 42 Music Styles Loaded")
-            }
+            // NEW: Initialize IntegrationHub (Accessibility, Localization, Streaming, Collaboration)
+            await IntegrationHub.shared.initializeAll()
+
+            #if DEBUG
+            debugLog("⚛️", "Echoelmusic Core Systems Initialized (async)")
+            debugLog("🎹", "InstrumentOrchestrator: 54+ Instruments Ready")
+            debugLog("🌍", "WorldMusicBridge: 42 Music Styles Loaded")
+            debugLog("🔌", "IntegrationHub: All systems connected")
+            #endif
         }
     }
 
@@ -66,6 +74,7 @@ struct EchoelmusicApp: App {
                 .environmentObject(healthKitManager)        // Makes health data available
                 .environmentObject(recordingEngine)         // Makes recording engine available
                 .environmentObject(unifiedControlHub)       // Makes unified control available
+                .environment(integrationHub)                // NEW: IntegrationHub (@Observable)
                 .preferredColorScheme(.dark)                // Force dark theme
                 .onAppear {
                     // Connect HealthKit to AudioEngine for bio-parameter mapping
@@ -74,30 +83,48 @@ struct EchoelmusicApp: App {
                     // Connect RecordingEngine to AudioEngine for audio routing
                     recordingEngine.connectAudioEngine(audioEngine)
 
+                    // NEW: Connect IntegrationHub to Audio & HealthKit
+                    integrationHub.connectToAudioEngine(audioEngine)
+                    integrationHub.connectToHealthKit(healthKitManager)
+
                     // Enable biometric monitoring through UnifiedControlHub
                     Task {
                         do {
                             try await unifiedControlHub.enableBiometricMonitoring()
-                            print("✅ Biometric monitoring enabled via UnifiedControlHub")
+                            #if DEBUG
+                            debugLog("✅", "Biometric monitoring enabled via UnifiedControlHub")
+                            #endif
                         } catch {
-                            print("⚠️ Biometric monitoring not available: \(error.localizedDescription)")
+                            #if DEBUG
+                            debugLog("⚠️", "Biometric monitoring not available: \(error.localizedDescription)")
+                            #endif
                         }
 
                         // Enable MIDI 2.0 + MPE
                         do {
                             try await unifiedControlHub.enableMIDI2()
-                            print("✅ MIDI 2.0 + MPE enabled via UnifiedControlHub")
+                            #if DEBUG
+                            debugLog("✅", "MIDI 2.0 + MPE enabled via UnifiedControlHub")
+                            #endif
                         } catch {
-                            print("⚠️ MIDI 2.0 not available: \(error.localizedDescription)")
+                            #if DEBUG
+                            debugLog("⚠️", "MIDI 2.0 not available: \(error.localizedDescription)")
+                            #endif
                         }
+
+                        // Load saved health sessions
+                        try? await LocalHealthStorage.shared.loadSessions()
                     }
 
                     // Start UnifiedControlHub
                     unifiedControlHub.start()
 
-                    print("🎵 Echoelmusic Started - All Systems Connected!")
-                    print("🎹 MIDI 2.0 + MPE + Spatial Audio Ready")
-                    print("🌊 Bio-Reactive Audio-Visual Platform Ready")
+                    #if DEBUG
+                    debugLog("🎵", "Echoelmusic Started - All Systems Connected!")
+                    debugLog("🎹", "MIDI 2.0 + MPE + Spatial Audio Ready")
+                    debugLog("🌊", "Bio-Reactive Audio-Visual Platform Ready")
+                    debugLog("🔌", "IntegrationHub: Accessibility + Localization + Streaming + Collaboration")
+                    #endif
                 }
         }
     }

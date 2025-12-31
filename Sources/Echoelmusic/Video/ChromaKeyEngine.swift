@@ -9,25 +9,27 @@ import SwiftUI
 /// Chroma Key Engine with 6-Pass Metal Pipeline for Real-Time Greenscreen/Bluescreen
 /// Supports iOS 15+ with optimized performance for 120 FPS @ 1080p on iPhone 16 Pro
 /// Features: Auto-Calibration, Multi-Color Key, Bio-Reactive Backgrounds
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class ChromaKeyEngine: ObservableObject {
+@Observable
+final class ChromaKeyEngine {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isActive: Bool = false
-    @Published var currentPreset: ChromaKeyPreset = .portrait
-    @Published var previewMode: PreviewMode = .normal
-    @Published var keyColor: KeyColor = .green
-    @Published var tolerance: Float = 0.3  // HSV distance tolerance (0-1)
-    @Published var edgeSoftness: Float = 0.5  // Edge feathering amount (0-1)
-    @Published var despillStrength: Float = 0.7  // Green/blue reflection removal (0-1)
-    @Published var lightWrapAmount: Float = 0.3  // Background color bleeding (0-1)
+    var isActive: Bool = false
+    var currentPreset: ChromaKeyPreset = .portrait
+    var previewMode: PreviewMode = .normal
+    var keyColor: KeyColor = .green
+    var tolerance: Float = 0.3  // HSV distance tolerance (0-1)
+    var edgeSoftness: Float = 0.5  // Edge feathering amount (0-1)
+    var despillStrength: Float = 0.7  // Green/blue reflection removal (0-1)
+    var lightWrapAmount: Float = 0.3  // Background color bleeding (0-1)
 
     // MARK: - Performance Metrics
 
-    @Published var currentFPS: Double = 0.0
-    @Published var processingTimeMs: Double = 0.0
-    @Published var isCalibrated: Bool = false
+    var currentFPS: Double = 0.0
+    var processingTimeMs: Double = 0.0
+    var isCalibrated: Bool = false
 
     // MARK: - Metal Components
 
@@ -125,21 +127,27 @@ class ChromaKeyEngine: ObservableObject {
     init?() {
         // Initialize Metal device
         guard let device = MTLCreateSystemDefaultDevice() else {
-            print("❌ ChromaKeyEngine: Metal not supported on this device")
+            #if DEBUG
+            debugLog("❌ ChromaKeyEngine: Metal not supported on this device")
+            #endif
             return nil
         }
         self.device = device
 
         // Create command queue
         guard let queue = device.makeCommandQueue() else {
-            print("❌ ChromaKeyEngine: Failed to create command queue")
+            #if DEBUG
+            debugLog("❌ ChromaKeyEngine: Failed to create command queue")
+            #endif
             return nil
         }
         self.commandQueue = queue
 
         // Load Metal library
         guard let library = device.makeDefaultLibrary() else {
-            print("❌ ChromaKeyEngine: Failed to load Metal library")
+            #if DEBUG
+            debugLog("❌ ChromaKeyEngine: Failed to load Metal library")
+            #endif
             return nil
         }
         self.library = library
@@ -153,9 +161,13 @@ class ChromaKeyEngine: ObservableObject {
         // Compile shader pipeline
         do {
             try compilePipeline()
-            print("✅ ChromaKeyEngine: Initialized successfully")
+            #if DEBUG
+            debugLog("✅ ChromaKeyEngine: Initialized successfully")
+            #endif
         } catch {
-            print("❌ ChromaKeyEngine: Failed to compile shaders - \(error)")
+            #if DEBUG
+            debugLog("❌ ChromaKeyEngine: Failed to compile shaders - \(error)")
+            #endif
             return nil
         }
     }
@@ -174,7 +186,9 @@ class ChromaKeyEngine: ObservableObject {
 
             let pipelineState = try device.makeComputePipelineState(function: function)
             pipelineStates[pass] = pipelineState
-            print("✅ ChromaKeyEngine: Compiled shader pass '\(pass.rawValue)'")
+            #if DEBUG
+            debugLog("✅ ChromaKeyEngine: Compiled shader pass '\(pass.rawValue)'")
+            #endif
         }
     }
 
@@ -183,7 +197,9 @@ class ChromaKeyEngine: ObservableObject {
     func start() {
         guard !isActive else { return }
         isActive = true
-        print("▶️ ChromaKeyEngine: Started")
+        #if DEBUG
+        debugLog("▶️ ChromaKeyEngine: Started")
+        #endif
     }
 
     func stop() {
@@ -197,7 +213,9 @@ class ChromaKeyEngine: ObservableObject {
         despilledTexture = nil
         compositedTexture = nil
 
-        print("⏹️ ChromaKeyEngine: Stopped")
+        #if DEBUG
+        debugLog("⏹️ ChromaKeyEngine: Stopped")
+        #endif
     }
 
     // MARK: - Auto-Calibration (9-Point Sampling)
@@ -247,9 +265,11 @@ class ChromaKeyEngine: ObservableObject {
 
         isCalibrated = true
         let elapsedTime = (CFAbsoluteTimeGetCurrent() - startTime) * 1000.0
-        print("✅ ChromaKeyEngine: Auto-calibration completed in \(String(format: "%.1f", elapsedTime))ms")
-        print("   - Tolerance: \(String(format: "%.3f", tolerance))")
-        print("   - Sampled \(calibrationPoints.count) points")
+        #if DEBUG
+        debugLog("✅ ChromaKeyEngine: Auto-calibration completed in \(String(format: "%.1f", elapsedTime))ms")
+        debugLog("   - Tolerance: \(String(format: "%.3f", tolerance))")
+        debugLog("   - Sampled \(calibrationPoints.count) points")
+        #endif
     }
 
     // MARK: - Color Sampling
@@ -353,7 +373,9 @@ class ChromaKeyEngine: ObservableObject {
         processingTimeMs = elapsedTime
         currentFPS = 1000.0 / elapsedTime
 
-        print("🎬 ChromaKeyEngine: Processed frame in \(String(format: "%.1f", elapsedTime))ms (\(String(format: "%.0f", currentFPS)) FPS)")
+        #if DEBUG
+        debugLog("🎬 ChromaKeyEngine: Processed frame in \(String(format: "%.1f", elapsedTime))ms (\(String(format: "%.0f", currentFPS)) FPS)")
+        #endif
 
         // Store for reuse
         self.sourceTexture = sourceTexture
@@ -494,7 +516,9 @@ class ChromaKeyEngine: ObservableObject {
         despillStrength = preset.despillStrength
         lightWrapAmount = preset.lightWrapAmount
 
-        print("🎨 ChromaKeyEngine: Applied preset '\(preset.name)'")
+        #if DEBUG
+        debugLog("🎨 ChromaKeyEngine: Applied preset '\(preset.name)'")
+        #endif
     }
 
     // MARK: - Shader Parameters (C-compatible struct)
@@ -606,3 +630,8 @@ enum ChromaKeyError: LocalizedError {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension ChromaKeyEngine: ObservableObject { }

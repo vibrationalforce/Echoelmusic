@@ -1,5 +1,6 @@
 #include "AudioEngine.h"
 #include "Track.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 AudioEngine::AudioEngine()
@@ -112,6 +113,10 @@ int AudioEngine::addAudioTrack(const juce::String& name)
     track->prepare(currentSampleRate, currentBlockSize);
 
     tracks.push_back(std::move(track));
+
+    // OPTIMIZATION: Update lock-free snapshot for audio thread
+    updateTrackSnapshot();
+
     return (int)tracks.size() - 1;
 }
 
@@ -123,6 +128,10 @@ int AudioEngine::addMIDITrack(const juce::String& name)
     track->prepare(currentSampleRate, currentBlockSize);
 
     tracks.push_back(std::move(track));
+
+    // OPTIMIZATION: Update lock-free snapshot for audio thread
+    updateTrackSnapshot();
+
     return (int)tracks.size() - 1;
 }
 
@@ -131,7 +140,12 @@ void AudioEngine::removeTrack(int trackIndex)
     const juce::ScopedLock sl(tracksLock);
 
     if (juce::isPositiveAndBelow(trackIndex, (int)tracks.size()))
+    {
         tracks.erase(tracks.begin() + trackIndex);
+
+        // OPTIMIZATION: Update lock-free snapshot for audio thread
+        updateTrackSnapshot();
+    }
 }
 
 int AudioEngine::getNumTracks() const
@@ -189,13 +203,13 @@ float AudioEngine::getMasterLevelLUFS() const
     if (peak < 0.00001f)
         return -80.0f;
 
-    return juce::Decibels::gainToDecibels(peak) - 23.0f; // Rough LUFS estimate
+    return Echoel::DSP::FastMath::gainToDb(peak) - 23.0f; // Rough LUFS estimate
 }
 
 float AudioEngine::getMasterPeakLevel() const
 {
     float peak = juce::jmax(masterPeakLeft.load(), masterPeakRight.load());
-    return juce::Decibels::gainToDecibels(peak);
+    return Echoel::DSP::FastMath::gainToDb(peak);
 }
 
 void AudioEngine::setMasterVolume(float volume)
@@ -308,16 +322,14 @@ void AudioEngine::processAudioBlock(const float* const* input, float* const* out
 
 void AudioEngine::mixTracksToMaster(int numSamples)
 {
-    // This will be brief - just check if we can iterate safely
-    // In production, use a lock-free structure
-    const juce::ScopedTryLock sl(tracksLock);
+    // OPTIMIZATION: Lock-free track iteration using atomic snapshot
+    // No blocking - audio thread reads snapshot, UI thread updates it
+    const size_t numTracks = trackSnapshotSize.load(std::memory_order_acquire);
 
-    if (!sl.isLocked())
-        return; // Track list is being modified, skip this block
-
-    for (auto& track : tracks)
+    for (size_t i = 0; i < numTracks; ++i)
     {
-        if (track != nullptr && track->isMuted() == false && track->isSoloed() == false)
+        Track* track = trackSnapshot[i];
+        if (track != nullptr && !track->isMuted() && !track->isSoloed())
         {
             track->processBlock(masterBuffer, numSamples);
         }
@@ -326,16 +338,14 @@ void AudioEngine::mixTracksToMaster(int numSamples)
 
 void AudioEngine::recordInputToTracks(const float* const* input, int numInputs, int numSamples)
 {
-    const juce::ScopedTryLock sl(tracksLock);
+    // OPTIMIZATION: Lock-free track iteration using atomic snapshot
+    const size_t numTracks = trackSnapshotSize.load(std::memory_order_acquire);
 
-    if (!sl.isLocked())
-        return;
-
-    for (auto& track : tracks)
+    for (size_t i = 0; i < numTracks; ++i)
     {
+        Track* track = trackSnapshot[i];
         if (track != nullptr && track->isArmed() && track->getType() == Track::Type::Audio)
         {
-            // Record input to track
             track->recordInput(input, numInputs, numSamples, playheadPosition.load());
         }
     }
@@ -387,4 +397,29 @@ void AudioEngine::audioDeviceAboutToStart(juce::AudioIODevice* device)
 void AudioEngine::audioDeviceStopped()
 {
     releaseResources();
+}
+
+//==============================================================================
+// Lock-Free Track Snapshot
+//==============================================================================
+
+void AudioEngine::updateTrackSnapshot()
+{
+    // Called from UI thread while holding tracksLock
+    // Updates atomic snapshot for lock-free audio thread access
+    const size_t numTracks = juce::jmin(tracks.size(), trackSnapshot.size());
+
+    for (size_t i = 0; i < numTracks; ++i)
+    {
+        trackSnapshot[i] = tracks[i].get();
+    }
+
+    // Clear remaining slots
+    for (size_t i = numTracks; i < trackSnapshot.size(); ++i)
+    {
+        trackSnapshot[i] = nullptr;
+    }
+
+    // Publish new size with release semantics (ensures writes above are visible)
+    trackSnapshotSize.store(numTracks, std::memory_order_release);
 }

@@ -4,13 +4,15 @@ import Combine
 
 /// Cloud Sync Manager - CloudKit Integration
 /// Session sync across devices, collaborative cloud sessions, automatic backup
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class CloudSyncManager: ObservableObject {
+@Observable
+final class CloudSyncManager {
 
-    @Published var isSyncing: Bool = false
-    @Published var syncEnabled: Bool = false
-    @Published var lastSyncDate: Date?
-    @Published var cloudSessions: [CloudSession] = []
+    var isSyncing: Bool = false
+    var syncEnabled: Bool = false
+    var lastSyncDate: Date?
+    var cloudSessions: [CloudSession] = []
 
     private let container: CKContainer
     private let privateDatabase: CKDatabase
@@ -20,7 +22,9 @@ class CloudSyncManager: ObservableObject {
         self.container = CKContainer(identifier: "iCloud.com.echoelmusic.app")
         self.privateDatabase = container.privateCloudDatabase
         self.sharedDatabase = container.sharedCloudDatabase
-        print("✅ CloudSyncManager: Initialized")
+        #if DEBUG
+        debugLog("✅", "CloudSyncManager: Initialized")
+        #endif
     }
 
     // MARK: - Enable/Disable Sync
@@ -34,12 +38,16 @@ class CloudSyncManager: ObservableObject {
         }
 
         syncEnabled = true
-        print("☁️ CloudSyncManager: Sync enabled")
+        #if DEBUG
+        debugLog("☁️", "CloudSyncManager: Sync enabled")
+        #endif
     }
 
     func disableSync() {
         syncEnabled = false
-        print("☁️ CloudSyncManager: Sync disabled")
+        #if DEBUG
+        debugLog("☁️", "CloudSyncManager: Sync disabled")
+        #endif
     }
 
     // MARK: - Save Session
@@ -61,7 +69,9 @@ class CloudSyncManager: ObservableObject {
         try await privateDatabase.save(record)
 
         lastSyncDate = Date()
-        print("☁️ CloudSyncManager: Saved session '\(session.name)'")
+        #if DEBUG
+        debugLog("☁️", "CloudSyncManager: Saved session '\(session.name)'")
+        #endif
     }
 
     // MARK: - Fetch Sessions
@@ -94,7 +104,9 @@ class CloudSyncManager: ObservableObject {
         cloudSessions = sessions
         lastSyncDate = Date()
 
-        print("☁️ CloudSyncManager: Fetched \(sessions.count) sessions")
+        #if DEBUG
+        debugLog("☁️", "CloudSyncManager: Fetched \(sessions.count) sessions")
+        #endif
         return sessions
     }
 
@@ -107,14 +119,23 @@ class CloudSyncManager: ObservableObject {
                 try? await self?.autoBackup()
             }
         }
-        print("☁️ CloudSyncManager: Auto backup enabled (every \(Int(interval))s)")
+        #if DEBUG
+        debugLog("☁️", "CloudSyncManager: Auto backup enabled (every \(Int(interval))s)")
+        #endif
     }
 
     private func autoBackup() async throws {
         // TODO: Backup current session automatically
-        print("☁️ CloudSyncManager: Auto backup triggered")
+        #if DEBUG
+        debugLog("☁️", "CloudSyncManager: Auto backup triggered")
+        #endif
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows CloudSyncManager to work with older SwiftUI code expecting ObservableObject
+extension CloudSyncManager: ObservableObject { }
 
 struct CloudSession: Identifiable {
     let id: UUID

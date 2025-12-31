@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include <atomic>
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -184,7 +185,12 @@ private:
 
     // Tracks (use lock-free structure for real-time safety)
     std::vector<std::unique_ptr<class Track>> tracks;
-    juce::CriticalSection tracksLock; // Only for add/remove, not in audio thread
+    juce::CriticalSection tracksLock; // Only for add/remove, NOT in audio thread
+
+    // OPTIMIZATION: Lock-free track iteration for audio thread
+    // Atomic snapshot allows audio thread to iterate without locking
+    std::atomic<size_t> trackSnapshotSize { 0 };
+    std::array<Track*, 64> trackSnapshot;  // Max 64 tracks, lock-free access
 
     // Master bus buffers (pre-allocated)
     juce::AudioBuffer<float> masterBuffer;
@@ -206,6 +212,7 @@ private:
     void recordInputToTracks(const float* const* input, int numInputs, int numSamples);
     void updatePlayhead(int numSamples);
     void updateMetering(const float* const* output, int numOutputs, int numSamples);
+    void updateTrackSnapshot();  // Lock-free snapshot update for audio thread
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioEngine)
 };

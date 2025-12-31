@@ -26,14 +26,16 @@ import Combine
 /// mpe.setVoiceBrightness(voice: voice, brightness: 0.7)
 /// mpe.deallocateVoice(voice: voice)
 /// ```
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class MPEZoneManager: ObservableObject {
+@Observable
+final class MPEZoneManager {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var activeVoices: [MPEVoice] = []
-    @Published var voiceCount: Int = 0
-    @Published var voiceAllocationMode: VoiceAllocationMode = .roundRobin
+    var activeVoices: [MPEVoice] = []
+    var voiceCount: Int = 0
+    var voiceAllocationMode: VoiceAllocationMode = .roundRobin
 
     // MARK: - MPE Voice Model
 
@@ -90,7 +92,9 @@ class MPEZoneManager: ObservableObject {
         if voices.count >= maxVoices {
             // Need to steal a voice
             guard let stolenVoice = selectVoiceToSteal() else {
-                print("⚠️ MPE: Failed to steal voice")
+                #if DEBUG
+                debugLog("⚠️ MPE: Failed to steal voice")
+                #endif
                 return nil
             }
 
@@ -100,7 +104,9 @@ class MPEZoneManager: ObservableObject {
 
         // Find available channel
         guard let channel = findAvailableChannel() else {
-            print("⚠️ MPE: No available channel")
+            #if DEBUG
+            debugLog("⚠️ MPE: No available channel")
+            #endif
             return nil
         }
 
@@ -120,7 +126,9 @@ class MPEZoneManager: ObservableObject {
         // Send MIDI 2.0 Note On
         midi2Manager.sendNoteOn(channel: channel, note: note, velocity: velocity)
 
-        print("[MPE] Allocated voice: Note \(note) on channel \(channel + 1)")
+        #if DEBUG
+        debugLog("[MPE] Allocated voice: Note \(note) on channel \(channel + 1)")
+        #endif
 
         return voice
     }
@@ -134,7 +142,9 @@ class MPEZoneManager: ObservableObject {
         voices.removeValue(forKey: voice.id)
         updatePublishedState()
 
-        print("[MPE] Deallocated voice: Note \(voice.note) from channel \(voice.channel + 1)")
+        #if DEBUG
+        debugLog("[MPE] Deallocated voice: Note \(voice.note) from channel \(voice.channel + 1)")
+        #endif
     }
 
     /// Find next available channel
@@ -279,7 +289,9 @@ class MPEZoneManager: ObservableObject {
         voices.removeAll()
         updatePublishedState()
 
-        print("[MPE] Released all voices")
+        #if DEBUG
+        debugLog("[MPE] Released all voices")
+        #endif
     }
 
     // MARK: - MPE Configuration Messages
@@ -306,7 +318,9 @@ class MPEZoneManager: ObservableObject {
         // Data Entry LSB (CC 38) = 0
         midi2Manager.sendControlChange(channel: channel, controller: 38, value: 0.0)
 
-        print("[MPE] Sent configuration: \(memberChannels) member channels")
+        #if DEBUG
+        debugLog("[MPE] Sent configuration: \(memberChannels) member channels")
+        #endif
     }
 
     /// Send MPE pitch bend range configuration
@@ -326,9 +340,16 @@ class MPEZoneManager: ObservableObject {
         // Data Entry LSB (CC 38) = 0
         midi2Manager.sendControlChange(channel: channel, controller: 38, value: 0.0)
 
-        print("[MPE] Set pitch bend range: ±\(semitones) semitones")
+        #if DEBUG
+        debugLog("[MPE] Set pitch bend range: ±\(semitones) semitones")
+        #endif
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension MPEZoneManager: ObservableObject { }
 
 // MARK: - Voice Statistics
 

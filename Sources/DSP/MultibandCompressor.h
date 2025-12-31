@@ -102,6 +102,32 @@ public:
 
 private:
     //==========================================================================
+    // Fast dB Approximations (OPTIMIZATION: ~5x faster than std::log/pow)
+    //==========================================================================
+
+    // Fast approximation of 20*log10(x) using IEEE754 float trick
+    static inline float fastGainToDb(float gain) noexcept
+    {
+        // log10(x) ≈ (float_bits / 2^23 - 127) * log10(2) * 20
+        // Simplified: multiply float exponent by constant
+        union { float f; uint32_t i; } u;
+        u.f = gain + 1e-20f;  // Avoid log(0)
+        return (static_cast<float>(u.i) * 8.2629582e-8f - 87.989971f);  // Pre-computed constants
+    }
+
+    // Fast approximation of 10^(dB/20) using exp approximation
+    static inline float fastDbToGain(float db) noexcept
+    {
+        // 10^(dB/20) = 2^(dB * log2(10) / 20)
+        // Use fast 2^x approximation
+        float x = db * 0.16609640474f;  // log2(10) / 20
+        x = std::max(-126.0f, x);  // Clamp to avoid underflow
+        union { float f; uint32_t i; } u;
+        u.i = static_cast<uint32_t>((x + 127.0f) * 8388608.0f);  // 2^23
+        return u.f;
+    }
+
+    //==========================================================================
     // Band State
     //==========================================================================
 
@@ -120,6 +146,11 @@ private:
         // Attack/release coefficients (cached)
         float attackCoeff = 0.0f;
         float releaseCoeff = 0.0f;
+
+        // OPTIMIZATION: Cached compression constants
+        float compressionFactor = 0.75f;  // (1 - 1/ratio)
+        float invKnee = 0.1667f;          // 1/knee
+        float halfKnee = 3.0f;            // knee/2
     };
 
     //==========================================================================

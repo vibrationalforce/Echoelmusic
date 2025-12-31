@@ -4,23 +4,25 @@ import Combine
 
 /// Recognizes hand gestures from HandTrackingManager data
 /// Supports: Pinch, Spread, Fist, Point, Swipe
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class GestureRecognizer: ObservableObject {
+@Observable
+final class GestureRecognizer {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
     /// Currently detected gesture for left hand
-    @Published var leftHandGesture: Gesture = .none
+    var leftHandGesture: Gesture = .none
 
     /// Currently detected gesture for right hand
-    @Published var rightHandGesture: Gesture = .none
+    var rightHandGesture: Gesture = .none
 
     /// Gesture confidence (0.0 - 1.0)
-    @Published var gestureConfidence: Float = 0.0
+    var gestureConfidence: Float = 0.0
 
     /// Pinch amount (0 = released, 1 = fully pinched)
-    @Published var leftPinchAmount: Float = 0.0
-    @Published var rightPinchAmount: Float = 0.0
+    var leftPinchAmount: Float = 0.0
+    var rightPinchAmount: Float = 0.0
 
 
     // MARK: - Gesture Types
@@ -63,7 +65,9 @@ class GestureRecognizer: ObservableObject {
 
     init(handTracker: HandTrackingManager) {
         self.handTracker = handTracker
-        print("✋ GestureRecognizer initialized")
+        #if DEBUG
+        debugLog("✋ GestureRecognizer initialized")
+        #endif
     }
 
 
@@ -296,3 +300,8 @@ class GestureRecognizer: ObservableObject {
         return currentGesture == gesture && gestureConfidence > 0.5
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension GestureRecognizer: ObservableObject { }

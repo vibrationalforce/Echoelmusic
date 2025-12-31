@@ -16,14 +16,16 @@ import Combine
 /// ✓ Lifetime purchase option available
 /// ✓ Student & accessibility discounts
 /// ✓ Open source core (coming soon)
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class FairBusinessModel: ObservableObject {
+@Observable
+final class FairBusinessModel {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var currentTier: PricingTier = .free
-    @Published var subscriptionStatus: SubscriptionStatus = .notSubscribed
-    @Published var lifetimePurchased: Bool = false
+    var currentTier: PricingTier = .free
+    var subscriptionStatus: SubscriptionStatus = .notSubscribed
+    var lifetimePurchased: Bool = false
 
     // MARK: - Pricing Tiers
 
@@ -206,7 +208,7 @@ class FairBusinessModel: ObservableObject {
         }
     }
 
-    @Published var activeTrial: TrialInfo?
+    var activeTrial: TrialInfo?
 
     // MARK: - Ethical Commitments
 
@@ -231,9 +233,11 @@ class FairBusinessModel: ObservableObject {
 
     init() {
         loadSubscriptionStatus()
-        print("✅ Fair Business Model: Initialized")
-        print("💰 Current Tier: \(currentTier.rawValue)")
-        print("🤝 Ethical commitments loaded")
+        #if DEBUG
+        debugLog("✅", "Fair Business Model: Initialized")
+        debugLog("💰", "Current Tier: \(currentTier.rawValue)")
+        debugLog("🤝", "Ethical commitments loaded")
+        #endif
     }
 
     // MARK: - Load Subscription Status
@@ -259,7 +263,9 @@ class FairBusinessModel: ObservableObject {
     func startFreeTrial(tier: PricingTier) {
         guard tier != .free && tier != .lifetime else { return }
         guard activeTrial == nil else {
-            print("⚠️ Trial already active")
+            #if DEBUG
+            debugLog("⚠️", "Trial already active")
+            #endif
             return
         }
 
@@ -276,9 +282,11 @@ class FairBusinessModel: ObservableObject {
 
         currentTier = tier
 
-        print("🎉 Free trial started: \(tier.rawValue)")
-        print("📅 Trial ends: \(endDate.formatted(date: .long, time: .omitted))")
-        print("💡 No credit card required. No auto-renewal.")
+        #if DEBUG
+        debugLog("🎉", "Free trial started: \(tier.rawValue)")
+        debugLog("📅", "Trial ends: \(endDate.formatted(date: .long, time: .omitted))")
+        debugLog("💡", "No credit card required. No auto-renewal.")
+        #endif
     }
 
     // MARK: - Purchase Subscription
@@ -287,7 +295,9 @@ class FairBusinessModel: ObservableObject {
         guard tier != .free else { return }
 
         // In production, use StoreKit 2
-        print("💳 Purchasing: \(tier.rawValue) (\(billingPeriod.rawValue))")
+        #if DEBUG
+        debugLog("💳", "Purchasing: \(tier.rawValue) (\(billingPeriod.rawValue))")
+        #endif
 
         // Simulate purchase
         try await Task.sleep(nanoseconds: 1_000_000_000)  // 1 second
@@ -298,7 +308,9 @@ class FairBusinessModel: ObservableObject {
             lifetimePurchased = true
             UserDefaults.standard.set(true, forKey: "lifetimePurchased")
             subscriptionStatus = .lifetime
-            print("✅ Lifetime purchase complete!")
+            #if DEBUG
+            debugLog("✅", "Lifetime purchase complete!")
+            #endif
         } else {
             let renewalDate = Calendar.current.date(
                 byAdding: billingPeriod == .monthly ? .month : .year,
@@ -306,7 +318,9 @@ class FairBusinessModel: ObservableObject {
                 to: Date()
             )!
             subscriptionStatus = .active(tier: tier, renewalDate: renewalDate)
-            print("✅ Subscription active until: \(renewalDate.formatted(date: .long, time: .omitted))")
+            #if DEBUG
+            debugLog("✅", "Subscription active until: \(renewalDate.formatted(date: .long, time: .omitted))")
+            #endif
         }
     }
 
@@ -318,26 +332,34 @@ class FairBusinessModel: ObservableObject {
     // MARK: - Cancel Subscription
 
     func cancelSubscription() async throws {
-        guard case .active(let tier, let renewalDate) = subscriptionStatus else {
-            print("⚠️ No active subscription to cancel")
+        guard case .active(_, let renewalDate) = subscriptionStatus else {
+            #if DEBUG
+            debugLog("⚠️", "No active subscription to cancel")
+            #endif
             return
         }
 
         // In production, use StoreKit 2 to cancel
-        print("🚫 Cancelling subscription...")
+        #if DEBUG
+        debugLog("🚫", "Cancelling subscription...")
+        #endif
 
         // No retention tactics, no "are you sure?" spam
         subscriptionStatus = .cancelled(expiresOn: renewalDate)
 
-        print("✅ Subscription cancelled")
-        print("📅 Access continues until: \(renewalDate.formatted(date: .long, time: .omitted))")
-        print("💾 Your data remains accessible. Export anytime.")
+        #if DEBUG
+        debugLog("✅", "Subscription cancelled")
+        debugLog("📅", "Access continues until: \(renewalDate.formatted(date: .long, time: .omitted))")
+        debugLog("💾", "Your data remains accessible. Export anytime.")
+        #endif
     }
 
     // MARK: - Restore Purchases
 
     func restorePurchases() async throws {
-        print("🔄 Restoring purchases...")
+        #if DEBUG
+        debugLog("🔄", "Restoring purchases...")
+        #endif
 
         // In production, use StoreKit 2 to restore
         try await Task.sleep(nanoseconds: 500_000_000)
@@ -345,9 +367,13 @@ class FairBusinessModel: ObservableObject {
         if lifetimePurchased {
             currentTier = .lifetime
             subscriptionStatus = .lifetime
-            print("✅ Lifetime purchase restored")
+            #if DEBUG
+            debugLog("✅", "Lifetime purchase restored")
+            #endif
         } else {
-            print("ℹ️ No purchases to restore")
+            #if DEBUG
+            debugLog("ℹ️", "No purchases to restore")
+            #endif
         }
     }
 
@@ -357,12 +383,16 @@ class FairBusinessModel: ObservableObject {
         // In production, verify token with backend
         guard discount.verificationRequired else { return false }
 
-        print("🎓 Discount applied: \(discount.rawValue)")
+        #if DEBUG
+        debugLog("🎓", "Discount applied: \(discount.rawValue)")
+        #endif
 
         if discount == .accessibility {
             currentTier = .professional
             subscriptionStatus = .lifetime  // Free forever
-            print("♿️ Accessibility tier activated. Free Professional forever.")
+            #if DEBUG
+            debugLog("♿️", "Accessibility tier activated. Free Professional forever.")
+            #endif
         }
 
         return true
@@ -473,3 +503,7 @@ class FairBusinessModel: ObservableObject {
         """
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension FairBusinessModel: ObservableObject { }

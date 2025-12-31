@@ -21,20 +21,22 @@ import Combine
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // MARK: - Video & AI Creative Hub
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
 @MainActor
-final class VideoAICreativeHub: ObservableObject {
+@Observable
+final class VideoAICreativeHub {
 
     // MARK: - Singleton
 
     static let shared = VideoAICreativeHub()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var currentProject: CreativeProject?
-    @Published var isProcessing: Bool = false
-    @Published var aiConfidence: Float = 0.0
-    @Published var generationProgress: Float = 0.0
+    var currentProject: CreativeProject?
+    var isProcessing: Bool = false
+    var aiConfidence: Float = 0.0
+    var generationProgress: Float = 0.0
 
     // MARK: - Sub-Systems
 
@@ -53,7 +55,9 @@ final class VideoAICreativeHub: ObservableObject {
 
     private init() {
         setupConnections()
-        print("🎬 VideoAICreativeHub: Initialized - Ultra Liquid Light Flow")
+        #if DEBUG
+        debugLog("🎬 VideoAICreativeHub: Initialized - Ultra Liquid Light Flow")
+        #endif
     }
 
     private func setupConnections() {
@@ -124,16 +128,18 @@ struct CreativeProject: Identifiable {
 }
 
 // MARK: - Generative AI Engine
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
 @MainActor
-class GenerativeAIEngine: ObservableObject {
+@Observable
+final class GenerativeAIEngine {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isGenerating: Bool = false
-    @Published var generatedContent: [GeneratedContent] = []
-    @Published var styleTransferActive: Bool = false
-    @Published var creativityLevel: Float = 0.5
+    var isGenerating: Bool = false
+    var generatedContent: [GeneratedContent] = []
+    var styleTransferActive: Bool = false
+    var creativityLevel: Float = 0.5
 
     // MARK: - AI Models
 
@@ -149,7 +155,9 @@ class GenerativeAIEngine: ObservableObject {
 
     private func loadModels() {
         // Note: In production, load actual CoreML models
-        print("🤖 GenerativeAI: Models loading...")
+        #if DEBUG
+        debugLog("🤖 GenerativeAI: Models loading...")
+        #endif
     }
 
     // MARK: - Creativity Level
@@ -202,7 +210,9 @@ class GenerativeAIEngine: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎨 GenerativeAI: Generating from prompt: '\(prompt)'")
+        #if DEBUG
+        debugLog("🎨 GenerativeAI: Generating from prompt: '\(prompt)'")
+        #endif
 
         // In production: Use Stable Diffusion or similar
         let visual = GeneratedVisual(
@@ -227,7 +237,9 @@ class GenerativeAIEngine: ObservableObject {
         styleTransferActive = true
         defer { styleTransferActive = false }
 
-        print("🎭 GenerativeAI: Applying \(style.rawValue) style transfer")
+        #if DEBUG
+        debugLog("🎭 GenerativeAI: Applying \(style.rawValue) style transfer")
+        #endif
 
         // In production: Process video frames through CoreML model
         return nil
@@ -243,7 +255,9 @@ class GenerativeAIEngine: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎵 GenerativeAI: Analyzing video for music generation")
+        #if DEBUG
+        debugLog("🎵 GenerativeAI: Analyzing video for music generation")
+        #endif
 
         // Analyze video motion, colors, pace
         let videoFeatures = await analyzeVideo(videoURL)
@@ -434,16 +448,18 @@ struct BioData {
 }
 
 // MARK: - Projection Mapper
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
 @MainActor
-class ProjectionMapper: ObservableObject {
+@Observable
+final class ProjectionMapper {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var surfaces: [MappingSurface] = []
-    @Published var selectedSurface: UUID?
-    @Published var isCalibrating: Bool = false
-    @Published var outputMode: OutputMode = .single
+    var surfaces: [MappingSurface] = []
+    var selectedSurface: UUID?
+    var isCalibrating: Bool = false
+    var outputMode: OutputMode = .single
 
     // MARK: - Output Modes
 
@@ -550,15 +566,17 @@ struct EdgeBlend {
 }
 
 // MARK: - Bio-Reactive Video Effects
+/// Migrated to @Observable for better performance (Swift 5.9+)
 
 @MainActor
-class BioReactiveVideoEffects: ObservableObject {
+@Observable
+final class BioReactiveVideoEffects {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var activeEffects: [BioVideoEffect] = []
-    @Published var coherenceInfluence: Float = 0.5
-    @Published var energyInfluence: Float = 0.5
+    var activeEffects: [BioVideoEffect] = []
+    var coherenceInfluence: Float = 0.5
+    var energyInfluence: Float = 0.5
 
     // MARK: - Bio Data
 
@@ -787,3 +805,11 @@ struct QuickActionButton: View {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension VideoAICreativeHub: ObservableObject { }
+extension GenerativeAIEngine: ObservableObject { }
+extension ProjectionMapper: ObservableObject { }
+extension BioReactiveVideoEffects: ObservableObject { }

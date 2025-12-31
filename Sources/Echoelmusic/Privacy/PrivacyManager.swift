@@ -15,15 +15,17 @@ import Security
 /// 5. Security: End-to-end encryption for any cloud sync
 /// 6. Right to be Forgotten: Delete all data at any time
 /// 7. No Third-Party Trackers: Zero analytics SDKs, zero ad networks
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class PrivacyManager: ObservableObject {
+@Observable
+final class PrivacyManager {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var privacyMode: PrivacyMode = .maximumPrivacy
-    @Published var cloudSyncEnabled: Bool = false
-    @Published var analyticsEnabled: Bool = false  // Always off by default
-    @Published var crashReportingEnabled: Bool = false
+    var privacyMode: PrivacyMode = .maximumPrivacy
+    var cloudSyncEnabled: Bool = false
+    var analyticsEnabled: Bool = false  // Always off by default
+    var crashReportingEnabled: Bool = false
 
     // MARK: - Privacy Modes
 
@@ -126,10 +128,12 @@ class PrivacyManager: ObservableObject {
         loadPrivacySettings()
         generateEncryptionKey()
 
-        print("✅ Privacy Manager: Initialized")
-        print("🔒 Privacy Mode: \(privacyMode.rawValue)")
-        print("🏠 All data stored locally first")
-        print("🚫 Zero third-party trackers")
+        #if DEBUG
+        debugLog("✅", "Privacy Manager: Initialized")
+        debugLog("🔒", "Privacy Mode: \(privacyMode.rawValue)")
+        debugLog("🏠", "All data stored locally first")
+        debugLog("🚫", "Zero third-party trackers")
+        #endif
     }
 
     // MARK: - Load Privacy Settings
@@ -172,12 +176,16 @@ class PrivacyManager: ObservableObject {
         // Apply mode constraints
         if !mode.allowsCloudSync {
             cloudSyncEnabled = false
-            print("🔒 Cloud sync disabled (privacy mode: \(mode.rawValue))")
+            #if DEBUG
+            debugLog("🔒", "Cloud sync disabled (privacy mode: \(mode.rawValue))")
+            #endif
         }
 
         if !mode.allowsAnalytics {
             analyticsEnabled = false
-            print("🔒 Analytics disabled (privacy mode: \(mode.rawValue))")
+            #if DEBUG
+            debugLog("🔒", "Analytics disabled (privacy mode: \(mode.rawValue))")
+            #endif
         }
 
         savePrivacySettings()
@@ -189,11 +197,15 @@ class PrivacyManager: ObservableObject {
         // Generate or load encryption key from Keychain
         if let keyData = loadKeyFromKeychain() {
             encryptionKey = SymmetricKey(data: keyData)
-            print("🔑 Encryption key loaded from Keychain")
+            #if DEBUG
+            debugLog("🔑", "Encryption key loaded from Keychain")
+            #endif
         } else {
             encryptionKey = SymmetricKey(size: .bits256)
             saveKeyToKeychain(encryptionKey!)
-            print("🔑 New encryption key generated")
+            #if DEBUG
+            debugLog("🔑", "New encryption key generated")
+            #endif
         }
     }
 
@@ -210,7 +222,9 @@ class PrivacyManager: ObservableObject {
         let status = SecItemCopyMatching(query as CFDictionary, &result)
 
         guard status == errSecSuccess else {
-            print("🔐 Keychain load failed or key not found: \(status)")
+            #if DEBUG
+            debugLog("🔐", "Keychain load failed or key not found: \(status)")
+            #endif
             return nil
         }
 
@@ -239,9 +253,13 @@ class PrivacyManager: ObservableObject {
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
         if status == errSecSuccess {
-            print("🔐 Encryption key saved to Keychain securely")
+            #if DEBUG
+            debugLog("🔐", "Encryption key saved to Keychain securely")
+            #endif
         } else {
-            print("⚠️ Keychain save failed: \(status)")
+            #if DEBUG
+            debugLog("⚠️", "Keychain save failed: \(status)")
+            #endif
         }
     }
 
@@ -280,7 +298,9 @@ class PrivacyManager: ObservableObject {
     // MARK: - Data Export (GDPR Right to Data Portability)
 
     func exportAllUserData() async throws -> URL {
-        print("📦 Exporting all user data...")
+        #if DEBUG
+        debugLog("📦", "Exporting all user data...")
+        #endif
 
         var exportData: [String: Any] = [:]
 
@@ -305,7 +325,9 @@ class PrivacyManager: ObservableObject {
 
         try jsonData.write(to: tempURL)
 
-        print("✅ User data exported to: \(tempURL.path)")
+        #if DEBUG
+        debugLog("✅", "User data exported to: \(tempURL.path)")
+        #endif
         return tempURL
     }
 
@@ -341,7 +363,9 @@ class PrivacyManager: ObservableObject {
     // MARK: - Data Deletion (GDPR Right to be Forgotten)
 
     func deleteAllUserData() async throws {
-        print("🗑️ Deleting all user data...")
+        #if DEBUG
+        debugLog("🗑️", "Deleting all user data...")
+        #endif
 
         // Delete local database
         try await deleteLocalDatabase()
@@ -358,22 +382,30 @@ class PrivacyManager: ObservableObject {
         // Delete Keychain
         deleteEncryptionKeyFromKeychain()
 
-        print("✅ All user data deleted")
+        #if DEBUG
+        debugLog("✅", "All user data deleted")
+        #endif
     }
 
     private func deleteLocalDatabase() async throws {
         // Delete local SQLite/CoreData database
-        print("   Deleted local database")
+        #if DEBUG
+        debugLog("🗑️", "   Deleted local database")
+        #endif
     }
 
     private func deleteCloudData() async throws {
         // Delete iCloud data
-        print("   Deleted cloud data")
+        #if DEBUG
+        debugLog("🗑️", "   Deleted cloud data")
+        #endif
     }
 
     private func deleteEncryptionKeyFromKeychain() {
         UserDefaults.standard.removeObject(forKey: "encryptionKey")
-        print("   Deleted encryption key")
+        #if DEBUG
+        debugLog("🗑️", "   Deleted encryption key")
+        #endif
     }
 
     // MARK: - Privacy Nutrition Label Data
@@ -488,11 +520,13 @@ class PrivacyManager: ObservableObject {
             cloudStorageUsed = await calculateCloudStorageSize()
         }
 
-        print("💾 Storage Usage:")
-        print("   Local: \(ByteCountFormatter.string(fromByteCount: localStorageUsed, countStyle: .file))")
+        #if DEBUG
+        debugLog("💾", "Storage Usage:")
+        debugLog("💾", "   Local: \(ByteCountFormatter.string(fromByteCount: localStorageUsed, countStyle: .file))")
         if cloudSyncEnabled {
-            print("   Cloud: \(ByteCountFormatter.string(fromByteCount: cloudStorageUsed, countStyle: .file))")
+            debugLog("💾", "   Cloud: \(ByteCountFormatter.string(fromByteCount: cloudStorageUsed, countStyle: .file))")
         }
+        #endif
     }
 
     private func calculateLocalStorageSize() async -> Int64 {
@@ -541,3 +575,8 @@ struct PrivacyNutritionLabel {
         return output
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows PrivacyManager to work with older SwiftUI code expecting ObservableObject
+extension PrivacyManager: ObservableObject { }

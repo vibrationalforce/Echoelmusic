@@ -1,4 +1,5 @@
 #include "Audio2MIDI.h"
+#include "../Core/DSPOptimizations.h"
 #include <cmath>
 #include <algorithm>
 
@@ -18,6 +19,10 @@ void Audio2MIDI::prepare(double sampleRate, int samplesPerBlock, int numChannels
 {
     currentSampleRate = sampleRate;
     currentNumChannels = numChannels;
+
+    // Pre-allocate note vectors to avoid allocations in audio thread
+    activeNotes.reserve(static_cast<size_t>(maxPolyphony * 2));
+    detectedNotes.reserve(1024);  // Room for a full song's worth of notes
 }
 
 void Audio2MIDI::reset()
@@ -182,16 +187,25 @@ void Audio2MIDI::loadPreset(Preset preset)
 void Audio2MIDI::performFFTAnalysis(const juce::AudioBuffer<float>& buffer)
 {
     int numSamples = juce::jmin(buffer.getNumSamples(), fftSize);
+    const int numChannels = buffer.getNumChannels();
+
+    // OPTIMIZATION: Cache read pointers to avoid per-sample virtual calls
+    const float* channelPtrs[8] = { nullptr };
+    const int maxChannels = juce::jmin(numChannels, 8);
+    for (int ch = 0; ch < maxChannels; ++ch)
+        channelPtrs[ch] = buffer.getReadPointer(ch);
+
+    const float invChannels = 1.0f / static_cast<float>(numChannels);
 
     // Mix to mono
     fftData.fill(0.0f);
     for (int i = 0; i < numSamples; ++i)
     {
         float sample = 0.0f;
-        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
-            sample += buffer.getSample(channel, i);
+        for (int channel = 0; channel < maxChannels; ++channel)
+            sample += channelPtrs[channel][i];
 
-        fftData[i] = sample / buffer.getNumChannels();
+        fftData[i] = sample * invChannels;
     }
 
     // Apply window
@@ -420,7 +434,8 @@ float Audio2MIDI::calculateEnergy(const juce::AudioBuffer<float>& buffer)
         }
     }
 
-    return std::sqrt(energy / (numSamples * buffer.getNumChannels()));
+    // Using fast sqrt for energy calculation
+    return Echoel::DSP::FastMath::fastSqrt(energy / (numSamples * buffer.getNumChannels()));
 }
 
 int Audio2MIDI::frequencyToMidiNote(float frequency)
@@ -434,5 +449,6 @@ int Audio2MIDI::frequencyToMidiNote(float frequency)
 
 float Audio2MIDI::midiNoteToFrequency(int midiNote)
 {
-    return 440.0f * std::pow(2.0f, (midiNote - 69) / 12.0f);
+    // Using fast pow for MIDI to frequency conversion
+    return 440.0f * Echoel::DSP::FastMath::fastPow(2.0f, (midiNote - 69) / 12.0f);
 }

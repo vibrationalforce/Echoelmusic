@@ -177,17 +177,23 @@ class TVApp {
 
             // Check for Dolby Atmos support
             if audioSession.availableCategories.contains(.ambient) {
-                print("📺 Dolby Atmos supported")
+                #if DEBUG
+                debugLog("📺 Dolby Atmos supported")
+                #endif
             }
         } catch {
-            print("❌ Audio session setup failed: \(error)")
+            #if DEBUG
+            debugLog("❌ Audio session setup failed: \(error)")
+            #endif
         }
     }
 
     // MARK: - Session Management
 
     func startSession(type: Session.SessionType) async {
-        print("📺 Starting \(type.rawValue) session on Apple TV")
+        #if DEBUG
+        debugLog("📺 Starting \(type.rawValue) session on Apple TV")
+        #endif
 
         let session = Session(type: type, startTime: Date())
         activeSession = session
@@ -205,7 +211,9 @@ class TVApp {
     func stopSession() async {
         guard activeSession != nil else { return }
 
-        print("📺 Stopping session on Apple TV")
+        #if DEBUG
+        debugLog("📺 Stopping session on Apple TV")
+        #endif
 
         await visualEngine.stop()
         await audioEngine.stop()
@@ -216,7 +224,9 @@ class TVApp {
     // MARK: - Device Connection
 
     private func handleDeviceConnected(_ device: ConnectedDevice) {
-        print("📱 Device connected: \(device.name) (\(device.type))")
+        #if DEBUG
+        debugLog("📱 Device connected: \(device.name) (\(device.type))")
+        #endif
         connectedDevices.append(device)
 
         // Füge als Participant zur Session hinzu
@@ -262,7 +272,9 @@ class TVApp {
     // MARK: - SharePlay
 
     func startSharePlay() async throws {
-        print("📺 Starting SharePlay session")
+        #if DEBUG
+        debugLog("📺 Starting SharePlay session")
+        #endif
         isSharePlayActive = true
 
         // TODO: Integrate with GroupActivities framework
@@ -271,7 +283,9 @@ class TVApp {
     }
 
     func stopSharePlay() {
-        print("📺 Stopping SharePlay session")
+        #if DEBUG
+        debugLog("📺 Stopping SharePlay session")
+        #endif
         isSharePlayActive = false
     }
 
@@ -297,7 +311,9 @@ class TVVisualizationEngine {
     private var intensity: Float = 1.0
 
     func start(mode: TVApp.VisualizationMode) async {
-        print("🎨 TV Visualization Engine started: \(mode.rawValue)")
+        #if DEBUG
+        debugLog("🎨 TV Visualization Engine started: \(mode.rawValue)")
+        #endif
         isRunning = true
         currentMode = mode
 
@@ -306,12 +322,16 @@ class TVVisualizationEngine {
     }
 
     func stop() async {
-        print("🎨 TV Visualization Engine stopped")
+        #if DEBUG
+        debugLog("🎨 TV Visualization Engine stopped")
+        #endif
         isRunning = false
     }
 
     func changeMode(_ mode: TVApp.VisualizationMode) async {
-        print("🎨 Changing mode to: \(mode.rawValue)")
+        #if DEBUG
+        debugLog("🎨 Changing mode to: \(mode.rawValue)")
+        #endif
         currentMode = mode
     }
 
@@ -321,13 +341,17 @@ class TVVisualizationEngine {
 
     func updateWithBioData(hrv: Double, coherence: Double) async {
         // Update visualization based on bio-data
-        print("💓 Updating visualization with HRV: \(hrv), Coherence: \(coherence)")
+        #if DEBUG
+        debugLog("💓 Updating visualization with HRV: \(hrv), Coherence: \(coherence)")
+        #endif
     }
 
     private func setupMetalRenderer() {
         // Setup Metal for high-performance rendering
         // Target: 4K @ 60fps, 8K @ 30fps
-        print("⚡ Metal renderer initialized for tvOS")
+        #if DEBUG
+        debugLog("⚡ Metal renderer initialized for tvOS")
+        #endif
     }
 }
 
@@ -339,7 +363,9 @@ class TVAudioEngine {
     private var isRunning: Bool = false
 
     func start() async {
-        print("🔊 TV Audio Engine started")
+        #if DEBUG
+        debugLog("🔊 TV Audio Engine started")
+        #endif
         isRunning = true
 
         // Setup Dolby Atmos if available
@@ -347,13 +373,17 @@ class TVAudioEngine {
     }
 
     func stop() async {
-        print("🔊 TV Audio Engine stopped")
+        #if DEBUG
+        debugLog("🔊 TV Audio Engine stopped")
+        #endif
         isRunning = false
     }
 
     private func setupDolbyAtmos() {
         // Configure Dolby Atmos for 3D spatial audio
-        print("🎧 Dolby Atmos configured")
+        #if DEBUG
+        debugLog("🎧 Dolby Atmos configured")
+        #endif
     }
 }
 
@@ -362,19 +392,27 @@ class TVAudioEngine {
 class TVFocusEngine {
 
     func setupFocusEnvironment() {
-        print("🎮 Focus Engine setup for Siri Remote")
+        #if DEBUG
+        debugLog("🎮 Focus Engine setup for Siri Remote")
+        #endif
     }
 
     func handleMenuPress() {
-        print("🎮 Menu button pressed")
+        #if DEBUG
+        debugLog("🎮 Menu button pressed")
+        #endif
     }
 
     func handlePlayPause() {
-        print("🎮 Play/Pause button pressed")
+        #if DEBUG
+        debugLog("🎮 Play/Pause button pressed")
+        #endif
     }
 
     func handleSwipe(direction: Direction) {
-        print("🎮 Swipe: \(direction)")
+        #if DEBUG
+        debugLog("🎮 Swipe: \(direction)")
+        #endif
     }
 
     enum Direction {
@@ -395,7 +433,9 @@ class AirPlayReceiver {
     }
 
     private func setupAirPlayReceiver() {
-        print("📡 AirPlay Receiver initialized")
+        #if DEBUG
+        debugLog("📡 AirPlay Receiver initialized")
+        #endif
         // Listen for incoming AirPlay connections
     }
 }

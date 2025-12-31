@@ -9,15 +9,17 @@ import UIKit
 /// Video Export Manager with H.264/H.265/ProRes/Dolby Vision HDR support
 /// Optimized for hardware encoding on A12+ chips
 /// Batch export to multiple resolutions simultaneously
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class VideoExportManager: ObservableObject {
+@Observable
+final class VideoExportManager {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isExporting: Bool = false
-    @Published var exportProgress: Double = 0.0
-    @Published var currentExport: ExportJob?
-    @Published var exportQueue: [ExportJob] = []
+    var isExporting: Bool = false
+    var exportProgress: Double = 0.0
+    var currentExport: ExportJob?
+    var exportQueue: [ExportJob] = []
 
     // MARK: - Export Formats
 
@@ -283,7 +285,9 @@ class VideoExportManager: ObservableObject {
             // Check result
             switch exportSession.status {
             case .completed:
-                print("✅ VideoExportManager: Export completed - \(outputURL.lastPathComponent)")
+                #if DEBUG
+                debugLog("✅ VideoExportManager: Export completed - \(outputURL.lastPathComponent)")
+                #endif
             case .failed:
                 throw exportSession.error ?? ExportError.exportFailed
             case .cancelled:
@@ -386,7 +390,9 @@ class VideoExportManager: ObservableObject {
             }
         }
 
-        print("✅ VideoExportManager: Hardware export completed")
+        #if DEBUG
+        debugLog("✅ VideoExportManager: Hardware export completed")
+        #endif
     }
 
     // MARK: - Build Video Settings
@@ -515,12 +521,16 @@ class VideoExportManager: ObservableObject {
             } catch {
                 job.status = .failed(error)
                 exportQueue[index] = job
-                print("❌ VideoExportManager: Batch export failed for job \(index) - \(error)")
+                #if DEBUG
+                debugLog("❌ VideoExportManager: Batch export failed for job \(index) - \(error)")
+                #endif
             }
         }
 
         currentExport = nil
-        print("✅ VideoExportManager: Batch export completed - \(exportQueue.count) jobs")
+        #if DEBUG
+        debugLog("✅ VideoExportManager: Batch export completed - \(exportQueue.count) jobs")
+        #endif
     }
 
     // MARK: - Cancel Export
@@ -533,7 +543,9 @@ class VideoExportManager: ObservableObject {
         exportProgress = 0.0
         currentExportSession = nil
 
-        print("❌ VideoExportManager: Export cancelled")
+        #if DEBUG
+        debugLog("❌ VideoExportManager: Export cancelled")
+        #endif
     }
 
     // MARK: - PNG Sequence Export
@@ -586,13 +598,17 @@ class VideoExportManager: ObservableObject {
                 // Update progress
                 exportProgress = Double(frameIndex + 1) / Double(totalFrames)
             } catch {
-                print("⚠️ VideoExportManager: Failed to export frame \(frameIndex)")
+                #if DEBUG
+                debugLog("⚠️ VideoExportManager: Failed to export frame \(frameIndex)")
+                #endif
             }
         }
 
         isExporting = false
         exportProgress = 1.0
-        print("✅ VideoExportManager: PNG sequence exported - \(totalFrames) frames to \(outputDirectory.lastPathComponent)")
+        #if DEBUG
+        debugLog("✅ VideoExportManager: PNG sequence exported - \(totalFrames) frames to \(outputDirectory.lastPathComponent)")
+        #endif
     }
 
     // MARK: - Animated GIF Export
@@ -660,7 +676,9 @@ class VideoExportManager: ObservableObject {
                 // Update progress
                 exportProgress = Double(frameIndex + 1) / Double(totalFrames)
             } catch {
-                print("⚠️ VideoExportManager: Failed to add frame \(frameIndex) to GIF")
+                #if DEBUG
+                debugLog("⚠️ VideoExportManager: Failed to add frame \(frameIndex) to GIF")
+                #endif
             }
         }
 
@@ -672,7 +690,9 @@ class VideoExportManager: ObservableObject {
 
         isExporting = false
         exportProgress = 1.0
-        print("✅ VideoExportManager: Animated GIF exported - \(totalFrames) frames to \(outputURL.lastPathComponent)")
+        #if DEBUG
+        debugLog("✅ VideoExportManager: Animated GIF exported - \(totalFrames) frames to \(outputURL.lastPathComponent)")
+        #endif
     }
 }
 
@@ -706,3 +726,8 @@ enum ExportError: LocalizedError {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension VideoExportManager: ObservableObject { }

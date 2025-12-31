@@ -16,8 +16,10 @@ import SwiftUI
 
 /// Central hub for all AI-powered audio features
 /// Integrates: Stem Separation, Bio-Reactive Composition, Intelligent Analysis
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-final class AIAudioIntelligenceHub: ObservableObject {
+@Observable
+final class AIAudioIntelligenceHub {
 
     // MARK: - Singleton
 
@@ -26,20 +28,20 @@ final class AIAudioIntelligenceHub: ObservableObject {
     // MARK: - AI Engines
 
     /// AI Stem Separation Engine - Ableton/Logic competitive
-    @Published var stemSeparation = AIStemSeparationEngine()
+    var stemSeparation = AIStemSeparationEngine()
 
     /// Bio-Reactive AI Composer - WORLD FIRST
-    @Published var bioComposer = BioReactiveAIComposer()
+    var bioComposer = BioReactiveAIComposer()
 
     /// Intelligent Audio Analyzer
-    @Published var analyzer = IntelligentAudioAnalyzer()
+    var analyzer = IntelligentAudioAnalyzer()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isProcessing = false
-    @Published var currentOperation: AIOperation = .idle
-    @Published var aiInsights: [AIInsight] = []
-    @Published var generatedContent: GeneratedContent?
+    var isProcessing = false
+    var currentOperation: AIOperation = .idle
+    var aiInsights: [AIInsight] = []
+    var generatedContent: GeneratedContent?
 
     // MARK: - Connections
 
@@ -835,3 +837,7 @@ extension AIAudioIntelligenceHub {
         return await generateFromBio(lengthBars: 4)
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension AIAudioIntelligenceHub: ObservableObject { }

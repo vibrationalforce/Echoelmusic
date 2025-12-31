@@ -26,14 +26,16 @@ import CoreMedia
 /// - Video: SMPTE, ITU-R BT.709/2020
 /// - Loudness: EBU R128, ATSC A/85, BS.1770
 /// - Timecode: SMPTE, LTC, MTC
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class UniversalExportPipeline: ObservableObject {
+@Observable
+final class UniversalExportPipeline {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var availablePresets: [ExportPreset] = []
-    @Published var currentExport: ExportJob?
-    @Published var exportProgress: Float = 0.0
+    var availablePresets: [ExportPreset] = []
+    var currentExport: ExportJob?
+    var exportProgress: Float = 0.0
 
     // MARK: - Export Preset
 
@@ -239,8 +241,10 @@ class UniversalExportPipeline: ObservableObject {
 
     init() {
         loadExportPresets()
-        print("✅ Universal Export Pipeline: Initialized")
-        print("📦 Presets: \(availablePresets.count)")
+        #if DEBUG
+        debugLog("✅", "Universal Export Pipeline: Initialized")
+        debugLog("📦", "Presets: \(availablePresets.count)")
+        #endif
     }
 
     // MARK: - Load Export Presets
@@ -507,13 +511,17 @@ class UniversalExportPipeline: ObservableObject {
             )
         ]
 
-        print("📦 Loaded \(availablePresets.count) export presets")
+        #if DEBUG
+        debugLog("📦", "Loaded \(availablePresets.count) export presets")
+        #endif
     }
 
     // MARK: - Start Export
 
     func startExport(preset: ExportPreset, inputDuration: Double, outputPath: URL) async -> Bool {
-        print("🚀 Starting export: \(preset.name)")
+        #if DEBUG
+        debugLog("🚀", "Starting export: \(preset.name)")
+        #endif
 
         var job = ExportJob(
             preset: preset,
@@ -529,7 +537,9 @@ class UniversalExportPipeline: ObservableObject {
         currentExport = job
 
         // Preparation phase
-        print("   Preparing export...")
+        #if DEBUG
+        debugLog("⏳", "Preparing export...")
+        #endif
         try? await Task.sleep(nanoseconds: 500_000_000)
         job.status = .exporting
         currentExport = job
@@ -543,13 +553,17 @@ class UniversalExportPipeline: ObservableObject {
             // Simulate processing time
             try? await Task.sleep(nanoseconds: 200_000_000)
 
-            print("   Progress: \(Int(progress * 100))%")
+            #if DEBUG
+            debugLog("📊", "Progress: \(Int(progress * 100))%")
+            #endif
         }
 
         // Finalization
         job.status = .finalizing
         currentExport = job
-        print("   Finalizing...")
+        #if DEBUG
+        debugLog("⏳", "Finalizing...")
+        #endif
         try? await Task.sleep(nanoseconds: 500_000_000)
 
         // Complete
@@ -561,8 +575,10 @@ class UniversalExportPipeline: ObservableObject {
         exportProgress = 1.0
 
         let duration = job.endTime!.timeIntervalSince(job.startTime!)
-        print("✅ Export completed in \(String(format: "%.1f", duration))s")
-        print("📁 File size: \(ByteCountFormatter.string(fromByteCount: job.fileSize!, countStyle: .file))")
+        #if DEBUG
+        debugLog("✅", "Export completed in \(String(format: "%.1f", duration))s")
+        debugLog("📁", "File size: \(ByteCountFormatter.string(fromByteCount: job.fileSize!, countStyle: .file))")
+        #endif
 
         return true
     }
@@ -628,3 +644,7 @@ class UniversalExportPipeline: ObservableObject {
         """
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension UniversalExportPipeline: ObservableObject { }

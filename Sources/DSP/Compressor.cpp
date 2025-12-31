@@ -1,4 +1,5 @@
 #include "Compressor.h"
+#include "../Core/DSPOptimizations.h"
 
 Compressor::Compressor() {}
 Compressor::~Compressor() {}
@@ -14,20 +15,31 @@ void Compressor::reset()
 {
     envelopeL = 0.0f;
     envelopeR = 0.0f;
-    gainReduction = 0.0f;
+    gainReduction.store(0.0f);
 }
 
 void Compressor::process(juce::AudioBuffer<float>& buffer)
 {
-    int numSamples = buffer.getNumSamples();
-    int numChannels = buffer.getNumChannels();
+    const int numSamples = buffer.getNumSamples();
+    const int numChannels = buffer.getNumChannels();
+    if (numSamples == 0 || numChannels == 0) return;
+
+    // OPTIMIZATION: Cache channel pointers for all channels (up to 8 for surround)
+    float* channelData[8] = { nullptr };
+    const int maxChannels = juce::jmin(numChannels, 8);
+    for (int ch = 0; ch < maxChannels; ++ch) {
+        channelData[ch] = buffer.getWritePointer(ch);
+    }
+
+    // OPTIMIZATION: Pre-compute makeup gain (constant per block)
+    const float makeup = Echoel::DSP::FastMath::dbToGain(makeupGain);
 
     for (int i = 0; i < numSamples; ++i)
     {
-        // Stereo-link detection
-        float detectionL = numChannels > 0 ? std::abs(buffer.getSample(0, i)) : 0.0f;
-        float detectionR = numChannels > 1 ? std::abs(buffer.getSample(1, i)) : detectionL;
-        float detection = juce::jmax(detectionL, detectionR);
+        // Stereo-link detection using cached pointers
+        const float detectionL = channelData[0] ? std::abs(channelData[0][i]) : 0.0f;
+        const float detectionR = channelData[1] ? std::abs(channelData[1][i]) : detectionL;
+        const float detection = juce::jmax(detectionL, detectionR);
 
         // Envelope follower
         float envelope = envelopeL;
@@ -39,18 +51,16 @@ void Compressor::process(juce::AudioBuffer<float>& buffer)
         envelopeL = envelope;
 
         // Compute gain reduction
-        float gain = computeGain(envelope);
-        gainReduction = 1.0f - gain;
+        const float gain = computeGain(envelope);
+        gainReduction.store(1.0f - gain);
 
-        // Apply makeup gain
-        float makeup = juce::Decibels::decibelsToGain(makeupGain);
-        float totalGain = gain * makeup;
+        // Apply total gain (compression + makeup)
+        const float totalGain = gain * makeup;
 
-        // Apply to all channels
-        for (int channel = 0; channel < numChannels; ++channel)
+        // Apply to all channels using cached pointers
+        for (int ch = 0; ch < maxChannels; ++ch)
         {
-            float sample = buffer.getSample(channel, i);
-            buffer.setSample(channel, i, sample * totalGain);
+            channelData[ch][i] *= totalGain;
         }
     }
 }
@@ -63,6 +73,8 @@ void Compressor::setThreshold(float dB)
 void Compressor::setRatio(float newRatio)
 {
     ratio = juce::jlimit(1.0f, 20.0f, newRatio);
+    // OPTIMIZATION: Cache reciprocal for division-free per-sample processing
+    invRatio = 1.0f / ratio;
 }
 
 void Compressor::setAttack(float ms)
@@ -80,6 +92,11 @@ void Compressor::setRelease(float ms)
 void Compressor::setKnee(float dB)
 {
     knee = juce::jlimit(0.0f, 12.0f, dB);
+    // OPTIMIZATION: Cache reciprocal for division-free per-sample processing
+    if (knee > 0.01f)
+        invTwoKnee = 1.0f / (2.0f * knee);
+    else
+        invTwoKnee = 50.0f;  // Large value for hard knee
 }
 
 void Compressor::setMakeupGain(float dB)
@@ -94,19 +111,19 @@ void Compressor::setMode(Mode mode)
 
 float Compressor::getGainReduction() const
 {
-    return gainReduction;
+    return gainReduction.load();
 }
 
 void Compressor::updateCoefficients()
 {
-    // Convert attack/release times to coefficients
-    attackCoeff = 1.0f - std::exp(-1.0f / (attack * 0.001f * (float)currentSampleRate));
-    releaseCoeff = 1.0f - std::exp(-1.0f / (release * 0.001f * (float)currentSampleRate));
+    // Convert attack/release times to coefficients using fast exp
+    attackCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (attack * 0.001f * (float)currentSampleRate));
+    releaseCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-1.0f / (release * 0.001f * (float)currentSampleRate));
 }
 
 float Compressor::computeGain(float input)
 {
-    float inputDB = juce::Decibels::gainToDecibels(input + 0.00001f);
+    float inputDB = Echoel::DSP::FastMath::gainToDb(input + 0.00001f);
 
     // Soft knee implementation
     float overThreshold = inputDB - threshold;
@@ -114,17 +131,17 @@ float Compressor::computeGain(float input)
 
     if (knee > 0.0f && overThreshold > -knee * 0.5f && overThreshold < knee * 0.5f)
     {
-        // Soft knee region
+        // Soft knee region - OPTIMIZATION: Use cached reciprocals
         float kneeInput = overThreshold + knee * 0.5f;
-        float kneeOutput = kneeInput * kneeInput / (2.0f * knee);
-        float compressionDB = kneeOutput / ratio - kneeOutput;
-        gain = juce::Decibels::decibelsToGain(compressionDB);
+        float kneeOutput = kneeInput * kneeInput * invTwoKnee;
+        float compressionDB = kneeOutput * invRatio - kneeOutput;
+        gain = Echoel::DSP::FastMath::dbToGain(compressionDB);
     }
     else if (overThreshold > 0.0f)
     {
-        // Above threshold
-        float compressionDB = overThreshold / ratio - overThreshold;
-        gain = juce::Decibels::decibelsToGain(compressionDB);
+        // Above threshold - OPTIMIZATION: Use cached reciprocal
+        float compressionDB = overThreshold * invRatio - overThreshold;
+        gain = Echoel::DSP::FastMath::dbToGain(compressionDB);
     }
 
     return gain;

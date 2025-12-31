@@ -1,0 +1,52 @@
+/* Echoelmusic Localizable Strings - Arabic (العربية) - RTL */
+
+/* App */
+"app.name" = "Echoelmusic";
+"app.tagline" = "نَفَس → صوت";
+
+/* Onboarding */
+"onboarding.welcome" = "مرحباً بك في Echoelmusic";
+"onboarding.subtitle" = "حوّل بياناتك الحيوية إلى موسيقى";
+"onboarding.getStarted" = "ابدأ الآن";
+"onboarding.skip" = "تخطي";
+"onboarding.next" = "التالي";
+"onboarding.step1.title" = "اربط جسمك";
+"onboarding.step1.description" = "استخدم Apple Watch أو Polar H10 أو تنفسك لإنشاء الموسيقى";
+"onboarding.step2.title" = "اشعر بالانسياب";
+"onboarding.step2.description" = "معدل ضربات قلبك و HRV يشكلان الصوت في الوقت الفعلي";
+"onboarding.step3.title" = "شارك وتواصل";
+"onboarding.step3.description" = "بث جلساتك أو العب مع موسيقيين من جميع أنحاء العالم";
+
+/* Session */
+"session.title" = "جلسة";
+"session.start" = "بدء الجلسة";
+"session.stop" = "إيقاف";
+"session.pause" = "إيقاف مؤقت";
+"session.resume" = "استئناف";
+"session.stats.duration" = "المدة";
+"session.stats.heartRate" = "معدل ضربات القلب";
+"session.stats.hrv" = "تغير معدل ضربات القلب";
+"session.stats.coherence" = "التماسك";
+"session.stats.bpm" = "نبضة/دقيقة";
+"session.stats.ms" = "مللي ثانية";
+
+/* Settings */
+"settings.title" = "الإعدادات";
+"settings.audio.title" = "الصوت";
+"settings.sensor.title" = "المستشعرات";
+"settings.accessibility.title" = "إمكانية الوصول";
+"settings.language.title" = "اللغة";
+
+/* Actions */
+"actions.ok" = "موافق";
+"actions.cancel" = "إلغاء";
+"actions.save" = "حفظ";
+"actions.delete" = "حذف";
+"actions.done" = "تم";
+"actions.back" = "رجوع";
+"actions.close" = "إغلاق";
+"actions.settings" = "الإعدادات";
+
+/* Wellness */
+"wellness.disclaimer" = "Echoelmusic هو منتج للعافية وليس جهازاً طبياً. لا يقوم بتشخيص أو علاج أو منع أي مرض. استشر مقدم الرعاية الصحية للحصول على المشورة الطبية.";
+"wellness.notMedical" = "ليس جهازاً طبياً";

@@ -13,17 +13,19 @@ import Combine
 ///
 /// This bridge recreates the WorldMusicDatabase.cpp data in Swift
 /// for native iOS integration until full C++ bridging is implemented.
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class WorldMusicBridge: ObservableObject {
+@Observable
+final class WorldMusicBridge {
 
     // MARK: - Singleton
 
     static let shared = WorldMusicBridge()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var availableStyles: [MusicStyle] = []
-    @Published var currentStyle: MusicStyle?
+    var availableStyles: [MusicStyle] = []
+    var currentStyle: MusicStyle?
 
     // MARK: - Types
 
@@ -90,7 +92,9 @@ class WorldMusicBridge: ObservableObject {
 
     private init() {
         loadMusicStyles()
-        print("✅ WorldMusicBridge: Loaded \(availableStyles.count) music styles")
+        #if DEBUG
+        debugLog("✅ WorldMusicBridge: Loaded \(availableStyles.count) music styles")
+        #endif
     }
 
     // MARK: - Load Music Styles (Mirror of WorldMusicDatabase.cpp)
@@ -751,3 +755,8 @@ class WorldMusicBridge: ObservableObject {
         return availableStyles.first { $0.name == "Pop" }
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension WorldMusicBridge: ObservableObject { }

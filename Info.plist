@@ -11,7 +11,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Blab</string>
+	<string>Echoelmusic</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -21,7 +21,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Blab needs microphone access to transform your voice and breath into immersive audio-visual experiences.</string>
+	<string>Echoelmusic kann deine Atmung über das Mikrofon erkennen um die Musik darauf abzustimmen.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -51,12 +51,19 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
+		<string>bluetooth-central</string>
 	</array>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Blab may use heart rate data to create adaptive audio-visual experiences.</string>
+	<string>Echoelmusic verwendet deine Herzfrequenz und HRV um Musik und Visualisierungen zu generieren, die auf deinen Körper reagieren.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Echoelmusic speichert deine Biofeedback-Sessions in Apple Health.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Blab uses your camera for face tracking to control audio parameters with your facial expressions.</string>
+	<string>Echoelmusic nutzt die Kamera für Face-Tracking um Audio-Parameter mit deiner Mimik zu steuern.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Blab uses face tracking (not Face ID) to map your expressions to audio-visual parameters.</string>
+	<string>Echoelmusic nutzt Face-Tracking (nicht Face ID) um deine Mimik auf Audio-Parameter zu mappen.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Echoelmusic verbindet sich mit Herzfrequenz-Sensoren wie dem Polar H10 für Echtzeit-Biofeedback.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Echoelmusic verbindet sich mit Bluetooth-Kopfhörern für Ultra-Low-Latency Audio.</string>
 </dict>
 </plist>

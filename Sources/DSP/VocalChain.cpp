@@ -1,4 +1,5 @@
 #include "VocalChain.h"
+#include "../Core/DSPOptimizations.h"
 
 VocalChain::VocalChain()
 {
@@ -36,6 +37,9 @@ void VocalChain::prepare(double sampleRate, int maximumBlockSize)
     // Prepare reverb
     reverb.prepare(spec);
 
+    // Pre-allocate reverb buffer (avoid per-frame allocation)
+    reverbBuffer.setSize(2, maximumBlockSize);
+
     // Prepare delay
     delayLine.prepare(spec);
     delayLine.setMaximumDelayInSamples(static_cast<int>(2.0f * sampleRate));  // 2s max
@@ -66,6 +70,12 @@ void VocalChain::process(juce::AudioBuffer<float>& buffer)
 
     if (numChannels == 0 || numSamples == 0)
         return;
+
+    // Update cached coefficients ONCE per block (not per sample!)
+    hpfL.updateCoefficients();
+    hpfR.updateCoefficients();
+    compressorL.updateCoefficients();
+    compressorR.updateCoefficients();
 
     // Process each channel through the chain
     for (int channel = 0; channel < juce::jmin(2, numChannels); ++channel)
@@ -124,20 +134,26 @@ void VocalChain::process(juce::AudioBuffer<float>& buffer)
         }
     }
 
-    // 6. Reverb
+    // 6. Reverb (uses pre-allocated buffer from prepare())
     if (reverbEnabled && reverbMix > 0.01f)
     {
-        juce::AudioBuffer<float> reverbBuffer(numChannels, numSamples);
-        for (int ch = 0; ch < numChannels; ++ch)
-            reverbBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
+        // OPTIMIZATION: No resize in audio thread - use pre-allocated size
+        const int safeNumSamples = juce::jmin(numSamples, reverbBuffer.getNumSamples());
+        const int safeNumChannels = juce::jmin(numChannels, reverbBuffer.getNumChannels());
+        jassert(safeNumSamples >= numSamples);  // Buffer should be pre-allocated large enough
 
-        juce::dsp::AudioBlock<float> block(reverbBuffer);
+        for (int ch = 0; ch < safeNumChannels; ++ch)
+            reverbBuffer.copyFrom(ch, 0, buffer, ch, 0, safeNumSamples);
+
+        juce::dsp::AudioBlock<float> block(reverbBuffer.getArrayOfWritePointers(),
+                                           static_cast<size_t>(safeNumChannels),
+                                           static_cast<size_t>(safeNumSamples));
         juce::dsp::ProcessContextReplacing<float> context(block);
         reverb.process(context);
 
         // Mix wet
-        for (int ch = 0; ch < numChannels; ++ch)
-            buffer.addFrom(ch, 0, reverbBuffer, ch, 0, numSamples, reverbMix);
+        for (int ch = 0; ch < safeNumChannels; ++ch)
+            buffer.addFrom(ch, 0, reverbBuffer, ch, 0, safeNumSamples, reverbMix);
     }
 
     // 7. Delay
@@ -211,15 +227,15 @@ void VocalChain::setCompressorRatio(float ratio)
 void VocalChain::setCompressorAttack(float ms)
 {
     compAttack = ms;
-    compressorL.attack = ms;
-    compressorR.attack = ms;
+    compressorL.setAttack(ms);
+    compressorR.setAttack(ms);
 }
 
 void VocalChain::setCompressorRelease(float ms)
 {
     compRelease = ms;
-    compressorL.release = ms;
-    compressorR.release = ms;
+    compressorL.setRelease(ms);
+    compressorR.setRelease(ms);
 }
 
 void VocalChain::setCompressorMakeup(float dB)
@@ -234,7 +250,7 @@ void VocalChain::setEQLowGain(float dB)
     eqLowGain = dB;
     // Update filter coefficients for low shelf @ 200 Hz
     auto coeffs = juce::dsp::IIR::Coefficients<float>::makeLowShelf(
-        currentSampleRate, 200.0f, 0.7f, juce::Decibels::decibelsToGain(dB)
+        currentSampleRate, 200.0f, 0.7f, Echoel::DSP::FastMath::dbToGain(dB)
     );
     eqFilters[0].coefficients = coeffs;  // L
     eqFilters[3].coefficients = coeffs;  // R
@@ -245,7 +261,7 @@ void VocalChain::setEQMidGain(float dB)
     eqMidGain = dB;
     // Update filter coefficients for peak @ 2000 Hz
     auto coeffs = juce::dsp::IIR::Coefficients<float>::makePeakFilter(
-        currentSampleRate, 2000.0f, 1.0f, juce::Decibels::decibelsToGain(dB)
+        currentSampleRate, 2000.0f, 1.0f, Echoel::DSP::FastMath::dbToGain(dB)
     );
     eqFilters[1].coefficients = coeffs;  // L
     eqFilters[4].coefficients = coeffs;  // R
@@ -256,7 +272,7 @@ void VocalChain::setEQHighGain(float dB)
     eqHighGain = dB;
     // Update filter coefficients for high shelf @ 8000 Hz
     auto coeffs = juce::dsp::IIR::Coefficients<float>::makeHighShelf(
-        currentSampleRate, 8000.0f, 0.7f, juce::Decibels::decibelsToGain(dB)
+        currentSampleRate, 8000.0f, 0.7f, Echoel::DSP::FastMath::dbToGain(dB)
     );
     eqFilters[2].coefficients = coeffs;  // L
     eqFilters[5].coefficients = coeffs;  // R

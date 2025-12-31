@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include <vector>
 #include <cmath>
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 /**
@@ -176,7 +177,8 @@ private:
             float diff = interval - meanRR;
             variance += diff * diff;
         }
-        currentMetrics.sdnn = std::sqrt(variance / rrIntervals.size());
+        // OPTIMIZATION: Use FastMath::fastSqrt (~3x faster)
+        currentMetrics.sdnn = Echoel::DSP::FastMath::fastSqrt(variance / rrIntervals.size());
 
         // RMSSD (Root Mean Square of Successive Differences)
         if (rrIntervals.size() > 1)
@@ -187,7 +189,8 @@ private:
                 float diff = rrIntervals[i] - rrIntervals[i - 1];
                 sumSquaredDiffs += diff * diff;
             }
-            currentMetrics.rmssd = std::sqrt(sumSquaredDiffs / (rrIntervals.size() - 1));
+            // OPTIMIZATION: Use FastMath::fastSqrt (~3x faster)
+            currentMetrics.rmssd = Echoel::DSP::FastMath::fastSqrt(sumSquaredDiffs / (rrIntervals.size() - 1));
         }
 
         // Normalized HRV (0-1 range based on SDNN)

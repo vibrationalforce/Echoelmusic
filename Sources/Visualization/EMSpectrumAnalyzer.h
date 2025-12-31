@@ -269,11 +269,15 @@ public:
             return;
 
         // Copy samples to FFT buffer
-        for (int i = 0; i < juce::jmin(buffer.getNumSamples(), fftSize); ++i)
+        // OPTIMIZATION: Cache read pointers to avoid per-sample virtual calls
+        const float* leftPtr = buffer.getReadPointer(0);
+        const float* rightPtr = (buffer.getNumChannels() > 1) ? buffer.getReadPointer(1) : nullptr;
+        const int numSamples = juce::jmin(buffer.getNumSamples(), fftSize);
+        for (int i = 0; i < numSamples; ++i)
         {
-            float sample = buffer.getSample(0, i);
-            if (buffer.getNumChannels() > 1)
-                sample = (sample + buffer.getSample(1, i)) * 0.5f;
+            float sample = leftPtr[i];
+            if (rightPtr != nullptr)
+                sample = (sample + rightPtr[i]) * 0.5f;
 
             fftData[static_cast<size_t>(i)] = sample;
         }

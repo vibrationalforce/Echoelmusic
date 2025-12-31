@@ -1,4 +1,5 @@
 #include "PitchCorrection.h"
+#include "../Core/DSPOptimizations.h"
 
 PitchCorrection::PitchCorrection()
 {
@@ -29,6 +30,9 @@ void PitchCorrection::prepare(double sampleRate, int maximumBlockSize)
     smootherL.setRetuneSpeed(retuneSpeed);
     smootherR.setRetuneSpeed(retuneSpeed);
 
+    // Pre-allocate dry buffer (OPTIMIZATION: avoids per-frame allocation)
+    dryBuffer.setSize(2, maximumBlockSize);
+
     reset();
 }
 
@@ -48,8 +52,9 @@ void PitchCorrection::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0 || correctionAmount < 0.01f)
         return;
 
-    // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
+    // Store dry signal using pre-allocated buffer (no allocation in audio thread)
+    if (dryBuffer.getNumChannels() < numChannels || dryBuffer.getNumSamples() < numSamples)
+        dryBuffer.setSize(numChannels, numSamples, false, false, true);
     for (int ch = 0; ch < numChannels; ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
@@ -82,10 +87,11 @@ void PitchCorrection::process(juce::AudioBuffer<float>& buffer)
                     // Quantize to scale
                     float targetPitch = quantizer.quantizePitch(detectedPitch);
 
-                    // Apply humanize (preserve natural vibrato)
+                    // Apply humanize (preserve natural vibrato) - using fast sin
                     if (humanize > 0.01f)
                     {
-                        float vibrato = std::sin(static_cast<float>(sample) * 0.005f) * 5.0f;
+                        const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
+                        float vibrato = trigTables.fastSinRad(static_cast<float>(sample) * 0.005f) * 5.0f;
                         targetPitch += vibrato * humanize;
                     }
 

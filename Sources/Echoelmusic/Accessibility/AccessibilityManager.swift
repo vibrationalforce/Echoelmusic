@@ -6,6 +6,7 @@ import Combine
 /// Accessibility Manager - WCAG 2.1 AAA Compliance
 /// Ensures Echoelmusic is usable by everyone, regardless of ability
 /// Comprehensive accessibility features for visual, auditory, motor, and cognitive needs
+/// Migrated to @Observable for better performance (Swift 5.9+)
 ///
 /// WCAG 2.1 AAA Guidelines Implemented:
 /// - Perceivable: Alternative text, captions, audio descriptions
@@ -13,22 +14,23 @@ import Combine
 /// - Understandable: Readable, predictable, input assistance
 /// - Robust: Compatible with assistive technologies
 @MainActor
-class AccessibilityManager: ObservableObject {
+@Observable
+final class AccessibilityManager {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isVoiceOverEnabled: Bool = false
-    @Published var isSwitchControlEnabled: Bool = false
-    @Published var isReduceMotionEnabled: Bool = false
-    @Published var isReduceTransparencyEnabled: Bool = false
-    @Published var isIncreasedContrastEnabled: Bool = false
-    @Published var preferredContentSizeCategory: ContentSizeCategory = .large
-    @Published var colorBlindnessMode: ColorBlindnessMode = .none
-    @Published var hapticFeedbackLevel: HapticLevel = .normal
+    var isVoiceOverEnabled: Bool = false
+    var isSwitchControlEnabled: Bool = false
+    var isReduceMotionEnabled: Bool = false
+    var isReduceTransparencyEnabled: Bool = false
+    var isIncreasedContrastEnabled: Bool = false
+    var preferredContentSizeCategory: ContentSizeCategory = .large
+    var colorBlindnessMode: ColorBlindnessMode = .none
+    var hapticFeedbackLevel: HapticLevel = .normal
 
     // MARK: - Accessibility Modes
 
-    @Published var currentMode: AccessibilityMode = .standard
+    var currentMode: AccessibilityMode = .standard
 
     enum AccessibilityMode: String, CaseIterable {
         case standard = "Standard"
@@ -138,7 +140,7 @@ class AccessibilityManager: ObservableObject {
         }
     }
 
-    @Published var preferredTouchTargetSize: TouchTargetSize = .recommended
+    var preferredTouchTargetSize: TouchTargetSize = .recommended
 
     // MARK: - Text Alternatives
 
@@ -166,13 +168,13 @@ class AccessibilityManager: ObservableObject {
 
     // MARK: - Audio Descriptions
 
-    @Published var audioDescriptionsEnabled: Bool = false
-    @Published var liveAudioCaptionsEnabled: Bool = false
+    var audioDescriptionsEnabled: Bool = false
+    var liveAudioCaptionsEnabled: Bool = false
 
     // MARK: - Timing Controls (WCAG 2.2.1 - Timing Adjustable)
 
-    @Published var sessionTimeout: TimeInterval = 3600  // 1 hour default
-    @Published var animationSpeed: AnimationSpeed = .normal
+    var sessionTimeout: TimeInterval = 3600  // 1 hour default
+    var animationSpeed: AnimationSpeed = .normal
 
     enum AnimationSpeed: String, CaseIterable {
         case off = "Off"
@@ -192,9 +194,9 @@ class AccessibilityManager: ObservableObject {
 
     // MARK: - Focus Management
 
-    @Published var currentFocusElement: String?
-    @Published var focusRingColor: Color = .blue
-    @Published var focusRingWidth: CGFloat = 3.0
+    var currentFocusElement: String?
+    var focusRingColor: Color = .blue
+    var focusRingWidth: CGFloat = 3.0
 
     // MARK: - Initialization
 
@@ -203,9 +205,11 @@ class AccessibilityManager: ObservableObject {
         setupAccessibilityNotifications()
         loadAccessibilityLabels()
 
-        print("✅ Accessibility Manager: Initialized")
-        print("♿️ WCAG 2.1 AAA Compliance Active")
-        print("🌐 Universal Design Principles Applied")
+        #if DEBUG
+        debugLog("✅", "Accessibility Manager: Initialized")
+        debugLog("♿️", "WCAG 2.1 AAA Compliance Active")
+        debugLog("🌐", "Universal Design Principles Applied")
+        #endif
     }
 
     deinit {
@@ -230,13 +234,15 @@ class AccessibilityManager: ObservableObject {
         let uiCategory = UIApplication.shared.preferredContentSizeCategory
         preferredContentSizeCategory = ContentSizeCategory(uiCategory)
 
-        print("📱 System Accessibility Settings:")
-        print("   - VoiceOver: \(isVoiceOverEnabled)")
-        print("   - Switch Control: \(isSwitchControlEnabled)")
-        print("   - Reduce Motion: \(isReduceMotionEnabled)")
-        print("   - Increase Contrast: \(isIncreasedContrastEnabled)")
-        print("   - Text Size: \(preferredContentSizeCategory)")
+        #if DEBUG
+        debugLog("📱", "System Accessibility Settings:")
+        debugLog("📱", "   - VoiceOver: \(isVoiceOverEnabled)")
+        debugLog("📱", "   - Switch Control: \(isSwitchControlEnabled)")
+        debugLog("📱", "   - Reduce Motion: \(isReduceMotionEnabled)")
+        debugLog("📱", "   - Increase Contrast: \(isIncreasedContrastEnabled)")
+        debugLog("📱", "   - Text Size: \(preferredContentSizeCategory)")
         #endif
+        #endif  // os(iOS)
 
         // Auto-enable accessibility mode based on system settings
         if isVoiceOverEnabled {
@@ -411,7 +417,9 @@ class AccessibilityManager: ObservableObject {
 
     func setFocus(to element: String) {
         currentFocusElement = element
-        print("♿️ Focus set to: \(element)")
+        #if DEBUG
+        debugLog("♿️", "Focus set to: \(element)")
+        #endif
     }
 
     // MARK: - Seizure Prevention (WCAG 2.3.1)
@@ -421,7 +429,9 @@ class AccessibilityManager: ObservableObject {
         let issSafe = flashesPerSecond <= 3.0
 
         if !issSafe {
-            print("⚠️ SEIZURE RISK: Flash rate \(flashesPerSecond) Hz exceeds 3 Hz limit")
+            #if DEBUG
+            debugLog("⚠️", "SEIZURE RISK: Flash rate \(flashesPerSecond) Hz exceeds 3 Hz limit")
+            #endif
             announce("Warning: Flashing content disabled for safety", priority: .high)
         }
 
@@ -449,9 +459,9 @@ class AccessibilityManager: ObservableObject {
 
     // MARK: - Keyboard Navigation Support
 
-    @Published var keyboardNavigationEnabled: Bool = true
-    @Published var focusableElements: [String] = []
-    @Published var currentFocusIndex: Int = 0
+    var keyboardNavigationEnabled: Bool = true
+    var focusableElements: [String] = []
+    var currentFocusIndex: Int = 0
 
     func registerFocusableElement(_ element: String) {
         if !focusableElements.contains(element) {
@@ -473,7 +483,7 @@ class AccessibilityManager: ObservableObject {
 
     // MARK: - Simplified UI Mode (Cognitive Accessibility)
 
-    @Published var simplifiedMode: Bool = false
+    var simplifiedMode: Bool = false
 
     func enableSimplifiedMode() {
         simplifiedMode = true
@@ -483,7 +493,9 @@ class AccessibilityManager: ObservableObject {
         isReduceTransparencyEnabled = true
         animationSpeed = .slow
 
-        print("🧠 Simplified Mode: Enabled")
+        #if DEBUG
+        debugLog("🧠", "Simplified Mode: Enabled")
+        #endif
         announce("Simplified mode activated. Interface complexity reduced.", priority: .normal)
     }
 
@@ -493,7 +505,9 @@ class AccessibilityManager: ObservableObject {
         liveAudioCaptionsEnabled = true
         audioDescriptionsEnabled = true
 
-        print("👂 Live Captions: Enabled")
+        #if DEBUG
+        debugLog("👂", "Live Captions: Enabled")
+        #endif
         announce("Live captions enabled. All audio will be transcribed.", priority: .normal)
     }
 
@@ -514,6 +528,11 @@ class AccessibilityManager: ObservableObject {
         )
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows AccessibilityManager to work with older SwiftUI code expecting ObservableObject
+extension AccessibilityManager: ObservableObject { }
 
 // MARK: - Content Size Category Extension
 

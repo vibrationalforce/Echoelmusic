@@ -1,0 +1,122 @@
+/* Echoelmusic Localizable Strings - Korean (한국어) */
+
+/* App */
+"app.name" = "Echoelmusic";
+"app.tagline" = "호흡 → 소리";
+
+/* Onboarding */
+"onboarding.welcome" = "Echoelmusic에 오신 것을 환영합니다";
+"onboarding.subtitle" = "바이오피드백을 음악으로 변환하세요";
+"onboarding.getStarted" = "시작하기";
+"onboarding.skip" = "건너뛰기";
+"onboarding.next" = "다음";
+"onboarding.step1.title" = "몸을 연결하세요";
+"onboarding.step1.description" = "Apple Watch, Polar H10 또는 호흡으로 음악을 만드세요";
+"onboarding.step2.title" = "플로우를 느끼세요";
+"onboarding.step2.description" = "심박수와 HRV가 실시간으로 소리를 형성합니다";
+"onboarding.step3.title" = "공유하고 연결하세요";
+"onboarding.step3.description" = "세션을 스트리밍하거나 전 세계 뮤지션과 잼하세요";
+
+/* Permissions */
+"permissions.title" = "권한";
+"permissions.microphone.title" = "마이크 접근";
+"permissions.microphone.description" = "호흡과 목소리를 감지하여 음악을 만듭니다";
+"permissions.microphone.denied" = "마이크 접근이 거부되었습니다. 설정에서 활성화해 주세요.";
+"permissions.healthkit.title" = "건강 접근";
+"permissions.healthkit.description" = "Apple Watch에서 심박수와 HRV를 읽습니다";
+"permissions.healthkit.denied" = "건강 접근이 거부되었습니다. 데모 모드를 활성화하거나 설정에서 접근을 허용해 주세요.";
+"permissions.bluetooth.title" = "블루투스 접근";
+"permissions.bluetooth.description" = "Polar H10 또는 다른 심박수 센서에 연결";
+
+/* Session */
+"session.title" = "세션";
+"session.start" = "세션 시작";
+"session.stop" = "중지";
+"session.pause" = "일시정지";
+"session.resume" = "재개";
+"session.stats.duration" = "시간";
+"session.stats.heartRate" = "심박수";
+"session.stats.hrv" = "HRV";
+"session.stats.coherence" = "일관성";
+"session.stats.bpm" = "BPM";
+"session.stats.ms" = "ms";
+
+/* Settings */
+"settings.title" = "설정";
+"settings.audio.title" = "오디오";
+"settings.audio.output" = "출력 장치";
+"settings.audio.latency" = "지연";
+"settings.audio.binauralBeats" = "바이노럴 비트";
+"settings.audio.spatialAudio" = "공간 오디오";
+"settings.sensor.title" = "센서";
+"settings.sensor.appleWatch" = "Apple Watch";
+"settings.sensor.polarH10" = "Polar H10";
+"settings.sensor.microphone" = "마이크 (호흡)";
+"settings.sensor.demoMode" = "데모 모드";
+"settings.accessibility.title" = "손쉬운 사용";
+"settings.accessibility.audioHaptic" = "오디오-햅틱";
+"settings.accessibility.signLanguage" = "수화";
+"settings.accessibility.eyeTracking" = "시선 추적";
+"settings.accessibility.reduceMotion" = "동작 줄이기";
+"settings.language.title" = "언어";
+"settings.language.systemDefault" = "시스템 기본값";
+
+/* Streaming */
+"streaming.title" = "라이브 스트리밍";
+"streaming.goLive" = "라이브 시작";
+"streaming.endStream" = "스트리밍 종료";
+"streaming.viewers" = "시청자";
+"streaming.quality" = "품질";
+"streaming.platforms.youtube" = "YouTube";
+"streaming.platforms.twitch" = "Twitch";
+"streaming.platforms.facebook" = "Facebook";
+"streaming.platforms.tiktok" = "TikTok";
+"streaming.platforms.custom" = "사용자 정의 RTMP";
+
+/* Collaboration */
+"collaboration.title" = "잼 세션";
+"collaboration.findSession" = "세션 찾기";
+"collaboration.createSession" = "세션 만들기";
+"collaboration.quickJoin" = "빠른 참가";
+"collaboration.leave" = "나가기";
+"collaboration.participants" = "참가자";
+"collaboration.latency" = "지연";
+"collaboration.genres.rock" = "록";
+"collaboration.genres.jazz" = "재즈";
+"collaboration.genres.electronic" = "일렉트로닉";
+"collaboration.genres.classical" = "클래식";
+"collaboration.genres.world" = "월드 뮤직";
+"collaboration.genres.ambient" = "앰비언트";
+
+/* Visualization */
+"visualization.title" = "시각화";
+"visualization.particles" = "파티클";
+"visualization.cymatics" = "사이마틱스";
+"visualization.waveform" = "파형";
+"visualization.spectral" = "스펙트럼";
+"visualization.mandala" = "만다라";
+
+/* Errors */
+"errors.generic" = "문제가 발생했습니다";
+"errors.network" = "네트워크 연결 실패";
+"errors.audio" = "오디오 시스템 오류";
+"errors.healthkit" = "건강 데이터에 접근할 수 없습니다";
+"errors.bluetooth" = "블루투스 연결 실패";
+"errors.tryAgain" = "다시 시도";
+"errors.dismiss" = "닫기";
+
+/* Actions */
+"actions.ok" = "확인";
+"actions.cancel" = "취소";
+"actions.save" = "저장";
+"actions.delete" = "삭제";
+"actions.edit" = "편집";
+"actions.share" = "공유";
+"actions.done" = "완료";
+"actions.back" = "뒤로";
+"actions.close" = "닫기";
+"actions.settings" = "설정";
+
+/* Wellness */
+"wellness.disclaimer" = "Echoelmusic은 웰니스 제품이며 의료 기기가 아닙니다. 질병을 진단, 치료 또는 예방하지 않습니다. 의료 조언은 의료 전문가와 상담하세요.";
+"wellness.notMedical" = "의료 기기가 아닙니다";

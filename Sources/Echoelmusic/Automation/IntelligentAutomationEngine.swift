@@ -29,15 +29,17 @@ import Combine
 /// 🧠 Bio-reactive: Effects respond to your state
 /// 🎬 Cinematic: Film-grade automation curves
 /// 🎸 Performance: Real-time intelligent effects
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class IntelligentAutomationEngine: ObservableObject {
+@Observable
+final class IntelligentAutomationEngine {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var automationMode: AutomationMode = .assistive
-    @Published var activeAutomations: [TrackAutomation] = []
-    @Published var suggestions: [AutomationSuggestion] = []
-    @Published var learningFromUser: Bool = true
+    var automationMode: AutomationMode = .assistive
+    var activeAutomations: [TrackAutomation] = []
+    var suggestions: [AutomationSuggestion] = []
+    var learningFromUser: Bool = true
 
     // MARK: - Automation Mode
 
@@ -305,15 +307,19 @@ class IntelligentAutomationEngine: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Intelligent Automation Engine: Initialized")
-        print("🎚️ Mode: \(automationMode.rawValue)")
-        print("🧠 Learning: \(learningFromUser ? "Enabled" : "Disabled")")
+        #if DEBUG
+        debugLog("✅", "Intelligent Automation Engine: Initialized")
+        debugLog("🎚️", "Mode: \(automationMode.rawValue)")
+        debugLog("🧠", "Learning: \(learningFromUser ? "Enabled" : "Disabled")")
+        #endif
     }
 
     // MARK: - Analyze Mix
 
     func analyzeMix(tracks: [AudioTrack]) -> MixAnalysis {
-        print("🔍 Analyzing mix...")
+        #if DEBUG
+        debugLog("🔍", "Analyzing mix...")
+        #endif
 
         // Simulate mix analysis
         let loudness: Float = -14.0  // Target for streaming: -14 LUFS
@@ -358,7 +364,9 @@ class IntelligentAutomationEngine: ObservableObject {
             ))
         }
 
-        print("✅ Mix analysis complete: \(issues.count) issues found")
+        #if DEBUG
+        debugLog("✅", "Mix analysis complete: \(issues.count) issues found")
+        #endif
 
         return MixAnalysis(
             overallLoudness: loudness,
@@ -382,7 +390,9 @@ class IntelligentAutomationEngine: ObservableObject {
     func generateSuggestions(for track: AudioTrack, context: MusicalContext) -> [AutomationSuggestion] {
         var suggestions: [AutomationSuggestion] = []
 
-        print("💡 Generating automation suggestions for: \(track.name)")
+        #if DEBUG
+        debugLog("💡", "Generating automation suggestions for: \(track.name)")
+        #endif
 
         // Suggest filter sweep for introduction
         if context.section == .intro {
@@ -459,7 +469,9 @@ class IntelligentAutomationEngine: ObservableObject {
             }
         }
 
-        print("✅ Generated \(suggestions.count) suggestions (avg confidence: \(Int(suggestions.map { $0.confidence }.reduce(0, +) / Float(suggestions.count) * 100))%)")
+        #if DEBUG
+        debugLog("✅", "Generated \(suggestions.count) suggestions (avg confidence: \(Int(suggestions.map { $0.confidence }.reduce(0, +) / Float(suggestions.count) * 100))%)")
+        #endif
 
         return suggestions
     }
@@ -493,7 +505,9 @@ class IntelligentAutomationEngine: ObservableObject {
     // MARK: - Bio-Reactive Automation
 
     func generateBioReactiveAutomation(hrv: Float, coherence: Float, parameter: TrackAutomation.AutomationParameter, duration: Double) -> TrackAutomation {
-        print("🧠 Generating bio-reactive automation...")
+        #if DEBUG
+        debugLog("🧠", "Generating bio-reactive automation...")
+        #endif
 
         var points: [TrackAutomation.AutomationPoint] = []
 
@@ -545,7 +559,9 @@ class IntelligentAutomationEngine: ObservableObject {
             points.append(TrackAutomation.AutomationPoint(time: duration, value: 0.5, tension: 0.0))
         }
 
-        print("✅ Bio-reactive automation generated: \(points.count) points")
+        #if DEBUG
+        debugLog("✅", "Bio-reactive automation generated: \(points.count) points")
+        #endif
 
         return TrackAutomation(
             trackID: "bio-track",
@@ -571,16 +587,20 @@ class IntelligentAutomationEngine: ObservableObject {
 
         userProfile.learn(from: decision)
 
-        print("📚 Learned from user decision: \(parameter.rawValue) = \(value) in \(context)")
+        #if DEBUG
+        debugLog("📚", "Learned from user decision: \(parameter.rawValue) = \(value) in \(context)")
+        #endif
     }
 
     // MARK: - Apply Automation
 
     func applyAutomation(_ automation: TrackAutomation, to track: AudioTrack) {
         activeAutomations.append(automation)
-        print("✅ Applied automation: \(automation.parameter.rawValue) to \(track.name)")
-        print("   Source: \(automation.source.rawValue)")
-        print("   Points: \(automation.points.count)")
+        #if DEBUG
+        debugLog("✅", "Applied automation: \(automation.parameter.rawValue) to \(track.name)")
+        debugLog("✅", "   Source: \(automation.source.rawValue)")
+        debugLog("✅", "   Points: \(automation.points.count)")
+        #endif
     }
 
     // MARK: - Cinematic Automation Presets
@@ -648,7 +668,9 @@ class IntelligentAutomationEngine: ObservableObject {
             ))
         }
 
-        print("🎬 Generated cinematic automation: \(style.rawValue)")
+        #if DEBUG
+        debugLog("🎬", "Generated cinematic automation: \(style.rawValue)")
+        #endif
 
         return automations
     }
@@ -694,3 +716,7 @@ class IntelligentAutomationEngine: ObservableObject {
         """
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension IntelligentAutomationEngine: ObservableObject { }

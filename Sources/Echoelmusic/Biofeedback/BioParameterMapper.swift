@@ -6,38 +6,40 @@ import Combine
 /// Heart Rate → Tempo, Pitch Shift, Frequency
 /// Voice Pitch → Base Note, Harmonics
 /// Implements exponential smoothing for natural parameter changes
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class BioParameterMapper: ObservableObject {
+@Observable
+final class BioParameterMapper {
 
-    // MARK: - Published Mapped Parameters
+    // MARK: - Mapped Parameters
 
     /// Reverb wet/dry mix (0.0 - 1.0)
     /// Mapped from: HRV Coherence (higher coherence = more reverb)
-    @Published var reverbWet: Float = 0.3
+    var reverbWet: Float = 0.3
 
     /// Filter cutoff frequency (Hz)
     /// Mapped from: Heart Rate (higher HR = higher cutoff)
-    @Published var filterCutoff: Float = 1000.0
+    var filterCutoff: Float = 1000.0
 
     /// Amplitude/volume (0.0 - 1.0)
     /// Mapped from: HRV Coherence + Audio Level
-    @Published var amplitude: Float = 0.5
+    var amplitude: Float = 0.5
 
     /// Base note frequency (Hz)
     /// Mapped from: Voice Pitch
-    @Published var baseFrequency: Float = 432.0
+    var baseFrequency: Float = 432.0
 
     /// Tempo (BPM)
     /// Mapped from: Heart Rate (synchronized breathing)
-    @Published var tempo: Float = 60.0
+    var tempo: Float = 60.0
 
     /// Spatial position (X/Y/Z)
     /// Mapped from: HRV Coherence (higher = more centered)
-    @Published var spatialPosition: (x: Float, y: Float, z: Float) = (0, 0, 1)
+    var spatialPosition: (x: Float, y: Float, z: Float) = (0, 0, 1)
 
     /// Harmonic richness (number of harmonics)
     /// Mapped from: Voice pitch clarity
-    @Published var harmonicCount: Int = 5
+    var harmonicCount: Int = 5
 
 
     // MARK: - Smoothing Configuration
@@ -283,7 +285,9 @@ class BioParameterMapper: ObservableObject {
     private func logParameters() {
         let timestamp = Int(Date().timeIntervalSince1970)
         if timestamp % 5 == 0 {  // Every 5 seconds
-            print("🎛️  BioParams: Rev:\(Int(reverbWet*100))% Filt:\(Int(filterCutoff))Hz Amp:\(Int(amplitude*100))% Freq:\(Int(baseFrequency))Hz")
+            #if DEBUG
+            debugLog("🎛️", "BioParams: Rev:\(Int(reverbWet*100))% Filt:\(Int(filterCutoff))Hz Amp:\(Int(amplitude*100))% Freq:\(Int(baseFrequency))Hz")
+            #endif
         }
     }
 
@@ -322,7 +326,9 @@ class BioParameterMapper: ObservableObject {
             tempo = 8.0
         }
 
-        print("🎛️  Applied preset: \(preset.rawValue)")
+        #if DEBUG
+        debugLog("🎛️", "Applied preset: \(preset.rawValue)")
+        #endif
     }
 
     enum BioPreset: String, CaseIterable {
@@ -361,3 +367,8 @@ extension BioParameterMapper {
         """
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows BioParameterMapper to work with older SwiftUI code expecting ObservableObject
+extension BioParameterMapper: ObservableObject { }

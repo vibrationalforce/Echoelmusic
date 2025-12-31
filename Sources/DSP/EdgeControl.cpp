@@ -1,4 +1,5 @@
 #include "EdgeControl.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -112,6 +113,9 @@ void EdgeControl::prepare(double sampleRate, int maxBlockSize)
 {
     currentSampleRate = sampleRate;
 
+    // Pre-allocate dry buffer (avoids per-frame allocation)
+    dryBuffer.setSize(2, maxBlockSize, false, false, true);
+
     // Prepare oversampling
     if (oversamplingFactor > 1)
     {
@@ -155,17 +159,24 @@ void EdgeControl::process(juce::AudioBuffer<float>& buffer)
     // Update input meters
     updateMeters(buffer, true);
 
-    // Store dry signal for mixing
-    juce::AudioBuffer<float> dryBuffer(buffer.getNumChannels(), buffer.getNumSamples());
-    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+    // Store dry signal for mixing (using pre-allocated buffer - NO ALLOCATION)
+    const int numChannels = buffer.getNumChannels();
+    const int numSamples = buffer.getNumSamples();
+
+    // OPTIMIZATION: No resize in audio thread - use safe bounds
+    const int safeChannels = juce::jmin(numChannels, dryBuffer.getNumChannels());
+    const int safeSamples = juce::jmin(numSamples, dryBuffer.getNumSamples());
+    jassert(safeSamples >= numSamples && safeChannels >= numChannels);  // Buffer should be pre-allocated
+
+    for (int ch = 0; ch < safeChannels; ++ch)
     {
-        dryBuffer.copyFrom(ch, 0, buffer, ch, 0, buffer.getNumSamples());
+        dryBuffer.copyFrom(ch, 0, buffer, ch, 0, safeSamples);
     }
 
     // Apply input gain
     if (std::abs(inputGainDb) > 0.1f)
     {
-        buffer.applyGain(juce::Decibels::decibelsToGain(inputGainDb));
+        buffer.applyGain(Echoel::DSP::FastMath::dbToGain(inputGainDb));
     }
 
     // Oversample if enabled
@@ -243,13 +254,13 @@ void EdgeControl::process(juce::AudioBuffer<float>& buffer)
     // Apply output gain
     if (std::abs(outputGainDb) > 0.1f)
     {
-        buffer.applyGain(juce::Decibels::decibelsToGain(outputGainDb));
+        buffer.applyGain(Echoel::DSP::FastMath::dbToGain(outputGainDb));
     }
 
     // Apply ceiling
     if (truePeakMode && ceilingDb < 0.0f)
     {
-        float ceilingGain = juce::Decibels::decibelsToGain(ceilingDb);
+        float ceilingGain = Echoel::DSP::FastMath::dbToGain(ceilingDb);
         for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
         {
             float* channelData = buffer.getWritePointer(ch);
@@ -285,12 +296,12 @@ void EdgeControl::process(juce::AudioBuffer<float>& buffer)
 
 float EdgeControl::getInputLevel() const
 {
-    return juce::Decibels::gainToDecibels(inputLevel.load());
+    return Echoel::DSP::FastMath::gainToDb(inputLevel.load());
 }
 
 float EdgeControl::getOutputLevel() const
 {
-    return juce::Decibels::gainToDecibels(outputLevel.load());
+    return Echoel::DSP::FastMath::gainToDb(outputLevel.load());
 }
 
 float EdgeControl::getGainReduction() const
@@ -309,7 +320,7 @@ float EdgeControl::getClippingAmount() const
 
 void EdgeControl::processStereo(juce::AudioBuffer<float>& buffer)
 {
-    const float threshold = juce::Decibels::decibelsToGain(thresholdDb);
+    const float threshold = Echoel::DSP::FastMath::dbToGain(thresholdDb);
 
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
     {
@@ -343,7 +354,7 @@ void EdgeControl::processMidSide(juce::AudioBuffer<float>& buffer)
     float* leftData = buffer.getWritePointer(0);
     float* rightData = buffer.getWritePointer(1);
 
-    const float threshold = juce::Decibels::decibelsToGain(thresholdDb);
+    const float threshold = Echoel::DSP::FastMath::dbToGain(thresholdDb);
 
     for (int i = 0; i < numSamples; ++i)
     {
@@ -417,9 +428,9 @@ float EdgeControl::softClip(float input, float threshold, float knee)
     }
     else
     {
-        // Above threshold - soft clip with tanh
+        // Above threshold - soft clip with fast tanh
         float excess = absInput - threshold;
-        return sign * (threshold + std::tanh(excess * 3.0f) * 0.3f);
+        return sign * (threshold + Echoel::DSP::FastMath::fastTanh(excess * 3.0f) * 0.3f);
     }
 }
 
@@ -444,7 +455,7 @@ float EdgeControl::tubeClip(float input, float threshold, float knee)
     }
     else
     {
-        output = (biased > 0.0f) ? std::tanh(biased * 1.5f) : std::tanh(biased * 0.8f);
+        output = (biased > 0.0f) ? Echoel::DSP::FastMath::fastTanh(biased * 1.5f) : Echoel::DSP::FastMath::fastTanh(biased * 0.8f);
     }
 
     return output * threshold;
@@ -498,8 +509,8 @@ float EdgeControl::analogClip(float input, float threshold, float knee)
     }
     else
     {
-        // Soft saturation
-        output = std::tanh(normalized * 1.2f) * 0.9f;
+        // Soft saturation using fast tanh
+        output = Echoel::DSP::FastMath::fastTanh(normalized * 1.2f) * 0.9f;
     }
 
     return output * threshold;
@@ -527,7 +538,7 @@ void EdgeControl::updateMeters(const juce::AudioBuffer<float>& buffer, bool isIn
         float inputPeak = inputLevel.load();
         if (inputPeak > 0.001f)
         {
-            float gr = juce::Decibels::gainToDecibels(peak / inputPeak);
+            float gr = Echoel::DSP::FastMath::gainToDb(peak / inputPeak);
             gainReduction.store(gr);
         }
     }
@@ -537,5 +548,5 @@ float EdgeControl::calculateMakeupGain() const
 {
     // Calculate makeup gain to compensate for threshold reduction
     float reduction = std::abs(thresholdDb);
-    return std::pow(10.0f, reduction / 40.0f);  // Conservative makeup
+    return Echoel::DSP::FastMath::fastPow(10.0f, reduction / 40.0f);  // Conservative makeup
 }

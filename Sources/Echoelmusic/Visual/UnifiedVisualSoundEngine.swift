@@ -7,28 +7,30 @@ import Accelerate
 // "Flüssiges Licht für deine Musik"
 
 /// Central hub that connects audio, bio-data, and visuals
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class UnifiedVisualSoundEngine: ObservableObject {
+@Observable
+final class UnifiedVisualSoundEngine {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
     /// Current visualization mode
-    @Published var currentMode: VisualMode = .liquidLight
+    var currentMode: VisualMode = .liquidLight
 
     /// Active visual parameters (derived from audio + bio)
-    @Published var visualParams = VisualParameters()
+    var visualParams = VisualParameters()
 
     /// FFT spectrum data (64 bands)
-    @Published var spectrumData: [Float] = Array(repeating: 0, count: 64)
+    var spectrumData: [Float] = Array(repeating: 0, count: 64)
 
     /// Waveform buffer
-    @Published var waveformData: [Float] = Array(repeating: 0, count: 256)
+    var waveformData: [Float] = Array(repeating: 0, count: 256)
 
     /// Beat detected flag
-    @Published var beatDetected = false
+    var beatDetected = false
 
     /// Current dominant frequency
-    @Published var dominantFrequency: Float = 0
+    var dominantFrequency: Float = 0
 
     // MARK: - Visualization Modes
 
@@ -822,3 +824,8 @@ struct UnifiedVisualizer: View {
         .clipped()
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension UnifiedVisualSoundEngine: ObservableObject { }

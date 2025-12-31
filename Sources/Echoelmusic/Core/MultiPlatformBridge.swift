@@ -35,21 +35,22 @@ import Combine
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // MARK: - Multi-Platform Bridge
-
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-final class MultiPlatformBridge: ObservableObject {
+@Observable
+final class MultiPlatformBridge {
 
     // MARK: - Singleton
 
     static let shared = MultiPlatformBridge()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var connectedPlatforms: [ConnectedPlatform] = []
-    @Published var isLinkEnabled = false
-    @Published var linkTempo: Double = 120
-    @Published var linkPhase: Double = 0
-    @Published var networkLatency: Double = 0
+    var connectedPlatforms: [ConnectedPlatform] = []
+    var isLinkEnabled = false
+    var linkTempo: Double = 120
+    var linkPhase: Double = 0
+    var networkLatency: Double = 0
 
     // MARK: - Protocol Handlers
 
@@ -565,6 +566,10 @@ extension MultiPlatformBridge: OSCHandlerDelegate,
         // Handle incoming WebSocket message
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension MultiPlatformBridge: ObservableObject { }
 
 // Protocol stubs
 protocol OSCHandlerDelegate: AnyObject {

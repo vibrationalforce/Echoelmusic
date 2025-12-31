@@ -9,21 +9,23 @@ import Combine
 /// Background Source Manager for Chroma Key Compositing
 /// Supports multiple background types: images, videos, Echoelmusic visuals, virtual backgrounds
 /// Bio-reactive backgrounds driven by HRV coherence and heart rate
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class BackgroundSourceManager: ObservableObject {
+@Observable
+final class BackgroundSourceManager {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var currentSource: BackgroundSource = .solidColor(.black)
-    @Published var availableSources: [BackgroundSource] = []
-    @Published var isLoading: Bool = false
-    @Published var errorMessage: String?
+    var currentSource: BackgroundSource = .solidColor(.black)
+    var availableSources: [BackgroundSource] = []
+    var isLoading: Bool = false
+    var errorMessage: String?
 
     // MARK: - Bio-Reactive Parameters
 
-    @Published var hrvCoherence: Float = 0.5  // 0-1
-    @Published var heartRate: Float = 70.0   // BPM
-    @Published var bioReactivityEnabled: Bool = true
+    var hrvCoherence: Float = 0.5  // 0-1
+    var heartRate: Float = 70.0   // BPM
+    var bioReactivityEnabled: Bool = true
 
     // MARK: - Metal & Core Image
 
@@ -152,7 +154,9 @@ class BackgroundSourceManager: ObservableObject {
         // Initialize available sources
         initializeDefaultSources()
 
-        print("✅ BackgroundSourceManager: Initialized")
+        #if DEBUG
+        debugLog("✅ BackgroundSourceManager: Initialized")
+        #endif
     }
 
     deinit {
@@ -228,12 +232,16 @@ class BackgroundSourceManager: ObservableObject {
             }
 
             isLoading = false
-            print("✅ BackgroundSourceManager: Set source to '\(source.displayName)'")
+            #if DEBUG
+            debugLog("✅ BackgroundSourceManager: Set source to '\(source.displayName)'")
+            #endif
 
         } catch {
             isLoading = false
             errorMessage = error.localizedDescription
-            print("❌ BackgroundSourceManager: Failed to set source - \(error)")
+            #if DEBUG
+            debugLog("❌ BackgroundSourceManager: Failed to set source - \(error)")
+            #endif
             throw error
         }
     }
@@ -507,7 +515,9 @@ class BackgroundSourceManager: ObservableObject {
         // Start display link for frame updates
         startDisplayLink()
 
-        print("▶️ BackgroundSourceManager: Started video playback")
+        #if DEBUG
+        debugLog("▶️ BackgroundSourceManager: Started video playback")
+        #endif
     }
 
     private func stopVideoPlayback() {
@@ -545,7 +555,9 @@ class BackgroundSourceManager: ObservableObject {
         // TODO: Implement live camera capture using AVCaptureSession
         // For now, use solid color as placeholder
         try await setSource(.solidColor(.blue))
-        print("⚠️ BackgroundSourceManager: Live camera not yet implemented")
+        #if DEBUG
+        debugLog("⚠️ BackgroundSourceManager: Live camera not yet implemented")
+        #endif
     }
 
     // MARK: - Echoelmusic Visual Integration
@@ -557,7 +569,9 @@ class BackgroundSourceManager: ObservableObject {
         // For now, create placeholder
         echoelmusicVisualRenderer = EchoelmusicVisualRenderer(device: device, type: type)
 
-        print("🎨 BackgroundSourceManager: Started Echoelmusic visual '\(type.displayName)'")
+        #if DEBUG
+        debugLog("🎨 BackgroundSourceManager: Started Echoelmusic visual '\(type.displayName)'")
+        #endif
     }
 
     // MARK: - Blur Background
@@ -565,7 +579,9 @@ class BackgroundSourceManager: ObservableObject {
     private func renderBlurBackground(type: BlurType, intensity: Float) async throws {
         // TODO: Implement blur using CIFilter
         try await setSource(.solidColor(.gray))
-        print("⚠️ BackgroundSourceManager: Blur backgrounds not yet fully implemented")
+        #if DEBUG
+        debugLog("⚠️ BackgroundSourceManager: Blur backgrounds not yet fully implemented")
+        #endif
     }
 
     // MARK: - Update Animated Source
@@ -734,3 +750,8 @@ enum BackgroundError: LocalizedError {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension BackgroundSourceManager: ObservableObject { }

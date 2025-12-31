@@ -4,37 +4,39 @@ import Combine
 
 /// Manages audio looping functionality with tempo-sync and quantization
 /// Supports loop recording, overdubbing, and playback
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class LoopEngine: ObservableObject {
+@Observable
+final class LoopEngine {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
     /// Is currently recording a loop
-    @Published var isRecordingLoop: Bool = false
+    var isRecordingLoop: Bool = false
 
     /// Is currently playing loops
-    @Published var isPlayingLoops: Bool = false
+    var isPlayingLoops: Bool = false
 
     /// Current loop position (0.0 to 1.0)
-    @Published var loopPosition: Double = 0.0
+    var loopPosition: Double = 0.0
 
     /// Active loops
-    @Published var loops: [Loop] = []
+    var loops: [Loop] = []
 
     /// Current tempo (BPM)
-    @Published var tempo: Double = 120.0
+    var tempo: Double = 120.0
 
     /// Time signature
-    @Published var timeSignature: TimeSignature = TimeSignature(beats: 4, noteValue: 4)
+    var timeSignature: TimeSignature = TimeSignature(beats: 4, noteValue: 4)
 
     /// Metronome enabled
-    @Published var metronomeEnabled: Bool = false
+    var metronomeEnabled: Bool = false
 
     /// Is currently overdubbing
-    @Published var isOverdubbing: Bool = false
+    var isOverdubbing: Bool = false
 
     /// Loop being overdubbed
-    @Published var overdubLoopID: UUID?
+    var overdubLoopID: UUID?
 
 
     // MARK: - Loop Model
@@ -123,7 +125,9 @@ class LoopEngine: ObservableObject {
         // Create directory if needed
         try? FileManager.default.createDirectory(at: loopsDirectory, withIntermediateDirectories: true)
 
-        print("🔄 Loop engine initialized")
+        #if DEBUG
+        debugLog("🔄", "Loop engine initialized")
+        #endif
     }
 
 
@@ -143,7 +147,9 @@ class LoopEngine: ObservableObject {
         isRecordingLoop = true
         loopStartTime = Date()
 
-        print("🔴 Started loop recording: \(loop.name) (\(bars) bars)")
+        #if DEBUG
+        debugLog("🔴", "Started loop recording: \(loop.name) (\(bars) bars)")
+        #endif
     }
 
     /// Stop recording current loop
@@ -166,7 +172,9 @@ class LoopEngine: ObservableObject {
 
             loops[lastLoopIndex].duration = quantizedDuration
 
-            print("⏹️ Stopped loop recording: \(quantizedDuration)s")
+            #if DEBUG
+            debugLog("⏹️", "Stopped loop recording: \(quantizedDuration)s")
+            #endif
         }
 
         loopStartTime = nil
@@ -189,7 +197,9 @@ class LoopEngine: ObservableObject {
             startPlayback()
         }
 
-        print("🎙️ Started overdub on loop: \(loops[loopIndex].name)")
+        #if DEBUG
+        debugLog("🎙️", "Started overdub on loop: \(loops[loopIndex].name)")
+        #endif
     }
 
     /// Stop overdubbing and merge with original loop
@@ -217,7 +227,9 @@ class LoopEngine: ObservableObject {
         overdubLoopID = nil
         loopStartTime = nil
 
-        print("⏹️ Stopped overdub, created: \(overdubName)")
+        #if DEBUG
+        debugLog("⏹️", "Stopped overdub, created: \(overdubName)")
+        #endif
     }
 
     /// Cancel overdub without saving
@@ -228,7 +240,9 @@ class LoopEngine: ObservableObject {
         overdubLoopID = nil
         loopStartTime = nil
 
-        print("❌ Cancelled overdub")
+        #if DEBUG
+        debugLog("❌", "Cancelled overdub")
+        #endif
     }
 
 
@@ -244,7 +258,9 @@ class LoopEngine: ObservableObject {
         // Start position timer
         startTimer()
 
-        print("▶️ Started loop playback")
+        #if DEBUG
+        debugLog("▶️", "Started loop playback")
+        #endif
     }
 
     /// Stop playing loops
@@ -253,7 +269,9 @@ class LoopEngine: ObservableObject {
         loopPosition = 0.0
         stopTimer()
 
-        print("⏹️ Stopped loop playback")
+        #if DEBUG
+        debugLog("⏹️", "Stopped loop playback")
+        #endif
     }
 
     /// Toggle playback
@@ -278,7 +296,9 @@ class LoopEngine: ObservableObject {
             players.removeValue(forKey: loopID)
         }
 
-        print("🗑️ Deleted loop")
+        #if DEBUG
+        debugLog("🗑️", "Deleted loop")
+        #endif
     }
 
     /// Mute/unmute loop
@@ -315,7 +335,9 @@ class LoopEngine: ObservableObject {
         loops.removeAll()
         players.removeAll()
 
-        print("🗑️ Cleared all loops")
+        #if DEBUG
+        debugLog("🗑️", "Cleared all loops")
+        #endif
     }
 
 
@@ -364,11 +386,13 @@ class LoopEngine: ObservableObject {
     func toggleMetronome() {
         metronomeEnabled.toggle()
 
+        #if DEBUG
         if metronomeEnabled {
-            print("🎵 Metronome enabled")
+            debugLog("🎵", "Metronome enabled")
         } else {
-            print("🎵 Metronome disabled")
+            debugLog("🎵", "Metronome disabled")
         }
+        #endif
     }
 
 
@@ -416,7 +440,9 @@ class LoopEngine: ObservableObject {
         let saveURL = loopsDirectory.appendingPathComponent("loops.json")
         try data.write(to: saveURL)
 
-        print("💾 Saved \(loops.count) loops")
+        #if DEBUG
+        debugLog("💾", "Saved \(loops.count) loops")
+        #endif
     }
 
     /// Load loops from disk
@@ -427,9 +453,16 @@ class LoopEngine: ObservableObject {
         let decoder = JSONDecoder()
         loops = try decoder.decode([Loop].self, from: data)
 
-        print("📂 Loaded \(loops.count) loops")
+        #if DEBUG
+        debugLog("📂", "Loaded \(loops.count) loops")
+        #endif
     }
 }
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows LoopEngine to work with older SwiftUI code expecting ObservableObject
+extension LoopEngine: ObservableObject { }
 
 
 // MARK: - Extensions

@@ -3,14 +3,16 @@ import AVFoundation
 import UniformTypeIdentifiers
 
 /// Handles importing audio files into sessions
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class AudioFileImporter: ObservableObject {
+@Observable
+final class AudioFileImporter {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
-    @Published var isImporting: Bool = false
-    @Published var importProgress: Double = 0.0
-    @Published var importError: String?
+    var isImporting: Bool = false
+    var importProgress: Double = 0.0
+    var importError: String?
 
     // MARK: - Supported Formats
 
@@ -86,7 +88,9 @@ class AudioFileImporter: ObservableObject {
 
         importProgress = 1.0
 
-        print("📥 Imported audio file: \(track.name)")
+        #if DEBUG
+        debugLog("📥", "Imported audio file: \(track.name)")
+        #endif
         return track
     }
 
@@ -167,7 +171,9 @@ class AudioFileImporter: ObservableObject {
                 let overallProgress = Double(index + 1) / Double(urls.count)
                 importProgress = overallProgress
             } catch {
-                print("❌ Failed to import \(url.lastPathComponent): \(error)")
+                #if DEBUG
+                debugLog("❌", "Failed to import \(url.lastPathComponent): \(error)")
+                #endif
                 // Continue with other files
             }
         }
@@ -258,3 +264,8 @@ struct AudioFilePicker: UIViewControllerRepresentable {
     }
 }
 #endif
+
+// MARK: - ObservableObject Conformance (Backward Compatibility)
+
+/// Allows AudioFileImporter to work with older SwiftUI code expecting ObservableObject
+extension AudioFileImporter: ObservableObject { }

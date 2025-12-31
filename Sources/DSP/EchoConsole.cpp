@@ -1,4 +1,5 @@
 #include "EchoConsole.h"
+#include "../Core/DSPOptimizations.h"
 
 EchoConsole::EchoConsole()
 {
@@ -69,7 +70,7 @@ void EchoConsole::reset()
     // Reset metering
     inputLevelSmooth.fill(0.0f);
     outputLevelSmooth.fill(0.0f);
-    gainReductionSmooth = 0.0f;
+    gainReductionSmooth.store(0.0f);
 }
 
 void EchoConsole::process(juce::AudioBuffer<float>& buffer)
@@ -110,7 +111,7 @@ float EchoConsole::processSample(float sample, int channel)
     if (gateEnabled)
     {
         float gatedSample = processGate(sample, channel);
-        preGainReduction = juce::Decibels::gainToDecibels(std::abs(gatedSample) / (std::abs(sample) + 1e-6f));
+        preGainReduction = Echoel::DSP::FastMath::gainToDb(std::abs(gatedSample) / (std::abs(sample) + 1e-6f));
         sample = gatedSample;
     }
 
@@ -122,7 +123,7 @@ float EchoConsole::processSample(float sample, int channel)
     if (compEnabled)
     {
         float compressedSample = processCompressor(sample, channel);
-        compGainReduction = juce::Decibels::gainToDecibels(std::abs(compressedSample) / (std::abs(sample) + 1e-6f));
+        compGainReduction = Echoel::DSP::FastMath::gainToDb(std::abs(compressedSample) / (std::abs(sample) + 1e-6f));
         sample = compressedSample;
     }
 
@@ -130,11 +131,12 @@ float EchoConsole::processSample(float sample, int channel)
     sample = processSaturation(sample);
 
     // 6. Output Gain
-    sample *= juce::Decibels::decibelsToGain(outputGain);
+    sample *= Echoel::DSP::FastMath::dbToGain(outputGain);
 
-    // Update gain reduction metering (gate + comp)
+    // OPTIMIZATION: Atomic smoothing for thread-safe UI metering
     float totalGR = preGainReduction + compGainReduction;
-    gainReductionSmooth = totalGR * 0.1f + gainReductionSmooth * 0.9f;
+    float grSmooth = totalGR * 0.1f + gainReductionSmooth.load() * 0.9f;
+    gainReductionSmooth.store(grSmooth);
 
     // Output metering
     float outputLevel = std::abs(sample);
@@ -159,10 +161,11 @@ void EchoConsole::setHPFEnabled(bool enabled)
 
 void EchoConsole::updateHPFCoefficients()
 {
-    // 12dB/oct Butterworth High-Pass
+    // 12dB/oct Butterworth High-Pass - using fast trig
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     float omega = 2.0f * juce::MathConstants<float>::pi * hpfFrequency / static_cast<float>(currentSampleRate);
-    float sinOmega = std::sin(omega);
-    float cosOmega = std::cos(omega);
+    float sinOmega = trigTables.fastSinRad(omega);
+    float cosOmega = trigTables.fastCosRad(omega);
     float alpha = sinOmega / (2.0f * 0.707f);  // Q = 0.707 for Butterworth
 
     float a0 = 1.0f + alpha;
@@ -259,25 +262,25 @@ void EchoConsole::updateEQCoefficients(int channel, EQBand band)
         case EQBand::HF:   // 3kHz - 16kHz
             if (eqBellMode)
                 *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(
-                    currentSampleRate, eq.frequency, eq.q, juce::Decibels::decibelsToGain(eq.gain));
+                    currentSampleRate, eq.frequency, eq.q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             else
                 *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeHighShelf(
-                    currentSampleRate, eq.frequency, eq.q, juce::Decibels::decibelsToGain(eq.gain));
+                    currentSampleRate, eq.frequency, eq.q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             break;
 
         case EQBand::HMF:  // 600Hz - 7kHz (parametric)
         case EQBand::LMF:  // 200Hz - 2.5kHz (parametric)
             *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(
-                currentSampleRate, eq.frequency, eq.q, juce::Decibels::decibelsToGain(eq.gain));
+                currentSampleRate, eq.frequency, eq.q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             break;
 
         case EQBand::LF:   // 30Hz - 450Hz
             if (eqBellMode)
                 *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(
-                    currentSampleRate, eq.frequency, eq.q, juce::Decibels::decibelsToGain(eq.gain));
+                    currentSampleRate, eq.frequency, eq.q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             else
                 *eq.filter.coefficients = *juce::dsp::IIR::Coefficients<float>::makeLowShelf(
-                    currentSampleRate, eq.frequency, eq.q, juce::Decibels::decibelsToGain(eq.gain));
+                    currentSampleRate, eq.frequency, eq.q, Echoel::DSP::FastMath::dbToGain(eq.gain));
             break;
     }
 }
@@ -333,14 +336,14 @@ void EchoConsole::setGateEnabled(bool enabled)
 
 void EchoConsole::updateGateCoefficients()
 {
-    // Exponential envelope followers
+    // Exponential envelope followers - using fast exp
     float attackTimeSeconds = 0.001f;  // Will be set dynamically
     float releaseTimeSeconds = 0.4f;
 
     for (auto& state : gateState)
     {
-        state.attackCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * attackTimeSeconds));
-        state.releaseCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * releaseTimeSeconds));
+        state.attackCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * attackTimeSeconds));
+        state.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * releaseTimeSeconds));
     }
 }
 
@@ -350,7 +353,7 @@ float EchoConsole::processGate(float sample, int channel)
 
     // RMS detection
     float inputLevel = std::abs(sample);
-    float inputDb = juce::Decibels::gainToDecibels(inputLevel + 1e-6f);
+    float inputDb = Echoel::DSP::FastMath::gainToDb(inputLevel + 1e-6f);
 
     // Envelope follower
     if (inputLevel > state.envelope)
@@ -358,7 +361,7 @@ float EchoConsole::processGate(float sample, int channel)
     else
         state.envelope = inputLevel + state.releaseCoeff * (state.envelope - inputLevel);
 
-    float envelopeDb = juce::Decibels::gainToDecibels(state.envelope + 1e-6f);
+    float envelopeDb = Echoel::DSP::FastMath::gainToDb(state.envelope + 1e-6f);
 
     // Expander curve
     float gainReduction = 0.0f;
@@ -369,7 +372,7 @@ float EchoConsole::processGate(float sample, int channel)
         gainReduction = juce::jlimit(gateRange, 0.0f, -gainReduction);
     }
 
-    float gain = juce::Decibels::decibelsToGain(gainReduction);
+    float gain = Echoel::DSP::FastMath::dbToGain(gainReduction);
     return sample * gain;
 }
 
@@ -415,13 +418,14 @@ void EchoConsole::setCompEnabled(bool enabled)
 
 void EchoConsole::updateCompressorCoefficients()
 {
-    float attackTimeSeconds = 0.003f;  // SSL-style fast attack (3ms default)
+    // SSL-style fast attack (3ms default) - using fast exp
+    float attackTimeSeconds = 0.003f;
     float releaseTimeSeconds = compReleaseMs / 1000.0f;
 
     for (auto& state : compState)
     {
-        state.attackCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * attackTimeSeconds));
-        state.releaseCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * releaseTimeSeconds));
+        state.attackCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * attackTimeSeconds));
+        state.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * releaseTimeSeconds));
     }
 }
 
@@ -431,7 +435,7 @@ float EchoConsole::processCompressor(float sample, int channel)
 
     // Peak detection (SSL VCA style)
     float inputLevel = std::abs(sample);
-    float inputDb = juce::Decibels::gainToDecibels(inputLevel + 1e-6f);
+    float inputDb = Echoel::DSP::FastMath::gainToDb(inputLevel + 1e-6f);
 
     // Envelope follower
     if (inputLevel > state.envelope)
@@ -449,13 +453,13 @@ float EchoConsole::processCompressor(float sample, int channel)
         state.envelope = inputLevel + releaseCoeff * (state.envelope - inputLevel);
     }
 
-    float envelopeDb = juce::Decibels::gainToDecibels(state.envelope + 1e-6f);
+    float envelopeDb = Echoel::DSP::FastMath::gainToDb(state.envelope + 1e-6f);
 
     // SSL compression curve (soft knee at higher ratios)
     float gainReduction = sslCompressorCurve(envelopeDb, compThreshold, compRatio);
 
     // Apply makeup gain
-    float totalGain = juce::Decibels::decibelsToGain(gainReduction + compMakeupGain);
+    float totalGain = Echoel::DSP::FastMath::dbToGain(gainReduction + compMakeupGain);
 
     return sample * totalGain;
 }
@@ -543,7 +547,7 @@ float EchoConsole::getOutputLevel(int channel) const
 
 float EchoConsole::getGainReduction() const
 {
-    return gainReductionSmooth;
+    return gainReductionSmooth.load();
 }
 
 //==============================================================================

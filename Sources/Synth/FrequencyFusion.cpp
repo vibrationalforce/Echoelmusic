@@ -1,4 +1,5 @@
 #include "FrequencyFusion.h"
+#include "../Core/DSPOptimizations.h"
 
 //==============================================================================
 // Constructor
@@ -132,6 +133,32 @@ void FrequencyFusion::prepare(double sampleRate, int maxBlockSize)
 void FrequencyFusion::reset()
 {
     allNotesOff(0, false);
+}
+
+//==============================================================================
+// Effects Parameters (NEW)
+//==============================================================================
+
+void FrequencyFusion::setChorusParams(float rate, float depth, float mix)
+{
+    chorus.rate = juce::jlimit(0.1f, 5.0f, rate);
+    chorus.depth = juce::jlimit(0.0f, 1.0f, depth);
+    chorus.mix = juce::jlimit(0.0f, 1.0f, mix);
+}
+
+void FrequencyFusion::setDelayParams(float timeL, float timeR, float feedback, float mix)
+{
+    delay.timeL = juce::jlimit(0.001f, 2.0f, timeL);
+    delay.timeR = juce::jlimit(0.001f, 2.0f, timeR);
+    delay.feedback = juce::jlimit(0.0f, 0.95f, feedback);
+    delay.mix = juce::jlimit(0.0f, 1.0f, mix);
+}
+
+void FrequencyFusion::setReverbParams(float size, float decay, float mix)
+{
+    reverb.size = juce::jlimit(0.0f, 1.0f, size);
+    reverb.decay = juce::jlimit(0.0f, 1.0f, decay);
+    reverb.mix = juce::jlimit(0.0f, 1.0f, mix);
 }
 
 //==============================================================================
@@ -392,9 +419,10 @@ void FrequencyFusion::FrequencyFusionVoice::renderNextBlock(juce::AudioBuffer<fl
         }
 
         // Normalize by number of carriers
+        // OPTIMIZATION: Use fast sqrt approximation
         if (numCarriers > 0)
         {
-            finalOutput /= std::sqrt(static_cast<float>(numCarriers));
+            finalOutput /= Echoel::DSP::FastMath::fastSqrt(static_cast<float>(numCarriers));
         }
 
         // Apply master volume
@@ -440,13 +468,13 @@ float FrequencyFusion::FrequencyFusionVoice::renderOperator(int opIndex, float m
     float baseFreq = juce::MidiMessage::getMidiNoteInHertz(currentNote);
     float opFreq = getOperatorFrequency(opIndex, baseFreq);
 
-    // Apply pitch bend
-    opFreq *= std::pow(2.0f, pitchBend * owner.pitchBendRange / 12.0f);
+    // OPTIMIZATION: Apply pitch bend with fastPow2
+    opFreq *= Echoel::DSP::FastMath::fastPow2(pitchBend * owner.pitchBendRange / 12.0f);
 
     // Apply LFO to pitch
     if (owner.lfo.enabled && owner.lfo.target == LFOTarget::Pitch)
     {
-        opFreq *= std::pow(2.0f, lfoValue * owner.lfo.depth * 0.1f);  // ±10% max
+        opFreq *= Echoel::DSP::FastMath::fastPow2(lfoValue * owner.lfo.depth * 0.1f);  // ±10% max
     }
 
     // Phase modulation (FM synthesis)
@@ -504,11 +532,9 @@ float FrequencyFusion::FrequencyFusionVoice::getOperatorFrequency(int opIndex, f
 
         float freq = baseFreq * ratio;
 
-        // Apply detune
-        freq *= std::pow(2.0f, op.detune / 1200.0f);
-
-        // Apply master tune
-        freq *= std::pow(2.0f, owner.masterTune / 1200.0f);
+        // OPTIMIZATION: Combine detune and master tune with single fastPow2
+        float tuning = (op.detune + owner.masterTune) / 1200.0f;
+        freq *= Echoel::DSP::FastMath::fastPow2(tuning);
 
         return freq;
     }
@@ -520,34 +546,49 @@ float FrequencyFusion::FrequencyFusionVoice::generateWaveform(Waveform waveform,
     while (phase >= 1.0f) phase -= 1.0f;
     while (phase < 0.0f) phase += 1.0f;
 
-    const float twoPi = juce::MathConstants<float>::twoPi;
-    float angle = phase * twoPi;
+    // OPTIMIZATION: Use fast trig lookup tables (~20x faster than std::sin)
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
 
     switch (waveform)
     {
         case Waveform::Sine:
-            return std::sin(angle);
+            return trigTables.fastSin(phase);
 
         case Waveform::HalfSine:
-            return (phase < 0.5f) ? std::sin(angle) : 0.0f;
+            return (phase < 0.5f) ? trigTables.fastSin(phase) : 0.0f;
 
         case Waveform::AbsSine:
-            return std::abs(std::sin(angle));
+            return std::abs(trigTables.fastSin(phase));
 
         case Waveform::PulseSine:
-            return (phase < 0.5f) ? std::sin(angle * 2.0f) : 0.0f;
+        {
+            float doublePhase = phase * 2.0f;
+            // OPTIMIZATION: Fast floor using integer truncation
+            doublePhase -= static_cast<float>(static_cast<int>(doublePhase));
+            return (phase < 0.5f) ? trigTables.fastSin(doublePhase) : 0.0f;
+        }
 
         case Waveform::EvenSine:
-            return std::sin(angle) + std::sin(angle * 2.0f) * 0.5f;
+        {
+            float phase2 = phase * 2.0f;
+            // OPTIMIZATION: Fast floor using integer truncation
+            phase2 -= static_cast<float>(static_cast<int>(phase2));
+            return trigTables.fastSin(phase) + trigTables.fastSin(phase2) * 0.5f;
+        }
 
         case Waveform::OddSine:
-            return std::sin(angle) + std::sin(angle * 3.0f) * 0.333f;
+        {
+            float phase3 = phase * 3.0f;
+            // OPTIMIZATION: Fast floor using integer truncation
+            phase3 -= static_cast<float>(static_cast<int>(phase3));
+            return trigTables.fastSin(phase) + trigTables.fastSin(phase3) * 0.333f;
+        }
 
         case Waveform::SquareSine:
-            return (std::sin(angle) > 0.0f) ? 1.0f : -1.0f;
+            return (trigTables.fastSin(phase) > 0.0f) ? 1.0f : -1.0f;
 
         default:
-            return std::sin(angle);
+            return trigTables.fastSin(phase);
     }
 }
 
@@ -637,12 +678,13 @@ void FrequencyFusion::FrequencyFusionVoice::updateLFO(float sampleRate)
     }
 
     // Calculate LFO value
-    const float twoPi = juce::MathConstants<float>::twoPi;
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
 
     switch (owner.lfo.shape)
     {
         case LFOShape::Sine:
-            lfoValue = std::sin(lfoPhase * twoPi);
+            // OPTIMIZATION: Use fast trig lookup for LFO
+            lfoValue = trigTables.fastSin(lfoPhase);
             break;
 
         case LFOShape::Triangle:

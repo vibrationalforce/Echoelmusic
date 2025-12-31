@@ -19,16 +19,18 @@ import Combine
 /// - HomeKit (Apple Smart Home)
 /// - FHIR (Medical devices)
 /// - ROS 2 (Robots)
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class UniversalDeviceIntegration: ObservableObject {
+@Observable
+final class UniversalDeviceIntegration {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var connectedDevices: [ConnectedDevice] = []
-    @Published var vehicleStatus: VehicleStatus?
-    @Published var droneStatus: DroneStatus?
-    @Published var smartHomeStatus: SmartHomeStatus?
-    @Published var medicalDeviceStatus: MedicalDeviceStatus?
+    var connectedDevices: [ConnectedDevice] = []
+    var vehicleStatus: VehicleStatus?
+    var droneStatus: DroneStatus?
+    var smartHomeStatus: SmartHomeStatus?
+    var medicalDeviceStatus: MedicalDeviceStatus?
 
     // MARK: - Connected Device
 
@@ -87,7 +89,9 @@ class UniversalDeviceIntegration: ObservableObject {
     }
 
     func connectToVehicle(manufacturer: String, model: String) async -> Bool {
-        print("🚗 Connecting to vehicle: \(manufacturer) \(model)...")
+        #if DEBUG
+        debugLog("🚗", "Connecting to vehicle: \(manufacturer) \(model)...")
+        #endif
 
         // Simulate connection
         try? await Task.sleep(nanoseconds: 1_000_000_000)
@@ -114,9 +118,11 @@ class UniversalDeviceIntegration: ObservableObject {
             audioSyncEnabled: true
         )
 
-        print("✅ Vehicle connected: \(manufacturer) \(model)")
-        print("   Protocol: CAN Bus")
-        print("   Bio-reactive audio: Enabled")
+        #if DEBUG
+        debugLog("✅", "Vehicle connected: \(manufacturer) \(model)")
+        debugLog("✅", "   Protocol: CAN Bus")
+        debugLog("✅", "   Bio-reactive audio: Enabled")
+        #endif
 
         return true
     }
@@ -128,24 +134,28 @@ class UniversalDeviceIntegration: ObservableObject {
         let stress = 1.0 - coherence  // Lower coherence = higher stress
 
         // Adjust music based on stress and driving conditions
+        #if DEBUG
         if stress > 0.7 {
-            print("⚠️ High driver stress detected - playing calming music")
+            debugLog("⚠️", "High driver stress detected - playing calming music")
             // Activate slow breathing protocol
             // Lower tempo, reduce complexity
         } else if status.speed > 100 {
-            print("🏎️ High speed - maintaining alert state")
+            debugLog("🏎️", "High speed - maintaining alert state")
             // Increase tempo slightly to maintain alertness
         }
 
-        print("🚗 Vehicle audio adjusted:")
-        print("   Speed: \(Int(status.speed)) km/h")
-        print("   Driver stress: \(String(format: "%.1f", stress * 100))%")
-        print("   HRV: \(Int(hrv)) ms")
+        debugLog("🚗", "Vehicle audio adjusted:")
+        debugLog("🚗", "   Speed: \(Int(status.speed)) km/h")
+        debugLog("🚗", "   Driver stress: \(String(format: "%.1f", stress * 100))%")
+        debugLog("🚗", "   HRV: \(Int(hrv)) ms")
+        #endif
     }
 
     func enableAutonomousMode() {
-        guard var status = vehicleStatus else { return }
-        print("🤖 Autonomous mode enabled - optimizing for relaxation")
+        guard vehicleStatus != nil else { return }
+        #if DEBUG
+        debugLog("🤖", "Autonomous mode enabled - optimizing for relaxation")
+        #endif
 
         // In autonomous mode, focus on wellbeing
         // No need to maintain alertness
@@ -174,7 +184,9 @@ class UniversalDeviceIntegration: ObservableObject {
     }
 
     func connectToDrone(manufacturer: String, model: String) async -> Bool {
-        print("🚁 Connecting to drone: \(manufacturer) \(model)...")
+        #if DEBUG
+        debugLog("🚁", "Connecting to drone: \(manufacturer) \(model)...")
+        #endif
 
         // Simulate connection
         try? await Task.sleep(nanoseconds: 1_000_000_000)
@@ -200,18 +212,22 @@ class UniversalDeviceIntegration: ObservableObject {
             flightMode: .manual
         )
 
-        print("✅ Drone connected: \(manufacturer) \(model)")
-        print("   Protocol: MAVLink")
-        print("   Audio-visual feedback: Enabled")
+        #if DEBUG
+        debugLog("✅", "Drone connected: \(manufacturer) \(model)")
+        debugLog("✅", "   Protocol: MAVLink")
+        debugLog("✅", "   Audio-visual feedback: Enabled")
+        #endif
 
         return true
     }
 
     func generateDroneSoundtrack(altitude: Float, speed: Float, batteryLevel: Float) {
-        print("🎵 Generating dynamic drone soundtrack...")
-        print("   Altitude: \(Int(altitude))m → Pitch adjustment")
-        print("   Speed: \(String(format: "%.1f", speed))m/s → Tempo adjustment")
-        print("   Battery: \(Int(batteryLevel * 100))% → Intensity adjustment")
+        #if DEBUG
+        debugLog("🎵", "Generating dynamic drone soundtrack...")
+        debugLog("🎵", "   Altitude: \(Int(altitude))m → Pitch adjustment")
+        debugLog("🎵", "   Speed: \(String(format: "%.1f", speed))m/s → Tempo adjustment")
+        debugLog("🎵", "   Battery: \(Int(batteryLevel * 100))% → Intensity adjustment")
+        #endif
 
         // Map flight parameters to audio
         // Higher altitude = higher pitch
@@ -220,8 +236,10 @@ class UniversalDeviceIntegration: ObservableObject {
     }
 
     func enableDroneFollowMeMode(pilotHRV: Float) {
-        print("🎯 Follow Me mode: Drone syncs with pilot's bio-data")
-        print("   Pilot HRV: \(Int(pilotHRV)) ms")
+        #if DEBUG
+        debugLog("🎯", "Follow Me mode: Drone syncs with pilot's bio-data")
+        debugLog("🎯", "   Pilot HRV: \(Int(pilotHRV)) ms")
+        #endif
 
         // Drone follows pilot and adjusts flight smoothness based on HRV
         // Lower HRV = smoother, calmer flight
@@ -260,7 +278,9 @@ class UniversalDeviceIntegration: ObservableObject {
     }
 
     func connectToSmartHome() async -> Bool {
-        print("🏠 Connecting to Smart Home...")
+        #if DEBUG
+        debugLog("🏠", "Connecting to Smart Home...")
+        #endif
 
         // Simulate connection
         try? await Task.sleep(nanoseconds: 500_000_000)
@@ -287,9 +307,11 @@ class UniversalDeviceIntegration: ObservableObject {
             bioSyncEnabled: true
         )
 
-        print("✅ Smart Home connected")
-        print("   Protocol: HomeKit")
-        print("   Devices: \(smartHomeStatus!.lights.count) lights, 1 thermostat, \(smartHomeStatus!.speakers.count) speakers")
+        #if DEBUG
+        debugLog("✅", "Smart Home connected")
+        debugLog("✅", "   Protocol: HomeKit")
+        debugLog("✅", "   Devices: \(smartHomeStatus!.lights.count) lights, 1 thermostat, \(smartHomeStatus!.speakers.count) speakers")
+        #endif
 
         return true
     }
@@ -297,7 +319,9 @@ class UniversalDeviceIntegration: ObservableObject {
     func syncSmartHomeWithBioData(hrv: Float, coherence: Float, temperature: Float) {
         guard var status = smartHomeStatus, status.bioSyncEnabled else { return }
 
-        print("🏠 Syncing Smart Home with bio-data...")
+        #if DEBUG
+        debugLog("🏠", "Syncing Smart Home with bio-data...")
+        #endif
 
         // Map HRV to light color (hue)
         // Higher HRV = cooler colors (blue/green)
@@ -316,19 +340,25 @@ class UniversalDeviceIntegration: ObservableObject {
 
         smartHomeStatus = status
 
-        print("   Lights adjusted: Hue=\(Int(hue))°, Brightness=\(Int(coherence * 100))%")
-        print("   Thermostat: \(String(format: "%.1f", targetTemp))°C")
+        #if DEBUG
+        debugLog("🏠", "   Lights adjusted: Hue=\(Int(hue))°, Brightness=\(Int(coherence * 100))%")
+        debugLog("🏠", "   Thermostat: \(String(format: "%.1f", targetTemp))°C")
+        #endif
     }
 
     func createAmbientWellbeingEnvironment() {
-        print("🌿 Creating ambient wellbeing environment...")
+        #if DEBUG
+        debugLog("🌿", "Creating ambient wellbeing environment...")
+        #endif
 
         // Dim lights to 30%
         // Warm color temperature (2700K)
         // Gentle audio (nature sounds + bio-reactive tones)
         // Optimal temperature (21°C)
 
-        print("✅ Wellbeing environment active")
+        #if DEBUG
+        debugLog("✅", "Wellbeing environment active")
+        #endif
     }
 
     // MARK: - Medical Device Integration
@@ -361,15 +391,17 @@ class UniversalDeviceIntegration: ObservableObject {
     }
 
     func connectToMedicalDevice(deviceType: MedicalDeviceStatus.MedicalDeviceType) async -> Bool {
-        print("🏥 Connecting to medical device: \(deviceType.rawValue)...")
+        #if DEBUG
+        debugLog("🏥", "Connecting to medical device: \(deviceType.rawValue)...")
 
         // IMPORTANT: Medical device integration requires regulatory compliance
         // FDA approval, HIPAA compliance, CE marking, etc.
-        print("⚠️ Medical device integration requires:")
-        print("   - FDA 510(k) clearance (USA)")
-        print("   - CE marking (Europe)")
-        print("   - HIPAA compliance")
-        print("   - Data encryption (FHIR)")
+        debugLog("⚠️", "Medical device integration requires:")
+        debugLog("⚠️", "   - FDA 510(k) clearance (USA)")
+        debugLog("⚠️", "   - CE marking (Europe)")
+        debugLog("⚠️", "   - HIPAA compliance")
+        debugLog("⚠️", "   - Data encryption (FHIR)")
+        #endif
 
         // Simulate connection
         try? await Task.sleep(nanoseconds: 1_000_000_000)
@@ -391,10 +423,12 @@ class UniversalDeviceIntegration: ObservableObject {
             alerts: []
         )
 
-        print("✅ Medical device connected")
-        print("   Protocol: FHIR (Fast Healthcare Interoperability Resources)")
-        print("   Encryption: AES-256")
-        print("   Compliance: HIPAA, GDPR")
+        #if DEBUG
+        debugLog("✅", "Medical device connected")
+        debugLog("✅", "   Protocol: FHIR (Fast Healthcare Interoperability Resources)")
+        debugLog("✅", "   Encryption: AES-256")
+        debugLog("✅", "   Compliance: HIPAA, GDPR")
+        #endif
 
         return true
     }
@@ -402,13 +436,15 @@ class UniversalDeviceIntegration: ObservableObject {
     func monitorVitalSigns() {
         guard let status = medicalDeviceStatus, status.isMonitoring else { return }
 
-        print("🏥 Monitoring vital signs...")
-        print("   Device: \(status.deviceName)")
+        #if DEBUG
+        debugLog("🏥", "Monitoring vital signs...")
+        debugLog("🏥", "   Device: \(status.deviceName)")
 
         // DISCLAIMER: NOT A MEDICAL DEVICE
-        print("⚠️ DISCLAIMER: Echoelmusic is NOT a medical device.")
-        print("   Do not use for diagnosis or treatment.")
-        print("   Consult healthcare professionals for medical advice.")
+        debugLog("⚠️", "DISCLAIMER: Echoelmusic is NOT a medical device.")
+        debugLog("⚠️", "   Do not use for diagnosis or treatment.")
+        debugLog("⚠️", "   Consult healthcare professionals for medical advice.")
+        #endif
     }
 
     // MARK: - Robot Integration (ROS 2)
@@ -430,7 +466,9 @@ class UniversalDeviceIntegration: ObservableObject {
     }
 
     func connectToRobot(name: String, type: RobotStatus.RobotType) async -> Bool {
-        print("🤖 Connecting to robot: \(name) (\(type.rawValue))...")
+        #if DEBUG
+        debugLog("🤖", "Connecting to robot: \(name) (\(type.rawValue))...")
+        #endif
 
         let device = ConnectedDevice(
             id: UUID(),
@@ -442,17 +480,21 @@ class UniversalDeviceIntegration: ObservableObject {
 
         connectedDevices.append(device)
 
-        print("✅ Robot connected: \(name)")
-        print("   Protocol: ROS 2")
-        print("   Bio-synchronized movement: Enabled")
+        #if DEBUG
+        debugLog("✅", "Robot connected: \(name)")
+        debugLog("✅", "   Protocol: ROS 2")
+        debugLog("✅", "   Bio-synchronized movement: Enabled")
+        #endif
 
         return true
     }
 
     func synchronizeRobotMovement(withHRV hrv: Float, coherence: Float) {
-        print("🤖 Synchronizing robot movement with bio-data...")
-        print("   HRV: \(Int(hrv)) ms → Movement smoothness")
-        print("   Coherence: \(String(format: "%.2f", coherence)) → Movement coordination")
+        #if DEBUG
+        debugLog("🤖", "Synchronizing robot movement with bio-data...")
+        debugLog("🤖", "   HRV: \(Int(hrv)) ms → Movement smoothness")
+        debugLog("🤖", "   Coherence: \(String(format: "%.2f", coherence)) → Movement coordination")
+        #endif
 
         // Higher HRV = smoother, more fluid robot movements
         // Lower coherence = more rigid, mechanical movements
@@ -461,15 +503,19 @@ class UniversalDeviceIntegration: ObservableObject {
     // MARK: - MQTT Integration (IoT Standard)
 
     func publishToMQTT(topic: String, payload: Data) {
-        print("📡 Publishing to MQTT:")
-        print("   Topic: \(topic)")
-        print("   Payload: \(payload.count) bytes")
+        #if DEBUG
+        debugLog("📡", "Publishing to MQTT:")
+        debugLog("📡", "   Topic: \(topic)")
+        debugLog("📡", "   Payload: \(payload.count) bytes")
+        #endif
 
         // In production, use CocoaMQTT or similar library
     }
 
     func subscribeToMQTT(topic: String, handler: @escaping (Data) -> Void) {
-        print("📡 Subscribing to MQTT topic: \(topic)")
+        #if DEBUG
+        debugLog("📡", "Subscribing to MQTT topic: \(topic)")
+        #endif
 
         // In production, use CocoaMQTT
     }
@@ -522,9 +568,11 @@ class UniversalDeviceIntegration: ObservableObject {
     // MARK: - Disconnect All
 
     func disconnectAll() {
+        #if DEBUG
         for device in connectedDevices {
-            print("🔌 Disconnecting: \(device.name)")
+            debugLog("🔌", "Disconnecting: \(device.name)")
         }
+        #endif
 
         connectedDevices.removeAll()
         vehicleStatus = nil
@@ -532,6 +580,12 @@ class UniversalDeviceIntegration: ObservableObject {
         smartHomeStatus = nil
         medicalDeviceStatus = nil
 
-        print("✅ All devices disconnected")
+        #if DEBUG
+        debugLog("✅", "All devices disconnected")
+        #endif
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension UniversalDeviceIntegration: ObservableObject { }

@@ -1,4 +1,5 @@
 #include "OptoCompressor.h"
+#include "../Core/DSPOptimizations.h"
 
 OptoCompressor::OptoCompressor()
 {
@@ -38,8 +39,8 @@ void OptoCompressor::reset()
 
     inputLevelSmooth.fill(0.0f);
     outputLevelSmooth.fill(0.0f);
-    gainReductionSmooth = 0.0f;
-    opticalCellStateSmooth = 0.0f;
+    gainReductionSmooth.store(0.0f);
+    opticalCellStateSmooth.store(0.0f);
 }
 
 void OptoCompressor::process(juce::AudioBuffer<float>& buffer)
@@ -47,23 +48,28 @@ void OptoCompressor::process(juce::AudioBuffer<float>& buffer)
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
+    // OPTIMIZATION: Cache channel pointers to avoid per-sample virtual calls
+    float* channelPtrs[2] = { nullptr, nullptr };
+    const int maxChannels = juce::jmin(numChannels, 2);
+    for (int ch = 0; ch < maxChannels; ++ch)
+        channelPtrs[ch] = buffer.getWritePointer(ch);
+
     for (int sample = 0; sample < numSamples; ++sample)
     {
         // Stereo linking: average sidechain signal
         float linkedSidechain = 0.0f;
         if (numChannels >= 2 && stereoLink > 0.01f)
         {
-            float left = buffer.getSample(0, sample);
-            float right = buffer.getSample(1, sample);
+            float left = channelPtrs[0][sample];
+            float right = channelPtrs[1][sample];
             linkedSidechain = (std::abs(left) + std::abs(right)) * 0.5f;
         }
 
-        for (int channel = 0; channel < numChannels; ++channel)
+        for (int channel = 0; channel < maxChannels; ++channel)
         {
-            float channelSample = buffer.getSample(channel, sample);
-            float sidechain = (stereoLink > 0.01f) ? linkedSidechain : std::abs(channelSample);
+            float channelSample = channelPtrs[channel][sample];
             float processed = processSample(channelSample, channel);
-            buffer.setSample(channel, sample, processed);
+            channelPtrs[channel][sample] = processed;
         }
     }
 }
@@ -169,9 +175,9 @@ void OptoCompressor::updateOpticalCellCoefficients()
 
     for (auto& cell : opticalCell)
     {
-        // Exponential envelope followers
-        cell.attackCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * attackSeconds));
-        cell.releaseCoeff = std::exp(-1.0f / (static_cast<float>(currentSampleRate) * releaseSeconds));
+        // Exponential envelope followers using fast exp
+        cell.attackCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * attackSeconds));
+        cell.releaseCoeff = Echoel::DSP::FastMath::fastExp(-1.0f / (static_cast<float>(currentSampleRate) * releaseSeconds));
     }
 }
 
@@ -180,7 +186,7 @@ float OptoCompressor::processOpticalCompression(float sample, int channel, float
     auto& cell = opticalCell[channel];
 
     // Convert to dB for processing
-    float inputDb = juce::Decibels::gainToDecibels(std::abs(sidechainSignal) + 1e-6f);
+    float inputDb = Echoel::DSP::FastMath::gainToDb(std::abs(sidechainSignal) + 1e-6f);
 
     // Determine threshold based on peak reduction amount
     float threshold = -20.0f + (peakReduction * 30.0f);  // -20dB to +10dB range
@@ -189,12 +195,14 @@ float OptoCompressor::processOpticalCompression(float sample, int channel, float
     float gainReduction = opticalCellResponse(inputDb, cell.lightLevel, cell.resistance, channel);
 
     // Apply gain reduction
-    float outputGain = juce::Decibels::decibelsToGain(gainReduction + makeupGain);
+    float outputGain = Echoel::DSP::FastMath::dbToGain(gainReduction + makeupGain);
     float compressed = sample * outputGain;
 
-    // Update metering
-    gainReductionSmooth = gainReduction * 0.1f + gainReductionSmooth * 0.9f;
-    opticalCellStateSmooth = cell.lightLevel * 0.1f + opticalCellStateSmooth * 0.9f;
+    // Update metering (atomic for thread-safe UI access)
+    float grSmooth = gainReduction * 0.1f + gainReductionSmooth.load() * 0.9f;
+    gainReductionSmooth.store(grSmooth);
+    float cellSmooth = cell.lightLevel * 0.1f + opticalCellStateSmooth.load() * 0.9f;
+    opticalCellStateSmooth.store(cellSmooth);
 
     return compressed;
 }
@@ -237,9 +245,9 @@ float OptoCompressor::opticalCellResponse(float inputDb, float& lightLevel, floa
     float baseResistance = 10.0f;  // Dark resistance (MΩ)
     float minResistance = 0.1f;    // Bright resistance (kΩ)
 
-    // Non-linear optical coupling (T4 characteristic)
+    // Non-linear optical coupling (T4 characteristic) using fast pow
     float coupling = opticalCharacter;
-    resistance = minResistance + (baseResistance - minResistance) * std::pow(1.0f - lightLevel, 2.0f + coupling);
+    resistance = minResistance + (baseResistance - minResistance) * Echoel::DSP::FastMath::fastPow(1.0f - lightLevel + 1e-6f, 2.0f + coupling);
 
     // Convert resistance to gain reduction
     // Lower resistance = more attenuation
@@ -294,11 +302,11 @@ float OptoCompressor::tubeSaturation(float sample, float warmth)
     // Soft clipping
     float saturated = x / (1.0f + 0.4f * std::abs(x));
 
-    // Tube "glow" on transients
+    // Tube "glow" on transients using fast tanh
     if (std::abs(x) > 0.7f)
     {
         float excess = std::abs(x) - 0.7f;
-        saturated += warmth * 0.1f * excess * std::tanh(excess * 5.0f);
+        saturated += warmth * 0.1f * excess * Echoel::DSP::FastMath::fastTanh(excess * 5.0f);
     }
 
     return saturated / drive;
@@ -343,10 +351,11 @@ void OptoCompressor::updateSidechainHPFCoefficients()
     if (sidechainHPF < 1.0f)
         return;
 
-    // 12dB/oct Butterworth High-Pass
+    // 12dB/oct Butterworth High-Pass using fast trig
+    const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
     float omega = 2.0f * juce::MathConstants<float>::pi * sidechainHPF / static_cast<float>(currentSampleRate);
-    float sinOmega = std::sin(omega);
-    float cosOmega = std::cos(omega);
+    float sinOmega = trigTables.fastSinRad(omega);
+    float cosOmega = trigTables.fastCosRad(omega);
     float alpha = sinOmega / (2.0f * 0.707f);
 
     float a0 = 1.0f + alpha;
@@ -387,7 +396,7 @@ float OptoCompressor::processSidechainHPF(float sample, int channel)
 
 float OptoCompressor::getGainReduction() const
 {
-    return gainReductionSmooth;
+    return gainReductionSmooth.load();
 }
 
 float OptoCompressor::getInputLevel(int channel) const
@@ -402,7 +411,7 @@ float OptoCompressor::getOutputLevel(int channel) const
 
 float OptoCompressor::getOpticalCellState() const
 {
-    return opticalCellStateSmooth;
+    return opticalCellStateSmooth.load();
 }
 
 //==============================================================================

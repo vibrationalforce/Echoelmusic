@@ -35,10 +35,15 @@ float Oscillator::process() {
             break;
 
         case Waveform::Square:
+        {
             output = mPhase < 0.5f ? 1.0f : -1.0f;
+            // OPTIMIZATION: Fast fmod for phase wrap
+            float squarePhase = mPhase + 0.5f;
+            squarePhase -= static_cast<float>(static_cast<int>(squarePhase));
             output += polyBLEP(mPhase, dt);
-            output -= polyBLEP(std::fmod(mPhase + 0.5f, 1.0f), dt);
+            output -= polyBLEP(squarePhase, dt);
             break;
+        }
 
         case Waveform::Noise:
             output = mNoiseDist(mNoiseGen);

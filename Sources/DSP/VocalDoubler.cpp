@@ -17,6 +17,10 @@ void VocalDoubler::prepare(double sampleRate, int maximumBlockSize)
     spec.maximumBlockSize = static_cast<uint32_t>(maximumBlockSize);
     spec.numChannels = 2;
 
+    // Pre-allocate buffers (avoid per-frame allocations)
+    dryBuffer.setSize(2, maximumBlockSize);
+    doublerBuffer.setSize(2, maximumBlockSize);
+
     // Prepare all voices
     for (auto& voice : voices)
         voice.prepare(spec);
@@ -38,6 +42,9 @@ void VocalDoubler::prepare(double sampleRate, int maximumBlockSize)
     voices[3].timingOffset = 0.028f * static_cast<float>(sampleRate);  // 28ms
     voices[3].panPosition = 0.6f;    // Further right
 
+    // Pre-compute pan gains (avoid per-sample sin/cos)
+    updatePanGains();
+
     reset();
 }
 
@@ -55,56 +62,59 @@ void VocalDoubler::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0 || currentVoices == 0)
         return;
 
-    // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
-    for (int ch = 0; ch < numChannels; ++ch)
+    // Ensure buffers are large enough (resize only if needed - rare path)
+    if (dryBuffer.getNumSamples() < numSamples)
+    {
+        dryBuffer.setSize(2, numSamples, false, false, true);
+        doublerBuffer.setSize(2, numSamples, false, false, true);
+    }
+
+    // Store dry signal (use pre-allocated buffer)
+    for (int ch = 0; ch < juce::jmin(2, numChannels); ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
-    // Create doubled buffer
-    juce::AudioBuffer<float> doublerBuffer(numChannels, numSamples);
+    // Clear doubled buffer
     doublerBuffer.clear();
 
-    // Process each voice
+    // Pre-compute voice scale factor (avoid per-sample division)
+    const float voiceScale = 1.0f / static_cast<float>(currentVoices);
+
+    // Process each voice with cached pan gains
     for (int v = 0; v < currentVoices && v < 4; ++v)
     {
         auto& voice = voices[v];
 
-        // Apply pitch and timing variation
-        voice.pitchOffset = voice.pitchOffset * currentPitchVariation;
-        voice.timingOffset = voice.timingOffset * currentTimingVariation;
+        // Cached pan gains (computed once when stereo width changes)
+        const float panGainL = panGainsL[static_cast<size_t>(v)] * voiceScale;
+        const float panGainR = panGainsR[static_cast<size_t>(v)] * voiceScale;
 
         for (int channel = 0; channel < juce::jmin(2, numChannels); ++channel)
         {
-            auto* dryData = dryBuffer.getReadPointer(channel);
+            const auto* dryData = dryBuffer.getReadPointer(channel);
             auto* doublerData = doublerBuffer.getWritePointer(channel);
+            const float panGain = (channel == 0) ? panGainL : panGainR;
 
             for (int sample = 0; sample < numSamples; ++sample)
             {
                 float voiceOutput = voice.process(dryData[sample], channel);
-
-                // Apply stereo positioning
-                float panGain = 1.0f;
-                if (channel == 0)  // Left
-                    panGain = std::cos((voice.panPosition + 1.0f) * juce::MathConstants<float>::pi / 4.0f);
-                else  // Right
-                    panGain = std::sin((voice.panPosition + 1.0f) * juce::MathConstants<float>::pi / 4.0f);
-
-                panGain *= currentStereoWidth;
-
-                doublerData[sample] += voiceOutput * panGain / static_cast<float>(currentVoices);
+                doublerData[sample] += voiceOutput * panGain;
             }
         }
     }
 
-    // Mix dry and doubled
-    for (int ch = 0; ch < numChannels; ++ch)
+    // Mix dry and doubled using SIMD-friendly operations
+    const float dryGain = 1.0f - currentMix + currentMix * 0.6f;  // Pre-compute
+    const float wetGain = currentMix;
+
+    for (int ch = 0; ch < juce::jmin(2, numChannels); ++ch)
     {
-        auto* dry = dryBuffer.getReadPointer(ch);
-        auto* doubled = doublerBuffer.getReadPointer(ch);
+        const auto* dry = dryBuffer.getReadPointer(ch);
+        const auto* doubled = doublerBuffer.getReadPointer(ch);
         auto* out = buffer.getWritePointer(ch);
 
-        for (int i = 0; i < numSamples; ++i)
-            out[i] = dry[i] * (1.0f - currentMix) + (dry[i] * 0.6f + doubled[i]) * currentMix;
+        // SIMD-optimized: out = dry * dryGain + doubled * wetGain
+        juce::FloatVectorOperations::copyWithMultiply(out, dry, dryGain, numSamples);
+        juce::FloatVectorOperations::addWithMultiply(out, doubled, wetGain, numSamples);
     }
 }
 
@@ -127,6 +137,18 @@ void VocalDoubler::setTimingVariation(float variation)
 void VocalDoubler::setStereoWidth(float width)
 {
     currentStereoWidth = juce::jlimit(0.0f, 1.0f, width);
+    updatePanGains();  // Recache pan gains when width changes
+}
+
+void VocalDoubler::updatePanGains()
+{
+    // Pre-compute sin/cos for pan law (called once when params change, not per-sample)
+    for (int v = 0; v < 4; ++v)
+    {
+        float angle = (voices[static_cast<size_t>(v)].panPosition + 1.0f) * juce::MathConstants<float>::pi / 4.0f;
+        panGainsL[static_cast<size_t>(v)] = std::cos(angle) * currentStereoWidth;
+        panGainsR[static_cast<size_t>(v)] = std::sin(angle) * currentStereoWidth;
+    }
 }
 
 void VocalDoubler::setMix(float mix)

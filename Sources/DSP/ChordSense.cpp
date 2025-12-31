@@ -162,14 +162,21 @@ void ChordSense::performFFTAnalysis(const juce::AudioBuffer<float>& buffer)
     int numSamples = juce::jmin(buffer.getNumSamples(), fftSize);
 
     // Mix to mono and copy to FFT buffer
+    // OPTIMIZATION: Cache read pointers to avoid per-sample virtual calls
     fftData.fill(0.0f);
+    const int numChannels = buffer.getNumChannels();
+    const float invChannels = 1.0f / static_cast<float>(numChannels);
+    const float* channelPtrs[8] = { nullptr };
+    for (int ch = 0; ch < juce::jmin(numChannels, 8); ++ch)
+        channelPtrs[ch] = buffer.getReadPointer(ch);
+
     for (int i = 0; i < numSamples; ++i)
     {
         float sample = 0.0f;
-        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
-            sample += buffer.getSample(channel, i);
+        for (int channel = 0; channel < numChannels; ++channel)
+            sample += channelPtrs[channel][i];
 
-        fftData[i] = sample / buffer.getNumChannels();
+        fftData[i] = sample * invChannels;
     }
 
     // Apply window

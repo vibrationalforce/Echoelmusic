@@ -1,4 +1,5 @@
 #include "ResonanceHealer.h"
+#include "../Core/DSPOptimizations.h"
 
 ResonanceHealer::ResonanceHealer()
     : fft(FFT_ORDER)
@@ -44,10 +45,24 @@ void ResonanceHealer::prepare(double sr, int maxBlockSize)
     inputFifo.clear();
     outputFifo.clear();
 
+    // Pre-allocate dry buffer
+    dryBuffer.setSize(2, maxBlockSize);
+
     inputFifoWritePos = 0;
     outputFifoReadPos = 0;
 
+    // Initialize cached coefficients
+    updateCoefficients();
+
     reset();
+}
+
+void ResonanceHealer::updateCoefficients()
+{
+    // Pre-compute attack/release coefficients for HOP_SIZE grain
+    float hopTime = static_cast<float>(HOP_SIZE) / static_cast<float>(sampleRate);
+    cachedAttackCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-hopTime / (currentAttack * 0.001f));
+    cachedReleaseCoeff = 1.0f - Echoel::DSP::FastMath::fastExp(-hopTime / (currentRelease * 0.001f));
 }
 
 void ResonanceHealer::reset()
@@ -68,6 +83,8 @@ void ResonanceHealer::reset()
 
     for (auto& comp : bandCompressors)
         comp.envelope = 0.0f;
+
+    smoothedSpectrum.fill(0.0f);
 }
 
 void ResonanceHealer::process(juce::AudioBuffer<float>& buffer)
@@ -78,8 +95,11 @@ void ResonanceHealer::process(juce::AudioBuffer<float>& buffer)
     if (numChannels == 0 || numSamples == 0)
         return;
 
+    // Ensure dry buffer is large enough (avoid per-frame allocation)
+    if (dryBuffer.getNumSamples() < numSamples || dryBuffer.getNumChannels() < numChannels)
+        dryBuffer.setSize(numChannels, numSamples, false, false, true);
+
     // Store dry signal
-    juce::AudioBuffer<float> dryBuffer(numChannels, numSamples);
     for (int ch = 0; ch < numChannels; ++ch)
         dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
@@ -97,12 +117,14 @@ void ResonanceHealer::process(juce::AudioBuffer<float>& buffer)
             // Process when we have enough samples
             if (inputFifoWritePos % HOP_SIZE == 0)
             {
-                // Copy to FFT buffer
+                // OPTIMIZATION: Copy to FFT buffer with cached pointer
+                const float* inputFifoPtr = inputFifo.getReadPointer(channel);
+                const int fifoSize = inputFifo.getNumSamples();
+                const int basePos = inputFifoWritePos - FFT_SIZE + fifoSize;
                 for (int i = 0; i < FFT_SIZE; ++i)
                 {
-                    int readPos = (inputFifoWritePos - FFT_SIZE + i + inputFifo.getNumSamples())
-                                 % inputFifo.getNumSamples();
-                    fftData[i] = inputFifo.getSample(channel, readPos);
+                    int readPos = (basePos + i) % fifoSize;
+                    fftData[i] = inputFifoPtr[readPos];
                     fftData[i + FFT_SIZE] = 0.0f;  // Zero imaginary part
                 }
 
@@ -112,13 +134,15 @@ void ResonanceHealer::process(juce::AudioBuffer<float>& buffer)
                 // Forward FFT
                 fft.performFrequencyOnlyForwardTransform(fftData.data());
 
-                // Extract magnitude & phase
+                // Extract magnitude & phase using fast math
                 for (int i = 0; i < FFT_SIZE / 2; ++i)
                 {
                     float real = fftData[i];
                     float imag = fftData[i + FFT_SIZE / 2];
-                    magnitudeSpectrum[i] = std::sqrt(real * real + imag * imag);
-                    phaseSpectrum[i] = std::atan2(imag, real);
+                    magnitudeSpectrum[i] = Echoel::DSP::FastMath::fastSqrt(real * real + imag * imag);
+                    // Fast atan2 approximation
+                    phaseSpectrum[i] = Echoel::DSP::FastMath::fastAtan(imag / (real + 1e-10f));
+                    if (real < 0.0f) phaseSpectrum[i] += (imag >= 0.0f) ? 3.14159265f : -3.14159265f;
                 }
 
                 // Detect resonances
@@ -127,22 +151,25 @@ void ResonanceHealer::process(juce::AudioBuffer<float>& buffer)
                 // Apply reduction
                 applyReduction();
 
-                // Reconstruct complex spectrum
+                // Reconstruct complex spectrum using fast trig
+                const auto& trigTables = Echoel::DSP::TrigLookupTables::getInstance();
                 for (int i = 0; i < FFT_SIZE / 2; ++i)
                 {
-                    fftData[i] = magnitudeSpectrum[i] * std::cos(phaseSpectrum[i]);
-                    fftData[i + FFT_SIZE / 2] = magnitudeSpectrum[i] * std::sin(phaseSpectrum[i]);
+                    fftData[i] = magnitudeSpectrum[i] * trigTables.fastCosRad(phaseSpectrum[i]);
+                    fftData[i + FFT_SIZE / 2] = magnitudeSpectrum[i] * trigTables.fastSinRad(phaseSpectrum[i]);
                 }
 
                 // Inverse FFT
                 fft.performRealOnlyInverseTransform(fftData.data());
 
-                // Overlap-add to output FIFO
+                // OPTIMIZATION: Overlap-add to output FIFO with cached pointer
+                float* outputFifoPtr = outputFifo.getWritePointer(channel);
+                const int outFifoSize = outputFifo.getNumSamples();
+                const float invFFT = 1.0f / FFT_SIZE;
                 for (int i = 0; i < FFT_SIZE; ++i)
                 {
-                    int writePos = (outputFifoReadPos + i) % outputFifo.getNumSamples();
-                    float existing = outputFifo.getSample(channel, writePos);
-                    outputFifo.setSample(channel, writePos, existing + fftData[i] / FFT_SIZE);
+                    int writePos = (outputFifoReadPos + i) % outFifoSize;
+                    outputFifoPtr[writePos] += fftData[i] * invFFT;
                 }
 
                 outputFifoReadPos = (outputFifoReadPos + HOP_SIZE) % outputFifo.getNumSamples();
@@ -189,9 +216,8 @@ void ResonanceHealer::process(juce::AudioBuffer<float>& buffer)
 
 void ResonanceHealer::detectResonances()
 {
-    // Calculate spectral envelope (smoothed spectrum)
-    std::array<float, FFT_SIZE / 2> smoothedSpectrum;
-    int windowSize = static_cast<int>(FFT_SIZE / 64);  // Smoothing window
+    // Calculate spectral envelope using pre-allocated smoothedSpectrum buffer
+    constexpr int windowSize = FFT_SIZE / 64;  // Smoothing window
 
     for (int i = 0; i < FFT_SIZE / 2; ++i)
     {
@@ -244,20 +270,16 @@ void ResonanceHealer::detectResonances()
             float excess = magnitude - threshold;
             float reductionTarget = juce::jlimit(0.0f, 1.0f, excess / threshold * currentDepth);
 
-            // Smooth reduction with attack/release
-            float attackCoeff = 1.0f - std::exp(-1.0f / (currentAttack * 0.001f * static_cast<float>(sampleRate) / HOP_SIZE));
-            float releaseCoeff = 1.0f - std::exp(-1.0f / (currentRelease * 0.001f * static_cast<float>(sampleRate) / HOP_SIZE));
-
+            // Smooth reduction with cached attack/release coefficients
             if (reductionTarget > band.reduction)
-                band.reduction += attackCoeff * (reductionTarget - band.reduction);
+                band.reduction += cachedAttackCoeff * (reductionTarget - band.reduction);
             else
-                band.reduction += releaseCoeff * (reductionTarget - band.reduction);
+                band.reduction += cachedReleaseCoeff * (reductionTarget - band.reduction);
         }
         else
         {
-            // Release
-            float releaseCoeff = 1.0f - std::exp(-1.0f / (currentRelease * 0.001f * static_cast<float>(sampleRate) / HOP_SIZE));
-            band.reduction += releaseCoeff * (0.0f - band.reduction);
+            // Release using cached coefficient
+            band.reduction += cachedReleaseCoeff * (0.0f - band.reduction);
         }
 
         band.magnitude = magnitude;
@@ -288,9 +310,9 @@ void ResonanceHealer::applyReduction()
             if (bin < 0 || bin >= FFT_SIZE / 2)
                 continue;
 
-            // Calculate bell curve
+            // Calculate bell curve using fast exp
             float x = static_cast<float>(i) / binWidth;
-            float bellCurve = std::exp(-4.0f * x * x);  // Gaussian
+            float bellCurve = Echoel::DSP::FastMath::fastExp(-4.0f * x * x);  // Gaussian
 
             // Apply reduction
             float gain = 1.0f - (band.reduction * bellCurve);
@@ -337,11 +359,13 @@ void ResonanceHealer::setDepth(float depth)
 void ResonanceHealer::setAttack(float ms)
 {
     currentAttack = juce::jlimit(1.0f, 100.0f, ms);
+    updateCoefficients();  // Update cached coefficients
 }
 
 void ResonanceHealer::setRelease(float ms)
 {
     currentRelease = juce::jlimit(10.0f, 1000.0f, ms);
+    updateCoefficients();  // Update cached coefficients
 }
 
 void ResonanceHealer::setFrequencyRange(float lowHz, float highHz)

@@ -21,25 +21,27 @@ import simd
 
 /// The ultimate AI engine combining quantum-inspired algorithms with
 /// neural networks for unprecedented creative generation
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-final class QuantumSuperIntelligence: ObservableObject {
+@Observable
+final class QuantumSuperIntelligence {
 
     // MARK: - Singleton
 
     static let shared = QuantumSuperIntelligence()
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var quantumState = QuantumSuperState()
-    @Published var consciousness: Float = 0.0           // System awareness level
-    @Published var creativityField: Float = 0.5         // Creative potential
-    @Published var coherenceLevel: Float = 0.5          // Bio-quantum coherence
-    @Published var isTranscending: Bool = false         // God mode active
+    var quantumState = QuantumSuperState()
+    var consciousness: Float = 0.0           // System awareness level
+    var creativityField: Float = 0.5         // Creative potential
+    var coherenceLevel: Float = 0.5          // Bio-quantum coherence
+    var isTranscending: Bool = false         // God mode active
 
     // Sub-system states
-    @Published var audioIntelligence = AudioIntelligenceState()
-    @Published var videoIntelligence = VideoIntelligenceState()
-    @Published var bioIntelligence = BioIntelligenceState()
+    var audioIntelligence = AudioIntelligenceState()
+    var videoIntelligence = VideoIntelligenceState()
+    var bioIntelligence = BioIntelligenceState()
 
     // MARK: - Core Engines
 
@@ -251,7 +253,9 @@ final class QuantumSuperIntelligence: ObservableObject {
         // Entangle all systems
         entangleAudioVideoSystems()
 
-        print("🌟 GOD MODE ACTIVATED - Universal Energy Flow")
+        #if DEBUG
+        debugLog("🌟", "GOD MODE ACTIVATED - Universal Energy Flow")
+        #endif
     }
 
     func deactivateGodMode() {
@@ -1154,3 +1158,7 @@ struct TranscendentGenerationView: View {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+extension QuantumSuperIntelligence: ObservableObject { }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <atomic>
 
 /**
  * Compressor - Professional dynamics processor
@@ -54,10 +55,16 @@ private:
     float knee = 3.0f;
     float makeupGain = 0.0f;
 
+    // OPTIMIZATION: Cached reciprocals for division-free per-sample processing
+    float invRatio = 0.25f;           // 1/ratio
+    float invTwoKnee = 0.1666667f;    // 1/(2*knee)
+
     // State
     float envelopeL = 0.0f;
     float envelopeR = 0.0f;
-    float gainReduction = 0.0f;
+
+    // OPTIMIZATION: Atomic for thread-safe UI metering access
+    std::atomic<float> gainReduction { 0.0f };
 
     // Coefficients (calculated from attack/release)
     float attackCoeff = 0.0f;

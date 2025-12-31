@@ -3,41 +3,51 @@ import Combine
 
 /// Chat Aggregator for Twitch, YouTube, Facebook Live
 /// Aggregates chat messages from multiple platforms with AI moderation
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class ChatAggregator: ObservableObject {
+@Observable
+final class ChatAggregator {
 
-    @Published var messages: [ChatMessage] = []
-    @Published var isActive: Bool = false
+    var messages: [ChatMessage] = []
+    var isActive: Bool = false
 
     // AI Moderation
-    @Published var moderationEnabled: Bool = true
-    @Published var toxicMessagesBlocked: Int = 0
+    var moderationEnabled: Bool = true
+    var toxicMessagesBlocked: Int = 0
 
     private var cancellables = Set<AnyCancellable>()
 
     func start() {
         guard !isActive else { return }
         isActive = true
-        print("💬 ChatAggregator: Started")
+        #if DEBUG
+        debugLog("💬 ChatAggregator: Started")
+        #endif
     }
 
     func stop() {
         guard isActive else { return }
         isActive = false
         cancellables.removeAll()
-        print("💬 ChatAggregator: Stopped")
+        #if DEBUG
+        debugLog("💬 ChatAggregator: Stopped")
+        #endif
     }
 
     func addMessage(_ message: ChatMessage) {
         // AI Moderation check
         if moderationEnabled && isToxic(message.text) {
             toxicMessagesBlocked += 1
-            print("🚫 ChatAggregator: Blocked toxic message from \(message.username)")
+            #if DEBUG
+            debugLog("🚫 ChatAggregator: Blocked toxic message from \(message.username)")
+            #endif
             return
         }
 
         messages.append(message)
-        print("💬 [\(message.platform.rawValue)] \(message.username): \(message.text)")
+        #if DEBUG
+        debugLog("💬 [\(message.platform.rawValue)] \(message.username): \(message.text)")
+        #endif
     }
 
     private func isToxic(_ text: String) -> Bool {
@@ -63,3 +73,8 @@ struct ChatMessage: Identifiable {
         case facebook = "Facebook"
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension ChatAggregator: ObservableObject { }
