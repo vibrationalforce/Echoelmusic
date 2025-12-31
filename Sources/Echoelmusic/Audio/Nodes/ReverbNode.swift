@@ -148,11 +148,15 @@ class ReverbNode: BaseEchoelmusicNode {
 
     override func start() {
         super.start()
-        print("🎵 ReverbNode started")
+        #if DEBUG
+        debugLog("🎵 ReverbNode started")
+        #endif
     }
 
     override func stop() {
         super.stop()
-        print("🎵 ReverbNode stopped")
+        #if DEBUG
+        debugLog("🎵 ReverbNode stopped")
+        #endif
     }
 }

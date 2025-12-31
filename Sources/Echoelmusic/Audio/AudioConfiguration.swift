@@ -84,12 +84,14 @@ enum AudioConfiguration {
         // Activate session
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
 
-        print("🎵 Audio Session Configured:")
-        print("   Sample Rate: \(audioSession.sampleRate) Hz")
-        print("   IO Buffer Duration: \(audioSession.ioBufferDuration * 1000) ms")
-        print("   Input Latency: \(audioSession.inputLatency * 1000) ms")
-        print("   Output Latency: \(audioSession.outputLatency * 1000) ms")
-        print("   Total Latency: \((audioSession.inputLatency + audioSession.outputLatency + audioSession.ioBufferDuration) * 1000) ms")
+        #if DEBUG
+        debugLog("🎵 Audio Session Configured:")
+        debugLog("   Sample Rate: \(audioSession.sampleRate) Hz")
+        debugLog("   IO Buffer Duration: \(audioSession.ioBufferDuration * 1000) ms")
+        debugLog("   Input Latency: \(audioSession.inputLatency * 1000) ms")
+        debugLog("   Output Latency: \(audioSession.outputLatency * 1000) ms")
+        debugLog("   Total Latency: \((audioSession.inputLatency + audioSession.outputLatency + audioSession.ioBufferDuration) * 1000) ms")
+        #endif
     }
 
 
@@ -121,7 +123,9 @@ enum AudioConfiguration {
     static func setLatencyMode(_ mode: LatencyMode) throws {
         currentBufferSize = mode.bufferSize
         try configureAudioSession()
-        print("🎵 Latency mode set to: \(mode.description)")
+        #if DEBUG
+        debugLog("🎵 Latency mode set to: \(mode.description)")
+        #endif
     }
 
 
@@ -166,11 +170,13 @@ enum AudioConfiguration {
             }
         }
 
+        #if DEBUG
         if result == KERN_SUCCESS {
-            print("✅ Real-time audio thread priority set")
+            debugLog("✅ Real-time audio thread priority set")
         } else {
-            print("⚠️  Failed to set audio thread priority: \(result)")
+            debugLog("⚠️  Failed to set audio thread priority: \(result)")
         }
+        #endif
     }
 
 

@@ -186,12 +186,16 @@ class DelayNode: BaseEchoelmusicNode {
 
     override func start() {
         super.start()
-        print("🎵 DelayNode started")
+        #if DEBUG
+        debugLog("🎵 DelayNode started")
+        #endif
     }
 
     override func stop() {
         super.stop()
-        print("🎵 DelayNode stopped")
+        #if DEBUG
+        debugLog("🎵 DelayNode stopped")
+        #endif
     }
 
 

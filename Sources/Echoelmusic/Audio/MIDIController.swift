@@ -162,7 +162,9 @@ final class MIDIController {
             if status == noErr {
                 let device = getDeviceInfo(for: source)
                 connectedDevices.append(device)
-                print("🎹 Connected to MIDI device: \(device.name)")
+                #if DEBUG
+                debugLog("🎹 Connected to MIDI device: \(device.name)")
+                #endif
             }
         }
 
@@ -253,7 +255,9 @@ final class MIDIController {
     }
 
     private func handleParameterChange(parameter: MIDIParameter, value: Float) {
-        print("🎹 MIDI parameter: \(parameter) = \(value)")
+        #if DEBUG
+        debugLog("🎹 MIDI parameter: \(parameter) = \(value)")
+        #endif
         // This would be handled by specific parameter callbacks
     }
 
@@ -262,13 +266,17 @@ final class MIDIController {
     /// Add MIDI CC mapping
     func addMapping(_ mapping: MIDIMapping) {
         mappings.append(mapping)
-        print("🎹 Added MIDI mapping: CC\(mapping.controllerNumber) → \(mapping.parameter)")
+        #if DEBUG
+        debugLog("🎹 Added MIDI mapping: CC\(mapping.controllerNumber) → \(mapping.parameter)")
+        #endif
     }
 
     /// Remove all mappings
     func clearMappings() {
         mappings.removeAll()
-        print("🎹 Cleared all MIDI mappings")
+        #if DEBUG
+        debugLog("🎹 Cleared all MIDI mappings")
+        #endif
     }
 
     /// Register message handler
@@ -292,7 +300,9 @@ final class MIDIController {
         addMapping(MIDIMapping(controllerNumber: 92, parameter: .delayTime, minValue: 0.01, maxValue: 2))    // Delay Time
         addMapping(MIDIMapping(controllerNumber: 93, parameter: .delayFeedback, minValue: 0, maxValue: 0.9)) // Delay Feedback
 
-        print("🎹 Setup default MIDI mappings")
+        #if DEBUG
+        debugLog("🎹 Setup default MIDI mappings")
+        #endif
     }
 
     // MARK: - Cleanup
@@ -312,7 +322,9 @@ final class MIDIController {
 extension MIDIController {
     /// Start MIDI learn mode for parameter
     func startLearnMode(for parameter: MIDIParameter, minValue: Float, maxValue: Float, timeout: TimeInterval = 10.0) async -> UInt8? {
-        print("🎹 MIDI Learn: Waiting for controller input...")
+        #if DEBUG
+        debugLog("🎹 MIDI Learn: Waiting for controller input...")
+        #endif
 
         // Wait for next CC message
         return await withCheckedContinuation { continuation in
@@ -324,7 +336,9 @@ extension MIDIController {
                       let ccNumber = message.controllerNumber else { return }
 
                 // Found CC controller
-                print("🎹 MIDI Learn: Learned CC\(ccNumber)")
+                #if DEBUG
+                debugLog("🎹 MIDI Learn: Learned CC\(ccNumber)")
+                #endif
 
                 // Add mapping
                 let mapping = MIDIMapping(
@@ -351,7 +365,9 @@ extension MIDIController {
             timeoutTask = Task {
                 try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
 
-                print("🎹 MIDI Learn: Timeout")
+                #if DEBUG
+                debugLog("🎹 MIDI Learn: Timeout")
+                #endif
 
                 if let handler = handler,
                    let index = messageHandlers.firstIndex(where: { handler as AnyObject === $0 as AnyObject }) {

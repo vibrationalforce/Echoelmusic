@@ -109,7 +109,9 @@ class WatchApp {
     func startSession(type: SessionType) async throws {
         guard !isSessionActive else { return }
 
-        print("⌚ Starting \(type.rawValue) session on Apple Watch")
+        #if DEBUG
+        debugLog("⌚ Starting \(type.rawValue) session on Apple Watch")
+        #endif
 
         // Starte HealthKit Workout
         try await startWorkoutSession(type: type)
@@ -130,7 +132,9 @@ class WatchApp {
     func stopSession() async {
         guard isSessionActive else { return }
 
-        print("⌚ Stopping session on Apple Watch")
+        #if DEBUG
+        debugLog("⌚ Stopping session on Apple Watch")
+        #endif
 
         // Stoppe Workout
         workoutSession?.end()
@@ -177,7 +181,9 @@ class WatchApp {
                                                    configuration: configuration)
             workoutSession?.startActivity(with: Date())
         } catch {
-            print("❌ Failed to start workout session: \(error)")
+            #if DEBUG
+            debugLog("❌ Failed to start workout session: \(error)")
+            #endif
             throw error
         }
     }
@@ -247,7 +253,9 @@ class WatchApp {
         )
 
         // TODO: Sync with iPhone via WatchConnectivity
-        print("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        #if DEBUG
+        debugLog("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        #endif
     }
 
     struct SessionData: Codable {
@@ -431,22 +439,30 @@ class WatchAudioEngine {
 
     func start(breathingRate: Double) async {
         isPlaying = true
-        print("🔊 Watch Audio Engine started")
+        #if DEBUG
+        debugLog("🔊 Watch Audio Engine started")
+        #endif
     }
 
     func stop() async {
         isPlaying = false
-        print("🔊 Watch Audio Engine stopped")
+        #if DEBUG
+        debugLog("🔊 Watch Audio Engine stopped")
+        #endif
     }
 
     func playInhaleTone() async {
         // Spiele sanften aufsteigenden Ton
-        print("🎵 Inhale tone")
+        #if DEBUG
+        debugLog("🎵 Inhale tone")
+        #endif
     }
 
     func playExhaleTone() async {
         // Spiele sanften absteigenden Ton
-        print("🎵 Exhale tone")
+        #if DEBUG
+        debugLog("🎵 Exhale tone")
+        #endif
     }
 }
 

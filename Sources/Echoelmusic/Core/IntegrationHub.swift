@@ -158,7 +158,7 @@ final class AccessibilityCoordinator {
         }
 
         #if DEBUG
-        print("♿ AccessibilityCoordinator: Initialized")
+        debugLog("♿ AccessibilityCoordinator: Initialized")
         #endif
     }
 
@@ -182,7 +182,7 @@ final class AccessibilityCoordinator {
         // Subscribe to audio level changes
         // In production: Connect via Combine publisher or callback
         #if DEBUG
-        print("🔊➡️📳 Audio-to-Haptic connected to AudioEngine")
+        debugLog("🔊➡️📳 Audio-to-Haptic connected to AudioEngine")
         #endif
     }
 
@@ -190,7 +190,7 @@ final class AccessibilityCoordinator {
         signLanguageEnabled = true
         IntegrationHub.shared.activeFeatures.insert(.signLanguage)
         #if DEBUG
-        print("🤟 Sign Language enabled: \(language.rawValue)")
+        debugLog("🤟 Sign Language enabled: \(language.rawValue)")
         #endif
     }
 
@@ -198,7 +198,7 @@ final class AccessibilityCoordinator {
         eyeTrackingEnabled = true
         IntegrationHub.shared.activeFeatures.insert(.eyeTracking)
         #if DEBUG
-        print("👁️ Eye Tracking enabled")
+        debugLog("👁️ Eye Tracking enabled")
         #endif
     }
 
@@ -223,14 +223,14 @@ final class AudioToHapticBridge {
     func start() async {
         isRunning = true
         #if DEBUG
-        print("📳 AudioToHapticBridge: Started")
+        debugLog("📳 AudioToHapticBridge: Started")
         #endif
     }
 
     func stop() {
         isRunning = false
         #if DEBUG
-        print("📳 AudioToHapticBridge: Stopped")
+        debugLog("📳 AudioToHapticBridge: Stopped")
         #endif
     }
 
@@ -269,8 +269,8 @@ final class LocalizationCoordinator {
         isRTL = Locale.current.language.characterDirection == .rightToLeft
 
         #if DEBUG
-        print("🌍 LocalizationCoordinator: Initialized with \(supportedLanguages.count) languages")
-        print("🌍 Current: \(currentLanguage), RTL: \(isRTL)")
+        debugLog("🌍 LocalizationCoordinator: Initialized with \(supportedLanguages.count) languages")
+        debugLog("🌍 Current: \(currentLanguage), RTL: \(isRTL)")
         #endif
     }
 
@@ -282,7 +282,7 @@ final class LocalizationCoordinator {
         NotificationCenter.default.post(name: .languageChanged, object: code)
 
         #if DEBUG
-        print("🌍 Language changed to: \(code)")
+        debugLog("🌍 Language changed to: \(code)")
         #endif
     }
 
@@ -379,14 +379,14 @@ final class StreamingCoordinator {
 
     func initialize() async {
         #if DEBUG
-        print("📡 StreamingCoordinator: Initialized")
+        debugLog("📡 StreamingCoordinator: Initialized")
         #endif
     }
 
     func connectAudioCapture(from audioEngine: AudioEngine) {
         // Connect to AudioEngine for stream capture
         #if DEBUG
-        print("📡 StreamingCoordinator: Connected to AudioEngine")
+        debugLog("📡 StreamingCoordinator: Connected to AudioEngine")
         #endif
     }
 
@@ -401,7 +401,7 @@ final class StreamingCoordinator {
         streamURL = "https://live.echoelmusic.com/\(UUID().uuidString.prefix(8))"
 
         #if DEBUG
-        print("🎬 Stream started: \(streamURL)")
+        debugLog("🎬 Stream started: \(streamURL)")
         #endif
     }
 
@@ -412,7 +412,7 @@ final class StreamingCoordinator {
         viewerCount = 0
 
         #if DEBUG
-        print("⏹️ Stream stopped")
+        debugLog("⏹️ Stream stopped")
         #endif
     }
 
@@ -455,13 +455,13 @@ final class CollaborationCoordinator {
 
     func initialize() async {
         #if DEBUG
-        print("🤝 CollaborationCoordinator: Initialized")
+        debugLog("🤝 CollaborationCoordinator: Initialized")
         #endif
     }
 
     func connectAudioSharing(from audioEngine: AudioEngine) {
         #if DEBUG
-        print("🤝 CollaborationCoordinator: Connected to AudioEngine")
+        debugLog("🤝 CollaborationCoordinator: Connected to AudioEngine")
         #endif
     }
 
@@ -487,7 +487,7 @@ final class CollaborationCoordinator {
         networkLatency = 35
 
         #if DEBUG
-        print("🎵 Joined session: \(currentSession?.name ?? "Unknown")")
+        debugLog("🎵 Joined session: \(currentSession?.name ?? "Unknown")")
         #endif
     }
 
@@ -498,7 +498,7 @@ final class CollaborationCoordinator {
         networkLatency = 0
 
         #if DEBUG
-        print("👋 Left session")
+        debugLog("👋 Left session")
         #endif
     }
 }
@@ -522,7 +522,7 @@ final class HealthKitDemoCoordinator {
 
     func initialize() async {
         #if DEBUG
-        print("💓 HealthKitDemoCoordinator: Initialized")
+        debugLog("💓 HealthKitDemoCoordinator: Initialized")
         #endif
     }
 
@@ -532,7 +532,7 @@ final class HealthKitDemoCoordinator {
         isDemoMode = false
 
         #if DEBUG
-        print("💓 Connected to real HealthKit")
+        debugLog("💓 Connected to real HealthKit")
         #endif
     }
 
@@ -549,7 +549,7 @@ final class HealthKitDemoCoordinator {
         }
 
         #if DEBUG
-        print("🎭 Demo mode enabled - simulating biofeedback data")
+        debugLog("🎭 Demo mode enabled - simulating biofeedback data")
         #endif
     }
 
@@ -559,7 +559,7 @@ final class HealthKitDemoCoordinator {
         demoTimer = nil
 
         #if DEBUG
-        print("🎭 Demo mode disabled")
+        debugLog("🎭 Demo mode disabled")
         #endif
     }
 
