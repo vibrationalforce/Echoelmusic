@@ -216,7 +216,9 @@ struct OnboardingView: View {
                 let impact = UIImpactFeedbackGenerator(style: .medium)
                 impact.impactOccurred()
             } catch {
-                print("⚠️ HealthKit authorization failed: \(error)")
+                #if DEBUG
+                debugLog("⚠️ HealthKit authorization failed: \(error)")
+                #endif
             }
         }
     }

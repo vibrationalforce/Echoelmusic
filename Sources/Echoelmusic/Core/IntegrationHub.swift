@@ -630,8 +630,8 @@ final class DebugMonitor {
             logs.removeFirst()
         }
 
-        // Also print in debug
-        print("\(level.rawValue) \(message)")
+        // Also log with debugLog
+        debugLog("\(level.rawValue) \(message)")
         #endif
     }
 

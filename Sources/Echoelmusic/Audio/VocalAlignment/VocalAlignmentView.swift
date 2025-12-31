@@ -302,11 +302,15 @@ struct VocalAlignmentView: View {
                     defer { url.stopAccessingSecurityScopedResource() }
                     try await aligner.loadGuideTrack(from: url)
                 } catch {
-                    print("Failed to load guide: \(error)")
+                    #if DEBUG
+                    debugLog("Failed to load guide: \(error)")
+                    #endif
                 }
             }
         case .failure(let error):
-            print("File picker error: \(error)")
+            #if DEBUG
+            debugLog("File picker error: \(error)")
+            #endif
         }
     }
 
@@ -320,12 +324,16 @@ struct VocalAlignmentView: View {
                         defer { url.stopAccessingSecurityScopedResource() }
                         try await aligner.addDubTrack(from: url)
                     } catch {
-                        print("Failed to load dub: \(error)")
+                        #if DEBUG
+                        debugLog("Failed to load dub: \(error)")
+                        #endif
                     }
                 }
             }
         case .failure(let error):
-            print("File picker error: \(error)")
+            #if DEBUG
+            debugLog("File picker error: \(error)")
+            #endif
         }
     }
 
@@ -334,7 +342,9 @@ struct VocalAlignmentView: View {
             do {
                 try await aligner.alignAllTracks()
             } catch {
-                print("Alignment failed: \(error)")
+                #if DEBUG
+                debugLog("Alignment failed: \(error)")
+                #endif
             }
         }
     }
@@ -344,7 +354,9 @@ struct VocalAlignmentView: View {
             do {
                 try await aligner.previewAlignedTrack(id)
             } catch {
-                print("Preview failed: \(error)")
+                #if DEBUG
+                debugLog("Preview failed: \(error)")
+                #endif
             }
         }
     }

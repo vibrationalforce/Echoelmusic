@@ -505,7 +505,9 @@ public class GlobalTranslationManager {
 
         // Add more as needed...
 
-        print("✅ GlobalTranslation: Loaded \(translations.count) languages")
+        #if DEBUG
+        debugLog("✅ GlobalTranslation: Loaded \(translations.count) languages")
+        #endif
     }
 
     public func translate(_ key: String) -> String {

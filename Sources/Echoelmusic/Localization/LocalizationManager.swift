@@ -31,7 +31,9 @@ class LocalizationManager {
         didSet {
             if currentLanguage != oldValue {
                 languageDidChange.send(currentLanguage)
-                print("🌍 Language changed to: \(currentLanguage.displayName)")
+                #if DEBUG
+                debugLog("🌍 Language changed to: \(currentLanguage.displayName)")
+                #endif
             }
         }
     }

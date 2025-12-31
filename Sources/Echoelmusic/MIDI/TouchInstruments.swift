@@ -58,7 +58,9 @@ final class TouchInstrumentsHub {
             hapticEngine = try CHHapticEngine()
             try hapticEngine?.start()
         } catch {
-            print("TouchInstruments: Haptics not available")
+            #if DEBUG
+            debugLog("TouchInstruments: Haptics not available")
+            #endif
         }
     }
 

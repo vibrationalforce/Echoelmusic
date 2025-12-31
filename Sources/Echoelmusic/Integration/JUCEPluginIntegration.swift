@@ -48,7 +48,9 @@ class JUCEPluginIntegration {
         checkPluginStatus()
         #endif
 
-        print("🎸 JUCE Plugin Integration initialized")
+        #if DEBUG
+        debugLog("🎸 JUCE Plugin Integration initialized")
+        #endif
     }
 
     // MARK: - Bio-Data Updates
@@ -74,9 +76,13 @@ class JUCEPluginIntegration {
             timestamp: Date().timeIntervalSince1970
         )
 
-        print("🎸 Bio-data sent to JUCE plugin: HRV=\(hrv), Coherence=\(coherence), HR=\(heartRate)")
+        #if DEBUG
+        debugLog("🎸 Bio-data sent to JUCE plugin: HRV=\(hrv), Coherence=\(coherence), HR=\(heartRate)")
+        #endif
         #else
-        print("⚠️ BioDataBridge not available - JUCE plugin not compiled")
+        #if DEBUG
+        debugLog("⚠️ BioDataBridge not available - JUCE plugin not compiled")
+        #endif
         #endif
     }
 
@@ -107,8 +113,10 @@ class JUCEPluginIntegration {
         isPluginLoaded = bridge.isPluginLoaded()
         pluginVersion = bridge.getPluginVersion() ?? "Unknown"
 
-        print("🎸 JUCE Plugin Status: \(isPluginLoaded ? "Loaded" : "Not Loaded")")
-        print("🎸 Plugin Version: \(pluginVersion)")
+        #if DEBUG
+        debugLog("🎸 JUCE Plugin Status: \(isPluginLoaded ? "Loaded" : "Not Loaded")")
+        debugLog("🎸 Plugin Version: \(pluginVersion)")
+        #endif
         #endif
     }
 
@@ -195,7 +203,9 @@ extension JUCEPluginIntegration {
     /// Example: Connect to HealthKit manager
     func connectToHealthKit(manager: AnyObject) {
         // This would be called from the main app to connect HealthKit data
-        print("🎸 Connecting JUCE plugin to HealthKit manager")
+        #if DEBUG
+        debugLog("🎸 Connecting JUCE plugin to HealthKit manager")
+        #endif
 
         // In practice, you would set up a Combine pipeline:
         // healthKitManager.$currentHRV
