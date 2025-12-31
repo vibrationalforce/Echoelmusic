@@ -20,15 +20,17 @@ import Combine
 /// 3. Stress Testing (thermal, battery, memory)
 /// 4. Integration Testing (sensors, connectivity, peripherals)
 /// 5. Future-Proofing Testing (upcoming hardware capabilities)
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class DeviceTestingFramework: ObservableObject {
+@Observable
+final class DeviceTestingFramework {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var currentDeviceProfile: DeviceProfile?
-    @Published var testResults: [TestResult] = []
-    @Published var compatibilityScore: Float = 0.0  // 0-100
-    @Published var isTestingInProgress: Bool = false
+    var currentDeviceProfile: DeviceProfile?
+    var testResults: [TestResult] = []
+    var compatibilityScore: Float = 0.0  // 0-100
+    var isTestingInProgress: Bool = false
 
     // MARK: - Device Categories
 
@@ -184,8 +186,10 @@ class DeviceTestingFramework: ObservableObject {
         loadDeviceDatabase()
         detectCurrentDevice()
 
-        print("✅ Device Testing Framework: Initialized")
-        print("📱 Device Database: \(deviceDatabase.count) profiles")
+        #if DEBUG
+        debugLog("✅ Device Testing Framework: Initialized")
+        debugLog("📱 Device Database: \(deviceDatabase.count) profiles")
+        #endif
     }
 
     // MARK: - Load Device Database
@@ -233,10 +237,12 @@ class DeviceTestingFramework: ObservableObject {
             createQuantumDevice2035()
         ]
 
-        print("📊 Device Database loaded: \(deviceDatabase.count) devices")
-        print("   - Smartphones: \(deviceDatabase.filter { $0.category == DeviceCategory.smartphone.rawValue }.count)")
-        print("   - Vehicles: \(deviceDatabase.filter { $0.category == DeviceCategory.vehicle.rawValue }.count)")
-        print("   - Future devices: \(deviceDatabase.filter { $0.releaseYear > 2025 }.count)")
+        #if DEBUG
+        debugLog("📊 Device Database loaded: \(deviceDatabase.count) devices")
+        debugLog("   - Smartphones: \(deviceDatabase.filter { $0.category == DeviceCategory.smartphone.rawValue }.count)")
+        debugLog("   - Vehicles: \(deviceDatabase.filter { $0.category == DeviceCategory.vehicle.rawValue }.count)")
+        debugLog("   - Future devices: \(deviceDatabase.filter { $0.releaseYear > 2025 }.count)")
+        #endif
     }
 
     // MARK: - Device Profiles (Current)
@@ -508,7 +514,9 @@ class DeviceTestingFramework: ObservableObject {
         currentDeviceProfile = createiPhone15ProMax()
         #endif
 
-        print("📱 Current Device: \(currentDeviceProfile?.name ?? "Unknown")")
+        #if DEBUG
+        debugLog("📱 Current Device: \(currentDeviceProfile?.name ?? "Unknown")")
+        #endif
     }
 
     private func getDeviceModelIdentifier() -> String {
@@ -566,8 +574,10 @@ class DeviceTestingFramework: ObservableObject {
         isTestingInProgress = true
         testResults = []
 
-        print("🧪 Starting Complete Test Suite...")
-        print("   Testing \(deviceDatabase.count) device profiles")
+        #if DEBUG
+        debugLog("🧪 Starting Complete Test Suite...")
+        debugLog("   Testing \(deviceDatabase.count) device profiles")
+        #endif
 
         for device in deviceDatabase {
             await testDevice(device)
@@ -576,14 +586,18 @@ class DeviceTestingFramework: ObservableObject {
         calculateOverallCompatibility()
         isTestingInProgress = false
 
-        print("✅ Test Suite Complete")
-        print("   Overall Compatibility: \(String(format: "%.1f", compatibilityScore))%")
+        #if DEBUG
+        debugLog("✅ Test Suite Complete")
+        debugLog("   Overall Compatibility: \(String(format: "%.1f", compatibilityScore))%")
+        #endif
     }
 
     // MARK: - Test Individual Device
 
     func testDevice(_ device: DeviceProfile) async {
-        print("   Testing: \(device.name)...")
+        #if DEBUG
+        debugLog("   Testing: \(device.name)...")
+        #endif
 
         // Performance Test
         let perfResult = await testPerformance(device)
@@ -844,3 +858,8 @@ class DeviceTestingFramework: ObservableObject {
         return report
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension DeviceTestingFramework: ObservableObject { }
