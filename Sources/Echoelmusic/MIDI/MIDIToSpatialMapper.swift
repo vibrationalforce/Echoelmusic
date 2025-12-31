@@ -22,14 +22,16 @@ import simd
 /// - Multiple sound sources arranged in geometric patterns
 /// - Phase-coherent synthesis
 /// - Bio-reactive field morphing
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class MIDIToSpatialMapper: ObservableObject {
+@Observable
+final class MIDIToSpatialMapper {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var spatialMode: SpatialMode = .stereo
-    @Published var currentPosition: SpatialPosition = SpatialPosition(x: 0, y: 0, z: 1)
-    @Published var afaField: AFAField?
+    var spatialMode: SpatialMode = .stereo
+    var currentPosition: SpatialPosition = SpatialPosition(x: 0, y: 0, z: 1)
+    var afaField: AFAField?
 
     // MARK: - Spatial Modes
 
@@ -347,3 +349,8 @@ struct MPEVoiceData {
     let pitchBend: Float
     let brightness: Float
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension MIDIToSpatialMapper: ObservableObject { }

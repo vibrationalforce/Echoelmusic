@@ -6,14 +6,16 @@ import Combine
 /// Bio-reactive LED feedback via SysEx messages
 /// 8x8 RGB LED grid (64 LEDs)
 /// Integrates with biofeedback system for real-time LED visualization
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class Push3LEDController: ObservableObject {
+@Observable
+final class Push3LEDController {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isConnected: Bool = false
-    @Published var currentPattern: LEDPattern = .breathe
-    @Published var brightness: Float = 0.7
+    var isConnected: Bool = false
+    var currentPattern: LEDPattern = .breathe
+    var brightness: Float = 0.7
 
     // MARK: - MIDI Components
 
@@ -96,7 +98,9 @@ class Push3LEDController: ObservableObject {
         ) { _ in }
 
         guard clientStatus == noErr else {
-            print("⚠️ Failed to create MIDI client for Push 3")
+            #if DEBUG
+            debugLog("⚠️ Failed to create MIDI client for Push 3")
+            #endif
             return
         }
         midiClient = client
@@ -110,7 +114,9 @@ class Push3LEDController: ObservableObject {
         )
 
         guard portStatus == noErr else {
-            print("⚠️ Failed to create MIDI output port for Push 3")
+            #if DEBUG
+            debugLog("⚠️ Failed to create MIDI output port for Push 3")
+            #endif
             return
         }
         outputPort = port
@@ -132,13 +138,17 @@ class Push3LEDController: ObservableObject {
                 if deviceName.contains("Ableton Push 3") || deviceName.contains("Push 3") {
                     push3Endpoint = endpoint
                     isConnected = true
-                    print("✅ Found Push 3: \(deviceName)")
+                    #if DEBUG
+                    debugLog("✅ Found Push 3: \(deviceName)")
+                    #endif
                     return
                 }
             }
         }
 
-        print("⚠️ Push 3 not found. Connect via USB and retry.")
+        #if DEBUG
+        debugLog("⚠️ Push 3 not found. Connect via USB and retry.")
+        #endif
     }
 
     // MARK: - Connection Management
@@ -171,7 +181,9 @@ class Push3LEDController: ObservableObject {
     /// Set entire grid
     func setGrid(_ grid: [[RGB]]) {
         guard grid.count == 8, grid.allSatisfy({ $0.count == 8 }) else {
-            print("⚠️ Invalid grid dimensions (must be 8x8)")
+            #if DEBUG
+            debugLog("⚠️ Invalid grid dimensions (must be 8x8)")
+            #endif
             return
         }
         ledGrid = grid
@@ -225,7 +237,9 @@ class Push3LEDController: ObservableObject {
 
         let status = MIDISend(outputPort, push3Endpoint, &packetList)
         if status != noErr {
-            print("⚠️ Failed to send SysEx to Push 3: \(status)")
+            #if DEBUG
+            debugLog("⚠️ Failed to send SysEx to Push 3: \(status)")
+            #endif
         }
     }
 
@@ -397,14 +411,18 @@ class Push3LEDController: ObservableObject {
             applyPattern(currentPattern)
         }
 
-        print("⚡ Gesture flash: \(gesture)")
+        #if DEBUG
+        debugLog("⚡ Gesture flash: \(gesture)")
+        #endif
     }
 
     // MARK: - Pattern Management
 
     func applyPattern(_ pattern: LEDPattern) {
         currentPattern = pattern
-        print("💡 Push 3 pattern: \(pattern.rawValue)")
+        #if DEBUG
+        debugLog("💡 Push 3 pattern: \(pattern.rawValue)")
+        #endif
     }
 
     // MARK: - Utility Functions
@@ -456,3 +474,8 @@ class Push3LEDController: ObservableObject {
         """
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension Push3LEDController: ObservableObject { }

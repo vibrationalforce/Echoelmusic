@@ -7,15 +7,17 @@ import Combine
 /// Maps MIDI/MPE parameters to DMX lighting and addressable LED strips
 /// Supports Art-Net, sACN (E1.31), and serial LED protocols
 /// Bio-reactive lighting for live performances and installations
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class MIDIToLightMapper: ObservableObject {
+@Observable
+final class MIDIToLightMapper {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var isActive: Bool = false
-    @Published var currentScene: LightScene = .ambient
-    @Published var dmxUniverse: [UInt8] = Array(repeating: 0, count: 512)
-    @Published var ledStrips: [LEDStrip] = []
+    var isActive: Bool = false
+    var currentScene: LightScene = .ambient
+    var dmxUniverse: [UInt8] = Array(repeating: 0, count: 512)
+    var ledStrips: [LEDStrip] = []
 
     // MARK: - DMX Configuration
 
@@ -145,7 +147,9 @@ class MIDIToLightMapper: ObservableObject {
 
     func addFixture(_ fixture: DMXFixture) {
         fixtures.append(fixture)
-        print("💡 Added fixture: \(fixture.name) @ DMX \(fixture.startAddress)")
+        #if DEBUG
+        debugLog("💡 Added fixture: \(fixture.name) @ DMX \(fixture.startAddress)")
+        #endif
     }
 
     // MARK: - Biometric Data Structure
@@ -166,7 +170,9 @@ class MIDIToLightMapper: ObservableObject {
         // Initialize Art-Net socket
         artNetSocket = try UDPSocket(address: artNetAddress, port: artNetPort)
         isActive = true
-        print("✅ DMX/LED Mapper connected (Art-Net → \(artNetAddress):\(artNetPort))")
+        #if DEBUG
+        debugLog("✅ DMX/LED Mapper connected (Art-Net → \(artNetAddress):\(artNetPort))")
+        #endif
     }
 
     /// Disconnect from Art-Net network
@@ -178,7 +184,9 @@ class MIDIToLightMapper: ObservableObject {
         artNetSocket = nil
         isActive = false
 
-        print("🛑 DMX/LED Mapper disconnected")
+        #if DEBUG
+        debugLog("🛑 DMX/LED Mapper disconnected")
+        #endif
     }
 
     // MARK: - Start/Stop (Legacy)
@@ -447,7 +455,9 @@ class MIDIToLightMapper: ObservableObject {
 
     func setScene(_ scene: LightScene) {
         currentScene = scene
-        print("💡 Light scene: \(scene.rawValue)")
+        #if DEBUG
+        debugLog("💡 Light scene: \(scene.rawValue)")
+        #endif
     }
 
     // MARK: - Debug Info
@@ -486,14 +496,20 @@ class UDPSocket {
         )
 
         // Setup state handler
-        connection?.stateUpdateHandler = { [weak self] state in
+        connection?.stateUpdateHandler = { state in
             switch state {
             case .ready:
-                print("💡 UDP Socket connected: \(address):\(port)")
+                #if DEBUG
+                debugLog("💡 UDP Socket connected: \(address):\(port)")
+                #endif
             case .failed(let error):
-                print("❌ UDP Socket failed: \(error)")
+                #if DEBUG
+                debugLog("❌ UDP Socket failed: \(error)")
+                #endif
             case .cancelled:
-                print("🔌 UDP Socket cancelled")
+                #if DEBUG
+                debugLog("🔌 UDP Socket cancelled")
+                #endif
             default:
                 break
             }
@@ -505,7 +521,9 @@ class UDPSocket {
 
     func send(data: Data) {
         guard let connection = connection else {
-            print("⚠️ UDP Socket not connected")
+            #if DEBUG
+            debugLog("⚠️ UDP Socket not connected")
+            #endif
             return
         }
 
@@ -513,7 +531,9 @@ class UDPSocket {
             content: data,
             completion: .contentProcessed { error in
                 if let error = error {
-                    print("❌ UDP send error: \(error)")
+                    #if DEBUG
+                    debugLog("❌ UDP send error: \(error)")
+                    #endif
                 }
             }
         )
@@ -522,6 +542,13 @@ class UDPSocket {
     func close() {
         connection?.cancel()
         connection = nil
-        print("🔌 UDP Socket closed")
+        #if DEBUG
+        debugLog("🔌 UDP Socket closed")
+        #endif
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension MIDIToLightMapper: ObservableObject { }
