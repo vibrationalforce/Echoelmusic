@@ -10,13 +10,15 @@ import HealthKit
 /// - PubMed Central peer-reviewed journals
 /// - Clinical practice guidelines from major medical organizations
 /// - Evidence levels per Oxford Centre for Evidence-Based Medicine
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class ClinicalEvidenceBase: ObservableObject {
+@Observable
+final class ClinicalEvidenceBase {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var availableInterventions: [ClinicalIntervention] = []
-    @Published var selectedIntervention: ClinicalIntervention?
+    var availableInterventions: [ClinicalIntervention] = []
+    var selectedIntervention: ClinicalIntervention?
 
     // MARK: - Clinical Interventions (Evidence-Based)
 
@@ -84,8 +86,10 @@ class ClinicalEvidenceBase: ObservableObject {
 
     init() {
         loadEvidenceBasedInterventions()
-        print("✅ Clinical Evidence Base: Initialized")
-        print("📚 All interventions backed by peer-reviewed research")
+        #if DEBUG
+        debugLog("✅ Clinical Evidence Base: Initialized")
+        debugLog("📚 All interventions backed by peer-reviewed research")
+        #endif
     }
 
     private func loadEvidenceBasedInterventions() {
@@ -285,3 +289,8 @@ class ClinicalEvidenceBase: ObservableObject {
         return summary
     }
 }
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension ClinicalEvidenceBase: ObservableObject { }

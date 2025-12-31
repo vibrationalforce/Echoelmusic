@@ -11,23 +11,25 @@ import Combine
 /// - Shaffer & Ginsberg (2017). "HRV Biofeedback" - Front. Public Health 5:258
 /// - McCraty et al. (2009). "The coherent heart" - HeartMath Institute
 /// - Gevirtz (2013). "The promise of heart rate variability biofeedback" - Biofeedback 41(3)
+/// Migrated to @Observable for better performance (Swift 5.9+)
 @MainActor
-class EvidenceBasedHRVTraining: ObservableObject {
+@Observable
+final class EvidenceBasedHRVTraining {
 
-    // MARK: - Published State
+    // MARK: - Observable State
 
-    @Published var currentProtocol: TrainingProtocol?
-    @Published var sessionProgress: Double = 0.0
-    @Published var isTraining: Bool = false
-    @Published var sessionData: [SessionDataPoint] = []
+    var currentProtocol: TrainingProtocol?
+    var sessionProgress: Double = 0.0
+    var isTraining: Bool = false
+    var sessionData: [SessionDataPoint] = []
 
     // MARK: - Evidence-Based Metrics (Per Research)
 
-    @Published var baselineHRV: Float = 0.0      // RMSSD in ms
-    @Published var currentHRV: Float = 0.0
-    @Published var hrvTrend: HRVTrend = .stable
-    @Published var coherenceScore: Float = 0.0   // HeartMath Coherence (0-100)
-    @Published var respiratoryRate: Float = 0.0  // Breaths per minute
+    var baselineHRV: Float = 0.0      // RMSSD in ms
+    var currentHRV: Float = 0.0
+    var hrvTrend: HRVTrend = .stable
+    var coherenceScore: Float = 0.0   // HeartMath Coherence (0-100)
+    var respiratoryRate: Float = 0.0  // Breaths per minute
 
     // MARK: - Training Protocols (Evidence-Based)
 
@@ -116,8 +118,10 @@ class EvidenceBasedHRVTraining: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Evidence-Based HRV Training: Initialized")
-        print("📚 Based on peer-reviewed research - Educational purposes only")
+        #if DEBUG
+        debugLog("✅ Evidence-Based HRV Training: Initialized")
+        debugLog("📚 Based on peer-reviewed research - Educational purposes only")
+        #endif
     }
 
     // MARK: - Start Training Session
@@ -133,10 +137,12 @@ class EvidenceBasedHRVTraining: ObservableObject {
         // Calculate baseline
         baselineHRV = try await measureBaselineHRV()
 
-        print("▶️ HRV Training: \(protocolType.rawValue)")
-        print("📊 Evidence Level: \(protocolType.evidenceLevel.rawValue)")
-        print("🫁 Target Breathing Rate: \(protocolType.targetBreathingRate) breaths/min")
-        print("⏱️ Duration: \(Int(protocolType.sessionDuration / 60)) minutes")
+        #if DEBUG
+        debugLog("▶️ HRV Training: \(protocolType.rawValue)")
+        debugLog("📊 Evidence Level: \(protocolType.evidenceLevel.rawValue)")
+        debugLog("🫁 Target Breathing Rate: \(protocolType.targetBreathingRate) breaths/min")
+        debugLog("⏱️ Duration: \(Int(protocolType.sessionDuration / 60)) minutes")
+        #endif
 
         // Start monitoring
         startMonitoring()
@@ -154,12 +160,14 @@ class EvidenceBasedHRVTraining: ObservableObject {
         let avgCoherence = sessionData.map { $0.coherence }.reduce(0, +) / Float(sessionData.count)
         let hrvChange = finalHRV - baselineHRV
 
-        print("⏹️ HRV Training: Session Ended")
-        print("📊 Results:")
-        print("   - Baseline HRV: \(String(format: "%.1f", baselineHRV)) ms")
-        print("   - Final HRV: \(String(format: "%.1f", finalHRV)) ms")
-        print("   - Change: \(hrvChange >= 0 ? "+" : "")\(String(format: "%.1f", hrvChange)) ms (\(String(format: "%.1f", (hrvChange / baselineHRV) * 100))%)")
-        print("   - Avg Coherence: \(String(format: "%.1f", avgCoherence))")
+        #if DEBUG
+        debugLog("⏹️ HRV Training: Session Ended")
+        debugLog("📊 Results:")
+        debugLog("   - Baseline HRV: \(String(format: "%.1f", baselineHRV)) ms")
+        debugLog("   - Final HRV: \(String(format: "%.1f", finalHRV)) ms")
+        debugLog("   - Change: \(hrvChange >= 0 ? "+" : "")\(String(format: "%.1f", hrvChange)) ms (\(String(format: "%.1f", (hrvChange / baselineHRV) * 100))%)")
+        debugLog("   - Avg Coherence: \(String(format: "%.1f", avgCoherence))")
+        #endif
 
         currentProtocol = nil
     }
@@ -325,3 +333,8 @@ struct SessionReport {
 
 extension SessionReport: Codable {}
 extension EvidenceBasedHRVTraining.SessionDataPoint: Codable {}
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility for existing code using @StateObject/@ObservedObject
+extension EvidenceBasedHRVTraining: ObservableObject { }
