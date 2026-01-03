@@ -37,6 +37,7 @@ namespace Vocals {
 
 enum class VoiceCharacter
 {
+    // === Basic Characters ===
     Natural,
     Robot,
     Alien,
@@ -54,7 +55,73 @@ enum class VoiceCharacter
     Androgynous,
     Choir,
     Cyberpunk,
-    Ghost
+    Ghost,
+
+    // === World Music Vocal Styles ===
+    // European Classical
+    Opera_Soprano,
+    Opera_Tenor,
+    Opera_Bass,
+
+    // African
+    African_Chant,
+    Afrobeat,
+    Gospel,
+    Soul,
+
+    // Latin American
+    Salsa,
+    BossaNova,
+    Tango,
+    Reggaeton,
+    Samba,
+
+    // Caribbean
+    Reggae,
+    Dancehall,
+    Calypso,
+
+    // Middle Eastern
+    Arabic_Maqam,
+    Persian,
+    Turkish,
+    Qawwali,
+
+    // Indian
+    Indian_Classical,
+    Bollywood,
+    Bhajan,
+
+    // East Asian
+    Chinese_Opera,
+    Japanese_Enka,
+    KPop,
+    JPop,
+
+    // Central Asian
+    Mongolian_Throat,
+    Tuvan_Khoomei,
+
+    // European Folk
+    Celtic,
+    Nordic_Kulning,
+    Flamenco,
+    Fado,
+    Slavic,
+    Swiss_Yodel,
+
+    // American
+    Country,
+    Blues,
+    Jazz_Scat,
+    RnB,
+    HipHop,
+
+    // Electronic
+    EDM_Vocal,
+    Trance,
+    Synthwave,
+    Vaporwave
 };
 
 struct VoiceProfile
@@ -639,6 +706,378 @@ private:
                 p.reverbAmount = 0.8f;
                 p.filterCutoff = 4000.0f;
                 p.chorusAmount = 0.5f;
+                break;
+
+            // =========================================================
+            // WORLD MUSIC VOCAL STYLES
+            // =========================================================
+
+            // === European Classical ===
+            case VoiceCharacter::Opera_Soprano:
+                p.pitchShift = 5.0f;
+                p.formantShift = 4.0f;
+                p.throatLength = 0.8f;
+                p.reverbAmount = 0.6f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 1;
+                p.harmonyIntervals = {12, 0, 0, 0};  // Octave doubling
+                break;
+
+            case VoiceCharacter::Opera_Tenor:
+                p.pitchShift = 2.0f;
+                p.formantShift = 2.0f;
+                p.throatLength = 0.95f;
+                p.reverbAmount = 0.6f;
+                break;
+
+            case VoiceCharacter::Opera_Bass:
+                p.pitchShift = -5.0f;
+                p.formantShift = -4.0f;
+                p.throatLength = 1.3f;
+                p.reverbAmount = 0.6f;
+                break;
+
+            // === African ===
+            case VoiceCharacter::African_Chant:
+                p.reverbAmount = 0.3f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 3;
+                p.harmonyIntervals = {-12, 7, 12, 0};  // Call and response
+                p.chorusAmount = 0.2f;
+                break;
+
+            case VoiceCharacter::Afrobeat:
+                p.pitchShift = 1.0f;
+                p.reverbAmount = 0.2f;
+                p.distortionAmount = 0.1f;
+                break;
+
+            case VoiceCharacter::Gospel:
+                p.reverbAmount = 0.5f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 4;
+                p.harmonyIntervals = {-12, 3, 7, 12};  // Full gospel harmony
+                p.chorusAmount = 0.3f;
+                break;
+
+            case VoiceCharacter::Soul:
+                p.formantShift = -1.0f;
+                p.throatLength = 1.1f;
+                p.reverbAmount = 0.3f;
+                p.chorusAmount = 0.15f;
+                break;
+
+            // === Latin American ===
+            case VoiceCharacter::Salsa:
+                p.pitchShift = 1.0f;
+                p.reverbAmount = 0.25f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {3, 7, 0, 0};  // Latin harmony
+                break;
+
+            case VoiceCharacter::BossaNova:
+                p.formantShift = 1.0f;
+                p.breathiness = 0.2f;
+                p.reverbAmount = 0.4f;
+                p.filterCutoff = 8000.0f;  // Smooth, mellow
+                break;
+
+            case VoiceCharacter::Tango:
+                p.pitchShift = -2.0f;
+                p.formantShift = -2.0f;
+                p.throatLength = 1.15f;
+                p.reverbAmount = 0.35f;
+                p.distortionAmount = 0.05f;  // Slight grit
+                break;
+
+            case VoiceCharacter::Reggaeton:
+                p.pitchShift = 0.0f;
+                p.roboticAmount = 0.15f;
+                p.reverbAmount = 0.2f;
+                p.distortionAmount = 0.1f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 1;
+                p.harmonyIntervals = {12, 0, 0, 0};  // Octave up ad-libs
+                break;
+
+            case VoiceCharacter::Samba:
+                p.pitchShift = 2.0f;
+                p.formantShift = 1.0f;
+                p.reverbAmount = 0.2f;
+                p.chorusAmount = 0.1f;
+                break;
+
+            // === Caribbean ===
+            case VoiceCharacter::Reggae:
+                p.pitchShift = -1.0f;
+                p.throatLength = 1.1f;
+                p.reverbAmount = 0.4f;
+                p.filterCutoff = 6000.0f;
+                break;
+
+            case VoiceCharacter::Dancehall:
+                p.pitchShift = 1.0f;
+                p.distortionAmount = 0.15f;
+                p.reverbAmount = 0.25f;
+                p.roboticAmount = 0.1f;
+                break;
+
+            case VoiceCharacter::Calypso:
+                p.pitchShift = 2.0f;
+                p.formantShift = 2.0f;
+                p.reverbAmount = 0.2f;
+                p.chorusAmount = 0.15f;
+                break;
+
+            // === Middle Eastern ===
+            case VoiceCharacter::Arabic_Maqam:
+                p.reverbAmount = 0.5f;
+                p.formantShift = 2.0f;
+                p.throatLength = 0.9f;
+                // Microtonal melismatic style - add slight pitch wobble via modulation
+                p.chorusAmount = 0.1f;
+                break;
+
+            case VoiceCharacter::Persian:
+                p.formantShift = 1.0f;
+                p.throatLength = 0.95f;
+                p.reverbAmount = 0.45f;
+                p.breathiness = 0.1f;
+                break;
+
+            case VoiceCharacter::Turkish:
+                p.formantShift = 2.0f;
+                p.reverbAmount = 0.4f;
+                p.throatLength = 0.9f;
+                break;
+
+            case VoiceCharacter::Qawwali:
+                p.reverbAmount = 0.5f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 3;
+                p.harmonyIntervals = {-12, 5, 7, 0};  // Sufi devotional harmony
+                p.chorusAmount = 0.25f;
+                break;
+
+            // === Indian ===
+            case VoiceCharacter::Indian_Classical:
+                p.formantShift = 1.0f;
+                p.reverbAmount = 0.35f;
+                p.throatLength = 0.95f;
+                // Gamakas (ornaments) via subtle modulation
+                p.chorusAmount = 0.05f;
+                break;
+
+            case VoiceCharacter::Bollywood:
+                p.pitchShift = 2.0f;
+                p.formantShift = 2.0f;
+                p.reverbAmount = 0.4f;
+                p.chorusAmount = 0.2f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {5, 7, 0, 0};
+                break;
+
+            case VoiceCharacter::Bhajan:
+                p.reverbAmount = 0.5f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {-12, 7, 0, 0};  // Devotional unison
+                p.chorusAmount = 0.15f;
+                break;
+
+            // === East Asian ===
+            case VoiceCharacter::Chinese_Opera:
+                p.pitchShift = 5.0f;
+                p.formantShift = 6.0f;
+                p.throatLength = 0.75f;
+                p.reverbAmount = 0.3f;
+                p.filterCutoff = 10000.0f;  // Bright, piercing
+                break;
+
+            case VoiceCharacter::Japanese_Enka:
+                p.formantShift = 1.0f;
+                p.reverbAmount = 0.5f;
+                p.throatLength = 0.9f;
+                // Heavy vibrato characteristic
+                p.chorusAmount = 0.2f;
+                break;
+
+            case VoiceCharacter::KPop:
+                p.pitchShift = 2.0f;
+                p.formantShift = 2.0f;
+                p.throatLength = 0.85f;
+                p.reverbAmount = 0.3f;
+                p.chorusAmount = 0.2f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {3, 7, 0, 0};
+                break;
+
+            case VoiceCharacter::JPop:
+                p.pitchShift = 3.0f;
+                p.formantShift = 3.0f;
+                p.throatLength = 0.8f;
+                p.reverbAmount = 0.35f;
+                p.chorusAmount = 0.15f;
+                break;
+
+            // === Central Asian (Overtone Singing) ===
+            case VoiceCharacter::Mongolian_Throat:
+                p.pitchShift = -8.0f;
+                p.formantShift = 10.0f;  // Extreme formant for overtones
+                p.throatLength = 1.5f;
+                p.distortionAmount = 0.2f;
+                p.reverbAmount = 0.4f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {12, 19, 0, 0};  // Overtone harmonics
+                break;
+
+            case VoiceCharacter::Tuvan_Khoomei:
+                p.pitchShift = -6.0f;
+                p.formantShift = 12.0f;  // Whistling overtones
+                p.throatLength = 1.4f;
+                p.distortionAmount = 0.15f;
+                p.reverbAmount = 0.45f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {12, 24, 0, 0};  // High overtones
+                break;
+
+            // === European Folk ===
+            case VoiceCharacter::Celtic:
+                p.formantShift = 1.0f;
+                p.reverbAmount = 0.4f;
+                p.chorusAmount = 0.15f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {5, 7, 0, 0};  // Celtic harmony
+                break;
+
+            case VoiceCharacter::Nordic_Kulning:
+                p.pitchShift = 8.0f;
+                p.formantShift = 6.0f;
+                p.throatLength = 0.7f;
+                p.reverbAmount = 0.7f;  // Mountain echo
+                p.filterCutoff = 12000.0f;  // Piercing herding call
+                break;
+
+            case VoiceCharacter::Flamenco:
+                p.pitchShift = -1.0f;
+                p.formantShift = -2.0f;
+                p.throatLength = 1.1f;
+                p.distortionAmount = 0.2f;  // Raspy, passionate
+                p.reverbAmount = 0.25f;
+                break;
+
+            case VoiceCharacter::Fado:
+                p.pitchShift = -1.0f;
+                p.formantShift = -1.0f;
+                p.reverbAmount = 0.5f;
+                p.breathiness = 0.15f;  // Saudade melancholy
+                break;
+
+            case VoiceCharacter::Slavic:
+                p.throatLength = 1.05f;
+                p.reverbAmount = 0.35f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 3;
+                p.harmonyIntervals = {-5, 3, 7, 0};  // Eastern European harmony
+                break;
+
+            case VoiceCharacter::Swiss_Yodel:
+                p.reverbAmount = 0.6f;  // Alpine echo
+                // Rapid register breaks simulated
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 1;
+                p.harmonyIntervals = {12, 0, 0, 0};  // Octave for yodel effect
+                p.chorusAmount = 0.1f;
+                break;
+
+            // === American ===
+            case VoiceCharacter::Country:
+                p.formantShift = -1.0f;
+                p.throatLength = 1.1f;
+                p.reverbAmount = 0.3f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {3, 5, 0, 0};  // Country harmony
+                break;
+
+            case VoiceCharacter::Blues:
+                p.pitchShift = -2.0f;
+                p.formantShift = -2.0f;
+                p.throatLength = 1.15f;
+                p.distortionAmount = 0.15f;
+                p.reverbAmount = 0.35f;
+                break;
+
+            case VoiceCharacter::Jazz_Scat:
+                p.reverbAmount = 0.4f;
+                p.chorusAmount = 0.1f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {4, 7, 0, 0};  // Jazz voicings
+                break;
+
+            case VoiceCharacter::RnB:
+                p.formantShift = 1.0f;
+                p.throatLength = 0.95f;
+                p.reverbAmount = 0.35f;
+                p.chorusAmount = 0.15f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 3;
+                p.harmonyIntervals = {3, 5, 7, 0};  // R&B stacking
+                break;
+
+            case VoiceCharacter::HipHop:
+                p.pitchShift = -1.0f;
+                p.throatLength = 1.1f;
+                p.distortionAmount = 0.1f;
+                p.reverbAmount = 0.2f;
+                p.roboticAmount = 0.05f;  // Modern trap autotune hint
+                break;
+
+            // === Electronic ===
+            case VoiceCharacter::EDM_Vocal:
+                p.pitchShift = 2.0f;
+                p.roboticAmount = 0.3f;
+                p.reverbAmount = 0.4f;
+                p.chorusAmount = 0.25f;
+                p.filterCutoff = 8000.0f;
+                break;
+
+            case VoiceCharacter::Trance:
+                p.pitchShift = 3.0f;
+                p.formantShift = 3.0f;
+                p.reverbAmount = 0.6f;
+                p.chorusAmount = 0.4f;
+                p.roboticAmount = 0.2f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {7, 12, 0, 0};
+                break;
+
+            case VoiceCharacter::Synthwave:
+                p.roboticAmount = 0.4f;
+                p.reverbAmount = 0.5f;
+                p.chorusAmount = 0.3f;
+                p.filterCutoff = 6000.0f;
+                p.distortionAmount = 0.1f;
+                break;
+
+            case VoiceCharacter::Vaporwave:
+                p.pitchShift = -3.0f;
+                p.formantShift = -2.0f;
+                p.reverbAmount = 0.7f;
+                p.chorusAmount = 0.5f;
+                p.filterCutoff = 4000.0f;  // Lo-fi aesthetic
+                break;
+
+            default:
+                // Natural/unchanged
                 break;
         }
 
