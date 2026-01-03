@@ -23,6 +23,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <queue>
 #include <functional>
 #include <atomic>
 #include <mutex>

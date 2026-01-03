@@ -388,6 +388,8 @@ target_include_directories(Echoelmusic
     PUBLIC
         Sources
         Sources/Plugin
+        Sources/Core
+        Sources/Brand
         Sources/MIDI
         Sources/DSP
         Sources/DSP/Effects
@@ -407,6 +409,7 @@ target_include_directories(Echoelmusic
         Sources/Biofeedback
         Sources/Development
         Sources/Examples
+        Sources/Effects
 )
 
 # ===========================

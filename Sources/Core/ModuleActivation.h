@@ -956,7 +956,7 @@ private:
             .name("Rhythm Matrix")
             .version("1.0.0")
             .description("Step sequencer and drum machine")
-            .category(ModuleCategory::Instrument)
+            .category(ModuleCategory::Sequencer)
             .dependsOn("AudioEngine")
             .dependsOn("DrumSynthesizer")
             .registerWith(core);
