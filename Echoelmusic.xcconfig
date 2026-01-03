@@ -1,0 +1,193 @@
+// Echoelmusic Xcode Build Configuration
+// For Apple Developer Launch - macOS, iOS, iPadOS, visionOS
+
+// ============================================
+// IDENTITY
+// ============================================
+
+PRODUCT_NAME = Echoelmusic
+PRODUCT_BUNDLE_IDENTIFIER = com.echoelmusic.app
+PRODUCT_VERSION = 1.0.0
+MARKETING_VERSION = 1.0.0
+CURRENT_PROJECT_VERSION = 1
+
+// ============================================
+// TEAM & SIGNING
+// ============================================
+
+DEVELOPMENT_TEAM =
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = Apple Development
+
+// macOS
+CODE_SIGN_IDENTITY[sdk=macosx*] = Apple Development
+// iOS
+CODE_SIGN_IDENTITY[sdk=iphoneos*] = iPhone Developer
+
+// Provisioning
+PROVISIONING_PROFILE_SPECIFIER =
+
+// ============================================
+// DEPLOYMENT TARGETS
+// ============================================
+
+// macOS
+MACOSX_DEPLOYMENT_TARGET = 12.0
+
+// iOS
+IPHONEOS_DEPLOYMENT_TARGET = 15.0
+
+// visionOS (if available)
+// XROS_DEPLOYMENT_TARGET = 1.0
+
+// ============================================
+// ARCHITECTURES
+// ============================================
+
+// Universal Binary (Intel + Apple Silicon)
+ARCHS = $(ARCHS_STANDARD)
+VALID_ARCHS = arm64 x86_64
+ONLY_ACTIVE_ARCH = NO
+
+// Excluded for release
+EXCLUDED_ARCHS[sdk=iphonesimulator*] = arm64
+
+// ============================================
+// C++ SETTINGS
+// ============================================
+
+CLANG_CXX_LANGUAGE_STANDARD = c++17
+CLANG_CXX_LIBRARY = libc++
+GCC_C_LANGUAGE_STANDARD = c11
+
+// ============================================
+// OPTIMIZATION
+// ============================================
+
+// Debug
+GCC_OPTIMIZATION_LEVEL[config=Debug] = 0
+DEBUG_INFORMATION_FORMAT[config=Debug] = dwarf-with-dsym
+
+// Release
+GCC_OPTIMIZATION_LEVEL[config=Release] = 3
+SWIFT_OPTIMIZATION_LEVEL[config=Release] = -O
+LLVM_LTO[config=Release] = YES
+
+// ============================================
+// SIMD / PERFORMANCE
+// ============================================
+
+// Enable SIMD on Apple Silicon
+OTHER_CFLAGS = -ffast-math
+OTHER_CPLUSPLUSFLAGS = -ffast-math
+
+// ============================================
+// FRAMEWORKS
+// ============================================
+
+// Audio
+SYSTEM_FRAMEWORK_SEARCH_PATHS = $(inherited) $(SDKROOT)/System/Library/Frameworks
+
+// Required frameworks (added in Build Phases)
+// - AudioToolbox.framework
+// - CoreAudio.framework
+// - CoreMIDI.framework
+// - Accelerate.framework
+// - AVFoundation.framework
+// - Metal.framework
+// - MetalPerformanceShaders.framework
+
+// iOS only
+// - HealthKit.framework
+// - ARKit.framework
+// - CoreHaptics.framework
+
+// ============================================
+// SWIFT INTEROP
+// ============================================
+
+SWIFT_VERSION = 5.0
+DEFINES_MODULE = YES
+SWIFT_OBJC_BRIDGING_HEADER = $(SRCROOT)/Sources/Bridge/Echoelmusic-Bridging-Header.h
+
+// ============================================
+// HARDENED RUNTIME (macOS)
+// ============================================
+
+ENABLE_HARDENED_RUNTIME = YES
+HARDENED_RUNTIME_ENTITLEMENTS = $(SRCROOT)/Echoelmusic.entitlements
+
+// ============================================
+// APP SANDBOX (macOS App Store)
+// ============================================
+
+ENABLE_APP_SANDBOX = YES
+
+// ============================================
+// PREPROCESSOR
+// ============================================
+
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited)
+GCC_PREPROCESSOR_DEFINITIONS[config=Debug] = DEBUG=1 $(inherited)
+GCC_PREPROCESSOR_DEFINITIONS[config=Release] = NDEBUG=1 $(inherited)
+
+// JUCE
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) JUCE_DISPLAY_SPLASH_SCREEN=0 JUCE_USE_SIMD=1
+
+// ============================================
+// WARNINGS
+// ============================================
+
+CLANG_WARN_DOCUMENTATION_COMMENTS = YES
+CLANG_WARN_EMPTY_BODY = YES
+CLANG_WARN_BOOL_CONVERSION = YES
+CLANG_WARN_CONSTANT_CONVERSION = YES
+CLANG_WARN_ENUM_CONVERSION = YES
+CLANG_WARN_INT_CONVERSION = YES
+CLANG_WARN_UNREACHABLE_CODE = YES
+GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR
+GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE
+GCC_WARN_UNUSED_FUNCTION = YES
+GCC_WARN_UNUSED_VARIABLE = YES
+
+// ============================================
+// ASSET CATALOG
+// ============================================
+
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon
+ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor
+
+// ============================================
+// INFO PLIST
+// ============================================
+
+INFOPLIST_FILE = $(SRCROOT)/Resources/Info.plist
+GENERATE_INFOPLIST_FILE = YES
+
+// App Category
+INFOPLIST_KEY_LSApplicationCategoryType = public.app-category.music
+
+// Usage descriptions (iOS)
+INFOPLIST_KEY_NSMicrophoneUsageDescription = Echoelmusic needs microphone access for audio recording and vocal processing.
+INFOPLIST_KEY_NSCameraUsageDescription = Echoelmusic needs camera access for video content creation and HRV measurement.
+INFOPLIST_KEY_NSHealthShareUsageDescription = Echoelmusic uses health data for biofeedback-driven music creation.
+INFOPLIST_KEY_NSHealthUpdateUsageDescription = Echoelmusic saves wellness metrics from your music sessions.
+INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = Echoelmusic connects to Bluetooth audio devices and wearables.
+
+// ============================================
+// AUDIO UNIT EXTENSION (AUv3)
+// ============================================
+
+// For AUv3 plugin target
+// PRODUCT_BUNDLE_IDENTIFIER = com.echoelmusic.app.AUv3
+// INFOPLIST_KEY_AudioComponents =
+
+// ============================================
+// EXPORT OPTIONS
+// ============================================
+
+// App Store
+ENABLE_BITCODE = NO
+VALIDATE_PRODUCT = YES
+STRIP_INSTALLED_PRODUCT = YES
+COPY_PHASE_STRIP = YES
