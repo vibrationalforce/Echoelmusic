@@ -1,0 +1,261 @@
+# Auto-Claude Task Configuration for Echoelmusic
+# Multi-Agent Autonomous Development Setup
+# "Ralph Wiggum Loop Mode" - Quantum Science Edition
+
+project:
+  name: "Echoelmusic"
+  description: "Bio-Reactive DAW with Unified Platform Integration"
+  repository: "https://github.com/vibrationalforce/Echoelmusic"
+  branch: "claude/airplane-booth-dongle-research-gYVVF"
+
+  # Technology stack
+  languages:
+    - cpp: "C++17 (JUCE Framework)"
+    - swift: "Swift 5 (iOS/macOS native)"
+    - python: "Python 3.12 (AI/ML tools)"
+
+  frameworks:
+    - JUCE: "Audio plugin development"
+    - AVFoundation: "iOS/macOS audio"
+    - Metal: "GPU compute"
+    - HealthKit: "Biometric integration"
+
+# Agent Configuration
+agents:
+  max_parallel: 12
+  timeout_minutes: 30
+  auto_commit: true
+  run_tests: true
+
+  # Specialized agent roles
+  roles:
+    - name: "dsp-agent"
+      focus: "Sources/DSP/**"
+      expertise: ["audio-processing", "simd-optimization", "real-time"]
+
+    - name: "vocals-agent"
+      focus: "Sources/Vocals/**"
+      expertise: ["pitch-correction", "harmonizer", "voice-cloning"]
+
+    - name: "ui-agent"
+      focus: "Sources/UI/**"
+      expertise: ["juce-gui", "responsive-design", "accessibility"]
+
+    - name: "platform-agent"
+      focus: "Sources/Platform/**"
+      expertise: ["cross-platform", "ios", "macos", "windows", "linux", "android"]
+
+    - name: "video-agent"
+      focus: "Sources/Video/**"
+      expertise: ["video-editing", "streaming", "vj-performance"]
+
+    - name: "bio-agent"
+      focus: "Sources/Bio/**"
+      expertise: ["healthkit", "hrv", "biofeedback", "wearables"]
+
+    - name: "network-agent"
+      focus: "Sources/Network/**"
+      expertise: ["webrtc", "streaming", "collaboration", "cloud-sync"]
+
+    - name: "test-agent"
+      focus: "Sources/Testing/**"
+      expertise: ["unit-tests", "integration-tests", "performance-benchmarks"]
+
+    - name: "content-agent"
+      focus: "Sources/Content/**"
+      expertise: ["blog", "recipes", "social-media", "export"]
+
+    - name: "visual-agent"
+      focus: "Sources/Visual/**"
+      expertise: ["vj", "dmx", "lighting", "led-mapping"]
+
+    - name: "synthesis-agent"
+      focus: "Sources/Synthesis/**"
+      expertise: ["oscillators", "wavetable", "physical-modeling"]
+
+    - name: "i18n-agent"
+      focus: "Sources/Core/Internationalization*"
+      expertise: ["localization", "rtl-languages", "accessibility"]
+
+# Task Templates
+task_templates:
+
+  # Feature Development
+  - id: "add-vocal-style"
+    description: "Add new vocal style to VocalSuite"
+    agents: ["vocals-agent", "test-agent"]
+    steps:
+      - "Add enum value to VoiceCharacter"
+      - "Create profile in getProfileForCharacter()"
+      - "Add unit test"
+      - "Update documentation"
+    validation:
+      - "Compiles without warnings"
+      - "All tests pass"
+      - "No memory leaks"
+
+  - id: "add-dsp-effect"
+    description: "Add new DSP effect processor"
+    agents: ["dsp-agent", "test-agent", "ui-agent"]
+    steps:
+      - "Create effect header in Sources/DSP/"
+      - "Implement processBlock() with SIMD"
+      - "Add to plugin parameter list"
+      - "Create UI controls"
+      - "Write performance benchmark"
+    validation:
+      - "< 5% CPU at 256 buffer"
+      - "Latency < 1ms"
+      - "No denormals"
+
+  - id: "platform-port"
+    description: "Port feature to new platform"
+    agents: ["platform-agent", "test-agent"]
+    steps:
+      - "Add platform detection"
+      - "Implement platform-specific code"
+      - "Add to CMakeLists.txt"
+      - "Test on target platform"
+
+  - id: "add-translation"
+    description: "Add language translation"
+    agents: ["i18n-agent"]
+    steps:
+      - "Add language to enum"
+      - "Add all translation strings"
+      - "Test RTL if applicable"
+      - "Verify number/date formatting"
+
+# Current Sprint Tasks
+sprint:
+  name: "Quantum Science Release"
+  goals:
+    - "Complete unified GUI system"
+    - "All platforms building successfully"
+    - "Test coverage > 80%"
+    - "Performance benchmarks passing"
+
+  tasks:
+    - id: "ECHO-001"
+      title: "Complete remaining DSP effects"
+      priority: "high"
+      agents: ["dsp-agent", "test-agent"]
+      estimate: "4 hours"
+      status: "completed"
+
+    - id: "ECHO-002"
+      title: "Integrate VocalSuite with UnifiedGUI"
+      priority: "high"
+      agents: ["vocals-agent", "ui-agent"]
+      estimate: "2 hours"
+      status: "completed"
+
+    - id: "ECHO-003"
+      title: "Add 50+ world music vocal styles"
+      priority: "medium"
+      agents: ["vocals-agent"]
+      estimate: "3 hours"
+      status: "completed"
+
+    - id: "ECHO-004"
+      title: "Create VJ/Lighting integration"
+      priority: "medium"
+      agents: ["visual-agent", "network-agent"]
+      estimate: "4 hours"
+      status: "completed"
+
+    - id: "ECHO-005"
+      title: "Implement document generation (PDF/XLSX/PPTX)"
+      priority: "medium"
+      agents: ["content-agent"]
+      estimate: "3 hours"
+      status: "completed"
+
+    - id: "ECHO-006"
+      title: "Add 50+ languages with RTL support"
+      priority: "medium"
+      agents: ["i18n-agent"]
+      estimate: "4 hours"
+      status: "completed"
+
+    - id: "ECHO-007"
+      title: "Create cross-platform test suite"
+      priority: "high"
+      agents: ["test-agent", "platform-agent"]
+      estimate: "3 hours"
+      status: "completed"
+
+    - id: "ECHO-008"
+      title: "Performance optimization (better than Reaper)"
+      priority: "high"
+      agents: ["dsp-agent"]
+      estimate: "4 hours"
+      status: "completed"
+
+# Validation Rules
+validation:
+  pre_commit:
+    - "clang-format check"
+    - "no compiler warnings"
+    - "no TODO comments in production code"
+
+  post_commit:
+    - "all unit tests pass"
+    - "integration tests pass"
+    - "performance benchmarks pass"
+
+  performance_targets:
+    cpu_load_max_percent: 50
+    latency_max_ms: 5
+    memory_baseline_mb: 100
+    ui_fps_min: 60
+
+  code_quality:
+    max_function_length: 100
+    max_file_length: 1000
+    require_documentation: true
+
+# Memory & Context
+memory:
+  # Key architectural decisions
+  decisions:
+    - "Use JUCE for cross-platform audio"
+    - "Singleton pattern for core managers"
+    - "Lock-free audio processing"
+    - "SIMD optimization required for DSP"
+
+  # Important files to always consider
+  core_files:
+    - "Sources/Platform/EchoelUnifiedPlatform.h"
+    - "Sources/UI/EchoelUnifiedGUI.h"
+    - "Sources/Vocals/VocalSuite.h"
+    - "Sources/Core/PerformanceEngine.h"
+    - "CMakeLists.txt"
+
+  # Patterns to follow
+  patterns:
+    - "All DSP in Sources/DSP/"
+    - "Platform abstractions in Sources/Platform/"
+    - "Tests mirror source structure in Sources/Testing/"
+    - "Use ECHOEL_ASSERT for tests"
+
+# Notifications
+notifications:
+  on_complete: true
+  on_error: true
+  on_conflict: true
+  channels:
+    - "console"
+    - "github-pr-comment"
+
+# Ralph Wiggum Mode Settings
+ralph_wiggum_mode:
+  enabled: true
+  description: "Auto-implement features without asking questions"
+  behavior:
+    - "Scan repo for existing patterns"
+    - "Combine and integrate related features"
+    - "Create comprehensive implementations"
+    - "Add tests automatically"
+    - "Commit with detailed messages"
+  philosophy: "Alles möglichst einfach - Super Quantum Intelligence mit voller Kontrolle"
