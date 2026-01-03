@@ -52,8 +52,8 @@ enum class ToolCategory
     // AI
     Intelligence,       // AI & ML Tools
 
-    // Wellness
-    Healing,            // Wellness & Healing
+    // Frequency Science
+    FrequencyScience,   // Psychoakustik & Frequenzwerkzeuge
 
     // Bio
     BioFeedback,        // Bio-Integration
@@ -97,7 +97,7 @@ struct ToolEntry
 
     bool isPremium = false;             // Nur in Pro/Infinite
     bool isExperimental = false;        // Beta/Preview
-    bool isWellness = true;             // Hat Wellness-Disclaimer
+    bool requiresDisclaimer = false;    // Benötigt wissenschaftlichen Disclaimer
 };
 
 //==============================================================================
@@ -398,52 +398,52 @@ private:
         });
 
         // ═══════════════════════════════════════════════════════════════
-        // RESONANCE SERIES - Healing & Wellness
+        // RESONANCE SERIES - Psychoakustik & Frequenzwissenschaft
         // ═══════════════════════════════════════════════════════════════
 
         registerTool({
-            "soulresonance", "SoulResonance", "SoulResonance", "SRes",
-            "Healing frequency generator (Entertainment)",
-            "Heilfrequenz-Generator (Unterhaltung)",
-            ToolCategory::Healing, ToolType::Generator, "Resonance",
-            {"healing", "frequency", "wellness", "solfeggio"},
-            "echoel_resonance", false, false, true
+            "toneresonance", "ToneResonance", "ToneResonance", "TRes",
+            "Isochronic tone generator for focus audio",
+            "Isochrone Tongenerator für Fokus-Audio",
+            ToolCategory::FrequencyScience, ToolType::Generator, "Resonance",
+            {"isochronic", "frequency", "tone", "focus"},
+            "echoel_resonance", false, false, false
         });
 
         registerTool({
             "bodyresonance", "BodyResonance", "BodyResonance", "BRes",
-            "Vibrotherapy sound system (Entertainment)",
-            "Vibrotherapie-Soundsystem (Unterhaltung)",
-            ToolCategory::Healing, ToolType::Generator, "Resonance",
-            {"vibration", "body", "therapy", "frequency"},
-            "echoel_resonance", false, false, true
+            "Tactile transducer control system",
+            "Taktile Transducer-Steuerung",
+            ToolCategory::FrequencyScience, ToolType::Generator, "Resonance",
+            {"tactile", "transducer", "haptic", "frequency"},
+            "echoel_resonance", false, false, false
         });
 
         registerTool({
             "mindresonance", "MindResonance", "MindResonance", "MRes",
-            "Brainwave entrainment audio (Entertainment)",
-            "Brainwave-Entrainment-Audio (Unterhaltung)",
-            ToolCategory::Healing, ToolType::Generator, "Resonance",
-            {"brainwave", "entrainment", "binaural", "isochronic"},
-            "echoel_resonance", false, false, true
+            "Binaural beat synthesis engine",
+            "Binaural-Beat-Synthese-Engine",
+            ToolCategory::FrequencyScience, ToolType::Generator, "Resonance",
+            {"binaural", "beat", "synthesis", "isochronic"},
+            "echoel_resonance", false, false, false
         });
 
         registerTool({
             "heartresonance", "HeartResonance", "HeartResonance", "HRes",
-            "Heart coherence audio (Entertainment)",
-            "Herzkohärenz-Audio (Unterhaltung)",
-            ToolCategory::Healing, ToolType::Generator, "Resonance",
-            {"heart", "coherence", "hrv", "breathing"},
-            "echoel_resonance", false, false, true
+            "HRV coherence analysis and audio sync",
+            "HRV-Kohärenzanalyse und Audio-Sync",
+            ToolCategory::FrequencyScience, ToolType::Analyzer, "Resonance",
+            {"hrv", "coherence", "analysis", "sync"},
+            "echoel_resonance", false, false, false
         });
 
         registerTool({
             "lightresonance", "LightResonance", "LightResonance", "LRes",
-            "Color therapy lighting (Atmosphere)",
-            "Farbtherapie-Beleuchtung (Atmosphäre)",
-            ToolCategory::Healing, ToolType::Utility, "Resonance",
-            {"light", "color", "therapy", "chromotherapy"},
-            "echoel_resonance", false, false, true
+            "Audio-visual synchronization engine",
+            "Audio-visuelle Synchronisations-Engine",
+            ToolCategory::FrequencyScience, ToolType::Utility, "Resonance",
+            {"light", "visual", "sync", "audio"},
+            "echoel_resonance", false, false, false
         });
 
         // ═══════════════════════════════════════════════════════════════

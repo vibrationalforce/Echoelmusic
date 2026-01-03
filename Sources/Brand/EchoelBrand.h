@@ -4,23 +4,23 @@
     EchoelBrand.h
     Echoelmusic Brand Identity System
 
-    Authentisch. Individuell. Resonant.
+    Präzise. Kreativ. Innovativ.
 
     Brand Philosophy:
     ─────────────────
-    "Echoel" = Echo + El (hebräisch: Gott/Kraft) + Soul
+    "Echoel" = Echo + Element + Electronic
 
-    Die Musik ist ein Echo der Seele.
-    Jeder Klang trägt die Kraft des Schöpfers.
-    Jede Welle resoniert mit dem Universum.
+    Musik als akustische Wissenschaft.
+    Jeder Klang ist eine messbare Wellenform.
+    Jede Frequenz hat eine definierte Wirkung.
 
     Brand Pillars:
     ─────────────────
-    1. RESONANZ   - Alles ist verbunden durch Schwingung
-    2. KREATION   - Jeder Mensch ist ein Schöpfer
-    3. HEILUNG    - Musik heilt Körper, Geist und Seele
-    4. EVOLUTION  - Ständige Weiterentwicklung
-    5. EINHEIT    - Technologie und Menschlichkeit vereint
+    1. PRECISION   - Wissenschaftlich fundierte Audiotechnologie
+    2. CREATION    - Werkzeuge für professionelle Musikproduktion
+    3. INNOVATION  - Cutting-Edge DSP und AI-Algorithmen
+    4. EVOLUTION   - Kontinuierliche technologische Weiterentwicklung
+    5. INTEGRATION - Nahtlose Verbindung von Hardware und Software
 
     Created: 2026
     Author: Echoelmusic Team
@@ -47,16 +47,16 @@ namespace Brand
     EchoelPalette
 
     Die offizielle Farbpalette von Echoelmusic.
-    Inspiriert von Klangwellen, Frequenzspektren und kosmischer Energie.
+    Basierend auf Frequenzspektrum-Visualisierung und UI/UX-Forschung.
 */
 struct EchoelPalette
 {
     // ═══════════════════════════════════════════════════════════════
-    // PRIMARY COLORS - Die Essenz
+    // PRIMARY COLORS - Markenidentität
     // ═══════════════════════════════════════════════════════════════
 
     // Echoel Violet - Die Signaturfarbe
-    // Repräsentiert: Kreativität, Transformation, das Mystische
+    // Repräsentiert: Kreativität, Innovation, Premium-Qualität
     static constexpr uint32_t EchoelViolet       = 0xFF7B2CBF;  // #7B2CBF
     static constexpr uint32_t EchoelVioletLight  = 0xFF9D4EDD;  // #9D4EDD
     static constexpr uint32_t EchoelVioletDark   = 0xFF5A189A;  // #5A189A
@@ -69,23 +69,23 @@ struct EchoelPalette
     static constexpr uint32_t ResonanceCyanDark  = 0xFF00BBF9;  // #00BBF9
 
     // ═══════════════════════════════════════════════════════════════
-    // SECONDARY COLORS - Die Nuancen
+    // SECONDARY COLORS - Die Akzente
     // ═══════════════════════════════════════════════════════════════
 
-    // Soul Gold - Die Wärme
-    // Repräsentiert: Menschlichkeit, Wärme, Wertigkeit
-    static constexpr uint32_t SoulGold           = 0xFFF9C74F;  // #F9C74F
-    static constexpr uint32_t SoulGoldLight      = 0xFFFEE440;  // #FEE440
-    static constexpr uint32_t SoulGoldDark       = 0xFFF4A261;  // #F4A261
+    // Signal Gold - Warmtöne
+    // Repräsentiert: Mittlere Frequenzen, Präsenz, Premium-Qualität
+    static constexpr uint32_t SignalGold         = 0xFFF9C74F;  // #F9C74F
+    static constexpr uint32_t SignalGoldLight    = 0xFFFEE440;  // #FEE440
+    static constexpr uint32_t SignalGoldDark     = 0xFFF4A261;  // #F4A261
 
-    // Healing Rose - Die Heilung
-    // Repräsentiert: Wellness, Heilung, Herzenergie
-    static constexpr uint32_t HealingRose        = 0xFFF72585;  // #F72585
-    static constexpr uint32_t HealingRoseLight   = 0xFFFF5CAA;  // #FF5CAA
-    static constexpr uint32_t HealingRoseDark    = 0xFFB5179E;  // #B5179E
+    // Accent Rose - Dynamik
+    // Repräsentiert: Transiente, Attack-Phase, Intensität
+    static constexpr uint32_t AccentRose         = 0xFFF72585;  // #F72585
+    static constexpr uint32_t AccentRoseLight    = 0xFFFF5CAA;  // #FF5CAA
+    static constexpr uint32_t AccentRoseDark     = 0xFFB5179E;  // #B5179E
 
-    // Bio Green - Das Leben
-    // Repräsentiert: Bio-Feedback, Natur, Vitalität
+    // Bio Green - Analyse
+    // Repräsentiert: Bio-Feedback-Daten, Sensor-Input, Echtzeit-Metriken
     static constexpr uint32_t BioGreen           = 0xFF06D6A0;  // #06D6A0
     static constexpr uint32_t BioGreenLight      = 0xFF80ED99;  // #80ED99
     static constexpr uint32_t BioGreenDark       = 0xFF2D6A4F;  // #2D6A4F
@@ -224,9 +224,9 @@ struct EchoelTypography
        - Metapher: Puls, Herzschlag der Musik
        - Beispiele: RhythmPulse, SyncPulse, BioPulse
 
-    6. RESONANCE Series (Heilung & Wellness)
-       - Metapher: Resonanz, harmonische Schwingung
-       - Beispiele: SoulResonance, BodyResonance, MindResonance
+    6. RESONANCE Series (Psychoakustik & Frequenzwissenschaft)
+       - Fokus: Messbare Frequenzeffekte, Binaural Beats, HRV
+       - Beispiele: ToneResonance, BodyResonance, MindResonance
 
     7. ARCHITECT Series (Struktur & Komposition)
        - Metapher: Architektur, bewusstes Bauen
@@ -295,15 +295,15 @@ struct EchoelToolNames
     static constexpr const char* MidiPulse      = "MidiPulse";          // MIDI Clock
 
     // ═══════════════════════════════════════════════════════════════
-    // HEALING & WELLNESS - Die Resonanz
+    // FREQUENCY SCIENCE - Resonanz & Psychoakustik
     // ═══════════════════════════════════════════════════════════════
 
-    // RESONANCE Series - Heilung
-    static constexpr const char* SoulResonance  = "SoulResonance";      // Healing Frequencies
-    static constexpr const char* BodyResonance  = "BodyResonance";      // Vibrotherapy
-    static constexpr const char* MindResonance  = "MindResonance";      // Brainwave Entrainment
-    static constexpr const char* HeartResonance = "HeartResonance";     // Heart Coherence
-    static constexpr const char* LightResonance = "LightResonance";     // Color Therapy
+    // RESONANCE Series - Psychoakustische Frequenz-Werkzeuge
+    static constexpr const char* ToneResonance  = "ToneResonance";      // Isochronic Tone Generator
+    static constexpr const char* BodyResonance  = "BodyResonance";      // Tactile Transducer Control
+    static constexpr const char* MindResonance  = "MindResonance";      // Binaural Beat Synthesis
+    static constexpr const char* HeartResonance = "HeartResonance";     // HRV Coherence Analysis
+    static constexpr const char* LightResonance = "LightResonance";     // Audio-Visual Sync Engine
 
     // ═══════════════════════════════════════════════════════════════
     // COMPOSITION & STRUCTURE - Die Architektur
@@ -383,29 +383,29 @@ struct EchoelToolNames
 struct EchoelVoice
 {
     // Taglines
-    static constexpr const char* MainTagline     = "Resonance. Creation. Evolution.";
-    static constexpr const char* TaglineDE       = "Resonanz. Kreation. Evolution.";
+    static constexpr const char* MainTagline     = "Precision. Creation. Innovation.";
+    static constexpr const char* TaglineDE       = "Präzision. Kreation. Innovation.";
 
     // Mission Statement
     static constexpr const char* Mission =
-        "Echoelmusic empowers creators to make music that resonates with the soul, "
-        "heals the body, and evolves consciousness.";
+        "Echoelmusic provides professional audio tools built on scientific research, "
+        "advanced DSP algorithms, and cutting-edge AI technology.";
 
     static constexpr const char* MissionDE =
-        "Echoelmusic befähigt Kreative, Musik zu erschaffen, die mit der Seele "
-        "resoniert, den Körper heilt und das Bewusstsein erweitert.";
+        "Echoelmusic entwickelt professionelle Audio-Werkzeuge basierend auf "
+        "wissenschaftlicher Forschung, fortschrittlichen DSP-Algorithmen und modernster KI-Technologie.";
 
     // Value Propositions
-    static constexpr const char* ValueCreation  = "Create without limits";
-    static constexpr const char* ValueHealing   = "Heal through sound";
-    static constexpr const char* ValueEvolution = "Evolve your art";
-    static constexpr const char* ValueConnection = "Connect to your truth";
+    static constexpr const char* ValueCreation   = "Create without limits";
+    static constexpr const char* ValuePrecision  = "Scientific audio precision";
+    static constexpr const char* ValueInnovation = "Cutting-edge technology";
+    static constexpr const char* ValueIntegration = "Seamless workflow integration";
 
     // Tone of Voice
-    // - Inspirierend, aber geerdet
-    // - Technisch präzise, aber zugänglich
-    // - Spirituell bewusst, aber nicht esoterisch
-    // - Innovativ, aber respektvoll zur Tradition
+    // - Professionell und präzise
+    // - Technisch fundiert, aber zugänglich
+    // - Innovativ und forschungsbasiert
+    // - Kreativ und experimentierfreudig
 };
 
 //==============================================================================
@@ -444,7 +444,7 @@ struct EchoelIcons
     static constexpr const char* Save           = "echoel_save";
     static constexpr const char* Export         = "echoel_export";
     static constexpr const char* Sync           = "echoel_sync";
-    static constexpr const char* Heal           = "echoel_heal";
+    static constexpr const char* Resonance_Icon = "echoel_resonance_icon";
 };
 
 //==============================================================================
@@ -466,7 +466,7 @@ struct EchoelEditions
 
     // Sub-Products
     static constexpr const char* LoopGenius = "Ralph Wiggum Loop Genius";
-    static constexpr const char* Wellness   = "Echoel Wellness Suite";
+    static constexpr const char* FreqScience = "Echoel Frequency Science Suite";
     static constexpr const char* AIStudio   = "Echoel AI Studio";
     static constexpr const char* LiveEngine = "Echoel Live Engine";
 };
@@ -571,7 +571,7 @@ public:
         if (toolName.contains("Sense"))      return "Analysis";
         if (toolName.contains("Flow"))       return "Movement";
         if (toolName.contains("Pulse"))      return "Rhythm";
-        if (toolName.contains("Resonance"))  return "Healing";
+        if (toolName.contains("Resonance"))  return "Frequency Science";
         if (toolName.contains("Architect"))  return "Structure";
         if (toolName.contains("Genius"))     return "Intelligence";
         if (toolName.startsWith("Echo"))     return "Core";
