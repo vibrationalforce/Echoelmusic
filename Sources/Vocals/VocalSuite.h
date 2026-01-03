@@ -121,7 +121,33 @@ enum class VoiceCharacter
     EDM_Vocal,
     Trance,
     Synthwave,
-    Vaporwave
+    Vaporwave,
+
+    // === Sacred & Ancient Vocal Traditions ===
+    // Medieval/Renaissance
+    Gregorian_Chant,
+    Renaissance_Polyphony,
+    Medieval_Troubadour,
+    Baroque_Oratorio,
+
+    // Sacred Eastern
+    Tibetan_Buddhist,
+    Hindu_Vedic,
+    Sufi_Dhikr,
+    Byzantine_Orthodox,
+    Russian_Orthodox,
+
+    // Indigenous/Shamanic
+    Native_American,
+    Aboriginal_Didgeridoo,
+    Amazonian_Icaro,
+    Sami_Joik,
+
+    // Healing/Meditation
+    Sound_Bath,
+    Overtone_Chant,
+    Mantra,
+    Kirtan
 };
 
 struct VoiceProfile
@@ -1074,6 +1100,173 @@ private:
                 p.reverbAmount = 0.7f;
                 p.chorusAmount = 0.5f;
                 p.filterCutoff = 4000.0f;  // Lo-fi aesthetic
+                break;
+
+            // =========================================================
+            // SACRED & ANCIENT VOCAL TRADITIONS
+            // =========================================================
+
+            // === Medieval/Renaissance ===
+            case VoiceCharacter::Gregorian_Chant:
+                p.reverbAmount = 0.8f;  // Cathedral acoustics
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 3;
+                p.harmonyIntervals = {-12, 0, 7, 0};  // Unison + octave + fifth (organum)
+                p.filterCutoff = 6000.0f;  // Warm, ancient tone
+                p.breathiness = 0.05f;
+                break;
+
+            case VoiceCharacter::Renaissance_Polyphony:
+                p.reverbAmount = 0.7f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 4;
+                p.harmonyIntervals = {-7, 3, 7, 12};  // Full polyphonic texture
+                p.chorusAmount = 0.15f;
+                break;
+
+            case VoiceCharacter::Medieval_Troubadour:
+                p.pitchShift = -1.0f;
+                p.formantShift = -1.0f;
+                p.reverbAmount = 0.4f;
+                p.filterCutoff = 5000.0f;  // Period-appropriate warmth
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 1;
+                p.harmonyIntervals = {5, 0, 0, 0};  // Simple drone
+                break;
+
+            case VoiceCharacter::Baroque_Oratorio:
+                p.pitchShift = 2.0f;
+                p.formantShift = 2.0f;
+                p.reverbAmount = 0.65f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 3;
+                p.harmonyIntervals = {-12, 4, 7, 0};  // Major chord foundation
+                p.chorusAmount = 0.1f;
+                break;
+
+            // === Sacred Eastern ===
+            case VoiceCharacter::Tibetan_Buddhist:
+                p.pitchShift = -12.0f;  // Deep bass drone
+                p.formantShift = 8.0f;  // Overtone emphasis
+                p.throatLength = 1.6f;
+                p.reverbAmount = 0.7f;
+                p.distortionAmount = 0.1f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {12, 19, 0, 0};  // Overtone series
+                break;
+
+            case VoiceCharacter::Hindu_Vedic:
+                p.reverbAmount = 0.5f;
+                p.formantShift = 1.0f;
+                p.throatLength = 0.95f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {0, 7, 0, 0};  // Drone + fifth
+                p.chorusAmount = 0.1f;
+                break;
+
+            case VoiceCharacter::Sufi_Dhikr:
+                p.reverbAmount = 0.6f;
+                p.breathiness = 0.15f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 3;
+                p.harmonyIntervals = {-12, 0, 5, 0};  // Ecstatic unison layers
+                p.chorusAmount = 0.2f;
+                break;
+
+            case VoiceCharacter::Byzantine_Orthodox:
+                p.pitchShift = -2.0f;
+                p.formantShift = -1.0f;
+                p.reverbAmount = 0.75f;  // Stone church reverb
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {-5, 7, 0, 0};  // Ison drone style
+                p.throatLength = 1.1f;
+                break;
+
+            case VoiceCharacter::Russian_Orthodox:
+                p.pitchShift = -5.0f;  // Deep bass tradition
+                p.formantShift = -4.0f;
+                p.throatLength = 1.3f;
+                p.reverbAmount = 0.8f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 4;
+                p.harmonyIntervals = {-12, -7, 3, 7};  // Rich bass-heavy harmony
+                break;
+
+            // === Indigenous/Shamanic ===
+            case VoiceCharacter::Native_American:
+                p.reverbAmount = 0.3f;
+                p.breathiness = 0.2f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 1;
+                p.harmonyIntervals = {-12, 0, 0, 0};  // Octave drone
+                p.filterCutoff = 7000.0f;
+                break;
+
+            case VoiceCharacter::Aboriginal_Didgeridoo:
+                p.pitchShift = -15.0f;  // Very deep drone
+                p.formantShift = 6.0f;  // Overtone emphasis
+                p.throatLength = 1.8f;
+                p.distortionAmount = 0.25f;
+                p.reverbAmount = 0.4f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {12, 24, 0, 0};  // Overtone harmonics
+                break;
+
+            case VoiceCharacter::Amazonian_Icaro:
+                p.reverbAmount = 0.5f;  // Jungle ambiance
+                p.breathiness = 0.1f;
+                p.chorusAmount = 0.2f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {5, 7, 0, 0};  // Healing melody intervals
+                break;
+
+            case VoiceCharacter::Sami_Joik:
+                p.pitchShift = 1.0f;
+                p.reverbAmount = 0.5f;  // Arctic echo
+                p.breathiness = 0.15f;
+                p.chorusAmount = 0.15f;
+                p.filterCutoff = 8000.0f;
+                break;
+
+            // === Healing/Meditation ===
+            case VoiceCharacter::Sound_Bath:
+                p.reverbAmount = 0.9f;  // Maximum space
+                p.chorusAmount = 0.4f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 4;
+                p.harmonyIntervals = {-12, 7, 12, 19};  // Crystal bowl harmonics
+                p.filterCutoff = 10000.0f;
+                break;
+
+            case VoiceCharacter::Overtone_Chant:
+                p.formantShift = 10.0f;  // Maximum overtone
+                p.throatLength = 1.3f;
+                p.reverbAmount = 0.6f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {12, 19, 0, 0};  // Natural overtone series
+                break;
+
+            case VoiceCharacter::Mantra:
+                p.reverbAmount = 0.55f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 2;
+                p.harmonyIntervals = {-12, 0, 0, 0};  // Grounding octave
+                p.chorusAmount = 0.15f;
+                p.breathiness = 0.05f;
+                break;
+
+            case VoiceCharacter::Kirtan:
+                p.reverbAmount = 0.5f;
+                p.enableHarmonizer = true;
+                p.harmonizerVoices = 4;
+                p.harmonyIntervals = {-12, 5, 7, 12};  // Call and response
+                p.chorusAmount = 0.25f;
                 break;
 
             default:
