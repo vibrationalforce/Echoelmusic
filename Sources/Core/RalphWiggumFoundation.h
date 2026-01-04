@@ -904,7 +904,7 @@ private:
 
         // Track active time (simplified - real impl would track actual activity)
         static juce::Time lastActive;
-        if (loops.size() > 0)
+        if (!loops.empty())
         {
             metrics.activeTimeSeconds += (now - lastActive).inSeconds();
         }

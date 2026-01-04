@@ -1018,7 +1018,7 @@ private:
     void cleanupRecoveryFiles(int keepCount)
     {
         auto files = getRecoveryFiles();
-        if (files.size() <= keepCount)
+        if (files.size() <= static_cast<size_t>(keepCount))
             return;
 
         // Sort by modification time (newest first)
@@ -1063,10 +1063,10 @@ private:
     }
 
     //==========================================================================
-    // State
+    // State (atomic for thread-safe access from recovery thread)
 
-    bool initialized = false;
-    bool isDirty = false;
+    std::atomic<bool> initialized{false};
+    std::atomic<bool> isDirty{false};
 
     juce::String currentSessionId;
     juce::String currentSessionName = "Untitled";
