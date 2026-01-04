@@ -1,454 +1,131 @@
 import SwiftUI
 
 /// Main user interface for the Echoelmusic app
-/// Optimized with proper state management and error handling
+/// Optimized with proper state management, error handling, and unified design system
 struct ContentView: View {
 
-    /// Access to the microphone manager from the environment
+    // MARK: - Environment
+
     @EnvironmentObject var microphoneManager: MicrophoneManager
-
-    /// Access to the central audio engine from the environment
     @EnvironmentObject var audioEngine: AudioEngine
-
-    /// Access to HealthKit manager from the environment
     @EnvironmentObject var healthKitManager: HealthKitManager
-
-    /// Access to Recording engine from the environment
     @EnvironmentObject var recordingEngine: RecordingEngine
 
-    /// Show permission denial alert
+    // MARK: - State
+
     @State private var showPermissionAlert = false
-
-    /// Show recording controls
     @State private var showRecordingControls = false
-
-    /// Show binaural beat controls
     @State private var showBinauralControls = false
-
-    /// Show spatial audio controls
     @State private var showSpatialControls = false
-
-    /// Show visualization mode picker
     @State private var showVisualizationPicker = false
-
-    /// Currently selected visualization mode
     @State private var selectedVisualizationMode: VisualizationMode = .particles
-
-    /// Currently selected brainwave state
     @State private var selectedBrainwaveState: BinauralBeatGenerator.BrainwaveState = .alpha
-
-    /// Binaural beat amplitude
     @State private var binauralAmplitude: Float = 0.3
+    @State private var pulseAnimation = false
 
     /// Computed property - single source of truth for recording state
     private var isRecording: Bool {
         microphoneManager.isRecording
     }
 
+    // MARK: - Body
+
     var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.05, green: 0.05, blue: 0.15),  // Deep blue-black
-                    Color(red: 0.1, green: 0.05, blue: 0.2)      // Purple-black
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Background - using design system
+            VaporwaveGradients.background
+                .ignoresSafeArea()
 
-            VStack(spacing: 40) {
+            VStack(spacing: VaporwaveSpacing.xl) {
 
-                // App Title
+                // App Title with neon glow
                 Text("Echoelmusic")
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .padding(.top, 60)
+                    .font(VaporwaveTypography.heroTitle())
+                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .neonGlow(color: isRecording ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan, radius: pulseAnimation ? 20 : 12)
+                    .padding(.top, VaporwaveSpacing.xxl)
+                    .accessibilityLabel("Echoelmusic - Bio-reactive music application")
 
                 Text("breath → sound")
-                    .font(.system(size: 14, weight: .light))
-                    .foregroundColor(.white.opacity(0.5))
-                    .tracking(3)
+                    .font(VaporwaveTypography.caption())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .tracking(4)
 
                 Spacer()
 
                 // Visualization (mode-based)
                 visualizationView
                     .frame(height: 350)
-                    .padding(.horizontal, 30)
+                    .padding(.horizontal, VaporwaveSpacing.lg)
+                    .accessibilityLabel("Audio visualization display")
 
                 // Visualization mode picker button
                 Button(action: { showVisualizationPicker.toggle() }) {
-                    HStack(spacing: 6) {
+                    HStack(spacing: VaporwaveSpacing.xs) {
                         Image(systemName: selectedVisualizationMode.icon)
                             .font(.system(size: 12))
                         Text(selectedVisualizationMode.rawValue)
-                            .font(.system(size: 11, weight: .medium))
+                            .font(VaporwaveTypography.label())
                     }
-                    .foregroundColor(.white.opacity(0.7))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .padding(.horizontal, VaporwaveSpacing.md)
+                    .padding(.vertical, VaporwaveSpacing.xs)
                     .background(
                         Capsule()
                             .fill(selectedVisualizationMode.color.opacity(0.2))
                     )
                 }
+                .accessibilityLabel("Visualization mode: \(selectedVisualizationMode.rawValue)")
+                .accessibilityHint("Double tap to change visualization mode")
 
                 Spacer()
 
                 // Frequency and amplitude display
                 if isRecording {
-                    HStack(spacing: 40) {
-                        // FFT Frequency display
-                        VStack(spacing: 4) {
-                            Text("\(Int(microphoneManager.frequency))")
-                                .font(.system(size: 36, weight: .light, design: .monospaced))
-                                .foregroundColor(Color(hue: 0.55, saturation: 0.8, brightness: 0.9))
-                            Text("FFT Hz")
-                                .font(.system(size: 12, weight: .light))
-                                .foregroundColor(.white.opacity(0.5))
-                        }
-
-                        // Amplitude display
-                        VStack(spacing: 4) {
-                            Text(String(format: "%.2f", microphoneManager.audioLevel))
-                                .font(.system(size: 36, weight: .light, design: .monospaced))
-                                .foregroundColor(Color(hue: 0.4, saturation: 0.8, brightness: 0.9))
-                            Text("level")
-                                .font(.system(size: 12, weight: .light))
-                                .foregroundColor(.white.opacity(0.5))
-                        }
-                    }
-                    .padding(.bottom, 8)
-                    .transition(.opacity.combined(with: .scale))
-
-                    // YIN Pitch display (more accurate for voice)
-                    HStack(spacing: 20) {
-                        VStack(spacing: 4) {
-                            Text("\(Int(microphoneManager.currentPitch))")
-                                .font(.system(size: 30, weight: .light, design: .monospaced))
-                                .foregroundColor(pitchColor(microphoneManager.currentPitch))
-                            Text("voice pitch (YIN)")
-                                .font(.system(size: 10, weight: .light))
-                                .foregroundColor(.white.opacity(0.5))
-                        }
-
-                        // Display musical note if pitch detected
-                        if microphoneManager.currentPitch > 0 {
-                            VStack(spacing: 4) {
-                                Text(musicalNote(microphoneManager.currentPitch))
-                                    .font(.system(size: 30, weight: .light, design: .rounded))
-                                    .foregroundColor(.white.opacity(0.9))
-                                Text("note")
-                                    .font(.system(size: 10, weight: .light))
-                                    .foregroundColor(.white.opacity(0.5))
-                            }
-                        }
-                    }
-                    .padding(.bottom, 20)
-                    .transition(.opacity.combined(with: .scale))
+                    audioMetricsDisplay
+                        .transition(.opacity.combined(with: .scale))
                 }
 
                 // HRV Biofeedback Display
                 if healthKitManager.isAuthorized && isRecording {
-                    HStack(spacing: 40) {
-                        // Heart Rate
-                        VStack(spacing: 4) {
-                            Text("\(Int(healthKitManager.heartRate))")
-                                .font(.system(size: 30, weight: .light, design: .monospaced))
-                                .foregroundColor(Color.red.opacity(0.8))
-                            Text("BPM")
-                                .font(.system(size: 10, weight: .light))
-                                .foregroundColor(.white.opacity(0.5))
-                        }
-
-                        // HRV RMSSD
-                        VStack(spacing: 4) {
-                            Text(String(format: "%.1f", healthKitManager.hrvRMSSD))
-                                .font(.system(size: 30, weight: .light, design: .monospaced))
-                                .foregroundColor(Color.green.opacity(0.8))
-                            Text("HRV ms")
-                                .font(.system(size: 10, weight: .light))
-                                .foregroundColor(.white.opacity(0.5))
-                        }
-
-                        // Coherence Score
-                        VStack(spacing: 4) {
-                            Text("\(Int(healthKitManager.hrvCoherence))")
-                                .font(.system(size: 30, weight: .light, design: .monospaced))
-                                .foregroundColor(coherenceColor(healthKitManager.hrvCoherence))
-                            Text("coherence")
-                                .font(.system(size: 10, weight: .light))
-                                .foregroundColor(.white.opacity(0.5))
-                        }
-                    }
-                    .padding(.bottom, 15)
-                    .transition(.opacity.combined(with: .scale))
+                    bioMetricsPanel
+                        .transition(.opacity.combined(with: .scale))
                 }
 
                 // Audio level bars (improved visualization)
                 if isRecording {
-                    HStack(spacing: 8) {
-                        ForEach(0..<24, id: \.self) { index in
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(barColor(for: index))
-                                .frame(width: 6, height: barHeight(for: index))
-                        }
-                    }
-                    .padding(.bottom, 20)
-                    .transition(.opacity)
-                    .animation(.easeInOut(duration: 0.2), value: microphoneManager.audioLevel)
+                    audioLevelBars
+                        .transition(.opacity)
+                        .animation(VaporwaveAnimation.quick, value: microphoneManager.audioLevel)
                 }
 
                 // Control Buttons
-                HStack(spacing: 30) {
-                    // Binaural beats toggle
-                    Button(action: toggleBinauralBeats) {
-                        VStack(spacing: 8) {
-                            ZStack {
-                                Circle()
-                                    .fill(audioEngine.binauralBeatsEnabled ? Color.purple : Color.gray.opacity(0.3))
-                                    .frame(width: 60, height: 60)
-                                    .shadow(
-                                        color: audioEngine.binauralBeatsEnabled ? .purple.opacity(0.5) : .clear,
-                                        radius: 15
-                                    )
+                controlButtonsRow
+                    .padding(.bottom, VaporwaveSpacing.md)
 
-                                Image(systemName: audioEngine.binauralBeatsEnabled ? "waveform.circle.fill" : "waveform.circle")
-                                    .font(.system(size: 28))
-                                    .foregroundColor(.white)
-                            }
-
-                            if audioEngine.binauralBeatsEnabled {
-                                Text("Binaural ON")
-                                    .font(.system(size: 10, weight: .light))
-                                    .foregroundColor(.white.opacity(0.7))
-                            } else {
-                                Text("Beats OFF")
-                                    .font(.system(size: 10, weight: .light))
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
-                        }
-                    }
-
-                    // Main record button
-                    Button(action: toggleRecording) {
-                        ZStack {
-                            Circle()
-                                .fill(isRecording ? Color.red : Color(hue: 0.55, saturation: 0.8, brightness: 0.7))
-                                .frame(width: 100, height: 100)
-                                .shadow(
-                                    color: isRecording ? .red.opacity(0.5) : Color.cyan.opacity(0.3),
-                                    radius: 20
-                                )
-
-                            Image(systemName: isRecording ? "stop.fill" : "mic.fill")
-                                .font(.system(size: 40))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .disabled(!microphoneManager.hasPermission && isRecording)
-
-                    // Spatial audio toggle (if available)
-                    if audioEngine.spatialAudioEngine != nil {
-                        Button(action: { showSpatialControls.toggle() }) {
-                            VStack(spacing: 8) {
-                                ZStack {
-                                    Circle()
-                                        .fill(audioEngine.spatialAudioEnabled ? Color.cyan.opacity(0.3) : Color.gray.opacity(0.3))
-                                        .frame(width: 60, height: 60)
-                                        .shadow(
-                                            color: audioEngine.spatialAudioEnabled ? .cyan.opacity(0.3) : .clear,
-                                            radius: 10
-                                        )
-
-                                    Image(systemName: "airpodspro")
-                                        .font(.system(size: 28))
-                                        .foregroundColor(.white)
-                                }
-
-                                Text("Spatial")
-                                    .font(.system(size: 10, weight: .light))
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
-                        }
-                    }
-
-                    // Recording controls toggle
-                    Button(action: { showRecordingControls.toggle() }) {
-                        VStack(spacing: 8) {
-                            ZStack {
-                                Circle()
-                                    .fill(recordingEngine.isRecording ? Color.red.opacity(0.3) : Color.gray.opacity(0.3))
-                                    .frame(width: 60, height: 60)
-                                    .shadow(
-                                        color: recordingEngine.isRecording ? .red.opacity(0.3) : .clear,
-                                        radius: 10
-                                    )
-
-                                Image(systemName: "waveform.circle.fill")
-                                    .font(.system(size: 28))
-                                    .foregroundColor(.white)
-                            }
-
-                            Text("Studio")
-                                .font(.system(size: 10, weight: .light))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                    }
-
-                    // Binaural controls toggle
-                    Button(action: { showBinauralControls.toggle() }) {
-                        VStack(spacing: 8) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(width: 60, height: 60)
-
-                                Image(systemName: "slider.horizontal.3")
-                                    .font(.system(size: 28))
-                                    .foregroundColor(.white)
-                            }
-
-                            Text("Settings")
-                                .font(.system(size: 10, weight: .light))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                    }
-                }
-                .padding(.bottom, 20)
-
-                // Spatial Audio Controls (NEW!)
+                // Spatial Audio Controls Panel
                 if showSpatialControls && audioEngine.spatialAudioEngine != nil {
-                    VStack(spacing: 15) {
-                        HStack {
-                            Image(systemName: "airpodspro")
-                                .font(.system(size: 18))
-                                .foregroundColor(.cyan)
-
-                            Text("Spatial Audio")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white.opacity(0.8))
-
-                            Spacer()
-
-                            // Status indicator
-                            Circle()
-                                .fill(audioEngine.spatialAudioEnabled ? .green : .gray)
-                                .frame(width: 10, height: 10)
-                        }
-
-                        // Toggle
-                        Toggle(isOn: Binding(
-                            get: { audioEngine.spatialAudioEnabled },
-                            set: { _ in audioEngine.toggleSpatialAudio() }
-                        )) {
-                            Text("Enable 3D Audio")
-                                .font(.system(size: 13, weight: .light))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                        .toggleStyle(SwitchToggleStyle(tint: .cyan))
-
-                        // Device Info
-                        if let capabilities = audioEngine.deviceCapabilities {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("Device: \(capabilities.deviceModel)")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(.white.opacity(0.6))
-
-                                if capabilities.hasAirPodsConnected {
-                                    Text("AirPods: \(capabilities.airPodsModel ?? "Unknown")")
-                                        .font(.system(size: 11))
-                                        .foregroundColor(.white.opacity(0.6))
-                                }
-
-                                if capabilities.supportsASAF {
-                                    Text("✅ ASAF Supported (iOS 19+)")
-                                        .font(.system(size: 11))
-                                        .foregroundColor(.green.opacity(0.7))
-                                } else {
-                                    Text("⚠️ ASAF requires iOS 19+ & iPhone 16+")
-                                        .font(.system(size: 10))
-                                        .foregroundColor(.yellow.opacity(0.6))
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.top, 8)
-                        }
-                    }
-                    .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.black.opacity(0.4))
-                    )
-                    .padding(.horizontal, 30)
-                    .transition(.opacity.combined(with: .scale))
-                    .padding(.bottom, 10)
+                    spatialAudioPanel
+                        .transition(.opacity.combined(with: .scale))
                 }
 
-                // Binaural beat controls (expandable)
+                // Binaural beat controls panel
                 if showBinauralControls {
-                    VStack(spacing: 15) {
-                        Text("Binaural Beat Controls")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white.opacity(0.8))
-
-                        // Brainwave state picker
-                        Picker("Brainwave State", selection: Binding(
-                            get: { audioEngine.currentBrainwaveState },
-                            set: { audioEngine.setBrainwaveState($0) }
-                        )) {
-                            ForEach(BinauralBeatGenerator.BrainwaveState.allCases, id: \.self) { state in
-                                Text(state.rawValue.capitalized).tag(state)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-
-                        // State description
-                        Text(audioEngine.currentBrainwaveState.description)
-                            .font(.system(size: 12, weight: .light))
-                            .foregroundColor(.white.opacity(0.6))
-
-                        // Amplitude control
-                        VStack(spacing: 5) {
-                            HStack {
-                                Text("Volume")
-                                    .font(.system(size: 12, weight: .light))
-                                Spacer()
-                                Text(String(format: "%.0f%%", audioEngine.binauralAmplitude * 100))
-                                    .font(.system(size: 12, weight: .light, design: .monospaced))
-                            }
-                            .foregroundColor(.white.opacity(0.7))
-
-                            Slider(value: Binding(
-                                get: { audioEngine.binauralAmplitude },
-                                set: { audioEngine.setBinauralAmplitude($0) }
-                            ), in: 0.0...0.6)
-                        }
-                    }
-                    .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.black.opacity(0.4))
-                    )
-                    .padding(.horizontal, 30)
-                    .transition(.opacity.combined(with: .scale))
-                    .padding(.bottom, 10)
+                    binauralControlsPanel
+                        .transition(.opacity.combined(with: .scale))
                 }
 
                 // Status text
                 Text(statusText)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
-                    .padding(.bottom, 60)
+                    .font(VaporwaveTypography.body())
+                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .padding(.bottom, VaporwaveSpacing.xxl)
+                    .accessibilityLabel("Status: \(statusText)")
             }
         }
         .onAppear {
-            // Request microphone permission when the app launches
+            pulseAnimation = true
             checkPermissions()
-
-            // Request HealthKit authorization
             Task {
                 try? await healthKitManager.requestAuthorization()
             }
@@ -544,69 +221,367 @@ struct ContentView: View {
         return baseHeight
     }
 
-    /// Color for audio bars based on level
+    /// Color for audio bars based on level using design system
     private func barColor(for index: Int) -> Color {
         let threshold = Float(index) / 24.0
         let active = microphoneManager.audioLevel > threshold
 
         if active {
-            // Gradient from cyan to yellow to red as level increases
+            // Gradient from cyan to purple to pink as level increases
             let normalizedIndex = Double(index) / 24.0
-            return Color(hue: 0.55 - normalizedIndex * 0.4, saturation: 0.8, brightness: 0.9)
+            if normalizedIndex < 0.4 {
+                return VaporwaveColors.neonCyan
+            } else if normalizedIndex < 0.7 {
+                return VaporwaveColors.neonPurple
+            } else {
+                return VaporwaveColors.neonPink
+            }
         }
-        return Color.gray.opacity(0.2)
+        return VaporwaveColors.textTertiary.opacity(0.3)
     }
 
-    /// Color for coherence score based on HeartMath zones
-    /// 0-40: Low coherence (red) - stress/anxiety
-    /// 40-60: Medium coherence (yellow) - transitional
-    /// 60-100: High coherence (green) - optimal/flow state
+    /// Color for coherence score using design system
     private func coherenceColor(_ score: Double) -> Color {
         if score < 40 {
-            return Color.red.opacity(0.8)
+            return VaporwaveColors.coherenceLow
         } else if score < 60 {
-            return Color.yellow.opacity(0.8)
+            return VaporwaveColors.coherenceMedium
         } else {
-            return Color.green.opacity(0.8)
+            return VaporwaveColors.coherenceHigh
         }
     }
 
     /// Color for pitch based on frequency range
-    /// Low (bass) = blue, Mid (voice) = purple, High (soprano) = pink
     private func pitchColor(_ pitch: Float) -> Color {
         if pitch < 100 {
-            return Color.blue.opacity(0.7)
+            return VaporwaveColors.neonCyan
         } else if pitch < 200 {
-            return Color(hue: 0.6, saturation: 0.7, brightness: 0.85) // Blue-purple
+            return VaporwaveColors.lavender
         } else if pitch < 400 {
-            return Color(hue: 0.75, saturation: 0.7, brightness: 0.85) // Purple
+            return VaporwaveColors.neonPurple
         } else if pitch < 800 {
-            return Color(hue: 0.85, saturation: 0.7, brightness: 0.85) // Pink-purple
+            return VaporwaveColors.neonPink
         } else {
-            return Color.pink.opacity(0.8)
+            return VaporwaveColors.coral
         }
     }
 
     /// Convert frequency to musical note name (12-tone equal temperament)
-    /// A4 = 440 Hz is the reference
     private func musicalNote(_ frequency: Float) -> String {
         guard frequency > 0 else { return "-" }
-
-        // Note names in chromatic scale
         let noteNames = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"]
-
-        // Calculate semitones from A4 (440 Hz)
         let semitonesFromA4 = 12.0 * log2(frequency / 440.0)
         let roundedSemitones = Int(round(semitonesFromA4))
-
-        // A4 is note index 9 (A) in octave 4
         let noteIndex = (9 + roundedSemitones) % 12
         let octave = 4 + (9 + roundedSemitones) / 12
-
-        // Handle negative modulo correctly
         let positiveNoteIndex = (noteIndex + 12) % 12
-
         return "\(noteNames[positiveNoteIndex])\(octave)"
+    }
+
+    // MARK: - Extracted View Components
+
+    /// Audio metrics display (FFT frequency, level, pitch)
+    private var audioMetricsDisplay: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            HStack(spacing: VaporwaveSpacing.xl) {
+                // FFT Frequency
+                VStack(spacing: VaporwaveSpacing.xs) {
+                    Text("\(Int(microphoneManager.frequency))")
+                        .font(VaporwaveTypography.data())
+                        .foregroundColor(VaporwaveColors.neonCyan)
+                        .neonGlow(color: VaporwaveColors.neonCyan, radius: 8)
+                    Text("FFT Hz")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .accessibilityLabel("FFT Frequency: \(Int(microphoneManager.frequency)) Hertz")
+
+                // Amplitude
+                VStack(spacing: VaporwaveSpacing.xs) {
+                    Text(String(format: "%.2f", microphoneManager.audioLevel))
+                        .font(VaporwaveTypography.data())
+                        .foregroundColor(VaporwaveColors.hrv)
+                        .neonGlow(color: VaporwaveColors.hrv, radius: 8)
+                    Text("level")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+                .accessibilityLabel("Audio level: \(String(format: "%.0f", microphoneManager.audioLevel * 100)) percent")
+            }
+            .padding(.bottom, VaporwaveSpacing.sm)
+
+            // YIN Pitch display
+            HStack(spacing: VaporwaveSpacing.lg) {
+                VStack(spacing: VaporwaveSpacing.xs) {
+                    Text("\(Int(microphoneManager.currentPitch))")
+                        .font(VaporwaveTypography.dataSmall())
+                        .foregroundColor(pitchColor(microphoneManager.currentPitch))
+                    Text("voice pitch (YIN)")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+
+                if microphoneManager.currentPitch > 0 {
+                    VStack(spacing: VaporwaveSpacing.xs) {
+                        Text(musicalNote(microphoneManager.currentPitch))
+                            .font(VaporwaveTypography.dataSmall())
+                            .foregroundColor(VaporwaveColors.textPrimary)
+                        Text("note")
+                            .font(VaporwaveTypography.label())
+                            .foregroundColor(VaporwaveColors.textTertiary)
+                    }
+                }
+            }
+        }
+        .padding(.bottom, VaporwaveSpacing.md)
+    }
+
+    /// Bio metrics panel (heart rate, HRV, coherence)
+    private var bioMetricsPanel: some View {
+        HStack(spacing: VaporwaveSpacing.xl) {
+            // Heart Rate
+            VStack(spacing: VaporwaveSpacing.xs) {
+                Text("\(Int(healthKitManager.heartRate))")
+                    .font(VaporwaveTypography.dataSmall())
+                    .foregroundColor(VaporwaveColors.heartRate)
+                    .neonGlow(color: VaporwaveColors.heartRate, radius: 6)
+                Text("BPM")
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .accessibilityLabel("Heart rate: \(Int(healthKitManager.heartRate)) beats per minute")
+
+            // HRV RMSSD
+            VStack(spacing: VaporwaveSpacing.xs) {
+                Text(String(format: "%.1f", healthKitManager.hrvRMSSD))
+                    .font(VaporwaveTypography.dataSmall())
+                    .foregroundColor(VaporwaveColors.hrv)
+                    .neonGlow(color: VaporwaveColors.hrv, radius: 6)
+                Text("HRV ms")
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .accessibilityLabel("Heart rate variability: \(String(format: "%.1f", healthKitManager.hrvRMSSD)) milliseconds")
+
+            // Coherence Score
+            VStack(spacing: VaporwaveSpacing.xs) {
+                Text("\(Int(healthKitManager.hrvCoherence))")
+                    .font(VaporwaveTypography.dataSmall())
+                    .foregroundColor(coherenceColor(healthKitManager.hrvCoherence))
+                    .neonGlow(color: coherenceColor(healthKitManager.hrvCoherence), radius: 6)
+                Text("coherence")
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .accessibilityLabel("Coherence score: \(Int(healthKitManager.hrvCoherence))")
+        }
+        .padding(VaporwaveSpacing.md)
+        .glassCard()
+        .padding(.horizontal, VaporwaveSpacing.lg)
+        .padding(.bottom, VaporwaveSpacing.md)
+    }
+
+    /// Audio level bars visualization
+    private var audioLevelBars: some View {
+        HStack(spacing: VaporwaveSpacing.sm) {
+            ForEach(0..<24, id: \.self) { index in
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(barColor(for: index))
+                    .frame(width: 6, height: barHeight(for: index))
+            }
+        }
+        .padding(.bottom, VaporwaveSpacing.md)
+        .accessibilityLabel("Audio level meter")
+    }
+
+    /// Control buttons row
+    private var controlButtonsRow: some View {
+        HStack(spacing: VaporwaveSpacing.lg) {
+            // Binaural beats toggle
+            controlButton(
+                icon: audioEngine.binauralBeatsEnabled ? "waveform.circle.fill" : "waveform.circle",
+                label: audioEngine.binauralBeatsEnabled ? "Binaural ON" : "Beats OFF",
+                isActive: audioEngine.binauralBeatsEnabled,
+                color: VaporwaveColors.neonPurple,
+                action: toggleBinauralBeats
+            )
+
+            // Main record button
+            Button(action: toggleRecording) {
+                ZStack {
+                    Circle()
+                        .fill(isRecording ? VaporwaveColors.recordingActive : VaporwaveColors.neonCyan)
+                        .frame(width: 100, height: 100)
+
+                    Image(systemName: isRecording ? "stop.fill" : "mic.fill")
+                        .font(.system(size: 40))
+                        .foregroundColor(VaporwaveColors.deepBlack)
+                }
+                .neonGlow(color: isRecording ? VaporwaveColors.recordingActive : VaporwaveColors.neonCyan, radius: 20)
+            }
+            .disabled(!microphoneManager.hasPermission && isRecording)
+            .accessibilityLabel(isRecording ? "Stop recording" : "Start recording")
+
+            // Spatial audio toggle (if available)
+            if audioEngine.spatialAudioEngine != nil {
+                controlButton(
+                    icon: "airpodspro",
+                    label: "Spatial",
+                    isActive: audioEngine.spatialAudioEnabled,
+                    color: VaporwaveColors.neonCyan,
+                    action: { showSpatialControls.toggle() }
+                )
+            }
+
+            // Recording controls toggle
+            controlButton(
+                icon: "waveform.circle.fill",
+                label: "Studio",
+                isActive: recordingEngine.isRecording,
+                color: VaporwaveColors.neonPink,
+                action: { showRecordingControls.toggle() }
+            )
+
+            // Settings toggle
+            controlButton(
+                icon: "slider.horizontal.3",
+                label: "Settings",
+                isActive: false,
+                color: VaporwaveColors.lavender,
+                action: { showBinauralControls.toggle() }
+            )
+        }
+    }
+
+    /// Reusable control button component
+    private func controlButton(
+        icon: String,
+        label: String,
+        isActive: Bool,
+        color: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(spacing: VaporwaveSpacing.sm) {
+                ZStack {
+                    Circle()
+                        .fill(isActive ? color.opacity(0.3) : VaporwaveColors.deepBlack.opacity(0.5))
+                        .frame(width: 60, height: 60)
+                        .overlay(
+                            Circle()
+                                .stroke(isActive ? color : VaporwaveColors.textTertiary, lineWidth: 1)
+                        )
+
+                    Image(systemName: icon)
+                        .font(.system(size: 28))
+                        .foregroundColor(isActive ? color : VaporwaveColors.textSecondary)
+                }
+                .neonGlow(color: isActive ? color : .clear, radius: 10)
+
+                Text(label)
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textSecondary)
+            }
+        }
+        .accessibilityLabel("\(label), \(isActive ? "active" : "inactive")")
+    }
+
+    /// Spatial audio controls panel
+    private var spatialAudioPanel: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            HStack {
+                Image(systemName: "airpodspro")
+                    .font(.system(size: 18))
+                    .foregroundColor(VaporwaveColors.neonCyan)
+
+                Text("Spatial Audio")
+                    .font(VaporwaveTypography.body())
+                    .foregroundColor(VaporwaveColors.textPrimary)
+
+                Spacer()
+
+                Circle()
+                    .fill(audioEngine.spatialAudioEnabled ? VaporwaveColors.success : VaporwaveColors.textTertiary)
+                    .frame(width: 10, height: 10)
+            }
+
+            Toggle(isOn: Binding(
+                get: { audioEngine.spatialAudioEnabled },
+                set: { _ in audioEngine.toggleSpatialAudio() }
+            )) {
+                Text("Enable 3D Audio")
+                    .font(VaporwaveTypography.caption())
+                    .foregroundColor(VaporwaveColors.textSecondary)
+            }
+            .toggleStyle(SwitchToggleStyle(tint: VaporwaveColors.neonCyan))
+
+            if let capabilities = audioEngine.deviceCapabilities {
+                VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
+                    Text("Device: \(capabilities.deviceModel)")
+                        .font(VaporwaveTypography.caption())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+
+                    if capabilities.hasAirPodsConnected {
+                        Text("AirPods: \(capabilities.airPodsModel ?? "Unknown")")
+                            .font(VaporwaveTypography.caption())
+                            .foregroundColor(VaporwaveColors.textTertiary)
+                    }
+
+                    Text(capabilities.supportsASAF ? "ASAF Supported (iOS 19+)" : "ASAF requires iOS 19+ & iPhone 16+")
+                        .font(VaporwaveTypography.caption())
+                        .foregroundColor(capabilities.supportsASAF ? VaporwaveColors.success : VaporwaveColors.warning)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(VaporwaveSpacing.lg)
+        .glassCard()
+        .padding(.horizontal, VaporwaveSpacing.lg)
+        .padding(.bottom, VaporwaveSpacing.sm)
+    }
+
+    /// Binaural controls panel
+    private var binauralControlsPanel: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            Text("Binaural Beat Controls")
+                .font(VaporwaveTypography.body())
+                .foregroundColor(VaporwaveColors.textPrimary)
+
+            Picker("Brainwave State", selection: Binding(
+                get: { audioEngine.currentBrainwaveState },
+                set: { audioEngine.setBrainwaveState($0) }
+            )) {
+                ForEach(BinauralBeatGenerator.BrainwaveState.allCases, id: \.self) { state in
+                    Text(state.rawValue.capitalized).tag(state)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Text(audioEngine.currentBrainwaveState.description)
+                .font(VaporwaveTypography.caption())
+                .foregroundColor(VaporwaveColors.textSecondary)
+
+            VStack(spacing: VaporwaveSpacing.xs) {
+                HStack {
+                    Text("Volume")
+                        .font(VaporwaveTypography.caption())
+                    Spacer()
+                    Text(String(format: "%.0f%%", audioEngine.binauralAmplitude * 100))
+                        .font(.system(size: 12, design: .monospaced))
+                }
+                .foregroundColor(VaporwaveColors.textSecondary)
+
+                Slider(value: Binding(
+                    get: { audioEngine.binauralAmplitude },
+                    set: { audioEngine.setBinauralAmplitude($0) }
+                ), in: 0.0...0.6)
+                .tint(VaporwaveColors.neonPurple)
+            }
+        }
+        .padding(VaporwaveSpacing.lg)
+        .glassCard()
+        .padding(.horizontal, VaporwaveSpacing.lg)
+        .padding(.bottom, VaporwaveSpacing.sm)
     }
 
     // MARK: - Actions
@@ -673,4 +648,7 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environmentObject(MicrophoneManager())
+        .environmentObject(AudioEngine())
+        .environmentObject(HealthKitManager())
+        .environmentObject(RecordingEngine())
 }

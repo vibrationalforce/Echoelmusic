@@ -2,7 +2,10 @@ import SwiftUI
 
 /// Clean, modern display of biometric data with visual indicators
 /// Shows heart rate, HRV coherence, and voice pitch in an elegant layout
+/// Uses VaporwaveTheme design system for consistent styling
 struct BioMetricsView: View {
+
+    // MARK: - Properties
 
     /// Heart rate in BPM
     let heartRate: Double
@@ -16,30 +19,35 @@ struct BioMetricsView: View {
     /// Whether data is actively being recorded
     let isActive: Bool
 
-    /// Animation state for pulsing heart
+    // MARK: - State
+
     @State private var heartScale: CGFloat = 1.0
 
+    // MARK: - Body
+
     var body: some View {
-        HStack(spacing: 30) {
+        HStack(spacing: VaporwaveSpacing.lg) {
             // Heart rate with pulsing icon
-            VStack(spacing: 8) {
+            VStack(spacing: VaporwaveSpacing.sm) {
                 Image(systemName: "heart.fill")
                     .font(.system(size: 32))
                     .foregroundColor(heartRateColor)
                     .scaleEffect(isActive ? heartScale : 1.0)
                     .animation(
-                        isActive ? Animation.easeInOut(duration: 60.0 / max(heartRate, 1.0)).repeatForever(autoreverses: true) : .default,
+                        isActive ? VaporwaveAnimation.pulse : .default,
                         value: heartScale
                     )
+                    .neonGlow(color: isActive ? heartRateColor : .clear, radius: 8)
 
                 Text("\(Int(heartRate))")
-                    .font(.system(size: 24, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white)
+                    .font(VaporwaveTypography.dataSmall())
+                    .foregroundColor(VaporwaveColors.textPrimary)
 
                 Text("BPM")
-                    .font(.system(size: 10, weight: .light))
-                    .foregroundColor(.white.opacity(0.6))
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textTertiary)
             }
+            .accessibilityLabel("Heart rate: \(Int(heartRate)) beats per minute")
             .onAppear {
                 if isActive {
                     heartScale = 1.2
@@ -50,49 +58,42 @@ struct BioMetricsView: View {
             }
 
             // Coherence gauge (circular progress)
-            VStack(spacing: 8) {
+            VStack(spacing: VaporwaveSpacing.sm) {
                 ZStack {
-                    // Background circle
-                    Circle()
-                        .stroke(Color.white.opacity(0.1), lineWidth: 6)
-                        .frame(width: 60, height: 60)
+                    // Use VaporwaveProgressRing
+                    VaporwaveProgressRing(
+                        progress: hrvCoherence / 100.0,
+                        color: coherenceColor,
+                        lineWidth: 6,
+                        size: 60
+                    )
 
-                    // Progress circle
-                    Circle()
-                        .trim(from: 0, to: CGFloat(min(hrvCoherence / 100.0, 1.0)))
-                        .stroke(
-                            coherenceColor,
-                            style: StrokeStyle(lineWidth: 6, lineCap: .round)
-                        )
-                        .frame(width: 60, height: 60)
-                        .rotationEffect(.degrees(-90))
-                        .animation(.easeInOut(duration: 1.0), value: hrvCoherence)
-
-                    // Coherence number
+                    // Coherence number overlay
                     Text("\(Int(hrvCoherence))")
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundColor(coherenceColor)
                 }
 
                 Text("Coherence")
-                    .font(.system(size: 10, weight: .light))
-                    .foregroundColor(.white.opacity(0.6))
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textTertiary)
 
                 // Coherence state indicator
                 Text(coherenceState)
                     .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(coherenceColor.opacity(0.8))
-                    .padding(.horizontal, 8)
+                    .foregroundColor(coherenceColor)
+                    .padding(.horizontal, VaporwaveSpacing.sm)
                     .padding(.vertical, 2)
                     .background(
                         Capsule()
                             .fill(coherenceColor.opacity(0.2))
                     )
             }
+            .accessibilityLabel("Coherence: \(Int(hrvCoherence)) percent, \(coherenceState)")
 
             // Voice pitch visualization
             if voicePitch > 0 {
-                VStack(spacing: 8) {
+                VStack(spacing: VaporwaveSpacing.sm) {
                     // Pitch wave visualization
                     Canvas { context, size in
                         let path = Path { path in
@@ -118,48 +119,46 @@ struct BioMetricsView: View {
                     .frame(width: 40, height: 30)
 
                     Text("\(Int(voicePitch))")
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .font(VaporwaveTypography.dataSmall())
                         .foregroundColor(pitchColor)
 
                     Text("Hz")
-                        .font(.system(size: 10, weight: .light))
-                        .foregroundColor(.white.opacity(0.6))
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
                 }
+                .accessibilityLabel("Voice pitch: \(Int(voicePitch)) Hertz")
             }
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.black.opacity(0.3))
-                .shadow(color: isActive ? coherenceColor.opacity(0.3) : .clear, radius: 20)
-        )
+        .padding(VaporwaveSpacing.lg)
+        .glassCard()
+        .neonGlow(color: isActive ? coherenceColor : .clear, radius: 20)
         .opacity(isActive ? 1.0 : 0.6)
     }
 
 
     // MARK: - Computed Properties
 
-    /// Heart rate color based on zones
+    /// Heart rate color based on zones using design system
     private var heartRateColor: Color {
         if heartRate < 50 {
-            return Color.blue  // Low/resting
+            return VaporwaveColors.neonCyan  // Low/resting
         } else if heartRate < 70 {
-            return Color.green  // Optimal
+            return VaporwaveColors.coherenceHigh  // Optimal
         } else if heartRate < 100 {
-            return Color.orange  // Elevated
+            return VaporwaveColors.coherenceMedium  // Elevated
         } else {
-            return Color.red  // High
+            return VaporwaveColors.heartRate  // High
         }
     }
 
-    /// Coherence color (HeartMath zones)
+    /// Coherence color (HeartMath zones) using design system
     private var coherenceColor: Color {
         if hrvCoherence < 40 {
-            return Color(hue: 0.0, saturation: 0.8, brightness: 0.9)  // Red
+            return VaporwaveColors.coherenceLow
         } else if hrvCoherence < 60 {
-            return Color(hue: 0.15, saturation: 0.9, brightness: 0.95)  // Yellow
+            return VaporwaveColors.coherenceMedium
         } else {
-            return Color(hue: 0.35, saturation: 0.8, brightness: 0.9)  // Green
+            return VaporwaveColors.coherenceHigh
         }
     }
 
@@ -174,14 +173,14 @@ struct BioMetricsView: View {
         }
     }
 
-    /// Voice pitch color
+    /// Voice pitch color using design system
     private var pitchColor: Color {
         if voicePitch < 200 {
-            return Color.blue.opacity(0.8)  // Bass
+            return VaporwaveColors.neonCyan  // Bass
         } else if voicePitch < 400 {
-            return Color.purple.opacity(0.8)  // Tenor/Alto
+            return VaporwaveColors.neonPurple  // Tenor/Alto
         } else {
-            return Color.pink.opacity(0.8)  // Soprano
+            return VaporwaveColors.neonPink  // Soprano
         }
     }
 }
@@ -191,41 +190,39 @@ struct BioMetricsView: View {
 
 #Preview {
     ZStack {
-        Color.black.ignoresSafeArea()
+        VaporwaveGradients.background
+            .ignoresSafeArea()
 
-        VStack(spacing: 40) {
-            Text("Low Coherence State")
-                .foregroundColor(.white)
-                .font(.headline)
+        ScrollView {
+            VStack(spacing: VaporwaveSpacing.xl) {
+                VaporwaveSectionHeader("Low Coherence State", icon: "exclamationmark.triangle")
 
-            BioMetricsView(
-                heartRate: 85,
-                hrvCoherence: 25,
-                voicePitch: 220,
-                isActive: true
-            )
+                BioMetricsView(
+                    heartRate: 85,
+                    hrvCoherence: 25,
+                    voicePitch: 220,
+                    isActive: true
+                )
 
-            Text("High Coherence State")
-                .foregroundColor(.white)
-                .font(.headline)
+                VaporwaveSectionHeader("High Coherence State", icon: "checkmark.circle")
 
-            BioMetricsView(
-                heartRate: 65,
-                hrvCoherence: 80,
-                voicePitch: 440,
-                isActive: true
-            )
+                BioMetricsView(
+                    heartRate: 65,
+                    hrvCoherence: 80,
+                    voicePitch: 440,
+                    isActive: true
+                )
 
-            Text("Inactive State")
-                .foregroundColor(.white)
-                .font(.headline)
+                VaporwaveSectionHeader("Inactive State", icon: "moon")
 
-            BioMetricsView(
-                heartRate: 60,
-                hrvCoherence: 50,
-                voicePitch: 0,
-                isActive: false
-            )
+                BioMetricsView(
+                    heartRate: 60,
+                    hrvCoherence: 50,
+                    voicePitch: 0,
+                    isActive: false
+                )
+            }
+            .padding()
         }
     }
 }

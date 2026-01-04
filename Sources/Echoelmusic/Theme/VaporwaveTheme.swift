@@ -364,3 +364,361 @@ struct VaporwavePreview: View {
 #Preview {
     VaporwavePreview()
 }
+
+
+// MARK: - Reusable UI Components
+
+/// Data display component for showing metrics with label
+struct VaporwaveDataDisplay: View {
+    let value: String
+    let label: String
+    let color: Color
+    let showGlow: Bool
+
+    init(value: String, label: String, color: Color = VaporwaveColors.neonCyan, showGlow: Bool = true) {
+        self.value = value
+        self.label = label
+        self.color = color
+        self.showGlow = showGlow
+    }
+
+    var body: some View {
+        VStack(spacing: VaporwaveSpacing.xs) {
+            Text(value)
+                .font(VaporwaveTypography.data())
+                .foregroundColor(color)
+                .neonGlow(color: showGlow ? color : .clear, radius: 8)
+
+            Text(label)
+                .font(VaporwaveTypography.label())
+                .foregroundColor(VaporwaveColors.textTertiary)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
+    }
+}
+
+/// Status indicator with pulse animation
+struct VaporwaveStatusIndicator: View {
+    let isActive: Bool
+    let activeColor: Color
+    let inactiveColor: Color
+    @State private var isPulsing = false
+
+    init(isActive: Bool, activeColor: Color = VaporwaveColors.success, inactiveColor: Color = VaporwaveColors.textTertiary) {
+        self.isActive = isActive
+        self.activeColor = activeColor
+        self.inactiveColor = inactiveColor
+    }
+
+    var body: some View {
+        Circle()
+            .fill(isActive ? activeColor : inactiveColor)
+            .frame(width: 10, height: 10)
+            .scaleEffect(isActive && isPulsing ? 1.3 : 1.0)
+            .shadow(color: isActive ? activeColor.opacity(0.5) : .clear, radius: 5)
+            .onAppear {
+                if isActive {
+                    withAnimation(VaporwaveAnimation.pulse) {
+                        isPulsing = true
+                    }
+                }
+            }
+            .accessibilityLabel(isActive ? "Active" : "Inactive")
+    }
+}
+
+/// Circular progress indicator for coherence/progress
+struct VaporwaveProgressRing: View {
+    let progress: Double
+    let color: Color
+    let lineWidth: CGFloat
+    let size: CGFloat
+
+    init(progress: Double, color: Color = VaporwaveColors.coherenceHigh, lineWidth: CGFloat = 6, size: CGFloat = 60) {
+        self.progress = progress
+        self.color = color
+        self.lineWidth = lineWidth
+        self.size = size
+    }
+
+    var body: some View {
+        ZStack {
+            // Background ring
+            Circle()
+                .stroke(VaporwaveColors.textTertiary.opacity(0.2), lineWidth: lineWidth)
+                .frame(width: size, height: size)
+
+            // Progress ring
+            Circle()
+                .trim(from: 0, to: min(progress, 1.0))
+                .stroke(
+                    color,
+                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                )
+                .frame(width: size, height: size)
+                .rotationEffect(.degrees(-90))
+                .animation(.easeInOut(duration: 1.0), value: progress)
+        }
+        .accessibilityLabel("Progress: \(Int(progress * 100)) percent")
+    }
+}
+
+/// Unified control button component
+struct VaporwaveControlButton: View {
+    let icon: String
+    let label: String
+    let isActive: Bool
+    let color: Color
+    let size: CGFloat
+    let action: () -> Void
+
+    init(
+        icon: String,
+        label: String,
+        isActive: Bool = false,
+        color: Color = VaporwaveColors.neonCyan,
+        size: CGFloat = 60,
+        action: @escaping () -> Void
+    ) {
+        self.icon = icon
+        self.label = label
+        self.isActive = isActive
+        self.color = color
+        self.size = size
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: VaporwaveSpacing.sm) {
+                ZStack {
+                    Circle()
+                        .fill(isActive ? color.opacity(0.3) : VaporwaveColors.deepBlack.opacity(0.5))
+                        .frame(width: size, height: size)
+                        .overlay(
+                            Circle()
+                                .stroke(isActive ? color : VaporwaveColors.textTertiary, lineWidth: 1)
+                        )
+
+                    Image(systemName: icon)
+                        .font(.system(size: size * 0.45))
+                        .foregroundColor(isActive ? color : VaporwaveColors.textSecondary)
+                }
+                .neonGlow(color: isActive ? color : .clear, radius: 10)
+
+                Text(label)
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textSecondary)
+            }
+        }
+        .accessibilityLabel("\(label), \(isActive ? "active" : "inactive")")
+        .accessibilityHint("Double tap to toggle")
+    }
+}
+
+/// Info row component for settings/device info
+struct VaporwaveInfoRow: View {
+    let icon: String
+    let title: String
+    let value: String
+    let valueColor: Color
+
+    init(icon: String, title: String, value: String, valueColor: Color = VaporwaveColors.textSecondary) {
+        self.icon = icon
+        self.title = title
+        self.value = value
+        self.valueColor = valueColor
+    }
+
+    var body: some View {
+        HStack(spacing: VaporwaveSpacing.md) {
+            Image(systemName: icon)
+                .font(.system(size: 16))
+                .foregroundColor(VaporwaveColors.neonCyan)
+                .frame(width: 24)
+
+            Text(title)
+                .font(VaporwaveTypography.body())
+                .foregroundColor(VaporwaveColors.textPrimary)
+
+            Spacer()
+
+            Text(value)
+                .font(VaporwaveTypography.caption())
+                .foregroundColor(valueColor)
+        }
+        .padding(VaporwaveSpacing.md)
+        .glassCard()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title): \(value)")
+    }
+}
+
+/// Section header component
+struct VaporwaveSectionHeader: View {
+    let title: String
+    let icon: String?
+
+    init(_ title: String, icon: String? = nil) {
+        self.title = title
+        self.icon = icon
+    }
+
+    var body: some View {
+        HStack(spacing: VaporwaveSpacing.sm) {
+            if let icon = icon {
+                Image(systemName: icon)
+                    .font(.system(size: 14))
+                    .foregroundColor(VaporwaveColors.neonCyan)
+            }
+
+            Text(title.uppercased())
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(VaporwaveColors.textTertiary)
+                .tracking(2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Toggle row with vaporwave styling
+struct VaporwaveToggleRow: View {
+    let title: String
+    let subtitle: String?
+    @Binding var isOn: Bool
+    let tintColor: Color
+
+    init(title: String, subtitle: String? = nil, isOn: Binding<Bool>, tintColor: Color = VaporwaveColors.neonCyan) {
+        self.title = title
+        self.subtitle = subtitle
+        self._isOn = isOn
+        self.tintColor = tintColor
+    }
+
+    var body: some View {
+        Toggle(isOn: $isOn) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(VaporwaveTypography.body())
+                    .foregroundColor(VaporwaveColors.textPrimary)
+
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(VaporwaveTypography.caption())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+            }
+        }
+        .toggleStyle(SwitchToggleStyle(tint: tintColor))
+        .padding(VaporwaveSpacing.md)
+        .glassCard()
+    }
+}
+
+/// Empty state placeholder
+struct VaporwaveEmptyState: View {
+    let icon: String
+    let title: String
+    let message: String
+    let actionTitle: String?
+    let action: (() -> Void)?
+
+    init(icon: String, title: String, message: String, actionTitle: String? = nil, action: (() -> Void)? = nil) {
+        self.icon = icon
+        self.title = title
+        self.message = message
+        self.actionTitle = actionTitle
+        self.action = action
+    }
+
+    var body: some View {
+        VStack(spacing: VaporwaveSpacing.lg) {
+            ZStack {
+                Circle()
+                    .fill(VaporwaveColors.neonPurple.opacity(0.2))
+                    .frame(width: 100, height: 100)
+
+                Image(systemName: icon)
+                    .font(.system(size: 40))
+                    .foregroundColor(VaporwaveColors.neonPurple)
+            }
+            .neonGlow(color: VaporwaveColors.neonPurple, radius: 15)
+
+            Text(title)
+                .font(VaporwaveTypography.sectionTitle())
+                .foregroundColor(VaporwaveColors.textPrimary)
+
+            Text(message)
+                .font(VaporwaveTypography.body())
+                .foregroundColor(VaporwaveColors.textSecondary)
+                .multilineTextAlignment(.center)
+
+            if let actionTitle = actionTitle, let action = action {
+                Button(action: action) {
+                    Text(actionTitle)
+                        .vaporwaveButton(isActive: true, activeColor: VaporwaveColors.neonCyan)
+                }
+            }
+        }
+        .padding(VaporwaveSpacing.xl)
+    }
+}
+
+// MARK: - Component Previews
+
+#Preview("Components") {
+    ZStack {
+        VaporwaveGradients.background
+            .ignoresSafeArea()
+
+        ScrollView {
+            VStack(spacing: VaporwaveSpacing.xl) {
+                VaporwaveSectionHeader("Data Displays", icon: "chart.bar")
+
+                HStack(spacing: VaporwaveSpacing.xl) {
+                    VaporwaveDataDisplay(value: "72", label: "BPM", color: VaporwaveColors.heartRate)
+                    VaporwaveDataDisplay(value: "68", label: "HRV", color: VaporwaveColors.hrv)
+                    VaporwaveDataDisplay(value: "85", label: "FLOW", color: VaporwaveColors.coherenceHigh)
+                }
+                .padding()
+                .glassCard()
+
+                VaporwaveSectionHeader("Progress Rings", icon: "circle.dashed")
+
+                HStack(spacing: VaporwaveSpacing.xl) {
+                    VaporwaveProgressRing(progress: 0.3, color: VaporwaveColors.coherenceLow)
+                    VaporwaveProgressRing(progress: 0.6, color: VaporwaveColors.coherenceMedium)
+                    VaporwaveProgressRing(progress: 0.9, color: VaporwaveColors.coherenceHigh)
+                }
+
+                VaporwaveSectionHeader("Control Buttons", icon: "button.horizontal")
+
+                HStack(spacing: VaporwaveSpacing.lg) {
+                    VaporwaveControlButton(icon: "mic.fill", label: "Record", isActive: true, color: VaporwaveColors.neonPink) {}
+                    VaporwaveControlButton(icon: "waveform", label: "Binaural", color: VaporwaveColors.neonPurple) {}
+                    VaporwaveControlButton(icon: "airpodspro", label: "Spatial", color: VaporwaveColors.neonCyan) {}
+                }
+
+                VaporwaveSectionHeader("Info Rows", icon: "info.circle")
+
+                VStack(spacing: VaporwaveSpacing.sm) {
+                    VaporwaveInfoRow(icon: "applewatch", title: "Apple Watch", value: "Connected", valueColor: VaporwaveColors.success)
+                    VaporwaveInfoRow(icon: "antenna.radiowaves.left.and.right", title: "OSC", value: "Ready")
+                }
+                .padding(.horizontal)
+
+                VaporwaveSectionHeader("Status Indicators", icon: "circle.fill")
+
+                HStack(spacing: VaporwaveSpacing.xl) {
+                    VaporwaveStatusIndicator(isActive: true)
+                    VaporwaveStatusIndicator(isActive: false)
+                    VaporwaveStatusIndicator(isActive: true, activeColor: VaporwaveColors.neonPink)
+                }
+
+                Spacer()
+            }
+            .padding()
+        }
+    }
+}
