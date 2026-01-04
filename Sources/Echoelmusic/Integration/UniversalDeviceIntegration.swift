@@ -289,7 +289,9 @@ class UniversalDeviceIntegration: ObservableObject {
 
         print("✅ Smart Home connected")
         print("   Protocol: HomeKit")
-        print("   Devices: \(smartHomeStatus!.lights.count) lights, 1 thermostat, \(smartHomeStatus!.speakers.count) speakers")
+        if let status = smartHomeStatus {
+            print("   Devices: \(status.lights.count) lights, 1 thermostat, \(status.speakers.count) speakers")
+        }
 
         return true
     }
@@ -483,20 +485,20 @@ class UniversalDeviceIntegration: ObservableObject {
         Connected Devices: \(connectedDevices.count)
 
         === VEHICLES ===
-        \(vehicleStatus != nil ? "✓ Connected: \(vehicleStatus!.manufacturer) \(vehicleStatus!.model)" : "✗ No vehicle connected")
-        \(vehicleStatus != nil ? "  Bio-reactive audio: \(vehicleStatus!.audioSyncEnabled ? "Enabled" : "Disabled")" : "")
+        \(vehicleStatus.map { "✓ Connected: \($0.manufacturer) \($0.model)" } ?? "✗ No vehicle connected")
+        \(vehicleStatus.map { "  Bio-reactive audio: \($0.audioSyncEnabled ? "Enabled" : "Disabled")" } ?? "")
 
         === DRONES ===
-        \(droneStatus != nil ? "✓ Connected: \(droneStatus!.manufacturer) \(droneStatus!.model)" : "✗ No drone connected")
-        \(droneStatus != nil ? "  Flight mode: \(droneStatus!.flightMode.rawValue)" : "")
+        \(droneStatus.map { "✓ Connected: \($0.manufacturer) \($0.model)" } ?? "✗ No drone connected")
+        \(droneStatus.map { "  Flight mode: \($0.flightMode.rawValue)" } ?? "")
 
         === SMART HOME ===
-        \(smartHomeStatus != nil ? "✓ Connected: \(smartHomeStatus!.lights.count) lights, \(smartHomeStatus!.speakers.count) speakers" : "✗ No smart home connected")
-        \(smartHomeStatus != nil ? "  Bio-sync: \(smartHomeStatus!.bioSyncEnabled ? "Enabled" : "Disabled")" : "")
+        \(smartHomeStatus.map { "✓ Connected: \($0.lights.count) lights, \($0.speakers.count) speakers" } ?? "✗ No smart home connected")
+        \(smartHomeStatus.map { "  Bio-sync: \($0.bioSyncEnabled ? "Enabled" : "Disabled")" } ?? "")
 
         === MEDICAL DEVICES ===
-        \(medicalDeviceStatus != nil ? "✓ Connected: \(medicalDeviceStatus!.deviceName)" : "✗ No medical device connected")
-        \(medicalDeviceStatus != nil ? "  Monitoring: \(medicalDeviceStatus!.isMonitoring ? "Active" : "Inactive")" : "")
+        \(medicalDeviceStatus.map { "✓ Connected: \($0.deviceName)" } ?? "✗ No medical device connected")
+        \(medicalDeviceStatus.map { "  Monitoring: \($0.isMonitoring ? "Active" : "Inactive")" } ?? "")
 
         === PROTOCOLS SUPPORTED ===
         • MQTT (IoT standard)
