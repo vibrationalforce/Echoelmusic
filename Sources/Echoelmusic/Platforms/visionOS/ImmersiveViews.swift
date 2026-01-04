@@ -115,6 +115,8 @@ struct ImmersiveExperiencePicker: View {
                                 .fill(selectedCategory == type ? VaporwaveColors.neonCyan.opacity(0.2) : Color.clear)
                         )
                     }
+                    .accessibilityLabel("\(type.rawValue) experiences")
+                    .accessibilityHint(selectedCategory == type ? "Currently selected" : "Double tap to filter by \(type.rawValue)")
                 }
             }
             .padding(.horizontal)
@@ -184,6 +186,8 @@ struct ImmersiveExperiencePicker: View {
                     .font(VaporwaveTypography.label())
                     .foregroundColor(VaporwaveColors.textTertiary)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Heart rate: \(Int(ImmersiveExperienceManager.shared.heartRate)) beats per minute")
 
             VStack(spacing: VaporwaveSpacing.xs) {
                 Image(systemName: "waveform.path.ecg")
@@ -194,6 +198,8 @@ struct ImmersiveExperiencePicker: View {
                     .font(VaporwaveTypography.label())
                     .foregroundColor(VaporwaveColors.textTertiary)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Coherence level: \(Int(ImmersiveExperienceManager.shared.coherenceLevel * 100)) percent")
 
             // Start/Stop button
             if let experience = selectedExperience {
@@ -209,6 +215,8 @@ struct ImmersiveExperiencePicker: View {
                     .background(VaporwaveColors.neonCyan)
                     .clipShape(Capsule())
                 }
+                .accessibilityLabel(isImmersive ? "Exit immersive experience" : "Enter \(experience.name) immersive experience")
+                .accessibilityHint(isImmersive ? "Double tap to exit the current immersive experience" : "Double tap to start the selected experience")
             }
         }
         .padding()
@@ -322,6 +330,9 @@ struct ExperienceCard: View {
             .neonGlow(color: isSelected ? VaporwaveColors.neonCyan : .clear, radius: 10)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(experience.name), \(experience.type.rawValue) experience")
+        .accessibilityHint(isSelected ? "Selected. Double tap to start" : "Double tap to select")
+        .accessibilityValue(experience.duration.map { "Duration: \(formatDuration($0))" } ?? "Unlimited duration")
     }
 
     private var environmentGradient: LinearGradient {
@@ -446,6 +457,10 @@ struct SpatialBioDisplay: View {
             }
         }
         .hoverEffect(.lift)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Bio metrics display. Coherence: \(Int(manager.coherenceLevel * 100)) percent. Heart rate: \(Int(manager.heartRate)) BPM")
+        .accessibilityHint(isExpanded ? "Double tap to collapse" : "Double tap to expand details")
+        .accessibilityAddTraits(.isButton)
     }
 
     private var coherenceColor: Color {
