@@ -255,6 +255,21 @@ class RTMPClient: ObservableObject {
 
     // MARK: - Send Media
 
+    /// Send encoded frame data (convenience wrapper for StreamEngine)
+    /// Assumes video frame with auto-detected keyframe based on NALU type
+    func sendFrame(_ data: Data) async throws {
+        guard !data.isEmpty else { return }
+
+        // Calculate timestamp based on frame count
+        let timestamp = UInt32(Date().timeIntervalSince1970 * 1000) - epoch
+
+        // Check if keyframe by looking at NALU type (simplified detection)
+        // NAL unit type 5 = IDR (keyframe), type 1 = non-IDR
+        let isKeyframe = data.first.map { ($0 & 0x1F) == 5 } ?? false
+
+        try await sendVideoFrame(data, timestamp: timestamp, isKeyframe: isKeyframe)
+    }
+
     /// Send video frame (H.264/AVC)
     func sendVideoFrame(_ data: Data, timestamp: UInt32, isKeyframe: Bool) async throws {
         guard connectionState == .streaming else {
