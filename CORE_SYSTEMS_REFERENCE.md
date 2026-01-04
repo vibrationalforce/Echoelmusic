@@ -561,6 +561,106 @@ Tests/EchoelmusicTests/
 
 ---
 
+## Progressive Disclosure Engine
+
+The **Progressive Disclosure Engine** unifies all disclosure patterns into a single bio-reactive system.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                PROGRESSIVE DISCLOSURE ENGINE                     │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                      UserState                             │  │
+│  │  Bio: heartRate, hrv, coherence, stressLevel              │  │
+│  │  Engagement: flowIntensity, sessionDuration, actionCount  │  │
+│  │  Learning: onboardingStep, modeTimeSpent, featureUsage    │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                              │                                   │
+│                              ▼                                   │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                   DisclosureLevel                          │  │
+│  │  Minimal → Basic → Intermediate → Advanced → Expert       │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                              │                                   │
+│                              ▼                                   │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                    FeatureGates                            │  │
+│  │  • minLevel, minCoherence, maxStress                      │  │
+│  │  • requiresFlow, hideWhenStressed, safetyGated            │  │
+│  │  • prerequisiteFeatures                                    │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Disclosure Levels
+
+| Level | Trigger | Features Visible |
+|-------|---------|------------------|
+| Minimal | Stressed (HRV < 30) | Essential controls only |
+| Basic | New user / Onboarding | Core features |
+| Intermediate | 30+ min engagement | Most features |
+| Advanced | 2+ hours + flow state | Full feature set |
+| Expert | 10+ hours + mastery | CLI, scripting, hardware |
+
+### Usage
+
+```cpp
+auto& disclosure = EchoelDisclosure;
+
+// Update from wearables
+disclosure.updateBioMetrics(heartRate, hrv, coherence);
+
+// Update from FlowStateIndicator
+disclosure.updateFlowState(flowIntensity);
+
+// Check feature visibility
+if (disclosure.isFeatureVisible("ai_composer")) {
+    showAIComposerPanel();
+}
+
+// Register custom feature gate
+FeatureGate gate = {
+    .featureId = "custom_feature",
+    .minLevel = DisclosureLevel::Advanced,
+    .minCoherence = 0.6f,
+    .requiresFlow = true
+};
+disclosure.registerFeature(gate);
+
+// Get AI suggestions
+auto suggestion = disclosure.getTopSuggestion();
+// "Ready to unlock: AI Composition Assistant"
+// "Reason: You're in flow state - perfect time to learn"
+```
+
+### Integration with Existing Systems
+
+```cpp
+// FirstTimeExperience integration
+disclosure.setOnboardingProgress(currentStep, completed);
+
+// FlowStateIndicator integration
+flowIndicator.onIntensityChange = [](float intensity) {
+    EchoelDisclosure.updateFlowState(intensity);
+};
+
+// WearableManager integration
+wearables.onBioDataReceived = [](BioData data) {
+    EchoelDisclosure.updateBioMetrics(data.hr, data.hrv, data.coherence);
+};
+
+// WellnessControlPanel - safety-gated features
+if (EchoelDisclosure.isFeatureVisible("ave_therapy")) {
+    showAVEControls();
+}
+```
+
+---
+
 ## Best Practices
 
 1. **Always use singletons via .shared()** for thread-safe access

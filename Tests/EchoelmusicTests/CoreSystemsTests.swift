@@ -464,6 +464,190 @@ final class CoreSystemsTests: XCTestCase {
 
         XCTAssertEqual(rhythm.count, 8, "Should generate rhythm at bio-tempo")
     }
+
+    // MARK: - Progressive Disclosure Engine Tests
+
+    func testProgressiveDisclosureSingleton() {
+        let engine1 = ProgressiveDisclosureEngine.shared
+        let engine2 = ProgressiveDisclosureEngine.shared
+        XCTAssertTrue(engine1 === engine2, "ProgressiveDisclosureEngine should be singleton")
+    }
+
+    func testDisclosureLevelProgression() {
+        let engine = ProgressiveDisclosureEngine.shared
+
+        // New user starts at Basic
+        XCTAssertEqual(engine.getCurrentLevel(), .basic)
+
+        // Simulate engaged user
+        var state = UserState()
+        state.sessionDuration = 3600  // 1 hour
+        state.actionCount = 100
+        state.coherence = 0.7
+        state.flowIntensity = 0.6
+        state.hasCompletedOnboarding = true
+
+        engine.updateUserState(state)
+
+        // Should advance to at least Intermediate
+        XCTAssertTrue(engine.getCurrentLevel().rawValue >= DisclosureLevel.intermediate.rawValue)
+    }
+
+    func testStressReducesDisclosureLevel() {
+        let engine = ProgressiveDisclosureEngine.shared
+
+        // High stress state
+        var stressedState = UserState()
+        stressedState.stressLevel = 0.8
+        stressedState.hrv = 20  // Low HRV indicates stress
+        stressedState.coherence = 0.2
+
+        engine.updateUserState(stressedState)
+
+        // Should reduce to Minimal
+        XCTAssertEqual(engine.getCurrentLevel(), .minimal)
+    }
+
+    func testFeatureGating() {
+        let engine = ProgressiveDisclosureEngine.shared
+
+        // Register a gated feature
+        let gate = FeatureGate(
+            featureId: "test_feature",
+            displayName: "Test Feature",
+            category: "test",
+            minLevel: .intermediate,
+            minCoherence: 0.5,
+            minSessionTime: 600
+        )
+        engine.registerFeature(gate)
+
+        // New user shouldn't see it
+        var newUser = UserState()
+        newUser.sessionDuration = 100
+        newUser.coherence = 0.3
+        engine.updateUserState(newUser)
+
+        XCTAssertTrue(engine.isFeatureLocked("test_feature"))
+
+        // Experienced user should see it
+        var experiencedUser = UserState()
+        experiencedUser.sessionDuration = 1800
+        experiencedUser.coherence = 0.7
+        experiencedUser.flowIntensity = 0.6
+        experiencedUser.hasCompletedOnboarding = true
+        experiencedUser.actionCount = 50
+        engine.updateUserState(experiencedUser)
+
+        XCTAssertTrue(engine.isFeatureVisible("test_feature"))
+    }
+
+    func testFlowStateEnablesAdvancedFeatures() {
+        let engine = ProgressiveDisclosureEngine.shared
+
+        // Register flow-gated feature
+        let flowGate = FeatureGate(
+            featureId: "flow_feature",
+            displayName: "Flow Feature",
+            category: "advanced",
+            minLevel: .basic,
+            requiresFlow: true
+        )
+        engine.registerFeature(flowGate)
+
+        // User not in flow
+        var noFlowState = UserState()
+        noFlowState.flowIntensity = 0.2
+        noFlowState.coherence = 0.4
+        engine.updateUserState(noFlowState)
+
+        XCTAssertTrue(engine.isFeatureLocked("flow_feature"))
+
+        // User in flow
+        var flowState = UserState()
+        flowState.flowIntensity = 0.8
+        flowState.coherence = 0.7
+        engine.updateUserState(flowState)
+
+        XCTAssertTrue(engine.isFeatureVisible("flow_feature"))
+    }
+
+    func testManualLevelOverride() {
+        let engine = ProgressiveDisclosureEngine.shared
+
+        engine.setManualLevel(.expert)
+        XCTAssertEqual(engine.getCurrentLevel(), .expert)
+
+        // Bio-state shouldn't change it while overridden
+        var stressedState = UserState()
+        stressedState.stressLevel = 0.9
+        engine.updateUserState(stressedState)
+
+        XCTAssertEqual(engine.getCurrentLevel(), .expert)
+
+        // Clear override
+        engine.clearManualOverride()
+        engine.updateUserState(stressedState)
+
+        XCTAssertNotEqual(engine.getCurrentLevel(), .expert)
+    }
+
+    func testSerialization() {
+        let engine = ProgressiveDisclosureEngine.shared
+
+        // Unlock some features
+        engine.unlockFeature("test_unlock_1")
+        engine.unlockFeature("test_unlock_2")
+
+        // Serialize
+        let json = engine.serializeProgress()
+        XCTAssertFalse(json.isEmpty)
+
+        // Deserialize
+        engine.deserializeProgress(json)
+
+        // Features should still be unlocked
+        XCTAssertTrue(engine.isFeatureVisible("test_unlock_1"))
+        XCTAssertTrue(engine.isFeatureVisible("test_unlock_2"))
+    }
+
+    func testBioMetricsUpdateLevel() {
+        let engine = ProgressiveDisclosureEngine.shared
+
+        // Calm state with good coherence
+        engine.updateBioMetrics(hr: 65, hrvValue: 80, coh: 0.85)
+
+        // Should not be in stressed/minimal mode
+        XCTAssertNotEqual(engine.getCurrentLevel(), .minimal)
+
+        // Stressed state
+        engine.updateBioMetrics(hr: 110, hrvValue: 15, coh: 0.2)
+
+        // Should reduce to minimal
+        XCTAssertEqual(engine.getCurrentLevel(), .minimal)
+    }
+
+    func testErrorCountReducesComplexity() {
+        let engine = ProgressiveDisclosureEngine.shared
+
+        // Set up intermediate level user
+        var state = UserState()
+        state.sessionDuration = 2000
+        state.coherence = 0.6
+        state.hasCompletedOnboarding = true
+        state.actionCount = 30
+        engine.updateUserState(state)
+
+        let initialLevel = engine.getCurrentLevel()
+
+        // Record multiple errors (frustration signal)
+        for _ in 0..<6 {
+            engine.recordError()
+        }
+
+        // Level should reduce due to errors
+        XCTAssertTrue(engine.getCurrentLevel().rawValue <= initialLevel.rawValue)
+    }
 }
 
 // MARK: - Test Helpers
@@ -476,6 +660,7 @@ extension CoreSystemsTests {
         WiseSaveMode.shared.reset()
         RalphWiggumFoundation.shared.reset()
         WearableManager.shared.reset()
+        ProgressiveDisclosureEngine.shared.reset()
     }
 
     override func tearDown() {
