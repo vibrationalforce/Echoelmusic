@@ -686,10 +686,473 @@ private:
 };
 
 //==============================================================================
+// Real-Time Performance Profiler
+//==============================================================================
+
+class PerformanceProfiler
+{
+public:
+    struct ProfileSection
+    {
+        juce::String name;
+        std::chrono::high_resolution_clock::time_point startTime;
+        double accumulatedTimeUs = 0.0;
+        double minTimeUs = std::numeric_limits<double>::max();
+        double maxTimeUs = 0.0;
+        int callCount = 0;
+        bool isActive = false;
+    };
+
+    struct ProfilingReport
+    {
+        juce::String sectionName;
+        double avgTimeUs;
+        double minTimeUs;
+        double maxTimeUs;
+        double totalTimeUs;
+        int callCount;
+        double percentOfTotal;
+    };
+
+    static PerformanceProfiler& getInstance()
+    {
+        static PerformanceProfiler instance;
+        return instance;
+    }
+
+    void beginSection(const juce::String& name)
+    {
+        if (!enabled) return;
+
+        std::lock_guard<std::mutex> lock(mutex);
+
+        auto& section = sections[name];
+        section.name = name;
+        section.startTime = std::chrono::high_resolution_clock::now();
+        section.isActive = true;
+    }
+
+    void endSection(const juce::String& name)
+    {
+        if (!enabled) return;
+
+        auto endTime = std::chrono::high_resolution_clock::now();
+
+        std::lock_guard<std::mutex> lock(mutex);
+
+        auto it = sections.find(name);
+        if (it == sections.end() || !it->second.isActive)
+            return;
+
+        auto& section = it->second;
+        double elapsed = std::chrono::duration<double, std::micro>(
+            endTime - section.startTime).count();
+
+        section.accumulatedTimeUs += elapsed;
+        section.minTimeUs = std::min(section.minTimeUs, elapsed);
+        section.maxTimeUs = std::max(section.maxTimeUs, elapsed);
+        section.callCount++;
+        section.isActive = false;
+    }
+
+    std::vector<ProfilingReport> getReport()
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+
+        std::vector<ProfilingReport> report;
+        double totalTime = 0.0;
+
+        for (const auto& [name, section] : sections)
+        {
+            totalTime += section.accumulatedTimeUs;
+        }
+
+        for (const auto& [name, section] : sections)
+        {
+            if (section.callCount == 0) continue;
+
+            ProfilingReport r;
+            r.sectionName = section.name;
+            r.avgTimeUs = section.accumulatedTimeUs / section.callCount;
+            r.minTimeUs = section.minTimeUs;
+            r.maxTimeUs = section.maxTimeUs;
+            r.totalTimeUs = section.accumulatedTimeUs;
+            r.callCount = section.callCount;
+            r.percentOfTotal = (section.accumulatedTimeUs / totalTime) * 100.0;
+            report.push_back(r);
+        }
+
+        // Sort by total time descending
+        std::sort(report.begin(), report.end(),
+            [](const ProfilingReport& a, const ProfilingReport& b) {
+                return a.totalTimeUs > b.totalTimeUs;
+            });
+
+        return report;
+    }
+
+    juce::String getFormattedReport()
+    {
+        auto report = getReport();
+
+        juce::String output;
+        output += "=== Performance Profiling Report ===\n\n";
+        output += juce::String::formatted("%-25s %10s %10s %10s %10s %8s\n",
+            "Section", "Avg (us)", "Min (us)", "Max (us)", "Total (ms)", "Calls");
+        output += juce::String::charToString('-').repeat(75) + "\n";
+
+        for (const auto& r : report)
+        {
+            output += juce::String::formatted("%-25s %10.1f %10.1f %10.1f %10.2f %8d\n",
+                r.sectionName.toRawUTF8(),
+                r.avgTimeUs,
+                r.minTimeUs,
+                r.maxTimeUs,
+                r.totalTimeUs / 1000.0,
+                r.callCount);
+        }
+
+        return output;
+    }
+
+    void reset()
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        sections.clear();
+    }
+
+    void setEnabled(bool enable) { enabled = enable; }
+    bool isEnabled() const { return enabled; }
+
+private:
+    PerformanceProfiler() = default;
+
+    std::map<juce::String, ProfileSection> sections;
+    std::mutex mutex;
+    bool enabled = true;
+};
+
+//==============================================================================
+// Scoped Profile Guard
+//==============================================================================
+
+class ScopedProfiler
+{
+public:
+    explicit ScopedProfiler(const juce::String& sectionName)
+        : name(sectionName)
+    {
+        PerformanceProfiler::getInstance().beginSection(name);
+    }
+
+    ~ScopedProfiler()
+    {
+        PerformanceProfiler::getInstance().endSection(name);
+    }
+
+private:
+    juce::String name;
+};
+
+#define PROFILE_SECTION(name) ScopedProfiler _profiler_##__LINE__(name)
+#define PROFILE_FUNCTION() ScopedProfiler _profiler_func(__FUNCTION__)
+
+//==============================================================================
+// Memory Profiler
+//==============================================================================
+
+class MemoryProfiler
+{
+public:
+    struct MemorySnapshot
+    {
+        size_t heapUsed = 0;
+        size_t heapPeak = 0;
+        size_t audioBufferBytes = 0;
+        size_t pluginStateBytes = 0;
+        size_t uiResourceBytes = 0;
+        std::chrono::steady_clock::time_point timestamp;
+    };
+
+    static MemoryProfiler& getInstance()
+    {
+        static MemoryProfiler instance;
+        return instance;
+    }
+
+    void trackAllocation(const juce::String& category, size_t bytes)
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        allocations[category] += bytes;
+        totalAllocated += bytes;
+    }
+
+    void trackDeallocation(const juce::String& category, size_t bytes)
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        allocations[category] -= bytes;
+        totalAllocated -= bytes;
+    }
+
+    MemorySnapshot takeSnapshot()
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+
+        MemorySnapshot snapshot;
+        snapshot.heapUsed = totalAllocated;
+        snapshot.heapPeak = peakAllocated;
+        snapshot.timestamp = std::chrono::steady_clock::now();
+
+        for (const auto& [category, bytes] : allocations)
+        {
+            if (category.contains("audio") || category.contains("buffer"))
+                snapshot.audioBufferBytes += bytes;
+            else if (category.contains("plugin") || category.contains("state"))
+                snapshot.pluginStateBytes += bytes;
+            else if (category.contains("ui") || category.contains("graphics"))
+                snapshot.uiResourceBytes += bytes;
+        }
+
+        if (totalAllocated > peakAllocated)
+            peakAllocated = totalAllocated;
+
+        history.push_back(snapshot);
+        if (history.size() > 1000)
+            history.erase(history.begin());
+
+        return snapshot;
+    }
+
+    std::vector<MemorySnapshot> getHistory() const
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        return history;
+    }
+
+    size_t getTotalAllocated() const { return totalAllocated; }
+    size_t getPeakAllocated() const { return peakAllocated; }
+
+    juce::String getReport()
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+
+        juce::String output;
+        output += "=== Memory Usage Report ===\n\n";
+        output += juce::String::formatted("Total Allocated: %.2f MB\n", totalAllocated / (1024.0 * 1024.0));
+        output += juce::String::formatted("Peak Allocated:  %.2f MB\n\n", peakAllocated / (1024.0 * 1024.0));
+        output += "By Category:\n";
+
+        std::vector<std::pair<juce::String, size_t>> sorted(allocations.begin(), allocations.end());
+        std::sort(sorted.begin(), sorted.end(),
+            [](const auto& a, const auto& b) { return a.second > b.second; });
+
+        for (const auto& [category, bytes] : sorted)
+        {
+            output += juce::String::formatted("  %-20s: %.2f MB\n",
+                category.toRawUTF8(), bytes / (1024.0 * 1024.0));
+        }
+
+        return output;
+    }
+
+private:
+    MemoryProfiler() = default;
+
+    std::map<juce::String, size_t> allocations;
+    std::vector<MemorySnapshot> history;
+    size_t totalAllocated = 0;
+    size_t peakAllocated = 0;
+    mutable std::mutex mutex;
+};
+
+//==============================================================================
+// Frame Rate Monitor
+//==============================================================================
+
+class FrameRateMonitor
+{
+public:
+    static FrameRateMonitor& getInstance()
+    {
+        static FrameRateMonitor instance;
+        return instance;
+    }
+
+    void recordFrame()
+    {
+        auto now = std::chrono::steady_clock::now();
+
+        if (lastFrameTime.time_since_epoch().count() > 0)
+        {
+            double delta = std::chrono::duration<double>(now - lastFrameTime).count();
+            frameTimes.push_back(delta);
+
+            if (frameTimes.size() > 60)
+                frameTimes.erase(frameTimes.begin());
+
+            // Update stats
+            frameCount++;
+            double elapsed = std::chrono::duration<double>(now - startTime).count();
+            if (elapsed > 0)
+                avgFPS = frameCount / elapsed;
+
+            // Reset every 5 seconds
+            if (elapsed > 5.0)
+            {
+                startTime = now;
+                frameCount = 0;
+            }
+        }
+        else
+        {
+            startTime = now;
+        }
+
+        lastFrameTime = now;
+    }
+
+    double getAverageFPS() const { return avgFPS; }
+
+    double getCurrentFPS() const
+    {
+        if (frameTimes.empty()) return 0.0;
+
+        double avgFrameTime = 0.0;
+        for (double t : frameTimes)
+            avgFrameTime += t;
+        avgFrameTime /= frameTimes.size();
+
+        return avgFrameTime > 0 ? 1.0 / avgFrameTime : 0.0;
+    }
+
+    double getMinFPS() const
+    {
+        if (frameTimes.empty()) return 0.0;
+        double maxTime = *std::max_element(frameTimes.begin(), frameTimes.end());
+        return maxTime > 0 ? 1.0 / maxTime : 0.0;
+    }
+
+    double getFrameTimeMs() const
+    {
+        if (frameTimes.empty()) return 0.0;
+        return frameTimes.back() * 1000.0;
+    }
+
+    bool isDroppingFrames() const
+    {
+        if (frameTimes.size() < 10) return false;
+
+        // Check if any recent frames took > 33ms (below 30 FPS)
+        for (size_t i = frameTimes.size() - 10; i < frameTimes.size(); ++i)
+        {
+            if (frameTimes[i] > 0.033)
+                return true;
+        }
+        return false;
+    }
+
+private:
+    FrameRateMonitor() = default;
+
+    std::vector<double> frameTimes;
+    std::chrono::steady_clock::time_point lastFrameTime;
+    std::chrono::steady_clock::time_point startTime;
+    int frameCount = 0;
+    double avgFPS = 60.0;
+};
+
+//==============================================================================
+// Audio Thread Monitor
+//==============================================================================
+
+class AudioThreadMonitor
+{
+public:
+    struct CallbackStats
+    {
+        double avgProcessingTimeUs = 0.0;
+        double maxProcessingTimeUs = 0.0;
+        double bufferDurationUs = 0.0;
+        double cpuUsagePercent = 0.0;
+        int underruns = 0;
+        int overruns = 0;
+        int callbackCount = 0;
+    };
+
+    static AudioThreadMonitor& getInstance()
+    {
+        static AudioThreadMonitor instance;
+        return instance;
+    }
+
+    void beginCallback(int bufferSize, double sampleRate)
+    {
+        callbackStart = std::chrono::high_resolution_clock::now();
+        currentBufferDurationUs = (bufferSize / sampleRate) * 1000000.0;
+    }
+
+    void endCallback()
+    {
+        auto end = std::chrono::high_resolution_clock::now();
+        double elapsed = std::chrono::duration<double, std::micro>(end - callbackStart).count();
+
+        processingTimes.push_back(elapsed);
+        if (processingTimes.size() > 100)
+            processingTimes.erase(processingTimes.begin());
+
+        stats.callbackCount++;
+
+        // Check for underrun (processing took too long)
+        if (elapsed > currentBufferDurationUs * 0.95)
+            stats.underruns++;
+
+        // Update stats
+        double sum = 0.0;
+        double maxTime = 0.0;
+        for (double t : processingTimes)
+        {
+            sum += t;
+            maxTime = std::max(maxTime, t);
+        }
+
+        stats.avgProcessingTimeUs = sum / processingTimes.size();
+        stats.maxProcessingTimeUs = maxTime;
+        stats.bufferDurationUs = currentBufferDurationUs;
+        stats.cpuUsagePercent = (stats.avgProcessingTimeUs / currentBufferDurationUs) * 100.0;
+    }
+
+    const CallbackStats& getStats() const { return stats; }
+
+    bool isHealthy() const
+    {
+        return stats.cpuUsagePercent < 70.0 &&
+               stats.underruns < 10;
+    }
+
+    void reset()
+    {
+        processingTimes.clear();
+        stats = {};
+    }
+
+private:
+    AudioThreadMonitor() = default;
+
+    std::vector<double> processingTimes;
+    std::chrono::high_resolution_clock::time_point callbackStart;
+    double currentBufferDurationUs = 0.0;
+    CallbackStats stats;
+};
+
+//==============================================================================
 // Convenience Macros
 //==============================================================================
 
 #define EchoelPerformance PerformanceEngine::getInstance()
+#define EchoelProfiler PerformanceProfiler::getInstance()
+#define EchoelMemory MemoryProfiler::getInstance()
+#define EchoelFrameRate FrameRateMonitor::getInstance()
+#define EchoelAudioMonitor AudioThreadMonitor::getInstance()
 
 } // namespace Core
 } // namespace Echoelmusic
