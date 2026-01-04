@@ -178,7 +178,11 @@ final class ImmersiveVideoCaptureManager {
     }
 
     func stopRecording() async throws -> ImmersiveRecording {
-        guard case .recording = captureState, case .paused = captureState else {
+        // Allow stopping from either recording or paused state
+        switch captureState {
+        case .recording, .paused:
+            break
+        default:
             throw CaptureError.notRecording
         }
 
