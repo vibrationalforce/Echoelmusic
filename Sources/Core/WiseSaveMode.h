@@ -693,7 +693,16 @@ public:
 
 private:
     WiseSaveMode() = default;
-    ~WiseSaveMode() = default;
+
+    ~WiseSaveMode()
+    {
+        // Stop recovery thread safely
+        recoveryThreadRunning = false;
+        if (recoveryThread.joinable())
+        {
+            recoveryThread.join();
+        }
+    }
 
     WiseSaveMode(const WiseSaveMode&) = delete;
     WiseSaveMode& operator=(const WiseSaveMode&) = delete;
@@ -1019,7 +1028,7 @@ private:
             });
 
         // Delete older files
-        for (int i = keepCount; i < files.size(); ++i)
+        for (size_t i = static_cast<size_t>(keepCount); i < files.size(); ++i)
         {
             files[i].deleteFile();
         }
@@ -1027,19 +1036,30 @@ private:
 
     void startRecoveryTimer()
     {
-        // Use a separate thread for recovery saves
-        std::thread([this]() {
-            while (config.recoveryModeEnabled)
-            {
-                std::this_thread::sleep_for(
-                    std::chrono::seconds(config.recoveryIntervalSeconds));
+        // Stop any existing recovery thread
+        recoveryThreadRunning = false;
+        if (recoveryThread.joinable())
+        {
+            recoveryThread.join();
+        }
 
-                if (isDirty && initialized)
+        // Start managed recovery thread
+        recoveryThreadRunning = true;
+        recoveryThread = std::thread([this]() {
+            while (recoveryThreadRunning && config.recoveryModeEnabled)
+            {
+                // Sleep in small intervals to allow quick shutdown
+                for (int i = 0; i < config.recoveryIntervalSeconds && recoveryThreadRunning; ++i)
+                {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                }
+
+                if (recoveryThreadRunning && isDirty && initialized)
                 {
                     createRecoveryPoint();
                 }
             }
-        }).detach();
+        });
     }
 
     //==========================================================================
@@ -1077,6 +1097,10 @@ private:
     std::function<void(const juce::String&)> onSnapshotCallback;
 
     mutable std::mutex stateMutex;
+
+    // Recovery thread management
+    std::atomic<bool> recoveryThreadRunning{false};
+    std::thread recoveryThread;
 };
 
 //==============================================================================

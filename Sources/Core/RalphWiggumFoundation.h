@@ -37,6 +37,7 @@
 #include <mutex>
 #include <map>
 #include <vector>
+#include <queue>
 #include <optional>
 
 namespace RalphWiggum
