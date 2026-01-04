@@ -6,23 +6,276 @@ import Combine
 
 #if os(visionOS)
 
-/// Echoelmusic für Apple Vision Pro
-///
-/// Vision Pro bietet eine revolutionäre Erfahrung für Echoelmusic:
-/// - **Spatial Audio**: 3D-Audio-Biofeedback im Raum positioniert
-/// - **Immersive Spaces**: Vollständig immersive 360° Visualisierungen
-/// - **Eye Tracking**: Gaze-basierte Interaktion
-/// - **Hand Tracking**: Natürliche Gestensteuerung
-/// - **3D Visualizations**: RealityKit für bio-reaktive 3D-Geometrie
-/// - **Passthrough**: Augmented Reality mit Realitätsbezug
-///
-/// Use Cases:
-/// - Immersive Meditation: 360° beruhigende Environments
-/// - Therapeutic VR: EMDR, Exposure Therapy mit Biofeedback
-/// - Music Creation in 3D: Räumliche Klanggestaltung
-/// - Bio-Reactive Art: 3D-Kunst reagiert auf Herzfrequenz
-/// - Group Sessions: Shared immersive experiences
-///
+// MARK: - Echoelmusic visionOS App
+
+/// Main App structure for visionOS with immersive space support
+@main
+struct EchoelmusicVisionApp: App {
+
+    @State private var immersionStyle: ImmersionStyle = .mixed
+
+    var body: some Scene {
+        // Main window
+        WindowGroup {
+            VisionContentView()
+        }
+        .windowStyle(.volumetric)
+
+        // Immersive space for full experiences
+        ImmersiveSpace(id: "echoelImmersive") {
+            EchoelImmersiveSpace()
+        }
+        .immersionStyle(selection: $immersionStyle, in: .mixed, .full, .progressive)
+
+        // Experience picker window
+        WindowGroup(id: "experiencePicker") {
+            ImmersiveExperiencePicker()
+        }
+        .windowStyle(.plain)
+        .defaultSize(width: 800, height: 600)
+
+        // Bio display ornament
+        WindowGroup(id: "bioDisplay") {
+            SpatialBioDisplay()
+        }
+        .windowStyle(.plain)
+        .defaultSize(width: 200, height: 200)
+    }
+}
+
+// MARK: - Vision Content View
+
+struct VisionContentView: View {
+
+    @Environment(\.openWindow) var openWindow
+    @Environment(\.openImmersiveSpace) var openImmersiveSpace
+    @Environment(\.dismissImmersiveSpace) var dismissImmersiveSpace
+
+    @State private var manager = ImmersiveExperienceManager.shared
+    @State private var visionApp = VisionApp()
+    @StateObject private var healthKit = HealthKitManager()
+    @State private var showSettings = false
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                // Background
+                VaporwaveGradients.background
+                    .ignoresSafeArea()
+
+                VStack(spacing: VaporwaveSpacing.xl) {
+
+                    // Header
+                    headerSection
+
+                    Spacer()
+
+                    // Bio metrics
+                    bioMetricsSection
+
+                    Spacer()
+
+                    // Quick actions
+                    quickActionsSection
+
+                    // Mode selector
+                    modeSelector
+
+                    Spacer()
+                }
+                .padding()
+            }
+            .navigationTitle("Echoelmusic")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { showSettings.toggle() }) {
+                        Image(systemName: "gearshape")
+                    }
+                }
+            }
+            .sheet(isPresented: $showSettings) {
+                ImmersiveSettingsView()
+            }
+        }
+        .task {
+            try? await healthKit.requestAuthorization()
+        }
+    }
+
+    // MARK: - Header
+
+    private var headerSection: some View {
+        VStack(spacing: VaporwaveSpacing.sm) {
+            Text("ECHOELMUSIC")
+                .font(VaporwaveTypography.heroTitle())
+                .foregroundColor(VaporwaveColors.textPrimary)
+                .neonGlow(color: VaporwaveColors.neonCyan, radius: 15)
+
+            Text("Immersive Bio-Reactive Audio")
+                .font(VaporwaveTypography.caption())
+                .foregroundColor(VaporwaveColors.textTertiary)
+                .tracking(4)
+        }
+    }
+
+    // MARK: - Bio Metrics
+
+    private var bioMetricsSection: some View {
+        HStack(spacing: VaporwaveSpacing.xxl) {
+            // Heart Rate
+            VStack(spacing: VaporwaveSpacing.sm) {
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(VaporwaveColors.heartRate)
+                    .neonGlow(color: VaporwaveColors.heartRate, radius: 10)
+
+                Text("\(Int(healthKit.heartRate))")
+                    .font(VaporwaveTypography.data())
+                    .foregroundColor(VaporwaveColors.textPrimary)
+
+                Text("BPM")
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .hoverEffect(.lift)
+
+            // Coherence
+            VStack(spacing: VaporwaveSpacing.sm) {
+                VaporwaveProgressRing(
+                    progress: healthKit.hrvCoherence / 100.0,
+                    color: coherenceColor,
+                    lineWidth: 6,
+                    size: 80
+                )
+                .overlay {
+                    Text("\(Int(healthKit.hrvCoherence))")
+                        .font(VaporwaveTypography.data())
+                        .foregroundColor(coherenceColor)
+                }
+
+                Text("Coherence")
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .hoverEffect(.lift)
+
+            // HRV
+            VStack(spacing: VaporwaveSpacing.sm) {
+                Image(systemName: "waveform.path.ecg")
+                    .font(.system(size: 40))
+                    .foregroundColor(VaporwaveColors.hrv)
+                    .neonGlow(color: VaporwaveColors.hrv, radius: 10)
+
+                Text(String(format: "%.0f", healthKit.hrvRMSSD))
+                    .font(VaporwaveTypography.data())
+                    .foregroundColor(VaporwaveColors.textPrimary)
+
+                Text("HRV ms")
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .hoverEffect(.lift)
+        }
+        .padding(VaporwaveSpacing.xl)
+        .glassCard()
+    }
+
+    private var coherenceColor: Color {
+        if healthKit.hrvCoherence < 40 {
+            return VaporwaveColors.coherenceLow
+        } else if healthKit.hrvCoherence < 60 {
+            return VaporwaveColors.coherenceMedium
+        } else {
+            return VaporwaveColors.coherenceHigh
+        }
+    }
+
+    // MARK: - Quick Actions
+
+    private var quickActionsSection: some View {
+        HStack(spacing: VaporwaveSpacing.lg) {
+            // Start Experience
+            VaporwaveControlButton(
+                icon: "visionpro.fill",
+                label: "Experience",
+                isActive: manager.isImmersive,
+                color: VaporwaveColors.neonPink,
+                size: 80
+            ) {
+                openWindow(id: "experiencePicker")
+            }
+
+            // Record
+            VaporwaveControlButton(
+                icon: "record.circle",
+                label: "Record",
+                isActive: ImmersiveVideoCaptureManager.shared.captureState == .recording,
+                color: VaporwaveColors.coral,
+                size: 80
+            ) {
+                Task {
+                    if ImmersiveVideoCaptureManager.shared.captureState == .recording {
+                        _ = try? await ImmersiveVideoCaptureManager.shared.stopRecording()
+                    } else {
+                        try? await ImmersiveVideoCaptureManager.shared.startRecording()
+                    }
+                }
+            }
+
+            // Bio Display
+            VaporwaveControlButton(
+                icon: "waveform.path.ecg.rectangle",
+                label: "Bio Display",
+                color: VaporwaveColors.neonCyan,
+                size: 80
+            ) {
+                openWindow(id: "bioDisplay")
+            }
+        }
+    }
+
+    // MARK: - Mode Selector
+
+    private var modeSelector: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            Text("IMMERSION MODE")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(VaporwaveColors.textTertiary)
+                .tracking(2)
+
+            HStack(spacing: VaporwaveSpacing.md) {
+                ForEach(ImmersiveMode.allCases, id: \.self) { mode in
+                    Button(action: {
+                        Task {
+                            await manager.setMode(mode)
+                        }
+                    }) {
+                        VStack(spacing: VaporwaveSpacing.xs) {
+                            Image(systemName: mode.systemImage)
+                                .font(.system(size: 20))
+
+                            Text(mode.rawValue)
+                                .font(VaporwaveTypography.label())
+                        }
+                        .foregroundColor(manager.currentMode == mode ? VaporwaveColors.neonCyan : VaporwaveColors.textSecondary)
+                        .padding(VaporwaveSpacing.md)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(manager.currentMode == mode ? VaporwaveColors.neonCyan.opacity(0.2) : Color.clear)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(manager.currentMode == mode ? VaporwaveColors.neonCyan : Color.clear, lineWidth: 1)
+                                )
+                        )
+                    }
+                    .hoverEffect(.highlight)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - VisionApp (Legacy Support)
 @MainActor
 @Observable
 class VisionApp {
