@@ -138,6 +138,8 @@ struct VisionContentView: View {
                     .foregroundColor(VaporwaveColors.textTertiary)
             }
             .hoverEffect(.lift)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Heart rate: \(Int(healthKit.heartRate)) beats per minute")
 
             // Coherence
             VStack(spacing: VaporwaveSpacing.sm) {
@@ -158,6 +160,8 @@ struct VisionContentView: View {
                     .foregroundColor(VaporwaveColors.textTertiary)
             }
             .hoverEffect(.lift)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Coherence level: \(Int(healthKit.hrvCoherence)) percent, \(coherenceState)")
 
             // HRV
             VStack(spacing: VaporwaveSpacing.sm) {
@@ -175,9 +179,21 @@ struct VisionContentView: View {
                     .foregroundColor(VaporwaveColors.textTertiary)
             }
             .hoverEffect(.lift)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Heart rate variability: \(Int(healthKit.hrvRMSSD)) milliseconds")
         }
         .padding(VaporwaveSpacing.xl)
         .glassCard()
+    }
+
+    private var coherenceState: String {
+        if healthKit.hrvCoherence < 40 {
+            return "low"
+        } else if healthKit.hrvCoherence < 60 {
+            return "medium"
+        } else {
+            return "high"
+        }
     }
 
     private var coherenceColor: Color {
