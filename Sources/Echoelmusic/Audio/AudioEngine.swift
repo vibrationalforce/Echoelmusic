@@ -376,4 +376,54 @@ class AudioEngine: ObservableObject {
     var bioParameterSummary: String {
         bioParameterMapper.parameterSummary
     }
+
+    /// Current audio level from microphone (0.0 - 1.0)
+    var currentLevel: Float {
+        microphoneManager.audioLevel
+    }
+
+    /// Get current detected pitch in Hz
+    var getCurrentPitch: (() -> Float)? {
+        return { [weak self] in
+            self?.microphoneManager.currentPitch ?? 0.0
+        }
+    }
+
+    // MARK: - Filter & Effect Control (for UnifiedControlHub)
+
+    /// Set filter cutoff frequency
+    func setFilterCutoff(_ frequency: Float) {
+        nodeGraph?.setParameter(.filterCutoff, value: frequency)
+    }
+
+    /// Set filter resonance
+    func setFilterResonance(_ resonance: Float) {
+        nodeGraph?.setParameter(.filterResonance, value: resonance)
+    }
+
+    /// Set reverb wetness (0.0 - 1.0)
+    func setReverbWetness(_ wetness: Float) {
+        nodeGraph?.setParameter(.reverbWet, value: wetness)
+        spatialAudioEngine?.setReverbBlend(wetness)
+    }
+
+    /// Set reverb size (0.0 - 1.0)
+    func setReverbSize(_ size: Float) {
+        nodeGraph?.setParameter(.reverbSize, value: size)
+    }
+
+    /// Set delay time in seconds
+    func setDelayTime(_ time: Float) {
+        nodeGraph?.setParameter(.delayTime, value: time)
+    }
+
+    /// Set master volume (0.0 - 1.0)
+    func setMasterVolume(_ volume: Float) {
+        nodeGraph?.setParameter(.masterVolume, value: volume)
+    }
+
+    /// Set tempo in BPM
+    func setTempo(_ bpm: Float) {
+        nodeGraph?.setParameter(.tempo, value: bpm)
+    }
 }

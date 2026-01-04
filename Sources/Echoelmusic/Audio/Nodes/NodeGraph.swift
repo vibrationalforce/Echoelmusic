@@ -333,6 +333,59 @@ struct NodeGraphPreset: Codable, Identifiable {
 
 // MARK: - Preset Factory
 
+// MARK: - Parameter Types for UnifiedControlHub
+
+extension NodeGraph {
+
+    /// Standard audio parameters that can be controlled from UnifiedControlHub
+    enum AudioParameter {
+        case filterCutoff
+        case filterResonance
+        case reverbWet
+        case reverbSize
+        case delayTime
+        case masterVolume
+        case tempo
+    }
+
+    /// Set a standard audio parameter across all relevant nodes
+    func setParameter(_ parameter: AudioParameter, value: Float) {
+        switch parameter {
+        case .filterCutoff:
+            for node in nodes where node.type == .filter {
+                node.setParameter(name: "cutoffFrequency", value: value)
+            }
+        case .filterResonance:
+            for node in nodes where node.type == .filter {
+                node.setParameter(name: "resonance", value: value)
+            }
+        case .reverbWet:
+            for node in nodes where node.type == .reverb {
+                node.setParameter(name: "wetDry", value: value * 100) // 0-1 to 0-100
+            }
+        case .reverbSize:
+            for node in nodes where node.type == .reverb {
+                node.setParameter(name: "roomSize", value: value * 100)
+            }
+        case .delayTime:
+            for node in nodes where node.type == .delay {
+                node.setParameter(name: "delayTime", value: value)
+            }
+        case .masterVolume:
+            // Apply to output nodes
+            for node in nodes where node.type == .output {
+                node.setParameter(name: "volume", value: value)
+            }
+        case .tempo:
+            // Apply to tempo-synced effects
+            for node in nodes {
+                node.setParameter(name: "tempo", value: value)
+            }
+        }
+    }
+}
+
+
 extension NodeGraph {
 
     /// Create default biofeedback processing chain

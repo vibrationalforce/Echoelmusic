@@ -24,6 +24,11 @@ class HealthKitManager: ObservableObject {
     /// 60-100: High coherence (optimal/flow state)
     @Published var hrvCoherence: Double = 0.0
 
+    /// Estimated breathing rate in breaths per minute
+    /// Derived from HRV respiratory sinus arrhythmia (RSA)
+    /// Normal range: 12-20 breaths/minute at rest
+    @Published var breathingRate: Double = 12.0
+
     /// Whether HealthKit authorization has been granted
     @Published var isAuthorized: Bool = false
 
@@ -269,9 +274,10 @@ class HealthKitManager: ObservableObject {
             Task { @MainActor in
                 self.hrvRMSSD = rmssd
 
-                // Calculate coherence from buffered RR intervals
+                // Calculate coherence and breathing rate from buffered RR intervals
                 if self.rrIntervalBuffer.count >= 30 { // Need minimum data
                     self.hrvCoherence = self.calculateCoherence(rrIntervals: self.rrIntervalBuffer)
+                    self.breathingRate = self.calculateBreathingRate()
                 }
             }
         }
@@ -415,6 +421,69 @@ class HealthKitManager: ObservableObject {
             power *= 2
         }
         return power
+    }
+
+
+    // MARK: - Breathing Rate Estimation
+
+    /// Calculate breathing rate from HRV using respiratory sinus arrhythmia (RSA)
+    /// RSA is the natural variation in heart rate that occurs during breathing:
+    /// - Heart rate increases during inhalation
+    /// - Heart rate decreases during exhalation
+    ///
+    /// The breathing rate can be estimated by finding the peak frequency
+    /// in the high-frequency (HF) band (0.15-0.4 Hz) of the HRV spectrum
+    ///
+    /// - Returns: Estimated breathing rate in breaths per minute
+    func calculateBreathingRate() -> Double {
+        guard rrIntervalBuffer.count >= 30 else {
+            return 12.0 // Default breathing rate
+        }
+
+        // Perform FFT on RR intervals
+        let detrended = detrend(rrIntervalBuffer)
+        let windowed = applyHammingWindow(detrended)
+        let fftSize = nextPowerOf2(windowed.count)
+        let powerSpectrum = performFFTForCoherence(windowed, fftSize: fftSize)
+
+        guard !powerSpectrum.isEmpty else { return 12.0 }
+
+        // Respiratory frequency band: 0.15-0.4 Hz (9-24 breaths/min)
+        // Assuming ~1 Hz sampling rate (1 RR interval per second)
+        let samplingRate = 1.0
+        let respiratoryBandLow = 0.15  // Hz
+        let respiratoryBandHigh = 0.4  // Hz
+
+        let binLow = max(1, Int(respiratoryBandLow * Double(fftSize) / samplingRate))
+        let binHigh = min(powerSpectrum.count - 1, Int(respiratoryBandHigh * Double(fftSize) / samplingRate))
+
+        guard binLow < binHigh else { return 12.0 }
+
+        // Find peak frequency in respiratory band
+        var maxPower: Double = 0.0
+        var peakBin = binLow
+
+        for i in binLow...binHigh {
+            if powerSpectrum[i] > maxPower {
+                maxPower = powerSpectrum[i]
+                peakBin = i
+            }
+        }
+
+        // Convert bin to frequency (Hz)
+        let peakFrequency = Double(peakBin) * samplingRate / Double(fftSize)
+
+        // Convert to breaths per minute (Hz * 60)
+        let breathsPerMinute = peakFrequency * 60.0
+
+        // Clamp to reasonable range (6-30 breaths/min)
+        return max(6.0, min(30.0, breathsPerMinute))
+    }
+
+    /// Update breathing rate from current HRV data
+    private func updateBreathingRate() {
+        let newRate = calculateBreathingRate()
+        breathingRate = newRate
     }
 
 
