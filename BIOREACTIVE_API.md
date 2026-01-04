@@ -31,14 +31,27 @@ The Bio-Reactive System is the **core innovation** of Echoelmusic - real-time au
 
 ## Core Components
 
-### 1. BioDataInput (Sources/BioData/)
+### 1. BioDataInput (Sources/BioData/ + Sources/Wearable/)
 ```cpp
 // Supported input sources
 enum class SourceType {
-    AppleWatch,      // HealthKit (iOS/watchOS)
-    PolarH10,        // Bluetooth HR sensor
-    BluetoothHR,     // Generic BLE heart rate
+    AppleWatch,      // HealthKit + WatchConnectivity (iOS/watchOS)
+    PolarH10,        // Bluetooth BLE HR sensor (standard HR profile)
+    OuraRing,        // Oura Ring via OAuth2 REST API
+    BluetoothHR,     // Generic BLE heart rate devices
     Simulated        // For testing/demo
+};
+
+// Bio-data types available
+enum class BioDataType {
+    HeartRate,       // BPM (real-time)
+    HRV,             // Heart Rate Variability (RMSSD)
+    EnergyLevel,     // Computed from HRV + activity
+    StressLevel,     // Derived from HRV metrics
+    SleepQuality,    // Oura Ring sleep data
+    Readiness,       // Oura Ring readiness score
+    SpO2,            // Blood oxygen (Apple Watch)
+    Motion           // Accelerometer/Gyro data
 };
 ```
 
@@ -164,6 +177,128 @@ visual_intensity = coherence * glow_amount
 
 ---
 
+## Wearable Integration System (Sources/Wearable/)
+
+### Device Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    WEARABLE INTEGRATION LAYER                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────────┐    ┌─────────────────┐                     │
+│  │  WearableManager│    │   BLEScanner    │                     │
+│  │    (Singleton)  │    │   (Singleton)   │                     │
+│  └────────┬────────┘    └────────┬────────┘                     │
+│           │                      │                               │
+│  ┌────────▼────────────────────▼─────────────────────────────┐ │
+│  │                    DEVICE DRIVERS                          │ │
+│  ├───────────────┬───────────────┬───────────────────────────┤ │
+│  │ AppleWatch    │ OuraRing      │ PolarH10                  │ │
+│  │ WCSession +   │ OAuth2 +      │ BLE Heart Rate            │ │
+│  │ HealthKit     │ REST API      │ Measurement Char.         │ │
+│  └───────────────┴───────────────┴───────────────────────────┘ │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Apple Watch Integration (WatchConnectivityBridge)
+
+```cpp
+// Real-time bio-data via WCSession
+class WatchConnectivityBridge {
+    void activate();                          // Start WCSession
+    bool isReachable();                       // Watch connected?
+    void sendHaptic(int pattern, float intensity);
+
+    // Callbacks
+    std::function<void(double)> onHeartRateReceived;
+    std::function<void(double)> onHRVReceived;
+    std::function<void(double, double, double)> onMotionReceived;
+};
+```
+
+### Oura Ring OAuth2 Integration
+
+```cpp
+// Complete OAuth2 flow with token management
+class OuraOAuth2Handler {
+    std::string getAuthorizationUrl();        // Generate auth URL with CSRF state
+    bool exchangeCodeForToken(const std::string& code, const std::string& state);
+    bool refreshAccessToken();                // Auto-refresh before expiry
+    std::string serializeTokens();            // Persist tokens to keychain
+    void deserializeTokens(const std::string& data);
+};
+
+// API Endpoints:
+// GET /v2/usercollection/daily_readiness
+// GET /v2/usercollection/daily_sleep
+// GET /v2/usercollection/heartrate
+```
+
+### BLE Scanner
+
+```cpp
+// Generic BLE device discovery and connection
+class BLEScanner {
+    void startScanning(const std::vector<std::string>& serviceUUIDs);
+    void stopScanning();
+    void connectDevice(const std::string& deviceId);
+
+    // Standard BLE Services:
+    static constexpr const char* HEART_RATE_SERVICE = "180D";
+    static constexpr const char* HEART_RATE_MEASUREMENT = "2A37";
+    static constexpr const char* BODY_SENSOR_LOCATION = "2A38";
+};
+```
+
+### Polar H10 HR Parsing (Bluetooth Spec Compliant)
+
+```cpp
+// Proper HR Measurement Characteristic parsing per Bluetooth SIG spec
+void parseHeartRateMeasurement(const uint8_t* data, size_t len) {
+    uint8_t flags = data[0];
+    bool isUint16 = (flags & 0x01);           // Bit 0: HR format
+    bool hasRRInterval = (flags & 0x10);      // Bit 4: RR present
+
+    // Extract heart rate (UINT8 or UINT16)
+    double heartRate = isUint16 ?
+        (data[1] | (data[2] << 8)) : data[1];
+
+    // Extract RR intervals for HRV calculation
+    if (hasRRInterval) {
+        // RR values are in 1/1024 second units
+        for each RR value:
+            rrIntervalMs = (rrValue / 1024.0) * 1000.0;
+    }
+}
+```
+
+### Bio-Modulation Mapping
+
+```cpp
+// Map bio-signals to audio parameters
+struct BioModulationMapping {
+    BioDataType sourceType;        // e.g., HeartRate
+    std::string targetParameter;   // e.g., "filterCutoff"
+    double inputMin, inputMax;     // e.g., 60.0, 100.0 BPM
+    double outputMin, outputMax;   // e.g., 0.0, 1.0
+    CurveType curve;               // Linear, Exponential, Logarithmic
+    double smoothingFactor;        // EMA smoothing (0-1)
+};
+
+// Example: Heart rate → filter cutoff
+BioModulationMapping hrToFilter = {
+    .sourceType = BioDataType::HeartRate,
+    .targetParameter = "filterCutoff",
+    .inputMin = 60.0, .inputMax = 100.0,
+    .outputMin = 0.0, .outputMax = 1.0
+};
+// At 80 BPM → filter = 0.5
+```
+
+---
+
 ## Files
 
 ```
@@ -174,6 +309,17 @@ Sources/
 ├── DSP/
 │   ├── BioReactiveDSP.h/.cpp     # Core DSP engine
 │   └── BioReactiveAudioProcessor.h # JUCE integration
+├── Wearable/
+│   └── WearableIntegration.h     # Complete wearable integration
+│       ├── WearableDevice (base) # Abstract device interface
+│       ├── AppleWatchDevice      # HealthKit + WCSession
+│       ├── OuraRingDevice        # OAuth2 + REST API
+│       ├── PolarH10Device        # BLE HR + HRV
+│       ├── SimulatorDevice       # Testing device
+│       ├── WearableManager       # Device orchestration
+│       ├── BLEScanner            # BLE discovery
+│       ├── OuraOAuth2Handler     # OAuth2 flow
+│       └── WatchConnectivityBridge # iOS ↔ watchOS
 ├── Visualization/
 │   ├── BioReactiveVisualizer.h/.cpp # Visual feedback
 └── Echoelmusic/ (Swift)

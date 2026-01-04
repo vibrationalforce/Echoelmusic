@@ -244,10 +244,10 @@ swift test
 
 ### Quick References:
 - **[XCODE_HANDOFF.md](XCODE_HANDOFF.md)** - Xcode development guide (MUST READ)
+- **[CORE_SYSTEMS_REFERENCE.md](CORE_SYSTEMS_REFERENCE.md)** - Ralph Wiggum Loop Genius, Wise Save Mode, Performance Profiling
+- **[BIOREACTIVE_API.md](BIOREACTIVE_API.md)** - Bio-reactive system & wearable integration
 - **[PHASE_3_OPTIMIZED.md](PHASE_3_OPTIMIZED.md)** - Phase 3 optimization details
 - **[DAW_INTEGRATION_GUIDE.md](DAW_INTEGRATION_GUIDE.md)** - DAW integration
-- **[ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md](ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md)** - Full roadmap
-- **[ECHOELMUSIC_90_DAY_ROADMAP.md](ECHOELMUSIC_90_DAY_ROADMAP.md)** - 90-day plan
 
 ### Additional Docs:
 - `COMPATIBILITY.md` - iOS compatibility notes
