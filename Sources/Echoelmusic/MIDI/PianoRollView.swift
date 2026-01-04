@@ -30,6 +30,8 @@ struct PianoRollView: View {
                     noteHeight: viewModel.noteHeight * scale
                 )
                 .frame(width: 60)
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Piano keyboard, \(viewModel.highestNote - viewModel.lowestNote + 1) keys")
 
                 // Note Grid (main area)
                 ScrollView([.horizontal, .vertical], showsIndicators: true) {
@@ -39,6 +41,7 @@ struct PianoRollView: View {
                             viewModel: viewModel,
                             scale: scale
                         )
+                        .accessibilityHidden(true)
 
                         // MIDI Notes
                         ForEach(viewModel.notes) { note in
@@ -59,6 +62,7 @@ struct PianoRollView: View {
                             viewModel: viewModel,
                             scale: scale
                         )
+                        .accessibilityLabel("Playhead at beat \(String(format: "%.1f", viewModel.playheadPosition))")
                     }
                     .frame(
                         width: viewModel.gridWidth * scale,
@@ -73,8 +77,13 @@ struct PianoRollView: View {
                             }
                     )
                 }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Piano roll editor with \(viewModel.notes.count) notes")
+                .accessibilityHint("Swipe to navigate, double tap to select notes")
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Piano roll MIDI editor")
         .toolbar {
             ToolbarItemGroup(placement: .bottomBar) {
                 // Edit Mode Picker
@@ -85,6 +94,8 @@ struct PianoRollView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 200)
+                .accessibilityLabel("Edit mode: \(viewModel.editMode.rawValue)")
+                .accessibilityHint("Select, Draw, Erase, or Velocity mode")
 
                 Divider()
 
@@ -98,13 +109,18 @@ struct PianoRollView: View {
                 } label: {
                     Label("Quantize: \(viewModel.quantize.rawValue)", systemImage: "squareshape.split.3x3")
                 }
+                .accessibilityLabel("Quantize: \(viewModel.quantize.rawValue)")
+                .accessibilityHint("Snap notes to grid resolution")
 
                 Divider()
 
                 // Velocity
                 Slider(value: $viewModel.defaultVelocity, in: 0...127)
                     .frame(width: 100)
+                    .accessibilityLabel("Default velocity")
+                    .accessibilityValue("\(Int(viewModel.defaultVelocity))")
                 Text("Vel: \(Int(viewModel.defaultVelocity))")
+                    .accessibilityHidden(true)
 
                 Divider()
 
@@ -112,6 +128,9 @@ struct PianoRollView: View {
                 Toggle("MPE", isOn: $viewModel.useMPE)
                     .toggleStyle(.button)
                     .tint(viewModel.useMPE ? .green : .gray)
+                    .accessibilityLabel("MPE polyphonic expression")
+                    .accessibilityValue(viewModel.useMPE ? "Enabled" : "Disabled")
+                    .accessibilityHint("Enables per-note expression control")
 
                 // Expression Lane Selector
                 Menu {
@@ -130,6 +149,8 @@ struct PianoRollView: View {
                         systemImage: viewModel.expressionLane?.icon ?? "slider.horizontal.3"
                     )
                 }
+                .accessibilityLabel("Expression lane: \(viewModel.expressionLane?.rawValue ?? "Hidden")")
+                .accessibilityHint("Show pitch bend, pressure, brightness, or timbre lane")
 
                 Divider()
 
@@ -137,9 +158,14 @@ struct PianoRollView: View {
                 Button(action: { scale = max(0.5, scale - 0.25) }) {
                     Image(systemName: "minus.magnifyingglass")
                 }
+                .accessibilityLabel("Zoom out")
+                .accessibilityHint("Decreases grid zoom level")
+
                 Button(action: { scale = min(3.0, scale + 0.25) }) {
                     Image(systemName: "plus.magnifyingglass")
                 }
+                .accessibilityLabel("Zoom in")
+                .accessibilityHint("Increases grid zoom level")
 
                 Spacer()
 
@@ -147,6 +173,8 @@ struct PianoRollView: View {
                 Button(action: viewModel.togglePlayback) {
                     Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
                 }
+                .accessibilityLabel(viewModel.isPlaying ? "Pause playback" : "Start playback")
+                .accessibilityHint("Toggle MIDI sequence playback")
             }
         }
     }
@@ -181,6 +209,8 @@ struct PianoKeysView: View {
                             .padding(.leading, 4)
                     }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(noteName), \(isBlack ? "black" : "white") key")
             }
         }
     }
@@ -302,6 +332,23 @@ struct MIDINoteView: View {
                     }
                 }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(noteAccessibilityLabel)
+            .accessibilityHint(isSelected ? "Selected. Double tap to deselect" : "Double tap to select")
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var noteAccessibilityLabel: String {
+        let noteName = noteToName(note.pitch)
+        let beatPosition = String(format: "%.2f", note.startBeat)
+        let durationText = String(format: "%.2f", note.duration)
+        return "\(noteName), velocity \(note.velocity), beat \(beatPosition), duration \(durationText) beats"
+    }
+
+    private func noteToName(_ pitch: Int) -> String {
+        let names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+        let octave = pitch / 12 - 1
+        return "\(names[pitch % 12])\(octave)"
     }
 }
 
@@ -321,6 +368,9 @@ struct PlayheadView: View {
             .frame(width: 2)
             .position(x: x, y: 0)
             .frame(maxHeight: .infinity, alignment: .top)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Playhead")
+            .accessibilityValue("Beat \(String(format: "%.1f", position))")
     }
 }
 

@@ -1,6 +1,7 @@
 import SwiftUI
 
 /// Visual effects chain editor with node routing
+/// Uses VaporwaveTheme for consistent styling
 struct EffectsChainView: View {
     @ObservedObject var nodeGraph: NodeGraph
 
@@ -11,7 +12,7 @@ struct EffectsChainView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: VaporwaveSpacing.lg) {
                     // Node Graph Visualization
                     nodeGraphView
 
@@ -26,7 +27,7 @@ struct EffectsChainView: View {
                 }
                 .padding()
             }
-            .background(Color.black.opacity(0.9))
+            .background(VaporwaveGradients.background)
             .navigationTitle("Effects Chain")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showNodePicker) {
@@ -41,19 +42,20 @@ struct EffectsChainView: View {
     // MARK: - Node Graph Visualization
 
     private var nodeGraphView: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: VaporwaveSpacing.md) {
             Text("Signal Flow")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(VaporwaveColors.textSecondary)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(spacing: VaporwaveSpacing.md) {
                     // Input
-                    signalFlowBox("Input", color: .green, isInput: true)
+                    signalFlowBox("Input", color: VaporwaveColors.coherenceHigh, isInput: true)
+                        .accessibilityLabel("Audio input")
 
                     ForEach(nodeGraph.nodes, id: \.id) { node in
                         Image(systemName: "arrow.right")
-                            .foregroundColor(.white.opacity(0.3))
+                            .foregroundColor(VaporwaveColors.textTertiary)
 
                         signalFlowBox(node.name, color: nodeColor(for: node), isNode: true)
                             .onTapGesture {
@@ -61,27 +63,29 @@ struct EffectsChainView: View {
                             }
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(selectedNode == node.id ? Color.cyan : Color.clear, lineWidth: 2)
+                                    .stroke(selectedNode == node.id ? VaporwaveColors.neonCyan : Color.clear, lineWidth: 2)
                             )
+                            .accessibilityLabel("\(node.name) effect node")
+                            .accessibilityHint("Double tap to select")
                     }
 
                     Image(systemName: "arrow.right")
-                        .foregroundColor(.white.opacity(0.3))
+                        .foregroundColor(VaporwaveColors.textTertiary)
 
                     // Output
-                    signalFlowBox("Output", color: .blue, isOutput: true)
+                    signalFlowBox("Output", color: VaporwaveColors.neonCyan, isOutput: true)
+                        .accessibilityLabel("Audio output")
                 }
             }
         }
         .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.05))
-        )
+        .glassCard()
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Effects signal flow with \(nodeGraph.nodes.count) nodes")
     }
 
     private func signalFlowBox(_ label: String, color: Color, isInput: Bool = false, isOutput: Bool = false, isNode: Bool = false) -> some View {
-        VStack(spacing: 6) {
+        VStack(spacing: VaporwaveSpacing.xs) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(color.opacity(0.2))
@@ -101,10 +105,11 @@ struct EffectsChainView: View {
                         .foregroundColor(color)
                 }
             }
+            .neonGlow(color: color, radius: 5)
 
             Text(label)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(VaporwaveColors.textSecondary)
                 .lineLimit(1)
         }
     }
@@ -112,10 +117,10 @@ struct EffectsChainView: View {
     // MARK: - Node List
 
     private var nodeListView: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: VaporwaveSpacing.md) {
             Text("Active Nodes (\(nodeGraph.nodes.count))")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(VaporwaveColors.textSecondary)
 
             if nodeGraph.nodes.isEmpty {
                 emptyStateView
@@ -128,25 +133,18 @@ struct EffectsChainView: View {
                 }
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Active nodes list")
     }
 
     private var emptyStateView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "waveform.path.badge.plus")
-                .font(.system(size: 40))
-                .foregroundColor(.white.opacity(0.3))
-
-            Text("No Effects Added")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.6))
-
-            Text("Tap + to add your first audio effect node")
-                .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.5))
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
+        VaporwaveEmptyState(
+            icon: "waveform.path.badge.plus",
+            title: "No Effects Added",
+            message: "Tap + to add your first audio effect node",
+            actionTitle: "Add Effect",
+            action: { showNodePicker.toggle() }
+        )
     }
 
     // MARK: - Add Node Button
@@ -159,68 +157,73 @@ struct EffectsChainView: View {
                 Text("Add Effect Node")
                     .font(.system(size: 14, weight: .medium))
             }
-            .foregroundColor(.white)
+            .foregroundColor(VaporwaveColors.textPrimary)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, VaporwaveSpacing.md)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.cyan.opacity(0.3))
+                    .fill(VaporwaveColors.neonCyan.opacity(0.3))
             )
         }
+        .accessibilityLabel("Add effect node")
+        .accessibilityHint("Opens effect picker")
     }
 
     // MARK: - Presets Section
 
     private var presetsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: VaporwaveSpacing.md) {
             HStack {
                 Text("Presets")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(VaporwaveColors.textSecondary)
 
                 Spacer()
 
                 Button(action: { showPresets.toggle() }) {
                     Text("View All")
                         .font(.system(size: 12))
-                        .foregroundColor(.cyan)
+                        .foregroundColor(VaporwaveColors.neonCyan)
                 }
+                .accessibilityLabel("View all presets")
             }
 
-            HStack(spacing: 12) {
-                presetButton("Biofeedback", icon: "heart.fill") {
+            HStack(spacing: VaporwaveSpacing.md) {
+                presetButton("Biofeedback", icon: "heart.fill", color: VaporwaveColors.neonPink) {
                     nodeGraph = NodeGraph.createBiofeedbackChain()
                 }
 
-                presetButton("Healing", icon: "leaf.fill") {
+                presetButton("Healing", icon: "leaf.fill", color: VaporwaveColors.coherenceHigh) {
                     nodeGraph = NodeGraph.createHealingPreset()
                 }
 
-                presetButton("Energizing", icon: "bolt.fill") {
+                presetButton("Energizing", icon: "bolt.fill", color: VaporwaveColors.coral) {
                     nodeGraph = NodeGraph.createEnergizingPreset()
                 }
             }
         }
     }
 
-    private func presetButton(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+    private func presetButton(_ title: String, icon: String, color: Color = VaporwaveColors.neonCyan, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 8) {
+            VStack(spacing: VaporwaveSpacing.sm) {
                 Image(systemName: icon)
                     .font(.system(size: 20))
-                    .foregroundColor(.cyan)
+                    .foregroundColor(color)
 
                 Text(title)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(VaporwaveColors.textSecondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
+            .padding(.vertical, VaporwaveSpacing.lg)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.white.opacity(0.05))
+                    .fill(color.opacity(0.1))
             )
+            .neonGlow(color: color, radius: 5)
         }
+        .accessibilityLabel("Apply \(title) preset")
     }
 
     // MARK: - Node Picker
@@ -373,15 +376,15 @@ struct EffectsChainView: View {
         let name = node.name.lowercased()
 
         if name.contains("filter") {
-            return .purple
+            return VaporwaveColors.neonPurple
         } else if name.contains("reverb") {
-            return .blue
+            return VaporwaveColors.neonCyan
         } else if name.contains("delay") {
-            return .orange
+            return VaporwaveColors.coral
         } else if name.contains("compressor") {
-            return .green
+            return VaporwaveColors.coherenceHigh
         } else {
-            return .cyan
+            return VaporwaveColors.neonPink
         }
     }
 }
@@ -394,8 +397,8 @@ struct NodeRow: View {
     let isSelected: Bool
 
     var body: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(spacing: VaporwaveSpacing.md) {
+            HStack(spacing: VaporwaveSpacing.md) {
                 // Node icon
                 Image(systemName: nodeIcon)
                     .font(.system(size: 18))
@@ -405,16 +408,17 @@ struct NodeRow: View {
                         RoundedRectangle(cornerRadius: 8)
                             .fill(nodeColor.opacity(0.2))
                     )
+                    .neonGlow(color: nodeColor, radius: 5)
 
                 // Node info
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
                     Text(node.name)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(VaporwaveColors.textPrimary)
 
                     Text(nodeDescription)
                         .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(VaporwaveColors.textTertiary)
                 }
 
                 Spacer()
@@ -425,34 +429,38 @@ struct NodeRow: View {
                 }) {
                     Image(systemName: "trash")
                         .font(.system(size: 14))
-                        .foregroundColor(.red.opacity(0.7))
+                        .foregroundColor(VaporwaveColors.coherenceLow.opacity(0.7))
                 }
+                .accessibilityLabel("Delete \(node.name)")
             }
 
             // Bio-reactive indicator
             if node.isBioReactive {
-                HStack(spacing: 6) {
+                HStack(spacing: VaporwaveSpacing.xs) {
                     Image(systemName: "heart.fill")
                         .font(.system(size: 10))
-                        .foregroundColor(.pink)
+                        .foregroundColor(VaporwaveColors.neonPink)
 
                     Text("Bio-Reactive")
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.pink)
+                        .foregroundColor(VaporwaveColors.neonPink)
 
                     Spacer()
                 }
             }
         }
-        .padding(12)
+        .padding(VaporwaveSpacing.md)
         .background(
             RoundedRectangle(cornerRadius: 10)
-                .fill(isSelected ? Color.cyan.opacity(0.1) : Color.white.opacity(0.05))
+                .fill(isSelected ? VaporwaveColors.neonCyan.opacity(0.1) : Color.white.opacity(0.05))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(isSelected ? Color.cyan : Color.clear, lineWidth: 1)
+                        .stroke(isSelected ? VaporwaveColors.neonCyan : Color.clear, lineWidth: 1)
                 )
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(node.name), \(nodeDescription)\(node.isBioReactive ? ", bio-reactive" : "")")
+        .accessibilityHint(isSelected ? "Selected" : "Double tap to select")
     }
 
     private var nodeIcon: String {
@@ -475,15 +483,15 @@ struct NodeRow: View {
         let name = node.name.lowercased()
 
         if name.contains("filter") {
-            return .purple
+            return VaporwaveColors.neonPurple
         } else if name.contains("reverb") {
-            return .blue
+            return VaporwaveColors.neonCyan
         } else if name.contains("delay") {
-            return .orange
+            return VaporwaveColors.coral
         } else if name.contains("compressor") {
-            return .green
+            return VaporwaveColors.coherenceHigh
         } else {
-            return .cyan
+            return VaporwaveColors.neonPink
         }
     }
 
