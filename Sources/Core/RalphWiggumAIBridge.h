@@ -456,12 +456,15 @@ private:
     RalphWiggumAIBridge& operator=(const RalphWiggumAIBridge&) = delete;
 
     //--------------------------------------------------------------------------
-    // State
+    // State (thread-safe via mutex for RNG)
     //--------------------------------------------------------------------------
+
+    mutable std::mutex stateMutex;
+    mutable std::mutex rngMutex;  // Protects RNG which is not thread-safe
 
     MusicalContext musicalContext;
     BioContext bioContext;
-    DisclosureLevel currentLevel;
+    DisclosureLevel currentLevel {static_cast<DisclosureLevel>(1)};  // Basic level
     SuggestionComplexity targetComplexity {SuggestionComplexity::Simple};
     bool manualComplexityOverride {false};
 
@@ -469,6 +472,14 @@ private:
     std::map<std::string, LearningRecord> learningRecords;
 
     std::mt19937 rng {std::random_device{}()};
+
+    // Thread-safe random number generation
+    template<typename Dist>
+    auto threadSafeRandom(Dist& dist)
+    {
+        std::lock_guard<std::mutex> lock(rngMutex);
+        return dist(rng);
+    }
 
     //--------------------------------------------------------------------------
     // Chord/Scale Data

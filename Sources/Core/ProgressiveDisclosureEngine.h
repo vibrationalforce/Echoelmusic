@@ -405,8 +405,10 @@ private:
     ProgressiveDisclosureEngine& operator=(const ProgressiveDisclosureEngine&) = delete;
 
     //--------------------------------------------------------------------------
-    // Internal state
+    // Internal state (thread-safe via mutex)
     //--------------------------------------------------------------------------
+
+    mutable std::mutex stateMutex;  // Protects all state below
 
     UserState userState;
     DisclosureLevel currentLevel {DisclosureLevel::Basic};

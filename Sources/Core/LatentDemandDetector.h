@@ -415,8 +415,10 @@ private:
     LatentDemandDetector& operator=(const LatentDemandDetector&) = delete;
 
     //--------------------------------------------------------------------------
-    // State
+    // State (thread-safe via mutex)
     //--------------------------------------------------------------------------
+
+    mutable std::mutex historyMutex;  // Protects actionHistory and demands
 
     std::deque<ActionRecord> actionHistory;
     std::vector<LatentDemand> detectedDemands;
@@ -425,18 +427,18 @@ private:
     std::map<UserActionType, int> actionCounts;
     std::map<std::string, int> contextCounts;
 
-    // Counters
-    int undoCount {0};
-    int pauseCount {0};
-    int stressSpikeCount {0};
-    int consecutiveUndos {0};
-    double totalIdleTime {0.0};
+    // Counters (atomic for thread-safe access)
+    std::atomic<int> undoCount {0};
+    std::atomic<int> pauseCount {0};
+    std::atomic<int> stressSpikeCount {0};
+    std::atomic<int> consecutiveUndos {0};
+    std::atomic<double> totalIdleTime {0.0};
     double lastIdleDuration {0.0};
 
-    // Bio-state
-    float currentCoherence {0.5f};
-    float currentStress {0.3f};
-    float currentHRV {50.0f};
+    // Bio-state (atomic for thread-safe access)
+    std::atomic<float> currentCoherence {0.5f};
+    std::atomic<float> currentStress {0.3f};
+    std::atomic<float> currentHRV {50.0f};
 
     // Config
     double pauseThreshold {5.0};        // Seconds of inactivity = pause

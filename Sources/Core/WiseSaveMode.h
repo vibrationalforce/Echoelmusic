@@ -1054,12 +1054,41 @@ private:
                     std::this_thread::sleep_for(std::chrono::seconds(1));
                 }
 
-                if (recoveryThreadRunning && isDirty && initialized)
+                if (recoveryThreadRunning && isDirty.load() && initialized.load())
                 {
-                    createRecoveryPoint();
+                    // Thread-safe recovery point creation
+                    std::lock_guard<std::mutex> lock(stateMutex);
+                    createRecoveryPointLocked();
                 }
             }
         });
+    }
+
+    // Internal recovery point creation (must hold stateMutex)
+    void createRecoveryPointLocked()
+    {
+        if (!initialized.load() || recoveryDirectory == juce::File())
+            return;
+
+        juce::String timestamp = juce::Time::getCurrentTime()
+            .formatted("%Y%m%d_%H%M%S");
+
+        juce::File recoveryFile = recoveryDirectory
+            .getChildFile("recovery_" + timestamp + ".json");
+
+        // Serialize current state
+        juce::DynamicObject::Ptr recovery = new juce::DynamicObject();
+        recovery->setProperty("timestamp", timestamp);
+        recovery->setProperty("sessionId", currentSessionId);
+        recovery->setProperty("sessionName", currentSessionName);
+
+        // Save to file
+        juce::FileOutputStream stream(recoveryFile);
+        if (stream.openedOk())
+        {
+            stream.writeText(juce::JSON::toString(recovery.get()), false, false, nullptr);
+            lastRecoveryTime = juce::Time::getCurrentTime();
+        }
     }
 
     //==========================================================================

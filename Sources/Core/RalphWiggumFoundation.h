@@ -946,7 +946,8 @@ private:
     CreativeMode previousMode = CreativeMode::Exploration;
     GeniusLevel geniusLevel = GeniusLevel::Journeyman;
 
-    // Loops
+    // Loops (thread-safe access)
+    mutable std::mutex loopsMutex;
     std::map<int, LoopState> loops;
     int nextLoopId = 0;
     double currentTempo = 120.0;
@@ -959,15 +960,41 @@ private:
 
     std::vector<CreativeSuggestion> recentSuggestions;
     std::queue<CreativeSuggestion> pendingSuggestions;
+    static constexpr size_t MAX_PENDING_SUGGESTIONS = 100;
 
     // Flow state
     bool inFlowState = false;
     float flowIntensity = 0.0f;
-    juce::Time flowStartTime;
+    juce::Time flowStartTime{juce::Time::getCurrentTime()};  // Initialize to prevent undefined behavior
+    juce::Time lastActiveTime{juce::Time::getCurrentTime()};
 
     // Metrics
     SessionMetrics metrics;
     int sessionUpdateIntervalMs = 1000;
+
+    //==========================================================================
+    // Thread-safe loop access helpers
+
+    void withLoopsLock(std::function<void()> fn)
+    {
+        std::lock_guard<std::mutex> lock(loopsMutex);
+        fn();
+    }
+
+    template<typename T>
+    T withLoopsLockReturn(std::function<T()> fn)
+    {
+        std::lock_guard<std::mutex> lock(loopsMutex);
+        return fn();
+    }
+
+    void trimPendingSuggestions()
+    {
+        while (pendingSuggestions.size() > MAX_PENDING_SUGGESTIONS)
+        {
+            pendingSuggestions.pop();
+        }
+    }
 };
 
 } // namespace RalphWiggum
