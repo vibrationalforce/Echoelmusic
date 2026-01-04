@@ -131,6 +131,95 @@ final class NodeGraphTests: XCTestCase {
     }
 
 
+    // MARK: - Circular Dependency Tests
+
+    func testDirectCyclePrevented() {
+        let nodeA = FilterNode()
+        let nodeB = ReverbNode()
+
+        nodeGraph.addNode(nodeA)
+        nodeGraph.addNode(nodeB)
+
+        // A → B is fine
+        try? nodeGraph.connect(from: nodeA.id, to: nodeB.id)
+
+        // B → A would create cycle - should throw
+        XCTAssertThrowsError(try nodeGraph.connect(from: nodeB.id, to: nodeA.id)) { error in
+            XCTAssertEqual(error as? NodeGraph.NodeGraphError, .circularDependency)
+        }
+    }
+
+    func testIndirectCyclePrevented() {
+        let nodeA = FilterNode()
+        let nodeB = ReverbNode()
+        let nodeC = DelayNode()
+
+        nodeGraph.addNode(nodeA)
+        nodeGraph.addNode(nodeB)
+        nodeGraph.addNode(nodeC)
+
+        // A → B → C chain
+        try? nodeGraph.connect(from: nodeA.id, to: nodeB.id)
+        try? nodeGraph.connect(from: nodeB.id, to: nodeC.id)
+
+        // C → A would create cycle - should throw
+        XCTAssertThrowsError(try nodeGraph.connect(from: nodeC.id, to: nodeA.id)) { error in
+            XCTAssertEqual(error as? NodeGraph.NodeGraphError, .circularDependency)
+        }
+    }
+
+    func testSelfLoopPrevented() {
+        let nodeA = FilterNode()
+        nodeGraph.addNode(nodeA)
+
+        // A → A is a self-loop - should throw
+        XCTAssertThrowsError(try nodeGraph.connect(from: nodeA.id, to: nodeA.id)) { error in
+            XCTAssertEqual(error as? NodeGraph.NodeGraphError, .circularDependency)
+        }
+    }
+
+    func testValidDAGAllowed() throws {
+        let nodeA = FilterNode()
+        let nodeB = ReverbNode()
+        let nodeC = DelayNode()
+        let nodeD = CompressorNode()
+
+        nodeGraph.addNode(nodeA)
+        nodeGraph.addNode(nodeB)
+        nodeGraph.addNode(nodeC)
+        nodeGraph.addNode(nodeD)
+
+        // Diamond pattern (A → B → D, A → C → D) is valid DAG
+        try nodeGraph.connect(from: nodeA.id, to: nodeB.id)
+        try nodeGraph.connect(from: nodeA.id, to: nodeC.id)
+        try nodeGraph.connect(from: nodeB.id, to: nodeD.id)
+        try nodeGraph.connect(from: nodeC.id, to: nodeD.id)
+
+        XCTAssertEqual(nodeGraph.connections.count, 4)
+    }
+
+    func testLongChainNoCycle() throws {
+        var nodes: [FilterNode] = []
+        for _ in 0..<10 {
+            let node = FilterNode()
+            nodeGraph.addNode(node)
+            nodes.append(node)
+        }
+
+        // Create linear chain
+        for i in 0..<(nodes.count - 1) {
+            try nodeGraph.connect(from: nodes[i].id, to: nodes[i + 1].id)
+        }
+
+        XCTAssertEqual(nodeGraph.connections.count, 9)
+
+        // Last → First would create cycle
+        XCTAssertThrowsError(try nodeGraph.connect(from: nodes.last!.id, to: nodes.first!.id)) { error in
+            XCTAssertEqual(error as? NodeGraph.NodeGraphError, .circularDependency)
+        }
+    }
+
+
     // MARK: - Audio Parameter Tests
 
     func testSetFilterCutoff() {
