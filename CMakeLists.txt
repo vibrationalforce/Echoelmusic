@@ -188,6 +188,9 @@ message(STATUS "Plugin Formats: ${FORMATS}")
 # Echoelmusic Plugin
 # ===========================
 
+# Only build plugin if JUCE is enabled
+if(USE_JUCE)
+
 juce_add_plugin(Echoelmusic
     COMPANY_NAME "Echoelmusic"
     PLUGIN_MANUFACTURER_CODE Ech0
@@ -727,3 +730,35 @@ if(ANDROID)
     message(STATUS "  - AAudio: ${ENABLE_ANDROID_AAUDIO}")
 endif()
 message(STATUS "==============================================")
+
+else()
+    # Non-JUCE build (Swift-only for iOS/macOS)
+    message(STATUS "")
+    message(STATUS "==============================================")
+    message(STATUS "Echoelmusic - Swift-Only Build Mode")
+    message(STATUS "==============================================")
+    message(STATUS "")
+    message(STATUS "JUCE Framework: DISABLED")
+    message(STATUS "")
+    message(STATUS "This configuration is for iOS/macOS Swift builds")
+    message(STATUS "that use native Apple frameworks:")
+    message(STATUS "  - AVFoundation (Audio/Video)")
+    message(STATUS "  - Accelerate (DSP/SIMD)")
+    message(STATUS "  - CoreML (AI/ML)")
+    message(STATUS "  - HealthKit (Biometrics)")
+    message(STATUS "  - Metal (GPU Shaders)")
+    message(STATUS "")
+    message(STATUS "To build Swift targets:")
+    message(STATUS "  swift build")
+    message(STATUS "  swift test")
+    message(STATUS "")
+    message(STATUS "To enable desktop plugin builds:")
+    message(STATUS "  cmake .. -DUSE_JUCE=ON")
+    message(STATUS "  (Requires JUCE in ThirdParty/JUCE)")
+    message(STATUS "")
+    message(STATUS "Or use iPlug2 (MIT license - FREE):")
+    message(STATUS "  cmake .. -DUSE_IPLUG2=ON")
+    message(STATUS "  (Requires iPlug2 in ThirdParty/iPlug2)")
+    message(STATUS "")
+    message(STATUS "==============================================")
+endif()
