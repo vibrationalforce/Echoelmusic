@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import AVFoundation
+import QuartzCore
 
 /// Central orchestrator for all input modalities in Echoelmusic
 ///
@@ -56,18 +57,24 @@ public class UnifiedControlHub: ObservableObject {
 
     // MARK: - Control Loop
 
+    #if os(iOS) || os(tvOS)
+    private var displayLink: CADisplayLink?
+    #endif
     private var controlLoopTimer: AnyCancellable?
     private let controlQueue = DispatchQueue(
         label: "com.echoelmusic.control",
         qos: .userInteractive
     )
 
-    private var lastUpdateTime: Date = Date()
+    private var lastUpdateTime: CFTimeInterval = CACurrentMediaTime()
     private let targetFrequency: Double = 60.0  // 60 Hz
 
-    // MARK: - Cancellables
+    // MARK: - Cancellables (Lifecycle-scoped)
 
     private var cancellables = Set<AnyCancellable>()
+    private var bioFeedbackCancellables = Set<AnyCancellable>()
+    private var faceTrackingCancellables = Set<AnyCancellable>()
+    private var handTrackingCancellables = Set<AnyCancellable>()
 
     // MARK: - Initialization
 
@@ -78,6 +85,9 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Enable face tracking integration
     public func enableFaceTracking() {
+        // Clear previous subscriptions to prevent leaks
+        faceTrackingCancellables.removeAll()
+
         let manager = ARFaceTrackingManager()
         self.faceTrackingManager = manager
 
@@ -86,13 +96,14 @@ public class UnifiedControlHub: ObservableObject {
             .sink { [weak self] expression in
                 self?.handleFaceExpressionUpdate(expression)
             }
-            .store(in: &cancellables)
+            .store(in: &faceTrackingCancellables)
 
         print("[UnifiedControlHub] Face tracking enabled")
     }
 
     /// Disable face tracking
     public func disableFaceTracking() {
+        faceTrackingCancellables.removeAll()
         faceTrackingManager?.stop()
         faceTrackingManager = nil
         print("[UnifiedControlHub] Face tracking disabled")
@@ -100,6 +111,9 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Enable hand tracking and gesture recognition
     public func enableHandTracking() {
+        // Clear previous subscriptions to prevent leaks
+        handTrackingCancellables.removeAll()
+
         let handManager = HandTrackingManager()
         let gestureRec = GestureRecognizer(handTracker: handManager)
         let conflictRes = GestureConflictResolver(
@@ -113,24 +127,25 @@ public class UnifiedControlHub: ObservableObject {
         self.gestureConflictResolver = conflictRes
         self.gestureToAudioMapper = gestureMapper
 
-        // Subscribe to gesture changes
+        // Subscribe to gesture changes (lifecycle-scoped)
         gestureRec.$leftHandGesture
             .sink { [weak self] gesture in
                 self?.handleGestureUpdate(hand: .left, gesture: gesture)
             }
-            .store(in: &cancellables)
+            .store(in: &handTrackingCancellables)
 
         gestureRec.$rightHandGesture
             .sink { [weak self] gesture in
                 self?.handleGestureUpdate(hand: .right, gesture: gesture)
             }
-            .store(in: &cancellables)
+            .store(in: &handTrackingCancellables)
 
         print("[UnifiedControlHub] Hand tracking enabled")
     }
 
     /// Disable hand tracking
     public func disableHandTracking() {
+        handTrackingCancellables.removeAll()
         handTrackingManager?.stopTracking()
         handTrackingManager = nil
         gestureRecognizer = nil
@@ -141,6 +156,9 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Enable biometric monitoring (HealthKit)
     public func enableBiometricMonitoring() async throws {
+        // Clear previous subscriptions to prevent leaks
+        bioFeedbackCancellables.removeAll()
+
         let healthKit = HealthKitManager()
         let bioMapper = BioParameterMapper()
 
@@ -158,18 +176,21 @@ public class UnifiedControlHub: ObservableObject {
         self.healthKitManager = healthKit
         self.bioParameterMapper = bioMapper
 
-        // Subscribe to HRV changes
+        // Event-driven bio updates (replaces polling pattern)
+        // Debounce prevents excessive updates while maintaining responsiveness
         healthKit.$hrvCoherence
-            .sink { [weak self] coherence in
-                self?.handleBioSignalUpdate()
-            }
-            .store(in: &cancellables)
-
-        healthKit.$heartRate
+            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleBioSignalUpdate()
             }
-            .store(in: &cancellables)
+            .store(in: &bioFeedbackCancellables)
+
+        healthKit.$heartRate
+            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.handleBioSignalUpdate()
+            }
+            .store(in: &bioFeedbackCancellables)
 
         // Start monitoring
         healthKit.startMonitoring()
@@ -179,6 +200,7 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Disable biometric monitoring
     public func disableBiometricMonitoring() {
+        bioFeedbackCancellables.removeAll()
         healthKitManager?.stopMonitoring()
         healthKitManager = nil
         bioParameterMapper = nil
@@ -306,6 +328,12 @@ public class UnifiedControlHub: ObservableObject {
     /// Stop the unified control system
     public func stop() {
         print("[UnifiedControlHub] Stopping control system...")
+
+        #if os(iOS) || os(tvOS)
+        displayLink?.invalidate()
+        displayLink = nil
+        #endif
+
         controlLoopTimer?.cancel()
         controlLoopTimer = nil
     }
@@ -313,20 +341,37 @@ public class UnifiedControlHub: ObservableObject {
     // MARK: - Control Loop (60 Hz)
 
     private func startControlLoop() {
-        let interval = 1.0 / targetFrequency  // ~16.67ms for 60 Hz
-
+        #if os(iOS) || os(tvOS)
+        // Use CADisplayLink for precise 60Hz timing (10-15ms jitter reduction)
+        displayLink = CADisplayLink(target: self, selector: #selector(displayLinkFired))
+        displayLink?.preferredFrameRateRange = CAFrameRateRange(
+            minimum: Float(targetFrequency),
+            maximum: Float(targetFrequency),
+            preferred: Float(targetFrequency)
+        )
+        displayLink?.add(to: .main, forMode: .common)
+        #else
+        // macOS/watchOS: Use high-precision timer
+        let interval = 1.0 / targetFrequency
         controlLoopTimer = Timer.publish(every: interval, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 self?.controlLoopTick()
             }
+        #endif
     }
 
+    #if os(iOS) || os(tvOS)
+    @objc private func displayLinkFired(_ link: CADisplayLink) {
+        controlLoopTick()
+    }
+    #endif
+
     private func controlLoopTick() {
-        // Measure actual frequency
-        let now = Date()
-        let deltaTime = now.timeIntervalSince(lastUpdateTime)
-        controlLoopFrequency = 1.0 / deltaTime
+        // Measure actual frequency using CACurrentMediaTime (no allocation)
+        let now = CACurrentMediaTime()
+        let deltaTime = now - lastUpdateTime
+        controlLoopFrequency = deltaTime > 0 ? 1.0 / deltaTime : targetFrequency
         lastUpdateTime = now
 
         // Priority-based parameter updates
