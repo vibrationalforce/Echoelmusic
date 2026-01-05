@@ -52,6 +52,10 @@ public class UnifiedControlHub: ObservableObject {
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
+    // Phase 4: Quantum Light Emulation (Future-Ready)
+    private var quantumLightEmulator: QuantumLightEmulator?
+    private var photonicsVisualization: PhotonicsVisualizationEngine?
+
     // TODO: Add when implementing
     // private let gazeTracker: GazeTracker?
 
@@ -307,6 +311,52 @@ public class UnifiedControlHub: ObservableObject {
         print("[UnifiedControlHub] DMX lighting disabled")
     }
 
+    /// Enable Quantum Light Emulator (Future-Ready)
+    /// - Parameter mode: Emulation mode (classical, quantum-inspired, bio-coherent, etc.)
+    public func enableQuantumLightEmulator(mode: QuantumLightEmulator.EmulationMode = .bioCoherent) {
+        let config = QuantumLightEmulator.Configuration()
+        let emulator = QuantumLightEmulator(configuration: config)
+        emulator.setMode(mode)
+        emulator.start()
+
+        // Connect photonics visualization
+        let photonics = PhotonicsVisualizationEngine()
+        photonics.connect(to: emulator)
+        photonics.start()
+
+        self.quantumLightEmulator = emulator
+        self.photonicsVisualization = photonics
+
+        print("[UnifiedControlHub] Quantum Light Emulator enabled in \(mode.rawValue) mode")
+        print("  - Qubits: \(config.qubitCount)")
+        print("  - Photons: \(config.photonCount)")
+        print("  - Field Geometry: \(config.lightFieldGeometry.rawValue)")
+    }
+
+    /// Disable Quantum Light Emulator
+    public func disableQuantumLightEmulator() {
+        quantumLightEmulator?.stop()
+        photonicsVisualization?.stop()
+        quantumLightEmulator = nil
+        photonicsVisualization = nil
+        print("[UnifiedControlHub] Quantum Light Emulator disabled")
+    }
+
+    /// Get current quantum coherence level
+    public var quantumCoherenceLevel: Float {
+        quantumLightEmulator?.coherenceLevel ?? 0.0
+    }
+
+    /// Get current light field for visualization
+    public var currentLightField: LightField? {
+        quantumLightEmulator?.currentLightField
+    }
+
+    /// Set quantum emulation mode
+    public func setQuantumMode(_ mode: QuantumLightEmulator.EmulationMode) {
+        quantumLightEmulator?.setMode(mode)
+    }
+
     // MARK: - Lifecycle
 
     /// Start the unified control system
@@ -336,6 +386,10 @@ public class UnifiedControlHub: ObservableObject {
 
         controlLoopTimer?.cancel()
         controlLoopTimer = nil
+
+        // Stop quantum emulator if running
+        quantumLightEmulator?.stop()
+        photonicsVisualization?.stop()
     }
 
     // MARK: - Control Loop (60 Hz)
@@ -659,8 +713,7 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     private func updateVisualEngine() {
-        guard let visualMapper = midiToVisualMapper,
-              let healthKit = healthKitManager else {
+        guard let healthKit = healthKitManager else {
             return
         }
 
@@ -672,7 +725,18 @@ public class UnifiedControlHub: ObservableObject {
             audioLevel: Double(audioEngine?.currentLevel ?? 0.5)
         )
 
-        visualMapper.updateBioParameters(bioParams)
+        if let visualMapper = midiToVisualMapper {
+            visualMapper.updateBioParameters(bioParams)
+        }
+
+        // Update Quantum Light Emulator with bio-inputs
+        if let quantumEmulator = quantumLightEmulator {
+            quantumEmulator.updateBioInputs(
+                hrvCoherence: Float(healthKit.hrvCoherence),
+                heartRate: Float(healthKit.heartRate),
+                breathingRate: Float(healthKit.breathingRate)
+            )
+        }
     }
 
     private func updateLightSystems() {
