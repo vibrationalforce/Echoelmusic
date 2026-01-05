@@ -314,6 +314,7 @@ target_sources(Echoelmusic
         # =====================================================================
         Sources/DSP/DynamicEQ.cpp               # 🎚️ 8-band Dynamic EQ (JUCE 7+ fixed)
         Sources/DSP/SpectralSculptor.cpp        # 🔬 Spectral processing suite (JUCE 7+ fixed)
+        Sources/DSP/BioModulator.cpp            # 🫀 Biofeedback → BPM, EFX, Instruments, Laser
 
         # =====================================================================
         # PHASE 4C: HARDWARE EMULATIONS (NEW! 2025-11-13) 🎛️✨
