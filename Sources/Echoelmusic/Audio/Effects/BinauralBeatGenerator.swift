@@ -88,12 +88,24 @@ class BinauralBeatGenerator: ObservableObject {
     private let rightPlayerNode = AVAudioPlayerNode()
 
     /// Audio format (stereo, 44.1 kHz)
-    private lazy var audioFormat: AVAudioFormat = {
-        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2) else {
-            fatalError("Failed to create audio format with sample rate \(sampleRate). This indicates an invalid audio configuration.")
+    private var audioFormat: AVAudioFormat? {
+        AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)
+    }
+
+    /// Error types for binaural beat generation
+    enum BinauralBeatError: Error, LocalizedError {
+        case invalidAudioFormat
+        case engineStartFailed(Error)
+
+        var errorDescription: String? {
+            switch self {
+            case .invalidAudioFormat:
+                return "Failed to create audio format. Check audio session configuration."
+            case .engineStartFailed(let error):
+                return "Audio engine failed to start: \(error.localizedDescription)"
+            }
         }
-        return format
-    }()
+    }
 
     /// Buffer size for generation (smaller = lower latency, more CPU)
     /// Reduced from 4096 to 1024 for lower latency (85ms → 21ms at 48kHz)
@@ -234,11 +246,14 @@ class BinauralBeatGenerator: ObservableObject {
         // Create mixer node to combine left and right channels
         let mixer = audioEngine.mainMixerNode
 
+        // Get audio format, use mixer's format as fallback
+        let format = audioFormat ?? mixer.outputFormat(forBus: 0)
+
         // Connect left player to mixer (left channel)
-        audioEngine.connect(leftPlayerNode, to: mixer, format: audioFormat)
+        audioEngine.connect(leftPlayerNode, to: mixer, format: format)
 
         // Connect right player to mixer (right channel)
-        audioEngine.connect(rightPlayerNode, to: mixer, format: audioFormat)
+        audioEngine.connect(rightPlayerNode, to: mixer, format: format)
 
         // Prepare engine
         audioEngine.prepare()
