@@ -41,6 +41,7 @@ class StreamEngine: ObservableObject {
     private let device: MTLDevice
     private let commandQueue: MTLCommandQueue
     private let ciContext: CIContext
+    private let sceneRenderer: SceneRenderer
 
     // MARK: - Capture Session
 
@@ -131,6 +132,13 @@ class StreamEngine: ObservableObject {
             .cacheIntermediates: false,
             .name: "StreamContext"
         ])
+
+        // Create scene renderer
+        guard let renderer = SceneRenderer(device: device) else {
+            print("❌ StreamEngine: Failed to create scene renderer")
+            return nil
+        }
+        self.sceneRenderer = renderer
 
         self.sceneManager = sceneManager
         self.chatAggregator = chatAggregator
@@ -311,29 +319,30 @@ class StreamEngine: ObservableObject {
 
     // MARK: - Scene Rendering
 
+    private var renderTime: Float = 0.0
+
     private func renderScene(_ scene: Scene) -> MTLTexture? {
-        guard let commandBuffer = commandQueue.makeCommandBuffer() else { return nil }
+        // Update render time
+        renderTime += 1.0 / Float(frameRate)
 
-        // Create output texture
-        let descriptor = MTLTextureDescriptor()
-        descriptor.textureType = .type2D
-        descriptor.pixelFormat = .bgra8Unorm
-        descriptor.width = Int(resolution.size.width)
-        descriptor.height = Int(resolution.size.height)
-        descriptor.usage = [.shaderRead, .renderTarget]
-        descriptor.storageMode = .shared
+        // Update scene renderer with current bio metrics
+        sceneRenderer.updateBioMetrics(
+            coherence: currentCoherence,
+            heartRate: currentHeartRate,
+            hrv: currentHRV,
+            breathingPhase: currentBreathingPhase
+        )
 
-        guard let outputTexture = device.makeTexture(descriptor: descriptor) else { return nil }
-
-        // Render scene sources
-        // TODO: Implement full scene rendering with layers, transitions, etc.
-        // For now, use placeholder
-
-        commandBuffer.commit()
-        commandBuffer.waitUntilCompleted()
-
-        return outputTexture
+        // Render complete scene with all layers, sources, and overlays
+        return sceneRenderer.renderScene(scene, size: resolution.size, time: renderTime)
     }
+
+    // MARK: - Bio Metrics
+
+    private var currentCoherence: Float = 0.0
+    private var currentHeartRate: Float = 72.0
+    private var currentHRV: Float = 50.0
+    private var currentBreathingPhase: Float = 0.0
 
     // MARK: - Scene Management
 
@@ -388,7 +397,13 @@ class StreamEngine: ObservableObject {
         print("🧠 StreamEngine: Bio-reactive scene switching \(enabled ? "enabled" : "disabled") with \(rules.count) rules")
     }
 
-    func updateBioParameters(coherence: Float, heartRate: Float, hrv: Float) {
+    func updateBioParameters(coherence: Float, heartRate: Float, hrv: Float, breathingPhase: Float = 0.0) {
+        // Store current bio metrics for rendering
+        currentCoherence = coherence
+        currentHeartRate = heartRate
+        currentHRV = hrv
+        currentBreathingPhase = breathingPhase
+
         // Check if any bio scene rules should trigger
         guard sceneManager.bioReactiveEnabled else { return }
 
@@ -544,10 +559,81 @@ class EncodingManager {
     }
 
     func encodeFrame(texture: MTLTexture) -> Data? {
-        // TODO: Implement actual frame encoding using VTCompressionSession
-        // This is a placeholder
-        return Data()
+        guard let session = compressionSession else { return nil }
+
+        // Create CVPixelBuffer from Metal texture
+        var pixelBuffer: CVPixelBuffer?
+        let attrs: [CFString: Any] = [
+            kCVPixelBufferPixelFormatTypeKey: kCVPixelFormatType_32BGRA,
+            kCVPixelBufferWidthKey: texture.width,
+            kCVPixelBufferHeightKey: texture.height,
+            kCVPixelBufferMetalCompatibilityKey: true
+        ]
+
+        let status = CVPixelBufferCreate(
+            kCFAllocatorDefault,
+            texture.width,
+            texture.height,
+            kCVPixelFormatType_32BGRA,
+            attrs as CFDictionary,
+            &pixelBuffer
+        )
+
+        guard status == kCVReturnSuccess, let buffer = pixelBuffer else {
+            return nil
+        }
+
+        // Copy texture data to pixel buffer
+        CVPixelBufferLockBaseAddress(buffer, [])
+        defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
+
+        guard let baseAddress = CVPixelBufferGetBaseAddress(buffer) else {
+            return nil
+        }
+
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(buffer)
+        let region = MTLRegionMake2D(0, 0, texture.width, texture.height)
+        texture.getBytes(baseAddress, bytesPerRow: bytesPerRow, from: region, mipmapLevel: 0)
+
+        // Encode frame
+        var encodedData = Data()
+        let presentationTime = CMTime(value: CMTimeValue(frameCount), timescale: CMTimeScale(currentFrameRate))
+        frameCount += 1
+
+        var infoFlags = VTEncodeInfoFlags()
+        let encodeStatus = VTCompressionSessionEncodeFrame(
+            session,
+            imageBuffer: buffer,
+            presentationTimeStamp: presentationTime,
+            duration: .invalid,
+            frameProperties: nil,
+            infoFlagsOut: &infoFlags
+        ) { [weak self] status, flags, sampleBuffer in
+            guard status == noErr, let sampleBuffer = sampleBuffer else { return }
+
+            // Extract encoded data
+            if let dataBuffer = CMSampleBufferGetDataBuffer(sampleBuffer) {
+                var length: Int = 0
+                var dataPointer: UnsafeMutablePointer<Int8>?
+
+                if CMBlockBufferGetDataPointer(dataBuffer, atOffset: 0, lengthAtOffsetOut: nil, totalLengthOut: &length, dataPointerOut: &dataPointer) == noErr,
+                   let pointer = dataPointer {
+                    self?.lastEncodedFrame = Data(bytes: pointer, count: length)
+                }
+            }
+        }
+
+        guard encodeStatus == noErr else { return nil }
+
+        // Wait for encoding and return last frame
+        VTCompressionSessionCompleteFrames(session, untilPresentationTimeStamp: presentationTime)
+
+        return lastEncodedFrame
     }
+
+    private var frameCount: Int64 = 0
+    private var currentFrameRate: Int = 60
+    private var lastEncodedFrame: Data?
 
     func updateBitrate(_ bitrate: Int) {
         guard let session = compressionSession else { return }
