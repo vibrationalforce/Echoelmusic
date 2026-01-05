@@ -1,7 +1,7 @@
 #include "DynamicEQ.h"
 
 //==============================================================================
-// Constructor
+// Constructor (JUCE 7+ Compatible)
 //==============================================================================
 
 DynamicEQ::DynamicEQ()
@@ -16,7 +16,7 @@ DynamicEQ::DynamicEQ()
         bands[i].frequency = frequencies[i];
         bands[i].gain = 0.0f;
         bands[i].q = 1.0f;
-        bands[i].filterType = ParametricEQ::FilterType::Peak;
+        bands[i].filterType = FilterType::Peak;  // Use DynamicEQ::FilterType
         bands[i].dynamicMode = DynamicMode::Static;
         bands[i].threshold = -20.0f;
         bands[i].ratio = 3.0f;
@@ -56,10 +56,13 @@ void DynamicEQ::reset()
         state.envelope.fill(0.0f);
         state.gainReduction.fill(0.0f);
 
+        // Reset filter states for both L/R channels
         for (auto& fs : state.filterStates)
         {
-            fs.x1 = fs.x2 = 0.0f;
-            fs.y1 = fs.y2 = 0.0f;
+            fs.x1 = 0.0f;
+            fs.x2 = 0.0f;
+            fs.y1 = 0.0f;
+            fs.y2 = 0.0f;
         }
     }
 

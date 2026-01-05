@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include <complex>
+#include <mutex>
 
 /**
  * SpectralSculptor
