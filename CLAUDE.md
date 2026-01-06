@@ -155,6 +155,77 @@
 - **Edge Case Tests** - Boundary values, empty states
 - **Performance Tests** - Light field generation, wave function normalization
 
+#### Eye Gaze Tracking System (NEW - Phase λ∞)
+- **GazeTracker** - Real-time eye gaze tracking for visionOS & iPad Pro
+- **GazeData** - Eye position, openness, fixation, blink detection
+- **9 Gaze Gestures** - Blink, double blink, wink, long gaze, look patterns
+- **GazeControlParameters** - Map gaze to audio pan, filter cutoff, effects
+- **ARKit Integration** - Face anchor processing for gaze direction
+- **Attention Tracking** - Fixation duration, stability, attention score
+- **Accessibility** - Eye-based navigation for motor-limited users
+
+#### Real-Time HealthKit Streaming (NEW)
+- **RealTimeHealthKitEngine** - Live biometric data streaming
+- **HRV Coherence Calculation** - SDNN, RMSSD, pNN50 from RR intervals
+- **Real-Time Heart Data** - HR, HRV, coherence ratio, LF/HF ratio
+- **Respiratory Sinus Arrhythmia** - Breath detection from HRV
+- **Streaming Sessions** - Continuous biometric monitoring
+- **Health Disclaimer** - NOT a medical device, creative/informational only
+
+#### Sample Developer Plugins (NEW)
+- **SacredGeometryVisualizerPlugin** - 8 sacred geometry patterns (Flower of Life, Metatron's Cube, etc.)
+- **BioAudioGeneratorPlugin** - Generate harmonic audio from biometric data
+- **QuantumMIDIBridgePlugin** - Map quantum state to MIDI CC messages
+- **DMXLightShowPlugin** - Control DMX fixtures from bio/quantum data
+- **Reference Implementations** - Full SDK usage examples for plugin developers
+
+#### Haptic Composition Engine (NEW)
+- **HapticCompositionEngine** - Create rich haptic experiences from bio signals
+- **15 Pattern Types** - Heartbeat, breathing, quantum flutter, meditation, etc.
+- **Bio-Synchronized Patterns** - Haptics sync to heart rate and breathing
+- **Haptic Events** - Transient, continuous, and audio-based haptic events
+- **Composition System** - Multi-event haptic compositions with looping
+- **CoreHaptics Integration** - Full CHHapticEngine support
+
+#### Social Coherence & Group Flow (NEW)
+- **SocialCoherenceEngine** - Multi-participant coherence synchronization
+- **1000+ Participants** - Global group flow sessions
+- **Group Metrics** - Heart sync, breath sync, HRV sync, entrainment level
+- **Flow Detection** - Automatic group flow state achievement detection
+- **Quantum Entanglement Events** - High-sync "entanglement" detection
+- **Guided Exercises** - Box breathing, coherence breathing, heart meditation
+- **Session Types** - Open meditation, coherence circle, music jam, research study
+
+#### AI Scene Director (NEW)
+- **AISceneDirector** - Intelligent camera switching for live performance
+- **10 Camera Types** - Wide, medium, close-up, quantum, bio-reactive, etc.
+- **10 Scene Moods** - Energetic, calm, cosmic, ethereal, triumphant, etc.
+- **8 Direction Styles** - Conservative, dynamic, cinematic, experimental, etc.
+- **AI Decision Making** - Context-aware camera and visual selection
+- **Performance Context** - BPM, beat phase, coherence, energy analysis
+- **10 Visual Layer Types** - Sacred geometry, particles, quantum field, bio field
+
+#### Biometric Music Generator (NEW)
+- **BiometricMusicGenerator** - Create music from body rhythms
+- **18 Musical Scales** - Major, pentatonic, blues, arabic, japanese, etc.
+- **Markov Chain Melody** - Probabilistic melody generation with step motion preference
+- **Chord Generation** - 10 chord types with inversions
+- **Bio-Tempo Mapping** - Heart rate drives BPM (40-200 range)
+- **Melodic Variation** - HRV modulates note selection
+- **Harmonic Consonance** - Coherence maps to chord consonance
+- **Dynamic Envelope** - Breathing shapes note velocity
+
+#### Lambda Enhancements Tests (NEW)
+- **LambdaEnhancementsTests** - 100+ test methods for all new features
+- **GazeTracker Tests** - Data, screen position, control parameters, gestures
+- **HealthKit Tests** - Heart data, breathing data, disclaimers
+- **Plugin Tests** - All 4 sample plugins, configurations
+- **Haptic Tests** - Patterns, events, compositions, bio sync
+- **Social Tests** - Participants, group state, events, sessions
+- **AI Director Tests** - Cameras, scenes, decisions, context
+- **Music Generator Tests** - Scales, notes, chords, bio data mapping
+- **Performance Tests** - Chord creation, note creation, scale lookup
+
 ---
 
 ### Phase 2000 Features (2026-01-05)
