@@ -36,11 +36,33 @@ class DeviceCapabilities: ObservableObject {
 
     /// Known iPhone models that support advanced spatial audio
     private let spatialAudioCapableModels: Set<String> = [
+        // iPhone 16 Series (2024)
         "iPhone16,1",  // iPhone 16 Pro
         "iPhone16,2",  // iPhone 16 Pro Max
+        "iPhone16,3",  // iPhone 16
+        "iPhone16,4",  // iPhone 16 Plus
+
+        // iPhone 17 Series (2025)
         "iPhone17,1",  // iPhone 17
         "iPhone17,2",  // iPhone 17 Pro
         "iPhone17,3",  // iPhone 17 Pro Max
+        "iPhone17,4",  // iPhone 17 Air
+
+        // iPhone 18 Series (2026)
+        "iPhone18,1",  // iPhone 18
+        "iPhone18,2",  // iPhone 18 Pro
+        "iPhone18,3",  // iPhone 18 Pro Max
+        "iPhone18,4",  // iPhone 18 Ultra
+
+        // iPhone 19 Series (2027 - Future Ready)
+        "iPhone19,1",  // iPhone 19
+        "iPhone19,2",  // iPhone 19 Pro
+        "iPhone19,3",  // iPhone 19 Pro Max
+
+        // iPhone 20 Series (2028 - Future Ready)
+        "iPhone20,1",  // iPhone 20
+        "iPhone20,2",  // iPhone 20 Pro
+        "iPhone20,3",  // iPhone 20 Pro Max
     ]
 
 
@@ -80,27 +102,63 @@ class DeviceCapabilities: ObservableObject {
     /// Map device identifier to human-readable name
     private func mapDeviceIdentifier(_ identifier: String) -> String {
         switch identifier {
-        // iPhone 16 Series
+        // iPhone 20 Series (2028 - Future Ready)
+        case "iPhone20,1": return "iPhone 20"
+        case "iPhone20,2": return "iPhone 20 Pro"
+        case "iPhone20,3": return "iPhone 20 Pro Max"
+
+        // iPhone 19 Series (2027 - Future Ready)
+        case "iPhone19,1": return "iPhone 19"
+        case "iPhone19,2": return "iPhone 19 Pro"
+        case "iPhone19,3": return "iPhone 19 Pro Max"
+
+        // iPhone 18 Series (2026)
+        case "iPhone18,1": return "iPhone 18"
+        case "iPhone18,2": return "iPhone 18 Pro"
+        case "iPhone18,3": return "iPhone 18 Pro Max"
+        case "iPhone18,4": return "iPhone 18 Ultra"
+
+        // iPhone 17 Series (2025)
+        case "iPhone17,1": return "iPhone 17"
+        case "iPhone17,2": return "iPhone 17 Pro"
+        case "iPhone17,3": return "iPhone 17 Pro Max"
+        case "iPhone17,4": return "iPhone 17 Air"
+
+        // iPhone 16 Series (2024)
         case "iPhone16,1": return "iPhone 16 Pro"
         case "iPhone16,2": return "iPhone 16 Pro Max"
         case "iPhone16,3": return "iPhone 16"
         case "iPhone16,4": return "iPhone 16 Plus"
 
-        // iPhone 17 Series (future)
-        case "iPhone17,1": return "iPhone 17"
-        case "iPhone17,2": return "iPhone 17 Pro"
-        case "iPhone17,3": return "iPhone 17 Pro Max"
-
-        // iPhone 15 Series
+        // iPhone 15 Series (2023)
         case "iPhone15,2": return "iPhone 14 Pro"
         case "iPhone15,3": return "iPhone 14 Pro Max"
         case "iPhone15,4": return "iPhone 15"
         case "iPhone15,5": return "iPhone 15 Plus"
 
+        // iPad Pro (Future Ready)
+        case "iPad16,1", "iPad16,2": return "iPad Pro (2026)"
+        case "iPad17,1", "iPad17,2": return "iPad Pro (2027)"
+
+        // Vision Pro (Future Ready)
+        case "RealityDevice14,1": return "Apple Vision Pro"
+        case "RealityDevice15,1": return "Apple Vision Pro 2"
+        case "RealityDevice16,1": return "Apple Vision Pro 3"
+
+        // Apple Watch (Future Ready)
+        case "Watch7,1", "Watch7,2": return "Apple Watch Ultra 3"
+        case "Watch8,1", "Watch8,2": return "Apple Watch Series 12"
+
         // Simulator
         case "x86_64", "arm64": return "iOS Simulator"
 
-        default: return identifier
+        default:
+            // Future-proof: Accept any iPhone/iPad/Watch/Reality device
+            if identifier.hasPrefix("iPhone") { return "iPhone (Future Model)" }
+            if identifier.hasPrefix("iPad") { return "iPad (Future Model)" }
+            if identifier.hasPrefix("Watch") { return "Apple Watch (Future Model)" }
+            if identifier.hasPrefix("RealityDevice") { return "Apple Vision (Future Model)" }
+            return identifier
         }
     }
 
