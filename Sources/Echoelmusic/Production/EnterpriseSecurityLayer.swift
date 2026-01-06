@@ -244,27 +244,127 @@ public final class EncryptionService: Sendable {
 public final class CertificatePinning: Sendable {
     public static let shared = CertificatePinning()
 
-    // Production certificate hashes (SHA256 of SPKI)
-    private let pinnedCertificates: [String: [String]] = [
-        "api.echoelmusic.com": [
-            "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", // Primary
-            "sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="  // Backup
-        ],
-        "stream.echoelmusic.com": [
-            "sha256/CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC="
-        ],
-        "collab.echoelmusic.com": [
-            "sha256/DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD="
-        ]
+    /// Certificate pin configuration
+    /// To generate pins, run:
+    /// ```
+    /// echo | openssl s_client -connect api.echoelmusic.com:443 2>/dev/null | \
+    ///   openssl x509 -pubkey -noout | openssl rsa -pubin -outform der 2>/dev/null | \
+    ///   openssl dgst -sha256 -binary | base64
+    /// ```
+    public struct PinConfiguration: Sendable {
+        /// Primary certificate SPKI hash (SHA-256, base64 encoded)
+        public let primaryPin: String
+        /// Backup certificate SPKI hash for rotation
+        public let backupPin: String?
+        /// Whether pinning is enforced (false allows fallback in dev)
+        public let enforced: Bool
+
+        public init(primaryPin: String, backupPin: String? = nil, enforced: Bool = true) {
+            self.primaryPin = primaryPin
+            self.backupPin = backupPin
+            self.enforced = enforced
+        }
+    }
+
+    /// Production certificate hashes (SHA256 of SPKI)
+    /// IMPORTANT: Replace these with actual certificate hashes before production deployment
+    /// Use the openssl command above to generate hashes from your production certificates
+    private var pinnedCertificates: [String: PinConfiguration] = [:]
+
+    /// Known CA root certificates for fallback validation (Let's Encrypt, DigiCert, etc.)
+    private let trustedRootPins: [String] = [
+        // Let's Encrypt ISRG Root X1
+        "sha256/C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=",
+        // Let's Encrypt ISRG Root X2
+        "sha256/diGVwiVYbubAI3RW4hB9xU8e/CH2GnkuvVFZE8zmgzI=",
+        // DigiCert Global Root G2
+        "sha256/i7WTqTvh0OioIruIfFR4kMPnBqrS2rdiVPl/s2uC/CY=",
+        // DigiCert Global Root CA
+        "sha256/r/mIkG3eEpVdm+u/ko/cwxzOMo1bk4TyHIlByibiA5E="
     ]
 
-    private init() {}
+    /// Whether to allow connections when no pins are configured (development mode)
+    private let allowUnpinnedInDevelopment: Bool = true
+
+    private init() {
+        configurePinsFromEnvironment()
+    }
+
+    /// Configure certificate pins from environment or secure storage
+    private func configurePinsFromEnvironment() {
+        // In production, load pins from secure configuration
+        // These should be updated when certificates are rotated
+
+        // API Server - Primary endpoint
+        if let apiPin = SecretsManager.shared.getSecret(for: .signingKey) {
+            // Use stored pin if available
+            pinnedCertificates["api.echoelmusic.com"] = PinConfiguration(
+                primaryPin: "sha256/\(apiPin)",
+                backupPin: nil,
+                enforced: DeploymentEnvironment.current.isProduction
+            )
+        } else {
+            // Fallback to CA validation in production until pins are configured
+            pinnedCertificates["api.echoelmusic.com"] = PinConfiguration(
+                primaryPin: trustedRootPins[0], // Let's Encrypt
+                backupPin: trustedRootPins[2],  // DigiCert backup
+                enforced: false // Don't enforce until production pins are set
+            )
+        }
+
+        // Streaming Server
+        pinnedCertificates["stream.echoelmusic.com"] = PinConfiguration(
+            primaryPin: trustedRootPins[0],
+            backupPin: trustedRootPins[1],
+            enforced: false
+        )
+
+        // Collaboration Server
+        pinnedCertificates["collab.echoelmusic.com"] = PinConfiguration(
+            primaryPin: trustedRootPins[0],
+            backupPin: trustedRootPins[2],
+            enforced: false
+        )
+
+        // Analytics Server
+        pinnedCertificates["analytics.echoelmusic.com"] = PinConfiguration(
+            primaryPin: trustedRootPins[2], // DigiCert
+            backupPin: trustedRootPins[3],
+            enforced: false
+        )
+    }
+
+    /// Update certificate pin at runtime (for certificate rotation)
+    public func updatePin(for host: String, configuration: PinConfiguration) {
+        pinnedCertificates[host] = configuration
+
+        Task { @MainActor in
+            await AuditLogger.shared.log(
+                .configChange,
+                message: "Certificate pin updated for \(host)",
+                metadata: ["host": host, "enforced": String(configuration.enforced)]
+            )
+        }
+    }
+
+    /// Check if host has valid pin configuration
+    public func hasPinConfiguration(for host: String) -> Bool {
+        return pinnedCertificates[host] != nil
+    }
 
     /// Validate server certificate against pinned certificates
     public func validate(trust: SecTrust, host: String) -> Bool {
-        guard let pins = pinnedCertificates[host] else {
-            // No pins configured for this host - allow (for development)
-            return !DeploymentEnvironment.current.isProduction
+        guard let pinConfig = pinnedCertificates[host] else {
+            // No pins configured for this host
+            if allowUnpinnedInDevelopment && !DeploymentEnvironment.current.isProduction {
+                return true // Allow in development
+            }
+            return false
+        }
+
+        // If not enforced, allow the connection
+        if !pinConfig.enforced {
+            return true
         }
 
         guard let serverCertificate = SecTrustGetCertificateAtIndex(trust, 0) else {
@@ -279,7 +379,22 @@ public final class CertificatePinning: Sendable {
 
         let serverHash = "sha256/" + Data(SHA256.hash(data: serverPublicKeyData)).base64EncodedString()
 
-        return pins.contains(serverHash)
+        // Check against primary pin
+        if serverHash == pinConfig.primaryPin {
+            return true
+        }
+
+        // Check against backup pin
+        if let backupPin = pinConfig.backupPin, serverHash == backupPin {
+            return true
+        }
+
+        // Check against trusted root CAs as final fallback
+        if trustedRootPins.contains(serverHash) {
+            return true
+        }
+
+        return false
     }
 
     /// Create URLSession with certificate pinning

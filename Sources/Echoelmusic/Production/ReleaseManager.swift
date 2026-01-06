@@ -154,7 +154,14 @@ public final class ReleaseManager: ObservableObject, Sendable {
     private func fetchLatestVersion() async throws -> AppUpdate? {
         // App Store lookup API
         guard let bundleId = Bundle.main.bundleIdentifier else { return nil }
-        let url = URL(string: "https://itunes.apple.com/lookup?bundleId=\(bundleId)")!
+
+        guard let url = SafeURL.api(
+            base: "https://itunes.apple.com",
+            path: "/lookup",
+            query: ["bundleId": bundleId]
+        ) else {
+            throw ProductionError.configurationMissing("Invalid App Store lookup URL")
+        }
 
         let (data, _) = try await URLSession.shared.data(from: url)
 
@@ -288,7 +295,7 @@ public final class ReleaseManager: ObservableObject, Sendable {
             ChangelogEntry(
                 id: "8000.0.0",
                 version: "8000.0.0",
-                releaseDate: Calendar.current.date(byAdding: .day, value: -1, to: Date())!,
+                releaseDate: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date(),
                 features: [
                     "Lambda Mode - Unified Consciousness Interface",
                     "Quantum Loop Light Science Engine",
@@ -404,8 +411,8 @@ public struct AppStoreConfiguration: Sendable {
         public static let bundleId = "com.echoelmusic.app"
         public static let teamId = "ABCDE12345" // Replace with actual Team ID
 
-        public static let appStoreURL = URL(string: "https://apps.apple.com/app/id\(appId)")!
-        public static let reviewURL = URL(string: "https://apps.apple.com/app/id\(appId)?action=write-review")!
+        public static var appStoreURL: URL? { SafeURL.from("https://apps.apple.com/app/id\(appId)") }
+        public static var reviewURL: URL? { SafeURL.from("https://apps.apple.com/app/id\(appId)?action=write-review") }
 
         public static let capabilities: [String] = [
             "Background Audio",
@@ -442,7 +449,7 @@ public struct AppStoreConfiguration: Sendable {
     // Play Store (Android)
     public struct Android: Sendable {
         public static let applicationId = "com.echoelmusic.app"
-        public static let playStoreURL = URL(string: "https://play.google.com/store/apps/details?id=\(applicationId)")!
+        public static var playStoreURL: URL? { SafeURL.from("https://play.google.com/store/apps/details?id=\(applicationId)") }
 
         public static let requiredPermissions: [String] = [
             "android.permission.RECORD_AUDIO",
@@ -459,9 +466,9 @@ public struct AppStoreConfiguration: Sendable {
 
     // Common
     public static let supportEmail = "support@echoelmusic.com"
-    public static let privacyPolicyURL = URL(string: "https://echoelmusic.com/privacy")!
-    public static let termsOfServiceURL = URL(string: "https://echoelmusic.com/terms")!
-    public static let helpURL = URL(string: "https://help.echoelmusic.com")!
+    public static var privacyPolicyURL: URL? { SafeURL.from("https://echoelmusic.com/privacy") }
+    public static var termsOfServiceURL: URL? { SafeURL.from("https://echoelmusic.com/terms") }
+    public static var helpURL: URL? { SafeURL.from("https://help.echoelmusic.com") }
 }
 
 // MARK: - Launch Readiness Check

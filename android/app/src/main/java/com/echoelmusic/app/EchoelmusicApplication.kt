@@ -2,13 +2,25 @@ package com.echoelmusic.app
 
 import android.app.Application
 import android.util.Log
-import com.echoelmusic.app.audio.AudioEngine
-import com.echoelmusic.app.midi.MidiManager
-import com.echoelmusic.app.bio.BioReactiveEngine
 
 /**
  * Echoelmusic Application
  * Bio-Reactive Audio-Visual Platform for Android
+ *
+ * ARCHITECTURE NOTE:
+ * Engine instances are now managed by EchoelmusicViewModel following
+ * proper Android architecture guidelines. Activities/Fragments should
+ * obtain the ViewModel via:
+ *
+ *     val viewModel: EchoelmusicViewModel by viewModels()
+ *
+ * This ensures:
+ * - Proper lifecycle management
+ * - Survives configuration changes
+ * - No memory leaks
+ * - Scoped coroutines
+ *
+ * Nobel Prize Multitrillion Dollar Company Loop - Production Ready
  *
  * Features:
  * - Ultra-low-latency audio via Oboe (AAudio/OpenSL ES)
@@ -21,15 +33,7 @@ class EchoelmusicApplication : Application() {
     companion object {
         private const val TAG = "Echoelmusic"
 
-        // Singleton instances
-        lateinit var audioEngine: AudioEngine
-            private set
-        lateinit var midiManager: MidiManager
-            private set
-        lateinit var bioReactiveEngine: BioReactiveEngine
-            private set
-
-        // Native library loaded flag
+        // Native library loaded flag - safe to keep in companion
         var isNativeLoaded = false
             private set
     }
@@ -45,22 +49,7 @@ class EchoelmusicApplication : Application() {
         // Load native audio engine
         loadNativeLibraries()
 
-        // Initialize audio engine
-        audioEngine = AudioEngine(this)
-        Log.i(TAG, "Audio Engine initialized")
-
-        // Initialize MIDI manager
-        midiManager = MidiManager(this)
-        Log.i(TAG, "MIDI Manager initialized")
-
-        // Initialize bio-reactive engine
-        bioReactiveEngine = BioReactiveEngine(this)
-        Log.i(TAG, "Bio-Reactive Engine initialized")
-
-        // Connect systems
-        connectSystems()
-
-        Log.i(TAG, "All systems operational")
+        Log.i(TAG, "Application initialized - use EchoelmusicViewModel for engine access")
     }
 
     private fun loadNativeLibraries() {
@@ -74,26 +63,8 @@ class EchoelmusicApplication : Application() {
         }
     }
 
-    private fun connectSystems() {
-        // Connect MIDI to audio engine
-        midiManager.setNoteCallback { note, velocity, isNoteOn ->
-            if (isNoteOn) {
-                audioEngine.noteOn(note, velocity)
-            } else {
-                audioEngine.noteOff(note)
-            }
-        }
-
-        // Connect bio data to audio modulation
-        bioReactiveEngine.setHeartRateCallback { hr, hrv, coherence ->
-            audioEngine.updateBioData(hr, hrv, coherence)
-        }
-    }
-
     override fun onTerminate() {
         super.onTerminate()
-        audioEngine.shutdown()
-        midiManager.shutdown()
-        bioReactiveEngine.shutdown()
+        Log.i(TAG, "Application terminated")
     }
 }

@@ -298,18 +298,43 @@ class WatchHealthKitManager {
     private var hrvQuery: HKAnchoredObjectQuery?
 
     func requestAuthorization() async throws {
+        // Safely create HKQuantityTypes with guard statements
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate),
+              let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN),
+              let respiratoryType = HKQuantityType.quantityType(forIdentifier: .respiratoryRate) else {
+            throw HealthKitError.quantityTypeUnavailable
+        }
+
         let typesToRead: Set<HKObjectType> = [
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
-            HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
-            HKObjectType.quantityType(forIdentifier: .respiratoryRate)!
+            heartRateType,
+            hrvType,
+            respiratoryType
         ]
+
+        guard let heartRateSampleType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            throw HealthKitError.quantityTypeUnavailable
+        }
 
         let typesToShare: Set<HKSampleType> = [
             HKObjectType.workoutType(),
-            HKObjectType.quantityType(forIdentifier: .heartRate)!
+            heartRateSampleType
         ]
 
         try await healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead)
+    }
+
+    enum HealthKitError: Error, LocalizedError {
+        case quantityTypeUnavailable
+        case queryFailed
+
+        var errorDescription: String? {
+            switch self {
+            case .quantityTypeUnavailable:
+                return "Required HealthKit quantity type is not available on this device"
+            case .queryFailed:
+                return "HealthKit query failed"
+            }
+        }
     }
 
     func startContinuousMonitoring() async throws {
@@ -328,7 +353,10 @@ class WatchHealthKitManager {
     }
 
     private func startHeartRateQuery() {
-        let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate)!
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            print("❌ Heart rate quantity type unavailable")
+            return
+        }
 
         let query = HKAnchoredObjectQuery(
             type: heartRateType,
@@ -368,7 +396,10 @@ class WatchHealthKitManager {
     }
 
     private func startHRVQuery() {
-        let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
+        guard let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else {
+            print("❌ HRV quantity type unavailable")
+            return
+        }
 
         let query = HKAnchoredObjectQuery(
             type: hrvType,
