@@ -831,7 +831,9 @@ public struct QuantumTopShelfProvider {
 
         return presets.map { preset in
             let item = TVTopShelfItem(identifier: preset.id)
-            item.displayAction = TVTopShelfAction(url: URL(string: "echoelmusic://preset/\(preset.id)")!)
+            if let presetURL = URL(string: "echoelmusic://preset/\(preset.id)") {
+                item.displayAction = TVTopShelfAction(url: presetURL)
+            }
             return item
         }
     }

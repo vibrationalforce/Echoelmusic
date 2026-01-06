@@ -322,34 +322,47 @@ public final class ProductionConfiguration: ObservableObject, Sendable {
         public let remoteConfig: URL
         public let collaboration: URL
 
+        /// Static fallback URL (compile-time guaranteed valid)
+        private static let fallbackURL = URL(fileURLWithPath: "/")
+
+        /// Safely create URL from string, with fallback for malformed URLs
+        private static func safeURL(_ string: String) -> URL {
+            guard let url = URL(string: string) else {
+                // Log error and return fallback - should never happen with hardcoded valid URLs
+                assertionFailure("Invalid URL string: \(string)")
+                return URL(string: "https://echoelmusic.com") ?? fallbackURL
+            }
+            return url
+        }
+
         public static func forEnvironment(_ env: DeploymentEnvironment) -> Endpoints {
             switch env {
             case .development:
                 return Endpoints(
-                    api: URL(string: "https://dev-api.echoelmusic.com/v2")!,
-                    streaming: URL(string: "rtmp://dev-stream.echoelmusic.com/live")!,
-                    analytics: URL(string: "https://dev-analytics.echoelmusic.com")!,
-                    crashReporting: URL(string: "https://dev-crashes.echoelmusic.com")!,
-                    remoteConfig: URL(string: "https://dev-config.echoelmusic.com/flags")!,
-                    collaboration: URL(string: "wss://dev-collab.echoelmusic.com")!
+                    api: safeURL("https://dev-api.echoelmusic.com/v2"),
+                    streaming: safeURL("rtmp://dev-stream.echoelmusic.com/live"),
+                    analytics: safeURL("https://dev-analytics.echoelmusic.com"),
+                    crashReporting: safeURL("https://dev-crashes.echoelmusic.com"),
+                    remoteConfig: safeURL("https://dev-config.echoelmusic.com/flags"),
+                    collaboration: safeURL("wss://dev-collab.echoelmusic.com")
                 )
             case .staging:
                 return Endpoints(
-                    api: URL(string: "https://staging-api.echoelmusic.com/v2")!,
-                    streaming: URL(string: "rtmp://staging-stream.echoelmusic.com/live")!,
-                    analytics: URL(string: "https://staging-analytics.echoelmusic.com")!,
-                    crashReporting: URL(string: "https://staging-crashes.echoelmusic.com")!,
-                    remoteConfig: URL(string: "https://staging-config.echoelmusic.com/flags")!,
-                    collaboration: URL(string: "wss://staging-collab.echoelmusic.com")!
+                    api: safeURL("https://staging-api.echoelmusic.com/v2"),
+                    streaming: safeURL("rtmp://staging-stream.echoelmusic.com/live"),
+                    analytics: safeURL("https://staging-analytics.echoelmusic.com"),
+                    crashReporting: safeURL("https://staging-crashes.echoelmusic.com"),
+                    remoteConfig: safeURL("https://staging-config.echoelmusic.com/flags"),
+                    collaboration: safeURL("wss://staging-collab.echoelmusic.com")
                 )
             case .production, .enterprise:
                 return Endpoints(
-                    api: URL(string: "https://api.echoelmusic.com/v2")!,
-                    streaming: URL(string: "rtmp://stream.echoelmusic.com/live")!,
-                    analytics: URL(string: "https://analytics.echoelmusic.com")!,
-                    crashReporting: URL(string: "https://crashes.echoelmusic.com")!,
-                    remoteConfig: URL(string: "https://config.echoelmusic.com/flags")!,
-                    collaboration: URL(string: "wss://collab.echoelmusic.com")!
+                    api: safeURL("https://api.echoelmusic.com/v2"),
+                    streaming: safeURL("rtmp://stream.echoelmusic.com/live"),
+                    analytics: safeURL("https://analytics.echoelmusic.com"),
+                    crashReporting: safeURL("https://crashes.echoelmusic.com"),
+                    remoteConfig: safeURL("https://config.echoelmusic.com/flags"),
+                    collaboration: safeURL("wss://collab.echoelmusic.com")
                 )
             }
         }

@@ -16,6 +16,16 @@ import WidgetKit
 import AppIntents
 #endif
 
+// MARK: - Safe Deep Link Helper
+
+/// Static fallback URL for widgets (compile-time guaranteed valid)
+private let widgetFallbackURL = URL(fileURLWithPath: "/")
+
+/// Creates safe deep link URLs for widgets with fallback
+private func safeDeepLink(_ path: String) -> URL {
+    URL(string: "echoelmusic://\(path)") ?? URL(string: "echoelmusic://home") ?? widgetFallbackURL
+}
+
 // MARK: - Widget Bundle
 
 @available(iOS 17.0, macOS 14.0, watchOS 10.0, *)
@@ -422,7 +432,7 @@ struct QuickSessionWidgetView: View {
     var entry: QuickSessionEntry
 
     var body: some View {
-        Link(destination: URL(string: "echoelmusic://start-session")!) {
+        Link(destination: safeDeepLink("start-session")) {
             VStack(spacing: 12) {
                 ZStack {
                     Circle()
@@ -522,7 +532,7 @@ struct PresetWidgetView: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        Link(destination: URL(string: "echoelmusic://preset/\(entry.preset.id)")!) {
+        Link(destination: safeDeepLink("preset/\(entry.preset.id)")) {
             switch family {
             case .systemSmall:
                 SmallPresetView(preset: entry.preset)
@@ -686,7 +696,7 @@ struct VisualizationWidgetView: View {
                 .background(.ultraThinMaterial)
             }
         }
-        .widgetURL(URL(string: "echoelmusic://visualization/\(entry.visualizationType.rawValue)")!)
+        .widgetURL(safeDeepLink("visualization/\(entry.visualizationType.rawValue)"))
     }
 }
 

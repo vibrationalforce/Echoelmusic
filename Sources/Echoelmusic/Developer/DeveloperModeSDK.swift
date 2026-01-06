@@ -524,7 +524,9 @@ public final class EchoelmusicAPIClient {
 
     public static let shared = EchoelmusicAPIClient()
 
-    public let baseURL = URL(string: "https://api.echoelmusic.com/v2")!
+    public var baseURL: URL {
+        URL(string: "https://api.echoelmusic.com/v2") ?? URL(fileURLWithPath: "/")
+    }
 
     // MARK: - Authentication
 

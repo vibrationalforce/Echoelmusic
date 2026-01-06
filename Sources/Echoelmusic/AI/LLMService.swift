@@ -269,7 +269,9 @@ class LLMService: ObservableObject {
     }
 
     private func sendClaudeRequest(messages: [Message], bioContext: Message.BioContext?, apiKey: String) async throws -> String {
-        let url = URL(string: "\(LLMProvider.claude.baseURL)/messages")!
+        guard let url = URL(string: "\(LLMProvider.claude.baseURL)/messages") else {
+            throw LLMError.apiError("Invalid Claude API URL")
+        }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -324,7 +326,9 @@ class LLMService: ObservableObject {
     }
 
     private func sendOpenAIRequest(messages: [Message], bioContext: Message.BioContext?, apiKey: String) async throws -> String {
-        let url = URL(string: "\(LLMProvider.openAI.baseURL)/chat/completions")!
+        guard let url = URL(string: "\(LLMProvider.openAI.baseURL)/chat/completions") else {
+            throw LLMError.apiError("Invalid OpenAI API URL")
+        }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -381,7 +385,9 @@ class LLMService: ObservableObject {
     }
 
     private func sendOllamaRequest(messages: [Message], bioContext: Message.BioContext?) async throws -> String {
-        let url = URL(string: "\(LLMProvider.local.baseURL)/chat")!
+        guard let url = URL(string: "\(LLMProvider.local.baseURL)/chat") else {
+            throw LLMError.apiError("Invalid Ollama API URL")
+        }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
