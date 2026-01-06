@@ -268,8 +268,14 @@ public class QuantumComplicationDataSource: NSObject, CLKComplicationDataSource 
     private func createGraphicBezelTemplate(coherence: Float) -> CLKComplicationTemplate {
         let circularTemplate = createGraphicCircularTemplate(coherence: coherence)
 
+        // Safe cast with fallback
+        guard let graphicCircular = circularTemplate as? CLKComplicationTemplateGraphicCircular else {
+            // Fallback: return the circular template itself if cast fails
+            return circularTemplate
+        }
+
         return CLKComplicationTemplateGraphicBezelCircularText(
-            circularTemplate: circularTemplate as! CLKComplicationTemplateGraphicCircular,
+            circularTemplate: graphicCircular,
             textProvider: CLKSimpleTextProvider(text: "Quantum \(Int(coherence * 100))%")
         )
     }
