@@ -813,8 +813,26 @@ public class UnifiedControlHub: ObservableObject {
                 let afaField = spatialMapper.mapToAFA(voices: voiceData, geometry: fieldGeometry)
                 spatialMapper.afaField = afaField
 
-                // TODO: Apply AFA field to SpatialAudioEngine
-                // print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
+                // Apply AFA field to SpatialAudioEngine
+                if let spatialEngine = spatialAudioEngine {
+                    // Position sources according to AFA field geometry
+                    for (index, source) in afaField.sources.enumerated() {
+                        spatialEngine.setSourcePosition(
+                            sourceID: index,
+                            x: source.position.x,
+                            y: source.position.y,
+                            z: source.position.z
+                        )
+
+                        // Apply coherence-based reverb blend
+                        let reverbBlend = Float(coherence) / 100.0
+                        spatialEngine.setReverbBlend(reverbBlend)
+                    }
+
+                    #if DEBUG
+                    print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count), Coherence: \(coherence)%")
+                    #endif
+                }
             }
         }
     }
@@ -837,9 +855,15 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
-        // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
-        // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+        // Apply to actual AudioEngine
+        if let engine = audioEngine {
+            engine.setFilterCutoff(params.filterCutoff)
+            engine.setFilterResonance(params.filterResonance)
+
+            #if DEBUG
+            print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+            #endif
+        }
 
         // Apply to all active MPE voices
         if let mpe = mpeZoneManager {
@@ -958,8 +982,11 @@ public class UnifiedControlHub: ObservableObject {
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // TODO: Change to preset
-            print("[Gesture→Audio] Switch to preset: \(presetChange)")
+            // Apply preset change to audio engine
+            if let engine = audioEngine {
+                engine.loadPreset(named: presetChange)
+                print("[Gesture→Audio] Switched to preset: \(presetChange)")
+            }
         }
     }
 

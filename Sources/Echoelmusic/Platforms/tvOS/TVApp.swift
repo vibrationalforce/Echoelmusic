@@ -261,17 +261,52 @@ class TVApp {
 
     // MARK: - SharePlay
 
+    private var groupActivityManager: GroupActivityManager?
+
     func startSharePlay() async throws {
         print("📺 Starting SharePlay session")
-        isSharePlayActive = true
 
-        // TODO: Integrate with GroupActivities framework
-        // let activity = EchoelmusicActivity()
-        // try await activity.prepareForActivation()
+        // Initialize GroupActivities manager
+        groupActivityManager = GroupActivityManager()
+
+        // Create and activate the Echoelmusic group activity
+        let activity = EchoelmusicGroupActivity(
+            sessionType: activeSession?.type ?? .meditation,
+            visualizationMode: visualizationMode
+        )
+
+        do {
+            // Prepare and activate the activity
+            let activationResult = try await activity.activate()
+
+            switch activationResult {
+            case .activationPreferred:
+                print("📺 SharePlay activation preferred")
+                isSharePlayActive = true
+                await groupActivityManager?.startGroupSession(activity: activity)
+
+            case .activationDisabled:
+                print("📺 SharePlay activation disabled by user")
+                isSharePlayActive = false
+
+            case .cancelled:
+                print("📺 SharePlay activation cancelled")
+                isSharePlayActive = false
+
+            @unknown default:
+                print("📺 Unknown SharePlay activation result")
+                isSharePlayActive = false
+            }
+        } catch {
+            print("❌ SharePlay activation failed: \(error)")
+            throw error
+        }
     }
 
     func stopSharePlay() {
         print("📺 Stopping SharePlay session")
+        groupActivityManager?.endGroupSession()
+        groupActivityManager = nil
         isSharePlayActive = false
     }
 
@@ -406,6 +441,120 @@ struct BioDataUpdate {
     let hrv: Double
     let coherence: Double
     let timestamp: Date
+}
+
+// MARK: - GroupActivities Integration
+
+import GroupActivities
+
+struct EchoelmusicGroupActivity: GroupActivity {
+
+    let sessionType: TVApp.Session.SessionType
+    let visualizationMode: TVApp.VisualizationMode
+
+    var metadata: GroupActivityMetadata {
+        var metadata = GroupActivityMetadata()
+        metadata.type = .generic
+        metadata.title = "Echoelmusic \(sessionType.rawValue)"
+        metadata.subtitle = "Gemeinsame \(sessionType.rawValue) Session"
+        metadata.previewImage = nil  // Add app icon here
+        metadata.fallbackURL = URL(string: "https://echoelmusic.com")
+        return metadata
+    }
+}
+
+@MainActor
+class GroupActivityManager {
+
+    private var groupSession: GroupSession<EchoelmusicGroupActivity>?
+    private var messenger: GroupSessionMessenger?
+    private var tasks = Set<Task<Void, Never>>()
+
+    func startGroupSession(activity: EchoelmusicGroupActivity) async {
+        // Listen for incoming group sessions
+        for await session in EchoelmusicGroupActivity.sessions() {
+            self.groupSession = session
+            self.messenger = GroupSessionMessenger(session: session)
+
+            // Join the session
+            session.join()
+
+            print("📺 Joined SharePlay session with \(session.activeParticipants.count) participants")
+
+            // Handle participant changes
+            let participantTask = Task {
+                for await participants in session.$activeParticipants.values {
+                    await handleParticipantsChanged(participants)
+                }
+            }
+            tasks.insert(participantTask)
+
+            // Handle incoming messages
+            if let messenger = messenger {
+                let messageTask = Task {
+                    for await message in messenger.messages(of: SharePlayMessage.self) {
+                        await handleMessage(message.0)
+                    }
+                }
+                tasks.insert(messageTask)
+            }
+        }
+    }
+
+    func endGroupSession() {
+        groupSession?.end()
+        groupSession = nil
+        messenger = nil
+        tasks.forEach { $0.cancel() }
+        tasks.removeAll()
+        print("📺 SharePlay session ended")
+    }
+
+    func sendBioUpdate(hrv: Double, coherence: Double) async {
+        guard let messenger = messenger else { return }
+
+        let message = SharePlayMessage(
+            type: .bioUpdate,
+            hrv: hrv,
+            coherence: coherence,
+            timestamp: Date()
+        )
+
+        do {
+            try await messenger.send(message)
+        } catch {
+            print("❌ Failed to send SharePlay message: \(error)")
+        }
+    }
+
+    private func handleParticipantsChanged(_ participants: Set<Participant>) async {
+        print("📺 SharePlay participants: \(participants.count)")
+    }
+
+    private func handleMessage(_ message: SharePlayMessage) async {
+        switch message.type {
+        case .bioUpdate:
+            print("📺 Received bio update: HRV=\(message.hrv ?? 0), Coherence=\(message.coherence ?? 0)")
+        case .visualChange:
+            print("📺 Received visualization change")
+        case .sessionControl:
+            print("📺 Received session control")
+        }
+    }
+}
+
+struct SharePlayMessage: Codable {
+    enum MessageType: String, Codable {
+        case bioUpdate
+        case visualChange
+        case sessionControl
+    }
+
+    let type: MessageType
+    var hrv: Double?
+    var coherence: Double?
+    var visualizationMode: String?
+    var timestamp: Date
 }
 
 #endif

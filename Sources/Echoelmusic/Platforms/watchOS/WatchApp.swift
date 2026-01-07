@@ -235,6 +235,8 @@ class WatchApp {
 
     // MARK: - Data Management
 
+    private let watchConnectivityManager = WatchConnectivityManager.shared
+
     private func saveSession(duration: TimeInterval, metrics: BioMetrics) async {
         // Speichere Session-Daten für Sync mit iPhone
         let session = SessionData(
@@ -246,8 +248,33 @@ class WatchApp {
             date: Date()
         )
 
-        // TODO: Sync with iPhone via WatchConnectivity
-        print("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        // Sync with iPhone via WatchConnectivity
+        let sessionDict: [String: Any] = [
+            "type": session.type.rawValue,
+            "duration": session.duration,
+            "avgHeartRate": session.avgHeartRate,
+            "avgHRV": session.avgHRV,
+            "avgCoherence": session.avgCoherence,
+            "date": session.date.timeIntervalSince1970
+        ]
+
+        await watchConnectivityManager.sendSessionData(sessionDict)
+        print("💾 Session saved and synced: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+    }
+
+    // MARK: - Real-time Bio Sync
+
+    func syncBioMetrics() async {
+        // Send real-time bio metrics to iPhone
+        let bioDict: [String: Any] = [
+            "heartRate": currentMetrics.heartRate,
+            "hrv": currentMetrics.hrv,
+            "coherence": currentMetrics.coherence,
+            "breathingRate": currentMetrics.breathingRate,
+            "timestamp": Date().timeIntervalSince1970
+        ]
+
+        await watchConnectivityManager.sendBioMetrics(bioDict)
     }
 
     struct SessionData: Codable {
@@ -478,6 +505,80 @@ class WatchAudioEngine {
     func playExhaleTone() async {
         // Spiele sanften absteigenden Ton
         print("🎵 Exhale tone")
+    }
+}
+
+// MARK: - WatchConnectivity Manager
+
+import WatchConnectivity
+
+class WatchConnectivityManager: NSObject, WCSessionDelegate {
+
+    static let shared = WatchConnectivityManager()
+
+    private var session: WCSession?
+
+    override init() {
+        super.init()
+        if WCSession.isSupported() {
+            session = WCSession.default
+            session?.delegate = self
+            session?.activate()
+            print("⌚ WatchConnectivity activated")
+        }
+    }
+
+    // MARK: - Send Data to iPhone
+
+    func sendSessionData(_ data: [String: Any]) async {
+        guard let session = session, session.isReachable else {
+            // Store locally if iPhone not reachable
+            try? session?.updateApplicationContext(["pendingSession": data])
+            print("⌚ Session data stored locally (iPhone not reachable)")
+            return
+        }
+
+        session.sendMessage(["sessionData": data], replyHandler: { reply in
+            print("⌚ Session data synced to iPhone: \(reply)")
+        }, errorHandler: { error in
+            print("❌ Failed to sync session: \(error)")
+        })
+    }
+
+    func sendBioMetrics(_ data: [String: Any]) async {
+        guard let session = session, session.isReachable else {
+            return  // Skip real-time sync if not reachable
+        }
+
+        // Use transferUserInfo for real-time bio data
+        session.sendMessage(["bioMetrics": data], replyHandler: nil, errorHandler: nil)
+    }
+
+    // MARK: - WCSessionDelegate
+
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        print("⌚ WCSession activation: \(activationState.rawValue)")
+    }
+
+    func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+        // Handle messages from iPhone (e.g., start session command)
+        if let command = message["command"] as? String {
+            Task { @MainActor in
+                handleCommand(command)
+            }
+        }
+    }
+
+    @MainActor
+    private func handleCommand(_ command: String) {
+        switch command {
+        case "startSession":
+            print("⌚ Received start session command from iPhone")
+        case "stopSession":
+            print("⌚ Received stop session command from iPhone")
+        default:
+            break
+        }
     }
 }
 
