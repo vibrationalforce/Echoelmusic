@@ -3,6 +3,9 @@ import Combine
 import AVFoundation
 import QuartzCore
 
+/// Global logger instance for UnifiedControlHub
+private let Log = Logger.shared
+
 /// Central orchestrator for all input modalities in Echoelmusic
 ///
 /// UnifiedControlHub manages the fusion of multiple input sources and routes
@@ -60,8 +63,9 @@ public class UnifiedControlHub: ObservableObject {
     private var hardwareEcosystem: HardwareEcosystem?
     private var crossPlatformSessionManager: CrossPlatformSessionManager?
 
-    // TODO: Add when implementing
-    // private let gazeTracker: GazeTracker?
+    // Phase λ∞: Eye Gaze Tracking Integration
+    private var gazeTracker: GazeTracker?
+    private var gazeTrackingCancellables = Set<AnyCancellable>()
 
     // MARK: - Control Loop
 
@@ -360,7 +364,7 @@ public class UnifiedControlHub: ObservableObject {
 
             // Log discovered devices
             if let ecosystem = hardwareEcosystem {
-                print("[UnifiedControlHub] Hardware Ecosystem enabled")
+                Log.info("Hardware Ecosystem enabled", category: .system)
                 print("  - Connected devices: \(ecosystem.connectedDevices.count)")
                 print("  - Audio interfaces available: \(ecosystem.audioInterfaces.supportedInterfaces.count)")
                 print("  - MIDI controllers available: \(ecosystem.midiControllers.supportedControllers.count)")
@@ -461,6 +465,171 @@ public class UnifiedControlHub: ObservableObject {
         crossPlatformSessionManager?.syncAudioParameters(params)
     }
 
+    // MARK: - Phase λ∞: Eye Gaze Tracking
+
+    /// Enable eye gaze tracking for bio-reactive control
+    /// Available on visionOS, iPad Pro with Face ID, and ARKit-enabled devices
+    @available(iOS 15.0, macOS 12.0, *)
+    public func enableGazeTracking() {
+        gazeTrackingCancellables.removeAll()
+
+        let tracker = GazeTracker()
+        self.gazeTracker = tracker
+
+        // Subscribe to gaze updates
+        tracker.$currentGaze
+            .debounce(for: .milliseconds(16), scheduler: DispatchQueue.main)
+            .sink { [weak self] gazeData in
+                self?.handleGazeUpdate(gazeData)
+            }
+            .store(in: &gazeTrackingCancellables)
+
+        // Subscribe to attention level changes
+        tracker.$attentionLevel
+            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
+            .sink { [weak self] attention in
+                self?.handleAttentionChange(attention)
+            }
+            .store(in: &gazeTrackingCancellables)
+
+        // Subscribe to zone changes for discrete control
+        tracker.$currentZone
+            .removeDuplicates()
+            .sink { [weak self] zone in
+                self?.handleGazeZoneChange(zone)
+            }
+            .store(in: &gazeTrackingCancellables)
+
+        tracker.startTracking()
+
+        print("[UnifiedControlHub] Gaze tracking enabled")
+        print("  - Available: \(tracker.isAvailable)")
+        print("  - Tracking: \(tracker.isTracking)")
+    }
+
+    /// Disable eye gaze tracking
+    @available(iOS 15.0, macOS 12.0, *)
+    public func disableGazeTracking() {
+        gazeTrackingCancellables.removeAll()
+        gazeTracker?.stopTracking()
+        gazeTracker = nil
+        print("[UnifiedControlHub] Gaze tracking disabled")
+    }
+
+    /// Handle gaze data updates
+    @available(iOS 15.0, macOS 12.0, *)
+    private func handleGazeUpdate(_ gazeData: GazeData) {
+        guard let tracker = gazeTracker else { return }
+
+        let params = tracker.getControlParameters()
+
+        // Apply gaze-based audio panning
+        if let spatial = spatialAudioEngine {
+            // Map gaze X to pan (-1 to +1)
+            let pan = params.audioPan
+            spatial.setPan(pan)
+        }
+
+        // Apply gaze-based filter modulation
+        if let engine = audioEngine {
+            // Filter cutoff based on attention and stability
+            let cutoffFactor = params.filterCutoff
+            let baseCutoff: Float = 200.0
+            let maxCutoff: Float = 8000.0
+            let cutoff = baseCutoff + cutoffFactor * (maxCutoff - baseCutoff)
+            engine.setFilterCutoff(cutoff)
+        }
+
+        // Apply to quantum light emulator
+        if let quantum = quantumLightEmulator {
+            // Map arousal to quantum coherence influence
+            quantum.updateGazeInputs(
+                gazeX: params.gazeX,
+                gazeY: params.gazeY,
+                attention: params.attention,
+                arousal: params.arousal
+            )
+        }
+
+        // Apply to visuals
+        if let visualMapper = midiToVisualMapper {
+            visualMapper.updateGazeParameters(
+                gazeX: params.gazeX,
+                gazeY: params.gazeY,
+                attention: params.attention,
+                focus: params.focus
+            )
+        }
+    }
+
+    /// Handle attention level changes
+    @available(iOS 15.0, macOS 12.0, *)
+    private func handleAttentionChange(_ attention: Float) {
+        // Modulate reverb based on attention (less attention = more reverb/dreamlike)
+        let reverbWet = 1.0 - attention
+        audioEngine?.setReverbWetness(reverbWet * 0.5)
+
+        // Update visual intensity
+        midiToVisualMapper?.setIntensity(attention)
+    }
+
+    /// Handle gaze zone changes for discrete audio-visual control
+    @available(iOS 15.0, macOS 12.0, *)
+    private func handleGazeZoneChange(_ zone: GazeZone) {
+        // Map zones to presets or parameters
+        switch zone {
+        case .topLeft:
+            // High frequencies, left pan
+            audioEngine?.setFilterCutoff(6000)
+        case .topCenter:
+            // Bright, centered
+            audioEngine?.setFilterCutoff(8000)
+        case .topRight:
+            // High frequencies, right pan
+            audioEngine?.setFilterCutoff(6000)
+        case .centerLeft:
+            // Mid frequencies, left
+            audioEngine?.setFilterCutoff(2000)
+        case .center:
+            // Balanced
+            audioEngine?.setFilterCutoff(4000)
+        case .centerRight:
+            // Mid frequencies, right
+            audioEngine?.setFilterCutoff(2000)
+        case .bottomLeft:
+            // Bass, left
+            audioEngine?.setFilterCutoff(500)
+        case .bottomCenter:
+            // Deep bass
+            audioEngine?.setFilterCutoff(200)
+        case .bottomRight:
+            // Bass, right
+            audioEngine?.setFilterCutoff(500)
+        }
+
+        #if DEBUG
+        print("[Gaze→Audio] Zone: \(zone.displayName)")
+        #endif
+    }
+
+    /// Get current gaze control parameters
+    @available(iOS 15.0, macOS 12.0, *)
+    public func getGazeControlParameters() -> GazeControlParameters? {
+        return gazeTracker?.getControlParameters()
+    }
+
+    /// Check if gaze tracking is available
+    @available(iOS 15.0, macOS 12.0, *)
+    public var isGazeTrackingAvailable: Bool {
+        gazeTracker?.isAvailable ?? false
+    }
+
+    /// Check if gaze tracking is currently active
+    @available(iOS 15.0, macOS 12.0, *)
+    public var isGazeTrackingActive: Bool {
+        gazeTracker?.isTracking ?? false
+    }
+
     /// Get current quantum coherence level
     public var quantumCoherenceLevel: Float {
         quantumLightEmulator?.coherenceLevel ?? 0.0
@@ -480,7 +649,7 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Start the unified control system
     public func start() {
-        print("[UnifiedControlHub] Starting control system...")
+        Log.info("Starting control system...", category: .system)
 
         // Start face tracking if enabled
         faceTrackingManager?.start()
@@ -496,7 +665,7 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Stop the unified control system
     public func stop() {
-        print("[UnifiedControlHub] Stopping control system...")
+        Log.info("Stopping control system...", category: .system)
 
         #if os(iOS) || os(tvOS)
         displayLink?.invalidate()
@@ -795,7 +964,25 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     private func updateFromGazeTracking() {
-        // TODO: Implement when GazeTracker is integrated
+        // Gaze tracking updates happen via Combine subscription
+        // See handleGazeUpdate(), handleAttentionChange(), handleGazeZoneChange()
+        // This method is called at 60Hz but actual processing is event-driven
+
+        if #available(iOS 15.0, macOS 12.0, *) {
+            guard let tracker = gazeTracker, tracker.isTracking else { return }
+
+            // Sync gaze data to cross-platform session if active
+            if let _ = crossPlatformSessionManager?.activeSession {
+                let params = tracker.getControlParameters()
+                // Gaze-derived parameters can be synced as part of biometric data
+                let hrvModifier = params.attention * 20  // Attention affects coherence perception
+                syncBiometricsToSession(
+                    hrvCoherence: healthKitManager?.hrvCoherence ?? 50 + Float(hrvModifier),
+                    heartRate: Float(healthKitManager?.heartRate ?? 72),
+                    breathingRate: Float(healthKitManager?.breathingRate ?? 12)
+                )
+            }
+        }
     }
 
     // MARK: - Conflict Resolution
