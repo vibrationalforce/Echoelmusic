@@ -280,6 +280,20 @@
 - **Attention Tracking** - Fixation duration, stability, attention score
 - **Accessibility** - Eye-based navigation for motor-limited users
 
+#### Gaze → Audio-Visual Mapping (UnifiedControlHub Integration)
+| Gaze Input | Audio Output | Visual Output |
+|------------|--------------|---------------|
+| Gaze X (0-1) | Pan (-1 to +1) | Focal point X |
+| Attention | Reverb wet (inverse) | Mandala symmetry |
+| Focus | Filter cutoff | Pattern attraction |
+| Arousal | Quantum coherence | Visual intensity |
+| Zone (9) | Frequency band | Particle emission |
+
+**Zone → Frequency Mapping:**
+- Top row: High frequencies (6-8kHz)
+- Middle row: Mid frequencies (2-4kHz)
+- Bottom row: Bass frequencies (200-500Hz)
+
 #### Real-Time HealthKit Streaming (NEW)
 - **RealTimeHealthKitEngine** - Live biometric data streaming
 - **HRV Coherence Calculation** - SDNN, RMSSD, pNN50 from RR intervals
@@ -609,7 +623,7 @@ mpe.setVoiceTimbre(voice: voice, timbre: smile)
 
 | File | Line | TODO | Status |
 |------|------|------|--------|
-| `UnifiedControlHub.swift` | 54 | Add GazeTracker integration | Future Phase |
+| `UnifiedControlHub.swift` | 54 | Add GazeTracker integration | ✅ Completed |
 | `UnifiedControlHub.swift` | 429 | Apply AFA field to SpatialAudioEngine | Phase 4 |
 | `UnifiedControlHub.swift` | 626-627 | Calculate breathing rate from HRV, get audio level | Uses fallback values |
 | `StreamEngine.swift` | 329, 365, 547 | Scene rendering, crossfade, frame encoding | Streaming feature |

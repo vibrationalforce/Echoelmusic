@@ -315,6 +315,34 @@ class SpatialAudioEngine: ObservableObject {
         environment.distanceAttenuationParameters.maximumDistance = max(10.0, distance * 2.0)
     }
 
+    // MARK: - Gaze-Based Pan Control
+
+    /// Set master pan position based on gaze tracking
+    /// - Parameter pan: Pan value from -1.0 (full left) to +1.0 (full right)
+    public func setPan(_ pan: Float) {
+        let clampedPan = max(-1.0, min(1.0, pan))
+
+        // Apply to all source nodes
+        for (_, playerNode) in sourceNodes {
+            playerNode.pan = clampedPan
+        }
+
+        // Apply to mixer if available
+        if let mixer = mixerNode {
+            mixer.pan = clampedPan
+        }
+    }
+
+    /// Set reverb blend amount
+    /// - Parameter blend: Reverb wetness from 0.0 (dry) to 1.0 (fully wet)
+    public func setReverbBlend(_ blend: Float) {
+        let clampedBlend = max(0.0, min(1.0, blend))
+
+        if #available(iOS 19.0, *), let environment = environmentNode {
+            environment.reverbParameters.wetDryMix = clampedBlend * 50.0  // Scale to 0-50%
+        }
+    }
+
     // MARK: - 4D Orbital Motion
 
     func update4DOrbitalMotion(deltaTime: Double) {

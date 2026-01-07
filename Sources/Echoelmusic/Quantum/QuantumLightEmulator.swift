@@ -625,6 +625,46 @@ public class QuantumLightEmulator: ObservableObject {
         }
     }
 
+    // MARK: - Gaze Input Integration
+
+    /// Update quantum visualization from gaze tracking inputs
+    /// - Parameters:
+    ///   - gazeX: Horizontal gaze position (0-1)
+    ///   - gazeY: Vertical gaze position (0-1)
+    ///   - attention: Attention level from gaze stability (0-1)
+    ///   - arousal: Arousal level from pupil dilation (0-1)
+    public func updateGazeInputs(gazeX: Float, gazeY: Float, attention: Float, arousal: Float) {
+        // Map gaze position to light field focal point
+        let focalX = (gazeX - 0.5) * 2.0  // Convert to -1 to +1
+        let focalY = (gazeY - 0.5) * 2.0
+
+        // Update light field focus based on gaze
+        if var field = currentLightField {
+            // Shift photon positions toward gaze point
+            for i in 0..<field.photons.count {
+                let attraction = attention * 0.1  // Attention increases attraction
+                let dx = focalX - field.photons[i].position.x
+                let dy = focalY - field.photons[i].position.y
+
+                field.photons[i].position.x += dx * attraction
+                field.photons[i].position.y += dy * attraction
+            }
+        }
+
+        // Arousal affects quantum coherence perception
+        let arousalModifier = arousal * 0.2  // 0-20% modifier
+        hrvCoherence = min(1.0, hrvCoherence + arousalModifier)
+
+        // Attention affects visualization complexity
+        if attention > 0.7 {
+            // High attention: more focused, coherent patterns
+            if let state = currentQuantumState {
+                var mutableState = state
+                mutableState.coherence = min(1.0, state.coherence + attention * 0.1)
+            }
+        }
+    }
+
     // MARK: - Audio Processing
 
     private func applyQuantumInspiredProcessing(_ samples: [Float]) -> [Float] {
