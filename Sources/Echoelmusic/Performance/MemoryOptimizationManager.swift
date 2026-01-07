@@ -190,10 +190,11 @@ class MemoryOptimizationManager {
             let algorithm = COMPRESSION_LZ4
 
             guard let compressedData = data.withUnsafeBytes({ (sourcePtr: UnsafeRawBufferPointer) -> Data? in
+                guard let baseAddress = sourcePtr.baseAddress else { return nil }
                 let size = compression_encode_buffer(
                     destinationBuffer,
                     data.count,
-                    sourcePtr.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                    baseAddress.assumingMemoryBound(to: UInt8.self),
                     data.count,
                     nil,
                     algorithm
@@ -219,10 +220,11 @@ class MemoryOptimizationManager {
             let algorithm = COMPRESSION_LZ4
 
             guard let decompressedData = compressedData.withUnsafeBytes({ (sourcePtr: UnsafeRawBufferPointer) -> Data? in
+                guard let baseAddress = sourcePtr.baseAddress else { return nil }
                 let size = compression_decode_buffer(
                     destinationBuffer,
                     uncompressedSize,
-                    sourcePtr.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                    baseAddress.assumingMemoryBound(to: UInt8.self),
                     compressedData.count,
                     nil,
                     algorithm

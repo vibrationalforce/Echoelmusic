@@ -25,7 +25,7 @@ class ClinicalEvidenceBase: ObservableObject {
         let name: String
         let indication: String
         let evidenceLevel: EvidenceLevel
-        let cochrane Review: String?
+        let cochraneReview: String?
         let effectSize: EffectSize
         let safetyProfile: SafetyProfile
         let contraindications: [String]

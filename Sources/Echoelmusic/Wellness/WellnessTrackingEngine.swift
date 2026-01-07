@@ -730,9 +730,10 @@ public final class WellnessTrackingEngine: ObservableObject {
         let favoriteCategory = categoryCounts.max { $0.value < $1.value }?.key
 
         // Calculate mood changes
-        let sessionsWithMood = sessions.filter { $0.moodBefore != nil && $0.moodAfter != nil }
-        let avgBefore = sessionsWithMood.isEmpty ? 3.0 : sessionsWithMood.reduce(0.0) { $0 + Double($1.moodBefore!.rawValue) } / Double(sessionsWithMood.count)
-        let avgAfter = sessionsWithMood.isEmpty ? 3.0 : sessionsWithMood.reduce(0.0) { $0 + Double($1.moodAfter!.rawValue) } / Double(sessionsWithMood.count)
+        let moodBeforeValues = sessions.compactMap { $0.moodBefore?.rawValue }
+        let moodAfterValues = sessions.compactMap { $0.moodAfter?.rawValue }
+        let avgBefore = moodBeforeValues.isEmpty ? 3.0 : moodBeforeValues.reduce(0.0) { $0 + Double($1) } / Double(moodBeforeValues.count)
+        let avgAfter = moodAfterValues.isEmpty ? 3.0 : moodAfterValues.reduce(0.0) { $0 + Double($1) } / Double(moodAfterValues.count)
 
         // Weekly minutes
         var weeklyMinutes = [Int](repeating: 0, count: 7)

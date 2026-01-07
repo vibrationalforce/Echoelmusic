@@ -450,19 +450,23 @@ class LLMService: ObservableObject {
     }
 
     private func summarizeBioData(_ data: [BioDataPoint]) -> String {
-        guard !data.isEmpty else { return "No data available" }
+        guard !data.isEmpty,
+              let firstPoint = data.first,
+              let lastPoint = data.last else {
+            return "No data available"
+        }
 
         let avgHR = data.map { $0.heartRate }.reduce(0, +) / Double(data.count)
         let avgHRV = data.map { $0.hrv }.reduce(0, +) / Double(data.count)
         let avgCoherence = data.map { $0.coherence }.reduce(0, +) / Double(data.count)
-        let duration = data.last!.timestamp.timeIntervalSince(data.first!.timestamp)
+        let duration = lastPoint.timestamp.timeIntervalSince(firstPoint.timestamp)
 
         return """
         - Duration: \(Int(duration / 60)) minutes
         - Average Heart Rate: \(Int(avgHR)) BPM
         - Average HRV: \(Int(avgHRV)) ms
         - Average Coherence: \(Int(avgCoherence * 100))%
-        - Trend: \(avgCoherence > data.first!.coherence ? "Improving" : "Declining")
+        - Trend: \(avgCoherence > firstPoint.coherence ? "Improving" : "Declining")
         """
     }
 }
