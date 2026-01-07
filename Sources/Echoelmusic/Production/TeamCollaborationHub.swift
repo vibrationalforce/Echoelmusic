@@ -8,6 +8,8 @@ import Combine
 @MainActor
 class TeamCollaborationHub: ObservableObject {
 
+    private let log = ProfessionalLogger.shared
+
     // MARK: - Singleton
 
     static let shared = TeamCollaborationHub()
@@ -33,7 +35,7 @@ class TeamCollaborationHub: ObservableObject {
 
     private init() {
         startWellnessMonitoring()
-        print("✅ TeamCollaborationHub: Initialized")
+        log.info(category: .social, "✅ TeamCollaborationHub: Initialized")
     }
 
     // MARK: - Session Management

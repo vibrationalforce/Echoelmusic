@@ -453,7 +453,7 @@ class FutureDevicePredictor: ObservableObject {
 
         readinessScore = (score / totalPredictions) * 100.0
 
-        print("🎯 Readiness Score: \(String(format: "%.1f", readinessScore))%")
+        log.hardware("🎯 Readiness Score: \(String(format: "%.1f", readinessScore))%")
     }
 
     // MARK: - Get Predictions By Year

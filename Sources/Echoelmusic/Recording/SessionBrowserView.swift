@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Session browser and manager for loading/organizing recording sessions
 struct SessionBrowserView: View {
+    private let log = ProfessionalLogger.shared
     @EnvironmentObject var recordingEngine: RecordingEngine
     @Environment(\.dismiss) var dismiss
 
@@ -214,14 +215,14 @@ struct SessionBrowserView: View {
             try recordingEngine.loadSession(id: id)
             dismiss()
         } catch {
-            print("❌ Failed to load session: \(error)")
+            log.error(category: .recording, "❌ Failed to load session: \(error)")
         }
     }
 
     private func deleteSession(_ id: UUID) {
         sessions.removeAll { $0.id == id }
         // In real implementation, delete from disk
-        print("🗑️ Deleted session: \(id)")
+        log.info(category: .recording, "🗑️ Deleted session: \(id)")
     }
 }
 

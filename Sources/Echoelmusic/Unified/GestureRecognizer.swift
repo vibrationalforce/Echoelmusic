@@ -7,6 +7,8 @@ import Combine
 @MainActor
 class GestureRecognizer: ObservableObject {
 
+    private let log = ProfessionalLogger.shared
+
     // MARK: - Published Properties
 
     /// Currently detected gesture for left hand
@@ -63,7 +65,7 @@ class GestureRecognizer: ObservableObject {
 
     init(handTracker: HandTrackingManager) {
         self.handTracker = handTracker
-        print("✋ GestureRecognizer initialized")
+        log.info(category: .spatial, "✋ GestureRecognizer initialized")
     }
 
 

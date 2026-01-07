@@ -16,6 +16,8 @@ import Combine
 @MainActor
 class WorldMusicBridge: ObservableObject {
 
+    private let log = ProfessionalLogger.shared
+
     // MARK: - Singleton
 
     static let shared = WorldMusicBridge()
@@ -90,7 +92,7 @@ class WorldMusicBridge: ObservableObject {
 
     private init() {
         loadMusicStyles()
-        print("✅ WorldMusicBridge: Loaded \(availableStyles.count) music styles")
+        log.info(category: .audio, "✅ WorldMusicBridge: Loaded \(availableStyles.count) music styles")
     }
 
     // MARK: - Load Music Styles (Mirror of WorldMusicDatabase.cpp)

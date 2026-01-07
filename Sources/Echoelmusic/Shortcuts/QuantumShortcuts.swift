@@ -381,7 +381,7 @@ public class ShortcutDonationManager {
         let interaction = INInteraction(intent: intent, response: nil)
         interaction.donate { error in
             if let error = error {
-                print("[Shortcuts] Donation error: \(error)")
+                ProfessionalLogger.shared.debug(category: .system, "[Shortcuts] Donation error: \(error)")
             }
         }
     }

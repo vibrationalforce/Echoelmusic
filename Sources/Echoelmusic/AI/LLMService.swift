@@ -13,6 +13,8 @@ import Combine
 @MainActor
 class LLMService: ObservableObject {
 
+    private let log = ProfessionalLogger.shared
+
     // MARK: - Singleton
 
     static let shared = LLMService()
@@ -637,7 +639,7 @@ struct LLMChatView: View {
             do {
                 _ = try await llm.sendMessage(text, bioContext: context)
             } catch {
-                print("LLM Error: \(error)")
+                log.error(category: .intelligence, "LLM Error: \(error)")
             }
         }
     }
