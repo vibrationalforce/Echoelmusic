@@ -160,8 +160,8 @@ public struct DataStatistics: Sendable {
         }
 
         let sorted = values.sorted()
-        min = sorted.first!
-        max = sorted.last!
+        min = sorted.first ?? 0
+        max = sorted.last ?? 0
         sum = values.reduce(0, +)
         mean = sum / Double(count)
         range = max - min

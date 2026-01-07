@@ -102,10 +102,11 @@ class AIComposer: ObservableObject {
         print("🎼 AIComposer: Generating melody in \(key) \(scale) (\(bars) bars)")
 
         // Get scale pattern and root note
+        let majorScale = [0, 2, 4, 5, 7, 9, 11]  // C major scale pattern
         guard let scalePattern = scalePatterns[scale.lowercased()],
               let rootNote = rootNotes[key] else {
             // Fallback to C major
-            return generateAlgorithmicMelody(root: 60, scale: scalePatterns["major"]!, bars: bars)
+            return generateAlgorithmicMelody(root: 60, scale: scalePatterns["major"] ?? majorScale, bars: bars)
         }
 
         let notes = generateAlgorithmicMelody(root: rootNote, scale: scalePattern, bars: bars)

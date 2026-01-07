@@ -234,8 +234,10 @@ class ScriptEngine: ObservableObject {
         try await Task.sleep(nanoseconds: 500_000_000)
 
         // 3. Create local script directory
-        let scriptsDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("Echoelmusic/Scripts", isDirectory: true)
+        guard let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            throw ScriptError.executionFailed("Cannot access application support directory")
+        }
+        let scriptsDirectory = appSupportURL.appendingPathComponent("Echoelmusic/Scripts", isDirectory: true)
         try? FileManager.default.createDirectory(at: scriptsDirectory, withIntermediateDirectories: true)
 
         // 4. Save script locally

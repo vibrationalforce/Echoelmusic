@@ -943,9 +943,10 @@ struct SchedulingSuggestion {
     var accommodations: [String]
 
     var formattedHours: String {
-        guard !recommendedHours.isEmpty else { return "No overlapping hours found" }
-        let start = recommendedHours.first!
-        let end = recommendedHours.last! + 1
-        return "\(start):00 - \(end):00 \(timezone.abbreviation() ?? "UTC")"
+        guard let start = recommendedHours.first,
+              let end = recommendedHours.last else {
+            return "No overlapping hours found"
+        }
+        return "\(start):00 - \(end + 1):00 \(timezone.abbreviation() ?? "UTC")"
     }
 }

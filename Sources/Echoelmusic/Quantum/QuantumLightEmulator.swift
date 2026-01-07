@@ -749,12 +749,13 @@ public class QuantumCreativityEngine {
         let intervals = [2, 2, 1, 2, 2, 2, 1, 3, 2, 1, 2, 1, 2, 2, 1] // Various scale intervals
 
         for i in 1..<scaleSize {
+            guard let lastNote = notes.last else { continue }
             if let state = emulator.currentQuantumState {
                 let intervalIndex = state.collapse() % intervals.count
                 let interval = intervals[intervalIndex]
-                notes.append(notes.last! + interval)
+                notes.append(lastNote + interval)
             } else {
-                notes.append(notes.last! + 2)
+                notes.append(lastNote + 2)
             }
         }
 
