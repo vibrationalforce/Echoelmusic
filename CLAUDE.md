@@ -756,6 +756,7 @@ mkdir build && cd build && cmake .. && make
 - `RELEASE_READINESS.md` - Platform submission checklist
 - `.github/CLAUDE_TODO.md` - Detailed sprint planning
 - `ARCHITECTURE_SCIENTIFIC.md` - Scientific background
+- `RESEARCH_EVIDENCE.md` - Evidence-based research & health disclaimers
 
 ---
 
