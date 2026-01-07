@@ -425,14 +425,14 @@ public final class QuantumLoopLightScienceEngine: ObservableObject {
             }
         }
 
-        print("⚛️ Quantum Loop Light Science Engine ACTIVATED")
+        log.quantum("⚛️ Quantum Loop Light Science Engine ACTIVATED")
     }
 
     public func stop() {
         isActive = false
         updateTimer?.invalidate()
         updateTimer = nil
-        print("⚛️ Quantum Loop Light Science Engine DEACTIVATED")
+        log.quantum("⚛️ Quantum Loop Light Science Engine DEACTIVATED")
     }
 
     private func tick() {

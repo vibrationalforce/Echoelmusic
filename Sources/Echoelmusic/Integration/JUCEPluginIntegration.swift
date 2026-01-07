@@ -1,4 +1,5 @@
 import Foundation
+import os.log
 
 #if canImport(BioDataBridge)
 import BioDataBridge
@@ -48,7 +49,7 @@ class JUCEPluginIntegration {
         checkPluginStatus()
         #endif
 
-        print("🎸 JUCE Plugin Integration initialized")
+        log.info("🎸 JUCE Plugin Integration initialized", category: .plugin)
     }
 
     // MARK: - Bio-Data Updates
@@ -74,9 +75,9 @@ class JUCEPluginIntegration {
             timestamp: Date().timeIntervalSince1970
         )
 
-        print("🎸 Bio-data sent to JUCE plugin: HRV=\(hrv), Coherence=\(coherence), HR=\(heartRate)")
+        log.info("🎸 Bio-data sent to JUCE plugin: HRV=\(hrv), Coherence=\(coherence), HR=\(heartRate)", category: .plugin)
         #else
-        print("⚠️ BioDataBridge not available - JUCE plugin not compiled")
+        log.info("⚠️ BioDataBridge not available - JUCE plugin not compiled", category: .plugin, level: .warning)
         #endif
     }
 
@@ -107,8 +108,8 @@ class JUCEPluginIntegration {
         isPluginLoaded = bridge.isPluginLoaded()
         pluginVersion = bridge.getPluginVersion() ?? "Unknown"
 
-        print("🎸 JUCE Plugin Status: \(isPluginLoaded ? "Loaded" : "Not Loaded")")
-        print("🎸 Plugin Version: \(pluginVersion)")
+        log.info("🎸 JUCE Plugin Status: \(isPluginLoaded ? "Loaded" : "Not Loaded")", category: .plugin)
+        log.info("🎸 Plugin Version: \(pluginVersion)", category: .plugin)
         #endif
     }
 
@@ -195,7 +196,7 @@ extension JUCEPluginIntegration {
     /// Example: Connect to HealthKit manager
     func connectToHealthKit(manager: AnyObject) {
         // This would be called from the main app to connect HealthKit data
-        print("🎸 Connecting JUCE plugin to HealthKit manager")
+        log.info("🎸 Connecting JUCE plugin to HealthKit manager", category: .plugin)
 
         // In practice, you would set up a Combine pipeline:
         // healthKitManager.$currentHRV

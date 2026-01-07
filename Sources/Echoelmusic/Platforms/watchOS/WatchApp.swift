@@ -109,7 +109,7 @@ class WatchApp {
     func startSession(type: SessionType) async throws {
         guard !isSessionActive else { return }
 
-        print("⌚ Starting \(type.rawValue) session on Apple Watch")
+        log.info("⌚ Starting \(type.rawValue) session on Apple Watch", category: .system)
 
         // Starte HealthKit Workout
         try await startWorkoutSession(type: type)
@@ -130,7 +130,7 @@ class WatchApp {
     func stopSession() async {
         guard isSessionActive else { return }
 
-        print("⌚ Stopping session on Apple Watch")
+        log.info("⌚ Stopping session on Apple Watch", category: .system)
 
         // Stoppe Workout
         workoutSession?.end()
@@ -177,7 +177,7 @@ class WatchApp {
                                                    configuration: configuration)
             workoutSession?.startActivity(with: Date())
         } catch {
-            print("❌ Failed to start workout session: \(error)")
+            log.error("❌ Failed to start workout session: \(error)", category: .system)
             throw error
         }
     }
@@ -259,7 +259,7 @@ class WatchApp {
         ]
 
         await watchConnectivityManager.sendSessionData(sessionDict)
-        print("💾 Session saved and synced: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        log.info("💾 Session saved and synced: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)", category: .system)
     }
 
     // MARK: - Real-time Bio Sync
@@ -381,7 +381,7 @@ class WatchHealthKitManager {
 
     private func startHeartRateQuery() {
         guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
-            print("❌ Heart rate quantity type unavailable")
+            log.error("❌ Heart rate quantity type unavailable", category: .system)
             return
         }
 
@@ -424,7 +424,7 @@ class WatchHealthKitManager {
 
     private func startHRVQuery() {
         guard let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else {
-            print("❌ HRV quantity type unavailable")
+            log.error("❌ HRV quantity type unavailable", category: .system)
             return
         }
 
@@ -489,22 +489,22 @@ class WatchAudioEngine {
 
     func start(breathingRate: Double) async {
         isPlaying = true
-        print("🔊 Watch Audio Engine started")
+        log.info("🔊 Watch Audio Engine started", category: .system)
     }
 
     func stop() async {
         isPlaying = false
-        print("🔊 Watch Audio Engine stopped")
+        log.info("🔊 Watch Audio Engine stopped", category: .system)
     }
 
     func playInhaleTone() async {
         // Spiele sanften aufsteigenden Ton
-        print("🎵 Inhale tone")
+        log.info("🎵 Inhale tone", category: .system)
     }
 
     func playExhaleTone() async {
         // Spiele sanften absteigenden Ton
-        print("🎵 Exhale tone")
+        log.info("🎵 Exhale tone", category: .system)
     }
 }
 
@@ -524,7 +524,7 @@ class WatchConnectivityManager: NSObject, WCSessionDelegate {
             session = WCSession.default
             session?.delegate = self
             session?.activate()
-            print("⌚ WatchConnectivity activated")
+            log.info("⌚ WatchConnectivity activated", category: .system)
         }
     }
 
@@ -534,14 +534,14 @@ class WatchConnectivityManager: NSObject, WCSessionDelegate {
         guard let session = session, session.isReachable else {
             // Store locally if iPhone not reachable
             try? session?.updateApplicationContext(["pendingSession": data])
-            print("⌚ Session data stored locally (iPhone not reachable)")
+            log.info("⌚ Session data stored locally (iPhone not reachable)", category: .system)
             return
         }
 
         session.sendMessage(["sessionData": data], replyHandler: { reply in
-            print("⌚ Session data synced to iPhone: \(reply)")
+            log.info("⌚ Session data synced to iPhone: \(reply)", category: .system)
         }, errorHandler: { error in
-            print("❌ Failed to sync session: \(error)")
+            log.error("❌ Failed to sync session: \(error)", category: .system)
         })
     }
 
@@ -557,7 +557,7 @@ class WatchConnectivityManager: NSObject, WCSessionDelegate {
     // MARK: - WCSessionDelegate
 
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
-        print("⌚ WCSession activation: \(activationState.rawValue)")
+        log.info("⌚ WCSession activation: \(activationState.rawValue)", category: .system)
     }
 
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
@@ -573,9 +573,9 @@ class WatchConnectivityManager: NSObject, WCSessionDelegate {
     private func handleCommand(_ command: String) {
         switch command {
         case "startSession":
-            print("⌚ Received start session command from iPhone")
+            log.info("⌚ Received start session command from iPhone", category: .system)
         case "stopSession":
-            print("⌚ Received stop session command from iPhone")
+            log.info("⌚ Received stop session command from iPhone", category: .system)
         default:
             break
         }

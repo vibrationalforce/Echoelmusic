@@ -255,7 +255,7 @@ public final class RealTimeHealthKitEngine: ObservableObject {
     public func requestAuthorization() async -> Bool {
         #if canImport(HealthKit)
         guard let healthStore = healthStore else {
-            print("❤️ HealthKit not available on this device")
+            log.biofeedback("❤️ HealthKit not available on this device", level: .warning)
             return false
         }
 
@@ -275,10 +275,10 @@ public final class RealTimeHealthKitEngine: ObservableObject {
             await MainActor.run {
                 self.isAuthorized = true
             }
-            print("❤️ HealthKit authorization granted")
+            log.biofeedback("❤️ HealthKit authorization granted")
             return true
         } catch {
-            print("❤️ HealthKit authorization failed: \(error)")
+            log.biofeedback("❤️ HealthKit authorization failed: \(error)", level: .error)
             return false
         }
         #else
@@ -302,8 +302,8 @@ public final class RealTimeHealthKitEngine: ObservableObject {
         startSimulatedStreaming()
 
         isStreaming = true
-        print("❤️ RealTimeHealthKitEngine: Started streaming")
-        print(Self.healthDisclaimer)
+        log.biofeedback("❤️ RealTimeHealthKitEngine: Started streaming")
+        log.biofeedback(Self.healthDisclaimer)
     }
 
     /// Stop streaming
@@ -316,7 +316,7 @@ public final class RealTimeHealthKitEngine: ObservableObject {
         stopHealthKitQueries()
         #endif
 
-        print("❤️ RealTimeHealthKitEngine: Stopped streaming")
+        log.biofeedback("❤️ RealTimeHealthKitEngine: Stopped streaming")
     }
 
     #if canImport(HealthKit)

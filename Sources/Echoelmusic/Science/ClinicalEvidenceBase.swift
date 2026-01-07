@@ -84,8 +84,8 @@ class ClinicalEvidenceBase: ObservableObject {
 
     init() {
         loadEvidenceBasedInterventions()
-        print("✅ Clinical Evidence Base: Initialized")
-        print("📚 All interventions backed by peer-reviewed research")
+        log.science("✅ Clinical Evidence Base: Initialized")
+        log.science("📚 All interventions backed by peer-reviewed research")
     }
 
     private func loadEvidenceBasedInterventions() {

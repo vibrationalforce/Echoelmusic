@@ -75,7 +75,7 @@ final class ImmersiveExperienceManager {
     // MARK: - Experience Control
 
     func startExperience(_ experience: ImmersiveExperience) async throws {
-        print("🥽 Starting immersive experience: \(experience.name)")
+        log.spatial("🥽 Starting immersive experience: \(experience.name)")
 
         activeExperience = experience
         isImmersive = true
@@ -85,7 +85,7 @@ final class ImmersiveExperienceManager {
     }
 
     func stopExperience() async {
-        print("🥽 Stopping immersive experience")
+        log.spatial("🥽 Stopping immersive experience")
 
         stopUpdateLoop()
         activeExperience = nil
@@ -93,7 +93,7 @@ final class ImmersiveExperienceManager {
     }
 
     func setMode(_ mode: ImmersiveMode) async {
-        print("🥽 Setting immersive mode: \(mode.rawValue)")
+        log.spatial("🥽 Setting immersive mode: \(mode.rawValue)")
         currentMode = mode
     }
 

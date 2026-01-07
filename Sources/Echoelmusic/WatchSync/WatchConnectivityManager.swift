@@ -134,14 +134,14 @@ class WatchConnectivityManager: NSObject, ObservableObject {
 
     private func setupSession() {
         guard let session = session else {
-            print("⌚ WatchConnectivity not supported on this device")
+            log.info("⌚ WatchConnectivity not supported on this device", category: .system)
             return
         }
 
         session.delegate = self
         session.activate()
 
-        print("⌚ WatchConnectivity session activated")
+        log.info("⌚ WatchConnectivity session activated", category: .system)
     }
 
     // MARK: - Public Methods
@@ -149,7 +149,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     /// Send bio data to Watch for display
     func sendBioDataToWatch(heartRate: Double, hrv: Double, coherence: Double) {
         guard let session = session, session.isReachable else {
-            print("⌚ Watch not reachable")
+            log.info("⌚ Watch not reachable", category: .system)
             return
         }
 
@@ -162,14 +162,14 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         ]
 
         session.sendMessage(message, replyHandler: nil) { error in
-            print("⌚ Failed to send bio data: \(error.localizedDescription)")
+            log.info("⌚ Failed to send bio data: \(error.localizedDescription)", category: .system, level: .error)
         }
     }
 
     /// Request Watch to start a session
     func startWatchSession(type: String, duration: TimeInterval) {
         guard let session = session, session.isReachable else {
-            print("⌚ Watch not reachable")
+            log.info("⌚ Watch not reachable", category: .system)
             return
         }
 
@@ -181,9 +181,9 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         ]
 
         session.sendMessage(message, replyHandler: { reply in
-            print("⌚ Watch session started: \(reply)")
+            log.info("⌚ Watch session started: \(reply)", category: .system)
         }) { error in
-            print("⌚ Failed to start watch session: \(error.localizedDescription)")
+            log.info("⌚ Failed to start watch session: \(error.localizedDescription)", category: .system, level: .error)
         }
     }
 
@@ -197,7 +197,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         ]
 
         session.sendMessage(message, replyHandler: nil) { error in
-            print("⌚ Failed to stop watch session: \(error.localizedDescription)")
+            log.info("⌚ Failed to stop watch session: \(error.localizedDescription)", category: .system, level: .error)
         }
     }
 
@@ -220,9 +220,9 @@ class WatchConnectivityManager: NSObject, ObservableObject {
 
         do {
             try session.updateApplicationContext(settings)
-            print("⌚ Watch settings updated")
+            log.info("⌚ Watch settings updated", category: .system)
         } catch {
-            print("⌚ Failed to update watch settings: \(error.localizedDescription)")
+            log.info("⌚ Failed to update watch settings: \(error.localizedDescription)", category: .system, level: .error)
         }
     }
 
@@ -240,7 +240,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
                 self?.handleBioDataReply(reply)
             }
         }) { error in
-            print("⌚ Failed to request bio data: \(error.localizedDescription)")
+            log.info("⌚ Failed to request bio data: \(error.localizedDescription)", category: .system, level: .error)
         }
     }
 
@@ -249,7 +249,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         guard let session = session else { return }
 
         session.transferFile(url, metadata: metadata)
-        print("⌚ File transfer initiated: \(url.lastPathComponent)")
+        log.info("⌚ File transfer initiated: \(url.lastPathComponent)", category: .system)
     }
 
     /// Update Watch complication with latest data
@@ -265,7 +265,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         ]
 
         session.transferCurrentComplicationUserInfo(userInfo)
-        print("⌚ Complication updated")
+        log.info("⌚ Complication updated", category: .system)
     }
 
     // MARK: - Private Methods
@@ -289,7 +289,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             timestamp: Date()
         )
 
-        print("⌚ Received bio data: HR=\(heartRate), HRV=\(hrv), Coherence=\(coherence)")
+        log.info("⌚ Received bio data: HR=\(heartRate), HRV=\(hrv), Coherence=\(coherence)", category: .system)
     }
 
     private func handleReceivedMessage(_ message: [String: Any]) {
@@ -306,7 +306,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             handleUserAction(message)
 
         default:
-            print("⌚ Unknown message type: \(type)")
+            log.info("⌚ Unknown message type: \(type)", category: .system)
         }
     }
 
@@ -330,7 +330,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             breathingCycles: message["breathingCycles"] as? Int ?? 0
         )
 
-        print("⌚ Session complete: \(duration)s, Avg Coherence: \(avgCoherence)")
+        log.info("⌚ Session complete: \(duration)s, Avg Coherence: \(avgCoherence)", category: .system)
 
         // Post notification for other parts of the app
         NotificationCenter.default.post(
@@ -358,10 +358,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         Task { @MainActor in
             if let error = error {
-                print("⌚ WCSession activation failed: \(error.localizedDescription)")
+                log.info("⌚ WCSession activation failed: \(error.localizedDescription)", category: .system, level: .error)
                 syncStatus = .error(error.localizedDescription)
             } else {
-                print("⌚ WCSession activated: \(activationState.rawValue)")
+                log.info("⌚ WCSession activated: \(activationState.rawValue)", category: .system)
                 isWatchReachable = session.isReachable
                 isWatchAppInstalled = session.isWatchAppInstalled
                 syncStatus = .synced
@@ -371,11 +371,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     #if os(iOS)
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {
-        print("⌚ WCSession became inactive")
+        log.info("⌚ WCSession became inactive", category: .system)
     }
 
     nonisolated func sessionDidDeactivate(_ session: WCSession) {
-        print("⌚ WCSession deactivated")
+        log.info("⌚ WCSession deactivated", category: .system)
         // Reactivate for switching watches
         session.activate()
     }
@@ -384,7 +384,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
     nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
         Task { @MainActor in
             isWatchReachable = session.isReachable
-            print("⌚ Watch reachability changed: \(session.isReachable)")
+            log.info("⌚ Watch reachability changed: \(session.isReachable)", category: .system)
         }
     }
 
@@ -405,7 +405,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
         Task { @MainActor in
-            print("⌚ Received application context: \(applicationContext)")
+            log.info("⌚ Received application context: \(applicationContext)", category: .system)
             // Handle settings sync from Watch
         }
     }
@@ -420,9 +420,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     nonisolated func session(_ session: WCSession, didFinish fileTransfer: WCSessionFileTransfer, error: Error?) {
         if let error = error {
-            print("⌚ File transfer failed: \(error.localizedDescription)")
+            log.info("⌚ File transfer failed: \(error.localizedDescription)", category: .system, level: .error)
         } else {
-            print("⌚ File transfer completed: \(fileTransfer.file.fileURL.lastPathComponent)")
+            log.info("⌚ File transfer completed: \(fileTransfer.file.fileURL.lastPathComponent)", category: .system)
         }
     }
 }

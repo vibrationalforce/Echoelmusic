@@ -60,7 +60,7 @@ class AIComposer: ObservableObject {
 
     init() {
         loadModels()
-        print("✅ AIComposer: Initialized with music theory engine")
+        log.audio("✅ AIComposer: Initialized with music theory engine")
     }
 
     private func loadModels() {
@@ -71,23 +71,23 @@ class AIComposer: ObservableObject {
                 // Attempt to load CoreML models from bundle
                 if let melodyURL = Bundle.main.url(forResource: "MelodyGenerator", withExtension: "mlmodelc") {
                     melodyModel = try MLModel(contentsOf: melodyURL)
-                    print("✅ AIComposer: Melody model loaded")
+                    log.audio("✅ AIComposer: Melody model loaded")
                 }
 
                 if let chordURL = Bundle.main.url(forResource: "ChordPredictor", withExtension: "mlmodelc") {
                     chordModel = try MLModel(contentsOf: chordURL)
-                    print("✅ AIComposer: Chord model loaded")
+                    log.audio("✅ AIComposer: Chord model loaded")
                 }
 
                 if let drumURL = Bundle.main.url(forResource: "DrumPatternGenerator", withExtension: "mlmodelc") {
                     drumModel = try MLModel(contentsOf: drumURL)
-                    print("✅ AIComposer: Drum model loaded")
+                    log.audio("✅ AIComposer: Drum model loaded")
                 }
 
                 modelStatus = .ready
             } catch {
                 // Models not available - use algorithmic fallback
-                print("ℹ️ AIComposer: CoreML models not found, using algorithmic generation")
+                log.audio("ℹ️ AIComposer: CoreML models not found, using algorithmic generation")
                 modelStatus = .ready
             }
         }
@@ -99,7 +99,7 @@ class AIComposer: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎼 AIComposer: Generating melody in \(key) \(scale) (\(bars) bars)")
+        log.audio("🎼 AIComposer: Generating melody in \(key) \(scale) (\(bars) bars)")
 
         // Get scale pattern and root note
         let majorScale = [0, 2, 4, 5, 7, 9, 11]  // C major scale pattern
@@ -182,7 +182,7 @@ class AIComposer: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎹 AIComposer: Suggesting chords for \(key) \(mood)")
+        log.audio("🎹 AIComposer: Suggesting chords for \(key) \(mood)")
 
         let chords = [
             Chord(root: "C", type: .major),
@@ -201,7 +201,7 @@ class AIComposer: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🥁 AIComposer: Generating \(style.rawValue) drum pattern (\(bars) bars)")
+        log.audio("🥁 AIComposer: Generating \(style.rawValue) drum pattern (\(bars) bars)")
 
         var hits: [DrumHit] = []
         let beatsPerBar = 4
@@ -297,7 +297,7 @@ class AIComposer: ObservableObject {
         let style = mapBioToMusicStyle(hrv: hrv, coherence: coherence, heartRate: heartRate)
         let scale = style.suggestedScale
 
-        print("🧠 AIComposer: Bio-reactive composition - Style: \(style.rawValue), Scale: \(scale)")
+        log.audio("🧠 AIComposer: Bio-reactive composition - Style: \(style.rawValue), Scale: \(scale)")
 
         async let melodyTask = generateMelody(key: key, scale: scale, bars: bars)
         async let chordsTask = suggestChordProgression(key: key, mood: style.rawValue.lowercased())

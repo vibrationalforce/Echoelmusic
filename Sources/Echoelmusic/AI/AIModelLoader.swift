@@ -112,7 +112,7 @@ class AIModelLoader: ObservableObject {
         // Create cache directory if needed
         try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
 
-        print("🤖 AIModelLoader: Initialized with cache at \(cacheDirectory.path)")
+        log.info("🤖 AIModelLoader: Initialized with cache at \(cacheDirectory.path)", category: .system)
     }
 
     // MARK: - Loading Methods
@@ -131,10 +131,10 @@ class AIModelLoader: ObservableObject {
             do {
                 if let model = try await loadModel(modelType) {
                     loadedModels[modelType] = model
-                    print("✅ AIModelLoader: Loaded \(modelType.rawValue)")
+                    log.info("✅ AIModelLoader: Loaded \(modelType.rawValue)", category: .system)
                 }
             } catch {
-                print("⚠️ AIModelLoader: Failed to load \(modelType.rawValue) - \(error.localizedDescription)")
+                log.info("⚠️ AIModelLoader: Failed to load \(modelType.rawValue) - \(error.localizedDescription)", level: .warning, category: .system)
                 if modelType.isCritical {
                     status = .error("Critical model failed: \(modelType.rawValue)")
                     return
@@ -146,7 +146,7 @@ class AIModelLoader: ObservableObject {
         }
 
         status = .ready
-        print("✅ AIModelLoader: Ready with \(loadedModels.count)/\(totalModels) models")
+        log.info("✅ AIModelLoader: Ready with \(loadedModels.count)/\(totalModels) models", category: .system)
     }
 
     /// Load a specific model
@@ -172,7 +172,7 @@ class AIModelLoader: ObservableObject {
         }
 
         // Model not available - return nil (use algorithmic fallback)
-        print("ℹ️ AIModelLoader: Model \(type.rawValue) not found, using fallback")
+        log.info("ℹ️ AIModelLoader: Model \(type.rawValue) not found, using fallback", category: .system)
         return nil
     }
 
@@ -269,7 +269,7 @@ class AIModelLoader: ObservableObject {
     /// Unload a specific model
     func unloadModel(_ type: ModelType) {
         loadedModels.removeValue(forKey: type)
-        print("🗑️ AIModelLoader: Unloaded \(type.rawValue)")
+        log.info("🗑️ AIModelLoader: Unloaded \(type.rawValue)", category: .system)
     }
 
     /// Unload all non-critical models
@@ -306,16 +306,16 @@ class AIModelLoader: ObservableObject {
 
     /// Pre-warm models with dummy input
     func warmUpModels() async {
-        print("🔥 AIModelLoader: Warming up models...")
+        log.info("🔥 AIModelLoader: Warming up models...", category: .system)
 
         for (type, info) in loadedModels {
             do {
                 // Create dummy input based on model type
                 let dummyInput = try createDummyInput(for: type)
                 _ = try await predict(modelType: type, input: dummyInput)
-                print("  ✓ \(type.rawValue) warmed up")
+                log.info("  ✓ \(type.rawValue) warmed up", category: .system)
             } catch {
-                print("  ✗ \(type.rawValue) warm-up failed: \(error.localizedDescription)")
+                log.info("  ✗ \(type.rawValue) warm-up failed: \(error.localizedDescription)", category: .system)
             }
         }
     }

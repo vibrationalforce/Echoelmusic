@@ -81,7 +81,7 @@ class ExportManager {
             throw RecordingError.fileNotFound
         }
 
-        print("📤 Exported audio: \(exportURL.lastPathComponent)")
+        log.audio("📤 Exported audio: \(exportURL.lastPathComponent)")
         return exportURL
     }
 
@@ -105,7 +105,7 @@ class ExportManager {
             try exportBioDataCSV(session: session, outputURL: exportURL)
         }
 
-        print("📤 Exported bio-data: \(exportURL.lastPathComponent)")
+        log.audio("📤 Exported bio-data: \(exportURL.lastPathComponent)")
         return exportURL
     }
 
@@ -146,7 +146,7 @@ class ExportManager {
             }
         }
 
-        print("📦 Exported session package: \(packageURL.lastPathComponent)")
+        log.audio("📦 Exported session package: \(packageURL.lastPathComponent)")
         return packageURL
     }
 

@@ -442,8 +442,8 @@ class ProfessionalSoundDesignStudio: ObservableObject {
 
     init() {
         setupDefaultExportFormats()
-        print("✅ Professional Sound Design Studio: Initialized")
-        print("🎬 Ready for film, TV, content creation")
+        log.audio("✅ Professional Sound Design Studio: Initialized")
+        log.audio("🎬 Ready for film, TV, content creation")
     }
 
     private func setupDefaultExportFormats() {
@@ -503,7 +503,7 @@ class ProfessionalSoundDesignStudio: ObservableObject {
         )
 
         currentProject = project
-        print("🎬 Created project: \(name) (\(type.rawValue))")
+        log.audio("🎬 Created project: \(name) (\(type.rawValue))")
 
         return project
     }
@@ -517,10 +517,10 @@ class ProfessionalSoundDesignStudio: ObservableObject {
         let gainDB = targetLoudness - currentLoudness
         let gain = pow(10.0, gainDB / 20.0)
 
-        print("🔊 Normalizing loudness:")
-        print("   Current: \(String(format: "%.1f", currentLoudness)) LUFS")
-        print("   Target: \(String(format: "%.1f", targetLoudness)) LUFS")
-        print("   Gain: \(String(format: "%.1f", gainDB)) dB")
+        log.audio("🔊 Normalizing loudness:")
+        log.audio("   Current: \(String(format: "%.1f", currentLoudness)) LUFS")
+        log.audio("   Target: \(String(format: "%.1f", targetLoudness)) LUFS")
+        log.audio("   Gain: \(String(format: "%.1f", gainDB)) dB")
 
         return audio.map { $0 * gain }
     }
@@ -535,14 +535,14 @@ class ProfessionalSoundDesignStudio: ObservableObject {
     // MARK: - Generate Foley
 
     func generateFoley(_ type: FoleyGenerator.FoleyType, duration: Float, intensity: Float = 1.0) -> [Float] {
-        print("🎤 Generating foley: \(type.rawValue)")
+        log.audio("🎤 Generating foley: \(type.rawValue)")
         return FoleyGenerator.synthesize(type, duration: duration, intensity: intensity, sampleRate: 48000)
     }
 
     // MARK: - Generate Ambience
 
     func generateAmbience(_ type: AmbienceDesigner.AmbienceType, duration: Float, density: Float = 0.5) -> AmbienceDesigner.AmbienceLayers {
-        print("🌊 Generating ambience: \(type.rawValue)")
+        log.audio("🌊 Generating ambience: \(type.rawValue)")
         return AmbienceDesigner.generate(type, duration: duration, density: density, sampleRate: 48000)
     }
 

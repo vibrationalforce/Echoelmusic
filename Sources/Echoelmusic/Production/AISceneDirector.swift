@@ -323,7 +323,7 @@ public final class AISceneDirector: ObservableObject {
         startUpdateLoop()
         logDecision(.hold, confidence: 1.0, reason: "Direction started")
 
-        print("AISceneDirector: Started directing")
+        log.video("AISceneDirector: Started directing")
     }
 
     /// Stop AI direction
@@ -332,7 +332,7 @@ public final class AISceneDirector: ObservableObject {
         stopUpdateLoop()
         logDecision(.hold, confidence: 1.0, reason: "Direction stopped")
 
-        print("AISceneDirector: Stopped directing")
+        log.video("AISceneDirector: Stopped directing")
     }
 
     /// Manual camera switch
@@ -636,7 +636,7 @@ public final class AISceneDirector: ObservableObject {
         lastCameraSwitch = Date()
 
         logDecision(.switchCamera, confidence: 0.8, reason: reason)
-        print("AISceneDirector: Switched to \(camera.name)")
+        log.video("AISceneDirector: Switched to \(camera.name)")
     }
 
     private func addVisualLayer(type: Scene.VisualLayer.VisualType) {

@@ -233,7 +233,7 @@ class EnhancedMLModels {
 
         func train(data: [EmotionTrainingData]) {
             trainingData.append(contentsOf: data)
-            print("📚 Trained emotion classifier with \(trainingData.count) samples")
+            log.info("📚 Trained emotion classifier with \(trainingData.count) samples", category: .system)
         }
     }
 
@@ -633,7 +633,7 @@ class EnhancedMLModels {
         currentEmotion = result?.emotion ?? .neutral
         predictions.emotionConfidence = result?.confidence ?? 0.0
 
-        print("🎭 Emotion: \(currentEmotion.rawValue) (Confidence: \(String(format: "%.2f", predictions.emotionConfidence)))")
+        log.info("🎭 Emotion: \(currentEmotion.rawValue) (Confidence: \(String(format: "%.2f", predictions.emotionConfidence)))", category: .system)
     }
 
     func classifyMusicStyle(audioBuffer: [Float], sampleRate: Float) {
@@ -645,7 +645,7 @@ class EnhancedMLModels {
         detectedMusicStyle = result?.style ?? .unknown
         predictions.styleConfidence = result?.confidence ?? 0.0
 
-        print("🎵 Music Style: \(detectedMusicStyle.rawValue) (Confidence: \(String(format: "%.2f", predictions.styleConfidence)))")
+        log.info("🎵 Music Style: \(detectedMusicStyle.rawValue) (Confidence: \(String(format: "%.2f", predictions.styleConfidence)))", category: .system)
     }
 
     func generateRecommendations(emotion: Emotion, style: MusicStyle) -> [Recommendation] {

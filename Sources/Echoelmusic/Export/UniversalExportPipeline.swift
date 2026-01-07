@@ -239,8 +239,8 @@ class UniversalExportPipeline: ObservableObject {
 
     init() {
         loadExportPresets()
-        print("✅ Universal Export Pipeline: Initialized")
-        print("📦 Presets: \(availablePresets.count)")
+        log.audio("✅ Universal Export Pipeline: Initialized")
+        log.audio("📦 Presets: \(availablePresets.count)")
     }
 
     // MARK: - Load Export Presets
@@ -507,13 +507,13 @@ class UniversalExportPipeline: ObservableObject {
             )
         ]
 
-        print("📦 Loaded \(availablePresets.count) export presets")
+        log.audio("📦 Loaded \(availablePresets.count) export presets")
     }
 
     // MARK: - Start Export
 
     func startExport(preset: ExportPreset, inputDuration: Double, outputPath: URL) async -> Bool {
-        print("🚀 Starting export: \(preset.name)")
+        log.audio("🚀 Starting export: \(preset.name)")
 
         var job = ExportJob(
             preset: preset,
@@ -529,7 +529,7 @@ class UniversalExportPipeline: ObservableObject {
         currentExport = job
 
         // Preparation phase
-        print("   Preparing export...")
+        log.audio("   Preparing export...")
         try? await Task.sleep(nanoseconds: 500_000_000)
         job.status = .exporting
         currentExport = job
@@ -543,13 +543,13 @@ class UniversalExportPipeline: ObservableObject {
             // Simulate processing time
             try? await Task.sleep(nanoseconds: 200_000_000)
 
-            print("   Progress: \(Int(progress * 100))%")
+            log.audio("   Progress: \(Int(progress * 100))%")
         }
 
         // Finalization
         job.status = .finalizing
         currentExport = job
-        print("   Finalizing...")
+        log.audio("   Finalizing...")
         try? await Task.sleep(nanoseconds: 500_000_000)
 
         // Complete
@@ -562,10 +562,10 @@ class UniversalExportPipeline: ObservableObject {
 
         if let endTime = job.endTime, let startTime = job.startTime {
             let duration = endTime.timeIntervalSince(startTime)
-            print("✅ Export completed in \(String(format: "%.1f", duration))s")
+            log.audio("✅ Export completed in \(String(format: "%.1f", duration))s")
         }
         if let fileSize = job.fileSize {
-            print("📁 File size: \(ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file))")
+            log.audio("📁 File size: \(ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file))")
         }
 
         return true

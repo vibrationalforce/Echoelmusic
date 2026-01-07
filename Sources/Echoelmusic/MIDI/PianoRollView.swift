@@ -425,7 +425,7 @@ class PianoRollViewModel: ObservableObject {
         mpe.sendMPEConfiguration(memberChannels: 15)
         mpe.setPitchBendRange(semitones: UInt8(pitchBendRange))
 
-        print("🎹 PianoRoll: Connected to MIDI 2.0 + MPE")
+        log.midi("🎹 PianoRoll: Connected to MIDI 2.0 + MPE")
     }
 
     // MARK: - Edit Modes
@@ -487,7 +487,7 @@ class PianoRollViewModel: ObservableObject {
         )
 
         notes.append(note)
-        print("🎹 Added note: \(note.pitch) at beat \(note.startBeat)")
+        log.midi("🎹 Added note: \(note.pitch) at beat \(note.startBeat)")
     }
 
     func deleteNote(_ id: UUID) {
@@ -625,12 +625,12 @@ class PianoRollViewModel: ObservableObject {
                 mpe.setVoiceBrightness(voice: voice, brightness: note.brightness)
                 mpe.setVoiceTimbre(voice: voice, timbre: note.timbre)
 
-                print("🎹 MPE Note On: \(note.pitch) vel=\(note.velocity) ch=\(voice.channel + 1)")
+                log.midi("🎹 MPE Note On: \(note.pitch) vel=\(note.velocity) ch=\(voice.channel + 1)")
             }
         } else if let midi2 = midi2Manager {
             // MIDI 2.0 without MPE (single channel)
             midi2.sendNoteOn(channel: 0, note: UInt8(note.pitch), velocity: note.velocity32bit)
-            print("🎹 MIDI2 Note On: \(note.pitch) vel=\(note.velocity)")
+            log.midi("🎹 MIDI2 Note On: \(note.pitch) vel=\(note.velocity)")
         }
     }
 
@@ -639,11 +639,11 @@ class PianoRollViewModel: ObservableObject {
             if let voice = activeVoices[note.id] {
                 mpe.deallocateVoice(voice: voice)
                 activeVoices.removeValue(forKey: note.id)
-                print("🎹 MPE Note Off: \(note.pitch)")
+                log.midi("🎹 MPE Note Off: \(note.pitch)")
             }
         } else if let midi2 = midi2Manager {
             midi2.sendNoteOff(channel: 0, note: UInt8(note.pitch))
-            print("🎹 MIDI2 Note Off: \(note.pitch)")
+            log.midi("🎹 MIDI2 Note Off: \(note.pitch)")
         }
     }
 
@@ -765,14 +765,14 @@ class PianoRollViewModel: ObservableObject {
     func exportToMIDI() -> Data? {
         // Generate MIDI file data
         // In production: Use AudioToolbox MusicSequence
-        print("📤 Exporting \(notes.count) notes to MIDI")
+        log.midi("📤 Exporting \(notes.count) notes to MIDI")
         return nil
     }
 
     func importFromMIDI(_ data: Data) {
         // Import MIDI file
         // In production: Parse MIDI data
-        print("📥 Importing MIDI data")
+        log.midi("📥 Importing MIDI data")
     }
 }
 

@@ -283,7 +283,7 @@ class VideoExportManager: ObservableObject {
             // Check result
             switch exportSession.status {
             case .completed:
-                print("✅ VideoExportManager: Export completed - \(outputURL.lastPathComponent)")
+                log.video("✅ VideoExportManager: Export completed - \(outputURL.lastPathComponent)")
             case .failed:
                 throw exportSession.error ?? ExportError.exportFailed
             case .cancelled:
@@ -386,7 +386,7 @@ class VideoExportManager: ObservableObject {
             }
         }
 
-        print("✅ VideoExportManager: Hardware export completed")
+        log.video("✅ VideoExportManager: Hardware export completed")
     }
 
     // MARK: - Build Video Settings
@@ -515,12 +515,12 @@ class VideoExportManager: ObservableObject {
             } catch {
                 job.status = .failed(error)
                 exportQueue[index] = job
-                print("❌ VideoExportManager: Batch export failed for job \(index) - \(error)")
+                log.video("❌ VideoExportManager: Batch export failed for job \(index) - \(error)", level: .error)
             }
         }
 
         currentExport = nil
-        print("✅ VideoExportManager: Batch export completed - \(exportQueue.count) jobs")
+        log.video("✅ VideoExportManager: Batch export completed - \(exportQueue.count) jobs")
     }
 
     // MARK: - Cancel Export
@@ -533,7 +533,7 @@ class VideoExportManager: ObservableObject {
         exportProgress = 0.0
         currentExportSession = nil
 
-        print("❌ VideoExportManager: Export cancelled")
+        log.video("❌ VideoExportManager: Export cancelled", level: .error)
     }
 
     // MARK: - PNG Sequence Export
@@ -586,13 +586,13 @@ class VideoExportManager: ObservableObject {
                 // Update progress
                 exportProgress = Double(frameIndex + 1) / Double(totalFrames)
             } catch {
-                print("⚠️ VideoExportManager: Failed to export frame \(frameIndex)")
+                log.video("⚠️ VideoExportManager: Failed to export frame \(frameIndex)", level: .warning)
             }
         }
 
         isExporting = false
         exportProgress = 1.0
-        print("✅ VideoExportManager: PNG sequence exported - \(totalFrames) frames to \(outputDirectory.lastPathComponent)")
+        log.video("✅ VideoExportManager: PNG sequence exported - \(totalFrames) frames to \(outputDirectory.lastPathComponent)")
     }
 
     // MARK: - Animated GIF Export
@@ -660,7 +660,7 @@ class VideoExportManager: ObservableObject {
                 // Update progress
                 exportProgress = Double(frameIndex + 1) / Double(totalFrames)
             } catch {
-                print("⚠️ VideoExportManager: Failed to add frame \(frameIndex) to GIF")
+                log.video("⚠️ VideoExportManager: Failed to add frame \(frameIndex) to GIF", level: .warning)
             }
         }
 
@@ -672,7 +672,7 @@ class VideoExportManager: ObservableObject {
 
         isExporting = false
         exportProgress = 1.0
-        print("✅ VideoExportManager: Animated GIF exported - \(totalFrames) frames to \(outputURL.lastPathComponent)")
+        log.video("✅ VideoExportManager: Animated GIF exported - \(totalFrames) frames to \(outputURL.lastPathComponent)")
     }
 }
 

@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import os.log
 
 /// Professional Vocal Alignment UI
 /// Touch-optimized interface for multi-track vocal alignment
@@ -302,11 +303,11 @@ struct VocalAlignmentView: View {
                     defer { url.stopAccessingSecurityScopedResource() }
                     try await aligner.loadGuideTrack(from: url)
                 } catch {
-                    print("Failed to load guide: \(error)")
+                    log.audio("❌ Failed to load guide: \(error)", level: .error)
                 }
             }
         case .failure(let error):
-            print("File picker error: \(error)")
+            log.audio("❌ File picker error: \(error)", level: .error)
         }
     }
 
@@ -320,12 +321,12 @@ struct VocalAlignmentView: View {
                         defer { url.stopAccessingSecurityScopedResource() }
                         try await aligner.addDubTrack(from: url)
                     } catch {
-                        print("Failed to load dub: \(error)")
+                        log.audio("❌ Failed to load dub: \(error)", level: .error)
                     }
                 }
             }
         case .failure(let error):
-            print("File picker error: \(error)")
+            log.audio("❌ File picker error: \(error)", level: .error)
         }
     }
 
@@ -334,7 +335,7 @@ struct VocalAlignmentView: View {
             do {
                 try await aligner.alignAllTracks()
             } catch {
-                print("Alignment failed: \(error)")
+                log.audio("❌ Alignment failed: \(error)", level: .error)
             }
         }
     }
@@ -344,7 +345,7 @@ struct VocalAlignmentView: View {
             do {
                 try await aligner.previewAlignedTrack(id)
             } catch {
-                print("Preview failed: \(error)")
+                log.audio("❌ Preview failed: \(error)", level: .error)
             }
         }
     }

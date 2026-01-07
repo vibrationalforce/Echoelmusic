@@ -96,7 +96,7 @@ class Push3LEDController: ObservableObject {
         ) { _ in }
 
         guard clientStatus == noErr else {
-            print("⚠️ Failed to create MIDI client for Push 3")
+            log.led("⚠️ Failed to create MIDI client for Push 3", level: .warning)
             return
         }
         midiClient = client
@@ -110,7 +110,7 @@ class Push3LEDController: ObservableObject {
         )
 
         guard portStatus == noErr else {
-            print("⚠️ Failed to create MIDI output port for Push 3")
+            log.led("⚠️ Failed to create MIDI output port for Push 3", level: .warning)
             return
         }
         outputPort = port
@@ -132,13 +132,13 @@ class Push3LEDController: ObservableObject {
                 if deviceName.contains("Ableton Push 3") || deviceName.contains("Push 3") {
                     push3Endpoint = endpoint
                     isConnected = true
-                    print("✅ Found Push 3: \(deviceName)")
+                    log.led("✅ Found Push 3: \(deviceName)")
                     return
                 }
             }
         }
 
-        print("⚠️ Push 3 not found. Connect via USB and retry.")
+        log.led("⚠️ Push 3 not found. Connect via USB and retry.", level: .warning)
     }
 
     // MARK: - Connection Management
@@ -171,7 +171,7 @@ class Push3LEDController: ObservableObject {
     /// Set entire grid
     func setGrid(_ grid: [[RGB]]) {
         guard grid.count == 8, grid.allSatisfy({ $0.count == 8 }) else {
-            print("⚠️ Invalid grid dimensions (must be 8x8)")
+            log.led("⚠️ Invalid grid dimensions (must be 8x8)", level: .warning)
             return
         }
         ledGrid = grid
@@ -225,7 +225,7 @@ class Push3LEDController: ObservableObject {
 
         let status = MIDISend(outputPort, push3Endpoint, &packetList)
         if status != noErr {
-            print("⚠️ Failed to send SysEx to Push 3: \(status)")
+            log.led("⚠️ Failed to send SysEx to Push 3: \(status)", level: .warning)
         }
     }
 
@@ -397,14 +397,14 @@ class Push3LEDController: ObservableObject {
             applyPattern(currentPattern)
         }
 
-        print("⚡ Gesture flash: \(gesture)")
+        log.led("⚡ Gesture flash: \(gesture)")
     }
 
     // MARK: - Pattern Management
 
     func applyPattern(_ pattern: LEDPattern) {
         currentPattern = pattern
-        print("💡 Push 3 pattern: \(pattern.rawValue)")
+        log.led("💡 Push 3 pattern: \(pattern.rawValue)")
     }
 
     // MARK: - Utility Functions

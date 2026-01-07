@@ -155,12 +155,12 @@ class MacApp {
 
     func startAudioEngine() async throws {
         try await audioEngine.start(source: audioInputSource)
-        print("🔊 macOS Audio Engine started with source: \(audioInputSource.rawValue)")
+        log.info("🔊 macOS Audio Engine started with source: \(audioInputSource.rawValue)", category: .system)
     }
 
     func stopAudioEngine() async {
         await audioEngine.stop()
-        print("🔊 macOS Audio Engine stopped")
+        log.info("🔊 macOS Audio Engine stopped", category: .system)
     }
 
     func changeAudioSource(_ source: AudioInputSource) async throws {
@@ -172,12 +172,12 @@ class MacApp {
 
     func scanMIDIDevices() {
         midiDevices = midiManager.scanDevices()
-        print("🎹 Found \(midiDevices.count) MIDI devices")
+        log.info("🎹 Found \(midiDevices.count) MIDI devices", category: .system)
     }
 
     func connectMIDIDevice(_ device: MIDIDevice) throws {
         try midiManager.connect(device)
-        print("🎹 Connected to MIDI device: \(device.name)")
+        log.info("🎹 Connected to MIDI device: \(device.name)", category: .system)
     }
 
     // MARK: - Visualization
@@ -191,12 +191,12 @@ class MacApp {
 
     func connectPush3() async throws {
         try await push3Controller.connect()
-        print("🎛️ Push 3 connected")
+        log.info("🎛️ Push 3 connected", category: .system)
     }
 
     func connectDMX(address: String, port: UInt16 = 6454) async throws {
         try await dmxController.connect(address: address, port: port)
-        print("💡 DMX connected to \(address):\(port)")
+        log.info("💡 DMX connected to \(address):\(port)", category: .system)
     }
 
     // MARK: - Recording
@@ -204,13 +204,13 @@ class MacApp {
     func startRecording() async throws {
         try await audioEngine.startRecording()
         isRecording = true
-        print("⏺️ Recording started")
+        log.info("⏺️ Recording started", category: .system)
     }
 
     func stopRecording() async throws -> URL {
         isRecording = false
         let url = try await audioEngine.stopRecording()
-        print("⏹️ Recording saved to: \(url.path)")
+        log.info("⏹️ Recording saved to: \(url.path)", category: .system)
         return url
     }
 
@@ -233,12 +233,12 @@ class MacApp {
     func saveProject() async throws {
         guard let project = currentProject else { return }
         // Save project to disk
-        print("💾 Project saved: \(project.name)")
+        log.info("💾 Project saved: \(project.name)", category: .system)
     }
 
     func loadProject(from url: URL) async throws {
         // Load project from disk
-        print("📂 Loading project from: \(url.path)")
+        log.info("📂 Loading project from: \(url.path)", category: .system)
     }
 }
 
@@ -252,17 +252,17 @@ class MacAudioEngine {
     private var recordingURL: URL?
 
     func start(source: MacApp.AudioInputSource) async throws {
-        print("🔊 Mac Audio Engine starting with source: \(source.rawValue)")
+        log.info("🔊 Mac Audio Engine starting with source: \(source.rawValue)", category: .system)
         isRunning = true
     }
 
     func stop() async {
-        print("🔊 Mac Audio Engine stopping")
+        log.info("🔊 Mac Audio Engine stopping", category: .system)
         isRunning = false
     }
 
     func changeSource(_ source: MacApp.AudioInputSource) async throws {
-        print("🔊 Changing audio source to: \(source.rawValue)")
+        log.info("🔊 Changing audio source to: \(source.rawValue)", category: .system)
     }
 
     func startRecording() async throws {
@@ -270,7 +270,7 @@ class MacAudioEngine {
         let timestamp = ISO8601DateFormatter().string(from: Date())
         recordingURL = documentsPath.appendingPathComponent("Recording_\(timestamp).wav")
         isRecording = true
-        print("⏺️ Recording to: \(recordingURL?.path ?? "unknown")")
+        log.info("⏺️ Recording to: \(recordingURL?.path ?? "unknown")", category: .system)
     }
 
     func stopRecording() async throws -> URL {
@@ -303,7 +303,7 @@ class MacMIDIManager {
     private func setupMIDIClient() {
         let status = MIDIClientCreate("Echoelmusic" as CFString, nil, nil, &midiClient)
         if status == noErr {
-            print("🎹 MIDI Client created successfully")
+            log.info("🎹 MIDI Client created successfully", category: .system)
         }
     }
 
@@ -352,7 +352,7 @@ class MacMIDIManager {
     }
 
     func connect(_ device: MacApp.MIDIDevice) throws {
-        print("🎹 Connecting to MIDI device: \(device.name)")
+        log.info("🎹 Connecting to MIDI device: \(device.name)", category: .system)
     }
 }
 
@@ -365,7 +365,7 @@ class MacVisualizationEngine {
 
     func setMode(_ mode: MacApp.VisualizationMode) async {
         currentMode = mode
-        print("🎨 Visualization mode changed to: \(mode.rawValue)")
+        log.info("🎨 Visualization mode changed to: \(mode.rawValue)", category: .system)
     }
 }
 
@@ -377,13 +377,13 @@ class Push3Controller {
     private var isConnected: Bool = false
 
     func connect() async throws {
-        print("🎛️ Connecting to Ableton Push 3...")
+        log.info("🎛️ Connecting to Ableton Push 3...", category: .system)
         isConnected = true
     }
 
     func disconnect() {
         isConnected = false
-        print("🎛️ Push 3 disconnected")
+        log.info("🎛️ Push 3 disconnected", category: .system)
     }
 }
 
@@ -395,13 +395,13 @@ class DMXController {
     private var isConnected: Bool = false
 
     func connect(address: String, port: UInt16) async throws {
-        print("💡 Connecting to DMX at \(address):\(port)...")
+        log.info("💡 Connecting to DMX at \(address):\(port)...", category: .system)
         isConnected = true
     }
 
     func disconnect() {
         isConnected = false
-        print("💡 DMX disconnected")
+        log.info("💡 DMX disconnected", category: .system)
     }
 }
 

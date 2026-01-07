@@ -108,7 +108,7 @@ class HealthKitManager: ObservableObject {
             isAuthorized = (status == .sharingAuthorized)
 
             if isAuthorized {
-                print("✅ HealthKit authorized")
+                log.biofeedback("✅ HealthKit authorized")
                 errorMessage = nil
             } else {
                 errorMessage = "HealthKit access denied. Enable in Settings."
@@ -133,7 +133,7 @@ class HealthKitManager: ObservableObject {
         startHeartRateMonitoring()
         startHRVMonitoring()
 
-        print("🫀 HealthKit monitoring started")
+        log.biofeedback("🫀 HealthKit monitoring started")
     }
 
     /// Stop all HealthKit monitoring
@@ -150,7 +150,7 @@ class HealthKitManager: ObservableObject {
 
         rrIntervalBuffer.removeAll()
 
-        print("⏹️ HealthKit monitoring stopped")
+        log.biofeedback("⏹️ HealthKit monitoring stopped")
     }
 
 

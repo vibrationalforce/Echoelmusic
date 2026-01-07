@@ -18,26 +18,26 @@ class ChatAggregator: ObservableObject {
     func start() {
         guard !isActive else { return }
         isActive = true
-        print("💬 ChatAggregator: Started")
+        log.streaming("💬 ChatAggregator: Started")
     }
 
     func stop() {
         guard isActive else { return }
         isActive = false
         cancellables.removeAll()
-        print("💬 ChatAggregator: Stopped")
+        log.streaming("💬 ChatAggregator: Stopped")
     }
 
     func addMessage(_ message: ChatMessage) {
         // AI Moderation check
         if moderationEnabled && isToxic(message.text) {
             toxicMessagesBlocked += 1
-            print("🚫 ChatAggregator: Blocked toxic message from \(message.username)")
+            log.streaming("🚫 ChatAggregator: Blocked toxic message from \(message.username)")
             return
         }
 
         messages.append(message)
-        print("💬 [\(message.platform.rawValue)] \(message.username): \(message.text)")
+        log.streaming("💬 [\(message.platform.rawValue)] \(message.username): \(message.text)")
     }
 
     // MARK: - ML Moderation

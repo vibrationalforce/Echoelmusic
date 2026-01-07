@@ -357,7 +357,7 @@ public final class BiometricMusicGenerator: ObservableObject {
         isGenerating = true
         startGenerationLoop()
 
-        print("BiometricMusicGenerator: Started generating")
+        log.audio("BiometricMusicGenerator: Started generating")
     }
 
     /// Stop generating music
@@ -366,7 +366,7 @@ public final class BiometricMusicGenerator: ObservableObject {
         stopGenerationLoop()
         activeNotes.removeAll()
 
-        print("BiometricMusicGenerator: Stopped generating")
+        log.audio("BiometricMusicGenerator: Stopped generating")
     }
 
     // MARK: - Generation Loop

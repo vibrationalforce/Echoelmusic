@@ -107,7 +107,7 @@ final class ImmersiveVideoCaptureManager {
     // MARK: - Recording
 
     func startRecording(format: VideoFormat = .immersive) async throws {
-        print("🎬 Starting immersive video recording in \(format.rawValue) format")
+        log.video("🎬 Starting immersive video recording in \(format.rawValue) format")
 
         captureState = .preparing
         bioDataBuffer = []
@@ -159,7 +159,7 @@ final class ImmersiveVideoCaptureManager {
 
     func pauseRecording() {
         guard case .recording = captureState else { return }
-        print("🎬 Pausing recording")
+        log.video("🎬 Pausing recording")
 
         videoOutput?.pauseRecording()
         recordingTimer?.invalidate()
@@ -168,7 +168,7 @@ final class ImmersiveVideoCaptureManager {
 
     func resumeRecording() {
         guard case .paused = captureState else { return }
-        print("🎬 Resuming recording")
+        log.video("🎬 Resuming recording")
 
         videoOutput?.resumeRecording()
         recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
@@ -186,7 +186,7 @@ final class ImmersiveVideoCaptureManager {
             throw CaptureError.notRecording
         }
 
-        print("🎬 Stopping recording")
+        log.video("🎬 Stopping recording")
 
         captureState = .finishing
         recordingTimer?.invalidate()
@@ -225,7 +225,7 @@ final class ImmersiveVideoCaptureManager {
     // MARK: - Playback
 
     func loadRecording(_ recording: ImmersiveRecording) async throws {
-        print("🎬 Loading recording: \(recording.name)")
+        log.video("🎬 Loading recording: \(recording.name)")
 
         currentRecording = recording
 
@@ -239,7 +239,7 @@ final class ImmersiveVideoCaptureManager {
 
     func play() {
         guard let player = player else { return }
-        print("🎬 Playing")
+        log.video("🎬 Playing")
 
         player.play()
         playbackState = .playing
@@ -250,7 +250,7 @@ final class ImmersiveVideoCaptureManager {
 
     func pause() {
         guard let player = player else { return }
-        print("🎬 Pausing")
+        log.video("🎬 Pausing")
 
         player.pause()
         playbackState = .paused
@@ -258,7 +258,7 @@ final class ImmersiveVideoCaptureManager {
 
     func seek(to time: TimeInterval) async {
         guard let player = player else { return }
-        print("🎬 Seeking to \(time)")
+        log.video("🎬 Seeking to \(time)")
 
         playbackState = .seeking
         await player.seek(to: CMTime(seconds: time, preferredTimescale: 600))
@@ -267,7 +267,7 @@ final class ImmersiveVideoCaptureManager {
     }
 
     func stop() {
-        print("🎬 Stopping playback")
+        log.video("🎬 Stopping playback")
 
         player?.pause()
         player?.seek(to: .zero)
@@ -404,10 +404,10 @@ extension ImmersiveVideoCaptureManager: AVCaptureFileOutputRecordingDelegate {
     ) {
         Task { @MainActor in
             if let error = error {
-                print("🎬 Recording error: \(error.localizedDescription)")
+                log.video("🎬 Recording error: \(error.localizedDescription)", level: .error)
                 self.captureState = .error(error)
             } else {
-                print("🎬 Recording finished: \(outputFileURL.path)")
+                log.video("🎬 Recording finished: \(outputFileURL.path)")
             }
         }
     }
@@ -418,7 +418,7 @@ extension ImmersiveVideoCaptureManager: AVCaptureFileOutputRecordingDelegate {
         from connections: [AVCaptureConnection]
     ) {
         Task { @MainActor in
-            print("🎬 Recording started: \(fileURL.path)")
+            log.video("🎬 Recording started: \(fileURL.path)")
         }
     }
 }

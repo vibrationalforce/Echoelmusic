@@ -177,17 +177,17 @@ class TVApp {
 
             // Check for Dolby Atmos support
             if audioSession.availableCategories.contains(.ambient) {
-                print("📺 Dolby Atmos supported")
+                log.info("📺 Dolby Atmos supported", category: .ui)
             }
         } catch {
-            print("❌ Audio session setup failed: \(error)")
+            log.error("❌ Audio session setup failed: \(error)", category: .ui)
         }
     }
 
     // MARK: - Session Management
 
     func startSession(type: Session.SessionType) async {
-        print("📺 Starting \(type.rawValue) session on Apple TV")
+        log.info("📺 Starting \(type.rawValue) session on Apple TV", category: .ui)
 
         let session = Session(type: type, startTime: Date())
         activeSession = session
@@ -205,7 +205,7 @@ class TVApp {
     func stopSession() async {
         guard activeSession != nil else { return }
 
-        print("📺 Stopping session on Apple TV")
+        log.info("📺 Stopping session on Apple TV", category: .ui)
 
         await visualEngine.stop()
         await audioEngine.stop()
@@ -216,7 +216,7 @@ class TVApp {
     // MARK: - Device Connection
 
     private func handleDeviceConnected(_ device: ConnectedDevice) {
-        print("📱 Device connected: \(device.name) (\(device.type))")
+        log.info("📱 Device connected: \(device.name) (\(device.type))", category: .ui)
         connectedDevices.append(device)
 
         // Füge als Participant zur Session hinzu
@@ -264,7 +264,7 @@ class TVApp {
     private var groupActivityManager: GroupActivityManager?
 
     func startSharePlay() async throws {
-        print("📺 Starting SharePlay session")
+        log.info("📺 Starting SharePlay session", category: .ui)
 
         // Initialize GroupActivities manager
         groupActivityManager = GroupActivityManager()
@@ -281,30 +281,30 @@ class TVApp {
 
             switch activationResult {
             case .activationPreferred:
-                print("📺 SharePlay activation preferred")
+                log.info("📺 SharePlay activation preferred", category: .ui)
                 isSharePlayActive = true
                 await groupActivityManager?.startGroupSession(activity: activity)
 
             case .activationDisabled:
-                print("📺 SharePlay activation disabled by user")
+                log.info("📺 SharePlay activation disabled by user", category: .ui)
                 isSharePlayActive = false
 
             case .cancelled:
-                print("📺 SharePlay activation cancelled")
+                log.info("📺 SharePlay activation cancelled", category: .ui)
                 isSharePlayActive = false
 
             @unknown default:
-                print("📺 Unknown SharePlay activation result")
+                log.info("📺 Unknown SharePlay activation result", category: .ui)
                 isSharePlayActive = false
             }
         } catch {
-            print("❌ SharePlay activation failed: \(error)")
+            log.error("❌ SharePlay activation failed: \(error)", category: .ui)
             throw error
         }
     }
 
     func stopSharePlay() {
-        print("📺 Stopping SharePlay session")
+        log.info("📺 Stopping SharePlay session", category: .ui)
         groupActivityManager?.endGroupSession()
         groupActivityManager = nil
         isSharePlayActive = false
@@ -332,7 +332,7 @@ class TVVisualizationEngine {
     private var intensity: Float = 1.0
 
     func start(mode: TVApp.VisualizationMode) async {
-        print("🎨 TV Visualization Engine started: \(mode.rawValue)")
+        log.info("🎨 TV Visualization Engine started: \(mode.rawValue)", category: .ui)
         isRunning = true
         currentMode = mode
 
@@ -341,12 +341,12 @@ class TVVisualizationEngine {
     }
 
     func stop() async {
-        print("🎨 TV Visualization Engine stopped")
+        log.info("🎨 TV Visualization Engine stopped", category: .ui)
         isRunning = false
     }
 
     func changeMode(_ mode: TVApp.VisualizationMode) async {
-        print("🎨 Changing mode to: \(mode.rawValue)")
+        log.info("🎨 Changing mode to: \(mode.rawValue)", category: .ui)
         currentMode = mode
     }
 
@@ -356,13 +356,13 @@ class TVVisualizationEngine {
 
     func updateWithBioData(hrv: Double, coherence: Double) async {
         // Update visualization based on bio-data
-        print("💓 Updating visualization with HRV: \(hrv), Coherence: \(coherence)")
+        log.info("💓 Updating visualization with HRV: \(hrv), Coherence: \(coherence)", category: .ui)
     }
 
     private func setupMetalRenderer() {
         // Setup Metal for high-performance rendering
         // Target: 4K @ 60fps, 8K @ 30fps
-        print("⚡ Metal renderer initialized for tvOS")
+        log.info("⚡ Metal renderer initialized for tvOS", category: .ui)
     }
 }
 
@@ -374,7 +374,7 @@ class TVAudioEngine {
     private var isRunning: Bool = false
 
     func start() async {
-        print("🔊 TV Audio Engine started")
+        log.info("🔊 TV Audio Engine started", category: .ui)
         isRunning = true
 
         // Setup Dolby Atmos if available
@@ -382,13 +382,13 @@ class TVAudioEngine {
     }
 
     func stop() async {
-        print("🔊 TV Audio Engine stopped")
+        log.info("🔊 TV Audio Engine stopped", category: .ui)
         isRunning = false
     }
 
     private func setupDolbyAtmos() {
         // Configure Dolby Atmos for 3D spatial audio
-        print("🎧 Dolby Atmos configured")
+        log.info("🎧 Dolby Atmos configured", category: .ui)
     }
 }
 
@@ -397,19 +397,19 @@ class TVAudioEngine {
 class TVFocusEngine {
 
     func setupFocusEnvironment() {
-        print("🎮 Focus Engine setup for Siri Remote")
+        log.info("🎮 Focus Engine setup for Siri Remote", category: .ui)
     }
 
     func handleMenuPress() {
-        print("🎮 Menu button pressed")
+        log.info("🎮 Menu button pressed", category: .ui)
     }
 
     func handlePlayPause() {
-        print("🎮 Play/Pause button pressed")
+        log.info("🎮 Play/Pause button pressed", category: .ui)
     }
 
     func handleSwipe(direction: Direction) {
-        print("🎮 Swipe: \(direction)")
+        log.info("🎮 Swipe: \(direction)", category: .ui)
     }
 
     enum Direction {
@@ -430,7 +430,7 @@ class AirPlayReceiver {
     }
 
     private func setupAirPlayReceiver() {
-        print("📡 AirPlay Receiver initialized")
+        log.info("📡 AirPlay Receiver initialized", category: .ui)
         // Listen for incoming AirPlay connections
     }
 }
@@ -479,7 +479,7 @@ class GroupActivityManager {
             // Join the session
             session.join()
 
-            print("📺 Joined SharePlay session with \(session.activeParticipants.count) participants")
+            log.info("📺 Joined SharePlay session with \(session.activeParticipants.count) participants", category: .ui)
 
             // Handle participant changes
             let participantTask = Task {
@@ -507,7 +507,7 @@ class GroupActivityManager {
         messenger = nil
         tasks.forEach { $0.cancel() }
         tasks.removeAll()
-        print("📺 SharePlay session ended")
+        log.info("📺 SharePlay session ended", category: .ui)
     }
 
     func sendBioUpdate(hrv: Double, coherence: Double) async {
@@ -523,22 +523,22 @@ class GroupActivityManager {
         do {
             try await messenger.send(message)
         } catch {
-            print("❌ Failed to send SharePlay message: \(error)")
+            log.error("❌ Failed to send SharePlay message: \(error)", category: .ui)
         }
     }
 
     private func handleParticipantsChanged(_ participants: Set<Participant>) async {
-        print("📺 SharePlay participants: \(participants.count)")
+        log.info("📺 SharePlay participants: \(participants.count)", category: .ui)
     }
 
     private func handleMessage(_ message: SharePlayMessage) async {
         switch message.type {
         case .bioUpdate:
-            print("📺 Received bio update: HRV=\(message.hrv ?? 0), Coherence=\(message.coherence ?? 0)")
+            log.info("📺 Received bio update: HRV=\(message.hrv ?? 0), Coherence=\(message.coherence ?? 0)", category: .ui)
         case .visualChange:
-            print("📺 Received visualization change")
+            log.info("📺 Received visualization change", category: .ui)
         case .sessionControl:
-            print("📺 Received session control")
+            log.info("📺 Received session control", category: .ui)
         }
     }
 }

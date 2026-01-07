@@ -405,7 +405,7 @@ public final class LambdaModeEngine: ObservableObject {
             }
         }
 
-        print("\(LambdaConstants.symbol) Lambda Mode ACTIVATED")
+        log.lambda("\(LambdaConstants.symbol) Lambda Mode ACTIVATED")
     }
 
     /// Deactivate Lambda Mode
@@ -415,7 +415,7 @@ public final class LambdaModeEngine: ObservableObject {
         updateTimer = nil
         transitionTo(.dormant)
 
-        print("\(LambdaConstants.symbol) Lambda Mode DEACTIVATED - Session: \(formatDuration(sessionDuration))")
+        log.lambda("\(LambdaConstants.symbol) Lambda Mode DEACTIVATED - Session: \(formatDuration(sessionDuration))")
     }
 
     /// Toggle Lambda Mode
@@ -529,7 +529,7 @@ public final class LambdaModeEngine: ObservableObject {
             triggerHaptic(for: newState)
         }
 
-        print("\(LambdaConstants.symbol) State: \(newState.emoji) \(newState.displayName)")
+        log.lambda("\(LambdaConstants.symbol) State: \(newState.emoji) \(newState.displayName)")
     }
 
     private var allSystemsActive: Bool {

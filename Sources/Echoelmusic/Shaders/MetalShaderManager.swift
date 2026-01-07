@@ -101,7 +101,7 @@ class MetalShaderManager: ObservableObject {
 
     func initialize() {
         guard let device = MTLCreateSystemDefaultDevice() else {
-            print("❌ Metal not supported on this device")
+            log.video("❌ Metal not supported on this device", level: .error)
             return
         }
 
@@ -119,7 +119,7 @@ class MetalShaderManager: ObservableObject {
                 self.library = try device.makeLibrary(source: shaderSource, options: nil)
             }
         } catch {
-            print("❌ Failed to load Metal shaders: \(error)")
+            log.video("❌ Failed to load Metal shaders: \(error)", level: .error)
             return
         }
 
@@ -130,7 +130,7 @@ class MetalShaderManager: ObservableObject {
         createBuffers()
 
         isInitialized = true
-        print("✅ Metal Shader Manager initialized")
+        log.video("✅ Metal Shader Manager initialized")
     }
 
     private func loadShaderSource() -> String {
@@ -192,7 +192,7 @@ class MetalShaderManager: ObservableObject {
 
         for shaderType in ShaderType.allCases {
             guard let fragmentFunction = library.makeFunction(name: shaderType.fragmentFunction) else {
-                print("⚠️ Missing fragment function: \(shaderType.fragmentFunction)")
+                log.video("⚠️ Missing fragment function: \(shaderType.fragmentFunction)", level: .warning)
                 continue
             }
 
@@ -217,7 +217,7 @@ class MetalShaderManager: ObservableObject {
                 // Also store in cache map for O(1) lookup
                 pipelineMap[shaderType] = pipeline
             } catch {
-                print("❌ Failed to create pipeline for \(shaderType): \(error)")
+                log.video("❌ Failed to create pipeline for \(shaderType): \(error)", level: .error)
             }
         }
 
@@ -226,7 +226,7 @@ class MetalShaderManager: ObservableObject {
             do {
                 particleUpdatePipeline = try device.makeComputePipelineState(function: particleFunction)
             } catch {
-                print("⚠️ Failed to create particle compute pipeline: \(error)")
+                log.video("⚠️ Failed to create particle compute pipeline: \(error)", level: .warning)
             }
         }
     }

@@ -35,7 +35,7 @@ class InclusiveMobilityManager: ObservableObject {
     private init() {
         loadSystemPreferences()
         setupDefaultProfiles()
-        print("✅ InclusiveMobilityManager: Initialized")
+        log.accessibility("✅ InclusiveMobilityManager: Initialized")
     }
 
     // MARK: - System Integration
@@ -111,7 +111,7 @@ class InclusiveMobilityManager: ObservableObject {
         // Apply profile settings
         applyProfileSettings(profile)
 
-        print("♿ InclusiveMobilityManager: Activated profile '\(profile.name)'")
+        log.accessibility("♿ InclusiveMobilityManager: Activated profile '\(profile.name)'")
     }
 
     func deactivateProfile() {
@@ -150,7 +150,7 @@ class InclusiveMobilityManager: ObservableObject {
             break
         }
 
-        print("♿ Enabled: \(feature.rawValue)")
+        log.accessibility("♿ Enabled: \(feature.rawValue)")
     }
 
     func disableFeature(_ feature: InclusiveFeature) {
@@ -169,7 +169,7 @@ class InclusiveMobilityManager: ObservableObject {
             break
         }
 
-        print("♿ Disabled: \(feature.rawValue)")
+        log.accessibility("♿ Disabled: \(feature.rawValue)")
     }
 
     // MARK: - Voice Control
@@ -325,13 +325,13 @@ class InclusiveMobilityManager: ObservableObject {
     func configureSwitchControl(switches: [SwitchConfiguration]) {
         // Configure external switches for users with motor impairments
         for switchConfig in switches {
-            print("♿ Configured switch: \(switchConfig.name) → \(switchConfig.action)")
+            log.accessibility("♿ Configured switch: \(switchConfig.name) → \(switchConfig.action)")
         }
     }
 
     func configureEyeTracking(sensitivity: Double, dwellTime: TimeInterval) {
         // Configure eye tracking settings
-        print("♿ Eye tracking: Sensitivity \(sensitivity), Dwell \(dwellTime)s")
+        log.accessibility("♿ Eye tracking: Sensitivity \(sensitivity), Dwell \(dwellTime)s")
     }
 
     // MARK: - Audio Description

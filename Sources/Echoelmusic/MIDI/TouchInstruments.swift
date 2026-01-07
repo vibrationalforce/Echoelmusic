@@ -44,7 +44,7 @@ class TouchInstrumentsHub: ObservableObject {
     func connect(midi2: MIDI2Manager, mpe: MPEZoneManager) {
         self.midi2Manager = midi2
         self.mpeZoneManager = mpe
-        print("TouchInstruments: Connected to MIDI 2.0 + MPE")
+        log.midi("TouchInstruments: Connected to MIDI 2.0 + MPE")
     }
 
     private func setupHaptics() {
@@ -54,7 +54,7 @@ class TouchInstrumentsHub: ObservableObject {
             hapticEngine = try CHHapticEngine()
             try hapticEngine?.start()
         } catch {
-            print("TouchInstruments: Haptics not available")
+            log.midi("TouchInstruments: Haptics not available")
         }
     }
 

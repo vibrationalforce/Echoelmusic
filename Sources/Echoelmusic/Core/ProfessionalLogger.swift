@@ -69,6 +69,17 @@ public enum LogCategory: String, CaseIterable, Sendable {
     case system = "System"
     case collaboration = "Collaboration"
     case scoring = "Scoring"
+    case hardware = "Hardware"
+    case privacy = "Privacy"
+    case recording = "Recording"
+    case business = "Business"
+    case automation = "Automation"
+    case intelligence = "Intelligence"
+    case spatial = "Spatial"
+    case led = "LED"
+    case social = "Social"
+    case science = "Science"
+    case wellness = "Wellness"
 
     public var osLog: OSLog {
         OSLog(subsystem: "com.echoelmusic", category: rawValue)
@@ -332,6 +343,50 @@ public final class Logger: @unchecked Sendable {
 
     public func scoring(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
         log(level, category: .scoring, message, file: file, function: function, line: line)
+    }
+
+    public func hardware(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .hardware, message, file: file, function: function, line: line)
+    }
+
+    public func privacy(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .privacy, message, file: file, function: function, line: line)
+    }
+
+    public func recording(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .recording, message, file: file, function: function, line: line)
+    }
+
+    public func business(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .business, message, file: file, function: function, line: line)
+    }
+
+    public func automation(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .automation, message, file: file, function: function, line: line)
+    }
+
+    public func intelligence(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .intelligence, message, file: file, function: function, line: line)
+    }
+
+    public func spatial(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .spatial, message, file: file, function: function, line: line)
+    }
+
+    public func led(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .led, message, file: file, function: function, line: line)
+    }
+
+    public func social(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .social, message, file: file, function: function, line: line)
+    }
+
+    public func science(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .science, message, file: file, function: function, line: line)
+    }
+
+    public func wellness(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .wellness, message, file: file, function: function, line: line)
     }
 
     // MARK: - Log Retrieval

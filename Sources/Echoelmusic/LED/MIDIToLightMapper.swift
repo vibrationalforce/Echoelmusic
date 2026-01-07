@@ -145,7 +145,7 @@ class MIDIToLightMapper: ObservableObject {
 
     func addFixture(_ fixture: DMXFixture) {
         fixtures.append(fixture)
-        print("💡 Added fixture: \(fixture.name) @ DMX \(fixture.startAddress)")
+        log.led("💡 Added fixture: \(fixture.name) @ DMX \(fixture.startAddress)")
     }
 
     // MARK: - Biometric Data Structure
@@ -166,7 +166,7 @@ class MIDIToLightMapper: ObservableObject {
         // Initialize Art-Net socket
         artNetSocket = try UDPSocket(address: artNetAddress, port: artNetPort)
         isActive = true
-        print("✅ DMX/LED Mapper connected (Art-Net → \(artNetAddress):\(artNetPort))")
+        log.led("✅ DMX/LED Mapper connected (Art-Net → \(artNetAddress):\(artNetPort))")
     }
 
     /// Disconnect from Art-Net network
@@ -178,7 +178,7 @@ class MIDIToLightMapper: ObservableObject {
         artNetSocket = nil
         isActive = false
 
-        print("🛑 DMX/LED Mapper disconnected")
+        log.led("🛑 DMX/LED Mapper disconnected")
     }
 
     // MARK: - Start/Stop (Legacy)
@@ -447,7 +447,7 @@ class MIDIToLightMapper: ObservableObject {
 
     func setScene(_ scene: LightScene) {
         currentScene = scene
-        print("💡 Light scene: \(scene.rawValue)")
+        log.led("💡 Light scene: \(scene.rawValue)")
     }
 
     // MARK: - Debug Info
@@ -489,11 +489,11 @@ class UDPSocket {
         connection?.stateUpdateHandler = { [weak self] state in
             switch state {
             case .ready:
-                print("💡 UDP Socket connected: \(address):\(port)")
+                log.led("💡 UDP Socket connected: \(address):\(port)")
             case .failed(let error):
-                print("❌ UDP Socket failed: \(error)")
+                log.led("❌ UDP Socket failed: \(error)", level: .error)
             case .cancelled:
-                print("🔌 UDP Socket cancelled")
+                log.led("🔌 UDP Socket cancelled")
             default:
                 break
             }
@@ -505,7 +505,7 @@ class UDPSocket {
 
     func send(data: Data) {
         guard let connection = connection else {
-            print("⚠️ UDP Socket not connected")
+            log.led("⚠️ UDP Socket not connected", level: .warning)
             return
         }
 
@@ -513,7 +513,7 @@ class UDPSocket {
             content: data,
             completion: .contentProcessed { error in
                 if let error = error {
-                    print("❌ UDP send error: \(error)")
+                    log.led("❌ UDP send error: \(error)", level: .error)
                 }
             }
         )
@@ -522,6 +522,6 @@ class UDPSocket {
     func close() {
         connection?.cancel()
         connection = nil
-        print("🔌 UDP Socket closed")
+        log.led("🔌 UDP Socket closed")
     }
 }

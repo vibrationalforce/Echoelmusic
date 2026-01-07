@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import os.log
 
 /// Resolves conflicts between gestures and other input sources
 /// Prevents accidental triggers and ensures intentional control
@@ -48,7 +49,7 @@ class GestureConflictResolver: ObservableObject {
         self.handTracker = handTracker
         self.faceTracker = faceTracker
 
-        print("🔀 GestureConflictResolver initialized")
+        log.info("🔀 GestureConflictResolver initialized", category: .system)
     }
 
 
@@ -150,14 +151,14 @@ class GestureConflictResolver: ObservableObject {
     /// Notify when gesture starts
     func gestureDidStart(_ gesture: GestureRecognizer.Gesture) {
         gestureStartTimes[gesture] = Date()
-        print("✋ Gesture started: \(gesture.rawValue)")
+        log.info("✋ Gesture started: \(gesture.rawValue)", category: .system)
     }
 
     /// Notify when gesture ends
     func gestureDidEnd(_ gesture: GestureRecognizer.Gesture) {
         gestureStartTimes[gesture] = nil
         lastGestureEndTime = Date()
-        print("✋ Gesture ended: \(gesture.rawValue)")
+        log.info("✋ Gesture ended: \(gesture.rawValue)", category: .system)
     }
 
     /// Reset all gesture state
@@ -209,19 +210,19 @@ class GestureConflictResolver: ObservableObject {
         if !enabled {
             reset()
         }
-        print("✋ Gestures \(enabled ? "enabled" : "disabled")")
+        log.info("✋ Gestures \(enabled ? "enabled" : "disabled")", category: .system)
     }
 
     /// Update confidence threshold
     func setConfidenceThreshold(_ threshold: Float) {
         minimumConfidenceThreshold = max(0.1, min(1.0, threshold))
-        print("✋ Confidence threshold: \(minimumConfidenceThreshold)")
+        log.info("✋ Confidence threshold: \(minimumConfidenceThreshold)", category: .system)
     }
 
     /// Update minimum hold time
     func setMinimumHoldTime(_ time: TimeInterval) {
         minimumGestureHoldTime = max(0.05, min(1.0, time))
-        print("✋ Minimum hold time: \(minimumGestureHoldTime)s")
+        log.info("✋ Minimum hold time: \(minimumGestureHoldTime)s", category: .system)
     }
 
 

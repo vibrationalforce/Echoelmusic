@@ -696,7 +696,7 @@ public final class CinematicScoringEngine: ObservableObject {
         isPlaying = true
         startPlaybackTimer()
 
-        print("🎼 CinematicScoringEngine: Playing '\(configuration.title)' at \(configuration.tempo) BPM")
+        log.orchestral("🎼 CinematicScoringEngine: Playing '\(configuration.title)' at \(configuration.tempo) BPM")
     }
 
     /// Stop playback
@@ -706,7 +706,7 @@ public final class CinematicScoringEngine: ObservableObject {
         currentTime = 0
         activeVoices.removeAll()
 
-        print("🎼 CinematicScoringEngine: Stopped")
+        log.orchestral("🎼 CinematicScoringEngine: Stopped")
     }
 
     /// Pause playback
@@ -877,7 +877,7 @@ public final class CinematicScoringEngine: ObservableObject {
         configuration.reverbType = .soundstage
         configuration.tempo = 100
 
-        print("🏰 Loaded Disney Animation preset")
+        log.orchestral("🏰 Loaded Disney Animation preset")
     }
 
     /// Load an epic adventure preset
@@ -888,7 +888,7 @@ public final class CinematicScoringEngine: ObservableObject {
         configuration.reverbType = .soundstage
         configuration.tempo = 85
 
-        print("⚔️ Loaded Epic Adventure preset")
+        log.orchestral("⚔️ Loaded Epic Adventure preset")
     }
 
     /// Load a romantic score preset
@@ -899,7 +899,7 @@ public final class CinematicScoringEngine: ObservableObject {
         configuration.reverbType = .concertHall
         configuration.tempo = 72
 
-        print("💕 Loaded Romantic preset")
+        log.orchestral("💕 Loaded Romantic preset")
     }
 
     /// Load an intimate piano preset (Max Richter style)
@@ -910,7 +910,7 @@ public final class CinematicScoringEngine: ObservableObject {
         configuration.reverbType = .intimate
         configuration.tempo = 60
 
-        print("🎹 Loaded Intimate Piano preset")
+        log.orchestral("🎹 Loaded Intimate Piano preset")
     }
 }
 

@@ -455,7 +455,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
         // Simulate discovering sessions
         updateStatistics()
 
-        print("WorldwideCollaborationHub: Connected to \(selectedRegion.endpoint)")
+        log.collaboration("WorldwideCollaborationHub: Connected to \(selectedRegion.endpoint)")
     }
 
     /// Disconnect from network
@@ -467,7 +467,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
         }
         isConnected = false
         networkQuality = nil
-        print("WorldwideCollaborationHub: Disconnected")
+        log.collaboration("WorldwideCollaborationHub: Disconnected")
     }
 
     // MARK: - Session Management
@@ -502,7 +502,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
 
         eventPublisher.send(.sessionStarted)
 
-        print("WorldwideCollaborationHub: Created session '\(name)' [\(session.code)]")
+        log.collaboration("WorldwideCollaborationHub: Created session '\(name)' [\(session.code)]")
         return session
     }
 
@@ -537,7 +537,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
 
         eventPublisher.send(.participantJoined(participant))
 
-        print("WorldwideCollaborationHub: Joined session [\(code)]")
+        log.collaboration("WorldwideCollaborationHub: Joined session [\(code)]")
     }
 
     /// Leave current session
@@ -549,7 +549,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
         currentSession = nil
         localParticipant = nil
 
-        print("WorldwideCollaborationHub: Left session [\(session.code)]")
+        log.collaboration("WorldwideCollaborationHub: Left session [\(session.code)]")
     }
 
     /// End session (host only)
@@ -568,7 +568,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
         currentSession = nil
         localParticipant = nil
 
-        print("WorldwideCollaborationHub: Ended session [\(session.code)]")
+        log.collaboration("WorldwideCollaborationHub: Ended session [\(session.code)]")
     }
 
     // MARK: - Communication
@@ -633,7 +633,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
 
         eventPublisher.send(.quantumEntanglement(strength: strength))
 
-        print("WorldwideCollaborationHub: Quantum entanglement triggered (strength: \(String(format: "%.2f", strength)))")
+        log.collaboration("WorldwideCollaborationHub: Quantum entanglement triggered (strength: \(String(format: "%.2f", strength)))")
     }
 
     /// Update shared parameters

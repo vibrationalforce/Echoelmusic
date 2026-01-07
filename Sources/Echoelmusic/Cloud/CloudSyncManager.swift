@@ -20,7 +20,7 @@ class CloudSyncManager: ObservableObject {
         self.container = CKContainer(identifier: "iCloud.com.echoelmusic.app")
         self.privateDatabase = container.privateCloudDatabase
         self.sharedDatabase = container.sharedCloudDatabase
-        print("✅ CloudSyncManager: Initialized")
+        log.network("✅ CloudSyncManager: Initialized")
     }
 
     // MARK: - Enable/Disable Sync
@@ -34,12 +34,12 @@ class CloudSyncManager: ObservableObject {
         }
 
         syncEnabled = true
-        print("☁️ CloudSyncManager: Sync enabled")
+        log.network("☁️ CloudSyncManager: Sync enabled")
     }
 
     func disableSync() {
         syncEnabled = false
-        print("☁️ CloudSyncManager: Sync disabled")
+        log.network("☁️ CloudSyncManager: Sync disabled")
     }
 
     // MARK: - Save Session
@@ -61,7 +61,7 @@ class CloudSyncManager: ObservableObject {
         try await privateDatabase.save(record)
 
         lastSyncDate = Date()
-        print("☁️ CloudSyncManager: Saved session '\(session.name)'")
+        log.network("☁️ CloudSyncManager: Saved session '\(session.name)'")
     }
 
     // MARK: - Fetch Sessions
@@ -94,7 +94,7 @@ class CloudSyncManager: ObservableObject {
         cloudSessions = sessions
         lastSyncDate = Date()
 
-        print("☁️ CloudSyncManager: Fetched \(sessions.count) sessions")
+        log.network("☁️ CloudSyncManager: Fetched \(sessions.count) sessions")
         return sessions
     }
 
@@ -123,13 +123,13 @@ class CloudSyncManager: ObservableObject {
                 try? await self?.autoBackup()
             }
         }
-        print("☁️ CloudSyncManager: Auto backup enabled (every \(Int(interval))s)")
+        log.network("☁️ CloudSyncManager: Auto backup enabled (every \(Int(interval))s)")
     }
 
     func disableAutoBackup() {
         autoBackupTimer?.invalidate()
         autoBackupTimer = nil
-        print("☁️ CloudSyncManager: Auto backup disabled")
+        log.network("☁️ CloudSyncManager: Auto backup disabled")
     }
 
     /// Update current session data for backup
@@ -153,19 +153,19 @@ class CloudSyncManager: ObservableObject {
 
     private func autoBackup() async throws {
         guard syncEnabled else {
-            print("☁️ CloudSyncManager: Auto backup skipped (sync disabled)")
+            log.network("☁️ CloudSyncManager: Auto backup skipped (sync disabled)")
             return
         }
 
         guard let sessionData = currentSessionData else {
-            print("☁️ CloudSyncManager: Auto backup skipped (no active session)")
+            log.network("☁️ CloudSyncManager: Auto backup skipped (no active session)")
             return
         }
 
         // Skip if nothing new to backup
         if let lastBackup = lastBackupDate,
            sessionData.hrvReadings.count < 10 {
-            print("☁️ CloudSyncManager: Auto backup skipped (insufficient new data)")
+            log.network("☁️ CloudSyncManager: Auto backup skipped (insufficient new data)")
             return
         }
 
@@ -205,9 +205,9 @@ class CloudSyncManager: ObservableObject {
             try await privateDatabase.save(record)
             lastBackupDate = Date()
             lastSyncDate = Date()
-            print("☁️ CloudSyncManager: Auto backup completed - \(sessionData.hrvReadings.count) data points, avg HRV: \(String(format: "%.1f", avgHRV)), avg Coherence: \(String(format: "%.2f", avgCoherence))")
+            log.network("☁️ CloudSyncManager: Auto backup completed - \(sessionData.hrvReadings.count) data points, avg HRV: \(String(format: "%.1f", avgHRV)), avg Coherence: \(String(format: "%.2f", avgCoherence))")
         } catch {
-            print("❌ CloudSyncManager: Auto backup failed - \(error.localizedDescription)")
+            log.network("❌ CloudSyncManager: Auto backup failed - \(error.localizedDescription)", level: .error)
             throw CloudError.syncFailed
         }
     }
@@ -234,7 +234,7 @@ class CloudSyncManager: ObservableObject {
         currentSessionData = nil
         lastBackupDate = nil
 
-        print("☁️ CloudSyncManager: Session finalized and saved")
+        log.network("☁️ CloudSyncManager: Session finalized and saved")
     }
 }
 

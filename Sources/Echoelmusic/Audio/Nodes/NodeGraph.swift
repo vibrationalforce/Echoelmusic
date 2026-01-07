@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import os.log
 
 /// Manages a graph of interconnected audio processing nodes
 /// Handles signal routing, parameter automation, and bio-reactivity
@@ -50,7 +51,7 @@ class NodeGraph: ObservableObject {
     func addNode(_ node: EchoelmusicNode) {
         nodes.append(node)
         invalidateCache() // Graph structure changed
-        print("📊 Added node: \(node.name) (\(node.type.rawValue))")
+        log.audio("📊 Added node: \(node.name) (\(node.type.rawValue))")
     }
 
     /// Remove a node from the graph
@@ -93,7 +94,7 @@ class NodeGraph: ObservableObject {
         connections.append(connection)
         invalidateCache() // Graph structure changed
 
-        print("📊 Connected: \(source.name) → \(destination.name)")
+        log.audio("📊 Connected: \(source.name) → \(destination.name)")
     }
 
     /// Disconnect two nodes
@@ -233,7 +234,7 @@ class NodeGraph: ObservableObject {
         }
 
         isProcessing = true
-        print("📊 NodeGraph started (\(nodes.count) nodes)")
+        log.audio("📊 NodeGraph started (\(nodes.count) nodes)")
     }
 
     /// Stop processing
@@ -244,7 +245,7 @@ class NodeGraph: ObservableObject {
         }
 
         isProcessing = false
-        print("📊 NodeGraph stopped")
+        log.audio("📊 NodeGraph stopped")
     }
 
     /// Reset all nodes
@@ -270,7 +271,7 @@ class NodeGraph: ObservableObject {
             // For now, placeholder
         }
 
-        print("📊 Loaded preset: \(preset.name)")
+        log.audio("📊 Loaded preset: \(preset.name)")
     }
 
     /// Save current configuration as preset

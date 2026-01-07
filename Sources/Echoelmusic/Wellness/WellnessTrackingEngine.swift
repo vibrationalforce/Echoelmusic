@@ -551,8 +551,8 @@ public final class WellnessTrackingEngine: ObservableObject {
         currentSession = session
         isSessionActive = true
 
-        print("WellnessTrackingEngine: Started '\(name)' session (\(category.rawValue))")
-        print(WellnessDisclaimer.short)
+        log.wellness("WellnessTrackingEngine: Started '\(name)' session (\(category.rawValue))")
+        log.wellness(WellnessDisclaimer.short)
     }
 
     /// End the current session
@@ -575,7 +575,7 @@ public final class WellnessTrackingEngine: ObservableObject {
         updateStatistics()
         updateGoalProgress(session)
 
-        print("WellnessTrackingEngine: Completed session. Duration: \(Int(session.duration / 60)) minutes")
+        log.wellness("WellnessTrackingEngine: Completed session. Duration: \(Int(session.duration / 60)) minutes")
     }
 
     /// Cancel the current session

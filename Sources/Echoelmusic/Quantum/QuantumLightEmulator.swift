@@ -301,10 +301,10 @@ public class QuantumLightEmulator: ObservableObject {
         isActive = true
         startUpdateLoop()
 
-        print("[QuantumLightEmulator] Started in \(emulationMode.rawValue) mode")
-        print("  - Qubits: \(configuration.qubitCount)")
-        print("  - Photons: \(configuration.photonCount)")
-        print("  - Geometry: \(configuration.lightFieldGeometry.rawValue)")
+        log.quantum("[QuantumLightEmulator] Started in \(emulationMode.rawValue) mode")
+        log.quantum("  - Qubits: \(configuration.qubitCount)")
+        log.quantum("  - Photons: \(configuration.photonCount)")
+        log.quantum("  - Geometry: \(configuration.lightFieldGeometry.rawValue)")
     }
 
     /// Stop the emulation
@@ -312,7 +312,7 @@ public class QuantumLightEmulator: ObservableObject {
         isActive = false
         updateTimer?.invalidate()
         updateTimer = nil
-        print("[QuantumLightEmulator] Stopped")
+        log.quantum("[QuantumLightEmulator] Stopped")
     }
 
     /// Set emulation mode
@@ -392,7 +392,7 @@ public class QuantumLightEmulator: ObservableObject {
     /// Create entanglement with another emulator (for multi-device sync)
     public func entangle(with deviceId: String, strength: Float) {
         entanglementNetwork[deviceId] = min(1.0, max(0.0, strength))
-        print("[QuantumLightEmulator] Entangled with \(deviceId) at strength \(strength)")
+        log.quantum("[QuantumLightEmulator] Entangled with \(deviceId) at strength \(strength)")
     }
 
     /// Break entanglement
@@ -860,14 +860,14 @@ public class CloudQuantumService {
 
     public init(provider: Provider) {
         self.provider = provider
-        print("[CloudQuantumService] Prepared for future \(provider.rawValue) integration")
+        log.quantum("[CloudQuantumService] Prepared for future \(provider.rawValue) integration")
     }
 
     /// Placeholder for future quantum circuit execution
     public func executeCircuit(_ circuit: QuantumCircuit) async throws -> QuantumResult {
         // Future: Connect to actual quantum cloud service
-        print("[CloudQuantumService] Quantum hardware execution not yet available")
-        print("  → Using classical emulation via QuantumLightEmulator")
+        log.quantum("[CloudQuantumService] Quantum hardware execution not yet available")
+        log.quantum("  → Using classical emulation via QuantumLightEmulator")
 
         // Return simulated result
         return QuantumResult(

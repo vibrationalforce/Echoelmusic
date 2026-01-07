@@ -412,7 +412,7 @@ public final class VideoProcessingEngine: ObservableObject {
 
     private func setupMetal() {
         guard let device = MTLCreateSystemDefaultDevice() else {
-            print("VideoProcessingEngine: Metal not available")
+            log.video("VideoProcessingEngine: Metal not available", level: .warning)
             return
         }
 
@@ -533,7 +533,7 @@ public final class VideoProcessingEngine: ObservableObject {
                 }
             }
         } catch {
-            print("VideoProcessingEngine: Shader compilation failed: \(error)")
+            log.video("VideoProcessingEngine: Shader compilation failed: \(error)", level: .error)
         }
     }
 
@@ -594,7 +594,7 @@ public final class VideoProcessingEngine: ObservableObject {
         frameCount = 0
         droppedFrameCount = 0
 
-        print("VideoProcessingEngine: Started at \(outputResolution.rawValue) \(outputFrameRate.rawValue)fps")
+        log.video("VideoProcessingEngine: Started at \(outputResolution.rawValue) \(outputFrameRate.rawValue)fps")
     }
 
     /// Stop the video processing engine
@@ -602,7 +602,7 @@ public final class VideoProcessingEngine: ObservableObject {
         isRunning = false
         startTime = nil
 
-        print("VideoProcessingEngine: Stopped. Processed \(frameCount) frames, dropped \(droppedFrameCount)")
+        log.video("VideoProcessingEngine: Stopped. Processed \(frameCount) frames, dropped \(droppedFrameCount)")
     }
 
     /// Create a new video project

@@ -231,9 +231,9 @@ class FairBusinessModel: ObservableObject {
 
     init() {
         loadSubscriptionStatus()
-        print("✅ Fair Business Model: Initialized")
-        print("💰 Current Tier: \(currentTier.rawValue)")
-        print("🤝 Ethical commitments loaded")
+        log.business("✅ Fair Business Model: Initialized")
+        log.business("💰 Current Tier: \(currentTier.rawValue)")
+        log.business("🤝 Ethical commitments loaded")
     }
 
     // MARK: - Load Subscription Status
@@ -259,7 +259,7 @@ class FairBusinessModel: ObservableObject {
     func startFreeTrial(tier: PricingTier) {
         guard tier != .free && tier != .lifetime else { return }
         guard activeTrial == nil else {
-            print("⚠️ Trial already active")
+            log.business("⚠️ Trial already active", level: .warning)
             return
         }
 
@@ -276,9 +276,9 @@ class FairBusinessModel: ObservableObject {
 
         currentTier = tier
 
-        print("🎉 Free trial started: \(tier.rawValue)")
-        print("📅 Trial ends: \(endDate.formatted(date: .long, time: .omitted))")
-        print("💡 No credit card required. No auto-renewal.")
+        log.business("🎉 Free trial started: \(tier.rawValue)")
+        log.business("📅 Trial ends: \(endDate.formatted(date: .long, time: .omitted))")
+        log.business("💡 No credit card required. No auto-renewal.")
     }
 
     // MARK: - Purchase Subscription
@@ -287,7 +287,7 @@ class FairBusinessModel: ObservableObject {
         guard tier != .free else { return }
 
         // In production, use StoreKit 2
-        print("💳 Purchasing: \(tier.rawValue) (\(billingPeriod.rawValue))")
+        log.business("💳 Purchasing: \(tier.rawValue) (\(billingPeriod.rawValue))")
 
         // Simulate purchase
         try await Task.sleep(nanoseconds: 1_000_000_000)  // 1 second
@@ -298,7 +298,7 @@ class FairBusinessModel: ObservableObject {
             lifetimePurchased = true
             UserDefaults.standard.set(true, forKey: "lifetimePurchased")
             subscriptionStatus = .lifetime
-            print("✅ Lifetime purchase complete!")
+            log.business("✅ Lifetime purchase complete!")
         } else {
             let renewalDate = Calendar.current.date(
                 byAdding: billingPeriod == .monthly ? .month : .year,
@@ -306,7 +306,7 @@ class FairBusinessModel: ObservableObject {
                 to: Date()
             )!
             subscriptionStatus = .active(tier: tier, renewalDate: renewalDate)
-            print("✅ Subscription active until: \(renewalDate.formatted(date: .long, time: .omitted))")
+            log.business("✅ Subscription active until: \(renewalDate.formatted(date: .long, time: .omitted))")
         }
     }
 
@@ -319,25 +319,25 @@ class FairBusinessModel: ObservableObject {
 
     func cancelSubscription() async throws {
         guard case .active(let tier, let renewalDate) = subscriptionStatus else {
-            print("⚠️ No active subscription to cancel")
+            log.business("⚠️ No active subscription to cancel", level: .warning)
             return
         }
 
         // In production, use StoreKit 2 to cancel
-        print("🚫 Cancelling subscription...")
+        log.business("🚫 Cancelling subscription...")
 
         // No retention tactics, no "are you sure?" spam
         subscriptionStatus = .cancelled(expiresOn: renewalDate)
 
-        print("✅ Subscription cancelled")
-        print("📅 Access continues until: \(renewalDate.formatted(date: .long, time: .omitted))")
-        print("💾 Your data remains accessible. Export anytime.")
+        log.business("✅ Subscription cancelled")
+        log.business("📅 Access continues until: \(renewalDate.formatted(date: .long, time: .omitted))")
+        log.business("💾 Your data remains accessible. Export anytime.")
     }
 
     // MARK: - Restore Purchases
 
     func restorePurchases() async throws {
-        print("🔄 Restoring purchases...")
+        log.business("🔄 Restoring purchases...")
 
         // In production, use StoreKit 2 to restore
         try await Task.sleep(nanoseconds: 500_000_000)
@@ -345,9 +345,9 @@ class FairBusinessModel: ObservableObject {
         if lifetimePurchased {
             currentTier = .lifetime
             subscriptionStatus = .lifetime
-            print("✅ Lifetime purchase restored")
+            log.business("✅ Lifetime purchase restored")
         } else {
-            print("ℹ️ No purchases to restore")
+            log.business("ℹ️ No purchases to restore")
         }
     }
 
@@ -357,12 +357,12 @@ class FairBusinessModel: ObservableObject {
         // In production, verify token with backend
         guard discount.verificationRequired else { return false }
 
-        print("🎓 Discount applied: \(discount.rawValue)")
+        log.business("🎓 Discount applied: \(discount.rawValue)")
 
         if discount == .accessibility {
             currentTier = .professional
             subscriptionStatus = .lifetime  // Free forever
-            print("♿️ Accessibility tier activated. Free Professional forever.")
+            log.business("♿️ Accessibility tier activated. Free Professional forever.")
         }
 
         return true

@@ -281,7 +281,7 @@ public final class SocialCoherenceEngine: ObservableObject {
         state = .active
         addEvent(.participantJoined, description: "Session started: \(config.name)")
 
-        print("SocialCoherenceEngine: Session started - \(config.name)")
+        log.social("SocialCoherenceEngine: Session started - \(config.name)")
     }
 
     /// Join an existing session
@@ -306,7 +306,7 @@ public final class SocialCoherenceEngine: ObservableObject {
         state = .active
         addEvent(.participantJoined, description: "Joined session")
 
-        print("SocialCoherenceEngine: Joined session \(sessionId)")
+        log.social("SocialCoherenceEngine: Joined session \(sessionId)")
     }
 
     /// Leave the current session
@@ -321,7 +321,7 @@ public final class SocialCoherenceEngine: ObservableObject {
             groupState.participants.removeAll { $0.id == local.id }
         }
 
-        print("SocialCoherenceEngine: Left session")
+        log.social("SocialCoherenceEngine: Left session")
     }
 
     /// End the session (for facilitators)
@@ -334,7 +334,7 @@ public final class SocialCoherenceEngine: ObservableObject {
         // Calculate final stats
         let finalCoherence = groupState.groupCoherence
         let duration = sessionDuration
-        print("SocialCoherenceEngine: Session ended - Duration: \(Int(duration))s, Final coherence: \(String(format: "%.2f", finalCoherence))")
+        log.social("SocialCoherenceEngine: Session ended - Duration: \(Int(duration))s, Final coherence: \(String(format: "%.2f", finalCoherence))")
 
         state = .idle
     }
@@ -597,7 +597,7 @@ public final class SocialCoherenceEngine: ObservableObject {
     /// Add a participant to the session
     public func addParticipant(_ participant: Participant) {
         guard groupState.participants.count < configuration.maxParticipants else {
-            print("SocialCoherenceEngine: Session full")
+            log.social("SocialCoherenceEngine: Session full", level: .warning)
             return
         }
 

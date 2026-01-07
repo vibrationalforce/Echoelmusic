@@ -29,7 +29,7 @@ class AdaptiveQualityManager {
         didSet {
             if currentQuality != oldValue {
                 qualityChangePublisher.send(currentQuality)
-                print("📊 Quality Level changed: \(oldValue.rawValue) → \(currentQuality.rawValue)")
+                log.performance("📊 Quality Level changed: \(oldValue.rawValue) → \(currentQuality.rawValue)")
             }
         }
     }
@@ -503,8 +503,8 @@ class AdaptiveQualityManager {
     // MARK: - Quality Transition
 
     private func transitionToQuality(_ newQuality: QualityLevel) {
-        print("🔄 Transitioning quality: \(currentQuality.rawValue) → \(newQuality.rawValue)")
-        print("   FPS: \(String(format: "%.1f", metrics.averageFPS)) | CPU: \(String(format: "%.1f%%", metrics.cpuUsage * 100)) | GPU: \(String(format: "%.1f%%", metrics.gpuUsage * 100))")
+        log.performance("🔄 Transitioning quality: \(currentQuality.rawValue) → \(newQuality.rawValue)")
+        log.performance("   FPS: \(String(format: "%.1f", metrics.averageFPS)) | CPU: \(String(format: "%.1f%%", metrics.cpuUsage * 100)) | GPU: \(String(format: "%.1f%%", metrics.gpuUsage * 100))")
 
         currentQuality = newQuality
         lastQualityChange = Date()
@@ -626,7 +626,7 @@ class AdaptiveQualityManager {
     // MARK: - Emergency Handlers
 
     private func handleMemoryWarning() {
-        print("⚠️ Memory Warning! Degrading quality immediately.")
+        log.performance("⚠️ Memory Warning! Degrading quality immediately.", level: .warning)
 
         // Sofortige Qualitätsreduzierung
         if currentQuality > .minimal {
@@ -640,7 +640,7 @@ class AdaptiveQualityManager {
 
     private func clearCaches() {
         // Implementierung würde hier Caches leeren
-        print("🧹 Clearing caches to free memory")
+        log.performance("🧹 Clearing caches to free memory")
     }
 
     // MARK: - Manual Control

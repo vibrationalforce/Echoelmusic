@@ -63,7 +63,7 @@ class HandTrackingManager: ObservableObject {
 
     init() {
         setupHandPoseRequest()
-        print("👋 HandTrackingManager initialized")
+        log.spatial("👋 HandTrackingManager initialized")
     }
 
 
@@ -88,7 +88,7 @@ class HandTrackingManager: ObservableObject {
         guard !isTracking else { return }
 
         isTracking = true
-        print("👋 Started hand tracking")
+        log.spatial("👋 Started hand tracking")
     }
 
     /// Stop hand tracking
@@ -102,7 +102,7 @@ class HandTrackingManager: ObservableObject {
         rightHandLandmarks.removeAll()
         trackingConfidence = 0.0
 
-        print("👋 Stopped hand tracking")
+        log.spatial("👋 Stopped hand tracking")
     }
 
     /// Process video frame for hand detection
@@ -112,7 +112,7 @@ class HandTrackingManager: ObservableObject {
         do {
             try sequenceHandler.perform([request], on: pixelBuffer)
         } catch {
-            print("❌ Hand tracking error: \(error)")
+            log.spatial("❌ Hand tracking error: \(error)", level: .error)
         }
     }
 
@@ -121,7 +121,7 @@ class HandTrackingManager: ObservableObject {
 
     private func handleHandPoseRequest(request: VNRequest, error: Error?) {
         if let error = error {
-            print("❌ Hand pose request error: \(error)")
+            log.spatial("❌ Hand pose request error: \(error)", level: .error)
             return
         }
 
@@ -298,7 +298,7 @@ extension HandTrackingManager {
 
         guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
               let input = try? AVCaptureDeviceInput(device: camera) else {
-            print("❌ Failed to create camera input")
+            log.spatial("❌ Failed to create camera input", level: .error)
             return nil
         }
 

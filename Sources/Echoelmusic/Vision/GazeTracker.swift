@@ -305,7 +305,7 @@ public final class GazeTracker: ObservableObject {
         #endif
 
         isTracking = true
-        print("👁️ GazeTracker: Started tracking")
+        log.spatial("👁️ GazeTracker: Started tracking")
     }
 
     /// Stop eye gaze tracking
@@ -319,7 +319,7 @@ public final class GazeTracker: ObservableObject {
         arSession = nil
         #endif
 
-        print("👁️ GazeTracker: Stopped tracking")
+        log.spatial("👁️ GazeTracker: Stopped tracking")
     }
 
     #if canImport(ARKit) && !targetEnvironment(simulator)
@@ -571,7 +571,7 @@ public final class GazeTracker: ObservableObject {
                     self.calibrationProgress = 1.0
                     self.isCalibrated = true
                     timer.invalidate()
-                    print("👁️ GazeTracker: Calibration complete")
+                    log.spatial("👁️ GazeTracker: Calibration complete")
                 }
             }
         }

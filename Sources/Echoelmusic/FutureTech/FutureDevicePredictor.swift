@@ -85,10 +85,10 @@ class FutureDevicePredictor: ObservableObject {
         analyzeTechnologyTrends()
         calculateReadinessScore()
 
-        print("✅ Future Device Predictor: Initialized")
-        print("🔮 Predictions generated: \(predictions.count)")
-        print("📈 Technology trends tracked: \(technologyTrends.count)")
-        print("🎯 Readiness score: \(String(format: "%.1f", readinessScore))%")
+        log.hardware("✅ Future Device Predictor: Initialized")
+        log.hardware("🔮 Predictions generated: \(predictions.count)")
+        log.hardware("📈 Technology trends tracked: \(technologyTrends.count)")
+        log.hardware("🎯 Readiness score: \(String(format: "%.1f", readinessScore))%")
     }
 
     // MARK: - Generate Predictions
@@ -333,7 +333,7 @@ class FutureDevicePredictor: ObservableObject {
             )
         ]
 
-        print("🔮 Generated \(predictions.count) device predictions (2025-2035)")
+        log.hardware("🔮 Generated \(predictions.count) device predictions (2025-2035)")
     }
 
     // MARK: - Analyze Technology Trends
@@ -431,7 +431,7 @@ class FutureDevicePredictor: ObservableObject {
             )
         ]
 
-        print("📈 Analyzed \(technologyTrends.count) technology trends")
+        log.hardware("📈 Analyzed \(technologyTrends.count) technology trends")
     }
 
     // MARK: - Calculate Readiness Score

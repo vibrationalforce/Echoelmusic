@@ -179,9 +179,9 @@ public class QuantumSharePlayManager: ObservableObject {
             do {
                 _ = try await activity.activate()
                 sessionPhase = .preparing
-                print("[SharePlay] Quantum session started")
+                log.collaboration("[SharePlay] Quantum session started")
             } catch {
-                print("[SharePlay] Failed to start: \(error)")
+                log.collaboration("[SharePlay] Failed to start: \(error)", level: .error)
                 throw error
             }
         }
@@ -397,7 +397,7 @@ public class QuantumSharePlayManager: ObservableObject {
         let localTime = CACurrentMediaTime()
         let latency = localTime - timestamp
 
-        print("[SharePlay] Entanglement pulse received, latency: \(latency * 1000)ms")
+        log.collaboration("[SharePlay] Entanglement pulse received, latency: \(latency * 1000)ms")
 
         // Flash coherence to maximum briefly
         Task {
@@ -408,7 +408,7 @@ public class QuantumSharePlayManager: ObservableObject {
     }
 
     private func handleCollectiveIntention(_ intention: String) {
-        print("[SharePlay] Collective intention: \(intention)")
+        log.collaboration("[SharePlay] Collective intention: \(intention)")
         // Could trigger specific visualization or audio response
     }
 

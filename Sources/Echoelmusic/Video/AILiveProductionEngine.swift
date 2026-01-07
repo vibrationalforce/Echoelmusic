@@ -383,7 +383,7 @@ public final class AILiveProductionEngine: ObservableObject {
             }
         }
 
-        print("LIVE: Production started")
+        log.video("LIVE: Production started")
     }
 
     public func stopLive() {
@@ -392,7 +392,7 @@ public final class AILiveProductionEngine: ObservableObject {
         productionTimer = nil
         logEvent(.streamEnded)
 
-        print("OFFLINE: Production ended")
+        log.video("OFFLINE: Production ended")
     }
 
     public func startRecording() {

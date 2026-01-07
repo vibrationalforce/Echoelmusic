@@ -128,7 +128,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
 
         isActive = true
         startDisplayLink()
-        print("[PhotonicsVisualization] Started - \(currentVisualization.rawValue)")
+        log.quantum("[PhotonicsVisualization] Started - \(currentVisualization.rawValue)")
     }
 
     /// Stop visualization

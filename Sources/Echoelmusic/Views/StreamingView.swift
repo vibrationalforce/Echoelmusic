@@ -535,9 +535,9 @@ struct StreamingView: View {
         }
 
         if isStreaming {
-            print("▶️ StreamingView: Starting stream to \(selectedDestinations.count) destination(s)")
+            log.streaming("▶️ StreamingView: Starting stream to \(selectedDestinations.count) destination(s)")
         } else {
-            print("⏹️ StreamingView: Stopping stream")
+            log.streaming("⏹️ StreamingView: Stopping stream")
         }
     }
 }

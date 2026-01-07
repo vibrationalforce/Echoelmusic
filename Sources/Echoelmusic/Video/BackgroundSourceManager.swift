@@ -152,7 +152,7 @@ class BackgroundSourceManager: ObservableObject {
         // Initialize available sources
         initializeDefaultSources()
 
-        print("✅ BackgroundSourceManager: Initialized")
+        log.video("✅ BackgroundSourceManager: Initialized")
     }
 
     deinit {
@@ -228,12 +228,12 @@ class BackgroundSourceManager: ObservableObject {
             }
 
             isLoading = false
-            print("✅ BackgroundSourceManager: Set source to '\(source.displayName)'")
+            log.video("✅ BackgroundSourceManager: Set source to '\(source.displayName)'")
 
         } catch {
             isLoading = false
             errorMessage = error.localizedDescription
-            print("❌ BackgroundSourceManager: Failed to set source - \(error)")
+            log.video("❌ BackgroundSourceManager: Failed to set source - \(error)", level: .error)
             throw error
         }
     }
@@ -647,7 +647,7 @@ class BackgroundSourceManager: ObservableObject {
         // Start display link for frame updates
         startDisplayLink()
 
-        print("▶️ BackgroundSourceManager: Started video playback")
+        log.video("▶️ BackgroundSourceManager: Started video playback")
     }
 
     private func stopVideoPlayback() {
@@ -722,7 +722,7 @@ class BackgroundSourceManager: ObservableObject {
             session.startRunning()
         }
 
-        print("📷 BackgroundSourceManager: Live camera capture started (\(position == .front ? "front" : "back") camera)")
+        log.video("📷 BackgroundSourceManager: Live camera capture started (\(position == .front ? "front" : "back") camera)")
         #else
         throw BackgroundError.cameraNotAvailable
         #endif
@@ -779,7 +779,7 @@ class BackgroundSourceManager: ObservableObject {
         await renderer.start()
         echoelmusicVisualRenderer = renderer
 
-        print("🎨 BackgroundSourceManager: Started Echoelmusic visual '\(type.displayName)' with \(type.rawValue) renderer")
+        log.video("🎨 BackgroundSourceManager: Started Echoelmusic visual '\(type.displayName)' with \(type.rawValue) renderer")
     }
 
     // MARK: - Blur Background
@@ -844,7 +844,7 @@ class BackgroundSourceManager: ObservableObject {
         // Render blurred image to texture
         blurredTexture = try createTexture(from: blurredImage)
         currentTexture = blurredTexture
-        print("🔵 BackgroundSourceManager: Applied \(type.rawValue) blur with intensity \(String(format: "%.1f", intensity))")
+        log.video("🔵 BackgroundSourceManager: Applied \(type.rawValue) blur with intensity \(String(format: "%.1f", intensity))")
     }
 
     // MARK: - Update Animated Source
@@ -964,7 +964,7 @@ class EchoelmusicVisualRenderer {
 
     func start() async {
         // Initialize renderer resources based on type
-        print("🎨 EchoelmusicVisualRenderer: Started \(type.rawValue)")
+        log.video("🎨 EchoelmusicVisualRenderer: Started \(type.rawValue)")
     }
 
     func render(size: CGSize) async throws -> MTLTexture {
@@ -1007,32 +1007,32 @@ class EchoelmusicVisualRenderer {
         // Cymatics rendering - water ripple patterns based on coherence
         let frequency = parameters["frequency"] as? Float ?? 432.0
         let amplitude = parameters["amplitude"] as? Float ?? hrvCoherence
-        print("🎨 Cymatics: freq=\(frequency)Hz, amp=\(amplitude), coherence=\(hrvCoherence)")
+        log.video("🎨 Cymatics: freq=\(frequency)Hz, amp=\(amplitude), coherence=\(hrvCoherence)")
     }
 
     private func renderMandalaToTexture(_ texture: MTLTexture) {
         // Mandala rendering - sacred geometry with symmetry
         let symmetry = parameters["symmetry"] as? Int ?? 8
         let rotationSpeed = parameters["rotationSpeed"] as? Float ?? 0.5
-        print("🎨 Mandala: symmetry=\(symmetry), rotation=\(rotationSpeed), coherence=\(hrvCoherence)")
+        log.video("🎨 Mandala: symmetry=\(symmetry), rotation=\(rotationSpeed), coherence=\(hrvCoherence)")
     }
 
     private func renderParticlesToTexture(_ texture: MTLTexture) {
         // Particle system rendering - bio-reactive particles
         let particleCount = parameters["particleCount"] as? Int ?? 10000
-        print("🎨 Particles: count=\(particleCount), heartRate=\(heartRate), coherence=\(hrvCoherence)")
+        log.video("🎨 Particles: count=\(particleCount), heartRate=\(heartRate), coherence=\(hrvCoherence)")
     }
 
     private func renderWaveformToTexture(_ texture: MTLTexture) {
         // Waveform rendering - audio visualization
         let fftSize = parameters["fftSize"] as? Int ?? 2048
-        print("🎨 Waveform: fftSize=\(fftSize), coherence=\(hrvCoherence)")
+        log.video("🎨 Waveform: fftSize=\(fftSize), coherence=\(hrvCoherence)")
     }
 
     private func renderSpectralToTexture(_ texture: MTLTexture) {
         // Spectral analysis rendering - FFT bars
         let bands = parameters["bands"] as? Int ?? 64
-        print("🎨 Spectral: bands=\(bands), coherence=\(hrvCoherence)")
+        log.video("🎨 Spectral: bands=\(bands), coherence=\(hrvCoherence)")
     }
 }
 

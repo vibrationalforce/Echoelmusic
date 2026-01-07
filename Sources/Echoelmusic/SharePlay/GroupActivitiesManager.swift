@@ -153,7 +153,7 @@ class GroupSessionManager {
         switch await activity.prepareForActivation() {
         case .activationPreferred:
             _ = try await activity.activate()
-            print("📺 SharePlay session started: \(type.displayName)")
+            log.collaboration("📺 SharePlay session started: \(type.displayName)")
 
         case .activationDisabled:
             throw GroupSessionError.activationDisabled
@@ -173,7 +173,7 @@ class GroupSessionManager {
         messenger = nil
         participants.removeAll()
         synchronizedState = SynchronizedState()
-        print("📺 SharePlay session ended")
+        log.collaboration("📺 SharePlay session ended")
     }
 
     /// Send bio metrics update to all participants
@@ -272,17 +272,17 @@ class GroupSessionManager {
         // Join the session
         session.join()
 
-        print("📺 Joined SharePlay session: \(session.activity.sessionType.displayName)")
+        log.collaboration("📺 Joined SharePlay session: \(session.activity.sessionType.displayName)")
     }
 
     private func handleSessionState(_ state: GroupSession<EchoelmusicActivity>.State) async {
         switch state {
         case .waiting:
-            print("📺 Waiting for participants...")
+            log.collaboration("📺 Waiting for participants...")
         case .joined:
-            print("📺 Session joined!")
+            log.collaboration("📺 Session joined!")
         case .invalidated(let reason):
-            print("📺 Session invalidated: \(reason)")
+            log.collaboration("📺 Session invalidated: \(reason)", level: .warning)
             endSession()
         @unknown default:
             break
@@ -303,7 +303,7 @@ class GroupSessionManager {
         // Recalculate group coherence
         updateGroupCoherence()
 
-        print("📺 Participants updated: \(participants.count) active")
+        log.collaboration("📺 Participants updated: \(participants.count) active")
     }
 
     private func handleMessage(_ message: SessionMessage) async {
@@ -330,7 +330,7 @@ class GroupSessionManager {
             if let payload = message.payload,
                let reaction = String(data: payload, encoding: .utf8) {
                 // Trigger visual/haptic feedback for reaction
-                print("📺 Reaction received: \(reaction)")
+                log.collaboration("📺 Reaction received: \(reaction)", level: .debug)
             }
 
         case .chat:

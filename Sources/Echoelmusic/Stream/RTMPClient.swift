@@ -172,7 +172,7 @@ class RTMPClient: ObservableObject {
         // C2: Echo back S1
         try await send(s1)
 
-        print("🤝 RTMP Handshake completed successfully")
+        log.streaming("🤝 RTMP Handshake completed successfully")
     }
 
     // MARK: - RTMP Commands
@@ -233,7 +233,7 @@ class RTMPClient: ObservableObject {
             streamID = 1
         }
 
-        print("📺 Stream created with ID: \(streamID)")
+        log.streaming("📺 Stream created with ID: \(streamID)")
     }
 
     /// Publish stream
@@ -250,7 +250,7 @@ class RTMPClient: ObservableObject {
         try await sendRTMPMessage(type: RTMPConstants.msgAMF0Command, data: amf, streamID: UInt32(streamID))
 
         connectionState = .streaming
-        print("🎬 Publishing to stream: \(streamKey)")
+        log.streaming("🎬 Publishing to stream: \(streamKey)")
     }
 
     // MARK: - Send Media

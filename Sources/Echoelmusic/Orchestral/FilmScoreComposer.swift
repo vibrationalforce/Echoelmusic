@@ -431,14 +431,14 @@ public final class FilmScoreComposer: ObservableObject {
         // Start composition loop
         startCompositionLoop()
 
-        print("🎬 FilmScoreComposer: Composing for '\(sceneType.rawValue)'")
+        log.orchestral("🎬 FilmScoreComposer: Composing for '\(sceneType.rawValue)'")
     }
 
     /// Stop composing
     public func stopComposing() {
         isComposing = false
         stopCompositionLoop()
-        print("🎬 FilmScoreComposer: Stopped")
+        log.orchestral("🎬 FilmScoreComposer: Stopped")
     }
 
     // MARK: - Composition Logic
@@ -730,7 +730,7 @@ public final class FilmScoreComposer: ObservableObject {
             tempo: 84
         ))
 
-        print("🏰 Loaded Walt Disney Classic preset")
+        log.orchestral("🏰 Loaded Walt Disney Classic preset")
     }
 
     /// Load John Williams Epic preset
@@ -761,7 +761,7 @@ public final class FilmScoreComposer: ObservableObject {
             tempo: 108
         ))
 
-        print("⚔️ Loaded Epic Adventure preset")
+        log.orchestral("⚔️ Loaded Epic Adventure preset")
     }
 
     /// Load Hans Zimmer Modern preset
@@ -792,7 +792,7 @@ public final class FilmScoreComposer: ObservableObject {
             tempo: 80
         ))
 
-        print("🌊 Loaded Modern Cinematic preset")
+        log.orchestral("🌊 Loaded Modern Cinematic preset")
     }
 }
 

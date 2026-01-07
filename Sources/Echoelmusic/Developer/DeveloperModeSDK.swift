@@ -370,7 +370,7 @@ public final class PluginManager: ObservableObject {
             try await plugin.onLoad(context: context)
             loadedPlugins[id] = plugin
             pluginErrors.removeValue(forKey: id)
-            print("PluginManager: Loaded '\(plugin.name)' (\(id))")
+            log.info("PluginManager: Loaded '\(plugin.name)' (\(id))", category: .plugin)
         } catch {
             pluginErrors[id] = error.localizedDescription
             throw error
@@ -385,7 +385,7 @@ public final class PluginManager: ObservableObject {
 
         await plugin.onUnload()
         loadedPlugins.removeValue(forKey: identifier)
-        print("PluginManager: Unloaded '\(plugin.name)' (\(identifier))")
+        log.info("PluginManager: Unloaded '\(plugin.name)' (\(identifier))", category: .plugin)
     }
 
     /// Reload a plugin
@@ -627,7 +627,7 @@ public final class DeveloperConsole: ObservableObject {
             logs.removeFirst(logs.count - 1000)
         }
 
-        print("[\(level.rawValue)] [\(source)] \(message)")
+        log.info("[\(level.rawValue)] [\(source)] \(message)", category: .plugin)
     }
 
     public func debug(_ message: String, source: String = "App") {

@@ -53,7 +53,7 @@ final class VideoAICreativeHub: ObservableObject {
 
     private init() {
         setupConnections()
-        print("🎬 VideoAICreativeHub: Initialized - Ultra Liquid Light Flow")
+        log.video("🎬 VideoAICreativeHub: Initialized - Ultra Liquid Light Flow")
     }
 
     private func setupConnections() {
@@ -149,7 +149,7 @@ class GenerativeAIEngine: ObservableObject {
 
     private func loadModels() {
         // Note: In production, load actual CoreML models
-        print("🤖 GenerativeAI: Models loading...")
+        log.video("🤖 GenerativeAI: Models loading...")
     }
 
     // MARK: - Creativity Level
@@ -202,7 +202,7 @@ class GenerativeAIEngine: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎨 GenerativeAI: Generating from prompt: '\(prompt)'")
+        log.video("🎨 GenerativeAI: Generating from prompt: '\(prompt)'")
 
         // In production: Use Stable Diffusion or similar
         let visual = GeneratedVisual(
@@ -227,7 +227,7 @@ class GenerativeAIEngine: ObservableObject {
         styleTransferActive = true
         defer { styleTransferActive = false }
 
-        print("🎭 GenerativeAI: Applying \(style.rawValue) style transfer")
+        log.video("🎭 GenerativeAI: Applying \(style.rawValue) style transfer")
 
         // In production: Process video frames through CoreML model
         return nil
@@ -243,7 +243,7 @@ class GenerativeAIEngine: ObservableObject {
         isGenerating = true
         defer { isGenerating = false }
 
-        print("🎵 GenerativeAI: Analyzing video for music generation")
+        log.video("🎵 GenerativeAI: Analyzing video for music generation")
 
         // Analyze video motion, colors, pace
         let videoFeatures = await analyzeVideo(videoURL)

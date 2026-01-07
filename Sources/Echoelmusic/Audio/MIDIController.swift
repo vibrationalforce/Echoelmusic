@@ -112,7 +112,7 @@ class MIDIController: ObservableObject {
         // Create MIDI client
         status = MIDIClientCreate("Echoelmusic" as CFString, nil, nil, &midiClient)
         guard status == noErr else {
-            print("❌ Failed to create MIDI client: \(status)")
+            log.midi("❌ Failed to create MIDI client: \(status)", level: .error)
             return
         }
 
@@ -132,14 +132,14 @@ class MIDIController: ObservableObject {
         )
 
         guard status == noErr else {
-            print("❌ Failed to create MIDI input port: \(status)")
+            log.midi("❌ Failed to create MIDI input port: \(status)", level: .error)
             return
         }
 
         // Connect to all sources
         connectToAllSources()
 
-        print("🎹 MIDI controller initialized")
+        log.midi("🎹 MIDI controller initialized")
     }
 
     // MARK: - MIDI Connection
@@ -154,7 +154,7 @@ class MIDIController: ObservableObject {
             if status == noErr {
                 let device = getDeviceInfo(for: source)
                 connectedDevices.append(device)
-                print("🎹 Connected to MIDI device: \(device.name)")
+                log.midi("🎹 Connected to MIDI device: \(device.name)")
             }
         }
 
@@ -245,7 +245,7 @@ class MIDIController: ObservableObject {
     }
 
     private func handleParameterChange(parameter: MIDIParameter, value: Float) {
-        print("🎹 MIDI parameter: \(parameter) = \(value)")
+        log.midi("🎹 MIDI parameter: \(parameter) = \(value)")
         // This would be handled by specific parameter callbacks
     }
 
@@ -254,13 +254,13 @@ class MIDIController: ObservableObject {
     /// Add MIDI CC mapping
     func addMapping(_ mapping: MIDIMapping) {
         mappings.append(mapping)
-        print("🎹 Added MIDI mapping: CC\(mapping.controllerNumber) → \(mapping.parameter)")
+        log.midi("🎹 Added MIDI mapping: CC\(mapping.controllerNumber) → \(mapping.parameter)")
     }
 
     /// Remove all mappings
     func clearMappings() {
         mappings.removeAll()
-        print("🎹 Cleared all MIDI mappings")
+        log.midi("🎹 Cleared all MIDI mappings")
     }
 
     /// Register message handler
@@ -284,7 +284,7 @@ class MIDIController: ObservableObject {
         addMapping(MIDIMapping(controllerNumber: 92, parameter: .delayTime, minValue: 0.01, maxValue: 2))    // Delay Time
         addMapping(MIDIMapping(controllerNumber: 93, parameter: .delayFeedback, minValue: 0, maxValue: 0.9)) // Delay Feedback
 
-        print("🎹 Setup default MIDI mappings")
+        log.midi("🎹 Setup default MIDI mappings")
     }
 
     // MARK: - Cleanup
@@ -304,7 +304,7 @@ class MIDIController: ObservableObject {
 extension MIDIController {
     /// Start MIDI learn mode for parameter
     func startLearnMode(for parameter: MIDIParameter, minValue: Float, maxValue: Float, timeout: TimeInterval = 10.0) async -> UInt8? {
-        print("🎹 MIDI Learn: Waiting for controller input...")
+        log.midi("🎹 MIDI Learn: Waiting for controller input...")
 
         // Wait for next CC message
         return await withCheckedContinuation { continuation in
@@ -316,7 +316,7 @@ extension MIDIController {
                       let ccNumber = message.controllerNumber else { return }
 
                 // Found CC controller
-                print("🎹 MIDI Learn: Learned CC\(ccNumber)")
+                log.midi("🎹 MIDI Learn: Learned CC\(ccNumber)")
 
                 // Add mapping
                 let mapping = MIDIMapping(
@@ -343,7 +343,7 @@ extension MIDIController {
             timeoutTask = Task {
                 try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
 
-                print("🎹 MIDI Learn: Timeout")
+                log.midi("🎹 MIDI Learn: Timeout")
 
                 if let handler = handler,
                    let index = messageHandlers.firstIndex(where: { handler as AnyObject === $0 as AnyObject }) {

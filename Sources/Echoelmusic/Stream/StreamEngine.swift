@@ -123,7 +123,7 @@ class StreamEngine: ObservableObject {
         self.device = device
 
         guard let queue = device.makeCommandQueue() else {
-            print("❌ StreamEngine: Failed to create command queue")
+            log.streaming("❌ StreamEngine: Failed to create command queue", level: .error)
             return nil
         }
         self.commandQueue = queue
@@ -135,7 +135,7 @@ class StreamEngine: ObservableObject {
 
         // Create scene renderer
         guard let renderer = SceneRenderer(device: device) else {
-            print("❌ StreamEngine: Failed to create scene renderer")
+            log.streaming("❌ StreamEngine: Failed to create scene renderer", level: .error)
             return nil
         }
         self.sceneRenderer = renderer
@@ -151,7 +151,7 @@ class StreamEngine: ObservableObject {
         self.availableScenes = sceneManager.loadScenes()
         self.currentScene = availableScenes.first
 
-        print("✅ StreamEngine: Initialized")
+        log.streaming("✅ StreamEngine: Initialized")
     }
 
     deinit {
@@ -194,7 +194,7 @@ class StreamEngine: ObservableObject {
                 error: nil
             )
 
-            print("🔗 StreamEngine: Connected to \(destination.rawValue)")
+            log.streaming("🔗 StreamEngine: Connected to \(destination.rawValue)")
         }
 
         // Start encoding
@@ -215,7 +215,7 @@ class StreamEngine: ObservableObject {
 
         isStreaming = true
 
-        print("▶️ StreamEngine: Started streaming to \(destinations.count) destination(s)")
+        log.streaming("▶️ StreamEngine: Started streaming to \(destinations.count) destination(s)")
     }
 
     // MARK: - Stop Streaming
@@ -232,7 +232,7 @@ class StreamEngine: ObservableObject {
         // Disconnect RTMP clients
         for (destination, client) in rtmpClients {
             client.disconnect()
-            print("🔌 StreamEngine: Disconnected from \(destination.rawValue)")
+            log.streaming("🔌 StreamEngine: Disconnected from \(destination.rawValue)")
         }
         rtmpClients.removeAll()
         activeStreams.removeAll()
@@ -247,7 +247,7 @@ class StreamEngine: ObservableObject {
         droppedFrames = 0
         actualFrameRate = 0.0
 
-        print("⏹️ StreamEngine: Stopped streaming")
+        log.streaming("⏹️ StreamEngine: Stopped streaming")
     }
 
     // MARK: - Capture Loop
@@ -302,7 +302,7 @@ class StreamEngine: ObservableObject {
                         self.activeStreams[destination] = status
                     }
                 } catch {
-                    print("❌ StreamEngine: Failed to send frame to \(destination.rawValue) - \(error)")
+                    log.streaming("❌ StreamEngine: Failed to send frame to \(destination.rawValue) - \(error)", level: .error)
 
                     // Update status
                     if var status = self.activeStreams[destination] {
@@ -358,7 +358,7 @@ class StreamEngine: ObservableObject {
         // Record in analytics
         analytics.recordSceneSwitch(to: scene)
 
-        print("🎬 StreamEngine: Switched to scene '\(scene.name)' with \(transition.rawValue) transition")
+        log.streaming("🎬 StreamEngine: Switched to scene '\(scene.name)' with \(transition.rawValue) transition")
     }
 
     private var transitionProgress: Float = 0.0
@@ -417,7 +417,7 @@ class StreamEngine: ObservableObject {
             try? await Task.sleep(nanoseconds: UInt64(frameInterval * 1_000_000_000))
         }
 
-        print("🎬 Crossfade transition completed (\(String(format: "%.1f", duration))s)")
+        log.streaming("🎬 Crossfade transition completed (\(String(format: "%.1f", duration))s)")
     }
 
     private func renderCrossfadeFrame(fromScene: Scene?, toScene: Scene, blendFactor: Float) async {
@@ -426,7 +426,7 @@ class StreamEngine: ObservableObject {
         // This would be implemented with Metal compute shader in production
         #if DEBUG
         if Int(blendFactor * 10) % 3 == 0 {
-            print("🎬 Crossfade: \(Int(blendFactor * 100))%")
+            log.streaming("🎬 Crossfade: \(Int(blendFactor * 100))%")
         }
         #endif
     }
@@ -453,7 +453,7 @@ class StreamEngine: ObservableObject {
             try? await Task.sleep(nanoseconds: UInt64(frameInterval * 1_000_000_000))
         }
 
-        print("🎬 Slide transition completed (\(String(format: "%.1f", duration))s)")
+        log.streaming("🎬 Slide transition completed (\(String(format: "%.1f", duration))s)")
     }
 
     private func renderSlideFrame(fromScene: Scene?, toScene: Scene, offset: Float) async {
@@ -489,7 +489,7 @@ class StreamEngine: ObservableObject {
             try? await Task.sleep(nanoseconds: UInt64(frameInterval * 1_000_000_000))
         }
 
-        print("🎬 Zoom transition completed (\(String(format: "%.1f", duration))s)")
+        log.streaming("🎬 Zoom transition completed (\(String(format: "%.1f", duration))s)")
     }
 
     private func renderZoomFrame(fromScene: Scene?, toScene: Scene, fromScale: Float, toScale: Float, fromAlpha: Float) async {
@@ -511,7 +511,7 @@ class StreamEngine: ObservableObject {
         // Second half: fade from stinger to new scene
         await performCrossfade(from: nil, to: to, duration: halfDuration)
 
-        print("🎬 Stinger transition completed (\(String(format: "%.1f", duration))s)")
+        log.streaming("🎬 Stinger transition completed (\(String(format: "%.1f", duration))s)")
     }
 
     // MARK: - Easing Functions
@@ -531,7 +531,7 @@ class StreamEngine: ObservableObject {
         sceneManager.bioReactiveEnabled = enabled
         sceneManager.bioSceneRules = rules
 
-        print("🧠 StreamEngine: Bio-reactive scene switching \(enabled ? "enabled" : "disabled") with \(rules.count) rules")
+        log.streaming("🧠 StreamEngine: Bio-reactive scene switching \(enabled ? "enabled" : "disabled") with \(rules.count) rules")
     }
 
     func updateBioParameters(coherence: Float, heartRate: Float, hrv: Float, breathingPhase: Float = 0.0) {
@@ -560,7 +560,7 @@ class StreamEngine: ObservableObject {
 
     func enableAdaptiveBitrate(_ enabled: Bool) {
         encodingManager.adaptiveBitrateEnabled = enabled
-        print("📊 StreamEngine: Adaptive bitrate \(enabled ? "enabled" : "disabled")")
+        log.streaming("📊 StreamEngine: Adaptive bitrate \(enabled ? "enabled" : "disabled")")
     }
 
     func updateNetworkConditions(packetLoss: Double, rtt: TimeInterval) {
@@ -571,13 +571,13 @@ class StreamEngine: ObservableObject {
                 let newBitrate = Int(Double(bitrate) * 0.8)
                 bitrate = max(1000, newBitrate)
                 encodingManager.updateBitrate(bitrate)
-                print("⚠️ StreamEngine: Reduced bitrate to \(bitrate) kbps due to packet loss")
+                log.streaming("⚠️ StreamEngine: Reduced bitrate to \(bitrate) kbps due to packet loss", level: .warning)
             } else if packetLoss < 0.005 && bitrate < resolution.recommendedBitrate {
                 // Good network - increase bitrate by 10%
                 let newBitrate = Int(Double(bitrate) * 1.1)
                 bitrate = min(resolution.recommendedBitrate, newBitrate)
                 encodingManager.updateBitrate(bitrate)
-                print("✅ StreamEngine: Increased bitrate to \(bitrate) kbps")
+                log.streaming("✅ StreamEngine: Increased bitrate to \(bitrate) kbps")
             }
         }
     }
@@ -684,7 +684,7 @@ class EncodingManager {
 
             if status == kCVReturnSuccess {
                 pixelBufferPool = pool
-                print("✅ EncodingManager: Created pixel buffer pool for \(width)x\(height)")
+                log.streaming("✅ EncodingManager: Created pixel buffer pool for \(width)x\(height)")
             }
         }
 
@@ -732,7 +732,7 @@ class EncodingManager {
 
         self.compressionSession = session
 
-        print("✅ EncodingManager: Started encoding at \(resolution.rawValue) @ \(frameRate) FPS, \(bitrate) kbps")
+        log.streaming("✅ EncodingManager: Started encoding at \(resolution.rawValue) @ \(frameRate) FPS, \(bitrate) kbps")
     }
 
     func stopEncoding() {

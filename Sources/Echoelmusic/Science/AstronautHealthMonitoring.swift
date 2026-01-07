@@ -127,9 +127,9 @@ class AstronautHealthMonitoring: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Astronaut Health Monitoring: Initialized")
-        print("🚀 Based on NASA/ESA/JAXA public research protocols")
-        print("⚠️ Educational purposes - not for actual spaceflight")
+        log.science("✅ Astronaut Health Monitoring: Initialized")
+        log.science("🚀 Based on NASA/ESA/JAXA public research protocols")
+        log.science("⚠️ Educational purposes - not for actual spaceflight", level: .warning)
     }
 
     // MARK: - Start Monitoring
@@ -138,9 +138,9 @@ class AstronautHealthMonitoring: ObservableObject {
         currentProtocol = protocolType
         monitoringActive = true
 
-        print("▶️ Astronaut Health: \(protocolType.rawValue)")
-        print("📊 Key Metrics: \(protocolType.keyMetrics.joined(separator: ", "))")
-        print("📚 Evidence: \(protocolType.evidenceBase)")
+        log.science("▶️ Astronaut Health: \(protocolType.rawValue)")
+        log.science("📊 Key Metrics: \(protocolType.keyMetrics.joined(separator: ", "))")
+        log.science("📚 Evidence: \(protocolType.evidenceBase)")
 
         // Start data collection
         startDataCollection()
@@ -150,7 +150,7 @@ class AstronautHealthMonitoring: ObservableObject {
 
     func stopMonitoring() {
         monitoringActive = false
-        print("⏹️ Astronaut Health: Monitoring stopped")
+        log.science("⏹️ Astronaut Health: Monitoring stopped")
     }
 
     // MARK: - Data Collection

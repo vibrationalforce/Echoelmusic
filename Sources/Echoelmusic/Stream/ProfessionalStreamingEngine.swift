@@ -260,7 +260,7 @@ public final class RTMPClientComplete: @unchecked Sendable {
         state = .handshakeDone
         isConnected = true
 
-        print("✅ RTMP Handshake complete with \(host):\(port)")
+        log.streaming("✅ RTMP Handshake complete with \(host):\(port)")
 
         // Step 6: Connect to application
         try await connectToApplication()
@@ -272,7 +272,7 @@ public final class RTMPClientComplete: @unchecked Sendable {
     private func sendC0() async throws {
         let c0 = Data([StreamingConstants.rtmpVersion])
         try await send(data: c0)
-        print("📤 RTMP C0 sent (version \(StreamingConstants.rtmpVersion))")
+        log.streaming("📤 RTMP C0 sent (version \(StreamingConstants.rtmpVersion))")
     }
 
     /// Send C1 - Client handshake chunk
@@ -293,7 +293,7 @@ public final class RTMPClientComplete: @unchecked Sendable {
         c1.replaceSubrange(8..<StreamingConstants.rtmpHandshakeSize, with: c1RandomBytes)
 
         try await send(data: c1)
-        print("📤 RTMP C1 sent (\(StreamingConstants.rtmpHandshakeSize) bytes)")
+        log.streaming("📤 RTMP C1 sent (\(StreamingConstants.rtmpHandshakeSize) bytes)")
     }
 
     /// Receive S0 and S1
@@ -305,7 +305,7 @@ public final class RTMPClientComplete: @unchecked Sendable {
         let s0 = data[0]
         let s1 = data.subdata(in: 1..<(1 + StreamingConstants.rtmpHandshakeSize))
 
-        print("📥 RTMP S0+S1 received (version \(s0))")
+        log.streaming("📥 RTMP S0+S1 received (version \(s0))")
         return (s0, s1)
     }
 
@@ -319,13 +319,13 @@ public final class RTMPClientComplete: @unchecked Sendable {
         // Extract random bytes
         s1RandomBytes = data.subdata(in: 8..<data.count)
 
-        print("📥 RTMP S1 parsed (timestamp: \(s1Timestamp))")
+        log.streaming("📥 RTMP S1 parsed (timestamp: \(s1Timestamp))")
     }
 
     /// Receive S2
     private func receiveS2() async throws -> Data {
         let data = try await receive(count: StreamingConstants.rtmpHandshakeSize)
-        print("📥 RTMP S2 received")
+        log.streaming("📥 RTMP S2 received")
         return data
     }
 
@@ -346,7 +346,7 @@ public final class RTMPClientComplete: @unchecked Sendable {
             throw RTMPError.handshakeFailed("S2 random bytes mismatch")
         }
 
-        print("✅ RTMP S2 validated")
+        log.streaming("✅ RTMP S2 validated")
     }
 
     /// Send C2 - Echo S1
@@ -368,7 +368,7 @@ public final class RTMPClientComplete: @unchecked Sendable {
         c2.replaceSubrange(8..<StreamingConstants.rtmpHandshakeSize, with: s1RandomBytes)
 
         try await send(data: c2)
-        print("📤 RTMP C2 sent")
+        log.streaming("📤 RTMP C2 sent")
     }
 
     /// Connect to RTMP application
@@ -376,7 +376,7 @@ public final class RTMPClientComplete: @unchecked Sendable {
         // Build AMF0 connect command
         let connectCommand = buildConnectCommand()
         try await sendChunk(data: connectCommand, chunkStreamId: 3, messageTypeId: 20)  // AMF0 command
-        print("📤 RTMP Connect command sent")
+        log.streaming("📤 RTMP Connect command sent")
 
         // Receive server response
         let response = try await receiveMessage()
@@ -423,7 +423,7 @@ public final class RTMPClientComplete: @unchecked Sendable {
         data.append(0x05)  // Null
 
         try await sendChunk(data: data, chunkStreamId: 3, messageTypeId: 20)
-        print("📤 RTMP createStream sent")
+        log.streaming("📤 RTMP createStream sent")
     }
 
     /// Publish stream
@@ -446,7 +446,7 @@ public final class RTMPClientComplete: @unchecked Sendable {
         data.append(contentsOf: encodeAMFString("live"))
 
         try await sendChunk(data: data, chunkStreamId: 8, messageTypeId: 20)
-        print("📤 RTMP publish '\(streamName)' sent")
+        log.streaming("📤 RTMP publish '\(streamName)' sent")
     }
 
     // MARK: - Video/Audio Data
@@ -567,7 +567,7 @@ public final class RTMPClientComplete: @unchecked Sendable {
         guard data.count > 0 else {
             throw RTMPError.invalidResponse
         }
-        print("📥 RTMP Connect response received")
+        log.streaming("📥 RTMP Connect response received")
     }
 
     // MARK: - Helpers
@@ -613,7 +613,7 @@ public final class RTMPClientComplete: @unchecked Sendable {
         connection = nil
         isConnected = false
         state = .uninitialized
-        print("🔌 RTMP Disconnected")
+        log.streaming("🔌 RTMP Disconnected")
     }
 
     // MARK: - Errors
@@ -724,7 +724,7 @@ public final class ProfessionalStreamingEngine: ObservableObject {
                 VTSessionSetProperty(session!, key: key as CFString, value: value as CFTypeRef)
             }
 
-            print("✅ H.264 encoder initialized (\(width)x\(height))")
+            log.streaming("✅ H.264 encoder initialized (\(width)x\(height))")
         }
     }
 
@@ -750,7 +750,7 @@ public final class ProfessionalStreamingEngine: ObservableObject {
         startTime = Date()
         startStreamLoop()
 
-        print("🔴 Streaming started to \(enabledDestinations.count) destination(s)")
+        log.streaming("🔴 Streaming started to \(enabledDestinations.count) destination(s)")
     }
 
     /// Stop streaming
@@ -761,7 +761,7 @@ public final class ProfessionalStreamingEngine: ObservableObject {
         rtmpClient?.disconnect()
         rtmpClient = nil
 
-        print("⬛ Streaming stopped (Duration: \(Int(streamDuration))s, Dropped: \(droppedFrames) frames)")
+        log.streaming("⬛ Streaming stopped (Duration: \(Int(streamDuration))s, Dropped: \(droppedFrames) frames)")
     }
 
     // MARK: - Stream Loop

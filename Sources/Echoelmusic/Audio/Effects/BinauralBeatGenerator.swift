@@ -147,7 +147,7 @@ class BinauralBeatGenerator: ObservableObject {
     func configure(state: BrainwaveState) {
         self.beatFrequency = state.beatFrequency
         // Keep current carrier frequency and amplitude
-        print("🧠 Configured for \(state.rawValue) state: \(state.description)")
+        log.audio("🧠 Configured for \(state.rawValue) state: \(state.description)")
     }
 
     /// Set beat frequency dynamically based on HRV coherence
@@ -168,7 +168,7 @@ class BinauralBeatGenerator: ObservableObject {
             // High coherence: maintain focus
             beatFrequency = 20.0  // Beta
         }
-        print("💓 HRV coherence \(Int(coherence)) → \(beatFrequency) Hz beat")
+        log.audio("💓 HRV coherence \(Int(coherence)) → \(beatFrequency) Hz beat")
     }
 
     /// Start generating and playing binaural/isochronic beats
@@ -205,10 +205,10 @@ class BinauralBeatGenerator: ObservableObject {
 
             isPlaying = true
             let modeStr = audioMode == .binaural ? "Binaural (stereo)" : "Isochronic (mono)"
-            print("▶️ \(modeStr) beats started: \(carrierFrequency) Hz @ \(beatFrequency) Hz")
+            log.audio("▶️ \(modeStr) beats started: \(carrierFrequency) Hz @ \(beatFrequency) Hz")
 
         } catch {
-            print("❌ Failed to start beats: \(error.localizedDescription)")
+            log.audio("❌ Failed to start beats: \(error.localizedDescription)", level: .error)
         }
     }
 
@@ -231,7 +231,7 @@ class BinauralBeatGenerator: ObservableObject {
         try? AVAudioSession.sharedInstance().setActive(false)
 
         isPlaying = false
-        print("⏹️ Binaural beats stopped")
+        log.audio("⏹️ Binaural beats stopped")
     }
 
 
@@ -417,10 +417,10 @@ class BinauralBeatGenerator: ObservableObject {
         // Set mode based on output
         if hasIsolatedHeadphones {
             audioMode = .binaural
-            print("🎧 Isolated headphones detected → Binaural mode (true stereo)")
+            log.audio("🎧 Isolated headphones detected → Binaural mode (true stereo)")
         } else {
             audioMode = .isochronic
-            print("🔊 Speaker/Open-air detected → Isochronic mode (mono pulsed, works anywhere)")
+            log.audio("🔊 Speaker/Open-air detected → Isochronic mode (mono pulsed, works anywhere)")
         }
     }
 }

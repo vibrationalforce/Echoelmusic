@@ -106,7 +106,7 @@ class SpatialAudioEngine: ObservableObject {
         if #available(iOS 19.0, *) {
             setupEnvironmentNode()
         } else {
-            print("⚠️ iOS 19+ required for full spatial audio. Using stereo fallback.")
+            log.spatial("⚠️ iOS 19+ required for full spatial audio. Using stereo fallback.", level: .warning)
         }
     }
 
@@ -151,7 +151,7 @@ class SpatialAudioEngine: ObservableObject {
         try audioEngine.start()
         isActive = true
 
-        print("✅ SpatialAudioEngine started (mode: \(currentMode.rawValue))")
+        log.spatial("✅ SpatialAudioEngine started (mode: \(currentMode.rawValue))")
 
         // Enable head tracking if available
         if headTrackingEnabled {
@@ -166,7 +166,7 @@ class SpatialAudioEngine: ObservableObject {
         audioEngine.stop()
         isActive = false
 
-        print("🛑 SpatialAudioEngine stopped")
+        log.spatial("🛑 SpatialAudioEngine stopped")
     }
 
     // MARK: - Source Management
@@ -380,7 +380,7 @@ class SpatialAudioEngine: ObservableObject {
             }
         }
 
-        print("🌊 AFA field applied: \(geometry) (coherence: \(Int(coherence)))")
+        log.spatial("🌊 AFA field applied: \(geometry) (coherence: \(Int(coherence)))")
     }
 
     enum AFAFieldGeometry {
@@ -473,7 +473,7 @@ class SpatialAudioEngine: ObservableObject {
         manager.deviceMotionUpdateInterval = 1.0 / 60.0  // 60 Hz
 
         guard manager.isDeviceMotionAvailable else {
-            print("⚠️ Device motion not available")
+            log.spatial("⚠️ Device motion not available", level: .warning)
             return
         }
 
@@ -484,7 +484,7 @@ class SpatialAudioEngine: ObservableObject {
             self.updateListenerOrientation(attitude: motion.attitude)
         }
 
-        print("✅ Head tracking started")
+        log.spatial("✅ Head tracking started")
     }
 
     private func stopHeadTracking() {
@@ -518,7 +518,7 @@ class SpatialAudioEngine: ObservableObject {
             applyPositionToNode(id: source.id, position: source.position)
         }
 
-        print("🎚️ Spatial mode: \(mode.rawValue)")
+        log.spatial("🎚️ Spatial mode: \(mode.rawValue)")
     }
 
     // MARK: - Debug Info

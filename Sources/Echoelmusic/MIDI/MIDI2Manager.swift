@@ -97,7 +97,7 @@ class MIDI2Manager: ObservableObject {
             outputPort = port
 
             isInitialized = true
-            print("✅ MIDI 2.0 initialized (UMP protocol)")
+            log.midi("✅ MIDI 2.0 initialized (UMP protocol)")
 
         } catch {
             errorMessage = "MIDI 2.0 initialization failed: \(error.localizedDescription)"
@@ -124,7 +124,7 @@ class MIDI2Manager: ObservableObject {
 
         isInitialized = false
         activeNotes.removeAll()
-        print("🛑 MIDI 2.0 cleaned up")
+        log.midi("🛑 MIDI 2.0 cleaned up")
     }
 
     // MARK: - MIDI Notification Handling
@@ -134,16 +134,16 @@ class MIDI2Manager: ObservableObject {
 
         switch notif.messageID {
         case .msgSetupChanged:
-            print("[MIDI2] Setup changed")
+            log.midi("[MIDI2] Setup changed")
             // Rescan endpoints
             scanEndpoints()
 
         case .msgObjectAdded:
-            print("[MIDI2] Object added")
+            log.midi("[MIDI2] Object added")
             scanEndpoints()
 
         case .msgObjectRemoved:
-            print("[MIDI2] Object removed")
+            log.midi("[MIDI2] Object removed")
             scanEndpoints()
 
         case .msgPropertyChanged:
@@ -180,7 +180,7 @@ class MIDI2Manager: ObservableObject {
     ///   - velocity: Velocity (0.0-1.0)
     func sendNoteOn(channel: UInt8, note: UInt8, velocity: Float) {
         guard isInitialized else {
-            print("⚠️ MIDI 2.0 not initialized")
+            log.midi("⚠️ MIDI 2.0 not initialized", level: .warning)
             return
         }
 
@@ -217,7 +217,7 @@ class MIDI2Manager: ObservableObject {
         // Check if note is active
         let noteId = NoteIdentifier(channel: channel, note: note)
         guard activeNotes.contains(noteId) else {
-            print("⚠️ Per-note controller sent for inactive note \(note) on channel \(channel)")
+            log.midi("⚠️ Per-note controller sent for inactive note \(note) on channel \(channel)", level: .warning)
             return
         }
 
@@ -241,7 +241,7 @@ class MIDI2Manager: ObservableObject {
 
         let noteId = NoteIdentifier(channel: channel, note: note)
         guard activeNotes.contains(noteId) else {
-            print("⚠️ Per-note pitch bend sent for inactive note \(note)")
+            log.midi("⚠️ Per-note pitch bend sent for inactive note \(note)", level: .warning)
             return
         }
 
@@ -272,7 +272,7 @@ class MIDI2Manager: ObservableObject {
     /// Send a 64-bit UMP packet
     private func sendUMPPacket(_ packet: UMPPacket64) {
         guard virtualSource != 0 else {
-            print("⚠️ Virtual source not created")
+            log.midi("⚠️ Virtual source not created", level: .warning)
             return
         }
 
@@ -297,7 +297,7 @@ class MIDI2Manager: ObservableObject {
         // Send via virtual source
         let status = MIDIReceivedEventList(virtualSource, &packetList)
         if status != noErr {
-            print("⚠️ Failed to send UMP packet: \(status)")
+            log.midi("⚠️ Failed to send UMP packet: \(status)", level: .warning)
         }
     }
 

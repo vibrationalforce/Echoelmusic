@@ -339,7 +339,7 @@ public class QuantumLiveActivityManager: ObservableObject {
 
         // Check if activities are supported
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-            print("[LiveActivity] Activities not enabled")
+            log.info("[LiveActivity] Activities not enabled", category: .ui)
             return
         }
 
@@ -371,10 +371,10 @@ public class QuantumLiveActivityManager: ObservableObject {
             isActive = true
             startUpdateTimer()
 
-            print("[LiveActivity] Started: \(name)")
+            log.info("[LiveActivity] Started: \(name)", category: .ui)
 
         } catch {
-            print("[LiveActivity] Failed to start: \(error)")
+            log.info("[LiveActivity] Failed to start: \(error)", level: .error, category: .ui)
             throw error
         }
     }
@@ -426,7 +426,7 @@ public class QuantumLiveActivityManager: ObservableObject {
         currentActivity = nil
         isActive = false
 
-        print("[LiveActivity] Ended")
+        log.info("[LiveActivity] Ended", category: .ui)
     }
 
     // MARK: - Auto Update Timer
@@ -538,11 +538,11 @@ public class QuantumLiveActivityManager: ObservableObject {
     private init() {}
 
     public func startSession(name: String, mode: String, icon: String = "🌟", targetDuration: TimeInterval = 600) async throws {
-        print("[LiveActivity] Not available on this platform")
+        log.info("[LiveActivity] Not available on this platform", category: .ui)
     }
 
     public func endSession(showSummary: Bool = true) async {
-        print("[LiveActivity] Not available on this platform")
+        log.info("[LiveActivity] Not available on this platform", category: .ui)
     }
 }
 #endif

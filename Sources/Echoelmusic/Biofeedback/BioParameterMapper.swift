@@ -283,7 +283,7 @@ class BioParameterMapper: ObservableObject {
     private func logParameters() {
         let timestamp = Int(Date().timeIntervalSince1970)
         if timestamp % 5 == 0 {  // Every 5 seconds
-            print("🎛️  BioParams: Rev:\(Int(reverbWet*100))% Filt:\(Int(filterCutoff))Hz Amp:\(Int(amplitude*100))% Freq:\(Int(baseFrequency))Hz")
+            log.biofeedback("🎛️  BioParams: Rev:\(Int(reverbWet*100))% Filt:\(Int(filterCutoff))Hz Amp:\(Int(amplitude*100))% Freq:\(Int(baseFrequency))Hz")
         }
     }
 
@@ -322,7 +322,7 @@ class BioParameterMapper: ObservableObject {
             tempo = 8.0
         }
 
-        print("🎛️  Applied preset: \(preset.rawValue)")
+        log.biofeedback("🎛️  Applied preset: \(preset.rawValue)")
     }
 
     enum BioPreset: String, CaseIterable {

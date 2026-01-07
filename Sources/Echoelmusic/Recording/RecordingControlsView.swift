@@ -1,4 +1,5 @@
 import SwiftUI
+import os.log
 
 /// Main recording controls view with session management
 struct RecordingControlsView: View {
@@ -467,11 +468,11 @@ struct RecordingControlsView: View {
         Task { @MainActor in
             do {
                 let url = try await exportManager.exportAudio(session: session, format: format)
-                print("📤 Exported to: \(url.path)")
+                log.recording("📤 Exported to: \(url.path)")
                 shareURL = url
                 showShareSheet = true
             } catch {
-                print("❌ Export failed: \(error)")
+                log.recording("❌ Export failed: \(error)", level: .error)
             }
         }
     }
@@ -482,11 +483,11 @@ struct RecordingControlsView: View {
         let exportManager = ExportManager()
         do {
             let url = try exportManager.exportBioData(session: session, format: format)
-            print("📤 Exported bio-data to: \(url.path)")
+            log.recording("📤 Exported bio-data to: \(url.path)")
             shareURL = url
             showShareSheet = true
         } catch {
-            print("❌ Export failed: \(error)")
+            log.recording("❌ Export failed: \(error)", level: .error)
         }
     }
 
@@ -497,11 +498,11 @@ struct RecordingControlsView: View {
         Task { @MainActor in
             do {
                 let url = try await exportManager.exportSessionPackage(session: session)
-                print("📦 Exported package to: \(url.path)")
+                log.recording("📦 Exported package to: \(url.path)")
                 shareURL = url
                 showShareSheet = true
             } catch {
-                print("❌ Export failed: \(error)")
+                log.recording("❌ Export failed: \(error)", level: .error)
             }
         }
     }

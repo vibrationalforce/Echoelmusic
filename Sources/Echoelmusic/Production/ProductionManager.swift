@@ -31,7 +31,7 @@ class ProductionManager: ObservableObject {
 
     private init() {
         setupDefaultWorkflows()
-        print("✅ ProductionManager: Initialized")
+        log.info("✅ ProductionManager: Initialized", category: .system)
     }
 
     // MARK: - Project Management
@@ -54,7 +54,7 @@ class ProductionManager: ObservableObject {
         activeProjects.append(project)
         impactTracker.trackProjectCreation(project)
 
-        print("📁 ProductionManager: Created project '\(name)'")
+        log.info("📁 ProductionManager: Created project '\(name)'", category: .system)
         return project
     }
 

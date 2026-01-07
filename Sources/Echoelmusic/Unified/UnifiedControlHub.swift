@@ -110,7 +110,7 @@ public class UnifiedControlHub: ObservableObject {
             }
             .store(in: &faceTrackingCancellables)
 
-        print("[UnifiedControlHub] Face tracking enabled")
+        Log.info("🎭 Face tracking enabled", category: .system)
     }
 
     /// Disable face tracking
@@ -118,7 +118,7 @@ public class UnifiedControlHub: ObservableObject {
         faceTrackingCancellables.removeAll()
         faceTrackingManager?.stop()
         faceTrackingManager = nil
-        print("[UnifiedControlHub] Face tracking disabled")
+        Log.info("🎭 Face tracking disabled", category: .system)
     }
 
     /// Enable hand tracking and gesture recognition
@@ -152,7 +152,7 @@ public class UnifiedControlHub: ObservableObject {
             }
             .store(in: &handTrackingCancellables)
 
-        print("[UnifiedControlHub] Hand tracking enabled")
+        Log.info("👋 Hand tracking enabled", category: .system)
     }
 
     /// Disable hand tracking
@@ -163,7 +163,7 @@ public class UnifiedControlHub: ObservableObject {
         gestureRecognizer = nil
         gestureConflictResolver = nil
         gestureToAudioMapper = nil
-        print("[UnifiedControlHub] Hand tracking disabled")
+        Log.info("👋 Hand tracking disabled", category: .system)
     }
 
     /// Enable biometric monitoring (HealthKit)
@@ -207,7 +207,7 @@ public class UnifiedControlHub: ObservableObject {
         // Start monitoring
         healthKit.startMonitoring()
 
-        print("[UnifiedControlHub] Biometric monitoring enabled")
+        Log.biofeedback("💓 Biometric monitoring enabled")
     }
 
     /// Disable biometric monitoring
@@ -216,7 +216,7 @@ public class UnifiedControlHub: ObservableObject {
         healthKitManager?.stopMonitoring()
         healthKitManager = nil
         bioParameterMapper = nil
-        print("[UnifiedControlHub] Biometric monitoring disabled")
+        Log.biofeedback("💓 Biometric monitoring disabled")
     }
 
     /// Handle bio signal updates from HealthKit
@@ -241,7 +241,7 @@ public class UnifiedControlHub: ObservableObject {
         mpe.sendMPEConfiguration(memberChannels: 15)
         mpe.setPitchBendRange(semitones: 48)  // ±4 octaves
 
-        print("[UnifiedControlHub] MIDI 2.0 + MPE enabled")
+        Log.midi("🎹 MIDI 2.0 + MPE enabled")
     }
 
     /// Disable MIDI 2.0
@@ -256,7 +256,7 @@ public class UnifiedControlHub: ObservableObject {
         mpeZoneManager = nil
         midiToSpatialMapper = nil
 
-        print("[UnifiedControlHub] MIDI 2.0 disabled")
+        Log.midi("🎹 MIDI 2.0 disabled")
     }
 
     // MARK: - Phase 3 Integration
@@ -266,27 +266,27 @@ public class UnifiedControlHub: ObservableObject {
         let spatial = SpatialAudioEngine()
         try spatial.start()
         self.spatialAudioEngine = spatial
-        print("[UnifiedControlHub] Spatial audio enabled")
+        Log.spatial("🔊 Spatial audio enabled")
     }
 
     /// Disable spatial audio
     public func disableSpatialAudio() {
         spatialAudioEngine?.stop()
         spatialAudioEngine = nil
-        print("[UnifiedControlHub] Spatial audio disabled")
+        Log.spatial("🔊 Spatial audio disabled")
     }
 
     /// Enable MIDI to visual mapping
     public func enableVisualMapping() {
         let visualMapper = MIDIToVisualMapper()
         self.midiToVisualMapper = visualMapper
-        print("[UnifiedControlHub] Visual mapping enabled")
+        Log.info("🎨 Visual mapping enabled", category: .system)
     }
 
     /// Disable visual mapping
     public func disableVisualMapping() {
         midiToVisualMapper = nil
-        print("[UnifiedControlHub] Visual mapping disabled")
+        Log.info("🎨 Visual mapping disabled", category: .system)
     }
 
     /// Enable Push 3 LED controller
@@ -294,14 +294,14 @@ public class UnifiedControlHub: ObservableObject {
         let push3 = Push3LEDController()
         try push3.connect()
         self.push3LEDController = push3
-        print("[UnifiedControlHub] Push 3 LED controller enabled")
+        Log.info("💡 Push 3 LED controller enabled", category: .system)
     }
 
     /// Disable Push 3 LED
     public func disablePush3LED() {
         push3LEDController?.disconnect()
         push3LEDController = nil
-        print("[UnifiedControlHub] Push 3 LED controller disabled")
+        Log.info("💡 Push 3 LED controller disabled", category: .system)
     }
 
     /// Enable DMX/LED strip lighting
@@ -309,14 +309,14 @@ public class UnifiedControlHub: ObservableObject {
         let lighting = MIDIToLightMapper()
         try lighting.connect()
         self.midiToLightMapper = lighting
-        print("[UnifiedControlHub] DMX lighting enabled")
+        Log.info("💡 DMX lighting enabled", category: .system)
     }
 
     /// Disable lighting
     public func disableLighting() {
         midiToLightMapper?.disconnect()
         midiToLightMapper = nil
-        print("[UnifiedControlHub] DMX lighting disabled")
+        Log.info("💡 DMX lighting disabled", category: .system)
     }
 
     /// Enable Quantum Light Emulator (Future-Ready)
@@ -335,10 +335,7 @@ public class UnifiedControlHub: ObservableObject {
         self.quantumLightEmulator = emulator
         self.photonicsVisualization = photonics
 
-        print("[UnifiedControlHub] Quantum Light Emulator enabled in \(mode.rawValue) mode")
-        print("  - Qubits: \(config.qubitCount)")
-        print("  - Photons: \(config.photonCount)")
-        print("  - Field Geometry: \(config.lightFieldGeometry.rawValue)")
+        Log.info("⚛️ Quantum Light Emulator enabled in \(mode.rawValue) mode\n  - Qubits: \(config.qubitCount)\n  - Photons: \(config.photonCount)\n  - Field Geometry: \(config.lightFieldGeometry.rawValue)", category: .system)
     }
 
     /// Disable Quantum Light Emulator
@@ -347,7 +344,7 @@ public class UnifiedControlHub: ObservableObject {
         photonicsVisualization?.stop()
         quantumLightEmulator = nil
         photonicsVisualization = nil
-        print("[UnifiedControlHub] Quantum Light Emulator disabled")
+        Log.info("⚛️ Quantum Light Emulator disabled", category: .system)
     }
 
     // MARK: - Phase 10000+: Ultimate Hardware Ecosystem
@@ -364,14 +361,7 @@ public class UnifiedControlHub: ObservableObject {
 
             // Log discovered devices
             if let ecosystem = hardwareEcosystem {
-                Log.info("Hardware Ecosystem enabled", category: .system)
-                print("  - Connected devices: \(ecosystem.connectedDevices.count)")
-                print("  - Audio interfaces available: \(ecosystem.audioInterfaces.supportedInterfaces.count)")
-                print("  - MIDI controllers available: \(ecosystem.midiControllers.supportedControllers.count)")
-                print("  - Lighting fixtures available: \(ecosystem.lightingHardware.supportedFixtures.count)")
-                print("  - Video hardware available: \(ecosystem.videoHardware.supportedDevices.count)")
-                print("  - VR/AR devices available: \(ecosystem.vrArDevices.supportedDevices.count)")
-                print("  - Wearables available: \(ecosystem.wearables.supportedDevices.count)")
+                Log.info("🔌 Hardware Ecosystem enabled\n  - Connected devices: \(ecosystem.connectedDevices.count)\n  - Audio interfaces available: \(ecosystem.audioInterfaces.supportedInterfaces.count)\n  - MIDI controllers available: \(ecosystem.midiControllers.supportedControllers.count)\n  - Lighting fixtures available: \(ecosystem.lightingHardware.supportedFixtures.count)\n  - Video hardware available: \(ecosystem.videoHardware.supportedDevices.count)\n  - VR/AR devices available: \(ecosystem.vrArDevices.supportedDevices.count)\n  - Wearables available: \(ecosystem.wearables.supportedDevices.count)", category: .system)
             }
         }
     }
@@ -379,7 +369,7 @@ public class UnifiedControlHub: ObservableObject {
     /// Disable Hardware Ecosystem
     public func disableHardwareEcosystem() {
         hardwareEcosystem = nil
-        print("[UnifiedControlHub] Hardware Ecosystem disabled")
+        Log.info("🔌 Hardware Ecosystem disabled", category: .system)
     }
 
     /// Enable Cross-Platform Session Manager for multi-device sessions
@@ -390,16 +380,14 @@ public class UnifiedControlHub: ObservableObject {
         // Start device discovery
         crossPlatformSessionManager?.startDiscovery()
 
-        print("[UnifiedControlHub] Cross-Platform Session Manager enabled")
-        print("  - Adaptive zero-latency mode active")
-        print("  - Supported ecosystems: Apple, Google, Microsoft, Meta, Linux, Tesla")
+        Log.info("🌐 Cross-Platform Session Manager enabled\n  - Adaptive zero-latency mode active\n  - Supported ecosystems: Apple, Google, Microsoft, Meta, Linux, Tesla", category: .system)
     }
 
     /// Disable Cross-Platform Session Manager
     public func disableCrossPlatformSessions() {
         crossPlatformSessionManager?.stopDiscovery()
         crossPlatformSessionManager = nil
-        print("[UnifiedControlHub] Cross-Platform Session Manager disabled")
+        Log.info("🌐 Cross-Platform Session Manager disabled", category: .system)
     }
 
     /// Create a cross-platform session with specified devices
@@ -414,14 +402,12 @@ public class UnifiedControlHub: ObservableObject {
         syncMode: CrossPlatformSessionManager.SyncMode = .adaptive
     ) -> CrossPlatformSessionManager.CrossPlatformSession? {
         guard let manager = crossPlatformSessionManager else {
-            print("[UnifiedControlHub] Cross-Platform Session Manager not enabled")
+            Log.info("⚠️ Cross-Platform Session Manager not enabled", category: .system, level: .warning)
             return nil
         }
 
         let session = manager.createSession(name: name, devices: devices, syncMode: syncMode)
-        print("[UnifiedControlHub] Created cross-platform session: \(name)")
-        print("  - Devices: \(devices.count)")
-        print("  - Sync mode: \(syncMode)")
+        Log.info("🌐 Created cross-platform session: \(name)\n  - Devices: \(devices.count)\n  - Sync mode: \(syncMode)", category: .system)
         return session
     }
 
@@ -502,9 +488,7 @@ public class UnifiedControlHub: ObservableObject {
 
         tracker.startTracking()
 
-        print("[UnifiedControlHub] Gaze tracking enabled")
-        print("  - Available: \(tracker.isAvailable)")
-        print("  - Tracking: \(tracker.isTracking)")
+        Log.spatial("👁️ Gaze tracking enabled\n  - Available: \(tracker.isAvailable)\n  - Tracking: \(tracker.isTracking)")
     }
 
     /// Disable eye gaze tracking
@@ -513,7 +497,7 @@ public class UnifiedControlHub: ObservableObject {
         gazeTrackingCancellables.removeAll()
         gazeTracker?.stopTracking()
         gazeTracker = nil
-        print("[UnifiedControlHub] Gaze tracking disabled")
+        Log.spatial("👁️ Gaze tracking disabled")
     }
 
     /// Handle gaze data updates
@@ -608,7 +592,7 @@ public class UnifiedControlHub: ObservableObject {
         }
 
         #if DEBUG
-        print("[Gaze→Audio] Zone: \(zone.displayName)")
+        Log.spatial("[Gaze→Audio] Zone: \(zone.displayName)")
         #endif
     }
 
@@ -777,7 +761,7 @@ public class UnifiedControlHub: ObservableObject {
 
         // Log bio→audio mapping (nur bei Debug)
         #if DEBUG
-        print("[Bio→Audio] Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Tempo: \(Int(mapper.tempo))BPM")
+        Log.biofeedback("[Bio→Audio] Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Tempo: \(Int(mapper.tempo))BPM")
         #endif
 
         // Apply bio-reactive spatial field (AFA)
@@ -830,7 +814,7 @@ public class UnifiedControlHub: ObservableObject {
                     }
 
                     #if DEBUG
-                    print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count), Coherence: \(coherence)%")
+                    Log.biofeedback("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count), Coherence: \(coherence)%")
                     #endif
                 }
             }
@@ -861,7 +845,7 @@ public class UnifiedControlHub: ObservableObject {
             engine.setFilterResonance(params.filterResonance)
 
             #if DEBUG
-            print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+            Log.spatial("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
             #endif
         }
 
@@ -951,7 +935,7 @@ public class UnifiedControlHub: ObservableObject {
         }
 
         #if DEBUG
-        print("[Gesture→Audio] Applied: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)")
+        Log.info("[Gesture→Audio] Applied: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)", category: .system)
         #endif
 
         // Trigger MIDI notes via MPE
@@ -962,7 +946,7 @@ public class UnifiedControlHub: ObservableObject {
                     note: midiNote.note,
                     velocity: Float(midiNote.velocity) / 127.0
                 ) {
-                    print("[Gesture→MPE] Voice allocated: Note \(midiNote.note), Channel \(voice.channel + 1)")
+                    Log.midi("[Gesture→MPE] Voice allocated: Note \(midiNote.note), Channel \(voice.channel + 1)")
 
                     // Apply initial per-note expression from gestures
                     if let gestureRec = gestureRecognizer {
@@ -976,7 +960,7 @@ public class UnifiedControlHub: ObservableObject {
                 }
             } else {
                 // Fallback to MIDI 1.0 if MPE not enabled
-                print("[Gesture→MIDI] Note On: \(midiNote.note), Velocity: \(midiNote.velocity)")
+                Log.midi("[Gesture→MIDI] Note On: \(midiNote.note), Velocity: \(midiNote.velocity)")
             }
         }
 
@@ -985,7 +969,7 @@ public class UnifiedControlHub: ObservableObject {
             // Apply preset change to audio engine
             if let engine = audioEngine {
                 engine.loadPreset(named: presetChange)
-                print("[Gesture→Audio] Switched to preset: \(presetChange)")
+                Log.info("[Gesture→Audio] Switched to preset: \(presetChange)", category: .system)
             }
         }
     }

@@ -75,7 +75,7 @@ class SceneRenderer {
         self.device = device
 
         guard let queue = device.makeCommandQueue() else {
-            print("❌ SceneRenderer: Failed to create command queue")
+            log.streaming("❌ SceneRenderer: Failed to create command queue", level: .error)
             return nil
         }
         self.commandQueue = queue
@@ -88,14 +88,14 @@ class SceneRenderer {
         setupPipelines()
         createBuffers()
 
-        print("✅ SceneRenderer: Initialized")
+        log.streaming("✅ SceneRenderer: Initialized")
     }
 
     // MARK: - Setup
 
     private func setupPipelines() {
         guard let library = device.makeDefaultLibrary() ?? loadFallbackLibrary() else {
-            print("⚠️ SceneRenderer: No shader library available")
+            log.streaming("⚠️ SceneRenderer: No shader library available", level: .warning)
             return
         }
 
