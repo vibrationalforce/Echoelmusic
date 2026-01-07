@@ -609,7 +609,7 @@ public actor AuditLogger {
 
         // Log to system log in debug mode
         #if DEBUG
-        ProfessionalLogger.shared.debug(category: .privacy, "📋 AUDIT [\(eventType.rawValue)]: \(message)")
+        ProfessionalLogger.shared.debug("📋 AUDIT [\(eventType.rawValue)]: \(message)", category: .privacy)
         #endif
 
         // In production, also send to remote logging

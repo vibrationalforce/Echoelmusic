@@ -610,7 +610,7 @@ public final class DeveloperConsole: ObservableObject {
         }
     }
 
-    public func log(_ message: String, level: LogLevel = .info, source: String = "App") {
+    public func logMessage(_ message: String, level: LogLevel = .info, source: String = "App") {
         guard level >= logLevel else { return }
 
         let entry = LogEntry(
@@ -627,23 +627,23 @@ public final class DeveloperConsole: ObservableObject {
             logs.removeFirst(logs.count - 1000)
         }
 
-        log.info("[\(level.rawValue)] [\(source)] \(message)", category: .plugin)
+        ProfessionalLogger.shared.info("[\(level.rawValue)] [\(source)] \(message)", category: .plugin)
     }
 
     public func debug(_ message: String, source: String = "App") {
-        log(message, level: .debug, source: source)
+        logMessage(message, level: .debug, source: source)
     }
 
     public func info(_ message: String, source: String = "App") {
-        log(message, level: .info, source: source)
+        logMessage(message, level: .info, source: source)
     }
 
     public func warning(_ message: String, source: String = "App") {
-        log(message, level: .warning, source: source)
+        logMessage(message, level: .warning, source: source)
     }
 
     public func error(_ message: String, source: String = "App") {
-        log(message, level: .error, source: source)
+        logMessage(message, level: .error, source: source)
     }
 
     public func clear() {

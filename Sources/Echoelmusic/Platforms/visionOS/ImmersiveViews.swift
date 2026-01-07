@@ -47,7 +47,7 @@ struct EchoelImmersiveSpace: View {
 
     private func handleEntityTap(_ entity: Entity) {
         // Handle entity interaction
-        ProfessionalLogger.shared.debug(category: .spatial, "🥽 Tapped entity: \(entity.name)")
+        ProfessionalLogger.shared.debug("🥽 Tapped entity: \(entity.name)", category: .spatial)
     }
 }
 
