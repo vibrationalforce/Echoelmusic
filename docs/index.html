@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echoelmusic - Bio-Reactive Audio-Visual Platform</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f0f23 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 20px;
+            text-align: center;
+        }
+        .logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 28px;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+        }
+        h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .tagline {
+            font-size: 20px;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 40px;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+            text-align: left;
+        }
+        .feature {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .feature h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #667eea;
+        }
+        .feature p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.5;
+        }
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        .badge {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.9);
+        }
+        .links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 50px;
+            flex-wrap: wrap;
+        }
+        .links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        .links a:hover {
+            color: #667eea;
+        }
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 16px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            margin: 30px 0;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+        }
+        footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">&#127926;</div>
+        <h1>Echoelmusic</h1>
+        <p class="tagline">Transform your heartbeat into a symphony</p>
+
+        <div class="badges">
+            <span class="badge">iOS</span>
+            <span class="badge">macOS</span>
+            <span class="badge">watchOS</span>
+            <span class="badge">visionOS</span>
+            <span class="badge">Android</span>
+            <span class="badge">Windows</span>
+        </div>
+
+        <a href="#" class="download-btn">Coming Soon to App Store</a>
+
+        <div class="features">
+            <div class="feature">
+                <h3>Bio-Reactive Audio</h3>
+                <p>Your heart rate and HRV transform into spatial audio fields in real-time.</p>
+            </div>
+            <div class="feature">
+                <h3>Quantum Visualization</h3>
+                <p>10 GPU-accelerated visual modes with sacred geometry and photon flow.</p>
+            </div>
+            <div class="feature">
+                <h3>Orchestral Scoring</h3>
+                <p>Walt Disney-inspired film composition with 27 articulations.</p>
+            </div>
+            <div class="feature">
+                <h3>Worldwide Collaboration</h3>
+                <p>Zero-latency global sessions with 1000+ participants.</p>
+            </div>
+            <div class="feature">
+                <h3>AI Creative Studio</h3>
+                <p>Generate art in 30+ styles and compose music in 30+ genres.</p>
+            </div>
+            <div class="feature">
+                <h3>WCAG AAA Accessible</h3>
+                <p>20+ accessibility profiles for users of all abilities.</p>
+            </div>
+        </div>
+
+        <div class="links">
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
+            <a href="support.html">Support</a>
+            <a href="health.html">Health Disclaimer</a>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Echoelmusic Inc. All rights reserved.</p>
+            <p style="margin-top: 10px;">Not a medical device. For wellness and creative purposes only.</p>
+        </footer>
+    </div>
+</body>
+</html>
