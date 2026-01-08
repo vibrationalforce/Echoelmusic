@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echoelmusic - Bio-Reaktive Audio-Visuelle Plattform</title>
+    <title>Echoelmusic - Wenn Dein Herzschlag Kunst Wird</title>
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Verwandle deinen Herzschlag in eine Symphonie. Bio-reaktive audio-visuelle Plattform für iOS, macOS, Android, Windows. Erstelle Musik aus Herzfrequenz, HRV und Atmung.">
-    <meta name="keywords" content="bio-reaktiv, audio, musik, HRV, herzfrequenz, meditation, wellness, räumlicher klang, quanten-visualisierung, Apple Watch, gesundheit">
-    <meta name="author" content="Echoelmusic Inc.">
+    <meta name="description" content="Dein Körper ist das Instrument. Dein Herzschlag ist der Rhythmus. Transformiere biometrische Signale in immersive audiovisuelle Erlebnisse. Bio-reaktive Kunst für bewusste Kreative.">
+    <meta name="keywords" content="bio-reaktive musik, HRV kunst, herzschlag musik, meditations audio, spatial sound, quanten visualisierung, biofeedback kunst, bewusstseins musik">
+    <meta name="author" content="Echoelmusic">
     <meta name="robots" content="index, follow">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://vibrationalforce.github.io/Echoelmusic/de/">
-    <meta property="og:title" content="Echoelmusic - Verwandle Deinen Herzschlag In Musik">
-    <meta property="og:description" content="Bio-reaktive audio-visuelle Plattform. Erstelle Musik aus Herzfrequenz, HRV und Atemmustern.">
+    <meta property="og:title" content="Echoelmusic - Wenn Dein Herzschlag Kunst Wird">
+    <meta property="og:description" content="Dein Körper ist das Instrument. Transformiere biometrische Signale in immersive audiovisuelle Kunst.">
     <meta property="og:image" content="https://vibrationalforce.github.io/Echoelmusic/og-image.png">
 
     <!-- Language Alternates -->
@@ -23,87 +23,326 @@
     <link rel="alternate" hreflang="de" href="https://vibrationalforce.github.io/Echoelmusic/de/">
     <link rel="canonical" href="https://vibrationalforce.github.io/Echoelmusic/de/">
 
-    <!-- Theme & Favicon -->
-    <meta name="theme-color" content="#667eea">
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#ff6ad5">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f0f23 100%);
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(180deg,
+                #0d0221 0%,
+                #150734 20%,
+                #1a0a3e 40%,
+                #2d1b69 60%,
+                #341a5e 80%,
+                #0d0221 100%);
             min-height: 100vh;
             color: #fff;
+            overflow-x: hidden;
+            position: relative;
         }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                linear-gradient(transparent 0%, rgba(255,106,213,0.03) 50%, transparent 100%),
+                repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(0,255,255,0.03) 50px, rgba(0,255,255,0.03) 51px),
+                repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255,106,213,0.03) 50px, rgba(255,106,213,0.03) 51px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .sunset-glow {
+            position: fixed;
+            bottom: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 400px;
+            background: radial-gradient(ellipse at center,
+                rgba(255,106,213,0.4) 0%,
+                rgba(199,45,126,0.2) 30%,
+                rgba(147,51,234,0.1) 50%,
+                transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 60px 20px;
             text-align: center;
+            position: relative;
+            z-index: 1;
         }
+
+        .lang-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+        }
+        .lang-switch a {
+            color: rgba(0,255,255,0.6);
+            text-decoration: none;
+            padding: 8px 12px;
+            border: 1px solid rgba(0,255,255,0.3);
+            transition: all 0.3s;
+        }
+        .lang-switch a:hover, .lang-switch a.active {
+            color: #00ffff;
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0,255,255,0.3);
+            text-shadow: 0 0 10px #00ffff;
+        }
+
         .logo {
-            width: 120px;
-            height: 120px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 28px;
-            margin: 0 auto 30px;
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 40px;
+        }
+        .logo-inner {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ff6ad5 0%, #c74dab 50%, #8b5cf6 100%);
+            border-radius: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 60px;
-            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+            font-size: 70px;
+            box-shadow: 0 0 60px rgba(255,106,213,0.5), 0 0 100px rgba(199,77,171,0.3);
+            animation: pulse-glow 3s ease-in-out infinite;
         }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 60px rgba(255,106,213,0.5), 0 0 100px rgba(199,77,171,0.3); }
+            50% { box-shadow: 0 0 80px rgba(255,106,213,0.7), 0 0 120px rgba(199,77,171,0.5); }
+        }
+
         h1 {
-            font-size: 48px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            font-family: 'Orbitron', monospace;
+            font-size: 56px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            background: linear-gradient(90deg, #ff6ad5, #00ffff, #ff6ad5);
+            background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            animation: gradient-shift 3s linear infinite;
         }
+        @keyframes gradient-shift {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
         .tagline {
-            font-size: 20px;
-            color: rgba(255,255,255,0.8);
-            margin-bottom: 40px;
+            font-size: 24px;
+            font-weight: 300;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 15px;
+            letter-spacing: 2px;
         }
+
+        .subtitle {
+            font-size: 16px;
+            color: #00ffff;
+            margin-bottom: 40px;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0,255,255,0.5);
+        }
+
+        .platforms {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .platform {
+            background: rgba(255,106,213,0.1);
+            border: 1px solid rgba(255,106,213,0.4);
+            border-radius: 25px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-family: 'Orbitron', monospace;
+            color: #ff6ad5;
+            transition: all 0.3s;
+        }
+        .platform:hover {
+            background: rgba(255,106,213,0.2);
+            box-shadow: 0 0 30px rgba(255,106,213,0.4);
+            transform: translateY(-2px);
+        }
+
+        .pricing {
+            background: linear-gradient(135deg, rgba(255,106,213,0.1) 0%, rgba(139,92,246,0.1) 100%);
+            border: 1px solid rgba(255,106,213,0.3);
+            border-radius: 24px;
+            padding: 40px;
+            margin: 50px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .pricing::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,106,213,0.05), transparent);
+            animation: shimmer 3s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+        .pricing h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 28px;
+            color: #00ffff;
+            margin-bottom: 25px;
+            text-shadow: 0 0 20px rgba(0,255,255,0.5);
+        }
+        .price-main {
+            font-family: 'Orbitron', monospace;
+            font-size: 64px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(255,106,213,0.5);
+        }
+        .price-label {
+            font-size: 18px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 20px;
+        }
+        .price-updates {
+            display: inline-block;
+            background: rgba(0,255,255,0.1);
+            border: 1px solid rgba(0,255,255,0.3);
+            border-radius: 20px;
+            padding: 12px 25px;
+            margin: 15px 0;
+            font-size: 16px;
+            color: #00ffff;
+        }
+        .beta-note {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(139,92,246,0.2);
+            border-radius: 12px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+        }
+        .beta-note strong {
+            color: #8b5cf6;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #ff6ad5 0%, #c74dab 50%, #8b5cf6 100%);
+            color: #fff;
+            padding: 18px 50px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 30px 0;
+            transition: all 0.3s;
+            box-shadow: 0 0 40px rgba(255,106,213,0.4);
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 60px rgba(255,106,213,0.6);
+        }
+
         .features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin: 40px 0;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 50px 0;
             text-align: left;
         }
         .feature {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 24px;
+            background: linear-gradient(135deg, rgba(13,2,33,0.8) 0%, rgba(45,27,105,0.4) 100%);
+            border: 1px solid rgba(255,106,213,0.2);
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #ff6ad5, #00ffff);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .feature:hover {
+            border-color: rgba(255,106,213,0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(255,106,213,0.2);
+        }
+        .feature:hover::before { opacity: 1; }
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
         }
         .feature h3 {
+            font-family: 'Orbitron', monospace;
             font-size: 18px;
-            margin-bottom: 8px;
-            color: #667eea;
+            margin-bottom: 12px;
+            color: #ff6ad5;
+            text-shadow: 0 0 10px rgba(255,106,213,0.3);
         }
         .feature p {
-            font-size: 14px;
-            color: rgba(255,255,255,0.7);
-            line-height: 1.5;
+            font-size: 15px;
+            color: rgba(255,255,255,0.75);
+            line-height: 1.7;
         }
-        .badges {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 40px 0;
-            flex-wrap: wrap;
+
+        .philosophy {
+            margin: 60px 0;
+            padding: 40px;
+            border-left: 3px solid #ff6ad5;
+            border-right: 3px solid #00ffff;
+            text-align: center;
         }
-        .badge {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 12px;
+        .philosophy blockquote {
+            font-size: 22px;
+            font-style: italic;
             color: rgba(255,255,255,0.9);
+            line-height: 1.8;
         }
+        .philosophy cite {
+            display: block;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #00ffff;
+            font-style: normal;
+            font-family: 'Orbitron', monospace;
+        }
+
         .links {
             display: flex;
             justify-content: center;
@@ -112,107 +351,140 @@
             flex-wrap: wrap;
         }
         .links a {
-            color: rgba(255,255,255,0.7);
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.3s;
-        }
-        .links a:hover {
-            color: #667eea;
-        }
-        .download-btn {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            padding: 16px 40px;
-            border-radius: 30px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 18px;
-            margin: 30px 0;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
-        }
-        .lang-switch {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-        }
-        .lang-switch a {
             color: rgba(255,255,255,0.6);
             text-decoration: none;
-            padding: 5px 10px;
+            font-size: 14px;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            padding: 10px;
         }
+        .links a:hover {
+            color: #00ffff;
+            text-shadow: 0 0 15px rgba(0,255,255,0.5);
+        }
+
         footer {
-            margin-top: 60px;
-            padding-top: 30px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            font-size: 12px;
+            margin-top: 80px;
+            padding: 40px 20px;
+            border-top: 1px solid rgba(255,106,213,0.2);
+            font-size: 13px;
             color: rgba(255,255,255,0.5);
+        }
+        footer a {
+            color: #ff6ad5;
+            text-decoration: none;
+        }
+        .disclaimer {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255,106,213,0.05);
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 36px; letter-spacing: 2px; }
+            .tagline { font-size: 18px; }
+            .price-main { font-size: 48px; }
+            .pricing { padding: 30px 20px; }
         }
     </style>
 </head>
 <body>
+    <div class="sunset-glow"></div>
+
     <div class="lang-switch">
-        <a href="../index.html">EN</a> | <a href="index.html" style="color:#667eea">DE</a>
+        <a href="../index.html">EN</a>
+        <a href="index.html" class="active">DE</a>
     </div>
 
     <div class="container">
-        <div class="logo">&#127926;</div>
-        <h1>Echoelmusic</h1>
-        <p class="tagline">Verwandle deinen Herzschlag in eine Symphonie</p>
-
-        <div class="badges">
-            <span class="badge">iOS</span>
-            <span class="badge">macOS</span>
-            <span class="badge">watchOS</span>
-            <span class="badge">visionOS</span>
-            <span class="badge">Android</span>
-            <span class="badge">Windows</span>
+        <div class="logo">
+            <div class="logo-inner">&#127926;</div>
         </div>
 
-        <a href="#" class="download-btn">Bald im App Store</a>
+        <h1>Echoelmusic</h1>
+        <p class="tagline">Dein Körper Ist Das Instrument</p>
+        <p class="subtitle">Atem // Puls // Licht // Klang</p>
+
+        <div class="platforms">
+            <span class="platform">iOS</span>
+            <span class="platform">macOS</span>
+            <span class="platform">watchOS</span>
+            <span class="platform">visionOS</span>
+            <span class="platform">Android</span>
+            <span class="platform">Windows</span>
+        </div>
+
+        <div class="pricing">
+            <h2>Lebenslange Lizenz</h2>
+            <div class="price-main">99</div>
+            <div class="price-label">Einmalzahlung // Alle Plattformen</div>
+            <div class="price-updates">+ 49 fr Haupt-Versions-Upgrades</div>
+            <div class="beta-note">
+                <strong>Beta-Programm:</strong> Werde Teil der kostenlosen TestFlight-Beta und gestalte die Zukunft bio-reaktiver Kunst. Dein Feedback formt die Vision.
+            </div>
+        </div>
+
+        <a href="#" class="cta-btn">Beta-Warteliste Beitreten</a>
 
         <div class="features">
             <div class="feature">
-                <h3>Bio-Reaktives Audio</h3>
-                <p>Deine Herzfrequenz und HRV werden in Echtzeit zu räumlichen Klangfeldern.</p>
+                <div class="feature-icon">&#128147;</div>
+                <h3>Bio-Reaktive Synthese</h3>
+                <p>Dein Herzschlag wird zum Rhythmus. Deine HRV formt die Harmonie. Dein Atem steuert die Dynamik. Echtzeit-Biometrie-zu-Audio-Transformation ber Apple Watch, Garmin, Whoop und mehr.</p>
             </div>
             <div class="feature">
+                <div class="feature-icon">&#10024;</div>
                 <h3>Quanten-Visualisierung</h3>
-                <p>10 GPU-beschleunigte visuelle Modi mit heiliger Geometrie und Photonenfluss.</p>
+                <p>Heilige Geometrie trifft Photonenphysik. 10 GPU-beschleunigte visuelle Engines rendern deinen Kohrenzzustand als lebende Lichtskulpturen, Fraktale und Partikelstrme.</p>
             </div>
             <div class="feature">
-                <h3>Orchester-Komposition</h3>
-                <p>Walt Disney-inspirierte Filmkomposition mit 27 Artikulationen.</p>
+                <div class="feature-icon">&#127932;</div>
+                <h3>Filmische Orchestrierung</h3>
+                <p>Ein virtuelles Orchester reagiert auf deinen inneren Zustand. 27 Artikulationen ber 8 Sektionen. Von Disney-inspiriertem Zauber bis zur Hans-Zimmer-Intensitt.</p>
             </div>
             <div class="feature">
-                <h3>Weltweite Kollaboration</h3>
-                <p>Nulllatenz globale Sessions mit 1000+ Teilnehmern.</p>
+                <div class="feature-icon">&#127758;</div>
+                <h3>Globales Kohrenznetzwerk</h3>
+                <p>Verbinde dich mit 1000+ bewussten Kreativen weltweit. Nulllatenz-Kollaborationssessions. Synchronisierte Herzschlge ber Kontinente. Kollektive Kunsterlebnisse.</p>
             </div>
             <div class="feature">
-                <h3>KI Kreativstudio</h3>
-                <p>Generiere Kunst in 30+ Stilen und komponiere Musik in 30+ Genres.</p>
+                <div class="feature-icon">&#129504;</div>
+                <h3>KI Kreativpartner</h3>
+                <p>Generiere visuelle Kunst in 30+ Stilen von heiliger Geometrie bis Cyberpunk. Komponiere Musik in 30+ Genres. Deine Kohrenz lenkt den Algorithmus.</p>
             </div>
             <div class="feature">
-                <h3>WCAG AAA Barrierefrei</h3>
-                <p>20+ Barrierefreiheitsprofile für Nutzer aller Fähigkeiten.</p>
+                <div class="feature-icon">&#9855;</div>
+                <h3>Universelle Barrierefreiheit</h3>
+                <p>Geschaffen fr alle Fhigkeiten. 20+ Barrierefreiheitsprofile. WCAG AAA konform. Blicksteuerung. Sprachnavigation. Haptisches Feedback. Kunst gehrt allen.</p>
             </div>
+        </div>
+
+        <div class="philosophy">
+            <blockquote>
+                "Wir machen keine Musik-Apps. Wir bauen Brcken zwischen den unsichtbaren Rhythmen deines Krpers und den sichtbaren Frequenzen von Licht und Klang. Deine Kohrenz ist der Dirigent."
+            </blockquote>
+            <cite>Das Echoelmusic Manifest</cite>
         </div>
 
         <div class="links">
             <a href="datenschutz.html">Datenschutz</a>
             <a href="agb.html">AGB</a>
             <a href="support.html">Support</a>
-            <a href="gesundheit.html">Gesundheitshinweis</a>
+            <a href="gesundheit.html">Gesundheit</a>
         </div>
 
         <footer>
-            <p>&copy; 2026 Echoelmusic Inc. Alle Rechte vorbehalten.</p>
-            <p style="margin-top: 10px;">Kein Medizinprodukt. Nur für Wellness und kreative Zwecke.</p>
+            <p>&copy; 2026 Echoelmusic. Mit Kohrenz erschaffen.</p>
+            <p style="margin-top: 10px;">
+                Kontakt: <a href="mailto:vibrationalforce@gmail.com">vibrationalforce@gmail.com</a>
+            </p>
+            <div class="disclaimer">
+                Echoelmusic ist kein Medizinprodukt. Biometrische Funktionen dienen ausschlielich kreativen und Wellness-Zwecken.
+                Nicht zur Diagnose, Behandlung, Heilung oder Prvention von Krankheiten bestimmt. Konsultieren Sie einen Arzt fr medizinische Beratung.
+            </div>
         </footer>
     </div>
 </body>
