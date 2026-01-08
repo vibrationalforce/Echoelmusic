@@ -1,0 +1,8 @@
+# Robots.txt for Echoelmusic
+# https://vibrationalforce.github.io/Echoelmusic/
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://vibrationalforce.github.io/Echoelmusic/sitemap.xml
