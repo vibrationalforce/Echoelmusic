@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(HealthKit)
 import HealthKit
+#endif
 import Combine
 
 /// Evidence-Based HRV Training System

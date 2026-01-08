@@ -1,7 +1,11 @@
 import Foundation
+#if canImport(Metal)
 import Metal
+#endif
 import AVFoundation
+#if canImport(CoreMotion)
 import CoreMotion
+#endif
 import Combine
 
 /// Universal Device Testing Framework

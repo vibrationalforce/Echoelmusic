@@ -1,7 +1,9 @@
 import Foundation
 import AVFoundation
 import Combine
+#if canImport(CoreMotion)
 import CoreMotion
+#endif
 
 /// Spatial Audio Engine with 3D/4D positioning and head tracking
 /// Supports iOS 15+ with runtime feature detection for iOS 19+ spatial audio
@@ -25,7 +27,9 @@ class SpatialAudioEngine: ObservableObject {
 
     // MARK: - Head Tracking (iOS 19+)
 
+    #if canImport(CoreMotion)
     private var motionManager: CMMotionManager?
+    #endif
     private var headTrackingCancellable: AnyCancellable?
 
     // MARK: - Position Cache (30-40% frame drop reduction)
@@ -466,6 +470,7 @@ class SpatialAudioEngine: ObservableObject {
 
     // MARK: - Head Tracking
 
+    #if canImport(CoreMotion)
     private func startHeadTracking() {
         guard motionManager == nil else { return }
 
@@ -481,7 +486,9 @@ class SpatialAudioEngine: ObservableObject {
 
         manager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
             guard let self = self, let motion = motion else { return }
-            self.updateListenerOrientation(attitude: motion.attitude)
+            Task { @MainActor in
+                self.updateListenerOrientation(attitude: motion.attitude)
+            }
         }
 
         log.spatial("✅ Head tracking started")
@@ -507,6 +514,15 @@ class SpatialAudioEngine: ObservableObject {
             roll: roll
         )
     }
+    #else
+    private func startHeadTracking() {
+        log.spatial("⚠️ CoreMotion not available on this platform", level: .warning)
+    }
+
+    private func stopHeadTracking() {
+        // No-op without CoreMotion
+    }
+    #endif
 
     // MARK: - Mode Switching
 

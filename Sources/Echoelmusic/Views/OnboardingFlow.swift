@@ -7,9 +7,13 @@
 //
 
 import SwiftUI
+#if canImport(HealthKit)
 import HealthKit
+#endif
 import AVFoundation
+#if canImport(WatchConnectivity)
 import WatchConnectivity
+#endif
 
 // MARK: - Onboarding Manager
 
@@ -36,25 +40,33 @@ public final class OnboardingManager: ObservableObject {
     /// Check current permission states
     public func checkPermissions() {
         // Check HealthKit authorization
-        let healthStore = HKHealthStore()
-        let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
-        let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
-
-        hasGrantedHealthKit = healthStore.authorizationStatus(for: heartRateType) == .sharingAuthorized &&
-                             healthStore.authorizationStatus(for: hrvType) == .sharingAuthorized
+        #if canImport(HealthKit)
+        if HKHealthStore.isHealthDataAvailable() {
+            let healthStore = HKHealthStore()
+            if let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate),
+               let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) {
+                hasGrantedHealthKit = healthStore.authorizationStatus(for: heartRateType) == .sharingAuthorized &&
+                                     healthStore.authorizationStatus(for: hrvType) == .sharingAuthorized
+            }
+        }
+        #endif
 
         // Check microphone authorization
+        #if os(iOS)
         switch AVAudioSession.sharedInstance().recordPermission {
         case .granted:
             hasGrantedMicrophone = true
         default:
             hasGrantedMicrophone = false
         }
+        #endif
 
         // Check Watch connectivity
+        #if canImport(WatchConnectivity)
         if WCSession.isSupported() {
             hasConnectedWatch = WCSession.default.isWatchAppInstalled
         }
+        #endif
     }
 
     /// Mark onboarding as complete

@@ -7,7 +7,9 @@
 //
 
 import Foundation
+#if canImport(HealthKit)
 import HealthKit
+#endif
 #if canImport(Combine)
 import Combine
 #endif

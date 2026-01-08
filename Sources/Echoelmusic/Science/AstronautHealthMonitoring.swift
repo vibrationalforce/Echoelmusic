@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(HealthKit)
 import HealthKit
+#endif
 import Combine
 
 /// Astronaut Health Monitoring Protocols
@@ -34,7 +36,7 @@ class AstronautHealthMonitoring: ObservableObject {
     // MARK: - Orthostatic Tolerance (Space Adaptation)
 
     @Published var orthostaticScore: Float = 0.0  // 0-100
-    @Published var baroreflex Sensitivity: Float = 0.0  // ms/mmHg
+    @Published var baroreflexSensitivity: Float = 0.0  // ms/mmHg
 
     // MARK: - Monitoring Protocols (Space Agencies)
 

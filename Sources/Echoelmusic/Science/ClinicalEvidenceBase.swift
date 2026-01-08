@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(HealthKit)
 import HealthKit
+#endif
 
 /// Clinical Evidence-Based Therapies
 /// Validated interventions from systematic reviews and meta-analyses

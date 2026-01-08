@@ -1,7 +1,10 @@
 import Foundation
-import HealthKit
 import Combine
 import Accelerate
+
+#if canImport(HealthKit)
+import HealthKit
+#endif
 
 /// Manages HealthKit integration for real-time HRV and heart rate monitoring
 /// Implements HeartMath Institute's coherence algorithm for biofeedback
@@ -38,25 +41,21 @@ class HealthKitManager: ObservableObject {
 
     // MARK: - Private Properties
 
+    #if canImport(HealthKit)
     /// The HealthKit store for querying health data
-    private let healthStore = HKHealthStore()
+    private var healthStore: HKHealthStore?
 
     /// Active query for heart rate monitoring
     private var heartRateQuery: HKQuery?
 
     /// Active query for HRV monitoring
     private var hrvQuery: HKQuery?
+    #endif
 
     /// Buffer for RR intervals (for coherence calculation)
     /// Stores last 60 seconds of RR intervals
     private var rrIntervalBuffer: [Double] = []
     private let maxBufferSize = 120 // 120 RR intervals ≈ 60 seconds at 60 BPM
-
-    /// Types we need to read from HealthKit
-    private let typesToRead: Set<HKObjectType> = [
-        HKObjectType.quantityType(forIdentifier: .heartRate)!,
-        HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
-    ]
 
 
     // MARK: - Initialization

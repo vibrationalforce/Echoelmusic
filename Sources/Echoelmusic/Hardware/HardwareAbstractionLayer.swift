@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(CoreMotion)
 import CoreMotion
+#endif
 import AVFoundation
 import Combine
 
