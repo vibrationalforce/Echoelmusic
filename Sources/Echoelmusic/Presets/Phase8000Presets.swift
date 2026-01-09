@@ -191,14 +191,14 @@ public struct CreativePreset: EnginePreset {
     public static let meditationMusic = CreativePreset(
         id: UUID(),
         name: "Meditation Music",
-        description: "Binaural beats and healing frequencies",
+        description: "Binaural beats and relaxation soundscapes",
         category: "Wellness",
         author: "Echoelmusic",
         version: "1.0",
         mode: .musicComposition,
         style: nil,
         genre: .meditation,
-        promptTemplate: "Meditation music, binaural beats, 432Hz, healing frequencies",
+        promptTemplate: "Meditation music, binaural beats, ambient soundscape, relaxation",
         quantumEnhanced: true,
         parameters: ["frequency": 432, "binaural": 10, "duration": 600]
     )

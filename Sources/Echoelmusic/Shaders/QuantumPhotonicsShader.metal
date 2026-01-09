@@ -326,9 +326,9 @@ fragment float4 biophotonAuraShader(
 
     intensity = clamp(intensity, 0.0, 1.0);
 
-    // Chakra colors based on vertical position
-    float chakraHue = (uv.y + 1.0) * 0.5 * 0.8; // Red at bottom, violet at top
-    float3 color = hslToRgb(chakraHue, 0.7, intensity * 0.6);
+    // Spectrum colors based on vertical position
+    float spectrumHue = (uv.y + 1.0) * 0.5 * 0.8; // Red at bottom, violet at top
+    float3 color = hslToRgb(spectrumHue, 0.7, intensity * 0.6);
 
     return float4(color, intensity);
 }

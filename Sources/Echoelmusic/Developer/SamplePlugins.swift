@@ -42,7 +42,7 @@ public final class SacredGeometryVisualizerPlugin: EchoelmusicPlugin {
 
     public struct Configuration: Sendable {
         public var pattern: GeometryPattern = .flowerOfLife
-        public var colorScheme: ColorScheme = .chakra
+        public var colorScheme: ColorScheme = .spectrum
         public var rotationSpeed: Float = 0.5
         public var breathSync: Bool = true
         public var quantumOverlay: Bool = true
@@ -50,7 +50,7 @@ public final class SacredGeometryVisualizerPlugin: EchoelmusicPlugin {
         public var glowIntensity: Float = 0.7
 
         public enum ColorScheme: String, CaseIterable, Sendable {
-            case chakra = "Chakra Colors"
+            case spectrum = "Spectrum Colors"
             case golden = "Golden"
             case cosmic = "Cosmic"
             case earthTones = "Earth Tones"
@@ -727,7 +727,7 @@ public final class DMXLightShowPlugin: EchoelmusicPlugin {
         public enum ColorMode: String, CaseIterable, Sendable {
             case bioReactive = "Bio-Reactive"
             case quantum = "Quantum"
-            case chakra = "Chakra"
+            case spectrum = "Spectrum"
             case rainbow = "Rainbow"
             case breathing = "Breathing"
             case heartbeat = "Heartbeat"
@@ -864,16 +864,16 @@ public final class DMXLightShowPlugin: EchoelmusicPlugin {
             let b: UInt8 = 255
             return [(r, g, b)]
 
-        case .chakra:
-            // 7 chakra colors
+        case .spectrum:
+            // 7-band spectrum (ROYGBIV)
             return [
-                (255, 0, 0),     // Root
-                (255, 127, 0),   // Sacral
-                (255, 255, 0),   // Solar Plexus
-                (0, 255, 0),     // Heart
-                (0, 127, 255),   // Throat
-                (0, 0, 255),     // Third Eye
-                (127, 0, 255)    // Crown
+                (255, 0, 0),     // Red
+                (255, 127, 0),   // Orange
+                (255, 255, 0),   // Yellow
+                (0, 255, 0),     // Green
+                (0, 127, 255),   // Cyan
+                (0, 0, 255),     // Blue
+                (127, 0, 255)    // Violet
             ]
 
         case .rainbow:

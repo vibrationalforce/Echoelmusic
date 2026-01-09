@@ -218,7 +218,7 @@ final class BioParameterMapperTests: XCTestCase {
 
         XCTAssertEqual(mapper.reverbWet, 0.3, accuracy: 0.01)
         XCTAssertEqual(mapper.filterCutoff, 1500.0, accuracy: 1.0)
-        XCTAssertEqual(mapper.baseFrequency, 528.0, accuracy: 0.1)  // Focus frequency
+        XCTAssertEqual(mapper.baseFrequency, 440.0, accuracy: 0.1)  // A4 standard
     }
 
     func testRelaxationPreset() {
@@ -226,7 +226,7 @@ final class BioParameterMapperTests: XCTestCase {
 
         XCTAssertEqual(mapper.reverbWet, 0.8, accuracy: 0.01)
         XCTAssertEqual(mapper.filterCutoff, 300.0, accuracy: 1.0)
-        XCTAssertEqual(mapper.baseFrequency, 396.0, accuracy: 0.1)  // Root chakra
+        XCTAssertEqual(mapper.baseFrequency, 220.0, accuracy: 0.1)  // A3 warm bass
         XCTAssertEqual(mapper.tempo, 4.0, accuracy: 0.1)
     }
 
@@ -235,7 +235,7 @@ final class BioParameterMapperTests: XCTestCase {
 
         XCTAssertEqual(mapper.reverbWet, 0.2, accuracy: 0.01)
         XCTAssertEqual(mapper.filterCutoff, 2000.0, accuracy: 1.0)
-        XCTAssertEqual(mapper.baseFrequency, 741.0, accuracy: 0.1)  // Awakening frequency
+        XCTAssertEqual(mapper.baseFrequency, 880.0, accuracy: 0.1)  // A5 bright
     }
 
     // MARK: - Validation Tests

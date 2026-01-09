@@ -367,7 +367,7 @@ public final class LaserVisualDesignerPlugin: EchoelmusicPlugin {
             case temperature = "Temperature"
             case quantum = "Quantum State"
             case manual = "Manual Color"
-            case chakra = "Chakra Colors"
+            case spectrum = "Spectrum Colors"
         }
 
         public enum ILDAProtocol: String, CaseIterable, Sendable {
@@ -627,8 +627,8 @@ public final class LaserVisualDesignerPlugin: EchoelmusicPlugin {
             return rainbowColor(phase: phase + colorPhase)
         case .quantum:
             return quantumColor(phase: phase)
-        case .chakra:
-            return chakraColor(phase: phase)
+        case .spectrum:
+            return spectrumColor(phase: phase)
         default:
             return rainbowColor(phase: phase)
         }
@@ -656,18 +656,18 @@ public final class LaserVisualDesignerPlugin: EchoelmusicPlugin {
         return hslToRgb(h: hue, s: saturation, l: 0.5)
     }
 
-    private func chakraColor(phase: Float) -> (UInt8, UInt8, UInt8) {
-        let chakras: [(UInt8, UInt8, UInt8)] = [
-            (255, 0, 0),      // Root - Red
-            (255, 127, 0),    // Sacral - Orange
-            (255, 255, 0),    // Solar Plexus - Yellow
-            (0, 255, 0),      // Heart - Green
-            (0, 127, 255),    // Throat - Blue
-            (75, 0, 130),     // Third Eye - Indigo
-            (148, 0, 211)     // Crown - Violet
+    private func spectrumColor(phase: Float) -> (UInt8, UInt8, UInt8) {
+        let spectrum: [(UInt8, UInt8, UInt8)] = [
+            (255, 0, 0),      // Red
+            (255, 127, 0),    // Orange
+            (255, 255, 0),    // Yellow
+            (0, 255, 0),      // Green
+            (0, 127, 255),    // Cyan
+            (75, 0, 130),     // Indigo
+            (148, 0, 211)     // Violet
         ]
-        let index = Int(phase * Float(chakras.count)) % chakras.count
-        return chakras[index]
+        let index = Int(phase * Float(spectrum.count)) % spectrum.count
+        return spectrum[index]
     }
 
     private func hslToRgb(h: Float, s: Float, l: Float) -> (UInt8, UInt8, UInt8) {

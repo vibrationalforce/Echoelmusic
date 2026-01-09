@@ -62,7 +62,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
         public enum ColorMode: String, Sendable {
             case spectrum = "Full Spectrum"
             case coherence = "Coherence Based"
-            case chakra = "Chakra Colors"
+            case rainbow = "Rainbow Spectrum"
             case monochrome = "Monochrome"
             case thermal = "Thermal"
             case aurora = "Aurora"
@@ -499,9 +499,9 @@ public class PhotonicsVisualizationEngine: ObservableObject {
                     intensity = (0.3 + wave) * (1 - (dist - 0.7) / 0.25) * coherence * coherence
                 }
 
-                // Chakra colors based on angle (vertical axis)
-                let chakraHue = (ny + 1) / 2 // Red at bottom, violet at top
-                let color = hslToRgb(hue: chakraHue * 0.8, saturation: 0.7, lightness: intensity * 0.6)
+                // Spectrum colors based on angle (vertical axis)
+                let spectrumHue = (ny + 1) / 2 // Red at bottom, violet at top
+                let color = hslToRgb(hue: spectrumHue * 0.8, saturation: 0.7, lightness: intensity * 0.6)
 
                 frameBuffer[y][x] = SIMD4<Float>(color.x, color.y, color.z, intensity)
             }
@@ -721,7 +721,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
             let hue = coherence * 0.3 + 0.5 // Blue-green for coherent
             return hslToRgb(hue: hue, saturation: 0.8, lightness: intensity * 0.6)
 
-        case .chakra:
+        case .rainbow:
             // Red -> Orange -> Yellow -> Green -> Blue -> Indigo -> Violet
             return hslToRgb(hue: intensity * 0.8, saturation: 0.9, lightness: 0.5)
 

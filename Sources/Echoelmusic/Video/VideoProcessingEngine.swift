@@ -133,7 +133,7 @@ public enum VideoEffectType: String, CaseIterable, Codable, Sendable {
     case hrvCoherence = "HRV Coherence Glow"
     case brainwaveSync = "Brainwave Sync"
     case auralField = "Aural Energy Field"
-    case chakraColors = "Chakra Color Mapping"
+    case spectrumColors = "Spectrum Color Mapping"
 
     // Cinematic Effects
     case filmGrain = "Film Grain"
@@ -182,7 +182,7 @@ public enum VideoEffectType: String, CaseIterable, Codable, Sendable {
         case .quantumWave, .coherenceField, .photonTrails, .entanglement,
              .superposition, .waveCollapse, .tunnelEffect, .interferencePattern,
              .heartbeatPulse, .breathingWave, .hrvCoherence, .brainwaveSync,
-             .auralField, .chakraColors, .anamorphic, .depthOfField:
+             .auralField, .spectrumColors, .anamorphic, .depthOfField:
             return true
         default:
             return false

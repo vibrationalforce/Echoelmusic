@@ -135,7 +135,7 @@ public enum SpatialElementType: String, CaseIterable, Identifiable, Sendable {
     case heartbeatPulse = "heartbeat_pulse"
     case breathingSphere = "breathing_sphere"
     case auraField = "aura_field"
-    case chakraRing = "chakra_ring"
+    case spectrumRing = "spectrum_ring"
 
     // Audio-reactive
     case spectrumBar = "spectrum_bar"
@@ -161,7 +161,7 @@ public enum SpatialElementType: String, CaseIterable, Identifiable, Sendable {
             return "Primitive"
         case .particleSystem, .lightField, .volumetricFog, .portal, .mirror, .text3D, .mesh:
             return "Complex"
-        case .coherenceOrb, .heartbeatPulse, .breathingSphere, .auraField, .chakraRing:
+        case .coherenceOrb, .heartbeatPulse, .breathingSphere, .auraField, .spectrumRing:
             return "Bio-Reactive"
         case .spectrumBar, .waveformRing, .beatPulse, .frequencyOrb:
             return "Audio-Reactive"

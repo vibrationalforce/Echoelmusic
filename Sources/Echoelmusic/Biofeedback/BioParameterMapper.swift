@@ -112,7 +112,7 @@ class BioParameterMapper: ObservableObject {
         let targetAmplitude = mapToAmplitude(hrvCoherence: hrvCoherence, audioLevel: audioLevel)
         amplitude = smooth(current: amplitude, target: targetAmplitude, factor: smoothingFactor)
 
-        // Map Voice Pitch → Base Frequency (snap to healing scale)
+        // Map Voice Pitch → Base Frequency (snap to musical scale)
         let targetFrequency = mapVoicePitchToScale(voicePitch: voicePitch)
         baseFrequency = smooth(current: baseFrequency, target: targetFrequency, factor: fastSmoothingFactor)
 
@@ -306,21 +306,21 @@ class BioParameterMapper: ObservableObject {
             reverbWet = 0.3
             filterCutoff = 1500.0
             amplitude = 0.6
-            baseFrequency = 528.0  // Focus frequency
+            baseFrequency = 440.0  // Standard A4 tuning
             tempo = 7.0
 
         case .relaxation:
             reverbWet = 0.8
             filterCutoff = 300.0
             amplitude = 0.4
-            baseFrequency = 396.0  // Root chakra frequency
+            baseFrequency = 220.0  // A3 - warm bass tone
             tempo = 4.0
 
         case .energize:
             reverbWet = 0.2
             filterCutoff = 2000.0
             amplitude = 0.7
-            baseFrequency = 741.0  // Awakening frequency
+            baseFrequency = 880.0  // A5 - bright energy
             tempo = 8.0
         }
 
