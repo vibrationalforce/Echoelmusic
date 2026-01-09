@@ -36,6 +36,8 @@ let package = Package(
                 "WatchOS",
                 "tvOS",
                 "Widgets"
+                // NOTE: Sources/_Deferred/ is automatically excluded (sibling folder)
+                // See DEFERRED_FEATURES.md for deferred features roadmap
             ],
             resources: [
                 .process("Resources")
