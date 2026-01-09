@@ -190,8 +190,10 @@ class AdvancedBinauralProcessor {
             }
         }
 
+        /// Traditional carrier frequency (432 Hz - kulturell als "entspannend" angesehen)
+        /// HINWEIS: Keine wissenschaftlich belegten "Heilungseffekte". Subjektive Praferenz.
         var carrierFrequency: Float {
-            return 432.0 // Healing frequency
+            return 432.0 // Traditional tuning (subjective preference)
         }
     }
 

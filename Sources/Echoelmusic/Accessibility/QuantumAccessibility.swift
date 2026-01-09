@@ -268,7 +268,7 @@ public class QuantumAccessibilityManager: ObservableObject {
             return "Quantum tunnel visualization. A spiraling vortex representing particle tunneling through energy barriers."
 
         case .biophotonAura:
-            return "Biophoton aura visualization. Colored layers represent different energy fields around the body, from physical to spiritual."
+            return "Coherence aura visualization. Colored layers represent bio-reactive visual feedback based on HRV coherence levels. HINWEIS: Rein kreative Visualisierung, keine wissenschaftlichen Energiefelder."
 
         case .lightMandala:
             return "Rotating light mandala. Symmetrical patterns with multiple layers spinning in harmony."

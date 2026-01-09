@@ -71,7 +71,7 @@ final class CircadianWellnessTests: XCTestCase {
         XCTAssertEqual(CircadianPhase.remSleep.carrierFrequency, 432.0)
         XCTAssertEqual(CircadianPhase.melatonin.carrierFrequency, 432.0)
 
-        // Healing phases use 528Hz
+        // Traditional Solfeggio phases use 528Hz (kulturelle Tradition, keine wissenschaftliche Heilwirkung)
         XCTAssertEqual(CircadianPhase.postLunch.carrierFrequency, 528.0)
         XCTAssertEqual(CircadianPhase.windDown.carrierFrequency, 528.0)
 

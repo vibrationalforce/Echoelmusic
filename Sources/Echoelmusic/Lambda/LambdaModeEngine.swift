@@ -757,7 +757,7 @@ public final class LambdaModeEngine: ObservableObject {
         visualState.mode = "breathing_guide"
         visualState.motionSpeed = 0.2
         visualState.complexity = 0.2
-        visualState.colorHue = 0.35 // Healing green
+        visualState.colorHue = 0.35 // Coherence green (calming visual)
     }
 
     //==========================================================================
