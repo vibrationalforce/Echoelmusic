@@ -855,7 +855,7 @@ public final class SoundBathGenerator: ObservableObject {
         case whiteNoise = "White Noise"
         case pinkNoise = "Pink Noise"
         case brownNoise = "Brown Noise"
-        case binaural = "Binaural Beats"
+        case binaural = "Multidimensional Brainwave Entrainment"
         case isochronic = "Isochronic Tones"
         case brainwave = "Brainwave Entrainment"
         case quantumHarmonics = "Quantum Harmonics"

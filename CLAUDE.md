@@ -192,7 +192,7 @@ Major, Minor, Diminished, Augmented, Major7, Minor7, Dominant7, Sus2, Sus4, Add9
 - **Evidence Levels** - Oxford CEBM 1a-5 (Meta-Analysis to Expert Opinion)
 - **Peer-reviewed Citations** - Adey 1981, Blackman 1985, Bawin & Adey 1976, PNAS
 - **Scientific Measurements** - EEG, HRV/EKG, EMG, SpO2, Cortisol
-- **Audio Implementation** - Binaural Beats, Isochronic Tones, Breathing Guides (NOT EM fields)
+- **Audio Implementation** - Multidimensional Brainwave Entrainment, Isochronic Tones, Breathing Guides (NOT EM fields)
 - **CRITICAL DISCLAIMER:** Audio ≠ Elektromagnetik. Keine medizinische Therapie.
 
 ---

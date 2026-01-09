@@ -450,7 +450,7 @@ Potential Research Areas:
      Research: University of Helsinki (vibroacoustic therapy for pain)
 
   3. Cymatics (Visual Sound Patterns)
-     Application: Visualize healing frequencies
+     Application: Visualize sound wave patterns
      Implemented: Sources/Visual/CymaticsRenderer.cpp
 
 Implementation:
@@ -608,19 +608,19 @@ Basis: Cymatics, Sound Therapy Research
 Concept:
   - Jedes Organ hat eine resonante Frequenz
   - Solfeggio-Frequenzen (removed from code, too esoteric)
-  - Binaural Beats (frequency entrainment)
+  - Multidimensional Brainwave Entrainment (frequency entrainment)
   - Isochronic Tones (pulsed tones)
 
 Scientific Research:
   1. Vibroacoustic Therapy for Pain (University of Helsinki)
-  2. Binaural Beats for Anxiety Reduction (Frontiers in Psychiatry, 2020)
+  2. Multidimensional Brainwave Entrainment for Anxiety Reduction (Frontiers in Psychiatry, 2020)
   3. Sound Healing (Review paper, Music and Medicine, 2021)
 
 Implementation:
   File: Sources/Wellness/BiofeedbackEngine.h (concept)
   Features:
     - Frequency generator (selectable frequencies)
-    - Binaural beat generator
+    - Multidimensional Brainwave Entrainment generator
     - Isochronic tone generator
     - Visual cymatics display
     - Guided breathing exercises
@@ -1105,7 +1105,7 @@ Audio Therapy:
   1. "Vibroacoustic therapy for pain"
      University of Helsinki
 
-  2. "Binaural Beats for Anxiety Reduction"
+  2. "Multidimensional Brainwave Entrainment for Anxiety Reduction"
      Frontiers in Psychiatry (2020)
 ```
 

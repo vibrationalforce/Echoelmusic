@@ -127,7 +127,7 @@ Section: sound
 Priority: optional
 Architecture: amd64
 Depends: libasound2, libjack-jackd2-0 | libjack0, libfreetype6, libx11-6
-Maintainer: Echoelmusic <support@echoelmusic.com>
+Maintainer: Echoelmusic <michaelterbuyken@gmail.com>
 Description: Bio-Reactive Audio-Visual Platform
  Echoelmusic is a complete music production platform with
  quantum AI tools, bio-reactive features, and professional

@@ -2,9 +2,9 @@ import Foundation
 import AVFoundation
 import Accelerate
 
-/// Generates binaural beats for brainwave entrainment
+/// Generates Multidimensional Brainwave Entrainment for brainwave entrainment
 ///
-/// Binaural beats work by playing two slightly different frequencies (one per ear),
+/// Multidimensional Brainwave Entrainment work by playing two slightly different frequencies (one per ear),
 /// causing the brain to perceive a "beat" at the difference frequency.
 /// This can induce specific brainwave states for relaxation, focus, sleep, etc.
 ///
@@ -215,7 +215,7 @@ class BinauralBeatGenerator: ObservableObject {
         }
     }
 
-    /// Stop playing binaural beats
+    /// Stop playing Multidimensional Brainwave Entrainment
     func stop() {
         guard isPlaying else { return }
 
@@ -234,7 +234,7 @@ class BinauralBeatGenerator: ObservableObject {
         try? AVAudioSession.sharedInstance().setActive(false)
 
         isPlaying = false
-        log.audio("⏹️ Binaural beats stopped")
+        log.audio("⏹️ Multidimensional Brainwave Entrainment stopped")
     }
 
 
@@ -390,7 +390,7 @@ class BinauralBeatGenerator: ObservableObject {
     /// ONLY headphones → Binaural (requires isolated left/right channels)
     /// Everything else → Isochronic (speakers, Bluetooth, spatial audio, club systems)
     ///
-    /// Why: Binaural beats require each ear to receive ONLY its designated frequency.
+    /// Why: Multidimensional Brainwave Entrainment require each ear to receive ONLY its designated frequency.
     /// Regular stereo speakers fail because both speakers reach both ears (crosstalk).
     /// Even in clubs with stereo systems, the sound mixes in the room.
     private func detectAudioMode() {

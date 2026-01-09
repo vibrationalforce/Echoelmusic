@@ -97,13 +97,13 @@ final class BioParameterMapperTests: XCTestCase {
     // MARK: - Voice Pitch to Frequency Mapping Tests
 
     func testVoicePitchSnapsToScale() {
-        // Test snapping to 432 Hz (A4)
+        // Test snapping to 440 Hz (A4 standard tuning)
         for _ in 0..<20 {
-            mapper.updateParameters(hrvCoherence: 50, heartRate: 70, voicePitch: 430, audioLevel: 0.5)
+            mapper.updateParameters(hrvCoherence: 50, heartRate: 70, voicePitch: 435, audioLevel: 0.5)
         }
 
-        // Should snap to 432 Hz (nearest in healing scale)
-        XCTAssertEqual(mapper.baseFrequency, 432.0, accuracy: 50.0)
+        // Should snap to 440 Hz (A4 standard tuning)
+        XCTAssertEqual(mapper.baseFrequency, 440.0, accuracy: 50.0)
     }
 
     func testVoicePitchSnapsToBNote() {

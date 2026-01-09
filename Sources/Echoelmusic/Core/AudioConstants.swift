@@ -69,7 +69,7 @@ enum AudioConstants {
 
     // MARK: - Amplitude Ranges
 
-    /// Default Amplitude für Binaural Beats
+    /// Default Amplitude für Multidimensional Brainwave Entrainment
     static let defaultBinauralAmplitude: Float = 0.3
 
     /// Minimum Amplitude

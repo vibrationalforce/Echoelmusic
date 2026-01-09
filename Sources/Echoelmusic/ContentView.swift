@@ -109,7 +109,7 @@ struct ContentView: View {
                         .transition(.opacity.combined(with: .scale))
                 }
 
-                // Binaural beat controls panel
+                // Multidimensional Brainwave Entrainment controls panel
                 if showBinauralControls {
                     binauralControlsPanel
                         .transition(.opacity.combined(with: .scale))
@@ -397,7 +397,7 @@ struct ContentView: View {
     /// Control buttons row
     private var controlButtonsRow: some View {
         HStack(spacing: VaporwaveSpacing.lg) {
-            // Binaural beats toggle
+            // Multidimensional Brainwave Entrainment toggle
             controlButton(
                 icon: audioEngine.binauralBeatsEnabled ? "waveform.circle.fill" : "waveform.circle",
                 label: audioEngine.binauralBeatsEnabled ? "Binaural ON" : "Beats OFF",
@@ -619,7 +619,7 @@ struct ContentView: View {
         }
     }
 
-    /// Toggle binaural beats on/off
+    /// Toggle Multidimensional Brainwave Entrainment on/off
     private func toggleBinauralBeats() {
         // Use AudioEngine to toggle (handles configuration)
         audioEngine.toggleBinauralBeats()

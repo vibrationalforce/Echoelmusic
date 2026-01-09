@@ -101,7 +101,7 @@ Echoelmusic maintains rigorous evidence-based practices for all biometric, welln
 | Beta (14-30 Hz) | Focus | 2b-3 | Mixed results |
 | Gamma (30-100 Hz) | Cognition | 3-4 | Early research |
 
-**Note:** Binaural beats are implemented as creative audio effects, not medical interventions.
+**Note:** Multidimensional Brainwave Entrainment are implemented as creative audio effects, not medical interventions.
 
 ---
 

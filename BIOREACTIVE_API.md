@@ -131,7 +131,7 @@ healthKitManager.hrvCoherence   // Double (0-100)
 - Gamification through sound quality
 
 ### 3. Wellness & Meditation Music
-- Binaural beats synced to HRV (scientifically validated: Goessl 2017)
+- Multidimensional Brainwave Entrainment synced to HRV (scientifically validated: Goessl 2017)
 - Brainwave entrainment (Delta/Theta/Alpha/Beta/Gamma)
 - Personalized relaxation soundscapes
 

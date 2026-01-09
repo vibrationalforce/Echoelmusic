@@ -148,9 +148,9 @@ extension Track {
         return track
     }
 
-    /// Create binaural beats track
+    /// Create Multidimensional Brainwave Entrainment track
     static func binauralTrack() -> Track {
-        var track = Track(name: "Binaural Beats", type: .binaural)
+        var track = Track(name: "Multidimensional Brainwave Entrainment", type: .binaural)
         track.volume = 0.3
         return track
     }

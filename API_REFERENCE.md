@@ -188,15 +188,15 @@ print("Current coherence: \(coherence)%")
 **Category:** Audio
 **Platforms:** iOS, macOS, watchOS, tvOS
 
-Central audio processing engine managing microphone, binaural beats, effects, and mixing
+Central audio processing engine managing microphone, Multidimensional Brainwave Entrainment, effects, and mixing
 
 ### Properties
 
 - **`isRunning`** (`@Published Bool`, read-only): Whether the audio engine is currently running
-- **`binauralBeatsEnabled`** (`@Published Bool`, read-only): Whether binaural beats are enabled
+- **`binauralBeatsEnabled`** (`@Published Bool`, read-only): Whether Multidimensional Brainwave Entrainment are enabled
 - **`spatialAudioEnabled`** (`@Published Bool`, read-only): Whether spatial audio is enabled
 - **`currentBrainwaveState`** (`@Published BrainwaveState`, read-only): Current binaural beat brainwave state
-- **`binauralAmplitude`** (`@Published Float`, read-only): Binaural beat volume (0.0 - 1.0)
+- **`binauralAmplitude`** (`@Published Float`, read-only): Multidimensional Brainwave Entrainment volume (0.0 - 1.0)
 
 ### Methods
 
@@ -226,7 +226,7 @@ let audioEngine = AudioEngine(microphoneManager: micManager)
 func start()
 ```
 
-Start the audio engine (microphone, binaural beats, spatial audio)
+Start the audio engine (microphone, Multidimensional Brainwave Entrainment, spatial audio)
 
 **Returns:** `Void`
 
@@ -243,7 +243,7 @@ audioEngine.start()
 func setBrainwaveState(_ state: BinauralBeatGenerator.BrainwaveState)
 ```
 
-Set target brainwave state for binaural beats
+Set target brainwave state for Multidimensional Brainwave Entrainment
 
 **Parameters:**
 - `state` (`BrainwaveState`): Target brainwave state (delta, theta, alpha, beta, gamma)
@@ -1165,7 +1165,7 @@ class BioReactiveSession: ObservableObject {
         hub.enableHandTracking()
         try await hub.enableBiometricMonitoring()
 
-        // 4. Configure binaural beats for meditation
+        // 4. Configure Multidimensional Brainwave Entrainment for meditation
         audioEngine.setBrainwaveState(.theta)
         audioEngine.setBinauralAmplitude(0.3)
         audioEngine.toggleBinauralBeats()

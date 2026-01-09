@@ -397,7 +397,7 @@ final class VisualizationTests: XCTestCase {
 ## Phase 2: Audio Erweiterung (Woche 2)
 
 ### Ziel
-Binaural Beats und mehr Audio-Modi hinzufügen.
+Multidimensional Brainwave Entrainment und mehr Audio-Modi hinzufügen.
 
 ### Neue Dateien
 
@@ -427,7 +427,7 @@ public enum AudioMode: String, CaseIterable, Identifiable {
     public var description: String {
         switch self {
         case .tone: return "Einfacher bio-reaktiver Ton"
-        case .binaural: return "Binaural Beats für Fokus/Entspannung"
+        case .binaural: return "Multidimensional Brainwave Entrainment für Fokus/Entspannung"
         case .drone: return "Atmosphärischer Ambient-Klang"
         case .silence: return "Nur Visualisierung, kein Audio"
         }
@@ -590,7 +590,7 @@ binauralEngine.stop()
 - [ ] Audio-Picker UI erstellen
 - [ ] Tests schreiben
 - [ ] Build testen
-- [ ] Commit: `git commit -m "feat: Add binaural beats and drone audio"`
+- [ ] Commit: `git commit -m "feat: Add Multidimensional Brainwave Entrainment and drone audio"`
 
 ---
 

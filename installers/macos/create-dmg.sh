@@ -69,7 +69,7 @@ CLAP PLUGIN:
 After installation, restart your DAW to detect new plugins.
 
 Website: https://echoelmusic.com
-Support: support@echoelmusic.com
+Support: michaelterbuyken@gmail.com
 EOF
 
 # Create symbolic links for Applications and Plugin folders

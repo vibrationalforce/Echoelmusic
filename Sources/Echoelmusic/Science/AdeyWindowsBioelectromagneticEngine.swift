@@ -286,7 +286,7 @@ public final class AdeyWindowsBioelectromagneticEngine: ObservableObject {
             Referenz: Hobson JA (1995). Sleep. Scientific American Library.
             """,
             evidenceLevel: .cohortStudy,
-            audioImplementation: "Binaural Beats: Carrier 200Hz, Differenz 2Hz → wahrgenommene 2Hz Pulsation",
+            audioImplementation: "Multidimensional Brainwave Entrainment: Carrier 200Hz, Differenz 2Hz → wahrgenommene 2Hz Pulsation",
             disclaimer: "Keine Schlaftherapie. Bei Schlafstörungen Arzt konsultieren."
         ),
 

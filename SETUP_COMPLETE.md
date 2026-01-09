@@ -145,7 +145,7 @@ iPhone anschließen → ⌘ + R
 ### Core Features ✅
 - ✅ Microphone Recording (AVAudioEngine)
 - ✅ Voice Pitch Detection (YIN Algorithm)
-- ✅ Binaural Beats (8 Brainwave States)
+- ✅ Multidimensional Brainwave Entrainment (8 Brainwave States)
 - ✅ HealthKit Integration (HRV, Heart Rate)
 - ✅ Bio-Parameter Mapping (HRV → Audio)
 - ✅ Spatial Audio Engine (3D Audio)

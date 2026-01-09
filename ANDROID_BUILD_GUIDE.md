@@ -175,4 +175,4 @@ APKs findest du unter: **Actions → Build → Artifacts**
 
 ## Kontakt
 
-Bei Problemen: support@echoelmusic.com
+Bei Problemen: michaelterbuyken@gmail.com

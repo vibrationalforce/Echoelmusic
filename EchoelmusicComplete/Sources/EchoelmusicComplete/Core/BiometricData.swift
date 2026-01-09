@@ -91,7 +91,7 @@ public enum AudioMode: String, CaseIterable, Identifiable {
     public var description: String {
         switch self {
         case .ambient: return "Bio-reactive ambient tone"
-        case .binaural: return "Binaural beats for focus"
+        case .binaural: return "Multidimensional Brainwave Entrainment for focus"
         case .drone: return "Layered ambient drone"
         case .silence: return "Visualization only"
         }

@@ -57,7 +57,7 @@ public:
         // Primary entrainment frequency (Hz)
         float entrainmentFrequency = 10.0f;  // Alpha default
 
-        // Carrier frequency for binaural beats (Hz)
+        // Carrier frequency for Multidimensional Brainwave Entrainment (Hz)
         float carrierFrequency = 200.0f;  // Audible carrier
 
         // Duration & amplitude
@@ -91,7 +91,7 @@ public:
     /** Set specific entrainment frequency (Hz) */
     void setEntrainmentFrequency(float frequencyHz);
 
-    /** Set carrier frequency for binaural beats (Hz) */
+    /** Set carrier frequency for Multidimensional Brainwave Entrainment (Hz) */
     void setCarrierFrequency(float frequencyHz);
 
     //==========================================================================
@@ -150,7 +150,7 @@ public:
 
     static juce::String getDisclaimer()
     {
-        return "DISCLAIMER: This is NOT a medical device. Binaural beats and "
+        return "DISCLAIMER: This is NOT a medical device. Multidimensional Brainwave Entrainment and "
                "isochronic tones are for relaxation and creative purposes only. "
                "Do NOT use if you have epilepsy or seizure disorders. "
                "Results vary individually. Consult a physician before use.";

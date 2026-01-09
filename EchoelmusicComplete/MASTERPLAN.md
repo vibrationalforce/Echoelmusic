@@ -49,7 +49,7 @@ EchoelmusicComplete/
 │   │   ├── AudioEngine.swift              # AVAudioEngine Core
 │   │   ├── BioModulator.swift             # Bio → Audio Mapping
 │   │   ├── ToneGenerator.swift            # Grundton-Generator
-│   │   ├── BinauralEngine.swift           # Binaural Beats
+│   │   ├── BinauralEngine.swift           # Multidimensional Brainwave Entrainment
 │   │   ├── DroneEngine.swift              # Ambient Drone
 │   │   └── EffectsChain.swift             # Reverb, Filter, Delay
 │   │
@@ -119,7 +119,7 @@ EchoelmusicComplete/
 ```swift
 // Modi:
 - Ambient Tone (bio-reaktiver Grundton)
-- Binaural Beats (Alpha, Theta, Delta, Gamma)
+- Multidimensional Brainwave Entrainment (Alpha, Theta, Delta, Gamma)
 - Drone (mehrschichtiger Ambient)
 - Silence (nur Visualisierung)
 

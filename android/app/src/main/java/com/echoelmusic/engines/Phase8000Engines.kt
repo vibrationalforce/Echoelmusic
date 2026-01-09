@@ -218,7 +218,7 @@ enum class MusicGenre(val displayName: String) {
     CLASSICAL("Classical"),
     JAZZ("Jazz"),
     MEDITATION("Meditation"),
-    BINAURAL("Binaural Beats"),
+    BINAURAL("Multidimensional Brainwave Entrainment"),
     QUANTUM_MUSIC("Quantum Music")
 }
 

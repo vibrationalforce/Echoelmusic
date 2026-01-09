@@ -354,7 +354,7 @@ extension DeviceCapabilities {
 
     enum AudioConfiguration {
         case spatialAudio    // Full 3D spatial audio with head tracking
-        case binauralBeats   // Binaural beats for headphones
+        case binauralBeats   // Multidimensional Brainwave Entrainment for headphones
         case standard        // Standard stereo
 
         var description: String {
@@ -362,7 +362,7 @@ extension DeviceCapabilities {
             case .spatialAudio:
                 return "Spatial Audio with Head Tracking"
             case .binauralBeats:
-                return "Binaural Beats (Headphones)"
+                return "Multidimensional Brainwave Entrainment (Headphones)"
             case .standard:
                 return "Standard Stereo"
             }

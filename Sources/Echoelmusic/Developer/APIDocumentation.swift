@@ -192,7 +192,7 @@ public struct APIDocumentation {
 
     public static let audioEngineAPI = APIModule(
         name: "AudioEngine",
-        description: "Central audio processing engine managing microphone, binaural beats, effects, and mixing",
+        description: "Central audio processing engine managing microphone, Multidimensional Brainwave Entrainment, effects, and mixing",
         category: .audio,
         platform: [.iOS, .macOS, .watchOS, .tvOS],
         methods: [
@@ -213,7 +213,7 @@ public struct APIDocumentation {
             APIMethod(
                 name: "start",
                 signature: "func start()",
-                description: "Start the audio engine (microphone, binaural beats, spatial audio)",
+                description: "Start the audio engine (microphone, Multidimensional Brainwave Entrainment, spatial audio)",
                 parameters: [],
                 returnType: "Void",
                 availability: .all,
@@ -236,19 +236,19 @@ public struct APIDocumentation {
             APIMethod(
                 name: "toggleBinauralBeats",
                 signature: "func toggleBinauralBeats()",
-                description: "Toggle binaural beats on/off",
+                description: "Toggle Multidimensional Brainwave Entrainment on/off",
                 parameters: [],
                 returnType: "Void",
                 availability: .all,
                 example: """
                 audioEngine.toggleBinauralBeats()
-                // Binaural beats enabled/disabled
+                // Multidimensional Brainwave Entrainment enabled/disabled
                 """
             ),
             APIMethod(
                 name: "setBrainwaveState",
                 signature: "func setBrainwaveState(_ state: BinauralBeatGenerator.BrainwaveState)",
-                description: "Set target brainwave state for binaural beats",
+                description: "Set target brainwave state for Multidimensional Brainwave Entrainment",
                 parameters: [
                     APIParameter(name: "state", type: "BrainwaveState", description: "Target brainwave state (delta, theta, alpha, beta, gamma)", defaultValue: nil)
                 ],
@@ -350,10 +350,10 @@ public struct APIDocumentation {
         ],
         properties: [
             APIProperty(name: "isRunning", type: "@Published Bool", description: "Whether the audio engine is currently running", access: .readOnly),
-            APIProperty(name: "binauralBeatsEnabled", type: "@Published Bool", description: "Whether binaural beats are enabled", access: .readOnly),
+            APIProperty(name: "binauralBeatsEnabled", type: "@Published Bool", description: "Whether Multidimensional Brainwave Entrainment are enabled", access: .readOnly),
             APIProperty(name: "spatialAudioEnabled", type: "@Published Bool", description: "Whether spatial audio is enabled", access: .readOnly),
             APIProperty(name: "currentBrainwaveState", type: "@Published BrainwaveState", description: "Current binaural beat brainwave state", access: .readOnly),
-            APIProperty(name: "binauralAmplitude", type: "@Published Float", description: "Binaural beat volume (0.0 - 1.0)", access: .readOnly)
+            APIProperty(name: "binauralAmplitude", type: "@Published Float", description: "Multidimensional Brainwave Entrainment volume (0.0 - 1.0)", access: .readOnly)
         ]
     )
 
@@ -1623,7 +1623,7 @@ public struct APIExamples {
             hub.enableHandTracking()
             try await hub.enableBiometricMonitoring()
 
-            // 4. Configure binaural beats for meditation
+            // 4. Configure Multidimensional Brainwave Entrainment for meditation
             audioEngine.setBrainwaveState(.theta)
             audioEngine.setBinauralAmplitude(0.3)
             audioEngine.toggleBinauralBeats()

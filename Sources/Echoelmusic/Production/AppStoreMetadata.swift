@@ -256,7 +256,7 @@ WORLDWIDE COLLABORATION
 
 WELLNESS & MEDITATION
 • Guided breathing patterns (box, 4-7-8, coherence)
-• Sound bath generator with binaural beats
+• Sound bath generator with Multidimensional Brainwave Entrainment
 • Session tracking & journaling
 • NOT medical advice - creative wellness only
 

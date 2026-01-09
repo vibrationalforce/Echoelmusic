@@ -130,7 +130,7 @@ public final class AudioEngine: ObservableObject {
             engine.connect(node, to: mixer, format: format)
         }
 
-        // Binaural beat generators (stereo)
+        // Multidimensional Brainwave Entrainment generators (stereo)
         let binauralFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
 
         binauralLeftNode = AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList -> OSStatus in

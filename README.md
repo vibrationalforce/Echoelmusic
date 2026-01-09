@@ -84,7 +84,7 @@ Echoelmusic is an **embodied multimodal music system** that transforms biometric
 - ✅ Real-time voice processing (AVAudioEngine)
 - ✅ FFT frequency detection
 - ✅ YIN pitch detection
-- ✅ Binaural beat generator (8 brainwave states)
+- ✅ Multidimensional Brainwave Entrainment generator (8 brainwave states)
 - ✅ Node-based audio graph
 - ✅ Multi-track recording
 

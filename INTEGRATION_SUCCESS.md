@@ -95,7 +95,7 @@ BioParameterMapper
 ├─ Reverb: 10-80% (based on HRV)
 ├─ Filter: 200-2000 Hz (based on HR)
 ├─ Spatial Position: X/Y/Z (based on coherence)
-└─ Base Frequency: 432 Hz healing scale
+└─ Base Frequency: A4 = 440 Hz (standard tuning)
     ↓
 Applied to Audio Output (100ms updates!)
 ```
@@ -168,7 +168,7 @@ Audio follows head movement! 🎧
 ✅ **Particle Visualization** (reacts to audio)
 ✅ **Audio Level Bars** (24 bars, color-coded)
 
-✅ **Binaural Beats** (via AudioEngine)
+✅ **Multidimensional Brainwave Entrainment** (via AudioEngine)
 ✅ **Brainwave States** (Delta/Theta/Alpha/Beta/Gamma)
 ✅ **HRV-based Beat Modulation** (adaptive frequencies)
 
@@ -221,7 +221,7 @@ CONNECTIONS:          ████████████ 100%
    - [ ] Audio level bars react
    - [ ] Pitch detection shows note
 
-2. **Binaural Beats**
+2. **Multidimensional Brainwave Entrainment**
    - [ ] Tap beats button → sound plays
    - [ ] Change brainwave state → frequency changes
    - [ ] Adjust volume → amplitude changes
@@ -235,7 +235,7 @@ CONNECTIONS:          ████████████ 100%
 4. **Bio-Parameter Mapping**
    - [ ] HRV changes → reverb changes (listen!)
    - [ ] HR changes → sound brightness changes
-   - [ ] Voice pitch → adapts to healing frequencies
+   - [ ] Voice pitch → adapts to brainwave entrainment
 
 5. **Spatial Audio** (if iOS 19+ with AirPods)
    - [ ] Connect AirPods Pro/Max
@@ -254,7 +254,7 @@ You know everything works when:
 ✅ All buttons functional
 ✅ Audio recording works
 ✅ Frequency/pitch displays update
-✅ Binaural beats play
+✅ Multidimensional Brainwave Entrainment play
 ✅ HRV data shows (if authorized)
 ✅ Spatial audio toggle appears (if supported)
 ✅ Audio changes with bio-parameters

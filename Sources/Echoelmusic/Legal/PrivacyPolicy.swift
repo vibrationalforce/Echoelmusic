@@ -1412,7 +1412,7 @@ public struct HealthDisclaimer {
     • Do not use at maximum volume for extended periods
     • Stop use if you experience ear pain or hearing changes
 
-    Binaural beats and spatial audio:
+    Multidimensional Brainwave Entrainment and spatial audio:
     • ARE NOT medical treatments
     • DO NOT cure or treat any condition
     • MAY cause discomfort in some individuals

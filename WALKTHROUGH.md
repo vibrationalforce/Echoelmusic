@@ -25,7 +25,7 @@ From First Creative Session to Published Production
 
 - **Apple Device**: iPhone 12+, iPad Pro, Mac (M1+), Apple Watch (optional)
 - **HealthKit Access**: Grant permission for heart rate and HRV data
-- **Headphones**: Quality headphones for binaural beats (AirPods Pro/Max recommended)
+- **Headphones**: Quality headphones for Multidimensional Brainwave Entrainment (AirPods Pro/Max recommended)
 - **Optional**: Ableton Push 3 for LED feedback, MIDI controller
 
 ### First Launch
@@ -219,7 +219,7 @@ Configure 3D/4D audio:
    Response: Real-time position
    ```
 
-### Binaural Beats
+### Multidimensional Brainwave Entrainment
 
 Add brainwave entrainment:
 
@@ -697,7 +697,7 @@ Keep detailed records:
 ### Contact
 
 For licensing, partnerships, or press inquiries:
-- Email: hello@echoelmusic.com
+- Email: michaelterbuyken@gmail.com
 
 ---
 

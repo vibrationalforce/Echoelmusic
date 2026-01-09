@@ -514,7 +514,7 @@ System Performance:
 
 - ~~ResonanceHealer~~ (Heilfrequenzen, Chakras, Solfeggio)
 - ~~Organ Resonances~~ (nicht wissenschaftlich validiert)
-- ~~Binaural Beats für "Bewusstseinserweiterung"~~
+- ~~Multidimensional Brainwave Entrainment für "Bewusstseinserweiterung"~~
 - ~~Kristall-/Energie-Konzepte~~
 
 **Grund:** Fokus auf peer-reviewed, reproduzierbare Wissenschaft.

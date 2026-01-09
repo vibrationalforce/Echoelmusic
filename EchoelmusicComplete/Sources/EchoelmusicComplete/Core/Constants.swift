@@ -84,7 +84,7 @@ public enum HealthDisclaimer {
     """
 
     public static let binaural = """
-    Binaural beats should not be used while driving or operating machinery. \
+    Multidimensional Brainwave Entrainment should not be used while driving or operating machinery. \
     If you have epilepsy or are prone to seizures, consult a doctor before use.
     """
 }

@@ -434,7 +434,7 @@ cat > echoelmusic_1.0.0/DEBIAN/control <<EOF
 Package: echoelmusic
 Version: 1.0.0
 Architecture: amd64
-Maintainer: Echoelmusic <support@echoelmusic.com>
+Maintainer: Echoelmusic <michaelterbuyken@gmail.com>
 Description: Bio-Reactive Audio Processing Platform
 EOF
 
@@ -512,7 +512,7 @@ signtool sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 \
 - Forum: https://forum.echoelmusic.com
 
 **Contact:**
-- Email: support@echoelmusic.com
+- Email: michaelterbuyken@gmail.com
 - Website: https://echoelmusic.com
 
 ---

@@ -32,7 +32,7 @@ public struct ValidatedScienceDatabase {
     ║ Level 1b (RCTs)                                                      ║
     ║ ├─ PEMF für Knochenbruchheilung (FDA-zugelassen 1979)               ║
     ║ ├─ 40Hz Gamma-Stimulation (MIT Tsai Lab, Phase 2)                   ║
-    ║ └─ Binaural Beats perioperativ: SMD = -1.38 Angst                   ║
+    ║ └─ Multidimensional Brainwave Entrainment perioperativ: SMD = -1.38 Angst                   ║
     ║                                                                      ║
     ║ Level 2a-2b (Kohortenstudien)                                        ║
     ║ ├─ NASA Vibration für Knochenerhalt (Rubin/Judex)                   ║
@@ -40,7 +40,7 @@ public struct ValidatedScienceDatabase {
     ║ └─ Photic Driving/Alpha-Entrainment (EEG-validiert)                 ║
     ║                                                                      ║
     ║ Level 3-5 (Limitierte Evidenz)                                       ║
-    ║ ├─ Binaural Beats Brainwave Entrainment (inkonsistent)              ║
+    ║ ├─ Multidimensional Brainwave Entrainment Brainwave Entrainment (inkonsistent)              ║
     ║ └─ Schumann-Resonanz biologische Effekte (spekulativ)               ║
     ║                                                                      ║
     ║ ENTFERNT (Pseudowissenschaft):                                       ║
@@ -263,16 +263,16 @@ public struct ValidatedScienceDatabase {
         safetyRating: .lowRisk
     )
 
-    /// Binaural Beats - Perioperative Anwendung
+    /// Multidimensional Brainwave Entrainment - Perioperative Anwendung
     public static let binauralBeatsAnxiety = ValidatedIntervention(
-        name: "Binaural Beats for Perioperative Anxiety",
+        name: "Multidimensional Brainwave Entrainment for Perioperative Anxiety",
         evidenceLevel: .randomizedControlledTrial,
         effectSize: EffectSize(hedgesG: -1.38, confidence95: (-1.65, -1.11), pValue: 0.001),
         primaryCitations: [
             Citation(
                 authors: "Liu R, Yang X, Zuo H, et al.",
                 year: 2025,
-                title: "Binaural beats for perioperative anxiety and pain: A systematic review and meta-analysis",
+                title: "Multidimensional Brainwave Entrainment for perioperative anxiety and pain: A systematic review and meta-analysis",
                 journal: "Complementary Therapies in Clinical Practice",
                 volume: "58",
                 pages: "101916",
@@ -458,16 +458,16 @@ public struct ValidatedScienceDatabase {
 
     // MARK: - Level 3-5 Interventions (Limited Evidence)
 
-    /// Binaural Beats - Brainwave Entrainment (Inkonsistent)
+    /// Multidimensional Brainwave Entrainment - Brainwave Entrainment (Inkonsistent)
     public static let binauralBrainwaveEntrainment = ValidatedIntervention(
-        name: "Binaural Beats Brainwave Entrainment",
+        name: "Multidimensional Brainwave Entrainment Brainwave Entrainment",
         evidenceLevel: .caseControl,
         effectSize: EffectSize(hedgesG: 0.40, confidence95: (0.10, 0.70), pValue: 0.05),
         primaryCitations: [
             Citation(
                 authors: "Ingendoh RM, Posny ES, Heine A",
                 year: 2023,
-                title: "Binaural beats to entrain the brain? A systematic review",
+                title: "Multidimensional Brainwave Entrainment to entrain the brain? A systematic review",
                 journal: "PLOS ONE",
                 volume: "18(5)",
                 pages: "e0286023",
