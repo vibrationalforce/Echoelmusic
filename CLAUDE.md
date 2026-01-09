@@ -124,6 +124,39 @@ Major, Minor, Diminished, Augmented, Major7, Minor7, Dominant7, Sus2, Sus4, Add9
 
 **HINWEIS:** Subjektive Entspannung ist besser belegt als neurophysiologische Effekte. Kein Medizinprodukt.
 
+### Visual Step Sequencer (nw_wrld Inspired)
+
+Inspired by [nw_wrld](https://github.com/aagentah/nw_wrld) event-driven sequencer concept.
+
+| Feature | Description |
+|---------|-------------|
+| **16-Step Grid** | Pattern-based visual trigger sequencer |
+| **8 Channels** | Visual A-D, Lighting, Effect 1-2, Bio Trigger |
+| **Bio-Modulation** | HRV → pattern density, HR → BPM |
+| **MIDI Sync** | External clock and sync support |
+| **5 Presets** | Four on Floor, Breakbeat, Ambient, Bio-Reactive, Minimal |
+| **60-180 BPM** | Adjustable tempo with bio-tempo lock |
+
+**Bio-Reactive Features:**
+- Heart rate → tempo modulation (smooth 5% transition)
+- HRV variability → skip probability (0-30%)
+- Coherence → velocity modulation (50-100%)
+
+### Visual Method Mapper
+
+| Component | Count | Description |
+|-----------|-------|-------------|
+| **Visual Methods** | 22 | show, hide, opacity, scale, rotate, pulse, breathe, hue, saturation, complexity, etc. |
+| **Input Sources** | 20 | Heart rate, HRV, coherence, breathing, sequencer channels 1-8, audio levels, MIDI |
+| **Mapping Curves** | 6 | Linear, Exponential, Logarithmic, S-Curve, Sine, Stepped |
+| **Presets** | 5 | Meditation, Energetic, Ambient, Performance, Research |
+
+**Input Source Categories:**
+- **Biometric**: Heart rate (40-200), HRV coherence (0-1), breathing rate/phase
+- **Sequencer**: 8 channel triggers from VisualStepSequencer
+- **Audio**: Level, bass, mid, high, beat detect
+- **MIDI**: Note, velocity, CC, pitch bend
+
 ---
 
 ### New in Phase 10000.2 SCIENTIFIC ULTRA MODE (2026-01-09)
