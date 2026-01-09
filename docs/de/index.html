@@ -445,6 +445,46 @@
             font-size: 11px;
         }
 
+        /* Accordion */
+        .accordion {
+            margin: 20px 0;
+        }
+        .accordion-item {
+            background: rgba(10,22,40,0.6);
+            border: 1px solid rgba(0,201,87,0.2);
+            border-radius: 12px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .accordion-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            color: var(--coherence-green);
+        }
+        .accordion-header:hover {
+            background: rgba(0,201,87,0.1);
+        }
+        .accordion-content {
+            padding: 0 20px 20px;
+            display: none;
+        }
+        .accordion-item.open .accordion-content {
+            display: block;
+        }
+        .accordion-item.open .accordion-header::after {
+            transform: rotate(180deg);
+        }
+        .accordion-header::after {
+            content: '▼';
+            font-size: 10px;
+            transition: transform 0.3s;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             h1 { font-size: 32px; }
@@ -480,8 +520,8 @@
 
             <div class="stats">
                 <div class="stat">
-                    <div class="stat-value">50+</div>
-                    <div class="stat-label">Native DSP Effekte</div>
+                    <div class="stat-value">100+</div>
+                    <div class="stat-label">Instrumente & DSP</div>
                 </div>
                 <div class="stat">
                     <div class="stat-value">&lt;10ms</div>
@@ -497,7 +537,11 @@
                 </div>
                 <div class="stat">
                     <div class="stat-value">7+</div>
-                    <div class="stat-label">Plugin-Formate (VST3/AU/AAX/CLAP/LV2/AUv3)</div>
+                    <div class="stat-label">Plugin-Formate</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">JEDE</div>
+                    <div class="stat-label">Gerätekombination</div>
                 </div>
             </div>
 
@@ -589,6 +633,193 @@
                         <span class="tech-tag">8 Sektionen</span>
                         <span class="tech-tag">Leitmotif System</span>
                         <span class="tech-tag">Bio-Reaktiv</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Umfassender Instrumentenkatalog -->
+        <div class="section">
+            <div class="section-header">
+                <h2>100+ Professionelle Instrumente</h2>
+                <p>Komplette Instrumentensammlung: Synthesizer-Engines, Orchestersektionen, globale Akustikinstrumente, Touch-Interfaces und 42 DSP-Prozessoren.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card highlight">
+                    <h3><span>🎹</span> 6 Synthese-Engines</h3>
+                    <p>Professionelles Sound Design mit verschiedenen Synthesemethoden, alle mit bio-reaktiver Modulation.</p>
+                    <table class="specs-table">
+                        <tr><td><strong>Subtraktiv</strong></td><td>Sägezahn + LP/HP/BP Filter, ADSR</td></tr>
+                        <tr><td><strong>FM-Synthese</strong></td><td>6 Operatoren, DX7-Stil</td></tr>
+                        <tr><td><strong>Wavetable</strong></td><td>256 Frames, Morphing</td></tr>
+                        <tr><td><strong>Granular</strong></td><td>50ms Grains, Dichtekontrolle</td></tr>
+                        <tr><td><strong>Additiv</strong></td><td>16 Harmonische, Partialkontrolle</td></tr>
+                        <tr><td><strong>Physical Modeling</strong></td><td>Karplus-Strong Saiten</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card highlight">
+                    <h3><span>🎻</span> 18 Orchesterinstrumente</h3>
+                    <p>Volles Orchester mit 27 Artikulationen. Professionelle Sample-Library-Architektur.</p>
+                    <table class="specs-table">
+                        <tr><th>Sektion</th><th>Instrumente</th></tr>
+                        <tr><td>Streicher</td><td>Violinen I/II, Bratschen, Celli, Kontrabässe</td></tr>
+                        <tr><td>Blech</td><td>Trompeten, Hörner, Posaunen, Tuba</td></tr>
+                        <tr><td>Holz</td><td>Flöten, Oboen, Klarinetten, Fagotte</td></tr>
+                        <tr><td>Chor</td><td>Sopran, Alt, Tenor, Bass</td></tr>
+                        <tr><td>Solo</td><td>Konzertflügel, Harfe, Celesta</td></tr>
+                        <tr><td>Percussion</td><td>Pauken (40-57 MIDI)</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>🌏</span> 10+ Weltinstrumente</h3>
+                    <p>Globale Akustikinstrumente mit authentischen Spieltechniken und alternativen Stimmungen.</p>
+                    <table class="specs-table">
+                        <tr><td>Asien</td><td>Sitar, Erhu, Koto, Shakuhachi</td></tr>
+                        <tr><td>Naher Osten</td><td>Oud, Ney</td></tr>
+                        <tr><td>Afrika</td><td>Djembe, Kalimba</td></tr>
+                        <tr><td>Ozeanien</td><td>Didgeridoo</td></tr>
+                        <tr><td>Elektronisch</td><td>Moog-Style Analog Synth</td></tr>
+                    </table>
+                    <div class="tech-list" style="margin-top: 10px;">
+                        <span class="tech-tag golden">Gamelan Slendro/Pelog</span>
+                        <span class="tech-tag">Viertelton</span>
+                        <span class="tech-tag">Traditionelle Techniken</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>📱</span> 5 Touch-Instrumente</h3>
+                    <p>Mobile-optimierte Instrumente für iOS/Android mit Gestensteuerung.</p>
+                    <table class="specs-table">
+                        <tr><td><strong>Akkord-Pad</strong></td><td>11 Akkordtypen, skalenfixiert</td></tr>
+                        <tr><td><strong>Drum-Pad</strong></td><td>11 Drumtypen (Kick, Snare, Hi-Hat, Toms, Clap, Cowbell)</td></tr>
+                        <tr><td><strong>Melody XY</strong></td><td>Kontinuierliche Tonhöhe/Klangfarbe</td></tr>
+                        <tr><td><strong>Keyboard</strong></td><td>13 Skalen, anschlagdynamisch</td></tr>
+                        <tr><td><strong>Strum-Pad</strong></td><td>Gitarren-Style Strumming</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card highlight">
+                    <h3><span>🎵</span> 18 Tonleitern</h3>
+                    <p>Globale Skalenunterstützung für diverse Musiktraditionen.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Dur</span>
+                        <span class="tech-tag">Moll</span>
+                        <span class="tech-tag">Pentatonik</span>
+                        <span class="tech-tag">Dorisch</span>
+                        <span class="tech-tag">Phrygisch</span>
+                        <span class="tech-tag">Lydisch</span>
+                        <span class="tech-tag">Mixolydisch</span>
+                        <span class="tech-tag golden">Blues</span>
+                        <span class="tech-tag golden">Japanisch</span>
+                        <span class="tech-tag golden">Arabisch</span>
+                        <span class="tech-tag">Chromatisch</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>🎶</span> 10 Akkordtypen</h3>
+                    <p>Umfassende Akkordunterstützung für Komposition und Performance.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Dur</span>
+                        <span class="tech-tag">Moll</span>
+                        <span class="tech-tag">Vermindert</span>
+                        <span class="tech-tag">Übermäßig</span>
+                        <span class="tech-tag">Maj7</span>
+                        <span class="tech-tag">Min7</span>
+                        <span class="tech-tag golden">Dom7</span>
+                        <span class="tech-tag">Sus2</span>
+                        <span class="tech-tag">Sus4</span>
+                        <span class="tech-tag">Add9</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adaptive Plattform & XR-Unterstützung -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Adaptive Plattform & XR-Unterstützung</h2>
+                <p>Funktioniert überall: iOS, Android, Windows, Linux, macOS, WearOS und alle wichtigen XR-Plattformen. JEDE Gerätekombination.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card highlight">
+                    <h3><span>🔗</span> Cross-Platform Sessions</h3>
+                    <p>JEDE Gerätekombination funktioniert nahtlos. iPhone + Windows, Android + Mac, MacBook + Meta-Brille, WearOS + alter PC.</p>
+                    <table class="specs-table">
+                        <tr><td><strong>6 Ökosysteme</strong></td><td>Apple, Google, Microsoft, Meta, Linux, Tesla</td></tr>
+                        <tr><td><strong>Zero-Latency</strong></td><td>&lt;10ms adaptive Sync (NTP/PTP)</td></tr>
+                        <tr><td><strong>Biometrie-Sync</strong></td><td>HRV, Herzrate, Atmung geräteübergreifend</td></tr>
+                        <tr><td><strong>Audio-Sync</strong></td><td>BPM, Filter, Reverb, Lautstärke Echtzeit</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card highlight">
+                    <h3><span>🥽</span> XR & Smart Glasses</h3>
+                    <p>Volle Unterstützung für aktuelle und kommende XR-Plattformen. Spatial Audio, Hand-Tracking, Blicksteuerung.</p>
+                    <table class="specs-table">
+                        <tr><td><strong>Apple Vision Pro</strong></td><td>visionOS nativ, Spatial Computing</td></tr>
+                        <tr><td><strong>Meta Quest 3</strong></td><td>Volle immersive Unterstützung</td></tr>
+                        <tr><td><strong>Meta Celeste</strong></td><td>Next-Gen XR (2026)</td></tr>
+                        <tr><td><strong>XREAL One</strong></td><td>AR-Brille (499-599€)</td></tr>
+                        <tr><td><strong>Android XR</strong></td><td>Samsung Galaxy XR ready</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>⌚</span> WearOS & Wearables</h3>
+                    <p>Volle WearOS-Unterstützung mit Health Services API. Funktioniert mit Apple Watch, Garmin, Whoop, Oura, Polar, Fitbit.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag golden">WearOS 4+</span>
+                        <span class="tech-tag">Apple Watch</span>
+                        <span class="tech-tag">Garmin</span>
+                        <span class="tech-tag">Whoop</span>
+                        <span class="tech-tag">Oura Ring</span>
+                        <span class="tech-tag">Polar</span>
+                        <span class="tech-tag">Fitbit</span>
+                    </div>
+                    <p style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 10px;">Echtzeit-HRV-Streaming vom Wearable zu jedem verbundenen Gerät.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>🖥️</span> Desktop & Legacy</h3>
+                    <p>Läuft auf modernen und älteren Systemen. Windows 10+, macOS 12+, Linux mit ALSA/PipeWire/JACK.</p>
+                    <table class="specs-table">
+                        <tr><td><strong>Windows</strong></td><td>WASAPI, ASIO, FlexASIO, ASIO4ALL</td></tr>
+                        <tr><td><strong>macOS</strong></td><td>Core Audio nativ</td></tr>
+                        <tr><td><strong>Linux</strong></td><td>PipeWire, JACK, ALSA</td></tr>
+                        <tr><td><strong>Min. Specs</strong></td><td>Dual-Core, 4GB RAM</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>🔌</span> Hardware-Ökosystem</h3>
+                    <p>60+ Audio-Interfaces, 40+ MIDI-Controller, DMX-Beleuchtung, Video-Hardware.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Universal Audio</span>
+                        <span class="tech-tag">Focusrite</span>
+                        <span class="tech-tag">RME</span>
+                        <span class="tech-tag">MOTU</span>
+                        <span class="tech-tag">Ableton Push 3</span>
+                        <span class="tech-tag">Akai</span>
+                        <span class="tech-tag">Novation</span>
+                        <span class="tech-tag">Arturia</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>📲</span> Mobile Plattformen</h3>
+                    <p>Native iOS und Android mit Low-Latency Audio-APIs.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">iOS 15+</span>
+                        <span class="tech-tag">Android 8+ (AAudio/Oboe)</span>
+                        <span class="tech-tag">Core Audio</span>
+                        <span class="tech-tag">HealthKit</span>
+                        <span class="tech-tag">Health Connect</span>
                     </div>
                 </div>
             </div>
@@ -771,5 +1002,13 @@
             </div>
         </footer>
     </div>
+
+    <script>
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', () => {
+                header.parentElement.classList.toggle('open');
+            });
+        });
+    </script>
 </body>
 </html>
