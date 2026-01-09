@@ -182,7 +182,7 @@ public struct SessionConfiguration: Sendable {
         case coherenceCircle = "Coherence Circle"
         case musicJam = "Music Jam"
         case researchStudy = "Research Study"
-        case healingCircle = "Healing Circle"
+        case wellnessCircle = "Wellness Circle"  // Renamed from "Healing" - scientific terminology
         case creativeFusion = "Creative Fusion"
         case quantumEntanglement = "Quantum Entanglement"
     }

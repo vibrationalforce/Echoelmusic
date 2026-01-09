@@ -46,7 +46,7 @@ public struct QuantumPreset: Identifiable, Codable, Sendable {
         case focus = "Focus"
         case relaxation = "Relaxation"
         case energy = "Energy"
-        case healing = "Healing"
+        case wellness = "Wellness"  // Renamed from "healing" - scientific terminology
         case exploration = "Exploration"
         case performance = "Performance"
     }
@@ -297,24 +297,26 @@ public struct BuiltInPresets {
         hrvSensitivity: 0.6
     )
 
-    // MARK: - Wellness Presets
+    // MARK: - Wellness Presets (No Medical Claims)
 
-    public static let deepRelaxation = QuantumPreset(
-        id: "deep-relaxation",
-        name: "Deep Relaxation",
-        description: "Traditional Solfeggio frequencies for subjective relaxation (no medical claims)",
+    /// Schumann Resonance - Earth's electromagnetic frequency (7.83Hz)
+    /// Scientific basis: Measurable ELF resonance. Subjective relaxation only.
+    public static let schumannResonance = QuantumPreset(
+        id: "schumann-resonance",
+        name: "Earth Resonance",
+        description: "7.83Hz Schumann resonance for grounding (no medical claims)",
         category: .wellness,
-        icon: "cross.fill",
-        color: .init(hue: 0.4, saturation: 0.6, brightness: 0.5),
-        emulationMode: "hybridPhotonic",
-        visualizationType: "biophotonAura",
+        icon: "globe.europe.africa.fill",
+        color: .init(hue: 0.35, saturation: 0.5, brightness: 0.4),
+        emulationMode: "bioCoherent",
+        visualizationType: "coherenceField",
         lightFieldGeometry: "toroidal",
-        binauralFrequency: 7.83, // Schumann resonance
+        binauralFrequency: 7.83, // Schumann resonance (scientifically measured)
         spatialMode: "ambisonics",
         reverbWetness: 0.45,
-        coherenceTarget: 0.8,
+        coherenceTarget: 0.75,
         breathingPaceSeconds: 6.0,
-        hrvSensitivity: 1.4
+        hrvSensitivity: 1.2
     )
 
     // MARK: - Exploration Presets
@@ -393,8 +395,8 @@ public struct BuiltInPresets {
         sleepPreparation,
         // Energy
         energyBoost,
-        // Healing
-        cellularHealing,
+        // Wellness (no medical claims - for relaxation only)
+        schumannResonance,
         // Exploration
         cosmicExplorer,
         lucidDreaming,

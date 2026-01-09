@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <!-- 528Hz Healing Green Gradient (DNA Repair Frequency) -->
-    <linearGradient id="healing-528hz" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Bio-Coherence Green Gradient (Heart-Brain Coherence Theme) -->
+    <linearGradient id="coherence-green" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#00C957"/>
       <stop offset="50%" style="stop-color:#00A86B"/>
       <stop offset="100%" style="stop-color:#50C878"/>
@@ -18,8 +18,8 @@
       <stop offset="70%" style="stop-color:#00C957"/>
       <stop offset="100%" style="stop-color:#006400"/>
     </radialGradient>
-    <!-- Healing Glow Filter -->
-    <filter id="healing-glow" x="-50%" y="-50%" width="200%" height="200%">
+    <!-- Coherence Glow Filter -->
+    <filter id="coherence-glow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="3" result="glow"/>
       <feMerge>
         <feMergeNode in="glow"/>
@@ -37,8 +37,8 @@
     </filter>
   </defs>
 
-  <!-- Background: Deep healing green -->
-  <rect width="100" height="100" rx="22" fill="url(#healing-528hz)"/>
+  <!-- Background: Bio-coherence green -->
+  <rect width="100" height="100" rx="22" fill="url(#coherence-green)"/>
 
   <!-- Sacred geometry ring (golden ratio) -->
   <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,215,0,0.3)" stroke-width="1.5"/>
@@ -53,7 +53,7 @@
            C72 20 80 28 80 38
            C80 50 65 60 50 75Z"
         fill="url(#heart-glow)"
-        filter="url(#healing-glow)"
+        filter="url(#coherence-glow)"
         opacity="0.9"/>
 
   <!-- HRV Coherence Wave (inside heart) -->

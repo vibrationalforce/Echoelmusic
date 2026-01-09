@@ -1256,10 +1256,12 @@ extension CollaborationPreset {
         suggestedDuration: 60
     )
 
-    public static let healingCircle = CollaborationPreset(
+    /// Wellness Circle - Group coherence session with synchronized biofeedback
+    /// NOTE: For relaxation/wellness purposes only. No medical claims.
+    public static let wellnessCircle = CollaborationPreset(
         id: UUID(),
-        name: "Healing Circle",
-        description: "Group sound healing with synchronized frequencies",
+        name: "Wellness Circle",
+        description: "Group coherence session with synchronized biofeedback frequencies",
         category: "Wellness",
         author: "Echoelmusic",
         version: "1.0",
@@ -1286,7 +1288,7 @@ extension CollaborationPreset {
 
     public static let allExpanded: [CollaborationPreset] = [
         .musicJamSession, .globalMeditation, .artStudio, .researchLab, .coherenceCircle,
-        .virtualConcert, .danceParty, .masterclass, .healingCircle, .quantumExperiment
+        .virtualConcert, .danceParty, .masterclass, .wellnessCircle, .quantumExperiment
     ]
 }
 
