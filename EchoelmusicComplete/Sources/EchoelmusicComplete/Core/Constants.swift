@@ -39,20 +39,22 @@ public enum AppConstants {
 // MARK: - Audio Frequencies
 
 public enum AudioFrequencies {
-    // Solfeggio frequencies (evidence-based relaxation)
-    public static let ut: Float = 396.0   // Liberating guilt
-    public static let re: Float = 417.0   // Facilitating change
-    public static let mi: Float = 528.0   // Transformation
-    public static let fa: Float = 639.0   // Connecting
-    public static let sol: Float = 741.0  // Awakening intuition
-    public static let la: Float = 852.0   // Spiritual order
+    // Brainwave entrainment frequencies (scientifically grounded)
+    public static let delta: Float = 2.0    // Deep sleep, regeneration
+    public static let theta: Float = 6.0    // Meditation, creativity
+    public static let alpha: Float = 10.0   // Relaxation, learning
+    public static let beta: Float = 20.0    // Focus, alertness
+    public static let gamma: Float = 40.0   // Peak cognition (MIT GENUS research)
 
-    // Standard tuning
+    // Standard tuning (ISO 16)
     public static let a4Standard: Float = 440.0
-    public static let a4Natural: Float = 432.0
+    public static let a4Verdi: Float = 432.0  // Historical preference, no scientific basis
 
     // Carrier frequencies for binaural
     public static let binauralCarrier: Float = 200.0
+
+    // Schumann resonance (Earth's natural EM frequency - for reference only)
+    public static let schumannResonance: Float = 7.83
 }
 
 // MARK: - Health Disclaimer

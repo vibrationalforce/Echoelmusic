@@ -41,8 +41,10 @@ public struct ValidatedScienceDatabase {
     ║                                                                      ║
     ║ Level 3-5 (Limitierte Evidenz)                                       ║
     ║ ├─ Binaural Beats Brainwave Entrainment (inkonsistent)              ║
-    ║ ├─ 528Hz Solfeggio (kulturell/traditionell, keine RCTs)             ║
     ║ └─ Schumann-Resonanz biologische Effekte (spekulativ)               ║
+    ║                                                                      ║
+    ║ ENTFERNT (Pseudowissenschaft):                                       ║
+    ║ └─ Solfeggio Frequencies (keine wissenschaftliche Basis)            ║
     ╚══════════════════════════════════════════════════════════════════════╝
     """
 

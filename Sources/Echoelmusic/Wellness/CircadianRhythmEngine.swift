@@ -48,7 +48,7 @@ public enum CircadianPhase: String, CaseIterable, Codable {
         }
     }
 
-    /// Empfohlene Lichtfarbe (528Hz Grün = Heilung)
+    /// Empfohlene Lichtfarbe (zirkadian-optimiert)
     public var recommendedLightColor: (r: Float, g: Float, b: Float) {
         switch self {
         case .deepSleep:
@@ -60,7 +60,7 @@ public enum CircadianPhase: String, CaseIterable, Codable {
         case .peakAlertness:
             return (0.0, 0.8, 0.95)          // Energetisches Blau (5000-6500K)
         case .postLunch:
-            return (0.0, 0.79, 0.34)         // 528Hz Smaragdgrün (Heilung)
+            return (0.0, 0.79, 0.34)         // Beruhigendes Gruen (~530nm)
         case .secondWind:
             return (0.0, 0.75, 0.85)         // Helles Cyan
         case .windDown:
@@ -84,15 +84,17 @@ public enum CircadianPhase: String, CaseIterable, Codable {
         }
     }
 
-    /// Carrier-Frequenz für Binaural Beats (432Hz oder 528Hz)
+    /// Carrier-Frequenz fuer Binaural Beats (Standard 440Hz)
+    /// HINWEIS: Alle Carrier-Frequenzen sind akustisch aequivalent fuer Entrainment.
+    /// Es gibt keine wissenschaftliche Evidenz fuer "spezielle" Frequenzen wie 432Hz oder 528Hz.
     public var carrierFrequency: Double {
         switch self {
         case .deepSleep, .remSleep, .melatonin:
-            return 432.0    // 432Hz für Entspannung
+            return 432.0    // Subjektiv als "waermer" empfunden (keine wissenschaftliche Basis)
         case .postLunch, .windDown:
-            return 528.0    // 528Hz Solfeggio (traditionell/kulturell, KEINE wissenschaftliche Heilwirkung belegt)
+            return 440.0    // Standard A4 Stimmung
         default:
-            return 440.0    // Standard für Aktivität
+            return 440.0    // Standard A4 Stimmung
         }
     }
 }

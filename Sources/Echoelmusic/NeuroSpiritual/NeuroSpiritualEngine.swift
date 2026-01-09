@@ -370,9 +370,8 @@ public final class NeuroSpiritualEngine: ObservableObject {
     /// Schumann Resonance (Erd-Resonanzfrequenz - scientifically measured at ~7.83Hz)
     public static let schumannResonance: Double = 7.83
 
-    /// 528Hz - Traditional Solfeggio Frequency (Cultural/Historical - NOT scientifically proven for "healing")
-    /// NOTE: Used for subjective wellness/relaxation experience. No medical claims.
-    public static let solfeggioMI: Double = 528.0
+    /// Standard A4 Tuning (440Hz) - International ISO 16 Standard
+    public static let standardA4: Double = 440.0
 
     /// Coherence Breathing Rate (6/min = 0.1Hz)
     public static let coherenceBreathingRate: Double = 6.0
@@ -449,25 +448,16 @@ public final class NeuroSpiritualEngine: ObservableObject {
         calculateCompositeScores()
     }
 
-    /// Berechnet optimale Audio-Parameter für aktuellen Zustand
+    /// Berechnet optimale Audio-Parameter fuer aktuellen Zustand
+    /// HINWEIS: Carrier-Frequenz hat keinen wissenschaftlich belegten Einfluss auf Entrainment.
+    /// Alle Carrier sind akustisch aequivalent - nur die Beat-Frequenz (Differenz) ist relevant.
     public func getOptimalAudioParameters() -> (frequency: Double, carrier: Double, volume: Double) {
         let targetFrequency = consciousnessState.audioFrequency
 
-        // Carrier basierend auf Zustand (traditionelle Solfeggio-Frequenzen für subjektives Wohlbefinden)
-        // HINWEIS: Keine medizinischen Wirkungen wissenschaftlich nachgewiesen
-        let carrier: Double
-        switch polyvagalState {
-        case .ventralVagal, .blendedVentralDorsal:
-            carrier = Self.solfeggioMI  // 528Hz - traditionell mit Wohlbefinden assoziiert
-        case .sympathetic:
-            carrier = 432.0  // Traditionell "entspannend" genannt
-        case .dorsalVagal:
-            carrier = 396.0  // Traditionell "UT" Solfeggio
-        case .blendedVentralSympathetic:
-            carrier = 440.0  // Aktivierend
-        }
+        // Standard A4 (440Hz) fuer alle Zustaende - wissenschaftlich neutral
+        let carrier = Self.standardA4
 
-        // Lautstärke basierend auf Zustand
+        // Lautstaerke basierend auf Zustand
         let volume = 0.3 + (overallCoherence * 0.4)  // 30-70%
 
         return (targetFrequency, carrier, volume)

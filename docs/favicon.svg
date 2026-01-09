@@ -65,7 +65,7 @@
         stroke-linejoin="round"
         filter="url(#soft-glow)"/>
 
-  <!-- 528Hz frequency dots (Solfeggio) -->
+  <!-- Coherence indicator dots -->
   <circle cx="50" cy="18" r="3" fill="#FFD700" opacity="0.8"/>
   <circle cx="30" cy="85" r="2" fill="#FFD700" opacity="0.6"/>
   <circle cx="70" cy="85" r="2" fill="#FFD700" opacity="0.6"/>
