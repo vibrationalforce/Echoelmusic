@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Frequently Asked Questions about Echoelmusic - Bio-Reactive Music App. Learn about binaural beats, HRV coherence, music production, and wellness features.">
+    <meta name="keywords" content="Echoelmusic FAQ, binaural beats, HRV music, bio-reactive audio, music therapy, meditation app, heart rate variability, wellness app">
+    <meta name="author" content="Echoelmusic">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://echoelmusic.com/faq">
+    <meta property="og:title" content="FAQ - Echoelmusic Bio-Reactive Music">
+    <meta property="og:description" content="Everything you need to know about Echoelmusic - bio-reactive audio, HRV coherence, binaural beats, and more.">
+    <meta property="og:image" content="https://echoelmusic.com/images/og-faq.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://echoelmusic.com/faq">
+    <meta property="twitter:title" content="FAQ - Echoelmusic Bio-Reactive Music">
+    <meta property="twitter:description" content="Everything you need to know about Echoelmusic.">
+
+    <!-- Schema.org FAQ markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is Echoelmusic?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Echoelmusic is a bio-reactive audio-visual synthesis application that transforms your biometric data (heart rate, HRV) into personalized music in real-time."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How does bio-reactive music work?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Echoelmusic reads your heart rate and HRV via HealthKit or Health Connect. These biometrics adjust tempo, harmony, dynamics, and visualizations in real-time."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is my health data safe?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes. All biometric data is processed locally on your device. Your data never leaves your phone, is not stored permanently, and is not transmitted to any server."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <title>FAQ - Echoelmusic</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --gray: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 80px 24px;
+        }
+
+        h1 {
+            font-size: 42px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--gray);
+            font-size: 18px;
+            margin-bottom: 48px;
+        }
+
+        .faq-section {
+            margin-bottom: 48px;
+        }
+
+        .faq-section h2 {
+            font-size: 24px;
+            color: var(--primary);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .faq-item {
+            margin-bottom: 16px;
+        }
+
+        .faq-question {
+            width: 100%;
+            text-align: left;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 16px 20px;
+            color: var(--light);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .faq-question:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--primary);
+        }
+
+        .faq-question.active {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .faq-question::after {
+            content: '+';
+            font-size: 24px;
+            color: var(--primary);
+            transition: transform 0.3s;
+        }
+
+        .faq-question.active::after {
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            display: none;
+            padding: 20px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            color: #cbd5e1;
+        }
+
+        .faq-answer.active {
+            display: block;
+        }
+
+        .faq-answer p {
+            margin-bottom: 12px;
+        }
+
+        .faq-answer ul {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .faq-answer li {
+            margin-bottom: 8px;
+        }
+
+        .faq-answer code {
+            background: rgba(99, 102, 241, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .cta-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+            border: 1px solid var(--primary);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            margin-top: 48px;
+        }
+
+        .cta-box h3 {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .cta-box p {
+            color: var(--gray);
+            margin-bottom: 24px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 14px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        a { color: var(--primary); }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 48px;
+            color: var(--gray);
+            text-decoration: none;
+        }
+
+        .back-link:hover { color: var(--light); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Frequently Asked Questions</h1>
+        <p class="subtitle">Everything you need to know about Echoelmusic</p>
+
+        <!-- Getting Started -->
+        <div class="faq-section">
+            <h2>Getting Started</h2>
+
+            <div class="faq-item">
+                <button class="faq-question">What is Echoelmusic?</button>
+                <div class="faq-answer">
+                    <p>Echoelmusic is a bio-reactive audio-visual synthesis application that transforms your biometric data (heart rate, HRV) into personalized music in real-time. It uses AI and advanced DSP to create soundscapes that respond to your emotional and physical state.</p>
+                    <p>Available on iOS, iPadOS, macOS, watchOS, tvOS, visionOS, Android, and as desktop plugins (VST3, AU, AAX, CLAP).</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">Do I need an Apple Watch to use Echoelmusic?</button>
+                <div class="faq-answer">
+                    <p>No, an Apple Watch is not required. However, it significantly enhances the experience by providing real-time heart rate and HRV data for bio-reactive features.</p>
+                    <p>Without biometric input, you can:</p>
+                    <ul>
+                        <li>Use Demo Mode with simulated biometric data</li>
+                        <li>Connect compatible Bluetooth heart rate monitors</li>
+                        <li>Use the app as a standard synthesizer/music creation tool</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">Which devices are supported?</button>
+                <div class="faq-answer">
+                    <p><strong>Apple Ecosystem:</strong></p>
+                    <ul>
+                        <li>iPhone (iOS 15+)</li>
+                        <li>iPad (iPadOS 15+)</li>
+                        <li>Mac (macOS 12+, Apple Silicon and Intel)</li>
+                        <li>Apple Watch (watchOS 8+)</li>
+                        <li>Apple TV (tvOS 15+)</li>
+                        <li>Apple Vision Pro (visionOS 1.0+)</li>
+                    </ul>
+                    <p><strong>Android:</strong></p>
+                    <ul>
+                        <li>Android 10+ with Health Connect support</li>
+                    </ul>
+                    <p><strong>Desktop Plugins:</strong></p>
+                    <ul>
+                        <li>Windows 10+ (VST3, AAX, CLAP)</li>
+                        <li>macOS 10.15+ (AU, VST3, AAX, CLAP)</li>
+                        <li>Linux (VST3, CLAP)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">Is Echoelmusic free?</button>
+                <div class="faq-answer">
+                    <p>Echoelmusic offers a free tier with core features:</p>
+                    <ul>
+                        <li>Basic synthesis engines</li>
+                        <li>Standard visualizations</li>
+                        <li>Bio-reactive mode (with compatible device)</li>
+                        <li>Export to MP3</li>
+                    </ul>
+                    <p><strong>Premium features</strong> (subscription or lifetime purchase):</p>
+                    <ul>
+                        <li>All synthesis engines</li>
+                        <li>Advanced DSP effects</li>
+                        <li>Unlimited WAV/FLAC export</li>
+                        <li>Global music scales (Maqam, Raga, etc.)</li>
+                        <li>Priority support</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bio-Reactive Features -->
+        <div class="faq-section">
+            <h2>Bio-Reactive Features</h2>
+
+            <div class="faq-item">
+                <button class="faq-question">How does bio-reactive music work?</button>
+                <div class="faq-answer">
+                    <p>Echoelmusic reads your heart rate and heart rate variability (HRV) in real-time via HealthKit (iOS) or Health Connect (Android). These biometrics are used to:</p>
+                    <ul>
+                        <li><strong>Adjust tempo:</strong> Music speed adapts to your heart rate</li>
+                        <li><strong>Modify harmony:</strong> Chord progressions respond to HRV coherence</li>
+                        <li><strong>Control dynamics:</strong> Volume and intensity reflect your state</li>
+                        <li><strong>Drive visualizations:</strong> Particle systems pulse with your heartbeat</li>
+                    </ul>
+                    <p>All processing happens on-device, ensuring your biometric data stays private.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">What is HRV coherence?</button>
+                <div class="faq-answer">
+                    <p>Heart Rate Variability (HRV) coherence is a measure of the regularity of your heart rhythm patterns. High coherence is associated with:</p>
+                    <ul>
+                        <li>Reduced stress</li>
+                        <li>Improved focus</li>
+                        <li>Emotional balance</li>
+                        <li>Flow states</li>
+                    </ul>
+                    <p>Echoelmusic uses coherence to adjust the music, creating a feedback loop that may help you achieve and maintain coherent states.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">Which heart rate monitors are compatible?</button>
+                <div class="faq-answer">
+                    <p><strong>Direct Integration:</strong></p>
+                    <ul>
+                        <li>Apple Watch (all models)</li>
+                        <li>Garmin watches (via Health Connect on Android)</li>
+                        <li>Fitbit devices (via Health Connect on Android)</li>
+                        <li>Samsung Galaxy Watch (via Health Connect)</li>
+                    </ul>
+                    <p><strong>Bluetooth Heart Rate Monitors:</strong></p>
+                    <ul>
+                        <li>Polar H10, H9, OH1</li>
+                        <li>Wahoo TICKR</li>
+                        <li>Garmin HRM-Pro</li>
+                        <li>Any Bluetooth LE heart rate strap</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audio & Music -->
+        <div class="faq-section">
+            <h2>Audio & Music</h2>
+
+            <div class="faq-item">
+                <button class="faq-question">What synthesis engines are available?</button>
+                <div class="faq-answer">
+                    <p>Echoelmusic includes multiple synthesis engines:</p>
+                    <ul>
+                        <li><strong>Subtractive:</strong> Classic analog-style synthesis</li>
+                        <li><strong>FM Synthesis:</strong> Complex harmonic timbres</li>
+                        <li><strong>Wavetable:</strong> Evolving, morphing sounds</li>
+                        <li><strong>Physical Modeling:</strong> Realistic acoustic instruments</li>
+                        <li><strong>Granular:</strong> Texture and atmosphere from audio grains</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">Can I export my music?</button>
+                <div class="faq-answer">
+                    <p>Yes! Echoelmusic supports multiple export formats:</p>
+                    <ul>
+                        <li><strong>WAV:</strong> Uncompressed, studio quality (16/24/32-bit)</li>
+                        <li><strong>FLAC:</strong> Lossless compression</li>
+                        <li><strong>MP3:</strong> Compressed (up to 320kbps)</li>
+                        <li><strong>AAC:</strong> High-quality compressed audio</li>
+                    </ul>
+                    <p>Audio is automatically loudness-normalized for streaming platforms (Spotify, Apple Music, YouTube, etc.).</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">What music scales are supported?</button>
+                <div class="faq-answer">
+                    <p>Echoelmusic includes scales from around the world:</p>
+                    <ul>
+                        <li><strong>Western:</strong> Major, Minor, Pentatonic, Blues, Modes (Dorian, Mixolydian, etc.)</li>
+                        <li><strong>Arabic:</strong> Maqam Bayati, Maqam Hijaz, Maqam Rast (with quarter tones)</li>
+                        <li><strong>Indian:</strong> Raga Bhairav, Raga Yaman, Raga Malkauns</li>
+                        <li><strong>Japanese:</strong> Hirajoshi, In-Sen, Yo scale</li>
+                        <li><strong>African:</strong> Equidistant pentatonic, polyrhythmic patterns</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy & Security -->
+        <div class="faq-section">
+            <h2>Privacy & Security</h2>
+
+            <div class="faq-item">
+                <button class="faq-question">Is my health data safe?</button>
+                <div class="faq-answer">
+                    <p><strong>Yes, absolutely.</strong> Echoelmusic processes all biometric data locally on your device. Your heart rate and HRV data:</p>
+                    <ul>
+                        <li>Never leave your device</li>
+                        <li>Are not stored permanently</li>
+                        <li>Are not transmitted to any server</li>
+                        <li>Are processed in real-time and discarded</li>
+                    </ul>
+                    <p>We are GDPR and CCPA compliant. See our <a href="/privacy.html">Privacy Policy</a> for details.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">Does Echoelmusic use tracking or analytics?</button>
+                <div class="faq-answer">
+                    <p><strong>No.</strong> We do not use:</p>
+                    <ul>
+                        <li>Google Analytics</li>
+                        <li>Facebook Pixel</li>
+                        <li>Advertising IDs (IDFA, GAID)</li>
+                        <li>Any third-party trackers</li>
+                    </ul>
+                    <p>Optional crash reporting (opt-in only) sends anonymous, non-identifiable data to help us improve the app.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Professional Use -->
+        <div class="faq-section">
+            <h2>Professional & Studio Use</h2>
+
+            <div class="faq-item">
+                <button class="faq-question">Can I use Echoelmusic in my DAW?</button>
+                <div class="faq-answer">
+                    <p>Yes! Echoelmusic is available as professional plugins:</p>
+                    <ul>
+                        <li><strong>VST3:</strong> Windows & macOS (Ableton, FL Studio, Cubase, etc.)</li>
+                        <li><strong>Audio Units (AU):</strong> macOS (Logic Pro, GarageBand)</li>
+                        <li><strong>AAX:</strong> Pro Tools</li>
+                        <li><strong>CLAP:</strong> Bitwig, Reaper (open plugin format)</li>
+                    </ul>
+                    <p>All plugins support MIDI input, tempo sync, and automation of all parameters.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">What sample rates and bit depths are supported?</button>
+                <div class="faq-answer">
+                    <p>Echoelmusic supports professional audio specifications:</p>
+                    <ul>
+                        <li><strong>Sample Rates:</strong> 44.1kHz, 48kHz, 88.2kHz, 96kHz, 176.4kHz, 192kHz</li>
+                        <li><strong>Bit Depths:</strong> 16-bit, 24-bit, 32-bit float</li>
+                        <li><strong>Latency:</strong> As low as 64 samples (~1.3ms at 48kHz)</li>
+                    </ul>
+                    <p>For bio-reactive features, we recommend 48kHz/24-bit for optimal balance of quality and CPU usage.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">How do I use Echoelmusic for live performance?</button>
+                <div class="faq-answer">
+                    <p>Echoelmusic excels in live environments:</p>
+                    <ul>
+                        <li><strong>iPad standalone:</strong> Full synthesis with touch interface</li>
+                        <li><strong>AUv3 in hosts:</strong> Use within AUM, AudioBus, or Cubasis</li>
+                        <li><strong>MIDI control:</strong> Map any parameter to hardware controllers</li>
+                        <li><strong>Ableton Link:</strong> Sync tempo with other devices/apps</li>
+                        <li><strong>Low latency mode:</strong> 5ms round-trip with wired headphones</li>
+                    </ul>
+                    <p>For live shows, connect a Polar H10 for real-time bio-reactive response to your performance energy.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">Can I use my music commercially?</button>
+                <div class="faq-answer">
+                    <p><strong>Yes!</strong> All music you create with Echoelmusic is 100% yours. You retain full rights to:</p>
+                    <ul>
+                        <li>Release commercially (Spotify, Apple Music, etc.)</li>
+                        <li>Use in videos, films, and games</li>
+                        <li>License to others</li>
+                        <li>Perform live</li>
+                    </ul>
+                    <p>No royalties, no attribution required. The only restriction: you cannot resell the Echoelmusic software itself.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wellness & Science -->
+        <div class="faq-section">
+            <h2>Wellness & Science</h2>
+
+            <div class="faq-item">
+                <button class="faq-question">What are binaural beats and how do they work?</button>
+                <div class="faq-answer">
+                    <p>Binaural beats are an auditory phenomenon where two slightly different frequencies (one per ear) create the perception of a third "beat" frequency.</p>
+                    <p><strong>Example:</strong> 432 Hz in left ear + 442 Hz in right ear = 10 Hz perceived beat (alpha waves)</p>
+                    <p>Different beat frequencies correspond to brainwave states:</p>
+                    <ul>
+                        <li><strong>Delta (0.5-4 Hz):</strong> Deep sleep, healing</li>
+                        <li><strong>Theta (4-8 Hz):</strong> Meditation, creativity</li>
+                        <li><strong>Alpha (8-14 Hz):</strong> Relaxation, learning</li>
+                        <li><strong>Beta (14-30 Hz):</strong> Focus, alertness</li>
+                        <li><strong>Gamma (30+ Hz):</strong> Peak awareness, cognition</li>
+                    </ul>
+                    <p><em>Note:</em> Binaural beats require headphones. Echoelmusic automatically switches to isochronic tones when using speakers.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">Is there scientific evidence for bio-reactive music?</button>
+                <div class="faq-answer">
+                    <p>The science behind Echoelmusic draws from multiple research areas:</p>
+                    <ul>
+                        <li><strong>HRV Biofeedback:</strong> Extensively studied for stress reduction (Lehrer & Gevirtz, 2014)</li>
+                        <li><strong>Music Therapy:</strong> Recognized by the American Music Therapy Association</li>
+                        <li><strong>Entrainment:</strong> Auditory-cortical synchronization research (Thaut, 2005)</li>
+                        <li><strong>Coherence:</strong> HeartMath Institute research on HRV patterns</li>
+                    </ul>
+                    <p><em>Disclaimer:</em> Echoelmusic is a wellness tool, not a medical device. It is not intended to diagnose, treat, or cure any condition.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">How does the 432 Hz tuning work?</button>
+                <div class="faq-answer">
+                    <p>Echoelmusic offers 432 Hz as an optional tuning reference (vs. standard 440 Hz). Some users report 432 Hz feels more "natural" or calming.</p>
+                    <p>You can choose your preferred tuning:</p>
+                    <ul>
+                        <li><strong>440 Hz:</strong> Standard concert pitch (default)</li>
+                        <li><strong>432 Hz:</strong> Alternative "healing" tuning</li>
+                        <li><strong>528 Hz:</strong> "Love frequency" (Solfeggio)</li>
+                        <li><strong>Custom:</strong> Set any reference pitch (410-460 Hz)</li>
+                    </ul>
+                    <p><em>Note:</em> Scientific evidence for 432 Hz benefits is limited. We include it as an option for those who prefer it subjectively.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="faq-section">
+            <h2>Troubleshooting</h2>
+
+            <div class="faq-item">
+                <button class="faq-question">The app isn't reading my heart rate</button>
+                <div class="faq-answer">
+                    <p>Try these steps:</p>
+                    <ol>
+                        <li>Ensure HealthKit/Health Connect access is granted in Settings</li>
+                        <li>Check that your Apple Watch/heart rate monitor is connected</li>
+                        <li>Start a workout on your watch to activate continuous heart rate monitoring</li>
+                        <li>Restart the Echoelmusic app</li>
+                        <li>On iOS: Settings > Privacy > Health > Echoelmusic > Enable Heart Rate</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">Audio is crackling or glitchy</button>
+                <div class="faq-answer">
+                    <p>Audio glitches usually indicate CPU overload. Try:</p>
+                    <ul>
+                        <li>Increasing buffer size in Settings > Audio > Buffer Size</li>
+                        <li>Reducing particle count in Visualization settings</li>
+                        <li>Closing other apps</li>
+                        <li>On older devices: Enable Legacy Mode in Settings > Performance</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">How do I contact support?</button>
+                <div class="faq-answer">
+                    <p>You can reach us through:</p>
+                    <ul>
+                        <li>Email: <a href="mailto:support@echoelmusic.com">support@echoelmusic.com</a></li>
+                        <li>In-app: Settings > Help > Contact Support</li>
+                        <li>GitHub: <a href="https://github.com/vibrationalforce/Echoelmusic/issues">Issue Tracker</a></li>
+                    </ul>
+                    <p>We typically respond within 24-48 hours.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Community -->
+        <div class="faq-section">
+            <h2>Community & Social</h2>
+
+            <div class="faq-item">
+                <button class="faq-question">Where can I connect with other Echoelmusic users?</button>
+                <div class="faq-answer">
+                    <p>Join our growing community:</p>
+                    <ul>
+                        <li><strong>Instagram:</strong> <a href="https://instagram.com/echoelmusic" target="_blank">@echoelmusic</a> - Daily inspiration, user features, tips</li>
+                        <li><strong>TikTok:</strong> <a href="https://tiktok.com/@echoelmusic" target="_blank">@echoelmusic</a> - Short tutorials, bio-reactive demos</li>
+                        <li><strong>GitHub:</strong> <a href="https://github.com/vibrationalforce/Echoelmusic" target="_blank">Open source contributions</a></li>
+                    </ul>
+                    <p>Share your creations with <strong>#echoelmusic</strong> for a chance to be featured!</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">Can I share my bio-reactive sessions?</button>
+                <div class="faq-answer">
+                    <p>Yes! Echoelmusic makes it easy to share:</p>
+                    <ul>
+                        <li><strong>Export video:</strong> Record your visualization with audio</li>
+                        <li><strong>Share stats:</strong> Post your HRV coherence achievements</li>
+                        <li><strong>Export audio:</strong> Share your compositions directly to social media</li>
+                    </ul>
+                    <p>Your biometric data is <strong>never</strong> included in exports - only the music and visuals you create.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">How can I request new features?</button>
+                <div class="faq-answer">
+                    <p>We love hearing from our community! Submit feature requests via:</p>
+                    <ul>
+                        <li><strong>GitHub Issues:</strong> <a href="https://github.com/vibrationalforce/Echoelmusic/issues" target="_blank">Feature request template</a></li>
+                        <li><strong>In-app feedback:</strong> Settings > Help > Feature Request</li>
+                    </ul>
+                    <p>Popular requests are prioritized for future updates!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-box">
+            <h3>Still have questions?</h3>
+            <p>Our support team is here to help you get the most out of Echoelmusic.</p>
+            <a href="/support.html" class="cta-button">Contact Support</a>
+        </div>
+
+        <!-- Social Media Links -->
+        <div class="social-section" style="text-align: center; margin-top: 48px; padding: 32px; background: rgba(255,255,255,0.03); border-radius: 16px;">
+            <h3 style="margin-bottom: 16px;">Follow Us</h3>
+            <div style="display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;">
+                <a href="https://instagram.com/echoelmusic" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); border-radius: 8px; color: white; text-decoration: none; font-weight: 600;">
+                    Instagram
+                </a>
+                <a href="https://tiktok.com/@echoelmusic" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: #000; border-radius: 8px; color: white; text-decoration: none; font-weight: 600; border: 1px solid #333;">
+                    TikTok
+                </a>
+                <a href="https://github.com/vibrationalforce/Echoelmusic" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: #333; border-radius: 8px; color: white; text-decoration: none; font-weight: 600;">
+                    GitHub
+                </a>
+            </div>
+        </div>
+
+        <a href="/" class="back-link">&larr; Back to Home</a>
+    </div>
+
+    <script>
+        document.querySelectorAll('.faq-question').forEach(button => {
+            button.addEventListener('click', () => {
+                const answer = button.nextElementSibling;
+                const isActive = button.classList.contains('active');
+
+                // Close all other answers
+                document.querySelectorAll('.faq-question').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.nextElementSibling.classList.remove('active');
+                });
+
+                // Toggle current answer
+                if (!isActive) {
+                    button.classList.add('active');
+                    answer.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
