@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echoelmusic - Bio-Reactive Audio-Visual Synthesis Platform</title>
+    <title>Echoelmusic - Holistic Bio-Coherence Platform</title>
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Transform biometric signals into immersive audio-visual experiences. 50+ DSP effects, 30+ visualization modes, DMX/Art-Net lighting, 8K streaming, worldwide collaboration. Professional bio-reactive synthesis for iOS, macOS, visionOS, Android, Windows.">
-    <meta name="keywords" content="bio-reactive music, HRV synthesis, heartbeat music, spatial audio, quantum visualization, DMX lighting, MIDI 2.0, MPE, biofeedback art, visionOS, Apple Watch">
+    <meta name="description" content="Transform biometric signals into coherent audio-visual experiences. 528Hz healing frequencies, circadian rhythm optimization, HRV coherence training, lifestyle coaching. The world's most advanced bio-reactive wellness platform.">
+    <meta name="keywords" content="528Hz healing, HRV coherence, circadian rhythm, biofeedback, spatial audio, heart coherence, meditation app, wellness technology, DMX lighting, visionOS">
     <meta name="author" content="Echoelmusic">
     <meta name="robots" content="index, follow">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://vibrationalforce.github.io/Echoelmusic/">
-    <meta property="og:title" content="Echoelmusic - Bio-Reactive Audio-Visual Synthesis">
-    <meta property="og:description" content="50+ DSP effects, 30+ visualizations, DMX lighting, 8K streaming. Your body is the controller.">
+    <meta property="og:title" content="Echoelmusic - Holistic Bio-Coherence Platform">
+    <meta property="og:description" content="528Hz healing frequencies, circadian rhythm optimization, HRV coherence training. Your body is the instrument.">
     <meta property="og:image" content="https://vibrationalforce.github.io/Echoelmusic/og-image.png">
 
     <!-- Language -->
@@ -23,7 +23,7 @@
     <link rel="alternate" hreflang="de" href="https://vibrationalforce.github.io/Echoelmusic/de/">
     <link rel="canonical" href="https://vibrationalforce.github.io/Echoelmusic/">
 
-    <meta name="theme-color" content="#ff6ad5">
+    <meta name="theme-color" content="#00C957">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <!-- Fonts -->
@@ -33,18 +33,22 @@
 
     <style>
         :root {
-            --pink: #ff6ad5;
-            --cyan: #00ffff;
-            --purple: #8b5cf6;
-            --dark: #0d0221;
-            --darker: #050010;
+            /* 528Hz Healing Green Palette */
+            --healing-green: #00C957;
+            --healing-dark: #00A86B;
+            --healing-light: #7CFC00;
+            --golden: #FFD700;
+            --heart-red: #FF6B6B;
+            --deep-space: #0a1628;
+            --space-blue: #0d2137;
+            --white: #ffffff;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Rajdhani', sans-serif;
-            background: linear-gradient(180deg, var(--darker) 0%, var(--dark) 20%, #150734 50%, var(--dark) 80%, var(--darker) 100%);
+            background: linear-gradient(180deg, var(--deep-space) 0%, var(--space-blue) 30%, #0a2a1a 60%, var(--deep-space) 100%);
             min-height: 100vh;
-            color: #fff;
+            color: var(--white);
             line-height: 1.6;
         }
         body::before {
@@ -52,8 +56,8 @@
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background:
-                repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(0,255,255,0.02) 60px, rgba(0,255,255,0.02) 61px),
-                repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,106,213,0.02) 60px, rgba(255,106,213,0.02) 61px);
+                radial-gradient(ellipse at 30% 20%, rgba(0,201,87,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(255,215,0,0.05) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
         }
@@ -67,16 +71,16 @@
             font-size: 11px;
         }
         .lang-switch a {
-            color: rgba(0,255,255,0.6);
+            color: rgba(0,201,87,0.6);
             text-decoration: none;
             padding: 6px 10px;
-            border: 1px solid rgba(0,255,255,0.3);
+            border: 1px solid rgba(0,201,87,0.3);
             transition: all 0.3s;
         }
         .lang-switch a:hover, .lang-switch a.active {
-            color: var(--cyan);
-            border-color: var(--cyan);
-            box-shadow: 0 0 15px rgba(0,255,255,0.3);
+            color: var(--healing-green);
+            border-color: var(--healing-green);
+            box-shadow: 0 0 15px rgba(0,201,87,0.3);
         }
 
         .container {
@@ -93,25 +97,45 @@
             padding: 60px 0 40px;
         }
         .logo {
-            width: 120px;
-            height: 120px;
+            width: 140px;
+            height: 140px;
             margin: 0 auto 30px;
         }
         .logo-inner {
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, var(--pink) 0%, #c74dab 50%, var(--purple) 100%);
-            border-radius: 28px;
+            background: linear-gradient(135deg, var(--healing-green) 0%, var(--healing-dark) 50%, #006400 100%);
+            border-radius: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 60px;
-            box-shadow: 0 0 60px rgba(255,106,213,0.5);
-            animation: pulse 3s ease-in-out infinite;
+            box-shadow: 0 0 60px rgba(0,201,87,0.5), inset 0 0 30px rgba(255,255,255,0.1);
+            animation: heartbeat 2s ease-in-out infinite;
+            position: relative;
         }
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 60px rgba(255,106,213,0.5); }
-            50% { box-shadow: 0 0 80px rgba(255,106,213,0.7); }
+        .logo-inner::after {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            background: radial-gradient(circle, rgba(255,215,0,0.3) 0%, transparent 70%);
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 60px rgba(0,201,87,0.5); }
+            14% { transform: scale(1.05); box-shadow: 0 0 80px rgba(0,201,87,0.7); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.03); box-shadow: 0 0 70px rgba(0,201,87,0.6); }
+            70% { transform: scale(1); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        .logo-inner svg {
+            width: 80px;
+            height: 80px;
+            z-index: 1;
         }
         h1 {
             font-family: 'Orbitron', monospace;
@@ -119,11 +143,12 @@
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 3px;
-            background: linear-gradient(90deg, var(--pink), var(--cyan), var(--pink));
+            background: linear-gradient(90deg, var(--healing-green), var(--golden), var(--healing-green));
             background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: gradient 3s linear infinite;
+            background-clip: text;
+            animation: gradient 4s linear infinite;
             margin-bottom: 15px;
         }
         @keyframes gradient {
@@ -138,9 +163,20 @@
         .subtitle {
             font-family: 'Orbitron', monospace;
             font-size: 14px;
-            color: var(--cyan);
+            color: var(--healing-green);
             letter-spacing: 3px;
-            text-shadow: 0 0 20px rgba(0,255,255,0.5);
+            text-shadow: 0 0 20px rgba(0,201,87,0.5);
+        }
+        .frequency-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, rgba(0,201,87,0.2), rgba(255,215,0,0.2));
+            border: 1px solid var(--golden);
+            border-radius: 20px;
+            padding: 8px 20px;
+            margin-top: 20px;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            color: var(--golden);
         }
 
         /* Stats Bar */
@@ -158,8 +194,8 @@
             font-family: 'Orbitron', monospace;
             font-size: 32px;
             font-weight: 900;
-            color: var(--pink);
-            text-shadow: 0 0 20px rgba(255,106,213,0.5);
+            color: var(--healing-green);
+            text-shadow: 0 0 20px rgba(0,201,87,0.5);
         }
         .stat-label {
             font-size: 12px;
@@ -177,13 +213,13 @@
             flex-wrap: wrap;
         }
         .platform {
-            background: rgba(255,106,213,0.1);
-            border: 1px solid rgba(255,106,213,0.3);
+            background: rgba(0,201,87,0.1);
+            border: 1px solid rgba(0,201,87,0.3);
             border-radius: 20px;
             padding: 8px 16px;
             font-size: 12px;
             font-family: 'Orbitron', monospace;
-            color: var(--pink);
+            color: var(--healing-green);
         }
 
         /* Section Headers */
@@ -197,8 +233,8 @@
         .section-header h2 {
             font-family: 'Orbitron', monospace;
             font-size: 28px;
-            color: var(--cyan);
-            text-shadow: 0 0 20px rgba(0,255,255,0.3);
+            color: var(--healing-green);
+            text-shadow: 0 0 20px rgba(0,201,87,0.3);
             margin-bottom: 10px;
         }
         .section-header p {
@@ -214,25 +250,32 @@
             gap: 25px;
         }
         .feature-card {
-            background: linear-gradient(135deg, rgba(13,2,33,0.9) 0%, rgba(45,27,105,0.4) 100%);
-            border: 1px solid rgba(255,106,213,0.2);
+            background: linear-gradient(135deg, rgba(10,22,40,0.9) 0%, rgba(0,42,26,0.4) 100%);
+            border: 1px solid rgba(0,201,87,0.2);
             border-radius: 16px;
             padding: 25px;
             transition: all 0.3s;
         }
         .feature-card:hover {
-            border-color: rgba(255,106,213,0.5);
+            border-color: rgba(0,201,87,0.5);
             transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(255,106,213,0.15);
+            box-shadow: 0 15px 40px rgba(0,201,87,0.15);
+        }
+        .feature-card.highlight {
+            border-color: var(--golden);
+            background: linear-gradient(135deg, rgba(10,22,40,0.9) 0%, rgba(50,40,0,0.3) 100%);
         }
         .feature-card h3 {
             font-family: 'Orbitron', monospace;
             font-size: 16px;
-            color: var(--pink);
+            color: var(--healing-green);
             margin-bottom: 12px;
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+        .feature-card.highlight h3 {
+            color: var(--golden);
         }
         .feature-card h3 span {
             font-size: 24px;
@@ -250,13 +293,18 @@
             gap: 6px;
         }
         .tech-tag {
-            background: rgba(0,255,255,0.1);
-            border: 1px solid rgba(0,255,255,0.3);
+            background: rgba(0,201,87,0.1);
+            border: 1px solid rgba(0,201,87,0.3);
             border-radius: 4px;
             padding: 3px 8px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 10px;
-            color: var(--cyan);
+            color: var(--healing-green);
+        }
+        .tech-tag.golden {
+            background: rgba(255,215,0,0.1);
+            border-color: rgba(255,215,0,0.3);
+            color: var(--golden);
         }
 
         /* Specs Tables */
@@ -267,12 +315,12 @@
             font-size: 13px;
         }
         .specs-table th {
-            background: rgba(255,106,213,0.2);
-            color: var(--pink);
+            background: rgba(0,201,87,0.2);
+            color: var(--healing-green);
             font-family: 'Orbitron', monospace;
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid rgba(255,106,213,0.3);
+            border-bottom: 1px solid rgba(0,201,87,0.3);
         }
         .specs-table td {
             padding: 10px 12px;
@@ -280,7 +328,7 @@
             color: rgba(255,255,255,0.8);
         }
         .specs-table tr:hover td {
-            background: rgba(0,255,255,0.05);
+            background: rgba(0,201,87,0.05);
         }
         .specs-table code {
             font-family: 'JetBrains Mono', monospace;
@@ -288,7 +336,7 @@
             padding: 2px 6px;
             border-radius: 3px;
             font-size: 11px;
-            color: var(--cyan);
+            color: var(--healing-green);
         }
 
         /* Accordion */
@@ -296,8 +344,8 @@
             margin: 20px 0;
         }
         .accordion-item {
-            background: rgba(13,2,33,0.6);
-            border: 1px solid rgba(255,106,213,0.2);
+            background: rgba(10,22,40,0.6);
+            border: 1px solid rgba(0,201,87,0.2);
             border-radius: 12px;
             margin: 10px 0;
             overflow: hidden;
@@ -310,10 +358,10 @@
             align-items: center;
             font-family: 'Orbitron', monospace;
             font-size: 14px;
-            color: var(--pink);
+            color: var(--healing-green);
         }
         .accordion-header:hover {
-            background: rgba(255,106,213,0.1);
+            background: rgba(0,201,87,0.1);
         }
         .accordion-content {
             padding: 0 20px 20px;
@@ -331,10 +379,36 @@
             transition: transform 0.3s;
         }
 
+        /* Circadian Timeline */
+        .circadian-timeline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .circadian-phase {
+            flex: 1;
+            min-width: 100px;
+            padding: 15px 10px;
+            text-align: center;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        .circadian-phase.sleep { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2d3a6e; }
+        .circadian-phase.wake { background: linear-gradient(135deg, #ff9a3c, #ff6b35); border: 1px solid #ff9a3c; }
+        .circadian-phase.peak { background: linear-gradient(135deg, #00C957, #00A86B); border: 1px solid #00C957; }
+        .circadian-phase.rest { background: linear-gradient(135deg, #ffd700, #ff8c00); border: 1px solid #ffd700; }
+        .circadian-phase .time {
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 5px;
+        }
+
         /* Pricing */
         .pricing {
-            background: linear-gradient(135deg, rgba(255,106,213,0.15) 0%, rgba(139,92,246,0.15) 100%);
-            border: 1px solid rgba(255,106,213,0.3);
+            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
+            border: 1px solid rgba(0,201,87,0.3);
             border-radius: 20px;
             padding: 40px;
             text-align: center;
@@ -342,14 +416,14 @@
         }
         .pricing h2 {
             font-family: 'Orbitron', monospace;
-            color: var(--cyan);
+            color: var(--healing-green);
             margin-bottom: 20px;
         }
         .price-main {
             font-family: 'Orbitron', monospace;
             font-size: 56px;
             font-weight: 900;
-            color: #fff;
+            color: var(--white);
         }
         .price-currency {
             font-size: 24px;
@@ -361,15 +435,15 @@
         }
         .price-upgrade {
             display: inline-block;
-            background: rgba(0,255,255,0.1);
-            border: 1px solid rgba(0,255,255,0.3);
+            background: rgba(255,215,0,0.1);
+            border: 1px solid rgba(255,215,0,0.3);
             border-radius: 20px;
             padding: 10px 20px;
-            color: var(--cyan);
+            color: var(--golden);
             margin: 10px 0;
         }
         .beta-note {
-            background: rgba(139,92,246,0.2);
+            background: rgba(0,201,87,0.1);
             border-radius: 10px;
             padding: 15px;
             margin-top: 20px;
@@ -379,8 +453,8 @@
         /* CTA */
         .cta-btn {
             display: inline-block;
-            background: linear-gradient(90deg, var(--pink) 0%, #c74dab 50%, var(--purple) 100%);
-            color: #fff;
+            background: linear-gradient(90deg, var(--healing-green) 0%, var(--healing-dark) 50%, #006400 100%);
+            color: var(--white);
             padding: 16px 40px;
             border-radius: 30px;
             text-decoration: none;
@@ -390,12 +464,12 @@
             letter-spacing: 2px;
             text-transform: uppercase;
             margin: 20px 0;
-            box-shadow: 0 0 30px rgba(255,106,213,0.4);
+            box-shadow: 0 0 30px rgba(0,201,87,0.4);
             transition: all 0.3s;
         }
         .cta-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 0 50px rgba(255,106,213,0.6);
+            box-shadow: 0 0 50px rgba(0,201,87,0.6);
         }
 
         /* Links */
@@ -414,25 +488,25 @@
             transition: color 0.3s;
         }
         .links a:hover {
-            color: var(--cyan);
+            color: var(--healing-green);
         }
 
         /* Footer */
         footer {
             text-align: center;
             padding: 40px 20px;
-            border-top: 1px solid rgba(255,106,213,0.2);
+            border-top: 1px solid rgba(0,201,87,0.2);
             font-size: 12px;
             color: rgba(255,255,255,0.5);
         }
         footer a {
-            color: var(--pink);
+            color: var(--healing-green);
             text-decoration: none;
         }
         .disclaimer {
             margin-top: 15px;
             padding: 15px;
-            background: rgba(255,106,213,0.05);
+            background: rgba(0,201,87,0.05);
             border-radius: 10px;
             font-size: 11px;
         }
@@ -444,6 +518,7 @@
             .features-grid { grid-template-columns: 1fr; }
             .pricing { padding: 30px 20px; }
             .price-main { font-size: 42px; }
+            .circadian-phase { min-width: 70px; }
         }
     </style>
 </head>
@@ -457,28 +532,35 @@
         <!-- Hero -->
         <div class="hero">
             <div class="logo">
-                <div class="logo-inner">&#127926;</div>
+                <div class="logo-inner">
+                    <!-- Heart + Coherence Wave SVG -->
+                    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M40 65 C25 50 10 40 10 28 C10 18 18 10 30 10 C36 10 40 14 40 14 C40 14 44 10 50 10 C62 10 70 18 70 28 C70 40 55 50 40 65Z" fill="rgba(255,255,255,0.9)"/>
+                        <path d="M20 35 L28 35 L32 25 L36 45 L40 20 L44 45 L48 25 L52 35 L60 35" stroke="#00C957" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
             </div>
             <h1>Echoelmusic</h1>
             <p class="tagline">Your Body Is The Instrument</p>
-            <p class="subtitle">Breath // Pulse // Light // Sound</p>
+            <p class="subtitle">Coherence // Rhythm // Light // Sound</p>
+            <div class="frequency-badge">528Hz DNA Repair Frequency • Heart Coherence Technology</div>
 
             <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">528Hz</div>
+                    <div class="stat-label">Healing Frequency</div>
+                </div>
                 <div class="stat">
                     <div class="stat-value">50+</div>
                     <div class="stat-label">DSP Effects</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-value">30+</div>
-                    <div class="stat-label">Visual Modes</div>
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Circadian Phases</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-value">8K</div>
-                    <div class="stat-label">Streaming</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">1000+</div>
-                    <div class="stat-label">Participants</div>
+                    <div class="stat-value">24/7</div>
+                    <div class="stat-label">Lifestyle Coach</div>
                 </div>
                 <div class="stat">
                     <div class="stat-value">&lt;10ms</div>
@@ -498,87 +580,248 @@
             </div>
         </div>
 
+        <!-- Circadian Rhythm Section (NEW) -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Circadian Rhythm Optimization</h2>
+                <p>Synchronize your body's internal clock with light, sound, and biofeedback for optimal health, energy, and coherence throughout the day.</p>
+            </div>
+
+            <div class="circadian-timeline">
+                <div class="circadian-phase sleep">
+                    <span class="time">00-06</span>
+                    Deep Sleep<br>Delta 2Hz
+                </div>
+                <div class="circadian-phase wake">
+                    <span class="time">06-08</span>
+                    Cortisol Rise<br>Alpha 10Hz
+                </div>
+                <div class="circadian-phase peak">
+                    <span class="time">08-12</span>
+                    Peak Focus<br>Beta 20Hz
+                </div>
+                <div class="circadian-phase rest">
+                    <span class="time">12-14</span>
+                    Rest/Digest<br>528Hz Green
+                </div>
+                <div class="circadian-phase peak">
+                    <span class="time">14-18</span>
+                    Second Wind<br>Exercise Peak
+                </div>
+                <div class="circadian-phase rest">
+                    <span class="time">18-21</span>
+                    Wind Down<br>Amber Light
+                </div>
+                <div class="circadian-phase sleep">
+                    <span class="time">21-00</span>
+                    Melatonin<br>Theta 4Hz
+                </div>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card highlight">
+                    <h3><span>☀️</span> Light Therapy Engine</h3>
+                    <p>Automatic light color adjustment based on time of day. Morning: energizing blue (5000K). Midday: 528Hz healing green. Evening: warm amber (2700K). Night: no blue light.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag golden">528Hz Green</span>
+                        <span class="tech-tag">10,000 Lux Morning</span>
+                        <span class="tech-tag">Blue Light Filter</span>
+                        <span class="tech-tag">DMX/Hue Sync</span>
+                    </div>
+                </div>
+
+                <div class="feature-card highlight">
+                    <h3><span>🧬</span> Chronotype Detection</h3>
+                    <p>Identify your chronotype (Lion, Bear, Wolf, or Dolphin) and receive personalized schedules for sleep, work, exercise, and meals optimized for your biology.</p>
+                    <table class="specs-table">
+                        <tr><td>Lion (15%)</td><td>Early bird, peak 08-12</td></tr>
+                        <tr><td>Bear (55%)</td><td>Solar schedule, peak 10-14</td></tr>
+                        <tr><td>Wolf (15%)</td><td>Night owl, peak 17-21</td></tr>
+                        <tr><td>Dolphin (10%)</td><td>Light sleeper, peak 15-21</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>🌙</span> Sleep Optimization</h3>
+                    <p>Track sleep debt, optimize sleep environment, and use binaural beats (Delta 2Hz, Theta 6Hz) to improve sleep quality and REM cycles.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Sleep Debt Tracking</span>
+                        <span class="tech-tag">18°C Recommendation</span>
+                        <span class="tech-tag">Delta Entrainment</span>
+                        <span class="tech-tag">NSDR Protocol</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>⏰</span> Circadian Audio</h3>
+                    <p>Automatic frequency adjustment: Morning cortisol support (Alpha 10Hz), daytime focus (Beta 20Hz), evening relaxation (Theta 6Hz), sleep induction (Delta 2Hz).</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">432Hz Evening</span>
+                        <span class="tech-tag golden">528Hz Midday</span>
+                        <span class="tech-tag">440Hz Active</span>
+                        <span class="tech-tag">Binaural Beats</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lifestyle Coach Section (NEW) -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Holistic Lifestyle Coach</h2>
+                <p>Personalized fitness plans, nutrition guidance, and daily habits optimized for HRV coherence and circadian alignment.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card highlight">
+                    <h3><span>💪</span> Fitness Planning</h3>
+                    <p>Personalized weekly training plans based on your chronotype, fitness level, and HRV data. Optimal training windows for maximum results.</p>
+                    <table class="specs-table">
+                        <tr><td>Strength</td><td>14:00-18:00 (peak muscle temp)</td></tr>
+                        <tr><td>Cardio</td><td>17:00-19:00 (best VO2max)</td></tr>
+                        <tr><td>Yoga</td><td>06:00-08:00 or 18:00-20:00</td></tr>
+                        <tr><td>HIIT</td><td>16:00-18:00 (recovery optimal)</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card highlight">
+                    <h3><span>🥗</span> Nutrition Planning</h3>
+                    <p>Circadian-aligned meal timing with HRV-optimizing foods. Omega-3, magnesium, tryptophan protocols for coherence and sleep.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag golden">Omega-3 Protocol</span>
+                        <span class="tech-tag">Magnesium 400mg</span>
+                        <span class="tech-tag">Tryptophan Foods</span>
+                        <span class="tech-tag">Ashwagandha</span>
+                        <span class="tech-tag">Circadian Fasting</span>
+                        <span class="tech-tag">Meal Timing</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>💧</span> Hydration & Supplements</h3>
+                    <p>Personalized hydration targets (35ml/kg) and evidence-based supplement recommendations for HRV optimization.</p>
+                    <table class="specs-table">
+                        <tr><td>Omega-3</td><td>2-3g EPA+DHA (HRV +15%)</td></tr>
+                        <tr><td>Magnesium</td><td>300-400mg glycinate (sleep)</td></tr>
+                        <tr><td>Vitamin D3</td><td>4000 IU (circadian support)</td></tr>
+                        <tr><td>Ashwagandha</td><td>600mg KSM-66 (cortisol -30%)</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>🧘</span> Stress Management</h3>
+                    <p>Physiological sighing, box breathing, NSDR (Non-Sleep Deep Rest), and coherence breathing protocols integrated with biofeedback.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Physiological Sigh</span>
+                        <span class="tech-tag">Box Breathing 4-4-4-4</span>
+                        <span class="tech-tag">Coherence 6/min</span>
+                        <span class="tech-tag">4-7-8 Sleep</span>
+                        <span class="tech-tag">NSDR Yoga Nidra</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>🌿</span> Nature & Grounding</h3>
+                    <p>Earthing protocols, morning sunlight exposure (10,000 lux), forest bathing recommendations, and outdoor activity tracking.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Morning Light 30min</span>
+                        <span class="tech-tag">Earthing 20min</span>
+                        <span class="tech-tag">Forest Bathing</span>
+                        <span class="tech-tag">Cold Exposure</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>📊</span> Progress Tracking</h3>
+                    <p>Daily, weekly, and monthly wellness metrics with HRV trends, coherence scores, sleep quality, and circadian alignment scoring.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">HRV Trends</span>
+                        <span class="tech-tag">Coherence Score</span>
+                        <span class="tech-tag">Circadian Score</span>
+                        <span class="tech-tag">Goal Tracking</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Audio Engine Section -->
         <div class="section">
             <div class="section-header">
                 <h2>Audio Engine</h2>
-                <p>Professional-grade audio synthesis with real-time biometric modulation. From 2.7ms ultra-low latency to 96kHz studio quality.</p>
+                <p>Professional-grade audio synthesis with real-time biometric modulation. 50+ DSP effects, spatial audio, and healing frequencies.</p>
             </div>
 
             <div class="features-grid">
                 <div class="feature-card">
-                    <h3><span>&#127897;</span> DSP Effects Suite</h3>
-                    <p>50+ professional processors including Parametric EQ (32-band), Multiband Compressor, Convolution Reverb, Shimmer Reverb, Tape Delay, Vocoder, Harmonizer, and more.</p>
+                    <h3><span>🎙️</span> DSP Effects Suite</h3>
+                    <p>50+ professional processors including Parametric EQ (32-band), Multiband Compressor, Convolution Reverb, Shimmer Reverb, Tape Delay, Vocoder.</p>
                     <div class="tech-list">
                         <span class="tech-tag">FET Compressor</span>
                         <span class="tech-tag">Opto Compressor</span>
                         <span class="tech-tag">De-Esser</span>
                         <span class="tech-tag">Transient Designer</span>
                         <span class="tech-tag">Dynamic EQ</span>
-                        <span class="tech-tag">Vocal Tuner</span>
-                        <span class="tech-tag">Stereo Imager</span>
                         <span class="tech-tag">Brick-Wall Limiter</span>
                     </div>
                 </div>
 
                 <div class="feature-card">
-                    <h3><span>&#127929;</span> EchoSynth Engine</h3>
-                    <p>Analog-modeled subtractive synthesizer with dual oscillators, 6 waveforms (Sine, Tri, Saw, Square, Pulse, Noise), 12/24dB filters, dual ADSR envelopes, and modular LFO routing.</p>
+                    <h3><span>🎹</span> EchoSynth Engine</h3>
+                    <p>Analog-modeled subtractive synthesizer with dual oscillators, 6 waveforms, 12/24dB filters, dual ADSR, and bio-reactive modulation.</p>
                     <div class="tech-list">
                         <span class="tech-tag">C++17 DSP</span>
                         <span class="tech-tag">SIMD Optimized</span>
                         <span class="tech-tag">Analog Drift</span>
-                        <span class="tech-tag">Unison Detune</span>
                         <span class="tech-tag">16 Voice Poly</span>
+                        <span class="tech-tag">Bio Modulation</span>
                     </div>
                 </div>
 
-                <div class="feature-card">
-                    <h3><span>&#128149;</span> Bio-Reactive Mapping</h3>
-                    <p>Real-time biometric-to-audio parameter mapping with 8 bio sources and 50+ modulation targets. Linear, exponential, logarithmic, S-curve, and stepped mapping curves.</p>
+                <div class="feature-card highlight">
+                    <h3><span>💚</span> Healing Frequencies</h3>
+                    <p>Solfeggio frequencies including 528Hz (DNA repair), 432Hz (natural tuning), binaural entrainment from Delta to Gamma.</p>
                     <table class="specs-table">
-                        <tr><td>Heart Rate</td><td>&#8594;</td><td>Tempo (40-200 BPM)</td></tr>
-                        <tr><td>HRV</td><td>&#8594;</td><td>Filter Cutoff, LFO Rate</td></tr>
-                        <tr><td>Coherence</td><td>&#8594;</td><td>Reverb Wet, Harmonic Consonance</td></tr>
-                        <tr><td>Breathing</td><td>&#8594;</td><td>Dynamics, Grain Density</td></tr>
-                        <tr><td>GSR</td><td>&#8594;</td><td>Distortion, Intensity</td></tr>
+                        <tr><td><code>396Hz</code></td><td>Liberation from fear</td></tr>
+                        <tr><td><code>417Hz</code></td><td>Facilitating change</td></tr>
+                        <tr><td class="golden"><code>528Hz</code></td><td>DNA repair (Love frequency)</td></tr>
+                        <tr><td><code>639Hz</code></td><td>Connecting relationships</td></tr>
+                        <tr><td><code>741Hz</code></td><td>Awakening intuition</td></tr>
+                        <tr><td><code>852Hz</code></td><td>Returning to spiritual order</td></tr>
                     </table>
                 </div>
 
                 <div class="feature-card">
-                    <h3><span>&#127911;</span> Spatial Audio</h3>
-                    <p>6 spatial modes including Binaural HRTF, Ambisonics, and proprietary AFA (Algorithmic Field Array). Head-tracking via CoreMotion with real-time listener positioning.</p>
+                    <h3><span>🎧</span> Spatial Audio</h3>
+                    <p>6 spatial modes including Binaural HRTF, Ambisonics, and proprietary AFA (Algorithmic Field Array). Head-tracking support.</p>
                     <div class="tech-list">
                         <span class="tech-tag">Stereo</span>
                         <span class="tech-tag">3D Spatial</span>
                         <span class="tech-tag">4D Orbital</span>
                         <span class="tech-tag">AFA Field</span>
                         <span class="tech-tag">Binaural HRTF</span>
-                        <span class="tech-tag">Ambisonics W,X,Y,Z</span>
+                        <span class="tech-tag">Ambisonics</span>
                     </div>
                 </div>
 
                 <div class="feature-card">
-                    <h3><span>&#128200;</span> Binaural Entrainment</h3>
-                    <p>Precision brainwave entrainment with binaural, isochronic, and monaural beat generation. 432Hz carrier frequency option.</p>
+                    <h3><span>💓</span> Bio-Reactive Mapping</h3>
+                    <p>Real-time biometric-to-audio parameter mapping with 8 bio sources and 50+ modulation targets.</p>
                     <table class="specs-table">
-                        <tr><td><code>Delta 2Hz</code></td><td>Deep Sleep, Healing</td></tr>
-                        <tr><td><code>Theta 6Hz</code></td><td>Meditation, Creativity</td></tr>
-                        <tr><td><code>Alpha 10Hz</code></td><td>Relaxation, Learning</td></tr>
-                        <tr><td><code>Beta 20Hz</code></td><td>Focus, Alertness</td></tr>
-                        <tr><td><code>Gamma 40Hz</code></td><td>Peak Performance</td></tr>
+                        <tr><td>Heart Rate</td><td>→</td><td>Tempo (40-200 BPM)</td></tr>
+                        <tr><td>HRV</td><td>→</td><td>Filter Cutoff, LFO Rate</td></tr>
+                        <tr><td>Coherence</td><td>→</td><td>Reverb Wet, Consonance</td></tr>
+                        <tr><td>Breathing</td><td>→</td><td>Dynamics, Grain Density</td></tr>
                     </table>
                 </div>
 
                 <div class="feature-card">
-                    <h3><span>&#127928;</span> MIDI 2.0 + MPE</h3>
-                    <p>Full MIDI 2.0 Universal Packet support with 32-bit resolution. MPE (MIDI Polyphonic Expression) for per-note pitch bend, brightness, and timbre via face tracking.</p>
+                    <h3><span>🎸</span> MIDI 2.0 + MPE</h3>
+                    <p>Full MIDI 2.0 Universal Packet with 32-bit resolution. MPE per-note expression via face tracking (jaw → brightness, smile → timbre).</p>
                     <div class="tech-list">
                         <span class="tech-tag">32-bit Velocity</span>
                         <span class="tech-tag">Per-Note CC</span>
-                        <span class="tech-tag">Face &#8594; MPE</span>
-                        <span class="tech-tag">Jaw &#8594; Brightness</span>
-                        <span class="tech-tag">Smile &#8594; Timbre</span>
+                        <span class="tech-tag">Face → MPE</span>
+                        <span class="tech-tag">Hand Gesture</span>
                     </div>
                 </div>
             </div>
@@ -589,348 +832,106 @@
                     <div class="accordion-content">
                         <table class="specs-table">
                             <tr><th>Category</th><th>Processors</th></tr>
-                            <tr><td>Dynamics</td><td>Compressor, FET Compressor, Opto Compressor, Multiband Compressor, Brick-Wall Limiter, De-Esser, Transient Designer, Dynamic EQ, Gate</td></tr>
-                            <tr><td>EQ/Filter</td><td>32-Band Parametric EQ, Passive EQ, Formant Filter, Low/High Pass, Band Pass, Notch, All Pass</td></tr>
-                            <tr><td>Reverb</td><td>Convolution Reverb, Shimmer Reverb, Algorithmic Reverb, Spring Reverb, Plate Reverb</td></tr>
-                            <tr><td>Delay</td><td>Tape Delay, Ping-Pong Delay, Multi-Tap Delay, Granular Delay</td></tr>
-                            <tr><td>Modulation</td><td>Chorus, Flanger, Phaser, Tremolo, Ring Modulator, Rotary Speaker</td></tr>
-                            <tr><td>Pitch</td><td>Pitch Correction, Harmonizer, Vocoder, Vocal Doubler</td></tr>
-                            <tr><td>Distortion</td><td>Classic Preamp, Saturation, Bit Crusher, LoFi, Tube Warmth</td></tr>
-                            <tr><td>Mastering</td><td>Mastering Mentor, Spectrum Master, Style-Aware Mastering, Loudness Meter</td></tr>
-                            <tr><td>Analysis</td><td>Audio2MIDI, Phase Analyzer, Tonal Balance, Psychoacoustic Analyzer</td></tr>
-                            <tr><td>Bio-Reactive</td><td>BioModulator, Bio-Reactive DSP, Resonance Healer</td></tr>
+                            <tr><td>Dynamics</td><td>Compressor, FET, Opto, Multiband, Limiter, De-Esser, Transient, Dynamic EQ, Gate</td></tr>
+                            <tr><td>EQ/Filter</td><td>32-Band Parametric, Passive EQ, Formant Filter, LP/HP/BP/Notch/All Pass</td></tr>
+                            <tr><td>Reverb</td><td>Convolution, Shimmer, Algorithmic, Spring, Plate</td></tr>
+                            <tr><td>Delay</td><td>Tape, Ping-Pong, Multi-Tap, Granular</td></tr>
+                            <tr><td>Modulation</td><td>Chorus, Flanger, Phaser, Tremolo, Ring Mod, Rotary</td></tr>
+                            <tr><td>Pitch</td><td>Pitch Correction, Harmonizer, Vocoder, Doubler</td></tr>
+                            <tr><td>Distortion</td><td>Preamp, Saturation, Bit Crusher, LoFi, Tube</td></tr>
+                            <tr><td>Mastering</td><td>Mastering Mentor, Spectrum Master, Loudness Meter</td></tr>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Visual Engine Section -->
+        <!-- Visual & Lighting -->
         <div class="section">
             <div class="section-header">
-                <h2>Visual Engine</h2>
-                <p>GPU-accelerated visualization with 30+ modes, sacred geometry, quantum physics simulation, and 16K resolution support.</p>
+                <h2>Visual Engine & Lighting</h2>
+                <p>30+ visualization modes, quantum photonics, 16K video, and professional DMX/Art-Net lighting control.</p>
             </div>
 
             <div class="features-grid">
                 <div class="feature-card">
-                    <h3><span>&#10024;</span> 30+ Visualization Modes</h3>
-                    <p>From classic waveforms and spectrum analyzers to quantum wave functions, sacred mandalas, and cosmic nebulae. All bio-reactive and audio-reactive.</p>
+                    <h3><span>✨</span> 30+ Visual Modes</h3>
+                    <p>From sacred geometry to quantum waves, cymatics, mandalas, nebulae, and bio-reactive particle systems.</p>
                     <div class="tech-list">
                         <span class="tech-tag">Particles</span>
                         <span class="tech-tag">Cymatics</span>
                         <span class="tech-tag">Mandala</span>
-                        <span class="tech-tag">Nebula</span>
-                        <span class="tech-tag">Liquid Light</span>
-                        <span class="tech-tag">Flow Field</span>
-                        <span class="tech-tag">Kaleidoscope</span>
-                        <span class="tech-tag">Vaporwave Grid</span>
                         <span class="tech-tag">Sacred Geometry</span>
                         <span class="tech-tag">Quantum Wave</span>
+                        <span class="tech-tag">Nebula</span>
                     </div>
                 </div>
 
                 <div class="feature-card">
-                    <h3><span>&#128302;</span> Quantum Photonics</h3>
-                    <p>Physics-inspired light simulation with 9 quantum state types and 9 light field geometries. Real photon wavelength-to-RGB conversion (CIE 1931).</p>
-                    <table class="specs-table">
-                        <tr><td>States</td><td><code>|0&#10217;</code> <code>|1&#10217;</code> <code>|&#968;&#10217;</code> <code>|&#934;&#8314;&#10217;</code> <code>|&#945;&#10217;</code> <code>|&#950;&#10217;</code> <code>|&#128049;&#10217;</code> <code>|n&#10217;</code></td></tr>
-                        <tr><td>Geometries</td><td>Spherical, Toroidal, Fibonacci, Platonic, Hyperbolic, Fractal, Mobius, Hopf, Calabi-Yau</td></tr>
-                        <tr><td>Wavelengths</td><td>380-780nm visible spectrum</td></tr>
-                    </table>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#127760;</span> 360 Immersive Engine</h3>
-                    <p>6 visual dimensions (2D to 6D Bio-Coherence Manifold), 8 projection modes, 16 blend modes including quantum blend. visionOS spatial computing ready.</p>
+                    <h3><span>🔮</span> Quantum Photonics</h3>
+                    <p>9 quantum state types, 9 light field geometries, real photon wavelength-to-RGB (CIE 1931).</p>
                     <div class="tech-list">
-                        <span class="tech-tag">Equirectangular 360</span>
-                        <span class="tech-tag">Cubemap 6-Face</span>
-                        <span class="tech-tag">Fisheye Dome</span>
-                        <span class="tech-tag">Domemaster</span>
-                        <span class="tech-tag">Stereoscopic 3D</span>
-                        <span class="tech-tag">Holographic</span>
+                        <span class="tech-tag">Superposition</span>
+                        <span class="tech-tag">Entangled</span>
+                        <span class="tech-tag">Coherent</span>
+                        <span class="tech-tag">Fibonacci</span>
+                        <span class="tech-tag">Toroidal</span>
                     </div>
                 </div>
 
                 <div class="feature-card">
-                    <h3><span>&#127916;</span> 16K Video Engine</h3>
-                    <p>Professional video processing up to 15360x8640 resolution at 1000fps. 50+ effects including quantum, bio-reactive, cinematic, and time manipulation.</p>
-                    <table class="specs-table">
-                        <tr><td>480p Mobile</td><td>2.5 Mbps</td></tr>
-                        <tr><td>1080p HD</td><td>10 Mbps</td></tr>
-                        <tr><td>4K UHD</td><td>50 Mbps</td></tr>
-                        <tr><td>8K UHD</td><td>150 Mbps</td></tr>
-                        <tr><td>16K Quantum</td><td>500 Mbps</td></tr>
-                    </table>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#9883;</span> Metal GPU Shaders</h3>
-                    <p>300% performance boost with Metal-accelerated rendering. Real-time 60Hz interference calculations, bio-reactive color modulation, SIMD optimization.</p>
-                    <div class="tech-list">
-                        <span class="tech-tag">Metal 3</span>
-                        <span class="tech-tag">SIMD 256-bit</span>
-                        <span class="tech-tag">Hann Window FFT</span>
-                        <span class="tech-tag">8192-point FFT</span>
-                        <span class="tech-tag">40 Mel Bands</span>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#127752;</span> Creative Studio</h3>
-                    <p>AI art generation in 30+ styles (Renaissance to Cyberpunk), AI music composition in 30+ genres, 11 fractal types with quantum perturbation.</p>
-                    <div class="tech-list">
-                        <span class="tech-tag">Sacred Geometry</span>
-                        <span class="tech-tag">Ukiyo-e</span>
-                        <span class="tech-tag">Vaporwave</span>
-                        <span class="tech-tag">Glitch Art</span>
-                        <span class="tech-tag">Mandelbrot</span>
-                        <span class="tech-tag">Julia Set</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Lighting Section -->
-        <div class="section">
-            <div class="section-header">
-                <h2>Lighting Control</h2>
-                <p>Professional DMX/Art-Net lighting with bio-reactive control, laser systems, and smart home integration.</p>
-            </div>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <h3><span>&#128161;</span> DMX/Art-Net</h3>
-                    <p>512-channel DMX512 universes via Art-Net UDP. Support for 19+ fixture types including moving heads, PARs, LED strips, and lasers.</p>
+                    <h3><span>💡</span> DMX/Art-Net Lighting</h3>
+                    <p>512-channel DMX512 universes, Art-Net 4, sACN E1.31, support for moving heads, PARs, LED strips, lasers.</p>
                     <div class="tech-list">
                         <span class="tech-tag">DMX512</span>
                         <span class="tech-tag">Art-Net 4</span>
-                        <span class="tech-tag">sACN E1.31</span>
-                        <span class="tech-tag">RDM</span>
-                        <span class="tech-tag">KiNET</span>
-                        <span class="tech-tag">WLED</span>
+                        <span class="tech-tag">sACN</span>
+                        <span class="tech-tag">ILDA Laser</span>
+                        <span class="tech-tag">Hue/LIFX</span>
                     </div>
                 </div>
 
                 <div class="feature-card">
-                    <h3><span>&#127775;</span> Laser Designer</h3>
-                    <p>ILDA protocol support with 15 visual effects, 10 scan patterns, and bio-reactive color modes. Safety zone and audience scanning controls.</p>
-                    <table class="specs-table">
-                        <tr><td>Effects</td><td>Tunnel, Cone, Fan, Wave, Spiral, Burst, Aurora, Vortex, Helix, Grid, Starburst, Fractal...</td></tr>
-                        <tr><td>Patterns</td><td>Circle, Square, Triangle, Star, Heart, Infinity, Lissajous, Spiral, BioSync</td></tr>
-                        <tr><td>Speed</td><td>30,000 points/second</td></tr>
-                    </table>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#127918;</span> Push 3 LED</h3>
-                    <p>Native Ableton Push 3 RGB LED matrix control (8x8 = 64 LEDs). 7 bio-reactive patterns including Breathe, Pulse, Coherence, Rainbow, Wave, Spiral.</p>
+                    <h3><span>🎬</span> 16K Video Engine</h3>
+                    <p>Up to 15360x8640 @ 1000fps, 50+ video effects, real-time compositing, H.264 hardware encoding.</p>
                     <div class="tech-list">
-                        <span class="tech-tag">MIDI SysEx</span>
-                        <span class="tech-tag">RGB 24-bit</span>
-                        <span class="tech-tag">HRV &#8594; Hue</span>
-                        <span class="tech-tag">HR &#8594; Flash</span>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#127968;</span> Smart Home</h3>
-                    <p>Integration with Philips Hue (63 devices), Nanoleaf (500), LIFX (1000), and WLED (1500). HomeKit, Matter, and Thread protocol support.</p>
-                    <div class="tech-list">
-                        <span class="tech-tag">Philips Hue</span>
-                        <span class="tech-tag">Nanoleaf</span>
-                        <span class="tech-tag">LIFX</span>
-                        <span class="tech-tag">HomeKit</span>
-                        <span class="tech-tag">Matter</span>
-                        <span class="tech-tag">Thread</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion">
-                <div class="accordion-item">
-                    <div class="accordion-header">Supported DMX Controllers (15+)</div>
-                    <div class="accordion-content">
-                        <table class="specs-table">
-                            <tr><th>Brand</th><th>Model</th><th>Universes</th><th>Protocols</th></tr>
-                            <tr><td>Enttec</td><td>DMX USB Pro</td><td>1</td><td>DMX512</td></tr>
-                            <tr><td>Enttec</td><td>DMX USB Pro MK2</td><td>2</td><td>DMX512 + RDM</td></tr>
-                            <tr><td>Enttec</td><td>ODE MK3</td><td>2</td><td>Art-Net/sACN/RDM</td></tr>
-                            <tr><td>Enttec</td><td>Storm 24</td><td>24</td><td>All protocols</td></tr>
-                            <tr><td>DMXking</td><td>ultraDMX2 Pro</td><td>2</td><td>DMX512 + RDM</td></tr>
-                            <tr><td>DMXking</td><td>eDMX4 PRO</td><td>4</td><td>Art-Net/sACN/RDM</td></tr>
-                            <tr><td>ChamSys</td><td>MQ80</td><td>48</td><td>Full protocol suite</td></tr>
-                            <tr><td>ChamSys</td><td>Stadium Connect</td><td>256</td><td>Full protocol suite</td></tr>
-                        </table>
+                        <span class="tech-tag">4K/8K/16K</span>
+                        <span class="tech-tag">1000fps</span>
+                        <span class="tech-tag">Metal GPU</span>
+                        <span class="tech-tag">VideoToolbox</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Streaming Section -->
+        <!-- Streaming & Collaboration -->
         <div class="section">
             <div class="section-header">
-                <h2>Streaming & Recording</h2>
-                <p>Professional multi-platform streaming with hardware H.264 encoding, multi-track recording, and bio-data synchronization.</p>
+                <h2>Streaming & Collaboration</h2>
+                <p>Multi-platform streaming, global collaboration with 1000+ participants, and zero-latency sync.</p>
             </div>
 
             <div class="features-grid">
                 <div class="feature-card">
-                    <h3><span>&#128250;</span> Multi-Platform Streaming</h3>
-                    <p>Simultaneous streaming to YouTube, Twitch, Facebook, Instagram, TikTok, and custom RTMP. Full RTMP/RTMPS handshake implementation.</p>
+                    <h3><span>📺</span> Multi-Platform Streaming</h3>
+                    <p>Simultaneous streaming to YouTube, Twitch, Facebook, Instagram, TikTok with RTMP/RTMPS/HLS/WebRTC/SRT.</p>
                     <div class="tech-list">
-                        <span class="tech-tag">RTMP 3</span>
-                        <span class="tech-tag">RTMPS TLS 1.3</span>
+                        <span class="tech-tag">RTMP/RTMPS</span>
                         <span class="tech-tag">HLS</span>
                         <span class="tech-tag">WebRTC</span>
                         <span class="tech-tag">SRT</span>
-                        <span class="tech-tag">RIST</span>
+                        <span class="tech-tag">480p-8K</span>
                     </div>
                 </div>
 
                 <div class="feature-card">
-                    <h3><span>&#127909;</span> Video Encoding</h3>
-                    <p>Hardware H.264 via VideoToolbox with adaptive bitrate control. 8 quality presets from 480p mobile to 8K UHD.</p>
-                    <table class="specs-table">
-                        <tr><td>Mobile 480p</td><td>1.5 Mbps @ 30fps</td></tr>
-                        <tr><td>HD 1080p</td><td>6-9 Mbps @ 60fps</td></tr>
-                        <tr><td>4K UHD</td><td>35 Mbps @ 60fps</td></tr>
-                        <tr><td>8K UHD</td><td>80 Mbps @ 60fps</td></tr>
-                    </table>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#127908;</span> Multi-Track Recording</h3>
-                    <p>Unlimited tracks with per-track volume, pan, mute, solo. 60-second retrospective capture buffer (Ableton-style). Bio-data point recording.</p>
+                    <h3><span>🌍</span> Worldwide Collaboration</h3>
+                    <p>1000+ participant sessions, 15 global regions, WebRTC P2P, group HRV sync, quantum entanglement events.</p>
                     <div class="tech-list">
-                        <span class="tech-tag">48kHz/32-bit Float</span>
-                        <span class="tech-tag">WAV/M4A/AIFF/CAF</span>
-                        <span class="tech-tag">Bio JSON/CSV</span>
-                        <span class="tech-tag">Undo/Redo</span>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#127916;</span> AI Scene Director</h3>
-                    <p>Intelligent camera switching with 10 camera types, 10 scene moods, 8 direction styles. Bio-reactive and audio-reactive shot selection.</p>
-                    <div class="tech-list">
-                        <span class="tech-tag">Wide/Medium/Close</span>
-                        <span class="tech-tag">Quantum Camera</span>
-                        <span class="tech-tag">Bio-Reactive</span>
-                        <span class="tech-tag">2-30s Shots</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Collaboration Section -->
-        <div class="section">
-            <div class="section-header">
-                <h2>Worldwide Collaboration</h2>
-                <p>Zero-latency global sessions with WebRTC, up to 1000+ participants, 15 server regions, and quantum coherence sync.</p>
-            </div>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <h3><span>&#127758;</span> 17 Collaboration Modes</h3>
-                    <p>From Music Jam (8p) to Group Meditation (100p) to Coherence Sync (1000+p). Scientific research, workshops, masterclasses.</p>
-                    <table class="specs-table">
-                        <tr><td>Music Jam</td><td>8 participants</td></tr>
-                        <tr><td>Live Performance</td><td>50 participants</td></tr>
-                        <tr><td>Group Meditation</td><td>100 participants</td></tr>
-                        <tr><td>Coherence Sync</td><td>1000+ participants</td></tr>
-                        <tr><td>Quantum Entangled</td><td>500 participants</td></tr>
-                    </table>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#127757;</span> 15 Global Regions</h3>
-                    <p>US East/West/Central, Canada, Brazil, EU West/Central/North, UK, Japan, Singapore, India, Australia, Africa, Middle East, plus Quantum Global.</p>
-                    <div class="tech-list">
-                        <span class="tech-tag">&lt;20ms LAN</span>
-                        <span class="tech-tag">&lt;50ms Internet</span>
-                        <span class="tech-tag">WebRTC P2P</span>
-                        <span class="tech-tag">STUN/TURN</span>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#128101;</span> Group Bio-Sync</h3>
-                    <p>Real-time group HRV coherence averaging, flow leader identification, synchronized heartbeat detection, quantum entanglement events.</p>
-                    <div class="tech-list">
-                        <span class="tech-tag">Avg HRV Sync</span>
-                        <span class="tech-tag">Flow Leader</span>
+                        <span class="tech-tag">&lt;50ms Latency</span>
+                        <span class="tech-tag">Group HRV Sync</span>
+                        <span class="tech-tag">Flow Detection</span>
                         <span class="tech-tag">Coherence Pulse</span>
-                        <span class="tech-tag">Entanglement Events</span>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#128274;</span> Enterprise Security</h3>
-                    <p>AES-256 encryption, certificate pinning (TLS 1.3), biometric auth (Face ID/Touch ID), jailbreak detection, GDPR/CCPA/HIPAA compliant.</p>
-                    <div class="tech-list">
-                        <span class="tech-tag">AES-256</span>
-                        <span class="tech-tag">TLS 1.3</span>
-                        <span class="tech-tag">Keychain Storage</span>
-                        <span class="tech-tag">GDPR</span>
-                        <span class="tech-tag">HIPAA</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Hardware Section -->
-        <div class="section">
-            <div class="section-header">
-                <h2>Hardware Ecosystem</h2>
-                <p>Universal device support with 60+ audio interfaces, 40+ MIDI controllers, and cross-platform session management.</p>
-            </div>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <h3><span>&#127911;</span> Audio Interfaces</h3>
-                    <p>60+ supported interfaces from Universal Audio, Focusrite, RME, MOTU, Apogee, PreSonus, SSL, Audient. Platform-specific APIs.</p>
-                    <table class="specs-table">
-                        <tr><td>iOS/macOS</td><td>Core Audio</td></tr>
-                        <tr><td>Windows</td><td>WASAPI/ASIO</td></tr>
-                        <tr><td>Linux</td><td>PipeWire/JACK/ALSA</td></tr>
-                        <tr><td>Android</td><td>AAudio/Oboe</td></tr>
-                    </table>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#127929;</span> MIDI Controllers</h3>
-                    <p>40+ controllers including Ableton Push 3, Native Instruments Maschine/Komplete, Akai MPC/APC, Novation Launchpad, Arturia, Roland.</p>
-                    <div class="tech-list">
-                        <span class="tech-tag">Push 3</span>
-                        <span class="tech-tag">Maschine MK3</span>
-                        <span class="tech-tag">MPC Live II</span>
-                        <span class="tech-tag">Launchpad X</span>
-                        <span class="tech-tag">KeyStep Pro</span>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#9201;</span> Wearables</h3>
-                    <p>Apple Watch (native HealthKit), Garmin, Whoop, Oura Ring, Polar, Fitbit. Real-time HRV streaming with coherence calculation.</p>
-                    <div class="tech-list">
-                        <span class="tech-tag">Apple Watch</span>
-                        <span class="tech-tag">Garmin</span>
-                        <span class="tech-tag">Whoop 4.0</span>
-                        <span class="tech-tag">Oura Gen 3</span>
-                        <span class="tech-tag">Polar H10</span>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <h3><span>&#129461;</span> VR/AR Devices</h3>
-                    <p>Apple Vision Pro (native visionOS), Meta Quest 3, Varjo XR-4, HTC Vive Pro 2, Pico 4. Full spatial computing and hand tracking.</p>
-                    <div class="tech-list">
-                        <span class="tech-tag">Vision Pro</span>
-                        <span class="tech-tag">Quest 3</span>
-                        <span class="tech-tag">Varjo XR-4</span>
-                        <span class="tech-tag">Vive Pro 2</span>
                     </div>
                 </div>
             </div>
@@ -939,11 +940,11 @@
         <!-- Pricing -->
         <div class="pricing">
             <h2>Lifetime License</h2>
-            <div class="price-main"><span class="price-currency">&#8364;</span>99</div>
-            <div class="price-label">One-Time Purchase // All Platforms</div>
-            <div class="price-upgrade">+ &#8364;49 for Major Version Upgrades (2.0, 3.0...)</div>
+            <div class="price-main"><span class="price-currency">€</span>99</div>
+            <div class="price-label">One-Time Purchase • All Platforms</div>
+            <div class="price-upgrade">+ €49 for Major Version Upgrades (2.0, 3.0...)</div>
             <div class="beta-note">
-                <strong>Free Beta Program:</strong> Join TestFlight and shape the future of bio-reactive art. Full access to all features. Your feedback creates the vision.
+                <strong>Free Beta Program:</strong> Join TestFlight and shape the future of bio-coherent wellness technology. Full access to all features. Your feedback creates the vision.
             </div>
             <a href="#" class="cta-btn">Join Beta Waitlist</a>
         </div>
@@ -953,24 +954,22 @@
             <a href="privacy.html">Privacy</a>
             <a href="terms.html">Terms</a>
             <a href="support.html">Support</a>
-            <a href="health.html">Health</a>
+            <a href="health.html">Health Disclaimer</a>
         </div>
 
         <!-- Footer -->
         <footer>
-            <p>&copy; 2026 Echoelmusic. Crafted with coherence.</p>
+            <p>© 2026 Echoelmusic. Coherence Technology.</p>
             <p style="margin-top: 10px;">
                 Contact: <a href="mailto:vibrationalforce@gmail.com">vibrationalforce@gmail.com</a>
             </p>
             <div class="disclaimer">
-                Echoelmusic is not a medical device. Biometric features are for creative and wellness purposes only.
-                Not intended to diagnose, treat, cure, or prevent any disease. Consult a healthcare professional for medical advice.
+                <strong>Medical Disclaimer:</strong> Echoelmusic is not a medical device. All features including biometric tracking, circadian optimization, nutrition guidance, and fitness recommendations are for general wellness and creative purposes only. They are not intended to diagnose, treat, cure, or prevent any disease. Always consult a qualified healthcare professional before making changes to your diet, exercise routine, or sleep habits.
             </div>
         </footer>
     </div>
 
     <script>
-        // Accordion functionality
         document.querySelectorAll('.accordion-header').forEach(header => {
             header.addEventListener('click', () => {
                 header.parentElement.classList.toggle('open');
