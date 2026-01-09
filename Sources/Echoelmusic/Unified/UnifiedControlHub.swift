@@ -619,12 +619,21 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        // Calculate breathing rate from HRV coherence and heart rate
+        let breathingRate = estimateBreathingRate(
+            heartRate: healthKit.heartRate,
+            coherence: healthKit.hrvCoherence
+        )
+
+        // Get audio level from engine (fallback to 0.5 if unavailable)
+        let audioLevel = audioEngine?.microphoneManager.audioLevel ?? 0.5
+
         // Update visual parameters from bio-signals
         let bioParams = MIDIToVisualMapper.BioParameters(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
-            audioLevel: 0.5      // TODO: Get from audio engine
+            breathingRate: breathingRate,
+            audioLevel: Double(audioLevel)
         )
 
         visualMapper.updateBioParameters(bioParams)
@@ -635,10 +644,16 @@ public class UnifiedControlHub: ObservableObject {
             return
         }
 
+        // Calculate breathing rate from HRV coherence and heart rate
+        let breathingRate = estimateBreathingRate(
+            heartRate: healthKit.heartRate,
+            coherence: healthKit.hrvCoherence
+        )
+
         let bioData = MIDIToLightMapper.BioData(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0  // TODO: Calculate from HRV
+            breathingRate: breathingRate
         )
 
         // Update Push 3 LED patterns
@@ -657,6 +672,29 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     // MARK: - Utilities
+
+    /// Estimate breathing rate from heart rate and HRV coherence
+    /// Uses the relationship between heart rate and respiratory rate
+    /// Normal ratio is approximately 4:1 to 5:1 (HR:RR)
+    /// High coherence indicates synchronized breathing (typically 6 breaths/min)
+    private func estimateBreathingRate(heartRate: Double, coherence: Double) -> Double {
+        // High coherence (>60) typically indicates resonant breathing at ~6 breaths/min
+        // This is the HeartMath coherence breathing rate (0.1 Hz)
+        if coherence >= 60 {
+            return 6.0
+        }
+
+        // Medium coherence - transitioning toward coherent breathing
+        if coherence >= 40 {
+            let t = (coherence - 40) / 20.0  // 0 to 1
+            let estimatedRate = heartRate / 4.5
+            return estimatedRate + t * (6.0 - estimatedRate)
+        }
+
+        // Low coherence - estimate from heart rate
+        // Normal respiratory rate is HR/4 to HR/5
+        return max(4.0, min(20.0, heartRate / 4.5))
+    }
 
     /// Map a value from one range to another
     public func mapRange(
