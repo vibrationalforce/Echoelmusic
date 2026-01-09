@@ -2,13 +2,16 @@ import Foundation
 import AVFoundation
 import Accelerate
 
-/// Generates binaural beats for brainwave entrainment and healing frequencies
+/// Generates binaural beats for brainwave entrainment
 ///
 /// Binaural beats work by playing two slightly different frequencies (one per ear),
 /// causing the brain to perceive a "beat" at the difference frequency.
 /// This can induce specific brainwave states for relaxation, focus, sleep, etc.
 ///
 /// Scientific basis: Oster, G. (1973). "Auditory beats in the brain"
+/// HINWEIS: Meta-Analysen zeigen inkonsistente Evidenz für EEG-Entrainment.
+/// Subjektive Entspannung ist besser belegt als neurophysiologische Effekte.
+/// KEIN Medizinprodukt. Für kreative/Wellness-Zwecke.
 @MainActor
 class BinauralBeatGenerator: ObservableObject {
 
@@ -24,7 +27,7 @@ class BinauralBeatGenerator: ObservableObject {
 
     /// Brainwave state configurations based on neuroscience research
     enum BrainwaveState: String, CaseIterable {
-        case delta      // 2 Hz - Deep sleep, healing
+        case delta      // 2 Hz - Deep sleep, regeneration (EEG-validiert)
         case theta      // 6 Hz - Meditation, creativity
         case alpha      // 10 Hz - Relaxation, learning
         case beta       // 20 Hz - Focus, alertness
@@ -44,7 +47,7 @@ class BinauralBeatGenerator: ObservableObject {
         /// Human-readable description
         var description: String {
             switch self {
-            case .delta: return "Deep Sleep & Healing"
+            case .delta: return "Deep Sleep & Regeneration"
             case .theta: return "Meditation & Creativity"
             case .alpha: return "Relaxation & Learning"
             case .beta: return "Focus & Alertness"
@@ -56,8 +59,8 @@ class BinauralBeatGenerator: ObservableObject {
 
     // MARK: - Configuration
 
-    /// Carrier frequency in Hz (the base tone, often 432 Hz for healing)
-    /// 432 Hz is considered the "natural frequency" in some healing traditions
+    /// Carrier frequency in Hz (the base tone, 432 Hz traditional tuning)
+    /// HINWEIS: 432 Hz ist kulturell beliebt, keine "Heilfrequenz" wissenschaftlich belegt
     private(set) var carrierFrequency: Float = 432.0
 
     /// Beat frequency in Hz (difference between left and right ear)

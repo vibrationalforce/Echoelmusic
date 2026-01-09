@@ -72,9 +72,11 @@ class BioParameterMapper: ObservableObject {
 
     // MARK: - Musical Scale Configuration
 
-    /// Musical scale for harmonic generation
-    private let healingScale: [Float] = [
-        432.0,   // A4 (base healing frequency)
+    /// Musical scale for harmonic generation (A4 = 432Hz variant)
+    /// HINWEIS: 432Hz ist eine kulturelle Präferenz, keine "Heilfrequenz"
+    /// Wissenschaftlich: Kein Unterschied zu 440Hz für Gesundheit belegt
+    private let harmonicScale: [Float] = [
+        432.0,   // A4 (traditionelle Stimmung, subjektiv "wärmer")
         486.0,   // B4
         512.0,   // C5
         576.0,   // D5
@@ -187,16 +189,16 @@ class BioParameterMapper: ObservableObject {
         )
     }
 
-    /// Map Voice Pitch → Musical Scale (healing frequencies)
-    /// Snaps detected pitch to nearest note in healing scale
+    /// Map Voice Pitch → Musical Scale (harmonic frequencies)
+    /// Snaps detected pitch to nearest note in harmonic scale (432Hz tuning)
     private func mapVoicePitchToScale(voicePitch: Float) -> Float {
-        guard voicePitch > 0 else { return healingScale[0] }
+        guard voicePitch > 0 else { return harmonicScale[0] }
 
-        // Find nearest note in healing scale
-        var closestNote = healingScale[0]
+        // Find nearest note in harmonic scale
+        var closestNote = harmonicScale[0]
         var minDistance = abs(voicePitch - closestNote)
 
-        for note in healingScale {
+        for note in harmonicScale {
             let distance = abs(voicePitch - note)
             if distance < minDistance {
                 minDistance = distance

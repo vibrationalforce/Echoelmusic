@@ -90,7 +90,7 @@ public enum CircadianPhase: String, CaseIterable, Codable {
         case .deepSleep, .remSleep, .melatonin:
             return 432.0    // 432Hz für Entspannung
         case .postLunch, .windDown:
-            return 528.0    // 528Hz für Heilung (DNA-Reparatur)
+            return 528.0    // 528Hz Solfeggio (traditionell/kulturell, KEINE wissenschaftliche Heilwirkung belegt)
         default:
             return 440.0    // Standard für Aktivität
         }
@@ -413,11 +413,11 @@ public final class CircadianRhythmEngine: ObservableObject {
         ),
         LifestyleTip(
             category: .lightExposure,
-            title: "528Hz Grünlicht Heilung",
-            description: "Smaragdgrünes Licht (528nm) fördert DNA-Reparatur und zelluläre Regeneration.",
+            title: "Grünes Licht Entspannung",
+            description: "Grünes Licht (520-560nm) wird subjektiv als beruhigend empfunden. Kulturelle Tradition, keine medizinischen Belege.",
             circadianPhases: [.postLunch, .windDown],
-            scientificBasis: "528Hz Solfeggio-Frequenz resoniert mit der DNA-Struktur",
-            coherenceImpact: 0.85
+            scientificBasis: "HINWEIS: 528Hz/nm 'DNA-Reparatur' ist NICHT wissenschaftlich belegt. Subjektive Entspannung möglich.",
+            coherenceImpact: 0.4  // Reduziert - keine wissenschaftliche Basis
         ),
 
         // Ernährung
