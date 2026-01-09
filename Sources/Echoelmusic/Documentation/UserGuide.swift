@@ -1219,7 +1219,7 @@ public struct UserGuide {
 
     **How to Contact Support:**
     - In-app: Settings → Help → Contact Support
-    - Email: vibrationalforce@gmail.com
+    - Email: michaelterbuyken@gmail.com
     - Website: echoelmusic.com/support
     - Include: Device, OS version, app version, detailed description, error messages/screenshots
     """
@@ -1548,6 +1548,6 @@ public struct UserGuide {
     ### Additional Resources
     - Full accessibility guide: Settings → Help → Accessibility Help
     - Video tutorials with captions
-    - Contact accessibility specialist: vibrationalforce@gmail.com
+    - Contact accessibility specialist: michaelterbuyken@gmail.com
     """
 }

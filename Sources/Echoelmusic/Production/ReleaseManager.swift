@@ -465,7 +465,7 @@ public struct AppStoreConfiguration: Sendable {
     }
 
     // Common
-    public static let supportEmail = "vibrationalforce@gmail.com"
+    public static let supportEmail = "michaelterbuyken@gmail.com"
     public static var privacyPolicyURL: URL? { SafeURL.from("https://echoelmusic.com/privacy") }
     public static var termsOfServiceURL: URL? { SafeURL.from("https://echoelmusic.com/terms") }
     public static var helpURL: URL? { SafeURL.from("https://help.echoelmusic.com") }

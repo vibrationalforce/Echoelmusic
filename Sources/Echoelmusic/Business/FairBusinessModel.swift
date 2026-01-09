@@ -431,7 +431,7 @@ class FairBusinessModel: ObservableObject {
         🌍 COMMITMENT TO ACCESS:
         We believe creativity and wellbeing tools should be accessible.
         That's why our free tier is genuinely useful, not a "freemium trap."
-        If our paid plans are still out of reach, contact us: vibrationalforce@gmail.com
+        If our paid plans are still out of reach, contact us: michaelterbuyken@gmail.com
 
         Current Tier: \(currentTier.rawValue)
         """

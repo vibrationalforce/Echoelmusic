@@ -15,7 +15,7 @@
 
 // Plugin URLs
 #define PLUG_URL_STR "https://echoelmusic.com"
-#define PLUG_EMAIL_STR "vibrationalforce@gmail.com"
+#define PLUG_EMAIL_STR "michaelterbuyken@gmail.com"
 #define PLUG_COPYRIGHT_STR "Copyright 2024-2025 Echoelmusic"
 
 // Plugin type configuration
