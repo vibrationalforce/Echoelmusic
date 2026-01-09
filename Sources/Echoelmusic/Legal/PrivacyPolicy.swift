@@ -22,8 +22,8 @@ public struct PrivacyPolicy {
     public static let effectiveDate = "January 7, 2026"
     public static let lastUpdated = "January 7, 2026"
     public static let companyName = "Echoelmusic Inc."
-    public static let contactEmail = "privacy@echoelmusic.com"
-    public static let dpoEmail = "dpo@echoelmusic.com" // Data Protection Officer
+    public static let contactEmail = "vibrationalforce@gmail.com"
+    public static let dpoEmail = "vibrationalforce@gmail.com" // Data Protection Officer
     public static let websiteURL = "https://echoelmusic.com"
 
     // MARK: - Full Privacy Policy Text

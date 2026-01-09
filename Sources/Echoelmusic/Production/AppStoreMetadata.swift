@@ -1120,7 +1120,7 @@ public struct ReviewInformation {
 
     /// Demo account for App Review (if login required)
     public static let demoAccount = DemoAccount(
-        username: "app_review@echoelmusic.com",
+        username: "vibrationalforce@gmail.com",
         password: "DemoPassword2026!",
         notes: "Full access demo account with pre-configured sessions and sample data. No actual Apple Watch or biometric hardware required for testing."
     )
@@ -1130,7 +1130,7 @@ public struct ReviewInformation {
         firstName: "App Review",
         lastName: "Contact",
         phone: "+1-555-ECHO-APP",
-        email: "appreview@echoelmusic.com"
+        email: "vibrationalforce@gmail.com"
     )
 
     /// Notes for reviewer

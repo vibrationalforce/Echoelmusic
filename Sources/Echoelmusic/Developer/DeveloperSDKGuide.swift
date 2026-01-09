@@ -227,7 +227,7 @@ public struct DeveloperSDKGuide {
 
             - GitHub Issues: https://github.com/echoelmusic/echoelmusic/issues
             - Stack Overflow: Tag [echoelmusic-sdk]
-            - Email: developers@echoelmusic.com
+            - Email: vibrationalforce@gmail.com
             """
 
         } // GettingStarted
@@ -2313,7 +2313,7 @@ public struct DeveloperSDKGuide {
             1. Check documentation: https://docs.echoelmusic.com
             2. Search GitHub issues: https://github.com/echoelmusic/echoelmusic/issues
             3. Ask on Discord: https://discord.gg/echoelmusic
-            4. Email: developers@echoelmusic.com
+            4. Email: vibrationalforce@gmail.com
 
             ## Reporting Bugs
 

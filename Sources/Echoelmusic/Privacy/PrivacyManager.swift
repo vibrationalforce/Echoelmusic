@@ -470,7 +470,7 @@ class PrivacyManager: ObservableObject {
         Cloud Sync: \(cloudSyncEnabled ? "Enabled" : "Disabled")
         Analytics: \(analyticsEnabled ? "Enabled" : "Disabled")
 
-        📧 Privacy Questions: privacy@echoelmusic.com
+        📧 Privacy Questions: vibrationalforce@gmail.com
         🌐 Full Policy: echoelmusic.com/privacy
 
         Last Updated: \(Date().formatted(date: .long, time: .omitted))
