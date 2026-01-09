@@ -2,6 +2,7 @@ import Foundation
 
 /// Recording session containing multiple tracks and settings
 struct Session: Identifiable, Codable {
+    private let log = ProfessionalLogger.shared
     let id: UUID
     var name: String
     var tracks: [Track]
@@ -119,7 +120,7 @@ struct Session: Identifiable, Codable {
         let data = try encoder.encode(self)
         try data.write(to: sessionFile)
 
-        print("💾 Session saved: \(name)")
+        log.info(category: .recording, "💾 Session saved: \(name)")
     }
 
     /// Load session from disk

@@ -117,7 +117,7 @@ class MIDIToVisualMapper: ObservableObject {
         // Emit particles
         emitParticlesFromNote(note: note, velocity: velocity)
 
-        print("🎨 Visual mapped: Note \(note), Vel \(Int(velocity * 127))")
+        log.video("🎨 Visual mapped: Note \(note), Vel \(Int(velocity * 127))")
     }
 
     /// Map MIDI note off to visual parameters
@@ -227,6 +227,58 @@ class MIDIToVisualMapper: ObservableObject {
             let hue = Double(index) / Double(magnitudes.count)  // 0-1 across spectrum
             return Color(hue: hue, saturation: 0.8, brightness: 0.9)
         }
+    }
+
+    // MARK: - Gaze Tracking Integration
+
+    /// Update visual parameters from gaze tracking data
+    /// - Parameters:
+    ///   - gazeX: Horizontal gaze position (0-1)
+    ///   - gazeY: Vertical gaze position (0-1)
+    ///   - attention: Attention level (0-1)
+    ///   - focus: Focus intensity (0-1)
+    func updateGazeParameters(gazeX: Float, gazeY: Float, attention: Float, focus: Float) {
+        // Map gaze to visual focal point
+        let focalPoint = SIMD2<Float>(gazeX * 2.0 - 1.0, gazeY * 2.0 - 1.0)
+
+        // Shift cymatics patterns toward gaze point
+        for i in 0..<cymaticsParameters.patterns.count {
+            let attraction = focus * 0.05
+            let dx = focalPoint.x - cymaticsParameters.patterns[i].position.x
+            let dy = focalPoint.y - cymaticsParameters.patterns[i].position.y
+            cymaticsParameters.patterns[i].position.x += dx * attraction
+            cymaticsParameters.patterns[i].position.y += dy * attraction
+        }
+
+        // Attention modulates mandala complexity
+        mandalaParameters.symmetry = Int(6.0 + attention * 6.0)  // 6-12 fold symmetry
+        mandalaParameters.rotationSpeed = Double(0.1 + focus * 0.4)
+
+        // Update particle behavior based on gaze
+        particleSystemParameters.emissionPosition = SIMD3<Float>(
+            gazeX * 2.0 - 1.0,
+            gazeY * 2.0 - 1.0,
+            0.0
+        )
+    }
+
+    /// Set overall visual intensity
+    /// - Parameter intensity: Visual intensity from 0.0 to 1.0
+    func setIntensity(_ intensity: Float) {
+        let clampedIntensity = max(0.0, min(1.0, intensity))
+
+        // Scale all visual parameters by intensity
+        cymaticsParameters.amplitude = clampedIntensity
+        mandalaParameters.rotationSpeed = Double(clampedIntensity) * 0.5
+        particleSystemParameters.particleSize = clampedIntensity * 10.0
+
+        // Adjust color saturation based on intensity
+        let saturation = 0.5 + clampedIntensity * 0.5  // 50-100%
+        mandalaParameters.color = Color(
+            hue: mandalaParameters.color.hueComponent,
+            saturation: saturation,
+            brightness: Double(clampedIntensity)
+        )
     }
 
     // MARK: - Cymatics Mapping
@@ -374,7 +426,7 @@ class MIDIToVisualMapper: ObservableObject {
             particleParameters.emissionRate = 30.0
         }
 
-        print("🎨 Visual preset: \(preset.rawValue)")
+        log.video("🎨 Visual preset: \(preset.rawValue)")
     }
 
     enum VisualPreset: String, CaseIterable {
@@ -411,5 +463,29 @@ extension Color {
     static func fromMIDINote(_ note: UInt8) -> Color {
         let hue = Double(note % 12) / 12.0
         return Color(hue: hue, saturation: 0.8, brightness: 0.9)
+    }
+
+    /// Extract hue component (0-1)
+    var hueComponent: Double {
+        // SwiftUI Color doesn't have direct hue access, so we use a stored value approach
+        // For colors created with hue, this returns the original hue
+        // For other colors, return 0.0 as fallback
+        #if canImport(UIKit)
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var alpha: CGFloat = 0
+        UIColor(self).getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+        return Double(hue)
+        #elseif canImport(AppKit)
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var alpha: CGFloat = 0
+        NSColor(self).getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+        return Double(hue)
+        #else
+        return 0.0
+        #endif
     }
 }

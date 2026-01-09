@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 5.9
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -26,6 +26,19 @@ let package = Package(
         .target(
             name: "Echoelmusic",
             dependencies: [],
+            exclude: [
+                // Platform-specific directories (handled separately)
+                "Platforms/visionOS",
+                "Platforms/watchOS",
+                "Platforms/tvOS",
+                // Files requiring platform-specific frameworks
+                "VisionOS",
+                "WatchOS",
+                "tvOS",
+                "Widgets"
+                // NOTE: Sources/_Deferred/ is automatically excluded (sibling folder)
+                // See DEFERRED_FEATURES.md for deferred features roadmap
+            ],
             resources: [
                 .process("Resources")
             ]),

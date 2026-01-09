@@ -2,13 +2,16 @@ import Foundation
 import AVFoundation
 import Accelerate
 
-/// Generates binaural beats for brainwave entrainment and healing frequencies
+/// Generates Multidimensional Brainwave Entrainment for brainwave entrainment
 ///
-/// Binaural beats work by playing two slightly different frequencies (one per ear),
+/// Multidimensional Brainwave Entrainment work by playing two slightly different frequencies (one per ear),
 /// causing the brain to perceive a "beat" at the difference frequency.
 /// This can induce specific brainwave states for relaxation, focus, sleep, etc.
 ///
 /// Scientific basis: Oster, G. (1973). "Auditory beats in the brain"
+/// HINWEIS: Meta-Analysen zeigen inkonsistente Evidenz für EEG-Entrainment.
+/// Subjektive Entspannung ist besser belegt als neurophysiologische Effekte.
+/// KEIN Medizinprodukt. Für kreative/Wellness-Zwecke.
 @MainActor
 class BinauralBeatGenerator: ObservableObject {
 
@@ -24,7 +27,7 @@ class BinauralBeatGenerator: ObservableObject {
 
     /// Brainwave state configurations based on neuroscience research
     enum BrainwaveState: String, CaseIterable {
-        case delta      // 2 Hz - Deep sleep, healing
+        case delta      // 2 Hz - Deep sleep, regeneration (EEG-validiert)
         case theta      // 6 Hz - Meditation, creativity
         case alpha      // 10 Hz - Relaxation, learning
         case beta       // 20 Hz - Focus, alertness
@@ -44,7 +47,7 @@ class BinauralBeatGenerator: ObservableObject {
         /// Human-readable description
         var description: String {
             switch self {
-            case .delta: return "Deep Sleep & Healing"
+            case .delta: return "Deep Sleep & Regeneration"
             case .theta: return "Meditation & Creativity"
             case .alpha: return "Relaxation & Learning"
             case .beta: return "Focus & Alertness"
@@ -56,8 +59,8 @@ class BinauralBeatGenerator: ObservableObject {
 
     // MARK: - Configuration
 
-    /// Carrier frequency in Hz (the base tone, often 432 Hz for healing)
-    /// 432 Hz is considered the "natural frequency" in some healing traditions
+    /// Carrier frequency in Hz (the base tone, 432 Hz traditional tuning)
+    /// HINWEIS: 432 Hz ist kulturell beliebt, keine "Heilfrequenz" wissenschaftlich belegt
     private(set) var carrierFrequency: Float = 432.0
 
     /// Beat frequency in Hz (difference between left and right ear)
@@ -88,12 +91,24 @@ class BinauralBeatGenerator: ObservableObject {
     private let rightPlayerNode = AVAudioPlayerNode()
 
     /// Audio format (stereo, 44.1 kHz)
-    private lazy var audioFormat: AVAudioFormat = {
-        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2) else {
-            fatalError("Failed to create audio format with sample rate \(sampleRate). This indicates an invalid audio configuration.")
+    private var audioFormat: AVAudioFormat? {
+        AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)
+    }
+
+    /// Error types for binaural beat generation
+    enum BinauralBeatError: Error, LocalizedError {
+        case invalidAudioFormat
+        case engineStartFailed(Error)
+
+        var errorDescription: String? {
+            switch self {
+            case .invalidAudioFormat:
+                return "Failed to create audio format. Check audio session configuration."
+            case .engineStartFailed(let error):
+                return "Audio engine failed to start: \(error.localizedDescription)"
+            }
         }
-        return format
-    }()
+    }
 
     /// Buffer size for generation (smaller = lower latency, more CPU)
     /// Reduced from 4096 to 1024 for lower latency (85ms → 21ms at 48kHz)
@@ -135,7 +150,7 @@ class BinauralBeatGenerator: ObservableObject {
     func configure(state: BrainwaveState) {
         self.beatFrequency = state.beatFrequency
         // Keep current carrier frequency and amplitude
-        print("🧠 Configured for \(state.rawValue) state: \(state.description)")
+        log.audio("🧠 Configured for \(state.rawValue) state: \(state.description)")
     }
 
     /// Set beat frequency dynamically based on HRV coherence
@@ -156,7 +171,7 @@ class BinauralBeatGenerator: ObservableObject {
             // High coherence: maintain focus
             beatFrequency = 20.0  // Beta
         }
-        print("💓 HRV coherence \(Int(coherence)) → \(beatFrequency) Hz beat")
+        log.audio("💓 HRV coherence \(Int(coherence)) → \(beatFrequency) Hz beat")
     }
 
     /// Start generating and playing binaural/isochronic beats
@@ -193,14 +208,14 @@ class BinauralBeatGenerator: ObservableObject {
 
             isPlaying = true
             let modeStr = audioMode == .binaural ? "Binaural (stereo)" : "Isochronic (mono)"
-            print("▶️ \(modeStr) beats started: \(carrierFrequency) Hz @ \(beatFrequency) Hz")
+            log.audio("▶️ \(modeStr) beats started: \(carrierFrequency) Hz @ \(beatFrequency) Hz")
 
         } catch {
-            print("❌ Failed to start beats: \(error.localizedDescription)")
+            log.audio("❌ Failed to start beats: \(error.localizedDescription)", level: .error)
         }
     }
 
-    /// Stop playing binaural beats
+    /// Stop playing Multidimensional Brainwave Entrainment
     func stop() {
         guard isPlaying else { return }
 
@@ -219,7 +234,7 @@ class BinauralBeatGenerator: ObservableObject {
         try? AVAudioSession.sharedInstance().setActive(false)
 
         isPlaying = false
-        print("⏹️ Binaural beats stopped")
+        log.audio("⏹️ Multidimensional Brainwave Entrainment stopped")
     }
 
 
@@ -234,11 +249,14 @@ class BinauralBeatGenerator: ObservableObject {
         // Create mixer node to combine left and right channels
         let mixer = audioEngine.mainMixerNode
 
+        // Get audio format, use mixer's format as fallback
+        let format = audioFormat ?? mixer.outputFormat(forBus: 0)
+
         // Connect left player to mixer (left channel)
-        audioEngine.connect(leftPlayerNode, to: mixer, format: audioFormat)
+        audioEngine.connect(leftPlayerNode, to: mixer, format: format)
 
         // Connect right player to mixer (right channel)
-        audioEngine.connect(rightPlayerNode, to: mixer, format: audioFormat)
+        audioEngine.connect(rightPlayerNode, to: mixer, format: format)
 
         // Prepare engine
         audioEngine.prepare()
@@ -372,7 +390,7 @@ class BinauralBeatGenerator: ObservableObject {
     /// ONLY headphones → Binaural (requires isolated left/right channels)
     /// Everything else → Isochronic (speakers, Bluetooth, spatial audio, club systems)
     ///
-    /// Why: Binaural beats require each ear to receive ONLY its designated frequency.
+    /// Why: Multidimensional Brainwave Entrainment require each ear to receive ONLY its designated frequency.
     /// Regular stereo speakers fail because both speakers reach both ears (crosstalk).
     /// Even in clubs with stereo systems, the sound mixes in the room.
     private func detectAudioMode() {
@@ -402,10 +420,10 @@ class BinauralBeatGenerator: ObservableObject {
         // Set mode based on output
         if hasIsolatedHeadphones {
             audioMode = .binaural
-            print("🎧 Isolated headphones detected → Binaural mode (true stereo)")
+            log.audio("🎧 Isolated headphones detected → Binaural mode (true stereo)")
         } else {
             audioMode = .isochronic
-            print("🔊 Speaker/Open-air detected → Isochronic mode (mono pulsed, works anywhere)")
+            log.audio("🔊 Speaker/Open-air detected → Isochronic mode (mono pulsed, works anywhere)")
         }
     }
 }

@@ -72,9 +72,11 @@ class BioParameterMapper: ObservableObject {
 
     // MARK: - Musical Scale Configuration
 
-    /// Musical scale for harmonic generation
-    private let healingScale: [Float] = [
-        432.0,   // A4 (base healing frequency)
+    /// Musical scale for harmonic generation (A4 = 432Hz variant)
+    /// HINWEIS: 432Hz ist eine kulturelle Präferenz, keine "Heilfrequenz"
+    /// Wissenschaftlich: Kein Unterschied zu 440Hz für Gesundheit belegt
+    private let harmonicScale: [Float] = [
+        432.0,   // A4 (traditionelle Stimmung, subjektiv "wärmer")
         486.0,   // B4
         512.0,   // C5
         576.0,   // D5
@@ -110,7 +112,7 @@ class BioParameterMapper: ObservableObject {
         let targetAmplitude = mapToAmplitude(hrvCoherence: hrvCoherence, audioLevel: audioLevel)
         amplitude = smooth(current: amplitude, target: targetAmplitude, factor: smoothingFactor)
 
-        // Map Voice Pitch → Base Frequency (snap to healing scale)
+        // Map Voice Pitch → Base Frequency (snap to musical scale)
         let targetFrequency = mapVoicePitchToScale(voicePitch: voicePitch)
         baseFrequency = smooth(current: baseFrequency, target: targetFrequency, factor: fastSmoothingFactor)
 
@@ -187,16 +189,16 @@ class BioParameterMapper: ObservableObject {
         )
     }
 
-    /// Map Voice Pitch → Musical Scale (healing frequencies)
-    /// Snaps detected pitch to nearest note in healing scale
+    /// Map Voice Pitch → Musical Scale (harmonic frequencies)
+    /// Snaps detected pitch to nearest note in harmonic scale (432Hz tuning)
     private func mapVoicePitchToScale(voicePitch: Float) -> Float {
-        guard voicePitch > 0 else { return healingScale[0] }
+        guard voicePitch > 0 else { return harmonicScale[0] }
 
-        // Find nearest note in healing scale
-        var closestNote = healingScale[0]
+        // Find nearest note in harmonic scale
+        var closestNote = harmonicScale[0]
         var minDistance = abs(voicePitch - closestNote)
 
-        for note in healingScale {
+        for note in harmonicScale {
             let distance = abs(voicePitch - note)
             if distance < minDistance {
                 minDistance = distance
@@ -283,7 +285,7 @@ class BioParameterMapper: ObservableObject {
     private func logParameters() {
         let timestamp = Int(Date().timeIntervalSince1970)
         if timestamp % 5 == 0 {  // Every 5 seconds
-            print("🎛️  BioParams: Rev:\(Int(reverbWet*100))% Filt:\(Int(filterCutoff))Hz Amp:\(Int(amplitude*100))% Freq:\(Int(baseFrequency))Hz")
+            log.biofeedback("🎛️  BioParams: Rev:\(Int(reverbWet*100))% Filt:\(Int(filterCutoff))Hz Amp:\(Int(amplitude*100))% Freq:\(Int(baseFrequency))Hz")
         }
     }
 
@@ -304,25 +306,25 @@ class BioParameterMapper: ObservableObject {
             reverbWet = 0.3
             filterCutoff = 1500.0
             amplitude = 0.6
-            baseFrequency = 528.0  // Focus frequency
+            baseFrequency = 440.0  // Standard A4 tuning
             tempo = 7.0
 
         case .relaxation:
             reverbWet = 0.8
             filterCutoff = 300.0
             amplitude = 0.4
-            baseFrequency = 396.0  // Root chakra frequency
+            baseFrequency = 220.0  // A3 - warm bass tone
             tempo = 4.0
 
         case .energize:
             reverbWet = 0.2
             filterCutoff = 2000.0
             amplitude = 0.7
-            baseFrequency = 741.0  // Awakening frequency
+            baseFrequency = 880.0  // A5 - bright energy
             tempo = 8.0
         }
 
-        print("🎛️  Applied preset: \(preset.rawValue)")
+        log.biofeedback("🎛️  Applied preset: \(preset.rawValue)")
     }
 
     enum BioPreset: String, CaseIterable {

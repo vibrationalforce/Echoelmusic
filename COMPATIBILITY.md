@@ -25,7 +25,7 @@ Für vollständige Apple Spatial Audio Features.
 |---------|--------|--------|--------|--------|---------|
 | **Core Features** | | | | | |
 | Mikrophone Aufnahme | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Binaural Beats | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Multidimensional Brainwave Entrainment | ✅ | ✅ | ✅ | ✅ | ✅ |
 | HealthKit (HRV) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Voice Pitch Detection | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Bio-Parameter Mapping | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -53,12 +53,12 @@ Für vollständige Apple Spatial Audio Features.
 ### AirPods Pro (Empfohlen)
 **Generationen:**
 - **AirPods Pro (1. Gen)** - iOS 15+
-  - ✅ Binaural Beats
+  - ✅ Multidimensional Brainwave Entrainment
   - ✅ Basic Spatial Audio
   - ⚠️ Head Tracking (iOS 14+)
 
 - **AirPods Pro (2. Gen)** - iOS 16+
-  - ✅ Binaural Beats
+  - ✅ Multidimensional Brainwave Entrainment
   - ✅ Advanced Spatial Audio
   - ✅ Head Tracking
   - ✅ Adaptive Transparency
@@ -74,7 +74,7 @@ Für vollständige Apple Spatial Audio Features.
 - ✅ Premium Audio Quality
 
 ### Andere Kopfhörer
-- ✅ Standard AirPods - Binaural Beats nur
+- ✅ Standard AirPods - Multidimensional Brainwave Entrainment nur
 - ✅ Bluetooth Headphones - Stereo Audio
 - ✅ Wired Headphones - Volle Audioqualität
 - ⚠️ Spatial Audio - Nur mit kompatiblen Bluetooth-Kopfhörern
@@ -117,7 +117,7 @@ Für vollständige Apple Spatial Audio Features.
 #### iPhone 12 Serie (iOS 15+)
 **Pro Max, Pro, Mini, Standard**
 - ✅ Core Features
-- ✅ Binaural Beats
+- ✅ Multidimensional Brainwave Entrainment
 - ✅ HealthKit
 - ⚠️ Spatial Audio basic
 - ⚠️ Keine Advanced Features
@@ -125,14 +125,14 @@ Für vollständige Apple Spatial Audio Features.
 #### iPhone 11 Serie (iOS 15+)
 **Pro Max, Pro, Standard**
 - ✅ Core Features
-- ✅ Binaural Beats
+- ✅ Multidimensional Brainwave Entrainment
 - ✅ HealthKit
 - ⚠️ Limitierte Spatial Audio
 - ⚠️ Langsamere Performance
 
 #### Ältere iPhones (iOS 15 Compatible)
 **iPhone 6s bis iPhone X** (mit iOS 15+)
-- ✅ Binaural Beats
+- ✅ Multidimensional Brainwave Entrainment
 - ✅ Mikrophone Recording
 - ⚠️ Kein HealthKit auf älteren Models
 - ❌ Kein Spatial Audio
@@ -168,7 +168,7 @@ Wenn Features nicht verfügbar sind, nutzt Echoelmusic automatisch Fallback-Modi
 | Feature nicht verfügbar | Fallback Modus |
 |-------------------------|----------------|
 | ASAF | Standard 3D Spatial Audio |
-| Spatial Audio | Binaural Beats (Stereo) |
+| Spatial Audio | Multidimensional Brainwave Entrainment (Stereo) |
 | Head Tracking | Statische 3D Position |
 | AirPods | Standard Kopfhörer-Modus |
 | HealthKit | Manuelle Parameter |
@@ -209,7 +209,7 @@ Wenn Features nicht verfügbar sind, nutzt Echoelmusic automatisch Fallback-Modi
 ```
 ✅ Mikrophone Recording
 ✅ Voice Pitch Detection
-✅ Binaural Beats (432 Hz healing frequency)
+✅ Multidimensional Brainwave Entrainment
 ✅ 8 Brainwave States (Delta → Gamma)
 ✅ Standard Stereo Audio
 ```

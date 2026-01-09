@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(HealthKit)
 import HealthKit
+#endif
 
 /// Clinical Evidence-Based Therapies
 /// Validated interventions from systematic reviews and meta-analyses
@@ -25,7 +27,7 @@ class ClinicalEvidenceBase: ObservableObject {
         let name: String
         let indication: String
         let evidenceLevel: EvidenceLevel
-        let cochrane Review: String?
+        let cochraneReview: String?
         let effectSize: EffectSize
         let safetyProfile: SafetyProfile
         let contraindications: [String]
@@ -84,8 +86,8 @@ class ClinicalEvidenceBase: ObservableObject {
 
     init() {
         loadEvidenceBasedInterventions()
-        print("✅ Clinical Evidence Base: Initialized")
-        print("📚 All interventions backed by peer-reviewed research")
+        log.science("✅ Clinical Evidence Base: Initialized")
+        log.science("📚 All interventions backed by peer-reviewed research")
     }
 
     private func loadEvidenceBasedInterventions() {

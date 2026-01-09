@@ -28,7 +28,7 @@
 
 	<!-- HealthKit Permissions (for HRV biofeedback) -->
 	<key>NSHealthShareUsageDescription</key>
-	<string>BLAB reads your heart rate variability (HRV) to create adaptive healing frequencies that respond to your nervous system state.</string>
+	<string>BLAB reads your heart rate variability (HRV) to create adaptive audio experiences that respond to your biometric state for creative expression.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>BLAB may log your meditation and breathing sessions to HealthKit for wellness tracking.</string>
 
@@ -38,7 +38,7 @@
 
 	<!-- Bluetooth Permission (for AirPods detection and ASAF) -->
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>BLAB detects your AirPods to enable Apple Spatial Audio Features (ASAF) and high-quality binaural beats.</string>
+	<string>BLAB detects your AirPods to enable Apple Spatial Audio Features (ASAF) and high-quality Multidimensional Brainwave Entrainment.</string>
 
 	<!-- Background Modes (for continuous audio playback) -->
 	<key>UIBackgroundModes</key>

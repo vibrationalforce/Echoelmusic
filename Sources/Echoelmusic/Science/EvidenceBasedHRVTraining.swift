@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(HealthKit)
 import HealthKit
+#endif
 import Combine
 
 /// Evidence-Based HRV Training System
@@ -116,8 +118,8 @@ class EvidenceBasedHRVTraining: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Evidence-Based HRV Training: Initialized")
-        print("📚 Based on peer-reviewed research - Educational purposes only")
+        log.science("✅ Evidence-Based HRV Training: Initialized")
+        log.science("📚 Based on peer-reviewed research - Educational purposes only")
     }
 
     // MARK: - Start Training Session
@@ -133,10 +135,10 @@ class EvidenceBasedHRVTraining: ObservableObject {
         // Calculate baseline
         baselineHRV = try await measureBaselineHRV()
 
-        print("▶️ HRV Training: \(protocolType.rawValue)")
-        print("📊 Evidence Level: \(protocolType.evidenceLevel.rawValue)")
-        print("🫁 Target Breathing Rate: \(protocolType.targetBreathingRate) breaths/min")
-        print("⏱️ Duration: \(Int(protocolType.sessionDuration / 60)) minutes")
+        log.science("▶️ HRV Training: \(protocolType.rawValue)")
+        log.science("📊 Evidence Level: \(protocolType.evidenceLevel.rawValue)")
+        log.science("🫁 Target Breathing Rate: \(protocolType.targetBreathingRate) breaths/min")
+        log.science("⏱️ Duration: \(Int(protocolType.sessionDuration / 60)) minutes")
 
         // Start monitoring
         startMonitoring()
@@ -154,12 +156,12 @@ class EvidenceBasedHRVTraining: ObservableObject {
         let avgCoherence = sessionData.map { $0.coherence }.reduce(0, +) / Float(sessionData.count)
         let hrvChange = finalHRV - baselineHRV
 
-        print("⏹️ HRV Training: Session Ended")
-        print("📊 Results:")
-        print("   - Baseline HRV: \(String(format: "%.1f", baselineHRV)) ms")
-        print("   - Final HRV: \(String(format: "%.1f", finalHRV)) ms")
-        print("   - Change: \(hrvChange >= 0 ? "+" : "")\(String(format: "%.1f", hrvChange)) ms (\(String(format: "%.1f", (hrvChange / baselineHRV) * 100))%)")
-        print("   - Avg Coherence: \(String(format: "%.1f", avgCoherence))")
+        log.science("⏹️ HRV Training: Session Ended")
+        log.science("📊 Results:")
+        log.science("   - Baseline HRV: \(String(format: "%.1f", baselineHRV)) ms")
+        log.science("   - Final HRV: \(String(format: "%.1f", finalHRV)) ms")
+        log.science("   - Change: \(hrvChange >= 0 ? "+" : "")\(String(format: "%.1f", hrvChange)) ms (\(String(format: "%.1f", (hrvChange / baselineHRV) * 100))%)")
+        log.science("   - Avg Coherence: \(String(format: "%.1f", avgCoherence))")
 
         currentProtocol = nil
     }

@@ -20,7 +20,7 @@ class CloudSyncManager: ObservableObject {
         self.container = CKContainer(identifier: "iCloud.com.echoelmusic.app")
         self.privateDatabase = container.privateCloudDatabase
         self.sharedDatabase = container.sharedCloudDatabase
-        print("✅ CloudSyncManager: Initialized")
+        log.network("✅ CloudSyncManager: Initialized")
     }
 
     // MARK: - Enable/Disable Sync
@@ -34,12 +34,12 @@ class CloudSyncManager: ObservableObject {
         }
 
         syncEnabled = true
-        print("☁️ CloudSyncManager: Sync enabled")
+        log.network("☁️ CloudSyncManager: Sync enabled")
     }
 
     func disableSync() {
         syncEnabled = false
-        print("☁️ CloudSyncManager: Sync disabled")
+        log.network("☁️ CloudSyncManager: Sync disabled")
     }
 
     // MARK: - Save Session
@@ -61,7 +61,7 @@ class CloudSyncManager: ObservableObject {
         try await privateDatabase.save(record)
 
         lastSyncDate = Date()
-        print("☁️ CloudSyncManager: Saved session '\(session.name)'")
+        log.network("☁️ CloudSyncManager: Saved session '\(session.name)'")
     }
 
     // MARK: - Fetch Sessions
@@ -94,25 +94,147 @@ class CloudSyncManager: ObservableObject {
         cloudSessions = sessions
         lastSyncDate = Date()
 
-        print("☁️ CloudSyncManager: Fetched \(sessions.count) sessions")
+        log.network("☁️ CloudSyncManager: Fetched \(sessions.count) sessions")
         return sessions
     }
 
     // MARK: - Auto Backup
 
+    private var autoBackupTimer: Timer?
+    private var currentSessionData: SessionBackupData?
+    private var lastBackupDate: Date?
+
+    struct SessionBackupData {
+        var name: String
+        var startTime: Date
+        var hrvReadings: [Float]
+        var coherenceReadings: [Float]
+        var heartRateReadings: [Float]
+        var currentDuration: TimeInterval
+    }
+
     func enableAutoBackup(interval: TimeInterval = 300) {
-        // Backup every 5 minutes
-        Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task {
+        // Cancel existing timer if any
+        autoBackupTimer?.invalidate()
+
+        // Backup every 5 minutes (or specified interval)
+        autoBackupTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
                 try? await self?.autoBackup()
             }
         }
-        print("☁️ CloudSyncManager: Auto backup enabled (every \(Int(interval))s)")
+        log.network("☁️ CloudSyncManager: Auto backup enabled (every \(Int(interval))s)")
+    }
+
+    func disableAutoBackup() {
+        autoBackupTimer?.invalidate()
+        autoBackupTimer = nil
+        log.network("☁️ CloudSyncManager: Auto backup disabled")
+    }
+
+    /// Update current session data for backup
+    func updateSessionData(hrv: Float, coherence: Float, heartRate: Float) {
+        if currentSessionData == nil {
+            currentSessionData = SessionBackupData(
+                name: "Session \(Date().formatted(date: .abbreviated, time: .shortened))",
+                startTime: Date(),
+                hrvReadings: [],
+                coherenceReadings: [],
+                heartRateReadings: [],
+                currentDuration: 0
+            )
+        }
+
+        currentSessionData?.hrvReadings.append(hrv)
+        currentSessionData?.coherenceReadings.append(coherence)
+        currentSessionData?.heartRateReadings.append(heartRate)
+        currentSessionData?.currentDuration = Date().timeIntervalSince(currentSessionData?.startTime ?? Date())
     }
 
     private func autoBackup() async throws {
-        // TODO: Backup current session automatically
-        print("☁️ CloudSyncManager: Auto backup triggered")
+        guard syncEnabled else {
+            log.network("☁️ CloudSyncManager: Auto backup skipped (sync disabled)")
+            return
+        }
+
+        guard let sessionData = currentSessionData else {
+            log.network("☁️ CloudSyncManager: Auto backup skipped (no active session)")
+            return
+        }
+
+        // Skip if nothing new to backup
+        if let lastBackup = lastBackupDate,
+           sessionData.hrvReadings.count < 10 {
+            log.network("☁️ CloudSyncManager: Auto backup skipped (insufficient new data)")
+            return
+        }
+
+        isSyncing = true
+        defer { isSyncing = false }
+
+        // Calculate averages
+        let avgHRV = sessionData.hrvReadings.reduce(0, +) / Float(max(sessionData.hrvReadings.count, 1))
+        let avgCoherence = sessionData.coherenceReadings.reduce(0, +) / Float(max(sessionData.coherenceReadings.count, 1))
+        let avgHeartRate = sessionData.heartRateReadings.reduce(0, +) / Float(max(sessionData.heartRateReadings.count, 1))
+
+        // Create backup record
+        let record = CKRecord(recordType: "SessionBackup")
+        record["name"] = sessionData.name as CKRecordValue
+        record["startTime"] = sessionData.startTime as CKRecordValue
+        record["duration"] = sessionData.currentDuration as CKRecordValue
+        record["avgHRV"] = avgHRV as CKRecordValue
+        record["avgCoherence"] = avgCoherence as CKRecordValue
+        record["avgHeartRate"] = avgHeartRate as CKRecordValue
+        record["dataPointCount"] = sessionData.hrvReadings.count as CKRecordValue
+        record["isPartialBackup"] = true as CKRecordValue
+        record["backupDate"] = Date() as CKRecordValue
+
+        // Store raw readings as JSON data (for detailed analysis)
+        let readings: [String: [Float]] = [
+            "hrv": sessionData.hrvReadings,
+            "coherence": sessionData.coherenceReadings,
+            "heartRate": sessionData.heartRateReadings
+        ]
+
+        if let readingsData = try? JSONEncoder().encode(readings) {
+            record["readings"] = readingsData as CKRecordValue
+        }
+
+        // Save to private database
+        do {
+            try await privateDatabase.save(record)
+            lastBackupDate = Date()
+            lastSyncDate = Date()
+            log.network("☁️ CloudSyncManager: Auto backup completed - \(sessionData.hrvReadings.count) data points, avg HRV: \(String(format: "%.1f", avgHRV)), avg Coherence: \(String(format: "%.2f", avgCoherence))")
+        } catch {
+            log.network("❌ CloudSyncManager: Auto backup failed - \(error.localizedDescription)", level: .error)
+            throw CloudError.syncFailed
+        }
+    }
+
+    /// Finalize and save complete session
+    func finalizeSession() async throws {
+        guard let sessionData = currentSessionData else { return }
+
+        // Calculate final averages
+        let avgHRV = sessionData.hrvReadings.reduce(0, +) / Float(max(sessionData.hrvReadings.count, 1))
+        let avgCoherence = sessionData.coherenceReadings.reduce(0, +) / Float(max(sessionData.coherenceReadings.count, 1))
+
+        // Save as complete session
+        let session = Session(
+            name: sessionData.name,
+            duration: sessionData.currentDuration,
+            avgHRV: avgHRV,
+            avgCoherence: avgCoherence
+        )
+
+        try await saveSession(session)
+
+        // Clear current session data
+        currentSessionData = nil
+        lastBackupDate = nil
+
+        log.network("☁️ CloudSyncManager: Session finalized and saved")
     }
 }
 

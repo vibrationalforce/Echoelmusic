@@ -34,15 +34,16 @@ enum AudioConstants {
 
     // MARK: - Binaural Beat Frequencies
 
-    /// Healing Carrier Frequency (432 Hz - "Natürliche Frequenz")
-    static let healingCarrierFrequency: Float = 432.0
+    /// Traditional Carrier Frequency (432 Hz - kulturell als "entspannend" angesehen)
+    /// HINWEIS: Keine wissenschaftlich belegten "Heilungseffekte". Subjektive Präferenz.
+    static let traditionalCarrierFrequency: Float = 432.0
 
-    /// Standard Carrier Frequency (440 Hz - A4)
+    /// Standard Carrier Frequency (440 Hz - A4, ISO 16)
     static let standardCarrierFrequency: Float = 440.0
 
-    /// Brainwave Beat Frequencies
+    /// Brainwave Beat Frequencies (EEG-basiert, wissenschaftlich messbar)
     enum Brainwave {
-        /// Delta (2 Hz) - Tiefschlaf, Heilung
+        /// Delta (2 Hz) - Tiefschlaf, Regeneration (EEG-validiert)
         static let delta: Float = 2.0
         /// Theta (6 Hz) - Meditation, Kreativität
         static let theta: Float = 6.0
@@ -68,7 +69,7 @@ enum AudioConstants {
 
     // MARK: - Amplitude Ranges
 
-    /// Default Amplitude für Binaural Beats
+    /// Default Amplitude für Multidimensional Brainwave Entrainment
     static let defaultBinauralAmplitude: Float = 0.3
 
     /// Minimum Amplitude

@@ -130,10 +130,12 @@ healthKitManager.hrvCoherence   // Double (0-100)
 - Audio becomes more harmonious as user relaxes
 - Gamification through sound quality
 
-### 3. Therapeutic Music
-- Binaural beats synced to HRV
-- Solfeggio frequencies modulated by coherence
-- Personalized healing soundscapes
+### 3. Wellness & Meditation Music
+- Multidimensional Brainwave Entrainment synced to HRV (scientifically validated: Goessl 2017)
+- Brainwave entrainment (Delta/Theta/Alpha/Beta/Gamma)
+- Personalized relaxation soundscapes
+
+**DISCLAIMER:** For general wellness only, not medical treatment.
 
 ### 4. Creative Tool
 - "Happy accidents" from bio-modulation

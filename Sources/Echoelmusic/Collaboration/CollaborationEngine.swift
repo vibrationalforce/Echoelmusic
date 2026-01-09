@@ -75,7 +75,7 @@ class CollaborationEngine: ObservableObject {
             try await webRTCClient?.createOffer()
         }
 
-        print("✅ CollaborationEngine: Created session (host: \(host), code: \(session.roomCode))")
+        log.collaboration("✅ CollaborationEngine: Created session (host: \(host), code: \(session.roomCode))")
     }
 
     func joinSession(sessionID: UUID) async throws {
@@ -93,7 +93,7 @@ class CollaborationEngine: ObservableObject {
         // Request to join session
         try await signalingClient?.joinRoom(sessionID: sessionID)
 
-        print("🔗 CollaborationEngine: Joining session \(sessionID)")
+        log.collaboration("🔗 CollaborationEngine: Joining session \(sessionID)")
     }
 
     func joinWithCode(_ code: String) async throws {
@@ -108,7 +108,7 @@ class CollaborationEngine: ObservableObject {
 
         try await signalingClient?.joinWithCode(code)
 
-        print("🔗 CollaborationEngine: Joining with code \(code)")
+        log.collaboration("🔗 CollaborationEngine: Joining with code \(code)")
     }
 
     func leaveSession() {
@@ -120,7 +120,7 @@ class CollaborationEngine: ObservableObject {
         isActive = false
         connectionState = .disconnected
 
-        print("👋 CollaborationEngine: Left session")
+        log.collaboration("👋 CollaborationEngine: Left session")
     }
 
     // MARK: - Data Channels
@@ -164,7 +164,7 @@ class CollaborationEngine: ObservableObject {
         averageHRV = participantBio.map { $0.hrv }.reduce(0, +) / count
         groupCoherence = participantBio.map { $0.coherence }.reduce(0, +) / count
 
-        print("🧠 CollaborationEngine: Group HRV: \(averageHRV), Group Coherence: \(groupCoherence)")
+        log.collaboration("🧠 CollaborationEngine: Group HRV: \(averageHRV), Group Coherence: \(groupCoherence)")
     }
 
     func identifyFlowLeader() -> UUID? {
@@ -222,11 +222,11 @@ extension CollaborationEngine: WebRTCClientDelegate {
         case .bio:
             if let bioData = try? JSONDecoder().decode(BioSyncData.self, from: data) {
                 // Update participant bio
-                print("📡 Received bio data: HRV=\(bioData.hrv), Coherence=\(bioData.coherence)")
+                log.collaboration("📡 Received bio data: HRV=\(bioData.hrv), Coherence=\(bioData.coherence)")
             }
         case .chat:
             if let chatMessage = try? JSONDecoder().decode(ChatMessage.self, from: data) {
-                print("💬 \(chatMessage.text)")
+                log.collaboration("💬 \(chatMessage.text)")
             }
         case .control:
             if String(data: data, encoding: .utf8) == "pong" {
@@ -336,36 +336,36 @@ class WebRTCClient {
 
     init(iceServers: [ICEServer]) {
         self.iceServers = iceServers
-        print("🔌 WebRTCClient: Initialized with \(iceServers.count) ICE servers")
+        log.collaboration("🔌 WebRTCClient: Initialized with \(iceServers.count) ICE servers")
     }
 
     func createOffer() async throws {
         // In production: Create WebRTC offer SDP
-        print("📤 WebRTCClient: Creating offer")
+        log.collaboration("📤 WebRTCClient: Creating offer")
     }
 
     func handleOffer(sdp: String) async throws {
         // In production: Set remote description, create answer
-        print("📥 WebRTCClient: Handling offer")
+        log.collaboration("📥 WebRTCClient: Handling offer")
     }
 
     func handleAnswer(sdp: String) async throws {
         // In production: Set remote description
-        print("📥 WebRTCClient: Handling answer")
+        log.collaboration("📥 WebRTCClient: Handling answer")
     }
 
     func addCandidate(_ candidate: ICECandidate) {
         // In production: Add ICE candidate
-        print("🧊 WebRTCClient: Adding ICE candidate")
+        log.collaboration("🧊 WebRTCClient: Adding ICE candidate")
     }
 
     func sendData(_ data: Data, channel: DataChannel) {
         // In production: Send via data channel
-        print("📡 WebRTCClient: Sending \(data.count) bytes on \(channel.rawValue)")
+        log.collaboration("📡 WebRTCClient: Sending \(data.count) bytes on \(channel.rawValue)")
     }
 
     func disconnect() {
-        print("🔌 WebRTCClient: Disconnecting")
+        log.collaboration("🔌 WebRTCClient: Disconnecting")
     }
 }
 
@@ -385,35 +385,35 @@ class SignalingClient {
 
     init(url: String) {
         self.url = url
-        print("📡 SignalingClient: Initialized with \(url)")
+        log.collaboration("📡 SignalingClient: Initialized with \(url)")
     }
 
     func connect() async throws {
         // In production: Connect to WebSocket
-        print("🔌 SignalingClient: Connecting to \(url)")
+        log.collaboration("🔌 SignalingClient: Connecting to \(url)")
     }
 
     func joinRoom(sessionID: UUID) async throws {
-        print("🚪 SignalingClient: Joining room \(sessionID)")
+        log.collaboration("🚪 SignalingClient: Joining room \(sessionID)")
     }
 
     func joinWithCode(_ code: String) async throws {
-        print("🚪 SignalingClient: Joining room with code \(code)")
+        log.collaboration("🚪 SignalingClient: Joining room with code \(code)")
     }
 
     func sendOffer(sdp: String) async throws {
-        print("📤 SignalingClient: Sending offer")
+        log.collaboration("📤 SignalingClient: Sending offer")
     }
 
     func sendAnswer(sdp: String) async throws {
-        print("📤 SignalingClient: Sending answer")
+        log.collaboration("📤 SignalingClient: Sending answer")
     }
 
     func sendCandidate(_ candidate: ICECandidate) async throws {
-        print("📤 SignalingClient: Sending ICE candidate")
+        log.collaboration("📤 SignalingClient: Sending ICE candidate")
     }
 
     func disconnect() {
-        print("🔌 SignalingClient: Disconnecting")
+        log.collaboration("🔌 SignalingClient: Disconnecting")
     }
 }

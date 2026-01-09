@@ -6,7 +6,7 @@ import Combine
 ///
 /// Coordinates:
 /// - Microphone input (for voice/breath capture)
-/// - Binaural beat generation (for brainwave entrainment)
+/// - Multidimensional Brainwave Entrainment generation (for brainwave entrainment)
 /// - Spatial audio with head tracking
 /// - Bio-parameter mapping (HRV → Audio)
 /// - Real-time mixing and effects
@@ -20,7 +20,7 @@ class AudioEngine: ObservableObject {
     /// Whether the audio engine is currently running
     @Published var isRunning: Bool = false
 
-    /// Whether binaural beats are enabled
+    /// Whether Multidimensional Brainwave Entrainment are enabled
     @Published var binauralBeatsEnabled: Bool = false
 
     /// Whether spatial audio is enabled
@@ -29,7 +29,7 @@ class AudioEngine: ObservableObject {
     /// Current binaural beat state
     @Published var currentBrainwaveState: BinauralBeatGenerator.BrainwaveState = .alpha
 
-    /// Binaural beat amplitude (0.0 - 1.0)
+    /// Multidimensional Brainwave Entrainment amplitude (0.0 - 1.0)
     @Published var binauralAmplitude: Float = 0.3
 
 
@@ -38,7 +38,8 @@ class AudioEngine: ObservableObject {
     /// Microphone manager for voice/breath input
     let microphoneManager: MicrophoneManager
 
-    /// Binaural beat generator for healing frequencies
+    /// Multidimensional Brainwave Entrainment generator for brainwave entrainment frequencies
+    /// HINWEIS: Subjektive Entspannung, keine medizinischen Heilungseffekte belegt
     private let binauralGenerator = BinauralBeatGenerator()
 
     /// Spatial audio engine for 3D audio
@@ -74,17 +75,18 @@ class AudioEngine: ObservableObject {
         // Configure audio session for optimal performance
         do {
             try AudioConfiguration.configureAudioSession()
-            print(AudioConfiguration.latencyStats())
+            log.audio(AudioConfiguration.latencyStats())
         } catch {
-            print("⚠️  Failed to configure audio session: \(error)")
+            log.audio("⚠️  Failed to configure audio session: \(error)", level: .warning)
         }
 
         // Set real-time audio thread priority
         AudioConfiguration.setAudioThreadPriority()
 
         // Configure default binaural beat settings
+        // HINWEIS: 432 Hz ist kulturell beliebt, keine "Heilfrequenz" wissenschaftlich belegt
         binauralGenerator.configure(
-            carrier: 432.0,  // Healing frequency
+            carrier: 432.0,  // Traditional tuning (subjective preference)
             beat: 10.0,      // Alpha waves (relaxation)
             amplitude: 0.3
         )
@@ -104,7 +106,7 @@ class AudioEngine: ObservableObject {
                 deviceCapabilities: capabilities
             )
         } else {
-            print("⚠️  Spatial audio engine requires iOS 15+")
+            log.audio("⚠️  Spatial audio engine requires iOS 15+", level: .warning)
         }
 
         // Start monitoring device capabilities
@@ -113,21 +115,21 @@ class AudioEngine: ObservableObject {
         // Initialize node graph with default biofeedback chain
         nodeGraph = NodeGraph.createBiofeedbackChain()
 
-        print("🎵 AudioEngine initialized")
-        print("   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "✅" : "❌")")
-        print("   Head Tracking: \(headTrackingManager?.isAvailable == true ? "✅" : "❌")")
-        print("   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")
+        log.audio("🎵 AudioEngine initialized")
+        log.audio("   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "✅" : "❌")")
+        log.audio("   Head Tracking: \(headTrackingManager?.isAvailable == true ? "✅" : "❌")")
+        log.audio("   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")
     }
 
 
     // MARK: - Public Methods
 
-    /// Start the audio engine (microphone + optional binaural beats + spatial audio)
+    /// Start the audio engine (microphone + optional Multidimensional Brainwave Entrainment + spatial audio)
     func start() {
         // Start microphone
         microphoneManager.startRecording()
 
-        // Start binaural beats if enabled
+        // Start Multidimensional Brainwave Entrainment if enabled
         if binauralBeatsEnabled {
             binauralGenerator.start()
         }
@@ -136,9 +138,9 @@ class AudioEngine: ObservableObject {
         if spatialAudioEnabled, let spatial = spatialAudioEngine {
             do {
                 try spatial.start()
-                print("🎵 Spatial audio started")
+                log.audio("🎵 Spatial audio started")
             } catch {
-                print("❌ Failed to start spatial audio: \(error)")
+                log.audio("❌ Failed to start spatial audio: \(error)", level: .error)
                 spatialAudioEnabled = false
             }
         }
@@ -147,7 +149,7 @@ class AudioEngine: ObservableObject {
         startBioParameterMapping()
 
         isRunning = true
-        print("🎵 AudioEngine started")
+        log.audio("🎵 AudioEngine started")
     }
 
     /// Stop the audio engine
@@ -155,7 +157,7 @@ class AudioEngine: ObservableObject {
         // Stop microphone
         microphoneManager.stopRecording()
 
-        // Stop binaural beats
+        // Stop Multidimensional Brainwave Entrainment
         binauralGenerator.stop()
 
         // Stop spatial audio
@@ -165,23 +167,23 @@ class AudioEngine: ObservableObject {
         stopBioParameterMapping()
 
         isRunning = false
-        print("🎵 AudioEngine stopped")
+        log.audio("🎵 AudioEngine stopped")
     }
 
-    /// Toggle binaural beats on/off
+    /// Toggle Multidimensional Brainwave Entrainment on/off
     func toggleBinauralBeats() {
         binauralBeatsEnabled.toggle()
 
         if binauralBeatsEnabled {
             binauralGenerator.start()
-            print("🔊 Binaural beats enabled")
+            log.audio("🔊 Multidimensional Brainwave Entrainment enabled")
         } else {
             binauralGenerator.stop()
-            print("🔇 Binaural beats disabled")
+            log.audio("🔇 Multidimensional Brainwave Entrainment disabled")
         }
     }
 
-    /// Set brainwave state for binaural beats
+    /// Set brainwave state for Multidimensional Brainwave Entrainment
     /// - Parameter state: Target brainwave state (delta, theta, alpha, beta, gamma)
     func setBrainwaveState(_ state: BinauralBeatGenerator.BrainwaveState) {
         currentBrainwaveState = state
@@ -219,18 +221,18 @@ class AudioEngine: ObservableObject {
             if let spatial = spatialAudioEngine {
                 do {
                     try spatial.start()
-                    print("🎵 Spatial audio enabled")
+                    log.audio("🎵 Spatial audio enabled")
                 } catch {
-                    print("❌ Failed to enable spatial audio: \(error)")
+                    log.audio("❌ Failed to enable spatial audio: \(error)", level: .error)
                     spatialAudioEnabled = false
                 }
             } else {
-                print("⚠️  Spatial audio not available")
+                log.audio("⚠️  Spatial audio not available", level: .warning)
                 spatialAudioEnabled = false
             }
         } else {
             spatialAudioEngine?.stop()
-            print("🎵 Spatial audio disabled")
+            log.audio("🎵 Spatial audio disabled")
         }
     }
 
@@ -274,7 +276,7 @@ class AudioEngine: ObservableObject {
     /// Start bio-parameter mapping (HRV/HR → Audio)
     private func startBioParameterMapping() {
         guard let healthKit = healthKitManager else {
-            print("⚠️  Bio-parameter mapping: HealthKit not connected")
+            log.audio("⚠️  Bio-parameter mapping: HealthKit not connected", level: .warning)
             return
         }
 
@@ -286,13 +288,13 @@ class AudioEngine: ObservableObject {
             }
             .store(in: &cancellables)
 
-        print("🎛️  Bio-parameter mapping started")
+        log.audio("🎛️  Bio-parameter mapping started")
     }
 
     /// Stop bio-parameter mapping
     private func stopBioParameterMapping() {
         // Cancellables will be cleared when engine stops
-        print("🎛️  Bio-parameter mapping stopped")
+        log.audio("🎛️  Bio-parameter mapping stopped")
     }
 
     /// Update bio-parameters from current biometric data
@@ -350,9 +352,9 @@ class AudioEngine: ObservableObject {
         var description = "Microphone: Active"
 
         if binauralBeatsEnabled {
-            description += "\nBinaural Beats: \(currentBrainwaveState.rawValue.capitalized) (\(currentBrainwaveState.beatFrequency) Hz)"
+            description += "\nMultidimensional Brainwave Entrainment: \(currentBrainwaveState.rawValue.capitalized) (\(currentBrainwaveState.beatFrequency) Hz)"
         } else {
-            description += "\nBinaural Beats: Off"
+            description += "\nMultidimensional Brainwave Entrainment: Off"
         }
 
         if spatialAudioEnabled {
@@ -375,5 +377,55 @@ class AudioEngine: ObservableObject {
     /// Get bio-parameter mapping summary
     var bioParameterSummary: String {
         bioParameterMapper.parameterSummary
+    }
+
+    /// Current audio level from microphone (0.0 - 1.0)
+    var currentLevel: Float {
+        microphoneManager.audioLevel
+    }
+
+    /// Get current detected pitch in Hz
+    var getCurrentPitch: (() -> Float)? {
+        return { [weak self] in
+            self?.microphoneManager.currentPitch ?? 0.0
+        }
+    }
+
+    // MARK: - Filter & Effect Control (for UnifiedControlHub)
+
+    /// Set filter cutoff frequency
+    func setFilterCutoff(_ frequency: Float) {
+        nodeGraph?.setParameter(.filterCutoff, value: frequency)
+    }
+
+    /// Set filter resonance
+    func setFilterResonance(_ resonance: Float) {
+        nodeGraph?.setParameter(.filterResonance, value: resonance)
+    }
+
+    /// Set reverb wetness (0.0 - 1.0)
+    func setReverbWetness(_ wetness: Float) {
+        nodeGraph?.setParameter(.reverbWet, value: wetness)
+        spatialAudioEngine?.setReverbBlend(wetness)
+    }
+
+    /// Set reverb size (0.0 - 1.0)
+    func setReverbSize(_ size: Float) {
+        nodeGraph?.setParameter(.reverbSize, value: size)
+    }
+
+    /// Set delay time in seconds
+    func setDelayTime(_ time: Float) {
+        nodeGraph?.setParameter(.delayTime, value: time)
+    }
+
+    /// Set master volume (0.0 - 1.0)
+    func setMasterVolume(_ volume: Float) {
+        nodeGraph?.setParameter(.masterVolume, value: volume)
+    }
+
+    /// Set tempo in BPM
+    func setTempo(_ bpm: Float) {
+        nodeGraph?.setParameter(.tempo, value: bpm)
     }
 }

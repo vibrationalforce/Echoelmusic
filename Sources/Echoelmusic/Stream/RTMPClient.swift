@@ -172,7 +172,7 @@ class RTMPClient: ObservableObject {
         // C2: Echo back S1
         try await send(s1)
 
-        print("🤝 RTMP Handshake completed successfully")
+        log.streaming("🤝 RTMP Handshake completed successfully")
     }
 
     // MARK: - RTMP Commands
@@ -233,7 +233,7 @@ class RTMPClient: ObservableObject {
             streamID = 1
         }
 
-        print("📺 Stream created with ID: \(streamID)")
+        log.streaming("📺 Stream created with ID: \(streamID)")
     }
 
     /// Publish stream
@@ -250,10 +250,25 @@ class RTMPClient: ObservableObject {
         try await sendRTMPMessage(type: RTMPConstants.msgAMF0Command, data: amf, streamID: UInt32(streamID))
 
         connectionState = .streaming
-        print("🎬 Publishing to stream: \(streamKey)")
+        log.streaming("🎬 Publishing to stream: \(streamKey)")
     }
 
     // MARK: - Send Media
+
+    /// Send encoded frame data (convenience wrapper for StreamEngine)
+    /// Assumes video frame with auto-detected keyframe based on NALU type
+    func sendFrame(_ data: Data) async throws {
+        guard !data.isEmpty else { return }
+
+        // Calculate timestamp based on frame count
+        let timestamp = UInt32(Date().timeIntervalSince1970 * 1000) - epoch
+
+        // Check if keyframe by looking at NALU type (simplified detection)
+        // NAL unit type 5 = IDR (keyframe), type 1 = non-IDR
+        let isKeyframe = data.first.map { ($0 & 0x1F) == 5 } ?? false
+
+        try await sendVideoFrame(data, timestamp: timestamp, isKeyframe: isKeyframe)
+    }
 
     /// Send video frame (H.264/AVC)
     func sendVideoFrame(_ data: Data, timestamp: UInt32, isKeyframe: Bool) async throws {

@@ -62,12 +62,17 @@ void SpectralSculptor::learnNoiseProfile(const juce::AudioBuffer<float>& buffer)
         // Apply window
         window.multiplyWithWindowingTable(state.fftData.data(), fftSize);
 
-        // Forward FFT
-        forwardFFT.perform(state.fftData.data(), reinterpret_cast<float*>(state.freqData.data()), false);
+        // Forward FFT (JUCE 7+ compatible)
+        std::vector<float> fftBuffer(fftSize * 2, 0.0f);
+        std::copy(state.fftData.begin(), state.fftData.end(), fftBuffer.begin());
+        forwardFFT.performRealOnlyForwardTransform(fftBuffer.data(), true);
 
-        // Accumulate magnitude
+        // Extract complex data and accumulate magnitude
         for (size_t i = 0; i < noiseProfile.size(); ++i)
         {
+            float real = fftBuffer[i * 2];
+            float imag = fftBuffer[i * 2 + 1];
+            state.freqData[i] = std::complex<float>(real, imag);
             float magnitude = std::abs(state.freqData[i]);
             noiseProfile[i] += magnitude;
         }
@@ -343,8 +348,18 @@ void SpectralSculptor::processFrame(ChannelState& state)
     std::vector<float> windowedData = state.fftData;
     window.multiplyWithWindowingTable(windowedData.data(), fftSize);
 
-    // Forward FFT
-    forwardFFT.perform(windowedData.data(), reinterpret_cast<float*>(state.freqData.data()), false);
+    // Forward FFT (JUCE 7+ compatible)
+    // Resize windowedData to 2x for complex output
+    windowedData.resize(fftSize * 2, 0.0f);
+    forwardFFT.performRealOnlyForwardTransform(windowedData.data(), true);
+
+    // Copy to complex frequency data
+    for (int i = 0; i <= fftSize / 2; ++i)
+    {
+        float real = windowedData[i * 2];
+        float imag = windowedData[i * 2 + 1];
+        state.freqData[i] = std::complex<float>(real, imag);
+    }
 
     // Process frequency domain based on mode
     switch (currentMode)
@@ -384,9 +399,17 @@ void SpectralSculptor::processFrame(ChannelState& state)
     // Update visualization
     updateVisualization(state.freqData);
 
-    // Inverse FFT
-    std::vector<float> timeData(fftSize * 2);
-    inverseFFT.perform(reinterpret_cast<float*>(state.freqData.data()), timeData.data(), true);
+    // Inverse FFT (JUCE 7+ compatible)
+    std::vector<float> timeData(fftSize * 2, 0.0f);
+
+    // Copy complex frequency data back to interleaved format
+    for (int i = 0; i <= fftSize / 2; ++i)
+    {
+        timeData[i * 2] = state.freqData[i].real();
+        timeData[i * 2 + 1] = state.freqData[i].imag();
+    }
+
+    inverseFFT.performRealOnlyInverseTransform(timeData.data());
 
     // Apply window again for overlap-add
     window.multiplyWithWindowingTable(timeData.data(), fftSize);

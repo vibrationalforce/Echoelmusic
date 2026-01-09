@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Echoelmusic</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Echoelmusic</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSMainStoryboardFile</key>
+	<string>Main</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright 2024-2026 Echoelmusic. All rights reserved.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Echoelmusic uses your microphone to capture audio for bio-reactive processing and voice-to-music transformation.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Echoelmusic uses your camera for face tracking to control audio parameters with your facial expressions.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Echoelmusic connects to Bluetooth MIDI controllers and audio devices.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Echoelmusic uses local network for DMX lighting control, Art-Net, and connecting to external audio interfaces.</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Echoelmusic may communicate with DAW applications for plugin hosting and MIDI routing.</string>
+	<key>NSSupportsAutomaticTermination</key>
+	<false/>
+	<key>NSSupportsSuddenTermination</key>
+	<false/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.music</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSSupportsSecureCoding</key>
+	<true/>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Echoelmusic Project</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>echoel</string>
+				<string>echoelproject</string>
+			</array>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Audio File</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>wav</string>
+				<string>aiff</string>
+				<string>mp3</string>
+				<string>m4a</string>
+				<string>flac</string>
+			</array>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>MIDI File</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>mid</string>
+				<string>midi</string>
+			</array>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -188,6 +188,9 @@ message(STATUS "Plugin Formats: ${FORMATS}")
 # Echoelmusic Plugin
 # ===========================
 
+# Only build plugin if JUCE is enabled
+if(USE_JUCE)
+
 juce_add_plugin(Echoelmusic
     COMPANY_NAME "Echoelmusic"
     PLUGIN_MANUFACTURER_CODE Ech0
@@ -307,6 +310,13 @@ target_sources(Echoelmusic
         Sources/DSP/ResonanceHealer.cpp         # 🔧 Adaptive resonance suppressor (soothe-style)
 
         # =====================================================================
+        # PHASE 100 JUCE: ADVANCED SPECTRAL & DYNAMICS (Fixed 2026-01-05) 🎚️✨
+        # =====================================================================
+        Sources/DSP/DynamicEQ.cpp               # 🎚️ 8-band Dynamic EQ (JUCE 7+ fixed)
+        Sources/DSP/SpectralSculptor.cpp        # 🔬 Spectral processing suite (JUCE 7+ fixed)
+        Sources/DSP/BioModulator.cpp            # 🫀 Biofeedback → BPM, EFX, Instruments, Laser
+
+        # =====================================================================
         # PHASE 4C: HARDWARE EMULATIONS (NEW! 2025-11-13) 🎛️✨
         # =====================================================================
         Sources/DSP/EchoConsole.cpp             # 🎚️ SSL G-Series Channel Strip
@@ -345,10 +355,6 @@ target_sources(Echoelmusic
         Sources/MIDI/ArpWeaver.cpp              # ✨ Advanced arpeggiator (Cthulhu competitor)
         Sources/MIDI/WorldMusicDatabase.cpp     # 🌍 50+ global music styles (Baroque to K-Pop)
 
-        # Pending (needs JUCE 7 fixes)
-        # Sources/DSP/DynamicEQ.cpp             # TODO: Fix ParametricEQ::FilterType
-        # Sources/DSP/SpectralSculptor.cpp      # TODO: Fix FFT API
-
         # =====================================================================
         # PHASE 3: SYNTHESIS & ADVANCED FEATURES
         # =====================================================================
@@ -356,28 +362,53 @@ target_sources(Echoelmusic
         # DRUM SYNTHESIZER - ENABLED! (808/909 style)
         Sources/Synthesis/DrumSynthesizer.cpp
 
-        # Pending (needs JUCE 7 fixes or later integration)
-        # Sources/AI/SmartMixer.cpp               # AI mixing assistant
-        # Sources/Visualization/SpectrumAnalyzer.cpp
-        # Sources/Visualization/BioReactiveVisualizer.cpp
-        # Sources/Healing/ResonanceHealer.cpp
-        # Sources/Instrument/RhythmMatrix.cpp
-        # Sources/Sequencer/ArpWeaver.cpp
-        # Sources/Video/VideoWeaver.cpp
-        # Sources/Visual/VisualForge.cpp
-        # Sources/Visual/LaserForce.cpp
-        # Sources/Remote/RemoteProcessingEngine.cpp
-        # Sources/Hardware/AbletonLink.cpp
-        # Sources/Hardware/MIDIHardwareManager.cpp
-        # Sources/Hardware/ModularIntegration.cpp
-        # Sources/Hardware/DJEquipmentIntegration.cpp
-        # Sources/Hardware/OSCManager.cpp
-        # Sources/Hardware/HardwareSyncManager.cpp
-        # Sources/Audio/SpatialForge.cpp
-        # Sources/Platform/CreatorManager.cpp
-        # Sources/Platform/AgencyManager.cpp
-        # Sources/Platform/GlobalReachOptimizer.cpp
-        # Sources/Platform/EchoHub.cpp
+        # =====================================================================
+        # PHASE 100 JUCE: AI & VISUALIZATION (Enabled 2026-01-05) 🤖🎨
+        # =====================================================================
+        Sources/AI/SmartMixer.cpp               # 🤖 AI mixing assistant
+        Sources/Visualization/SpectrumAnalyzer.cpp   # 📊 Real-time spectrum analysis
+        Sources/Visualization/BioReactiveVisualizer.cpp  # 🫀 Bio-reactive visuals
+
+        # =====================================================================
+        # PHASE 100 JUCE: SEQUENCING & RHYTHM (Enabled 2026-01-05) 🎼
+        # =====================================================================
+        Sources/Instrument/RhythmMatrix.cpp     # 🥁 Rhythm sequencer matrix
+        Sources/Sequencer/ArpWeaver.cpp         # ✨ Advanced arpeggiator
+
+        # =====================================================================
+        # PHASE 100 JUCE: VIDEO & VISUALS (Enabled 2026-01-05) 🎬
+        # =====================================================================
+        Sources/Video/VideoWeaver.cpp           # 🎬 Video compositing engine
+        Sources/Visual/VisualForge.cpp          # 🎨 Visual effects forge
+        Sources/Visual/LaserForce.cpp           # 💫 Laser show controller
+
+        # =====================================================================
+        # PHASE 100 JUCE: REMOTE & CLOUD (Enabled 2026-01-05) ☁️
+        # =====================================================================
+        Sources/Remote/RemoteProcessingEngine.cpp  # ☁️ Remote processing
+
+        # =====================================================================
+        # PHASE 100 JUCE: HARDWARE INTEGRATION (Enabled 2026-01-05) 🎛️
+        # =====================================================================
+        Sources/Hardware/AbletonLink.cpp        # 🔗 Ableton Link sync
+        Sources/Hardware/MIDIHardwareManager.cpp  # 🎹 MIDI hardware control
+        Sources/Hardware/ModularIntegration.cpp # 🔌 Modular synth integration
+        Sources/Hardware/DJEquipmentIntegration.cpp  # 🎧 DJ controller support
+        Sources/Hardware/OSCManager.cpp         # 📡 OSC network protocol
+        Sources/Hardware/HardwareSyncManager.cpp  # ⏱️ Hardware clock sync
+
+        # =====================================================================
+        # PHASE 100 JUCE: SPATIAL AUDIO (Enabled 2026-01-05) 🔊
+        # =====================================================================
+        Sources/Audio/SpatialForge.cpp          # 🔊 3D spatial audio engine
+
+        # =====================================================================
+        # PHASE 100 JUCE: PLATFORM SERVICES (Enabled 2026-01-05) 🌐
+        # =====================================================================
+        Sources/Platform/CreatorManager.cpp     # 👤 Creator profiles
+        Sources/Platform/AgencyManager.cpp      # 🏢 Agency/label management
+        Sources/Platform/GlobalReachOptimizer.cpp  # 🌍 Global distribution
+        Sources/Platform/EchoHub.cpp            # 🔄 Echoelmusic hub
 )
 
 # ===========================
@@ -727,3 +758,35 @@ if(ANDROID)
     message(STATUS "  - AAudio: ${ENABLE_ANDROID_AAUDIO}")
 endif()
 message(STATUS "==============================================")
+
+else()
+    # Non-JUCE build (Swift-only for iOS/macOS)
+    message(STATUS "")
+    message(STATUS "==============================================")
+    message(STATUS "Echoelmusic - Swift-Only Build Mode")
+    message(STATUS "==============================================")
+    message(STATUS "")
+    message(STATUS "JUCE Framework: DISABLED")
+    message(STATUS "")
+    message(STATUS "This configuration is for iOS/macOS Swift builds")
+    message(STATUS "that use native Apple frameworks:")
+    message(STATUS "  - AVFoundation (Audio/Video)")
+    message(STATUS "  - Accelerate (DSP/SIMD)")
+    message(STATUS "  - CoreML (AI/ML)")
+    message(STATUS "  - HealthKit (Biometrics)")
+    message(STATUS "  - Metal (GPU Shaders)")
+    message(STATUS "")
+    message(STATUS "To build Swift targets:")
+    message(STATUS "  swift build")
+    message(STATUS "  swift test")
+    message(STATUS "")
+    message(STATUS "To enable desktop plugin builds:")
+    message(STATUS "  cmake .. -DUSE_JUCE=ON")
+    message(STATUS "  (Requires JUCE in ThirdParty/JUCE)")
+    message(STATUS "")
+    message(STATUS "Or use iPlug2 (MIT license - FREE):")
+    message(STATUS "  cmake .. -DUSE_IPLUG2=ON")
+    message(STATUS "  (Requires iPlug2 in ThirdParty/iPlug2)")
+    message(STATUS "")
+    message(STATUS "==============================================")
+endif()

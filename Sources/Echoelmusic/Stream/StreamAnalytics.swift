@@ -32,7 +32,7 @@ class StreamAnalytics: ObservableObject {
     func startSession() {
         sessionStartTime = Date()
         resetMetrics()
-        print("📊 StreamAnalytics: Started session")
+        log.streaming("📊 StreamAnalytics: Started session")
     }
 
     func endSession() {
@@ -54,7 +54,7 @@ class StreamAnalytics: ObservableObject {
             avgHeartRate = hrSum / Float(bioSamples.count)
         }
 
-        print("📊 StreamAnalytics: Session ended - Duration: \(Int(sessionDuration))s, Peak Viewers: \(peakViewers), Avg HRV: \(avgHRV)")
+        log.streaming("📊 StreamAnalytics: Session ended - Duration: \(Int(sessionDuration))s, Peak Viewers: \(peakViewers), Avg HRV: \(avgHRV)")
     }
 
     func recordFrame() {
@@ -77,7 +77,7 @@ class StreamAnalytics: ObservableObject {
     }
 
     func recordSceneSwitch(to scene: Scene) {
-        print("📊 StreamAnalytics: Scene switched to '\(scene.name)'")
+        log.streaming("📊 StreamAnalytics: Scene switched to '\(scene.name)'")
     }
 
     private func resetMetrics() {

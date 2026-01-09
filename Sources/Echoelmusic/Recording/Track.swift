@@ -3,6 +3,7 @@ import AVFoundation
 
 /// Represents a single audio track in a recording session
 struct Track: Identifiable, Codable {
+    private let log = ProfessionalLogger.shared
     let id: UUID
     var name: String
     var url: URL?
@@ -104,7 +105,7 @@ struct Track: Identifiable, Codable {
             self.waveformData = waveform
 
         } catch {
-            print("❌ Failed to generate waveform: \(error)")
+            log.error(category: .recording, "❌ Failed to generate waveform: \(error)")
         }
     }
 
@@ -147,9 +148,9 @@ extension Track {
         return track
     }
 
-    /// Create binaural beats track
+    /// Create Multidimensional Brainwave Entrainment track
     static func binauralTrack() -> Track {
-        var track = Track(name: "Binaural Beats", type: .binaural)
+        var track = Track(name: "Multidimensional Brainwave Entrainment", type: .binaural)
         track.volume = 0.3
         return track
     }

@@ -166,10 +166,10 @@ class GlobalMusicTheoryDatabase: ObservableObject {
         loadModeDatabase()
         loadRhythmDatabase()
 
-        print("✅ Global Music Theory Database: Initialized")
-        print("🌍 Scales: \(scaleDatabase.count)")
-        print("🎵 Modes: \(modeDatabase.count)")
-        print("🥁 Rhythm Patterns: \(rhythmDatabase.count)")
+        log.audio("✅ Global Music Theory Database: Initialized")
+        log.audio("🌍 Scales: \(scaleDatabase.count)")
+        log.audio("🎵 Modes: \(modeDatabase.count)")
+        log.audio("🥁 Rhythm Patterns: \(rhythmDatabase.count)")
     }
 
     // MARK: - Load Scale Database
@@ -373,7 +373,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             )
         ]
 
-        print("📚 Loaded \(scaleDatabase.count) scales from global music traditions")
+        log.audio("📚 Loaded \(scaleDatabase.count) scales from global music traditions")
     }
 
     // MARK: - Load Mode Database
@@ -423,7 +423,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             )
         ]
 
-        print("🎭 Loaded \(modeDatabase.count) modal systems")
+        log.audio("🎭 Loaded \(modeDatabase.count) modal systems")
     }
 
     // MARK: - Load Rhythm Database
@@ -476,7 +476,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             )
         ]
 
-        print("🥁 Loaded \(rhythmDatabase.count) rhythm patterns")
+        log.audio("🥁 Loaded \(rhythmDatabase.count) rhythm patterns")
     }
 
     // MARK: - Query Functions

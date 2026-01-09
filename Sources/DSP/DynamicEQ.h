@@ -1,9 +1,9 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ParametricEQ.h"
 #include <array>
 #include <vector>
+#include <mutex>
 
 /**
  * Dynamic EQ
@@ -21,10 +21,52 @@
  * - Solo/mute per band
  * - Sidechain input per band
  * - Look-ahead processing
+ *
+ * JUCE 7+ Compatible - Fixed 2026-01-05
  */
 class DynamicEQ
 {
 public:
+    //==========================================================================
+    // Filter Type (JUCE 7 Compatible)
+    //==========================================================================
+
+    enum class FilterType
+    {
+        LowPass,
+        HighPass,
+        LowShelf,
+        HighShelf,
+        Peak,
+        Notch,
+        BandPass
+    };
+
+    //==========================================================================
+    // Biquad Coefficients Structure
+    //==========================================================================
+
+    struct BiquadCoefficients
+    {
+        float b0 = 1.0f;
+        float b1 = 0.0f;
+        float b2 = 0.0f;
+        float a1 = 0.0f;
+        float a2 = 0.0f;
+    };
+
+    //==========================================================================
+    // Filter State (for biquad processing)
+    //==========================================================================
+
+    struct FilterState
+    {
+        float x1 = 0.0f;
+        float x2 = 0.0f;
+        float y1 = 0.0f;
+        float y2 = 0.0f;
+    };
+
     //==========================================================================
     // Dynamic Mode
     //==========================================================================
@@ -47,7 +89,7 @@ public:
         float frequency = 1000.0f;                      // Hz
         float gain = 0.0f;                              // dB
         float q = 1.0f;                                 // Quality factor
-        ParametricEQ::FilterType filterType = ParametricEQ::FilterType::Peak;
+        FilterType filterType = FilterType::Peak;
 
         // Dynamics Parameters
         DynamicMode dynamicMode = DynamicMode::Static;
@@ -127,11 +169,11 @@ private:
 
     struct BandState
     {
-        // Parametric EQ filter
-        ParametricEQ::BiquadCoefficients eqCoeffs;
+        // Parametric EQ filter coefficients
+        BiquadCoefficients eqCoeffs;
 
-        // Biquad filter state per channel
-        std::array<ParametricEQ::Band, 2> filterStates;  // [L/R]
+        // Biquad filter state per channel [L/R]
+        std::array<FilterState, 2> filterStates;
 
         // Dynamics state per channel
         std::array<float, 2> envelope {{0.0f, 0.0f}};

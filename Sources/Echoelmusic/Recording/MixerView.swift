@@ -1,6 +1,7 @@
 import SwiftUI
 
 /// Professional mixer view with faders and metering
+/// Uses VaporwaveTheme for consistent styling
 struct MixerView: View {
     @EnvironmentObject var recordingEngine: RecordingEngine
     @Binding var session: Session
@@ -9,7 +10,7 @@ struct MixerView: View {
         NavigationView {
             GeometryReader { geometry in
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 20) {
+                    HStack(spacing: VaporwaveSpacing.lg) {
                         ForEach(session.tracks) { track in
                             MixerChannelStrip(track: track)
                                 .frame(width: 100)
@@ -24,16 +25,7 @@ struct MixerView: View {
                 }
                 .frame(height: geometry.size.height)
             }
-            .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 0.05, green: 0.05, blue: 0.15),
-                        Color(red: 0.1, green: 0.05, blue: 0.2)
-                    ]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
+            .background(VaporwaveGradients.background)
             .navigationTitle("Mixer")
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -46,11 +38,11 @@ struct MixerChannelStrip: View {
     let track: Track
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: VaporwaveSpacing.md) {
             // Track name
             Text(track.name)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white)
+                .foregroundColor(VaporwaveColors.textPrimary)
                 .lineLimit(1)
                 .frame(height: 30)
 
@@ -59,18 +51,20 @@ struct MixerChannelStrip: View {
                 .frame(height: 200)
 
             // Pan knob
-            VStack(spacing: 4) {
+            VStack(spacing: VaporwaveSpacing.xs) {
                 Text("PAN")
                     .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(VaporwaveColors.textTertiary)
 
                 panKnobView
                     .frame(width: 50, height: 50)
 
                 Text(panString(track.pan))
                     .font(.system(size: 9, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(VaporwaveColors.textSecondary)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Pan position: \(panString(track.pan))")
 
             Spacer()
 
@@ -81,24 +75,27 @@ struct MixerChannelStrip: View {
             // Volume readout
             Text("\(Int(track.volume * 100))")
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                .foregroundColor(.white)
+                .foregroundColor(VaporwaveColors.textPrimary)
                 .frame(height: 20)
+                .accessibilityLabel("Volume: \(Int(track.volume * 100)) percent")
 
             // Control buttons
-            HStack(spacing: 8) {
+            HStack(spacing: VaporwaveSpacing.sm) {
                 // Mute button
                 Button(action: {
                     recordingEngine.setTrackMuted(track.id, muted: !track.isMuted)
                 }) {
                     Text("M")
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(track.isMuted ? .black : .white)
+                        .foregroundColor(track.isMuted ? .black : VaporwaveColors.textPrimary)
                         .frame(width: 28, height: 28)
                         .background(
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(track.isMuted ? Color.red : Color.white.opacity(0.2))
+                                .fill(track.isMuted ? VaporwaveColors.coherenceLow : Color.white.opacity(0.2))
                         )
                 }
+                .accessibilityLabel("Mute \(track.name)")
+                .accessibilityValue(track.isMuted ? "Muted" : "Not muted")
 
                 // Solo button
                 Button(action: {
@@ -106,31 +103,31 @@ struct MixerChannelStrip: View {
                 }) {
                     Text("S")
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(track.isSoloed ? .black : .white)
+                        .foregroundColor(track.isSoloed ? .black : VaporwaveColors.textPrimary)
                         .frame(width: 28, height: 28)
                         .background(
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(track.isSoloed ? Color.yellow : Color.white.opacity(0.2))
+                                .fill(track.isSoloed ? VaporwaveColors.coherenceMedium : Color.white.opacity(0.2))
                         )
                 }
+                .accessibilityLabel("Solo \(track.name)")
+                .accessibilityValue(track.isSoloed ? "Soloed" : "Not soloed")
             }
 
             // Track type indicator
-            HStack(spacing: 4) {
+            HStack(spacing: VaporwaveSpacing.xs) {
                 Image(systemName: track.type.icon)
                     .font(.system(size: 8))
                 Text(track.type.rawValue)
                     .font(.system(size: 8))
             }
-            .foregroundColor(.white.opacity(0.5))
-            .padding(.bottom, 8)
+            .foregroundColor(VaporwaveColors.textTertiary)
+            .padding(.bottom, VaporwaveSpacing.sm)
         }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.3))
-                .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
-        )
+        .padding(VaporwaveSpacing.md)
+        .glassCard()
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(track.name) channel strip")
     }
 
     // MARK: - Peak Meter
@@ -154,11 +151,11 @@ struct MixerChannelStrip: View {
 
     private func meterColor(for level: Float) -> Color {
         if level > 0.9 {
-            return .red
+            return VaporwaveColors.coherenceLow  // Clipping zone
         } else if level > 0.7 {
-            return .yellow
+            return VaporwaveColors.coherenceMedium  // Warning zone
         } else {
-            return .green
+            return VaporwaveColors.coherenceHigh  // Safe zone
         }
     }
 
@@ -168,7 +165,7 @@ struct MixerChannelStrip: View {
         ZStack {
             // Knob background
             Circle()
-                .fill(Color.gray.opacity(0.3))
+                .fill(VaporwaveColors.deepBlack.opacity(0.5))
 
             // Knob indicator
             Circle()
@@ -212,9 +209,9 @@ struct MixerChannelStrip: View {
                 RoundedRectangle(cornerRadius: 3)
                     .fill(
                         LinearGradient(
-                            gradient: Gradient(colors: [.cyan, .blue]),
+                            gradient: Gradient(colors: [VaporwaveColors.neonCyan, VaporwaveColors.neonPurple]),
                             startPoint: .bottom,
-                            startPoint: .top
+                            endPoint: .top
                         )
                     )
                     .frame(width: 30, height: geometry.size.height * CGFloat(track.volume))
@@ -259,41 +256,45 @@ struct MasterChannelStrip: View {
     @EnvironmentObject var recordingEngine: RecordingEngine
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: VaporwaveSpacing.md) {
             // Master label
             Text("MASTER")
                 .font(.system(size: 12, weight: .bold))
-                .foregroundColor(.orange)
+                .foregroundColor(VaporwaveColors.neonPink)
                 .frame(height: 30)
 
             // Peak meter
             masterPeakMeterView
                 .frame(height: 200)
+                .accessibilityLabel("Master level meter")
 
             Spacer()
 
             // Volume readout
             Text("0.0 dB")
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                .foregroundColor(.white)
+                .foregroundColor(VaporwaveColors.textPrimary)
                 .frame(height: 20)
+                .accessibilityLabel("Master volume: 0 decibels")
 
             // Master icon
             Image(systemName: "slider.horizontal.3")
                 .font(.system(size: 24))
-                .foregroundColor(.orange.opacity(0.5))
+                .foregroundColor(VaporwaveColors.neonPink.opacity(0.5))
                 .padding(.bottom, 40)
         }
-        .padding(12)
+        .padding(VaporwaveSpacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.orange.opacity(0.1))
+                .fill(VaporwaveColors.neonPink.opacity(0.1))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.orange.opacity(0.3), lineWidth: 2)
+                        .stroke(VaporwaveColors.neonPink.opacity(0.3), lineWidth: 2)
                 )
-                .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
         )
+        .neonGlow(color: VaporwaveColors.neonPink, radius: 10)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Master channel strip")
     }
 
     private var masterPeakMeterView: some View {
@@ -314,11 +315,11 @@ struct MasterChannelStrip: View {
 
     private func meterColor(for level: Float) -> Color {
         if level > 0.9 {
-            return .red
+            return VaporwaveColors.coherenceLow  // Clipping zone
         } else if level > 0.7 {
-            return .yellow
+            return VaporwaveColors.coherenceMedium  // Warning zone
         } else {
-            return .green
+            return VaporwaveColors.coherenceHigh  // Safe zone
         }
     }
 }

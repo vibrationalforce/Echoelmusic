@@ -24,6 +24,8 @@ import Combine
 @Observable
 class LocalizationManager {
 
+    private let log = ProfessionalLogger.shared
+
     // MARK: - Published Properties
 
     /// Aktuelle Sprache
@@ -31,7 +33,7 @@ class LocalizationManager {
         didSet {
             if currentLanguage != oldValue {
                 languageDidChange.send(currentLanguage)
-                print("🌍 Language changed to: \(currentLanguage.displayName)")
+                log.info(category: .system, "🌍 Language changed to: \(currentLanguage.displayName)")
             }
         }
     }

@@ -55,7 +55,7 @@ Sources/Blab/
 **AudioEngine.swift** (Existing)
 - AVAudioEngine-based real-time processing
 - Low-latency input tap (microphone)
-- Binaural beat generation
+- Multidimensional Brainwave Entrainment generation
 - Spatial audio integration hooks
 
 **MicrophoneManager.swift** (Existing)
@@ -173,7 +173,7 @@ class VisualEngine {
 **BioParameterMapper.swift** (364 lines, existing)
 - 7 mapped parameters (reverb, filter, amp, freq, tempo, spatial, harmonics)
 - Exponential smoothing (0.85 factor)
-- Healing frequency scale (432 Hz base)
+- Standard tuning scale (A4 = 440 Hz)
 - 4 presets (Meditation, Focus, Relaxation, Energize)
 
 ### **Required Extensions**
@@ -1112,8 +1112,8 @@ blab-ios-app/
 
 ### **Neuro-Acoustics Research**
 - HeartMath Institute - HRV Coherence
-- Brainwave Entrainment Studies
-- Solfeggio Frequencies Research
+- Brainwave Entrainment Studies (EEG-validated)
+- MIT Tsai Lab - 40Hz Gamma Entrainment (GENUS)
 
 ### **AI/ML Resources**
 - [Core ML Models](https://developer.apple.com/machine-learning/models/)

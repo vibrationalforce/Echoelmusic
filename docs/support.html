@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support - Echoelmusic</title>
+    <meta name="description" content="Get help with Echoelmusic. Contact support, FAQ, and resources.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(180deg, #0d0221 0%, #150734 30%, #1a0a3e 60%, #0d0221 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(0,255,255,0.02) 50px, rgba(0,255,255,0.02) 51px),
+                        repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255,106,213,0.02) 50px, rgba(255,106,213,0.02) 51px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .header {
+            background: linear-gradient(135deg, rgba(255,106,213,0.2) 0%, rgba(139,92,246,0.2) 100%);
+            padding: 50px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,106,213,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 42px;
+            background: linear-gradient(90deg, #ff6ad5, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 16px;
+            letter-spacing: 2px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: #00ffff;
+            text-decoration: none;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .back-link:hover {
+            text-shadow: 0 0 15px rgba(0,255,255,0.5);
+        }
+        .contact-card {
+            background: linear-gradient(135deg, rgba(255,106,213,0.15) 0%, rgba(139,92,246,0.15) 100%);
+            border: 1px solid rgba(255,106,213,0.4);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .contact-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #ff6ad5, #00ffff);
+        }
+        .contact-card h3 {
+            font-family: 'Orbitron', monospace;
+            font-size: 22px;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .contact-card .email {
+            font-family: 'Orbitron', monospace;
+            font-size: 24px;
+            color: #ff6ad5;
+            text-decoration: none;
+            text-shadow: 0 0 20px rgba(255,106,213,0.5);
+            transition: all 0.3s;
+        }
+        .contact-card .email:hover {
+            color: #00ffff;
+            text-shadow: 0 0 30px rgba(0,255,255,0.5);
+        }
+        .contact-card .response {
+            margin-top: 15px;
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+        }
+        h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 24px;
+            color: #00ffff;
+            margin: 50px 0 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,255,255,0.3);
+            text-shadow: 0 0 15px rgba(0,255,255,0.3);
+        }
+        .faq-item {
+            background: rgba(13,2,33,0.6);
+            border: 1px solid rgba(255,106,213,0.2);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 20px 0;
+            transition: all 0.3s;
+        }
+        .faq-item:hover {
+            border-color: rgba(255,106,213,0.5);
+            box-shadow: 0 10px 40px rgba(255,106,213,0.1);
+        }
+        .faq-item h4 {
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            color: #ff6ad5;
+            margin-bottom: 12px;
+        }
+        .faq-item p {
+            color: rgba(255,255,255,0.75);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        .faq-item a {
+            color: #00ffff;
+            text-decoration: none;
+        }
+        .faq-item a:hover {
+            text-decoration: underline;
+        }
+        .resources {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .resource-link {
+            display: block;
+            background: rgba(0,255,255,0.05);
+            border: 1px solid rgba(0,255,255,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-decoration: none;
+            color: #00ffff;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .resource-link:hover {
+            background: rgba(0,255,255,0.1);
+            box-shadow: 0 0 30px rgba(0,255,255,0.2);
+            transform: translateY(-3px);
+        }
+        footer {
+            text-align: center;
+            padding: 50px 20px;
+            border-top: 1px solid rgba(255,106,213,0.2);
+            color: rgba(255,255,255,0.5);
+            font-size: 13px;
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Support</h1>
+        <p>We're Here To Help</p>
+    </div>
+
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to Home</a>
+
+        <div class="contact-card">
+            <h3>Contact Support</h3>
+            <a href="mailto:michaelterbuyken@gmail.com" class="email">michaelterbuyken@gmail.com</a>
+            <p class="response">Response time: 24-48 hours</p>
+        </div>
+
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+            <h4>What devices are supported?</h4>
+            <p>Echoelmusic runs on iOS 15+, macOS 12+, watchOS 8+, tvOS 15+, visionOS 1+, Android 8+, Windows 10+, and Linux. Apple Watch is recommended for full biometric features, but the app works great with Garmin, Whoop, Oura, and other wearables too.</p>
+        </div>
+
+        <div class="faq-item">
+            <h4>Is Echoelmusic a medical device?</h4>
+            <p>No. Echoelmusic is NOT a medical device. It's designed for creative expression and general wellness only. It does not diagnose, treat, cure, or prevent any disease. Always consult healthcare professionals for medical advice.</p>
+        </div>
+
+        <div class="faq-item">
+            <h4>What's the pricing model?</h4>
+            <p>99 lifetime license (one-time purchase) gives you access on all platforms. Major version upgrades (2.0, 3.0, etc.) are 49. The free TestFlight/beta program lets you try everything before buying.</p>
+        </div>
+
+        <div class="faq-item">
+            <h4>Is my biometric data private?</h4>
+            <p>Yes. All biometric data is processed locally on your device. Nothing is sent to our servers unless you explicitly enable cloud sync. We never sell your data. See our <a href="privacy.html">Privacy Policy</a> for details.</p>
+        </div>
+
+        <div class="faq-item">
+            <h4>Can I use it without a wearable?</h4>
+            <p>Yes! Demo Mode simulates realistic biometric data so you can experience all features. You can also manually adjust parameters or use camera-based heart rate detection on supported devices.</p>
+        </div>
+
+        <div class="faq-item">
+            <h4>What is HRV coherence?</h4>
+            <p>Heart Rate Variability (HRV) coherence measures the regularity of your heartbeat intervals. In Echoelmusic, higher coherence creates more harmonious sounds and visuals. This is a creative tool, not medical measurement.</p>
+        </div>
+
+        <div class="faq-item">
+            <h4>How do I report a bug?</h4>
+            <p>Email <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a> with your device model, OS version, and steps to reproduce the issue. Screenshots or screen recordings help us fix things faster.</p>
+        </div>
+
+        <div class="faq-item">
+            <h4>Refund policy?</h4>
+            <p>Purchases through App Store or Play Store follow their respective refund policies. Contact Apple or Google directly for refund requests. We recommend trying the free beta first.</p>
+        </div>
+
+        <h2>Resources</h2>
+        <div class="resources">
+            <a href="privacy.html" class="resource-link">Privacy Policy</a>
+            <a href="terms.html" class="resource-link">Terms of Service</a>
+            <a href="health.html" class="resource-link">Health Disclaimer</a>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Echoelmusic. Crafted with coherence.</p>
+        </footer>
+    </div>
+</body>
+</html>

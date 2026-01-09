@@ -177,17 +177,17 @@ class TVApp {
 
             // Check for Dolby Atmos support
             if audioSession.availableCategories.contains(.ambient) {
-                print("📺 Dolby Atmos supported")
+                log.info("📺 Dolby Atmos supported", category: .ui)
             }
         } catch {
-            print("❌ Audio session setup failed: \(error)")
+            log.error("❌ Audio session setup failed: \(error)", category: .ui)
         }
     }
 
     // MARK: - Session Management
 
     func startSession(type: Session.SessionType) async {
-        print("📺 Starting \(type.rawValue) session on Apple TV")
+        log.info("📺 Starting \(type.rawValue) session on Apple TV", category: .ui)
 
         let session = Session(type: type, startTime: Date())
         activeSession = session
@@ -205,7 +205,7 @@ class TVApp {
     func stopSession() async {
         guard activeSession != nil else { return }
 
-        print("📺 Stopping session on Apple TV")
+        log.info("📺 Stopping session on Apple TV", category: .ui)
 
         await visualEngine.stop()
         await audioEngine.stop()
@@ -216,7 +216,7 @@ class TVApp {
     // MARK: - Device Connection
 
     private func handleDeviceConnected(_ device: ConnectedDevice) {
-        print("📱 Device connected: \(device.name) (\(device.type))")
+        log.info("📱 Device connected: \(device.name) (\(device.type))", category: .ui)
         connectedDevices.append(device)
 
         // Füge als Participant zur Session hinzu
@@ -261,17 +261,52 @@ class TVApp {
 
     // MARK: - SharePlay
 
-    func startSharePlay() async throws {
-        print("📺 Starting SharePlay session")
-        isSharePlayActive = true
+    private var groupActivityManager: GroupActivityManager?
 
-        // TODO: Integrate with GroupActivities framework
-        // let activity = EchoelmusicActivity()
-        // try await activity.prepareForActivation()
+    func startSharePlay() async throws {
+        log.info("📺 Starting SharePlay session", category: .ui)
+
+        // Initialize GroupActivities manager
+        groupActivityManager = GroupActivityManager()
+
+        // Create and activate the Echoelmusic group activity
+        let activity = EchoelmusicGroupActivity(
+            sessionType: activeSession?.type ?? .meditation,
+            visualizationMode: visualizationMode
+        )
+
+        do {
+            // Prepare and activate the activity
+            let activationResult = try await activity.activate()
+
+            switch activationResult {
+            case .activationPreferred:
+                log.info("📺 SharePlay activation preferred", category: .ui)
+                isSharePlayActive = true
+                await groupActivityManager?.startGroupSession(activity: activity)
+
+            case .activationDisabled:
+                log.info("📺 SharePlay activation disabled by user", category: .ui)
+                isSharePlayActive = false
+
+            case .cancelled:
+                log.info("📺 SharePlay activation cancelled", category: .ui)
+                isSharePlayActive = false
+
+            @unknown default:
+                log.info("📺 Unknown SharePlay activation result", category: .ui)
+                isSharePlayActive = false
+            }
+        } catch {
+            log.error("❌ SharePlay activation failed: \(error)", category: .ui)
+            throw error
+        }
     }
 
     func stopSharePlay() {
-        print("📺 Stopping SharePlay session")
+        log.info("📺 Stopping SharePlay session", category: .ui)
+        groupActivityManager?.endGroupSession()
+        groupActivityManager = nil
         isSharePlayActive = false
     }
 
@@ -297,7 +332,7 @@ class TVVisualizationEngine {
     private var intensity: Float = 1.0
 
     func start(mode: TVApp.VisualizationMode) async {
-        print("🎨 TV Visualization Engine started: \(mode.rawValue)")
+        log.info("🎨 TV Visualization Engine started: \(mode.rawValue)", category: .ui)
         isRunning = true
         currentMode = mode
 
@@ -306,12 +341,12 @@ class TVVisualizationEngine {
     }
 
     func stop() async {
-        print("🎨 TV Visualization Engine stopped")
+        log.info("🎨 TV Visualization Engine stopped", category: .ui)
         isRunning = false
     }
 
     func changeMode(_ mode: TVApp.VisualizationMode) async {
-        print("🎨 Changing mode to: \(mode.rawValue)")
+        log.info("🎨 Changing mode to: \(mode.rawValue)", category: .ui)
         currentMode = mode
     }
 
@@ -321,13 +356,13 @@ class TVVisualizationEngine {
 
     func updateWithBioData(hrv: Double, coherence: Double) async {
         // Update visualization based on bio-data
-        print("💓 Updating visualization with HRV: \(hrv), Coherence: \(coherence)")
+        log.info("💓 Updating visualization with HRV: \(hrv), Coherence: \(coherence)", category: .ui)
     }
 
     private func setupMetalRenderer() {
         // Setup Metal for high-performance rendering
         // Target: 4K @ 60fps, 8K @ 30fps
-        print("⚡ Metal renderer initialized for tvOS")
+        log.info("⚡ Metal renderer initialized for tvOS", category: .ui)
     }
 }
 
@@ -339,7 +374,7 @@ class TVAudioEngine {
     private var isRunning: Bool = false
 
     func start() async {
-        print("🔊 TV Audio Engine started")
+        log.info("🔊 TV Audio Engine started", category: .ui)
         isRunning = true
 
         // Setup Dolby Atmos if available
@@ -347,13 +382,13 @@ class TVAudioEngine {
     }
 
     func stop() async {
-        print("🔊 TV Audio Engine stopped")
+        log.info("🔊 TV Audio Engine stopped", category: .ui)
         isRunning = false
     }
 
     private func setupDolbyAtmos() {
         // Configure Dolby Atmos for 3D spatial audio
-        print("🎧 Dolby Atmos configured")
+        log.info("🎧 Dolby Atmos configured", category: .ui)
     }
 }
 
@@ -362,19 +397,19 @@ class TVAudioEngine {
 class TVFocusEngine {
 
     func setupFocusEnvironment() {
-        print("🎮 Focus Engine setup for Siri Remote")
+        log.info("🎮 Focus Engine setup for Siri Remote", category: .ui)
     }
 
     func handleMenuPress() {
-        print("🎮 Menu button pressed")
+        log.info("🎮 Menu button pressed", category: .ui)
     }
 
     func handlePlayPause() {
-        print("🎮 Play/Pause button pressed")
+        log.info("🎮 Play/Pause button pressed", category: .ui)
     }
 
     func handleSwipe(direction: Direction) {
-        print("🎮 Swipe: \(direction)")
+        log.info("🎮 Swipe: \(direction)", category: .ui)
     }
 
     enum Direction {
@@ -395,7 +430,7 @@ class AirPlayReceiver {
     }
 
     private func setupAirPlayReceiver() {
-        print("📡 AirPlay Receiver initialized")
+        log.info("📡 AirPlay Receiver initialized", category: .ui)
         // Listen for incoming AirPlay connections
     }
 }
@@ -406,6 +441,120 @@ struct BioDataUpdate {
     let hrv: Double
     let coherence: Double
     let timestamp: Date
+}
+
+// MARK: - GroupActivities Integration
+
+import GroupActivities
+
+struct EchoelmusicGroupActivity: GroupActivity {
+
+    let sessionType: TVApp.Session.SessionType
+    let visualizationMode: TVApp.VisualizationMode
+
+    var metadata: GroupActivityMetadata {
+        var metadata = GroupActivityMetadata()
+        metadata.type = .generic
+        metadata.title = "Echoelmusic \(sessionType.rawValue)"
+        metadata.subtitle = "Gemeinsame \(sessionType.rawValue) Session"
+        metadata.previewImage = nil  // Add app icon here
+        metadata.fallbackURL = URL(string: "https://echoelmusic.com")
+        return metadata
+    }
+}
+
+@MainActor
+class GroupActivityManager {
+
+    private var groupSession: GroupSession<EchoelmusicGroupActivity>?
+    private var messenger: GroupSessionMessenger?
+    private var tasks = Set<Task<Void, Never>>()
+
+    func startGroupSession(activity: EchoelmusicGroupActivity) async {
+        // Listen for incoming group sessions
+        for await session in EchoelmusicGroupActivity.sessions() {
+            self.groupSession = session
+            self.messenger = GroupSessionMessenger(session: session)
+
+            // Join the session
+            session.join()
+
+            log.info("📺 Joined SharePlay session with \(session.activeParticipants.count) participants", category: .ui)
+
+            // Handle participant changes
+            let participantTask = Task {
+                for await participants in session.$activeParticipants.values {
+                    await handleParticipantsChanged(participants)
+                }
+            }
+            tasks.insert(participantTask)
+
+            // Handle incoming messages
+            if let messenger = messenger {
+                let messageTask = Task {
+                    for await message in messenger.messages(of: SharePlayMessage.self) {
+                        await handleMessage(message.0)
+                    }
+                }
+                tasks.insert(messageTask)
+            }
+        }
+    }
+
+    func endGroupSession() {
+        groupSession?.end()
+        groupSession = nil
+        messenger = nil
+        tasks.forEach { $0.cancel() }
+        tasks.removeAll()
+        log.info("📺 SharePlay session ended", category: .ui)
+    }
+
+    func sendBioUpdate(hrv: Double, coherence: Double) async {
+        guard let messenger = messenger else { return }
+
+        let message = SharePlayMessage(
+            type: .bioUpdate,
+            hrv: hrv,
+            coherence: coherence,
+            timestamp: Date()
+        )
+
+        do {
+            try await messenger.send(message)
+        } catch {
+            log.error("❌ Failed to send SharePlay message: \(error)", category: .ui)
+        }
+    }
+
+    private func handleParticipantsChanged(_ participants: Set<Participant>) async {
+        log.info("📺 SharePlay participants: \(participants.count)", category: .ui)
+    }
+
+    private func handleMessage(_ message: SharePlayMessage) async {
+        switch message.type {
+        case .bioUpdate:
+            log.info("📺 Received bio update: HRV=\(message.hrv ?? 0), Coherence=\(message.coherence ?? 0)", category: .ui)
+        case .visualChange:
+            log.info("📺 Received visualization change", category: .ui)
+        case .sessionControl:
+            log.info("📺 Received session control", category: .ui)
+        }
+    }
+}
+
+struct SharePlayMessage: Codable {
+    enum MessageType: String, Codable {
+        case bioUpdate
+        case visualChange
+        case sessionControl
+    }
+
+    let type: MessageType
+    var hrv: Double?
+    var coherence: Double?
+    var visualizationMode: String?
+    var timestamp: Date
 }
 
 #endif

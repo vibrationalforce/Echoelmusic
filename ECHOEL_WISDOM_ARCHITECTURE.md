@@ -126,7 +126,7 @@ Exclusion Criteria:
 - Genre selection based on desired emotional state
 - Tempo/rhythm matching to arousal levels
 - Harmonic content for stress reduction
-- Binaural beats (evidence-based frequencies only)
+- Multidimensional Brainwave Entrainment (evidence-based frequencies only)
 
 ---
 

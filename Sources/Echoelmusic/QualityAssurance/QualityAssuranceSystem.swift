@@ -321,14 +321,14 @@ class QualityAssuranceSystem: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        print("✅ Quality Assurance System: Initialized")
-        print("🔍 Ready for comprehensive quality testing")
+        log.info("✅ Quality Assurance System: Initialized", category: .system)
+        log.info("🔍 Ready for comprehensive quality testing", category: .system)
     }
 
     // MARK: - Run Complete Test Suite
 
     func runCompleteTestSuite() async {
-        print("🧪 Starting Complete Quality Test Suite...")
+        log.info("🧪 Starting Complete Quality Test Suite...", category: .system)
 
         activeTests = []
         issues = []
@@ -363,16 +363,16 @@ class QualityAssuranceSystem: ObservableObject {
         // Calculate overall metrics
         calculateOverallQuality()
 
-        print("✅ Test Suite Complete")
-        print("📊 Overall Quality Score: \(String(format: "%.1f", overallQualityScore))%")
-        print("⚠️ Issues Found: \(issues.count)")
+        log.info("✅ Test Suite Complete", category: .system)
+        log.info("📊 Overall Quality Score: \(String(format: "%.1f", overallQualityScore))%", category: .system)
+        log.info("⚠️ Issues Found: \(issues.count)", level: .warning, category: .system)
     }
 
     private func runTest(name: String, category: QualityTest.TestCategory, duration: Double) async {
         var test = QualityTest(name: name, category: category, duration: duration, status: .running, result: nil)
         activeTests.append(test)
 
-        print("   Running: \(name)...")
+        log.info("   Running: \(name)...", category: .system)
 
         // Simulate test execution
         try? await Task.sleep(nanoseconds: UInt64(min(duration, 1.0) * 1_000_000_000))
@@ -399,7 +399,7 @@ class QualityAssuranceSystem: ObservableObject {
             addIssue(for: test, score: score)
         }
 
-        print("   ✓ \(name): \(String(format: "%.1f", score))% [\(test.status.rawValue)]")
+        log.info("   ✓ \(name): \(String(format: "%.1f", score))% [\(test.status.rawValue)]", category: .system)
     }
 
     private func generateTestDetails(for testName: String) -> String {

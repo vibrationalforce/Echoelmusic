@@ -379,9 +379,9 @@ class UniversalSoundLibrary: ObservableObject {
         loadSynthEngines()
         loadPresets()
 
-        print("✅ Universal Sound Library: Initialized")
-        print("🎹 Instruments: \(availableInstruments.count)")
-        print("🎛️ Synthesis Engines: \(availableSynthEngines.count)")
+        log.audio("✅ Universal Sound Library: Initialized")
+        log.audio("🎹 Instruments: \(availableInstruments.count)")
+        log.audio("🎛️ Synthesis Engines: \(availableSynthEngines.count)")
     }
 
     // MARK: - Load Instrument Database
@@ -648,7 +648,7 @@ class UniversalSoundLibrary: ObservableObject {
             )
         ]
 
-        print("🎹 Loaded \(availableInstruments.count) instruments from global traditions")
+        log.audio("🎹 Loaded \(availableInstruments.count) instruments from global traditions")
     }
 
     // MARK: - Load Synthesis Engines
@@ -723,14 +723,14 @@ class UniversalSoundLibrary: ObservableObject {
             )
         ]
 
-        print("🎛️ Loaded \(availableSynthEngines.count) synthesis engines")
+        log.audio("🎛️ Loaded \(availableSynthEngines.count) synthesis engines")
     }
 
     // MARK: - Load Presets
 
     private func loadPresets() {
         // Presets would be loaded here
-        print("💾 Preset system ready")
+        log.audio("💾 Preset system ready")
     }
 
     // MARK: - Query Functions

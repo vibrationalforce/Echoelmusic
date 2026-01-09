@@ -57,7 +57,7 @@ final class UndoRedoManager: ObservableObject {
         }
 
         updateState()
-        print("✅ Executed: \(command.actionName)")
+        log.info("✅ Executed: \(command.actionName)", category: .system)
     }
 
     /// Undo the last action
@@ -68,7 +68,7 @@ final class UndoRedoManager: ObservableObject {
         redoStack.append(command)
 
         updateState()
-        print("↩️ Undo: \(command.actionName)")
+        log.info("↩️ Undo: \(command.actionName)", category: .system)
     }
 
     /// Redo the last undone action
@@ -79,7 +79,7 @@ final class UndoRedoManager: ObservableObject {
         undoStack.append(command)
 
         updateState()
-        print("↪️ Redo: \(command.actionName)")
+        log.info("↪️ Redo: \(command.actionName)", category: .system)
     }
 
     /// Clear all history

@@ -1,0 +1,17 @@
+Version 1.0 - Initial Release
+
+We're thrilled to introduce Echoelmusic - the world's first bio-reactive audio-visual platform!
+
+NEW FEATURES
+• Bio-reactive audio engine that responds to your heart rate, HRV, and breathing
+• 6 spatial audio modes including 3D, 4D orbital, and binaural
+• Professional MIDI 2.0 + MPE support
+• 50+ DSP effects and TR-808 synthesis
+• AI-powered chord and melody generation
+• Guided breathing and meditation modes
+• Apple Watch integration for real-time bio-data
+• Vision Pro support with immersive experiences
+• AUv3 plugin for GarageBand and Logic Pro
+• DMX lighting and Push 3 LED control
+
+Your heartbeat has never sounded so good.

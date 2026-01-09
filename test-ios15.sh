@@ -75,7 +75,7 @@ if [ ${PIPESTATUS[0]} -eq 0 ]; then
     echo ""
     echo -e "${YELLOW}Next steps:${NC}"
     echo "  • Run app in Simulator via Xcode"
-    echo "  • Test core features (mic, binaural beats, HealthKit)"
+    echo "  • Test core features (mic, Multidimensional Brainwave Entrainment, HealthKit)"
     echo "  • Verify graceful fallbacks (spatial audio disabled on iOS 15)"
     echo ""
 else

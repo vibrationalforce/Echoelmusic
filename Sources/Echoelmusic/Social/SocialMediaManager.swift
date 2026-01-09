@@ -179,8 +179,8 @@ class SocialMediaManager: ObservableObject {
 
     private init() {
         loadCredentials()
-        print("✅ SocialMediaManager: Initialized")
-        print("📱 Supported Platforms: \(Platform.allCases.count)")
+        log.social("✅ SocialMediaManager: Initialized")
+        log.social("📱 Supported Platforms: \(Platform.allCases.count)")
     }
 
     // MARK: - One-Click Live
@@ -216,16 +216,16 @@ class SocialMediaManager: ObservableObject {
                     switch result {
                     case .success:
                         self.liveStatus[platform] = .live(viewers: 0, duration: 0)
-                        print("🔴 LIVE auf \(platform.rawValue)")
+                        log.social("🔴 LIVE auf \(platform.rawValue)")
                     case .failure(let error):
                         self.liveStatus[platform] = .failed(error: error.localizedDescription)
-                        print("❌ Live fehlgeschlagen auf \(platform.rawValue): \(error)")
+                        log.social("❌ Live fehlgeschlagen auf \(platform.rawValue): \(error)", level: .error)
                     }
                 }
             }
         }
 
-        print("🔴 LIVE AUF \(livePlatforms.count) PLATTFORMEN!")
+        log.social("🔴 LIVE AUF \(livePlatforms.count) PLATTFORMEN!")
     }
 
     /// Beende Live auf allen Plattformen
@@ -234,7 +234,7 @@ class SocialMediaManager: ObservableObject {
             await endLive(on: platform)
         }
         isLive = false
-        print("⬛ Live beendet auf allen Plattformen")
+        log.social("⬛ Live beendet auf allen Plattformen")
     }
 
     // MARK: - One-Click Post
@@ -267,17 +267,17 @@ class SocialMediaManager: ObservableObject {
                     switch result {
                     case .success(let url):
                         self.postProgress[platform] = .completed(url: url)
-                        print("✅ Gepostet auf \(platform.rawValue): \(url)")
+                        log.social("✅ Gepostet auf \(platform.rawValue): \(url)")
                     case .failure(let error):
                         self.postProgress[platform] = .failed(error: error.localizedDescription)
-                        print("❌ Post fehlgeschlagen auf \(platform.rawValue): \(error)")
+                        log.social("❌ Post fehlgeschlagen auf \(platform.rawValue): \(error)", level: .error)
                     }
                 }
             }
         }
 
         isPosting = false
-        print("📤 GEPOSTET AUF \(connectedPlatforms.count) PLATTFORMEN!")
+        log.social("📤 GEPOSTET AUF \(connectedPlatforms.count) PLATTFORMEN!")
     }
 
     // MARK: - Platform Connection
@@ -285,7 +285,7 @@ class SocialMediaManager: ObservableObject {
     /// Verbinde mit einer Plattform (OAuth)
     func connect(to platform: Platform) async throws {
         // Simuliere OAuth Flow
-        print("🔗 Verbinde mit \(platform.rawValue)...")
+        log.social("🔗 Verbinde mit \(platform.rawValue)...")
 
         // In echter Implementierung: OAuth Flow mit ASWebAuthenticationSession
         // Hier: Simulierte Verbindung
@@ -294,7 +294,7 @@ class SocialMediaManager: ObservableObject {
         postProgress[platform] = .idle
         liveStatus[platform] = .offline
 
-        print("✅ Verbunden mit \(platform.rawValue)")
+        log.social("✅ Verbunden mit \(platform.rawValue)")
     }
 
     /// Trenne Verbindung zu einer Plattform
@@ -305,7 +305,7 @@ class SocialMediaManager: ObservableObject {
         liveStatus.removeValue(forKey: platform)
         saveCredentials()
 
-        print("🔌 Getrennt von \(platform.rawValue)")
+        log.social("🔌 Getrennt von \(platform.rawValue)")
     }
 
     // MARK: - Private Methods
@@ -509,14 +509,14 @@ class SocialMediaManager: ObservableObject {
         saveScheduledPosts()
         startSchedulerIfNeeded()
 
-        print("📅 Scheduled post for \(scheduledTime) on \(platforms.count) platforms")
+        log.social("📅 Scheduled post for \(scheduledTime) on \(platforms.count) platforms")
     }
 
     /// Cancel a scheduled post
     func cancelScheduledPost(id: UUID) {
         scheduledPosts.removeAll { $0.id == id }
         saveScheduledPosts()
-        print("❌ Cancelled scheduled post \(id)")
+        log.social("❌ Cancelled scheduled post \(id)", level: .warning)
     }
 
     /// Start the scheduler timer
@@ -529,14 +529,14 @@ class SocialMediaManager: ObservableObject {
             }
         }
 
-        print("⏰ Scheduler started")
+        log.social("⏰ Scheduler started")
     }
 
     /// Stop the scheduler timer
     func stopScheduler() {
         schedulerTimer?.invalidate()
         schedulerTimer = nil
-        print("⏰ Scheduler stopped")
+        log.social("⏰ Scheduler stopped")
     }
 
     /// Process due scheduled posts
@@ -582,10 +582,10 @@ class SocialMediaManager: ObservableObject {
             connectedPlatforms = previousConnected
 
             scheduledPosts[index].status = .completed
-            print("✅ Scheduled post \(post.id) completed")
+            log.social("✅ Scheduled post \(post.id) completed")
         } catch {
             scheduledPosts[index].status = .failed
-            print("❌ Scheduled post \(post.id) failed: \(error)")
+            log.social("❌ Scheduled post \(post.id) failed: \(error)", level: .error)
         }
 
         saveScheduledPosts()
@@ -644,7 +644,7 @@ class SocialMediaManager: ObservableObject {
                 recentPosts: []
             )
         }
-        print("📊 Analytics fetched for \(connectedPlatforms.count) platforms")
+        log.social("📊 Analytics fetched for \(connectedPlatforms.count) platforms")
     }
 
     // MARK: - Errors

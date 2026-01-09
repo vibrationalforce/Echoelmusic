@@ -176,7 +176,7 @@ Häufigste Warning-Typen:
 ### 3️⃣ WELLNESS SUITE (3 Therapeutische Systeme)
 
 #### 🧠 Audio-Visual Entrainment (AVE)
-Brainwave-Entrainment durch binaural beats und isochronic tones:
+Brainwave-Entrainment durch Multidimensional Brainwave Entrainment und isochronic tones:
 - **Delta** (0.5-4 Hz): Tiefschlaf, Heilung
 - **Theta** (4-8 Hz): Meditation, Kreativität
 - **Alpha** (8-13 Hz): Entspannung, Lernen

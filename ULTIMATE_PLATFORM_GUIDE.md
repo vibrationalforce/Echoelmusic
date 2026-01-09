@@ -40,15 +40,14 @@
    - Room simulation
    - Bio-reactive spatial positioning
 
-#### **Healing & Wellness**
-19. ✅ **ResonanceHealer** - Organ resonance therapy
-   - 15 organ-specific frequencies
-   - Solfeggio frequencies (396-963 Hz)
-   - 7 chakra tuning frequencies
-   - Binaural beats (Delta/Theta/Alpha/Beta/Gamma)
-   - Schumann resonance (7.83 Hz)
-   - Bio-feedback adaptive healing
-   - Session tracking & progress monitoring
+#### **Relaxation & Wellness** (Non-Medical)
+19. ✅ **BrainwaveEntrainment** - Scientifically-grounded audio relaxation
+   - Multidimensional Brainwave Entrainment (Delta/Theta/Alpha/Beta/Gamma)
+   - Isochronic tones
+   - 40Hz Gamma (MIT GENUS research)
+   - Bio-feedback adaptive adjustment
+   - Session tracking
+   - **DISCLAIMER:** NOT a medical device. For relaxation only.
 
 ### 🎼 **INTELLIGENT MUSIC TOOLS**
 
@@ -265,7 +264,7 @@
 - Visuals: Particle behavior, color shifts, animation speed
 - Lasers: Beam movement, rotation, pattern morphing
 - Video: Color grading intensity
-- Healing: Adaptive frequency adjustment
+- Wellness: Adaptive brainwave entrainment
 - Spatial: 3D object positioning
 
 ### 🎵 **2. AUDIO-REACTIVE EVERYTHING**
@@ -474,7 +473,7 @@
 - Distribution
 
 ### **Wellness Practitioners**
-- Healing frequency generator
+- Brainwave entrainment generator
 - Bio-feedback integration
 - Session tracking
 - Client management

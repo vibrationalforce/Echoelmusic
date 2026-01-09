@@ -306,7 +306,7 @@ final class DeepMaskEstimator: @unchecked Sendable {
             min(512, 64 * Int(pow(2.0, Double(i))))
         }
 
-        self.bottleneckChannels = encoderChannels.last! * 2
+        self.bottleneckChannels = (encoderChannels.last ?? 64) * 2
 
         // Build decoder architecture (mirror of encoder)
         self.decoderChannels = encoderChannels.reversed()

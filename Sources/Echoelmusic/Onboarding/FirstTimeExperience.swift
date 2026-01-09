@@ -148,7 +148,7 @@ class FirstTimeExperience: ObservableObject {
             demoMode = false
         }
 
-        print("✅ First-Time Experience: Initialized")
+        log.info("✅ First-Time Experience: Initialized", category: .ui)
     }
 
     // MARK: - Navigation
@@ -172,7 +172,7 @@ class FirstTimeExperience: ObservableObject {
         hasCompletedOnboarding = true
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         demoMode = false
-        print("✅ Onboarding completed")
+        log.info("✅ Onboarding completed", category: .ui)
     }
 
     // MARK: - Demo Actions
@@ -180,12 +180,12 @@ class FirstTimeExperience: ObservableObject {
     func startInstantDemo() {
         // Launch instant demo (touch-reactive audio-visual)
         // No permissions required - uses touch input only
-        print("▶️ Instant Demo: Touch-reactive mode")
+        log.info("▶️ Instant Demo: Touch-reactive mode", category: .ui)
     }
 
     func launchPreset(_ preset: QuickStartPreset) {
         // Launch selected preset
-        print("🚀 Launching preset: \(preset.name)")
+        log.info("🚀 Launching preset: \(preset.name)", category: .ui)
     }
 
     // MARK: - Permission Flow
@@ -195,20 +195,20 @@ class FirstTimeExperience: ObservableObject {
         // Always offer "Skip" option - app works without permissions
 
         // HealthKit (optional)
-        print("📱 Requesting HealthKit permission (optional)")
+        log.info("📱 Requesting HealthKit permission (optional)", category: .ui)
 
         // Microphone (optional)
-        print("🎤 Requesting Microphone permission (optional)")
+        log.info("🎤 Requesting Microphone permission (optional)", category: .ui)
 
         // Camera (optional)
-        print("📷 Requesting Camera permission (optional)")
+        log.info("📷 Requesting Camera permission (optional)", category: .ui)
     }
 
     // MARK: - Accessibility
 
     func enableAccessibilityMode() {
         // Enable enhanced accessibility (VoiceOver, larger text, etc.)
-        print("♿️ Accessibility mode enabled")
+        log.info("♿️ Accessibility mode enabled", category: .ui)
     }
 }
 

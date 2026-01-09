@@ -1,6 +1,10 @@
 import Foundation
 import Combine
 import AVFoundation
+import QuartzCore
+
+/// Global logger instance for UnifiedControlHub
+private let Log = Logger.shared
 
 /// Central orchestrator for all input modalities in Echoelmusic
 ///
@@ -51,23 +55,38 @@ public class UnifiedControlHub: ObservableObject {
     private var push3LEDController: Push3LEDController?
     private var midiToLightMapper: MIDIToLightMapper?
 
-    // TODO: Add when implementing
-    // private let gazeTracker: GazeTracker?
+    // Phase 4: Quantum Light Emulation (Future-Ready)
+    private var quantumLightEmulator: QuantumLightEmulator?
+    private var photonicsVisualization: PhotonicsVisualizationEngine?
+
+    // Phase 10000+: Ultimate Hardware Ecosystem Integration
+    private var hardwareEcosystem: HardwareEcosystem?
+    private var crossPlatformSessionManager: CrossPlatformSessionManager?
+
+    // Phase λ∞: Eye Gaze Tracking Integration
+    private var gazeTracker: GazeTracker?
+    private var gazeTrackingCancellables = Set<AnyCancellable>()
 
     // MARK: - Control Loop
 
+    #if os(iOS) || os(tvOS)
+    private var displayLink: CADisplayLink?
+    #endif
     private var controlLoopTimer: AnyCancellable?
     private let controlQueue = DispatchQueue(
         label: "com.echoelmusic.control",
         qos: .userInteractive
     )
 
-    private var lastUpdateTime: Date = Date()
+    private var lastUpdateTime: CFTimeInterval = CACurrentMediaTime()
     private let targetFrequency: Double = 60.0  // 60 Hz
 
-    // MARK: - Cancellables
+    // MARK: - Cancellables (Lifecycle-scoped)
 
     private var cancellables = Set<AnyCancellable>()
+    private var bioFeedbackCancellables = Set<AnyCancellable>()
+    private var faceTrackingCancellables = Set<AnyCancellable>()
+    private var handTrackingCancellables = Set<AnyCancellable>()
 
     // MARK: - Initialization
 
@@ -78,6 +97,9 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Enable face tracking integration
     public func enableFaceTracking() {
+        // Clear previous subscriptions to prevent leaks
+        faceTrackingCancellables.removeAll()
+
         let manager = ARFaceTrackingManager()
         self.faceTrackingManager = manager
 
@@ -86,20 +108,24 @@ public class UnifiedControlHub: ObservableObject {
             .sink { [weak self] expression in
                 self?.handleFaceExpressionUpdate(expression)
             }
-            .store(in: &cancellables)
+            .store(in: &faceTrackingCancellables)
 
-        print("[UnifiedControlHub] Face tracking enabled")
+        Log.info("🎭 Face tracking enabled", category: .system)
     }
 
     /// Disable face tracking
     public func disableFaceTracking() {
+        faceTrackingCancellables.removeAll()
         faceTrackingManager?.stop()
         faceTrackingManager = nil
-        print("[UnifiedControlHub] Face tracking disabled")
+        Log.info("🎭 Face tracking disabled", category: .system)
     }
 
     /// Enable hand tracking and gesture recognition
     public func enableHandTracking() {
+        // Clear previous subscriptions to prevent leaks
+        handTrackingCancellables.removeAll()
+
         let handManager = HandTrackingManager()
         let gestureRec = GestureRecognizer(handTracker: handManager)
         let conflictRes = GestureConflictResolver(
@@ -113,34 +139,38 @@ public class UnifiedControlHub: ObservableObject {
         self.gestureConflictResolver = conflictRes
         self.gestureToAudioMapper = gestureMapper
 
-        // Subscribe to gesture changes
+        // Subscribe to gesture changes (lifecycle-scoped)
         gestureRec.$leftHandGesture
             .sink { [weak self] gesture in
                 self?.handleGestureUpdate(hand: .left, gesture: gesture)
             }
-            .store(in: &cancellables)
+            .store(in: &handTrackingCancellables)
 
         gestureRec.$rightHandGesture
             .sink { [weak self] gesture in
                 self?.handleGestureUpdate(hand: .right, gesture: gesture)
             }
-            .store(in: &cancellables)
+            .store(in: &handTrackingCancellables)
 
-        print("[UnifiedControlHub] Hand tracking enabled")
+        Log.info("👋 Hand tracking enabled", category: .system)
     }
 
     /// Disable hand tracking
     public func disableHandTracking() {
+        handTrackingCancellables.removeAll()
         handTrackingManager?.stopTracking()
         handTrackingManager = nil
         gestureRecognizer = nil
         gestureConflictResolver = nil
         gestureToAudioMapper = nil
-        print("[UnifiedControlHub] Hand tracking disabled")
+        Log.info("👋 Hand tracking disabled", category: .system)
     }
 
     /// Enable biometric monitoring (HealthKit)
     public func enableBiometricMonitoring() async throws {
+        // Clear previous subscriptions to prevent leaks
+        bioFeedbackCancellables.removeAll()
+
         let healthKit = HealthKitManager()
         let bioMapper = BioParameterMapper()
 
@@ -158,31 +188,35 @@ public class UnifiedControlHub: ObservableObject {
         self.healthKitManager = healthKit
         self.bioParameterMapper = bioMapper
 
-        // Subscribe to HRV changes
+        // Event-driven bio updates (replaces polling pattern)
+        // Debounce prevents excessive updates while maintaining responsiveness
         healthKit.$hrvCoherence
-            .sink { [weak self] coherence in
-                self?.handleBioSignalUpdate()
-            }
-            .store(in: &cancellables)
-
-        healthKit.$heartRate
+            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleBioSignalUpdate()
             }
-            .store(in: &cancellables)
+            .store(in: &bioFeedbackCancellables)
+
+        healthKit.$heartRate
+            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.handleBioSignalUpdate()
+            }
+            .store(in: &bioFeedbackCancellables)
 
         // Start monitoring
         healthKit.startMonitoring()
 
-        print("[UnifiedControlHub] Biometric monitoring enabled")
+        Log.biofeedback("💓 Biometric monitoring enabled")
     }
 
     /// Disable biometric monitoring
     public func disableBiometricMonitoring() {
+        bioFeedbackCancellables.removeAll()
         healthKitManager?.stopMonitoring()
         healthKitManager = nil
         bioParameterMapper = nil
-        print("[UnifiedControlHub] Biometric monitoring disabled")
+        Log.biofeedback("💓 Biometric monitoring disabled")
     }
 
     /// Handle bio signal updates from HealthKit
@@ -207,7 +241,7 @@ public class UnifiedControlHub: ObservableObject {
         mpe.sendMPEConfiguration(memberChannels: 15)
         mpe.setPitchBendRange(semitones: 48)  // ±4 octaves
 
-        print("[UnifiedControlHub] MIDI 2.0 + MPE enabled")
+        Log.midi("🎹 MIDI 2.0 + MPE enabled")
     }
 
     /// Disable MIDI 2.0
@@ -222,7 +256,7 @@ public class UnifiedControlHub: ObservableObject {
         mpeZoneManager = nil
         midiToSpatialMapper = nil
 
-        print("[UnifiedControlHub] MIDI 2.0 disabled")
+        Log.midi("🎹 MIDI 2.0 disabled")
     }
 
     // MARK: - Phase 3 Integration
@@ -232,27 +266,27 @@ public class UnifiedControlHub: ObservableObject {
         let spatial = SpatialAudioEngine()
         try spatial.start()
         self.spatialAudioEngine = spatial
-        print("[UnifiedControlHub] Spatial audio enabled")
+        Log.spatial("🔊 Spatial audio enabled")
     }
 
     /// Disable spatial audio
     public func disableSpatialAudio() {
         spatialAudioEngine?.stop()
         spatialAudioEngine = nil
-        print("[UnifiedControlHub] Spatial audio disabled")
+        Log.spatial("🔊 Spatial audio disabled")
     }
 
     /// Enable MIDI to visual mapping
     public func enableVisualMapping() {
         let visualMapper = MIDIToVisualMapper()
         self.midiToVisualMapper = visualMapper
-        print("[UnifiedControlHub] Visual mapping enabled")
+        Log.info("🎨 Visual mapping enabled", category: .system)
     }
 
     /// Disable visual mapping
     public func disableVisualMapping() {
         midiToVisualMapper = nil
-        print("[UnifiedControlHub] Visual mapping disabled")
+        Log.info("🎨 Visual mapping disabled", category: .system)
     }
 
     /// Enable Push 3 LED controller
@@ -260,14 +294,14 @@ public class UnifiedControlHub: ObservableObject {
         let push3 = Push3LEDController()
         try push3.connect()
         self.push3LEDController = push3
-        print("[UnifiedControlHub] Push 3 LED controller enabled")
+        Log.info("💡 Push 3 LED controller enabled", category: .system)
     }
 
     /// Disable Push 3 LED
     public func disablePush3LED() {
         push3LEDController?.disconnect()
         push3LEDController = nil
-        print("[UnifiedControlHub] Push 3 LED controller disabled")
+        Log.info("💡 Push 3 LED controller disabled", category: .system)
     }
 
     /// Enable DMX/LED strip lighting
@@ -275,21 +309,331 @@ public class UnifiedControlHub: ObservableObject {
         let lighting = MIDIToLightMapper()
         try lighting.connect()
         self.midiToLightMapper = lighting
-        print("[UnifiedControlHub] DMX lighting enabled")
+        Log.info("💡 DMX lighting enabled", category: .system)
     }
 
     /// Disable lighting
     public func disableLighting() {
         midiToLightMapper?.disconnect()
         midiToLightMapper = nil
-        print("[UnifiedControlHub] DMX lighting disabled")
+        Log.info("💡 DMX lighting disabled", category: .system)
+    }
+
+    /// Enable Quantum Light Emulator (Future-Ready)
+    /// - Parameter mode: Emulation mode (classical, quantum-inspired, bio-coherent, etc.)
+    public func enableQuantumLightEmulator(mode: QuantumLightEmulator.EmulationMode = .bioCoherent) {
+        let config = QuantumLightEmulator.Configuration()
+        let emulator = QuantumLightEmulator(configuration: config)
+        emulator.setMode(mode)
+        emulator.start()
+
+        // Connect photonics visualization
+        let photonics = PhotonicsVisualizationEngine()
+        photonics.connect(to: emulator)
+        photonics.start()
+
+        self.quantumLightEmulator = emulator
+        self.photonicsVisualization = photonics
+
+        Log.info("⚛️ Quantum Light Emulator enabled in \(mode.rawValue) mode\n  - Qubits: \(config.qubitCount)\n  - Photons: \(config.photonCount)\n  - Field Geometry: \(config.lightFieldGeometry.rawValue)", category: .system)
+    }
+
+    /// Disable Quantum Light Emulator
+    public func disableQuantumLightEmulator() {
+        quantumLightEmulator?.stop()
+        photonicsVisualization?.stop()
+        quantumLightEmulator = nil
+        photonicsVisualization = nil
+        Log.info("⚛️ Quantum Light Emulator disabled", category: .system)
+    }
+
+    // MARK: - Phase 10000+: Ultimate Hardware Ecosystem
+
+    /// Enable the Ultimate Hardware Ecosystem for universal device connectivity
+    /// Supports 60+ audio interfaces, 40+ MIDI controllers, DMX/Art-Net lighting,
+    /// video/broadcast equipment, VR/AR devices, wearables, and more
+    public func enableHardwareEcosystem() {
+        hardwareEcosystem = HardwareEcosystem.shared
+
+        // Auto-discover connected devices
+        Task {
+            await hardwareEcosystem?.discoverAllDevices()
+
+            // Log discovered devices
+            if let ecosystem = hardwareEcosystem {
+                Log.info("🔌 Hardware Ecosystem enabled\n  - Connected devices: \(ecosystem.connectedDevices.count)\n  - Audio interfaces available: \(ecosystem.audioInterfaces.supportedInterfaces.count)\n  - MIDI controllers available: \(ecosystem.midiControllers.supportedControllers.count)\n  - Lighting fixtures available: \(ecosystem.lightingHardware.supportedFixtures.count)\n  - Video hardware available: \(ecosystem.videoHardware.supportedDevices.count)\n  - VR/AR devices available: \(ecosystem.vrArDevices.supportedDevices.count)\n  - Wearables available: \(ecosystem.wearables.supportedDevices.count)", category: .system)
+            }
+        }
+    }
+
+    /// Disable Hardware Ecosystem
+    public func disableHardwareEcosystem() {
+        hardwareEcosystem = nil
+        Log.info("🔌 Hardware Ecosystem disabled", category: .system)
+    }
+
+    /// Enable Cross-Platform Session Manager for multi-device sessions
+    /// Supports ANY device combination: iPhone + Windows, Android + Mac, etc.
+    public func enableCrossPlatformSessions() {
+        crossPlatformSessionManager = CrossPlatformSessionManager.shared
+
+        // Start device discovery
+        crossPlatformSessionManager?.startDiscovery()
+
+        Log.info("🌐 Cross-Platform Session Manager enabled\n  - Adaptive zero-latency mode active\n  - Supported ecosystems: Apple, Google, Microsoft, Meta, Linux, Tesla", category: .system)
+    }
+
+    /// Disable Cross-Platform Session Manager
+    public func disableCrossPlatformSessions() {
+        crossPlatformSessionManager?.stopDiscovery()
+        crossPlatformSessionManager = nil
+        Log.info("🌐 Cross-Platform Session Manager disabled", category: .system)
+    }
+
+    /// Create a cross-platform session with specified devices
+    /// - Parameters:
+    ///   - name: Session name
+    ///   - devices: Devices to include in the session
+    ///   - syncMode: Synchronization mode (adaptive, lowLatency, highQuality)
+    /// - Returns: The created session
+    public func createCrossPlatformSession(
+        name: String,
+        devices: [CrossPlatformSessionManager.SessionDevice],
+        syncMode: CrossPlatformSessionManager.SyncMode = .adaptive
+    ) -> CrossPlatformSessionManager.CrossPlatformSession? {
+        guard let manager = crossPlatformSessionManager else {
+            Log.info("⚠️ Cross-Platform Session Manager not enabled", category: .system, level: .warning)
+            return nil
+        }
+
+        let session = manager.createSession(name: name, devices: devices, syncMode: syncMode)
+        Log.info("🌐 Created cross-platform session: \(name)\n  - Devices: \(devices.count)\n  - Sync mode: \(syncMode)", category: .system)
+        return session
+    }
+
+    /// Get recommended audio interface for current platform
+    public func getRecommendedAudioInterface() -> HardwareEcosystem.AudioInterface? {
+        return hardwareEcosystem?.audioInterfaces.getRecommendedInterface()
+    }
+
+    /// Get all connected MIDI controllers
+    public func getConnectedMIDIControllers() -> [HardwareEcosystem.MIDIController] {
+        return hardwareEcosystem?.midiControllers.supportedControllers.filter { controller in
+            // Check if controller is actually connected
+            hardwareEcosystem?.connectedDevices.contains { $0.name == controller.name } ?? false
+        } ?? []
+    }
+
+    /// Get all available lighting fixtures
+    public func getAvailableLightingFixtures() -> [HardwareEcosystem.LightingFixture] {
+        return hardwareEcosystem?.lightingHardware.supportedFixtures ?? []
+    }
+
+    /// Sync biometric data across all devices in cross-platform session
+    public func syncBiometricsToSession(hrvCoherence: Float, heartRate: Float, breathingRate: Float) {
+        let bioData = CrossPlatformSessionManager.BiometricSyncData(
+            hrvCoherence: hrvCoherence,
+            heartRate: heartRate,
+            breathingRate: breathingRate,
+            timestamp: Date()
+        )
+        crossPlatformSessionManager?.syncBiometricData(bioData)
+    }
+
+    /// Sync audio parameters across all devices in cross-platform session
+    public func syncAudioParametersToSession(bpm: Float, filterCutoff: Float, reverbWet: Float) {
+        let params = CrossPlatformSessionManager.AudioSyncParameters(
+            bpm: bpm,
+            filterCutoff: filterCutoff,
+            reverbWet: reverbWet,
+            masterVolume: 0.8
+        )
+        crossPlatformSessionManager?.syncAudioParameters(params)
+    }
+
+    // MARK: - Phase λ∞: Eye Gaze Tracking
+
+    /// Enable eye gaze tracking for bio-reactive control
+    /// Available on visionOS, iPad Pro with Face ID, and ARKit-enabled devices
+    @available(iOS 15.0, macOS 12.0, *)
+    public func enableGazeTracking() {
+        gazeTrackingCancellables.removeAll()
+
+        let tracker = GazeTracker()
+        self.gazeTracker = tracker
+
+        // Subscribe to gaze updates
+        tracker.$currentGaze
+            .debounce(for: .milliseconds(16), scheduler: DispatchQueue.main)
+            .sink { [weak self] gazeData in
+                self?.handleGazeUpdate(gazeData)
+            }
+            .store(in: &gazeTrackingCancellables)
+
+        // Subscribe to attention level changes
+        tracker.$attentionLevel
+            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
+            .sink { [weak self] attention in
+                self?.handleAttentionChange(attention)
+            }
+            .store(in: &gazeTrackingCancellables)
+
+        // Subscribe to zone changes for discrete control
+        tracker.$currentZone
+            .removeDuplicates()
+            .sink { [weak self] zone in
+                self?.handleGazeZoneChange(zone)
+            }
+            .store(in: &gazeTrackingCancellables)
+
+        tracker.startTracking()
+
+        Log.spatial("👁️ Gaze tracking enabled\n  - Available: \(tracker.isAvailable)\n  - Tracking: \(tracker.isTracking)")
+    }
+
+    /// Disable eye gaze tracking
+    @available(iOS 15.0, macOS 12.0, *)
+    public func disableGazeTracking() {
+        gazeTrackingCancellables.removeAll()
+        gazeTracker?.stopTracking()
+        gazeTracker = nil
+        Log.spatial("👁️ Gaze tracking disabled")
+    }
+
+    /// Handle gaze data updates
+    @available(iOS 15.0, macOS 12.0, *)
+    private func handleGazeUpdate(_ gazeData: GazeData) {
+        guard let tracker = gazeTracker else { return }
+
+        let params = tracker.getControlParameters()
+
+        // Apply gaze-based audio panning
+        if let spatial = spatialAudioEngine {
+            // Map gaze X to pan (-1 to +1)
+            let pan = params.audioPan
+            spatial.setPan(pan)
+        }
+
+        // Apply gaze-based filter modulation
+        if let engine = audioEngine {
+            // Filter cutoff based on attention and stability
+            let cutoffFactor = params.filterCutoff
+            let baseCutoff: Float = 200.0
+            let maxCutoff: Float = 8000.0
+            let cutoff = baseCutoff + cutoffFactor * (maxCutoff - baseCutoff)
+            engine.setFilterCutoff(cutoff)
+        }
+
+        // Apply to quantum light emulator
+        if let quantum = quantumLightEmulator {
+            // Map arousal to quantum coherence influence
+            quantum.updateGazeInputs(
+                gazeX: params.gazeX,
+                gazeY: params.gazeY,
+                attention: params.attention,
+                arousal: params.arousal
+            )
+        }
+
+        // Apply to visuals
+        if let visualMapper = midiToVisualMapper {
+            visualMapper.updateGazeParameters(
+                gazeX: params.gazeX,
+                gazeY: params.gazeY,
+                attention: params.attention,
+                focus: params.focus
+            )
+        }
+    }
+
+    /// Handle attention level changes
+    @available(iOS 15.0, macOS 12.0, *)
+    private func handleAttentionChange(_ attention: Float) {
+        // Modulate reverb based on attention (less attention = more reverb/dreamlike)
+        let reverbWet = 1.0 - attention
+        audioEngine?.setReverbWetness(reverbWet * 0.5)
+
+        // Update visual intensity
+        midiToVisualMapper?.setIntensity(attention)
+    }
+
+    /// Handle gaze zone changes for discrete audio-visual control
+    @available(iOS 15.0, macOS 12.0, *)
+    private func handleGazeZoneChange(_ zone: GazeZone) {
+        // Map zones to presets or parameters
+        switch zone {
+        case .topLeft:
+            // High frequencies, left pan
+            audioEngine?.setFilterCutoff(6000)
+        case .topCenter:
+            // Bright, centered
+            audioEngine?.setFilterCutoff(8000)
+        case .topRight:
+            // High frequencies, right pan
+            audioEngine?.setFilterCutoff(6000)
+        case .centerLeft:
+            // Mid frequencies, left
+            audioEngine?.setFilterCutoff(2000)
+        case .center:
+            // Balanced
+            audioEngine?.setFilterCutoff(4000)
+        case .centerRight:
+            // Mid frequencies, right
+            audioEngine?.setFilterCutoff(2000)
+        case .bottomLeft:
+            // Bass, left
+            audioEngine?.setFilterCutoff(500)
+        case .bottomCenter:
+            // Deep bass
+            audioEngine?.setFilterCutoff(200)
+        case .bottomRight:
+            // Bass, right
+            audioEngine?.setFilterCutoff(500)
+        }
+
+        #if DEBUG
+        Log.spatial("[Gaze→Audio] Zone: \(zone.displayName)")
+        #endif
+    }
+
+    /// Get current gaze control parameters
+    @available(iOS 15.0, macOS 12.0, *)
+    public func getGazeControlParameters() -> GazeControlParameters? {
+        return gazeTracker?.getControlParameters()
+    }
+
+    /// Check if gaze tracking is available
+    @available(iOS 15.0, macOS 12.0, *)
+    public var isGazeTrackingAvailable: Bool {
+        gazeTracker?.isAvailable ?? false
+    }
+
+    /// Check if gaze tracking is currently active
+    @available(iOS 15.0, macOS 12.0, *)
+    public var isGazeTrackingActive: Bool {
+        gazeTracker?.isTracking ?? false
+    }
+
+    /// Get current quantum coherence level
+    public var quantumCoherenceLevel: Float {
+        quantumLightEmulator?.coherenceLevel ?? 0.0
+    }
+
+    /// Get current light field for visualization
+    public var currentLightField: LightField? {
+        quantumLightEmulator?.currentLightField
+    }
+
+    /// Set quantum emulation mode
+    public func setQuantumMode(_ mode: QuantumLightEmulator.EmulationMode) {
+        quantumLightEmulator?.setMode(mode)
     }
 
     // MARK: - Lifecycle
 
     /// Start the unified control system
     public func start() {
-        print("[UnifiedControlHub] Starting control system...")
+        Log.info("Starting control system...", category: .system)
 
         // Start face tracking if enabled
         faceTrackingManager?.start()
@@ -305,28 +649,55 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Stop the unified control system
     public func stop() {
-        print("[UnifiedControlHub] Stopping control system...")
+        Log.info("Stopping control system...", category: .system)
+
+        #if os(iOS) || os(tvOS)
+        displayLink?.invalidate()
+        displayLink = nil
+        #endif
+
         controlLoopTimer?.cancel()
         controlLoopTimer = nil
+
+        // Stop quantum emulator if running
+        quantumLightEmulator?.stop()
+        photonicsVisualization?.stop()
     }
 
     // MARK: - Control Loop (60 Hz)
 
     private func startControlLoop() {
-        let interval = 1.0 / targetFrequency  // ~16.67ms for 60 Hz
-
+        #if os(iOS) || os(tvOS)
+        // Use CADisplayLink for precise 60Hz timing (10-15ms jitter reduction)
+        displayLink = CADisplayLink(target: self, selector: #selector(displayLinkFired))
+        displayLink?.preferredFrameRateRange = CAFrameRateRange(
+            minimum: Float(targetFrequency),
+            maximum: Float(targetFrequency),
+            preferred: Float(targetFrequency)
+        )
+        displayLink?.add(to: .main, forMode: .common)
+        #else
+        // macOS/watchOS: Use high-precision timer
+        let interval = 1.0 / targetFrequency
         controlLoopTimer = Timer.publish(every: interval, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 self?.controlLoopTick()
             }
+        #endif
     }
 
+    #if os(iOS) || os(tvOS)
+    @objc private func displayLinkFired(_ link: CADisplayLink) {
+        controlLoopTick()
+    }
+    #endif
+
     private func controlLoopTick() {
-        // Measure actual frequency
-        let now = Date()
-        let deltaTime = now.timeIntervalSince(lastUpdateTime)
-        controlLoopFrequency = 1.0 / deltaTime
+        // Measure actual frequency using CACurrentMediaTime (no allocation)
+        let now = CACurrentMediaTime()
+        let deltaTime = now - lastUpdateTime
+        controlLoopFrequency = deltaTime > 0 ? 1.0 / deltaTime : targetFrequency
         lastUpdateTime = now
 
         // Priority-based parameter updates
@@ -390,7 +761,7 @@ public class UnifiedControlHub: ObservableObject {
 
         // Log bio→audio mapping (nur bei Debug)
         #if DEBUG
-        print("[Bio→Audio] Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Tempo: \(Int(mapper.tempo))BPM")
+        Log.biofeedback("[Bio→Audio] Filter: \(Int(mapper.filterCutoff))Hz, Reverb: \(Int(mapper.reverbWet * 100))%, Tempo: \(Int(mapper.tempo))BPM")
         #endif
 
         // Apply bio-reactive spatial field (AFA)
@@ -426,8 +797,26 @@ public class UnifiedControlHub: ObservableObject {
                 let afaField = spatialMapper.mapToAFA(voices: voiceData, geometry: fieldGeometry)
                 spatialMapper.afaField = afaField
 
-                // TODO: Apply AFA field to SpatialAudioEngine
-                // print("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count)")
+                // Apply AFA field to SpatialAudioEngine
+                if let spatialEngine = spatialAudioEngine {
+                    // Position sources according to AFA field geometry
+                    for (index, source) in afaField.sources.enumerated() {
+                        spatialEngine.setSourcePosition(
+                            sourceID: index,
+                            x: source.position.x,
+                            y: source.position.y,
+                            z: source.position.z
+                        )
+
+                        // Apply coherence-based reverb blend
+                        let reverbBlend = Float(coherence) / 100.0
+                        spatialEngine.setReverbBlend(reverbBlend)
+                    }
+
+                    #if DEBUG
+                    Log.biofeedback("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count), Coherence: \(coherence)%")
+                    #endif
+                }
             }
         }
     }
@@ -450,9 +839,15 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Apply face-derived audio parameters to audio engine and MPE
     private func applyFaceAudioParameters(_ params: AudioParameters) {
-        // Apply to audio engine
-        // TODO: Apply to actual AudioEngine once extended
-        // print("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+        // Apply to actual AudioEngine
+        if let engine = audioEngine {
+            engine.setFilterCutoff(params.filterCutoff)
+            engine.setFilterResonance(params.filterResonance)
+
+            #if DEBUG
+            Log.spatial("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
+            #endif
+        }
 
         // Apply to all active MPE voices
         if let mpe = mpeZoneManager {
@@ -540,7 +935,7 @@ public class UnifiedControlHub: ObservableObject {
         }
 
         #if DEBUG
-        print("[Gesture→Audio] Applied: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)")
+        Log.info("[Gesture→Audio] Applied: Filter=\(params.filterCutoff ?? 0)Hz, Reverb=\(params.reverbWetness ?? 0)", category: .system)
         #endif
 
         // Trigger MIDI notes via MPE
@@ -551,7 +946,7 @@ public class UnifiedControlHub: ObservableObject {
                     note: midiNote.note,
                     velocity: Float(midiNote.velocity) / 127.0
                 ) {
-                    print("[Gesture→MPE] Voice allocated: Note \(midiNote.note), Channel \(voice.channel + 1)")
+                    Log.midi("[Gesture→MPE] Voice allocated: Note \(midiNote.note), Channel \(voice.channel + 1)")
 
                     // Apply initial per-note expression from gestures
                     if let gestureRec = gestureRecognizer {
@@ -565,19 +960,40 @@ public class UnifiedControlHub: ObservableObject {
                 }
             } else {
                 // Fallback to MIDI 1.0 if MPE not enabled
-                print("[Gesture→MIDI] Note On: \(midiNote.note), Velocity: \(midiNote.velocity)")
+                Log.midi("[Gesture→MIDI] Note On: \(midiNote.note), Velocity: \(midiNote.velocity)")
             }
         }
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // TODO: Change to preset
-            print("[Gesture→Audio] Switch to preset: \(presetChange)")
+            // Apply preset change to audio engine
+            if let engine = audioEngine {
+                engine.loadPreset(named: presetChange)
+                Log.info("[Gesture→Audio] Switched to preset: \(presetChange)", category: .system)
+            }
         }
     }
 
     private func updateFromGazeTracking() {
-        // TODO: Implement when GazeTracker is integrated
+        // Gaze tracking updates happen via Combine subscription
+        // See handleGazeUpdate(), handleAttentionChange(), handleGazeZoneChange()
+        // This method is called at 60Hz but actual processing is event-driven
+
+        if #available(iOS 15.0, macOS 12.0, *) {
+            guard let tracker = gazeTracker, tracker.isTracking else { return }
+
+            // Sync gaze data to cross-platform session if active
+            if let _ = crossPlatformSessionManager?.activeSession {
+                let params = tracker.getControlParameters()
+                // Gaze-derived parameters can be synced as part of biometric data
+                let hrvModifier = params.attention * 20  // Attention affects coherence perception
+                syncBiometricsToSession(
+                    hrvCoherence: healthKitManager?.hrvCoherence ?? 50 + Float(hrvModifier),
+                    heartRate: Float(healthKitManager?.heartRate ?? 72),
+                    breathingRate: Float(healthKitManager?.breathingRate ?? 12)
+                )
+            }
+        }
     }
 
     // MARK: - Conflict Resolution
@@ -614,8 +1030,7 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     private func updateVisualEngine() {
-        guard let visualMapper = midiToVisualMapper,
-              let healthKit = healthKitManager else {
+        guard let healthKit = healthKitManager else {
             return
         }
 
@@ -623,11 +1038,22 @@ public class UnifiedControlHub: ObservableObject {
         let bioParams = MIDIToVisualMapper.BioParameters(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0,  // TODO: Calculate from HRV
-            audioLevel: 0.5      // TODO: Get from audio engine
+            breathingRate: healthKit.breathingRate,
+            audioLevel: Double(audioEngine?.currentLevel ?? 0.5)
         )
 
-        visualMapper.updateBioParameters(bioParams)
+        if let visualMapper = midiToVisualMapper {
+            visualMapper.updateBioParameters(bioParams)
+        }
+
+        // Update Quantum Light Emulator with bio-inputs
+        if let quantumEmulator = quantumLightEmulator {
+            quantumEmulator.updateBioInputs(
+                hrvCoherence: Float(healthKit.hrvCoherence),
+                heartRate: Float(healthKit.heartRate),
+                breathingRate: Float(healthKit.breathingRate)
+            )
+        }
     }
 
     private func updateLightSystems() {
@@ -638,7 +1064,7 @@ public class UnifiedControlHub: ObservableObject {
         let bioData = MIDIToLightMapper.BioData(
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
-            breathingRate: 6.0  // TODO: Calculate from HRV
+            breathingRate: healthKit.breathingRate
         )
 
         // Update Push 3 LED patterns

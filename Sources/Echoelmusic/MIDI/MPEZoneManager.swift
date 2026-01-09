@@ -90,7 +90,7 @@ class MPEZoneManager: ObservableObject {
         if voices.count >= maxVoices {
             // Need to steal a voice
             guard let stolenVoice = selectVoiceToSteal() else {
-                print("⚠️ MPE: Failed to steal voice")
+                log.midi("⚠️ MPE: Failed to steal voice", level: .warning)
                 return nil
             }
 
@@ -100,7 +100,7 @@ class MPEZoneManager: ObservableObject {
 
         // Find available channel
         guard let channel = findAvailableChannel() else {
-            print("⚠️ MPE: No available channel")
+            log.midi("⚠️ MPE: No available channel", level: .warning)
             return nil
         }
 
@@ -120,7 +120,7 @@ class MPEZoneManager: ObservableObject {
         // Send MIDI 2.0 Note On
         midi2Manager.sendNoteOn(channel: channel, note: note, velocity: velocity)
 
-        print("[MPE] Allocated voice: Note \(note) on channel \(channel + 1)")
+        log.midi("[MPE] Allocated voice: Note \(note) on channel \(channel + 1)")
 
         return voice
     }
@@ -134,7 +134,7 @@ class MPEZoneManager: ObservableObject {
         voices.removeValue(forKey: voice.id)
         updatePublishedState()
 
-        print("[MPE] Deallocated voice: Note \(voice.note) from channel \(voice.channel + 1)")
+        log.midi("[MPE] Deallocated voice: Note \(voice.note) from channel \(voice.channel + 1)")
     }
 
     /// Find next available channel
@@ -279,7 +279,7 @@ class MPEZoneManager: ObservableObject {
         voices.removeAll()
         updatePublishedState()
 
-        print("[MPE] Released all voices")
+        log.midi("[MPE] Released all voices")
     }
 
     // MARK: - MPE Configuration Messages
@@ -306,7 +306,7 @@ class MPEZoneManager: ObservableObject {
         // Data Entry LSB (CC 38) = 0
         midi2Manager.sendControlChange(channel: channel, controller: 38, value: 0.0)
 
-        print("[MPE] Sent configuration: \(memberChannels) member channels")
+        log.midi("[MPE] Sent configuration: \(memberChannels) member channels")
     }
 
     /// Send MPE pitch bend range configuration
@@ -326,7 +326,7 @@ class MPEZoneManager: ObservableObject {
         // Data Entry LSB (CC 38) = 0
         midi2Manager.sendControlChange(channel: channel, controller: 38, value: 0.0)
 
-        print("[MPE] Set pitch bend range: ±\(semitones) semitones")
+        log.midi("[MPE] Set pitch bend range: ±\(semitones) semitones")
     }
 }
 

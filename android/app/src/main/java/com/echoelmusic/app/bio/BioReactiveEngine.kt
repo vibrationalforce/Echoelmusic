@@ -128,14 +128,19 @@ class BioReactiveEngine(private val context: Context) {
         )
 
         try {
-            val response = client.readRecords(request)
-            response.records.lastOrNull()?.let { record ->
+            // Add 5-second timeout to prevent ANR
+            val response = withTimeoutOrNull(5000) {
+                client.readRecords(request)
+            }
+            response?.records?.lastOrNull()?.let { record ->
                 record.samples.lastOrNull()?.let { sample ->
                     _heartRate.value = sample.beatsPerMinute.toFloat()
                 }
             }
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission denied for heart rate")
+        } catch (e: Exception) {
+            Log.w(TAG, "Error reading heart rate: ${e.message}")
         }
     }
 
@@ -150,8 +155,11 @@ class BioReactiveEngine(private val context: Context) {
         )
 
         try {
-            val response = client.readRecords(request)
-            response.records.lastOrNull()?.let { record ->
+            // Add 5-second timeout to prevent ANR
+            val response = withTimeoutOrNull(5000) {
+                client.readRecords(request)
+            }
+            response?.records?.lastOrNull()?.let { record ->
                 val hrvValue = record.heartRateVariabilityMillis.toFloat()
                 _hrv.value = hrvValue
 
@@ -163,6 +171,8 @@ class BioReactiveEngine(private val context: Context) {
             }
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission denied for HRV")
+        } catch (e: Exception) {
+            Log.w(TAG, "Error reading HRV: ${e.message}")
         }
     }
 
@@ -177,12 +187,17 @@ class BioReactiveEngine(private val context: Context) {
         )
 
         try {
-            val response = client.readRecords(request)
-            response.records.lastOrNull()?.let { record ->
+            // Add 5-second timeout to prevent ANR
+            val response = withTimeoutOrNull(5000) {
+                client.readRecords(request)
+            }
+            response?.records?.lastOrNull()?.let { record ->
                 _respiratoryRate.value = record.rate.toFloat()
             }
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission denied for respiratory rate")
+        } catch (e: Exception) {
+            Log.w(TAG, "Error reading respiratory rate: ${e.message}")
         }
     }
 

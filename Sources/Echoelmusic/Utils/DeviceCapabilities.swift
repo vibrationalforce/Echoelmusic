@@ -36,11 +36,33 @@ class DeviceCapabilities: ObservableObject {
 
     /// Known iPhone models that support advanced spatial audio
     private let spatialAudioCapableModels: Set<String> = [
+        // iPhone 16 Series (2024)
         "iPhone16,1",  // iPhone 16 Pro
         "iPhone16,2",  // iPhone 16 Pro Max
+        "iPhone16,3",  // iPhone 16
+        "iPhone16,4",  // iPhone 16 Plus
+
+        // iPhone 17 Series (2025)
         "iPhone17,1",  // iPhone 17
         "iPhone17,2",  // iPhone 17 Pro
         "iPhone17,3",  // iPhone 17 Pro Max
+        "iPhone17,4",  // iPhone 17 Air
+
+        // iPhone 18 Series (2026)
+        "iPhone18,1",  // iPhone 18
+        "iPhone18,2",  // iPhone 18 Pro
+        "iPhone18,3",  // iPhone 18 Pro Max
+        "iPhone18,4",  // iPhone 18 Ultra
+
+        // iPhone 19 Series (2027 - Future Ready)
+        "iPhone19,1",  // iPhone 19
+        "iPhone19,2",  // iPhone 19 Pro
+        "iPhone19,3",  // iPhone 19 Pro Max
+
+        // iPhone 20 Series (2028 - Future Ready)
+        "iPhone20,1",  // iPhone 20
+        "iPhone20,2",  // iPhone 20 Pro
+        "iPhone20,3",  // iPhone 20 Pro Max
     ]
 
 
@@ -74,33 +96,69 @@ class DeviceCapabilities: ObservableObject {
 
         deviceModel = mapDeviceIdentifier(identifier)
 
-        print("📱 Device: \(deviceModel) (\(identifier))")
+        log.performance("📱 Device: \(deviceModel) (\(identifier))")
     }
 
     /// Map device identifier to human-readable name
     private func mapDeviceIdentifier(_ identifier: String) -> String {
         switch identifier {
-        // iPhone 16 Series
+        // iPhone 20 Series (2028 - Future Ready)
+        case "iPhone20,1": return "iPhone 20"
+        case "iPhone20,2": return "iPhone 20 Pro"
+        case "iPhone20,3": return "iPhone 20 Pro Max"
+
+        // iPhone 19 Series (2027 - Future Ready)
+        case "iPhone19,1": return "iPhone 19"
+        case "iPhone19,2": return "iPhone 19 Pro"
+        case "iPhone19,3": return "iPhone 19 Pro Max"
+
+        // iPhone 18 Series (2026)
+        case "iPhone18,1": return "iPhone 18"
+        case "iPhone18,2": return "iPhone 18 Pro"
+        case "iPhone18,3": return "iPhone 18 Pro Max"
+        case "iPhone18,4": return "iPhone 18 Ultra"
+
+        // iPhone 17 Series (2025)
+        case "iPhone17,1": return "iPhone 17"
+        case "iPhone17,2": return "iPhone 17 Pro"
+        case "iPhone17,3": return "iPhone 17 Pro Max"
+        case "iPhone17,4": return "iPhone 17 Air"
+
+        // iPhone 16 Series (2024)
         case "iPhone16,1": return "iPhone 16 Pro"
         case "iPhone16,2": return "iPhone 16 Pro Max"
         case "iPhone16,3": return "iPhone 16"
         case "iPhone16,4": return "iPhone 16 Plus"
 
-        // iPhone 17 Series (future)
-        case "iPhone17,1": return "iPhone 17"
-        case "iPhone17,2": return "iPhone 17 Pro"
-        case "iPhone17,3": return "iPhone 17 Pro Max"
-
-        // iPhone 15 Series
+        // iPhone 15 Series (2023)
         case "iPhone15,2": return "iPhone 14 Pro"
         case "iPhone15,3": return "iPhone 14 Pro Max"
         case "iPhone15,4": return "iPhone 15"
         case "iPhone15,5": return "iPhone 15 Plus"
 
+        // iPad Pro (Future Ready)
+        case "iPad16,1", "iPad16,2": return "iPad Pro (2026)"
+        case "iPad17,1", "iPad17,2": return "iPad Pro (2027)"
+
+        // Vision Pro (Future Ready)
+        case "RealityDevice14,1": return "Apple Vision Pro"
+        case "RealityDevice15,1": return "Apple Vision Pro 2"
+        case "RealityDevice16,1": return "Apple Vision Pro 3"
+
+        // Apple Watch (Future Ready)
+        case "Watch7,1", "Watch7,2": return "Apple Watch Ultra 3"
+        case "Watch8,1", "Watch8,2": return "Apple Watch Series 12"
+
         // Simulator
         case "x86_64", "arm64": return "iOS Simulator"
 
-        default: return identifier
+        default:
+            // Future-proof: Accept any iPhone/iPad/Watch/Reality device
+            if identifier.hasPrefix("iPhone") { return "iPhone (Future Model)" }
+            if identifier.hasPrefix("iPad") { return "iPad (Future Model)" }
+            if identifier.hasPrefix("Watch") { return "Apple Watch (Future Model)" }
+            if identifier.hasPrefix("RealityDevice") { return "Apple Vision (Future Model)" }
+            return identifier
         }
     }
 
@@ -109,7 +167,7 @@ class DeviceCapabilities: ObservableObject {
         let version = UIDevice.current.systemVersion
         iOSVersion = version
 
-        print("🔧 iOS Version: \(version)")
+        log.performance("🔧 iOS Version: \(version)")
     }
 
     /// Check if device supports ASAF (Apple Spatial Audio Features)
@@ -140,10 +198,10 @@ class DeviceCapabilities: ObservableObject {
         supportsASAF = hasRequiredOS && hasCapableHardware
 
         if supportsASAF {
-            print("✅ ASAF Supported (iOS \(majorVersion)+ with \(deviceModel))")
+            log.performance("✅ ASAF Supported (iOS \(majorVersion)+ with \(deviceModel))")
         } else {
-            print("⚠️  ASAF Not Supported (Need iOS 19+ and iPhone 16+)")
-            print("   Current: iOS \(iOSVersion), \(deviceModel)")
+            log.performance("⚠️  ASAF Not Supported (Need iOS 19+ and iPhone 16+)", level: .warning)
+            log.performance("   Current: iOS \(iOSVersion), \(deviceModel)", level: .warning)
         }
     }
 
@@ -181,9 +239,9 @@ class DeviceCapabilities: ObservableObject {
                     airPodsModel = "Bluetooth Audio Device"
                 }
 
-                print("🎧 Audio Output: \(airPodsModel ?? "Unknown")")
+                log.performance("🎧 Audio Output: \(airPodsModel ?? "Unknown")")
                 if supportsAPACCodec {
-                    print("✅ APAC Codec Available")
+                    log.performance("✅ APAC Codec Available")
                 }
 
                 return
@@ -195,7 +253,7 @@ class DeviceCapabilities: ObservableObject {
         airPodsModel = nil
         supportsAPACCodec = false
 
-        print("🔇 No AirPods detected")
+        log.performance("🔇 No AirPods detected")
     }
 
 
@@ -250,7 +308,7 @@ class DeviceCapabilities: ObservableObject {
             object: nil
         )
 
-        print("🔊 Started monitoring audio route changes")
+        log.performance("🔊 Started monitoring audio route changes")
     }
 
     /// Stop monitoring audio route changes
@@ -261,12 +319,12 @@ class DeviceCapabilities: ObservableObject {
             object: nil
         )
 
-        print("🔇 Stopped monitoring audio route changes")
+        log.performance("🔇 Stopped monitoring audio route changes")
     }
 
     /// Handle audio route changes
     @objc private func audioRouteChanged(notification: Notification) {
-        print("🔄 Audio route changed, re-detecting AirPods...")
+        log.performance("🔄 Audio route changed, re-detecting AirPods...")
         detectAirPods()
     }
 
@@ -296,7 +354,7 @@ extension DeviceCapabilities {
 
     enum AudioConfiguration {
         case spatialAudio    // Full 3D spatial audio with head tracking
-        case binauralBeats   // Binaural beats for headphones
+        case binauralBeats   // Multidimensional Brainwave Entrainment for headphones
         case standard        // Standard stereo
 
         var description: String {
@@ -304,7 +362,7 @@ extension DeviceCapabilities {
             case .spatialAudio:
                 return "Spatial Audio with Head Tracking"
             case .binauralBeats:
-                return "Binaural Beats (Headphones)"
+                return "Multidimensional Brainwave Entrainment (Headphones)"
             case .standard:
                 return "Standard Stereo"
             }

@@ -109,7 +109,7 @@ class WatchApp {
     func startSession(type: SessionType) async throws {
         guard !isSessionActive else { return }
 
-        print("⌚ Starting \(type.rawValue) session on Apple Watch")
+        log.info("⌚ Starting \(type.rawValue) session on Apple Watch", category: .system)
 
         // Starte HealthKit Workout
         try await startWorkoutSession(type: type)
@@ -130,7 +130,7 @@ class WatchApp {
     func stopSession() async {
         guard isSessionActive else { return }
 
-        print("⌚ Stopping session on Apple Watch")
+        log.info("⌚ Stopping session on Apple Watch", category: .system)
 
         // Stoppe Workout
         workoutSession?.end()
@@ -177,7 +177,7 @@ class WatchApp {
                                                    configuration: configuration)
             workoutSession?.startActivity(with: Date())
         } catch {
-            print("❌ Failed to start workout session: \(error)")
+            log.error("❌ Failed to start workout session: \(error)", category: .system)
             throw error
         }
     }
@@ -235,6 +235,8 @@ class WatchApp {
 
     // MARK: - Data Management
 
+    private let watchConnectivityManager = WatchConnectivityManager.shared
+
     private func saveSession(duration: TimeInterval, metrics: BioMetrics) async {
         // Speichere Session-Daten für Sync mit iPhone
         let session = SessionData(
@@ -246,8 +248,33 @@ class WatchApp {
             date: Date()
         )
 
-        // TODO: Sync with iPhone via WatchConnectivity
-        print("💾 Session saved: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)")
+        // Sync with iPhone via WatchConnectivity
+        let sessionDict: [String: Any] = [
+            "type": session.type.rawValue,
+            "duration": session.duration,
+            "avgHeartRate": session.avgHeartRate,
+            "avgHRV": session.avgHRV,
+            "avgCoherence": session.avgCoherence,
+            "date": session.date.timeIntervalSince1970
+        ]
+
+        await watchConnectivityManager.sendSessionData(sessionDict)
+        log.info("💾 Session saved and synced: \(duration)s, HRV: \(metrics.hrv), Coherence: \(metrics.coherence)", category: .system)
+    }
+
+    // MARK: - Real-time Bio Sync
+
+    func syncBioMetrics() async {
+        // Send real-time bio metrics to iPhone
+        let bioDict: [String: Any] = [
+            "heartRate": currentMetrics.heartRate,
+            "hrv": currentMetrics.hrv,
+            "coherence": currentMetrics.coherence,
+            "breathingRate": currentMetrics.breathingRate,
+            "timestamp": Date().timeIntervalSince1970
+        ]
+
+        await watchConnectivityManager.sendBioMetrics(bioDict)
     }
 
     struct SessionData: Codable {
@@ -298,18 +325,43 @@ class WatchHealthKitManager {
     private var hrvQuery: HKAnchoredObjectQuery?
 
     func requestAuthorization() async throws {
+        // Safely create HKQuantityTypes with guard statements
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate),
+              let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN),
+              let respiratoryType = HKQuantityType.quantityType(forIdentifier: .respiratoryRate) else {
+            throw HealthKitError.quantityTypeUnavailable
+        }
+
         let typesToRead: Set<HKObjectType> = [
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
-            HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
-            HKObjectType.quantityType(forIdentifier: .respiratoryRate)!
+            heartRateType,
+            hrvType,
+            respiratoryType
         ]
+
+        guard let heartRateSampleType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            throw HealthKitError.quantityTypeUnavailable
+        }
 
         let typesToShare: Set<HKSampleType> = [
             HKObjectType.workoutType(),
-            HKObjectType.quantityType(forIdentifier: .heartRate)!
+            heartRateSampleType
         ]
 
         try await healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead)
+    }
+
+    enum HealthKitError: Error, LocalizedError {
+        case quantityTypeUnavailable
+        case queryFailed
+
+        var errorDescription: String? {
+            switch self {
+            case .quantityTypeUnavailable:
+                return "Required HealthKit quantity type is not available on this device"
+            case .queryFailed:
+                return "HealthKit query failed"
+            }
+        }
     }
 
     func startContinuousMonitoring() async throws {
@@ -328,7 +380,10 @@ class WatchHealthKitManager {
     }
 
     private func startHeartRateQuery() {
-        let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate)!
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            log.error("❌ Heart rate quantity type unavailable", category: .system)
+            return
+        }
 
         let query = HKAnchoredObjectQuery(
             type: heartRateType,
@@ -368,7 +423,10 @@ class WatchHealthKitManager {
     }
 
     private func startHRVQuery() {
-        let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
+        guard let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else {
+            log.error("❌ HRV quantity type unavailable", category: .system)
+            return
+        }
 
         let query = HKAnchoredObjectQuery(
             type: hrvType,
@@ -431,22 +489,96 @@ class WatchAudioEngine {
 
     func start(breathingRate: Double) async {
         isPlaying = true
-        print("🔊 Watch Audio Engine started")
+        log.info("🔊 Watch Audio Engine started", category: .system)
     }
 
     func stop() async {
         isPlaying = false
-        print("🔊 Watch Audio Engine stopped")
+        log.info("🔊 Watch Audio Engine stopped", category: .system)
     }
 
     func playInhaleTone() async {
         // Spiele sanften aufsteigenden Ton
-        print("🎵 Inhale tone")
+        log.info("🎵 Inhale tone", category: .system)
     }
 
     func playExhaleTone() async {
         // Spiele sanften absteigenden Ton
-        print("🎵 Exhale tone")
+        log.info("🎵 Exhale tone", category: .system)
+    }
+}
+
+// MARK: - WatchConnectivity Manager
+
+import WatchConnectivity
+
+class WatchConnectivityManager: NSObject, WCSessionDelegate {
+
+    static let shared = WatchConnectivityManager()
+
+    private var session: WCSession?
+
+    override init() {
+        super.init()
+        if WCSession.isSupported() {
+            session = WCSession.default
+            session?.delegate = self
+            session?.activate()
+            log.info("⌚ WatchConnectivity activated", category: .system)
+        }
+    }
+
+    // MARK: - Send Data to iPhone
+
+    func sendSessionData(_ data: [String: Any]) async {
+        guard let session = session, session.isReachable else {
+            // Store locally if iPhone not reachable
+            try? session?.updateApplicationContext(["pendingSession": data])
+            log.info("⌚ Session data stored locally (iPhone not reachable)", category: .system)
+            return
+        }
+
+        session.sendMessage(["sessionData": data], replyHandler: { reply in
+            log.info("⌚ Session data synced to iPhone: \(reply)", category: .system)
+        }, errorHandler: { error in
+            log.error("❌ Failed to sync session: \(error)", category: .system)
+        })
+    }
+
+    func sendBioMetrics(_ data: [String: Any]) async {
+        guard let session = session, session.isReachable else {
+            return  // Skip real-time sync if not reachable
+        }
+
+        // Use transferUserInfo for real-time bio data
+        session.sendMessage(["bioMetrics": data], replyHandler: nil, errorHandler: nil)
+    }
+
+    // MARK: - WCSessionDelegate
+
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        log.info("⌚ WCSession activation: \(activationState.rawValue)", category: .system)
+    }
+
+    func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+        // Handle messages from iPhone (e.g., start session command)
+        if let command = message["command"] as? String {
+            Task { @MainActor in
+                handleCommand(command)
+            }
+        }
+    }
+
+    @MainActor
+    private func handleCommand(_ command: String) {
+        switch command {
+        case "startSession":
+            log.info("⌚ Received start session command from iPhone", category: .system)
+        case "stopSession":
+            log.info("⌚ Received stop session command from iPhone", category: .system)
+        default:
+            break
+        }
     }
 }
 

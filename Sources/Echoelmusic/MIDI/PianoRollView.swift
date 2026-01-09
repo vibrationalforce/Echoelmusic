@@ -30,6 +30,8 @@ struct PianoRollView: View {
                     noteHeight: viewModel.noteHeight * scale
                 )
                 .frame(width: 60)
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Piano keyboard, \(viewModel.highestNote - viewModel.lowestNote + 1) keys")
 
                 // Note Grid (main area)
                 ScrollView([.horizontal, .vertical], showsIndicators: true) {
@@ -39,6 +41,7 @@ struct PianoRollView: View {
                             viewModel: viewModel,
                             scale: scale
                         )
+                        .accessibilityHidden(true)
 
                         // MIDI Notes
                         ForEach(viewModel.notes) { note in
@@ -59,6 +62,7 @@ struct PianoRollView: View {
                             viewModel: viewModel,
                             scale: scale
                         )
+                        .accessibilityLabel("Playhead at beat \(String(format: "%.1f", viewModel.playheadPosition))")
                     }
                     .frame(
                         width: viewModel.gridWidth * scale,
@@ -73,8 +77,13 @@ struct PianoRollView: View {
                             }
                     )
                 }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Piano roll editor with \(viewModel.notes.count) notes")
+                .accessibilityHint("Swipe to navigate, double tap to select notes")
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Piano roll MIDI editor")
         .toolbar {
             ToolbarItemGroup(placement: .bottomBar) {
                 // Edit Mode Picker
@@ -85,6 +94,8 @@ struct PianoRollView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 200)
+                .accessibilityLabel("Edit mode: \(viewModel.editMode.rawValue)")
+                .accessibilityHint("Select, Draw, Erase, or Velocity mode")
 
                 Divider()
 
@@ -98,13 +109,18 @@ struct PianoRollView: View {
                 } label: {
                     Label("Quantize: \(viewModel.quantize.rawValue)", systemImage: "squareshape.split.3x3")
                 }
+                .accessibilityLabel("Quantize: \(viewModel.quantize.rawValue)")
+                .accessibilityHint("Snap notes to grid resolution")
 
                 Divider()
 
                 // Velocity
                 Slider(value: $viewModel.defaultVelocity, in: 0...127)
                     .frame(width: 100)
+                    .accessibilityLabel("Default velocity")
+                    .accessibilityValue("\(Int(viewModel.defaultVelocity))")
                 Text("Vel: \(Int(viewModel.defaultVelocity))")
+                    .accessibilityHidden(true)
 
                 Divider()
 
@@ -112,6 +128,9 @@ struct PianoRollView: View {
                 Toggle("MPE", isOn: $viewModel.useMPE)
                     .toggleStyle(.button)
                     .tint(viewModel.useMPE ? .green : .gray)
+                    .accessibilityLabel("MPE polyphonic expression")
+                    .accessibilityValue(viewModel.useMPE ? "Enabled" : "Disabled")
+                    .accessibilityHint("Enables per-note expression control")
 
                 // Expression Lane Selector
                 Menu {
@@ -130,6 +149,8 @@ struct PianoRollView: View {
                         systemImage: viewModel.expressionLane?.icon ?? "slider.horizontal.3"
                     )
                 }
+                .accessibilityLabel("Expression lane: \(viewModel.expressionLane?.rawValue ?? "Hidden")")
+                .accessibilityHint("Show pitch bend, pressure, brightness, or timbre lane")
 
                 Divider()
 
@@ -137,9 +158,14 @@ struct PianoRollView: View {
                 Button(action: { scale = max(0.5, scale - 0.25) }) {
                     Image(systemName: "minus.magnifyingglass")
                 }
+                .accessibilityLabel("Zoom out")
+                .accessibilityHint("Decreases grid zoom level")
+
                 Button(action: { scale = min(3.0, scale + 0.25) }) {
                     Image(systemName: "plus.magnifyingglass")
                 }
+                .accessibilityLabel("Zoom in")
+                .accessibilityHint("Increases grid zoom level")
 
                 Spacer()
 
@@ -147,6 +173,8 @@ struct PianoRollView: View {
                 Button(action: viewModel.togglePlayback) {
                     Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
                 }
+                .accessibilityLabel(viewModel.isPlaying ? "Pause playback" : "Start playback")
+                .accessibilityHint("Toggle MIDI sequence playback")
             }
         }
     }
@@ -181,6 +209,8 @@ struct PianoKeysView: View {
                             .padding(.leading, 4)
                     }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(noteName), \(isBlack ? "black" : "white") key")
             }
         }
     }
@@ -302,6 +332,23 @@ struct MIDINoteView: View {
                     }
                 }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(noteAccessibilityLabel)
+            .accessibilityHint(isSelected ? "Selected. Double tap to deselect" : "Double tap to select")
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var noteAccessibilityLabel: String {
+        let noteName = noteToName(note.pitch)
+        let beatPosition = String(format: "%.2f", note.startBeat)
+        let durationText = String(format: "%.2f", note.duration)
+        return "\(noteName), velocity \(note.velocity), beat \(beatPosition), duration \(durationText) beats"
+    }
+
+    private func noteToName(_ pitch: Int) -> String {
+        let names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+        let octave = pitch / 12 - 1
+        return "\(names[pitch % 12])\(octave)"
     }
 }
 
@@ -321,6 +368,9 @@ struct PlayheadView: View {
             .frame(width: 2)
             .position(x: x, y: 0)
             .frame(maxHeight: .infinity, alignment: .top)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Playhead")
+            .accessibilityValue("Beat \(String(format: "%.1f", position))")
     }
 }
 
@@ -375,7 +425,7 @@ class PianoRollViewModel: ObservableObject {
         mpe.sendMPEConfiguration(memberChannels: 15)
         mpe.setPitchBendRange(semitones: UInt8(pitchBendRange))
 
-        print("🎹 PianoRoll: Connected to MIDI 2.0 + MPE")
+        log.midi("🎹 PianoRoll: Connected to MIDI 2.0 + MPE")
     }
 
     // MARK: - Edit Modes
@@ -437,7 +487,7 @@ class PianoRollViewModel: ObservableObject {
         )
 
         notes.append(note)
-        print("🎹 Added note: \(note.pitch) at beat \(note.startBeat)")
+        log.midi("🎹 Added note: \(note.pitch) at beat \(note.startBeat)")
     }
 
     func deleteNote(_ id: UUID) {
@@ -575,12 +625,12 @@ class PianoRollViewModel: ObservableObject {
                 mpe.setVoiceBrightness(voice: voice, brightness: note.brightness)
                 mpe.setVoiceTimbre(voice: voice, timbre: note.timbre)
 
-                print("🎹 MPE Note On: \(note.pitch) vel=\(note.velocity) ch=\(voice.channel + 1)")
+                log.midi("🎹 MPE Note On: \(note.pitch) vel=\(note.velocity) ch=\(voice.channel + 1)")
             }
         } else if let midi2 = midi2Manager {
             // MIDI 2.0 without MPE (single channel)
             midi2.sendNoteOn(channel: 0, note: UInt8(note.pitch), velocity: note.velocity32bit)
-            print("🎹 MIDI2 Note On: \(note.pitch) vel=\(note.velocity)")
+            log.midi("🎹 MIDI2 Note On: \(note.pitch) vel=\(note.velocity)")
         }
     }
 
@@ -589,11 +639,11 @@ class PianoRollViewModel: ObservableObject {
             if let voice = activeVoices[note.id] {
                 mpe.deallocateVoice(voice: voice)
                 activeVoices.removeValue(forKey: note.id)
-                print("🎹 MPE Note Off: \(note.pitch)")
+                log.midi("🎹 MPE Note Off: \(note.pitch)")
             }
         } else if let midi2 = midi2Manager {
             midi2.sendNoteOff(channel: 0, note: UInt8(note.pitch))
-            print("🎹 MIDI2 Note Off: \(note.pitch)")
+            log.midi("🎹 MIDI2 Note Off: \(note.pitch)")
         }
     }
 
@@ -715,14 +765,14 @@ class PianoRollViewModel: ObservableObject {
     func exportToMIDI() -> Data? {
         // Generate MIDI file data
         // In production: Use AudioToolbox MusicSequence
-        print("📤 Exporting \(notes.count) notes to MIDI")
+        log.midi("📤 Exporting \(notes.count) notes to MIDI")
         return nil
     }
 
     func importFromMIDI(_ data: Data) {
         // Import MIDI file
         // In production: Parse MIDI data
-        print("📥 Importing MIDI data")
+        log.midi("📥 Importing MIDI data")
     }
 }
 

@@ -129,7 +129,7 @@ final class EchoelUniversalCore: ObservableObject {
 
         // Tools sind bereits verbunden via EchoelTools.shared
 
-        print("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden")
+        log.info("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden", category: .system)
     }
 
     /// Reagiert auf Flow-State Änderungen vom Self-Healing System
@@ -562,7 +562,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         propagateUniversalState()
 
         #if DEBUG
-        print("[UniversalCore] Bio update: Coherence=\(String(format: "%.2f", state.coherence))")
+        log.info("[UniversalCore] Bio update: Coherence=\(String(format: "%.2f", state.coherence))", category: .system)
         #endif
     }
 
@@ -579,7 +579,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         }
 
         #if DEBUG
-        print("[UniversalCore] Quantum collapsed to choice: \(choice)")
+        log.info("[UniversalCore] Quantum collapsed to choice: \(choice)", category: .system)
         #endif
     }
 
@@ -588,7 +588,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         connectedModules.insert(.sync)
 
         #if DEBUG
-        print("[UniversalCore] Device connected: \(device) (Total: \(systemState.connectedDevices))")
+        log.info("[UniversalCore] Device connected: \(device) (Total: \(systemState.connectedDevices))", category: .system)
         #endif
     }
 
@@ -596,7 +596,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         systemState.connectedDevices = max(0, systemState.connectedDevices - 1)
 
         #if DEBUG
-        print("[UniversalCore] Device disconnected: \(device) (Total: \(systemState.connectedDevices))")
+        log.info("[UniversalCore] Device disconnected: \(device) (Total: \(systemState.connectedDevices))", category: .system)
         #endif
     }
 
@@ -613,7 +613,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         propagateUniversalState()
 
         #if DEBUG
-        print("[UniversalCore] Analog gear response: \(response.count) channels")
+        log.info("[UniversalCore] Analog gear response: \(response.count) channels", category: .system)
         #endif
     }
 
@@ -627,7 +627,7 @@ extension EchoelUniversalCore: BioReactiveProcessorDelegate,
         }
 
         #if DEBUG
-        print("[UniversalCore] AI suggestion: \(suggestion.type) (confidence: \(suggestion.confidence))")
+        log.info("[UniversalCore] AI suggestion: \(suggestion.type) (confidence: \(suggestion.confidence))", category: .system)
         #endif
     }
 

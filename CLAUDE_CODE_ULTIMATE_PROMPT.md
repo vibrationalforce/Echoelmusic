@@ -465,11 +465,11 @@ ChatGPT: Bitte debuggen und optimieren."
 
 ```swift
 // ✅ GOOD: Klare Benennung, Type-Safety, Dokumentation
-/// Generates binaural beats based on target brainwave state
+/// Generates Multidimensional Brainwave Entrainment based on target brainwave state
 /// - Parameters:
 ///   - state: Target brainwave state (Delta, Theta, Alpha, etc.)
 ///   - baseFrequency: Carrier frequency in Hz (default: 440 Hz)
-/// - Returns: Configured binaural beat generator
+/// - Returns: Configured Multidimensional Brainwave Entrainment generator
 func generateBinauralBeat(
     state: BrainwaveState,
     baseFrequency: Float = 440.0

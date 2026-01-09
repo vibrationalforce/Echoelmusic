@@ -57,7 +57,7 @@ Sources/
 - [x] **Pitch Detection** - PitchDetector.swift (YIN algorithm, pre-allocated buffers)
 - [x] **Vocal Alignment** - AutomaticVocalAligner.swift (DTW, WSOLA, formant-preserving)
 - [x] **Loop Engine** - LoopEngine.swift (tempo-sync, quantization, overdub)
-- [x] **Binaural Beats** - BinauralBeatGenerator.swift (5 brainwave states)
+- [x] **Multidimensional Brainwave Entrainment** - BinauralBeatGenerator.swift (5 brainwave states)
 - [x] **Spatial Audio** - SpatialAudioEngine.swift (3D/4D, head tracking, HRTF)
 - [x] **Node Graph** - NodeGraph.swift (cached topological sort)
 - [x] **Piano Roll** - PianoRollView.swift (note editing, velocity, quantization)

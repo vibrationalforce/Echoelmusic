@@ -72,7 +72,7 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
     private func setupMetal() {
         // Get default Metal device
         guard let device = MTLCreateSystemDefaultDevice() else {
-            print("❌ Metal is not supported on this device")
+            log.video("❌ Metal is not supported on this device", level: .error)
             return
         }
 
@@ -83,9 +83,9 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
         do {
             try createPipeline()
             createVertexBuffer()
-            print("✅ Metal Cymatics Renderer initialized")
+            log.video("✅ Metal Cymatics Renderer initialized")
         } catch {
-            print("❌ Failed to setup Metal pipeline: \(error)")
+            log.video("❌ Failed to setup Metal pipeline: \(error)", level: .error)
         }
     }
 

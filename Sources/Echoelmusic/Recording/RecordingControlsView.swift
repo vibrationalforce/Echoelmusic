@@ -1,4 +1,5 @@
 import SwiftUI
+import os.log
 
 /// Main recording controls view with session management
 struct RecordingControlsView: View {
@@ -11,6 +12,8 @@ struct RecordingControlsView: View {
     @State private var showTrackList = false
     @State private var showMixer = false
     @State private var showExportOptions = false
+    @State private var shareURL: URL?
+    @State private var showShareSheet = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -87,8 +90,12 @@ struct RecordingControlsView: View {
         .sheet(isPresented: $showExportOptions) {
             exportOptionsView
         }
+        .sheet(isPresented: $showShareSheet) {
+            if let url = shareURL {
+                ShareSheet(items: [url])
+            }
+        }
     }
-
     // MARK: - Recording Controls Section
 
     private var recordingControlsSection: some View {
@@ -458,13 +465,14 @@ struct RecordingControlsView: View {
         guard let session = recordingEngine.currentSession else { return }
 
         let exportManager = ExportManager()
-        Task {
+        Task { @MainActor in
             do {
                 let url = try await exportManager.exportAudio(session: session, format: format)
-                print("📤 Exported to: \(url.path)")
-                // TODO: Show share sheet
+                log.recording("📤 Exported to: \(url.path)")
+                shareURL = url
+                showShareSheet = true
             } catch {
-                print("❌ Export failed: \(error)")
+                log.recording("❌ Export failed: \(error)", level: .error)
             }
         }
     }
@@ -475,10 +483,11 @@ struct RecordingControlsView: View {
         let exportManager = ExportManager()
         do {
             let url = try exportManager.exportBioData(session: session, format: format)
-            print("📤 Exported bio-data to: \(url.path)")
-            // TODO: Show share sheet
+            log.recording("📤 Exported bio-data to: \(url.path)")
+            shareURL = url
+            showShareSheet = true
         } catch {
-            print("❌ Export failed: \(error)")
+            log.recording("❌ Export failed: \(error)", level: .error)
         }
     }
 
@@ -486,13 +495,14 @@ struct RecordingControlsView: View {
         guard let session = recordingEngine.currentSession else { return }
 
         let exportManager = ExportManager()
-        Task {
+        Task { @MainActor in
             do {
                 let url = try await exportManager.exportSessionPackage(session: session)
-                print("📦 Exported package to: \(url.path)")
-                // TODO: Show share sheet
+                log.recording("📦 Exported package to: \(url.path)")
+                shareURL = url
+                showShareSheet = true
             } catch {
-                print("❌ Export failed: \(error)")
+                log.recording("❌ Export failed: \(error)", level: .error)
             }
         }
     }
@@ -506,3 +516,44 @@ struct RecordingControlsView: View {
         return String(format: "%02d:%02d.%01d", minutes, seconds, milliseconds)
     }
 }
+
+// MARK: - Share Sheet
+
+#if os(iOS) || os(visionOS)
+import UIKit
+
+/// Cross-platform share sheet wrapper for iOS/visionOS
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+#elseif os(macOS)
+import AppKit
+
+/// Share sheet wrapper for macOS using NSSharingServicePicker
+struct ShareSheet: View {
+    let items: [Any]
+
+    var body: some View {
+        VStack {
+            Text("Export Complete")
+                .font(.headline)
+            Text("File saved successfully")
+                .foregroundColor(.secondary)
+            Button("Show in Finder") {
+                if let url = items.first as? URL {
+                    NSWorkspace.shared.activateFileViewerSelecting([url])
+                }
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+        .frame(minWidth: 300, minHeight: 150)
+    }
+}
+#endif
