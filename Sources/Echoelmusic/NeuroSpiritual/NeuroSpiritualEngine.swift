@@ -367,11 +367,12 @@ public final class NeuroSpiritualEngine: ObservableObject {
 
     // MARK: - Constants
 
-    /// Schumann Resonance (Erd-Resonanzfrequenz)
+    /// Schumann Resonance (Erd-Resonanzfrequenz - scientifically measured at ~7.83Hz)
     public static let schumannResonance: Double = 7.83
 
-    /// 528Hz DNA Repair Frequency
-    public static let dnaRepairFrequency: Double = 528.0
+    /// 528Hz - Traditional Solfeggio Frequency (Cultural/Historical - NOT scientifically proven for "healing")
+    /// NOTE: Used for subjective wellness/relaxation experience. No medical claims.
+    public static let solfeggioMI: Double = 528.0
 
     /// Coherence Breathing Rate (6/min = 0.1Hz)
     public static let coherenceBreathingRate: Double = 6.0
@@ -452,15 +453,16 @@ public final class NeuroSpiritualEngine: ObservableObject {
     public func getOptimalAudioParameters() -> (frequency: Double, carrier: Double, volume: Double) {
         let targetFrequency = consciousnessState.audioFrequency
 
-        // Carrier basierend auf Ziel
+        // Carrier basierend auf Zustand (traditionelle Solfeggio-Frequenzen für subjektives Wohlbefinden)
+        // HINWEIS: Keine medizinischen Wirkungen wissenschaftlich nachgewiesen
         let carrier: Double
         switch polyvagalState {
         case .ventralVagal, .blendedVentralDorsal:
-            carrier = Self.dnaRepairFrequency  // 528Hz für Heilung
+            carrier = Self.solfeggioMI  // 528Hz - traditionell mit Wohlbefinden assoziiert
         case .sympathetic:
-            carrier = 432.0  // Beruhigend
+            carrier = 432.0  // Traditionell "entspannend" genannt
         case .dorsalVagal:
-            carrier = 396.0  // Befreiend
+            carrier = 396.0  // Traditionell "UT" Solfeggio
         case .blendedVentralSympathetic:
             carrier = 440.0  // Aktivierend
         }
@@ -472,22 +474,23 @@ public final class NeuroSpiritualEngine: ObservableObject {
     }
 
     /// Berechnet optimale Lichtfarbe für aktuellen Zustand
+    /// Farben basieren auf Chromotherapie-Tradition (subjektives Wohlbefinden, keine medizinischen Ansprüche)
     public func getOptimalLightColor() -> (r: Float, g: Float, b: Float) {
         switch polyvagalState {
         case .ventralVagal:
-            // 528Hz Smaragdgrün (Herzöffnung)
+            // Smaragdgrün - traditionell mit Ruhe assoziiert
             return (0.0, 0.79, 0.34)
         case .sympathetic:
-            // Warmes Orange (beruhigend)
+            // Warmes Orange - traditionell beruhigend
             return (1.0, 0.6, 0.3)
         case .dorsalVagal:
-            // Sanftes Rosa (wärmend)
+            // Sanftes Rosa - warm und einladend
             return (1.0, 0.7, 0.8)
         case .blendedVentralSympathetic:
-            // Energetisches Cyan
+            // Energetisches Cyan - aktivierend
             return (0.0, 0.9, 0.9)
         case .blendedVentralDorsal:
-            // Tiefes Indigo (meditativ)
+            // Tiefes Indigo - meditativ
             return (0.3, 0.3, 0.7)
         }
     }

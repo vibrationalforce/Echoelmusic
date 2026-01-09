@@ -93,7 +93,7 @@ public struct QuantumEntanglementSession: Identifiable, Codable {
         case meditation = "meditation"
         case coherenceTraining = "coherence_training"
         case creativeSynthesis = "creative_synthesis"
-        case healingCircle = "healing_circle"
+        case wellnessCircle = "wellness_circle"  // Changed from "healing" - no medical claims
         case researchStudy = "research_study"
         case performance = "performance"
         case workshop = "workshop"

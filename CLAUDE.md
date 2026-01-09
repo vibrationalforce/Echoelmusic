@@ -60,7 +60,7 @@
 - **QuantumHealthBiofeedbackEngine** - Quantum-inspired health & unlimited collaboration
 - **Quantum Health State** - 10 biometric observables + 5 quantum-inspired metrics
 - **Unlimited Participants** - Int.max participants per session
-- **8 Session Types** - Meditation, Coherence, Creative, Healing, Research, Performance, Workshop, Unlimited
+- **8 Session Types** - Meditation, Coherence, Creative, Wellness, Research, Performance, Workshop, Unlimited
 - **Group Quantum Metrics** - Coherence, Entanglement, Synchrony scores
 - **Entanglement Threshold** - 0.9 coherence for "quantum event" detection
 - **Real-Time Broadcasting** - 8 platforms (YouTube, Twitch, Facebook, Instagram, TikTok, WebRTC, NDI, Custom)
@@ -116,7 +116,7 @@
 - **VisualPresets** - 10 new (SacredMandala, CosmicNebula, QuantumField, etc.)
 - **LightingPresets** - 10 new (SunriseMeditation, RaveStrobe, LaserShow, etc.)
 - **StreamingPresets** - 5 new (YouTubePremium4K, TwitchLowLatency, etc.)
-- **CollaborationPresets** - 5 new (VirtualConcert, HealingCircle, etc.)
+- **CollaborationPresets** - 5 new (VirtualConcert, WellnessCircle, etc.)
 
 #### App Store Screenshots (NEW)
 - **10 Screenshot Templates** - SwiftUI views for all App Store sizes
@@ -916,7 +916,7 @@ hub.enableQuantumLightEmulator(mode: .bioCoherent)
 | Photon Flow | Particle system display |
 | Sacred Geometry | Flower of Life patterns |
 | Quantum Tunnel | Vortex tunnel effect |
-| Biophoton Aura | Chakra-colored energy layers |
+| Biophoton Aura | Multi-colored energy layers (traditional color associations) |
 | Light Mandala | Rotating symmetrical patterns |
 | Holographic Display | Interference fringes |
 | Cosmic Web | Universe structure simulation |

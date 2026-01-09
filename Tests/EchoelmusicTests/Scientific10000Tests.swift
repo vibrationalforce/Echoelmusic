@@ -469,7 +469,7 @@ final class Scientific10000Tests: XCTestCase {
         XCTAssertTrue(QuantumEntanglementSession.SessionType.allCases.contains(.meditation))
         XCTAssertTrue(QuantumEntanglementSession.SessionType.allCases.contains(.coherenceTraining))
         XCTAssertTrue(QuantumEntanglementSession.SessionType.allCases.contains(.creativeSynthesis))
-        XCTAssertTrue(QuantumEntanglementSession.SessionType.allCases.contains(.healingCircle))
+        XCTAssertTrue(QuantumEntanglementSession.SessionType.allCases.contains(.wellnessCircle))
         XCTAssertTrue(QuantumEntanglementSession.SessionType.allCases.contains(.researchStudy))
         XCTAssertTrue(QuantumEntanglementSession.SessionType.allCases.contains(.performance))
         XCTAssertTrue(QuantumEntanglementSession.SessionType.allCases.contains(.workshop))

@@ -297,13 +297,13 @@ public struct BuiltInPresets {
         hrvSensitivity: 0.6
     )
 
-    // MARK: - Healing Presets
+    // MARK: - Wellness Presets
 
-    public static let cellularHealing = QuantumPreset(
-        id: "cellular-healing",
-        name: "Cellular Healing",
-        description: "Support cellular regeneration with Solfeggio frequencies",
-        category: .healing,
+    public static let deepRelaxation = QuantumPreset(
+        id: "deep-relaxation",
+        name: "Deep Relaxation",
+        description: "Traditional Solfeggio frequencies for subjective relaxation (no medical claims)",
+        category: .wellness,
         icon: "cross.fill",
         color: .init(hue: 0.4, saturation: 0.6, brightness: 0.5),
         emulationMode: "hybridPhotonic",
