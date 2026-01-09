@@ -3,425 +3,430 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echoelmusic - Where Your Heartbeat Becomes Art</title>
+    <title>Echoelmusic - Bio-Reactive Audio-Visual Synthesis Platform</title>
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Your body is the instrument. Your heartbeat is the rhythm. Transform biometric signals into immersive audio-visual experiences. Bio-reactive art for the conscious creator.">
-    <meta name="keywords" content="bio-reactive music, HRV art, heartbeat music, meditation audio, spatial sound, quantum visualization, biofeedback art, consciousness music">
+    <meta name="description" content="Transform biometric signals into immersive audio-visual experiences. 50+ DSP effects, 30+ visualization modes, DMX/Art-Net lighting, 8K streaming, worldwide collaboration. Professional bio-reactive synthesis for iOS, macOS, visionOS, Android, Windows.">
+    <meta name="keywords" content="bio-reactive music, HRV synthesis, heartbeat music, spatial audio, quantum visualization, DMX lighting, MIDI 2.0, MPE, biofeedback art, visionOS, Apple Watch">
     <meta name="author" content="Echoelmusic">
     <meta name="robots" content="index, follow">
 
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://vibrationalforce.github.io/Echoelmusic/">
-    <meta property="og:title" content="Echoelmusic - Where Your Heartbeat Becomes Art">
-    <meta property="og:description" content="Your body is the instrument. Transform biometric signals into immersive audio-visual art.">
+    <meta property="og:title" content="Echoelmusic - Bio-Reactive Audio-Visual Synthesis">
+    <meta property="og:description" content="50+ DSP effects, 30+ visualizations, DMX lighting, 8K streaming. Your body is the controller.">
     <meta property="og:image" content="https://vibrationalforce.github.io/Echoelmusic/og-image.png">
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Echoelmusic - Bio-Reactive Audio-Visual Art">
-    <meta name="twitter:description" content="Your heartbeat becomes music. Your breath becomes light.">
-
-    <!-- Language Alternates -->
+    <!-- Language -->
     <link rel="alternate" hreflang="en" href="https://vibrationalforce.github.io/Echoelmusic/">
     <link rel="alternate" hreflang="de" href="https://vibrationalforce.github.io/Echoelmusic/de/">
     <link rel="canonical" href="https://vibrationalforce.github.io/Echoelmusic/">
 
-    <!-- Theme Color -->
     <meta name="theme-color" content="#ff6ad5">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
-    <!-- Google Fonts -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --pink: #ff6ad5;
+            --cyan: #00ffff;
+            --purple: #8b5cf6;
+            --dark: #0d0221;
+            --darker: #050010;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: 'Rajdhani', sans-serif;
-            background: linear-gradient(180deg,
-                #0d0221 0%,
-                #150734 20%,
-                #1a0a3e 40%,
-                #2d1b69 60%,
-                #341a5e 80%,
-                #0d0221 100%);
+            background: linear-gradient(180deg, var(--darker) 0%, var(--dark) 20%, #150734 50%, var(--dark) 80%, var(--darker) 100%);
             min-height: 100vh;
             color: #fff;
-            overflow-x: hidden;
-            position: relative;
+            line-height: 1.6;
         }
-
-        /* Animated Grid Background */
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background:
-                linear-gradient(transparent 0%, rgba(255,106,213,0.03) 50%, transparent 100%),
-                repeating-linear-gradient(
-                    0deg,
-                    transparent,
-                    transparent 50px,
-                    rgba(0,255,255,0.03) 50px,
-                    rgba(0,255,255,0.03) 51px
-                ),
-                repeating-linear-gradient(
-                    90deg,
-                    transparent,
-                    transparent 50px,
-                    rgba(255,106,213,0.03) 50px,
-                    rgba(255,106,213,0.03) 51px
-                );
+                repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(0,255,255,0.02) 60px, rgba(0,255,255,0.02) 61px),
+                repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,106,213,0.02) 60px, rgba(255,106,213,0.02) 61px);
             pointer-events: none;
             z-index: 0;
         }
 
-        /* Sunset Glow */
-        .sunset-glow {
-            position: fixed;
-            bottom: -200px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 800px;
-            height: 400px;
-            background: radial-gradient(ellipse at center,
-                rgba(255,106,213,0.4) 0%,
-                rgba(199,45,126,0.2) 30%,
-                rgba(147,51,234,0.1) 50%,
-                transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 60px 20px;
-            text-align: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Language Switcher */
         .lang-switch {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 100;
             font-family: 'Orbitron', monospace;
-            font-size: 12px;
+            font-size: 11px;
         }
         .lang-switch a {
             color: rgba(0,255,255,0.6);
             text-decoration: none;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border: 1px solid rgba(0,255,255,0.3);
             transition: all 0.3s;
         }
         .lang-switch a:hover, .lang-switch a.active {
-            color: #00ffff;
-            border-color: #00ffff;
-            box-shadow: 0 0 20px rgba(0,255,255,0.3);
-            text-shadow: 0 0 10px #00ffff;
+            color: var(--cyan);
+            border-color: var(--cyan);
+            box-shadow: 0 0 15px rgba(0,255,255,0.3);
         }
 
-        /* Logo */
-        .logo {
-            width: 140px;
-            height: 140px;
-            margin: 0 auto 40px;
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
             position: relative;
+            z-index: 1;
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 60px 0 40px;
+        }
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
         }
         .logo-inner {
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #ff6ad5 0%, #c74dab 50%, #8b5cf6 100%);
-            border-radius: 32px;
+            background: linear-gradient(135deg, var(--pink) 0%, #c74dab 50%, var(--purple) 100%);
+            border-radius: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 70px;
-            box-shadow:
-                0 0 60px rgba(255,106,213,0.5),
-                0 0 100px rgba(199,77,171,0.3),
-                inset 0 0 30px rgba(255,255,255,0.1);
-            animation: pulse-glow 3s ease-in-out infinite;
+            font-size: 60px;
+            box-shadow: 0 0 60px rgba(255,106,213,0.5);
+            animation: pulse 3s ease-in-out infinite;
         }
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 60px rgba(255,106,213,0.5), 0 0 100px rgba(199,77,171,0.3); }
-            50% { box-shadow: 0 0 80px rgba(255,106,213,0.7), 0 0 120px rgba(199,77,171,0.5); }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 60px rgba(255,106,213,0.5); }
+            50% { box-shadow: 0 0 80px rgba(255,106,213,0.7); }
         }
-
-        /* Title with Glitch Effect */
         h1 {
             font-family: 'Orbitron', monospace;
-            font-size: 56px;
+            font-size: 48px;
             font-weight: 900;
-            margin-bottom: 20px;
             text-transform: uppercase;
-            letter-spacing: 4px;
-            background: linear-gradient(90deg, #ff6ad5, #00ffff, #ff6ad5);
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, var(--pink), var(--cyan), var(--pink));
             background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: gradient-shift 3s linear infinite;
-            text-shadow: none;
-            position: relative;
+            animation: gradient 3s linear infinite;
+            margin-bottom: 15px;
         }
-        @keyframes gradient-shift {
+        @keyframes gradient {
             0% { background-position: 0% center; }
             100% { background-position: 200% center; }
         }
-
         .tagline {
-            font-size: 24px;
-            font-weight: 300;
+            font-size: 22px;
             color: rgba(255,255,255,0.9);
-            margin-bottom: 15px;
-            letter-spacing: 2px;
+            margin-bottom: 10px;
         }
-
         .subtitle {
-            font-size: 16px;
-            color: #00ffff;
-            margin-bottom: 40px;
             font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            color: var(--cyan);
             letter-spacing: 3px;
-            text-transform: uppercase;
             text-shadow: 0 0 20px rgba(0,255,255,0.5);
         }
 
-        /* Platform Badges */
+        /* Stats Bar */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--pink);
+            text-shadow: 0 0 20px rgba(255,106,213,0.5);
+        }
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Platforms */
         .platforms {
             display: flex;
             justify-content: center;
-            gap: 12px;
+            gap: 10px;
             margin: 30px 0;
             flex-wrap: wrap;
         }
         .platform {
             background: rgba(255,106,213,0.1);
-            border: 1px solid rgba(255,106,213,0.4);
-            border-radius: 25px;
-            padding: 10px 20px;
-            font-size: 13px;
+            border: 1px solid rgba(255,106,213,0.3);
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 12px;
             font-family: 'Orbitron', monospace;
-            color: #ff6ad5;
-            transition: all 0.3s;
-        }
-        .platform:hover {
-            background: rgba(255,106,213,0.2);
-            box-shadow: 0 0 30px rgba(255,106,213,0.4);
-            transform: translateY(-2px);
+            color: var(--pink);
         }
 
-        /* Pricing Section */
-        .pricing {
-            background: linear-gradient(135deg, rgba(255,106,213,0.1) 0%, rgba(139,92,246,0.1) 100%);
-            border: 1px solid rgba(255,106,213,0.3);
-            border-radius: 24px;
-            padding: 40px;
-            margin: 50px 0;
-            position: relative;
+        /* Section Headers */
+        .section {
+            margin: 60px 0;
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .section-header h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 28px;
+            color: var(--cyan);
+            text-shadow: 0 0 20px rgba(0,255,255,0.3);
+            margin-bottom: 10px;
+        }
+        .section-header p {
+            color: rgba(255,255,255,0.7);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Feature Cards */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+        .feature-card {
+            background: linear-gradient(135deg, rgba(13,2,33,0.9) 0%, rgba(45,27,105,0.4) 100%);
+            border: 1px solid rgba(255,106,213,0.2);
+            border-radius: 16px;
+            padding: 25px;
+            transition: all 0.3s;
+        }
+        .feature-card:hover {
+            border-color: rgba(255,106,213,0.5);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255,106,213,0.15);
+        }
+        .feature-card h3 {
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            color: var(--pink);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .feature-card h3 span {
+            font-size: 24px;
+        }
+        .feature-card p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.75);
+            margin-bottom: 15px;
+        }
+
+        /* Tech Lists */
+        .tech-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .tech-tag {
+            background: rgba(0,255,255,0.1);
+            border: 1px solid rgba(0,255,255,0.3);
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--cyan);
+        }
+
+        /* Specs Tables */
+        .specs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 13px;
+        }
+        .specs-table th {
+            background: rgba(255,106,213,0.2);
+            color: var(--pink);
+            font-family: 'Orbitron', monospace;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,106,213,0.3);
+        }
+        .specs-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.8);
+        }
+        .specs-table tr:hover td {
+            background: rgba(0,255,255,0.05);
+        }
+        .specs-table code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: var(--cyan);
+        }
+
+        /* Accordion */
+        .accordion {
+            margin: 20px 0;
+        }
+        .accordion-item {
+            background: rgba(13,2,33,0.6);
+            border: 1px solid rgba(255,106,213,0.2);
+            border-radius: 12px;
+            margin: 10px 0;
             overflow: hidden;
         }
-        .pricing::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,106,213,0.05), transparent);
-            animation: shimmer 3s infinite;
+        .accordion-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            color: var(--pink);
         }
-        @keyframes shimmer {
-            0% { transform: translateX(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) rotate(45deg); }
+        .accordion-header:hover {
+            background: rgba(255,106,213,0.1);
+        }
+        .accordion-content {
+            padding: 0 20px 20px;
+            display: none;
+        }
+        .accordion-item.open .accordion-content {
+            display: block;
+        }
+        .accordion-item.open .accordion-header::after {
+            transform: rotate(180deg);
+        }
+        .accordion-header::after {
+            content: '▼';
+            font-size: 10px;
+            transition: transform 0.3s;
+        }
+
+        /* Pricing */
+        .pricing {
+            background: linear-gradient(135deg, rgba(255,106,213,0.15) 0%, rgba(139,92,246,0.15) 100%);
+            border: 1px solid rgba(255,106,213,0.3);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            margin: 40px 0;
         }
         .pricing h2 {
             font-family: 'Orbitron', monospace;
-            font-size: 28px;
-            color: #00ffff;
-            margin-bottom: 25px;
-            text-shadow: 0 0 20px rgba(0,255,255,0.5);
+            color: var(--cyan);
+            margin-bottom: 20px;
         }
         .price-main {
             font-family: 'Orbitron', monospace;
-            font-size: 64px;
+            font-size: 56px;
             font-weight: 900;
             color: #fff;
-            text-shadow: 0 0 30px rgba(255,106,213,0.5);
+        }
+        .price-currency {
+            font-size: 24px;
+            vertical-align: super;
         }
         .price-label {
-            font-size: 18px;
             color: rgba(255,255,255,0.7);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
-        .price-updates {
+        .price-upgrade {
             display: inline-block;
             background: rgba(0,255,255,0.1);
             border: 1px solid rgba(0,255,255,0.3);
             border-radius: 20px;
-            padding: 12px 25px;
-            margin: 15px 0;
-            font-size: 16px;
-            color: #00ffff;
+            padding: 10px 20px;
+            color: var(--cyan);
+            margin: 10px 0;
         }
         .beta-note {
-            margin-top: 20px;
-            padding: 15px;
             background: rgba(139,92,246,0.2);
-            border-radius: 12px;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
             font-size: 14px;
-            color: rgba(255,255,255,0.8);
-        }
-        .beta-note strong {
-            color: #8b5cf6;
         }
 
-        /* CTA Button */
+        /* CTA */
         .cta-btn {
             display: inline-block;
-            background: linear-gradient(90deg, #ff6ad5 0%, #c74dab 50%, #8b5cf6 100%);
+            background: linear-gradient(90deg, var(--pink) 0%, #c74dab 50%, var(--purple) 100%);
             color: #fff;
-            padding: 18px 50px;
-            border-radius: 50px;
+            padding: 16px 40px;
+            border-radius: 30px;
             text-decoration: none;
             font-family: 'Orbitron', monospace;
             font-weight: 700;
-            font-size: 16px;
+            font-size: 14px;
             letter-spacing: 2px;
             text-transform: uppercase;
-            margin: 30px 0;
+            margin: 20px 0;
+            box-shadow: 0 0 30px rgba(255,106,213,0.4);
             transition: all 0.3s;
-            box-shadow: 0 0 40px rgba(255,106,213,0.4);
-            position: relative;
-            overflow: hidden;
         }
         .cta-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 60px rgba(255,106,213,0.6);
-        }
-
-        /* Features */
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin: 50px 0;
-            text-align: left;
-        }
-        .feature {
-            background: linear-gradient(135deg, rgba(13,2,33,0.8) 0%, rgba(45,27,105,0.4) 100%);
-            border: 1px solid rgba(255,106,213,0.2);
-            border-radius: 20px;
-            padding: 30px;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-        .feature::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #ff6ad5, #00ffff);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .feature:hover {
-            border-color: rgba(255,106,213,0.5);
-            transform: translateY(-5px);
-            box-shadow: 0 20px 60px rgba(255,106,213,0.2);
-        }
-        .feature:hover::before {
-            opacity: 1;
-        }
-        .feature-icon {
-            font-size: 40px;
-            margin-bottom: 15px;
-        }
-        .feature h3 {
-            font-family: 'Orbitron', monospace;
-            font-size: 18px;
-            margin-bottom: 12px;
-            color: #ff6ad5;
-            text-shadow: 0 0 10px rgba(255,106,213,0.3);
-        }
-        .feature p {
-            font-size: 15px;
-            color: rgba(255,255,255,0.75);
-            line-height: 1.7;
-        }
-
-        /* Philosophy Section */
-        .philosophy {
-            margin: 60px 0;
-            padding: 40px;
-            border-left: 3px solid #ff6ad5;
-            border-right: 3px solid #00ffff;
-            text-align: center;
-        }
-        .philosophy blockquote {
-            font-size: 22px;
-            font-style: italic;
-            color: rgba(255,255,255,0.9);
-            line-height: 1.8;
-        }
-        .philosophy cite {
-            display: block;
-            margin-top: 20px;
-            font-size: 14px;
-            color: #00ffff;
-            font-style: normal;
-            font-family: 'Orbitron', monospace;
+            transform: translateY(-2px);
+            box-shadow: 0 0 50px rgba(255,106,213,0.6);
         }
 
         /* Links */
         .links {
             display: flex;
             justify-content: center;
-            gap: 30px;
-            margin-top: 50px;
+            gap: 25px;
+            margin: 40px 0;
             flex-wrap: wrap;
         }
         .links a {
             color: rgba(255,255,255,0.6);
             text-decoration: none;
-            font-size: 14px;
+            font-size: 13px;
             font-family: 'Orbitron', monospace;
-            letter-spacing: 1px;
-            transition: all 0.3s;
-            padding: 10px;
+            transition: color 0.3s;
         }
         .links a:hover {
-            color: #00ffff;
-            text-shadow: 0 0 15px rgba(0,255,255,0.5);
+            color: var(--cyan);
         }
 
         /* Footer */
         footer {
-            margin-top: 80px;
+            text-align: center;
             padding: 40px 20px;
             border-top: 1px solid rgba(255,106,213,0.2);
-            font-size: 13px;
+            font-size: 12px;
             color: rgba(255,255,255,0.5);
         }
         footer a {
-            color: #ff6ad5;
+            color: var(--pink);
             text-decoration: none;
         }
         .disclaimer {
@@ -429,96 +434,521 @@
             padding: 15px;
             background: rgba(255,106,213,0.05);
             border-radius: 10px;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         /* Responsive */
         @media (max-width: 768px) {
-            h1 { font-size: 36px; letter-spacing: 2px; }
-            .tagline { font-size: 18px; }
-            .price-main { font-size: 48px; }
+            h1 { font-size: 32px; }
+            .stat-value { font-size: 24px; }
+            .features-grid { grid-template-columns: 1fr; }
             .pricing { padding: 30px 20px; }
+            .price-main { font-size: 42px; }
         }
     </style>
 </head>
 <body>
-    <div class="sunset-glow"></div>
-
     <div class="lang-switch">
         <a href="index.html" class="active">EN</a>
         <a href="de/">DE</a>
     </div>
 
     <div class="container">
-        <div class="logo">
-            <div class="logo-inner">&#127926;</div>
+        <!-- Hero -->
+        <div class="hero">
+            <div class="logo">
+                <div class="logo-inner">&#127926;</div>
+            </div>
+            <h1>Echoelmusic</h1>
+            <p class="tagline">Your Body Is The Instrument</p>
+            <p class="subtitle">Breath // Pulse // Light // Sound</p>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">50+</div>
+                    <div class="stat-label">DSP Effects</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">30+</div>
+                    <div class="stat-label">Visual Modes</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">8K</div>
+                    <div class="stat-label">Streaming</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">1000+</div>
+                    <div class="stat-label">Participants</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">&lt;10ms</div>
+                    <div class="stat-label">Latency</div>
+                </div>
+            </div>
+
+            <div class="platforms">
+                <span class="platform">iOS 15+</span>
+                <span class="platform">macOS 12+</span>
+                <span class="platform">watchOS 8+</span>
+                <span class="platform">visionOS 1+</span>
+                <span class="platform">tvOS 15+</span>
+                <span class="platform">Android 8+</span>
+                <span class="platform">Windows 10+</span>
+                <span class="platform">Linux</span>
+            </div>
         </div>
 
-        <h1>Echoelmusic</h1>
-        <p class="tagline">Your Body Is The Instrument</p>
-        <p class="subtitle">Breath // Pulse // Light // Sound</p>
+        <!-- Audio Engine Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Audio Engine</h2>
+                <p>Professional-grade audio synthesis with real-time biometric modulation. From 2.7ms ultra-low latency to 96kHz studio quality.</p>
+            </div>
 
-        <div class="platforms">
-            <span class="platform">iOS</span>
-            <span class="platform">macOS</span>
-            <span class="platform">watchOS</span>
-            <span class="platform">visionOS</span>
-            <span class="platform">Android</span>
-            <span class="platform">Windows</span>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3><span>&#127897;</span> DSP Effects Suite</h3>
+                    <p>50+ professional processors including Parametric EQ (32-band), Multiband Compressor, Convolution Reverb, Shimmer Reverb, Tape Delay, Vocoder, Harmonizer, and more.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">FET Compressor</span>
+                        <span class="tech-tag">Opto Compressor</span>
+                        <span class="tech-tag">De-Esser</span>
+                        <span class="tech-tag">Transient Designer</span>
+                        <span class="tech-tag">Dynamic EQ</span>
+                        <span class="tech-tag">Vocal Tuner</span>
+                        <span class="tech-tag">Stereo Imager</span>
+                        <span class="tech-tag">Brick-Wall Limiter</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127929;</span> EchoSynth Engine</h3>
+                    <p>Analog-modeled subtractive synthesizer with dual oscillators, 6 waveforms (Sine, Tri, Saw, Square, Pulse, Noise), 12/24dB filters, dual ADSR envelopes, and modular LFO routing.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">C++17 DSP</span>
+                        <span class="tech-tag">SIMD Optimized</span>
+                        <span class="tech-tag">Analog Drift</span>
+                        <span class="tech-tag">Unison Detune</span>
+                        <span class="tech-tag">16 Voice Poly</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#128149;</span> Bio-Reactive Mapping</h3>
+                    <p>Real-time biometric-to-audio parameter mapping with 8 bio sources and 50+ modulation targets. Linear, exponential, logarithmic, S-curve, and stepped mapping curves.</p>
+                    <table class="specs-table">
+                        <tr><td>Heart Rate</td><td>&#8594;</td><td>Tempo (40-200 BPM)</td></tr>
+                        <tr><td>HRV</td><td>&#8594;</td><td>Filter Cutoff, LFO Rate</td></tr>
+                        <tr><td>Coherence</td><td>&#8594;</td><td>Reverb Wet, Harmonic Consonance</td></tr>
+                        <tr><td>Breathing</td><td>&#8594;</td><td>Dynamics, Grain Density</td></tr>
+                        <tr><td>GSR</td><td>&#8594;</td><td>Distortion, Intensity</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127911;</span> Spatial Audio</h3>
+                    <p>6 spatial modes including Binaural HRTF, Ambisonics, and proprietary AFA (Algorithmic Field Array). Head-tracking via CoreMotion with real-time listener positioning.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Stereo</span>
+                        <span class="tech-tag">3D Spatial</span>
+                        <span class="tech-tag">4D Orbital</span>
+                        <span class="tech-tag">AFA Field</span>
+                        <span class="tech-tag">Binaural HRTF</span>
+                        <span class="tech-tag">Ambisonics W,X,Y,Z</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#128200;</span> Binaural Entrainment</h3>
+                    <p>Precision brainwave entrainment with binaural, isochronic, and monaural beat generation. 432Hz carrier frequency option.</p>
+                    <table class="specs-table">
+                        <tr><td><code>Delta 2Hz</code></td><td>Deep Sleep, Healing</td></tr>
+                        <tr><td><code>Theta 6Hz</code></td><td>Meditation, Creativity</td></tr>
+                        <tr><td><code>Alpha 10Hz</code></td><td>Relaxation, Learning</td></tr>
+                        <tr><td><code>Beta 20Hz</code></td><td>Focus, Alertness</td></tr>
+                        <tr><td><code>Gamma 40Hz</code></td><td>Peak Performance</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127928;</span> MIDI 2.0 + MPE</h3>
+                    <p>Full MIDI 2.0 Universal Packet support with 32-bit resolution. MPE (MIDI Polyphonic Expression) for per-note pitch bend, brightness, and timbre via face tracking.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">32-bit Velocity</span>
+                        <span class="tech-tag">Per-Note CC</span>
+                        <span class="tech-tag">Face &#8594; MPE</span>
+                        <span class="tech-tag">Jaw &#8594; Brightness</span>
+                        <span class="tech-tag">Smile &#8594; Timbre</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header">Full DSP Processor List (50+)</div>
+                    <div class="accordion-content">
+                        <table class="specs-table">
+                            <tr><th>Category</th><th>Processors</th></tr>
+                            <tr><td>Dynamics</td><td>Compressor, FET Compressor, Opto Compressor, Multiband Compressor, Brick-Wall Limiter, De-Esser, Transient Designer, Dynamic EQ, Gate</td></tr>
+                            <tr><td>EQ/Filter</td><td>32-Band Parametric EQ, Passive EQ, Formant Filter, Low/High Pass, Band Pass, Notch, All Pass</td></tr>
+                            <tr><td>Reverb</td><td>Convolution Reverb, Shimmer Reverb, Algorithmic Reverb, Spring Reverb, Plate Reverb</td></tr>
+                            <tr><td>Delay</td><td>Tape Delay, Ping-Pong Delay, Multi-Tap Delay, Granular Delay</td></tr>
+                            <tr><td>Modulation</td><td>Chorus, Flanger, Phaser, Tremolo, Ring Modulator, Rotary Speaker</td></tr>
+                            <tr><td>Pitch</td><td>Pitch Correction, Harmonizer, Vocoder, Vocal Doubler</td></tr>
+                            <tr><td>Distortion</td><td>Classic Preamp, Saturation, Bit Crusher, LoFi, Tube Warmth</td></tr>
+                            <tr><td>Mastering</td><td>Mastering Mentor, Spectrum Master, Style-Aware Mastering, Loudness Meter</td></tr>
+                            <tr><td>Analysis</td><td>Audio2MIDI, Phase Analyzer, Tonal Balance, Psychoacoustic Analyzer</td></tr>
+                            <tr><td>Bio-Reactive</td><td>BioModulator, Bio-Reactive DSP, Resonance Healer</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
+        <!-- Visual Engine Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Visual Engine</h2>
+                <p>GPU-accelerated visualization with 30+ modes, sacred geometry, quantum physics simulation, and 16K resolution support.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3><span>&#10024;</span> 30+ Visualization Modes</h3>
+                    <p>From classic waveforms and spectrum analyzers to quantum wave functions, sacred mandalas, and cosmic nebulae. All bio-reactive and audio-reactive.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Particles</span>
+                        <span class="tech-tag">Cymatics</span>
+                        <span class="tech-tag">Mandala</span>
+                        <span class="tech-tag">Nebula</span>
+                        <span class="tech-tag">Liquid Light</span>
+                        <span class="tech-tag">Flow Field</span>
+                        <span class="tech-tag">Kaleidoscope</span>
+                        <span class="tech-tag">Vaporwave Grid</span>
+                        <span class="tech-tag">Sacred Geometry</span>
+                        <span class="tech-tag">Quantum Wave</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#128302;</span> Quantum Photonics</h3>
+                    <p>Physics-inspired light simulation with 9 quantum state types and 9 light field geometries. Real photon wavelength-to-RGB conversion (CIE 1931).</p>
+                    <table class="specs-table">
+                        <tr><td>States</td><td><code>|0&#10217;</code> <code>|1&#10217;</code> <code>|&#968;&#10217;</code> <code>|&#934;&#8314;&#10217;</code> <code>|&#945;&#10217;</code> <code>|&#950;&#10217;</code> <code>|&#128049;&#10217;</code> <code>|n&#10217;</code></td></tr>
+                        <tr><td>Geometries</td><td>Spherical, Toroidal, Fibonacci, Platonic, Hyperbolic, Fractal, Mobius, Hopf, Calabi-Yau</td></tr>
+                        <tr><td>Wavelengths</td><td>380-780nm visible spectrum</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127760;</span> 360 Immersive Engine</h3>
+                    <p>6 visual dimensions (2D to 6D Bio-Coherence Manifold), 8 projection modes, 16 blend modes including quantum blend. visionOS spatial computing ready.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Equirectangular 360</span>
+                        <span class="tech-tag">Cubemap 6-Face</span>
+                        <span class="tech-tag">Fisheye Dome</span>
+                        <span class="tech-tag">Domemaster</span>
+                        <span class="tech-tag">Stereoscopic 3D</span>
+                        <span class="tech-tag">Holographic</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127916;</span> 16K Video Engine</h3>
+                    <p>Professional video processing up to 15360x8640 resolution at 1000fps. 50+ effects including quantum, bio-reactive, cinematic, and time manipulation.</p>
+                    <table class="specs-table">
+                        <tr><td>480p Mobile</td><td>2.5 Mbps</td></tr>
+                        <tr><td>1080p HD</td><td>10 Mbps</td></tr>
+                        <tr><td>4K UHD</td><td>50 Mbps</td></tr>
+                        <tr><td>8K UHD</td><td>150 Mbps</td></tr>
+                        <tr><td>16K Quantum</td><td>500 Mbps</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#9883;</span> Metal GPU Shaders</h3>
+                    <p>300% performance boost with Metal-accelerated rendering. Real-time 60Hz interference calculations, bio-reactive color modulation, SIMD optimization.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Metal 3</span>
+                        <span class="tech-tag">SIMD 256-bit</span>
+                        <span class="tech-tag">Hann Window FFT</span>
+                        <span class="tech-tag">8192-point FFT</span>
+                        <span class="tech-tag">40 Mel Bands</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127752;</span> Creative Studio</h3>
+                    <p>AI art generation in 30+ styles (Renaissance to Cyberpunk), AI music composition in 30+ genres, 11 fractal types with quantum perturbation.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Sacred Geometry</span>
+                        <span class="tech-tag">Ukiyo-e</span>
+                        <span class="tech-tag">Vaporwave</span>
+                        <span class="tech-tag">Glitch Art</span>
+                        <span class="tech-tag">Mandelbrot</span>
+                        <span class="tech-tag">Julia Set</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lighting Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Lighting Control</h2>
+                <p>Professional DMX/Art-Net lighting with bio-reactive control, laser systems, and smart home integration.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3><span>&#128161;</span> DMX/Art-Net</h3>
+                    <p>512-channel DMX512 universes via Art-Net UDP. Support for 19+ fixture types including moving heads, PARs, LED strips, and lasers.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">DMX512</span>
+                        <span class="tech-tag">Art-Net 4</span>
+                        <span class="tech-tag">sACN E1.31</span>
+                        <span class="tech-tag">RDM</span>
+                        <span class="tech-tag">KiNET</span>
+                        <span class="tech-tag">WLED</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127775;</span> Laser Designer</h3>
+                    <p>ILDA protocol support with 15 visual effects, 10 scan patterns, and bio-reactive color modes. Safety zone and audience scanning controls.</p>
+                    <table class="specs-table">
+                        <tr><td>Effects</td><td>Tunnel, Cone, Fan, Wave, Spiral, Burst, Aurora, Vortex, Helix, Grid, Starburst, Fractal...</td></tr>
+                        <tr><td>Patterns</td><td>Circle, Square, Triangle, Star, Heart, Infinity, Lissajous, Spiral, BioSync</td></tr>
+                        <tr><td>Speed</td><td>30,000 points/second</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127918;</span> Push 3 LED</h3>
+                    <p>Native Ableton Push 3 RGB LED matrix control (8x8 = 64 LEDs). 7 bio-reactive patterns including Breathe, Pulse, Coherence, Rainbow, Wave, Spiral.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">MIDI SysEx</span>
+                        <span class="tech-tag">RGB 24-bit</span>
+                        <span class="tech-tag">HRV &#8594; Hue</span>
+                        <span class="tech-tag">HR &#8594; Flash</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127968;</span> Smart Home</h3>
+                    <p>Integration with Philips Hue (63 devices), Nanoleaf (500), LIFX (1000), and WLED (1500). HomeKit, Matter, and Thread protocol support.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Philips Hue</span>
+                        <span class="tech-tag">Nanoleaf</span>
+                        <span class="tech-tag">LIFX</span>
+                        <span class="tech-tag">HomeKit</span>
+                        <span class="tech-tag">Matter</span>
+                        <span class="tech-tag">Thread</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header">Supported DMX Controllers (15+)</div>
+                    <div class="accordion-content">
+                        <table class="specs-table">
+                            <tr><th>Brand</th><th>Model</th><th>Universes</th><th>Protocols</th></tr>
+                            <tr><td>Enttec</td><td>DMX USB Pro</td><td>1</td><td>DMX512</td></tr>
+                            <tr><td>Enttec</td><td>DMX USB Pro MK2</td><td>2</td><td>DMX512 + RDM</td></tr>
+                            <tr><td>Enttec</td><td>ODE MK3</td><td>2</td><td>Art-Net/sACN/RDM</td></tr>
+                            <tr><td>Enttec</td><td>Storm 24</td><td>24</td><td>All protocols</td></tr>
+                            <tr><td>DMXking</td><td>ultraDMX2 Pro</td><td>2</td><td>DMX512 + RDM</td></tr>
+                            <tr><td>DMXking</td><td>eDMX4 PRO</td><td>4</td><td>Art-Net/sACN/RDM</td></tr>
+                            <tr><td>ChamSys</td><td>MQ80</td><td>48</td><td>Full protocol suite</td></tr>
+                            <tr><td>ChamSys</td><td>Stadium Connect</td><td>256</td><td>Full protocol suite</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Streaming Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Streaming & Recording</h2>
+                <p>Professional multi-platform streaming with hardware H.264 encoding, multi-track recording, and bio-data synchronization.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3><span>&#128250;</span> Multi-Platform Streaming</h3>
+                    <p>Simultaneous streaming to YouTube, Twitch, Facebook, Instagram, TikTok, and custom RTMP. Full RTMP/RTMPS handshake implementation.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">RTMP 3</span>
+                        <span class="tech-tag">RTMPS TLS 1.3</span>
+                        <span class="tech-tag">HLS</span>
+                        <span class="tech-tag">WebRTC</span>
+                        <span class="tech-tag">SRT</span>
+                        <span class="tech-tag">RIST</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127909;</span> Video Encoding</h3>
+                    <p>Hardware H.264 via VideoToolbox with adaptive bitrate control. 8 quality presets from 480p mobile to 8K UHD.</p>
+                    <table class="specs-table">
+                        <tr><td>Mobile 480p</td><td>1.5 Mbps @ 30fps</td></tr>
+                        <tr><td>HD 1080p</td><td>6-9 Mbps @ 60fps</td></tr>
+                        <tr><td>4K UHD</td><td>35 Mbps @ 60fps</td></tr>
+                        <tr><td>8K UHD</td><td>80 Mbps @ 60fps</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127908;</span> Multi-Track Recording</h3>
+                    <p>Unlimited tracks with per-track volume, pan, mute, solo. 60-second retrospective capture buffer (Ableton-style). Bio-data point recording.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">48kHz/32-bit Float</span>
+                        <span class="tech-tag">WAV/M4A/AIFF/CAF</span>
+                        <span class="tech-tag">Bio JSON/CSV</span>
+                        <span class="tech-tag">Undo/Redo</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127916;</span> AI Scene Director</h3>
+                    <p>Intelligent camera switching with 10 camera types, 10 scene moods, 8 direction styles. Bio-reactive and audio-reactive shot selection.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Wide/Medium/Close</span>
+                        <span class="tech-tag">Quantum Camera</span>
+                        <span class="tech-tag">Bio-Reactive</span>
+                        <span class="tech-tag">2-30s Shots</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collaboration Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Worldwide Collaboration</h2>
+                <p>Zero-latency global sessions with WebRTC, up to 1000+ participants, 15 server regions, and quantum coherence sync.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3><span>&#127758;</span> 17 Collaboration Modes</h3>
+                    <p>From Music Jam (8p) to Group Meditation (100p) to Coherence Sync (1000+p). Scientific research, workshops, masterclasses.</p>
+                    <table class="specs-table">
+                        <tr><td>Music Jam</td><td>8 participants</td></tr>
+                        <tr><td>Live Performance</td><td>50 participants</td></tr>
+                        <tr><td>Group Meditation</td><td>100 participants</td></tr>
+                        <tr><td>Coherence Sync</td><td>1000+ participants</td></tr>
+                        <tr><td>Quantum Entangled</td><td>500 participants</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127757;</span> 15 Global Regions</h3>
+                    <p>US East/West/Central, Canada, Brazil, EU West/Central/North, UK, Japan, Singapore, India, Australia, Africa, Middle East, plus Quantum Global.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">&lt;20ms LAN</span>
+                        <span class="tech-tag">&lt;50ms Internet</span>
+                        <span class="tech-tag">WebRTC P2P</span>
+                        <span class="tech-tag">STUN/TURN</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#128101;</span> Group Bio-Sync</h3>
+                    <p>Real-time group HRV coherence averaging, flow leader identification, synchronized heartbeat detection, quantum entanglement events.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Avg HRV Sync</span>
+                        <span class="tech-tag">Flow Leader</span>
+                        <span class="tech-tag">Coherence Pulse</span>
+                        <span class="tech-tag">Entanglement Events</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#128274;</span> Enterprise Security</h3>
+                    <p>AES-256 encryption, certificate pinning (TLS 1.3), biometric auth (Face ID/Touch ID), jailbreak detection, GDPR/CCPA/HIPAA compliant.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">AES-256</span>
+                        <span class="tech-tag">TLS 1.3</span>
+                        <span class="tech-tag">Keychain Storage</span>
+                        <span class="tech-tag">GDPR</span>
+                        <span class="tech-tag">HIPAA</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hardware Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Hardware Ecosystem</h2>
+                <p>Universal device support with 60+ audio interfaces, 40+ MIDI controllers, and cross-platform session management.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3><span>&#127911;</span> Audio Interfaces</h3>
+                    <p>60+ supported interfaces from Universal Audio, Focusrite, RME, MOTU, Apogee, PreSonus, SSL, Audient. Platform-specific APIs.</p>
+                    <table class="specs-table">
+                        <tr><td>iOS/macOS</td><td>Core Audio</td></tr>
+                        <tr><td>Windows</td><td>WASAPI/ASIO</td></tr>
+                        <tr><td>Linux</td><td>PipeWire/JACK/ALSA</td></tr>
+                        <tr><td>Android</td><td>AAudio/Oboe</td></tr>
+                    </table>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#127929;</span> MIDI Controllers</h3>
+                    <p>40+ controllers including Ableton Push 3, Native Instruments Maschine/Komplete, Akai MPC/APC, Novation Launchpad, Arturia, Roland.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Push 3</span>
+                        <span class="tech-tag">Maschine MK3</span>
+                        <span class="tech-tag">MPC Live II</span>
+                        <span class="tech-tag">Launchpad X</span>
+                        <span class="tech-tag">KeyStep Pro</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#9201;</span> Wearables</h3>
+                    <p>Apple Watch (native HealthKit), Garmin, Whoop, Oura Ring, Polar, Fitbit. Real-time HRV streaming with coherence calculation.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Apple Watch</span>
+                        <span class="tech-tag">Garmin</span>
+                        <span class="tech-tag">Whoop 4.0</span>
+                        <span class="tech-tag">Oura Gen 3</span>
+                        <span class="tech-tag">Polar H10</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span>&#129461;</span> VR/AR Devices</h3>
+                    <p>Apple Vision Pro (native visionOS), Meta Quest 3, Varjo XR-4, HTC Vive Pro 2, Pico 4. Full spatial computing and hand tracking.</p>
+                    <div class="tech-list">
+                        <span class="tech-tag">Vision Pro</span>
+                        <span class="tech-tag">Quest 3</span>
+                        <span class="tech-tag">Varjo XR-4</span>
+                        <span class="tech-tag">Vive Pro 2</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing -->
         <div class="pricing">
             <h2>Lifetime License</h2>
-            <div class="price-main">99</div>
+            <div class="price-main"><span class="price-currency">&#8364;</span>99</div>
             <div class="price-label">One-Time Purchase // All Platforms</div>
-            <div class="price-updates">+ 49 for Major Version Upgrades</div>
+            <div class="price-upgrade">+ &#8364;49 for Major Version Upgrades (2.0, 3.0...)</div>
             <div class="beta-note">
-                <strong>Beta Program:</strong> Join the free TestFlight beta and shape the future of bio-reactive art. Your feedback creates the vision.
+                <strong>Free Beta Program:</strong> Join TestFlight and shape the future of bio-reactive art. Full access to all features. Your feedback creates the vision.
             </div>
+            <a href="#" class="cta-btn">Join Beta Waitlist</a>
         </div>
 
-        <a href="#" class="cta-btn">Join Beta Waitlist</a>
-
-        <div class="features">
-            <div class="feature">
-                <div class="feature-icon">&#128147;</div>
-                <h3>Bio-Reactive Synthesis</h3>
-                <p>Your heartbeat becomes rhythm. Your HRV shapes harmony. Your breath controls dynamics. Real-time biometric-to-audio transformation through Apple Watch, Garmin, Whoop, and more.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">&#10024;</div>
-                <h3>Quantum Visualization</h3>
-                <p>Sacred geometry meets photon physics. 10 GPU-accelerated visual engines render your coherence state as living light sculptures, fractals, and particle flows.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">&#127932;</div>
-                <h3>Cinematic Orchestration</h3>
-                <p>A virtual orchestra responds to your inner state. 27 articulations across 8 sections. From Disney-inspired wonder to Hans Zimmer intensity.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">&#127758;</div>
-                <h3>Global Coherence Network</h3>
-                <p>Connect with 1000+ conscious creators worldwide. Zero-latency collaborative sessions. Synchronized heartbeats across continents. Collective art experiences.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">&#129504;</div>
-                <h3>AI Creative Partner</h3>
-                <p>Generate visual art in 30+ styles from sacred geometry to cyberpunk. Compose music across 30+ genres. Your coherence guides the algorithm.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">&#9855;</div>
-                <h3>Universal Accessibility</h3>
-                <p>Created for all abilities. 20+ accessibility profiles. WCAG AAA compliant. Eye-gaze control. Voice navigation. Haptic feedback. Art belongs to everyone.</p>
-            </div>
-        </div>
-
-        <div class="philosophy">
-            <blockquote>
-                "We don't make music apps. We build bridges between the invisible rhythms of your body and the visible frequencies of light and sound. Your coherence is the conductor."
-            </blockquote>
-            <cite>The Echoelmusic Manifesto</cite>
-        </div>
-
+        <!-- Links -->
         <div class="links">
             <a href="privacy.html">Privacy</a>
             <a href="terms.html">Terms</a>
@@ -526,6 +956,7 @@
             <a href="health.html">Health</a>
         </div>
 
+        <!-- Footer -->
         <footer>
             <p>&copy; 2026 Echoelmusic. Crafted with coherence.</p>
             <p style="margin-top: 10px;">
@@ -537,5 +968,14 @@
             </div>
         </footer>
     </div>
+
+    <script>
+        // Accordion functionality
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', () => {
+                header.parentElement.classList.toggle('open');
+            });
+        });
+    </script>
 </body>
 </html>
