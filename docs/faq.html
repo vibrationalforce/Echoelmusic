@@ -228,6 +228,33 @@
         }
 
         .back-link:hover { color: var(--light); }
+
+        /* Accessibility: Focus indicators */
+        a:focus-visible, button:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Accessibility: Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Accessibility: Screen reader only text */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
     </style>
 </head>
 <body>
@@ -606,9 +633,9 @@
                 <div class="faq-answer">
                     <p>Join our growing community:</p>
                     <ul>
-                        <li><strong>Instagram:</strong> <a href="https://instagram.com/echoelmusic" target="_blank">@echoelmusic</a> - Daily inspiration, user features, tips</li>
-                        <li><strong>TikTok:</strong> <a href="https://tiktok.com/@echoelmusic" target="_blank">@echoelmusic</a> - Short tutorials, bio-reactive demos</li>
-                        <li><strong>GitHub:</strong> <a href="https://github.com/vibrationalforce/Echoelmusic" target="_blank">Open source contributions</a></li>
+                        <li><strong>Instagram:</strong> <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer">@echoelmusic</a> - Daily inspiration, user features, tips</li>
+                        <li><strong>TikTok:</strong> <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer">@echoelmusic</a> - Short tutorials, bio-reactive demos</li>
+                        <li><strong>GitHub:</strong> <a href="https://github.com/vibrationalforce/Echoelmusic" target="_blank" rel="noopener noreferrer">Open source contributions</a></li>
                     </ul>
                     <p>Share your creations with <strong>#echoelmusic</strong> for a chance to be featured!</p>
                 </div>
@@ -632,7 +659,7 @@
                 <div class="faq-answer">
                     <p>We love hearing from our community! Submit feature requests via:</p>
                     <ul>
-                        <li><strong>GitHub Issues:</strong> <a href="https://github.com/vibrationalforce/Echoelmusic/issues" target="_blank">Feature request template</a></li>
+                        <li><strong>GitHub Issues:</strong> <a href="https://github.com/vibrationalforce/Echoelmusic/issues" target="_blank" rel="noopener noreferrer">Feature request template</a></li>
                         <li><strong>In-app feedback:</strong> Settings > Help > Feature Request</li>
                     </ul>
                     <p>Popular requests are prioritized for future updates!</p>
@@ -650,10 +677,10 @@
         <div class="social-section" style="text-align: center; margin-top: 48px; padding: 32px; background: rgba(255,255,255,0.03); border-radius: 16px;">
             <h3 style="margin-bottom: 16px;">Follow Us</h3>
             <div style="display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;">
-                <a href="https://instagram.com/echoelmusic" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); border-radius: 8px; color: white; text-decoration: none; font-weight: 600;">
+                <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); border-radius: 8px; color: white; text-decoration: none; font-weight: 600;">
                     Instagram
                 </a>
-                <a href="https://tiktok.com/@echoelmusic" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: #000; border-radius: 8px; color: white; text-decoration: none; font-weight: 600; border: 1px solid #333;">
+                <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: #000; border-radius: 8px; color: white; text-decoration: none; font-weight: 600; border: 1px solid #333;">
                     TikTok
                 </a>
             </div>
@@ -663,6 +690,14 @@
     </div>
 
     <script>
+        // Initialize ARIA attributes for accessibility
+        document.querySelectorAll('.faq-question').forEach((button, index) => {
+            const answerId = `faq-answer-${index}`;
+            button.setAttribute('aria-expanded', 'false');
+            button.setAttribute('aria-controls', answerId);
+            button.nextElementSibling.id = answerId;
+        });
+
         document.querySelectorAll('.faq-question').forEach(button => {
             button.addEventListener('click', () => {
                 const answer = button.nextElementSibling;
@@ -671,12 +706,14 @@
                 // Close all other answers
                 document.querySelectorAll('.faq-question').forEach(btn => {
                     btn.classList.remove('active');
+                    btn.setAttribute('aria-expanded', 'false');
                     btn.nextElementSibling.classList.remove('active');
                 });
 
                 // Toggle current answer
                 if (!isActive) {
                     button.classList.add('active');
+                    button.setAttribute('aria-expanded', 'true');
                     answer.classList.add('active');
                 }
             });
