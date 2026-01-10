@@ -446,8 +446,9 @@
     <section class="hero">
         <div class="hero-icon">
             <svg viewBox="0 0 100 100" fill="none">
-                <path d="M50 80 C32 62 15 48 15 33 C15 20 25 12 38 12 C45 12 50 17 50 17 C50 17 55 12 62 12 C75 12 85 20 85 33 C85 48 68 62 50 80Z" fill="rgba(255,255,255,0.95)"/>
-                <path d="M22 40 L33 40 L39 26 L45 54 L51 18 L57 54 L63 26 L69 40 L78 40" stroke="#FF1493" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs><linearGradient id="hero-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF1493"/><stop offset="50%" stop-color="#9933FF"/><stop offset="100%" stop-color="#00FFFF"/></linearGradient></defs>
+                <path d="M50 80 C32 62 15 48 15 33 C15 20 25 12 38 12 C45 12 50 17 50 17 C50 17 55 12 62 12 C75 12 85 20 85 33 C85 48 68 62 50 80Z" fill="url(#hero-grad)"/>
+                <path d="M22 40 L33 40 L39 26 L45 54 L51 18 L57 54 L63 26 L69 40 L78 40" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </div>
         <h1>Transform Your<br>Heartbeat Into Art</h1>
