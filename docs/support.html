@@ -3,43 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support - Echoelmusic</title>
-    <meta name="description" content="Get help with Echoelmusic. Contact support, FAQ, and resources.">
+    <title>Support - Echoelmusic | Get Help with Bio-Reactive Audio</title>
+    <meta name="description" content="Get help with Echoelmusic bio-reactive audio synthesis. Contact support, find answers to common questions, and access resources.">
+    <meta name="keywords" content="Echoelmusic support, bio-reactive music help, HRV app support, contact Echoelmusic, customer service">
+    <meta name="author" content="Echoelmusic">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://vibrationalforce.github.io/Echoelmusic/support.html">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vibrationalforce.github.io/Echoelmusic/support.html">
+    <meta property="og:title" content="Support - Echoelmusic">
+    <meta property="og:description" content="Get help with Echoelmusic bio-reactive audio synthesis.">
+    <meta property="og:site_name" content="Echoelmusic">
+
+    <meta name="theme-color" content="#00C957">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            /* Bio-Coherence Green Palette (consistent with main site) */
+            --coherence-green: #00C957;
+            --coherence-dark: #00A86B;
+            --coherence-light: #7CFC00;
+            --golden: #FFD700;
+            --deep-space: #0a1628;
+            --space-blue: #0d2137;
+            --white: #ffffff;
+            --gray: #94a3b8;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Rajdhani', sans-serif;
-            background: linear-gradient(180deg, #0d0221 0%, #150734 30%, #1a0a3e 60%, #0d0221 100%);
+            background: linear-gradient(180deg, var(--deep-space) 0%, var(--space-blue) 30%, #0a2a1a 60%, var(--deep-space) 100%);
             min-height: 100vh;
-            color: #fff;
+            color: var(--white);
         }
         body::before {
             content: '';
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(0,255,255,0.02) 50px, rgba(0,255,255,0.02) 51px),
-                        repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255,106,213,0.02) 50px, rgba(255,106,213,0.02) 51px);
+            background:
+                radial-gradient(ellipse at 30% 20%, rgba(0,201,87,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(255,215,0,0.05) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
         }
         .header {
-            background: linear-gradient(135deg, rgba(255,106,213,0.2) 0%, rgba(139,92,246,0.2) 100%);
-            padding: 50px 20px;
+            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
+            padding: 100px 20px 50px;
             text-align: center;
-            border-bottom: 1px solid rgba(255,106,213,0.3);
+            border-bottom: 1px solid rgba(0,201,87,0.3);
             position: relative;
             z-index: 1;
         }
         .header h1 {
             font-family: 'Orbitron', monospace;
             font-size: 42px;
-            background: linear-gradient(90deg, #ff6ad5, #00ffff);
+            background: linear-gradient(90deg, var(--coherence-green), var(--golden), var(--coherence-green));
+            background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 10px;
         }
         .header p {
@@ -57,18 +84,18 @@
         .back-link {
             display: inline-block;
             margin-bottom: 30px;
-            color: #00ffff;
+            color: var(--coherence-green);
             text-decoration: none;
             font-family: 'Orbitron', monospace;
             font-size: 14px;
             transition: all 0.3s;
         }
         .back-link:hover {
-            text-shadow: 0 0 15px rgba(0,255,255,0.5);
+            text-shadow: 0 0 15px rgba(0,201,87,0.5);
         }
         .contact-card {
-            background: linear-gradient(135deg, rgba(255,106,213,0.15) 0%, rgba(139,92,246,0.15) 100%);
-            border: 1px solid rgba(255,106,213,0.4);
+            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
+            border: 1px solid rgba(0,201,87,0.4);
             border-radius: 20px;
             padding: 40px;
             margin: 30px 0;
@@ -81,25 +108,25 @@
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 2px;
-            background: linear-gradient(90deg, #ff6ad5, #00ffff);
+            background: linear-gradient(90deg, var(--coherence-green), var(--golden));
         }
         .contact-card h3 {
             font-family: 'Orbitron', monospace;
             font-size: 22px;
-            color: #fff;
+            color: var(--white);
             margin-bottom: 20px;
         }
         .contact-card .email {
             font-family: 'Orbitron', monospace;
             font-size: 24px;
-            color: #ff6ad5;
+            color: var(--coherence-green);
             text-decoration: none;
-            text-shadow: 0 0 20px rgba(255,106,213,0.5);
+            text-shadow: 0 0 20px rgba(0,201,87,0.5);
             transition: all 0.3s;
         }
         .contact-card .email:hover {
-            color: #00ffff;
-            text-shadow: 0 0 30px rgba(0,255,255,0.5);
+            color: var(--golden);
+            text-shadow: 0 0 30px rgba(255,215,0,0.5);
         }
         .contact-card .response {
             margin-top: 15px;
@@ -109,28 +136,28 @@
         h2 {
             font-family: 'Orbitron', monospace;
             font-size: 24px;
-            color: #00ffff;
+            color: var(--coherence-green);
             margin: 50px 0 25px;
             padding-bottom: 15px;
-            border-bottom: 1px solid rgba(0,255,255,0.3);
-            text-shadow: 0 0 15px rgba(0,255,255,0.3);
+            border-bottom: 1px solid rgba(0,201,87,0.3);
+            text-shadow: 0 0 15px rgba(0,201,87,0.3);
         }
         .faq-item {
-            background: rgba(13,2,33,0.6);
-            border: 1px solid rgba(255,106,213,0.2);
+            background: rgba(10,22,40,0.6);
+            border: 1px solid rgba(0,201,87,0.2);
             border-radius: 16px;
             padding: 25px;
             margin: 20px 0;
             transition: all 0.3s;
         }
         .faq-item:hover {
-            border-color: rgba(255,106,213,0.5);
-            box-shadow: 0 10px 40px rgba(255,106,213,0.1);
+            border-color: rgba(0,201,87,0.5);
+            box-shadow: 0 10px 40px rgba(0,201,87,0.1);
         }
         .faq-item h4 {
             font-family: 'Orbitron', monospace;
             font-size: 16px;
-            color: #ff6ad5;
+            color: var(--coherence-green);
             margin-bottom: 12px;
         }
         .faq-item p {
@@ -139,11 +166,11 @@
             line-height: 1.7;
         }
         .faq-item a {
-            color: #00ffff;
+            color: var(--coherence-green);
             text-decoration: none;
         }
         .faq-item a:hover {
-            text-decoration: underline;
+            text-shadow: 0 0 10px rgba(0,201,87,0.5);
         }
         .resources {
             display: grid;
@@ -153,35 +180,98 @@
         }
         .resource-link {
             display: block;
-            background: rgba(0,255,255,0.05);
-            border: 1px solid rgba(0,255,255,0.3);
+            background: rgba(0,201,87,0.05);
+            border: 1px solid rgba(0,201,87,0.3);
             border-radius: 12px;
             padding: 20px;
             text-decoration: none;
-            color: #00ffff;
+            color: var(--coherence-green);
             font-family: 'Orbitron', monospace;
             font-size: 14px;
             text-align: center;
             transition: all 0.3s;
         }
         .resource-link:hover {
-            background: rgba(0,255,255,0.1);
-            box-shadow: 0 0 30px rgba(0,255,255,0.2);
+            background: rgba(0,201,87,0.1);
+            box-shadow: 0 0 30px rgba(0,201,87,0.2);
             transform: translateY(-3px);
         }
         footer {
             text-align: center;
             padding: 50px 20px;
-            border-top: 1px solid rgba(255,106,213,0.2);
+            border-top: 1px solid rgba(0,201,87,0.2);
             color: rgba(255,255,255,0.5);
             font-size: 13px;
             position: relative;
             z-index: 1;
         }
 
+        /* Navigation Bar */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(0,201,87,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--coherence-green), var(--golden));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+            align-items: center;
+        }
+        .nav-links a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 13px;
+            font-family: 'Orbitron', monospace;
+            transition: all 0.3s;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--coherence-green);
+            text-shadow: 0 0 10px rgba(0,201,87,0.5);
+        }
+        .nav-social {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .nav-social a {
+            color: rgba(0,201,87,0.6);
+            text-decoration: none;
+            font-size: 12px;
+            padding: 5px 10px;
+            border: 1px solid rgba(0,201,87,0.3);
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+        .nav-social a:hover {
+            color: var(--coherence-green);
+            border-color: var(--coherence-green);
+            box-shadow: 0 0 15px rgba(0,201,87,0.3);
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            nav { padding: 12px 15px; }
+        }
+
         /* Accessibility: Focus indicators */
         a:focus-visible, button:focus-visible {
-            outline: 2px solid #00ffff;
+            outline: 2px solid var(--coherence-green);
             outline-offset: 2px;
         }
 
@@ -196,13 +286,30 @@
     </style>
 </head>
 <body>
+    <!-- Skip to content link for accessibility -->
+    <a href="#main-content" class="skip-link" style="position: absolute; top: -40px; left: 0; background: var(--coherence-green); color: var(--deep-space); padding: 8px 16px; z-index: 1001; font-family: 'Orbitron', monospace; text-decoration: none; transition: top 0.3s;" onfocus="this.style.top='0'" onblur="this.style.top='-40px'">Skip to content</a>
+
+    <!-- Navigation Bar -->
+    <nav>
+        <a href="index.html" class="nav-logo">Echoelmusic</a>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="use-cases.html">Use Cases</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="support.html" class="active">Support</a></li>
+        </ul>
+        <div class="nav-social">
+            <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer">TikTok</a>
+        </div>
+    </nav>
+
     <div class="header">
         <h1>Support</h1>
         <p>We're Here To Help</p>
     </div>
 
-    <div class="container">
-        <a href="index.html" class="back-link">&larr; Back to Home</a>
+    <div class="container" id="main-content">
 
         <div class="contact-card">
             <h3>Contact Support</h3>
@@ -266,10 +373,16 @@
             <a href="https://instagram.com/echoelmusic" class="resource-link" target="_blank" rel="noopener noreferrer">Instagram</a>
             <a href="https://tiktok.com/@echoelmusic" class="resource-link" target="_blank" rel="noopener noreferrer">TikTok</a>
         </div>
-
-        <footer>
-            <p>&copy; 2026 Echoelmusic. Crafted with coherence.</p>
-        </footer>
     </div>
+
+    <!-- Footer -->
+    <footer style="padding: 40px 20px; text-align: center; border-top: 1px solid rgba(0,201,87,0.2); background: rgba(10,22,40,0.5);">
+        <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 12px;">&copy; 2024-2026 Echoelmusic. Bio-Reactive Audio-Visual Experience.</p>
+        <p style="color: rgba(255,255,255,0.4); font-size: 13px;">
+            <a href="privacy.html" style="color: var(--coherence-green); text-decoration: none;">Privacy</a> ·
+            <a href="terms.html" style="color: var(--coherence-green); text-decoration: none;">Terms</a> ·
+            <a href="faq.html" style="color: var(--coherence-green); text-decoration: none;">FAQ</a>
+        </p>
+    </footer>
 </body>
 </html>

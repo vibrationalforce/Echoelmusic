@@ -4,40 +4,203 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Datenschutzerklärung - Echoelmusic</title>
+    <meta name="description" content="Datenschutzerklärung für Echoelmusic - Bio-reaktive Audio-Visual Plattform. DSGVO, CCPA konform. Alle biometrischen Daten werden nur auf dem Gerät verarbeitet.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://vibrationalforce.github.io/Echoelmusic/de/datenschutz.html">
+    <meta name="theme-color" content="#00C957">
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --coherence-green: #00C957;
+            --coherence-dark: #00A86B;
+            --coherence-light: #50D98A;
+            --gold-accent: #FFD700;
+            --bg-dark: #0a0f0d;
+            --bg-card: rgba(0, 201, 87, 0.05);
+            --text-primary: #f0f0f0;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f23;
-            color: #e0e0e0;
+            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
             line-height: 1.8;
+            min-height: 100vh;
         }
+        a.skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--coherence-green);
+            color: var(--bg-dark);
+            padding: 8px 16px;
+            z-index: 1001;
+            font-weight: 600;
+        }
+        a.skip-link:focus { top: 0; }
+
+        /* Navigation */
+        nav {
+            background: rgba(10, 15, 13, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 201, 87, 0.2);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .nav-logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--coherence-green);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            font-size: 1rem;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--coherence-green);
+        }
+        .nav-social {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .nav-social a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+        .nav-social a:hover { color: var(--coherence-green); }
+        .lang-switch {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 1rem;
+            padding-left: 1rem;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+        .lang-switch a {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .lang-switch a.active {
+            background: var(--coherence-green);
+            color: var(--bg-dark);
+        }
+
         .header {
-            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 100%);
-            padding: 40px 20px;
+            background: linear-gradient(135deg, rgba(0, 168, 107, 0.15) 0%, rgba(0, 201, 87, 0.08) 100%);
+            padding: 60px 20px;
             text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(0, 201, 87, 0.2);
         }
-        .header h1 { font-size: 32px; color: #fff; margin-bottom: 10px; }
-        .header p { color: rgba(255,255,255,0.6); font-size: 14px; }
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            color: var(--coherence-green);
+            margin-bottom: 10px;
+        }
+        .header p { color: var(--text-secondary); font-size: 1rem; }
         .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
-        h2 { color: #667eea; font-size: 22px; margin: 40px 0 20px; padding-bottom: 10px; border-bottom: 1px solid rgba(102, 126, 234, 0.3); }
-        h3 { color: #fff; font-size: 18px; margin: 25px 0 15px; }
-        p, li { margin-bottom: 15px; color: rgba(255,255,255,0.8); }
+        h2 {
+            font-family: 'Orbitron', monospace;
+            color: var(--coherence-green);
+            font-size: 1.4rem;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 201, 87, 0.3);
+        }
+        h3 { color: var(--text-primary); font-size: 1.1rem; margin: 25px 0 15px; font-weight: 600; }
+        p, li { margin-bottom: 15px; color: var(--text-secondary); }
         ul { padding-left: 25px; margin-bottom: 20px; }
-        .highlight { background: rgba(102, 126, 234, 0.1); border-left: 4px solid #667eea; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0; }
-        a { color: #667eea; }
-        .back-link { display: inline-block; margin-bottom: 30px; color: rgba(255,255,255,0.6); text-decoration: none; }
-        footer { text-align: center; padding: 40px 20px; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); font-size: 12px; }
+        .highlight {
+            background: var(--bg-card);
+            border-left: 4px solid var(--coherence-green);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 12px 12px 0;
+        }
+        .highlight strong { color: var(--coherence-green); }
+        a { color: var(--coherence-green); }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .back-link:hover { color: var(--coherence-green); }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid rgba(0, 201, 87, 0.2);
+            background: rgba(0, 201, 87, 0.02);
+        }
+        .footer-links { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .footer-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
+        .footer-links a:hover { color: var(--coherence-green); }
+        .footer-social { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1rem; }
+        .footer-social a { color: var(--coherence-green); text-decoration: none; font-weight: 600; }
+        .footer-copyright { color: var(--text-secondary); font-size: 0.85rem; }
+
+        @media (max-width: 768px) {
+            nav { flex-wrap: wrap; gap: 1rem; padding: 1rem; }
+            .nav-links { gap: 1rem; }
+            .nav-social { flex-wrap: wrap; }
+            .header h1 { font-size: 1.8rem; }
+        }
     </style>
 </head>
 <body>
+    <a href="#main-content" class="skip-link">Zum Hauptinhalt springen</a>
+
+    <nav>
+        <a href="index.html" class="nav-logo">Echoelmusic</a>
+        <ul class="nav-links">
+            <li><a href="index.html">Start</a></li>
+            <li><a href="support.html">Support</a></li>
+            <li><a href="datenschutz.html" class="active">Datenschutz</a></li>
+        </ul>
+        <div class="nav-social">
+            <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer">TikTok</a>
+            <div class="lang-switch">
+                <a href="../privacy.html">EN</a>
+                <a href="datenschutz.html" class="active">DE</a>
+            </div>
+        </div>
+    </nav>
+
     <div class="header">
         <h1>Datenschutzerklärung</h1>
         <p>Gültig ab: 7. Januar 2026 | Version 1.0.0</p>
     </div>
 
-    <div class="container">
+    <main id="main-content" class="container">
         <a href="index.html" class="back-link">&larr; Zurück zur Startseite</a>
 
         <div class="highlight">
@@ -51,6 +214,7 @@
 
         <h2>1. Einleitung</h2>
         <p>Willkommen bei Echoelmusic. Diese Datenschutzerklärung erklärt, wie wir Ihre Informationen erfassen, verwenden, offenlegen und schützen, wenn Sie unsere bio-reaktive audio-visuelle Plattform nutzen.</p>
+        <p>Wir verpflichten uns zum Schutz Ihrer Privatsphäre und zur Einhaltung anwendbarer Datenschutzgesetze, einschließlich DSGVO, CCPA, COPPA, PIPEDA und australischer Privacy Principles.</p>
 
         <h2>2. Welche Daten wir erfassen</h2>
 
@@ -62,36 +226,89 @@
             <li>Atemfrequenz aus HRV-Analyse</li>
             <li>Gesichtsausdruckdaten (nur auf dem Gerät verarbeitet)</li>
             <li>Stimmdaten für Stimme-zu-Visuell-Mapping (auf dem Gerät verarbeitet, nicht gespeichert)</li>
+            <li>Blickrichtungsdaten von visionOS-Geräten (nur auf dem Gerät verarbeitet)</li>
         </ul>
 
         <div class="highlight">
-            <strong>WICHTIG:</strong> Alle biometrischen Daten werden AUF DEM GERÄT verarbeitet. Rohe biometrische Daten werden NIE an unsere Server übertragen, es sei denn, Sie aktivieren explizit Cloud-Sync-Funktionen.
+            <strong>WICHTIG:</strong> Alle biometrischen Daten werden AUF DEM GERÄT mit Apple HealthKit, Android Health Connect und lokaler Verarbeitung verarbeitet. Rohe biometrische Daten werden NIE an unsere Server übertragen, es sei denn, Sie aktivieren explizit Cloud-Sync-Funktionen.
         </div>
 
-        <h2>3. Ihre Rechte (DSGVO)</h2>
+        <h3>2.2 Nutzungsdaten</h3>
+        <p>Wir erfassen automatisch bestimmte Informationen:</p>
         <ul>
-            <li><strong>Recht auf Auskunft:</strong> Kopie Ihrer Daten anfordern</li>
-            <li><strong>Recht auf Berichtigung:</strong> Falsche Daten korrigieren</li>
-            <li><strong>Recht auf Löschung:</strong> Löschung beantragen ("Recht auf Vergessenwerden")</li>
-            <li><strong>Recht auf Datenübertragbarkeit:</strong> Daten in maschinenlesbarem Format</li>
-            <li><strong>Recht auf Widerruf:</strong> Jederzeit</li>
+            <li>Geräteinformationen: Gerätetyp, Betriebssystemversion, eindeutige Geräte-IDs</li>
+            <li>App-Nutzung: Verwendete Funktionen, Sitzungsdauer, Preset-Auswahl</li>
+            <li>Leistungsmetriken: App-Abstürze, Fehlerprotokolle</li>
+            <li>Netzwerkdaten: IP-Adresse (anonymisiert), Verbindungstyp</li>
         </ul>
 
-        <h2>4. Datensicherheit</h2>
+        <h3>2.3 Kinderdaten (COPPA-Konformität)</h3>
+        <p>Die App ist NICHT für Kinder unter 13 Jahren (oder unter 16 in der EU) bestimmt. Wir erfassen wissentlich keine personenbezogenen Daten von Kindern.</p>
+
+        <h2>3. Wie wir Ihre Daten verwenden</h2>
+        <ul>
+            <li>Kernfunktionalität bereitstellen: Biometrische Daten für bio-reaktive Erlebnisse verarbeiten</li>
+            <li>Benutzererfahrung verbessern: Präferenzen und benutzerdefinierte Presets speichern</li>
+            <li>App verbessern: Nutzungsmuster analysieren (anonymisiert)</li>
+            <li>Kundensupport: Auf Anfragen reagieren</li>
+            <li>Sicherheit gewährleisten: Betrug erkennen und verhindern</li>
+        </ul>
+
+        <h2>4. Datenspeicherung und Sicherheit</h2>
+        <p>Wir implementieren Enterprise-Grade-Sicherheit:</p>
         <ul>
             <li>Verschlüsselung im Ruhezustand: AES-256</li>
             <li>Verschlüsselung bei Übertragung: TLS 1.3</li>
             <li>Certificate Pinning: Verhindert Man-in-the-Middle-Angriffe</li>
             <li>Biometrische Authentifizierung: Face ID, Touch ID, Optic ID</li>
+            <li>Sichere Keychain-Speicherung: iOS Keychain, Android Keystore</li>
         </ul>
 
-        <h2>5. Kontakt</h2>
+        <h2>5. Datenweitergabe</h2>
+        <p><strong>Wir verkaufen, vermieten oder handeln NIEMALS Ihre personenbezogenen Daten an Dritte für Marketingzwecke.</strong></p>
+        <p>Wir können Daten mit vertrauenswürdigen Dienstleistern (Cloud-Infrastruktur, Analysen, Absturzmeldungen) teilen, die vertraglich verpflichtet sind, Ihre Daten zu schützen.</p>
+
+        <h2>6. Ihre Rechte</h2>
+
+        <h3>DSGVO-Rechte (EU/EWR-Nutzer)</h3>
+        <ul>
+            <li><strong>Recht auf Auskunft:</strong> Kopie Ihrer Daten anfordern</li>
+            <li><strong>Recht auf Berichtigung:</strong> Falsche Daten korrigieren</li>
+            <li><strong>Recht auf Löschung:</strong> Löschung beantragen ("Recht auf Vergessenwerden")</li>
+            <li><strong>Recht auf Datenübertragbarkeit:</strong> Daten in maschinenlesbarem Format erhalten</li>
+            <li><strong>Recht auf Widerruf:</strong> Jederzeit</li>
+        </ul>
+
+        <h3>CCPA-Rechte (Einwohner Kaliforniens)</h3>
+        <ul>
+            <li><strong>Recht auf Wissen:</strong> Offenlegung personenbezogener Daten anfordern</li>
+            <li><strong>Recht auf Löschung:</strong> Löschung personenbezogener Daten anfordern</li>
+            <li><strong>Recht auf Opt-Out:</strong> Wir verkaufen keine Daten, aber Sie können Analysen deaktivieren</li>
+            <li><strong>Recht auf Nichtdiskriminierung:</strong> Gleicher Service unabhängig von Datenschutzentscheidungen</li>
+        </ul>
+
+        <h2>7. Kontakt</h2>
         <p>Datenschutzanfragen: <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a></p>
         <p>Datenschutzbeauftragter: <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a></p>
 
-        <footer>
-            <p>&copy; 2026 Echoelmusic Inc. Alle Rechte vorbehalten.</p>
-        </footer>
-    </div>
+        <h2>8. Änderungen dieser Richtlinie</h2>
+        <p>Wir können diese Datenschutzerklärung von Zeit zu Zeit aktualisieren. Wir werden Sie über wesentliche Änderungen per In-App-Benachrichtigung und E-Mail (für registrierte Benutzer) informieren.</p>
+    </main>
+
+    <footer>
+        <div class="footer-links">
+            <a href="index.html">Start</a>
+            <a href="support.html">Support</a>
+            <a href="datenschutz.html">Datenschutz</a>
+            <a href="agb.html">AGB</a>
+            <a href="gesundheit.html">Gesundheit</a>
+        </div>
+        <div class="footer-social">
+            <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer">TikTok</a>
+        </div>
+        <p class="footer-copyright">&copy; 2026 Echoelmusic. Alle Rechte vorbehalten.</p>
+        <p class="footer-copyright">Zuletzt aktualisiert: 7. Januar 2026</p>
+    </footer>
 </body>
 </html>

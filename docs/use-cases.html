@@ -10,14 +10,14 @@
     <meta name="keywords" content="bio-reactive music, HRV music therapy, meditation app, music production AI, live performance biofeedback, wellness technology, heart rate music, coherence training, stress relief music">
     <meta name="author" content="Echoelmusic">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://echoelmusic.com/use-cases.html">
+    <link rel="canonical" href="https://vibrationalforce.github.io/Echoelmusic/use-cases.html">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="article">
-    <meta property="og:url" content="https://echoelmusic.com/use-cases.html">
+    <meta property="og:url" content="https://vibrationalforce.github.io/Echoelmusic/use-cases.html">
     <meta property="og:title" content="Echoelmusic Use Cases - Bio-Reactive Music Applications">
     <meta property="og:description" content="Real-world applications of bio-reactive music technology for wellness, production, and performance.">
-    <meta property="og:image" content="https://echoelmusic.com/images/use-cases-og.png">
+    <meta property="og:image" content="https://vibrationalforce.github.io/Echoelmusic/images/use-cases-og.png">
     <meta property="og:site_name" content="Echoelmusic">
 
     <!-- Twitter -->
@@ -25,7 +25,7 @@
     <meta name="twitter:site" content="@echoelmusic">
     <meta name="twitter:title" content="Echoelmusic Use Cases - Bio-Reactive Music Applications">
     <meta name="twitter:description" content="Discover how professionals use bio-reactive music technology.">
-    <meta name="twitter:image" content="https://echoelmusic.com/images/use-cases-twitter.png">
+    <meta name="twitter:image" content="https://vibrationalforce.github.io/Echoelmusic/images/use-cases-twitter.png">
 
     <!-- Structured Data for SEO -->
     <script type="application/ld+json">
@@ -34,11 +34,11 @@
         "@type": "WebPage",
         "name": "Echoelmusic Use Cases",
         "description": "Bio-reactive music applications for wellness, production, and performance",
-        "url": "https://echoelmusic.com/use-cases.html",
+        "url": "https://vibrationalforce.github.io/Echoelmusic/use-cases.html",
         "publisher": {
             "@type": "Organization",
             "name": "Echoelmusic",
-            "logo": "https://echoelmusic.com/images/logo.png",
+            "logo": "https://vibrationalforce.github.io/Echoelmusic/images/logo.png",
             "sameAs": [
                 "https://instagram.com/echoelmusic",
                 "https://tiktok.com/@echoelmusic"
@@ -47,78 +47,101 @@
     }
     </script>
 
+    <!-- Fonts (consistent with main site) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #8b5cf6;
-            --accent: #ec4899;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --dark: #0f172a;
-            --light: #f8fafc;
-            --gray: #64748b;
+            /* Bio-Coherence Green Palette (consistent with main site) */
+            --coherence-green: #00C957;
+            --coherence-dark: #00A86B;
+            --coherence-light: #7CFC00;
+            --golden: #FFD700;
+            --deep-space: #0a1628;
+            --space-blue: #0d2137;
+            --white: #ffffff;
+            --gray: #94a3b8;
+            --success: #00C957;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, var(--dark) 0%, #1e293b 100%);
-            color: var(--light);
+            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, var(--deep-space) 0%, var(--space-blue) 30%, #0a2a1a 60%, var(--deep-space) 100%);
+            color: var(--white);
             line-height: 1.7;
             min-height: 100vh;
         }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 30% 20%, rgba(0,201,87,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(255,215,0,0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
 
         /* Navigation */
         nav {
             position: fixed; top: 0; left: 0; right: 0;
-            background: rgba(15, 23, 42, 0.95);
+            background: rgba(10, 22, 40, 0.95);
             backdrop-filter: blur(10px);
             z-index: 1000;
             padding: 16px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(0,201,87,0.2);
         }
 
         nav .container { display: flex; justify-content: space-between; align-items: center; }
 
         .logo {
+            font-family: 'Orbitron', monospace;
             font-size: 24px; font-weight: 700;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: linear-gradient(90deg, var(--coherence-green), var(--golden));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-decoration: none;
         }
 
         .nav-links { display: flex; gap: 24px; list-style: none; align-items: center; }
-        .nav-links a { color: var(--light); text-decoration: none; font-weight: 500; transition: color 0.3s; }
-        .nav-links a:hover { color: var(--primary); }
+        .nav-links a { color: var(--white); text-decoration: none; font-weight: 500; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--coherence-green); }
 
         .social-icons { display: flex; gap: 16px; }
         .social-icons a { color: var(--gray); font-size: 20px; transition: color 0.3s; }
-        .social-icons a:hover { color: var(--accent); }
+        .social-icons a:hover { color: var(--coherence-green); }
 
         /* Hero */
         .hero {
             padding: 140px 0 80px;
             text-align: center;
-            background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            background: radial-gradient(ellipse at center, rgba(0,201,87,0.15) 0%, transparent 70%);
+            position: relative;
+            z-index: 1;
         }
 
         .hero h1 {
+            font-family: 'Orbitron', monospace;
             font-size: clamp(2.5rem, 5vw, 4rem);
             margin-bottom: 24px;
-            background: linear-gradient(135deg, var(--light), var(--primary));
+            background: linear-gradient(90deg, var(--coherence-green), var(--golden), var(--coherence-green));
+            background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .hero p { font-size: 1.25rem; color: var(--gray); max-width: 700px; margin: 0 auto 40px; }
 
         /* Use Case Cards */
-        .use-cases { padding: 60px 0 100px; }
+        .use-cases { padding: 60px 0 100px; position: relative; z-index: 1; }
 
         .use-case-grid {
             display: grid;
@@ -127,28 +150,30 @@
         }
 
         .use-case-card {
-            background: rgba(30, 41, 59, 0.8);
+            background: linear-gradient(135deg, rgba(10,22,40,0.9) 0%, rgba(0,42,26,0.4) 100%);
             border-radius: 20px;
             padding: 40px;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(0,201,87,0.2);
             transition: transform 0.3s, box-shadow 0.3s;
         }
 
         .use-case-card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+            border-color: rgba(0,201,87,0.5);
+            box-shadow: 0 20px 40px rgba(0,201,87,0.15);
         }
 
         .use-case-icon {
             width: 64px; height: 64px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: linear-gradient(135deg, var(--coherence-green), var(--coherence-dark));
             border-radius: 16px;
             display: flex; align-items: center; justify-content: center;
             font-size: 32px;
             margin-bottom: 24px;
+            box-shadow: 0 0 20px rgba(0,201,87,0.3);
         }
 
-        .use-case-card h3 { font-size: 1.5rem; margin-bottom: 16px; color: var(--light); }
+        .use-case-card h3 { font-family: 'Orbitron', monospace; font-size: 1.5rem; margin-bottom: 16px; color: var(--coherence-green); }
         .use-case-card p { color: var(--gray); margin-bottom: 20px; }
 
         .benefits { list-style: none; margin-bottom: 24px; }
@@ -156,47 +181,50 @@
             padding: 8px 0;
             padding-left: 28px;
             position: relative;
-            color: var(--gray);
+            color: rgba(255,255,255,0.8);
         }
         .benefits li::before {
             content: "✓";
             position: absolute;
             left: 0;
-            color: var(--success);
+            color: var(--coherence-green);
             font-weight: bold;
         }
 
         .testimonial {
-            background: rgba(99, 102, 241, 0.1);
+            background: rgba(0,201,87,0.1);
             border-radius: 12px;
             padding: 20px;
-            border-left: 3px solid var(--primary);
+            border-left: 3px solid var(--coherence-green);
             font-style: italic;
-            color: var(--light);
+            color: var(--white);
         }
 
         .testimonial-author {
             margin-top: 12px;
             font-style: normal;
             font-size: 0.9rem;
-            color: var(--accent);
+            color: var(--golden);
         }
 
         /* CTA Section */
         .cta-section {
             padding: 80px 0;
             text-align: center;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(236, 72, 153, 0.1) 100%);
+            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
+            position: relative;
+            z-index: 1;
         }
 
-        .cta-section h2 { font-size: 2.5rem; margin-bottom: 20px; }
+        .cta-section h2 { font-family: 'Orbitron', monospace; font-size: 2.5rem; margin-bottom: 20px; color: var(--coherence-green); }
         .cta-section p { color: var(--gray); max-width: 600px; margin: 0 auto 32px; }
 
         .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
 
         .btn {
             padding: 16px 32px;
-            border-radius: 12px;
+            border-radius: 30px;
+            font-family: 'Orbitron', monospace;
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s;
@@ -206,25 +234,28 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: linear-gradient(90deg, var(--coherence-green) 0%, var(--coherence-dark) 50%, #006400 100%);
             color: white;
+            box-shadow: 0 0 20px rgba(0,201,87,0.3);
         }
 
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(0,201,87,0.5); }
 
         .btn-outline {
-            border: 2px solid var(--primary);
-            color: var(--primary);
+            border: 2px solid var(--coherence-green);
+            color: var(--coherence-green);
             background: transparent;
         }
 
-        .btn-outline:hover { background: var(--primary); color: white; }
+        .btn-outline:hover { background: rgba(0,201,87,0.1); }
 
         /* Social Proof */
         .social-proof {
             padding: 60px 0;
             text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid rgba(0,201,87,0.2);
+            position: relative;
+            z-index: 1;
         }
 
         .social-proof h3 { color: var(--gray); margin-bottom: 32px; font-weight: 400; }
@@ -240,26 +271,29 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            color: var(--light);
+            color: var(--white);
             text-decoration: none;
             padding: 16px 24px;
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 12px;
+            background: rgba(0,201,87,0.1);
+            border: 1px solid rgba(0,201,87,0.3);
+            border-radius: 30px;
             transition: all 0.3s;
         }
 
-        .social-link:hover { background: rgba(99, 102, 241, 0.2); transform: translateY(-4px); }
-        .social-link svg { width: 24px; height: 24px; }
+        .social-link:hover { background: rgba(0,201,87,0.2); transform: translateY(-4px); box-shadow: 0 0 30px rgba(0,201,87,0.2); }
+        .social-link svg { width: 24px; height: 24px; fill: var(--coherence-green); }
 
         /* Footer */
         footer {
             padding: 40px 0;
             text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid rgba(0,201,87,0.2);
+            position: relative;
+            z-index: 1;
         }
 
         footer p { color: var(--gray); }
-        footer a { color: var(--primary); text-decoration: none; }
+        footer a { color: var(--coherence-green); text-decoration: none; }
 
         @media (max-width: 768px) {
             .nav-links { display: none; }
@@ -269,7 +303,7 @@
 
         /* Accessibility: Focus indicators */
         a:focus-visible, button:focus-visible {
-            outline: 2px solid var(--primary);
+            outline: 2px solid var(--coherence-green);
             outline-offset: 2px;
         }
 
