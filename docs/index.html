@@ -991,6 +991,202 @@
             .pricing-price { font-size: 42px; }
             .features-tabs { gap: var(--space-xs); }
             .tab-btn { padding: 10px 16px; font-size: 11px; }
+            .interactive-demo-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ========== INTERACTIVE DEMO ========== */
+        .interactive-demo-section {
+            background: radial-gradient(ellipse at 50% 30%, rgba(255,20,147,0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 70%, rgba(0,255,255,0.08) 0%, transparent 50%),
+                        linear-gradient(180deg, var(--midnight-blue) 0%, var(--deep-black) 100%);
+            overflow: hidden;
+        }
+        .interactive-demo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-xl);
+        }
+        .demo-module {
+            padding: var(--space-xl);
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .demo-module::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,20,147,0.15) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .demo-module:hover::before { opacity: 1; }
+        .demo-module:hover { transform: translateY(-8px) scale(1.02); border-color: var(--neon-pink); }
+        .demo-module h3 {
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            color: var(--neon-cyan);
+            margin-bottom: var(--space-md);
+            letter-spacing: 2px;
+        }
+        .demo-module p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: var(--space-md);
+        }
+
+        /* Coherence Ring */
+        .coherence-demo {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .coherence-ring {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, var(--neon-pink), var(--neon-purple), var(--neon-cyan), var(--neon-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: coherence-pulse 3s ease-in-out infinite;
+            transition: all 0.3s;
+        }
+        @keyframes coherence-pulse {
+            0%, 100% { box-shadow: 0 0 30px rgba(255,20,147,0.4), 0 0 60px rgba(255,20,147,0.2); transform: scale(1); }
+            50% { box-shadow: 0 0 50px rgba(255,20,147,0.6), 0 0 100px rgba(255,20,147,0.3); transform: scale(1.03); }
+        }
+        .coherence-inner {
+            width: 160px;
+            height: 160px;
+            background: var(--deep-black);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .coherence-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--neon-cyan);
+            transition: all 0.3s;
+        }
+        .coherence-label {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+
+        /* Audio Visualizer */
+        .audio-visualizer {
+            height: 120px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 4px;
+            padding: var(--space-md) 0;
+        }
+        .audio-bar {
+            width: 8px;
+            background: linear-gradient(180deg, var(--neon-pink), var(--neon-purple), var(--neon-cyan));
+            border-radius: 4px;
+            transition: height 0.1s ease-out;
+            animation: audio-wave 1.2s ease-in-out infinite;
+        }
+        @keyframes audio-wave {
+            0%, 100% { transform: scaleY(0.3); }
+            50% { transform: scaleY(1); }
+        }
+        .audio-bar:nth-child(1) { animation-delay: 0s; height: 40px; }
+        .audio-bar:nth-child(2) { animation-delay: 0.1s; height: 60px; }
+        .audio-bar:nth-child(3) { animation-delay: 0.2s; height: 80px; }
+        .audio-bar:nth-child(4) { animation-delay: 0.15s; height: 100px; }
+        .audio-bar:nth-child(5) { animation-delay: 0.25s; height: 70px; }
+        .audio-bar:nth-child(6) { animation-delay: 0.05s; height: 90px; }
+        .audio-bar:nth-child(7) { animation-delay: 0.3s; height: 50px; }
+        .audio-bar:nth-child(8) { animation-delay: 0.18s; height: 85px; }
+        .audio-bar:nth-child(9) { animation-delay: 0.22s; height: 65px; }
+        .audio-bar:nth-child(10) { animation-delay: 0.12s; height: 75px; }
+        .audio-bar:nth-child(11) { animation-delay: 0.28s; height: 55px; }
+        .audio-bar:nth-child(12) { animation-delay: 0.08s; height: 95px; }
+
+        /* Breathing Guide */
+        .breathing-demo {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .breathing-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,255,255,0.2) 0%, transparent 70%);
+            border: 2px solid var(--neon-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: breathe 8s ease-in-out infinite;
+            box-shadow: 0 0 30px rgba(0,255,255,0.3), inset 0 0 50px rgba(0,255,255,0.1);
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(0.8); opacity: 0.7; }
+            25% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1); opacity: 1; }
+            75% { transform: scale(0.8); opacity: 0.7; }
+        }
+        .breathing-text {
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            color: var(--neon-cyan);
+            letter-spacing: 3px;
+            animation: breathe-text 8s ease-in-out infinite;
+        }
+        @keyframes breathe-text {
+            0%, 100% { opacity: 0; }
+            5%, 20% { opacity: 1; }
+            25%, 45% { opacity: 0; }
+            50%, 70% { opacity: 1; }
+            75%, 95% { opacity: 0; }
+        }
+        .breathing-instruction {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-tertiary);
+            white-space: nowrap;
+        }
+
+        /* Interactive hint */
+        .demo-hint {
+            text-align: center;
+            margin-top: var(--space-xl);
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+        .demo-hint span {
+            color: var(--neon-pink);
+            animation: hint-pulse 2s ease-in-out infinite;
+        }
+        @keyframes hint-pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Smooth transitions for all interactive elements */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        .demo-module, .coherence-ring, .breathing-circle, .audio-bar {
+            will-change: transform;
         }
     </style>
 </head>
@@ -1116,86 +1312,64 @@
         </div>
     </section>
 
-    <!-- Demo Videos -->
-    <section class="demo-section" id="demos">
+    <!-- Interactive Demo - Experience the App -->
+    <section class="interactive-demo-section" id="demos">
         <div class="container">
             <div class="section-header">
-                <h2>See It In <span class="text-glow-cyan">Action</span></h2>
-                <p>Watch how biometrics, gestures, and breath control music, visuals, and lighting in real-time</p>
+                <h2>Experience It <span class="text-glow-cyan">Live</span></h2>
+                <p>Interactive demos — move your mouse to influence coherence, feel the breathing rhythm</p>
             </div>
 
-            <div class="demo-grid">
-                <div class="demo-card glass" role="button" tabindex="0" aria-label="Watch App Overview Demo">
-                    <div class="demo-thumbnail">
-                        <div class="play-button neon-pink">
-                            <svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+            <div class="interactive-demo-grid">
+                <!-- Coherence Visualization -->
+                <div class="demo-module glass" id="coherence-module">
+                    <h3>COHERENCE</h3>
+                    <div class="coherence-demo">
+                        <div class="coherence-ring" id="coherence-ring">
+                            <div class="coherence-inner">
+                                <div class="coherence-value" id="coherence-value">85</div>
+                                <div class="coherence-label">COHERENCE</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="demo-info">
-                        <h4>App Overview</h4>
-                        <p>Complete walkthrough of the Vaporwave Palace interface</p>
-                    </div>
+                    <p>Move your mouse to change coherence level</p>
                 </div>
 
-                <div class="demo-card glass" role="button" tabindex="0" aria-label="Watch Instruments Demo">
-                    <div class="demo-thumbnail">
-                        <div class="play-button neon-pink">
-                            <svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
+                <!-- Audio Visualizer -->
+                <div class="demo-module glass" id="audio-module">
+                    <h3>BIO-REACTIVE AUDIO</h3>
+                    <div class="audio-visualizer" id="audio-visualizer">
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
                     </div>
-                    <div class="demo-info">
-                        <h4>100+ Instruments</h4>
-                        <p>Synths, orchestral, world instruments — all bio-reactive</p>
-                    </div>
+                    <p>Audio visualization responds to biometric signals</p>
                 </div>
 
-                <div class="demo-card glass" role="button" tabindex="0" aria-label="Watch Visual Generation Demo">
-                    <div class="demo-thumbnail">
-                        <div class="play-button neon-pink">
-                            <svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                <!-- Breathing Guide -->
+                <div class="demo-module glass" id="breathing-module">
+                    <h3>BREATHING GUIDE</h3>
+                    <div class="breathing-demo">
+                        <div class="breathing-circle" id="breathing-circle">
+                            <span class="breathing-text" id="breathing-text">INHALE</span>
                         </div>
+                        <div class="breathing-instruction">Follow the rhythm for coherence</div>
                     </div>
-                    <div class="demo-info">
-                        <h4>Visual Generation</h4>
-                        <p>Sacred geometry, fractals, particles synced to your heart</p>
-                    </div>
+                    <p>Coherent breathing at 6 breaths per minute</p>
                 </div>
+            </div>
 
-                <div class="demo-card glass" role="button" tabindex="0" aria-label="Watch Biofeedback Demo">
-                    <div class="demo-thumbnail">
-                        <div class="play-button neon-pink">
-                            <svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
-                    </div>
-                    <div class="demo-info">
-                        <h4>Biofeedback Control</h4>
-                        <p>HRV, breathing, gestures, facial expressions → parameters</p>
-                    </div>
-                </div>
-
-                <div class="demo-card glass" role="button" tabindex="0" aria-label="Watch DMX Lighting Demo">
-                    <div class="demo-thumbnail">
-                        <div class="play-button neon-pink">
-                            <svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
-                    </div>
-                    <div class="demo-info">
-                        <h4>DMX & Laser Control</h4>
-                        <p>Moving heads, LED fixtures, ILDA lasers with bio-sync</p>
-                    </div>
-                </div>
-
-                <div class="demo-card glass" role="button" tabindex="0" aria-label="Watch DAW Integration Demo">
-                    <div class="demo-thumbnail">
-                        <div class="play-button neon-pink">
-                            <svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
-                    </div>
-                    <div class="demo-info">
-                        <h4>DAW Integration</h4>
-                        <p>VST3, AU, AAX plugins with full bio-reactive modulation</p>
-                    </div>
-                </div>
+            <div class="demo-hint">
+                <span>Interact with the demos above</span> — this is how the app responds to your body
             </div>
         </div>
     </section>
@@ -1649,9 +1823,6 @@
                     <a href="https://youtube.com/@echoelmusic" target="_blank" rel="noopener noreferrer" title="YouTube">
                         <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                     </a>
-                    <a href="https://github.com/vibrationalforce/Echoelmusic" target="_blank" rel="noopener noreferrer" title="GitHub">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                    </a>
                 </div>
             </div>
 
@@ -1685,5 +1856,108 @@
             </div>
         </div>
     </footer>
+
+    <!-- Interactive Demo JavaScript -->
+    <script>
+        // Coherence Demo - responds to mouse position
+        const coherenceModule = document.getElementById('coherence-module');
+        const coherenceRing = document.getElementById('coherence-ring');
+        const coherenceValue = document.getElementById('coherence-value');
+
+        if (coherenceModule && coherenceRing && coherenceValue) {
+            coherenceModule.addEventListener('mousemove', (e) => {
+                const rect = coherenceModule.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = (e.clientY - rect.top) / rect.height;
+
+                // Calculate coherence based on distance from center
+                const centerX = 0.5, centerY = 0.5;
+                const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+                const coherence = Math.round(Math.max(20, Math.min(100, 100 - (distance * 120))));
+
+                coherenceValue.textContent = coherence;
+
+                // Update glow based on coherence
+                const hue = coherence > 70 ? 180 : coherence > 40 ? 300 : 0; // cyan, pink, red
+                const intensity = coherence / 100;
+                coherenceRing.style.boxShadow = `0 0 ${30 + coherence * 0.5}px rgba(255, 20, 147, ${0.3 + intensity * 0.4}), 0 0 ${60 + coherence}px rgba(0, 255, 255, ${intensity * 0.3})`;
+
+                // Update CSS variable for mouse tracking effect
+                coherenceModule.style.setProperty('--mouse-x', `${x * 100}%`);
+                coherenceModule.style.setProperty('--mouse-y', `${y * 100}%`);
+            });
+
+            coherenceModule.addEventListener('mouseleave', () => {
+                coherenceValue.textContent = '85';
+                coherenceRing.style.boxShadow = '';
+            });
+        }
+
+        // Audio Visualizer - randomize heights for more dynamic feel
+        const audioBars = document.querySelectorAll('.audio-bar');
+        if (audioBars.length > 0) {
+            setInterval(() => {
+                audioBars.forEach(bar => {
+                    const randomHeight = 30 + Math.random() * 80;
+                    bar.style.height = `${randomHeight}px`;
+                });
+            }, 150);
+        }
+
+        // Breathing Guide - update text based on animation phase
+        const breathingText = document.getElementById('breathing-text');
+        if (breathingText) {
+            const phases = ['INHALE', 'HOLD', 'EXHALE', 'HOLD'];
+            let phaseIndex = 0;
+
+            setInterval(() => {
+                phaseIndex = (phaseIndex + 1) % phases.length;
+                breathingText.textContent = phases[phaseIndex];
+            }, 2000); // 8s total cycle / 4 phases = 2s per phase
+        }
+
+        // Mouse tracking glow effect for all demo modules
+        document.querySelectorAll('.demo-module').forEach(module => {
+            module.addEventListener('mousemove', (e) => {
+                const rect = module.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                module.style.setProperty('--mouse-x', `${x}%`);
+                module.style.setProperty('--mouse-y', `${y}%`);
+            });
+        });
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href !== '#' && href.startsWith('#')) {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            });
+        });
+
+        // Add smooth reveal animation on scroll
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.demo-module, .feature-card, .step, .use-case').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            revealObserver.observe(el);
+        });
+    </script>
 </body>
 </html>
