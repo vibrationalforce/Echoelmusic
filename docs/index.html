@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- DEPLOYMENT TEST: 2026-01-10 15:00 UTC - If you see this, deployment works! -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,8 +6,8 @@
     <title>Echoelmusic - Your Heart. Your Sound. Your Art.</title>
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Transform your heartbeat into music. Professional bio-reactive audio suite with 100+ instruments, spatial audio, and real-time biofeedback. Create music that responds to YOU.">
-    <meta name="keywords" content="bio-reactive music, heart rate music, HRV audio, biofeedback synthesis, spatial audio, music production, creative tools, wellness music">
+    <meta name="description" content="Transform your heartbeat into music and visuals. Professional bio-reactive audio-visual suite with 100+ instruments, DMX lighting, laser control, and AI composition. You own everything you create.">
+    <meta name="keywords" content="bio-reactive music, heart rate music, HRV audio, DMX lighting, laser show, visual mapping, AI composition, spatial audio, music production">
     <meta name="author" content="Echoelmusic">
     <meta name="robots" content="index, follow">
 
@@ -16,7 +15,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://vibrationalforce.github.io/Echoelmusic/">
     <meta property="og:title" content="Echoelmusic - Your Heart. Your Sound. Your Art.">
-    <meta property="og:description" content="Transform your heartbeat into music. Bio-reactive audio that responds to YOU.">
+    <meta property="og:description" content="Transform your heartbeat into music and visuals. Bio-reactive audio that responds to YOU.">
     <meta property="og:image" content="https://vibrationalforce.github.io/Echoelmusic/og-image.png">
 
     <!-- Language -->
@@ -37,6 +36,8 @@
             --primary: #00C957;
             --primary-dark: #00A86B;
             --accent: #FFD700;
+            --accent-purple: #9B59B6;
+            --accent-blue: #3498DB;
             --bg-dark: #0a1628;
             --bg-section: #0d1f2d;
             --text: #ffffff;
@@ -128,6 +129,7 @@
             background:
                 radial-gradient(ellipse at 50% 0%, rgba(0,201,87,0.15) 0%, transparent 50%),
                 radial-gradient(ellipse at 80% 80%, rgba(255,215,0,0.08) 0%, transparent 40%),
+                radial-gradient(ellipse at 20% 60%, rgba(155,89,182,0.08) 0%, transparent 40%),
                 linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-section) 100%);
             position: relative;
         }
@@ -282,6 +284,8 @@
             margin: 0 auto;
         }
         .highlight-text { color: var(--primary); }
+        .highlight-purple { color: var(--accent-purple); }
+        .highlight-gold { color: var(--accent); }
 
         /* How It Works */
         .how-it-works {
@@ -357,6 +361,10 @@
             border-color: var(--accent);
             background: linear-gradient(135deg, rgba(10,22,40,0.9) 0%, rgba(50,40,0,0.2) 100%);
         }
+        .feature-card.purple {
+            border-color: var(--accent-purple);
+            background: linear-gradient(135deg, rgba(10,22,40,0.9) 0%, rgba(155,89,182,0.15) 100%);
+        }
         .feature-icon {
             font-size: 40px;
             margin-bottom: 16px;
@@ -368,6 +376,7 @@
             margin-bottom: 12px;
         }
         .feature-card.featured h3 { color: var(--accent); }
+        .feature-card.purple h3 { color: var(--accent-purple); }
         .feature-card p {
             color: var(--text-muted);
             font-size: 15px;
@@ -392,52 +401,68 @@
             border-color: rgba(255,215,0,0.2);
             color: var(--accent);
         }
+        .tag.purple {
+            background: rgba(155,89,182,0.1);
+            border-color: rgba(155,89,182,0.2);
+            color: var(--accent-purple);
+        }
 
-        /* Testimonials */
-        .testimonials {
+        /* Visual & Lighting Section */
+        .visual-section {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, rgba(155,89,182,0.1) 50%, var(--bg-section) 100%);
+        }
+
+        /* AI Section */
+        .ai-section {
+            background: linear-gradient(135deg, var(--bg-section) 0%, rgba(255,215,0,0.08) 50%, var(--bg-dark) 100%);
+        }
+        .ownership-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, var(--accent), #FF6B35);
+            color: var(--bg-dark);
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 32px;
+            box-shadow: 0 0 30px rgba(255,215,0,0.3);
+        }
+
+        /* Use Cases Section */
+        .use-cases {
             background: var(--bg-dark);
         }
-        .testimonials-grid {
+        .use-cases-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 24px;
         }
-        .testimonial {
-            background: rgba(0,201,87,0.05);
-            border: 1px solid rgba(0,201,87,0.15);
+        .use-case {
+            text-align: center;
+            padding: 32px 24px;
+            background: rgba(0,201,87,0.03);
+            border: 1px solid rgba(0,201,87,0.1);
             border-radius: 16px;
-            padding: 32px;
+            transition: all 0.3s;
         }
-        .testimonial-text {
+        .use-case:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+        .use-case-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .use-case h3 {
+            font-family: 'Orbitron', monospace;
             font-size: 16px;
-            color: var(--text);
-            font-style: italic;
-            margin-bottom: 20px;
-            line-height: 1.7;
-        }
-        .testimonial-author {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .author-avatar {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-        .author-info h4 {
-            color: var(--text);
-            font-size: 14px;
-            margin-bottom: 2px;
-        }
-        .author-info p {
             color: var(--primary);
-            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .use-case p {
+            color: var(--text-muted);
+            font-size: 14px;
         }
 
         /* Platforms */
@@ -695,8 +720,8 @@
                 </svg>
             </div>
             <h1>Your Heart.<br>Your Sound.<br>Your Art.</h1>
-            <p class="hero-tagline">Transform your heartbeat into music with bio-reactive synthesis</p>
-            <p class="hero-subtitle">Professional Audio Suite for Creators</p>
+            <p class="hero-tagline">Bio-reactive audio, visuals, and lighting - all from your heartbeat</p>
+            <p class="hero-subtitle">Audio • Visual • Lighting • AI</p>
 
             <div class="hero-cta">
                 <a href="#pricing" class="btn-primary">Join Free Beta</a>
@@ -709,16 +734,16 @@
                     <div class="stat-label">Instruments</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-value">&lt;10ms</div>
-                    <div class="stat-label">Latency</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">8</div>
-                    <div class="stat-label">Platforms</div>
-                </div>
-                <div class="stat">
                     <div class="stat-value">50+</div>
-                    <div class="stat-label">DSP Effects</div>
+                    <div class="stat-label">Visual Modes</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">DMX</div>
+                    <div class="stat-label">Lighting</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">AI</div>
+                    <div class="stat-label">Composition</div>
                 </div>
             </div>
         </div>
@@ -729,7 +754,7 @@
         <div class="container">
             <div class="section-header">
                 <h2>Music That <span class="highlight-text">Responds</span> to You</h2>
-                <p>Your body becomes the controller. Your heart sets the tempo. Your breath shapes the sound.</p>
+                <p>Your body becomes the controller. Your heart sets the tempo. Your breath shapes the sound and light.</p>
             </div>
 
             <div class="steps">
@@ -737,37 +762,37 @@
                     <div class="step-number">1</div>
                     <div class="step-icon">⌚</div>
                     <h3>Connect</h3>
-                    <p>Pair your Apple Watch, Garmin, Whoop, or any Bluetooth heart rate monitor. Works with HealthKit and Health Connect.</p>
+                    <p>Pair your Apple Watch, Garmin, Whoop, or any Bluetooth heart rate monitor. Connect DMX lighting and laser systems.</p>
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-icon">💓</div>
                     <h3>Feel</h3>
-                    <p>Your heart rate, HRV, and breathing patterns are analyzed in real-time. High coherence creates harmonic sounds.</p>
+                    <p>Heart rate, HRV, and breathing are analyzed in real-time. High coherence creates harmonic sounds and synchronized visuals.</p>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
                     <div class="step-icon">🎵</div>
                     <h3>Create</h3>
-                    <p>100+ instruments respond to your state. Relaxed? Ambient pads. Energized? Driving beats. You control it naturally.</p>
+                    <p>Audio, visuals, and lighting respond together. Let AI assist your composition - you own everything you create.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Features -->
+    <!-- Audio Features -->
     <section class="features">
         <div class="container">
             <div class="section-header">
-                <h2>Professional <span class="highlight-text">Tools</span></h2>
-                <p>Everything you need for bio-reactive audio production</p>
+                <h2>Professional <span class="highlight-text">Audio</span></h2>
+                <p>Complete audio production suite with bio-reactive control</p>
             </div>
 
             <div class="features-grid">
                 <div class="feature-card featured">
                     <div class="feature-icon">💚</div>
                     <h3>Bio-Reactive Engine</h3>
-                    <p>Real-time mapping from HRV, heart rate, and breathing to any audio parameter. 8 bio sources, 50+ modulation targets.</p>
+                    <p>Real-time mapping from HRV, heart rate, and breathing to any parameter. 8 bio sources, 50+ modulation targets.</p>
                     <div class="feature-tags">
                         <span class="tag gold">Heart Rate → Tempo</span>
                         <span class="tag">HRV → Filter</span>
@@ -808,73 +833,166 @@
                         <span class="tag">Mastering</span>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
 
-                <div class="feature-card">
-                    <div class="feature-icon">🎸</div>
-                    <h3>MIDI 2.0 + MPE</h3>
-                    <p>32-bit resolution, per-note expression. Face tracking → MPE: jaw controls brightness, smile controls timbre.</p>
+    <!-- Visual & Lighting Section -->
+    <section class="visual-section">
+        <div class="container">
+            <div class="section-header">
+                <h2><span class="highlight-purple">Visual</span> & <span class="highlight-text">Lighting</span></h2>
+                <p>Real-time visuals, DMX lighting, and laser control - all synced to your bio-signals</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card purple">
+                    <div class="feature-icon">🎆</div>
+                    <h3>Real-Time Visuals</h3>
+                    <p>50+ visualization modes including sacred geometry, fractals, particle systems, and quantum-inspired patterns. GPU-accelerated.</p>
                     <div class="feature-tags">
-                        <span class="tag">32-bit Velocity</span>
-                        <span class="tag">Per-Note Control</span>
-                        <span class="tag">Face → MIDI</span>
+                        <span class="tag purple">Sacred Geometry</span>
+                        <span class="tag purple">Fractals</span>
+                        <span class="tag purple">Particles</span>
                     </div>
                 </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon">🔌</div>
-                    <h3>Plugin Formats</h3>
-                    <p>Works in your DAW: VST3, AU, AAX, AUv3, CLAP, LV2. Standalone apps for iOS, Android, macOS, Windows, Linux.</p>
+                <div class="feature-card purple">
+                    <div class="feature-icon">💡</div>
+                    <h3>DMX Lighting Control</h3>
+                    <p>Full DMX512 and Art-Net support. Control moving heads, LED fixtures, fog machines. Bio-reactive color and intensity mapping.</p>
                     <div class="feature-tags">
-                        <span class="tag">VST3</span>
-                        <span class="tag">AU</span>
-                        <span class="tag">AAX</span>
-                        <span class="tag">CLAP</span>
+                        <span class="tag purple">DMX512</span>
+                        <span class="tag purple">Art-Net</span>
+                        <span class="tag purple">sACN</span>
+                    </div>
+                </div>
+
+                <div class="feature-card purple">
+                    <div class="feature-icon">✨</div>
+                    <h3>Laser Show Designer</h3>
+                    <p>ILDA laser control with safety zones. 15+ beam effects, scanner patterns, and bio-reactive intensity. Professional show control.</p>
+                    <div class="feature-tags">
+                        <span class="tag purple">ILDA</span>
+                        <span class="tag purple">Safety Zones</span>
+                        <span class="tag purple">Beam Effects</span>
+                    </div>
+                </div>
+
+                <div class="feature-card purple">
+                    <div class="feature-icon">🎬</div>
+                    <h3>Video Mapping</h3>
+                    <p>Project visuals onto any surface. Multi-output support, edge blending, warping. Sync video to heartbeat and music.</p>
+                    <div class="feature-tags">
+                        <span class="tag purple">Projection Mapping</span>
+                        <span class="tag purple">Multi-Output</span>
+                        <span class="tag purple">NDI</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Testimonials -->
-    <section class="testimonials">
+    <!-- AI Section -->
+    <section class="ai-section">
         <div class="container">
             <div class="section-header">
-                <h2>Creators <span class="highlight-text">Love</span> It</h2>
-                <p>Join producers, therapists, and wellness professionals worldwide</p>
+                <div class="ownership-badge">YOU OWN EVERYTHING YOU CREATE</div>
+                <h2><span class="highlight-gold">AI</span> Creative Tools</h2>
+                <p>Intelligent assistants that help you create. Full control, full ownership, no hidden fees.</p>
             </div>
 
-            <div class="testimonials-grid">
-                <div class="testimonial">
-                    <p class="testimonial-text">"I produced an entire EP using bio-reactive features. Each track captures a different emotional state. Nothing else lets you create like this."</p>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">🎹</div>
-                        <div class="author-info">
-                            <h4>Marcus K.</h4>
-                            <p>Electronic Producer, Berlin</p>
-                        </div>
+            <div class="features-grid">
+                <div class="feature-card featured">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI Composition Assistant</h3>
+                    <p>Generate melodies, chord progressions, and arrangements. Train on your style. The AI suggests - you decide and own the result.</p>
+                    <div class="feature-tags">
+                        <span class="tag gold">Melody Generation</span>
+                        <span class="tag gold">Chord Suggestions</span>
+                        <span class="tag gold">Style Learning</span>
                     </div>
                 </div>
 
-                <div class="testimonial">
-                    <p class="testimonial-text">"Echoelmusic helped me achieve coherence scores above 80%. My meditation practice has never been deeper."</p>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">🧘</div>
-                        <div class="author-info">
-                            <h4>Sarah M.</h4>
-                            <p>Yoga Instructor</p>
-                        </div>
+                <div class="feature-card featured">
+                    <div class="feature-icon">🎨</div>
+                    <h3>AI Visual Designer</h3>
+                    <p>Describe your vision, get real-time visuals. Bio-reactive parameter suggestions. Export in any format - it's your art.</p>
+                    <div class="feature-tags">
+                        <span class="tag gold">Text-to-Visual</span>
+                        <span class="tag gold">Style Transfer</span>
+                        <span class="tag gold">Bio-Reactive</span>
                     </div>
                 </div>
 
-                <div class="testimonial">
-                    <p class="testimonial-text">"We integrated Echoelmusic into our anxiety treatment program. Patients engage more actively with biofeedback sessions."</p>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">💊</div>
-                        <div class="author-info">
-                            <h4>Dr. Elena R.</h4>
-                            <p>Clinical Psychologist</p>
-                        </div>
+                <div class="feature-card featured">
+                    <div class="feature-icon">🎼</div>
+                    <h3>Smart Sound Design</h3>
+                    <p>AI-powered synthesis parameter suggestions. Describe sounds in words, get playable presets. Full parameter access - tweak everything.</p>
+                    <div class="feature-tags">
+                        <span class="tag gold">Neural Synthesis</span>
+                        <span class="tag gold">Preset Generation</span>
+                        <span class="tag gold">Sound Matching</span>
                     </div>
+                </div>
+
+                <div class="feature-card featured">
+                    <div class="feature-icon">💡</div>
+                    <h3>Intelligent Light Shows</h3>
+                    <p>AI creates DMX sequences from your music. Beat detection, mood analysis, automatic cue programming. Export to any lighting console.</p>
+                    <div class="feature-tags">
+                        <span class="tag gold">Auto-Programming</span>
+                        <span class="tag gold">Beat Sync</span>
+                        <span class="tag gold">Mood Analysis</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 48px; padding: 32px; background: rgba(255,215,0,0.05); border-radius: 16px; border: 1px solid rgba(255,215,0,0.2);">
+                <h3 style="font-family: 'Orbitron', monospace; color: var(--accent); margin-bottom: 16px;">Your Creations. Your Rights. Your Credits.</h3>
+                <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto;">Everything generated with Echoelmusic AI tools belongs to you. No royalty claims, no usage restrictions, no hidden terms. Use commercially, remix, distribute - it's yours.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section class="use-cases">
+        <div class="container">
+            <div class="section-header">
+                <h2>Built For <span class="highlight-text">Creators</span></h2>
+                <p>From meditation studios to concert stages</p>
+            </div>
+
+            <div class="use-cases-grid">
+                <div class="use-case">
+                    <div class="use-case-icon">🎵</div>
+                    <h3>Music Production</h3>
+                    <p>Create unique bio-reactive tracks that capture emotional states</p>
+                </div>
+                <div class="use-case">
+                    <div class="use-case-icon">🧘</div>
+                    <h3>Wellness & Meditation</h3>
+                    <p>Guided sessions with real-time audio-visual biofeedback</p>
+                </div>
+                <div class="use-case">
+                    <div class="use-case-icon">🎤</div>
+                    <h3>Live Performance</h3>
+                    <p>Sync lighting, visuals, and sound to your presence on stage</p>
+                </div>
+                <div class="use-case">
+                    <div class="use-case-icon">🎬</div>
+                    <h3>Immersive Events</h3>
+                    <p>Multi-sensory experiences for installations and exhibitions</p>
+                </div>
+                <div class="use-case">
+                    <div class="use-case-icon">🔬</div>
+                    <h3>Research</h3>
+                    <p>HRV analysis, coherence studies, biofeedback experiments</p>
+                </div>
+                <div class="use-case">
+                    <div class="use-case-icon">🎓</div>
+                    <h3>Education</h3>
+                    <p>Teach music theory, synthesis, and bio-signal processing</p>
                 </div>
             </div>
         </div>
@@ -899,7 +1017,7 @@
                 <span class="platform-badge">Linux</span>
             </div>
 
-            <p style="color: var(--text-muted); font-size: 14px;">Compatible with Apple Watch, Garmin, Whoop, Oura, Polar, Fitbit, and any Bluetooth heart rate monitor.</p>
+            <p style="color: var(--text-muted); font-size: 14px;">Plugin formats: VST3, AU, AAX, AUv3, CLAP, LV2. Compatible with all major DAWs.</p>
         </div>
     </section>
 
@@ -913,24 +1031,24 @@
 
             <div class="pricing-card">
                 <div class="pricing-badge">LIFETIME LICENSE</div>
-                <h3 class="pricing-title">All Platforms</h3>
+                <h3 class="pricing-title">Complete Suite</h3>
                 <div class="pricing-price"><span>€</span>99</div>
-                <p class="pricing-desc">One-time purchase • All current features</p>
+                <p class="pricing-desc">One-time purchase • All features included</p>
 
                 <ul class="pricing-features">
                     <li>100+ instruments & 50+ DSP effects</li>
-                    <li>All synthesis engines (FM, Wavetable, Granular...)</li>
-                    <li>Bio-reactive engine with full modulation</li>
-                    <li>Spatial audio & 7.1.4 support</li>
+                    <li>50+ visual modes & projection mapping</li>
+                    <li>DMX, Art-Net & laser control</li>
+                    <li>AI composition & sound design tools</li>
                     <li>All plugin formats (VST3, AU, AAX, CLAP)</li>
                     <li>iOS, Android, macOS, Windows, Linux</li>
-                    <li>Free updates within major version</li>
+                    <li>Full ownership of AI-generated content</li>
                 </ul>
 
                 <a href="mailto:michaelterbuyken@gmail.com?subject=Echoelmusic%20Beta" class="btn-primary" style="display: block; text-align: center;">Join Free Beta</a>
 
                 <div class="pricing-note">
-                    <strong>Free Beta Program:</strong> Get full access now. Help shape the future of bio-reactive audio. Email us to join.
+                    <strong>Free Beta Program:</strong> Get full access now. Help shape the future of bio-reactive audio-visual tools.
                 </div>
             </div>
         </div>
@@ -938,8 +1056,8 @@
 
     <!-- CTA -->
     <section class="cta-section">
-        <h2>Ready to Create Music That Feels?</h2>
-        <p>Join thousands of creators using bio-reactive audio technology.</p>
+        <h2>Ready to Create?</h2>
+        <p>Transform your heartbeat into music, visuals, and light.</p>
         <a href="mailto:michaelterbuyken@gmail.com?subject=Echoelmusic%20Beta" class="btn-primary">Join Free Beta</a>
     </section>
 
@@ -948,10 +1066,10 @@
         <div class="footer-content">
             <div class="footer-brand">
                 <h3>Echoelmusic</h3>
-                <p>Professional bio-reactive audio suite. Transform your heartbeat into music.</p>
+                <p>Professional bio-reactive audio-visual suite. Your heart, your sound, your art.</p>
                 <div class="footer-social">
-                    <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer" title="Instagram">📷</a>
-                    <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer" title="TikTok">🎵</a>
+                    <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer" title="Instagram">IG</a>
+                    <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer" title="TikTok">TT</a>
                 </div>
             </div>
 
@@ -979,7 +1097,7 @@
         <div class="footer-bottom">
             <p>© 2026 Echoelmusic. All rights reserved.</p>
             <div class="footer-disclaimer">
-                <strong>Disclaimer:</strong> Echoelmusic is a professional audio production tool, not a medical device. Biofeedback features are for creative and wellness purposes only. No health claims are made. Consult healthcare professionals for medical decisions.
+                <strong>Disclaimer:</strong> Echoelmusic is a professional audio-visual production tool, not a medical device. Biofeedback features are for creative and wellness purposes only. AI-generated content ownership transfers fully to the user upon creation.
             </div>
         </div>
     </footer>
