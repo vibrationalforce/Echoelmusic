@@ -178,6 +178,21 @@
             position: relative;
             z-index: 1;
         }
+
+        /* Accessibility: Focus indicators */
+        a:focus-visible, button:focus-visible {
+            outline: 2px solid #00ffff;
+            outline-offset: 2px;
+        }
+
+        /* Accessibility: Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -248,9 +263,8 @@
 
         <h2>Follow Us</h2>
         <div class="resources">
-            <a href="https://instagram.com/echoelmusic" class="resource-link" target="_blank">Instagram</a>
-            <a href="https://tiktok.com/@echoelmusic" class="resource-link" target="_blank">TikTok</a>
-            <a href="https://github.com/vibrationalforce/Echoelmusic" class="resource-link" target="_blank">GitHub</a>
+            <a href="https://instagram.com/echoelmusic" class="resource-link" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://tiktok.com/@echoelmusic" class="resource-link" target="_blank" rel="noopener noreferrer">TikTok</a>
         </div>
 
         <footer>

@@ -520,6 +520,21 @@
             .price-main { font-size: 42px; }
             .circadian-phase { min-width: 70px; }
         }
+
+        /* Accessibility: Focus indicators */
+        a:focus-visible, button:focus-visible {
+            outline: 2px solid var(--coherence-green);
+            outline-offset: 2px;
+        }
+
+        /* Accessibility: Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1497,9 +1512,8 @@
 
         <!-- Social Media -->
         <div class="links" style="margin-top: 20px;">
-            <a href="https://instagram.com/echoelmusic" target="_blank" style="color: var(--coherence-green);">Instagram</a>
-            <a href="https://tiktok.com/@echoelmusic" target="_blank" style="color: var(--coherence-green);">TikTok</a>
-            <a href="https://github.com/vibrationalforce/Echoelmusic" target="_blank" style="color: var(--coherence-green);">GitHub</a>
+            <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer" style="color: var(--coherence-green);">Instagram</a>
+            <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer" style="color: var(--coherence-green);">TikTok</a>
         </div>
 
         <!-- Footer -->
