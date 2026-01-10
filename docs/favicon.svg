@@ -1,35 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <!-- Bio-Coherence Green Gradient (Heart-Brain Coherence Theme) -->
-    <linearGradient id="coherence-green" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#00C957"/>
-      <stop offset="50%" style="stop-color:#00A86B"/>
-      <stop offset="100%" style="stop-color:#50C878"/>
+    <!-- Vaporwave Palace Gradient -->
+    <linearGradient id="vaporwave-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF1493"/>
+      <stop offset="50%" style="stop-color:#9933FF"/>
+      <stop offset="100%" style="stop-color:#00FFFF"/>
     </linearGradient>
-    <!-- Golden Light Gradient -->
-    <linearGradient id="golden-light" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#FFD700"/>
-      <stop offset="50%" style="stop-color:#00C957"/>
-      <stop offset="100%" style="stop-color:#FFD700"/>
-    </linearGradient>
-    <!-- Heart Coherence Gradient -->
-    <radialGradient id="heart-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#7CFC00"/>
-      <stop offset="70%" style="stop-color:#00C957"/>
-      <stop offset="100%" style="stop-color:#006400"/>
-    </radialGradient>
-    <!-- Coherence Glow Filter -->
-    <filter id="coherence-glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="3" result="glow"/>
+    <!-- Neon Glow Filter -->
+    <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="glow"/>
       <feMerge>
         <feMergeNode in="glow"/>
         <feMergeNode in="glow"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-    <!-- Soft Inner Glow -->
+    <!-- Soft Glow -->
     <filter id="soft-glow">
-      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feGaussianBlur stdDeviation="1" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
@@ -37,39 +25,43 @@
     </filter>
   </defs>
 
-  <!-- Background: Bio-coherence green -->
-  <rect width="100" height="100" rx="22" fill="url(#coherence-green)"/>
+  <!-- Background with rounded corners -->
+  <rect width="100" height="100" rx="22" fill="url(#vaporwave-grad)"/>
 
-  <!-- Sacred geometry ring (golden ratio) -->
-  <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,215,0,0.3)" stroke-width="1.5"/>
-  <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,215,0,0.2)" stroke-width="1"/>
+  <!-- Grid lines (subtle) -->
+  <g opacity="0.15" stroke="#00FFFF" stroke-width="0.5">
+    <line x1="20" y1="0" x2="20" y2="100"/>
+    <line x1="40" y1="0" x2="40" y2="100"/>
+    <line x1="60" y1="0" x2="60" y2="100"/>
+    <line x1="80" y1="0" x2="80" y2="100"/>
+    <line x1="0" y1="20" x2="100" y2="20"/>
+    <line x1="0" y1="40" x2="100" y2="40"/>
+    <line x1="0" y1="60" x2="100" y2="60"/>
+    <line x1="0" y1="80" x2="100" y2="80"/>
+  </g>
 
-  <!-- Heart shape (heart coherence symbol) -->
-  <path d="M50 75
-           C35 60 20 50 20 38
-           C20 28 28 20 40 20
-           C46 20 50 24 50 24
-           C50 24 54 20 60 20
-           C72 20 80 28 80 38
-           C80 50 65 60 50 75Z"
-        fill="url(#heart-glow)"
-        filter="url(#coherence-glow)"
-        opacity="0.9"/>
+  <!-- Heart shape -->
+  <path d="M50 78
+           C33 60 15 48 15 33
+           C15 21 24 13 37 13
+           C45 13 50 18 50 18
+           C50 18 55 13 63 13
+           C76 13 85 21 85 33
+           C85 48 67 60 50 78Z"
+        fill="rgba(255,255,255,0.95)"
+        filter="url(#neon-glow)"/>
 
-  <!-- HRV Coherence Wave (inside heart) -->
-  <path d="M30 45 L38 45 L42 35 L46 55 L50 30 L54 55 L58 35 L62 45 L70 45"
+  <!-- HRV Waveform -->
+  <path d="M25 42 L35 42 L40 30 L45 54 L50 22 L55 54 L60 30 L65 42 L75 42"
         fill="none"
-        stroke="url(#golden-light)"
-        stroke-width="3"
+        stroke="#FF1493"
+        stroke-width="4"
         stroke-linecap="round"
         stroke-linejoin="round"
         filter="url(#soft-glow)"/>
 
-  <!-- Coherence indicator dots -->
-  <circle cx="50" cy="18" r="3" fill="#FFD700" opacity="0.8"/>
-  <circle cx="30" cy="85" r="2" fill="#FFD700" opacity="0.6"/>
-  <circle cx="70" cy="85" r="2" fill="#FFD700" opacity="0.6"/>
-
-  <!-- Inner light pulse -->
-  <circle cx="50" cy="45" r="8" fill="rgba(255,255,255,0.15)"/>
+  <!-- Neon accent dots -->
+  <circle cx="50" cy="12" r="3" fill="#00FFFF" opacity="0.9"/>
+  <circle cx="12" cy="50" r="2" fill="#FF1493" opacity="0.7"/>
+  <circle cx="88" cy="50" r="2" fill="#00FFFF" opacity="0.7"/>
 </svg>

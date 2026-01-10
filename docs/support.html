@@ -3,386 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support - Echoelmusic | Get Help with Bio-Reactive Audio</title>
-    <meta name="description" content="Get help with Echoelmusic bio-reactive audio synthesis. Contact support, find answers to common questions, and access resources.">
-    <meta name="keywords" content="Echoelmusic support, bio-reactive music help, HRV app support, contact Echoelmusic, customer service">
-    <meta name="author" content="Echoelmusic">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://vibrationalforce.github.io/Echoelmusic/support.html">
-
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://vibrationalforce.github.io/Echoelmusic/support.html">
-    <meta property="og:title" content="Support - Echoelmusic">
-    <meta property="og:description" content="Get help with Echoelmusic bio-reactive audio synthesis.">
-    <meta property="og:site_name" content="Echoelmusic">
-
-    <meta name="theme-color" content="#00C957">
+    <title>Support - Echoelmusic | Help Center</title>
+    <meta name="description" content="Get help with Echoelmusic. Contact support, access resources, and find answers to common issues.">
+    <meta name="theme-color" content="#FF1493">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            /* Bio-Coherence Green Palette (consistent with main site) */
-            --coherence-green: #00C957;
-            --coherence-dark: #00A86B;
-            --coherence-light: #7CFC00;
-            --golden: #FFD700;
-            --deep-space: #0a1628;
-            --space-blue: #0d2137;
-            --white: #ffffff;
-            --gray: #94a3b8;
-        }
+        :root { --neon-pink: #FF1493; --neon-cyan: #00FFFF; --neon-purple: #9933FF; --deep-black: #050510; --midnight-blue: #0D0D26; --text-primary: rgba(255,255,255,1); --text-secondary: rgba(255,255,255,0.7); --text-tertiary: rgba(255,255,255,0.4); --glass-border: rgba(255,255,255,0.1); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Rajdhani', sans-serif;
-            background: linear-gradient(180deg, var(--deep-space) 0%, var(--space-blue) 30%, #0a2a1a 60%, var(--deep-space) 100%);
-            min-height: 100vh;
-            color: var(--white);
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background:
-                radial-gradient(ellipse at 30% 20%, rgba(0,201,87,0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 80%, rgba(255,215,0,0.05) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 0;
-        }
-        .header {
-            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
-            padding: 100px 20px 50px;
-            text-align: center;
-            border-bottom: 1px solid rgba(0,201,87,0.3);
-            position: relative;
-            z-index: 1;
-        }
-        .header h1 {
-            font-family: 'Orbitron', monospace;
-            font-size: 42px;
-            background: linear-gradient(90deg, var(--coherence-green), var(--golden), var(--coherence-green));
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 10px;
-        }
-        .header p {
-            color: rgba(255,255,255,0.7);
-            font-size: 16px;
-            letter-spacing: 2px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            position: relative;
-            z-index: 1;
-        }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 30px;
-            color: var(--coherence-green);
-            text-decoration: none;
-            font-family: 'Orbitron', monospace;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        .back-link:hover {
-            text-shadow: 0 0 15px rgba(0,201,87,0.5);
-        }
-        .contact-card {
-            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
-            border: 1px solid rgba(0,201,87,0.4);
-            border-radius: 20px;
-            padding: 40px;
-            margin: 30px 0;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .contact-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--coherence-green), var(--golden));
-        }
-        .contact-card h3 {
-            font-family: 'Orbitron', monospace;
-            font-size: 22px;
-            color: var(--white);
-            margin-bottom: 20px;
-        }
-        .contact-card .email {
-            font-family: 'Orbitron', monospace;
-            font-size: 24px;
-            color: var(--coherence-green);
-            text-decoration: none;
-            text-shadow: 0 0 20px rgba(0,201,87,0.5);
-            transition: all 0.3s;
-        }
-        .contact-card .email:hover {
-            color: var(--golden);
-            text-shadow: 0 0 30px rgba(255,215,0,0.5);
-        }
-        .contact-card .response {
-            margin-top: 15px;
-            color: rgba(255,255,255,0.6);
-            font-size: 14px;
-        }
-        h2 {
-            font-family: 'Orbitron', monospace;
-            font-size: 24px;
-            color: var(--coherence-green);
-            margin: 50px 0 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(0,201,87,0.3);
-            text-shadow: 0 0 15px rgba(0,201,87,0.3);
-        }
-        .faq-item {
-            background: rgba(10,22,40,0.6);
-            border: 1px solid rgba(0,201,87,0.2);
-            border-radius: 16px;
-            padding: 25px;
-            margin: 20px 0;
-            transition: all 0.3s;
-        }
-        .faq-item:hover {
-            border-color: rgba(0,201,87,0.5);
-            box-shadow: 0 10px 40px rgba(0,201,87,0.1);
-        }
-        .faq-item h4 {
-            font-family: 'Orbitron', monospace;
-            font-size: 16px;
-            color: var(--coherence-green);
-            margin-bottom: 12px;
-        }
-        .faq-item p {
-            color: rgba(255,255,255,0.75);
-            font-size: 15px;
-            line-height: 1.7;
-        }
-        .faq-item a {
-            color: var(--coherence-green);
-            text-decoration: none;
-        }
-        .faq-item a:hover {
-            text-shadow: 0 0 10px rgba(0,201,87,0.5);
-        }
-        .resources {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 30px 0;
-        }
-        .resource-link {
-            display: block;
-            background: rgba(0,201,87,0.05);
-            border: 1px solid rgba(0,201,87,0.3);
-            border-radius: 12px;
-            padding: 20px;
-            text-decoration: none;
-            color: var(--coherence-green);
-            font-family: 'Orbitron', monospace;
-            font-size: 14px;
-            text-align: center;
-            transition: all 0.3s;
-        }
-        .resource-link:hover {
-            background: rgba(0,201,87,0.1);
-            box-shadow: 0 0 30px rgba(0,201,87,0.2);
-            transform: translateY(-3px);
-        }
-        footer {
-            text-align: center;
-            padding: 50px 20px;
-            border-top: 1px solid rgba(0,201,87,0.2);
-            color: rgba(255,255,255,0.5);
-            font-size: 13px;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Navigation Bar */
-        nav {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            background: rgba(10, 22, 40, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            padding: 14px 20px;
-            border-bottom: 1px solid rgba(0,201,87,0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .nav-logo {
-            font-family: 'Orbitron', monospace;
-            font-size: 20px;
-            font-weight: 700;
-            background: linear-gradient(90deg, var(--coherence-green), var(--golden));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-decoration: none;
-        }
-        .nav-links {
-            display: flex;
-            gap: 24px;
-            list-style: none;
-            align-items: center;
-        }
-        .nav-links a {
-            color: rgba(255,255,255,0.8);
-            text-decoration: none;
-            font-size: 13px;
-            font-family: 'Orbitron', monospace;
-            transition: all 0.3s;
-        }
-        .nav-links a:hover, .nav-links a.active {
-            color: var(--coherence-green);
-            text-shadow: 0 0 10px rgba(0,201,87,0.5);
-        }
-        .nav-social {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        .nav-social a {
-            color: rgba(0,201,87,0.6);
-            text-decoration: none;
-            font-size: 12px;
-            padding: 5px 10px;
-            border: 1px solid rgba(0,201,87,0.3);
-            border-radius: 20px;
-            transition: all 0.3s;
-        }
-        .nav-social a:hover {
-            color: var(--coherence-green);
-            border-color: var(--coherence-green);
-            box-shadow: 0 0 15px rgba(0,201,87,0.3);
-        }
-        @media (max-width: 768px) {
-            .nav-links { display: none; }
-            nav { padding: 12px 15px; }
-        }
-
-        /* Accessibility: Focus indicators */
-        a:focus-visible, button:focus-visible {
-            outline: 2px solid var(--coherence-green);
-            outline-offset: 2px;
-        }
-
-        /* Accessibility: Reduced motion */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--deep-black); color: var(--text-primary); line-height: 1.6; }
+        .grid-bg { position: fixed; inset: 0; background-image: linear-gradient(rgba(255,20,147,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; z-index: 0; }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 16px 24px; background: rgba(5,5,16,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,20,147,0.1); }
+        .nav-inner { max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+        .nav-logo svg { width: 36px; height: 36px; }
+        .nav-logo span { font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 700; background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-back { color: var(--neon-cyan); text-decoration: none; font-size: 14px; }
+        main { position: relative; z-index: 1; padding: 120px 24px 80px; max-width: 1000px; margin: 0 auto; }
+        h1 { font-family: 'Orbitron', monospace; font-size: clamp(32px, 5vw, 48px); font-weight: 800; margin-bottom: 16px; text-align: center; background: linear-gradient(90deg, var(--text-primary), var(--neon-pink), var(--neon-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: var(--text-secondary); font-size: 18px; margin-bottom: 48px; text-align: center; }
+        .support-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 48px; }
+        .support-card { background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid var(--glass-border); border-radius: 20px; padding: 32px; text-align: center; transition: all 0.3s; }
+        .support-card:hover { border-color: var(--neon-pink); transform: translateY(-4px); }
+        .support-card .icon { width: 64px; height: 64px; margin: 0 auto 20px; background: linear-gradient(135deg, rgba(255,20,147,0.2), rgba(0,255,255,0.2)); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+        .support-card h3 { font-family: 'Orbitron', monospace; font-size: 16px; color: var(--neon-cyan); margin-bottom: 12px; }
+        .support-card p { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; }
+        .support-card a { display: inline-block; background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple)); color: white; padding: 10px 24px; border-radius: 25px; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.3s; }
+        .support-card a:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(255,20,147,0.4); }
+        h2 { font-family: 'Orbitron', monospace; font-size: 24px; color: var(--text-primary); margin-bottom: 24px; text-align: center; }
+        .quick-links { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-bottom: 48px; }
+        .quick-links a { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-secondary); padding: 12px 24px; border-radius: 30px; text-decoration: none; font-size: 14px; transition: all 0.3s; }
+        .quick-links a:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+        .troubleshoot { background: linear-gradient(135deg, rgba(255,20,147,0.05), rgba(0,255,255,0.03)); border: 1px solid var(--glass-border); border-radius: 20px; padding: 32px; }
+        .troubleshoot h3 { font-family: 'Orbitron', monospace; font-size: 18px; color: var(--neon-pink); margin-bottom: 20px; }
+        .troubleshoot-item { padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .troubleshoot-item:last-child { border: none; }
+        .troubleshoot-item strong { color: var(--text-primary); display: block; margin-bottom: 8px; }
+        .troubleshoot-item p { color: var(--text-secondary); font-size: 14px; margin: 0; }
+        footer { background: var(--deep-black); padding: 40px 24px; border-top: 1px solid rgba(255,20,147,0.1); text-align: center; position: relative; z-index: 1; }
+        footer p { color: var(--text-tertiary); font-size: 13px; }
+        footer a { color: var(--neon-cyan); text-decoration: none; }
     </style>
 </head>
 <body>
-    <!-- Skip to content link for accessibility -->
-    <a href="#main-content" class="skip-link" style="position: absolute; top: -40px; left: 0; background: var(--coherence-green); color: var(--deep-space); padding: 8px 16px; z-index: 1001; font-family: 'Orbitron', monospace; text-decoration: none; transition: top 0.3s;" onfocus="this.style.top='0'" onblur="this.style.top='-40px'">Skip to content</a>
+    <div class="grid-bg"></div>
+    <nav><div class="nav-inner"><a href="index.html" class="nav-logo"><svg viewBox="0 0 100 100" fill="none"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF1493"/><stop offset="50%" stop-color="#9933FF"/><stop offset="100%" stop-color="#00FFFF"/></linearGradient></defs><path d="M50 85 C30 65 10 50 10 32 C10 18 22 8 36 8 C44 8 50 14 50 14 C50 14 56 8 64 8 C78 8 90 18 90 32 C90 50 70 65 50 85Z" fill="url(#g)"/><path d="M20 42 L32 42 L38 28 L44 56 L50 20 L56 56 L62 28 L68 42 L80 42" stroke="white" stroke-width="4" stroke-linecap="round"/></svg><span>Echoelmusic</span></a><a href="index.html" class="nav-back">← Back</a></div></nav>
+    <main>
+        <h1>Support Center</h1>
+        <p class="subtitle">We're here to help you create amazing bio-reactive experiences</p>
 
-    <!-- Navigation Bar -->
-    <nav>
-        <a href="index.html" class="nav-logo">Echoelmusic</a>
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="use-cases.html">Use Cases</a></li>
-            <li><a href="faq.html">FAQ</a></li>
-            <li><a href="support.html" class="active">Support</a></li>
-        </ul>
-        <div class="nav-social">
-            <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer">Instagram</a>
-            <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer">TikTok</a>
-        </div>
-    </nav>
-
-    <div class="header">
-        <h1>Support</h1>
-        <p>We're Here To Help</p>
-    </div>
-
-    <div class="container" id="main-content">
-
-        <div class="contact-card">
-            <h3>Contact Support</h3>
-            <a href="mailto:michaelterbuyken@gmail.com" class="email">michaelterbuyken@gmail.com</a>
-            <p class="response">Response time: 24-48 hours</p>
-        </div>
-
-        <h2>Frequently Asked Questions</h2>
-
-        <div class="faq-item">
-            <h4>What devices are supported?</h4>
-            <p>Echoelmusic runs on iOS 15+, macOS 12+, watchOS 8+, tvOS 15+, visionOS 1+, Android 8+, Windows 10+, and Linux. Apple Watch is recommended for full biometric features, but the app works great with Garmin, Whoop, Oura, and other wearables too.</p>
+        <div class="support-grid">
+            <div class="support-card">
+                <div class="icon">📧</div>
+                <h3>Email Support</h3>
+                <p>Get help from our team. We typically respond within 24 hours.</p>
+                <a href="mailto:michaelterbuyken@gmail.com?subject=Echoelmusic%20Support">Send Email</a>
+            </div>
+            <div class="support-card">
+                <div class="icon">❓</div>
+                <h3>FAQ</h3>
+                <p>Find answers to frequently asked questions about features, pricing, and more.</p>
+                <a href="faq.html">View FAQ</a>
+            </div>
+            <div class="support-card">
+                <div class="icon">🐛</div>
+                <h3>Report a Bug</h3>
+                <p>Found an issue? Help us improve by reporting bugs and problems.</p>
+                <a href="mailto:michaelterbuyken@gmail.com?subject=Echoelmusic%20Bug%20Report">Report Bug</a>
+            </div>
+            <div class="support-card">
+                <div class="icon">💡</div>
+                <h3>Feature Request</h3>
+                <p>Have an idea? We love hearing suggestions from our community.</p>
+                <a href="mailto:michaelterbuyken@gmail.com?subject=Echoelmusic%20Feature%20Request">Suggest Feature</a>
+            </div>
         </div>
 
-        <div class="faq-item">
-            <h4>Is Echoelmusic a medical device?</h4>
-            <p>No. Echoelmusic is NOT a medical device. It's designed for creative expression and general wellness only. It does not diagnose, treat, cure, or prevent any disease. Always consult healthcare professionals for medical advice.</p>
+        <h2>Quick Links</h2>
+        <div class="quick-links">
+            <a href="faq.html#general">Getting Started</a>
+            <a href="faq.html#features">Platform Compatibility</a>
+            <a href="faq.html#ai">AI Tools & Ownership</a>
+            <a href="health.html">Health & Safety</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
         </div>
 
-        <div class="faq-item">
-            <h4>What's the pricing model?</h4>
-            <p>99 lifetime license (one-time purchase) gives you access on all platforms. Major version upgrades (2.0, 3.0, etc.) are 49. The free TestFlight/beta program lets you try everything before buying.</p>
+        <div class="troubleshoot">
+            <h3>Common Issues</h3>
+            <div class="troubleshoot-item">
+                <strong>Wearable not connecting?</strong>
+                <p>Ensure Bluetooth is enabled and your device is nearby. For Apple Watch, grant HealthKit permissions in Settings > Privacy > Health. For other devices, check the companion app is running.</p>
+            </div>
+            <div class="troubleshoot-item">
+                <strong>Audio latency issues?</strong>
+                <p>Reduce buffer size in audio settings. On macOS/Windows, use ASIO/Core Audio drivers. Close other audio applications. For best results, use an external audio interface.</p>
+            </div>
+            <div class="troubleshoot-item">
+                <strong>DMX not working?</strong>
+                <p>Verify network settings for Art-Net (port 6454). Ensure fixtures are in the correct universe/channel range. Check that USB-DMX interface drivers are installed.</p>
+            </div>
+            <div class="troubleshoot-item">
+                <strong>Plugin not showing in DAW?</strong>
+                <p>Rescan plugins in your DAW. Verify the plugin format matches (VST3 for Windows/Mac, AU for Mac only). Check the plugin folder path in DAW preferences.</p>
+            </div>
         </div>
-
-        <div class="faq-item">
-            <h4>Is my biometric data private?</h4>
-            <p>Yes. All biometric data is processed locally on your device. Nothing is sent to our servers unless you explicitly enable cloud sync. We never sell your data. See our <a href="privacy.html">Privacy Policy</a> for details.</p>
-        </div>
-
-        <div class="faq-item">
-            <h4>Can I use it without a wearable?</h4>
-            <p>Yes! Demo Mode simulates realistic biometric data so you can experience all features. You can also manually adjust parameters or use camera-based heart rate detection on supported devices.</p>
-        </div>
-
-        <div class="faq-item">
-            <h4>What is HRV coherence?</h4>
-            <p>Heart Rate Variability (HRV) coherence measures the regularity of your heartbeat intervals. In Echoelmusic, higher coherence creates more harmonious sounds and visuals. This is a creative tool, not medical measurement.</p>
-        </div>
-
-        <div class="faq-item">
-            <h4>How do I report a bug?</h4>
-            <p>Email <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a> with your device model, OS version, and steps to reproduce the issue. Screenshots or screen recordings help us fix things faster.</p>
-        </div>
-
-        <div class="faq-item">
-            <h4>Refund policy?</h4>
-            <p>Purchases through App Store or Play Store follow their respective refund policies. Contact Apple or Google directly for refund requests. We recommend trying the free beta first.</p>
-        </div>
-
-        <h2>Resources</h2>
-        <div class="resources">
-            <a href="privacy.html" class="resource-link">Privacy Policy</a>
-            <a href="terms.html" class="resource-link">Terms of Service</a>
-            <a href="health.html" class="resource-link">Health Disclaimer</a>
-            <a href="faq.html" class="resource-link">FAQ</a>
-            <a href="use-cases.html" class="resource-link">Use Cases</a>
-        </div>
-
-        <h2>Follow Us</h2>
-        <div class="resources">
-            <a href="https://instagram.com/echoelmusic" class="resource-link" target="_blank" rel="noopener noreferrer">Instagram</a>
-            <a href="https://tiktok.com/@echoelmusic" class="resource-link" target="_blank" rel="noopener noreferrer">TikTok</a>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer style="padding: 40px 20px; text-align: center; border-top: 1px solid rgba(0,201,87,0.2); background: rgba(10,22,40,0.5);">
-        <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 12px;">&copy; 2024-2026 Echoelmusic. Bio-Reactive Audio-Visual Experience.</p>
-        <p style="color: rgba(255,255,255,0.4); font-size: 13px;">
-            <a href="privacy.html" style="color: var(--coherence-green); text-decoration: none;">Privacy</a> ·
-            <a href="terms.html" style="color: var(--coherence-green); text-decoration: none;">Terms</a> ·
-            <a href="faq.html" style="color: var(--coherence-green); text-decoration: none;">FAQ</a>
-        </p>
-    </footer>
+    </main>
+    <footer><p>© 2026 Echoelmusic. <a href="privacy.html">Privacy</a> | <a href="terms.html">Terms</a> | <a href="health.html">Health</a></p></footer>
 </body>
 </html>
