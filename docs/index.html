@@ -241,6 +241,192 @@
         }
         @media (max-width: 768px) {
             .nav-links { display: none; }
+            .nav-cta { display: none; }
+        }
+
+        /* ========== SCROLL PROGRESS BAR ========== */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple), var(--neon-cyan));
+            z-index: 1001;
+            transition: width 0.1s ease-out;
+            box-shadow: 0 0 10px var(--neon-pink), 0 0 20px rgba(255,20,147,0.5);
+        }
+
+        /* ========== HAMBURGER MENU ========== */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            z-index: 1002;
+            padding: 4px;
+        }
+        .hamburger span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--neon-pink);
+            border-radius: 2px;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 0 8px var(--neon-pink);
+        }
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(5,5,16,0.98);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: var(--space-xl);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .mobile-menu.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .mobile-menu a {
+            font-family: 'Orbitron', monospace;
+            font-size: 24px;
+            color: var(--text-primary);
+            text-decoration: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease-out;
+        }
+        .mobile-menu.active a {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .mobile-menu.active a:nth-child(1) { transition-delay: 0.1s; }
+        .mobile-menu.active a:nth-child(2) { transition-delay: 0.15s; }
+        .mobile-menu.active a:nth-child(3) { transition-delay: 0.2s; }
+        .mobile-menu.active a:nth-child(4) { transition-delay: 0.25s; }
+        .mobile-menu.active a:nth-child(5) { transition-delay: 0.3s; }
+        .mobile-menu a:hover {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px var(--neon-cyan);
+        }
+        .mobile-menu .mobile-cta {
+            margin-top: var(--space-lg);
+            background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-size: 16px;
+            box-shadow: 0 0 30px rgba(255,20,147,0.4);
+        }
+
+        @media (max-width: 768px) {
+            .hamburger { display: flex; }
+        }
+
+        /* ========== PARALLAX SECTIONS ========== */
+        .parallax-section {
+            position: relative;
+            overflow: hidden;
+        }
+        .parallax-bg {
+            position: absolute;
+            top: -50%;
+            left: 0;
+            right: 0;
+            bottom: -50%;
+            background-size: cover;
+            background-position: center;
+            will-change: transform;
+            pointer-events: none;
+        }
+
+        /* ========== STICKY FEATURE TABS ========== */
+        .features-tabs.sticky {
+            position: sticky;
+            top: 70px;
+            z-index: 100;
+            background: rgba(5,5,16,0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            margin: 0 calc(-1 * var(--space-lg));
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid rgba(255,20,147,0.1);
+        }
+
+        /* ========== STAGGERED ANIMATIONS ========== */
+        .stagger-item {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .stagger-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .stagger-item:nth-child(1) { transition-delay: 0s; }
+        .stagger-item:nth-child(2) { transition-delay: 0.1s; }
+        .stagger-item:nth-child(3) { transition-delay: 0.2s; }
+        .stagger-item:nth-child(4) { transition-delay: 0.3s; }
+        .stagger-item:nth-child(5) { transition-delay: 0.4s; }
+        .stagger-item:nth-child(6) { transition-delay: 0.5s; }
+
+        /* ========== SMOOTH HOVER EFFECTS ========== */
+        .hover-lift {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(255,20,147,0.2), 0 0 60px rgba(0,255,255,0.1);
+        }
+
+        /* ========== GLOW CURSOR EFFECT ========== */
+        .glow-cursor {
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,20,147,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            transform: translate(-50%, -50%);
+        }
+        body:hover .glow-cursor {
+            opacity: 1;
+        }
+
+        /* ========== SECTION DIVIDERS ========== */
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-pink), var(--neon-cyan), transparent);
+            margin: 0;
+            opacity: 0.3;
         }
 
         /* ========== HERO SECTION ========== */
@@ -1331,6 +1517,21 @@
     <a href="#main-content" class="skip-link">Skip to content</a>
     <div class="grid-bg" aria-hidden="true"></div>
 
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <!-- Glow Cursor Effect -->
+    <div class="glow-cursor" id="glowCursor"></div>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#features">Features</a>
+        <a href="#demos">Demos</a>
+        <a href="#use-cases">Use Cases</a>
+        <a href="faq.html">FAQ</a>
+        <a href="#pricing" class="mobile-cta">Get Beta Access</a>
+    </div>
+
     <!-- Navigation -->
     <nav>
         <div class="nav-inner">
@@ -1360,6 +1561,12 @@
                     <a href="de/">DE</a>
                 </div>
                 <a href="#pricing" class="nav-cta">Get Beta Access</a>
+                <!-- Hamburger Menu Button -->
+                <div class="hamburger" id="hamburger" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
             </div>
         </div>
     </nav>
@@ -2198,6 +2405,80 @@
             el.style.transform = 'translateY(30px)';
             el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
             revealObserver.observe(el);
+        });
+
+        // ========== SCROLL PROGRESS BAR ==========
+        const scrollProgress = document.getElementById('scrollProgress');
+        if (scrollProgress) {
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const scrollPercent = (scrollTop / docHeight) * 100;
+                scrollProgress.style.width = `${scrollPercent}%`;
+            }, { passive: true });
+        }
+
+        // ========== HAMBURGER MENU ==========
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (hamburger && mobileMenu) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+
+            // Close menu when clicking a link
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    hamburger.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            });
+        }
+
+        // ========== GLOW CURSOR EFFECT ==========
+        const glowCursor = document.getElementById('glowCursor');
+        if (glowCursor && window.innerWidth > 768) {
+            document.addEventListener('mousemove', (e) => {
+                requestAnimationFrame(() => {
+                    glowCursor.style.left = `${e.clientX}px`;
+                    glowCursor.style.top = `${e.clientY}px`;
+                });
+            }, { passive: true });
+        }
+
+        // ========== STICKY FEATURE TABS ==========
+        const featuresTabs = document.querySelector('.features-tabs');
+        const featuresSection = document.querySelector('.features-section');
+        if (featuresTabs && featuresSection) {
+            const tabsTop = featuresTabs.getBoundingClientRect().top + window.scrollY;
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > tabsTop - 70) {
+                    featuresTabs.classList.add('sticky');
+                } else {
+                    featuresTabs.classList.remove('sticky');
+                }
+            }, { passive: true });
+        }
+
+        // ========== PERFORMANCE: REDUCE MOTION ==========
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        if (prefersReducedMotion.matches) {
+            document.documentElement.style.setProperty('--animation-duration', '0.01ms');
+            document.querySelectorAll('.particle, .ekg-line, .breathing-circle').forEach(el => {
+                el.style.animation = 'none';
+            });
+        }
+
+        // ========== KEYBOARD NAVIGATION ==========
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mobileMenu && mobileMenu.classList.contains('active')) {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
         });
     </script>
 </body>

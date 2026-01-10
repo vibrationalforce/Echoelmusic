@@ -111,7 +111,38 @@
         .lang-switch a.active, .lang-switch a:hover { color: var(--neon-pink); background: rgba(255,20,147,0.1); }
         .nav-cta { background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple)); color: white; padding: 10px 24px; border-radius: 25px; font-weight: 600; font-size: 13px; text-decoration: none; transition: all 0.3s; }
         .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(255,20,147,0.5); }
-        @media (max-width: 768px) { .nav-links { display: none; } }
+        @media (max-width: 768px) { .nav-links { display: none; } .nav-cta { display: none; } }
+
+        /* Scroll Progress Bar */
+        .scroll-progress { position: fixed; top: 0; left: 0; width: 0%; height: 3px; background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple), var(--neon-cyan)); z-index: 1001; transition: width 0.1s ease-out; box-shadow: 0 0 10px var(--neon-pink), 0 0 20px rgba(255,20,147,0.5); }
+
+        /* Hamburger Menu */
+        .hamburger { display: none; flex-direction: column; justify-content: center; gap: 5px; width: 32px; height: 32px; cursor: pointer; z-index: 1002; padding: 4px; }
+        .hamburger span { display: block; width: 24px; height: 2px; background: var(--neon-pink); border-radius: 2px; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); box-shadow: 0 0 8px var(--neon-pink); }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; transform: translateX(-10px); }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        /* Mobile Menu */
+        .mobile-menu { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(5,5,16,0.98); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: var(--space-xl); opacity: 0; visibility: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .mobile-menu.active { opacity: 1; visibility: visible; }
+        .mobile-menu a { font-family: 'Orbitron', monospace; font-size: 24px; color: var(--text-primary); text-decoration: none; opacity: 0; transform: translateY(20px); transition: all 0.3s ease-out; }
+        .mobile-menu.active a { opacity: 1; transform: translateY(0); }
+        .mobile-menu.active a:nth-child(1) { transition-delay: 0.1s; }
+        .mobile-menu.active a:nth-child(2) { transition-delay: 0.15s; }
+        .mobile-menu.active a:nth-child(3) { transition-delay: 0.2s; }
+        .mobile-menu.active a:nth-child(4) { transition-delay: 0.25s; }
+        .mobile-menu.active a:nth-child(5) { transition-delay: 0.3s; }
+        .mobile-menu a:hover { color: var(--neon-cyan); text-shadow: 0 0 20px var(--neon-cyan); }
+        .mobile-menu .mobile-cta { margin-top: var(--space-lg); background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple)); padding: 16px 40px; border-radius: 50px; font-size: 16px; box-shadow: 0 0 30px rgba(255,20,147,0.4); }
+        @media (max-width: 768px) { .hamburger { display: flex; } }
+
+        /* Glow Cursor */
+        .glow-cursor { position: fixed; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,20,147,0.15) 0%, transparent 70%); border-radius: 50%; pointer-events: none; z-index: 0; opacity: 0; transition: opacity 0.3s ease; transform: translate(-50%, -50%); }
+        body:hover .glow-cursor { opacity: 1; }
+
+        /* Sticky Feature Tabs */
+        .features-tabs.sticky { position: sticky; top: 70px; z-index: 100; background: rgba(5,5,16,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); margin: 0 calc(-1 * var(--space-lg)); padding: var(--space-md) var(--space-lg); border-bottom: 1px solid rgba(255,20,147,0.1); }
 
         .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 120px var(--space-lg) var(--space-3xl); position: relative; background: radial-gradient(ellipse at 30% 20%, rgba(255,20,147,0.15) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(0,255,255,0.1) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(153,51,255,0.1) 0%, transparent 60%), linear-gradient(180deg, var(--deep-black) 0%, var(--midnight-blue) 50%, var(--dark-purple) 100%); }
         .hero-content { position: relative; z-index: 1; max-width: 900px; }
@@ -322,6 +353,21 @@
     <a href="#main-content" class="skip-link">Zum Inhalt springen</a>
     <div class="grid-bg" aria-hidden="true"></div>
 
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <!-- Glow Cursor Effect -->
+    <div class="glow-cursor" id="glowCursor"></div>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#features">Features</a>
+        <a href="#demos">Demos</a>
+        <a href="#use-cases">Anwendungen</a>
+        <a href="../faq.html">FAQ</a>
+        <a href="#pricing" class="mobile-cta">Beta-Zugang</a>
+    </div>
+
     <nav>
         <div class="nav-inner">
             <a href="index.html" class="nav-logo">
@@ -337,6 +383,12 @@
             <div class="nav-right">
                 <div class="lang-switch"><a href="../index.html">EN</a><a href="index.html" class="active">DE</a></div>
                 <a href="#pricing" class="nav-cta">Beta-Zugang</a>
+                <!-- Hamburger Menu Button -->
+                <div class="hamburger" id="hamburger" aria-label="Menü öffnen">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
             </div>
         </div>
     </nav>
@@ -734,6 +786,71 @@
             el.style.transform = 'translateY(30px)';
             el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
             revealObserver.observe(el);
+        });
+
+        // Scroll Progress Bar
+        const scrollProgress = document.getElementById('scrollProgress');
+        if (scrollProgress) {
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const scrollPercent = (scrollTop / docHeight) * 100;
+                scrollProgress.style.width = `${scrollPercent}%`;
+            }, { passive: true });
+        }
+
+        // Hamburger Menu
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (hamburger && mobileMenu) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    hamburger.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            });
+        }
+
+        // Glow Cursor
+        const glowCursor = document.getElementById('glowCursor');
+        if (glowCursor && window.innerWidth > 768) {
+            document.addEventListener('mousemove', (e) => {
+                requestAnimationFrame(() => {
+                    glowCursor.style.left = `${e.clientX}px`;
+                    glowCursor.style.top = `${e.clientY}px`;
+                });
+            }, { passive: true });
+        }
+
+        // Sticky Tabs
+        const featuresTabs = document.querySelector('.features-tabs');
+        if (featuresTabs) {
+            const tabsTop = featuresTabs.getBoundingClientRect().top + window.scrollY;
+            window.addEventListener('scroll', () => {
+                featuresTabs.classList.toggle('sticky', window.scrollY > tabsTop - 70);
+            }, { passive: true });
+        }
+
+        // Reduced Motion
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            document.querySelectorAll('.particle, .ekg-line, .breathing-circle').forEach(el => {
+                el.style.animation = 'none';
+            });
+        }
+
+        // Escape key closes menu
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mobileMenu && mobileMenu.classList.contains('active')) {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
         });
     </script>
 </body>
