@@ -9,14 +9,14 @@
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://echoelmusic.com/faq">
+    <meta property="og:url" content="https://vibrationalforce.github.io/Echoelmusic/faq">
     <meta property="og:title" content="FAQ - Echoelmusic Bio-Reactive Music">
     <meta property="og:description" content="Everything you need to know about Echoelmusic - bio-reactive audio, HRV coherence, binaural beats, and more.">
-    <meta property="og:image" content="https://echoelmusic.com/images/og-faq.png">
+    <meta property="og:image" content="https://vibrationalforce.github.io/Echoelmusic/images/og-faq.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://echoelmusic.com/faq">
+    <meta property="twitter:url" content="https://vibrationalforce.github.io/Echoelmusic/faq">
     <meta property="twitter:title" content="FAQ - Echoelmusic Bio-Reactive Music">
     <meta property="twitter:description" content="Everything you need to know about Echoelmusic.">
 
@@ -55,37 +55,62 @@
     </script>
 
     <title>FAQ - Echoelmusic</title>
+    <!-- Fonts (consistent with main site) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         :root {
-            --primary: #6366f1;
-            --secondary: #8b5cf6;
-            --accent: #ec4899;
-            --dark: #0f172a;
-            --light: #f8fafc;
-            --gray: #64748b;
+            /* Bio-Coherence Green Palette (consistent with main site) */
+            --coherence-green: #00C957;
+            --coherence-dark: #00A86B;
+            --coherence-light: #7CFC00;
+            --golden: #FFD700;
+            --deep-space: #0a1628;
+            --space-blue: #0d2137;
+            --white: #ffffff;
+            --gray: #94a3b8;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--dark);
-            color: var(--light);
+            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, var(--deep-space) 0%, var(--space-blue) 30%, #0a2a1a 60%, var(--deep-space) 100%);
+            color: var(--white);
             line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 30% 20%, rgba(0,201,87,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(255,215,0,0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         .container {
             max-width: 900px;
             margin: 0 auto;
             padding: 80px 24px;
+            position: relative;
+            z-index: 1;
         }
 
         h1 {
+            font-family: 'Orbitron', monospace;
             font-size: 42px;
             margin-bottom: 16px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: linear-gradient(90deg, var(--coherence-green), var(--golden), var(--coherence-green));
+            background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .subtitle {
@@ -99,11 +124,13 @@
         }
 
         .faq-section h2 {
+            font-family: 'Orbitron', monospace;
             font-size: 24px;
-            color: var(--primary);
+            color: var(--coherence-green);
             margin-bottom: 24px;
             padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(0,201,87,0.3);
+            text-shadow: 0 0 20px rgba(0,201,87,0.3);
         }
 
         .faq-item {
@@ -113,11 +140,11 @@
         .faq-question {
             width: 100%;
             text-align: left;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
+            background: rgba(0,201,87,0.05);
+            border: 1px solid rgba(0,201,87,0.2);
+            border-radius: 12px;
             padding: 16px 20px;
-            color: var(--light);
+            color: var(--white);
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -125,23 +152,24 @@
             justify-content: space-between;
             align-items: center;
             transition: all 0.3s;
+            font-family: 'Rajdhani', sans-serif;
         }
 
         .faq-question:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: var(--primary);
+            background: rgba(0,201,87,0.1);
+            border-color: var(--coherence-green);
         }
 
         .faq-question.active {
-            background: rgba(99, 102, 241, 0.1);
-            border-color: var(--primary);
-            border-radius: 8px 8px 0 0;
+            background: rgba(0,201,87,0.15);
+            border-color: var(--coherence-green);
+            border-radius: 12px 12px 0 0;
         }
 
         .faq-question::after {
             content: '+';
             font-size: 24px;
-            color: var(--primary);
+            color: var(--coherence-green);
             transition: transform 0.3s;
         }
 
@@ -152,11 +180,11 @@
         .faq-answer {
             display: none;
             padding: 20px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(10,22,40,0.6);
+            border: 1px solid rgba(0,201,87,0.2);
             border-top: none;
-            border-radius: 0 0 8px 8px;
-            color: #cbd5e1;
+            border-radius: 0 0 12px 12px;
+            color: rgba(255,255,255,0.8);
         }
 
         .faq-answer.active {
@@ -167,7 +195,7 @@
             margin-bottom: 12px;
         }
 
-        .faq-answer ul {
+        .faq-answer ul, .faq-answer ol {
             margin-left: 20px;
             margin-bottom: 12px;
         }
@@ -177,24 +205,27 @@
         }
 
         .faq-answer code {
-            background: rgba(99, 102, 241, 0.2);
+            background: rgba(0,201,87,0.2);
             padding: 2px 6px;
             border-radius: 4px;
             font-family: monospace;
+            color: var(--coherence-green);
         }
 
         .cta-box {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
-            border: 1px solid var(--primary);
-            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
+            border: 1px solid rgba(0,201,87,0.3);
+            border-radius: 20px;
             padding: 32px;
             text-align: center;
             margin-top: 48px;
         }
 
         .cta-box h3 {
+            font-family: 'Orbitron', monospace;
             font-size: 24px;
             margin-bottom: 12px;
+            color: var(--coherence-green);
         }
 
         .cta-box p {
@@ -204,34 +235,39 @@
 
         .cta-button {
             display: inline-block;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: linear-gradient(90deg, var(--coherence-green) 0%, var(--coherence-dark) 50%, #006400 100%);
             color: white;
             padding: 14px 28px;
-            border-radius: 8px;
+            border-radius: 30px;
             text-decoration: none;
-            font-weight: 600;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
             transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 0 20px rgba(0,201,87,0.3);
         }
 
         .cta-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 0 40px rgba(0,201,87,0.5);
         }
 
-        a { color: var(--primary); }
+        a { color: var(--coherence-green); }
+        a:hover { text-shadow: 0 0 10px rgba(0,201,87,0.5); }
 
         .back-link {
             display: inline-block;
             margin-top: 48px;
             color: var(--gray);
             text-decoration: none;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
         }
 
-        .back-link:hover { color: var(--light); }
+        .back-link:hover { color: var(--coherence-green); }
 
         /* Accessibility: Focus indicators */
         a:focus-visible, button:focus-visible {
-            outline: 2px solid var(--primary);
+            outline: 2px solid var(--coherence-green);
             outline-offset: 2px;
         }
 
@@ -448,7 +484,7 @@
                         <li>Are not transmitted to any server</li>
                         <li>Are processed in real-time and discarded</li>
                     </ul>
-                    <p>We are GDPR and CCPA compliant. See our <a href="/privacy.html">Privacy Policy</a> for details.</p>
+                    <p>We are GDPR and CCPA compliant. See our <a href="privacy.html">Privacy Policy</a> for details.</p>
                 </div>
             </div>
 
@@ -615,9 +651,8 @@
                 <div class="faq-answer">
                     <p>You can reach us through:</p>
                     <ul>
-                        <li>Email: <a href="mailto:support@echoelmusic.com">support@echoelmusic.com</a></li>
+                        <li>Email: <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a></li>
                         <li>In-app: Settings > Help > Contact Support</li>
-                        <li>GitHub: <a href="https://github.com/vibrationalforce/Echoelmusic/issues">Issue Tracker</a></li>
                     </ul>
                     <p>We typically respond within 24-48 hours.</p>
                 </div>
@@ -635,7 +670,6 @@
                     <ul>
                         <li><strong>Instagram:</strong> <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer">@echoelmusic</a> - Daily inspiration, user features, tips</li>
                         <li><strong>TikTok:</strong> <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer">@echoelmusic</a> - Short tutorials, bio-reactive demos</li>
-                        <li><strong>GitHub:</strong> <a href="https://github.com/vibrationalforce/Echoelmusic" target="_blank" rel="noopener noreferrer">Open source contributions</a></li>
                     </ul>
                     <p>Share your creations with <strong>#echoelmusic</strong> for a chance to be featured!</p>
                 </div>
@@ -659,8 +693,9 @@
                 <div class="faq-answer">
                     <p>We love hearing from our community! Submit feature requests via:</p>
                     <ul>
-                        <li><strong>GitHub Issues:</strong> <a href="https://github.com/vibrationalforce/Echoelmusic/issues" target="_blank" rel="noopener noreferrer">Feature request template</a></li>
+                        <li><strong>Email:</strong> <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a></li>
                         <li><strong>In-app feedback:</strong> Settings > Help > Feature Request</li>
+                        <li><strong>Social Media:</strong> DM us on <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer">Instagram</a> or <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer">TikTok</a></li>
                     </ul>
                     <p>Popular requests are prioritized for future updates!</p>
                 </div>
@@ -670,23 +705,23 @@
         <div class="cta-box">
             <h3>Still have questions?</h3>
             <p>Our support team is here to help you get the most out of Echoelmusic.</p>
-            <a href="/support.html" class="cta-button">Contact Support</a>
+            <a href="support.html" class="cta-button">Contact Support</a>
         </div>
 
         <!-- Social Media Links -->
-        <div class="social-section" style="text-align: center; margin-top: 48px; padding: 32px; background: rgba(255,255,255,0.03); border-radius: 16px;">
-            <h3 style="margin-bottom: 16px;">Follow Us</h3>
+        <div class="social-section" style="text-align: center; margin-top: 48px; padding: 32px; background: rgba(0,201,87,0.05); border: 1px solid rgba(0,201,87,0.2); border-radius: 20px;">
+            <h3 style="margin-bottom: 16px; font-family: 'Orbitron', monospace; color: var(--coherence-green);">Follow Us</h3>
             <div style="display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;">
-                <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); border-radius: 8px; color: white; text-decoration: none; font-weight: 600;">
+                <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: rgba(0,201,87,0.1); border: 1px solid rgba(0,201,87,0.3); border-radius: 30px; color: var(--coherence-green); text-decoration: none; font-weight: 600; font-family: 'Orbitron', monospace; transition: all 0.3s;">
                     Instagram
                 </a>
-                <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: #000; border-radius: 8px; color: white; text-decoration: none; font-weight: 600; border: 1px solid #333;">
+                <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: rgba(0,201,87,0.1); border: 1px solid rgba(0,201,87,0.3); border-radius: 30px; color: var(--coherence-green); text-decoration: none; font-weight: 600; font-family: 'Orbitron', monospace; transition: all 0.3s;">
                     TikTok
                 </a>
             </div>
         </div>
 
-        <a href="/" class="back-link">&larr; Back to Home</a>
+        <a href="index.html" class="back-link">&larr; Back to Home</a>
     </div>
 
     <script>

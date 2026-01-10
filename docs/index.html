@@ -62,18 +62,75 @@
             z-index: 0;
         }
 
-        .lang-switch {
+        /* Navigation Bar */
+        nav {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
+            top: 0; left: 0; right: 0;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(0,201,87,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-logo {
             font-family: 'Orbitron', monospace;
-            font-size: 11px;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--coherence-green), var(--golden));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+            align-items: center;
+        }
+        .nav-links a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 13px;
+            font-family: 'Orbitron', monospace;
+            transition: all 0.3s;
+        }
+        .nav-links a:hover {
+            color: var(--coherence-green);
+            text-shadow: 0 0 10px rgba(0,201,87,0.5);
+        }
+        .nav-social {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .nav-social a {
+            color: rgba(0,201,87,0.6);
+            text-decoration: none;
+            font-size: 12px;
+            padding: 5px 10px;
+            border: 1px solid rgba(0,201,87,0.3);
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+        .nav-social a:hover {
+            color: var(--coherence-green);
+            border-color: var(--coherence-green);
+            box-shadow: 0 0 15px rgba(0,201,87,0.3);
+        }
+        .lang-switch {
+            display: flex;
+            gap: 4px;
+            margin-left: 16px;
         }
         .lang-switch a {
             color: rgba(0,201,87,0.6);
             text-decoration: none;
-            padding: 6px 10px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-family: 'Orbitron', monospace;
             border: 1px solid rgba(0,201,87,0.3);
             transition: all 0.3s;
         }
@@ -81,6 +138,10 @@
             color: var(--coherence-green);
             border-color: var(--coherence-green);
             box-shadow: 0 0 15px rgba(0,201,87,0.3);
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            nav { padding: 12px 15px; }
         }
 
         .container {
@@ -94,7 +155,7 @@
         /* Hero */
         .hero {
             text-align: center;
-            padding: 60px 0 40px;
+            padding: 100px 0 40px;
         }
         .logo {
             width: 140px;
@@ -538,12 +599,29 @@
     </style>
 </head>
 <body>
-    <div class="lang-switch">
-        <a href="index.html" class="active">EN</a>
-        <a href="de/">DE</a>
-    </div>
+    <!-- Skip to content link for accessibility -->
+    <a href="#main-content" class="skip-link" style="position: absolute; top: -40px; left: 0; background: var(--coherence-green); color: var(--deep-space); padding: 8px 16px; z-index: 1001; font-family: 'Orbitron', monospace; text-decoration: none; transition: top 0.3s;" onfocus="this.style.top='0'" onblur="this.style.top='-40px'">Skip to content</a>
 
-    <div class="container">
+    <!-- Navigation Bar -->
+    <nav>
+        <a href="index.html" class="nav-logo">Echoelmusic</a>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="use-cases.html">Use Cases</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="support.html">Support</a></li>
+        </ul>
+        <div class="nav-social">
+            <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer">TikTok</a>
+            <div class="lang-switch">
+                <a href="index.html" class="active">EN</a>
+                <a href="de/">DE</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" id="main-content">
         <!-- Hero -->
         <div class="hero">
             <div class="logo">
