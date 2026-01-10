@@ -4,189 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy - Echoelmusic</title>
+    <meta name="description" content="Echoelmusic Privacy Policy. Learn how we handle your data, biometric information, and protect your privacy.">
+    <meta name="theme-color" content="#FF1493">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root { --neon-pink: #FF1493; --neon-cyan: #00FFFF; --neon-purple: #9933FF; --deep-black: #050510; --midnight-blue: #0D0D26; --text-primary: rgba(255,255,255,1); --text-secondary: rgba(255,255,255,0.7); --text-tertiary: rgba(255,255,255,0.4); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f23;
-            color: #e0e0e0;
-            line-height: 1.8;
-        }
-        .header {
-            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 100%);
-            padding: 40px 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .header h1 {
-            font-size: 32px;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-        .header p {
-            color: rgba(255,255,255,0.6);
-            font-size: 14px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-        h2 {
-            color: #667eea;
-            font-size: 22px;
-            margin: 40px 0 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(102, 126, 234, 0.3);
-        }
-        h3 {
-            color: #fff;
-            font-size: 18px;
-            margin: 25px 0 15px;
-        }
-        p, li {
-            margin-bottom: 15px;
-            color: rgba(255,255,255,0.8);
-        }
-        ul {
-            padding-left: 25px;
-            margin-bottom: 20px;
-        }
-        .highlight {
-            background: rgba(102, 126, 234, 0.1);
-            border-left: 4px solid #667eea;
-            padding: 20px;
-            margin: 25px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        .highlight strong {
-            color: #667eea;
-        }
-        a {
-            color: #667eea;
-        }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 30px;
-            color: rgba(255,255,255,0.6);
-            text-decoration: none;
-        }
-        .back-link:hover {
-            color: #667eea;
-        }
-        footer {
-            text-align: center;
-            padding: 40px 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.5);
-            font-size: 12px;
-        }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--deep-black); color: var(--text-primary); line-height: 1.8; }
+        .grid-bg { position: fixed; inset: 0; background-image: linear-gradient(rgba(255,20,147,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; z-index: 0; }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 16px 24px; background: rgba(5,5,16,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,20,147,0.1); }
+        .nav-inner { max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+        .nav-logo svg { width: 36px; height: 36px; }
+        .nav-logo span { font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 700; background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-back { color: var(--neon-cyan); text-decoration: none; font-size: 14px; }
+        main { position: relative; z-index: 1; padding: 120px 24px 80px; max-width: 800px; margin: 0 auto; }
+        h1 { font-family: 'Orbitron', monospace; font-size: clamp(28px, 4vw, 40px); font-weight: 800; margin-bottom: 8px; background: linear-gradient(90deg, var(--text-primary), var(--neon-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .updated { color: var(--text-tertiary); font-size: 14px; margin-bottom: 40px; }
+        h2 { font-family: 'Orbitron', monospace; font-size: 18px; color: var(--neon-cyan); margin: 40px 0 16px; }
+        p, li { color: var(--text-secondary); margin-bottom: 16px; font-size: 15px; }
+        ul { padding-left: 24px; margin-bottom: 16px; }
+        a { color: var(--neon-cyan); }
+        .highlight { background: rgba(255,20,147,0.1); border-left: 3px solid var(--neon-pink); padding: 16px 20px; border-radius: 0 12px 12px 0; margin: 24px 0; }
+        .highlight p { margin: 0; }
+        footer { background: var(--deep-black); padding: 40px 24px; border-top: 1px solid rgba(255,20,147,0.1); text-align: center; position: relative; z-index: 1; }
+        footer p { color: var(--text-tertiary); font-size: 13px; }
+        footer a { color: var(--neon-cyan); text-decoration: none; }
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class="grid-bg"></div>
+    <nav><div class="nav-inner"><a href="index.html" class="nav-logo"><svg viewBox="0 0 100 100" fill="none"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF1493"/><stop offset="50%" stop-color="#9933FF"/><stop offset="100%" stop-color="#00FFFF"/></linearGradient></defs><path d="M50 85 C30 65 10 50 10 32 C10 18 22 8 36 8 C44 8 50 14 50 14 C50 14 56 8 64 8 C78 8 90 18 90 32 C90 50 70 65 50 85Z" fill="url(#g)"/><path d="M20 42 L32 42 L38 28 L44 56 L50 20 L56 56 L62 28 L68 42 L80 42" stroke="white" stroke-width="4" stroke-linecap="round"/></svg><span>Echoelmusic</span></a><a href="index.html" class="nav-back">← Back</a></div></nav>
+    <main>
         <h1>Privacy Policy</h1>
-        <p>Effective Date: January 7, 2026 | Version 1.0.0</p>
-    </div>
+        <p class="updated">Last updated: January 2026</p>
 
-    <div class="container">
-        <a href="index.html" class="back-link">&larr; Back to Home</a>
+        <div class="highlight"><p><strong>Summary:</strong> Your biometric data stays on your device. We don't sell your data. You own your creations.</p></div>
 
-        <div class="highlight">
-            <strong>YOUR PRIVACY IS OUR PRIORITY</strong><br><br>
-            &bull; ALL biometric data processed ON-DEVICE only<br>
-            &bull; We NEVER sell your data<br>
-            &bull; You control what's shared<br>
-            &bull; GDPR, CCPA, COPPA compliant<br>
-            &bull; Enterprise-grade AES-256 encryption
-        </div>
+        <h2>1. Information We Collect</h2>
+        <p><strong>Biometric Data:</strong> Heart rate, HRV, breathing patterns, and other health metrics are processed locally on your device. This data is never transmitted to our servers unless you explicitly enable cloud features.</p>
+        <p><strong>Usage Data:</strong> Anonymous usage statistics (feature usage, crash reports) to improve the app. No personal identifiers included.</p>
+        <p><strong>Account Data:</strong> If you create an account: email address and display name only.</p>
 
-        <h2>1. Introduction</h2>
-        <p>Welcome to Echoelmusic. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our bio-reactive audio-visual platform application.</p>
-        <p>We are committed to protecting your privacy and complying with applicable data protection laws, including GDPR, CCPA, COPPA, PIPEDA, and Australian Privacy Principles.</p>
-
-        <h2>2. Information We Collect</h2>
-
-        <h3>2.1 Biometric and Health Data</h3>
-        <p>The App processes biometric data to create bio-reactive audio-visual experiences:</p>
+        <h2>2. How We Use Your Data</h2>
         <ul>
-            <li>Heart Rate Data from Apple Watch, HealthKit, or compatible wearables</li>
-            <li>Heart Rate Variability (HRV) for coherence calculations</li>
-            <li>Breathing Rate derived from HRV analysis</li>
-            <li>Facial Expression Data (processed on-device only)</li>
-            <li>Voice Data for voice-to-visual mapping (processed on-device, not stored)</li>
-            <li>Eye Gaze Data from visionOS devices (processed on-device only)</li>
+            <li>Generate bio-reactive audio, visuals, and lighting responses</li>
+            <li>Improve app performance and fix bugs</li>
+            <li>Provide customer support when requested</li>
+            <li>Process purchases and manage licenses</li>
         </ul>
 
-        <div class="highlight">
-            <strong>IMPORTANT:</strong> All biometric data is processed ON-DEVICE using Apple HealthKit, Android Health Connect, and local processing. Raw biometric data is NEVER transmitted to our servers unless you explicitly opt-in to cloud sync features.
-        </div>
+        <h2>3. Data Storage & Security</h2>
+        <p>Biometric data is stored locally on your device using encrypted storage. If you enable cloud sync, data is encrypted end-to-end using AES-256 encryption. We use TLS 1.3 for all network communications.</p>
 
-        <h3>2.2 Usage Data</h3>
-        <p>We automatically collect certain information:</p>
+        <h2>4. Third-Party Services</h2>
+        <p>We integrate with:</p>
         <ul>
-            <li>Device Information: Device type, OS version, unique device identifiers</li>
-            <li>App Usage: Features used, session duration, preset selections</li>
-            <li>Performance Metrics: App crashes, error logs</li>
-            <li>Network Data: IP address (anonymized), connection type</li>
+            <li><strong>Apple HealthKit / Google Health Connect:</strong> Read heart rate and HRV with your permission</li>
+            <li><strong>Payment Processors:</strong> Stripe/Apple Pay for secure transactions</li>
+            <li><strong>Crash Reporting:</strong> Anonymous crash logs to fix bugs</li>
         </ul>
 
-        <h3>2.3 Children's Data (COPPA Compliance)</h3>
-        <p>The App is NOT intended for children under 13 years of age (or under 16 in the EU). We do not knowingly collect personal information from children.</p>
-
-        <h2>3. How We Use Your Information</h2>
+        <h2>5. Your Rights (GDPR/CCPA)</h2>
         <ul>
-            <li>Provide Core Functionality: Process biometric data for bio-reactive experiences</li>
-            <li>Enhance User Experience: Remember preferences and custom presets</li>
-            <li>Improve the App: Analyze usage patterns (anonymized)</li>
-            <li>Provide Customer Support: Respond to inquiries</li>
-            <li>Ensure Security: Detect and prevent fraud</li>
+            <li><strong>Access:</strong> Request a copy of your data</li>
+            <li><strong>Deletion:</strong> Request complete data deletion</li>
+            <li><strong>Portability:</strong> Export your data in standard formats</li>
+            <li><strong>Opt-out:</strong> Disable analytics at any time in settings</li>
         </ul>
 
-        <h2>4. Data Storage and Security</h2>
-        <p>We implement enterprise-grade security:</p>
-        <ul>
-            <li>Encryption at Rest: AES-256 encryption</li>
-            <li>Encryption in Transit: TLS 1.3</li>
-            <li>Certificate Pinning: Prevents man-in-the-middle attacks</li>
-            <li>Biometric Authentication: Face ID, Touch ID, Optic ID</li>
-            <li>Secure Keychain Storage: iOS Keychain, Android Keystore</li>
-        </ul>
+        <h2>6. AI-Generated Content</h2>
+        <p>Any content you create using our AI tools belongs entirely to you. We retain no rights to your creations. You may use, sell, remix, or distribute your content without restriction.</p>
 
-        <h2>5. Data Sharing</h2>
-        <p><strong>We NEVER sell, rent, or trade your personal information to third parties for marketing purposes.</strong></p>
-        <p>We may share data with trusted service providers (cloud infrastructure, analytics, crash reporting) who are contractually bound to protect your data.</p>
+        <h2>7. Children's Privacy</h2>
+        <p>Echoelmusic is not intended for children under 13. We do not knowingly collect data from children.</p>
 
-        <h2>6. Your Rights</h2>
-
-        <h3>GDPR Rights (EU/EEA Users)</h3>
-        <ul>
-            <li>Right to Access: Request a copy of your data</li>
-            <li>Right to Rectification: Correct inaccurate data</li>
-            <li>Right to Erasure: Request deletion ("right to be forgotten")</li>
-            <li>Right to Data Portability: Receive data in machine-readable format</li>
-            <li>Right to Withdraw Consent: At any time</li>
-        </ul>
-
-        <h3>CCPA Rights (California Residents)</h3>
-        <ul>
-            <li>Right to Know: Request disclosure of personal information</li>
-            <li>Right to Delete: Request deletion of personal information</li>
-            <li>Right to Opt-Out: We don't sell data, but you can opt-out of analytics</li>
-            <li>Right to Non-Discrimination: Equal service regardless of privacy choices</li>
-        </ul>
-
-        <h2>7. Contact Information</h2>
-        <p>For privacy inquiries: <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a></p>
-        <p>Data Protection Officer: <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a></p>
-
-        <h2>8. Changes to This Policy</h2>
-        <p>We may update this Privacy Policy from time to time. We will notify you of material changes via in-app notification and email (for registered users).</p>
-
-        <footer>
-            <p>&copy; 2026 Echoelmusic Inc. All rights reserved.</p>
-            <p>Last Updated: January 7, 2026</p>
-        </footer>
-    </div>
+        <h2>8. Contact</h2>
+        <p>Questions about privacy? Email us at <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a></p>
+    </main>
+    <footer><p>© 2026 Echoelmusic. <a href="terms.html">Terms</a> | <a href="health.html">Health Disclaimer</a> | <a href="faq.html">FAQ</a></p></footer>
 </body>
 </html>

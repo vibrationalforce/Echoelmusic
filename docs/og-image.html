@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Echoelmusic OG Image</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 1200px;
+            height: 630px;
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(135deg, #050510 0%, #0D0D26 50%, #1A0D33 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,20,147,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,255,0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .glow-pink {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255,20,147,0.3) 0%, transparent 70%);
+            top: -100px;
+            left: -100px;
+        }
+        .glow-cyan {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0,255,255,0.2) 0%, transparent 70%);
+            bottom: -100px;
+            right: -50px;
+        }
+        .content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 60px;
+            padding: 60px;
+        }
+        .icon {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(135deg, #FF1493 0%, #9933FF 50%, #00FFFF 100%);
+            border-radius: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 60px rgba(255,20,147,0.5), 0 0 120px rgba(153,51,255,0.3);
+            flex-shrink: 0;
+        }
+        .icon svg { width: 120px; height: 120px; }
+        .text { max-width: 700px; }
+        h1 {
+            font-size: 72px;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #fff 0%, #FF1493 50%, #00FFFF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        p {
+            font-size: 28px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 30px;
+            font-weight: 400;
+            font-family: -apple-system, sans-serif;
+        }
+        .stats {
+            display: flex;
+            gap: 40px;
+        }
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #00FFFF;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .badge {
+            position: absolute;
+            bottom: 40px;
+            right: 60px;
+            background: linear-gradient(90deg, #FF1493, #9933FF);
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="grid"></div>
+    <div class="glow-pink"></div>
+    <div class="glow-cyan"></div>
+
+    <div class="content">
+        <div class="icon">
+            <svg viewBox="0 0 100 100" fill="none">
+                <path d="M50 80 C32 62 15 48 15 33 C15 20 25 12 38 12 C45 12 50 17 50 17 C50 17 55 12 62 12 C75 12 85 20 85 33 C85 48 68 62 50 80Z" fill="rgba(255,255,255,0.95)"/>
+                <path d="M22 40 L33 40 L39 26 L45 54 L51 18 L57 54 L63 26 L69 40 L78 40" stroke="#FF1493" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="text">
+            <h1>Echoelmusic</h1>
+            <p>Transform your heartbeat into music, visuals, and light. Professional bio-reactive audio-visual production suite.</p>
+            <div class="stats">
+                <div><div class="stat-value">100+</div><div class="stat-label">Instruments</div></div>
+                <div><div class="stat-value">50+</div><div class="stat-label">Visual Modes</div></div>
+                <div><div class="stat-value">DMX</div><div class="stat-label">Lighting</div></div>
+                <div><div class="stat-value">AI</div><div class="stat-label">Composition</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="badge">FREE BETA</div>
+</body>
+</html>

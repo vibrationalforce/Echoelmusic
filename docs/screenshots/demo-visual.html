@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Echoelmusic - Visual Demo Screenshot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --neon-pink: #FF1493; --neon-cyan: #00FFFF; --neon-purple: #9933FF; --deep-black: #050510; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 390px; height: 844px;
+            background: var(--deep-black);
+            font-family: 'Inter', sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        .visual-canvas {
+            width: 100%; height: 500px;
+            background: radial-gradient(ellipse at center, #1a0d33 0%, var(--deep-black) 100%);
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .mandala {
+            width: 300px; height: 300px;
+            position: relative;
+            animation: rotate 20s linear infinite;
+        }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .ring { position: absolute; border-radius: 50%; border: 2px solid; }
+        .ring1 { width: 300px; height: 300px; top: 0; left: 0; border-color: rgba(255,20,147,0.6); }
+        .ring2 { width: 240px; height: 240px; top: 30px; left: 30px; border-color: rgba(153,51,255,0.6); animation: rotate 15s linear infinite reverse; }
+        .ring3 { width: 180px; height: 180px; top: 60px; left: 60px; border-color: rgba(0,255,255,0.6); animation: rotate 10s linear infinite; }
+        .ring4 { width: 120px; height: 120px; top: 90px; left: 90px; border-color: rgba(255,20,147,0.8); animation: rotate 8s linear infinite reverse; }
+        .ring5 { width: 60px; height: 60px; top: 120px; left: 120px; border-color: rgba(0,255,255,0.8); }
+        .center-dot { position: absolute; width: 20px; height: 20px; top: 140px; left: 140px; background: white; border-radius: 50%; box-shadow: 0 0 30px white; }
+        .glow-orb { position: absolute; width: 100px; height: 100px; border-radius: 50%; filter: blur(40px); }
+        .orb1 { top: 50px; left: 30px; background: var(--neon-pink); opacity: 0.3; animation: float 4s ease-in-out infinite; }
+        .orb2 { top: 300px; right: 30px; background: var(--neon-cyan); opacity: 0.3; animation: float 5s ease-in-out infinite reverse; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .controls { padding: 24px; }
+        .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .control-label { font-size: 12px; color: rgba(255,255,255,0.6); }
+        .control-value { font-family: 'Orbitron', monospace; font-size: 14px; color: var(--neon-cyan); }
+        .slider-track { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 8px; position: relative; }
+        .slider-fill { height: 100%; background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan)); border-radius: 2px; }
+        .mode-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+        .pill { padding: 8px 16px; border-radius: 20px; font-size: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+        .pill.active { background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple)); border-color: transparent; }
+        .nav-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 84px; background: rgba(13,13,38,0.95); backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; padding-bottom: 20px; }
+        .nav-item { text-align: center; opacity: 0.5; }
+        .nav-item.active { opacity: 1; }
+        .nav-icon { font-size: 24px; margin-bottom: 4px; }
+        .nav-label { font-size: 10px; }
+    </style>
+</head>
+<body>
+    <div class="visual-canvas">
+        <div class="glow-orb orb1"></div>
+        <div class="glow-orb orb2"></div>
+        <div class="mandala">
+            <div class="ring ring1"></div>
+            <div class="ring ring2"></div>
+            <div class="ring ring3"></div>
+            <div class="ring ring4"></div>
+            <div class="ring ring5"></div>
+            <div class="center-dot"></div>
+        </div>
+    </div>
+    <div class="controls">
+        <div class="control-row">
+            <span class="control-label">COMPLEXITY</span>
+            <span class="control-value">72%</span>
+        </div>
+        <div class="slider-track"><div class="slider-fill" style="width:72%"></div></div>
+        <div class="control-row" style="margin-top:20px">
+            <span class="control-label">BIO-REACTIVITY</span>
+            <span class="control-value">85%</span>
+        </div>
+        <div class="slider-track"><div class="slider-fill" style="width:85%"></div></div>
+        <div class="mode-pills">
+            <div class="pill active">Mandala</div>
+            <div class="pill">Particles</div>
+            <div class="pill">Waveform</div>
+            <div class="pill">Nebula</div>
+        </div>
+    </div>
+    <div class="nav-bar">
+        <div class="nav-item"><div class="nav-icon">💗</div><div class="nav-label">Bio</div></div>
+        <div class="nav-item"><div class="nav-icon">🎵</div><div class="nav-label">Audio</div></div>
+        <div class="nav-item active"><div class="nav-icon">✨</div><div class="nav-label">Visual</div></div>
+        <div class="nav-item"><div class="nav-icon">💡</div><div class="nav-label">Lights</div></div>
+        <div class="nav-item"><div class="nav-icon">⚙️</div><div class="nav-label">Settings</div></div>
+    </div>
+</body>
+</html>

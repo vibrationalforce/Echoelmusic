@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+    <defs>
+        <!-- Main Vaporwave Gradient -->
+        <linearGradient id="vaporwave-main" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#FF1493"/>
+            <stop offset="50%" style="stop-color:#9933FF"/>
+            <stop offset="100%" style="stop-color:#00FFFF"/>
+        </linearGradient>
+
+        <!-- Background Gradient -->
+        <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#0D0D26"/>
+            <stop offset="100%" style="stop-color:#050510"/>
+        </linearGradient>
+
+        <!-- Glow Effect -->
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="15" result="blur"/>
+            <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+
+        <!-- Inner Shadow -->
+        <filter id="inner-shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feOffset dx="0" dy="4"/>
+            <feGaussianBlur stdDeviation="8" result="shadow"/>
+            <feComposite in2="SourceGraphic" operator="arithmetic" k2="-1" k3="1"/>
+        </filter>
+    </defs>
+
+    <!-- Background -->
+    <rect width="1024" height="1024" rx="224" fill="url(#bg-gradient)"/>
+
+    <!-- Subtle Grid Pattern -->
+    <g opacity="0.1">
+        <line x1="0" y1="256" x2="1024" y2="256" stroke="#FF1493" stroke-width="2"/>
+        <line x1="0" y1="512" x2="1024" y2="512" stroke="#FF1493" stroke-width="2"/>
+        <line x1="0" y1="768" x2="1024" y2="768" stroke="#FF1493" stroke-width="2"/>
+        <line x1="256" y1="0" x2="256" y2="1024" stroke="#00FFFF" stroke-width="2"/>
+        <line x1="512" y1="0" x2="512" y2="1024" stroke="#00FFFF" stroke-width="2"/>
+        <line x1="768" y1="0" x2="768" y2="1024" stroke="#00FFFF" stroke-width="2"/>
+    </g>
+
+    <!-- Main Heart Shape with HRV -->
+    <g filter="url(#glow)" transform="translate(512, 480)">
+        <!-- Heart Shape -->
+        <path d="M0 320
+                 C-180 180 -360 20 -360 -130
+                 C-360 -260 -250 -340 -140 -340
+                 C-60 -340 0 -280 0 -280
+                 C0 -280 60 -340 140 -340
+                 C250 -340 360 -260 360 -130
+                 C360 20 180 180 0 320Z"
+              fill="url(#vaporwave-main)"/>
+
+        <!-- HRV Waveform (ECG style) -->
+        <path d="M-280 0
+                 L-200 0
+                 L-160 -80
+                 L-100 160
+                 L-40 -200
+                 L40 160
+                 L100 -80
+                 L160 0
+                 L280 0"
+              stroke="white"
+              stroke-width="28"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              fill="none"/>
+    </g>
+
+    <!-- Decorative Circles -->
+    <circle cx="180" cy="180" r="40" fill="none" stroke="#FF1493" stroke-width="4" opacity="0.3"/>
+    <circle cx="844" cy="180" r="40" fill="none" stroke="#00FFFF" stroke-width="4" opacity="0.3"/>
+    <circle cx="180" cy="844" r="40" fill="none" stroke="#00FFFF" stroke-width="4" opacity="0.3"/>
+    <circle cx="844" cy="844" r="40" fill="none" stroke="#FF1493" stroke-width="4" opacity="0.3"/>
+
+    <!-- Corner Accent Lines -->
+    <path d="M80 200 L80 80 L200 80" stroke="url(#vaporwave-main)" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M944 200 L944 80 L824 80" stroke="url(#vaporwave-main)" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M80 824 L80 944 L200 944" stroke="url(#vaporwave-main)" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M944 824 L944 944 L824 944" stroke="url(#vaporwave-main)" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.5"/>
+</svg>
