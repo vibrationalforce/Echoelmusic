@@ -3,1009 +3,390 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echoelmusic - Dein Herz. Dein Sound. Deine Kunst.</title>
+    <title>Echoelmusic - Bio-Reaktive Audio-Visual Suite | Verwandle Deinen Herzschlag in Kunst</title>
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Verwandle deinen Herzschlag in Musik und Visuals. Professionelle bio-reaktive Audio-Visual Suite mit 100+ Instrumenten, DMX Lighting, Laser-Steuerung und KI-Komposition. Du besitzt alles, was du erschaffst.">
-    <meta name="keywords" content="bio-reaktive Musik, Herzfrequenz Musik, HRV Audio, DMX Lighting, Laser Show, Visual Mapping, KI Komposition, Spatial Audio, Musikproduktion">
+    <meta name="description" content="Professionelle bio-reaktive Audio-Visual Produktionssuite. Verwandle Biometrie in Musik, Visuals und Beleuchtung. 100+ Instrumente, DMX-Steuerung, KI-Komposition. iOS, Android, macOS, Windows, Linux. Kostenlose Beta.">
+    <meta name="keywords" content="bio-reaktive Musik, Biofeedback Audio, HRV Musikproduktion, DMX Beleuchtungssoftware, KI Musikkomposition, Spatial Audio, Gestensteuerung Musik, Atemgesteuerte Synthese, Herzfrequenz Musik, Visuelle Musik Software">
     <meta name="author" content="Echoelmusic">
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="theme-color" content="#FF1493">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://vibrationalforce.github.io/Echoelmusic/de/">
-    <meta property="og:title" content="Echoelmusic - Dein Herz. Dein Sound. Deine Kunst.">
-    <meta property="og:description" content="Verwandle deinen Herzschlag in Musik und Visuals. Bio-reaktives Audio, das auf DICH reagiert.">
+    <meta property="og:title" content="Echoelmusic - Bio-Reaktive Audio-Visual Suite">
+    <meta property="og:description" content="Verwandle deinen Herzschlag in Musik, Visuals und Licht. Professionelle bio-reaktive Produktionstools.">
     <meta property="og:image" content="https://vibrationalforce.github.io/Echoelmusic/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="de_DE">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Echoelmusic - Bio-Reaktive Audio-Visual Suite">
+    <meta name="twitter:description" content="Verwandle deinen Herzschlag in Musik, Visuals und Licht.">
 
     <!-- Language -->
     <link rel="alternate" hreflang="en" href="https://vibrationalforce.github.io/Echoelmusic/">
     <link rel="alternate" hreflang="de" href="https://vibrationalforce.github.io/Echoelmusic/de/">
     <link rel="canonical" href="https://vibrationalforce.github.io/Echoelmusic/de/">
 
-    <meta name="theme-color" content="#00C957">
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
-
-    <!-- Fonts -->
+    <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Echoelmusic",
+        "description": "Professionelle bio-reaktive Audio-Visual Produktionssuite",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": ["iOS 15+", "macOS 12+", "Android 8+", "Windows 10+", "Linux"],
+        "offers": {
+            "@type": "Offer",
+            "price": "99",
+            "priceCurrency": "EUR",
+            "availability": "https://schema.org/PreOrder"
+        },
+        "featureList": ["Bio-reaktives Audio", "100+ Instrumente", "DMX-Beleuchtung", "KI-Komposition", "Spatial Audio", "Visual-Generierung"],
+        "inLanguage": "de"
+    }
+    </script>
 
     <style>
+        /* ========== VAPORWAVE PALACE DESIGN SYSTEM ========== */
         :root {
-            --primary: #00C957;
-            --primary-dark: #00A86B;
-            --accent: #FFD700;
-            --accent-purple: #9B59B6;
-            --accent-blue: #3498DB;
-            --bg-dark: #0a1628;
-            --bg-section: #0d1f2d;
-            --text: #ffffff;
-            --text-muted: rgba(255,255,255,0.7);
-            --text-subtle: rgba(255,255,255,0.5);
+            --neon-pink: #FF1493;
+            --neon-cyan: #00FFFF;
+            --neon-purple: #9933FF;
+            --lavender: #CC99FF;
+            --deep-black: #050510;
+            --midnight-blue: #0D0D26;
+            --dark-purple: #1A0D33;
+            --coherence-low: #FF4D4D;
+            --coherence-mid: #FFCC33;
+            --coherence-high: #33FFCC;
+            --text-primary: rgba(255,255,255,1);
+            --text-secondary: rgba(255,255,255,0.7);
+            --text-tertiary: rgba(255,255,255,0.4);
+            --glass-bg: rgba(255,255,255,0.05);
+            --glass-border: rgba(255,255,255,0.1);
+            --glass-blur: 20px;
+            --space-xs: 4px; --space-sm: 8px; --space-md: 16px; --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--deep-black); color: var(--text-primary); line-height: 1.6; overflow-x: hidden; }
 
-        body {
-            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-dark);
-            color: var(--text);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
+        .grid-bg { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: linear-gradient(rgba(255,20,147,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px); background-size: 60px 60px; animation: grid-move 30s linear infinite; pointer-events: none; z-index: 0; }
+        @keyframes grid-move { 0% { transform: perspective(500px) rotateX(60deg) translateY(0); } 100% { transform: perspective(500px) rotateX(60deg) translateY(60px); } }
 
-        /* Navigation */
-        nav {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            background: rgba(10, 22, 40, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            z-index: 1000;
-            padding: 16px 24px;
-            border-bottom: 1px solid rgba(0,201,87,0.15);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .nav-logo {
-            font-family: 'Orbitron', monospace;
-            font-size: 22px;
-            font-weight: 900;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-decoration: none;
-            letter-spacing: 1px;
-        }
-        .nav-links { display: flex; gap: 32px; list-style: none; align-items: center; }
-        .nav-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-        .nav-links a:hover { color: var(--primary); }
-        .nav-cta {
-            background: var(--primary);
-            color: var(--bg-dark);
-            padding: 10px 24px;
-            border-radius: 25px;
-            font-weight: 700;
-            text-decoration: none;
-            font-size: 13px;
-            transition: all 0.3s;
-        }
-        .nav-cta:hover { background: var(--accent); transform: translateY(-2px); }
-        .nav-right { display: flex; align-items: center; gap: 20px; }
-        .lang-switch a {
-            color: var(--text-subtle);
-            text-decoration: none;
-            font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: all 0.3s;
-        }
-        .lang-switch a.active, .lang-switch a:hover {
-            color: var(--primary);
-            background: rgba(0,201,87,0.1);
-        }
-        @media (max-width: 768px) {
-            .nav-links { display: none; }
-            nav { padding: 14px 16px; }
-        }
+        .glass { background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur)); border: 1px solid var(--glass-border); border-radius: 20px; }
+        .glass-subtle { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; }
 
-        /* Hero Section */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 120px 24px 80px;
-            background:
-                radial-gradient(ellipse at 50% 0%, rgba(0,201,87,0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, rgba(255,215,0,0.08) 0%, transparent 40%),
-                radial-gradient(ellipse at 20% 60%, rgba(155,89,182,0.08) 0%, transparent 40%),
-                linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-section) 100%);
-            position: relative;
-        }
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(0,201,87,0.1) 0%, transparent 70%);
-            transform: translate(-50%, -50%);
-            animation: pulse 4s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-        }
+        .neon-pink { box-shadow: 0 0 10px var(--neon-pink), 0 0 20px rgba(255,20,147,0.5), 0 0 40px rgba(255,20,147,0.2); }
+        .text-glow-pink { text-shadow: 0 0 20px var(--neon-pink), 0 0 40px rgba(255,20,147,0.5); }
+        .text-glow-cyan { text-shadow: 0 0 20px var(--neon-cyan), 0 0 40px rgba(0,255,255,0.5); }
 
-        .hero-content { position: relative; z-index: 1; max-width: 800px; }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: var(--space-md) var(--space-lg); background: rgba(5,5,16,0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,20,147,0.1); }
+        .nav-inner { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .nav-logo { display: flex; align-items: center; gap: var(--space-sm); text-decoration: none; }
+        .nav-logo svg { width: 40px; height: 40px; }
+        .nav-logo span { font-family: 'Orbitron', monospace; font-size: 20px; font-weight: 700; background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-links { display: flex; gap: var(--space-xl); list-style: none; }
+        .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: all 0.3s; }
+        .nav-links a:hover { color: var(--neon-cyan); }
+        .nav-right { display: flex; align-items: center; gap: var(--space-md); }
+        .lang-switch a { color: var(--text-tertiary); text-decoration: none; font-size: 12px; padding: 4px 8px; border-radius: 4px; transition: all 0.3s; }
+        .lang-switch a.active, .lang-switch a:hover { color: var(--neon-pink); background: rgba(255,20,147,0.1); }
+        .nav-cta { background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple)); color: white; padding: 10px 24px; border-radius: 25px; font-weight: 600; font-size: 13px; text-decoration: none; transition: all 0.3s; }
+        .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(255,20,147,0.5); }
+        @media (max-width: 768px) { .nav-links { display: none; } }
 
-        .logo-icon {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 32px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            border-radius: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 80px rgba(0,201,87,0.4);
-            animation: heartbeat 2s ease-in-out infinite;
-        }
-        @keyframes heartbeat {
-            0%, 100% { transform: scale(1); }
-            15% { transform: scale(1.08); }
-            30% { transform: scale(1); }
-            45% { transform: scale(1.04); }
-        }
-        .logo-icon svg { width: 70px; height: 70px; }
+        .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 120px var(--space-lg) var(--space-3xl); position: relative; background: radial-gradient(ellipse at 30% 20%, rgba(255,20,147,0.15) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(0,255,255,0.1) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(153,51,255,0.1) 0%, transparent 60%), linear-gradient(180deg, var(--deep-black) 0%, var(--midnight-blue) 50%, var(--dark-purple) 100%); }
+        .hero-content { position: relative; z-index: 1; max-width: 900px; }
+        .app-icon { width: 140px; height: 140px; margin: 0 auto var(--space-xl); background: linear-gradient(135deg, var(--neon-pink) 0%, var(--neon-purple) 50%, var(--neon-cyan) 100%); border-radius: 32px; display: flex; align-items: center; justify-content: center; animation: icon-pulse 3s ease-in-out infinite; box-shadow: 0 0 40px rgba(255,20,147,0.4), 0 0 80px rgba(153,51,255,0.3), 0 0 120px rgba(0,255,255,0.2); }
+        @keyframes icon-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .app-icon svg { width: 80px; height: 80px; }
+        .hero h1 { font-family: 'Orbitron', monospace; font-size: clamp(36px, 7vw, 64px); font-weight: 800; line-height: 1.1; margin-bottom: var(--space-lg); background: linear-gradient(90deg, var(--text-primary) 0%, var(--neon-pink) 50%, var(--neon-cyan) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-tagline { font-size: clamp(18px, 3vw, 24px); color: var(--text-secondary); margin-bottom: var(--space-sm); }
+        .hero-subtitle { font-family: 'Orbitron', monospace; font-size: 14px; color: var(--neon-cyan); letter-spacing: 4px; margin-bottom: var(--space-xl); }
+        .hero-cta { display: flex; gap: var(--space-md); justify-content: center; flex-wrap: wrap; margin-bottom: var(--space-2xl); }
+        .btn-primary { background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple)); color: white; padding: 18px 40px; border-radius: 50px; text-decoration: none; font-family: 'Orbitron', monospace; font-weight: 600; font-size: 14px; letter-spacing: 1px; transition: all 0.3s; box-shadow: 0 0 30px rgba(255,20,147,0.4); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 0 50px rgba(255,20,147,0.6); }
+        .btn-secondary { background: transparent; color: var(--text-primary); padding: 18px 40px; border-radius: 50px; text-decoration: none; font-family: 'Orbitron', monospace; font-weight: 600; font-size: 14px; border: 2px solid var(--neon-cyan); transition: all 0.3s; }
+        .btn-secondary:hover { background: rgba(0,255,255,0.1); box-shadow: 0 0 20px rgba(0,255,255,0.3); }
+        .hero-stats { display: flex; justify-content: center; gap: var(--space-lg); flex-wrap: wrap; }
+        .stat { padding: var(--space-md) var(--space-lg); }
+        .stat-value { font-family: 'Orbitron', monospace; font-size: 32px; font-weight: 700; color: var(--neon-cyan); }
+        .stat-label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 2px; }
 
-        .hero h1 {
-            font-family: 'Orbitron', monospace;
-            font-size: clamp(32px, 6vw, 56px);
-            font-weight: 900;
-            line-height: 1.1;
-            margin-bottom: 20px;
-            background: linear-gradient(90deg, var(--text) 0%, var(--primary) 50%, var(--accent) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero-tagline {
-            font-size: clamp(18px, 3vw, 24px);
-            color: var(--text-muted);
-            margin-bottom: 12px;
-            font-weight: 500;
-        }
-        .hero-subtitle {
-            font-size: 16px;
-            color: var(--primary);
-            font-family: 'Orbitron', monospace;
-            letter-spacing: 2px;
-            margin-bottom: 40px;
-        }
+        section { padding: var(--space-3xl) var(--space-lg); position: relative; z-index: 1; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: var(--space-2xl); }
+        .section-header h2 { font-family: 'Orbitron', monospace; font-size: clamp(28px, 5vw, 42px); font-weight: 700; margin-bottom: var(--space-md); }
+        .section-header p { font-size: 18px; color: var(--text-secondary); max-width: 600px; margin: 0 auto; }
 
-        .hero-cta {
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 48px;
-        }
-        .btn-primary {
-            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
-            color: white;
-            padding: 18px 40px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-family: 'Orbitron', monospace;
-            font-weight: 700;
-            font-size: 14px;
-            letter-spacing: 1px;
-            box-shadow: 0 0 40px rgba(0,201,87,0.4);
-            transition: all 0.3s;
-        }
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 60px rgba(0,201,87,0.6);
-        }
-        .btn-secondary {
-            background: transparent;
-            color: var(--text);
-            padding: 18px 40px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-family: 'Orbitron', monospace;
-            font-weight: 600;
-            font-size: 14px;
-            border: 2px solid rgba(255,255,255,0.3);
-            transition: all 0.3s;
-        }
-        .btn-secondary:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
+        .how-it-works { background: linear-gradient(180deg, var(--dark-purple) 0%, var(--midnight-blue) 100%); }
+        .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-lg); }
+        .step { text-align: center; padding: var(--space-xl); transition: all 0.3s; }
+        .step:hover { transform: translateY(-8px); }
+        .step-icon { width: 80px; height: 80px; margin: 0 auto var(--space-lg); background: linear-gradient(135deg, rgba(255,20,147,0.2), rgba(0,255,255,0.2)); border-radius: 20px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); }
+        .step-icon svg { width: 40px; height: 40px; }
+        .step-number { display: inline-block; width: 28px; height: 28px; background: var(--neon-pink); color: white; border-radius: 50%; font-family: 'Orbitron', monospace; font-weight: 700; font-size: 12px; line-height: 28px; margin-bottom: var(--space-md); }
+        .step h3 { font-family: 'Orbitron', monospace; font-size: 18px; margin-bottom: var(--space-sm); }
+        .step p { color: var(--text-secondary); font-size: 14px; }
 
-        /* Stats */
-        .hero-stats {
-            display: flex;
-            justify-content: center;
-            gap: 48px;
-            flex-wrap: wrap;
-        }
-        .stat {
-            text-align: center;
-        }
-        .stat-value {
-            font-family: 'Orbitron', monospace;
-            font-size: 36px;
-            font-weight: 900;
-            color: var(--primary);
-        }
-        .stat-label {
-            font-size: 12px;
-            color: var(--text-subtle);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .demo-section { background: linear-gradient(180deg, var(--midnight-blue) 0%, var(--deep-black) 100%); }
+        .demo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: var(--space-lg); }
+        .demo-card { position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 16/9; cursor: pointer; transition: all 0.3s; }
+        .demo-card:hover { transform: scale(1.02); }
+        .demo-thumbnail { width: 100%; height: 100%; background: linear-gradient(135deg, var(--dark-purple), var(--midnight-blue)); display: flex; align-items: center; justify-content: center; position: relative; }
+        .demo-thumbnail::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,20,147,0.1), rgba(0,255,255,0.1)); }
+        .play-button { width: 70px; height: 70px; background: rgba(255,20,147,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 1; transition: all 0.3s; }
+        .demo-card:hover .play-button { transform: scale(1.1); box-shadow: 0 0 30px rgba(255,20,147,0.6); }
+        .play-button svg { width: 30px; height: 30px; margin-left: 4px; }
+        .demo-info { position: absolute; bottom: 0; left: 0; right: 0; padding: var(--space-md); background: linear-gradient(transparent, rgba(0,0,0,0.9)); }
+        .demo-info h4 { font-family: 'Orbitron', monospace; font-size: 14px; color: var(--neon-cyan); margin-bottom: 4px; }
+        .demo-info p { font-size: 12px; color: var(--text-secondary); }
 
-        /* Section styling */
-        section {
-            padding: 100px 24px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .section-header {
-            text-align: center;
-            margin-bottom: 64px;
-        }
-        .section-header h2 {
-            font-family: 'Orbitron', monospace;
-            font-size: clamp(28px, 4vw, 42px);
-            color: var(--text);
-            margin-bottom: 16px;
-        }
-        .section-header p {
-            font-size: 18px;
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .highlight-text { color: var(--primary); }
-        .highlight-purple { color: var(--accent-purple); }
-        .highlight-gold { color: var(--accent); }
+        .features-section { background: radial-gradient(ellipse at center, rgba(153,51,255,0.1) 0%, transparent 70%), linear-gradient(180deg, var(--deep-black) 0%, var(--midnight-blue) 100%); }
+        .features-tabs { display: flex; justify-content: center; gap: var(--space-sm); margin-bottom: var(--space-xl); flex-wrap: wrap; }
+        .tab-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); padding: 12px 24px; border-radius: 30px; font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .tab-btn:hover, .tab-btn.active { background: linear-gradient(135deg, rgba(255,20,147,0.2), rgba(0,255,255,0.2)); border-color: var(--neon-pink); color: var(--text-primary); }
+        .tab-btn.active { box-shadow: 0 0 20px rgba(255,20,147,0.3); }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-lg); }
+        .feature-card { padding: var(--space-xl); transition: all 0.3s; }
+        .feature-card:hover { transform: translateY(-4px); border-color: var(--neon-pink); }
+        .feature-icon { width: 56px; height: 56px; margin-bottom: var(--space-md); background: linear-gradient(135deg, rgba(255,20,147,0.2), rgba(153,51,255,0.2)); border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+        .feature-icon svg { width: 28px; height: 28px; }
+        .feature-card h3 { font-family: 'Orbitron', monospace; font-size: 16px; color: var(--neon-cyan); margin-bottom: var(--space-sm); }
+        .feature-card p { color: var(--text-secondary); font-size: 14px; margin-bottom: var(--space-md); }
+        .feature-tags { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+        .tag { background: rgba(255,20,147,0.1); border: 1px solid rgba(255,20,147,0.2); color: var(--neon-pink); padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+        .tag.cyan { background: rgba(0,255,255,0.1); border-color: rgba(0,255,255,0.2); color: var(--neon-cyan); }
+        .tag.purple { background: rgba(153,51,255,0.1); border-color: rgba(153,51,255,0.2); color: var(--lavender); }
 
-        /* How It Works */
-        .how-it-works {
-            background: var(--bg-section);
-        }
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 32px;
-        }
-        .step {
-            text-align: center;
-            padding: 40px 32px;
-            background: rgba(0,201,87,0.03);
-            border: 1px solid rgba(0,201,87,0.1);
-            border-radius: 20px;
-            transition: all 0.3s;
-        }
-        .step:hover {
-            border-color: rgba(0,201,87,0.3);
-            transform: translateY(-8px);
-        }
-        .step-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
-        .step-number {
-            display: inline-block;
-            width: 32px;
-            height: 32px;
-            background: var(--primary);
-            color: var(--bg-dark);
-            border-radius: 50%;
-            font-family: 'Orbitron', monospace;
-            font-weight: 900;
-            font-size: 14px;
-            line-height: 32px;
-            margin-bottom: 16px;
-        }
-        .step h3 {
-            font-family: 'Orbitron', monospace;
-            font-size: 18px;
-            color: var(--text);
-            margin-bottom: 12px;
-        }
-        .step p {
-            color: var(--text-muted);
-            font-size: 15px;
-        }
+        .ai-section { background: radial-gradient(ellipse at center, rgba(255,215,0,0.08) 0%, transparent 60%), linear-gradient(180deg, var(--dark-purple) 0%, var(--midnight-blue) 100%); }
+        .ownership-badge { display: inline-block; background: linear-gradient(90deg, #FFD700, #FF6B35); color: var(--deep-black); padding: 14px 28px; border-radius: 30px; font-family: 'Orbitron', monospace; font-weight: 700; font-size: 13px; margin-bottom: var(--space-xl); box-shadow: 0 0 30px rgba(255,215,0,0.4); }
+        .ownership-box { max-width: 700px; margin: var(--space-xl) auto 0; padding: var(--space-xl); background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.15); border-radius: 20px; text-align: center; }
+        .ownership-box h3 { font-family: 'Orbitron', monospace; color: #FFD700; margin-bottom: var(--space-md); }
+        .ownership-box p { color: var(--text-secondary); font-size: 15px; }
 
-        /* Features Grid */
-        .features {
-            background: linear-gradient(180deg, var(--bg-section) 0%, var(--bg-dark) 100%);
-        }
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 24px;
-        }
-        .feature-card {
-            background: rgba(10, 22, 40, 0.8);
-            border: 1px solid rgba(0,201,87,0.15);
-            border-radius: 16px;
-            padding: 32px;
-            transition: all 0.3s;
-        }
-        .feature-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-        }
-        .feature-card.featured {
-            border-color: var(--accent);
-            background: linear-gradient(135deg, rgba(10,22,40,0.9) 0%, rgba(50,40,0,0.2) 100%);
-        }
-        .feature-card.purple {
-            border-color: var(--accent-purple);
-            background: linear-gradient(135deg, rgba(10,22,40,0.9) 0%, rgba(155,89,182,0.15) 100%);
-        }
-        .feature-icon {
-            font-size: 40px;
-            margin-bottom: 16px;
-        }
-        .feature-card h3 {
-            font-family: 'Orbitron', monospace;
-            font-size: 18px;
-            color: var(--primary);
-            margin-bottom: 12px;
-        }
-        .feature-card.featured h3 { color: var(--accent); }
-        .feature-card.purple h3 { color: var(--accent-purple); }
-        .feature-card p {
-            color: var(--text-muted);
-            font-size: 15px;
-            margin-bottom: 16px;
-        }
-        .feature-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .tag {
-            background: rgba(0,201,87,0.1);
-            border: 1px solid rgba(0,201,87,0.2);
-            color: var(--primary);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .tag.gold {
-            background: rgba(255,215,0,0.1);
-            border-color: rgba(255,215,0,0.2);
-            color: var(--accent);
-        }
-        .tag.purple {
-            background: rgba(155,89,182,0.1);
-            border-color: rgba(155,89,182,0.2);
-            color: var(--accent-purple);
-        }
+        .use-cases { background: linear-gradient(180deg, var(--midnight-blue) 0%, var(--dark-purple) 100%); }
+        .use-cases-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-lg); }
+        .use-case { padding: var(--space-xl); text-align: center; transition: all 0.3s; }
+        .use-case:hover { transform: translateY(-4px); border-color: var(--neon-cyan); }
+        .use-case-icon { width: 64px; height: 64px; margin: 0 auto var(--space-md); background: linear-gradient(135deg, rgba(0,255,255,0.2), rgba(153,51,255,0.2)); border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        .use-case-icon svg { width: 32px; height: 32px; }
+        .use-case h3 { font-family: 'Orbitron', monospace; font-size: 14px; color: var(--neon-pink); margin-bottom: var(--space-sm); }
+        .use-case p { color: var(--text-secondary); font-size: 13px; }
 
-        /* Visual & Lighting Section */
-        .visual-section {
-            background: linear-gradient(135deg, var(--bg-dark) 0%, rgba(155,89,182,0.1) 50%, var(--bg-section) 100%);
-        }
+        .platforms { background: var(--deep-black); text-align: center; }
+        .platforms-grid { display: flex; justify-content: center; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-xl); }
+        .platform-badge { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 12px 24px; font-family: 'Orbitron', monospace; font-size: 12px; color: var(--neon-cyan); transition: all 0.3s; }
+        .platform-badge:hover { border-color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0,255,255,0.2); }
 
-        /* AI Section */
-        .ai-section {
-            background: linear-gradient(135deg, var(--bg-section) 0%, rgba(255,215,0,0.08) 50%, var(--bg-dark) 100%);
-        }
-        .ownership-badge {
-            display: inline-block;
-            background: linear-gradient(90deg, var(--accent), #FF6B35);
-            color: var(--bg-dark);
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-family: 'Orbitron', monospace;
-            font-weight: 700;
-            font-size: 14px;
-            margin-bottom: 32px;
-            box-shadow: 0 0 30px rgba(255,215,0,0.3);
-        }
+        .pricing { background: linear-gradient(180deg, var(--midnight-blue) 0%, var(--deep-black) 100%); }
+        .pricing-card { max-width: 500px; margin: 0 auto; padding: var(--space-2xl); text-align: center; border: 2px solid var(--neon-pink); background: linear-gradient(135deg, rgba(255,20,147,0.05) 0%, rgba(0,255,255,0.03) 100%); }
+        .pricing-badge { display: inline-block; background: var(--neon-pink); color: white; padding: 8px 20px; border-radius: 20px; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 700; margin-bottom: var(--space-lg); }
+        .pricing-title { font-family: 'Orbitron', monospace; font-size: 24px; margin-bottom: var(--space-sm); }
+        .pricing-price { font-family: 'Orbitron', monospace; font-size: 56px; font-weight: 800; color: var(--neon-cyan); margin-bottom: var(--space-sm); }
+        .pricing-price span { font-size: 20px; vertical-align: super; }
+        .pricing-desc { color: var(--text-secondary); margin-bottom: var(--space-lg); }
+        .pricing-features { text-align: left; margin-bottom: var(--space-lg); }
+        .pricing-features li { color: var(--text-secondary); padding: 10px 0; padding-left: 28px; position: relative; list-style: none; font-size: 14px; }
+        .pricing-features li::before { content: "✓"; position: absolute; left: 0; color: var(--coherence-high); font-weight: bold; }
+        .pricing-note { background: rgba(255,215,0,0.1); border-radius: 12px; padding: var(--space-md); margin-top: var(--space-lg); font-size: 13px; color: #FFD700; }
 
-        /* Use Cases Section */
-        .use-cases {
-            background: var(--bg-dark);
-        }
-        .use-cases-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 24px;
-        }
-        .use-case {
-            text-align: center;
-            padding: 32px 24px;
-            background: rgba(0,201,87,0.03);
-            border: 1px solid rgba(0,201,87,0.1);
-            border-radius: 16px;
-            transition: all 0.3s;
-        }
-        .use-case:hover {
-            border-color: var(--primary);
-            transform: translateY(-4px);
-        }
-        .use-case-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-        .use-case h3 {
-            font-family: 'Orbitron', monospace;
-            font-size: 16px;
-            color: var(--primary);
-            margin-bottom: 8px;
-        }
-        .use-case p {
-            color: var(--text-muted);
-            font-size: 14px;
-        }
+        .cta-section { background: linear-gradient(135deg, rgba(255,20,147,0.15), rgba(0,255,255,0.1)); text-align: center; padding: var(--space-3xl) var(--space-lg); }
+        .cta-section h2 { font-family: 'Orbitron', monospace; font-size: clamp(24px, 4vw, 36px); margin-bottom: var(--space-md); }
+        .cta-section p { color: var(--text-secondary); font-size: 18px; margin-bottom: var(--space-xl); }
 
-        /* Platforms */
-        .platforms-section {
-            background: var(--bg-section);
-            text-align: center;
-        }
-        .platforms-grid {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 48px;
-        }
-        .platform-badge {
-            background: rgba(0,201,87,0.1);
-            border: 1px solid rgba(0,201,87,0.2);
-            border-radius: 30px;
-            padding: 12px 24px;
-            font-family: 'Orbitron', monospace;
-            font-size: 13px;
-            color: var(--primary);
-        }
+        footer { background: var(--deep-black); padding: var(--space-3xl) var(--space-lg) var(--space-xl); border-top: 1px solid rgba(255,20,147,0.1); }
+        .footer-content { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-xl); margin-bottom: var(--space-xl); }
+        .footer-brand h3 { font-family: 'Orbitron', monospace; font-size: 18px; color: var(--neon-pink); margin-bottom: var(--space-sm); }
+        .footer-brand p { color: var(--text-tertiary); font-size: 13px; }
+        .footer-links h4 { color: var(--text-primary); font-size: 13px; margin-bottom: var(--space-md); font-weight: 600; }
+        .footer-links a { display: block; color: var(--text-tertiary); text-decoration: none; font-size: 13px; padding: 6px 0; transition: color 0.3s; }
+        .footer-links a:hover { color: var(--neon-cyan); }
+        .footer-social { display: flex; gap: var(--space-md); margin-top: var(--space-md); }
+        .footer-social a { width: 36px; height: 36px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--neon-pink); text-decoration: none; transition: all 0.3s; font-size: 12px; }
+        .footer-social a:hover { background: var(--neon-pink); color: white; }
+        .footer-bottom { text-align: center; padding-top: var(--space-xl); border-top: 1px solid rgba(255,255,255,0.05); }
+        .footer-bottom p { color: var(--text-tertiary); font-size: 12px; }
+        .footer-disclaimer { background: rgba(255,255,255,0.02); border-radius: 12px; padding: var(--space-md); margin-top: var(--space-lg); font-size: 10px; color: var(--text-tertiary); max-width: 800px; margin-left: auto; margin-right: auto; }
 
-        /* Pricing */
-        .pricing {
-            background: var(--bg-dark);
-        }
-        .pricing-card {
-            max-width: 500px;
-            margin: 0 auto;
-            background: linear-gradient(135deg, rgba(0,201,87,0.1) 0%, rgba(255,215,0,0.05) 100%);
-            border: 2px solid var(--primary);
-            border-radius: 24px;
-            padding: 48px;
-            text-align: center;
-        }
-        .pricing-badge {
-            display: inline-block;
-            background: var(--primary);
-            color: var(--bg-dark);
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            margin-bottom: 24px;
-        }
-        .pricing-title {
-            font-family: 'Orbitron', monospace;
-            font-size: 28px;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-        .pricing-price {
-            font-family: 'Orbitron', monospace;
-            font-size: 64px;
-            font-weight: 900;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-        .pricing-price span { font-size: 24px; vertical-align: super; }
-        .pricing-desc {
-            color: var(--text-muted);
-            margin-bottom: 32px;
-        }
-        .pricing-features {
-            text-align: left;
-            margin-bottom: 32px;
-        }
-        .pricing-features li {
-            color: var(--text-muted);
-            padding: 8px 0;
-            padding-left: 28px;
-            position: relative;
-            list-style: none;
-        }
-        .pricing-features li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: var(--primary);
-            font-weight: bold;
-        }
-        .pricing-note {
-            background: rgba(255,215,0,0.1);
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 24px;
-            font-size: 14px;
-            color: var(--accent);
-        }
-
-        /* CTA Section */
-        .cta-section {
-            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
-            text-align: center;
-            padding: 80px 24px;
-        }
-        .cta-section h2 {
-            font-family: 'Orbitron', monospace;
-            font-size: clamp(24px, 4vw, 36px);
-            color: var(--text);
-            margin-bottom: 16px;
-        }
-        .cta-section p {
-            color: var(--text-muted);
-            font-size: 18px;
-            margin-bottom: 32px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        /* Footer */
-        footer {
-            background: var(--bg-dark);
-            padding: 60px 24px 40px;
-            border-top: 1px solid rgba(0,201,87,0.1);
-        }
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 40px;
-            margin-bottom: 40px;
-        }
-        .footer-brand h3 {
-            font-family: 'Orbitron', monospace;
-            font-size: 20px;
-            color: var(--primary);
-            margin-bottom: 12px;
-        }
-        .footer-brand p {
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-        .footer-links h4 {
-            color: var(--text);
-            font-size: 14px;
-            margin-bottom: 16px;
-            font-weight: 600;
-        }
-        .footer-links a {
-            display: block;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 14px;
-            padding: 6px 0;
-            transition: color 0.3s;
-        }
-        .footer-links a:hover { color: var(--primary); }
-        .footer-social {
-            display: flex;
-            gap: 16px;
-            margin-top: 16px;
-        }
-        .footer-social a {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            background: rgba(0,201,87,0.1);
-            border: 1px solid rgba(0,201,87,0.2);
-            border-radius: 50%;
-            color: var(--primary);
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-        .footer-social a:hover {
-            background: var(--primary);
-            color: var(--bg-dark);
-        }
-        .footer-bottom {
-            text-align: center;
-            padding-top: 40px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-        }
-        .footer-bottom p {
-            color: var(--text-subtle);
-            font-size: 13px;
-        }
-        .footer-disclaimer {
-            background: rgba(0,201,87,0.05);
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 24px;
-            font-size: 11px;
-            color: var(--text-subtle);
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        /* Accessibility */
-        a:focus-visible, button:focus-visible {
-            outline: 2px solid var(--primary);
-            outline-offset: 2px;
-        }
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-        .skip-link {
-            position: absolute;
-            top: -40px;
-            left: 0;
-            background: var(--primary);
-            color: var(--bg-dark);
-            padding: 8px 16px;
-            z-index: 1001;
-            text-decoration: none;
-            font-weight: 600;
-        }
+        .skip-link { position: absolute; top: -50px; left: 0; background: var(--neon-pink); color: white; padding: 10px 20px; z-index: 1001; text-decoration: none; font-weight: 600; }
         .skip-link:focus { top: 0; }
-
-        @media (max-width: 768px) {
-            .hero-stats { gap: 24px; }
-            .stat-value { font-size: 28px; }
-            .features-grid { grid-template-columns: 1fr; }
-            .pricing-price { font-size: 48px; }
-        }
+        a:focus-visible, button:focus-visible { outline: 2px solid var(--neon-cyan); outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } .grid-bg { animation: none; } }
+        @media (max-width: 768px) { .hero-stats { gap: var(--space-md); } .stat-value { font-size: 24px; } .features-grid, .demo-grid { grid-template-columns: 1fr; } .pricing-price { font-size: 42px; } .features-tabs { gap: var(--space-xs); } .tab-btn { padding: 10px 16px; font-size: 11px; } }
     </style>
 </head>
 <body>
     <a href="#main-content" class="skip-link">Zum Inhalt springen</a>
+    <div class="grid-bg" aria-hidden="true"></div>
 
-    <!-- Navigation -->
     <nav>
-        <a href="index.html" class="nav-logo">Echoelmusic</a>
-        <ul class="nav-links">
-            <li><a href="use-cases.html">Anwendungen</a></li>
-            <li><a href="faq.html">FAQ</a></li>
-            <li><a href="support.html">Support</a></li>
-        </ul>
-        <div class="nav-right">
-            <div class="lang-switch">
-                <a href="../index.html">EN</a>
-                <a href="index.html" class="active">DE</a>
+        <div class="nav-inner">
+            <a href="index.html" class="nav-logo">
+                <svg viewBox="0 0 100 100" fill="none"><defs><linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF1493"/><stop offset="50%" stop-color="#9933FF"/><stop offset="100%" stop-color="#00FFFF"/></linearGradient></defs><path d="M50 85 C30 65 10 50 10 32 C10 18 22 8 36 8 C44 8 50 14 50 14 C50 14 56 8 64 8 C78 8 90 18 90 32 C90 50 70 65 50 85Z" fill="url(#logo-grad)"/><path d="M20 42 L32 42 L38 28 L44 56 L50 20 L56 56 L62 28 L68 42 L80 42" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Echoelmusic</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#demos">Demos</a></li>
+                <li><a href="#use-cases">Anwendungen</a></li>
+                <li><a href="../faq.html">FAQ</a></li>
+            </ul>
+            <div class="nav-right">
+                <div class="lang-switch"><a href="../index.html">EN</a><a href="index.html" class="active">DE</a></div>
+                <a href="#pricing" class="nav-cta">Beta-Zugang</a>
             </div>
-            <a href="#pricing" class="nav-cta">Jetzt Starten</a>
         </div>
     </nav>
 
-    <!-- Hero Section -->
     <section class="hero" id="main-content">
         <div class="hero-content">
-            <div class="logo-icon">
-                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M40 65 C25 50 10 40 10 28 C10 18 18 10 30 10 C36 10 40 14 40 14 C40 14 44 10 50 10 C62 10 70 18 70 28 C70 40 55 50 40 65Z" fill="rgba(255,255,255,0.9)"/>
-                    <path d="M20 35 L28 35 L32 25 L36 45 L40 20 L44 45 L48 25 L52 35 L60 35" stroke="#00C957" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+            <div class="app-icon">
+                <svg viewBox="0 0 100 100" fill="none"><path d="M50 80 C32 62 15 48 15 33 C15 20 25 12 38 12 C45 12 50 17 50 17 C50 17 55 12 62 12 C75 12 85 20 85 33 C85 48 68 62 50 80Z" fill="rgba(255,255,255,0.95)"/><path d="M22 40 L33 40 L39 26 L45 54 L51 18 L57 54 L63 26 L69 40 L78 40" stroke="#FF1493" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
-            <h1>Dein Herz.<br>Dein Sound.<br>Deine Kunst.</h1>
-            <p class="hero-tagline">Bio-reaktives Audio, Visuals und Lighting - alles aus deinem Herzschlag</p>
-            <p class="hero-subtitle">Audio • Visual • Lighting • KI</p>
-
+            <h1>Verwandle Deinen<br>Herzschlag in Kunst</h1>
+            <p class="hero-tagline">Bio-reaktives Audio, Visuals und Beleuchtung aus deinen Biosignalen</p>
+            <p class="hero-subtitle">AUDIO • VISUAL • LICHT • KI</p>
             <div class="hero-cta">
                 <a href="#pricing" class="btn-primary">Kostenlose Beta</a>
-                <a href="use-cases.html" class="btn-secondary">Live erleben</a>
+                <a href="#demos" class="btn-secondary">Demos Ansehen</a>
             </div>
-
             <div class="hero-stats">
-                <div class="stat">
-                    <div class="stat-value">100+</div>
-                    <div class="stat-label">Instrumente</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">50+</div>
-                    <div class="stat-label">Visual Modi</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">DMX</div>
-                    <div class="stat-label">Lighting</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">KI</div>
-                    <div class="stat-label">Komposition</div>
-                </div>
+                <div class="stat glass-subtle"><div class="stat-value">100+</div><div class="stat-label">Instrumente</div></div>
+                <div class="stat glass-subtle"><div class="stat-value">50+</div><div class="stat-label">Visual-Modi</div></div>
+                <div class="stat glass-subtle"><div class="stat-value">DMX</div><div class="stat-label">Beleuchtung</div></div>
+                <div class="stat glass-subtle"><div class="stat-value">KI</div><div class="stat-label">Komposition</div></div>
             </div>
         </div>
     </section>
 
-    <!-- How It Works -->
     <section class="how-it-works">
         <div class="container">
             <div class="section-header">
-                <h2>Musik die auf <span class="highlight-text">dich reagiert</span></h2>
-                <p>Dein Körper wird zum Controller. Dein Herz gibt das Tempo vor. Dein Atem formt Sound und Licht.</p>
+                <h2>So <span class="text-glow-pink">Funktioniert's</span></h2>
+                <p>Dein Körper wird zum Controller. Dein Herz gibt das Tempo vor. Dein Atem formt das Licht.</p>
             </div>
-
             <div class="steps">
-                <div class="step">
+                <div class="step glass">
+                    <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
                     <div class="step-number">1</div>
-                    <div class="step-icon">⌚</div>
                     <h3>Verbinden</h3>
-                    <p>Koppel deine Apple Watch, Garmin, Whoop oder jeden Bluetooth-Herzfrequenzmonitor. Verbinde DMX Lighting und Laser-Systeme.</p>
+                    <p>Koppeln mit Wearables — Apple Watch, Garmin, Whoop oder Bluetooth-Herzfrequenzsensor. DMX-Lampen und Laser verbinden.</p>
                 </div>
-                <div class="step">
+                <div class="step glass">
+                    <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#FF1493" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
                     <div class="step-number">2</div>
-                    <div class="step-icon">💓</div>
                     <h3>Fühlen</h3>
-                    <p>Herzfrequenz, HRV und Atmung werden in Echtzeit analysiert. Hohe Kohärenz erzeugt harmonische Klänge und synchronisierte Visuals.</p>
+                    <p>Herzfrequenz, HRV, Atmung, Gesten und Mimik werden in Echtzeit analysiert. Hohe Kohärenz erzeugt Harmonie.</p>
                 </div>
-                <div class="step">
+                <div class="step glass">
+                    <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#9933FF" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
                     <div class="step-number">3</div>
-                    <div class="step-icon">🎵</div>
                     <h3>Erschaffen</h3>
-                    <p>Audio, Visuals und Lighting reagieren gemeinsam. Lass KI deine Komposition unterstützen - du besitzt alles, was du erschaffst.</p>
+                    <p>Audio, Visuals und Beleuchtung reagieren auf deinen Zustand. KI unterstützt — du behältst alle Rechte.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Audio Features -->
-    <section class="features">
+    <section class="demo-section" id="demos">
         <div class="container">
             <div class="section-header">
-                <h2>Professionelles <span class="highlight-text">Audio</span></h2>
-                <p>Komplette Audio-Produktions-Suite mit bio-reaktiver Steuerung</p>
+                <h2>Erlebe Es <span class="text-glow-cyan">Live</span></h2>
+                <p>Sieh wie Biometrie, Gesten und Atem Musik, Visuals und Beleuchtung in Echtzeit steuern</p>
             </div>
-
-            <div class="features-grid">
-                <div class="feature-card featured">
-                    <div class="feature-icon">💚</div>
-                    <h3>Bio-Reaktive Engine</h3>
-                    <p>Echtzeit-Mapping von HRV, Herzfrequenz und Atmung auf jeden Parameter. 8 Bio-Quellen, 50+ Modulationsziele.</p>
-                    <div class="feature-tags">
-                        <span class="tag gold">Herzfrequenz → Tempo</span>
-                        <span class="tag">HRV → Filter</span>
-                        <span class="tag">Kohärenz → Reverb</span>
-                    </div>
-                </div>
-
-                <div class="feature-card featured">
-                    <div class="feature-icon">🎹</div>
-                    <h3>100+ Instrumente</h3>
-                    <p>6 Synthese-Engines, 18 Orchesterinstrumente, 10+ Weltinstrumente, 5 Touch-Controller. Alle bio-reaktiv.</p>
-                    <div class="feature-tags">
-                        <span class="tag gold">FM • Wavetable • Granular</span>
-                        <span class="tag">Orchester</span>
-                        <span class="tag">Welt</span>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🎧</div>
-                    <h3>Spatial Audio</h3>
-                    <p>6 Spatial-Modi inklusive Binaural HRTF, Ambisonics und 7.1.4 Dolby Atmos. Volle Mono-Kompatibilität.</p>
-                    <div class="feature-tags">
-                        <span class="tag">3D Spatial</span>
-                        <span class="tag">Binaural</span>
-                        <span class="tag">Head Tracking</span>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🎛️</div>
-                    <h3>50+ DSP Effekte</h3>
-                    <p>Professionelle Prozessoren: Multiband-Kompression, Convolution Reverb, Tape Delay, Vocoder, Mastering Suite.</p>
-                    <div class="feature-tags">
-                        <span class="tag">Dynamik</span>
-                        <span class="tag">EQ</span>
-                        <span class="tag">Reverb</span>
-                        <span class="tag">Mastering</span>
-                    </div>
-                </div>
+            <div class="demo-grid">
+                <div class="demo-card glass" role="button" tabindex="0" aria-label="App-Übersicht Demo"><div class="demo-thumbnail"><div class="play-button neon-pink"><svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div><div class="demo-info"><h4>App-Übersicht</h4><p>Komplette Führung durch das Vaporwave Palace Interface</p></div></div>
+                <div class="demo-card glass" role="button" tabindex="0" aria-label="Instrumente Demo"><div class="demo-thumbnail"><div class="play-button neon-pink"><svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div><div class="demo-info"><h4>100+ Instrumente</h4><p>Synths, Orchester, Weltinstrumente — alle bio-reaktiv</p></div></div>
+                <div class="demo-card glass" role="button" tabindex="0" aria-label="Visual Demo"><div class="demo-thumbnail"><div class="play-button neon-pink"><svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div><div class="demo-info"><h4>Visual-Generierung</h4><p>Heilige Geometrie, Fraktale, Partikel — synchron zu deinem Herz</p></div></div>
+                <div class="demo-card glass" role="button" tabindex="0" aria-label="Biofeedback Demo"><div class="demo-thumbnail"><div class="play-button neon-pink"><svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div><div class="demo-info"><h4>Biofeedback-Steuerung</h4><p>HRV, Atmung, Gesten, Mimik → Parameter</p></div></div>
+                <div class="demo-card glass" role="button" tabindex="0" aria-label="DMX Demo"><div class="demo-thumbnail"><div class="play-button neon-pink"><svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div><div class="demo-info"><h4>DMX & Laser-Steuerung</h4><p>Moving Heads, LED-Fixtures, ILDA-Laser mit Bio-Sync</p></div></div>
+                <div class="demo-card glass" role="button" tabindex="0" aria-label="DAW Demo"><div class="demo-thumbnail"><div class="play-button neon-pink"><svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div></div><div class="demo-info"><h4>DAW-Integration</h4><p>VST3, AU, AAX Plugins mit bio-reaktiver Modulation</p></div></div>
             </div>
         </div>
     </section>
 
-    <!-- Visual & Lighting Section -->
-    <section class="visual-section">
+    <section class="features-section" id="features">
         <div class="container">
             <div class="section-header">
-                <h2><span class="highlight-purple">Visual</span> & <span class="highlight-text">Lighting</span></h2>
-                <p>Echtzeit-Visuals, DMX Lighting und Laser-Steuerung - alles synchron zu deinen Bio-Signalen</p>
+                <h2>Professionelle <span class="text-glow-pink">Features</span></h2>
+                <p>Komplette Audio-Visual Produktionssuite mit bio-reaktiver Steuerung</p>
             </div>
-
+            <div class="features-tabs">
+                <button class="tab-btn active" data-tab="audio">Audio</button>
+                <button class="tab-btn" data-tab="visual">Visual</button>
+                <button class="tab-btn" data-tab="lighting">Licht</button>
+                <button class="tab-btn" data-tab="ai">KI-Tools</button>
+            </div>
             <div class="features-grid">
-                <div class="feature-card purple">
-                    <div class="feature-icon">🎆</div>
-                    <h3>Echtzeit-Visuals</h3>
-                    <p>50+ Visualisierungsmodi inklusive Sacred Geometry, Fraktale, Partikelsysteme und Quantum-inspirierte Muster. GPU-beschleunigt.</p>
-                    <div class="feature-tags">
-                        <span class="tag purple">Sacred Geometry</span>
-                        <span class="tag purple">Fraktale</span>
-                        <span class="tag purple">Partikel</span>
-                    </div>
-                </div>
-
-                <div class="feature-card purple">
-                    <div class="feature-icon">💡</div>
-                    <h3>DMX Lighting Control</h3>
-                    <p>Volle DMX512 und Art-Net Unterstützung. Steuere Moving Heads, LED-Fixtures, Nebelmaschinen. Bio-reaktives Farb- und Intensitäts-Mapping.</p>
-                    <div class="feature-tags">
-                        <span class="tag purple">DMX512</span>
-                        <span class="tag purple">Art-Net</span>
-                        <span class="tag purple">sACN</span>
-                    </div>
-                </div>
-
-                <div class="feature-card purple">
-                    <div class="feature-icon">✨</div>
-                    <h3>Laser Show Designer</h3>
-                    <p>ILDA Laser-Steuerung mit Safety Zones. 15+ Beam-Effekte, Scanner-Patterns und bio-reaktive Intensität. Professionelle Show-Kontrolle.</p>
-                    <div class="feature-tags">
-                        <span class="tag purple">ILDA</span>
-                        <span class="tag purple">Safety Zones</span>
-                        <span class="tag purple">Beam-Effekte</span>
-                    </div>
-                </div>
-
-                <div class="feature-card purple">
-                    <div class="feature-icon">🎬</div>
-                    <h3>Video Mapping</h3>
-                    <p>Projiziere Visuals auf jede Oberfläche. Multi-Output Support, Edge Blending, Warping. Sync Video zu Herzschlag und Musik.</p>
-                    <div class="feature-tags">
-                        <span class="tag purple">Projection Mapping</span>
-                        <span class="tag purple">Multi-Output</span>
-                        <span class="tag purple">NDI</span>
-                    </div>
-                </div>
+                <div class="feature-card glass"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#FF1493" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><h3>Bio-Reaktive Engine</h3><p>Echtzeit-Mapping von HRV, Herzfrequenz, Atmung, Gesten und Mimik auf jeden Parameter.</p><div class="feature-tags"><span class="tag">Herz → Tempo</span><span class="tag cyan">HRV → Filter</span><span class="tag purple">Atem → Hall</span></div></div>
+                <div class="feature-card glass"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h.01M10 12h.01M14 12h.01M18 12h.01"/></svg></div><h3>100+ Instrumente</h3><p>6 Synthese-Engines, 18 Orchester, 10+ Weltinstrumente, 5 Touch-Controller. Alle bio-reaktiv.</p><div class="feature-tags"><span class="tag">Synth-Engines</span><span class="tag cyan">Orchester</span><span class="tag purple">Weltmusik</span></div></div>
+                <div class="feature-card glass"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#9933FF" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><h3>Spatial Audio</h3><p>6 Modi: Binaural HRTF, Ambisonics, 7.1.4 Dolby Atmos. Head-Tracking Support.</p><div class="feature-tags"><span class="tag">3D Spatial</span><span class="tag cyan">Binaural</span><span class="tag purple">Atmos</span></div></div>
+                <div class="feature-card glass"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#FF1493" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div><h3>50+ DSP-Effekte</h3><p>Multiband-Dynamik, Faltungshall, Tape-Delay, Vocoder, Spektral-Processing, Mastering-Suite.</p><div class="feature-tags"><span class="tag">Dynamik</span><span class="tag cyan">Hall</span><span class="tag purple">Mastering</span></div></div>
+                <div class="feature-card glass"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 3v9l6 3"/></svg></div><h3>Echtzeit-Visuals</h3><p>50+ GPU-beschleunigte Modi: Heilige Geometrie, Fraktale, Partikel, Quantenmuster.</p><div class="feature-tags"><span class="tag">Heilige Geometrie</span><span class="tag cyan">Fraktale</span><span class="tag purple">Partikel</span></div></div>
+                <div class="feature-card glass"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#9933FF" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg></div><h3>DMX & Laser-Steuerung</h3><p>DMX512, Art-Net, sACN. Moving Heads, LEDs, Nebel, ILDA-Laser mit Sicherheitszonen.</p><div class="feature-tags"><span class="tag">DMX512</span><span class="tag cyan">Art-Net</span><span class="tag purple">ILDA</span></div></div>
             </div>
         </div>
     </section>
 
-    <!-- AI Section -->
     <section class="ai-section">
         <div class="container">
             <div class="section-header">
                 <div class="ownership-badge">DU BESITZT ALLES WAS DU ERSCHAFFST</div>
-                <h2><span class="highlight-gold">KI</span> Kreativ-Tools</h2>
-                <p>Intelligente Assistenten die dir beim Erschaffen helfen. Volle Kontrolle, volles Eigentum, keine versteckten Kosten.</p>
+                <h2><span style="color: #FFD700;">KI</span> Kreativ-Tools</h2>
+                <p>Intelligente Assistenten für deine Kreativität. Volle Kontrolle, volle Eigentumsrechte.</p>
             </div>
-
             <div class="features-grid">
-                <div class="feature-card featured">
-                    <div class="feature-icon">🤖</div>
-                    <h3>KI Kompositions-Assistent</h3>
-                    <p>Generiere Melodien, Akkordfolgen und Arrangements. Trainiere auf deinen Stil. Die KI schlägt vor - du entscheidest und besitzt das Ergebnis.</p>
-                    <div class="feature-tags">
-                        <span class="tag gold">Melodie-Generierung</span>
-                        <span class="tag gold">Akkord-Vorschläge</span>
-                        <span class="tag gold">Stil-Lernen</span>
-                    </div>
-                </div>
-
-                <div class="feature-card featured">
-                    <div class="feature-icon">🎨</div>
-                    <h3>KI Visual Designer</h3>
-                    <p>Beschreibe deine Vision, erhalte Echtzeit-Visuals. Bio-reaktive Parameter-Vorschläge. Exportiere in jedem Format - es ist deine Kunst.</p>
-                    <div class="feature-tags">
-                        <span class="tag gold">Text-zu-Visual</span>
-                        <span class="tag gold">Style Transfer</span>
-                        <span class="tag gold">Bio-Reaktiv</span>
-                    </div>
-                </div>
-
-                <div class="feature-card featured">
-                    <div class="feature-icon">🎼</div>
-                    <h3>Smart Sound Design</h3>
-                    <p>KI-gestützte Synthese-Parameter-Vorschläge. Beschreibe Sounds in Worten, erhalte spielbare Presets. Voller Parameter-Zugang - tweak alles.</p>
-                    <div class="feature-tags">
-                        <span class="tag gold">Neural Synthesis</span>
-                        <span class="tag gold">Preset-Generierung</span>
-                        <span class="tag gold">Sound Matching</span>
-                    </div>
-                </div>
-
-                <div class="feature-card featured">
-                    <div class="feature-icon">💡</div>
-                    <h3>Intelligente Light Shows</h3>
-                    <p>KI erstellt DMX-Sequenzen aus deiner Musik. Beat-Erkennung, Stimmungsanalyse, automatische Cue-Programmierung. Export zu jedem Lighting-Pult.</p>
-                    <div class="feature-tags">
-                        <span class="tag gold">Auto-Programmierung</span>
-                        <span class="tag gold">Beat Sync</span>
-                        <span class="tag gold">Stimmungsanalyse</span>
-                    </div>
-                </div>
+                <div class="feature-card glass"><div class="feature-icon" style="background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,107,53,0.2));"><svg viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 2a10 10 0 0 1 10 10"/></svg></div><h3 style="color: #FFD700;">KI-Komposition</h3><p>Generiere Melodien, Akkordfolgen, Arrangements. Die KI schlägt vor — du entscheidest.</p><div class="feature-tags"><span class="tag" style="background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.2); color: #FFD700;">Melodie</span><span class="tag" style="background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.2); color: #FFD700;">Akkorde</span></div></div>
+                <div class="feature-card glass"><div class="feature-icon" style="background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,107,53,0.2));"><svg viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><h3 style="color: #FFD700;">KI Visual-Design</h3><p>Beschreibe deine Vision, erhalte Echtzeit-Visuals. Style-Transfer, bio-reaktive Parameter.</p><div class="feature-tags"><span class="tag" style="background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.2); color: #FFD700;">Text-zu-Visual</span><span class="tag" style="background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.2); color: #FFD700;">Style-Transfer</span></div></div>
+                <div class="feature-card glass"><div class="feature-icon" style="background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,107,53,0.2));"><svg viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></div><h3 style="color: #FFD700;">Smart Sound-Design</h3><p>Beschreibe Sounds in Worten, erhalte spielbare Presets. Neuronale Synthese.</p><div class="feature-tags"><span class="tag" style="background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.2); color: #FFD700;">Neural Synth</span><span class="tag" style="background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.2); color: #FFD700;">Sound Match</span></div></div>
+                <div class="feature-card glass"><div class="feature-icon" style="background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,107,53,0.2));"><svg viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div><h3 style="color: #FFD700;">KI Light-Shows</h3><p>KI erstellt DMX-Sequenzen aus deiner Musik. Beat-Erkennung, Stimmungsanalyse.</p><div class="feature-tags"><span class="tag" style="background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.2); color: #FFD700;">Auto-Programm</span><span class="tag" style="background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.2); color: #FFD700;">Beat-Sync</span></div></div>
             </div>
-
-            <div style="text-align: center; margin-top: 48px; padding: 32px; background: rgba(255,215,0,0.05); border-radius: 16px; border: 1px solid rgba(255,215,0,0.2);">
-                <h3 style="font-family: 'Orbitron', monospace; color: var(--accent); margin-bottom: 16px;">Deine Kreationen. Deine Rechte. Deine Credits.</h3>
-                <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto;">Alles was du mit Echoelmusic KI-Tools generierst gehört dir. Keine Lizenzansprüche, keine Nutzungsbeschränkungen, keine versteckten Bedingungen. Nutze es kommerziell, remixe, verteile - es gehört dir.</p>
-            </div>
+            <div class="ownership-box"><h3>Deine Kreationen. Deine Rechte. Deine Credits.</h3><p>Alles was mit Echoelmusic KI generiert wird, gehört dir. Keine Lizenzansprüche, keine Nutzungseinschränkungen.</p></div>
         </div>
     </section>
 
-    <!-- Use Cases -->
-    <section class="use-cases">
+    <section class="use-cases" id="use-cases">
         <div class="container">
             <div class="section-header">
-                <h2>Gebaut für <span class="highlight-text">Kreative</span></h2>
+                <h2>Gemacht Für <span class="text-glow-cyan">Kreative</span></h2>
                 <p>Vom Meditationsstudio bis zur Konzertbühne</p>
             </div>
-
             <div class="use-cases-grid">
-                <div class="use-case">
-                    <div class="use-case-icon">🎵</div>
-                    <h3>Musikproduktion</h3>
-                    <p>Erschaffe einzigartige bio-reaktive Tracks die emotionale Zustände einfangen</p>
-                </div>
-                <div class="use-case">
-                    <div class="use-case-icon">🧘</div>
-                    <h3>Wellness & Meditation</h3>
-                    <p>Geführte Sessions mit Echtzeit Audio-Visual Biofeedback</p>
-                </div>
-                <div class="use-case">
-                    <div class="use-case-icon">🎤</div>
-                    <h3>Live Performance</h3>
-                    <p>Synchronisiere Lighting, Visuals und Sound mit deiner Präsenz auf der Bühne</p>
-                </div>
-                <div class="use-case">
-                    <div class="use-case-icon">🎬</div>
-                    <h3>Immersive Events</h3>
-                    <p>Multi-sensorische Erfahrungen für Installationen und Ausstellungen</p>
-                </div>
-                <div class="use-case">
-                    <div class="use-case-icon">🔬</div>
-                    <h3>Forschung</h3>
-                    <p>HRV-Analyse, Kohärenz-Studien, Biofeedback-Experimente</p>
-                </div>
-                <div class="use-case">
-                    <div class="use-case-icon">🎓</div>
-                    <h3>Bildung</h3>
-                    <p>Lehre Musiktheorie, Synthese und Bio-Signal-Verarbeitung</p>
-                </div>
+                <div class="use-case glass"><div class="use-case-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#FF1493" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><h3>Musikproduzenten</h3><p>Erstelle einzigartige bio-reaktive Tracks. Exportiere Stems für jede DAW.</p></div>
+                <div class="use-case glass"><div class="use-case-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><h3>Wellness-Coaches</h3><p>Geführte Sessions mit Echtzeit Audio-Visual Biofeedback.</p></div>
+                <div class="use-case glass"><div class="use-case-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#9933FF" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div><h3>Live-Performer</h3><p>Synchronisiere Beleuchtung, Visuals und Sound mit deiner Bühnenpräsenz.</p></div>
+                <div class="use-case glass"><div class="use-case-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#FF1493" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><h3>VJ-Künstler</h3><p>Generiere Visuals aus Biosignalen. Multi-Output, NDI-Streaming.</p></div>
+                <div class="use-case glass"><div class="use-case-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><h3>Forscher</h3><p>HRV-Analyse, Kohärenz-Studien, Biofeedback-Experimente.</p></div>
+                <div class="use-case glass"><div class="use-case-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#9933FF" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><h3>Pädagogen</h3><p>Unterrichte Synthese, Musiktheorie mit interaktiven Tools.</p></div>
             </div>
         </div>
     </section>
 
-    <!-- Platforms -->
-    <section class="platforms-section">
+    <section class="platforms">
         <div class="container">
             <div class="section-header">
-                <h2>Funktioniert <span class="highlight-text">überall</span></h2>
+                <h2>Läuft <span class="text-glow-pink">Überall</span></h2>
                 <p>Eine Lizenz. Alle Plattformen. Jede Gerätekombination.</p>
             </div>
-
             <div class="platforms-grid">
                 <span class="platform-badge">iOS 15+</span>
                 <span class="platform-badge">macOS 12+</span>
@@ -1016,89 +397,52 @@
                 <span class="platform-badge">Windows 10+</span>
                 <span class="platform-badge">Linux</span>
             </div>
-
-            <p style="color: var(--text-muted); font-size: 14px;">Plugin-Formate: VST3, AU, AAX, AUv3, CLAP, LV2. Kompatibel mit allen großen DAWs.</p>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-top: var(--space-lg);">Plugin-Formate: VST3, AU, AAX, AUv3, CLAP, LV2. Kompatibel mit Ableton, Logic, Pro Tools, FL Studio, Reaper.</p>
         </div>
     </section>
 
-    <!-- Pricing -->
     <section class="pricing" id="pricing">
         <div class="container">
             <div class="section-header">
-                <h2>Einfache <span class="highlight-text">Preise</span></h2>
-                <p>Keine Abos. Für immer besitzen.</p>
+                <h2>Einfache <span class="text-glow-cyan">Preise</span></h2>
+                <p>Kein Abo. Für immer besitzen.</p>
             </div>
-
-            <div class="pricing-card">
+            <div class="pricing-card glass">
                 <div class="pricing-badge">LEBENSLANGE LIZENZ</div>
-                <h3 class="pricing-title">Komplettes Paket</h3>
+                <h3 class="pricing-title">Komplette Suite</h3>
                 <div class="pricing-price"><span>€</span>99</div>
-                <p class="pricing-desc">Einmalzahlung • Alle Funktionen inklusive</p>
-
+                <p class="pricing-desc">Einmaliger Kauf • Alle Features inklusive</p>
                 <ul class="pricing-features">
                     <li>100+ Instrumente & 50+ DSP-Effekte</li>
                     <li>50+ Visual-Modi & Projection Mapping</li>
-                    <li>DMX, Art-Net & Laser-Steuerung</li>
-                    <li>KI Komposition & Sound Design Tools</li>
+                    <li>DMX, Art-Net & ILDA Laser-Steuerung</li>
+                    <li>KI-Komposition & Sound-Design Tools</li>
                     <li>Alle Plugin-Formate (VST3, AU, AAX, CLAP)</li>
                     <li>iOS, Android, macOS, Windows, Linux</li>
-                    <li>Volles Eigentum an KI-generierten Inhalten</li>
+                    <li>Volle Eigentumsrechte an KI-generierten Inhalten</li>
                 </ul>
-
-                <a href="mailto:michaelterbuyken@gmail.com?subject=Echoelmusic%20Beta" class="btn-primary" style="display: block; text-align: center;">Kostenlose Beta beitreten</a>
-
-                <div class="pricing-note">
-                    <strong>Kostenloses Beta-Programm:</strong> Erhalte jetzt vollen Zugang. Hilf die Zukunft bio-reaktiver Audio-Visual Tools zu gestalten.
-                </div>
+                <a href="mailto:michaelterbuyken@gmail.com?subject=Echoelmusic%20Beta%20Zugang" class="btn-primary" style="display: block; text-align: center; width: 100%;">Kostenlose Beta Starten</a>
+                <div class="pricing-note"><strong>Kostenlose Beta:</strong> Voller Zugang jetzt. Hilf mit, die Zukunft bio-reaktiver Audio-Visual Tools zu gestalten.</div>
             </div>
         </div>
     </section>
 
-    <!-- CTA -->
     <section class="cta-section">
-        <h2>Bereit zu erschaffen?</h2>
+        <h2>Bereit Loszulegen?</h2>
         <p>Verwandle deinen Herzschlag in Musik, Visuals und Licht.</p>
-        <a href="mailto:michaelterbuyken@gmail.com?subject=Echoelmusic%20Beta" class="btn-primary">Kostenlose Beta beitreten</a>
+        <a href="mailto:michaelterbuyken@gmail.com?subject=Echoelmusic%20Beta%20Zugang" class="btn-primary">Kostenlose Beta Starten</a>
     </section>
 
-    <!-- Footer -->
     <footer>
         <div class="footer-content">
-            <div class="footer-brand">
-                <h3>Echoelmusic</h3>
-                <p>Professionelle bio-reaktive Audio-Visual Suite. Dein Herz, dein Sound, deine Kunst.</p>
-                <div class="footer-social">
-                    <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer" title="Instagram">IG</a>
-                    <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer" title="TikTok">TT</a>
-                </div>
-            </div>
-
-            <div class="footer-links">
-                <h4>Produkt</h4>
-                <a href="use-cases.html">Anwendungen</a>
-                <a href="faq.html">FAQ</a>
-                <a href="#pricing">Preise</a>
-            </div>
-
-            <div class="footer-links">
-                <h4>Rechtliches</h4>
-                <a href="datenschutz.html">Datenschutz</a>
-                <a href="agb.html">AGB</a>
-                <a href="gesundheit.html">Gesundheitshinweis</a>
-            </div>
-
-            <div class="footer-links">
-                <h4>Support</h4>
-                <a href="support.html">Hilfe-Center</a>
-                <a href="mailto:michaelterbuyken@gmail.com">Kontakt</a>
-            </div>
+            <div class="footer-brand"><h3>Echoelmusic</h3><p>Professionelle bio-reaktive Audio-Visual Suite. Dein Herz, dein Sound, deine Kunst.</p><div class="footer-social"><a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer" title="Instagram">IG</a><a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer" title="TikTok">TT</a></div></div>
+            <div class="footer-links"><h4>Produkt</h4><a href="#features">Features</a><a href="#demos">Demos</a><a href="#use-cases">Anwendungen</a><a href="#pricing">Preise</a></div>
+            <div class="footer-links"><h4>Rechtliches</h4><a href="../privacy.html">Datenschutz</a><a href="../terms.html">AGB</a><a href="../health.html">Gesundheitshinweis</a></div>
+            <div class="footer-links"><h4>Support</h4><a href="../faq.html">FAQ</a><a href="../support.html">Hilfe-Center</a><a href="mailto:michaelterbuyken@gmail.com">Kontakt</a></div>
         </div>
-
         <div class="footer-bottom">
             <p>© 2026 Echoelmusic. Alle Rechte vorbehalten.</p>
-            <div class="footer-disclaimer">
-                <strong>Haftungsausschluss:</strong> Echoelmusic ist ein professionelles Audio-Visual Produktionstool, kein Medizinprodukt. Biofeedback-Funktionen dienen ausschließlich kreativen und Wellness-Zwecken. KI-generierte Inhalte gehen vollständig in das Eigentum des Nutzers über.
-            </div>
+            <div class="footer-disclaimer"><strong>Hinweis:</strong> Echoelmusic ist ein professionelles Audio-Visual Produktionstool, kein Medizinprodukt. Biofeedback-Funktionen dienen ausschließlich kreativen und Wellness-Zwecken. Die Eigentumsrechte an KI-generierten Inhalten gehen bei Erstellung vollständig auf den Nutzer über.</div>
         </div>
     </footer>
 </body>
