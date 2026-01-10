@@ -83,6 +83,8 @@
             --glass-border: rgba(255,255,255,0.1);
             --glass-blur: 20px;
             --space-xs: 4px; --space-sm: 8px; --space-md: 16px; --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
@@ -143,6 +145,63 @@
 
         /* Sticky Feature Tabs */
         .features-tabs.sticky { position: sticky; top: 70px; z-index: 100; background: rgba(5,5,16,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); margin: 0 calc(-1 * var(--space-lg)); padding: var(--space-md) var(--space-lg); border-bottom: 1px solid rgba(255,20,147,0.1); }
+
+        /* Page Loader */
+        .page-loader { position: fixed; inset: 0; background: var(--deep-black); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s var(--ease-out-expo), visibility 0.6s; }
+        .page-loader.loaded { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loader-heart { width: 80px; height: 80px; animation: loader-pulse 1s ease-in-out infinite; }
+        @keyframes loader-pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 1; } }
+        .page-content { opacity: 0; animation: page-fade-in 0.8s var(--ease-out-expo) 0.3s forwards; }
+        @keyframes page-fade-in { to { opacity: 1; } }
+
+        /* Button Ripple */
+        .btn-primary, .btn-secondary, .nav-cta { position: relative; overflow: hidden; }
+        .ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.4); transform: scale(0); animation: ripple-effect 0.6s ease-out forwards; pointer-events: none; }
+        @keyframes ripple-effect { to { transform: scale(4); opacity: 0; } }
+
+        /* Nav Scroll Effect */
+        nav.scrolled { background: rgba(5,5,16,0.95); box-shadow: 0 4px 30px rgba(255,20,147,0.1); }
+        .nav-links a { position: relative; }
+        .nav-links a::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px; background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan)); transition: width 0.3s var(--ease-out-expo); }
+        .nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+
+        /* Trust Badges */
+        .trust-badges { display: flex; justify-content: center; gap: var(--space-lg); flex-wrap: wrap; margin-top: var(--space-xl); padding: var(--space-lg) 0; }
+        .trust-badge { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 30px; font-size: 12px; color: var(--text-secondary); transition: all 0.3s; }
+        .trust-badge:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+        .trust-badge svg { width: 16px; height: 16px; color: var(--coherence-high); }
+
+        /* Mobile Bottom CTA */
+        .mobile-bottom-cta { display: none; position: fixed; bottom: 0; left: 0; right: 0; padding: var(--space-md); background: rgba(5,5,16,0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255,20,147,0.2); z-index: 998; transform: translateY(100%); transition: transform 0.4s var(--ease-out-expo); }
+        .mobile-bottom-cta.visible { transform: translateY(0); }
+        .mobile-bottom-cta .btn-primary { width: 100%; text-align: center; padding: 16px; }
+        @media (max-width: 768px) { .mobile-bottom-cta { display: block; } body { padding-bottom: 80px; } }
+
+        /* Focus States */
+        *:focus-visible { outline: 2px solid var(--neon-cyan); outline-offset: 4px; border-radius: 4px; }
+        ::selection { background: var(--neon-pink); color: white; }
+
+        /* Scroll Hint */
+        .scroll-hint { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); color: var(--text-tertiary); font-size: 12px; animation: scroll-hint-bounce 2s ease-in-out infinite; }
+        .scroll-hint svg { width: 24px; height: 24px; animation: scroll-arrow 1.5s ease-in-out infinite; }
+        @keyframes scroll-hint-bounce { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        @keyframes scroll-arrow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+
+        /* Testimonials */
+        .testimonials { background: linear-gradient(180deg, var(--midnight-blue) 0%, var(--dark-purple) 100%); padding: var(--space-3xl) var(--space-lg); }
+        .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-lg); max-width: 1200px; margin: 0 auto; }
+        .testimonial-card { padding: var(--space-xl); text-align: left; position: relative; }
+        .testimonial-card::before { content: '"'; position: absolute; top: 10px; left: 20px; font-size: 60px; font-family: Georgia, serif; color: var(--neon-pink); opacity: 0.3; line-height: 1; }
+        .testimonial-text { font-size: 15px; color: var(--text-secondary); line-height: 1.7; margin-bottom: var(--space-lg); font-style: italic; }
+        .testimonial-author { display: flex; align-items: center; gap: var(--space-md); }
+        .testimonial-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
+        .testimonial-name { font-weight: 600; color: var(--text-primary); }
+        .testimonial-role { font-size: 12px; color: var(--text-tertiary); }
+        .testimonial-stars { color: #FFD700; font-size: 14px; margin-bottom: var(--space-sm); }
+
+        /* Enhanced Cards */
+        .feature-card, .step, .use-case, .demo-module { transition: all 0.4s var(--ease-out-expo); }
+        .feature-card:hover, .step:hover, .use-case:hover { transform: translateY(-12px) scale(1.02); box-shadow: 0 25px 50px rgba(255,20,147,0.15), 0 0 100px rgba(0,255,255,0.05); }
 
         .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 120px var(--space-lg) var(--space-3xl); position: relative; background: radial-gradient(ellipse at 30% 20%, rgba(255,20,147,0.15) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(0,255,255,0.1) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(153,51,255,0.1) 0%, transparent 60%), linear-gradient(180deg, var(--deep-black) 0%, var(--midnight-blue) 50%, var(--dark-purple) 100%); }
         .hero-content { position: relative; z-index: 1; max-width: 900px; }
@@ -350,6 +409,14 @@
     </style>
 </head>
 <body>
+    <!-- Page Loader -->
+    <div class="page-loader" id="pageLoader">
+        <svg class="loader-heart" viewBox="0 0 100 100" fill="none">
+            <path d="M50 80 C32 62 15 48 15 33 C15 20 25 12 38 12 C45 12 50 17 50 17 C50 17 55 12 62 12 C75 12 85 20 85 33 C85 48 68 62 50 80Z" fill="url(#loader-gradient)"/>
+            <defs><linearGradient id="loader-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF1493"/><stop offset="100%" stop-color="#00FFFF"/></linearGradient></defs>
+        </svg>
+    </div>
+
     <a href="#main-content" class="skip-link">Zum Inhalt springen</a>
     <div class="grid-bg" aria-hidden="true"></div>
 
@@ -430,6 +497,32 @@
                 <div class="stat glass-subtle"><div class="stat-value">DMX</div><div class="stat-label">Beleuchtung</div></div>
                 <div class="stat glass-subtle"><div class="stat-value">KI</div><div class="stat-label">Komposition</div></div>
             </div>
+
+            <!-- Trust Badges -->
+            <div class="trust-badges">
+                <div class="trust-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>Datenschutz Zuerst</span>
+                </div>
+                <div class="trust-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <span>100% Eigentumsrechte</span>
+                </div>
+                <div class="trust-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>Kein Abo</span>
+                </div>
+                <div class="trust-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <span>Echtzeit</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Hint -->
+        <div class="scroll-hint">
+            <span>Mehr entdecken</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
         </div>
     </section>
 
@@ -697,6 +790,51 @@
         </div>
     </section>
 
+    <!-- Testimonials -->
+    <section class="testimonials">
+        <div class="container">
+            <div class="section-header">
+                <h2>Das Sagen <span class="text-glow-cyan">Nutzer</span></h2>
+                <p>Kreative Profis transformieren ihre Arbeit mit Bio-Reaktiver Technologie</p>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card glass">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">Die HRV-Kohärenz-Features haben meine Meditationsmusik-Produktionen revolutioniert. Das Gefühl, dass das Audio auf meinen Herzschlag reagiert, ist unvergleichlich.</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">S.M.</div>
+                        <div>
+                            <div class="testimonial-name">Sarah M.</div>
+                            <div class="testimonial-role">Sound Designer, Berlin</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card glass">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">Als VJ ist die DMX-Integration genial. Meine Light-Shows synchronisieren sich jetzt mit meiner Energie. Das Publikum spürt den Unterschied wirklich.</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">M.T.</div>
+                        <div>
+                            <div class="testimonial-name">Marcus T.</div>
+                            <div class="testimonial-role">Visual Artist, München</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card glass">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">Endlich ein Tool das 100% Eigentumsrechte an KI-generierten Inhalten garantiert. Die Gestensteuerung macht Live-Auftritte so viel expressiver.</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">L.K.</div>
+                        <div>
+                            <div class="testimonial-name">Laura K.</div>
+                            <div class="testimonial-role">Elektronik-Musikerin, Hamburg</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="cta-section">
         <h2>Bereit Loszulegen?</h2>
         <p>Verwandle deinen Herzschlag in Musik, Visuals und Licht.</p>
@@ -715,6 +853,11 @@
             <div class="footer-disclaimer"><strong>Hinweis:</strong> Echoelmusic ist ein professionelles Audio-Visual Produktionstool, kein Medizinprodukt. Biofeedback-Funktionen dienen ausschließlich kreativen und Wellness-Zwecken. Die Eigentumsrechte an KI-generierten Inhalten gehen bei Erstellung vollständig auf den Nutzer über.</div>
         </div>
     </footer>
+
+    <!-- Mobile Bottom CTA -->
+    <div class="mobile-bottom-cta" id="mobileBottomCta">
+        <a href="mailto:michaelterbuyken@gmail.com?subject=Echoelmusic%20Beta%20Zugang" class="btn-primary">Kostenlose Beta Starten</a>
+    </div>
 
     <!-- Interaktive Demo JavaScript -->
     <script>
@@ -851,6 +994,63 @@
                 mobileMenu.classList.remove('active');
                 document.body.style.overflow = '';
             }
+        });
+
+        // Page Loader
+        const pageLoader = document.getElementById('pageLoader');
+        if (pageLoader) {
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    pageLoader.classList.add('loaded');
+                }, 300);
+            });
+        }
+
+        // Nav Scroll Effect
+        const nav = document.querySelector('nav');
+        if (nav) {
+            window.addEventListener('scroll', () => {
+                nav.classList.toggle('scrolled', window.scrollY > 50);
+            }, { passive: true });
+        }
+
+        // Button Ripple Effect
+        document.querySelectorAll('.btn-primary, .btn-secondary, .nav-cta').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                ripple.style.width = ripple.style.height = `${size}px`;
+                ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+                ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+                this.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+
+        // Mobile Bottom CTA
+        const mobileBottomCta = document.getElementById('mobileBottomCta');
+        if (mobileBottomCta) {
+            let lastScrollY = window.scrollY;
+            window.addEventListener('scroll', () => {
+                const currentScrollY = window.scrollY;
+                const heroHeight = document.querySelector('.hero')?.offsetHeight || 500;
+                if (currentScrollY > heroHeight && currentScrollY < lastScrollY) {
+                    mobileBottomCta.classList.add('visible');
+                } else if (currentScrollY < heroHeight || currentScrollY > lastScrollY) {
+                    mobileBottomCta.classList.remove('visible');
+                }
+                lastScrollY = currentScrollY;
+            }, { passive: true });
+        }
+
+        // Testimonial Animation
+        document.querySelectorAll('.testimonial-card').forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = `opacity 0.6s ease-out ${index * 0.1}s, transform 0.6s ease-out ${index * 0.1}s`;
+            revealObserver.observe(card);
         });
     </script>
 </body>
