@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main", "claude/repo-audit-quality-bYbII"]
+    branches: ["main", "claude/build-verification-launch-vD0lB"]
   workflow_dispatch:
 
 # Sets permissions for GITHUB_TOKEN
