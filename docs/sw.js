@@ -13,7 +13,8 @@ const STATIC_ASSETS = [
   '/Echoelmusic/de/index.html',
   '/Echoelmusic/favicon.svg',
   '/Echoelmusic/app-icon.svg',
-  '/Echoelmusic/manifest.json'
+  '/Echoelmusic/manifest.json',
+  '/Echoelmusic/version.json'
 ];
 
 // Install: Cache static assets
