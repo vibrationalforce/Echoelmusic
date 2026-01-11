@@ -121,8 +121,8 @@ else()
     message(STATUS "  → No licensing fees required!")
 endif()
 
-# Future: iPlug2 integration for JUCE-free desktop plugins
-option(USE_IPLUG2 "Use iPlug2 framework (MIT license, JUCE-free)" OFF)
+# RECOMMENDED: iPlug2 for JUCE-free desktop plugins (MIT license, FREE)
+option(USE_IPLUG2 "Use iPlug2 framework (MIT license, JUCE-free) - RECOMMENDED" OFF)
 if(USE_IPLUG2)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/iPlug2")
         message(STATUS "iPlug2 Framework: ENABLED (MIT License - Free!)")
