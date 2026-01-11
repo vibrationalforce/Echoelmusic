@@ -6,7 +6,7 @@
  * Background Sync, Push Notifications
  */
 
-const CACHE_NAME = 'echoelmusic-v2.0.0-isochronic';
+const CACHE_NAME = 'echoelmusic-v2.1.0-echosynth';
 const STATIC_ASSETS = [
   '/Echoelmusic/',
   '/Echoelmusic/index.html',

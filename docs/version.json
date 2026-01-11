@@ -1,20 +1,25 @@
 {
-  "version": "2.0.0-isochronic",
-  "build": "2026-01-11T10:15:00Z",
+  "version": "2.1.0-echosynth",
+  "build": "2026-01-11T11:00:00Z",
   "features": {
-    "isochronicTones": true,
+    "echoSynth": true,
+    "polyphonic": true,
+    "realTimeFilter": true,
+    "keyboardInput": true,
+    "touchInput": true,
     "pwa": true,
     "offlineMode": true,
     "webXR": "detection",
-    "webBluetooth": "hooks",
-    "visualEntrainment": true
+    "webBluetooth": "hooks"
   },
   "changelog": [
-    "Isochronic tones engine (50dB modulation, mono-compatible)",
+    "EchoSynth real-time synthesizer demo",
+    "Polyphonic playback with ADSR envelope",
+    "4 waveforms: Saw, Square, Sine, Triangle",
+    "Lowpass filter with cutoff and resonance",
+    "Keyboard input (A-K keys) + touch support",
+    "Production-focused design (not wellness)",
     "PWA install banner with offline support",
-    "Evidence-based design and disclaimers",
-    "WebXR detection for future glasses support",
-    "Web Bluetooth hooks for wearable integration",
-    "Visual entrainment synced to frequency"
+    "WebXR detection for future glasses support"
   ]
 }
