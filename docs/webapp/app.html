@@ -2,14 +2,25 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Echoelmusic - Bio-Reactive Audio-Visual Experience</title>
     <meta name="description" content="Transform your biometrics into music and visuals. Heart rate, HRV, breathing - all become art.">
     <meta name="theme-color" content="#0a0a0f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <!-- PWA -->
-    <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../app-icon.svg">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Echoelmusic WebApp">
+    <meta property="og:description" content="Bio-reactive audio-visual experience in your browser">
+    <meta property="og:type" content="website">
 
     <style>
         :root {
@@ -22,12 +33,23 @@
             --success: #44ff44;
             --warning: #ffaa00;
             --error: #ff4444;
+            --focus-ring: 0 0 0 2px var(--primary);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* Accessibility - Focus styles */
+        *:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
         }
 
         body {
@@ -35,7 +57,9 @@
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
+            min-height: 100dvh;
             overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* Header */
@@ -43,27 +67,31 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 2rem;
-            background: rgba(21, 21, 32, 0.9);
+            padding: 0.75rem 1rem;
+            background: rgba(21, 21, 32, 0.95);
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: bold;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
         }
 
         .header-controls {
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
             align-items: center;
         }
 
@@ -71,10 +99,10 @@
             display: flex;
             gap: 0.5rem;
             align-items: center;
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.75rem;
             background: var(--surface);
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
 
         .bio-status .heart {
@@ -84,40 +112,50 @@
 
         @keyframes heartbeat {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.15); }
         }
 
         .coherence-badge {
-            padding: 0.25rem 0.5rem;
+            padding: 0.2rem 0.5rem;
             border-radius: 10px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: bold;
         }
 
         .coherence-low { background: var(--error); }
-        .coherence-mid { background: var(--warning); }
+        .coherence-mid { background: var(--warning); color: #000; }
         .coherence-high { background: var(--success); color: #000; }
 
         /* Main Layout */
         .main-container {
             display: grid;
-            grid-template-columns: 280px 1fr 320px;
-            gap: 1rem;
-            padding: 5rem 1rem 1rem;
+            grid-template-columns: 260px 1fr 300px;
+            gap: 0.75rem;
+            padding: 4rem 0.75rem 0.75rem;
             min-height: 100vh;
+            min-height: 100dvh;
         }
 
-        @media (max-width: 1200px) {
+        @media (max-width: 1100px) {
+            .main-container {
+                grid-template-columns: 1fr 280px;
+            }
+            .left-panel { display: none; }
+        }
+
+        @media (max-width: 768px) {
             .main-container {
                 grid-template-columns: 1fr;
+                padding: 3.5rem 0.5rem 0.5rem;
             }
+            .left-panel, .right-panel { display: none; }
         }
 
         /* Panels */
         .panel {
             background: var(--surface);
-            border-radius: 12px;
-            padding: 1rem;
+            border-radius: 10px;
+            padding: 0.75rem;
             overflow: hidden;
         }
 
@@ -125,46 +163,49 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
             padding-bottom: 0.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
 
         .panel-title {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--text-dim);
         }
 
-        /* Left Panel - Controls */
+        /* Left Panel */
         .left-panel {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.75rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 5rem);
         }
 
-        /* Bio Source Selector */
+        /* Bio Source */
         .bio-source-selector {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.4rem;
             flex-wrap: wrap;
         }
 
         .bio-source-btn {
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.75rem;
             border: 1px solid var(--primary);
             background: transparent;
             color: var(--primary);
-            border-radius: 20px;
+            border-radius: 16px;
             cursor: pointer;
-            font-size: 0.8rem;
-            transition: all 0.2s;
+            font-size: 0.75rem;
+            transition: all 0.15s;
+            touch-action: manipulation;
         }
 
-        .bio-source-btn:hover {
-            background: rgba(0, 255, 204, 0.1);
+        .bio-source-btn:hover, .bio-source-btn:focus {
+            background: rgba(0, 255, 204, 0.15);
         }
 
         .bio-source-btn.active {
@@ -173,34 +214,35 @@
         }
 
         .bio-source-btn:disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
         }
 
-        /* Bio Data Display */
+        /* Bio Data Grid */
         .bio-data-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
+            gap: 0.5rem;
         }
 
         .bio-metric {
             background: rgba(0,0,0,0.3);
-            padding: 0.75rem;
+            padding: 0.6rem;
             border-radius: 8px;
             text-align: center;
         }
 
         .bio-metric-value {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: bold;
             color: var(--primary);
+            font-variant-numeric: tabular-nums;
         }
 
         .bio-metric-label {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--text-dim);
-            margin-top: 0.25rem;
+            margin-top: 0.2rem;
         }
 
         /* Breathing Guide */
@@ -208,42 +250,40 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 1rem;
+            padding: 0.75rem;
         }
 
         .breath-circle {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             background: radial-gradient(circle, var(--primary), transparent);
             opacity: 0.5;
-            transition: all 0.3s ease;
-        }
-
-        .breath-circle.inhale {
-            transform: scale(1.3);
-            opacity: 0.8;
+            transition: all 0.4s ease-out;
+            will-change: transform, opacity;
         }
 
         .breath-instruction {
-            margin-top: 1rem;
-            font-size: 0.9rem;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
             color: var(--text-dim);
         }
 
-        /* Center Panel - Visualizer */
+        /* Center Panel */
         .center-panel {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.75rem;
+            min-width: 0;
         }
 
         .visualizer-container {
             flex: 1;
-            min-height: 400px;
+            min-height: 300px;
             position: relative;
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
+            background: #000;
         }
 
         #visualizer {
@@ -254,7 +294,7 @@
 
         .viz-mode-selector {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.4rem;
             flex-wrap: wrap;
             padding: 0.5rem;
             background: rgba(0,0,0,0.5);
@@ -262,17 +302,18 @@
         }
 
         .viz-mode-btn {
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.75rem;
             background: transparent;
             border: none;
             color: var(--text-dim);
             cursor: pointer;
             border-radius: 6px;
-            font-size: 0.8rem;
-            transition: all 0.2s;
+            font-size: 0.75rem;
+            transition: all 0.15s;
+            touch-action: manipulation;
         }
 
-        .viz-mode-btn:hover {
+        .viz-mode-btn:hover, .viz-mode-btn:focus {
             background: rgba(255,255,255,0.1);
             color: var(--text);
         }
@@ -284,51 +325,48 @@
 
         /* Keyboard */
         .keyboard-container {
-            padding: 1rem;
+            padding: 0.75rem;
             background: linear-gradient(180deg, #2a2a3a, #1a1a2a);
-            border-radius: 12px;
+            border-radius: 10px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .keyboard {
             display: flex;
             justify-content: center;
             gap: 2px;
+            min-width: max-content;
             padding: 0.5rem;
         }
 
         .key {
-            width: 40px;
-            height: 120px;
-            background: linear-gradient(180deg, #fff, #eee);
+            width: 36px;
+            height: 110px;
+            background: linear-gradient(180deg, #fff, #e8e8e8);
             border: 1px solid #999;
             border-radius: 0 0 4px 4px;
             cursor: pointer;
             position: relative;
-            transition: all 0.1s;
-        }
-
-        .key:hover {
-            background: linear-gradient(180deg, #f0f0f0, #ddd);
+            transition: background 0.05s, transform 0.05s;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .key:active, .key.active {
             background: linear-gradient(180deg, #ddd, #ccc);
             transform: translateY(2px);
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
         }
 
         .key.black {
-            width: 28px;
-            height: 75px;
+            width: 24px;
+            height: 70px;
             background: linear-gradient(180deg, #333, #111);
             border-color: #000;
-            margin-left: -14px;
-            margin-right: -14px;
+            margin-left: -12px;
+            margin-right: -12px;
             z-index: 1;
-        }
-
-        .key.black:hover {
-            background: linear-gradient(180deg, #444, #222);
         }
 
         .key.black:active, .key.black.active {
@@ -337,62 +375,57 @@
 
         .key-label {
             position: absolute;
-            bottom: 5px;
+            bottom: 4px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             color: #666;
+            pointer-events: none;
         }
 
-        .key.black .key-label {
-            color: #888;
-        }
+        .key.black .key-label { color: #888; }
 
-        /* Right Panel - Sequencer & Wellness */
+        /* Right Panel */
         .right-panel {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.75rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 5rem);
         }
 
-        /* Sequencer Grid */
+        /* Sequencer */
         .sequencer-grid {
             display: grid;
-            grid-template-columns: 60px repeat(16, 1fr);
+            grid-template-columns: 50px repeat(16, 1fr);
             gap: 2px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
         }
 
         .seq-channel-name {
             display: flex;
             align-items: center;
-            padding: 0.25rem;
+            padding: 0.2rem;
             color: var(--text-dim);
+            font-size: 0.6rem;
         }
 
         .seq-step {
             aspect-ratio: 1;
-            background: rgba(0,0,0,0.3);
-            border-radius: 4px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 3px;
             cursor: pointer;
-            transition: all 0.1s;
+            transition: background 0.1s;
+            touch-action: manipulation;
         }
 
-        .seq-step:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
-        .seq-step.active {
-            background: var(--primary);
-        }
-
-        .seq-step.current {
-            box-shadow: 0 0 0 2px var(--secondary);
-        }
+        .seq-step:hover { background: rgba(255,255,255,0.15); }
+        .seq-step.active { background: var(--primary); }
+        .seq-step.current { box-shadow: inset 0 0 0 2px var(--secondary); }
 
         .seq-controls {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.4rem;
             margin-top: 0.5rem;
         }
 
@@ -404,321 +437,380 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.8rem;
+            touch-action: manipulation;
         }
 
-        .seq-btn.stop {
-            background: var(--error);
-        }
+        .seq-btn.stop { background: var(--error); color: #fff; }
 
-        /* BPM Control */
         .bpm-control {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             margin-top: 0.5rem;
+            font-size: 0.8rem;
         }
 
         .bpm-control input[type="range"] {
             flex: 1;
             accent-color: var(--primary);
+            height: 4px;
         }
 
         .bpm-value {
-            width: 60px;
+            width: 45px;
             text-align: center;
             font-weight: bold;
+            font-variant-numeric: tabular-nums;
         }
 
         /* Wellness Tips */
         .wellness-tips {
-            padding: 1rem;
-            background: linear-gradient(135deg, rgba(0,255,204,0.1), rgba(255,0,170,0.1));
+            padding: 0.75rem;
+            background: linear-gradient(135deg, rgba(0,255,204,0.08), rgba(255,0,170,0.08));
             border-radius: 8px;
         }
 
         .tip-content {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             line-height: 1.5;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
         }
 
         .tip-source {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--text-dim);
         }
 
         .tip-disclaimer {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             color: var(--text-dim);
-            margin-top: 0.5rem;
+            margin-top: 0.4rem;
             font-style: italic;
+            opacity: 0.7;
         }
 
-        /* Volume Control */
+        /* Volume */
         .volume-control {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
 
         .volume-control input {
-            flex: 1;
+            width: 60px;
             accent-color: var(--primary);
         }
 
         /* Buttons */
-        .btn {
-            padding: 0.75rem 1.5rem;
+        .btn-icon {
+            background: none;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: var(--bg);
-        }
-
-        .btn-primary:hover {
-            filter: brightness(1.1);
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            border: 1px solid var(--primary);
             color: var(--primary);
-        }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal {
-            background: var(--surface);
-            padding: 2rem;
-            border-radius: 16px;
-            max-width: 500px;
-            width: 90%;
-            text-align: center;
-        }
-
-        .modal h2 {
-            margin-bottom: 1rem;
-        }
-
-        .modal p {
-            color: var(--text-dim);
-            margin-bottom: 1.5rem;
-            line-height: 1.6;
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 1rem;
         }
 
         /* Start Screen */
         .start-screen {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             background: var(--bg);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 200;
-            transition: all 0.5s;
+            transition: opacity 0.4s, visibility 0.4s;
         }
 
         .start-screen.hidden {
             opacity: 0;
+            visibility: hidden;
             pointer-events: none;
         }
 
         .start-logo {
-            font-size: 3rem;
+            font-size: clamp(2rem, 8vw, 3.5rem);
             font-weight: bold;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 1rem;
+            background-clip: text;
+            margin-bottom: 0.75rem;
         }
 
         .start-tagline {
             color: var(--text-dim);
             margin-bottom: 2rem;
-            font-size: 1.2rem;
+            font-size: clamp(1rem, 3vw, 1.25rem);
         }
 
         .start-btn {
-            padding: 1rem 3rem;
-            font-size: 1.2rem;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: var(--bg);
             border: none;
             border-radius: 30px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            touch-action: manipulation;
         }
 
-        .start-btn:hover {
+        .start-btn:hover, .start-btn:focus {
             transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(0,255,204,0.5);
+            box-shadow: 0 0 40px rgba(0,255,204,0.4);
         }
 
         .start-disclaimer {
             position: absolute;
-            bottom: 2rem;
-            font-size: 0.75rem;
+            bottom: 1.5rem;
+            left: 1rem;
+            right: 1rem;
+            font-size: 0.7rem;
             color: var(--text-dim);
-            max-width: 600px;
             text-align: center;
             line-height: 1.5;
+            opacity: 0.8;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header {
-                padding: 0.75rem 1rem;
-            }
-
-            .main-container {
-                padding: 4rem 0.5rem 0.5rem;
-            }
-
-            .left-panel, .right-panel {
-                display: none;
-            }
-
-            .key {
-                width: 30px;
-                height: 100px;
-            }
-
-            .key.black {
-                width: 22px;
-                height: 60px;
-                margin-left: -11px;
-                margin-right: -11px;
-            }
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            transition: opacity 0.3s;
         }
 
-        /* Loading animation */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--primary);
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--surface);
+            border-top-color: var(--primary);
             border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Error Toast */
+        .toast {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--surface);
+            border: 1px solid var(--error);
+            color: var(--text);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            z-index: 400;
+            transition: transform 0.3s;
+            max-width: 90vw;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Offline Banner */
+        .offline-banner {
+            position: fixed;
+            top: 3.5rem;
+            left: 0;
+            right: 0;
+            background: var(--warning);
+            color: #000;
+            text-align: center;
+            padding: 0.4rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 99;
+            display: none;
+        }
+
+        .offline-banner.show { display: block; }
+
+        /* Mobile bottom bar */
+        @media (max-width: 768px) {
+            .mobile-bar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: var(--surface);
+                border-top: 1px solid rgba(255,255,255,0.1);
+                padding: 0.5rem;
+                display: flex;
+                justify-content: space-around;
+                z-index: 100;
+            }
+
+            .mobile-bar button {
+                background: none;
+                border: none;
+                color: var(--text-dim);
+                font-size: 0.7rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.2rem;
+                cursor: pointer;
+                padding: 0.25rem 0.5rem;
+            }
+
+            .mobile-bar button.active { color: var(--primary); }
+            .mobile-bar button svg { width: 20px; height: 20px; }
+
+            .main-container {
+                padding-bottom: 4rem;
+            }
+
+            .keyboard-container {
+                padding: 0.5rem;
+            }
+
+            .key {
+                width: 28px;
+                height: 90px;
+            }
+
+            .key.black {
+                width: 18px;
+                height: 55px;
+                margin-left: -9px;
+                margin-right: -9px;
+            }
+        }
+
+        /* Print */
+        @media print {
+            .header, .start-screen, .mobile-bar { display: none; }
+        }
+
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            :root {
+                --primary: #00ffff;
+                --secondary: #ff00ff;
+                --bg: #000000;
+                --surface: #1a1a1a;
+            }
+        }
     </style>
 </head>
 <body>
 
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner" role="status" aria-label="Loading"></div>
+</div>
+
+<!-- Offline Banner -->
+<div class="offline-banner" id="offlineBanner" role="alert">
+    Offline Mode - Some features may be limited
+</div>
+
+<!-- Error Toast -->
+<div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
 <!-- Start Screen -->
-<div class="start-screen" id="startScreen">
-    <div class="start-logo">Echoelmusic</div>
+<div class="start-screen" id="startScreen" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+    <div class="start-logo" id="startTitle">Echoelmusic</div>
     <div class="start-tagline">Bio-Reactive Audio-Visual Experience</div>
-    <button class="start-btn" id="startBtn">Start Experience</button>
+    <button class="start-btn" id="startBtn" autofocus>Start Experience</button>
     <div class="start-disclaimer">
-        <strong>Disclaimer:</strong> This is for creative and educational purposes only. Not a medical device. Not medical advice.
+        <strong>Disclaimer:</strong> For creative and educational purposes only. Not a medical device.
         Biometric features are for relaxation and creative expression. Consult healthcare professionals for health concerns.
     </div>
 </div>
 
 <!-- Header -->
-<header class="header">
-    <div class="logo">Echoelmusic</div>
+<header class="header" role="banner">
+    <a href="../index.html" class="logo" aria-label="Echoelmusic Home">Echoelmusic</a>
     <div class="header-controls">
-        <div class="bio-status">
-            <span class="heart">♥</span>
-            <span id="headerHR">--</span> BPM
-            <span class="coherence-badge coherence-mid" id="headerCoherence">--</span>
+        <div class="bio-status" aria-label="Bio Status">
+            <span class="heart" aria-hidden="true">♥</span>
+            <span id="headerHR" aria-label="Heart Rate">--</span>
+            <span aria-hidden="true">BPM</span>
+            <span class="coherence-badge coherence-mid" id="headerCoherence" aria-label="Coherence">--</span>
         </div>
         <div class="volume-control">
-            <span>🔊</span>
-            <input type="range" id="volumeSlider" min="0" max="100" value="70">
+            <span aria-hidden="true">🔊</span>
+            <input type="range" id="volumeSlider" min="0" max="100" value="70"
+                   aria-label="Volume" title="Volume">
         </div>
     </div>
 </header>
 
 <!-- Main Content -->
-<div class="main-container">
+<main class="main-container" role="main">
 
-    <!-- Left Panel - Bio & Controls -->
-    <div class="left-panel">
+    <!-- Left Panel -->
+    <aside class="left-panel" aria-label="Controls">
 
         <!-- Bio Source -->
-        <div class="panel">
+        <section class="panel" aria-labelledby="bioSourceTitle">
             <div class="panel-header">
-                <span class="panel-title">Bio Source</span>
+                <span class="panel-title" id="bioSourceTitle">Bio Source</span>
             </div>
-            <div class="bio-source-selector">
-                <button class="bio-source-btn active" id="btnSimulator">Simulator</button>
-                <button class="bio-source-btn" id="btnBluetooth">Bluetooth</button>
-                <button class="bio-source-btn" id="btnCamera">Camera</button>
+            <div class="bio-source-selector" role="group" aria-label="Select bio data source">
+                <button class="bio-source-btn active" id="btnSimulator" aria-pressed="true">Simulator</button>
+                <button class="bio-source-btn" id="btnBluetooth" aria-pressed="false">Bluetooth</button>
+                <button class="bio-source-btn" id="btnCamera" aria-pressed="false">Camera</button>
             </div>
-            <div id="bioSourceStatus" style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-dim);">
+            <div id="bioSourceStatus" style="margin-top: 0.4rem; font-size: 0.75rem; color: var(--text-dim);" aria-live="polite">
                 Simulator active
             </div>
-        </div>
+        </section>
 
         <!-- Bio Data -->
-        <div class="panel">
+        <section class="panel" aria-labelledby="bioDataTitle">
             <div class="panel-header">
-                <span class="panel-title">Biometrics</span>
+                <span class="panel-title" id="bioDataTitle">Biometrics</span>
             </div>
             <div class="bio-data-grid">
                 <div class="bio-metric">
-                    <div class="bio-metric-value" id="bioHR">72</div>
+                    <div class="bio-metric-value" id="bioHR" aria-label="Heart Rate">72</div>
                     <div class="bio-metric-label">Heart Rate</div>
                 </div>
                 <div class="bio-metric">
-                    <div class="bio-metric-value" id="bioHRV">45</div>
+                    <div class="bio-metric-value" id="bioHRV" aria-label="HRV">45</div>
                     <div class="bio-metric-label">HRV (ms)</div>
                 </div>
                 <div class="bio-metric">
-                    <div class="bio-metric-value" id="bioCoherence">50%</div>
+                    <div class="bio-metric-value" id="bioCoherence" aria-label="Coherence">50%</div>
                     <div class="bio-metric-label">Coherence</div>
                 </div>
                 <div class="bio-metric">
-                    <div class="bio-metric-value" id="bioBreath">6</div>
+                    <div class="bio-metric-value" id="bioBreath" aria-label="Breathing Rate">6</div>
                     <div class="bio-metric-label">Breath/min</div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Breathing Guide -->
-        <div class="panel">
+        <section class="panel" aria-labelledby="breathingTitle">
             <div class="panel-header">
-                <span class="panel-title">Breathing Guide</span>
-                <select id="breathPattern" style="background: var(--bg); color: var(--text); border: 1px solid var(--primary); padding: 0.25rem; border-radius: 4px;">
+                <span class="panel-title" id="breathingTitle">Breathing Guide</span>
+                <select id="breathPattern" aria-label="Breathing pattern"
+                        style="background: var(--bg); color: var(--text); border: 1px solid var(--primary); padding: 0.2rem; border-radius: 4px; font-size: 0.75rem;">
                     <option value="off">Off</option>
                     <option value="coherence">Coherence (6/min)</option>
                     <option value="box">Box (4-4-4-4)</option>
@@ -727,104 +819,136 @@
                 </select>
             </div>
             <div class="breathing-guide">
-                <div class="breath-circle" id="breathCircle"></div>
-                <div class="breath-instruction" id="breathInstruction">Select a pattern</div>
+                <div class="breath-circle" id="breathCircle" role="img" aria-label="Breathing visualization"></div>
+                <div class="breath-instruction" id="breathInstruction" aria-live="polite">Select a pattern</div>
             </div>
-        </div>
+        </section>
 
-    </div>
+    </aside>
 
-    <!-- Center Panel - Visualizer & Keyboard -->
+    <!-- Center Panel -->
     <div class="center-panel">
 
         <!-- Visualizer -->
-        <div class="panel visualizer-container">
-            <canvas id="visualizer"></canvas>
-        </div>
+        <section class="panel visualizer-container" aria-labelledby="vizTitle">
+            <h2 class="visually-hidden" id="vizTitle">Audio Visualization</h2>
+            <canvas id="visualizer" aria-label="Audio visualization canvas"></canvas>
+        </section>
 
-        <!-- Viz Mode Selector -->
-        <div class="viz-mode-selector">
-            <button class="viz-mode-btn active" data-mode="waveform">Waveform</button>
-            <button class="viz-mode-btn" data-mode="spectrum">Spectrum</button>
-            <button class="viz-mode-btn" data-mode="mandala">Mandala</button>
-            <button class="viz-mode-btn" data-mode="particles">Particles</button>
-            <button class="viz-mode-btn" data-mode="quantum">Quantum</button>
-            <button class="viz-mode-btn" data-mode="coherence">Coherence</button>
-            <button class="viz-mode-btn" data-mode="sacredGeometry">Sacred</button>
-            <button class="viz-mode-btn" data-mode="cosmic">Cosmic</button>
-        </div>
+        <!-- Viz Mode -->
+        <nav class="viz-mode-selector" aria-label="Visualization modes">
+            <button class="viz-mode-btn active" data-mode="waveform" aria-pressed="true">Waveform</button>
+            <button class="viz-mode-btn" data-mode="spectrum" aria-pressed="false">Spectrum</button>
+            <button class="viz-mode-btn" data-mode="mandala" aria-pressed="false">Mandala</button>
+            <button class="viz-mode-btn" data-mode="particles" aria-pressed="false">Particles</button>
+            <button class="viz-mode-btn" data-mode="quantum" aria-pressed="false">Quantum</button>
+            <button class="viz-mode-btn" data-mode="coherence" aria-pressed="false">Coherence</button>
+            <button class="viz-mode-btn" data-mode="sacredGeometry" aria-pressed="false">Sacred</button>
+            <button class="viz-mode-btn" data-mode="cosmic" aria-pressed="false">Cosmic</button>
+        </nav>
 
         <!-- Keyboard -->
-        <div class="keyboard-container">
-            <div class="keyboard" id="keyboard">
+        <section class="keyboard-container" aria-labelledby="keyboardTitle">
+            <h2 class="visually-hidden" id="keyboardTitle">Piano Keyboard</h2>
+            <div class="keyboard" id="keyboard" role="group" aria-label="Piano keyboard - use A-K keys to play">
                 <!-- Generated by JS -->
             </div>
-        </div>
+        </section>
 
     </div>
 
-    <!-- Right Panel - Sequencer & Wellness -->
-    <div class="right-panel">
+    <!-- Right Panel -->
+    <aside class="right-panel" aria-label="Sequencer and Info">
 
         <!-- Sequencer -->
-        <div class="panel">
+        <section class="panel" aria-labelledby="seqTitle">
             <div class="panel-header">
-                <span class="panel-title">Step Sequencer</span>
+                <span class="panel-title" id="seqTitle">Step Sequencer</span>
             </div>
-            <div class="sequencer-grid" id="sequencerGrid">
+            <div class="sequencer-grid" id="sequencerGrid" role="grid" aria-label="Drum pattern grid">
                 <!-- Generated by JS -->
             </div>
             <div class="seq-controls">
-                <button class="seq-btn" id="seqPlay">▶ Play</button>
-                <button class="seq-btn stop" id="seqStop">■ Stop</button>
+                <button class="seq-btn" id="seqPlay" aria-label="Play sequencer">▶ Play</button>
+                <button class="seq-btn stop" id="seqStop" aria-label="Stop sequencer">■ Stop</button>
             </div>
             <div class="bpm-control">
-                <span>BPM:</span>
-                <input type="range" id="bpmSlider" min="60" max="180" value="120">
-                <span class="bpm-value" id="bpmValue">120</span>
+                <label for="bpmSlider">BPM:</label>
+                <input type="range" id="bpmSlider" min="60" max="180" value="120" aria-label="Tempo">
+                <span class="bpm-value" id="bpmValue" aria-live="polite">120</span>
             </div>
-            <div style="margin-top: 0.5rem;">
-                <select id="seqPreset" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--primary); border-radius: 4px;">
-                    <option value="">Load Preset...</option>
-                    <option value="fourOnFloor">Four on Floor</option>
-                    <option value="breakbeat">Breakbeat</option>
-                    <option value="trap">Trap</option>
-                    <option value="minimal">Minimal</option>
-                    <option value="ambient">Ambient</option>
-                </select>
-            </div>
-        </div>
+            <select id="seqPreset" aria-label="Load drum pattern preset"
+                    style="width: 100%; padding: 0.4rem; margin-top: 0.4rem; background: var(--bg); color: var(--text); border: 1px solid var(--primary); border-radius: 4px; font-size: 0.75rem;">
+                <option value="">Load Preset...</option>
+                <option value="fourOnFloor">Four on Floor</option>
+                <option value="breakbeat">Breakbeat</option>
+                <option value="trap">Trap</option>
+                <option value="minimal">Minimal</option>
+                <option value="ambient">Ambient</option>
+            </select>
+        </section>
 
-        <!-- Wellness Tips -->
-        <div class="panel">
+        <!-- Wellness -->
+        <section class="panel" aria-labelledby="wellnessTitle">
             <div class="panel-header">
-                <span class="panel-title">Wellness Insight</span>
-                <button id="newTipBtn" style="background: none; border: none; color: var(--primary); cursor: pointer;">↻</button>
+                <span class="panel-title" id="wellnessTitle">Wellness Insight</span>
+                <button class="btn-icon" id="newTipBtn" aria-label="Get new tip">↻</button>
             </div>
             <div class="wellness-tips" id="wellnessTip">
                 <div class="tip-content">Loading tip...</div>
                 <div class="tip-source"></div>
                 <div class="tip-disclaimer">For educational purposes only. Not medical advice.</div>
             </div>
-        </div>
+        </section>
 
-        <!-- Session Stats -->
-        <div class="panel">
+        <!-- Session -->
+        <section class="panel" aria-labelledby="sessionTitle">
             <div class="panel-header">
-                <span class="panel-title">Session</span>
+                <span class="panel-title" id="sessionTitle">Session</span>
             </div>
-            <div style="font-size: 0.85rem; color: var(--text-dim);">
-                <div>Duration: <span id="sessionDuration">0:00</span></div>
+            <div style="font-size: 0.8rem; color: var(--text-dim);">
+                <div>Duration: <span id="sessionDuration" aria-live="polite">0:00</span></div>
                 <div>High Coherence: <span id="sessionCoherence">0 min</span></div>
-                <div>Stress Level: <span id="sessionStress">--</span></div>
+                <div>Stress: <span id="sessionStress">--</span></div>
             </div>
-        </div>
+        </section>
 
-    </div>
+    </aside>
 
-</div>
+</main>
 
-<!-- Scripts -->
+<!-- Mobile Bottom Bar -->
+<nav class="mobile-bar" aria-label="Mobile navigation" style="display: none;">
+    <button id="mobileViz" class="active" aria-label="Visualizer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+        Viz
+    </button>
+    <button id="mobileSeq" aria-label="Sequencer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        Seq
+    </button>
+    <button id="mobileBio" aria-label="Bio Data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        Bio
+    </button>
+</nav>
+
+<!-- Visually Hidden (for screen readers) -->
+<style>
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+</style>
+
+<!-- Combined Engine Scripts -->
 <script src="js/core/AudioEngine.js"></script>
 <script src="js/core/BioEngine.js"></script>
 <script src="js/core/VisualEngine.js"></script>
@@ -833,44 +957,100 @@
 <script src="js/core/Sequencer.js"></script>
 
 <script>
-// ==================== APP INITIALIZATION ====================
+// ==================== ERROR HANDLING ====================
+window.onerror = function(msg, url, line, col, error) {
+    console.error('[App Error]', msg, error);
+    showToast('An error occurred. Please refresh.');
+    return false;
+};
+
+window.onunhandledrejection = function(event) {
+    console.error('[Promise Error]', event.reason);
+};
+
+function showToast(message, duration = 4000) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), duration);
+}
+
+// ==================== OFFLINE DETECTION ====================
+function updateOnlineStatus() {
+    const banner = document.getElementById('offlineBanner');
+    banner.classList.toggle('show', !navigator.onLine);
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+
+// ==================== APP STATE ====================
 let audioEngine, bioEngine, visualEngine, midiEngine, wellnessEngine, sequencer;
 let isStarted = false;
 let sessionStartTime = null;
 
-// DOM Elements
-const startScreen = document.getElementById('startScreen');
-const startBtn = document.getElementById('startBtn');
+// ==================== INITIALIZATION ====================
+document.addEventListener('DOMContentLoaded', () => {
+    // Hide loading after DOM ready
+    setTimeout(() => {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }, 300);
+
+    // Mobile bar detection
+    if (window.innerWidth <= 768) {
+        document.querySelector('.mobile-bar').style.display = 'flex';
+    }
+    window.addEventListener('resize', () => {
+        document.querySelector('.mobile-bar').style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+    });
+});
 
 // Start button
-startBtn.addEventListener('click', async () => {
-    await initializeApp();
-    startScreen.classList.add('hidden');
-    isStarted = true;
-    sessionStartTime = Date.now();
-    updateSessionStats();
+document.getElementById('startBtn').addEventListener('click', async () => {
+    try {
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+        await initializeApp();
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('loadingOverlay').classList.add('hidden');
+        isStarted = true;
+        sessionStartTime = Date.now();
+        updateSessionStats();
+    } catch (error) {
+        console.error('[Init Error]', error);
+        document.getElementById('loadingOverlay').classList.add('hidden');
+        showToast('Failed to initialize. Please try again.');
+    }
 });
 
 async function initializeApp() {
-    // Initialize engines
+    // Audio Engine
     audioEngine = new AudioEngine();
     await audioEngine.init();
 
+    // Bio Engine
     bioEngine = new BioEngine();
     bioEngine.startSimulator();
 
+    // Visual Engine
     visualEngine = new VisualEngine('visualizer');
     visualEngine.start();
 
+    // MIDI Engine (optional - may fail in some browsers)
     midiEngine = new MIDIEngine();
-    await midiEngine.init();
+    try {
+        await midiEngine.init();
+    } catch (e) {
+        console.log('[MIDI] Not available:', e.message);
+    }
 
+    // Wellness Engine
     wellnessEngine = new WellnessEngine(bioEngine);
     wellnessEngine.startSession();
 
+    // Sequencer
     sequencer = new Sequencer(audioEngine);
 
-    // Setup connections
+    // Setup UI
     setupBioListeners();
     setupMIDIListeners();
     setupUIListeners();
@@ -878,13 +1058,13 @@ async function initializeApp() {
     setupSequencerUI();
     loadWellnessTip();
 
-    console.log('[App] Initialized');
+    console.log('[App] Ready');
 }
 
 // ==================== BIO LISTENERS ====================
 function setupBioListeners() {
     bioEngine.addListener((data) => {
-        // Update UI
+        // Update displays
         document.getElementById('bioHR').textContent = data.heartRate;
         document.getElementById('bioHRV').textContent = data.hrv;
         document.getElementById('bioCoherence').textContent = Math.round(data.coherence * 100) + '%';
@@ -892,9 +1072,9 @@ function setupBioListeners() {
 
         // Header
         document.getElementById('headerHR').textContent = data.heartRate;
-        const coherenceBadge = document.getElementById('headerCoherence');
-        coherenceBadge.textContent = Math.round(data.coherence * 100) + '%';
-        coherenceBadge.className = 'coherence-badge ' +
+        const badge = document.getElementById('headerCoherence');
+        badge.textContent = Math.round(data.coherence * 100) + '%';
+        badge.className = 'coherence-badge ' +
             (data.coherence > 0.6 ? 'coherence-high' : data.coherence > 0.3 ? 'coherence-mid' : 'coherence-low');
 
         // Update engines
@@ -902,18 +1082,21 @@ function setupBioListeners() {
         if (visualEngine) visualEngine.onBioData(data);
         if (sequencer) sequencer.onBioData(data);
 
-        // Breathing circle animation
-        const breathCircle = document.getElementById('breathCircle');
-        breathCircle.style.transform = `scale(${0.8 + data.breathPhase * 0.5})`;
-        breathCircle.style.opacity = 0.3 + data.breathPhase * 0.5;
+        // Breathing circle
+        const circle = document.getElementById('breathCircle');
+        circle.style.transform = `scale(${0.7 + data.breathPhase * 0.6})`;
+        circle.style.opacity = 0.3 + data.breathPhase * 0.5;
 
-        // Heartbeat animation sync
-        document.querySelector('.heart').style.animationDuration = (60 / data.heartRate) + 's';
+        // Heartbeat animation
+        const heart = document.querySelector('.heart');
+        if (heart) heart.style.animationDuration = (60 / data.heartRate) + 's';
     });
 }
 
 // ==================== MIDI LISTENERS ====================
 function setupMIDIListeners() {
+    if (!midiEngine) return;
+
     midiEngine.addListener((event) => {
         if (event.type === 'noteOn') {
             audioEngine.noteOn(event.note, event.velocity);
@@ -921,58 +1104,43 @@ function setupMIDIListeners() {
         } else if (event.type === 'noteOff') {
             audioEngine.noteOff(event.note);
             highlightKey(event.note, false);
-        } else if (event.type === 'cc') {
-            handleCC(event.controller, event.value);
-        }
-    });
-}
-
-function handleCC(controller, value) {
-    // Map common CCs
-    switch (controller) {
-        case 1: // Mod wheel → Filter
-            audioEngine.filter.frequency.setTargetAtTime(
-                500 + value * 7500,
+        } else if (event.type === 'cc' && event.controller === 1) {
+            // Mod wheel → filter
+            audioEngine.filter?.frequency.setTargetAtTime(
+                500 + event.value * 7500,
                 audioEngine.audioContext.currentTime, 0.1
             );
-            break;
-        case 7: // Volume
-            audioEngine.setVolume(value);
-            document.getElementById('volumeSlider').value = value * 100;
-            break;
-    }
+        }
+    });
 }
 
 // ==================== UI LISTENERS ====================
 function setupUIListeners() {
     // Volume
     document.getElementById('volumeSlider').addEventListener('input', (e) => {
-        audioEngine.setVolume(e.target.value / 100);
+        audioEngine?.setVolume(e.target.value / 100);
     });
 
-    // Bio source buttons
-    document.getElementById('btnSimulator').addEventListener('click', () => {
-        bioEngine.stop();
-        bioEngine.startSimulator();
-        updateBioSourceUI('simulator');
-    });
+    // Bio source
+    const bioSources = [
+        { id: 'btnSimulator', mode: 'simulator', start: () => bioEngine.startSimulator() },
+        { id: 'btnBluetooth', mode: 'bluetooth', start: () => bioEngine.startBluetooth() },
+        { id: 'btnCamera', mode: 'camera', start: () => bioEngine.startCamera() }
+    ];
 
-    document.getElementById('btnBluetooth').addEventListener('click', async () => {
-        try {
-            const deviceName = await bioEngine.startBluetooth();
-            updateBioSourceUI('bluetooth', deviceName);
-        } catch (e) {
-            alert('Bluetooth not available: ' + e.message);
-        }
-    });
-
-    document.getElementById('btnCamera').addEventListener('click', async () => {
-        try {
-            await bioEngine.startCamera();
-            updateBioSourceUI('camera');
-        } catch (e) {
-            alert('Camera not available: ' + e.message);
-        }
+    bioSources.forEach(({ id, mode, start }) => {
+        document.getElementById(id).addEventListener('click', async () => {
+            try {
+                bioEngine.stop();
+                const result = await start();
+                updateBioSourceUI(mode, typeof result === 'string' ? result : '');
+            } catch (e) {
+                showToast(mode + ' not available: ' + e.message);
+                // Fall back to simulator
+                bioEngine.startSimulator();
+                updateBioSourceUI('simulator');
+            }
+        });
     });
 
     // Breathing pattern
@@ -988,45 +1156,52 @@ function setupUIListeners() {
         }
     });
 
-    // Viz mode buttons
+    // Viz modes
     document.querySelectorAll('.viz-mode-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.viz-mode-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.viz-mode-btn').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-pressed', 'false');
+            });
             btn.classList.add('active');
-            visualEngine.setMode(btn.dataset.mode);
+            btn.setAttribute('aria-pressed', 'true');
+            visualEngine?.setMode(btn.dataset.mode);
         });
     });
 
-    // Sequencer controls
+    // Sequencer
     document.getElementById('seqPlay').addEventListener('click', () => {
-        audioEngine.resume();
-        sequencer.start();
+        audioEngine?.resume();
+        sequencer?.start();
     });
 
     document.getElementById('seqStop').addEventListener('click', () => {
-        sequencer.stop();
+        sequencer?.stop();
     });
 
     document.getElementById('bpmSlider').addEventListener('input', (e) => {
-        sequencer.setBpm(parseInt(e.target.value));
+        sequencer?.setBpm(parseInt(e.target.value));
         document.getElementById('bpmValue').textContent = e.target.value;
     });
 
     document.getElementById('seqPreset').addEventListener('change', (e) => {
         if (e.target.value) {
-            sequencer.loadPreset(e.target.value);
+            sequencer?.loadPreset(e.target.value);
             updateSequencerUI();
             e.target.value = '';
         }
     });
 
-    // Wellness tip refresh
+    // Wellness tip
     document.getElementById('newTipBtn').addEventListener('click', loadWellnessTip);
 }
 
 function updateBioSourceUI(source, extra = '') {
-    document.querySelectorAll('.bio-source-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('btn' + source.charAt(0).toUpperCase() + source.slice(1)).classList.add('active');
+    document.querySelectorAll('.bio-source-btn').forEach(btn => {
+        const isActive = btn.id === 'btn' + source.charAt(0).toUpperCase() + source.slice(1);
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
     document.getElementById('bioSourceStatus').textContent =
         source.charAt(0).toUpperCase() + source.slice(1) + ' active' + (extra ? ': ' + extra : '');
 }
@@ -1035,58 +1210,41 @@ function updateBioSourceUI(source, extra = '') {
 function setupKeyboard() {
     const keyboard = document.getElementById('keyboard');
     const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C'];
-    const octave = 4;
-    const startNote = 60; // Middle C
+    const startNote = 60;
 
     notes.forEach((note, i) => {
         const isBlack = note.includes('#');
-        const key = document.createElement('div');
+        const key = document.createElement('button');
         key.className = 'key' + (isBlack ? ' black' : '');
         key.dataset.note = startNote + i;
+        key.setAttribute('aria-label', note + '4');
 
         if (!isBlack) {
             const label = document.createElement('span');
             label.className = 'key-label';
-            label.textContent = note + octave;
+            label.textContent = note;
+            label.setAttribute('aria-hidden', 'true');
             key.appendChild(label);
         }
 
-        // Mouse events
-        key.addEventListener('mousedown', (e) => {
+        // Pointer events (mouse + touch)
+        key.addEventListener('pointerdown', (e) => {
             e.preventDefault();
-            audioEngine.resume();
-            const noteNum = parseInt(key.dataset.note);
-            audioEngine.noteOn(noteNum);
+            audioEngine?.resume();
+            audioEngine?.noteOn(parseInt(key.dataset.note));
             key.classList.add('active');
         });
 
-        key.addEventListener('mouseup', () => {
-            const noteNum = parseInt(key.dataset.note);
-            audioEngine.noteOff(noteNum);
+        key.addEventListener('pointerup', () => {
+            audioEngine?.noteOff(parseInt(key.dataset.note));
             key.classList.remove('active');
         });
 
-        key.addEventListener('mouseleave', () => {
+        key.addEventListener('pointerleave', () => {
             if (key.classList.contains('active')) {
-                const noteNum = parseInt(key.dataset.note);
-                audioEngine.noteOff(noteNum);
+                audioEngine?.noteOff(parseInt(key.dataset.note));
                 key.classList.remove('active');
             }
-        });
-
-        // Touch events
-        key.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            audioEngine.resume();
-            const noteNum = parseInt(key.dataset.note);
-            audioEngine.noteOn(noteNum);
-            key.classList.add('active');
-        });
-
-        key.addEventListener('touchend', () => {
-            const noteNum = parseInt(key.dataset.note);
-            audioEngine.noteOff(noteNum);
-            key.classList.remove('active');
         });
 
         keyboard.appendChild(key);
@@ -1095,38 +1253,26 @@ function setupKeyboard() {
 
 function highlightKey(noteNum, active) {
     const key = document.querySelector(`.key[data-note="${noteNum}"]`);
-    if (key) {
-        if (active) key.classList.add('active');
-        else key.classList.remove('active');
-    }
+    if (key) key.classList.toggle('active', active);
 }
 
-// Computer keyboard
+// Computer keyboard mapping
+const keyMap = { a:60, w:61, s:62, e:63, d:64, f:65, t:66, g:67, y:68, h:69, u:70, j:71, k:72 };
+
 document.addEventListener('keydown', (e) => {
-    if (!isStarted || e.repeat) return;
-
-    const keyMap = {
-        'a': 60, 'w': 61, 's': 62, 'e': 63, 'd': 64, 'f': 65, 't': 66,
-        'g': 67, 'y': 68, 'h': 69, 'u': 70, 'j': 71, 'k': 72
-    };
-
+    if (!isStarted || e.repeat || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
     const note = keyMap[e.key.toLowerCase()];
     if (note) {
-        audioEngine.resume();
-        audioEngine.noteOn(note);
+        audioEngine?.resume();
+        audioEngine?.noteOn(note);
         highlightKey(note, true);
     }
 });
 
 document.addEventListener('keyup', (e) => {
-    const keyMap = {
-        'a': 60, 'w': 61, 's': 62, 'e': 63, 'd': 64, 'f': 65, 't': 66,
-        'g': 67, 'y': 68, 'h': 69, 'u': 70, 'j': 71, 'k': 72
-    };
-
     const note = keyMap[e.key.toLowerCase()];
     if (note) {
-        audioEngine.noteOff(note);
+        audioEngine?.noteOff(note);
         highlightKey(note, false);
     }
 });
@@ -1134,10 +1280,8 @@ document.addEventListener('keyup', (e) => {
 // ==================== SEQUENCER UI ====================
 function setupSequencerUI() {
     updateSequencerUI();
-
-    sequencer.addListener((event) => {
+    sequencer?.addListener((event) => {
         if (event.type === 'step') {
-            // Update current step highlight
             document.querySelectorAll('.seq-step').forEach(s => s.classList.remove('current'));
             document.querySelectorAll(`.seq-step[data-step="${event.step}"]`).forEach(s => {
                 s.classList.add('current');
@@ -1147,26 +1291,28 @@ function setupSequencerUI() {
 }
 
 function updateSequencerUI() {
+    if (!sequencer) return;
     const grid = document.getElementById('sequencerGrid');
     grid.innerHTML = '';
 
     sequencer.channels.forEach((channel, chIndex) => {
-        // Channel name
         const name = document.createElement('div');
         name.className = 'seq-channel-name';
         name.textContent = channel.name;
         grid.appendChild(name);
 
-        // Steps
         for (let step = 0; step < 16; step++) {
-            const stepEl = document.createElement('div');
+            const stepEl = document.createElement('button');
             stepEl.className = 'seq-step' + (channel.pattern[step] ? ' active' : '');
             stepEl.dataset.channel = chIndex;
             stepEl.dataset.step = step;
+            stepEl.setAttribute('aria-label', `${channel.name} step ${step + 1}`);
+            stepEl.setAttribute('aria-pressed', channel.pattern[step] ? 'true' : 'false');
 
             stepEl.addEventListener('click', () => {
                 sequencer.toggleStep(chIndex, step);
                 stepEl.classList.toggle('active');
+                stepEl.setAttribute('aria-pressed', stepEl.classList.contains('active') ? 'true' : 'false');
             });
 
             grid.appendChild(stepEl);
@@ -1176,6 +1322,7 @@ function updateSequencerUI() {
 
 // ==================== WELLNESS ====================
 function loadWellnessTip() {
+    if (!wellnessEngine) return;
     const tip = wellnessEngine.getTip();
     const tipEl = document.getElementById('wellnessTip');
     tipEl.querySelector('.tip-content').textContent = tip.tip;
@@ -1203,7 +1350,7 @@ function updateSessionStats() {
     setTimeout(updateSessionStats, 1000);
 }
 
-// ==================== AUDIO DATA TO VISUALIZER ====================
+// ==================== AUDIO VISUALIZATION LOOP ====================
 function audioLoop() {
     if (audioEngine && visualEngine) {
         visualEngine.setAudioData(
@@ -1216,9 +1363,24 @@ function audioLoop() {
 audioLoop();
 
 // Resize handler
+let resizeTimeout;
 window.addEventListener('resize', () => {
-    if (visualEngine) visualEngine.resize();
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        visualEngine?.resize();
+    }, 100);
 });
+
+// ==================== SERVICE WORKER ====================
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('../sw.js')
+            .then(() => console.log('[PWA] Ready'))
+            .catch(err => console.log('[PWA] Error:', err));
+    });
+}
+
+console.log('%c Echoelmusic WebApp ', 'background: linear-gradient(90deg, #00ffcc, #ff00aa); color: #0a0a0f; font-weight: bold; padding: 4px 8px; border-radius: 4px;');
 </script>
 
 </body>
