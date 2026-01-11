@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Echoelmusic - Bio-Reactive Audio-Visual Experience</title>
+    <meta name="description" content="Transform your biometrics into music and visuals. Heart rate, HRV, breathing - all become art.">
+    <meta name="theme-color" content="#0a0a0f">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+    <style>
+        :root {
+            --primary: #00ffcc;
+            --secondary: #ff00aa;
+            --bg: #0a0a0f;
+            --surface: #151520;
+            --text: #ffffff;
+            --text-dim: #888899;
+            --success: #44ff44;
+            --warning: #ffaa00;
+            --error: #ff4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: rgba(21, 21, 32, 0.9);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .bio-status {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: var(--surface);
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .bio-status .heart {
+            color: #ff6b6b;
+            animation: heartbeat 1s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .coherence-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .coherence-low { background: var(--error); }
+        .coherence-mid { background: var(--warning); }
+        .coherence-high { background: var(--success); color: #000; }
+
+        /* Main Layout */
+        .main-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            gap: 1rem;
+            padding: 5rem 1rem 1rem;
+            min-height: 100vh;
+        }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panels */
+        .panel {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+        }
+
+        /* Left Panel - Controls */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Bio Source Selector */
+        .bio-source-selector {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .bio-source-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .bio-source-btn:hover {
+            background: rgba(0, 255, 204, 0.1);
+        }
+
+        .bio-source-btn.active {
+            background: var(--primary);
+            color: var(--bg);
+        }
+
+        .bio-source-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Bio Data Display */
+        .bio-data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .bio-metric {
+            background: rgba(0,0,0,0.3);
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .bio-metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .bio-metric-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 0.25rem;
+        }
+
+        /* Breathing Guide */
+        .breathing-guide {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .breath-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--primary), transparent);
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .breath-circle.inhale {
+            transform: scale(1.3);
+            opacity: 0.8;
+        }
+
+        .breath-instruction {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        /* Center Panel - Visualizer */
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .visualizer-container {
+            flex: 1;
+            min-height: 400px;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #visualizer {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .viz-mode-selector {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            padding: 0.5rem;
+            background: rgba(0,0,0,0.5);
+            border-radius: 8px;
+        }
+
+        .viz-mode-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .viz-mode-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
+        }
+
+        .viz-mode-btn.active {
+            background: var(--primary);
+            color: var(--bg);
+        }
+
+        /* Keyboard */
+        .keyboard-container {
+            padding: 1rem;
+            background: linear-gradient(180deg, #2a2a3a, #1a1a2a);
+            border-radius: 12px;
+        }
+
+        .keyboard {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            padding: 0.5rem;
+        }
+
+        .key {
+            width: 40px;
+            height: 120px;
+            background: linear-gradient(180deg, #fff, #eee);
+            border: 1px solid #999;
+            border-radius: 0 0 4px 4px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.1s;
+        }
+
+        .key:hover {
+            background: linear-gradient(180deg, #f0f0f0, #ddd);
+        }
+
+        .key:active, .key.active {
+            background: linear-gradient(180deg, #ddd, #ccc);
+            transform: translateY(2px);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .key.black {
+            width: 28px;
+            height: 75px;
+            background: linear-gradient(180deg, #333, #111);
+            border-color: #000;
+            margin-left: -14px;
+            margin-right: -14px;
+            z-index: 1;
+        }
+
+        .key.black:hover {
+            background: linear-gradient(180deg, #444, #222);
+        }
+
+        .key.black:active, .key.black.active {
+            background: linear-gradient(180deg, #222, #000);
+        }
+
+        .key-label {
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .key.black .key-label {
+            color: #888;
+        }
+
+        /* Right Panel - Sequencer & Wellness */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Sequencer Grid */
+        .sequencer-grid {
+            display: grid;
+            grid-template-columns: 60px repeat(16, 1fr);
+            gap: 2px;
+            font-size: 0.7rem;
+        }
+
+        .seq-channel-name {
+            display: flex;
+            align-items: center;
+            padding: 0.25rem;
+            color: var(--text-dim);
+        }
+
+        .seq-step {
+            aspect-ratio: 1;
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .seq-step:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .seq-step.active {
+            background: var(--primary);
+        }
+
+        .seq-step.current {
+            box-shadow: 0 0 0 2px var(--secondary);
+        }
+
+        .seq-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .seq-btn {
+            flex: 1;
+            padding: 0.5rem;
+            background: var(--primary);
+            color: var(--bg);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .seq-btn.stop {
+            background: var(--error);
+        }
+
+        /* BPM Control */
+        .bpm-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .bpm-control input[type="range"] {
+            flex: 1;
+            accent-color: var(--primary);
+        }
+
+        .bpm-value {
+            width: 60px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Wellness Tips */
+        .wellness-tips {
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(0,255,204,0.1), rgba(255,0,170,0.1));
+            border-radius: 8px;
+        }
+
+        .tip-content {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+        }
+
+        .tip-source {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        .tip-disclaimer {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        /* Volume Control */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .volume-control input {
+            flex: 1;
+            accent-color: var(--primary);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--bg);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal h2 {
+            margin-bottom: 1rem;
+        }
+
+        .modal p {
+            color: var(--text-dim);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        /* Start Screen */
+        .start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            transition: all 0.5s;
+        }
+
+        .start-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .start-logo {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .start-tagline {
+            color: var(--text-dim);
+            margin-bottom: 2rem;
+            font-size: 1.2rem;
+        }
+
+        .start-btn {
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--bg);
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0,255,204,0.5);
+        }
+
+        .start-disclaimer {
+            position: absolute;
+            bottom: 2rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            max-width: 600px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 0.75rem 1rem;
+            }
+
+            .main-container {
+                padding: 4rem 0.5rem 0.5rem;
+            }
+
+            .left-panel, .right-panel {
+                display: none;
+            }
+
+            .key {
+                width: 30px;
+                height: 100px;
+            }
+
+            .key.black {
+                width: 22px;
+                height: 60px;
+                margin-left: -11px;
+                margin-right: -11px;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Start Screen -->
+<div class="start-screen" id="startScreen">
+    <div class="start-logo">Echoelmusic</div>
+    <div class="start-tagline">Bio-Reactive Audio-Visual Experience</div>
+    <button class="start-btn" id="startBtn">Start Experience</button>
+    <div class="start-disclaimer">
+        <strong>Disclaimer:</strong> This is for creative and educational purposes only. Not a medical device. Not medical advice.
+        Biometric features are for relaxation and creative expression. Consult healthcare professionals for health concerns.
+    </div>
+</div>
+
+<!-- Header -->
+<header class="header">
+    <div class="logo">Echoelmusic</div>
+    <div class="header-controls">
+        <div class="bio-status">
+            <span class="heart">♥</span>
+            <span id="headerHR">--</span> BPM
+            <span class="coherence-badge coherence-mid" id="headerCoherence">--</span>
+        </div>
+        <div class="volume-control">
+            <span>🔊</span>
+            <input type="range" id="volumeSlider" min="0" max="100" value="70">
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<div class="main-container">
+
+    <!-- Left Panel - Bio & Controls -->
+    <div class="left-panel">
+
+        <!-- Bio Source -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Bio Source</span>
+            </div>
+            <div class="bio-source-selector">
+                <button class="bio-source-btn active" id="btnSimulator">Simulator</button>
+                <button class="bio-source-btn" id="btnBluetooth">Bluetooth</button>
+                <button class="bio-source-btn" id="btnCamera">Camera</button>
+            </div>
+            <div id="bioSourceStatus" style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-dim);">
+                Simulator active
+            </div>
+        </div>
+
+        <!-- Bio Data -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Biometrics</span>
+            </div>
+            <div class="bio-data-grid">
+                <div class="bio-metric">
+                    <div class="bio-metric-value" id="bioHR">72</div>
+                    <div class="bio-metric-label">Heart Rate</div>
+                </div>
+                <div class="bio-metric">
+                    <div class="bio-metric-value" id="bioHRV">45</div>
+                    <div class="bio-metric-label">HRV (ms)</div>
+                </div>
+                <div class="bio-metric">
+                    <div class="bio-metric-value" id="bioCoherence">50%</div>
+                    <div class="bio-metric-label">Coherence</div>
+                </div>
+                <div class="bio-metric">
+                    <div class="bio-metric-value" id="bioBreath">6</div>
+                    <div class="bio-metric-label">Breath/min</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Breathing Guide -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Breathing Guide</span>
+                <select id="breathPattern" style="background: var(--bg); color: var(--text); border: 1px solid var(--primary); padding: 0.25rem; border-radius: 4px;">
+                    <option value="off">Off</option>
+                    <option value="coherence">Coherence (6/min)</option>
+                    <option value="box">Box (4-4-4-4)</option>
+                    <option value="478">4-7-8</option>
+                    <option value="calming">Calming</option>
+                </select>
+            </div>
+            <div class="breathing-guide">
+                <div class="breath-circle" id="breathCircle"></div>
+                <div class="breath-instruction" id="breathInstruction">Select a pattern</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Center Panel - Visualizer & Keyboard -->
+    <div class="center-panel">
+
+        <!-- Visualizer -->
+        <div class="panel visualizer-container">
+            <canvas id="visualizer"></canvas>
+        </div>
+
+        <!-- Viz Mode Selector -->
+        <div class="viz-mode-selector">
+            <button class="viz-mode-btn active" data-mode="waveform">Waveform</button>
+            <button class="viz-mode-btn" data-mode="spectrum">Spectrum</button>
+            <button class="viz-mode-btn" data-mode="mandala">Mandala</button>
+            <button class="viz-mode-btn" data-mode="particles">Particles</button>
+            <button class="viz-mode-btn" data-mode="quantum">Quantum</button>
+            <button class="viz-mode-btn" data-mode="coherence">Coherence</button>
+            <button class="viz-mode-btn" data-mode="sacredGeometry">Sacred</button>
+            <button class="viz-mode-btn" data-mode="cosmic">Cosmic</button>
+        </div>
+
+        <!-- Keyboard -->
+        <div class="keyboard-container">
+            <div class="keyboard" id="keyboard">
+                <!-- Generated by JS -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Panel - Sequencer & Wellness -->
+    <div class="right-panel">
+
+        <!-- Sequencer -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Step Sequencer</span>
+            </div>
+            <div class="sequencer-grid" id="sequencerGrid">
+                <!-- Generated by JS -->
+            </div>
+            <div class="seq-controls">
+                <button class="seq-btn" id="seqPlay">▶ Play</button>
+                <button class="seq-btn stop" id="seqStop">■ Stop</button>
+            </div>
+            <div class="bpm-control">
+                <span>BPM:</span>
+                <input type="range" id="bpmSlider" min="60" max="180" value="120">
+                <span class="bpm-value" id="bpmValue">120</span>
+            </div>
+            <div style="margin-top: 0.5rem;">
+                <select id="seqPreset" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--primary); border-radius: 4px;">
+                    <option value="">Load Preset...</option>
+                    <option value="fourOnFloor">Four on Floor</option>
+                    <option value="breakbeat">Breakbeat</option>
+                    <option value="trap">Trap</option>
+                    <option value="minimal">Minimal</option>
+                    <option value="ambient">Ambient</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Wellness Tips -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Wellness Insight</span>
+                <button id="newTipBtn" style="background: none; border: none; color: var(--primary); cursor: pointer;">↻</button>
+            </div>
+            <div class="wellness-tips" id="wellnessTip">
+                <div class="tip-content">Loading tip...</div>
+                <div class="tip-source"></div>
+                <div class="tip-disclaimer">For educational purposes only. Not medical advice.</div>
+            </div>
+        </div>
+
+        <!-- Session Stats -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Session</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-dim);">
+                <div>Duration: <span id="sessionDuration">0:00</span></div>
+                <div>High Coherence: <span id="sessionCoherence">0 min</span></div>
+                <div>Stress Level: <span id="sessionStress">--</span></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Scripts -->
+<script src="js/core/AudioEngine.js"></script>
+<script src="js/core/BioEngine.js"></script>
+<script src="js/core/VisualEngine.js"></script>
+<script src="js/core/MIDIEngine.js"></script>
+<script src="js/core/WellnessEngine.js"></script>
+<script src="js/core/Sequencer.js"></script>
+
+<script>
+// ==================== APP INITIALIZATION ====================
+let audioEngine, bioEngine, visualEngine, midiEngine, wellnessEngine, sequencer;
+let isStarted = false;
+let sessionStartTime = null;
+
+// DOM Elements
+const startScreen = document.getElementById('startScreen');
+const startBtn = document.getElementById('startBtn');
+
+// Start button
+startBtn.addEventListener('click', async () => {
+    await initializeApp();
+    startScreen.classList.add('hidden');
+    isStarted = true;
+    sessionStartTime = Date.now();
+    updateSessionStats();
+});
+
+async function initializeApp() {
+    // Initialize engines
+    audioEngine = new AudioEngine();
+    await audioEngine.init();
+
+    bioEngine = new BioEngine();
+    bioEngine.startSimulator();
+
+    visualEngine = new VisualEngine('visualizer');
+    visualEngine.start();
+
+    midiEngine = new MIDIEngine();
+    await midiEngine.init();
+
+    wellnessEngine = new WellnessEngine(bioEngine);
+    wellnessEngine.startSession();
+
+    sequencer = new Sequencer(audioEngine);
+
+    // Setup connections
+    setupBioListeners();
+    setupMIDIListeners();
+    setupUIListeners();
+    setupKeyboard();
+    setupSequencerUI();
+    loadWellnessTip();
+
+    console.log('[App] Initialized');
+}
+
+// ==================== BIO LISTENERS ====================
+function setupBioListeners() {
+    bioEngine.addListener((data) => {
+        // Update UI
+        document.getElementById('bioHR').textContent = data.heartRate;
+        document.getElementById('bioHRV').textContent = data.hrv;
+        document.getElementById('bioCoherence').textContent = Math.round(data.coherence * 100) + '%';
+        document.getElementById('bioBreath').textContent = data.breathingRate.toFixed(1);
+
+        // Header
+        document.getElementById('headerHR').textContent = data.heartRate;
+        const coherenceBadge = document.getElementById('headerCoherence');
+        coherenceBadge.textContent = Math.round(data.coherence * 100) + '%';
+        coherenceBadge.className = 'coherence-badge ' +
+            (data.coherence > 0.6 ? 'coherence-high' : data.coherence > 0.3 ? 'coherence-mid' : 'coherence-low');
+
+        // Update engines
+        if (audioEngine) audioEngine.onBioData(data);
+        if (visualEngine) visualEngine.onBioData(data);
+        if (sequencer) sequencer.onBioData(data);
+
+        // Breathing circle animation
+        const breathCircle = document.getElementById('breathCircle');
+        breathCircle.style.transform = `scale(${0.8 + data.breathPhase * 0.5})`;
+        breathCircle.style.opacity = 0.3 + data.breathPhase * 0.5;
+
+        // Heartbeat animation sync
+        document.querySelector('.heart').style.animationDuration = (60 / data.heartRate) + 's';
+    });
+}
+
+// ==================== MIDI LISTENERS ====================
+function setupMIDIListeners() {
+    midiEngine.addListener((event) => {
+        if (event.type === 'noteOn') {
+            audioEngine.noteOn(event.note, event.velocity);
+            highlightKey(event.note, true);
+        } else if (event.type === 'noteOff') {
+            audioEngine.noteOff(event.note);
+            highlightKey(event.note, false);
+        } else if (event.type === 'cc') {
+            handleCC(event.controller, event.value);
+        }
+    });
+}
+
+function handleCC(controller, value) {
+    // Map common CCs
+    switch (controller) {
+        case 1: // Mod wheel → Filter
+            audioEngine.filter.frequency.setTargetAtTime(
+                500 + value * 7500,
+                audioEngine.audioContext.currentTime, 0.1
+            );
+            break;
+        case 7: // Volume
+            audioEngine.setVolume(value);
+            document.getElementById('volumeSlider').value = value * 100;
+            break;
+    }
+}
+
+// ==================== UI LISTENERS ====================
+function setupUIListeners() {
+    // Volume
+    document.getElementById('volumeSlider').addEventListener('input', (e) => {
+        audioEngine.setVolume(e.target.value / 100);
+    });
+
+    // Bio source buttons
+    document.getElementById('btnSimulator').addEventListener('click', () => {
+        bioEngine.stop();
+        bioEngine.startSimulator();
+        updateBioSourceUI('simulator');
+    });
+
+    document.getElementById('btnBluetooth').addEventListener('click', async () => {
+        try {
+            const deviceName = await bioEngine.startBluetooth();
+            updateBioSourceUI('bluetooth', deviceName);
+        } catch (e) {
+            alert('Bluetooth not available: ' + e.message);
+        }
+    });
+
+    document.getElementById('btnCamera').addEventListener('click', async () => {
+        try {
+            await bioEngine.startCamera();
+            updateBioSourceUI('camera');
+        } catch (e) {
+            alert('Camera not available: ' + e.message);
+        }
+    });
+
+    // Breathing pattern
+    document.getElementById('breathPattern').addEventListener('change', (e) => {
+        const pattern = e.target.value;
+        if (pattern === 'off') {
+            bioEngine.stopBreathingGuide();
+            document.getElementById('breathInstruction').textContent = 'Select a pattern';
+        } else {
+            const info = bioEngine.startBreathingGuide(pattern);
+            document.getElementById('breathInstruction').textContent =
+                `${info.bpm.toFixed(1)} breaths/min`;
+        }
+    });
+
+    // Viz mode buttons
+    document.querySelectorAll('.viz-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.viz-mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            visualEngine.setMode(btn.dataset.mode);
+        });
+    });
+
+    // Sequencer controls
+    document.getElementById('seqPlay').addEventListener('click', () => {
+        audioEngine.resume();
+        sequencer.start();
+    });
+
+    document.getElementById('seqStop').addEventListener('click', () => {
+        sequencer.stop();
+    });
+
+    document.getElementById('bpmSlider').addEventListener('input', (e) => {
+        sequencer.setBpm(parseInt(e.target.value));
+        document.getElementById('bpmValue').textContent = e.target.value;
+    });
+
+    document.getElementById('seqPreset').addEventListener('change', (e) => {
+        if (e.target.value) {
+            sequencer.loadPreset(e.target.value);
+            updateSequencerUI();
+            e.target.value = '';
+        }
+    });
+
+    // Wellness tip refresh
+    document.getElementById('newTipBtn').addEventListener('click', loadWellnessTip);
+}
+
+function updateBioSourceUI(source, extra = '') {
+    document.querySelectorAll('.bio-source-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('btn' + source.charAt(0).toUpperCase() + source.slice(1)).classList.add('active');
+    document.getElementById('bioSourceStatus').textContent =
+        source.charAt(0).toUpperCase() + source.slice(1) + ' active' + (extra ? ': ' + extra : '');
+}
+
+// ==================== KEYBOARD ====================
+function setupKeyboard() {
+    const keyboard = document.getElementById('keyboard');
+    const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C'];
+    const octave = 4;
+    const startNote = 60; // Middle C
+
+    notes.forEach((note, i) => {
+        const isBlack = note.includes('#');
+        const key = document.createElement('div');
+        key.className = 'key' + (isBlack ? ' black' : '');
+        key.dataset.note = startNote + i;
+
+        if (!isBlack) {
+            const label = document.createElement('span');
+            label.className = 'key-label';
+            label.textContent = note + octave;
+            key.appendChild(label);
+        }
+
+        // Mouse events
+        key.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            audioEngine.resume();
+            const noteNum = parseInt(key.dataset.note);
+            audioEngine.noteOn(noteNum);
+            key.classList.add('active');
+        });
+
+        key.addEventListener('mouseup', () => {
+            const noteNum = parseInt(key.dataset.note);
+            audioEngine.noteOff(noteNum);
+            key.classList.remove('active');
+        });
+
+        key.addEventListener('mouseleave', () => {
+            if (key.classList.contains('active')) {
+                const noteNum = parseInt(key.dataset.note);
+                audioEngine.noteOff(noteNum);
+                key.classList.remove('active');
+            }
+        });
+
+        // Touch events
+        key.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            audioEngine.resume();
+            const noteNum = parseInt(key.dataset.note);
+            audioEngine.noteOn(noteNum);
+            key.classList.add('active');
+        });
+
+        key.addEventListener('touchend', () => {
+            const noteNum = parseInt(key.dataset.note);
+            audioEngine.noteOff(noteNum);
+            key.classList.remove('active');
+        });
+
+        keyboard.appendChild(key);
+    });
+}
+
+function highlightKey(noteNum, active) {
+    const key = document.querySelector(`.key[data-note="${noteNum}"]`);
+    if (key) {
+        if (active) key.classList.add('active');
+        else key.classList.remove('active');
+    }
+}
+
+// Computer keyboard
+document.addEventListener('keydown', (e) => {
+    if (!isStarted || e.repeat) return;
+
+    const keyMap = {
+        'a': 60, 'w': 61, 's': 62, 'e': 63, 'd': 64, 'f': 65, 't': 66,
+        'g': 67, 'y': 68, 'h': 69, 'u': 70, 'j': 71, 'k': 72
+    };
+
+    const note = keyMap[e.key.toLowerCase()];
+    if (note) {
+        audioEngine.resume();
+        audioEngine.noteOn(note);
+        highlightKey(note, true);
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    const keyMap = {
+        'a': 60, 'w': 61, 's': 62, 'e': 63, 'd': 64, 'f': 65, 't': 66,
+        'g': 67, 'y': 68, 'h': 69, 'u': 70, 'j': 71, 'k': 72
+    };
+
+    const note = keyMap[e.key.toLowerCase()];
+    if (note) {
+        audioEngine.noteOff(note);
+        highlightKey(note, false);
+    }
+});
+
+// ==================== SEQUENCER UI ====================
+function setupSequencerUI() {
+    updateSequencerUI();
+
+    sequencer.addListener((event) => {
+        if (event.type === 'step') {
+            // Update current step highlight
+            document.querySelectorAll('.seq-step').forEach(s => s.classList.remove('current'));
+            document.querySelectorAll(`.seq-step[data-step="${event.step}"]`).forEach(s => {
+                s.classList.add('current');
+            });
+        }
+    });
+}
+
+function updateSequencerUI() {
+    const grid = document.getElementById('sequencerGrid');
+    grid.innerHTML = '';
+
+    sequencer.channels.forEach((channel, chIndex) => {
+        // Channel name
+        const name = document.createElement('div');
+        name.className = 'seq-channel-name';
+        name.textContent = channel.name;
+        grid.appendChild(name);
+
+        // Steps
+        for (let step = 0; step < 16; step++) {
+            const stepEl = document.createElement('div');
+            stepEl.className = 'seq-step' + (channel.pattern[step] ? ' active' : '');
+            stepEl.dataset.channel = chIndex;
+            stepEl.dataset.step = step;
+
+            stepEl.addEventListener('click', () => {
+                sequencer.toggleStep(chIndex, step);
+                stepEl.classList.toggle('active');
+            });
+
+            grid.appendChild(stepEl);
+        }
+    });
+}
+
+// ==================== WELLNESS ====================
+function loadWellnessTip() {
+    const tip = wellnessEngine.getTip();
+    const tipEl = document.getElementById('wellnessTip');
+    tipEl.querySelector('.tip-content').textContent = tip.tip;
+    tipEl.querySelector('.tip-source').textContent = '— ' + tip.source;
+}
+
+// ==================== SESSION STATS ====================
+function updateSessionStats() {
+    if (!isStarted) return;
+
+    const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    document.getElementById('sessionDuration').textContent =
+        `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+    if (wellnessEngine) {
+        const data = wellnessEngine.getExtendedData();
+        document.getElementById('sessionCoherence').textContent =
+            wellnessEngine.highCoherenceMinutes.toFixed(1) + ' min';
+        document.getElementById('sessionStress').textContent =
+            data.stress < 0.3 ? 'Low ✓' : data.stress < 0.6 ? 'Medium' : 'High';
+    }
+
+    setTimeout(updateSessionStats, 1000);
+}
+
+// ==================== AUDIO DATA TO VISUALIZER ====================
+function audioLoop() {
+    if (audioEngine && visualEngine) {
+        visualEngine.setAudioData(
+            audioEngine.getFrequencyData(),
+            audioEngine.getTimeDomainData()
+        );
+    }
+    requestAnimationFrame(audioLoop);
+}
+audioLoop();
+
+// Resize handler
+window.addEventListener('resize', () => {
+    if (visualEngine) visualEngine.resize();
+});
+</script>
+
+</body>
+</html>
