@@ -1190,6 +1190,8 @@ async function initializeApp() {
     // Bio Engine
     bioEngine = new BioEngine();
     bioEngine.startSimulator();
+    // Notify Echoela that simulator is active
+    if (echoela) echoela.setBioSourceActive('simulator');
 
     // Visual Engine
     visualEngine = new VisualEngine('visualizer');

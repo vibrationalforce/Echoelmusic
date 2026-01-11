@@ -1303,10 +1303,7 @@ class Echoela {
     }
 }
 
-// Global instance
-let echoela = null;
-
 // Export for module use
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { Echoela };
+    module.exports = Echoela;
 }
