@@ -54,8 +54,23 @@ class VisualEngine {
         this.spectrumHistory = [];
         this.maxSpectrumHistory = 100;
 
+        // Bound handlers for cleanup
+        this._resizeHandler = () => this.resize();
+
         this.resize();
-        window.addEventListener('resize', () => this.resize());
+        window.addEventListener('resize', this._resizeHandler);
+    }
+
+    /**
+     * Cleanup resources
+     */
+    destroy() {
+        this.stop();
+        window.removeEventListener('resize', this._resizeHandler);
+        this.particles = [];
+        this.waveFunctionPoints = [];
+        this.photons = [];
+        this.spectrumHistory = [];
     }
 
     resize() {
@@ -100,6 +115,7 @@ class VisualEngine {
         this.isRunning = false;
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
+            this.animationId = null;
         }
     }
 

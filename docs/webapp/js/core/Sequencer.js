@@ -88,7 +88,10 @@ class Sequencer {
             this.currentStep = (this.currentStep + 1) % this.stepCount;
         }
 
-        this.intervalId = setTimeout(() => this.scheduleLoop(), 25);
+        // Only schedule next loop if still playing
+        if (this.isPlaying) {
+            this.intervalId = setTimeout(() => this.scheduleLoop(), 25);
+        }
     }
 
     scheduleStep(step, time) {

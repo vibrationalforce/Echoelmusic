@@ -113,7 +113,7 @@ class WellnessEngine {
     }
 
     estimateLightFromTime() {
-        setInterval(() => {
+        this._lightInterval = setInterval(() => {
             const hour = new Date().getHours();
             let estimatedLux = 100;
 
@@ -389,12 +389,19 @@ class WellnessEngine {
     stop() {
         if (this.motionHandler) {
             window.removeEventListener('devicemotion', this.motionHandler);
+            this.motionHandler = null;
         }
         if (this.lightSensor) {
             this.lightSensor.stop();
+            this.lightSensor = null;
         }
         if (this.coherenceInterval) {
             clearInterval(this.coherenceInterval);
+            this.coherenceInterval = null;
+        }
+        if (this._lightInterval) {
+            clearInterval(this._lightInterval);
+            this._lightInterval = null;
         }
         this.isRunning = false;
     }

@@ -923,7 +923,7 @@ class Echoela {
      */
     startContextualTips() {
         // Check context every 30 seconds
-        setInterval(() => {
+        this._tipInterval = setInterval(() => {
             if (!this.onboardingComplete) return;
             if (Date.now() - this.lastTipTime < this.minTipInterval) return;
 
@@ -1141,6 +1141,29 @@ class Echoela {
             btBtn.click();
             this.highlightElement(btBtn, 'Bluetooth verbinden...', 3000);
         }
+    }
+
+    /**
+     * Cleanup and destroy
+     */
+    destroy() {
+        // Clear interval
+        if (this._tipInterval) {
+            clearInterval(this._tipInterval);
+            this._tipInterval = null;
+        }
+
+        // Clear highlights
+        this.clearHighlights();
+
+        // Remove UI
+        const container = document.getElementById('echoela-container');
+        if (container) {
+            container.remove();
+        }
+
+        this.isActive = false;
+        console.log('[Echoela] Destroyed');
     }
 }
 

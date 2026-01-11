@@ -25,10 +25,19 @@ class AudioEngine {
     async init() {
         if (this.isInitialized) return;
 
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
-            latencyHint: 'interactive',
-            sampleRate: 48000
-        });
+        try {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) {
+                throw new Error('Web Audio API not supported');
+            }
+            this.audioContext = new AudioContextClass({
+                latencyHint: 'interactive',
+                sampleRate: 48000
+            });
+        } catch (e) {
+            console.error('[AudioEngine] Failed to create AudioContext:', e);
+            throw e;
+        }
 
         // Master output chain
         this.masterGain = this.audioContext.createGain();
@@ -129,19 +138,28 @@ class AudioEngine {
 
     noteOff(noteNumber) {
         const voice = this.voices.get(noteNumber);
-        if (voice) {
-            const releaseTime = voice.envelope.release || 0.3;
-            const now = this.audioContext.currentTime;
+        if (!voice || !this.audioContext) return;
 
+        const releaseTime = voice.envelope?.release || 0.3;
+        const now = this.audioContext.currentTime;
+
+        try {
             voice.gainNode.gain.cancelScheduledValues(now);
             voice.gainNode.gain.setValueAtTime(voice.gainNode.gain.value, now);
             voice.gainNode.gain.exponentialRampToValueAtTime(0.001, now + releaseTime);
 
             setTimeout(() => {
-                voice.oscillators.forEach(osc => osc.stop());
-                voice.gainNode.disconnect();
+                try {
+                    voice.oscillators?.forEach(osc => osc.stop());
+                    voice.gainNode?.disconnect();
+                } catch (e) {
+                    // Already stopped/disconnected
+                }
                 this.voices.delete(noteNumber);
             }, releaseTime * 1000 + 50);
+        } catch (e) {
+            console.warn('[AudioEngine] noteOff error:', e);
+            this.voices.delete(noteNumber);
         }
     }
 
