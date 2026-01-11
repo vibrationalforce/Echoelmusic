@@ -1,0 +1,87 @@
+{
+  "name": "Echoelmusic",
+  "short_name": "Echoelmusic",
+  "description": "Bio-reactive audio-visual platform. Transform biometrics into spatial audio and immersive visuals.",
+  "start_url": "/Echoelmusic/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0C0A1A",
+  "theme_color": "#2DD4BF",
+  "orientation": "any",
+  "scope": "/Echoelmusic/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["music", "health", "productivity", "entertainment"],
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "app-icon.svg",
+      "sizes": "1024x1024",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Echoelmusic Bio-Reactive Interface"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Quick Session",
+      "short_name": "Session",
+      "description": "Start a bio-reactive session",
+      "url": "/Echoelmusic/?action=session",
+      "icons": [{"src": "favicon.svg", "sizes": "any"}]
+    },
+    {
+      "name": "Adey Windows",
+      "short_name": "Adey",
+      "description": "Explore frequency-body mapping",
+      "url": "/Echoelmusic/#adey-demo",
+      "icons": [{"src": "favicon.svg", "sizes": "any"}]
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.echoelmusic.app"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/echoelmusic"
+    }
+  ],
+  "prefer_related_applications": false,
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "share_target": {
+    "action": "/Echoelmusic/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+echoelmusic",
+      "url": "/Echoelmusic/?protocol=%s"
+    }
+  ]
+}

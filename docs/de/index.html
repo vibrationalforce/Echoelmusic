@@ -5,7 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Echoelmusic - Bio-Reaktive Audio-Visual Suite</title>
     <meta name="description" content="Verwandle deinen Herzschlag in Musik, Visuals und Licht. Professionelle bio-reaktive Produktionssuite mit 100+ Instrumenten, DMX-Steuerung und KI-Komposition.">
-    <meta name="theme-color" content="#F472B6">
+    <meta name="theme-color" content="#2DD4BF">
+
+    <!-- PWA / Adaptive Web App -->
+    <link rel="manifest" href="../manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Echoelmusic">
+    <link rel="apple-touch-icon" href="../app-icon.svg">
+
+    <!-- Future-proof: XR/Glasses/Immersive -->
+    <meta name="xr-immersive" content="vr ar">
+    <meta name="color-scheme" content="dark light">
 
     <!-- SEO -->
     <meta name="keywords" content="bio-reaktiv, audio-visual, HRV, Herzfrequenzvariabilität, Musikproduktion, DMX, Laser, KI-Komposition, Biofeedback, Kohärenz">
@@ -1000,6 +1012,28 @@
         function setAdeyFeel(val) {
             adeyFeel = val;
         }
+
+        // ===== SERVICE WORKER REGISTRATION =====
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('../sw.js')
+                    .then(reg => console.log('[PWA] Service Worker registriert:', reg.scope))
+                    .catch(err => console.log('[PWA] SW Registrierung fehlgeschlagen:', err));
+            });
+        }
+
+        // ===== ZUKUNFTSSICHER: WebXR Erkennung =====
+        if (navigator.xr) {
+            navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+                if (supported) console.log('[XR] VR unterstützt - bereit für Brillen');
+            });
+            navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+                if (supported) console.log('[XR] AR unterstützt - bereit für Mixed Reality');
+            });
+        }
+
+        // ===== ZUKUNFTSSICHER: Web Bluetooth für Wearables =====
+        // Ermöglicht direkte HRV-Sensor-Verbindung ohne App
     </script>
 </body>
 </html>
