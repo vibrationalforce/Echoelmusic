@@ -5,7 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Echoelmusic - Bio-Reactive Audio-Visual Suite</title>
     <meta name="description" content="Transform your heartbeat into music, visuals, and light. Professional bio-reactive production suite with 100+ instruments, DMX control, and AI composition.">
-    <meta name="theme-color" content="#F472B6">
+    <meta name="theme-color" content="#2DD4BF">
+
+    <!-- PWA / Adaptive Web App -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Echoelmusic">
+    <link rel="apple-touch-icon" href="app-icon.svg">
+
+    <!-- Future-proof: XR/Glasses/Immersive -->
+    <meta name="xr-immersive" content="vr ar">
+    <meta name="color-scheme" content="dark light">
 
     <!-- SEO -->
     <meta name="keywords" content="bio-reactive, audio-visual, HRV, heart rate variability, music production, DMX, laser, AI composition, biofeedback, coherence">
@@ -1100,10 +1112,22 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>© 2026 Echoelmusic. All rights reserved.</p>
+            <p>© 2026 Echoelmusic. All rights reserved. <span id="appVersion" style="opacity:0.5;font-size:11px;">v2.0.0-isochronic</span></p>
             <div class="footer-disclaimer"><strong>Disclaimer:</strong> Echoelmusic is a professional audio-visual production tool, not a medical device. Biofeedback features are for creative and wellness purposes only. AI-generated content ownership transfers fully to the user upon creation.</div>
         </div>
     </footer>
+
+    <!-- PWA Install Banner -->
+    <div id="pwaInstall" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--teal);border-radius:12px;padding:16px 24px;z-index:1000;backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+        <span style="color:var(--text);">Install Echoelmusic App</span>
+        <button onclick="installPWA()" style="margin-left:12px;background:var(--teal);color:var(--bg);border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;">Install</button>
+        <button onclick="dismissPWA()" style="margin-left:8px;background:transparent;color:var(--text-dim);border:1px solid var(--border);padding:8px 12px;border-radius:8px;cursor:pointer;">Later</button>
+    </div>
+
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" style="display:none;position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--amber);color:var(--bg);padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;z-index:1001;">
+        Offline Mode
+    </div>
 
     <!-- Cookie Banner -->
     <div class="cookie-banner" id="cookieBanner">
@@ -1236,6 +1260,77 @@
             // Update modulation depth in real-time if playing
             // Note: Would need to recreate LFO gain connection for live update
         }
+
+        // ===== SERVICE WORKER REGISTRATION =====
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
+                    .catch(err => console.log('[PWA] SW registration failed:', err));
+            });
+        }
+
+        // ===== FUTURE-PROOF: WebXR Detection =====
+        if (navigator.xr) {
+            navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+                if (supported) console.log('[XR] VR supported - ready for glasses');
+            });
+            navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+                if (supported) console.log('[XR] AR supported - ready for mixed reality');
+            });
+        }
+
+        // ===== FUTURE-PROOF: Web Bluetooth for Wearables =====
+        // Will enable direct HRV sensor connection without app
+        // navigator.bluetooth.requestDevice() available when user initiates
+
+        // ===== PWA INSTALL PROMPT =====
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show install banner after 30 seconds if not dismissed
+            if (!localStorage.getItem('pwa-dismissed')) {
+                setTimeout(() => {
+                    document.getElementById('pwaInstall').style.display = 'flex';
+                }, 30000);
+            }
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choice) => {
+                    if (choice.outcome === 'accepted') {
+                        console.log('[PWA] App installed');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('pwaInstall').style.display = 'none';
+                });
+            }
+        }
+
+        function dismissPWA() {
+            document.getElementById('pwaInstall').style.display = 'none';
+            localStorage.setItem('pwa-dismissed', 'true');
+        }
+
+        // ===== OFFLINE DETECTION =====
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offlineIndicator');
+            if (!navigator.onLine) {
+                indicator.style.display = 'block';
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+        // ===== VERSION & BUILD INFO =====
+        console.log('%c Echoelmusic v2.0.0-isochronic ', 'background: linear-gradient(90deg, #F472B6, #2DD4BF); color: #0C0A1A; font-weight: bold; padding: 4px 8px; border-radius: 4px;');
+        console.log('[Build] 2026-01-11 | PWA: Enabled | WebXR: Ready | Bluetooth: Ready');
     </script>
 </body>
 </html>

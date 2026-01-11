@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main", "claude/build-verification-launch-vD0lB"]
+    branches: ["main", "claude/build-verification-launch-vD0lB", "claude/fix-website-errors-YekLi"]
   workflow_dispatch:
 
 # Sets permissions for GITHUB_TOKEN

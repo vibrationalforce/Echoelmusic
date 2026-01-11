@@ -129,3 +129,4 @@ Tuist/Dependencies/
 .tuist-cache/
 graph.json
 manifest.json
+!docs/manifest.json
