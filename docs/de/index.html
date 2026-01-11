@@ -7,12 +7,28 @@
     <meta name="description" content="Verwandle deinen Herzschlag in Musik, Visuals und Licht. Professionelle bio-reaktive Produktionssuite mit 100+ Instrumenten, DMX-Steuerung und KI-Komposition.">
     <meta name="theme-color" content="#FF1493">
 
+    <!-- SEO -->
+    <meta name="keywords" content="bio-reaktiv, audio-visual, HRV, Herzfrequenzvariabilität, Musikproduktion, DMX, Laser, KI-Komposition, Biofeedback, Kohärenz">
+    <meta name="author" content="Echoelmusic">
+    <meta name="robots" content="index, follow">
+
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://vibrationalforce.github.io/Echoelmusic/de/">
     <meta property="og:title" content="Echoelmusic - Bio-Reaktive Audio-Visual Suite">
     <meta property="og:description" content="Verwandle deinen Herzschlag in Musik, Visuals und Licht.">
+    <meta property="og:image" content="https://vibrationalforce.github.io/Echoelmusic/app-icon.svg">
     <meta property="og:locale" content="de_DE">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Echoelmusic - Bio-Reaktive Audio-Visual Suite">
+    <meta name="twitter:description" content="Verwandle deinen Herzschlag in Musik, Visuals und Licht.">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Echoelmusic","description":"Bio-reaktive Audio-Visual Produktionssuite","applicationCategory":"MultimediaApplication","operatingSystem":"iOS, Android, macOS, Windows, Linux","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"5","ratingCount":"1"}}
+    </script>
 
     <!-- Language -->
     <link rel="alternate" hreflang="en" href="https://vibrationalforce.github.io/Echoelmusic/">
@@ -110,7 +126,41 @@
             animation: pulse 3s ease-in-out infinite;
         }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+        @keyframes hrv-draw { 0% { stroke-dashoffset: 200; } 100% { stroke-dashoffset: 0; } }
+        @keyframes glow { 0%, 100% { filter: drop-shadow(0 0 8px rgba(255,20,147,0.6)); } 50% { filter: drop-shadow(0 0 20px rgba(0,255,255,0.8)); } }
         .hero-icon svg { width: 70px; height: 70px; }
+        .hero-icon svg path:last-child { stroke-dasharray: 200; animation: hrv-draw 2s ease-in-out infinite, glow 3s ease-in-out infinite; }
+
+        /* ===== LIVE DEMO ===== */
+        .hero-demo {
+            margin-top: 48px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px 32px;
+            display: flex; align-items: center; gap: 24px;
+            max-width: 500px;
+        }
+        .demo-heart {
+            width: 60px; height: 60px;
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            animation: heartbeat 1s ease-in-out infinite;
+        }
+        @keyframes heartbeat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.15); } 30% { transform: scale(1); } 45% { transform: scale(1.1); } }
+        .demo-heart svg { width: 28px; height: 28px; fill: white; }
+        .demo-info { flex: 1; }
+        .demo-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .demo-value { font-family: 'Orbitron', monospace; font-size: 24px; font-weight: 700; color: var(--cyan); }
+        .demo-coherence {
+            height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 8px; overflow: hidden;
+        }
+        .demo-coherence-bar {
+            height: 100%; width: 78%; background: linear-gradient(90deg, var(--pink), var(--cyan));
+            border-radius: 3px; animation: coherence-pulse 4s ease-in-out infinite;
+        }
+        @keyframes coherence-pulse { 0%, 100% { width: 72%; } 50% { width: 85%; } }
 
         .hero h1 {
             font-family: 'Orbitron', monospace;
@@ -419,6 +469,23 @@
             outline: 2px solid var(--cyan);
             outline-offset: 2px;
         }
+
+        /* ===== COOKIE BANNER ===== */
+        .cookie-banner {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+            background: var(--bg-light); border-top: 1px solid var(--border);
+            padding: 16px 24px;
+            display: none; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;
+        }
+        .cookie-banner.show { display: flex; }
+        .cookie-banner p { font-size: 13px; color: var(--text-dim); max-width: 600px; }
+        .cookie-banner a { color: var(--cyan); }
+        .cookie-btn {
+            background: var(--pink); color: white; border: none;
+            padding: 10px 20px; border-radius: 6px; font-weight: 600;
+            cursor: pointer; font-size: 13px; transition: transform 0.2s;
+        }
+        .cookie-btn:hover { transform: translateY(-2px); }
     </style>
 </head>
 <body>
@@ -463,6 +530,16 @@
             <div class="stat"><div class="stat-value">50+</div><div class="stat-label">Visual-Modi</div></div>
             <div class="stat"><div class="stat-value">DMX</div><div class="stat-label">Beleuchtung</div></div>
             <div class="stat"><div class="stat-value">KI</div><div class="stat-label">Komposition</div></div>
+        </div>
+        <div class="hero-demo">
+            <div class="demo-heart">
+                <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            </div>
+            <div class="demo-info">
+                <div class="demo-label">Live Kohärenz</div>
+                <div class="demo-value">78%</div>
+                <div class="demo-coherence"><div class="demo-coherence-bar"></div></div>
+            </div>
         </div>
     </section>
 
@@ -610,5 +687,15 @@
             <div class="footer-disclaimer"><strong>Hinweis:</strong> Echoelmusic ist ein professionelles Audio-Visual Produktionstool, kein Medizinprodukt. Biofeedback-Funktionen dienen ausschließlich kreativen und Wellness-Zwecken. Eigentumsrechte an KI-generierten Inhalten gehen bei Erstellung vollständig auf den Nutzer über.</div>
         </div>
     </footer>
+
+    <!-- Cookie Banner -->
+    <div class="cookie-banner" id="cookieBanner">
+        <p>Wir verwenden nur essenzielle Cookies. Kein Tracking. <a href="../privacy.html">Datenschutz</a></p>
+        <button class="cookie-btn" onclick="acceptCookies()">Akzeptieren</button>
+    </div>
+    <script>
+        if(!localStorage.getItem('cookies-accepted')){document.getElementById('cookieBanner').classList.add('show');}
+        function acceptCookies(){localStorage.setItem('cookies-accepted','true');document.getElementById('cookieBanner').classList.remove('show');}
+    </script>
 </body>
 </html>
