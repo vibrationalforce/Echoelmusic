@@ -291,6 +291,27 @@
         }
         .feature p { color: var(--text-dim); font-size: 14px; }
 
+        /* ===== SCIENCE SECTION ===== */
+        .science { background: linear-gradient(180deg, var(--bg) 0%, var(--bg-light) 100%); }
+        .science-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+        .science-card { background: var(--glass); border: 1px solid var(--border); border-radius: 20px; padding: 32px; position: relative; overflow: hidden; }
+        .science-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--pink), var(--cyan)); }
+        .science-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,255,255,0.1); border: 1px solid rgba(0,255,255,0.3); padding: 4px 10px; border-radius: 20px; font-size: 10px; color: var(--cyan); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .science-badge svg { width: 12px; height: 12px; }
+        .science-card h3 { font-family: 'Orbitron', monospace; font-size: 18px; margin-bottom: 12px; background: linear-gradient(90deg, var(--text), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .science-card p { color: var(--text-dim); font-size: 14px; line-height: 1.7; margin-bottom: 16px; }
+        .science-list { list-style: none; }
+        .science-list li { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; font-size: 13px; color: var(--text-dim); }
+        .science-list li svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; }
+        .science-cite { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); }
+        .science-cite a { color: var(--cyan); text-decoration: none; }
+        .science-disclaimer { margin-top: 32px; background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.2); border-radius: 12px; padding: 16px; font-size: 12px; color: rgba(255,215,0,0.9); text-align: center; }
+        .trust-section { padding: 40px 24px; background: var(--bg); border-bottom: 1px solid var(--border); }
+        .trust-inner { max-width: 900px; margin: 0 auto; display: flex; justify-content: center; align-items: center; gap: 40px; flex-wrap: wrap; }
+        .trust-badge { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 12px; }
+        .trust-badge svg { width: 20px; height: 20px; opacity: 0.6; }
+        .trust-badge span { opacity: 0.7; }
+
         /* ===== PRICING ===== */
         .pricing {
             background: linear-gradient(180deg, var(--bg-light) 0%, var(--bg) 100%);
@@ -501,6 +522,7 @@
             </a>
             <div class="nav-links">
                 <a href="#features">Features</a>
+                <a href="#science">Wissenschaft</a>
                 <a href="#pricing">Preise</a>
                 <div class="lang">
                     <a href="../index.html">EN</a>
@@ -614,6 +636,69 @@
                     <h3>Cross-Platform</h3>
                     <p>iOS, Android, macOS, Windows, Linux. Synchronisiert über alle deine Geräte.</p>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="trust-section">
+        <div class="trust-inner">
+            <div class="trust-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>DSGVO-Konform</span>
+            </div>
+            <div class="trust-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <span>Peer-Review Forschung</span>
+            </div>
+            <div class="trust-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                <span>AES-256 Verschlüsselung</span>
+            </div>
+            <div class="trust-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                <span>5 Plattformen</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="science" id="science">
+        <div class="container">
+            <h2 class="section-title">Wissenschaftliche Grundlage</h2>
+            <p class="section-subtitle">Basierend auf jahrzehntelanger peer-reviewed Forschung in Bioelektromagnetik und Psychophysiologie</p>
+            <div class="science-grid">
+                <div class="science-card">
+                    <div class="science-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        Adey Windows
+                    </div>
+                    <h3>Biologische Frequenzfenster</h3>
+                    <p>Basierend auf Dr. W. Ross Adeys Forschung am UCLA Brain Research Institute. Spezifische Frequenzbereiche zeigen verstärkte biologische Reaktionen.</p>
+                    <ul class="science-list">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>Delta (0,5-4 Hz) — Tiefe Entspannung</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>Theta (4-8 Hz) — Kreativität, Meditation</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>Alpha (8-12 Hz) — Entspannte Konzentration</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>Schumann (7,83 Hz) — Erdresonanz</li>
+                    </ul>
+                    <div class="science-cite">Adey, W.R. (1981). <a href="#">Physiological Reviews</a> · UCLA Brain Research Institute</div>
+                </div>
+                <div class="science-card">
+                    <div class="science-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                        HRV-Kohärenz
+                    </div>
+                    <h3>Herzfrequenzvariabilität</h3>
+                    <p>HeartMath Institute Forschung zeigt den Zusammenhang zwischen HRV-Kohärenz, emotionalen Zuständen und kognitiver Leistung.</p>
+                    <ul class="science-list">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="#FF1493" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>0,1 Hz Atmung — Optimale Kohärenz</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="#FF1493" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>Echtzeit SDNN/RMSSD Analyse</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="#FF1493" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>LF/HF Ratio Tracking</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="#FF1493" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>Kohärenz-gesteuerte Audio-Zuordnung</li>
+                    </ul>
+                    <div class="science-cite">McCraty, R. et al. · <a href="#">HeartMath Research Center</a></div>
+                </div>
+            </div>
+            <div class="science-disclaimer">
+                <strong>Wichtig:</strong> Echoelmusic verwendet audio-basierte Entrainment-Techniken, inspiriert von dieser Forschung. Es ist KEIN elektromagnetisches Therapiegerät und erhebt keine medizinischen Ansprüche. Features dienen ausschließlich kreativen und Entspannungszwecken. Konsultieren Sie für medizinische Beratung einen Arzt.
             </div>
         </div>
     </section>
