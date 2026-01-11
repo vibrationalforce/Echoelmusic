@@ -475,5 +475,5 @@ class BodyTrackingEngine {
 
 // Export
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { BodyTrackingEngine };
+    module.exports = BodyTrackingEngine;
 }
