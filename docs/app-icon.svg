@@ -1,26 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
-    <!-- Echoelmusic Artist Brand Gradient -->
+    <!-- Echoelmusic Vaporwave Gradient -->
     <linearGradient id="brand-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F472B6"/>
-      <stop offset="50%" stop-color="#A78BFA"/>
-      <stop offset="100%" stop-color="#2DD4BF"/>
+      <stop offset="0%" stop-color="#FF1493"/>
+      <stop offset="50%" stop-color="#9933FF"/>
+      <stop offset="100%" stop-color="#00FFFF"/>
     </linearGradient>
     <!-- Background gradient -->
     <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0C0A1A"/>
-      <stop offset="100%" stop-color="#151326"/>
+      <stop offset="0%" stop-color="#050513"/>
+      <stop offset="50%" stop-color="#0D0D26"/>
+      <stop offset="100%" stop-color="#1A0D33"/>
     </linearGradient>
-    <!-- Glow effect -->
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="12" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <!-- Soft inner glow -->
-    <filter id="inner-glow">
+    <!-- Subtle glow filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur stdDeviation="8" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
@@ -29,37 +22,36 @@
     </filter>
   </defs>
 
-  <!-- Background - Premium dark with rounded corners (Apple HIG compliant) -->
+  <!-- Background - Premium dark with Apple HIG rounded corners -->
   <rect width="1024" height="1024" rx="225" fill="url(#bg-gradient)"/>
 
   <!-- Subtle brand glow overlay -->
   <rect width="1024" height="1024" rx="225" fill="url(#brand-gradient)" opacity="0.06"/>
 
-  <!-- Echo rings (sound wave visualization) - professional, subtle -->
-  <g opacity="0.12" stroke="url(#brand-gradient)" fill="none" stroke-width="12">
-    <circle cx="512" cy="512" r="420"/>
-    <circle cx="512" cy="512" r="340"/>
-    <circle cx="512" cy="512" r="260"/>
-  </g>
-
-  <!-- Main waveform/pulse icon - bold, simple, recognizable -->
+  <!-- Heart shape - geometric, clean, professional -->
   <g filter="url(#glow)">
-    <path d="M240 512
-             L320 512
-             L370 390
-             L430 634
-             L512 260
-             L594 634
-             L654 390
-             L704 512
-             L784 512"
-          fill="none"
-          stroke="url(#brand-gradient)"
-          stroke-width="48"
-          stroke-linecap="round"
-          stroke-linejoin="round"/>
+    <path d="M512 800
+             C370 680 205 555 205 390
+             C205 290 285 205 390 205
+             C450 205 512 245 512 245
+             C512 245 574 205 634 205
+             C739 205 819 290 819 390
+             C819 555 654 680 512 800Z"
+          fill="url(#brand-gradient)"
+          opacity="0.88"/>
   </g>
 
-  <!-- Coherence indicator dot - brand signature -->
-  <circle cx="512" cy="840" r="36" fill="#2DD4BF" filter="url(#inner-glow)"/>
+  <!-- Organic sound wave - smooth flowing curves -->
+  <path d="M310 455
+           Q375 455 395 415
+           Q415 375 445 415
+           Q475 455 512 375
+           Q549 455 579 415
+           Q609 375 629 415
+           Q649 455 714 455"
+        fill="none"
+        stroke="white"
+        stroke-width="36"
+        stroke-linecap="round"
+        opacity="0.95"/>
 </svg>
