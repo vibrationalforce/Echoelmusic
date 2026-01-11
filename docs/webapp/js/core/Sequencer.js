@@ -48,6 +48,17 @@ class Sequencer {
         this.intervalId = null;
         this.nextStepTime = 0;
         this.scheduleAheadTime = 0.1;
+
+        // Smooth BPM transition
+        this.targetBpm = 120;
+        this.bpmTransitionRate = 2; // BPM change per second
+    }
+
+    /**
+     * Get drum output (bypasses delay effects)
+     */
+    getDrumOutput() {
+        return this.audioEngine?.getDrumOutput?.() || this.audioEngine?.masterGain;
     }
 
     // ==================== PLAYBACK ====================
@@ -167,6 +178,9 @@ class Sequencer {
     }
 
     playKick(ctx, time, velocity) {
+        const drumOutput = this.getDrumOutput();
+        if (!drumOutput) return;
+
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
 
@@ -178,7 +192,7 @@ class Sequencer {
         gain.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
 
         osc.connect(gain);
-        gain.connect(this.audioEngine.masterGain);
+        gain.connect(drumOutput);
 
         osc.start(time);
         osc.stop(time + 0.3);
@@ -206,7 +220,7 @@ class Sequencer {
 
         noise.connect(noiseFilter);
         noiseFilter.connect(noiseGain);
-        noiseGain.connect(this.audioEngine.masterGain);
+        noiseGain.connect(this.getDrumOutput());
 
         // Tone component
         const osc = ctx.createOscillator();
@@ -217,7 +231,7 @@ class Sequencer {
         oscGain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
 
         osc.connect(oscGain);
-        oscGain.connect(this.audioEngine.masterGain);
+        oscGain.connect(this.getDrumOutput());
 
         noise.start(time);
         osc.start(time);
@@ -246,7 +260,7 @@ class Sequencer {
 
         noise.connect(filter);
         filter.connect(gain);
-        gain.connect(this.audioEngine.masterGain);
+        gain.connect(this.getDrumOutput());
 
         noise.start(time);
         noise.stop(time + decay + 0.1);
@@ -275,7 +289,7 @@ class Sequencer {
 
             noise.connect(filter);
             filter.connect(gain);
-            gain.connect(this.audioEngine.masterGain);
+            gain.connect(this.getDrumOutput());
 
             noise.start(time + i * 0.01);
             noise.stop(time + i * 0.01 + 0.15);
@@ -294,7 +308,7 @@ class Sequencer {
         gain.gain.exponentialRampToValueAtTime(0.01, time + 0.25);
 
         osc.connect(gain);
-        gain.connect(this.audioEngine.masterGain);
+        gain.connect(this.getDrumOutput());
 
         osc.start(time);
         osc.stop(time + 0.3);
@@ -311,7 +325,7 @@ class Sequencer {
         gain.gain.exponentialRampToValueAtTime(0.01, time + 0.03);
 
         osc.connect(gain);
-        gain.connect(this.audioEngine.masterGain);
+        gain.connect(this.getDrumOutput());
 
         osc.start(time);
         osc.stop(time + 0.05);
@@ -329,7 +343,7 @@ class Sequencer {
         gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
 
         osc.connect(gain);
-        gain.connect(this.audioEngine.masterGain);
+        gain.connect(this.getDrumOutput());
 
         osc.start(time);
         osc.stop(time + 0.15);
@@ -374,16 +388,39 @@ class Sequencer {
     }
 
     // ==================== BPM & TIMING ====================
-    setBpm(bpm) {
-        this.bpm = Math.max(30, Math.min(300, bpm));
+    setBpm(bpm, instant = false) {
+        const newBpm = Math.max(30, Math.min(300, bpm));
+        if (instant) {
+            this.bpm = newBpm;
+            this.targetBpm = newBpm;
+        } else {
+            // Smooth transition target
+            this.targetBpm = newBpm;
+        }
+    }
+
+    /**
+     * Smooth BPM update (call this in scheduleLoop for smooth transitions)
+     */
+    updateBpmSmooth() {
+        if (Math.abs(this.bpm - this.targetBpm) < 0.5) {
+            this.bpm = this.targetBpm;
+            return;
+        }
+        // Smooth interpolation towards target (2 BPM per update at 40Hz)
+        const diff = this.targetBpm - this.bpm;
+        this.bpm += Math.sign(diff) * Math.min(Math.abs(diff), 0.5);
     }
 
     getEffectiveBpm() {
+        // Smooth BPM transition
+        this.updateBpmSmooth();
+
         if (this.bioModulation.enabled && this.bioModulation.bpmFromHeartRate) {
             // Smooth blend between set BPM and heart rate
             const heartRateBpm = this.bioData.heartRate;
-            const targetBpm = this.bpm + (heartRateBpm - 72) * 0.5;
-            return Math.max(60, Math.min(180, targetBpm));
+            const bioTarget = this.bpm + (heartRateBpm - 72) * 0.3; // Gentler influence
+            return Math.max(60, Math.min(180, bioTarget));
         }
         return this.bpm;
     }
