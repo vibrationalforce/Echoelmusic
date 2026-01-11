@@ -771,9 +771,9 @@
                 <span class="panel-title" id="bioSourceTitle">Bio Source</span>
             </div>
             <div class="bio-source-selector" role="group" aria-label="Select bio data source">
-                <button class="bio-source-btn active" id="btnSimulator" aria-pressed="true">Simulator</button>
-                <button class="bio-source-btn" id="btnBluetooth" aria-pressed="false">Bluetooth</button>
-                <button class="bio-source-btn" id="btnCamera" aria-pressed="false">Camera</button>
+                <button class="bio-source-btn active" id="btnSimulator" data-source="simulator" aria-pressed="true">Simulator</button>
+                <button class="bio-source-btn" id="btnBluetooth" data-source="bluetooth" aria-pressed="false">⌚ Bluetooth</button>
+                <button class="bio-source-btn" id="btnCamera" data-source="camera" aria-pressed="false">📷 Camera</button>
             </div>
             <div id="bioSourceStatus" style="margin-top: 0.4rem; font-size: 0.75rem; color: var(--text-dim);" aria-live="polite">
                 Simulator active
@@ -955,6 +955,10 @@
 <script src="js/core/MIDIEngine.js"></script>
 <script src="js/core/WellnessEngine.js"></script>
 <script src="js/core/Sequencer.js"></script>
+<script src="js/core/Echoela.js"></script>
+<script src="js/core/SyncEngine.js"></script>
+<script src="js/core/PresetsEngine.js"></script>
+<script src="js/core/RecordingEngine.js"></script>
 
 <script>
 // ==================== ERROR HANDLING ====================
@@ -986,6 +990,7 @@ updateOnlineStatus();
 
 // ==================== APP STATE ====================
 let audioEngine, bioEngine, visualEngine, midiEngine, wellnessEngine, sequencer;
+let syncEngine, presetsEngine, recordingEngine;
 let isStarted = false;
 let sessionStartTime = null;
 
@@ -1050,6 +1055,24 @@ async function initializeApp() {
     // Sequencer
     sequencer = new Sequencer(audioEngine);
 
+    // Sync Engine
+    if (typeof SyncEngine !== 'undefined') {
+        syncEngine = new SyncEngine();
+        await syncEngine.init();
+    }
+
+    // Presets Engine
+    if (typeof PresetsEngine !== 'undefined') {
+        presetsEngine = new PresetsEngine();
+        await presetsEngine.init();
+    }
+
+    // Recording Engine
+    if (typeof RecordingEngine !== 'undefined') {
+        recordingEngine = new RecordingEngine();
+        await recordingEngine.init(audioEngine?.audioContext);
+    }
+
     // Setup UI
     setupBioListeners();
     setupMIDIListeners();
@@ -1058,7 +1081,7 @@ async function initializeApp() {
     setupSequencerUI();
     loadWellnessTip();
 
-    console.log('[App] Ready');
+    console.log('[App] Ready - All 10 engines initialized');
 }
 
 // ==================== BIO LISTENERS ====================
@@ -1081,6 +1104,8 @@ function setupBioListeners() {
         if (audioEngine) audioEngine.onBioData(data);
         if (visualEngine) visualEngine.onBioData(data);
         if (sequencer) sequencer.onBioData(data);
+        if (recordingEngine) recordingEngine.setCurrentBioData(data);
+        if (syncEngine) syncEngine.sendStateUpdate('bio', data);
 
         // Breathing circle
         const circle = document.getElementById('breathCircle');
@@ -1381,6 +1406,52 @@ if ('serviceWorker' in navigator) {
 }
 
 console.log('%c Echoelmusic WebApp ', 'background: linear-gradient(90deg, #00ffcc, #ff00aa); color: #0a0a0f; font-weight: bold; padding: 4px 8px; border-radius: 4px;');
+
+// ==================== ECHOELA ASSISTANT ====================
+// Initialize Echoela after DOM is ready
+if (typeof Echoela !== 'undefined') {
+    echoela = new Echoela();
+    echoela.init().then(() => {
+        console.log('[Echoela] Assistant ready');
+    });
+}
+
+// Mark features as working when activated
+function markFeatureActive(feature, selector) {
+    if (echoela) {
+        echoela.markFeatureWorking(feature, selector);
+    }
+}
+
+// Hook into engine events to track feature status
+window.addEventListener('load', () => {
+    // Audio
+    if (audioEngine) {
+        markFeatureActive('audio', '.volume-slider');
+    }
+
+    // Sequencer
+    const playBtn = document.getElementById('seqPlay');
+    playBtn?.addEventListener('click', () => {
+        markFeatureActive('sequencer', '#seqPlay');
+    });
+
+    // Visualizer - mark on first mode change
+    document.querySelectorAll('.viz-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            markFeatureActive('visualizer', '.viz-buttons');
+        }, { once: true });
+    });
+
+    // Breathing guide
+    document.querySelectorAll('.breathing-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (btn.id !== 'breathOff') {
+                markFeatureActive('breathing', '.breathing-select');
+            }
+        }, { once: true });
+    });
+});
 </script>
 
 </body>
