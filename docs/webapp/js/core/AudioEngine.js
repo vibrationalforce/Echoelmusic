@@ -72,6 +72,12 @@ class AudioEngine {
         this.delayGain = this.audioContext.createGain();
         this.delayGain.gain.value = 0.3;
 
+        // Separate drum bus (no delay, light reverb)
+        this.drumGain = this.audioContext.createGain();
+        this.drumGain.gain.value = 0.8;
+        this.drumReverb = this.audioContext.createGain();
+        this.drumReverb.gain.value = 0.1; // Light room reverb for drums
+
         // Connect effects chain
         this.masterGain.connect(this.filter);
         this.filter.connect(this.compressor);
@@ -85,15 +91,66 @@ class AudioEngine {
         this.reverb.connect(this.reverbGain);
         this.reverbGain.connect(this.audioContext.destination);
 
-        // Delay path with feedback
+        // Delay path with feedback (synth only)
         this.analyser.connect(this.delay);
         this.delay.connect(this.delayFeedback);
         this.delayFeedback.connect(this.delay);
         this.delay.connect(this.delayGain);
         this.delayGain.connect(this.audioContext.destination);
 
+        // Drum path (bypasses delay, direct to compressor)
+        this.drumGain.connect(this.compressor);
+        this.drumGain.connect(this.reverb);
+
+        // Scale/Key settings
+        this.currentScale = 'major';
+        this.rootNote = 60; // C4
+        this.scales = {
+            major: [0, 2, 4, 5, 7, 9, 11],
+            minor: [0, 2, 3, 5, 7, 8, 10],
+            pentatonic: [0, 2, 4, 7, 9],
+            blues: [0, 3, 5, 6, 7, 10],
+            dorian: [0, 2, 3, 5, 7, 9, 10],
+            mixolydian: [0, 2, 4, 5, 7, 9, 10],
+            phrygian: [0, 1, 3, 5, 7, 8, 10],
+            harmonic_minor: [0, 2, 3, 5, 7, 8, 11],
+            japanese: [0, 1, 5, 7, 8],
+            arabic: [0, 1, 4, 5, 7, 8, 11]
+        };
+
         this.isInitialized = true;
         console.log('[AudioEngine] Initialized at', this.audioContext.sampleRate, 'Hz');
+    }
+
+    /**
+     * Get drum output node (bypasses delay)
+     */
+    getDrumOutput() {
+        return this.drumGain;
+    }
+
+    /**
+     * Set musical scale
+     */
+    setScale(scaleName, rootNote = null) {
+        if (this.scales[scaleName]) {
+            this.currentScale = scaleName;
+        }
+        if (rootNote !== null) {
+            this.rootNote = rootNote;
+        }
+        console.log('[AudioEngine] Scale:', this.currentScale, 'Root:', this.rootNote);
+    }
+
+    /**
+     * Get note in current scale
+     */
+    getNoteInScale(degree, octave = 0) {
+        const scale = this.scales[this.currentScale] || this.scales.major;
+        const scaleLength = scale.length;
+        const octaveOffset = Math.floor(degree / scaleLength) * 12;
+        const noteInScale = scale[((degree % scaleLength) + scaleLength) % scaleLength];
+        return this.rootNote + noteInScale + octaveOffset + (octave * 12);
     }
 
     async createReverb() {
@@ -152,6 +209,7 @@ class AudioEngine {
                 try {
                     voice.oscillators?.forEach(osc => osc.stop());
                     voice.gainNode?.disconnect();
+                    voice.voiceFilter?.disconnect();
                 } catch (e) {
                     // Already stopped/disconnected
                 }
@@ -164,40 +222,88 @@ class AudioEngine {
     }
 
     createVoice(frequency, velocity, params = {}) {
+        // Lush synth voice with multiple oscillators and sub
         const waveform = params.waveform || 'sawtooth';
-        const attack = params.attack || 0.01;
-        const decay = params.decay || 0.1;
-        const sustain = params.sustain || 0.7;
-        const release = params.release || 0.3;
+        const attack = params.attack || 0.08; // Smooth attack
+        const decay = params.decay || 0.2;
+        const sustain = params.sustain || 0.6;
+        const release = params.release || 0.8; // Long smooth release
         const detune = params.detune || 0;
-        const oscillatorCount = params.oscillatorCount || 2;
+        const brightness = params.brightness || 0.7;
 
+        const now = this.audioContext.currentTime;
+        const oscillators = [];
+
+        // Voice filter (per-voice brightness control)
+        const voiceFilter = this.audioContext.createBiquadFilter();
+        voiceFilter.type = 'lowpass';
+        voiceFilter.frequency.value = 1000 + (brightness * 6000) + (frequency * 2);
+        voiceFilter.Q.value = 0.7;
+
+        // Main gain node
         const gainNode = this.audioContext.createGain();
         gainNode.gain.value = 0;
+
+        // Connect voice chain
+        voiceFilter.connect(gainNode);
         gainNode.connect(this.masterGain);
 
-        const oscillators = [];
-        const now = this.audioContext.currentTime;
+        // Main oscillators (3 for richness with slight detuning)
+        const mainOscGain = this.audioContext.createGain();
+        mainOscGain.gain.value = 0.25;
+        mainOscGain.connect(voiceFilter);
 
-        for (let i = 0; i < oscillatorCount; i++) {
+        [-7, 0, 7].forEach((cents, i) => {
             const osc = this.audioContext.createOscillator();
             osc.type = waveform;
             osc.frequency.value = frequency;
-            osc.detune.value = detune + (i - (oscillatorCount - 1) / 2) * 10;
-            osc.connect(gainNode);
+            osc.detune.value = detune + cents;
+            osc.connect(mainOscGain);
             osc.start(now);
             oscillators.push(osc);
-        }
+        });
 
-        // ADSR envelope
-        const peakGain = velocity * 0.5;
-        gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(peakGain, now + attack);
-        gainNode.gain.linearRampToValueAtTime(peakGain * sustain, now + attack + decay);
+        // Sub oscillator (1 octave down, sine wave for warmth)
+        const subOscGain = this.audioContext.createGain();
+        subOscGain.gain.value = 0.15;
+        subOscGain.connect(voiceFilter);
+
+        const subOsc = this.audioContext.createOscillator();
+        subOsc.type = 'sine';
+        subOsc.frequency.value = frequency / 2;
+        subOsc.connect(subOscGain);
+        subOsc.start(now);
+        oscillators.push(subOsc);
+
+        // High harmonic (1 octave up, triangle, quiet)
+        const highOscGain = this.audioContext.createGain();
+        highOscGain.gain.value = 0.05;
+        highOscGain.connect(voiceFilter);
+
+        const highOsc = this.audioContext.createOscillator();
+        highOsc.type = 'triangle';
+        highOsc.frequency.value = frequency * 2;
+        highOsc.connect(highOscGain);
+        highOsc.start(now);
+        oscillators.push(highOsc);
+
+        // Smooth ADSR envelope
+        const peakGain = velocity * 0.4;
+        gainNode.gain.setValueAtTime(0.001, now);
+        gainNode.gain.exponentialRampToValueAtTime(peakGain, now + attack);
+        gainNode.gain.exponentialRampToValueAtTime(Math.max(0.001, peakGain * sustain), now + attack + decay);
+
+        // Filter envelope (brighter on attack, mellows out)
+        const filterPeak = 2000 + (brightness * 8000);
+        const filterSustain = 1000 + (brightness * 4000);
+        voiceFilter.frequency.setValueAtTime(filterSustain, now);
+        voiceFilter.frequency.exponentialRampToValueAtTime(filterPeak, now + attack * 0.5);
+        voiceFilter.frequency.exponentialRampToValueAtTime(filterSustain, now + attack + decay);
 
         return {
             oscillators,
             gainNode,
+            voiceFilter,
             frequency,
             envelope: { attack, decay, sustain, release }
         };

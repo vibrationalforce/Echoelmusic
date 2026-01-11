@@ -713,6 +713,95 @@
                 --surface: #1a1a1a;
             }
         }
+
+        /* Smooth experience polish */
+        .panel {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .panel:hover {
+            box-shadow: 0 4px 20px rgba(0, 255, 204, 0.1);
+        }
+
+        .bio-metric {
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        .bio-metric:hover {
+            transform: scale(1.02);
+            background: rgba(0, 255, 204, 0.1);
+        }
+
+        .bio-metric-value {
+            transition: color 0.3s ease;
+        }
+
+        /* Keyboard glow effect on play */
+        .key.active {
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        .key.black.active {
+            box-shadow: 0 0 15px var(--secondary);
+        }
+
+        /* Smooth sequencer step transitions */
+        .seq-step {
+            transition: all 0.1s ease;
+        }
+
+        .seq-step:active {
+            transform: scale(0.95);
+        }
+
+        /* Bio source active glow */
+        .bio-source-btn.active {
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        /* Coherence badge pulse when high */
+        .coherence-high {
+            animation: coherencePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes coherencePulse {
+            0%, 100% { box-shadow: 0 0 5px var(--success); }
+            50% { box-shadow: 0 0 15px var(--success); }
+        }
+
+        /* Volume slider smooth thumb */
+        input[type="range"]::-webkit-slider-thumb {
+            transition: transform 0.1s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Breathing circle smooth pulse */
+        .breath-circle {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+        }
+
+        /* Body tracking data grid animation */
+        #bodyDataGrid {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scale selector smooth styling */
+        #scaleSelect, #rootNoteSelect {
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #scaleSelect:focus, #rootNoteSelect:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 8px rgba(255, 0, 170, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -805,6 +894,38 @@
             </div>
         </section>
 
+        <!-- Body Tracking -->
+        <section class="panel" aria-labelledby="bodyTrackingTitle">
+            <div class="panel-header">
+                <span class="panel-title" id="bodyTrackingTitle">Body Tracking</span>
+                <button class="btn-icon" id="bodyTrackingToggle" aria-label="Toggle body tracking">▶</button>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem;">
+                Smile, gestures, movement, breathing
+            </div>
+            <div class="bio-data-grid" id="bodyDataGrid" style="display: none;">
+                <div class="bio-metric">
+                    <div class="bio-metric-value" id="bodySmile">0%</div>
+                    <div class="bio-metric-label">Smile</div>
+                </div>
+                <div class="bio-metric">
+                    <div class="bio-metric-value" id="bodyGesture">--</div>
+                    <div class="bio-metric-label">Gesture</div>
+                </div>
+                <div class="bio-metric">
+                    <div class="bio-metric-value" id="bodyEnergy">50%</div>
+                    <div class="bio-metric-label">Energy</div>
+                </div>
+                <div class="bio-metric">
+                    <div class="bio-metric-value" id="bodyArousal">--</div>
+                    <div class="bio-metric-label">State</div>
+                </div>
+            </div>
+            <div id="bodyTrackingStatus" style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.3rem;">
+                Tap ▶ to start camera
+            </div>
+        </section>
+
         <!-- Breathing Guide -->
         <section class="panel" aria-labelledby="breathingTitle">
             <div class="panel-header">
@@ -850,6 +971,38 @@
         <!-- Keyboard -->
         <section class="keyboard-container" aria-labelledby="keyboardTitle">
             <h2 class="visually-hidden" id="keyboardTitle">Piano Keyboard</h2>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; align-items: center; justify-content: center;">
+                <label for="scaleSelect" style="font-size: 0.75rem; color: var(--text-dim);">Scale:</label>
+                <select id="scaleSelect" aria-label="Musical scale"
+                        style="background: var(--bg); color: var(--text); border: 1px solid var(--primary); padding: 0.3rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">
+                    <option value="major">Major</option>
+                    <option value="minor">Minor</option>
+                    <option value="pentatonic">Pentatonic</option>
+                    <option value="blues">Blues</option>
+                    <option value="dorian">Dorian</option>
+                    <option value="mixolydian">Mixolydian</option>
+                    <option value="phrygian">Phrygian</option>
+                    <option value="harmonic_minor">Harmonic Minor</option>
+                    <option value="japanese">Japanese</option>
+                    <option value="arabic">Arabic</option>
+                </select>
+                <label for="rootNoteSelect" style="font-size: 0.75rem; color: var(--text-dim);">Root:</label>
+                <select id="rootNoteSelect" aria-label="Root note"
+                        style="background: var(--bg); color: var(--text); border: 1px solid var(--primary); padding: 0.3rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">
+                    <option value="60">C</option>
+                    <option value="61">C#</option>
+                    <option value="62">D</option>
+                    <option value="63">D#</option>
+                    <option value="64">E</option>
+                    <option value="65">F</option>
+                    <option value="66">F#</option>
+                    <option value="67">G</option>
+                    <option value="68">G#</option>
+                    <option value="69">A</option>
+                    <option value="70">A#</option>
+                    <option value="71">B</option>
+                </select>
+            </div>
             <div class="keyboard" id="keyboard" role="group" aria-label="Piano keyboard - use A-K keys to play">
                 <!-- Generated by JS -->
             </div>
@@ -959,6 +1112,7 @@
 <script src="js/core/SyncEngine.js"></script>
 <script src="js/core/PresetsEngine.js"></script>
 <script src="js/core/RecordingEngine.js"></script>
+<script src="js/core/BodyTrackingEngine.js"></script>
 
 <script>
 // ==================== ERROR HANDLING ====================
@@ -990,7 +1144,8 @@ updateOnlineStatus();
 
 // ==================== APP STATE ====================
 let audioEngine, bioEngine, visualEngine, midiEngine, wellnessEngine, sequencer;
-let syncEngine, presetsEngine, recordingEngine;
+let syncEngine, presetsEngine, recordingEngine, bodyTrackingEngine;
+let echoela;
 let isStarted = false;
 let sessionStartTime = null;
 
@@ -1073,6 +1228,13 @@ async function initializeApp() {
         await recordingEngine.init(audioEngine?.audioContext);
     }
 
+    // Body Tracking Engine
+    if (typeof BodyTrackingEngine !== 'undefined') {
+        bodyTrackingEngine = new BodyTrackingEngine();
+        await bodyTrackingEngine.init();
+        setupBodyTrackingListeners();
+    }
+
     // Setup UI
     setupBioListeners();
     setupMIDIListeners();
@@ -1081,7 +1243,7 @@ async function initializeApp() {
     setupSequencerUI();
     loadWellnessTip();
 
-    console.log('[App] Ready - All 10 engines initialized');
+    console.log('[App] Ready - All 11 engines initialized (Audio, Bio, Visual, MIDI, Wellness, Sequencer, Echoela, Sync, Presets, Recording, BodyTracking)');
 }
 
 // ==================== BIO LISTENERS ====================
@@ -1374,6 +1536,83 @@ function updateSessionStats() {
 
     setTimeout(updateSessionStats, 1000);
 }
+
+// ==================== BODY TRACKING ====================
+function setupBodyTrackingListeners() {
+    const toggleBtn = document.getElementById('bodyTrackingToggle');
+    const statusEl = document.getElementById('bodyTrackingStatus');
+    const dataGrid = document.getElementById('bodyDataGrid');
+    let isTracking = false;
+
+    toggleBtn?.addEventListener('click', async () => {
+        if (!bodyTrackingEngine) return;
+
+        if (isTracking) {
+            bodyTrackingEngine.stop();
+            isTracking = false;
+            toggleBtn.textContent = '▶';
+            statusEl.textContent = 'Stopped';
+            dataGrid.style.display = 'none';
+            if (echoela) echoela.setBioSourceActive(null);
+        } else {
+            try {
+                statusEl.textContent = 'Starting camera...';
+                await bodyTrackingEngine.startFaceTracking();
+                bodyTrackingEngine.startMotionTracking();
+                isTracking = true;
+                toggleBtn.textContent = '■';
+                statusEl.textContent = 'Tracking active';
+                dataGrid.style.display = 'grid';
+                if (echoela) echoela.setBioSourceActive('camera');
+            } catch (e) {
+                statusEl.textContent = 'Camera error: ' + e.message;
+                console.error('[BodyTracking]', e);
+            }
+        }
+    });
+
+    // Listen to body data updates
+    if (bodyTrackingEngine) {
+        bodyTrackingEngine.addListener((data) => {
+            // Update UI
+            document.getElementById('bodySmile').textContent = Math.round(data.face.smile * 100) + '%';
+            document.getElementById('bodyEnergy').textContent = Math.round(data.movement.energy * 100) + '%';
+            document.getElementById('bodyGesture').textContent = data.movement.gestureType || '--';
+
+            // State based on arousal/relaxation
+            const state = data.arousal > 0.6 ? 'Active' :
+                          data.relaxation > 0.6 ? 'Relaxed' :
+                          'Neutral';
+            document.getElementById('bodyArousal').textContent = state;
+
+            // Apply to audio - smile affects brightness
+            if (audioEngine && audioEngine.filter) {
+                const brightness = 2000 + data.face.smile * 6000;
+                audioEngine.filter.frequency.setTargetAtTime(
+                    brightness, audioEngine.audioContext.currentTime, 0.1
+                );
+            }
+
+            // Apply to visuals - movement energy affects particle count/speed
+            if (visualEngine) {
+                visualEngine.onBodyData?.(data);
+            }
+        });
+    }
+}
+
+// ==================== SCALE SELECTION ====================
+document.getElementById('scaleSelect')?.addEventListener('change', (e) => {
+    if (audioEngine) {
+        audioEngine.setScale(e.target.value);
+    }
+});
+
+document.getElementById('rootNoteSelect')?.addEventListener('change', (e) => {
+    if (audioEngine) {
+        audioEngine.setScale(audioEngine.currentScale, parseInt(e.target.value));
+    }
+});
 
 // ==================== AUDIO VISUALIZATION LOOP ====================
 function audioLoop() {

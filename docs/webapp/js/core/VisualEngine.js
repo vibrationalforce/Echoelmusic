@@ -105,6 +105,39 @@ class VisualEngine {
         this.params.complexity = 0.3 + this.bioData.hrv / 100;
     }
 
+    onBodyData(data) {
+        // Body tracking modulation
+        if (!data) return;
+
+        // Smile increases visual brightness/warmth
+        if (data.face && data.face.smile > 0.3) {
+            const warmHue = 40 + data.face.smile * 30; // Orange-yellow
+            this.params.primaryColor = `hsl(${warmHue}, 100%, 60%)`;
+        } else {
+            this.params.primaryColor = '#00ffcc'; // Default cyan
+        }
+
+        // Movement energy affects particle spawn rate and speed
+        if (data.movement) {
+            this.params.speed = Math.max(0.5, this.params.speed + data.movement.energy * 0.5);
+            // More particles when moving
+            if (data.movement.isMoving && this.particles.length < this.maxParticles) {
+                this.spawnParticle();
+                this.spawnParticle();
+            }
+        }
+
+        // Arousal affects symmetry (more aroused = more complex patterns)
+        if (typeof data.arousal === 'number') {
+            this.params.symmetry = Math.floor(6 + data.arousal * 6);
+        }
+
+        // Relaxation smooths out visuals
+        if (typeof data.relaxation === 'number' && data.relaxation > 0.6) {
+            this.params.speed = Math.max(0.3, this.params.speed * 0.9);
+        }
+    }
+
     start() {
         if (this.isRunning) return;
         this.isRunning = true;

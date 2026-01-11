@@ -76,10 +76,138 @@ class Echoela {
         // Start contextual tip system
         this.startContextualTips();
 
+        // Start bio tracking status monitor
+        this.startBioStatusMonitor();
+
         this.isActive = true;
         console.log('🎵 Echoela ready!');
 
         return this;
+    }
+
+    /**
+     * Start bio tracking status monitor
+     */
+    startBioStatusMonitor() {
+        // Create bio status indicator
+        this.createBioStatusIndicator();
+
+        // Update every second
+        this._bioStatusInterval = setInterval(() => {
+            this.updateBioStatusIndicator();
+        }, 1000);
+    }
+
+    /**
+     * Create bio status indicator element
+     */
+    createBioStatusIndicator() {
+        const indicator = document.createElement('div');
+        indicator.id = 'echoela-bio-status';
+        indicator.innerHTML = `
+            <style>
+                #echoela-bio-status {
+                    position: fixed;
+                    top: 70px;
+                    right: 20px;
+                    background: rgba(20, 20, 30, 0.9);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border-radius: 12px;
+                    padding: 8px 12px;
+                    z-index: 1000;
+                    display: none;
+                    border: 1px solid rgba(255, 0, 170, 0.3);
+                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    font-size: 12px;
+                }
+                #echoela-bio-status.active {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    animation: bio-pulse 2s infinite;
+                }
+                @keyframes bio-pulse {
+                    0%, 100% { border-color: rgba(255, 0, 170, 0.3); }
+                    50% { border-color: rgba(255, 0, 170, 0.7); }
+                }
+                .bio-status-icon {
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    background: #ff00aa;
+                    animation: bio-dot-pulse 1s infinite;
+                }
+                @keyframes bio-dot-pulse {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.7; transform: scale(0.9); }
+                }
+                .bio-status-text {
+                    color: rgba(255, 255, 255, 0.9);
+                }
+                .bio-status-source {
+                    color: #ff00aa;
+                    font-weight: 500;
+                }
+                @media (max-width: 768px) {
+                    #echoela-bio-status {
+                        top: auto;
+                        bottom: 150px;
+                        right: 10px;
+                        font-size: 11px;
+                    }
+                }
+            </style>
+            <div class="bio-status-icon"></div>
+            <span class="bio-status-text">Bio: <span class="bio-status-source">--</span></span>
+        `;
+        document.body.appendChild(indicator);
+    }
+
+    /**
+     * Update bio status indicator
+     */
+    updateBioStatusIndicator() {
+        const indicator = document.getElementById('echoela-bio-status');
+        if (!indicator) return;
+
+        // Check if any bio source is active
+        const bioActive = this.featureStatus.bioSimulator.working ||
+                         this.featureStatus.bioBluetooth.working ||
+                         this.featureStatus.bioCamera.working;
+
+        if (bioActive) {
+            indicator.classList.add('active');
+            let source = 'Simulator';
+            if (this.featureStatus.bioCamera.working) source = '📷 Kamera';
+            else if (this.featureStatus.bioBluetooth.working) source = '⌚ Bluetooth';
+            else if (this.featureStatus.bioSimulator.working) source = '🎲 Simulator';
+
+            indicator.querySelector('.bio-status-source').textContent = source;
+        } else {
+            indicator.classList.remove('active');
+        }
+    }
+
+    /**
+     * Set bio source as active (called from app.html)
+     */
+    setBioSourceActive(source) {
+        // Reset all
+        this.featureStatus.bioSimulator.working = false;
+        this.featureStatus.bioBluetooth.working = false;
+        this.featureStatus.bioCamera.working = false;
+
+        // Set active source
+        if (source === 'simulator') {
+            this.featureStatus.bioSimulator.working = true;
+        } else if (source === 'bluetooth') {
+            this.featureStatus.bioBluetooth.working = true;
+        } else if (source === 'camera') {
+            this.featureStatus.bioCamera.working = true;
+        }
+
+        this.updateBioStatusIndicator();
     }
 
     /**
@@ -1147,10 +1275,14 @@ class Echoela {
      * Cleanup and destroy
      */
     destroy() {
-        // Clear interval
+        // Clear intervals
         if (this._tipInterval) {
             clearInterval(this._tipInterval);
             this._tipInterval = null;
+        }
+        if (this._bioStatusInterval) {
+            clearInterval(this._bioStatusInterval);
+            this._bioStatusInterval = null;
         }
 
         // Clear highlights
@@ -1160,6 +1292,10 @@ class Echoela {
         const container = document.getElementById('echoela-container');
         if (container) {
             container.remove();
+        }
+        const bioStatus = document.getElementById('echoela-bio-status');
+        if (bioStatus) {
+            bioStatus.remove();
         }
 
         this.isActive = false;
