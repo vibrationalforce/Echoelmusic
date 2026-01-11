@@ -11,15 +11,46 @@
 
 ---
 
-## Downloads
+## Downloads (Beta 2.6.1)
 
-| Platform | Download | Formats |
-|----------|----------|---------|
-| **Windows** | [Installer](../../releases/latest) | VST3, CLAP, Standalone |
-| **macOS** | [DMG](../../releases/latest) | VST3, AU, CLAP, Standalone |
-| **Linux** | [AppImage](../../releases/latest) | VST3, CLAP, Standalone, Deb |
-| **Android** | [APK](../../releases/latest) | Standalone App |
-| **iOS** | App Store (coming) | AUv3, Standalone |
+| Platform | Download | Formats | Status |
+|----------|----------|---------|--------|
+| **macOS** | [DMG](../../releases/latest/download/Echoelmusic-macOS.dmg) | VST3, AU, CLAP, Standalone | Ready |
+| **Windows** | [Installer](../../releases/latest/download/Echoelmusic-Windows-Setup.exe) | VST3, CLAP, Standalone | Ready |
+| **Linux** | [AppImage](../../releases/latest/download/Echoelmusic-Linux.AppImage) | VST3, CLAP, Standalone, Deb | Ready |
+| **iOS** | App Store | AUv3, Standalone, HealthKit | Coming Soon |
+| **Android** | Google Play | Standalone, Health Connect | Coming Soon |
+| **visionOS** | App Store | Immersive, Spatial Audio | Coming 2026 |
+
+---
+
+## 🎹 100% JUCE-Free Architecture
+
+Echoelmusic is built with a **completely JUCE-free architecture** - no licensing fees, no restrictions.
+
+| Platform | Audio Framework | License |
+|----------|-----------------|---------|
+| **iOS/macOS/watchOS/tvOS/visionOS** | AVFoundation + Accelerate | Apple (Free) |
+| **Android** | Oboe + AAudio | Apache 2.0 (Free) |
+| **Desktop Plugins** | iPlug2 | MIT (Free) |
+| **DSP Engine** | Pure C++17 | MIT (Free) |
+
+### Plugin Formats (via iPlug2)
+- VST3 (Windows, macOS, Linux)
+- Audio Unit (macOS, iOS)
+- CLAP (Windows, macOS, Linux)
+- AAX (Pro Tools)
+- Standalone Apps
+
+### Build Without JUCE
+```bash
+# Swift apps (iOS/macOS) - no external dependencies
+swift build
+
+# Desktop plugins (iPlug2)
+cmake .. -DUSE_IPLUG2=ON -DUSE_JUCE=OFF
+make -j8
+```
 
 ---
 

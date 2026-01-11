@@ -423,6 +423,131 @@
         .disclaimer strong { color: var(--color-warning); }
         .disclaimer a { color: var(--color-primary); }
 
+        /* ===== DOWNLOADS ===== */
+        .downloads {
+            background: transparent;
+        }
+
+        .downloads-intro {
+            text-align: center;
+            margin-bottom: var(--space-xl);
+        }
+
+        .downloads-intro p {
+            color: var(--color-text-secondary);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .downloads-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .download-card {
+            padding: var(--space-lg);
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid var(--color-glass-border);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            transition: all var(--transition);
+        }
+
+        .download-card:hover {
+            border-color: var(--color-primary);
+            box-shadow: var(--glow-primary);
+            transform: translateY(-4px);
+        }
+
+        .download-card.coming-soon {
+            opacity: 0.7;
+        }
+        .download-card.coming-soon:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: var(--color-glass-border);
+        }
+
+        .download-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto var(--space-md);
+        }
+
+        .download-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: var(--space-xs);
+        }
+
+        .download-card .version {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-bottom: var(--space-md);
+        }
+
+        .download-card .formats {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            margin-top: var(--space-sm);
+        }
+
+        .badge-coming {
+            display: inline-block;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, var(--color-secondary), var(--color-accent));
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            color: var(--color-bg);
+            font-weight: 600;
+            font-size: 13px;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all var(--transition);
+        }
+        .btn-download:hover {
+            box-shadow: var(--glow-primary);
+            transform: scale(1.05);
+        }
+        .btn-download svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .downloads-note {
+            text-align: center;
+            padding: var(--space-lg);
+            background: rgba(255,255,255,0.03);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+        }
+        .downloads-note p {
+            color: var(--color-text-muted);
+            font-size: 13px;
+            margin: 0;
+        }
+        .downloads-note a {
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+        .downloads-note a:hover {
+            text-decoration: underline;
+        }
+
         /* ===== CTA ===== */
         .cta {
             background: transparent;
@@ -733,13 +858,106 @@
             </div>
         </section>
 
-        <!-- CTA Section -->
-        <section id="get-started" class="cta" aria-labelledby="cta-title">
+        <!-- Downloads Section -->
+        <section id="get-started" class="section downloads" aria-labelledby="downloads-title">
+            <div class="container">
+                <header class="section-header">
+                    <h2 id="downloads-title" class="section-title" data-i18n="downloads-title">Download</h2>
+                </header>
+                <div class="downloads-intro">
+                    <p data-i18n="downloads-intro">Free beta. All platforms. No credit card required.</p>
+                </div>
+
+                <div class="downloads-grid" role="list">
+                    <!-- macOS -->
+                    <article class="download-card" role="listitem">
+                        <svg class="download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                        </svg>
+                        <h3>macOS</h3>
+                        <div class="version">Beta 2.6.1 · Intel & Apple Silicon</div>
+                        <a href="https://github.com/vibrationalforce/Echoelmusic/releases/latest/download/Echoelmusic-macOS.dmg" class="btn-download">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                            Download DMG
+                        </a>
+                        <div class="formats">VST3 · AU · CLAP · Standalone</div>
+                    </article>
+
+                    <!-- Windows -->
+                    <article class="download-card" role="listitem">
+                        <svg class="download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M3 12V6.75l6-1.32v6.48L3 12zm17-9v8.75l-10 .15V5.21L20 3zM3 13l6 .09v6.81l-6-1.15V13zm17 .25V22l-10-1.91V13.1l10 .15z"/>
+                        </svg>
+                        <h3>Windows</h3>
+                        <div class="version">Beta 2.6.1 · Windows 10/11 (64-bit)</div>
+                        <a href="https://github.com/vibrationalforce/Echoelmusic/releases/latest/download/Echoelmusic-Windows-Setup.exe" class="btn-download">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                            Download EXE
+                        </a>
+                        <div class="formats">VST3 · CLAP · Standalone</div>
+                    </article>
+
+                    <!-- Linux -->
+                    <article class="download-card" role="listitem">
+                        <svg class="download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139zm.529 3.405h.013c.213 0 .396.062.584.198.19.135.33.332.438.533.105.259.158.459.166.724 0-.02.006-.04.006-.06v.105a.086.086 0 01-.004-.021l-.004-.024a1.807 1.807 0 01-.15.706.953.953 0 01-.213.335.71.71 0 00-.088-.042c-.104-.045-.198-.064-.284-.133a1.312 1.312 0 00-.22-.066c.05-.06.146-.133.183-.198.053-.128.082-.264.088-.402v-.02a1.21 1.21 0 00-.061-.4c-.045-.134-.101-.2-.183-.333-.084-.066-.167-.132-.267-.132h-.016c-.093 0-.176.03-.262.132a.8.8 0 00-.205.334 1.18 1.18 0 00-.09.4v.019c.002.089.008.179.02.267-.193-.067-.438-.135-.607-.202a1.635 1.635 0 01-.018-.2v-.02a1.772 1.772 0 01.15-.768c.082-.22.232-.406.43-.533a.985.985 0 01.594-.2zm-2.962.059h.036c.142 0 .27.048.399.135.146.129.264.288.344.465.09.199.14.4.153.667v.004c.007.134.006.2-.002.266v.08c-.03.007-.056.018-.083.024-.152.055-.274.135-.393.2.012-.09.013-.18.003-.267v-.015c-.012-.133-.04-.2-.082-.333a.613.613 0 00-.166-.267.248.248 0 00-.183-.064h-.021c-.071.006-.13.04-.186.132a.552.552 0 00-.12.27.944.944 0 00-.023.33v.015c.012.135.037.2.08.334.046.134.098.2.166.268.01.009.02.018.034.024-.07.057-.117.07-.176.136a.304.304 0 01-.131.068 2.62 2.62 0 01-.275-.402 1.772 1.772 0 01-.155-.667 1.759 1.759 0 01.08-.668 1.43 1.43 0 01.283-.535c.128-.133.26-.2.418-.2zm1.37 1.706c.332 0 .733.065 1.216.399.293.2.523.269 1.052.468h.003c.255.136.405.266.478.399v-.131a.571.571 0 01.016.47c-.123.31-.516.643-1.063.842v.002c-.268.135-.501.333-.775.465-.276.135-.588.292-1.012.267a1.139 1.139 0 01-.448-.067 3.566 3.566 0 01-.322-.198c-.195-.135-.363-.332-.612-.465v-.005h-.005c-.4-.246-.616-.512-.686-.71-.07-.268-.005-.47.193-.6.224-.135.38-.271.483-.336.104-.074.143-.102.176-.131h.002v-.003c.169-.202.436-.47.839-.601.139-.036.294-.065.466-.065zm2.8 2.142c.358 1.417 1.196 3.475 1.735 4.473.286.534.855 1.659 1.102 3.024.156-.005.33.018.513.064.646-1.671-.546-3.467-1.089-3.966-.22-.2-.232-.335-.123-.335.59.534 1.365 1.572 1.646 2.757.13.535.16 1.104.021 1.67.067.028.135.06.205.067 1.032.534 1.413.938 1.23 1.537v-.002c-.06-.135-.12-.2-.184-.268-.193-.135-.406-.199-.603-.534-.268-.467-.539-.602-.87-.669-.089-.013-.18-.004-.268.007.582.135 1.072.672 1.211 1.066.046.134.06.198.06.337 0 .399-.12.468-.18.535-.12.135-.18.267-.316.4-.12.135-.267.335-.267.4-.107.534.027.933.266 1.267.24.336.533.535.73.669.135.066.199.135.259.201a.42.42 0 01.074.467c-.059.119-.196.199-.41.332-.267.135-.603.2-.869.4-.267.134-.468.332-.536.464a.726.726 0 00-.061.382c.001.139.03.209.061.337.03.136.071.271.124.464.045.135.091.2.091.333 0 .068-.04.135-.091.202a.553.553 0 01-.182.134c-.134.067-.329.135-.529.2-.267.067-.47.135-.672.135-.201 0-.399-.067-.596-.199-.135-.067-.27-.2-.398-.334-.063-.066-.201-.199-.201-.4 0-.132.08-.266.128-.334.066-.128.201-.195.334-.263.267-.135.533-.265.803-.398.267-.135.467-.267.602-.4.136-.134.138-.269.138-.403-.001-.135-.066-.202-.202-.336-.202-.2-.534-.403-.805-.603-.27-.2-.535-.336-.73-.47-.135-.065-.264-.131-.397-.2-.134-.065-.2-.135-.265-.197-.066-.068-.131-.136-.198-.27-.059-.129-.059-.264-.059-.332-.001-.135.057-.265.124-.464.067-.135.133-.332.198-.535l.003-.001a3.096 3.096 0 01.474-.937 2.03 2.03 0 01-.127-.398v-.002a1.763 1.763 0 01-.062-.4v-.066a1.27 1.27 0 01.096-.4c-.003-.003-.009-.003-.012-.003-.066-.135-.131-.2-.197-.335-.066-.134-.197-.268-.329-.334-.198-.135-.33-.196-.53-.263-.2-.132-.396-.336-.596-.535-.198-.2-.396-.468-.596-.737-.198-.267-.398-.536-.598-.87-.198-.333-.33-.667-.462-1.067-.133-.4-.134-.8-.133-1.134.002-.268.065-.536.198-.8.134-.269.332-.468.599-.668.261-.2.526-.267.859-.267.399 0 .73.069 1.004.203.272.135.542.336.743.536z"/>
+                        </svg>
+                        <h3>Linux</h3>
+                        <div class="version">Beta 2.6.1 · Ubuntu, Debian, Fedora</div>
+                        <a href="https://github.com/vibrationalforce/Echoelmusic/releases/latest/download/Echoelmusic-Linux.AppImage" class="btn-download">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                            Download AppImage
+                        </a>
+                        <div class="formats">VST3 · CLAP · Standalone · .deb</div>
+                    </article>
+
+                    <!-- iOS - Coming Soon -->
+                    <article class="download-card coming-soon" role="listitem">
+                        <svg class="download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                        </svg>
+                        <h3>iOS & iPadOS</h3>
+                        <div class="version">iPhone · iPad · Apple Watch</div>
+                        <span class="badge-coming">App Store Coming Soon</span>
+                        <div class="formats">AUv3 · Standalone · HealthKit</div>
+                    </article>
+
+                    <!-- Android - Coming Soon -->
+                    <article class="download-card coming-soon" role="listitem">
+                        <svg class="download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M17.523 15.341a.89.89 0 01-.891-.89.89.89 0 01.891-.89.89.89 0 010 1.78zm-11.046 0a.89.89 0 01-.891-.89.89.89 0 01.891-.89.89.89 0 010 1.78zm11.405-6.025l1.997-3.46a.416.416 0 00-.152-.567.416.416 0 00-.568.152l-2.022 3.503a12.247 12.247 0 00-5.137-1.119c-1.852 0-3.594.398-5.137 1.12L4.84 5.44a.416.416 0 00-.567-.152.416.416 0 00-.152.567l1.997 3.46C2.688 11.196.343 14.612 0 18.593h24c-.343-3.98-2.688-7.397-6.118-9.277z"/>
+                        </svg>
+                        <h3>Android</h3>
+                        <div class="version">Phones · Tablets · Wear OS</div>
+                        <span class="badge-coming">Google Play Coming Soon</span>
+                        <div class="formats">Standalone · Health Connect</div>
+                    </article>
+
+                    <!-- visionOS - Coming Soon -->
+                    <article class="download-card coming-soon" role="listitem">
+                        <svg class="download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                        <h3>visionOS</h3>
+                        <div class="version">Apple Vision Pro</div>
+                        <span class="badge-coming">Coming 2026</span>
+                        <div class="formats">Immersive · Spatial Audio</div>
+                    </article>
+                </div>
+
+                <div class="downloads-note">
+                    <p>All downloads are free during beta. Source code available on <a href="https://github.com/vibrationalforce/Echoelmusic" target="_blank" rel="noopener">GitHub</a>.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Beta CTA Section -->
+        <section class="section cta" aria-labelledby="cta-title">
             <div class="container">
                 <div class="cta-card">
-                    <h2 id="cta-title" class="section-title" data-i18n="cta-title">Get Started</h2>
+                    <h2 id="cta-title" class="section-title" data-i18n="cta-title">Join the Beta</h2>
                     <div class="cta-price" aria-label="Free">€0</div>
-                    <p class="cta-note" data-i18n="cta-note">Free beta access · No credit card required</p>
+                    <p class="cta-note" data-i18n="cta-note">Get notified when mobile apps launch</p>
                     <ul class="cta-list" role="list">
                         <li role="listitem" data-i18n="cta-feature-1">Bio-reactive audio, visuals, and lighting</li>
                         <li role="listitem" data-i18n="cta-feature-2">100+ instruments and synthesis engines</li>
