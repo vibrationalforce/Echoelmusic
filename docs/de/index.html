@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Echoelmusic - Bio-reaktive Audio-visuelle Produktion</title>
     <meta name="description" content="Verwandle biometrische Signale in Musik, Visuals und Licht. Professionelle bio-reaktive Produktion für iOS, Android, macOS, Windows, Linux und visionOS.">
-    <meta name="theme-color" content="#2DD4BF">
+    <meta name="theme-color" content="#00FFFF">
 
     <!-- Accessibility -->
     <meta name="color-scheme" content="dark">
@@ -35,30 +35,50 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* ===== CSS CUSTOM PROPERTIES ===== */
+        /* ===== CSS CUSTOM PROPERTIES (Vaporwave Theme - Native App) ===== */
         :root {
-            --color-primary: #2DD4BF;
-            --color-accent: #F472B6;
-            --color-secondary: #A78BFA;
+            /* Neon Colors (Native App Palette) */
+            --color-primary: #00FFFF;
+            --color-accent: #FF1493;
+            --color-secondary: #9933FF;
+            --color-lavender: #CC99FF;
             --color-warning: #FBBF24;
-            --color-bg: #0C0A1A;
-            --color-surface: #151326;
-            --color-text: #F8FAFC;
-            --color-text-secondary: rgba(248,250,252,0.7);
-            --color-text-muted: rgba(248,250,252,0.5);
-            --color-border: rgba(255,255,255,0.1);
+            /* Bio-reactive States */
+            --color-coherence-low: #FF4D4D;
+            --color-coherence-mid: #FFCC33;
+            --color-coherence-high: #33FFD1;
+            /* Background (Deep Space) */
+            --color-bg: #050513;
+            --color-bg-mid: #0D0D26;
+            --color-surface: #1A0D33;
+            /* Text */
+            --color-text: #FFFFFF;
+            --color-text-secondary: rgba(255,255,255,0.7);
+            --color-text-muted: rgba(255,255,255,0.4);
+            /* Glass & Borders */
+            --color-border: rgba(255,255,255,0.12);
+            --color-glass: rgba(255,255,255,0.05);
+            --color-glass-border: rgba(255,255,255,0.15);
+            /* Typography */
             --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 20px;
+            /* Spacing (Native App System) */
             --space-xs: 4px;
             --space-sm: 8px;
             --space-md: 16px;
             --space-lg: 24px;
-            --space-xl: 48px;
-            --space-2xl: 80px;
+            --space-xl: 32px;
+            --space-2xl: 48px;
+            /* Radius */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            /* Layout */
             --max-width: 1000px;
-            --transition: 0.2s ease;
+            --transition: 0.3s ease;
+            /* Glow Effects */
+            --glow-primary: 0 0 20px rgba(0,255,255,0.4), 0 0 40px rgba(0,255,255,0.2);
+            --glow-accent: 0 0 20px rgba(255,20,147,0.4), 0 0 40px rgba(255,20,147,0.2);
+            --glow-secondary: 0 0 20px rgba(153,51,255,0.4), 0 0 40px rgba(153,51,255,0.2);
         }
 
         /* ===== RESET & BASE ===== */
@@ -67,11 +87,13 @@
 
         body {
             font-family: var(--font-sans);
-            background: var(--color-bg);
+            background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-bg-mid) 50%, var(--color-surface) 100%);
+            background-attachment: fixed;
             color: var(--color-text);
             line-height: 1.6;
             font-size: 16px;
             -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
         }
 
         /* ===== ACCESSIBILITY ===== */
@@ -178,8 +200,8 @@
             display: inline-flex;
             align-items: center;
             gap: var(--space-sm);
-            padding: var(--space-sm) var(--space-md);
-            border-radius: var(--radius-sm);
+            padding: 12px 24px;
+            border-radius: 50px;
             font-weight: 600;
             font-size: 14px;
             text-decoration: none;
@@ -188,16 +210,25 @@
             cursor: pointer;
         }
         .btn-primary {
-            background: var(--color-primary);
-            color: var(--color-bg);
-        }
-        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        .btn-secondary {
-            background: transparent;
+            background: linear-gradient(135deg, var(--color-accent), var(--color-secondary), var(--color-primary));
             color: var(--color-text);
-            border: 1px solid var(--color-border);
+            box-shadow: var(--glow-accent);
         }
-        .btn-secondary:hover { border-color: var(--color-primary); color: var(--color-primary); }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(255,20,147,0.5), 0 0 60px rgba(255,20,147,0.3);
+        }
+        .btn-secondary {
+            background: var(--color-glass);
+            color: var(--color-text);
+            border: 1px solid var(--color-glass-border);
+            backdrop-filter: blur(10px);
+        }
+        .btn-secondary:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            box-shadow: var(--glow-primary);
+        }
 
         /* ===== HERO ===== */
         .hero {
@@ -251,13 +282,19 @@
             text-align: center;
         }
         .stat-value {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
-            color: var(--color-primary);
+            background: linear-gradient(135deg, var(--color-accent), var(--color-secondary), var(--color-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0,255,255,0.3);
         }
         .stat-label {
             font-size: 13px;
             color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         /* ===== SECTIONS ===== */
@@ -284,7 +321,7 @@
 
         /* ===== FEATURES ===== */
         .features {
-            background: var(--color-surface);
+            background: transparent;
         }
 
         .features-grid {
@@ -297,15 +334,25 @@
 
         .feature {
             padding: var(--space-lg);
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--color-border);
+            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid var(--color-glass-border);
             border-radius: var(--radius-lg);
+            backdrop-filter: blur(10px);
+            transition: all var(--transition);
+        }
+        .feature:hover {
+            transform: translateY(-4px);
+            border-color: var(--color-primary);
+            box-shadow: var(--glow-primary);
         }
 
         .feature-icon {
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             margin-bottom: var(--space-md);
+            padding: 10px;
+            background: linear-gradient(135deg, rgba(255,20,147,0.2), rgba(153,51,255,0.15));
+            border-radius: var(--radius-md);
             color: var(--color-primary);
         }
 
@@ -313,11 +360,13 @@
             font-size: 16px;
             font-weight: 600;
             margin-bottom: var(--space-sm);
+            color: var(--color-text);
         }
 
         .feature p {
             font-size: 14px;
             color: var(--color-text-secondary);
+            line-height: 1.6;
         }
 
         /* ===== SCIENCE ===== */
@@ -331,9 +380,15 @@
 
         .science-card {
             padding: var(--space-md);
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--color-border);
+            background: linear-gradient(135deg, rgba(153,51,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid var(--color-glass-border);
             border-radius: var(--radius-md);
+            backdrop-filter: blur(8px);
+            transition: all var(--transition);
+        }
+        .science-card:hover {
+            border-color: var(--color-secondary);
+            box-shadow: var(--glow-secondary);
         }
 
         .science-card h3 {
@@ -365,23 +420,28 @@
 
         /* ===== CTA ===== */
         .cta {
-            background: var(--color-surface);
+            background: transparent;
             text-align: center;
         }
 
         .cta-card {
             max-width: 500px;
             margin: 0 auto;
-            padding: var(--space-xl);
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--color-border);
+            padding: var(--space-2xl);
+            background: linear-gradient(135deg, rgba(255,20,147,0.1) 0%, rgba(153,51,255,0.08) 50%, rgba(0,255,255,0.05) 100%);
+            border: 2px solid var(--color-accent);
             border-radius: var(--radius-lg);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 60px rgba(255,20,147,0.15);
         }
 
         .cta-price {
-            font-size: 48px;
+            font-size: 56px;
             font-weight: 700;
-            color: var(--color-primary);
+            background: linear-gradient(135deg, var(--color-accent), var(--color-secondary), var(--color-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: var(--space-sm);
         }
 
