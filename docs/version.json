@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0-isochronic",
+  "build": "2026-01-11T10:15:00Z",
+  "features": {
+    "isochronicTones": true,
+    "pwa": true,
+    "offlineMode": true,
+    "webXR": "detection",
+    "webBluetooth": "hooks",
+    "visualEntrainment": true
+  },
+  "changelog": [
+    "Isochronic tones engine (50dB modulation, mono-compatible)",
+    "PWA install banner with offline support",
+    "Evidence-based design and disclaimers",
+    "WebXR detection for future glasses support",
+    "Web Bluetooth hooks for wearable integration",
+    "Visual entrainment synced to frequency"
+  ]
+}
