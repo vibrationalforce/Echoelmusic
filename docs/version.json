@@ -1,25 +1,23 @@
 {
-  "version": "2.1.0-echosynth",
-  "build": "2026-01-11T11:00:00Z",
+  "version": "3.0.0-minimal",
+  "build": "2026-01-11T12:00:00Z",
   "features": {
-    "echoSynth": true,
-    "polyphonic": true,
-    "realTimeFilter": true,
-    "keyboardInput": true,
-    "touchInput": true,
+    "uspFocused": true,
+    "minimalDesign": true,
     "pwa": true,
     "offlineMode": true,
     "webXR": "detection",
-    "webBluetooth": "hooks"
+    "webBluetooth": "hooks",
+    "multiLanguage": true
   },
   "changelog": [
-    "EchoSynth real-time synthesizer demo",
-    "Polyphonic playback with ADSR envelope",
-    "4 waveforms: Saw, Square, Sine, Triangle",
-    "Lowpass filter with cutoff and resonance",
-    "Keyboard input (A-K keys) + touch support",
-    "Production-focused design (not wellness)",
-    "PWA install banner with offline support",
-    "WebXR detection for future glasses support"
+    "Simplified landing page - USP focused",
+    "Removed demo for cleaner experience",
+    "New headline: Your Body. Your Sound. Your Art.",
+    "3 core USP cards: Real-Time, All Platforms, 100% Yours",
+    "Trust badges: GDPR, AES-256, 5 Platforms, Bio-Reactive",
+    "Streamlined CTA section",
+    "German version synchronized",
+    "PWA ready for adaptive WebApp deployment"
   ]
 }
