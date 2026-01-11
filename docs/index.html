@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echoelmusic - Bio-Reactive Audio-Visual Production</title>
-    <meta name="description" content="Transform biometric signals into music, visuals, and light. Professional bio-reactive production for iOS, Android, macOS, Windows, Linux, and visionOS.">
+    <title>Echoelmusic - Transform Heartbeat Into Sound</title>
+    <meta name="description" content="Bio-reactive music production. Transform your heartbeat into sound. Free beta for macOS, Windows, Linux. 100+ instruments, real-time biofeedback, <10ms latency.">
+    <meta name="keywords" content="bio-reactive music, biofeedback audio, HRV music, heart rate music production, wellness audio, music production software">
+    <meta name="author" content="Echoelmusic">
     <meta name="theme-color" content="#00FFFF">
-
-    <!-- Accessibility -->
     <meta name="color-scheme" content="dark">
 
     <!-- PWA -->
@@ -22,9 +22,38 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://vibrationalforce.github.io/Echoelmusic/">
-    <meta property="og:title" content="Echoelmusic - Bio-Reactive Audio-Visual Production">
-    <meta property="og:description" content="Transform biometric signals into music, visuals, and light.">
+    <meta property="og:title" content="Echoelmusic - Transform Heartbeat Into Sound">
+    <meta property="og:description" content="Bio-reactive music production. Create art that responds to your body in real-time.">
     <meta property="og:image" content="https://vibrationalforce.github.io/Echoelmusic/app-icon.svg">
+    <meta property="og:site_name" content="Echoelmusic">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Echoelmusic - Transform Heartbeat Into Sound">
+    <meta name="twitter:description" content="Bio-reactive music production. Create art that responds to your body.">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Echoelmusic",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "macOS, Windows, Linux, iOS, Android, visionOS",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock"
+        },
+        "description": "Bio-reactive audio-visual production software. Transform biometrics into music, visuals, and light.",
+        "softwareVersion": "2.6.1-beta",
+        "author": {
+            "@type": "Organization",
+            "name": "Echoelmusic"
+        }
+    }
+    </script>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -35,53 +64,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* ===== CSS CUSTOM PROPERTIES (Vaporwave Theme - Native App) ===== */
         :root {
-            /* Neon Colors (Native App Palette) */
             --color-primary: #00FFFF;
             --color-accent: #FF1493;
             --color-secondary: #9933FF;
-            --color-lavender: #CC99FF;
-            --color-warning: #FBBF24;
-            /* Bio-reactive States */
-            --color-coherence-low: #FF4D4D;
-            --color-coherence-mid: #FFCC33;
-            --color-coherence-high: #33FFD1;
-            /* Background (Deep Space) */
             --color-bg: #050513;
             --color-bg-mid: #0D0D26;
             --color-surface: #1A0D33;
-            /* Text */
             --color-text: #FFFFFF;
             --color-text-secondary: rgba(255,255,255,0.7);
             --color-text-muted: rgba(255,255,255,0.4);
-            /* Glass & Borders */
             --color-border: rgba(255,255,255,0.12);
             --color-glass: rgba(255,255,255,0.05);
             --color-glass-border: rgba(255,255,255,0.15);
-            /* Typography */
+            --color-warning: #FBBF24;
             --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-            /* Spacing (Native App System) */
-            --space-xs: 4px;
-            --space-sm: 8px;
-            --space-md: 16px;
-            --space-lg: 24px;
-            --space-xl: 32px;
-            --space-2xl: 48px;
-            /* Radius */
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 20px;
-            /* Layout */
-            --max-width: 1000px;
+            --space-xs: 4px; --space-sm: 8px; --space-md: 16px; --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px;
+            --radius-sm: 8px; --radius-md: 12px; --radius-lg: 20px;
+            --max-width: 900px;
             --transition: 0.3s ease;
-            /* Glow Effects */
             --glow-primary: 0 0 20px rgba(0,255,255,0.4), 0 0 40px rgba(0,255,255,0.2);
             --glow-accent: 0 0 20px rgba(255,20,147,0.4), 0 0 40px rgba(255,20,147,0.2);
-            --glow-secondary: 0 0 20px rgba(153,51,255,0.4), 0 0 40px rgba(153,51,255,0.2);
         }
 
-        /* ===== RESET & BASE ===== */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
 
@@ -96,7 +101,6 @@
             min-height: 100vh;
         }
 
-        /* ===== ACCESSIBILITY ===== */
         .skip-link {
             position: absolute;
             top: -100%;
@@ -111,49 +115,22 @@
         }
         .skip-link:focus { top: var(--space-md); }
 
-        :focus-visible {
-            outline: 2px solid var(--color-primary);
-            outline-offset: 2px;
-        }
+        :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 
         @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.01ms !important;
-            }
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
             html { scroll-behavior: auto; }
         }
 
-        .visually-hidden {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        /* ===== LAYOUT ===== */
-        .container {
-            max-width: var(--max-width);
-            margin: 0 auto;
-            padding: 0 var(--space-lg);
-        }
-
-        /* ===== HEADER ===== */
+        /* Header */
         .header {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             z-index: 100;
             background: rgba(12,10,26,0.9);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--color-border);
-            padding: var(--space-md) var(--space-lg);
+            padding: var(--space-sm) var(--space-lg);
         }
 
         .header-inner {
@@ -168,11 +145,10 @@
             display: flex;
             align-items: center;
             gap: var(--space-sm);
-            color: var(--color-text);
             font-weight: 700;
             font-size: 18px;
         }
-        .logo svg { width: 32px; height: 32px; }
+        .logo svg { width: 28px; height: 28px; }
         .logo span {
             background: linear-gradient(135deg, var(--color-accent), var(--color-secondary), var(--color-primary));
             -webkit-background-clip: text;
@@ -180,17 +156,9 @@
             background-clip: text;
         }
 
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
-        }
+        .nav-actions { display: flex; align-items: center; gap: var(--space-md); }
 
-        .lang-switch {
-            display: flex;
-            gap: 2px;
-            font-size: 12px;
-        }
+        .lang-switch { display: flex; gap: 2px; font-size: 12px; }
         .lang-switch a {
             color: var(--color-text-muted);
             text-decoration: none;
@@ -201,499 +169,137 @@
         .lang-switch a:hover { color: var(--color-text); }
         .lang-switch a[aria-current="page"] { color: var(--color-primary); }
 
-        .btn {
-            display: inline-flex;
-            align-items: center;
+        .social-header {
+            display: flex;
             gap: var(--space-sm);
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 14px;
-            text-decoration: none;
-            transition: all var(--transition);
-            border: none;
-            cursor: pointer;
         }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--color-accent), var(--color-secondary), var(--color-primary));
-            color: var(--color-text);
-            box-shadow: var(--glow-accent);
+        .social-header a {
+            color: var(--color-text-muted);
+            transition: color var(--transition);
         }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 30px rgba(255,20,147,0.5), 0 0 60px rgba(255,20,147,0.3);
-        }
-        .btn-secondary {
-            background: var(--color-glass);
-            color: var(--color-text);
-            border: 1px solid var(--color-glass-border);
-            backdrop-filter: blur(10px);
-        }
-        .btn-secondary:hover {
-            border-color: var(--color-primary);
-            color: var(--color-primary);
-            box-shadow: var(--glow-primary);
-        }
+        .social-header a:hover { color: var(--color-primary); }
+        .social-header svg { width: 18px; height: 18px; }
 
-        /* ===== HERO ===== */
+        /* Hero - Compact */
         .hero {
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            padding: 120px var(--space-lg) var(--space-2xl);
+            padding: 80px var(--space-lg) var(--space-xl);
             text-align: center;
         }
 
-        .hero-content {
-            max-width: 700px;
-            margin: 0 auto;
-        }
+        .hero-content { max-width: 600px; }
 
         .hero h1 {
-            font-size: clamp(32px, 7vw, 56px);
+            font-size: clamp(28px, 6vw, 48px);
             font-weight: 700;
             line-height: 1.1;
-            margin-bottom: var(--space-md);
+            margin-bottom: var(--space-sm);
             letter-spacing: -0.02em;
         }
 
         .hero-lead {
-            font-size: clamp(16px, 2.5vw, 20px);
+            font-size: clamp(15px, 2vw, 18px);
             color: var(--color-text-secondary);
+            margin-bottom: var(--space-xl);
+        }
+
+        /* Download Buttons - Above Fold */
+        .download-buttons {
+            display: flex;
+            gap: var(--space-md);
+            justify-content: center;
+            flex-wrap: wrap;
             margin-bottom: var(--space-lg);
-            max-width: 550px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .hero-cta {
-            display: flex;
-            gap: var(--space-md);
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: var(--space-xl);
-        }
-
-        .hero-stats {
-            display: flex;
-            justify-content: center;
-            gap: var(--space-xl);
-            flex-wrap: wrap;
-            padding-top: var(--space-lg);
-            border-top: 1px solid var(--color-border);
-        }
-
-        .stat {
-            text-align: center;
-        }
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--color-accent), var(--color-secondary), var(--color-primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 0 30px rgba(0,255,255,0.3);
-        }
-        .stat-label {
-            font-size: 13px;
-            color: var(--color-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        /* ===== SECTIONS ===== */
-        section {
-            padding: var(--space-2xl) var(--space-lg);
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: var(--space-xl);
-        }
-
-        .section-title {
-            font-size: clamp(24px, 4vw, 36px);
-            font-weight: 700;
-            margin-bottom: var(--space-sm);
-        }
-
-        .section-subtitle {
-            color: var(--color-text-secondary);
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        /* ===== FEATURES ===== */
-        .features {
-            background: transparent;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: var(--space-lg);
-            max-width: var(--max-width);
-            margin: 0 auto;
-        }
-
-        .feature {
-            padding: var(--space-lg);
-            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
-            border: 1px solid var(--color-glass-border);
-            border-radius: var(--radius-lg);
-            backdrop-filter: blur(10px);
-            transition: all var(--transition);
-        }
-        .feature:hover {
-            transform: translateY(-4px);
-            border-color: var(--color-primary);
-            box-shadow: var(--glow-primary);
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            margin-bottom: var(--space-md);
-            padding: 10px;
-            background: linear-gradient(135deg, rgba(255,20,147,0.2), rgba(153,51,255,0.15));
-            border-radius: var(--radius-md);
-            color: var(--color-primary);
-        }
-
-        .feature h3 {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: var(--space-sm);
-            color: var(--color-text);
-        }
-
-        .feature p {
-            font-size: 14px;
-            color: var(--color-text-secondary);
-            line-height: 1.6;
-        }
-
-        /* ===== SCIENCE ===== */
-        .science-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: var(--space-md);
-            max-width: var(--max-width);
-            margin: 0 auto var(--space-lg);
-        }
-
-        .science-card {
-            padding: var(--space-md);
-            background: linear-gradient(135deg, rgba(153,51,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
-            border: 1px solid var(--color-glass-border);
-            border-radius: var(--radius-md);
-            backdrop-filter: blur(8px);
-            transition: all var(--transition);
-        }
-        .science-card:hover {
-            border-color: var(--color-secondary);
-            box-shadow: var(--glow-secondary);
-        }
-
-        .science-card h3 {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: var(--space-xs);
-            color: var(--color-secondary);
-        }
-
-        .science-card p {
-            font-size: 13px;
-            color: var(--color-text-secondary);
-            line-height: 1.5;
-        }
-
-        .disclaimer {
-            max-width: 700px;
-            margin: 0 auto;
-            padding: var(--space-md);
-            background: rgba(251,191,36,0.08);
-            border: 1px solid rgba(251,191,36,0.2);
-            border-radius: var(--radius-md);
-            font-size: 13px;
-            color: var(--color-text-secondary);
-            text-align: center;
-        }
-        .disclaimer strong { color: var(--color-warning); }
-        .disclaimer a { color: var(--color-primary); }
-
-        /* ===== DOWNLOADS ===== */
-        .downloads {
-            background: transparent;
-        }
-
-        .downloads-intro {
-            text-align: center;
-            margin-bottom: var(--space-xl);
-        }
-
-        .downloads-intro p {
-            color: var(--color-text-secondary);
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .downloads-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: var(--space-lg);
-            margin-bottom: var(--space-2xl);
-        }
-
-        .download-card {
-            padding: var(--space-lg);
-            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-            border: 1px solid var(--color-glass-border);
-            border-radius: var(--radius-lg);
-            backdrop-filter: blur(10px);
-            text-align: center;
-            transition: all var(--transition);
-        }
-
-        .download-card:hover {
-            border-color: var(--color-primary);
-            box-shadow: var(--glow-primary);
-            transform: translateY(-4px);
-        }
-
-        .download-card.coming-soon {
-            opacity: 0.7;
-        }
-        .download-card.coming-soon:hover {
-            transform: none;
-            box-shadow: none;
-            border-color: var(--color-glass-border);
-        }
-
-        .download-icon {
-            width: 48px;
-            height: 48px;
-            margin: 0 auto var(--space-md);
-        }
-
-        .download-card h3 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: var(--space-xs);
-        }
-
-        .download-card .version {
-            font-size: 12px;
-            color: var(--color-text-muted);
-            margin-bottom: var(--space-md);
-        }
-
-        .download-card .formats {
-            font-size: 11px;
-            color: var(--color-text-muted);
-            margin-top: var(--space-sm);
-        }
-
-        .badge-coming {
-            display: inline-block;
-            padding: 4px 12px;
-            background: linear-gradient(135deg, var(--color-secondary), var(--color-accent));
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
 
         .btn-download {
             display: inline-flex;
             align-items: center;
             gap: var(--space-sm);
-            padding: 10px 20px;
+            padding: 14px 28px;
             background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
             color: var(--color-bg);
             font-weight: 600;
-            font-size: 13px;
-            border-radius: 25px;
+            font-size: 14px;
+            border-radius: 50px;
             text-decoration: none;
             transition: all var(--transition);
+            border: none;
         }
         .btn-download:hover {
             box-shadow: var(--glow-primary);
-            transform: scale(1.05);
+            transform: translateY(-2px);
         }
-        .btn-download svg {
-            width: 16px;
-            height: 16px;
+        .btn-download svg { width: 18px; height: 18px; }
+
+        .btn-secondary {
+            background: var(--color-glass);
+            color: var(--color-text);
+            border: 1px solid var(--color-glass-border);
+        }
+        .btn-secondary:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
         }
 
-        .downloads-note {
-            text-align: center;
-            padding: var(--space-lg);
-            background: rgba(255,255,255,0.03);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--color-border);
-        }
-        .downloads-note p {
-            color: var(--color-text-muted);
+        .mobile-coming {
             font-size: 13px;
-            margin: 0;
+            color: var(--color-text-muted);
+            margin-bottom: var(--space-xl);
         }
-        .downloads-note a {
-            color: var(--color-primary);
+        .mobile-coming a {
+            color: var(--color-secondary);
             text-decoration: none;
         }
-        .downloads-note a:hover {
-            text-decoration: underline;
-        }
 
-        /* ===== CTA ===== */
-        .cta {
-            background: transparent;
-            text-align: center;
-        }
-
-        .cta-card {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: var(--space-2xl);
-            background: linear-gradient(135deg, rgba(255,20,147,0.1) 0%, rgba(153,51,255,0.08) 50%, rgba(0,255,255,0.05) 100%);
-            border: 2px solid var(--color-accent);
-            border-radius: var(--radius-lg);
-            backdrop-filter: blur(20px);
-            box-shadow: 0 0 60px rgba(255,20,147,0.15);
-        }
-
-        .cta-price {
-            font-size: 56px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--color-accent), var(--color-secondary), var(--color-primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: var(--space-sm);
-        }
-
-        .cta-note {
-            color: var(--color-text-muted);
-            font-size: 14px;
-            margin-bottom: var(--space-lg);
-        }
-
-        .cta-list {
-            list-style: none;
-            text-align: left;
-            margin-bottom: var(--space-lg);
-        }
-
-        .cta-list li {
-            padding: var(--space-sm) 0;
-            padding-left: var(--space-lg);
-            position: relative;
-            font-size: 14px;
-            color: var(--color-text-secondary);
-            border-bottom: 1px solid var(--color-border);
-        }
-        .cta-list li:last-child { border-bottom: none; }
-        .cta-list li::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 16px;
-            height: 16px;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232DD4BF' stroke-width='3'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E") center/contain no-repeat;
-        }
-
-        .cta .btn { width: 100%; justify-content: center; padding: var(--space-md); }
-
-        /* ===== FAQ ===== */
-        .faq-list {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .faq-item {
-            border-bottom: 1px solid var(--color-border);
-        }
-
-        .faq-question {
-            width: 100%;
-            padding: var(--space-md) 0;
-            background: none;
-            border: none;
+        /* Trust Bar */
+        .trust-bar {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--color-text);
-            text-align: left;
-        }
-        .faq-question:hover { color: var(--color-primary); }
-        .faq-question svg {
-            width: 16px;
-            height: 16px;
+            justify-content: center;
+            gap: var(--space-xl);
+            flex-wrap: wrap;
+            padding: var(--space-md) 0;
+            border-top: 1px solid var(--color-border);
+            font-size: 13px;
             color: var(--color-text-muted);
-            transition: transform var(--transition);
-        }
-        .faq-item[open] .faq-question svg { transform: rotate(180deg); }
-
-        .faq-answer {
-            padding: 0 0 var(--space-md);
-            font-size: 14px;
-            color: var(--color-text-secondary);
-            line-height: 1.6;
         }
 
-        /* ===== FOOTER ===== */
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+        .trust-item strong {
+            color: var(--color-text);
+            font-weight: 600;
+        }
+
+        /* Disclaimer - Compact */
+        .disclaimer-bar {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: var(--space-md) var(--space-lg);
+            text-align: center;
+            font-size: 12px;
+            color: var(--color-text-muted);
+        }
+        .disclaimer-bar a { color: var(--color-primary); text-decoration: none; }
+        .disclaimer-bar a:hover { text-decoration: underline; }
+
+        /* Footer - Minimal */
         .footer {
             background: var(--color-bg);
             border-top: 1px solid var(--color-border);
-            padding: var(--space-xl) var(--space-lg) var(--space-lg);
+            padding: var(--space-lg) var(--space-lg);
         }
 
         .footer-inner {
             max-width: var(--max-width);
             margin: 0 auto;
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
-            gap: var(--space-xl);
-        }
-
-        .footer-brand p {
-            color: var(--color-text-muted);
-            font-size: 14px;
-            margin: var(--space-sm) 0 var(--space-md);
-            max-width: 280px;
-        }
-
-        .footer-links h4 {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: var(--space-md);
-            color: var(--color-text-muted);
-        }
-
-        .footer-links a {
-            display: block;
-            color: var(--color-text-secondary);
-            text-decoration: none;
-            font-size: 14px;
-            padding: var(--space-xs) 0;
-        }
-        .footer-links a:hover { color: var(--color-primary); }
-
-        .footer-bottom {
-            max-width: var(--max-width);
-            margin: var(--space-lg) auto 0;
-            padding-top: var(--space-lg);
-            border-top: 1px solid var(--color-border);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -703,88 +309,43 @@
             color: var(--color-text-muted);
         }
 
+        .footer-links {
+            display: flex;
+            gap: var(--space-lg);
+            flex-wrap: wrap;
+        }
+        .footer-links a {
+            color: var(--color-text-muted);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+        .footer-links a:hover { color: var(--color-primary); }
+
         .social-links {
             display: flex;
             gap: var(--space-md);
         }
-        .social-links a {
-            color: var(--color-text-muted);
-            transition: color var(--transition);
-        }
+        .social-links a { color: var(--color-text-muted); transition: color var(--transition); }
         .social-links a:hover { color: var(--color-primary); }
-        .social-links svg { width: 20px; height: 20px; }
+        .social-links svg { width: 18px; height: 18px; }
 
-        /* ===== STICKY SOCIAL BAR ===== */
-        .social-bar {
-            position: fixed;
-            right: var(--space-md);
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 90;
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-sm);
-            padding: var(--space-sm);
-            background: rgba(12,10,26,0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--color-glass-border);
-            border-radius: var(--radius-lg);
-        }
-        .social-bar a {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            color: var(--color-text-muted);
-            border-radius: var(--radius-sm);
-            transition: all var(--transition);
-        }
-        .social-bar a:hover {
-            color: var(--color-primary);
-            background: rgba(0,255,255,0.1);
-            box-shadow: var(--glow-primary);
-        }
-        .social-bar svg { width: 20px; height: 20px; }
-
-        /* ===== RESPONSIVE ===== */
+        /* Responsive */
         @media (max-width: 768px) {
-            .hero { padding-top: 100px; min-height: auto; padding-bottom: var(--space-xl); }
-            .hero-stats { gap: var(--space-lg); }
-            .stat-value { font-size: 24px; }
-            .footer-inner { grid-template-columns: 1fr; text-align: center; }
-            .footer-brand p { max-width: none; }
-            .footer-bottom { flex-direction: column; text-align: center; }
-            .social-bar { display: none; }
+            .hero { padding-top: 100px; min-height: auto; }
+            .download-buttons { flex-direction: column; align-items: center; }
+            .btn-download { width: 100%; max-width: 280px; justify-content: center; }
+            .trust-bar { gap: var(--space-md); }
+            .footer-inner { flex-direction: column; text-align: center; }
+            .social-header { display: none; }
         }
 
         @media (max-width: 480px) {
-            .hero-cta { flex-direction: column; align-items: center; }
-            .hero-cta .btn { width: 100%; max-width: 280px; justify-content: center; }
+            .trust-bar { flex-direction: column; gap: var(--space-sm); }
         }
     </style>
 </head>
 <body>
-    <a href="#main" class="skip-link" data-i18n="skip-to-content">Skip to content</a>
-
-    <!-- Sticky Social Bar -->
-    <aside class="social-bar" aria-label="Social media links">
-        <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener" aria-label="Instagram">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-            </svg>
-        </a>
-        <a href="https://youtube.com/@echoelmusic" target="_blank" rel="noopener" aria-label="YouTube">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-            </svg>
-        </a>
-        <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener" aria-label="TikTok">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
-            </svg>
-        </a>
-    </aside>
+    <a href="#main" class="skip-link">Skip to content</a>
 
     <header class="header" role="banner">
         <div class="header-inner">
@@ -792,20 +353,29 @@
                 <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
                     <defs>
                         <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="var(--color-accent, #FF1493)"/>
-                            <stop offset="50%" stop-color="var(--color-secondary, #9933FF)"/>
-                            <stop offset="100%" stop-color="var(--color-primary, #00FFFF)"/>
+                            <stop offset="0%" stop-color="#FF1493"/>
+                            <stop offset="50%" stop-color="#9933FF"/>
+                            <stop offset="100%" stop-color="#00FFFF"/>
                         </linearGradient>
                     </defs>
-                    <!-- Organic heart shape -->
                     <path d="M50 82 C32 64 15 50 15 34 C15 22 25 12 37 12 C45 12 50 18 50 18 C50 18 55 12 63 12 C75 12 85 22 85 34 C85 50 68 64 50 82Z" fill="url(#logo-gradient)" opacity="0.9"/>
-                    <!-- Gentle sound wave - organic curves -->
                     <path d="M28 44 Q35 44 38 38 Q41 32 44 38 Q47 44 50 32 Q53 44 56 38 Q59 32 62 38 Q65 44 72 44" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.95"/>
                 </svg>
                 <span>Echoelmusic</span>
             </div>
             <nav class="nav-actions" aria-label="Main navigation">
-                <div class="lang-switch" role="navigation" aria-label="Language selection">
+                <div class="social-header">
+                    <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener" aria-label="Instagram">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </a>
+                    <a href="https://youtube.com/@echoelmusic" target="_blank" rel="noopener" aria-label="YouTube">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    </a>
+                    <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener" aria-label="TikTok">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+                    </a>
+                </div>
+                <div class="lang-switch" role="navigation" aria-label="Language">
                     <a href="index.html" aria-current="page" lang="en">EN</a>
                     <a href="de/index.html" lang="de">DE</a>
                 </div>
@@ -814,308 +384,68 @@
     </header>
 
     <main id="main" role="main">
-        <!-- Hero Section -->
         <section class="hero" aria-labelledby="hero-title">
             <div class="hero-content">
-                <h1 id="hero-title" data-i18n="hero-title">Bio-Reactive Audio-Visual Production</h1>
-                <p class="hero-lead" data-i18n="hero-lead">Transform your heartbeat, breathing, and biometrics into music, visuals, and light. Create art that responds to your body in real-time.</p>
-                <div class="hero-cta">
-                    <a href="#get-started" class="btn btn-primary" data-i18n="hero-cta-primary">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                        Free Beta Access
+                <h1 id="hero-title">Transform Heartbeat Into Sound</h1>
+                <p class="hero-lead">Bio-reactive music production. Create art that responds to your body in real-time.</p>
+
+                <div class="download-buttons">
+                    <a href="https://github.com/vibrationalforce/Echoelmusic/releases/latest/download/Echoelmusic-macOS.dmg" class="btn-download">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                        macOS
                     </a>
-                    <a href="#features" class="btn btn-secondary" data-i18n="hero-cta-secondary">Learn More</a>
+                    <a href="https://github.com/vibrationalforce/Echoelmusic/releases/latest/download/Echoelmusic-Windows-Setup.exe" class="btn-download">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 12V6.75l6-1.32v6.48L3 12zm17-9v8.75l-10 .15V5.21L20 3zM3 13l6 .09v6.81l-6-1.15V13zm17 .25V22l-10-1.91V13.1l10 .15z"/></svg>
+                        Windows
+                    </a>
+                    <a href="https://github.com/vibrationalforce/Echoelmusic/releases/latest/download/Echoelmusic-Linux.AppImage" class="btn-download">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139z"/></svg>
+                        Linux
+                    </a>
                 </div>
-                <div class="hero-stats" role="list" aria-label="Key statistics">
-                    <div class="stat" role="listitem">
-                        <div class="stat-value">6</div>
-                        <div class="stat-label" data-i18n="stat-platforms">Platforms</div>
-                    </div>
-                    <div class="stat" role="listitem">
-                        <div class="stat-value">100+</div>
-                        <div class="stat-label" data-i18n="stat-instruments">Instruments</div>
-                    </div>
-                    <div class="stat" role="listitem">
-                        <div class="stat-value">&lt;10ms</div>
-                        <div class="stat-label" data-i18n="stat-latency">Latency</div>
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- Features Section -->
-        <section id="features" class="features" aria-labelledby="features-title">
-            <div class="container">
-                <header class="section-header">
-                    <h2 id="features-title" class="section-title" data-i18n="features-title">Professional Tools</h2>
-                    <p class="section-subtitle" data-i18n="features-subtitle">Everything you need for bio-reactive production</p>
-                </header>
-                <div class="features-grid" role="list">
-                    <article class="feature" role="listitem">
-                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
-                        </svg>
-                        <h3 data-i18n="feature-bio-title">Real-Time Biofeedback</h3>
-                        <p data-i18n="feature-bio-desc">Heart rate, HRV, and breathing control sound, visuals, and lighting parameters instantly.</p>
-                    </article>
-                    <article class="feature" role="listitem">
-                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                            <path d="M9 18V5l12-2v13M9 9l12-2"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-                        </svg>
-                        <h3 data-i18n="feature-instruments-title">100+ Instruments</h3>
-                        <p data-i18n="feature-instruments-desc">Orchestral, synthesizers, world instruments, and 6 synthesis engines.</p>
-                    </article>
-                    <article class="feature" role="listitem">
-                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                            <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-                        </svg>
-                        <h3 data-i18n="feature-platforms-title">Cross-Platform</h3>
-                        <p data-i18n="feature-platforms-desc">Native apps for iOS, Android, macOS, Windows, Linux, and visionOS.</p>
-                    </article>
-                    <article class="feature" role="listitem">
-                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                        </svg>
-                        <h3 data-i18n="feature-security-title">Privacy-First</h3>
-                        <p data-i18n="feature-security-desc">AES-256 encryption, GDPR compliant. You own 100% of your creations.</p>
-                    </article>
+                <p class="mobile-coming">iOS & Android <a href="#mobile">coming soon</a> · Free Beta · No credit card</p>
+
+                <div class="trust-bar">
+                    <div class="trust-item"><strong>6</strong> Platforms</div>
+                    <div class="trust-item"><strong>100+</strong> Instruments</div>
+                    <div class="trust-item"><strong>&lt;10ms</strong> Latency</div>
+                    <div class="trust-item"><strong>HRV</strong> Research-Based</div>
+                    <div class="trust-item"><strong>GDPR</strong> Compliant</div>
                 </div>
             </div>
         </section>
 
-        <!-- Science Section -->
-        <section id="science" class="science" aria-labelledby="science-title">
-            <div class="container">
-                <header class="section-header">
-                    <h2 id="science-title" class="section-title" data-i18n="science-title">Research Foundation</h2>
-                    <p class="section-subtitle" data-i18n="science-subtitle">Exploring biophysical connections</p>
-                </header>
-                <div class="science-grid" role="list">
-                    <article class="science-card" role="listitem">
-                        <h3 data-i18n="science-hrv-title">Heart Rate Variability</h3>
-                        <p data-i18n="science-hrv-desc">HRV reflects autonomic balance. Research suggests coherent patterns may correlate with emotional regulation.</p>
-                    </article>
-                    <article class="science-card" role="listitem">
-                        <h3 data-i18n="science-resonance-title">Resonance Frequency</h3>
-                        <p data-i18n="science-resonance-desc">Breathing at ~6 breaths/min may optimize cardiovascular-respiratory synchronization.</p>
-                    </article>
-                    <article class="science-card" role="listitem">
-                        <h3 data-i18n="science-pni-title">Mind-Body Connection</h3>
-                        <p data-i18n="science-pni-desc">Psychoneuroimmunology explores links between psychological processes and physiological function.</p>
-                    </article>
-                </div>
-                <div class="disclaimer" role="note" aria-label="Health disclaimer">
-                    <p><strong data-i18n="disclaimer-label">Important:</strong> <span data-i18n="disclaimer-text">Echoelmusic is a creative tool, not a medical device. We make no health claims.</span> <a href="health.html" data-i18n="disclaimer-link">Health Disclaimer</a></p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Downloads Section -->
-        <section id="get-started" class="section downloads" aria-labelledby="downloads-title">
-            <div class="container">
-                <header class="section-header">
-                    <h2 id="downloads-title" class="section-title" data-i18n="downloads-title">Download</h2>
-                </header>
-                <div class="downloads-intro">
-                    <p data-i18n="downloads-intro">Free beta. All platforms. No credit card required.</p>
-                </div>
-
-                <div class="downloads-grid" role="list">
-                    <!-- macOS -->
-                    <article class="download-card" role="listitem">
-                        <svg class="download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                        </svg>
-                        <h3>macOS</h3>
-                        <div class="version">Beta 2.6.1 · Intel & Apple Silicon</div>
-                        <a href="https://github.com/vibrationalforce/Echoelmusic/releases/latest/download/Echoelmusic-macOS.dmg" class="btn-download">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                            Download DMG
-                        </a>
-                        <div class="formats">VST3 · AU · CLAP · Standalone</div>
-                    </article>
-
-                    <!-- Windows -->
-                    <article class="download-card" role="listitem">
-                        <svg class="download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                            <path d="M3 12V6.75l6-1.32v6.48L3 12zm17-9v8.75l-10 .15V5.21L20 3zM3 13l6 .09v6.81l-6-1.15V13zm17 .25V22l-10-1.91V13.1l10 .15z"/>
-                        </svg>
-                        <h3>Windows</h3>
-                        <div class="version">Beta 2.6.1 · Windows 10/11 (64-bit)</div>
-                        <a href="https://github.com/vibrationalforce/Echoelmusic/releases/latest/download/Echoelmusic-Windows-Setup.exe" class="btn-download">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                            Download EXE
-                        </a>
-                        <div class="formats">VST3 · CLAP · Standalone</div>
-                    </article>
-
-                    <!-- Linux -->
-                    <article class="download-card" role="listitem">
-                        <svg class="download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                            <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139zm.529 3.405h.013c.213 0 .396.062.584.198.19.135.33.332.438.533.105.259.158.459.166.724 0-.02.006-.04.006-.06v.105a.086.086 0 01-.004-.021l-.004-.024a1.807 1.807 0 01-.15.706.953.953 0 01-.213.335.71.71 0 00-.088-.042c-.104-.045-.198-.064-.284-.133a1.312 1.312 0 00-.22-.066c.05-.06.146-.133.183-.198.053-.128.082-.264.088-.402v-.02a1.21 1.21 0 00-.061-.4c-.045-.134-.101-.2-.183-.333-.084-.066-.167-.132-.267-.132h-.016c-.093 0-.176.03-.262.132a.8.8 0 00-.205.334 1.18 1.18 0 00-.09.4v.019c.002.089.008.179.02.267-.193-.067-.438-.135-.607-.202a1.635 1.635 0 01-.018-.2v-.02a1.772 1.772 0 01.15-.768c.082-.22.232-.406.43-.533a.985.985 0 01.594-.2zm-2.962.059h.036c.142 0 .27.048.399.135.146.129.264.288.344.465.09.199.14.4.153.667v.004c.007.134.006.2-.002.266v.08c-.03.007-.056.018-.083.024-.152.055-.274.135-.393.2.012-.09.013-.18.003-.267v-.015c-.012-.133-.04-.2-.082-.333a.613.613 0 00-.166-.267.248.248 0 00-.183-.064h-.021c-.071.006-.13.04-.186.132a.552.552 0 00-.12.27.944.944 0 00-.023.33v.015c.012.135.037.2.08.334.046.134.098.2.166.268.01.009.02.018.034.024-.07.057-.117.07-.176.136a.304.304 0 01-.131.068 2.62 2.62 0 01-.275-.402 1.772 1.772 0 01-.155-.667 1.759 1.759 0 01.08-.668 1.43 1.43 0 01.283-.535c.128-.133.26-.2.418-.2zm1.37 1.706c.332 0 .733.065 1.216.399.293.2.523.269 1.052.468h.003c.255.136.405.266.478.399v-.131a.571.571 0 01.016.47c-.123.31-.516.643-1.063.842v.002c-.268.135-.501.333-.775.465-.276.135-.588.292-1.012.267a1.139 1.139 0 01-.448-.067 3.566 3.566 0 01-.322-.198c-.195-.135-.363-.332-.612-.465v-.005h-.005c-.4-.246-.616-.512-.686-.71-.07-.268-.005-.47.193-.6.224-.135.38-.271.483-.336.104-.074.143-.102.176-.131h.002v-.003c.169-.202.436-.47.839-.601.139-.036.294-.065.466-.065zm2.8 2.142c.358 1.417 1.196 3.475 1.735 4.473.286.534.855 1.659 1.102 3.024.156-.005.33.018.513.064.646-1.671-.546-3.467-1.089-3.966-.22-.2-.232-.335-.123-.335.59.534 1.365 1.572 1.646 2.757.13.535.16 1.104.021 1.67.067.028.135.06.205.067 1.032.534 1.413.938 1.23 1.537v-.002c-.06-.135-.12-.2-.184-.268-.193-.135-.406-.199-.603-.534-.268-.467-.539-.602-.87-.669-.089-.013-.18-.004-.268.007.582.135 1.072.672 1.211 1.066.046.134.06.198.06.337 0 .399-.12.468-.18.535-.12.135-.18.267-.316.4-.12.135-.267.335-.267.4-.107.534.027.933.266 1.267.24.336.533.535.73.669.135.066.199.135.259.201a.42.42 0 01.074.467c-.059.119-.196.199-.41.332-.267.135-.603.2-.869.4-.267.134-.468.332-.536.464a.726.726 0 00-.061.382c.001.139.03.209.061.337.03.136.071.271.124.464.045.135.091.2.091.333 0 .068-.04.135-.091.202a.553.553 0 01-.182.134c-.134.067-.329.135-.529.2-.267.067-.47.135-.672.135-.201 0-.399-.067-.596-.199-.135-.067-.27-.2-.398-.334-.063-.066-.201-.199-.201-.4 0-.132.08-.266.128-.334.066-.128.201-.195.334-.263.267-.135.533-.265.803-.398.267-.135.467-.267.602-.4.136-.134.138-.269.138-.403-.001-.135-.066-.202-.202-.336-.202-.2-.534-.403-.805-.603-.27-.2-.535-.336-.73-.47-.135-.065-.264-.131-.397-.2-.134-.065-.2-.135-.265-.197-.066-.068-.131-.136-.198-.27-.059-.129-.059-.264-.059-.332-.001-.135.057-.265.124-.464.067-.135.133-.332.198-.535l.003-.001a3.096 3.096 0 01.474-.937 2.03 2.03 0 01-.127-.398v-.002a1.763 1.763 0 01-.062-.4v-.066a1.27 1.27 0 01.096-.4c-.003-.003-.009-.003-.012-.003-.066-.135-.131-.2-.197-.335-.066-.134-.197-.268-.329-.334-.198-.135-.33-.196-.53-.263-.2-.132-.396-.336-.596-.535-.198-.2-.396-.468-.596-.737-.198-.267-.398-.536-.598-.87-.198-.333-.33-.667-.462-1.067-.133-.4-.134-.8-.133-1.134.002-.268.065-.536.198-.8.134-.269.332-.468.599-.668.261-.2.526-.267.859-.267.399 0 .73.069 1.004.203.272.135.542.336.743.536z"/>
-                        </svg>
-                        <h3>Linux</h3>
-                        <div class="version">Beta 2.6.1 · Ubuntu, Debian, Fedora</div>
-                        <a href="https://github.com/vibrationalforce/Echoelmusic/releases/latest/download/Echoelmusic-Linux.AppImage" class="btn-download">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                            Download AppImage
-                        </a>
-                        <div class="formats">VST3 · CLAP · Standalone · .deb</div>
-                    </article>
-
-                    <!-- iOS - Coming Soon -->
-                    <article class="download-card coming-soon" role="listitem">
-                        <svg class="download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                        </svg>
-                        <h3>iOS & iPadOS</h3>
-                        <div class="version">iPhone · iPad · Apple Watch</div>
-                        <span class="badge-coming">App Store Coming Soon</span>
-                        <div class="formats">AUv3 · Standalone · HealthKit</div>
-                    </article>
-
-                    <!-- Android - Coming Soon -->
-                    <article class="download-card coming-soon" role="listitem">
-                        <svg class="download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                            <path d="M17.523 15.341a.89.89 0 01-.891-.89.89.89 0 01.891-.89.89.89 0 010 1.78zm-11.046 0a.89.89 0 01-.891-.89.89.89 0 01.891-.89.89.89 0 010 1.78zm11.405-6.025l1.997-3.46a.416.416 0 00-.152-.567.416.416 0 00-.568.152l-2.022 3.503a12.247 12.247 0 00-5.137-1.119c-1.852 0-3.594.398-5.137 1.12L4.84 5.44a.416.416 0 00-.567-.152.416.416 0 00-.152.567l1.997 3.46C2.688 11.196.343 14.612 0 18.593h24c-.343-3.98-2.688-7.397-6.118-9.277z"/>
-                        </svg>
-                        <h3>Android</h3>
-                        <div class="version">Phones · Tablets · Wear OS</div>
-                        <span class="badge-coming">Google Play Coming Soon</span>
-                        <div class="formats">Standalone · Health Connect</div>
-                    </article>
-
-                    <!-- visionOS - Coming Soon -->
-                    <article class="download-card coming-soon" role="listitem">
-                        <svg class="download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                        </svg>
-                        <h3>visionOS</h3>
-                        <div class="version">Apple Vision Pro</div>
-                        <span class="badge-coming">Coming 2026</span>
-                        <div class="formats">Immersive · Spatial Audio</div>
-                    </article>
-                </div>
-
-                <div class="downloads-note">
-                    <p>All downloads are free during beta. Follow us on <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener">Instagram</a>, <a href="https://youtube.com/@echoelmusic" target="_blank" rel="noopener">YouTube</a> &amp; <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener">TikTok</a>.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- FAQ Section -->
-        <section id="faq" class="faq" aria-labelledby="faq-title">
-            <div class="container">
-                <header class="section-header">
-                    <h2 id="faq-title" class="section-title" data-i18n="faq-title">Questions</h2>
-                </header>
-                <div class="faq-list" role="list">
-                    <details class="faq-item">
-                        <summary class="faq-question" data-i18n="faq-q1">
-                            What devices work for biofeedback?
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-                        </summary>
-                        <p class="faq-answer" data-i18n="faq-a1">Apple Watch, Polar, Garmin, Wahoo, or any Bluetooth heart rate monitor. Your phone's camera also works for basic detection.</p>
-                    </details>
-                    <details class="faq-item">
-                        <summary class="faq-question" data-i18n="faq-q2">
-                            Do I own what I create?
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-                        </summary>
-                        <p class="faq-answer" data-i18n="faq-a2">Yes, 100%. Full commercial rights, no royalties. This includes AI-assisted compositions.</p>
-                    </details>
-                    <details class="faq-item">
-                        <summary class="faq-question" data-i18n="faq-q3">
-                            Is this a medical device?
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-                        </summary>
-                        <p class="faq-answer" data-i18n="faq-a3">No. Echoelmusic is a creative tool for artistic and wellness exploration. Always consult healthcare professionals for medical advice.</p>
-                    </details>
-                </div>
-            </div>
-        </section>
+        <div class="disclaimer-bar" role="note">
+            Creative tool for artistic exploration. Not a medical device. <a href="health.html">Health Disclaimer</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a>
+        </div>
     </main>
 
     <footer class="footer" role="contentinfo">
         <div class="footer-inner">
-            <div class="footer-brand">
-                <div class="logo" aria-label="Echoelmusic">
-                    <svg viewBox="0 0 100 100" width="28" height="28" fill="none" aria-hidden="true">
-                        <defs>
-                            <linearGradient id="logo-gradient-footer" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="var(--color-accent, #FF1493)"/>
-                                <stop offset="50%" stop-color="var(--color-secondary, #9933FF)"/>
-                                <stop offset="100%" stop-color="var(--color-primary, #00FFFF)"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M50 82 C32 64 15 50 15 34 C15 22 25 12 37 12 C45 12 50 18 50 18 C50 18 55 12 63 12 C75 12 85 22 85 34 C85 50 68 64 50 82Z" fill="url(#logo-gradient-footer)" opacity="0.9"/>
-                        <path d="M28 44 Q35 44 38 38 Q41 32 44 38 Q47 44 50 32 Q53 44 56 38 Q59 32 62 38 Q65 44 72 44" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.95"/>
-                    </svg>
-                    <span>Echoelmusic</span>
-                </div>
-                <p data-i18n="footer-tagline">Bio-reactive audio-visual production. Transform your body into art.</p>
-            </div>
-            <nav class="footer-links" aria-label="Legal links">
-                <h4 data-i18n="footer-legal">Legal</h4>
-                <a href="privacy.html" data-i18n="footer-privacy">Privacy Policy</a>
-                <a href="terms.html" data-i18n="footer-terms">Terms of Service</a>
-                <a href="health.html" data-i18n="footer-health">Health Disclaimer</a>
+            <p>&copy; 2026 Echoelmusic</p>
+            <nav class="footer-links" aria-label="Footer navigation">
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+                <a href="health.html">Health</a>
+                <a href="faq.html">FAQ</a>
+                <a href="mailto:michaelterbuyken@gmail.com">Contact</a>
             </nav>
-            <nav class="footer-links" aria-label="Contact links">
-                <h4 data-i18n="footer-contact">Contact</h4>
-                <a href="mailto:michaelterbuyken@gmail.com" data-i18n="footer-email">Email</a>
-            </nav>
-            <nav class="footer-links" aria-label="Social Media">
-                <h4 data-i18n="footer-social">Social</h4>
-                <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener">Instagram</a>
-                <a href="https://youtube.com/@echoelmusic" target="_blank" rel="noopener">YouTube</a>
-                <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener">TikTok</a>
-            </nav>
-        </div>
-        <div class="footer-bottom">
-            <p>© 2026 Echoelmusic. <span data-i18n="footer-rights">All rights reserved.</span></p>
             <div class="social-links">
                 <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener" aria-label="Instagram">
-                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                 </a>
                 <a href="https://youtube.com/@echoelmusic" target="_blank" rel="noopener" aria-label="YouTube">
-                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                 </a>
                 <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener" aria-label="TikTok">
-                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
                 </a>
             </div>
         </div>
     </footer>
 
-    <!-- Cookie Consent -->
-    <div id="cookie-consent" role="dialog" aria-labelledby="cookie-title" aria-describedby="cookie-desc" style="display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(12,10,26,0.98); backdrop-filter:blur(12px); padding:16px 24px; z-index:1000; border-top:1px solid rgba(255,255,255,0.1);">
-        <div style="max-width:1000px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
-            <div>
-                <p id="cookie-title" style="font-size:14px; font-weight:600; margin-bottom:4px;" data-i18n="cookie-title">Privacy Notice</p>
-                <p id="cookie-desc" style="font-size:13px; color:rgba(248,250,252,0.7);" data-i18n="cookie-desc">Essential cookies only. No tracking. <a href="privacy.html" style="color:#2DD4BF;">Privacy Policy</a></p>
-            </div>
-            <button onclick="acceptCookies()" class="btn btn-primary" data-i18n="cookie-accept">Accept</button>
-        </div>
-    </div>
-
     <script>
-        // Cookie consent
-        function acceptCookies() {
-            localStorage.setItem('cookieConsent', 'accepted');
-            document.getElementById('cookie-consent').style.display = 'none';
-        }
-        if (!localStorage.getItem('cookieConsent')) {
-            setTimeout(() => { document.getElementById('cookie-consent').style.display = 'block'; }, 1000);
-        }
-
-        // Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {});
         }
