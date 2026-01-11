@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echoelmusic WebApp</title>
+    <meta name="description" content="Bio-reactive audio-visual creation in your browser">
+    <meta name="theme-color" content="#2DD4BF">
+
+    <!-- PWA -->
+    <link rel="manifest" href="../manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <style>
+        :root {
+            --rose: #F472B6;
+            --teal: #2DD4BF;
+            --violet: #A78BFA;
+            --bg: #0C0A1A;
+            --bg-card: #1A1730;
+            --text: #F8FAFC;
+            --text-dim: rgba(248,250,252,0.7);
+            --border: rgba(255,255,255,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .app {
+            display: grid;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            background: rgba(12,10,26,0.9);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .logo svg { width: 32px; height: 32px; }
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--teal);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Canvas Grid */
+        .canvas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 16px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        /* Canvas Container */
+        .canvas {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .canvas-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--teal);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .canvas-body {
+            flex: 1;
+            padding: 16px;
+            min-height: 300px;
+        }
+
+        /* Synthesizer Canvas */
+        .synth-keyboard {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            margin-bottom: 16px;
+        }
+        .synth-key {
+            width: 40px;
+            height: 120px;
+            background: linear-gradient(180deg, #fff 0%, #e8e8e8 100%);
+            border: 1px solid #999;
+            border-radius: 0 0 4px 4px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+        .synth-key:hover { background: #f0f0f0; }
+        .synth-key:active, .synth-key.active {
+            background: linear-gradient(180deg, var(--teal) 0%, #1a9e8f 100%);
+            transform: translateY(2px);
+        }
+        .synth-key.black {
+            width: 28px;
+            height: 75px;
+            background: linear-gradient(180deg, #333 0%, #111 100%);
+            border-color: #000;
+            margin: 0 -14px;
+            z-index: 1;
+        }
+        .synth-key.black:active, .synth-key.black.active {
+            background: linear-gradient(180deg, var(--rose) 0%, #c43d8f 100%);
+        }
+        .synth-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .control-group {
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .control-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .control-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--teal);
+        }
+
+        /* Visualizer Canvas */
+        #visualizer-container {
+            width: 100%;
+            height: 300px;
+            background: radial-gradient(ellipse at center, rgba(45,212,191,0.1) 0%, transparent 70%);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        #visualizer-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Biometric Canvas */
+        .bio-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .bio-metric {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .bio-metric-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .bio-metric-value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .bio-metric-value.hr { color: var(--rose); }
+        .bio-metric-value.hrv { color: var(--violet); }
+        .bio-metric-value.coherence { color: var(--teal); }
+        .bio-metric-value.breathing { color: #38BDF8; }
+        .coherence-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+        .coherence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--rose), var(--teal));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Footer Status */
+        .footer-status {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-size: 12px;
+            color: var(--text-dim);
+            backdrop-filter: blur(20px);
+        }
+        .footer-status span { color: var(--teal); font-weight: 600; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .canvas-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            * { animation: none !important; transition: none !important; }
+        }
+        *:focus-visible {
+            outline: 2px solid var(--teal);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header>
+            <div class="logo">
+                <svg viewBox="0 0 100 100" fill="none">
+                    <defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#F472B6"/><stop offset="50%" stop-color="#A78BFA"/><stop offset="100%" stop-color="#2DD4BF"/></linearGradient></defs>
+                    <path d="M50 85 C30 65 10 50 10 32 C10 18 22 8 36 8 C44 8 50 14 50 14 C50 14 56 8 64 8 C78 8 90 18 90 32 C90 50 70 65 50 85Z" fill="url(#g)"/>
+                    <path d="M20 42 L32 42 L38 28 L44 56 L50 20 L56 56 L62 28 L68 42 L80 42" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Echoelmusic WebApp
+            </div>
+            <div class="status">
+                <div class="status-dot"></div>
+                <span id="status-text">Simulation Mode</span>
+            </div>
+        </header>
+
+        <main class="canvas-grid">
+            <!-- Synthesizer Canvas -->
+            <div class="canvas" id="synth-canvas">
+                <div class="canvas-header">
+                    <span>Synthesizer</span>
+                    <span id="synth-note">—</span>
+                </div>
+                <div class="canvas-body">
+                    <div class="synth-keyboard" id="keyboard">
+                        <!-- Generated by JS -->
+                    </div>
+                    <div class="synth-controls">
+                        <div class="control-group">
+                            <div class="control-label">Waveform</div>
+                            <div class="control-value" id="waveform-val">Saw</div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-label">Cutoff</div>
+                            <div class="control-value" id="cutoff-val">2.0 kHz</div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-label">Attack</div>
+                            <div class="control-value" id="attack-val">10 ms</div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-label">Release</div>
+                            <div class="control-value" id="release-val">300 ms</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualizer Canvas -->
+            <div class="canvas" id="viz-canvas">
+                <div class="canvas-header">
+                    <span>Quantum Visualizer</span>
+                    <span id="viz-fps">60 FPS</span>
+                </div>
+                <div class="canvas-body">
+                    <div id="visualizer-container">
+                        <canvas id="visualizer-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Biometric Canvas -->
+            <div class="canvas" id="bio-canvas">
+                <div class="canvas-header">
+                    <span>Biometrics</span>
+                    <span>Simulated</span>
+                </div>
+                <div class="canvas-body">
+                    <div class="bio-grid">
+                        <div class="bio-metric">
+                            <div class="bio-metric-label">Heart Rate</div>
+                            <div class="bio-metric-value hr" id="hr-value">72</div>
+                        </div>
+                        <div class="bio-metric">
+                            <div class="bio-metric-label">HRV (SDNN)</div>
+                            <div class="bio-metric-value hrv" id="hrv-value">45</div>
+                        </div>
+                        <div class="bio-metric">
+                            <div class="bio-metric-label">Coherence</div>
+                            <div class="bio-metric-value coherence" id="coherence-value">65%</div>
+                        </div>
+                        <div class="bio-metric">
+                            <div class="bio-metric-label">Breathing</div>
+                            <div class="bio-metric-value breathing" id="breathing-value">12/min</div>
+                        </div>
+                    </div>
+                    <div class="coherence-bar">
+                        <div class="coherence-fill" id="coherence-bar" style="width: 65%"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div class="footer-status">
+            WebApp MVP • <span>Canvases synced</span> • Press keys A-K to play
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // ECHOELMUSIC WEBAPP - Modular Canvas Architecture
+        // ═══════════════════════════════════════════════════════════════
+
+        // ===== BIOMETRIC SIMULATOR =====
+        const BioSimulator = {
+            heartRate: 72,
+            hrv: 45,
+            coherence: 0.65,
+            breathing: 12,
+            interval: null,
+
+            start(callback) {
+                this.interval = setInterval(() => {
+                    // Natural variation
+                    this.heartRate += (Math.random() - 0.5) * 3;
+                    this.heartRate = Math.max(55, Math.min(100, this.heartRate));
+
+                    this.hrv += (Math.random() - 0.5) * 8;
+                    this.hrv = Math.max(20, Math.min(80, this.hrv));
+
+                    // Coherence follows HRV
+                    this.coherence = 0.3 + (this.hrv / 100) * 0.6;
+
+                    // Breathing cycle
+                    this.breathing = 10 + Math.sin(Date.now() / 4000) * 4;
+
+                    callback({
+                        heartRate: Math.round(this.heartRate),
+                        hrv: Math.round(this.hrv),
+                        coherence: this.coherence,
+                        breathing: this.breathing
+                    });
+                }, 1000);
+            },
+
+            stop() {
+                if (this.interval) clearInterval(this.interval);
+            }
+        };
+
+        // ===== SYNTHESIZER CANVAS =====
+        const SynthCanvas = {
+            ctx: null,
+            masterGain: null,
+            filter: null,
+            voices: new Map(),
+            params: {
+                waveform: 'sawtooth',
+                cutoff: 2000,
+                resonance: 2,
+                attack: 0.01,
+                release: 0.3
+            },
+            keyMap: {
+                'a': 261.63, 'w': 277.18, 's': 293.66, 'e': 311.13,
+                'd': 329.63, 'f': 349.23, 't': 369.99, 'g': 392.00,
+                'y': 415.30, 'h': 440.00, 'u': 466.16, 'j': 493.88, 'k': 523.25
+            },
+            noteNames: {
+                261.63: 'C4', 277.18: 'C#4', 293.66: 'D4', 311.13: 'D#4',
+                329.63: 'E4', 349.23: 'F4', 369.99: 'F#4', 392.00: 'G4',
+                415.30: 'G#4', 440.00: 'A4', 466.16: 'A#4', 493.88: 'B4', 523.25: 'C5'
+            },
+
+            init() {
+                if (this.ctx) return;
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+                this.filter = this.ctx.createBiquadFilter();
+                this.filter.type = 'lowpass';
+                this.filter.frequency.value = this.params.cutoff;
+                this.filter.Q.value = this.params.resonance;
+
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.value = 0.4;
+
+                this.filter.connect(this.masterGain);
+                this.masterGain.connect(this.ctx.destination);
+
+                this.renderKeyboard();
+                this.setupEvents();
+            },
+
+            renderKeyboard() {
+                const keyboard = document.getElementById('keyboard');
+                const keys = [
+                    { note: 'C4', freq: 261.63, black: false, key: 'A' },
+                    { note: 'C#4', freq: 277.18, black: true, key: 'W' },
+                    { note: 'D4', freq: 293.66, black: false, key: 'S' },
+                    { note: 'D#4', freq: 311.13, black: true, key: 'E' },
+                    { note: 'E4', freq: 329.63, black: false, key: 'D' },
+                    { note: 'F4', freq: 349.23, black: false, key: 'F' },
+                    { note: 'F#4', freq: 369.99, black: true, key: 'T' },
+                    { note: 'G4', freq: 392.00, black: false, key: 'G' },
+                    { note: 'G#4', freq: 415.30, black: true, key: 'Y' },
+                    { note: 'A4', freq: 440.00, black: false, key: 'H' },
+                    { note: 'A#4', freq: 466.16, black: true, key: 'U' },
+                    { note: 'B4', freq: 493.88, black: false, key: 'J' },
+                    { note: 'C5', freq: 523.25, black: false, key: 'K' }
+                ];
+
+                keyboard.innerHTML = keys.map(k => `
+                    <div class="synth-key ${k.black ? 'black' : ''}"
+                         data-freq="${k.freq}" data-note="${k.note}">
+                    </div>
+                `).join('');
+            },
+
+            noteOn(freq, keyEl) {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                if (this.voices.has(freq)) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = this.params.waveform;
+                osc.frequency.value = freq;
+
+                gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.3, this.ctx.currentTime + this.params.attack);
+
+                osc.connect(gain);
+                gain.connect(this.filter);
+                osc.start();
+
+                this.voices.set(freq, { osc, gain, keyEl });
+                if (keyEl) keyEl.classList.add('active');
+
+                document.getElementById('synth-note').textContent = this.noteNames[freq] || freq + ' Hz';
+            },
+
+            noteOff(freq) {
+                const voice = this.voices.get(freq);
+                if (!voice) return;
+
+                const { osc, gain, keyEl } = voice;
+
+                gain.gain.cancelScheduledValues(this.ctx.currentTime);
+                gain.gain.setValueAtTime(gain.gain.value, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + this.params.release);
+
+                setTimeout(() => {
+                    osc.stop();
+                    osc.disconnect();
+                    gain.disconnect();
+                }, this.params.release * 1000 + 50);
+
+                this.voices.delete(freq);
+                if (keyEl) keyEl.classList.remove('active');
+
+                if (this.voices.size === 0) {
+                    document.getElementById('synth-note').textContent = '—';
+                }
+            },
+
+            onBioData(bio) {
+                // Bio-reactive filter modulation
+                if (bio.coherence > 0.5) {
+                    const newCutoff = 1000 + bio.coherence * 6000;
+                    this.filter.frequency.value = newCutoff;
+                    document.getElementById('cutoff-val').textContent = (newCutoff / 1000).toFixed(1) + ' kHz';
+                }
+            },
+
+            setupEvents() {
+                document.querySelectorAll('.synth-key').forEach(key => {
+                    const freq = parseFloat(key.dataset.freq);
+
+                    key.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        this.init();
+                        this.noteOn(freq, key);
+                    });
+                    key.addEventListener('mouseup', () => this.noteOff(freq));
+                    key.addEventListener('mouseleave', () => this.noteOff(freq));
+
+                    key.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.init();
+                        this.noteOn(freq, key);
+                    }, { passive: false });
+                    key.addEventListener('touchend', () => this.noteOff(freq));
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.repeat) return;
+                    const freq = this.keyMap[e.key.toLowerCase()];
+                    if (freq) {
+                        this.init();
+                        const keyEl = document.querySelector(`.synth-key[data-freq="${freq}"]`);
+                        this.noteOn(freq, keyEl);
+                    }
+                });
+
+                document.addEventListener('keyup', (e) => {
+                    const freq = this.keyMap[e.key.toLowerCase()];
+                    if (freq) this.noteOff(freq);
+                });
+            }
+        };
+
+        // ===== VISUALIZER CANVAS =====
+        const VizCanvas = {
+            canvas: null,
+            ctx: null,
+            particles: [],
+            coherence: 0.5,
+            frameCount: 0,
+            lastFpsUpdate: 0,
+
+            init() {
+                this.canvas = document.getElementById('visualizer-canvas');
+                this.ctx = this.canvas.getContext('2d');
+
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+
+                // Create particles
+                for (let i = 0; i < 200; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 2,
+                        radius: Math.random() * 3 + 1,
+                        hue: Math.random() * 60 + 160 // Teal range
+                    });
+                }
+
+                this.animate();
+            },
+
+            resize() {
+                const container = document.getElementById('visualizer-container');
+                this.canvas.width = container.clientWidth;
+                this.canvas.height = container.clientHeight;
+            },
+
+            onBioData(bio) {
+                this.coherence = bio.coherence;
+            },
+
+            animate() {
+                this.frameCount++;
+
+                // FPS counter
+                if (Date.now() - this.lastFpsUpdate > 1000) {
+                    document.getElementById('viz-fps').textContent = this.frameCount + ' FPS';
+                    this.frameCount = 0;
+                    this.lastFpsUpdate = Date.now();
+                }
+
+                // Clear
+                this.ctx.fillStyle = 'rgba(12, 10, 26, 0.1)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw particles
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+
+                this.particles.forEach(p => {
+                    // Attraction to center based on coherence
+                    const dx = centerX - p.x;
+                    const dy = centerY - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (this.coherence > 0.5) {
+                        p.vx += (dx / dist) * this.coherence * 0.02;
+                        p.vy += (dy / dist) * this.coherence * 0.02;
+                    } else {
+                        p.vx += (Math.random() - 0.5) * 0.5;
+                        p.vy += (Math.random() - 0.5) * 0.5;
+                    }
+
+                    // Damping
+                    p.vx *= 0.99;
+                    p.vy *= 0.99;
+
+                    // Update position
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    // Wrap around
+                    if (p.x < 0) p.x = this.canvas.width;
+                    if (p.x > this.canvas.width) p.x = 0;
+                    if (p.y < 0) p.y = this.canvas.height;
+                    if (p.y > this.canvas.height) p.y = 0;
+
+                    // Draw
+                    const alpha = 0.3 + this.coherence * 0.7;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.radius * (1 + this.coherence), 0, Math.PI * 2);
+                    this.ctx.fillStyle = `hsla(${p.hue}, 80%, 60%, ${alpha})`;
+                    this.ctx.fill();
+                });
+
+                // Draw center glow
+                const gradient = this.ctx.createRadialGradient(
+                    centerX, centerY, 0,
+                    centerX, centerY, 100 * this.coherence
+                );
+                gradient.addColorStop(0, `rgba(45, 212, 191, ${this.coherence * 0.3})`);
+                gradient.addColorStop(1, 'rgba(45, 212, 191, 0)');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                requestAnimationFrame(() => this.animate());
+            }
+        };
+
+        // ===== BIOMETRIC CANVAS =====
+        const BioCanvas = {
+            update(bio) {
+                document.getElementById('hr-value').textContent = bio.heartRate;
+                document.getElementById('hrv-value').textContent = bio.hrv;
+                document.getElementById('coherence-value').textContent = Math.round(bio.coherence * 100) + '%';
+                document.getElementById('breathing-value').textContent = bio.breathing.toFixed(1) + '/min';
+                document.getElementById('coherence-bar').style.width = (bio.coherence * 100) + '%';
+            }
+        };
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', () => {
+            // Init synthesizer
+            SynthCanvas.init();
+
+            // Init visualizer
+            VizCanvas.init();
+
+            // Start bio simulator
+            BioSimulator.start((bio) => {
+                BioCanvas.update(bio);
+                SynthCanvas.onBioData(bio);
+                VizCanvas.onBioData(bio);
+            });
+
+            console.log('%c Echoelmusic WebApp ', 'background: linear-gradient(90deg, #F472B6, #2DD4BF); color: #0C0A1A; font-weight: bold; padding: 4px 8px; border-radius: 4px;');
+            console.log('[WebApp] Canvases initialized: Synthesizer, Visualizer, Biometric');
+        });
+    </script>
+</body>
+</html>

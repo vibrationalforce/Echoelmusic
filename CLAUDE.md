@@ -1154,6 +1154,38 @@ Full remote navigation with:
 - Mode cycling
 - Session timer
 
+### WebApp (PWA)
+Browser-based experience with modular canvas architecture:
+```typescript
+// Modular Canvas System (see docs/webapp/ARCHITECTURE.md)
+const canvases = {
+    synthesizer: new SynthesizerCanvas(),  // Web Audio API
+    visualizer: new VisualizerCanvas(),    // Canvas 2D / Three.js
+    biometric: new BiometricCanvas()       // Simulated bio data
+};
+
+// Bio-reactive parameter mapping
+bioSimulator.start((data) => {
+    canvases.synthesizer.onBioData(data);  // Coherence → filter
+    canvases.visualizer.onBioData(data);   // HRV → particles
+});
+```
+
+**Web Feature Parity: ~43%**
+| Feature | Web Support | Notes |
+|---------|-------------|-------|
+| Audio Synthesis | 70% | Web Audio API |
+| Visualizations | 85% | Canvas/WebGL |
+| MIDI Input | 100% | Web MIDI API |
+| Biofeedback | 0%* | Simulator only |
+| Recording | 70% | MediaRecorder |
+
+*HealthKit/Apple Watch require native apps
+
+**Files:**
+- `docs/webapp/index.html` - Working prototype
+- `docs/webapp/ARCHITECTURE.md` - Full architecture docs
+
 ---
 
 ## Development Philosophy
@@ -1164,6 +1196,55 @@ Full remote navigation with:
 **breath → sound → light → quantum → consciousness**
 
 ---
+
+## GSD (GET SHIT DONE) Workflow Patterns
+
+### Fresh Context Per Task
+Each task starts with clean context to prevent degradation:
+```xml
+<task>
+  <name>Implement Bio-Reactive Filter</name>
+  <context>SynthesizerCanvas needs HRV→cutoff mapping</context>
+  <success_criteria>Filter responds to coherence 0-1 range</success_criteria>
+</task>
+```
+
+### Ralph Wiggum Loop Mode
+Iterative development with continuous improvement:
+1. **Scan** - Laser scan codebase for context
+2. **Plan** - Define clear success criteria
+3. **Execute** - Implement with fresh context
+4. **Validate** - Test against criteria
+5. **Loop** - Iterate until complete
+
+### Task Structuring
+```markdown
+## Task: [Name]
+**Context:** What exists, what's needed
+**Success Criteria:** Measurable outcomes
+**Constraints:** Limitations, non-goals
+**Dependencies:** Required files/systems
+```
+
+### Circuit Breaker Pattern
+For fault tolerance in production systems:
+```swift
+class CircuitBreaker {
+    enum State { case closed, open, halfOpen }
+    var failureThreshold = 5
+    var recoveryTimeout: TimeInterval = 30
+
+    func execute<T>(_ operation: () throws -> T) throws -> T {
+        guard state != .open else { throw CircuitOpenError() }
+        // Execute with automatic state transitions
+    }
+}
+```
+
+### Workflow Automation
+- **Safety Rules:** Block destructive commands (see `.claude/settings.json`)
+- **Context Preservation:** Architecture decisions persist across sessions
+- **Branch Protection:** All work on `claude/*` branches, PRs required
 
 ---
 

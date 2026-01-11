@@ -1,0 +1,95 @@
+{
+  "$schema": "https://claude.ai/schema/settings.json",
+  "project": {
+    "name": "Echoelmusic",
+    "description": "Bio-reactive audio-visual production suite",
+    "version": "10000.2",
+    "phase": "ULTIMATE RALPH WIGGUM LOOP MODE"
+  },
+  "safety": {
+    "enabled": true,
+    "rules": [
+      {
+        "pattern": "git reset --hard",
+        "action": "block",
+        "reason": "Protects uncommitted work and biometric test data"
+      },
+      {
+        "pattern": "git push --force main",
+        "action": "block",
+        "reason": "Production branch protection - use PRs"
+      },
+      {
+        "pattern": "git push --force master",
+        "action": "block",
+        "reason": "Production branch protection - use PRs"
+      },
+      {
+        "pattern": "rm -rf Sources/",
+        "action": "block",
+        "reason": "Core Swift source protection"
+      },
+      {
+        "pattern": "rm -rf android/",
+        "action": "block",
+        "reason": "Android build protection"
+      },
+      {
+        "pattern": "rm -rf Tests/",
+        "action": "block",
+        "reason": "Test suite protection (10000+ tests)"
+      },
+      {
+        "pattern": "rm -rf docs/",
+        "action": "block",
+        "reason": "Website/WebApp protection"
+      },
+      {
+        "pattern": "DROP TABLE",
+        "action": "block",
+        "reason": "Database protection"
+      },
+      {
+        "pattern": "DELETE FROM",
+        "action": "warn",
+        "reason": "Potential data loss - confirm intent"
+      }
+    ],
+    "allowedDestructive": [
+      "rm -rf build/",
+      "rm -rf .build/",
+      "rm -rf DerivedData/",
+      "rm -rf node_modules/",
+      "rm -rf dist/"
+    ]
+  },
+  "workflow": {
+    "branchPrefix": "claude/",
+    "commitStyle": "conventional",
+    "prRequired": true,
+    "testBeforeCommit": false,
+    "lintBeforeCommit": false
+  },
+  "context": {
+    "maxTokens": 200000,
+    "forkOnComplexTasks": true,
+    "preserveAcrossSessions": [
+      "architecture-decisions",
+      "phase-progress",
+      "known-issues"
+    ]
+  },
+  "platforms": {
+    "primary": ["iOS", "macOS", "visionOS"],
+    "secondary": ["Android", "Windows", "Linux"],
+    "web": ["PWA", "WebApp"]
+  },
+  "engines": {
+    "audio": ["AudioEngine", "SpatialAudioEngine", "BinauralBeatGenerator", "LoopEngine"],
+    "visual": ["QuantumLightEmulator", "PhotonicsVisualizationEngine", "CymaticsRenderer"],
+    "biofeedback": ["HealthKitManager", "BioParameterMapper", "RealTimeHealthKitEngine"],
+    "quantum": ["QuantumLoopLightScience", "QuantumHealthBiofeedback"],
+    "wellness": ["LongevityNutritionEngine", "NeuroSpiritualEngine", "WellnessTrackingEngine"],
+    "production": ["StreamEngine", "VideoProcessingEngine", "CreativeStudioEngine"]
+  }
+}
