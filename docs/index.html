@@ -132,13 +132,15 @@
             transition: color 0.2s;
         }
         .nav-links a:hover { color: var(--teal); }
-        .lang { display: flex; gap: 4px; }
+        .lang { display: flex; gap: 2px; }
         .lang a {
             color: var(--text-muted); text-decoration: none;
-            padding: 6px 10px; font-size: 12px; font-weight: 600;
-            border-radius: 6px; transition: all 0.2s;
+            padding: 4px 8px; font-size: 11px; font-weight: 500;
+            border-radius: 4px; transition: all 0.2s;
+            opacity: 0.6;
         }
-        .lang a:hover, .lang a.active { color: var(--rose); background: rgba(244,114,182,0.1); }
+        .lang a:hover { opacity: 1; color: var(--text); }
+        .lang a.active { opacity: 1; color: var(--teal); }
         .nav-cta {
             background: var(--gradient);
             color: white; padding: 10px 20px; border-radius: 8px;
@@ -373,7 +375,11 @@
             transition: all 0.3s;
         }
         .use-case:hover { transform: scale(1.03); border-color: var(--violet); }
-        .use-case-emoji { font-size: 48px; margin-bottom: 16px; }
+        .use-case-icon {
+            width: 48px; height: 48px; margin: 0 auto 16px;
+            color: var(--teal);
+        }
+        .use-case-icon svg { width: 100%; height: 100%; }
         .use-case h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
         .use-case p { font-size: 13px; color: var(--text-muted); }
 
@@ -401,8 +407,9 @@
             background: var(--gradient);
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px;
+            color: white;
         }
+        .testimonial-avatar svg { width: 28px; height: 28px; }
         .testimonial-info h4 { font-size: 16px; font-weight: 600; }
         .testimonial-info p { font-size: 13px; color: var(--text-muted); }
 
@@ -880,26 +887,45 @@
         <div class="section-header">
             <div class="section-badge">Who It's For</div>
             <h2 class="section-title">Made for Creators</h2>
-            <p class="section-subtitle">Whether you're a musician, artist, or wellness practitioner</p>
+            <p class="section-subtitle">Whether you're a musician, artist, film and content producer, or wellness practitioner</p>
         </div>
         <div class="use-cases-grid">
             <div class="use-case">
-                <div class="use-case-emoji">🎵</div>
+                <div class="use-case-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M9 18V5l12-2v13M9 9l12-2"/>
+                        <circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                    </svg>
+                </div>
                 <h3>Musicians</h3>
                 <p>Add emotional depth to live performances</p>
             </div>
             <div class="use-case">
-                <div class="use-case-emoji">🎨</div>
-                <h3>Visual Artists</h3>
-                <p>Create living, breathing installations</p>
+                <div class="use-case-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polygon points="10 8 16 12 10 16 10 8"/>
+                    </svg>
+                </div>
+                <h3>Film & Content</h3>
+                <p>Bio-reactive scoring for video production</p>
             </div>
             <div class="use-case">
-                <div class="use-case-emoji">🧘</div>
+                <div class="use-case-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                </div>
                 <h3>Wellness</h3>
                 <p>Biofeedback-guided meditation & breathwork</p>
             </div>
             <div class="use-case">
-                <div class="use-case-emoji">🔬</div>
+                <div class="use-case-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                </div>
                 <h3>Researchers</h3>
                 <p>Study HRV coherence & psychophysiology</p>
             </div>
@@ -910,7 +936,11 @@
         <div class="social-proof-inner">
             <p class="testimonial-quote">"The future of music is embodied. Echoelmusic makes your heartbeat the conductor."</p>
             <div class="testimonial-author">
-                <div class="testimonial-avatar">💚</div>
+                <div class="testimonial-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                    </svg>
+                </div>
                 <div class="testimonial-info">
                     <h4>The Vision</h4>
                     <p>breath → sound → light → consciousness</p>
@@ -1132,7 +1162,7 @@
         </div>
         <div class="footer-bottom">
             <p>© 2026 Echoelmusic. All rights reserved.</p>
-            <p>Made with 💚 for creators who feel the music.</p>
+            <p>Made in Germany for creators who feel the music.</p>
         </div>
     </footer>
 
