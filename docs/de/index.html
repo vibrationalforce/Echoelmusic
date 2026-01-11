@@ -306,6 +306,47 @@
         .science-cite { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); }
         .science-cite a { color: var(--cyan); text-decoration: none; }
         .science-disclaimer { margin-top: 32px; background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.2); border-radius: 12px; padding: 16px; font-size: 12px; color: rgba(255,215,0,0.9); text-align: center; }
+
+        /* ===== INTERACTIVE ADEY WINDOWS ===== */
+        .adey-demo { margin-top: 48px; padding: 32px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 20px; }
+        .adey-demo-title { text-align: center; font-family: 'Orbitron', monospace; font-size: 16px; margin-bottom: 8px; color: var(--cyan); }
+        .adey-demo-subtitle { text-align: center; font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+        .adey-windows { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        @media (max-width: 640px) { .adey-windows { grid-template-columns: repeat(2, 1fr); } }
+        .adey-window { background: var(--glass); border: 2px solid var(--border); border-radius: 16px; padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .adey-window::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0; transition: opacity 0.3s; }
+        .adey-window.delta::before { background: radial-gradient(circle, rgba(138,43,226,0.3) 0%, transparent 70%); }
+        .adey-window.theta::before { background: radial-gradient(circle, rgba(0,191,255,0.3) 0%, transparent 70%); }
+        .adey-window.alpha::before { background: radial-gradient(circle, rgba(0,255,127,0.3) 0%, transparent 70%); }
+        .adey-window.schumann::before { background: radial-gradient(circle, rgba(255,215,0,0.3) 0%, transparent 70%); }
+        .adey-window:hover::before, .adey-window.active::before { opacity: 1; }
+        .adey-window.delta { border-color: rgba(138,43,226,0.5); }
+        .adey-window.theta { border-color: rgba(0,191,255,0.5); }
+        .adey-window.alpha { border-color: rgba(0,255,127,0.5); }
+        .adey-window.schumann { border-color: rgba(255,215,0,0.5); }
+        .adey-window:hover { transform: translateY(-4px); }
+        .adey-window.active { transform: scale(1.02); }
+        .adey-window.delta.active { border-color: #8A2BE2; box-shadow: 0 0 30px rgba(138,43,226,0.5); }
+        .adey-window.theta.active { border-color: #00BFFF; box-shadow: 0 0 30px rgba(0,191,255,0.5); }
+        .adey-window.alpha.active { border-color: #00FF7F; box-shadow: 0 0 30px rgba(0,255,127,0.5); }
+        .adey-window.schumann.active { border-color: #FFD700; box-shadow: 0 0 30px rgba(255,215,0,0.5); }
+        .adey-wave { height: 40px; margin-bottom: 12px; position: relative; display: flex; align-items: center; justify-content: center; }
+        .adey-wave svg { width: 100%; height: 100%; opacity: 0.6; }
+        .adey-window.active .adey-wave svg { opacity: 1; animation: wave-pulse 0.5s ease-in-out infinite; }
+        @keyframes wave-pulse { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.2); } }
+        .adey-freq { font-family: 'Orbitron', monospace; font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+        .adey-window.delta .adey-freq { color: #8A2BE2; }
+        .adey-window.theta .adey-freq { color: #00BFFF; }
+        .adey-window.alpha .adey-freq { color: #00FF7F; }
+        .adey-window.schumann .adey-freq { color: #FFD700; }
+        .adey-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .adey-desc { font-size: 11px; color: var(--text-muted); }
+        .adey-status { margin-top: 20px; text-align: center; font-size: 12px; color: var(--text-muted); min-height: 20px; }
+        .adey-status.playing { color: var(--cyan); }
+        .adey-volume { margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .adey-volume label { font-size: 11px; color: var(--text-muted); }
+        .adey-volume input[type="range"] { width: 120px; height: 4px; -webkit-appearance: none; background: var(--border); border-radius: 2px; outline: none; }
+        .adey-volume input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--cyan); border-radius: 50%; cursor: pointer; }
         .trust-section { padding: 40px 24px; background: var(--bg); border-bottom: 1px solid var(--border); }
         .trust-inner { max-width: 900px; margin: 0 auto; display: flex; justify-content: center; align-items: center; gap: 40px; flex-wrap: wrap; }
         .trust-badge { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 12px; }
@@ -700,6 +741,51 @@
             <div class="science-disclaimer">
                 <strong>Wichtig:</strong> Echoelmusic verwendet audio-basierte Entrainment-Techniken, inspiriert von dieser Forschung. Es ist KEIN elektromagnetisches Therapiegerät und erhebt keine medizinischen Ansprüche. Features dienen ausschließlich kreativen und Entspannungszwecken. Konsultieren Sie für medizinische Beratung einen Arzt.
             </div>
+
+            <!-- Interactive Adey Windows Demo -->
+            <div class="adey-demo">
+                <h3 class="adey-demo-title">Frequenzfenster Erleben</h3>
+                <p class="adey-demo-subtitle">Klicke um binaurale Töne bei jeder Gehirnwellenfrequenz zu hören</p>
+                <div class="adey-windows">
+                    <div class="adey-window delta" onclick="playAdeyTone('delta', 2, 200)">
+                        <div class="adey-wave">
+                            <svg viewBox="0 0 100 40" fill="none" stroke="#8A2BE2" stroke-width="2"><path d="M0 20 Q25 5 50 20 T100 20" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="adey-freq">2 Hz</div>
+                        <div class="adey-name">Delta</div>
+                        <div class="adey-desc">Tiefschlaf</div>
+                    </div>
+                    <div class="adey-window theta" onclick="playAdeyTone('theta', 6, 250)">
+                        <div class="adey-wave">
+                            <svg viewBox="0 0 100 40" fill="none" stroke="#00BFFF" stroke-width="2"><path d="M0 20 Q12.5 5 25 20 T50 20 T75 20 T100 20" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="adey-freq">6 Hz</div>
+                        <div class="adey-name">Theta</div>
+                        <div class="adey-desc">Meditation</div>
+                    </div>
+                    <div class="adey-window alpha" onclick="playAdeyTone('alpha', 10, 300)">
+                        <div class="adey-wave">
+                            <svg viewBox="0 0 100 40" fill="none" stroke="#00FF7F" stroke-width="2"><path d="M0 20 Q6.25 5 12.5 20 T25 20 T37.5 20 T50 20 T62.5 20 T75 20 T87.5 20 T100 20" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="adey-freq">10 Hz</div>
+                        <div class="adey-name">Alpha</div>
+                        <div class="adey-desc">Entspannte Konzentration</div>
+                    </div>
+                    <div class="adey-window schumann" onclick="playAdeyTone('schumann', 7.83, 280)">
+                        <div class="adey-wave">
+                            <svg viewBox="0 0 100 40" fill="none" stroke="#FFD700" stroke-width="2"><path d="M0 20 Q8 5 16 20 T32 20 T48 20 T64 20 T80 20 T100 20" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="adey-freq">7,83 Hz</div>
+                        <div class="adey-name">Schumann</div>
+                        <div class="adey-desc">Erdresonanz</div>
+                    </div>
+                </div>
+                <div class="adey-volume">
+                    <label>Lautstärke</label>
+                    <input type="range" id="adeyVolume" min="0" max="100" value="30" oninput="setAdeyVolume(this.value)">
+                </div>
+                <div class="adey-status" id="adeyStatus">Klicke eine Frequenz zum Starten</div>
+            </div>
         </div>
     </section>
 
@@ -781,6 +867,100 @@
     <script>
         if(!localStorage.getItem('cookies-accepted')){document.getElementById('cookieBanner').classList.add('show');}
         function acceptCookies(){localStorage.setItem('cookies-accepted','true');document.getElementById('cookieBanner').classList.remove('show');}
+
+        // ===== ADEY WINDOWS AUDIO ENGINE (Web Audio API) =====
+        let adeyCtx = null;
+        let adeyOscL = null;
+        let adeyOscR = null;
+        let adeyGain = null;
+        let adeyActive = null;
+        let adeyVolume = 0.3;
+
+        function initAdeyAudio() {
+            if (!adeyCtx) {
+                adeyCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (adeyCtx.state === 'suspended') {
+                adeyCtx.resume();
+            }
+        }
+
+        function playAdeyTone(type, beatFreq, carrier) {
+            initAdeyAudio();
+
+            // Toggle off if same type
+            if (adeyActive === type) {
+                stopAdeyTone();
+                return;
+            }
+
+            // Stop current tone without UI update
+            stopAdeyTone(false);
+
+            // Create stereo merger for binaural effect
+            const merger = adeyCtx.createChannelMerger(2);
+            adeyGain = adeyCtx.createGain();
+            adeyGain.gain.value = adeyVolume;
+
+            // Left oscillator (carrier frequency)
+            adeyOscL = adeyCtx.createOscillator();
+            adeyOscL.type = 'sine';
+            adeyOscL.frequency.value = carrier;
+            const gainL = adeyCtx.createGain();
+            gainL.gain.value = 1;
+            adeyOscL.connect(gainL);
+            gainL.connect(merger, 0, 0);
+
+            // Right oscillator (carrier + beat frequency for binaural)
+            adeyOscR = adeyCtx.createOscillator();
+            adeyOscR.type = 'sine';
+            adeyOscR.frequency.value = carrier + beatFreq;
+            const gainR = adeyCtx.createGain();
+            gainR.gain.value = 1;
+            adeyOscR.connect(gainR);
+            gainR.connect(merger, 0, 1);
+
+            // Connect to output
+            merger.connect(adeyGain);
+            adeyGain.connect(adeyCtx.destination);
+
+            // Start oscillators
+            adeyOscL.start();
+            adeyOscR.start();
+
+            adeyActive = type;
+            updateAdeyUI();
+        }
+
+        function stopAdeyTone(updateUI = true) {
+            if (adeyOscL) { try { adeyOscL.stop(); } catch(e){} adeyOscL = null; }
+            if (adeyOscR) { try { adeyOscR.stop(); } catch(e){} adeyOscR = null; }
+            if (adeyGain) { adeyGain.disconnect(); adeyGain = null; }
+            adeyActive = null;
+            if (updateUI) updateAdeyUI();
+        }
+
+        function setAdeyVolume(val) {
+            adeyVolume = val;
+            if (adeyGain) adeyGain.gain.value = val;
+            document.getElementById('adeyVolumeValue').textContent = Math.round(val * 100) + '%';
+        }
+
+        function updateAdeyUI() {
+            const windows = document.querySelectorAll('.adey-window');
+            windows.forEach(w => w.classList.remove('active'));
+
+            const status = document.getElementById('adeyStatus');
+            if (adeyActive) {
+                document.querySelector('.adey-window.' + adeyActive)?.classList.add('active');
+                const names = { delta: 'Delta (2 Hz)', theta: 'Theta (6 Hz)', alpha: 'Alpha (10 Hz)', schumann: 'Schumann (7.83 Hz)' };
+                status.textContent = '🎵 Spielt: ' + names[adeyActive] + ' — Kopfhörer für binauralen Effekt empfohlen';
+                status.style.color = 'var(--success)';
+            } else {
+                status.textContent = 'Klicke auf eine Frequenz zum Anhören';
+                status.style.color = 'var(--text-muted)';
+            }
+        }
     </script>
 </body>
 </html>
