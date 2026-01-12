@@ -922,7 +922,7 @@ Tests/EchoelmusicTests/
 ├── Comprehensive2000Tests.swift         # 2000% full coverage tests
 ├── Comprehensive8000Tests.swift         # 8000% MAXIMUM OVERDRIVE tests (NEW)
 ├── UnifiedControlHubTests.swift         # Control hub tests
-├── BinauralBeatTests.swift              # Audio tests
+├── ImmersiveIsochronicTests.swift       # Isochronic entrainment tests
 ├── HealthKitManagerTests.swift          # Biofeedback tests
 ├── FaceToAudioMapperTests.swift         # Face mapping tests
 ├── PitchDetectorTests.swift             # DSP tests

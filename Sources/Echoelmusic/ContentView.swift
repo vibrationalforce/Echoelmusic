@@ -15,12 +15,12 @@ struct ContentView: View {
 
     @State private var showPermissionAlert = false
     @State private var showRecordingControls = false
-    @State private var showBinauralControls = false
+    @State private var showIsochronicControls = false
     @State private var showSpatialControls = false
     @State private var showVisualizationPicker = false
     @State private var selectedVisualizationMode: VisualizationMode = .particles
-    @State private var selectedBrainwaveState: BinauralBeatGenerator.BrainwaveState = .alpha
-    @State private var binauralAmplitude: Float = 0.3
+    @State private var selectedEntrainmentPreset: ImmersiveIsochronicEngine.EntrainmentPreset = .relaxedFocus
+    @State private var isochronicVolume: Float = 0.5
     @State private var pulseAnimation = false
 
     /// Computed property - single source of truth for recording state
@@ -109,9 +109,9 @@ struct ContentView: View {
                         .transition(.opacity.combined(with: .scale))
                 }
 
-                // Multidimensional Brainwave Entrainment controls panel
-                if showBinauralControls {
-                    binauralControlsPanel
+                // Isochronic entrainment controls panel
+                if showIsochronicControls {
+                    isochronicControlsPanel
                         .transition(.opacity.combined(with: .scale))
                 }
 
@@ -397,13 +397,13 @@ struct ContentView: View {
     /// Control buttons row
     private var controlButtonsRow: some View {
         HStack(spacing: VaporwaveSpacing.lg) {
-            // Multidimensional Brainwave Entrainment toggle
+            // Isochronic entrainment toggle
             controlButton(
-                icon: audioEngine.binauralBeatsEnabled ? "waveform.circle.fill" : "waveform.circle",
-                label: audioEngine.binauralBeatsEnabled ? "Binaural ON" : "Beats OFF",
-                isActive: audioEngine.binauralBeatsEnabled,
+                icon: audioEngine.isochronicEnabled ? "waveform.circle.fill" : "waveform.circle",
+                label: audioEngine.isochronicEnabled ? "Entrainment ON" : "Entrainment OFF",
+                isActive: audioEngine.isochronicEnabled,
                 color: VaporwaveColors.neonPurple,
-                action: toggleBinauralBeats
+                action: toggleIsochronicEntrainment
             )
 
             // Main record button
@@ -448,7 +448,7 @@ struct ContentView: View {
                 label: "Settings",
                 isActive: false,
                 color: VaporwaveColors.lavender,
-                action: { showBinauralControls.toggle() }
+                action: { showIsochronicControls.toggle() }
             )
         }
     }
@@ -540,24 +540,24 @@ struct ContentView: View {
         .padding(.bottom, VaporwaveSpacing.sm)
     }
 
-    /// Binaural controls panel
-    private var binauralControlsPanel: some View {
+    /// Isochronic entrainment controls panel
+    private var isochronicControlsPanel: some View {
         VStack(spacing: VaporwaveSpacing.md) {
-            Text("Binaural Beat Controls")
+            Text("Isochronic Entrainment")
                 .font(VaporwaveTypography.body())
                 .foregroundColor(VaporwaveColors.textPrimary)
 
-            Picker("Brainwave State", selection: Binding(
-                get: { audioEngine.currentBrainwaveState },
-                set: { audioEngine.setBrainwaveState($0) }
+            Picker("Preset", selection: Binding(
+                get: { audioEngine.currentEntrainmentPreset },
+                set: { audioEngine.setEntrainmentPreset($0) }
             )) {
-                ForEach(BinauralBeatGenerator.BrainwaveState.allCases, id: \.self) { state in
-                    Text(state.rawValue.capitalized).tag(state)
+                ForEach(ImmersiveIsochronicEngine.EntrainmentPreset.allCases) { preset in
+                    Text(preset.displayName).tag(preset)
                 }
             }
             .pickerStyle(.segmented)
 
-            Text(audioEngine.currentBrainwaveState.description)
+            Text(audioEngine.currentEntrainmentPreset.description)
                 .font(VaporwaveTypography.caption())
                 .foregroundColor(VaporwaveColors.textSecondary)
 
@@ -566,15 +566,15 @@ struct ContentView: View {
                     Text("Volume")
                         .font(VaporwaveTypography.caption())
                     Spacer()
-                    Text(String(format: "%.0f%%", audioEngine.binauralAmplitude * 100))
+                    Text(String(format: "%.0f%%", audioEngine.isochronicVolume * 100))
                         .font(.system(size: 12, design: .monospaced))
                 }
                 .foregroundColor(VaporwaveColors.textSecondary)
 
                 Slider(value: Binding(
-                    get: { audioEngine.binauralAmplitude },
-                    set: { audioEngine.setBinauralAmplitude($0) }
-                ), in: 0.0...0.6)
+                    get: { audioEngine.isochronicVolume },
+                    set: { audioEngine.setIsochronicVolume($0) }
+                ), in: 0.0...1.0)
                 .tint(VaporwaveColors.neonPurple)
             }
         }
@@ -619,10 +619,10 @@ struct ContentView: View {
         }
     }
 
-    /// Toggle Multidimensional Brainwave Entrainment on/off
-    private func toggleBinauralBeats() {
+    /// Toggle isochronic entrainment on/off
+    private func toggleIsochronicEntrainment() {
         // Use AudioEngine to toggle (handles configuration)
-        audioEngine.toggleBinauralBeats()
+        audioEngine.toggleIsochronicEntrainment()
 
         // Haptic feedback
         let impactFeedback = UIImpactFeedbackGenerator(style: .light)

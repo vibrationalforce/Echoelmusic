@@ -20,17 +20,17 @@ class AudioEngine: ObservableObject {
     /// Whether the audio engine is currently running
     @Published var isRunning: Bool = false
 
-    /// Whether Multidimensional Brainwave Entrainment are enabled
-    @Published var binauralBeatsEnabled: Bool = false
+    /// Whether isochronic entrainment is enabled
+    @Published var isochronicEnabled: Bool = false
 
     /// Whether spatial audio is enabled
     @Published var spatialAudioEnabled: Bool = false
 
-    /// Current binaural beat state
-    @Published var currentBrainwaveState: BinauralBeatGenerator.BrainwaveState = .alpha
+    /// Current entrainment preset
+    @Published var currentEntrainmentPreset: ImmersiveIsochronicEngine.EntrainmentPreset = .relaxedFocus
 
-    /// Multidimensional Brainwave Entrainment amplitude (0.0 - 1.0)
-    @Published var binauralAmplitude: Float = 0.3
+    /// Isochronic volume (0.0 - 1.0)
+    @Published var isochronicVolume: Float = 0.5
 
 
     // MARK: - Audio Components
@@ -38,9 +38,9 @@ class AudioEngine: ObservableObject {
     /// Microphone manager for voice/breath input
     let microphoneManager: MicrophoneManager
 
-    /// Multidimensional Brainwave Entrainment generator for brainwave entrainment frequencies
+    /// Immersive isochronic engine for brainwave entrainment with rich sound design
     /// HINWEIS: Subjektive Entspannung, keine medizinischen Heilungseffekte belegt
-    private let binauralGenerator = BinauralBeatGenerator()
+    private let isochronicEngine = ImmersiveIsochronicEngine()
 
     /// Spatial audio engine for 3D audio
     private var spatialAudioEngine: SpatialAudioEngine?
@@ -83,13 +83,9 @@ class AudioEngine: ObservableObject {
         // Set real-time audio thread priority
         AudioConfiguration.setAudioThreadPriority()
 
-        // Configure default binaural beat settings
-        // HINWEIS: 432 Hz ist kulturell beliebt, keine "Heilfrequenz" wissenschaftlich belegt
-        binauralGenerator.configure(
-            carrier: 432.0,  // Traditional tuning (subjective preference)
-            beat: 10.0,      // Alpha waves (relaxation)
-            amplitude: 0.3
-        )
+        // Configure default isochronic entrainment settings
+        // Uses rich soundscapes instead of boring sine waves
+        isochronicEngine.configure(preset: .relaxedFocus, soundscape: .warmPad)
 
         // Initialize device capabilities
         deviceCapabilities = DeviceCapabilities()
@@ -129,9 +125,9 @@ class AudioEngine: ObservableObject {
         // Start microphone
         microphoneManager.startRecording()
 
-        // Start Multidimensional Brainwave Entrainment if enabled
-        if binauralBeatsEnabled {
-            binauralGenerator.start()
+        // Start isochronic entrainment if enabled
+        if isochronicEnabled {
+            isochronicEngine.start()
         }
 
         // Start spatial audio if enabled
@@ -157,8 +153,8 @@ class AudioEngine: ObservableObject {
         // Stop microphone
         microphoneManager.stopRecording()
 
-        // Stop Multidimensional Brainwave Entrainment
-        binauralGenerator.stop()
+        // Stop isochronic entrainment
+        isochronicEngine.stop()
 
         // Stop spatial audio
         spatialAudioEngine?.stop()
@@ -170,47 +166,32 @@ class AudioEngine: ObservableObject {
         log.audio("🎵 AudioEngine stopped")
     }
 
-    /// Toggle Multidimensional Brainwave Entrainment on/off
-    func toggleBinauralBeats() {
-        binauralBeatsEnabled.toggle()
+    /// Toggle isochronic entrainment on/off
+    func toggleIsochronicEntrainment() {
+        isochronicEnabled.toggle()
 
-        if binauralBeatsEnabled {
-            binauralGenerator.start()
-            log.audio("🔊 Multidimensional Brainwave Entrainment enabled")
+        if isochronicEnabled {
+            isochronicEngine.start()
+            log.audio("Isochronic entrainment enabled")
         } else {
-            binauralGenerator.stop()
-            log.audio("🔇 Multidimensional Brainwave Entrainment disabled")
+            isochronicEngine.stop()
+            log.audio("Isochronic entrainment disabled")
         }
     }
 
-    /// Set brainwave state for Multidimensional Brainwave Entrainment
-    /// - Parameter state: Target brainwave state (delta, theta, alpha, beta, gamma)
-    func setBrainwaveState(_ state: BinauralBeatGenerator.BrainwaveState) {
-        currentBrainwaveState = state
-        binauralGenerator.configure(state: state)
-
-        // Restart if currently playing
-        if binauralBeatsEnabled {
-            binauralGenerator.stop()
-            binauralGenerator.start()
-        }
+    /// Set entrainment preset for isochronic tones
+    /// - Parameter preset: Target entrainment preset (deepRest, meditation, relaxedFocus, focus, activeThinking, peakFlow)
+    func setEntrainmentPreset(_ preset: ImmersiveIsochronicEngine.EntrainmentPreset) {
+        currentEntrainmentPreset = preset
+        isochronicEngine.configure(preset: preset)
+        log.audio("Entrainment preset set to: \(preset.displayName)")
     }
 
-    /// Set binaural beat amplitude
-    /// - Parameter amplitude: Volume (0.0 - 1.0)
-    func setBinauralAmplitude(_ amplitude: Float) {
-        binauralAmplitude = amplitude
-        binauralGenerator.configure(
-            carrier: 432.0,
-            beat: currentBrainwaveState.beatFrequency,
-            amplitude: amplitude
-        )
-
-        // Restart if currently playing
-        if binauralBeatsEnabled {
-            binauralGenerator.stop()
-            binauralGenerator.start()
-        }
+    /// Set isochronic volume
+    /// - Parameter volume: Volume (0.0 - 1.0)
+    func setIsochronicVolume(_ volume: Float) {
+        isochronicVolume = volume
+        isochronicEngine.volume = volume
     }
 
     /// Toggle spatial audio on/off
@@ -252,24 +233,19 @@ class AudioEngine: ObservableObject {
 
     // MARK: - Private Methods
 
-    /// Adapt binaural beat frequency based on HRV coherence
+    /// Adapt isochronic rhythm based on HRV coherence
     /// - Parameter coherence: HRV coherence score (0-100)
     private func adaptToBiofeedback(coherence: Double) {
-        guard binauralBeatsEnabled else { return }
+        guard isochronicEnabled else { return }
 
-        // Use HRV to modulate binaural beat frequency
-        binauralGenerator.setBeatFrequencyFromHRV(coherence: coherence)
+        // Use HRV to modulate isochronic rhythm
+        isochronicEngine.modulateFromCoherence(coherence)
 
-        // Optional: Adjust amplitude based on coherence
-        // Higher coherence = can handle higher amplitude
-        let adaptiveAmplitude = Float(0.2 + (coherence / 100.0) * 0.3)  // 0.2-0.5 range
-        binauralAmplitude = adaptiveAmplitude
-
-        binauralGenerator.configure(
-            carrier: 432.0,
-            beat: binauralGenerator.beatFrequency,
-            amplitude: adaptiveAmplitude
-        )
+        // Optional: Adjust volume based on coherence
+        // Higher coherence = can handle higher volume
+        let adaptiveVolume = Float(0.3 + (coherence / 100.0) * 0.4)  // 0.3-0.7 range
+        isochronicVolume = adaptiveVolume
+        isochronicEngine.volume = adaptiveVolume
     }
 
 
@@ -330,13 +306,9 @@ class AudioEngine: ObservableObject {
             spatial.positionSource(x: pos.x, y: pos.y, z: pos.z)
         }
 
-        // Apply frequency/amplitude to binaural generator
-        if binauralBeatsEnabled {
-            binauralGenerator.configure(
-                carrier: bioParameterMapper.baseFrequency,
-                beat: currentBrainwaveState.beatFrequency,
-                amplitude: bioParameterMapper.amplitude
-            )
+        // Apply amplitude to isochronic engine
+        if isochronicEnabled {
+            isochronicEngine.volume = bioParameterMapper.amplitude
         }
     }
 
@@ -351,10 +323,10 @@ class AudioEngine: ObservableObject {
 
         var description = "Microphone: Active"
 
-        if binauralBeatsEnabled {
-            description += "\nMultidimensional Brainwave Entrainment: \(currentBrainwaveState.rawValue.capitalized) (\(currentBrainwaveState.beatFrequency) Hz)"
+        if isochronicEnabled {
+            description += "\nIsochronic Entrainment: \(currentEntrainmentPreset.displayName) (\(currentEntrainmentPreset.centerFrequency) Hz)"
         } else {
-            description += "\nMultidimensional Brainwave Entrainment: Off"
+            description += "\nIsochronic Entrainment: Off"
         }
 
         if spatialAudioEnabled {

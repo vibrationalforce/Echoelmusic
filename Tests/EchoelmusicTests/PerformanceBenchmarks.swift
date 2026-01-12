@@ -152,28 +152,32 @@ final class PerformanceBenchmarks: XCTestCase {
         }
     }
 
-    func testBinauralBeatGeneration() {
+    func testIsochronicToneGeneration() {
         let sampleRate = 44100.0
         let bufferSize = 512
-        let leftFreq = 440.0
-        let rightFreq = 446.0
-        let beatFreq = rightFreq - leftFreq
+        let carrierFreq = 220.0  // Warm pad base frequency
+        let pulseFreq = 10.0     // Alpha rhythm
 
         var leftBuffer = [Float](repeating: 0.0, count: bufferSize)
         var rightBuffer = [Float](repeating: 0.0, count: bufferSize)
-        var phase: Double = 0.0
+        var carrierPhase: Double = 0.0
+        var pulsePhase: Double = 0.0
 
         measurePerformance(
-            name: "Binaural Beat Generation (CPU)",
+            name: "Isochronic Tone Generation (CPU)",
             target: 0.005, // 5ms target
             iterations: 1000
         ) {
             for i in 0..<bufferSize {
-                let time = Double(i) / sampleRate + phase
-                leftBuffer[i] = Float(sin(2.0 * .pi * leftFreq * time))
-                rightBuffer[i] = Float(sin(2.0 * .pi * rightFreq * time))
+                let time = Double(i) / sampleRate
+                let carrier = sin(2.0 * .pi * carrierFreq * time + carrierPhase)
+                let pulse = (sin(2.0 * .pi * pulseFreq * time + pulsePhase) + 1.0) / 2.0
+                let sample = Float(carrier * pulse)
+                leftBuffer[i] = sample
+                rightBuffer[i] = sample
             }
-            phase += Double(bufferSize) / sampleRate
+            carrierPhase += 2.0 * .pi * carrierFreq * Double(bufferSize) / sampleRate
+            pulsePhase += 2.0 * .pi * pulseFreq * Double(bufferSize) / sampleRate
         }
     }
 

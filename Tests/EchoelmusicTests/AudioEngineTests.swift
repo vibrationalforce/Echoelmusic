@@ -26,16 +26,16 @@ final class AudioEngineTests: XCTestCase {
     func testInitialization() {
         XCTAssertNotNil(audioEngine)
         XCTAssertFalse(audioEngine.isRunning)
-        XCTAssertFalse(audioEngine.binauralBeatsEnabled)
+        XCTAssertFalse(audioEngine.isochronicEnabled)
         XCTAssertFalse(audioEngine.spatialAudioEnabled)
     }
 
-    func testDefaultBrainwaveState() {
-        XCTAssertEqual(audioEngine.currentBrainwaveState, .alpha)
+    func testDefaultEntrainmentPreset() {
+        XCTAssertEqual(audioEngine.currentEntrainmentPreset, .relaxedFocus)
     }
 
-    func testDefaultBinauralAmplitude() {
-        XCTAssertEqual(audioEngine.binauralAmplitude, 0.3, accuracy: 0.01)
+    func testDefaultIsochronicVolume() {
+        XCTAssertEqual(audioEngine.isochronicVolume, 0.5, accuracy: 0.01)
     }
 
 
@@ -57,57 +57,57 @@ final class AudioEngineTests: XCTestCase {
     }
 
 
-    // MARK: - Brainwave State Tests
+    // MARK: - Entrainment Preset Tests
 
-    func testSetBrainwaveStateDelta() {
-        audioEngine.setBrainwaveState(.delta)
-        XCTAssertEqual(audioEngine.currentBrainwaveState, .delta)
+    func testSetEntrainmentPresetDeepRest() {
+        audioEngine.setEntrainmentPreset(.deepRest)
+        XCTAssertEqual(audioEngine.currentEntrainmentPreset, .deepRest)
     }
 
-    func testSetBrainwaveStateTheta() {
-        audioEngine.setBrainwaveState(.theta)
-        XCTAssertEqual(audioEngine.currentBrainwaveState, .theta)
+    func testSetEntrainmentPresetMeditation() {
+        audioEngine.setEntrainmentPreset(.meditation)
+        XCTAssertEqual(audioEngine.currentEntrainmentPreset, .meditation)
     }
 
-    func testSetBrainwaveStateBeta() {
-        audioEngine.setBrainwaveState(.beta)
-        XCTAssertEqual(audioEngine.currentBrainwaveState, .beta)
+    func testSetEntrainmentPresetFocus() {
+        audioEngine.setEntrainmentPreset(.focus)
+        XCTAssertEqual(audioEngine.currentEntrainmentPreset, .focus)
     }
 
-    func testSetBrainwaveStateGamma() {
-        audioEngine.setBrainwaveState(.gamma)
-        XCTAssertEqual(audioEngine.currentBrainwaveState, .gamma)
+    func testSetEntrainmentPresetPeakFlow() {
+        audioEngine.setEntrainmentPreset(.peakFlow)
+        XCTAssertEqual(audioEngine.currentEntrainmentPreset, .peakFlow)
     }
 
 
-    // MARK: - Amplitude Tests
+    // MARK: - Volume Tests
 
-    func testSetBinauralAmplitude() {
-        audioEngine.setBinauralAmplitude(0.5)
-        XCTAssertEqual(audioEngine.binauralAmplitude, 0.5, accuracy: 0.01)
+    func testSetIsochronicVolume() {
+        audioEngine.setIsochronicVolume(0.7)
+        XCTAssertEqual(audioEngine.isochronicVolume, 0.7, accuracy: 0.01)
     }
 
-    func testSetBinauralAmplitudeZero() {
-        audioEngine.setBinauralAmplitude(0.0)
-        XCTAssertEqual(audioEngine.binauralAmplitude, 0.0, accuracy: 0.01)
+    func testSetIsochronicVolumeZero() {
+        audioEngine.setIsochronicVolume(0.0)
+        XCTAssertEqual(audioEngine.isochronicVolume, 0.0, accuracy: 0.01)
     }
 
-    func testSetBinauralAmplitudeMax() {
-        audioEngine.setBinauralAmplitude(1.0)
-        XCTAssertEqual(audioEngine.binauralAmplitude, 1.0, accuracy: 0.01)
+    func testSetIsochronicVolumeMax() {
+        audioEngine.setIsochronicVolume(1.0)
+        XCTAssertEqual(audioEngine.isochronicVolume, 1.0, accuracy: 0.01)
     }
 
 
     // MARK: - Toggle Tests
 
-    func testToggleBinauralBeats() {
-        XCTAssertFalse(audioEngine.binauralBeatsEnabled)
+    func testToggleIsochronicEntrainment() {
+        XCTAssertFalse(audioEngine.isochronicEnabled)
 
-        audioEngine.toggleBinauralBeats()
-        XCTAssertTrue(audioEngine.binauralBeatsEnabled)
+        audioEngine.toggleIsochronicEntrainment()
+        XCTAssertTrue(audioEngine.isochronicEnabled)
 
-        audioEngine.toggleBinauralBeats()
-        XCTAssertFalse(audioEngine.binauralBeatsEnabled)
+        audioEngine.toggleIsochronicEntrainment()
+        XCTAssertFalse(audioEngine.isochronicEnabled)
     }
 
     func testToggleSpatialAudio() {
@@ -180,12 +180,12 @@ final class AudioEngineTests: XCTestCase {
 
     // MARK: - Performance Tests
 
-    func testBrainwaveStateSwitchingPerformance() {
-        let states: [BinauralBeatGenerator.BrainwaveState] = [.delta, .theta, .alpha, .beta, .gamma]
+    func testEntrainmentPresetSwitchingPerformance() {
+        let presets = ImmersiveIsochronicEngine.EntrainmentPreset.allCases
 
         measure {
-            for state in states {
-                audioEngine.setBrainwaveState(state)
+            for preset in presets {
+                audioEngine.setEntrainmentPreset(preset)
             }
         }
     }
