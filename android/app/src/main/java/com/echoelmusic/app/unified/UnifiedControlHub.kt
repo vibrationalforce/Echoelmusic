@@ -8,8 +8,12 @@ import com.echoelmusic.app.audio.AudioEngine
 import com.echoelmusic.app.audio.ImmersiveIsochronicEngine
 import com.echoelmusic.app.bio.BioReactiveEngine
 import com.echoelmusic.app.midi.MidiManager
-// HardwareEcosystem integration placeholder - implementation pending
-// import com.echoelmusic.hardware.HardwareEcosystem
+import com.echoelmusic.app.hardware.HardwareEcosystem
+import com.echoelmusic.app.hardware.ConnectedDevice
+import com.echoelmusic.app.hardware.DeviceType
+import com.echoelmusic.app.hardware.DevicePlatform
+import com.echoelmusic.app.hardware.ConnectionType
+import com.echoelmusic.app.hardware.DeviceCapability
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
@@ -73,8 +77,21 @@ class UnifiedControlHub(
     private var isochronicEngine: ImmersiveIsochronicEngine? = null
     private var bioReactiveEngine: BioReactiveEngine? = null
     private var midiManager: MidiManager? = null
-    // HardwareEcosystem integration pending
-    // private var hardwareEcosystem: HardwareEcosystem? = null
+
+    // MARK: - Hardware Ecosystem Integration
+
+    private val _connectedHardware = MutableStateFlow<List<ConnectedDevice>>(emptyList())
+    val connectedHardware: StateFlow<List<ConnectedDevice>> = _connectedHardware
+
+    init {
+        // Collect hardware ecosystem state
+        scope.launch {
+            HardwareEcosystem.connectedDevices.collect { devices ->
+                _connectedHardware.value = devices
+                Log.d(TAG, "Hardware devices updated: ${devices.size} connected")
+            }
+        }
+    }
 
     // MARK: - Control Loop
 
@@ -150,11 +167,38 @@ class UnifiedControlHub(
         Log.i(TAG, "MIDI manager connected")
     }
 
-    // HardwareEcosystem integration - placeholder for future implementation
-    // fun setHardwareEcosystem(ecosystem: HardwareEcosystem) {
-    //     this.hardwareEcosystem = ecosystem
-    //     Log.i(TAG, "Hardware ecosystem connected")
-    // }
+    // MARK: - Hardware Methods
+
+    fun getAudioInterfaces(): List<ConnectedDevice> {
+        return _connectedHardware.value.filter {
+            it.capabilities.contains(DeviceCapability.AUDIO_INPUT) ||
+            it.capabilities.contains(DeviceCapability.AUDIO_OUTPUT)
+        }
+    }
+
+    fun getMidiControllers(): List<ConnectedDevice> {
+        return _connectedHardware.value.filter {
+            it.capabilities.contains(DeviceCapability.MIDI_IN) ||
+            it.capabilities.contains(DeviceCapability.MIDI_OUT)
+        }
+    }
+
+    fun getWearables(): List<ConnectedDevice> {
+        return _connectedHardware.value.filter {
+            it.capabilities.contains(DeviceCapability.HEART_RATE) ||
+            it.capabilities.contains(DeviceCapability.HRV)
+        }
+    }
+
+    fun startHardwareScanning() {
+        HardwareEcosystem.startScanning()
+        Log.i(TAG, "Started hardware device scanning")
+    }
+
+    fun stopHardwareScanning() {
+        HardwareEcosystem.stopScanning()
+        Log.i(TAG, "Stopped hardware device scanning")
+    }
 
     // MARK: - Control Loop
 
