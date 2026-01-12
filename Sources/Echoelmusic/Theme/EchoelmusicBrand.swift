@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 // MARK: - Echoelmusic Artist Brand Identity
 // Professional audio-visual production suite brand system
@@ -10,30 +13,45 @@ import SwiftUI
 // - Windows Fluent Design
 // - Pro Audio Industry Standards (Ableton, Logic Pro, Native Instruments)
 // - WCAG 2.2 AAA Accessibility
+// - VR/AR Readability (visionOS, Quest)
+//
+// Typography: Atkinson Hyperlegible - Optimal VR/AR readability
+// Primary Color: Bio-Green 💚 - Organic, wellness, growth
 
 /// Echoelmusic Brand Colors - Professional Artist Identity
-/// Color strategy: Reduced saturation (70-80%) for eye comfort during long sessions
-/// Inspired by: HeartMath (wellness trust), Ableton (pro audio), Native Instruments (premium)
+/// Color strategy: Bio-Green theme for organic wellness feel
+/// Inspired by: HeartMath (wellness trust), Calm (green wellness), Nature (bio-reactive)
 public struct EchoelBrand {
 
-    // MARK: - Primary Brand Colors
+    // MARK: - Primary Brand Colors (Bio-Green Theme 💚)
 
-    /// Teal - Primary brand color (confidence, technology, wellness)
-    /// HSL: 168°, 65%, 50% - Professional yet approachable
-    public static let teal = Color(red: 0.176, green: 0.831, blue: 0.749)  // #2DD4BF
+    /// Green - Primary brand color (life, bio-reactive, wellness)
+    /// #22C55E - Vibrant bio-green
+    public static let primary = Color(red: 0.133, green: 0.773, blue: 0.369)  // #22C55E
 
-    /// Rose - Secondary brand color (heart, bio-reactive, human)
-    /// HSL: 330°, 86%, 70% - Warm, confident, not aggressive
+    /// Emerald - Secondary brand color (depth, growth)
+    /// #10B981 - Rich emerald
+    public static let secondary = Color(red: 0.063, green: 0.725, blue: 0.506)  // #10B981
+
+    /// Mint - Accent color (freshness, clarity)
+    /// #34D399 - Light mint
+    public static let accent = Color(red: 0.204, green: 0.827, blue: 0.600)  // #34D399
+
+    // MARK: - Legacy Aliases (for backward compatibility)
+
+    /// Teal - Alias for primary (bio-green)
+    public static let teal = primary
+
+    /// Rose - Soft pink for heart visualization
     public static let rose = Color(red: 0.957, green: 0.447, blue: 0.714)  // #F472B6
 
-    /// Violet - Accent color (creativity, premium, innovation)
-    /// HSL: 258°, 90%, 77% - Sophisticated, modern
+    /// Violet - For creativity accents
     public static let violet = Color(red: 0.655, green: 0.545, blue: 0.980)  // #A78BFA
 
     // MARK: - Extended Palette
 
-    /// Emerald - Health, success, growth
-    public static let emerald = Color(red: 0.204, green: 0.827, blue: 0.600)  // #34D399
+    /// Emerald - Health, success, growth (same as secondary)
+    public static let emerald = secondary
 
     /// Sky - Science, trust, clarity
     public static let sky = Color(red: 0.220, green: 0.741, blue: 0.973)  // #38BDF8
@@ -44,19 +62,19 @@ public struct EchoelBrand {
     /// Coral - Warning, attention
     public static let coral = Color(red: 0.984, green: 0.451, blue: 0.408)  // #FB7366
 
-    // MARK: - Background System (Warm Dark - Premium Feel)
+    // MARK: - Background System (Bio-Green Dark Theme)
 
-    /// Deep background - Primary (warmer than pure black)
-    public static let bgDeep = Color(red: 0.047, green: 0.039, blue: 0.102)  // #0C0A1A
+    /// Deep background - Primary (dark with green undertone)
+    public static let bgDeep = Color(red: 0.012, green: 0.027, blue: 0.071)  // #030712
 
-    /// Surface background - Cards, panels
-    public static let bgSurface = Color(red: 0.082, green: 0.075, blue: 0.149)  // #151326
+    /// Surface background - Cards, panels (forest green tint)
+    public static let bgSurface = Color(red: 0.020, green: 0.180, blue: 0.086)  // #052e16
 
     /// Elevated background - Modals, popovers
-    public static let bgElevated = Color(red: 0.102, green: 0.090, blue: 0.188)  // #1A1730
+    public static let bgElevated = Color(red: 0.039, green: 0.212, blue: 0.133)  // #0a3622
 
-    /// Glass overlay
-    public static let bgGlass = Color.white.opacity(0.04)
+    /// Glass overlay (green tint)
+    public static let bgGlass = primary.opacity(0.08)
 
     // MARK: - Text Hierarchy
 
@@ -80,8 +98,8 @@ public struct EchoelBrand {
     /// Medium coherence - Transitioning
     public static let coherenceMedium = Color(red: 0.984, green: 0.749, blue: 0.141)  // #FBBF24
 
-    /// High coherence - Flow state achieved
-    public static let coherenceHigh = Color(red: 0.176, green: 0.831, blue: 0.749)  // #2DD4BF
+    /// High coherence - Flow state achieved (bio-green)
+    public static let coherenceHigh = primary  // #22C55E
 
     // MARK: - Semantic Colors
 
@@ -99,11 +117,11 @@ public struct EchoelBrand {
 
     // MARK: - Border & Divider
 
-    /// Default border
-    public static let border = Color.white.opacity(0.08)
+    /// Default border (green tint)
+    public static let border = primary.opacity(0.2)
 
     /// Active/focused border
-    public static let borderActive = teal.opacity(0.5)
+    public static let borderActive = primary.opacity(0.5)
 
     // MARK: - Brainwave Colors (Evidence-Based Associations)
     // These colors are for UI differentiation, NOT claimed therapeutic effects
@@ -128,16 +146,16 @@ public struct EchoelBrand {
 
 public struct EchoelGradients {
 
-    /// Primary brand gradient (teal to violet)
+    /// Primary brand gradient (bio-green spectrum)
     public static let brand = LinearGradient(
-        colors: [EchoelBrand.teal, EchoelBrand.violet],
+        colors: [EchoelBrand.primary, EchoelBrand.secondary, EchoelBrand.accent],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
-    /// Bio-reactive gradient (heart to coherence)
+    /// Bio-reactive gradient (emerald to mint)
     public static let bioReactive = LinearGradient(
-        colors: [EchoelBrand.rose, EchoelBrand.teal],
+        colors: [EchoelBrand.secondary, EchoelBrand.primary, EchoelBrand.accent],
         startPoint: .leading,
         endPoint: .trailing
     )
@@ -185,35 +203,62 @@ public struct EchoelGradients {
 }
 
 // MARK: - Typography Scale
+// Recommended: Atkinson Hyperlegible for VR/AR readability
+// Fallback: System font (SF Pro on Apple, Roboto on Android)
+// Benefits: Distinguishable letterforms (I/l/1, O/0), optimal for Vision Pro & Quest
 
 public struct EchoelTypography {
 
+    /// Preferred font name for VR/AR readability
+    /// Install from: https://fonts.google.com/specimen/Atkinson+Hyperlegible
+    public static let preferredFontName = "AtkinsonHyperlegible-Regular"
+    public static let preferredFontNameBold = "AtkinsonHyperlegible-Bold"
+
+    /// Check if preferred font is available
+    private static var fontAvailable: Bool {
+        #if canImport(UIKit)
+        return UIFont(name: preferredFontName, size: 16) != nil
+        #else
+        return false  // Use system font on macOS/watchOS
+        #endif
+    }
+
     /// Hero title (44pt bold)
     public static func heroTitle() -> Font {
-        .system(size: 44, weight: .bold, design: .rounded)
+        fontAvailable
+            ? .custom(preferredFontNameBold, size: 44)
+            : .system(size: 44, weight: .bold, design: .rounded)
     }
 
     /// Section title (28pt semibold)
     public static func sectionTitle() -> Font {
-        .system(size: 28, weight: .semibold, design: .rounded)
+        fontAvailable
+            ? .custom(preferredFontNameBold, size: 28)
+            : .system(size: 28, weight: .semibold, design: .rounded)
     }
 
     /// Card title (20pt semibold)
     public static func cardTitle() -> Font {
-        .system(size: 20, weight: .semibold, design: .default)
+        fontAvailable
+            ? .custom(preferredFontNameBold, size: 20)
+            : .system(size: 20, weight: .semibold, design: .default)
     }
 
     /// Body text (16pt regular)
     public static func body() -> Font {
-        .system(size: 16, weight: .regular, design: .default)
+        fontAvailable
+            ? .custom(preferredFontName, size: 16)
+            : .system(size: 16, weight: .regular, design: .default)
     }
 
     /// Caption (13pt regular)
     public static func caption() -> Font {
-        .system(size: 13, weight: .regular, design: .default)
+        fontAvailable
+            ? .custom(preferredFontName, size: 13)
+            : .system(size: 13, weight: .regular, design: .default)
     }
 
-    /// Data display (24pt monospace)
+    /// Data display (24pt monospace) - Use system monospace for data
     public static func data() -> Font {
         .system(size: 24, weight: .medium, design: .monospaced)
     }
@@ -223,9 +268,11 @@ public struct EchoelTypography {
         .system(size: 14, weight: .medium, design: .monospaced)
     }
 
-    /// Label (12pt medium, all caps tracking)
+    /// Label (12pt medium)
     public static func label() -> Font {
-        .system(size: 12, weight: .medium, design: .default)
+        fontAvailable
+            ? .custom(preferredFontName, size: 12)
+            : .system(size: 12, weight: .medium, design: .default)
     }
 }
 
@@ -274,13 +321,13 @@ public struct EchoelAnimation {
 
 // MARK: - View Modifiers
 
-/// Professional glow effect (subtle, not neon)
+/// Professional glow effect (subtle, bio-green)
 public struct EchoelGlow: ViewModifier {
     let color: Color
     let radius: CGFloat
     let intensity: Double
 
-    public init(color: Color = EchoelBrand.teal, radius: CGFloat = 12, intensity: Double = 0.4) {
+    public init(color: Color = EchoelBrand.primary, radius: CGFloat = 12, intensity: Double = 0.5) {
         self.color = color
         self.radius = radius
         self.intensity = intensity
@@ -314,7 +361,7 @@ public struct EchoelCard: ViewModifier {
     }
 }
 
-/// Primary button style
+/// Primary button style (bio-green)
 public struct EchoelPrimaryButton: ButtonStyle {
     public init() {}
 
@@ -326,29 +373,33 @@ public struct EchoelPrimaryButton: ButtonStyle {
             .padding(.vertical, EchoelSpacing.md)
             .background(
                 RoundedRectangle(cornerRadius: EchoelRadius.md)
-                    .fill(EchoelBrand.teal)
+                    .fill(LinearGradient(
+                        colors: [EchoelBrand.primary, EchoelBrand.secondary],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ))
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .animation(.easeOut(duration: EchoelAnimation.quick), value: configuration.isPressed)
     }
 }
 
-/// Secondary button style
+/// Secondary button style (bio-green outline)
 public struct EchoelSecondaryButton: ButtonStyle {
     public init() {}
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(EchoelTypography.body().weight(.medium))
-            .foregroundColor(EchoelBrand.teal)
+            .foregroundColor(EchoelBrand.primary)
             .padding(.horizontal, EchoelSpacing.lg)
             .padding(.vertical, EchoelSpacing.md)
             .background(
                 RoundedRectangle(cornerRadius: EchoelRadius.md)
-                    .stroke(EchoelBrand.teal.opacity(0.5), lineWidth: 1.5)
+                    .stroke(EchoelBrand.primary.opacity(0.5), lineWidth: 1.5)
                     .background(
                         RoundedRectangle(cornerRadius: EchoelRadius.md)
-                            .fill(EchoelBrand.teal.opacity(configuration.isPressed ? 0.15 : 0.05))
+                            .fill(EchoelBrand.primary.opacity(configuration.isPressed ? 0.15 : 0.05))
                     )
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
@@ -359,8 +410,8 @@ public struct EchoelSecondaryButton: ButtonStyle {
 // MARK: - View Extensions
 
 public extension View {
-    /// Apply professional glow effect
-    func echoelGlow(_ color: Color = EchoelBrand.teal, radius: CGFloat = 12, intensity: Double = 0.4) -> some View {
+    /// Apply professional glow effect (bio-green by default)
+    func echoelGlow(_ color: Color = EchoelBrand.primary, radius: CGFloat = 12, intensity: Double = 0.5) -> some View {
         modifier(EchoelGlow(color: color, radius: radius, intensity: intensity))
     }
 
