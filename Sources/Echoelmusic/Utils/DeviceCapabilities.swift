@@ -346,23 +346,23 @@ extension DeviceCapabilities {
         if canUseSpatialAudio {
             return .spatialAudio
         } else if hasAirPodsConnected {
-            return .binauralBeats
+            return .isochronicEntrainment
         } else {
             return .standard
         }
     }
 
     enum AudioConfiguration {
-        case spatialAudio    // Full 3D spatial audio with head tracking
-        case binauralBeats   // Multidimensional Brainwave Entrainment for headphones
-        case standard        // Standard stereo
+        case spatialAudio           // Full 3D spatial audio with head tracking
+        case isochronicEntrainment  // Isochronic entrainment (works on any output)
+        case standard               // Standard stereo
 
         var description: String {
             switch self {
             case .spatialAudio:
                 return "Spatial Audio with Head Tracking"
-            case .binauralBeats:
-                return "Multidimensional Brainwave Entrainment (Headphones)"
+            case .isochronicEntrainment:
+                return "Isochronic Entrainment (All Outputs)"
             case .standard:
                 return "Standard Stereo"
             }

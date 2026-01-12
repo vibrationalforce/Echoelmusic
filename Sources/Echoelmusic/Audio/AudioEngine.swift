@@ -120,7 +120,7 @@ class AudioEngine: ObservableObject {
 
     // MARK: - Public Methods
 
-    /// Start the audio engine (microphone + optional Multidimensional Brainwave Entrainment + spatial audio)
+    /// Start the audio engine (microphone + optional isochronic entrainment + spatial audio)
     func start() {
         // Start microphone
         microphoneManager.startRecording()

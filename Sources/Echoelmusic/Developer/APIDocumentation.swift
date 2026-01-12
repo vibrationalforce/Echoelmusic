@@ -234,48 +234,48 @@ public struct APIDocumentation {
                 """
             ),
             APIMethod(
-                name: "toggleBinauralBeats",
-                signature: "func toggleBinauralBeats()",
-                description: "Toggle Multidimensional Brainwave Entrainment on/off",
+                name: "toggleIsochronicEntrainment",
+                signature: "func toggleIsochronicEntrainment()",
+                description: "Toggle isochronic entrainment on/off",
                 parameters: [],
                 returnType: "Void",
                 availability: .all,
                 example: """
-                audioEngine.toggleBinauralBeats()
-                // Multidimensional Brainwave Entrainment enabled/disabled
+                audioEngine.toggleIsochronicEntrainment()
+                // Isochronic entrainment enabled/disabled
                 """
             ),
             APIMethod(
-                name: "setBrainwaveState",
-                signature: "func setBrainwaveState(_ state: BinauralBeatGenerator.BrainwaveState)",
-                description: "Set target brainwave state for Multidimensional Brainwave Entrainment",
+                name: "setEntrainmentPreset",
+                signature: "func setEntrainmentPreset(_ preset: ImmersiveIsochronicEngine.EntrainmentPreset)",
+                description: "Set target entrainment preset for isochronic tones",
                 parameters: [
-                    APIParameter(name: "state", type: "BrainwaveState", description: "Target brainwave state (delta, theta, alpha, beta, gamma)", defaultValue: nil)
+                    APIParameter(name: "preset", type: "EntrainmentPreset", description: "Target preset (deepRest, meditation, relaxedFocus, focus, activeThinking, peakFlow)", defaultValue: nil)
                 ],
                 returnType: "Void",
                 availability: .all,
                 example: """
-                // Alpha waves for relaxation (8-12 Hz)
-                audioEngine.setBrainwaveState(.alpha)
+                // Relaxed focus for calm alertness (8-12 Hz)
+                audioEngine.setEntrainmentPreset(.relaxedFocus)
 
-                // Theta waves for meditation (4-8 Hz)
-                audioEngine.setBrainwaveState(.theta)
+                // Meditation for reflective states (4-8 Hz)
+                audioEngine.setEntrainmentPreset(.meditation)
 
-                // Gamma waves for focus (32-100 Hz)
-                audioEngine.setBrainwaveState(.gamma)
+                // Focus for sustained attention (12-15 Hz)
+                audioEngine.setEntrainmentPreset(.focus)
                 """
             ),
             APIMethod(
-                name: "setBinauralAmplitude",
-                signature: "func setBinauralAmplitude(_ amplitude: Float)",
-                description: "Set binaural beat volume (0.0 - 1.0)",
+                name: "setIsochronicVolume",
+                signature: "func setIsochronicVolume(_ volume: Float)",
+                description: "Set isochronic tone volume (0.0 - 1.0)",
                 parameters: [
-                    APIParameter(name: "amplitude", type: "Float", description: "Volume level 0.0 to 1.0", defaultValue: nil)
+                    APIParameter(name: "volume", type: "Float", description: "Volume level 0.0 to 1.0", defaultValue: nil)
                 ],
                 returnType: "Void",
                 availability: .all,
                 example: """
-                audioEngine.setBinauralAmplitude(0.5)
+                audioEngine.setIsochronicVolume(0.5)
                 // 50% volume
                 """
             ),
@@ -350,10 +350,10 @@ public struct APIDocumentation {
         ],
         properties: [
             APIProperty(name: "isRunning", type: "@Published Bool", description: "Whether the audio engine is currently running", access: .readOnly),
-            APIProperty(name: "binauralBeatsEnabled", type: "@Published Bool", description: "Whether Multidimensional Brainwave Entrainment are enabled", access: .readOnly),
+            APIProperty(name: "isochronicEnabled", type: "@Published Bool", description: "Whether isochronic entrainment is enabled", access: .readOnly),
             APIProperty(name: "spatialAudioEnabled", type: "@Published Bool", description: "Whether spatial audio is enabled", access: .readOnly),
-            APIProperty(name: "currentBrainwaveState", type: "@Published BrainwaveState", description: "Current binaural beat brainwave state", access: .readOnly),
-            APIProperty(name: "binauralAmplitude", type: "@Published Float", description: "Multidimensional Brainwave Entrainment volume (0.0 - 1.0)", access: .readOnly)
+            APIProperty(name: "currentEntrainmentPreset", type: "@Published EntrainmentPreset", description: "Current isochronic entrainment preset", access: .readOnly),
+            APIProperty(name: "isochronicVolume", type: "@Published Float", description: "Isochronic entrainment volume (0.0 - 1.0)", access: .readOnly)
         ]
     )
 
@@ -1623,10 +1623,10 @@ public struct APIExamples {
             hub.enableHandTracking()
             try await hub.enableBiometricMonitoring()
 
-            // 4. Configure Multidimensional Brainwave Entrainment for meditation
-            audioEngine.setBrainwaveState(.theta)
-            audioEngine.setBinauralAmplitude(0.3)
-            audioEngine.toggleBinauralBeats()
+            // 4. Configure isochronic entrainment for meditation
+            audioEngine.setEntrainmentPreset(.meditation)
+            audioEngine.setIsochronicVolume(0.5)
+            audioEngine.toggleIsochronicEntrainment()
 
             // 5. Start control loop
             hub.start()
