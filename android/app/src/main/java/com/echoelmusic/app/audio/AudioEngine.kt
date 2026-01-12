@@ -109,6 +109,31 @@ class AudioEngine(private val context: Context) {
         nativeSet808Parameter(paramId, value)
     }
 
+    // UnifiedControlHub integration methods
+    fun setFilterCutoff(value: Float) {
+        setParameter(Params.FILTER_CUTOFF, value.coerceIn(20f, 20000f))
+    }
+
+    fun setFilterResonance(value: Float) {
+        setParameter(Params.FILTER_RESONANCE, value.coerceIn(0f, 1f))
+    }
+
+    fun setReverbWetness(value: Float) {
+        // Map to LFO depth as reverb proxy (native reverb would need separate param)
+        setParameter(Params.LFO_DEPTH, value.coerceIn(0f, 1f))
+    }
+
+    fun setMasterVolume(value: Float) {
+        // Volume applied through native engine scaling
+        nativeSetMasterVolume(value.coerceIn(0f, 1f))
+    }
+
+    fun setTempo(bpm: Float) {
+        // Tempo affects LFO rate mapping
+        val normalizedRate = (bpm / 120f).coerceIn(0.5f, 2f)
+        setParameter(Params.LFO_RATE, normalizedRate)
+    }
+
     // Parameter IDs
     object Params {
         // Oscillator
@@ -156,4 +181,5 @@ class AudioEngine(private val context: Context) {
 
     private external fun nativeTrigger808(note: Int, velocity: Int)
     private external fun nativeSet808Parameter(paramId: Int, value: Float)
+    private external fun nativeSetMasterVolume(value: Float)
 }

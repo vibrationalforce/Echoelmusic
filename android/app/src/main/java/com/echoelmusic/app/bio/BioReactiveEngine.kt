@@ -54,6 +54,9 @@ class BioReactiveEngine(private val context: Context) {
     private val _respiratoryRate = MutableStateFlow(12f)
     val respiratoryRate: StateFlow<Float> = _respiratoryRate
 
+    // Alias for UnifiedControlHub integration (breathing rate is synonymous)
+    val breathingRate: StateFlow<Float> = _respiratoryRate
+
     private val _isConnected = MutableStateFlow(false)
     val isConnected: StateFlow<Boolean> = _isConnected
 

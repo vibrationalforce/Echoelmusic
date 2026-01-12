@@ -5,7 +5,10 @@ import android.media.midi.*
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -42,14 +45,27 @@ class MidiManager(private val context: Context) {
     private val _isActive = MutableStateFlow(false)
     val isActive: StateFlow<Boolean> = _isActive
 
+    // Flow-based events for UnifiedControlHub integration
+    private val _noteEvents = MutableSharedFlow<NoteEvent>(extraBufferCapacity = 64)
+    val noteEvents: SharedFlow<NoteEvent> = _noteEvents
+
+    private val _controlChangeEvents = MutableSharedFlow<ControlChangeEvent>(extraBufferCapacity = 64)
+    val controlChangeEvents: SharedFlow<ControlChangeEvent> = _controlChangeEvents
+
+    private val _pitchBendEvents = MutableSharedFlow<PitchBendEvent>(extraBufferCapacity = 64)
+    val pitchBendEvents: SharedFlow<PitchBendEvent> = _pitchBendEvents
+
     private var openDevices = mutableListOf<MidiDevice>()
     private var openInputPorts = mutableListOf<MidiInputPort>()
     private var openOutputPorts = mutableListOf<MidiOutputPort>()
 
-    // Callbacks
+    // Callbacks (legacy support)
     private var noteCallback: ((Int, Int, Boolean) -> Unit)? = null
     private var ccCallback: ((Int, Int, Int) -> Unit)? = null
     private var pitchBendCallback: ((Int, Float) -> Unit)? = null
+
+    // Coroutine scope for emitting events
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     // MPE configuration
     private var mpeEnabled = true
@@ -95,6 +111,7 @@ class MidiManager(private val context: Context) {
 
     fun shutdown() {
         stop()
+        scope.cancel()
         midiManager?.unregisterDeviceCallback(deviceCallback)
     }
 
@@ -168,6 +185,10 @@ class MidiManager(private val context: Context) {
                         val velocity = msg[offset + 2].toInt() and 0x7F
                         val isNoteOn = velocity > 0
                         noteCallback?.invoke(note, velocity, isNoteOn)
+                        // Emit via Flow for UnifiedControlHub
+                        scope.launch {
+                            _noteEvents.emit(NoteEvent(channel, note, velocity, isNoteOn))
+                        }
                     }
                 }
 
@@ -175,6 +196,10 @@ class MidiManager(private val context: Context) {
                     if (count >= 3) {
                         val note = msg[offset + 1].toInt() and 0x7F
                         noteCallback?.invoke(note, 0, false)
+                        // Emit via Flow
+                        scope.launch {
+                            _noteEvents.emit(NoteEvent(channel, note, 0, false))
+                        }
                     }
                 }
 
@@ -183,6 +208,10 @@ class MidiManager(private val context: Context) {
                         val cc = msg[offset + 1].toInt() and 0x7F
                         val value = msg[offset + 2].toInt() and 0x7F
                         ccCallback?.invoke(channel, cc, value)
+                        // Emit via Flow
+                        scope.launch {
+                            _controlChangeEvents.emit(ControlChangeEvent(channel, cc, value))
+                        }
                     }
                 }
 
@@ -193,6 +222,10 @@ class MidiManager(private val context: Context) {
                         val bend = ((msb shl 7) or lsb) - 8192
                         val normalizedBend = bend / 8192f // -1 to +1
                         pitchBendCallback?.invoke(channel, normalizedBend)
+                        // Emit via Flow
+                        scope.launch {
+                            _pitchBendEvents.emit(PitchBendEvent(channel, normalizedBend))
+                        }
                     }
                 }
 
@@ -253,4 +286,39 @@ class MidiManager(private val context: Context) {
             }
         }
     }
+
+    // MIDI Event Data Classes for Flow-based API
+
+    /**
+     * MIDI Note Event for Flow-based processing
+     */
+    data class NoteEvent(
+        val channel: Int,
+        val note: Int,
+        val velocity: Int,
+        val isNoteOn: Boolean
+    )
+
+    /**
+     * MIDI Control Change Event for Flow-based processing
+     */
+    data class ControlChangeEvent(
+        val channel: Int,
+        val controller: Int,
+        val value: Float  // Normalized 0-1
+    ) {
+        constructor(channel: Int, controller: Int, rawValue: Int) : this(
+            channel,
+            controller,
+            rawValue / 127f
+        )
+    }
+
+    /**
+     * MIDI Pitch Bend Event for Flow-based processing
+     */
+    data class PitchBendEvent(
+        val channel: Int,
+        val value: Float  // -1 to +1
+    )
 }
