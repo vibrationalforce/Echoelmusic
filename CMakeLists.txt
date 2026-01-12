@@ -121,6 +121,26 @@ else()
     message(STATUS "  → No licensing fees required!")
 endif()
 
+# ===========================
+# Desktop Core Sources (Phase 10000 - 2026-01-12)
+# These can be built independently without JUCE/iPlug2
+# ===========================
+
+set(DESKTOP_CORE_SOURCES
+    # UI Framework
+    Sources/Desktop/UI/MainWindow.cpp
+
+    # Core Systems
+    Sources/Desktop/Core/ProjectManager.cpp         # JSON project save/load, presets, undo
+    Sources/Desktop/Core/MIDISequencer.cpp          # Piano roll, step sequencer, bio-tempo
+    Sources/Desktop/Core/AudioExportSystem.cpp      # Multi-format export, LUFS, dithering
+    Sources/Desktop/Core/AbletonLinkIntegration.cpp # Link protocol, bio-tempo, MIDI clock
+    Sources/Desktop/Core/SpatialAudioProcessor.cpp  # HRTF, Ambisonics, bio-reactive field
+    Sources/Desktop/Core/RealTimeCollaborationEngine.cpp  # WebSocket, group coherence
+)
+
+message(STATUS "Desktop Core Sources: ENABLED (${CMAKE_CURRENT_SOURCE_DIR}/Sources/Desktop)")
+
 # RECOMMENDED: iPlug2 for JUCE-free desktop plugins (MIT license, FREE)
 option(USE_IPLUG2 "Use iPlug2 framework (MIT license, JUCE-free) - RECOMMENDED" OFF)
 if(USE_IPLUG2)
@@ -128,7 +148,8 @@ if(USE_IPLUG2)
         message(STATUS "iPlug2 Framework: ENABLED (MIT License - Free!)")
         # Add Desktop plugin build
         add_subdirectory(Sources/Desktop)
-    else()
+    endif()
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/iPlug2")
         message(STATUS "")
         message(STATUS "╔══════════════════════════════════════════════════════════╗")
         message(STATUS "║  iPlug2 not found! To enable desktop plugins:            ║")
@@ -315,6 +336,15 @@ target_sources(Echoelmusic
         Sources/DSP/DynamicEQ.cpp               # 🎚️ 8-band Dynamic EQ (JUCE 7+ fixed)
         Sources/DSP/SpectralSculptor.cpp        # 🔬 Spectral processing suite (JUCE 7+ fixed)
         Sources/DSP/BioModulator.cpp            # 🫀 Biofeedback → BPM, EFX, Instruments, Laser
+
+        # =====================================================================
+        # PHASE 10000: ENHANCED EFX SUITE (NEW 2026-01-12) 🎛️✨
+        # Inspired by iZotope, GoldClip, Mäag, soothe2
+        # =====================================================================
+        Sources/DSP/BassAlchemist.cpp           # 🎸 Low-end focus (iZotope inspired) + Heart rate sync
+        Sources/DSP/ClarityEnhancer.cpp         # 🔬 Clarity & presence (Ozone Clarity inspired)
+        Sources/DSP/SoftClipper.cpp             # 🔥 9 clip algorithms + Quantum bio-morph (GoldClip inspired)
+        Sources/DSP/UnlimiterRestore.cpp        # 🎚️ Dynamics restoration (Ozone Unlimiter concept)
 
         # =====================================================================
         # PHASE 4C: HARDWARE EMULATIONS (NEW! 2025-11-13) 🎛️✨
@@ -788,5 +818,48 @@ else()
     message(STATUS "  cmake .. -DUSE_IPLUG2=ON")
     message(STATUS "  (Requires iPlug2 in ThirdParty/iPlug2)")
     message(STATUS "")
+    message(STATUS "==============================================")
+endif()
+
+# ===========================
+# Desktop Core Test Suite (Phase 10000)
+# Can be built without JUCE/iPlug2
+# ===========================
+
+option(BUILD_DESKTOP_TESTS "Build Desktop Core C++ test suite" ON)
+
+if(BUILD_DESKTOP_TESTS)
+    # Test executable
+    add_executable(DesktopCoreTests
+        Tests/DesktopTests/DesktopCoreTests.cpp
+    )
+
+    target_compile_features(DesktopCoreTests PRIVATE cxx_std_17)
+
+    # Math library on Linux/macOS
+    if(UNIX)
+        target_link_libraries(DesktopCoreTests PRIVATE m)
+    endif()
+
+    # Enable testing
+    enable_testing()
+
+    # Add test
+    add_test(
+        NAME DesktopCoreTests
+        COMMAND DesktopCoreTests
+    )
+
+    # Test output
+    set_tests_properties(DesktopCoreTests PROPERTIES
+        TIMEOUT 120
+        PASS_REGULAR_EXPRESSION "ALL TESTS PASSED"
+    )
+
+    message(STATUS "")
+    message(STATUS "==============================================")
+    message(STATUS "Desktop Core Test Suite: ENABLED")
+    message(STATUS "==============================================")
+    message(STATUS "Run tests with: ctest or ./DesktopCoreTests")
     message(STATUS "==============================================")
 endif()
