@@ -821,53 +821,19 @@ public struct NeuroBodyStatusBar: View {
 
 extension NeuroBodyCompanion {
 
-    // MARK: - Share Progress
+    // MARK: - Wellness Data (Optional Add-on for Content)
 
-    /// Generate shareable wellness summary
-    public func generateProgressSummary() -> WellnessShareContent {
-        let stats = todayStats
-        let sessionHours = Int(totalSessionDuration / 3600)
-        let sessionMinutes = Int((totalSessionDuration.truncatingRemainder(dividingBy: 3600)) / 60)
-
-        return WellnessShareContent(
-            title: "Mein Wellness-Tag mit Echoelmusic",
-            message: """
-            🎵 Produktiv & Gesund mit Echoelmusic
-
-            ⏱️ Session: \(sessionHours)h \(sessionMinutes)m
-            😊 Wellness Score: \(Int(currentWellnessScore * 100))%
-            ☕ Pausen: \(stats.breaks)x
-            🚶 Bewegung: \(stats.movement)x
-            💧 Hydration: \(stats.hydration)x
-
-            #Echoelmusic #HealthyCreator #MusicProduction #WellnessAtWork
-            """,
-            score: currentWellnessScore,
-            stats: stats
-        )
+    /// Optional wellness stats to add to content (NOT the main focus)
+    public func optionalWellnessTag() -> String? {
+        guard currentWellnessScore > 0 else { return nil }
+        return "💚 \(Int(currentWellnessScore * 100))%"
     }
 
-    public struct WellnessShareContent {
-        public let title: String
-        public let message: String
-        public let score: Double
-        public let stats: (breaks: Int, movement: Int, hydration: Int)
-
-        public var hashtags: [String] {
-            ["Echoelmusic", "HealthyCreator", "MusicProduction", "WellnessAtWork", "CreativeHealth"]
-        }
-    }
-
-    // MARK: - Live Wellness Overlay
-
-    /// Data for live stream wellness overlay
+    /// Data for optional live stream wellness overlay (small, unobtrusive)
     public func liveOverlayData() -> LiveWellnessOverlay {
         LiveWellnessOverlay(
             wellnessScore: currentWellnessScore,
             sessionMinutes: Int(totalSessionDuration / 60),
-            lastBreakMinutes: Int(timeSinceLastBreak / 60),
-            todayBreaks: todayStats.breaks,
-            todayMovement: todayStats.movement,
             isHealthy: currentWellnessScore >= 0.7
         )
     }
@@ -875,9 +841,6 @@ extension NeuroBodyCompanion {
     public struct LiveWellnessOverlay {
         public let wellnessScore: Double
         public let sessionMinutes: Int
-        public let lastBreakMinutes: Int
-        public let todayBreaks: Int
-        public let todayMovement: Int
         public let isHealthy: Bool
 
         public var statusEmoji: String {
@@ -890,318 +853,27 @@ extension NeuroBodyCompanion {
             "\(statusEmoji) \(Int(wellnessScore * 100))%"
         }
     }
-
-    // MARK: - Content Templates
-
-    public enum ContentTemplate: String, CaseIterable {
-        case breakReminder = "break_reminder"
-        case sessionComplete = "session_complete"
-        case weeklyProgress = "weekly_progress"
-        case milestone = "milestone"
-        case liveStart = "live_start"
-        case collaborationInvite = "collab_invite"
-
-        public var title: String {
-            switch self {
-            case .breakReminder: return "Zeit für eine Pause! 🧘"
-            case .sessionComplete: return "Session beendet! 🎉"
-            case .weeklyProgress: return "Wochenrückblick 📊"
-            case .milestone: return "Milestone erreicht! 🏆"
-            case .liveStart: return "Jetzt Live! 🔴"
-            case .collaborationInvite: return "Gemeinsam kreativ! 🤝"
-            }
-        }
-    }
-
-    /// Generate content for specific template
-    public func generateContent(template: ContentTemplate) -> String {
-        switch template {
-        case .breakReminder:
-            return """
-            ⏸️ Kurze Pause vom Produzieren!
-
-            Nach \(Int(timeSinceLastBreak / 60)) Minuten mache ich eine kurze Stretch-Pause.
-            Wellness Score: \(Int(currentWellnessScore * 100))%
-
-            Wer macht mit? 🧘‍♂️
-
-            #HealthyCreator #Echoelmusic #TakeABreak
-            """
-
-        case .sessionComplete:
-            let stats = todayStats
-            return """
-            🎵 Session beendet!
-
-            Heute geschafft:
-            ⏱️ \(Int(totalSessionDuration / 60)) Minuten produziert
-            ☕ \(stats.breaks) Pausen genommen
-            🚶 \(stats.movement)x bewegt
-            💧 \(stats.hydration)x hydratisiert
-
-            Wellness Score: \(Int(currentWellnessScore * 100))% 💚
-
-            #Echoelmusic #ProductiveDay #HealthyCreator
-            """
-
-        case .liveStart:
-            return """
-            🔴 JETZT LIVE!
-
-            Bio-reaktive Musikproduktion mit Echoelmusic.
-            Mein Wellness Score: \(Int(currentWellnessScore * 100))%
-
-            Kommt vorbei und macht mit! 🎶
-
-            #LiveMusic #Echoelmusic #BioReactiveMusic
-            """
-
-        case .collaborationInvite:
-            return """
-            🤝 Gemeinsam kreativ sein!
-
-            Ich lade euch ein zu einer kollaborativen Session.
-            Bio-reaktiv, gesund, kreativ.
-
-            Wellness Score Ziel: 80%+ 💚
-
-            #Echoelmusic #Collaboration #HealthyCreativity
-            """
-
-        case .milestone:
-            return """
-            🏆 Milestone erreicht!
-
-            \(completedToday.count) Wellness-Aktivitäten heute!
-            Durchgängig gesund geblieben während der Produktion.
-
-            #Echoelmusic #HealthyMilestone #CreativeWellness
-            """
-
-        case .weeklyProgress:
-            return """
-            📊 Meine Woche mit Echoelmusic
-
-            Durchschnittlicher Wellness Score: \(Int(currentWellnessScore * 100))%
-            Produktiv UND gesund! 💚
-
-            #WeeklyProgress #Echoelmusic #HealthyCreator
-            """
-        }
-    }
 }
 
-// MARK: - Social Share View
-
-public struct WellnessShareView: View {
-    @ObservedObject private var companion = NeuroBodyCompanion.shared
-    @State private var selectedTemplate: NeuroBodyCompanion.ContentTemplate = .sessionComplete
-    @State private var customMessage: String = ""
-    @State private var showShareSheet = false
-
-    public init() {}
-
-    public var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Preview Card
-                    previewCard
-
-                    // Template Picker
-                    templatePicker
-
-                    // Share Buttons
-                    shareButtons
-                }
-                .padding()
-            }
-            .navigationTitle("Fortschritt teilen")
-        }
-    }
-
-    private var previewCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Vorschau")
-                .font(.headline)
-
-            Text(companion.generateContent(template: selectedTemplate))
-                .font(.caption)
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.tertiarySystemBackground))
-                .cornerRadius(12)
-        }
-    }
-
-    private var templatePicker: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Vorlage")
-                .font(.headline)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(NeuroBodyCompanion.ContentTemplate.allCases, id: \.rawValue) { template in
-                        Button {
-                            selectedTemplate = template
-                        } label: {
-                            Text(template.title)
-                                .font(.caption)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(selectedTemplate == template ? Color.green : Color(.tertiarySystemBackground))
-                                .foregroundStyle(selectedTemplate == template ? .white : .primary)
-                                .cornerRadius(20)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-    }
-
-    private var shareButtons: some View {
-        VStack(spacing: 12) {
-            // Native Share
-            Button {
-                showShareSheet = true
-            } label: {
-                HStack {
-                    Image(systemName: "square.and.arrow.up")
-                    Text("Teilen")
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.green)
-                .foregroundStyle(.white)
-                .cornerRadius(12)
-            }
-
-            // Quick Platform Buttons
-            HStack(spacing: 12) {
-                platformButton(name: "Instagram", icon: "camera.circle.fill", color: .pink)
-                platformButton(name: "TikTok", icon: "music.note", color: .black)
-                platformButton(name: "YouTube", icon: "play.rectangle.fill", color: .red)
-                platformButton(name: "X", icon: "bubble.left.fill", color: .black)
-            }
-        }
-        .sheet(isPresented: $showShareSheet) {
-            ShareSheet(items: [companion.generateContent(template: selectedTemplate)])
-        }
-    }
-
-    private func platformButton(name: String, icon: String, color: Color) -> some View {
-        Button {
-            // Would integrate with SocialMediaManager
-        } label: {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.title3)
-                Text(name)
-                    .font(.caption2)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(color.opacity(0.1))
-            .foregroundStyle(color)
-            .cornerRadius(12)
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Share Sheet (UIKit Bridge)
-
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
-
-// MARK: - Live Wellness Overlay View (for Streams)
+// MARK: - Optional Small Wellness Overlay for Streams
 
 public struct LiveWellnessOverlayView: View {
     @ObservedObject private var companion = NeuroBodyCompanion.shared
-    let style: OverlayStyle
+    @Binding var showOverlay: Bool
 
-    public enum OverlayStyle {
-        case minimal      // Just score
-        case compact      // Score + session time
-        case full         // All stats
-    }
-
-    public init(style: OverlayStyle = .compact) {
-        self.style = style
+    public init(showOverlay: Binding<Bool>) {
+        self._showOverlay = showOverlay
     }
 
     public var body: some View {
-        let data = companion.liveOverlayData()
-
-        Group {
-            switch style {
-            case .minimal:
-                Text(data.shortStatus)
-                    .font(.headline)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(20)
-
-            case .compact:
-                HStack(spacing: 12) {
-                    Text(data.shortStatus)
-                        .font(.headline)
-
-                    Divider()
-                        .frame(height: 20)
-
-                    HStack(spacing: 4) {
-                        Image(systemName: "clock")
-                            .font(.caption)
-                        Text("\(data.sessionMinutes)m")
-                            .font(.caption)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(.ultraThinMaterial)
-                .cornerRadius(20)
-
-            case .full:
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text(data.shortStatus)
-                            .font(.headline)
-                        Spacer()
-                        Text("NeuroBody")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    HStack(spacing: 16) {
-                        statPill(icon: "clock", value: "\(data.sessionMinutes)m")
-                        statPill(icon: "pause.circle", value: "\(data.todayBreaks)")
-                        statPill(icon: "figure.walk", value: "\(data.todayMovement)")
-                    }
-                }
-                .padding()
-                .background(.ultraThinMaterial)
-                .cornerRadius(16)
-            }
-        }
-    }
-
-    private func statPill(icon: String, value: String) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.caption2)
-            Text(value)
+        if showOverlay {
+            let data = companion.liveOverlayData()
+            Text(data.shortStatus)
                 .font(.caption)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
         }
-        .foregroundStyle(.secondary)
     }
 }
