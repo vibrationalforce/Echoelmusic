@@ -29,21 +29,21 @@ public struct EchoelBrand {
     public static let tagline = [
         "Find your Sound",
         "Feel your Soul",
-        "Force your Spirit"
+        "Focus your Spirit"
     ]
 
     /// Tagline joined
-    public static let taglineJoined = "Find your Sound · Feel your Soul · Force your Spirit"
+    public static let taglineJoined = "Find your Sound · Feel your Soul · Focus your Spirit"
 
     /// German tagline
     public static let taglineDE = [
         "Finde deinen Klang",
         "Fühle deine Seele",
-        "Entfache deinen Geist"
+        "Fokussiere deinen Geist"
     ]
 
     /// Brand slogan (tagline is the main headline now)
-    public static let slogan = "Find your Sound · Feel your Soul · Force your Spirit"
+    public static let slogan = "Find your Sound · Feel your Soul · Focus your Spirit"
 
     /// Description
     public static let description = "Create immersive sound, music, video, visuals & light via bio-reactive tools."
