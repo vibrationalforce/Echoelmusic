@@ -204,9 +204,11 @@ public struct LocalizedMetadata {
     public static let english = LocalizedMetadata(
         locale: "en-US",
         name: "Echoelmusic",
-        subtitle: "Bio-Reactive Audio & Visuals",
+        subtitle: "Find your Sound · Feel your Soul",
         description: """
-Transform your heartbeat, breath, and consciousness into stunning spatial audio and immersive visuals.
+Find your Sound. Feel your Soul. Force your Spirit.
+
+Create immersive sound, music, video, visuals & light via bio-reactive tools. Transform your heartbeat, breath, and consciousness into stunning spatial audio and immersive visuals.
 
 Echoelmusic is the world's first bio-reactive audio-visual platform that turns your biometric signals into art. Experience music creation through your body's natural rhythms, powered by cutting-edge AI and quantum-inspired processing.
 
@@ -365,9 +367,11 @@ Ready for App Store & Play Store deployment!
     public static let german = LocalizedMetadata(
         locale: "de-DE",
         name: "Echoelmusic",
-        subtitle: "Bio-Reaktive Audio & Visuals",
+        subtitle: "Finde deinen Klang · Fühle deine Seele",
         description: """
-Verwandeln Sie Ihren Herzschlag, Atem und Bewusstsein in atemberaubende räumliche Klänge und immersive Visuals.
+Finde deinen Klang. Fühle deine Seele. Entfache deinen Geist.
+
+Erschaffe immersive Klänge, Musik, Video, Visuals & Licht mit bio-reaktiven Tools. Verwandeln Sie Ihren Herzschlag, Atem und Bewusstsein in atemberaubende räumliche Klänge und immersive Visuals.
 
 Echoelmusic ist die weltweit erste bio-reaktive Audio-Visual-Plattform, die Ihre biometrischen Signale in Kunst verwandelt. Erleben Sie Musikkreation durch die natürlichen Rhythmen Ihres Körpers, angetrieben von modernster KI und quanten-inspirierter Verarbeitung.
 
