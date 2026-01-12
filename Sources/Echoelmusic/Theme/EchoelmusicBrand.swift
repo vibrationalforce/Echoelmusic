@@ -42,8 +42,8 @@ public struct EchoelBrand {
         "Entfache deinen Geist"
     ]
 
-    /// Brand slogan
-    public static let slogan = "Transform Heartbeat Into Sound"
+    /// Brand slogan (tagline is the main headline now)
+    public static let slogan = "Find your Sound · Feel your Soul · Force your Spirit"
 
     /// Description
     public static let description = "Create immersive sound, music, video, visuals & light via bio-reactive tools."
