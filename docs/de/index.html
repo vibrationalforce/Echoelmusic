@@ -203,6 +203,25 @@
             letter-spacing: -0.02em;
         }
 
+        .hero-tagline {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: clamp(14px, 2.5vw, 18px);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: var(--space-md);
+        }
+        .hero-tagline span {
+            background: linear-gradient(90deg, var(--color-primary), var(--color-accent), var(--color-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-tagline span:nth-child(2) { opacity: 0.85; }
+        .hero-tagline span:nth-child(3) { opacity: 0.7; }
+
         .hero-lead {
             font-size: clamp(15px, 2vw, 18px);
             color: var(--color-text-secondary);
@@ -388,8 +407,13 @@
     <main id="main" role="main">
         <section class="hero" aria-labelledby="hero-title">
             <div class="hero-content">
+                <p class="hero-tagline">
+                    <span>Finde deinen Klang</span>
+                    <span>Fühle deine Seele</span>
+                    <span>Entfache deinen Geist</span>
+                </p>
                 <h1 id="hero-title">Verwandle Herzschlag in Klang</h1>
-                <p class="hero-lead">Bio-reaktive Musikproduktion. Erschaffe Kunst, die in Echtzeit auf deinen Körper reagiert.</p>
+                <p class="hero-lead">Erschaffe immersive Klänge, Musik, Video, Visuals & Licht mit bio-reaktiven Tools.</p>
 
                 <div class="download-buttons">
                     <a href="https://github.com/vibrationalforce/Echoelmusic/releases/latest/download/Echoelmusic-macOS.dmg" class="btn-download">

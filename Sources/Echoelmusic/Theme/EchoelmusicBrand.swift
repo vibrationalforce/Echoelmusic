@@ -23,6 +23,31 @@ import UIKit
 /// Inspired by: HeartMath (wellness trust), Calm (green wellness), Nature (bio-reactive)
 public struct EchoelBrand {
 
+    // MARK: - Brand Tagline
+
+    /// Primary tagline (3-line poetic)
+    public static let tagline = [
+        "Find your Sound",
+        "Feel your Soul",
+        "Force your Spirit"
+    ]
+
+    /// Tagline joined
+    public static let taglineJoined = "Find your Sound · Feel your Soul · Force your Spirit"
+
+    /// German tagline
+    public static let taglineDE = [
+        "Finde deinen Klang",
+        "Fühle deine Seele",
+        "Entfache deinen Geist"
+    ]
+
+    /// Brand slogan
+    public static let slogan = "Transform Heartbeat Into Sound"
+
+    /// Description
+    public static let description = "Create immersive sound, music, video, visuals & light via bio-reactive tools."
+
     // MARK: - Primary Brand Colors (Bio-Green Theme 💚)
 
     /// Green - Primary brand color (life, bio-reactive, wellness)
