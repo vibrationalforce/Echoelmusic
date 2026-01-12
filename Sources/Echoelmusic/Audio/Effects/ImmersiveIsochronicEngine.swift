@@ -219,6 +219,71 @@ public final class ImmersiveIsochronicEngine: ObservableObject {
     /// Bio-reactive modulation amount (0 = none, 1 = full)
     public var bioModulationAmount: Float = 0.5
 
+    /// Breath-sync mode: when enabled, pulse rhythm syncs to breathing rate
+    @Published public private(set) var breathSyncEnabled: Bool = false
+
+    /// Current breathing rate (breaths per minute) for breath-sync mode
+    private var currentBreathingRate: Float = 6.0
+
+    /// Crossfade duration when switching soundscapes (seconds)
+    public var crossfadeDuration: TimeInterval = 2.0
+
+    /// Session statistics for tracking usage
+    @Published public private(set) var sessionStats: SessionStatistics = SessionStatistics()
+
+    // MARK: - Session Statistics
+
+    /// Tracks listening time and usage patterns
+    public struct SessionStatistics: Codable {
+        public var totalListeningSeconds: TimeInterval = 0
+        public var sessionsCompleted: Int = 0
+        public var presetMinutes: [String: Int] = [:]
+        public var lastSessionDate: Date?
+        public var currentStreak: Int = 0
+        public var longestStreak: Int = 0
+
+        public var totalMinutes: Int {
+            Int(totalListeningSeconds / 60)
+        }
+
+        public var favoritePreset: String? {
+            presetMinutes.max(by: { $0.value < $1.value })?.key
+        }
+
+        mutating func recordSession(preset: EntrainmentPreset, minutes: Int) {
+            let key = preset.rawValue
+            presetMinutes[key, default: 0] += minutes
+            totalListeningSeconds += TimeInterval(minutes * 60)
+            sessionsCompleted += 1
+
+            // Update streak
+            let calendar = Calendar.current
+            if let lastDate = lastSessionDate {
+                let daysSinceLast = calendar.dateComponents([.day], from: lastDate, to: Date()).day ?? 0
+                if daysSinceLast == 1 {
+                    currentStreak += 1
+                    longestStreak = max(longestStreak, currentStreak)
+                } else if daysSinceLast > 1 {
+                    currentStreak = 1
+                }
+            } else {
+                currentStreak = 1
+            }
+            lastSessionDate = Date()
+        }
+    }
+
+    // MARK: - Crossfade State
+
+    private var crossfadeProgress: Float = 1.0  // 1.0 = no crossfade active
+    private var previousHarmonics: [Float] = []
+    private var previousDetuning: [Float] = []
+    private var previousCarrierFreq: Float = 220.0
+
+    // MARK: - Session Timing
+
+    private var sessionStartTime: Date?
+
     // MARK: - Audio Engine
 
     private let audioEngine = AVAudioEngine()
@@ -309,6 +374,78 @@ public final class ImmersiveIsochronicEngine: ObservableObject {
         log.audio("Spatial position: \(position.rawValue)")
     }
 
+    // MARK: - Breath Sync
+
+    /// Enable breath-synchronized pulse mode
+    /// Rhythm frequency syncs to breathing rate (typically 4-8 breaths/min for relaxation)
+    /// Optimal rate: 6 breaths/min (0.1 Hz) for baroreflex synchronization
+    public func enableBreathSync(breathingRate: Float = 6.0) {
+        self.breathSyncEnabled = true
+        self.currentBreathingRate = min(max(breathingRate, 2.0), 20.0)
+
+        // Convert breaths per minute to Hz for pulse
+        // 6 breaths/min = 0.1 Hz = one pulse every 10 seconds
+        // But we want sub-rhythm, so multiply by entrainment factor
+        let breathHz = currentBreathingRate / 60.0
+        let entrainmentMultiplier: Float = 60.0  // Creates 6 Hz at 6 BPM
+
+        self.rhythmFrequency = breathHz * entrainmentMultiplier
+        updateSynthesisParameters()
+
+        log.audio("Breath sync enabled: \(currentBreathingRate) BPM → \(rhythmFrequency) Hz")
+    }
+
+    /// Update breathing rate while breath sync is active
+    public func updateBreathingRate(_ bpm: Float) {
+        guard breathSyncEnabled else { return }
+
+        self.currentBreathingRate = min(max(bpm, 2.0), 20.0)
+        let breathHz = currentBreathingRate / 60.0
+        let entrainmentMultiplier: Float = 60.0
+
+        self.rhythmFrequency = breathHz * entrainmentMultiplier
+        updateSynthesisParameters()
+    }
+
+    /// Disable breath sync and return to preset-based frequency
+    public func disableBreathSync() {
+        self.breathSyncEnabled = false
+        self.rhythmFrequency = currentPreset.centerFrequency
+        updateSynthesisParameters()
+        log.audio("Breath sync disabled, returning to preset frequency")
+    }
+
+    // MARK: - Soundscape Transitions
+
+    /// Transition to a new soundscape with smooth crossfade
+    public func transitionTo(soundscape: Soundscape, duration: TimeInterval? = nil) {
+        let fadeDuration = duration ?? crossfadeDuration
+
+        // Store previous parameters for crossfade
+        previousHarmonics = currentHarmonics
+        previousDetuning = currentDetuning
+        previousCarrierFreq = currentCarrierFreq
+
+        // Set new soundscape
+        self.currentSoundscape = soundscape
+
+        // Start crossfade (will be processed in render callback)
+        crossfadeProgress = 0.0
+
+        // Calculate crossfade increment per sample
+        // At 48kHz, 2 second fade = 96000 samples
+        // Progress increment = 1.0 / 96000 ≈ 0.00001
+        let samplesForFade = sampleRate * fadeDuration
+        crossfadeIncrement = 1.0 / Float(samplesForFade)
+
+        updateSynthesisParameters()
+        log.audio("Transitioning to \(soundscape.displayName) over \(fadeDuration)s")
+    }
+
+    private var crossfadeIncrement: Float = 0.0001
+
+    // MARK: - Lifecycle
+
     /// Start playback
     public func start() {
         guard !isPlaying else { return }
@@ -326,6 +463,9 @@ public final class ImmersiveIsochronicEngine: ObservableObject {
                 try audioEngine.start()
             }
 
+            // Track session start time
+            sessionStartTime = Date()
+
             isPlaying = true
             log.audio("Immersive Isochronic Engine started: \(currentPreset.displayName) @ \(rhythmFrequency) Hz")
 
@@ -338,6 +478,17 @@ public final class ImmersiveIsochronicEngine: ObservableObject {
     public func stop() {
         guard isPlaying else { return }
 
+        // Record session statistics
+        if let startTime = sessionStartTime {
+            let sessionDuration = Date().timeIntervalSince(startTime)
+            let minutes = Int(sessionDuration / 60)
+            if minutes > 0 {
+                sessionStats.recordSession(preset: currentPreset, minutes: minutes)
+                log.audio("Session recorded: \(minutes) min of \(currentPreset.displayName)")
+            }
+        }
+        sessionStartTime = nil
+
         audioEngine.stop()
         try? AVAudioSession.sharedInstance().setActive(false)
 
@@ -348,6 +499,12 @@ public final class ImmersiveIsochronicEngine: ObservableObject {
 
         isPlaying = false
         log.audio("Immersive Isochronic Engine stopped")
+    }
+
+    /// Get current session duration in seconds
+    public var currentSessionDuration: TimeInterval {
+        guard let startTime = sessionStartTime, isPlaying else { return 0 }
+        return Date().timeIntervalSince(startTime)
     }
 
     // MARK: - Private Methods

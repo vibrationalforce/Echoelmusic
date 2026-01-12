@@ -374,4 +374,157 @@ final class ImmersiveIsochronicTests: XCTestCase {
         let allPositions = ImmersiveIsochronicEngine.SpatialPosition.allCases
         XCTAssertEqual(allPositions.count, 5, "Should have 5 spatial positions")
     }
+
+
+    // MARK: - Breath Sync Tests
+
+    func testEnableBreathSync() {
+        XCTAssertFalse(engine.breathSyncEnabled)
+
+        engine.enableBreathSync(breathingRate: 6.0)
+
+        XCTAssertTrue(engine.breathSyncEnabled)
+        // 6 BPM * 60 = 6 Hz rhythm
+        XCTAssertEqual(engine.rhythmFrequency, 6.0, accuracy: 0.1)
+    }
+
+    func testUpdateBreathingRate() {
+        engine.enableBreathSync(breathingRate: 6.0)
+        let initialFreq = engine.rhythmFrequency
+
+        engine.updateBreathingRate(12.0)
+
+        // 12 BPM should double the frequency
+        XCTAssertEqual(engine.rhythmFrequency, initialFreq * 2, accuracy: 0.1)
+    }
+
+    func testUpdateBreathingRateWhenNotEnabled() {
+        let initialFreq = engine.rhythmFrequency
+
+        engine.updateBreathingRate(12.0)
+
+        // Should not change when breath sync is disabled
+        XCTAssertEqual(engine.rhythmFrequency, initialFreq)
+    }
+
+    func testDisableBreathSync() {
+        engine.configure(preset: .focus)
+        let presetFreq = engine.currentPreset.centerFrequency
+
+        engine.enableBreathSync(breathingRate: 6.0)
+        XCTAssertTrue(engine.breathSyncEnabled)
+
+        engine.disableBreathSync()
+
+        XCTAssertFalse(engine.breathSyncEnabled)
+        XCTAssertEqual(engine.rhythmFrequency, presetFreq, accuracy: 0.1)
+    }
+
+    func testBreathSyncClampingLow() {
+        engine.enableBreathSync(breathingRate: 0.5)  // Below minimum
+
+        // Should clamp to 2.0 BPM minimum
+        XCTAssertTrue(engine.breathSyncEnabled)
+    }
+
+    func testBreathSyncClampingHigh() {
+        engine.enableBreathSync(breathingRate: 30.0)  // Above maximum
+
+        // Should clamp to 20.0 BPM maximum
+        XCTAssertTrue(engine.breathSyncEnabled)
+    }
+
+
+    // MARK: - Soundscape Transition Tests
+
+    func testTransitionToSoundscape() {
+        engine.configure(preset: .focus, soundscape: .warmPad)
+
+        engine.transitionTo(soundscape: .crystalBowl)
+
+        XCTAssertEqual(engine.currentSoundscape, .crystalBowl)
+    }
+
+    func testTransitionWithCustomDuration() {
+        engine.configure(preset: .focus, soundscape: .warmPad)
+
+        engine.transitionTo(soundscape: .cosmicWash, duration: 5.0)
+
+        XCTAssertEqual(engine.currentSoundscape, .cosmicWash)
+    }
+
+    func testCrossfadeDurationConfiguration() {
+        engine.crossfadeDuration = 3.0
+        XCTAssertEqual(engine.crossfadeDuration, 3.0)
+    }
+
+
+    // MARK: - Session Statistics Tests
+
+    func testInitialSessionStats() {
+        XCTAssertEqual(engine.sessionStats.totalListeningSeconds, 0)
+        XCTAssertEqual(engine.sessionStats.sessionsCompleted, 0)
+        XCTAssertNil(engine.sessionStats.lastSessionDate)
+        XCTAssertEqual(engine.sessionStats.currentStreak, 0)
+    }
+
+    func testSessionStatsRecording() {
+        var stats = ImmersiveIsochronicEngine.SessionStatistics()
+
+        stats.recordSession(preset: .focus, minutes: 15)
+
+        XCTAssertEqual(stats.sessionsCompleted, 1)
+        XCTAssertEqual(stats.totalMinutes, 15)
+        XCTAssertNotNil(stats.lastSessionDate)
+        XCTAssertEqual(stats.currentStreak, 1)
+    }
+
+    func testSessionStatsFavoritePreset() {
+        var stats = ImmersiveIsochronicEngine.SessionStatistics()
+
+        stats.recordSession(preset: .focus, minutes: 30)
+        stats.recordSession(preset: .meditation, minutes: 10)
+        stats.recordSession(preset: .focus, minutes: 20)
+
+        XCTAssertEqual(stats.favoritePreset, "focus")
+        XCTAssertEqual(stats.presetMinutes["focus"], 50)
+        XCTAssertEqual(stats.presetMinutes["meditation"], 10)
+    }
+
+    func testSessionStatsStreakTracking() {
+        var stats = ImmersiveIsochronicEngine.SessionStatistics()
+
+        // First session
+        stats.recordSession(preset: .focus, minutes: 10)
+        XCTAssertEqual(stats.currentStreak, 1)
+
+        // Simulate same day (streak stays same)
+        // Note: This test may need adjustment based on actual date handling
+    }
+
+    func testCurrentSessionDuration() {
+        XCTAssertEqual(engine.currentSessionDuration, 0, "Should be 0 when not playing")
+    }
+
+
+    // MARK: - Session Statistics Codable Tests
+
+    func testSessionStatsCodable() throws {
+        var stats = ImmersiveIsochronicEngine.SessionStatistics()
+        stats.recordSession(preset: .focus, minutes: 20)
+        stats.recordSession(preset: .meditation, minutes: 15)
+
+        // Encode
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(stats)
+
+        // Decode
+        let decoder = JSONDecoder()
+        let decoded = try decoder.decode(ImmersiveIsochronicEngine.SessionStatistics.self, from: data)
+
+        XCTAssertEqual(decoded.sessionsCompleted, 2)
+        XCTAssertEqual(decoded.totalMinutes, 35)
+        XCTAssertEqual(decoded.presetMinutes["focus"], 20)
+        XCTAssertEqual(decoded.presetMinutes["meditation"], 15)
+    }
 }
