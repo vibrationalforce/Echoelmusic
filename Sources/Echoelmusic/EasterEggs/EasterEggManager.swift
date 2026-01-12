@@ -6,185 +6,134 @@ import SwiftUI
 import Combine
 
 // MARK: - Easter Egg Manager
-/// Manages hidden features unlocked through special gestures, codes, or achievements
+/// Manages the hidden NeuroPsychoImmunoBody feature
+/// Unlocked through coherence achievement, secret codes, or special gestures
 @MainActor
 public final class EasterEggManager: ObservableObject {
 
     public static let shared = EasterEggManager()
 
-    // MARK: - Easter Egg Features
+    // MARK: - The Easter Egg
 
-    public enum EasterEgg: String, CaseIterable, Identifiable {
-        case longevityNutrition = "longevity"
-        case wellnessTracking = "wellness"
-        case neuroSpiritual = "consciousness"
-        case circadianRhythm = "circadian"
-        case quantumHealth = "quantum_health"
-        case adeyWindows = "bioelectromagnetic"
-        case lifestyleCoach = "lifestyle"
-        case astronautHealth = "astronaut"
-        case socialHealth = "social_coherence"
+    /// Single unified Easter Egg: NeuroPsychoImmunoBody Tool
+    /// Combines all wellness, longevity, and body health research
+    public struct NeuroBodyEasterEgg {
+        public static let name = "NeuroBody"
+        public static let fullName = "NeuroPsychoImmunoBody"
+        public static let icon = "heart.text.square.fill"
 
-        public var id: String { rawValue }
+        public static let description = """
+        Ganzheitliches Gesundheitstool basierend auf Psychoneuroimmunologie:
 
-        public var displayName: String {
-            switch self {
-            case .longevityNutrition: return "Longevity Lab"
-            case .wellnessTracking: return "Wellness Studio"
-            case .neuroSpiritual: return "Consciousness Explorer"
-            case .circadianRhythm: return "Circadian Flow"
-            case .quantumHealth: return "Quantum Coherence"
-            case .adeyWindows: return "Biofield Science"
-            case .lifestyleCoach: return "Life Harmony"
-            case .astronautHealth: return "Space Vitals"
-            case .socialHealth: return "Collective Heart"
-            }
-        }
+        🧠 Neuroplastizität & Gehirngesundheit
+        🛡️ Immunsystem & Entzündungsregulation
+        💪 Muskel-, Organ- & Knochengesundheit
+        🔄 Regeneration & Zellreparatur
+        ⏰ Circadiane Rhythmen & Chronobiologie
+        🧬 Langlebigkeit & Blue Zones Forschung
+        🌊 Polyvagal-Theorie & Vagusnerv
+        ❤️ HRV-basierte Gesundheitsoptimierung
+        """
 
-        public var icon: String {
-            switch self {
-            case .longevityNutrition: return "leaf.fill"
-            case .wellnessTracking: return "heart.text.square.fill"
-            case .neuroSpiritual: return "brain.head.profile"
-            case .circadianRhythm: return "sun.and.horizon.fill"
-            case .quantumHealth: return "atom"
-            case .adeyWindows: return "waveform.path.ecg"
-            case .lifestyleCoach: return "figure.mind.and.body"
-            case .astronautHealth: return "airplane.circle.fill"
-            case .socialHealth: return "person.3.fill"
-            }
-        }
+        public static let unlockCodes = [
+            "NEUROBODY",
+            "PSYCHONEUROIMMUNO",
+            "HOLISTICHEALTH",
+            "BODYMIND",
+            "ECHOELHEALTH"
+        ]
 
-        public var unlockCode: String {
-            switch self {
-            case .longevityNutrition: return "BLUEZONE"
-            case .wellnessTracking: return "BREATHE"
-            case .neuroSpiritual: return "AWAKEN"
-            case .circadianRhythm: return "SUNRISE"
-            case .quantumHealth: return "ENTANGLE"
-            case .adeyWindows: return "FREQUENCY"
-            case .lifestyleCoach: return "BALANCE"
-            case .astronautHealth: return "ORBIT"
-            case .socialHealth: return "TOGETHER"
-            }
-        }
+        public static let coherenceThreshold: Double = 0.80
+        public static let coherenceDuration: TimeInterval = 120 // 2 minutes
 
-        public var coherenceThreshold: Double {
-            switch self {
-            case .longevityNutrition: return 0.85
-            case .wellnessTracking: return 0.60
-            case .neuroSpiritual: return 0.90
-            case .circadianRhythm: return 0.70
-            case .quantumHealth: return 0.95
-            case .adeyWindows: return 0.88
-            case .lifestyleCoach: return 0.65
-            case .astronautHealth: return 0.92
-            case .socialHealth: return 0.80
-            }
-        }
-
-        public var description: String {
-            switch self {
-            case .longevityNutrition:
-                return "Blue Zones research, 9 Hallmarks of Aging, 15+ longevity compounds"
-            case .wellnessTracking:
-                return "25+ wellness categories, 6 breathing patterns, guided meditations"
-            case .neuroSpiritual:
-                return "10 consciousness states, Polyvagal theory, FACS expression mapping"
-            case .circadianRhythm:
-                return "Chronotype optimization, sleep cycles, biological timing"
-            case .quantumHealth:
-                return "Unlimited collaboration, 8 session types, quantum-inspired metrics"
-            case .adeyWindows:
-                return "Dr. Adey's research, frequency-body mapping, scientific windows"
-            case .lifestyleCoach:
-                return "Holistic wellness coaching, personalized recommendations"
-            case .astronautHealth:
-                return "Space medicine protocols, extreme environment adaptation"
-            case .socialHealth:
-                return "Group coherence, collective heart synchronization"
-            }
-        }
+        public static let gestureUnlocks = [
+            "heart_coherence",    // Heart-focused breathing gesture
+            "body_scan",          // Full body awareness gesture
+            "healing_hands"       // Hands over heart gesture
+        ]
     }
 
     // MARK: - Unlock State
 
-    @Published public private(set) var unlockedEggs: Set<EasterEgg> = []
-    @Published public private(set) var discoveryProgress: [EasterEgg: Double] = [:]
+    @Published public private(set) var isUnlocked: Bool = false
+    @Published public private(set) var discoveryProgress: Double = 0.0
     @Published public var showUnlockAnimation: Bool = false
-    @Published public var lastUnlockedEgg: EasterEgg?
+    @Published public private(set) var coherenceStreak: TimeInterval = 0
+    @Published public private(set) var unlockMethod: String?
 
-    private let storageKey = "echoelmusic.easter_eggs.unlocked"
-    private var cancellables = Set<AnyCancellable>()
+    private let storageKey = "echoelmusic.neurobody.unlocked"
+    private var highCoherenceStartTime: Date?
+
+    // MARK: - Initialization
+
+    private init() {
+        loadUnlockState()
+    }
 
     // MARK: - Unlock Methods
 
-    private init() {
-        loadUnlockedEggs()
-    }
-
-    /// Unlock with secret code
-    public func tryUnlock(code: String) -> EasterEgg? {
+    /// Try unlock with secret code
+    public func tryUnlock(code: String) -> Bool {
         let normalizedCode = code.uppercased().trimmingCharacters(in: .whitespaces)
 
-        for egg in EasterEgg.allCases {
-            if egg.unlockCode == normalizedCode && !unlockedEggs.contains(egg) {
-                unlock(egg)
-                return egg
-            }
+        if NeuroBodyEasterEgg.unlockCodes.contains(normalizedCode) && !isUnlocked {
+            unlock(method: "Code: \(normalizedCode)")
+            return true
         }
-        return nil
+        return false
     }
 
-    /// Unlock through coherence achievement
+    /// Check coherence-based unlock (called from UnifiedControlHub)
     public func checkCoherenceUnlock(coherence: Double, duration: TimeInterval) {
-        for egg in EasterEgg.allCases where !unlockedEggs.contains(egg) {
-            if coherence >= egg.coherenceThreshold && duration >= 60 {
-                // Update progress
-                let currentProgress = discoveryProgress[egg] ?? 0
-                let newProgress = min(1.0, currentProgress + 0.1)
-                discoveryProgress[egg] = newProgress
+        guard !isUnlocked else { return }
 
-                // Unlock at 100% progress
-                if newProgress >= 1.0 {
-                    unlock(egg)
-                }
+        if coherence >= NeuroBodyEasterEgg.coherenceThreshold {
+            if highCoherenceStartTime == nil {
+                highCoherenceStartTime = Date()
             }
+
+            let streak = Date().timeIntervalSince(highCoherenceStartTime!)
+            coherenceStreak = streak
+
+            // Update progress
+            discoveryProgress = min(1.0, streak / NeuroBodyEasterEgg.coherenceDuration)
+
+            // Unlock when threshold duration reached
+            if streak >= NeuroBodyEasterEgg.coherenceDuration {
+                unlock(method: "Kohärenz \(Int(coherence * 100))% für \(Int(streak))s")
+            }
+        } else {
+            // Reset streak if coherence drops
+            highCoherenceStartTime = nil
+            coherenceStreak = 0
+            // Keep some progress as encouragement
+            discoveryProgress = max(0, discoveryProgress - 0.01)
         }
     }
 
-    /// Special gesture unlock (e.g., heart shape with hands)
+    /// Gesture-based unlock
     public func gestureUnlock(_ gesture: String) {
-        switch gesture {
-        case "heart_shape":
-            if !unlockedEggs.contains(.socialHealth) {
-                unlock(.socialHealth)
+        guard !isUnlocked else { return }
+
+        if NeuroBodyEasterEgg.gestureUnlocks.contains(gesture) {
+            // Gesture adds progress
+            discoveryProgress = min(1.0, discoveryProgress + 0.2)
+
+            if discoveryProgress >= 1.0 {
+                unlock(method: "Geste: \(gesture)")
             }
-        case "meditation_pose":
-            if !unlockedEggs.contains(.neuroSpiritual) {
-                unlock(.neuroSpiritual)
-            }
-        case "sunrise_gesture":
-            if !unlockedEggs.contains(.circadianRhythm) {
-                unlock(.circadianRhythm)
-            }
-        case "quantum_wave":
-            if !unlockedEggs.contains(.quantumHealth) {
-                unlock(.quantumHealth)
-            }
-        default:
-            break
         }
     }
 
     /// Direct unlock (for testing/admin)
-    public func unlock(_ egg: EasterEgg) {
-        guard !unlockedEggs.contains(egg) else { return }
+    public func unlock(method: String = "Direct") {
+        guard !isUnlocked else { return }
 
-        unlockedEggs.insert(egg)
-        lastUnlockedEgg = egg
+        isUnlocked = true
+        unlockMethod = method
         showUnlockAnimation = true
-        saveUnlockedEggs()
+        discoveryProgress = 1.0
+        saveUnlockState()
 
         // Haptic feedback
         #if os(iOS)
@@ -193,65 +142,64 @@ public final class EasterEggManager: ObservableObject {
         #endif
 
         // Reset animation after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
             self?.showUnlockAnimation = false
         }
     }
 
-    /// Unlock all (master code)
-    public func unlockAll(masterCode: String) -> Bool {
-        if masterCode == "ECHOELMASTER2026" || masterCode == "LAMBDAINFINITY" {
-            EasterEgg.allCases.forEach { unlock($0) }
+    /// Master unlock (developer)
+    public func masterUnlock(_ code: String) -> Bool {
+        if code == "ECHOELMASTER2026" || code == "LAMBDAINFINITY" || code == "NEUROBODYUNLOCK" {
+            unlock(method: "Master Code")
             return true
         }
         return false
     }
 
-    // MARK: - Feature Access
-
-    public func isUnlocked(_ egg: EasterEgg) -> Bool {
-        unlockedEggs.contains(egg)
-    }
-
-    public var totalUnlocked: Int {
-        unlockedEggs.count
-    }
-
-    public var totalEggs: Int {
-        EasterEgg.allCases.count
-    }
-
-    public var completionPercentage: Double {
-        Double(totalUnlocked) / Double(totalEggs) * 100
-    }
-
     // MARK: - Persistence
 
-    private func loadUnlockedEggs() {
-        if let data = UserDefaults.standard.data(forKey: storageKey),
-           let decoded = try? JSONDecoder().decode([String].self, from: data) {
-            unlockedEggs = Set(decoded.compactMap { EasterEgg(rawValue: $0) })
+    private func loadUnlockState() {
+        isUnlocked = UserDefaults.standard.bool(forKey: storageKey)
+        if isUnlocked {
+            discoveryProgress = 1.0
         }
     }
 
-    private func saveUnlockedEggs() {
-        let rawValues = unlockedEggs.map { $0.rawValue }
-        if let data = try? JSONEncoder().encode(rawValues) {
-            UserDefaults.standard.set(data, forKey: storageKey)
-        }
+    private func saveUnlockState() {
+        UserDefaults.standard.set(isUnlocked, forKey: storageKey)
     }
 
-    /// Reset all progress (for testing)
-    public func resetAll() {
-        unlockedEggs.removeAll()
-        discoveryProgress.removeAll()
+    /// Reset (for testing)
+    public func reset() {
+        isUnlocked = false
+        discoveryProgress = 0
+        coherenceStreak = 0
+        highCoherenceStartTime = nil
+        unlockMethod = nil
         UserDefaults.standard.removeObject(forKey: storageKey)
+    }
+
+    // MARK: - Integration Helpers
+
+    /// Called from UnifiedControlHub
+    public func onCoherenceUpdate(coherence: Double, sessionDuration: TimeInterval) {
+        checkCoherenceUnlock(coherence: coherence, duration: sessionDuration)
+
+        // Also update the NeuroPsychoImmunoBody engine if unlocked
+        if isUnlocked {
+            NeuroPsychoImmunoBodyEngine.shared.updateCoherence(coherence, duration: sessionDuration)
+        }
+    }
+
+    /// Called from gesture detection
+    public func onGestureDetected(_ gesture: String) {
+        gestureUnlock(gesture)
     }
 }
 
-// MARK: - Easter Egg View
+// MARK: - Easter Egg Discovery View
 
-public struct EasterEggGalleryView: View {
+public struct EasterEggDiscoveryView: View {
     @ObservedObject private var manager = EasterEggManager.shared
     @State private var secretCode: String = ""
     @State private var showCodeInput: Bool = false
@@ -260,174 +208,180 @@ public struct EasterEggGalleryView: View {
     public init() {}
 
     public var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Progress Header
-                    progressHeader
-
-                    // Easter Eggs Grid
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: 16) {
-                        ForEach(EasterEggManager.EasterEgg.allCases) { egg in
-                            EasterEggCard(egg: egg, isUnlocked: manager.isUnlocked(egg))
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    // Secret Code Input (hidden until 5 taps on header)
-                    if showCodeInput {
-                        secretCodeInput
-                    }
-                }
-                .padding(.vertical)
+        Group {
+            if manager.isUnlocked {
+                // Show the full NeuroPsychoImmunoBody tool
+                NeuroPsychoImmunoBodyView()
+            } else {
+                // Show discovery/unlock UI
+                discoveryView
             }
-            .navigationTitle("Hidden Features")
-            .background(Color(.systemBackground))
         }
         .overlay {
-            if manager.showUnlockAnimation, let egg = manager.lastUnlockedEgg {
-                UnlockAnimationView(egg: egg)
+            if manager.showUnlockAnimation {
+                unlockAnimation
             }
         }
     }
 
-    private var progressHeader: some View {
-        VStack(spacing: 8) {
-            Text("\(manager.totalUnlocked) / \(manager.totalEggs)")
-                .font(.system(size: 48, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
+    private var discoveryView: some View {
+        VStack(spacing: 32) {
+            Spacer()
 
-            Text("Features Discovered")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            ProgressView(value: manager.completionPercentage, total: 100)
-                .tint(.green)
-                .padding(.horizontal, 40)
-        }
-        .padding()
-        .onTapGesture {
-            tapCount += 1
-            if tapCount >= 5 {
-                withAnimation {
-                    showCodeInput = true
-                }
-            }
-        }
-    }
-
-    private var secretCodeInput: some View {
-        VStack(spacing: 12) {
-            TextField("Enter secret code...", text: $secretCode)
-                .textFieldStyle(.roundedBorder)
-                .textInputAutocapitalization(.characters)
-                .padding(.horizontal)
-
-            Button("Unlock") {
-                if let egg = manager.tryUnlock(code: secretCode) {
-                    secretCode = ""
-                } else if manager.unlockAll(masterCode: secretCode) {
-                    secretCode = ""
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.green)
-        }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(16)
-        .padding()
-    }
-}
-
-// MARK: - Easter Egg Card
-
-struct EasterEggCard: View {
-    let egg: EasterEggManager.EasterEgg
-    let isUnlocked: Bool
-
-    var body: some View {
-        VStack(spacing: 12) {
+            // Mystery Icon
             ZStack {
                 Circle()
-                    .fill(isUnlocked ? Color.green.opacity(0.2) : Color.gray.opacity(0.1))
-                    .frame(width: 60, height: 60)
+                    .fill(Color.green.opacity(0.1))
+                    .frame(width: 120, height: 120)
 
-                Image(systemName: isUnlocked ? egg.icon : "lock.fill")
-                    .font(.title2)
-                    .foregroundStyle(isUnlocked ? .green : .gray)
+                Circle()
+                    .stroke(Color.green.opacity(0.3), lineWidth: 2)
+                    .frame(width: 140, height: 140)
+
+                Image(systemName: manager.discoveryProgress > 0.5 ? "heart.text.square" : "lock.fill")
+                    .font(.system(size: 50))
+                    .foregroundStyle(manager.discoveryProgress > 0.5 ? .green : .gray)
+            }
+            .onTapGesture {
+                tapCount += 1
+                if tapCount >= 7 {
+                    withAnimation { showCodeInput = true }
+                }
             }
 
-            Text(isUnlocked ? egg.displayName : "???")
-                .font(.caption)
-                .fontWeight(.medium)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(isUnlocked ? .primary : .secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(16)
-    }
-}
-
-// MARK: - Unlock Animation
-
-struct UnlockAnimationView: View {
-    let egg: EasterEggManager.EasterEgg
-    @State private var scale: CGFloat = 0.5
-    @State private var opacity: Double = 0
-
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.7)
-                .ignoresSafeArea()
-
-            VStack(spacing: 20) {
-                Image(systemName: egg.icon)
-                    .font(.system(size: 80))
-                    .foregroundStyle(.green)
-
-                Text("Unlocked!")
+            // Title
+            VStack(spacing: 8) {
+                Text(manager.discoveryProgress > 0.5 ? "NeuroBody" : "Versteckte Funktion")
                     .font(.title)
                     .fontWeight(.bold)
 
-                Text(egg.displayName)
-                    .font(.title2)
+                Text("Entdecke das ganzheitliche Gesundheitstool")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            // Progress
+            VStack(spacing: 12) {
+                ProgressView(value: manager.discoveryProgress)
+                    .tint(.green)
+                    .padding(.horizontal, 40)
+
+                Text("\(Int(manager.discoveryProgress * 100))% entdeckt")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
 
-                Text(egg.description)
+                if manager.coherenceStreak > 0 {
+                    Text("Kohärenz: \(Int(manager.coherenceStreak))s / \(Int(EasterEggManager.NeuroBodyEasterEgg.coherenceDuration))s")
+                        .font(.caption2)
+                        .foregroundStyle(.green)
+                }
+            }
+
+            // Hints
+            VStack(alignment: .leading, spacing: 8) {
+                hintRow(icon: "heart.fill", text: "Erreiche 80% Kohärenz für 2 Minuten", unlocked: manager.discoveryProgress >= 0.3)
+                hintRow(icon: "hand.raised.fill", text: "Spezielle Geste ausführen", unlocked: manager.discoveryProgress >= 0.6)
+                hintRow(icon: "key.fill", text: "Oder finde den Geheimcode...", unlocked: manager.discoveryProgress >= 0.9)
+            }
+            .padding()
+            .background(Color(.secondarySystemBackground))
+            .cornerRadius(16)
+            .padding(.horizontal)
+
+            // Secret code input (hidden until 7 taps)
+            if showCodeInput {
+                VStack(spacing: 12) {
+                    TextField("Geheimcode...", text: $secretCode)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.characters)
+
+                    Button("Freischalten") {
+                        if manager.tryUnlock(code: secretCode) || manager.masterUnlock(secretCode) {
+                            secretCode = ""
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.green)
+                }
+                .padding()
+            }
+
+            Spacer()
+        }
+        .padding()
+    }
+
+    private func hintRow(icon: String, text: String, unlocked: Bool) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: unlocked ? "checkmark.circle.fill" : icon)
+                .foregroundStyle(unlocked ? .green : .gray)
+
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(unlocked ? .primary : .secondary)
+
+            Spacer()
+        }
+    }
+
+    private var unlockAnimation: some View {
+        ZStack {
+            Color.black.opacity(0.8)
+                .ignoresSafeArea()
+
+            VStack(spacing: 24) {
+                Image(systemName: "heart.text.square.fill")
+                    .font(.system(size: 100))
+                    .foregroundStyle(.green)
+                    .symbolEffect(.pulse)
+
+                Text("Freigeschaltet!")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+
+                Text("NeuroBody")
+                    .font(.title2)
+                    .foregroundStyle(.green)
+
+                Text(EasterEggManager.NeuroBodyEasterEgg.description)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
-            }
-            .scaleEffect(scale)
-            .opacity(opacity)
-        }
-        .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                scale = 1.0
-                opacity = 1.0
+
+                if let method = manager.unlockMethod {
+                    Text("Methode: \(method)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
 }
 
-// MARK: - Integration with UnifiedControlHub
+// MARK: - Compact Easter Egg Button (for main UI)
 
-extension EasterEggManager {
+public struct EasterEggButton: View {
+    @ObservedObject private var manager = EasterEggManager.shared
+    @State private var showSheet = false
 
-    /// Called from UnifiedControlHub coherence updates
-    public func onCoherenceUpdate(coherence: Double, sessionDuration: TimeInterval) {
-        checkCoherenceUnlock(coherence: coherence, duration: sessionDuration)
-    }
+    public init() {}
 
-    /// Called from HandTrackingManager gesture detection
-    public func onGestureDetected(_ gesture: String) {
-        gestureUnlock(gesture)
+    public var body: some View {
+        Button {
+            showSheet = true
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(manager.isUnlocked ? Color.green.opacity(0.2) : Color.gray.opacity(0.1))
+                    .frame(width: 44, height: 44)
+
+                Image(systemName: manager.isUnlocked ? "heart.text.square.fill" : "sparkles")
+                    .foregroundStyle(manager.isUnlocked ? .green : .gray)
+            }
+        }
+        .sheet(isPresented: $showSheet) {
+            EasterEggDiscoveryView()
+        }
     }
 }
