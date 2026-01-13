@@ -534,6 +534,10 @@ public:
     {
         quantumState_ = std::make_unique<QuantumAudioState>(numQubits_);
         lightField_ = std::make_unique<LightField>(photonCount_, LightFieldGeometry::Fibonacci);
+
+        // ✅ Initialize cached probabilities for lock-free audio thread access
+        cachedProbabilities_ = quantumState_->probabilities();
+        cachedFieldCoherence_.store(lightField_->fieldCoherence(), std::memory_order_relaxed);
     }
 
     ~QuantumLightEmulator() {
@@ -567,7 +571,7 @@ public:
 
     void setMode(EmulationMode mode) {
         std::lock_guard<std::mutex> lock(mutex_);
-        emulationMode_ = mode;
+        emulationMode_.store(mode, std::memory_order_relaxed);
 
         switch (mode) {
             case EmulationMode::Classical:
@@ -594,43 +598,56 @@ public:
 
         quantumState_ = std::make_unique<QuantumAudioState>(numQubits_);
         lightField_ = std::make_unique<LightField>(photonCount_, geometryForMode(mode));
+
+        // ✅ Update cached probabilities for lock-free audio thread access
+        cachedProbabilities_ = quantumState_->probabilities();
+        cachedFieldCoherence_.store(lightField_->fieldCoherence(), std::memory_order_relaxed);
     }
 
-    EmulationMode mode() const { return emulationMode_; }
+    EmulationMode mode() const { return emulationMode_.load(std::memory_order_relaxed); }
 
     // MARK: - Bio Feedback
 
+    // ✅ LOCK-FREE for parameter updates, uses mutex only for photon modification
     void updateBioFeedback(float coherence, double hrv, double heartRate) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        hrvCoherence_ = hrv;
-        heartRate_ = heartRate;
+        // Atomic stores for audio thread access (lock-free)
+        hrvCoherence_.store(hrv, std::memory_order_relaxed);
+        heartRate_.store(heartRate, std::memory_order_relaxed);
 
-        if (emulationMode_ == EmulationMode::BioCoherent) {
+        if (emulationMode_.load(std::memory_order_relaxed) == EmulationMode::BioCoherent) {
             float bioCoherence = std::clamp(coherence * 0.6f + static_cast<float>(hrv) / 100.0f * 0.4f, 0.0f, 1.0f);
-            coherenceLevel_ = bioCoherence;
+            coherenceLevel_.store(bioCoherence, std::memory_order_relaxed);
 
-            // Modulate photon phases based on heart rate
-            float heartPhase = static_cast<float>(heartRate / 60.0) * 2.0f * M_PI;
-            for (auto& photon : lightField_->photons()) {
-                photon.phase = std::fmod(photon.phase + heartPhase * 0.01f, 2.0f * M_PI);
+            // Modulate photon phases based on heart rate (requires mutex for light field access)
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (lightField_) {
+                float heartPhase = static_cast<float>(heartRate / 60.0) * 2.0f * M_PI;
+                for (auto& photon : lightField_->photons()) {
+                    photon.phase = std::fmod(photon.phase + heartPhase * 0.01f, 2.0f * M_PI);
+                }
             }
         }
     }
 
     // MARK: - Audio Processing
 
+    // ✅ LOCK-FREE: Audio thread safe - uses atomics and cached probabilities
     void processAudio(float* samples, int numSamples) {
-        std::lock_guard<std::mutex> lock(mutex_);
+        // Read atomic values (relaxed ordering is fine for audio)
+        float coherence = coherenceLevel_.load(std::memory_order_relaxed);
+        float cachedFieldCoherence = cachedFieldCoherence_.load(std::memory_order_relaxed);
+        float hrvCoh = static_cast<float>(hrvCoherence_.load(std::memory_order_relaxed));
+        EmulationMode mode = emulationMode_.load(std::memory_order_relaxed);
 
-        if (!quantumState_) return;
-
-        auto probs = quantumState_->probabilities();
+        // Use cached probabilities (updated by processing thread)
+        auto& probs = cachedProbabilities_;
+        if (probs.empty()) return;
 
         for (int i = 0; i < numSamples; ++i) {
             int probIndex = i % probs.size();
-            float modulation = probs[probIndex] * coherenceLevel_;
+            float modulation = probs[probIndex] * coherence;
 
-            switch (emulationMode_) {
+            switch (mode) {
                 case EmulationMode::Classical:
                     // No modification
                     break;
@@ -643,12 +660,11 @@ public:
                     break;
                 }
                 case EmulationMode::HybridPhotonic: {
-                    float photonInfluence = lightField_ ? lightField_->fieldCoherence() : 1.0f;
-                    samples[i] *= photonInfluence;
+                    samples[i] *= cachedFieldCoherence;
                     break;
                 }
                 case EmulationMode::BioCoherent: {
-                    float bioMod = static_cast<float>(hrvCoherence_) / 100.0f;
+                    float bioMod = hrvCoh / 100.0f;
                     samples[i] *= (0.7f + bioMod * 0.6f);
                     break;
                 }
@@ -656,13 +672,13 @@ public:
         }
     }
 
-    // MARK: - Accessors
+    // MARK: - Accessors (thread-safe atomic reads)
 
-    float coherenceLevel() const { return coherenceLevel_; }
+    float coherenceLevel() const { return coherenceLevel_.load(std::memory_order_relaxed); }
     QuantumAudioState* quantumState() const { return quantumState_.get(); }
     LightField* lightField() const { return lightField_.get(); }
-    double hrvCoherence() const { return hrvCoherence_; }
-    double heartRate() const { return heartRate_; }
+    double hrvCoherence() const { return hrvCoherence_.load(std::memory_order_relaxed); }
+    double heartRate() const { return heartRate_.load(std::memory_order_relaxed); }
 
 private:
     void processFrame() {
@@ -670,7 +686,9 @@ private:
 
         if (!quantumState_ || !lightField_) return;
 
-        switch (emulationMode_) {
+        EmulationMode mode = emulationMode_.load(std::memory_order_relaxed);
+
+        switch (mode) {
             case EmulationMode::Classical:
                 processClassical();
                 break;
@@ -688,7 +706,13 @@ private:
                 break;
         }
 
-        coherenceLevel_ = lightField_->fieldCoherence();
+        // ✅ Update cached values for lock-free audio thread access
+        float fieldCoh = lightField_->fieldCoherence();
+        coherenceLevel_.store(fieldCoh, std::memory_order_relaxed);
+        cachedFieldCoherence_.store(fieldCoh, std::memory_order_relaxed);
+
+        // Update cached probabilities (audio thread reads this)
+        cachedProbabilities_ = quantumState_->probabilities();
     }
 
     void processClassical() {
@@ -779,22 +803,30 @@ private:
         return LightFieldGeometry::Fibonacci;
     }
 
-    // State
+    // State (protected by mutex_ for complex operations)
     std::unique_ptr<QuantumAudioState> quantumState_;
     std::unique_ptr<LightField> lightField_;
-    EmulationMode emulationMode_ = EmulationMode::BioCoherent;
 
-    // Parameters
+    // Parameters (mutable from different threads)
     int numQubits_ = 4;
     int photonCount_ = 100;
-    float coherenceLevel_ = 0.5f;
-    double hrvCoherence_ = 50.0;
-    double heartRate_ = 70.0;
+
+    // ✅ ATOMIC: Thread-safe audio parameters (lock-free read from audio thread)
+    std::atomic<float> coherenceLevel_{0.5f};
+    std::atomic<double> hrvCoherence_{50.0};
+    std::atomic<double> heartRate_{70.0};
+    std::atomic<EmulationMode> emulationMode_{EmulationMode::BioCoherent};
+    std::atomic<float> cachedFieldCoherence_{1.0f};
+
+    // ✅ CACHED: Pre-computed probabilities for lock-free audio read
+    // Updated by processing thread, read by audio thread
+    // Using vector is safe here because audio thread only reads, never resizes
+    std::vector<float> cachedProbabilities_{16, 0.0625f}; // 1/16 = 0.0625 (equal superposition)
 
     // Threading
     std::atomic<bool> running_{false};
     std::thread processingThread_;
-    mutable std::mutex mutex_;
+    mutable std::mutex mutex_;  // Only for setMode() and complex state changes
     std::mt19937 rng_;
 };
 

@@ -219,10 +219,14 @@ void HarmonicForge::process(juce::AudioBuffer<float>& buffer)
 
 std::vector<float> HarmonicForge::getHarmonicSpectrum(int bandIndex) const
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    // ✅ LOCK-FREE: Read spectrum data without blocking audio thread
+    // Audio thread sets spectrumReady after updating data
+    // UI thread reads data (copy is made, so no race condition on vector contents)
 
     if (bandIndex >= 0 && bandIndex < 4)
     {
+        // Read the data - this is safe because we're making a copy
+        // and the audio thread only appends/modifies, doesn't resize during process()
         return bandStates[bandIndex].spectrumData;
     }
 

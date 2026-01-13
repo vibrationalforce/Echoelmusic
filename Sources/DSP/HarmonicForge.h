@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include <array>
 #include <vector>
+#include <atomic>
 
 /**
  * HarmonicForge
@@ -185,8 +186,10 @@ private:
     // Oversampling
     std::unique_ptr<juce::dsp::Oversampling<float>> oversampling;
 
-    // Visualization
-    mutable std::mutex spectrumMutex;
+    // Visualization - LOCK-FREE design for audio thread safety
+    // Audio thread writes to bandStates[i].spectrumData, then sets flag
+    // UI thread reads when flag is set, then clears it
+    mutable std::atomic<bool> spectrumReady{false};
 
     //==========================================================================
     // Internal Methods

@@ -214,10 +214,10 @@ void PhaseAnalyzer::calculatePhaseCorrelation(const juce::AudioBuffer<float>& bu
     minCorrelation = juce::jmin(minCorrelation, instantCorrelation);
     maxCorrelation = juce::jmax(maxCorrelation, instantCorrelation);
 
-    // Add to history
+    // ✅ O(1) FIFO: Add to history (deque has O(1) pop_front)
     correlationHistory.values.push_back(instantCorrelation);
     if (correlationHistory.values.size() > static_cast<size_t>(correlationHistory.maxSize))
-        correlationHistory.values.erase(correlationHistory.values.begin());
+        correlationHistory.values.pop_front();
 }
 
 void PhaseAnalyzer::updateGoniometer(const juce::AudioBuffer<float>& buffer)
@@ -245,9 +245,9 @@ void PhaseAnalyzer::updateGoniometer(const juce::AudioBuffer<float>& buffer)
         goniometerHistory.push_back(point);
     }
 
-    // Limit history size
+    // ✅ O(1) FIFO: Limit history size (deque has O(1) pop_front)
     while (goniometerHistory.size() > static_cast<size_t>(maxGoniometerPoints))
-        goniometerHistory.erase(goniometerHistory.begin());
+        goniometerHistory.pop_front();
 }
 
 void PhaseAnalyzer::performFFTAnalysis(const juce::AudioBuffer<float>& buffer)

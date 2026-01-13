@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include <array>
 #include <vector>
+#include <deque>
 #include <map>
 
 /**
@@ -145,7 +146,7 @@ public:
 
     struct CorrelationHistory
     {
-        std::vector<float> values;   // Historical correlation values
+        std::deque<float> values;    // Historical correlation values (deque for O(1) pop_front)
         int maxSize;                  // Maximum history size
         double timePerSample;         // Time between samples (for X-axis)
     };
@@ -170,8 +171,8 @@ private:
     float correlationMeterSpeed = 0.5f;
     float correlationAlpha = 0.1f;  // Smoothing coefficient
 
-    // Goniometer
-    std::vector<GoniometerPoint> goniometerHistory;
+    // Goniometer (deque for O(1) pop_front)
+    std::deque<GoniometerPoint> goniometerHistory;
     float goniometerPersistence = 2.0f;  // Seconds
     int maxGoniometerPoints = 2048;
 
