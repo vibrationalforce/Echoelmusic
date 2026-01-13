@@ -14,6 +14,7 @@
 
 #include "IPlug_include_in_plug_hdr.h"
 #include "IControls.h"
+#include <atomic>
 
 // Include our JUCE-free DSP
 #include "../DSP/EchoelmusicDSP.h"
@@ -116,10 +117,10 @@ private:
     // Voice Management
     static const int kMaxVoices = 16;
 
-    // Bio-Reactive State
-    float mCurrentHRV = 0.5f;
-    float mCurrentCoherence = 0.5f;
-    float mCurrentHeartRate = 70.0f;
+    // Bio-Reactive State (atomic for lock-free audio thread access)
+    std::atomic<float> mCurrentHRV{0.5f};
+    std::atomic<float> mCurrentCoherence{0.5f};
+    std::atomic<float> mCurrentHeartRate{70.0f};
 
     // Parameter smoothing (exponential smoothing for anti-clicking)
     struct SmoothedParameter

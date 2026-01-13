@@ -177,15 +177,15 @@ void EchoelmusicPlugin::OnParamChange(int paramIdx)
             mDSP.SetOsc2Waveform(static_cast<int>(GetParam(kOsc2Waveform)->Value()));
             break;
         case kBioHRV:
-            mCurrentHRV = GetParam(kBioHRV)->Value();
+            mCurrentHRV.store(static_cast<float>(GetParam(kBioHRV)->Value()), std::memory_order_relaxed);
             ApplyBioModulation();
             break;
         case kBioCoherence:
-            mCurrentCoherence = GetParam(kBioCoherence)->Value();
+            mCurrentCoherence.store(static_cast<float>(GetParam(kBioCoherence)->Value()), std::memory_order_relaxed);
             ApplyBioModulation();
             break;
         case kBioHeartRate:
-            mCurrentHeartRate = GetParam(kBioHeartRate)->Value();
+            mCurrentHeartRate.store(static_cast<float>(GetParam(kBioHeartRate)->Value()), std::memory_order_relaxed);
             ApplyBioModulation();
             break;
         default:
@@ -297,9 +297,10 @@ void EchoelmusicPlugin::ProcessMidiMsg(const IMidiMsg& msg)
 
 void EchoelmusicPlugin::UpdateBioData(float hrv, float coherence, float heartRate)
 {
-    mCurrentHRV = hrv;
-    mCurrentCoherence = coherence;
-    mCurrentHeartRate = heartRate;
+    // Lock-free atomic stores for audio thread safety
+    mCurrentHRV.store(hrv, std::memory_order_relaxed);
+    mCurrentCoherence.store(coherence, std::memory_order_relaxed);
+    mCurrentHeartRate.store(heartRate, std::memory_order_relaxed);
 
     // Update parameters (these will trigger UI updates)
     GetParam(kBioHRV)->Set(hrv);
@@ -324,41 +325,55 @@ void EchoelmusicPlugin::ApplyBioModulation()
     // Heart Rate (40-200 bpm):
     //   - Modulates LFO rate subtly
 
+    // Lock-free atomic loads for audio thread safety
+    const float hrv = mCurrentHRV.load(std::memory_order_relaxed);
+    const float coherence = mCurrentCoherence.load(std::memory_order_relaxed);
+    const float heartRate = mCurrentHeartRate.load(std::memory_order_relaxed);
+
     // Filter modulation based on HRV
-    float baseFilterCutoff = GetParam(kFilterCutoff)->Value();
+    float baseFilterCutoff = static_cast<float>(GetParam(kFilterCutoff)->Value());
     float hrvModAmount = 0.3f;  // 30% modulation range
-    float hrvMod = (mCurrentHRV - 0.5f) * hrvModAmount;
+    float hrvMod = (hrv - 0.5f) * hrvModAmount;
     float modulatedCutoff = baseFilterCutoff * (1.0f + hrvMod);
     modulatedCutoff = std::clamp(modulatedCutoff, 20.0f, 20000.0f);
     mDSP.SetFilterCutoff(modulatedCutoff);
 
     // Reverb modulation based on coherence
-    float reverbMix = mCurrentCoherence * 0.5f;  // 0-50% reverb based on coherence
+    float reverbMix = coherence * 0.5f;  // 0-50% reverb based on coherence
     mDSP.SetReverbMix(reverbMix);
 
     // LFO rate modulation based on heart rate
-    float baseLFORate = GetParam(kLFORate)->Value();
-    float hrMod = (mCurrentHeartRate - 70.0f) / 130.0f;  // Normalize around 70 bpm
+    float baseLFORate = static_cast<float>(GetParam(kLFORate)->Value());
+    float hrMod = (heartRate - 70.0f) / 130.0f;  // Normalize around 70 bpm
     float modulatedLFORate = baseLFORate * (1.0f + hrMod * 0.2f);
     mDSP.SetLFORate(modulatedLFORate);
 }
 
 bool EchoelmusicPlugin::SerializeState(IByteChunk& chunk) const
 {
-    // Save bio-reactive state
-    chunk.Put(&mCurrentHRV);
-    chunk.Put(&mCurrentCoherence);
-    chunk.Put(&mCurrentHeartRate);
+    // Save bio-reactive state (copy from atomics)
+    float hrv = mCurrentHRV.load(std::memory_order_relaxed);
+    float coherence = mCurrentCoherence.load(std::memory_order_relaxed);
+    float heartRate = mCurrentHeartRate.load(std::memory_order_relaxed);
+
+    chunk.Put(&hrv);
+    chunk.Put(&coherence);
+    chunk.Put(&heartRate);
 
     return SerializeParams(chunk);
 }
 
 int EchoelmusicPlugin::UnserializeState(const IByteChunk& chunk, int startPos)
 {
-    // Load bio-reactive state
-    startPos = chunk.Get(&mCurrentHRV, startPos);
-    startPos = chunk.Get(&mCurrentCoherence, startPos);
-    startPos = chunk.Get(&mCurrentHeartRate, startPos);
+    // Load bio-reactive state into temporaries, then store atomically
+    float hrv, coherence, heartRate;
+    startPos = chunk.Get(&hrv, startPos);
+    startPos = chunk.Get(&coherence, startPos);
+    startPos = chunk.Get(&heartRate, startPos);
+
+    mCurrentHRV.store(hrv, std::memory_order_relaxed);
+    mCurrentCoherence.store(coherence, std::memory_order_relaxed);
+    mCurrentHeartRate.store(heartRate, std::memory_order_relaxed);
 
     return UnserializeParams(chunk, startPos);
 }

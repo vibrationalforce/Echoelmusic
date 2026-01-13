@@ -362,18 +362,24 @@ private:
 };
 
 //==============================================================================
-// Simple Reverb (Schroeder)
+// Simple Reverb (Schroeder) - Zero-allocation audio-safe implementation
 //==============================================================================
 class SimpleReverb
 {
 public:
+    // Fixed-size delay line buffers (supports up to 192kHz sample rate)
+    // Max delay = 192000 * 0.1 = 19200 samples
+    static constexpr int kMaxCombDelay = 20000;
+    static constexpr int kMaxAllpassDelay = 5000;
+
     void SetSampleRate(float sr)
     {
         mSampleRate = sr;
-        // Resize delay lines
-        int maxDelay = static_cast<int>(sr * 0.1f);  // 100ms max
-        for (auto& comb : mCombs) comb.resize(maxDelay, 0.0f);
-        for (auto& ap : mAllpass) ap.resize(maxDelay / 4, 0.0f);
+        // Clear delay lines (no allocation - fixed size arrays)
+        for (auto& comb : mCombs) comb.fill(0.0f);
+        for (auto& ap : mAllpass) ap.fill(0.0f);
+        mCombIdx.fill(0);
+        mApIdx.fill(0);
     }
 
     void SetMix(float mix) { mMix = std::clamp(mix, 0.0f, 1.0f); }
@@ -381,14 +387,14 @@ public:
 
     float Process(float input)
     {
-        // 4 parallel comb filters
+        // 4 parallel comb filters (prime number delays at 44.1kHz, scaled to current SR)
         float combOut = 0.0f;
-        const int combDelays[] = {1557, 1617, 1491, 1422};  // Prime delays
+        constexpr int combDelays[] = {1557, 1617, 1491, 1422};
 
         for (int i = 0; i < 4; i++)
         {
             int delay = static_cast<int>(combDelays[i] * mSampleRate / 44100.0f);
-            delay = std::min(delay, static_cast<int>(mCombs[i].size()) - 1);
+            delay = std::clamp(delay, 1, kMaxCombDelay - 1);
 
             float delayed = mCombs[i][mCombIdx[i]];
             mCombs[i][mCombIdx[i]] = input + delayed * mDecay;
@@ -399,13 +405,13 @@ public:
         combOut *= 0.25f;
 
         // 2 series allpass filters
-        const int apDelays[] = {225, 556};
+        constexpr int apDelays[] = {225, 556};
         float apOut = combOut;
 
         for (int i = 0; i < 2; i++)
         {
             int delay = static_cast<int>(apDelays[i] * mSampleRate / 44100.0f);
-            delay = std::min(delay, static_cast<int>(mAllpass[i].size()) - 1);
+            delay = std::clamp(delay, 1, kMaxAllpassDelay - 1);
 
             float delayed = mAllpass[i][mApIdx[i]];
             float temp = apOut + delayed * 0.5f;
@@ -422,10 +428,11 @@ private:
     float mMix = 0.3f;
     float mDecay = 0.8f;
 
-    std::array<std::vector<float>, 4> mCombs;
-    std::array<std::vector<float>, 2> mAllpass;
-    std::array<int, 4> mCombIdx = {0, 0, 0, 0};
-    std::array<int, 2> mApIdx = {0, 0};
+    // Fixed-size arrays - NO HEAP ALLOCATION in audio thread
+    std::array<std::array<float, kMaxCombDelay>, 4> mCombs{};
+    std::array<std::array<float, kMaxAllpassDelay>, 2> mAllpass{};
+    std::array<int, 4> mCombIdx{};
+    std::array<int, 2> mApIdx{};
 };
 
 //==============================================================================
