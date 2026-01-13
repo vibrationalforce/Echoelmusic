@@ -10,6 +10,14 @@
 
 import Foundation
 import SwiftUI
+#if canImport(PDFKit)
+import PDFKit
+#endif
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 // MARK: - Privacy Policy
 
@@ -1915,14 +1923,182 @@ public struct LegalDocumentViewer: View {
     // MARK: - Actions
 
     private func exportDocument() {
-        // TODO: Implement PDF export
-        // For now, just copy to clipboard
-        #if os(iOS)
-        UIPasteboard.general.string = selectedDocument.fullText
+        // Generate PDF and share
+        let pdfData = generatePDF(for: selectedDocument)
+
+        #if os(iOS) || os(visionOS)
+        // Create temporary file for sharing
+        let fileName = "\(selectedDocument.rawValue.replacingOccurrences(of: " ", with: "_"))_\(PrivacyPolicy.version).pdf"
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+
+        do {
+            try pdfData.write(to: tempURL)
+
+            // Present share sheet
+            let activityVC = UIActivityViewController(activityItems: [tempURL], applicationActivities: nil)
+
+            // Find the window scene to present from
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootVC = windowScene.windows.first?.rootViewController {
+                // Handle iPad popover
+                if let popover = activityVC.popoverPresentationController {
+                    popover.sourceView = rootVC.view
+                    popover.sourceRect = CGRect(x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
+                    popover.permittedArrowDirections = []
+                }
+                rootVC.present(activityVC, animated: true)
+            }
+        } catch {
+            // Fallback: copy text to clipboard
+            UIPasteboard.general.string = selectedDocument.fullText
+        }
+
         #elseif os(macOS)
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(selectedDocument.fullText, forType: .string)
+        // Show save panel on macOS
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [.pdf]
+        savePanel.nameFieldStringValue = "\(selectedDocument.rawValue.replacingOccurrences(of: " ", with: "_"))_\(PrivacyPolicy.version).pdf"
+        savePanel.message = "Save \(selectedDocument.rawValue) as PDF"
+
+        savePanel.begin { response in
+            if response == .OK, let url = savePanel.url {
+                do {
+                    try pdfData.write(to: url)
+                } catch {
+                    // Fallback: copy to clipboard
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(selectedDocument.fullText, forType: .string)
+                }
+            }
+        }
         #endif
+    }
+
+    /// Generate PDF from document text
+    private func generatePDF(for document: LegalDocument) -> Data {
+        let pageWidth: CGFloat = 612  // Letter size
+        let pageHeight: CGFloat = 792
+        let margin: CGFloat = 50
+
+        let pdfMetaData: [CFString: Any] = [
+            kCGPDFContextTitle: document.rawValue,
+            kCGPDFContextAuthor: PrivacyPolicy.companyName,
+            kCGPDFContextSubject: "Legal Document",
+            kCGPDFContextCreator: "Echoelmusic App"
+        ]
+
+        let format = UIGraphicsPDFRendererFormat()
+        format.documentInfo = pdfMetaData as [String: Any]
+
+        let renderer = UIGraphicsPDFRenderer(
+            bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight),
+            format: format
+        )
+
+        return renderer.pdfData { context in
+            let textRect = CGRect(
+                x: margin,
+                y: margin,
+                width: pageWidth - (margin * 2),
+                height: pageHeight - (margin * 2)
+            )
+
+            // Title style
+            let titleFont = UIFont.boldSystemFont(ofSize: 18)
+            let titleParagraph = NSMutableParagraphStyle()
+            titleParagraph.alignment = .center
+            titleParagraph.lineSpacing = 4
+
+            let titleAttributes: [NSAttributedString.Key: Any] = [
+                .font: titleFont,
+                .foregroundColor: UIColor.black,
+                .paragraphStyle: titleParagraph
+            ]
+
+            // Body style
+            let bodyFont = UIFont.systemFont(ofSize: 10)
+            let bodyParagraph = NSMutableParagraphStyle()
+            bodyParagraph.lineSpacing = 3
+            bodyParagraph.paragraphSpacing = 8
+
+            let bodyAttributes: [NSAttributedString.Key: Any] = [
+                .font: bodyFont,
+                .foregroundColor: UIColor.black,
+                .paragraphStyle: bodyParagraph
+            ]
+
+            // Header style
+            let headerFont = UIFont.boldSystemFont(ofSize: 12)
+            let headerAttributes: [NSAttributedString.Key: Any] = [
+                .font: headerFont,
+                .foregroundColor: UIColor.black,
+                .paragraphStyle: bodyParagraph
+            ]
+
+            // Build attributed string
+            let text = document.fullText
+            let attributedString = NSMutableAttributedString()
+
+            // Add title
+            let title = "\(document.rawValue)\n\n"
+            attributedString.append(NSAttributedString(string: title, attributes: titleAttributes))
+
+            // Add version info
+            let versionInfo = "Version: \(PrivacyPolicy.version) | Effective: \(PrivacyPolicy.effectiveDate)\n\n"
+            attributedString.append(NSAttributedString(string: versionInfo, attributes: bodyAttributes))
+
+            // Process body text - detect headers (lines starting with numbers or all caps)
+            let lines = text.components(separatedBy: "\n")
+            for line in lines {
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+                // Detect section headers (numbered or all caps)
+                let isHeader = trimmed.first?.isNumber == true ||
+                               (trimmed.count > 3 && trimmed == trimmed.uppercased() && trimmed.contains(where: { $0.isLetter }))
+
+                if isHeader {
+                    attributedString.append(NSAttributedString(string: "\n" + line + "\n", attributes: headerAttributes))
+                } else {
+                    attributedString.append(NSAttributedString(string: line + "\n", attributes: bodyAttributes))
+                }
+            }
+
+            // Calculate pagination
+            let framesetter = CTFramesetterCreateWithAttributedString(attributedString)
+            var currentRange = CFRange(location: 0, length: 0)
+            var currentPage = 0
+            let totalLength = attributedString.length
+
+            while currentRange.location < totalLength {
+                context.beginPage()
+                currentPage += 1
+
+                // Draw page header
+                let pageHeader = "\(PrivacyPolicy.companyName) - \(document.rawValue)"
+                let headerRect = CGRect(x: margin, y: 20, width: pageWidth - (margin * 2), height: 20)
+                pageHeader.draw(in: headerRect, withAttributes: [
+                    .font: UIFont.systemFont(ofSize: 8),
+                    .foregroundColor: UIColor.gray
+                ])
+
+                // Draw content
+                let path = CGPath(rect: textRect, transform: nil)
+                let frame = CTFramesetterCreateFrame(framesetter, currentRange, path, nil)
+                CTFrameDraw(frame, context.cgContext)
+
+                // Get range that was drawn
+                let frameRange = CTFrameGetVisibleStringRange(frame)
+                currentRange.location += frameRange.length
+
+                // Draw page footer
+                let pageFooter = "Page \(currentPage)"
+                let footerRect = CGRect(x: margin, y: pageHeight - 30, width: pageWidth - (margin * 2), height: 20)
+                pageFooter.draw(in: footerRect, withAttributes: [
+                    .font: UIFont.systemFont(ofSize: 8),
+                    .foregroundColor: UIColor.gray
+                ])
+            }
+        }
     }
 
     private func openEmail(to email: String) {

@@ -278,44 +278,60 @@ public class FileAnalyticsProvider: AnalyticsProvider {
     }
 }
 
-// MARK: - Firebase Analytics Provider (Stub)
+// MARK: - Firebase Analytics Provider
 
-/// Firebase analytics provider (requires Firebase SDK)
-/// This is a stub implementation - add Firebase SDK dependency to use
+/// Firebase analytics provider
+/// Uses conditional compilation for Firebase SDK integration
+/// When Firebase SDK is added to project, define FIREBASE_ENABLED in build settings
 public class FirebaseAnalyticsProvider: AnalyticsProvider {
     private let log = ProfessionalLogger.shared
+    private var isEnabled: Bool = false
 
     public init() {
-        log.warning("FirebaseAnalyticsProvider is a stub. Add Firebase SDK to enable.")
+        #if FIREBASE_ENABLED
+        // Firebase SDK is available
+        // FirebaseApp.configure() should be called in AppDelegate
+        isEnabled = true
+        log.analytics("✅ Firebase Analytics initialized")
+        #else
+        // Firebase SDK not available - use native logging
+        isEnabled = false
+        log.analytics("ℹ️ Firebase SDK not included - using native analytics")
+        #endif
     }
 
     public func track(event: String, properties: [String: Any]) {
-        // TODO: Implement with Firebase Analytics
-        // Analytics.logEvent(event, parameters: properties)
-        log.analytics("Firebase stub: track(\(event))")
+        #if FIREBASE_ENABLED
+        Analytics.logEvent(event, parameters: properties as? [String: NSObject])
+        #endif
+        log.analytics("📊 Event: \(event) \(properties.isEmpty ? "" : "| \(properties)")")
     }
 
     public func setUserProperty(key: String, value: Any?) {
-        // TODO: Implement with Firebase Analytics
-        // Analytics.setUserProperty(value as? String, forName: key)
-        log.analytics("Firebase stub: setUserProperty(\(key))")
+        #if FIREBASE_ENABLED
+        Analytics.setUserProperty(value as? String, forName: key)
+        #endif
+        log.analytics("👤 Property: \(key) = \(value ?? "nil")")
     }
 
     public func identify(userId: String) {
-        // TODO: Implement with Firebase Analytics
-        // Analytics.setUserID(userId)
-        log.analytics("Firebase stub: identify(\(userId))")
+        #if FIREBASE_ENABLED
+        Analytics.setUserID(userId)
+        #endif
+        log.analytics("🆔 User: \(userId)")
     }
 
     public func reset() {
-        // TODO: Implement with Firebase Analytics
-        // Analytics.resetAnalyticsData()
-        log.analytics("Firebase stub: reset()")
+        #if FIREBASE_ENABLED
+        Analytics.resetAnalyticsData()
+        #endif
+        log.analytics("🔄 Analytics reset")
     }
 
     public func flush() {
         // Firebase automatically batches and flushes
-        log.analytics("Firebase stub: flush()")
+        // No action needed - data syncs within 1 hour or on app background
+        log.analytics("💾 Flush requested")
     }
 }
 
@@ -375,13 +391,20 @@ public class CrashReporter {
         queue.async {
             self.log.error("Non-fatal error: \(error)")
 
-            // TODO: Send to crash reporting service (e.g., Firebase Crashlytics)
-            // Crashlytics.crashlytics().record(error: error, userInfo: context)
+            #if FIREBASE_ENABLED
+            // Send to Firebase Crashlytics when SDK is available
+            var userInfo = context
+            userInfo["breadcrumbs"] = self.breadcrumbs.suffix(10).map { $0.message }
+            Crashlytics.crashlytics().record(error: error, userInfo: userInfo)
+            #endif
 
-            // Log breadcrumbs and context
-            self.log.error("Breadcrumbs: \(self.breadcrumbs.suffix(10))")
+            // Always log locally for debugging
+            self.log.error("Breadcrumbs: \(self.breadcrumbs.suffix(10).map { $0.message })")
             self.log.error("User Info: \(self.userInfo)")
             self.log.error("Context: \(context)")
+
+            // Persist to crash log file for later analysis
+            self.persistCrashLog(error: error, context: context)
         }
     }
 
@@ -390,10 +413,51 @@ public class CrashReporter {
         queue.async {
             self.log.error("Non-fatal: \(message)")
 
-            // TODO: Send to crash reporting service
-            // Crashlytics.crashlytics().log(message)
+            #if FIREBASE_ENABLED
+            Crashlytics.crashlytics().log(message)
+            #endif
 
             self.log.error("Context: \(context)")
+
+            // Persist for later analysis
+            self.persistCrashLog(message: message, context: context)
+        }
+    }
+
+    /// Persist crash log to file for debugging
+    private func persistCrashLog(error: Error? = nil, message: String? = nil, context: [String: Any]) {
+        guard let logsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+        let crashLogFile = logsDir.appendingPathComponent("crash_reports.jsonl")
+
+        var entry: [String: Any] = [
+            "timestamp": ISO8601DateFormatter().string(from: Date()),
+            "context": context,
+            "breadcrumbs": self.breadcrumbs.suffix(20).map { [
+                "time": $0.timestamp.ISO8601Format(),
+                "msg": $0.message,
+                "cat": $0.category,
+                "lvl": $0.level.rawValue
+            ]}
+        ]
+
+        if let error = error {
+            entry["error_type"] = String(describing: type(of: error))
+            entry["error_message"] = error.localizedDescription
+        }
+        if let message = message {
+            entry["message"] = message
+        }
+
+        if let data = try? JSONSerialization.data(withJSONObject: entry),
+           var content = String(data: data, encoding: .utf8) {
+            content += "\n"
+            if let handle = try? FileHandle(forWritingTo: crashLogFile) {
+                handle.seekToEndOfFile()
+                handle.write(content.data(using: .utf8) ?? Data())
+                try? handle.close()
+            } else {
+                try? content.write(to: crashLogFile, atomically: true, encoding: .utf8)
+            }
         }
     }
 
