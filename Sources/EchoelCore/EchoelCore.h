@@ -33,9 +33,9 @@
  */
 
 #define ECHOELCORE_VERSION_MAJOR 1
-#define ECHOELCORE_VERSION_MINOR 0
+#define ECHOELCORE_VERSION_MINOR 1
 #define ECHOELCORE_VERSION_PATCH 0
-#define ECHOELCORE_VERSION_STRING "1.0.0"
+#define ECHOELCORE_VERSION_STRING "1.1.0"
 
 //==============================================================================
 // Core Components
@@ -51,6 +51,22 @@
 // CLAP Plugin Framework
 #include "CLAP/CLAPTypes.h"
 #include "CLAP/CLAPPlugin.h"
+
+//==============================================================================
+// Advanced Components (v1.1.0)
+//==============================================================================
+
+// MCP (Model Context Protocol) - AI Agent Integration
+#include "MCP/MCPBioServer.h"
+
+// WebXR/PWA - Browser & Immersive Audio
+#include "WebXR/WebXRAudioBridge.h"
+
+// Photonic Interconnect - Future Hardware Abstraction
+#include "Photonic/PhotonicInterconnect.h"
+
+// Lambda Loop - Central Orchestrator
+#include "Lambda/LambdaLoop.h"
 
 //==============================================================================
 // Convenience Namespace
@@ -153,4 +169,60 @@ inline void printInfo() {
  *     - Call queueParamChange() on plugin
  *     - Push to ParamQueue (producer)
  *     - Pop from SpectrumQueue (consumer)
+ *
+ * Lambda Loop (v1.1.0):
+ * ---------------------
+ *   LambdaLoop              - Central orchestrator
+ *     .initialize()         - Initialize all subsystems
+ *     .start()              - Start the 60Hz control loop
+ *     .tick()               - Process one loop iteration
+ *     .addSubsystem(...)    - Register a subsystem
+ *     .getBioState()        - Access shared bio state
+ *     .getLambdaScore()     - Get unified coherence score (0-1)
+ *     .getState()           - Get current lambda state
+ *
+ *   LambdaState             - State machine
+ *     Dormant, Initializing, Calibrating, Active,
+ *     Flowing, Transcendent, Degrading, Shutting_Down
+ *
+ * MCP Server (v1.1.0):
+ * --------------------
+ *   MCPBioServer            - AI agent integration via MCP
+ *     .handleMessage(json)  - Process JSON-RPC message
+ *     .registerResource()   - Add custom resource
+ *     .registerTool()       - Add custom tool
+ *
+ *   Default Resources:
+ *     echoelmusic://bio/state       - Full bio state
+ *     echoelmusic://bio/hrv         - HRV value
+ *     echoelmusic://bio/coherence   - Coherence score
+ *     echoelmusic://bio/heartrate   - Heart rate BPM
+ *     echoelmusic://bio/breathing   - Breath phase/rate
+ *
+ *   Default Tools:
+ *     setBioHRV, setBioCoherence, setBioHeartRate,
+ *     setBioBreathPhase, getBioState, simulateBioSession
+ *
+ * WebXR Bridge (v1.1.0):
+ * ----------------------
+ *   WebXRAudioBridge        - Spatial audio for WebXR/PWA
+ *     .startSession(type)   - Start XR session
+ *     .addSource(...)       - Add spatial audio source
+ *     .updateListenerPose() - Update head position
+ *     .processAudio(L,R,n)  - Render spatial audio
+ *
+ *   XRSessionType           - VR/AR/Inline modes
+ *   SpatialAudioSource      - 3D positioned audio with bio modulation
+ *
+ * Photonic Interconnect (v1.1.0):
+ * -------------------------------
+ *   PhotonicInterconnect    - Future hardware abstraction
+ *     .initialize()         - Detect available hardware
+ *     .processBioAudio()    - Bio-modulated filtering
+ *     .computeSpectrum()    - FFT for visualization
+ *     .denseLayer()         - Neural network acceleration
+ *
+ *   PhotonicTensor<R,C>     - Matrix for optical computation
+ *   ElectronicPPU           - Current CPU/GPU simulation
+ *   (FutureL SiliconPhotonicPPU - Direct chip integration)
  */

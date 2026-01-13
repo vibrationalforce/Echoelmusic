@@ -168,8 +168,21 @@ EchoelCore/
 │
 ├── CLAP/
 │   ├── CLAPPlugin.h          # CLAP plugin base class
+│   ├── CLAPTypes.h           # Minimal CLAP type definitions
 │   ├── CLAPBioExt.h          # Bio-reactive CLAP extension
 │   └── CLAPEntry.h           # Plugin entry point
+│
+├── MCP/                      # (v1.1.0) AI Agent Integration
+│   └── MCPBioServer.h        # Model Context Protocol server
+│
+├── WebXR/                    # (v1.1.0) Browser & VR/AR Support
+│   └── WebXRAudioBridge.h    # WebXR spatial audio bridge
+│
+├── Photonic/                 # (v1.1.0) Future Hardware Abstraction
+│   └── PhotonicInterconnect.h # Silicon photonics abstraction
+│
+├── Lambda/                   # (v1.1.0) Central Orchestrator
+│   └── LambdaLoop.h          # 60Hz control loop orchestrator
 │
 └── Platform/
     ├── CoreAudio.h           # macOS/iOS backend
@@ -177,6 +190,73 @@ EchoelCore/
     ├── ALSA.h                # Linux backend
     └── WebAudio.h            # WASM/Browser backend
 ```
+
+## Lambda Loop Architecture (v1.1.0)
+
+The Lambda Loop is the central nervous system that orchestrates all EchoelCore subsystems:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Lambda Loop (60 Hz)                          │
+│                                                                 │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
+│  │ Bio Sensors │───►│  BioState   │───►│   Photonic  │         │
+│  │ (HealthKit) │    │  (Atomic)   │    │  Processing │         │
+│  └─────────────┘    └──────┬──────┘    └──────┬──────┘         │
+│                            │                   │                │
+│  ┌─────────────┐    ┌──────▼──────┐    ┌──────▼──────┐         │
+│  │ MCP Server  │◄───│   Lambda    │───►│   Audio     │         │
+│  │ (AI Agents) │    │ Orchestrator│    │   Engine    │         │
+│  └─────────────┘    └──────┬──────┘    └─────────────┘         │
+│                            │                                    │
+│  ┌─────────────┐    ┌──────▼──────┐                            │
+│  │   WebXR     │◄───│   Visual    │                            │
+│  │   Bridge    │    │   Engine    │                            │
+│  └─────────────┘    └─────────────┘                            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Lambda States
+
+| State | Description |
+|-------|-------------|
+| Dormant | System off |
+| Initializing | Starting up |
+| Calibrating | Establishing baselines |
+| Active | Normal operation |
+| Flowing | High coherence state (λ > 0.8) |
+| Transcendent | Peak experience (λ∞, coherence > 0.9) |
+| Degrading | Under load, reducing features |
+| Shutting_Down | Graceful shutdown |
+
+### Lambda Score (λ)
+
+The unified coherence metric combining:
+- **Bio coherence** (50%): HRV + coherence + relaxation
+- **System health** (30%): Subsystem readiness
+- **Performance** (20%): Inverse of load factor
+
+## MCP Integration (v1.1.0)
+
+Exposes bio-reactive state to AI agents via Model Context Protocol:
+
+```
+AI Agent ─── JSON-RPC ───► MCPBioServer ─── Atomic ───► BioState
+                                │
+                                ├── Resources (echoelmusic://bio/*)
+                                └── Tools (setBioHRV, simulateBioSession, etc.)
+```
+
+## Photonic Hardware Roadmap
+
+| Phase | Hardware | Status |
+|-------|----------|--------|
+| Current | ElectronicPPU (CPU/GPU simulation) | ✅ Implemented |
+| 2025 | FPGA with optical I/O | Abstraction ready |
+| 2026 | Intel Photonic AI Accelerators | Abstraction ready |
+| 2027+ | Full silicon photonics | Abstraction ready |
+
+The `PhotonicInterconnect` abstraction provides seamless migration path.
 
 ## Sources & References
 
