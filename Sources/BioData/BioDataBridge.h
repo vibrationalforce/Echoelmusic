@@ -3,10 +3,10 @@
 #import <Foundation/Foundation.h>
 
 /**
- * Bio-Data Bridge (Swift ↔️ C++/JUCE)
+ * Bio-Data Bridge (Swift ↔️ C++)
  *
- * Objective-C++ bridge that allows Swift code to communicate with the JUCE plugin.
- * This enables HealthKit data from Swift/watchOS to control JUCE audio parameters.
+ * Objective-C++ bridge that allows Swift code to communicate with the native audio engine.
+ * This enables HealthKit data from Swift/watchOS to control audio parameters.
  *
  * Usage from Swift:
  * ```swift

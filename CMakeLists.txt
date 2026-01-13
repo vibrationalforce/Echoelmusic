@@ -102,23 +102,40 @@ option(ENABLE_ANDROID_OBOE "Enable Oboe (Android)" ON)
 option(ENABLE_ANDROID_AAUDIO "Enable AAudio (Android)" ON)
 
 # ===========================
-# JUCE Framework (Optional - Not needed for iOS Swift-only builds)
+# JUCE Framework - REMOVED (2026-01-13)
 # ===========================
+# JUCE has been completely removed from this project.
+# All DSP is now handled by EchoelmusicDSP.h (JUCE-free, MIT license)
+#
+# For desktop plugins, use iPlug2 (MIT license, FREE):
+#   cmake .. -DUSE_IPLUG2=ON
 
-option(USE_JUCE "Use JUCE framework (required for desktop plugins)" OFF)
+option(USE_JUCE "DEPRECATED - JUCE has been removed" OFF)
 
 if(USE_JUCE)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/JUCE")
-        add_subdirectory(ThirdParty/JUCE)
-        message(STATUS "JUCE Framework: ENABLED (Desktop Plugins)")
-    else()
-        message(WARNING "JUCE not found in ThirdParty/JUCE - Desktop plugins disabled")
-        set(USE_JUCE OFF)
-    endif()
+    message(FATAL_ERROR "
+╔══════════════════════════════════════════════════════════════════╗
+║  JUCE SUPPORT HAS BEEN REMOVED                                    ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  This project no longer uses JUCE.                               ║
+║  All DSP is now handled by EchoelmusicDSP.h (MIT license)        ║
+║                                                                   ║
+║  For desktop plugins, use iPlug2 instead:                        ║
+║    cmake .. -DUSE_IPLUG2=ON                                      ║
+║                                                                   ║
+║  Benefits:                                                        ║
+║  • 100% JUCE-free codebase                                       ║
+║  • MIT license (no fees)                                         ║
+║  • Smaller binary size                                           ║
+║  • Native performance on all platforms                           ║
+║                                                                   ║
+╚══════════════════════════════════════════════════════════════════╝
+")
 else()
-    message(STATUS "JUCE Framework: DISABLED (iOS Swift-only build)")
-    message(STATUS "  → Using native AVFoundation + Accelerate for DSP")
-    message(STATUS "  → No licensing fees required!")
+    message(STATUS "JUCE Framework: REMOVED (using native EchoelmusicDSP)")
+    message(STATUS "  → EchoelmusicDSP.h for all DSP operations")
+    message(STATUS "  → iPlug2 available for desktop plugins")
 endif()
 
 # RECOMMENDED: iPlug2 for JUCE-free desktop plugins (MIT license, FREE)
