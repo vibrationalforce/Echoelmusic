@@ -197,7 +197,12 @@ void DynamicEQ::setBandRatio(int index, float ratio)
 
 std::vector<float> DynamicEQ::getSpectrumData() const
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    // ✅ LOCK-FREE: Check if new spectrum data is ready
+    if (spectrumReady.load(std::memory_order_acquire))
+    {
+        spectrumData = spectrumDataTemp;
+        spectrumReady.store(false, std::memory_order_release);
+    }
     return std::vector<float>(spectrumData.begin(), spectrumData.end());
 }
 
@@ -428,8 +433,8 @@ void DynamicEQ::updateSpectrumData(const juce::AudioBuffer<float>& buffer)
             window.multiplyWithWindowingTable(fftData.data(), fftSize);
             fft.performFrequencyOnlyForwardTransform(fftData.data());
 
-            // Convert to spectrum bins
-            std::lock_guard<std::mutex> lock(spectrumMutex);
+            // ✅ LOCK-FREE: Write to temp buffer, signal via atomic flag
+            // NO MUTEX - Real-time safe!
 
             for (int bin = 0; bin < spectrumBins; ++bin)
             {
@@ -453,9 +458,12 @@ void DynamicEQ::updateSpectrumData(const juce::AudioBuffer<float>& buffer)
                     float avgMagnitude = sum / count;
                     float db = juce::Decibels::gainToDecibels(avgMagnitude + 0.001f);
                     float normalized = juce::jmap(db, -60.0f, 0.0f, 0.0f, 1.0f);
-                    spectrumData[bin] = juce::jlimit(0.0f, 1.0f, normalized);
+                    spectrumDataTemp[bin] = juce::jlimit(0.0f, 1.0f, normalized);
                 }
             }
+
+            // Signal UI thread that new data is ready
+            spectrumReady.store(true, std::memory_order_release);
 
             fftDataIndex = 0;
             fftData.fill(0.0f);

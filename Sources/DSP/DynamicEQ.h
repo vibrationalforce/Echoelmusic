@@ -3,7 +3,7 @@
 #include <JuceHeader.h>
 #include <array>
 #include <vector>
-#include <mutex>
+#include <atomic>
 
 /**
  * Dynamic EQ
@@ -205,8 +205,10 @@ private:
     std::array<float, fftSize * 2> fftData;
     int fftDataIndex = 0;
 
-    std::array<float, spectrumBins> spectrumData;
-    mutable std::mutex spectrumMutex;
+    // Spectrum data - LOCK-FREE design for audio thread safety
+    mutable std::array<float, spectrumBins> spectrumData{};
+    std::array<float, spectrumBins> spectrumDataTemp{};
+    mutable std::atomic<bool> spectrumReady{false};
 
     //==========================================================================
     // Internal Methods

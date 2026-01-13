@@ -4,7 +4,7 @@
 #include <array>
 #include <vector>
 #include <complex>
-#include <mutex>
+#include <atomic>
 
 /**
  * SpectralSculptor
@@ -243,10 +243,15 @@ private:
     float mix = 1.0f;
     bool zeroLatency = false;
 
-    // Visualization
-    mutable std::mutex spectrumMutex;
-    std::vector<float> visualSpectrum;
-    std::vector<float> visualNoiseProfile;
+    // Visualization - LOCK-FREE design for audio thread safety
+    // Audio thread writes to temp buffers, sets atomic flag
+    // UI thread reads when flag is set, copies to visible buffers
+    mutable std::vector<float> visualSpectrum{std::vector<float>(1024, 0.0f)};
+    mutable std::vector<float> visualNoiseProfile{std::vector<float>(1024, 0.0f)};
+    std::vector<float> visualSpectrumTemp{std::vector<float>(1024, 0.0f)};
+    std::vector<float> visualNoiseProfileTemp{std::vector<float>(1024, 0.0f)};
+    mutable std::atomic<bool> spectrumReady{false};
+    mutable std::atomic<bool> noiseProfileReady{false};
 
     //==========================================================================
     // Internal Methods

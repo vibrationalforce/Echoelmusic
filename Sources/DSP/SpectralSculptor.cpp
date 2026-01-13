@@ -91,14 +91,15 @@ void SpectralSculptor::learnNoiseProfile(const juce::AudioBuffer<float>& buffer)
         noiseProfileLearned = true;
         noiseLearnFrames = 0;
 
-        // Update visualization
-        std::lock_guard<std::mutex> lock(spectrumMutex);
+        // ✅ LOCK-FREE: Update visualization using atomic flag
+        // Copy to local buffer first, then signal UI thread
         const float scale = 1024.0f / static_cast<float>(noiseProfile.size());
-        for (size_t i = 0; i < visualNoiseProfile.size(); ++i)
+        for (size_t i = 0; i < visualNoiseProfileTemp.size(); ++i)
         {
             int bin = static_cast<int>(i / scale);
-            visualNoiseProfile[i] = noiseProfile[bin];
+            visualNoiseProfileTemp[i] = noiseProfile[bin];
         }
+        noiseProfileReady.store(true, std::memory_order_release);
     }
 }
 
@@ -322,13 +323,24 @@ void SpectralSculptor::process(juce::AudioBuffer<float>& buffer)
 
 std::vector<float> SpectralSculptor::getSpectrumData() const
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    // ✅ LOCK-FREE: Check if new spectrum data is ready
+    if (spectrumReady.load(std::memory_order_acquire))
+    {
+        // Copy from temp buffer to visible buffer (UI thread only)
+        const_cast<std::vector<float>&>(visualSpectrum) = visualSpectrumTemp;
+        const_cast<std::atomic<bool>&>(spectrumReady).store(false, std::memory_order_release);
+    }
     return visualSpectrum;
 }
 
 std::vector<float> SpectralSculptor::getNoiseProfileData() const
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    // ✅ LOCK-FREE: Check if new noise profile is ready
+    if (noiseProfileReady.load(std::memory_order_acquire))
+    {
+        const_cast<std::vector<float>&>(visualNoiseProfile) = visualNoiseProfileTemp;
+        const_cast<std::atomic<bool>&>(noiseProfileReady).store(false, std::memory_order_release);
+    }
     return visualNoiseProfile;
 }
 
@@ -644,17 +656,21 @@ int SpectralSculptor::frequencyToBin(float freq) const
 
 void SpectralSculptor::updateVisualization(const std::vector<std::complex<float>>& freqData)
 {
-    std::lock_guard<std::mutex> lock(spectrumMutex);
+    // ✅ LOCK-FREE: Write to temp buffer, signal via atomic flag
+    // NO MUTEX - Real-time safe!
 
     const float scale = 1024.0f / static_cast<float>(freqData.size());
 
-    for (size_t i = 0; i < visualSpectrum.size(); ++i)
+    for (size_t i = 0; i < visualSpectrumTemp.size(); ++i)
     {
         int bin = static_cast<int>(i / scale);
         if (bin < static_cast<int>(freqData.size()))
         {
             float magnitude = std::abs(freqData[bin]);
-            visualSpectrum[i] = magnitude;
+            visualSpectrumTemp[i] = magnitude;
         }
     }
+
+    // Signal UI thread that new data is ready
+    spectrumReady.store(true, std::memory_order_release);
 }
