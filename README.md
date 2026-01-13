@@ -26,30 +26,38 @@
 
 ## 🎹 100% JUCE-Free Architecture
 
-Echoelmusic is built with a **completely JUCE-free architecture** - no licensing fees, no restrictions.
+Echoelmusic is built with **EchoelDSP** - a completely JUCE-free, zero-dependency audio engine.
 
-| Platform | Audio Framework | License |
-|----------|-----------------|---------|
-| **iOS/macOS/watchOS/tvOS/visionOS** | AVFoundation + Accelerate | Apple (Free) |
-| **Android** | Oboe + AAudio | Apache 2.0 (Free) |
-| **Desktop Plugins** | iPlug2 | MIT (Free) |
-| **DSP Engine** | Pure C++17 | MIT (Free) |
+| Platform | Audio Backend | SIMD | License |
+|----------|---------------|------|---------|
+| **macOS/iOS/visionOS/watchOS/tvOS** | Core Audio | ARM NEON | MIT |
+| **Windows** | WASAPI (Exclusive Mode) | AVX2/SSE4 | MIT |
+| **Linux** | PipeWire/ALSA (Auto-detect) | AVX2/SSE4 | MIT |
+| **Android** | AAudio/Oboe | ARM NEON | MIT |
 
-### Plugin Formats (via iPlug2)
+### EchoelDSP Features
+- **Zero Dependencies** - Pure C++17, no external libraries
+- **SIMD Optimized** - ARM NEON, x86 AVX2/SSE4, WebAssembly SIMD
+- **Lock-Free** - Real-time safe audio processing
+- **Cache-Aligned** - 64-byte alignment for maximum throughput
+
+### Plugin Formats (via EchoelDSP PluginAPI)
 - VST3 (Windows, macOS, Linux)
 - Audio Unit (macOS, iOS)
 - CLAP (Windows, macOS, Linux)
-- AAX (Pro Tools)
 - Standalone Apps
 
-### Build Without JUCE
+### Build (No External Dependencies)
 ```bash
-# Swift apps (iOS/macOS) - no external dependencies
+# Swift apps (iOS/macOS)
 swift build
 
-# Desktop plugins (iPlug2)
-cmake .. -DUSE_IPLUG2=ON -DUSE_JUCE=OFF
-make -j8
+# Desktop (Windows/Linux)
+cmake .. -DUSE_JUCE=OFF
+cmake --build . --parallel
+
+# Linux with PipeWire
+cmake .. -DECHOEL_USE_PIPEWIRE=ON -DECHOEL_USE_ALSA=ON
 ```
 
 ---

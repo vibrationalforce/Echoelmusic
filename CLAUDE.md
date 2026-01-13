@@ -9,8 +9,8 @@
 - **Platforms:** iOS 15+, macOS 12+, watchOS 8+, tvOS 15+, visionOS 1+, Android 8+, Windows 10+, Linux
 - **Build Systems:** Swift Package Manager, Gradle (Android), CMake (Desktop plugins)
 - **Current Phase:** Active Development
-- **DSP Engine:** EchoelDSP v1.0.0 (JUCE-FREE, SIMD-optimized, zero dependencies)
-- **Desktop Plugin Framework:** iPlug2 (MIT license, JUCE-free)
+- **DSP Engine:** EchoelDSP v1.0.0 (JUCE-FREE, iPlug2-FREE, SIMD-optimized, zero dependencies)
+- **Desktop Plugin Framework:** EchoelDSP PluginAPI (VST3/AU/CLAP from single codebase)
 - **Core Framework:** EchoelCore v1.1.0 (Lambda Loop, MCP, WebXR, Photonic)
 - **Swift-C++ Bridge:** ObjC++ wrapper for iOS/macOS integration
 - **Audio Thread Safety:** Lock-free atomics, zero-allocation DSP
@@ -29,7 +29,7 @@
 ### Key Features
 | Feature | Description |
 |---------|-------------|
-| **SIMD** | ARM NEON (Apple Silicon), x86 AVX2/SSE4, WebAssembly SIMD |
+| **SIMD** | ARM NEON (Apple Silicon), x86 AVX2/SSE4 |
 | **Lock-Free** | Zero heap allocation in audio callbacks, atomic parameters |
 | **Cache-Aligned** | 64-byte alignment for maximum memory throughput |
 | **FFT** | Split-radix algorithm, STFT, spectrum analyzer |
@@ -40,7 +40,7 @@
 
 ```
 Sources/EchoelDSP/
-├── SIMD.h              # Platform-agnostic SIMD (NEON/AVX2/SSE4/WASM)
+├── SIMD.h              # Platform-agnostic SIMD (ARM NEON, x86 AVX2/SSE4)
 ├── AudioBuffer.h       # Lock-free multi-channel audio buffers
 ├── FFT.h               # Split-radix FFT, STFT, spectrum analyzer
 ├── Filters.h           # Biquad, SVF, crossover, multiband
@@ -48,7 +48,9 @@ Sources/EchoelDSP/
 ├── Plugin/
 │   └── PluginAPI.h     # Universal plugin API (VST3/AU/CLAP)
 ├── Backends/
-│   └── CoreAudioBackend.h  # Native Apple audio
+│   ├── CoreAudioBackend.h  # Native Apple audio (macOS/iOS/visionOS)
+│   ├── WASAPIBackend.h     # Native Windows audio
+│   └── LinuxAudioBackend.h # ALSA + PipeWire backends
 └── Examples/
     └── BioSyncPlugin.h # Bio-reactive audio plugin demo
 ```
@@ -70,7 +72,8 @@ Sources/EchoelDSP/
 | Windows | WASAPI | AVX2/SSE4 |
 | Linux | ALSA/PipeWire | AVX2/SSE4 |
 | Android | AAudio/Oboe | ARM NEON |
-| WebAssembly | Web Audio API | WASM SIMD |
+
+> **Note:** WebAssembly support is planned for a future release.
 
 ---
 
@@ -504,15 +507,15 @@ Inspired by [nw_wrld](https://github.com/aagentah/nw_wrld) event-driven sequence
 - **Edge Case Tests** - Boundary conditions, error handling
 - **Concurrency Tests** - Multi-engine, thread safety
 
-#### JUCE 100% Integration (NEW)
-- **DynamicEQ** - 8-band dynamic EQ (JUCE 7+ compatible)
-- **SpectralSculptor** - Spectral processing suite (FFT API fixed)
-- **All DSP Effects** - 50+ DSP processors enabled
+#### EchoelDSP 100% Integration (JUCE-FREE)
+- **DynamicEQ** - 8-band dynamic EQ (EchoelDSP native)
+- **SpectralSculptor** - Spectral processing suite (split-radix FFT)
+- **All DSP Effects** - 50+ DSP processors (lock-free, SIMD-optimized)
 - **AI & Visualization** - SmartMixer, SpectrumAnalyzer, BioReactiveVisualizer
 - **Hardware Integration** - Ableton Link, MIDI, OSC, Modular, DJ Equipment
 - **Video & Visuals** - VideoWeaver, VisualForge, LaserForce
 - **Platform Services** - CreatorManager, AgencyManager, GlobalReach, EchoHub
-- **Plugin Formats** - VST3, AU, AAX, AUv3, CLAP, LV2, Standalone
+- **Plugin Formats** - VST3, AU, CLAP (via EchoelDSP PluginAPI)
 
 #### Biofeedback Modulation System (NEW)
 - **BioModulator** - Real-time biometric to audio parameter mapping
@@ -755,14 +758,14 @@ cd android
 ./gradlew test
 ```
 
-### Desktop Plugins (CMake/JUCE)
+### Desktop Plugins (CMake/EchoelDSP)
 ```bash
 mkdir build && cd build
-cmake .. -DUSE_JUCE=ON -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . --parallel
 
-# Swift-only mode (no JUCE required)
-cmake .. -DUSE_JUCE=OFF
+# Run build validation
+./scripts/validate_build.sh
 ```
 
 ---
@@ -874,10 +877,10 @@ Echoelmusic/
 │   │   ├── CLAP/                    # CLAP plugin base
 │   │   ├── Lock-Free/               # SPSCQueue, atomics
 │   │   └── Tests/                   # C++ unit tests
-│   ├── DSP/                         # C++ DSP effects (JUCE)
-│   ├── Plugin/                      # VST3/AU plugin code
+│   ├── EchoelDSP/                   # Zero-dependency DSP library
+│   ├── Plugin/                      # VST3/AU/CLAP plugin code
 │   ├── UI/                          # C++ desktop UI
-│   └── Desktop/                     # iPlug2 integration
+│   └── Desktop/                     # Desktop platform integration
 ├── Tests/EchoelmusicTests/          # Swift unit tests
 ├── android/                         # Android Kotlin app
 └── .github/workflows/               # CI/CD pipelines
@@ -896,9 +899,9 @@ Echoelmusic/
 
 ### C++
 - **C++17** standard
-- JUCE framework for desktop plugins
-- Namespace: `Echoelmusic::`
-- Header guards or `#pragma once`
+- EchoelDSP library for audio processing (zero dependencies)
+- Namespace: `Echoel::DSP::` for DSP, `Echoel::Plugin::` for plugins
+- Use `#pragma once` for include guards
 
 ### Commit Messages
 ```
@@ -963,7 +966,7 @@ mpe.setVoiceTimbre(voice: voice, timbre: smile)
 | `UnifiedControlHub.swift` | 626-627 | Calculate breathing rate from HRV, get audio level | Uses fallback values |
 | `StreamEngine.swift` | 329, 365, 547 | Scene rendering, crossfade, frame encoding | Streaming feature |
 | `AIComposer.swift` | 21, 31 | Load CoreML models, LSTM melody generation | AI Phase |
-| `CMakeLists.txt` | 349-350 | DynamicEQ.cpp, SpectralSculptor.cpp need JUCE fixes | Desktop plugins |
+| `CMakeLists.txt` | - | Migrated to EchoelDSP | ✅ Complete |
 
 ### Platform Limitations
 - **Simulator:** No HealthKit, Push 3, or head tracking
@@ -1062,8 +1065,9 @@ Tests/EchoelmusicTests/
 - Oboe (low-latency audio)
 
 ### Desktop (CMakeLists.txt)
-- JUCE Framework (optional)
-- iPlug2 (MIT license alternative)
+- EchoelDSP (zero dependencies, header-only)
+- ALSA (Linux): `apt install libasound2-dev`
+- PipeWire (Linux, optional): `apt install libpipewire-0.3-dev`
 
 ---
 
@@ -1088,7 +1092,8 @@ mkdir build && cd build && cmake .. && make
 | HealthKit not available | Run on real device, not simulator |
 | Push 3 not detected | Check USB connection |
 | Build fails on Linux | Install ALSA dev: `apt install libasound2-dev` |
-| CMake JUCE error | Set `-DUSE_JUCE=OFF` for Swift-only build |
+| PipeWire not detected | Install: `apt install libpipewire-0.3-dev` |
+| Validation fails | Run `./scripts/validate_build.sh` for diagnostics |
 
 ### Useful Files
 - `XCODE_HANDOFF.md` - Xcode development guide
@@ -1423,4 +1428,4 @@ QuantumAccessibility.colorSchemes:
 
 ---
 
-*Last Updated: 2026-01-13 | iPlug2 Desktop Plugin Integration - Lock-free Audio DSP - Bio-Reactive Synthesis*
+*Last Updated: 2026-01-13 | EchoelDSP Zero-Dependency Audio - Lock-free RT-Safe DSP - Multi-Platform Backends*

@@ -324,7 +324,7 @@ private:
 // These would be implemented in separate .cpp files for each format
 
 namespace VST3 {
-    // VST3 SDK wrapper - implements IPluginBase, IComponent, IAudioProcessor
+    // VST3 SDK wrapper - implements Steinberg plugin interfaces
     // Requires Steinberg VST3 SDK headers
 
     inline bool exportPlugin(PluginBase* plugin, void* factory) {
