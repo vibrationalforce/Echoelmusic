@@ -17,7 +17,7 @@
 - **Collaboration:** Zero-Latency Worldwide Real-Time
 - **Localization:** 12 Languages (EN, DE, JA, ES, FR, ZH, KO, PT, IT, RU, AR, HI)
 - **Presets:** 74+ Curated Engine Presets (50 expanded presets added)
-- **JUCE Integration:** 100% (50+ DSP, All Formats)
+- **EchoelCore/EchoelDSP:** 100% Native (NO JUCE, NO iPlug2)
 - **Plugins:** 53 Total (8 SDK + 3 Advanced + 42 DSP)
 - **Legal:** Privacy Policy, Terms of Service, Health Disclaimers
 - **Security Score:** 85/100 (Grade A)
@@ -457,15 +457,16 @@ Inspired by [nw_wrld](https://github.com/aagentah/nw_wrld) event-driven sequence
 - **Edge Case Tests** - Boundary conditions, error handling
 - **Concurrency Tests** - Multi-engine, thread safety
 
-#### JUCE 100% Integration (NEW)
-- **DynamicEQ** - 8-band dynamic EQ (JUCE 7+ compatible)
-- **SpectralSculptor** - Spectral processing suite (FFT API fixed)
-- **All DSP Effects** - 50+ DSP processors enabled
-- **AI & Visualization** - SmartMixer, SpectrumAnalyzer, BioReactiveVisualizer
-- **Hardware Integration** - Ableton Link, MIDI, OSC, Modular, DJ Equipment
+#### EchoelCore/EchoelDSP Native Framework (NO JUCE, NO iPlug2)
+- **EchoelCore** - Native C++17 audio framework with SIMD optimizations
+- **EchoelDSP** - 50+ native DSP processors (Biquad, Dynamics, Saturation, etc.)
+- **PluginAPI** - MIDI 2.0 support, 32-bit controller resolution, MPE
+- **AAudio/Oboe Backend** - Native Android audio with USB Class-Compliant
+- **WebAudio Backend** - WebAssembly SIMD for browser deployment
+- **Hardware Integration** - Ableton Link, MIDI 2.0, OSC, Modular, DJ Equipment
 - **Video & Visuals** - VideoWeaver, VisualForge, LaserForce
 - **Platform Services** - CreatorManager, AgencyManager, GlobalReach, EchoHub
-- **Plugin Formats** - VST3, AU, AAX, AUv3, CLAP, LV2, Standalone
+- **Plugin Formats** - VST3, AU, AUv3, CLAP (native build scripts)
 
 #### Biofeedback Modulation System (NEW)
 - **BioModulator** - Real-time biometric to audio parameter mapping
@@ -708,14 +709,17 @@ cd android
 ./gradlew test
 ```
 
-### Desktop Plugins (CMake/JUCE)
+### Desktop Plugins (EchoelCore/EchoelDSP - NO JUCE)
 ```bash
 mkdir build && cd build
-cmake .. -DUSE_JUCE=ON -DCMAKE_BUILD_TYPE=Release
+cmake ../Sources/EchoelCore -DCMAKE_BUILD_TYPE=Release
 cmake --build . --parallel
 
-# Swift-only mode (no JUCE required)
-cmake .. -DUSE_JUCE=OFF
+# Build all plugin formats (VST3, AU, CLAP)
+./scripts/build-plugins.sh all
+
+# Run tests
+./scripts/build-plugins.sh test
 ```
 
 ---
@@ -811,10 +815,10 @@ Echoelmusic/
 │   │   ├── Developer/               # Developer SDK & plugins
 │   │   ├── Resources/               # App icons & assets
 │   │   └── Core/                    # Utilities & constants
-│   ├── DSP/                         # C++ DSP effects (JUCE)
-│   ├── Plugin/                      # VST3/AU plugin code
-│   ├── UI/                          # C++ desktop UI
-│   └── Desktop/                     # iPlug2 integration
+│   ├── EchoelCore/                  # Native C++17 audio framework
+│   ├── EchoelDSP/                   # Native DSP effects (NO JUCE)
+│   ├── Tests/                       # C++ unit tests
+│   └── Plugin/                      # VST3/AU/CLAP plugin code
 ├── Tests/EchoelmusicTests/          # Swift unit tests
 ├── android/                         # Android Kotlin app
 └── .github/workflows/               # CI/CD pipelines
@@ -833,8 +837,8 @@ Echoelmusic/
 
 ### C++
 - **C++17** standard
-- JUCE framework for desktop plugins
-- Namespace: `Echoelmusic::`
+- **EchoelCore/EchoelDSP** native framework (NO JUCE, NO iPlug2)
+- Namespace: `EchoelCore::` and `EchoelDSP::`
 - Header guards or `#pragma once`
 
 ### Commit Messages
@@ -900,7 +904,7 @@ mpe.setVoiceTimbre(voice: voice, timbre: smile)
 | `UnifiedControlHub.swift` | 626-627 | Calculate breathing rate from HRV, get audio level | Uses fallback values |
 | `StreamEngine.swift` | 329, 365, 547 | Scene rendering, crossfade, frame encoding | Streaming feature |
 | `AIComposer.swift` | 21, 31 | Load CoreML models, LSTM melody generation | AI Phase |
-| `CMakeLists.txt` | 349-350 | DynamicEQ.cpp, SpectralSculptor.cpp need JUCE fixes | Desktop plugins |
+| `CMakeLists.txt` | - | Migrated to EchoelCore/EchoelDSP | ✅ Completed |
 
 ### Platform Limitations
 - **Simulator:** No HealthKit, Push 3, or head tracking
@@ -999,8 +1003,8 @@ Tests/EchoelmusicTests/
 - Oboe (low-latency audio)
 
 ### Desktop (CMakeLists.txt)
-- JUCE Framework (optional)
-- iPlug2 (MIT license alternative)
+- **EchoelCore/EchoelDSP** - Native audio framework (NO external dependencies)
+- Platform audio: Core Audio (macOS), WASAPI (Windows), ALSA/PipeWire (Linux), AAudio (Android)
 
 ---
 
@@ -1025,7 +1029,7 @@ mkdir build && cd build && cmake .. && make
 | HealthKit not available | Run on real device, not simulator |
 | Push 3 not detected | Check USB connection |
 | Build fails on Linux | Install ALSA dev: `apt install libasound2-dev` |
-| CMake JUCE error | Set `-DUSE_JUCE=OFF` for Swift-only build |
+| CMake build error | Use `cmake ../Sources/EchoelCore` for native build |
 
 ### Useful Files
 - `XCODE_HANDOFF.md` - Xcode development guide
