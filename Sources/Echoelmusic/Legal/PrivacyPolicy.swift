@@ -10,6 +10,12 @@
 
 import Foundation
 import SwiftUI
+#if os(iOS) || os(visionOS)
+import UIKit
+#elseif os(macOS)
+import AppKit
+import UniformTypeIdentifiers
+#endif
 
 // MARK: - Privacy Policy
 
@@ -1776,6 +1782,8 @@ public struct LegalDocumentViewer: View {
 
     @State private var selectedDocument: DocumentType
     @State private var showFullText: Bool = false
+    @State private var pdfURL: URL?
+    @State private var showShareSheet: Bool = false
     @Environment(\.dismiss) private var dismiss
 
     public init(document: DocumentType = .privacyPolicy) {
@@ -1909,21 +1917,265 @@ public struct LegalDocumentViewer: View {
                     }
                 }
             }
+            #if os(iOS) || os(visionOS)
+            .sheet(isPresented: $showShareSheet) {
+                if let url = pdfURL {
+                    ShareSheet(activityItems: [url])
+                }
+            }
+            #endif
         }
     }
 
     // MARK: - Actions
 
     private func exportDocument() {
-        // TODO: Implement PDF export
-        // For now, just copy to clipboard
-        #if os(iOS)
-        UIPasteboard.general.string = selectedDocument.fullText
+        #if os(iOS) || os(visionOS)
+        exportDocumentToiOSPDF()
         #elseif os(macOS)
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(selectedDocument.fullText, forType: .string)
+        exportDocumentToMacPDF()
+        #else
+        // Fallback: copy to clipboard for watchOS/tvOS
+        #if os(watchOS)
+        // watchOS doesn't have clipboard access
+        #endif
         #endif
     }
+
+    #if os(iOS) || os(visionOS)
+    private func exportDocumentToiOSPDF() {
+        let pageSize = CGSize(width: 612, height: 792) // US Letter size
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: pageSize))
+
+        let data = renderer.pdfData { context in
+            renderPDFContent(context: context, pageSize: pageSize)
+        }
+
+        // Save to temporary file
+        let fileName = "\(selectedDocument.rawValue.replacingOccurrences(of: " ", with: "_"))_\(selectedDocument.version).pdf"
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+
+        do {
+            try data.write(to: tempURL)
+            pdfURL = tempURL
+            showShareSheet = true
+        } catch {
+            // Fallback to clipboard if PDF creation fails
+            UIPasteboard.general.string = selectedDocument.fullText
+        }
+    }
+
+    private func renderPDFContent(context: UIGraphicsPDFRendererContext, pageSize: CGSize) {
+        let margin: CGFloat = 50
+        let contentWidth = pageSize.width - (margin * 2)
+        var currentY: CGFloat = margin
+
+        // Title attributes
+        let titleFont = UIFont.boldSystemFont(ofSize: 24)
+        let titleAttributes: [NSAttributedString.Key: Any] = [
+            .font: titleFont,
+            .foregroundColor: UIColor.black
+        ]
+
+        // Subtitle attributes
+        let subtitleFont = UIFont.systemFont(ofSize: 12)
+        let subtitleAttributes: [NSAttributedString.Key: Any] = [
+            .font: subtitleFont,
+            .foregroundColor: UIColor.darkGray
+        ]
+
+        // Body text attributes
+        let bodyFont = UIFont.systemFont(ofSize: 10)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 4
+        paragraphStyle.paragraphSpacing = 8
+        let bodyAttributes: [NSAttributedString.Key: Any] = [
+            .font: bodyFont,
+            .foregroundColor: UIColor.black,
+            .paragraphStyle: paragraphStyle
+        ]
+
+        // Calculate maximum content height per page (leave room for header)
+        let maxContentHeight = pageSize.height - (margin * 2) - 100
+
+        // Split content into pages
+        let fullText = selectedDocument.fullText
+        let lines = fullText.components(separatedBy: "\n")
+        var pageLines: [[String]] = [[]]
+        var currentPageHeight: CGFloat = 0
+
+        for line in lines {
+            let lineRect = (line as NSString).boundingRect(
+                with: CGSize(width: contentWidth, height: .infinity),
+                options: [.usesLineFragmentOrigin, .usesFontLeading],
+                attributes: bodyAttributes,
+                context: nil
+            )
+            let requiredHeight = lineRect.height + paragraphStyle.paragraphSpacing
+
+            if currentPageHeight + requiredHeight > maxContentHeight && !pageLines[pageLines.count - 1].isEmpty {
+                pageLines.append([])
+                currentPageHeight = 0
+            }
+
+            pageLines[pageLines.count - 1].append(line)
+            currentPageHeight += requiredHeight
+        }
+
+        // Render each page
+        for (pageIndex, pageLinesContent) in pageLines.enumerated() {
+            context.beginPage()
+            currentY = margin
+
+            // Draw header on each page
+            let title = selectedDocument.rawValue
+            let titleRect = CGRect(x: margin, y: currentY, width: contentWidth, height: 30)
+            title.draw(in: titleRect, withAttributes: titleAttributes)
+            currentY += 35
+
+            // Metadata
+            let metadata = "Version \(selectedDocument.version) • Effective: \(selectedDocument.effectiveDate) • Page \(pageIndex + 1) of \(pageLines.count)"
+            let metadataRect = CGRect(x: margin, y: currentY, width: contentWidth, height: 20)
+            metadata.draw(in: metadataRect, withAttributes: subtitleAttributes)
+            currentY += 30
+
+            // Separator line
+            let linePath = UIBezierPath()
+            linePath.move(to: CGPoint(x: margin, y: currentY))
+            linePath.addLine(to: CGPoint(x: pageSize.width - margin, y: currentY))
+            UIColor.lightGray.setStroke()
+            linePath.lineWidth = 0.5
+            linePath.stroke()
+            currentY += 15
+
+            // Draw body text for this page
+            let pageText = pageLinesContent.joined(separator: "\n")
+            let textRect = CGRect(x: margin, y: currentY, width: contentWidth, height: pageSize.height - currentY - margin)
+            pageText.draw(in: textRect, withAttributes: bodyAttributes)
+        }
+    }
+    #endif
+
+    #if os(macOS)
+    private func exportDocumentToMacPDF() {
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [.pdf]
+        savePanel.nameFieldStringValue = "\(selectedDocument.rawValue.replacingOccurrences(of: " ", with: "_"))_\(selectedDocument.version).pdf"
+        savePanel.title = "Export \(selectedDocument.rawValue)"
+
+        savePanel.begin { response in
+            if response == .OK, let url = savePanel.url {
+                self.createMacPDF(at: url)
+            }
+        }
+    }
+
+    private func createMacPDF(at url: URL) {
+        let pageSize = NSSize(width: 612, height: 792) // US Letter
+        let margin: CGFloat = 50
+        let contentWidth = pageSize.width - (margin * 2)
+
+        // Create PDF context
+        var mediaBox = CGRect(origin: .zero, size: CGSize(width: pageSize.width, height: pageSize.height))
+        guard let context = CGContext(url as CFURL, mediaBox: &mediaBox, nil) else {
+            // Fallback to clipboard
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(selectedDocument.fullText, forType: .string)
+            return
+        }
+
+        // Text attributes
+        let titleFont = NSFont.boldSystemFont(ofSize: 24)
+        let subtitleFont = NSFont.systemFont(ofSize: 12)
+        let bodyFont = NSFont.systemFont(ofSize: 10)
+
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 4
+        paragraphStyle.paragraphSpacing = 8
+
+        let titleAttributes: [NSAttributedString.Key: Any] = [
+            .font: titleFont,
+            .foregroundColor: NSColor.black
+        ]
+
+        let subtitleAttributes: [NSAttributedString.Key: Any] = [
+            .font: subtitleFont,
+            .foregroundColor: NSColor.darkGray
+        ]
+
+        let bodyAttributes: [NSAttributedString.Key: Any] = [
+            .font: bodyFont,
+            .foregroundColor: NSColor.black,
+            .paragraphStyle: paragraphStyle
+        ]
+
+        // Calculate content per page
+        let maxContentHeight = pageSize.height - (margin * 2) - 100
+        let lines = selectedDocument.fullText.components(separatedBy: "\n")
+        var pageLines: [[String]] = [[]]
+        var currentPageHeight: CGFloat = 0
+
+        for line in lines {
+            let lineRect = (line as NSString).boundingRect(
+                with: CGSize(width: contentWidth, height: .infinity),
+                options: [.usesLineFragmentOrigin, .usesFontLeading],
+                attributes: bodyAttributes
+            )
+            let requiredHeight = lineRect.height + paragraphStyle.paragraphSpacing
+
+            if currentPageHeight + requiredHeight > maxContentHeight && !pageLines[pageLines.count - 1].isEmpty {
+                pageLines.append([])
+                currentPageHeight = 0
+            }
+
+            pageLines[pageLines.count - 1].append(line)
+            currentPageHeight += requiredHeight
+        }
+
+        // Render pages
+        for (pageIndex, pageLinesContent) in pageLines.enumerated() {
+            context.beginPDFPage(nil)
+            var currentY = pageSize.height - margin
+
+            // Title
+            let title = NSAttributedString(string: selectedDocument.rawValue, attributes: titleAttributes)
+            let titleHeight = title.boundingRect(with: CGSize(width: contentWidth, height: .infinity), options: .usesLineFragmentOrigin).height
+            currentY -= titleHeight
+            title.draw(at: NSPoint(x: margin, y: currentY))
+            currentY -= 15
+
+            // Metadata
+            let metadata = NSAttributedString(
+                string: "Version \(selectedDocument.version) • Effective: \(selectedDocument.effectiveDate) • Page \(pageIndex + 1) of \(pageLines.count)",
+                attributes: subtitleAttributes
+            )
+            let metadataHeight = metadata.boundingRect(with: CGSize(width: contentWidth, height: .infinity), options: .usesLineFragmentOrigin).height
+            currentY -= metadataHeight
+            metadata.draw(at: NSPoint(x: margin, y: currentY))
+            currentY -= 20
+
+            // Separator line
+            context.setStrokeColor(NSColor.lightGray.cgColor)
+            context.setLineWidth(0.5)
+            context.move(to: CGPoint(x: margin, y: currentY))
+            context.addLine(to: CGPoint(x: pageSize.width - margin, y: currentY))
+            context.strokePath()
+            currentY -= 15
+
+            // Body text
+            let bodyText = NSAttributedString(
+                string: pageLinesContent.joined(separator: "\n"),
+                attributes: bodyAttributes
+            )
+            let bodyRect = NSRect(x: margin, y: margin, width: contentWidth, height: currentY - margin)
+            bodyText.draw(in: bodyRect)
+
+            context.endPDFPage()
+        }
+
+        context.closePDF()
+    }
+    #endif
 
     private func openEmail(to email: String) {
         let subject = "Inquiry about \(selectedDocument.rawValue)"
@@ -1947,6 +2199,26 @@ public struct LegalDocumentViewer: View {
         }
     }
 }
+
+// MARK: - Share Sheet (iOS/visionOS)
+
+#if os(iOS) || os(visionOS)
+/// UIKit share sheet wrapper for SwiftUI
+@available(iOS 15.0, visionOS 1.0, *)
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    let applicationActivities: [UIActivity]? = nil
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(
+            activityItems: activityItems,
+            applicationActivities: applicationActivities
+        )
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+#endif
 
 // MARK: - Compact Legal Banner
 
