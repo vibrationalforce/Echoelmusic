@@ -1,0 +1,247 @@
+# ============================================================================
+# EchoelDSP CI/CD Pipeline
+# ============================================================================
+# Builds and tests on all platforms: macOS, Windows, Linux
+# JUCE-FREE | iPlug2-FREE | Pure C++17 | SIMD-Optimized
+# ============================================================================
+
+name: EchoelDSP CI
+
+on:
+  push:
+    branches: [ main, develop, 'claude/*' ]
+    paths:
+      - 'Sources/EchoelDSP/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/echoeldsp-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'Sources/EchoelDSP/**'
+      - 'CMakeLists.txt'
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  # ============================================================================
+  # macOS Build (Universal Binary: arm64 + x86_64)
+  # ============================================================================
+  macos:
+    runs-on: macos-14
+    strategy:
+      matrix:
+        arch: [arm64, x86_64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: |
+          mkdir build && cd build
+          cmake ../Sources/EchoelDSP \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} \
+            -DECHOEL_DSP_BUILD_TESTS=ON \
+            -DECHOEL_DSP_ENABLE_SIMD=ON
+
+      - name: Build
+        run: cmake --build build --parallel $(sysctl -n hw.ncpu)
+
+      - name: Run Tests
+        run: |
+          cd build
+          if [ -f "./EchoelDSPTests" ]; then
+            ./EchoelDSPTests
+          fi
+
+      - name: Run Validation Script
+        run: |
+          chmod +x scripts/validate_build.sh
+          ./scripts/validate_build.sh
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: echoeldsp-macos-${{ matrix.arch }}
+          path: |
+            build/*.dylib
+            build/*.component
+            build/*.vst3
+
+  # ============================================================================
+  # Windows Build (x64)
+  # ============================================================================
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: |
+          mkdir build
+          cd build
+          cmake ../Sources/EchoelDSP `
+            -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+            -DECHOEL_DSP_BUILD_TESTS=ON `
+            -DECHOEL_DSP_ENABLE_SIMD=ON
+
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+
+      - name: Run Tests
+        run: |
+          cd build
+          if (Test-Path ".\Release\EchoelDSPTests.exe") {
+            .\Release\EchoelDSPTests.exe
+          }
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: echoeldsp-windows-x64
+          path: |
+            build/Release/*.dll
+            build/Release/*.vst3
+
+  # ============================================================================
+  # Linux Build (x64)
+  # ============================================================================
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            libasound2-dev \
+            libpipewire-0.3-dev
+
+      - name: Configure CMake
+        run: |
+          mkdir build && cd build
+          cmake ../Sources/EchoelDSP \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DECHOEL_DSP_BUILD_TESTS=ON \
+            -DECHOEL_DSP_ENABLE_SIMD=ON
+
+      - name: Build
+        run: cmake --build build --parallel $(nproc)
+
+      - name: Run Tests
+        run: |
+          cd build
+          if [ -f "./EchoelDSPTests" ]; then
+            ./EchoelDSPTests
+          fi
+
+      - name: Run Validation Script
+        run: |
+          chmod +x scripts/validate_build.sh
+          ./scripts/validate_build.sh
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: echoeldsp-linux-x64
+          path: |
+            build/*.so
+            build/*.vst3
+            build/*.clap
+
+  # ============================================================================
+  # Code Quality
+  # ============================================================================
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for JUCE Dependencies
+        run: |
+          echo "Checking for JUCE dependencies..."
+          JUCE_REFS=$(grep -rE "juce::|#include.*juce|JuceHeader|JUCE_" Sources/EchoelDSP || echo "")
+          if [ -n "$JUCE_REFS" ]; then
+            echo "ERROR: Found JUCE references in EchoelDSP!"
+            echo "$JUCE_REFS"
+            exit 1
+          fi
+          echo "✓ No JUCE dependencies found"
+
+      - name: Check for iPlug2 Dependencies
+        run: |
+          echo "Checking for iPlug2 dependencies..."
+          IPLUG_REFS=$(grep -rE "IPlug|iplug2|IGraphics" Sources/EchoelDSP || echo "")
+          if [ -n "$IPLUG_REFS" ]; then
+            echo "ERROR: Found iPlug2 references in EchoelDSP!"
+            echo "$IPLUG_REFS"
+            exit 1
+          fi
+          echo "✓ No iPlug2 dependencies found"
+
+      - name: Check Include Guards
+        run: |
+          echo "Checking include guards..."
+          for file in Sources/EchoelDSP/*.h Sources/EchoelDSP/**/*.h; do
+            if [ -f "$file" ]; then
+              if ! grep -q "#pragma once" "$file"; then
+                echo "WARNING: Missing #pragma once in $file"
+              fi
+            fi
+          done
+          echo "✓ Include guards check complete"
+
+  # ============================================================================
+  # Android Build (Optional)
+  # ============================================================================
+  android:
+    runs-on: ubuntu-latest
+    if: false  # Disabled by default, enable when Android support is needed
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build Android
+        run: |
+          cd android
+          ./gradlew assembleRelease
+
+  # ============================================================================
+  # Release
+  # ============================================================================
+  release:
+    needs: [macos, windows, linux, lint]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release Package
+        run: |
+          mkdir -p release
+          cp -r artifacts/* release/
+          cd release
+          zip -r ../echoeldsp-all-platforms.zip .
+
+      - name: Upload Release Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: echoeldsp-release
+          path: echoeldsp-all-platforms.zip
