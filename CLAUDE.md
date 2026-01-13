@@ -10,6 +10,8 @@
 - **Build Systems:** Swift Package Manager, Gradle (Android), CMake (Desktop plugins)
 - **Current Phase:** Active Development
 - **Desktop Plugin Framework:** iPlug2 (MIT license, JUCE-free)
+- **Core Framework:** EchoelCore v1.1.0 (Lambda Loop, MCP, WebXR, Photonic)
+- **Swift-C++ Bridge:** ObjC++ wrapper for iOS/macOS integration
 - **Audio Thread Safety:** Lock-free atomics, zero-allocation DSP
 - **Localization:** 12 Languages (EN, DE, JA, ES, FR, ZH, KO, PT, IT, RU, AR, HI)
 - **Presets:** 74+ Curated Engine Presets
@@ -758,6 +760,12 @@ cmake .. -DUSE_JUCE=OFF
 | `NeuroSpiritualEngine` | `Sources/Echoelmusic/NeuroSpiritual/` | Psychosomatic data (FACS, Polyvagal, Reich) |
 | `QuantumHealthBiofeedbackEngine` | `Sources/Echoelmusic/Quantum/` | Unlimited collaboration, broadcasting |
 | `AdeyWindowsBioelectromagneticEngine` | `Sources/Echoelmusic/Science/` | Scientific frequency-body mapping (Adey Research) |
+| **EchoelCore (C++)** | | |
+| `LambdaLoop` | `Sources/EchoelCore/Lambda/` | Central 60Hz C++ orchestrator |
+| `MCPBioServer` | `Sources/EchoelCore/MCP/` | AI agent integration (Model Context Protocol) |
+| `WebXRAudioBridge` | `Sources/EchoelCore/WebXR/` | Spatial audio for VR/AR/PWA |
+| `PhotonicInterconnect` | `Sources/EchoelCore/Photonic/` | Future silicon photonics abstraction |
+| `EchoelCoreBridge` | `Sources/EchoelCore/Bridge/` | ObjC++ Swift-C++ integration layer |
 
 ---
 
@@ -802,6 +810,16 @@ Echoelmusic/
 │   │   ├── Developer/               # Developer SDK & plugins
 │   │   ├── Resources/               # App icons & assets
 │   │   └── Core/                    # Utilities & constants
+│   ├── EchoelCore/                  # C++ Core Framework (v1.1.0)
+│   │   ├── Lambda/                  # LambdaLoop orchestrator
+│   │   ├── MCP/                     # MCPBioServer (AI agents)
+│   │   ├── WebXR/                   # WebXRAudioBridge (VR/AR)
+│   │   ├── Photonic/                # PhotonicInterconnect
+│   │   ├── Bridge/                  # Swift-C++ ObjC++ wrapper
+│   │   ├── Bio/                     # BioState, BioMapping
+│   │   ├── CLAP/                    # CLAP plugin base
+│   │   ├── Lock-Free/               # SPSCQueue, atomics
+│   │   └── Tests/                   # C++ unit tests
 │   ├── DSP/                         # C++ DSP effects (JUCE)
 │   ├── Plugin/                      # VST3/AU plugin code
 │   ├── UI/                          # C++ desktop UI
