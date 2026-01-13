@@ -4,6 +4,39 @@
 #include <atomic>
 #include <memory>
 #include <functional>
+#include <array>
+
+// ============================================================================
+// Lock-Free Audio Queue for Real-Time Safety
+// ============================================================================
+
+template<typename T, size_t Capacity>
+class LockFreeAudioQueue {
+    static_assert((Capacity & (Capacity - 1)) == 0, "Capacity must be power of 2");
+public:
+    bool push(const T& item) noexcept {
+        size_t writePos = writePos_.load(std::memory_order_relaxed);
+        size_t nextWrite = (writePos + 1) & (Capacity - 1);
+        if (nextWrite == readPos_.load(std::memory_order_acquire)) return false;
+        buffer_[writePos] = item;
+        writePos_.store(nextWrite, std::memory_order_release);
+        return true;
+    }
+    bool pop(T& item) noexcept {
+        size_t readPos = readPos_.load(std::memory_order_relaxed);
+        if (readPos == writePos_.load(std::memory_order_acquire)) return false;
+        item = buffer_[readPos];
+        readPos_.store((readPos + 1) & (Capacity - 1), std::memory_order_release);
+        return true;
+    }
+    bool empty() const noexcept {
+        return readPos_.load(std::memory_order_relaxed) == writePos_.load(std::memory_order_relaxed);
+    }
+private:
+    std::array<T, Capacity> buffer_;
+    alignas(64) std::atomic<size_t> writePos_{0};
+    alignas(64) std::atomic<size_t> readPos_{0};
+};
 
 /**
  * RemoteProcessingEngine
@@ -379,7 +412,7 @@ private:
     NetworkStats currentNetworkStats;
     std::atomic<float> currentLatencyMs { 0.0f };
 
-    // Task queue
+    // Task queue (NON-RT thread only - uses mutex)
     struct InternalTask
     {
         ProcessingTask task;
@@ -389,7 +422,28 @@ private:
     };
 
     juce::HashMap<juce::String, InternalTask> activeTasks;
-    juce::CriticalSection tasksMutex;
+    juce::CriticalSection tasksMutex;  // ⚠️ Only for non-RT task management
+
+    // ✅ LOCK-FREE: Real-time audio processing queue
+    // Audio thread writes to rtAudioQueue_, network thread reads
+    struct RTAudioCommand {
+        enum class Type { ProcessAudio, SetParameter, Bypass } type = Type::ProcessAudio;
+        int capabilityId = 0;
+        float paramValue = 0.0f;
+    };
+    LockFreeAudioQueue<RTAudioCommand, 256> rtCommandQueue_;
+
+    // ✅ ATOMIC: Real-time safe flags and parameters
+    std::atomic<bool> rtBypassEnabled_{false};
+    std::atomic<float> rtDryWetMix_{1.0f};
+    std::atomic<bool> rtRemoteAvailable_{false};
+
+    // ✅ PRE-ALLOCATED: Audio buffers for lock-free exchange
+    static constexpr int RT_BUFFER_SIZE = 2048;
+    static constexpr int RT_NUM_CHANNELS = 2;
+    alignas(64) float rtSendBuffer_[RT_NUM_CHANNELS][RT_BUFFER_SIZE] = {};
+    alignas(64) float rtRecvBuffer_[RT_NUM_CHANNELS][RT_BUFFER_SIZE] = {};
+    std::atomic<int> rtRecvBufferReady_{0};
 
     // Local fallback processors
     juce::HashMap<int, LocalFallbackProcessor> fallbackProcessors;

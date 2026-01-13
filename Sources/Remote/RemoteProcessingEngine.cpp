@@ -398,22 +398,72 @@ void RemoteProcessingEngine::processBlock(juce::AudioBuffer<float>& buffer,
                                          RemoteCapability capability,
                                          const juce::var& parameters)
 {
-    // ✅ REAL-TIME SAFE: No allocations, no locks (except brief task lookup)
+    // ✅ LOCK-FREE REAL-TIME SAFE: No allocations, no locks, no blocking calls
+
+    // Check bypass flag (atomic read)
+    if (rtBypassEnabled_.load(std::memory_order_relaxed))
+        return;
+
+    // Check if remote is available (atomic read)
+    bool remoteAvailable = rtRemoteAvailable_.load(std::memory_order_acquire);
+    float latency = currentLatencyMs.load(std::memory_order_relaxed);
+
+    if (remoteAvailable && latency < 10.0f && shouldUseRemoteProcessing(capability))
+    {
+        // ✅ Copy to pre-allocated send buffer (no heap allocation)
+        int numSamples = std::min(buffer.getNumSamples(), RT_BUFFER_SIZE);
+        int numChannels = std::min(buffer.getNumChannels(), RT_NUM_CHANNELS);
+
+        for (int ch = 0; ch < numChannels; ++ch) {
+            std::memcpy(rtSendBuffer_[ch], buffer.getReadPointer(ch), numSamples * sizeof(float));
+        }
+
+        // ✅ Queue command for network thread (lock-free)
+        RTAudioCommand cmd;
+        cmd.type = RTAudioCommand::Type::ProcessAudio;
+        cmd.capabilityId = static_cast<int>(capability);
+        rtCommandQueue_.push(cmd);
+
+        // ✅ Check if we have processed data ready (atomic)
+        int recvReady = rtRecvBufferReady_.load(std::memory_order_acquire);
+        if (recvReady >= numSamples)
+        {
+            // Use processed remote data
+            float dryWet = rtDryWetMix_.load(std::memory_order_relaxed);
+            for (int ch = 0; ch < numChannels; ++ch) {
+                float* out = buffer.getWritePointer(ch);
+                for (int i = 0; i < numSamples; ++i) {
+                    out[i] = out[i] * (1.0f - dryWet) + rtRecvBuffer_[ch][i] * dryWet;
+                }
+            }
+            rtRecvBufferReady_.store(0, std::memory_order_release);
+            return;
+        }
+
+        // No remote data ready - fall through to local fallback
+    }
+
+    // ✅ FALLBACK: Use local processor (no locks needed - HashMap is read-only after init)
+    auto* processor = fallbackProcessors.getReference(static_cast<int>(capability));
+    if (processor && *processor)
+    {
+        (*processor)(buffer, parameters);
+    }
+}
+
+// Original processBlock implementation for reference (NON-RT, async tasks)
+void RemoteProcessingEngine::processBlockAsync(juce::AudioBuffer<float>& buffer,
+                                               RemoteCapability capability,
+                                               const juce::var& parameters)
+{
+    // ⚠️ NON-RT: Uses locks, for offline/async processing only
 
     if (shouldUseRemoteProcessing(capability))
     {
-        // Check if latency is acceptable for real-time
         float latency = currentLatencyMs.load();
 
-        if (latency < 10.0f)  // < 10ms is acceptable for real-time
+        if (latency < 10.0f)
         {
-            // Try remote processing
-            // For real-time, we need a different approach:
-            // - Pre-allocated circular buffer for audio exchange
-            // - Lock-free FIFO for parameter changes
-            // - Immediate fallback if remote not available
-
-            // Send to remote (non-blocking)
             juce::var metadata;
             metadata.setProperty("capability", (int)capability, nullptr);
             metadata.setProperty("parameters", parameters, nullptr);
@@ -423,9 +473,8 @@ void RemoteProcessingEngine::processBlock(juce::AudioBuffer<float>& buffer,
 
             if (sent)
             {
-                // Try to receive processed buffer (with timeout)
                 juce::AudioBuffer<float> remoteBuffer;
-                bool received = transport->receiveAudioBuffer(remoteBuffer, 5);  // 5ms timeout
+                bool received = transport->receiveAudioBuffer(remoteBuffer, 5);
 
                 if (received && remoteBuffer.getNumSamples() > 0)
                 {
