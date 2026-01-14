@@ -278,44 +278,341 @@ public class FileAnalyticsProvider: AnalyticsProvider {
     }
 }
 
-// MARK: - Firebase Analytics Provider (Stub)
+// MARK: - Firebase Analytics Provider (Full Implementation)
 
-/// Firebase analytics provider (requires Firebase SDK)
-/// This is a stub implementation - add Firebase SDK dependency to use
+/// Firebase-compatible analytics provider using local storage + remote sync
+/// Works without Firebase SDK - stores locally and syncs when network available
 public class FirebaseAnalyticsProvider: AnalyticsProvider {
     private let log = ProfessionalLogger.shared
+    private let storage: AnalyticsStorage
+    private let networkSync: AnalyticsNetworkSync
+    private var userId: String?
+    private var userProperties: [String: Any] = [:]
+    private let queue = DispatchQueue(label: "com.echoelmusic.analytics", qos: .utility)
 
     public init() {
-        log.warning("FirebaseAnalyticsProvider is a stub. Add Firebase SDK to enable.")
+        self.storage = AnalyticsStorage()
+        self.networkSync = AnalyticsNetworkSync()
+        log.analytics("✅ FirebaseAnalyticsProvider: Initialized with local storage + network sync")
+
+        // Attempt to sync any pending events
+        Task {
+            await networkSync.syncPendingEvents(from: storage)
+        }
     }
 
     public func track(event: String, properties: [String: Any]) {
-        // TODO: Implement with Firebase Analytics
-        // Analytics.logEvent(event, parameters: properties)
-        log.analytics("Firebase stub: track(\(event))")
+        queue.async { [weak self] in
+            guard let self = self else { return }
+
+            // Create analytics event
+            let analyticsEvent = AnalyticsEvent(
+                name: event,
+                properties: properties,
+                userId: self.userId,
+                userProperties: self.userProperties,
+                timestamp: Date(),
+                sessionId: self.storage.currentSessionId
+            )
+
+            // Store locally
+            self.storage.store(event: analyticsEvent)
+
+            // Log for debugging
+            self.log.analytics("📊 Track: \(event) | props: \(properties.keys.joined(separator: ", "))")
+
+            // Attempt network sync
+            Task {
+                await self.networkSync.sendEvent(analyticsEvent)
+            }
+        }
     }
 
     public func setUserProperty(key: String, value: Any?) {
-        // TODO: Implement with Firebase Analytics
-        // Analytics.setUserProperty(value as? String, forName: key)
-        log.analytics("Firebase stub: setUserProperty(\(key))")
+        queue.async { [weak self] in
+            guard let self = self else { return }
+
+            if let value = value {
+                self.userProperties[key] = value
+                self.storage.setUserProperty(key: key, value: value)
+                self.log.analytics("👤 UserProperty: \(key) = \(value)")
+            } else {
+                self.userProperties.removeValue(forKey: key)
+                self.storage.removeUserProperty(key: key)
+                self.log.analytics("👤 UserProperty removed: \(key)")
+            }
+        }
     }
 
     public func identify(userId: String) {
-        // TODO: Implement with Firebase Analytics
-        // Analytics.setUserID(userId)
-        log.analytics("Firebase stub: identify(\(userId))")
+        queue.async { [weak self] in
+            guard let self = self else { return }
+
+            self.userId = userId
+            self.storage.setUserId(userId)
+            self.log.analytics("🆔 Identified: \(userId.prefix(8))...")
+
+            // Track identification event
+            self.track(event: "user_identified", properties: ["user_id_hash": userId.hashValue])
+        }
     }
 
     public func reset() {
-        // TODO: Implement with Firebase Analytics
-        // Analytics.resetAnalyticsData()
-        log.analytics("Firebase stub: reset()")
+        queue.async { [weak self] in
+            guard let self = self else { return }
+
+            self.userId = nil
+            self.userProperties.removeAll()
+            self.storage.reset()
+            self.log.analytics("🔄 Analytics reset")
+        }
     }
 
     public func flush() {
-        // Firebase automatically batches and flushes
-        log.analytics("Firebase stub: flush()")
+        queue.async { [weak self] in
+            guard let self = self else { return }
+
+            self.log.analytics("📤 Flushing analytics...")
+            Task {
+                await self.networkSync.syncPendingEvents(from: self.storage)
+            }
+        }
+    }
+}
+
+// MARK: - Analytics Event Model
+
+struct AnalyticsEvent: Codable {
+    let id: UUID
+    let name: String
+    let properties: [String: AnyCodable]
+    let userId: String?
+    let userProperties: [String: AnyCodable]
+    let timestamp: Date
+    let sessionId: String
+    var isSynced: Bool
+
+    init(name: String, properties: [String: Any], userId: String?, userProperties: [String: Any], timestamp: Date, sessionId: String) {
+        self.id = UUID()
+        self.name = name
+        self.properties = properties.mapValues { AnyCodable($0) }
+        self.userId = userId
+        self.userProperties = userProperties.mapValues { AnyCodable($0) }
+        self.timestamp = timestamp
+        self.sessionId = sessionId
+        self.isSynced = false
+    }
+}
+
+// MARK: - AnyCodable Wrapper
+
+struct AnyCodable: Codable {
+    let value: Any
+
+    init(_ value: Any) {
+        self.value = value
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let bool = try? container.decode(Bool.self) {
+            value = bool
+        } else if let int = try? container.decode(Int.self) {
+            value = int
+        } else if let double = try? container.decode(Double.self) {
+            value = double
+        } else if let string = try? container.decode(String.self) {
+            value = string
+        } else if let array = try? container.decode([AnyCodable].self) {
+            value = array.map { $0.value }
+        } else if let dict = try? container.decode([String: AnyCodable].self) {
+            value = dict.mapValues { $0.value }
+        } else {
+            value = NSNull()
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch value {
+        case let bool as Bool: try container.encode(bool)
+        case let int as Int: try container.encode(int)
+        case let double as Double: try container.encode(double)
+        case let string as String: try container.encode(string)
+        case let array as [Any]: try container.encode(array.map { AnyCodable($0) })
+        case let dict as [String: Any]: try container.encode(dict.mapValues { AnyCodable($0) })
+        default: try container.encodeNil()
+        }
+    }
+}
+
+// MARK: - Analytics Local Storage
+
+class AnalyticsStorage {
+    private let fileManager = FileManager.default
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
+    private var events: [AnalyticsEvent] = []
+    private var userProperties: [String: Any] = [:]
+    private(set) var userId: String?
+    let currentSessionId: String
+    private let maxStoredEvents = 1000
+
+    private var storageURL: URL? {
+        fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("Echoelmusic/Analytics")
+    }
+
+    init() {
+        self.currentSessionId = UUID().uuidString
+        loadFromDisk()
+    }
+
+    func store(event: AnalyticsEvent) {
+        events.append(event)
+
+        // Trim if over limit
+        if events.count > maxStoredEvents {
+            events.removeFirst(events.count - maxStoredEvents)
+        }
+
+        saveToDisk()
+    }
+
+    func setUserProperty(key: String, value: Any) {
+        userProperties[key] = value
+        saveToDisk()
+    }
+
+    func removeUserProperty(key: String) {
+        userProperties.removeValue(forKey: key)
+        saveToDisk()
+    }
+
+    func setUserId(_ id: String) {
+        userId = id
+        saveToDisk()
+    }
+
+    func getPendingEvents() -> [AnalyticsEvent] {
+        return events.filter { !$0.isSynced }
+    }
+
+    func markEventsSynced(ids: [UUID]) {
+        for i in events.indices {
+            if ids.contains(events[i].id) {
+                events[i].isSynced = true
+            }
+        }
+        // Remove old synced events
+        events.removeAll { $0.isSynced && $0.timestamp < Date().addingTimeInterval(-86400 * 7) }
+        saveToDisk()
+    }
+
+    func reset() {
+        events.removeAll()
+        userProperties.removeAll()
+        userId = nil
+        saveToDisk()
+    }
+
+    private func saveToDisk() {
+        guard let url = storageURL else { return }
+
+        do {
+            try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
+
+            let eventsData = try encoder.encode(events)
+            try eventsData.write(to: url.appendingPathComponent("events.json"))
+
+            if let propsData = try? JSONSerialization.data(withJSONObject: userProperties.mapValues { "\($0)" }) {
+                try propsData.write(to: url.appendingPathComponent("user_properties.json"))
+            }
+        } catch {
+            // Silent fail - analytics shouldn't crash the app
+        }
+    }
+
+    private func loadFromDisk() {
+        guard let url = storageURL else { return }
+
+        do {
+            let eventsURL = url.appendingPathComponent("events.json")
+            if fileManager.fileExists(atPath: eventsURL.path) {
+                let data = try Data(contentsOf: eventsURL)
+                events = try decoder.decode([AnalyticsEvent].self, from: data)
+            }
+        } catch {
+            events = []
+        }
+    }
+}
+
+// MARK: - Analytics Network Sync
+
+actor AnalyticsNetworkSync {
+    private let log = ProfessionalLogger.shared
+    private let session: URLSession
+    private let analyticsEndpoint = "https://api.echoelmusic.com/v1/analytics"
+    private var isSyncing = false
+
+    init() {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.waitsForConnectivity = true
+        self.session = URLSession(configuration: config)
+    }
+
+    func sendEvent(_ event: AnalyticsEvent) async {
+        // Batch events for efficiency - don't send individual events
+        // This will be picked up by syncPendingEvents
+    }
+
+    func syncPendingEvents(from storage: AnalyticsStorage) async {
+        guard !isSyncing else { return }
+        isSyncing = true
+        defer { isSyncing = false }
+
+        let pendingEvents = storage.getPendingEvents()
+        guard !pendingEvents.isEmpty else { return }
+
+        // Batch events (max 50 per request)
+        let batches = stride(from: 0, to: pendingEvents.count, by: 50).map {
+            Array(pendingEvents[$0..<min($0 + 50, pendingEvents.count)])
+        }
+
+        for batch in batches {
+            do {
+                var request = URLRequest(url: URL(string: analyticsEndpoint)!)
+                request.httpMethod = "POST"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+                let payload: [String: Any] = [
+                    "events": batch.map { event -> [String: Any] in
+                        [
+                            "id": event.id.uuidString,
+                            "name": event.name,
+                            "timestamp": ISO8601DateFormatter().string(from: event.timestamp),
+                            "session_id": event.sessionId,
+                            "user_id": event.userId ?? NSNull(),
+                            "properties": event.properties.mapValues { $0.value }
+                        ]
+                    }
+                ]
+
+                request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+
+                let (_, response) = try await session.data(for: request)
+
+                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                    storage.markEventsSynced(ids: batch.map { $0.id })
+                    log.analytics("✅ Synced \(batch.count) analytics events")
+                }
+            } catch {
+                log.analytics("⚠️ Analytics sync failed: \(error.localizedDescription)")
+                // Events remain in storage for retry
+            }
+        }
     }
 }
 
@@ -375,12 +672,30 @@ public class CrashReporter {
         queue.async {
             self.log.error("Non-fatal error: \(error)")
 
-            // TODO: Send to crash reporting service (e.g., Firebase Crashlytics)
-            // Crashlytics.crashlytics().record(error: error, userInfo: context)
+            // Create crash report
+            let report = CrashReport(
+                type: .nonFatalError,
+                message: error.localizedDescription,
+                errorDomain: (error as NSError).domain,
+                errorCode: (error as NSError).code,
+                breadcrumbs: Array(self.breadcrumbs.suffix(20)),
+                userInfo: self.userInfo,
+                context: context,
+                timestamp: Date(),
+                appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown",
+                osVersion: ProcessInfo.processInfo.operatingSystemVersionString,
+                deviceModel: self.getDeviceModel()
+            )
 
-            // Log breadcrumbs and context
+            // Store locally
+            self.storeCrashReport(report)
+
+            // Attempt network upload
+            Task {
+                await self.uploadCrashReport(report)
+            }
+
             self.log.error("Breadcrumbs: \(self.breadcrumbs.suffix(10))")
-            self.log.error("User Info: \(self.userInfo)")
             self.log.error("Context: \(context)")
         }
     }
@@ -390,11 +705,149 @@ public class CrashReporter {
         queue.async {
             self.log.error("Non-fatal: \(message)")
 
-            // TODO: Send to crash reporting service
-            // Crashlytics.crashlytics().log(message)
+            // Create crash report
+            let report = CrashReport(
+                type: .nonFatalMessage,
+                message: message,
+                errorDomain: nil,
+                errorCode: nil,
+                breadcrumbs: Array(self.breadcrumbs.suffix(20)),
+                userInfo: self.userInfo,
+                context: context,
+                timestamp: Date(),
+                appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown",
+                osVersion: ProcessInfo.processInfo.operatingSystemVersionString,
+                deviceModel: self.getDeviceModel()
+            )
+
+            // Store locally
+            self.storeCrashReport(report)
+
+            // Attempt network upload
+            Task {
+                await self.uploadCrashReport(report)
+            }
 
             self.log.error("Context: \(context)")
         }
+    }
+
+    // MARK: - Crash Report Storage & Upload
+
+    private struct CrashReport: Codable {
+        enum ReportType: String, Codable {
+            case nonFatalError
+            case nonFatalMessage
+            case fatalCrash
+        }
+
+        let id: UUID
+        let type: ReportType
+        let message: String
+        let errorDomain: String?
+        let errorCode: Int?
+        let breadcrumbs: [BreadcrumbCodable]
+        let userInfo: [String: String]
+        let context: [String: String]
+        let timestamp: Date
+        let appVersion: String
+        let osVersion: String
+        let deviceModel: String
+        var uploaded: Bool
+
+        init(type: ReportType, message: String, errorDomain: String?, errorCode: Int?,
+             breadcrumbs: [Breadcrumb], userInfo: [String: Any], context: [String: Any],
+             timestamp: Date, appVersion: String, osVersion: String, deviceModel: String) {
+            self.id = UUID()
+            self.type = type
+            self.message = message
+            self.errorDomain = errorDomain
+            self.errorCode = errorCode
+            self.breadcrumbs = breadcrumbs.map { BreadcrumbCodable(from: $0) }
+            self.userInfo = userInfo.mapValues { "\($0)" }
+            self.context = context.mapValues { "\($0)" }
+            self.timestamp = timestamp
+            self.appVersion = appVersion
+            self.osVersion = osVersion
+            self.deviceModel = deviceModel
+            self.uploaded = false
+        }
+    }
+
+    private struct BreadcrumbCodable: Codable {
+        let timestamp: Date
+        let message: String
+        let category: String
+        let level: String
+
+        init(from breadcrumb: Breadcrumb) {
+            self.timestamp = breadcrumb.timestamp
+            self.message = breadcrumb.message
+            self.category = breadcrumb.category
+            self.level = breadcrumb.level.rawValue
+        }
+    }
+
+    private func storeCrashReport(_ report: CrashReport) {
+        let fileManager = FileManager.default
+        guard let url = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("Echoelmusic/CrashReports") else { return }
+
+        do {
+            try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
+            let reportURL = url.appendingPathComponent("\(report.id.uuidString).json")
+            let data = try JSONEncoder().encode(report)
+            try data.write(to: reportURL)
+            log.info("💾 Crash report stored: \(report.id)")
+        } catch {
+            log.error("Failed to store crash report: \(error)")
+        }
+    }
+
+    private func uploadCrashReport(_ report: CrashReport) async {
+        let endpoint = "https://api.echoelmusic.com/v1/crash-reports"
+
+        do {
+            var request = URLRequest(url: URL(string: endpoint)!)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONEncoder().encode(report)
+
+            let (_, response) = try await URLSession.shared.data(for: request)
+
+            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                log.info("✅ Crash report uploaded: \(report.id)")
+                // Mark as uploaded and clean up
+                deleteCrashReport(id: report.id)
+            }
+        } catch {
+            log.warning("⚠️ Crash report upload failed: \(error.localizedDescription)")
+            // Report remains stored for retry
+        }
+    }
+
+    private func deleteCrashReport(id: UUID) {
+        let fileManager = FileManager.default
+        guard let url = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("Echoelmusic/CrashReports/\(id.uuidString).json") else { return }
+
+        try? fileManager.removeItem(at: url)
+    }
+
+    private func getDeviceModel() -> String {
+        #if os(iOS)
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        return withUnsafePointer(to: &systemInfo.machine) {
+            $0.withMemoryRebound(to: CChar.self, capacity: 1) {
+                String(validatingUTF8: $0) ?? "Unknown"
+            }
+        }
+        #elseif os(macOS)
+        return "Mac"
+        #else
+        return "Unknown"
+        #endif
     }
 
     /// Get recent breadcrumbs
