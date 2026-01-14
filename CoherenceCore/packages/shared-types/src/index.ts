@@ -296,6 +296,137 @@ export const DEFAULT_SESSION_STATE: SessionState = {
 };
 
 // ============================================================================
+// ORGAN RESONANCE FREQUENCIES (Clinical Research)
+// Source: MRE studies, PMC6223825, PMC3066083
+// ============================================================================
+
+export interface OrganResonanceData {
+  organ: string;
+  clinicalFrequencyHz: number;
+  frequencyRangeHz: [number, number];
+  pathologies: string[];
+  measurementParameter: string;
+  source: string;
+}
+
+/**
+ * Clinical organ resonance frequencies from peer-reviewed MR Elastography studies
+ * These are the frequencies used for CLINICAL measurement, not detection targets
+ */
+export const ORGAN_RESONANCE_TABLE: Record<string, OrganResonanceData> = {
+  liver: {
+    organ: 'Liver',
+    clinicalFrequencyHz: 60,
+    frequencyRangeHz: [50, 70],
+    pathologies: ['Fibrosis', 'Cirrhosis', 'Steatosis'],
+    measurementParameter: 'Shear Modulus (kPa)',
+    source: 'PMC6223825 - MR Elastography',
+  },
+  heart: {
+    organ: 'Heart',
+    clinicalFrequencyHz: 110,
+    frequencyRangeHz: [80, 140],
+    pathologies: ['Myocardial Stiffness', 'HOCM'],
+    measurementParameter: 'Myocardial Strain',
+    source: 'PMC3066083 - MRE Review',
+  },
+  spleen: {
+    organ: 'Spleen',
+    clinicalFrequencyHz: 100,
+    frequencyRangeHz: [80, 120],
+    pathologies: ['Portal Hypertension'],
+    measurementParameter: 'Spleen Stiffness (SSM)',
+    source: 'PMC6223825',
+  },
+  brain: {
+    organ: 'Brain',
+    clinicalFrequencyHz: 45,
+    frequencyRangeHz: [25, 62.5],
+    pathologies: ['Neurodegenerative Processes'],
+    measurementParameter: 'Viscoelasticity',
+    source: 'PMC3066083',
+  },
+};
+
+/**
+ * Body eigenfrequencies in sitting/standing position
+ * Source: FAA Technical Report AM63-30pt11
+ */
+export const BODY_EIGENFREQUENCY_RANGE: [number, number] = [1, 20];
+
+// ============================================================================
+// TISSUE ACOUSTIC IMPEDANCE (Biophysical Constants)
+// Source: Medical ultrasound reference values
+// ============================================================================
+
+export interface TissueAcousticProperties {
+  tissue: string;
+  density: number; // kg/m³
+  soundVelocity: number; // m/s
+  impedance: number; // 10^6 kg/m²s (MRayl)
+}
+
+export const TISSUE_ACOUSTIC_TABLE: Record<string, TissueAcousticProperties> = {
+  liver: { tissue: 'Liver', density: 1050, soundVelocity: 1570, impedance: 1.65 },
+  muscle: { tissue: 'Muscle', density: 1040, soundVelocity: 1580, impedance: 1.64 },
+  fat: { tissue: 'Fat', density: 925, soundVelocity: 1450, impedance: 1.34 },
+  skin: { tissue: 'Skin', density: 1100, soundVelocity: 1600, impedance: 1.76 },
+  air: { tissue: 'Air', density: 1.2, soundVelocity: 343, impedance: 0.0004 },
+};
+
+/**
+ * Calculate intensity reflection coefficient at tissue boundary
+ * Returns fraction of energy reflected (0-1)
+ */
+export function calculateReflectionCoefficient(
+  tissue1: TissueAcousticProperties,
+  tissue2: TissueAcousticProperties
+): number {
+  const z1 = tissue1.impedance;
+  const z2 = tissue2.impedance;
+  const coefficient = Math.pow((z2 - z1) / (z2 + z1), 2);
+  return coefficient;
+}
+
+// ============================================================================
+// SENSOR CAPABILITIES (Research-Backed Limits)
+// Source: MDPI Sensors 23(18):7832, PMC10537187
+// ============================================================================
+
+/**
+ * iPhone LiDAR actual capabilities
+ * CRITICAL: Effective sampling rate is 15Hz, NOT 60Hz as API suggests
+ */
+export const LIDAR_CAPABILITIES = {
+  resolution: { width: 256, height: 192 },
+  effectiveSamplingRateHz: 15, // NOT 60Hz! Source: PMC10537187
+  maxDetectableFrequencyHz: 7.5, // Nyquist limit: 15/2
+  rangeMeters: { min: 0.3, max: 5, optimal: { min: 0.3, max: 2 } },
+  staticAccuracyCm: 1,
+  wavelengthNm: 940,
+} as const;
+
+/**
+ * iPhone Camera capabilities for EVM analysis
+ */
+export const CAMERA_CAPABILITIES = {
+  maxFps4K: 60,
+  maxFps1080p: 120,
+  maxFpsSlowMo: 240,
+  maxDetectableFrequency4K: 30, // Nyquist: 60/2
+  maxDetectableFrequency1080p: 60, // Nyquist: 120/2
+  maxDetectableFrequencySlowMo: 120, // Nyquist: 240/2
+} as const;
+
+/**
+ * IMU capabilities
+ */
+export const IMU_CAPABILITIES = {
+  typicalSampleRateHz: 100,
+  maxDetectableFrequencyHz: 50, // Nyquist: 100/2
+} as const;
+
+// ============================================================================
 // HARDWARE VALIDATION
 // ============================================================================
 
@@ -388,4 +519,173 @@ export function detectPlatform(): Platform {
   if (/linux/.test(userAgent)) return 'linux';
 
   return 'web';
+}
+
+// ============================================================================
+// ACTIVE HAPTIC MEASUREMENT (Taptic Engine + IMU)
+// Source: ResearchGate - Material Recognition using Smartphone Vibrations
+// ============================================================================
+
+export type ChirpType = 'linear' | 'exponential' | 'logarithmic';
+
+export interface ActiveHapticConfig {
+  /** Measurement mode */
+  mode: 'active' | 'passive';
+  /** Chirp signal type for active measurement */
+  chirpType: ChirpType;
+  /** Start frequency for chirp (Hz) */
+  chirpStartHz: number;
+  /** End frequency for chirp (Hz) */
+  chirpEndHz: number;
+  /** Chirp duration (ms) */
+  chirpDurationMs: number;
+  /** Number of chirp repetitions */
+  chirpRepetitions: number;
+  /** Wait time between chirps (ms) */
+  chirpIntervalMs: number;
+  /** IMU recording duration after chirp (ms) */
+  responseWindowMs: number;
+}
+
+export const DEFAULT_ACTIVE_HAPTIC_CONFIG: ActiveHapticConfig = {
+  mode: 'passive',
+  chirpType: 'linear',
+  chirpStartHz: 10,
+  chirpEndHz: 100,
+  chirpDurationMs: 500,
+  chirpRepetitions: 3,
+  chirpIntervalMs: 1000,
+  responseWindowMs: 200,
+};
+
+export interface ActiveHapticResult {
+  timestamp: number;
+  chirpsSent: number;
+  responseSignal: Float32Array;
+  dampingCoefficient: number;
+  dominantFrequencyHz: number;
+  tissueStiffnessEstimate: number; // Arbitrary units, NOT kPa
+  qualityScore: number;
+}
+
+// ============================================================================
+// MULTI-SENSOR FUSION ENGINE
+// Source: Deep Research - Multisensor-Fusions-Modell
+// ============================================================================
+
+export type SensorSource = 'camera' | 'lidar' | 'imu' | 'haptic' | 'audio';
+
+export interface SensorWeight {
+  source: SensorSource;
+  weight: number; // 0-1
+  confidence: number; // 0-1
+  lastUpdateMs: number;
+}
+
+export interface FusionConfig {
+  /** Enabled sensor sources */
+  enabledSources: SensorSource[];
+  /** Sensor weights (auto-adjusted based on confidence) */
+  weights: Record<SensorSource, number>;
+  /** Kalman filter process noise */
+  processNoise: number;
+  /** Kalman filter measurement noise */
+  measurementNoise: number;
+  /** Maximum sensor age before exclusion (ms) */
+  maxSensorAgeMs: number;
+  /** Minimum confidence threshold */
+  minConfidenceThreshold: number;
+}
+
+export const DEFAULT_FUSION_CONFIG: FusionConfig = {
+  enabledSources: ['camera', 'imu'],
+  weights: {
+    camera: 0.4,
+    lidar: 0.1, // Low weight due to 15Hz limit
+    imu: 0.3,
+    haptic: 0.15,
+    audio: 0.05,
+  },
+  processNoise: 0.01,
+  measurementNoise: 0.1,
+  maxSensorAgeMs: 500,
+  minConfidenceThreshold: 0.3,
+};
+
+export interface FusionResult {
+  timestamp: number;
+  /** Fused frequency estimate (Hz) */
+  fusedFrequencyHz: number;
+  /** Fused amplitude estimate (0-1) */
+  fusedAmplitude: number;
+  /** Overall confidence (0-1) */
+  confidence: number;
+  /** Individual sensor contributions */
+  sensorContributions: Record<SensorSource, { frequency: number; weight: number; confidence: number }>;
+  /** Estimated tissue properties */
+  tissueEstimates: {
+    stiffness: number; // Arbitrary units
+    damping: number; // Arbitrary units
+    resonanceFrequency: number; // Hz
+  };
+}
+
+// ============================================================================
+// USER BIOMETRIC CALIBRATION
+// For individual variance compensation (BMI, age correction)
+// ============================================================================
+
+export interface UserCalibration {
+  /** User identifier (anonymous) */
+  userId: string;
+  /** Age range (for tissue property estimation) */
+  ageRange: '18-30' | '30-45' | '45-60' | '60+';
+  /** BMI category (affects subcutaneous fat damping) */
+  bmiCategory: 'underweight' | 'normal' | 'overweight' | 'obese';
+  /** Estimated fat layer thickness multiplier (1.0 = average) */
+  fatLayerMultiplier: number;
+  /** Skin elasticity multiplier (1.0 = average, decreases with age) */
+  skinElasticityMultiplier: number;
+  /** Calibration timestamp */
+  calibratedAt: number;
+}
+
+export const DEFAULT_USER_CALIBRATION: UserCalibration = {
+  userId: 'anonymous',
+  ageRange: '30-45',
+  bmiCategory: 'normal',
+  fatLayerMultiplier: 1.0,
+  skinElasticityMultiplier: 1.0,
+  calibratedAt: 0,
+};
+
+/**
+ * Calculate tissue damping correction factor based on user calibration
+ */
+export function calculateDampingCorrection(calibration: UserCalibration): number {
+  // Base damping factor
+  let damping = 1.0;
+
+  // Age correction (older = more damping)
+  const ageCorrection: Record<string, number> = {
+    '18-30': 0.85,
+    '30-45': 1.0,
+    '45-60': 1.15,
+    '60+': 1.3,
+  };
+  damping *= ageCorrection[calibration.ageRange] || 1.0;
+
+  // BMI correction (higher BMI = more fat layer damping)
+  const bmiCorrection: Record<string, number> = {
+    underweight: 0.8,
+    normal: 1.0,
+    overweight: 1.25,
+    obese: 1.5,
+  };
+  damping *= bmiCorrection[calibration.bmiCategory] || 1.0;
+
+  // Apply user-specific multipliers
+  damping *= calibration.fatLayerMultiplier;
+
+  return damping;
 }

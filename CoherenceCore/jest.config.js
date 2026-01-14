@@ -13,6 +13,7 @@ module.exports = {
     '^@coherence-core/shared-types$': '<rootDir>/packages/shared-types/src/index.ts',
     '^@coherence-core/frequency-engine$': '<rootDir>/packages/frequency-engine/src/index.ts',
     '^@coherence-core/evm-engine$': '<rootDir>/packages/evm-engine/src/index.ts',
+    '^@coherence-core/fusion-engine$': '<rootDir>/packages/fusion-engine/src/index.ts',
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
