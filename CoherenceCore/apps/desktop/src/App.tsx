@@ -34,6 +34,24 @@ interface SafetyLimits {
   cooldownPeriodMs: number;
 }
 
+interface AudioDeviceInfo {
+  id: string;
+  name: string;
+  host_id: string;
+  is_default: boolean;
+  is_usb: boolean;
+  sample_rates: number[];
+  min_buffer_size: number;
+  max_buffer_size: number;
+  channels: number;
+}
+
+interface AudioConfig {
+  device_id: string | null;
+  sample_rate: number;
+  buffer_size: number;
+}
+
 const formatTime = (ms: number): string => {
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -50,20 +68,29 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'stimulate' | 'scan' | 'settings'>('stimulate');
   const [cymaticsMode, setCymaticsMode] = useState<CymaticsMode>('chladni');
 
+  // Audio device state (class-compliant USB support)
+  const [audioDevices, setAudioDevices] = useState<AudioDeviceInfo[]>([]);
+  const [audioConfig, setAudioConfig] = useState<AudioConfig | null>(null);
+  const [loadingDevices, setLoadingDevices] = useState(false);
+
   // Load initial data
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [presetsData, sessionData, limitsData, disclaimerData] = await Promise.all([
+        const [presetsData, sessionData, limitsData, disclaimerData, devicesData, configData] = await Promise.all([
           invoke<FrequencyPreset[]>('get_presets'),
           invoke<SessionState>('get_session_state'),
           invoke<SafetyLimits>('get_safety_limits'),
           invoke<string>('get_disclaimer'),
+          invoke<AudioDeviceInfo[]>('get_audio_devices'),
+          invoke<AudioConfig>('get_audio_config'),
         ]);
         setPresets(presetsData);
         setSession(sessionData);
         setSafetyLimits(limitsData);
         setDisclaimer(disclaimerData);
+        setAudioDevices(devicesData);
+        setAudioConfig(configData);
       } catch (error) {
         console.error('Failed to load data:', error);
       }
@@ -134,6 +161,48 @@ export default function App() {
       console.error('Failed to toggle session:', error);
     }
   }, [session?.is_playing]);
+
+  // Audio device handlers (class-compliant USB)
+  const handleDeviceChange = useCallback(async (deviceId: string) => {
+    try {
+      await invoke('set_audio_config', { deviceId, sampleRate: null, bufferSize: null });
+      const configData = await invoke<AudioConfig>('get_audio_config');
+      setAudioConfig(configData);
+    } catch (error) {
+      console.error('Failed to set audio device:', error);
+    }
+  }, []);
+
+  const handleSampleRateChange = useCallback(async (sampleRate: number) => {
+    try {
+      await invoke('set_audio_config', { deviceId: null, sampleRate, bufferSize: null });
+      const configData = await invoke<AudioConfig>('get_audio_config');
+      setAudioConfig(configData);
+    } catch (error) {
+      console.error('Failed to set sample rate:', error);
+    }
+  }, []);
+
+  const handleBufferSizeChange = useCallback(async (bufferSize: number) => {
+    try {
+      await invoke('set_audio_config', { deviceId: null, sampleRate: null, bufferSize });
+      const configData = await invoke<AudioConfig>('get_audio_config');
+      setAudioConfig(configData);
+    } catch (error) {
+      console.error('Failed to set buffer size:', error);
+    }
+  }, []);
+
+  const refreshAudioDevices = useCallback(async () => {
+    setLoadingDevices(true);
+    try {
+      const devicesData = await invoke<AudioDeviceInfo[]>('get_audio_devices');
+      setAudioDevices(devicesData);
+    } catch (error) {
+      console.error('Failed to refresh devices:', error);
+    }
+    setLoadingDevices(false);
+  }, []);
 
   const currentPreset = presets.find(p => p.id === selectedPreset);
 

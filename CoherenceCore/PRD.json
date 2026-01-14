@@ -222,7 +222,14 @@
     "audio_implementation": {
       "mobile": "frequency-engine with expo-av (actual audio generation)",
       "desktop": "cpal with real-time waveform generation",
-      "synchronized_haptics": true
+      "synchronized_haptics": true,
+      "class_compliant_usb": {
+        "status": "partial",
+        "backend_complete": true,
+        "frontend_ui": "deferred",
+        "features": ["device_enumeration", "host_detection", "sample_rate_config", "buffer_size_config"],
+        "supported_interfaces": ["Focusrite", "Scarlett", "Steinberg", "PreSonus", "MOTU", "Universal Audio", "RME", "Apogee", "Audient", "SSL", "Behringer", "Arturia", "Native Instruments"]
+      }
     },
     "cymatics_visualizer": {
       "mobile": "react-native-skia CymaticsVisualizer component",
