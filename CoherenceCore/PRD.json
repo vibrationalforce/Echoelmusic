@@ -1,0 +1,150 @@
+{
+  "project": "CoherenceCore",
+  "version": "0.1.0",
+  "description": "Quad-platform biophysical resonance framework for tissue micro-vibration analysis and coherent stimulation",
+  "compliance": {
+    "medical_claims": false,
+    "disclaimer_required": true,
+    "disclaimer_text": "Wellness/Informational Tool - No Medical Advice. Not a medical device.",
+    "max_session_duration_minutes": 15,
+    "safety_cutoff_enabled": true
+  },
+  "platforms": {
+    "ios": { "framework": "expo", "sdk": "52+", "status": "pending" },
+    "android": { "framework": "expo", "sdk": "52+", "status": "pending" },
+    "windows": { "framework": "tauri", "version": "2.0", "status": "pending" },
+    "linux": { "framework": "tauri", "version": "2.0", "status": "pending" }
+  },
+  "features": [
+    {
+      "id": "F001",
+      "name": "EVM-Scanner",
+      "description": "Eulerian Video Magnification for 1-60 Hz micro-vibration detection",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": false,
+      "tests": ["T001", "T002", "T003"],
+      "implementation": {
+        "mobile": "expo-camera + WebGL shader",
+        "desktop": "crabcamera + wgpu shader"
+      }
+    },
+    {
+      "id": "F002",
+      "name": "IMU-Analyzer",
+      "description": "100Hz accelerometer sampling with FFT for 30-50 Hz detection",
+      "platforms": ["ios", "android"],
+      "passes": false,
+      "tests": ["T004", "T005"],
+      "implementation": {
+        "mobile": "expo-sensors (Accelerometer)",
+        "desktop": "N/A (camera-based only)"
+      }
+    },
+    {
+      "id": "F003",
+      "name": "Osteo-Sync-Engine",
+      "description": "35-45 Hz frequency generation for bone tissue resonance",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": false,
+      "tests": ["T006", "T007"],
+      "evidence": {
+        "frequency_range_hz": [35, 45],
+        "primary_frequency_hz": 40,
+        "research": "Rubin et al. (2006) - Low-magnitude mechanical signals",
+        "target": "Osteoblast activity optimization"
+      }
+    },
+    {
+      "id": "F004",
+      "name": "Myo-Resonance-Engine",
+      "description": "45-50 Hz frequency generation for muscle fiber coherence",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": false,
+      "tests": ["T008", "T009"],
+      "evidence": {
+        "frequency_range_hz": [45, 50],
+        "primary_frequency_hz": 47.5,
+        "research": "Judex & Rubin (2010) - Mechanical influences",
+        "target": "Myofibril coherence, fibrosis reduction"
+      }
+    },
+    {
+      "id": "F005",
+      "name": "Neural-Flow-Engine",
+      "description": "40 Hz gamma entrainment for focus and pain modulation",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": false,
+      "tests": ["T010", "T011"],
+      "evidence": {
+        "frequency_range_hz": [38, 42],
+        "primary_frequency_hz": 40,
+        "research": "Iaccarino et al. (2016) - Gamma entrainment",
+        "target": "Neural gamma oscillation"
+      }
+    },
+    {
+      "id": "F006",
+      "name": "VAT-Output",
+      "description": "Vibroacoustic Therapy audio output via speakers/transducers",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": false,
+      "tests": ["T012", "T013"],
+      "implementation": {
+        "mobile": "expo-av (Audio.Sound with sine wave generation)",
+        "desktop": "cpal (low-latency audio output)"
+      }
+    },
+    {
+      "id": "F007",
+      "name": "Haptic-Feedback",
+      "description": "Device haptic motor stimulation synchronized to frequencies",
+      "platforms": ["ios", "android"],
+      "passes": false,
+      "tests": ["T014", "T015"],
+      "implementation": {
+        "mobile": "expo-haptics + react-native-haptic-feedback"
+      }
+    },
+    {
+      "id": "F008",
+      "name": "Cymatics-Visualizer",
+      "description": "Real-time wave interference pattern visualization",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": false,
+      "tests": ["T016", "T017"],
+      "implementation": {
+        "mobile": "react-native-skia",
+        "desktop": "wgpu shaders"
+      }
+    },
+    {
+      "id": "F009",
+      "name": "Safety-Compliance",
+      "description": "15-minute duty cycle cutoff and mandatory disclaimers",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": false,
+      "tests": ["T018", "T019", "T020"]
+    },
+    {
+      "id": "F010",
+      "name": "Hardware-Validation",
+      "description": "Nyquist check for sensor sampling rates vs target frequencies",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": false,
+      "tests": ["T021", "T022"],
+      "nyquist_requirements": {
+        "camera_min_fps": 120,
+        "camera_acceptable_fps": 60,
+        "imu_min_hz": 100,
+        "lidar_max_hz": 15,
+        "aliasing_prevention": "freq < sample_rate / 2"
+      }
+    }
+  ],
+  "loop_state": {
+    "current_iteration": 0,
+    "last_error": null,
+    "status": "initializing",
+    "completed": false
+  }
+}

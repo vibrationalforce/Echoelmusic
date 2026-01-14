@@ -1,0 +1,320 @@
+{
+  "test_suite": "CoherenceCore Hardware Validation",
+  "version": "0.1.0",
+  "tests": [
+    {
+      "id": "T001",
+      "name": "EVM-Camera-Access",
+      "feature": "F001",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "Verify camera access and raw frame capture",
+      "validation": {
+        "type": "hardware_check",
+        "criteria": "Camera stream available at minimum 30fps"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T002",
+      "name": "EVM-Frequency-Detection",
+      "feature": "F001",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "Detect 1-60 Hz micro-vibrations in video stream",
+      "validation": {
+        "type": "signal_processing",
+        "criteria": "FFT bins show power in target frequency range"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T003",
+      "name": "EVM-Laplacian-Pyramid",
+      "feature": "F001",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "GPU-accelerated spatial decomposition",
+      "validation": {
+        "type": "performance",
+        "criteria": "Pyramid levels computed in < 16ms per frame"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T004",
+      "name": "IMU-100Hz-Sampling",
+      "feature": "F002",
+      "platforms": ["ios", "android"],
+      "description": "Accelerometer samples at 100Hz minimum",
+      "validation": {
+        "type": "hardware_check",
+        "criteria": "expo-sensors.Accelerometer.setUpdateInterval(10) succeeds"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T005",
+      "name": "IMU-FFT-30-50Hz",
+      "feature": "F002",
+      "platforms": ["ios", "android"],
+      "description": "FFT analysis isolates 30-50 Hz band",
+      "validation": {
+        "type": "signal_processing",
+        "criteria": "Peak detection in 30-50 Hz range with SNR > 10dB"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T006",
+      "name": "Osteo-Sync-Frequency-Generation",
+      "feature": "F003",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "Generate 35-45 Hz sine wave audio",
+      "validation": {
+        "type": "audio_output",
+        "criteria": "Spectrum analyzer shows peak at 40 Hz +/- 1 Hz"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T007",
+      "name": "Osteo-Sync-Amplitude-Control",
+      "feature": "F003",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "Amplitude control 0-100% with safety limits",
+      "validation": {
+        "type": "safety",
+        "criteria": "Max amplitude capped at 80%"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T008",
+      "name": "Myo-Resonance-Frequency-Generation",
+      "feature": "F004",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "Generate 45-50 Hz sine wave audio",
+      "validation": {
+        "type": "audio_output",
+        "criteria": "Spectrum analyzer shows peak at 47.5 Hz +/- 1 Hz"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T009",
+      "name": "Myo-Resonance-Modulation",
+      "feature": "F004",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "Frequency sweep within 45-50 Hz range",
+      "validation": {
+        "type": "audio_output",
+        "criteria": "Smooth frequency transition without clicks/pops"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T010",
+      "name": "Neural-Flow-40Hz-Generation",
+      "feature": "F005",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "Generate precise 40 Hz gamma frequency",
+      "validation": {
+        "type": "audio_output",
+        "criteria": "40.00 Hz +/- 0.1 Hz precision"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T011",
+      "name": "Neural-Flow-Entrainment-Pattern",
+      "feature": "F005",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "Isochronic/binaural beat patterns",
+      "validation": {
+        "type": "audio_output",
+        "criteria": "Beat frequency matches target +/- 0.5 Hz"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T012",
+      "name": "VAT-Mobile-Audio-Output",
+      "feature": "F006",
+      "platforms": ["ios", "android"],
+      "description": "expo-av generates low-frequency sine waves",
+      "validation": {
+        "type": "audio_output",
+        "criteria": "Audio plays through device speakers at target frequency"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T013",
+      "name": "VAT-Desktop-Audio-Output",
+      "feature": "F006",
+      "platforms": ["windows", "linux"],
+      "description": "cpal generates low-frequency sine waves",
+      "validation": {
+        "type": "audio_output",
+        "criteria": "Audio plays through system audio at target frequency"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T014",
+      "name": "Haptic-iOS-Feedback",
+      "feature": "F007",
+      "platforms": ["ios"],
+      "description": "Taptic Engine responds to frequency commands",
+      "validation": {
+        "type": "hardware_check",
+        "criteria": "expo-haptics triggers successfully"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T015",
+      "name": "Haptic-Android-Feedback",
+      "feature": "F007",
+      "platforms": ["android"],
+      "description": "Vibration motor responds to frequency commands",
+      "validation": {
+        "type": "hardware_check",
+        "criteria": "Vibration API triggers successfully"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T016",
+      "name": "Cymatics-Mobile-Rendering",
+      "feature": "F008",
+      "platforms": ["ios", "android"],
+      "description": "Skia canvas renders wave patterns at 60fps",
+      "validation": {
+        "type": "performance",
+        "criteria": "Frame time < 16.67ms"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T017",
+      "name": "Cymatics-Desktop-Rendering",
+      "feature": "F008",
+      "platforms": ["windows", "linux"],
+      "description": "wgpu renders wave patterns at 60fps",
+      "validation": {
+        "type": "performance",
+        "criteria": "Frame time < 16.67ms"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T018",
+      "name": "Safety-Disclaimer-Display",
+      "feature": "F009",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "Disclaimer shown on every screen",
+      "validation": {
+        "type": "compliance",
+        "criteria": "Text 'Wellness/Informational Tool - No Medical Advice' visible"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T019",
+      "name": "Safety-15min-Cutoff",
+      "feature": "F009",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "Automatic session termination at 15 minutes",
+      "validation": {
+        "type": "safety",
+        "criteria": "Stimulation stops at 900 seconds"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T020",
+      "name": "Safety-Duty-Cycle-Limit",
+      "feature": "F009",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "70% maximum duty cycle enforced",
+      "validation": {
+        "type": "safety",
+        "criteria": "Vibration/sound duty cycle <= 0.7"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T021",
+      "name": "Nyquist-Camera-Check",
+      "feature": "F010",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "description": "Camera FPS validates against target frequency",
+      "validation": {
+        "type": "hardware_check",
+        "criteria": "Camera FPS >= 2 * max_target_frequency (120 Hz for 60 Hz target)"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    },
+    {
+      "id": "T022",
+      "name": "Nyquist-IMU-Check",
+      "feature": "F010",
+      "platforms": ["ios", "android"],
+      "description": "IMU sample rate validates against target frequency",
+      "validation": {
+        "type": "hardware_check",
+        "criteria": "IMU Hz >= 2 * max_target_frequency (100 Hz for 50 Hz target)"
+      },
+      "passes": false,
+      "last_run": null,
+      "error": null
+    }
+  ],
+  "summary": {
+    "total": 22,
+    "passed": 0,
+    "failed": 0,
+    "pending": 22
+  }
+}

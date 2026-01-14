@@ -1,0 +1,18 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@/*": ["./*"],
+      "@coherence-core/shared-types": ["../../packages/shared-types/src"],
+      "@coherence-core/frequency-engine": ["../../packages/frequency-engine/src"],
+      "@coherence-core/evm-engine": ["../../packages/evm-engine/src"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
+}
