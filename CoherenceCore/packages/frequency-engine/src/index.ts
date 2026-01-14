@@ -469,7 +469,10 @@ export function createWavBlob(
 
   const pcmArray = new Uint8Array(pcmData.buffer);
 
-  return new Blob([headerArray, pcmArray], { type: 'audio/wav' });
+  // Type assertion needed due to React Native type conflicts
+  type StandardBlobConstructor = new (blobParts?: ArrayBuffer[], options?: { type?: string }) => Blob;
+  const BlobCtor = (globalThis.Blob ?? Blob) as unknown as StandardBlobConstructor;
+  return new BlobCtor([header, pcmData.buffer], { type: 'audio/wav' });
 }
 
 /**

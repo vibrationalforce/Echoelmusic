@@ -142,9 +142,11 @@
     }
   ],
   "loop_state": {
-    "current_iteration": 0,
+    "current_iteration": 1,
     "last_error": null,
-    "status": "initializing",
-    "completed": false
+    "status": "software_tests_passing",
+    "completed": false,
+    "software_tests_passed": 62,
+    "hardware_tests_pending": 22
   }
 }
