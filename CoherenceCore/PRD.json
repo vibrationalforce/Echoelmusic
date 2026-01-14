@@ -224,10 +224,10 @@
       "desktop": "cpal with real-time waveform generation",
       "synchronized_haptics": true,
       "class_compliant_usb": {
-        "status": "partial",
+        "status": "complete",
         "backend_complete": true,
-        "frontend_ui": "deferred",
-        "features": ["device_enumeration", "host_detection", "sample_rate_config", "buffer_size_config"],
+        "frontend_ui": "complete",
+        "features": ["device_enumeration", "host_detection", "sample_rate_config", "buffer_size_config", "device_selection_ui", "refresh_devices"],
         "supported_interfaces": ["Focusrite", "Scarlett", "Steinberg", "PreSonus", "MOTU", "Universal Audio", "RME", "Apogee", "Audient", "SSL", "Behringer", "Arturia", "Native Instruments"]
       }
     },

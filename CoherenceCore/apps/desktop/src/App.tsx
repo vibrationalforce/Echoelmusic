@@ -372,6 +372,77 @@ export default function App() {
 
         {activeTab === 'settings' && safetyLimits && (
           <div className="settings-view">
+            {/* Audio Device Settings */}
+            <h2>Audio Device</h2>
+            <div className="settings-group">
+              <div className="setting-row">
+                <span>Output Device</span>
+                <div className="setting-control">
+                  <select
+                    className="device-select"
+                    value={audioConfig?.device_id || ''}
+                    onChange={e => handleDeviceChange(e.target.value)}
+                    disabled={session?.is_playing}
+                  >
+                    <option value="">System Default</option>
+                    {audioDevices.map(device => (
+                      <option key={device.id} value={device.id}>
+                        {device.is_usb ? '🎛️ ' : ''}{device.name}
+                        {device.is_default ? ' (Default)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    className="refresh-btn"
+                    onClick={refreshAudioDevices}
+                    disabled={loadingDevices}
+                    title="Refresh devices"
+                  >
+                    {loadingDevices ? '...' : '↻'}
+                  </button>
+                </div>
+              </div>
+              <div className="setting-row">
+                <span>Sample Rate</span>
+                <select
+                  className="rate-select"
+                  value={audioConfig?.sample_rate || 44100}
+                  onChange={e => handleSampleRateChange(parseInt(e.target.value))}
+                  disabled={session?.is_playing}
+                >
+                  <option value={44100}>44.1 kHz</option>
+                  <option value={48000}>48 kHz</option>
+                  <option value={88200}>88.2 kHz</option>
+                  <option value={96000}>96 kHz</option>
+                  <option value={176400}>176.4 kHz</option>
+                  <option value={192000}>192 kHz</option>
+                </select>
+              </div>
+              <div className="setting-row">
+                <span>Buffer Size</span>
+                <select
+                  className="buffer-select"
+                  value={audioConfig?.buffer_size || 512}
+                  onChange={e => handleBufferSizeChange(parseInt(e.target.value))}
+                  disabled={session?.is_playing}
+                >
+                  <option value={64}>64 samples (~1.5ms)</option>
+                  <option value={128}>128 samples (~3ms)</option>
+                  <option value={256}>256 samples (~6ms)</option>
+                  <option value={512}>512 samples (~12ms)</option>
+                  <option value={1024}>1024 samples (~23ms)</option>
+                  <option value={2048}>2048 samples (~46ms)</option>
+                </select>
+              </div>
+              {audioDevices.length > 0 && (
+                <div className="device-info">
+                  <span className="device-count">
+                    {audioDevices.filter(d => d.is_usb).length} USB interface(s) detected
+                  </span>
+                </div>
+              )}
+            </div>
+
             <h2>Safety Limits</h2>
             <div className="settings-group">
               <div className="setting-row">
