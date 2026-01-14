@@ -142,11 +142,13 @@
     }
   ],
   "loop_state": {
-    "current_iteration": 1,
+    "current_iteration": 4,
     "last_error": null,
-    "status": "software_tests_passing",
-    "completed": false,
+    "status": "all_tasks_complete",
+    "completed": true,
     "software_tests_passed": 62,
-    "hardware_tests_pending": 22
+    "hardware_tests_pending": 22,
+    "mobile_screens_implemented": ["scan", "stimulate", "settings"],
+    "desktop_app_initialized": true
   }
 }
