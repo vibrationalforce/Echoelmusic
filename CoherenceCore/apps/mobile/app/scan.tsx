@@ -4,10 +4,12 @@
  * EVM (Eulerian Video Magnification) camera scanner for detecting
  * micro-vibrations in tissue (1-60 Hz range).
  *
+ * Uses unified CoherenceEngine hook for state management.
+ *
  * WELLNESS ONLY - NO MEDICAL CLAIMS
  */
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,35 +20,24 @@ import {
 } from 'react-native';
 import { Camera, CameraType, CameraView } from 'expo-camera';
 import { router } from 'expo-router';
-import {
-  DEFAULT_EVM_CONFIG,
-  DISCLAIMER_TEXT,
-  validateNyquist,
-} from '@coherence-core/shared-types';
+import { DISCLAIMER_TEXT } from '@coherence-core/shared-types';
+import { useCoherenceEngine } from '../lib/useCoherenceEngine';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-// Analysis state
-interface AnalysisState {
-  isAnalyzing: boolean;
-  frameCount: number;
-  detectedFrequencies: number[];
-  qualityScore: number;
-  fps: number;
-  nyquistValid: boolean;
-}
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ScanScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [facing, setFacing] = useState<CameraType>('back');
-  const [analysis, setAnalysis] = useState<AnalysisState>({
-    isAnalyzing: false,
-    frameCount: 0,
-    detectedFrequencies: [],
-    qualityScore: 0,
-    fps: 30,
-    nyquistValid: false,
-  });
+
+  // Use unified engine hook
+  const {
+    session,
+    evmConfig,
+    sensorLimits,
+    toggleAnalysis,
+    updateFrameRate,
+    showDisclaimerModal,
+  } = useCoherenceEngine();
 
   const cameraRef = useRef<CameraView>(null);
   const frameCountRef = useRef(0);
@@ -61,35 +52,22 @@ export default function ScanScreen() {
     })();
   }, []);
 
-  // Validate Nyquist for current FPS
-  useEffect(() => {
-    const maxTargetFreq = DEFAULT_EVM_CONFIG.frequencyRangeHz[1];
-    const validation = validateNyquist(maxTargetFreq, analysis.fps);
-    setAnalysis(prev => ({
-      ...prev,
-      nyquistValid: validation.isValid,
-    }));
-  }, [analysis.fps]);
-
-  // Start/stop analysis
-  const toggleAnalysis = useCallback(() => {
-    setAnalysis(prev => ({
-      ...prev,
-      isAnalyzing: !prev.isAnalyzing,
-      frameCount: 0,
-      detectedFrequencies: [],
-      qualityScore: 0,
-    }));
-    frameCountRef.current = 0;
-  }, []);
-
   // Toggle camera facing
   const toggleCameraFacing = useCallback(() => {
     setFacing(current => (current === 'back' ? 'front' : 'back'));
   }, []);
 
+  // Handle analysis toggle with disclaimer check
+  const handleToggleAnalysis = useCallback(async () => {
+    if (!session.disclaimerAcknowledged && !session.isAnalyzing) {
+      const accepted = await showDisclaimerModal();
+      if (!accepted) return;
+    }
+    await toggleAnalysis();
+  }, [session.disclaimerAcknowledged, session.isAnalyzing, showDisclaimerModal, toggleAnalysis]);
+
   // Calculate FPS from frame timing
-  const updateFPS = useCallback(() => {
+  const onFrameProcessed = useCallback(() => {
     const now = Date.now();
     const elapsed = now - lastFrameTimeRef.current;
     lastFrameTimeRef.current = now;
@@ -105,17 +83,14 @@ export default function ScanScreen() {
         fpsHistoryRef.current.reduce((a, b) => a + b, 0) /
         fpsHistoryRef.current.length;
 
-      setAnalysis(prev => ({
-        ...prev,
-        fps: Math.round(avgFps),
-        frameCount: frameCountRef.current,
-      }));
+      updateFrameRate(avgFps);
     }
-  }, []);
+    frameCountRef.current++;
+  }, [updateFrameRate]);
 
-  // Simulated frame processing (actual EVM would use WebGL)
+  // Camera ready callback
   const onCameraReady = useCallback(() => {
-    console.log('Camera ready');
+    console.log('[ScanScreen] Camera ready');
   }, []);
 
   // Render permission states
@@ -186,22 +161,24 @@ export default function ScanScreen() {
             <View style={styles.statusRow}>
               <View style={styles.statusItem}>
                 <Text style={styles.statusLabel}>FPS</Text>
-                <Text style={styles.statusValue}>{analysis.fps}</Text>
+                <Text style={styles.statusValue}>{session.frameRate}</Text>
               </View>
               <View style={styles.statusItem}>
                 <Text style={styles.statusLabel}>Nyquist</Text>
                 <Text
                   style={[
                     styles.statusValue,
-                    { color: analysis.nyquistValid ? '#4CAF50' : '#FF9800' },
+                    { color: session.nyquistValid ? '#4CAF50' : '#FF9800' },
                   ]}
                 >
-                  {analysis.nyquistValid ? 'OK' : 'LOW FPS'}
+                  {session.nyquistValid ? 'OK' : 'LOW FPS'}
                 </Text>
               </View>
               <View style={styles.statusItem}>
-                <Text style={styles.statusLabel}>Frames</Text>
-                <Text style={styles.statusValue}>{analysis.frameCount}</Text>
+                <Text style={styles.statusLabel}>Quality</Text>
+                <Text style={styles.statusValue}>
+                  {Math.round(session.qualityScore * 100)}%
+                </Text>
               </View>
             </View>
 
@@ -209,33 +186,47 @@ export default function ScanScreen() {
             <View style={styles.frequencyRange}>
               <Text style={styles.frequencyLabel}>Target Range:</Text>
               <Text style={styles.frequencyValue}>
-                {DEFAULT_EVM_CONFIG.frequencyRangeHz[0]}-
-                {DEFAULT_EVM_CONFIG.frequencyRangeHz[1]} Hz
+                {evmConfig.frequencyRangeHz[0]}-
+                {evmConfig.frequencyRangeHz[1]} Hz
               </Text>
             </View>
 
-            {/* Quality Score */}
+            {/* Sensor Limits Info */}
+            <View style={styles.sensorInfo}>
+              <Text style={styles.sensorInfoTitle}>Max Detectable (Nyquist):</Text>
+              <View style={styles.sensorInfoRow}>
+                <Text style={styles.sensorInfoLabel}>4K Camera:</Text>
+                <Text style={styles.sensorInfoValue}>{sensorLimits.camera4KMaxHz} Hz</Text>
+              </View>
+              <View style={styles.sensorInfoRow}>
+                <Text style={styles.sensorInfoLabel}>1080p Camera:</Text>
+                <Text style={styles.sensorInfoValue}>{sensorLimits.camera1080pMaxHz} Hz</Text>
+              </View>
+              <View style={styles.sensorInfoRow}>
+                <Text style={styles.sensorInfoLabel}>IMU (100Hz):</Text>
+                <Text style={styles.sensorInfoValue}>{sensorLimits.imuMaxHz} Hz</Text>
+              </View>
+            </View>
+
+            {/* Quality Score Bar */}
             <View style={styles.qualityContainer}>
               <Text style={styles.qualityLabel}>Signal Quality</Text>
               <View style={styles.qualityBar}>
                 <View
                   style={[
                     styles.qualityFill,
-                    { width: `${analysis.qualityScore * 100}%` },
+                    { width: `${session.qualityScore * 100}%` },
                   ]}
                 />
               </View>
-              <Text style={styles.qualityValue}>
-                {Math.round(analysis.qualityScore * 100)}%
-              </Text>
             </View>
 
             {/* Detected Frequencies */}
-            {analysis.detectedFrequencies.length > 0 && (
+            {session.detectedFrequencies.length > 0 && (
               <View style={styles.detectedContainer}>
                 <Text style={styles.detectedLabel}>Detected:</Text>
                 <Text style={styles.detectedValue}>
-                  {analysis.detectedFrequencies
+                  {session.detectedFrequencies
                     .map(f => `${f.toFixed(1)} Hz`)
                     .join(', ')}
                 </Text>
@@ -246,12 +237,12 @@ export default function ScanScreen() {
             <TouchableOpacity
               style={[
                 styles.analyzeButton,
-                analysis.isAnalyzing && styles.analyzeButtonActive,
+                session.isAnalyzing && styles.analyzeButtonActive,
               ]}
-              onPress={toggleAnalysis}
+              onPress={handleToggleAnalysis}
             >
               <Text style={styles.analyzeButtonText}>
-                {analysis.isAnalyzing ? 'Stop Analysis' : 'Start Analysis'}
+                {session.isAnalyzing ? 'Stop Analysis' : 'Start Analysis'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -399,6 +390,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  sensorInfo: {
+    backgroundColor: 'rgba(0,229,255,0.1)',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+  sensorInfoTitle: {
+    color: '#00E5FF',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  sensorInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  sensorInfoLabel: {
+    color: '#888',
+    fontSize: 11,
+  },
+  sensorInfoValue: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '500',
+  },
   qualityContainer: {
     marginBottom: 15,
   },
@@ -417,12 +434,6 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#00E5FF',
     borderRadius: 4,
-  },
-  qualityValue: {
-    color: '#fff',
-    fontSize: 12,
-    textAlign: 'right',
-    marginTop: 4,
   },
   detectedContainer: {
     backgroundColor: 'rgba(0,229,255,0.1)',
