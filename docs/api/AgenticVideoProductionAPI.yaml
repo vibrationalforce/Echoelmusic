@@ -1,0 +1,1086 @@
+openapi: 3.1.0
+info:
+  title: Echoelmusic Agentic Video Production API
+  description: |
+    Comprehensive API for the Super Intelligence Video Production system.
+
+    ## Overview
+    The Agentic Video Production Pipeline provides:
+    - **Model Orchestrator**: Intelligent routing between Sora 2, Kling 2.0, Runway Gen-4
+    - **Volumetric Content Pipeline**: 3D hologram and real capture integration
+    - **Agentic Director**: Autonomous pacing, lighting, and continuity optimization
+    - **Character Drift Detector**: Cross-scene consistency analysis
+    - **Timeline Assembler**: Coherent narrative flow assembly
+
+    ## Authentication
+    All endpoints require Bearer token authentication.
+
+  version: 1.0.0
+  contact:
+    name: Echoelmusic API Support
+    url: https://echoelmusic.com/support
+  license:
+    name: Proprietary
+    url: https://echoelmusic.com/license
+
+servers:
+  - url: https://api.echoelmusic.com/v1
+    description: Production server
+  - url: https://staging-api.echoelmusic.com/v1
+    description: Staging server
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: Model Orchestrator
+    description: Intelligent model selection and video generation
+  - name: Character Drift
+    description: Character consistency analysis
+  - name: Volumetric Content
+    description: 3D content import and composition
+  - name: Agentic Director
+    description: Autonomous direction based on story metadata
+  - name: Timeline Assembly
+    description: Segment assembly and narrative flow
+
+paths:
+  /video/generate:
+    post:
+      tags:
+        - Model Orchestrator
+      summary: Generate video with intelligent model selection
+      description: |
+        Generates video content using the optimal AI model based on request parameters.
+        The orchestrator automatically selects between Sora 2, Kling 2.0, Runway Gen-4,
+        or hybrid multi-model based on requirements.
+      operationId: generateVideo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VideoGenerationRequest'
+      responses:
+        '200':
+          description: Video generation started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerationJob'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '402':
+          description: Budget limit exceeded
+        '503':
+          description: All models unavailable
+
+  /video/generate/{jobId}:
+    get:
+      tags:
+        - Model Orchestrator
+      summary: Get generation job status
+      operationId: getGenerationStatus
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerationJob'
+        '404':
+          description: Job not found
+
+  /video/models:
+    get:
+      tags:
+        - Model Orchestrator
+      summary: List available video generation models
+      operationId: listModels
+      responses:
+        '200':
+          description: List of available models
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModelInfo'
+
+  /video/models/{model}/capabilities:
+    get:
+      tags:
+        - Model Orchestrator
+      summary: Get model capabilities
+      operationId: getModelCapabilities
+      parameters:
+        - name: model
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/VideoGenerationModel'
+      responses:
+        '200':
+          description: Model capabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelCapabilities'
+
+  /video/select-model:
+    post:
+      tags:
+        - Model Orchestrator
+      summary: Get optimal model recommendation
+      description: Returns the recommended model for a request without generating
+      operationId: selectOptimalModel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VideoGenerationRequest'
+      responses:
+        '200':
+          description: Model recommendation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recommendedModel:
+                    $ref: '#/components/schemas/VideoGenerationModel'
+                  confidence:
+                    type: number
+                    format: float
+                  alternativeModels:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        model:
+                          $ref: '#/components/schemas/VideoGenerationModel'
+                        score:
+                          type: number
+                          format: float
+
+  /drift/analyze:
+    post:
+      tags:
+        - Character Drift
+      summary: Analyze character consistency
+      description: Analyzes video for character drift and consistency issues
+      operationId: analyzeDrift
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - videoUrl
+                - characterReferences
+              properties:
+                videoUrl:
+                  type: string
+                  format: uri
+                characterReferences:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CharacterReference'
+      responses:
+        '200':
+          description: Drift analysis result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriftAnalysis'
+
+  /drift/timeline:
+    post:
+      tags:
+        - Character Drift
+      summary: Analyze timeline consistency
+      description: Analyzes consistency across multiple video segments
+      operationId: analyzeTimelineConsistency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - segments
+                - characterReferences
+              properties:
+                segments:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                        format: uri
+                      duration:
+                        type: number
+                characterReferences:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CharacterReference'
+      responses:
+        '200':
+          description: Timeline consistency score
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  overallScore:
+                    type: number
+                    format: float
+                  segmentScores:
+                    type: array
+                    items:
+                      type: number
+                      format: float
+
+  /volumetric/import:
+    post:
+      tags:
+        - Volumetric Content
+      summary: Import volumetric asset
+      description: Import point cloud, NeRF, or Gaussian Splatting model
+      operationId: importVolumetricAsset
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - format
+              properties:
+                file:
+                  type: string
+                  format: binary
+                format:
+                  type: string
+                  enum: [ply, las, xyz, e57, nerf, gaussian_splat]
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Asset imported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VolumetricAsset'
+
+  /volumetric/compositions:
+    post:
+      tags:
+        - Volumetric Content
+      summary: Create volumetric composition
+      operationId: createComposition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                layers:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CompositionLayer'
+      responses:
+        '200':
+          description: Composition created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VolumetricComposition'
+
+  /volumetric/compositions/{compositionId}/render:
+    post:
+      tags:
+        - Volumetric Content
+      summary: Render volumetric composition
+      operationId: renderComposition
+      parameters:
+        - name: compositionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                duration:
+                  type: number
+                  format: float
+                resolution:
+                  type: object
+                  properties:
+                    width:
+                      type: integer
+                    height:
+                      type: integer
+                fps:
+                  type: number
+                quality:
+                  type: string
+                  enum: [preview, production, final]
+      responses:
+        '200':
+          description: Render started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                    format: uuid
+                  estimatedDuration:
+                    type: number
+
+  /director/start:
+    post:
+      tags:
+        - Agentic Director
+      summary: Start autonomous direction
+      description: Begins agentic direction based on story metadata
+      operationId: startDirecting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoryMetadata'
+      responses:
+        '200':
+          description: Direction started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                    format: uuid
+                  isDirecting:
+                    type: boolean
+
+  /director/stop:
+    post:
+      tags:
+        - Agentic Director
+      summary: Stop autonomous direction
+      operationId: stopDirecting
+      responses:
+        '200':
+          description: Direction stopped
+
+  /director/decisions:
+    get:
+      tags:
+        - Agentic Director
+      summary: Get recent director decisions
+      operationId: getDecisions
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: minConfidence
+          in: query
+          schema:
+            type: number
+            format: float
+            default: 0.0
+      responses:
+        '200':
+          description: List of decisions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DirectorDecision'
+
+  /director/state:
+    get:
+      tags:
+        - Agentic Director
+      summary: Get current story state
+      operationId: getStoryState
+      responses:
+        '200':
+          description: Current story state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoryState'
+
+  /timeline/assemble:
+    post:
+      tags:
+        - Timeline Assembly
+      summary: Assemble segments into timeline
+      description: Assembles video segments into coherent timeline with transitions
+      operationId: assembleTimeline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - segments
+              properties:
+                name:
+                  type: string
+                segments:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                        format: uri
+                      prompt:
+                        type: string
+                      duration:
+                        type: number
+                storyMetadata:
+                  $ref: '#/components/schemas/StoryMetadata'
+      responses:
+        '200':
+          description: Timeline assembled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssembledTimeline'
+
+  /timeline/{timelineId}/render:
+    post:
+      tags:
+        - Timeline Assembly
+      summary: Render assembled timeline
+      operationId: renderTimeline
+      parameters:
+        - name: timelineId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenderSettings'
+      responses:
+        '200':
+          description: Render started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                    format: uuid
+                  outputUrl:
+                    type: string
+                    format: uri
+
+components:
+  schemas:
+    VideoGenerationModel:
+      type: string
+      enum:
+        - sora2
+        - kling2
+        - runwayGen4
+        - localDiffusion
+        - hybrid
+      description: |
+        Available video generation models:
+        - **sora2**: OpenAI Sora 2 - Physics realism (0.98), up to 60s
+        - **kling2**: Kuaishou Kling 2.0 - Temporal consistency (0.96), up to 120s
+        - **runwayGen4**: Runway Gen-4 - Stylistic control (0.95), up to 16s
+        - **localDiffusion**: Local offline model - Free, up to 8s
+        - **hybrid**: Multi-model orchestration - Best of all, up to 300s
+
+    VideoGenerationRequest:
+      type: object
+      required:
+        - prompt
+        - duration
+      properties:
+        prompt:
+          type: string
+          description: Text description of the video to generate
+          example: "A person walking through a forest at sunset"
+        negativePrompt:
+          type: string
+          description: Elements to avoid in generation
+        duration:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 300
+          description: Video duration in seconds
+        resolution:
+          type: object
+          properties:
+            width:
+              type: integer
+              default: 1920
+            height:
+              type: integer
+              default: 1080
+        fps:
+          type: number
+          default: 30
+        styleReference:
+          type: string
+          format: uri
+          description: URL to style reference image
+        motionReference:
+          type: string
+          format: uri
+          description: URL to motion reference video
+        characterReferences:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterReference'
+        requiresPhysicsRealism:
+          type: boolean
+          default: false
+        requiredFeatures:
+          type: array
+          items:
+            type: string
+        preferredModel:
+          $ref: '#/components/schemas/VideoGenerationModel'
+        budgetLimit:
+          type: number
+          format: float
+          description: Maximum cost in USD
+        priority:
+          type: string
+          enum: [low, normal, high, urgent, realtime]
+          default: normal
+        storyMetadata:
+          $ref: '#/components/schemas/StoryMetadata'
+
+    ModelCapabilities:
+      type: object
+      properties:
+        physicsRealism:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        temporalConsistency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        stylisticControl:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        maxDuration:
+          type: number
+          format: float
+        maxResolution:
+          type: object
+          properties:
+            width:
+              type: integer
+            height:
+              type: integer
+        supportedAspectRatios:
+          type: array
+          items:
+            type: number
+        latencySeconds:
+          type: number
+        costPerSecond:
+          type: number
+        specialFeatures:
+          type: array
+          items:
+            type: string
+
+    ModelInfo:
+      type: object
+      properties:
+        model:
+          $ref: '#/components/schemas/VideoGenerationModel'
+        displayName:
+          type: string
+        isAvailable:
+          type: boolean
+        currentLoad:
+          type: number
+          format: float
+        estimatedWaitTime:
+          type: number
+        successRate:
+          type: number
+          format: float
+        capabilities:
+          $ref: '#/components/schemas/ModelCapabilities'
+
+    GenerationJob:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        request:
+          $ref: '#/components/schemas/VideoGenerationRequest'
+        selectedModel:
+          $ref: '#/components/schemas/VideoGenerationModel'
+        status:
+          type: string
+          enum: [queued, preparing, generating, postProcessing, completed, failed, cancelled]
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        startTime:
+          type: string
+          format: date-time
+        estimatedCompletion:
+          type: string
+          format: date-time
+        result:
+          $ref: '#/components/schemas/GenerationResult'
+
+    GenerationResult:
+      type: object
+      properties:
+        videoUrl:
+          type: string
+          format: uri
+        thumbnailUrl:
+          type: string
+          format: uri
+        duration:
+          type: number
+        resolution:
+          type: object
+          properties:
+            width:
+              type: integer
+            height:
+              type: integer
+        qualityScore:
+          type: number
+          format: float
+        driftScore:
+          type: number
+          format: float
+          description: Character consistency score (0-1)
+
+    CharacterReference:
+      type: object
+      required:
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        referenceImages:
+          type: array
+          items:
+            type: string
+            format: uri
+        faceEmbedding:
+          type: array
+          items:
+            type: number
+            format: float
+          description: 512-dimensional face embedding vector
+        bodyProportions:
+          type: object
+          properties:
+            height:
+              type: number
+            shoulderWidth:
+              type: number
+            bodyType:
+              type: string
+              enum: [slim, average, athletic, muscular, heavy]
+        clothingDescriptions:
+          type: array
+          items:
+            type: string
+        voiceReference:
+          type: string
+          format: uri
+
+    DriftAnalysis:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        overallScore:
+          type: number
+          format: float
+        facialConsistency:
+          type: number
+          format: float
+        clothingConsistency:
+          type: number
+          format: float
+        proportionConsistency:
+          type: number
+          format: float
+        poseNaturalness:
+          type: number
+          format: float
+        detectedIssues:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [faceChange, clothingChange, proportionShift, poseArtifact, voiceMismatch, lightingInconsistency, temporalGlitch]
+              severity:
+                type: number
+                format: float
+              frameRange:
+                type: object
+                properties:
+                  start:
+                    type: integer
+                  end:
+                    type: integer
+              description:
+                type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+        frameByFrameScores:
+          type: array
+          items:
+            type: number
+            format: float
+
+    StoryMetadata:
+      type: object
+      properties:
+        title:
+          type: string
+        genre:
+          type: string
+          enum: [drama, comedy, action, thriller, horror, sciFi, fantasy, romance, documentary, musical, animation, experimental, meditation, educational]
+        narrativeStructure:
+          type: string
+          enum: [threeAct, herosJourney, nonLinear, circular, parallel, episodic, freeform]
+        currentAct:
+          type: integer
+        totalActs:
+          type: integer
+        currentBeat:
+          type: object
+          properties:
+            name:
+              type: string
+            type:
+              type: string
+              enum: [opening, exposition, risingAction, climax, fallingAction, resolution, plotTwist, revelation, confrontation, reflection, transition]
+            intensity:
+              type: number
+              format: float
+            duration:
+              type: number
+        emotionalArc:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: number
+              emotion:
+                type: string
+              intensity:
+                type: number
+                format: float
+        paceProfile:
+          type: object
+          properties:
+            overallPace:
+              type: string
+              enum: [meditative, slow, moderate, fast, frenetic]
+            cutFrequency:
+              type: number
+              description: Cuts per minute
+            averageShotDuration:
+              type: number
+        visualStyle:
+          type: object
+          properties:
+            colorPalette:
+              type: array
+              items:
+                type: string
+            cinematicLook:
+              type: string
+              enum: [naturalistic, stylized, noir, neon, vintage, futuristic, dreamlike]
+
+    StoryState:
+      type: object
+      properties:
+        currentBeatIndex:
+          type: integer
+        emotionalIntensity:
+          type: number
+          format: float
+        tensionLevel:
+          type: number
+          format: float
+        audienceEngagement:
+          type: number
+          format: float
+        pacingMultiplier:
+          type: number
+          format: float
+        timeInStory:
+          type: number
+
+    DirectorDecision:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        type:
+          type: string
+          enum: [cameraSwitch, paceAdjustment, lightingChange, transitionType, effectTrigger, cutTiming, emotionalBeat, narrativeFocus, audienceHook, climaxBuild]
+        confidence:
+          type: number
+          format: float
+        reasoning:
+          type: string
+        wasApplied:
+          type: boolean
+
+    VolumetricAsset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [pointCloud, mesh3D, nerf, gaussianSplat, hologram, volumetricCapture, depthVideo]
+        sourceUrl:
+          type: string
+          format: uri
+        boundingBox:
+          type: object
+          properties:
+            min:
+              type: array
+              items:
+                type: number
+            max:
+              type: array
+              items:
+                type: number
+        frameCount:
+          type: integer
+        fps:
+          type: number
+        duration:
+          type: number
+
+    VolumetricComposition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        layers:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompositionLayer'
+
+    CompositionLayer:
+      type: object
+      properties:
+        assetId:
+          type: string
+          format: uuid
+        transform:
+          type: object
+          properties:
+            position:
+              type: array
+              items:
+                type: number
+            rotation:
+              type: array
+              items:
+                type: number
+            scale:
+              type: array
+              items:
+                type: number
+        opacity:
+          type: number
+          format: float
+        blendMode:
+          type: string
+          enum: [normal, additive, multiply, screen, overlay]
+        isVisible:
+          type: boolean
+
+    AssembledTimeline:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        totalDuration:
+          type: number
+        consistencyScore:
+          type: number
+          format: float
+        segments:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              startTime:
+                type: number
+              duration:
+                type: number
+              videoUrl:
+                type: string
+                format: uri
+              consistencyScore:
+                type: number
+                format: float
+        transitions:
+          type: array
+          items:
+            type: object
+            properties:
+              fromSegmentId:
+                type: string
+                format: uuid
+              toSegmentId:
+                type: string
+                format: uuid
+              type:
+                type: string
+                enum: [cut, dissolve, fade, wipe, push, slide, morph, match_cut]
+              duration:
+                type: number
+        narrativeFlow:
+          type: object
+          properties:
+            flowScore:
+              type: number
+              format: float
+            pacingConsistency:
+              type: number
+              format: float
+            visualContinuity:
+              type: number
+              format: float
+            issues:
+              type: array
+              items:
+                type: object
+
+    RenderSettings:
+      type: object
+      properties:
+        resolution:
+          type: object
+          properties:
+            width:
+              type: integer
+            height:
+              type: integer
+        frameRate:
+          type: number
+        codec:
+          type: string
+        bitrate:
+          type: integer
+        audioCodec:
+          type: string
+        audioBitrate:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
