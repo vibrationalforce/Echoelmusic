@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { CymaticsCanvas, CymaticsMode } from './CymaticsCanvas';
 
 interface FrequencyPreset {
   id: string;
@@ -47,6 +48,7 @@ export default function App() {
   const [disclaimer, setDisclaimer] = useState<string>('');
   const [selectedPreset, setSelectedPreset] = useState<string>('osteo-sync');
   const [activeTab, setActiveTab] = useState<'stimulate' | 'scan' | 'settings'>('stimulate');
+  const [cymaticsMode, setCymaticsMode] = useState<CymaticsMode>('chladni');
 
   // Load initial data
   useEffect(() => {
@@ -166,6 +168,38 @@ export default function App() {
       <main className="main">
         {activeTab === 'stimulate' && session && safetyLimits && (
           <div className="stimulate-view">
+            {/* Cymatics Visualizer */}
+            <div className="cymatics-section">
+              <CymaticsCanvas
+                frequencyHz={session.current_frequency_hz}
+                amplitude={session.amplitude}
+                isActive={session.is_playing}
+                mode={cymaticsMode}
+                size={180}
+              />
+              <div className="cymatics-info">
+                <span className="cymatics-label">
+                  {session.is_playing ? 'Wave Pattern' : 'Preview'}
+                </span>
+                <span className="cymatics-freq">
+                  {session.current_frequency_hz.toFixed(1)} Hz
+                </span>
+              </div>
+              <div className="cymatics-modes">
+                {(['chladni', 'interference', 'ripple', 'standing'] as CymaticsMode[]).map(
+                  (mode) => (
+                    <button
+                      key={mode}
+                      className={`cymatics-mode-btn ${cymaticsMode === mode ? 'active' : ''}`}
+                      onClick={() => setCymaticsMode(mode)}
+                    >
+                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+
             {/* Timer */}
             <div className="timer-section">
               <div className="timer-circle">

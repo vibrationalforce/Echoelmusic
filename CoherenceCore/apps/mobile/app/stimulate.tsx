@@ -9,7 +9,7 @@
  * WELLNESS ONLY - NO MEDICAL CLAIMS
  */
 
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
+import { CymaticsVisualizer, CymaticsMode } from '../components/CymaticsVisualizer';
 import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
 import {
@@ -86,6 +87,38 @@ export default function StimulateScreen() {
     showDisclaimerModal,
   } = useCoherenceEngine();
 
+  // Cymatics visualizer state
+  const [cymaticsPhase, setCymaticsPhase] = useState(0);
+  const [cymaticsMode, setCymaticsMode] = useState<CymaticsMode>('chladni');
+  const animationRef = useRef<number | null>(null);
+
+  // Animate cymatics when session is playing
+  useEffect(() => {
+    if (session.isPlaying) {
+      const startTime = Date.now();
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        // Phase cycles based on frequency - lower frequencies = slower animation
+        const cycleMs = 1000 / (session.frequencyHz / 20);
+        const phase = (elapsed % cycleMs) / cycleMs;
+        setCymaticsPhase(phase);
+        animationRef.current = requestAnimationFrame(animate);
+      };
+      animationRef.current = requestAnimationFrame(animate);
+    } else {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+    }
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [session.isPlaying, session.frequencyHz]);
+
   // Handle session toggle with disclaimer check
   const handleToggleSession = useCallback(async () => {
     if (!session.disclaimerAcknowledged && !session.isPlaying) {
@@ -143,6 +176,54 @@ export default function StimulateScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Cymatics Visualizer */}
+        <View style={styles.cymaticsContainer}>
+          <CymaticsVisualizer
+            frequencyHz={session.frequencyHz}
+            amplitude={session.amplitude}
+            phase={cymaticsPhase}
+            mode={cymaticsMode}
+            isActive={session.isPlaying}
+            size={200}
+          />
+          <View style={styles.cymaticsInfo}>
+            <Text style={styles.cymaticsLabel}>
+              {session.isPlaying ? 'Wave Pattern' : 'Preview'}
+            </Text>
+            <Text style={styles.cymaticsFreq}>
+              {session.frequencyHz.toFixed(1)} Hz
+            </Text>
+          </View>
+        </View>
+
+        {/* Cymatics Mode Selection */}
+        <View style={styles.cymaticsModeContainer}>
+          <Text style={styles.cymaticsModeLabel}>Visualization Mode</Text>
+          <View style={styles.cymaticsModeButtons}>
+            {(['chladni', 'interference', 'ripple', 'standing'] as CymaticsMode[]).map(
+              (mode) => (
+                <TouchableOpacity
+                  key={mode}
+                  style={[
+                    styles.cymaticsModeButton,
+                    cymaticsMode === mode && styles.cymaticsModeButtonSelected,
+                  ]}
+                  onPress={() => setCymaticsMode(mode)}
+                >
+                  <Text
+                    style={[
+                      styles.cymaticsModeButtonText,
+                      cymaticsMode === mode && styles.cymaticsModeButtonTextSelected,
+                    ]}
+                  >
+                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              )
+            )}
+          </View>
+        </View>
+
         {/* Session Timer */}
         <View style={styles.timerContainer}>
           <View style={styles.timerCircle}>
@@ -320,6 +401,65 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0a0a',
+  },
+  cymaticsContainer: {
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 15,
+  },
+  cymaticsInfo: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  cymaticsLabel: {
+    color: '#888',
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  cymaticsFreq: {
+    color: '#00E5FF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
+  cymaticsModeContainer: {
+    marginBottom: 20,
+  },
+  cymaticsModeLabel: {
+    color: '#888',
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  cymaticsModeButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+  },
+  cymaticsModeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginHorizontal: 4,
+    marginBottom: 4,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  cymaticsModeButtonSelected: {
+    borderColor: '#00E5FF',
+    backgroundColor: 'rgba(0,229,255,0.1)',
+  },
+  cymaticsModeButtonText: {
+    color: '#666',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  cymaticsModeButtonTextSelected: {
+    color: '#00E5FF',
   },
   header: {
     flexDirection: 'row',
