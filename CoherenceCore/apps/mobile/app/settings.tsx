@@ -2,12 +2,11 @@
  * CoherenceCore Settings Screen
  *
  * Configuration options for audio output, safety limits,
- * and general app preferences.
+ * and general app preferences with persistent storage.
  *
  * WELLNESS ONLY - NO MEDICAL CLAIMS
  */
 
-import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -17,39 +16,32 @@ import {
   Switch,
   Platform,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { DEFAULT_SAFETY_LIMITS, DISCLAIMER_TEXT } from '@coherence-core/shared-types';
-
-interface SettingsState {
-  hapticFeedback: boolean;
-  backgroundAudio: boolean;
-  autoStopOnBackground: boolean;
-  lowLatencyMode: boolean;
-  showResearchCitations: boolean;
-  darkMode: boolean;
-}
+import { useSettings } from '../lib/useSettings';
 
 export default function SettingsScreen() {
-  const [settings, setSettings] = useState<SettingsState>({
-    hapticFeedback: true,
-    backgroundAudio: true,
-    autoStopOnBackground: false,
-    lowLatencyMode: Platform.OS === 'ios',
-    showResearchCitations: true,
-    darkMode: true,
-  });
-
-  const toggleSetting = (key: keyof SettingsState) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
+  const {
+    settings,
+    isLoading,
+    setSetting,
+    resetSettings,
+  } = useSettings();
 
   const openLink = (url: string) => {
     Linking.openURL(url);
   };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#00E5FF" />
+        <Text style={styles.loadingText}>Loading settings...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -75,7 +67,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={settings.backgroundAudio}
-              onValueChange={() => toggleSetting('backgroundAudio')}
+              onValueChange={(value) => setSetting('backgroundAudio', value)}
               trackColor={{ false: '#333', true: '#00E5FF' }}
               thumbColor="#fff"
             />
@@ -90,7 +82,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={settings.lowLatencyMode}
-              onValueChange={() => toggleSetting('lowLatencyMode')}
+              onValueChange={(value) => setSetting('lowLatencyMode', value)}
               trackColor={{ false: '#333', true: '#00E5FF' }}
               thumbColor="#fff"
             />
@@ -105,7 +97,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={settings.autoStopOnBackground}
-              onValueChange={() => toggleSetting('autoStopOnBackground')}
+              onValueChange={(value) => setSetting('autoStopOnBackground', value)}
               trackColor={{ false: '#333', true: '#00E5FF' }}
               thumbColor="#fff"
             />
@@ -124,7 +116,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={settings.hapticFeedback}
-              onValueChange={() => toggleSetting('hapticFeedback')}
+              onValueChange={(value) => setSetting('hapticFeedback', value)}
               trackColor={{ false: '#333', true: '#00E5FF' }}
               thumbColor="#fff"
             />
@@ -143,7 +135,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={settings.showResearchCitations}
-              onValueChange={() => toggleSetting('showResearchCitations')}
+              onValueChange={(value) => setSetting('showResearchCitations', value)}
               trackColor={{ false: '#333', true: '#00E5FF' }}
               thumbColor="#fff"
             />
@@ -193,6 +185,10 @@ export default function SettingsScreen() {
             <Text style={styles.infoLabel}>Build</Text>
             <Text style={styles.infoValue}>2026.01.14</Text>
           </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Platform</Text>
+            <Text style={styles.infoValue}>{Platform.OS}</Text>
+          </View>
         </View>
 
         {/* Links */}
@@ -221,6 +217,20 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Reset Settings */}
+        <Text style={styles.sectionTitle}>Data</Text>
+        <View style={styles.settingsGroup}>
+          <TouchableOpacity
+            style={styles.dangerRow}
+            onPress={resetSettings}
+          >
+            <Text style={styles.dangerLabel}>Reset All Settings</Text>
+            <Text style={styles.dangerDescription}>
+              Restore default settings and clear saved data
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Disclaimer */}
         <View style={styles.disclaimerSection}>
           <Text style={styles.disclaimerTitle}>Important Disclaimer</Text>
@@ -243,6 +253,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0a0a',
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#0a0a0a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#888',
+    marginTop: 12,
   },
   header: {
     flexDirection: 'row',
@@ -343,6 +363,19 @@ const styles = StyleSheet.create({
   linkArrow: {
     color: '#00E5FF',
     fontSize: 18,
+  },
+  dangerRow: {
+    padding: 15,
+  },
+  dangerLabel: {
+    color: '#FF5252',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  dangerDescription: {
+    color: '#888',
+    fontSize: 12,
   },
   disclaimerSection: {
     backgroundColor: 'rgba(255,152,0,0.1)',

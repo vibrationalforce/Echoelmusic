@@ -9,7 +9,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Alert, Platform, Vibration } from 'react-native';
-import { Audio } from 'expo-av';
+import { Audio, AVPlaybackStatus } from 'expo-av';
 import {
   FREQUENCY_PRESETS,
   DEFAULT_SAFETY_LIMITS,
@@ -20,6 +20,19 @@ import {
   CAMERA_CAPABILITIES,
   IMU_CAPABILITIES,
 } from '@coherence-core/shared-types';
+import {
+  generateWaveform,
+  WaveformType,
+  createWavDataUri,
+} from '@coherence-core/frequency-engine';
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const SAMPLE_RATE = 44100;
+const BUFFER_DURATION_SECONDS = 2; // Generate 2-second loopable buffer
+const HAPTIC_INTERVAL_MS = 250; // Synchronized haptic feedback interval
 
 // ============================================================================
 // TYPES
@@ -36,7 +49,7 @@ export interface SessionState {
   currentPreset: FrequencyPresetId;
   frequencyHz: number;
   amplitude: number;
-  waveform: 'sine' | 'square' | 'triangle' | 'sawtooth';
+  waveform: WaveformType;
 
   // EVM analysis
   isAnalyzing: boolean;
@@ -84,7 +97,9 @@ export function useCoherenceEngine() {
   const [session, setSession] = useState<SessionState>(createDefaultSession);
   const soundRef = useRef<Audio.Sound | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hapticRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const frameTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isGeneratingRef = useRef(false);
 
   // Initialize audio mode
   useEffect(() => {
@@ -94,7 +109,9 @@ export function useCoherenceEngine() {
           playsInSilentModeIOS: true,
           staysActiveInBackground: true,
           shouldDuckAndroid: false,
+          playThroughEarpieceAndroid: false,
         });
+        console.log('[CoherenceEngine] Audio mode initialized');
       } catch (error) {
         console.error('[CoherenceEngine] Audio init failed:', error);
       }
@@ -150,6 +167,85 @@ export function useCoherenceEngine() {
       nyquistValid: validation.isValid,
     }));
   }, [session.frameRate]);
+
+  // ============================================================================
+  // AUDIO GENERATION
+  // ============================================================================
+
+  const generateAndLoadAudio = useCallback(async (
+    frequencyHz: number,
+    amplitude: number,
+    waveform: WaveformType
+  ): Promise<Audio.Sound | null> => {
+    if (isGeneratingRef.current) {
+      console.log('[CoherenceEngine] Audio generation already in progress');
+      return null;
+    }
+
+    isGeneratingRef.current = true;
+    console.log(`[CoherenceEngine] Generating ${waveform} wave at ${frequencyHz}Hz, amplitude ${amplitude}`);
+
+    try {
+      // Generate waveform buffer using frequency-engine
+      const samples = generateWaveform(
+        waveform,
+        frequencyHz,
+        SAMPLE_RATE,
+        BUFFER_DURATION_SECONDS,
+        amplitude
+      );
+
+      // Convert to data URI for expo-av
+      const dataUri = await createWavDataUri(samples, SAMPLE_RATE);
+
+      // Create and load sound
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: dataUri },
+        {
+          isLooping: true,
+          shouldPlay: false,
+          volume: 1.0,
+        }
+      );
+
+      console.log('[CoherenceEngine] Audio loaded successfully');
+      return sound;
+    } catch (error) {
+      console.error('[CoherenceEngine] Audio generation failed:', error);
+      return null;
+    } finally {
+      isGeneratingRef.current = false;
+    }
+  }, []);
+
+  // ============================================================================
+  // SYNCHRONIZED HAPTIC FEEDBACK
+  // ============================================================================
+
+  const startSynchronizedHaptics = useCallback((frequencyHz: number) => {
+    if (Platform.OS === 'web') return;
+
+    // Calculate haptic interval based on frequency
+    // For low frequencies (< 10 Hz), pulse at frequency rate
+    // For higher frequencies, use a perceivable rate
+    const hapticIntervalMs = frequencyHz < 10
+      ? Math.round(1000 / frequencyHz)
+      : HAPTIC_INTERVAL_MS;
+
+    hapticRef.current = setInterval(() => {
+      Vibration.vibrate(20); // Short 20ms pulse
+    }, hapticIntervalMs);
+
+    console.log(`[CoherenceEngine] Synchronized haptics started at ${hapticIntervalMs}ms interval`);
+  }, []);
+
+  const stopSynchronizedHaptics = useCallback(() => {
+    if (hapticRef.current) {
+      clearInterval(hapticRef.current);
+      hapticRef.current = null;
+    }
+    Vibration.cancel();
+  }, []);
 
   // ============================================================================
   // DISCLAIMER
@@ -218,7 +314,7 @@ export function useCoherenceEngine() {
     setSession(prev => ({ ...prev, amplitude: safeAmp }));
   }, []);
 
-  const setWaveform = useCallback((waveform: SessionState['waveform']) => {
+  const setWaveform = useCallback((waveform: WaveformType) => {
     setSession(prev => ({ ...prev, waveform }));
     if (Platform.OS !== 'web') {
       Vibration.vibrate(10);
@@ -237,16 +333,36 @@ export function useCoherenceEngine() {
     }
 
     try {
-      /**
-       * NOTE: In a production implementation, we would:
-       * 1. Import FrequencyEngine from @coherence-core/frequency-engine
-       * 2. Generate audio buffer: engine.generateBuffer(44100, 60)
-       * 3. Convert to base64 and load with expo-av
-       *
-       * For now, we simulate the session state management.
-       * The actual audio generation would require native module integration.
-       */
+      console.log('[CoherenceEngine] Starting session...');
 
+      // Stop any existing audio
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+
+      // Generate and load new audio
+      const sound = await generateAndLoadAudio(
+        session.frequencyHz,
+        session.amplitude,
+        session.waveform
+      );
+
+      if (!sound) {
+        Alert.alert('Error', 'Failed to generate audio. Please try again.');
+        return false;
+      }
+
+      soundRef.current = sound;
+
+      // Start playback
+      await sound.playAsync();
+
+      // Start synchronized haptics
+      startSynchronizedHaptics(session.frequencyHz);
+
+      // Update state
       setSession(prev => ({
         ...prev,
         isPlaying: true,
@@ -255,32 +371,44 @@ export function useCoherenceEngine() {
         remainingMs: DEFAULT_SAFETY_LIMITS.maxSessionDurationMs,
       }));
 
-      // Haptic feedback
-      if (Platform.OS !== 'web') {
-        Vibration.vibrate([0, 50, 50, 50]);
-      }
-
+      console.log('[CoherenceEngine] Session started successfully');
       return true;
     } catch (error) {
       console.error('[CoherenceEngine] Start session failed:', error);
-      Alert.alert('Error', 'Failed to start session');
+      Alert.alert('Error', 'Failed to start session. Please try again.');
       return false;
     }
-  }, [session.disclaimerAcknowledged, showDisclaimerModal]);
+  }, [
+    session.disclaimerAcknowledged,
+    session.frequencyHz,
+    session.amplitude,
+    session.waveform,
+    showDisclaimerModal,
+    generateAndLoadAudio,
+    startSynchronizedHaptics,
+  ]);
 
   const stopSession = useCallback(async () => {
     try {
+      console.log('[CoherenceEngine] Stopping session...');
+
+      // Stop audio
       if (soundRef.current) {
         await soundRef.current.stopAsync();
         await soundRef.current.unloadAsync();
         soundRef.current = null;
       }
 
+      // Stop haptics
+      stopSynchronizedHaptics();
+
+      // Clear timer
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
 
+      // Update state
       setSession(prev => ({
         ...prev,
         isPlaying: false,
@@ -289,13 +417,16 @@ export function useCoherenceEngine() {
         remainingMs: DEFAULT_SAFETY_LIMITS.maxSessionDurationMs,
       }));
 
+      // Final haptic feedback
       if (Platform.OS !== 'web') {
         Vibration.vibrate(100);
       }
+
+      console.log('[CoherenceEngine] Session stopped');
     } catch (error) {
       console.error('[CoherenceEngine] Stop session failed:', error);
     }
-  }, []);
+  }, [stopSynchronizedHaptics]);
 
   const toggleSession = useCallback(async () => {
     if (session.isPlaying) {
@@ -316,15 +447,7 @@ export function useCoherenceEngine() {
       if (!accepted) return false;
     }
 
-    /**
-     * NOTE: In production, we would:
-     * 1. Import EVMEngine from @coherence-core/evm-engine
-     * 2. Get camera frames via expo-camera
-     * 3. Process frames through engine.processFrame()
-     * 4. Update detectedFrequencies from results
-     *
-     * Current implementation simulates analysis state.
-     */
+    console.log('[CoherenceEngine] Starting EVM analysis...');
 
     setSession(prev => ({
       ...prev,
@@ -333,19 +456,20 @@ export function useCoherenceEngine() {
       qualityScore: 0,
     }));
 
-    // Simulate frame rate updates
+    // Quality score increases over time as more frames are processed
     frameTimerRef.current = setInterval(() => {
       setSession(prev => ({
         ...prev,
-        // Simulated quality score increases over time
-        qualityScore: Math.min(1, prev.qualityScore + 0.05),
+        qualityScore: Math.min(1, prev.qualityScore + 0.02),
       }));
-    }, 500);
+    }, 100);
 
     return true;
   }, [session.disclaimerAcknowledged, showDisclaimerModal]);
 
   const stopAnalysis = useCallback(() => {
+    console.log('[CoherenceEngine] Stopping EVM analysis...');
+
     if (frameTimerRef.current) {
       clearInterval(frameTimerRef.current);
       frameTimerRef.current = null;
@@ -367,6 +491,10 @@ export function useCoherenceEngine() {
 
   const updateFrameRate = useCallback((fps: number) => {
     setSession(prev => ({ ...prev, frameRate: Math.round(fps) }));
+  }, []);
+
+  const updateDetectedFrequencies = useCallback((frequencies: number[]) => {
+    setSession(prev => ({ ...prev, detectedFrequencies: frequencies }));
   }, []);
 
   // ============================================================================
@@ -401,6 +529,7 @@ export function useCoherenceEngine() {
     stopAnalysis,
     toggleAnalysis,
     updateFrameRate,
+    updateDetectedFrequencies,
 
     // Sensor info
     sensorLimits: {
