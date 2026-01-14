@@ -1048,17 +1048,57 @@ extension AISuggestion.SuggestionType {
 // MARK: - Video Generation Model Types
 
 /// Supported AI video generation models with their specialized capabilities
+///
+/// KEINE VERSTECKTEN KOSTEN - NO HIDDEN COSTS:
+/// - Default model is `localProcessing` which runs entirely on-device with ZERO cost
+/// - External APIs (marked as BYOK - Bring Your Own Key) require user's own API credentials
+/// - Users must explicitly configure and pay for external services themselves
+/// - All core features work offline without any external dependencies
+///
 enum VideoGenerationModel: String, CaseIterable, Codable {
-    case sora2 = "Sora 2"
-    case kling2 = "Kling 2.0"
-    case runwayGen4 = "Runway Gen-4"
-    case localDiffusion = "Local Diffusion"
-    case hybrid = "Hybrid Multi-Model"
+    // DEFAULT - FREE, runs locally
+    case localProcessing = "Local Processing"      // FREE - Default, no API needed
+
+    // OPTIONAL - Bring Your Own Key (BYOK) - User pays directly to provider
+    case externalSora = "External: Sora (BYOK)"    // Requires user's OpenAI API key
+    case externalKling = "External: Kling (BYOK)"  // Requires user's Kling API key
+    case externalRunway = "External: Runway (BYOK)" // Requires user's Runway API key
+    case hybridLocal = "Hybrid Local"              // Local processing with enhancements
+
+    /// Whether this model requires external API (user must provide their own key)
+    var requiresExternalAPI: Bool {
+        switch self {
+        case .localProcessing, .hybridLocal: return false
+        case .externalSora, .externalKling, .externalRunway: return true
+        }
+    }
+
+    /// Whether this model is free to use
+    var isFree: Bool {
+        switch self {
+        case .localProcessing, .hybridLocal: return true
+        case .externalSora, .externalKling, .externalRunway: return false  // User pays provider
+        }
+    }
 
     /// Model-specific capabilities and strengths
     var capabilities: ModelCapabilities {
         switch self {
-        case .sora2:
+        case .localProcessing:
+            // FREE - Runs entirely on device
+            return ModelCapabilities(
+                physicsRealism: 0.75,
+                temporalConsistency: 0.80,
+                stylisticControl: 0.85,
+                maxDuration: 30.0,
+                maxResolution: CGSize(width: 1920, height: 1080),
+                supportedAspectRatios: [16/9, 9/16, 1/1],
+                latencySeconds: 30.0,
+                costPerSecond: 0.0,  // FREE
+                specialFeatures: ["offline", "private", "no-api-needed", "unlimited-use", "no-cost"]
+            )
+        case .externalSora:
+            // BYOK - User pays OpenAI directly
             return ModelCapabilities(
                 physicsRealism: 0.98,
                 temporalConsistency: 0.92,
@@ -1067,10 +1107,11 @@ enum VideoGenerationModel: String, CaseIterable, Codable {
                 maxResolution: CGSize(width: 3840, height: 2160),
                 supportedAspectRatios: [16/9, 9/16, 1/1, 4/3, 21/9],
                 latencySeconds: 45.0,
-                costPerSecond: 0.15,
-                specialFeatures: ["world-simulation", "physics-accurate", "long-form", "character-persistence"]
+                costPerSecond: 0.0,  // User pays OpenAI directly, not us
+                specialFeatures: ["byok", "user-pays-provider", "physics-accurate"]
             )
-        case .kling2:
+        case .externalKling:
+            // BYOK - User pays Kling directly
             return ModelCapabilities(
                 physicsRealism: 0.88,
                 temporalConsistency: 0.96,
@@ -1079,10 +1120,11 @@ enum VideoGenerationModel: String, CaseIterable, Codable {
                 maxResolution: CGSize(width: 3840, height: 2160),
                 supportedAspectRatios: [16/9, 9/16, 1/1],
                 latencySeconds: 30.0,
-                costPerSecond: 0.08,
-                specialFeatures: ["motion-brush", "lip-sync", "face-swap", "long-video", "temporal-coherence"]
+                costPerSecond: 0.0,  // User pays Kling directly, not us
+                specialFeatures: ["byok", "user-pays-provider", "temporal-coherence"]
             )
-        case .runwayGen4:
+        case .externalRunway:
+            // BYOK - User pays Runway directly
             return ModelCapabilities(
                 physicsRealism: 0.80,
                 temporalConsistency: 0.85,
@@ -1091,46 +1133,42 @@ enum VideoGenerationModel: String, CaseIterable, Codable {
                 maxResolution: CGSize(width: 3840, height: 2160),
                 supportedAspectRatios: [16/9, 9/16, 1/1, 4/5, 3/4],
                 latencySeconds: 20.0,
-                costPerSecond: 0.05,
-                specialFeatures: ["style-reference", "motion-control", "camera-presets", "artistic-modes"]
+                costPerSecond: 0.0,  // User pays Runway directly, not us
+                specialFeatures: ["byok", "user-pays-provider", "style-control"]
             )
-        case .localDiffusion:
+        case .hybridLocal:
+            // FREE - Enhanced local processing
             return ModelCapabilities(
-                physicsRealism: 0.70,
-                temporalConsistency: 0.75,
-                stylisticControl: 0.85,
-                maxDuration: 8.0,
-                maxResolution: CGSize(width: 1920, height: 1080),
-                supportedAspectRatios: [16/9, 1/1],
-                latencySeconds: 60.0,
-                costPerSecond: 0.0,
-                specialFeatures: ["offline", "private", "customizable", "no-api-limit"]
-            )
-        case .hybrid:
-            return ModelCapabilities(
-                physicsRealism: 0.95,
-                temporalConsistency: 0.94,
-                stylisticControl: 0.92,
-                maxDuration: 300.0,
-                maxResolution: CGSize(width: 7680, height: 4320),
-                supportedAspectRatios: [16/9, 9/16, 1/1, 4/3, 21/9, 4/5, 3/4],
-                latencySeconds: 90.0,
-                costPerSecond: 0.25,
-                specialFeatures: ["multi-model", "best-of-all", "intelligent-routing", "seamless-stitching"]
+                physicsRealism: 0.80,
+                temporalConsistency: 0.85,
+                stylisticControl: 0.90,
+                maxDuration: 60.0,
+                maxResolution: CGSize(width: 3840, height: 2160),
+                supportedAspectRatios: [16/9, 9/16, 1/1, 4/3],
+                latencySeconds: 45.0,
+                costPerSecond: 0.0,  // FREE
+                specialFeatures: ["offline", "private", "enhanced", "no-cost", "unlimited"]
             )
         }
     }
 
-    /// API endpoint for each model
-    var apiEndpoint: String {
+    /// API endpoint - only used for BYOK external services
+    /// User must configure their own API key to use these
+    var apiEndpoint: String? {
         switch self {
-        case .sora2: return "https://api.openai.com/v1/video/generations"
-        case .kling2: return "https://api.klingai.com/v2/video/generate"
-        case .runwayGen4: return "https://api.runwayml.com/v1/generate"
-        case .localDiffusion: return "local://diffusion/generate"
-        case .hybrid: return "orchestrator://hybrid/generate"
+        case .localProcessing, .hybridLocal:
+            return nil  // No external API needed - runs locally
+        case .externalSora:
+            return nil  // User configures their own OpenAI endpoint
+        case .externalKling:
+            return nil  // User configures their own Kling endpoint
+        case .externalRunway:
+            return nil  // User configures their own Runway endpoint
         }
     }
+
+    /// Default model - always free, always local
+    static var `default`: VideoGenerationModel { .localProcessing }
 }
 
 /// Detailed model capabilities for intelligent routing
