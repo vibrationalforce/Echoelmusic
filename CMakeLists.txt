@@ -817,7 +817,19 @@ if(BUILD_NATIVE_AUDIO)
             INTERFACE
                 ole32
                 uuid
+                crypt32
+                credui
         )
+
+        # Echoela Security Library (Windows)
+        add_library(EchoelaSecurity STATIC
+            Sources/DSP/EchoelaSecurity.cpp
+            Sources/DSP/EchoelaSecurity.h
+        )
+        target_include_directories(EchoelaSecurity PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Sources/DSP)
+        target_link_libraries(EchoelaSecurity PRIVATE crypt32 credui webauthn)
+        target_compile_definitions(EchoelaSecurity PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX _UNICODE UNICODE)
+        message(STATUS "  - Echoela Security: DPAPI + Credential Manager + Windows Hello")
     elseif(UNIX AND NOT APPLE AND NOT ANDROID)
         message(STATUS "  Linux: ALSA + PipeWire")
 
@@ -840,9 +852,24 @@ if(BUILD_NATIVE_AUDIO)
                 target_compile_definitions(EchoelmusicNativeAudio INTERFACE ECHOELMUSIC_PIPEWIRE=1)
                 message(STATUS "    - PipeWire: Found")
             endif()
+
+            # OpenSSL for encryption
+            find_package(OpenSSL)
+            if(OPENSSL_FOUND)
+                message(STATUS "    - OpenSSL: Found")
+            endif()
         endif()
 
         target_link_libraries(EchoelmusicNativeAudio INTERFACE pthread)
+
+        # Echoela Security Library (Linux)
+        add_library(EchoelaSecurity STATIC
+            Sources/DSP/EchoelaSecurity.cpp
+            Sources/DSP/EchoelaSecurity.h
+        )
+        target_include_directories(EchoelaSecurity PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Sources/DSP)
+        target_link_libraries(EchoelaSecurity PRIVATE pthread OpenSSL::SSL OpenSSL::Crypto)
+        message(STATUS "  - Echoela Security: OpenSSL AES-256-GCM + Secure File Storage")
     endif()
 
     message(STATUS "==============================================")
