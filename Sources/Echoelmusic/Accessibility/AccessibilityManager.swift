@@ -522,11 +522,47 @@ class AccessibilityManager: ObservableObject {
     // MARK: - Contrast Ratio Calculation (WCAG 2.1.4.11)
 
     func calculateContrastRatio(foreground: Color, background: Color) -> Float {
-        // Simplified contrast calculation - in production use proper WCAG formula
+        // WCAG 2.1 relative luminance formula
         // WCAG AAA requires 7:1 for normal text, 4.5:1 for large text
 
-        // Placeholder - implement proper relative luminance calculation
-        return 7.5  // Mock high contrast
+        let fgLuminance = relativeLuminance(of: foreground)
+        let bgLuminance = relativeLuminance(of: background)
+
+        let lighter = max(fgLuminance, bgLuminance)
+        let darker = min(fgLuminance, bgLuminance)
+
+        // WCAG contrast ratio formula: (L1 + 0.05) / (L2 + 0.05)
+        return Float((lighter + 0.05) / (darker + 0.05))
+    }
+
+    /// Calculate relative luminance per WCAG 2.1 specification
+    private func relativeLuminance(of color: Color) -> Double {
+        // Convert Color to RGB components
+        #if canImport(UIKit)
+        let uiColor = UIColor(color)
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        uiColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        #elseif canImport(AppKit)
+        let nsColor = NSColor(color)
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        nsColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        #else
+        // Fallback for other platforms
+        let red: CGFloat = 0.5, green: CGFloat = 0.5, blue: CGFloat = 0.5
+        #endif
+
+        // Apply sRGB linearization
+        func linearize(_ c: CGFloat) -> Double {
+            let val = Double(c)
+            return val <= 0.03928 ? val / 12.92 : pow((val + 0.055) / 1.055, 2.4)
+        }
+
+        let r = linearize(red)
+        let g = linearize(green)
+        let b = linearize(blue)
+
+        // WCAG relative luminance formula
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
     }
 
     func meetsContrastRequirements(foreground: Color, background: Color, textSize: CGFloat) -> Bool {

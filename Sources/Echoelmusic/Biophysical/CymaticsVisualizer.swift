@@ -462,7 +462,7 @@ public final class BiophysicalAudioGenerator {
             try audioEngine?.start()
             isPlaying = true
         } catch {
-            print("[BiophysicalAudio] Failed to start: \(error)")
+            log.error("BiophysicalAudio failed to start: \(error)")
         }
     }
 

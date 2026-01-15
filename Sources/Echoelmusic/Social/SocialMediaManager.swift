@@ -593,16 +593,24 @@ class SocialMediaManager: ObservableObject {
 
     /// Save scheduled posts to storage
     private func saveScheduledPosts() {
-        guard let data = try? JSONEncoder().encode(scheduledPosts) else { return }
-        UserDefaults.standard.set(data, forKey: "scheduledPosts")
+        do {
+            let data = try JSONEncoder().encode(scheduledPosts)
+            UserDefaults.standard.set(data, forKey: "scheduledPosts")
+        } catch {
+            log.error("Failed to save scheduled posts: \(error)")
+        }
     }
 
     /// Load scheduled posts from storage
     private func loadScheduledPosts() {
-        guard let data = UserDefaults.standard.data(forKey: "scheduledPosts"),
-              let posts = try? JSONDecoder().decode([ScheduledPost].self, from: data) else { return }
-        scheduledPosts = posts.filter { $0.status == .pending }
-        startSchedulerIfNeeded()
+        guard let data = UserDefaults.standard.data(forKey: "scheduledPosts") else { return }
+        do {
+            let posts = try JSONDecoder().decode([ScheduledPost].self, from: data)
+            scheduledPosts = posts.filter { $0.status == .pending }
+            startSchedulerIfNeeded()
+        } catch {
+            log.error("Failed to load scheduled posts: \(error)")
+        }
     }
 
     // MARK: - Analytics

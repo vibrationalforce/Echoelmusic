@@ -417,7 +417,11 @@ public final class ImmersiveIsochronicSession: ObservableObject {
     /// Resume a paused session
     public func resumeSession() {
         state.isActive = true
-        try? audioEngine?.start()
+        do {
+            try audioEngine?.start()
+        } catch {
+            log.error("Failed to resume audio engine in immersive session: \(error)")
+        }
         startTimers()
     }
 

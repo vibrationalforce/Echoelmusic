@@ -119,7 +119,7 @@ public final class TapticStimulationEngine: ObservableObject {
 
     private func setupHapticEngine() {
         guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
-            print("[Taptic] Haptics not supported on this device")
+            log.info("Haptics not supported on this device")
             return
         }
 
@@ -144,7 +144,7 @@ public final class TapticStimulationEngine: ObservableObject {
             try hapticEngine?.start()
 
         } catch {
-            print("[Taptic] Failed to create haptic engine: \(error)")
+            log.error("Failed to create haptic engine: \(error)")
         }
     }
 
@@ -162,12 +162,12 @@ public final class TapticStimulationEngine: ObservableObject {
                 }
             }
         } catch {
-            print("[Taptic] Failed to restart engine: \(error)")
+            log.error("Failed to restart haptic engine: \(error)")
         }
     }
 
     private func handleEngineStopped(reason: CHHapticEngine.StoppedReason) {
-        print("[Taptic] Engine stopped: \(reason)")
+        log.info("Haptic engine stopped: \(reason)")
 
         Task { @MainActor in
             isActive = false
@@ -226,7 +226,7 @@ public final class TapticStimulationEngine: ObservableObject {
         do {
             try continuousPlayer?.stop(atTime: CHHapticTimeImmediate)
         } catch {
-            print("[Taptic] Error stopping: \(error)")
+            log.error("Error stopping haptic playback: \(error)")
         }
 
         stopSessionTimer()
@@ -276,7 +276,7 @@ public final class TapticStimulationEngine: ObservableObject {
             }
 
         } catch {
-            print("[Taptic] Error updating frequency: \(error)")
+            log.error("Error updating frequency: \(error)")
         }
     }
 
@@ -299,7 +299,7 @@ public final class TapticStimulationEngine: ObservableObject {
             try continuousPlayer?.sendParameters([intensityParam], atTime: CHHapticTimeImmediate)
 
         } catch {
-            print("[Taptic] Error updating intensity: \(error)")
+            log.error("Error updating intensity: \(error)")
         }
     }
 

@@ -127,7 +127,11 @@ struct ContentView: View {
             pulseAnimation = true
             checkPermissions()
             Task {
-                try? await healthKitManager.requestAuthorization()
+                do {
+                    try await healthKitManager.requestAuthorization()
+                } catch {
+                    log.error("HealthKit authorization failed: \(error)")
+                }
             }
         }
         .alert("Microphone Access Required", isPresented: $showPermissionAlert) {

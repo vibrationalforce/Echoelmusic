@@ -165,7 +165,7 @@ public final class EVMAnalysisEngine: NSObject {
 
     private func setupMetal() {
         guard let device = MTLCreateSystemDefaultDevice() else {
-            print("[EVM] Metal not available")
+            log.warning("Metal not available for EVM analysis")
             return
         }
 
@@ -179,7 +179,7 @@ public final class EVMAnalysisEngine: NSObject {
                 computePipelineState = try device.makeComputePipelineState(function: function)
             }
         } catch {
-            print("[EVM] Failed to create compute pipeline: \(error)")
+            log.error("Failed to create EVM compute pipeline: \(error)")
         }
     }
 

@@ -323,7 +323,7 @@ private struct PermissionsPage: View {
                     hapticFeedback(.success)
                 }
             } catch {
-                print("HealthKit authorization error: \(error)")
+                log.error("HealthKit authorization error: \(error)")
                 hapticFeedback(.error)
             }
         }

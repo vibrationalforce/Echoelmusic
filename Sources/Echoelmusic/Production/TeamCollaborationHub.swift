@@ -294,13 +294,40 @@ class TeamCollaborationHub: ObservableObject {
     }
 
     private func calculateTeamWorkHours() -> Double {
-        // Placeholder - would calculate from activity logs
-        return 6.5
+        // Calculate total active hours from sessions
+        let now = Date()
+        var totalHours: Double = 0.0
+
+        for session in activeSessions where session.status == .active {
+            let sessionStart = session.startedAt
+            let sessionEnd = session.endedAt ?? now
+            let sessionDuration = sessionEnd.timeIntervalSince(sessionStart) / 3600.0
+            totalHours += sessionDuration
+        }
+
+        // Average across active team members
+        let memberCount = max(1, onlineMembers.count)
+        return totalHours / Double(memberCount)
     }
 
     private func calculateTimeSinceLastBreak() -> TimeInterval {
-        // Placeholder
-        return 5400 // 1.5 hours
+        // Find the most recent break activity
+        let now = Date()
+        let breakActivities = recentActivity.filter {
+            if case .leftSession = $0.type { return true }
+            return false
+        }
+
+        if let lastBreak = breakActivities.first {
+            return now.timeIntervalSince(lastBreak.timestamp)
+        }
+
+        // If no break found, use session start times
+        if let oldestSession = activeSessions.min(by: { $0.startedAt < $1.startedAt }) {
+            return now.timeIntervalSince(oldestSession.startedAt)
+        }
+
+        return 3600 // Default 1 hour if no data
     }
 
     private func updateTeamWellnessScore() {
