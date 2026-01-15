@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Echoelmusic</string>
+    <string name="coherence_complication">Coherence</string>
+    <string name="hrv_complication">HRV</string>
+    <string name="heart_rate_complication">Heart Rate</string>
+</resources>
