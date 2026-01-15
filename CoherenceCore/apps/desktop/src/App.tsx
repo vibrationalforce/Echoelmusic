@@ -360,12 +360,79 @@ export default function App() {
 
         {activeTab === 'scan' && (
           <div className="scan-view">
-            <div className="placeholder">
-              <h2>EVM Scanner</h2>
-              <p>Camera-based micro-vibration detection</p>
-              <p className="note">
-                Requires camera access. Use crabcamera for desktop capture.
-              </p>
+            {/* Camera Preview */}
+            <div className="camera-section">
+              <div className="camera-preview">
+                <div className="camera-placeholder">
+                  <span className="camera-icon">📷</span>
+                  <span className="camera-text">Camera Preview</span>
+                  <span className="camera-hint">Position target area in frame</span>
+                </div>
+              </div>
+              <div className="camera-controls">
+                <button className="scan-btn">Start Scan</button>
+                <select className="camera-select">
+                  <option value="">Select Camera...</option>
+                  <option value="default">Default Webcam</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Analysis Results */}
+            <div className="analysis-section">
+              <h3>EVM Analysis</h3>
+              <div className="analysis-grid">
+                <div className="analysis-card">
+                  <span className="analysis-label">Detected Frequency</span>
+                  <span className="analysis-value">-- Hz</span>
+                  <span className="analysis-range">Target: 1-60 Hz</span>
+                </div>
+                <div className="analysis-card">
+                  <span className="analysis-label">Amplitude</span>
+                  <span className="analysis-value">-- μm</span>
+                  <span className="analysis-range">Micro-displacement</span>
+                </div>
+                <div className="analysis-card">
+                  <span className="analysis-label">Signal Quality</span>
+                  <span className="analysis-value">--%</span>
+                  <span className="analysis-range">SNR indicator</span>
+                </div>
+                <div className="analysis-card">
+                  <span className="analysis-label">Frame Rate</span>
+                  <span className="analysis-value">-- fps</span>
+                  <span className="analysis-range">Min: 60 fps for Nyquist</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Frequency Spectrum */}
+            <div className="spectrum-section">
+              <h3>Frequency Spectrum</h3>
+              <div className="spectrum-chart">
+                <div className="spectrum-placeholder">
+                  <div className="spectrum-bar" style={{ height: '20%' }} />
+                  <div className="spectrum-bar" style={{ height: '35%' }} />
+                  <div className="spectrum-bar" style={{ height: '60%' }} />
+                  <div className="spectrum-bar" style={{ height: '80%' }} />
+                  <div className="spectrum-bar" style={{ height: '45%' }} />
+                  <div className="spectrum-bar" style={{ height: '30%' }} />
+                  <div className="spectrum-bar" style={{ height: '15%' }} />
+                  <div className="spectrum-bar" style={{ height: '10%' }} />
+                </div>
+                <div className="spectrum-labels">
+                  <span>0 Hz</span>
+                  <span>15 Hz</span>
+                  <span>30 Hz</span>
+                  <span>45 Hz</span>
+                  <span>60 Hz</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="scan-info">
+              <p>EVM (Eulerian Video Magnification) detects micro-vibrations invisible to the naked eye.</p>
+              <p className="note">Requires stable camera mount and good lighting for optimal results.</p>
             </div>
           </div>
         )}

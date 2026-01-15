@@ -310,14 +310,187 @@ body {
   background: var(--color-danger);
 }
 
-/* Scan View */
+/* Scan View - EVM Scanner */
 .scan-view {
+  max-width: 900px;
+  margin: 0 auto;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
+  flex-direction: column;
+  gap: 25px;
 }
 
+/* Camera Section */
+.camera-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.camera-preview {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: var(--color-surface);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.camera-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+}
+
+.camera-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.camera-text {
+  font-size: 18px;
+  color: var(--color-text-secondary);
+}
+
+.camera-hint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.camera-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.scan-btn {
+  flex: 1;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  background: var(--color-primary);
+  color: var(--color-bg);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.scan-btn:hover {
+  opacity: 0.9;
+}
+
+.camera-select {
+  flex: 1;
+  padding: 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Analysis Section */
+.analysis-section h3,
+.spectrum-section h3 {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.analysis-card {
+  background: var(--color-surface);
+  padding: 16px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.analysis-label {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.analysis-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--color-primary);
+}
+
+.analysis-range {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+/* Spectrum Section */
+.spectrum-chart {
+  background: var(--color-surface);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.spectrum-placeholder {
+  height: 120px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.spectrum-bar {
+  flex: 1;
+  background: linear-gradient(to top, var(--color-primary), rgba(0, 229, 255, 0.3));
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+  opacity: 0.4;
+}
+
+.spectrum-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+/* Scan Info */
+.scan-info {
+  text-align: center;
+  padding: 15px;
+  background: rgba(0, 229, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 229, 255, 0.1);
+}
+
+.scan-info p {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.scan-info .note {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--color-warning);
+}
+
+/* Legacy placeholder */
 .placeholder {
   text-align: center;
   color: var(--color-text-secondary);
