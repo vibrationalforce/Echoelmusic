@@ -35,7 +35,7 @@
     {
       "id": "F002",
       "name": "IMU-Analyzer",
-      "description": "100Hz accelerometer sampling with FFT for 30-50 Hz detection",
+      "description": "100Hz accelerometer sampling with FFT for 0.8-50 Hz detection (heart rate + breathing)",
       "platforms": ["ios", "android"],
       "passes": true,
       "software_complete": true,
@@ -43,8 +43,17 @@
       "tests": ["T004", "T005"],
       "tests_passing": 6,
       "implementation": {
-        "mobile": "expo-sensors (Accelerometer)",
-        "types": "@coherence-core/shared-types (IMU_CAPABILITIES)"
+        "mobile": "expo-sensors (Accelerometer) + useIMUAnalyzer hook",
+        "types": "@coherence-core/shared-types (IMU_CAPABILITIES)",
+        "ui_integration": "scan.tsx mode tabs (Camera/IMU/Fusion)",
+        "features": [
+          "Real-time accelerometer XYZ visualization",
+          "DFT-based frequency detection (no FFT library needed)",
+          "Heart rate estimation (0.8-3.5 Hz → 48-210 BPM)",
+          "Breathing rate estimation (0.1-0.5 Hz → 6-30/min)",
+          "Signal quality and noise level metrics",
+          "Sensor fusion mode with EVM camera"
+        ]
       }
     },
     {
@@ -208,7 +217,7 @@
     }
   ],
   "loop_state": {
-    "current_iteration": 8,
+    "current_iteration": 9,
     "last_error": null,
     "status": "all_features_complete",
     "completed": true,
@@ -219,6 +228,14 @@
     "mobile_screens_integrated": ["scan", "stimulate", "settings"],
     "desktop_app_initialized": true,
     "unified_engine_hook": "apps/mobile/lib/useCoherenceEngine.ts",
+    "imu_analyzer_hook": "apps/mobile/lib/useIMUAnalyzer.ts",
+    "sensor_fusion": {
+      "status": "complete",
+      "modes": ["camera", "imu", "fusion"],
+      "connection": "Both EVM and IMU detect the same physiological signals through different modalities",
+      "evm": "Optical detection of skin micro-motion via camera",
+      "imu": "Inertial detection of body micro-motion via accelerometer"
+    },
     "audio_implementation": {
       "mobile": "frequency-engine with expo-av (actual audio generation)",
       "desktop": "cpal with real-time waveform generation",

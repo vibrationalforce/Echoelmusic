@@ -17,17 +17,22 @@ import {
   TouchableOpacity,
   Dimensions,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { Camera, CameraType, CameraView } from 'expo-camera';
 import { router } from 'expo-router';
 import { DISCLAIMER_TEXT } from '@coherence-core/shared-types';
 import { useCoherenceEngine } from '../lib/useCoherenceEngine';
+import { useIMUAnalyzer } from '../lib/useIMUAnalyzer';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+type ScanMode = 'camera' | 'imu' | 'fusion';
 
 export default function ScanScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [facing, setFacing] = useState<CameraType>('back');
+  const [scanMode, setScanMode] = useState<ScanMode>('camera');
 
   // Use unified engine hook
   const {
@@ -38,6 +43,9 @@ export default function ScanScreen() {
     updateFrameRate,
     showDisclaimerModal,
   } = useCoherenceEngine();
+
+  // IMU Analyzer hook - THE CONNECTION: Both detect micro-vibrations!
+  const imu = useIMUAnalyzer();
 
   const cameraRef = useRef<CameraView>(null);
   const frameCountRef = useRef(0);
@@ -63,8 +71,40 @@ export default function ScanScreen() {
       const accepted = await showDisclaimerModal();
       if (!accepted) return;
     }
-    await toggleAnalysis();
-  }, [session.disclaimerAcknowledged, session.isAnalyzing, showDisclaimerModal, toggleAnalysis]);
+
+    // Toggle based on scan mode
+    if (scanMode === 'camera') {
+      await toggleAnalysis();
+    } else if (scanMode === 'imu') {
+      await imu.toggleAnalysis();
+    } else if (scanMode === 'fusion') {
+      // Fusion mode: toggle both
+      await toggleAnalysis();
+      await imu.toggleAnalysis();
+    }
+  }, [
+    session.disclaimerAcknowledged,
+    session.isAnalyzing,
+    showDisclaimerModal,
+    toggleAnalysis,
+    scanMode,
+    imu,
+  ]);
+
+  // Check if any analysis is running
+  const isAnyAnalyzing = session.isAnalyzing || imu.isAnalyzing;
+
+  // Convert Hz to BPM for display
+  const formatHeartRate = (hz: number | null): string => {
+    if (hz === null) return '--';
+    return `${Math.round(hz * 60)} BPM`;
+  };
+
+  // Convert Hz to breaths/min for display
+  const formatBreathingRate = (hz: number | null): string => {
+    if (hz === null) return '--';
+    return `${(hz * 60).toFixed(1)}/min`;
+  };
 
   // Calculate FPS from frame timing
   const onFrameProcessed = useCallback(() => {
@@ -135,7 +175,9 @@ export default function ScanScreen() {
             >
               <Text style={styles.backButtonText}>← Back</Text>
             </TouchableOpacity>
-            <Text style={styles.title}>EVM Scanner</Text>
+            <Text style={styles.title}>
+              {scanMode === 'camera' ? 'EVM Scanner' : scanMode === 'imu' ? 'IMU Analyzer' : 'Sensor Fusion'}
+            </Text>
             <TouchableOpacity
               style={styles.flipButton}
               onPress={toggleCameraFacing}
@@ -144,91 +186,276 @@ export default function ScanScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Target Reticle */}
+          {/* Mode Tabs - THE CONNECTION between EVM and IMU */}
+          <View style={styles.modeTabs}>
+            <TouchableOpacity
+              style={[styles.modeTab, scanMode === 'camera' && styles.modeTabActive]}
+              onPress={() => setScanMode('camera')}
+            >
+              <Text style={[styles.modeTabText, scanMode === 'camera' && styles.modeTabTextActive]}>
+                📷 Camera
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modeTab, scanMode === 'imu' && styles.modeTabActive]}
+              onPress={() => setScanMode('imu')}
+            >
+              <Text style={[styles.modeTabText, scanMode === 'imu' && styles.modeTabTextActive]}>
+                📱 IMU
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modeTab, scanMode === 'fusion' && styles.modeTabActive]}
+              onPress={() => setScanMode('fusion')}
+            >
+              <Text style={[styles.modeTabText, scanMode === 'fusion' && styles.modeTabTextActive]}>
+                🔗 Fusion
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Target Reticle (Camera mode) or IMU Display */}
           <View style={styles.reticleContainer}>
-            <View style={styles.reticle}>
-              <View style={styles.reticleCorner} />
-              <View style={[styles.reticleCorner, styles.topRight]} />
-              <View style={[styles.reticleCorner, styles.bottomLeft]} />
-              <View style={[styles.reticleCorner, styles.bottomRight]} />
-            </View>
-            <Text style={styles.reticleText}>Position target in frame</Text>
+            {scanMode === 'imu' ? (
+              /* IMU Mode: Show accelerometer visualization */
+              <View style={styles.imuDisplay}>
+                <Text style={styles.imuTitle}>Accelerometer</Text>
+                {imu.currentData ? (
+                  <>
+                    <View style={styles.imuAxes}>
+                      <View style={styles.imuAxis}>
+                        <Text style={styles.imuAxisLabel}>X</Text>
+                        <View style={styles.imuBar}>
+                          <View
+                            style={[
+                              styles.imuBarFill,
+                              styles.imuBarX,
+                              { width: `${Math.min(100, Math.abs(imu.currentData.x) * 50)}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.imuAxisValue}>
+                          {imu.currentData.x.toFixed(3)}
+                        </Text>
+                      </View>
+                      <View style={styles.imuAxis}>
+                        <Text style={styles.imuAxisLabel}>Y</Text>
+                        <View style={styles.imuBar}>
+                          <View
+                            style={[
+                              styles.imuBarFill,
+                              styles.imuBarY,
+                              { width: `${Math.min(100, Math.abs(imu.currentData.y) * 50)}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.imuAxisValue}>
+                          {imu.currentData.y.toFixed(3)}
+                        </Text>
+                      </View>
+                      <View style={styles.imuAxis}>
+                        <Text style={styles.imuAxisLabel}>Z</Text>
+                        <View style={styles.imuBar}>
+                          <View
+                            style={[
+                              styles.imuBarFill,
+                              styles.imuBarZ,
+                              { width: `${Math.min(100, Math.abs(imu.currentData.z) * 50)}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.imuAxisValue}>
+                          {imu.currentData.z.toFixed(3)}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.imuMagnitude}>
+                      Magnitude: {imu.currentData.magnitude.toFixed(3)} g
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={styles.imuHint}>
+                    {imu.isAvailable ? 'Start analysis to see data' : 'IMU not available'}
+                  </Text>
+                )}
+                {imu.isAnalyzing && (
+                  <View style={styles.imuBuffer}>
+                    <Text style={styles.imuBufferLabel}>Buffer:</Text>
+                    <View style={styles.imuBufferBar}>
+                      <View
+                        style={[styles.imuBufferFill, { width: `${imu.bufferFillPercent}%` }]}
+                      />
+                    </View>
+                    <Text style={styles.imuBufferPercent}>
+                      {Math.round(imu.bufferFillPercent)}%
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ) : (
+              /* Camera mode: Show target reticle */
+              <>
+                <View style={styles.reticle}>
+                  <View style={styles.reticleCorner} />
+                  <View style={[styles.reticleCorner, styles.topRight]} />
+                  <View style={[styles.reticleCorner, styles.bottomLeft]} />
+                  <View style={[styles.reticleCorner, styles.bottomRight]} />
+                </View>
+                <Text style={styles.reticleText}>
+                  {scanMode === 'fusion'
+                    ? 'Position target + Hold device steady'
+                    : 'Position target in frame'}
+                </Text>
+              </>
+            )}
           </View>
 
           {/* Analysis Panel */}
           <View style={styles.analysisPanel}>
-            {/* FPS and Nyquist Status */}
-            <View style={styles.statusRow}>
-              <View style={styles.statusItem}>
-                <Text style={styles.statusLabel}>FPS</Text>
-                <Text style={styles.statusValue}>{session.frameRate}</Text>
+            {/* Mode-specific status row */}
+            {scanMode === 'imu' ? (
+              /* IMU Mode Status */
+              <View style={styles.statusRow}>
+                <View style={styles.statusItem}>
+                  <Text style={styles.statusLabel}>Sample Rate</Text>
+                  <Text style={styles.statusValue}>{imu.analysis.sampleRateHz} Hz</Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <Text style={styles.statusLabel}>Nyquist</Text>
+                  <Text
+                    style={[
+                      styles.statusValue,
+                      { color: imu.analysis.isNyquistValid ? '#4CAF50' : '#FF9800' },
+                    ]}
+                  >
+                    {imu.analysis.isNyquistValid ? 'OK' : 'LIMIT'}
+                  </Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <Text style={styles.statusLabel}>Quality</Text>
+                  <Text style={styles.statusValue}>
+                    {Math.round(imu.analysis.signalQuality * 100)}%
+                  </Text>
+                </View>
               </View>
-              <View style={styles.statusItem}>
-                <Text style={styles.statusLabel}>Nyquist</Text>
-                <Text
-                  style={[
-                    styles.statusValue,
-                    { color: session.nyquistValid ? '#4CAF50' : '#FF9800' },
-                  ]}
-                >
-                  {session.nyquistValid ? 'OK' : 'LOW FPS'}
-                </Text>
+            ) : (
+              /* Camera Mode Status */
+              <View style={styles.statusRow}>
+                <View style={styles.statusItem}>
+                  <Text style={styles.statusLabel}>FPS</Text>
+                  <Text style={styles.statusValue}>{session.frameRate}</Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <Text style={styles.statusLabel}>Nyquist</Text>
+                  <Text
+                    style={[
+                      styles.statusValue,
+                      { color: session.nyquistValid ? '#4CAF50' : '#FF9800' },
+                    ]}
+                  >
+                    {session.nyquistValid ? 'OK' : 'LOW FPS'}
+                  </Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <Text style={styles.statusLabel}>Quality</Text>
+                  <Text style={styles.statusValue}>
+                    {Math.round(session.qualityScore * 100)}%
+                  </Text>
+                </View>
               </View>
-              <View style={styles.statusItem}>
-                <Text style={styles.statusLabel}>Quality</Text>
-                <Text style={styles.statusValue}>
-                  {Math.round(session.qualityScore * 100)}%
-                </Text>
+            )}
+
+            {/* IMU Biometric Estimates (IMU mode only) */}
+            {(scanMode === 'imu' || scanMode === 'fusion') && imu.isAnalyzing && (
+              <View style={styles.biometricEstimates}>
+                <View style={styles.biometricItem}>
+                  <Text style={styles.biometricIcon}>❤️</Text>
+                  <Text style={styles.biometricLabel}>Heart Rate</Text>
+                  <Text style={styles.biometricValue}>
+                    {formatHeartRate(imu.analysis.estimatedHeartRateHz)}
+                  </Text>
+                </View>
+                <View style={styles.biometricItem}>
+                  <Text style={styles.biometricIcon}>🌬️</Text>
+                  <Text style={styles.biometricLabel}>Breathing</Text>
+                  <Text style={styles.biometricValue}>
+                    {formatBreathingRate(imu.analysis.estimatedBreathingRateHz)}
+                  </Text>
+                </View>
               </View>
-            </View>
+            )}
 
             {/* Frequency Range */}
             <View style={styles.frequencyRange}>
               <Text style={styles.frequencyLabel}>Target Range:</Text>
               <Text style={styles.frequencyValue}>
-                {evmConfig.frequencyRangeHz[0]}-
-                {evmConfig.frequencyRangeHz[1]} Hz
+                {scanMode === 'imu'
+                  ? `${imu.frequencyRanges.heartRate[0]}-${imu.frequencyRanges.heartRate[1]} Hz`
+                  : `${evmConfig.frequencyRangeHz[0]}-${evmConfig.frequencyRangeHz[1]} Hz`}
               </Text>
             </View>
 
             {/* Sensor Limits Info */}
             <View style={styles.sensorInfo}>
-              <Text style={styles.sensorInfoTitle}>Max Detectable (Nyquist):</Text>
-              <View style={styles.sensorInfoRow}>
-                <Text style={styles.sensorInfoLabel}>4K Camera:</Text>
-                <Text style={styles.sensorInfoValue}>{sensorLimits.camera4KMaxHz} Hz</Text>
-              </View>
-              <View style={styles.sensorInfoRow}>
-                <Text style={styles.sensorInfoLabel}>1080p Camera:</Text>
-                <Text style={styles.sensorInfoValue}>{sensorLimits.camera1080pMaxHz} Hz</Text>
-              </View>
-              <View style={styles.sensorInfoRow}>
-                <Text style={styles.sensorInfoLabel}>IMU (100Hz):</Text>
-                <Text style={styles.sensorInfoValue}>{sensorLimits.imuMaxHz} Hz</Text>
-              </View>
+              <Text style={styles.sensorInfoTitle}>
+                {scanMode === 'fusion' ? 'Sensor Fusion (Max Detectable):' : 'Max Detectable (Nyquist):'}
+              </Text>
+              {(scanMode === 'camera' || scanMode === 'fusion') && (
+                <>
+                  <View style={styles.sensorInfoRow}>
+                    <Text style={styles.sensorInfoLabel}>4K Camera:</Text>
+                    <Text style={styles.sensorInfoValue}>{sensorLimits.camera4KMaxHz} Hz</Text>
+                  </View>
+                  <View style={styles.sensorInfoRow}>
+                    <Text style={styles.sensorInfoLabel}>1080p Camera:</Text>
+                    <Text style={styles.sensorInfoValue}>{sensorLimits.camera1080pMaxHz} Hz</Text>
+                  </View>
+                </>
+              )}
+              {(scanMode === 'imu' || scanMode === 'fusion') && (
+                <View style={styles.sensorInfoRow}>
+                  <Text style={[styles.sensorInfoLabel, scanMode === 'imu' && styles.sensorInfoActive]}>
+                    IMU ({imu.capabilities.typicalSampleRateHz}Hz):
+                  </Text>
+                  <Text style={[styles.sensorInfoValue, scanMode === 'imu' && styles.sensorInfoActive]}>
+                    {imu.capabilities.maxDetectableFrequencyHz} Hz
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Quality Score Bar */}
             <View style={styles.qualityContainer}>
-              <Text style={styles.qualityLabel}>Signal Quality</Text>
+              <Text style={styles.qualityLabel}>
+                Signal Quality {scanMode === 'imu' && imu.analysis.noiseLevel > 0.5 ? '(Noisy)' : ''}
+              </Text>
               <View style={styles.qualityBar}>
                 <View
                   style={[
                     styles.qualityFill,
-                    { width: `${session.qualityScore * 100}%` },
+                    {
+                      width: `${(scanMode === 'imu' ? imu.analysis.signalQuality : session.qualityScore) * 100}%`,
+                    },
                   ]}
                 />
               </View>
             </View>
 
             {/* Detected Frequencies */}
-            {session.detectedFrequencies.length > 0 && (
+            {((scanMode === 'camera' && session.detectedFrequencies.length > 0) ||
+              (scanMode === 'imu' && imu.analysis.dominantFrequencies.length > 0) ||
+              (scanMode === 'fusion' && (session.detectedFrequencies.length > 0 || imu.analysis.dominantFrequencies.length > 0))) && (
               <View style={styles.detectedContainer}>
                 <Text style={styles.detectedLabel}>Detected:</Text>
                 <Text style={styles.detectedValue}>
-                  {session.detectedFrequencies
-                    .map(f => `${f.toFixed(1)} Hz`)
-                    .join(', ')}
+                  {scanMode === 'camera'
+                    ? session.detectedFrequencies.map(f => `${f.toFixed(1)} Hz`).join(', ')
+                    : scanMode === 'imu'
+                    ? imu.analysis.dominantFrequencies.map(f => `${f.toFixed(1)} Hz`).join(', ')
+                    : [...new Set([...session.detectedFrequencies, ...imu.analysis.dominantFrequencies])]
+                        .sort((a, b) => a - b)
+                        .map(f => `${f.toFixed(1)} Hz`)
+                        .join(', ')}
                 </Text>
               </View>
             )}
@@ -237,12 +464,12 @@ export default function ScanScreen() {
             <TouchableOpacity
               style={[
                 styles.analyzeButton,
-                session.isAnalyzing && styles.analyzeButtonActive,
+                isAnyAnalyzing && styles.analyzeButtonActive,
               ]}
               onPress={handleToggleAnalysis}
             >
               <Text style={styles.analyzeButtonText}>
-                {session.isAnalyzing ? 'Stop Analysis' : 'Start Analysis'}
+                {isAnyAnalyzing ? 'Stop Analysis' : 'Start Analysis'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -496,5 +723,159 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+
+  // Mode Tabs - THE CONNECTION between sensors
+  modeTabs: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  modeTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  modeTabActive: {
+    backgroundColor: '#00E5FF',
+  },
+  modeTabText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  modeTabTextActive: {
+    color: '#000',
+  },
+
+  // IMU Display
+  imuDisplay: {
+    width: 280,
+    padding: 20,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  imuTitle: {
+    color: '#00E5FF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 15,
+  },
+  imuAxes: {
+    width: '100%',
+    gap: 10,
+  },
+  imuAxis: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  imuAxisLabel: {
+    color: '#888',
+    fontSize: 14,
+    fontWeight: '600',
+    width: 20,
+  },
+  imuBar: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#333',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  imuBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  imuBarX: {
+    backgroundColor: '#FF5252',
+  },
+  imuBarY: {
+    backgroundColor: '#4CAF50',
+  },
+  imuBarZ: {
+    backgroundColor: '#2196F3',
+  },
+  imuAxisValue: {
+    color: '#fff',
+    fontSize: 11,
+    width: 50,
+    textAlign: 'right',
+  },
+  imuMagnitude: {
+    color: '#fff',
+    fontSize: 14,
+    marginTop: 15,
+  },
+  imuHint: {
+    color: '#888',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  imuBuffer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 15,
+    width: '100%',
+    gap: 8,
+  },
+  imuBufferLabel: {
+    color: '#888',
+    fontSize: 11,
+  },
+  imuBufferBar: {
+    flex: 1,
+    height: 4,
+    backgroundColor: '#333',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  imuBufferFill: {
+    height: '100%',
+    backgroundColor: '#00E5FF',
+    borderRadius: 2,
+  },
+  imuBufferPercent: {
+    color: '#888',
+    fontSize: 11,
+    width: 35,
+    textAlign: 'right',
+  },
+
+  // Biometric Estimates
+  biometricEstimates: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 15,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(0,229,255,0.05)',
+    borderRadius: 12,
+  },
+  biometricItem: {
+    alignItems: 'center',
+  },
+  biometricIcon: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  biometricLabel: {
+    color: '#888',
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  biometricValue: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Active sensor highlight
+  sensorInfoActive: {
+    color: '#00E5FF',
+    fontWeight: '600',
   },
 });
