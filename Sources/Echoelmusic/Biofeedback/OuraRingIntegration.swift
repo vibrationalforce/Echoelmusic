@@ -335,7 +335,7 @@ public class OuraRingIntegration: ObservableObject {
                 options: .cumulativeSum
             ) { _, statistics, _ in
                 let value = statistics?.sumQuantity()?.doubleValue(for: HKUnit.count())
-                continuation.resume(returning: value != nil ? Int(value!) : nil)
+                continuation.resume(returning: value.map { Int($0) })
             }
             healthStore.execute(query)
         }

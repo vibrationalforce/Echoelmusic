@@ -254,8 +254,8 @@ class SceneRenderer {
     func renderScene(_ scene: Scene, size: CGSize, time: Float) -> MTLTexture? {
         // Create or reuse output texture
         if outputTexture == nil ||
-           outputTexture!.width != Int(size.width) ||
-           outputTexture!.height != Int(size.height) {
+           outputTexture?.width != Int(size.width) ||
+           outputTexture?.height != Int(size.height) {
             outputTexture = createTexture(size: size)
         }
 

@@ -719,12 +719,12 @@ public final class ProfessionalStreamingEngine: ObservableObject {
             compressionSessionOut: &session
         )
 
-        if status == noErr {
-            videoEncoder = session
+        if status == noErr, let encoderSession = session {
+            videoEncoder = encoderSession
 
             // Apply settings
             for (key, value) in encoderSpec {
-                VTSessionSetProperty(session!, key: key as CFString, value: value as CFTypeRef)
+                VTSessionSetProperty(encoderSession, key: key as CFString, value: value as CFTypeRef)
             }
 
             log.streaming("✅ H.264 encoder initialized (\(width)x\(height))")
