@@ -60,6 +60,23 @@ export type {
 } from './bio/BioSimulator';
 
 // ============================================================================
+// MARK: - AudioWorklet Module (Low-Latency)
+// ============================================================================
+
+export {
+    EchoelmusicWorkletNode,
+    createWorkletSynth,
+    isAudioWorkletSupported,
+    getAudioLatencyInfo,
+    WORKLET_PROCESSOR_CODE
+} from './audio/AudioWorklet';
+
+export type {
+    WorkletMessage,
+    VoiceState
+} from './audio/AudioWorklet';
+
+// ============================================================================
 // MARK: - Version Info
 // ============================================================================
 

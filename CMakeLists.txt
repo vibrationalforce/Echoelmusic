@@ -776,7 +776,113 @@ if(ANDROID)
 endif()
 message(STATUS "==============================================")
 
-else()
+endif() # End of USE_JUCE block
+
+# ===========================
+# Native Audio Engines (JUCE-Free)
+# ===========================
+# These are standalone audio engines that don't require JUCE
+# Used for: Standalone apps, Swift bridge, non-plugin builds
+
+option(BUILD_NATIVE_AUDIO "Build native audio engines (JUCE-free)" ON)
+
+if(BUILD_NATIVE_AUDIO)
+    message(STATUS "")
+    message(STATUS "==============================================")
+    message(STATUS "Echoelmusic Native Audio Engines")
+    message(STATUS "==============================================")
+
+    # Header-only library for native audio
+    add_library(EchoelmusicNativeAudio INTERFACE)
+
+    target_include_directories(EchoelmusicNativeAudio
+        INTERFACE
+            ${CMAKE_CURRENT_SOURCE_DIR}/Sources/DSP
+            ${CMAKE_CURRENT_SOURCE_DIR}/Sources/Desktop/DSP
+    )
+
+    # Platform-specific configurations
+    if(WIN32)
+        message(STATUS "  Windows: WASAPI + ASIO Bridge")
+        target_compile_definitions(EchoelmusicNativeAudio
+            INTERFACE
+                WIN32_LEAN_AND_MEAN
+                NOMINMAX
+                _UNICODE
+                UNICODE
+        )
+        # Note: WindowsAudioEngine.hpp is header-only
+        # Link requirements for consumers
+        target_link_libraries(EchoelmusicNativeAudio
+            INTERFACE
+                ole32
+                uuid
+        )
+    elseif(UNIX AND NOT APPLE AND NOT ANDROID)
+        message(STATUS "  Linux: ALSA + PipeWire")
+
+        find_package(PkgConfig)
+        if(PkgConfig_FOUND)
+            # ALSA
+            pkg_check_modules(ALSA alsa)
+            if(ALSA_FOUND)
+                target_include_directories(EchoelmusicNativeAudio INTERFACE ${ALSA_INCLUDE_DIRS})
+                target_link_libraries(EchoelmusicNativeAudio INTERFACE ${ALSA_LIBRARIES})
+                target_compile_definitions(EchoelmusicNativeAudio INTERFACE ECHOELMUSIC_ALSA=1)
+                message(STATUS "    - ALSA: Found")
+            endif()
+
+            # PipeWire
+            pkg_check_modules(PIPEWIRE libpipewire-0.3)
+            if(PIPEWIRE_FOUND)
+                target_include_directories(EchoelmusicNativeAudio INTERFACE ${PIPEWIRE_INCLUDE_DIRS})
+                target_link_libraries(EchoelmusicNativeAudio INTERFACE ${PIPEWIRE_LIBRARIES})
+                target_compile_definitions(EchoelmusicNativeAudio INTERFACE ECHOELMUSIC_PIPEWIRE=1)
+                message(STATUS "    - PipeWire: Found")
+            endif()
+        endif()
+
+        target_link_libraries(EchoelmusicNativeAudio INTERFACE pthread)
+    endif()
+
+    message(STATUS "==============================================")
+    message(STATUS "")
+endif()
+
+# ===========================
+# WebAssembly Build (Emscripten)
+# ===========================
+
+if(EMSCRIPTEN)
+    message(STATUS "")
+    message(STATUS "==============================================")
+    message(STATUS "Echoelmusic WebAssembly Build")
+    message(STATUS "==============================================")
+
+    add_executable(echoelcore_wasm
+        Sources/Desktop/DSP/EchoelmusicDSP.h
+    )
+
+    # Emscripten settings for audio
+    set_target_properties(echoelcore_wasm PROPERTIES
+        SUFFIX ".js"
+        LINK_FLAGS "-s WASM=1 -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap'] -s ALLOW_MEMORY_GROWTH=1 -s AUDIO_WORKLET=1"
+    )
+
+    target_compile_definitions(echoelcore_wasm PRIVATE
+        ECHOELMUSIC_WASM=1
+    )
+
+    message(STATUS "  Target: echoelcore_wasm.js + echoelcore_wasm.wasm")
+    message(STATUS "  Build with: emcmake cmake .. && emmake make")
+    message(STATUS "==============================================")
+endif()
+
+# ===========================
+# Summary for Non-JUCE builds
+# ===========================
+
+if(NOT USE_JUCE)
     # Non-JUCE build (Swift-only for iOS/macOS)
     message(STATUS "")
     message(STATUS "==============================================")
