@@ -13,3 +13,8 @@
 export { useInterval } from './useInterval';
 export { usePersistentState } from './usePersistentState';
 export { useHapticFeedback, type HapticFeedbackControls } from './useHapticFeedback';
+export {
+  useDisclaimerManagement,
+  type DisclaimerState,
+  type UseDisclaimerManagementReturn
+} from './useDisclaimerManagement';

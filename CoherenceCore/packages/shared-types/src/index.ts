@@ -192,6 +192,10 @@ export type HapticPatternType =
   | 'coherent'
   | 'breathing';
 
+/**
+ * @deprecated Not used in production - consider removing in next major version
+ * Use useHapticFeedback hook from mobile base hooks instead
+ */
 export interface HapticConfig {
   /** Target frequency in Hz */
   frequencyHz: number;
@@ -203,6 +207,9 @@ export interface HapticConfig {
   dutyCycle: number;
 }
 
+/**
+ * @deprecated Not used in production - see HapticConfig
+ */
 export const DEFAULT_HAPTIC_CONFIG: HapticConfig = {
   frequencyHz: 40,
   intensity: 0.5,
@@ -232,6 +239,10 @@ export type CymaticsColorMode =
   | 'monochrome'
   | 'thermal';
 
+/**
+ * @deprecated Use @coherence-core/cymatics-patterns package instead
+ * This config is not used by the actual visualizers
+ */
 export interface CymaticsConfig {
   /** Current frequency being visualized */
   frequencyHz: number;
@@ -249,6 +260,9 @@ export interface CymaticsConfig {
   damping: number;
 }
 
+/**
+ * @deprecated See CymaticsConfig
+ */
 export const DEFAULT_CYMATICS_CONFIG: CymaticsConfig = {
   frequencyHz: 40,
   amplitude: 0.5,
@@ -351,6 +365,7 @@ export const ORGAN_RESONANCE_TABLE: Record<string, OrganResonanceData> = {
 /**
  * Body eigenfrequencies in sitting/standing position
  * Source: FAA Technical Report AM63-30pt11
+ * @deprecated Not actively used - kept for research reference only
  */
 export const BODY_EIGENFREQUENCY_RANGE: [number, number] = [1, 20];
 
@@ -524,10 +539,17 @@ export function detectPlatform(): Platform {
 // ============================================================================
 // ACTIVE HAPTIC MEASUREMENT (Taptic Engine + IMU)
 // Source: ResearchGate - Material Recognition using Smartphone Vibrations
+// @deprecated This entire section is experimental and not used in production
 // ============================================================================
 
+/**
+ * @deprecated Experimental - not used in production
+ */
 export type ChirpType = 'linear' | 'exponential' | 'logarithmic';
 
+/**
+ * @deprecated Experimental active haptic measurement config - not implemented
+ */
 export interface ActiveHapticConfig {
   /** Measurement mode */
   mode: 'active' | 'passive';
@@ -547,6 +569,9 @@ export interface ActiveHapticConfig {
   responseWindowMs: number;
 }
 
+/**
+ * @deprecated See ActiveHapticConfig
+ */
 export const DEFAULT_ACTIVE_HAPTIC_CONFIG: ActiveHapticConfig = {
   mode: 'passive',
   chirpType: 'linear',
@@ -558,6 +583,9 @@ export const DEFAULT_ACTIVE_HAPTIC_CONFIG: ActiveHapticConfig = {
   responseWindowMs: 200,
 };
 
+/**
+ * @deprecated Experimental - not used in production
+ */
 export interface ActiveHapticResult {
   timestamp: number;
   chirpsSent: number;
