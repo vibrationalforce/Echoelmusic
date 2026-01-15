@@ -689,3 +689,118 @@ export function calculateDampingCorrection(calibration: UserCalibration): number
 
   return damping;
 }
+
+// ============================================================================
+// SHARED UTILITY FUNCTIONS (Consolidated to eliminate cross-hook duplication)
+// ============================================================================
+
+/**
+ * Validate frequency is within safe operating range
+ */
+export function validateFrequencyRange(
+  frequencyHz: number,
+  minHz: number = 1,
+  maxHz: number = 60
+): { isValid: boolean; error?: string } {
+  if (frequencyHz < minHz || frequencyHz > maxHz) {
+    return {
+      isValid: false,
+      error: `Frequency ${frequencyHz} Hz out of range (${minHz}-${maxHz} Hz)`,
+    };
+  }
+  return { isValid: true };
+}
+
+/**
+ * Clamp amplitude to safety limits
+ */
+export function clampAmplitude(
+  amplitude: number,
+  limits: SafetyLimits = DEFAULT_SAFETY_LIMITS
+): number {
+  return Math.max(0, Math.min(limits.maxAmplitude, amplitude));
+}
+
+/**
+ * Calculate remaining session time
+ */
+export function calculateRemainingTime(
+  elapsedMs: number,
+  maxDurationMs: number = DEFAULT_SAFETY_LIMITS.maxSessionDurationMs
+): number {
+  return Math.max(0, maxDurationMs - elapsedMs);
+}
+
+/**
+ * Check if session duration exceeded safety limits
+ */
+export function isSessionTimeoutReached(
+  elapsedMs: number,
+  limits: SafetyLimits = DEFAULT_SAFETY_LIMITS
+): boolean {
+  return elapsedMs >= limits.maxSessionDurationMs;
+}
+
+/**
+ * Format duration in ms to MM:SS string
+ */
+export function formatDuration(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Get frequency preset by ID, with fallback
+ */
+export function getFrequencyPreset(presetId: FrequencyPresetId): FrequencyPreset {
+  return FREQUENCY_PRESETS[presetId] || FREQUENCY_PRESETS['osteo-sync'];
+}
+
+/**
+ * Validate preset frequency is within range
+ */
+export function validatePresetFrequency(
+  presetId: FrequencyPresetId,
+  frequencyHz: number
+): boolean {
+  const preset = FREQUENCY_PRESETS[presetId];
+  if (!preset) return false;
+
+  const [min, max] = preset.frequencyRangeHz;
+  return frequencyHz >= min && frequencyHz <= max;
+}
+
+/**
+ * Estimate signal quality from variance
+ * Higher quality when variance near optimalVariance
+ */
+export function estimateSignalQuality(signal: number[], optimalVariance: number = 0.01): number {
+  if (signal.length < 32) return 0;
+
+  const mean = signal.reduce((a, b) => a + b, 0) / signal.length;
+  const variance = signal.reduce((sum, val) => sum + (val - mean) ** 2, 0) / signal.length;
+
+  // Exponential decay from optimal variance
+  const quality = Math.exp(-Math.abs(Math.log10(variance / optimalVariance)));
+  return Math.max(0, Math.min(1, quality));
+}
+
+/**
+ * Estimate noise level from high-frequency content
+ */
+export function estimateNoiseLevel(signal: number[]): number {
+  if (signal.length < 2) return 0;
+
+  let highFreqEnergy = 0;
+  let totalEnergy = 0;
+
+  for (let i = 1; i < signal.length; i++) {
+    const diff = signal[i] - signal[i - 1];
+    highFreqEnergy += diff * diff;
+    totalEnergy += signal[i] * signal[i];
+  }
+
+  return totalEnergy < 0.0001 ? 0 : Math.min(1, highFreqEnergy / totalEnergy);
+}

@@ -16,89 +16,16 @@ import {
   UserCalibration,
 } from './index';
 
-// Import new types directly from shared-types source for testing
-// These were added as part of the organ resonance research integration
-const ORGAN_RESONANCE_TABLE = {
-  liver: {
-    organ: 'Liver',
-    clinicalFrequencyHz: 60,
-    frequencyRangeHz: [50, 70] as [number, number],
-    pathologies: ['Fibrosis', 'Cirrhosis', 'Steatosis'],
-    measurementParameter: 'Shear Modulus (kPa)',
-    source: 'PMC6223825 - MR Elastography',
-  },
-  heart: {
-    organ: 'Heart',
-    clinicalFrequencyHz: 110,
-    frequencyRangeHz: [80, 140] as [number, number],
-    pathologies: ['Myocardial Stiffness', 'HOCM'],
-    measurementParameter: 'Myocardial Strain',
-    source: 'PMC3066083 - MRE Review',
-  },
-  spleen: {
-    organ: 'Spleen',
-    clinicalFrequencyHz: 100,
-    frequencyRangeHz: [80, 120] as [number, number],
-    pathologies: ['Portal Hypertension'],
-    measurementParameter: 'Spleen Stiffness (SSM)',
-    source: 'PMC6223825',
-  },
-  brain: {
-    organ: 'Brain',
-    clinicalFrequencyHz: 45,
-    frequencyRangeHz: [25, 62.5] as [number, number],
-    pathologies: ['Neurodegenerative Processes'],
-    measurementParameter: 'Viscoelasticity',
-    source: 'PMC3066083',
-  },
-};
-
-const TISSUE_ACOUSTIC_TABLE = {
-  liver: { tissue: 'Liver', density: 1050, soundVelocity: 1570, impedance: 1.65 },
-  muscle: { tissue: 'Muscle', density: 1040, soundVelocity: 1580, impedance: 1.64 },
-  fat: { tissue: 'Fat', density: 925, soundVelocity: 1450, impedance: 1.34 },
-  skin: { tissue: 'Skin', density: 1100, soundVelocity: 1600, impedance: 1.76 },
-  air: { tissue: 'Air', density: 1.2, soundVelocity: 343, impedance: 0.0004 },
-};
-
-const LIDAR_CAPABILITIES = {
-  resolution: { width: 256, height: 192 },
-  effectiveSamplingRateHz: 15,
-  maxDetectableFrequencyHz: 7.5,
-  rangeMeters: { min: 0.3, max: 5, optimal: { min: 0.3, max: 2 } },
-  staticAccuracyCm: 1,
-  wavelengthNm: 940,
-};
-
-const CAMERA_CAPABILITIES = {
-  maxFps4K: 60,
-  maxFps1080p: 120,
-  maxFpsSlowMo: 240,
-  maxDetectableFrequency4K: 30,
-  maxDetectableFrequency1080p: 60,
-  maxDetectableFrequencySlowMo: 120,
-};
-
-const IMU_CAPABILITIES = {
-  typicalSampleRateHz: 100,
-  maxDetectableFrequencyHz: 50,
-};
-
-interface TissueAcousticProperties {
-  tissue: string;
-  density: number;
-  soundVelocity: number;
-  impedance: number;
-}
-
-function calculateReflectionCoefficient(
-  tissue1: TissueAcousticProperties,
-  tissue2: TissueAcousticProperties
-): number {
-  const z1 = tissue1.impedance;
-  const z2 = tissue2.impedance;
-  return Math.pow((z2 - z1) / (z2 + z1), 2);
-}
+// Import constants and utilities from shared-types (consolidated - no local duplicates)
+import {
+  ORGAN_RESONANCE_TABLE,
+  TISSUE_ACOUSTIC_TABLE,
+  LIDAR_CAPABILITIES,
+  CAMERA_CAPABILITIES,
+  IMU_CAPABILITIES,
+  TissueAcousticProperties,
+  calculateReflectionCoefficient,
+} from '@coherence-core/shared-types';
 
 function calculateDampingCorrection(calibration: UserCalibration): number {
   let damping = 1.0;

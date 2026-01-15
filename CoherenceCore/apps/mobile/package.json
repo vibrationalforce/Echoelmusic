@@ -16,6 +16,7 @@
     "@coherence-core/shared-types": "*",
     "@coherence-core/frequency-engine": "*",
     "@coherence-core/evm-engine": "*",
+    "@coherence-core/cymatics-patterns": "*",
     "@react-native-async-storage/async-storage": "^1.21.0",
     "@react-native-community/slider": "^4.5.0",
     "@shopify/react-native-skia": "^1.0.0",

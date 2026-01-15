@@ -4,12 +4,25 @@
  * Real-time wave interference pattern visualization using HTML5 Canvas.
  * Renders Chladni-style patterns based on frequency and amplitude inputs.
  *
+ * Uses shared algorithms from @coherence-core/cymatics-patterns
+ *
  * WELLNESS VISUALIZATION - NO MEDICAL CLAIMS
  */
 
 import { useRef, useEffect, useCallback } from 'react';
+import {
+  CymaticsMode,
+  chladniValue,
+  interferenceValue,
+  rippleValue,
+  standingWaveValue,
+  valueToRGB,
+  getModeNumbers,
+  calculatePhase,
+} from '@coherence-core/cymatics-patterns';
 
-export type CymaticsMode = 'chladni' | 'interference' | 'ripple' | 'standing';
+// Re-export type for consumers
+export type { CymaticsMode } from '@coherence-core/cymatics-patterns';
 
 interface CymaticsCanvasProps {
   /** Current frequency in Hz (1-60) */
@@ -23,114 +36,6 @@ interface CymaticsCanvasProps {
   /** Canvas size */
   size?: number;
 }
-
-/**
- * Calculate Chladni pattern value at a point
- * Based on Ernst Chladni's vibrating plate equations
- */
-const chladniValue = (
-  x: number,
-  y: number,
-  n: number,
-  m: number,
-  phase: number
-): number => {
-  const term1 = Math.cos(n * Math.PI * x) * Math.cos(m * Math.PI * y);
-  const term2 = Math.cos(m * Math.PI * x) * Math.cos(n * Math.PI * y);
-  return Math.sin(phase * 2 * Math.PI) * (term1 - term2);
-};
-
-/**
- * Calculate wave interference pattern
- */
-const interferenceValue = (
-  x: number,
-  y: number,
-  frequency: number,
-  phase: number
-): number => {
-  const source1 = { x: 0.3, y: 0.5 };
-  const source2 = { x: 0.7, y: 0.5 };
-
-  const r1 = Math.sqrt(
-    Math.pow(x - source1.x, 2) + Math.pow(y - source1.y, 2)
-  );
-  const r2 = Math.sqrt(
-    Math.pow(x - source2.x, 2) + Math.pow(y - source2.y, 2)
-  );
-
-  const k = frequency * 0.5;
-  const wave1 = Math.sin(k * r1 * 20 - phase * 2 * Math.PI);
-  const wave2 = Math.sin(k * r2 * 20 - phase * 2 * Math.PI);
-
-  return (wave1 + wave2) / 2;
-};
-
-/**
- * Calculate ripple pattern from center
- */
-const rippleValue = (
-  x: number,
-  y: number,
-  frequency: number,
-  phase: number
-): number => {
-  const cx = 0.5;
-  const cy = 0.5;
-  const r = Math.sqrt(Math.pow(x - cx, 2) + Math.pow(y - cy, 2));
-  const k = frequency * 0.8;
-  return Math.sin(k * r * 30 - phase * 2 * Math.PI) * Math.exp(-r * 2);
-};
-
-/**
- * Calculate standing wave pattern
- */
-const standingWaveValue = (
-  x: number,
-  y: number,
-  frequency: number,
-  phase: number
-): number => {
-  const n = Math.floor(frequency / 10) + 2;
-  const m = Math.floor(frequency / 15) + 2;
-  const spatialX = Math.sin(n * Math.PI * x);
-  const spatialY = Math.sin(m * Math.PI * y);
-  const temporal = Math.cos(phase * 2 * Math.PI);
-  return spatialX * spatialY * temporal;
-};
-
-/**
- * Convert value to RGB color
- */
-const valueToColor = (
-  value: number,
-  isActive: boolean
-): { r: number; g: number; b: number } => {
-  if (!isActive) {
-    const gray = Math.abs(value) * 100 + 20;
-    return { r: gray, g: gray, b: gray };
-  }
-
-  const intensity = Math.abs(value);
-  if (value > 0.05) {
-    // Cyan for positive
-    return {
-      r: Math.floor(intensity * 50),
-      g: Math.floor(180 + intensity * 75),
-      b: 255,
-    };
-  } else if (value < -0.05) {
-    // Magenta for negative
-    return {
-      r: Math.floor(180 + intensity * 75),
-      g: Math.floor(intensity * 50),
-      b: 255,
-    };
-  } else {
-    // Dark for nodal lines
-    return { r: 20, g: 20, b: 30 };
-  }
-};
 
 export function CymaticsCanvas({
   frequencyHz,
@@ -151,18 +56,16 @@ export function CymaticsCanvas({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Calculate phase
+    // Calculate phase using shared utility
     if (isActive) {
       const elapsed = Date.now() - startTimeRef.current;
-      const cycleMs = 1000 / (frequencyHz / 20);
-      phaseRef.current = (elapsed % cycleMs) / cycleMs;
+      phaseRef.current = calculatePhase(elapsed, frequencyHz);
     }
 
     const phase = phaseRef.current;
 
-    // Derive mode parameters from frequency
-    const n = Math.floor(frequencyHz / 8) + 2;
-    const m = Math.floor(frequencyHz / 12) + 2;
+    // Derive mode parameters from frequency using shared utility
+    const { n, m } = getModeNumbers(frequencyHz);
 
     // Create image data
     const imageData = ctx.createImageData(size, size);
@@ -195,7 +98,8 @@ export function CymaticsCanvas({
         // Scale by amplitude
         value *= amplitude;
 
-        const color = valueToColor(value, isActive);
+        // Use shared color mapping
+        const color = valueToRGB(value, isActive);
 
         const idx = (y * size + x) * 4;
         data[idx] = color.r;

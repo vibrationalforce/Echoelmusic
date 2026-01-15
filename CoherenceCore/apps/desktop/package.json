@@ -15,6 +15,7 @@
     "@coherence-core/shared-types": "workspace:*",
     "@coherence-core/frequency-engine": "workspace:*",
     "@coherence-core/evm-engine": "workspace:*",
+    "@coherence-core/cymatics-patterns": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
