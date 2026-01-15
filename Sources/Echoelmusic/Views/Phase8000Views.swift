@@ -1027,6 +1027,8 @@ struct ModeChip: View {
                 .foregroundColor(isSelected ? .white : .primary)
                 .cornerRadius(16)
         }
+        .accessibilityLabel("\(mode.rawValue) mode")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -1045,6 +1047,8 @@ struct StyleChip: View {
                 .foregroundColor(isSelected ? .white : .primary)
                 .cornerRadius(16)
         }
+        .accessibilityLabel("\(style.rawValue) style")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -1063,6 +1067,8 @@ struct CategoryPill: View {
                 .foregroundColor(isSelected ? .white : .primary)
                 .cornerRadius(20)
         }
+        .accessibilityLabel("\(category.rawValue) category")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -1085,6 +1091,8 @@ struct BreathingPatternCard: View {
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(pattern.name) breathing pattern, \(Int(pattern.cycleDuration)) second cycle")
+        .accessibilityHint("Double tap to start this breathing exercise")
     }
 }
 

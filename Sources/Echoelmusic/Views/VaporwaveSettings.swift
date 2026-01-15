@@ -86,6 +86,7 @@ struct VaporwaveSettings: View {
                             .font(.system(size: 24))
                             .foregroundColor(VaporwaveColors.textSecondary)
                     }
+                    .accessibilityLabel("Close settings")
                 }
             }
         }
@@ -365,6 +366,8 @@ struct VaporwaveSettings: View {
 
             Toggle("", isOn: isOn)
                 .toggleStyle(SwitchToggleStyle(tint: color))
+                .accessibilityLabel(title)
+                .accessibilityHint(subtitle)
         }
     }
 }
