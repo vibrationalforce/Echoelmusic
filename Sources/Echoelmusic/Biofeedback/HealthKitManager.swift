@@ -43,13 +43,22 @@ class HealthKitManager: ObservableObject {
 
     #if canImport(HealthKit)
     /// The HealthKit store for querying health data
-    private var healthStore: HKHealthStore?
+    private var healthStore: HKHealthStore
 
     /// Active query for heart rate monitoring
     private var heartRateQuery: HKQuery?
 
     /// Active query for HRV monitoring
     private var hrvQuery: HKQuery?
+
+    /// Types to read from HealthKit
+    private let typesToRead: Set<HKObjectType> = [
+        HKObjectType.quantityType(forIdentifier: .heartRate)!,
+        HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
+        HKObjectType.quantityType(forIdentifier: .restingHeartRate)!,
+        HKObjectType.quantityType(forIdentifier: .respiratoryRate)!,
+        HKObjectType.quantityType(forIdentifier: .oxygenSaturation)!
+    ]
     #endif
 
     /// Buffer for RR intervals (for coherence calculation)
@@ -61,6 +70,9 @@ class HealthKitManager: ObservableObject {
     // MARK: - Initialization
 
     init() {
+        #if canImport(HealthKit)
+        self.healthStore = HKHealthStore()
+        #endif
         checkAvailability()
     }
 
@@ -69,6 +81,7 @@ class HealthKitManager: ObservableObject {
 
     /// Check if HealthKit is available on this device
     private func checkAvailability() {
+        #if canImport(HealthKit)
         guard HKHealthStore.isHealthDataAvailable() else {
             errorMessage = "HealthKit is not available on this device"
             return
@@ -79,6 +92,9 @@ class HealthKitManager: ObservableObject {
         let status = healthStore.authorizationStatus(for: heartRateType)
 
         isAuthorized = (status == .sharingAuthorized)
+        #else
+        errorMessage = "HealthKit is not available on this platform"
+        #endif
     }
 
 
@@ -87,6 +103,7 @@ class HealthKitManager: ObservableObject {
     /// Request authorization to access HealthKit data
     /// - Throws: HealthKit authorization errors
     func requestAuthorization() async throws {
+        #if canImport(HealthKit)
         guard HKHealthStore.isHealthDataAvailable() else {
             let error = NSError(
                 domain: "com.echoelmusic.healthkit",
@@ -117,6 +134,13 @@ class HealthKitManager: ObservableObject {
             errorMessage = "HealthKit authorization failed: \(error.localizedDescription)"
             throw error
         }
+        #else
+        throw NSError(
+            domain: "com.echoelmusic.healthkit",
+            code: 2,
+            userInfo: [NSLocalizedDescriptionKey: "HealthKit not available on this platform"]
+        )
+        #endif
     }
 
 
@@ -124,6 +148,7 @@ class HealthKitManager: ObservableObject {
 
     /// Start real-time monitoring of heart rate and HRV
     func startMonitoring() {
+        #if canImport(HealthKit)
         guard isAuthorized else {
             errorMessage = "HealthKit not authorized. Please grant access."
             return
@@ -133,10 +158,14 @@ class HealthKitManager: ObservableObject {
         startHRVMonitoring()
 
         log.biofeedback("🫀 HealthKit monitoring started")
+        #else
+        errorMessage = "HealthKit not available on this platform"
+        #endif
     }
 
     /// Stop all HealthKit monitoring
     func stopMonitoring() {
+        #if canImport(HealthKit)
         if let query = heartRateQuery {
             healthStore.stop(query)
             heartRateQuery = nil
@@ -146,6 +175,7 @@ class HealthKitManager: ObservableObject {
             healthStore.stop(query)
             hrvQuery = nil
         }
+        #endif
 
         rrIntervalBuffer.removeAll()
 
@@ -155,6 +185,7 @@ class HealthKitManager: ObservableObject {
 
     // MARK: - Heart Rate Monitoring
 
+    #if canImport(HealthKit)
     /// Start continuous heart rate monitoring
     private func startHeartRateMonitoring() {
         guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
@@ -281,6 +312,7 @@ class HealthKitManager: ObservableObject {
             }
         }
     }
+    #endif
 
     /// Add RR interval to circular buffer
     private func addRRInterval(_ interval: Double) {
