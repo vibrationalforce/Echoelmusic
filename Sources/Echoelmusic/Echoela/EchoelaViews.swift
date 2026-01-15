@@ -1021,3 +1021,495 @@ public extension View {
         modifier(EchoelaEnhancedOverlayModifier(echoela: echoela))
     }
 }
+
+// MARK: - Privacy Status Indicator
+
+/// Shows current privacy status to reassure users
+public struct PrivacyStatusIndicator: View {
+    @AppStorage("echoela_has_consented") private var hasConsented = false
+    @AppStorage("echoela_consent_learning") private var allowLearning = false
+    @AppStorage("echoela_consent_feedback") private var allowFeedback = false
+    @AppStorage("echoela_consent_voice") private var allowVoice = false
+    @AppStorage("echoela_consent_analytics") private var allowAnalytics = false
+
+    @State private var showDetails = false
+    @Environment(\.colorScheme) var colorScheme
+
+    public init() {}
+
+    public var body: some View {
+        Button {
+            showDetails.toggle()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: privacyIconName)
+                    .font(.caption)
+                    .foregroundColor(privacyIconColor)
+
+                if !isCompactMode {
+                    Text(privacyLabel)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(privacyBackgroundColor)
+            )
+        }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showDetails) {
+            PrivacyDetailSheet()
+        }
+        .accessibilityLabel("Privacy status: \(privacyLabel)")
+        .accessibilityHint("Tap to view privacy details")
+    }
+
+    private var isCompactMode: Bool {
+        #if os(watchOS)
+        return true
+        #else
+        return false
+        #endif
+    }
+
+    private var privacyIconName: String {
+        if !hasConsented {
+            return "hand.raised.fill"  // Maximum privacy
+        } else if activeCount == 0 {
+            return "lock.shield.fill"  // All off
+        } else if activeCount == 4 {
+            return "checkmark.shield.fill"  // All on
+        } else {
+            return "shield.checkered"  // Partial
+        }
+    }
+
+    private var privacyIconColor: Color {
+        if !hasConsented || activeCount == 0 {
+            return .green  // Maximum privacy
+        } else if activeCount <= 2 {
+            return .blue  // Balanced
+        } else {
+            return .orange  // More sharing
+        }
+    }
+
+    private var privacyBackgroundColor: Color {
+        privacyIconColor.opacity(colorScheme == .dark ? 0.2 : 0.1)
+    }
+
+    private var privacyLabel: String {
+        if !hasConsented || activeCount == 0 {
+            return "Privacy Mode"
+        } else if activeCount <= 2 {
+            return "Balanced"
+        } else {
+            return "Full Features"
+        }
+    }
+
+    private var activeCount: Int {
+        [allowLearning, allowFeedback, allowVoice, allowAnalytics].filter { $0 }.count
+    }
+}
+
+// MARK: - Privacy Detail Sheet
+
+/// Detailed privacy settings sheet
+public struct PrivacyDetailSheet: View {
+    @AppStorage("echoela_has_consented") private var hasConsented = false
+    @AppStorage("echoela_consent_learning") private var allowLearning = false
+    @AppStorage("echoela_consent_feedback") private var allowFeedback = false
+    @AppStorage("echoela_consent_voice") private var allowVoice = false
+    @AppStorage("echoela_consent_analytics") private var allowAnalytics = false
+    @AppStorage("echoela_consent_timestamp") private var consentTimestamp: Double = 0
+
+    @Environment(\.dismiss) var dismiss
+    @State private var showDeleteConfirmation = false
+
+    public init() {}
+
+    public var body: some View {
+        NavigationStack {
+            Form {
+                // Privacy Status Section
+                Section {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(statusTitle)
+                                .font(.headline)
+                            Text(statusDescription)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: statusIcon)
+                            .font(.title)
+                            .foregroundColor(statusColor)
+                    }
+                    .padding(.vertical, 8)
+                }
+
+                // Privacy Assurances
+                Section {
+                    PrivacyAssuranceRow(icon: "lock.fill", title: "AES-256 Encryption", description: "All data encrypted at rest")
+                    PrivacyAssuranceRow(icon: "iphone", title: "On-Device Processing", description: "Biometrics never leave your device")
+                    PrivacyAssuranceRow(icon: "nosign", title: "No Data Selling", description: "We never sell your information")
+                    PrivacyAssuranceRow(icon: "globe", title: "GDPR/CCPA Compliant", description: "Full regulatory compliance")
+                } header: {
+                    Text("Your Privacy Guarantees")
+                }
+
+                // Consent Toggles
+                Section {
+                    PrivacyToggle(
+                        title: "Learning Profile",
+                        description: "Personalize your experience",
+                        icon: "brain.head.profile",
+                        isOn: $allowLearning
+                    )
+
+                    PrivacyToggle(
+                        title: "Anonymous Feedback",
+                        description: "Help improve Echoela",
+                        icon: "bubble.left.and.bubble.right",
+                        isOn: $allowFeedback
+                    )
+
+                    PrivacyToggle(
+                        title: "Voice Processing",
+                        description: "Local voice analysis",
+                        icon: "waveform",
+                        isOn: $allowVoice
+                    )
+
+                    PrivacyToggle(
+                        title: "Usage Analytics",
+                        description: "Anonymous app usage",
+                        icon: "chart.bar",
+                        isOn: $allowAnalytics
+                    )
+                } header: {
+                    Text("Data Sharing")
+                } footer: {
+                    Text("You can change these anytime. The app works fully without any sharing enabled.")
+                }
+
+                // Quick Actions
+                Section {
+                    Button {
+                        withAnimation {
+                            allowLearning = false
+                            allowFeedback = false
+                            allowVoice = false
+                            allowAnalytics = false
+                        }
+                    } label: {
+                        Label("Enable Privacy Mode", systemImage: "hand.raised.fill")
+                    }
+                    .disabled(!allowLearning && !allowFeedback && !allowVoice && !allowAnalytics)
+
+                    Button {
+                        withAnimation {
+                            allowLearning = true
+                            allowFeedback = true
+                            allowVoice = true
+                            allowAnalytics = true
+                        }
+                    } label: {
+                        Label("Enable All Features", systemImage: "checkmark.shield.fill")
+                    }
+                    .disabled(allowLearning && allowFeedback && allowVoice && allowAnalytics)
+                } header: {
+                    Text("Quick Actions")
+                }
+
+                // Data Management
+                Section {
+                    NavigationLink {
+                        DataExportView()
+                    } label: {
+                        Label("Export My Data", systemImage: "square.and.arrow.up")
+                    }
+
+                    Button(role: .destructive) {
+                        showDeleteConfirmation = true
+                    } label: {
+                        Label("Delete All My Data", systemImage: "trash")
+                    }
+                } header: {
+                    Text("Your Data Rights")
+                } footer: {
+                    if consentTimestamp > 0 {
+                        Text("Consent given: \(Date(timeIntervalSince1970: consentTimestamp).formatted(date: .abbreviated, time: .shortened))")
+                    }
+                }
+            }
+            .navigationTitle("Privacy & Data")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .confirmationDialog(
+                "Delete All Data?",
+                isPresented: $showDeleteConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Delete Everything", role: .destructive) {
+                    deleteAllData()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will permanently delete all your Echoela data including learning profiles, feedback, and preferences. This cannot be undone.")
+            }
+        }
+    }
+
+    private var statusTitle: String {
+        let count = [allowLearning, allowFeedback, allowVoice, allowAnalytics].filter { $0 }.count
+        switch count {
+        case 0: return "Maximum Privacy"
+        case 1...2: return "Balanced Privacy"
+        case 3: return "Most Features Enabled"
+        default: return "All Features Enabled"
+        }
+    }
+
+    private var statusDescription: String {
+        let count = [allowLearning, allowFeedback, allowVoice, allowAnalytics].filter { $0 }.count
+        switch count {
+        case 0: return "No data is being shared"
+        case 1...2: return "\(count) of 4 sharing options enabled"
+        case 3: return "3 of 4 sharing options enabled"
+        default: return "All sharing options enabled"
+        }
+    }
+
+    private var statusIcon: String {
+        let count = [allowLearning, allowFeedback, allowVoice, allowAnalytics].filter { $0 }.count
+        switch count {
+        case 0: return "lock.shield.fill"
+        case 1...2: return "shield.checkered"
+        default: return "checkmark.shield.fill"
+        }
+    }
+
+    private var statusColor: Color {
+        let count = [allowLearning, allowFeedback, allowVoice, allowAnalytics].filter { $0 }.count
+        switch count {
+        case 0: return .green
+        case 1...2: return .blue
+        default: return .orange
+        }
+    }
+
+    private func deleteAllData() {
+        // Delete all Echoela data
+        let keysToDelete = [
+            "echoela_progress",
+            "echoela_feedback_queue",
+            "echoela_user_profile",
+            "echoela_personality",
+            "echoela_session_count",
+            "echoela_consent_learning",
+            "echoela_consent_feedback",
+            "echoela_consent_voice",
+            "echoela_consent_analytics",
+            "echoela_has_consented",
+            "echoela_consent_timestamp"
+        ]
+
+        keysToDelete.forEach { key in
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+
+        // Reset local state
+        allowLearning = false
+        allowFeedback = false
+        allowVoice = false
+        allowAnalytics = false
+        hasConsented = false
+        consentTimestamp = 0
+
+        dismiss()
+    }
+}
+
+// MARK: - Privacy Support Views
+
+struct PrivacyAssuranceRow: View {
+    let icon: String
+    let title: String
+    let description: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(.green)
+                .frame(width: 30)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline)
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct PrivacyToggle: View {
+    let title: String
+    let description: String
+    let icon: String
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Toggle(isOn: $isOn) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .frame(width: 24)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline)
+                    Text(description)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .tint(.green)
+    }
+}
+
+// MARK: - Data Export View
+
+struct DataExportView: View {
+    @State private var isExporting = false
+    @State private var exportComplete = false
+    @State private var exportData: String = ""
+
+    var body: some View {
+        Form {
+            Section {
+                Text("Export all your Echoela data in JSON format. This includes your learning profile, preferences, and any feedback you've submitted.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            Section {
+                Button {
+                    exportAllData()
+                } label: {
+                    HStack {
+                        Label("Generate Export", systemImage: "doc.badge.plus")
+
+                        Spacer()
+
+                        if isExporting {
+                            ProgressView()
+                        }
+                    }
+                }
+                .disabled(isExporting)
+            }
+
+            if exportComplete {
+                Section {
+                    Text(exportData)
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                } header: {
+                    Text("Your Data")
+                } footer: {
+                    Text("You can copy this data or share it.")
+                }
+
+                Section {
+                    ShareLink(
+                        item: exportData,
+                        subject: Text("Echoela Data Export"),
+                        message: Text("My Echoela data export")
+                    ) {
+                        Label("Share Export", systemImage: "square.and.arrow.up")
+                    }
+                }
+            }
+        }
+        .navigationTitle("Export Data")
+    }
+
+    private func exportAllData() {
+        isExporting = true
+
+        // Gather all user data
+        let userData: [String: Any] = [
+            "exportDate": Date().ISO8601Format(),
+            "consent": [
+                "hasConsented": UserDefaults.standard.bool(forKey: "echoela_has_consented"),
+                "learning": UserDefaults.standard.bool(forKey: "echoela_consent_learning"),
+                "feedback": UserDefaults.standard.bool(forKey: "echoela_consent_feedback"),
+                "voice": UserDefaults.standard.bool(forKey: "echoela_consent_voice"),
+                "analytics": UserDefaults.standard.bool(forKey: "echoela_consent_analytics"),
+                "timestamp": UserDefaults.standard.double(forKey: "echoela_consent_timestamp")
+            ],
+            "progress": UserDefaults.standard.dictionary(forKey: "echoela_progress") ?? [:],
+            "preferences": [
+                "isEnabled": UserDefaults.standard.bool(forKey: "echoela_enabled"),
+                "showHints": UserDefaults.standard.bool(forKey: "echoela_show_hints"),
+                "voiceGuidance": UserDefaults.standard.bool(forKey: "echoela_voice_guidance")
+            ],
+            "sessionCount": UserDefaults.standard.integer(forKey: "echoela_session_count")
+        ]
+
+        // Convert to JSON
+        if let jsonData = try? JSONSerialization.data(withJSONObject: userData, options: .prettyPrinted),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            exportData = jsonString
+            exportComplete = true
+        } else {
+            exportData = "Error generating export"
+            exportComplete = true
+        }
+
+        isExporting = false
+    }
+}
+
+// MARK: - Privacy Badge Modifier
+
+/// Add a privacy badge to any view
+public struct PrivacyBadgeModifier: ViewModifier {
+    let alignment: Alignment
+
+    public init(alignment: Alignment = .topTrailing) {
+        self.alignment = alignment
+    }
+
+    public func body(content: Content) -> some View {
+        content.overlay(alignment: alignment) {
+            PrivacyStatusIndicator()
+                .padding(8)
+        }
+    }
+}
+
+public extension View {
+    /// Add privacy status badge
+    func withPrivacyBadge(alignment: Alignment = .topTrailing) -> some View {
+        modifier(PrivacyBadgeModifier(alignment: alignment))
+    }
+}

@@ -257,6 +257,23 @@ public final class EchoelaEngine: ObservableObject {
     private var peekAnimationTimer: Timer?
     private var voiceSynthesizer: AVSpeechSynthesizer?
 
+    // MARK: - Privacy & Consent State
+
+    /// User consent for learning profile storage
+    @AppStorage("echoela_consent_learning") private var hasLearningConsent: Bool = false
+
+    /// User consent for feedback collection
+    @AppStorage("echoela_consent_feedback") private var hasFeedbackConsent: Bool = false
+
+    /// User consent for voice processing
+    @AppStorage("echoela_consent_voice") private var hasVoiceConsent: Bool = false
+
+    /// User consent for analytics
+    @AppStorage("echoela_consent_analytics") private var hasAnalyticsConsent: Bool = false
+
+    /// Overall consent status
+    @AppStorage("echoela_has_consented") private var hasConsented: Bool = false
+
     // MARK: - Constants
 
     private let hesitationThreshold: TimeInterval = 5.0  // Seconds before detecting hesitation
@@ -932,6 +949,12 @@ public final class EchoelaEngine: ObservableObject {
     }
 
     private func saveUserProfile() {
+        // Only save user profile if consent is given for learning
+        guard hasLearningConsent else {
+            log.info("✨ Echoela: Skipping profile save - no consent for learning", category: .accessibility)
+            return
+        }
+
         if let encoded = try? JSONEncoder().encode(userProfile) {
             UserDefaults.standard.set(encoded, forKey: userProfileKey)
         }
@@ -972,9 +995,14 @@ public final class EchoelaEngine: ObservableObject {
     // MARK: - Voice Guidance (Atmospheric)
 
     /// Speak with Echoela's atmospheric voice
+    /// Respects user's voice processing consent
     public func speak(_ text: String) {
         guard preferences.voiceGuidance else { return }
         guard !isLivePerformanceMode else { return }
+        guard hasVoiceConsent else {
+            log.info("✨ Echoela: Voice guidance disabled - no consent for voice processing", category: .accessibility)
+            return
+        }
 
         #if canImport(AVFoundation) && !os(watchOS)
         let utterance = AVSpeechUtterance(string: personalizedMessage(text))
@@ -1011,6 +1039,7 @@ public final class EchoelaEngine: ObservableObject {
     // MARK: - Feedback System
 
     /// Submit user feedback (stored for repo updates)
+    /// Requires user consent for feedback collection
     public func submitFeedback(
         type: EchoelaFeedback.FeedbackType,
         context: String,
@@ -1018,6 +1047,16 @@ public final class EchoelaEngine: ObservableObject {
         rating: Int? = nil,
         suggestion: String? = nil
     ) {
+        // Check consent for feedback
+        guard hasFeedbackConsent else {
+            log.info("✨ Echoela: Feedback not stored - no consent for feedback collection", category: .accessibility)
+            // Still thank the user but don't store
+            if personality.warmth > 0.5 {
+                speak("Thank you for sharing. To store feedback for improvements, please enable feedback in privacy settings.")
+            }
+            return
+        }
+
         let feedback = EchoelaFeedback(
             type: type,
             context: context,
@@ -1089,6 +1128,114 @@ public final class EchoelaEngine: ObservableObject {
     public func clearSyncedFeedback() {
         pendingFeedback.removeAll()
         savePendingFeedback()
+    }
+
+    // MARK: - Privacy Management
+
+    /// Check if user has given consent for any data storage
+    public var hasAnyConsent: Bool {
+        hasLearningConsent || hasFeedbackConsent || hasVoiceConsent || hasAnalyticsConsent
+    }
+
+    /// Get current privacy status for display
+    public var privacyStatus: PrivacyStatus {
+        if !hasConsented || !hasAnyConsent {
+            return .maximum
+        } else if [hasLearningConsent, hasFeedbackConsent, hasVoiceConsent, hasAnalyticsConsent].filter({ $0 }).count <= 2 {
+            return .balanced
+        } else {
+            return .fullFeatures
+        }
+    }
+
+    public enum PrivacyStatus: String {
+        case maximum = "Maximum Privacy"
+        case balanced = "Balanced"
+        case fullFeatures = "Full Features"
+
+        public var icon: String {
+            switch self {
+            case .maximum: return "lock.shield.fill"
+            case .balanced: return "shield.checkered"
+            case .fullFeatures: return "checkmark.shield.fill"
+            }
+        }
+    }
+
+    /// Delete all Echoela user data (GDPR compliance)
+    public func deleteAllUserData() {
+        // Clear in-memory state
+        userProfile = UserLearningProfile()
+        pendingFeedback.removeAll()
+        completedTopics.removeAll()
+        interactionHistory.removeAll()
+        skillLevel = 0.5
+        confidenceScore = 0.5
+        guidanceDensity = 0.5
+
+        // Clear persisted data
+        let keysToDelete = [
+            "echoela_progress",
+            "echoela_feedback_queue",
+            "echoela_user_profile",
+            "echoela_personality",
+            "echoela_session_count",
+            "echoela_preferences"
+        ]
+
+        keysToDelete.forEach { key in
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+
+        // Clear feedback files
+        let fileManager = FileManager.default
+        if let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let feedbackDir = documentsPath.appendingPathComponent("echoela_feedback")
+            try? fileManager.removeItem(at: feedbackDir)
+        }
+
+        log.info("✨ Echoela: All user data deleted (GDPR request)", category: .accessibility)
+    }
+
+    /// Export all user data as JSON (GDPR compliance)
+    public func exportAllUserData() -> Data? {
+        let exportData: [String: Any] = [
+            "exportDate": Date().ISO8601Format(),
+            "consent": [
+                "hasConsented": hasConsented,
+                "learning": hasLearningConsent,
+                "feedback": hasFeedbackConsent,
+                "voice": hasVoiceConsent,
+                "analytics": hasAnalyticsConsent
+            ],
+            "progress": [
+                "skillLevel": skillLevel,
+                "confidenceScore": confidenceScore,
+                "guidanceDensity": guidanceDensity,
+                "completedTopics": completedTopics.map { $0.rawValue }
+            ],
+            "userProfile": [
+                "learningStyle": userProfile.learningStyle.rawValue,
+                "pace": userProfile.pacePReference.rawValue,
+                "activeHours": userProfile.activeHours,
+                "favoriteFeatures": userProfile.favoriteFeatures,
+                "challengeAreas": userProfile.challengeAreas,
+                "avgSessionDuration": userProfile.avgSessionDuration,
+                "helpAcceptanceRate": userProfile.helpAcceptanceRate,
+                "interactionPatterns": userProfile.interactionPatterns
+            ],
+            "sessionCount": sessionCount,
+            "personality": [
+                "warmth": personality.warmth,
+                "playfulness": personality.playfulness,
+                "formality": personality.formality,
+                "verbosity": personality.verbosity,
+                "encouragement": personality.encouragement
+            ],
+            "feedbackCount": pendingFeedback.count
+        ]
+
+        return try? JSONSerialization.data(withJSONObject: exportData, options: .prettyPrinted)
     }
 
     // MARK: - Session Tracking
