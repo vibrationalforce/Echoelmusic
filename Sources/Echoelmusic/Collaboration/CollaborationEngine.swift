@@ -198,8 +198,8 @@ class CollaborationEngine: ObservableObject {
     // MARK: - Helpers
 
     private func generateRoomCode() -> String {
-        let letters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // No I, O, 0, 1
-        return String((0..<6).map { _ in letters.randomElement()! })
+        let letters = Array("ABCDEFGHJKLMNPQRSTUVWXYZ23456789") // No I, O, 0, 1
+        return String((0..<6).compactMap { _ in letters.randomElement() })
     }
 }
 
@@ -451,13 +451,13 @@ class WebRTCClient {
     // MARK: - Helpers
 
     private func generateIceUfrag() -> String {
-        let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        return String((0..<8).map { _ in chars.randomElement()! })
+        let chars = Array("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+        return String((0..<8).compactMap { _ in chars.randomElement() })
     }
 
     private func generateIcePwd() -> String {
-        let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        return String((0..<24).map { _ in chars.randomElement()! })
+        let chars = Array("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+        return String((0..<24).compactMap { _ in chars.randomElement() })
     }
 
     private func generateFingerprint() -> String {

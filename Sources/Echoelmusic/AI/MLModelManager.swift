@@ -125,10 +125,11 @@ struct MLModelConfiguration {
     let inputDimensions: [String: [Int]]
     let outputDimensions: [String: [Int]]
 
+    /// Returns nil if documents directory is inaccessible (shouldn't happen on iOS/macOS)
     static func defaultConfiguration(for model: EchoelmusicMLModels) -> MLModelConfiguration {
-        guard let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            fatalError("Unable to access documents directory - critical system failure")
-        }
+        // Use fallback to temporary directory if documents unavailable
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
         let modelsPath = documentsPath.appendingPathComponent("MLModels", isDirectory: true)
 
         switch model {
@@ -407,8 +408,9 @@ actor MLModelDownloadManager {
             throw MLModelError.downloadFailed(NSError(domain: "MLModelDownload", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid HTTP response"]))
         }
 
-        // Move to permanent location
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        // Move to permanent location (fallback to temp if documents unavailable)
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
         let modelsPath = documentsPath.appendingPathComponent("MLModels", isDirectory: true)
 
         try? FileManager.default.createDirectory(at: modelsPath, withIntermediateDirectories: true)

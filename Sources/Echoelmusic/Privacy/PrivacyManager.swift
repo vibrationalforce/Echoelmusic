@@ -191,8 +191,9 @@ class PrivacyManager: ObservableObject {
             encryptionKey = SymmetricKey(data: keyData)
             log.privacy("🔑 Encryption key loaded from Keychain")
         } else {
-            encryptionKey = SymmetricKey(size: .bits256)
-            saveKeyToKeychain(encryptionKey!)
+            let newKey = SymmetricKey(size: .bits256)
+            encryptionKey = newKey
+            saveKeyToKeychain(newKey)
             log.privacy("🔑 New encryption key generated")
         }
     }

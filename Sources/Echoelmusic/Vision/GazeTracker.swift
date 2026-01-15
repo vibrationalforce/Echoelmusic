@@ -446,9 +446,9 @@ public final class GazeTracker: ObservableObject {
         if eyesClosed && lastBlinkTime == nil {
             // Blink started
             lastBlinkTime = Date()
-        } else if !eyesClosed && lastBlinkTime != nil {
+        } else if !eyesClosed, let blinkStartTime = lastBlinkTime {
             // Blink ended
-            let blinkDuration = Date().timeIntervalSince(lastBlinkTime!)
+            let blinkDuration = Date().timeIntervalSince(blinkStartTime)
 
             if blinkDuration < 0.5 {  // Valid blink duration
                 blinkCount += 1

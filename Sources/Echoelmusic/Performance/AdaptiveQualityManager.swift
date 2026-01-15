@@ -629,8 +629,10 @@ class AdaptiveQualityManager {
         log.performance("⚠️ Memory Warning! Degrading quality immediately.", level: .warning)
 
         // Sofortige Qualitätsreduzierung
-        if currentQuality > .minimal {
-            let newQuality = QualityLevel.allCases[max(0, QualityLevel.allCases.firstIndex(of: currentQuality)! - 2)]
+        if currentQuality > .minimal,
+           let currentIndex = QualityLevel.allCases.firstIndex(of: currentQuality) {
+            let newIndex = max(0, currentIndex - 2)
+            let newQuality = QualityLevel.allCases[newIndex]
             transitionToQuality(newQuality)
         }
 

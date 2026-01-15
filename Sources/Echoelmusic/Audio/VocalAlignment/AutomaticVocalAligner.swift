@@ -117,10 +117,10 @@ class AutomaticVocalAligner: ObservableObject {
         guideTrack = track
 
         // Analyze guide track
-        if var guide = guideTrack {
-            guide.onsetTimes = await detectOnsets(buffer: guide.audioBuffer!)
-            guide.energyProfile = await computeEnergyEnvelope(buffer: guide.audioBuffer!)
-            guide.pitchProfile = await detectPitch(buffer: guide.audioBuffer!)
+        if var guide = guideTrack, let buffer = guide.audioBuffer {
+            guide.onsetTimes = await detectOnsets(buffer: buffer)
+            guide.energyProfile = await computeEnergyEnvelope(buffer: buffer)
+            guide.pitchProfile = await detectPitch(buffer: buffer)
             guideTrack = guide
         }
 
@@ -131,9 +131,11 @@ class AutomaticVocalAligner: ObservableObject {
         let track = try await loadAudioFile(url: url, name: "Dub \(dubTracks.count + 1)")
 
         var analyzedTrack = track
-        analyzedTrack.onsetTimes = await detectOnsets(buffer: track.audioBuffer!)
-        analyzedTrack.energyProfile = await computeEnergyEnvelope(buffer: track.audioBuffer!)
-        analyzedTrack.pitchProfile = await detectPitch(buffer: track.audioBuffer!)
+        if let buffer = track.audioBuffer {
+            analyzedTrack.onsetTimes = await detectOnsets(buffer: buffer)
+            analyzedTrack.energyProfile = await computeEnergyEnvelope(buffer: buffer)
+            analyzedTrack.pitchProfile = await detectPitch(buffer: buffer)
+        }
 
         dubTracks.append(analyzedTrack)
 

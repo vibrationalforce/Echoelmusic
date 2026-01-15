@@ -839,11 +839,10 @@ public class ILDALaserController: ObservableObject {
     // MARK: - Safety
 
     private func applySafetyBlanking(to frame: inout ILDAFrame) {
-        guard !frame.points.isEmpty else { return }
+        guard let firstPoint = frame.points.first,
+              let lastPoint = frame.points.last else { return }
 
         // Add blanking points at start and end
-        let firstPoint = frame.points.first!
-        let lastPoint = frame.points.last!
 
         // Blanking lead-in (prevents initial flash)
         frame.points.insert(.blanked(x: firstPoint.x, y: firstPoint.y), at: 0)

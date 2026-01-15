@@ -59,7 +59,9 @@ class LegacyDeviceSupport: ObservableObject {
 
             static func < (lhs: DeviceGeneration, rhs: DeviceGeneration) -> Bool {
                 let order: [DeviceGeneration] = [.legacy, .midRange, .modern, .current]
-                return order.firstIndex(of: lhs)! < order.firstIndex(of: rhs)!
+                let lhsIndex = order.firstIndex(of: lhs) ?? 0
+                let rhsIndex = order.firstIndex(of: rhs) ?? 0
+                return lhsIndex < rhsIndex
             }
 
             var performanceMultiplier: Float {
