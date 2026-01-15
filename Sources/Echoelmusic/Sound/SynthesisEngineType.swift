@@ -39,6 +39,13 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
     case vector = "vector"
     case neural = "neural"
 
+    // Organic/Genetic synthesis (Synplant-inspired)
+    case genetic = "genetic"
+    case organic = "organic"
+
+    // Bio-reactive synthesis (Echoelmusic unique)
+    case bioReactive = "bio_reactive"
+
     /// Human-readable display name
     public var displayName: String {
         switch self {
@@ -55,6 +62,9 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
         case .sampler: return "Sample-based"
         case .vector: return "Vector Synthesis"
         case .neural: return "Neural Audio"
+        case .genetic: return "Genetic Synthesis"
+        case .organic: return "Organic Synthesis"
+        case .bioReactive: return "Bio-Reactive Synthesis"
         }
     }
 
@@ -87,6 +97,12 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
             return "Crossfading between multiple sound sources"
         case .neural:
             return "AI-powered audio generation and transformation"
+        case .genetic:
+            return "Sounds evolve and mutate like DNA (Synplant-inspired)"
+        case .organic:
+            return "Living, breathing sounds that grow from seeds"
+        case .bioReactive:
+            return "Synthesis controlled by heart rate, HRV, and breathing"
         }
     }
 
@@ -103,6 +119,10 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
             return .sample
         case .vector, .neural:
             return .advanced
+        case .genetic, .organic:
+            return .organic
+        case .bioReactive:
+            return .bioReactive
         }
     }
 
@@ -124,6 +144,8 @@ public enum SynthesisCategory: String, CaseIterable, Sendable {
     case physical = "Physical"
     case sample = "Sample"
     case advanced = "Advanced"
+    case organic = "Organic"       // Synplant-inspired genetic/organic synthesis
+    case bioReactive = "Bio-Reactive"  // Echoelmusic unique biofeedback synthesis
 
     /// Engines in this category
     public var engines: [SynthesisEngineType] {
