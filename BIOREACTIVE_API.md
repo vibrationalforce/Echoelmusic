@@ -1,5 +1,20 @@
 # Echoelmusic Bio-Reactive API
 
+> **IMPORTANT HEALTH DISCLAIMER**
+>
+> This bio-reactive system is designed for **creative and entertainment purposes only**.
+>
+> - **NOT A MEDICAL DEVICE** - This software is not FDA-approved or CE-marked for medical use
+> - **NOT FOR DIAGNOSIS** - Do not use biometric readings for health diagnosis or treatment decisions
+> - **NOT FOR MONITORING** - This is not a substitute for clinical heart rate monitors or medical equipment
+> - **CONSULT PROFESSIONALS** - Always consult qualified healthcare providers for health concerns
+> - **ACCURACY NOT GUARANTEED** - Biometric readings are approximations and may not be accurate
+> - **"COHERENCE" IS ARTISTIC** - The "coherence score" is a creative interpretation inspired by HeartMath research, not a validated clinical measurement
+>
+> By using this API, you acknowledge these limitations and agree to use it responsibly.
+
+---
+
 ## Overview
 
 The Bio-Reactive System is the **core innovation** of Echoelmusic - real-time audio/visual modulation based on physiological signals (HRV, Coherence, Heart Rate).
@@ -135,7 +150,18 @@ healthKitManager.hrvCoherence   // Double (0-100)
 - Brainwave entrainment (Delta/Theta/Alpha/Beta/Gamma)
 - Personalized relaxation soundscapes
 
-**DISCLAIMER:** For general wellness only, not medical treatment.
+> **Wellness Feature Disclaimer**
+>
+> These features are for **general wellness and relaxation only**:
+>
+> - **Not medical treatment** - Brainwave entrainment and HRV-synced audio are not proven medical therapies
+> - **Subjective effects** - Individual experiences vary; relaxation is not guaranteed
+> - **No health claims** - We make no claims about treating anxiety, depression, insomnia, or any condition
+> - **Seizure risk** - If you have epilepsy or a history of seizures, consult a doctor before using audio/visual entrainment
+> - **Stop if unwell** - Discontinue use if you experience dizziness, nausea, or discomfort
+> - **Not a substitute** - This is not a replacement for professional mental health treatment
+>
+> Scientific references are provided for transparency, not as endorsement of medical efficacy.
 
 ### 4. Creative Tool
 - "Happy accidents" from bio-modulation
@@ -187,9 +213,39 @@ Sources/
 
 ---
 
+## Health & Safety Guidelines
+
+### Before Using Bio-Reactive Features
+
+1. **General Health** - Ensure you are in good health before using biometric features
+2. **Medical Conditions** - Consult a doctor if you have:
+   - Heart conditions or arrhythmias
+   - Epilepsy or seizure disorders
+   - Anxiety disorders or panic attacks
+   - Any condition affected by stress or stimulation
+3. **Pacemakers/Implants** - Consult your cardiologist before using heart rate monitoring
+4. **Pregnancy** - Consult your healthcare provider before using biofeedback features
+
+### During Use
+
+- **Stay Hydrated** - Drink water during extended sessions
+- **Take Breaks** - Rest every 30-60 minutes
+- **Stop if Unwell** - Discontinue immediately if you feel dizzy, nauseous, or unwell
+- **Safe Environment** - Use in a safe, seated position if using immersive features
+
+### Emergency Contact
+
+If you experience a medical emergency, **call emergency services immediately**:
+- **USA**: 911
+- **EU**: 112
+- **UK**: 999
+- **Australia**: 000
+
+---
+
 ## License & IP
 
-**Copyright (c) 2024-2025 Echoelmusic**
+**Copyright (c) 2024-2026 Echoelmusic**
 
 The Bio-Reactive System is proprietary technology.
 Contact for licensing: [TBD]
