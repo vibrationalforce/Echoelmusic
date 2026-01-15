@@ -579,3 +579,445 @@ public extension View {
         modifier(EchoelaOverlayModifier(echoela: echoela))
     }
 }
+
+// MARK: - Echoela Peek View (Playful Peek Animation)
+
+/// Echoela peeking playfully from behind UI elements
+public struct EchoelaPeekView: View {
+    @ObservedObject var echoela: EchoelaEngine
+    @Environment(\.colorScheme) var colorScheme
+
+    public init(echoela: EchoelaEngine = .shared) {
+        self.echoela = echoela
+    }
+
+    public var body: some View {
+        GeometryReader { geometry in
+            if echoela.peekState.visibility > 0 && !echoela.isLivePerformanceMode {
+                ZStack {
+                    // Subtle background glow
+                    echoela.peekState.backgroundTint
+                        .opacity(Double(echoela.peekState.visibility) * 0.3)
+                        .blur(radius: 30)
+                        .allowsHitTesting(false)
+
+                    // Echoela avatar peeking
+                    EchoelaAvatarView(
+                        personality: echoela.personality,
+                        phase: echoela.peekState.animationPhase
+                    )
+                    .scaleEffect(CGFloat(0.5 + echoela.peekState.visibility * 0.5))
+                    .opacity(Double(echoela.peekState.visibility))
+                    .position(peekPosition(in: geometry.size))
+                }
+                .animation(.spring(response: 0.6, dampingFraction: 0.7), value: echoela.peekState.visibility)
+            }
+        }
+    }
+
+    private func peekPosition(in size: CGSize) -> CGPoint {
+        let visibility = CGFloat(echoela.peekState.visibility)
+        let offset = (1 - visibility) * 60  // How far offscreen when peeking
+
+        switch echoela.peekState.peekEdge {
+        case .bottomTrailing:
+            return CGPoint(x: size.width - 40 + offset, y: size.height - 80 + offset)
+        case .bottomLeading:
+            return CGPoint(x: 40 - offset, y: size.height - 80 + offset)
+        case .topTrailing:
+            return CGPoint(x: size.width - 40 + offset, y: 80 - offset)
+        case .topLeading:
+            return CGPoint(x: 40 - offset, y: 80 - offset)
+        case .bottom:
+            return CGPoint(x: size.width / 2, y: size.height - 40 + offset)
+        case .trailing:
+            return CGPoint(x: size.width - 40 + offset, y: size.height / 2)
+        case .leading:
+            return CGPoint(x: 40 - offset, y: size.height / 2)
+        }
+    }
+}
+
+// MARK: - Echoela Avatar View
+
+/// Echoela's visual avatar that reflects her personality
+struct EchoelaAvatarView: View {
+    let personality: EchoelaPersonality
+    let phase: EchoelaPeekState.PeekAnimationPhase
+
+    @State private var pulseScale: CGFloat = 1.0
+    @State private var eyeOffset: CGFloat = 0.0
+
+    var body: some View {
+        ZStack {
+            // Soft glow background
+            Circle()
+                .fill(avatarGradient)
+                .frame(width: 56, height: 56)
+                .blur(radius: 8)
+                .scaleEffect(pulseScale)
+
+            // Main avatar circle
+            Circle()
+                .fill(avatarGradient)
+                .frame(width: 48, height: 48)
+                .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+
+            // Sparkle icon
+            Image(systemName: "sparkle")
+                .font(.title2.weight(.medium))
+                .foregroundColor(.white)
+                .offset(y: eyeOffset)
+
+            // Playful expression overlay
+            if personality.playfulness > 0.5 && phase == .peeking {
+                // Little "peeking" eyes effect
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 6, height: 6)
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 6, height: 6)
+                }
+                .offset(y: -4 + eyeOffset)
+            }
+        }
+        .onAppear {
+            startAnimations()
+        }
+        .onChange(of: phase) { _, newPhase in
+            updateAnimations(for: newPhase)
+        }
+    }
+
+    private var avatarGradient: LinearGradient {
+        let baseColor = Color(red: 0.4, green: 0.5, blue: 0.9)
+        let warmColor = Color(red: 0.6, green: 0.5, blue: 0.9)
+        let playfulColor = Color(red: 0.5, green: 0.7, blue: 0.95)
+
+        let topColor = personality.playfulness > 0.5 ? playfulColor : baseColor
+        let bottomColor = personality.warmth > 0.5 ? warmColor : baseColor
+
+        return LinearGradient(
+            colors: [topColor, bottomColor],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private func startAnimations() {
+        // Gentle breathing pulse
+        withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+            pulseScale = 1.05
+        }
+    }
+
+    private func updateAnimations(for phase: EchoelaPeekState.PeekAnimationPhase) {
+        switch phase {
+        case .peeking:
+            // Playful eye movement
+            withAnimation(.easeInOut(duration: 0.3)) {
+                eyeOffset = -2
+            }
+        case .visible, .explaining:
+            withAnimation(.easeInOut(duration: 0.2)) {
+                eyeOffset = 0
+            }
+        default:
+            eyeOffset = 0
+        }
+    }
+}
+
+// MARK: - Personality Settings View
+
+/// View for adjusting Echoela's personality
+public struct EchoelaPersonalityView: View {
+    @ObservedObject var echoela: EchoelaEngine
+
+    public init(echoela: EchoelaEngine = .shared) {
+        self.echoela = echoela
+    }
+
+    public var body: some View {
+        Form {
+            Section {
+                Text("Adjust how Echoela communicates with you")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            Section("Presets") {
+                ForEach(EchoelaEngine.PersonalityPreset.allCases, id: \.self) { preset in
+                    Button {
+                        echoela.applyPersonalityPreset(preset)
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(preset.rawValue)
+                                    .foregroundColor(.primary)
+                                Text(presetDescription(preset))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Spacer()
+
+                            if isCurrentPreset(preset) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Section("Fine Tuning") {
+                PersonalitySlider(
+                    title: "Warmth",
+                    value: Binding(
+                        get: { echoela.personality.warmth },
+                        set: { echoela.personality.warmth = $0; echoela.setPersonality(echoela.personality) }
+                    ),
+                    lowLabel: "Neutral",
+                    highLabel: "Warm"
+                )
+
+                PersonalitySlider(
+                    title: "Playfulness",
+                    value: Binding(
+                        get: { echoela.personality.playfulness },
+                        set: { echoela.personality.playfulness = $0; echoela.setPersonality(echoela.personality) }
+                    ),
+                    lowLabel: "Serious",
+                    highLabel: "Playful"
+                )
+
+                PersonalitySlider(
+                    title: "Verbosity",
+                    value: Binding(
+                        get: { echoela.personality.verbosity },
+                        set: { echoela.personality.verbosity = $0; echoela.setPersonality(echoela.personality) }
+                    ),
+                    lowLabel: "Brief",
+                    highLabel: "Detailed"
+                )
+
+                PersonalitySlider(
+                    title: "Encouragement",
+                    value: Binding(
+                        get: { echoela.personality.encouragement },
+                        set: { echoela.personality.encouragement = $0; echoela.setPersonality(echoela.personality) }
+                    ),
+                    lowLabel: "Minimal",
+                    highLabel: "Frequent"
+                )
+            }
+
+            Section("Voice") {
+                PersonalitySlider(
+                    title: "Voice Speed",
+                    value: Binding(
+                        get: { echoela.personality.voiceSpeed },
+                        set: { echoela.personality.voiceSpeed = $0; echoela.setPersonality(echoela.personality) }
+                    ),
+                    lowLabel: "Slow",
+                    highLabel: "Fast",
+                    range: 0.5...1.5
+                )
+
+                PersonalitySlider(
+                    title: "Voice Pitch",
+                    value: Binding(
+                        get: { echoela.personality.voicePitch },
+                        set: { echoela.personality.voicePitch = $0; echoela.setPersonality(echoela.personality) }
+                    ),
+                    lowLabel: "Lower",
+                    highLabel: "Higher",
+                    range: 0.5...1.5
+                )
+            }
+        }
+        .navigationTitle("Echoela Personality")
+    }
+
+    private func presetDescription(_ preset: EchoelaEngine.PersonalityPreset) -> String {
+        switch preset {
+        case .warm: return "Gentle and supportive"
+        case .playful: return "Fun and cheeky with subtle humor"
+        case .professional: return "Clear and efficient"
+        case .minimal: return "Only essential guidance"
+        case .empathetic: return "Understanding and patient"
+        }
+    }
+
+    private func isCurrentPreset(_ preset: EchoelaEngine.PersonalityPreset) -> Bool {
+        switch preset {
+        case .warm: return echoela.personality == .warm
+        case .playful: return echoela.personality == .playful
+        case .professional: return echoela.personality == .professional
+        case .minimal: return echoela.personality == .minimal
+        case .empathetic: return echoela.personality == .empathetic
+        }
+    }
+}
+
+struct PersonalitySlider: View {
+    let title: String
+    @Binding var value: Float
+    let lowLabel: String
+    let highLabel: String
+    var range: ClosedRange<Float> = 0...1
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline)
+
+            HStack {
+                Text(lowLabel)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(width: 60, alignment: .leading)
+
+                Slider(value: $value, in: range)
+                    .tint(Color(red: 0.4, green: 0.5, blue: 0.9))
+
+                Text(highLabel)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(width: 60, alignment: .trailing)
+            }
+        }
+    }
+}
+
+// MARK: - Feedback View
+
+/// View for submitting feedback to Echoela
+public struct EchoelaFeedbackView: View {
+    @ObservedObject var echoela: EchoelaEngine
+    @Environment(\.dismiss) var dismiss
+
+    @State private var feedbackType: EchoelaFeedback.FeedbackType = .suggestion
+    @State private var message: String = ""
+    @State private var rating: Int = 3
+    @State private var suggestion: String = ""
+
+    public init(echoela: EchoelaEngine = .shared) {
+        self.echoela = echoela
+    }
+
+    public var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text("Your feedback helps Echoela improve for everyone")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
+                Section("Type") {
+                    Picker("Feedback Type", selection: $feedbackType) {
+                        Text("Suggestion").tag(EchoelaFeedback.FeedbackType.suggestion)
+                        Text("Issue").tag(EchoelaFeedback.FeedbackType.issue)
+                        Text("Praise").tag(EchoelaFeedback.FeedbackType.praise)
+                        Text("Confusion").tag(EchoelaFeedback.FeedbackType.confusion)
+                        Text("Feature Request").tag(EchoelaFeedback.FeedbackType.featureRequest)
+                        Text("Accessibility").tag(EchoelaFeedback.FeedbackType.accessibility)
+                    }
+                    .pickerStyle(.menu)
+                }
+
+                Section("Your Feedback") {
+                    TextField("What would you like to share?", text: $message, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+
+                Section("Rating (Optional)") {
+                    HStack {
+                        ForEach(1...5, id: \.self) { star in
+                            Button {
+                                rating = star
+                            } label: {
+                                Image(systemName: star <= rating ? "star.fill" : "star")
+                                    .foregroundColor(star <= rating ? .yellow : .gray)
+                                    .font(.title2)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+
+                Section("Additional Suggestion (Optional)") {
+                    TextField("Any specific suggestions?", text: $suggestion, axis: .vertical)
+                        .lineLimit(2...4)
+                }
+
+                Section {
+                    Button("Submit Feedback") {
+                        submitFeedback()
+                    }
+                    .disabled(message.isEmpty)
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .navigationTitle("Feedback")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func submitFeedback() {
+        echoela.submitFeedback(
+            type: feedbackType,
+            context: echoela.currentContext?.id ?? "general",
+            message: message,
+            rating: rating,
+            suggestion: suggestion.isEmpty ? nil : suggestion
+        )
+        dismiss()
+    }
+}
+
+// MARK: - Enhanced Overlay with Peek
+
+/// Enhanced Echoela overlay with peek animations
+public struct EchoelaEnhancedOverlayModifier: ViewModifier {
+    @ObservedObject var echoela: EchoelaEngine
+
+    public init(echoela: EchoelaEngine = .shared) {
+        self.echoela = echoela
+    }
+
+    public func body(content: Content) -> some View {
+        ZStack {
+            content
+
+            // Peek animation layer
+            EchoelaPeekView(echoela: echoela)
+
+            // Main bubble (when fully visible)
+            if echoela.isActive && !echoela.isLivePerformanceMode {
+                VStack {
+                    Spacer()
+                    EchoelaBubble(echoela: echoela)
+                        .padding(.bottom, 100)
+                }
+            }
+        }
+    }
+}
+
+public extension View {
+    /// Add enhanced Echoela overlay with peek animations
+    func withEchoelaEnhanced(_ echoela: EchoelaEngine = .shared) -> some View {
+        modifier(EchoelaEnhancedOverlayModifier(echoela: echoela))
+    }
+}

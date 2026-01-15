@@ -7,6 +7,11 @@
  * - Detects confusion and offers help without pressure
  * - Supports all accessibility profiles
  * - Is always optional and dismissible
+ * - Has an adjustable personality (warm, playful, professional)
+ * - Playfully peeks from behind UI elements
+ * - Auto-hides during Live Performance mode
+ * - Learns user thinking patterns and adapts
+ * - Collects feedback for future updates
  *
  * Created: 2026-01-15
  */
@@ -21,6 +26,10 @@ import android.speech.tts.TextToSpeech
 import android.view.accessibility.AccessibilityManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.io.File
 import java.util.*
 
 /**
@@ -50,6 +59,10 @@ class EchoelaEngine private constructor(private val context: Context) {
         private const val KEY_CONFIDENCE = "confidence"
         private const val KEY_GUIDANCE_DENSITY = "guidance_density"
         private const val KEY_COMPLETED_TOPICS = "completed_topics"
+        private const val KEY_PERSONALITY = "personality"
+        private const val KEY_USER_PROFILE = "user_profile"
+        private const val KEY_SESSION_COUNT = "session_count"
+        private const val KEY_PENDING_FEEDBACK = "pending_feedback"
     }
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -87,13 +100,40 @@ class EchoelaEngine private constructor(private val context: Context) {
     private val _preferences = MutableStateFlow(loadPreferences())
     val preferences: StateFlow<EchoelaPreferences> = _preferences.asStateFlow()
 
+    // Personality & Visual State (NEW)
+    private val _personality = MutableStateFlow(loadPersonality())
+    val personality: StateFlow<EchoelaPersonality> = _personality.asStateFlow()
+
+    private val _peekState = MutableStateFlow(EchoelaPeekState())
+    val peekState: StateFlow<EchoelaPeekState> = _peekState.asStateFlow()
+
+    private val _isLivePerformanceMode = MutableStateFlow(false)
+    val isLivePerformanceMode: StateFlow<Boolean> = _isLivePerformanceMode.asStateFlow()
+
+    private val _userProfile = MutableStateFlow(loadUserProfile())
+    val userProfile: StateFlow<UserLearningProfile> = _userProfile.asStateFlow()
+
+    private val _pendingFeedback = MutableStateFlow<List<EchoelaFeedback>>(loadPendingFeedback())
+    val pendingFeedback: StateFlow<List<EchoelaFeedback>> = _pendingFeedback.asStateFlow()
+
+    private val _sessionCount = MutableStateFlow(prefs.getInt(KEY_SESSION_COUNT, 0))
+    val sessionCount: StateFlow<Int> = _sessionCount.asStateFlow()
+
+    private val _isSpeaking = MutableStateFlow(false)
+    val isSpeaking: StateFlow<Boolean> = _isSpeaking.asStateFlow()
+
     // Internal state
     private val interactionHistory = mutableListOf<InteractionEvent>()
     private var lastInteractionTime = System.currentTimeMillis()
     private var hesitationJob: Job? = null
+    private var sessionStartTime = System.currentTimeMillis()
+    private var peekAnimationJob: Job? = null
 
     // Text-to-speech
     private var tts: TextToSpeech? = null
+
+    // JSON serializer
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     // Constants
     private val hesitationThresholdMs = 5000L
@@ -504,6 +544,382 @@ class EchoelaEngine private constructor(private val context: Context) {
         }
     }
 
+    // ========================================================================
+    // Personality System
+    // ========================================================================
+
+    fun setPersonality(newPersonality: EchoelaPersonality) {
+        _personality.value = newPersonality
+        savePersonality()
+    }
+
+    fun applyPersonalityPreset(preset: PersonalityPreset) {
+        _personality.value = when (preset) {
+            PersonalityPreset.WARM -> EchoelaPersonality.warm()
+            PersonalityPreset.PLAYFUL -> EchoelaPersonality.playful()
+            PersonalityPreset.PROFESSIONAL -> EchoelaPersonality.professional()
+            PersonalityPreset.MINIMAL -> EchoelaPersonality.minimal()
+            PersonalityPreset.EMPATHETIC -> EchoelaPersonality.empathetic()
+        }
+        savePersonality()
+    }
+
+    private fun savePersonality() {
+        prefs.edit().putString(KEY_PERSONALITY, json.encodeToString(_personality.value)).apply()
+    }
+
+    private fun loadPersonality(): EchoelaPersonality {
+        val stored = prefs.getString(KEY_PERSONALITY, null) ?: return EchoelaPersonality()
+        return try {
+            json.decodeFromString<EchoelaPersonality>(stored)
+        } catch (e: Exception) {
+            EchoelaPersonality()
+        }
+    }
+
+    fun personalizedMessage(baseMessage: String): String {
+        var message = baseMessage
+        val p = _personality.value
+
+        // Add warmth
+        if (p.warmth > 0.7f) {
+            val warmPrefixes = listOf("Hey there! ", "Hi! ", "Hello! ", "")
+            message = warmPrefixes.random() + message
+        }
+
+        // Add playfulness
+        if (p.playfulness > 0.7f) {
+            val playfulSuffixes = listOf(" 😊", " ✨", " 💡", "")
+            message += playfulSuffixes.random()
+        }
+
+        // Adjust verbosity
+        if (p.verbosity < 0.3f && message.length > 50) {
+            message = message.take(50) + "..."
+        }
+
+        return message
+    }
+
+    // ========================================================================
+    // Peek Animation System
+    // ========================================================================
+
+    fun peekFromEdge(edge: PeekEdge, message: String? = null) {
+        if (_isLivePerformanceMode.value) return  // Never interrupt live performance
+
+        _peekState.value = _peekState.value.copy(
+            peekEdge = edge,
+            animationPhase = PeekAnimationPhase.PEEKING,
+            visibility = 0.3f
+        )
+
+        // After a playful peek, decide whether to fully appear
+        peekAnimationJob?.cancel()
+        peekAnimationJob = scope.launch {
+            delay(1500)
+            if (_peekState.value.animationPhase == PeekAnimationPhase.PEEKING) {
+                if (shouldFullyAppear()) {
+                    fullyAppear(message)
+                } else {
+                    retreatQuietly()
+                }
+            }
+        }
+    }
+
+    private fun shouldFullyAppear(): Boolean {
+        return _userSeemsConfused.value ||
+               (System.currentTimeMillis() - lastInteractionTime > 3000)
+    }
+
+    private fun fullyAppear(message: String?) {
+        _peekState.value = _peekState.value.copy(
+            animationPhase = PeekAnimationPhase.VISIBLE,
+            visibility = 1.0f
+        )
+
+        if (message != null) {
+            if (_personality.value.playfulness > 0.5f) {
+                offerHelp(HelpOfferReason.USER_REQUESTED)
+            } else {
+                offerHelp(HelpOfferReason.HESITATION)
+            }
+        }
+    }
+
+    fun retreatQuietly() {
+        _peekState.value = _peekState.value.copy(
+            animationPhase = PeekAnimationPhase.RETREATING,
+            visibility = 0f
+        )
+
+        scope.launch {
+            delay(500)
+            _peekState.value = _peekState.value.copy(animationPhase = PeekAnimationPhase.HIDDEN)
+        }
+    }
+
+    // ========================================================================
+    // Live Performance Mode
+    // ========================================================================
+
+    fun enterLivePerformanceMode() {
+        _isLivePerformanceMode.value = true
+        retreatQuietly()
+        _currentHint.value = null
+        _pendingHelpOffer.value = null
+    }
+
+    fun exitLivePerformanceMode() {
+        _isLivePerformanceMode.value = false
+
+        if (_preferences.value.isEnabled && _isActive.value) {
+            scope.launch {
+                delay(2000)
+                peekFromEdge(PeekEdge.BOTTOM_TRAILING, null)
+            }
+        }
+    }
+
+    fun checkLivePerformanceContext(contextName: String) {
+        val liveContexts = listOf("streaming", "recording", "performance", "concert", "live", "broadcast")
+        val shouldHide = liveContexts.any { contextName.lowercase().contains(it) }
+
+        if (shouldHide && !_isLivePerformanceMode.value) {
+            enterLivePerformanceMode()
+        } else if (!shouldHide && _isLivePerformanceMode.value) {
+            exitLivePerformanceMode()
+        }
+    }
+
+    // ========================================================================
+    // User Learning System
+    // ========================================================================
+
+    fun learnFromInteraction(event: InteractionEvent) {
+        val profile = _userProfile.value.copy()
+
+        // Track interaction patterns
+        val patternKey = event.type.name
+        val currentValue = profile.interactionPatterns[patternKey] ?: 0f
+        profile.interactionPatterns[patternKey] = minOf(1f, currentValue + 0.1f)
+
+        // Detect learning style
+        when (event.type) {
+            InteractionType.GESTURE -> profile.learningStyle = LearningStyle.KINESTHETIC
+            InteractionType.VOICE -> profile.learningStyle = LearningStyle.AUDITORY
+            InteractionType.TAP, InteractionType.NAVIGATION -> {
+                if ((profile.interactionPatterns["NAVIGATION"] ?: 0f) > 0.5f) {
+                    profile.learningStyle = LearningStyle.VISUAL
+                }
+            }
+            else -> {}
+        }
+
+        // Track feature usage
+        event.context?.id?.let { contextId ->
+            if (event.wasSuccessful && !profile.favoriteFeatures.contains(contextId)) {
+                profile.favoriteFeatures = (profile.favoriteFeatures + contextId).takeLast(10)
+            }
+        }
+
+        // Track struggle areas
+        event.context?.id?.let { contextId ->
+            if (event.errorType != null && !profile.challengeAreas.contains(contextId)) {
+                profile.challengeAreas = (profile.challengeAreas + contextId).takeLast(5)
+            }
+        }
+
+        // Detect pace
+        val avgInteractionTime = System.currentTimeMillis() - lastInteractionTime
+        profile.pacePreference = when {
+            avgInteractionTime < 1000 -> Pace.FAST
+            avgInteractionTime > 5000 -> Pace.SLOW
+            else -> Pace.MODERATE
+        }
+
+        profile.lastUpdated = System.currentTimeMillis()
+        _userProfile.value = profile
+        saveUserProfile()
+    }
+
+    fun trackHelpAcceptance(accepted: Boolean) {
+        val weight = 0.1f
+        val profile = _userProfile.value.copy()
+        profile.helpAcceptanceRate = profile.helpAcceptanceRate * (1 - weight) + (if (accepted) 1f else 0f) * weight
+        _userProfile.value = profile
+        saveUserProfile()
+    }
+
+    private fun saveUserProfile() {
+        prefs.edit().putString(KEY_USER_PROFILE, json.encodeToString(_userProfile.value)).apply()
+    }
+
+    private fun loadUserProfile(): UserLearningProfile {
+        val stored = prefs.getString(KEY_USER_PROFILE, null) ?: return UserLearningProfile()
+        return try {
+            json.decodeFromString<UserLearningProfile>(stored)
+        } catch (e: Exception) {
+            UserLearningProfile()
+        }
+    }
+
+    fun adaptToUser() {
+        val profile = _userProfile.value
+
+        // Adjust guidance density based on help acceptance
+        if (profile.helpAcceptanceRate < 0.3f) {
+            _guidanceDensity.value = maxOf(0.1f, _guidanceDensity.value - 0.1f)
+        } else if (profile.helpAcceptanceRate > 0.7f) {
+            _guidanceDensity.value = minOf(0.9f, _guidanceDensity.value + 0.1f)
+        }
+
+        // Adjust personality based on interaction patterns
+        val p = _personality.value.copy()
+        if ((profile.interactionPatterns["GESTURE"] ?: 0f) > 0.5f) {
+            p.playfulness = minOf(1f, p.playfulness + 0.1f)
+        }
+        if (profile.pacePreference == Pace.FAST) {
+            p.verbosity = maxOf(0.2f, p.verbosity - 0.1f)
+        }
+        _personality.value = p
+
+        savePersonality()
+        saveProgress()
+    }
+
+    // ========================================================================
+    // Voice Guidance (Atmospheric)
+    // ========================================================================
+
+    fun speakWithPersonality(text: String) {
+        if (!_preferences.value.voiceGuidance) return
+        if (_isLivePerformanceMode.value) return
+
+        val message = personalizedMessage(text)
+        _isSpeaking.value = true
+
+        tts?.setPitch(_personality.value.voicePitch)
+        tts?.setSpeechRate(_personality.value.voiceSpeed)
+        tts?.speak(message, TextToSpeech.QUEUE_FLUSH, null, UUID.randomUUID().toString())
+
+        scope.launch {
+            delay((text.length * 60).toLong())
+            _isSpeaking.value = false
+        }
+    }
+
+    fun stopSpeaking() {
+        tts?.stop()
+        _isSpeaking.value = false
+    }
+
+    // ========================================================================
+    // Feedback System
+    // ========================================================================
+
+    fun submitFeedback(
+        type: FeedbackType,
+        contextId: String,
+        message: String,
+        rating: Int? = null,
+        suggestion: String? = null
+    ) {
+        val feedback = EchoelaFeedback(
+            id = UUID.randomUUID().toString(),
+            timestamp = System.currentTimeMillis(),
+            feedbackType = type,
+            context = contextId,
+            message = message,
+            rating = rating,
+            suggestion = suggestion,
+            systemInfo = FeedbackSystemInfo(
+                skillLevel = _skillLevel.value,
+                guidanceDensity = _guidanceDensity.value,
+                personality = if (_personality.value.playfulness > 0.5f) "playful" else "warm",
+                sessionCount = _sessionCount.value
+            )
+        )
+
+        _pendingFeedback.value = _pendingFeedback.value + feedback
+        savePendingFeedback()
+        exportFeedbackToFile(feedback)
+
+        if (_personality.value.warmth > 0.5f) {
+            speakWithPersonality("Thank you for your feedback. It helps me improve.")
+        }
+    }
+
+    private fun savePendingFeedback() {
+        prefs.edit().putString(KEY_PENDING_FEEDBACK, json.encodeToString(_pendingFeedback.value)).apply()
+    }
+
+    private fun loadPendingFeedback(): List<EchoelaFeedback> {
+        val stored = prefs.getString(KEY_PENDING_FEEDBACK, null) ?: return emptyList()
+        return try {
+            json.decodeFromString<List<EchoelaFeedback>>(stored)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun exportFeedbackToFile(feedback: EchoelaFeedback) {
+        try {
+            val feedbackDir = File(context.filesDir, "echoela_feedback")
+            feedbackDir.mkdirs()
+            val file = File(feedbackDir, "feedback_${feedback.id}.json")
+            file.writeText(json.encodeToString(feedback))
+        } catch (e: Exception) {
+            // Silently fail - feedback export is not critical
+        }
+    }
+
+    fun exportAllFeedback(): String? {
+        return try {
+            json.encodeToString(_pendingFeedback.value)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun clearSyncedFeedback() {
+        _pendingFeedback.value = emptyList()
+        savePendingFeedback()
+    }
+
+    // ========================================================================
+    // Session Tracking
+    // ========================================================================
+
+    fun startSession() {
+        sessionStartTime = System.currentTimeMillis()
+        _sessionCount.value = _sessionCount.value + 1
+        prefs.edit().putInt(KEY_SESSION_COUNT, _sessionCount.value).apply()
+
+        // Track active hour
+        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        val profile = _userProfile.value.copy()
+        if (!profile.activeHours.contains(hour)) {
+            profile.activeHours = (profile.activeHours + hour).takeLast(5)
+            _userProfile.value = profile
+            saveUserProfile()
+        }
+    }
+
+    fun endSession() {
+        val duration = System.currentTimeMillis() - sessionStartTime
+
+        val profile = _userProfile.value.copy()
+        val weight = 0.2
+        profile.avgSessionDuration = (profile.avgSessionDuration * (1 - weight) + duration * weight).toLong()
+        _userProfile.value = profile
+        saveUserProfile()
+
+        adaptToUser()
+        saveProgress()
+    }
+
     fun cleanup() {
         scope.cancel()
         tts?.shutdown()
@@ -608,4 +1024,128 @@ enum class TextSize {
     MEDIUM,
     LARGE,
     EXTRA_LARGE
+}
+
+// ============================================================================
+// Personality Data Classes
+// ============================================================================
+
+@Serializable
+data class EchoelaPersonality(
+    var warmth: Float = 0.7f,
+    var playfulness: Float = 0.5f,
+    var formality: Float = 0.3f,
+    var verbosity: Float = 0.5f,
+    var encouragement: Float = 0.6f,
+    var voicePitch: Float = 1.0f,
+    var voiceSpeed: Float = 0.9f
+) {
+    companion object {
+        fun warm() = EchoelaPersonality(warmth = 0.9f, playfulness = 0.3f, formality = 0.2f, verbosity = 0.5f, encouragement = 0.8f, voicePitch = 1.0f, voiceSpeed = 0.85f)
+        fun playful() = EchoelaPersonality(warmth = 0.7f, playfulness = 0.9f, formality = 0.1f, verbosity = 0.6f, encouragement = 0.7f, voicePitch = 1.1f, voiceSpeed = 1.0f)
+        fun professional() = EchoelaPersonality(warmth = 0.5f, playfulness = 0.2f, formality = 0.8f, verbosity = 0.7f, encouragement = 0.4f, voicePitch = 0.95f, voiceSpeed = 0.95f)
+        fun minimal() = EchoelaPersonality(warmth = 0.4f, playfulness = 0.1f, formality = 0.5f, verbosity = 0.2f, encouragement = 0.2f, voicePitch = 1.0f, voiceSpeed = 1.0f)
+        fun empathetic() = EchoelaPersonality(warmth = 1.0f, playfulness = 0.4f, formality = 0.2f, verbosity = 0.6f, encouragement = 0.9f, voicePitch = 0.95f, voiceSpeed = 0.8f)
+    }
+}
+
+enum class PersonalityPreset {
+    WARM,
+    PLAYFUL,
+    PROFESSIONAL,
+    MINIMAL,
+    EMPATHETIC
+}
+
+// ============================================================================
+// Peek Animation Data Classes
+// ============================================================================
+
+data class EchoelaPeekState(
+    val peekEdge: PeekEdge = PeekEdge.BOTTOM_TRAILING,
+    val visibility: Float = 0f,
+    val animationPhase: PeekAnimationPhase = PeekAnimationPhase.HIDDEN,
+    val backgroundTintAlpha: Float = 0.1f
+)
+
+enum class PeekEdge {
+    BOTTOM_LEADING,
+    BOTTOM_TRAILING,
+    TOP_LEADING,
+    TOP_TRAILING,
+    BOTTOM,
+    TRAILING,
+    LEADING
+}
+
+enum class PeekAnimationPhase {
+    HIDDEN,
+    PEEKING,
+    APPEARING,
+    VISIBLE,
+    EXPLAINING,
+    RETREATING
+}
+
+// ============================================================================
+// User Learning Data Classes
+// ============================================================================
+
+@Serializable
+data class UserLearningProfile(
+    var learningStyle: LearningStyle = LearningStyle.VISUAL,
+    var pacePreference: Pace = Pace.MODERATE,
+    var activeHours: List<Int> = emptyList(),
+    var favoriteFeatures: List<String> = emptyList(),
+    var challengeAreas: List<String> = emptyList(),
+    var avgSessionDuration: Long = 300000L,
+    var helpAcceptanceRate: Float = 0.5f,
+    var interactionPatterns: MutableMap<String, Float> = mutableMapOf(),
+    var lastUpdated: Long = System.currentTimeMillis()
+)
+
+enum class LearningStyle {
+    VISUAL,
+    AUDITORY,
+    KINESTHETIC,
+    READING
+}
+
+enum class Pace {
+    SLOW,
+    MODERATE,
+    FAST
+}
+
+// ============================================================================
+// Feedback Data Classes
+// ============================================================================
+
+@Serializable
+data class EchoelaFeedback(
+    val id: String,
+    val timestamp: Long,
+    val feedbackType: FeedbackType,
+    val context: String,
+    val message: String,
+    val rating: Int? = null,
+    val suggestion: String? = null,
+    val systemInfo: FeedbackSystemInfo
+)
+
+@Serializable
+data class FeedbackSystemInfo(
+    val skillLevel: Float,
+    val guidanceDensity: Float,
+    val personality: String,
+    val sessionCount: Int
+)
+
+enum class FeedbackType {
+    SUGGESTION,
+    ISSUE,
+    PRAISE,
+    CONFUSION,
+    FEATURE_REQUEST,
+    ACCESSIBILITY
 }
