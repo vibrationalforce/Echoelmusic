@@ -296,3 +296,225 @@ Sources/Echoelmusic/
 Senior Developer Manager
 Ralph Wiggum Lambda Loop Mode
 2026-01-15
+
+---
+
+## Phase 5: Instrument Section Consolidation (P4)
+
+### 5.1 CRITICAL: Synthesis Engine Duplication
+
+**Two separate synthesis engine registries with overlapping types:**
+
+| Location | Enum Name | Types |
+|----------|-----------|-------|
+| `Sound/UniversalSoundLibrary.swift:151` | `SynthType` | subtractive, fm, wavetable, granular, additive, physicalModeling, sampler, spectral, vectorSynth, modalSynth |
+| `Developer/AdvancedPlugins.swift:32` | `SynthesisEngine` | granular, spectral, wavetable, physical, neural, additive, subtractive, fm, karplus, waveguide |
+
+**OVERLAP:** 8 of 10 types are duplicates with different naming!
+
+**RECOMMENDATION: Create Unified Synthesis Registry**
+
+```swift
+// NEW: Sources/Echoelmusic/Audio/SynthesisRegistry.swift
+
+/// Unified synthesis engine type registry
+/// Single source of truth for ALL synthesis methods
+public enum SynthesisEngineType: String, CaseIterable, Sendable {
+    // Analog-style
+    case subtractive = "Subtractive"
+
+    // Digital methods
+    case fm = "FM Synthesis"
+    case wavetable = "Wavetable"
+    case additive = "Additive"
+    case spectral = "Spectral"
+    case vectorSynth = "Vector"
+
+    // Texture-based
+    case granular = "Granular"
+
+    // Physical
+    case physicalModeling = "Physical Modeling"
+    case karplusStrong = "Karplus-Strong"
+    case waveguide = "Waveguide"
+    case modalSynth = "Modal"
+
+    // Sample-based
+    case sampler = "Sample-based"
+
+    // AI/Neural
+    case neural = "Neural Audio"
+}
+```
+
+### 5.2 Voice Management Fragmentation
+
+**Multiple Voice implementations for different purposes:**
+
+| File | Type | Purpose | Voices |
+|------|------|---------|--------|
+| `Sound/InstrumentOrchestrator.swift:45` | `private struct Voice` | Polyphonic voice management | 16 max |
+| `Developer/AdvancedPlugins.swift:882` | `public struct Voice` | Orchestral/singing voices | N/A |
+| `MIDI/MPEZoneManager.swift:56` | `enum VoiceAllocationMode` | MIDI voice allocation | Zone-based |
+| `Audio/EnhancedAudioFeatures.swift:1298` | `class VoiceProcessor` | Vocal audio processing | N/A |
+| `Sound/TR808BassSynth.swift` | Internal voice array | 808 polyphony | 8 max |
+
+**RECOMMENDATION: Create Voice Protocol Hierarchy**
+
+```swift
+// NEW: Sources/Echoelmusic/Audio/VoiceProtocols.swift
+
+/// Base protocol for all voice types
+protocol SynthVoice: Identifiable {
+    var id: UUID { get }
+    var isActive: Bool { get set }
+    var note: Int { get set }
+    var velocity: Float { get set }
+    func trigger(note: Int, velocity: Float)
+    func release()
+}
+
+/// Polyphonic voice pool manager
+protocol VoicePool {
+    associatedtype V: SynthVoice
+    var maxVoices: Int { get }
+    var activeVoices: Int { get }
+    func allocateVoice(for note: Int) -> V?
+    func releaseVoice(_ voice: V)
+}
+```
+
+### 5.3 Orchestral Instrument Definitions
+
+**THREE separate orchestral instrument systems:**
+
+| File | System | Instruments |
+|------|--------|-------------|
+| `Sound/UniversalSoundLibrary.swift` | `Instrument` struct | 13+ world instruments |
+| `Orchestral/CinematicScoringEngine.swift` | `OrchestraInstrument` | Full orchestral (8 sections) |
+| `Developer/AdvancedPlugins.swift` | `OrganicScoreInstrumentPlugin` | 40+ comprehensive |
+
+**RECOMMENDATION: Unified Instrument Registry**
+
+```swift
+// NEW: Sources/Echoelmusic/Audio/InstrumentRegistry.swift
+
+/// Unified instrument catalog
+class InstrumentRegistry {
+
+    enum InstrumentFamily: String, CaseIterable {
+        // Orchestral
+        case strings, brass, woodwinds, percussion, keyboard, choir
+
+        // World
+        case asian, middleEastern, african, latin, oceanian
+
+        // Electronic
+        case synthesizer, drumMachine, sampler
+
+        // Special
+        case experimental, foley, soundFX
+    }
+
+    /// All registered instruments
+    static var all: [RegisteredInstrument] { ... }
+
+    /// Get instruments by family
+    static func instruments(for family: InstrumentFamily) -> [RegisteredInstrument]
+}
+```
+
+### 5.4 DSP Effects Consolidation
+
+**Two DSP architectures:**
+
+| Location | Architecture | Effects |
+|----------|--------------|---------|
+| `Audio/Nodes/` | Node graph | CompressorNode, DelayNode, FilterNode, ReverbNode |
+| `DSP/AdvancedDSPEffects.swift` | Monolithic classes | 12+ professional effects |
+
+**RECOMMENDATION:** Keep both but ensure interface compatibility
+
+```swift
+/// Protocol for all DSP effects (node or monolithic)
+protocol DSPEffect {
+    func process(input: UnsafeMutablePointer<Float>, output: UnsafeMutablePointer<Float>, frameCount: Int)
+    func setParameter(_ name: String, value: Float)
+}
+```
+
+### 5.5 Scale & Chord Definitions
+
+**Potential duplication between:**
+- `MIDI/TouchInstruments.swift` - 13 scales, 11 chord types
+- `Integration/GlobalMusicTheoryDatabase.swift` (if exists)
+
+**RECOMMENDATION:** Create `MusicTheory` module in MIDI/
+
+### 5.6 Instrument Section Target Architecture
+
+```
+Sources/Echoelmusic/Audio/
+├── Synthesis/
+│   ├── SynthesisRegistry.swift        # Unified engine types (NEW)
+│   ├── VoiceProtocols.swift           # Voice interfaces (NEW)
+│   ├── SynthEngine.swift              # Base synthesis engine
+│   ├── SubtractiveSynth.swift         # Analog-style
+│   ├── FMSynth.swift                  # FM synthesis
+│   ├── WavetableSynth.swift           # Wavetable
+│   ├── GranularSynth.swift            # Granular
+│   ├── AdditiveSynth.swift            # Additive
+│   └── PhysicalModelSynth.swift       # Physical modeling
+│
+├── Instruments/
+│   ├── InstrumentRegistry.swift       # Unified catalog (NEW)
+│   ├── TR808BassSynth.swift           # 808 (keep)
+│   ├── Orchestral/
+│   │   ├── CinematicScoringEngine.swift
+│   │   ├── FilmScoreComposer.swift
+│   │   └── OrchestraSection.swift
+│   └── World/
+│       └── WorldInstruments.swift
+│
+├── Effects/
+│   ├── DSPEffect.swift                # Base protocol (NEW)
+│   ├── Nodes/                         # Node graph
+│   └── AdvancedDSPEffects.swift       # Monolithic
+│
+└── Touch/
+    └── TouchInstruments.swift         # Touch instruments (keep)
+```
+
+### 5.7 Instrument Consolidation Metrics
+
+| Metric | Current | Target | Impact |
+|--------|---------|--------|--------|
+| Synthesis engine enums | 2 | 1 | Remove duplication |
+| Voice implementations | 5 | 1 protocol + implementations | Unified interface |
+| Orchestral systems | 3 | 1 registry | Single source of truth |
+| DSP architectures | 2 | 2 (with shared protocol) | Interoperability |
+| Files in Sound/ | 3 | 0 (merged to Audio/) | Directory cleanup |
+
+### 5.8 Implementation Priority
+
+1. **HIGH:** Create `SynthesisRegistry.swift` - eliminate engine type duplication
+2. **HIGH:** Create `VoiceProtocols.swift` - unify voice management
+3. **MEDIUM:** Create `InstrumentRegistry.swift` - catalog consolidation
+4. **LOW:** Move Sound/ contents → Audio/Synthesis/ and Audio/Instruments/
+5. **LOW:** DSP effect protocol for node/monolithic interop
+
+---
+
+## Updated Success Metrics (Including Instruments)
+
+| Metric | Current | Target | Status |
+|--------|---------|--------|--------|
+| Mobile hook count | 3 | 1 | Pending |
+| Disclaimer sources | 2 | 1 | Pending |
+| Duplicate cymatics code | 89 lines | 0 | **DONE** |
+| Swift directories | 58 | 25 | Pending |
+| Swift duplicate classes | 4 | 0 | Pending |
+| Empty packages | 1 | 0 | **DONE** |
+| Synthesis engine enums | 2 | 1 | Pending |
+| Voice implementations | 5 | 1 protocol | Pending |
+| Orchestral systems | 3 | 1 registry | Pending |
