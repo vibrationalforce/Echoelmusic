@@ -267,8 +267,8 @@ public final class CertificatePinning: Sendable {
     }
 
     /// Production certificate hashes (SHA256 of SPKI)
-    /// IMPORTANT: Replace these with actual certificate hashes before production deployment
-    /// Use the openssl command above to generate hashes from your production certificates
+    /// Generated using: openssl s_client -connect HOST:443 | openssl x509 -pubkey -noout | \
+    ///                  openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -binary | base64
     private var pinnedCertificates: [String: PinConfiguration] = [:]
 
     /// Known CA root certificates for fallback validation (Let's Encrypt, DigiCert, etc.)
@@ -283,55 +283,152 @@ public final class CertificatePinning: Sendable {
         "sha256/r/mIkG3eEpVdm+u/ko/cwxzOMo1bk4TyHIlByibiA5E="
     ]
 
+    /// Production SPKI hashes - MUST be configured before production deployment
+    /// These are generated from actual production server certificates
+    public struct ProductionPins {
+        /// API endpoint certificate pins
+        /// To generate: echo | openssl s_client -connect api.echoelmusic.com:443 2>/dev/null | \
+        ///              openssl x509 -pubkey -noout | openssl rsa -pubin -outform der 2>/dev/null | \
+        ///              openssl dgst -sha256 -binary | base64
+        public static var apiPrimary: String? = ProcessInfo.processInfo.environment["ECHOELMUSIC_API_PIN_PRIMARY"]
+        public static var apiBackup: String? = ProcessInfo.processInfo.environment["ECHOELMUSIC_API_PIN_BACKUP"]
+
+        /// Streaming endpoint certificate pins
+        public static var streamPrimary: String? = ProcessInfo.processInfo.environment["ECHOELMUSIC_STREAM_PIN_PRIMARY"]
+        public static var streamBackup: String? = ProcessInfo.processInfo.environment["ECHOELMUSIC_STREAM_PIN_BACKUP"]
+
+        /// Collaboration endpoint certificate pins
+        public static var collabPrimary: String? = ProcessInfo.processInfo.environment["ECHOELMUSIC_COLLAB_PIN_PRIMARY"]
+        public static var collabBackup: String? = ProcessInfo.processInfo.environment["ECHOELMUSIC_COLLAB_PIN_BACKUP"]
+
+        /// Analytics endpoint certificate pins
+        public static var analyticsPrimary: String? = ProcessInfo.processInfo.environment["ECHOELMUSIC_ANALYTICS_PIN_PRIMARY"]
+        public static var analyticsBackup: String? = ProcessInfo.processInfo.environment["ECHOELMUSIC_ANALYTICS_PIN_BACKUP"]
+
+        /// Check if production pins are configured
+        public static var isConfigured: Bool {
+            return apiPrimary != nil && streamPrimary != nil && collabPrimary != nil && analyticsPrimary != nil
+        }
+
+        /// Configure pins programmatically (for app bundle configuration)
+        public static func configure(
+            api: (primary: String, backup: String?),
+            stream: (primary: String, backup: String?),
+            collab: (primary: String, backup: String?),
+            analytics: (primary: String, backup: String?)
+        ) {
+            apiPrimary = api.primary
+            apiBackup = api.backup
+            streamPrimary = stream.primary
+            streamBackup = stream.backup
+            collabPrimary = collab.primary
+            collabBackup = collab.backup
+            analyticsPrimary = analytics.primary
+            analyticsBackup = analytics.backup
+
+            // Reload pins
+            CertificatePinning.shared.reloadPins()
+        }
+    }
+
     /// Whether to allow connections when no pins are configured (development mode)
     private let allowUnpinnedInDevelopment: Bool = true
+
+    /// Whether production pins are properly configured
+    public var isProductionReady: Bool {
+        return ProductionPins.isConfigured
+    }
 
     private init() {
         configurePinsFromEnvironment()
     }
 
+    /// Reload certificate pins (call after ProductionPins.configure())
+    public func reloadPins() {
+        pinnedCertificates.removeAll()
+        configurePinsFromEnvironment()
+    }
+
     /// Configure certificate pins from environment or secure storage
     private func configurePinsFromEnvironment() {
-        // In production, load pins from secure configuration
-        // These should be updated when certificates are rotated
+        let isProduction = DeploymentEnvironment.current.isProduction
+        let productionPinsConfigured = ProductionPins.isConfigured
 
         // API Server - Primary endpoint
-        if let apiPin = SecretsManager.shared.getSecret(for: .signingKey) {
-            // Use stored pin if available
+        if let apiPin = ProductionPins.apiPrimary {
             pinnedCertificates["api.echoelmusic.com"] = PinConfiguration(
                 primaryPin: "sha256/\(apiPin)",
+                backupPin: ProductionPins.apiBackup.map { "sha256/\($0)" },
+                enforced: isProduction
+            )
+        } else if let storedPin = SecretsManager.shared.getSecret(for: .signingKey) {
+            pinnedCertificates["api.echoelmusic.com"] = PinConfiguration(
+                primaryPin: "sha256/\(storedPin)",
                 backupPin: nil,
-                enforced: DeploymentEnvironment.current.isProduction
+                enforced: isProduction && productionPinsConfigured
             )
         } else {
-            // Fallback to CA validation in production until pins are configured
+            // Fallback to CA validation until pins are configured
             pinnedCertificates["api.echoelmusic.com"] = PinConfiguration(
                 primaryPin: trustedRootPins[0], // Let's Encrypt
                 backupPin: trustedRootPins[2],  // DigiCert backup
-                enforced: false // Don't enforce until production pins are set
+                enforced: false // Don't enforce CA-only validation
             )
         }
 
         // Streaming Server
-        pinnedCertificates["stream.echoelmusic.com"] = PinConfiguration(
-            primaryPin: trustedRootPins[0],
-            backupPin: trustedRootPins[1],
-            enforced: false
-        )
+        if let streamPin = ProductionPins.streamPrimary {
+            pinnedCertificates["stream.echoelmusic.com"] = PinConfiguration(
+                primaryPin: "sha256/\(streamPin)",
+                backupPin: ProductionPins.streamBackup.map { "sha256/\($0)" },
+                enforced: isProduction
+            )
+        } else {
+            pinnedCertificates["stream.echoelmusic.com"] = PinConfiguration(
+                primaryPin: trustedRootPins[0],
+                backupPin: trustedRootPins[1],
+                enforced: false
+            )
+        }
 
         // Collaboration Server
-        pinnedCertificates["collab.echoelmusic.com"] = PinConfiguration(
-            primaryPin: trustedRootPins[0],
-            backupPin: trustedRootPins[2],
-            enforced: false
-        )
+        if let collabPin = ProductionPins.collabPrimary {
+            pinnedCertificates["collab.echoelmusic.com"] = PinConfiguration(
+                primaryPin: "sha256/\(collabPin)",
+                backupPin: ProductionPins.collabBackup.map { "sha256/\($0)" },
+                enforced: isProduction
+            )
+        } else {
+            pinnedCertificates["collab.echoelmusic.com"] = PinConfiguration(
+                primaryPin: trustedRootPins[0],
+                backupPin: trustedRootPins[2],
+                enforced: false
+            )
+        }
 
         // Analytics Server
-        pinnedCertificates["analytics.echoelmusic.com"] = PinConfiguration(
-            primaryPin: trustedRootPins[2], // DigiCert
-            backupPin: trustedRootPins[3],
-            enforced: false
-        )
+        if let analyticsPin = ProductionPins.analyticsPrimary {
+            pinnedCertificates["analytics.echoelmusic.com"] = PinConfiguration(
+                primaryPin: "sha256/\(analyticsPin)",
+                backupPin: ProductionPins.analyticsBackup.map { "sha256/\($0)" },
+                enforced: isProduction
+            )
+        } else {
+            pinnedCertificates["analytics.echoelmusic.com"] = PinConfiguration(
+                primaryPin: trustedRootPins[2], // DigiCert
+                backupPin: trustedRootPins[3],
+                enforced: false
+            )
+        }
+
+        // Log configuration status
+        if productionPinsConfigured {
+            ProfessionalLogger.shared.info("✅ Certificate pinning: Production pins configured and enforced", category: .network)
+        } else if isProduction {
+            ProfessionalLogger.shared.warning("⚠️ Certificate pinning: Production environment but pins not configured - using CA fallback", category: .network)
+        } else {
+            ProfessionalLogger.shared.debug("🔓 Certificate pinning: Development mode - using CA validation", category: .network)
+        }
     }
 
     /// Update certificate pin at runtime (for certificate rotation)
