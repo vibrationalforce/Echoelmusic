@@ -271,7 +271,7 @@ public final class ClipLauncherGrid: ObservableObject {
         do {
             try audioEngine?.start()
         } catch {
-            print("Audio engine error: \(error)")
+            log.audio("Audio engine start failed: \(error)", level: .error)
         }
     }
 

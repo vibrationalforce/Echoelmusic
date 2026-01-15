@@ -378,14 +378,14 @@ public final class ImmersiveIsochronicSession: ObservableObject {
             try session.setCategory(.playback, mode: .default)
             try session.setActive(true)
         } catch {
-            print("Audio session error: \(error)")
+            log.audio("Audio session configuration failed: \(error)", level: .error)
         }
 
         // Start audio engine
         do {
             try audioEngine?.start()
         } catch {
-            print("Audio engine start error: \(error)")
+            log.audio("Audio engine start failed: \(error)", level: .error)
         }
 
         // Start timers

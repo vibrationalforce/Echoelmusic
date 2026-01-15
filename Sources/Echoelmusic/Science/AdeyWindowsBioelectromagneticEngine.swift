@@ -561,18 +561,5 @@ public struct AdeyWindowsDisclaimer {
 
 // MARK: - Logger Extension
 
-private let log = Logger.shared
-
-private struct Logger {
-    static let shared = Logger()
-
-    func info(category: LogCategory, _ message: String) {
-        #if DEBUG
-        print("[\(category.rawValue)] \(message)")
-        #endif
-    }
-
-    enum LogCategory: String {
-        case biofeedback = "Biofeedback"
-    }
-}
+// Uses global logger (log) from ProfessionalLogger.swift
+// Biofeedback messages are logged via log.biofeedback() or log.info()
