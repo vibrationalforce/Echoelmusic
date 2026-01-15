@@ -99,6 +99,7 @@ struct VaporwaveSessions: View {
                             .font(.system(size: 24))
                             .foregroundColor(VaporwaveColors.textSecondary)
                     }
+                    .accessibilityLabel("Close sessions")
                 }
             }
             .sheet(item: $selectedSession) { session in
@@ -132,6 +133,8 @@ struct VaporwaveSessions: View {
                                     .stroke(selectedFilter == filter ? filter.color.opacity(0.5) : Color.white.opacity(0.1), lineWidth: 1)
                             )
                     }
+                    .accessibilityLabel("\(filter.rawValue) filter")
+                    .accessibilityAddTraits(selectedFilter == filter ? .isSelected : [])
                 }
             }
             .padding(.horizontal, VaporwaveSpacing.lg)
