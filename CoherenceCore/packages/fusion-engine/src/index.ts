@@ -504,11 +504,6 @@ export class FusionEngine {
 // EXPORTS
 // ============================================================================
 
-export {
-  FusionConfig,
-  DEFAULT_FUSION_CONFIG,
-  FusionResult,
-  UserCalibration,
-  DEFAULT_USER_CALIBRATION,
-  SensorSource,
-} from '@coherence-core/shared-types';
+// NOTE: Types like FusionConfig, FusionResult, SensorSource, UserCalibration
+// should be imported directly from @coherence-core/shared-types
+// Re-exports removed to avoid ambiguous import paths (2026-01-15)

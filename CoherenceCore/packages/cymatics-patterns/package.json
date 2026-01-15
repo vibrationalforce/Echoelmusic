@@ -1,0 +1,28 @@
+{
+  "name": "@coherence-core/cymatics-patterns",
+  "version": "0.1.0",
+  "description": "Shared Chladni plate and wave interference pattern algorithms for CoherenceCore",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "cymatics",
+    "chladni",
+    "wave",
+    "interference",
+    "visualization"
+  ],
+  "license": "PROPRIETARY",
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  },
+  "files": [
+    "dist",
+    "src"
+  ]
+}
