@@ -1034,6 +1034,10 @@ mkdir build && cd build && cmake .. && make
 - `.github/CLAUDE_TODO.md` - Detailed sprint planning
 - `ARCHITECTURE_SCIENTIFIC.md` - Scientific background
 - `RESEARCH_EVIDENCE.md` - Evidence-based research & health disclaimers
+- `ECHOELMUSIC_IMPLEMENTATION_ROADMAP.md` - Implementation status & production checklist
+- `ECHOELMUSIC_90_DAY_ROADMAP.md` - 90-day launch plan with milestones
+- `BIOREACTIVE_API.md` - Bio-reactive system API & health disclaimers
+- `.pre-commit-config.yaml` - Secret scanning & code quality hooks
 
 ---
 
