@@ -634,15 +634,130 @@ public final class CreativeStudioEngine: ObservableObject {
     }
 
     private func generatePlaceholderImageData() -> Data? {
-        // Generate placeholder gradient image data
-        return Data(count: imageWidth * imageHeight * 4)
+        // Generate procedural gradient/noise image with quantum-inspired patterns
+        var pixels = [UInt8](repeating: 0, count: imageWidth * imageHeight * 4)
+
+        let seed = Int.random(in: 0...Int.max)
+        let time = Date().timeIntervalSince1970
+
+        for y in 0..<imageHeight {
+            for x in 0..<imageWidth {
+                let index = (y * imageWidth + x) * 4
+
+                // Normalized coordinates
+                let nx = Float(x) / Float(imageWidth)
+                let ny = Float(y) / Float(imageHeight)
+
+                // Multi-layer procedural pattern
+                // Layer 1: Base gradient influenced by quantum coherence
+                let baseHue = (nx + ny) * 0.5 + Float(quantumCoherence) * 0.3
+
+                // Layer 2: Perlin-like noise approximation
+                let noiseFreq: Float = 4.0 + Float(quantumCoherence) * 8.0
+                let noise1 = sin(nx * noiseFreq * Float.pi) * cos(ny * noiseFreq * Float.pi)
+                let noise2 = sin((nx + 0.5) * noiseFreq * 1.5 * Float.pi) * cos((ny + 0.3) * noiseFreq * 1.5 * Float.pi)
+                let noise = (noise1 + noise2 * 0.5) * 0.5 + 0.5
+
+                // Layer 3: Radial quantum field effect
+                let dx = nx - 0.5
+                let dy = ny - 0.5
+                let dist = sqrt(dx * dx + dy * dy)
+                let radial = sin(dist * 20.0 * Float.pi * Float(quantumCoherence)) * 0.3 + 0.7
+
+                // Combine layers with style-based color mapping
+                let hue = baseHue + noise * 0.2
+                let saturation = 0.6 + Float(quantumCoherence) * 0.4
+                let brightness = radial * noise
+
+                // Convert HSB to RGB
+                let (r, g, b) = hsbToRgb(h: hue, s: saturation, b: brightness)
+
+                pixels[index] = UInt8(clamping: Int(r * 255))
+                pixels[index + 1] = UInt8(clamping: Int(g * 255))
+                pixels[index + 2] = UInt8(clamping: Int(b * 255))
+                pixels[index + 3] = 255  // Alpha
+            }
+        }
+
+        return Data(pixels)
+    }
+
+    private func hsbToRgb(h: Float, s: Float, b: Float) -> (Float, Float, Float) {
+        let hue = h.truncatingRemainder(dividingBy: 1.0) * 6.0
+        let f = hue - floor(hue)
+        let p = b * (1 - s)
+        let q = b * (1 - s * f)
+        let t = b * (1 - s * (1 - f))
+
+        let segment = Int(hue) % 6
+        switch segment {
+        case 0: return (b, t, p)
+        case 1: return (q, b, p)
+        case 2: return (p, b, t)
+        case 3: return (p, q, b)
+        case 4: return (t, p, b)
+        default: return (b, p, q)
+        }
     }
 
     private func generatePlaceholderAudioData() -> Data? {
-        // Generate placeholder audio data
+        // Generate procedural audio with bio-reactive waveforms
         let sampleRate = 44100
-        let samples = Int(audioDuration) * sampleRate * 2
-        return Data(count: samples * 2)
+        let numSamples = Int(audioDuration) * sampleRate
+
+        var samples = [Int16](repeating: 0, count: numSamples * 2)  // Stereo
+
+        // Base frequencies based on genre
+        let baseFreq: Float
+        switch selectedGenre {
+        case .ambient, .meditation, .drone:
+            baseFreq = 110.0  // A2
+        case .classical, .jazz:
+            baseFreq = 220.0  // A3
+        case .electronic, .house, .techno, .trance:
+            baseFreq = 440.0  // A4
+        default:
+            baseFreq = 220.0
+        }
+
+        // Generate layered waveform
+        for i in 0..<numSamples {
+            let t = Float(i) / Float(sampleRate)
+
+            // Layer 1: Fundamental sine wave
+            let fundamental = sin(2.0 * Float.pi * baseFreq * t)
+
+            // Layer 2: Harmonic overtones (quantum-modulated)
+            let harmonic2 = sin(2.0 * Float.pi * baseFreq * 2.0 * t) * 0.5 * quantumCoherence
+            let harmonic3 = sin(2.0 * Float.pi * baseFreq * 3.0 * t) * 0.25 * quantumCoherence
+            let harmonic5 = sin(2.0 * Float.pi * baseFreq * 5.0 * t) * 0.125
+
+            // Layer 3: LFO modulation (bio-reactive rate)
+            let lfoRate = 0.1 + Float(quantumCoherence) * 0.4
+            let lfo = sin(2.0 * Float.pi * lfoRate * t) * 0.3 + 0.7
+
+            // Layer 4: Slow amplitude envelope
+            let envelope = sin(Float.pi * t / Float(audioDuration))
+
+            // Combine all layers
+            let mixedSignal = (fundamental + harmonic2 + harmonic3 + harmonic5) * lfo * envelope * 0.7
+
+            // Apply soft clipping (tanh saturation)
+            let clipped = tanh(mixedSignal * 1.5)
+
+            // Convert to 16-bit
+            let sampleValue = Int16(clamping: Int(clipped * 32000))
+
+            // Stereo with slight phase offset for width
+            let stereoOffset = sin(2.0 * Float.pi * 0.5 * t) * 0.1
+            samples[i * 2] = sampleValue  // Left
+            samples[i * 2 + 1] = Int16(clamping: Int(clipped * (1.0 + stereoOffset) * 32000))  // Right
+        }
+
+        // Convert to Data
+        return samples.withUnsafeBufferPointer { buffer in
+            Data(buffer: buffer.withMemoryRebound(to: UInt8.self) { $0 })
+        }
     }
 
     /// Cancel current generation

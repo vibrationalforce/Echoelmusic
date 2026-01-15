@@ -134,8 +134,32 @@ class AdvancedDSPEffects {
                 a1 = -2.0 * cosOmega
                 a2 = 1.0 - alpha
 
-            default:
-                return input  // Not implemented
+            case .bandPass:
+                // Bandpass with constant 0dB peak gain
+                b0 = alpha
+                b1 = 0.0
+                b2 = -alpha
+                a0 = 1.0 + alpha
+                a1 = -2.0 * cosOmega
+                a2 = 1.0 - alpha
+
+            case .notch:
+                // Notch (band-reject) filter
+                b0 = 1.0
+                b1 = -2.0 * cosOmega
+                b2 = 1.0
+                a0 = 1.0 + alpha
+                a1 = -2.0 * cosOmega
+                a2 = 1.0 - alpha
+
+            case .allPass:
+                // All-pass filter (phase shift only)
+                b0 = 1.0 - alpha
+                b1 = -2.0 * cosOmega
+                b2 = 1.0 + alpha
+                a0 = 1.0 + alpha
+                a1 = -2.0 * cosOmega
+                a2 = 1.0 - alpha
             }
 
             // Normalize coefficients
@@ -244,9 +268,74 @@ class AdvancedDSPEffects {
         }
 
         private func filterBand(_ input: [Float], lowFreq: Float, highFreq: Float) -> [Float] {
-            // Simplified bandpass filter
-            // In production, use proper Linkwitz-Riley crossovers
-            return input  // Placeholder
+            // Linkwitz-Riley crossover bandpass implementation
+            // Cascaded 2nd-order Butterworth filters (= 4th order LR)
+            var output = input
+
+            // High-pass section (remove frequencies below lowFreq)
+            if lowFreq > 0 {
+                output = applyHighPass(output, cutoff: lowFreq)
+                output = applyHighPass(output, cutoff: lowFreq)  // 2nd pass for LR4
+            }
+
+            // Low-pass section (remove frequencies above highFreq)
+            if highFreq < sampleRate / 2 {
+                output = applyLowPass(output, cutoff: highFreq)
+                output = applyLowPass(output, cutoff: highFreq)  // 2nd pass for LR4
+            }
+
+            return output
+        }
+
+        private func applyLowPass(_ input: [Float], cutoff: Float) -> [Float] {
+            let omega = 2.0 * Float.pi * cutoff / sampleRate
+            let sinOmega = sin(omega)
+            let cosOmega = cos(omega)
+            let alpha = sinOmega / (2.0 * 0.707)  // Q = 0.707 for Butterworth
+
+            let a0 = 1.0 + alpha
+            let b0 = ((1.0 - cosOmega) / 2.0) / a0
+            let b1 = (1.0 - cosOmega) / a0
+            let b2 = ((1.0 - cosOmega) / 2.0) / a0
+            let a1 = (-2.0 * cosOmega) / a0
+            let a2 = (1.0 - alpha) / a0
+
+            return applyBiquadFilter(input, b0: b0, b1: b1, b2: b2, a1: a1, a2: a2)
+        }
+
+        private func applyHighPass(_ input: [Float], cutoff: Float) -> [Float] {
+            let omega = 2.0 * Float.pi * cutoff / sampleRate
+            let sinOmega = sin(omega)
+            let cosOmega = cos(omega)
+            let alpha = sinOmega / (2.0 * 0.707)  // Q = 0.707 for Butterworth
+
+            let a0 = 1.0 + alpha
+            let b0 = ((1.0 + cosOmega) / 2.0) / a0
+            let b1 = (-(1.0 + cosOmega)) / a0
+            let b2 = ((1.0 + cosOmega) / 2.0) / a0
+            let a1 = (-2.0 * cosOmega) / a0
+            let a2 = (1.0 - alpha) / a0
+
+            return applyBiquadFilter(input, b0: b0, b1: b1, b2: b2, a1: a1, a2: a2)
+        }
+
+        private func applyBiquadFilter(_ input: [Float], b0: Float, b1: Float, b2: Float, a1: Float, a2: Float) -> [Float] {
+            var output = [Float](repeating: 0, count: input.count)
+            var x1: Float = 0, x2: Float = 0
+            var y1: Float = 0, y2: Float = 0
+
+            for i in 0..<input.count {
+                let x0 = input[i]
+                let y0 = b0 * x0 + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+
+                output[i] = y0
+                x2 = x1
+                x1 = x0
+                y2 = y1
+                y1 = y0
+            }
+
+            return output
         }
 
         private func compressBand(_ input: [Float], band: Band) -> [Float] {
@@ -363,16 +452,71 @@ class AdvancedDSPEffects {
         }
 
         private func detectSibilance(_ input: [Float]) -> [Float] {
-            // Bandpass filter around sibilance frequencies (6-8 kHz)
-            // Simplified implementation
+            // Bandpass filter around sibilance frequencies
+            // Uses cascaded high-pass + low-pass for steep rolloff
+
+            // High-pass at (frequency - bandwidth/2)
+            let lowCutoff = max(frequency - bandwidth / 2.0, 100.0)
+            // Low-pass at (frequency + bandwidth/2)
+            let highCutoff = min(frequency + bandwidth / 2.0, sampleRate / 2.0 - 100.0)
+
+            // Calculate high-pass biquad coefficients
+            let omegaHP = 2.0 * Float.pi * lowCutoff / sampleRate
+            let sinHP = sin(omegaHP)
+            let cosHP = cos(omegaHP)
+            let alphaHP = sinHP / (2.0 * 1.0)  // Q = 1.0
+
+            let a0HP = 1.0 + alphaHP
+            let b0HP = ((1.0 + cosHP) / 2.0) / a0HP
+            let b1HP = (-(1.0 + cosHP)) / a0HP
+            let b2HP = ((1.0 + cosHP) / 2.0) / a0HP
+            let a1HP = (-2.0 * cosHP) / a0HP
+            let a2HP = (1.0 - alphaHP) / a0HP
+
+            // Calculate low-pass biquad coefficients
+            let omegaLP = 2.0 * Float.pi * highCutoff / sampleRate
+            let sinLP = sin(omegaLP)
+            let cosLP = cos(omegaLP)
+            let alphaLP = sinLP / (2.0 * 1.0)  // Q = 1.0
+
+            let a0LP = 1.0 + alphaLP
+            let b0LP = ((1.0 - cosLP) / 2.0) / a0LP
+            let b1LP = (1.0 - cosLP) / a0LP
+            let b2LP = ((1.0 - cosLP) / 2.0) / a0LP
+            let a1LP = (-2.0 * cosLP) / a0LP
+            let a2LP = (1.0 - alphaLP) / a0LP
+
+            // Apply high-pass filter
             var output = [Float](repeating: 0, count: input.count)
+            var x1HP: Float = 0, x2HP: Float = 0
+            var y1HP: Float = 0, y2HP: Float = 0
 
             for i in 0..<input.count {
-                // Placeholder: in production use proper bandpass filter
-                output[i] = input[i]
+                let x0 = input[i]
+                let y0 = b0HP * x0 + b1HP * x1HP + b2HP * x2HP - a1HP * y1HP - a2HP * y2HP
+                output[i] = y0
+                x2HP = x1HP
+                x1HP = x0
+                y2HP = y1HP
+                y1HP = y0
             }
 
-            return output
+            // Apply low-pass filter
+            var x1LP: Float = 0, x2LP: Float = 0
+            var y1LP: Float = 0, y2LP: Float = 0
+            var filtered = [Float](repeating: 0, count: input.count)
+
+            for i in 0..<output.count {
+                let x0 = output[i]
+                let y0 = b0LP * x0 + b1LP * x1LP + b2LP * x2LP - a1LP * y1LP - a2LP * y2LP
+                filtered[i] = y0
+                x2LP = x1LP
+                x1LP = x0
+                y2LP = y1LP
+                y1LP = y0
+            }
+
+            return filtered
         }
     }
 

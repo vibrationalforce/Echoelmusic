@@ -551,15 +551,45 @@ class HealthMonitor {
     }
 
     private func getCPUUsage() -> Float {
-        // Simplified CPU check
-        var info = mach_task_basic_info()
-        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
-        let result = withUnsafeMutablePointer(to: &info) {
-            $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
-                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+        // Get CPU usage by summing thread CPU times
+        var threadList: thread_act_array_t?
+        var threadCount: mach_msg_type_number_t = 0
+
+        let result = task_threads(mach_task_self_, &threadList, &threadCount)
+        guard result == KERN_SUCCESS, let threads = threadList else {
+            return 0.3  // Fallback on error
+        }
+
+        defer {
+            // Deallocate thread list
+            let size = vm_size_t(MemoryLayout<thread_t>.stride * Int(threadCount))
+            vm_deallocate(mach_task_self_, vm_address_t(bitPattern: threads), size)
+        }
+
+        var totalCPU: Float = 0.0
+
+        for i in 0..<Int(threadCount) {
+            var threadInfo = thread_basic_info()
+            var count = mach_msg_type_number_t(THREAD_BASIC_INFO_COUNT)
+
+            let infoResult = withUnsafeMutablePointer(to: &threadInfo) {
+                $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+                    thread_info(threads[i], thread_flavor_t(THREAD_BASIC_INFO), $0, &count)
+                }
+            }
+
+            if infoResult == KERN_SUCCESS {
+                // Skip idle threads
+                if threadInfo.flags & TH_FLAGS_IDLE == 0 {
+                    // CPU usage is reported as percentage * 10 (0-1000)
+                    totalCPU += Float(threadInfo.cpu_usage) / Float(TH_USAGE_SCALE)
+                }
             }
         }
-        return result == KERN_SUCCESS ? 0.5 : 0.3  // Placeholder
+
+        // Normalize by number of cores for overall system usage
+        let coreCount = Float(ProcessInfo.processInfo.processorCount)
+        return min(totalCPU / coreCount, 1.0)
     }
 
     private func getMemoryUsage() -> Float {

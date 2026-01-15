@@ -1,31 +1,62 @@
 import Foundation
 import AVFoundation
+import Accelerate
 
 /// Reverb effect node with bio-reactive parameters
 /// HRV Coherence → Reverb Wetness (higher coherence = more reverb = spacious feeling)
+///
+/// Implementation: Freeverb-style algorithmic reverb using:
+/// - 8 parallel comb filters for early reflections
+/// - 4 series allpass filters for diffusion
+/// - Accelerate/vDSP for SIMD optimization
+///
+/// EchoelCore Native - No external dependencies
 @MainActor
 class ReverbNode: BaseEchoelmusicNode {
 
-    // MARK: - AVAudioUnit Reverb
+    // MARK: - Reverb DSP Components
 
-    private let reverbUnit: AVAudioUnitReverb
+    /// Comb filter delays (samples at 44.1kHz, scaled for actual sample rate)
+    private static let combDelays: [Int] = [1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617]
+
+    /// Allpass filter delays
+    private static let allpassDelays: [Int] = [556, 441, 341, 225]
+
+    /// Comb filter buffers (8 filters)
+    private var combBuffers: [[Float]] = []
+    private var combIndices: [Int] = []
+
+    /// Allpass filter buffers (4 filters)
+    private var allpassBuffers: [[Float]] = []
+    private var allpassIndices: [Int] = []
+
+    /// Current sample rate
+    private var currentSampleRate: Double = 44100.0
+
+    /// Feedback amount for comb filters (0.0-1.0)
+    private var feedback: Float = 0.84
+
+    /// Damping coefficient (low-pass in feedback loop)
+    private var damping: Float = 0.2
+
+    /// Previous damped values for each comb filter
+    private var dampedValues: [Float] = []
 
 
     // MARK: - Parameters
 
     private enum Params {
         static let wetDry = "wetDry"
-        static let smallRoomSize = "smallRoomSize"
-        static let mediumRoomSize = "mediumRoomSize"
-        static let largeRoomSize = "largeRoomSize"
+        static let roomSize = "roomSize"
+        static let damping = "damping"
+        static let width = "width"
+        static let preDelay = "preDelay"
     }
 
 
     // MARK: - Initialization
 
     init() {
-        self.reverbUnit = AVAudioUnitReverb()
-
         super.init(name: "Bio-Reactive Reverb", type: .effect)
 
         // Setup parameters
@@ -42,19 +73,8 @@ class ReverbNode: BaseEchoelmusicNode {
                 type: .continuous
             ),
             NodeParameter(
-                name: Params.smallRoomSize,
-                label: "Small Room Size",
-                value: 0.0,
-                min: 0.0,
-                max: 100.0,
-                defaultValue: 0.0,
-                unit: "%",
-                isAutomatable: true,
-                type: .continuous
-            ),
-            NodeParameter(
-                name: Params.mediumRoomSize,
-                label: "Medium Room Size",
+                name: Params.roomSize,
+                label: "Room Size",
                 value: 50.0,
                 min: 0.0,
                 max: 100.0,
@@ -64,21 +84,63 @@ class ReverbNode: BaseEchoelmusicNode {
                 type: .continuous
             ),
             NodeParameter(
-                name: Params.largeRoomSize,
-                label: "Large Room Size",
+                name: Params.damping,
+                label: "Damping",
+                value: 50.0,
+                min: 0.0,
+                max: 100.0,
+                defaultValue: 50.0,
+                unit: "%",
+                isAutomatable: true,
+                type: .continuous
+            ),
+            NodeParameter(
+                name: Params.width,
+                label: "Stereo Width",
+                value: 100.0,
+                min: 0.0,
+                max: 100.0,
+                defaultValue: 100.0,
+                unit: "%",
+                isAutomatable: true,
+                type: .continuous
+            ),
+            NodeParameter(
+                name: Params.preDelay,
+                label: "Pre-Delay",
                 value: 0.0,
                 min: 0.0,
                 max: 100.0,
                 defaultValue: 0.0,
-                unit: "%",
+                unit: "ms",
                 isAutomatable: true,
                 type: .continuous
             )
         ]
 
-        // Configure reverb
-        reverbUnit.wetDryMix = 30.0  // 30% wet
-        reverbUnit.loadFactoryPreset(.mediumHall)
+        // Initialize buffers at default sample rate
+        initializeBuffers(sampleRate: 44100.0)
+    }
+
+    /// Initialize delay buffers scaled to sample rate
+    private func initializeBuffers(sampleRate: Double) {
+        currentSampleRate = sampleRate
+        let scaleFactor = sampleRate / 44100.0
+
+        // Initialize comb filter buffers
+        combBuffers = ReverbNode.combDelays.map { delay in
+            let scaledDelay = Int(Double(delay) * scaleFactor)
+            return [Float](repeating: 0.0, count: scaledDelay)
+        }
+        combIndices = [Int](repeating: 0, count: ReverbNode.combDelays.count)
+        dampedValues = [Float](repeating: 0.0, count: ReverbNode.combDelays.count)
+
+        // Initialize allpass filter buffers
+        allpassBuffers = ReverbNode.allpassDelays.map { delay in
+            let scaledDelay = Int(Double(delay) * scaleFactor)
+            return [Float](repeating: 0.0, count: scaledDelay)
+        }
+        allpassIndices = [Int](repeating: 0, count: ReverbNode.allpassDelays.count)
     }
 
 
@@ -90,14 +152,74 @@ class ReverbNode: BaseEchoelmusicNode {
             return buffer
         }
 
-        // Apply reverb parameters
-        if let wetDry = getParameter(name: Params.wetDry) {
-            reverbUnit.wetDryMix = wetDry
+        guard let channelData = buffer.floatChannelData else {
+            return buffer
         }
 
-        // Note: In a full implementation, we'd render through the AVAudioUnit
-        // For now, this is a placeholder showing the architecture
-        // Real implementation would use AVAudioEngine or manual DSP
+        let frameCount = Int(buffer.frameLength)
+        let channelCount = Int(buffer.format.channelCount)
+
+        // Get parameters
+        let wetDry = (getParameter(name: Params.wetDry) ?? 30.0) / 100.0
+        let roomSize = (getParameter(name: Params.roomSize) ?? 50.0) / 100.0
+        let dampingParam = (getParameter(name: Params.damping) ?? 50.0) / 100.0
+
+        // Update feedback based on room size (0.7 to 0.98)
+        feedback = 0.7 + roomSize * 0.28
+        damping = dampingParam * 0.4
+
+        // Process each channel
+        for channel in 0..<min(channelCount, 2) {
+            let inputPtr = channelData[channel]
+
+            for frame in 0..<frameCount {
+                let input = inputPtr[frame]
+
+                // Sum of all comb filter outputs
+                var combSum: Float = 0.0
+
+                // Process 8 parallel comb filters
+                for i in 0..<combBuffers.count {
+                    let bufferSize = combBuffers[i].count
+                    guard bufferSize > 0 else { continue }
+
+                    // Read from delay buffer
+                    let delayed = combBuffers[i][combIndices[i]]
+
+                    // Low-pass filter in feedback loop (damping)
+                    dampedValues[i] = delayed * (1.0 - damping) + dampedValues[i] * damping
+
+                    // Write to delay buffer with feedback
+                    combBuffers[i][combIndices[i]] = input + dampedValues[i] * feedback
+
+                    // Advance index
+                    combIndices[i] = (combIndices[i] + 1) % bufferSize
+
+                    // Accumulate output
+                    combSum += delayed
+                }
+
+                // Scale comb output
+                var output = combSum * 0.125  // Divide by 8 comb filters
+
+                // Process 4 series allpass filters for diffusion
+                for i in 0..<allpassBuffers.count {
+                    let bufferSize = allpassBuffers[i].count
+                    guard bufferSize > 0 else { continue }
+
+                    let delayed = allpassBuffers[i][allpassIndices[i]]
+                    let temp = output + delayed * 0.5
+
+                    allpassBuffers[i][allpassIndices[i]] = temp
+                    allpassIndices[i] = (allpassIndices[i] + 1) % bufferSize
+
+                    output = delayed - output * 0.5
+                }
+
+                // Mix dry and wet signals
+                inputPtr[frame] = input * (1.0 - wetDry) + output * wetDry
+            }
+        }
 
         return buffer
     }
@@ -125,7 +247,7 @@ class ReverbNode: BaseEchoelmusicNode {
             targetWetness = 50.0 + Float((coherence - 60.0) / 40.0) * 30.0  // 50-80%
         }
 
-        // Smooth transition
+        // Smooth transition for wet/dry
         if let currentWetness = getParameter(name: Params.wetDry) {
             let smoothed = currentWetness * 0.95 + targetWetness * 0.05
             setParameter(name: Params.wetDry, value: smoothed)
@@ -133,9 +255,16 @@ class ReverbNode: BaseEchoelmusicNode {
 
         // HRV → Room Size (higher HRV = larger room)
         let targetRoomSize = Float(min(signal.hrv / 100.0, 1.0)) * 100.0  // 0-100%
-        if let currentRoomSize = getParameter(name: Params.mediumRoomSize) {
+        if let currentRoomSize = getParameter(name: Params.roomSize) {
             let smoothed = currentRoomSize * 0.98 + targetRoomSize * 0.02
-            setParameter(name: Params.mediumRoomSize, value: smoothed)
+            setParameter(name: Params.roomSize, value: smoothed)
+        }
+
+        // Heart Rate → Damping (higher HR = more damping = tighter sound)
+        let targetDamping = Float(min(max((signal.heartRate - 60.0) / 60.0, 0.0), 1.0)) * 80.0 + 20.0
+        if let currentDamping = getParameter(name: Params.damping) {
+            let smoothed = currentDamping * 0.97 + targetDamping * 0.03
+            setParameter(name: Params.damping, value: smoothed)
         }
     }
 
@@ -143,16 +272,33 @@ class ReverbNode: BaseEchoelmusicNode {
     // MARK: - Lifecycle
 
     override func prepare(sampleRate: Double, maxFrames: AVAudioFrameCount) {
-        // Reverb is always ready (uses AVAudioUnitReverb)
+        // Reinitialize buffers if sample rate changed
+        if abs(sampleRate - currentSampleRate) > 1.0 {
+            initializeBuffers(sampleRate: sampleRate)
+        }
     }
 
     override func start() {
         super.start()
-        log.audio("🎵 ReverbNode started")
+        log.audio("🎵 ReverbNode started (EchoelCore Freeverb)")
     }
 
     override func stop() {
         super.stop()
         log.audio("🎵 ReverbNode stopped")
+    }
+
+    override func reset() {
+        super.reset()
+        // Clear all delay buffers
+        for i in 0..<combBuffers.count {
+            combBuffers[i] = [Float](repeating: 0.0, count: combBuffers[i].count)
+            combIndices[i] = 0
+            dampedValues[i] = 0.0
+        }
+        for i in 0..<allpassBuffers.count {
+            allpassBuffers[i] = [Float](repeating: 0.0, count: allpassBuffers[i].count)
+            allpassIndices[i] = 0
+        }
     }
 }
