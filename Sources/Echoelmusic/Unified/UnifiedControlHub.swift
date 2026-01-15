@@ -715,7 +715,7 @@ public class UnifiedControlHub: ObservableObject {
         updateLightSystems()
     }
 
-    // MARK: - Input Updates (Placeholder implementations)
+    // MARK: - Input Updates
 
     private func updateFromBioSignals() {
         guard let healthKit = healthKitManager,

@@ -126,7 +126,9 @@ struct MLModelConfiguration {
     let outputDimensions: [String: [Int]]
 
     static func defaultConfiguration(for model: EchoelmusicMLModels) -> MLModelConfiguration {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            fatalError("Unable to access documents directory - critical system failure")
+        }
         let modelsPath = documentsPath.appendingPathComponent("MLModels", isDirectory: true)
 
         switch model {

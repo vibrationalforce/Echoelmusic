@@ -708,14 +708,5 @@ public struct AbletonLinkView: View {
 
 import SwiftUI
 
-/// Placeholder for EchoelBrand (defined elsewhere in codebase)
-private enum EchoelBrandPlaceholder {
-    static let primary = Color.blue
-    static let accent = Color.purple
-    static let success = Color.green
-    static let warning = Color.orange
-    static let textPrimary = Color.primary
-    static let textSecondary = Color.secondary
-    static let textTertiary = Color.gray
-    static let bgSurface = Color.gray.opacity(0.2)
-}
+// Use actual EchoelBrand from Theme/EchoelmusicBrand.swift
+// No placeholder needed - import the real brand colors

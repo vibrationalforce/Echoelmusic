@@ -496,9 +496,35 @@ class PrivacyManager: ObservableObject {
     }
 
     private func calculateLocalStorageSize() async -> Int64 {
-        // Calculate size of local database + user files
-        // Simplified - in production walk file system
-        return 10_000_000  // 10 MB placeholder
+        // Calculate size of app documents + caches + support files
+        let fileManager = FileManager.default
+        var totalSize: Int64 = 0
+
+        let directories: [FileManager.SearchPathDirectory] = [
+            .documentDirectory,
+            .cachesDirectory,
+            .applicationSupportDirectory
+        ]
+
+        for directory in directories {
+            guard let url = fileManager.urls(for: directory, in: .userDomainMask).first else {
+                continue
+            }
+
+            if let enumerator = fileManager.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey], options: [.skipsHiddenFiles]) {
+                for case let fileURL as URL in enumerator {
+                    do {
+                        let resourceValues = try fileURL.resourceValues(forKeys: [.fileSizeKey])
+                        totalSize += Int64(resourceValues.fileSize ?? 0)
+                    } catch {
+                        // Skip files we can't access
+                        continue
+                    }
+                }
+            }
+        }
+
+        return totalSize
     }
 
     private func calculateCloudStorageSize() async -> Int64 {
