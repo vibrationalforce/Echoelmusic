@@ -94,6 +94,8 @@ public struct BiophysicalWellnessView: View {
                     .font(.title3)
                     .foregroundColor(.white)
             }
+            .accessibilityLabel("Settings")
+            .accessibilityHint("Opens biophysical wellness settings")
         }
         .padding()
     }
@@ -116,15 +118,19 @@ public struct BiophysicalWellnessView: View {
             HStack {
                 Label("\(engine.currentFrequency, specifier: "%.1f") Hz", systemImage: "waveform")
                     .foregroundColor(presetColor)
+                    .accessibilityLabel("Frequency: \(engine.currentFrequency, specifier: "%.1f") Hertz")
 
                 Spacer()
 
                 Label("\(Int(engine.currentCoherence * 100))% Coherence", systemImage: "heart.fill")
                     .foregroundColor(coherenceColor)
+                    .accessibilityLabel("Coherence level: \(Int(engine.currentCoherence * 100)) percent")
             }
             .font(.subheadline)
             .padding(.horizontal)
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Cymatics visualization")
         .padding(.horizontal)
         .onChange(of: engine.currentFrequency) { _, newFreq in
             cymaticsVisualizer.update(
@@ -446,6 +452,9 @@ struct PresetButton: View {
                     .stroke(isSelected ? colorForPreset : Color.clear, lineWidth: 2)
             )
         }
+        .accessibilityLabel("\(preset.rawValue) preset, \(Int(preset.primaryFrequency)) Hertz")
+        .accessibilityHint("Double tap to select this wellness preset")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private var iconForPreset: String {

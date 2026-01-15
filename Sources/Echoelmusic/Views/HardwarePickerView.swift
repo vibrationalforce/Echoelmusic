@@ -45,6 +45,8 @@ struct HardwarePickerView: View {
                     } label: {
                         Label("New Session", systemImage: "plus.circle.fill")
                     }
+                    .accessibilityLabel("Create new hardware session")
+                    .accessibilityHint("Opens session setup wizard")
                 }
             }
             .sheet(isPresented: $showingSessionSetup) {
@@ -279,6 +281,9 @@ struct CategoryButton: View {
             .background(isSelected ? Color.accentColor : Color(.systemGray6))
             .cornerRadius(12)
         }
+        .accessibilityLabel("\(category.rawValue) category")
+        .accessibilityHint("Double tap to view \(category.rawValue.lowercased())")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -300,6 +305,8 @@ struct SectionHeader: View {
                 .background(Color(.systemGray5))
                 .cornerRadius(8)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title), \(count) items")
         .padding(.top, 8)
     }
 }
