@@ -1430,7 +1430,11 @@ public class ServerHealthMonitor: ObservableObject {
     /// Perform health check
     public func checkHealth() async -> Bool {
         let config = ServerConfiguration.shared
-        let url = URL(string: config.healthCheckURL)!
+        guard let url = URL(string: config.healthCheckURL) else {
+            logger.error("Invalid health check URL: \(config.healthCheckURL)", category: .network)
+            isHealthy = false
+            return false
+        }
 
         let start = Date()
 

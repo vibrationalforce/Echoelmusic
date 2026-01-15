@@ -798,6 +798,16 @@ public final class LongevityNutritionEngine: ObservableObject {
 
     // MARK: - Chronotype Plans
 
+    /// Safe helper to find compounds by name substring
+    private static func findCompound(containing name: String) -> LongevityCompound? {
+        longevityCompounds.first { $0.name.contains(name) }
+    }
+
+    /// Safe helper to get multiple compounds
+    private static func findCompounds(_ names: [String]) -> [LongevityCompound] {
+        names.compactMap { findCompound(containing: $0) }
+    }
+
     public static func createLionPlan() -> ChronotypeLongevityPlan {
         ChronotypeLongevityPlan(
             chronotype: .lion,
@@ -808,11 +818,7 @@ public final class LongevityNutritionEngine: ObservableObject {
             keyFoods: longevityFoods.filter { food in
                 food.hrvBenefit >= 0.5
             },
-            supplements: [
-                longevityCompounds.first { $0.name.contains("Omega-3") }!,
-                longevityCompounds.first { $0.name.contains("NMN") }!,
-                longevityCompounds.first { $0.name.contains("Ashwagandha") }!
-            ],
+            supplements: findCompounds(["Omega-3", "NMN", "Ashwagandha"]),
             exerciseProtocol: "06:00 Cardio/Yoga, 17:00 Kraft",
             sleepProtocol: "21:00 Schlaf, 05:00-05:30 Aufwachen",
             stressProtocol: "Morgenmeditation 06:00, Nachmittags-NSDR 14:00",
@@ -830,11 +836,7 @@ public final class LongevityNutritionEngine: ObservableObject {
             keyFoods: longevityFoods.filter { food in
                 food.hrvBenefit >= 0.45
             },
-            supplements: [
-                longevityCompounds.first { $0.name.contains("Omega-3") }!,
-                longevityCompounds.first { $0.name.contains("CoQ10") }!,
-                longevityCompounds.first { $0.name.contains("Curcumin") }!
-            ],
+            supplements: findCompounds(["Omega-3", "CoQ10", "Curcumin"]),
             exerciseProtocol: "07:30 Bewegung, 17:00-19:00 Haupttraining",
             sleepProtocol: "23:00 Schlaf, 07:00 Aufwachen",
             stressProtocol: "Morgenlicht 30min, Abendmeditation 21:00",
@@ -852,11 +854,7 @@ public final class LongevityNutritionEngine: ObservableObject {
             keyFoods: longevityFoods.filter { food in
                 food.hrvBenefit >= 0.45
             },
-            supplements: [
-                longevityCompounds.first { $0.name.contains("Omega-3") }!,
-                longevityCompounds.first { $0.name.contains("Ashwagandha") }!,
-                longevityCompounds.first { $0.name.contains("Rhodiola") }!
-            ],
+            supplements: findCompounds(["Omega-3", "Ashwagandha", "Rhodiola"]),
             exerciseProtocol: "18:00-20:00 Haupttraining",
             sleepProtocol: "00:00-01:00 Schlaf, 07:30-08:00 Aufwachen",
             stressProtocol: "Intensive Morgenlicht-Therapie, späte Meditation 23:00",
@@ -874,11 +872,7 @@ public final class LongevityNutritionEngine: ObservableObject {
             keyFoods: longevityFoods.filter { food in
                 food.hrvBenefit >= 0.5  // Höhere HRV Anforderung für Dolphins
             },
-            supplements: [
-                longevityCompounds.first { $0.name.contains("Omega-3") }!,
-                longevityCompounds.first { $0.name.contains("Ashwagandha") }!,
-                longevityCompounds.first { $0.name.contains("Spermidine") }!
-            ],
+            supplements: findCompounds(["Omega-3", "Ashwagandha", "Spermidine"]),
             exerciseProtocol: "16:00-18:00 moderates Training, Yoga bevorzugt",
             sleepProtocol: "23:30 Schlaf (strikt), 06:30 Aufwachen, NSDR Naps",
             stressProtocol: "Kohärenz-Atmung 4x/Tag, Abend-Routine kritisch",

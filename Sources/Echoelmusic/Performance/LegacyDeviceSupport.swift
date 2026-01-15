@@ -496,16 +496,33 @@ class LegacyDeviceSupport: ObservableObject {
     private func detectByCapabilities() -> DeviceProfile {
         // Detect by RAM and processor count
         let ram = Float(ProcessInfo.processInfo.physicalMemory) / 1_073_741_824.0
-        let cpuCount = ProcessInfo.processInfo.processorCount
+
+        // Safe lookup with fallback to first available device
+        let fallback = deviceDatabase.first ?? DeviceProfile(
+            deviceName: "Unknown Device",
+            deviceGeneration: .legacy,
+            chip: .a10,
+            ramGB: ram,
+            gpuGeneration: .a10,
+            supportedFeatures: [.basicAudio, .simpleVisuals],
+            recommendedSettings: RecommendedSettings(
+                targetFPS: 30,
+                maxParticles: 512,
+                textureQuality: .low,
+                audioSampleRate: 22050,
+                enableMetalEffects: false,
+                maxConcurrentEffects: 2
+            )
+        )
 
         if ram < 3.0 {
-            return deviceDatabase.first { $0.deviceName.contains("iPhone 7") }!
+            return deviceDatabase.first { $0.deviceName.contains("iPhone 7") } ?? fallback
         } else if ram < 4.0 {
-            return deviceDatabase.first { $0.deviceName.contains("iPhone XR") }!
+            return deviceDatabase.first { $0.deviceName.contains("iPhone XR") } ?? fallback
         } else if ram < 6.0 {
-            return deviceDatabase.first { $0.deviceName.contains("iPhone 12") }!
+            return deviceDatabase.first { $0.deviceName.contains("iPhone 12") } ?? fallback
         } else {
-            return deviceDatabase.first { $0.deviceName.contains("iPhone 13 Pro") }!
+            return deviceDatabase.first { $0.deviceName.contains("iPhone 13 Pro") } ?? fallback
         }
     }
 

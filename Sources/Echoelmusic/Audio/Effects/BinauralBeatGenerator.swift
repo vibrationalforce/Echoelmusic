@@ -299,8 +299,12 @@ class BinauralBeatGenerator: ObservableObject {
         guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
               let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: bufferSize) else {
             // Return a minimal valid buffer on failure
-            let fallbackFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 1, interleaved: false)!
-            return AVAudioPCMBuffer(pcmFormat: fallbackFormat, frameCapacity: 1) ?? AVAudioPCMBuffer()
+            guard let fallbackFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 1, interleaved: false),
+                  let fallbackBuffer = AVAudioPCMBuffer(pcmFormat: fallbackFormat, frameCapacity: 1) else {
+                log.error("Failed to create fallback audio buffer for tone generation")
+                return AVAudioPCMBuffer()
+            }
+            return fallbackBuffer
         }
         buffer.frameLength = bufferSize
 
@@ -355,8 +359,12 @@ class BinauralBeatGenerator: ObservableObject {
         guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
               let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: bufferSize) else {
             // Return a minimal valid buffer on failure
-            let fallbackFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 1, interleaved: false)!
-            return AVAudioPCMBuffer(pcmFormat: fallbackFormat, frameCapacity: 1) ?? AVAudioPCMBuffer()
+            guard let fallbackFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 1, interleaved: false),
+                  let fallbackBuffer = AVAudioPCMBuffer(pcmFormat: fallbackFormat, frameCapacity: 1) else {
+                log.error("Failed to create fallback audio buffer for isochronic generation")
+                return AVAudioPCMBuffer()
+            }
+            return fallbackBuffer
         }
         buffer.frameLength = bufferSize
 

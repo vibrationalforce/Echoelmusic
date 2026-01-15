@@ -140,10 +140,20 @@ class PerformanceOptimizer: ObservableObject {
         }
 
         // Detect Metal GPU family
-        let metalDevice = MTLCreateSystemDefaultDevice()!
+        guard let metalDevice = MTLCreateSystemDefaultDevice() else {
+            // Metal not available - return conservative defaults
+            return DeviceCapabilities(
+                supportsProMotion: supportsProMotion,
+                supportsMetalFX: false,
+                gpuFamily: 1,
+                memoryGB: Double(ProcessInfo.processInfo.physicalMemory) / 1_000_000_000.0,
+                chipGeneration: chipGeneration
+            )
+        }
         var gpuFamily = 1
         for family in (1...9).reversed() {
-            if metalDevice.supportsFamily(MTLGPUFamily(rawValue: family)!) {
+            if let gpuFamilyEnum = MTLGPUFamily(rawValue: family),
+               metalDevice.supportsFamily(gpuFamilyEnum) {
                 gpuFamily = family
                 break
             }

@@ -262,7 +262,10 @@ public final class ImmersiveIsochronicSession: ObservableObject {
 
         guard let audioEngine = audioEngine else { return }
 
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2) else {
+            log.error("Failed to create AVAudioFormat for immersive session")
+            return
+        }
 
         // Create tone generator node
         toneGenerator = AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList -> OSStatus in

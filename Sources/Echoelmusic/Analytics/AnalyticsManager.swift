@@ -583,7 +583,11 @@ actor AnalyticsNetworkSync {
 
         for batch in batches {
             do {
-                var request = URLRequest(url: URL(string: analyticsEndpoint)!)
+                guard let url = URL(string: analyticsEndpoint) else {
+                    log.error("Invalid analytics endpoint URL: \(analyticsEndpoint)")
+                    continue
+                }
+                var request = URLRequest(url: url)
                 request.httpMethod = "POST"
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
@@ -807,8 +811,13 @@ public class CrashReporter {
     private func uploadCrashReport(_ report: CrashReport) async {
         let endpoint = "https://api.echoelmusic.com/v1/crash-reports"
 
+        guard let url = URL(string: endpoint) else {
+            log.error("Invalid crash report endpoint URL")
+            return
+        }
+
         do {
-            var request = URLRequest(url: URL(string: endpoint)!)
+            var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONEncoder().encode(report)
