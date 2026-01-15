@@ -250,6 +250,8 @@ struct OnboardingView: View {
                             experience.skip()
                         }
                         .foregroundColor(.white.opacity(0.7))
+                        .accessibilityLabel("Skip this step")
+                        .accessibilityHint("Continues without enabling optional permissions")
                     }
 
                     Spacer()
@@ -270,6 +272,8 @@ struct OnboardingView: View {
                             .background(Color.white.opacity(0.2))
                             .cornerRadius(25)
                     }
+                    .accessibilityLabel(experience.currentStep == .quickStart ? "Get started with Echoelmusic" : "Continue to next step")
+                    .accessibilityHint(experience.currentStep == .quickStart ? "Completes onboarding and opens the app" : "Moves to the next onboarding screen")
                 }
                 .padding(.horizontal, 30)
             }
@@ -573,6 +577,8 @@ struct PrivacyToggleRow: View {
             Toggle("", isOn: $isOn)
                 .labelsHidden()
                 .tint(.green)
+                .accessibilityLabel(title)
+                .accessibilityHint(description)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -672,6 +678,8 @@ struct PermissionRow: View {
         .padding()
         .background(Color.white.opacity(0.1))
         .cornerRadius(12)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title), \(description)\(isOptional ? ", optional" : "")")
     }
 }
 
@@ -727,5 +735,8 @@ struct PresetCard: View {
             .background(Color.white.opacity(0.15))
             .cornerRadius(15)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(preset.name), \(preset.description)")
+        .accessibilityHint("Double tap to start this experience")
     }
 }
