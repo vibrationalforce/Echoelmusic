@@ -244,40 +244,43 @@ public class OctaveCreativeStudio: ObservableObject {
     }
 
     // MARK: - Core Calculations
+    // Verwendet UnifiedVisualSoundEngine.OctaveTransposition für Basis-Physik
+    // Erweitert um: konfigurierbare Oktaven, Mapping-Kurven, Temperatur-Offset
 
-    /// Bio-Frequenz → Audio-Frequenz (f × 2^n)
+    /// Bio-Frequenz → Audio-Frequenz (f × 2^n) mit konfigurierbaren Oktaven
     public func bioToAudio(bioFrequency: Float, octaves: Int) -> Float {
+        // Basis-Formel identisch zu OctaveTransposition, aber mit variablen Oktaven
         return bioFrequency * pow(2.0, Float(octaves))
     }
 
-    /// Heart Rate (BPM) → Audio-Frequenz
+    /// Heart Rate (BPM) → Audio-Frequenz mit konfigurierbarem Oktav-Shift
     public func heartRateToAudio() -> Float {
         let heartFrequency = liveBioData.heartRate / 60.0  // BPM → Hz
         return bioToAudio(bioFrequency: heartFrequency, octaves: heartRateOctaves)
     }
 
-    /// Breathing Rate → Audio-Frequenz
+    /// Breathing Rate → Audio-Frequenz mit konfigurierbarem Oktav-Shift
     public func breathingToAudio() -> Float {
         let breathFrequency = liveBioData.breathingRate / 60.0  // Atemzüge/min → Hz
         return bioToAudio(bioFrequency: breathFrequency, octaves: breathingOctaves)
     }
 
-    /// HRV → Audio-Frequenz
+    /// HRV → Audio-Frequenz mit konfigurierbarem Oktav-Shift
     public func hrvToAudio() -> Float {
         return bioToAudio(bioFrequency: liveBioData.hrvFrequency, octaves: hrvOctaves)
     }
 
-    /// Audio-Frequenz → Licht-Frequenz (THz)
+    /// Audio-Frequenz → Licht-Frequenz (THz) mit Kurve + Temperatur
     public func audioToLight(audioFrequency: Float) -> Float {
         // Position im Audio-Spektrum (0-1)
         let audioOctaves = log2(Constants.audioMax / Constants.audioMin)
-        let position = log2(audioFrequency / Constants.audioMin) / audioOctaves
+        let position = log2(max(audioFrequency, Constants.audioMin) / Constants.audioMin) / audioOctaves
         let clampedPosition = max(0, min(1, position))
 
-        // Mapping-Kurve anwenden
+        // Mapping-Kurve anwenden (OctaveCreativeStudio-spezifisch)
         let curvedPosition = mappingCurve.apply(clampedPosition)
 
-        // Farbtemperatur-Offset anwenden
+        // Farbtemperatur-Offset anwenden (OctaveCreativeStudio-spezifisch)
         let temperatureOffset = colorTemperature * 0.2
         let adjustedPosition = max(0, min(1, curvedPosition + temperatureOffset))
 
@@ -286,50 +289,15 @@ public class OctaveCreativeStudio: ObservableObject {
     }
 
     /// Licht-Frequenz (THz) → Wellenlänge (nm)
+    /// Delegiert an UnifiedVisualSoundEngine für konsistente Physik
     public func frequencyToWavelength(thz: Float) -> Float {
-        return 299792.458 / thz  // c = λ × f → λ = c / f
+        return UnifiedVisualSoundEngine.OctaveTransposition.frequencyToWavelength(thz: thz)
     }
 
     /// Wellenlänge (nm) → RGB
+    /// Delegiert an UnifiedVisualSoundEngine für konsistentes CIE 1931 Mapping
     public func wavelengthToRGB(wavelength: Float) -> (r: Float, g: Float, b: Float) {
-        var r: Float = 0, g: Float = 0, b: Float = 0
-        let wl = wavelength
-
-        if wl >= 380 && wl < 440 {
-            r = -(wl - 440) / (440 - 380)
-            g = 0
-            b = 1
-        } else if wl >= 440 && wl < 490 {
-            r = 0
-            g = (wl - 440) / (490 - 440)
-            b = 1
-        } else if wl >= 490 && wl < 510 {
-            r = 0
-            g = 1
-            b = -(wl - 510) / (510 - 490)
-        } else if wl >= 510 && wl < 580 {
-            r = (wl - 510) / (580 - 510)
-            g = 1
-            b = 0
-        } else if wl >= 580 && wl < 645 {
-            r = 1
-            g = -(wl - 645) / (645 - 580)
-            b = 0
-        } else if wl >= 645 && wl <= 780 {
-            r = 1
-            g = 0
-            b = 0
-        }
-
-        // Intensitätsanpassung an den Rändern
-        var intensity: Float = 1.0
-        if wl >= 380 && wl < 420 {
-            intensity = 0.3 + 0.7 * (wl - 380) / (420 - 380)
-        } else if wl >= 700 && wl <= 780 {
-            intensity = 0.3 + 0.7 * (780 - wl) / (780 - 700)
-        }
-
-        return (r * intensity, g * intensity, b * intensity)
+        return UnifiedVisualSoundEngine.OctaveTransposition.wavelengthToRGB(wavelength: wavelength)
     }
 
     /// Vollständige Kette: Bio → Audio → Licht → Farbe

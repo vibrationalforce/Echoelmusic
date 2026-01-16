@@ -20,6 +20,12 @@ import simd
 import HealthKit
 #endif
 
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
+
 //==============================================================================
 // MARK: - λ Lambda Constants
 //==============================================================================
@@ -611,8 +617,22 @@ public final class LambdaModeEngine: ObservableObject {
         // Map heart rate to motion speed
         visualState.motionSpeed = bioData.heartRate / 60.0
 
-        // Map breath to color cycling
-        visualState.colorHue = state.colorHue + bioData.breathPhase * 0.1
+        // === Oktav-basiertes Farb-Mapping (Excess of Reduction) ===
+        // Heart Rate → Audio → Licht → Farbe
+        let heartAudioFreq = UnifiedVisualSoundEngine.OctaveTransposition.heartRateToAudio(
+            bpm: Float(bioData.heartRate)
+        )
+        let baseColor = UnifiedVisualSoundEngine.OctaveTransposition.audioToColor(
+            audioFrequency: heartAudioFreq
+        )
+        // Extrahiere Hue aus der berechneten Farbe
+        let octaveHue = hueFromColor(baseColor)
+
+        // Kombiniere Oktav-Hue mit Atem-Phase für sanfte Modulation
+        visualState.colorHue = octaveHue + bioData.breathPhase * 0.05
+
+        // Coherence beeinflusst Sättigung (hohe Coherence = satte Farben)
+        visualState.colorSaturation = 0.5 + bioData.overallCoherence * 0.4
 
         // Map flow state to particle count
         if bioData.isInFlowState {
@@ -629,6 +649,45 @@ public final class LambdaModeEngine: ObservableObject {
         case .unified: visualState.dimension = 5
         case .lambda: visualState.dimension = 6
         }
+    }
+
+    /// Extrahiert den Hue-Wert (0-1) aus einer SwiftUI Color
+    private func hueFromColor(_ color: Color) -> Double {
+        // Konvertiere Color zu RGB-Komponenten
+        #if canImport(UIKit)
+        guard let cgColor = UIColor(color).cgColor,
+              let components = cgColor.components,
+              components.count >= 3 else {
+            return 0.5
+        }
+        let r = components[0], g = components[1], b = components[2]
+        #elseif canImport(AppKit)
+        guard let nsColor = NSColor(color).usingColorSpace(.sRGB) else {
+            return 0.5
+        }
+        let r = nsColor.redComponent, g = nsColor.greenComponent, b = nsColor.blueComponent
+        #else
+        return 0.5
+        #endif
+
+        let maxC = max(r, g, b)
+        let minC = min(r, g, b)
+        let delta = maxC - minC
+
+        guard delta > 0.0001 else { return 0.0 }
+
+        var hue: CGFloat = 0
+        if maxC == r {
+            hue = ((g - b) / delta).truncatingRemainder(dividingBy: 6)
+        } else if maxC == g {
+            hue = (b - r) / delta + 2
+        } else {
+            hue = (r - g) / delta + 4
+        }
+
+        hue /= 6
+        if hue < 0 { hue += 1 }
+        return Double(hue)
     }
 
     private func syncVisualsWithAudio() {
