@@ -1,6 +1,4 @@
 import Foundation
-import Accelerate
-import AVFoundation
 
 // MARK: - Neve-Inspired DSP Processors
 // Inspired by Rupert Neve Designs mastering hardware

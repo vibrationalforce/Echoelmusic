@@ -1,6 +1,5 @@
 import Foundation
 import Accelerate
-import AVFoundation
 
 /// Advanced DSP Effects Library
 /// Professional-grade audio effects for studio/broadcast/film

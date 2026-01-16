@@ -1,6 +1,4 @@
 import Foundation
-import Accelerate
-import AVFoundation
 
 // MARK: - Classic Analog Hardware Emulations
 // Cross-Platform Support: iOS 15+, macOS 12+, watchOS 8+, tvOS 15+, visionOS 1+
