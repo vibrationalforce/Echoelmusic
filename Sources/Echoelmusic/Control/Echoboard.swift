@@ -356,7 +356,6 @@ public enum WidgetType: String, CaseIterable, Codable {
     case sessionTimer = "Session Timer"
     case streamStatus = "Stream Status"
     case wellnessScore = "Wellness Score"
-    case mealPlan = "Meal Plan"
     case calendar = "Calendar"
 
     public var icon: String {
@@ -377,7 +376,6 @@ public enum WidgetType: String, CaseIterable, Codable {
         case .sessionTimer: return "⏱️"
         case .streamStatus: return "📺"
         case .wellnessScore: return "🧘"
-        case .mealPlan: return "🍽️"
         case .calendar: return "📅"
         }
     }
