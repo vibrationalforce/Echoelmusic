@@ -331,39 +331,7 @@ final class Comprehensive8000Tests: XCTestCase {
         XCTAssertEqual(pattern.holdExhaleSeconds, 0)
     }
 
-    // MARK: - Wellness Tracking Engine Tests
-
-    @MainActor
-    func testWellnessTrackingEngine_Initialization() async {
-        let engine = WellnessTrackingEngine()
-        XCTAssertFalse(engine.isSessionActive)
-        XCTAssertNil(engine.currentSession)
-    }
-
-    @MainActor
-    func testWellnessTrackingEngine_StartSession() async {
-        let engine = WellnessTrackingEngine()
-        engine.startSession(category: .meditation, duration: 600)
-        XCTAssertTrue(engine.isSessionActive)
-        XCTAssertNotNil(engine.currentSession)
-    }
-
-    @MainActor
-    func testWellnessTrackingEngine_EndSession() async {
-        let engine = WellnessTrackingEngine()
-        engine.startSession(category: .meditation, duration: 600)
-        engine.endSession()
-        XCTAssertFalse(engine.isSessionActive)
-    }
-
-    @MainActor
-    func testWellnessTrackingEngine_Disclaimer() async {
-        let engine = WellnessTrackingEngine()
-        XCTAssertFalse(engine.disclaimer.isEmpty)
-        XCTAssertTrue(engine.disclaimer.contains("not medical"))
-    }
-
-    // MARK: - Wellness Goal Tests
+    // MARK: - Wellness Goal Tests (Static types only - engine removed)
 
     func testWellnessGoal_Creation() {
         let goal = WellnessGoal(
@@ -693,18 +661,13 @@ final class Comprehensive8000Tests: XCTestCase {
         XCTAssertEqual(creative.currentMode, .fractals)
     }
 
-    // MARK: - Science + Wellness Integration
+    // MARK: - Science Integration
 
     @MainActor
-    func testScienceWellnessIntegration() async {
+    func testScienceIntegration() async {
         let science = ScientificVisualizationEngine()
-        let wellness = WellnessTrackingEngine()
-
         science.setVisualization(.heartRatePlot)
-        wellness.startSession(category: .meditation, duration: 300)
-
         XCTAssertEqual(science.currentVisualization, .heartRatePlot)
-        XCTAssertTrue(wellness.isSessionActive)
     }
 
     // MARK: - Collaboration + Presets Integration
@@ -726,7 +689,6 @@ final class Comprehensive8000Tests: XCTestCase {
         let video = VideoProcessingEngine()
         let creative = CreativeStudioEngine()
         let science = ScientificVisualizationEngine()
-        let wellness = WellnessTrackingEngine()
         let collab = WorldwideCollaborationHub()
         let presets = PresetManager.shared
         let localization = LocalizationManager.shared
@@ -740,8 +702,6 @@ final class Comprehensive8000Tests: XCTestCase {
         creative.setStyle(.sacredGeometry)
 
         science.setVisualization(.quantumField)
-
-        wellness.startSession(category: .meditation, duration: 600)
 
         collab.createSession(mode: .coherenceSync, maxParticipants: 500)
         collab.setRegion(.quantumGlobal)
@@ -757,8 +717,6 @@ final class Comprehensive8000Tests: XCTestCase {
         XCTAssertEqual(creative.currentStyle, .sacredGeometry)
 
         XCTAssertEqual(science.currentVisualization, .quantumField)
-
-        XCTAssertTrue(wellness.isSessionActive)
 
         XCTAssertNotNil(collab.currentSession)
         XCTAssertEqual(collab.currentRegion, .quantumGlobal)
@@ -835,23 +793,6 @@ final class Comprehensive8000Tests: XCTestCase {
         // Should handle gracefully
     }
 
-    // MARK: - Wellness Edge Cases
-
-    @MainActor
-    func testWellnessEngine_DoubleStartSession() async {
-        let engine = WellnessTrackingEngine()
-        engine.startSession(category: .meditation, duration: 300)
-        engine.startSession(category: .breathing, duration: 600) // Second start
-        // Should handle gracefully
-    }
-
-    @MainActor
-    func testWellnessEngine_EndWithoutStart() async {
-        let engine = WellnessTrackingEngine()
-        engine.endSession() // No session started
-        XCTAssertFalse(engine.isSessionActive)
-    }
-
     // MARK: - Quantum State Edge Cases
 
     func testQuantumState_ZeroQubits() {
@@ -915,10 +856,10 @@ final class Comprehensive8000Tests: XCTestCase {
         }
     }
 
-    func testSecurity_WellnessDisclaimerPresent() {
+    func testSecurity_CircadianDisclaimerPresent() {
         // Medical disclaimer must be present
-        let engine = WellnessTrackingEngine()
-        XCTAssertTrue(engine.disclaimer.contains("not medical") || engine.disclaimer.contains("Not medical"))
+        XCTAssertFalse(CircadianHealthDisclaimer.fullDisclaimer.isEmpty)
+        XCTAssertTrue(CircadianHealthDisclaimer.fullDisclaimer.contains("KEIN medizinisches Gerät"))
     }
 
     // ============================================================================
@@ -931,13 +872,11 @@ final class Comprehensive8000Tests: XCTestCase {
         async let video = VideoProcessingEngine()
         async let creative = CreativeStudioEngine()
         async let science = ScientificVisualizationEngine()
-        async let wellness = WellnessTrackingEngine()
 
-        let engines = await (video, creative, science, wellness)
+        let engines = await (video, creative, science)
         XCTAssertNotNil(engines.0)
         XCTAssertNotNil(engines.1)
         XCTAssertNotNil(engines.2)
-        XCTAssertNotNil(engines.3)
     }
 
     func testConcurrency_QuantumStateOperations() async {

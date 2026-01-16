@@ -105,31 +105,18 @@ Echoelmusic maintains rigorous evidence-based practices for all biometric, welln
 
 ---
 
-### 4. Social Health Support
+### 4. Circadian Rhythm Engine (NASA-Validated)
 
-**File:** `Sources/Echoelmusic/Science/SocialHealthSupport.swift`
+**File:** `Sources/Echoelmusic/Circadian/CircadianRhythmEngine.swift`
 
-#### Evidence-Based Features
+#### NASA-Derived Light Protocols
 
-- Social connection tracking (observational research)
-- Community coherence metrics (HeartMath research)
-- Loneliness indicators (validated questionnaires)
+- ISS SSLA-based light temperatures (4500K, 2700K, 6500K)
+- Circadian phase detection (8 phases)
+- 460nm blue light awareness for melatonin
+- Chronotype support (Lion, Bear, Wolf, Dolphin)
 
-**Disclaimer:** For personalized support, consult healthcare or social work professionals.
-
----
-
-### 5. Astronaut Health Monitoring
-
-**File:** `Sources/Echoelmusic/Science/AstronautHealthMonitoring.swift`
-
-#### NASA-Derived Protocols
-
-- HRV analysis for stress detection
-- Circadian rhythm monitoring
-- Isolation stress indicators
-
-**Research Basis:** NASA Human Research Program publications
+**Research Basis:** NASA Human Research Program, Harvard Circadian Medicine
 
 ---
 
@@ -181,7 +168,7 @@ informational purposes only.
 | Breathing Exercises | `LambdaModeEngine.swift:294` | Stop if dizzy, not for respiratory conditions |
 | Meditation | `LambdaModeEngine.swift:299` | Consult mental health professional if concerns |
 | Biometrics | `RealTimeHealthKitEngine.swift:221` | Not for medical monitoring |
-| Wellness | `WellnessTrackingEngine.swift` | General wellness only |
+| Circadian | `CircadianRhythmEngine.swift` | Light/time-based, not medical |
 
 ---
 

@@ -442,184 +442,6 @@ final class ScientificVisualizationEngineTests: XCTestCase {
     }
 }
 
-// MARK: - Wellness Tracking Tests
-
-final class WellnessTrackingEngineTests: XCTestCase {
-
-    // MARK: - Disclaimer Tests
-
-    func testDisclaimerContent() {
-        XCTAssertFalse(WellnessDisclaimer.full.isEmpty)
-        XCTAssertFalse(WellnessDisclaimer.short.isEmpty)
-        XCTAssertTrue(WellnessDisclaimer.full.contains("NOT"))
-        XCTAssertTrue(WellnessDisclaimer.full.contains("medical"))
-    }
-
-    // MARK: - Category Tests
-
-    func testAllWellnessCategories() {
-        XCTAssertGreaterThan(WellnessCategory.allCases.count, 20)
-    }
-
-    func testCategoryDescriptions() {
-        for category in WellnessCategory.allCases {
-            XCTAssertFalse(category.description.isEmpty)
-        }
-    }
-
-    // MARK: - Session Tests
-
-    func testSessionCreation() {
-        let session = WellnessSession(name: "Morning Meditation", category: .meditation)
-        XCTAssertEqual(session.name, "Morning Meditation")
-        XCTAssertEqual(session.category, .meditation)
-        XCTAssertFalse(session.isComplete)
-    }
-
-    func testMoodLevels() {
-        XCTAssertEqual(WellnessSession.MoodLevel.allCases.count, 5)
-        XCTAssertFalse(WellnessSession.MoodLevel.great.emoji.isEmpty)
-    }
-
-    // MARK: - Breathing Pattern Tests
-
-    func testBoxBreathing() {
-        let pattern = BreathingPattern.boxBreathing
-        XCTAssertEqual(pattern.inhaleSeconds, 4)
-        XCTAssertEqual(pattern.holdInSeconds, 4)
-        XCTAssertEqual(pattern.exhaleSeconds, 4)
-        XCTAssertEqual(pattern.holdOutSeconds, 4)
-        XCTAssertEqual(pattern.cycleDuration, 16)
-    }
-
-    func testRelaxingBreath() {
-        let pattern = BreathingPattern.relaxingBreath
-        XCTAssertEqual(pattern.inhaleSeconds, 4)
-        XCTAssertEqual(pattern.holdInSeconds, 7)
-        XCTAssertEqual(pattern.exhaleSeconds, 8)
-    }
-
-    func testAllBreathingPatterns() {
-        let patterns = BreathingPattern.allPatterns
-        XCTAssertGreaterThan(patterns.count, 5)
-
-        for pattern in patterns {
-            XCTAssertGreaterThan(pattern.cycleDuration, 0)
-            XCTAssertGreaterThan(pattern.cycles, 0)
-        }
-    }
-
-    // MARK: - Meditation Guide Tests
-
-    func testMeditationGuideCreation() {
-        let guide = MeditationGuide(
-            title: "Test Meditation",
-            description: "A test",
-            duration: 600,
-            category: .meditation
-        )
-        XCTAssertEqual(guide.title, "Test Meditation")
-        XCTAssertEqual(guide.duration, 600)
-    }
-
-    func testMeditationDifficultyLevels() {
-        XCTAssertEqual(MeditationGuide.Difficulty.allCases.count, 3)
-    }
-
-    // MARK: - Goal Tests
-
-    func testWellnessGoalCreation() {
-        let goal = WellnessGoal(
-            title: "Daily Meditation",
-            category: .meditation,
-            targetMinutesPerDay: 10,
-            targetDaysPerWeek: 5
-        )
-        XCTAssertEqual(goal.title, "Daily Meditation")
-        XCTAssertEqual(goal.targetMinutesPerDay, 10)
-        XCTAssertTrue(goal.isActive)
-    }
-
-    // MARK: - Journal Tests
-
-    func testJournalEntryCreation() {
-        let entry = JournalEntry(
-            title: "Good Day",
-            content: "Today was great",
-            mood: .great
-        )
-        XCTAssertEqual(entry.title, "Good Day")
-        XCTAssertEqual(entry.mood, .great)
-        XCTAssertTrue(entry.isPrivate)
-    }
-
-    // MARK: - Statistics Tests
-
-    func testEmptyStatistics() {
-        let stats = WellnessStatistics.empty
-        XCTAssertEqual(stats.totalSessions, 0)
-        XCTAssertEqual(stats.totalMinutes, 0)
-        XCTAssertEqual(stats.currentStreak, 0)
-    }
-
-    // MARK: - Engine Tests
-
-    @MainActor
-    func testWellnessEngineInitialization() async {
-        let engine = WellnessTrackingEngine()
-        XCTAssertFalse(engine.isSessionActive)
-        XCTAssertNil(engine.currentSession)
-        XCTAssertTrue(engine.sessions.isEmpty)
-    }
-
-    @MainActor
-    func testWellnessSessionStartEnd() async {
-        let engine = WellnessTrackingEngine()
-
-        engine.startSession(name: "Test", category: .relaxation, moodBefore: .neutral)
-        XCTAssertTrue(engine.isSessionActive)
-        XCTAssertNotNil(engine.currentSession)
-
-        engine.endSession(moodAfter: .good, notes: "Felt good")
-        XCTAssertFalse(engine.isSessionActive)
-        XCTAssertEqual(engine.sessions.count, 1)
-    }
-
-    @MainActor
-    func testWellnessGoalCreationInEngine() async {
-        let engine = WellnessTrackingEngine()
-        let goal = engine.createGoal(
-            title: "Daily Practice",
-            category: .meditation,
-            targetMinutesPerDay: 15
-        )
-
-        XCTAssertEqual(goal.title, "Daily Practice")
-        XCTAssertEqual(engine.goals.count, 1)
-    }
-
-    @MainActor
-    func testJournalEntryInEngine() async {
-        let engine = WellnessTrackingEngine()
-
-        engine.addJournalEntry(title: "Test", content: "Content", mood: .good, tags: ["test"])
-        XCTAssertEqual(engine.journal.count, 1)
-
-        let entry = engine.journal.first!
-        engine.deleteJournalEntry(entry.id)
-        XCTAssertTrue(engine.journal.isEmpty)
-    }
-
-    @MainActor
-    func testWellnessRecommendations() async {
-        let engine = WellnessTrackingEngine()
-        let recommendations = engine.getRecommendations()
-
-        // Should always have some recommendations
-        XCTAssertGreaterThan(recommendations.count, 0)
-    }
-}
-
 // MARK: - Collaboration Hub Tests
 
 final class WorldwideCollaborationHubTests: XCTestCase {
@@ -981,7 +803,6 @@ final class Integration2000Tests: XCTestCase {
         let videoEngine = VideoProcessingEngine()
         let creativeEngine = CreativeStudioEngine()
         let scientificEngine = ScientificVisualizationEngine()
-        let wellnessEngine = WellnessTrackingEngine()
         let collaborationHub = WorldwideCollaborationHub()
         let pluginManager = PluginManager()
 
@@ -989,21 +810,16 @@ final class Integration2000Tests: XCTestCase {
         XCTAssertFalse(videoEngine.isRunning)
         XCTAssertFalse(creativeEngine.isProcessing)
         XCTAssertFalse(scientificEngine.isProcessing)
-        XCTAssertFalse(wellnessEngine.isSessionActive)
         XCTAssertFalse(collaborationHub.isConnected)
         XCTAssertTrue(pluginManager.loadedPlugins.isEmpty)
     }
 
     @MainActor
     func testCrossSystemBioDataFlow() async {
-        let wellnessEngine = WellnessTrackingEngine()
         let pluginManager = PluginManager()
         let plugin = SampleVisualizerPlugin()
 
         try? await pluginManager.loadPlugin(plugin)
-
-        // Start wellness session
-        wellnessEngine.startSession(name: "Test", category: .meditation)
 
         // Simulate bio data
         let bioData = BioData(
@@ -1020,8 +836,8 @@ final class Integration2000Tests: XCTestCase {
         // Broadcast to plugins
         pluginManager.broadcastBioData(bioData)
 
-        wellnessEngine.endSession()
-        XCTAssertEqual(wellnessEngine.sessions.count, 1)
+        // Verify plugin received data
+        XCTAssertTrue(plugin.receivedBioData)
     }
 
     @MainActor

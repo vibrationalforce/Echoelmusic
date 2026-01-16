@@ -538,7 +538,6 @@ Inspired by [nw_wrld](https://github.com/aagentah/nw_wrld) event-driven sequence
 - **VideoProcessingEngine** - 16K video, 1000fps on Android
 - **CreativeStudioEngine** - AI generation with Kotlin coroutines
 - **ScientificVisualizationEngine** - Quantum simulation on Android
-- **WellnessTrackingEngine** - Breathing patterns & goals
 - **WorldwideCollaborationHub** - Global sync on Android
 
 #### Engine Presets System (NEW)
@@ -880,7 +879,7 @@ cmake .. -DUSE_JUCE=OFF
 | `VideoProcessingEngine` | `Sources/Echoelmusic/Video/` | 16K video, 1000fps, quantum effects |
 | `CreativeStudioEngine` | `Sources/Echoelmusic/Creative/` | AI art, music, fractals |
 | `ScientificVisualizationEngine` | `Sources/Echoelmusic/Science/` | Quantum physics, data viz |
-| `WellnessTrackingEngine` | `Sources/Echoelmusic/Wellness/` | Meditation, breathing (non-medical) |
+| `CircadianRhythmEngine` | `Sources/Echoelmusic/Circadian/` | NASA-validated light + HRV protocols |
 | `WorldwideCollaborationHub` | `Sources/Echoelmusic/Collaboration/` | Zero-latency global sync |
 | `PluginManager` | `Sources/Echoelmusic/Developer/` | Developer SDK & plugins |
 | `HardwareEcosystem` | `Sources/Echoelmusic/Hardware/` | Universal device registry (60+ audio, 40+ MIDI) |
