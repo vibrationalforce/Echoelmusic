@@ -358,6 +358,13 @@ public final class LambdaModeEngine: ObservableObject {
     @Published public var reducedMotion: Bool = false
     @Published public var hapticFeedback: Bool = true
 
+    // Physical light output (DMX/Art-Net via MIDIToLightMapper)
+    @Published public var physicalLightOutputEnabled: Bool = false
+
+    /// Callback for physical light output (DMX/Art-Net)
+    /// Parameters: (r: Float, g: Float, b: Float, intensity: Float)
+    public var onLightOutput: ((Float, Float, Float, Float) -> Void)?
+
     //==========================================================================
     // MARK: - Private Properties
     //==========================================================================
@@ -649,6 +656,49 @@ public final class LambdaModeEngine: ObservableObject {
         case .unified: visualState.dimension = 5
         case .lambda: visualState.dimension = 6
         }
+
+        // Output to physical lights (DMX/Art-Net)
+        if physicalLightOutputEnabled {
+            outputToPhysicalLights()
+        }
+    }
+
+    /// Output current visual state to physical lights (DMX/Art-Net)
+    private func outputToPhysicalLights() {
+        // Convert HSB to RGB
+        let rgb = hsbToRGB(
+            h: visualState.colorHue,
+            s: visualState.colorSaturation,
+            b: visualState.colorBrightness
+        )
+
+        // Intensity based on coherence and visual intensity
+        let intensity = Float(visualState.intensity * bioData.overallCoherence)
+
+        // Call the output callback
+        onLightOutput?(rgb.r, rgb.g, rgb.b, intensity)
+    }
+
+    /// Convert HSB to RGB (0-1 range)
+    private func hsbToRGB(h: Double, s: Double, b: Double) -> (r: Float, g: Float, b: Float) {
+        let c = b * s
+        let x = c * (1 - abs((h * 6).truncatingRemainder(dividingBy: 2) - 1))
+        let m = b - c
+
+        var r: Double = 0, g: Double = 0, bl: Double = 0
+        let sector = Int(h * 6) % 6
+
+        switch sector {
+        case 0: (r, g, bl) = (c, x, 0)
+        case 1: (r, g, bl) = (x, c, 0)
+        case 2: (r, g, bl) = (0, c, x)
+        case 3: (r, g, bl) = (0, x, c)
+        case 4: (r, g, bl) = (x, 0, c)
+        case 5: (r, g, bl) = (c, 0, x)
+        default: break
+        }
+
+        return (Float(r + m), Float(g + m), Float(bl + m))
     }
 
     /// Extrahiert den Hue-Wert (0-1) aus einer SwiftUI Color
@@ -769,6 +819,39 @@ public final class LambdaModeEngine: ObservableObject {
 
     public func enableCollaboration(_ enabled: Bool) {
         collaborationActive = enabled
+    }
+
+    //==========================================================================
+    // MARK: - Physical Light Output (DMX/Art-Net)
+    //==========================================================================
+
+    /// Connect Lambda Mode to MIDIToLightMapper for physical light output
+    /// - Parameter lightMapper: The MIDIToLightMapper instance to use
+    public func connectToLightMapper(_ lightMapper: MIDIToLightMapper) {
+        physicalLightOutputEnabled = true
+        onLightOutput = { [weak lightMapper] r, g, b, intensity in
+            Task { @MainActor in
+                lightMapper?.updateFromOctaveColor(r: r, g: g, b: b, coherence: intensity)
+            }
+        }
+        log.lambda("\(LambdaConstants.symbol) Connected to MIDIToLightMapper for DMX/Art-Net output")
+    }
+
+    /// Disconnect from physical light output
+    public func disconnectFromLightMapper() {
+        physicalLightOutputEnabled = false
+        onLightOutput = nil
+        log.lambda("\(LambdaConstants.symbol) Disconnected from MIDIToLightMapper")
+    }
+
+    /// Enable/disable physical light output
+    public func enablePhysicalLightOutput(_ enabled: Bool) {
+        physicalLightOutputEnabled = enabled
+        if enabled {
+            log.lambda("\(LambdaConstants.symbol) Physical light output ENABLED")
+        } else {
+            log.lambda("\(LambdaConstants.symbol) Physical light output DISABLED")
+        }
     }
 
     //==========================================================================

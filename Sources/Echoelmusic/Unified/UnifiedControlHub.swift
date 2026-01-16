@@ -65,6 +65,12 @@ public class UnifiedControlHub: ObservableObject {
     private var quantumLightEmulator: QuantumLightEmulator?
     private var photonicsVisualization: PhotonicsVisualizationEngine?
 
+    // Phase 10000: ILDA Laser Control (Ether Dream, LaserCube, Beyond)
+    private var iLDALaserController: ILDALaserController?
+
+    // Phase λ∞: Lambda Mode Engine
+    private var lambdaModeEngine: LambdaModeEngine?
+
     // Phase 10000+: Ultimate Hardware Ecosystem Integration
     private var hardwareEcosystem: HardwareEcosystem?
     private var crossPlatformSessionManager: CrossPlatformSessionManager?
@@ -323,6 +329,93 @@ public class UnifiedControlHub: ObservableObject {
         midiToLightMapper?.disconnect()
         midiToLightMapper = nil
         Log.info("💡 DMX lighting disabled", category: .system)
+    }
+
+    /// Enable ILDA laser control
+    /// Supports: Ether Dream, LaserCube, Pangolin Beyond, Generic ILDA DACs
+    /// - Parameters:
+    ///   - dacType: Type of DAC to connect to
+    ///   - address: DAC network address (default: 192.168.1.100)
+    ///   - port: DAC port (default: 7765 for Ether Dream)
+    public func enableLaserControl(
+        dacType: ILDALaserController.DACType = .etherDream,
+        address: String = "192.168.1.100",
+        port: UInt16 = ILDAConstants.etherDreamPort
+    ) async throws {
+        let laser = ILDALaserController()
+        try await laser.connect(type: dacType, address: address, port: port)
+        laser.startOutput(frameRate: 30)
+        self.iLDALaserController = laser
+        Log.led("🔦 ILDA Laser enabled: \(dacType.rawValue) @ \(address):\(port)")
+    }
+
+    /// Disable laser control
+    public func disableLaserControl() {
+        iLDALaserController?.stopOutput()
+        iLDALaserController?.disconnect()
+        iLDALaserController = nil
+        Log.led("🔦 ILDA Laser disabled")
+    }
+
+    /// Set laser pattern
+    public func setLaserPattern(_ pattern: LaserPattern) {
+        iLDALaserController?.currentPattern = pattern
+    }
+
+    /// Get available laser patterns
+    public var availableLaserPatterns: [LaserPattern] {
+        LaserPattern.allCases
+    }
+
+    // MARK: - Phase λ∞: Lambda Mode
+
+    /// Enable Lambda Mode with physical light output
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+    public func enableLambdaMode() {
+        let lambda = LambdaModeEngine()
+
+        // Connect Lambda Mode to physical lights if available
+        if let lighting = midiToLightMapper {
+            lambda.connectToLightMapper(lighting)
+        }
+
+        lambda.activate()
+        self.lambdaModeEngine = lambda
+        Log.lambda("λ∞ Lambda Mode enabled with physical light output")
+    }
+
+    /// Disable Lambda Mode
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+    public func disableLambdaMode() {
+        lambdaModeEngine?.deactivate()
+        lambdaModeEngine?.disconnectFromLightMapper()
+        lambdaModeEngine = nil
+        Log.lambda("λ∞ Lambda Mode disabled")
+    }
+
+    /// Get current Lambda Mode state
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+    public var lambdaState: LambdaState? {
+        lambdaModeEngine?.state
+    }
+
+    /// Get Lambda Mode score (0-1)
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+    public var lambdaScore: Double {
+        lambdaModeEngine?.lambdaScore ?? 0.0
+    }
+
+    /// Update Lambda Mode with bio data from HealthKit
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+    public func updateLambdaModeWithBioData() {
+        guard let lambda = lambdaModeEngine,
+              let healthKit = healthKitManager else { return }
+
+        var bioData = UnifiedBioData()
+        bioData.heartRate = healthKit.heartRate
+        bioData.hrvCoherence = healthKit.hrvCoherence / 100.0  // Normalize to 0-1
+        bioData.breathingRate = healthKit.breathingRate
+        lambda.updateBioData(bioData)
     }
 
     /// Enable Quantum Light Emulator (Future-Ready)
@@ -668,6 +761,9 @@ public class UnifiedControlHub: ObservableObject {
         // Stop quantum emulator if running
         quantumLightEmulator?.stop()
         photonicsVisualization?.stop()
+
+        // Stop ILDA laser
+        iLDALaserController?.stopOutput()
     }
 
     // MARK: - Control Loop (60 Hz)
@@ -1060,6 +1156,17 @@ public class UnifiedControlHub: ObservableObject {
                 breathingRate: Float(healthKit.breathingRate)
             )
         }
+
+        // Update Lambda Mode Engine with bio data
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+            if let lambda = lambdaModeEngine {
+                var bioData = UnifiedBioData()
+                bioData.heartRate = healthKit.heartRate
+                bioData.hrvCoherence = healthKit.hrvCoherence / 100.0  // Normalize to 0-1
+                bioData.breathingRate = healthKit.breathingRate
+                lambda.updateBioData(bioData)
+            }
+        }
     }
 
     private func updateLightSystems() {
@@ -1097,6 +1204,54 @@ public class UnifiedControlHub: ObservableObject {
                 lighting.updateBioReactive(bioData)
             }
         }
+
+        // Update ILDA Laser with octave-based hue
+        if let laser = iLDALaserController {
+            if useOctaveBasedLighting {
+                // Calculate octave-based hue from heart rate
+                // HR → Audio (f × 2^n) → Light wavelength → Hue (0-1)
+                let heartHz = Float(bioData.heartRate) / 60.0
+                let audioFreq = heartHz * pow(2.0, Float(lightingOctaveShift))
+                let hue = wavelengthToHue(audioFrequency: audioFreq)
+
+                laser.updateBioReactive(
+                    coherence: bioData.hrvCoherence / 100.0,  // Normalize to 0-1
+                    heartRate: bioData.heartRate,
+                    hue: hue
+                )
+            } else {
+                // Legacy: Simple coherence-based hue
+                let hue = Float(bioData.hrvCoherence) / 100.0 * 0.7  // 0-0.7 (red to violet)
+                laser.updateBioReactive(
+                    coherence: bioData.hrvCoherence / 100.0,
+                    heartRate: bioData.heartRate,
+                    hue: hue
+                )
+            }
+        }
+    }
+
+    // MARK: - Octave Color Helpers
+
+    /// Convert audio frequency to hue (0-1) via light wavelength
+    /// Uses the physics-based octave transposition: Audio → Light (f × 2^n)
+    private func wavelengthToHue(audioFrequency: Float) -> Float {
+        // Audio to light: ~40 octaves up (20Hz → 400THz)
+        // Visible light: 380-780nm (789-384 THz)
+        let lightTHz = audioFrequency * pow(2.0, 40) / 1e12  // Convert to THz
+
+        // Clamp to visible range
+        let clampedTHz = max(384, min(789, lightTHz))
+
+        // Convert frequency to wavelength: λ = c / f
+        let wavelengthNm = 299792458.0 / (Double(clampedTHz) * 1e12) * 1e9
+
+        // Map wavelength (380-780nm) to hue (0.0-0.83)
+        // 380nm (violet) → 0.83, 780nm (red) → 0.0
+        let normalizedWavelength = (wavelengthNm - 380) / 400  // 0-1
+        let hue = Float((1.0 - normalizedWavelength) * 0.83)
+
+        return max(0, min(1, hue))
     }
 
     // MARK: - Utilities

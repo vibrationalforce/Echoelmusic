@@ -372,4 +372,130 @@ final class ILDALaserTests: XCTestCase {
             _ = frame.encode()
         }
     }
+
+    // MARK: - UnifiedControlHub Laser Integration Tests
+
+    @MainActor
+    func testUnifiedControlHubLaserPatterns() {
+        let hub = UnifiedControlHub()
+
+        // Check all laser patterns are available
+        let patterns = hub.availableLaserPatterns
+        XCTAssertEqual(patterns.count, 10)
+        XCTAssertTrue(patterns.contains(.flowerOfLife))
+        XCTAssertTrue(patterns.contains(.coherenceRings))
+        XCTAssertTrue(patterns.contains(.heartbeat))
+    }
+
+    @MainActor
+    func testUnifiedControlHubOctaveBasedLighting() {
+        let hub = UnifiedControlHub()
+
+        // Default should be octave-based
+        XCTAssertTrue(hub.useOctaveBasedLighting)
+        XCTAssertEqual(hub.lightingOctaveShift, 6)
+
+        // Test changing settings
+        hub.useOctaveBasedLighting = false
+        XCTAssertFalse(hub.useOctaveBasedLighting)
+
+        hub.lightingOctaveShift = 8
+        XCTAssertEqual(hub.lightingOctaveShift, 8)
+    }
+
+    @MainActor
+    func testSetLaserPattern() {
+        let hub = UnifiedControlHub()
+
+        // Setting pattern should not crash even without connected laser
+        hub.setLaserPattern(.flowerOfLife)
+        hub.setLaserPattern(.coherenceRings)
+        hub.setLaserPattern(.heartbeat)
+    }
+
+    // MARK: - Wavelength to Hue Conversion Tests
+
+    func testWavelengthToHueConversion() {
+        // Test that the octave transposition produces valid hues
+        // These are internal calculations, but we can verify the math
+
+        // Heart rate 60 BPM = 1 Hz
+        // With 6 octaves: 1 * 2^6 = 64 Hz
+        // With 40 more octaves to light: 64 * 2^40 = ~70 THz (infrared, below visible)
+
+        // Heart rate 120 BPM = 2 Hz
+        // With 6 octaves: 2 * 2^6 = 128 Hz
+        // With 40 more octaves to light: 128 * 2^40 = ~140 THz (still infrared)
+
+        // The actual wavelengthToHue function clamps to visible range
+        // Let's verify the pattern generator uses valid hues
+        let generator = LaserPatternGenerator()
+        var params = LaserPatternGenerator.PatternParams()
+
+        // Test with different hue values
+        for hue: Float in stride(from: 0, to: 1.0, by: 0.1) {
+            params.hue = hue
+            let frame = generator.generateFrame(pattern: .circle, params: params)
+            XCTAssertFalse(frame.points.isEmpty)
+
+            // All points should have valid RGB values
+            for point in frame.points {
+                XCTAssertLessThanOrEqual(point.r, 255)
+                XCTAssertLessThanOrEqual(point.g, 255)
+                XCTAssertLessThanOrEqual(point.b, 255)
+            }
+        }
+    }
+
+    // MARK: - Bio-Reactive Laser Integration Tests
+
+    @MainActor
+    func testLaserBioReactiveUpdate() async {
+        // Create laser controller (won't connect to real DAC)
+        let laser = ILDALaserController()
+
+        // Test bio-reactive update (should not crash)
+        laser.updateBioReactive(coherence: 0.8, heartRate: 72.0, hue: 0.5)
+
+        // Verify pattern changes based on coherence
+        XCTAssertEqual(laser.currentPattern, .flowerOfLife) // High coherence
+
+        laser.updateBioReactive(coherence: 0.3, heartRate: 72.0, hue: 0.5)
+        XCTAssertEqual(laser.currentPattern, .spiral) // Low coherence
+    }
+
+    @MainActor
+    func testLaserCoherencePatternSelection() async {
+        let laser = ILDALaserController()
+
+        // High coherence (>0.8) → Flower of Life
+        laser.updateBioReactive(coherence: 0.9, heartRate: 72.0)
+        XCTAssertEqual(laser.currentPattern, .flowerOfLife)
+
+        // Medium-high coherence (0.6-0.8) → Coherence Rings
+        laser.updateBioReactive(coherence: 0.7, heartRate: 72.0)
+        XCTAssertEqual(laser.currentPattern, .coherenceRings)
+
+        // Medium coherence (0.4-0.6) → Lissajous
+        laser.updateBioReactive(coherence: 0.5, heartRate: 72.0)
+        XCTAssertEqual(laser.currentPattern, .lissajous)
+
+        // Low coherence (<0.4) → Spiral
+        laser.updateBioReactive(coherence: 0.2, heartRate: 72.0)
+        XCTAssertEqual(laser.currentPattern, .spiral)
+    }
+
+    @MainActor
+    func testLaserDebugInfo() async {
+        let laser = ILDALaserController()
+
+        let info = laser.debugInfo
+        XCTAssertTrue(info.contains("ILDA Laser Controller"))
+        XCTAssertTrue(info.contains("Connected:"))
+        XCTAssertTrue(info.contains("Output:"))
+        XCTAssertTrue(info.contains("DAC:"))
+        XCTAssertTrue(info.contains("Pattern:"))
+        XCTAssertTrue(info.contains("Sample Rate:"))
+        XCTAssertTrue(info.contains("Safety Blanking:"))
+    }
 }
