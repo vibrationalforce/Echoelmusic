@@ -38,7 +38,6 @@ Diese Features wurden aus der Haupt-App entfernt, um den Fokus auf **professione
 | Datei | Beschreibung | LOC | Potential |
 |-------|--------------|-----|-----------|
 | `AstronautHealthMonitoring.swift` | NASA/ESA Protokolle, Space Medicine | ~350 | 🚀 Spezial-Edition |
-| `AdeyWindowsBioelectromagneticEngine.swift` | Adey Research, Frequenz-Körper-Mapping | ~600 | 📡 Wissenschafts-Modus |
 | `SocialHealthSupport.swift` | Gruppen-Gesundheits-Support | ~300 | 🤝 Community Features |
 
 ### ⚛️ QuantumHealth (Research Edition geplant)

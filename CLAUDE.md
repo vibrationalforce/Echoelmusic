@@ -351,17 +351,6 @@ Inspired by [nw_wrld](https://github.com/aagentah/nw_wrld) event-driven sequence
 - **Peter Levine** - Somatic Experiencing integration
 - **Varela, Thompson, Rosch** - Embodied Cognition framework
 
-#### Adey Windows Bioelectromagnetic Engine (NEW - Scientific Body Coherence)
-- **AdeyWindowsBioelectromagneticEngine** - Wissenschaftlich fundierte Frequenz-Körper-Mapping
-- **Dr. W. Ross Adey Research** - UCLA Brain Research Institute, Loma Linda (Physiological Reviews 1981)
-- **6 Body Systems** - Nervous (Psyche), Cardiovascular, Musculoskeletal, Respiratory, Endocrine, Immune
-- **10 Scientific Windows** - Delta, Theta, Alpha, Schumann, HRV Coherence, PEMF, Vagal Tone
-- **Evidence Levels** - Oxford CEBM 1a-5 (Meta-Analysis to Expert Opinion)
-- **Peer-reviewed Citations** - Adey 1981, Blackman 1985, Bawin & Adey 1976, PNAS
-- **Scientific Measurements** - EEG, HRV/EKG, EMG, SpO2, Cortisol
-- **Audio Implementation** - Multidimensional Brainwave Entrainment, Isochronic Tones, Breathing Guides (NOT EM fields)
-- **CRITICAL DISCLAIMER:** Audio ≠ Elektromagnetik. Keine medizinische Therapie.
-
 ---
 
 ### New in Phase 10000.1 ULTRA MODE (2026-01-07)
@@ -899,7 +888,6 @@ cmake .. -DUSE_JUCE=OFF
 | `HardwarePickerView` | `Sources/Echoelmusic/Views/` | SwiftUI hardware selection UI |
 | `NeuroSpiritualEngine` | `Sources/Echoelmusic/NeuroSpiritual/` | Psychosomatic data (FACS, Polyvagal, Reich) |
 | `QuantumHealthBiofeedbackEngine` | `Sources/Echoelmusic/Quantum/` | Unlimited collaboration, broadcasting |
-| `AdeyWindowsBioelectromagneticEngine` | `Sources/Echoelmusic/Science/` | Scientific frequency-body mapping (Adey Research) |
 
 ---
 
