@@ -2,6 +2,13 @@ import Foundation
 import Network
 import CoreMIDI
 import Combine
+import SwiftUI
+
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 /// MIDI to DMX/LED Strip Controller
 /// Maps MIDI/MPE parameters to DMX lighting and addressable LED strips
@@ -448,6 +455,78 @@ class MIDIToLightMapper: ObservableObject {
     func setScene(_ scene: LightScene) {
         currentScene = scene
         log.led("💡 Light scene: \(scene.rawValue)")
+    }
+
+    // MARK: - Octave-Based Color Input (OctaveCreativeStudio Bridge)
+
+    /// Update lights from OctaveCreativeStudio's physics-based RGB output
+    /// Uses proper Bio→Audio→Licht octave transposition (f × 2^n)
+    func updateFromOctaveColor(r: Float, g: Float, b: Float, coherence: Float = 1.0) {
+        let intensity = UInt8(255 * coherence)
+        let color = RGB(
+            r: UInt8(r * 255 * coherence),
+            g: UInt8(g * 255 * coherence),
+            b: UInt8(b * 255 * coherence)
+        )
+
+        fillAllStrips(color: color)
+
+        // Also update fixtures with CIE-based color
+        for fixture in fixtures {
+            switch fixture.channelMap {
+            case .rgbPar(let rCh, let gCh, let bCh, let dimmer):
+                dmxUniverse[fixture.startAddress + rCh - 1] = color.r
+                dmxUniverse[fixture.startAddress + gCh - 1] = color.g
+                dmxUniverse[fixture.startAddress + bCh - 1] = color.b
+                if let dimmerCh = dimmer {
+                    dmxUniverse[fixture.startAddress + dimmerCh - 1] = intensity
+                }
+            case .movingHead(_, _, let dimmer, let rCh, let gCh, let bCh):
+                dmxUniverse[fixture.startAddress + rCh - 1] = color.r
+                dmxUniverse[fixture.startAddress + gCh - 1] = color.g
+                dmxUniverse[fixture.startAddress + bCh - 1] = color.b
+                dmxUniverse[fixture.startAddress + dimmer - 1] = intensity
+            case .strobe:
+                break
+            }
+        }
+
+        sendDMX()
+    }
+
+    /// Update lights using full octave transposition pipeline
+    /// Computes: heartRate → audioFreq (f × 2^n) → lightFreq → wavelength → CIE 1931 RGB
+    func updateFromOctaveBio(heartRate: Double, coherence: Double, octaves: Int = 6) {
+        // Step 1: Heart rate to audio frequency (octave transposition)
+        let heartHz = Float(heartRate) / 60.0
+        let audioFreq = heartHz * pow(2.0, Float(octaves))
+
+        // Step 2: Audio to light via OctaveTransposition
+        let color = UnifiedVisualSoundEngine.OctaveTransposition.audioToColor(
+            audioFrequency: audioFreq
+        )
+
+        // Step 3: Extract RGB from SwiftUI Color
+        let rgb = extractRGB(from: color)
+
+        // Step 4: Send to lights
+        updateFromOctaveColor(r: rgb.r, g: rgb.g, b: rgb.b, coherence: Float(coherence))
+    }
+
+    /// Extract RGB components from SwiftUI Color (platform-agnostic)
+    private func extractRGB(from color: Color) -> (r: Float, g: Float, b: Float) {
+        #if canImport(UIKit)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
+        return (Float(r), Float(g), Float(b))
+        #elseif canImport(AppKit)
+        let nsColor = NSColor(color).usingColorSpace(.deviceRGB) ?? NSColor.white
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        nsColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return (Float(r), Float(g), Float(b))
+        #else
+        return (1.0, 1.0, 1.0)
+        #endif
     }
 
     // MARK: - Debug Info

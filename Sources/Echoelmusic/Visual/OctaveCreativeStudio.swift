@@ -48,6 +48,12 @@ public class OctaveCreativeStudio: ObservableObject {
     /// Berechnete Licht-Wellenlänge (nm)
     @Published public var resultWavelength: Float = 550
 
+    /// Berechnete RGB-Komponenten (für Light-Output)
+    @Published public var resultRGB: (r: Float, g: Float, b: Float) = (1.0, 1.0, 1.0)
+
+    /// Callback für physische Licht-Ausgabe (DMX/Art-Net via MIDIToLightMapper)
+    public var onColorUpdate: ((Float, Float, Float, Float) -> Void)?
+
     // MARK: - Mapping Curves
 
     public enum MappingCurve: String, CaseIterable, Identifiable {
@@ -323,7 +329,30 @@ public class OctaveCreativeStudio: ObservableObject {
         resultAudioFrequency = heartRateToAudio()
         let lightFreq = audioToLight(audioFrequency: resultAudioFrequency)
         resultWavelength = frequencyToWavelength(thz: lightFreq)
-        resultColor = calculateResultColor()
+
+        // Calculate RGB components
+        let rgb = wavelengthToRGB(wavelength: resultWavelength)
+        let saturation = 0.5 + liveBioData.coherence * 0.5
+        resultRGB = (rgb.r * saturation, rgb.g * saturation, rgb.b * saturation)
+
+        resultColor = Color(
+            red: Double(resultRGB.r),
+            green: Double(resultRGB.g),
+            blue: Double(resultRGB.b)
+        )
+
+        // Output to physical lights (DMX/Art-Net via MIDIToLightMapper)
+        onColorUpdate?(resultRGB.r, resultRGB.g, resultRGB.b, liveBioData.coherence)
+    }
+
+    /// Connect to MIDIToLightMapper for physical light output
+    @MainActor
+    public func connectToLightMapper(_ lightMapper: MIDIToLightMapper) {
+        onColorUpdate = { [weak lightMapper] r, g, b, coherence in
+            Task { @MainActor in
+                lightMapper?.updateFromOctaveColor(r: r, g: g, b: b, coherence: coherence)
+            }
+        }
     }
 
     // MARK: - Bio Simulation

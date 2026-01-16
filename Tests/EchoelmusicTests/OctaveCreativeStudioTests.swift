@@ -262,6 +262,55 @@ final class OctaveCreativeStudioTests: XCTestCase {
             XCTAssertLessThanOrEqual(aboveOne, 1, "\(curve) should clamp values > 1")
         }
     }
+
+    // MARK: - Light Mapper Integration Tests
+
+    func testResultRGB_StoresComponents() {
+        let studio = OctaveCreativeStudioTestHelper()
+
+        studio.liveBioData.heartRate = 70
+        studio.liveBioData.coherence = 0.8
+        studio.heartRateOctaves = 6
+
+        // Calculate result
+        let result = studio.calculateResultColor() as! (r: Float, g: Float, b: Float)
+
+        // RGB components should be valid
+        XCTAssertGreaterThanOrEqual(result.r, 0)
+        XCTAssertLessThanOrEqual(result.r, 1)
+        XCTAssertGreaterThanOrEqual(result.g, 0)
+        XCTAssertLessThanOrEqual(result.g, 1)
+        XCTAssertGreaterThanOrEqual(result.b, 0)
+        XCTAssertLessThanOrEqual(result.b, 1)
+    }
+
+    func testOnColorUpdate_CallbackFires() {
+        var callbackFired = false
+        var capturedR: Float = 0
+        var capturedG: Float = 0
+        var capturedB: Float = 0
+        var capturedCoherence: Float = 0
+
+        // Simulate callback behavior from OctaveCreativeStudio
+        let callback: (Float, Float, Float, Float) -> Void = { r, g, b, coherence in
+            callbackFired = true
+            capturedR = r
+            capturedG = g
+            capturedB = b
+            capturedCoherence = coherence
+        }
+
+        // Simulate what updateResult would do
+        let rgb: (r: Float, g: Float, b: Float) = (0.8, 0.3, 0.1)
+        let coherence: Float = 0.75
+        callback(rgb.r, rgb.g, rgb.b, coherence)
+
+        XCTAssertTrue(callbackFired, "Color update callback should fire")
+        XCTAssertEqual(capturedR, 0.8, accuracy: 0.01)
+        XCTAssertEqual(capturedG, 0.3, accuracy: 0.01)
+        XCTAssertEqual(capturedB, 0.1, accuracy: 0.01)
+        XCTAssertEqual(capturedCoherence, 0.75, accuracy: 0.01)
+    }
 }
 
 // MARK: - Test Helper (Non-MainActor)

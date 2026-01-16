@@ -34,6 +34,12 @@ public class UnifiedControlHub: ObservableObject {
     /// Current control loop frequency (Hz)
     @Published public private(set) var controlLoopFrequency: Double = 0
 
+    /// Use octave-based color mapping for lighting (f × 2^n, CIE 1931)
+    @Published public var useOctaveBasedLighting: Bool = true
+
+    /// Octave shift for heart rate → audio frequency mapping (default: 6)
+    @Published public var lightingOctaveShift: Int = 6
+
     // MARK: - Dependencies (Injected)
 
     private let audioEngine: AudioEngine?
@@ -1078,7 +1084,18 @@ public class UnifiedControlHub: ObservableObject {
 
         // Update DMX/LED strip lighting
         if let lighting = midiToLightMapper {
-            lighting.updateBioReactive(bioData)
+            if useOctaveBasedLighting {
+                // Octave-based: HR → Audio (f × 2^n) → Light → CIE 1931 RGB
+                // Uses UnifiedVisualSoundEngine.OctaveTransposition for physics
+                lighting.updateFromOctaveBio(
+                    heartRate: bioData.heartRate,
+                    coherence: bioData.hrvCoherence / 100.0,  // Normalize to 0-1
+                    octaves: lightingOctaveShift
+                )
+            } else {
+                // Legacy: Simple hue-based mapping
+                lighting.updateBioReactive(bioData)
+            }
         }
     }
 
