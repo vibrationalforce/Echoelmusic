@@ -516,12 +516,12 @@ Inspired by [nw_wrld](https://github.com/aagentah/nw_wrld) event-driven sequence
 - **VR/AR Devices** - Apple Vision Pro, Meta Quest, Varjo, HTC Vive, Pico
 - **Wearables** - Apple Watch, Garmin, Whoop, Oura, Polar, Fitbit
 - **Smart Home** - HomeKit, Matter, Thread, Philips Hue, LIFX
-- **Vehicles** - Tesla API, CarPlay, Android Auto
+- **Car Audio** - CarPlay, Android Auto (music app integration)
 
 #### Cross-Platform Session Manager (NEW - ALL Device Combinations)
 - **CrossPlatformSessionManager** - Universal cross-ecosystem sessions
 - **ANY Device Combination** - iPhone + Windows, Android + Mac, MacBook + Meta glasses
-- **6 Device Ecosystems** - Apple, Google, Microsoft, Meta, Linux, Tesla
+- **5 Device Ecosystems** - Apple, Google, Microsoft, Meta, Linux
 - **Adaptive Zero-Latency** - Dynamic buffer optimization, NTP/PTP sync
 - **3 Sync Modes** - Adaptive, Low Latency (<10ms), High Quality
 - **10+ Predefined Combinations** - Pro Studio, Live Performance, Mobile DJ, Research Lab

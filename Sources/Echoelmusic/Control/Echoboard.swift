@@ -15,7 +15,7 @@ import Combine
 // ║   🎛️ ECHOBOARD - Unified Control Dashboard 🎛️                                                        ║
 // ║                                                                                                       ║
 // ║   Central Hub for ALL Connected Devices & Systems                                                    ║
-// ║   Audio • Video • Lighting • Vehicles • Drones • Smart Home • Wearables                              ║
+// ║   Audio • Video • Lighting • Smart Home • Wearables • VR/AR                                          ║
 // ║                                                                                                       ║
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════╝
 
@@ -27,8 +27,6 @@ public enum EchoboardCategory: String, CaseIterable, Codable {
     case lighting = "Lighting"
     case biometrics = "Biometrics"
     case smartHome = "Smart Home"
-    case vehicles = "Vehicles"
-    case drones = "Drones"
     case robots = "Robots"
     case vr = "VR/AR"
     case streaming = "Streaming"
@@ -42,8 +40,6 @@ public enum EchoboardCategory: String, CaseIterable, Codable {
         case .lighting: return "💡"
         case .biometrics: return "❤️"
         case .smartHome: return "🏠"
-        case .vehicles: return "🚗"
-        case .drones: return "🚁"
         case .robots: return "🤖"
         case .vr: return "🥽"
         case .streaming: return "📡"
@@ -59,8 +55,6 @@ public enum EchoboardCategory: String, CaseIterable, Codable {
         case .lighting: return "#FFE66D"
         case .biometrics: return "#FF69B4"
         case .smartHome: return "#95E1D3"
-        case .vehicles: return "#5D9CEC"
-        case .drones: return "#A29BFE"
         case .robots: return "#636E72"
         case .vr: return "#00CEC9"
         case .streaming: return "#E17055"
@@ -361,8 +355,6 @@ public enum WidgetType: String, CaseIterable, Codable {
     case quickActions = "Quick Actions"
     case sessionTimer = "Session Timer"
     case streamStatus = "Stream Status"
-    case droneControl = "Drone Control"
-    case vehicleStatus = "Vehicle Status"
     case wellnessScore = "Wellness Score"
     case mealPlan = "Meal Plan"
     case calendar = "Calendar"
@@ -384,8 +376,6 @@ public enum WidgetType: String, CaseIterable, Codable {
         case .quickActions: return "⚡"
         case .sessionTimer: return "⏱️"
         case .streamStatus: return "📺"
-        case .droneControl: return "🚁"
-        case .vehicleStatus: return "🚗"
         case .wellnessScore: return "🧘"
         case .mealPlan: return "🍽️"
         case .calendar: return "📅"
@@ -540,13 +530,7 @@ public class Echoboard: ObservableObject {
                           capabilities: ["midi", "pads", "encoders", "display"]),
             ConnectedDevice(name: "Vision Pro", category: .vr, status: .paired,
                           manufacturer: "Apple", model: "Vision Pro", batteryLevel: 0.72,
-                          capabilities: ["spatial", "handTracking", "eyeTracking"]),
-            ConnectedDevice(name: "DJI Mini 4", category: .drones, status: .disconnected,
-                          manufacturer: "DJI", model: "Mini 4 Pro", batteryLevel: 1.0,
-                          capabilities: ["video4k", "gps", "followMe", "waypoints"]),
-            ConnectedDevice(name: "Tesla Model S", category: .vehicles, status: .disconnected,
-                          manufacturer: "Tesla", model: "Model S Plaid",
-                          capabilities: ["audio", "climate", "navigation", "ambientLighting"])
+                          capabilities: ["spatial", "handTracking", "eyeTracking"])
         ]
 
         for device in discoveredDevices {
