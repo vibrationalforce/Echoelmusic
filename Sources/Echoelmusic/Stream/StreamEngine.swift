@@ -275,16 +275,32 @@ class StreamEngine: ObservableObject {
     }
 
     @objc private func captureFrame() {
-        guard isStreaming, let scene = currentScene else { return }
+        guard isStreaming else { return }
 
-        // Render scene to Metal texture
-        guard let texture = renderScene(scene) else {
+        // Get frame based on source mode
+        let texture: MTLTexture?
+
+        switch frameSourceMode {
+        case .internalScene:
+            guard let scene = currentScene else {
+                droppedFrames += 1
+                return
+            }
+            texture = renderScene(scene)
+
+        case .externalCamera:
+            // Use injected frame from VideoPipelineCoordinator
+            texture = injectedFrame
+            injectedFrame = nil  // Clear for next frame
+        }
+
+        guard let frameTexture = texture else {
             droppedFrames += 1
             return
         }
 
         // Encode frame
-        guard let encodedData = encodingManager.encodeFrame(texture: texture) else {
+        guard let encodedData = encodingManager.encodeFrame(texture: frameTexture) else {
             droppedFrames += 1
             return
         }
@@ -335,6 +351,72 @@ class StreamEngine: ObservableObject {
 
         // Render complete scene with all layers, sources, and overlays
         return sceneRenderer.renderScene(scene, size: resolution.size, time: renderTime)
+    }
+
+    // MARK: - External Frame Injection (for VideoPipelineCoordinator)
+
+    /// Mode for frame source
+    enum FrameSourceMode {
+        case internalScene  // Use internal scene rendering (default)
+        case externalCamera // Use frames from external camera
+    }
+
+    private(set) var frameSourceMode: FrameSourceMode = .internalScene
+    private var injectedFrame: MTLTexture?
+    private var injectedFrameTime: CMTime?
+
+    /// Set frame source mode
+    /// - Parameter mode: Source mode (internal scene or external camera)
+    func setFrameSourceMode(_ mode: FrameSourceMode) {
+        frameSourceMode = mode
+        log.streaming("StreamEngine: Frame source mode set to \(mode)")
+    }
+
+    /// Inject a frame from an external source (e.g., CameraManager via VideoPipelineCoordinator)
+    /// - Parameters:
+    ///   - texture: The Metal texture containing the frame
+    ///   - time: The presentation timestamp
+    func injectFrame(texture: MTLTexture, time: CMTime) {
+        guard frameSourceMode == .externalCamera else {
+            return // Ignore if not in external mode
+        }
+
+        // Store for next encode cycle
+        injectedFrame = texture
+        injectedFrameTime = time
+    }
+
+    /// Process and send an injected frame immediately
+    /// - Parameters:
+    ///   - texture: The Metal texture to encode and stream
+    ///   - time: The presentation timestamp
+    func injectAndSendFrame(texture: MTLTexture, time: CMTime) async {
+        guard isStreaming else { return }
+
+        // Encode frame
+        guard let encodedData = encodingManager.encodeFrame(texture: texture) else {
+            droppedFrames += 1
+            return
+        }
+
+        // Send to all active streams
+        for (destination, client) in rtmpClients {
+            do {
+                try await client.sendFrame(encodedData)
+
+                // Update status
+                if var status = activeStreams[destination] {
+                    status.framesSent += 1
+                    status.bytesTransferred += Int64(encodedData.count)
+                    activeStreams[destination] = status
+                }
+            } catch {
+                log.streaming("StreamEngine: Failed to send injected frame to \(destination.rawValue) - \(error)", level: .error)
+            }
+        }
+
+        // Update analytics
+        analytics.recordFrame()
     }
 
     // MARK: - Bio Metrics
