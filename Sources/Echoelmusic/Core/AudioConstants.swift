@@ -176,6 +176,65 @@ public enum AudioConstants {
 
     /// Voice Stealing Threshold
     static let voiceStealingThreshold: Int = 14
+
+    // MARK: - Coherence Scale Normalization
+    //
+    // IMPORTANT: Coherence values have two scales in the system:
+    // 1. HeartMath Scale (0-100): Used by HealthKitManager.hrvCoherence
+    //    - 0-40: Low coherence (stress/anxiety)
+    //    - 40-60: Medium coherence (transitional)
+    //    - 60-100: High coherence (optimal/flow state)
+    //
+    // 2. Normalized Scale (0.0-1.0): Used by visual/audio parameters
+    //    - UnifiedBioData.hrvCoherence
+    //    - Visual effects (intensity, color, etc.)
+    //    - Light output (DMX, ILDA, Art-Net)
+    //    - Lambda Mode visual state
+    //
+    // ALWAYS normalize when passing from HealthKitManager to other components:
+    // let normalized = healthKit.hrvCoherence / 100.0
+
+    /// HeartMath coherence scale constants
+    enum Coherence {
+        /// Maximum HeartMath coherence value
+        static let heartMathMax: Double = 100.0
+
+        /// Low coherence threshold (stress/anxiety)
+        static let lowThreshold: Double = 40.0
+
+        /// High coherence threshold (optimal/flow)
+        static let highThreshold: Double = 60.0
+
+        /// Normalize HeartMath coherence (0-100) to 0-1
+        @inline(__always)
+        static func normalize(_ heartMathValue: Double) -> Double {
+            max(0, min(1, heartMathValue / heartMathMax))
+        }
+
+        /// Normalize HeartMath coherence (0-100) to 0-1 (Float)
+        @inline(__always)
+        static func normalize(_ heartMathValue: Float) -> Float {
+            max(0, min(1, heartMathValue / Float(heartMathMax)))
+        }
+
+        /// Denormalize (0-1) to HeartMath scale (0-100)
+        @inline(__always)
+        static func denormalize(_ normalizedValue: Double) -> Double {
+            max(0, min(heartMathMax, normalizedValue * heartMathMax))
+        }
+
+        /// Check if coherence is in high state (flow)
+        @inline(__always)
+        static func isHighCoherence(_ heartMathValue: Double) -> Bool {
+            heartMathValue >= highThreshold
+        }
+
+        /// Check if coherence is in low state (stress)
+        @inline(__always)
+        static func isLowCoherence(_ heartMathValue: Double) -> Bool {
+            heartMathValue < lowThreshold
+        }
+    }
 }
 
 // MARK: - Convenience Extensions

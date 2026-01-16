@@ -413,7 +413,7 @@ public class UnifiedControlHub: ObservableObject {
 
         var bioData = UnifiedBioData()
         bioData.heartRate = healthKit.heartRate
-        bioData.hrvCoherence = healthKit.hrvCoherence / 100.0  // Normalize to 0-1
+        bioData.hrvCoherence = AudioConstants.Coherence.normalize(healthKit.hrvCoherence)
         bioData.breathingRate = healthKit.breathingRate
         lambda.updateBioData(bioData)
     }
@@ -911,7 +911,7 @@ public class UnifiedControlHub: ObservableObject {
                         )
 
                         // Apply coherence-based reverb blend
-                        let reverbBlend = Float(coherence) / 100.0
+                        let reverbBlend = AudioConstants.Coherence.normalize(Float(coherence))
                         spatialEngine.setReverbBlend(reverbBlend)
                     }
 
@@ -1162,7 +1162,7 @@ public class UnifiedControlHub: ObservableObject {
             if let lambda = lambdaModeEngine {
                 var bioData = UnifiedBioData()
                 bioData.heartRate = healthKit.heartRate
-                bioData.hrvCoherence = healthKit.hrvCoherence / 100.0  // Normalize to 0-1
+                bioData.hrvCoherence = AudioConstants.Coherence.normalize(healthKit.hrvCoherence)
                 bioData.breathingRate = healthKit.breathingRate
                 lambda.updateBioData(bioData)
             }
@@ -1189,6 +1189,9 @@ public class UnifiedControlHub: ObservableObject {
             )
         }
 
+        // Normalize coherence once using standard utility
+        let normalizedCoherence = AudioConstants.Coherence.normalize(bioData.hrvCoherence)
+
         // Update DMX/LED strip lighting
         if let lighting = midiToLightMapper {
             if useOctaveBasedLighting {
@@ -1196,7 +1199,7 @@ public class UnifiedControlHub: ObservableObject {
                 // Uses UnifiedVisualSoundEngine.OctaveTransposition for physics
                 lighting.updateFromOctaveBio(
                     heartRate: bioData.heartRate,
-                    coherence: bioData.hrvCoherence / 100.0,  // Normalize to 0-1
+                    coherence: normalizedCoherence,
                     octaves: lightingOctaveShift
                 )
             } else {
@@ -1215,15 +1218,15 @@ public class UnifiedControlHub: ObservableObject {
                 let hue = wavelengthToHue(audioFrequency: audioFreq)
 
                 laser.updateBioReactive(
-                    coherence: bioData.hrvCoherence / 100.0,  // Normalize to 0-1
+                    coherence: normalizedCoherence,
                     heartRate: bioData.heartRate,
                     hue: hue
                 )
             } else {
                 // Legacy: Simple coherence-based hue
-                let hue = Float(bioData.hrvCoherence) / 100.0 * 0.7  // 0-0.7 (red to violet)
+                let hue = Float(normalizedCoherence) * 0.7  // 0-0.7 (red to violet)
                 laser.updateBioReactive(
-                    coherence: bioData.hrvCoherence / 100.0,
+                    coherence: normalizedCoherence,
                     heartRate: bioData.heartRate,
                     hue: hue
                 )
