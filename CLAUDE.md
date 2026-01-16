@@ -17,7 +17,7 @@
 - **Collaboration:** Zero-Latency Worldwide Real-Time
 - **Localization:** 12 Languages (EN, DE, JA, ES, FR, ZH, KO, PT, IT, RU, AR, HI)
 - **Presets:** 74+ Curated Engine Presets (50 expanded presets added)
-- **JUCE Integration:** 100% (50+ DSP, All Formats)
+- **DSP Framework:** EchoelCore (Pure Native - NO JUCE, NO Dependencies!)
 - **Plugins:** 53 Total (8 SDK + 3 Advanced + 42 DSP)
 - **Legal:** Privacy Policy, Terms of Service, Health Disclaimers
 - **Security Score:** 85/100 (Grade A)
@@ -86,6 +86,52 @@
 | **Melody XY** | Continuous pitch/timbre control |
 | **Keyboard** | 13 scales, velocity sensitive |
 | **Strum Pad** | Guitar-style strumming |
+
+### EchoelCore DSP Framework (NEW - No JUCE!)
+
+**Pure Native DSP - No Dependencies, Just Vibes** 🎵
+
+EchoelCore is Echoelmusic's custom DSP framework - 100% native Swift/Kotlin with zero external dependencies.
+
+| Module | Description | Fun Name |
+|--------|-------------|----------|
+| **EchoelWarmth** | Analog hardware emulations | "Like a hug for your audio" |
+| **EchoelSeed** | Genetic sound evolution | "Plant a seed, grow a sound" |
+| **EchoelPulse** | Bio-reactive audio | "Your heartbeat is the tempo" |
+| **EchoelVibe** | Creative effects | "Make it weird, make it wonderful" |
+
+**EchoelWarmth.TheConsole** - One Knob to Rule Them All:
+
+| Legend | Emoji | Vibe |
+|--------|-------|------|
+| SSL Glue | 🔵 | Punchy. Glue. Modern. |
+| API Punch | ⚫ | Thrust. Power. Drums. |
+| Neve Magic | 🔷 | Silk. Warmth. Magic. |
+| Pultec Silk | 🟡 | Air. Bottom. Classic. |
+| Fairchild Dream | ⚪ | Smooth. Vintage. Rare. |
+| LA-2A Love | 🪩 | Vocals. Bass. Butter. |
+| 1176 Bite | 🖤 | Fast. Aggressive. Bite. |
+| Manley Velvet | 🟠 | Master. Tube. Velvet. |
+
+**EchoelVibe Effects:**
+
+| Effect | Emoji | Description |
+|--------|-------|-------------|
+| ThePunisher | ☢️ | Saturation that goes to 11 (with THE BUTTON 🔴) |
+| TheTimeMachine | 📼 | Delay with character (tape, analog, lo-fi) |
+| TheVoiceChanger | 🤖 | Formant/pitch shifting with robot mode |
+
+**EchoelSeed.SoundDNA:**
+- 16 harmonic genes that define a voice
+- `plantSeed()` - Create random sound
+- `mutate(chaos:)` - Evolve the sound
+- `breed(with:)` - Make babies with another sound 👶
+
+**EchoelPulse.HeartSync:**
+- 💓 Heart rate → Filter brightness
+- 📊 HRV → Reverb amount
+- ✨ Coherence → Warmth/saturation
+- 🌬️ Breathing → Delay time + volume envelope
 
 ### DSP Effects Suite (60+ Processors)
 
