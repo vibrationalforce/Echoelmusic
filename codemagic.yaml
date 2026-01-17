@@ -255,8 +255,6 @@ workflows:
     instance_type: linux_x2
     max_build_duration: 60
     environment:
-      android_signing:
-        - keystore_reference: echoelmusic_keystore
       java: 17
       vars:
         VERSION: "1.1.0"
