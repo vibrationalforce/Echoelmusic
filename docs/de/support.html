@@ -16,26 +16,27 @@
     <meta property="og:description" content="Hilfe für Echoelmusic bio-reaktive Audio-Synthese.">
     <meta property="og:site_name" content="Echoelmusic">
 
-    <meta name="theme-color" content="#00C957">
+    <meta name="theme-color" content="#22C55E">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --coherence-green: #00C957;
-            --coherence-dark: #00A86B;
-            --coherence-light: #7CFC00;
+            --coherence-green: #22C55E;
+            --coherence-dark: #10B981;
+            --coherence-light: #34D399;
             --golden: #FFD700;
-            --deep-space: #0a1628;
-            --space-blue: #0d2137;
+            --deep-space: #030712;
+            --space-blue: #052e16;
+            --space-teal: #0a3622;
             --white: #ffffff;
             --gray: #94a3b8;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Rajdhani', sans-serif;
-            background: linear-gradient(180deg, var(--deep-space) 0%, var(--space-blue) 30%, #0a2a1a 60%, var(--deep-space) 100%);
+            font-family: 'Atkinson Hyperlegible', sans-serif;
+            background: linear-gradient(180deg, var(--deep-space) 0%, var(--space-blue) 30%, var(--space-teal) 60%, var(--deep-space) 100%);
             min-height: 100vh;
             color: var(--white);
         }
@@ -44,7 +45,7 @@
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background:
-                radial-gradient(ellipse at 30% 20%, rgba(0,201,87,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 30% 20%, rgba(34,197,94,0.08) 0%, transparent 50%),
                 radial-gradient(ellipse at 70% 80%, rgba(255,215,0,0.05) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
@@ -52,17 +53,17 @@
         nav {
             position: fixed;
             top: 0; left: 0; right: 0;
-            background: rgba(10, 22, 40, 0.95);
+            background: rgba(3, 7, 18, 0.95);
             backdrop-filter: blur(10px);
             z-index: 1000;
             padding: 14px 20px;
-            border-bottom: 1px solid rgba(0,201,87,0.2);
+            border-bottom: 1px solid rgba(34,197,94,0.2);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .nav-logo {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-size: 20px;
             font-weight: 700;
             background: linear-gradient(90deg, var(--coherence-green), var(--golden));
@@ -80,12 +81,12 @@
             color: rgba(255,255,255,0.8);
             text-decoration: none;
             font-size: 13px;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             transition: all 0.3s;
         }
         .nav-links a:hover, .nav-links a.active {
             color: var(--coherence-green);
-            text-shadow: 0 0 10px rgba(0,201,87,0.5);
+            text-shadow: 0 0 10px rgba(34,197,94,0.5);
         }
         .nav-social {
             display: flex;
@@ -93,18 +94,18 @@
             align-items: center;
         }
         .nav-social a {
-            color: rgba(0,201,87,0.6);
+            color: rgba(34,197,94,0.6);
             text-decoration: none;
             font-size: 12px;
             padding: 5px 10px;
-            border: 1px solid rgba(0,201,87,0.3);
+            border: 1px solid rgba(34,197,94,0.3);
             border-radius: 20px;
             transition: all 0.3s;
         }
         .nav-social a:hover {
             color: var(--coherence-green);
             border-color: var(--coherence-green);
-            box-shadow: 0 0 15px rgba(0,201,87,0.3);
+            box-shadow: 0 0 15px rgba(34,197,94,0.3);
         }
         .lang-switch {
             display: flex;
@@ -112,12 +113,12 @@
             margin-left: 16px;
         }
         .lang-switch a {
-            color: rgba(0,201,87,0.6);
+            color: rgba(34,197,94,0.6);
             text-decoration: none;
             padding: 4px 8px;
             font-size: 11px;
-            font-family: 'Orbitron', monospace;
-            border: 1px solid rgba(0,201,87,0.3);
+            font-family: 'Atkinson Hyperlegible', sans-serif;
+            border: 1px solid rgba(34,197,94,0.3);
             transition: all 0.3s;
         }
         .lang-switch a:hover, .lang-switch a.active {
@@ -129,15 +130,15 @@
             nav { padding: 12px 15px; }
         }
         .header {
-            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
+            background: linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(255,215,0,0.1) 100%);
             padding: 100px 20px 50px;
             text-align: center;
-            border-bottom: 1px solid rgba(0,201,87,0.3);
+            border-bottom: 1px solid rgba(34,197,94,0.3);
             position: relative;
             z-index: 1;
         }
         .header h1 {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-size: 42px;
             background: linear-gradient(90deg, var(--coherence-green), var(--golden), var(--coherence-green));
             background-size: 200% auto;
@@ -158,8 +159,8 @@
             z-index: 1;
         }
         .contact-card {
-            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
-            border: 1px solid rgba(0,201,87,0.4);
+            background: linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(255,215,0,0.1) 100%);
+            border: 1px solid rgba(34,197,94,0.4);
             border-radius: 20px;
             padding: 40px;
             margin: 30px 0;
@@ -175,17 +176,17 @@
             background: linear-gradient(90deg, var(--coherence-green), var(--golden));
         }
         .contact-card h3 {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-size: 22px;
             color: var(--white);
             margin-bottom: 20px;
         }
         .contact-card .email {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-size: 24px;
             color: var(--coherence-green);
             text-decoration: none;
-            text-shadow: 0 0 20px rgba(0,201,87,0.5);
+            text-shadow: 0 0 20px rgba(34,197,94,0.5);
             transition: all 0.3s;
         }
         .contact-card .email:hover {
@@ -198,28 +199,28 @@
             font-size: 14px;
         }
         h2 {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-size: 24px;
             color: var(--coherence-green);
             margin: 50px 0 25px;
             padding-bottom: 15px;
-            border-bottom: 1px solid rgba(0,201,87,0.3);
-            text-shadow: 0 0 15px rgba(0,201,87,0.3);
+            border-bottom: 1px solid rgba(34,197,94,0.3);
+            text-shadow: 0 0 15px rgba(34,197,94,0.3);
         }
         .faq-item {
-            background: rgba(10,22,40,0.6);
-            border: 1px solid rgba(0,201,87,0.2);
+            background: rgba(3,7,18,0.6);
+            border: 1px solid rgba(34,197,94,0.2);
             border-radius: 16px;
             padding: 25px;
             margin: 20px 0;
             transition: all 0.3s;
         }
         .faq-item:hover {
-            border-color: rgba(0,201,87,0.5);
-            box-shadow: 0 10px 40px rgba(0,201,87,0.1);
+            border-color: rgba(34,197,94,0.5);
+            box-shadow: 0 10px 40px rgba(34,197,94,0.1);
         }
         .faq-item h4 {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-size: 16px;
             color: var(--coherence-green);
             margin-bottom: 12px;
@@ -234,7 +235,7 @@
             text-decoration: none;
         }
         .faq-item a:hover {
-            text-shadow: 0 0 10px rgba(0,201,87,0.5);
+            text-shadow: 0 0 10px rgba(34,197,94,0.5);
         }
         .resources {
             display: grid;
@@ -244,20 +245,20 @@
         }
         .resource-link {
             display: block;
-            background: rgba(0,201,87,0.05);
-            border: 1px solid rgba(0,201,87,0.3);
+            background: rgba(34,197,94,0.05);
+            border: 1px solid rgba(34,197,94,0.3);
             border-radius: 12px;
             padding: 20px;
             text-decoration: none;
             color: var(--coherence-green);
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-size: 14px;
             text-align: center;
             transition: all 0.3s;
         }
         .resource-link:hover {
-            background: rgba(0,201,87,0.1);
-            box-shadow: 0 0 30px rgba(0,201,87,0.2);
+            background: rgba(34,197,94,0.1);
+            box-shadow: 0 0 30px rgba(34,197,94,0.2);
             transform: translateY(-3px);
         }
         a:focus-visible, button:focus-visible {
@@ -273,7 +274,7 @@
     </style>
 </head>
 <body>
-    <a href="#main-content" class="skip-link" style="position: absolute; top: -40px; left: 0; background: var(--coherence-green); color: var(--deep-space); padding: 8px 16px; z-index: 1001; font-family: 'Orbitron', monospace; text-decoration: none; transition: top 0.3s;" onfocus="this.style.top='0'" onblur="this.style.top='-40px'">Zum Inhalt springen</a>
+    <a href="#main-content" class="skip-link" style="position: absolute; top: -40px; left: 0; background: var(--coherence-green); color: var(--deep-space); padding: 8px 16px; z-index: 1001; font-family: 'Atkinson Hyperlegible', sans-serif; text-decoration: none; transition: top 0.3s;" onfocus="this.style.top='0'" onblur="this.style.top='-40px'">Zum Inhalt springen</a>
 
     <nav>
         <a href="index.html" class="nav-logo">Echoelmusic</a>
@@ -359,7 +360,7 @@
         </div>
     </div>
 
-    <footer style="padding: 40px 20px; text-align: center; border-top: 1px solid rgba(0,201,87,0.2); background: rgba(10,22,40,0.5);">
+    <footer style="padding: 40px 20px; text-align: center; border-top: 1px solid rgba(34,197,94,0.2); background: rgba(3,7,18,0.5);">
         <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 12px;">&copy; 2024-2026 Echoelmusic. Bio-Reaktives Audio-Visuelles Erlebnis.</p>
         <p style="color: rgba(255,255,255,0.4); font-size: 13px;">
             <a href="datenschutz.html" style="color: var(--coherence-green); text-decoration: none;">Datenschutz</a> ·

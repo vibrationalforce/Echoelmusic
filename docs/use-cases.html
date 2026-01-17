@@ -10,6 +10,8 @@
     <meta name="keywords" content="bio-reactive music, HRV music therapy, meditation app, music production AI, live performance biofeedback, wellness technology, heart rate music, coherence training, stress relief music">
     <meta name="author" content="Echoelmusic">
     <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#22C55E">
+    <meta name="color-scheme" content="dark">
     <link rel="canonical" href="https://vibrationalforce.github.io/Echoelmusic/use-cases.html">
 
     <!-- Open Graph / Facebook -->
@@ -47,31 +49,35 @@
     }
     </script>
 
-    <!-- Fonts (consistent with main site) -->
+    <!-- Fonts - Atkinson Hyperlegible -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            /* Bio-Coherence Green Palette (consistent with main site) */
-            --coherence-green: #00C957;
-            --coherence-dark: #00A86B;
-            --coherence-light: #7CFC00;
-            --golden: #FFD700;
-            --deep-space: #0a1628;
-            --space-blue: #0d2137;
-            --white: #ffffff;
-            --gray: #94a3b8;
-            --success: #00C957;
+            --color-primary: #22C55E;
+            --color-accent: #10B981;
+            --color-secondary: #34D399;
+            --color-bg: #030712;
+            --color-bg-mid: #052e16;
+            --color-surface: #0a3622;
+            --color-text: #FFFFFF;
+            --color-text-secondary: rgba(255,255,255,0.75);
+            --color-text-muted: rgba(255,255,255,0.5);
+            --color-border: rgba(34,197,94,0.2);
+            --color-glass: rgba(34,197,94,0.08);
+            --color-glass-border: rgba(34,197,94,0.25);
+            --font-sans: 'Atkinson Hyperlegible', system-ui, -apple-system, sans-serif;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(180deg, var(--deep-space) 0%, var(--space-blue) 30%, #0a2a1a 60%, var(--deep-space) 100%);
-            color: var(--white);
+            font-family: var(--font-sans);
+            background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-bg-mid) 50%, var(--color-surface) 100%);
+            background-attachment: fixed;
+            color: var(--color-text);
             line-height: 1.7;
             min-height: 100vh;
         }
@@ -81,8 +87,8 @@
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background:
-                radial-gradient(ellipse at 30% 20%, rgba(0,201,87,0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 80%, rgba(255,215,0,0.05) 0%, transparent 50%);
+                radial-gradient(ellipse at 30% 20%, rgba(34,197,94,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(52,211,153,0.05) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
         }
@@ -92,53 +98,62 @@
         /* Navigation */
         nav {
             position: fixed; top: 0; left: 0; right: 0;
-            background: rgba(10, 22, 40, 0.95);
+            background: rgba(3, 7, 18, 0.95);
             backdrop-filter: blur(10px);
             z-index: 1000;
             padding: 16px 0;
-            border-bottom: 1px solid rgba(0,201,87,0.2);
+            border-bottom: 1px solid var(--color-border);
         }
 
         nav .container { display: flex; justify-content: space-between; align-items: center; }
 
         .logo {
-            font-family: 'Orbitron', monospace;
-            font-size: 24px; font-weight: 700;
-            background: linear-gradient(90deg, var(--coherence-green), var(--golden));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 24px;
+            font-weight: 700;
             text-decoration: none;
         }
 
+        .logo svg { width: 28px; height: 28px; }
+
+        .logo span {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent), var(--color-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
         .nav-links { display: flex; gap: 24px; list-style: none; align-items: center; }
-        .nav-links a { color: var(--white); text-decoration: none; font-weight: 500; transition: color 0.3s; }
-        .nav-links a:hover { color: var(--coherence-green); }
+        .nav-links a { color: var(--color-text); text-decoration: none; font-weight: 500; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--color-primary); }
 
         .social-icons { display: flex; gap: 16px; }
-        .social-icons a { color: var(--gray); font-size: 20px; transition: color 0.3s; }
-        .social-icons a:hover { color: var(--coherence-green); }
+        .social-icons a { color: var(--color-text-muted); font-size: 20px; transition: color 0.3s; }
+        .social-icons a:hover { color: var(--color-primary); }
 
         /* Hero */
         .hero {
             padding: 140px 0 80px;
             text-align: center;
-            background: radial-gradient(ellipse at center, rgba(0,201,87,0.15) 0%, transparent 70%);
+            background: radial-gradient(ellipse at center, rgba(34,197,94,0.15) 0%, transparent 70%);
             position: relative;
             z-index: 1;
         }
 
         .hero h1 {
-            font-family: 'Orbitron', monospace;
             font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
             margin-bottom: 24px;
-            background: linear-gradient(90deg, var(--coherence-green), var(--golden), var(--coherence-green));
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent), var(--color-secondary));
             background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .hero p { font-size: 1.25rem; color: var(--gray); max-width: 700px; margin: 0 auto 40px; }
+        .hero p { font-size: 1.25rem; color: var(--color-text-secondary); max-width: 700px; margin: 0 auto 40px; }
 
         /* Use Case Cards */
         .use-cases { padding: 60px 0 100px; position: relative; z-index: 1; }
@@ -150,81 +165,80 @@
         }
 
         .use-case-card {
-            background: linear-gradient(135deg, rgba(10,22,40,0.9) 0%, rgba(0,42,26,0.4) 100%);
+            background: linear-gradient(135deg, rgba(3,7,18,0.9) 0%, rgba(10,54,34,0.4) 100%);
             border-radius: 20px;
             padding: 40px;
-            border: 1px solid rgba(0,201,87,0.2);
-            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid var(--color-border);
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
         }
 
         .use-case-card:hover {
             transform: translateY(-8px);
-            border-color: rgba(0,201,87,0.5);
-            box-shadow: 0 20px 40px rgba(0,201,87,0.15);
+            border-color: rgba(34,197,94,0.5);
+            box-shadow: 0 20px 40px rgba(34,197,94,0.15);
         }
 
         .use-case-icon {
             width: 64px; height: 64px;
-            background: linear-gradient(135deg, var(--coherence-green), var(--coherence-dark));
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
             border-radius: 16px;
             display: flex; align-items: center; justify-content: center;
             font-size: 32px;
             margin-bottom: 24px;
-            box-shadow: 0 0 20px rgba(0,201,87,0.3);
+            box-shadow: 0 0 20px rgba(34,197,94,0.3);
         }
 
-        .use-case-card h3 { font-family: 'Orbitron', monospace; font-size: 1.5rem; margin-bottom: 16px; color: var(--coherence-green); }
-        .use-case-card p { color: var(--gray); margin-bottom: 20px; }
+        .use-case-card h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 16px; color: var(--color-primary); }
+        .use-case-card p { color: var(--color-text-secondary); margin-bottom: 20px; }
 
         .benefits { list-style: none; margin-bottom: 24px; }
         .benefits li {
             padding: 8px 0;
             padding-left: 28px;
             position: relative;
-            color: rgba(255,255,255,0.8);
+            color: var(--color-text-secondary);
         }
         .benefits li::before {
             content: "✓";
             position: absolute;
             left: 0;
-            color: var(--coherence-green);
+            color: var(--color-primary);
             font-weight: bold;
         }
 
         .testimonial {
-            background: rgba(0,201,87,0.1);
+            background: rgba(34,197,94,0.1);
             border-radius: 12px;
             padding: 20px;
-            border-left: 3px solid var(--coherence-green);
+            border-left: 3px solid var(--color-primary);
             font-style: italic;
-            color: var(--white);
+            color: var(--color-text);
         }
 
         .testimonial-author {
             margin-top: 12px;
             font-style: normal;
             font-size: 0.9rem;
-            color: var(--golden);
+            color: var(--color-secondary);
         }
 
         /* CTA Section */
         .cta-section {
             padding: 80px 0;
             text-align: center;
-            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
+            background: linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(52,211,153,0.1) 100%);
             position: relative;
             z-index: 1;
         }
 
-        .cta-section h2 { font-family: 'Orbitron', monospace; font-size: 2.5rem; margin-bottom: 20px; color: var(--coherence-green); }
-        .cta-section p { color: var(--gray); max-width: 600px; margin: 0 auto 32px; }
+        .cta-section h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 20px; color: var(--color-primary); }
+        .cta-section p { color: var(--color-text-secondary); max-width: 600px; margin: 0 auto 32px; }
 
         .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
 
         .btn {
             padding: 16px 32px;
             border-radius: 30px;
-            font-family: 'Orbitron', monospace;
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s;
@@ -234,31 +248,31 @@
         }
 
         .btn-primary {
-            background: linear-gradient(90deg, var(--coherence-green) 0%, var(--coherence-dark) 50%, #006400 100%);
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
             color: white;
-            box-shadow: 0 0 20px rgba(0,201,87,0.3);
+            box-shadow: 0 0 20px rgba(34,197,94,0.3);
         }
 
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(0,201,87,0.5); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(34,197,94,0.5); }
 
         .btn-outline {
-            border: 2px solid var(--coherence-green);
-            color: var(--coherence-green);
+            border: 2px solid var(--color-primary);
+            color: var(--color-primary);
             background: transparent;
         }
 
-        .btn-outline:hover { background: rgba(0,201,87,0.1); }
+        .btn-outline:hover { background: rgba(34,197,94,0.1); }
 
         /* Social Proof */
         .social-proof {
             padding: 60px 0;
             text-align: center;
-            border-top: 1px solid rgba(0,201,87,0.2);
+            border-top: 1px solid var(--color-border);
             position: relative;
             z-index: 1;
         }
 
-        .social-proof h3 { color: var(--gray); margin-bottom: 32px; font-weight: 400; }
+        .social-proof h3 { color: var(--color-text-secondary); margin-bottom: 32px; font-weight: 400; }
 
         .social-links {
             display: flex;
@@ -271,29 +285,29 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            color: var(--white);
+            color: var(--color-text);
             text-decoration: none;
             padding: 16px 24px;
-            background: rgba(0,201,87,0.1);
-            border: 1px solid rgba(0,201,87,0.3);
+            background: var(--color-glass);
+            border: 1px solid var(--color-glass-border);
             border-radius: 30px;
             transition: all 0.3s;
         }
 
-        .social-link:hover { background: rgba(0,201,87,0.2); transform: translateY(-4px); box-shadow: 0 0 30px rgba(0,201,87,0.2); }
-        .social-link svg { width: 24px; height: 24px; fill: var(--coherence-green); }
+        .social-link:hover { background: rgba(34,197,94,0.2); transform: translateY(-4px); box-shadow: 0 0 30px rgba(34,197,94,0.2); }
+        .social-link svg { width: 24px; height: 24px; fill: var(--color-primary); }
 
         /* Footer */
         footer {
             padding: 40px 0;
             text-align: center;
-            border-top: 1px solid rgba(0,201,87,0.2);
+            border-top: 1px solid var(--color-border);
             position: relative;
             z-index: 1;
         }
 
-        footer p { color: var(--gray); }
-        footer a { color: var(--coherence-green); text-decoration: none; }
+        footer p { color: var(--color-text-muted); }
+        footer a { color: var(--color-primary); text-decoration: none; }
 
         @media (max-width: 768px) {
             .nav-links { display: none; }
@@ -303,7 +317,7 @@
 
         /* Accessibility: Focus indicators */
         a:focus-visible, button:focus-visible {
-            outline: 2px solid var(--coherence-green);
+            outline: 2px solid var(--color-primary);
             outline-offset: 2px;
         }
 
@@ -320,7 +334,20 @@
 <body>
     <nav>
         <div class="container">
-            <a href="index.html" class="logo">Echoelmusic</a>
+            <a href="index.html" class="logo">
+                <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#22C55E"/>
+                            <stop offset="50%" stop-color="#10B981"/>
+                            <stop offset="100%" stop-color="#34D399"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M50 82 C32 64 15 50 15 34 C15 22 25 12 37 12 C45 12 50 18 50 18 C50 18 55 12 63 12 C75 12 85 22 85 34 C85 50 68 64 50 82Z" fill="url(#logo-gradient)" opacity="0.9"/>
+                    <path d="M28 44 Q35 44 38 38 Q41 32 44 38 Q47 44 50 32 Q53 44 56 38 Q59 32 62 38 Q65 44 72 44" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.95"/>
+                </svg>
+                <span>Echoelmusic</span>
+            </a>
             <ul class="nav-links">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="use-cases.html">Use Cases</a></li>

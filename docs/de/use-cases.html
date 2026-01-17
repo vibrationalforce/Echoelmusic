@@ -10,7 +10,7 @@
     <meta name="author" content="Echoelmusic">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://vibrationalforce.github.io/Echoelmusic/de/use-cases.html">
-    <meta name="theme-color" content="#00C957">
+    <meta name="theme-color" content="#22C55E">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 
     <meta property="og:type" content="article">
@@ -39,16 +39,17 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --coherence-green: #00C957;
-            --coherence-dark: #00A86B;
-            --coherence-light: #7CFC00;
+            --coherence-green: #22C55E;
+            --coherence-dark: #10B981;
+            --coherence-light: #34D399;
             --golden: #FFD700;
-            --deep-space: #0a1628;
-            --space-blue: #0d2137;
+            --deep-space: #030712;
+            --space-blue: #052e16;
+            --space-green: #0a3622;
             --white: #ffffff;
             --gray: #94a3b8;
         }
@@ -56,8 +57,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(180deg, var(--deep-space) 0%, var(--space-blue) 30%, #0a2a1a 60%, var(--deep-space) 100%);
+            font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, var(--deep-space) 0%, var(--space-blue) 30%, var(--space-green) 60%, var(--deep-space) 100%);
             color: var(--white);
             line-height: 1.7;
             min-height: 100vh;
@@ -68,7 +69,7 @@
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background:
-                radial-gradient(ellipse at 30% 20%, rgba(0,201,87,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 30% 20%, rgba(34,197,94,0.08) 0%, transparent 50%),
                 radial-gradient(ellipse at 70% 80%, rgba(255,215,0,0.05) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
@@ -78,15 +79,15 @@
 
         nav {
             position: fixed; top: 0; left: 0; right: 0;
-            background: rgba(10, 22, 40, 0.95);
+            background: rgba(3, 7, 18, 0.95);
             backdrop-filter: blur(10px);
             z-index: 1000;
             padding: 16px 0;
-            border-bottom: 1px solid rgba(0,201,87,0.2);
+            border-bottom: 1px solid rgba(34,197,94,0.2);
         }
         nav .container { display: flex; justify-content: space-between; align-items: center; }
         .logo {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-size: 24px; font-weight: 700;
             background: linear-gradient(90deg, var(--coherence-green), var(--golden));
             -webkit-background-clip: text;
@@ -98,11 +99,11 @@
         .nav-links a:hover, .nav-links a.active { color: var(--coherence-green); }
         .nav-social { display: flex; gap: 12px; align-items: center; }
         .nav-social a {
-            color: rgba(0,201,87,0.6);
+            color: rgba(34,197,94,0.6);
             text-decoration: none;
             font-size: 12px;
             padding: 5px 10px;
-            border: 1px solid rgba(0,201,87,0.3);
+            border: 1px solid rgba(34,197,94,0.3);
             border-radius: 20px;
             transition: all 0.3s;
         }
@@ -114,12 +115,12 @@
         .hero {
             padding: 140px 0 80px;
             text-align: center;
-            background: radial-gradient(ellipse at center, rgba(0,201,87,0.15) 0%, transparent 70%);
+            background: radial-gradient(ellipse at center, rgba(34,197,94,0.15) 0%, transparent 70%);
             position: relative;
             z-index: 1;
         }
         .hero h1 {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-size: clamp(2.5rem, 5vw, 4rem);
             margin-bottom: 24px;
             background: linear-gradient(90deg, var(--coherence-green), var(--golden), var(--coherence-green));
@@ -132,16 +133,16 @@
         .use-cases { padding: 60px 0 100px; position: relative; z-index: 1; }
         .use-case-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 32px; }
         .use-case-card {
-            background: linear-gradient(135deg, rgba(10,22,40,0.9) 0%, rgba(0,42,26,0.4) 100%);
+            background: linear-gradient(135deg, rgba(3,7,18,0.9) 0%, rgba(5,46,22,0.4) 100%);
             border-radius: 20px;
             padding: 40px;
-            border: 1px solid rgba(0,201,87,0.2);
+            border: 1px solid rgba(34,197,94,0.2);
             transition: transform 0.3s, box-shadow 0.3s;
         }
         .use-case-card:hover {
             transform: translateY(-8px);
-            border-color: rgba(0,201,87,0.5);
-            box-shadow: 0 20px 40px rgba(0,201,87,0.15);
+            border-color: rgba(34,197,94,0.5);
+            box-shadow: 0 20px 40px rgba(34,197,94,0.15);
         }
         .use-case-icon {
             width: 64px; height: 64px;
@@ -150,15 +151,15 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 32px;
             margin-bottom: 24px;
-            box-shadow: 0 0 20px rgba(0,201,87,0.3);
+            box-shadow: 0 0 20px rgba(34,197,94,0.3);
         }
-        .use-case-card h3 { font-family: 'Orbitron', monospace; font-size: 1.5rem; margin-bottom: 16px; color: var(--coherence-green); }
+        .use-case-card h3 { font-family: 'Atkinson Hyperlegible', sans-serif; font-size: 1.5rem; margin-bottom: 16px; color: var(--coherence-green); }
         .use-case-card p { color: var(--gray); margin-bottom: 20px; }
         .benefits { list-style: none; margin-bottom: 24px; }
         .benefits li { padding: 8px 0; padding-left: 28px; position: relative; color: rgba(255,255,255,0.8); }
         .benefits li::before { content: "✓"; position: absolute; left: 0; color: var(--coherence-green); font-weight: bold; }
         .testimonial {
-            background: rgba(0,201,87,0.1);
+            background: rgba(34,197,94,0.1);
             border-radius: 12px;
             padding: 20px;
             border-left: 3px solid var(--coherence-green);
@@ -170,17 +171,17 @@
         .cta-section {
             padding: 80px 0;
             text-align: center;
-            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
+            background: linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(255,215,0,0.1) 100%);
             position: relative;
             z-index: 1;
         }
-        .cta-section h2 { font-family: 'Orbitron', monospace; font-size: 2.5rem; margin-bottom: 20px; color: var(--coherence-green); }
+        .cta-section h2 { font-family: 'Atkinson Hyperlegible', sans-serif; font-size: 2.5rem; margin-bottom: 20px; color: var(--coherence-green); }
         .cta-section p { color: var(--gray); max-width: 600px; margin: 0 auto 32px; }
         .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
         .btn {
             padding: 16px 32px;
             border-radius: 30px;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s;
@@ -189,15 +190,15 @@
             gap: 8px;
         }
         .btn-primary {
-            background: linear-gradient(90deg, var(--coherence-green) 0%, var(--coherence-dark) 50%, #006400 100%);
+            background: linear-gradient(90deg, var(--coherence-green) 0%, var(--coherence-dark) 50%, #059669 100%);
             color: white;
-            box-shadow: 0 0 20px rgba(0,201,87,0.3);
+            box-shadow: 0 0 20px rgba(34,197,94,0.3);
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(0,201,87,0.5); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(34,197,94,0.5); }
         .btn-outline { border: 2px solid var(--coherence-green); color: var(--coherence-green); background: transparent; }
-        .btn-outline:hover { background: rgba(0,201,87,0.1); }
+        .btn-outline:hover { background: rgba(34,197,94,0.1); }
 
-        .social-proof { padding: 60px 0; text-align: center; border-top: 1px solid rgba(0,201,87,0.2); position: relative; z-index: 1; }
+        .social-proof { padding: 60px 0; text-align: center; border-top: 1px solid rgba(34,197,94,0.2); position: relative; z-index: 1; }
         .social-proof h3 { color: var(--gray); margin-bottom: 32px; font-weight: 400; }
         .social-links { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
         .social-link {
@@ -205,14 +206,14 @@
             color: var(--white);
             text-decoration: none;
             padding: 16px 24px;
-            background: rgba(0,201,87,0.1);
-            border: 1px solid rgba(0,201,87,0.3);
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.3);
             border-radius: 30px;
             transition: all 0.3s;
         }
-        .social-link:hover { background: rgba(0,201,87,0.2); transform: translateY(-4px); }
+        .social-link:hover { background: rgba(34,197,94,0.2); transform: translateY(-4px); }
 
-        footer { padding: 40px 0; text-align: center; border-top: 1px solid rgba(0,201,87,0.2); position: relative; z-index: 1; }
+        footer { padding: 40px 0; text-align: center; border-top: 1px solid rgba(34,197,94,0.2); position: relative; z-index: 1; }
         footer p { color: var(--gray); }
         footer a { color: var(--coherence-green); text-decoration: none; }
 

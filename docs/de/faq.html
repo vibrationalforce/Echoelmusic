@@ -8,7 +8,7 @@
     <meta name="author" content="Echoelmusic">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://vibrationalforce.github.io/Echoelmusic/de/faq.html">
-    <meta name="theme-color" content="#00C957">
+    <meta name="theme-color" content="#22C55E">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 
     <meta property="og:type" content="website">
@@ -44,16 +44,17 @@
     <title>FAQ - Echoelmusic | Häufig gestellte Fragen</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --coherence-green: #00C957;
-            --coherence-dark: #00A86B;
-            --coherence-light: #7CFC00;
+            --coherence-green: #22C55E;
+            --coherence-dark: #10B981;
+            --coherence-light: #34D399;
             --golden: #FFD700;
-            --deep-space: #0a1628;
-            --space-blue: #0d2137;
+            --deep-space: #030712;
+            --space-green-dark: #052e16;
+            --space-green-mid: #0a3622;
             --white: #ffffff;
             --gray: #94a3b8;
         }
@@ -61,8 +62,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(180deg, var(--deep-space) 0%, var(--space-blue) 30%, #0a2a1a 60%, var(--deep-space) 100%);
+            font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, var(--deep-space) 0%, var(--space-green-dark) 30%, var(--space-green-mid) 60%, var(--deep-space) 100%);
             color: var(--white);
             line-height: 1.7;
             min-height: 100vh;
@@ -73,7 +74,7 @@
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background:
-                radial-gradient(ellipse at 30% 20%, rgba(0,201,87,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 30% 20%, rgba(34,197,94,0.08) 0%, transparent 50%),
                 radial-gradient(ellipse at 70% 80%, rgba(255,215,0,0.05) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
@@ -82,17 +83,17 @@
         nav {
             position: fixed;
             top: 0; left: 0; right: 0;
-            background: rgba(10, 22, 40, 0.95);
+            background: rgba(3, 7, 18, 0.95);
             backdrop-filter: blur(10px);
             z-index: 1000;
             padding: 14px 20px;
-            border-bottom: 1px solid rgba(0,201,87,0.2);
+            border-bottom: 1px solid rgba(34,197,94,0.2);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .nav-logo {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-size: 20px;
             font-weight: 700;
             background: linear-gradient(90deg, var(--coherence-green), var(--golden));
@@ -105,17 +106,17 @@
             color: rgba(255,255,255,0.8);
             text-decoration: none;
             font-size: 13px;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             transition: all 0.3s;
         }
         .nav-links a:hover, .nav-links a.active { color: var(--coherence-green); }
         .nav-social { display: flex; gap: 12px; align-items: center; }
         .nav-social a {
-            color: rgba(0,201,87,0.6);
+            color: rgba(34,197,94,0.6);
             text-decoration: none;
             font-size: 12px;
             padding: 5px 10px;
-            border: 1px solid rgba(0,201,87,0.3);
+            border: 1px solid rgba(34,197,94,0.3);
             border-radius: 20px;
             transition: all 0.3s;
         }
@@ -128,7 +129,7 @@
         .container { max-width: 900px; margin: 0 auto; padding: 100px 24px 80px; position: relative; z-index: 1; }
 
         h1 {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-size: 42px;
             margin-bottom: 16px;
             background: linear-gradient(90deg, var(--coherence-green), var(--golden), var(--coherence-green));
@@ -139,19 +140,19 @@
         .subtitle { color: var(--gray); font-size: 18px; margin-bottom: 48px; }
         .faq-section { margin-bottom: 48px; }
         .faq-section h2 {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-size: 24px;
             color: var(--coherence-green);
             margin-bottom: 24px;
             padding-bottom: 12px;
-            border-bottom: 1px solid rgba(0,201,87,0.3);
+            border-bottom: 1px solid rgba(34,197,94,0.3);
         }
         .faq-item { margin-bottom: 16px; }
         .faq-question {
             width: 100%;
             text-align: left;
-            background: rgba(0,201,87,0.05);
-            border: 1px solid rgba(0,201,87,0.2);
+            background: rgba(34,197,94,0.05);
+            border: 1px solid rgba(34,197,94,0.2);
             border-radius: 12px;
             padding: 16px 20px;
             color: var(--white);
@@ -162,17 +163,17 @@
             justify-content: space-between;
             align-items: center;
             transition: all 0.3s;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
         }
-        .faq-question:hover { background: rgba(0,201,87,0.1); border-color: var(--coherence-green); }
-        .faq-question.active { background: rgba(0,201,87,0.15); border-color: var(--coherence-green); border-radius: 12px 12px 0 0; }
+        .faq-question:hover { background: rgba(34,197,94,0.1); border-color: var(--coherence-green); }
+        .faq-question.active { background: rgba(34,197,94,0.15); border-color: var(--coherence-green); border-radius: 12px 12px 0 0; }
         .faq-question::after { content: '+'; font-size: 24px; color: var(--coherence-green); transition: transform 0.3s; }
         .faq-question.active::after { transform: rotate(45deg); }
         .faq-answer {
             display: none;
             padding: 20px;
-            background: rgba(10,22,40,0.6);
-            border: 1px solid rgba(0,201,87,0.2);
+            background: rgba(3,7,18,0.6);
+            border: 1px solid rgba(34,197,94,0.2);
             border-top: none;
             border-radius: 0 0 12px 12px;
             color: rgba(255,255,255,0.8);
@@ -182,38 +183,38 @@
         .faq-answer ul, .faq-answer ol { margin-left: 20px; margin-bottom: 12px; }
         .faq-answer li { margin-bottom: 8px; }
         .cta-box {
-            background: linear-gradient(135deg, rgba(0,201,87,0.15) 0%, rgba(255,215,0,0.1) 100%);
-            border: 1px solid rgba(0,201,87,0.3);
+            background: linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(255,215,0,0.1) 100%);
+            border: 1px solid rgba(34,197,94,0.3);
             border-radius: 20px;
             padding: 32px;
             text-align: center;
             margin-top: 48px;
         }
-        .cta-box h3 { font-family: 'Orbitron', monospace; font-size: 24px; margin-bottom: 12px; color: var(--coherence-green); }
+        .cta-box h3 { font-family: 'Atkinson Hyperlegible', sans-serif; font-size: 24px; margin-bottom: 12px; color: var(--coherence-green); }
         .cta-box p { color: var(--gray); margin-bottom: 24px; }
         .cta-button {
             display: inline-block;
-            background: linear-gradient(90deg, var(--coherence-green) 0%, var(--coherence-dark) 50%, #006400 100%);
+            background: linear-gradient(90deg, var(--coherence-green) 0%, var(--coherence-dark) 50%, #059669 100%);
             color: white;
             padding: 14px 28px;
             border-radius: 30px;
             text-decoration: none;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
             font-weight: 700;
             transition: transform 0.3s, box-shadow 0.3s;
-            box-shadow: 0 0 20px rgba(0,201,87,0.3);
+            box-shadow: 0 0 20px rgba(34,197,94,0.3);
         }
-        .cta-button:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(0,201,87,0.5); }
+        .cta-button:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(34,197,94,0.5); }
         a { color: var(--coherence-green); }
         a:focus-visible, button:focus-visible { outline: 2px solid var(--coherence-green); outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
-        footer { padding: 40px 20px; text-align: center; border-top: 1px solid rgba(0,201,87,0.2); background: rgba(10,22,40,0.5); }
+        footer { padding: 40px 20px; text-align: center; border-top: 1px solid rgba(34,197,94,0.2); background: rgba(3,7,18,0.5); }
         .footer-social { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
-        .footer-social a { padding: 12px 24px; background: rgba(0,201,87,0.1); border: 1px solid rgba(0,201,87,0.3); border-radius: 30px; color: var(--coherence-green); text-decoration: none; font-weight: 600; }
+        .footer-social a { padding: 12px 24px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 30px; color: var(--coherence-green); text-decoration: none; font-weight: 600; }
     </style>
 </head>
 <body>
-    <a href="#main-content" class="skip-link" style="position: absolute; top: -40px; left: 0; background: var(--coherence-green); color: var(--deep-space); padding: 8px 16px; z-index: 1001; font-family: 'Orbitron', monospace; text-decoration: none; transition: top 0.3s;" onfocus="this.style.top='0'" onblur="this.style.top='-40px'">Zum Inhalt springen</a>
+    <a href="#main-content" class="skip-link" style="position: absolute; top: -40px; left: 0; background: var(--coherence-green); color: var(--deep-space); padding: 8px 16px; z-index: 1001; font-family: 'Atkinson Hyperlegible', sans-serif; text-decoration: none; transition: top 0.3s;" onfocus="this.style.top='0'" onblur="this.style.top='-40px'">Zum Inhalt springen</a>
 
     <nav>
         <a href="index.html" class="nav-logo">Echoelmusic</a>
@@ -590,8 +591,8 @@
             <a href="support.html" class="cta-button">Support kontaktieren</a>
         </div>
 
-        <div class="social-section" style="text-align: center; margin-top: 48px; padding: 32px; background: rgba(0,201,87,0.05); border: 1px solid rgba(0,201,87,0.2); border-radius: 20px;">
-            <h3 style="margin-bottom: 16px; font-family: 'Orbitron', monospace; color: var(--coherence-green);">Folge uns</h3>
+        <div class="social-section" style="text-align: center; margin-top: 48px; padding: 32px; background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.2); border-radius: 20px;">
+            <h3 style="margin-bottom: 16px; font-family: 'Atkinson Hyperlegible', sans-serif; color: var(--coherence-green);">Folge uns</h3>
             <div class="footer-social">
                 <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer">Instagram</a>
                 <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener noreferrer">TikTok</a>
