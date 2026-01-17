@@ -5,36 +5,6 @@
 # Windows + Linux → See .github/workflows/desktop_build.yml
 # =============================================================================
 
-definitions:
-  environment:
-    vars: &env_vars
-      XCODE_SCHEME: "Echoelmusic"
-      APP_ID: "com.echoelmusic.app"
-      BUNDLE_ID: "com.echoelmusic.app"
-      VERSION: "1.1.0"
-
-    ios_signing: &ios_signing
-      app_store_connect: Echoelmusic  # Configure in Codemagic UI
-
-    android_signing: &android_signing
-      - echoelmusic_keystore  # Configure in Codemagic UI
-
-  scripts:
-    - &install_deps
-      name: Install dependencies
-      script: swift package resolve
-
-    - &get_build_number
-      name: Get next build number
-      script: |
-        BUILD_NUMBER=$(($(app-store-connect get-latest-testflight-build-number "$APP_ID" || echo 0) + 1))
-        echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
-
-  cache: &cache
-    cache_paths:
-      - $HOME/Library/Caches/org.swift.swiftpm
-      - $HOME/.gradle/caches
-
 workflows:
   # ===========================================================================
   # iOS → TestFlight
@@ -43,9 +13,16 @@ workflows:
     name: iOS
     instance_type: mac_mini_m2
     max_build_duration: 60
+    integrations:
+      app_store_connect: Echoelmusic
     environment:
-      <<: *env_vars
-      ios_signing: *ios_signing
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.echoelmusic.app
+      vars:
+        XCODE_SCHEME: Echoelmusic
+        APP_ID: com.echoelmusic.app
+        VERSION: "1.1.0"
       xcode: 15.2
     triggering:
       events: [push, tag]
@@ -55,11 +32,14 @@ workflows:
       tag_patterns:
         - pattern: 'v*'
           include: true
-    cache: *cache
     scripts:
-      - *install_deps
-      - *get_build_number
-      - name: Build
+      - name: Install dependencies
+        script: swift package resolve
+      - name: Get build number
+        script: |
+          BUILD_NUMBER=$(($(app-store-connect get-latest-testflight-build-number "$APP_ID" || echo 0) + 1))
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
+      - name: Build iOS
         script: |
           xcodebuild archive \
             -scheme "$XCODE_SCHEME" \
@@ -69,13 +49,29 @@ workflows:
             CODE_SIGN_STYLE=Automatic \
             MARKETING_VERSION="$VERSION" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+      - name: Export IPA
+        script: |
+          xcodebuild -exportArchive \
+            -archivePath build/iOS.xcarchive \
+            -exportPath build/iOS \
+            -exportOptionsPlist /dev/stdin <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+          </dict></plist>
+          EOF
     artifacts:
-      - build/**/*.ipa
+      - build/iOS/*.ipa
     publishing:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
-        beta_groups: [Internal Testers]
+        beta_groups:
+          - Internal Testers
+    cache:
+      cache_paths:
+        - $HOME/Library/Caches/org.swift.swiftpm
 
   # ===========================================================================
   # macOS → TestFlight
@@ -84,9 +80,15 @@ workflows:
     name: macOS
     instance_type: mac_mini_m2
     max_build_duration: 60
+    integrations:
+      app_store_connect: Echoelmusic
     environment:
-      <<: *env_vars
-      ios_signing: *ios_signing
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.echoelmusic.mac
+      vars:
+        XCODE_SCHEME: Echoelmusic
+        VERSION: "1.1.0"
       xcode: 15.2
     triggering:
       events: [push, tag]
@@ -96,11 +98,10 @@ workflows:
       tag_patterns:
         - pattern: 'v*'
           include: true
-    cache: *cache
     scripts:
-      - *install_deps
-      - *get_build_number
-      - name: Build
+      - name: Install dependencies
+        script: swift package resolve
+      - name: Build macOS
         script: |
           xcodebuild archive \
             -scheme "$XCODE_SCHEME" \
@@ -109,36 +110,43 @@ workflows:
             -allowProvisioningUpdates \
             CODE_SIGN_STYLE=Automatic \
             MARKETING_VERSION="$VERSION" \
-            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+            CURRENT_PROJECT_VERSION="${BUILD_NUMBER:-1}"
     artifacts:
-      - build/**/*.pkg
-      - build/**/*.app
+      - build/macOS/*.pkg
+      - build/macOS/*.app
     publishing:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
+    cache:
+      cache_paths:
+        - $HOME/Library/Caches/org.swift.swiftpm
 
   # ===========================================================================
-  # watchOS → TestFlight (via iOS)
+  # watchOS → TestFlight (via iOS companion)
   # ===========================================================================
   watchos:
     name: watchOS
     instance_type: mac_mini_m2
     max_build_duration: 60
+    integrations:
+      app_store_connect: Echoelmusic
     environment:
-      <<: *env_vars
-      ios_signing: *ios_signing
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.echoelmusic.app.watchkitapp
+      vars:
+        VERSION: "1.1.0"
       xcode: 15.2
     triggering:
       events: [tag]
       tag_patterns:
         - pattern: 'v*'
           include: true
-    cache: *cache
     scripts:
-      - *install_deps
-      - *get_build_number
-      - name: Build
+      - name: Install dependencies
+        script: swift package resolve
+      - name: Build watchOS
         script: |
           xcodebuild archive \
             -scheme "Echoelmusic Watch" \
@@ -147,9 +155,9 @@ workflows:
             -allowProvisioningUpdates \
             CODE_SIGN_STYLE=Automatic \
             MARKETING_VERSION="$VERSION" \
-            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+            CURRENT_PROJECT_VERSION="${BUILD_NUMBER:-1}"
     artifacts:
-      - build/**/*.xcarchive
+      - build/watchOS/*.xcarchive
     publishing:
       app_store_connect:
         auth: integration
@@ -162,20 +170,25 @@ workflows:
     name: tvOS
     instance_type: mac_mini_m2
     max_build_duration: 60
+    integrations:
+      app_store_connect: Echoelmusic
     environment:
-      <<: *env_vars
-      ios_signing: *ios_signing
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.echoelmusic.tv
+      vars:
+        XCODE_SCHEME: Echoelmusic
+        VERSION: "1.1.0"
       xcode: 15.2
     triggering:
       events: [tag]
       tag_patterns:
         - pattern: 'v*'
           include: true
-    cache: *cache
     scripts:
-      - *install_deps
-      - *get_build_number
-      - name: Build
+      - name: Install dependencies
+        script: swift package resolve
+      - name: Build tvOS
         script: |
           xcodebuild archive \
             -scheme "$XCODE_SCHEME" \
@@ -184,9 +197,9 @@ workflows:
             -allowProvisioningUpdates \
             CODE_SIGN_STYLE=Automatic \
             MARKETING_VERSION="$VERSION" \
-            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+            CURRENT_PROJECT_VERSION="${BUILD_NUMBER:-1}"
     artifacts:
-      - build/**/*.ipa
+      - build/tvOS/*.ipa
     publishing:
       app_store_connect:
         auth: integration
@@ -199,20 +212,25 @@ workflows:
     name: visionOS
     instance_type: mac_mini_m2
     max_build_duration: 60
+    integrations:
+      app_store_connect: Echoelmusic
     environment:
-      <<: *env_vars
-      ios_signing: *ios_signing
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.echoelmusic.vision
+      vars:
+        XCODE_SCHEME: Echoelmusic
+        VERSION: "1.1.0"
       xcode: 15.2
     triggering:
       events: [tag]
       tag_patterns:
         - pattern: 'v*'
           include: true
-    cache: *cache
     scripts:
-      - *install_deps
-      - *get_build_number
-      - name: Build
+      - name: Install dependencies
+        script: swift package resolve
+      - name: Build visionOS
         script: |
           xcodebuild archive \
             -scheme "$XCODE_SCHEME" \
@@ -221,9 +239,9 @@ workflows:
             -allowProvisioningUpdates \
             CODE_SIGN_STYLE=Automatic \
             MARKETING_VERSION="$VERSION" \
-            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+            CURRENT_PROJECT_VERSION="${BUILD_NUMBER:-1}"
     artifacts:
-      - build/**/*.ipa
+      - build/visionOS/*.ipa
     publishing:
       app_store_connect:
         auth: integration
@@ -237,9 +255,11 @@ workflows:
     instance_type: linux_x2
     max_build_duration: 60
     environment:
-      <<: *env_vars
-      android_signing: *android_signing
+      android_signing:
+        - keystore_reference: echoelmusic_keystore
       java: 17
+      vars:
+        VERSION: "1.1.0"
     triggering:
       events: [push, tag]
       branch_patterns:
@@ -248,16 +268,12 @@ workflows:
       tag_patterns:
         - pattern: 'v*'
           include: true
-    cache:
-      cache_paths:
-        - $HOME/.gradle/caches
-        - android/.gradle
     scripts:
       - name: Set version
         script: |
           cd android
-          sed -i "s/versionCode = [0-9]*/versionCode = $BUILD_ID/" app/build.gradle.kts
-          sed -i "s/versionName = \"[^\"]*\"/versionName = \"$VERSION\"/" app/build.gradle.kts
+          sed -i "s/versionCode = [0-9]*/versionCode = $BUILD_NUMBER/" app/build.gradle.kts 2>/dev/null || true
+          sed -i "s/versionName = \"[^\"]*\"/versionName = \"$VERSION\"/" app/build.gradle.kts 2>/dev/null || true
       - name: Build
         script: |
           cd android
@@ -266,8 +282,7 @@ workflows:
     artifacts:
       - android/app/build/outputs/**/*.apk
       - android/app/build/outputs/**/*.aab
-    publishing:
-      google_play:
-        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-        track: internal
-        submit_as_draft: true
+    cache:
+      cache_paths:
+        - $HOME/.gradle/caches
+        - android/.gradle
