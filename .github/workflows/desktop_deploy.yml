@@ -1,0 +1,499 @@
+# =============================================================================
+# Echoelmusic - Desktop & Android Deployment Pipeline
+# =============================================================================
+# Automated Build & Distribution for Windows, Linux, and Android
+# Outputs: Windows MSIX, Linux Flatpak/AppImage, Android APK/AAB
+# =============================================================================
+
+name: Desktop & Android Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - windows
+          - linux
+          - android
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - debug
+          - release
+
+env:
+  VERSION: '1.1.0'
+
+# Required GitHub Secrets (add when ready):
+# Windows:
+#   - WINDOWS_CERTIFICATE_BASE64
+#   - WINDOWS_CERTIFICATE_PASSWORD
+#   - MICROSOFT_STORE_CLIENT_ID (optional for Store)
+#   - MICROSOFT_STORE_CLIENT_SECRET (optional for Store)
+#
+# Android:
+#   - ANDROID_KEYSTORE_BASE64
+#   - ANDROID_KEYSTORE_PASSWORD
+#   - ANDROID_KEY_ALIAS
+#   - ANDROID_KEY_PASSWORD
+#   - GOOGLE_PLAY_SERVICE_ACCOUNT_JSON (optional for Play Store)
+
+jobs:
+  # ===========================================================================
+  # Pre-flight Checks
+  # ===========================================================================
+  preflight:
+    name: Pre-flight Validation
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_number: ${{ steps.version.outputs.build_number }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Extract Version Info
+        id: version
+        run: |
+          VERSION="${{ env.VERSION }}"
+          BUILD=${{ github.run_number }}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION (Build $BUILD)"
+
+  # ===========================================================================
+  # Windows Build (MSIX + Portable)
+  # ===========================================================================
+  windows:
+    name: Windows Build
+    runs-on: windows-latest
+    needs: preflight
+    if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'windows' || github.event.inputs.platform == ''
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSVC
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '2024.01.12'
+
+      - name: Install Dependencies
+        run: |
+          vcpkg install asio:x64-windows
+          vcpkg install portaudio:x64-windows
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -S . `
+            -DCMAKE_BUILD_TYPE=${{ github.event.inputs.build_type || 'Release' }} `
+            -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake `
+            -DENABLE_ASIO=ON `
+            -DENABLE_WASAPI=ON `
+            -DVERSION="${{ needs.preflight.outputs.version }}" `
+            -DBUILD_NUMBER="${{ needs.preflight.outputs.build_number }}"
+
+      - name: Build
+        run: cmake --build build --config ${{ github.event.inputs.build_type || 'Release' }} --parallel
+
+      - name: Create Portable ZIP
+        run: |
+          mkdir -p dist/Echoelmusic-Windows
+          cp build/Release/*.exe dist/Echoelmusic-Windows/
+          cp build/Release/*.dll dist/Echoelmusic-Windows/ 2>$null || true
+          cp -r Resources dist/Echoelmusic-Windows/
+          Compress-Archive -Path dist/Echoelmusic-Windows -DestinationPath dist/Echoelmusic-Windows-${{ needs.preflight.outputs.version }}-portable.zip
+
+      - name: Create MSIX Package
+        if: secrets.WINDOWS_CERTIFICATE_BASE64 != ''
+        run: |
+          # Decode certificate
+          $certBytes = [System.Convert]::FromBase64String("${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}")
+          [System.IO.File]::WriteAllBytes("cert.pfx", $certBytes)
+
+          # Create MSIX
+          & "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\makeappx.exe" pack `
+            /d dist/Echoelmusic-Windows `
+            /p dist/Echoelmusic-${{ needs.preflight.outputs.version }}.msix
+
+          # Sign MSIX
+          & "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign `
+            /fd SHA256 `
+            /f cert.pfx `
+            /p "${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}" `
+            dist/Echoelmusic-${{ needs.preflight.outputs.version }}.msix
+
+          # Cleanup
+          Remove-Item cert.pfx
+
+      - name: Upload Windows Portable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Windows-${{ needs.preflight.outputs.version }}-portable
+          path: dist/Echoelmusic-Windows-${{ needs.preflight.outputs.version }}-portable.zip
+          retention-days: 30
+
+      - name: Upload Windows MSIX
+        if: secrets.WINDOWS_CERTIFICATE_BASE64 != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Windows-${{ needs.preflight.outputs.version }}-msix
+          path: dist/Echoelmusic-${{ needs.preflight.outputs.version }}.msix
+          retention-days: 30
+
+  # ===========================================================================
+  # Linux Build (AppImage + Flatpak)
+  # ===========================================================================
+  linux:
+    name: Linux Build
+    runs-on: ubuntu-22.04
+    needs: preflight
+    if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'linux' || github.event.inputs.platform == ''
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            libasound2-dev \
+            libjack-jackd2-dev \
+            libpipewire-0.3-dev \
+            libpulse-dev \
+            libgl1-mesa-dev \
+            libx11-dev \
+            libxrandr-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libxinerama-dev \
+            libfuse2 \
+            flatpak \
+            flatpak-builder
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -S . \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ github.event.inputs.build_type || 'Release' }} \
+            -DENABLE_JACK=ON \
+            -DENABLE_PIPEWIRE=ON \
+            -DENABLE_ALSA=ON \
+            -DVERSION="${{ needs.preflight.outputs.version }}" \
+            -DBUILD_NUMBER="${{ needs.preflight.outputs.build_number }}"
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Create AppDir
+        run: |
+          mkdir -p AppDir/usr/bin
+          mkdir -p AppDir/usr/lib
+          mkdir -p AppDir/usr/share/applications
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+
+          cp build/Echoelmusic AppDir/usr/bin/
+          cp build/*.so AppDir/usr/lib/ 2>/dev/null || true
+
+          # Create desktop file
+          cat > AppDir/usr/share/applications/echoelmusic.desktop << 'EOF'
+          [Desktop Entry]
+          Name=Echoelmusic
+          Comment=Bio-reactive audio-visual platform
+          Exec=Echoelmusic
+          Icon=echoelmusic
+          Type=Application
+          Categories=Audio;AudioVideo;Music;
+          Keywords=music;audio;biofeedback;
+          EOF
+
+          # Copy icon (use placeholder if not exists)
+          cp Resources/AppIcon.png AppDir/usr/share/icons/hicolor/256x256/apps/echoelmusic.png 2>/dev/null || \
+            convert -size 256x256 xc:purple AppDir/usr/share/icons/hicolor/256x256/apps/echoelmusic.png
+
+      - name: Create AppImage
+        run: |
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+
+          # Create AppRun
+          cat > AppDir/AppRun << 'EOF'
+          #!/bin/bash
+          HERE="$(dirname "$(readlink -f "$0")")"
+          export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
+          exec "$HERE/usr/bin/Echoelmusic" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+
+          # Build AppImage
+          ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir dist/Echoelmusic-${{ needs.preflight.outputs.version }}-x86_64.AppImage
+
+      - name: Setup Flatpak
+        run: |
+          sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install -y flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
+
+      - name: Create Flatpak Manifest
+        run: |
+          cat > com.echoelmusic.Echoelmusic.yml << EOF
+          app-id: com.echoelmusic.Echoelmusic
+          runtime: org.freedesktop.Platform
+          runtime-version: '23.08'
+          sdk: org.freedesktop.Sdk
+          command: Echoelmusic
+          finish-args:
+            - --share=ipc
+            - --socket=x11
+            - --socket=wayland
+            - --socket=pulseaudio
+            - --device=all
+            - --share=network
+            - --filesystem=home
+          modules:
+            - name: echoelmusic
+              buildsystem: simple
+              build-commands:
+                - install -Dm755 Echoelmusic /app/bin/Echoelmusic
+                - install -Dm644 echoelmusic.desktop /app/share/applications/com.echoelmusic.Echoelmusic.desktop
+              sources:
+                - type: file
+                  path: build/Echoelmusic
+                - type: file
+                  path: AppDir/usr/share/applications/echoelmusic.desktop
+                  dest-filename: echoelmusic.desktop
+          EOF
+
+      - name: Build Flatpak
+        run: |
+          flatpak-builder --force-clean --repo=repo flatpak-build com.echoelmusic.Echoelmusic.yml
+          flatpak build-bundle repo dist/Echoelmusic-${{ needs.preflight.outputs.version }}.flatpak com.echoelmusic.Echoelmusic
+
+      - name: Upload Linux AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Linux-${{ needs.preflight.outputs.version }}-AppImage
+          path: dist/Echoelmusic-${{ needs.preflight.outputs.version }}-x86_64.AppImage
+          retention-days: 30
+
+      - name: Upload Linux Flatpak
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Linux-${{ needs.preflight.outputs.version }}-Flatpak
+          path: dist/Echoelmusic-${{ needs.preflight.outputs.version }}.flatpak
+          retention-days: 30
+
+  # ===========================================================================
+  # Android Build (APK + AAB)
+  # ===========================================================================
+  android:
+    name: Android Build
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android' || github.event.inputs.platform == ''
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant Gradle Execute Permission
+        run: chmod +x android/gradlew
+
+      - name: Update Version
+        run: |
+          cd android
+          sed -i "s/versionCode = [0-9]*/versionCode = ${{ needs.preflight.outputs.build_number }}/" app/build.gradle.kts
+          sed -i "s/versionName = \"[^\"]*\"/versionName = \"${{ needs.preflight.outputs.version }}\"/" app/build.gradle.kts
+
+      - name: Build Debug APK
+        if: github.event.inputs.build_type == 'debug'
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Build Release APK & AAB
+        if: github.event.inputs.build_type != 'debug'
+        run: |
+          cd android
+          ./gradlew assembleRelease bundleRelease
+
+      - name: Sign APK
+        if: github.event.inputs.build_type != 'debug' && secrets.ANDROID_KEYSTORE_BASE64 != ''
+        run: |
+          # Decode keystore
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+
+          # Sign APK
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+            --ks keystore.jks \
+            --ks-pass pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+            --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} \
+            --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} \
+            --out android/app/build/outputs/apk/release/Echoelmusic-${{ needs.preflight.outputs.version }}-signed.apk \
+            android/app/build/outputs/apk/release/app-release-unsigned.apk
+
+          # Sign AAB
+          jarsigner \
+            -keystore keystore.jks \
+            -storepass ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+            -keypass ${{ secrets.ANDROID_KEY_PASSWORD }} \
+            android/app/build/outputs/bundle/release/app-release.aab \
+            ${{ secrets.ANDROID_KEY_ALIAS }}
+
+          # Cleanup
+          rm keystore.jks
+
+      - name: Upload Debug APK
+        if: github.event.inputs.build_type == 'debug'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Android-${{ needs.preflight.outputs.version }}-debug
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30
+
+      - name: Upload Release APK
+        if: github.event.inputs.build_type != 'debug'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Android-${{ needs.preflight.outputs.version }}-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          retention-days: 30
+
+      - name: Upload Release AAB
+        if: github.event.inputs.build_type != 'debug'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echoelmusic-Android-${{ needs.preflight.outputs.version }}-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+          retention-days: 30
+
+      - name: Upload to Google Play (Internal Testing)
+        if: github.event.inputs.build_type != 'debug' && secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != ''
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.echoelmusic.app
+          releaseFiles: android/app/build/outputs/bundle/release/*.aab
+          track: internal
+          status: draft
+
+  # ===========================================================================
+  # Deployment Summary
+  # ===========================================================================
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [preflight, windows, linux, android]
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🖥️ Desktop & Android Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.preflight.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Build:** ${{ needs.preflight.outputs.build_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Type:** ${{ github.event.inputs.build_type || 'Release' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Format | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Windows | MSIX + Portable | ${{ needs.windows.result == 'success' && '✅ Success' || needs.windows.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Linux | AppImage + Flatpak | ${{ needs.linux.result == 'success' && '✅ Success' || needs.linux.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Android | APK + AAB | ${{ needs.android.result == 'success' && '✅ Success' || needs.android.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Distribution Formats" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Windows" >> $GITHUB_STEP_SUMMARY
+          echo "- **MSIX**: Microsoft Store ready (requires signing cert)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Portable ZIP**: Direct download, no install" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Linux" >> $GITHUB_STEP_SUMMARY
+          echo "- **AppImage**: Universal Linux, runs anywhere" >> $GITHUB_STEP_SUMMARY
+          echo "- **Flatpak**: Sandboxed, Flathub ready" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Android" >> $GITHUB_STEP_SUMMARY
+          echo "- **APK**: Direct install / sideload" >> $GITHUB_STEP_SUMMARY
+          echo "- **AAB**: Google Play Store format" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # Create GitHub Release
+  # ===========================================================================
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [preflight, windows, linux, android]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Echoelmusic v${{ needs.preflight.outputs.version }}
+          body: |
+            ## Echoelmusic v${{ needs.preflight.outputs.version }}
+
+            ### Downloads
+
+            **Windows**
+            - MSIX (Microsoft Store format)
+            - Portable ZIP (no installation required)
+
+            **Linux**
+            - AppImage (universal, runs anywhere)
+            - Flatpak (sandboxed)
+
+            **Android**
+            - APK (direct install)
+            - AAB (Play Store)
+
+            ### Changes
+            See CHANGELOG.md for details.
+          files: |
+            artifacts/**/*.zip
+            artifacts/**/*.msix
+            artifacts/**/*.AppImage
+            artifacts/**/*.flatpak
+            artifacts/**/*.apk
+            artifacts/**/*.aab
+          draft: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
