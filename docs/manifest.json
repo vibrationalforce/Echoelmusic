@@ -42,13 +42,6 @@
       "description": "Start a bio-reactive session",
       "url": "/Echoelmusic/?action=session",
       "icons": [{"src": "favicon.svg", "sizes": "any"}]
-    },
-    {
-      "name": "Adey Windows",
-      "short_name": "Adey",
-      "description": "Explore frequency-body mapping",
-      "url": "/Echoelmusic/#adey-demo",
-      "icons": [{"src": "favicon.svg", "sizes": "any"}]
     }
   ],
   "related_applications": [

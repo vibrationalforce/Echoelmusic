@@ -165,6 +165,9 @@ struct VaporwaveApp: View {
             }
             .frame(maxWidth: .infinity)
         }
+        .accessibilityLabel("\(tab.label) tab")
+        .accessibilityAddTraits(selectedTab == tab ? .isSelected : [])
+        .accessibilityHint("Double tap to switch to \(tab.label.lowercased())")
     }
 
     // MARK: - Helpers
@@ -274,6 +277,9 @@ struct CreateView: View {
             .padding(VaporwaveSpacing.md)
             .glassCard()
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title), \(subtitle)")
+        .accessibilityHint("Double tap to start this session type")
     }
 }
 
@@ -399,6 +405,8 @@ struct ProfileView: View {
         .frame(maxWidth: .infinity)
         .padding(VaporwaveSpacing.md)
         .glassCard()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 
     private func achievementBadge(icon: String, title: String, color: Color) -> some View {
@@ -419,6 +427,8 @@ struct ProfileView: View {
                 .foregroundColor(VaporwaveColors.textSecondary)
         }
         .padding(VaporwaveSpacing.sm)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Achievement: \(title)")
     }
 
     private func connectionRow(icon: String, title: String, status: String, connected: Bool) -> some View {
@@ -446,6 +456,9 @@ struct ProfileView: View {
         }
         .padding(VaporwaveSpacing.md)
         .glassCard()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title), \(status)")
+        .accessibilityValue(connected ? "Connected" : "Not connected")
     }
 }
 

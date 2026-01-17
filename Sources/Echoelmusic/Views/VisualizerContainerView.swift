@@ -105,6 +105,8 @@ struct VisualizerContainerView: View {
                             .stroke(VaporwaveColors.neonCyan.opacity(0.3), lineWidth: 1)
                     )
                 }
+                .accessibilityLabel("Visualization mode: \(visualEngine.currentMode.rawValue)")
+                .accessibilityHint("Double tap to change visualization mode")
 
                 Spacer()
 
@@ -120,6 +122,7 @@ struct VisualizerContainerView: View {
                         .padding(12)
                         .background(Circle().fill(Color.black.opacity(0.5)))
                 }
+                .accessibilityLabel("Enter fullscreen")
             }
             .padding(.horizontal, VaporwaveSpacing.lg)
             .padding(.top, VaporwaveSpacing.lg)

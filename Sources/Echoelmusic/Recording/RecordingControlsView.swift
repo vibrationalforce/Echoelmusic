@@ -56,6 +56,8 @@ struct RecordingControlsView: View {
                             .fill(Color.cyan.opacity(0.3))
                     )
                 }
+                .accessibilityLabel("Create new recording session")
+                .accessibilityHint("Opens session creation wizard")
             } else {
                 // Recording controls
                 recordingControlsSection
@@ -122,6 +124,8 @@ struct RecordingControlsView: View {
                         .foregroundColor(.white.opacity(0.7))
                 }
             }
+            .accessibilityLabel(recordingEngine.isRecording ? "Stop recording" : "Start recording")
+            .accessibilityHint(recordingEngine.isRecording ? "Stops the current recording" : "Begins recording audio and bio-data")
 
             Spacer()
 
@@ -184,6 +188,8 @@ struct RecordingControlsView: View {
                     )
             }
             .disabled(recordingEngine.isRecording)
+            .accessibilityLabel(recordingEngine.isPlaying ? "Pause playback" : "Play recording")
+            .accessibilityHint(recordingEngine.isPlaying ? "Pauses audio playback" : "Starts playing the recorded audio")
 
             // Stop button
             Button(action: stopPlayback) {
@@ -197,6 +203,8 @@ struct RecordingControlsView: View {
                     )
             }
             .disabled(!recordingEngine.isPlaying)
+            .accessibilityLabel("Stop playback")
+            .accessibilityHint("Stops audio playback and returns to beginning")
 
             // Progress slider
             if let session = recordingEngine.currentSession, session.duration > 0 {
@@ -239,6 +247,8 @@ struct RecordingControlsView: View {
                         .fill(Color.white.opacity(0.1))
                 )
             }
+            .accessibilityLabel("View tracks, \(recordingEngine.currentSession?.tracks.count ?? 0) total")
+            .accessibilityHint("Opens track list for editing and management")
 
             // Mixer button
             Button(action: { showMixer.toggle() }) {
@@ -256,6 +266,8 @@ struct RecordingControlsView: View {
                         .fill(Color.white.opacity(0.1))
                 )
             }
+            .accessibilityLabel("Open mixer")
+            .accessibilityHint("Opens audio mixer with volume and pan controls")
 
             // Export button
             Button(action: { showExportOptions.toggle() }) {
@@ -274,6 +286,8 @@ struct RecordingControlsView: View {
                 )
             }
             .disabled(recordingEngine.currentSession?.tracks.isEmpty ?? true)
+            .accessibilityLabel("Export session")
+            .accessibilityHint("Opens export options for audio and bio-data")
         }
     }
 

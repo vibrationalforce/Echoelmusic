@@ -10,14 +10,14 @@ import Combine
 // - Windows: WASAPI, ASIO, FlexASIO (Native ASIO support coming late 2025)
 // - Linux: ALSA, JACK, PipeWire (pipewire.org, wiki.archlinux.org/title/Professional_audio)
 // - Meta Quest: Meta XR Audio SDK, Spatial SDK (developers.meta.com/horizon)
-// - Tesla: Developer API (developer.tesla.com)
+// - CarPlay: Audio app integration (developer.apple.com/carplay)
 // - Wear OS: Health Services API (developer.android.com/health-and-fitness)
 // - Lighting: DMX512, Art-Net, sACN (E1.31)
 // - Video: Blackmagic ATEM, NDI, RTMP, SRT
 
 /// The ultimate hardware ecosystem for professional audio, video, lighting, and broadcasting
 /// Supports ALL major platforms: iOS, macOS, watchOS, tvOS, visionOS, Android, Windows, Linux
-/// Plus vehicles (Tesla, CarPlay), VR/AR (Quest, Vision Pro), and smart home devices
+/// Plus CarPlay, Android Auto, VR/AR (Quest, Vision Pro), and smart home devices
 @MainActor
 public final class HardwareEcosystem: ObservableObject {
 
@@ -39,7 +39,6 @@ public final class HardwareEcosystem: ObservableObject {
     public let videoHardware = VideoHardwareRegistry()
     public let broadcastEquipment = BroadcastEquipmentRegistry()
     public let smartHomeDevices = SmartHomeRegistry()
-    public let vehicleIntegration = VehicleIntegrationRegistry()
     public let vrArDevices = VRARDeviceRegistry()
     public let wearableDevices = WearableDeviceRegistry()
 
@@ -138,8 +137,7 @@ public enum DeviceType: String, CaseIterable {
     case lightFixture = "Light Fixture"
     case ledStrip = "LED Strip"
 
-    // Vehicles
-    case tesla = "Tesla"
+    // In-Car Audio Platforms
     case carPlay = "CarPlay"
     case androidAuto = "Android Auto"
 
@@ -176,8 +174,7 @@ public enum DevicePlatform: String, CaseIterable {
     // Meta
     case questOS = "Quest OS"
 
-    // Vehicles
-    case teslaOS = "Tesla OS"
+    // In-Car Audio Platforms
     case carPlay = "CarPlay"
 
     // Smart Home
@@ -1528,71 +1525,6 @@ public final class SmartHomeRegistry {
     ]
 }
 
-// MARK: - Vehicle Integration Registry
-
-public final class VehicleIntegrationRegistry {
-
-    public enum VehiclePlatform: String, CaseIterable {
-        case teslaOS = "Tesla OS"
-        case appleCarPlay = "Apple CarPlay"
-        case androidAuto = "Android Auto"
-        case amazonAuto = "Amazon Alexa Auto"
-    }
-
-    public struct VehicleFeature: Identifiable, Hashable {
-        public let id: UUID
-        public let platform: VehiclePlatform
-        public let feature: String
-        public let available: Bool
-        public let notes: String
-
-        public init(
-            id: UUID = UUID(),
-            platform: VehiclePlatform,
-            feature: String,
-            available: Bool,
-            notes: String = ""
-        ) {
-            self.id = id
-            self.platform = platform
-            self.feature = feature
-            self.available = available
-            self.notes = notes
-        }
-    }
-
-    /// Vehicle integration features
-    public let features: [VehicleFeature] = [
-        // Tesla
-        VehicleFeature(platform: .teslaOS, feature: "Audio Streaming", available: true,
-                      notes: "Via Bluetooth/USB"),
-        VehicleFeature(platform: .teslaOS, feature: "Ambient Lighting Sync", available: true,
-                      notes: "Light Sync feature (2025.26+)"),
-        VehicleFeature(platform: .teslaOS, feature: "Grok AI Integration", available: true,
-                      notes: "AMD Ryzen required"),
-        VehicleFeature(platform: .teslaOS, feature: "Third-Party Apps", available: true,
-                      notes: "Via Tesla Developer API"),
-
-        // Apple CarPlay
-        VehicleFeature(platform: .appleCarPlay, feature: "Audio Apps", available: true,
-                      notes: "MediaPlayer framework"),
-        VehicleFeature(platform: .appleCarPlay, feature: "Now Playing", available: true,
-                      notes: "CPNowPlayingTemplate"),
-        VehicleFeature(platform: .appleCarPlay, feature: "Dashboard", available: true,
-                      notes: "CPDashboardController"),
-        VehicleFeature(platform: .appleCarPlay, feature: "Instrument Cluster", available: true,
-                      notes: "CPInstrumentClusterController"),
-
-        // Android Auto
-        VehicleFeature(platform: .androidAuto, feature: "Media Apps", available: true,
-                      notes: "MediaBrowserServiceCompat"),
-        VehicleFeature(platform: .androidAuto, feature: "Audio Focus", available: true,
-                      notes: "AudioManager.requestAudioFocus"),
-        VehicleFeature(platform: .androidAuto, feature: "Voice Commands", available: true,
-                      notes: "Google Assistant integration"),
-    ]
-}
-
 // MARK: - VR/AR Device Registry
 
 public final class VRARDeviceRegistry {
@@ -1840,11 +1772,10 @@ extension HardwareEcosystem {
                 [.visionPro, .appleWatch, .airPods],
                 [.metaQuest, .wearOS],
             ]
-        case .vehicleIntegration:
+        case .carAudio:
             return [
                 [.iPhone, .appleWatch, .carPlay],
                 [.androidPhone, .wearOS, .androidAuto],
-                [.tesla, .iPhone, .appleWatch],
             ]
         }
     }
@@ -1856,7 +1787,7 @@ extension HardwareEcosystem {
         case meditation = "Meditation"
         case collaboration = "Collaboration"
         case vrExperience = "VR Experience"
-        case vehicleIntegration = "Vehicle Integration"
+        case carAudio = "Car Audio"
     }
 }
 
@@ -1922,10 +1853,10 @@ extension HardwareEcosystem {
         Protocols: HomeKit, Matter, Thread, Zigbee, Z-Wave, WiFi
         Brands: Philips Hue, Nanoleaf, LIFX, Govee, Apple HomePod
 
-        🚗 VEHICLE INTEGRATION: On The Road
+        🚗 CAR AUDIO: Music On The Road
         ───────────────────────────────────────────────────────────────────
-        Platforms: Tesla OS, Apple CarPlay, Android Auto
-        Features: Audio Streaming, Ambient Light Sync, Voice Control
+        Platforms: Apple CarPlay, Android Auto
+        Features: Audio Apps, Now Playing, Voice Control
 
         🥽 VR/AR DEVICES: Immersive Experiences
         ───────────────────────────────────────────────────────────────────
@@ -1963,8 +1894,8 @@ extension HardwareEcosystem {
         🥽 VR Experience:
            Vision Pro + Apple Watch + AirPods
 
-        🚗 Vehicle:
-           iPhone + Apple Watch + CarPlay/Tesla
+        🚗 Car Audio:
+           iPhone + Apple Watch + CarPlay / Android Auto
 
         ═══════════════════════════════════════════════════════════════════
         ✅ Nobel Prize Multitrillion Dollar Company Ready

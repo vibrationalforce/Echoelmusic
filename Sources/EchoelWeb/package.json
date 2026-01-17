@@ -1,0 +1,65 @@
+{
+  "name": "@echoelmusic/web",
+  "version": "1.0.0",
+  "description": "Echoelmusic - Bio-Reactive Audio Synthesis for Web",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format esm --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "test": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "audio",
+    "synthesis",
+    "web-audio",
+    "biometric",
+    "hrv",
+    "music",
+    "bio-reactive",
+    "echoelmusic"
+  ],
+  "author": "Echoelmusic Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/echoelmusic/echoelmusic.git",
+    "directory": "Sources/EchoelWeb"
+  },
+  "homepage": "https://echoelmusic.com",
+  "bugs": {
+    "url": "https://github.com/echoelmusic/echoelmusic/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "eslint": "^8.55.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.4"
+  },
+  "peerDependencies": {},
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions",
+    "last 2 Edge versions"
+  ]
+}

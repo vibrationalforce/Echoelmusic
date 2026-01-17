@@ -338,10 +338,16 @@ public final class RealTimeHealthKitEngine: ObservableObject {
             self?.processHeartRateSamples(samples)
         }
 
-        healthStore.execute(heartRateQuery!)
+        if let query = heartRateQuery {
+            healthStore.execute(query)
+        }
 
         // HRV query
-        let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
+        guard let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else {
+            log.biofeedback("⚠️ HRV type not available")
+            return
+        }
+
         hrvQuery = HKAnchoredObjectQuery(
             type: hrvType,
             predicate: nil,
@@ -355,7 +361,9 @@ public final class RealTimeHealthKitEngine: ObservableObject {
             self?.processHRVSamples(samples)
         }
 
-        healthStore.execute(hrvQuery!)
+        if let query = hrvQuery {
+            healthStore.execute(query)
+        }
     }
 
     private func stopHealthKitQueries() {

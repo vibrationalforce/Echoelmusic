@@ -130,10 +130,14 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
     // MARK: - Audio Format
 
     /// Default audio format (48kHz, stereo, float32)
-    public static let defaultFormat = AVAudioFormat(
-        standardFormatWithSampleRate: 48000,
-        channels: 2
-    )!
+    public static let defaultFormat: AVAudioFormat = {
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) else {
+            // Fallback to common format - should never fail
+            return AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 48000, channels: 2, interleaved: false)
+                ?? AVAudioFormat()
+        }
+        return format
+    }()
 
     // MARK: - Initialization
 
@@ -560,22 +564,22 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
                 }
             }
 
-            // Process MIDI events
-            var event = realtimeEventListHead?.pointee
-            while event != nil {
-                switch event!.head.eventType {
+            // Process MIDI events safely
+            var currentEvent = realtimeEventListHead?.pointee
+            while let event = currentEvent {
+                switch event.head.eventType {
                 case .MIDI:
-                    let midiEvent = event!.MIDI
+                    let midiEvent = event.MIDI
                     kernel.handleMIDI(
                         status: midiEvent.data.0,
                         data1: midiEvent.data.1,
                         data2: midiEvent.data.2,
-                        sampleOffset: AUEventSampleTime(event!.head.eventSampleTime)
+                        sampleOffset: AUEventSampleTime(event.head.eventSampleTime)
                     )
                 case .midiSysEx:
                     break
                 case .parameter:
-                    let paramEvent = event!.parameter
+                    let paramEvent = event.parameter
                     kernel.setParameter(
                         address: paramEvent.parameterAddress,
                         value: paramEvent.value
@@ -583,7 +587,7 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
                 default:
                     break
                 }
-                event = event!.head.next?.pointee
+                currentEvent = event.head.next?.pointee
             }
 
             // Render audio

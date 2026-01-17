@@ -16,3 +16,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Echoelmusic"
 include(":app")
+include(":wear")
+include(":automotive")

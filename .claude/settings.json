@@ -89,7 +89,7 @@
     "visual": ["QuantumLightEmulator", "PhotonicsVisualizationEngine", "CymaticsRenderer"],
     "biofeedback": ["HealthKitManager", "BioParameterMapper", "RealTimeHealthKitEngine"],
     "quantum": ["QuantumLoopLightScience", "QuantumHealthBiofeedback"],
-    "wellness": ["LongevityNutritionEngine", "NeuroSpiritualEngine", "WellnessTrackingEngine"],
+    "wellness": ["CircadianRhythmEngine", "EvidenceBasedHRVTraining", "BioModulator"],
     "production": ["StreamEngine", "VideoProcessingEngine", "CreativeStudioEngine"]
   }
 }

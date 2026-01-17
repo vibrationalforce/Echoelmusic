@@ -1389,9 +1389,6 @@ public struct SourceFiles {
         // Scientific
         .init(path: "Sources/Echoelmusic/Science/ScientificVisualizationEngine.swift"),
 
-        // Wellness
-        .init(path: "Sources/Echoelmusic/Wellness/WellnessTrackingEngine.swift"),
-
         // Collaboration
         .init(path: "Sources/Echoelmusic/Collaboration/WorldwideCollaborationHub.swift"),
         .init(path: "Sources/Echoelmusic/Collaboration/SocialCoherenceEngine.swift"),

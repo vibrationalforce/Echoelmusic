@@ -132,7 +132,7 @@ class AIComposer: ObservableObject {
         var currentBeat: Double = 0
 
         while currentBeat < Double(totalBeats) {
-            let pattern = rhythmPatterns.randomElement()!
+            guard let pattern = rhythmPatterns.randomElement() else { break }
 
             for duration in pattern {
                 guard currentBeat + duration <= Double(totalBeats) else { break }
@@ -167,12 +167,13 @@ class AIComposer: ObservableObject {
         let isStep = Double.random(in: 0...1) < 0.7
 
         if isStep {
-            // Move to adjacent scale degree
-            return Bool.random() ? scale.randomElement()! : -(scale.randomElement()!)
+            // Move to adjacent scale degree (default to 2 semitones if scale empty)
+            let interval = scale.randomElement() ?? 2
+            return Bool.random() ? interval : -interval
         } else {
-            // Leap (3rd, 4th, or 5th)
+            // Leap (3rd, 4th, or 5th) - array always non-empty
             let leaps = [-7, -5, -4, -3, 3, 4, 5, 7]
-            return leaps.randomElement()!
+            return leaps.randomElement() ?? 3
         }
     }
 

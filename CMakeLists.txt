@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(Echoelmusic VERSION 1.0.0 LANGUAGES CXX)
+project(Echoelmusic VERSION 1.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -95,8 +95,9 @@ option(ENABLE_WASAPI "Enable WASAPI support (Windows)" ON)
 option(ENABLE_DIRECTSOUND "Enable DirectSound (Windows)" ON)
 
 option(ENABLE_ALSA "Enable ALSA support (Linux)" ON)
-option(ENABLE_JACK "Enable JACK support (Linux)" OFF)  # Disabled for minimal build
-option(ENABLE_PULSEAUDIO "Enable PulseAudio (Linux)" OFF)  # Disabled for minimal build
+option(ENABLE_JACK "Enable JACK support (Linux)" ON)   # Enabled for professional audio (<10ms latency)
+option(ENABLE_PIPEWIRE "Enable PipeWire support (Linux)" ON)  # Modern Linux audio (<15ms latency)
+option(ENABLE_PULSEAUDIO "Enable PulseAudio (Linux)" OFF)  # Deprecated - use PipeWire instead
 
 option(ENABLE_ANDROID_OBOE "Enable Oboe (Android)" ON)
 option(ENABLE_ANDROID_AAUDIO "Enable AAudio (Android)" ON)
@@ -619,21 +620,39 @@ elseif(UNIX AND NOT APPLE)
         target_include_directories(Echoelmusic PRIVATE ${ALSA_INCLUDE_DIRS})
     endif()
 
-    # JACK
+    # JACK (Professional audio - <10ms latency)
     if(ENABLE_JACK)
         pkg_check_modules(JACK jack)
         if(JACK_FOUND)
             target_link_libraries(Echoelmusic PRIVATE ${JACK_LIBRARIES})
             target_include_directories(Echoelmusic PRIVATE ${JACK_INCLUDE_DIRS})
+            target_compile_definitions(Echoelmusic PRIVATE ECHOELMUSIC_JACK_AVAILABLE=1)
+            message(STATUS "    - JACK: Found (Professional low-latency audio)")
+        else()
+            message(STATUS "    - JACK: Not found (install libjack-dev for <10ms latency)")
         endif()
     endif()
 
-    # PulseAudio
+    # PipeWire (Modern Linux audio - <15ms latency)
+    if(ENABLE_PIPEWIRE)
+        pkg_check_modules(PIPEWIRE libpipewire-0.3)
+        if(PIPEWIRE_FOUND)
+            target_link_libraries(Echoelmusic PRIVATE ${PIPEWIRE_LIBRARIES})
+            target_include_directories(Echoelmusic PRIVATE ${PIPEWIRE_INCLUDE_DIRS})
+            target_compile_definitions(Echoelmusic PRIVATE ECHOELMUSIC_PIPEWIRE_AVAILABLE=1)
+            message(STATUS "    - PipeWire: Found (Modern low-latency audio)")
+        else()
+            message(STATUS "    - PipeWire: Not found (install libpipewire-0.3-dev)")
+        endif()
+    endif()
+
+    # PulseAudio (Legacy - deprecated, use PipeWire)
     if(ENABLE_PULSEAUDIO)
         pkg_check_modules(PULSE libpulse)
         if(PULSE_FOUND)
             target_link_libraries(Echoelmusic PRIVATE ${PULSE_LIBRARIES})
             target_include_directories(Echoelmusic PRIVATE ${PULSE_INCLUDE_DIRS})
+            message(WARNING "PulseAudio is deprecated. Consider using PipeWire instead.")
         endif()
     endif()
 
@@ -776,7 +795,140 @@ if(ANDROID)
 endif()
 message(STATUS "==============================================")
 
-else()
+endif() # End of USE_JUCE block
+
+# ===========================
+# Native Audio Engines (JUCE-Free)
+# ===========================
+# These are standalone audio engines that don't require JUCE
+# Used for: Standalone apps, Swift bridge, non-plugin builds
+
+option(BUILD_NATIVE_AUDIO "Build native audio engines (JUCE-free)" ON)
+
+if(BUILD_NATIVE_AUDIO)
+    message(STATUS "")
+    message(STATUS "==============================================")
+    message(STATUS "Echoelmusic Native Audio Engines")
+    message(STATUS "==============================================")
+
+    # Header-only library for native audio
+    add_library(EchoelmusicNativeAudio INTERFACE)
+
+    target_include_directories(EchoelmusicNativeAudio
+        INTERFACE
+            ${CMAKE_CURRENT_SOURCE_DIR}/Sources/DSP
+            ${CMAKE_CURRENT_SOURCE_DIR}/Sources/Desktop/DSP
+    )
+
+    # Platform-specific configurations
+    if(WIN32)
+        message(STATUS "  Windows: WASAPI + ASIO Bridge")
+        target_compile_definitions(EchoelmusicNativeAudio
+            INTERFACE
+                WIN32_LEAN_AND_MEAN
+                NOMINMAX
+                _UNICODE
+                UNICODE
+        )
+        # Note: WindowsAudioEngine.hpp is header-only
+        # Link requirements for consumers
+        target_link_libraries(EchoelmusicNativeAudio
+            INTERFACE
+                ole32
+                uuid
+                crypt32
+                credui
+        )
+
+        # Echoela Security Library (Windows)
+        add_library(EchoelaSecurity STATIC
+            Sources/DSP/EchoelaSecurity.cpp
+            Sources/DSP/EchoelaSecurity.h
+        )
+        target_include_directories(EchoelaSecurity PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Sources/DSP)
+        target_link_libraries(EchoelaSecurity PRIVATE crypt32 credui webauthn)
+        target_compile_definitions(EchoelaSecurity PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX _UNICODE UNICODE)
+        message(STATUS "  - Echoela Security: DPAPI + Credential Manager + Windows Hello")
+    elseif(UNIX AND NOT APPLE AND NOT ANDROID)
+        message(STATUS "  Linux: ALSA + PipeWire")
+
+        find_package(PkgConfig)
+        if(PkgConfig_FOUND)
+            # ALSA
+            pkg_check_modules(ALSA alsa)
+            if(ALSA_FOUND)
+                target_include_directories(EchoelmusicNativeAudio INTERFACE ${ALSA_INCLUDE_DIRS})
+                target_link_libraries(EchoelmusicNativeAudio INTERFACE ${ALSA_LIBRARIES})
+                target_compile_definitions(EchoelmusicNativeAudio INTERFACE ECHOELMUSIC_ALSA=1)
+                message(STATUS "    - ALSA: Found")
+            endif()
+
+            # PipeWire
+            pkg_check_modules(PIPEWIRE libpipewire-0.3)
+            if(PIPEWIRE_FOUND)
+                target_include_directories(EchoelmusicNativeAudio INTERFACE ${PIPEWIRE_INCLUDE_DIRS})
+                target_link_libraries(EchoelmusicNativeAudio INTERFACE ${PIPEWIRE_LIBRARIES})
+                target_compile_definitions(EchoelmusicNativeAudio INTERFACE ECHOELMUSIC_PIPEWIRE=1)
+                message(STATUS "    - PipeWire: Found")
+            endif()
+
+            # OpenSSL for encryption
+            find_package(OpenSSL)
+            if(OPENSSL_FOUND)
+                message(STATUS "    - OpenSSL: Found")
+            endif()
+        endif()
+
+        target_link_libraries(EchoelmusicNativeAudio INTERFACE pthread)
+
+        # Echoela Security Library (Linux)
+        add_library(EchoelaSecurity STATIC
+            Sources/DSP/EchoelaSecurity.cpp
+            Sources/DSP/EchoelaSecurity.h
+        )
+        target_include_directories(EchoelaSecurity PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Sources/DSP)
+        target_link_libraries(EchoelaSecurity PRIVATE pthread OpenSSL::SSL OpenSSL::Crypto)
+        message(STATUS "  - Echoela Security: OpenSSL AES-256-GCM + Secure File Storage")
+    endif()
+
+    message(STATUS "==============================================")
+    message(STATUS "")
+endif()
+
+# ===========================
+# WebAssembly Build (Emscripten)
+# ===========================
+
+if(EMSCRIPTEN)
+    message(STATUS "")
+    message(STATUS "==============================================")
+    message(STATUS "Echoelmusic WebAssembly Build")
+    message(STATUS "==============================================")
+
+    add_executable(echoelcore_wasm
+        Sources/Desktop/DSP/EchoelmusicDSP.h
+    )
+
+    # Emscripten settings for audio
+    set_target_properties(echoelcore_wasm PROPERTIES
+        SUFFIX ".js"
+        LINK_FLAGS "-s WASM=1 -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap'] -s ALLOW_MEMORY_GROWTH=1 -s AUDIO_WORKLET=1"
+    )
+
+    target_compile_definitions(echoelcore_wasm PRIVATE
+        ECHOELMUSIC_WASM=1
+    )
+
+    message(STATUS "  Target: echoelcore_wasm.js + echoelcore_wasm.wasm")
+    message(STATUS "  Build with: emcmake cmake .. && emmake make")
+    message(STATUS "==============================================")
+endif()
+
+# ===========================
+# Summary for Non-JUCE builds
+# ===========================
+
+if(NOT USE_JUCE)
     # Non-JUCE build (Swift-only for iOS/macOS)
     message(STATUS "")
     message(STATUS "==============================================")

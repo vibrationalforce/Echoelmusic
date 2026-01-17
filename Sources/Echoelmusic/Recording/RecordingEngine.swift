@@ -286,7 +286,11 @@ class RecordingEngine: ObservableObject {
 
         // Write to audio file
         if let file = audioFile {
-            try? file.write(from: buffer)
+            do {
+                try file.write(from: buffer)
+            } catch {
+                log.error("Failed to write audio buffer to recording file: \(error)")
+            }
         }
 
         // Update waveform buffer for real-time display

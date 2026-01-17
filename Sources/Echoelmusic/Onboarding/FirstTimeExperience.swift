@@ -21,14 +21,16 @@ class FirstTimeExperience: ObservableObject {
         case welcome = 0           // 5 seconds
         case instantDemo = 1       // 10 seconds - INSTANT AHA MOMENT
         case explainer = 2         // 5 seconds
-        case permissions = 3       // 5 seconds (optional)
-        case quickStart = 4        // 5 seconds
+        case privacyConsent = 3    // Privacy-first: user chooses what to share
+        case permissions = 4       // 5 seconds (optional)
+        case quickStart = 5        // 5 seconds
 
         var title: String {
             switch self {
             case .welcome: return "Welcome to Echoelmusic"
             case .instantDemo: return "Feel Your Heartbeat"
             case .explainer: return "What You Just Experienced"
+            case .privacyConsent: return "Your Privacy Matters"
             case .permissions: return "Unlock Full Experience"
             case .quickStart: return "You're All Set!"
             }
@@ -42,6 +44,8 @@ class FirstTimeExperience: ObservableObject {
                 return "Touch and hold the screen. Notice how the sound reacts to your touch."
             case .explainer:
                 return "Echoelmusic translates your biofeedback into immersive audio-visuals. This is art, not medicine."
+            case .privacyConsent:
+                return "You're in control. Choose what data to share - or nothing at all. The app works great either way."
             case .permissions:
                 return "Optional: Connect HealthKit for heart rate reactive music. You can skip this and still enjoy everything."
             case .quickStart:
@@ -54,6 +58,7 @@ class FirstTimeExperience: ObservableObject {
             case .welcome: return 5.0
             case .instantDemo: return 10.0
             case .explainer: return 5.0
+            case .privacyConsent: return 10.0
             case .permissions: return 5.0
             case .quickStart: return 5.0
             }
@@ -245,6 +250,8 @@ struct OnboardingView: View {
                             experience.skip()
                         }
                         .foregroundColor(.white.opacity(0.7))
+                        .accessibilityLabel("Skip this step")
+                        .accessibilityHint("Continues without enabling optional permissions")
                     }
 
                     Spacer()
@@ -265,6 +272,8 @@ struct OnboardingView: View {
                             .background(Color.white.opacity(0.2))
                             .cornerRadius(25)
                     }
+                    .accessibilityLabel(experience.currentStep == .quickStart ? "Get started with Echoelmusic" : "Continue to next step")
+                    .accessibilityHint(experience.currentStep == .quickStart ? "Completes onboarding and opens the app" : "Moves to the next onboarding screen")
                 }
                 .padding(.horizontal, 30)
             }
@@ -281,6 +290,8 @@ struct OnboardingView: View {
             InstantDemoStepView(experience: experience)
         case .explainer:
             ExplainerStepView()
+        case .privacyConsent:
+            PrivacyConsentStepView(experience: experience)
         case .permissions:
             PermissionsStepView(experience: experience)
         case .quickStart:
@@ -415,6 +426,183 @@ struct FeatureBullet: View {
     }
 }
 
+// MARK: - Privacy Consent Step (Privacy-First)
+
+struct PrivacyConsentStepView: View {
+    @ObservedObject var experience: FirstTimeExperience
+    @State private var allowLearning: Bool = false
+    @State private var allowFeedback: Bool = false
+    @State private var allowVoice: Bool = false
+    @State private var allowAnalytics: Bool = false
+
+    var body: some View {
+        VStack(spacing: 20) {
+            // Privacy Shield Icon
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.15))
+                    .frame(width: 100, height: 100)
+
+                Image(systemName: "hand.raised.fill")
+                    .font(.system(size: 50))
+                    .foregroundColor(.white)
+            }
+
+            Text("Your Privacy Matters")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+
+            Text("You're in complete control. Choose what to share — or nothing at all.\nEchoelmusic works beautifully either way.")
+                .font(.body)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.white.opacity(0.9))
+                .padding(.horizontal, 30)
+
+            // Privacy Toggles
+            VStack(spacing: 12) {
+                PrivacyToggleRow(
+                    icon: "brain.head.profile",
+                    title: "Learning Profile",
+                    description: "Personalize your experience over time",
+                    isOn: $allowLearning
+                )
+
+                PrivacyToggleRow(
+                    icon: "bubble.left.and.bubble.right",
+                    title: "Anonymous Feedback",
+                    description: "Help improve Echoela (fully anonymized)",
+                    isOn: $allowFeedback
+                )
+
+                PrivacyToggleRow(
+                    icon: "waveform",
+                    title: "Voice Processing",
+                    description: "Local-only voice analysis for bio-reactive audio",
+                    isOn: $allowVoice
+                )
+
+                PrivacyToggleRow(
+                    icon: "chart.bar",
+                    title: "Usage Analytics",
+                    description: "Anonymous app usage data",
+                    isOn: $allowAnalytics
+                )
+            }
+            .padding(.horizontal, 20)
+
+            // Privacy Assurances
+            VStack(spacing: 8) {
+                PrivacyAssurance(icon: "lock.shield", text: "All data encrypted with AES-256")
+                PrivacyAssurance(icon: "trash", text: "Delete everything anytime")
+                PrivacyAssurance(icon: "eye.slash", text: "No data sold, ever")
+                PrivacyAssurance(icon: "server.rack", text: "Biometrics stay on your device")
+            }
+            .padding(.top, 10)
+
+            // Quick Actions
+            HStack(spacing: 15) {
+                Button("Enable All") {
+                    withAnimation {
+                        allowLearning = true
+                        allowFeedback = true
+                        allowVoice = true
+                        allowAnalytics = true
+                    }
+                }
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.8))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.1))
+                .cornerRadius(20)
+
+                Button("Privacy Mode") {
+                    withAnimation {
+                        allowLearning = false
+                        allowFeedback = false
+                        allowVoice = false
+                        allowAnalytics = false
+                    }
+                }
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.8))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.1))
+                .cornerRadius(20)
+            }
+        }
+        .onChange(of: allowLearning) { _ in saveConsent() }
+        .onChange(of: allowFeedback) { _ in saveConsent() }
+        .onChange(of: allowVoice) { _ in saveConsent() }
+        .onChange(of: allowAnalytics) { _ in saveConsent() }
+    }
+
+    private func saveConsent() {
+        // Save consent preferences (integrates with EchoelaSecurityManager)
+        UserDefaults.standard.set(allowLearning, forKey: "echoela_consent_learning")
+        UserDefaults.standard.set(allowFeedback, forKey: "echoela_consent_feedback")
+        UserDefaults.standard.set(allowVoice, forKey: "echoela_consent_voice")
+        UserDefaults.standard.set(allowAnalytics, forKey: "echoela_consent_analytics")
+        UserDefaults.standard.set(true, forKey: "echoela_has_consented")
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "echoela_consent_timestamp")
+    }
+}
+
+struct PrivacyToggleRow: View {
+    let icon: String
+    let title: String
+    let description: String
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(.white)
+                .frame(width: 35)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+
+            Spacer()
+
+            Toggle("", isOn: $isOn)
+                .labelsHidden()
+                .tint(.green)
+                .accessibilityLabel(title)
+                .accessibilityHint(description)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.white.opacity(0.1))
+        .cornerRadius(12)
+    }
+}
+
+struct PrivacyAssurance: View {
+    let icon: String
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundColor(.green)
+            Text(text)
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.7))
+        }
+    }
+}
+
 // MARK: - Permissions Step
 
 struct PermissionsStepView: View {
@@ -490,6 +678,8 @@ struct PermissionRow: View {
         .padding()
         .background(Color.white.opacity(0.1))
         .cornerRadius(12)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title), \(description)\(isOptional ? ", optional" : "")")
     }
 }
 
@@ -545,5 +735,8 @@ struct PresetCard: View {
             .background(Color.white.opacity(0.15))
             .cornerRadius(15)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(preset.name), \(preset.description)")
+        .accessibilityHint("Double tap to start this experience")
     }
 }

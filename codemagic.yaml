@@ -1,0 +1,273 @@
+# =============================================================================
+# Echoelmusic - Codemagic CI/CD Configuration
+# =============================================================================
+# Apple (iOS, macOS, watchOS, tvOS, visionOS) + Android
+# Windows + Linux → See .github/workflows/desktop_build.yml
+# =============================================================================
+
+definitions:
+  environment:
+    vars: &env_vars
+      XCODE_SCHEME: "Echoelmusic"
+      APP_ID: "com.echoelmusic.app"
+      BUNDLE_ID: "com.echoelmusic.app"
+      VERSION: "1.1.0"
+
+    ios_signing: &ios_signing
+      app_store_connect: Echoelmusic  # Configure in Codemagic UI
+
+    android_signing: &android_signing
+      - echoelmusic_keystore  # Configure in Codemagic UI
+
+  scripts:
+    - &install_deps
+      name: Install dependencies
+      script: swift package resolve
+
+    - &get_build_number
+      name: Get next build number
+      script: |
+        BUILD_NUMBER=$(($(app-store-connect get-latest-testflight-build-number "$APP_ID" || echo 0) + 1))
+        echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
+
+  cache: &cache
+    cache_paths:
+      - $HOME/Library/Caches/org.swift.swiftpm
+      - $HOME/.gradle/caches
+
+workflows:
+  # ===========================================================================
+  # iOS → TestFlight
+  # ===========================================================================
+  ios:
+    name: iOS
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      <<: *env_vars
+      ios_signing: *ios_signing
+      xcode: 15.2
+    triggering:
+      events: [push, tag]
+      branch_patterns:
+        - pattern: main
+          include: true
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    cache: *cache
+    scripts:
+      - *install_deps
+      - *get_build_number
+      - name: Build
+        script: |
+          xcodebuild archive \
+            -scheme "$XCODE_SCHEME" \
+            -destination "generic/platform=iOS" \
+            -archivePath build/iOS.xcarchive \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+    artifacts:
+      - build/**/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups: [Internal Testers]
+
+  # ===========================================================================
+  # macOS → TestFlight
+  # ===========================================================================
+  macos:
+    name: macOS
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      <<: *env_vars
+      ios_signing: *ios_signing
+      xcode: 15.2
+    triggering:
+      events: [push, tag]
+      branch_patterns:
+        - pattern: main
+          include: true
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    cache: *cache
+    scripts:
+      - *install_deps
+      - *get_build_number
+      - name: Build
+        script: |
+          xcodebuild archive \
+            -scheme "$XCODE_SCHEME" \
+            -destination "generic/platform=macOS" \
+            -archivePath build/macOS.xcarchive \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+    artifacts:
+      - build/**/*.pkg
+      - build/**/*.app
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  # ===========================================================================
+  # watchOS → TestFlight (via iOS)
+  # ===========================================================================
+  watchos:
+    name: watchOS
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      <<: *env_vars
+      ios_signing: *ios_signing
+      xcode: 15.2
+    triggering:
+      events: [tag]
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    cache: *cache
+    scripts:
+      - *install_deps
+      - *get_build_number
+      - name: Build
+        script: |
+          xcodebuild archive \
+            -scheme "Echoelmusic Watch" \
+            -destination "generic/platform=watchOS" \
+            -archivePath build/watchOS.xcarchive \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+    artifacts:
+      - build/**/*.xcarchive
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  # ===========================================================================
+  # tvOS → TestFlight
+  # ===========================================================================
+  tvos:
+    name: tvOS
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      <<: *env_vars
+      ios_signing: *ios_signing
+      xcode: 15.2
+    triggering:
+      events: [tag]
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    cache: *cache
+    scripts:
+      - *install_deps
+      - *get_build_number
+      - name: Build
+        script: |
+          xcodebuild archive \
+            -scheme "$XCODE_SCHEME" \
+            -destination "generic/platform=tvOS" \
+            -archivePath build/tvOS.xcarchive \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+    artifacts:
+      - build/**/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  # ===========================================================================
+  # visionOS → TestFlight
+  # ===========================================================================
+  visionos:
+    name: visionOS
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      <<: *env_vars
+      ios_signing: *ios_signing
+      xcode: 15.2
+    triggering:
+      events: [tag]
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    cache: *cache
+    scripts:
+      - *install_deps
+      - *get_build_number
+      - name: Build
+        script: |
+          xcodebuild archive \
+            -scheme "$XCODE_SCHEME" \
+            -destination "generic/platform=visionOS" \
+            -archivePath build/visionOS.xcarchive \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+    artifacts:
+      - build/**/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  # ===========================================================================
+  # Android → Play Store (Internal Testing)
+  # ===========================================================================
+  android:
+    name: Android
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      <<: *env_vars
+      android_signing: *android_signing
+      java: 17
+    triggering:
+      events: [push, tag]
+      branch_patterns:
+        - pattern: main
+          include: true
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    cache:
+      cache_paths:
+        - $HOME/.gradle/caches
+        - android/.gradle
+    scripts:
+      - name: Set version
+        script: |
+          cd android
+          sed -i "s/versionCode = [0-9]*/versionCode = $BUILD_ID/" app/build.gradle.kts
+          sed -i "s/versionName = \"[^\"]*\"/versionName = \"$VERSION\"/" app/build.gradle.kts
+      - name: Build
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease
+    artifacts:
+      - android/app/build/outputs/**/*.apk
+      - android/app/build/outputs/**/*.aab
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true

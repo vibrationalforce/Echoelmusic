@@ -294,6 +294,17 @@ struct VaporwaveAnimation {
 
     /// Glow animation
     static let glow = Animation.easeInOut(duration: 2.0).repeatForever(autoreverses: true)
+
+    /// Returns nil animation if reduce motion is enabled, otherwise returns the provided animation
+    /// Use this for accessibility compliance
+    static func reduced(_ animation: Animation, reduceMotion: Bool) -> Animation? {
+        reduceMotion ? nil : animation
+    }
+
+    /// Smooth animation that respects reduced motion preference
+    static func smoothReduced(_ reduceMotion: Bool) -> Animation? {
+        reduceMotion ? nil : smooth
+    }
 }
 
 // MARK: - Preview Components

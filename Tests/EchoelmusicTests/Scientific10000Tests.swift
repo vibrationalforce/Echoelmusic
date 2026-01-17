@@ -1,208 +1,18 @@
 // Scientific10000Tests.swift
 // Echoelmusic Tests
 //
-// Comprehensive 10000% Scientific ULTRA MODE Tests
-// Tests for: LongevityNutritionEngine, NeuroSpiritualEngine, QuantumHealthBiofeedbackEngine
+// Comprehensive Scientific Tests for Bio-Reactive Features
+// Tests for: NeuroSpiritualEngine, QuantumHealthBiofeedbackEngine
 //
 // Scientific Basis:
-// - López-Otín et al., Cell 2013 (9 Hallmarks of Aging)
 // - PMC7527628 (HRV and Exceptional Longevity)
 // - Stephen Porges (Polyvagal Theory)
 // - FACS (Facial Action Coding System)
-// - Blue Zones Research (Dan Buettner)
 
 import XCTest
 @testable import Echoelmusic
 
 final class Scientific10000Tests: XCTestCase {
-
-    // MARK: - Hallmarks of Aging Tests
-
-    func testAllNineHallmarksOfAgingExist() {
-        // López-Otín et al., Cell 2013
-        XCTAssertEqual(HallmarkOfAging.allCases.count, 9)
-        XCTAssertTrue(HallmarkOfAging.allCases.contains(.genomicInstability))
-        XCTAssertTrue(HallmarkOfAging.allCases.contains(.telomereAttrition))
-        XCTAssertTrue(HallmarkOfAging.allCases.contains(.epigeneticAlterations))
-        XCTAssertTrue(HallmarkOfAging.allCases.contains(.lossOfProteostasis))
-        XCTAssertTrue(HallmarkOfAging.allCases.contains(.deregulatedNutrientSensing))
-        XCTAssertTrue(HallmarkOfAging.allCases.contains(.mitochondrialDysfunction))
-        XCTAssertTrue(HallmarkOfAging.allCases.contains(.cellularSenescence))
-        XCTAssertTrue(HallmarkOfAging.allCases.contains(.stemCellExhaustion))
-        XCTAssertTrue(HallmarkOfAging.allCases.contains(.alteredIntercellularCommunication))
-    }
-
-    func testHallmarkDescriptions() {
-        XCTAssertFalse(HallmarkOfAging.genomicInstability.description.isEmpty)
-        XCTAssertTrue(HallmarkOfAging.genomicInstability.description.contains("DNA"))
-        XCTAssertTrue(HallmarkOfAging.telomereAttrition.description.contains("Telomere"))
-        XCTAssertTrue(HallmarkOfAging.cellularSenescence.description.contains("SASP"))
-    }
-
-    func testHallmarkTargetingNutrients() {
-        // Each hallmark should have targeting nutrients
-        for hallmark in HallmarkOfAging.allCases {
-            XCTAssertFalse(hallmark.targetingNutrients.isEmpty, "\(hallmark) should have targeting nutrients")
-        }
-
-        // Specific nutrients for specific hallmarks
-        XCTAssertTrue(HallmarkOfAging.cellularSenescence.targetingNutrients.contains("Fisetin"))
-        XCTAssertTrue(HallmarkOfAging.cellularSenescence.targetingNutrients.contains("Quercetin"))
-        XCTAssertTrue(HallmarkOfAging.mitochondrialDysfunction.targetingNutrients.contains("CoQ10"))
-        XCTAssertTrue(HallmarkOfAging.mitochondrialDysfunction.targetingNutrients.contains("NAD+/NMN"))
-    }
-
-    // MARK: - Longevity Compounds Tests
-
-    func testAllCompoundCategoriesExist() {
-        XCTAssertEqual(CompoundCategory.allCases.count, 10)
-        XCTAssertTrue(CompoundCategory.allCases.contains(.sirtuin))
-        XCTAssertTrue(CompoundCategory.allCases.contains(.senolytic))
-        XCTAssertTrue(CompoundCategory.allCases.contains(.nad))
-        XCTAssertTrue(CompoundCategory.allCases.contains(.mitochondrial))
-        XCTAssertTrue(CompoundCategory.allCases.contains(.epigenetic))
-        XCTAssertTrue(CompoundCategory.allCases.contains(.antiInflammatory))
-        XCTAssertTrue(CompoundCategory.allCases.contains(.autophagy))
-        XCTAssertTrue(CompoundCategory.allCases.contains(.telomere))
-        XCTAssertTrue(CompoundCategory.allCases.contains(.antioxidant))
-        XCTAssertTrue(CompoundCategory.allCases.contains(.adaptogen))
-    }
-
-    func testEvidenceLevelReliability() {
-        XCTAssertEqual(EvidenceLevel.humanRCT.reliability, 1.0)
-        XCTAssertEqual(EvidenceLevel.humanObservational.reliability, 0.8)
-        XCTAssertEqual(EvidenceLevel.animalStudy.reliability, 0.5)
-        XCTAssertEqual(EvidenceLevel.inVitro.reliability, 0.3)
-        XCTAssertEqual(EvidenceLevel.traditional.reliability, 0.4)
-    }
-
-    func testLongevityCompoundCreation() {
-        let compound = LongevityCompound(
-            name: "NMN",
-            category: .nad,
-            mechanism: "NAD+ precursor",
-            dosage: "250-500mg",
-            timing: "Morning",
-            foodSources: ["Broccoli", "Avocado"],
-            targetedHallmarks: [.mitochondrialDysfunction, .stemCellExhaustion],
-            evidenceLevel: .humanRCT,
-            hrvImpact: 0.7,
-            caution: "Consult physician"
-        )
-
-        XCTAssertEqual(compound.name, "NMN")
-        XCTAssertEqual(compound.category, .nad)
-        XCTAssertEqual(compound.targetedHallmarks.count, 2)
-        XCTAssertEqual(compound.evidenceLevel.reliability, 1.0)
-    }
-
-    // MARK: - Blue Zones Tests
-
-    func testAllBlueZonePrinciplesExist() {
-        // Power 9 Principles
-        XCTAssertEqual(BlueZonePrinciple.allCases.count, 9)
-        XCTAssertTrue(BlueZonePrinciple.allCases.contains(.moveNaturally))
-        XCTAssertTrue(BlueZonePrinciple.allCases.contains(.purpose))
-        XCTAssertTrue(BlueZonePrinciple.allCases.contains(.downshift))
-        XCTAssertTrue(BlueZonePrinciple.allCases.contains(.eightyPercentRule))
-        XCTAssertTrue(BlueZonePrinciple.allCases.contains(.plantSlant))
-        XCTAssertTrue(BlueZonePrinciple.allCases.contains(.wineAtFive))
-        XCTAssertTrue(BlueZonePrinciple.allCases.contains(.belong))
-        XCTAssertTrue(BlueZonePrinciple.allCases.contains(.lovedOnesFirst))
-        XCTAssertTrue(BlueZonePrinciple.allCases.contains(.rightTribe))
-    }
-
-    func testBlueZonePrincipleCoherenceImpact() {
-        // Downshift should have highest coherence impact (stress reduction)
-        XCTAssertEqual(BlueZonePrinciple.downshift.coherenceImpact, 0.95)
-        // Purpose (Ikigai) should be high
-        XCTAssertEqual(BlueZonePrinciple.purpose.coherenceImpact, 0.9)
-        // All impacts should be 0-1
-        for principle in BlueZonePrinciple.allCases {
-            XCTAssertGreaterThanOrEqual(principle.coherenceImpact, 0)
-            XCTAssertLessThanOrEqual(principle.coherenceImpact, 1.0)
-        }
-    }
-
-    func testBlueZonePrincipleDescriptions() {
-        XCTAssertTrue(BlueZonePrinciple.eightyPercentRule.description.contains("Hara Hachi Bu"))
-        XCTAssertTrue(BlueZonePrinciple.purpose.description.contains("Ikigai"))
-    }
-
-    // MARK: - Food Category Tests
-
-    func testAllFoodCategoriesExist() {
-        XCTAssertEqual(FoodCategory.allCases.count, 12)
-        XCTAssertTrue(FoodCategory.allCases.contains(.cruciferous))
-        XCTAssertTrue(FoodCategory.allCases.contains(.legumes))
-        XCTAssertTrue(FoodCategory.allCases.contains(.berries))
-        XCTAssertTrue(FoodCategory.allCases.contains(.fermented))
-        XCTAssertTrue(FoodCategory.allCases.contains(.mushrooms))
-    }
-
-    func testLongevityFoodCreation() {
-        let food = LongevityFood(
-            name: "Black Beans",
-            category: .legumes,
-            activeCompounds: ["Fiber", "Anthocyanins", "Folate"],
-            targetedHallmarks: [.deregulatedNutrientSensing, .alteredIntercellularCommunication],
-            servingSize: "1/2 cup",
-            frequency: "Daily",
-            hrvBenefit: 0.6,
-            blueZoneOrigin: "Nicoya, Costa Rica"
-        )
-
-        XCTAssertEqual(food.name, "Black Beans")
-        XCTAssertEqual(food.category, .legumes)
-        XCTAssertEqual(food.blueZoneOrigin, "Nicoya, Costa Rica")
-        XCTAssertEqual(food.activeCompounds.count, 3)
-    }
-
-    // MARK: - Chronotype Longevity Plan Tests
-
-    func testChronotypeLongevityPlanCreation() {
-        let food = LongevityFood(
-            name: "Matcha",
-            category: .beverages,
-            activeCompounds: ["EGCG", "L-Theanine"],
-            targetedHallmarks: [.genomicInstability],
-            servingSize: "1 tsp",
-            frequency: "Morning",
-            hrvBenefit: 0.5
-        )
-
-        let compound = LongevityCompound(
-            name: "NMN",
-            category: .nad,
-            mechanism: "NAD+ precursor",
-            dosage: "250mg",
-            timing: "Morning",
-            foodSources: [],
-            targetedHallmarks: [.mitochondrialDysfunction],
-            evidenceLevel: .humanRCT,
-            hrvImpact: 0.6,
-            caution: ""
-        )
-
-        let plan = ChronotypeLongevityPlan(
-            chronotype: .lion,
-            fastingWindow: "16:8",
-            eatingWindow: "6AM-2PM",
-            firstMealTime: "6:00 AM",
-            lastMealTime: "2:00 PM",
-            keyFoods: [food],
-            supplements: [compound],
-            exerciseProtocol: "HIIT Morning",
-            sleepProtocol: "9PM-5AM",
-            stressProtocol: "Morning meditation",
-            estimatedLifespanBenefit: "+5-10 years"
-        )
-
-        XCTAssertEqual(plan.chronotype, .lion)
-        XCTAssertEqual(plan.fastingWindow, "16:8")
-        XCTAssertEqual(plan.keyFoods.count, 1)
-        XCTAssertEqual(plan.supplements.count, 1)
-    }
 
     // MARK: - Consciousness State Tests (NeuroSpiritual)
 
@@ -641,25 +451,5 @@ final class Scientific10000Tests: XCTestCase {
 
         let maxScore = state.quantumHealthScore
         XCTAssertLessThanOrEqual(maxScore, 100)
-    }
-
-    // MARK: - Scientific Disclaimer Tests
-
-    func testLongevityCompoundRequiresCaution() {
-        let compound = LongevityCompound(
-            name: "Rapamycin",
-            category: .autophagy,
-            mechanism: "mTOR inhibition",
-            dosage: "Prescription only",
-            timing: "Weekly",
-            foodSources: [],
-            targetedHallmarks: [.deregulatedNutrientSensing],
-            evidenceLevel: .humanRCT,
-            hrvImpact: 0.3,
-            caution: "Prescription only. Immunosuppressant."
-        )
-
-        XCTAssertFalse(compound.caution.isEmpty)
-        XCTAssertTrue(compound.caution.contains("Prescription"))
     }
 }

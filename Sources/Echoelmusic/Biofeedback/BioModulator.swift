@@ -1,8 +1,14 @@
 // BioModulator.swift
 // Echoelmusic - Biofeedback to BPM, EFX, Instruments Modulation
 //
-// Real-time mapping of biometric signals to audio parameters
-// HRV → BPM, Heart Rate → Effects, Breathing → Instruments
+// ⚠️ DEPRECATED - This class is superseded by UnifiedControlHub
+// UnifiedControlHub provides:
+// - 60Hz control loop for real-time bio-reactive modulation
+// - Octave-based color mapping (HR → Audio → Light → CIE 1931 RGB)
+// - Unified audio, visual, and lighting control
+// - Integration with MIDIToLightMapper, ILDALaserController, LambdaModeEngine
+//
+// Removal scheduled: Phase 12000
 //
 // Created by Echoelmusic Team
 // Copyright 2026 Echoelmusic. MIT License.
@@ -270,6 +276,24 @@ public enum MappingCurve: String, CaseIterable, Codable, Sendable {
 // MARK: - BioModulator Engine
 
 /// Main biofeedback modulation engine
+///
+/// - Important: **DEPRECATED** - Use `UnifiedControlHub` instead.
+///   UnifiedControlHub now handles all bio-reactive audio/visual/lighting modulation
+///   in a unified 60Hz control loop with octave-based color mapping.
+///
+/// Migration Guide:
+/// ```swift
+/// // Old (BioModulator)
+/// let modulator = BioModulator()
+/// modulator.addMapping(source: .heartRate, target: .filterCutoff, ...)
+///
+/// // New (UnifiedControlHub)
+/// let hub = UnifiedControlHub()
+/// hub.start()  // Bio data automatically flows to audio, visuals, and lights
+/// ```
+///
+/// This class remains for backward compatibility but will be removed in a future version.
+@available(*, deprecated, message: "Use UnifiedControlHub instead. It provides unified bio-reactive control for audio, visuals, and lighting.")
 @MainActor
 public final class BioModulator: ObservableObject {
 

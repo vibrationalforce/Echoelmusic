@@ -196,8 +196,8 @@ public final class RTMPClientComplete: @unchecked Sendable {
         self.port = UInt16(components.port ?? 1935)
         self.streamKey = streamKey
 
-        // Create TCP connection
-        let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: self.port)!)
+        // Create TCP connection (port validated via URLComponents, use default 1935 as fallback)
+        let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: self.port) ?? NWEndpoint.Port(integerLiteral: 1935))
         connection = NWConnection(to: endpoint, using: .tcp)
 
         return try await withCheckedThrowingContinuation { continuation in
@@ -574,7 +574,10 @@ public final class RTMPClientComplete: @unchecked Sendable {
 
     private func generateRandomBytes(count: Int) -> Data {
         var bytes = Data(count: count)
-        _ = bytes.withUnsafeMutableBytes { SecRandomCopyBytes(kSecRandomDefault, count, $0.baseAddress!) }
+        bytes.withUnsafeMutableBytes { ptr in
+            guard let baseAddress = ptr.baseAddress else { return }
+            SecRandomCopyBytes(kSecRandomDefault, count, baseAddress)
+        }
         return bytes
     }
 
@@ -716,12 +719,12 @@ public final class ProfessionalStreamingEngine: ObservableObject {
             compressionSessionOut: &session
         )
 
-        if status == noErr {
-            videoEncoder = session
+        if status == noErr, let encoderSession = session {
+            videoEncoder = encoderSession
 
             // Apply settings
             for (key, value) in encoderSpec {
-                VTSessionSetProperty(session!, key: key as CFString, value: value as CFTypeRef)
+                VTSessionSetProperty(encoderSession, key: key as CFString, value: value as CFTypeRef)
             }
 
             log.streaming("✅ H.264 encoder initialized (\(width)x\(height))")

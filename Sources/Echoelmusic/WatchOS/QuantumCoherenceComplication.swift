@@ -158,7 +158,7 @@ public class QuantumComplicationDataSource: NSObject, CLKComplicationDataSource 
         )
 
         return CLKComplicationTemplateCircularSmallSimpleImage(
-            imageProvider: CLKImageProvider(onePieceImage: UIImage(systemName: "waveform.circle.fill")!)
+            imageProvider: CLKImageProvider(onePieceImage: safeSystemImage("waveform.circle.fill"))
         )
     }
 
@@ -166,7 +166,7 @@ public class QuantumComplicationDataSource: NSObject, CLKComplicationDataSource 
 
     private func createModularSmallTemplate(coherence: Float) -> CLKComplicationTemplate {
         return CLKComplicationTemplateModularSmallSimpleImage(
-            imageProvider: CLKImageProvider(onePieceImage: UIImage(systemName: "atom")!)
+            imageProvider: CLKImageProvider(onePieceImage: safeSystemImage("atom"))
         )
     }
 
@@ -204,7 +204,7 @@ public class QuantumComplicationDataSource: NSObject, CLKComplicationDataSource 
 
     private func createExtraLargeTemplate(coherence: Float) -> CLKComplicationTemplate {
         return CLKComplicationTemplateExtraLargeSimpleImage(
-            imageProvider: CLKImageProvider(onePieceImage: UIImage(systemName: "waveform.circle.fill")!)
+            imageProvider: CLKImageProvider(onePieceImage: safeSystemImage("waveform.circle.fill"))
         )
     }
 
@@ -236,7 +236,7 @@ public class QuantumComplicationDataSource: NSObject, CLKComplicationDataSource 
 
         return CLKComplicationTemplateGraphicCircularClosedGaugeImage(
             gaugeProvider: gaugeProvider,
-            imageProvider: CLKFullColorImageProvider(fullColorImage: UIImage(systemName: "atom")!)
+            imageProvider: CLKFullColorImageProvider(fullColorImage: safeSystemImage("atom"))
         )
     }
 
@@ -291,11 +291,16 @@ public class QuantumComplicationDataSource: NSObject, CLKComplicationDataSource 
 
         return CLKComplicationTemplateGraphicExtraLargeCircularClosedGaugeImage(
             gaugeProvider: gaugeProvider,
-            imageProvider: CLKFullColorImageProvider(fullColorImage: UIImage(systemName: "waveform.circle.fill")!)
+            imageProvider: CLKFullColorImageProvider(fullColorImage: safeSystemImage("waveform.circle.fill"))
         )
     }
 
     // MARK: - Helpers
+
+    /// Safe system image loader with fallback
+    private func safeSystemImage(_ name: String) -> UIImage {
+        UIImage(systemName: name) ?? UIImage()
+    }
 
     private func coherenceColor(_ coherence: Float) -> UIColor {
         if coherence > 0.7 {

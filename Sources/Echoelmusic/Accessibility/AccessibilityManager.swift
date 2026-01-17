@@ -2,6 +2,13 @@ import Foundation
 import SwiftUI
 import AVFoundation
 import Combine
+#if os(iOS)
+import UIKit
+typealias PlatformColor = UIColor
+#elseif os(macOS)
+import AppKit
+typealias PlatformColor = NSColor
+#endif
 
 /// Accessibility Manager - WCAG 2.1 AAA Compliance
 /// Ensures Echoelmusic is usable by everyone, regardless of ability
@@ -80,24 +87,108 @@ class AccessibilityManager: ObservableObject {
             }
         }
 
-        /// Adjust color for color blindness simulation
+        /// Adjust color for color blindness simulation using Brettel/Viénot/Mollon algorithm
+        /// Based on research: Brettel H, Viénot F, Mollon JD (1997) "Computerized simulation of color appearance for dichromats"
         func adjustColor(_ color: Color) -> Color {
-            // Simplified color adjustment - in production use proper CVD simulation
+            #if os(iOS) || os(macOS)
+            // Extract RGB components
+            let uiColor: PlatformColor
+            #if os(iOS)
+            uiColor = UIColor(color)
+            #else
+            uiColor = NSColor(color)
+            #endif
+
+            var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+            uiColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+
+            // Convert to linear RGB (remove gamma)
+            let linearR = pow(red, 2.2)
+            let linearG = pow(green, 2.2)
+            let linearB = pow(blue, 2.2)
+
+            var newR: CGFloat, newG: CGFloat, newB: CGFloat
+
             switch self {
             case .none:
                 return color
+
             case .protanopia:
-                // Shift reds to yellows/browns
-                return color.opacity(0.8)  // Placeholder
+                // Brettel protanopia simulation matrix
+                // Missing L-cones (red receptors)
+                newR = 0.56667 * linearR + 0.43333 * linearG + 0.00000 * linearB
+                newG = 0.55833 * linearR + 0.44167 * linearG + 0.00000 * linearB
+                newB = 0.00000 * linearR + 0.24167 * linearG + 0.75833 * linearB
+
             case .deuteranopia:
-                // Shift greens to yellows
-                return color.opacity(0.8)  // Placeholder
+                // Brettel deuteranopia simulation matrix
+                // Missing M-cones (green receptors)
+                newR = 0.62500 * linearR + 0.37500 * linearG + 0.00000 * linearB
+                newG = 0.70000 * linearR + 0.30000 * linearG + 0.00000 * linearB
+                newB = 0.00000 * linearR + 0.30000 * linearG + 0.70000 * linearB
+
             case .tritanopia:
-                // Shift blues to greens
-                return color.opacity(0.8)  // Placeholder
+                // Brettel tritanopia simulation matrix
+                // Missing S-cones (blue receptors)
+                newR = 0.95000 * linearR + 0.05000 * linearG + 0.00000 * linearB
+                newG = 0.00000 * linearR + 0.43333 * linearG + 0.56667 * linearB
+                newB = 0.00000 * linearR + 0.47500 * linearG + 0.52500 * linearB
+
             case .achromatopsia:
-                // Convert to grayscale
-                return Color.gray
+                // Complete color blindness - convert to luminance
+                // Using Rec. 709 coefficients
+                let luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB
+                newR = luminance
+                newG = luminance
+                newB = luminance
+            }
+
+            // Apply gamma correction back
+            let finalR = pow(max(0, min(1, newR)), 1/2.2)
+            let finalG = pow(max(0, min(1, newG)), 1/2.2)
+            let finalB = pow(max(0, min(1, newB)), 1/2.2)
+
+            return Color(red: finalR, green: finalG, blue: finalB, opacity: alpha)
+            #else
+            return color // Fallback for other platforms
+            #endif
+        }
+
+        /// Get a color-safe palette for this CVD type
+        func colorSafePalette() -> [Color] {
+            switch self {
+            case .none:
+                return [.red, .orange, .yellow, .green, .blue, .purple]
+            case .protanopia, .deuteranopia:
+                // Red-green safe: Use blue/yellow distinction
+                return [
+                    Color(red: 0.0, green: 0.45, blue: 0.70),   // Blue
+                    Color(red: 0.90, green: 0.60, blue: 0.0),   // Orange
+                    Color(red: 0.0, green: 0.62, blue: 0.45),   // Teal
+                    Color(red: 0.80, green: 0.47, blue: 0.65),  // Pink
+                    Color(red: 0.94, green: 0.89, blue: 0.26),  // Yellow
+                    Color(red: 0.34, green: 0.71, blue: 0.91)   // Sky blue
+                ]
+            case .tritanopia:
+                // Blue-yellow safe: Use red/green/magenta distinction
+                return [
+                    Color(red: 0.84, green: 0.15, blue: 0.16),  // Red
+                    Color(red: 0.0, green: 0.50, blue: 0.0),    // Green
+                    Color(red: 0.58, green: 0.0, blue: 0.83),   // Purple
+                    Color(red: 1.0, green: 0.41, blue: 0.71),   // Pink
+                    Color(red: 0.0, green: 0.0, blue: 0.0),     // Black
+                    Color(red: 0.50, green: 0.50, blue: 0.50)   // Gray
+                ]
+            case .achromatopsia:
+                // Grayscale only - use patterns/shapes instead of colors
+                return [
+                    Color(white: 0.0),   // Black
+                    Color(white: 0.25),  // Dark gray
+                    Color(white: 0.50),  // Medium gray
+                    Color(white: 0.75),  // Light gray
+                    Color(white: 0.90),  // Very light gray
+                    Color(white: 1.0)    // White
+                ]
             }
         }
     }
@@ -431,11 +522,47 @@ class AccessibilityManager: ObservableObject {
     // MARK: - Contrast Ratio Calculation (WCAG 2.1.4.11)
 
     func calculateContrastRatio(foreground: Color, background: Color) -> Float {
-        // Simplified contrast calculation - in production use proper WCAG formula
+        // WCAG 2.1 relative luminance formula
         // WCAG AAA requires 7:1 for normal text, 4.5:1 for large text
 
-        // Placeholder - implement proper relative luminance calculation
-        return 7.5  // Mock high contrast
+        let fgLuminance = relativeLuminance(of: foreground)
+        let bgLuminance = relativeLuminance(of: background)
+
+        let lighter = max(fgLuminance, bgLuminance)
+        let darker = min(fgLuminance, bgLuminance)
+
+        // WCAG contrast ratio formula: (L1 + 0.05) / (L2 + 0.05)
+        return Float((lighter + 0.05) / (darker + 0.05))
+    }
+
+    /// Calculate relative luminance per WCAG 2.1 specification
+    private func relativeLuminance(of color: Color) -> Double {
+        // Convert Color to RGB components
+        #if canImport(UIKit)
+        let uiColor = UIColor(color)
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        uiColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        #elseif canImport(AppKit)
+        let nsColor = NSColor(color)
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        nsColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        #else
+        // Fallback for other platforms
+        let red: CGFloat = 0.5, green: CGFloat = 0.5, blue: CGFloat = 0.5
+        #endif
+
+        // Apply sRGB linearization
+        func linearize(_ c: CGFloat) -> Double {
+            let val = Double(c)
+            return val <= 0.03928 ? val / 12.92 : pow((val + 0.055) / 1.055, 2.4)
+        }
+
+        let r = linearize(red)
+        let g = linearize(green)
+        let b = linearize(blue)
+
+        // WCAG relative luminance formula
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
     }
 
     func meetsContrastRequirements(foreground: Color, background: Color, textSize: CGFloat) -> Bool {

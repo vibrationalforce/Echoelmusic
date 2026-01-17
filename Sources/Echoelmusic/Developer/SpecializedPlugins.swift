@@ -512,14 +512,18 @@ public final class TherapySessionPlugin: EchoelmusicPlugin {
     private func loadClientProgressData(from directory: URL) async {
         let progressFile = directory.appendingPathComponent("client_progress.json")
 
-        guard FileManager.default.fileExists(atPath: progressFile.path),
-              let data = try? Data(contentsOf: progressFile),
-              let progress = try? JSONDecoder().decode([String: ClientProgress].self, from: data) else {
+        guard FileManager.default.fileExists(atPath: progressFile.path) else {
             log.debug("No existing client progress data found", category: .wellness)
             return
         }
 
-        clientProgressMap = progress
+        do {
+            let data = try Data(contentsOf: progressFile)
+            let progress = try JSONDecoder().decode([String: ClientProgress].self, from: data)
+            clientProgressMap = progress
+        } catch {
+            log.error("Failed to load client progress data: \(error)", category: .wellness)
+        }
     }
 
     private func saveSession(_ session: TherapySession) async {

@@ -1,0 +1,274 @@
+{
+  "project": "CoherenceCore",
+  "version": "0.1.0",
+  "description": "Quad-platform biophysical resonance framework for tissue micro-vibration analysis and coherent stimulation",
+  "compliance": {
+    "medical_claims": false,
+    "disclaimer_required": true,
+    "disclaimer_text": "Wellness/Informational Tool - No Medical Advice. Not a medical device.",
+    "max_session_duration_minutes": 15,
+    "safety_cutoff_enabled": true
+  },
+  "platforms": {
+    "ios": { "framework": "expo", "sdk": "52+", "status": "development" },
+    "android": { "framework": "expo", "sdk": "52+", "status": "development" },
+    "windows": { "framework": "tauri", "version": "2.0", "status": "development" },
+    "linux": { "framework": "tauri", "version": "2.0", "status": "development" }
+  },
+  "features": [
+    {
+      "id": "F001",
+      "name": "EVM-Scanner",
+      "description": "Eulerian Video Magnification for 1-60 Hz micro-vibration detection",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": true,
+      "software_complete": true,
+      "hardware_tested": false,
+      "tests": ["T001", "T002", "T003"],
+      "tests_passing": 28,
+      "implementation": {
+        "mobile": "expo-camera + useCoherenceEngine hook",
+        "desktop": "crabcamera + wgpu shader",
+        "engine": "@coherence-core/evm-engine"
+      }
+    },
+    {
+      "id": "F002",
+      "name": "IMU-Analyzer",
+      "description": "100Hz accelerometer sampling with FFT for 0.8-50 Hz detection (heart rate + breathing)",
+      "platforms": ["ios", "android"],
+      "passes": true,
+      "software_complete": true,
+      "hardware_tested": false,
+      "tests": ["T004", "T005"],
+      "tests_passing": 6,
+      "implementation": {
+        "mobile": "expo-sensors (Accelerometer) + useIMUAnalyzer hook",
+        "types": "@coherence-core/shared-types (IMU_CAPABILITIES)",
+        "ui_integration": "scan.tsx mode tabs (Camera/IMU/Fusion)",
+        "features": [
+          "Real-time accelerometer XYZ visualization",
+          "DFT-based frequency detection (no FFT library needed)",
+          "Heart rate estimation (0.8-3.5 Hz → 48-210 BPM)",
+          "Breathing rate estimation (0.1-0.5 Hz → 6-30/min)",
+          "Signal quality and noise level metrics",
+          "Sensor fusion mode with EVM camera"
+        ]
+      }
+    },
+    {
+      "id": "F003",
+      "name": "Osteo-Sync-Engine",
+      "description": "35-45 Hz frequency generation for bone tissue resonance",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": true,
+      "software_complete": true,
+      "hardware_tested": false,
+      "tests": ["T006", "T007"],
+      "tests_passing": 12,
+      "evidence": {
+        "frequency_range_hz": [35, 45],
+        "primary_frequency_hz": 40,
+        "research": "Rubin et al. (2006) - Low-magnitude mechanical signals",
+        "target": "Osteoblast activity optimization"
+      },
+      "implementation": {
+        "engine": "@coherence-core/frequency-engine",
+        "preset": "FREQUENCY_PRESETS['osteo-sync']"
+      }
+    },
+    {
+      "id": "F004",
+      "name": "Myo-Resonance-Engine",
+      "description": "45-50 Hz frequency generation for muscle fiber coherence",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": true,
+      "software_complete": true,
+      "hardware_tested": false,
+      "tests": ["T008", "T009"],
+      "tests_passing": 12,
+      "evidence": {
+        "frequency_range_hz": [45, 50],
+        "primary_frequency_hz": 47.5,
+        "research": "Judex & Rubin (2010) - Mechanical influences",
+        "target": "Myofibril coherence, fibrosis reduction"
+      },
+      "implementation": {
+        "engine": "@coherence-core/frequency-engine",
+        "preset": "FREQUENCY_PRESETS['myo-resonance']"
+      }
+    },
+    {
+      "id": "F005",
+      "name": "Neural-Flow-Engine",
+      "description": "40 Hz gamma entrainment for focus and pain modulation",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": true,
+      "software_complete": true,
+      "hardware_tested": false,
+      "tests": ["T010", "T011"],
+      "tests_passing": 12,
+      "evidence": {
+        "frequency_range_hz": [38, 42],
+        "primary_frequency_hz": 40,
+        "research": "Iaccarino et al. (2016) - Gamma entrainment",
+        "target": "Neural gamma oscillation"
+      },
+      "implementation": {
+        "engine": "@coherence-core/frequency-engine",
+        "preset": "FREQUENCY_PRESETS['neural-flow']"
+      }
+    },
+    {
+      "id": "F006",
+      "name": "VAT-Output",
+      "description": "Vibroacoustic Therapy audio output via speakers/transducers",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": true,
+      "software_complete": true,
+      "hardware_tested": false,
+      "tests": ["T012", "T013"],
+      "implementation": {
+        "mobile": "expo-av + useCoherenceEngine hook",
+        "desktop": "cpal (low-latency audio output)",
+        "engine": "@coherence-core/frequency-engine"
+      }
+    },
+    {
+      "id": "F007",
+      "name": "Haptic-Feedback",
+      "description": "Device haptic motor stimulation synchronized to frequencies",
+      "platforms": ["ios", "android"],
+      "passes": true,
+      "software_complete": true,
+      "hardware_tested": false,
+      "tests": ["T014", "T015"],
+      "implementation": {
+        "mobile": "react-native Vibration API in useCoherenceEngine"
+      }
+    },
+    {
+      "id": "F008",
+      "name": "Cymatics-Visualizer",
+      "description": "Real-time wave interference pattern visualization",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": true,
+      "software_complete": true,
+      "hardware_tested": false,
+      "tests": ["T016", "T017"],
+      "tests_passing": 4,
+      "modes": ["chladni", "interference", "ripple", "standing"],
+      "implementation": {
+        "mobile": "react-native-skia CymaticsVisualizer component with 4 pattern modes",
+        "desktop": "HTML5 Canvas CymaticsCanvas component with real-time animation"
+      }
+    },
+    {
+      "id": "F009",
+      "name": "Safety-Compliance",
+      "description": "15-minute duty cycle cutoff and mandatory disclaimers",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": true,
+      "software_complete": true,
+      "hardware_tested": false,
+      "tests": ["T018", "T019", "T020"],
+      "implementation": {
+        "mobile": "useCoherenceEngine hook with session timer and disclaimer modal",
+        "desktop": "Tauri backend with session tracking",
+        "constants": "DEFAULT_SAFETY_LIMITS in shared-types"
+      }
+    },
+    {
+      "id": "F010",
+      "name": "Hardware-Validation",
+      "description": "Nyquist check for sensor sampling rates vs target frequencies",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": true,
+      "software_complete": true,
+      "hardware_tested": false,
+      "tests": ["T021", "T022"],
+      "tests_passing": 15,
+      "nyquist_requirements": {
+        "camera_min_fps": 120,
+        "camera_acceptable_fps": 60,
+        "imu_min_hz": 100,
+        "lidar_max_hz": 15,
+        "aliasing_prevention": "freq < sample_rate / 2"
+      },
+      "implementation": {
+        "validation": "validateNyquist() in shared-types",
+        "sensors": "LIDAR_CAPABILITIES, CAMERA_CAPABILITIES, IMU_CAPABILITIES"
+      }
+    },
+    {
+      "id": "F011",
+      "name": "Multi-Sensor-Fusion",
+      "description": "Kalman-filtered fusion of camera, LiDAR, IMU, haptic, audio sensors",
+      "platforms": ["ios", "android", "windows", "linux"],
+      "passes": true,
+      "software_complete": true,
+      "hardware_tested": false,
+      "tests": ["T023", "T024", "T025"],
+      "tests_passing": 43,
+      "implementation": {
+        "engine": "@coherence-core/fusion-engine",
+        "components": ["KalmanFilter", "FusionEngine", "separateSignalSources"]
+      }
+    }
+  ],
+  "loop_state": {
+    "current_iteration": 9,
+    "last_error": null,
+    "status": "all_features_complete",
+    "completed": true,
+    "software_tests_passed": 109,
+    "hardware_tests_pending": 22,
+    "features_passing": 11,
+    "features_pending": 0,
+    "mobile_screens_integrated": ["scan", "stimulate", "settings"],
+    "desktop_app_initialized": true,
+    "unified_engine_hook": "apps/mobile/lib/useCoherenceEngine.ts",
+    "imu_analyzer_hook": "apps/mobile/lib/useIMUAnalyzer.ts",
+    "sensor_fusion": {
+      "status": "complete",
+      "modes": ["camera", "imu", "fusion"],
+      "connection": "Both EVM and IMU detect the same physiological signals through different modalities",
+      "evm": "Optical detection of skin micro-motion via camera",
+      "imu": "Inertial detection of body micro-motion via accelerometer"
+    },
+    "audio_implementation": {
+      "mobile": "frequency-engine with expo-av (actual audio generation)",
+      "desktop": "cpal with real-time waveform generation",
+      "synchronized_haptics": true,
+      "class_compliant_usb": {
+        "status": "complete",
+        "backend_complete": true,
+        "frontend_ui": "complete",
+        "features": ["device_enumeration", "host_detection", "sample_rate_config", "buffer_size_config", "device_selection_ui", "refresh_devices"],
+        "supported_interfaces": ["Focusrite", "Scarlett", "Steinberg", "PreSonus", "MOTU", "Universal Audio", "RME", "Apogee", "Audient", "SSL", "Behringer", "Arturia", "Native Instruments"]
+      }
+    },
+    "cymatics_visualizer": {
+      "mobile": "react-native-skia CymaticsVisualizer component",
+      "desktop": "HTML5 Canvas CymaticsCanvas component",
+      "modes": ["chladni", "interference", "ripple", "standing"],
+      "patterns": "Chladni plate equations, wave interference, ripple, standing waves"
+    },
+    "settings_persistence": "apps/mobile/lib/useSettings.ts (AsyncStorage)",
+    "documentation": "README.md created",
+    "research_integration": {
+      "organ_resonance_table": true,
+      "tissue_acoustic_impedance": true,
+      "sensor_nyquist_limits": {
+        "lidar_hz": 7.5,
+        "camera_4k_hz": 30,
+        "camera_1080p_hz": 60,
+        "imu_hz": 50
+      },
+      "multi_sensor_fusion_engine": true,
+      "active_haptic_measurement": true,
+      "user_calibration_system": true,
+      "kalman_filtering": true
+    }
+  }
+}

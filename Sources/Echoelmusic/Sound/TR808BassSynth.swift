@@ -323,7 +323,11 @@ public final class TR808BassSynth: ObservableObject {
     public func noteOn(note: Int, velocity: Float = 0.8) {
         // Ensure engine is running
         if audioEngine?.isRunning != true {
-            try? audioEngine?.start()
+            do {
+                try audioEngine?.start()
+            } catch {
+                log.error("Failed to start TR808 audio engine: \(error)")
+            }
         }
 
         voiceLock.lock()

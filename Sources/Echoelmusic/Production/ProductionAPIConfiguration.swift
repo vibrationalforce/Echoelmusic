@@ -827,8 +827,9 @@ public final class SecureAPIKeyManager {
             throw APIKeyError.keychainStoreFailed(status: status)
         }
         #else
-        // Fallback for non-Apple platforms
-        print("WARNING: Keychain not available, API key not stored securely")
+        // Fallback for non-Apple platforms - throw error for security
+        log.warning("Keychain not available on this platform, API key storage not supported")
+        throw APIKeyError.keychainNotAvailable
         #endif
     }
 
@@ -874,7 +875,8 @@ public final class SecureAPIKeyManager {
             throw APIKeyError.keychainDeleteFailed(status: status)
         }
         #else
-        print("WARNING: Keychain not available, cannot delete API key")
+        log.warning("Keychain not available on this platform, cannot delete API key")
+        throw APIKeyError.keychainNotAvailable
         #endif
     }
 
@@ -892,7 +894,8 @@ public final class SecureAPIKeyManager {
             throw APIKeyError.keychainDeleteFailed(status: status)
         }
         #else
-        print("WARNING: Keychain not available, cannot clear API keys")
+        log.warning("Keychain not available on this platform, cannot clear API keys")
+        throw APIKeyError.keychainNotAvailable
         #endif
     }
 

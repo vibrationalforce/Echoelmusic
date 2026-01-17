@@ -606,7 +606,9 @@ public final class DeveloperConsole: ObservableObject {
 
         public static func < (lhs: LogLevel, rhs: LogLevel) -> Bool {
             let order: [LogLevel] = [.debug, .info, .warning, .error]
-            return order.firstIndex(of: lhs)! < order.firstIndex(of: rhs)!
+            let lhsIndex = order.firstIndex(of: lhs) ?? 0
+            let rhsIndex = order.firstIndex(of: rhs) ?? 0
+            return lhsIndex < rhsIndex
         }
     }
 

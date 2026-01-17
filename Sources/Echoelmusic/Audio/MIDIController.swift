@@ -337,7 +337,9 @@ extension MIDIController {
                 continuation.resume(returning: ccNumber)
             }
 
-            messageHandlers.append(handler!)
+            if let h = handler {
+                messageHandlers.append(h)
+            }
 
             // Timeout
             timeoutTask = Task {

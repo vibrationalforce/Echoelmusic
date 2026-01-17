@@ -3,19 +3,15 @@ import CoreLocation
 import Combine
 
 /// Universal Device Integration
-/// Connects Echoelmusic to: Vehicles, Drones, IoT, Medical Devices, Smart Home, Robots
+/// Connects Echoelmusic to: IoT, Medical Devices, Smart Home, Robots
 ///
 /// Use Cases:
-/// 🚗 Vehicles: Bio-reactive music in your car, stress detection while driving
-/// 🚁 Drones: Audio-visual feedback during flight, autonomous soundtrack generation
 /// 🏠 Smart Home: Sync lights/temp with your bio-data, ambient wellbeing environment
 /// 🏥 Medical: Real-time health monitoring, therapeutic audio interventions
 /// 🤖 Robots: Emotional response to robot interactions, bio-synchronized movement
 ///
 /// Protocols Supported:
 /// - MQTT (IoT standard)
-/// - CAN Bus (Vehicles)
-/// - MAVLink (Drones)
 /// - HomeKit (Apple Smart Home)
 /// - FHIR (Medical devices)
 /// - ROS 2 (Robots)
@@ -25,8 +21,6 @@ class UniversalDeviceIntegration: ObservableObject {
     // MARK: - Published State
 
     @Published var connectedDevices: [ConnectedDevice] = []
-    @Published var vehicleStatus: VehicleStatus?
-    @Published var droneStatus: DroneStatus?
     @Published var smartHomeStatus: SmartHomeStatus?
     @Published var medicalDeviceStatus: MedicalDeviceStatus?
 
@@ -40,8 +34,6 @@ class UniversalDeviceIntegration: ObservableObject {
         let status: ConnectionStatus
 
         enum DeviceType: String {
-            case vehicle = "Vehicle"
-            case drone = "Drone"
             case smartHome = "Smart Home"
             case medicalDevice = "Medical Device"
             case robot = "Robot"
@@ -51,8 +43,6 @@ class UniversalDeviceIntegration: ObservableObject {
 
         enum CommunicationProtocol: String {
             case mqtt = "MQTT"
-            case canBus = "CAN Bus"
-            case mavlink = "MAVLink"
             case homeKit = "HomeKit"
             case fhir = "FHIR"
             case ros2 = "ROS 2"
@@ -66,155 +56,6 @@ class UniversalDeviceIntegration: ObservableObject {
             case disconnected = "Disconnected"
             case error = "Error"
         }
-    }
-
-    // MARK: - Vehicle Integration
-
-    struct VehicleStatus {
-        let manufacturer: String
-        let model: String
-        let speed: Float  // km/h
-        let rpm: Int
-        let fuelLevel: Float  // 0-1
-        let batteryLevel: Float  // 0-1 (for EVs)
-        let isAutonomous: Bool
-        let driverStressLevel: Float  // 0-1 from bio-data
-        let audioSyncEnabled: Bool
-
-        var isMoving: Bool {
-            return speed > 0
-        }
-    }
-
-    func connectToVehicle(manufacturer: String, model: String) async -> Bool {
-        log.hardware("🚗 Connecting to vehicle: \(manufacturer) \(model)...")
-
-        // Simulate connection
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
-
-        let device = ConnectedDevice(
-            id: UUID(),
-            name: "\(manufacturer) \(model)",
-            type: .vehicle,
-            protocol: .canBus,
-            status: .connected
-        )
-
-        connectedDevices.append(device)
-
-        vehicleStatus = VehicleStatus(
-            manufacturer: manufacturer,
-            model: model,
-            speed: 0,
-            rpm: 0,
-            fuelLevel: 0.75,
-            batteryLevel: 0.85,
-            isAutonomous: false,
-            driverStressLevel: 0.3,
-            audioSyncEnabled: true
-        )
-
-        log.hardware("✅ Vehicle connected: \(manufacturer) \(model) - Protocol: CAN Bus - Bio-reactive audio: Enabled", level: .info)
-
-        return true
-    }
-
-    func updateVehicleAudio(basedOnBioData hrv: Float, coherence: Float) {
-        guard var status = vehicleStatus else { return }
-
-        // Calculate driver stress from bio-data
-        let stress = 1.0 - coherence  // Lower coherence = higher stress
-
-        // Adjust music based on stress and driving conditions
-        if stress > 0.7 {
-            log.hardware("⚠️ High driver stress detected - playing calming music", level: .warning)
-            // Activate slow breathing protocol
-            // Lower tempo, reduce complexity
-        } else if status.speed > 100 {
-            log.hardware("🏎️ High speed - maintaining alert state")
-            // Increase tempo slightly to maintain alertness
-        }
-
-        log.hardware("🚗 Vehicle audio adjusted: Speed: \(Int(status.speed)) km/h - Driver stress: \(String(format: "%.1f", stress * 100))% - HRV: \(Int(hrv)) ms")
-    }
-
-    func enableAutonomousMode() {
-        guard var status = vehicleStatus else { return }
-        log.hardware("🤖 Autonomous mode enabled - optimizing for relaxation")
-
-        // In autonomous mode, focus on wellbeing
-        // No need to maintain alertness
-        // Can use deeper meditative states
-    }
-
-    // MARK: - Drone Integration
-
-    struct DroneStatus {
-        let manufacturer: String
-        let model: String
-        let altitude: Float  // meters
-        let speed: Float  // m/s
-        let batteryLevel: Float  // 0-1
-        let isAutonomous: Bool
-        let gpsCoordinates: CLLocationCoordinate2D
-        let flightMode: FlightMode
-
-        enum FlightMode: String {
-            case manual = "Manual"
-            case autonomous = "Autonomous"
-            case followMe = "Follow Me"
-            case waypoint = "Waypoint"
-            case returnHome = "Return Home"
-        }
-    }
-
-    func connectToDrone(manufacturer: String, model: String) async -> Bool {
-        log.hardware("🚁 Connecting to drone: \(manufacturer) \(model)...")
-
-        // Simulate connection
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
-
-        let device = ConnectedDevice(
-            id: UUID(),
-            name: "\(manufacturer) \(model)",
-            type: .drone,
-            protocol: .mavlink,
-            status: .connected
-        )
-
-        connectedDevices.append(device)
-
-        droneStatus = DroneStatus(
-            manufacturer: manufacturer,
-            model: model,
-            altitude: 0,
-            speed: 0,
-            batteryLevel: 1.0,
-            isAutonomous: false,
-            gpsCoordinates: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-            flightMode: .manual
-        )
-
-        log.hardware("✅ Drone connected: \(manufacturer) \(model) - Protocol: MAVLink - Audio-visual feedback: Enabled", level: .info)
-
-        return true
-    }
-
-    func generateDroneSoundtrack(altitude: Float, speed: Float, batteryLevel: Float) {
-        log.hardware("🎵 Generating dynamic drone soundtrack - Altitude: \(Int(altitude))m → Pitch adjustment - Speed: \(String(format: "%.1f", speed))m/s → Tempo adjustment - Battery: \(Int(batteryLevel * 100))% → Intensity adjustment")
-
-        // Map flight parameters to audio
-        // Higher altitude = higher pitch
-        // Faster speed = faster tempo
-        // Lower battery = warning tones
-    }
-
-    func enableDroneFollowMeMode(pilotHRV: Float) {
-        log.hardware("🎯 Follow Me mode: Drone syncs with pilot's bio-data - Pilot HRV: \(Int(pilotHRV)) ms")
-
-        // Drone follows pilot and adjusts flight smoothness based on HRV
-        // Lower HRV = smoother, calmer flight
-        // Higher HRV = more dynamic, responsive flight
     }
 
     // MARK: - Smart Home Integration
@@ -456,14 +297,6 @@ class UniversalDeviceIntegration: ObservableObject {
 
         Connected Devices: \(connectedDevices.count)
 
-        === VEHICLES ===
-        \(vehicleStatus.map { "✓ Connected: \($0.manufacturer) \($0.model)" } ?? "✗ No vehicle connected")
-        \(vehicleStatus.map { "  Bio-reactive audio: \($0.audioSyncEnabled ? "Enabled" : "Disabled")" } ?? "")
-
-        === DRONES ===
-        \(droneStatus.map { "✓ Connected: \($0.manufacturer) \($0.model)" } ?? "✗ No drone connected")
-        \(droneStatus.map { "  Flight mode: \($0.flightMode.rawValue)" } ?? "")
-
         === SMART HOME ===
         \(smartHomeStatus.map { "✓ Connected: \($0.lights.count) lights, \($0.speakers.count) speakers" } ?? "✗ No smart home connected")
         \(smartHomeStatus.map { "  Bio-sync: \($0.bioSyncEnabled ? "Enabled" : "Disabled")" } ?? "")
@@ -474,8 +307,6 @@ class UniversalDeviceIntegration: ObservableObject {
 
         === PROTOCOLS SUPPORTED ===
         • MQTT (IoT standard)
-        • CAN Bus (Vehicles)
-        • MAVLink (Drones)
         • HomeKit (Smart Home)
         • FHIR (Medical devices)
         • ROS 2 (Robots)
@@ -483,8 +314,6 @@ class UniversalDeviceIntegration: ObservableObject {
         • WiFi Direct
 
         === USE CASES ===
-        🚗 Vehicle: Bio-reactive music adapts to driving stress
-        🚁 Drone: Dynamic soundtrack based on flight parameters
         🏠 Smart Home: Lights and temperature sync with your state
         🏥 Medical: Therapeutic audio interventions (research use)
         🤖 Robot: Movement synchronized with your bio-rhythm
@@ -501,8 +330,6 @@ class UniversalDeviceIntegration: ObservableObject {
         }
 
         connectedDevices.removeAll()
-        vehicleStatus = nil
-        droneStatus = nil
         smartHomeStatus = nil
         medicalDeviceStatus = nil
 

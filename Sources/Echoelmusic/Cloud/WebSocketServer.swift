@@ -511,7 +511,7 @@ public class WebSocketSecurity {
     private func recordSuspiciousActivity(_ userID: String) {
         suspiciousActivity[userID, default: 0] += 1
 
-        if suspiciousActivity[userID]! >= suspicionThreshold {
+        if (suspiciousActivity[userID] ?? 0) >= suspicionThreshold {
             logger.error("User \(userID) flagged for abuse (threshold: \(suspicionThreshold))", category: .network)
         }
     }

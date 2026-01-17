@@ -384,12 +384,16 @@ public class AuthenticationService: ObservableObject {
         let status = SecItemCopyMatching(query as CFDictionary, &result)
 
         guard status == errSecSuccess,
-              let data = result as? Data,
-              let token = try? JSONDecoder().decode(JWTToken.self, from: data) else {
+              let data = result as? Data else {
             return nil
         }
 
-        return token
+        do {
+            return try JSONDecoder().decode(JWTToken.self, from: data)
+        } catch {
+            log.error("Failed to decode JWT token from Keychain: \(error)")
+            return nil
+        }
     }
 
     private func deleteTokenFromKeychain() {
@@ -705,24 +709,26 @@ public class CollaborationServer: NSObject, ObservableObject {
     private func handleMessage(_ message: URLSessionWebSocketTask.Message) async {
         switch message {
         case .string(let text):
-            guard let data = text.data(using: .utf8),
-                  let wsMessage = try? JSONDecoder().decode(WSMessage.self, from: data) else {
-                return
-            }
-
-            await MainActor.run {
-                messageSubject.send(wsMessage)
-                processMessage(wsMessage)
+            guard let data = text.data(using: .utf8) else { return }
+            do {
+                let wsMessage = try JSONDecoder().decode(WSMessage.self, from: data)
+                await MainActor.run {
+                    messageSubject.send(wsMessage)
+                    processMessage(wsMessage)
+                }
+            } catch {
+                logger.error("Failed to decode WebSocket text message: \(error)", category: .collaboration)
             }
 
         case .data(let data):
-            guard let wsMessage = try? JSONDecoder().decode(WSMessage.self, from: data) else {
-                return
-            }
-
-            await MainActor.run {
-                messageSubject.send(wsMessage)
-                processMessage(wsMessage)
+            do {
+                let wsMessage = try JSONDecoder().decode(WSMessage.self, from: data)
+                await MainActor.run {
+                    messageSubject.send(wsMessage)
+                    processMessage(wsMessage)
+                }
+            } catch {
+                logger.error("Failed to decode WebSocket binary message: \(error)", category: .collaboration)
             }
 
         @unknown default:
@@ -1424,7 +1430,11 @@ public class ServerHealthMonitor: ObservableObject {
     /// Perform health check
     public func checkHealth() async -> Bool {
         let config = ServerConfiguration.shared
-        let url = URL(string: config.healthCheckURL)!
+        guard let url = URL(string: config.healthCheckURL) else {
+            logger.error("Invalid health check URL: \(config.healthCheckURL)", category: .network)
+            isHealthy = false
+            return false
+        }
 
         let start = Date()
 

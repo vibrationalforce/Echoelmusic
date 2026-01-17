@@ -294,13 +294,40 @@ class TeamCollaborationHub: ObservableObject {
     }
 
     private func calculateTeamWorkHours() -> Double {
-        // Placeholder - would calculate from activity logs
-        return 6.5
+        // Calculate total active hours from sessions
+        let now = Date()
+        var totalHours: Double = 0.0
+
+        for session in activeSessions where session.status == .active {
+            let sessionStart = session.startedAt
+            let sessionEnd = session.endedAt ?? now
+            let sessionDuration = sessionEnd.timeIntervalSince(sessionStart) / 3600.0
+            totalHours += sessionDuration
+        }
+
+        // Average across active team members
+        let memberCount = max(1, onlineMembers.count)
+        return totalHours / Double(memberCount)
     }
 
     private func calculateTimeSinceLastBreak() -> TimeInterval {
-        // Placeholder
-        return 5400 // 1.5 hours
+        // Find the most recent break activity
+        let now = Date()
+        let breakActivities = recentActivity.filter {
+            if case .leftSession = $0.type { return true }
+            return false
+        }
+
+        if let lastBreak = breakActivities.first {
+            return now.timeIntervalSince(lastBreak.timestamp)
+        }
+
+        // If no break found, use session start times
+        if let oldestSession = activeSessions.min(by: { $0.startedAt < $1.startedAt }) {
+            return now.timeIntervalSince(oldestSession.startedAt)
+        }
+
+        return 3600 // Default 1 hour if no data
     }
 
     private func updateTeamWellnessScore() {
@@ -629,13 +656,68 @@ extension TeamCollaborationHub {
     }
 
     private func calculateMostActiveHours() -> [Int] {
-        // Return hours with most activity
-        return [10, 11, 14, 15, 16]  // Placeholder
+        // Analyze recentActivity timestamps to find most active hours
+        var hourCounts = [Int: Int]()
+
+        for activity in recentActivity {
+            let calendar = Calendar.current
+            let hour = calendar.component(.hour, from: activity.timestamp)
+            hourCounts[hour, default: 0] += 1
+        }
+
+        // Sort hours by activity count and return top 5
+        let sortedHours = hourCounts.sorted { $0.value > $1.value }
+        let topHours = sortedHours.prefix(5).map { $0.key }.sorted()
+
+        // If no activity data, return typical work hours
+        return topHours.isEmpty ? [10, 11, 14, 15, 16] : topHours
     }
 
     private func calculateCollaborationScore(_ sessions: [CollaborationSession]) -> Double {
-        // Calculate based on participation, engagement, etc.
-        return 0.85  // Placeholder
+        // Calculate collaboration score based on multiple factors
+        guard !sessions.isEmpty else { return 0.0 }
+
+        var totalScore: Double = 0.0
+
+        for session in sessions {
+            var sessionScore: Double = 0.0
+
+            // Factor 1: Participation rate (joined vs invited)
+            let invitedCount = Double(session.participantIds.count)
+            let joinedCount = Double(session.joinedParticipants.count)
+            if invitedCount > 0 {
+                sessionScore += (joinedCount / invitedCount) * 0.3
+            }
+
+            // Factor 2: Session completion (ended properly vs abandoned)
+            if session.endedAt != nil && session.status == .ended {
+                sessionScore += 0.25
+            }
+
+            // Factor 3: Duration quality (optimal is 30-90 minutes)
+            if let endTime = session.endedAt {
+                let durationMinutes = endTime.timeIntervalSince(session.createdAt) / 60.0
+                if durationMinutes >= 30 && durationMinutes <= 90 {
+                    sessionScore += 0.25  // Optimal duration
+                } else if durationMinutes > 10 && durationMinutes < 120 {
+                    sessionScore += 0.15  // Acceptable duration
+                } else {
+                    sessionScore += 0.05  // Too short or too long
+                }
+            }
+
+            // Factor 4: Multi-participant sessions are more valuable
+            if session.joinedParticipants.count >= 3 {
+                sessionScore += 0.2
+            } else if session.joinedParticipants.count >= 2 {
+                sessionScore += 0.1
+            }
+
+            totalScore += sessionScore
+        }
+
+        // Average score across sessions, normalized to 0-1
+        return min(totalScore / Double(sessions.count), 1.0)
     }
 }
 

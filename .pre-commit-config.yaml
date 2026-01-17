@@ -1,0 +1,80 @@
+# Pre-commit hooks for Echoelmusic
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Secret Detection - Prevents accidental credential commits
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: |
+          (?x)^(
+            .*\.lock$|
+            .*\.resolved$|
+            Package\.resolved$|
+            Podfile\.lock$|
+            .*\.xcodeproj/.*|
+            \.build/.*|
+            build/.*|
+            DerivedData/.*|
+            .*\.md$
+          )$
+
+  # Git-secrets (AWS credential detection)
+  - repo: https://github.com/awslabs/git-secrets
+    rev: master
+    hooks:
+      - id: git-secrets
+        entry: git-secrets --scan
+        language: script
+        files: ''
+
+  # General code quality hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+        exclude: '\.md$|\.xcodeproj/'
+      - id: check-yaml
+        args: ['--unsafe']
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: ['--branch', 'main', '--branch', 'master']
+
+  # Swift-specific linting (if swiftlint installed)
+  - repo: local
+    hooks:
+      - id: swiftlint
+        name: SwiftLint
+        entry: swiftlint lint --strict
+        language: system
+        types: [swift]
+        pass_filenames: false
+
+      - id: swift-format-check
+        name: Swift Format Check
+        entry: swift-format lint --recursive Sources Tests
+        language: system
+        types: [swift]
+        pass_filenames: false
+
+# Custom patterns for Echoelmusic secrets
+# These patterns catch common credential formats
+default_language_version:
+  python: python3
+
+# Patterns to detect (added to detect-secrets baseline)
+# - API keys: /[A-Za-z0-9_-]{32,}/
+# - AWS keys: /AKIA[0-9A-Z]{16}/
+# - Private keys: /-----BEGIN.*PRIVATE KEY-----/
+# - Certificate pins: /sha256\/[A-Za-z0-9+\/=]{43,44}/
+# - Bearer tokens: /Bearer [A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/

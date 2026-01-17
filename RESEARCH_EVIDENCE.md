@@ -105,77 +105,18 @@ Echoelmusic maintains rigorous evidence-based practices for all biometric, welln
 
 ---
 
-### 4. Social Health Support
+### 4. Circadian Rhythm Engine (NASA-Validated)
 
-**File:** `Sources/Echoelmusic/Science/SocialHealthSupport.swift`
+**File:** `Sources/Echoelmusic/Circadian/CircadianRhythmEngine.swift`
 
-#### Evidence-Based Features
+#### NASA-Derived Light Protocols
 
-- Social connection tracking (observational research)
-- Community coherence metrics (HeartMath research)
-- Loneliness indicators (validated questionnaires)
+- ISS SSLA-based light temperatures (4500K, 2700K, 6500K)
+- Circadian phase detection (8 phases)
+- 460nm blue light awareness for melatonin
+- Chronotype support (Lion, Bear, Wolf, Dolphin)
 
-**Disclaimer:** For personalized support, consult healthcare or social work professionals.
-
----
-
-### 5. Astronaut Health Monitoring
-
-**File:** `Sources/Echoelmusic/Science/AstronautHealthMonitoring.swift`
-
-#### NASA-Derived Protocols
-
-- HRV analysis for stress detection
-- Circadian rhythm monitoring
-- Isolation stress indicators
-
-**Research Basis:** NASA Human Research Program publications
-
----
-
-### 6. Adey Windows Bioelectromagnetic Research (NEW)
-
-**File:** `Sources/Echoelmusic/Science/AdeyWindowsBioelectromagneticEngine.swift`
-
-#### Research Foundation
-
-Dr. W. Ross Adey (1922-2004) - UCLA Brain Research Institute, Loma Linda University
-
-| Publication | Year | Journal | Evidence Level |
-|-------------|------|---------|----------------|
-| Tissue interactions with nonionizing EM fields | 1981 | Physiological Reviews | 2b (Cohort) |
-| Cell membranes and cancer promotion | 1988 | Neurochemical Research | 3 (Case-Control) |
-| Biological effects of EM fields | 1993 | J Cell Biochemistry | 5 (Expert Review) |
-| Calcium binding sensitivity to ELF | 1976 | PNAS | Lab Study |
-
-#### Key Findings (Scientific Context)
-
-- **Frequency Windows:** Biological effects observed only at specific ELF ranges (6-20 Hz)
-- **Amplitude Windows:** Non-linear dose-response (not "more is better")
-- **Calcium Efflux:** Demonstrated effects on brain tissue calcium ion channels
-- **CRITICAL LIMITATION:** Research focused on EM fields, NOT audio frequencies
-
-#### Implemented Body System Mappings
-
-| Body System | Frequency Window | Measurement | Evidence |
-|-------------|------------------|-------------|----------|
-| Nervous System (Psyche) | Delta 0.5-4 Hz, Theta 4-8 Hz, Alpha 8-12 Hz | EEG | 1a-2b |
-| Cardiovascular | HRV Coherence 0.04-0.15 Hz | HRV/EKG | 1a |
-| Musculoskeletal | PEMF-inspired 15-30 Hz | EMG | 1b-2b |
-| Respiratory | Resonance 0.08-0.12 Hz | Breathing Rate | 1a |
-| Immune (Vagal Tone) | HF-HRV 0.15-0.4 Hz | HRV | 2b |
-
-#### CRITICAL DISCLAIMER
-
-```
-⚠️ AUDIO ≠ ELEKTROMAGNETIK ⚠️
-
-Die Adey-Forschung bezog sich auf elektromagnetische Felder, NICHT auf Audio.
-Echoelmusic implementiert diese Erkenntnisse als AUDIO-BIOFEEDBACK-INSPIRATION,
-nicht als elektromagnetische Therapie.
-
-Keine medizinischen Anwendungen. FDA hat keine Adey-Windows-Therapien zugelassen.
-```
+**Research Basis:** NASA Human Research Program, Harvard Circadian Medicine
 
 ---
 
@@ -227,7 +168,7 @@ informational purposes only.
 | Breathing Exercises | `LambdaModeEngine.swift:294` | Stop if dizzy, not for respiratory conditions |
 | Meditation | `LambdaModeEngine.swift:299` | Consult mental health professional if concerns |
 | Biometrics | `RealTimeHealthKitEngine.swift:221` | Not for medical monitoring |
-| Wellness | `WellnessTrackingEngine.swift` | General wellness only |
+| Circadian | `CircadianRhythmEngine.swift` | Light/time-based, not medical |
 
 ---
 

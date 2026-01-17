@@ -307,7 +307,8 @@ public final class StemSeparationDSPKernel: EchoelmusicDSPKernel {
         var splitComplex = DSPSplitComplex(realp: &realBuffer, imagp: &imagBuffer)
 
         windowedFrame.withUnsafeBufferPointer { ptr in
-            ptr.baseAddress!.withMemoryRebound(to: DSPComplex.self, capacity: freqBins) { complexPtr in
+            guard let baseAddress = ptr.baseAddress else { return }
+            baseAddress.withMemoryRebound(to: DSPComplex.self, capacity: freqBins) { complexPtr in
                 vDSP_ctoz(complexPtr, 2, &splitComplex, 1, vDSP_Length(freqBins))
             }
         }

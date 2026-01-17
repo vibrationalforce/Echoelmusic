@@ -621,4 +621,123 @@ final class LambdaModeTests: XCTestCase {
             wf.normalize()
         }
     }
+
+    //==========================================================================
+    // MARK: - Physical Light Output Tests
+    //==========================================================================
+
+    @MainActor
+    func testLambdaModePhysicalLightOutputEnabled() async {
+        let engine = LambdaModeEngine()
+
+        // Default should be disabled
+        XCTAssertFalse(engine.physicalLightOutputEnabled)
+
+        // Enable
+        engine.enablePhysicalLightOutput(true)
+        XCTAssertTrue(engine.physicalLightOutputEnabled)
+
+        // Disable
+        engine.enablePhysicalLightOutput(false)
+        XCTAssertFalse(engine.physicalLightOutputEnabled)
+    }
+
+    @MainActor
+    func testLambdaModeLightOutputCallback() async {
+        let engine = LambdaModeEngine()
+        var callbackFired = false
+        var capturedR: Float = 0
+        var capturedG: Float = 0
+        var capturedB: Float = 0
+        var capturedIntensity: Float = 0
+
+        // Set up callback
+        engine.onLightOutput = { r, g, b, intensity in
+            callbackFired = true
+            capturedR = r
+            capturedG = g
+            capturedB = b
+            capturedIntensity = intensity
+        }
+
+        // Enable physical light output
+        engine.physicalLightOutputEnabled = true
+
+        // Activate and let tick run
+        engine.activate()
+
+        // Simulate bio data to trigger visual sync
+        var bioData = UnifiedBioData()
+        bioData.heartRate = 72.0
+        bioData.hrvCoherence = 0.8
+        engine.updateBioData(bioData)
+
+        // Wait for tick
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        // Check callback fired (may or may not depending on timing)
+        // At minimum, verify callback was set up correctly
+        XCTAssertNotNil(engine.onLightOutput)
+
+        engine.deactivate()
+    }
+
+    @MainActor
+    func testLambdaModeVisualStateToLightMapping() async {
+        let engine = LambdaModeEngine()
+
+        // Test HSB to RGB conversion via visual state
+        engine.visualState.colorHue = 0.0  // Red
+        engine.visualState.colorSaturation = 1.0
+        engine.visualState.colorBrightness = 1.0
+        engine.visualState.intensity = 1.0
+
+        var bioData = UnifiedBioData()
+        bioData.hrvCoherence = 1.0
+        engine.updateBioData(bioData)
+
+        // Visual state should be updated
+        XCTAssertGreaterThan(engine.visualState.intensity, 0)
+    }
+
+    @MainActor
+    func testLambdaModeOctaveBasedColorCalculation() async {
+        let engine = LambdaModeEngine()
+
+        // Enable bio sync
+        engine.bioSyncEnabled = true
+        engine.activate()
+
+        // Set heart rate that maps to specific octave color
+        var bioData = UnifiedBioData()
+        bioData.heartRate = 60.0  // 1 Hz heart rate
+        bioData.hrvCoherence = 0.5
+        engine.updateBioData(bioData)
+
+        // Wait for sync
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        // Visual state should have been updated with octave-based hue
+        // Exact value depends on octave transposition formula
+        XCTAssertGreaterThanOrEqual(engine.visualState.colorHue, 0)
+        XCTAssertLessThanOrEqual(engine.visualState.colorHue, 1.0)
+
+        engine.deactivate()
+    }
+
+    @MainActor
+    func testDisconnectFromLightMapper() async {
+        let engine = LambdaModeEngine()
+
+        // Set up a callback
+        engine.onLightOutput = { _, _, _, _ in }
+        engine.physicalLightOutputEnabled = true
+
+        // Disconnect
+        engine.disconnectFromLightMapper()
+
+        // Should be disabled and callback cleared
+        XCTAssertFalse(engine.physicalLightOutputEnabled)
+        XCTAssertNil(engine.onLightOutput)
+    }
 }

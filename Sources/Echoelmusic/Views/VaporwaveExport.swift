@@ -156,6 +156,7 @@ struct VaporwaveExport: View {
                         .font(.system(size: 28))
                         .foregroundColor(VaporwaveColors.textSecondary)
                 }
+                .accessibilityLabel("Close export")
             }
         }
         .padding(.top, VaporwaveSpacing.xl)
@@ -217,6 +218,10 @@ struct VaporwaveExport: View {
                     .stroke(isSelected ? format.color : Color.white.opacity(0.1), lineWidth: isSelected ? 2 : 1)
             )
             .neonGlow(color: isSelected ? format.color : .clear, radius: 10)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(format.rawValue) format, \(format.description)")
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
+            .accessibilityHint("Double tap to select this export format")
         }
     }
 
@@ -379,6 +384,8 @@ struct VaporwaveExport: View {
             .cornerRadius(16)
             .neonGlow(color: selectedFormat.color, radius: 15)
         }
+        .accessibilityLabel("Export as \(selectedFormat.rawValue)")
+        .accessibilityHint("Double tap to start export")
     }
 
     // MARK: - Exporting View

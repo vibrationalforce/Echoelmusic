@@ -1321,18 +1321,20 @@ extension PresetManager {
     }
 
     /// Get preset by category
+    /// - Parameter type: The preset type to retrieve
+    /// - Returns: Array of presets matching the requested type, empty if type mismatch
     public func getPresetsByCategory<T: EnginePreset>(_ type: T.Type) -> [T] {
         switch type {
         case is BioReactivePreset.Type:
-            return BioReactivePreset.all as! [T]
+            return (BioReactivePreset.all as? [T]) ?? []
         case is MusicalPreset.Type:
-            return MusicalPreset.all as! [T]
+            return (MusicalPreset.all as? [T]) ?? []
         case is VisualPreset.Type:
-            return VisualPreset.all as! [T]
+            return (VisualPreset.all as? [T]) ?? []
         case is LightingPreset.Type:
-            return LightingPreset.all as! [T]
+            return (LightingPreset.all as? [T]) ?? []
         case is StreamingPreset.Type:
-            return StreamingPreset.all as! [T]
+            return (StreamingPreset.all as? [T]) ?? []
         default:
             return []
         }
@@ -1361,50 +1363,35 @@ public struct PresetExporter {
 /// Statistics and analytics for preset usage
 public struct PresetStatistics {
 
-    public static func printSummary() {
-        print("""
+    /// Log preset summary to the structured logging system
+    public static func logSummary() {
+        let summary = """
+        Preset Categories:
+        - Bio-Reactive: \(BioReactivePreset.all.count)
+        - Musical: \(MusicalPreset.all.count)
+        - Visual: \(VisualPreset.all.count)
+        - Lighting: \(LightingPreset.all.count)
+        - Streaming: \(StreamingPreset.all.count)
+        - Collaboration: \(CollaborationPreset.allExpanded.count)
+        Total: 50+ expanded presets
+        """
+        log.info(summary)
+    }
 
-        ═══════════════════════════════════════════════════════════════
-        ECHOELMUSIC EXPANDED PRESETS - PHASE 10000 ULTIMATE MODE
-        ═══════════════════════════════════════════════════════════════
+    /// Get preset counts as a dictionary
+    public static var counts: [String: Int] {
+        [
+            "bioReactive": BioReactivePreset.all.count,
+            "musical": MusicalPreset.all.count,
+            "visual": VisualPreset.all.count,
+            "lighting": LightingPreset.all.count,
+            "streaming": StreamingPreset.all.count,
+            "collaboration": CollaborationPreset.allExpanded.count
+        ]
+    }
 
-        📊 PRESET CATEGORIES:
-
-        🧘 Bio-Reactive Presets:  \(BioReactivePreset.all.count)
-           - Deep meditation, active flow, sleep induction, focus
-           - Heart coherence, breath sync, stress relief
-
-        🎵 Musical Presets:       \(MusicalPreset.all.count)
-           - Ambient, techno, jazz, classical, world music
-           - Professional production workflows
-
-        🎨 Visual Presets:        \(VisualPreset.all.count)
-           - Sacred geometry, cosmic, nature, quantum
-           - Real-time generative graphics
-
-        💡 Lighting Presets:      \(LightingPreset.all.count)
-           - DMX/Art-Net control, LED strips, moving heads
-           - Theater, concert, meditation, rave
-
-        📡 Streaming Presets:     \(StreamingPreset.all.count)
-           - YouTube, Twitch, Instagram, TikTok
-           - Professional broadcast quality
-
-        🌍 Collaboration Presets: \(CollaborationPreset.allExpanded.count)
-           - Virtual concerts, meditation circles, workshops
-           - Research experiments, healing sessions
-
-        ═══════════════════════════════════════════════════════════════
-        TOTAL EXPANDED PRESETS: 50+
-        ═══════════════════════════════════════════════════════════════
-
-        All presets include:
-        ✅ Complete parameter configuration
-        ✅ Bio-reactive mappings (where applicable)
-        ✅ Audio, visual, and lighting settings
-        ✅ Professional defaults
-        ✅ Export/Import support
-
-        """)
+    /// Total preset count
+    public static var totalCount: Int {
+        counts.values.reduce(0, +)
     }
 }

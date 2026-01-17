@@ -239,8 +239,8 @@ public struct CollaborationSession: Identifiable, Codable, Sendable {
     }
 
     private static func generateCode() -> String {
-        let chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-        return String((0..<6).map { _ in chars.randomElement()! })
+        let chars = Array("ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
+        return String((0..<6).compactMap { _ in chars.randomElement() })
     }
 
     public var isActive: Bool {
@@ -709,8 +709,9 @@ public final class WorldwideCollaborationHub: ObservableObject {
         // Add some sample participants
         let participantCount = Int.random(in: 2...20)
         for i in 0..<participantCount {
+            let cities = ["New York", "London", "Tokyo", "Berlin", "Sydney"]
             let location = Participant.Location(
-                city: ["New York", "London", "Tokyo", "Berlin", "Sydney"].randomElement()!,
+                city: cities.randomElement() ?? "Unknown",
                 country: "World",
                 timezone: "UTC"
             )

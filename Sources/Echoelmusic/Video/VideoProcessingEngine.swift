@@ -748,10 +748,76 @@ public final class VideoProcessingEngine: ObservableObject {
 
         guard let pipeline = computePipelineStates[shaderName] else { return nil }
 
-        // Create textures and execute shader
-        // (Simplified - full implementation would create proper texture handling)
+        // Get image dimensions
+        let extent = image.extent
+        let width = Int(extent.width)
+        let height = Int(extent.height)
 
-        return image
+        guard width > 0, height > 0 else { return nil }
+
+        // Create texture descriptor
+        let textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat: .rgba8Unorm,
+            width: width,
+            height: height,
+            mipmapped: false
+        )
+        textureDescriptor.usage = [.shaderRead, .shaderWrite]
+
+        // Create input and output textures
+        guard let inputTexture = device.makeTexture(descriptor: textureDescriptor),
+              let outputTexture = device.makeTexture(descriptor: textureDescriptor) else {
+            return nil
+        }
+
+        // Render CIImage to input texture
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        ciContext.render(image, to: inputTexture, commandBuffer: nil, bounds: extent, colorSpace: colorSpace)
+
+        // Create command buffer and compute encoder
+        guard let commandBuffer = commandQueue.makeCommandBuffer(),
+              let computeEncoder = commandBuffer.makeComputeCommandEncoder() else {
+            return nil
+        }
+
+        // Configure compute pipeline
+        computeEncoder.setComputePipelineState(pipeline)
+        computeEncoder.setTexture(inputTexture, index: 0)
+        computeEncoder.setTexture(outputTexture, index: 1)
+
+        // Set effect parameters
+        var params = EffectParameters(
+            time: Float(Date().timeIntervalSince(startTime ?? Date())),
+            coherence: bioCoherence,
+            heartRate: bioHeartRate,
+            intensity: 1.0
+        )
+        computeEncoder.setBytes(&params, length: MemoryLayout<EffectParameters>.size, index: 0)
+
+        // Calculate thread groups
+        let threadGroupSize = MTLSize(width: 16, height: 16, depth: 1)
+        let threadGroups = MTLSize(
+            width: (width + threadGroupSize.width - 1) / threadGroupSize.width,
+            height: (height + threadGroupSize.height - 1) / threadGroupSize.height,
+            depth: 1
+        )
+
+        computeEncoder.dispatchThreadgroups(threadGroups, threadsPerThreadgroup: threadGroupSize)
+        computeEncoder.endEncoding()
+
+        commandBuffer.commit()
+        commandBuffer.waitUntilCompleted()
+
+        // Convert output texture back to CIImage
+        return CIImage(mtlTexture: outputTexture, options: [.colorSpace: colorSpace])
+    }
+
+    // Metal shader effect parameters
+    private struct EffectParameters {
+        var time: Float
+        var coherence: Float
+        var heartRate: Float
+        var intensity: Float
     }
 
     // MARK: - Statistics Calculation
