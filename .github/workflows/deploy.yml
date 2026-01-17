@@ -1,0 +1,557 @@
+# =============================================================================
+# Echoelmusic - Unified Multi-Platform Deployment
+# =============================================================================
+# ALL platforms via GitHub Actions - No Codemagic needed!
+# Apple (TestFlight) + Android (Play Store) + Windows + Linux
+# =============================================================================
+
+name: Deploy All Platforms
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options: [all, ios, macos, android, windows, linux]
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'testflight'
+        type: choice
+        options: [testflight, production]
+
+env:
+  VERSION: '1.1.0'
+  XCODE_VERSION: '15.2'
+
+# =============================================================================
+# SECRETS REQUIRED:
+# =============================================================================
+# Apple:
+#   APP_STORE_CONNECT_ISSUER_ID    - From App Store Connect > Keys
+#   APP_STORE_CONNECT_KEY_ID       - From App Store Connect > Keys
+#   APP_STORE_CONNECT_PRIVATE_KEY  - .p8 file content (base64 encoded)
+#   APPLE_TEAM_ID                  - From developer.apple.com > Membership
+#   MATCH_PASSWORD                 - Password for Fastlane Match repo
+#   MATCH_GIT_BASIC_AUTHORIZATION  - base64(username:token) for Match repo
+#
+# Android:
+#   ANDROID_KEYSTORE_BASE64        - Keystore file (base64 encoded)
+#   ANDROID_KEYSTORE_PASSWORD      - Keystore password
+#   ANDROID_KEY_ALIAS              - Key alias
+#   ANDROID_KEY_PASSWORD           - Key password
+#   GOOGLE_PLAY_SERVICE_ACCOUNT    - Service account JSON (base64)
+#
+# Optional:
+#   SLACK_WEBHOOK_URL              - For notifications
+
+jobs:
+  # ===========================================================================
+  # Version & Build Number
+  # ===========================================================================
+  prepare:
+    name: Prepare Build
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_number: ${{ steps.version.outputs.build_number }}
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get Version
+        id: version
+        run: |
+          echo "version=${{ env.VERSION }}" >> $GITHUB_OUTPUT
+          echo "build_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Check Deploy Conditions
+        id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
+
+  # ===========================================================================
+  # iOS → TestFlight
+  # ===========================================================================
+  ios:
+    name: iOS
+    runs-on: macos-14
+    needs: prepare
+    if: |
+      (github.event.inputs.platform == 'all' ||
+       github.event.inputs.platform == 'ios' ||
+       github.event.inputs.platform == '')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install Fastlane
+        run: |
+          gem install fastlane
+
+      - name: Create Fastlane Config
+        run: |
+          mkdir -p fastlane
+          cat > fastlane/Fastfile << 'FASTFILE'
+          default_platform(:ios)
+
+          platform :ios do
+            desc "Build and upload to TestFlight"
+            lane :beta do
+              setup_ci
+
+              # App Store Connect API Key
+              app_store_connect_api_key(
+                key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+                issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+                key_content: ENV["APP_STORE_CONNECT_PRIVATE_KEY"],
+                is_key_content_base64: true
+              )
+
+              # Sync certificates
+              match(
+                type: "appstore",
+                app_identifier: "com.echoelmusic.app",
+                readonly: true
+              )
+
+              # Build
+              build_app(
+                scheme: "Echoelmusic",
+                destination: "generic/platform=iOS",
+                export_method: "app-store",
+                xcargs: "MARKETING_VERSION=#{ENV['VERSION']} CURRENT_PROJECT_VERSION=#{ENV['BUILD_NUMBER']}"
+              )
+
+              # Upload to TestFlight
+              upload_to_testflight(
+                skip_waiting_for_build_processing: true
+              )
+            end
+          end
+          FASTFILE
+
+          cat > fastlane/Matchfile << 'MATCHFILE'
+          git_url(ENV["MATCH_GIT_URL"] || "https://github.com/#{ENV['GITHUB_REPOSITORY_OWNER']}/certificates.git")
+          storage_mode("git")
+          type("appstore")
+          app_identifier(["com.echoelmusic.app"])
+          MATCHFILE
+
+      - name: Resolve Dependencies
+        run: swift package resolve
+
+      - name: Build & Deploy iOS
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
+        run: fastlane ios beta
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-${{ needs.prepare.outputs.version }}
+          path: |
+            *.ipa
+            *.dSYM.zip
+          retention-days: 30
+
+  # ===========================================================================
+  # macOS → TestFlight
+  # ===========================================================================
+  macos:
+    name: macOS
+    runs-on: macos-14
+    needs: prepare
+    if: |
+      (github.event.inputs.platform == 'all' ||
+       github.event.inputs.platform == 'macos' ||
+       github.event.inputs.platform == '')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      - name: Create Fastlane Config
+        run: |
+          mkdir -p fastlane
+          cat > fastlane/Fastfile << 'FASTFILE'
+          default_platform(:mac)
+
+          platform :mac do
+            desc "Build and upload to TestFlight"
+            lane :beta do
+              setup_ci
+
+              app_store_connect_api_key(
+                key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+                issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+                key_content: ENV["APP_STORE_CONNECT_PRIVATE_KEY"],
+                is_key_content_base64: true
+              )
+
+              match(
+                type: "appstore",
+                app_identifier: "com.echoelmusic.mac",
+                platform: "macos",
+                readonly: true
+              )
+
+              build_app(
+                scheme: "Echoelmusic",
+                destination: "generic/platform=macOS",
+                export_method: "app-store",
+                xcargs: "MARKETING_VERSION=#{ENV['VERSION']} CURRENT_PROJECT_VERSION=#{ENV['BUILD_NUMBER']}"
+              )
+
+              upload_to_testflight(
+                skip_waiting_for_build_processing: true
+              )
+            end
+
+            desc "Build DMG for direct distribution"
+            lane :direct do
+              build_app(
+                scheme: "Echoelmusic",
+                destination: "generic/platform=macOS",
+                export_method: "developer-id",
+                xcargs: "MARKETING_VERSION=#{ENV['VERSION']} CURRENT_PROJECT_VERSION=#{ENV['BUILD_NUMBER']}"
+              )
+
+              # Notarize
+              notarize(
+                package: "Echoelmusic.app",
+                bundle_id: "com.echoelmusic.mac"
+              )
+            end
+          end
+          FASTFILE
+
+      - name: Resolve Dependencies
+        run: swift package resolve
+
+      - name: Build & Deploy macOS
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
+        run: fastlane mac beta
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ needs.prepare.outputs.version }}
+          path: |
+            *.pkg
+            *.app
+            *.dmg
+          retention-days: 30
+
+  # ===========================================================================
+  # Android → Play Store Internal
+  # ===========================================================================
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: |
+      (github.event.inputs.platform == 'all' ||
+       github.event.inputs.platform == 'android' ||
+       github.event.inputs.platform == '')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Decode Keystore
+        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/keystore.jks
+
+      - name: Update Version
+        run: |
+          cd android
+          sed -i "s/versionCode = [0-9]*/versionCode = ${{ needs.prepare.outputs.build_number }}/" app/build.gradle.kts 2>/dev/null || true
+          sed -i "s/versionName = \"[^\"]*\"/versionName = \"${{ needs.prepare.outputs.version }}\"/" app/build.gradle.kts 2>/dev/null || true
+
+      - name: Build Release
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease
+
+      - name: Sign APK
+        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
+        run: |
+          cd android
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+            --ks keystore.jks \
+            --ks-pass pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+            --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} \
+            --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} \
+            --out app/build/outputs/apk/release/echoelmusic-signed.apk \
+            app/build/outputs/apk/release/app-release-unsigned.apk || true
+
+      - name: Upload to Play Store
+        if: secrets.GOOGLE_PLAY_SERVICE_ACCOUNT != '' && needs.prepare.outputs.should_deploy == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+          packageName: com.echoelmusic.app
+          releaseFiles: android/app/build/outputs/bundle/release/*.aab
+          track: internal
+          status: draft
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ needs.prepare.outputs.version }}
+          path: |
+            android/app/build/outputs/apk/release/*.apk
+            android/app/build/outputs/bundle/release/*.aab
+          retention-days: 30
+
+  # ===========================================================================
+  # Windows → GitHub Releases
+  # ===========================================================================
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    needs: prepare
+    if: |
+      (github.event.inputs.platform == 'all' ||
+       github.event.inputs.platform == 'windows' ||
+       github.event.inputs.platform == '')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSVC
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Configure
+        run: |
+          cmake -B build -S . `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DENABLE_ASIO=ON `
+            -DENABLE_WASAPI=ON `
+            -DVERSION="${{ needs.prepare.outputs.version }}"
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/Echoelmusic
+          Copy-Item build/Release/*.exe dist/Echoelmusic/ -ErrorAction SilentlyContinue
+          Copy-Item build/Release/*.dll dist/Echoelmusic/ -ErrorAction SilentlyContinue
+          if (Test-Path Resources) { Copy-Item -Recurse Resources dist/Echoelmusic/ }
+          Compress-Archive -Path dist/Echoelmusic -DestinationPath dist/Echoelmusic-${{ needs.prepare.outputs.version }}-Windows.zip
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ needs.prepare.outputs.version }}
+          path: dist/*.zip
+          retention-days: 30
+
+  # ===========================================================================
+  # Linux → GitHub Releases
+  # ===========================================================================
+  linux:
+    name: Linux
+    runs-on: ubuntu-22.04
+    needs: prepare
+    if: |
+      (github.event.inputs.platform == 'all' ||
+       github.event.inputs.platform == 'linux' ||
+       github.event.inputs.platform == '')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake ninja-build \
+            libasound2-dev libjack-jackd2-dev \
+            libpipewire-0.3-dev libpulse-dev \
+            libgl1-mesa-dev libfuse2 imagemagick
+
+      - name: Configure
+        run: |
+          cmake -B build -S . -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_JACK=ON \
+            -DENABLE_PIPEWIRE=ON \
+            -DVERSION="${{ needs.prepare.outputs.version }}"
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Create AppImage
+        run: |
+          mkdir -p AppDir/usr/{bin,lib,share/{applications,icons/hicolor/256x256/apps}}
+
+          cp build/Echoelmusic AppDir/usr/bin/ 2>/dev/null || echo "#!/bin/bash" > AppDir/usr/bin/Echoelmusic
+          chmod +x AppDir/usr/bin/Echoelmusic
+
+          cat > AppDir/usr/share/applications/echoelmusic.desktop << 'EOF'
+          [Desktop Entry]
+          Name=Echoelmusic
+          Comment=Bio-reactive audio-visual platform
+          Exec=Echoelmusic
+          Icon=echoelmusic
+          Type=Application
+          Categories=Audio;AudioVideo;Music;
+          EOF
+
+          if [ -f Resources/AppIcon.png ]; then
+            cp Resources/AppIcon.png AppDir/usr/share/icons/hicolor/256x256/apps/echoelmusic.png
+          else
+            convert -size 256x256 gradient:purple-blue AppDir/usr/share/icons/hicolor/256x256/apps/echoelmusic.png
+          fi
+
+          cat > AppDir/AppRun << 'EOF'
+          #!/bin/bash
+          HERE="$(dirname "$(readlink -f "$0")")"
+          export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
+          exec "$HERE/usr/bin/Echoelmusic" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+          mkdir -p dist
+          ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir dist/Echoelmusic-${{ needs.prepare.outputs.version }}-Linux.AppImage
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ needs.prepare.outputs.version }}
+          path: dist/*.AppImage
+          retention-days: 30
+
+  # ===========================================================================
+  # Create GitHub Release
+  # ===========================================================================
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [prepare, ios, macos, android, windows, linux]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Echoelmusic v${{ needs.prepare.outputs.version }}
+          body: |
+            ## Echoelmusic v${{ needs.prepare.outputs.version }}
+
+            ### Downloads
+
+            | Platform | File | Store |
+            |----------|------|-------|
+            | iOS | TestFlight | [App Store](https://apps.apple.com) |
+            | macOS | TestFlight | [App Store](https://apps.apple.com) |
+            | Android | APK / AAB | [Play Store](https://play.google.com) |
+            | Windows | ZIP | Direct Download |
+            | Linux | AppImage | Direct Download |
+
+            ### Direct Downloads (Website License)
+            - macOS, Windows, Linux builds included below
+            - For licensing: [echoelmusic.com](https://echoelmusic.com)
+          files: |
+            artifacts/**/*.zip
+            artifacts/**/*.AppImage
+            artifacts/**/*.apk
+            artifacts/**/*.aab
+            artifacts/**/*.dmg
+          draft: false
+          prerelease: false
+
+  # ===========================================================================
+  # Summary
+  # ===========================================================================
+  summary:
+    name: Summary
+    runs-on: ubuntu-latest
+    needs: [prepare, ios, macos, android, windows, linux]
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Build:** ${{ needs.prepare.outputs.build_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS | ${{ needs.ios.result == 'success' && '✅' || needs.ios.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS | ${{ needs.macos.result == 'success' && '✅' || needs.macos.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Android | ${{ needs.android.result == 'success' && '✅' || needs.android.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Windows | ${{ needs.windows.result == 'success' && '✅' || needs.windows.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Linux | ${{ needs.linux.result == 'success' && '✅' || needs.linux.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY

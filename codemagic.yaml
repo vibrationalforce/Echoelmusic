@@ -1,6 +1,9 @@
 # =============================================================================
-# Echoelmusic - Codemagic CI/CD Configuration
+# Echoelmusic - Codemagic CI/CD Configuration (ALTERNATIVE)
 # =============================================================================
+# NOTE: Primary deployment is via .github/workflows/deploy.yml (GitHub Actions)
+# This file is kept as an alternative for those who prefer Codemagic.
+#
 # Apple (iOS, macOS, watchOS, tvOS, visionOS) + Android
 # Windows + Linux → See .github/workflows/desktop_build.yml
 # =============================================================================
