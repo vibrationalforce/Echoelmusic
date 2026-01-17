@@ -302,19 +302,7 @@
             font-weight: 600;
         }
 
-        /* Disclaimer - Compact */
-        .disclaimer-bar {
-            max-width: var(--max-width);
-            margin: 0 auto;
-            padding: var(--space-md) var(--space-lg);
-            text-align: center;
-            font-size: 12px;
-            color: var(--color-text-muted);
-        }
-        .disclaimer-bar a { color: var(--color-primary); text-decoration: none; }
-        .disclaimer-bar a:hover { text-decoration: underline; }
-
-        /* Footer - Minimal */
+        /* Footer */
         .footer {
             background: var(--color-bg);
             border-top: 1px solid var(--color-border);
@@ -352,6 +340,16 @@
         .social-links a { color: var(--color-text-muted); transition: color var(--transition); }
         .social-links a:hover { color: var(--color-primary); }
         .social-links svg { width: 18px; height: 18px; }
+
+        .footer-disclaimer {
+            max-width: var(--max-width);
+            margin: var(--space-md) auto 0;
+            padding-top: var(--space-md);
+            text-align: center;
+            font-size: 11px;
+            color: var(--color-text-muted);
+            border-top: 1px solid var(--color-border);
+        }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -458,10 +456,6 @@
                 </div>
             </div>
         </section>
-
-        <div class="disclaimer-bar" role="note">
-            Creative tool for artistic exploration. Not a medical device. <a href="health.html">Health Disclaimer</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a>
-        </div>
     </main>
 
     <footer class="footer" role="contentinfo">
@@ -486,6 +480,7 @@
                 </a>
             </div>
         </div>
+        <p class="footer-disclaimer">Creative tool for artistic exploration. Not a medical device.</p>
     </footer>
 
     <script>
