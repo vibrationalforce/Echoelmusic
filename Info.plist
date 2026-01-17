@@ -11,17 +11,19 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Blab</string>
+	<string>Echoelmusic</string>
+	<key>CFBundleDisplayName</key>
+	<string>Echoelmusic</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>1.1.0</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>2</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Blab needs microphone access to transform your voice and breath into immersive audio-visual experiences.</string>
+	<string>Echoelmusic uses your microphone to capture audio for bio-reactive processing and voice-to-music transformation.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -45,18 +47,27 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UIUserInterfaceStyle</key>
 	<string>Dark</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
+		<string>bluetooth-central</string>
 	</array>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Blab may use heart rate data to create adaptive audio-visual experiences.</string>
+	<string>Echoelmusic uses heart rate and HRV data to create personalized bio-reactive audio experiences that respond to your body.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Echoelmusic may save your meditation and coherence training sessions to HealthKit.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Blab uses your camera for face tracking to control audio parameters with your facial expressions.</string>
+	<string>Echoelmusic uses your camera for face tracking to control audio parameters with your facial expressions.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Blab uses face tracking (not Face ID) to map your expressions to audio-visual parameters.</string>
+	<string>Echoelmusic uses TrueDepth camera for face tracking to map your expressions to audio-visual parameters.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Echoelmusic connects to Bluetooth MIDI controllers and audio devices for professional music creation.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
