@@ -1,0 +1,551 @@
+# =============================================================================
+# Echoelmusic - Codemagic CI/CD Configuration
+# =============================================================================
+# Complete multi-platform deployment: Apple, Android, Windows, Linux
+# Documentation: https://docs.codemagic.io/yaml/yaml-getting-started/
+# =============================================================================
+
+definitions:
+  # ===========================================================================
+  # Shared Environment Variables
+  # ===========================================================================
+  environment:
+    vars: &env_vars
+      XCODE_WORKSPACE: "Echoelmusic.xcworkspace"
+      XCODE_SCHEME: "Echoelmusic"
+      APP_ID: "com.echoelmusic.app"
+      BUNDLE_ID: "com.echoelmusic.app"
+      VERSION: "1.1.0"
+
+    # Apple Code Signing (configured in Codemagic UI)
+    ios_signing: &ios_signing
+      app_store_connect: Echoelmusic
+
+    android_signing: &android_signing
+      - echoelmusic_keystore
+
+  # ===========================================================================
+  # Reusable Scripts
+  # ===========================================================================
+  scripts:
+    - &install_swift_deps
+      name: Install Swift dependencies
+      script: swift package resolve
+
+    - &increment_build_number
+      name: Increment build number
+      script: |
+        BUILD_NUMBER=$(($(app-store-connect get-latest-testflight-build-number "$APP_ID" || echo 0) + 1))
+        echo "Build number: $BUILD_NUMBER"
+        echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
+
+  # ===========================================================================
+  # Caching
+  # ===========================================================================
+  cache: &swift_cache
+    cache_paths:
+      - $HOME/Library/Caches/org.swift.swiftpm
+      - $HOME/.gradle/caches
+
+# =============================================================================
+# WORKFLOWS
+# =============================================================================
+workflows:
+  # ===========================================================================
+  # iOS Workflow → TestFlight
+  # ===========================================================================
+  ios-release:
+    name: iOS Release
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    labels:
+      - iOS
+      - Release
+    environment:
+      <<: *env_vars
+      ios_signing: *ios_signing
+      xcode: 15.2
+      cocoapods: default
+    triggering:
+      events:
+        - push
+        - tag
+      branch_patterns:
+        - pattern: main
+          include: true
+        - pattern: release/*
+          include: true
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    cache: *swift_cache
+    scripts:
+      - *install_swift_deps
+      - *increment_build_number
+      - name: Build iOS
+        script: |
+          xcodebuild archive \
+            -scheme "$XCODE_SCHEME" \
+            -destination "generic/platform=iOS" \
+            -archivePath build/Echoelmusic-iOS.xcarchive \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+      - name: Export IPA
+        script: |
+          xcodebuild -exportArchive \
+            -archivePath build/Echoelmusic-iOS.xcarchive \
+            -exportPath build/iOS \
+            -exportOptionsPlist /dev/stdin <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+          </dict></plist>
+          EOF
+    artifacts:
+      - build/iOS/*.ipa
+      - build/*.xcarchive
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal Testers
+      slack:
+        channel: '#releases'
+        notify_on_build_start: false
+
+  # ===========================================================================
+  # macOS Workflow → TestFlight
+  # ===========================================================================
+  macos-release:
+    name: macOS Release
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    labels:
+      - macOS
+      - Release
+    environment:
+      <<: *env_vars
+      ios_signing: *ios_signing
+      xcode: 15.2
+    triggering:
+      events:
+        - push
+        - tag
+      branch_patterns:
+        - pattern: main
+          include: true
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    cache: *swift_cache
+    scripts:
+      - *install_swift_deps
+      - *increment_build_number
+      - name: Build macOS
+        script: |
+          xcodebuild archive \
+            -scheme "$XCODE_SCHEME" \
+            -destination "generic/platform=macOS" \
+            -archivePath build/Echoelmusic-macOS.xcarchive \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+      - name: Export PKG
+        script: |
+          xcodebuild -exportArchive \
+            -archivePath build/Echoelmusic-macOS.xcarchive \
+            -exportPath build/macOS \
+            -exportOptionsPlist /dev/stdin <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+          </dict></plist>
+          EOF
+    artifacts:
+      - build/macOS/*.pkg
+      - build/macOS/*.app
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  # ===========================================================================
+  # watchOS Workflow → TestFlight (via iOS companion)
+  # ===========================================================================
+  watchos-release:
+    name: watchOS Release
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    labels:
+      - watchOS
+      - Release
+    environment:
+      <<: *env_vars
+      ios_signing: *ios_signing
+      xcode: 15.2
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    cache: *swift_cache
+    scripts:
+      - *install_swift_deps
+      - *increment_build_number
+      - name: Build watchOS
+        script: |
+          xcodebuild archive \
+            -scheme "Echoelmusic Watch" \
+            -destination "generic/platform=watchOS" \
+            -archivePath build/Echoelmusic-watchOS.xcarchive \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+    artifacts:
+      - build/*.xcarchive
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  # ===========================================================================
+  # tvOS Workflow → TestFlight
+  # ===========================================================================
+  tvos-release:
+    name: tvOS Release
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    labels:
+      - tvOS
+      - Release
+    environment:
+      <<: *env_vars
+      ios_signing: *ios_signing
+      xcode: 15.2
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    cache: *swift_cache
+    scripts:
+      - *install_swift_deps
+      - *increment_build_number
+      - name: Build tvOS
+        script: |
+          xcodebuild archive \
+            -scheme "$XCODE_SCHEME" \
+            -destination "generic/platform=tvOS" \
+            -archivePath build/Echoelmusic-tvOS.xcarchive \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+      - name: Export IPA
+        script: |
+          xcodebuild -exportArchive \
+            -archivePath build/Echoelmusic-tvOS.xcarchive \
+            -exportPath build/tvOS \
+            -exportOptionsPlist /dev/stdin <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+          </dict></plist>
+          EOF
+    artifacts:
+      - build/tvOS/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  # ===========================================================================
+  # visionOS Workflow → TestFlight
+  # ===========================================================================
+  visionos-release:
+    name: visionOS Release
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    labels:
+      - visionOS
+      - Release
+    environment:
+      <<: *env_vars
+      ios_signing: *ios_signing
+      xcode: 15.2
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    cache: *swift_cache
+    scripts:
+      - *install_swift_deps
+      - *increment_build_number
+      - name: Build visionOS
+        script: |
+          xcodebuild archive \
+            -scheme "$XCODE_SCHEME" \
+            -destination "generic/platform=visionOS" \
+            -archivePath build/Echoelmusic-visionOS.xcarchive \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+      - name: Export IPA
+        script: |
+          xcodebuild -exportArchive \
+            -archivePath build/Echoelmusic-visionOS.xcarchive \
+            -exportPath build/visionOS \
+            -exportOptionsPlist /dev/stdin <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+          </dict></plist>
+          EOF
+    artifacts:
+      - build/visionOS/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  # ===========================================================================
+  # Android Workflow → Play Store (Internal Testing)
+  # ===========================================================================
+  android-release:
+    name: Android Release
+    instance_type: linux_x2
+    max_build_duration: 60
+    labels:
+      - Android
+      - Release
+    environment:
+      <<: *env_vars
+      android_signing: *android_signing
+      java: 17
+      ndk: r25c
+    triggering:
+      events:
+        - push
+        - tag
+      branch_patterns:
+        - pattern: main
+          include: true
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    cache:
+      cache_paths:
+        - $HOME/.gradle/caches
+        - android/.gradle
+    scripts:
+      - name: Set version
+        script: |
+          cd android
+          BUILD_NUMBER=$BUILD_ID
+          sed -i "s/versionCode = [0-9]*/versionCode = $BUILD_NUMBER/" app/build.gradle.kts
+          sed -i "s/versionName = \"[^\"]*\"/versionName = \"$VERSION\"/" app/build.gradle.kts
+      - name: Build APK & AAB
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease
+    artifacts:
+      - android/app/build/outputs/apk/release/*.apk
+      - android/app/build/outputs/bundle/release/*.aab
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true
+      github:
+        releases: true
+        prerelease: false
+
+  # ===========================================================================
+  # Windows Workflow → GitHub Releases
+  # ===========================================================================
+  windows-release:
+    name: Windows Release
+    instance_type: windows_x2
+    max_build_duration: 60
+    labels:
+      - Windows
+      - Release
+    environment:
+      vars:
+        VERSION: "1.1.0"
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    scripts:
+      - name: Install Build Tools
+        script: |
+          choco install cmake ninja -y
+          refreshenv
+      - name: Configure CMake
+        script: |
+          cmake -B build -S . -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DENABLE_ASIO=ON `
+            -DENABLE_WASAPI=ON `
+            -DVERSION="$env:VERSION"
+      - name: Build
+        script: |
+          cmake --build build --config Release --parallel
+      - name: Create Portable ZIP
+        script: |
+          New-Item -ItemType Directory -Force -Path dist/Echoelmusic-Windows
+          Copy-Item build/Release/*.exe dist/Echoelmusic-Windows/
+          Copy-Item build/Release/*.dll dist/Echoelmusic-Windows/ -ErrorAction SilentlyContinue
+          Copy-Item -Recurse Resources dist/Echoelmusic-Windows/
+          Compress-Archive -Path dist/Echoelmusic-Windows -DestinationPath dist/Echoelmusic-Windows-$env:VERSION-portable.zip
+      - name: Create MSIX (if certificate available)
+        script: |
+          if (Test-Path env:WINDOWS_CERTIFICATE) {
+            # Create MSIX package
+            & "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\makeappx.exe" pack `
+              /d dist/Echoelmusic-Windows `
+              /p dist/Echoelmusic-$env:VERSION.msix
+          }
+    artifacts:
+      - dist/*.zip
+      - dist/*.msix
+    publishing:
+      github:
+        releases: true
+        prerelease: false
+        name: "Echoelmusic v${VERSION} - Windows"
+
+  # ===========================================================================
+  # Linux Workflow → GitHub Releases
+  # ===========================================================================
+  linux-release:
+    name: Linux Release
+    instance_type: linux_x2
+    max_build_duration: 60
+    labels:
+      - Linux
+      - Release
+    environment:
+      vars:
+        VERSION: "1.1.0"
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    scripts:
+      - name: Install Dependencies
+        script: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake ninja-build \
+            libasound2-dev libjack-jackd2-dev \
+            libpipewire-0.3-dev libpulse-dev \
+            libgl1-mesa-dev libfuse2
+      - name: Configure CMake
+        script: |
+          cmake -B build -S . -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_JACK=ON \
+            -DENABLE_PIPEWIRE=ON \
+            -DENABLE_ALSA=ON \
+            -DVERSION="$VERSION"
+      - name: Build
+        script: |
+          cmake --build build --parallel
+      - name: Create AppDir
+        script: |
+          mkdir -p AppDir/usr/{bin,lib,share/{applications,icons/hicolor/256x256/apps}}
+          cp build/Echoelmusic AppDir/usr/bin/
+          cp build/*.so AppDir/usr/lib/ 2>/dev/null || true
+
+          cat > AppDir/usr/share/applications/echoelmusic.desktop << 'DESKTOP'
+          [Desktop Entry]
+          Name=Echoelmusic
+          Comment=Bio-reactive audio-visual platform
+          Exec=Echoelmusic
+          Icon=echoelmusic
+          Type=Application
+          Categories=Audio;AudioVideo;Music;
+          DESKTOP
+
+          cp Resources/AppIcon.png AppDir/usr/share/icons/hicolor/256x256/apps/echoelmusic.png 2>/dev/null || \
+            convert -size 256x256 xc:purple AppDir/usr/share/icons/hicolor/256x256/apps/echoelmusic.png
+
+          cat > AppDir/AppRun << 'APPRUN'
+          #!/bin/bash
+          HERE="$(dirname "$(readlink -f "$0")")"
+          export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
+          exec "$HERE/usr/bin/Echoelmusic" "$@"
+          APPRUN
+          chmod +x AppDir/AppRun
+      - name: Create AppImage
+        script: |
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+          ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir dist/Echoelmusic-$VERSION-x86_64.AppImage
+    artifacts:
+      - dist/*.AppImage
+      - dist/*.flatpak
+    publishing:
+      github:
+        releases: true
+        prerelease: false
+        name: "Echoelmusic v${VERSION} - Linux"
+
+  # ===========================================================================
+  # All Platforms Release (Manual Trigger)
+  # ===========================================================================
+  full-release:
+    name: Full Release (All Platforms)
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    labels:
+      - All Platforms
+      - Release
+    environment:
+      <<: *env_vars
+      ios_signing: *ios_signing
+      xcode: 15.2
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*-full'
+          include: true
+    scripts:
+      - name: Trigger all workflows
+        script: |
+          echo "This workflow triggers all platform builds."
+          echo "Tag with v*-full to trigger, e.g., v1.1.0-full"
+          # Individual workflows are triggered by v* tags
+          # This is for documentation/tracking purposes
+    publishing:
+      slack:
+        channel: '#releases'
+        notify:
+          success: true
+          failure: true
