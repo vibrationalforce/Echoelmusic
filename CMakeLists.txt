@@ -95,8 +95,9 @@ option(ENABLE_WASAPI "Enable WASAPI support (Windows)" ON)
 option(ENABLE_DIRECTSOUND "Enable DirectSound (Windows)" ON)
 
 option(ENABLE_ALSA "Enable ALSA support (Linux)" ON)
-option(ENABLE_JACK "Enable JACK support (Linux)" OFF)  # Disabled for minimal build
-option(ENABLE_PULSEAUDIO "Enable PulseAudio (Linux)" OFF)  # Disabled for minimal build
+option(ENABLE_JACK "Enable JACK support (Linux)" ON)   # Enabled for professional audio (<10ms latency)
+option(ENABLE_PIPEWIRE "Enable PipeWire support (Linux)" ON)  # Modern Linux audio (<15ms latency)
+option(ENABLE_PULSEAUDIO "Enable PulseAudio (Linux)" OFF)  # Deprecated - use PipeWire instead
 
 option(ENABLE_ANDROID_OBOE "Enable Oboe (Android)" ON)
 option(ENABLE_ANDROID_AAUDIO "Enable AAudio (Android)" ON)
@@ -619,21 +620,39 @@ elseif(UNIX AND NOT APPLE)
         target_include_directories(Echoelmusic PRIVATE ${ALSA_INCLUDE_DIRS})
     endif()
 
-    # JACK
+    # JACK (Professional audio - <10ms latency)
     if(ENABLE_JACK)
         pkg_check_modules(JACK jack)
         if(JACK_FOUND)
             target_link_libraries(Echoelmusic PRIVATE ${JACK_LIBRARIES})
             target_include_directories(Echoelmusic PRIVATE ${JACK_INCLUDE_DIRS})
+            target_compile_definitions(Echoelmusic PRIVATE ECHOELMUSIC_JACK_AVAILABLE=1)
+            message(STATUS "    - JACK: Found (Professional low-latency audio)")
+        else()
+            message(STATUS "    - JACK: Not found (install libjack-dev for <10ms latency)")
         endif()
     endif()
 
-    # PulseAudio
+    # PipeWire (Modern Linux audio - <15ms latency)
+    if(ENABLE_PIPEWIRE)
+        pkg_check_modules(PIPEWIRE libpipewire-0.3)
+        if(PIPEWIRE_FOUND)
+            target_link_libraries(Echoelmusic PRIVATE ${PIPEWIRE_LIBRARIES})
+            target_include_directories(Echoelmusic PRIVATE ${PIPEWIRE_INCLUDE_DIRS})
+            target_compile_definitions(Echoelmusic PRIVATE ECHOELMUSIC_PIPEWIRE_AVAILABLE=1)
+            message(STATUS "    - PipeWire: Found (Modern low-latency audio)")
+        else()
+            message(STATUS "    - PipeWire: Not found (install libpipewire-0.3-dev)")
+        endif()
+    endif()
+
+    # PulseAudio (Legacy - deprecated, use PipeWire)
     if(ENABLE_PULSEAUDIO)
         pkg_check_modules(PULSE libpulse)
         if(PULSE_FOUND)
             target_link_libraries(Echoelmusic PRIVATE ${PULSE_LIBRARIES})
             target_include_directories(Echoelmusic PRIVATE ${PULSE_INCLUDE_DIRS})
+            message(WARNING "PulseAudio is deprecated. Consider using PipeWire instead.")
         endif()
     endif()
 
