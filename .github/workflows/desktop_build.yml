@@ -1,8 +1,8 @@
 # =============================================================================
 # Echoelmusic - Desktop Build Pipeline (Windows + Linux)
 # =============================================================================
-# Apple + Android → See codemagic.yaml (auto code signing)
-# This workflow: Windows MSIX/Portable + Linux AppImage
+# NOTE: For full multi-platform deployment, use deploy.yml instead.
+# This is a simpler workflow for desktop-only builds (no secrets required).
 # =============================================================================
 
 name: Desktop Build
