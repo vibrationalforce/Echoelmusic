@@ -314,19 +314,7 @@
             font-weight: 600;
         }
 
-        /* Disclaimer - Compact */
-        .disclaimer-bar {
-            max-width: var(--max-width);
-            margin: 0 auto;
-            padding: var(--space-md) var(--space-lg);
-            text-align: center;
-            font-size: 12px;
-            color: var(--color-text-muted);
-        }
-        .disclaimer-bar a { color: var(--color-primary); text-decoration: none; }
-        .disclaimer-bar a:hover { text-decoration: underline; }
-
-        /* Footer - Minimal */
+        /* Footer */
         .footer {
             background: var(--color-bg);
             border-top: 1px solid var(--color-border);
@@ -364,6 +352,16 @@
         .social-links a { color: var(--color-text-muted); transition: color var(--transition); }
         .social-links a:hover { color: var(--color-primary); }
         .social-links svg { width: 18px; height: 18px; }
+
+        .footer-disclaimer {
+            max-width: var(--max-width);
+            margin: var(--space-md) auto 0;
+            padding-top: var(--space-md);
+            text-align: center;
+            font-size: 11px;
+            color: var(--color-text-muted);
+            border-top: 1px solid var(--color-border);
+        }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -471,9 +469,6 @@
             </div>
         </section>
 
-        <div class="disclaimer-bar" role="note">
-            Kreatives Werkzeug für künstlerische Erkundung. Kein Medizinprodukt. <a href="gesundheit.html">Gesundheitshinweis</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="agb.html">AGB</a>
-        </div>
     </main>
 
     <footer class="footer" role="contentinfo">
@@ -498,6 +493,7 @@
                 </a>
             </div>
         </div>
+        <p class="footer-disclaimer">Kreatives Werkzeug für künstlerische Erkundung. Kein Medizinprodukt.</p>
     </footer>
 
     <script>
