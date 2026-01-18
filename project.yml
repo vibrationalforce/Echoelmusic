@@ -26,11 +26,13 @@ targets:
     sources:
       - path: Sources/Echoelmusic
         type: group
-      - path: Echoelmusic
-        type: group
+        excludes:
+          - "**/*.xcassets"
 
     # Resources
     resources:
+      - path: Sources/Echoelmusic/Resources/Assets.xcassets
+        type: folder
       - path: Resources
         type: folder
       - path: PrivacyInfo.xcprivacy

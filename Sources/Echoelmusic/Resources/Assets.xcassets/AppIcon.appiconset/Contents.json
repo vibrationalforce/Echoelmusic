@@ -1,18 +1,9 @@
 {
   "images" : [
     {
+      "filename" : "AppIcon-1024.png",
       "idiom" : "universal",
       "platform" : "ios",
-      "size" : "1024x1024"
-    },
-    {
-      "idiom" : "universal",
-      "platform" : "tvos",
-      "size" : "1280x768"
-    },
-    {
-      "idiom" : "universal",
-      "platform" : "visionos",
       "size" : "1024x1024"
     }
   ],
