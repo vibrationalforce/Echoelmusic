@@ -107,6 +107,35 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
 
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Generate AppIcon from SVG
+        run: |
+          brew install librsvg
+          mkdir -p Sources/Echoelmusic/Resources/Assets.xcassets/AppIcon.appiconset
+          rsvg-convert -w 1024 -h 1024 docs/app-icon.svg > Sources/Echoelmusic/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+          # Update Contents.json to reference the generated icon
+          cat > Sources/Echoelmusic/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json << 'EOF'
+          {
+            "images" : [
+              {
+                "filename" : "AppIcon-1024.png",
+                "idiom" : "universal",
+                "platform" : "ios",
+                "size" : "1024x1024"
+              }
+            ],
+            "info" : {
+              "author" : "xcode",
+              "version" : 1
+            }
+          }
+          EOF
+
       - name: Resolve Dependencies
         run: swift package resolve
 
@@ -190,6 +219,46 @@ jobs:
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
           echo "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Generate AppIcon from SVG
+        run: |
+          brew install librsvg
+          mkdir -p Sources/Echoelmusic/Resources/Assets.xcassets/AppIcon.appiconset
+          rsvg-convert -w 1024 -h 1024 docs/app-icon.svg > Sources/Echoelmusic/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+          cat > Sources/Echoelmusic/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json << 'EOF'
+          {
+            "images" : [
+              {
+                "filename" : "AppIcon-1024.png",
+                "idiom" : "universal",
+                "platform" : "ios",
+                "size" : "1024x1024"
+              },
+              {
+                "filename" : "AppIcon-1024.png",
+                "idiom" : "mac",
+                "scale" : "1x",
+                "size" : "512x512"
+              },
+              {
+                "filename" : "AppIcon-1024.png",
+                "idiom" : "mac",
+                "scale" : "2x",
+                "size" : "512x512"
+              }
+            ],
+            "info" : {
+              "author" : "xcode",
+              "version" : 1
+            }
+          }
+          EOF
 
       - name: Resolve Dependencies
         run: swift package resolve

@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <!-- Echoelmusic Vaporwave Gradient -->
+    <!-- Echoelmusic Green Gradient (matching website CI) -->
     <linearGradient id="brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF1493"/>
-      <stop offset="50%" stop-color="#9933FF"/>
-      <stop offset="100%" stop-color="#00FFFF"/>
+      <stop offset="0%" stop-color="#22C55E"/>
+      <stop offset="50%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#34D399"/>
     </linearGradient>
   </defs>
 
-  <!-- Background - Deep space -->
-  <rect width="100" height="100" rx="22" fill="#050513"/>
+  <!-- Background - Deep green/black -->
+  <rect width="100" height="100" rx="22" fill="#030712"/>
 
   <!-- Subtle gradient overlay -->
   <rect width="100" height="100" rx="22" fill="url(#brand-grad)" opacity="0.08"/>
@@ -23,7 +23,7 @@
            C72 20 80 28 80 38
            C80 54 64 66 50 78Z"
         fill="url(#brand-grad)"
-        opacity="0.85"/>
+        opacity="0.9"/>
 
   <!-- Organic sound wave - smooth curves -->
   <path d="M30 44

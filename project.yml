@@ -88,20 +88,20 @@ targets:
     # App settings
     settings:
       base:
-        PRODUCT_NAME: Blab
-        PRODUCT_BUNDLE_IDENTIFIER: com.blab.studio
+        PRODUCT_NAME: Echoelmusic
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         INFOPLIST_FILE: Info.plist
         GENERATE_INFOPLIST_FILE: NO
 
-        # Code signing (for development)
+        # Code signing (for CI/CD automatic signing)
         CODE_SIGN_STYLE: Automatic
-        CODE_SIGN_IDENTITY: ""
+        CODE_SIGN_IDENTITY: "Apple Development"
         DEVELOPMENT_TEAM: ""
 
         # Build settings
-        TARGETED_DEVICE_FAMILY: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "16.0"
-        SWIFT_VERSION: "5.7"
+        SWIFT_VERSION: "5.9"
         ENABLE_BITCODE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
