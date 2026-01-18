@@ -42,6 +42,12 @@ jobs:
         path: .build
         key: ${{ runner.os }}-spm-${{ matrix.platform }}-${{ hashFiles('**/Package.resolved') }}
 
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Generate Xcode Project
+      run: xcodegen generate
+
     - name: Build for ${{ matrix.platform }}
       run: |
         xcodebuild build \
