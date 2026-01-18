@@ -88,6 +88,12 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-spm-
 
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Generate Xcode Project
+      run: xcodegen generate
+
     - name: Resolve Swift Package Dependencies
       run: |
         swift package resolve
@@ -165,6 +171,12 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-spm-
 
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Generate Xcode Project
+      run: xcodegen generate
+
     - name: Build for Testing (macOS)
       run: |
         xcodebuild build-for-testing \
@@ -197,6 +209,12 @@ jobs:
       uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: latest-stable
+
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Generate Xcode Project
+      run: xcodegen generate
 
     - name: Run Performance Tests
       run: |
@@ -237,6 +255,12 @@ jobs:
       uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: latest-stable
+
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Generate Xcode Project
+      run: xcodegen generate
 
     - name: Test Legacy Device Support
       run: |
@@ -288,6 +312,12 @@ jobs:
         key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
         restore-keys: |
           ${{ runner.os }}-spm-
+
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Generate Xcode Project
+      run: xcodegen generate
 
     - name: Build Release Archive
       run: |
