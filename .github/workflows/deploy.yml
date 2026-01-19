@@ -93,9 +93,10 @@ jobs:
     needs: prepare
     environment: production
     if: |
-      (github.event.inputs.platform == 'all' ||
-       github.event.inputs.platform == 'ios' ||
-       github.event.inputs.platform == '')
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      github.event.inputs.platform == 'all' ||
+      github.event.inputs.platform == 'ios'
     steps:
       - uses: actions/checkout@v4
 
@@ -238,9 +239,10 @@ jobs:
     needs: prepare
     environment: production
     if: |
-      (github.event.inputs.platform == 'all' ||
-       github.event.inputs.platform == 'macos' ||
-       github.event.inputs.platform == '')
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      github.event.inputs.platform == 'all' ||
+      github.event.inputs.platform == 'macos'
     steps:
       - uses: actions/checkout@v4
 
@@ -376,9 +378,10 @@ jobs:
     needs: prepare
     environment: production
     if: |
-      (github.event.inputs.platform == 'all' ||
-       github.event.inputs.platform == 'android' ||
-       github.event.inputs.platform == '')
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      github.event.inputs.platform == 'all' ||
+      github.event.inputs.platform == 'android'
     steps:
       - uses: actions/checkout@v4
 
@@ -461,10 +464,12 @@ jobs:
     name: Windows
     runs-on: windows-latest
     needs: prepare
+    continue-on-error: true
     if: |
-      (github.event.inputs.platform == 'all' ||
-       github.event.inputs.platform == 'windows' ||
-       github.event.inputs.platform == '')
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      github.event.inputs.platform == 'all' ||
+      github.event.inputs.platform == 'windows'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -515,10 +520,12 @@ jobs:
     name: Linux
     runs-on: ubuntu-22.04
     needs: prepare
+    continue-on-error: true
     if: |
-      (github.event.inputs.platform == 'all' ||
-       github.event.inputs.platform == 'linux' ||
-       github.event.inputs.platform == '')
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      github.event.inputs.platform == 'all' ||
+      github.event.inputs.platform == 'linux'
     steps:
       - uses: actions/checkout@v4
         with:
