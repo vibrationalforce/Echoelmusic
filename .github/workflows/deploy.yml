@@ -116,8 +116,21 @@ jobs:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "$ASC_KEY" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          echo "App Store Connect API key configured"
+          KEY_FILE=~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          # Try base64 decode first, if fails use raw content
+          if echo "$ASC_KEY" | base64 -d > "$KEY_FILE" 2>/dev/null && grep -q "PRIVATE KEY" "$KEY_FILE"; then
+            echo "✅ App Store Connect API key configured (base64)"
+          else
+            # Raw .p8 content (not base64 encoded)
+            echo "$ASC_KEY" > "$KEY_FILE"
+            echo "✅ App Store Connect API key configured (raw)"
+          fi
+          # Verify key file
+          if grep -q "BEGIN PRIVATE KEY" "$KEY_FILE"; then
+            echo "✅ Key file valid"
+          else
+            echo "⚠️ Warning: Key file may be invalid"
+          fi
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -255,7 +268,14 @@ jobs:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "$ASC_KEY" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          KEY_FILE=~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          # Try base64 decode first, if fails use raw content
+          if echo "$ASC_KEY" | base64 -d > "$KEY_FILE" 2>/dev/null && grep -q "PRIVATE KEY" "$KEY_FILE"; then
+            echo "✅ App Store Connect API key configured (base64)"
+          else
+            echo "$ASC_KEY" > "$KEY_FILE"
+            echo "✅ App Store Connect API key configured (raw)"
+          fi
 
       - name: Install XcodeGen
         run: brew install xcodegen
