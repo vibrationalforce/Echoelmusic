@@ -2,9 +2,9 @@ name: Phase 8000 MAXIMUM OVERDRIVE CI
 
 on:
   push:
-    branches: [ main, develop, 'feature/**', 'claude/**' ]
+    branches: [ develop, 'feature/**' ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ develop ]
   workflow_dispatch:
 
 env:
