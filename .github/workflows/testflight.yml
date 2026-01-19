@@ -9,7 +9,6 @@ jobs:
   deploy:
     name: Build & Deploy to TestFlight
     runs-on: macos-14
-    environment: production
 
     env:
       ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
