@@ -1,0 +1,12 @@
+# App Store Connect App ID (numeric)
+# You can find this in App Store Connect under App Information
+apple_id ENV["APPLE_APP_ID"]
+
+# Bundle Identifier
+app_identifier "com.echoelmusic.app"
+
+# Apple Developer Team ID
+team_id ENV["APPLE_TEAM_ID"]
+
+# App Store Connect Team ID (usually same as team_id for individual accounts)
+itc_team_id ENV["APPLE_TEAM_ID"]
