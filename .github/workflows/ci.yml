@@ -2,9 +2,9 @@ name: Echoelmusic CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop, 'feature/**', 'claude/**' ]
+    branches: [ develop, 'feature/**' ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ develop ]
   workflow_dispatch:
 
 env:
