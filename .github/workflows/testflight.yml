@@ -1,4 +1,5 @@
-# Simplified TestFlight deployment using Fastlane
+# TestFlight deployment using Fastlane
+# Secrets are in GitHub Environment "production"
 name: TestFlight Deploy
 
 on:
@@ -8,8 +9,8 @@ jobs:
   deploy:
     name: Build & Deploy to TestFlight
     runs-on: macos-14
+    environment: production
 
-    # Use repository secrets (not environment secrets)
     env:
       ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
