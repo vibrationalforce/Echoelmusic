@@ -1,5 +1,6 @@
 # TestFlight deployment using Fastlane
-# Secrets are in GitHub Environment "production"
+# Secrets required: APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_ISSUER_ID,
+#                   APP_STORE_CONNECT_PRIVATE_KEY, APPLE_TEAM_ID
 name: TestFlight Deploy
 
 on:
@@ -15,7 +16,6 @@ jobs:
       ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
       ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      APPLE_APP_ID: ${{ secrets.APPLE_APP_ID }}
 
     steps:
       - name: Checkout
@@ -24,43 +24,52 @@ jobs:
       - name: Debug - Check secrets presence
         run: |
           echo "=== Secrets Check ==="
+          MISSING=false
+
           if [ -n "$ASC_KEY_ID" ]; then
-            echo "✅ APP_STORE_CONNECT_KEY_ID is set (length: ${#ASC_KEY_ID})"
+            echo "✅ APP_STORE_CONNECT_KEY_ID is set (${#ASC_KEY_ID} chars)"
           else
             echo "❌ APP_STORE_CONNECT_KEY_ID is NOT set"
+            MISSING=true
           fi
 
           if [ -n "$ASC_ISSUER_ID" ]; then
-            echo "✅ APP_STORE_CONNECT_ISSUER_ID is set (length: ${#ASC_ISSUER_ID})"
+            echo "✅ APP_STORE_CONNECT_ISSUER_ID is set (${#ASC_ISSUER_ID} chars)"
           else
             echo "❌ APP_STORE_CONNECT_ISSUER_ID is NOT set"
+            MISSING=true
           fi
 
           if [ -n "$ASC_KEY_CONTENT" ]; then
-            echo "✅ APP_STORE_CONNECT_PRIVATE_KEY is set (length: ${#ASC_KEY_CONTENT})"
-            # Check if it looks like a valid key
+            echo "✅ APP_STORE_CONNECT_PRIVATE_KEY is set (${#ASC_KEY_CONTENT} chars)"
             if echo "$ASC_KEY_CONTENT" | grep -q "BEGIN.*PRIVATE KEY"; then
-              echo "   Key format: Valid PEM format detected"
+              echo "   ✅ Key format looks valid (PEM)"
             else
-              echo "   Key format: WARNING - doesn't look like PEM format"
+              echo "   ⚠️ Key format might be wrong"
             fi
           else
             echo "❌ APP_STORE_CONNECT_PRIVATE_KEY is NOT set"
+            MISSING=true
           fi
 
           if [ -n "$APPLE_TEAM_ID" ]; then
-            echo "✅ APPLE_TEAM_ID is set (length: ${#APPLE_TEAM_ID})"
+            echo "✅ APPLE_TEAM_ID is set (${#APPLE_TEAM_ID} chars)"
           else
             echo "❌ APPLE_TEAM_ID is NOT set"
+            MISSING=true
           fi
 
-          if [ -n "$APPLE_APP_ID" ]; then
-            echo "✅ APPLE_APP_ID is set"
-          else
-            echo "⚠️  APPLE_APP_ID is not set (optional, will be auto-detected)"
+          if [ "$MISSING" = true ]; then
+            echo ""
+            echo "❌ Some secrets are missing!"
+            echo "Go to: Settings → Secrets and variables → Actions → New repository secret"
+            exit 1
           fi
 
-      - name: Setup Xcode
+          echo ""
+          echo "✅ All required secrets are configured!"
+
+      - name: Setup Xcode 15.4
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '15.4'
@@ -71,15 +80,19 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
+      - name: Set Development Team in project.yml
+        run: |
+          echo "Setting DEVELOPMENT_TEAM to $APPLE_TEAM_ID"
+          sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"$APPLE_TEAM_ID\"/" project.yml
+          grep "DEVELOPMENT_TEAM" project.yml
+
       - name: Generate Xcode project
         run: |
-          if [ -f "project.yml" ]; then
-            echo "Generating Xcode project with XcodeGen..."
-            xcodegen generate
-          else
-            echo "No project.yml found, checking for existing project..."
-            ls -la *.xcodeproj 2>/dev/null || echo "No .xcodeproj found"
-          fi
+          echo "Generating Xcode project with XcodeGen..."
+          xcodegen generate
+          echo ""
+          echo "Generated project structure:"
+          ls -la *.xcodeproj
 
       - name: Install Fastlane
         run: |
@@ -87,24 +100,25 @@ jobs:
           fastlane --version
 
       - name: Build & Upload to TestFlight
-        run: |
-          cd $GITHUB_WORKSPACE
-          fastlane ios beta
+        run: fastlane ios beta
         env:
-          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 120
+          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 180
 
       - name: Success
         if: success()
-        run: echo "🎉 Successfully uploaded to TestFlight!"
+        run: |
+          echo "🎉 Successfully uploaded to TestFlight!"
+          echo "Check App Store Connect for the new build."
 
       - name: Failure Info
         if: failure()
         run: |
           echo "❌ Build or upload failed"
-          echo "Check the logs above for details"
           echo ""
           echo "Common issues:"
           echo "1. Secrets not configured correctly"
-          echo "2. Bundle ID mismatch"
-          echo "3. Missing provisioning profile"
-          echo "4. App not registered in App Store Connect"
+          echo "2. Bundle ID mismatch (should be com.echoelmusic.app)"
+          echo "3. App not registered in App Store Connect"
+          echo "4. Team ID doesn't match App Store Connect account"
+          echo ""
+          echo "Check the logs above for specific error messages."
