@@ -1,21 +1,20 @@
 // Echoelmusic Android App
-// Updated: December 2025 - Latest Stable Versions
-// Compose December '25 Release, API 35, Kotlin 2.1.20
+// Updated: January 2026 - CI-Compatible Stable Versions
+// Compose BOM 2024.02.00, API 34, Kotlin 1.9.22
 
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "com.echoelmusic.app"
-    compileSdk = 35  // Android 15 (API 35)
+    compileSdk = 34  // Android 14 (API 34) - Stable in CI
 
     defaultConfig {
         applicationId = "com.echoelmusic.app"
         minSdk = 26      // Android 8.0+
-        targetSdk = 35   // Android 15
+        targetSdk = 34   // Android 14
         versionCode = 2
         versionName = "1.1.0"
 
@@ -25,20 +24,17 @@ android {
             useSupportLibrary = true
         }
 
-        // NDK configuration for Oboe with 16KB page support
+        // NDK configuration for Oboe
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
 
         externalNativeBuild {
             cmake {
-                // C++20 for latest features (NDK r27+)
-                cppFlags += listOf("-std=c++20", "-O3", "-ffast-math", "-DANDROID")
+                cppFlags += listOf("-std=c++17", "-O3", "-ffast-math", "-DANDROID")
                 arguments += listOf(
                     "-DANDROID_STL=c++_shared",
-                    "-DANDROID_TOOLCHAIN=clang",
-                    // 16KB page size support (Android 15 / API 35)
-                    "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+                    "-DANDROID_TOOLCHAIN=clang"
                 )
             }
         }
@@ -67,7 +63,6 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
-        // K2 compiler optimizations
         freeCompilerArgs += listOf(
             "-opt-in=kotlin.RequiresOptIn",
             "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
@@ -79,6 +74,10 @@ android {
         compose = true
         prefab = true  // For Oboe
         buildConfig = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.8"
     }
 
     externalNativeBuild {
@@ -98,82 +97,78 @@ android {
 
 dependencies {
     // ═══════════════════════════════════════════════════════════════
-    // Compose BOM December 2025 (1.10 Stable + Material 3 1.4)
-    // Features: Pausable Composition, Background Text Prefetch
+    // Compose BOM - Stable February 2024
     // ═══════════════════════════════════════════════════════════════
-    val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
+    val composeBom = platform("androidx.compose:compose-bom:2024.02.00")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
     // ═══════════════════════════════════════════════════════════════
-    // Core Android - December 2025 Stable
+    // Core Android - Stable versions
     // ═══════════════════════════════════════════════════════════════
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    implementation("androidx.activity:activity-compose:1.9.3")
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation("androidx.activity:activity-compose:1.8.2")
 
     // ═══════════════════════════════════════════════════════════════
-    // Compose UI 1.10 (December 2025)
-    // New: Auto-sizing text, Visibility tracking, Animate bounds
+    // Compose UI
     // ═══════════════════════════════════════════════════════════════
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.ui:ui-util")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.animation:animation")
 
-    // Material 3 (1.4 December 2025)
+    // Material 3
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material3:material3-window-size-class")
     implementation("androidx.compose.material:material-icons-extended")
 
     // ═══════════════════════════════════════════════════════════════
     // Navigation
     // ═══════════════════════════════════════════════════════════════
-    implementation("androidx.navigation:navigation-compose:2.8.5")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
 
     // ═══════════════════════════════════════════════════════════════
     // Health Connect (Bio-Reactive Features)
     // ═══════════════════════════════════════════════════════════════
-    implementation("androidx.health.connect:connect-client:1.1.0-alpha10")
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha07")
 
     // ═══════════════════════════════════════════════════════════════
-    // Media & MIDI
+    // Media & Audio
     // ═══════════════════════════════════════════════════════════════
     implementation("androidx.media:media:1.7.0")
-    implementation("androidx.media3:media3-exoplayer:1.5.0")
+    implementation("androidx.media3:media3-exoplayer:1.2.1")
 
     // ═══════════════════════════════════════════════════════════════
-    // Coroutines (Kotlin 2.1.20 compatible)
+    // Coroutines
     // ═══════════════════════════════════════════════════════════════
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
     // ═══════════════════════════════════════════════════════════════
-    // Oboe 1.9.0 (Low-latency audio)
+    // Oboe (Low-latency audio)
     // ═══════════════════════════════════════════════════════════════
-    implementation("com.google.oboe:oboe:1.9.0")
+    implementation("com.google.oboe:oboe:1.8.0")
 
     // ═══════════════════════════════════════════════════════════════
     // DataStore & Preferences
     // ═══════════════════════════════════════════════════════════════
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     // ═══════════════════════════════════════════════════════════════
-    // Serialization (for state saving)
+    // Serialization
     // ═══════════════════════════════════════════════════════════════
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
     // ═══════════════════════════════════════════════════════════════
     // Testing
     // ═══════════════════════════════════════════════════════════════
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
