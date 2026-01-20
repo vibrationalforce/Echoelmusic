@@ -1256,26 +1256,37 @@ struct Screenshot10_Accessibility: View {
 
 // MARK: - Helper Views
 
+struct WaveformShape: Shape {
+    let amplitude: Double
+    let phase: Double
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let width = rect.width
+        let height = rect.height
+        let midHeight = height / 2
+        let stepCount = Int(width / 2)
+
+        path.move(to: CGPoint(x: 0, y: midHeight))
+
+        for i in 0..<stepCount {
+            let x = CGFloat(i * 2)
+            let relativeX = x / width
+            let sine = sin((relativeX * 4 * .pi) + phase)
+            let y = midHeight + (sine * midHeight * amplitude)
+            path.addLine(to: CGPoint(x: x, y: y))
+        }
+
+        return path
+    }
+}
+
 struct WaveformView: View {
     let amplitude: Double
     let phase: Double
 
     var body: some View {
-        GeometryReader { geometry in
-            Path { path in
-                let width = geometry.size.width
-                let height = geometry.size.height
-                let midHeight = height / 2
-
-                path.move(to: CGPoint(x: 0, y: midHeight))
-
-                for x in stride(from: 0, to: width, by: 2) {
-                    let relativeX = x / width
-                    let sine = sin((relativeX * 4 * .pi) + phase)
-                    let y = midHeight + (sine * midHeight * amplitude)
-                    path.addLine(to: CGPoint(x: x, y: y))
-                }
-            }
+        WaveformShape(amplitude: amplitude, phase: phase)
             .stroke(
                 LinearGradient(
                     colors: [Color.cyan, Color.purple],
@@ -1284,7 +1295,6 @@ struct WaveformView: View {
                 ),
                 lineWidth: 3
             )
-        }
     }
 }
 
