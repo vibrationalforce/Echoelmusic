@@ -280,7 +280,7 @@ public final class EchoelMapService: NSObject, ObservableObject, CLLocationManag
         )
 
         // In production: Send to collaboration server
-        print("📍 Sharing location: \(location.latitude), \(location.longitude)")
+        // Note: Location coordinates redacted from logs for privacy
 
         return LocationShareResult(
             success: true,
