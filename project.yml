@@ -5,8 +5,14 @@ name: Echoelmusic
 
 options:
   bundleIdPrefix: com.echoelmusic
+  # Use Xcode 15.4 format for GitHub Actions compatibility
+  xcodeVersion: "15.4"
   deploymentTarget:
-    iOS: "16.0"
+    iOS: "16.0"      # Wide compatibility (iPhone 8+)
+    macOS: "13.0"    # macOS Ventura+
+    watchOS: "9.0"   # Apple Watch Series 4+
+    tvOS: "16.0"     # Apple TV HD+
+    visionOS: "1.0"  # Vision Pro
   # Generate Info.plist automatically
   generateEmptyDirectories: true
 

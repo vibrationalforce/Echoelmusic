@@ -22,7 +22,7 @@ on:
 jobs:
   ios-testflight:
     name: "📱 Build & Deploy iOS"
-    runs-on: macos-14
+    runs-on: macos-14  # Stable with Xcode 15.4
 
     steps:
       - name: "📥 Checkout"
@@ -58,8 +58,21 @@ jobs:
 
       - name: "⚙️ Configure Project"
         run: |
+          echo "Setting DEVELOPMENT_TEAM..."
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          xcodegen generate
+
+          echo "Running XcodeGen..."
+          xcodegen generate --spec project.yml
+
+          echo "Verifying project was created..."
+          if [ -d "Echoelmusic.xcodeproj" ]; then
+            echo "✅ Echoelmusic.xcodeproj created successfully"
+            ls -la Echoelmusic.xcodeproj/
+          else
+            echo "❌ ERROR: Echoelmusic.xcodeproj was not created!"
+            echo "XcodeGen output above should show the error."
+            exit 1
+          fi
 
       - name: "🔨 Build iOS App"
         run: |
