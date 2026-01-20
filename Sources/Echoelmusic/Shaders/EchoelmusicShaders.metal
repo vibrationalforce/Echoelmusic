@@ -350,7 +350,8 @@ struct Particle {
     float4 color;
 };
 
-kernel void updateParticles(
+// Echoelmusic prefixed to avoid linker conflicts with AdvancedShaders.metal - 2026-01-20 fix
+kernel void echoelUpdateParticles(
     device Particle *particles [[buffer(0)]],
     constant EchoelUniforms &uniforms [[buffer(1)]],
     uint id [[thread_position_in_grid]]
