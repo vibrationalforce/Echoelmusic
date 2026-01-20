@@ -5,7 +5,8 @@ name: Echoelmusic
 
 options:
   bundleIdPrefix: com.echoelmusic
-  # Use latest Xcode format for future compatibility
+  # Use Xcode 15.4 format for GitHub Actions compatibility
+  xcodeVersion: "15.4"
   deploymentTarget:
     iOS: "16.0"      # Wide compatibility (iPhone 8+)
     macOS: "13.0"    # macOS Ventura+
