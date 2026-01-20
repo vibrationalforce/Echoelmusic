@@ -5,6 +5,7 @@ name: Echoelmusic
 
 options:
   bundleIdPrefix: com.echoelmusic
+  xcodeVersion: "15.4"
   deploymentTarget:
     iOS: "16.0"
   # Generate Info.plist automatically
