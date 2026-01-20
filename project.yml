@@ -114,18 +114,18 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
 
-    # Dependencies
-    dependencies:
-      - target: EchoelmusicAUv3
-        embed: true
+    # Dependencies (AUv3 extension temporarily disabled for CI)
+    # dependencies:
+    #   - target: EchoelmusicAUv3
+    #     embed: true
 
-    # Entitlements
-    entitlements:
-      path: Echoelmusic.entitlements
-      properties:
-        com.apple.security.application-groups:
-          - group.com.echoelmusic.audio
-        inter-app-audio: true
+    # Entitlements (simplified for initial TestFlight build)
+    # entitlements:
+    #   path: Echoelmusic.entitlements
+    #   properties:
+    #     com.apple.security.application-groups:
+    #       - group.com.echoelmusic.audio
+    #     inter-app-audio: true
 
   # ===========================================
   # AUv3 Audio Unit Extension
