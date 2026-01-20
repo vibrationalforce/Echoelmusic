@@ -381,7 +381,7 @@ kernel void updateParticles(device ParticleData* particles [[buffer(0)]],
 // NOTE: This file uses AdvancedVertexOut, AdvancedVertexIn, AdvancedUniforms
 // to avoid linker symbol conflicts with other Metal shader files
 
-vertex AdvancedVertexOut particleVertex(device ParticleData* particles [[buffer(0)]],
+vertex AdvancedVertexOut particleVertex(const device ParticleData* particles [[buffer(0)]],
                                 constant AdvancedUniforms& uniforms [[buffer(1)]],
                                 uint vertexID [[vertex_id]],
                                 uint instanceID [[instance_id]]) {

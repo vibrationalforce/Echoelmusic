@@ -158,17 +158,8 @@ struct Screenshot2_QuantumVisualization: View {
             // Dark cosmic background
             Color.black.ignoresSafeArea()
 
-            // Starfield
-            ForEach(0..<50, id: \.self) { _ in
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: CGFloat.random(in: 1...3))
-                    .position(
-                        x: CGFloat.random(in: 0...400),
-                        y: CGFloat.random(in: 0...800)
-                    )
-                    .opacity(Double.random(in: 0.3...0.9))
-            }
+            // Starfield - using static positions to avoid compiler type inference issues
+            StarfieldView()
 
             VStack(spacing: 40) {
                 // Title
@@ -1073,11 +1064,11 @@ struct Screenshot9_Collaboration: View {
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 16) {
-                            ForEach(0..<8, id: \.self) { index in
+                            ForEach(ParticipantData.samples, id: \.name) { participant in
                                 ParticipantAvatar(
-                                    name: ["Alex", "Maria", "Kenji", "Sofia", "Chen", "Aisha", "Marco", "Priya"][index],
-                                    coherence: [0.85, 0.78, 0.92, 0.81, 0.88, 0.75, 0.94, 0.83][index],
-                                    country: ["🇺🇸", "🇪🇸", "🇯🇵", "🇮🇹", "🇨🇳", "🇦🇪", "🇧🇷", "🇮🇳"][index]
+                                    name: participant.name,
+                                    coherence: participant.coherence,
+                                    country: participant.country
                                 )
                             }
                         }
@@ -1803,6 +1794,61 @@ struct AccessibilityFeatureRow: View {
         }
         .padding(.vertical, 8)
     }
+}
+
+// MARK: - Data Models for Type Safety
+
+/// Static star data to avoid runtime random values that cause compiler type inference issues
+private struct StarData: Identifiable {
+    let id: Int
+    let x: CGFloat
+    let y: CGFloat
+    let size: CGFloat
+    let opacity: Double
+
+    static let stars: [StarData] = (0..<50).map { index in
+        // Use deterministic values based on index to create star-like distribution
+        let seed = Double(index)
+        StarData(
+            id: index,
+            x: CGFloat((seed * 31.415) .truncatingRemainder(dividingBy: 400)),
+            y: CGFloat((seed * 17.32) .truncatingRemainder(dividingBy: 800)),
+            size: CGFloat(1 + (seed.truncatingRemainder(dividingBy: 3))),
+            opacity: 0.3 + (seed.truncatingRemainder(dividingBy: 6)) / 10
+        )
+    }
+}
+
+/// Starfield view using pre-computed positions
+private struct StarfieldView: View {
+    var body: some View {
+        ForEach(StarData.stars) { star in
+            Circle()
+                .fill(Color.white)
+                .frame(width: star.size, height: star.size)
+                .position(x: star.x, y: star.y)
+                .opacity(star.opacity)
+        }
+    }
+}
+
+/// Participant data structure for collaboration view
+private struct ParticipantData: Identifiable {
+    let id = UUID()
+    let name: String
+    let coherence: Double
+    let country: String
+
+    static let samples: [ParticipantData] = [
+        ParticipantData(name: "Alex", coherence: 0.85, country: "🇺🇸"),
+        ParticipantData(name: "Maria", coherence: 0.78, country: "🇪🇸"),
+        ParticipantData(name: "Kenji", coherence: 0.92, country: "🇯🇵"),
+        ParticipantData(name: "Sofia", coherence: 0.81, country: "🇮🇹"),
+        ParticipantData(name: "Chen", coherence: 0.88, country: "🇨🇳"),
+        ParticipantData(name: "Aisha", coherence: 0.75, country: "🇦🇪"),
+        ParticipantData(name: "Marco", coherence: 0.94, country: "🇧🇷"),
+        ParticipantData(name: "Priya", coherence: 0.83, country: "🇮🇳")
+    ]
 }
 
 // MARK: - Preview Providers
