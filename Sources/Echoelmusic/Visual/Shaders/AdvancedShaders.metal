@@ -592,7 +592,7 @@ kernel void bloomBlur(texture2d<float, access::read> inTexture [[texture(0)]],
                      constant bool& horizontal [[buffer(0)]],
                      uint2 gid [[thread_position_in_grid]]) {
     // Gaussian blur weights (9-tap)
-    constant float weights[5] = {0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216};
+    const float weights[5] = {0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216};
 
     float4 result = inTexture.read(gid) * weights[0];
 
