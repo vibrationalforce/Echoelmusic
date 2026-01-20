@@ -28,13 +28,51 @@ platform :ios do
 
     UI.message("Using keychain: #{keychain_path}")
 
-    # Get certificates - force: true revokes old certs if max reached
+    # === RALPH WIGGUM CLEANUP: Revoke old orphaned certificates ===
+    UI.message("🧹 Cleaning up old Distribution certificates...")
+
+    begin
+      require 'spaceship'
+      Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+        key_id: ENV["ASC_KEY_ID"],
+        issuer_id: ENV["ASC_ISSUER_ID"],
+        key: ENV["ASC_KEY_CONTENT"]
+      )
+
+      # Find all distribution certificates
+      all_certs = Spaceship::ConnectAPI::Certificate.all.select do |cert|
+        cert.certificate_type == "DISTRIBUTION" || cert.certificate_type == "IOS_DISTRIBUTION"
+      end
+
+      UI.message("Found #{all_certs.count} distribution certificate(s)")
+
+      # Keep only the newest one, revoke the rest
+      if all_certs.count > 1
+        sorted = all_certs.sort_by { |c| c.expiration_date }.reverse
+        to_revoke = sorted[1..-1]  # Keep the first (newest), revoke the rest
+
+        to_revoke.each do |cert|
+          UI.message("🗑️  Revoking old certificate: #{cert.id} (expires: #{cert.expiration_date})")
+          cert.delete!
+        end
+        UI.success("✅ Revoked #{to_revoke.count} old certificate(s)")
+      elsif all_certs.count == 1
+        # Revoke the single one too, so we can create a fresh one with the key in our keychain
+        UI.message("🗑️  Revoking existing certificate to create fresh one with local key")
+        all_certs.first.delete!
+        UI.success("✅ Revoked 1 certificate")
+      end
+    rescue => e
+      UI.important("⚠️  Could not cleanup certificates: #{e.message}")
+      UI.important("Continuing anyway...")
+    end
+
+    # Get certificates - now should work since we cleaned up
     get_certificates(
       api_key: api_key,
       platform: "ios",
       keychain_path: keychain_path,
-      keychain_password: keychain_password,
-      force: true  # Revoke old cert and create new one
+      keychain_password: keychain_password
     )
 
     get_provisioning_profile(
