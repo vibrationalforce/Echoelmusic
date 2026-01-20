@@ -22,7 +22,7 @@ on:
 jobs:
   ios-testflight:
     name: "📱 Build & Deploy iOS"
-    runs-on: macos-14
+    runs-on: macos-15  # Latest macOS with Xcode 16
 
     steps:
       - name: "📥 Checkout"
@@ -46,10 +46,10 @@ jobs:
             .build
           key: ${{ runner.os }}-swift-ios-${{ hashFiles('Package.swift') }}
 
-      - name: "🔧 Setup Xcode 15.4"
+      - name: "🔧 Setup Xcode (Latest)"
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.4'
+          xcode-version: 'latest-stable'
 
       - name: "📦 Install Tools"
         run: |
