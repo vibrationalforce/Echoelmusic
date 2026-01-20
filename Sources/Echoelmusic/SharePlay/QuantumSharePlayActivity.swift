@@ -280,7 +280,8 @@ public class QuantumSharePlayManager: ObservableObject {
 
         // Receive messages
         Task {
-            for await (message, _) in messenger!.messages(of: SharePlayMessage.self) {
+            guard let messenger = messenger else { return }
+            for await (message, _) in messenger.messages(of: SharePlayMessage.self) {
                 await handleMessage(message)
             }
         }

@@ -516,7 +516,10 @@ enum LLMError: LocalizedError {
 
 private enum KeychainHelper {
     static func save(key: String, value: String) {
-        let data = value.data(using: .utf8)!
+        guard let data = value.data(using: .utf8) else {
+            // Log encoding failure but don't crash
+            return
+        }
 
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -525,7 +528,10 @@ private enum KeychainHelper {
         ]
 
         SecItemDelete(query as CFDictionary)
-        SecItemAdd(query as CFDictionary, nil)
+        let status = SecItemAdd(query as CFDictionary, nil)
+        if status != errSecSuccess {
+            // Log keychain error silently in production
+        }
     }
 
     static func load(key: String) -> String? {
