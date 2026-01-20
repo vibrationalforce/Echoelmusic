@@ -259,7 +259,8 @@ public final class TherapySessionPlugin: EchoelmusicPlugin {
             await saveSession(session)
         }
 
-        log.info("Ended therapy session - Duration: \(String(format: "%.1f", session.endTime!.timeIntervalSince(session.startTime) / 60)) minutes", category: .wellness)
+        let durationMinutes = session.endTime.map { String(format: "%.1f", $0.timeIntervalSince(session.startTime) / 60) } ?? "unknown"
+        log.info("Ended therapy session - Duration: \(durationMinutes) minutes", category: .wellness)
 
         currentSession = nil
         sessionStartTime = nil
@@ -911,10 +912,11 @@ public final class LivePerformancePlugin: EchoelmusicPlugin {
 
     /// Add cue to current song
     public func addCueToCurrentSong(_ cue: Cue) {
-        guard currentSetList != nil else { return }
+        guard var setList = currentSetList else { return }
 
-        let songIndex = currentSetList!.currentSongIndex
-        currentSetList?.songs[songIndex].cues.append(cue)
+        let songIndex = setList.currentSongIndex
+        setList.songs[songIndex].cues.append(cue)
+        currentSetList = setList
 
         log.debug("Added cue '\(cue.name)' to current song", category: .performance)
     }
@@ -2360,7 +2362,8 @@ public final class ContentCreatorPlugin: EchoelmusicPlugin {
             await autoPostHighlights(session)
         }
 
-        log.info("Ended stream - Duration: \(String(format: "%.1f", session.endTime!.timeIntervalSince(session.startTime) / 60)) minutes, Avg coherence: \(session.averageCoherence)", category: .social)
+        let streamDuration = session.endTime.map { String(format: "%.1f", $0.timeIntervalSince(session.startTime) / 60) } ?? "unknown"
+        log.info("Ended stream - Duration: \(streamDuration) minutes, Avg coherence: \(session.averageCoherence)", category: .social)
 
         currentSession = nil
     }

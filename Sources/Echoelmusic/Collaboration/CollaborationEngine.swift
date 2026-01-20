@@ -186,7 +186,9 @@ class CollaborationEngine: ObservableObject {
 
     private func sendPing() {
         lastPingTime = Date()
-        webRTCClient?.sendData("ping".data(using: .utf8)!, channel: .control)
+        if let pingData = "ping".data(using: .utf8) {
+            webRTCClient?.sendData(pingData, channel: .control)
+        }
     }
 
     func receivedPong() {

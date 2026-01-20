@@ -444,19 +444,37 @@ public class WebSocketSecurity {
     private var suspiciousActivity: [String: Int] = [:]
     private let suspicionThreshold = 3
 
-    /// Sign message with user's JWT token
+    // Thread-safe queue for dictionary access
+    private let securityQueue = DispatchQueue(label: "com.echoelmusic.websocket.security", attributes: .concurrent)
+
+    // Salt for HKDF key derivation (app-specific, not secret)
+    private static let hmacSalt = "echoelmusic.websocket.signing.v1".data(using: .utf8)!
+
+    /// Derive a proper cryptographic key from JWT token using HKDF
+    private func deriveSigningKey(from token: String) -> SymmetricKey {
+        let inputKey = SymmetricKey(data: Data(token.utf8))
+        let derivedKey = HKDF<SHA256>.deriveKey(
+            inputKeyMaterial: inputKey,
+            salt: Self.hmacSalt,
+            info: Data("message-signing".utf8),
+            outputByteCount: 32
+        )
+        return derivedKey
+    }
+
+    /// Sign message with user's JWT token (using HKDF-derived key)
     public func signMessage<T: WebSocketMessage>(_ message: inout T, token: String) throws {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
 
         let messageData = try encoder.encode(message)
-        let key = SymmetricKey(data: Data(token.utf8))
+        let key = deriveSigningKey(from: token)
         let signature = HMAC<SHA256>.authenticationCode(for: messageData, using: key)
 
         message.signature = Data(signature).base64EncodedString()
     }
 
-    /// Verify message signature
+    /// Verify message signature (using HKDF-derived key)
     public func verifyMessage<T: WebSocketMessage>(_ message: T, token: String) throws -> Bool {
         guard let signatureString = message.signature else {
             throw SecurityError.noSignature
@@ -469,7 +487,7 @@ public class WebSocketSecurity {
         encoder.dateEncodingStrategy = .iso8601
         let messageData = try encoder.encode(unsignedMessage)
 
-        let key = SymmetricKey(data: Data(token.utf8))
+        let key = deriveSigningKey(from: token)
         let expectedSignature = HMAC<SHA256>.authenticationCode(for: messageData, using: key)
 
         guard let providedSignature = Data(base64Encoded: signatureString) else {
@@ -479,36 +497,38 @@ public class WebSocketSecurity {
         return Data(expectedSignature) == providedSignature
     }
 
-    /// Check rate limit for user
+    /// Check rate limit for user (thread-safe)
     public func checkRateLimit(userID: String) -> Bool {
-        let now = Date()
+        return securityQueue.sync(flags: .barrier) {
+            let now = Date()
 
-        // Reset counter if minute has passed
-        if let resetTime = rateLimitResetTime[userID], now >= resetTime {
-            messageCounts[userID] = 0
-            rateLimitResetTime[userID] = now.addingTimeInterval(60)
+            // Reset counter if minute has passed
+            if let resetTime = rateLimitResetTime[userID], now >= resetTime {
+                messageCounts[userID] = 0
+                rateLimitResetTime[userID] = now.addingTimeInterval(60)
+            }
+
+            // Initialize if new user
+            if messageCounts[userID] == nil {
+                messageCounts[userID] = 0
+                rateLimitResetTime[userID] = now.addingTimeInterval(60)
+            }
+
+            // Check limit
+            let count = messageCounts[userID] ?? 0
+            if count >= maxMessagesPerMinute {
+                logger.warning("Rate limit exceeded for user \(userID)", category: .network)
+                recordSuspiciousActivityUnsafe(userID)
+                return false
+            }
+
+            messageCounts[userID] = count + 1
+            return true
         }
-
-        // Initialize if new user
-        if messageCounts[userID] == nil {
-            messageCounts[userID] = 0
-            rateLimitResetTime[userID] = now.addingTimeInterval(60)
-        }
-
-        // Check limit
-        let count = messageCounts[userID] ?? 0
-        if count >= maxMessagesPerMinute {
-            logger.warning("Rate limit exceeded for user \(userID)", category: .network)
-            recordSuspiciousActivity(userID)
-            return false
-        }
-
-        messageCounts[userID] = count + 1
-        return true
     }
 
-    /// Record suspicious activity
-    private func recordSuspiciousActivity(_ userID: String) {
+    /// Record suspicious activity (must be called from within barrier queue)
+    private func recordSuspiciousActivityUnsafe(_ userID: String) {
         suspiciousActivity[userID, default: 0] += 1
 
         if (suspiciousActivity[userID] ?? 0) >= suspicionThreshold {
@@ -516,16 +536,20 @@ public class WebSocketSecurity {
         }
     }
 
-    /// Check if user is flagged for abuse
+    /// Check if user is flagged for abuse (thread-safe)
     public func isAbusive(_ userID: String) -> Bool {
-        return (suspiciousActivity[userID] ?? 0) >= suspicionThreshold
+        return securityQueue.sync {
+            return (suspiciousActivity[userID] ?? 0) >= suspicionThreshold
+        }
     }
 
-    /// Reset user's abuse counter (admin action)
+    /// Reset user's abuse counter (admin action, thread-safe)
     public func resetAbuseCounter(_ userID: String) {
-        suspiciousActivity[userID] = 0
-        messageCounts[userID] = 0
-        logger.info("Abuse counter reset for user \(userID)", category: .network)
+        securityQueue.sync(flags: .barrier) {
+            suspiciousActivity[userID] = 0
+            messageCounts[userID] = 0
+            logger.info("Abuse counter reset for user \(userID)", category: .network)
+        }
     }
 }
 

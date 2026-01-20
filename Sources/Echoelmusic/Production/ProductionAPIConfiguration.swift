@@ -807,7 +807,9 @@ public final class SecureAPIKeyManager {
     /// Store API key securely in Keychain
     public func storeAPIKey(_ key: String, identifier: String) throws {
         #if canImport(Security)
-        let data = key.data(using: .utf8)!
+        guard let data = key.data(using: .utf8) else {
+            throw APIKeyError.keychainStoreFailed(status: errSecParam)
+        }
 
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,

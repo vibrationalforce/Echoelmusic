@@ -967,9 +967,18 @@ public class ILDAFileParser {
                 for _ in 0..<count {
                     guard offset + 10 <= data.count else { break }
 
-                    let x = Int16(bigEndian: data.subdata(in: offset..<(offset + 2)).withUnsafeBytes { $0.load(as: Int16.self) })
-                    let y = Int16(bigEndian: data.subdata(in: (offset + 2)..<(offset + 4)).withUnsafeBytes { $0.load(as: Int16.self) })
-                    let z = Int16(bigEndian: data.subdata(in: (offset + 4)..<(offset + 6)).withUnsafeBytes { $0.load(as: Int16.self) })
+                    // Safe big-endian byte reading without withUnsafeBytes
+                    let xHigh = Int16(bitPattern: UInt16(data[offset]) << 8)
+                    let xLow = Int16(data[offset + 1])
+                    let x = xHigh | xLow
+
+                    let yHigh = Int16(bitPattern: UInt16(data[offset + 2]) << 8)
+                    let yLow = Int16(data[offset + 3])
+                    let y = yHigh | yLow
+
+                    let zHigh = Int16(bitPattern: UInt16(data[offset + 4]) << 8)
+                    let zLow = Int16(data[offset + 5])
+                    let z = zHigh | zLow
 
                     let status = data[offset + 6]
                     let b = data[offset + 7]
