@@ -10,6 +10,9 @@
 
 import Foundation
 import Combine
+#if canImport(Network)
+import Network
+#endif
 
 // MARK: - Syncable Entity
 
@@ -432,8 +435,6 @@ public final class SyncManager: ObservableObject {
 
     private func setupNetworkMonitoring() {
         #if canImport(Network)
-        import Network
-
         let monitor = NWPathMonitor()
         monitor.pathUpdateHandler = { [weak self] path in
             Task { @MainActor in

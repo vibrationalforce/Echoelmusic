@@ -30,7 +30,7 @@ class UniversalDeviceIntegration: ObservableObject {
         let id: UUID
         let name: String
         let type: DeviceType
-        let protocol: CommunicationProtocol
+        let communicationProtocol: CommunicationProtocol
         let status: ConnectionStatus
 
         enum DeviceType: String {

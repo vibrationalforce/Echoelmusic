@@ -1,9 +1,8 @@
 import Foundation
+#if os(watchOS)
 import WatchKit
 import HealthKit
 import Combine
-
-#if os(watchOS)
 
 /// Echoelmusic für Apple Watch
 ///
