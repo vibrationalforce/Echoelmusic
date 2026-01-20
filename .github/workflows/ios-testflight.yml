@@ -56,7 +56,7 @@ jobs:
           # Install XcodeGen 2.38.0 (last version with Xcode 15 project format)
           curl -sL https://github.com/yonaskolb/XcodeGen/releases/download/2.38.0/xcodegen.zip -o xcodegen.zip
           unzip -o xcodegen.zip
-          sudo mv xcodegen /usr/local/bin/
+          sudo mv xcodegen/bin/xcodegen /usr/local/bin/
           xcodegen --version
 
           gem install fastlane -N
