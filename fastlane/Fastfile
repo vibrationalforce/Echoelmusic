@@ -22,16 +22,26 @@ platform :ios do
     key_path = "#{Dir.tmpdir}/AuthKey_#{ENV["ASC_KEY_ID"]}.p8"
     File.write(key_path, ENV["ASC_KEY_CONTENT"])
 
-    # Get certificates and provisioning profiles automatically
+    # Use CI keychain if available, otherwise use default
+    keychain_path = ENV["KEYCHAIN_PATH"] || "~/Library/Keychains/login.keychain-db"
+    keychain_password = ENV["KEYCHAIN_PASSWORD"] || ""
+
+    UI.message("Using keychain: #{keychain_path}")
+
+    # Get certificates - force: true revokes old certs if max reached
     get_certificates(
       api_key: api_key,
-      platform: "ios"
+      platform: "ios",
+      keychain_path: keychain_path,
+      keychain_password: keychain_password,
+      force: true  # Revoke old cert and create new one
     )
 
     get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app",
-      platform: "ios"
+      platform: "ios",
+      force: true  # Always fetch fresh profile
     )
 
     # Get the profile name that was just created/fetched
