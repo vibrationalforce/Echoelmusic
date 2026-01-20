@@ -975,15 +975,26 @@ struct CreationThumbnail: View {
 struct QuantumVideoOverlay: View {
     let coherence: Float
 
+    // Pre-computed particle data to avoid CGFloat.random() in view body (compiler crash fix)
+    private static let particleData: [(relX: CGFloat, relY: CGFloat, size: CGFloat)] = (0..<20).map { i in
+        let seed = Double(i)
+        return (
+            relX: CGFloat((seed * 0.618).truncatingRemainder(dividingBy: 1.0)),
+            relY: CGFloat((seed * 0.382 + 0.1).truncatingRemainder(dividingBy: 1.0)),
+            size: CGFloat(10 + (seed.truncatingRemainder(dividingBy: 4)) * 10)
+        )
+    }
+
     var body: some View {
         GeometryReader { geo in
             ForEach(0..<20, id: \.self) { i in
+                let particle = Self.particleData[i]
                 Circle()
                     .fill(Color.blue.opacity(Double(coherence) * 0.3))
-                    .frame(width: CGFloat.random(in: 10...50))
+                    .frame(width: particle.size)
                     .position(
-                        x: CGFloat.random(in: 0...geo.size.width),
-                        y: CGFloat.random(in: 0...geo.size.height)
+                        x: particle.relX * geo.size.width,
+                        y: particle.relY * geo.size.height
                     )
                     .blur(radius: 5)
             }
