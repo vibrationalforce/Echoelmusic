@@ -62,7 +62,7 @@ class UniversalSoundLibrary: ObservableObject {
             case analogSynth = "Analog Synthesizer"
             case digitalSynth = "Digital Synthesizer"
             case sampler = "Sampler"
-            case drum Machine = "Drum Machine"
+            case drumMachine = "Drum Machine"
 
             // String
             case pluckedString = "Plucked String"

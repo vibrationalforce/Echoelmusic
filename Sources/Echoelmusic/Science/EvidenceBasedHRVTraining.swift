@@ -279,7 +279,7 @@ class EvidenceBasedHRVTraining: ObservableObject {
 
     func exportSessionData() -> SessionReport {
         return SessionReport(
-            protocol: currentProtocol?.rawValue ?? "Unknown",
+            trainingProtocol: currentProtocol?.rawValue ?? "Unknown",
             duration: sessionData.count,
             baselineHRV: baselineHRV,
             avgHRV: sessionData.map { $0.hrv }.reduce(0, +) / Float(sessionData.count),
@@ -293,7 +293,7 @@ class EvidenceBasedHRVTraining: ObservableObject {
 // MARK: - Session Report
 
 struct SessionReport {
-    let protocol: String
+    let trainingProtocol: String
     let duration: Int  // seconds
     let baselineHRV: Float
     let avgHRV: Float

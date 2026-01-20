@@ -30,7 +30,7 @@ class UniversalDeviceIntegration: ObservableObject {
         let id: UUID
         let name: String
         let type: DeviceType
-        let protocol: CommunicationProtocol
+        let communicationProtocol: CommunicationProtocol
         let status: ConnectionStatus
 
         enum DeviceType: String {
@@ -99,7 +99,7 @@ class UniversalDeviceIntegration: ObservableObject {
             id: UUID(),
             name: "Smart Home",
             type: .smartHome,
-            protocol: .homeKit,
+            communicationProtocol: .homeKit,
             status: .connected
         )
 
@@ -205,7 +205,7 @@ class UniversalDeviceIntegration: ObservableObject {
             id: UUID(),
             name: deviceType.rawValue,
             type: .medicalDevice,
-            protocol: .fhir,
+            communicationProtocol: .fhir,
             status: .connected
         )
 
@@ -257,7 +257,7 @@ class UniversalDeviceIntegration: ObservableObject {
             id: UUID(),
             name: name,
             type: .robot,
-            protocol: .ros2,
+            communicationProtocol: .ros2,
             status: .connected
         )
 

@@ -69,10 +69,10 @@ jobs:
           echo ""
           echo "✅ All required secrets are configured!"
 
-      - name: Setup Xcode 15.4
+      - name: Setup Xcode 16.2
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.4'
+          xcode-version: '16.2'
 
       - name: Show Xcode version
         run: xcodebuild -version
