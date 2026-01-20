@@ -1,0 +1,95 @@
+# =============================================================================
+# ECHOELMUSIC - iOS TESTFLIGHT (Quick Deploy)
+# =============================================================================
+# One-tap iOS deployment from iPhone
+# Cost: ~$1.20 per build
+# =============================================================================
+
+name: "📱 iOS TestFlight"
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'testflight'
+        type: choice
+        options:
+          - testflight
+          - build-only
+
+jobs:
+  ios-testflight:
+    name: "📱 Build & Deploy iOS"
+    runs-on: macos-14
+
+    steps:
+      - name: "📥 Checkout"
+        uses: actions/checkout@v4
+
+      - name: "🔐 Verify Secrets"
+        run: |
+          MISSING=false
+          [ -z "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ] && echo "❌ Missing: APP_STORE_CONNECT_KEY_ID" && MISSING=true
+          [ -z "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ] && echo "❌ Missing: APP_STORE_CONNECT_ISSUER_ID" && MISSING=true
+          [ -z "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" ] && echo "❌ Missing: APP_STORE_CONNECT_PRIVATE_KEY" && MISSING=true
+          [ -z "${{ secrets.APPLE_TEAM_ID }}" ] && echo "❌ Missing: APPLE_TEAM_ID" && MISSING=true
+          [ "$MISSING" = true ] && exit 1
+          echo "✅ All secrets configured!"
+
+      - name: "💾 Cache Swift Packages"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.swiftpm
+            .build
+          key: ${{ runner.os }}-swift-ios-${{ hashFiles('Package.swift') }}
+
+      - name: "🔧 Setup Xcode 15.4"
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
+
+      - name: "📦 Install Tools"
+        run: |
+          brew install xcodegen
+          gem install fastlane -N
+
+      - name: "⚙️ Configure Project"
+        run: |
+          sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
+          xcodegen generate
+
+      - name: "🔨 Build iOS App"
+        run: |
+          xcodebuild -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic \
+            -destination "generic/platform=iOS" \
+            -configuration Release \
+            -archivePath build/Echoelmusic.xcarchive \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            -allowProvisioningUpdates \
+            clean archive
+
+      - name: "🚀 Upload to TestFlight"
+        if: ${{ github.event.inputs.build_type == 'testflight' }}
+        run: fastlane ios beta
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: "✅ Success"
+        run: |
+          echo "========================================"
+          echo "  🎉 iOS BUILD SUCCESSFUL!"
+          echo "========================================"
+          if [ "${{ github.event.inputs.build_type }}" = "testflight" ]; then
+            echo "  📱 Check TestFlight for new build"
+            echo "  ⏱️  Processing takes 15-30 minutes"
+          else
+            echo "  ✅ Build completed (not uploaded)"
+          fi
+          echo "========================================"
