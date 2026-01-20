@@ -104,6 +104,25 @@ jobs:
         env:
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 180
 
+      - name: Upload Build Log on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ~/Library/Logs/gym/
+          retention-days: 7
+
+      - name: Show Build Errors on Failure
+        if: failure()
+        run: |
+          echo "=== Last 500 lines of build log ==="
+          if [ -f ~/Library/Logs/gym/Echoelmusic-Echoelmusic.log ]; then
+            tail -500 ~/Library/Logs/gym/Echoelmusic-Echoelmusic.log
+          else
+            echo "No build log found"
+            ls -la ~/Library/Logs/gym/ || echo "gym log directory not found"
+          fi
+
       - name: Success
         if: success()
         run: |
