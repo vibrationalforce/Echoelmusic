@@ -22,6 +22,18 @@ platform :ios do
     key_path = "#{Dir.tmpdir}/AuthKey_#{ENV["ASC_KEY_ID"]}.p8"
     File.write(key_path, ENV["ASC_KEY_CONTENT"])
 
+    # Get certificates and provisioning profiles automatically
+    get_certificates(
+      api_key: api_key,
+      platform: "ios"
+    )
+
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app",
+      platform: "ios"
+    )
+
     # Build the app with automatic signing using API key authentication
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -31,6 +43,7 @@ platform :ios do
       export_method: "app-store",
       xcargs: [
         "DEVELOPMENT_TEAM='#{ENV["APPLE_TEAM_ID"]}'",
+        "CODE_SIGN_STYLE='Automatic'",
         "-allowProvisioningUpdates",
         "-authenticationKeyPath '#{key_path}'",
         "-authenticationKeyID '#{ENV["ASC_KEY_ID"]}'",
