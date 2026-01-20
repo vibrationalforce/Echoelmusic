@@ -27,6 +27,21 @@ jobs:
     steps:
       - name: "📥 Checkout"
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: "🔍 Verify Metal Shader Content"
+        run: |
+          echo "=== Verifying Metal shaders have unique struct names ==="
+          echo "Checking AdvancedShaders.metal line 379:"
+          sed -n '379p' Sources/Echoelmusic/Visual/Shaders/AdvancedShaders.metal
+          echo ""
+          echo "Checking for duplicated struct names:"
+          grep -r "^struct VertexOut\|^struct VertexIn\|^struct Uniforms" Sources/ --include="*.metal" || echo "✅ No duplicated unprefixed structs found"
+          echo ""
+          echo "Current struct definitions:"
+          grep -r "^struct.*Vertex\|^struct.*Uniforms" Sources/ --include="*.metal"
 
       - name: "🔐 Verify Secrets"
         run: |
