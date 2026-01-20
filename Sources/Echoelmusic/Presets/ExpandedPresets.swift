@@ -1094,7 +1094,7 @@ public struct StreamingPreset: EnginePreset {
     public var frameRate: Double
     public var bitrate: Int              // kbps
     public var codec: String
-    public var protocol: String
+    public var streamingProtocol: String
 
     // Audio Settings
     public var audioCodec: String
@@ -1117,7 +1117,7 @@ public struct StreamingPreset: EnginePreset {
         frameRate: 60.0,
         bitrate: 35000,
         codec: "H.265/HEVC",
-        protocol: "RTMPS",
+        streamingProtocol: "RTMPS",
         audioCodec: "AAC",
         audioBitrate: 320,
         sampleRate: 48000,
@@ -1137,7 +1137,7 @@ public struct StreamingPreset: EnginePreset {
         frameRate: 60.0,
         bitrate: 6000,
         codec: "H.264",
-        protocol: "RTMP",
+        streamingProtocol: "RTMP",
         audioCodec: "AAC",
         audioBitrate: 160,
         sampleRate: 48000,
@@ -1157,7 +1157,7 @@ public struct StreamingPreset: EnginePreset {
         frameRate: 30.0,
         bitrate: 4000,
         codec: "H.264",
-        protocol: "RTMPS",
+        streamingProtocol: "RTMPS",
         audioCodec: "AAC",
         audioBitrate: 128,
         sampleRate: 44100,
@@ -1177,7 +1177,7 @@ public struct StreamingPreset: EnginePreset {
         frameRate: 30.0,
         bitrate: 2500,
         codec: "H.264",
-        protocol: "RTMP",
+        streamingProtocol: "RTMP",
         audioCodec: "AAC",
         audioBitrate: 96,
         sampleRate: 44100,
@@ -1197,7 +1197,7 @@ public struct StreamingPreset: EnginePreset {
         frameRate: 60.0,
         bitrate: 12000,
         codec: "H.264",
-        protocol: "SRT",
+        streamingProtocol: "SRT",
         audioCodec: "AAC",
         audioBitrate: 256,
         sampleRate: 48000,

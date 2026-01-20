@@ -162,8 +162,8 @@ class GestureRecognizer: ObservableObject {
         let fingers: [HandTrackingManager.Finger] = [.thumb, .index, .middle, .ring, .little]
 
         for finger in fingers {
-            let extension = tracker.getFingerExtension(hand: hand, finger: finger)
-            if extension < 0.6 {
+            let fingerExtension = tracker.getFingerExtension(hand: hand, finger: finger)
+            if fingerExtension < 0.6 {
                 return false // Finger not extended enough
             }
         }
