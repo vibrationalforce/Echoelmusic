@@ -376,6 +376,10 @@ kernel void updateParticles(device ParticleData* particles [[buffer(0)]],
     particles[id] = particle;
 }
 
+// MARK: - Particle System (Advanced prefixed structs - 2026-01-20 fix)
+// NOTE: This file uses AdvancedVertexOut, AdvancedVertexIn, AdvancedUniforms
+// to avoid linker symbol conflicts with other Metal shader files
+
 vertex AdvancedVertexOut particleVertex(device ParticleData* particles [[buffer(0)]],
                                 constant AdvancedUniforms& uniforms [[buffer(1)]],
                                 uint vertexID [[vertex_id]],
