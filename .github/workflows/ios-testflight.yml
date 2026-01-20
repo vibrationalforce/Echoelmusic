@@ -33,15 +33,19 @@ jobs:
 
       - name: "🔍 Verify Metal Shader Content"
         run: |
-          echo "=== Verifying Metal shaders have unique struct names ==="
-          echo "Checking AdvancedShaders.metal line 379:"
-          sed -n '379p' Sources/Echoelmusic/Visual/Shaders/AdvancedShaders.metal
+          echo "=== Verifying Metal shaders have unique symbol names ==="
           echo ""
           echo "Checking for duplicated struct names:"
           grep -r "^struct VertexOut\|^struct VertexIn\|^struct Uniforms" Sources/ --include="*.metal" || echo "✅ No duplicated unprefixed structs found"
           echo ""
-          echo "Current struct definitions:"
+          echo "Checking for duplicated function names:"
+          grep -r "^float hash\|^float noise\|^float fbm\|^float3 hsv2rgb" Sources/ --include="*.metal" || echo "✅ No duplicated unprefixed functions found"
+          echo ""
+          echo "Prefixed struct definitions:"
           grep -r "^struct.*Vertex\|^struct.*Uniforms" Sources/ --include="*.metal"
+          echo ""
+          echo "Prefixed function definitions:"
+          grep -rE "^float (cymatics|advanced|echoel)(Hash|Noise|Fbm)|^float3 (cymatics|advanced)Hsv2rgb" Sources/ --include="*.metal"
 
       - name: "🔐 Verify Secrets"
         run: |

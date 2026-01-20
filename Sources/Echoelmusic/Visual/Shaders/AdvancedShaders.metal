@@ -71,32 +71,32 @@ struct FragmentUniforms {
     float contrast;
 };
 
-// MARK: - Utility Functions
+// MARK: - Utility Functions (Advanced prefixed to avoid linker conflicts - 2026-01-20 fix)
 
-float hash(float2 p) {
+float advancedHash(float2 p) {
     return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
 }
 
-float noise(float2 p) {
+float advancedNoise(float2 p) {
     float2 i = floor(p);
     float2 f = fract(p);
     float2 u = f * f * (3.0 - 2.0 * f);
 
-    float a = hash(i + float2(0.0, 0.0));
-    float b = hash(i + float2(1.0, 0.0));
-    float c = hash(i + float2(0.0, 1.0));
-    float d = hash(i + float2(1.0, 1.0));
+    float a = advancedHash(i + float2(0.0, 0.0));
+    float b = advancedHash(i + float2(1.0, 0.0));
+    float c = advancedHash(i + float2(0.0, 1.0));
+    float d = advancedHash(i + float2(1.0, 1.0));
 
     return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 
-float fbm(float2 p, int octaves) {
+float advancedFbm(float2 p, int octaves) {
     float value = 0.0;
     float amplitude = 0.5;
     float frequency = 1.0;
 
     for (int i = 0; i < octaves; i++) {
-        value += amplitude * noise(p * frequency);
+        value += amplitude * advancedNoise(p * frequency);
         frequency *= 2.0;
         amplitude *= 0.5;
     }
@@ -104,7 +104,7 @@ float fbm(float2 p, int octaves) {
     return value;
 }
 
-float3 hsv2rgb(float3 c) {
+float3 advancedHsv2rgb(float3 c) {
     float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
     float3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
@@ -340,7 +340,7 @@ kernel void updateParticles(device ParticleData* particles [[buffer(0)]],
 
         particle.position = float3(cos(angle) * radius,
                                    sin(angle) * radius,
-                                   (hash(float2(id, uniforms.time)) - 0.5) * 2.0);
+                                   (advancedHash(float2(id, uniforms.time)) - 0.5) * 2.0);
 
         // Bio-reactive velocity
         float speedMultiplier = 1.0 + uniforms.coherence * 2.0;
@@ -349,7 +349,7 @@ kernel void updateParticles(device ParticleData* particles [[buffer(0)]],
         // Color based on frequency content
         float hue = float(id % 100) / 100.0;
         hue += uniforms.bassLevel * 0.1;
-        particle.color = float4(hsv2rgb(float3(hue, 0.8, 1.0)), 1.0);
+        particle.color = float4(advancedHsv2rgb(float3(hue, 0.8, 1.0)), 1.0);
 
         particle.life = 1.0 + uniforms.hrv * 2.0; // HRV affects lifetime
         particle.size = 0.05 + uniforms.audioLevel * 0.1;
@@ -465,7 +465,7 @@ vertex AdvancedVertexOut spectrumVertex(constant float* spectrum [[buffer(0)]],
 
     // Color based on frequency (bass = red, mid = green, high = blue)
     float normalizedIndex = float(barIndex) / 128.0;
-    out.color = float4(hsv2rgb(float3(normalizedIndex * 0.7, 0.8, height)), 1.0);
+    out.color = float4(advancedHsv2rgb(float3(normalizedIndex * 0.7, 0.8, height)), 1.0);
 
     return out;
 }
@@ -498,7 +498,7 @@ vertex AdvancedVertexOut waveformVertex(constant float* waveform [[buffer(0)]],
 
     // Color gradient along waveform
     float hue = float(sampleIndex) / 512.0 + uniforms.time * 0.1;
-    out.color = float4(hsv2rgb(float3(hue, 0.7, 1.0)), 1.0);
+    out.color = float4(advancedHsv2rgb(float3(hue, 0.7, 1.0)), 1.0);
 
     return out;
 }
@@ -512,7 +512,7 @@ vertex AdvancedVertexOut bioReactiveVertex(AdvancedVertexIn in [[stage_in]],
     float3 pos = in.position;
 
     // Morph geometry based on HRV
-    float displacement = noise(in.texCoord * 5.0 + uniforms.time * 0.5) * uniforms.hrv * 0.3;
+    float displacement = advancedNoise(in.texCoord * 5.0 + uniforms.time * 0.5) * uniforms.hrv * 0.3;
     pos += in.normal * displacement;
 
     // Coherence affects rotation/animation
@@ -549,7 +549,7 @@ fragment float4 bioReactiveFragment(AdvancedVertexOut in [[stage_in]],
     float saturation = 0.6 + uniforms.hrv * 0.4; // High HRV = more saturated
     float value = 0.7 + uniforms.audioLevel * 0.3;
 
-    float3 baseColor = hsv2rgb(float3(hue, saturation, value));
+    float3 baseColor = advancedHsv2rgb(float3(hue, saturation, value));
 
     // Animated noise texture overlay
     float2 uvAnim = in.texCoord + float2(uniforms.time * 0.1, 0.0);

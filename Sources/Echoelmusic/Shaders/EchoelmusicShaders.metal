@@ -54,8 +54,8 @@ float simplex2D(float2 p) {
     return dot(n, float3(70.0));
 }
 
-// Fractal Brownian Motion
-float fbm(float2 p, int octaves) {
+// Fractal Brownian Motion (Echoelmusic prefixed to avoid linker conflicts - 2026-01-20 fix)
+float echoelFbm(float2 p, int octaves) {
     float value = 0.0;
     float amplitude = 0.5;
     float frequency = 1.0;
@@ -128,7 +128,7 @@ fragment float4 perlinNoiseShader(
     float2 p = uv * 3.0 + float2(uniforms.time * 0.1, uniforms.time * 0.05);
 
     // Generate fractal noise
-    float noise = fbm(p, 6);
+    float noise = echoelFbm(p, 6);
 
     // Map to colors based on coherence
     float3 lowCoherenceColor = float3(0.1, 0.05, 0.15);   // Dark purple
@@ -184,7 +184,7 @@ fragment float4 starfieldShader(
     }
 
     // Add subtle nebula
-    float nebula = fbm(uv * 2.0 + uniforms.time * 0.02, 4) * 0.15;
+    float nebula = echoelFbm(uv * 2.0 + uniforms.time * 0.02, 4) * 0.15;
     color += nebula * float3(0.3, 0.1, 0.5);
 
     return float4(color, 1.0);

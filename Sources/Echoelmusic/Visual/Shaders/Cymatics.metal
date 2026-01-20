@@ -44,35 +44,35 @@ struct CymaticsUniforms {
 };
 
 
-// MARK: - Helper Functions
+// MARK: - Helper Functions (Cymatics prefixed to avoid linker conflicts - 2026-01-20 fix)
 
 /// Hash function for noise generation
-float hash(float2 p) {
+float cymaticsHash(float2 p) {
     return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
 }
 
 /// Smoothed noise
-float noise(float2 p) {
+float cymaticsNoise(float2 p) {
     float2 i = floor(p);
     float2 f = fract(p);
     f = f * f * (3.0 - 2.0 * f);  // Smoothstep
 
-    float a = hash(i);
-    float b = hash(i + float2(1.0, 0.0));
-    float c = hash(i + float2(0.0, 1.0));
-    float d = hash(i + float2(1.0, 1.0));
+    float a = cymaticsHash(i);
+    float b = cymaticsHash(i + float2(1.0, 0.0));
+    float c = cymaticsHash(i + float2(0.0, 1.0));
+    float d = cymaticsHash(i + float2(1.0, 1.0));
 
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
 /// Fractal Brownian Motion (layered noise)
-float fbm(float2 p) {
+float cymaticsFbm(float2 p) {
     float value = 0.0;
     float amplitude = 0.5;
     float frequency = 1.0;
 
     for (int i = 0; i < 5; i++) {
-        value += amplitude * noise(p * frequency);
+        value += amplitude * cymaticsNoise(p * frequency);
         frequency *= 2.0;
         amplitude *= 0.5;
     }
@@ -81,7 +81,7 @@ float fbm(float2 p) {
 }
 
 /// Convert HSV to RGB
-float3 hsv2rgb(float3 c) {
+float3 cymaticsHsv2rgb(float3 c) {
     float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
     float3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
@@ -173,7 +173,7 @@ fragment float4 cymatics_fragment(
     float pattern = mix(chladni, ripple, uniforms.audioLevel);
 
     // Add noise for texture
-    float noiseValue = fbm(centeredUV * 5.0 + uniforms.time * 0.1);
+    float noiseValue = cymaticsFbm(centeredUV * 5.0 + uniforms.time * 0.1);
     pattern += noiseValue * 0.1;
 
     // Modulate by audio level (pulsing effect)
@@ -197,7 +197,7 @@ fragment float4 cymatics_fragment(
     float brightness = 0.3 + pattern * 0.7;   // 0.3-1.0
 
     // Convert HSV to RGB
-    float3 color = hsv2rgb(float3(hue, saturation, brightness));
+    float3 color = cymaticsHsv2rgb(float3(hue, saturation, brightness));
 
 
     // MARK: - Post-Processing
@@ -253,7 +253,7 @@ fragment float4 particle_fragment(
 
     // Color based on HRV
     float hue = uniforms.hrvCoherence * 0.5;
-    float3 color = hsv2rgb(float3(hue, 0.8, particles));
+    float3 color = cymaticsHsv2rgb(float3(hue, 0.8, particles));
 
     return float4(color, 1.0);
 }
