@@ -22,7 +22,7 @@ using namespace metal;
 // MARK: - Constants & Structures (static to avoid linker conflicts)
 
 static constant float PI = 3.14159265359;
-static constant float TWO_PI = 6.28318530718;
+// TWO_PI removed - unused constant (2026-01-20 cleanup)
 
 struct AdvancedVertexIn {
     float3 position [[attribute(0)]];
@@ -298,7 +298,8 @@ float4 applyBlendMode(float4 base, float4 blend, int mode, float opacity) {
             result = hsl2rgb(float3(baseHSL.x, baseHSL.y, blendHSL.z));
             break;
         }
-        default: // BLEND_NORMAL
+        case BLEND_NORMAL:
+        default:
             result = blend.rgb;
             break;
     }
@@ -362,8 +363,8 @@ kernel void updateParticles(device ParticleData* particles [[buffer(0)]],
         int spectrumIndex = (id % 64);
         float spectrumValue = audioSpectrum[spectrumIndex];
 
-        // Frequency-based movement
-        particle.velocity.y += spectrumValue * 0.05;
+        // Frequency-based movement (use audioForce for base + spectrum for variation)
+        particle.velocity.y += spectrumValue * 0.05 + audioForce;
         particle.velocity *= 0.98; // Drag
 
         // Update color alpha based on life
@@ -719,6 +720,8 @@ fragment float4 volumetricLighting(AdvancedVertexOut in [[stage_in]],
     float2 delta = lightPos - in.texCoord;
     delta *= 1.0 / 50.0; // 50 samples
 
+    // Use depth to attenuate effect for closer objects
+    float depthAttenuation = smoothstep(0.0, 0.5, depth);
     float illumination = 0.0;
     float2 samplePos = in.texCoord;
 
@@ -730,9 +733,9 @@ fragment float4 volumetricLighting(AdvancedVertexOut in [[stage_in]],
         samplePos += delta;
     }
 
-    // Add volumetric light
+    // Add volumetric light (attenuated by depth for more realistic effect)
     float3 lightColor = float3(1.0, 0.9, 0.7) * uniforms.audioLevel;
-    color.rgb += lightColor * illumination * 0.3;
+    color.rgb += lightColor * illumination * 0.3 * depthAttenuation;
 
     return color;
 }

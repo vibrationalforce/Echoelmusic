@@ -466,8 +466,8 @@ float4 fibonacciFieldShader(
     float intensity = 0.0;
     float3 totalColor = float3(0.0);
 
-    // Golden angle spiral
-    float goldenAngle = PI * (3.0 - sqrt(5.0));
+    // Golden angle spiral (using PHI - golden ratio)
+    float goldenAngle = 2.0 * PI * (2.0 - PHI);
 
     for (int i = 0; i < min(uniforms.photonCount, 64); i++) {
         float angle = float(i) * goldenAngle + time * 0.5;
