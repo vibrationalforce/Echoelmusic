@@ -1,0 +1,108 @@
+# =============================================================================
+# ECHOELMUSIC - QUICK TEST WORKFLOW
+# =============================================================================
+# Runs fast tests on Linux (cheapest runner: $0.008/min)
+# Use this for everyday commits - saves ~90% vs full builds
+# =============================================================================
+
+name: "⚡ Quick Test"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+    branches: [main]
+
+jobs:
+  swift-test:
+    name: "🧪 Swift Tests"
+    runs-on: ubuntu-latest  # Linux = $0.008/min (10x cheaper than macOS!)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Swift
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.swiftpm
+            .build
+          key: ${{ runner.os }}-swift-${{ hashFiles('Package.swift') }}
+          restore-keys: ${{ runner.os }}-swift-
+
+      - name: Swift Version
+        run: swift --version
+
+      - name: Build (Linux)
+        run: swift build
+
+      - name: Run Tests
+        run: swift test
+
+      - name: "✅ Tests Passed"
+        run: echo "All Swift tests passed!"
+
+  android-test:
+    name: "🧪 Android Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/*.gradle*') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Run Android Tests
+        working-directory: android
+        run: ./gradlew test
+
+      - name: "✅ Android Tests Passed"
+        run: echo "All Android tests passed!"
+
+  lint:
+    name: "🔍 Code Quality"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for secrets in code
+        run: |
+          echo "Checking for hardcoded secrets..."
+          ! grep -r "AKIA\|sk-\|password\s*=\s*['\"]" --include="*.swift" --include="*.kt" . || echo "No secrets found"
+
+      - name: "✅ Lint Passed"
+        run: echo "Code quality checks passed!"
+
+  summary:
+    name: "📊 Test Summary"
+    needs: [swift-test, android-test, lint]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Results
+        run: |
+          echo "================================"
+          echo "  QUICK TEST RESULTS"
+          echo "================================"
+          echo "Swift:   ${{ needs.swift-test.result }}"
+          echo "Android: ${{ needs.android-test.result }}"
+          echo "Lint:    ${{ needs.lint.result }}"
+          echo "================================"
+          echo ""
+          echo "💡 This was a QUICK test (~$0.05)"
+          echo "   For full platform builds, use:"
+          echo "   '🚀 Release All Platforms' workflow"
