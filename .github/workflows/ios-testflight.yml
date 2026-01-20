@@ -79,20 +79,15 @@ jobs:
             exit 1
           fi
 
-      - name: "🔨 Build iOS App"
+      - name: "🔨 Build & Upload via Fastlane"
         run: |
-          xcodebuild -project Echoelmusic.xcodeproj \
-            -scheme Echoelmusic \
-            -destination "generic/platform=iOS" \
-            -configuration Release \
-            -archivePath build/Echoelmusic.xcarchive \
-            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
-            -allowProvisioningUpdates \
-            clean archive
-
-      - name: "🚀 Upload to TestFlight"
-        if: ${{ github.event.inputs.build_type == 'testflight' }}
-        run: fastlane ios beta
+          if [ "${{ github.event.inputs.build_type }}" == "testflight" ]; then
+            echo "Building and uploading to TestFlight..."
+            fastlane ios beta
+          else
+            echo "Building only (no upload)..."
+            fastlane ios build_only
+          fi
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}

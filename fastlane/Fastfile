@@ -18,15 +18,24 @@ platform :ios do
       in_house: false
     )
 
-    # Build the app with automatic signing
+    # Write API key to file for xcodebuild authentication
+    key_path = "#{Dir.tmpdir}/AuthKey_#{ENV["ASC_KEY_ID"]}.p8"
+    File.write(key_path, ENV["ASC_KEY_CONTENT"])
+
+    # Build the app with automatic signing using API key authentication
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
       configuration: "Release",
       clean: true,
       export_method: "app-store",
-      export_xcargs: "-allowProvisioningUpdates",
-      xcargs: "DEVELOPMENT_TEAM='#{ENV["APPLE_TEAM_ID"]}' -allowProvisioningUpdates"
+      xcargs: [
+        "DEVELOPMENT_TEAM='#{ENV["APPLE_TEAM_ID"]}'",
+        "-allowProvisioningUpdates",
+        "-authenticationKeyPath '#{key_path}'",
+        "-authenticationKeyID '#{ENV["ASC_KEY_ID"]}'",
+        "-authenticationKeyIssuerID '#{ENV["ASC_ISSUER_ID"]}'"
+      ].join(" ")
     )
 
     # Upload to TestFlight
