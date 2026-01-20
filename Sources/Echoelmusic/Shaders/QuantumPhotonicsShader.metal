@@ -120,12 +120,12 @@ vertex VertexOut quantumVertexShader(
     return out;
 }
 
-// MARK: - Interference Pattern Shader
+// MARK: - Interference Pattern Shader (helper function)
 
-fragment float4 interferencePatternShader(
-    VertexOut in [[stage_in]],
-    constant QuantumUniforms &uniforms [[buffer(0)]],
-    constant PhotonData *photons [[buffer(1)]]
+float4 interferencePatternShader(
+    VertexOut in,
+    constant QuantumUniforms &uniforms,
+    constant PhotonData *photons
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     float time = uniforms.time;
@@ -156,11 +156,11 @@ fragment float4 interferencePatternShader(
     return float4(totalColor, alpha);
 }
 
-// MARK: - Wave Function Visualization
+// MARK: - Wave Function Visualization (helper function)
 
-fragment float4 waveFunctionShader(
-    VertexOut in [[stage_in]],
-    constant QuantumUniforms &uniforms [[buffer(0)]]
+float4 waveFunctionShader(
+    VertexOut in,
+    constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     float time = uniforms.time;
@@ -189,9 +189,9 @@ fragment float4 waveFunctionShader(
 
 // MARK: - Coherence Field Visualization
 
-fragment float4 coherenceFieldShader(
-    VertexOut in [[stage_in]],
-    constant QuantumUniforms &uniforms [[buffer(0)]]
+float4 coherenceFieldShader(
+    VertexOut in,
+    constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     float time = uniforms.time;
@@ -217,9 +217,9 @@ fragment float4 coherenceFieldShader(
 
 // MARK: - Sacred Geometry (Flower of Life)
 
-fragment float4 sacredGeometryShader(
-    VertexOut in [[stage_in]],
-    constant QuantumUniforms &uniforms [[buffer(0)]]
+float4 sacredGeometryShader(
+    VertexOut in,
+    constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     float time = uniforms.time;
@@ -261,9 +261,9 @@ fragment float4 sacredGeometryShader(
 
 // MARK: - Quantum Tunnel Effect
 
-fragment float4 quantumTunnelShader(
-    VertexOut in [[stage_in]],
-    constant QuantumUniforms &uniforms [[buffer(0)]]
+float4 quantumTunnelShader(
+    VertexOut in,
+    constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     float time = uniforms.time;
@@ -288,9 +288,9 @@ fragment float4 quantumTunnelShader(
 
 // MARK: - Biophoton Aura
 
-fragment float4 biophotonAuraShader(
-    VertexOut in [[stage_in]],
-    constant QuantumUniforms &uniforms [[buffer(0)]]
+float4 biophotonAuraShader(
+    VertexOut in,
+    constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     float time = uniforms.time;
@@ -335,9 +335,9 @@ fragment float4 biophotonAuraShader(
 
 // MARK: - Light Mandala
 
-fragment float4 lightMandalaShader(
-    VertexOut in [[stage_in]],
-    constant QuantumUniforms &uniforms [[buffer(0)]]
+float4 lightMandalaShader(
+    VertexOut in,
+    constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     float time = uniforms.time;
@@ -379,10 +379,10 @@ fragment float4 lightMandalaShader(
 
 // MARK: - Holographic Display
 
-fragment float4 holographicDisplayShader(
-    VertexOut in [[stage_in]],
-    constant QuantumUniforms &uniforms [[buffer(0)]],
-    constant PhotonData *photons [[buffer(1)]]
+float4 holographicDisplayShader(
+    VertexOut in,
+    constant QuantumUniforms &uniforms,
+    constant PhotonData *photons
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     float time = uniforms.time;
@@ -420,9 +420,9 @@ fragment float4 holographicDisplayShader(
 
 // MARK: - Cosmic Web
 
-fragment float4 cosmicWebShader(
-    VertexOut in [[stage_in]],
-    constant QuantumUniforms &uniforms [[buffer(0)]]
+float4 cosmicWebShader(
+    VertexOut in,
+    constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     float time = uniforms.time;
@@ -454,10 +454,10 @@ fragment float4 cosmicWebShader(
 
 // MARK: - Fibonacci Spiral Field
 
-fragment float4 fibonacciFieldShader(
-    VertexOut in [[stage_in]],
-    constant QuantumUniforms &uniforms [[buffer(0)]],
-    constant PhotonData *photons [[buffer(1)]]
+float4 fibonacciFieldShader(
+    VertexOut in,
+    constant QuantumUniforms &uniforms,
+    constant PhotonData *photons
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     float time = uniforms.time;
