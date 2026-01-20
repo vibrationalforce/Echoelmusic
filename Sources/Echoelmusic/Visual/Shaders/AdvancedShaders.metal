@@ -19,19 +19,19 @@
 
 using namespace metal;
 
-// MARK: - Constants & Structures
+// MARK: - Constants & Structures (static to avoid linker conflicts)
 
-constant float PI = 3.14159265359;
-constant float TWO_PI = 6.28318530718;
+static constant float PI = 3.14159265359;
+static constant float TWO_PI = 6.28318530718;
 
-struct VertexIn {
+struct AdvancedVertexIn {
     float3 position [[attribute(0)]];
     float3 normal [[attribute(1)]];
     float2 texCoord [[attribute(2)]];
     float4 color [[attribute(3)]];
 };
 
-struct VertexOut {
+struct AdvancedVertexOut {
     float4 position [[position]];
     float3 worldPosition;
     float3 normal;
@@ -39,7 +39,7 @@ struct VertexOut {
     float4 color;
 };
 
-struct Uniforms {
+struct AdvancedUniforms {
     float4x4 modelMatrix;
     float4x4 viewMatrix;
     float4x4 projectionMatrix;
@@ -325,7 +325,7 @@ kernel void blendLayers(texture2d<float, access::read> baseTexture [[texture(0)]
 // MARK: - Particle System
 
 kernel void updateParticles(device ParticleData* particles [[buffer(0)]],
-                           constant Uniforms& uniforms [[buffer(1)]],
+                           constant AdvancedUniforms& uniforms [[buffer(1)]],
                            constant float* audioSpectrum [[buffer(2)]],
                            uint id [[thread_position_in_grid]]) {
     ParticleData particle = particles[id];
@@ -376,8 +376,8 @@ kernel void updateParticles(device ParticleData* particles [[buffer(0)]],
     particles[id] = particle;
 }
 
-vertex VertexOut particleVertex(device ParticleData* particles [[buffer(0)]],
-                                constant Uniforms& uniforms [[buffer(1)]],
+vertex AdvancedVertexOut particleVertex(device ParticleData* particles [[buffer(0)]],
+                                constant AdvancedUniforms& uniforms [[buffer(1)]],
                                 uint vertexID [[vertex_id]],
                                 uint instanceID [[instance_id]]) {
     ParticleData particle = particles[instanceID];
@@ -404,7 +404,7 @@ vertex VertexOut particleVertex(device ParticleData* particles [[buffer(0)]],
                           cameraRight * quadPos.x +
                           cameraUp * quadPos.y;
 
-    VertexOut out;
+    AdvancedVertexOut out;
     float4x4 mvp = uniforms.projectionMatrix * uniforms.viewMatrix * uniforms.modelMatrix;
     out.position = mvp * float4(worldPosition, 1.0);
     out.worldPosition = worldPosition;
@@ -414,8 +414,8 @@ vertex VertexOut particleVertex(device ParticleData* particles [[buffer(0)]],
     return out;
 }
 
-fragment float4 particleFragment(VertexOut in [[stage_in]],
-                                constant Uniforms& uniforms [[buffer(0)]]) {
+fragment float4 particleFragment(AdvancedVertexOut in [[stage_in]],
+                                constant AdvancedUniforms& uniforms [[buffer(0)]]) {
     // Soft circular particle
     float2 coord = in.texCoord * 2.0 - 1.0;
     float dist = length(coord);
@@ -433,8 +433,8 @@ fragment float4 particleFragment(VertexOut in [[stage_in]],
 
 // MARK: - Frequency Spectrum Visualization
 
-vertex VertexOut spectrumVertex(constant float* spectrum [[buffer(0)]],
-                                constant Uniforms& uniforms [[buffer(1)]],
+vertex AdvancedVertexOut spectrumVertex(constant float* spectrum [[buffer(0)]],
+                                constant AdvancedUniforms& uniforms [[buffer(1)]],
                                 uint vertexID [[vertex_id]]) {
     int barIndex = vertexID / 6; // 6 vertices per bar (2 triangles)
     int vertexInBar = vertexID % 6;
@@ -453,7 +453,7 @@ vertex VertexOut spectrumVertex(constant float* spectrum [[buffer(0)]],
         float3(x, height, 0.0)
     };
 
-    VertexOut out;
+    AdvancedVertexOut out;
     float4x4 mvp = uniforms.projectionMatrix * uniforms.viewMatrix * uniforms.modelMatrix;
     out.position = mvp * float4(positions[vertexInBar], 1.0);
     out.worldPosition = positions[vertexInBar];
@@ -466,14 +466,14 @@ vertex VertexOut spectrumVertex(constant float* spectrum [[buffer(0)]],
     return out;
 }
 
-fragment float4 spectrumFragment(VertexOut in [[stage_in]]) {
+fragment float4 spectrumFragment(AdvancedVertexOut in [[stage_in]]) {
     return in.color;
 }
 
 // MARK: - 3D Waveform Visualization
 
-vertex VertexOut waveformVertex(constant float* waveform [[buffer(0)]],
-                               constant Uniforms& uniforms [[buffer(1)]],
+vertex AdvancedVertexOut waveformVertex(constant float* waveform [[buffer(0)]],
+                               constant AdvancedUniforms& uniforms [[buffer(1)]],
                                uint vertexID [[vertex_id]]) {
     int sampleIndex = vertexID;
     float x = (float(sampleIndex) / 512.0) * 4.0 - 2.0;
@@ -486,7 +486,7 @@ vertex VertexOut waveformVertex(constant float* waveform [[buffer(0)]],
 
     float3 position = float3(x, y, z);
 
-    VertexOut out;
+    AdvancedVertexOut out;
     float4x4 mvp = uniforms.projectionMatrix * uniforms.viewMatrix * uniforms.modelMatrix;
     out.position = mvp * float4(position, 1.0);
     out.worldPosition = position;
@@ -501,9 +501,9 @@ vertex VertexOut waveformVertex(constant float* waveform [[buffer(0)]],
 
 // MARK: - Bio-Reactive Visualization (HRV + Coherence)
 
-vertex VertexOut bioReactiveVertex(VertexIn in [[stage_in]],
-                                  constant Uniforms& uniforms [[buffer(0)]]) {
-    VertexOut out;
+vertex AdvancedVertexOut bioReactiveVertex(AdvancedVertexIn in [[stage_in]],
+                                  constant AdvancedUniforms& uniforms [[buffer(0)]]) {
+    AdvancedVertexOut out;
 
     float3 pos = in.position;
 
@@ -535,8 +535,8 @@ vertex VertexOut bioReactiveVertex(VertexIn in [[stage_in]],
     return out;
 }
 
-fragment float4 bioReactiveFragment(VertexOut in [[stage_in]],
-                                   constant Uniforms& uniforms [[buffer(0)]],
+fragment float4 bioReactiveFragment(AdvancedVertexOut in [[stage_in]],
+                                   constant AdvancedUniforms& uniforms [[buffer(0)]],
                                    texture2d<float> noiseTexture [[texture(0)]]) {
     constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
 
@@ -699,8 +699,8 @@ kernel void depthOfField(texture2d<float, access::read> colorTexture [[texture(0
 
 // MARK: - Volumetric Lighting (God Rays)
 
-fragment float4 volumetricLighting(VertexOut in [[stage_in]],
-                                  constant Uniforms& uniforms [[buffer(0)]],
+fragment float4 volumetricLighting(AdvancedVertexOut in [[stage_in]],
+                                  constant AdvancedUniforms& uniforms [[buffer(0)]],
                                   texture2d<float> sceneTexture [[texture(0)]],
                                   texture2d<float> depthTexture [[texture(1)]]) {
     constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
@@ -778,8 +778,8 @@ float3 fresnelSchlick(float cosTheta, float3 F0) {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
-fragment float4 pbrFragment(VertexOut in [[stage_in]],
-                           constant Uniforms& uniforms [[buffer(0)]],
+fragment float4 pbrFragment(AdvancedVertexOut in [[stage_in]],
+                           constant AdvancedUniforms& uniforms [[buffer(0)]],
                            constant PBRMaterial& material [[buffer(1)]],
                            texture2d<float> albedoMap [[texture(0)]],
                            texture2d<float> normalMap [[texture(1)]],

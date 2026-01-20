@@ -4,19 +4,19 @@
 #include <metal_stdlib>
 using namespace metal;
 
-// MARK: - Common Types
+// MARK: - Common Types (Echoelmusic prefixed to avoid linker conflicts)
 
-struct VertexIn {
+struct EchoelVertexIn {
     float4 position [[attribute(0)]];
     float2 texCoord [[attribute(1)]];
 };
 
-struct VertexOut {
+struct EchoelVertexOut {
     float4 position [[position]];
     float2 texCoord;
 };
 
-struct Uniforms {
+struct EchoelUniforms {
     float time;
     float coherence;      // 0-1, HRV coherence level
     float heartRate;      // BPM
@@ -71,8 +71,8 @@ float fbm(float2 p, int octaves) {
 
 // MARK: - Vertex Shader
 
-vertex VertexOut vertexShader(VertexIn in [[stage_in]]) {
-    VertexOut out;
+vertex EchoelVertexOut vertexShader(EchoelVertexIn in [[stage_in]]) {
+    EchoelVertexOut out;
     out.position = in.position;
     out.texCoord = in.texCoord;
     return out;
@@ -81,8 +81,8 @@ vertex VertexOut vertexShader(VertexIn in [[stage_in]]) {
 // MARK: - Angular Gradient Shader
 
 fragment float4 angularGradientShader(
-    VertexOut in [[stage_in]],
-    constant Uniforms &uniforms [[buffer(0)]]
+    EchoelVertexOut in [[stage_in]],
+    constant EchoelUniforms &uniforms [[buffer(0)]]
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
 
@@ -119,8 +119,8 @@ fragment float4 angularGradientShader(
 // MARK: - Perlin Noise Background Shader
 
 fragment float4 perlinNoiseShader(
-    VertexOut in [[stage_in]],
-    constant Uniforms &uniforms [[buffer(0)]]
+    EchoelVertexOut in [[stage_in]],
+    constant EchoelUniforms &uniforms [[buffer(0)]]
 ) {
     float2 uv = in.texCoord;
 
@@ -148,8 +148,8 @@ fragment float4 perlinNoiseShader(
 // MARK: - Starfield Shader
 
 fragment float4 starfieldShader(
-    VertexOut in [[stage_in]],
-    constant Uniforms &uniforms [[buffer(0)]]
+    EchoelVertexOut in [[stage_in]],
+    constant EchoelUniforms &uniforms [[buffer(0)]]
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     uv.x *= uniforms.resolution.x / uniforms.resolution.y;
@@ -193,8 +193,8 @@ fragment float4 starfieldShader(
 // MARK: - Bio-Reactive Pulse Shader
 
 fragment float4 bioReactivePulseShader(
-    VertexOut in [[stage_in]],
-    constant Uniforms &uniforms [[buffer(0)]]
+    EchoelVertexOut in [[stage_in]],
+    constant EchoelUniforms &uniforms [[buffer(0)]]
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     uv.x *= uniforms.resolution.x / uniforms.resolution.y;
@@ -240,8 +240,8 @@ fragment float4 bioReactivePulseShader(
 // MARK: - Cymatics Pattern Shader
 
 fragment float4 cymaticsShader(
-    VertexOut in [[stage_in]],
-    constant Uniforms &uniforms [[buffer(0)]]
+    EchoelVertexOut in [[stage_in]],
+    constant EchoelUniforms &uniforms [[buffer(0)]]
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     uv.x *= uniforms.resolution.x / uniforms.resolution.y;
@@ -289,8 +289,8 @@ fragment float4 cymaticsShader(
 // MARK: - Mandala Sacred Geometry Shader
 
 fragment float4 mandalaShader(
-    VertexOut in [[stage_in]],
-    constant Uniforms &uniforms [[buffer(0)]]
+    EchoelVertexOut in [[stage_in]],
+    constant EchoelUniforms &uniforms [[buffer(0)]]
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
     uv.x *= uniforms.resolution.x / uniforms.resolution.y;
@@ -352,7 +352,7 @@ struct Particle {
 
 kernel void updateParticles(
     device Particle *particles [[buffer(0)]],
-    constant Uniforms &uniforms [[buffer(1)]],
+    constant EchoelUniforms &uniforms [[buffer(1)]],
     uint id [[thread_position_in_grid]]
 ) {
     Particle p = particles[id];

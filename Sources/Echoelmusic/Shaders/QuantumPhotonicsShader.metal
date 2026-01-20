@@ -11,9 +11,9 @@
 #include <metal_stdlib>
 using namespace metal;
 
-// MARK: - Structures
+// MARK: - Structures (Quantum prefixed to avoid linker conflicts)
 
-struct VertexOut {
+struct QuantumVertexOut {
     float4 position [[position]];
     float2 texCoord;
 };
@@ -103,17 +103,17 @@ float3 hslToRgb(float h, float s, float l) {
     return rgb + m;
 }
 
-// Golden ratio for Fibonacci patterns
-constant float PHI = 1.618033988749895;
-constant float PI = 3.14159265359;
+// Golden ratio for Fibonacci patterns (static to avoid linker conflicts)
+static constant float PHI = 1.618033988749895;
+static constant float PI = 3.14159265359;
 
 // MARK: - Vertex Shader
 
-vertex VertexOut quantumVertexShader(
+vertex QuantumVertexOut quantumVertexShader(
     uint vertexID [[vertex_id]],
     constant float4 *vertices [[buffer(0)]]
 ) {
-    VertexOut out;
+    QuantumVertexOut out;
     out.position = vertices[vertexID];
     out.texCoord = (vertices[vertexID].xy + 1.0) * 0.5;
     out.texCoord.y = 1.0 - out.texCoord.y; // Flip Y
@@ -123,7 +123,7 @@ vertex VertexOut quantumVertexShader(
 // MARK: - Interference Pattern Shader (helper function)
 
 float4 interferencePatternShader(
-    VertexOut in,
+    QuantumVertexOut in,
     constant QuantumUniforms &uniforms,
     constant PhotonData *photons
 ) {
@@ -159,7 +159,7 @@ float4 interferencePatternShader(
 // MARK: - Wave Function Visualization (helper function)
 
 float4 waveFunctionShader(
-    VertexOut in,
+    QuantumVertexOut in,
     constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
@@ -190,7 +190,7 @@ float4 waveFunctionShader(
 // MARK: - Coherence Field Visualization
 
 float4 coherenceFieldShader(
-    VertexOut in,
+    QuantumVertexOut in,
     constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
@@ -218,7 +218,7 @@ float4 coherenceFieldShader(
 // MARK: - Sacred Geometry (Flower of Life)
 
 float4 sacredGeometryShader(
-    VertexOut in,
+    QuantumVertexOut in,
     constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
@@ -262,7 +262,7 @@ float4 sacredGeometryShader(
 // MARK: - Quantum Tunnel Effect
 
 float4 quantumTunnelShader(
-    VertexOut in,
+    QuantumVertexOut in,
     constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
@@ -289,7 +289,7 @@ float4 quantumTunnelShader(
 // MARK: - Biophoton Aura
 
 float4 biophotonAuraShader(
-    VertexOut in,
+    QuantumVertexOut in,
     constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
@@ -336,7 +336,7 @@ float4 biophotonAuraShader(
 // MARK: - Light Mandala
 
 float4 lightMandalaShader(
-    VertexOut in,
+    QuantumVertexOut in,
     constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
@@ -380,7 +380,7 @@ float4 lightMandalaShader(
 // MARK: - Holographic Display
 
 float4 holographicDisplayShader(
-    VertexOut in,
+    QuantumVertexOut in,
     constant QuantumUniforms &uniforms,
     constant PhotonData *photons
 ) {
@@ -421,7 +421,7 @@ float4 holographicDisplayShader(
 // MARK: - Cosmic Web
 
 float4 cosmicWebShader(
-    VertexOut in,
+    QuantumVertexOut in,
     constant QuantumUniforms &uniforms
 ) {
     float2 uv = in.texCoord * 2.0 - 1.0;
@@ -455,7 +455,7 @@ float4 cosmicWebShader(
 // MARK: - Fibonacci Spiral Field
 
 float4 fibonacciFieldShader(
-    VertexOut in,
+    QuantumVertexOut in,
     constant QuantumUniforms &uniforms,
     constant PhotonData *photons
 ) {
@@ -492,7 +492,7 @@ float4 fibonacciFieldShader(
 // MARK: - Master Shader Selector
 
 fragment float4 quantumPhotonicsShader(
-    VertexOut in [[stage_in]],
+    QuantumVertexOut in [[stage_in]],
     constant QuantumUniforms &uniforms [[buffer(0)]],
     constant PhotonData *photons [[buffer(1)]]
 ) {

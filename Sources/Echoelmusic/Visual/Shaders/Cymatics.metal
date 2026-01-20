@@ -12,18 +12,18 @@ using namespace metal;
 
 // MARK: - Vertex Shader
 
-struct VertexIn {
+struct CymaticsVertexIn {
     float2 position [[attribute(0)]];
     float2 texCoord [[attribute(1)]];
 };
 
-struct VertexOut {
+struct CymaticsVertexOut {
     float4 position [[position]];
     float2 texCoord;
 };
 
-vertex VertexOut cymatics_vertex(VertexIn in [[stage_in]]) {
-    VertexOut out;
+vertex CymaticsVertexOut cymatics_vertex(CymaticsVertexIn in [[stage_in]]) {
+    CymaticsVertexOut out;
     out.position = float4(in.position, 0.0, 1.0);
     out.texCoord = in.texCoord;
     return out;
@@ -146,7 +146,7 @@ float waterRipple(float2 uv, float time, float audioLevel) {
 // MARK: - Main Fragment Shader
 
 fragment float4 cymatics_fragment(
-    VertexOut in [[stage_in]],
+    CymaticsVertexOut in [[stage_in]],
     constant CymaticsUniforms &uniforms [[buffer(0)]]
 ) {
     // Normalize coordinates (0 to 1)
@@ -225,7 +225,7 @@ fragment float4 cymatics_fragment(
 // MARK: - Alternative: Particle Field Shader
 
 fragment float4 particle_fragment(
-    VertexOut in [[stage_in]],
+    CymaticsVertexOut in [[stage_in]],
     constant CymaticsUniforms &uniforms [[buffer(0)]]
 ) {
     float2 uv = in.texCoord;
