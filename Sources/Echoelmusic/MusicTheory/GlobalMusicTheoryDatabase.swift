@@ -317,7 +317,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             Scale(
                 name: "Slendro Scale",
                 culture: .indonesian,
-                intervals: [0, 2.4, 4.8, 7.2, 9.6],  // Approximately equal 5-tone
+                intervals: [0.0, 2.4, 4.8, 7.2, 9.6],  // Approximately equal 5-tone
                 degrees: 5,
                 description: "Gamelan scale with near-equal divisions. Mystical character.",
                 emotionalCharacter: "Mystical, Balanced, Communal",

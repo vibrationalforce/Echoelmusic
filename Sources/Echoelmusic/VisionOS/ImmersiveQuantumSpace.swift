@@ -46,7 +46,7 @@ public struct ImmersiveQuantumSpace: View {
 
             // Add bio-coherence indicator attachment
             if let coherencePanel = attachments.entity(for: "coherencePanel") {
-                coherencePanel.position = [0, 1.5, -1]
+                coherencePanel.position = SIMD3<Float>(0, 1.5, -1)
                 anchor.addChild(coherencePanel)
             }
 
