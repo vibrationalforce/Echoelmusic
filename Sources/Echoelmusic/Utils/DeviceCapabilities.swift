@@ -19,7 +19,7 @@ class DeviceCapabilities: ObservableObject {
     /// iOS version (e.g., "17.0")
     @Published var iOSVersion: String = ""
 
-    /// Whether device supports ASAF (iOS 19+ with compatible hardware)
+    /// Whether device supports ASAF (iOS 18+ with compatible hardware)
     @Published var supportsASAF: Bool = false
 
     /// Whether AirPods are connected
@@ -28,7 +28,7 @@ class DeviceCapabilities: ObservableObject {
     /// AirPods model if detected
     @Published var airPodsModel: String? = nil
 
-    /// Whether APAC codec is available (AirPods Pro 3 with iOS 19+)
+    /// Whether APAC codec is available (AirPods Pro 3 with iOS 18+)
     @Published var supportsAPACCodec: Bool = false
 
 
@@ -171,7 +171,7 @@ class DeviceCapabilities: ObservableObject {
     }
 
     /// Check if device supports ASAF (Apple Spatial Audio Features)
-    /// Requires: iOS 19+ AND compatible hardware (iPhone 16+)
+    /// Requires: iOS 18+ AND compatible hardware (iPhone 16+)
     private func detectASAFSupport() {
         // Get iOS major version
         let versionComponents = iOSVersion.components(separatedBy: ".")
@@ -182,7 +182,7 @@ class DeviceCapabilities: ObservableObject {
         }
 
         // Check iOS version (19+)
-        let hasRequiredOS = majorInt >= 19
+        let hasRequiredOS = majorInt >= 18
 
         // Check hardware capability
         var systemInfo = utsname()
@@ -200,7 +200,7 @@ class DeviceCapabilities: ObservableObject {
         if supportsASAF {
             log.performance("✅ ASAF Supported (iOS \(majorVersion)+ with \(deviceModel))")
         } else {
-            log.performance("⚠️  ASAF Not Supported (Need iOS 19+ and iPhone 16+)", level: .warning)
+            log.performance("⚠️  ASAF Not Supported (Need iOS 18+ and iPhone 16+)", level: .warning)
             log.performance("   Current: iOS \(iOSVersion), \(deviceModel)", level: .warning)
         }
     }

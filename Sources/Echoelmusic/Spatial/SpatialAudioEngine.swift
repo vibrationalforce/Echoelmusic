@@ -6,7 +6,7 @@ import CoreMotion
 #endif
 
 /// Spatial Audio Engine with 3D/4D positioning and head tracking
-/// Supports iOS 15+ with runtime feature detection for iOS 19+ spatial audio
+/// Supports iOS 15+ with runtime feature detection for iOS 17+ spatial audio
 /// Integrates with MIDIToSpatialMapper for bio-reactive spatial fields
 @MainActor
 class SpatialAudioEngine: ObservableObject {
@@ -25,7 +25,7 @@ class SpatialAudioEngine: ObservableObject {
     private var sourceNodes: [UUID: AVAudioPlayerNode] = [:]
     private var mixerNode: AVAudioMixerNode?
 
-    // MARK: - Head Tracking (iOS 19+)
+    // MARK: - Head Tracking (iOS 17+)
 
     #if canImport(CoreMotion)
     private var motionManager: CMMotionManager?
@@ -106,15 +106,15 @@ class SpatialAudioEngine: ObservableObject {
         // Connect mixer to output
         audioEngine.connect(mixer, to: audioEngine.mainMixerNode, format: nil)
 
-        // Setup environment node if available (iOS 19+)
-        if #available(iOS 19.0, *) {
+        // Setup environment node if available (iOS 17+)
+        if #available(iOS 17.0, *) {
             setupEnvironmentNode()
         } else {
-            log.spatial("⚠️ iOS 19+ required for full spatial audio. Using stereo fallback.", level: .warning)
+            log.spatial("⚠️ iOS 17+ required for full spatial audio. Using stereo fallback.", level: .warning)
         }
     }
 
-    @available(iOS 19.0, *)
+    @available(iOS 17.0, *)
     private func setupEnvironmentNode() {
         let environment = AVAudioEnvironmentNode()
         audioEngine.attach(environment)
@@ -225,7 +225,7 @@ class SpatialAudioEngine: ObservableObject {
         )
 
         // Connect based on mode
-        if #available(iOS 19.0, *), let environment = environmentNode, currentMode != .stereo {
+        if #available(iOS 17.0, *), let environment = environmentNode, currentMode != .stereo {
             audioEngine.connect(playerNode, to: environment, format: format)
         } else if let mixer = mixerNode {
             audioEngine.connect(playerNode, to: mixer, format: format)
@@ -283,21 +283,21 @@ class SpatialAudioEngine: ObservableObject {
             applyStereoPosition(node: playerNode, position: position)
 
         case .surround_3d, .surround_4d, .afa:
-            if #available(iOS 19.0, *), let environment = environmentNode {
+            if #available(iOS 17.0, *), let environment = environmentNode {
                 apply3DPosition(node: playerNode, environment: environment, position: position)
             } else {
                 applyStereoPosition(node: playerNode, position: position)
             }
 
         case .binaural:
-            if #available(iOS 19.0, *), let environment = environmentNode {
+            if #available(iOS 17.0, *), let environment = environmentNode {
                 apply3DPosition(node: playerNode, environment: environment, position: position)
                 environment.renderingAlgorithm = .HRTFHQ
             }
 
         case .ambisonics:
             // Higher-order ambisonics (future implementation)
-            if #available(iOS 19.0, *), let environment = environmentNode {
+            if #available(iOS 17.0, *), let environment = environmentNode {
                 apply3DPosition(node: playerNode, environment: environment, position: position)
             }
         }
@@ -309,7 +309,7 @@ class SpatialAudioEngine: ObservableObject {
         node.pan = pan
     }
 
-    @available(iOS 19.0, *)
+    @available(iOS 17.0, *)
     private func apply3DPosition(node: AVAudioPlayerNode, environment: AVAudioEnvironmentNode, position: SIMD3<Float>) {
         // Set 3D position
         node.position = AVAudio3DPoint(x: position.x, y: position.y, z: position.z)
@@ -342,7 +342,7 @@ class SpatialAudioEngine: ObservableObject {
     public func setReverbBlend(_ blend: Float) {
         let clampedBlend = max(0.0, min(1.0, blend))
 
-        if #available(iOS 19.0, *), let environment = environmentNode {
+        if #available(iOS 17.0, *), let environment = environmentNode {
             environment.reverbParameters.wetDryMix = clampedBlend * 50.0  // Scale to 0-50%
         }
     }
@@ -499,7 +499,7 @@ class SpatialAudioEngine: ObservableObject {
         motionManager = nil
     }
 
-    @available(iOS 19.0, *)
+    @available(iOS 17.0, *)
     private func updateListenerOrientation(attitude: CMAttitude) {
         guard let environment = environmentNode else { return }
 
@@ -546,7 +546,7 @@ class SpatialAudioEngine: ObservableObject {
         - Active: \(isActive)
         - Sources: \(spatialSources.count)
         - Head Tracking: \(headTrackingEnabled ? "✅" : "❌")
-        - iOS 19+ Features: \(environmentNode != nil ? "✅" : "❌")
+        - iOS 17+ Features: \(environmentNode != nil ? "✅" : "❌")
         """
     }
 }

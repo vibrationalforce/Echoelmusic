@@ -182,10 +182,18 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 
     // MARK: - Errors
 
-    enum RendererError: Error {
+    enum RendererError: Error, LocalizedError {
         case libraryCreationFailed
         case shaderLoadFailed
         case pipelineCreationFailed
+
+        var errorDescription: String? {
+            switch self {
+            case .libraryCreationFailed: return "Failed to create Metal library"
+            case .shaderLoadFailed: return "Failed to load shader"
+            case .pipelineCreationFailed: return "Failed to create render pipeline"
+            }
+        }
     }
 }
 

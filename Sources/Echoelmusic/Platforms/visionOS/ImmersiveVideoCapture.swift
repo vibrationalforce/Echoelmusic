@@ -330,10 +330,18 @@ final class ImmersiveVideoCaptureManager: ObservableObject {
 
     // MARK: - Errors
 
-    enum CaptureError: Error {
+    enum CaptureError: Error, LocalizedError {
         case notRecording
         case cameraUnavailable
         case outputError
+
+        var errorDescription: String? {
+            switch self {
+            case .notRecording: return "Not currently recording"
+            case .cameraUnavailable: return "Camera is unavailable"
+            case .outputError: return "Video output error"
+            }
+        }
     }
 
     // MARK: - Video Format

@@ -531,7 +531,7 @@ struct ContentView: View {
                             .foregroundColor(VaporwaveColors.textTertiary)
                     }
 
-                    Text(capabilities.supportsASAF ? "ASAF Supported (iOS 19+)" : "ASAF requires iOS 19+ & iPhone 16+")
+                    Text(capabilities.supportsASAF ? "ASAF Supported (iOS 18+)" : "ASAF requires iOS 18+ & iPhone 16+")
                         .font(VaporwaveTypography.caption())
                         .foregroundColor(capabilities.supportsASAF ? VaporwaveColors.success : VaporwaveColors.warning)
                 }

@@ -270,12 +270,22 @@ class PrivacyManager: ObservableObject {
         return try AES.GCM.open(sealedBox, using: key)
     }
 
-    enum PrivacyError: Error {
+    enum PrivacyError: Error, LocalizedError {
         case noEncryptionKey
         case encryptionFailed
         case decryptionFailed
         case cloudSyncDisabled
         case dataNotFound
+
+        var errorDescription: String? {
+            switch self {
+            case .noEncryptionKey: return "Encryption key not available"
+            case .encryptionFailed: return "Encryption failed"
+            case .decryptionFailed: return "Decryption failed"
+            case .cloudSyncDisabled: return "Cloud sync is disabled"
+            case .dataNotFound: return "Data not found"
+            }
+        }
     }
 
     // MARK: - Data Export (GDPR Right to Data Portability)

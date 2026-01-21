@@ -280,9 +280,16 @@ class MacAudioEngine {
         return url
     }
 
-    enum RecordingError: Error {
+    enum RecordingError: Error, LocalizedError {
         case noRecordingInProgress
         case saveFailed
+
+        var errorDescription: String? {
+            switch self {
+            case .noRecordingInProgress: return "No recording in progress"
+            case .saveFailed: return "Failed to save recording"
+            }
+        }
     }
 }
 

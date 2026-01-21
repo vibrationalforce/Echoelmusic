@@ -664,11 +664,20 @@ class MemoryOptimizationManager: ObservableObject {
 
 // MARK: - Errors
 
-enum MemoryOptimizationError: Error {
+enum MemoryOptimizationError: Error, LocalizedError {
     case fileNotFound
     case compressionFailed
     case decompressionFailed
     case memoryMappingFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .fileNotFound: return "File not found"
+        case .compressionFailed: return "Compression failed"
+        case .decompressionFailed: return "Decompression failed"
+        case .memoryMappingFailed: return "Memory mapping failed"
+        }
+    }
 }
 
 // MARK: - Specialized Data Structures for Low-RAM
