@@ -369,7 +369,8 @@ public final class RealTimeHealthKitEngine: ObservableObject {
     /// Stop streaming
     public func stopStreaming() {
         isStreaming = false
-        updateTimer?.invalidate()
+        // LAMBDA LOOP 100%: Clean up high-precision timer
+        updateTimer?.cancel()
         updateTimer = nil
 
         #if canImport(HealthKit)
@@ -475,11 +476,17 @@ public final class RealTimeHealthKitEngine: ObservableObject {
     #endif
 
     private func startSimulatedStreaming() {
-        updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        // LAMBDA LOOP 100%: High-precision simulated streaming
+        updateTimer?.cancel()
+        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: updateQueue)
+        timer.schedule(deadline: .now(), repeating: .seconds(1), leeway: .milliseconds(10))
+        timer.setEventHandler { [weak self] in
             Task { @MainActor in
                 self?.simulateHealthUpdate()
             }
         }
+        timer.resume()
+        updateTimer = timer
     }
 
     private func simulateHealthUpdate() {

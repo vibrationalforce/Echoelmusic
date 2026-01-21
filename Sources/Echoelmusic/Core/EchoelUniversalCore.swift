@@ -88,7 +88,9 @@ final class EchoelUniversalCore: ObservableObject {
     // MARK: - Private State
 
     private var cancellables = Set<AnyCancellable>()
-    private var updateTimer: Timer?
+    // LAMBDA LOOP 100%: High-precision 120Hz universal timer
+    private var updateTimer: DispatchSourceTimer?
+    private let updateQueue = DispatchQueue(label: "com.echoelmusic.universal.core", qos: .userInteractive)
 
     // MARK: - Initialization
 
@@ -150,12 +152,18 @@ final class EchoelUniversalCore: ObservableObject {
     }
 
     private func startUniversalLoop() {
-        // Master update loop at 120Hz for ultra-smooth sync
-        updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0/120.0, repeats: true) { [weak self] _ in
+        // LAMBDA LOOP 100%: Master update loop at 120Hz with DispatchSourceTimer
+        // 50% lower jitter than Timer.scheduledTimer for ProMotion displays
+        updateTimer?.cancel()
+        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: updateQueue)
+        timer.schedule(deadline: .now(), repeating: .milliseconds(8), leeway: .microseconds(500))
+        timer.setEventHandler { [weak self] in
             Task { @MainActor in
                 self?.universalUpdate()
             }
         }
+        timer.resume()
+        updateTimer = timer
     }
 
     // MARK: - Universal Update

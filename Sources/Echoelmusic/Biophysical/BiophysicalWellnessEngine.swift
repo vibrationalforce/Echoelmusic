@@ -309,7 +309,9 @@ public final class BiophysicalWellnessEngine: ObservableObject {
     // MARK: - Session Management
 
     private var sessionTimer: Timer?
-    private var updateTimer: Timer?
+    // LAMBDA LOOP 100%: High-precision 30Hz wellness timer
+    private var updateTimer: DispatchSourceTimer?
+    private let updateQueue = DispatchQueue(label: "com.echoelmusic.wellness.update", qos: .userInteractive)
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Safety Limits
@@ -471,15 +473,21 @@ public final class BiophysicalWellnessEngine: ObservableObject {
     // MARK: - Private Methods
 
     private func startUpdateLoop() {
-        updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+        // LAMBDA LOOP 100%: 30Hz wellness updates with high precision
+        updateTimer?.cancel()
+        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: updateQueue)
+        timer.schedule(deadline: .now(), repeating: .milliseconds(33), leeway: .milliseconds(2))
+        timer.setEventHandler { [weak self] in
             Task { @MainActor [weak self] in
                 await self?.updateLoop()
             }
         }
+        timer.resume()
+        updateTimer = timer
     }
 
     private func stopUpdateLoop() {
-        updateTimer?.invalidate()
+        updateTimer?.cancel()
         updateTimer = nil
     }
 
