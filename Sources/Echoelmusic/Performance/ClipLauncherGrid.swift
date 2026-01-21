@@ -15,7 +15,7 @@ import AVFoundation
 
 /// Audio/MIDI clip for the launcher grid
 public struct LauncherClip: Identifiable, Codable {
-    public let id: UUID
+    public var id: UUID
     public var name: String
     public var color: ClipColor
     public var type: ClipType

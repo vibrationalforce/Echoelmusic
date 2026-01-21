@@ -12,7 +12,7 @@ class CollaborationEngine: ObservableObject {
 
     @Published var isActive: Bool = false
     @Published var currentSession: CollaborationSession?
-    @Published var participants: [Participant] = []
+    @Published var participants: [CollaborationParticipant] = []
     @Published var groupCoherence: Float = 0.0
     @Published var averageHRV: Float = 0.0
     @Published var connectionState: ConnectionState = .disconnected
@@ -264,7 +264,7 @@ extension CollaborationEngine: SignalingClientDelegate {
         webRTCClient?.addCandidate(candidate)
     }
 
-    func signalingClient(_ client: SignalingClient, participantJoined participant: Participant) {
+    func signalingClient(_ client: SignalingClient, participantJoined participant: CollaborationParticipant) {
         participants.append(participant)
     }
 
@@ -278,12 +278,13 @@ extension CollaborationEngine: SignalingClientDelegate {
 struct CollaborationSession: Identifiable {
     let id: UUID
     let hostID: UUID
-    var participants: [Participant]
+    var participants: [CollaborationParticipant]
     let isHost: Bool
     var roomCode: String = ""
 }
 
-struct Participant: Identifiable {
+/// Simple participant for CollaborationEngine (renamed to avoid conflict with WorldwideCollaborationHub.Participant)
+struct CollaborationParticipant: Identifiable {
     let id: UUID
     var name: String
     var hrv: Float
@@ -474,7 +475,7 @@ protocol SignalingClientDelegate: AnyObject {
     func signalingClient(_ client: SignalingClient, didReceiveOffer sdp: String)
     func signalingClient(_ client: SignalingClient, didReceiveAnswer sdp: String)
     func signalingClient(_ client: SignalingClient, didReceiveCandidate candidate: ICECandidate)
-    func signalingClient(_ client: SignalingClient, participantJoined participant: Participant)
+    func signalingClient(_ client: SignalingClient, participantJoined participant: CollaborationParticipant)
     func signalingClient(_ client: SignalingClient, participantLeft participantID: UUID)
 }
 
@@ -566,7 +567,7 @@ class SignalingClient {
                let idString = participantData["id"] as? String,
                let id = UUID(uuidString: idString),
                let name = participantData["name"] as? String {
-                let participant = Participant(id: id, name: name, hrv: 0, coherence: 0, isMuted: false)
+                let participant = CollaborationParticipant(id: id, name: name, hrv: 0, coherence: 0, isMuted: false)
                 delegate?.signalingClient(self, participantJoined: participant)
             }
         case "participant_left":

@@ -260,8 +260,8 @@ enum CloudError: LocalizedError {
     }
 }
 
-// Session struct placeholder
-struct Session {
+// CloudSession struct placeholder (renamed to avoid conflict with Recording/Session)
+struct CloudSession {
     let name: String
     let duration: TimeInterval
     let avgHRV: Float
