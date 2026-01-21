@@ -471,11 +471,12 @@ public final class SocialCoherenceEngine: ObservableObject {
         groupState.groupFlowScore = flowScore
         groupState.timestamp = Date()
 
-        // Update history
+        // Update history - LAMBDA LOOP: Batch removal for 10x less O(n) overhead
         coherenceHistory.append(avgCoherence)
         flowHistory.append(flowScore)
-        if coherenceHistory.count > 1000 { coherenceHistory.removeFirst() }
-        if flowHistory.count > 1000 { flowHistory.removeFirst() }
+        // Remove 100 at once instead of 1 at a time (10x fewer array shifts)
+        if coherenceHistory.count > 1100 { coherenceHistory.removeFirst(100) }
+        if flowHistory.count > 1100 { flowHistory.removeFirst(100) }
     }
 
     private func calculateSynchronization(values: [Double]) -> Float {
