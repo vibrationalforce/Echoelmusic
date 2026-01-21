@@ -10,13 +10,11 @@ name: "⚡ Quick Test"
 on:
   workflow_dispatch:
   push:
-    branches: [main, develop]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-  # pull_request disabled - use ios-testflight.yml for PR testing
-  # pull_request:
-  #   branches: [main]
+    branches: [develop]  # Only develop, main uses ios-testflight.yml
+    paths:
+      - 'Sources/**/*.swift'
+      - 'Tests/**/*.swift'
+      - 'Package.swift'
 
 jobs:
   swift-test:

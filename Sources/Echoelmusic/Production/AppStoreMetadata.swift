@@ -14,6 +14,9 @@
 
 import Foundation
 
+/// Logger instance for App Store metadata operations
+private let log = Logger.shared
+
 // MARK: - App Store Metadata
 
 /// Complete App Store submission metadata for Echoelmusic
@@ -1520,48 +1523,48 @@ extension AppStoreMetadata {
         return jsonString
     }
 
-    /// Print all metadata for review
-    public static func printAllMetadata() {
-        print("=== ECHOELMUSIC APP STORE METADATA ===\n")
+    /// Log all metadata for review
+    public static func logAllMetadata() {
+        log.info("=== ECHOELMUSIC APP STORE METADATA ===", category: .system)
 
-        print("APP INFORMATION:")
-        print("  Name: \(appName)")
-        print("  Bundle ID: \(bundleIdentifier)")
-        print("  Primary Category: \(primaryCategory.rawValue)")
-        print("  Secondary Category: \(secondaryCategory.rawValue)")
-        print("  Age Rating: \(ageRating.rawValue)")
-        print("  Price Tier: \(priceTier) (Free with IAP)")
-        print("  Languages: \(supportedLanguages.count)")
-        print()
+        log.info("APP INFORMATION:", category: .system)
+        log.info("  Name: \(appName)", category: .system)
+        log.info("  Bundle ID: \(bundleIdentifier)", category: .system)
+        log.info("  Primary Category: \(primaryCategory.rawValue)", category: .system)
+        log.info("  Secondary Category: \(secondaryCategory.rawValue)", category: .system)
+        log.info("  Age Rating: \(ageRating.rawValue)", category: .system)
+        log.info("  Price Tier: \(priceTier) (Free with IAP)", category: .system)
+        log.info("  Languages: \(supportedLanguages.count)", category: .system)
 
-        print("URLS:")
-        print("  Marketing: \(marketingURL)")
-        print("  Support: \(supportURL)")
-        print("  Privacy: \(privacyPolicyURL)")
-        print()
+        log.info("URLS:", category: .system)
+        log.info("  Marketing: \(marketingURL)", category: .system)
+        log.info("  Support: \(supportURL)", category: .system)
+        log.info("  Privacy: \(privacyPolicyURL)", category: .system)
 
-        print("SUBSCRIPTIONS:")
+        log.info("SUBSCRIPTIONS:", category: .system)
         for sub in InAppPurchases.subscriptions {
-            print("  \(sub.name): \(sub.price)")
+            log.info("  \(sub.name): \(sub.price)", category: .system)
         }
-        print()
 
-        print("SCREENSHOTS REQUIRED:")
+        log.info("SCREENSHOTS REQUIRED:", category: .system)
         for spec in AppStoreScreenshots.specifications {
-            print("  \(spec.device): \(spec.count) screenshots at \(spec.size)")
+            log.info("  \(spec.device): \(spec.count) screenshots at \(spec.size)", category: .system)
         }
-        print()
 
-        print("PRIVACY PRACTICES:")
+        log.info("PRIVACY PRACTICES:", category: .system)
         for practice in AppPrivacy.privacyPractices {
-            print("  \(practice.category.rawValue): \(practice.dataTypes.count) data types")
+            log.info("  \(practice.category.rawValue): \(practice.dataTypes.count) data types", category: .system)
         }
-        print()
 
-        print("REVIEW NOTES:")
-        print(ReviewInformation.reviewNotes)
-        print()
+        log.info("REVIEW NOTES:", category: .system)
+        log.info(ReviewInformation.reviewNotes, category: .system)
 
-        print("=== END METADATA ===")
+        log.info("=== END METADATA ===", category: .system)
+    }
+
+    /// Deprecated: Use logAllMetadata() instead
+    @available(*, deprecated, renamed: "logAllMetadata")
+    public static func printAllMetadata() {
+        logAllMetadata()
     }
 }

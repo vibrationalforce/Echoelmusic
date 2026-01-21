@@ -8,9 +8,11 @@ on:
     branches: [develop]
     tags:
       - 'v*'
-  # pull_request disabled - use ios-testflight.yml for PR testing
-  # pull_request:
-  #   branches: [develop]
+    paths:
+      - 'Sources/**'
+      - 'android/**'
+      - 'CMakeLists.txt'
+      - 'Package.swift'
   workflow_dispatch:  # Manual trigger
 
 env:

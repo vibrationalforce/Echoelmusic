@@ -11,6 +11,9 @@ import AppClip
 import CoreLocation
 import StoreKit
 
+/// Logger instance for App Clip operations
+private let log = Logger.shared
+
 // MARK: - App Clip Entry Point
 
 /// App Clip main entry
@@ -233,12 +236,12 @@ public final class AppClipManager: ObservableObject {
 
     private func startSessionAudio() {
         // In production: Start audio engine with preset
-        print("🎵 Starting audio: \(sessionType.audioPreset)")
+        log.debug("Starting audio: \(sessionType.audioPreset)", category: .audio)
     }
 
     private func stopSessionAudio() {
         // In production: Stop audio engine
-        print("🔇 Stopping audio")
+        log.debug("Stopping audio", category: .audio)
     }
 
     // MARK: - Full App Promotion

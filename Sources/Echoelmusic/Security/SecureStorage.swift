@@ -13,6 +13,9 @@ import CryptoKit
 import Security
 #endif
 
+/// Logger instance for security audit operations
+private let log = Logger.shared
+
 // MARK: - Secure Storage Manager
 
 /// Thread-safe secure storage manager with AES-256-GCM encryption
@@ -404,7 +407,7 @@ public final class SecurityAuditLogger {
 
             // Log critical events to system
             if !entry.success && (entry.event == "violation" || entry.event == "cert_pin") {
-                print("[SECURITY AUDIT] \(entry.timestamp): \(entry.event) - \(entry.details)")
+                log.warning("[SECURITY AUDIT] \(entry.timestamp): \(entry.event) - \(entry.details)", category: .system)
             }
         }
     }

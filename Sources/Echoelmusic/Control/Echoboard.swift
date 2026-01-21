@@ -633,33 +633,33 @@ public class Echoboard: ObservableObject {
     private func executeAction(_ action: AutomationAction) async {
         switch action {
         case .setDeviceParameter(let deviceId, let parameter, let value):
-            print("📝 Setting \(parameter) = \(value) on device \(deviceId)")
+            log.debug("Setting \(parameter) = \(value) on device \(deviceId)", category: .system)
         case .toggleDevice(let deviceId, let on):
-            print("🔌 \(on ? "Enabling" : "Disabling") device \(deviceId)")
+            log.debug("\(on ? "Enabling" : "Disabling") device \(deviceId)", category: .system)
         case .setLightColor(let deviceId, let hue, let sat, let brightness):
-            print("💡 Light \(deviceId): H\(hue) S\(sat) B\(brightness)")
+            log.debug("Light \(deviceId): H\(hue) S\(sat) B\(brightness)", category: .system)
         case .playPreset(let name):
             state.currentPreset = name
-            print("🎛️ Playing preset: \(name)")
+            log.debug("Playing preset: \(name)", category: .system)
         case .sendNotification(let message):
-            print("📢 Notification: \(message)")
+            log.debug("Notification: \(message)", category: .system)
         case .startRecording:
             state.isRecording = true
         case .stopRecording:
             state.isRecording = false
         case .startStreaming(let platform):
             state.isStreaming = true
-            print("📡 Streaming to \(platform)")
+            log.debug("Streaming to \(platform)", category: .system)
         case .stopStreaming:
             state.isStreaming = false
         case .runShortcut(let name):
-            print("⚡ Running shortcut: \(name)")
+            log.debug("Running shortcut: \(name)", category: .system)
         case .setVolume(let level):
             state.masterVolume = level
         case .setBPM(let bpm):
             state.globalBPM = bpm
         case .triggerEffect(let name):
-            print("✨ Triggering effect: \(name)")
+            log.debug("Triggering effect: \(name)", category: .system)
         }
     }
 
@@ -797,39 +797,39 @@ public class Echoboard: ObservableObject {
     private func activateMeditationMode() async {
         state.globalBPM = 60
         state.masterVolume = 0.4
-        print("🧘 Meditation mode activated")
+        log.info("Meditation mode activated", category: .system)
     }
 
     private func activatePerformanceMode() async {
         state.globalBPM = 120
         state.masterVolume = 0.9
-        print("🎭 Performance mode activated")
+        log.info("Performance mode activated", category: .system)
     }
 
     private func activateSleepMode() async {
         state.globalBPM = 40
         state.masterVolume = 0.2
         state.isPlaying = false
-        print("😴 Sleep mode activated")
+        log.info("Sleep mode activated", category: .system)
     }
 
     private func activateFocusMode() async {
         state.globalBPM = 80
         state.masterVolume = 0.5
-        print("🎯 Focus mode activated")
+        log.info("Focus mode activated", category: .system)
     }
 
     private func turnOffAllLights() async {
         let lights = devices.filter { $0.category == .lighting || $0.category == .smartHome }
         for light in lights {
-            print("💡 Turning off: \(light.name)")
+            log.debug("Turning off: \(light.name)", category: .system)
         }
     }
 
     private func turnOnAllLights() async {
         let lights = devices.filter { $0.category == .lighting || $0.category == .smartHome }
         for light in lights {
-            print("💡 Turning on: \(light.name)")
+            log.debug("Turning on: \(light.name)", category: .system)
         }
     }
 
@@ -838,7 +838,7 @@ public class Echoboard: ObservableObject {
         state.isRecording = false
         state.isStreaming = false
         state.masterMute = true
-        print("🛑 EMERGENCY STOP - All systems halted")
+        log.warning("EMERGENCY STOP - All systems halted", category: .system)
     }
 
     // MARK: - Export/Import

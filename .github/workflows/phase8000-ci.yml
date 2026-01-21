@@ -3,9 +3,10 @@ name: Phase 8000 MAXIMUM OVERDRIVE CI
 on:
   push:
     branches: [ develop, 'feature/**' ]
-  # pull_request disabled - use ios-testflight.yml for PR testing
-  # pull_request:
-  #   branches: [ develop ]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
   workflow_dispatch:
 
 env:
