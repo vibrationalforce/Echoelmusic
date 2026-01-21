@@ -13,10 +13,11 @@
 import Foundation
 import SwiftUI
 import Combine
+#if canImport(ARKit)
 import ARKit
-import RealityKit
+#endif
 
-#if os(visionOS)
+#if canImport(RealityKit)
 import RealityKit
 #endif
 

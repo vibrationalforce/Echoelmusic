@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(ARKit)
 import ARKit
+#endif
 
 /// Maps ARKit face tracking data to audio parameters
 ///

@@ -2,7 +2,9 @@ import Foundation
 import AVFoundation
 import Metal
 import CoreImage
+#if canImport(Vision)
 import Vision
+#endif
 import Combine
 import Accelerate
 

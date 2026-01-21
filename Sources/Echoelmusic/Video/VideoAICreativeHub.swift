@@ -1,7 +1,9 @@
 import SwiftUI
 import AVFoundation
 import CoreML
+#if canImport(Vision)
 import Vision
+#endif
 import Combine
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -137,8 +139,10 @@ class GenerativeAIEngine: ObservableObject {
 
     // MARK: - AI Models
 
+    #if canImport(Vision)
     private var styleTransferModel: VNCoreMLModel?
     private var imageGenerationModel: VNCoreMLModel?
+    #endif
     private var audioGenerationModel: MLModel?
 
     // MARK: - Initialization
