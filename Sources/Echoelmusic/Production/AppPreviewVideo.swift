@@ -13,6 +13,9 @@ import UIKit
 import AppKit
 #endif
 
+/// Logger instance for App Preview operations
+private let log = Logger.shared
+
 // MARK: - App Preview Script
 
 /// Complete 30-second App Store preview video script with timing and assets
@@ -1411,39 +1414,44 @@ public struct AppPreviewExporter {
 
 #if DEBUG
 public struct AppPreviewDebugHelper {
-    /// Print full script breakdown to console
-    public static func printScriptBreakdown(script: AppPreviewScript = .standard) {
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        print("📱 APP STORE PREVIEW VIDEO SCRIPT")
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        print("Duration: \(script.duration)s")
-        print("Platform: \(script.videoSpecs.platform.rawValue)")
-        print("Resolution: \(script.videoSpecs.resolution.description)")
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+    /// Log full script breakdown for debugging
+    public static func logScriptBreakdown(script: AppPreviewScript = .standard) {
+        log.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
+        log.debug("APP STORE PREVIEW VIDEO SCRIPT", category: .video)
+        log.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
+        log.debug("Duration: \(script.duration)s", category: .video)
+        log.debug("Platform: \(script.videoSpecs.platform.rawValue)", category: .video)
+        log.debug("Resolution: \(script.videoSpecs.resolution.description)", category: .video)
+        log.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
 
         for scene in script.scenes {
-            print("🎬 \(scene.name) (\(String(format: "%.1f", scene.startTime))s - \(String(format: "%.1f", scene.endTime))s)")
-            print("   \(scene.visualDescription.replacingOccurrences(of: "\n", with: "\n   "))")
-            print("   Camera: \(scene.cameraMovement.rawValue)")
+            log.debug("Scene: \(scene.name) (\(String(format: "%.1f", scene.startTime))s - \(String(format: "%.1f", scene.endTime))s)", category: .video)
+            log.debug("   \(scene.visualDescription.replacingOccurrences(of: "\n", with: "\n   "))", category: .video)
+            log.debug("   Camera: \(scene.cameraMovement.rawValue)", category: .video)
 
             if !scene.onScreenText.isEmpty {
-                print("   Text Overlays:")
+                log.debug("   Text Overlays:", category: .video)
                 for text in scene.onScreenText {
-                    print("   • \(text.text) (\(String(format: "%.1f", text.startTime))s)")
+                    log.debug("   - \(text.text) (\(String(format: "%.1f", text.startTime))s)", category: .video)
                 }
             }
-            print("")
         }
 
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        print("🎤 VOICEOVER SCRIPT (\(script.voiceoverScript.language))")
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        log.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
+        log.debug("VOICEOVER SCRIPT (\(script.voiceoverScript.language))", category: .video)
+        log.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
 
         for (index, line) in script.voiceoverScript.lines.enumerated() {
-            print("\(index + 1). (\(String(format: "%.1f", line.startTime))s) \(line.text)")
+            log.debug("\(index + 1). (\(String(format: "%.1f", line.startTime))s) \(line.text)", category: .video)
         }
 
-        print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        log.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
+    }
+
+    /// Deprecated: Use logScriptBreakdown() instead
+    @available(*, deprecated, renamed: "logScriptBreakdown")
+    public static func printScriptBreakdown(script: AppPreviewScript = .standard) {
+        logScriptBreakdown(script: script)
     }
 }
 #endif
