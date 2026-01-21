@@ -315,7 +315,7 @@ class VisionApp: ObservableObject {
     // MARK: - Private Properties
 
     private let realityKitEngine: RealityKitEngine
-    private let spatialAudioEngine: SpatialAudioEngine
+    private let spatialAudioEngine: VisionSpatialAudioEngine
     private let eyeTracker: EyeTracker
     private let handTracker: HandTracker
     private let immersionController: ImmersionController
@@ -444,7 +444,7 @@ class VisionApp: ObservableObject {
 
     init() {
         self.realityKitEngine = RealityKitEngine()
-        self.spatialAudioEngine = SpatialAudioEngine()
+        self.spatialAudioEngine = VisionSpatialAudioEngine()
         self.eyeTracker = EyeTracker()
         self.handTracker = HandTracker()
         self.immersionController = ImmersionController()
@@ -689,10 +689,10 @@ class RealityKitEngine {
     }
 }
 
-// MARK: - Spatial Audio Engine
+// MARK: - Vision Spatial Audio Engine (renamed to avoid conflict with Spatial/SpatialAudioEngine)
 
 @MainActor
-class SpatialAudioEngine {
+class VisionSpatialAudioEngine {
 
     private var isPlaying: Bool = false
 

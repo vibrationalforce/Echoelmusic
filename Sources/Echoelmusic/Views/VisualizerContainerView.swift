@@ -175,7 +175,7 @@ struct VisualizerContainerView: View {
 
                 // Coherence indicator
                 VStack(spacing: 4) {
-                    CoherenceRing(coherence: CGFloat(visualEngine.visualParams.coherence))
+                    VisualizerCoherenceRing(coherence: CGFloat(visualEngine.visualParams.coherence))
                         .frame(width: 40, height: 40)
 
                     Text("FLOW")
@@ -370,9 +370,9 @@ struct LevelMeter: View {
     }
 }
 
-// MARK: - Coherence Ring
+// MARK: - Visualizer Coherence Ring (renamed to avoid conflict with WatchAppView.CoherenceRing)
 
-struct CoherenceRing: View {
+struct VisualizerCoherenceRing: View {
     let coherence: CGFloat
 
     private var ringColor: Color {

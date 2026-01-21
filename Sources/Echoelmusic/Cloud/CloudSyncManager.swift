@@ -261,10 +261,4 @@ enum CloudError: LocalizedError {
     }
 }
 
-// CloudSession struct placeholder (renamed to avoid conflict with Recording/Session)
-struct CloudSession {
-    let name: String
-    let duration: TimeInterval
-    let avgHRV: Float
-    let avgCoherence: Float
-}
+// Note: CloudSession struct is defined above at line 242

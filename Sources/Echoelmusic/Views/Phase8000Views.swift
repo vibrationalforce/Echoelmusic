@@ -551,17 +551,17 @@ public struct CollaborationLobbyView: View {
             Text("Global Activity")
                 .font(.headline)
             HStack {
-                StatCard(title: "Sessions", value: "\(hub.statistics.totalSessions)", icon: "globe")
-                StatCard(title: "Online", value: "\(hub.statistics.activeParticipants)", icon: "person.3")
-                StatCard(title: "Regions", value: "\(hub.statistics.regionsOnline)", icon: "map")
+                Phase8000StatCard(title: "Sessions", value: "\(hub.statistics.totalSessions)", icon: "globe")
+                Phase8000StatCard(title: "Online", value: "\(hub.statistics.activeParticipants)", icon: "person.3")
+                Phase8000StatCard(title: "Regions", value: "\(hub.statistics.regionsOnline)", icon: "map")
             }
         }
     }
 }
 
-// MARK: - Active Session View
+// MARK: - Collaboration Active Session View (renamed to avoid conflict with AppClip.ActiveSessionView)
 
-struct ActiveSessionView: View {
+struct CollaborationActiveSessionView: View {
     @ObservedObject var hub: WorldwideCollaborationHub
 
     var body: some View {
@@ -578,7 +578,7 @@ struct ActiveSessionView: View {
                 }
 
                 // Coherence Sync
-                CoherenceRing(coherence: session.sharedState.currentCoherence)
+                Phase8000CoherenceRing(coherence: session.sharedState.currentCoherence)
                     .frame(width: 200, height: 200)
 
                 // Participants
@@ -740,7 +740,8 @@ public struct DeveloperConsoleView: View {
 
 // MARK: - Supporting Views
 
-struct CoherenceRing: View {
+/// Coherence ring for Phase 8000 views (renamed to avoid conflict with WatchAppView.CoherenceRing)
+struct Phase8000CoherenceRing: View {
     let coherence: Float
 
     var body: some View {
@@ -783,7 +784,8 @@ struct StatBadge: View {
     }
 }
 
-struct StatCard: View {
+/// Stat card for Phase 8000 views (renamed to avoid conflict with QuantumCoherenceComplication.StatCard)
+struct Phase8000StatCard: View {
     let title: String
     let value: String
     let icon: String
@@ -910,7 +912,8 @@ struct BreathingPatternCard: View {
     }
 }
 
-struct ParticipantAvatar: View {
+/// Participant avatar for Phase 8000 (renamed to avoid conflict with AppStoreScreenshots.ParticipantAvatar)
+struct Phase8000ParticipantAvatar: View {
     let participant: Participant
 
     var body: some View {
