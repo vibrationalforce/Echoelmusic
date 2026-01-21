@@ -19,13 +19,12 @@ import MetalKit
 /// - Hysterese zur Vermeidung von "Flackern" zwischen Qualitätsstufen
 ///
 @MainActor
-@Observable
-class AdaptiveQualityManager {
+class AdaptiveQualityManager: ObservableObject {
 
     // MARK: - Published Properties
 
     /// Aktuelle Qualitätsstufe
-    var currentQuality: QualityLevel = .high {
+    @Published var currentQuality: QualityLevel = .high {
         didSet {
             if currentQuality != oldValue {
                 qualityChangePublisher.send(currentQuality)
@@ -35,16 +34,16 @@ class AdaptiveQualityManager {
     }
 
     /// Performance-Metriken
-    var metrics: PerformanceMetrics = PerformanceMetrics()
+    @Published var metrics: PerformanceMetrics = PerformanceMetrics()
 
     /// Ist adaptive Qualität aktiviert?
-    var isAdaptiveQualityEnabled: Bool = true
+    @Published var isAdaptiveQualityEnabled: Bool = true
 
     /// Aktuelle visuelle Einstellungen
-    var visualSettings: VisualSettings = VisualSettings()
+    @Published var visualSettings: VisualSettings = VisualSettings()
 
     /// Aktuelle Audio-Einstellungen
-    var audioSettings: AudioSettings = AudioSettings()
+    @Published var audioSettings: AudioSettings = AudioSettings()
 
     // MARK: - Private Properties
 

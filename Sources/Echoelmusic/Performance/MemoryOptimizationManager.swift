@@ -18,19 +18,18 @@ import Accelerate
 /// - Chunk-basierte Verarbeitung großer Dateien
 ///
 @MainActor
-@Observable
-class MemoryOptimizationManager {
+class MemoryOptimizationManager: ObservableObject {
 
     // MARK: - Published Properties
 
     /// Aktuelle Speichernutzung
-    var memoryUsage: MemoryUsage = MemoryUsage()
+    @Published var memoryUsage: MemoryUsage = MemoryUsage()
 
     /// Ist Speicheroptimierung aktiviert?
-    var isMemoryOptimizationEnabled: Bool = true
+    @Published var isMemoryOptimizationEnabled: Bool = true
 
     /// Cache-Statistiken
-    var cacheStats: CacheStatistics = CacheStatistics()
+    @Published var cacheStats: CacheStatistics = CacheStatistics()
 
     // MARK: - Private Properties
 

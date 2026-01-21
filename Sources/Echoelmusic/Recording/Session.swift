@@ -2,7 +2,6 @@ import Foundation
 
 /// Recording session containing multiple tracks and settings
 struct Session: Identifiable, Codable {
-    private let log = ProfessionalLogger.shared
     let id: UUID
     var name: String
     var tracks: [Track]
@@ -13,6 +12,9 @@ struct Session: Identifiable, Codable {
     var modifiedAt: Date
     var bioData: [BioDataPoint]
     var metadata: SessionMetadata
+
+    /// Logger (computed to avoid Codable issues)
+    private var log: ProfessionalLogger { ProfessionalLogger.shared }
 
 
     // MARK: - Initialization

@@ -22,22 +22,21 @@ import Combine
 /// - Background Heart Rate Monitoring
 ///
 @MainActor
-@Observable
-class WatchApp {
+class WatchApp: ObservableObject {
 
     // MARK: - Published Properties
 
     /// Aktuelle Bio-Metriken
-    var currentMetrics: BioMetrics = BioMetrics()
+    @Published var currentMetrics: BioMetrics = BioMetrics()
 
     /// Ist eine Session aktiv?
-    var isSessionActive: Bool = false
+    @Published var isSessionActive: Bool = false
 
     /// Aktuelle Breathing-Rate
-    var breathingRate: Double = 6.0 // Atemzüge pro Minute
+    @Published var breathingRate: Double = 6.0 // Atemzüge pro Minute
 
     /// Session-Status
-    var sessionDuration: TimeInterval = 0
+    @Published var sessionDuration: TimeInterval = 0
 
     // MARK: - Private Properties
 

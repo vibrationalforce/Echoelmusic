@@ -317,7 +317,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             Scale(
                 name: "Slendro Scale",
                 culture: .indonesian,
-                intervals: [0, 2.4, 4.8, 7.2, 9.6],  // Approximately equal 5-tone
+                intervals: [0.0, 2.4, 4.8, 7.2, 9.6],  // Approximately equal 5-tone
                 degrees: 5,
                 description: "Gamelan scale with near-equal divisions. Mystical character.",
                 emotionalCharacter: "Mystical, Balanced, Communal",
@@ -340,7 +340,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
             Scale(
                 name: "Dastgah Shur",
                 culture: .persian,
-                intervals: [0, 1.5, 3, 5, 7, 8.5, 10],  // Quarter tones
+                intervals: [0.0, 1.5, 3.0, 5.0, 7.0, 8.5, 10.0],  // Quarter tones
                 degrees: 7,
                 description: "Most common Persian mode. Bittersweet character.",
                 emotionalCharacter: "Bittersweet, Longing, Expressive",
@@ -407,14 +407,14 @@ class GlobalMusicTheoryDatabase: ObservableObject {
                 name: "Maqam Bayati",
                 culture: .arabic,
                 baseScale: "Bayati",
-                characteristicNotes: [0, 1.5, 3, 5, 7, 8, 10],
+                characteristicNotes: [0.0, 1.5, 3.0, 5.0, 7.0, 8.0, 10.0],
                 raga: nil,
                 maqam: Mode.Maqam(
                     name: "Bayati",
                     family: "Bayati Family",
                     jins: [
-                        Mode.Maqam.Jins(name: "Bayati", intervals: [0, 1.5, 3, 5], startingNote: 0),
-                        Mode.Maqam.Jins(name: "Nahawand", intervals: [0, 2, 3, 5], startingNote: 5)
+                        Mode.Maqam.Jins(name: "Bayati", intervals: [0.0, 1.5, 3.0, 5.0], startingNote: 0),
+                        Mode.Maqam.Jins(name: "Nahawand", intervals: [0.0, 2.0, 3.0, 5.0], startingNote: 5)
                     ],
                     qarar: 0,  // D (typically)
                     ghammaz: 10  // C

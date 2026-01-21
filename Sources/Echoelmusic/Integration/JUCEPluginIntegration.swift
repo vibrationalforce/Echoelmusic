@@ -17,8 +17,7 @@ import BioDataBridge
 /// ```
 ///
 @MainActor
-@Observable
-class JUCEPluginIntegration {
+class JUCEPluginIntegration: ObservableObject {
 
     // MARK: - Singleton
 
@@ -27,13 +26,13 @@ class JUCEPluginIntegration {
     // MARK: - Properties
 
     /// Ist das Plugin geladen?
-    var isPluginLoaded: Bool = false
+    @Published var isPluginLoaded: Bool = false
 
     /// Plugin Version
-    var pluginVersion: String = "Unknown"
+    @Published var pluginVersion: String = "Unknown"
 
     /// Letzte Bio-Daten
-    var lastBioData: BioDataSnapshot?
+    @Published var lastBioData: BioDataSnapshot?
 
     struct BioDataSnapshot {
         let hrv: Float

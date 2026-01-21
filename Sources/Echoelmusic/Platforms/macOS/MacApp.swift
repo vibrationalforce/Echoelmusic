@@ -24,25 +24,24 @@ import CoreMIDI
 /// - Drag & drop audio files
 ///
 @MainActor
-@Observable
-class MacApp {
+class MacApp: ObservableObject {
 
     // MARK: - Published Properties
 
     /// Current visualization mode
-    var visualizationMode: VisualizationMode = .spectrum
+    @Published var visualizationMode: VisualizationMode = .spectrum
 
     /// Audio input source
-    var audioInputSource: AudioInputSource = .microphone
+    @Published var audioInputSource: AudioInputSource = .microphone
 
     /// MIDI devices connected
-    var midiDevices: [MIDIDevice] = []
+    @Published var midiDevices: [MIDIDevice] = []
 
     /// Is recording active
-    var isRecording: Bool = false
+    @Published var isRecording: Bool = false
 
     /// Current project
-    var currentProject: Project?
+    @Published var currentProject: Project?
 
     // MARK: - Private Properties
 

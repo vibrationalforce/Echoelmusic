@@ -9,8 +9,7 @@ import Combine
 /// Records and plays back immersive 360° / spatial video with bio-data overlay
 /// Supports Apple Immersive Video format and standard 360° equirectangular
 @MainActor
-@Observable
-final class ImmersiveVideoCaptureManager {
+final class ImmersiveVideoCaptureManager: ObservableObject {
 
     // MARK: - Singleton
 
@@ -19,28 +18,28 @@ final class ImmersiveVideoCaptureManager {
     // MARK: - State
 
     /// Current capture state
-    var captureState: CaptureState = .idle
+    @Published var captureState: CaptureState = .idle
 
     /// Current playback state
-    var playbackState: PlaybackState = .stopped
+    @Published var playbackState: PlaybackState = .stopped
 
     /// Recording duration
-    var recordingDuration: TimeInterval = 0
+    @Published var recordingDuration: TimeInterval = 0
 
     /// Current playback time
-    var playbackTime: TimeInterval = 0
+    @Published var playbackTime: TimeInterval = 0
 
     /// Total duration of loaded video
-    var totalDuration: TimeInterval = 0
+    @Published var totalDuration: TimeInterval = 0
 
     /// Bio-data overlay enabled
-    var bioOverlayEnabled: Bool = true
+    @Published var bioOverlayEnabled: Bool = true
 
     /// Currently loaded recording
-    var currentRecording: ImmersiveRecording?
+    @Published var currentRecording: ImmersiveRecording?
 
     /// Available recordings
-    var recordings: [ImmersiveRecording] = []
+    @Published var recordings: [ImmersiveRecording] = []
 
     // MARK: - Private
 
@@ -429,8 +428,7 @@ extension ImmersiveVideoCaptureManager: AVCaptureFileOutputRecordingDelegate {
 
 #if !os(visionOS) && !os(iOS)
 @MainActor
-@Observable
-final class ImmersiveVideoCaptureManager {
+final class ImmersiveVideoCaptureManager: ObservableObject {
     static let shared = ImmersiveVideoCaptureManager()
     private init() {}
 }

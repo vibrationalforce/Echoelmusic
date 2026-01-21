@@ -3,7 +3,6 @@ import AVFoundation
 
 /// Represents a single audio track in a recording session
 struct Track: Identifiable, Codable {
-    private let log = ProfessionalLogger.shared
     let id: UUID
     var name: String
     var url: URL?
@@ -16,6 +15,9 @@ struct Track: Identifiable, Codable {
     var waveformData: [Float]?
     var createdAt: Date
     var modifiedAt: Date
+
+    /// Logger (computed to avoid Codable issues)
+    private var log: ProfessionalLogger { ProfessionalLogger.shared }
 
     // MARK: - Track Type
 

@@ -16,22 +16,21 @@ import Combine
 /// - User Behavior Prediction
 ///
 @MainActor
-@Observable
-class EnhancedMLModels {
+class EnhancedMLModels: ObservableObject {
 
     // MARK: - Published Properties
 
     /// Erkannte Emotion
-    var currentEmotion: Emotion = .neutral
+    @Published var currentEmotion: Emotion = .neutral
 
     /// Erkannter Musikstil
-    var detectedMusicStyle: MusicStyle = .unknown
+    @Published var detectedMusicStyle: MusicStyle = .unknown
 
     /// ML-Vorhersagen
-    var predictions: MLPredictions = MLPredictions()
+    @Published var predictions: MLPredictions = MLPredictions()
 
     /// Empfehlungen
-    var recommendations: [Recommendation] = []
+    @Published var recommendations: [Recommendation] = []
 
     // MARK: - Private Properties
 

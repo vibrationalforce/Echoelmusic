@@ -23,22 +23,21 @@ import Combine
 /// - Ambient Background: Bioreaktive Kunst als Hintergrund
 ///
 @MainActor
-@Observable
-class TVApp {
+class TVApp: ObservableObject {
 
     // MARK: - Published Properties
 
     /// Visualisierungsmodus
-    var visualizationMode: VisualizationMode = .spectrum
+    @Published var visualizationMode: VisualizationMode = .spectrum
 
     /// Aktive Session
-    var activeSession: Session?
+    @Published var activeSession: Session?
 
     /// Connected iOS Devices (via AirPlay)
-    var connectedDevices: [ConnectedDevice] = []
+    @Published var connectedDevices: [ConnectedDevice] = []
 
     /// Ist SharePlay aktiv?
-    var isSharePlayActive: Bool = false
+    @Published var isSharePlayActive: Bool = false
 
     // MARK: - Private Properties
 
