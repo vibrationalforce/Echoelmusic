@@ -14,7 +14,7 @@ import Security
 #endif
 
 /// Logger instance for security audit operations
-private let log = Logger.shared
+private let log = EchoelLogger.shared
 
 // MARK: - Secure Storage Manager
 

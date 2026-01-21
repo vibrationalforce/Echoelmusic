@@ -366,7 +366,7 @@ public class WebSocketRoom: ObservableObject, Identifiable {
         }
     }
 
-    private let logger = Logger.shared
+    private let logger = EchoelLogger.shared
     private var inviteList: Set<String> = []
 
     public init(id: String, name: String, creatorID: String, accessControl: RoomAccessControl = .publicRoom) {
@@ -433,7 +433,7 @@ public class WebSocketRoom: ObservableObject, Identifiable {
 
 /// WebSocket security layer
 public class WebSocketSecurity {
-    private let logger = Logger.shared
+    private let logger = EchoelLogger.shared
 
     // Rate limiting
     private var messageCounts: [String: Int] = [:]
@@ -628,7 +628,7 @@ public class OfflineMessageQueue: ObservableObject {
     @Published public var queuedMessages: [QueuedWebSocketMessage] = []
     @Published public var isProcessing = false
 
-    private let logger = Logger.shared
+    private let logger = EchoelLogger.shared
     private let maxQueueSize = 1000
     private let maxRetries = 5
 
@@ -782,7 +782,7 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
     private var webSocketTask: URLSessionWebSocketTask?
     private var session: URLSession!
 
-    private let logger = Logger.shared
+    private let logger = EchoelLogger.shared
     private let security = WebSocketSecurity()
     private let offlineQueue = OfflineMessageQueue()
 
@@ -1184,7 +1184,7 @@ extension EchoelmusicWebSocket: URLSessionWebSocketDelegate {
 
 // MARK: - Extension Helpers
 
-extension Logger {
+extension EchoelLogger {
     func auth(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
         self.log(.info, category: .network, message, file: file, function: function, line: line)
     }

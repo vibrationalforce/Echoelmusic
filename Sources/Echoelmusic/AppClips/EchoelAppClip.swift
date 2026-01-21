@@ -12,7 +12,7 @@ import CoreLocation
 import StoreKit
 
 /// Logger instance for App Clip operations
-private let log = Logger.shared
+private let log = EchoelLogger.shared
 
 // MARK: - App Clip Entry Point
 
