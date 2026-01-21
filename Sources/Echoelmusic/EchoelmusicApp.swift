@@ -1,5 +1,7 @@
 import SwiftUI
 
+#if os(iOS) || os(macOS) || os(tvOS)
+
 /// Main entry point for the Echoelmusic app
 /// Bio-reactive audio-visual experiences platform
 @main
@@ -102,3 +104,5 @@ struct EchoelmusicApp: App {
         }
     }
 }
+
+#endif // os(iOS) || os(macOS) || os(tvOS)
