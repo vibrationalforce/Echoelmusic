@@ -374,28 +374,28 @@ public struct TypeSafeBioData: Sendable {
 
     /// Default resting state
     public static let resting = TypeSafeBioData(
-        heartRate: 72,
-        coherence: 50,
-        breathPhase: 0,
+        heartRate: 72.0,
+        coherence: 50.0,
+        breathPhase: 0.0,
         gsr: 0.5,
-        spO2: 98
+        spO2: 98.0
     )
 
     /// High coherence flow state
     public static let flow = TypeSafeBioData(
-        heartRate: 65,
-        coherence: 80,
+        heartRate: 65.0,
+        coherence: 80.0,
         breathPhase: 0.5,
         gsr: 0.4,
-        spO2: 99
+        spO2: 99.0
     )
 
     /// Low coherence stress state
     public static let stressed = TypeSafeBioData(
-        heartRate: 95,
-        coherence: 25,
+        heartRate: 95.0,
+        coherence: 25.0,
         breathPhase: 0.2,
         gsr: 0.8,
-        spO2: 97
+        spO2: 97.0
     )
 }

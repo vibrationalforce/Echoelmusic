@@ -231,15 +231,16 @@ public struct LoggerKey: DependencyKey {
 
 /// Protocol for logger
 public protocol LoggerProtocol {
-    func log(_ message: String, level: LogLevel)
+    func log(_ message: String, level: SimpleLogLevel)
 }
 
-public enum LogLevel: String {
+/// Simple log level for DependencyContainer (renamed to avoid conflict with ProfessionalLogger.LogLevel)
+public enum SimpleLogLevel: String {
     case debug, info, warning, error
 }
 
 struct DefaultLogger: LoggerProtocol {
-    func log(_ message: String, level: LogLevel) {
+    func log(_ message: String, level: SimpleLogLevel) {
         print("[\(level.rawValue.uppercased())] \(message)")
     }
 }

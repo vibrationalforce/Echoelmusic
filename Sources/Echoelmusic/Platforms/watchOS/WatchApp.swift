@@ -233,7 +233,7 @@ class WatchApp: ObservableObject {
 
     // MARK: - Data Management
 
-    private let watchConnectivityManager = WatchConnectivityManager.shared
+    private let watchConnectivityManager = WatchAppConnectivityManager.shared
 
     private func saveSession(duration: TimeInterval, metrics: BioMetrics) async {
         // Speichere Session-Daten für Sync mit iPhone
@@ -510,9 +510,10 @@ class WatchAudioEngine {
 
 import WatchConnectivity
 
-class WatchConnectivityManager: NSObject, WCSessionDelegate {
+/// Watch connectivity manager for WatchApp (renamed to avoid conflict with WatchSync/WatchConnectivityManager)
+class WatchAppConnectivityManager: NSObject, WCSessionDelegate {
 
-    static let shared = WatchConnectivityManager()
+    static let shared = WatchAppConnectivityManager()
 
     private var session: WCSession?
 

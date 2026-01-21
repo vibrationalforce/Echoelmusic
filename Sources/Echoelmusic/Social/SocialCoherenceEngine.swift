@@ -23,10 +23,10 @@ public enum SocialCoherenceConstants {
     public static let phi: Float = 1.618033988749895
 }
 
-// MARK: - Participant
+// MARK: - Social Participant
 
-/// Individual participant in a social coherence session
-public struct Participant: Identifiable, Equatable, Sendable {
+/// Individual participant in a social coherence session (renamed to avoid conflict with WorldwideCollaborationHub.Participant)
+public struct SocialParticipant: Identifiable, Equatable, Sendable {
     public let id: UUID
     public var displayName: String
     public var avatarURL: URL?
@@ -83,7 +83,7 @@ public struct Participant: Identifiable, Equatable, Sendable {
 
 /// Collective state of the group
 public struct GroupState: Equatable, Sendable {
-    public var participants: [Participant]
+    public var participants: [SocialParticipant]
     public var groupCoherence: Float  // 0-1
     public var groupFlowScore: Float  // 0-1
     public var heartRateSync: Float  // Synchronization score
@@ -109,7 +109,7 @@ public struct GroupState: Equatable, Sendable {
         self.timestamp = Date()
     }
 
-    public var activeParticipants: [Participant] {
+    public var activeParticipants: [SocialParticipant] {
         participants.filter { $0.isActive }
     }
 
@@ -222,7 +222,7 @@ public final class SocialCoherenceEngine: ObservableObject {
     @Published public private(set) var groupState = GroupState()
     @Published public private(set) var events: [CoherenceEvent] = []
     @Published public private(set) var sessionDuration: TimeInterval = 0
-    @Published public private(set) var localParticipant: Participant?
+    @Published public private(set) var localParticipant: SocialParticipant?
 
     @Published public var configuration = SessionConfiguration()
 
@@ -252,7 +252,7 @@ public final class SocialCoherenceEngine: ObservableObject {
     }
 
     private func setupLocalParticipant() {
-        localParticipant = Participant(
+        localParticipant = SocialParticipant(
             displayName: "You",
             role: .participant
         )
@@ -586,7 +586,7 @@ public final class SocialCoherenceEngine: ObservableObject {
         let names = ["Alex", "Jordan", "Sam", "Taylor", "Morgan", "Casey", "Riley", "Avery", "Quinn", "Sage"]
 
         for i in 0..<min(count, names.count) {
-            let participant = Participant(
+            let participant = SocialParticipant(
                 displayName: names[i],
                 role: i == 0 ? .facilitator : .participant
             )
@@ -595,7 +595,7 @@ public final class SocialCoherenceEngine: ObservableObject {
     }
 
     /// Add a participant to the session
-    public func addParticipant(_ participant: Participant) {
+    public func addParticipant(_ participant: SocialParticipant) {
         guard groupState.participants.count < configuration.maxParticipants else {
             log.social("SocialCoherenceEngine: Session full", level: .warning)
             return

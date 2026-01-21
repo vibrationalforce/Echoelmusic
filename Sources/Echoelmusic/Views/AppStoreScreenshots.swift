@@ -208,7 +208,7 @@ struct Screenshot2_QuantumVisualization: View {
 
                     // Particle effects
                     ForEach(0..<20, id: \.self) { index in
-                        ParticleView(index: index, phase: rotationAngle)
+                        ScreenshotParticleView(index: index, phase: rotationAngle)
                     }
                 }
 
@@ -1330,7 +1330,8 @@ struct FlowerOfLifeView: Shape {
     }
 }
 
-struct ParticleView: View {
+/// Simple particle view for screenshots (renamed to avoid conflict with ParticleView.swift)
+struct ScreenshotParticleView: View {
     let index: Int
     let phase: Double
 

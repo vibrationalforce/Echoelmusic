@@ -943,8 +943,8 @@ public class UnifiedControlHub: ObservableObject {
     private func applyFaceAudioParameters(_ params: AudioParameters) {
         // Apply to actual AudioEngine
         if let engine = audioEngine {
-            engine.setFilterCutoff(params.filterCutoff)
-            engine.setFilterResonance(params.filterResonance)
+            engine.setFilterCutoff(Float(params.filterCutoff))
+            engine.setFilterResonance(Float(params.filterResonance))
 
             #if DEBUG
             Log.spatial("[Face→Audio] Cutoff: \(Int(params.filterCutoff)) Hz, Q: \(String(format: "%.2f", params.filterResonance))")
@@ -955,11 +955,11 @@ public class UnifiedControlHub: ObservableObject {
         if let mpe = mpeZoneManager {
             for voice in mpe.activeVoices {
                 // Jaw open → Per-note brightness (CC 74)
-                let jawOpen = params.filterCutoff / 8000.0  // Normalize cutoff to 0-1
+                let jawOpen = Float(params.filterCutoff / 8000.0)  // Normalize cutoff to 0-1
                 mpe.setVoiceBrightness(voice: voice, brightness: jawOpen)
 
                 // Smile → Per-note timbre (CC 71)
-                let smile = params.filterResonance / 5.0  // Normalize resonance to 0-1
+                let smile = Float(params.filterResonance / 5.0)  // Normalize resonance to 0-1
                 mpe.setVoiceTimbre(voice: voice, timbre: smile)
             }
         }
@@ -987,7 +987,7 @@ public class UnifiedControlHub: ObservableObject {
         }
 
         // Validate gesture with conflict resolver
-        let confidence = gestureRecognizer.leftGestureConfidence // Use appropriate confidence
+        let confidence = gestureRecognizer.gestureConfidence // Use gesture confidence
         guard conflictResolver.shouldProcessGesture(gesture, hand: hand, confidence: confidence) else {
             return
         }
@@ -1013,22 +1013,22 @@ public class UnifiedControlHub: ObservableObject {
     private func applyGestureAudioParameters(_ params: GestureToAudioMapper.AudioParameters) {
         guard let engine = audioEngine else { return }
 
-        // FIXED: Apply filter parameters
+        // FIXED: Apply filter parameters with explicit Float conversion
         if let cutoff = params.filterCutoff {
-            engine.setFilterCutoff(cutoff)
+            engine.setFilterCutoff(Float(cutoff))
         }
 
         if let resonance = params.filterResonance {
-            engine.setFilterResonance(resonance)
+            engine.setFilterResonance(Float(resonance))
         }
 
-        // FIXED: Apply reverb parameters
+        // FIXED: Apply reverb parameters with explicit Float conversion
         if let size = params.reverbSize {
-            engine.setReverbSize(size)
+            engine.setReverbSize(Float(size))
         }
 
         if let wetness = params.reverbWetness {
-            engine.setReverbWetness(wetness)
+            engine.setReverbWetness(Float(wetness))
         }
 
         // FIXED: Apply delay parameters
@@ -1068,11 +1068,9 @@ public class UnifiedControlHub: ObservableObject {
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // Apply preset change to audio engine
-            if let engine = audioEngine {
-                engine.loadPreset(named: presetChange)
-                Log.info("[Gesture→Audio] Switched to preset: \(presetChange)", category: .system)
-            }
+            // Log preset change request (AudioEngine preset loading not yet implemented)
+            Log.info("[Gesture→Audio] Preset change requested: \(presetChange)", category: .system)
+            // TODO: Implement audioEngine.loadPreset(named:) when preset system is ready
         }
     }
 

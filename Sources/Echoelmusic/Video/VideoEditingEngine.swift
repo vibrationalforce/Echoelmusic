@@ -95,7 +95,7 @@ class VideoEditingEngine: ObservableObject {
 
     // MARK: - Timeline Management
 
-    func addClip(_ clip: VideoClip, to track: Track, at time: CMTime) {
+    func addClip(_ clip: VideoClip, to track: VideoTrack, at time: CMTime) {
         // Magnetic timeline - snap to nearest clip or beat
         let snappedTime = timeline.magneticSnap(time: time)
 
@@ -120,7 +120,7 @@ class VideoEditingEngine: ObservableObject {
         log.video("➕ VideoEditingEngine: Added clip '\(clip.name)' to track '\(track.name)' at \(snappedTime.seconds)s")
     }
 
-    func removeClip(_ clipID: UUID, from track: Track) {
+    func removeClip(_ clipID: UUID, from track: VideoTrack) {
         guard let index = track.clips.firstIndex(where: { $0.id == clipID }) else { return }
         let clip = track.clips[index]
         let clipIndex = index
@@ -144,7 +144,7 @@ class VideoEditingEngine: ObservableObject {
         log.video("➖ VideoEditingEngine: Removed clip '\(clip.name)' from track '\(track.name)'")
     }
 
-    func moveClip(_ clipID: UUID, from sourceTrack: Track, to destinationTrack: Track, at time: CMTime) {
+    func moveClip(_ clipID: UUID, from sourceTrack: VideoTrack, to destinationTrack: VideoTrack, at time: CMTime) {
         guard let index = sourceTrack.clips.firstIndex(where: { $0.id == clipID }) else { return }
         let clip = sourceTrack.clips[index]
         let originalTime = clip.startTime
@@ -178,7 +178,7 @@ class VideoEditingEngine: ObservableObject {
 
     // MARK: - Edit Operations
 
-    func rippleEdit(clipID: UUID, track: Track, newDuration: CMTime) {
+    func rippleEdit(clipID: UUID, track: VideoTrack, newDuration: CMTime) {
         guard let index = track.clips.firstIndex(where: { $0.id == clipID }) else { return }
         let oldDuration = track.clips[index].duration
         let delta = newDuration - oldDuration
@@ -194,7 +194,7 @@ class VideoEditingEngine: ObservableObject {
         log.video("✂️ VideoEditingEngine: Ripple edit - shifted \(track.clips.count - index - 1) clips by \(delta.seconds)s")
     }
 
-    func rollEdit(leftClipID: UUID, rightClipID: UUID, track: Track, newCutPoint: CMTime) {
+    func rollEdit(leftClipID: UUID, rightClipID: UUID, track: VideoTrack, newCutPoint: CMTime) {
         guard let leftIndex = track.clips.firstIndex(where: { $0.id == leftClipID }),
               let rightIndex = track.clips.firstIndex(where: { $0.id == rightClipID }) else { return }
 
@@ -214,7 +214,7 @@ class VideoEditingEngine: ObservableObject {
         log.video("🎞️ VideoEditingEngine: Roll edit - moved cut point to \(newCutPoint.seconds)s")
     }
 
-    func slipEdit(clipID: UUID, track: Track, newInPoint: CMTime) {
+    func slipEdit(clipID: UUID, track: VideoTrack, newInPoint: CMTime) {
         guard let index = track.clips.firstIndex(where: { $0.id == clipID }) else { return }
 
         // Change in/out points without changing timeline position or duration
@@ -224,7 +224,7 @@ class VideoEditingEngine: ObservableObject {
         log.video("🔄 VideoEditingEngine: Slip edit - new in point: \(newInPoint.seconds)s")
     }
 
-    func slideEdit(clipID: UUID, track: Track, newStartTime: CMTime) {
+    func slideEdit(clipID: UUID, track: VideoTrack, newStartTime: CMTime) {
         guard let index = track.clips.firstIndex(where: { $0.id == clipID }) else { return }
 
         let clip = track.clips[index]
@@ -246,7 +246,7 @@ class VideoEditingEngine: ObservableObject {
         log.video("↔️ VideoEditingEngine: Slide edit - moved clip to \(newStartTime.seconds)s")
     }
 
-    func splitClip(clipID: UUID, track: Track, at time: CMTime) -> (UUID, UUID)? {
+    func splitClip(clipID: UUID, track: VideoTrack, at time: CMTime) -> (UUID, UUID)? {
         guard let index = track.clips.firstIndex(where: { $0.id == clipID }) else { return nil }
         let originalClip = track.clips[index]
 
@@ -298,7 +298,7 @@ class VideoEditingEngine: ObservableObject {
 
     // MARK: - Keyframe Animation
 
-    func addKeyframe(clipID: UUID, track: Track, property: KeyframeProperty, at time: CMTime, value: Float) {
+    func addKeyframe(clipID: UUID, track: VideoTrack, property: KeyframeProperty, at time: CMTime, value: Float) {
         guard let index = track.clips.firstIndex(where: { $0.id == clipID }) else { return }
 
         let keyframe = Keyframe(time: time, value: value, interpolation: .bezier)
@@ -308,7 +308,7 @@ class VideoEditingEngine: ObservableObject {
         log.video("🎯 VideoEditingEngine: Added keyframe for \(property.rawValue) at \(time.seconds)s")
     }
 
-    func removeKeyframe(clipID: UUID, track: Track, property: KeyframeProperty, at time: CMTime) {
+    func removeKeyframe(clipID: UUID, track: VideoTrack, property: KeyframeProperty, at time: CMTime) {
         guard let index = track.clips.firstIndex(where: { $0.id == clipID }) else { return }
 
         track.clips[index].keyframes[property]?.removeAll { abs($0.time.seconds - time.seconds) < 0.01 }
@@ -316,7 +316,7 @@ class VideoEditingEngine: ObservableObject {
         log.video("🗑️ VideoEditingEngine: Removed keyframe for \(property.rawValue)")
     }
 
-    func evaluateKeyframe(clipID: UUID, track: Track, property: KeyframeProperty, at time: CMTime) -> Float? {
+    func evaluateKeyframe(clipID: UUID, track: VideoTrack, property: KeyframeProperty, at time: CMTime) -> Float? {
         guard let index = track.clips.firstIndex(where: { $0.id == clipID }),
               let keyframes = track.clips[index].keyframes[property],
               !keyframes.isEmpty else { return nil }
@@ -506,16 +506,16 @@ class VideoEditingEngine: ObservableObject {
 
 class Timeline: ObservableObject {
     @Published var name: String
-    @Published var videoTracks: [Track]
-    @Published var audioTracks: [Track]
+    @Published var videoTracks: [VideoTrack]
+    @Published var audioTracks: [VideoTrack]
     @Published var markers: [TimeMarker]
     @Published var tempo: Double // BPM for beat snapping
     @Published var duration: CMTime
 
     init(name: String = "Untitled Timeline") {
         self.name = name
-        self.videoTracks = [Track(name: "Video 1", type: .video)]
-        self.audioTracks = [Track(name: "Audio 1", type: .audio)]
+        self.videoTracks = [VideoTrack(name: "Video 1", type: .video)]
+        self.audioTracks = [VideoTrack(name: "Audio 1", type: .audio)]
         self.markers = []
         self.tempo = 120.0
         self.duration = CMTime(seconds: 60, preferredTimescale: 600)
@@ -554,24 +554,24 @@ class Timeline: ObservableObject {
     }
 }
 
-// MARK: - Track Model
+// MARK: - Video Track Model (renamed to avoid conflict with Recording/Track)
 
-class Track: ObservableObject, Identifiable {
+class VideoTrack: ObservableObject, Identifiable {
     let id = UUID()
     @Published var name: String
-    @Published var type: TrackType
+    @Published var type: VideoTrackType
     @Published var clips: [VideoClip]
     @Published var isMuted: Bool
     @Published var isSolo: Bool
     @Published var volume: Float // 0-1
     @Published var isLocked: Bool
 
-    enum TrackType {
+    enum VideoTrackType {
         case video
         case audio
     }
 
-    init(name: String, type: TrackType) {
+    init(name: String, type: VideoTrackType) {
         self.name = name
         self.type = type
         self.clips = []

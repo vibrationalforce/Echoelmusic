@@ -853,13 +853,13 @@ final class ProductionReadinessTests: XCTestCase {
     }
 
     func testRetryPolicyConfigurations() {
-        let defaultPolicy = RetryPolicy.default
+        let defaultPolicy = APIRetryPolicy.default
         XCTAssertEqual(defaultPolicy.maxRetries, 3)
 
-        let aggressive = RetryPolicy.aggressive
+        let aggressive = APIRetryPolicy.aggressive
         XCTAssertGreaterThan(aggressive.maxRetries, defaultPolicy.maxRetries)
 
-        let conservative = RetryPolicy.conservative
+        let conservative = APIRetryPolicy.conservative
         XCTAssertLessThan(conservative.maxRetries, defaultPolicy.maxRetries)
     }
 
