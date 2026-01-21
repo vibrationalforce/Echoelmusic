@@ -7,7 +7,7 @@ import AuthenticationServices
 ///
 /// Ermöglicht gleichzeitiges Posten/Live-Gehen auf allen Plattformen:
 /// - Instagram, TikTok, YouTube, Facebook, Twitter/X
-/// - Twitch, Kick, LinkedIn
+/// - Twitch, Kick
 ///
 /// Features:
 /// - One-Click Live auf allen Plattformen
@@ -40,7 +40,6 @@ class SocialMediaManager: ObservableObject {
         case twitter = "X (Twitter)"
         case twitch = "Twitch"
         case kick = "Kick"
-        case linkedin = "LinkedIn"
         case threads = "Threads"
 
         var id: String { rawValue }
@@ -54,7 +53,6 @@ class SocialMediaManager: ObservableObject {
             case .twitter: return "bubble.left.fill"
             case .twitch: return "tv.fill"
             case .kick: return "bolt.circle.fill"
-            case .linkedin: return "briefcase.fill"
             case .threads: return "at.circle.fill"
             }
         }
@@ -68,14 +66,13 @@ class SocialMediaManager: ObservableObject {
             case .twitter: return "#000000"
             case .twitch: return "#9146FF"
             case .kick: return "#53FC18"
-            case .linkedin: return "#0A66C2"
             case .threads: return "#000000"
             }
         }
 
         var supportsLive: Bool {
             switch self {
-            case .instagram, .tiktok, .youtube, .facebook, .twitch, .kick, .linkedin:
+            case .instagram, .tiktok, .youtube, .facebook, .twitch, .kick:
                 return true
             case .twitter, .threads:
                 return false
@@ -95,7 +92,6 @@ class SocialMediaManager: ObservableObject {
             case .twitter: return 140   // 2:20
             case .twitch: return 0      // Unlimited (Live)
             case .kick: return 0        // Unlimited (Live)
-            case .linkedin: return 600  // 10 Minuten
             case .threads: return 300   // 5 Minuten
             }
         }
@@ -104,7 +100,7 @@ class SocialMediaManager: ObservableObject {
             switch self {
             case .instagram, .tiktok, .threads:
                 return (1080, 1920) // 9:16 Portrait
-            case .youtube, .facebook, .twitter, .linkedin:
+            case .youtube, .facebook, .twitter:
                 return (1920, 1080) // 16:9 Landscape
             case .twitch, .kick:
                 return (1920, 1080) // 16:9 Landscape
@@ -171,8 +167,7 @@ class SocialMediaManager: ObservableObject {
         .facebook: "rtmps://live-api-s.facebook.com:443/rtmp/",
         .kick: "rtmp://ingest.kick.com/live/",
         .instagram: "rtmps://live-upload.instagram.com:443/rtmp/",
-        .tiktok: "rtmp://push.tiktok.com/live/",
-        .linkedin: "rtmp://live.linkedin.com/live/"
+        .tiktok: "rtmp://push.tiktok.com/live/"
     ]
 
     // MARK: - Initialization
@@ -385,8 +380,6 @@ class SocialMediaManager: ObservableObject {
             url = "https://twitch.tv/videos/\(postId)"
         case .kick:
             url = "https://kick.com/video/\(postId)"
-        case .linkedin:
-            url = "https://linkedin.com/posts/\(postId)"
         case .threads:
             url = "https://threads.net/@user/post/\(postId)"
         }

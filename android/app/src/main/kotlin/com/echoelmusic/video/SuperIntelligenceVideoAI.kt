@@ -398,7 +398,7 @@ enum class ResolutionPreset(
         fun recommendedFor(platform: String): ResolutionPreset = when (platform) {
             "YouTube", "Vimeo" -> UHD_4K
             "Instagram", "TikTok" -> VERTICAL_9X16
-            "Twitter", "LinkedIn" -> FULL_HD_1080P
+            "Twitter" -> FULL_HD_1080P
             "Cinema" -> CINEMA_4K
             else -> FULL_HD_1080P
         }

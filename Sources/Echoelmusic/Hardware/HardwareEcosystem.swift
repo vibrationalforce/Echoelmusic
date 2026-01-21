@@ -1396,7 +1396,6 @@ public final class BroadcastEquipmentRegistry {
         ("Facebook Live", "rtmps://live-api-s.facebook.com:443/rtmp", 8000),
         ("Instagram Live", "rtmps://live-upload.instagram.com:443/rtmp", 3500),
         ("TikTok Live", "rtmp://push.tiktokv.com/live", 6000),
-        ("LinkedIn Live", "rtmps://prod-rtmp.linkedin.com:443/livevideostreaming", 10000),
         ("X (Twitter) Live", "rtmp://rtmp.pscp.tv:80/x", 2500),
         ("Vimeo Live", "rtmps://rtmp-global.cloud.vimeo.com:443/live", 20000),
         ("Restream", "rtmp://live.restream.io/live", 51000),
@@ -1846,7 +1845,7 @@ extension HardwareEcosystem {
         Switchers: ATEM, TriCaster, vMix, OBS, Wirecast, Ecamm
         Protocols: RTMP, RTMPS, SRT, WebRTC, HLS, NDI
         Platforms: YouTube, Twitch, Facebook, Instagram, TikTok,
-                   LinkedIn, Vimeo, Restream, Castr
+                   Vimeo, Restream, Castr
 
         🏠 SMART HOME: Connected Living
         ───────────────────────────────────────────────────────────────────
