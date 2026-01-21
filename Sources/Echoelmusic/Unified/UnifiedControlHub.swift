@@ -4,7 +4,7 @@ import AVFoundation
 import QuartzCore
 
 /// Global logger instance for UnifiedControlHub
-private let Log = Logger.shared
+private let Log = EchoelLogger.shared
 
 /// Central orchestrator for all input modalities in Echoelmusic
 ///

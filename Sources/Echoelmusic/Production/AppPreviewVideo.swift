@@ -14,7 +14,7 @@ import AppKit
 #endif
 
 /// Logger instance for App Preview operations
-private let log = Logger.shared
+private let log = EchoelLogger.shared
 
 // MARK: - App Preview Script
 

@@ -10,6 +10,9 @@
 import Foundation
 import os.log
 
+/// Typealias for backwards compatibility
+public typealias ProfessionalLogger = EchoelLogger
+
 // MARK: - Log Level
 
 /// Log severity levels
@@ -187,12 +190,12 @@ public final class FileOutput: LogOutput, @unchecked Sendable {
 
 // MARK: - Professional Logger
 
-/// Main professional logging system
-public final class Logger: @unchecked Sendable {
+/// Main professional logging system (renamed from Logger to avoid os.log.Logger conflict)
+public final class EchoelLogger: @unchecked Sendable {
 
     // MARK: - Singleton
 
-    public static let shared = Logger()
+    public static let shared = EchoelLogger()
 
     // MARK: - Properties
 
@@ -428,4 +431,4 @@ public final class Logger: @unchecked Sendable {
 // MARK: - Global Logger Access
 
 /// Global logger instance
-public let log = Logger.shared
+public let log = EchoelLogger.shared

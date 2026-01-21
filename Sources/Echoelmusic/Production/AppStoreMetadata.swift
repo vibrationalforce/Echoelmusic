@@ -15,7 +15,7 @@
 import Foundation
 
 /// Logger instance for App Store metadata operations
-private let log = Logger.shared
+private let log = EchoelLogger.shared
 
 // MARK: - App Store Metadata
 

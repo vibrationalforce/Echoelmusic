@@ -20,7 +20,7 @@ import WeatherKit
 #endif
 
 /// Logger instance for Apple Services operations
-private let log = Logger.shared
+private let log = EchoelLogger.shared
 
 #if canImport(CallKit)
 import CallKit
