@@ -72,7 +72,7 @@ Code auf MacBook schreiben (VS Code) → Push zu GitHub → Automatischer Build 
 → Name: Echoelmusic
 → Primary Language: German (oder English)
 → Bundle ID: com.echoelmusic.app (wähle die erstellte ID)
-→ SKU: blab-001 (eindeutige ID)
+→ SKU: echoelmusic-001 (eindeutige ID)
 → User Access: Full Access
 ```
 
@@ -141,7 +141,7 @@ open Package.swift  # Öffnet in Xcode
 # In Xcode:
 → File → New → Project
 → iOS → App
-→ Product Name: Blab
+→ Product Name: Echoelmusic
 → Team: [Wähle dein Developer Team]
 → Bundle Identifier: com.echoelmusic.app
 → Interface: SwiftUI

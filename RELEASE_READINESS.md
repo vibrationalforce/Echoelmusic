@@ -1,8 +1,8 @@
 # Release Readiness Checklist
 
-**Last Updated:** 2026-01-05
-**Branch:** `claude/repo-audit-quality-bYbII`
-**Status:** Full Body Ready Mode
+**Last Updated:** 2026-01-21
+**Branch:** `claude/fix-testflight-deployment-cbuxc`
+**Status:** TestFlight Deployment Ready
 
 ---
 
@@ -63,13 +63,15 @@ open Package.swift     # Opens in Xcode
 - [x] Privacy descriptions (HealthKit, Microphone, Camera)
 - [x] App icons (all sizes)
 - [x] Launch screens
-- [x] Entitlements file
+- [x] Entitlements file (aps-environment: production)
 - [x] Code signing configured
+- [x] Demo credentials secured (env vars)
 - [ ] TestFlight build tested
 - [ ] App Store Connect metadata
 - [ ] Screenshots (all device sizes)
-- [ ] Privacy policy URL
+- [ ] Privacy policy URL (verify https://echoelmusic.com/privacy is live)
 - [ ] App review notes
+- [ ] Verify all marketing URLs return HTTP 200
 
 ---
 

@@ -34,20 +34,24 @@ public struct AppStoreMetadata {
     /// Primary language
     public static let primaryLanguage = "en-US"
 
-    /// Supported languages (12 total)
+    /// Supported languages
+    /// NOTE: App Store metadata is localized for 12 languages, but in-app UI
+    /// currently defaults to English. Full runtime localization (.lproj bundles)
+    /// is planned for a future release. For now, declare English as primary.
     public static let supportedLanguages: [String] = [
-        "en-US",    // English
-        "de-DE",    // German
-        "ja-JP",    // Japanese
-        "es-ES",    // Spanish
-        "fr-FR",    // French
-        "zh-Hans",  // Chinese (Simplified)
-        "ko-KR",    // Korean
-        "pt-BR",    // Portuguese (Brazil)
-        "it-IT",    // Italian
-        "ru-RU",    // Russian
-        "ar-SA",    // Arabic
-        "hi-IN"     // Hindi
+        "en-US"     // English (primary - full UI support)
+        // Future localization planned for:
+        // "de-DE",    // German
+        // "ja-JP",    // Japanese
+        // "es-ES",    // Spanish
+        // "fr-FR",    // French
+        // "zh-Hans",  // Chinese (Simplified)
+        // "ko-KR",    // Korean
+        // "pt-BR",    // Portuguese (Brazil)
+        // "it-IT",    // Italian
+        // "ru-RU",    // Russian
+        // "ar-SA",    // Arabic
+        // "hi-IN"     // Hindi
     ]
 
     // MARK: - Categories
@@ -69,6 +73,9 @@ public struct AppStoreMetadata {
     }
 
     // MARK: - URLs
+    // IMPORTANT: Verify all URLs are LIVE and return HTTP 200 before App Store submission!
+    // App Store review will automatically check these URLs.
+    // Current status: URLs need to be configured on your web hosting.
 
     /// Marketing website
     public static let marketingURL = "https://echoelmusic.com"
@@ -1126,18 +1133,24 @@ VOICEOVER: Optional calm, inspiring narration
 public struct ReviewInformation {
 
     /// Demo account for App Review (if login required)
+    /// IMPORTANT: Set these values via environment variables or secure config before submission:
+    /// - ECHOELMUSIC_DEMO_USERNAME
+    /// - ECHOELMUSIC_DEMO_PASSWORD
+    /// - ECHOELMUSIC_CONTACT_EMAIL
+    /// - ECHOELMUSIC_CONTACT_PHONE
     public static let demoAccount = DemoAccount(
-        username: "michaelterbuyken@gmail.com",
-        password: "DemoPassword2026!",
+        username: ProcessInfo.processInfo.environment["ECHOELMUSIC_DEMO_USERNAME"] ?? "demo@echoelmusic.com",
+        password: ProcessInfo.processInfo.environment["ECHOELMUSIC_DEMO_PASSWORD"] ?? "SET_VIA_ENV_VAR",
         notes: "Full access demo account with pre-configured sessions and sample data. No actual Apple Watch or biometric hardware required for testing."
     )
 
     /// Contact information
+    /// Configure via environment variables for production
     public static let contact = ContactInfo(
         firstName: "App Review",
         lastName: "Contact",
-        phone: "+1-555-ECHO-APP",
-        email: "michaelterbuyken@gmail.com"
+        phone: ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_PHONE"] ?? "+1-555-ECHO-APP",
+        email: ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_EMAIL"] ?? "review@echoelmusic.com"
     )
 
     /// Notes for reviewer
