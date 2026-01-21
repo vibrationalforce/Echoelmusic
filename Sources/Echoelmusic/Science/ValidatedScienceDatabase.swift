@@ -607,6 +607,20 @@ public struct Citation: Identifiable {
     }
 }
 
+/// Evidenzlevel nach Oxford CEBM
+public enum EvidenceLevel: String, Codable {
+    case metaAnalysis = "Level 1a - Meta-Analysis"
+    case randomizedControlledTrial = "Level 1b - RCT"
+    case cohortStudy = "Level 2 - Cohort Study"
+    case caseControl = "Level 3 - Case-Control"
+    case caseReport = "Level 4 - Case Report"
+    case expertOpinion = "Level 5 - Expert Opinion"
+
+    public var description: String {
+        return self.rawValue
+    }
+}
+
 /// Sicherheitsbewertung
 public enum SafetyRating: String, Codable {
     case veryLowRisk = "Sehr niedriges Risiko"

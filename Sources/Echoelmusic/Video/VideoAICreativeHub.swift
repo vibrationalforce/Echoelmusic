@@ -221,7 +221,7 @@ class GenerativeAIEngine: ObservableObject {
     /// Apply style transfer to video
     func applyStyleTransfer(
         to videoURL: URL,
-        style: ArtStyle,
+        style: VideoArtStyle,
         intensity: Float
     ) async -> URL? {
         styleTransferActive = true
@@ -404,7 +404,7 @@ enum VisualStyle: String, CaseIterable {
     case liquidLight = "Liquid Light"
 }
 
-enum ArtStyle: String, CaseIterable {
+enum VideoArtStyle: String, CaseIterable {
     case vanGogh = "Van Gogh"
     case picasso = "Picasso"
     case monet = "Monet"
@@ -675,7 +675,7 @@ struct AISettings {
     var bioReactivity: Float = 0.6
     var quantumSampling: Bool = true
     var selectedStyle: VisualStyle = .liquidLight
-    var selectedArtStyle: ArtStyle = .vaporwave
+    var selectedArtStyle: VideoArtStyle = .vaporwave
 }
 
 struct MappingConfiguration {

@@ -69,6 +69,11 @@ class AudioEngine: ObservableObject {
 
     // MARK: - Initialization
 
+    /// Convenience initializer with default MicrophoneManager
+    convenience init() {
+        self.init(microphoneManager: MicrophoneManager())
+    }
+
     init(microphoneManager: MicrophoneManager) {
         self.microphoneManager = microphoneManager
 
