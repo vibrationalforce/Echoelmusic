@@ -11,6 +11,151 @@
 
 import Foundation
 
+// MARK: - Supporting Types (must be defined before use)
+
+/// Evidenzlevel nach Oxford CEBM
+public enum EvidenceLevel: String, Codable, Sendable {
+    case metaAnalysis = "Level 1a - Meta-Analysis"
+    case randomizedControlledTrial = "Level 1b - RCT"
+    case cohortStudy = "Level 2 - Cohort Study"
+    case caseControl = "Level 3 - Case-Control"
+    case caseReport = "Level 4 - Case Report"
+    case expertOpinion = "Level 5 - Expert Opinion"
+
+    public var description: String {
+        return self.rawValue
+    }
+
+    /// Stärke-Score für Vergleiche (höher = stärker)
+    public var strengthScore: Int {
+        switch self {
+        case .metaAnalysis: return 6
+        case .randomizedControlledTrial: return 5
+        case .cohortStudy: return 4
+        case .caseControl: return 3
+        case .caseReport: return 2
+        case .expertOpinion: return 1
+        }
+    }
+}
+
+/// Sicherheitsbewertung
+public enum SafetyRating: String, Codable, Sendable {
+    case veryLowRisk = "Sehr niedriges Risiko"
+    case lowRisk = "Niedriges Risiko"
+    case moderateRisk = "Moderates Risiko"
+    case elevatedRisk = "Erhöhtes Risiko"
+    case highRisk = "Hohes Risiko"
+}
+
+/// Effektstärke nach Cohen/Hedges
+public struct EffectSize: Sendable {
+    public let hedgesG: Double
+    public let confidence95: (Double, Double)
+    public let pValue: Double
+
+    public init(hedgesG: Double, confidence95: (Double, Double), pValue: Double) {
+        self.hedgesG = hedgesG
+        self.confidence95 = confidence95
+        self.pValue = pValue
+    }
+
+    public var interpretation: String {
+        let absG = abs(hedgesG)
+        if absG >= 0.8 { return "Großer Effekt" }
+        if absG >= 0.5 { return "Mittlerer Effekt" }
+        if absG >= 0.2 { return "Kleiner Effekt" }
+        return "Minimaler Effekt"
+    }
+}
+
+/// Wissenschaftliche Zitation
+public struct Citation: Identifiable, Sendable {
+    public let id: UUID
+    public let authors: String
+    public let year: Int
+    public let title: String
+    public let journal: String
+    public let volume: String
+    public let pages: String
+    public let pmid: String?
+    public let doi: String?
+
+    public init(authors: String, year: Int, title: String, journal: String, volume: String, pages: String, pmid: String? = nil, doi: String? = nil) {
+        self.id = UUID()
+        self.authors = authors
+        self.year = year
+        self.title = title
+        self.journal = journal
+        self.volume = volume
+        self.pages = pages
+        self.pmid = pmid
+        self.doi = doi
+    }
+
+    public var shortCitation: String {
+        "\(authors) (\(year)). \(journal) \(volume):\(pages)"
+    }
+
+    public var fullCitation: String {
+        var citation = "\(authors) (\(year)). \(title). \(journal) \(volume):\(pages)."
+        if let pmid = pmid { citation += " PMID: \(pmid)" }
+        if let doi = doi { citation += " DOI: \(doi)" }
+        return citation
+    }
+}
+
+/// Validierte Intervention mit vollständiger Dokumentation
+public struct ValidatedIntervention: Identifiable, Sendable {
+    public let id: UUID
+    public let name: String
+    public let evidenceLevel: EvidenceLevel
+    public let effectSize: EffectSize
+    public let primaryCitations: [Citation]
+    public let mechanism: String
+    public let implementationNotes: String
+    public let contraindications: [String]
+    public let safetyRating: SafetyRating
+
+    public init(name: String, evidenceLevel: EvidenceLevel, effectSize: EffectSize, primaryCitations: [Citation], mechanism: String, implementationNotes: String, contraindications: [String], safetyRating: SafetyRating) {
+        self.id = UUID()
+        self.name = name
+        self.evidenceLevel = evidenceLevel
+        self.effectSize = effectSize
+        self.primaryCitations = primaryCitations
+        self.mechanism = mechanism
+        self.implementationNotes = implementationNotes
+        self.contraindications = contraindications
+        self.safetyRating = safetyRating
+    }
+
+    public var fullDescription: String {
+        """
+        ╔═══════════════════════════════════════════════════════════════╗
+        ║ \(name)
+        ╠═══════════════════════════════════════════════════════════════╣
+        ║ Evidenzlevel: \(evidenceLevel.description)
+        ║ Effektstärke: Hedges' g = \(effectSize.hedgesG) (\(effectSize.interpretation))
+        ║ 95% CI: [\(effectSize.confidence95.0), \(effectSize.confidence95.1)]
+        ║ p-Wert: \(effectSize.pValue)
+        ║ Sicherheit: \(safetyRating.rawValue)
+        ╠═══════════════════════════════════════════════════════════════╣
+        ║ MECHANISMUS:
+        \(mechanism)
+        ╠═══════════════════════════════════════════════════════════════╣
+        ║ IMPLEMENTIERUNG:
+        \(implementationNotes)
+        ╠═══════════════════════════════════════════════════════════════╣
+        ║ KONTRAINDIKATIONEN:
+        \(contraindications.isEmpty ? "Keine bekannt" : contraindications.map { "• " + $0 }.joined(separator: "\n"))
+        ╠═══════════════════════════════════════════════════════════════╣
+        ║ PRIMÄRLITERATUR:
+        \(primaryCitations.map { "• " + $0.shortCitation }.joined(separator: "\n"))
+        ╚═══════════════════════════════════════════════════════════════╝
+        """
+    }
+}
+
 // MARK: - Validated Science Database
 
 /// Umfassende Datenbank wissenschaftlich validierter Interventionen
@@ -526,108 +671,6 @@ public struct ValidatedScienceDatabase {
 
         return report
     }
-}
-
-// MARK: - Supporting Types
-
-/// Validierte Intervention mit vollständiger Dokumentation
-public struct ValidatedIntervention: Identifiable {
-    public let id = UUID()
-    public let name: String
-    public let evidenceLevel: EvidenceLevel
-    public let effectSize: EffectSize
-    public let primaryCitations: [Citation]
-    public let mechanism: String
-    public let implementationNotes: String
-    public let contraindications: [String]
-    public let safetyRating: SafetyRating
-
-    public var fullDescription: String {
-        """
-        ╔═══════════════════════════════════════════════════════════════╗
-        ║ \(name)
-        ╠═══════════════════════════════════════════════════════════════╣
-        ║ Evidenzlevel: \(evidenceLevel.description)
-        ║ Effektstärke: Hedges' g = \(String(format: "%.2f", effectSize.hedgesG)) (p = \(String(format: "%.3f", effectSize.pValue)))
-        ║ 95% CI: [\(String(format: "%.2f", effectSize.confidence95.0)), \(String(format: "%.2f", effectSize.confidence95.1))]
-        ║ Sicherheit: \(safetyRating.rawValue)
-        ╠═══════════════════════════════════════════════════════════════╣
-        ║ MECHANISMUS:
-        \(mechanism)
-        ╠═══════════════════════════════════════════════════════════════╣
-        ║ IMPLEMENTIERUNG:
-        \(implementationNotes)
-        ╠═══════════════════════════════════════════════════════════════╣
-        ║ KONTRAINDIKATIONEN:
-        \(contraindications.isEmpty ? "Keine bekannt" : contraindications.map { "• " + $0 }.joined(separator: "\n"))
-        ╠═══════════════════════════════════════════════════════════════╣
-        ║ PRIMÄRLITERATUR:
-        \(primaryCitations.map { "• " + $0.shortCitation }.joined(separator: "\n"))
-        ╚═══════════════════════════════════════════════════════════════╝
-        """
-    }
-}
-
-/// Effektstärke nach Cohen/Hedges
-public struct EffectSize {
-    public let hedgesG: Double
-    public let confidence95: (Double, Double)
-    public let pValue: Double
-
-    public var interpretation: String {
-        let absG = abs(hedgesG)
-        if absG >= 0.8 { return "Großer Effekt" }
-        if absG >= 0.5 { return "Mittlerer Effekt" }
-        if absG >= 0.2 { return "Kleiner Effekt" }
-        return "Minimaler Effekt"
-    }
-}
-
-/// Wissenschaftliche Zitation
-public struct Citation: Identifiable {
-    public let id = UUID()
-    public let authors: String
-    public let year: Int
-    public let title: String
-    public let journal: String
-    public let volume: String
-    public let pages: String
-    public let pmid: String?
-    public let doi: String?
-
-    public var shortCitation: String {
-        "\(authors) (\(year)). \(journal) \(volume):\(pages)"
-    }
-
-    public var fullCitation: String {
-        var citation = "\(authors) (\(year)). \(title). \(journal) \(volume):\(pages)."
-        if let pmid = pmid { citation += " PMID: \(pmid)" }
-        if let doi = doi { citation += " DOI: \(doi)" }
-        return citation
-    }
-}
-
-/// Evidenzlevel nach Oxford CEBM
-public enum EvidenceLevel: String, Codable {
-    case metaAnalysis = "Level 1a - Meta-Analysis"
-    case randomizedControlledTrial = "Level 1b - RCT"
-    case cohortStudy = "Level 2 - Cohort Study"
-    case caseControl = "Level 3 - Case-Control"
-    case caseReport = "Level 4 - Case Report"
-    case expertOpinion = "Level 5 - Expert Opinion"
-
-    public var description: String {
-        return self.rawValue
-    }
-}
-
-/// Sicherheitsbewertung
-public enum SafetyRating: String, Codable {
-    case veryLowRisk = "Sehr niedriges Risiko"
-    case lowRisk = "Niedriges Risiko"
-    case moderateRisk = "Moderates Risiko"
-    case elevatedRisk = "Erhöhtes Risiko"
-    case highRisk = "Hohes Risiko"
 }
 
 // MARK: - Master Disclaimer
