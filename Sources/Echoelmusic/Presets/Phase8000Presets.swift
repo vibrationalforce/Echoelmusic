@@ -282,6 +282,25 @@ public struct ScientificPreset: EnginePreset {
 
 // MARK: - Wellness Presets
 
+/// Wellness category types for meditation and wellness sessions
+public enum WellnessCategory: String, Codable, Sendable {
+    case mindfulness = "Mindfulness"
+    case relaxation = "Relaxation"
+    case focus = "Focus"
+    case sleepSupport = "Sleep Support"
+    case meditation = "Meditation"
+    case energy = "Energy"
+}
+
+/// Breathing pattern types for guided breathing exercises
+public enum BreathingPattern: String, Codable, Sendable {
+    case coherenceBreath = "Coherence Breath"
+    case relaxingBreath = "Relaxing Breath"
+    case boxBreathing = "Box Breathing"
+    case fourSevenEight = "4-7-8 Breath"
+    case energizingBreath = "Energizing Breath"
+}
+
 public struct WellnessPreset: EnginePreset {
     public let id: UUID
     public var name: String
@@ -462,11 +481,11 @@ public struct CollaborationPreset: EnginePreset {
     ]
 }
 
-// MARK: - Preset Manager
+// MARK: - Phase 8000 Preset Manager
 
 @MainActor
-public final class PresetManager: ObservableObject {
-    public static let shared = PresetManager()
+public final class Phase8000PresetManager: ObservableObject {
+    public static let shared = Phase8000PresetManager()
 
     @Published public var videoPresets: [VideoPreset] = VideoPreset.all
     @Published public var creativePresets: [CreativePreset] = CreativePreset.all
