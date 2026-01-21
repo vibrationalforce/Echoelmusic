@@ -167,7 +167,7 @@ public struct ModulationMapping: Identifiable, Codable, Sendable {
     public var targetType: ModulationTargetType
     public var targetName: String
     public var amount: Double           // Modulation depth (-1.0 to 1.0)
-    public var curve: MappingCurve      // Response curve
+    public var curve: BioMappingCurve      // Response curve
     public var smoothing: Double        // Smoothing time in ms (0-1000)
     public var minInput: Double         // Input range min
     public var maxInput: Double         // Input range max
@@ -181,7 +181,7 @@ public struct ModulationMapping: Identifiable, Codable, Sendable {
         targetType: ModulationTargetType,
         targetName: String,
         amount: Double = 1.0,
-        curve: MappingCurve = .linear,
+        curve: BioMappingCurve = .linear,
         smoothing: Double = 50,
         minInput: Double = 0,
         maxInput: Double = 1,
@@ -238,7 +238,7 @@ public enum ModulationTargetType: String, CaseIterable, Codable, Sendable {
 }
 
 /// Mapping curve types
-public enum MappingCurve: String, CaseIterable, Codable, Sendable {
+public enum BioMappingCurve: String, CaseIterable, Codable, Sendable {
     case linear
     case exponential
     case logarithmic

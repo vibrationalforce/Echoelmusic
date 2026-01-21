@@ -6,7 +6,7 @@ import Combine
 @MainActor
 class ChatAggregator: ObservableObject {
 
-    @Published var messages: [ChatMessage] = []
+    @Published var messages: [StreamChatMessage] = []
     @Published var isActive: Bool = false
 
     // AI Moderation
@@ -28,7 +28,7 @@ class ChatAggregator: ObservableObject {
         log.streaming("💬 ChatAggregator: Stopped")
     }
 
-    func addMessage(_ message: ChatMessage) {
+    func addMessage(_ message: StreamChatMessage) {
         // AI Moderation check
         if moderationEnabled && isToxic(message.text) {
             toxicMessagesBlocked += 1
@@ -170,7 +170,7 @@ class ToxicityClassifier {
     }
 }
 
-struct ChatMessage: Identifiable {
+struct StreamChatMessage: Identifiable {
     let id = UUID()
     let platform: Platform
     let username: String

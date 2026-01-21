@@ -27,7 +27,7 @@ public enum HealthKitDataSource: String, Codable {
 // MARK: - Real-Time Heart Data
 
 /// Real-time heart rate and HRV data
-public struct RealTimeHeartData: Codable {
+public struct ProductionHeartData: Codable {
     public let timestamp: Date
     public let heartRate: Double              // BPM
     public let heartRateVariability: Double?  // SDNN in ms
@@ -159,7 +159,7 @@ public class ProductionHealthKitManager {
     private let maxBufferSize = 300 // 5 minutes at 1 Hz
 
     // Callbacks
-    public var onHeartRateUpdate: ((RealTimeHeartData) -> Void)?
+    public var onHeartRateUpdate: ((ProductionHeartData) -> Void)?
     public var onHRVUpdate: ((HRVMetrics) -> Void)?
     public var onWorkoutUpdate: ((HKWorkout) -> Void)?
 
@@ -394,7 +394,7 @@ public class ProductionHealthKitManager {
             // Calculate HRV metrics from buffer
             let metrics = calculateHRVMetrics()
 
-            let heartData = RealTimeHeartData(
+            let heartData = ProductionHeartData(
                 timestamp: latest.endDate,
                 heartRate: bpm,
                 heartRateVariability: metrics?.sdnn,
@@ -631,7 +631,7 @@ public class ProductionHealthKitManager {
             // Calculate metrics
             let metrics = self.calculateHRVMetrics()
 
-            let heartData = RealTimeHeartData(
+            let heartData = ProductionHeartData(
                 timestamp: Date(),
                 heartRate: simulatedHR,
                 heartRateVariability: metrics?.sdnn,

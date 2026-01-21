@@ -27,7 +27,7 @@ public enum HapticConstants {
 // MARK: - Haptic Pattern Types
 
 /// Types of haptic patterns the engine can generate
-public enum HapticPatternType: String, CaseIterable, Identifiable, Sendable {
+public enum CompositionPatternType: String, CaseIterable, Identifiable, Sendable {
     case heartbeat = "Heartbeat"
     case breathing = "Breathing"
     case coherencePulse = "Coherence Pulse"
@@ -145,7 +145,7 @@ public final class HapticCompositionEngine: ObservableObject {
     @Published public private(set) var state: HapticEngineState = .idle
     @Published public private(set) var isSupported: Bool = false
     @Published public private(set) var currentComposition: HapticComposition?
-    @Published public private(set) var currentPattern: HapticPatternType = .coherencePulse
+    @Published public private(set) var currentPattern: CompositionPatternType = .coherencePulse
 
     @Published public var masterIntensity: Float = 1.0
     @Published public var bioSyncEnabled: Bool = true
@@ -245,7 +245,7 @@ public final class HapticCompositionEngine: ObservableObject {
     // MARK: - Pattern Generation
 
     /// Generate a haptic pattern based on type and bio data
-    public func generatePattern(_ type: HapticPatternType) -> HapticComposition {
+    public func generatePattern(_ type: CompositionPatternType) -> HapticComposition {
         currentPattern = type
 
         switch type {
@@ -677,7 +677,7 @@ public final class HapticCompositionEngine: ObservableObject {
     }
 
     /// Play a pattern type
-    public func playPattern(_ type: HapticPatternType) {
+    public func playPattern(_ type: CompositionPatternType) {
         let composition = generatePattern(type)
         play(composition)
     }
