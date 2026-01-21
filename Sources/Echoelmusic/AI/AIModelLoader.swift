@@ -400,7 +400,7 @@ extension AIModelLoader {
 
             if let stateIndex = output.featureValue(for: "state")?.int64Value,
                let confidence = output.featureValue(for: "confidence")?.doubleValue {
-                let state = BioState(rawValue: Int(stateIndex)) ?? .balanced
+                let state = AIBioState(rawValue: Int(stateIndex)) ?? .balanced
                 return BioStatePrediction(state: state, confidence: confidence)
             }
         }
@@ -413,7 +413,7 @@ extension AIModelLoader {
         // Calculate coherence (simplified formula)
         let coherence = min(1.0, hrv / 100.0 * (1.0 - abs(breathingRate - 6.0) / 10.0))
 
-        let state: BioState
+        let state: AIBioState
         let confidence: Double
 
         if coherence > 0.8 && heartRate < 75 {
@@ -440,9 +440,9 @@ extension AIModelLoader {
     }
 }
 
-// MARK: - Bio State Types
+// MARK: - AI Bio State Types (renamed to avoid conflict with EchoelUniversalCore.BioState)
 
-enum BioState: Int, CaseIterable {
+enum AIBioState: Int, CaseIterable {
     case stressed = 0
     case fatigued = 1
     case balanced = 2
@@ -474,7 +474,7 @@ enum BioState: Int, CaseIterable {
 }
 
 struct BioStatePrediction {
-    let state: BioState
+    let state: AIBioState
     let confidence: Double
 
     var isHighConfidence: Bool {

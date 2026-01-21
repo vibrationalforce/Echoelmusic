@@ -6,6 +6,10 @@
 //
 // Created: 2026-01-20
 
+// App Clips are only available on iOS and built as a separate target
+// This guard prevents compilation conflicts when building other platforms
+#if os(iOS) && canImport(AppClip)
+
 import SwiftUI
 import AppClip
 import CoreLocation
@@ -16,8 +20,9 @@ private let log = EchoelLogger.shared
 
 // MARK: - App Clip Entry Point
 
-/// App Clip main entry
-@main
+/// App Clip main entry - only compiled for App Clip target
+// Note: @main is removed here as App Clips use a separate target with its own entry point
+// The App Clip target in Xcode will have its own @main attribute
 struct EchoelAppClipApp: App {
     @StateObject private var appClipManager = AppClipManager.shared
 
@@ -684,3 +689,5 @@ struct AppClipRootView_Previews: PreviewProvider {
     }
 }
 #endif
+
+#endif // os(iOS) && canImport(AppClip)

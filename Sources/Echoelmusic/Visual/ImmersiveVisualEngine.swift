@@ -1020,7 +1020,7 @@ public struct ImmersiveVisualView: View {
             }
         }
         .sheet(isPresented: $showSettings) {
-            ImmersiveSettingsView(engine: engine)
+            VisualImmersiveSettingsView(engine: engine)
         }
     }
 }
@@ -1207,11 +1207,11 @@ struct ImmersiveScenePreview: View {
 }
 
 //==============================================================================
-// MARK: - Immersive Settings View
+// MARK: - Visual Immersive Settings View (renamed to avoid conflict with ImmersiveViews.ImmersiveSettingsView)
 //==============================================================================
 
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, *)
-struct ImmersiveSettingsView: View {
+struct VisualImmersiveSettingsView: View {
     @ObservedObject var engine: ImmersiveVisualEngine
     @Environment(\.dismiss) var dismiss
 
