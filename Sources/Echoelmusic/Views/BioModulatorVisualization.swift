@@ -152,10 +152,10 @@ struct BioMiniMeter: View {
     }
 }
 
-// MARK: - Bio Metrics View
+// MARK: - Bio Modulator Metrics View (renamed to avoid conflict with Components/BioMetricsView)
 
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, *)
-struct BioMetricsView: View {
+struct BioModulatorMetricsView: View {
     let bioData: BiometricData
     @State private var heartRateHistory: [Double] = Array(repeating: 70, count: 60)
     @State private var hrvHistory: [Double] = Array(repeating: 50, count: 60)
@@ -205,14 +205,14 @@ struct BioMetricsView: View {
 
                 // Additional Metrics
                 HStack(spacing: 16) {
-                    MetricCard(
+                    BioMetricCard(
                         title: "GSR",
                         value: bioData.skinConductance,
                         icon: "hand.raised.fill",
                         color: .yellow
                     )
 
-                    MetricCard(
+                    BioMetricCard(
                         title: "Temp",
                         value: bioData.bodyTemperature,
                         icon: "thermometer",
@@ -220,7 +220,7 @@ struct BioMetricsView: View {
                         format: "%.1f°C"
                     )
 
-                    MetricCard(
+                    BioMetricCard(
                         title: "SpO2",
                         value: bioData.oxygenSaturation,
                         icon: "drop.fill",
@@ -385,10 +385,10 @@ struct BreathingVisualization: View {
     }
 }
 
-// MARK: - Metric Card
+// MARK: - Bio Metric Card (renamed to avoid conflict with WatchAppView.MetricCard)
 
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, *)
-struct MetricCard: View {
+struct BioMetricCard: View {
     let title: String
     let value: Double
     let icon: String

@@ -6,7 +6,7 @@ struct Session: Identifiable, Codable {
     var name: String
     var tracks: [Track]
     var tempo: Double
-    var timeSignature: TimeSignature
+    var timeSignature: RecordingTimeSignature
     var duration: TimeInterval
     var createdAt: Date
     var modifiedAt: Date
@@ -24,7 +24,7 @@ struct Session: Identifiable, Codable {
         self.name = name
         self.tracks = []
         self.tempo = tempo
-        self.timeSignature = TimeSignature(numerator: 4, denominator: 4)
+        self.timeSignature = RecordingTimeSignature(numerator: 4, denominator: 4)
         self.duration = 0
         self.createdAt = Date()
         self.modifiedAt = Date()
@@ -148,8 +148,8 @@ struct Session: Identifiable, Codable {
 
 // MARK: - Supporting Types
 
-/// Time signature (e.g., 4/4, 3/4)
-struct TimeSignature: Codable {
+/// Recording time signature (e.g., 4/4, 3/4) - renamed to avoid conflict with BPMGridEditEngine.TimeSignature
+struct RecordingTimeSignature: Codable {
     var numerator: Int
     var denominator: Int
 

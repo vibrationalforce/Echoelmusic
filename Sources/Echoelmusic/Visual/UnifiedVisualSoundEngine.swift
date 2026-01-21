@@ -425,7 +425,7 @@ class UnifiedVisualSoundEngine: ObservableObject {
 
     deinit {
         if let setup = fftSetup {
-            vDSP_DFT_Destroy(setup)
+            vDSP_DFT_DestroySetup(setup)
         }
     }
 

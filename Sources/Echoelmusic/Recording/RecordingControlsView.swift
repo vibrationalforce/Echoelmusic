@@ -94,7 +94,7 @@ struct RecordingControlsView: View {
         }
         .sheet(isPresented: $showShareSheet) {
             if let url = shareURL {
-                ShareSheet(items: [url])
+                RecordingShareSheet(items: [url])
             }
         }
     }
@@ -536,8 +536,8 @@ struct RecordingControlsView: View {
 #if os(iOS) || os(visionOS)
 import UIKit
 
-/// Cross-platform share sheet wrapper for iOS/visionOS
-struct ShareSheet: UIViewControllerRepresentable {
+/// Cross-platform share sheet for recording export (renamed to avoid conflict with PrivacyPolicy.ShareSheet)
+struct RecordingShareSheet: UIViewControllerRepresentable {
     let items: [Any]
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
@@ -550,7 +550,7 @@ struct ShareSheet: UIViewControllerRepresentable {
 import AppKit
 
 /// Share sheet wrapper for macOS using NSSharingServicePicker
-struct ShareSheet: View {
+struct RecordingShareSheet: View {
     let items: [Any]
 
     var body: some View {

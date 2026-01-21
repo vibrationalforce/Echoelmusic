@@ -164,16 +164,16 @@ public final class ErrorRecoverySystem: Sendable {
         logger.info("Circuit breaker \(service) manually reset")
     }
 
-    // MARK: - Retry Policy
+    // MARK: - Recovery Retry Policy
 
-    public struct RetryPolicy: Sendable {
+    public struct RecoveryRetryPolicy: Sendable {
         public var maxAttempts: Int
         public var initialDelay: TimeInterval
         public var maxDelay: TimeInterval
         public var backoffMultiplier: Double
         public var jitter: Bool
 
-        public static let `default` = RetryPolicy(
+        public static let `default` = RecoveryRetryPolicy(
             maxAttempts: 3,
             initialDelay: 0.5,
             maxDelay: 30,
@@ -181,7 +181,7 @@ public final class ErrorRecoverySystem: Sendable {
             jitter: true
         )
 
-        public static let aggressive = RetryPolicy(
+        public static let aggressive = RecoveryRetryPolicy(
             maxAttempts: 5,
             initialDelay: 0.1,
             maxDelay: 60,
@@ -189,7 +189,7 @@ public final class ErrorRecoverySystem: Sendable {
             jitter: true
         )
 
-        public static let conservative = RetryPolicy(
+        public static let conservative = RecoveryRetryPolicy(
             maxAttempts: 2,
             initialDelay: 1.0,
             maxDelay: 10,
@@ -212,7 +212,7 @@ public final class ErrorRecoverySystem: Sendable {
     /// Execute with retry policy
     public func executeWithRetry<T>(
         _ operation: String,
-        policy: RetryPolicy = .default,
+        policy: RecoveryRetryPolicy = .default,
         retryableErrors: [Error.Type] = [],
         task: () async throws -> T
     ) async throws -> T {

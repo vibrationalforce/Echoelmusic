@@ -43,7 +43,7 @@ final class SelfHealingEngine: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var healthMonitor: HealthMonitor?
     private var errorPredictor: ErrorPredictor?
-    private var performanceOptimizer: PerformanceOptimizer?
+    private var performanceOptimizer: FlowPerformanceOptimizer?
     private var memoryGuardian: MemoryGuardian?
     private var flowStateMachine: FlowStateMachine?
 
@@ -60,7 +60,7 @@ final class SelfHealingEngine: ObservableObject {
     private func setupSubsystems() {
         healthMonitor = HealthMonitor(delegate: self)
         errorPredictor = ErrorPredictor(delegate: self)
-        performanceOptimizer = PerformanceOptimizer(delegate: self)
+        performanceOptimizer = FlowPerformanceOptimizer(delegate: self)
         memoryGuardian = MemoryGuardian(delegate: self)
         flowStateMachine = FlowStateMachine(delegate: self)
     }
@@ -677,7 +677,8 @@ class ErrorPredictor {
     }
 }
 
-class PerformanceOptimizer {
+/// Flow-based performance optimizer for SelfHealingEngine (renamed to avoid conflict with Optimization/PerformanceOptimizer)
+class FlowPerformanceOptimizer {
     weak var delegate: PerformanceOptimizerDelegate?
 
     init(delegate: PerformanceOptimizerDelegate?) {

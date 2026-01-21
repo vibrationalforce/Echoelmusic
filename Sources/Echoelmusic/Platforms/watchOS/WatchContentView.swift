@@ -2,9 +2,9 @@ import SwiftUI
 
 #if os(watchOS)
 
-/// Main content view for Echoelmusic Apple Watch app
+/// Alternative content view for Echoelmusic Apple Watch app (renamed to avoid conflict with WatchAppView)
 /// Bio-reactive meditation and breathing guidance with haptic feedback
-struct WatchContentView: View {
+struct WatchContentViewAlt: View {
 
     @State private var watchApp = WatchApp()
     @State private var selectedTab: Tab = .metrics
@@ -341,15 +341,6 @@ struct HistoryView: View {
     }
 }
 
-// MARK: - Watch App Entry Point
-
-@main
-struct EchoelmusicWatchApp: App {
-    var body: some Scene {
-        WindowGroup {
-            WatchContentView()
-        }
-    }
-}
+// Note: Main entry point is in WatchAppView.swift (EchoelmusicWatchApp)
 
 #endif

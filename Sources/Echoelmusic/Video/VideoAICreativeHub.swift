@@ -79,7 +79,7 @@ final class VideoAICreativeHub: ObservableObject {
 
     // MARK: - Project Management
 
-    func createProject(name: String, type: ProjectType) -> CreativeProject {
+    func createProject(name: String, type: VideoProjectType) -> CreativeProject {
         let project = CreativeProject(name: name, type: type)
         currentProject = project
         return project
@@ -91,9 +91,9 @@ final class VideoAICreativeHub: ObservableObject {
     }
 }
 
-// MARK: - Project Types
+// MARK: - Video Project Types (renamed to avoid conflict with ProductionManager.ProjectType)
 
-enum ProjectType: String, CaseIterable {
+enum VideoProjectType: String, CaseIterable {
     case musicVideo = "Music Video"
     case liveVisual = "Live Visual"
     case installation = "Installation"
@@ -105,14 +105,14 @@ enum ProjectType: String, CaseIterable {
 struct CreativeProject: Identifiable {
     let id = UUID()
     var name: String
-    var type: ProjectType
+    var type: VideoProjectType
     var timeline: Timeline
     var aiSettings: AISettings
     var mappingConfig: MappingConfiguration
     var createdAt: Date
     var modifiedAt: Date
 
-    init(name: String, type: ProjectType) {
+    init(name: String, type: VideoProjectType) {
         self.name = name
         self.type = type
         self.timeline = Timeline(name: name)

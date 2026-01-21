@@ -119,7 +119,8 @@ class CloudSyncManager: ObservableObject {
 
         // Backup every 5 minutes (or specified interval)
         autoBackupTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            guard let self = self else { return }
+            Task { @MainActor [weak self] in
                 try? await self?.autoBackup()
             }
         }
@@ -260,10 +261,4 @@ enum CloudError: LocalizedError {
     }
 }
 
-// Session struct placeholder
-struct Session {
-    let name: String
-    let duration: TimeInterval
-    let avgHRV: Float
-    let avgCoherence: Float
-}
+// Note: CloudSession struct is defined above at line 242

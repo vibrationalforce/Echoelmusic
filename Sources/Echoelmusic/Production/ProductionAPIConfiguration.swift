@@ -31,7 +31,7 @@ public protocol APIConfiguration {
     var timeout: TimeInterval { get }
 
     /// Retry policy
-    var retryPolicy: RetryPolicy { get }
+    var retryPolicy: APIRetryPolicy { get }
 
     /// Rate limit configuration
     var rateLimit: RateLimitConfiguration { get }
@@ -63,10 +63,10 @@ public enum APIEnvironment: String, Codable {
     }
 }
 
-// MARK: - Retry Policy
+// MARK: - API Retry Policy
 
-/// Retry policy for failed API requests
-public struct RetryPolicy: Codable {
+/// Retry policy for failed API requests (renamed to avoid conflict with CircuitBreaker.RetryPolicy)
+public struct APIRetryPolicy: Codable {
     public let maxRetries: Int
     public let initialDelay: TimeInterval
     public let maxDelay: TimeInterval
@@ -87,9 +87,9 @@ public struct RetryPolicy: Codable {
         self.retryableStatusCodes = retryableStatusCodes
     }
 
-    public static let `default` = RetryPolicy()
-    public static let aggressive = RetryPolicy(maxRetries: 5, initialDelay: 0.5)
-    public static let conservative = RetryPolicy(maxRetries: 2, initialDelay: 2.0)
+    public static let `default` = APIRetryPolicy()
+    public static let aggressive = APIRetryPolicy(maxRetries: 5, initialDelay: 0.5)
+    public static let conservative = APIRetryPolicy(maxRetries: 2, initialDelay: 2.0)
 }
 
 // MARK: - Rate Limit Configuration
@@ -150,7 +150,7 @@ public struct YouTubeAPIConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 30.0
-    public let retryPolicy = RetryPolicy.default
+    public let retryPolicy = APIRetryPolicy.default
     public let rateLimit = RateLimitConfiguration.streaming
 
     /// OAuth 2.0 scopes
@@ -187,7 +187,7 @@ public struct TwitchAPIConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 30.0
-    public let retryPolicy = RetryPolicy.default
+    public let retryPolicy = APIRetryPolicy.default
     public let rateLimit = RateLimitConfiguration(
         requestsPerSecond: 20,
         requestsPerMinute: 800,
@@ -228,7 +228,7 @@ public struct FacebookAPIConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 30.0
-    public let retryPolicy = RetryPolicy.default
+    public let retryPolicy = APIRetryPolicy.default
     public let rateLimit = RateLimitConfiguration.streaming
 
     /// Permissions
@@ -263,7 +263,7 @@ public struct InstagramAPIConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 30.0
-    public let retryPolicy = RetryPolicy.default
+    public let retryPolicy = APIRetryPolicy.default
     public let rateLimit = RateLimitConfiguration.streaming
 
     public init(environment: APIEnvironment = .current) {
@@ -291,7 +291,7 @@ public struct TikTokAPIConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 30.0
-    public let retryPolicy = RetryPolicy.default
+    public let retryPolicy = APIRetryPolicy.default
     public let rateLimit = RateLimitConfiguration.streaming
 
     public init(environment: APIEnvironment = .current) {
@@ -336,7 +336,7 @@ public struct CloudKitConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 60.0
-    public let retryPolicy = RetryPolicy.conservative
+    public let retryPolicy = APIRetryPolicy.conservative
     public let rateLimit = RateLimitConfiguration(
         requestsPerSecond: 40,
         requestsPerMinute: 2400,
@@ -378,7 +378,7 @@ public struct AWSS3Configuration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 120.0
-    public let retryPolicy = RetryPolicy.aggressive
+    public let retryPolicy = APIRetryPolicy.aggressive
     public let rateLimit = RateLimitConfiguration(
         requestsPerSecond: 100,
         requestsPerMinute: 6000,
@@ -418,7 +418,7 @@ public struct GoogleCloudStorageConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 120.0
-    public let retryPolicy = RetryPolicy.aggressive
+    public let retryPolicy = APIRetryPolicy.aggressive
     public let rateLimit = RateLimitConfiguration(
         requestsPerSecond: 100,
         requestsPerMinute: 6000,
@@ -456,7 +456,7 @@ public struct AzureBlobConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 120.0
-    public let retryPolicy = RetryPolicy.aggressive
+    public let retryPolicy = APIRetryPolicy.aggressive
     public let rateLimit = RateLimitConfiguration(
         requestsPerSecond: 100,
         requestsPerMinute: 6000,
@@ -490,7 +490,7 @@ public struct FirebaseAnalyticsConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 10.0
-    public let retryPolicy = RetryPolicy.aggressive
+    public let retryPolicy = APIRetryPolicy.aggressive
     public let rateLimit = RateLimitConfiguration.analytics
 
     /// Google App ID
@@ -532,7 +532,7 @@ public struct MixpanelConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 10.0
-    public let retryPolicy = RetryPolicy.aggressive
+    public let retryPolicy = APIRetryPolicy.aggressive
     public let rateLimit = RateLimitConfiguration.analytics
 
     public init(environment: APIEnvironment = .current) {
@@ -559,7 +559,7 @@ public struct AmplitudeConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 10.0
-    public let retryPolicy = RetryPolicy.aggressive
+    public let retryPolicy = APIRetryPolicy.aggressive
     public let rateLimit = RateLimitConfiguration.analytics
 
     public init(environment: APIEnvironment = .current) {
@@ -588,7 +588,7 @@ public struct CrashlyticsConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 30.0
-    public let retryPolicy = RetryPolicy.aggressive
+    public let retryPolicy = APIRetryPolicy.aggressive
     public let rateLimit = RateLimitConfiguration(
         requestsPerSecond: 10,
         requestsPerMinute: 600,
@@ -620,7 +620,7 @@ public struct SentryConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 30.0
-    public let retryPolicy = RetryPolicy.aggressive
+    public let retryPolicy = APIRetryPolicy.aggressive
     public let rateLimit = RateLimitConfiguration(
         requestsPerSecond: 10,
         requestsPerMinute: 600,
@@ -660,7 +660,7 @@ public struct AppleMLConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 60.0
-    public let retryPolicy = RetryPolicy.default
+    public let retryPolicy = APIRetryPolicy.default
     public let rateLimit = RateLimitConfiguration(
         requestsPerSecond: 5,
         requestsPerMinute: 300,
@@ -700,7 +700,7 @@ public struct CustomAIConfiguration: APIConfiguration {
     }
 
     public let timeout: TimeInterval = 60.0
-    public let retryPolicy = RetryPolicy.default
+    public let retryPolicy = APIRetryPolicy.default
     public let rateLimit = RateLimitConfiguration(
         requestsPerSecond: 5,
         requestsPerMinute: 300,

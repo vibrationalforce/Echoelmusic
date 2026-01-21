@@ -237,7 +237,7 @@ class LLMService: ObservableObject {
     }
 
     /// Interpret a session recording
-    func interpretSession(bioData: [BioDataPoint]) async throws -> String {
+    func interpretSession(bioData: [LLMBioDataPoint]) async throws -> String {
         let summary = summarizeBioData(bioData)
 
         let prompt = """
@@ -451,7 +451,7 @@ class LLMService: ObservableObject {
         }
     }
 
-    private func summarizeBioData(_ data: [BioDataPoint]) -> String {
+    private func summarizeBioData(_ data: [LLMBioDataPoint]) -> String {
         guard !data.isEmpty,
               let firstPoint = data.first,
               let lastPoint = data.last else {
@@ -483,7 +483,8 @@ enum MeditationFocus: String, CaseIterable {
     case openAwareness = "open awareness"
 }
 
-struct BioDataPoint {
+/// Bio data point for LLM context (renamed to avoid conflict with Recording/Session.BioDataPoint)
+struct LLMBioDataPoint {
     let timestamp: Date
     let heartRate: Double
     let hrv: Double
