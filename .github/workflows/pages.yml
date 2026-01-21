@@ -3,7 +3,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main", "claude/build-verification-launch-vD0lB", "claude/fix-website-errors-YekLi"]
+    branches: ["main"]
+    paths:
+      - 'docs/**'  # Only run when docs change
   workflow_dispatch:
 
 # Sets permissions for GITHUB_TOKEN

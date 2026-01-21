@@ -3,9 +3,11 @@ name: Echoelmusic CI/CD Pipeline
 on:
   push:
     branches: [ develop, 'feature/**' ]
-  # pull_request disabled - use ios-testflight.yml for PR testing
-  # pull_request:
-  #   branches: [ develop ]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'project.yml'
   workflow_dispatch:
 
 env:
