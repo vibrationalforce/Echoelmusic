@@ -1329,27 +1329,27 @@ struct LambdaStatsView: View {
         NavigationView {
             List {
                 Section("Session") {
-                    StatRow(label: "Duration", value: formatDuration(engine.sessionStats.duration))
-                    StatRow(label: "Current State", value: engine.state.displayName)
-                    StatRow(label: "λ Score", value: "\(Int(engine.lambdaScore * 100))%")
+                    LambdaStatRow(label: "Duration", value: formatDuration(engine.sessionStats.duration))
+                    LambdaStatRow(label: "Current State", value: engine.state.displayName)
+                    LambdaStatRow(label: "λ Score", value: "\(Int(engine.lambdaScore * 100))%")
                 }
 
                 Section("Coherence") {
-                    StatRow(label: "Current", value: "\(Int(engine.bioData.overallCoherence * 100))%")
-                    StatRow(label: "Average", value: "\(Int(engine.sessionStats.averageCoherence * 100))%")
-                    StatRow(label: "Peak", value: "\(Int(engine.sessionStats.peakCoherence * 100))%")
+                    LambdaStatRow(label: "Current", value: "\(Int(engine.bioData.overallCoherence * 100))%")
+                    LambdaStatRow(label: "Average", value: "\(Int(engine.sessionStats.averageCoherence * 100))%")
+                    LambdaStatRow(label: "Peak", value: "\(Int(engine.sessionStats.peakCoherence * 100))%")
                 }
 
                 Section("Flow") {
-                    StatRow(label: "Current", value: "\(Int(engine.bioData.flowScore * 100))%")
-                    StatRow(label: "Average", value: "\(Int(engine.sessionStats.averageFlow * 100))%")
-                    StatRow(label: "Peak", value: "\(Int(engine.sessionStats.peakFlow * 100))%")
+                    LambdaStatRow(label: "Current", value: "\(Int(engine.bioData.flowScore * 100))%")
+                    LambdaStatRow(label: "Average", value: "\(Int(engine.sessionStats.averageFlow * 100))%")
+                    LambdaStatRow(label: "Peak", value: "\(Int(engine.sessionStats.peakFlow * 100))%")
                 }
 
                 Section("Biometrics") {
-                    StatRow(label: "Heart Rate", value: "\(Int(engine.bioData.heartRate)) BPM")
-                    StatRow(label: "HRV", value: "\(Int(engine.bioData.hrvMs)) ms")
-                    StatRow(label: "Breathing Rate", value: "\(Int(engine.bioData.breathingRate)) /min")
+                    LambdaStatRow(label: "Heart Rate", value: "\(Int(engine.bioData.heartRate)) BPM")
+                    LambdaStatRow(label: "HRV", value: "\(Int(engine.bioData.hrvMs)) ms")
+                    LambdaStatRow(label: "Breathing Rate", value: "\(Int(engine.bioData.breathingRate)) /min")
                 }
 
                 Section {
@@ -1374,7 +1374,8 @@ struct LambdaStatsView: View {
     }
 }
 
-struct StatRow: View {
+/// Lambda mode stat row (renamed to avoid conflict with QuantumWidgets.StatRow)
+struct LambdaStatRow: View {
     let label: String
     let value: String
 
