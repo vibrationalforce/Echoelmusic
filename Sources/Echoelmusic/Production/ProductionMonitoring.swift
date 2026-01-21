@@ -12,7 +12,7 @@ import Combine
 
 /// Central monitoring and analytics system
 @MainActor
-public final class ProductionMonitoring: ObservableObject, Sendable {
+public final class ProductionMonitoring: ObservableObject {
     public static let shared = ProductionMonitoring()
 
     @Published public private(set) var isInitialized: Bool = false
@@ -475,7 +475,7 @@ public final class PerformanceTracer: Sendable {
 
 /// Real-time health metrics dashboard
 @MainActor
-public final class HealthDashboard: ObservableObject, Sendable {
+public final class HealthDashboard: ObservableObject {
     public static let shared = HealthDashboard()
 
     @Published public var healthStatus: HealthStatus = .healthy

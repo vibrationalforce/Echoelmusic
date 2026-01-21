@@ -13,7 +13,7 @@ import LocalAuthentication
 
 /// Central security management for enterprise deployment
 @MainActor
-public final class SecurityManager: ObservableObject, Sendable {
+public final class SecurityManager: ObservableObject {
     public static let shared = SecurityManager()
 
     @Published public private(set) var isSecurityValidated: Bool = false
@@ -548,7 +548,7 @@ public final class CertificatePinningDelegate: NSObject, URLSessionDelegate, Sen
 
 /// Biometric authentication service
 @MainActor
-public final class BiometricAuthService: ObservableObject, Sendable {
+public final class BiometricAuthService: ObservableObject {
     public static let shared = BiometricAuthService()
 
     @Published public private(set) var biometricType: BiometricType = .none

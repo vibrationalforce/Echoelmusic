@@ -385,9 +385,9 @@ public class FirebaseAnalyticsProvider: AnalyticsProvider {
 struct AnalyticsEvent: Codable {
     let id: UUID
     let name: String
-    let properties: [String: AnyCodable]
+    let properties: [String: AnalyticsAnyCodable]
     let userId: String?
-    let userProperties: [String: AnyCodable]
+    let userProperties: [String: AnalyticsAnyCodable]
     let timestamp: Date
     let sessionId: String
     var isSynced: Bool
@@ -395,18 +395,18 @@ struct AnalyticsEvent: Codable {
     init(name: String, properties: [String: Any], userId: String?, userProperties: [String: Any], timestamp: Date, sessionId: String) {
         self.id = UUID()
         self.name = name
-        self.properties = properties.mapValues { AnyCodable($0) }
+        self.properties = properties.mapValues { AnalyticsAnyCodable($0) }
         self.userId = userId
-        self.userProperties = userProperties.mapValues { AnyCodable($0) }
+        self.userProperties = userProperties.mapValues { AnalyticsAnyCodable($0) }
         self.timestamp = timestamp
         self.sessionId = sessionId
         self.isSynced = false
     }
 }
 
-// MARK: - AnyCodable Wrapper
+// MARK: - AnalyticsAnyCodable Wrapper
 
-struct AnyCodable: Codable {
+struct AnalyticsAnyCodable: Codable {
     let value: Any
 
     init(_ value: Any) {
@@ -423,9 +423,9 @@ struct AnyCodable: Codable {
             value = double
         } else if let string = try? container.decode(String.self) {
             value = string
-        } else if let array = try? container.decode([AnyCodable].self) {
+        } else if let array = try? container.decode([AnalyticsAnyCodable].self) {
             value = array.map { $0.value }
-        } else if let dict = try? container.decode([String: AnyCodable].self) {
+        } else if let dict = try? container.decode([String: AnalyticsAnyCodable].self) {
             value = dict.mapValues { $0.value }
         } else {
             value = NSNull()
@@ -439,8 +439,8 @@ struct AnyCodable: Codable {
         case let int as Int: try container.encode(int)
         case let double as Double: try container.encode(double)
         case let string as String: try container.encode(string)
-        case let array as [Any]: try container.encode(array.map { AnyCodable($0) })
-        case let dict as [String: Any]: try container.encode(dict.mapValues { AnyCodable($0) })
+        case let array as [Any]: try container.encode(array.map { AnalyticsAnyCodable($0) })
+        case let dict as [String: Any]: try container.encode(dict.mapValues { AnalyticsAnyCodable($0) })
         default: try container.encodeNil()
         }
     }
