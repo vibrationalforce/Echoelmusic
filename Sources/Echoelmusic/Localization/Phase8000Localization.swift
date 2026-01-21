@@ -440,8 +440,8 @@ public struct LocalizationStrings {
 // MARK: - Localization Manager
 
 @MainActor
-public final class LocalizationManager: ObservableObject {
-    public static let shared = LocalizationManager()
+public final class Phase8000LocalizationManager: ObservableObject {
+    public static let shared = Phase8000LocalizationManager()
 
     @Published public var currentLanguage: SupportedLanguage = .english
     @Published public var strings: [LocalizationKey: String] = LocalizationStrings.english
@@ -498,7 +498,7 @@ public extension String {
 
 public struct LocalizedText: View {
     let key: LocalizationKey
-    @ObservedObject var manager = LocalizationManager.shared
+    @ObservedObject var manager = Phase8000LocalizationManager.shared
 
     public init(_ key: LocalizationKey) {
         self.key = key

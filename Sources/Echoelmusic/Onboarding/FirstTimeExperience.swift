@@ -219,7 +219,7 @@ class FirstTimeExperience: ObservableObject {
 
 // MARK: - SwiftUI Onboarding View
 
-struct OnboardingView: View {
+struct FirstTimeOnboardingView: View {
     @StateObject private var experience = FirstTimeExperience()
     @Environment(\.dismiss) private var dismiss
 

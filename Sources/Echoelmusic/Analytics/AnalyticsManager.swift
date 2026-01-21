@@ -877,8 +877,8 @@ public class CrashReporter {
 // MARK: - Performance Monitor
 
 /// Performance monitoring for app metrics
-public class PerformanceMonitor {
-    public static let shared = PerformanceMonitor()
+public class AnalyticsPerformanceMonitor {
+    public static let shared = AnalyticsPerformanceMonitor()
 
     private let log = ProfessionalLogger.shared
     private var timers: [String: Date] = [:]
@@ -990,7 +990,7 @@ public class PrivacyCompliance {
     }
 
     /// Check if performance monitoring is enabled
-    public var isPerformanceMonitoringEnabled: Bool {
+    public var isAnalyticsPerformanceMonitoringEnabled: Bool {
         get { defaults.bool(forKey: performanceConsentKey) }
         set {
             defaults.set(newValue, forKey: performanceConsentKey)
@@ -1006,7 +1006,7 @@ public class PrivacyCompliance {
     ) {
         isAnalyticsEnabled = analytics
         isCrashReportingEnabled = crashReporting
-        isPerformanceMonitoringEnabled = performance
+        isAnalyticsPerformanceMonitoringEnabled = performance
 
         log.analytics("All consents set: analytics=\(analytics), crash=\(crashReporting), perf=\(performance)")
     }
@@ -1051,7 +1051,7 @@ public class PrivacyCompliance {
         data["consents"] = [
             "analytics": isAnalyticsEnabled,
             "crash_reporting": isCrashReportingEnabled,
-            "performance": isPerformanceMonitoringEnabled,
+            "performance": isAnalyticsPerformanceMonitoringEnabled,
             "consent_date": consentDate?.ISO8601Format() ?? "none"
         ]
 
@@ -1215,7 +1215,7 @@ public class AnalyticsManager: ObservableObject {
         value: Double? = nil,
         properties: [String: Any] = [:]
     ) {
-        guard PrivacyCompliance.shared.isPerformanceMonitoringEnabled else { return }
+        guard PrivacyCompliance.shared.isAnalyticsPerformanceMonitoringEnabled else { return }
 
         var props = properties
         if let duration = duration {
@@ -1412,7 +1412,7 @@ extension AnalyticsManager {
 
 // MARK: - Performance Extensions
 
-extension PerformanceMonitor {
+extension AnalyticsPerformanceMonitor {
     /// Convenient timer closure
     public func measure<T>(_ name: String, operation: () throws -> T) rethrows -> T {
         startTimer(name)

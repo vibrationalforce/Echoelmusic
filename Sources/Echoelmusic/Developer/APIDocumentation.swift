@@ -13,7 +13,7 @@ import Foundation
 
 /// Comprehensive API documentation for Echoelmusic platform
 public struct APIDocumentation {
-    public static let version = APIVersion(
+    public static let version = DocAPIVersion(
         major: 10000,
         minor: 0,
         patch: 0,
@@ -1570,7 +1570,7 @@ public struct APIProperty {
 
 // MARK: - API Version
 
-public struct APIVersion {
+public struct DocAPIVersion {
     public let major: Int
     public let minor: Int
     public let patch: Int

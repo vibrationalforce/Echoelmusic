@@ -29,7 +29,7 @@ public final class CrossPlatformSessionManager: ObservableObject {
     @Published public var activeSession: CrossPlatformSession?
     @Published public var discoveredDevices: [DiscoveredDevice] = []
     @Published public var connectionQuality: ConnectionQuality = .excellent
-    @Published public var syncStatus: SyncStatus = .idle
+    @Published public var syncStatus: SessionSyncStatus = .idle
 
     // MARK: - Network Discovery
 
@@ -87,7 +87,7 @@ public final class CrossPlatformSessionManager: ObservableObject {
         }
     }
 
-    private func detectPlatform(from name: String) -> DevicePlatform {
+    private func detectPlatform(from name: String) -> SessionDevicePlatform {
         let lowercased = name.lowercased()
         if lowercased.contains("iphone") { return .iOS }
         if lowercased.contains("ipad") { return .iPadOS }
@@ -308,7 +308,7 @@ public struct SessionDevice: Identifiable, Hashable {
     public let id: String
     public let name: String
     public let type: DeviceType
-    public let platform: DevicePlatform
+    public let platform: SessionDevicePlatform
     public let ecosystem: DeviceEcosystem
     public var role: DeviceRole
     public var capabilities: Set<DeviceCapability>
@@ -320,7 +320,7 @@ public struct SessionDevice: Identifiable, Hashable {
         id: String = UUID().uuidString,
         name: String,
         type: DeviceType,
-        platform: DevicePlatform,
+        platform: SessionDevicePlatform,
         role: DeviceRole = .participant,
         capabilities: Set<DeviceCapability> = []
     ) {
@@ -353,7 +353,7 @@ public enum DeviceEcosystem: String, CaseIterable {
     case tesla = "Tesla"
     case other = "Other"
 
-    public static func from(platform: DevicePlatform) -> DeviceEcosystem {
+    public static func from(platform: SessionDevicePlatform) -> DeviceEcosystem {
         switch platform {
         case .iOS, .iPadOS, .macOS, .watchOS, .tvOS, .visionOS, .carPlay:
             return .apple
@@ -375,7 +375,7 @@ public enum DeviceEcosystem: String, CaseIterable {
 
 // MARK: - Device Platform (Extended)
 
-public enum DevicePlatform: String, CaseIterable {
+public enum SessionDevicePlatform: String, CaseIterable {
     // Apple
     case iOS = "iOS"
     case iPadOS = "iPadOS"
@@ -453,7 +453,7 @@ public enum ConnectionQuality: String {
 
 // MARK: - Sync Status
 
-public enum SyncStatus: String {
+public enum SessionSyncStatus: String {
     case idle = "Idle"
     case discovering = "Discovering"
     case connecting = "Connecting"
@@ -664,7 +664,7 @@ public struct DiscoveredDevice: Identifiable {
     public let id: String
     public let name: String
     public let endpoint: NWEndpoint
-    public let platform: DevicePlatform
+    public let platform: SessionDevicePlatform
     public var lastSeen: Date = Date()
 }
 
@@ -893,7 +893,7 @@ public struct DeviceCombinationPresets {
 
     public struct DeviceCombination {
         public let name: String
-        public let devices: [(type: DeviceType, platform: DevicePlatform, role: DeviceRole)]
+        public let devices: [(type: DeviceType, platform: SessionDevicePlatform, role: DeviceRole)]
         public let syncMode: SyncMode
         public let notes: String
     }

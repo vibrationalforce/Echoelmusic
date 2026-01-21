@@ -33,7 +33,7 @@ final class VideoAICreativeHub: ObservableObject {
 
     // MARK: - Published State
 
-    @Published var currentProject: CreativeProject?
+    @Published var currentProject: VideoCreativeProject?
     @Published var isProcessing: Bool = false
     @Published var aiConfidence: Float = 0.0
     @Published var generationProgress: Float = 0.0
@@ -69,7 +69,7 @@ final class VideoAICreativeHub: ObservableObject {
 
     private func updateFromSystemState(_ state: EchoelUniversalCore.SystemState) {
         // Update video effects with bio-data
-        videoEffects.updateBioData(
+        videoEffects.updateHubBioData(
             coherence: state.coherence,
             energy: state.energy,
             flow: state.flow
@@ -81,13 +81,13 @@ final class VideoAICreativeHub: ObservableObject {
 
     // MARK: - Project Management
 
-    func createProject(name: String, type: VideoProjectType) -> CreativeProject {
-        let project = CreativeProject(name: name, type: type)
+    func createProject(name: String, type: VideoProjectType) -> VideoCreativeProject {
+        let project = VideoCreativeProject(name: name, type: type)
         currentProject = project
         return project
     }
 
-    func loadProject(_ project: CreativeProject) {
+    func loadProject(_ project: VideoCreativeProject) {
         currentProject = project
         videoEditor.timeline = project.timeline
     }
@@ -104,7 +104,7 @@ enum VideoProjectType: String, CaseIterable {
     case generativeArt = "Generative Art"
 }
 
-struct CreativeProject: Identifiable {
+struct VideoCreativeProject: Identifiable {
     let id = UUID()
     var name: String
     var type: VideoProjectType
@@ -187,7 +187,7 @@ class GenerativeAIEngine: ObservableObject {
 
     /// Generate visuals from bio-data
     func generateVisualsFromBio(
-        bioData: BioData,
+        bioData: HubBioData,
         style: VisualStyle
     ) async -> GeneratedVisual? {
         isGenerating = true
@@ -267,7 +267,7 @@ class GenerativeAIEngine: ObservableObject {
 
     /// Generate ambient soundscape from bio-data
     func generateSoundscapeFromBio(
-        bioData: BioData,
+        bioData: HubBioData,
         duration: Double
     ) async -> GeneratedAudio? {
         isGenerating = true
@@ -312,7 +312,7 @@ class GenerativeAIEngine: ObservableObject {
         )
     }
 
-    private func mapBioToVisualParams(_ bio: BioData, style: VisualStyle) -> VisualGenerationParams {
+    private func mapBioToVisualParams(_ bio: HubBioData, style: VisualStyle) -> VisualGenerationParams {
         return VisualGenerationParams(
             complexity: bio.coherence * creativityLevel,
             colorIntensity: bio.energy,
@@ -429,7 +429,7 @@ struct AudioFeatures {
     var beatPhase: Float
 }
 
-struct BioData {
+struct HubBioData {
     var heartRate: Float
     var hrv: Float
     var coherence: Float
@@ -572,7 +572,7 @@ class BioReactiveVideoEffects: ObservableObject {
 
     // MARK: - Update Bio Data
 
-    func updateBioData(coherence: Float, energy: Float, flow: Float) {
+    func updateHubBioData(coherence: Float, energy: Float, flow: Float) {
         currentCoherence = coherence
         currentEnergy = energy
         currentFlow = flow

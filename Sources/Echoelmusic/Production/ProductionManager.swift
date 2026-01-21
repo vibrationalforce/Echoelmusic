@@ -115,9 +115,9 @@ struct Project: Identifiable {
     var archivedAt: Date?
 
     // Production tracking
-    var sessions: [ProductionSession] = []
+    var sessions: [ManagerProductionSession] = []
     var exports: [ExportRecord] = []
-    var collaborations: [CollaborationEvent] = []
+    var collaborations: [ProductionCollaborationEvent] = []
 
     // Impact metrics
     var carbonFootprint: CarbonFootprint = CarbonFootprint()
@@ -309,7 +309,7 @@ class WorkflowManager {
 
 // MARK: - Production Session
 
-struct ProductionSession: Identifiable {
+struct ManagerProductionSession: Identifiable {
     let id = UUID()
     var projectId: UUID
     var type: SessionType
@@ -565,7 +565,7 @@ struct BusinessMetrics: Equatable {
 
 // MARK: - Collaboration
 
-struct CollaborationEvent: Identifiable {
+struct ProductionCollaborationEvent: Identifiable {
     let id = UUID()
     var type: CollaborationType
     var participants: [UUID]
@@ -602,7 +602,7 @@ class CollaborationHub {
 class ResourceManager {
     // Track compute, storage, network resources
 
-    func estimateResourceUsage(for session: ProductionSession) -> ResourceEstimate {
+    func estimateResourceUsage(for session: ManagerProductionSession) -> ResourceEstimate {
         ResourceEstimate(
             computeHours: 2.0,
             storageGB: 5.0,

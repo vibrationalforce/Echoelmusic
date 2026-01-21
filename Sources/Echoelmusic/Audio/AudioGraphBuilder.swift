@@ -78,7 +78,7 @@ public struct AudioGraph {
 ///         .resonance(0.7)
 ///         .input("oscillator")
 ///
-///     BioReactive("coherenceFilter")
+///     BioReactiveNode("coherenceFilter")
 ///         .parameter(.cutoff, mappedTo: .coherence)
 ///         .input("filter")
 ///
@@ -277,7 +277,7 @@ public struct Effect: AudioGraphNode {
 // MARK: - Bio-Reactive Node
 
 /// Bio-reactive modulation node
-public struct BioReactive: AudioGraphNode {
+public struct BioReactiveNode: AudioGraphNode {
     public let nodeId: String
     public let nodeType: AudioNodeType = .bioReactive
     public var inputs: [String] = []
@@ -300,13 +300,13 @@ public struct BioReactive: AudioGraphNode {
         self.outputs = [id]
     }
 
-    public func input(_ sourceId: String) -> BioReactive {
+    public func input(_ sourceId: String) -> BioReactiveNode {
         var copy = self
         copy.inputs.append(sourceId)
         return copy
     }
 
-    public func parameter(_ target: TargetParameter, mappedTo source: BioSource) -> BioReactive {
+    public func parameter(_ target: TargetParameter, mappedTo source: BioSource) -> BioReactiveNode {
         var copy = self
         var mappings = (copy.parameters["mappings"] as? [[String: String]]) ?? []
         mappings.append([
@@ -317,20 +317,20 @@ public struct BioReactive: AudioGraphNode {
         return copy
     }
 
-    public func range(min: Float, max: Float) -> BioReactive {
+    public func range(min: Float, max: Float) -> BioReactiveNode {
         var copy = self
         copy.parameters["rangeMin"] = min
         copy.parameters["rangeMax"] = max
         return copy
     }
 
-    public func curve(_ curve: MappingCurve) -> BioReactive {
+    public func curve(_ curve: MappingCurve) -> BioReactiveNode {
         var copy = self
         copy.parameters["curve"] = curve.rawValue
         return copy
     }
 
-    public func smoothing(_ factor: Float) -> BioReactive {
+    public func smoothing(_ factor: Float) -> BioReactiveNode {
         var copy = self
         copy.parameters["smoothing"] = factor
         return copy
@@ -489,7 +489,7 @@ public extension AudioGraphBuilder {
                 .input("carrier", volume: 1.0, pan: -1.0)
                 .input("binaural", volume: 1.0, pan: 1.0)
 
-            BioReactive("coherenceMod")
+            BioReactiveNode("coherenceMod")
                 .input("binauralMix")
                 .parameter(.amplitude, mappedTo: .coherence)
                 .smoothing(0.8)
@@ -523,7 +523,7 @@ public extension AudioGraphBuilder {
                 .cutoff(200)
                 .resonance(0.5)
 
-            BioReactive("filterMod")
+            BioReactiveNode("filterMod")
                 .input("bassFilter")
                 .parameter(.cutoff, mappedTo: .heartRate)
                 .range(min: 100, max: 2000)

@@ -477,7 +477,7 @@ public class WebSocketSecurity {
     /// Verify message signature (using HKDF-derived key)
     public func verifyMessage<T: WebSocketMessage>(_ message: T, token: String) throws -> Bool {
         guard let signatureString = message.signature else {
-            throw SecurityError.noSignature
+            throw WebSocketSecurityError.noSignature
         }
 
         var unsignedMessage = message
@@ -491,7 +491,7 @@ public class WebSocketSecurity {
         let expectedSignature = HMAC<SHA256>.authenticationCode(for: messageData, using: key)
 
         guard let providedSignature = Data(base64Encoded: signatureString) else {
-            throw SecurityError.invalidSignature
+            throw WebSocketSecurityError.invalidSignature
         }
 
         return Data(expectedSignature) == providedSignature
@@ -553,7 +553,7 @@ public class WebSocketSecurity {
     }
 }
 
-public enum SecurityError: Error {
+public enum WebSocketSecurityError: Error {
     case noSignature
     case invalidSignature
     case rateLimitExceeded
@@ -909,12 +909,12 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
 
         // Check rate limit
         guard security.checkRateLimit(userID: message.senderID) else {
-            throw SecurityError.rateLimitExceeded
+            throw WebSocketSecurityError.rateLimitExceeded
         }
 
         // Check abuse
         guard !security.isAbusive(message.senderID) else {
-            throw SecurityError.abuseDetected
+            throw WebSocketSecurityError.abuseDetected
         }
 
         // Sign message

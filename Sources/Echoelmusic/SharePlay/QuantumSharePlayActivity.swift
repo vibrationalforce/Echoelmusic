@@ -442,6 +442,7 @@ public class QuantumSharePlayManager: ObservableObject {
 
 import SwiftUI
 
+#if canImport(GroupActivities)
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, *)
 public struct SharePlayControlView: View {
     @ObservedObject var manager = QuantumSharePlayManager.shared
@@ -652,6 +653,7 @@ struct ParticipantBubble: View {
         }
     }
 }
+#endif // canImport(GroupActivities)
 
 // MARK: - Platform Compatibility
 
