@@ -1209,12 +1209,12 @@ public final class OrganicScoreInstrumentPlugin: EchoelmusicPlugin {
 
 // MARK: - Supporting Types
 
-public struct VisualOutput: Sendable {
+public struct PluginVisualOutput: Sendable {
     public var points: [CGPoint]
     public var colors: [SIMD4<Float>]
 }
 
-public struct UserInteraction: Sendable {
+public struct PluginUserInteraction: Sendable {
     public enum InteractionType: Sendable {
         case tap, drag, pinch, noteOn, noteOff, control
     }
@@ -1224,7 +1224,7 @@ public struct UserInteraction: Sendable {
     public var position: CGPoint = .zero
 }
 
-public struct RenderContext: Sendable {
+public struct PluginRenderContext: Sendable {
     public var width: Int
     public var height: Int
     public var time: TimeInterval

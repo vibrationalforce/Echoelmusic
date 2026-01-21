@@ -22,7 +22,7 @@ public protocol EnginePreset: Identifiable, Codable, Sendable {
 
 // MARK: - Video Presets
 
-public struct VideoPreset: EnginePreset {
+public struct Phase8000VideoPreset: EnginePreset {
     public let id: UUID
     public var name: String
     public var description: String
@@ -36,7 +36,7 @@ public struct VideoPreset: EnginePreset {
     public var quantumSync: Bool
     public var bioReactive: Bool
 
-    public static let cinematic4K = VideoPreset(
+    public static let cinematic4K = Phase8000VideoPreset(
         id: UUID(),
         name: "Cinematic 4K",
         description: "Professional cinema-quality video with film grain and vignette",
@@ -50,7 +50,7 @@ public struct VideoPreset: EnginePreset {
         bioReactive: false
     )
 
-    public static let quantumDream = VideoPreset(
+    public static let quantumDream = Phase8000VideoPreset(
         id: UUID(),
         name: "Quantum Dream",
         description: "Ethereal quantum effects with bio-reactive coherence field",
@@ -64,7 +64,7 @@ public struct VideoPreset: EnginePreset {
         bioReactive: true
     )
 
-    public static let bioReactiveFlow = VideoPreset(
+    public static let bioReactiveFlow = Phase8000VideoPreset(
         id: UUID(),
         name: "Bio-Reactive Flow",
         description: "Heartbeat-synced visuals responding to your biometrics",
@@ -78,7 +78,7 @@ public struct VideoPreset: EnginePreset {
         bioReactive: true
     )
 
-    public static let lightSpeed8K = VideoPreset(
+    public static let lightSpeed8K = Phase8000VideoPreset(
         id: UUID(),
         name: "Light Speed 8K",
         description: "Maximum resolution with quantum light trails",
@@ -92,7 +92,7 @@ public struct VideoPreset: EnginePreset {
         bioReactive: false
     )
 
-    public static let socialMedia = VideoPreset(
+    public static let socialMedia = Phase8000VideoPreset(
         id: UUID(),
         name: "Social Ready",
         description: "Optimized for social media platforms",
@@ -106,7 +106,7 @@ public struct VideoPreset: EnginePreset {
         bioReactive: false
     )
 
-    public static let all: [VideoPreset] = [
+    public static let all: [Phase8000VideoPreset] = [
         .cinematic4K, .quantumDream, .bioReactiveFlow, .lightSpeed8K, .socialMedia
     ]
 }
@@ -487,7 +487,7 @@ public struct CollaborationPreset: EnginePreset {
 public final class Phase8000PresetManager: ObservableObject {
     public static let shared = Phase8000PresetManager()
 
-    @Published public var videoPresets: [VideoPreset] = VideoPreset.all
+    @Published public var videoPresets: [Phase8000VideoPreset] = Phase8000VideoPreset.all
     @Published public var creativePresets: [CreativePreset] = CreativePreset.all
     @Published public var scientificPresets: [ScientificPreset] = ScientificPreset.all
     @Published public var wellnessPresets: [WellnessPreset] = WellnessPreset.all

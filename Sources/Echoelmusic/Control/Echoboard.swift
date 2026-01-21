@@ -90,7 +90,7 @@ public enum ConnectionStatus: String, Codable {
 
 // MARK: - Connected Device
 
-public struct ConnectedDevice: Identifiable, Codable {
+public struct EchoboardDevice: Identifiable, Codable {
     public var id: UUID
     public var name: String
     public var category: EchoboardCategory
@@ -446,7 +446,7 @@ public class Echoboard: ObservableObject {
 
     // MARK: - Published State
 
-    @Published public var devices: [ConnectedDevice] = []
+    @Published public var devices: [EchoboardDevice] = []
     @Published public var groups: [ControlGroup] = []
     @Published public var automations: [AutomationRule] = []
     @Published public var widgets: [DashboardWidget] = []
@@ -456,15 +456,15 @@ public class Echoboard: ObservableObject {
 
     // MARK: - Computed Properties
 
-    public var connectedDevices: [ConnectedDevice] {
+    public var connectedDevices: [EchoboardDevice] {
         devices.filter { $0.status == .connected || $0.status == .paired }
     }
 
-    public var devicesByCategory: [EchoboardCategory: [ConnectedDevice]] {
+    public var devicesByCategory: [EchoboardCategory: [EchoboardDevice]] {
         Dictionary(grouping: devices) { $0.category }
     }
 
-    public var favoriteDevices: [ConnectedDevice] {
+    public var favoriteDevices: [EchoboardDevice] {
         devices.filter { $0.isFavorite }
     }
 
@@ -516,17 +516,17 @@ public class Echoboard: ObservableObject {
         try? await Task.sleep(nanoseconds: 2_000_000_000)
 
         // Add discovered devices (simulation)
-        let discoveredDevices: [ConnectedDevice] = [
-            ConnectedDevice(name: "Apple Watch", category: .biometrics, status: .connected,
+        let discoveredDevices: [EchoboardDevice] = [
+            EchoboardDevice(name: "Apple Watch", category: .biometrics, status: .connected,
                           manufacturer: "Apple", model: "Series 9", batteryLevel: 0.85,
                           capabilities: ["heartRate", "hrv", "activity"]),
-            ConnectedDevice(name: "Hue Bridge", category: .smartHome, status: .connected,
+            EchoboardDevice(name: "Hue Bridge", category: .smartHome, status: .connected,
                           manufacturer: "Philips", model: "Bridge v2", ipAddress: "192.168.1.100",
                           capabilities: ["lights", "scenes", "schedules"]),
-            ConnectedDevice(name: "Ableton Push 3", category: .audio, status: .connected,
+            EchoboardDevice(name: "Ableton Push 3", category: .audio, status: .connected,
                           manufacturer: "Ableton", model: "Push 3",
                           capabilities: ["midi", "pads", "encoders", "display"]),
-            ConnectedDevice(name: "Vision Pro", category: .vr, status: .paired,
+            EchoboardDevice(name: "Vision Pro", category: .vr, status: .paired,
                           manufacturer: "Apple", model: "Vision Pro", batteryLevel: 0.72,
                           capabilities: ["spatial", "handTracking", "eyeTracking"])
         ]
@@ -541,7 +541,7 @@ public class Echoboard: ObservableObject {
     }
 
     /// Connect to a device
-    public func connectDevice(_ device: ConnectedDevice) async -> Bool {
+    public func connectDevice(_ device: EchoboardDevice) async -> Bool {
         guard let index = devices.firstIndex(where: { $0.id == device.id }) else { return false }
 
         devices[index].status = .connecting
@@ -562,19 +562,19 @@ public class Echoboard: ObservableObject {
     }
 
     /// Disconnect from a device
-    public func disconnectDevice(_ device: ConnectedDevice) {
+    public func disconnectDevice(_ device: EchoboardDevice) {
         guard let index = devices.firstIndex(where: { $0.id == device.id }) else { return }
         devices[index].status = .disconnected
     }
 
     /// Toggle device favorite
-    public func toggleFavorite(_ device: ConnectedDevice) {
+    public func toggleFavorite(_ device: EchoboardDevice) {
         guard let index = devices.firstIndex(where: { $0.id == device.id }) else { return }
         devices[index].isFavorite.toggle()
     }
 
     /// Remove device
-    public func removeDevice(_ device: ConnectedDevice) {
+    public func removeDevice(_ device: EchoboardDevice) {
         devices.removeAll { $0.id == device.id }
     }
 
@@ -601,7 +601,7 @@ public class Echoboard: ObservableObject {
     }
 
     /// Get devices in group
-    public func devicesInGroup(_ group: ControlGroup) -> [ConnectedDevice] {
+    public func devicesInGroup(_ group: ControlGroup) -> [EchoboardDevice] {
         devices.filter { group.deviceIds.contains($0.id) }
     }
 
@@ -870,7 +870,7 @@ public class Echoboard: ObservableObject {
 // MARK: - Configuration Export
 
 private struct EchoboardConfiguration: Codable {
-    var devices: [ConnectedDevice]
+    var devices: [EchoboardDevice]
     var groups: [ControlGroup]
     var automations: [AutomationRule]
     var widgets: [DashboardWidget]

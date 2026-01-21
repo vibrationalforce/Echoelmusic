@@ -33,7 +33,7 @@ final class VideoAICreativeHub: ObservableObject {
 
     // MARK: - Published State
 
-    @Published var currentProject: CreativeProject?
+    @Published var currentProject: VideoCreativeProject?
     @Published var isProcessing: Bool = false
     @Published var aiConfidence: Float = 0.0
     @Published var generationProgress: Float = 0.0
@@ -81,13 +81,13 @@ final class VideoAICreativeHub: ObservableObject {
 
     // MARK: - Project Management
 
-    func createProject(name: String, type: VideoProjectType) -> CreativeProject {
-        let project = CreativeProject(name: name, type: type)
+    func createProject(name: String, type: VideoProjectType) -> VideoCreativeProject {
+        let project = VideoCreativeProject(name: name, type: type)
         currentProject = project
         return project
     }
 
-    func loadProject(_ project: CreativeProject) {
+    func loadProject(_ project: VideoCreativeProject) {
         currentProject = project
         videoEditor.timeline = project.timeline
     }
@@ -104,7 +104,7 @@ enum VideoProjectType: String, CaseIterable {
     case generativeArt = "Generative Art"
 }
 
-struct CreativeProject: Identifiable {
+struct VideoCreativeProject: Identifiable {
     let id = UUID()
     var name: String
     var type: VideoProjectType

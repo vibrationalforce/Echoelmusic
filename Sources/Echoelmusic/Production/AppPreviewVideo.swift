@@ -66,10 +66,10 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
     public let startTime: TimeInterval
     public let duration: TimeInterval
     public let visualDescription: String
-    public let onScreenText: [TextOverlay]
+    public let onScreenText: [PreviewTextOverlay]
     public let uiElements: [String]
     public let cameraMovement: CameraMovement
-    public let transition: SceneTransition
+    public let transition: PreviewSceneTransition
 
     public var endTime: TimeInterval {
         startTime + duration
@@ -81,10 +81,10 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
         startTime: TimeInterval,
         duration: TimeInterval,
         visualDescription: String,
-        onScreenText: [TextOverlay],
+        onScreenText: [PreviewTextOverlay],
         uiElements: [String],
         cameraMovement: CameraMovement = .static,
-        transition: SceneTransition = .cut
+        transition: PreviewSceneTransition = .cut
     ) {
         self.id = id
         self.name = name
@@ -111,7 +111,7 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
             Background: Deep cosmic purple gradient with particle effects.
             """,
             onScreenText: [
-                TextOverlay(
+                PreviewTextOverlay(
                     text: "Transform Your Body Into Music",
                     font: .headline,
                     position: .center,
@@ -139,7 +139,7 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
             Sacred geometry particles sync with heart rhythm.
             """,
             onScreenText: [
-                TextOverlay(
+                PreviewTextOverlay(
                     text: "Real-Time Heart Rate",
                     font: .subheadline,
                     position: .top,
@@ -147,7 +147,7 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
                     duration: 1.5,
                     animation: .fadeIn
                 ),
-                TextOverlay(
+                PreviewTextOverlay(
                     text: "Your Heart Controls The Music",
                     font: .body,
                     position: .bottom,
@@ -182,7 +182,7 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
             Full screen visual showcase, minimal UI
             """,
             onScreenText: [
-                TextOverlay(
+                PreviewTextOverlay(
                     text: "Quantum Visuals",
                     font: .headline,
                     position: .topLeading,
@@ -190,7 +190,7 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
                     duration: 2.0,
                     animation: .fadeIn
                 ),
-                TextOverlay(
+                PreviewTextOverlay(
                     text: "Sacred Geometry • Particles • Fractals",
                     font: .caption,
                     position: .bottomLeading,
@@ -224,7 +224,7 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
             Dynamic marking changes: 'mp' → 'f' → 'ff'
             """,
             onScreenText: [
-                TextOverlay(
+                PreviewTextOverlay(
                     text: "Professional Orchestral Scoring",
                     font: .headline,
                     position: .top,
@@ -232,7 +232,7 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
                     duration: 2.5,
                     animation: .fadeIn
                 ),
-                TextOverlay(
+                PreviewTextOverlay(
                     text: "Walt Disney & Hollywood Style",
                     font: .subheadline,
                     position: .center,
@@ -267,7 +267,7 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
             Bottom: Session type 'Music Jam Session'
             """,
             onScreenText: [
-                TextOverlay(
+                PreviewTextOverlay(
                     text: "Collaborate Worldwide",
                     font: .headline,
                     position: .top,
@@ -275,7 +275,7 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
                     duration: 2.0,
                     animation: .fadeIn
                 ),
-                TextOverlay(
+                PreviewTextOverlay(
                     text: "Zero-Latency Sync • 1000+ Users",
                     font: .body,
                     position: .bottom,
@@ -319,7 +319,7 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
             - Platform icons (iPhone, iPad, Mac, Watch, Vision Pro)
             """,
             onScreenText: [
-                TextOverlay(
+                PreviewTextOverlay(
                     text: "Download Echoelmusic",
                     font: .largeTitle,
                     position: .center,
@@ -327,7 +327,7 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
                     duration: 5.0,
                     animation: .scaleUp
                 ),
-                TextOverlay(
+                PreviewTextOverlay(
                     text: "Available on iPhone, iPad, Mac, Watch & Vision Pro",
                     font: .caption,
                     position: .bottom,
@@ -352,7 +352,7 @@ public struct PreviewScene: Codable, Sendable, Identifiable {
 
 // MARK: - Text Overlay
 
-public struct TextOverlay: Codable, Sendable {
+public struct PreviewTextOverlay: Codable, Sendable {
     public enum Font: String, Codable, Sendable {
         case largeTitle
         case title
@@ -461,7 +461,7 @@ public enum CameraMovement: String, Codable, Sendable {
 
 // MARK: - Scene Transition
 
-public enum SceneTransition: String, Codable, Sendable {
+public enum PreviewSceneTransition: String, Codable, Sendable {
     case cut
     case dissolve
     case crossDissolve

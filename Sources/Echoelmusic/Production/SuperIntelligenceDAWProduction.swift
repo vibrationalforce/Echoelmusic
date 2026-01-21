@@ -327,11 +327,11 @@ public enum PluginFormat: String, CaseIterable, Codable {
 // MARK: - Video Track Integration
 
 /// Video track for DAW timeline
-public class VideoTrack: ObservableObject, Identifiable {
+public class DAWVideoTrack: ObservableObject, Identifiable {
     public let id: UUID
     public var name: String
-    @Published public var clips: [VideoClip]
-    @Published public var effects: [VideoTrackEffect]
+    @Published public var clips: [DAWVideoClip]
+    @Published public var effects: [DAWVideoTrackEffect]
     @Published public var isMuted: Bool
     @Published public var isSolo: Bool
     @Published public var opacity: Float
@@ -340,8 +340,8 @@ public class VideoTrack: ObservableObject, Identifiable {
     public init(
         id: UUID = UUID(),
         name: String = "Video Track",
-        clips: [VideoClip] = [],
-        effects: [VideoTrackEffect] = []
+        clips: [DAWVideoClip] = [],
+        effects: [DAWVideoTrackEffect] = []
     ) {
         self.id = id
         self.name = name
@@ -375,7 +375,7 @@ public class VideoTrack: ObservableObject, Identifiable {
 }
 
 /// Video clip on timeline
-public struct VideoClip: Identifiable, Codable {
+public struct DAWVideoClip: Identifiable, Codable {
     public var id: UUID
     public var name: String
     public var sourcePath: String
@@ -454,7 +454,7 @@ public struct VideoKeyframe: Codable, Identifiable {
 }
 
 /// Video effect on track
-public struct VideoTrackEffect: Identifiable, Codable {
+public struct DAWVideoTrackEffect: Identifiable, Codable {
     public var id: UUID
     public var effectType: String
     public var isEnabled: Bool
@@ -476,7 +476,7 @@ public class ProductionSession: ObservableObject, Identifiable {
     @Published public var name: String
     @Published public var environment: ProductionEnvironment
     @Published public var dawHost: DAWHostInfo
-    @Published public var videoTracks: [VideoTrack]
+    @Published public var videoTracks: [DAWVideoTrack]
     @Published public var audioTracks: [AudioTrackRef]
     @Published public var markers: [SessionMarker]
     @Published public var regions: [SessionRegion]
@@ -499,14 +499,14 @@ public class ProductionSession: ObservableObject, Identifiable {
     }
 
     /// Add video track
-    public func addVideoTrack(name: String = "Video") -> VideoTrack {
-        let track = VideoTrack(name: "\(name) \(videoTracks.count + 1)")
+    public func addDAWVideoTrack(name: String = "Video") -> DAWVideoTrack {
+        let track = DAWVideoTrack(name: "\(name) \(videoTracks.count + 1)")
         videoTracks.append(track)
         return track
     }
 
     /// Remove video track
-    public func removeVideoTrack(id: UUID) {
+    public func removeDAWVideoTrack(id: UUID) {
         videoTracks.removeAll { $0.id == id }
     }
 }
@@ -646,7 +646,7 @@ public class DAWProductionEngine: ObservableObject {
 
     // MARK: - Internal State
 
-    private var videoTracks: [VideoTrack] = []
+    private var videoTracks: [DAWVideoTrack] = []
     private var processedFrameCount: Int = 0
     private var lastTransportPosition: Double = 0
 
@@ -762,7 +762,7 @@ public class DAWProductionEngine: ObservableObject {
         lastTransportPosition = position
     }
 
-    private func renderVideoFrame(clip: VideoClip, time: Double) -> Bool {
+    private func renderVideoFrame(clip: DAWVideoClip, time: Double) -> Bool {
         // GPU-accelerated frame rendering
         processedFrameCount += 1
         return true
@@ -771,13 +771,13 @@ public class DAWProductionEngine: ObservableObject {
     // MARK: - Video Track Operations
 
     /// Add video track to session
-    public func addVideoTrack(name: String = "Video") -> VideoTrack? {
-        return currentSession?.addVideoTrack(name: name)
+    public func addDAWVideoTrack(name: String = "Video") -> DAWVideoTrack? {
+        return currentSession?.addDAWVideoTrack(name: name)
     }
 
     /// Import video to track
-    public func importVideo(path: String, toTrack track: VideoTrack, atTime: Double) -> VideoClip {
-        let clip = VideoClip(
+    public func importVideo(path: String, toTrack track: DAWVideoTrack, atTime: Double) -> DAWVideoClip {
+        let clip = DAWVideoClip(
             name: URL(fileURLWithPath: path).lastPathComponent,
             sourcePath: path,
             startTime: atTime,
@@ -1035,7 +1035,7 @@ extension DAWProductionEngine {
 
         // Add default video track if video-enabled
         if template.videoEnabled {
-            _ = addVideoTrack(name: "Video 1")
+            _ = addDAWVideoTrack(name: "Video 1")
         }
     }
 

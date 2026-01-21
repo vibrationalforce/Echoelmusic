@@ -61,7 +61,7 @@ public struct SyncOperation<Entity: SyncableEntity>: Codable, Identifiable {
 // MARK: - Sync Status
 
 /// Current sync status
-public enum SyncStatus: Equatable {
+public enum OfflineSyncStatus: Equatable {
     case idle
     case syncing(progress: Double)
     case completed(Date)
@@ -72,7 +72,7 @@ public enum SyncStatus: Equatable {
 // MARK: - Conflict Resolution
 
 /// Conflict resolution strategy
-public enum ConflictResolution {
+public enum OfflineConflictResolution {
     case serverWins
     case clientWins
     case latestWins
@@ -116,7 +116,7 @@ public actor OfflineFirstSyncEngine<Entity: SyncableEntity> {
         public var baseRetryDelay: TimeInterval = 5
 
         /// Conflict resolution strategy
-        public var conflictResolution: ConflictResolution = .latestWins
+        public var conflictResolution: OfflineConflictResolution = .latestWins
 
         /// Auto-sync interval (seconds)
         public var autoSyncInterval: TimeInterval = 60
@@ -137,7 +137,7 @@ public actor OfflineFirstSyncEngine<Entity: SyncableEntity> {
 
     // MARK: - State
 
-    private(set) var status: SyncStatus = .idle
+    private(set) var status: OfflineSyncStatus = .idle
     private(set) var isOnline: Bool = true
 
     // MARK: - File Storage

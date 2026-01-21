@@ -969,7 +969,7 @@ public final class VideoCollaborationHub: ObservableObject {
 
 /// High-quality video export with multiple formats
 @MainActor
-public final class VideoExportManager: ObservableObject {
+public final class ProcessingExportManager: ObservableObject {
 
     public enum ExportFormat: String, CaseIterable, Sendable {
         case h264 = "H.264"

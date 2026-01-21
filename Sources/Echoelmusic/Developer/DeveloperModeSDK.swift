@@ -201,7 +201,7 @@ public struct QuantumPluginState: Sendable {
 // MARK: - Render Context
 
 /// Context for visual rendering plugins
-public struct RenderContext: Sendable {
+public struct SDKRenderContext: Sendable {
     public var width: Int
     public var height: Int
     public var pixelScale: Float
@@ -215,7 +215,7 @@ public struct RenderContext: Sendable {
 // MARK: - Visual Output
 
 /// Output from visual plugins
-public struct VisualOutput: Sendable {
+public struct SDKVisualOutput: Sendable {
     public var pixelData: Data?
     public var textureId: UInt32?
     public var shaderUniforms: [String: Float]
@@ -229,7 +229,7 @@ public struct VisualOutput: Sendable {
 // MARK: - User Interaction
 
 /// User interaction events for plugins
-public struct UserInteraction: Sendable {
+public struct SDKUserInteraction: Sendable {
     public var type: InteractionType
     public var position: SIMD2<Float>?
     public var value: Float?

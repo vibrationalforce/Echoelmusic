@@ -193,7 +193,7 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 // MARK: - SwiftUI Integration
 
 /// SwiftUI view wrapper for Metal Cymatics Renderer
-struct CymaticsView: UIViewRepresentable {
+struct MetalCymaticsView: UIViewRepresentable {
 
     /// Audio level (0.0 - 1.0)
     var audioLevel: Float
@@ -244,9 +244,9 @@ struct CymaticsView: UIViewRepresentable {
 // MARK: - Preview
 
 #if DEBUG
-struct CymaticsView_Previews: PreviewProvider {
+struct MetalCymaticsView_Previews: PreviewProvider {
     static var previews: some View {
-        CymaticsView(
+        MetalCymaticsView(
             audioLevel: 0.5,
             frequency: 440.0,
             hrvCoherence: 75.0,

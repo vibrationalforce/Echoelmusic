@@ -247,7 +247,7 @@ struct MandalaVisualizer: View {
 
 // MARK: - Cymatics Visualizer
 
-struct CymaticsVisualizer: View {
+struct SimpleCymaticsVisualizer: View {
     let params: UnifiedVisualSoundEngine.VisualParameters
 
     var body: some View {
