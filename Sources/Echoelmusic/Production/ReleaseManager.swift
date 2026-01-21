@@ -11,7 +11,7 @@ import os.log
 
 /// Central release and version management system
 @MainActor
-public final class ReleaseManager: ObservableObject, Sendable {
+public final class ReleaseManager: ObservableObject {
     public static let shared = ReleaseManager()
 
     @Published public private(set) var currentVersion: AppVersion
@@ -325,7 +325,7 @@ public final class ReleaseManager: ObservableObject, Sendable {
 
 /// Staged rollout management for gradual feature releases
 @MainActor
-public final class StagedRolloutManager: ObservableObject, Sendable {
+public final class StagedRolloutManager: ObservableObject {
     public static let shared = StagedRolloutManager()
 
     @Published public private(set) var activeRollouts: [Rollout] = []

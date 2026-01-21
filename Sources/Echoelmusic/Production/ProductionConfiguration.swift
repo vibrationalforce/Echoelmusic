@@ -46,7 +46,7 @@ public enum DeploymentEnvironment: String, CaseIterable, Sendable {
 
 /// Production feature flag system with remote config support
 @MainActor
-public final class FeatureFlagManager: ObservableObject, Sendable {
+public final class FeatureFlagManager: ObservableObject {
     public static let shared = FeatureFlagManager()
 
     @Published public private(set) var flags: [String: FeatureFlag] = [:]
@@ -303,7 +303,7 @@ public final class SecretsManager: Sendable {
 
 /// Main production configuration container
 @MainActor
-public final class ProductionConfiguration: ObservableObject, Sendable {
+public final class ProductionConfiguration: ObservableObject {
     public static let shared = ProductionConfiguration()
 
     @Published public var environment: DeploymentEnvironment
@@ -464,7 +464,7 @@ public final class ProductionConfiguration: ObservableObject, Sendable {
 
 /// Production A/B testing system
 @MainActor
-public final class ABTestManager: ObservableObject, Sendable {
+public final class ABTestManager: ObservableObject {
     public static let shared = ABTestManager()
 
     public struct Experiment: Identifiable, Codable, Sendable {

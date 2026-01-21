@@ -15,7 +15,7 @@ class TouchInstrumentsHub: ObservableObject {
 
     @Published var activeInstrument: InstrumentType = .chordPad
     @Published var isPlaying: Bool = false
-    @Published var currentScale: MusicalScale = .major
+    @Published var currentScale: TouchMusicalScale = .major
     @Published var rootNote: UInt8 = 60 // Middle C
     @Published var octave: Int = 4
 
@@ -84,7 +84,7 @@ class TouchInstrumentsHub: ObservableObject {
 
 // MARK: - Musical Scale
 
-enum MusicalScale: String, CaseIterable {
+enum TouchMusicalScale: String, CaseIterable {
     case major = "Major"
     case minor = "Minor"
     case harmonicMinor = "Harmonic Minor"
@@ -185,7 +185,7 @@ struct ChordPadView: View {
 
                 // Scale selector
                 Picker("Scale", selection: $hub.currentScale) {
-                    ForEach(MusicalScale.allCases, id: \.self) { scale in
+                    ForEach(TouchMusicalScale.allCases, id: \.self) { scale in
                         Text(scale.rawValue).tag(scale)
                     }
                 }
@@ -866,7 +866,7 @@ struct MelodyPadView: View {
 
                 // Scale
                 Picker("Scale", selection: $hub.currentScale) {
-                    ForEach(MusicalScale.allCases, id: \.self) { scale in
+                    ForEach(TouchMusicalScale.allCases, id: \.self) { scale in
                         Text(scale.rawValue).tag(scale)
                     }
                 }
@@ -934,7 +934,7 @@ struct MelodyPadView: View {
 // MARK: - Melody Grid Background
 
 struct MelodyGridBackground: View {
-    let scale: MusicalScale
+    let scale: TouchMusicalScale
     let root: UInt8
     let octaveRange: Int
 

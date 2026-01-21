@@ -16,7 +16,7 @@ class TeamCollaborationHub: ObservableObject {
 
     // MARK: - Published State
 
-    @Published private(set) var activeSessions: [CollaborationSession] = []
+    @Published private(set) var activeSessions: [TeamCollaborationSession] = []
     @Published private(set) var pendingInvitations: [CollaborationInvitation] = []
     @Published private(set) var recentActivity: [ActivityItem] = []
     @Published private(set) var onlineMembers: [UUID] = []
@@ -45,8 +45,8 @@ class TeamCollaborationHub: ObservableObject {
         type: SessionType,
         participants: [UUID],
         projectId: UUID? = nil
-    ) -> CollaborationSession {
-        let session = CollaborationSession(
+    ) -> TeamCollaborationSession {
+        let session = TeamCollaborationSession(
             name: name,
             type: type,
             hostId: UUID(), // Current user
@@ -387,7 +387,7 @@ class TeamCollaborationHub: ObservableObject {
 
 // MARK: - Types
 
-struct CollaborationSession: Identifiable {
+struct TeamCollaborationSession: Identifiable {
     let id = UUID()
     var name: String
     var type: SessionType
@@ -645,7 +645,7 @@ extension TeamCollaborationHub {
         )
     }
 
-    private func calculateAverageSessionDuration(_ sessions: [CollaborationSession]) -> TimeInterval {
+    private func calculateAverageSessionDuration(_ sessions: [TeamCollaborationSession]) -> TimeInterval {
         let durations = sessions.compactMap { session -> TimeInterval? in
             guard let end = session.endedAt else { return nil }
             return end.timeIntervalSince(session.createdAt)
@@ -673,7 +673,7 @@ extension TeamCollaborationHub {
         return topHours.isEmpty ? [10, 11, 14, 15, 16] : topHours
     }
 
-    private func calculateCollaborationScore(_ sessions: [CollaborationSession]) -> Double {
+    private func calculateCollaborationScore(_ sessions: [TeamCollaborationSession]) -> Double {
         // Calculate collaboration score based on multiple factors
         guard !sessions.isEmpty else { return 0.0 }
 

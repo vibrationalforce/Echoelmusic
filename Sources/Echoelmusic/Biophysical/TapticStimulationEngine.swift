@@ -18,7 +18,7 @@ import AVFoundation
 // MARK: - Haptic Pattern Type
 
 /// Types of haptic patterns for different wellness experiences
-public enum HapticPatternType: String, CaseIterable, Codable, Sendable {
+public enum TapticPatternType: String, CaseIterable, Codable, Sendable {
     case continuous = "Continuous"           // Steady vibration at target frequency
     case pulsed = "Pulsed"                   // On/off pattern
     case ramping = "Ramping"                 // Gradual intensity changes
@@ -52,7 +52,7 @@ public struct HapticStimulationConfig: Codable, Sendable {
     public var intensity: Double
 
     /// Pattern type
-    public var patternType: HapticPatternType
+    public var patternType: TapticPatternType
 
     /// Duty cycle (0.0 - 1.0) for pulsed patterns
     public var dutyCycle: Double
@@ -66,7 +66,7 @@ public struct HapticStimulationConfig: Codable, Sendable {
     public init(
         frequency: Double = 40.0,
         intensity: Double = 0.5,
-        patternType: HapticPatternType = .continuous,
+        patternType: TapticPatternType = .continuous,
         dutyCycle: Double = 0.5,
         rampDuration: TimeInterval = 1.0,
         audioEnabled: Bool = false

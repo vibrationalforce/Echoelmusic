@@ -852,7 +852,7 @@ public class CloudSyncService: ObservableObject {
     // MARK: - Session Sync
 
     /// Upload session to cloud
-    public func uploadSession(_ session: CollaborationSession) async throws {
+    public func uploadSession(_ session: ServerCollaborationSession) async throws {
         logger.cloud("Uploading session: \(session.id)")
 
         let data = try JSONEncoder().encode(session)
@@ -864,13 +864,13 @@ public class CloudSyncService: ObservableObject {
     }
 
     /// Download session from cloud
-    public func downloadSession(_ sessionID: String) async throws -> CollaborationSession {
+    public func downloadSession(_ sessionID: String) async throws -> ServerCollaborationSession {
         logger.cloud("Downloading session: \(sessionID)")
 
         let endpoint = "/sync/sessions/\(sessionID)"
         let data = try await apiClient.get(endpoint: endpoint)
 
-        let session = try JSONDecoder().decode(CollaborationSession.self, from: data)
+        let session = try JSONDecoder().decode(ServerCollaborationSession.self, from: data)
         logger.cloud("Session downloaded successfully")
 
         return session
@@ -1487,7 +1487,7 @@ public class ServerHealthMonitor: ObservableObject {
 
 // MARK: - Collaboration Session (Reference Type)
 
-public struct CollaborationSession: Codable {
+public struct ServerCollaborationSession: Codable {
     public let id: String
     public let name: String
     public let mode: String

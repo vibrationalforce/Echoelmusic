@@ -12,7 +12,7 @@ class AIComposer: ObservableObject {
 
     @Published var isGenerating: Bool = false
     @Published var generatedMelody: [Note] = []
-    @Published var suggestedChords: [Chord] = []
+    @Published var suggestedChords: [AIChord] = []
     @Published var generatedDrumPattern: [DrumHit] = []
     @Published var currentStyle: MusicStyle = .balanced
     @Published var modelStatus: ModelStatus = .notLoaded
@@ -179,17 +179,17 @@ class AIComposer: ObservableObject {
 
     // MARK: - Chord Suggestions
 
-    func suggestChordProgression(key: String, mood: String) async -> [Chord] {
+    func suggestChordProgression(key: String, mood: String) async -> [AIChord] {
         isGenerating = true
         defer { isGenerating = false }
 
         log.audio("🎹 AIComposer: Suggesting chords for \(key) \(mood)")
 
         let chords = [
-            Chord(root: "C", type: .major),
-            Chord(root: "Am", type: .minor),
-            Chord(root: "F", type: .major),
-            Chord(root: "G", type: .major)
+            AIChord(root: "C", type: .major),
+            AIChord(root: "Am", type: .minor),
+            AIChord(root: "F", type: .major),
+            AIChord(root: "G", type: .major)
         ]
 
         suggestedChords = chords
@@ -291,7 +291,7 @@ class AIComposer: ObservableObject {
         heartRate: Float,
         key: String = "C",
         bars: Int = 8
-    ) async -> (melody: [Note], chords: [Chord], drums: [DrumHit]) {
+    ) async -> (melody: [Note], chords: [AIChord], drums: [DrumHit]) {
         isGenerating = true
         defer { isGenerating = false }
 
@@ -328,12 +328,12 @@ struct Note: Identifiable, Equatable {
     }
 }
 
-struct Chord: Identifiable, Equatable {
+struct AIChord: Identifiable, Equatable {
     let id = UUID()
     let root: String
-    let type: ChordType
+    let type: AIChordType
 
-    enum ChordType: String, CaseIterable {
+    enum AIChordType: String, CaseIterable {
         case major = "maj"
         case minor = "min"
         case dominant7 = "7"
