@@ -10,8 +10,7 @@ import Combine
 /// Manages immersive experiences for Apple Vision Pro, VR headsets, and AR glasses
 /// Bio-reactive 360° environments that respond to heart rate, HRV, and coherence
 @MainActor
-@Observable
-final class ImmersiveExperienceManager {
+final class ImmersiveExperienceManager: ObservableObject {
 
     // MARK: - Singleton
 
@@ -20,25 +19,25 @@ final class ImmersiveExperienceManager {
     // MARK: - State
 
     /// Current immersive mode
-    var currentMode: ImmersiveMode = .passthrough
+    @Published var currentMode: ImmersiveMode = .passthrough
 
     /// Active experience
-    var activeExperience: ImmersiveExperience?
+    @Published var activeExperience: ImmersiveExperience?
 
     /// Is currently in immersive space
-    var isImmersive: Bool = false
+    @Published var isImmersive: Bool = false
 
     /// Bio-reactive intensity (0-1)
-    var bioIntensity: Double = 0.5
+    @Published var bioIntensity: Double = 0.5
 
     /// Current coherence level driving visuals
-    var coherenceLevel: Double = 0.5
+    @Published var coherenceLevel: Double = 0.5
 
     /// Current heart rate for pulsing effects
-    var heartRate: Double = 60
+    @Published var heartRate: Double = 60
 
     /// User preference for motion comfort
-    var motionComfort: MotionComfort = .standard
+    @Published var motionComfort: MotionComfort = .standard
 
     // MARK: - Private
 

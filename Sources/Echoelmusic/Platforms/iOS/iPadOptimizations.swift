@@ -24,34 +24,33 @@ import Combine
 /// - Field Recording: Mobile Studio mit großem Interface
 ///
 @MainActor
-@Observable
-class iPadOptimizations {
+class iPadOptimizations: ObservableObject {
 
     // MARK: - Published Properties
 
     /// Ist dies ein iPad?
-    var isiPad: Bool = UIDevice.current.userInterfaceIdiom == .pad
+    @Published var isiPad: Bool = UIDevice.current.userInterfaceIdiom == .pad
 
     /// iPad-Modell
-    var iPadModel: iPadModel?
+    @Published var iPadModel: iPadModel?
 
     /// Split View aktiv?
-    var isSplitViewActive: Bool = false
+    @Published var isSplitViewActive: Bool = false
 
     /// Stage Manager aktiv?
-    var isStageManagerActive: Bool = false
+    @Published var isStageManagerActive: Bool = false
 
     /// Apple Pencil verbunden?
-    var isApplePencilConnected: Bool = false
+    @Published var isApplePencilConnected: Bool = false
 
     /// Externes Display verbunden?
-    var externalDisplayConnected: Bool = false
+    @Published var externalDisplayConnected: Bool = false
 
     /// ProMotion verfügbar?
-    var supportsProMotion: Bool = false
+    @Published var supportsProMotion: Bool = false
 
     /// Layout-Modus
-    var layoutMode: LayoutMode = .standard
+    @Published var layoutMode: LayoutMode = .standard
 
     // MARK: - Private Properties
 

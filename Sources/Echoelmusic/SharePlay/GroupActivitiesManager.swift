@@ -69,8 +69,7 @@ struct EchoelmusicActivity: GroupActivity {
 
 /// Manages SharePlay sessions for synchronized experiences
 @MainActor
-@Observable
-class GroupSessionManager {
+class GroupSessionManager: ObservableObject {
 
     // MARK: - Singleton
 
@@ -79,19 +78,19 @@ class GroupSessionManager {
     // MARK: - Published Properties
 
     /// Current group session
-    private(set) var groupSession: GroupSession<EchoelmusicActivity>?
+    @Published private(set) var groupSession: GroupSession<EchoelmusicActivity>?
 
     /// Is SharePlay active
     var isSharePlayActive: Bool { groupSession != nil }
 
     /// Connected participants
-    private(set) var participants: [Participant] = []
+    @Published private(set) var participants: [Participant] = []
 
     /// Synchronized state
-    private(set) var synchronizedState: SynchronizedState = SynchronizedState()
+    @Published private(set) var synchronizedState: SynchronizedState = SynchronizedState()
 
     /// Session messages
-    private(set) var messages: [SessionMessage] = []
+    @Published private(set) var messages: [SessionMessage] = []
 
     // MARK: - Private Properties
 

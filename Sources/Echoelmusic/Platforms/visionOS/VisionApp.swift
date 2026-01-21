@@ -293,25 +293,24 @@ struct VisionContentView: View {
 
 // MARK: - VisionApp (Legacy Support)
 @MainActor
-@Observable
-class VisionApp {
+class VisionApp: ObservableObject {
 
     // MARK: - Published Properties
 
     /// Aktueller Immersion-Level
-    var immersionLevel: ImmersionLevel = .mixed
+    @Published var immersionLevel: ImmersionLevel = .mixed
 
     /// Aktive 3D-Szene
-    var activeScene: ImmersiveScene?
+    @Published var activeScene: ImmersiveScene?
 
     /// Spatial Audio aktiviert
-    var spatialAudioEnabled: Bool = true
+    @Published var spatialAudioEnabled: Bool = true
 
     /// Eye-Tracking-Daten
-    var eyeTrackingData: EyeTrackingData?
+    @Published var eyeTrackingData: EyeTrackingData?
 
     /// Hand-Tracking-Daten
-    var handTrackingData: HandTrackingData?
+    @Published var handTrackingData: HandTrackingData?
 
     // MARK: - Private Properties
 

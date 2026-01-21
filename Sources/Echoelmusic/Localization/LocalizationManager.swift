@@ -21,15 +21,14 @@ import Combine
 /// - Fallback-Mechanismus
 ///
 @MainActor
-@Observable
-class LocalizationManager {
+class LocalizationManager: ObservableObject {
 
     private let log = ProfessionalLogger.shared
 
     // MARK: - Published Properties
 
     /// Aktuelle Sprache
-    var currentLanguage: Language = .german {
+    @Published var currentLanguage: Language = .german {
         didSet {
             if currentLanguage != oldValue {
                 languageDidChange.send(currentLanguage)
