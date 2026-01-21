@@ -42,7 +42,7 @@ struct StreamScene: Identifiable {
 // MARK: - Scene Source
 
 enum SceneSource: Identifiable {
-    case camera(CameraSource)
+    case camera(StreamCameraSource)
     case chromaKey(ChromaKeySource)
     case screenCapture(ScreenCaptureSource)
     case videoFile(VideoFileSource)
@@ -67,7 +67,7 @@ enum SceneSource: Identifiable {
     }
 }
 
-struct CameraSource: Identifiable {
+struct StreamCameraSource: Identifiable {
     let id = UUID()
     var name: String
     var cameraPosition: AVCaptureDevice.Position

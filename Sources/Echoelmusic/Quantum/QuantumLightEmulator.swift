@@ -178,7 +178,7 @@ public struct Photon: Sendable {
 // MARK: - Light Field
 
 /// Represents a coherent light field (laser-like or bio-coherent)
-public struct LightField: Sendable {
+public struct EmulatorLightField: Sendable {
     /// Photons in the field
     public let photons: [Photon]
 
@@ -240,7 +240,7 @@ public class QuantumLightEmulator: ObservableObject {
 
     @Published public private(set) var isActive: Bool = false
     @Published public private(set) var currentQuantumState: QuantumAudioState?
-    @Published public private(set) var currentLightField: LightField?
+    @Published public private(set) var currentEmulatorLightField: EmulatorLightField?
     @Published public private(set) var coherenceLevel: Float = 0.0
     @Published public private(set) var entanglementNetwork: [String: Float] = [:]
     @Published public private(set) var emulationMode: EmulationMode = .classical
@@ -261,7 +261,7 @@ public class QuantumLightEmulator: ObservableObject {
         public var coherenceThreshold: Float = 0.7
         public var decoherenceRate: Float = 0.01
         public var entanglementStrength: Float = 0.5
-        public var lightFieldGeometry: LightField.FieldGeometry = .fibonacci
+        public var lightFieldGeometry: EmulatorLightField.FieldGeometry = .fibonacci
         public var updateFrequency: Double = 60.0
 
         public init() {}
@@ -357,13 +357,13 @@ public class QuantumLightEmulator: ObservableObject {
     }
 
     /// Generate light field visualization data
-    public func generateLightFieldVisualization(width: Int, height: Int) -> [[SIMD3<Float>]] {
+    public func generateEmulatorLightFieldVisualization(width: Int, height: Int) -> [[SIMD3<Float>]] {
         var pixels: [[SIMD3<Float>]] = Array(
             repeating: Array(repeating: .zero, count: width),
             count: height
         )
 
-        guard let field = currentLightField else { return pixels }
+        guard let field = currentEmulatorLightField else { return pixels }
 
         for y in 0..<height {
             for x in 0..<width {
@@ -444,7 +444,7 @@ public class QuantumLightEmulator: ObservableObject {
             )
         }
 
-        updateLightField()
+        updateEmulatorLightField()
     }
 
     private func updateConfiguration() {
@@ -491,7 +491,7 @@ public class QuantumLightEmulator: ObservableObject {
         evolvePhotonField()
 
         // Update light field
-        updateLightField()
+        updateEmulatorLightField()
 
         // Update coherence level
         updateCoherenceLevel()
@@ -604,8 +604,8 @@ public class QuantumLightEmulator: ObservableObject {
         }
     }
 
-    private func updateLightField() {
-        currentLightField = LightField(
+    private func updateEmulatorLightField() {
+        currentEmulatorLightField = EmulatorLightField(
             photons: photonBuffer,
             fieldCoherence: coherenceLevel,
             geometry: configuration.lightFieldGeometry,
@@ -639,7 +639,7 @@ public class QuantumLightEmulator: ObservableObject {
         let focalY = (gazeY - 0.5) * 2.0
 
         // Update light field focus based on gaze
-        if var field = currentLightField {
+        if var field = currentEmulatorLightField {
             // Shift photon positions toward gaze point
             for i in 0..<field.photons.count {
                 let attraction = attention * 0.1  // Attention increases attraction
@@ -693,7 +693,7 @@ public class QuantumLightEmulator: ObservableObject {
         var output = samples
 
         // Use light field interference patterns to modulate audio
-        guard let field = currentLightField else { return samples }
+        guard let field = currentEmulatorLightField else { return samples }
 
         for i in 0..<output.count {
             let position = SIMD3<Float>(Float(i) / Float(output.count) * 2 - 1, 0, 0)
@@ -796,7 +796,7 @@ public class QuantumCreativityEngine {
     /// Generate color palette from light field
     @MainActor
     public func generateColorPalette(count: Int = 5) -> [SIMD3<Float>] {
-        guard let field = emulator.currentLightField else {
+        guard let field = emulator.currentEmulatorLightField else {
             return (0..<count).map { _ in SIMD3<Float>.random(in: 0...1) }
         }
 

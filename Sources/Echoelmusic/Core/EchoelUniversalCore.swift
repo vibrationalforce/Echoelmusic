@@ -186,7 +186,7 @@ final class EchoelUniversalCore: ObservableObject {
         )
     }
 
-    private func calculateGlobalCoherence(bio: BioState, audio: AudioState, quantum: QuantumState) -> Float {
+    private func calculateGlobalCoherence(bio: BioState, audio: AudioState, quantum: CoreQuantumState) -> Float {
         // Weighted combination of all coherence sources
         let bioWeight: Float = 0.4
         let audioWeight: Float = 0.3
@@ -428,7 +428,7 @@ struct AudioState {
     var beatPhase: Float = 0
 }
 
-struct QuantumState {
+struct CoreQuantumState {
     var superpositionStrength: Float = 0.5
     var entanglementStrength: Float = 0
     var creativity: Float = 0.5
@@ -462,7 +462,7 @@ class BioReactiveProcessor {
 
 class QuantumProcessor {
     weak var delegate: EchoelUniversalCore?
-    var currentState = QuantumState()
+    var currentState = CoreQuantumState()
 
     func setCoherence(_ coherence: Float) {
         // Higher coherence = more classical behavior

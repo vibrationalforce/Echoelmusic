@@ -69,7 +69,7 @@ final class VideoAICreativeHub: ObservableObject {
 
     private func updateFromSystemState(_ state: EchoelUniversalCore.SystemState) {
         // Update video effects with bio-data
-        videoEffects.updateBioData(
+        videoEffects.updateHubBioData(
             coherence: state.coherence,
             energy: state.energy,
             flow: state.flow
@@ -187,7 +187,7 @@ class GenerativeAIEngine: ObservableObject {
 
     /// Generate visuals from bio-data
     func generateVisualsFromBio(
-        bioData: BioData,
+        bioData: HubBioData,
         style: VisualStyle
     ) async -> GeneratedVisual? {
         isGenerating = true
@@ -267,7 +267,7 @@ class GenerativeAIEngine: ObservableObject {
 
     /// Generate ambient soundscape from bio-data
     func generateSoundscapeFromBio(
-        bioData: BioData,
+        bioData: HubBioData,
         duration: Double
     ) async -> GeneratedAudio? {
         isGenerating = true
@@ -312,7 +312,7 @@ class GenerativeAIEngine: ObservableObject {
         )
     }
 
-    private func mapBioToVisualParams(_ bio: BioData, style: VisualStyle) -> VisualGenerationParams {
+    private func mapBioToVisualParams(_ bio: HubBioData, style: VisualStyle) -> VisualGenerationParams {
         return VisualGenerationParams(
             complexity: bio.coherence * creativityLevel,
             colorIntensity: bio.energy,
@@ -429,7 +429,7 @@ struct AudioFeatures {
     var beatPhase: Float
 }
 
-struct BioData {
+struct HubBioData {
     var heartRate: Float
     var hrv: Float
     var coherence: Float
@@ -572,7 +572,7 @@ class BioReactiveVideoEffects: ObservableObject {
 
     // MARK: - Update Bio Data
 
-    func updateBioData(coherence: Float, energy: Float, flow: Float) {
+    func updateHubBioData(coherence: Float, energy: Float, flow: Float) {
         currentCoherence = coherence
         currentEnergy = energy
         currentFlow = flow
