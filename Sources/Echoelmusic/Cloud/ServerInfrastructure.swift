@@ -430,11 +430,35 @@ public class AuthenticationService: ObservableObject {
     }
 }
 
-public enum AuthError: Error {
+public enum AuthError: Error, LocalizedError {
     case noToken
     case refreshFailed
     case keychainFailed
     case invalidCredentials
+
+    public var errorDescription: String? {
+        switch self {
+        case .noToken:
+            return "Authentication token not found"
+        case .refreshFailed:
+            return "Failed to refresh authentication token"
+        case .keychainFailed:
+            return "Keychain access failed"
+        case .invalidCredentials:
+            return "Invalid credentials provided"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .noToken, .invalidCredentials:
+            return "Please sign in again to continue"
+        case .refreshFailed:
+            return "Check your network connection and try again"
+        case .keychainFailed:
+            return "Please restart the app and try again"
+        }
+    }
 }
 
 // MARK: - Collaboration Server
@@ -799,13 +823,47 @@ extension CollaborationServer: URLSessionWebSocketDelegate {
     }
 }
 
-public enum CollaborationError: Error {
+public enum CollaborationError: Error, LocalizedError {
     case invalidURL
     case notConnected
     case notAuthenticated
     case noActiveSession
     case maxReconnectAttemptsReached
     case sendFailed
+
+    public var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "Invalid server URL"
+        case .notConnected:
+            return "Not connected to collaboration server"
+        case .notAuthenticated:
+            return "Not authenticated for collaboration"
+        case .noActiveSession:
+            return "No active collaboration session"
+        case .maxReconnectAttemptsReached:
+            return "Maximum reconnection attempts reached"
+        case .sendFailed:
+            return "Failed to send message"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .invalidURL:
+            return "Check the server configuration"
+        case .notConnected:
+            return "Check your network connection and try again"
+        case .notAuthenticated:
+            return "Please sign in to join collaboration sessions"
+        case .noActiveSession:
+            return "Create or join a session to continue"
+        case .maxReconnectAttemptsReached:
+            return "Please wait a moment and try reconnecting"
+        case .sendFailed:
+            return "Check your connection and try again"
+        }
+    }
 }
 
 // MARK: - Cloud Sync Service
@@ -1284,11 +1342,43 @@ public class APIClient: ObservableObject {
     }
 }
 
-public enum APIError: Error {
+public enum APIError: Error, LocalizedError {
     case invalidURL
     case invalidResponse
     case httpError(Int)
     case networkError(Error)
+
+    public var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "Invalid API URL"
+        case .invalidResponse:
+            return "Invalid response from server"
+        case .httpError(let code):
+            return "Server error (HTTP \(code))"
+        case .networkError(let error):
+            return "Network error: \(error.localizedDescription)"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .invalidURL:
+            return "Please check the API configuration"
+        case .invalidResponse:
+            return "Please try again later"
+        case .httpError(let code):
+            if code >= 500 {
+                return "The server is experiencing issues. Please try again later"
+            } else if code == 401 || code == 403 {
+                return "Please sign in again to continue"
+            } else {
+                return "Please check your request and try again"
+            }
+        case .networkError:
+            return "Check your internet connection and try again"
+        }
+    }
 }
 
 // MARK: - Offline Support
