@@ -8,8 +8,9 @@ on:
     branches: [develop]
     tags:
       - 'v*'
-  pull_request:
-    branches: [develop]
+  # pull_request disabled - use ios-testflight.yml for PR testing
+  # pull_request:
+  #   branches: [develop]
   workflow_dispatch:  # Manual trigger
 
 env:

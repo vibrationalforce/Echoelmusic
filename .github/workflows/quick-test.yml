@@ -14,8 +14,9 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
-  pull_request:
-    branches: [main]
+  # pull_request disabled - use ios-testflight.yml for PR testing
+  # pull_request:
+  #   branches: [main]
 
 jobs:
   swift-test:
