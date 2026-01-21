@@ -8,21 +8,21 @@ import SwiftUI
 @MainActor
 class SceneManager: ObservableObject {
 
-    @Published var scenes: [Scene] = []
+    @Published var scenes: [StreamScene] = []
     @Published var bioReactiveEnabled: Bool = false
     @Published var bioSceneRules: [BioSceneRule] = []
 
-    func loadScenes() -> [Scene] {
+    func loadScenes() -> [StreamScene] {
         // Create default scenes
         return [
-            Scene(name: "Main", sources: []),
-            Scene(name: "Meditation", sources: []),
-            Scene(name: "Performance", sources: []),
-            Scene(name: "BRB", sources: [])
+            StreamScene(name: "Main", sources: []),
+            StreamScene(name: "Meditation", sources: []),
+            StreamScene(name: "Performance", sources: []),
+            StreamScene(name: "BRB", sources: [])
         ]
     }
 
-    func addScene(_ scene: Scene) {
+    func addScene(_ scene: StreamScene) {
         scenes.append(scene)
     }
 
@@ -33,7 +33,7 @@ class SceneManager: ObservableObject {
 
 // MARK: - Scene Model
 
-struct Scene: Identifiable {
+struct StreamScene: Identifiable {
     let id = UUID()
     var name: String
     var sources: [SceneSource]
