@@ -15,7 +15,8 @@ struct TrackListView: View {
                     if session.tracks.isEmpty {
                         emptyStateView
                     } else {
-                        ForEach(session.tracks) { track in
+                        // OPTIMIZED: Explicit id binding for stable identity during mutations
+                        ForEach(session.tracks, id: \.id) { track in
                             TrackRow(track: track)
                                 .environmentObject(recordingEngine)
                         }

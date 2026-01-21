@@ -11,7 +11,8 @@ struct MixerView: View {
             GeometryReader { geometry in
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: VaporwaveSpacing.lg) {
-                        ForEach(session.tracks) { track in
+                        // OPTIMIZED: Explicit id binding for better list performance
+                        ForEach(session.tracks, id: \.id) { track in
                             MixerChannelStrip(track: track)
                                 .frame(width: 100)
                                 .environmentObject(recordingEngine)

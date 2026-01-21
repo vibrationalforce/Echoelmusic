@@ -43,8 +43,8 @@ struct PianoRollView: View {
                         )
                         .accessibilityHidden(true)
 
-                        // MIDI Notes
-                        ForEach(viewModel.notes) { note in
+                        // MIDI Notes - OPTIMIZED: Explicit id for stable note identity
+                        ForEach(viewModel.notes, id: \.id) { note in
                             MIDINoteView(
                                 note: note,
                                 viewModel: viewModel,
