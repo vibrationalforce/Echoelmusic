@@ -120,13 +120,17 @@ jobs:
           echo "✅ CI Keychain created: $KEYCHAIN_NAME"
 
       - name: "🔨 Build & Upload via Fastlane"
+        id: build
         run: |
+          # Create log directory
+          mkdir -p build_logs
+
           if [ "${{ github.event.inputs.build_type }}" == "testflight" ]; then
             echo "Building and uploading to TestFlight..."
-            fastlane ios beta
+            fastlane ios beta 2>&1 | tee build_logs/fastlane.log
           else
             echo "Building only (no upload)..."
-            fastlane ios build_only
+            fastlane ios build_only 2>&1 | tee build_logs/fastlane.log
           fi
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -135,6 +139,29 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           KEYCHAIN_PATH: ${{ env.KEYCHAIN_PATH }}
           KEYCHAIN_PASSWORD: ${{ env.KEYCHAIN_PASSWORD }}
+
+      - name: "📋 Show Build Errors on Failure"
+        if: failure()
+        run: |
+          echo "========================================"
+          echo "  ❌ BUILD FAILED - SHOWING ERRORS"
+          echo "========================================"
+          echo ""
+          echo "=== Swift Compilation Errors ==="
+          grep -E "error:|fatal error:|cannot find|no such module" build_logs/fastlane.log | head -100 || true
+          echo ""
+          echo "=== Full Error Context ==="
+          grep -B 5 -A 5 "error:" build_logs/fastlane.log | head -200 || true
+
+      - name: "📦 Upload Build Logs"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            build_logs/
+            ~/Library/Logs/gym/*.log
+          retention-days: 7
 
       - name: "✅ Success"
         run: |
