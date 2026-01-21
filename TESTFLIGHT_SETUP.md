@@ -14,7 +14,7 @@ Code auf MacBook schreiben (VS Code) → Push zu GitHub → Automatischer Build 
 
 ### 2. App Store Connect Setup
 - App ID erstellen
-- Bundle Identifier: `com.vibrationalforce.echoelmusic` (oder eigene Domain)
+- Bundle Identifier: `com.echoelmusic.app` (oder eigene Domain)
 - App in App Store Connect registrieren
 
 ### 3. GitHub Repository
@@ -41,7 +41,7 @@ Code auf MacBook schreiben (VS Code) → Push zu GitHub → Automatischer Build 
 → Klicke auf "+" (neue ID)
 → Wähle "App IDs" → "App"
 → Description: "Echoelmusic Biofeedback Music"
-→ Bundle ID: "com.vibrationalforce.echoelmusic"
+→ Bundle ID: "com.echoelmusic.app"
 → Capabilities aktivieren:
    ✅ HealthKit
    ✅ Background Modes (Audio)
@@ -54,7 +54,7 @@ Code auf MacBook schreiben (VS Code) → Push zu GitHub → Automatischer Build 
 → Gehe zu: https://developer.apple.com/account/resources/profiles/list
 → Klicke auf "+"
 → Wähle "iOS App Development" (für TestFlight später "App Store")
-→ Wähle deine App ID: "com.vibrationalforce.echoelmusic"
+→ Wähle deine App ID: "com.echoelmusic.app"
 → Wähle dein Certificate
 → Wähle deine Devices (dein iPhone registrieren!)
 → Download das .mobileprovision file
@@ -71,7 +71,7 @@ Code auf MacBook schreiben (VS Code) → Push zu GitHub → Automatischer Build 
 → Platforms: iOS
 → Name: Echoelmusic
 → Primary Language: German (oder English)
-→ Bundle ID: com.vibrationalforce.echoelmusic (wähle die erstellte ID)
+→ Bundle ID: com.echoelmusic.app (wähle die erstellte ID)
 → SKU: blab-001 (eindeutige ID)
 → User Access: Full Access
 ```
@@ -143,7 +143,7 @@ open Package.swift  # Öffnet in Xcode
 → iOS → App
 → Product Name: Blab
 → Team: [Wähle dein Developer Team]
-→ Bundle Identifier: com.vibrationalforce.echoelmusic
+→ Bundle Identifier: com.echoelmusic.app
 → Interface: SwiftUI
 → Language: Swift
 
