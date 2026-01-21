@@ -575,26 +575,25 @@ public struct PrivacyPolicy {
     16.2. DATA PROTECTION OFFICER (GDPR)
 
     Email: \(dpoEmail)
-    Address: [DPO Mailing Address]
+    Address: [Configure before App Store release]
 
     16.3. CALIFORNIA PRIVACY REQUESTS (CCPA)
 
     Email: \(contactEmail)
-    Toll-Free: 1-800-XXX-XXXX (US residents)
+    Toll-Free: Contact via email (US residents)
     Web Form: \(websiteURL)/ccpa-request
 
     16.4. EU REPRESENTATIVE (GDPR Article 27)
 
-    Company: [EU Representative Company Name]
-    Address: [EU Representative Mailing Address]
-    Email: [EU Representative Email]
+    Company: [Configure before EU release]
+    Address: [Configure before EU release]
+    Email: [Configure before EU release]
 
     16.5. MAILING ADDRESS
 
     Echoelmusic Inc.
     Attn: Privacy Department
-    [Company Mailing Address]
-    [City, State, ZIP]
+    [Configure before App Store release]
     United States
 
 
