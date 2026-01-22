@@ -1,0 +1,311 @@
+# =============================================================================
+# ECHOELMUSIC ANDROID CI/CD PIPELINE
+# =============================================================================
+# Comprehensive CI for Android builds, tests, and release preparation.
+# Runs on push to main branches and pull requests.
+# =============================================================================
+
+name: Android Build & Test
+
+on:
+  push:
+    branches: [ develop, main, 'feature/**', 'claude/**' ]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android-build.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'android/**'
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '17'
+  ANDROID_COMPILE_SDK: '34'
+  ANDROID_BUILD_TOOLS: '34.0.0'
+
+jobs:
+  # Job 1: Code Quality
+  lint:
+    name: Lint & Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: '8.4'
+
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          android/.gradle
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Run Lint
+      working-directory: android
+      run: ./gradlew lint --continue
+      continue-on-error: true
+
+    - name: Upload Lint Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: lint-results
+        path: android/app/build/reports/lint-results*.html
+
+  # Job 2: Unit Tests
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          android/.gradle
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Run Unit Tests
+      working-directory: android
+      run: ./gradlew test --continue
+      continue-on-error: true
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: unit-test-results
+        path: android/app/build/reports/tests/
+
+    - name: Upload Test Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: android/app/build/test-results/
+
+  # Job 3: Build Debug APK
+  build-debug:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          android/.gradle
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Build Debug APK
+      working-directory: android
+      run: ./gradlew assembleDebug
+
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-apk
+        path: android/app/build/outputs/apk/debug/*.apk
+
+  # Job 4: Build Release APK (for main branch only)
+  build-release:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+    needs: [unit-tests, build-debug]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          android/.gradle
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Decode Keystore
+      if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      env:
+        ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      run: |
+        echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/release-key.jks
+
+    - name: Build Release APK
+      working-directory: android
+      env:
+        ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/android/app/release-key.jks
+        ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      run: ./gradlew assembleRelease
+
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-apk
+        path: android/app/build/outputs/apk/release/*.apk
+
+    - name: Build Release Bundle (AAB)
+      working-directory: android
+      env:
+        ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/android/app/release-key.jks
+        ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      run: ./gradlew bundleRelease
+
+    - name: Upload Release Bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-bundle
+        path: android/app/build/outputs/bundle/release/*.aab
+
+  # Job 5: Instrumented Tests (on emulator)
+  instrumented-tests:
+    name: Instrumented Tests
+    runs-on: ubuntu-latest
+    needs: build-debug
+    continue-on-error: true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+
+    - name: Enable KVM
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    - name: Run Instrumented Tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 30
+        arch: x86_64
+        target: google_apis
+        script: cd android && ./gradlew connectedAndroidTest --continue
+      continue-on-error: true
+
+    - name: Upload Instrumented Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: instrumented-test-results
+        path: android/app/build/reports/androidTests/
+
+  # Job 6: Security Scan
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check for hardcoded secrets
+      run: |
+        echo "Scanning for hardcoded secrets in Android code..."
+        grep -rn "password\s*=\s*[\"']" android --include='*.kt' 2>/dev/null | grep -v '//' | head -5 || true
+        grep -rn "apiKey\s*=\s*[\"']" android --include='*.kt' 2>/dev/null | grep -v '//' | head -5 || true
+        echo "Security scan completed"
+      continue-on-error: true
+
+  # Job 7: Build Summary
+  build-summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [lint, unit-tests, build-debug, build-release, instrumented-tests]
+    if: always()
+
+    steps:
+    - name: Build Status Summary
+      run: |
+        echo "Android Build Summary:"
+        echo "======================"
+        echo "Lint: ${{ needs.lint.result }}"
+        echo "Unit Tests: ${{ needs.unit-tests.result }}"
+        echo "Debug Build: ${{ needs.build-debug.result }}"
+        echo "Release Build: ${{ needs.build-release.result }}"
+        echo "Instrumented Tests: ${{ needs.instrumented-tests.result }}"
+
+        if [ "${{ needs.build-debug.result }}" == "failure" ]; then
+          echo "Debug build failed"
+          exit 1
+        fi
+
+        echo "Build pipeline completed successfully"

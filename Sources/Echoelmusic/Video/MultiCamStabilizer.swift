@@ -771,9 +771,9 @@ class VideoStabilizer: ObservableObject {
                     context: ciContext
                 )
 
-                // Wait for writer
+                // Wait for writer - use RunLoop to avoid blocking main thread
                 while !writerInput.isReadyForMoreMediaData {
-                    Thread.sleep(forTimeInterval: 0.01)
+                    RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.01))
                 }
 
                 // Append frame
