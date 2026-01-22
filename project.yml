@@ -39,8 +39,6 @@ targets:
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
-      - path: Resources
-        type: folder
       - path: PrivacyInfo.xcprivacy
         type: file
 
