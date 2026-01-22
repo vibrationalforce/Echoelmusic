@@ -1144,14 +1144,30 @@ public struct ReviewInformation {
         notes: "Full access demo account with pre-configured sessions and sample data. No actual Apple Watch or biometric hardware required for testing."
     )
 
-    /// Contact information
-    /// Configure via environment variables for production
-    public static let contact = ContactInfo(
-        firstName: "App Review",
-        lastName: "Contact",
-        phone: ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_PHONE"] ?? "+1-555-ECHO-APP",
-        email: ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_EMAIL"] ?? "review@echoelmusic.com"
-    )
+    /// Contact information for App Store review process
+    /// REQUIRED: Configure these environment variables before App Store submission:
+    /// - ECHOELMUSIC_CONTACT_PHONE: Valid phone number for App Review team
+    /// - ECHOELMUSIC_CONTACT_EMAIL: Valid email for App Review team
+    /// - ECHOELMUSIC_CONTACT_FIRST_NAME: First name of contact person
+    /// - ECHOELMUSIC_CONTACT_LAST_NAME: Last name of contact person
+    public static var contact: ContactInfo {
+        ContactInfo(
+            firstName: ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_FIRST_NAME"] ?? "App Review",
+            lastName: ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_LAST_NAME"] ?? "Contact",
+            phone: ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_PHONE"] ?? "",
+            email: ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_EMAIL"] ?? ""
+        )
+    }
+
+    /// Validates that required contact information is configured for production
+    public static var isContactConfigured: Bool {
+        guard let phone = ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_PHONE"],
+              let email = ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_EMAIL"],
+              !phone.isEmpty, !email.isEmpty else {
+            return false
+        }
+        return true
+    }
 
     /// Notes for reviewer
     public static let reviewNotes = """
