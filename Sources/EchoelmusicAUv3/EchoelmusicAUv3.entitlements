@@ -5,7 +5,7 @@
     <!-- App Groups for shared data between main app and extension -->
     <key>com.apple.security.application-groups</key>
     <array>
-        <string>group.com.echoelmusic.audio</string>
+        <string>group.com.echoelmusic.shared</string>
     </array>
 
     <!-- Audio component registration -->

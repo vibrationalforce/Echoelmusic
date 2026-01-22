@@ -40,7 +40,7 @@ All entitlements files have been created/updated with comprehensive capabilities
    - Bluetooth (MIDI Controllers)
    - Push Notifications
    - Background Audio
-   - App Groups (`group.com.echoelmusic.shared`, `group.com.echoelmusic.audio`)
+   - App Groups (`group.com.echoelmusic.shared`)
    - Keychain Sharing
    - Associated Domains
    - NFC Tag Reading
