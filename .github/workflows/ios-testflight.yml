@@ -44,7 +44,8 @@ jobs:
   pr-build-check:
     name: "🔍 PR Build Check"
     runs-on: macos-14
-    if: ${{ github.event_name == 'pull_request' }}
+    # Run ONLY on pull requests - use simple condition without ${{ }} wrapper
+    if: github.event_name == 'pull_request'
 
     steps:
       - name: "📥 Checkout"
@@ -121,8 +122,8 @@ jobs:
   ios-testflight:
     name: "📱 Build & Deploy iOS"
     runs-on: macos-14
-    # Only run on manual workflow_dispatch, never on pull_request
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    # Run ONLY on manual workflow_dispatch - use simple condition without ${{ }} wrapper
+    if: github.event_name == 'workflow_dispatch'
 
     steps:
       - name: "📥 Checkout"
