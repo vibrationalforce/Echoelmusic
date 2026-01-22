@@ -6,6 +6,10 @@ import Accelerate
 import HealthKit
 #endif
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
 // MARK: - Optimized Circular Buffer for HRV Data
 
 /// High-performance circular buffer for real-time biometric data
@@ -98,6 +102,29 @@ class HealthKitManager: ObservableObject {
     /// Error message if authorization or monitoring fails
     @Published var errorMessage: String?
 
+    /// Authorization state for UI display
+    @Published var authorizationState: AuthorizationState = .unknown
+
+    /// Authorization state enum for better UI handling
+    enum AuthorizationState {
+        case unknown
+        case notDetermined
+        case authorized
+        case denied
+        case unavailable
+
+        var canRetry: Bool {
+            switch self {
+            case .notDetermined, .unknown: return true
+            case .denied, .authorized, .unavailable: return false
+            }
+        }
+
+        var shouldShowSettingsLink: Bool {
+            self == .denied
+        }
+    }
+
 
     // MARK: - Private Properties
 
@@ -157,6 +184,7 @@ class HealthKitManager: ObservableObject {
     private func checkAvailability() {
         #if canImport(HealthKit)
         guard HKHealthStore.isHealthDataAvailable() else {
+            authorizationState = .unavailable
             errorMessage = "HealthKit is not available on this device"
             return
         }
@@ -165,8 +193,22 @@ class HealthKitManager: ObservableObject {
         let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
         let status = healthStore.authorizationStatus(for: heartRateType)
 
-        isAuthorized = (status == .sharingAuthorized)
+        switch status {
+        case .sharingAuthorized:
+            isAuthorized = true
+            authorizationState = .authorized
+        case .sharingDenied:
+            isAuthorized = false
+            authorizationState = .denied
+        case .notDetermined:
+            isAuthorized = false
+            authorizationState = .notDetermined
+        @unknown default:
+            isAuthorized = false
+            authorizationState = .unknown
+        }
         #else
+        authorizationState = .unavailable
         errorMessage = "HealthKit is not available on this platform"
         #endif
     }
@@ -179,6 +221,7 @@ class HealthKitManager: ObservableObject {
     func requestAuthorization() async throws {
         #if canImport(HealthKit)
         guard HKHealthStore.isHealthDataAvailable() else {
+            authorizationState = .unavailable
             let error = NSError(
                 domain: "com.echoelmusic.healthkit",
                 code: 1,
@@ -198,22 +241,62 @@ class HealthKitManager: ObservableObject {
             isAuthorized = (status == .sharingAuthorized)
 
             if isAuthorized {
-                log.biofeedback("✅ HealthKit authorized")
+                authorizationState = .authorized
+                log.biofeedback("HealthKit authorized")
                 errorMessage = nil
             } else {
-                errorMessage = "HealthKit access denied. Enable in Settings."
+                authorizationState = .denied
+                errorMessage = "HealthKit access denied. Enable in Settings > Privacy > Health."
             }
 
         } catch {
+            authorizationState = .denied
             errorMessage = "HealthKit authorization failed: \(error.localizedDescription)"
             throw error
         }
         #else
+        authorizationState = .unavailable
         throw NSError(
             domain: "com.echoelmusic.healthkit",
             code: 2,
             userInfo: [NSLocalizedDescriptionKey: "HealthKit not available on this platform"]
         )
+        #endif
+    }
+
+    /// Open iOS Settings app to the Health section
+    /// Call this when user needs to manually enable HealthKit access
+    func openHealthSettings() {
+        #if os(iOS)
+        if let url = URL(string: "x-apple-health://") {
+            Task { @MainActor in
+                await UIApplication.shared.open(url)
+            }
+        }
+        #endif
+    }
+
+    /// Retry authorization check (useful after returning from Settings)
+    func recheckAuthorization() {
+        #if canImport(HealthKit)
+        let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
+        let status = healthStore.authorizationStatus(for: heartRateType)
+
+        switch status {
+        case .sharingAuthorized:
+            isAuthorized = true
+            authorizationState = .authorized
+            errorMessage = nil
+        case .sharingDenied:
+            isAuthorized = false
+            authorizationState = .denied
+        case .notDetermined:
+            isAuthorized = false
+            authorizationState = .notDetermined
+        @unknown default:
+            isAuthorized = false
+            authorizationState = .unknown
+        }
         #endif
     }
 
