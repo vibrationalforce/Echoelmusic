@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.1.0</string>
+	<string>1.2.0</string>
 	<key>CFBundleVersion</key>
 	<string>2</string>
 	<key>LSRequiresIPhoneOS</key>
@@ -28,18 +28,6 @@
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
-		<key>UISceneConfigurations</key>
-		<dict>
-			<key>UIWindowSceneSessionRoleApplication</key>
-			<array>
-				<dict>
-					<key>UISceneConfigurationName</key>
-					<string>Default Configuration</string>
-					<key>UISceneDelegateClassName</key>
-					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
-				</dict>
-			</array>
-		</dict>
 	</dict>
 	<key>UILaunchScreen</key>
 	<dict/>
@@ -61,6 +49,21 @@
 	<string>Echoelmusic uses heart rate and HRV data to create personalized bio-reactive audio experiences that respond to your body.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Echoelmusic may save your meditation and coherence training sessions to HealthKit.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Echoelmusic uses local network for DMX lighting control, Art-Net, and connecting to external audio interfaces.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+		<string>_rtsp._tcp</string>
+		<string>_artnet._udp</string>
+		<string>_osc._udp</string>
+		<string>_midi._udp</string>
+		<string>_echoelmusic._tcp</string>
+	</array>
+	<key>NSMotionUsageDescription</key>
+	<string>Echoelmusic uses motion data for gesture-based audio control and spatial audio head tracking.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Echoelmusic connects to Bluetooth MIDI controllers for music creation.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Echoelmusic uses your camera for face tracking to control audio parameters with your facial expressions.</string>
 	<key>NSFaceIDUsageDescription</key>

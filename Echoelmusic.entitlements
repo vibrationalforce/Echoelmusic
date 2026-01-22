@@ -2,39 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- HealthKit Access -->
+	<!-- HealthKit Access (basic - no health-records which requires approval) -->
 	<key>com.apple.developer.healthkit</key>
 	<true/>
-	<key>com.apple.developer.healthkit.access</key>
-	<array>
-		<string>health-records</string>
-	</array>
 
 	<!-- Audio Background Mode -->
-	<key>com.apple.developer.playable-content</key>
-	<true/>
-	<key>com.apple.developer.coremedia.allow-alternate-audio-track-policy</key>
-	<true/>
-
-	<!-- Inter-App Audio -->
 	<key>inter-app-audio</key>
-	<true/>
-
-	<!-- Network Extensions -->
-	<key>com.apple.developer.networking.multicast</key>
-	<true/>
-	<key>com.apple.developer.networking.wifi-info</key>
-	<true/>
-
-	<!-- HomeKit (for smart lighting integration) -->
-	<key>com.apple.developer.homekit</key>
 	<true/>
 
 	<!-- App Groups (for widget/watch communication) -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.echoelmusic.shared</string>
-		<string>group.com.echoelmusic.audio</string>
 	</array>
 
 	<!-- Keychain Sharing -->
@@ -42,67 +21,5 @@
 	<array>
 		<string>$(AppIdentifierPrefix)com.echoelmusic.app</string>
 	</array>
-
-	<!-- iCloud (for user data sync) -->
-	<key>com.apple.developer.icloud-container-identifiers</key>
-	<array>
-		<string>iCloud.com.echoelmusic.app</string>
-	</array>
-	<key>com.apple.developer.icloud-services</key>
-	<array>
-		<string>CloudKit</string>
-		<string>CloudDocuments</string>
-	</array>
-	<key>com.apple.developer.ubiquity-container-identifiers</key>
-	<array>
-		<string>iCloud.com.echoelmusic.app</string>
-	</array>
-	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
-	<string>$(TeamIdentifierPrefix)com.echoelmusic.app</string>
-
-	<!-- Push Notifications -->
-	<key>aps-environment</key>
-	<string>production</string>
-
-	<!-- Associated Domains (for universal links) -->
-	<key>com.apple.developer.associated-domains</key>
-	<array>
-		<string>applinks:echoelmusic.com</string>
-		<string>activitycontinuation:echoelmusic.com</string>
-	</array>
-
-	<!-- Siri Integration -->
-	<key>com.apple.developer.siri</key>
-	<true/>
-
-	<!-- Apple Music API -->
-	<key>com.apple.developer.music-kit</key>
-	<true/>
-
-	<!-- Background Processing -->
-	<key>com.apple.developer.background-processing</key>
-	<array/>
-
-	<!-- Bluetooth for MIDI controllers -->
-	<key>com.apple.developer.bluetooth.central</key>
-	<true/>
-
-	<!-- NFC (for future hardware integration) -->
-	<key>com.apple.developer.nfc.readersession.formats</key>
-	<array>
-		<string>TAG</string>
-	</array>
-
-	<!-- Family Controls (for wellness features) -->
-	<key>com.apple.developer.family-controls</key>
-	<true/>
-
-	<!-- Extended Virtual Addressing (for visionOS compatibility) -->
-	<key>com.apple.developer.kernel.extended-virtual-addressing</key>
-	<true/>
-
-	<!-- Increased Memory Limit (for audio processing) -->
-	<key>com.apple.developer.kernel.increased-memory-limit</key>
-	<true/>
 </dict>
 </plist>

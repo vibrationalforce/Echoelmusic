@@ -787,17 +787,9 @@ extension Dictionary where Key == String, Value == Any {
         // Launch Screen
         "UILaunchScreen": [:],
 
-        // Scene Configuration
+        // Scene Configuration - SwiftUI @main App handles scenes automatically
         "UIApplicationSceneManifest": [
-            "UIApplicationSupportsMultipleScenes": true,
-            "UISceneConfigurations": [
-                "UIWindowSceneSessionRoleApplication": [
-                    [
-                        "UISceneConfigurationName": "Default",
-                        "UISceneDelegateClassName": "$(PRODUCT_MODULE_NAME).SceneDelegate"
-                    ]
-                ]
-            ]
+            "UIApplicationSupportsMultipleScenes": false
         ],
 
         // App Transport Security

@@ -1,13 +1,23 @@
+# =============================================================================
+# ECHOELMUSIC CI/CD PIPELINE
+# =============================================================================
+# Comprehensive CI for code changes (push events only).
+# For PR checks, use ios-testflight.yml workflow instead.
+# This separation keeps PR checks fast while post-merge CI is thorough.
+# =============================================================================
+
 name: Echoelmusic CI/CD Pipeline
 
 on:
   push:
-    branches: [ develop, 'feature/**' ]
+    branches: [ develop, main, 'feature/**', 'claude/**' ]
     paths:
       - 'Sources/**'
       - 'Tests/**'
       - 'Package.swift'
       - 'project.yml'
+  # NOTE: PR checks are handled by ios-testflight.yml
+  # This workflow runs on push (post-merge) for thorough testing
   workflow_dispatch:
 
 env:
