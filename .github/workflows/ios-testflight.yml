@@ -1,13 +1,22 @@
 # =============================================================================
 # ECHOELMUSIC - iOS TESTFLIGHT (Quick Deploy)
 # =============================================================================
-# One-tap iOS deployment from iPhone
-# Cost: ~$1.20 per build
+# One-tap iOS deployment from iPhone + PR build verification
+# Cost: ~$1.20 per build (TestFlight only)
 # =============================================================================
 
 name: "📱 iOS TestFlight"
 
 on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'project.yml'
+      - 'fastlane/**'
+      - '.github/workflows/ios-testflight.yml'
   workflow_dispatch:
     inputs:
       build_type:
@@ -19,10 +28,112 @@ on:
           - testflight
           - build-only
 
+# Concurrency: Cancel in-progress runs for same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # ==========================================================================
+  # PR Build Check (No Secrets Required)
+  # ==========================================================================
+  pr-build-check:
+    name: "🔍 PR Build Check"
+    runs-on: macos-14
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: "📥 Checkout"
+        uses: actions/checkout@v4
+
+      - name: "🔧 Setup Xcode 15.4"
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
+
+      - name: "📦 Install XcodeGen"
+        run: |
+          # Install XcodeGen 2.38.0 (compatible with Xcode 15)
+          curl -sL https://github.com/yonaskolb/XcodeGen/releases/download/2.38.0/xcodegen.zip -o xcodegen.zip
+          unzip -o xcodegen.zip
+          sudo mv xcodegen/bin/xcodegen /usr/local/bin/
+          xcodegen --version
+
+      - name: "💾 Cache Swift Packages"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.swiftpm
+            .build
+          key: ${{ runner.os }}-swift-ios-${{ hashFiles('Package.swift') }}
+
+      - name: "⚙️ Generate Xcode Project"
+        run: |
+          echo "Generating Xcode project..."
+          # Use placeholder team ID for CI builds
+          sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+          xcodegen generate --spec project.yml
+
+          if [ -d "Echoelmusic.xcodeproj" ]; then
+            echo "✅ Echoelmusic.xcodeproj created successfully"
+          else
+            echo "❌ ERROR: Project generation failed"
+            exit 1
+          fi
+
+      - name: "🔍 Verify Metal Shader Content"
+        run: |
+          echo "=== Verifying Metal shaders ==="
+          grep -r "^struct VertexOut\|^struct VertexIn\|^struct Uniforms" Sources/ --include="*.metal" || echo "✅ No duplicated unprefixed structs"
+
+      - name: "🔨 Build iOS (Simulator - No Signing)"
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            2>&1 | tee build.log | head -500
+
+          # Check for success
+          if [ ${PIPESTATUS[0]} -eq 0 ]; then
+            echo ""
+            echo "✅ iOS Build SUCCESSFUL"
+          else
+            echo ""
+            echo "❌ Build failed - showing errors:"
+            grep -E "error:|fatal error:|cannot find" build.log | head -50
+            exit 1
+          fi
+
+      - name: "📋 Show Build Errors on Failure"
+        if: failure()
+        run: |
+          echo "=== Build Errors ==="
+          if [ -f build.log ]; then
+            grep -E "error:|warning:|fatal" build.log | head -100
+          fi
+
+      - name: "✅ PR Check Complete"
+        run: |
+          echo "========================================"
+          echo "  ✅ PR BUILD CHECK PASSED"
+          echo "========================================"
+          echo "  The iOS app builds successfully."
+          echo "  Merge this PR and run TestFlight"
+          echo "  deploy manually if needed."
+          echo "========================================"
+
+  # ==========================================================================
+  # TestFlight Deploy (Manual Trigger Only)
+  # ==========================================================================
   ios-testflight:
     name: "📱 Build & Deploy iOS"
-    runs-on: macos-14  # Stable with Xcode 15.4
+    runs-on: macos-14
+    if: github.event_name == 'workflow_dispatch'
 
     steps:
       - name: "📥 Checkout"

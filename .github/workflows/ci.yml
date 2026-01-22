@@ -2,7 +2,14 @@ name: Echoelmusic CI/CD Pipeline
 
 on:
   push:
-    branches: [ develop, 'feature/**' ]
+    branches: [ develop, main, 'feature/**', 'claude/**' ]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'project.yml'
+  pull_request:
+    branches: [ main, develop ]
     paths:
       - 'Sources/**'
       - 'Tests/**'
