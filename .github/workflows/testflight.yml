@@ -1,10 +1,23 @@
+# =============================================================================
+# DEPRECATED - Use "iOS TestFlight" workflow instead
+# =============================================================================
+# This workflow is kept for backwards compatibility only.
+# Please use: .github/workflows/ios-testflight.yml
+# =============================================================================
+#
 # TestFlight deployment using Fastlane
 # Secrets required: APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_ISSUER_ID,
 #                   APP_STORE_CONNECT_PRIVATE_KEY, APPLE_TEAM_ID
-name: TestFlight Deploy
+name: "[LEGACY] TestFlight Deploy"
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm_legacy:
+        description: 'Confirm using legacy workflow (recommended: use iOS TestFlight instead)'
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   deploy:

@@ -1,8 +1,14 @@
 default_platform(:ios)
 
+# =============================================================================
+# ECHOELMUSIC - FASTLANE CONFIGURATION
+# Version: 1.2.0 - Phase 10000 ULTIMATE MODE
+# =============================================================================
+
 platform :ios do
-  desc "Build and upload to TestFlight"
+  desc "Build and upload to TestFlight (optimized for CI/CD)"
   lane :beta do
+    UI.header "Starting TestFlight build for Echoelmusic v1.2.0"
     # Ensure we have the required environment variables
     UI.user_error!("ASC_KEY_ID not set") unless ENV["ASC_KEY_ID"]
     UI.user_error!("ASC_ISSUER_ID not set") unless ENV["ASC_ISSUER_ID"]
@@ -89,38 +95,69 @@ platform :ios do
     UI.message("Using provisioning profile: #{profile_name} (#{profile_uuid})")
 
     # Build the app with MANUAL signing using the fetched certificate and profile
+    # Optimized for faster CI/CD builds
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
       configuration: "Release",
-      clean: true,
+      clean: ENV["CLEAN_BUILD"] == "true",  # Only clean when explicitly requested
       export_method: "app-store",
       codesigning_identity: "Apple Distribution",
+      derived_data_path: "./build/DerivedData",  # Cache for faster incremental builds
       xcargs: [
         "DEVELOPMENT_TEAM='#{ENV["APPLE_TEAM_ID"]}'",
         "CODE_SIGN_STYLE='Manual'",
         "CODE_SIGN_IDENTITY='Apple Distribution'",
-        "PROVISIONING_PROFILE_SPECIFIER='#{profile_name}'"
+        "PROVISIONING_PROFILE_SPECIFIER='#{profile_name}'",
+        "COMPILER_INDEX_STORE_ENABLE=NO",  # Faster builds
+        "DEBUG_INFORMATION_FORMAT='dwarf-with-dsym'"  # Required for crash reporting
       ].join(" ")
     )
 
-    # Upload to TestFlight
+    # Upload to TestFlight with optimized settings
+    UI.message("📤 Uploading to TestFlight...")
     upload_to_testflight(
       api_key: api_key,
-      skip_waiting_for_build_processing: true
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,  # Don't auto-distribute to external testers
+      notify_external_testers: false,
+      changelog: "Build #{ENV['BUILD_NUMBER'] || 'dev'} - Phase 10000 ULTIMATE MODE"
     )
+
+    UI.success("🎉 Successfully uploaded to TestFlight!")
   end
 
   desc "Just build without signing (for CI testing)"
   lane :build_only do
+    UI.header "Building for simulator (no signing)"
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
       configuration: "Release",
-      clean: true,
+      clean: false,
       skip_codesigning: true,
       skip_archive: true,
-      destination: "generic/platform=iOS Simulator"
+      destination: "generic/platform=iOS Simulator",
+      derived_data_path: "./build/DerivedData"
+    )
+  end
+
+  desc "Run tests"
+  lane :test do
+    UI.header "Running tests"
+    run_tests(
+      project: "Echoelmusic.xcodeproj",
+      scheme: "Echoelmusic",
+      device: "iPhone 15 Pro",
+      clean: false,
+      derived_data_path: "./build/DerivedData"
+    )
+  end
+
+  desc "Increment build number"
+  lane :bump do
+    increment_build_number(
+      build_number: ENV["BUILD_NUMBER"] || (latest_testflight_build_number + 1).to_s
     )
   end
 end
