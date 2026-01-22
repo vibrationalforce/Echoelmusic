@@ -46,7 +46,7 @@ targets:
 
     # Info.plist configuration (inline)
     info:
-      path: Resources/Info.plist
+      path: Resources/iOS/Info.plist
       properties:
         CFBundleDevelopmentRegion: en
         CFBundleExecutable: $(EXECUTABLE_NAME)
@@ -65,6 +65,20 @@ targets:
         NSHealthUpdateUsageDescription: "Echoelmusic can save your coherence scores to Health"
         NSBluetoothAlwaysUsageDescription: "Echoelmusic connects to Bluetooth MIDI controllers and audio devices"
         NSBluetoothPeripheralUsageDescription: "Echoelmusic connects to Bluetooth audio devices for ultra-low latency monitoring"
+        NSCameraUsageDescription: "Echoelmusic uses your camera for face tracking to control audio parameters with facial expressions"
+        NSFaceIDUsageDescription: "Echoelmusic uses TrueDepth camera for face tracking to map expressions to audio-visual parameters"
+        NSMotionUsageDescription: "Echoelmusic uses motion data for gesture-based audio control and spatial audio head tracking"
+        NSLocalNetworkUsageDescription: "Echoelmusic uses local network for DMX lighting control, Art-Net, and connecting to external audio interfaces"
+        NSBonjourServices:
+          - "_http._tcp"
+          - "_rtsp._tcp"
+          - "_artnet._udp"
+          - "_osc._udp"
+          - "_midi._udp"
+          - "_echoelmusic._tcp"
+
+        # Export compliance
+        ITSAppUsesNonExemptEncryption: false
 
         # Background modes
         UIBackgroundModes:
@@ -94,8 +108,9 @@ targets:
       base:
         PRODUCT_NAME: Echoelmusic
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
-        INFOPLIST_FILE: Info.plist
+        INFOPLIST_FILE: Resources/iOS/Info.plist
         GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: Echoelmusic.entitlements
 
         # Code signing (for CI/CD automatic signing)
         CODE_SIGN_STYLE: Automatic
@@ -116,13 +131,9 @@ targets:
     #   - target: EchoelmusicAUv3
     #     embed: true
 
-    # Entitlements (simplified for initial TestFlight build)
-    # entitlements:
-    #   path: Echoelmusic.entitlements
-    #   properties:
-    #     com.apple.security.application-groups:
-    #       - group.com.echoelmusic.audio
-    #     inter-app-audio: true
+    # Entitlements for App Store
+    entitlements:
+      path: Echoelmusic.entitlements
 
   # ===========================================
   # AUv3 Audio Unit Extension

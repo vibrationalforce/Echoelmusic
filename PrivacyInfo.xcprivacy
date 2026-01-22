@@ -72,6 +72,16 @@
                 <string>CA92.1</string>
             </array>
         </dict>
+
+        <!-- Disk space for audio file management -->
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryDiskSpace</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>E174.1</string>
+            </array>
+        </dict>
     </array>
 </dict>
 </plist>
