@@ -160,4 +160,146 @@ platform :ios do
       build_number: ENV["BUILD_NUMBER"] || (latest_testflight_build_number + 1).to_s
     )
   end
+
+  # =============================================================================
+  # SCREENSHOT AUTOMATION - Phase 10000 ULTIMATE MODE
+  # =============================================================================
+
+  desc "Capture screenshots for all devices and languages"
+  lane :screenshots do
+    UI.header "📸 Capturing App Store Screenshots"
+
+    capture_screenshots(
+      scheme: "EchoelmusicScreenshots",
+      output_directory: "./fastlane/screenshots",
+      clear_previous_screenshots: true,
+      concurrent_simulators: true,
+      languages: [
+        "en-US",
+        "de-DE",
+        "ja",
+        "es-ES",
+        "fr-FR",
+        "zh-Hans",
+        "ko",
+        "pt-BR",
+        "it",
+        "ru",
+        "ar",
+        "hi"
+      ],
+      devices: [
+        "iPhone 16 Pro Max",
+        "iPhone 16 Pro",
+        "iPhone SE (3rd generation)",
+        "iPad Pro 13-inch (M4)",
+        "iPad Pro 11-inch (M4)"
+      ],
+      dark_mode: false,
+      override_status_bar: true,
+      reinstall_app: false,
+      stop_after_first_error: false,
+      derived_data_path: "./build/DerivedData"
+    )
+
+    UI.success("✅ Screenshots captured successfully!")
+  end
+
+  desc "Capture screenshots for iPhone only (faster)"
+  lane :screenshots_iphone do
+    UI.header "📱 Capturing iPhone Screenshots"
+
+    capture_screenshots(
+      scheme: "EchoelmusicScreenshots",
+      output_directory: "./fastlane/screenshots",
+      clear_previous_screenshots: true,
+      concurrent_simulators: true,
+      languages: ["en-US"],
+      devices: [
+        "iPhone 16 Pro Max",
+        "iPhone 16 Pro"
+      ],
+      dark_mode: false,
+      override_status_bar: true,
+      derived_data_path: "./build/DerivedData"
+    )
+
+    UI.success("✅ iPhone screenshots captured!")
+  end
+
+  desc "Capture screenshots for iPad only"
+  lane :screenshots_ipad do
+    UI.header "📱 Capturing iPad Screenshots"
+
+    capture_screenshots(
+      scheme: "EchoelmusicScreenshots",
+      output_directory: "./fastlane/screenshots",
+      clear_previous_screenshots: true,
+      concurrent_simulators: true,
+      languages: ["en-US"],
+      devices: [
+        "iPad Pro 13-inch (M4)",
+        "iPad Pro 11-inch (M4)"
+      ],
+      dark_mode: false,
+      override_status_bar: true,
+      derived_data_path: "./build/DerivedData"
+    )
+
+    UI.success("✅ iPad screenshots captured!")
+  end
+
+  desc "Add device frames to screenshots"
+  lane :frame_screenshots do
+    UI.header "🖼️ Framing Screenshots"
+
+    frameit(
+      path: "./fastlane/screenshots",
+      white: false,
+      force_device_type: nil,
+      use_platform: "IOS",
+      show_complete_frame: true
+    )
+
+    UI.success("✅ Screenshots framed!")
+  end
+
+  desc "Upload screenshots to App Store Connect"
+  lane :upload_screenshots do
+    UI.header "📤 Uploading Screenshots to App Store Connect"
+
+    UI.user_error!("ASC_KEY_ID not set") unless ENV["ASC_KEY_ID"]
+    UI.user_error!("ASC_ISSUER_ID not set") unless ENV["ASC_ISSUER_ID"]
+    UI.user_error!("ASC_KEY_CONTENT not set") unless ENV["ASC_KEY_CONTENT"]
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: ENV["ASC_KEY_CONTENT"],
+      is_key_content_base64: false
+    )
+
+    deliver(
+      api_key: api_key,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_app_version_update: true,
+      screenshots_path: "./fastlane/screenshots",
+      overwrite_screenshots: true,
+      force: true
+    )
+
+    UI.success("✅ Screenshots uploaded to App Store Connect!")
+  end
+
+  desc "Full screenshot workflow: capture, frame, upload"
+  lane :screenshots_full do
+    UI.header "🚀 Full Screenshot Workflow"
+
+    screenshots
+    frame_screenshots
+    upload_screenshots
+
+    UI.success("🎉 Full screenshot workflow complete!")
+  end
 end

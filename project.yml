@@ -199,3 +199,67 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.tests
         SWIFT_VERSION: "5.9"
+
+  # ===========================================
+  # UI Tests (Screenshots)
+  # ===========================================
+  EchoelmusicUITests:
+    type: bundle.ui-testing
+    platform: iOS
+
+    sources:
+      - path: Tests/EchoelmusicUITests
+        type: group
+
+    dependencies:
+      - target: Echoelmusic
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.uitests
+        SWIFT_VERSION: "5.9"
+        TEST_TARGET_NAME: Echoelmusic
+
+# ===========================================
+# Schemes
+# ===========================================
+schemes:
+  # Main development scheme
+  Echoelmusic:
+    build:
+      targets:
+        Echoelmusic: all
+        EchoelmusicTests: [test]
+        EchoelmusicUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - EchoelmusicTests
+        - EchoelmusicUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  # Screenshot capture scheme (for fastlane)
+  EchoelmusicScreenshots:
+    build:
+      targets:
+        Echoelmusic: all
+        EchoelmusicUITests: [test]
+    run:
+      config: Release
+      environmentVariables:
+        FASTLANE_SNAPSHOT: "true"
+    test:
+      config: Release
+      gatherCoverageData: false
+      targets:
+        - name: EchoelmusicUITests
+          parallelizable: false
+          randomExecutionOrder: false
