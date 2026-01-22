@@ -8,7 +8,11 @@
 name: "📱 iOS TestFlight"
 
 on:
+  # Trigger on all pull requests for build validation
   pull_request:
+    types: [opened, synchronize, reopened]
+
+  # Manual trigger for TestFlight deployment
   workflow_dispatch:
     inputs:
       build_type:
@@ -40,7 +44,7 @@ jobs:
   pr-build-check:
     name: "🔍 PR Build Check"
     runs-on: macos-14
-    if: github.event_name == 'pull_request'
+    if: ${{ github.event_name == 'pull_request' }}
 
     steps:
       - name: "📥 Checkout"
@@ -48,10 +52,14 @@ jobs:
 
       - name: "ℹ️ Show PR Info"
         run: |
+          echo "=== Workflow Debug Info ==="
+          echo "Event Name: ${{ github.event_name }}"
           echo "PR Number: ${{ github.event.pull_request.number }}"
           echo "Base: ${{ github.base_ref }}"
           echo "Head: ${{ github.head_ref }}"
-          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "=========================="
 
       - name: "🔧 Setup Xcode ${{ env.XCODE_VERSION }}"
         uses: maxim-lobanov/setup-xcode@v1
@@ -108,16 +116,25 @@ jobs:
           retention-days: 3
 
   # ==========================================================================
-  # TestFlight Deploy (Manual Only)
+  # TestFlight Deploy (Manual Only - Never runs on PRs)
   # ==========================================================================
   ios-testflight:
     name: "📱 Build & Deploy iOS"
     runs-on: macos-14
-    if: github.event_name == 'workflow_dispatch'
+    # Only run on manual workflow_dispatch, never on pull_request
+    if: ${{ github.event_name == 'workflow_dispatch' }}
 
     steps:
       - name: "📥 Checkout"
         uses: actions/checkout@v4
+
+      - name: "ℹ️ Show Deploy Info"
+        run: |
+          echo "=== Deployment Info ==="
+          echo "Event: ${{ github.event_name }}"
+          echo "Build Type: ${{ github.event.inputs.build_type }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "========================"
 
       - name: "🔐 Verify Secrets"
         run: |
