@@ -33,7 +33,7 @@ env:
 # Apple (nur 4 Secrets!):
 #   APP_STORE_CONNECT_ISSUER_ID    - From App Store Connect > Keys
 #   APP_STORE_CONNECT_KEY_ID       - From App Store Connect > Keys
-#   APP_STORE_CONNECT_PRIVATE_KEY  - .p8 file content (base64 encoded)
+#   APP_STORE_CONNECT_PRIVATE_KEY  - .p8 file content (plain text or base64)
 #   APPLE_TEAM_ID                  - From developer.apple.com > Membership
 #
 # Android:

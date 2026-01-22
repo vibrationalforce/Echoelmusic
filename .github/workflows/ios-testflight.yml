@@ -171,11 +171,36 @@ jobs:
       - name: "🔨 Build & Upload"
         run: |
           mkdir -p build_logs
-          if [ "${{ github.event.inputs.build_type }}" == "testflight" ]; then
-            fastlane ios beta 2>&1 | tee build_logs/fastlane.log
-          else
-            fastlane ios build_only 2>&1 | tee build_logs/fastlane.log
-          fi
+
+          # Retry logic for network issues
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "🚀 Attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES"
+
+            if [ "${{ github.event.inputs.build_type }}" == "testflight" ]; then
+              if fastlane ios beta 2>&1 | tee build_logs/fastlane.log; then
+                echo "✅ Build and upload successful!"
+                exit 0
+              fi
+            else
+              if fastlane ios build_only 2>&1 | tee build_logs/fastlane.log; then
+                echo "✅ Build successful!"
+                exit 0
+              fi
+            fi
+
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              WAIT_TIME=$((RETRY_COUNT * 30))
+              echo "⏳ Retrying in ${WAIT_TIME}s..."
+              sleep $WAIT_TIME
+            fi
+          done
+
+          echo "❌ Failed after $MAX_RETRIES attempts"
+          exit 1
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -183,16 +208,30 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           KEYCHAIN_PATH: ${{ env.KEYCHAIN_PATH }}
           KEYCHAIN_PASSWORD: ${{ env.KEYCHAIN_PASSWORD }}
+          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 180
 
       - name: "📋 Show Errors"
         if: failure()
         run: |
-          grep -E "error:|fatal" build_logs/fastlane.log | head -50 || true
+          echo "=== Build Errors ==="
+          grep -E "error:|fatal|Error:|FAILED" build_logs/fastlane.log | head -50 || true
+          echo ""
+          echo "=== Signing Issues ==="
+          grep -E "signing|certificate|provision|codesign" build_logs/fastlane.log | head -20 || true
 
       - name: "📦 Upload Logs"
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs
+          name: build-logs-${{ github.run_number }}
           path: build_logs/
-          retention-days: 7
+          retention-days: 14
+
+      - name: "✅ Success Summary"
+        if: success()
+        run: |
+          echo "## 🎉 TestFlight Build Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Number:** ${{ env.BUILD_NUMBER }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Type:** ${{ github.event.inputs.build_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
