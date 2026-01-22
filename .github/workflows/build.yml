@@ -1,13 +1,19 @@
-# Echoelmusic Multi-Platform Build & Release
+# =============================================================================
+# ECHOELMUSIC - Multi-Platform Build & Release
+# =============================================================================
 # Builds for Windows, macOS, Linux, and Android
+# NOTE: This workflow does NOT run on pull requests!
+#       - For PR checks → use ios-testflight.yml
+#       - For manual releases → use 🚀 Release All Platforms
+# =============================================================================
 
 name: Build & Release
 
 on:
   push:
-    branches: [develop]
+    branches: [develop]  # Only develop branch pushes
     tags:
-      - 'v*'
+      - 'v*'  # Release tags
     paths:
       - 'Sources/**'
       - 'android/**'
