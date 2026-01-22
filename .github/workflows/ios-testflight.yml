@@ -1,22 +1,13 @@
 # =============================================================================
 # ECHOELMUSIC - iOS TESTFLIGHT (Quick Deploy)
 # =============================================================================
-# One-tap iOS deployment from iPhone + PR build verification
-# Cost: ~$1.20 per build (TestFlight only)
+# PR Build Check + Manual TestFlight Deploy
 # =============================================================================
 
 name: "📱 iOS TestFlight"
 
 on:
   pull_request:
-    branches: [main, develop]
-    paths:
-      - 'Sources/**'
-      - 'Tests/**'
-      - 'Package.swift'
-      - 'project.yml'
-      - 'fastlane/**'
-      - '.github/workflows/ios-testflight.yml'
   workflow_dispatch:
     inputs:
       build_type:
@@ -28,14 +19,13 @@ on:
           - testflight
           - build-only
 
-# Concurrency: Cancel in-progress runs for same PR
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ios-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   # ==========================================================================
-  # PR Build Check (No Secrets Required)
+  # PR Build Check (Runs on ALL PRs - No Secrets Required)
   # ==========================================================================
   pr-build-check:
     name: "🔍 PR Build Check"
@@ -46,6 +36,13 @@ jobs:
       - name: "📥 Checkout"
         uses: actions/checkout@v4
 
+      - name: "ℹ️ Show PR Info"
+        run: |
+          echo "PR Number: ${{ github.event.pull_request.number }}"
+          echo "Base: ${{ github.base_ref }}"
+          echo "Head: ${{ github.head_ref }}"
+          echo "Event: ${{ github.event_name }}"
+
       - name: "🔧 Setup Xcode 15.4"
         uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -53,7 +50,6 @@ jobs:
 
       - name: "📦 Install XcodeGen"
         run: |
-          # Install XcodeGen 2.38.0 (compatible with Xcode 15)
           curl -sL https://github.com/yonaskolb/XcodeGen/releases/download/2.38.0/xcodegen.zip -o xcodegen.zip
           unzip -o xcodegen.zip
           sudo mv xcodegen/bin/xcodegen /usr/local/bin/
@@ -65,70 +61,44 @@ jobs:
           path: |
             ~/.swiftpm
             .build
-          key: ${{ runner.os }}-swift-ios-${{ hashFiles('Package.swift') }}
+          key: ${{ runner.os }}-swift-${{ hashFiles('Package.swift') }}
 
       - name: "⚙️ Generate Xcode Project"
         run: |
-          echo "Generating Xcode project..."
-          # Use placeholder team ID for CI builds
           sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
           xcodegen generate --spec project.yml
+          ls -la *.xcodeproj || echo "No project generated"
 
-          if [ -d "Echoelmusic.xcodeproj" ]; then
-            echo "✅ Echoelmusic.xcodeproj created successfully"
-          else
-            echo "❌ ERROR: Project generation failed"
-            exit 1
-          fi
-
-      - name: "🔍 Verify Metal Shader Content"
+      - name: "🔨 Build iOS (Simulator)"
         run: |
-          echo "=== Verifying Metal shaders ==="
-          grep -r "^struct VertexOut\|^struct VertexIn\|^struct Uniforms" Sources/ --include="*.metal" || echo "✅ No duplicated unprefixed structs"
-
-      - name: "🔨 Build iOS (Simulator - No Signing)"
-        run: |
-          set -o pipefail
           xcodebuild build \
             -project Echoelmusic.xcodeproj \
             -scheme Echoelmusic \
             -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
-            COMPILER_INDEX_STORE_ENABLE=NO \
-            2>&1 | tee build.log | head -500
+            2>&1 | tee build.log | tail -100
 
-          # Check for success
-          if [ ${PIPESTATUS[0]} -eq 0 ]; then
-            echo ""
-            echo "✅ iOS Build SUCCESSFUL"
+          BUILD_RESULT=${PIPESTATUS[0]}
+          if [ $BUILD_RESULT -eq 0 ]; then
+            echo "✅ Build successful!"
           else
-            echo ""
-            echo "❌ Build failed - showing errors:"
-            grep -E "error:|fatal error:|cannot find" build.log | head -50
+            echo "❌ Build failed!"
+            echo "=== Errors ==="
+            grep -E "error:" build.log | head -30
             exit 1
           fi
 
-      - name: "📋 Show Build Errors on Failure"
+      - name: "📋 Upload Build Log"
         if: failure()
-        run: |
-          echo "=== Build Errors ==="
-          if [ -f build.log ]; then
-            grep -E "error:|warning:|fatal" build.log | head -100
-          fi
-
-      - name: "✅ PR Check Complete"
-        run: |
-          echo "========================================"
-          echo "  ✅ PR BUILD CHECK PASSED"
-          echo "========================================"
-          echo "  The iOS app builds successfully."
-          echo "  Merge this PR and run TestFlight"
-          echo "  deploy manually if needed."
-          echo "========================================"
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-build-log
+          path: build.log
+          retention-days: 3
 
   # ==========================================================================
-  # TestFlight Deploy (Manual Trigger Only)
+  # TestFlight Deploy (Manual Only)
   # ==========================================================================
   ios-testflight:
     name: "📱 Build & Deploy iOS"
@@ -138,43 +108,16 @@ jobs:
     steps:
       - name: "📥 Checkout"
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0
-
-      - name: "🔍 Verify Metal Shader Content"
-        run: |
-          echo "=== Verifying Metal shaders have unique symbol names ==="
-          echo ""
-          echo "Checking for duplicated struct names:"
-          grep -r "^struct VertexOut\|^struct VertexIn\|^struct Uniforms" Sources/ --include="*.metal" || echo "✅ No duplicated unprefixed structs found"
-          echo ""
-          echo "Checking for duplicated function names:"
-          grep -r "^float hash\|^float noise\|^float fbm\|^float3 hsv2rgb" Sources/ --include="*.metal" || echo "✅ No duplicated unprefixed functions found"
-          echo ""
-          echo "Prefixed struct definitions:"
-          grep -r "^struct.*Vertex\|^struct.*Uniforms" Sources/ --include="*.metal"
-          echo ""
-          echo "Prefixed function definitions:"
-          grep -rE "^float (cymatics|advanced|echoel)(Hash|Noise|Fbm)|^float3 (cymatics|advanced)Hsv2rgb" Sources/ --include="*.metal"
 
       - name: "🔐 Verify Secrets"
         run: |
           MISSING=false
-          [ -z "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ] && echo "❌ Missing: APP_STORE_CONNECT_KEY_ID" && MISSING=true
-          [ -z "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ] && echo "❌ Missing: APP_STORE_CONNECT_ISSUER_ID" && MISSING=true
-          [ -z "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" ] && echo "❌ Missing: APP_STORE_CONNECT_PRIVATE_KEY" && MISSING=true
-          [ -z "${{ secrets.APPLE_TEAM_ID }}" ] && echo "❌ Missing: APPLE_TEAM_ID" && MISSING=true
+          [ -z "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ] && echo "❌ APP_STORE_CONNECT_KEY_ID" && MISSING=true
+          [ -z "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ] && echo "❌ APP_STORE_CONNECT_ISSUER_ID" && MISSING=true
+          [ -z "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" ] && echo "❌ APP_STORE_CONNECT_PRIVATE_KEY" && MISSING=true
+          [ -z "${{ secrets.APPLE_TEAM_ID }}" ] && echo "❌ APPLE_TEAM_ID" && MISSING=true
           [ "$MISSING" = true ] && exit 1
-          echo "✅ All secrets configured!"
-
-      - name: "💾 Cache Swift Packages"
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.swiftpm
-            .build
-          key: ${{ runner.os }}-swift-ios-${{ hashFiles('Package.swift') }}
+          echo "✅ All secrets OK"
 
       - name: "🔧 Setup Xcode 15.4"
         uses: maxim-lobanov/setup-xcode@v1
@@ -183,64 +126,34 @@ jobs:
 
       - name: "📦 Install Tools"
         run: |
-          # Install XcodeGen 2.38.0 (last version with Xcode 15 project format)
           curl -sL https://github.com/yonaskolb/XcodeGen/releases/download/2.38.0/xcodegen.zip -o xcodegen.zip
           unzip -o xcodegen.zip
           sudo mv xcodegen/bin/xcodegen /usr/local/bin/
-          xcodegen --version
-
           gem install fastlane -N
 
-      - name: "⚙️ Configure Project"
+      - name: "⚙️ Generate Project"
         run: |
-          echo "Setting DEVELOPMENT_TEAM..."
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-
-          echo "Running XcodeGen..."
           xcodegen generate --spec project.yml
 
-          echo "Verifying project was created..."
-          if [ -d "Echoelmusic.xcodeproj" ]; then
-            echo "✅ Echoelmusic.xcodeproj created successfully"
-            ls -la Echoelmusic.xcodeproj/
-          else
-            echo "❌ ERROR: Echoelmusic.xcodeproj was not created!"
-            echo "XcodeGen output above should show the error."
-            exit 1
-          fi
-
-      - name: "🔑 Setup CI Keychain"
+      - name: "🔑 Setup Keychain"
         run: |
-          # Create a temporary keychain for CI
           KEYCHAIN_NAME="ci_signing.keychain-db"
-          KEYCHAIN_PASSWORD="ci_password_$RANDOM"
-
-          # Create and configure keychain
+          KEYCHAIN_PASSWORD="ci_$RANDOM"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-
-          # Add to search list and make default
           security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
           security default-keychain -s "$KEYCHAIN_NAME"
-
-          # Export for Fastlane
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
-          echo "✅ CI Keychain created: $KEYCHAIN_NAME"
-
-      - name: "🔨 Build & Upload via Fastlane"
-        id: build
+      - name: "🔨 Build & Upload"
         run: |
-          # Create log directory
           mkdir -p build_logs
-
           if [ "${{ github.event.inputs.build_type }}" == "testflight" ]; then
-            echo "Building and uploading to TestFlight..."
             fastlane ios beta 2>&1 | tee build_logs/fastlane.log
           else
-            echo "Building only (no upload)..."
             fastlane ios build_only 2>&1 | tee build_logs/fastlane.log
           fi
         env:
@@ -251,38 +164,15 @@ jobs:
           KEYCHAIN_PATH: ${{ env.KEYCHAIN_PATH }}
           KEYCHAIN_PASSWORD: ${{ env.KEYCHAIN_PASSWORD }}
 
-      - name: "📋 Show Build Errors on Failure"
+      - name: "📋 Show Errors"
         if: failure()
         run: |
-          echo "========================================"
-          echo "  ❌ BUILD FAILED - SHOWING ERRORS"
-          echo "========================================"
-          echo ""
-          echo "=== Swift Compilation Errors ==="
-          grep -E "error:|fatal error:|cannot find|no such module" build_logs/fastlane.log | head -100 || true
-          echo ""
-          echo "=== Full Error Context ==="
-          grep -B 5 -A 5 "error:" build_logs/fastlane.log | head -200 || true
+          grep -E "error:|fatal" build_logs/fastlane.log | head -50 || true
 
-      - name: "📦 Upload Build Logs"
+      - name: "📦 Upload Logs"
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-logs
-          path: |
-            build_logs/
-            ~/Library/Logs/gym/*.log
+          path: build_logs/
           retention-days: 7
-
-      - name: "✅ Success"
-        run: |
-          echo "========================================"
-          echo "  🎉 iOS BUILD SUCCESSFUL!"
-          echo "========================================"
-          if [ "${{ github.event.inputs.build_type }}" = "testflight" ]; then
-            echo "  📱 Check TestFlight for new build"
-            echo "  ⏱️  Processing takes 15-30 minutes"
-          else
-            echo "  ✅ Build completed (not uploaded)"
-          fi
-          echo "========================================"
