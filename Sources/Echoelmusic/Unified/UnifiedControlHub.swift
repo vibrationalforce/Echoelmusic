@@ -1075,9 +1075,8 @@ public class UnifiedControlHub: ObservableObject {
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // Log preset change request (AudioEngine preset loading not yet implemented)
             Log.info("[Gesture→Audio] Preset change requested: \(presetChange)", category: .system)
-            // TODO: Implement audioEngine.loadPreset(named:) when preset system is ready
+            audioEngine.loadPreset(named: presetChange)
         }
     }
 
