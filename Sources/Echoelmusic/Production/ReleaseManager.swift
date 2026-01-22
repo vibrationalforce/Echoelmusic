@@ -404,15 +404,34 @@ public final class StagedRolloutManager: ObservableObject {
 // MARK: - App Store Configuration
 
 /// App Store and Play Store deployment configuration
+/// REQUIRED: Configure these environment variables before store submission:
+/// - ECHOELMUSIC_IOS_APP_ID: App Store app ID (from App Store Connect)
+/// - ECHOELMUSIC_IOS_TEAM_ID: Apple Developer Team ID
+/// - ECHOELMUSIC_ANDROID_APP_ID: Play Store app ID (package name)
 public struct AppStoreConfiguration: Sendable {
     // App Store (iOS)
     public struct iOS: Sendable {
-        public static let appId = "1234567890" // Replace with actual App ID
+        public static var appId: String {
+            ProcessInfo.processInfo.environment["ECHOELMUSIC_IOS_APP_ID"] ?? ""
+        }
         public static let bundleId = "com.echoelmusic.app"
-        public static let teamId = "ABCDE12345" // Replace with actual Team ID
+        public static var teamId: String {
+            ProcessInfo.processInfo.environment["ECHOELMUSIC_IOS_TEAM_ID"] ?? ""
+        }
 
-        public static var appStoreURL: URL? { SafeURL.from("https://apps.apple.com/app/id\(appId)") }
-        public static var reviewURL: URL? { SafeURL.from("https://apps.apple.com/app/id\(appId)?action=write-review") }
+        /// Validates that required iOS configuration is set for production
+        public static var isConfigured: Bool {
+            !appId.isEmpty && !teamId.isEmpty
+        }
+
+        public static var appStoreURL: URL? {
+            guard !appId.isEmpty else { return nil }
+            return SafeURL.from("https://apps.apple.com/app/id\(appId)")
+        }
+        public static var reviewURL: URL? {
+            guard !appId.isEmpty else { return nil }
+            return SafeURL.from("https://apps.apple.com/app/id\(appId)?action=write-review")
+        }
 
         public static let capabilities: [String] = [
             "Background Audio",

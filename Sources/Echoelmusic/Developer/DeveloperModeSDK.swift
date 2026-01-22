@@ -570,11 +570,20 @@ public final class EchoelmusicAPIClient {
         return try JSONDecoder().decode(T.self, from: data)
     }
 
-    public enum APIError: Error {
+    public enum APIError: Error, LocalizedError {
         case requestFailed
         case unauthorized
         case notFound
         case serverError
+
+        public var errorDescription: String? {
+            switch self {
+            case .requestFailed: return "API request failed"
+            case .unauthorized: return "Unauthorized access"
+            case .notFound: return "Resource not found"
+            case .serverError: return "Server error occurred"
+            }
+        }
     }
 }
 

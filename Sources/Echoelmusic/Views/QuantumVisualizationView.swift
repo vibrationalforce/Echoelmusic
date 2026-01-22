@@ -45,12 +45,14 @@ public struct QuantumVisualizationView: View {
                     }
 
                     // Main visualization area
+                    // LAMBDA LOOP: Explicit animation value for smart recalculation
                     visualizationCanvas(size: geometry.size)
                         .onTapGesture(count: 2) {
-                            withAnimation(.spring()) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                 isFullscreen.toggle()
                             }
                         }
+                        .animation(.easeInOut(duration: 0.2), value: isFullscreen)
 
                     // Bottom controls
                     if !isFullscreen {
@@ -74,8 +76,9 @@ public struct QuantumVisualizationView: View {
         .accessibilityHint("Double tap to toggle fullscreen mode")
     }
 
-    // MARK: - Subviews
+    // MARK: - Subviews (LAMBDA LOOP: @ViewBuilder for optimized rendering)
 
+    @ViewBuilder
     private var coherenceGradient: some View {
         let coherence = Double(emulator.coherenceLevel)
         let topColor = Color(
@@ -96,6 +99,7 @@ public struct QuantumVisualizationView: View {
         )
     }
 
+    @ViewBuilder
     private var headerView: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {

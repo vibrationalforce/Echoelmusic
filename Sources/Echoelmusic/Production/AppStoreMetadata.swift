@@ -34,20 +34,24 @@ public struct AppStoreMetadata {
     /// Primary language
     public static let primaryLanguage = "en-US"
 
-    /// Supported languages (12 total)
+    /// Supported languages
+    /// NOTE: App Store metadata is localized for 12 languages, but in-app UI
+    /// currently defaults to English. Full runtime localization (.lproj bundles)
+    /// is planned for a future release. For now, declare English as primary.
     public static let supportedLanguages: [String] = [
-        "en-US",    // English
-        "de-DE",    // German
-        "ja-JP",    // Japanese
-        "es-ES",    // Spanish
-        "fr-FR",    // French
-        "zh-Hans",  // Chinese (Simplified)
-        "ko-KR",    // Korean
-        "pt-BR",    // Portuguese (Brazil)
-        "it-IT",    // Italian
-        "ru-RU",    // Russian
-        "ar-SA",    // Arabic
-        "hi-IN"     // Hindi
+        "en-US"     // English (primary - full UI support)
+        // Future localization planned for:
+        // "de-DE",    // German
+        // "ja-JP",    // Japanese
+        // "es-ES",    // Spanish
+        // "fr-FR",    // French
+        // "zh-Hans",  // Chinese (Simplified)
+        // "ko-KR",    // Korean
+        // "pt-BR",    // Portuguese (Brazil)
+        // "it-IT",    // Italian
+        // "ru-RU",    // Russian
+        // "ar-SA",    // Arabic
+        // "hi-IN"     // Hindi
     ]
 
     // MARK: - Categories
@@ -69,6 +73,9 @@ public struct AppStoreMetadata {
     }
 
     // MARK: - URLs
+    // IMPORTANT: Verify all URLs are LIVE and return HTTP 200 before App Store submission!
+    // App Store review will automatically check these URLs.
+    // Current status: URLs need to be configured on your web hosting.
 
     /// Marketing website
     public static let marketingURL = "https://echoelmusic.com"
@@ -1126,19 +1133,41 @@ VOICEOVER: Optional calm, inspiring narration
 public struct ReviewInformation {
 
     /// Demo account for App Review (if login required)
+    /// IMPORTANT: Set these values via environment variables or secure config before submission:
+    /// - ECHOELMUSIC_DEMO_USERNAME
+    /// - ECHOELMUSIC_DEMO_PASSWORD
+    /// - ECHOELMUSIC_CONTACT_EMAIL
+    /// - ECHOELMUSIC_CONTACT_PHONE
     public static let demoAccount = DemoAccount(
-        username: "michaelterbuyken@gmail.com",
-        password: "DemoPassword2026!",
+        username: ProcessInfo.processInfo.environment["ECHOELMUSIC_DEMO_USERNAME"] ?? "demo@echoelmusic.com",
+        password: ProcessInfo.processInfo.environment["ECHOELMUSIC_DEMO_PASSWORD"] ?? "SET_VIA_ENV_VAR",
         notes: "Full access demo account with pre-configured sessions and sample data. No actual Apple Watch or biometric hardware required for testing."
     )
 
-    /// Contact information
-    public static let contact = ContactInfo(
-        firstName: "App Review",
-        lastName: "Contact",
-        phone: "+1-555-ECHO-APP",
-        email: "michaelterbuyken@gmail.com"
-    )
+    /// Contact information for App Store review process
+    /// REQUIRED: Configure these environment variables before App Store submission:
+    /// - ECHOELMUSIC_CONTACT_PHONE: Valid phone number for App Review team
+    /// - ECHOELMUSIC_CONTACT_EMAIL: Valid email for App Review team
+    /// - ECHOELMUSIC_CONTACT_FIRST_NAME: First name of contact person
+    /// - ECHOELMUSIC_CONTACT_LAST_NAME: Last name of contact person
+    public static var contact: ContactInfo {
+        ContactInfo(
+            firstName: ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_FIRST_NAME"] ?? "App Review",
+            lastName: ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_LAST_NAME"] ?? "Contact",
+            phone: ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_PHONE"] ?? "",
+            email: ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_EMAIL"] ?? ""
+        )
+    }
+
+    /// Validates that required contact information is configured for production
+    public static var isContactConfigured: Bool {
+        guard let phone = ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_PHONE"],
+              let email = ProcessInfo.processInfo.environment["ECHOELMUSIC_CONTACT_EMAIL"],
+              !phone.isEmpty, !email.isEmpty else {
+            return false
+        }
+        return true
+    }
 
     /// Notes for reviewer
     public static let reviewNotes = """

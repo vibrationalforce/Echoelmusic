@@ -601,7 +601,6 @@ public enum ResolutionPreset: String, CaseIterable, Codable {
         case "YouTube", "Vimeo": return .uhd4k
         case "Instagram", "TikTok": return .vertical9x16
         case "Twitter": return .fullHD1080p
-        case "LinkedIn": return .fullHD1080p
         case "Cinema": return .cinema4k
         default: return .fullHD1080p
         }

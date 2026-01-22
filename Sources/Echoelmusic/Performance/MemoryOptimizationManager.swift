@@ -42,6 +42,11 @@ class MemoryOptimizationManager: ObservableObject {
     /// Maximale Cache-Größe (in Bytes)
     private let maxCacheSize: Int = 100 * 1024 * 1024 // 100 MB
 
+    // OPTIMIZATION: Size limits for unbounded collections
+    private let maxObjectPools: Int = 50
+    private let maxMemoryMappedFiles: Int = 20
+    private let maxCompressionBuffers: Int = 30
+
     /// Memory Pressure Threshold (80%)
     private let memoryPressureThreshold: Float = 0.8
 
@@ -535,6 +540,12 @@ class MemoryOptimizationManager: ObservableObject {
     func compressData(_ data: Data) -> CompressionBuffer {
         let buffer = CompressionBuffer(data: data)
         compressionBuffers.append(buffer)
+
+        // OPTIMIZATION: Enforce size limit with FIFO eviction
+        while compressionBuffers.count > maxCompressionBuffers {
+            compressionBuffers.removeFirst()
+        }
+
         return buffer
     }
 
@@ -560,6 +571,14 @@ class MemoryOptimizationManager: ObservableObject {
     // MARK: - Object Pooling
 
     func createPool<T>(name: String, maxSize: Int = 50, factory: @escaping () -> T, reset: @escaping (T) -> Void) {
+        // OPTIMIZATION: Enforce pool count limit - remove oldest pools if at capacity
+        if objectPools.count >= maxObjectPools && objectPools[name] == nil {
+            // Remove first (oldest) pool to make room
+            if let firstKey = objectPools.keys.first {
+                objectPools.removeValue(forKey: firstKey)
+                log.performance("🗑️ Evicted pool '\(firstKey)' to stay under limit")
+            }
+        }
         objectPools[name] = ObjectPool<T>(maxSize: maxSize, factory: factory, reset: reset)
     }
 
@@ -664,11 +683,20 @@ class MemoryOptimizationManager: ObservableObject {
 
 // MARK: - Errors
 
-enum MemoryOptimizationError: Error {
+enum MemoryOptimizationError: Error, LocalizedError {
     case fileNotFound
     case compressionFailed
     case decompressionFailed
     case memoryMappingFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .fileNotFound: return "File not found"
+        case .compressionFailed: return "Compression failed"
+        case .decompressionFailed: return "Decompression failed"
+        case .memoryMappingFailed: return "Memory mapping failed"
+        }
+    }
 }
 
 // MARK: - Specialized Data Structures for Low-RAM

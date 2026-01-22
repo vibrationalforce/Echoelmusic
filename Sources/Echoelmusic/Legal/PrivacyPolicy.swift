@@ -24,12 +24,12 @@ public struct PrivacyPolicy {
 
     // MARK: - Metadata
 
-    public static let version = "1.0.0"
+    public static let version = "1.1.0"
     public static let effectiveDate = "January 7, 2026"
-    public static let lastUpdated = "January 7, 2026"
+    public static let lastUpdated = "January 21, 2026"
     public static let companyName = "Echoelmusic Inc."
-    public static let contactEmail = "michaelterbuyken@gmail.com"
-    public static let dpoEmail = "michaelterbuyken@gmail.com" // Data Protection Officer
+    public static let contactEmail = "privacy@echoelmusic.com"
+    public static let dpoEmail = "privacy@echoelmusic.com" // Data Protection Officer
     public static let websiteURL = "https://echoelmusic.com"
 
     // MARK: - Full Privacy Policy Text
@@ -141,15 +141,16 @@ public struct PrivacyPolicy {
     • Subject to ethical review board approval
     • Opt-in only (you control participation)
 
-    3.3. MARKETING AND COMMUNICATIONS (OPT-IN ONLY)
+    3.3. MARKETING AND COMMUNICATIONS
 
-    With your consent, we may send:
+    IMPORTANT: We do NOT collect email addresses for marketing purposes.
+    We do NOT have a newsletter.
+    We do NOT send marketing emails.
 
-    • Product updates and new features
-    • Tips for using the App effectively
-    • Special offers and promotions
-
-    You can opt-out at any time via app settings or email unsubscribe links.
+    App updates and announcements are communicated through:
+    • In-app notifications
+    • App Store/Play Store update notes
+    • Our website (https://echoelmusic.com)
 
 
     4. DATA STORAGE AND SECURITY
@@ -334,7 +335,22 @@ public struct PrivacyPolicy {
 
     8. THIRD-PARTY SERVICES
 
-    8.1. HARDWARE INTEGRATIONS
+    8.1. EXTERNAL APPLICATIONS AND SERVICES DISCLAIMER
+
+    Echoelmusic may connect to or control external applications for:
+    • Content management systems
+    • Live streaming platforms (YouTube, Twitch, TikTok, etc.)
+    • Social media publishing
+    • Cloud storage services
+
+    IMPORTANT: These external services have their own:
+    • Terms of Service
+    • Privacy Policies
+    • Age restrictions and content guidelines
+
+    You are responsible for reviewing and complying with the terms of any external service you use through Echoelmusic. We are NOT responsible for third-party service practices, content policies, or age restrictions.
+
+    8.2. HARDWARE INTEGRATIONS
 
     The App integrates with third-party hardware:
 
@@ -429,16 +445,28 @@ public struct PrivacyPolicy {
     • Age Verification: Self-declared date of birth during account creation
     • Parental Consent: Required for users under 18 for certain features
 
-    11.2. DATA MINIMIZATION FOR MINORS
+    11.2. PARENTAL SUPERVISION RECOMMENDATION
+
+    IMPORTANT: For users under 18 years of age, we strongly recommend:
+
+    • Parental or guardian supervision during use
+    • Oversight by qualified caregivers or professionals when used in educational or therapeutic contexts
+    • Regular check-ins about the user's experience
+
+    We recommend ALL users, regardless of age, seek feedback from multiple sources (healthcare providers, educators, family members) about their progress and any challenges that may arise from App use.
+
+    External services accessed through Echoelmusic (content management, livestreaming platforms) have their own age restrictions and terms of service that must be observed separately.
+
+    11.3. DATA MINIMIZATION FOR MINORS
 
     If a user is identified as a minor (13-17 in US, 16-17 in EU):
 
     • Restricted Features: Collaboration features disabled by default
-    • No Marketing: Marketing communications disabled
+    • No Marketing: Marketing communications disabled (we don't collect email anyway)
     • Enhanced Privacy: Stricter default privacy settings
     • Parental Controls: Parent/guardian can manage account via Family Sharing
 
-    11.3. DISCOVERY OF UNDERAGE USERS
+    11.4. DISCOVERY OF UNDERAGE USERS
 
     If we discover a user is under 13 (or 16 in EU):
 
@@ -672,9 +700,9 @@ public struct PrivacyPolicy {
 /// Comprehensive Terms of Service
 public struct TermsOfService {
 
-    public static let version = "1.0.0"
+    public static let version = "1.1.0"
     public static let effectiveDate = "January 7, 2026"
-    public static let lastUpdated = "January 7, 2026"
+    public static let lastUpdated = "January 21, 2026"
 
     public static let fullText = """
     TERMS OF SERVICE
@@ -1110,11 +1138,24 @@ public struct TermsOfService {
 
     We are not responsible for third-party device performance or compatibility.
 
-    16.2. THIRD-PARTY TERMS
+    16.2. EXTERNAL APPS AND STREAMING PLATFORMS
+
+    Echoelmusic may connect to external services for content management and livestreaming (YouTube, Twitch, TikTok, Instagram, Facebook, etc.).
+
+    IMPORTANT:
+    • These services have their own Terms of Service and age restrictions
+    • You must comply with each platform's terms independently
+    • We are NOT responsible for third-party platform policies or content moderation
+    • Age requirements on external platforms may differ from Echoelmusic's requirements
+
+    16.3. THIRD-PARTY TERMS
 
     Use of third-party services subject to their terms:
     • Apple: https://www.apple.com/legal/internet-services/itunes/
     • Google: https://play.google.com/about/play-terms/
+    • YouTube: https://www.youtube.com/t/terms
+    • Twitch: https://www.twitch.tv/p/legal/terms-of-service/
+    • TikTok: https://www.tiktok.com/legal/terms-of-service
 
 
     17. EXPORT CONTROLS

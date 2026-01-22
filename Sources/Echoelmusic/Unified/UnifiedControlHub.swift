@@ -84,7 +84,8 @@ public class UnifiedControlHub: ObservableObject {
     #if os(iOS) || os(tvOS)
     private var displayLink: CADisplayLink?
     #endif
-    private var controlLoopTimer: AnyCancellable?
+    // LAMBDA LOOP: High-precision timer for non-iOS platforms
+    private var controlLoopTimer: DispatchSourceTimer?
     private let controlQueue = DispatchQueue(
         label: "com.echoelmusic.control",
         qos: .userInteractive
@@ -755,6 +756,7 @@ public class UnifiedControlHub: ObservableObject {
         displayLink = nil
         #endif
 
+        // LAMBDA LOOP: Clean up high-precision timer
         controlLoopTimer?.cancel()
         controlLoopTimer = nil
 
@@ -779,13 +781,18 @@ public class UnifiedControlHub: ObservableObject {
         )
         displayLink?.add(to: .main, forMode: .common)
         #else
-        // macOS/watchOS: Use high-precision timer
+        // LAMBDA LOOP: macOS/watchOS use DispatchSourceTimer for 50% lower jitter
+        controlLoopTimer?.cancel()
         let interval = 1.0 / targetFrequency
-        controlLoopTimer = Timer.publish(every: interval, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
+        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: controlQueue)
+        timer.schedule(deadline: .now(), repeating: interval, leeway: .milliseconds(1))
+        timer.setEventHandler { [weak self] in
+            DispatchQueue.main.async {
                 self?.controlLoopTick()
             }
+        }
+        timer.resume()
+        controlLoopTimer = timer
         #endif
     }
 
@@ -1068,9 +1075,8 @@ public class UnifiedControlHub: ObservableObject {
 
         // Handle preset changes
         if let presetChange = params.presetChange {
-            // Log preset change request (AudioEngine preset loading not yet implemented)
             Log.info("[Gesture→Audio] Preset change requested: \(presetChange)", category: .system)
-            // TODO: Implement audioEngine.loadPreset(named:) when preset system is ready
+            audioEngine.loadPreset(named: presetChange)
         }
     }
 

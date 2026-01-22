@@ -99,7 +99,7 @@ Sources/
 - [x] **Animated GIF** - VideoExportManager.swift (loop count, frame rate control)
 
 ### SOCIAL MEDIA
-- [x] **9 Platforms** - Instagram, TikTok, YouTube, Facebook, Twitter, Twitch, Kick, LinkedIn, Threads
+- [x] **8 Platforms** - Instagram, TikTok, YouTube, Facebook, Twitter, Twitch, Kick, Threads
 - [x] **One-Click Publish** - SocialMediaManager.swift
 - [x] **RTMP Endpoints** - All major platforms configured
 - [x] **Platform Optimization** - Auto-format, hashtags, title limits

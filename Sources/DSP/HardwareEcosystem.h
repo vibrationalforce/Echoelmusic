@@ -369,7 +369,6 @@ const std::vector<StreamingPlatform> STREAMING_PLATFORMS = {
     {"Facebook Live", "rtmps://live-api-s.facebook.com:443/rtmp", 8000},
     {"Instagram Live", "rtmps://live-upload.instagram.com:443/rtmp", 3500},
     {"TikTok Live", "rtmp://push.tiktokv.com/live", 6000},
-    {"LinkedIn Live", "rtmps://prod-rtmp.linkedin.com:443/livevideostreaming", 10000},
     {"Vimeo Live", "rtmps://rtmp-global.cloud.vimeo.com:443/live", 20000},
     {"Restream", "rtmp://live.restream.io/live", 51000},
     {"Castr", "rtmp://live.castr.io/static", 51000}

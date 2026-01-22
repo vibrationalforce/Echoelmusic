@@ -24,21 +24,21 @@
 
 	<!-- Microphone Permission (REQUIRED for audio capture) -->
 	<key>NSMicrophoneUsageDescription</key>
-	<string>BLAB needs microphone access to capture your voice and breath for real-time audio visualization and biofeedback music creation.</string>
+	<string>Echoelmusic needs microphone access to capture your voice and breath for real-time audio visualization and biofeedback music creation.</string>
 
 	<!-- HealthKit Permissions (for HRV biofeedback) -->
 	<key>NSHealthShareUsageDescription</key>
-	<string>BLAB reads your heart rate variability (HRV) to create adaptive audio experiences that respond to your biometric state for creative expression.</string>
+	<string>Echoelmusic reads your heart rate variability (HRV) to create adaptive audio experiences that respond to your biometric state for creative expression.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>BLAB may log your meditation and breathing sessions to HealthKit for wellness tracking.</string>
+	<string>Echoelmusic may log your meditation and breathing sessions to HealthKit for wellness tracking.</string>
 
 	<!-- Motion Permission (for head tracking with spatial audio) -->
 	<key>NSMotionUsageDescription</key>
-	<string>BLAB uses head tracking to create immersive 3D spatial audio experiences that move with your head movements.</string>
+	<string>Echoelmusic uses head tracking to create immersive 3D spatial audio experiences that move with your head movements.</string>
 
 	<!-- Bluetooth Permission (for AirPods detection and ASAF) -->
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>BLAB detects your AirPods to enable Apple Spatial Audio Features (ASAF) and high-quality Multidimensional Brainwave Entrainment.</string>
+	<string>Echoelmusic detects your AirPods to enable Apple Spatial Audio Features (ASAF) and high-quality Multidimensional Brainwave Entrainment.</string>
 
 	<!-- Background Modes (for continuous audio playback) -->
 	<key>UIBackgroundModes</key>

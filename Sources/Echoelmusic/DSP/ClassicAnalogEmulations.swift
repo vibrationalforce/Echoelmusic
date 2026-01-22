@@ -100,6 +100,7 @@ class AnalogConsole {
 
     private var sslCompressor: SSLBusCompressor
     private var apiCompressor: APIBusCompressor
+    private var neveMasteringChain: NeveMasteringChain
     private var pultecEQ: PultecEQP1A
     private var fairchildLimiter: FairchildLimiter
     private var la2aCompressor: LA2ACompressor
@@ -113,6 +114,7 @@ class AnalogConsole {
 
         sslCompressor = SSLBusCompressor(sampleRate: sampleRate)
         apiCompressor = APIBusCompressor(sampleRate: sampleRate)
+        neveMasteringChain = NeveMasteringChain(sampleRate: sampleRate)
         pultecEQ = PultecEQP1A(sampleRate: sampleRate)
         fairchildLimiter = FairchildLimiter(sampleRate: sampleRate)
         la2aCompressor = LA2ACompressor(sampleRate: sampleRate)
@@ -133,8 +135,7 @@ class AnalogConsole {
         case .api:
             processed = apiCompressor.process(input)
         case .neve:
-            // Use existing Neve from NeveInspiredDSP
-            processed = input // Placeholder - integrate with NeveMasteringChain
+            processed = neveMasteringChain.process(input)
         case .pultec:
             processed = pultecEQ.process(input)
         case .fairchild:
@@ -182,7 +183,11 @@ class AnalogConsole {
             apiCompressor.tone = normalized * 100.0
 
         case .neve:
-            break  // Handled externally
+            // Character → Drive + Silk amount across the chain
+            neveMasteringChain.inputTransformer.drive = 15.0 + normalized * 25.0  // 15-40%
+            neveMasteringChain.inputTransformer.silk = normalized * 60.0  // 0-60%
+            neveMasteringChain.compressor.threshold = -4.0 - normalized * 8.0  // -4 to -12
+            neveMasteringChain.outputTransformer.drive = 10.0 + normalized * 20.0  // 10-30%
 
         case .pultec:
             // Character → Low boost + High boost
@@ -218,11 +223,12 @@ class AnalogConsole {
         switch currentStyle {
         case .ssl: return sslCompressor.gainReduction
         case .api: return apiCompressor.gainReduction
+        case .neve: return neveMasteringChain.compressor.getGainReduction()
         case .fairchild: return fairchildLimiter.gainReduction
         case .la2a: return la2aCompressor.gainReduction
         case .urei1176: return urei1176.gainReduction
         case .manley: return manleyVariMu.gainReduction
-        default: return 0.0
+        case .pultec: return 0.0  // EQ has no gain reduction
         }
     }
 }

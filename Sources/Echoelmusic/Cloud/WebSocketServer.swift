@@ -553,11 +553,35 @@ public class WebSocketSecurity {
     }
 }
 
-public enum WebSocketSecurityError: Error {
+public enum WebSocketSecurityError: Error, LocalizedError {
     case noSignature
     case invalidSignature
     case rateLimitExceeded
     case abuseDetected
+
+    public var errorDescription: String? {
+        switch self {
+        case .noSignature:
+            return "Message signature missing"
+        case .invalidSignature:
+            return "Message signature invalid"
+        case .rateLimitExceeded:
+            return "Rate limit exceeded"
+        case .abuseDetected:
+            return "Abuse detected"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .noSignature, .invalidSignature:
+            return "Please reconnect to the server"
+        case .rateLimitExceeded:
+            return "Please slow down and try again in a moment"
+        case .abuseDetected:
+            return "Your activity has been temporarily restricted"
+        }
+    }
 }
 
 // MARK: - WebSocket Metrics
