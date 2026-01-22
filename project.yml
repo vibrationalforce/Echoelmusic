@@ -85,13 +85,9 @@ targets:
         UIUserInterfaceStyle: Dark
         UIRequiresFullScreen: false
 
-        # SwiftUI support
+        # SwiftUI support - no SceneDelegate needed with @main App
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
-          UISceneConfigurations:
-            UIWindowSceneSessionRoleApplication:
-              - UISceneConfigurationName: Default Configuration
-                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
 
     # App settings
     settings:

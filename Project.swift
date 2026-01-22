@@ -63,15 +63,7 @@ let project = Project(
                 "CFBundleVersion": "10000",
                 "UILaunchScreen": [:],
                 "UIApplicationSceneManifest": [
-                    "UIApplicationSupportsMultipleScenes": true,
-                    "UISceneConfigurations": [
-                        "UIWindowSceneSessionRoleApplication": [
-                            [
-                                "UISceneConfigurationName": "Default Configuration",
-                                "UISceneDelegateClassName": "$(PRODUCT_MODULE_NAME).SceneDelegate"
-                            ]
-                        ]
-                    ]
+                    "UIApplicationSupportsMultipleScenes": false
                 ],
                 "UIBackgroundModes": [
                     "audio",
