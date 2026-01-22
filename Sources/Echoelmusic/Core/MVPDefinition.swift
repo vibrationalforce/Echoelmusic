@@ -472,11 +472,19 @@ public struct MVPFeature: Identifiable {
         }
     }
 
-    /// Check if all files exist
+    /// Check if all files exist (used for development tracking)
+    /// In production builds, always returns true since files are compiled into the app
     public func filesExist() -> Bool {
-        files.allSatisfy { path in
-            FileManager.default.fileExists(atPath: "/home/user/Echoelmusic/\(path)")
+        #if DEBUG
+        // In debug builds, check if source files exist relative to current working directory
+        // This is a development-time check only
+        return files.allSatisfy { path in
+            FileManager.default.fileExists(atPath: path)
         }
+        #else
+        // In release builds, files are compiled into the app - always return true
+        return true
+        #endif
     }
 
     /// Generate markdown checklist item
