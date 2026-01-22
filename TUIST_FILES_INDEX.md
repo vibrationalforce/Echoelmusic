@@ -316,8 +316,7 @@ com.echoelmusic.uitests (UI Tests)
 ## App Groups Configuration
 
 All targets share data via:
-- `group.com.echoelmusic.shared` - Primary shared container
-- `group.com.echoelmusic.audio` - Audio-specific data (legacy)
+- `group.com.echoelmusic.shared` - Unified shared container for all targets
 
 **Used By**:
 - ✅ Echoelmusic (iOS)
