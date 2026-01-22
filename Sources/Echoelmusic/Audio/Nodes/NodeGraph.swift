@@ -263,15 +263,48 @@ class NodeGraph: ObservableObject {
         // Clear existing
         nodes.removeAll()
         connections.removeAll()
+        invalidateCache()
 
-        // Load nodes from preset
-        for nodeManifest in preset.nodes {
-            // Create node based on type
-            // (In full implementation, use factory pattern or reflection)
-            // For now, placeholder
+        // Track created node IDs for connection mapping
+        var nodeIDMap: [String: UUID] = [:]
+
+        // Load nodes from preset using factory pattern
+        for manifest in preset.nodes {
+            if let node = NodeFactory.createNode(from: manifest) {
+                // Apply saved parameters
+                for (paramName, paramValue) in manifest.parameters {
+                    node.setParameter(name: paramName, value: paramValue)
+                }
+
+                // Apply bypass state
+                node.isBypassed = manifest.isBypassed
+
+                // Track ID mapping
+                nodeIDMap[manifest.id] = node.id
+
+                // Add to graph
+                nodes.append(node)
+            } else {
+                log.audio("⚠️ Failed to create node: \(manifest.className)", level: .warning)
+            }
         }
 
-        log.audio("📊 Loaded preset: \(preset.name)")
+        // Restore connections using ID mapping
+        for connectionManifest in preset.connections {
+            guard let sourceID = nodeIDMap[connectionManifest.sourceNodeID],
+                  let destID = nodeIDMap[connectionManifest.destinationNodeID] else {
+                log.audio("⚠️ Connection node not found", level: .warning)
+                continue
+            }
+
+            do {
+                try connect(from: sourceID, to: destID)
+            } catch {
+                log.audio("⚠️ Failed to restore connection: \(error)", level: .warning)
+            }
+        }
+
+        log.audio("📊 Loaded preset: \(preset.name) (\(nodes.count) nodes, \(connections.count) connections)")
     }
 
     /// Save current configuration as preset
@@ -332,7 +365,36 @@ struct NodeGraphPreset: Codable, Identifiable {
 }
 
 
-// MARK: - Preset Factory
+// MARK: - Node Factory
+
+/// Factory for creating nodes from manifests
+enum NodeFactory {
+
+    /// Create a node from a manifest using the className
+    @MainActor
+    static func createNode(from manifest: NodeManifest) -> EchoelmusicNode? {
+        switch manifest.className {
+        case "FilterNode":
+            return FilterNode()
+        case "ReverbNode":
+            return ReverbNode()
+        case "DelayNode":
+            return DelayNode()
+        case "CompressorNode":
+            return CompressorNode()
+        default:
+            // Try to create a generic node for unknown types
+            log.audio("⚠️ Unknown node class: \(manifest.className)", level: .warning)
+            return nil
+        }
+    }
+
+    /// Get all available node class names
+    static var availableNodeClasses: [String] {
+        ["FilterNode", "ReverbNode", "DelayNode", "CompressorNode"]
+    }
+}
+
 
 // MARK: - Parameter Types for UnifiedControlHub
 
