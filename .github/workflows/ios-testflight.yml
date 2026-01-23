@@ -345,9 +345,9 @@ jobs:
 
       - name: "Success"
         run: |
-          echo "## macOS + AUv3 Deployed to TestFlight" >> $GITHUB_STEP_SUMMARY
+          echo "## macOS Deployed to TestFlight" >> $GITHUB_STEP_SUMMARY
           echo "- Build: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Bundle IDs: com.echoelmusic.app, com.echoelmusic.app.auv3 (Universal Purchase)" >> $GITHUB_STEP_SUMMARY
+          echo "- Bundle ID: com.echoelmusic.app (Standalone + embedded AUv3)" >> $GITHUB_STEP_SUMMARY
 
   # ===========================================================================
   # JOB 4: watchOS TestFlight Deployment

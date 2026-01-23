@@ -54,9 +54,11 @@ end
 # Main Apps (Universal Purchase enabled):
 #   - com.echoelmusic.app              (iOS, macOS, tvOS, visionOS)
 #
-# Extensions (platform-specific):
-#   - com.echoelmusic.app.auv3         (AUv3 Audio Unit for iOS & macOS)
+# Extensions:
+#   - com.echoelmusic.app.auv3         (iOS AUv3 - separate extension)
 #   - com.echoelmusic.app.watchkitapp  (watchOS companion app)
+#
+# Note: macOS AUv3 is embedded inside the main app bundle, not separate.
 #
 # App Groups:
 #   - group.com.echoelmusic.shared     (shared data between apps & extensions)
