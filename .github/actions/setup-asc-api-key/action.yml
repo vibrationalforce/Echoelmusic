@@ -1,0 +1,53 @@
+# =============================================================================
+# REUSABLE ACTION: Setup App Store Connect API Key
+# =============================================================================
+# Configures App Store Connect API key for automatic code signing.
+# Handles both base64-encoded and raw .p8 key content.
+# =============================================================================
+
+name: 'Setup App Store Connect API Key'
+description: 'Configure App Store Connect API key for xcodebuild authentication'
+
+inputs:
+  key-id:
+    description: 'App Store Connect Key ID'
+    required: true
+  key-content:
+    description: 'App Store Connect API key content (.p8 file content)'
+    required: true
+
+outputs:
+  key-path:
+    description: 'Path to the configured API key file'
+    value: ${{ steps.setup.outputs.key-path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup API Key
+      id: setup
+      shell: bash
+      env:
+        ASC_KEY: ${{ inputs.key-content }}
+        ASC_KEY_ID: ${{ inputs.key-id }}
+      run: |
+        mkdir -p ~/.appstoreconnect/private_keys
+        KEY_FILE=~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
+        # Try base64 decode first, if fails use raw content
+        if echo "$ASC_KEY" | base64 -d > "$KEY_FILE" 2>/dev/null && grep -q "PRIVATE KEY" "$KEY_FILE"; then
+          echo "App Store Connect API key configured (base64)"
+        else
+          # Raw .p8 content (not base64 encoded)
+          echo "$ASC_KEY" > "$KEY_FILE"
+          echo "App Store Connect API key configured (raw)"
+        fi
+
+        # Verify key file
+        if grep -q "BEGIN PRIVATE KEY" "$KEY_FILE"; then
+          echo "Key file valid"
+          echo "key-path=$KEY_FILE" >> $GITHUB_OUTPUT
+        else
+          echo "::error::Key file appears invalid - missing PRIVATE KEY header"
+          exit 1
+        fi

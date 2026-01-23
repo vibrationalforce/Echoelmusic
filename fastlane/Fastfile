@@ -79,11 +79,14 @@ platform :ios do
       keychain_password: keychain_password
     )
 
+    # Fetch provisioning profile - only force refresh if CLEAN_BUILD requested
+    # This enables caching for faster incremental builds while allowing
+    # full refresh when needed (e.g., after cert rotation)
     get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app",
       platform: "ios",
-      force: true  # Always fetch fresh profile
+      force: ENV["CLEAN_BUILD"] == "true" || ENV["FORCE_PROFILE_REFRESH"] == "true"
     )
 
     # Get the profile name that was just created/fetched

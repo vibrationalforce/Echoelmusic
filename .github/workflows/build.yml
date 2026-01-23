@@ -71,10 +71,21 @@ jobs:
 
       - name: Build Desktop Plugins
         if: steps.check_cmake.outputs.has_cmake == 'true'
+        id: build_plugins
         run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --config Release --parallel
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release 2>&1 | tee cmake_config.log
+          cmake --build build --config Release --parallel 2>&1 | tee cmake_build.log
+          echo "BUILD_SUCCESS=true" >> $GITHUB_OUTPUT
         continue-on-error: true
+
+      - name: Report Build Status
+        if: steps.check_cmake.outputs.has_cmake == 'true'
+        run: |
+          if [ "${{ steps.build_plugins.outputs.BUILD_SUCCESS }}" != "true" ]; then
+            echo "::warning::Desktop plugin build completed with errors"
+            echo "## Build Warnings" >> $GITHUB_STEP_SUMMARY
+            echo "Desktop plugin build had errors. Check logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Package Windows Build
         run: |
@@ -140,10 +151,21 @@ jobs:
 
       - name: Build Desktop Plugins
         if: steps.check_cmake.outputs.has_cmake == 'true'
+        id: build_plugins_macos
         run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --config Release --parallel
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release 2>&1 | tee cmake_config.log
+          cmake --build build --config Release --parallel 2>&1 | tee cmake_build.log
+          echo "BUILD_SUCCESS=true" >> $GITHUB_OUTPUT
         continue-on-error: true
+
+      - name: Report Build Status
+        if: steps.check_cmake.outputs.has_cmake == 'true'
+        run: |
+          if [ "${{ steps.build_plugins_macos.outputs.BUILD_SUCCESS }}" != "true" ]; then
+            echo "::warning::macOS plugin build completed with errors"
+            echo "## Build Warnings" >> $GITHUB_STEP_SUMMARY
+            echo "macOS plugin build had errors. Check logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Package macOS Build
         run: |
@@ -217,10 +239,21 @@ jobs:
 
       - name: Build Desktop Plugins
         if: steps.check_cmake.outputs.has_cmake == 'true'
+        id: build_plugins_linux
         run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --parallel
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release 2>&1 | tee cmake_config.log
+          cmake --build build --parallel 2>&1 | tee cmake_build.log
+          echo "BUILD_SUCCESS=true" >> $GITHUB_OUTPUT
         continue-on-error: true
+
+      - name: Report Build Status
+        if: steps.check_cmake.outputs.has_cmake == 'true'
+        run: |
+          if [ "${{ steps.build_plugins_linux.outputs.BUILD_SUCCESS }}" != "true" ]; then
+            echo "::warning::Linux plugin build completed with errors"
+            echo "## Build Warnings" >> $GITHUB_STEP_SUMMARY
+            echo "Linux plugin build had errors. Check logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Create AppImage
         run: |

@@ -22,6 +22,7 @@ on:
 
 env:
   XCODE_VERSION: '15.4'
+  XCODEGEN_VERSION: '2.38.0'
 
 jobs:
   # Job 1: Code Quality & Linting
@@ -99,17 +100,24 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
+          ~/.swiftpm
           .build
           ~/Library/Developer/Xcode/DerivedData
-        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}-${{ matrix.name }}
         restore-keys: |
+          ${{ runner.os }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}-
           ${{ runner.os }}-spm-
 
-    - name: Install XcodeGen
-      run: brew install xcodegen
+    - name: Setup XcodeGen
+      uses: ./.github/actions/setup-xcodegen
+      with:
+        version: ${{ env.XCODEGEN_VERSION }}
 
     - name: Generate Xcode Project
-      run: xcodegen generate
+      run: |
+        # Set placeholder Team ID for simulator build (no actual signing needed)
+        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+        xcodegen generate --spec project.yml
 
     - name: Resolve Swift Package Dependencies
       run: |
@@ -186,17 +194,24 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
+          ~/.swiftpm
           .build
           ~/Library/Developer/Xcode/DerivedData
-        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        key: ${{ runner.os }}-spm-macos-${{ hashFiles('Package.swift', 'Package.resolved') }}
         restore-keys: |
+          ${{ runner.os }}-spm-macos-
           ${{ runner.os }}-spm-
 
-    - name: Install XcodeGen
-      run: brew install xcodegen
+    - name: Setup XcodeGen
+      uses: ./.github/actions/setup-xcodegen
+      with:
+        version: ${{ env.XCODEGEN_VERSION }}
 
     - name: Generate Xcode Project
-      run: xcodegen generate
+      run: |
+        # Set placeholder Team ID for simulator build (no actual signing needed)
+        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+        xcodegen generate --spec project.yml
 
     - name: Build for Testing (macOS)
       run: |
@@ -236,11 +251,16 @@ jobs:
       with:
         xcode-version: ${{ env.XCODE_VERSION }}
 
-    - name: Install XcodeGen
-      run: brew install xcodegen
+    - name: Setup XcodeGen
+      uses: ./.github/actions/setup-xcodegen
+      with:
+        version: ${{ env.XCODEGEN_VERSION }}
 
     - name: Generate Xcode Project
-      run: xcodegen generate
+      run: |
+        # Set placeholder Team ID for simulator build (no actual signing needed)
+        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+        xcodegen generate --spec project.yml
 
     - name: Run Performance Tests
       run: |
@@ -304,17 +324,24 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
+          ~/.swiftpm
           .build
           ~/Library/Developer/Xcode/DerivedData
-        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        key: ${{ runner.os }}-spm-archive-${{ hashFiles('Package.swift', 'Package.resolved') }}
         restore-keys: |
+          ${{ runner.os }}-spm-archive-
           ${{ runner.os }}-spm-
 
-    - name: Install XcodeGen
-      run: brew install xcodegen
+    - name: Setup XcodeGen
+      uses: ./.github/actions/setup-xcodegen
+      with:
+        version: ${{ env.XCODEGEN_VERSION }}
 
     - name: Generate Xcode Project
-      run: xcodegen generate
+      run: |
+        # Set placeholder Team ID for archive build (actual team set via xcargs)
+        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+        xcodegen generate --spec project.yml
 
     - name: Build Release Archive
       run: |
