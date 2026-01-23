@@ -74,12 +74,14 @@ jobs:
   pr-check:
     name: "PR Build Check"
     runs-on: macos-14
-    if: ${{ github.event_name == 'pull_request' }}
+    if: github.event_name == 'pull_request'
     timeout-minutes: 30
 
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: "Event Info"
         run: |
@@ -89,15 +91,15 @@ jobs:
           echo "PR: #${{ github.event.pull_request.number }}"
           echo "Branch: ${{ github.head_ref }} -> ${{ github.base_ref }}"
 
-      - name: "Setup Xcode ${{ env.XCODE_VERSION }}"
+      - name: "Setup Xcode"
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: ${{ env.XCODE_VERSION }}
+          xcode-version: "15.4"
 
-      - name: "Setup XcodeGen"
-        uses: ./.github/actions/setup-xcodegen
-        with:
-          version: ${{ env.XCODEGEN_VERSION }}
+      - name: "Install XcodeGen"
+        run: |
+          brew install xcodegen || true
+          xcodegen --version
 
       - name: "Cache Swift Packages"
         uses: actions/cache@v4
