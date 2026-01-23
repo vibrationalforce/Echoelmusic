@@ -1,138 +1,335 @@
+# =============================================================================
+# ECHOELMUSIC - MULTI-PLATFORM FASTLANE CONFIGURATION
+# =============================================================================
+# Version: 3.0.0 - Phase 10000 ULTIMATE MODE
+#
+# Supported Platforms:
+# - iOS (iPhone + iPad) with AUv3
+# - macOS (Apple Silicon + Intel) with AUv3
+# - watchOS (Apple Watch)
+# - tvOS (Apple TV)
+# - visionOS (Apple Vision Pro)
+#
+# Usage:
+#   fastlane ios beta              # Upload iOS to TestFlight
+#   fastlane mac beta              # Upload macOS to TestFlight
+#   fastlane ios beta_watchos      # Upload watchOS to TestFlight
+#   fastlane ios beta_tvos         # Upload tvOS to TestFlight
+#   fastlane ios beta_visionos     # Upload visionOS to TestFlight
+#   fastlane ios beta_all          # Upload ALL platforms to TestFlight
+# =============================================================================
+
 default_platform(:ios)
 
+# Shared configuration
+TEAM_ID = ENV["APPLE_TEAM_ID"]
+BUILD_NUMBER = ENV["BUILD_NUMBER"] || "1"
+
 # =============================================================================
-# ECHOELMUSIC - FASTLANE CONFIGURATION
-# Version: 1.2.0 - Phase 10000 ULTIMATE MODE
+# SHARED HELPERS
+# =============================================================================
+
+def setup_api_key
+  UI.user_error!("ASC_KEY_ID not set") unless ENV["ASC_KEY_ID"]
+  UI.user_error!("ASC_ISSUER_ID not set") unless ENV["ASC_ISSUER_ID"]
+  UI.user_error!("ASC_KEY_CONTENT not set") unless ENV["ASC_KEY_CONTENT"]
+  UI.user_error!("APPLE_TEAM_ID not set") unless ENV["APPLE_TEAM_ID"]
+
+  app_store_connect_api_key(
+    key_id: ENV["ASC_KEY_ID"],
+    issuer_id: ENV["ASC_ISSUER_ID"],
+    key_content: ENV["ASC_KEY_CONTENT"],
+    is_key_content_base64: false,
+    in_house: false
+  )
+end
+
+def setup_keychain
+  keychain_path = ENV["KEYCHAIN_PATH"] || "~/Library/Keychains/login.keychain-db"
+  keychain_password = ENV["KEYCHAIN_PASSWORD"] || ""
+  UI.message("Using keychain: #{keychain_path}")
+  { path: keychain_path, password: keychain_password }
+end
+
+def cleanup_certificates(api_key)
+  UI.message("Checking Distribution certificates...")
+  begin
+    require 'spaceship'
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key: ENV["ASC_KEY_CONTENT"]
+    )
+
+    all_certs = Spaceship::ConnectAPI::Certificate.all.select do |cert|
+      cert.certificate_type == "DISTRIBUTION" || cert.certificate_type == "IOS_DISTRIBUTION"
+    end
+
+    UI.message("Found #{all_certs.count} distribution certificate(s)")
+
+    if all_certs.count > 2
+      sorted = all_certs.sort_by { |c| c.expiration_date }.reverse
+      to_revoke = sorted[2..-1]
+      to_revoke.each do |cert|
+        UI.message("Revoking old certificate: #{cert.id}")
+        cert.delete!
+      end
+      UI.success("Cleaned up #{to_revoke.count} old certificate(s)")
+    end
+  rescue => e
+    UI.important("Certificate check skipped: #{e.message}")
+  end
+end
+
+def upload_to_testflight_with_retry(api_key, changelog)
+  UI.message("Uploading to TestFlight...")
+  upload_to_testflight(
+    api_key: api_key,
+    skip_waiting_for_build_processing: true,
+    distribute_external: false,
+    notify_external_testers: false,
+    changelog: changelog,
+    reject_build_waiting_for_review: false
+  )
+  UI.success("Successfully uploaded to TestFlight!")
+end
+
+# =============================================================================
+# iOS PLATFORM
 # =============================================================================
 
 platform :ios do
-  desc "Build and upload to TestFlight (optimized for CI/CD)"
+
+  # ---------------------------------------------------------------------------
+  # iOS App + AUv3 Extension
+  # ---------------------------------------------------------------------------
+  desc "Build and upload iOS app with AUv3 to TestFlight"
   lane :beta do
-    UI.header "Starting TestFlight build for Echoelmusic v1.2.0"
-    # Ensure we have the required environment variables
-    UI.user_error!("ASC_KEY_ID not set") unless ENV["ASC_KEY_ID"]
-    UI.user_error!("ASC_ISSUER_ID not set") unless ENV["ASC_ISSUER_ID"]
-    UI.user_error!("ASC_KEY_CONTENT not set") unless ENV["ASC_KEY_CONTENT"]
-    UI.user_error!("APPLE_TEAM_ID not set") unless ENV["APPLE_TEAM_ID"]
+    UI.header "iOS TestFlight Build (with AUv3)"
 
-    # Setup App Store Connect API Key
-    api_key = app_store_connect_api_key(
-      key_id: ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key_content: ENV["ASC_KEY_CONTENT"],
-      is_key_content_base64: false,
-      in_house: false
-    )
+    api_key = setup_api_key
+    keychain = setup_keychain
+    cleanup_certificates(api_key)
 
-    # Write API key to file for xcodebuild authentication
-    key_path = "#{Dir.tmpdir}/AuthKey_#{ENV["ASC_KEY_ID"]}.p8"
-    File.write(key_path, ENV["ASC_KEY_CONTENT"])
-
-    # Use CI keychain if available, otherwise use default
-    keychain_path = ENV["KEYCHAIN_PATH"] || "~/Library/Keychains/login.keychain-db"
-    keychain_password = ENV["KEYCHAIN_PASSWORD"] || ""
-
-    UI.message("Using keychain: #{keychain_path}")
-
-    # === Certificate Management (only cleanup expired/excess) ===
-    UI.message("🔐 Checking Distribution certificates...")
-
-    begin
-      require 'spaceship'
-      Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
-        key_id: ENV["ASC_KEY_ID"],
-        issuer_id: ENV["ASC_ISSUER_ID"],
-        key: ENV["ASC_KEY_CONTENT"]
-      )
-
-      # Find all distribution certificates
-      all_certs = Spaceship::ConnectAPI::Certificate.all.select do |cert|
-        cert.certificate_type == "DISTRIBUTION" || cert.certificate_type == "IOS_DISTRIBUTION"
-      end
-
-      UI.message("Found #{all_certs.count} distribution certificate(s)")
-
-      # Only revoke expired certificates, keep valid ones
-      if all_certs.count > 2
-        # Keep the 2 newest, revoke the rest (Apple allows max 3)
-        sorted = all_certs.sort_by { |c| c.expiration_date }.reverse
-        to_revoke = sorted[2..-1]
-
-        to_revoke.each do |cert|
-          UI.message("🗑️  Revoking old certificate: #{cert.id} (expires: #{cert.expiration_date})")
-          cert.delete!
-        end
-        UI.success("✅ Cleaned up #{to_revoke.count} old certificate(s)")
-      else
-        UI.success("✅ Certificate count OK (#{all_certs.count}/3)")
-      end
-    rescue => e
-      UI.important("⚠️  Certificate check skipped: #{e.message}")
-      UI.important("Continuing with existing certificates...")
-    end
-
-    # Get certificates - now should work since we cleaned up
+    # Get certificates
     get_certificates(
       api_key: api_key,
       platform: "ios",
-      keychain_path: keychain_path,
-      keychain_password: keychain_password
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password]
     )
 
-    # Fetch provisioning profile - only force refresh if CLEAN_BUILD requested
-    # This enables caching for faster incremental builds while allowing
-    # full refresh when needed (e.g., after cert rotation)
+    # Main app profile
     get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app",
       platform: "ios",
-      force: ENV["CLEAN_BUILD"] == "true" || ENV["FORCE_PROFILE_REFRESH"] == "true"
+      force: ENV["CLEAN_BUILD"] == "true"
     )
+    app_profile = lane_context[SharedValues::SIGH_NAME]
 
-    # Get the profile name that was just created/fetched
-    profile_name = lane_context[SharedValues::SIGH_NAME]
-    profile_uuid = lane_context[SharedValues::SIGH_UUID]
+    # AUv3 extension profile
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.auv3",
+      platform: "ios",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    auv3_profile = lane_context[SharedValues::SIGH_NAME]
 
-    UI.message("Using provisioning profile: #{profile_name} (#{profile_uuid})")
+    UI.message("App profile: #{app_profile}")
+    UI.message("AUv3 profile: #{auv3_profile}")
 
-    # Build the app with MANUAL signing using the fetched certificate and profile
-    # Optimized for faster CI/CD builds
+    # Build with proper signing
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
       configuration: "Release",
-      clean: ENV["CLEAN_BUILD"] == "true",  # Only clean when explicitly requested
+      clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
       codesigning_identity: "Apple Distribution",
-      derived_data_path: "./build/DerivedData",  # Cache for faster incremental builds
+      derived_data_path: "./build/DerivedData",
+      export_options: {
+        provisioningProfiles: {
+          "com.echoelmusic.app" => app_profile,
+          "com.echoelmusic.app.auv3" => auv3_profile
+        }
+      },
       xcargs: [
-        "DEVELOPMENT_TEAM='#{ENV["APPLE_TEAM_ID"]}'",
+        "DEVELOPMENT_TEAM='#{TEAM_ID}'",
         "CODE_SIGN_STYLE='Manual'",
-        "CODE_SIGN_IDENTITY='Apple Distribution'",
-        "PROVISIONING_PROFILE_SPECIFIER='#{profile_name}'",
-        "COMPILER_INDEX_STORE_ENABLE=NO",  # Faster builds
-        "DEBUG_INFORMATION_FORMAT='dwarf-with-dsym'"  # Required for crash reporting
+        "COMPILER_INDEX_STORE_ENABLE=NO"
       ].join(" ")
     )
 
-    # Upload to TestFlight with optimized settings
-    UI.message("📤 Uploading to TestFlight...")
-    upload_to_testflight(
-      api_key: api_key,
-      skip_waiting_for_build_processing: true,
-      distribute_external: false,  # Don't auto-distribute to external testers
-      notify_external_testers: false,
-      changelog: "Build #{ENV['BUILD_NUMBER'] || 'dev'} - Phase 10000 ULTIMATE MODE",
-      reject_build_waiting_for_review: false
-    )
-
-    UI.success("🎉 Successfully uploaded to TestFlight!")
-    UI.success("📱 Check App Store Connect for build processing status")
+    upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE with AUv3")
   end
 
+  # ---------------------------------------------------------------------------
+  # watchOS App
+  # ---------------------------------------------------------------------------
+  desc "Build and upload watchOS app to TestFlight"
+  lane :beta_watchos do
+    UI.header "watchOS TestFlight Build"
+
+    api_key = setup_api_key
+    keychain = setup_keychain
+    cleanup_certificates(api_key)
+
+    get_certificates(
+      api_key: api_key,
+      platform: "ios",
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password]
+    )
+
+    # Companion iOS app profile (required for watchOS)
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app",
+      platform: "ios",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    ios_profile = lane_context[SharedValues::SIGH_NAME]
+
+    # watchOS app profile
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.watchkitapp",
+      platform: "ios",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    watch_profile = lane_context[SharedValues::SIGH_NAME]
+
+    build_app(
+      project: "Echoelmusic.xcodeproj",
+      scheme: "Echoelmusic-watchOS",
+      configuration: "Release",
+      clean: ENV["CLEAN_BUILD"] == "true",
+      export_method: "app-store",
+      codesigning_identity: "Apple Distribution",
+      derived_data_path: "./build/DerivedData",
+      export_options: {
+        provisioningProfiles: {
+          "com.echoelmusic.app" => ios_profile,
+          "com.echoelmusic.app.watchkitapp" => watch_profile
+        }
+      },
+      xcargs: [
+        "DEVELOPMENT_TEAM='#{TEAM_ID}'",
+        "CODE_SIGN_STYLE='Manual'",
+        "COMPILER_INDEX_STORE_ENABLE=NO"
+      ].join(" ")
+    )
+
+    upload_to_testflight_with_retry(api_key, "watchOS Build #{BUILD_NUMBER} - Bio-Reactive HRV")
+  end
+
+  # ---------------------------------------------------------------------------
+  # tvOS App
+  # ---------------------------------------------------------------------------
+  desc "Build and upload tvOS app to TestFlight"
+  lane :beta_tvos do
+    UI.header "tvOS TestFlight Build"
+
+    api_key = setup_api_key
+    keychain = setup_keychain
+    cleanup_certificates(api_key)
+
+    get_certificates(
+      api_key: api_key,
+      platform: "ios",
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password]
+    )
+
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.tv",
+      platform: "tvos",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    profile = lane_context[SharedValues::SIGH_NAME]
+
+    build_app(
+      project: "Echoelmusic.xcodeproj",
+      scheme: "Echoelmusic-tvOS",
+      configuration: "Release",
+      clean: ENV["CLEAN_BUILD"] == "true",
+      export_method: "app-store",
+      codesigning_identity: "Apple Distribution",
+      derived_data_path: "./build/DerivedData",
+      export_options: {
+        provisioningProfiles: {
+          "com.echoelmusic.tv" => profile
+        }
+      },
+      xcargs: [
+        "DEVELOPMENT_TEAM='#{TEAM_ID}'",
+        "CODE_SIGN_STYLE='Manual'",
+        "COMPILER_INDEX_STORE_ENABLE=NO"
+      ].join(" ")
+    )
+
+    upload_to_testflight_with_retry(api_key, "tvOS Build #{BUILD_NUMBER} - Big Screen Experience")
+  end
+
+  # ---------------------------------------------------------------------------
+  # visionOS App
+  # ---------------------------------------------------------------------------
+  desc "Build and upload visionOS app to TestFlight"
+  lane :beta_visionos do
+    UI.header "visionOS TestFlight Build"
+
+    api_key = setup_api_key
+    keychain = setup_keychain
+    cleanup_certificates(api_key)
+
+    get_certificates(
+      api_key: api_key,
+      platform: "ios",
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password]
+    )
+
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.vision",
+      platform: "ios",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    profile = lane_context[SharedValues::SIGH_NAME]
+
+    build_app(
+      project: "Echoelmusic.xcodeproj",
+      scheme: "Echoelmusic-visionOS",
+      configuration: "Release",
+      clean: ENV["CLEAN_BUILD"] == "true",
+      export_method: "app-store",
+      codesigning_identity: "Apple Distribution",
+      derived_data_path: "./build/DerivedData",
+      destination: "generic/platform=visionOS",
+      export_options: {
+        provisioningProfiles: {
+          "com.echoelmusic.vision" => profile
+        }
+      },
+      xcargs: [
+        "DEVELOPMENT_TEAM='#{TEAM_ID}'",
+        "CODE_SIGN_STYLE='Manual'",
+        "COMPILER_INDEX_STORE_ENABLE=NO"
+      ].join(" ")
+    )
+
+    upload_to_testflight_with_retry(api_key, "visionOS Build #{BUILD_NUMBER} - Spatial Audio Immersive")
+  end
+
+  # ---------------------------------------------------------------------------
+  # Build Only (No Upload)
+  # ---------------------------------------------------------------------------
   desc "Just build without signing (for CI testing)"
   lane :build_only do
-    UI.header "Building for simulator (no signing)"
+    UI.header "Building iOS for simulator (no signing)"
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -145,9 +342,27 @@ platform :ios do
     )
   end
 
-  desc "Run tests"
+  # ---------------------------------------------------------------------------
+  # All iOS Platforms
+  # ---------------------------------------------------------------------------
+  desc "Build and upload ALL iOS platforms to TestFlight"
+  lane :beta_all_ios do
+    UI.header "Building ALL iOS Platforms for TestFlight"
+
+    beta
+    beta_watchos
+    beta_tvos
+    beta_visionos
+
+    UI.success("All iOS platforms uploaded to TestFlight!")
+  end
+
+  # ---------------------------------------------------------------------------
+  # Tests
+  # ---------------------------------------------------------------------------
+  desc "Run iOS tests"
   lane :test do
-    UI.header "Running tests"
+    UI.header "Running iOS tests"
     run_tests(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -157,131 +372,30 @@ platform :ios do
     )
   end
 
-  desc "Increment build number"
-  lane :bump do
-    increment_build_number(
-      build_number: ENV["BUILD_NUMBER"] || (latest_testflight_build_number + 1).to_s
-    )
-  end
-
-  # =============================================================================
-  # SCREENSHOT AUTOMATION - Phase 10000 ULTIMATE MODE
-  # =============================================================================
-
+  # ---------------------------------------------------------------------------
+  # Screenshots
+  # ---------------------------------------------------------------------------
   desc "Capture screenshots for all devices and languages"
   lane :screenshots do
-    UI.header "📸 Capturing App Store Screenshots"
-
+    UI.header "Capturing App Store Screenshots"
     capture_screenshots(
       scheme: "EchoelmusicScreenshots",
       output_directory: "./fastlane/screenshots",
       clear_previous_screenshots: true,
       concurrent_simulators: true,
-      languages: [
-        "en-US",
-        "de-DE",
-        "ja",
-        "es-ES",
-        "fr-FR",
-        "zh-Hans",
-        "ko",
-        "pt-BR",
-        "it",
-        "ru",
-        "ar",
-        "hi"
-      ],
-      devices: [
-        "iPhone 16 Pro Max",
-        "iPhone 16 Pro",
-        "iPhone SE (3rd generation)",
-        "iPad Pro 13-inch (M4)",
-        "iPad Pro 11-inch (M4)"
-      ],
-      dark_mode: false,
-      override_status_bar: true,
-      reinstall_app: false,
-      stop_after_first_error: false,
-      derived_data_path: "./build/DerivedData"
-    )
-
-    UI.success("✅ Screenshots captured successfully!")
-  end
-
-  desc "Capture screenshots for iPhone only (faster)"
-  lane :screenshots_iphone do
-    UI.header "📱 Capturing iPhone Screenshots"
-
-    capture_screenshots(
-      scheme: "EchoelmusicScreenshots",
-      output_directory: "./fastlane/screenshots",
-      clear_previous_screenshots: true,
-      concurrent_simulators: true,
-      languages: ["en-US"],
-      devices: [
-        "iPhone 16 Pro Max",
-        "iPhone 16 Pro"
-      ],
+      languages: ["en-US", "de-DE", "ja", "es-ES", "fr-FR", "zh-Hans", "ko", "pt-BR", "it", "ru", "ar", "hi"],
+      devices: ["iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone SE (3rd generation)", "iPad Pro 13-inch (M4)", "iPad Pro 11-inch (M4)"],
       dark_mode: false,
       override_status_bar: true,
       derived_data_path: "./build/DerivedData"
     )
-
-    UI.success("✅ iPhone screenshots captured!")
-  end
-
-  desc "Capture screenshots for iPad only"
-  lane :screenshots_ipad do
-    UI.header "📱 Capturing iPad Screenshots"
-
-    capture_screenshots(
-      scheme: "EchoelmusicScreenshots",
-      output_directory: "./fastlane/screenshots",
-      clear_previous_screenshots: true,
-      concurrent_simulators: true,
-      languages: ["en-US"],
-      devices: [
-        "iPad Pro 13-inch (M4)",
-        "iPad Pro 11-inch (M4)"
-      ],
-      dark_mode: false,
-      override_status_bar: true,
-      derived_data_path: "./build/DerivedData"
-    )
-
-    UI.success("✅ iPad screenshots captured!")
-  end
-
-  desc "Add device frames to screenshots"
-  lane :frame_screenshots do
-    UI.header "🖼️ Framing Screenshots"
-
-    frameit(
-      path: "./fastlane/screenshots",
-      white: false,
-      force_device_type: nil,
-      use_platform: "IOS",
-      show_complete_frame: true
-    )
-
-    UI.success("✅ Screenshots framed!")
+    UI.success("Screenshots captured!")
   end
 
   desc "Upload screenshots to App Store Connect"
   lane :upload_screenshots do
-    UI.header "📤 Uploading Screenshots to App Store Connect"
-
-    UI.user_error!("ASC_KEY_ID not set") unless ENV["ASC_KEY_ID"]
-    UI.user_error!("ASC_ISSUER_ID not set") unless ENV["ASC_ISSUER_ID"]
-    UI.user_error!("ASC_KEY_CONTENT not set") unless ENV["ASC_KEY_CONTENT"]
-
-    api_key = app_store_connect_api_key(
-      key_id: ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key_content: ENV["ASC_KEY_CONTENT"],
-      is_key_content_base64: false
-    )
-
+    UI.header "Uploading Screenshots"
+    api_key = setup_api_key
     deliver(
       api_key: api_key,
       skip_binary_upload: true,
@@ -291,18 +405,141 @@ platform :ios do
       overwrite_screenshots: true,
       force: true
     )
+    UI.success("Screenshots uploaded!")
+  end
+end
 
-    UI.success("✅ Screenshots uploaded to App Store Connect!")
+# =============================================================================
+# macOS PLATFORM
+# =============================================================================
+
+platform :mac do
+
+  # ---------------------------------------------------------------------------
+  # macOS App + AUv3 Extension
+  # ---------------------------------------------------------------------------
+  desc "Build and upload macOS app with AUv3 to TestFlight"
+  lane :beta do
+    UI.header "macOS TestFlight Build (with AUv3)"
+
+    api_key = setup_api_key
+    keychain = setup_keychain
+    cleanup_certificates(api_key)
+
+    # macOS uses different certificate type
+    get_certificates(
+      api_key: api_key,
+      platform: "macos",
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password]
+    )
+
+    # Main app profile
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.mac",
+      platform: "macos",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    app_profile = lane_context[SharedValues::SIGH_NAME]
+
+    # AUv3 extension profile
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.mac.auv3",
+      platform: "macos",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    auv3_profile = lane_context[SharedValues::SIGH_NAME]
+
+    UI.message("macOS App profile: #{app_profile}")
+    UI.message("macOS AUv3 profile: #{auv3_profile}")
+
+    build_app(
+      project: "Echoelmusic.xcodeproj",
+      scheme: "Echoelmusic-macOS",
+      configuration: "Release",
+      clean: ENV["CLEAN_BUILD"] == "true",
+      export_method: "app-store",
+      codesigning_identity: "Apple Distribution",
+      derived_data_path: "./build/DerivedData",
+      export_options: {
+        provisioningProfiles: {
+          "com.echoelmusic.mac" => app_profile,
+          "com.echoelmusic.mac.auv3" => auv3_profile
+        }
+      },
+      xcargs: [
+        "DEVELOPMENT_TEAM='#{TEAM_ID}'",
+        "CODE_SIGN_STYLE='Manual'",
+        "COMPILER_INDEX_STORE_ENABLE=NO"
+      ].join(" ")
+    )
+
+    upload_to_testflight_with_retry(api_key, "macOS Build #{BUILD_NUMBER} - Phase 10000 with AUv3 Plugins")
   end
 
-  desc "Full screenshot workflow: capture, frame, upload"
-  lane :screenshots_full do
-    UI.header "🚀 Full Screenshot Workflow"
-
-    screenshots
-    frame_screenshots
-    upload_screenshots
-
-    UI.success("🎉 Full screenshot workflow complete!")
+  # ---------------------------------------------------------------------------
+  # Build Only (No Upload)
+  # ---------------------------------------------------------------------------
+  desc "Just build macOS without signing"
+  lane :build_only do
+    UI.header "Building macOS (no signing)"
+    build_app(
+      project: "Echoelmusic.xcodeproj",
+      scheme: "Echoelmusic-macOS",
+      configuration: "Release",
+      clean: false,
+      skip_codesigning: true,
+      skip_archive: true,
+      derived_data_path: "./build/DerivedData"
+    )
   end
+
+  # ---------------------------------------------------------------------------
+  # Tests
+  # ---------------------------------------------------------------------------
+  desc "Run macOS tests"
+  lane :test do
+    UI.header "Running macOS tests"
+    run_tests(
+      project: "Echoelmusic.xcodeproj",
+      scheme: "Echoelmusic-macOS",
+      clean: false,
+      derived_data_path: "./build/DerivedData"
+    )
+  end
+end
+
+# =============================================================================
+# UNIVERSAL LANE - ALL PLATFORMS
+# =============================================================================
+
+desc "Build and upload ALL platforms to TestFlight"
+lane :beta_all do
+  UI.header "Building ALL Platforms for TestFlight"
+  UI.message("This will build: iOS, macOS, watchOS, tvOS, visionOS")
+
+  # iOS family
+  Fastlane::LaneManager.cruise_lane("ios", "beta")
+  Fastlane::LaneManager.cruise_lane("ios", "beta_watchos")
+  Fastlane::LaneManager.cruise_lane("ios", "beta_tvos")
+  Fastlane::LaneManager.cruise_lane("ios", "beta_visionos")
+
+  # macOS
+  Fastlane::LaneManager.cruise_lane("mac", "beta")
+
+  UI.success("")
+  UI.success("=" * 60)
+  UI.success("  ALL PLATFORMS UPLOADED TO TESTFLIGHT!")
+  UI.success("=" * 60)
+  UI.success("")
+  UI.success("  iOS:      com.echoelmusic.app + AUv3")
+  UI.success("  macOS:    com.echoelmusic.mac + AUv3")
+  UI.success("  watchOS:  com.echoelmusic.app.watchkitapp")
+  UI.success("  tvOS:     com.echoelmusic.tv")
+  UI.success("  visionOS: com.echoelmusic.vision")
+  UI.success("")
+  UI.success("Check App Store Connect for build processing status.")
+  UI.success("=" * 60)
 end

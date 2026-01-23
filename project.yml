@@ -1,20 +1,42 @@
-# XcodeGen Project Configuration for Echoelmusic
-# This file defines how to generate the Xcode project
+# =============================================================================
+# ECHOELMUSIC - XCODEGEN PROJECT CONFIGURATION
+# =============================================================================
+# Multi-Platform TestFlight Deployment - ALL Apple Ecosystems
+# Version: 3.0.0 - Phase 10000 ULTIMATE MODE
+#
+# Supported Platforms:
+# - iOS (iPhone + iPad) with AUv3 Audio Unit Extension
+# - macOS (Apple Silicon + Intel) with AUv3 Audio Unit Extension
+# - watchOS (Apple Watch) with Complications
+# - tvOS (Apple TV) with Big Screen Experience
+# - visionOS (Apple Vision Pro) with Spatial Audio
+#
+# AUv3 Features:
+# - TR-808 Bass Synth Instrument
+# - Bio-Reactive Composer
+# - AI Stem Separator
+# - MIDI 2.0 + MPE Processor
+# =============================================================================
 
 name: Echoelmusic
 
 options:
   bundleIdPrefix: com.echoelmusic
-  # Use Xcode 15.4 format for GitHub Actions compatibility (macos-14 runner)
   xcodeVersion: "15.4"
   deploymentTarget:
-    iOS: "16.0"      # Wide compatibility (iPhone 8+)
-    macOS: "13.0"    # macOS Ventura+
-    watchOS: "9.0"   # Apple Watch Series 4+
-    tvOS: "16.0"     # Apple TV HD+
-    visionOS: "1.0"  # Vision Pro
-  # Generate Info.plist automatically
+    iOS: "16.0"
+    macOS: "13.0"
+    watchOS: "9.0"
+    tvOS: "16.0"
+    visionOS: "1.0"
   generateEmptyDirectories: true
+  createIntermediateGroups: true
+  groupSortPosition: top
+  defaultConfig: Release
+
+configs:
+  Debug: debug
+  Release: release
 
 settings:
   base:
@@ -22,27 +44,52 @@ settings:
     PRODUCT_NAME: $(TARGET_NAME)
     MARKETING_VERSION: "1.2.0"
     CURRENT_PROJECT_VERSION: "${BUILD_NUMBER:=1}"
+    ENABLE_BITCODE: NO
+    ALWAYS_SEARCH_USER_PATHS: NO
+    SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited)"
+    CLANG_ENABLE_MODULES: YES
+    CLANG_ENABLE_OBJC_ARC: YES
+    SWIFT_OPTIMIZATION_LEVEL: "-O"
+    GCC_OPTIMIZATION_LEVEL: "s"
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+  configs:
+    Debug:
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+      GCC_OPTIMIZATION_LEVEL: "0"
+      DEBUG_INFORMATION_FORMAT: "dwarf"
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: "DEBUG $(inherited)"
+    Release:
+      DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
+      SWIFT_COMPILATION_MODE: "wholemodule"
+
+# =============================================================================
+# TARGETS
+# =============================================================================
 
 targets:
+
+  # ===========================================================================
+  # iOS App (iPhone + iPad)
+  # ===========================================================================
   Echoelmusic:
     type: application
     platform: iOS
-
-    # Source files location
     sources:
       - path: Sources/Echoelmusic
         type: group
         excludes:
           - "**/*.xcassets"
-
-    # Resources
+          - "**/VisionOS/**"
+          - "**/WatchOS/**"
+          - "**/tvOS/**"
+          - "**/Platforms/**"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
       - path: Resources/PrivacyInfo.xcprivacy
         type: file
-
-    # Info.plist configuration (inline)
+        optional: true
     info:
       path: Resources/iOS/Info.plist
       properties:
@@ -56,8 +103,6 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDisplayName: Echoelmusic
         LSRequiresIPhoneOS: true
-
-        # Permissions
         NSMicrophoneUsageDescription: "Echoelmusic needs microphone access to create music from your voice and breath"
         NSHealthShareUsageDescription: "Echoelmusic uses heart rate data to create bio-reactive music that responds to your body"
         NSHealthUpdateUsageDescription: "Echoelmusic can save your coherence scores to Health"
@@ -74,16 +119,10 @@ targets:
           - "_osc._udp"
           - "_midi._udp"
           - "_echoelmusic._tcp"
-
-        # Export compliance
         ITSAppUsesNonExemptEncryption: false
-
-        # Background modes
         UIBackgroundModes:
           - audio
           - bluetooth-central
-
-        # UI Configuration
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -96,12 +135,8 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         UIUserInterfaceStyle: Dark
         UIRequiresFullScreen: false
-
-        # SwiftUI support - no SceneDelegate needed with @main App
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
-
-    # App settings
     settings:
       base:
         PRODUCT_NAME: Echoelmusic
@@ -109,128 +144,415 @@ targets:
         INFOPLIST_FILE: Resources/iOS/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: Echoelmusic.entitlements
-
-        # Code signing (Manual for CI/CD compatibility)
-        # CI sets DEVELOPMENT_TEAM via sed substitution
-        # Fastlane overrides CODE_SIGN_IDENTITY for distribution
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
         DEVELOPMENT_TEAM: ""
-
-        # Build settings
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "16.0"
-        SWIFT_VERSION: "5.9"
-        ENABLE_BITCODE: NO
-        ALWAYS_SEARCH_USER_PATHS: NO
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-
-    # Dependencies (AUv3 extension temporarily disabled for CI)
-    # dependencies:
-    #   - target: EchoelmusicAUv3
-    #     embed: true
-
-    # Entitlements for App Store
+    dependencies:
+      - target: EchoelmusicAUv3-iOS
+        embed: true
     entitlements:
       path: Echoelmusic.entitlements
 
-  # ===========================================
-  # AUv3 Audio Unit Extension
-  # ===========================================
-  EchoelmusicAUv3:
+  # ===========================================================================
+  # iOS AUv3 Audio Unit Extension
+  # ===========================================================================
+  EchoelmusicAUv3-iOS:
     type: app-extension
     platform: iOS
-
-    # Source files
     sources:
       - path: Sources/EchoelmusicAUv3
         type: group
       - path: Sources/Echoelmusic/Sound/TR808BassSynth.swift
         type: file
-
-    # Info.plist
     info:
       path: Sources/EchoelmusicAUv3/Info.plist
-
-    # Extension settings
     settings:
       base:
         PRODUCT_NAME: EchoelmusicAUv3
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.auv3
         INFOPLIST_FILE: Sources/EchoelmusicAUv3/Info.plist
         GENERATE_INFOPLIST_FILE: NO
-
-        # Code signing (Manual for CI/CD compatibility)
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
         CODE_SIGN_ENTITLEMENTS: Sources/EchoelmusicAUv3/EchoelmusicAUv3.entitlements
-
-        # Build settings
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "16.0"
-        SWIFT_VERSION: "5.9"
-        ENABLE_BITCODE: NO
-
-        # Extension settings
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
         SKIP_INSTALL: YES
-
-    # Frameworks
     dependencies:
       - framework: AudioToolbox.framework
       - framework: AVFoundation.framework
       - framework: CoreAudioKit.framework
       - framework: Accelerate.framework
 
-  # ===========================================
-  # Unit Tests
-  # ===========================================
+  # ===========================================================================
+  # macOS App
+  # ===========================================================================
+  Echoelmusic-macOS:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/Echoelmusic
+        type: group
+        excludes:
+          - "**/*.xcassets"
+          - "**/VisionOS/**"
+          - "**/WatchOS/**"
+          - "**/tvOS/**"
+          - "**/Platforms/**"
+          - "**/Widgets/**"
+          - "**/LiveActivity/**"
+    resources:
+      - path: Sources/Echoelmusic/Resources/Assets.xcassets
+        type: folder
+      - path: Resources/PrivacyInfo.xcprivacy
+        type: file
+        optional: true
+    info:
+      path: Resources/macOS/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIconFile: AppIcon
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        NSHumanReadableCopyright: "Copyright 2024-2026 Echoelmusic. All rights reserved."
+        NSPrincipalClass: NSApplication
+        NSMicrophoneUsageDescription: "Echoelmusic needs microphone access to create music from your voice and breath"
+        NSCameraUsageDescription: "Echoelmusic uses your camera for face tracking to control audio parameters"
+        NSBluetoothAlwaysUsageDescription: "Echoelmusic connects to Bluetooth MIDI controllers and audio devices"
+        NSLocalNetworkUsageDescription: "Echoelmusic uses local network for DMX lighting control and Art-Net"
+        ITSAppUsesNonExemptEncryption: false
+        LSApplicationCategoryType: "public.app-category.music"
+    settings:
+      base:
+        PRODUCT_NAME: Echoelmusic
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.mac
+        INFOPLIST_FILE: Resources/macOS/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicMac.entitlements
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Apple Distribution"
+        DEVELOPMENT_TEAM: ""
+        MACOSX_DEPLOYMENT_TARGET: "13.0"
+        ENABLE_HARDENED_RUNTIME: YES
+        COMBINE_HIDPI_IMAGES: YES
+    dependencies:
+      - target: EchoelmusicAUv3-macOS
+        embed: true
+    entitlements:
+      path: EchoelmusicMac.entitlements
+
+  # ===========================================================================
+  # macOS AUv3 Audio Unit Extension
+  # ===========================================================================
+  EchoelmusicAUv3-macOS:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Sources/EchoelmusicAUv3
+        type: group
+      - path: Sources/Echoelmusic/Sound/TR808BassSynth.swift
+        type: file
+    info:
+      path: Sources/EchoelmusicAUv3/Info-macOS.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleDisplayName: "Echoelmusic 808"
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: XPC!
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        NSExtension:
+          NSExtensionAttributes:
+            AudioComponents:
+              - description: "Echoelmusic TR-808 Bass Synth with Pitch Glide"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: 808 Bass"
+                sandboxSafe: true
+                subtype: E808
+                tags: [Synth, Bass, 808]
+                type: aumu
+                version: 1
+              - description: "Echoelmusic Bio-Reactive AI Music Generator"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: BioComposer"
+                sandboxSafe: true
+                subtype: Ebio
+                tags: [Synth, Generator, AI]
+                type: aumu
+                version: 1
+              - description: "Echoelmusic AI Stem Separation"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: Stem Splitter"
+                sandboxSafe: true
+                subtype: Estm
+                tags: [Effect, AI, Separator]
+                type: aufx
+                version: 1
+              - description: "Echoelmusic MIDI 2.0 + MPE Processor"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: MIDI Pro"
+                sandboxSafe: true
+                subtype: Emid
+                tags: [MIDI, MPE, Processor]
+                type: aumi
+                version: 1
+          NSExtensionPointIdentifier: com.apple.AudioUnit-UI
+          NSExtensionPrincipalClass: EchoelmusicAudioUnitViewController
+    settings:
+      base:
+        PRODUCT_NAME: EchoelmusicAUv3
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.mac.auv3
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Apple Distribution"
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicAUv3.entitlements
+        MACOSX_DEPLOYMENT_TARGET: "13.0"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
+        SKIP_INSTALL: YES
+        ENABLE_HARDENED_RUNTIME: YES
+    dependencies:
+      - framework: AudioToolbox.framework
+      - framework: AVFoundation.framework
+      - framework: CoreAudioKit.framework
+      - framework: Accelerate.framework
+
+  # ===========================================================================
+  # watchOS App
+  # ===========================================================================
+  Echoelmusic-watchOS:
+    type: application
+    platform: watchOS
+    sources:
+      - path: Sources/Echoelmusic
+        type: group
+        excludes:
+          - "**/*.xcassets"
+          - "**/VisionOS/**"
+          - "**/tvOS/**"
+          - "**/Platforms/**"
+          - "**/Widgets/**"
+          - "**/LiveActivity/**"
+          - "**/LED/**"
+          - "**/Stream/**"
+          - "**/Recording/**"
+          - "**/Video/**"
+    resources:
+      - path: Sources/Echoelmusic/Resources/Assets.xcassets
+        type: folder
+    info:
+      path: Resources/watchOS/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        WKApplication: true
+        WKWatchOnly: false
+        NSHealthShareUsageDescription: "Echoelmusic reads your heart rate and HRV to create bio-reactive music"
+        NSHealthUpdateUsageDescription: "Echoelmusic saves coherence scores to Health"
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_NAME: "Echoelmusic Watch"
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.watchkitapp
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicWatch.entitlements
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Apple Distribution"
+        DEVELOPMENT_TEAM: ""
+        WATCHOS_DEPLOYMENT_TARGET: "9.0"
+        TARGETED_DEVICE_FAMILY: "4"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_EMIT_LOC_STRINGS: YES
+    entitlements:
+      path: EchoelmusicWatch.entitlements
+
+  # ===========================================================================
+  # tvOS App
+  # ===========================================================================
+  Echoelmusic-tvOS:
+    type: application
+    platform: tvOS
+    sources:
+      - path: Sources/Echoelmusic
+        type: group
+        excludes:
+          - "**/*.xcassets"
+          - "**/VisionOS/**"
+          - "**/WatchOS/**"
+          - "**/Platforms/**"
+          - "**/Widgets/**"
+          - "**/LiveActivity/**"
+          - "**/Biofeedback/**"
+    resources:
+      - path: Sources/Echoelmusic/Resources/Assets.xcassets
+        type: folder
+    info:
+      path: Resources/tvOS/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSRequiresIPhoneOS: true
+        UIBackgroundModes:
+          - audio
+        UILaunchScreen: {}
+        UIUserInterfaceStyle: Dark
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_NAME: Echoelmusic
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.tv
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicTV.entitlements
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Apple Distribution"
+        DEVELOPMENT_TEAM: ""
+        TVOS_DEPLOYMENT_TARGET: "16.0"
+        TARGETED_DEVICE_FAMILY: "3"
+    entitlements:
+      path: EchoelmusicTV.entitlements
+
+  # ===========================================================================
+  # visionOS App
+  # ===========================================================================
+  Echoelmusic-visionOS:
+    type: application
+    platform: visionOS
+    sources:
+      - path: Sources/Echoelmusic
+        type: group
+        excludes:
+          - "**/*.xcassets"
+          - "**/WatchOS/**"
+          - "**/tvOS/**"
+          - "**/Platforms/**"
+          - "**/Widgets/**"
+          - "**/LiveActivity/**"
+    resources:
+      - path: Sources/Echoelmusic/Resources/Assets.xcassets
+        type: folder
+    info:
+      path: Resources/visionOS/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSMicrophoneUsageDescription: "Echoelmusic needs microphone access to create music from your voice"
+        NSCameraUsageDescription: "Echoelmusic uses cameras for hand and eye tracking"
+        NSHandsTrackingUsageDescription: "Echoelmusic uses hand tracking for gesture-based audio control"
+        NSEyeTrackingUsageDescription: "Echoelmusic uses eye tracking for immersive audio control"
+        ITSAppUsesNonExemptEncryption: false
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+          UISceneConfigurations: {}
+        UIApplicationPreferredDefaultSceneSessionRole: UIWindowSceneSessionRoleVolumetricApplication
+    settings:
+      base:
+        PRODUCT_NAME: Echoelmusic
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.vision
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicVision.entitlements
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Apple Distribution"
+        DEVELOPMENT_TEAM: ""
+        XROS_DEPLOYMENT_TARGET: "1.0"
+    entitlements:
+      path: EchoelmusicVision.entitlements
+
+  # ===========================================================================
+  # iOS Unit Tests
+  # ===========================================================================
   EchoelmusicTests:
     type: bundle.unit-test
     platform: iOS
-
     sources:
       - path: Tests/EchoelmusicTests
         type: group
-
     dependencies:
       - target: Echoelmusic
-
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.tests
-        SWIFT_VERSION: "5.9"
+        GENERATE_INFOPLIST_FILE: YES
 
-  # ===========================================
-  # UI Tests (Screenshots)
-  # ===========================================
+  # ===========================================================================
+  # iOS UI Tests (Screenshots)
+  # ===========================================================================
   EchoelmusicUITests:
     type: bundle.ui-testing
     platform: iOS
-
     sources:
       - path: Tests/EchoelmusicUITests
         type: group
-
+        optional: true
     dependencies:
       - target: Echoelmusic
-
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.uitests
-        SWIFT_VERSION: "5.9"
         TEST_TARGET_NAME: Echoelmusic
+        GENERATE_INFOPLIST_FILE: YES
 
-# ===========================================
-# Schemes
-# ===========================================
+  # ===========================================================================
+  # macOS Unit Tests
+  # ===========================================================================
+  EchoelmusicTests-macOS:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/EchoelmusicTests
+        type: group
+    dependencies:
+      - target: Echoelmusic-macOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.tests.macos
+        GENERATE_INFOPLIST_FILE: YES
+
+# =============================================================================
+# SCHEMES
+# =============================================================================
+
 schemes:
-  # Main development scheme
+
+  # iOS Development
   Echoelmusic:
     build:
       targets:
         Echoelmusic: all
+        EchoelmusicAUv3-iOS: all
         EchoelmusicTests: [test]
         EchoelmusicUITests: [test]
     run:
@@ -240,7 +562,6 @@ schemes:
       gatherCoverageData: true
       targets:
         - EchoelmusicTests
-        - EchoelmusicUITests
     profile:
       config: Release
     analyze:
@@ -248,7 +569,70 @@ schemes:
     archive:
       config: Release
 
-  # Screenshot capture scheme (for fastlane)
+  # macOS Development
+  Echoelmusic-macOS:
+    build:
+      targets:
+        Echoelmusic-macOS: all
+        EchoelmusicAUv3-macOS: all
+        EchoelmusicTests-macOS: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - EchoelmusicTests-macOS
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  # watchOS Development
+  Echoelmusic-watchOS:
+    build:
+      targets:
+        Echoelmusic-watchOS: all
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  # tvOS Development
+  Echoelmusic-tvOS:
+    build:
+      targets:
+        Echoelmusic-tvOS: all
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  # visionOS Development
+  Echoelmusic-visionOS:
+    build:
+      targets:
+        Echoelmusic-visionOS: all
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  # Screenshot Capture
   EchoelmusicScreenshots:
     build:
       targets:
@@ -265,3 +649,17 @@ schemes:
         - name: EchoelmusicUITests
           parallelizable: false
           randomExecutionOrder: false
+
+  # All Platforms Release (for CI)
+  Echoelmusic-AllPlatforms:
+    build:
+      targets:
+        Echoelmusic: [archive]
+        EchoelmusicAUv3-iOS: [archive]
+        Echoelmusic-macOS: [archive]
+        EchoelmusicAUv3-macOS: [archive]
+        Echoelmusic-watchOS: [archive]
+        Echoelmusic-tvOS: [archive]
+        Echoelmusic-visionOS: [archive]
+    archive:
+      config: Release
