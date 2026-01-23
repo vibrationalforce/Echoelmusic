@@ -98,7 +98,12 @@ jobs:
 
       - name: "Install XcodeGen"
         run: |
-          brew install xcodegen || true
+          if ! command -v xcodegen &> /dev/null; then
+            echo "Installing XcodeGen via Homebrew..."
+            brew install xcodegen
+          else
+            echo "XcodeGen already installed"
+          fi
           xcodegen --version
 
       - name: "Cache Swift Packages"
