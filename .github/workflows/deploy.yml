@@ -26,6 +26,7 @@ on:
 env:
   VERSION: '1.1.0'
   XCODE_VERSION: '15.4'
+  XCODEGEN_VERSION: '2.38.0'
 
 # =============================================================================
 # SECRETS REQUIRED:
@@ -113,9 +114,14 @@ jobs:
 
       - name: Setup XcodeGen
         uses: ./.github/actions/setup-xcodegen
+        with:
+          version: ${{ env.XCODEGEN_VERSION }}
 
       - name: Generate Xcode Project
-        run: xcodegen generate
+        run: |
+          # Set placeholder Team ID (actual team set via xcargs)
+          sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+          xcodegen generate --spec project.yml
 
       - name: Resolve Dependencies
         run: swift package resolve || true
@@ -249,9 +255,14 @@ jobs:
 
       - name: Setup XcodeGen
         uses: ./.github/actions/setup-xcodegen
+        with:
+          version: ${{ env.XCODEGEN_VERSION }}
 
       - name: Generate Xcode Project
-        run: xcodegen generate
+        run: |
+          # Set placeholder Team ID (actual team set via xcargs)
+          sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+          xcodegen generate --spec project.yml
 
       - name: Resolve Dependencies
         run: swift package resolve || true

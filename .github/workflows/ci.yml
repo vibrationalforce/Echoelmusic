@@ -22,6 +22,7 @@ on:
 
 env:
   XCODE_VERSION: '15.4'
+  XCODEGEN_VERSION: '2.38.0'
 
 jobs:
   # Job 1: Code Quality & Linting
@@ -109,9 +110,14 @@ jobs:
 
     - name: Setup XcodeGen
       uses: ./.github/actions/setup-xcodegen
+      with:
+        version: ${{ env.XCODEGEN_VERSION }}
 
     - name: Generate Xcode Project
-      run: xcodegen generate
+      run: |
+        # Set placeholder Team ID for simulator build (no actual signing needed)
+        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+        xcodegen generate --spec project.yml
 
     - name: Resolve Swift Package Dependencies
       run: |
@@ -198,9 +204,14 @@ jobs:
 
     - name: Setup XcodeGen
       uses: ./.github/actions/setup-xcodegen
+      with:
+        version: ${{ env.XCODEGEN_VERSION }}
 
     - name: Generate Xcode Project
-      run: xcodegen generate
+      run: |
+        # Set placeholder Team ID for simulator build (no actual signing needed)
+        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+        xcodegen generate --spec project.yml
 
     - name: Build for Testing (macOS)
       run: |
@@ -242,9 +253,14 @@ jobs:
 
     - name: Setup XcodeGen
       uses: ./.github/actions/setup-xcodegen
+      with:
+        version: ${{ env.XCODEGEN_VERSION }}
 
     - name: Generate Xcode Project
-      run: xcodegen generate
+      run: |
+        # Set placeholder Team ID for simulator build (no actual signing needed)
+        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+        xcodegen generate --spec project.yml
 
     - name: Run Performance Tests
       run: |
@@ -318,9 +334,14 @@ jobs:
 
     - name: Setup XcodeGen
       uses: ./.github/actions/setup-xcodegen
+      with:
+        version: ${{ env.XCODEGEN_VERSION }}
 
     - name: Generate Xcode Project
-      run: xcodegen generate
+      run: |
+        # Set placeholder Team ID for archive build (actual team set via xcargs)
+        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+        xcodegen generate --spec project.yml
 
     - name: Build Release Archive
       run: |
