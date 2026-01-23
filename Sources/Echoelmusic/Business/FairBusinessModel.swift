@@ -1,16 +1,15 @@
 import Foundation
-import StoreKit
 import Combine
 
 /// Fair Business Model - Transparent, Ethical, No Dark Patterns
 /// Principles: Honesty, user respect, sustainable pricing, no manipulation
 ///
-/// ONE-TIME PURCHASE MODEL ($29.99):
-/// ✓ Buy once, own forever
-/// ✓ All features included
-/// ✓ Lifetime updates
-/// ✓ Family Sharing (up to 6 members)
-/// ✓ No subscriptions, no recurring fees
+/// FREE APP - ALL FEATURES INCLUDED:
+/// ✓ Completely free to use
+/// ✓ All features unlocked
+/// ✓ No in-app purchases
+/// ✓ No subscriptions
+/// ✓ No ads
 ///
 /// Anti-Dark Pattern Commitments:
 /// ✓ No fake urgency ("Only 2 left!")
@@ -18,28 +17,26 @@ import Combine
 /// ✓ No subscription traps
 /// ✓ Export your data anytime for free
 /// ✓ No artificial feature limitations
-/// ✓ Accessibility discounts available
 /// ✓ Open source core (coming soon)
 @MainActor
 class FairBusinessModel: ObservableObject {
 
     // MARK: - Published State
 
-    @Published var isFullVersionPurchased: Bool = false
+    /// Always true - app is completely free with all features
+    @Published var isFullVersionPurchased: Bool = true
 
-    // MARK: - Pricing Model (One-Time Purchase)
+    // MARK: - App Info (Free)
 
-    /// Echoelmusic uses a simple one-time purchase model
-    struct PricingInfo {
-        static let price: Decimal = 29.99
+    /// Echoelmusic is completely free
+    struct AppInfo {
+        static let price: Decimal = 0
         static let currency = "USD"
-        static let displayPrice = "$29.99"
-        static let productID = "com.echoelmusic.app.universal"
+        static let displayPrice = "Free"
 
         static let description = """
-        Buy once, own forever.
-        All features included. Lifetime updates.
-        Family Sharing for up to 6 members.
+        Completely free to use.
+        All features included. No ads. No IAP.
         """
 
         static let features: [Feature] = [
@@ -78,8 +75,7 @@ class FairBusinessModel: ObservableObject {
 
             // Support & Updates
             Feature(name: "Lifetime Updates", included: true),
-            Feature(name: "Priority Email Support", included: true),
-            Feature(name: "Family Sharing (6 members)", included: true)
+            Feature(name: "Priority Email Support", included: true)
         ]
 
         struct Feature {
@@ -88,156 +84,56 @@ class FairBusinessModel: ObservableObject {
         }
     }
 
-    // MARK: - Purchase Status
+    // MARK: - Access Status
 
-    enum PurchaseStatus {
-        case notPurchased
-        case purchased
-        case familyShared
+    enum AccessStatus {
+        case fullAccess
 
         var hasFullAccess: Bool {
-            switch self {
-            case .purchased, .familyShared: return true
-            case .notPurchased: return false
-            }
+            return true
         }
     }
 
-    @Published var purchaseStatus: PurchaseStatus = .notPurchased
-
-    // MARK: - Discounts (For Accessibility)
-
-    enum Discount: String {
-        case accessibility = "Accessibility (Free)"
-
-        var discountPercentage: Decimal {
-            switch self {
-            case .accessibility: return 1.00  // 100% off = free
-            }
-        }
-
-        var description: String {
-            switch self {
-            case .accessibility:
-                return "Free for users with disabilities. No questions asked. Contact us."
-            }
-        }
-    }
+    @Published var accessStatus: AccessStatus = .fullAccess
 
     // MARK: - Ethical Commitments
 
     struct EthicalCommitments {
         static let commitments: [String] = [
-            "✓ Buy Once, Own Forever - No subscriptions, no recurring fees",
+            "✓ Completely Free - No cost to download or use",
             "✓ All Features Included - No artificial limitations",
-            "✓ Lifetime Updates - All future features included",
-            "✓ Family Sharing - Up to 6 family members",
+            "✓ No In-App Purchases - Everything is free",
+            "✓ No Subscriptions - No recurring fees ever",
+            "✓ No Ads - You are not the product",
             "✓ No Dark Patterns - We respect your intelligence",
-            "✓ No Hidden Costs - $29.99 is all you pay",
             "✓ Free Data Export - Your data is yours, export anytime",
-            "✓ Accessibility Commitment - Free for users with disabilities",
-            "✓ Transparent Pricing - Simple and fair",
+            "✓ Accessibility First - WCAG AAA compliant",
             "✓ Open Source Core - Coming 2026",
-            "✓ Sustainable Business - Fair pricing for long-term viability",
-            "✓ No Ads, Ever - You're the customer, not the product"
+            "✓ Privacy Focused - Your data stays on your device"
         ]
     }
 
     // MARK: - Initialization
 
     init() {
-        loadPurchaseStatus()
         log.business("✅ Fair Business Model: Initialized")
-        log.business("💰 Pricing: \(PricingInfo.displayPrice) (one-time)")
+        log.business("💰 Pricing: Free (no in-app purchases)")
         log.business("🤝 Ethical commitments loaded")
     }
 
-    // MARK: - Load Purchase Status
+    // MARK: - App Summary
 
-    private func loadPurchaseStatus() {
-        isFullVersionPurchased = UserDefaults.standard.bool(forKey: "echoelmusic.fullVersionPurchased")
-
-        if isFullVersionPurchased {
-            purchaseStatus = .purchased
-        } else {
-            purchaseStatus = .notPurchased
-        }
-    }
-
-    // MARK: - Purchase Full Version
-
-    func purchaseFullVersion() async throws {
-        log.business("💳 Purchasing Echoelmusic Full Version...")
-
-        // In production, use StoreKitManager
-        // This is a placeholder for the actual StoreKit 2 integration
-        try await Task.sleep(nanoseconds: 1_000_000_000)  // 1 second simulation
-
-        isFullVersionPurchased = true
-        UserDefaults.standard.set(true, forKey: "echoelmusic.fullVersionPurchased")
-        purchaseStatus = .purchased
-
-        log.business("✅ Purchase complete! All features unlocked forever.")
-        log.business("👨‍👩‍👧‍👦 Family Sharing: Up to 6 family members can now use the app.")
-    }
-
-    // MARK: - Restore Purchases
-
-    func restorePurchases() async throws {
-        log.business("🔄 Restoring purchases...")
-
-        // In production, use StoreKit 2 to restore
-        try await Task.sleep(nanoseconds: 500_000_000)
-
-        // Check with StoreKit for existing purchases
-        if isFullVersionPurchased {
-            purchaseStatus = .purchased
-            log.business("✅ Purchase restored!")
-        } else {
-            log.business("ℹ️ No purchases to restore")
-        }
-    }
-
-    // MARK: - Apply Accessibility Discount
-
-    func applyAccessibilityDiscount() {
-        log.business("♿️ Accessibility discount applied")
-        isFullVersionPurchased = true
-        UserDefaults.standard.set(true, forKey: "echoelmusic.fullVersionPurchased")
-        purchaseStatus = .purchased
-        log.business("✅ Full version activated for free. Thank you for being part of our community.")
-    }
-
-    // MARK: - Pricing Summary
-
-    func getPricingSummary() -> String {
+    func getAppSummary() -> String {
         return """
-        💰 ECHOELMUSIC - SIMPLE, FAIR PRICING
+        💰 ECHOELMUSIC - COMPLETELY FREE
 
-        ONE-TIME PURCHASE: \(PricingInfo.displayPrice)
-
-        \(PricingInfo.description)
+        \(AppInfo.description)
 
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         WHAT'S INCLUDED:
 
-        \(PricingInfo.features.map { "✓ \($0.name)" }.joined(separator: "\n"))
-
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-        💡 VALUE COMPARISON:
-
-        Echoelmusic: $29.99 (one-time, forever)
-
-        Similar Apps (Subscriptions):
-        • $9.99-29.99/month
-        • $120-360/year
-        • $360-1,080 over 3 years
-
-        YOUR SAVINGS:
-        • First year: Save $90-330
-        • Over 3 years: Save $330-1,050
+        \(AppInfo.features.map { "✓ \($0.name)" }.joined(separator: "\n"))
 
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -249,20 +145,25 @@ class FairBusinessModel: ObservableObject {
 
         ♿️ ACCESSIBILITY:
 
-        Free for users with disabilities.
-        No verification required. No questions asked.
+        Full WCAG AAA compliance.
+        20+ accessibility profiles included.
         Contact: michaelterbuyken@gmail.com
 
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-        Purchase Status: \(purchaseStatus == .purchased ? "✅ Full Version" : "Not Purchased")
+        Status: ✅ All Features Unlocked
         """
     }
 
     // MARK: - Legacy Support
 
-    @available(*, deprecated, message: "Use getPricingSummary() instead")
+    @available(*, deprecated, message: "Use getAppSummary() instead")
+    func getPricingSummary() -> String {
+        return getAppSummary()
+    }
+
+    @available(*, deprecated, message: "Use getAppSummary() instead")
     func getPricingComparison() -> String {
-        return getPricingSummary()
+        return getAppSummary()
     }
 }

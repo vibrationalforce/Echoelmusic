@@ -114,27 +114,25 @@ public struct AppStoreMetadata {
 
     // MARK: - Pricing
 
-    /// Price tier for one-time purchase
-    /// Echoelmusic uses a Universal One-Time Purchase model:
-    /// - Buy once on any platform (iOS, macOS, visionOS, tvOS, watchOS)
-    /// - Own forever with lifetime updates
-    /// - Family Sharing supported (up to 6 family members)
-    /// - No subscriptions, no recurring fees
-    public static let priceTier = 0  // Managed via IAP (non-consumable)
+    /// Price tier - FREE
+    /// Echoelmusic is completely free:
+    /// - No in-app purchases
+    /// - No subscriptions
+    /// - All features included
+    /// - No ads
+    public static let priceTier = 0  // Free
 
-    /// One-time purchase price (USD)
-    public static let oneTimePurchasePrice = "$29.99"
-
-    /// Product identifier for one-time universal purchase
-    public static let oneTimePurchaseProductID = "com.echoelmusic.app.universal"
+    /// App price (USD)
+    public static let appPrice = "Free"
 
     /// Available territories (all countries)
     public static let availableTerritories: [String] = ["ALL"]
 
     /// Pricing model description
-    public static let pricingModel = PricingModel.oneTimePurchase
+    public static let pricingModel = PricingModel.free
 
     public enum PricingModel: String {
+        case free = "Free"
         case oneTimePurchase = "One-Time Purchase"
         case subscription = "Subscription"
         case freemium = "Freemium"
@@ -1381,53 +1379,19 @@ Full privacy policy: https://echoelmusic.com/privacy
     }
 }
 
-// MARK: - In-App Purchases (One-Time Universal Purchase)
+// MARK: - App Features (Free App - No In-App Purchases)
 
-public struct InAppPurchases {
+public struct AppFeatures {
 
-    // MARK: - One-Time Purchase Model
+    // MARK: - Free App Model
 
-    /// Echoelmusic uses a simple, fair one-time purchase model:
-    /// - Buy once, own forever
+    /// Echoelmusic is completely FREE:
+    /// - No in-app purchases
+    /// - No subscriptions
     /// - All features included
-    /// - Lifetime updates
-    /// - Family Sharing (up to 6 members)
-    /// - Universal purchase (works on iOS, macOS, visionOS, tvOS, watchOS)
+    /// - No ads
 
-    /// Product identifiers for one-time purchase
-    public static let productIDs = ProductIDs()
-
-    public struct ProductIDs {
-        // Universal one-time purchase (non-consumable)
-        public let universalPurchase = "com.echoelmusic.app.universal"
-
-        // Optional tip jar for supporters (consumable)
-        public let tipSmall = "com.echoelmusic.tip.small"      // $2.99
-        public let tipMedium = "com.echoelmusic.tip.medium"    // $9.99
-        public let tipLarge = "com.echoelmusic.tip.large"      // $24.99
-    }
-
-    /// Universal one-time purchase details
-    public static let universalPurchase = UniversalPurchase(
-        productID: "com.echoelmusic.app.universal",
-        displayName: "Echoelmusic Full Version",
-        price: "$29.99",
-        priceLocalized: [
-            "en-US": "$29.99",
-            "de-DE": "29,99 €",
-            "ja-JP": "¥4,400",
-            "zh-Hans": "¥218",
-            "ko-KR": "₩39,000",
-            "gb": "£24.99",
-            "au": "$44.99 AUD"
-        ],
-        features: allFeatures,
-        familySharingEnabled: true,
-        universalPurchase: true,  // Works on all Apple platforms
-        lifetimeUpdates: true
-    )
-
-    /// All features included in one-time purchase
+    /// All features included for free
     public static let allFeatures: [String] = [
         // Core Bio-Reactive
         "✅ Bio-reactive audio creation with HRV/heart rate",
@@ -1471,8 +1435,7 @@ public struct InAppPurchases {
 
         // Support & Updates
         "✅ Lifetime updates (all future features)",
-        "✅ Priority email support",
-        "✅ Family Sharing (up to 6 members)"
+        "✅ Priority email support"
     ]
 
     /// What's NOT included (to be transparent)
@@ -1482,51 +1445,32 @@ public struct InAppPurchases {
         "ℹ️ Cloud storage beyond iCloud (use your own iCloud)"
     ]
 
-    /// Pricing comparison to show value
-    public static let valueSummary = """
-    💰 ONE-TIME PURCHASE VALUE
+    /// App summary
+    public static let appSummary = """
+    💰 ECHOELMUSIC - COMPLETELY FREE
 
-    Echoelmusic: $29.99 (one-time, lifetime)
+    Echoelmusic is 100% free:
+    • No in-app purchases
+    • No subscriptions
+    • No ads
+    • All features included
 
-    VS. TYPICAL SUBSCRIPTION COSTS:
-    • Similar apps: $9.99-29.99/month
-    • Annual cost: $120-360/year
-    • 3-year cost: $360-1,080
-
-    YOUR SAVINGS:
-    • First year: Save $90-330
-    • Over 3 years: Save $330-1,050
-
-    WHAT YOU GET:
-    • All features unlocked
-    • Lifetime updates included
-    • Family Sharing (6 members = $5/person)
-    • No recurring charges ever
-    • Support independent development
-
-    🤝 ETHICAL PRICING:
+    🤝 ETHICAL COMMITMENTS:
     • No dark patterns
     • No artificial limits
-    • No subscription traps
-    • Fair price for fair value
+    • No paywalls
+    • Privacy focused
     """
+}
 
-    // MARK: - Data Structures
+// MARK: - Legacy In-App Purchases (Deprecated)
 
-    public struct UniversalPurchase {
-        public let productID: String
-        public let displayName: String
-        public let price: String
-        public let priceLocalized: [String: String]
-        public let features: [String]
-        public let familySharingEnabled: Bool
-        public let universalPurchase: Bool
-        public let lifetimeUpdates: Bool
-    }
+@available(*, deprecated, message: "Echoelmusic is now free - no IAP")
+public struct InAppPurchases {
+    @available(*, deprecated, message: "App is now free")
+    public static let subscriptions: [LegacySubscription] = []
 
-    // Legacy subscription struct (deprecated)
-    @available(*, deprecated, message: "Use UniversalPurchase instead - subscriptions removed")
-    public struct Subscription {
+    public struct LegacySubscription {
         public let name: String
         public let productID: String?
         public let price: String
@@ -1593,7 +1537,7 @@ extension AppStoreMetadata {
         log.info("  Primary Category: \(primaryCategory.rawValue)", category: .system)
         log.info("  Secondary Category: \(secondaryCategory.rawValue)", category: .system)
         log.info("  Age Rating: \(ageRating.rawValue)", category: .system)
-        log.info("  Price Tier: \(priceTier) (Free with IAP)", category: .system)
+        log.info("  Price Tier: \(priceTier) (Free)", category: .system)
         log.info("  Languages: \(supportedLanguages.count)", category: .system)
 
         log.info("URLS:", category: .system)
@@ -1601,10 +1545,7 @@ extension AppStoreMetadata {
         log.info("  Support: \(supportURL)", category: .system)
         log.info("  Privacy: \(privacyPolicyURL)", category: .system)
 
-        log.info("SUBSCRIPTIONS:", category: .system)
-        for sub in InAppPurchases.subscriptions {
-            log.info("  \(sub.name): \(sub.price)", category: .system)
-        }
+        log.info("PRICING: Free (no in-app purchases)", category: .system)
 
         log.info("SCREENSHOTS REQUIRED:", category: .system)
         for spec in AppStoreScreenshots.specifications {
