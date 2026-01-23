@@ -12,7 +12,7 @@ inputs:
   version:
     description: 'XcodeGen version to install'
     required: false
-    default: '2.38.0'
+    default: '2.42.0'
 
 runs:
   using: 'composite'
@@ -21,19 +21,56 @@ runs:
       id: cache-xcodegen
       uses: actions/cache@v4
       with:
-        path: /usr/local/bin/xcodegen
-        key: xcodegen-${{ runner.os }}-${{ inputs.version }}
+        path: ~/xcodegen-bin
+        key: xcodegen-${{ runner.os }}-${{ inputs.version }}-v2
 
     - name: Install XcodeGen
       if: steps.cache-xcodegen.outputs.cache-hit != 'true'
       shell: bash
       run: |
+        set -e
         echo "Installing XcodeGen ${{ inputs.version }}..."
-        curl -sL "https://github.com/yonaskolb/XcodeGen/releases/download/${{ inputs.version }}/xcodegen.zip" -o /tmp/xcodegen.zip
+
+        # Create cache directory
+        mkdir -p ~/xcodegen-bin
+
+        # Download with progress and error handling
+        DOWNLOAD_URL="https://github.com/yonaskolb/XcodeGen/releases/download/${{ inputs.version }}/xcodegen.zip"
+        echo "Downloading from: $DOWNLOAD_URL"
+
+        if ! curl -fL "$DOWNLOAD_URL" -o /tmp/xcodegen.zip; then
+          echo "ERROR: Failed to download XcodeGen ${{ inputs.version }}"
+          exit 1
+        fi
+
+        # Verify download
+        if [ ! -s /tmp/xcodegen.zip ]; then
+          echo "ERROR: Downloaded file is empty"
+          exit 1
+        fi
+
+        # Extract
+        echo "Extracting..."
         unzip -o /tmp/xcodegen.zip -d /tmp
-        sudo mv /tmp/xcodegen/bin/xcodegen /usr/local/bin/
+
+        # Move to cache location
+        cp /tmp/xcodegen/bin/xcodegen ~/xcodegen-bin/
+        chmod +x ~/xcodegen-bin/xcodegen
+
+        # Cleanup
         rm -rf /tmp/xcodegen /tmp/xcodegen.zip
+
+        echo "XcodeGen installed to ~/xcodegen-bin/"
+
+    - name: Add to PATH
+      shell: bash
+      run: |
+        echo "$HOME/xcodegen-bin" >> $GITHUB_PATH
+        echo "Added ~/xcodegen-bin to PATH"
 
     - name: Verify XcodeGen
       shell: bash
-      run: xcodegen --version
+      run: |
+        echo "Verifying XcodeGen installation..."
+        which xcodegen || echo "xcodegen not in PATH, checking cache..."
+        ~/xcodegen-bin/xcodegen --version
