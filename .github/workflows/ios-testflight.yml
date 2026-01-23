@@ -1,18 +1,32 @@
 # =============================================================================
-# ECHOELMUSIC - iOS TESTFLIGHT (Primary Deployment Workflow)
+# ECHOELMUSIC - iOS TESTFLIGHT DEPLOYMENT
 # =============================================================================
-# PR Build Check + Manual TestFlight Deploy
-# Version: 1.2.1 - Phase 10000 ULTIMATE MODE (Re-enabled)
+# Lambda Loop A++++ Optimized Workflow
+# Version: 2.0.0 - Phase 10000 ULTIMATE MODE
+#
+# ARCHITECTURE:
+# - PR Events -> pr-check job (simulator build, no secrets)
+# - Manual Dispatch -> deploy job (TestFlight upload, requires secrets)
+#
+# This design ensures clean job separation and reliable condition evaluation.
 # =============================================================================
 
-name: "📱 iOS TestFlight"
+name: "iOS TestFlight"
 
 on:
-  # Trigger on all pull requests for build validation
+  # PR build validation (no secrets required)
   pull_request:
+    branches: [main, develop]
     types: [opened, synchronize, reopened]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'project.yml'
+      - 'fastlane/**'
+      - '.github/workflows/ios-testflight.yml'
 
-  # Manual trigger for TestFlight deployment
+  # Manual TestFlight deployment (secrets required)
   workflow_dispatch:
     inputs:
       build_type:
@@ -29,8 +43,9 @@ on:
         default: true
         type: boolean
 
+# Cancel in-progress runs for the same PR/ref
 concurrency:
-  group: ios-${{ github.event.pull_request.number || github.ref }}
+  group: ios-build-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -38,187 +53,308 @@ env:
   XCODEGEN_VERSION: '2.38.0'
 
 jobs:
-  # ==========================================================================
-  # PR Build Check (Runs on ALL PRs - No Secrets Required)
-  # ==========================================================================
-  pr-build-check:
-    name: "🔍 PR Build Check"
+  # ===========================================================================
+  # JOB 1: PR Build Check
+  # ===========================================================================
+  # Runs ONLY on pull_request events. Validates the build on simulator.
+  # No secrets required - safe for external contributors.
+  # ===========================================================================
+  pr-check:
+    name: "PR Build Check"
     runs-on: macos-14
-    # Run ONLY on pull requests - use simple condition without ${{ }} wrapper
-    if: github.event_name == 'pull_request'
+    # CRITICAL: Use explicit expression syntax for reliable evaluation
+    if: ${{ github.event_name == 'pull_request' }}
+    timeout-minutes: 30
 
     steps:
-      - name: "📥 Checkout"
+      - name: "Checkout"
         uses: actions/checkout@v4
 
-      - name: "ℹ️ Show PR Info"
+      - name: "Event Info"
         run: |
-          echo "=== Workflow Debug Info ==="
-          echo "Event Name: ${{ github.event_name }}"
-          echo "PR Number: ${{ github.event.pull_request.number }}"
-          echo "Base: ${{ github.base_ref }}"
-          echo "Head: ${{ github.head_ref }}"
-          echo "Ref: ${{ github.ref }}"
+          echo "====================================="
+          echo "  iOS TestFlight - PR Build Check"
+          echo "====================================="
+          echo "Event: ${{ github.event_name }}"
+          echo "PR: #${{ github.event.pull_request.number }}"
+          echo "Branch: ${{ github.head_ref }} -> ${{ github.base_ref }}"
           echo "SHA: ${{ github.sha }}"
-          echo "=========================="
+          echo "====================================="
 
-      - name: "🔧 Setup Xcode ${{ env.XCODE_VERSION }}"
+      - name: "Setup Xcode ${{ env.XCODE_VERSION }}"
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
-      - name: "📦 Install XcodeGen"
+      - name: "Install XcodeGen"
         run: |
-          curl -sL https://github.com/yonaskolb/XcodeGen/releases/download/${{ env.XCODEGEN_VERSION }}/xcodegen.zip -o xcodegen.zip
+          echo "Installing XcodeGen ${{ env.XCODEGEN_VERSION }}..."
+          curl -sL "https://github.com/yonaskolb/XcodeGen/releases/download/${{ env.XCODEGEN_VERSION }}/xcodegen.zip" -o xcodegen.zip
           unzip -o xcodegen.zip
           sudo mv xcodegen/bin/xcodegen /usr/local/bin/
           xcodegen --version
 
-      - name: "💾 Cache Swift Packages"
+      - name: "Cache Swift Packages"
         uses: actions/cache@v4
         with:
           path: |
             ~/.swiftpm
             .build
-          key: ${{ runner.os }}-swift-${{ hashFiles('Package.swift') }}
+            build/DerivedData
+          key: ${{ runner.os }}-swift-${{ hashFiles('Package.swift') }}-${{ hashFiles('project.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-swift-${{ hashFiles('Package.swift') }}-
+            ${{ runner.os }}-swift-
 
-      - name: "⚙️ Generate Xcode Project"
+      - name: "Generate Xcode Project"
         run: |
+          # Set placeholder Team ID for simulator build
           sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
           xcodegen generate --spec project.yml
-          ls -la *.xcodeproj || echo "No project generated"
+          echo "Generated project files:"
+          ls -la *.xcodeproj 2>/dev/null || echo "Warning: No .xcodeproj found"
 
-      - name: "🔨 Build iOS (Simulator)"
+      - name: "Build for Simulator"
         run: |
+          set -o pipefail
+
+          echo "Building Echoelmusic for iOS Simulator..."
+
           xcodebuild build \
             -project Echoelmusic.xcodeproj \
             -scheme Echoelmusic \
             -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
             -configuration Debug \
+            -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee build.log | tail -100
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            2>&1 | tee build.log
 
-          BUILD_RESULT=${PIPESTATUS[0]}
+          BUILD_RESULT=$?
+
           if [ $BUILD_RESULT -eq 0 ]; then
-            echo "✅ Build successful!"
+            echo ""
+            echo "========================================"
+            echo "  BUILD SUCCESSFUL"
+            echo "========================================"
           else
-            echo "❌ Build failed!"
-            echo "=== Errors ==="
-            grep -E "error:" build.log | head -30
+            echo ""
+            echo "========================================"
+            echo "  BUILD FAILED"
+            echo "========================================"
+            echo ""
+            echo "=== Build Errors ==="
+            grep -E "error:|fatal:" build.log | head -20 || true
             exit 1
           fi
 
-      - name: "📋 Upload Build Log"
+      - name: "Build Summary"
+        if: always()
+        run: |
+          if [ -f build.log ]; then
+            echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            WARNINGS=$(grep -c "warning:" build.log 2>/dev/null || echo "0")
+            ERRORS=$(grep -c "error:" build.log 2>/dev/null || echo "0")
+
+            if [ "$ERRORS" -eq "0" ]; then
+              echo "- **Status:** Success" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **Status:** Failed" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "- **Warnings:** $WARNINGS" >> $GITHUB_STEP_SUMMARY
+            echo "- **Errors:** $ERRORS" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: "Upload Build Log"
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: pr-build-log
+          name: pr-build-log-${{ github.event.pull_request.number }}
           path: build.log
-          retention-days: 3
+          retention-days: 7
 
-  # ==========================================================================
-  # TestFlight Deploy (Manual Only - Never runs on PRs)
-  # ==========================================================================
-  ios-testflight:
-    name: "📱 Build & Deploy iOS"
+  # ===========================================================================
+  # JOB 2: TestFlight Deployment
+  # ===========================================================================
+  # Runs ONLY on workflow_dispatch (manual trigger).
+  # Requires all Apple signing secrets to be configured.
+  # ===========================================================================
+  deploy:
+    name: "TestFlight Deploy"
     runs-on: macos-14
-    # Run ONLY on manual workflow_dispatch - use simple condition without ${{ }} wrapper
-    if: github.event_name == 'workflow_dispatch'
+    # CRITICAL: Use explicit expression syntax for reliable evaluation
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    timeout-minutes: 60
 
     steps:
-      - name: "📥 Checkout"
+      - name: "Checkout"
         uses: actions/checkout@v4
 
-      - name: "ℹ️ Show Deploy Info"
+      - name: "Deployment Info"
         run: |
-          echo "=== Deployment Info ==="
+          echo "====================================="
+          echo "  iOS TestFlight Deployment"
+          echo "====================================="
           echo "Event: ${{ github.event_name }}"
           echo "Build Type: ${{ github.event.inputs.build_type }}"
+          echo "Auto-increment: ${{ github.event.inputs.increment_build }}"
           echo "Ref: ${{ github.ref }}"
-          echo "========================"
+          echo "Run Number: ${{ github.run_number }}"
+          echo "====================================="
 
-      - name: "🔐 Verify Secrets"
+      - name: "Verify Secrets"
         run: |
-          MISSING=false
-          [ -z "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ] && echo "❌ APP_STORE_CONNECT_KEY_ID" && MISSING=true
-          [ -z "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ] && echo "❌ APP_STORE_CONNECT_ISSUER_ID" && MISSING=true
-          [ -z "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" ] && echo "❌ APP_STORE_CONNECT_PRIVATE_KEY" && MISSING=true
-          [ -z "${{ secrets.APPLE_TEAM_ID }}" ] && echo "❌ APPLE_TEAM_ID" && MISSING=true
-          [ "$MISSING" = true ] && exit 1
-          echo "✅ All secrets OK"
+          echo "Checking required secrets..."
+          MISSING=0
 
-      - name: "🔧 Setup Xcode ${{ env.XCODE_VERSION }}"
+          if [ -z "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ]; then
+            echo "ERROR: APP_STORE_CONNECT_KEY_ID not set"
+            MISSING=1
+          else
+            echo "OK: APP_STORE_CONNECT_KEY_ID"
+          fi
+
+          if [ -z "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ]; then
+            echo "ERROR: APP_STORE_CONNECT_ISSUER_ID not set"
+            MISSING=1
+          else
+            echo "OK: APP_STORE_CONNECT_ISSUER_ID"
+          fi
+
+          if [ -z "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" ]; then
+            echo "ERROR: APP_STORE_CONNECT_PRIVATE_KEY not set"
+            MISSING=1
+          else
+            echo "OK: APP_STORE_CONNECT_PRIVATE_KEY"
+          fi
+
+          if [ -z "${{ secrets.APPLE_TEAM_ID }}" ]; then
+            echo "ERROR: APPLE_TEAM_ID not set"
+            MISSING=1
+          else
+            echo "OK: APPLE_TEAM_ID"
+          fi
+
+          if [ $MISSING -eq 1 ]; then
+            echo ""
+            echo "Missing required secrets. Please configure them in:"
+            echo "Settings -> Secrets and variables -> Actions"
+            exit 1
+          fi
+
+          echo ""
+          echo "All secrets verified!"
+
+      - name: "Setup Xcode ${{ env.XCODE_VERSION }}"
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
-      - name: "📦 Install Tools"
+      - name: "Install Tools"
         run: |
-          curl -sL https://github.com/yonaskolb/XcodeGen/releases/download/${{ env.XCODEGEN_VERSION }}/xcodegen.zip -o xcodegen.zip
+          # Install XcodeGen
+          echo "Installing XcodeGen..."
+          curl -sL "https://github.com/yonaskolb/XcodeGen/releases/download/${{ env.XCODEGEN_VERSION }}/xcodegen.zip" -o xcodegen.zip
           unzip -o xcodegen.zip
           sudo mv xcodegen/bin/xcodegen /usr/local/bin/
-          gem install fastlane -N
 
-      - name: "🔢 Set Build Number"
+          # Install Fastlane
+          echo "Installing Fastlane..."
+          gem install fastlane -N --no-document
+
+          echo "Tool versions:"
+          xcodegen --version
+          fastlane --version
+
+      - name: "Set Build Number"
+        id: build_number
         run: |
           BUILD_NUMBER=${{ github.run_number }}
           echo "BUILD_NUMBER=${BUILD_NUMBER}" >> $GITHUB_ENV
-          echo "📦 Build number: ${BUILD_NUMBER}"
+          echo "build_number=${BUILD_NUMBER}" >> $GITHUB_OUTPUT
+          echo "Build number: ${BUILD_NUMBER}"
 
-      - name: "⚙️ Generate Project"
+      - name: "Generate Xcode Project"
         run: |
-          # Set Team ID
+          # Set real Team ID from secrets
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          # Set build number from GitHub Actions
-          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
-          xcodegen generate --spec project.yml
-          echo "✅ Project generated with build number ${{ env.BUILD_NUMBER }}"
 
-      - name: "🔑 Setup Keychain"
+          # Set build number
+          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
+
+          # Generate project
+          xcodegen generate --spec project.yml
+
+          echo "Project generated with:"
+          echo "- Team ID: ${{ secrets.APPLE_TEAM_ID }}"
+          echo "- Build Number: ${{ env.BUILD_NUMBER }}"
+
+      - name: "Setup Keychain"
         run: |
-          KEYCHAIN_NAME="ci_signing.keychain-db"
-          KEYCHAIN_PASSWORD="ci_$RANDOM"
+          KEYCHAIN_NAME="ci_signing_${{ github.run_id }}.keychain-db"
+          KEYCHAIN_PASSWORD="ci_password_${{ github.run_id }}"
+
+          # Create and configure keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+
+          # Add to search list and make default
           security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
           security default-keychain -s "$KEYCHAIN_NAME"
+
+          # Export for fastlane
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
-      - name: "🔨 Build & Upload"
+          echo "Keychain configured: $KEYCHAIN_NAME"
+
+      - name: "Build and Upload"
+        id: fastlane
         run: |
           mkdir -p build_logs
 
-          # Retry logic for network issues
           MAX_RETRIES=3
           RETRY_COUNT=0
+          SUCCESS=false
 
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            echo "🚀 Attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES"
-
-            if [ "${{ github.event.inputs.build_type }}" == "testflight" ]; then
-              if fastlane ios beta 2>&1 | tee build_logs/fastlane.log; then
-                echo "✅ Build and upload successful!"
-                exit 0
-              fi
-            else
-              if fastlane ios build_only 2>&1 | tee build_logs/fastlane.log; then
-                echo "✅ Build successful!"
-                exit 0
-              fi
-            fi
-
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$SUCCESS" = "false" ]; do
             RETRY_COUNT=$((RETRY_COUNT + 1))
-            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-              WAIT_TIME=$((RETRY_COUNT * 30))
-              echo "⏳ Retrying in ${WAIT_TIME}s..."
-              sleep $WAIT_TIME
+            echo ""
+            echo "====================================="
+            echo "  Attempt $RETRY_COUNT of $MAX_RETRIES"
+            echo "====================================="
+
+            LANE="${{ github.event.inputs.build_type == 'testflight' && 'beta' || 'build_only' }}"
+            echo "Running fastlane ios $LANE..."
+
+            if fastlane ios $LANE 2>&1 | tee build_logs/fastlane_attempt_${RETRY_COUNT}.log; then
+              SUCCESS=true
+              echo ""
+              echo "====================================="
+              echo "  SUCCESS!"
+              echo "====================================="
+            else
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                WAIT_TIME=$((RETRY_COUNT * 30))
+                echo "Attempt failed. Waiting ${WAIT_TIME}s before retry..."
+                sleep $WAIT_TIME
+              fi
             fi
           done
 
-          echo "❌ Failed after $MAX_RETRIES attempts"
-          exit 1
+          # Copy last attempt as main log
+          cp "build_logs/fastlane_attempt_${RETRY_COUNT}.log" build_logs/fastlane.log 2>/dev/null || true
+
+          if [ "$SUCCESS" = "false" ]; then
+            echo ""
+            echo "====================================="
+            echo "  FAILED after $MAX_RETRIES attempts"
+            echo "====================================="
+            exit 1
+          fi
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -228,28 +364,44 @@ jobs:
           KEYCHAIN_PASSWORD: ${{ env.KEYCHAIN_PASSWORD }}
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 180
 
-      - name: "📋 Show Errors"
+      - name: "Show Errors"
         if: failure()
         run: |
-          echo "=== Build Errors ==="
-          grep -E "error:|fatal|Error:|FAILED" build_logs/fastlane.log | head -50 || true
-          echo ""
-          echo "=== Signing Issues ==="
-          grep -E "signing|certificate|provision|codesign" build_logs/fastlane.log | head -20 || true
+          echo "=== Fastlane Errors ==="
+          if [ -f build_logs/fastlane.log ]; then
+            grep -E "error:|Error:|FAILED|fatal" build_logs/fastlane.log | head -30 || true
+            echo ""
+            echo "=== Signing Issues ==="
+            grep -E "signing|certificate|provision|codesign" build_logs/fastlane.log | head -20 || true
+          else
+            echo "No fastlane log found"
+          fi
 
-      - name: "📦 Upload Logs"
+      - name: "Cleanup Keychain"
+        if: always()
+        run: |
+          if [ -n "${{ env.KEYCHAIN_PATH }}" ]; then
+            security delete-keychain "${{ env.KEYCHAIN_PATH }}" 2>/dev/null || true
+          fi
+
+      - name: "Upload Build Logs"
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs-${{ github.run_number }}
+          name: testflight-logs-${{ github.run_number }}
           path: build_logs/
           retention-days: 14
 
-      - name: "✅ Success Summary"
+      - name: "Success Summary"
         if: success()
         run: |
-          echo "## 🎉 TestFlight Build Successful" >> $GITHUB_STEP_SUMMARY
+          echo "## TestFlight Build Successful" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build Number:** ${{ env.BUILD_NUMBER }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build Type:** ${{ github.event.inputs.build_type }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Number | ${{ env.BUILD_NUMBER }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Type | ${{ github.event.inputs.build_type }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | @${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The build has been uploaded to App Store Connect." >> $GITHUB_STEP_SUMMARY
+          echo "Check TestFlight for processing status." >> $GITHUB_STEP_SUMMARY
