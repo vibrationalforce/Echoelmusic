@@ -334,7 +334,7 @@ class HealthKitManager: ObservableObject {
         }
         #endif
 
-        rrIntervalBuffer.removeAll()
+        rrIntervalBuffer.clear()
 
         log.biofeedback("⏹️ HealthKit monitoring stopped")
     }
