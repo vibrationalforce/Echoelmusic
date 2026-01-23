@@ -1,8 +1,66 @@
-# Bundle Identifier
-app_identifier "com.echoelmusic.app"
+# =============================================================================
+# ECHOELMUSIC - FASTLANE APPFILE
+# =============================================================================
+# Multi-Platform Configuration for TestFlight Deployment
+# Version: 3.0.0 - Phase 10000 ULTIMATE MODE
+# =============================================================================
 
 # Apple Developer Team ID (from environment)
 team_id ENV["APPLE_TEAM_ID"]
 
 # App Store Connect Team ID (same as team_id for individual accounts)
 itc_team_id ENV["APPLE_TEAM_ID"]
+
+# =============================================================================
+# Bundle Identifiers by Platform
+# =============================================================================
+
+# iOS App (iPhone + iPad)
+app_identifier "com.echoelmusic.app"
+
+# iOS AUv3 Audio Unit Extension
+for_lane :beta do
+  app_identifier "com.echoelmusic.app"
+end
+
+# macOS App
+for_platform :mac do
+  app_identifier "com.echoelmusic.mac"
+end
+
+# watchOS App
+for_lane :beta_watchos do
+  app_identifier "com.echoelmusic.app.watchkitapp"
+end
+
+# tvOS App
+for_lane :beta_tvos do
+  app_identifier "com.echoelmusic.tv"
+end
+
+# visionOS App
+for_lane :beta_visionos do
+  app_identifier "com.echoelmusic.vision"
+end
+
+# =============================================================================
+# All Bundle Identifiers (for reference)
+# =============================================================================
+#
+# iOS Family:
+#   - com.echoelmusic.app              (iOS main app)
+#   - com.echoelmusic.app.auv3         (iOS AUv3 extension)
+#   - com.echoelmusic.app.watchkitapp  (watchOS app)
+#
+# macOS Family:
+#   - com.echoelmusic.mac              (macOS main app)
+#   - com.echoelmusic.mac.auv3         (macOS AUv3 extension)
+#
+# Standalone:
+#   - com.echoelmusic.tv               (tvOS app)
+#   - com.echoelmusic.vision           (visionOS app)
+#
+# App Groups:
+#   - group.com.echoelmusic.shared     (shared data between apps)
+#
+# =============================================================================

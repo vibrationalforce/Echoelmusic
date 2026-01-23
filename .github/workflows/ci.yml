@@ -217,7 +217,7 @@ jobs:
       run: |
         set -o pipefail
         xcodebuild build-for-testing \
-          -scheme Echoelmusic \
+          -scheme Echoelmusic-macOS \
           -destination 'platform=macOS' \
           -configuration Debug \
           -enableCodeCoverage YES \
@@ -228,7 +228,7 @@ jobs:
       run: |
         set -o pipefail
         xcodebuild test-without-building \
-          -scheme Echoelmusic \
+          -scheme Echoelmusic-macOS \
           -destination 'platform=macOS' \
           -configuration Debug \
           -enableCodeCoverage YES \

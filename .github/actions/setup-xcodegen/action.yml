@@ -49,6 +49,14 @@ runs:
           exit 1
         fi
 
+        # Verify ZIP integrity before extracting
+        echo "Verifying ZIP integrity..."
+        if ! unzip -t /tmp/xcodegen.zip > /dev/null 2>&1; then
+          echo "ERROR: ZIP file is corrupted"
+          rm -f /tmp/xcodegen.zip
+          exit 1
+        fi
+
         # Extract
         echo "Extracting..."
         unzip -o /tmp/xcodegen.zip -d /tmp

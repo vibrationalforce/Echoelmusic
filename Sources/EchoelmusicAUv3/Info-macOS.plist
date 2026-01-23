@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Echoelmusic 808</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>XPC!</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<key>AudioComponents</key>
+			<array>
+				<dict>
+					<key>description</key>
+					<string>Echoelmusic TR-808 Bass Synth with Pitch Glide</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicAudioUnitFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>name</key>
+					<string>Echoelmusic: 808 Bass</string>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>subtype</key>
+					<string>E808</string>
+					<key>tags</key>
+					<array>
+						<string>Synth</string>
+						<string>Bass</string>
+						<string>808</string>
+					</array>
+					<key>type</key>
+					<string>aumu</string>
+					<key>version</key>
+					<integer>1</integer>
+				</dict>
+				<dict>
+					<key>description</key>
+					<string>Echoelmusic Bio-Reactive AI Music Generator</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicAudioUnitFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>name</key>
+					<string>Echoelmusic: BioComposer</string>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>subtype</key>
+					<string>Ebio</string>
+					<key>tags</key>
+					<array>
+						<string>Synth</string>
+						<string>Generator</string>
+						<string>AI</string>
+					</array>
+					<key>type</key>
+					<string>aumu</string>
+					<key>version</key>
+					<integer>1</integer>
+				</dict>
+				<dict>
+					<key>description</key>
+					<string>Echoelmusic AI Stem Separation</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicAudioUnitFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>name</key>
+					<string>Echoelmusic: Stem Splitter</string>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>subtype</key>
+					<string>Estm</string>
+					<key>tags</key>
+					<array>
+						<string>Effect</string>
+						<string>AI</string>
+						<string>Separator</string>
+					</array>
+					<key>type</key>
+					<string>aufx</string>
+					<key>version</key>
+					<integer>1</integer>
+				</dict>
+				<dict>
+					<key>description</key>
+					<string>Echoelmusic MIDI 2.0 + MPE Processor</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicAudioUnitFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>name</key>
+					<string>Echoelmusic: MIDI Pro</string>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>subtype</key>
+					<string>Emid</string>
+					<key>tags</key>
+					<array>
+						<string>MIDI</string>
+						<string>MPE</string>
+						<string>Processor</string>
+					</array>
+					<key>type</key>
+					<string>aumi</string>
+					<key>version</key>
+					<integer>1</integer>
+				</dict>
+			</array>
+		</dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.AudioUnit-UI</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>EchoelmusicAudioUnitViewController</string>
+	</dict>
+</dict>
+</plist>
