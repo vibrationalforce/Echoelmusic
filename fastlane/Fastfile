@@ -243,9 +243,10 @@ platform :ios do
       keychain_password: keychain[:password]
     )
 
+    # Unified bundle ID for tvOS (enables universal purchase)
     get_provisioning_profile(
       api_key: api_key,
-      app_identifier: "com.echoelmusic.tv",
+      app_identifier: "com.echoelmusic.app",
       platform: "tvos",
       force: ENV["CLEAN_BUILD"] == "true"
     )
@@ -261,7 +262,7 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       export_options: {
         provisioningProfiles: {
-          "com.echoelmusic.tv" => profile
+          "com.echoelmusic.app" => profile
         }
       },
       xcargs: [
@@ -292,9 +293,10 @@ platform :ios do
       keychain_password: keychain[:password]
     )
 
+    # Unified bundle ID for visionOS (enables universal purchase)
     get_provisioning_profile(
       api_key: api_key,
-      app_identifier: "com.echoelmusic.vision",
+      app_identifier: "com.echoelmusic.app",
       platform: "ios",
       force: ENV["CLEAN_BUILD"] == "true"
     )
@@ -311,7 +313,7 @@ platform :ios do
       destination: "generic/platform=visionOS",
       export_options: {
         provisioningProfiles: {
-          "com.echoelmusic.vision" => profile
+          "com.echoelmusic.app" => profile
         }
       },
       xcargs: [
@@ -434,10 +436,10 @@ platform :mac do
       keychain_password: keychain[:password]
     )
 
-    # Main app profile
+    # Main app profile (unified bundle ID across platforms)
     get_provisioning_profile(
       api_key: api_key,
-      app_identifier: "com.echoelmusic.mac",
+      app_identifier: "com.echoelmusic.app",
       platform: "macos",
       force: ENV["CLEAN_BUILD"] == "true"
     )
@@ -446,7 +448,7 @@ platform :mac do
     # AUv3 extension profile
     get_provisioning_profile(
       api_key: api_key,
-      app_identifier: "com.echoelmusic.mac.auv3",
+      app_identifier: "com.echoelmusic.app.auv3",
       platform: "macos",
       force: ENV["CLEAN_BUILD"] == "true"
     )
@@ -465,8 +467,8 @@ platform :mac do
       derived_data_path: "./build/DerivedData",
       export_options: {
         provisioningProfiles: {
-          "com.echoelmusic.mac" => app_profile,
-          "com.echoelmusic.mac.auv3" => auv3_profile
+          "com.echoelmusic.app" => app_profile,
+          "com.echoelmusic.app.auv3" => auv3_profile
         }
       },
       xcargs: [
@@ -534,11 +536,14 @@ lane :beta_all do
   UI.success("  ALL PLATFORMS UPLOADED TO TESTFLIGHT!")
   UI.success("=" * 60)
   UI.success("")
+  UI.success("  Unified Bundle ID: com.echoelmusic.app")
+  UI.success("  (Universal Purchase enabled across all platforms)")
+  UI.success("")
   UI.success("  iOS:      com.echoelmusic.app + AUv3")
-  UI.success("  macOS:    com.echoelmusic.mac + AUv3")
+  UI.success("  macOS:    com.echoelmusic.app + AUv3")
   UI.success("  watchOS:  com.echoelmusic.app.watchkitapp")
-  UI.success("  tvOS:     com.echoelmusic.tv")
-  UI.success("  visionOS: com.echoelmusic.vision")
+  UI.success("  tvOS:     com.echoelmusic.app")
+  UI.success("  visionOS: com.echoelmusic.app")
   UI.success("")
   UI.success("Check App Store Connect for build processing status.")
   UI.success("=" * 60)
