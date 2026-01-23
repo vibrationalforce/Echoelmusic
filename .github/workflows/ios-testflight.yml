@@ -74,7 +74,8 @@ jobs:
   pr-check:
     name: "PR Build Check"
     runs-on: macos-14
-    if: ${{ github.event_name == 'pull_request' }}
+    # Only run on pull_request events, skip for manual workflow_dispatch
+    if: github.event_name == 'pull_request'
     timeout-minutes: 30
 
     steps:
@@ -167,7 +168,8 @@ jobs:
   deploy-ios:
     name: "Deploy iOS + AUv3"
     runs-on: macos-14
-    if: ${{ github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "ios", "ios-macos"]'), github.event.inputs.platforms) }}
+    # Only run on manual workflow_dispatch, not on pull_request events
+    if: github.event_name == 'workflow_dispatch' && (inputs.platforms == 'all' || inputs.platforms == 'ios' || inputs.platforms == 'ios-macos')
     timeout-minutes: 60
 
     steps:
@@ -261,7 +263,8 @@ jobs:
   deploy-macos:
     name: "Deploy macOS + AUv3"
     runs-on: macos-14
-    if: ${{ github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "macos", "ios-macos"]'), github.event.inputs.platforms) }}
+    # Only run on manual workflow_dispatch, not on pull_request events
+    if: github.event_name == 'workflow_dispatch' && (inputs.platforms == 'all' || inputs.platforms == 'macos' || inputs.platforms == 'ios-macos')
     timeout-minutes: 60
 
     steps:
@@ -352,7 +355,8 @@ jobs:
   deploy-watchos:
     name: "Deploy watchOS"
     runs-on: macos-14
-    if: ${{ github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "watchos"]'), github.event.inputs.platforms) }}
+    # Only run on manual workflow_dispatch, not on pull_request events
+    if: github.event_name == 'workflow_dispatch' && (inputs.platforms == 'all' || inputs.platforms == 'watchos')
     timeout-minutes: 60
 
     steps:
@@ -419,7 +423,8 @@ jobs:
   deploy-tvos:
     name: "Deploy tvOS"
     runs-on: macos-14
-    if: ${{ github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "tvos"]'), github.event.inputs.platforms) }}
+    # Only run on manual workflow_dispatch, not on pull_request events
+    if: github.event_name == 'workflow_dispatch' && (inputs.platforms == 'all' || inputs.platforms == 'tvos')
     timeout-minutes: 60
 
     steps:
@@ -486,7 +491,8 @@ jobs:
   deploy-visionos:
     name: "Deploy visionOS"
     runs-on: macos-14
-    if: ${{ github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "visionos"]'), github.event.inputs.platforms) }}
+    # Only run on manual workflow_dispatch, not on pull_request events
+    if: github.event_name == 'workflow_dispatch' && (inputs.platforms == 'all' || inputs.platforms == 'visionos')
     timeout-minutes: 60
 
     steps:
@@ -553,7 +559,8 @@ jobs:
   summary:
     name: "Deployment Summary"
     runs-on: ubuntu-latest
-    if: ${{ always() && github.event_name == 'workflow_dispatch' }}
+    # Only show summary for manual workflow_dispatch, not for PR builds
+    if: always() && github.event_name == 'workflow_dispatch'
     needs: [deploy-ios, deploy-macos, deploy-watchos, deploy-tvos, deploy-visionos]
 
     steps:
