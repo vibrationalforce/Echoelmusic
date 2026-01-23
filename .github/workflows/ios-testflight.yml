@@ -105,11 +105,29 @@ jobs:
 
       - name: "Generate Xcode Project"
         run: |
+          set -e
+
           # Set placeholder Team ID for simulator build
-          sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
-          xcodegen generate --spec project.yml
-          echo "Generated project files:"
-          ls -la *.xcodeproj 2>/dev/null || echo "Warning: No .xcodeproj found"
+          if grep -q 'DEVELOPMENT_TEAM: ""' project.yml 2>/dev/null; then
+            sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml
+            echo "Set placeholder Team ID"
+          fi
+
+          # Generate project with error handling
+          echo "Generating Xcode project..."
+          if ! xcodegen generate --spec project.yml; then
+            echo "ERROR: XcodeGen failed to generate project"
+            exit 1
+          fi
+
+          # Verify project was created
+          if [ ! -d "Echoelmusic.xcodeproj" ]; then
+            echo "ERROR: Echoelmusic.xcodeproj not found after generation"
+            ls -la
+            exit 1
+          fi
+
+          echo "Project generated successfully"
 
       - name: "Build for Simulator"
         run: |
@@ -254,10 +272,40 @@ jobs:
         with:
           version: ${{ env.XCODEGEN_VERSION }}
 
+      - name: "Cache DerivedData"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData
+            build/DerivedData
+          key: ${{ runner.os }}-deriveddata-${{ hashFiles('Package.swift', 'project.yml') }}-${{ github.run_number }}
+          restore-keys: |
+            ${{ runner.os }}-deriveddata-${{ hashFiles('Package.swift', 'project.yml') }}-
+            ${{ runner.os }}-deriveddata-
+
+      - name: "Cache Fastlane Gems"
+        uses: actions/cache@v4
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-gems-fastlane-${{ hashFiles('**/Gemfile.lock', '.ruby-version') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-fastlane-
+            ${{ runner.os }}-gems-
+
       - name: "Install Fastlane"
         run: |
           echo "Installing Fastlane..."
-          gem install fastlane -N --no-document
+          if [ -d vendor/bundle ] && bundle check > /dev/null 2>&1; then
+            echo "Using cached gems..."
+          else
+            gem install bundler -N --no-document 2>/dev/null || true
+            if [ -f Gemfile ]; then
+              bundle config set --local path 'vendor/bundle'
+              bundle install --jobs 4 --retry 3
+            else
+              gem install fastlane -N --no-document
+            fi
+          fi
           fastlane --version
 
       - name: "Set Build Number"
@@ -270,16 +318,34 @@ jobs:
 
       - name: "Generate Xcode Project"
         run: |
+          set -e
+
           # Set real Team ID from secrets
-          sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
+          if [ -n "${{ secrets.APPLE_TEAM_ID }}" ]; then
+            sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
+          else
+            echo "ERROR: APPLE_TEAM_ID is empty"
+            exit 1
+          fi
 
           # Set build number
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
 
-          # Generate project
-          xcodegen generate --spec project.yml
+          # Generate project with error handling
+          echo "Generating Xcode project..."
+          if ! xcodegen generate --spec project.yml; then
+            echo "ERROR: XcodeGen failed to generate project"
+            exit 1
+          fi
 
-          echo "Project generated with:"
+          # Verify project was created
+          if [ ! -d "Echoelmusic.xcodeproj" ]; then
+            echo "ERROR: Echoelmusic.xcodeproj not found after generation"
+            ls -la
+            exit 1
+          fi
+
+          echo "Project generated successfully with:"
           echo "- Team ID: ${{ secrets.APPLE_TEAM_ID }}"
           echo "- Build Number: ${{ env.BUILD_NUMBER }}"
 
@@ -322,7 +388,16 @@ jobs:
             LANE="${{ github.event.inputs.build_type == 'testflight' && 'beta' || 'build_only' }}"
             echo "Running fastlane ios $LANE..."
 
-            if fastlane ios $LANE 2>&1 | tee build_logs/fastlane_attempt_${RETRY_COUNT}.log; then
+            # Run fastlane with proper exit code capture (avoid tee masking)
+            set +e
+            fastlane ios $LANE > build_logs/fastlane_attempt_${RETRY_COUNT}.log 2>&1
+            FASTLANE_EXIT=$?
+            set -e
+
+            # Show output
+            cat build_logs/fastlane_attempt_${RETRY_COUNT}.log
+
+            if [ $FASTLANE_EXIT -eq 0 ]; then
               SUCCESS=true
               echo ""
               echo "====================================="
@@ -330,8 +405,9 @@ jobs:
               echo "====================================="
             else
               if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                WAIT_TIME=$((RETRY_COUNT * 30))
-                echo "Attempt failed. Waiting ${WAIT_TIME}s before retry..."
+                # Exponential backoff: 15s, 30s, 60s
+                WAIT_TIME=$((15 * (2 ** (RETRY_COUNT - 1))))
+                echo "Attempt failed (exit code: $FASTLANE_EXIT). Exponential backoff: ${WAIT_TIME}s..."
                 sleep $WAIT_TIME
               fi
             fi
