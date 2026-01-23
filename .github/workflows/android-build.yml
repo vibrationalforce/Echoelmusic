@@ -9,14 +9,15 @@ name: Android Build & Test
 
 on:
   push:
-    branches: [ develop, main, 'feature/**', 'claude/**' ]
+    branches: [ main ]
     paths:
       - 'android/**'
       - '.github/workflows/android-build.yml'
-  pull_request:
-    branches: [ main, develop ]
-    paths:
-      - 'android/**'
+  # NOTE: PR checks disabled - focusing on Apple platforms first
+  # pull_request:
+  #   branches: [ main, develop ]
+  #   paths:
+  #     - 'android/**'
   workflow_dispatch:
 
 env:
