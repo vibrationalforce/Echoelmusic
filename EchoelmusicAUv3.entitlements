@@ -8,10 +8,10 @@
 		<string>group.com.echoelmusic.shared</string>
 	</array>
 
-	<!-- Keychain Sharing -->
+	<!-- Keychain Sharing (matches macOS main app for shared access) -->
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.echoelmusic.app</string>
+		<string>$(AppIdentifierPrefix)com.echoelmusic.mac</string>
 	</array>
 
 	<!-- Inter-App Audio -->
