@@ -9,7 +9,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.echoelmusic.wear"
+        applicationId = "com.echoelmusic.app.wear"
         minSdk = 30
         targetSdk = 34
         versionCode = 1

@@ -8,7 +8,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.echoelmusic.auto"
+        applicationId = "com.echoelmusic.app.auto"
         minSdk = 28
         targetSdk = 34
         versionCode = 1

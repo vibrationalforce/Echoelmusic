@@ -193,6 +193,22 @@ endif()
 if(BUILD_CLAP)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/clap")
         list(APPEND FORMATS CLAP)
+        message(STATUS "CLAP plugin format: ENABLED")
+    else()
+        message(STATUS "")
+        message(STATUS "╔══════════════════════════════════════════════════════════╗")
+        message(STATUS "║  CLAP SDK not found! To enable CLAP plugins:             ║")
+        message(STATUS "║                                                          ║")
+        message(STATUS "║  git clone https://github.com/free-audio/clap \\          ║")
+        message(STATUS "║            ThirdParty/clap                               ║")
+        message(STATUS "║                                                          ║")
+        message(STATUS "║  CLAP is supported in:                                   ║")
+        message(STATUS "║  • Bitwig Studio 4.0+                                    ║")
+        message(STATUS "║  • REAPER 6.60+                                          ║")
+        message(STATUS "║  • MultitrackStudio                                      ║")
+        message(STATUS "║  • Renoise 3.4+                                          ║")
+        message(STATUS "╚══════════════════════════════════════════════════════════╝")
+        message(STATUS "")
     endif()
 endif()
 
@@ -250,8 +266,8 @@ juce_add_plugin(Echoelmusic
     IPHONE_SCREEN_ORIENTATIONS UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
     IPAD_SCREEN_ORIENTATIONS UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
 
-    # Bundle ID
-    BUNDLE_ID "com.echoelmusic.plugin"
+    # Bundle ID (unified across all platforms)
+    BUNDLE_ID "com.echoelmusic.app.plugin"
 
     # Description
     DESCRIPTION "Bio-Reactive Audio Processing - Heart Rate Variability meets Professional Audio"

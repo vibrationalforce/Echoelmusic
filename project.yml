@@ -234,7 +234,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: Echoelmusic
-        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.mac
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         INFOPLIST_FILE: Resources/macOS/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: EchoelmusicMac.entitlements
@@ -318,7 +318,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: EchoelmusicAUv3
-        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.mac.auv3
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.auv3
         INFOPLIST_FILE: Sources/EchoelmusicAUv3/Info-macOS.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_STYLE: Manual
@@ -429,7 +429,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: Echoelmusic
-        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.tv
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: EchoelmusicTV.entitlements
         CODE_SIGN_STYLE: Manual
@@ -482,7 +482,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: Echoelmusic
-        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.vision
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: EchoelmusicVision.entitlements
         CODE_SIGN_STYLE: Manual

@@ -41,10 +41,10 @@
 	<!-- Keychain Sharing -->
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.echoelmusic.mac</string>
+		<string>$(AppIdentifierPrefix)com.echoelmusic.app</string>
 	</array>
 
-	<!-- iCloud -->
+	<!-- iCloud (unified across all platforms) -->
 	<key>com.apple.developer.icloud-container-identifiers</key>
 	<array>
 		<string>iCloud.com.echoelmusic.app</string>
@@ -59,7 +59,7 @@
 		<string>iCloud.com.echoelmusic.app</string>
 	</array>
 	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
-	<string>$(TeamIdentifierPrefix)com.echoelmusic.mac</string>
+	<string>$(TeamIdentifierPrefix)com.echoelmusic.app</string>
 
 	<!-- HomeKit -->
 	<key>com.apple.developer.homekit</key>
