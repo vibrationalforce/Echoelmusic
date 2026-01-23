@@ -5,8 +5,8 @@
 # Version: 3.0.0 - Phase 10000 ULTIMATE MODE
 #
 # Supported Platforms:
-# - iOS (iPhone + iPad) with AUv3 Audio Unit Extension
-# - macOS (Apple Silicon + Intel) with AUv3 Audio Unit Extension
+# - iOS (iPhone + iPad) with integrated AUv3 (works as host and plugin)
+# - macOS (Apple Silicon + Intel) with embedded AUv3 Audio Unit Extension
 # - watchOS (Apple Watch) with Complications
 # - tvOS (Apple TV) with Big Screen Experience
 # - visionOS (Apple Vision Pro) with Spatial Audio
@@ -163,10 +163,10 @@ jobs:
           retention-days: 7
 
   # ===========================================================================
-  # JOB 2: iOS + AUv3 TestFlight Deployment
+  # JOB 2: iOS TestFlight Deployment (AUv3 integrated in app)
   # ===========================================================================
   deploy-ios:
-    name: "Deploy iOS + AUv3"
+    name: "Deploy iOS"
     runs-on: macos-14
     # Only run on manual workflow_dispatch with ios platform selected
     if: github.event_name == 'workflow_dispatch' && contains('all ios ios-macos', inputs.platforms)
@@ -179,7 +179,8 @@ jobs:
       - name: "Deployment Info"
         run: |
           echo "====================================="
-          echo "  iOS + AUv3 TestFlight Deployment"
+          echo "  iOS TestFlight Deployment"
+          echo "  (AUv3 integrated in app)"
           echo "====================================="
           echo "Build Number: ${{ github.run_number }}"
 
@@ -253,9 +254,9 @@ jobs:
 
       - name: "Success"
         run: |
-          echo "## iOS + AUv3 Deployed to TestFlight" >> $GITHUB_STEP_SUMMARY
+          echo "## iOS Deployed to TestFlight" >> $GITHUB_STEP_SUMMARY
           echo "- Build: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Bundle IDs: com.echoelmusic.app, com.echoelmusic.app.auv3" >> $GITHUB_STEP_SUMMARY
+          echo "- Bundle ID: com.echoelmusic.app (Standalone + integrated AUv3)" >> $GITHUB_STEP_SUMMARY
 
   # ===========================================================================
   # JOB 3: macOS + AUv3 TestFlight Deployment
@@ -572,7 +573,7 @@ jobs:
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
 
           if [[ "${{ github.event.inputs.platforms }}" == "all" || "${{ github.event.inputs.platforms }}" == "ios" || "${{ github.event.inputs.platforms }}" == "ios-macos" ]]; then
-            echo "| iOS + AUv3 | ${{ needs.deploy-ios.result == 'success' && 'Deployed' || needs.deploy-ios.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| iOS (integrated AUv3) | ${{ needs.deploy-ios.result == 'success' && 'Deployed' || needs.deploy-ios.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
           fi
 
           if [[ "${{ github.event.inputs.platforms }}" == "all" || "${{ github.event.inputs.platforms }}" == "macos" || "${{ github.event.inputs.platforms }}" == "ios-macos" ]]; then
