@@ -114,11 +114,31 @@ public struct AppStoreMetadata {
 
     // MARK: - Pricing
 
-    /// Price tier (0 = Free with IAP)
-    public static let priceTier = 0
+    /// Price tier for one-time purchase
+    /// Echoelmusic uses a Universal One-Time Purchase model:
+    /// - Buy once on any platform (iOS, macOS, visionOS, tvOS, watchOS)
+    /// - Own forever with lifetime updates
+    /// - Family Sharing supported (up to 6 family members)
+    /// - No subscriptions, no recurring fees
+    public static let priceTier = 0  // Managed via IAP (non-consumable)
+
+    /// One-time purchase price (USD)
+    public static let oneTimePurchasePrice = "$29.99"
+
+    /// Product identifier for one-time universal purchase
+    public static let oneTimePurchaseProductID = "com.echoelmusic.app.universal"
 
     /// Available territories (all countries)
     public static let availableTerritories: [String] = ["ALL"]
+
+    /// Pricing model description
+    public static let pricingModel = PricingModel.oneTimePurchase
+
+    public enum PricingModel: String {
+        case oneTimePurchase = "One-Time Purchase"
+        case subscription = "Subscription"
+        case freemium = "Freemium"
+    }
 }
 
 // MARK: - Age Rating Questionnaire
@@ -1204,10 +1224,11 @@ PERMISSIONS REQUESTED:
 
 All permissions are optional and the app provides full functionality in demo mode.
 
-SUBSCRIPTION TESTING:
-• Sandbox accounts can test all subscription tiers
-• Free tier provides full core functionality
-• Pro/Studio/Enterprise unlock additional hardware and cloud features
+PURCHASE TESTING:
+• Sandbox accounts can test the one-time purchase flow
+• Purchase unlocks all features permanently
+• Family Sharing can be tested with sandbox family accounts
+• No subscriptions - single $29.99 purchase unlocks everything
 
 KNOWN LIMITATIONS:
 • Quantum light emulation requires Metal-compatible device (iOS 15+)
@@ -1360,141 +1381,151 @@ Full privacy policy: https://echoelmusic.com/privacy
     }
 }
 
-// MARK: - In-App Purchases
+// MARK: - In-App Purchases (One-Time Universal Purchase)
 
 public struct InAppPurchases {
 
-    /// All subscription tiers
-    public static let subscriptions: [Subscription] = [
-        .free,
-        .pro,
-        .studio,
-        .enterprise
-    ]
+    // MARK: - One-Time Purchase Model
 
-    /// Product identifiers
+    /// Echoelmusic uses a simple, fair one-time purchase model:
+    /// - Buy once, own forever
+    /// - All features included
+    /// - Lifetime updates
+    /// - Family Sharing (up to 6 members)
+    /// - Universal purchase (works on iOS, macOS, visionOS, tvOS, watchOS)
+
+    /// Product identifiers for one-time purchase
     public static let productIDs = ProductIDs()
 
     public struct ProductIDs {
-        // Subscriptions (auto-renewable)
-        public let proMonthly = "com.echoelmusic.subscription.pro.monthly"
-        public let proYearly = "com.echoelmusic.subscription.pro.yearly"
-        public let studioMonthly = "com.echoelmusic.subscription.studio.monthly"
-        public let studioYearly = "com.echoelmusic.subscription.studio.yearly"
-        public let enterpriseMonthly = "com.echoelmusic.subscription.enterprise.monthly"
-        public let enterpriseYearly = "com.echoelmusic.subscription.enterprise.yearly"
+        // Universal one-time purchase (non-consumable)
+        public let universalPurchase = "com.echoelmusic.app.universal"
 
-        // Non-consumable
-        public let lifetimePro = "com.echoelmusic.lifetime.pro"
-        public let lifetimeStudio = "com.echoelmusic.lifetime.studio"
-
-        // Consumable
-        public let cloudStorageBoost1TB = "com.echoelmusic.consumable.storage.1tb"
-        public let cloudStorageBoost5TB = "com.echoelmusic.consumable.storage.5tb"
+        // Optional tip jar for supporters (consumable)
+        public let tipSmall = "com.echoelmusic.tip.small"      // $2.99
+        public let tipMedium = "com.echoelmusic.tip.medium"    // $9.99
+        public let tipLarge = "com.echoelmusic.tip.large"      // $24.99
     }
 
-    /// Free tier
-    public static let free = Subscription(
-        name: "Free",
-        productID: nil,
-        price: "$0",
-        features: [
-            "✅ Bio-reactive audio creation",
-            "✅ 5 quantum visualization modes",
-            "✅ Basic spatial audio (3D)",
-            "✅ Apple Watch integration",
-            "✅ 10 AI art/music generations per day",
-            "✅ Meditation & breathing exercises",
-            "✅ Join collaboration sessions",
-            "✅ Basic accessibility features",
-            "✅ Up to 3 custom presets",
-            "❌ Advanced visualizations (5 locked)",
-            "❌ 4D spatial audio & AFA fields",
-            "❌ Orchestral film scoring",
-            "❌ Professional streaming",
-            "❌ Hardware integrations (Push 3, DMX)",
-            "❌ Developer SDK & plugins",
-            "❌ Cloud storage (local only)",
-            "❌ Priority support"
-        ]
+    /// Universal one-time purchase details
+    public static let universalPurchase = UniversalPurchase(
+        productID: "com.echoelmusic.app.universal",
+        displayName: "Echoelmusic Full Version",
+        price: "$29.99",
+        priceLocalized: [
+            "en-US": "$29.99",
+            "de-DE": "29,99 €",
+            "ja-JP": "¥4,400",
+            "zh-Hans": "¥218",
+            "ko-KR": "₩39,000",
+            "gb": "£24.99",
+            "au": "$44.99 AUD"
+        ],
+        features: allFeatures,
+        familySharingEnabled: true,
+        universalPurchase: true,  // Works on all Apple platforms
+        lifetimeUpdates: true
     )
 
-    /// Pro tier
-    public static let pro = Subscription(
-        name: "Pro",
-        productID: "com.echoelmusic.subscription.pro.monthly",
-        price: "$9.99/month or $99/year",
-        features: [
-            "✅ Everything in Free",
-            "✅ All 10 quantum visualization modes",
-            "✅ 4D spatial audio & AFA fields",
-            "✅ Unlimited AI art/music generation",
-            "✅ Orchestral film scoring engine",
-            "✅ 4K video processing & effects",
-            "✅ Stream to 1 platform (1080p)",
-            "✅ Host collaboration sessions (up to 10)",
-            "✅ Unlimited custom presets",
-            "✅ 10 GB cloud storage",
-            "✅ Advanced accessibility (all 20+ profiles)",
-            "✅ Email support (24h response)",
-            "❌ 8K/16K video processing",
-            "❌ Multi-platform streaming",
-            "❌ Hardware integrations (Push 3, DMX)",
-            "❌ Developer SDK & plugins",
-            "❌ 100+ participant sessions"
-        ]
-    )
+    /// All features included in one-time purchase
+    public static let allFeatures: [String] = [
+        // Core Bio-Reactive
+        "✅ Bio-reactive audio creation with HRV/heart rate",
+        "✅ Apple Watch integration for real-time biometrics",
+        "✅ All 10 quantum visualization modes",
+        "✅ 4D spatial audio & AFA fields",
 
-    /// Studio tier
-    public static let studio = Subscription(
-        name: "Studio",
-        productID: "com.echoelmusic.subscription.studio.monthly",
-        price: "$29.99/month or $299/year",
-        features: [
-            "✅ Everything in Pro",
-            "✅ 8K/16K video processing (up to 15360x8640)",
-            "✅ 1000 fps light-speed video",
-            "✅ Multi-platform streaming (up to 5 destinations)",
-            "✅ Ableton Push 3 LED control",
-            "✅ DMX/Art-Net lighting control",
-            "✅ 60+ audio interface presets",
-            "✅ 40+ MIDI controller mappings",
-            "✅ Cross-platform sessions (any device combo)",
-            "✅ Host sessions up to 100 participants",
-            "✅ 100 GB cloud storage",
-            "✅ VST3/AU plugin integration",
-            "✅ Priority email support (4h response)",
-            "❌ Developer SDK & custom plugins",
-            "❌ 1000+ participant sessions",
-            "❌ Enterprise security features"
-        ]
-    )
+        // Audio & Music
+        "✅ Unlimited AI art/music generation",
+        "✅ Cinematic orchestral film scoring engine",
+        "✅ 60+ audio interface presets",
+        "✅ 40+ MIDI controller mappings",
+        "✅ VST3/AU plugin integration",
 
-    /// Enterprise tier
-    public static let enterprise = Subscription(
-        name: "Enterprise",
-        productID: "com.echoelmusic.subscription.enterprise.monthly",
-        price: "$99.99/month or $999/year",
-        features: [
-            "✅ Everything in Studio",
-            "✅ Developer SDK & plugin API",
-            "✅ Custom plugin deployment",
-            "✅ Unlimited multi-platform streaming",
-            "✅ Host sessions up to 1000 participants",
-            "✅ 1 TB cloud storage",
-            "✅ Enterprise security (AES-256, cert pinning)",
-            "✅ Biometric authentication required",
-            "✅ Audit logging & compliance reports",
-            "✅ Dedicated account manager",
-            "✅ Priority phone/chat support (1h response)",
-            "✅ Custom feature development consultation",
-            "✅ White-label options available",
-            "✅ SLA guarantees (99.9% uptime)",
-            "✅ On-premise deployment options",
-            "✅ Advanced analytics & insights"
-        ]
-    )
+        // Video & Streaming
+        "✅ 16K video processing (up to 15360x8640)",
+        "✅ 1000 fps light-speed video",
+        "✅ Multi-platform streaming (YouTube, Twitch, etc.)",
 
+        // Hardware
+        "✅ Ableton Push 3 LED control",
+        "✅ DMX/Art-Net lighting control",
+        "✅ Cross-platform sessions (any device combo)",
+
+        // Collaboration
+        "✅ Host collaboration sessions (up to 100 participants)",
+        "✅ Join unlimited sessions",
+
+        // Accessibility
+        "✅ All 20+ accessibility profiles (WCAG AAA)",
+        "✅ VoiceOver/TalkBack full support",
+
+        // Storage & Export
+        "✅ Unlimited local storage",
+        "✅ iCloud sync included",
+        "✅ Export to all formats (4K video, ProRes, JSON)",
+
+        // Presets & Customization
+        "✅ 74+ curated engine presets",
+        "✅ Unlimited custom presets",
+
+        // Support & Updates
+        "✅ Lifetime updates (all future features)",
+        "✅ Priority email support",
+        "✅ Family Sharing (up to 6 members)"
+    ]
+
+    /// What's NOT included (to be transparent)
+    public static let notIncluded: [String] = [
+        "⚠️ Developer SDK & custom plugins (coming in future update)",
+        "⚠️ Enterprise features (1000+ participants, SLA)",
+        "ℹ️ Cloud storage beyond iCloud (use your own iCloud)"
+    ]
+
+    /// Pricing comparison to show value
+    public static let valueSummary = """
+    💰 ONE-TIME PURCHASE VALUE
+
+    Echoelmusic: $29.99 (one-time, lifetime)
+
+    VS. TYPICAL SUBSCRIPTION COSTS:
+    • Similar apps: $9.99-29.99/month
+    • Annual cost: $120-360/year
+    • 3-year cost: $360-1,080
+
+    YOUR SAVINGS:
+    • First year: Save $90-330
+    • Over 3 years: Save $330-1,050
+
+    WHAT YOU GET:
+    • All features unlocked
+    • Lifetime updates included
+    • Family Sharing (6 members = $5/person)
+    • No recurring charges ever
+    • Support independent development
+
+    🤝 ETHICAL PRICING:
+    • No dark patterns
+    • No artificial limits
+    • No subscription traps
+    • Fair price for fair value
+    """
+
+    // MARK: - Data Structures
+
+    public struct UniversalPurchase {
+        public let productID: String
+        public let displayName: String
+        public let price: String
+        public let priceLocalized: [String: String]
+        public let features: [String]
+        public let familySharingEnabled: Bool
+        public let universalPurchase: Bool
+        public let lifetimeUpdates: Bool
+    }
+
+    // Legacy subscription struct (deprecated)
+    @available(*, deprecated, message: "Use UniversalPurchase instead - subscriptions removed")
     public struct Subscription {
         public let name: String
         public let productID: String?

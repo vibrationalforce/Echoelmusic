@@ -5,128 +5,82 @@ import Combine
 /// Fair Business Model - Transparent, Ethical, No Dark Patterns
 /// Principles: Honesty, user respect, sustainable pricing, no manipulation
 ///
+/// ONE-TIME PURCHASE MODEL ($29.99):
+/// ✓ Buy once, own forever
+/// ✓ All features included
+/// ✓ Lifetime updates
+/// ✓ Family Sharing (up to 6 members)
+/// ✓ No subscriptions, no recurring fees
+///
 /// Anti-Dark Pattern Commitments:
 /// ✓ No fake urgency ("Only 2 left!")
 /// ✓ No hidden costs or surprise charges
-/// ✓ Easy cancellation (no retention tactics)
-/// ✓ Clear feature comparison
 /// ✓ No subscription traps
 /// ✓ Export your data anytime for free
 /// ✓ No artificial feature limitations
-/// ✓ Lifetime purchase option available
-/// ✓ Student & accessibility discounts
+/// ✓ Accessibility discounts available
 /// ✓ Open source core (coming soon)
 @MainActor
 class FairBusinessModel: ObservableObject {
 
     // MARK: - Published State
 
-    @Published var currentTier: PricingTier = .free
-    @Published var subscriptionStatus: SubscriptionStatus = .notSubscribed
-    @Published var lifetimePurchased: Bool = false
+    @Published var isFullVersionPurchased: Bool = false
 
-    // MARK: - Pricing Tiers
+    // MARK: - Pricing Model (One-Time Purchase)
 
-    enum PricingTier: String, CaseIterable {
-        case free = "Free"
-        case creator = "Creator"
-        case professional = "Professional"
-        case lifetime = "Lifetime"
+    /// Echoelmusic uses a simple one-time purchase model
+    struct PricingInfo {
+        static let price: Decimal = 29.99
+        static let currency = "USD"
+        static let displayPrice = "$29.99"
+        static let productID = "com.echoelmusic.app.universal"
 
-        var displayName: String {
-            return rawValue
-        }
+        static let description = """
+        Buy once, own forever.
+        All features included. Lifetime updates.
+        Family Sharing for up to 6 members.
+        """
 
-        var monthlyPrice: Decimal {
-            switch self {
-            case .free: return 0.00
-            case .creator: return 4.99
-            case .professional: return 9.99
-            case .lifetime: return 79.99  // One-time
-            }
-        }
+        static let features: [Feature] = [
+            // Core Bio-Reactive
+            Feature(name: "Bio-Reactive Audio & Visuals", included: true),
+            Feature(name: "Apple Watch Integration", included: true),
+            Feature(name: "All 10 Quantum Visualization Modes", included: true),
+            Feature(name: "4D Spatial Audio & AFA Fields", included: true),
 
-        var annualPrice: Decimal {
-            switch self {
-            case .free: return 0.00
-            case .creator: return 49.99  // 2 months free
-            case .professional: return 99.99  // 2 months free
-            case .lifetime: return 79.99  // One-time
-            }
-        }
+            // Audio & Music
+            Feature(name: "Unlimited AI Art/Music Generation", included: true),
+            Feature(name: "Cinematic Orchestral Film Scoring", included: true),
+            Feature(name: "60+ Audio Interface Presets", included: true),
+            Feature(name: "40+ MIDI Controller Mappings", included: true),
+            Feature(name: "VST3/AU Plugin Integration", included: true),
 
-        var description: String {
-            switch self {
-            case .free:
-                return "Full bio-reactive experience. No time limits. No ads. Forever free."
-            case .creator:
-                return "Advanced features for creative professionals. Cloud sync, export, collaboration."
-            case .professional:
-                return "Everything in Creator + pro tools. Unlimited cloud storage, AI composer, priority support."
-            case .lifetime:
-                return "Pay once, own forever. All current and future features. No subscriptions."
-            }
-        }
+            // Video & Streaming
+            Feature(name: "16K Video Processing", included: true),
+            Feature(name: "1000fps Light-Speed Video", included: true),
+            Feature(name: "Multi-Platform Streaming", included: true),
 
-        var features: [Feature] {
-            switch self {
-            case .free:
-                return [
-                    Feature(name: "Bio-Reactive Audio & Visuals", included: true),
-                    Feature(name: "HRV Training Protocols", included: true),
-                    Feature(name: "6 Quick-Start Presets", included: true),
-                    Feature(name: "Local Storage (5 GB)", included: true),
-                    Feature(name: "Export Sessions (JSON)", included: true),
-                    Feature(name: "Basic Spatial Audio", included: true),
-                    Feature(name: "No Time Limits", included: true),
-                    Feature(name: "No Ads", included: true),
-                    Feature(name: "Cloud Sync", included: false),
-                    Feature(name: "Advanced Export (4K Video)", included: false),
-                    Feature(name: "AI Music Composer", included: false),
-                    Feature(name: "Collaboration (Multiplayer)", included: false),
-                    Feature(name: "Priority Support", included: false)
-                ]
+            // Hardware
+            Feature(name: "Ableton Push 3 LED Control", included: true),
+            Feature(name: "DMX/Art-Net Lighting Control", included: true),
 
-            case .creator:
-                return [
-                    Feature(name: "Everything in Free", included: true),
-                    Feature(name: "Cloud Sync (2 GB)", included: true),
-                    Feature(name: "Advanced Export (4K Video, ProRes)", included: true),
-                    Feature(name: "Collaboration (Up to 4 people)", included: true),
-                    Feature(name: "Streaming Integration", included: true),
-                    Feature(name: "Custom Presets Library", included: true),
-                    Feature(name: "Email Support", included: true),
-                    Feature(name: "AI Music Composer", included: false),
-                    Feature(name: "Unlimited Cloud Storage", included: false),
-                    Feature(name: "Priority Support", included: false)
-                ]
+            // Collaboration
+            Feature(name: "Collaboration Sessions (100 participants)", included: true),
 
-            case .professional:
-                return [
-                    Feature(name: "Everything in Creator", included: true),
-                    Feature(name: "AI Music Composer", included: true),
-                    Feature(name: "Unlimited Cloud Storage", included: true),
-                    Feature(name: "Collaboration (Unlimited)", included: true),
-                    Feature(name: "Advanced Scripting Engine", included: true),
-                    Feature(name: "Custom Integrations API", included: true),
-                    Feature(name: "Priority Support (24h response)", included: true),
-                    Feature(name: "Early Access to Features", included: true),
-                    Feature(name: "Commercial Use License", included: true)
-                ]
+            // Accessibility
+            Feature(name: "All 20+ Accessibility Profiles", included: true),
 
-            case .lifetime:
-                return [
-                    Feature(name: "Everything in Professional", included: true),
-                    Feature(name: "All Current Features", included: true),
-                    Feature(name: "All Future Features", included: true),
-                    Feature(name: "Lifetime Updates", included: true),
-                    Feature(name: "No Recurring Payments", included: true),
-                    Feature(name: "Priority Support Forever", included: true),
-                    Feature(name: "Transferable License", included: true),
-                    Feature(name: "Early Beta Access", included: true)
-                ]
-            }
-        }
+            // Storage & Presets
+            Feature(name: "iCloud Sync", included: true),
+            Feature(name: "74+ Curated Engine Presets", included: true),
+            Feature(name: "Unlimited Custom Presets", included: true),
+
+            // Support & Updates
+            Feature(name: "Lifetime Updates", included: true),
+            Feature(name: "Priority Email Support", included: true),
+            Feature(name: "Family Sharing (6 members)", included: true)
+        ]
 
         struct Feature {
             let name: String
@@ -134,94 +88,56 @@ class FairBusinessModel: ObservableObject {
         }
     }
 
-    // MARK: - Subscription Status
+    // MARK: - Purchase Status
 
-    enum SubscriptionStatus {
-        case notSubscribed
-        case active(tier: PricingTier, renewalDate: Date)
-        case cancelled(expiresOn: Date)
-        case expired
-        case lifetime
+    enum PurchaseStatus {
+        case notPurchased
+        case purchased
+        case familyShared
 
-        var isActive: Bool {
+        var hasFullAccess: Bool {
             switch self {
-            case .active, .lifetime: return true
-            case .cancelled(let expiresOn): return Date() < expiresOn
-            case .notSubscribed, .expired: return false
+            case .purchased, .familyShared: return true
+            case .notPurchased: return false
             }
         }
     }
 
-    // MARK: - Discounts
+    @Published var purchaseStatus: PurchaseStatus = .notPurchased
+
+    // MARK: - Discounts (For Accessibility)
 
     enum Discount: String {
-        case student = "Student (50% off)"
-        case accessibility = "Accessibility (Free Professional)"
-        case nonprofit = "Non-Profit (40% off)"
-        case educator = "Educator (60% off)"
+        case accessibility = "Accessibility (Free)"
 
         var discountPercentage: Decimal {
             switch self {
-            case .student: return 0.50
             case .accessibility: return 1.00  // 100% off = free
-            case .nonprofit: return 0.40
-            case .educator: return 0.60
             }
-        }
-
-        var verificationRequired: Bool {
-            return true  // All discounts require verification
         }
 
         var description: String {
             switch self {
-            case .student:
-                return "50% off for students. Verify with your .edu email or student ID."
             case .accessibility:
-                return "Free Professional tier for users with disabilities. No questions asked."
-            case .nonprofit:
-                return "40% off for registered non-profit organizations."
-            case .educator:
-                return "60% off for teachers and educators. Bring creativity to your classroom."
+                return "Free for users with disabilities. No questions asked. Contact us."
             }
         }
     }
-
-    // MARK: - Trial Period
-
-    struct TrialInfo {
-        let tier: PricingTier
-        let durationDays: Int
-        let startDate: Date
-        let endDate: Date
-        let features: [PricingTier.Feature]
-
-        var daysRemaining: Int {
-            let remaining = Calendar.current.dateComponents([.day], from: Date(), to: endDate).day ?? 0
-            return max(0, remaining)
-        }
-
-        var isActive: Bool {
-            return Date() < endDate
-        }
-    }
-
-    @Published var activeTrial: TrialInfo?
 
     // MARK: - Ethical Commitments
 
     struct EthicalCommitments {
         static let commitments: [String] = [
+            "✓ Buy Once, Own Forever - No subscriptions, no recurring fees",
+            "✓ All Features Included - No artificial limitations",
+            "✓ Lifetime Updates - All future features included",
+            "✓ Family Sharing - Up to 6 family members",
             "✓ No Dark Patterns - We respect your intelligence",
-            "✓ No Hidden Costs - Price you see is price you pay",
-            "✓ Easy Cancellation - Cancel anytime, no retention tactics",
-            "✓ No Subscription Traps - Clear renewal dates, proactive reminders",
-            "✓ Free Data Export - Your data is yours, export anytime for free",
-            "✓ No Artificial Limits - Free tier is genuinely useful, not crippled",
-            "✓ Student Discounts - 50% off for students",
-            "✓ Accessibility Commitment - Free Professional for users with disabilities",
-            "✓ Transparent Pricing - No psychological pricing tricks",
-            "✓ Open Source Core - Core features will be open sourced (coming 2026)",
+            "✓ No Hidden Costs - $29.99 is all you pay",
+            "✓ Free Data Export - Your data is yours, export anytime",
+            "✓ Accessibility Commitment - Free for users with disabilities",
+            "✓ Transparent Pricing - Simple and fair",
+            "✓ Open Source Core - Coming 2026",
             "✓ Sustainable Business - Fair pricing for long-term viability",
             "✓ No Ads, Ever - You're the customer, not the product"
         ]
@@ -230,108 +146,39 @@ class FairBusinessModel: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        loadSubscriptionStatus()
+        loadPurchaseStatus()
         log.business("✅ Fair Business Model: Initialized")
-        log.business("💰 Current Tier: \(currentTier.rawValue)")
+        log.business("💰 Pricing: \(PricingInfo.displayPrice) (one-time)")
         log.business("🤝 Ethical commitments loaded")
     }
 
-    // MARK: - Load Subscription Status
+    // MARK: - Load Purchase Status
 
-    private func loadSubscriptionStatus() {
-        // Load from local storage
-        lifetimePurchased = UserDefaults.standard.bool(forKey: "lifetimePurchased")
+    private func loadPurchaseStatus() {
+        isFullVersionPurchased = UserDefaults.standard.bool(forKey: "echoelmusic.fullVersionPurchased")
 
-        if lifetimePurchased {
-            currentTier = .lifetime
-            subscriptionStatus = .lifetime
-            return
-        }
-
-        // Check StoreKit for active subscriptions
-        // In production, use StoreKit 2 async APIs
-        currentTier = .free
-        subscriptionStatus = .notSubscribed
-    }
-
-    // MARK: - Start Free Trial
-
-    func startFreeTrial(tier: PricingTier) {
-        guard tier != .free && tier != .lifetime else { return }
-        guard activeTrial == nil else {
-            log.business("⚠️ Trial already active", level: .warning)
-            return
-        }
-
-        let startDate = Date()
-        let endDate = Calendar.current.date(byAdding: .day, value: 14, to: startDate)!
-
-        activeTrial = TrialInfo(
-            tier: tier,
-            durationDays: 14,
-            startDate: startDate,
-            endDate: endDate,
-            features: tier.features
-        )
-
-        currentTier = tier
-
-        log.business("🎉 Free trial started: \(tier.rawValue)")
-        log.business("📅 Trial ends: \(endDate.formatted(date: .long, time: .omitted))")
-        log.business("💡 No credit card required. No auto-renewal.")
-    }
-
-    // MARK: - Purchase Subscription
-
-    func purchaseSubscription(tier: PricingTier, billingPeriod: BillingPeriod) async throws {
-        guard tier != .free else { return }
-
-        // In production, use StoreKit 2
-        log.business("💳 Purchasing: \(tier.rawValue) (\(billingPeriod.rawValue))")
-
-        // Simulate purchase
-        try await Task.sleep(nanoseconds: 1_000_000_000)  // 1 second
-
-        currentTier = tier
-
-        if tier == .lifetime {
-            lifetimePurchased = true
-            UserDefaults.standard.set(true, forKey: "lifetimePurchased")
-            subscriptionStatus = .lifetime
-            log.business("✅ Lifetime purchase complete!")
+        if isFullVersionPurchased {
+            purchaseStatus = .purchased
         } else {
-            let renewalDate = Calendar.current.date(
-                byAdding: billingPeriod == .monthly ? .month : .year,
-                value: 1,
-                to: Date()
-            )!
-            subscriptionStatus = .active(tier: tier, renewalDate: renewalDate)
-            log.business("✅ Subscription active until: \(renewalDate.formatted(date: .long, time: .omitted))")
+            purchaseStatus = .notPurchased
         }
     }
 
-    enum BillingPeriod: String {
-        case monthly = "Monthly"
-        case annual = "Annual"
-    }
+    // MARK: - Purchase Full Version
 
-    // MARK: - Cancel Subscription
+    func purchaseFullVersion() async throws {
+        log.business("💳 Purchasing Echoelmusic Full Version...")
 
-    func cancelSubscription() async throws {
-        guard case .active(let tier, let renewalDate) = subscriptionStatus else {
-            log.business("⚠️ No active subscription to cancel", level: .warning)
-            return
-        }
+        // In production, use StoreKitManager
+        // This is a placeholder for the actual StoreKit 2 integration
+        try await Task.sleep(nanoseconds: 1_000_000_000)  // 1 second simulation
 
-        // In production, use StoreKit 2 to cancel
-        log.business("🚫 Cancelling subscription...")
+        isFullVersionPurchased = true
+        UserDefaults.standard.set(true, forKey: "echoelmusic.fullVersionPurchased")
+        purchaseStatus = .purchased
 
-        // No retention tactics, no "are you sure?" spam
-        subscriptionStatus = .cancelled(expiresOn: renewalDate)
-
-        log.business("✅ Subscription cancelled")
-        log.business("📅 Access continues until: \(renewalDate.formatted(date: .long, time: .omitted))")
-        log.business("💾 Your data remains accessible. Export anytime.")
+        log.business("✅ Purchase complete! All features unlocked forever.")
+        log.business("👨‍👩‍👧‍👦 Family Sharing: Up to 6 family members can now use the app.")
     }
 
     // MARK: - Restore Purchases
@@ -342,134 +189,80 @@ class FairBusinessModel: ObservableObject {
         // In production, use StoreKit 2 to restore
         try await Task.sleep(nanoseconds: 500_000_000)
 
-        if lifetimePurchased {
-            currentTier = .lifetime
-            subscriptionStatus = .lifetime
-            log.business("✅ Lifetime purchase restored")
+        // Check with StoreKit for existing purchases
+        if isFullVersionPurchased {
+            purchaseStatus = .purchased
+            log.business("✅ Purchase restored!")
         } else {
             log.business("ℹ️ No purchases to restore")
         }
     }
 
-    // MARK: - Apply Discount
+    // MARK: - Apply Accessibility Discount
 
-    func applyDiscount(_ discount: Discount, verificationToken: String? = nil) -> Bool {
-        // In production, verify token with backend
-        guard discount.verificationRequired else { return false }
-
-        log.business("🎓 Discount applied: \(discount.rawValue)")
-
-        if discount == .accessibility {
-            currentTier = .professional
-            subscriptionStatus = .lifetime  // Free forever
-            log.business("♿️ Accessibility tier activated. Free Professional forever.")
-        }
-
-        return true
+    func applyAccessibilityDiscount() {
+        log.business("♿️ Accessibility discount applied")
+        isFullVersionPurchased = true
+        UserDefaults.standard.set(true, forKey: "echoelmusic.fullVersionPurchased")
+        purchaseStatus = .purchased
+        log.business("✅ Full version activated for free. Thank you for being part of our community.")
     }
 
-    // MARK: - Pricing Comparison
+    // MARK: - Pricing Summary
 
-    func getPricingComparison() -> String {
-        var comparison = """
-        💰 ECHOELMUSIC PRICING - Transparent & Fair
+    func getPricingSummary() -> String {
+        return """
+        💰 ECHOELMUSIC - SIMPLE, FAIR PRICING
 
-        """
+        ONE-TIME PURCHASE: \(PricingInfo.displayPrice)
 
-        for tier in PricingTier.allCases {
-            comparison += "\n\(tier.displayName.uppercased())\n"
+        \(PricingInfo.description)
 
-            if tier == .free {
-                comparison += "Price: FREE (forever)\n"
-            } else if tier == .lifetime {
-                comparison += "Price: $\(tier.monthlyPrice) (one-time payment)\n"
-            } else {
-                comparison += "Price: $\(tier.monthlyPrice)/month or $\(tier.annualPrice)/year\n"
-            }
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-            comparison += "\(tier.description)\n"
-            comparison += "\nFeatures:\n"
+        WHAT'S INCLUDED:
 
-            for feature in tier.features {
-                let symbol = feature.included ? "✓" : "✗"
-                comparison += "\(symbol) \(feature.name)\n"
-            }
+        \(PricingInfo.features.map { "✓ \($0.name)" }.joined(separator: "\n"))
 
-            comparison += "\n" + String(repeating: "-", count: 50) + "\n"
-        }
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-        comparison += """
+        💡 VALUE COMPARISON:
 
-        🎓 DISCOUNTS AVAILABLE:
-        • Students: 50% off
-        • Educators: 60% off
-        • Non-Profits: 40% off
-        • Accessibility: FREE Professional tier
+        Echoelmusic: $29.99 (one-time, forever)
+
+        Similar Apps (Subscriptions):
+        • $9.99-29.99/month
+        • $120-360/year
+        • $360-1,080 over 3 years
+
+        YOUR SAVINGS:
+        • First year: Save $90-330
+        • Over 3 years: Save $330-1,050
+
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         🤝 ETHICAL COMMITMENTS:
+
+        \(EthicalCommitments.commitments.joined(separator: "\n"))
+
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        ♿️ ACCESSIBILITY:
+
+        Free for users with disabilities.
+        No verification required. No questions asked.
+        Contact: michaelterbuyken@gmail.com
+
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        Purchase Status: \(purchaseStatus == .purchased ? "✅ Full Version" : "Not Purchased")
         """
-
-        for commitment in EthicalCommitments.commitments {
-            comparison += "\n\(commitment)"
-        }
-
-        comparison += """
-
-
-        ⏱️ FREE TRIAL:
-        • 14 days, any paid tier
-        • No credit card required
-        • No auto-renewal
-        • Full access to all features
-
-        ❓ WHY THESE PRICES?
-        • Sustainable business model
-        • Fair compensation for development
-        • No investor pressure for unsustainable growth
-        • Long-term viability > short-term profit
-
-        🌍 COMMITMENT TO ACCESS:
-        We believe creativity and wellbeing tools should be accessible.
-        That's why our free tier is genuinely useful, not a "freemium trap."
-        If our paid plans are still out of reach, contact us: michaelterbuyken@gmail.com
-
-        Current Tier: \(currentTier.rawValue)
-        """
-
-        return comparison
     }
 
-    // MARK: - Cancellation Flow (No Dark Patterns)
+    // MARK: - Legacy Support
 
-    func getCancellationInfo() -> String {
-        guard case .active(let tier, let renewalDate) = subscriptionStatus else {
-            return "No active subscription"
-        }
-
-        return """
-        🚫 CANCEL SUBSCRIPTION
-
-        We're sorry to see you go! Here's what happens:
-
-        ✓ Your subscription continues until \(renewalDate.formatted(date: .long, time: .omitted))
-        ✓ You keep all features until expiration
-        ✓ No partial refunds (sorry, industry standard)
-        ✓ Your data remains accessible
-        ✓ You can export all data for free (always)
-        ✓ You can resubscribe anytime
-
-        Why are you leaving? (Optional feedback)
-        [ ] Too expensive
-        [ ] Not using enough
-        [ ] Missing features
-        [ ] Found alternative
-        [ ] Other: ____________
-
-        Your honest feedback helps us improve!
-
-        [Cancel My Subscription] [Keep Subscription]
-
-        No retention tactics. No guilt trips. Your choice.
-        """
+    @available(*, deprecated, message: "Use getPricingSummary() instead")
+    func getPricingComparison() -> String {
+        return getPricingSummary()
     }
 }
