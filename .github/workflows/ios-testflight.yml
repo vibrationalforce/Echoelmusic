@@ -74,7 +74,7 @@ jobs:
   pr-check:
     name: "PR Build Check"
     runs-on: macos-14
-    if: github.event_name == 'pull_request'
+    if: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 30
 
     steps:
@@ -98,7 +98,12 @@ jobs:
 
       - name: "Install XcodeGen"
         run: |
-          brew install xcodegen || true
+          if ! command -v xcodegen &> /dev/null; then
+            echo "Installing XcodeGen via Homebrew..."
+            brew install xcodegen
+          else
+            echo "XcodeGen already installed"
+          fi
           xcodegen --version
 
       - name: "Cache Swift Packages"
@@ -162,7 +167,7 @@ jobs:
   deploy-ios:
     name: "Deploy iOS + AUv3"
     runs-on: macos-14
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'ios' || github.event.inputs.platforms == 'ios-macos') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "ios", "ios-macos"]'), github.event.inputs.platforms) }}
     timeout-minutes: 60
 
     steps:
@@ -256,7 +261,7 @@ jobs:
   deploy-macos:
     name: "Deploy macOS + AUv3"
     runs-on: macos-14
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'macos' || github.event.inputs.platforms == 'ios-macos') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "macos", "ios-macos"]'), github.event.inputs.platforms) }}
     timeout-minutes: 60
 
     steps:
@@ -347,7 +352,7 @@ jobs:
   deploy-watchos:
     name: "Deploy watchOS"
     runs-on: macos-14
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'watchos') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "watchos"]'), github.event.inputs.platforms) }}
     timeout-minutes: 60
 
     steps:
@@ -414,7 +419,7 @@ jobs:
   deploy-tvos:
     name: "Deploy tvOS"
     runs-on: macos-14
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'tvos') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "tvos"]'), github.event.inputs.platforms) }}
     timeout-minutes: 60
 
     steps:
@@ -481,7 +486,7 @@ jobs:
   deploy-visionos:
     name: "Deploy visionOS"
     runs-on: macos-14
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'visionos') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "visionos"]'), github.event.inputs.platforms) }}
     timeout-minutes: 60
 
     steps:
@@ -548,7 +553,7 @@ jobs:
   summary:
     name: "Deployment Summary"
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' && always() }}
+    if: ${{ always() && github.event_name == 'workflow_dispatch' }}
     needs: [deploy-ios, deploy-macos, deploy-watchos, deploy-tvos, deploy-visionos]
 
     steps:
