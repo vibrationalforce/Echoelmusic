@@ -106,29 +106,13 @@ jobs:
 
       - name: Setup App Store Connect API Key
         if: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY != '' }}
-        env:
-          ASC_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-        run: |
-          mkdir -p ~/.appstoreconnect/private_keys
-          KEY_FILE=~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          # Try base64 decode first, if fails use raw content
-          if echo "$ASC_KEY" | base64 -d > "$KEY_FILE" 2>/dev/null && grep -q "PRIVATE KEY" "$KEY_FILE"; then
-            echo "✅ App Store Connect API key configured (base64)"
-          else
-            # Raw .p8 content (not base64 encoded)
-            echo "$ASC_KEY" > "$KEY_FILE"
-            echo "✅ App Store Connect API key configured (raw)"
-          fi
-          # Verify key file
-          if grep -q "BEGIN PRIVATE KEY" "$KEY_FILE"; then
-            echo "✅ Key file valid"
-          else
-            echo "⚠️ Warning: Key file may be invalid"
-          fi
+        uses: ./.github/actions/setup-asc-api-key
+        with:
+          key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          key-content: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
+      - name: Setup XcodeGen
+        uses: ./.github/actions/setup-xcodegen
 
       - name: Generate Xcode Project
         run: xcodegen generate
@@ -258,22 +242,13 @@ jobs:
 
       - name: Setup App Store Connect API Key
         if: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY != '' }}
-        env:
-          ASC_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-        run: |
-          mkdir -p ~/.appstoreconnect/private_keys
-          KEY_FILE=~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          # Try base64 decode first, if fails use raw content
-          if echo "$ASC_KEY" | base64 -d > "$KEY_FILE" 2>/dev/null && grep -q "PRIVATE KEY" "$KEY_FILE"; then
-            echo "✅ App Store Connect API key configured (base64)"
-          else
-            echo "$ASC_KEY" > "$KEY_FILE"
-            echo "✅ App Store Connect API key configured (raw)"
-          fi
+        uses: ./.github/actions/setup-asc-api-key
+        with:
+          key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          key-content: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
+      - name: Setup XcodeGen
+        uses: ./.github/actions/setup-xcodegen
 
       - name: Generate Xcode Project
         run: xcodegen generate

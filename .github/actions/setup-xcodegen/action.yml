@@ -1,0 +1,39 @@
+# =============================================================================
+# REUSABLE ACTION: Setup XcodeGen with Caching
+# =============================================================================
+# Installs XcodeGen via direct download with caching for faster CI runs.
+# Saves ~30-40 seconds per job compared to brew install.
+# =============================================================================
+
+name: 'Setup XcodeGen'
+description: 'Install XcodeGen with caching for faster CI builds'
+
+inputs:
+  version:
+    description: 'XcodeGen version to install'
+    required: false
+    default: '2.38.0'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Cache XcodeGen
+      id: cache-xcodegen
+      uses: actions/cache@v4
+      with:
+        path: /usr/local/bin/xcodegen
+        key: xcodegen-${{ runner.os }}-${{ inputs.version }}
+
+    - name: Install XcodeGen
+      if: steps.cache-xcodegen.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        echo "Installing XcodeGen ${{ inputs.version }}..."
+        curl -sL "https://github.com/yonaskolb/XcodeGen/releases/download/${{ inputs.version }}/xcodegen.zip" -o /tmp/xcodegen.zip
+        unzip -o /tmp/xcodegen.zip -d /tmp
+        sudo mv /tmp/xcodegen/bin/xcodegen /usr/local/bin/
+        rm -rf /tmp/xcodegen /tmp/xcodegen.zip
+
+    - name: Verify XcodeGen
+      shell: bash
+      run: xcodegen --version

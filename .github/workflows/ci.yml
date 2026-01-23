@@ -99,14 +99,16 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
+          ~/.swiftpm
           .build
           ~/Library/Developer/Xcode/DerivedData
-        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}-${{ matrix.name }}
         restore-keys: |
+          ${{ runner.os }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}-
           ${{ runner.os }}-spm-
 
-    - name: Install XcodeGen
-      run: brew install xcodegen
+    - name: Setup XcodeGen
+      uses: ./.github/actions/setup-xcodegen
 
     - name: Generate Xcode Project
       run: xcodegen generate
@@ -186,14 +188,16 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
+          ~/.swiftpm
           .build
           ~/Library/Developer/Xcode/DerivedData
-        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        key: ${{ runner.os }}-spm-macos-${{ hashFiles('Package.swift', 'Package.resolved') }}
         restore-keys: |
+          ${{ runner.os }}-spm-macos-
           ${{ runner.os }}-spm-
 
-    - name: Install XcodeGen
-      run: brew install xcodegen
+    - name: Setup XcodeGen
+      uses: ./.github/actions/setup-xcodegen
 
     - name: Generate Xcode Project
       run: xcodegen generate
@@ -236,8 +240,8 @@ jobs:
       with:
         xcode-version: ${{ env.XCODE_VERSION }}
 
-    - name: Install XcodeGen
-      run: brew install xcodegen
+    - name: Setup XcodeGen
+      uses: ./.github/actions/setup-xcodegen
 
     - name: Generate Xcode Project
       run: xcodegen generate
@@ -304,14 +308,16 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
+          ~/.swiftpm
           .build
           ~/Library/Developer/Xcode/DerivedData
-        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        key: ${{ runner.os }}-spm-archive-${{ hashFiles('Package.swift', 'Package.resolved') }}
         restore-keys: |
+          ${{ runner.os }}-spm-archive-
           ${{ runner.os }}-spm-
 
-    - name: Install XcodeGen
-      run: brew install xcodegen
+    - name: Setup XcodeGen
+      uses: ./.github/actions/setup-xcodegen
 
     - name: Generate Xcode Project
       run: xcodegen generate
