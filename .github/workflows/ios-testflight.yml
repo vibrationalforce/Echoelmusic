@@ -2,7 +2,7 @@
 # ECHOELMUSIC - iOS TESTFLIGHT (Primary Deployment Workflow)
 # =============================================================================
 # PR Build Check + Manual TestFlight Deploy
-# Version: 1.2.0 - Phase 10000 ULTIMATE MODE
+# Version: 1.2.1 - Phase 10000 ULTIMATE MODE (Re-enabled)
 # =============================================================================
 
 name: "📱 iOS TestFlight"
