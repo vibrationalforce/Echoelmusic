@@ -61,8 +61,18 @@ runs:
         echo "Extracting..."
         unzip -o /tmp/xcodegen.zip -d /tmp
 
+        # Find the extracted directory (could be XcodeGen or xcodegen)
+        XCODEGEN_DIR=$(find /tmp -maxdepth 1 -type d -iname "xcodegen*" | head -1)
+        echo "Found XcodeGen directory: $XCODEGEN_DIR"
+
+        if [ -z "$XCODEGEN_DIR" ] || [ ! -f "$XCODEGEN_DIR/bin/xcodegen" ]; then
+          echo "ERROR: Could not find xcodegen binary in extracted files"
+          ls -la /tmp/
+          exit 1
+        fi
+
         # Move to cache location
-        cp /tmp/xcodegen/bin/xcodegen ~/xcodegen-bin/
+        cp "$XCODEGEN_DIR/bin/xcodegen" ~/xcodegen-bin/
         chmod +x ~/xcodegen-bin/xcodegen
 
         # Cleanup
