@@ -39,7 +39,7 @@ targets:
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
-      - path: PrivacyInfo.xcprivacy
+      - path: Resources/PrivacyInfo.xcprivacy
         type: file
 
     # Info.plist configuration (inline)
@@ -110,9 +110,11 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: Echoelmusic.entitlements
 
-        # Code signing (for CI/CD automatic signing)
-        CODE_SIGN_STYLE: Automatic
-        CODE_SIGN_IDENTITY: "Apple Development"
+        # Code signing (Manual for CI/CD compatibility)
+        # CI sets DEVELOPMENT_TEAM via sed substitution
+        # Fastlane overrides CODE_SIGN_IDENTITY for distribution
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Apple Distribution"
         DEVELOPMENT_TEAM: ""
 
         # Build settings
@@ -159,9 +161,9 @@ targets:
         INFOPLIST_FILE: Sources/EchoelmusicAUv3/Info.plist
         GENERATE_INFOPLIST_FILE: NO
 
-        # Code signing
-        CODE_SIGN_STYLE: Automatic
-        CODE_SIGN_IDENTITY: "Apple Development"
+        # Code signing (Manual for CI/CD compatibility)
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Apple Distribution"
         CODE_SIGN_ENTITLEMENTS: Sources/EchoelmusicAUv3/EchoelmusicAUv3.entitlements
 
         # Build settings
