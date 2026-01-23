@@ -319,7 +319,8 @@ targets:
       base:
         PRODUCT_NAME: EchoelmusicAUv3
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.mac.auv3
-        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Sources/EchoelmusicAUv3/Info-macOS.plist
+        GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
         CODE_SIGN_ENTITLEMENTS: EchoelmusicAUv3.entitlements
