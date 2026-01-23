@@ -1,6 +1,8 @@
 // Echoelmusic Android App
 // Updated: January 2026 - CI-Compatible Stable Versions
-// Compose BOM 2024.02.00, API 34, Kotlin 1.9.22
+// Compose BOM 2024.10.00, API 34, Kotlin 1.9.22
+
+import java.io.File
 
 plugins {
     id("com.android.application")
@@ -10,6 +12,24 @@ plugins {
 android {
     namespace = "com.echoelmusic.app"
     compileSdk = 34  // Android 14 (API 34) - Stable in CI
+
+    signingConfigs {
+        create("release") {
+            // Use environment variables for CI/CD (GitHub Secrets)
+            // For local builds, use debug key or create local.properties
+            val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH") ?: ""
+            val keystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD") ?: ""
+            val keyAlias = System.getenv("ANDROID_KEY_ALIAS") ?: ""
+            val keyPassword = System.getenv("ANDROID_KEY_PASSWORD") ?: ""
+
+            if (keystorePath.isNotEmpty() && File(keystorePath).exists()) {
+                storeFile = File(keystorePath)
+                storePassword = keystorePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "com.echoelmusic.app"
@@ -48,7 +68,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug") // Debug key for easy install
+            // Use release signing config if available (CI/CD), fallback to debug for local builds
+            val releaseConfig = signingConfigs.findByName("release")
+            signingConfig = if (releaseConfig?.storeFile != null) {
+                releaseConfig
+            } else {
+                signingConfigs.getByName("debug") // Fallback for local development
+            }
         }
         debug {
             isDebuggable = true
@@ -97,9 +123,9 @@ android {
 
 dependencies {
     // ═══════════════════════════════════════════════════════════════
-    // Compose BOM - Stable February 2024
+    // Compose BOM - Stable October 2024 (Latest stable with Kotlin 1.9.22)
     // ═══════════════════════════════════════════════════════════════
-    val composeBom = platform("androidx.compose:compose-bom:2024.02.00")
+    val composeBom = platform("androidx.compose:compose-bom:2024.10.00")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 

@@ -16,6 +16,8 @@ class AIComposer: ObservableObject {
     @Published var generatedDrumPattern: [DrumHit] = []
     @Published var currentStyle: MusicStyle = .balanced
     @Published var modelStatus: ModelStatus = .notLoaded
+    @Published var usingFallbackMode: Bool = false
+    @Published var lastError: AIComposerError?
 
     // MARK: - Model Status
 
@@ -23,7 +25,30 @@ class AIComposer: ObservableObject {
         case notLoaded = "Not Loaded"
         case loading = "Loading..."
         case ready = "Ready"
+        case readyWithFallback = "Ready (Algorithmic)"
         case error = "Error"
+    }
+
+    // MARK: - Error Types
+
+    enum AIComposerError: Error, LocalizedError {
+        case modelNotFound(String)
+        case modelLoadFailed(String, Error)
+        case predictionFailed(Error)
+        case invalidInput(String)
+
+        var errorDescription: String? {
+            switch self {
+            case .modelNotFound(let name):
+                return "Model '\(name)' not found - using algorithmic generation"
+            case .modelLoadFailed(let name, let error):
+                return "Failed to load '\(name)': \(error.localizedDescription)"
+            case .predictionFailed(let error):
+                return "Prediction failed: \(error.localizedDescription)"
+            case .invalidInput(let message):
+                return "Invalid input: \(message)"
+            }
+        }
     }
 
     // MARK: - CoreML Models
@@ -65,30 +90,67 @@ class AIComposer: ObservableObject {
 
     private func loadModels() {
         modelStatus = .loading
+        usingFallbackMode = false
+        lastError = nil
 
         Task {
+            var loadedModels = 0
+            var errors: [AIComposerError] = []
+
+            // Attempt to load CoreML models from bundle
             do {
-                // Attempt to load CoreML models from bundle
                 if let melodyURL = Bundle.main.url(forResource: "MelodyGenerator", withExtension: "mlmodelc") {
                     melodyModel = try MLModel(contentsOf: melodyURL)
-                    log.audio("✅ AIComposer: Melody model loaded")
+                    loadedModels += 1
+                    log.audio("AIComposer: Melody model loaded")
+                } else {
+                    errors.append(.modelNotFound("MelodyGenerator"))
                 }
+            } catch {
+                errors.append(.modelLoadFailed("MelodyGenerator", error))
+                log.audio("AIComposer: Failed to load melody model - \(error.localizedDescription)")
+            }
 
+            do {
                 if let chordURL = Bundle.main.url(forResource: "ChordPredictor", withExtension: "mlmodelc") {
                     chordModel = try MLModel(contentsOf: chordURL)
-                    log.audio("✅ AIComposer: Chord model loaded")
+                    loadedModels += 1
+                    log.audio("AIComposer: Chord model loaded")
+                } else {
+                    errors.append(.modelNotFound("ChordPredictor"))
                 }
+            } catch {
+                errors.append(.modelLoadFailed("ChordPredictor", error))
+                log.audio("AIComposer: Failed to load chord model - \(error.localizedDescription)")
+            }
 
+            do {
                 if let drumURL = Bundle.main.url(forResource: "DrumPatternGenerator", withExtension: "mlmodelc") {
                     drumModel = try MLModel(contentsOf: drumURL)
-                    log.audio("✅ AIComposer: Drum model loaded")
+                    loadedModels += 1
+                    log.audio("AIComposer: Drum model loaded")
+                } else {
+                    errors.append(.modelNotFound("DrumPatternGenerator"))
                 }
-
-                modelStatus = .ready
             } catch {
-                // Models not available - use algorithmic fallback
-                log.audio("ℹ️ AIComposer: CoreML models not found, using algorithmic generation")
+                errors.append(.modelLoadFailed("DrumPatternGenerator", error))
+                log.audio("AIComposer: Failed to load drum model - \(error.localizedDescription)")
+            }
+
+            // Update status based on loaded models
+            if loadedModels == 3 {
                 modelStatus = .ready
+                log.audio("AIComposer: All CoreML models loaded successfully")
+            } else if loadedModels > 0 {
+                modelStatus = .readyWithFallback
+                usingFallbackMode = true
+                log.audio("AIComposer: Partial model load (\(loadedModels)/3), using hybrid mode")
+            } else {
+                // No models loaded - use pure algorithmic fallback
+                modelStatus = .readyWithFallback
+                usingFallbackMode = true
+                lastError = errors.first
+                log.audio("AIComposer: No CoreML models available, using algorithmic generation")
             }
         }
     }

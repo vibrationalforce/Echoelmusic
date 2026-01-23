@@ -203,10 +203,14 @@ endif()
 message(STATUS "Plugin Formats: ${FORMATS}")
 
 # ===========================
-# Echoelmusic Plugin
+# Echoelmusic Plugin (Legacy JUCE Code - UNREACHABLE)
 # ===========================
+# NOTE: This entire block is DEAD CODE and will never execute.
+# USE_JUCE=ON triggers a FATAL_ERROR above.
+# This code is preserved for reference only and should be ignored.
+# For desktop plugins, use iPlug2: cmake .. -DUSE_IPLUG2=ON
 
-# Only build plugin if JUCE is enabled
+# Only build plugin if JUCE is enabled (never true due to FATAL_ERROR)
 if(USE_JUCE)
 
 juce_add_plugin(Echoelmusic

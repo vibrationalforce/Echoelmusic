@@ -1,0 +1,90 @@
+# =============================================================================
+# ECHOELMUSIC - SNAPFILE CONFIGURATION
+# Version: 1.0.0 - Phase 10000 ULTIMATE MODE
+# Screenshot automation for App Store
+# =============================================================================
+
+# Devices to capture screenshots on
+devices([
+  # iPhone - Required for App Store
+  "iPhone 16 Pro Max",           # 6.9" Display (2868x1320)
+  "iPhone 16 Pro",               # 6.3" Display (2556x1179)
+  "iPhone SE (3rd generation)",  # 4.7" Display (1242x2208)
+
+  # iPad - Required for Universal apps
+  "iPad Pro 13-inch (M4)",       # 12.9" Display (2048x2732)
+  "iPad Pro 11-inch (M4)"        # 11" Display (1668x2388)
+])
+
+# Languages for localization (12 supported)
+languages([
+  "en-US",     # English (US) - Primary
+  "de-DE",     # German
+  "ja",        # Japanese
+  "es-ES",     # Spanish (Spain)
+  "fr-FR",     # French
+  "zh-Hans",   # Chinese (Simplified)
+  "ko",        # Korean
+  "pt-BR",     # Portuguese (Brazil)
+  "it",        # Italian
+  "ru",        # Russian
+  "ar",        # Arabic (RTL)
+  "hi"         # Hindi
+])
+
+# Xcode scheme for screenshot tests
+scheme("EchoelmusicScreenshots")
+
+# Output directory
+output_directory("./fastlane/screenshots")
+
+# Clear previous screenshots before capture
+clear_previous_screenshots(true)
+
+# Run simulators concurrently for faster capture
+concurrent_simulators(true)
+
+# Override status bar (time, battery, signal)
+override_status_bar(true)
+
+# Status bar time override
+override_status_bar_arguments("--time 09:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100")
+
+# Don't reinstall app between test runs (faster)
+reinstall_app(false)
+
+# Continue even if one screenshot fails
+stop_after_first_error(false)
+
+# Dark mode support
+dark_mode(false)
+
+# Skip waiting for animations to finish
+disable_slide_to_type(true)
+
+# Derived data path for faster builds
+derived_data_path("./build/DerivedData")
+
+# Test without building (if already built)
+# test_without_building(true)
+
+# iOS version (optional - uses latest by default)
+# ios_version("18.0")
+
+# =============================================================================
+# SCREENSHOT NAMING
+# =============================================================================
+# Screenshots are named: {device}_{language}_{screenshot_name}.png
+# Example: iPhone16ProMax_en-US_01_BioReactiveAudio.png
+
+# =============================================================================
+# WATCHOS SCREENSHOTS (Separate workflow)
+# =============================================================================
+# Apple Watch screenshots require WatchKit app scheme
+# Use: fastlane screenshots_watch
+
+# =============================================================================
+# VISIONOS SCREENSHOTS (Separate workflow)
+# =============================================================================
+# Vision Pro screenshots require visionOS scheme
+# Use: fastlane screenshots_visionos
