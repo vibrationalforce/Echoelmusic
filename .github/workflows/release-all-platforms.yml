@@ -65,7 +65,8 @@ jobs:
         run: brew install xcodegen
 
       - name: Set Team ID
-        run: sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
+        run: |
+          sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "${{ secrets.APPLE_TEAM_ID }}"/' project.yml
 
       - name: Generate Xcode Project
         run: xcodegen generate
