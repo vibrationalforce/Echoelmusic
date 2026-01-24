@@ -1,7 +1,7 @@
 # =============================================================================
 # ECHOELMUSIC - MULTI-PLATFORM TESTFLIGHT DEPLOYMENT
 # =============================================================================
-# Version: 3.2.0 - ULTIMATE FIXED
+# Version: 3.3.0 - FIXED CONDITIONS WITH EXPLICIT SYNTAX
 #
 # ARCHITECTURE:
 # - pull_request events -> ONLY pr-check job runs (simulator build)
@@ -53,12 +53,33 @@ env:
 
 jobs:
   # ===========================================================================
+  # DEBUG - Always runs first to show event info
+  # ===========================================================================
+  debug:
+    name: "Debug Event"
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: "Show Event Info"
+        run: |
+          echo "=============================================="
+          echo "  EVENT DEBUG INFO"
+          echo "=============================================="
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "Is PR: ${{ github.event_name == 'pull_request' }}"
+          echo "Is Dispatch: ${{ github.event_name == 'workflow_dispatch' }}"
+          echo "PR Number: ${{ github.event.pull_request.number || 'N/A' }}"
+          echo "Platforms: ${{ github.event.inputs.platforms || 'N/A' }}"
+          echo "=============================================="
+
+  # ===========================================================================
   # PR BUILD CHECK - Runs ONLY for pull_request events
   # ===========================================================================
   pr-check:
     name: "PR Build Check"
     runs-on: macos-14
-    if: github.event_name == 'pull_request'
+    needs: debug
+    if: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 30
 
     steps:
@@ -119,8 +140,8 @@ jobs:
           echo "## PR Build Check Passed" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| iOS Simulator | OK |" >> $GITHUB_STEP_SUMMARY
-          echo "| macOS | OK |" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS Simulator | ✅ OK |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS | ✅ OK |" >> $GITHUB_STEP_SUMMARY
 
   # ===========================================================================
   # PREFLIGHT - Runs ONLY for workflow_dispatch events
@@ -128,7 +149,8 @@ jobs:
   preflight:
     name: "Pre-flight Check"
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
+    needs: debug
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 5
     outputs:
       ready: ${{ steps.validate.outputs.ready }}
@@ -178,7 +200,7 @@ jobs:
 
       - name: "Summary"
         run: |
-          echo "## Pre-flight Passed" >> $GITHUB_STEP_SUMMARY
+          echo "## Pre-flight Passed ✅" >> $GITHUB_STEP_SUMMARY
           echo "- Platforms: ${{ github.event.inputs.platforms }}" >> $GITHUB_STEP_SUMMARY
           echo "- Build: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
 
@@ -189,7 +211,7 @@ jobs:
     name: "Deploy iOS"
     runs-on: macos-14
     needs: preflight
-    if: github.event_name == 'workflow_dispatch' && contains('all ios ios-macos', github.event.inputs.platforms)
+    if: ${{ github.event_name == 'workflow_dispatch' && contains('all ios ios-macos', github.event.inputs.platforms) }}
     timeout-minutes: 60
 
     steps:
@@ -239,7 +261,7 @@ jobs:
         run: security delete-keychain ci.keychain-db 2>/dev/null || true
 
       - name: "Summary"
-        run: echo "## iOS deployed to TestFlight (Build ${{ github.run_number }})" >> $GITHUB_STEP_SUMMARY
+        run: echo "## iOS deployed to TestFlight ✅ (Build ${{ github.run_number }})" >> $GITHUB_STEP_SUMMARY
 
   # ===========================================================================
   # macOS DEPLOYMENT
@@ -248,7 +270,7 @@ jobs:
     name: "Deploy macOS"
     runs-on: macos-14
     needs: preflight
-    if: github.event_name == 'workflow_dispatch' && contains('all macos ios-macos', github.event.inputs.platforms)
+    if: ${{ github.event_name == 'workflow_dispatch' && contains('all macos ios-macos', github.event.inputs.platforms) }}
     timeout-minutes: 60
 
     steps:
@@ -298,7 +320,7 @@ jobs:
         run: security delete-keychain ci_mac.keychain-db 2>/dev/null || true
 
       - name: "Summary"
-        run: echo "## macOS deployed to TestFlight (Build ${{ github.run_number }})" >> $GITHUB_STEP_SUMMARY
+        run: echo "## macOS deployed to TestFlight ✅ (Build ${{ github.run_number }})" >> $GITHUB_STEP_SUMMARY
 
   # ===========================================================================
   # watchOS DEPLOYMENT
@@ -307,7 +329,7 @@ jobs:
     name: "Deploy watchOS"
     runs-on: macos-14
     needs: preflight
-    if: github.event_name == 'workflow_dispatch' && contains('all watchos', github.event.inputs.platforms)
+    if: ${{ github.event_name == 'workflow_dispatch' && contains('all watchos', github.event.inputs.platforms) }}
     timeout-minutes: 60
 
     steps:
@@ -347,7 +369,7 @@ jobs:
     name: "Deploy tvOS"
     runs-on: macos-14
     needs: preflight
-    if: github.event_name == 'workflow_dispatch' && contains('all tvos', github.event.inputs.platforms)
+    if: ${{ github.event_name == 'workflow_dispatch' && contains('all tvos', github.event.inputs.platforms) }}
     timeout-minutes: 60
 
     steps:
@@ -387,7 +409,7 @@ jobs:
     name: "Deploy visionOS"
     runs-on: macos-14
     needs: preflight
-    if: github.event_name == 'workflow_dispatch' && contains('all visionos', github.event.inputs.platforms)
+    if: ${{ github.event_name == 'workflow_dispatch' && contains('all visionos', github.event.inputs.platforms) }}
     timeout-minutes: 60
 
     steps:
@@ -426,13 +448,13 @@ jobs:
   summary:
     name: "Summary"
     runs-on: ubuntu-latest
-    if: always() && github.event_name == 'workflow_dispatch'
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' }}
     needs: [preflight, deploy-ios, deploy-macos, deploy-watchos, deploy-tvos, deploy-visionos]
 
     steps:
       - name: "Generate"
         run: |
-          echo "# TestFlight Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "# TestFlight Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
