@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Echoelmusic</string>
+    <string name="app_description">Био-реактивная аудиовизуальная платформа</string>
+
+    <!-- Health Connect -->
+    <string name="health_connect_rationale">Echoelmusic использует данные о частоте сердечных сокращений и ВСР для био-реактивных аудио функций. Эти данные обрабатываются локально и никогда не загружаются.</string>
+
+    <!-- Audio -->
+    <string name="audio_service_title">Echoelmusic Аудио</string>
+    <string name="audio_service_text">Аудио движок работает</string>
+
+    <!-- Screens -->
+    <string name="synth_title">Полифонический синтезатор</string>
+    <string name="tr808_title">TR-808 Бас</string>
+    <string name="bio_title">Био-реактивное управление</string>
+    <string name="ai_title">Квантовая ИИ генерация</string>
+    <string name="settings_title">Настройки</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Главная</string>
+    <string name="nav_video">Видео</string>
+    <string name="nav_creative">Творчество</string>
+    <string name="nav_science">Наука</string>
+    <string name="nav_wellness">Здоровье</string>
+    <string name="nav_collaboration">Совместная работа</string>
+
+    <!-- Common Actions -->
+    <string name="action_start">Старт</string>
+    <string name="action_stop">Стоп</string>
+    <string name="action_save">Сохранить</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_confirm">Подтвердить</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_share">Поделиться</string>
+    <string name="action_help">Помощь</string>
+
+    <!-- Bio-Reactive -->
+    <string name="bio_heart_rate">Частота сердечных сокращений</string>
+    <string name="bio_hrv">ВСР</string>
+    <string name="bio_coherence">Когерентность</string>
+    <string name="bio_breathing">Дыхание</string>
+    <string name="bio_stress">Стресс</string>
+    <string name="bio_relaxation">Расслабление</string>
+    <string name="bio_meditation">Медитация</string>
+
+    <!-- Wellness -->
+    <string name="wellness_center">Центр здоровья</string>
+    <string name="wellness_focus">Фокус</string>
+    <string name="wellness_disclaimer">Творческий инструмент для художественных исследований. Не является медицинским устройством.</string>
+
+    <!-- Quantum -->
+    <string name="quantum_mode">Квантовый режим</string>
+    <string name="quantum_coherence">Квантовая когерентность</string>
+    <string name="quantum_entanglement">Квантовая запутанность</string>
+    <string name="quantum_superposition">Суперпозиция</string>
+
+    <!-- Errors -->
+    <string name="error_generic">Произошла ошибка</string>
+    <string name="error_connection">Ошибка подключения</string>
+    <string name="error_permission">Требуется разрешение</string>
+</resources>

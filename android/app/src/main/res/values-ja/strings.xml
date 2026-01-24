@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Echoelmusic</string>
+    <string name="app_description">バイオリアクティブ・オーディオビジュアルプラットフォーム</string>
+
+    <!-- Health Connect -->
+    <string name="health_connect_rationale">Echoelmusicは、バイオリアクティブオーディオ機能のために心拍数とHRVデータを使用します。このデータはローカルで処理され、アップロードされることはありません。</string>
+
+    <!-- Audio -->
+    <string name="audio_service_title">Echoelmusic オーディオ</string>
+    <string name="audio_service_text">オーディオエンジン実行中</string>
+
+    <!-- Screens -->
+    <string name="synth_title">ポリフォニックシンセサイザー</string>
+    <string name="tr808_title">TR-808 ベース</string>
+    <string name="bio_title">バイオリアクティブコントロール</string>
+    <string name="ai_title">量子AI生成</string>
+    <string name="settings_title">設定</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">ホーム</string>
+    <string name="nav_video">ビデオ</string>
+    <string name="nav_creative">クリエイティブ</string>
+    <string name="nav_science">サイエンス</string>
+    <string name="nav_wellness">ウェルネス</string>
+    <string name="nav_collaboration">コラボレーション</string>
+
+    <!-- Common Actions -->
+    <string name="action_start">開始</string>
+    <string name="action_stop">停止</string>
+    <string name="action_save">保存</string>
+    <string name="action_cancel">キャンセル</string>
+    <string name="action_confirm">確認</string>
+    <string name="action_delete">削除</string>
+    <string name="action_share">共有</string>
+    <string name="action_help">ヘルプ</string>
+
+    <!-- Bio-Reactive -->
+    <string name="bio_heart_rate">心拍数</string>
+    <string name="bio_hrv">HRV</string>
+    <string name="bio_coherence">コヒーレンス</string>
+    <string name="bio_breathing">呼吸</string>
+    <string name="bio_stress">ストレス</string>
+    <string name="bio_relaxation">リラクゼーション</string>
+    <string name="bio_meditation">瞑想</string>
+
+    <!-- Wellness -->
+    <string name="wellness_center">ウェルネスセンター</string>
+    <string name="wellness_focus">フォーカス</string>
+    <string name="wellness_disclaimer">芸術的探求のためのクリエイティブツール。医療機器ではありません。</string>
+
+    <!-- Quantum -->
+    <string name="quantum_mode">量子モード</string>
+    <string name="quantum_coherence">量子コヒーレンス</string>
+    <string name="quantum_entanglement">量子もつれ</string>
+    <string name="quantum_superposition">重ね合わせ</string>
+
+    <!-- Errors -->
+    <string name="error_generic">エラーが発生しました</string>
+    <string name="error_connection">接続エラー</string>
+    <string name="error_permission">許可が必要です</string>
+</resources>

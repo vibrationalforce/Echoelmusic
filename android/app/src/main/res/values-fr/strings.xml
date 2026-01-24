@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Echoelmusic</string>
+    <string name="app_description">Plateforme Audio-Visuelle Bio-Réactive</string>
+
+    <!-- Health Connect -->
+    <string name="health_connect_rationale">Echoelmusic utilise vos données de fréquence cardiaque et VFC pour les fonctions audio bio-réactives. Ces données sont traitées localement et jamais téléchargées.</string>
+
+    <!-- Audio -->
+    <string name="audio_service_title">Echoelmusic Audio</string>
+    <string name="audio_service_text">Moteur audio en cours d\'exécution</string>
+
+    <!-- Screens -->
+    <string name="synth_title">Synthétiseur Polyphonique</string>
+    <string name="tr808_title">TR-808 Basse</string>
+    <string name="bio_title">Contrôle Bio-Réactif</string>
+    <string name="ai_title">Génération Quantum IA</string>
+    <string name="settings_title">Paramètres</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Accueil</string>
+    <string name="nav_video">Vidéo</string>
+    <string name="nav_creative">Créatif</string>
+    <string name="nav_science">Science</string>
+    <string name="nav_wellness">Bien-être</string>
+    <string name="nav_collaboration">Collaboration</string>
+
+    <!-- Common Actions -->
+    <string name="action_start">Démarrer</string>
+    <string name="action_stop">Arrêter</string>
+    <string name="action_save">Enregistrer</string>
+    <string name="action_cancel">Annuler</string>
+    <string name="action_confirm">Confirmer</string>
+    <string name="action_delete">Supprimer</string>
+    <string name="action_share">Partager</string>
+    <string name="action_help">Aide</string>
+
+    <!-- Bio-Reactive -->
+    <string name="bio_heart_rate">Fréquence cardiaque</string>
+    <string name="bio_hrv">VFC</string>
+    <string name="bio_coherence">Cohérence</string>
+    <string name="bio_breathing">Respiration</string>
+    <string name="bio_stress">Stress</string>
+    <string name="bio_relaxation">Relaxation</string>
+    <string name="bio_meditation">Méditation</string>
+
+    <!-- Wellness -->
+    <string name="wellness_center">Centre Bien-être</string>
+    <string name="wellness_focus">Concentration</string>
+    <string name="wellness_disclaimer">Outil créatif pour l\'exploration artistique. Ce n\'est pas un dispositif médical.</string>
+
+    <!-- Quantum -->
+    <string name="quantum_mode">Mode Quantum</string>
+    <string name="quantum_coherence">Cohérence Quantum</string>
+    <string name="quantum_entanglement">Intrication</string>
+    <string name="quantum_superposition">Superposition</string>
+
+    <!-- Errors -->
+    <string name="error_generic">Une erreur s\'est produite</string>
+    <string name="error_connection">Erreur de connexion</string>
+    <string name="error_permission">Permission requise</string>
+</resources>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Echoelmusic</string>
+    <string name="app_description">बायो-रिएक्टिव ऑडियो-विजुअल प्लेटफॉर्म</string>
+
+    <!-- Health Connect -->
+    <string name="health_connect_rationale">Echoelmusic बायो-रिएक्टिव ऑडियो सुविधाओं के लिए आपकी हृदय गति और HRV डेटा का उपयोग करता है। यह डेटा स्थानीय रूप से संसाधित होता है और कभी अपलोड नहीं किया जाता।</string>
+
+    <!-- Audio -->
+    <string name="audio_service_title">Echoelmusic ऑडियो</string>
+    <string name="audio_service_text">ऑडियो इंजन चल रहा है</string>
+
+    <!-- Screens -->
+    <string name="synth_title">पॉलीफोनिक सिंथेसाइज़र</string>
+    <string name="tr808_title">TR-808 बेस</string>
+    <string name="bio_title">बायो-रिएक्टिव कंट्रोल</string>
+    <string name="ai_title">क्वांटम AI जनरेशन</string>
+    <string name="settings_title">सेटिंग्स</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">होम</string>
+    <string name="nav_video">वीडियो</string>
+    <string name="nav_creative">क्रिएटिव</string>
+    <string name="nav_science">विज्ञान</string>
+    <string name="nav_wellness">वेलनेस</string>
+    <string name="nav_collaboration">सहयोग</string>
+
+    <!-- Common Actions -->
+    <string name="action_start">शुरू करें</string>
+    <string name="action_stop">रोकें</string>
+    <string name="action_save">सहेजें</string>
+    <string name="action_cancel">रद्द करें</string>
+    <string name="action_confirm">पुष्टि करें</string>
+    <string name="action_delete">हटाएं</string>
+    <string name="action_share">साझा करें</string>
+    <string name="action_help">मदद</string>
+
+    <!-- Bio-Reactive -->
+    <string name="bio_heart_rate">हृदय गति</string>
+    <string name="bio_hrv">HRV</string>
+    <string name="bio_coherence">सुसंगति</string>
+    <string name="bio_breathing">श्वास</string>
+    <string name="bio_stress">तनाव</string>
+    <string name="bio_relaxation">विश्राम</string>
+    <string name="bio_meditation">ध्यान</string>
+
+    <!-- Wellness -->
+    <string name="wellness_center">वेलनेस सेंटर</string>
+    <string name="wellness_focus">फोकस</string>
+    <string name="wellness_disclaimer">कलात्मक अन्वेषण के लिए रचनात्मक उपकरण। यह चिकित्सा उपकरण नहीं है।</string>
+
+    <!-- Quantum -->
+    <string name="quantum_mode">क्वांटम मोड</string>
+    <string name="quantum_coherence">क्वांटम सुसंगति</string>
+    <string name="quantum_entanglement">क्वांटम उलझाव</string>
+    <string name="quantum_superposition">सुपरपोजिशन</string>
+
+    <!-- Errors -->
+    <string name="error_generic">एक त्रुटि हुई</string>
+    <string name="error_connection">कनेक्शन त्रुटि</string>
+    <string name="error_permission">अनुमति आवश्यक</string>
+</resources>

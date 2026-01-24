@@ -34,24 +34,21 @@ public struct AppStoreMetadata {
     /// Primary language
     public static let primaryLanguage = "en-US"
 
-    /// Supported languages
-    /// NOTE: App Store metadata is localized for 12 languages, but in-app UI
-    /// currently defaults to English. Full runtime localization (.lproj bundles)
-    /// is planned for a future release. For now, declare English as primary.
+    /// Supported languages - All 12 languages are now fully supported
+    /// Full runtime localization available for iOS, Android, and Website
     public static let supportedLanguages: [String] = [
-        "en-US"     // English (primary - full UI support)
-        // Future localization planned for:
-        // "de-DE",    // German
-        // "ja-JP",    // Japanese
-        // "es-ES",    // Spanish
-        // "fr-FR",    // French
-        // "zh-Hans",  // Chinese (Simplified)
-        // "ko-KR",    // Korean
-        // "pt-BR",    // Portuguese (Brazil)
-        // "it-IT",    // Italian
-        // "ru-RU",    // Russian
-        // "ar-SA",    // Arabic
-        // "hi-IN"     // Hindi
+        "en-US",    // English (primary)
+        "de-DE",    // German
+        "ja-JP",    // Japanese
+        "es-ES",    // Spanish
+        "fr-FR",    // French
+        "zh-Hans",  // Chinese (Simplified)
+        "ko-KR",    // Korean
+        "pt-BR",    // Portuguese (Brazil)
+        "it-IT",    // Italian
+        "ru-RU",    // Russian
+        "ar-SA",    // Arabic (RTL)
+        "hi-IN"     // Hindi
     ]
 
     // MARK: - Categories
