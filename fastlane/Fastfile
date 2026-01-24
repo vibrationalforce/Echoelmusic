@@ -283,10 +283,12 @@ platform :ios do
     )
 
     # Unified bundle ID for visionOS (enables universal purchase)
+    # Note: visionOS uses "ios" platform for provisioning profiles in Fastlane
+    # as of 2024 - this is correct behavior until Fastlane adds native visionOS support
     get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app",
-      platform: "ios",
+      platform: "ios",  # visionOS profiles use iOS platform in sigh/match
       force: ENV["CLEAN_BUILD"] == "true"
     )
     profile = lane_context[SharedValues::SIGH_NAME]

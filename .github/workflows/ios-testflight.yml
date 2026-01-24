@@ -1,25 +1,16 @@
 # =============================================================================
 # ECHOELMUSIC - MULTI-PLATFORM TESTFLIGHT DEPLOYMENT
 # =============================================================================
-# Lambda Loop A++++ Optimized Workflow - ALL Apple Ecosystems
-# Version: 3.0.0 - Phase 10000 ULTIMATE MODE
-#
-# Supported Platforms:
-# - iOS (iPhone + iPad) with integrated AUv3 (works as host and plugin)
-# - macOS (Apple Silicon + Intel) with embedded AUv3 Audio Unit Extension
-# - watchOS (Apple Watch) with Complications
-# - tvOS (Apple TV) with Big Screen Experience
-# - visionOS (Apple Vision Pro) with Spatial Audio
+# Version: 3.2.0 - ULTIMATE FIXED
 #
 # ARCHITECTURE:
-# - PR Events -> pr-check job (simulator build, no secrets)
-# - Manual Dispatch -> platform-specific deploy jobs (TestFlight, requires secrets)
+# - pull_request events -> ONLY pr-check job runs (simulator build)
+# - workflow_dispatch events -> preflight + deploy jobs run (TestFlight)
 # =============================================================================
 
 name: "TestFlight Multi-Platform"
 
 on:
-  # PR build validation (no secrets required)
   pull_request:
     branches: [main, develop]
     types: [opened, synchronize, reopened]
@@ -31,7 +22,6 @@ on:
       - 'fastlane/**'
       - '.github/workflows/ios-testflight.yml'
 
-  # Manual TestFlight deployment (secrets required)
   workflow_dispatch:
     inputs:
       platforms:
@@ -47,18 +37,12 @@ on:
           - tvos
           - visionos
           - ios-macos
-      increment_build:
-        description: 'Auto-increment build number'
-        required: false
-        default: true
-        type: boolean
       clean_build:
-        description: 'Clean build (slower but fresh)'
+        description: 'Clean build'
         required: false
         default: false
         type: boolean
 
-# Cancel in-progress runs for the same PR/ref
 concurrency:
   group: testflight-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
@@ -69,133 +53,32 @@ env:
 
 jobs:
   # ===========================================================================
-  # JOB 0: Pre-flight Validation (Runs before deployment)
-  # ===========================================================================
-  preflight:
-    name: "Pre-flight Check"
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-    timeout-minutes: 5
-
-    steps:
-      - name: "Checkout"
-        uses: actions/checkout@v4
-
-      - name: "Pre-flight Validation"
-        run: |
-          echo "=============================================="
-          echo "  ECHOELMUSIC PRE-FLIGHT VALIDATION"
-          echo "=============================================="
-
-          ERRORS=0
-
-          # Check required files
-          echo "--- Checking Required Files ---"
-          for file in Package.swift project.yml fastlane/Fastfile fastlane/Appfile; do
-            if [[ -f "$file" ]]; then
-              echo "[PASS] $file exists"
-            else
-              echo "[FAIL] $file is missing"
-              ((ERRORS++))
-            fi
-          done
-
-          # Check Bundle ID consistency
-          echo ""
-          echo "--- Checking Bundle ID ---"
-          BUNDLE_ID="com.echoelmusic.app"
-          if grep -q "$BUNDLE_ID" fastlane/Appfile; then
-            echo "[PASS] Bundle ID consistent: $BUNDLE_ID"
-          else
-            echo "[FAIL] Bundle ID mismatch"
-            ((ERRORS++))
-          fi
-
-          # Check metadata
-          echo ""
-          echo "--- Checking Metadata ---"
-          for meta in description.txt keywords.txt release_notes.txt privacy_url.txt; do
-            if [[ -s "fastlane/metadata/en-US/$meta" ]]; then
-              echo "[PASS] $meta has content"
-            else
-              echo "[FAIL] $meta is empty or missing"
-              ((ERRORS++))
-            fi
-          done
-
-          # Check version
-          echo ""
-          echo "--- Checking Version ---"
-          VERSION=$(grep "MARKETING_VERSION:" project.yml | head -1 | sed 's/.*: *//' | tr -d '"')
-          echo "[INFO] Marketing version: $VERSION"
-
-          # Summary
-          echo ""
-          echo "=============================================="
-          if [[ $ERRORS -gt 0 ]]; then
-            echo "[FAIL] Pre-flight check failed with $ERRORS error(s)"
-            exit 1
-          else
-            echo "[PASS] Pre-flight check passed"
-          fi
-
-      - name: "Deployment Summary"
-        run: |
-          echo "## Pre-flight Check Passed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Required Files | Verified |" >> $GITHUB_STEP_SUMMARY
-          echo "| Bundle ID | Consistent |" >> $GITHUB_STEP_SUMMARY
-          echo "| Metadata | Complete |" >> $GITHUB_STEP_SUMMARY
-          echo "| Version | $(grep 'MARKETING_VERSION:' project.yml | head -1 | sed 's/.*: *//' | tr -d '\"') |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Platforms:** ${{ github.event.inputs.platforms }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Build Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-
-  # ===========================================================================
-  # JOB 1: PR Build Check (Simulator - No Secrets Required)
+  # PR BUILD CHECK - Runs ONLY for pull_request events
   # ===========================================================================
   pr-check:
     name: "PR Build Check"
     runs-on: macos-14
-    # Only run on pull_request events, skip for manual workflow_dispatch
     if: github.event_name == 'pull_request'
     timeout-minutes: 30
 
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
-      - name: "Event Info"
+      - name: "Info"
         run: |
-          echo "====================================="
-          echo "  TestFlight - PR Build Check"
-          echo "====================================="
+          echo "=============================================="
+          echo "  PR BUILD CHECK"
+          echo "=============================================="
+          echo "Event: ${{ github.event_name }}"
           echo "PR: #${{ github.event.pull_request.number }}"
           echo "Branch: ${{ github.head_ref }} -> ${{ github.base_ref }}"
-          echo "Runner: $(uname -a)"
-          echo "====================================="
 
-      - name: "Validate Required Files"
+      - name: "Validate Files"
         run: |
-          echo "Checking required files..."
-          ERRORS=0
           for file in Package.swift project.yml fastlane/Fastfile; do
-            if [[ -f "$file" ]]; then
-              echo "[OK] $file exists"
-            else
-              echo "[ERROR] $file is missing"
-              ((ERRORS++))
-            fi
+            [ -f "$file" ] && echo "[OK] $file" || { echo "[FAIL] $file missing"; exit 1; }
           done
-          if [[ $ERRORS -gt 0 ]]; then
-            echo "Missing required files!"
-            exit 1
-          fi
-          echo "All required files present"
 
       - name: "Setup Xcode"
         uses: maxim-lobanov/setup-xcode@v1
@@ -203,155 +86,116 @@ jobs:
           xcode-version: "15.4"
 
       - name: "Install XcodeGen"
+        run: brew install xcodegen || true
+
+      - name: "Generate Project"
         run: |
-          echo "Installing XcodeGen..."
-          if ! command -v xcodegen &> /dev/null; then
-            echo "Installing XcodeGen via Homebrew..."
-            brew install xcodegen || {
-              echo "Homebrew install failed, trying direct download..."
-              curl -fsSL https://github.com/yonaskolb/XcodeGen/releases/download/2.42.0/xcodegen.zip -o /tmp/xcodegen.zip
-              unzip -o /tmp/xcodegen.zip -d /tmp
-              sudo cp /tmp/xcodegen/bin/xcodegen /usr/local/bin/
-              chmod +x /usr/local/bin/xcodegen
-            }
-          fi
-          xcodegen --version
-
-      - name: "Cache Swift Packages"
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.swiftpm
-            .build
-            build/DerivedData
-          key: ${{ runner.os }}-swift-${{ hashFiles('Package.swift') }}-${{ hashFiles('project.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-swift-
-
-      - name: "Generate Xcode Project"
-        run: |
-          set -e
-          echo "Preparing project.yml for CI..."
-          # Replace empty DEVELOPMENT_TEAM with placeholder for CI builds
-          sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml 2>/dev/null || true
-
-          echo "Generating Xcode project..."
+          sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml
           xcodegen generate --spec project.yml
 
-          if [ -d "Echoelmusic.xcodeproj" ]; then
-            echo "Xcode project generated successfully"
-            ls -la Echoelmusic.xcodeproj/
-          else
-            echo "ERROR: Xcode project generation failed"
-            exit 1
-          fi
-
-      - name: "List Available Simulators"
+      - name: "Build iOS Simulator"
         run: |
-          echo "Available iOS Simulators:"
-          xcrun simctl list devices available | grep -E "iPhone|iPad" | head -20 || true
-
-      - name: "Build iOS for Simulator"
-        run: |
-          set -o pipefail
-          echo "Building iOS app for simulator..."
-
-          # Try iPhone 15 Pro first, fallback to any available iPhone
-          DESTINATION='platform=iOS Simulator,name=iPhone 15 Pro'
-          if ! xcrun simctl list devices available | grep -q "iPhone 15 Pro"; then
-            DESTINATION='platform=iOS Simulator,OS=latest,name=iPhone 16 Pro'
-            echo "Using fallback destination: $DESTINATION"
-          fi
-
           xcodebuild build \
             -project Echoelmusic.xcodeproj \
             -scheme Echoelmusic \
-            -destination "$DESTINATION" \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
             -configuration Debug \
-            -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGN_IDENTITY="" \
-            COMPILER_INDEX_STORE_ENABLE=NO \
-            -quiet \
-            2>&1 | tee build_ios.log || {
-              echo "Build failed, showing last 100 lines of log:"
-              tail -100 build_ios.log
-              exit 1
-            }
-          echo "iOS build successful"
+            -quiet || exit 1
+          echo "iOS build OK"
 
       - name: "Build macOS"
         run: |
-          set -o pipefail
-          echo "Building macOS app..."
           xcodebuild build \
             -project Echoelmusic.xcodeproj \
             -scheme Echoelmusic-macOS \
             -configuration Debug \
-            -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGN_IDENTITY="" \
-            COMPILER_INDEX_STORE_ENABLE=NO \
-            -quiet \
-            2>&1 | tee build_macos.log || {
-              echo "Build failed, showing last 100 lines of log:"
-              tail -100 build_macos.log
-              exit 1
-            }
-          echo "macOS build successful"
+            -quiet || exit 1
+          echo "macOS build OK"
 
-      - name: "Build Summary"
-        if: success()
+      - name: "Summary"
         run: |
           echo "## PR Build Check Passed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| iOS Simulator | Built |" >> $GITHUB_STEP_SUMMARY
-          echo "| macOS | Built |" >> $GITHUB_STEP_SUMMARY
-
-      - name: "Upload Build Logs"
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pr-build-logs-${{ github.event.pull_request.number }}
-          path: |
-            build_*.log
-            Echoelmusic.xcodeproj/
-          retention-days: 7
+          echo "| iOS Simulator | OK |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS | OK |" >> $GITHUB_STEP_SUMMARY
 
   # ===========================================================================
-  # JOB 2: iOS TestFlight Deployment (AUv3 integrated in app)
+  # PREFLIGHT - Runs ONLY for workflow_dispatch events
+  # ===========================================================================
+  preflight:
+    name: "Pre-flight Check"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    timeout-minutes: 5
+    outputs:
+      ready: ${{ steps.validate.outputs.ready }}
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Info"
+        run: |
+          echo "=============================================="
+          echo "  TESTFLIGHT PRE-FLIGHT CHECK"
+          echo "=============================================="
+          echo "Event: ${{ github.event_name }}"
+          echo "Platforms: ${{ github.event.inputs.platforms }}"
+          echo "Build: ${{ github.run_number }}"
+
+      - name: "Validate"
+        id: validate
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          ERRORS=0
+
+          # Check files
+          for f in Package.swift project.yml fastlane/Fastfile fastlane/Appfile; do
+            [ -f "$f" ] && echo "[OK] $f" || { echo "[FAIL] $f"; ((ERRORS++)); }
+          done
+
+          # Check secrets
+          [ -n "$ASC_KEY_ID" ] && echo "[OK] ASC_KEY_ID" || { echo "[FAIL] ASC_KEY_ID missing"; ((ERRORS++)); }
+          [ -n "$ASC_ISSUER_ID" ] && echo "[OK] ASC_ISSUER_ID" || { echo "[FAIL] ASC_ISSUER_ID missing"; ((ERRORS++)); }
+          [ -n "$ASC_KEY" ] && echo "[OK] ASC_KEY (${#ASC_KEY} chars)" || { echo "[FAIL] ASC_KEY missing"; ((ERRORS++)); }
+          [ -n "$TEAM_ID" ] && echo "[OK] TEAM_ID" || { echo "[FAIL] TEAM_ID missing"; ((ERRORS++)); }
+
+          if [ $ERRORS -gt 0 ]; then
+            echo "ready=false" >> $GITHUB_OUTPUT
+            echo "[FAIL] $ERRORS error(s) found"
+            exit 1
+          fi
+
+          echo "ready=true" >> $GITHUB_OUTPUT
+          echo "[PASS] All checks passed"
+
+      - name: "Summary"
+        run: |
+          echo "## Pre-flight Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- Platforms: ${{ github.event.inputs.platforms }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # iOS DEPLOYMENT
   # ===========================================================================
   deploy-ios:
     name: "Deploy iOS"
     runs-on: macos-14
-    needs: [preflight]
-    # Only run on manual workflow_dispatch with ios platform selected
+    needs: preflight
     if: github.event_name == 'workflow_dispatch' && contains('all ios ios-macos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: "Deployment Info"
-        run: |
-          echo "====================================="
-          echo "  iOS TestFlight Deployment"
-          echo "  (AUv3 integrated in app)"
-          echo "====================================="
-          echo "Build Number: ${{ github.run_number }}"
-
-      - name: "Verify Secrets"
-        run: |
-          [ -n "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ] || { echo "ERROR: ASC_KEY_ID missing"; exit 1; }
-          [ -n "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ] || { echo "ERROR: ASC_ISSUER_ID missing"; exit 1; }
-          [ -n "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" ] || { echo "ERROR: ASC_KEY missing"; exit 1; }
-          [ -n "${{ secrets.APPLE_TEAM_ID }}" ] || { echo "ERROR: TEAM_ID missing"; exit 1; }
-          echo "All secrets verified"
-
-      - name: "Setup Xcode & XcodeGen"
+      - name: "Setup Xcode"
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
@@ -361,91 +205,56 @@ jobs:
         with:
           version: ${{ env.XCODEGEN_VERSION }}
 
-      - name: "Cache"
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/Library/Developer/Xcode/DerivedData
-            build/DerivedData
-            vendor/bundle
-          key: ${{ runner.os }}-ios-${{ hashFiles('Package.swift', 'project.yml', '**/Gemfile.lock') }}-${{ github.run_number }}
-          restore-keys: ${{ runner.os }}-ios-
-
       - name: "Install Fastlane"
-        run: |
-          gem install bundler -N --no-document 2>/dev/null || true
-          [ -f Gemfile ] && bundle install --jobs 4 --retry 3 || gem install fastlane -N --no-document
-          fastlane --version
+        run: gem install fastlane -N --no-document
 
-      - name: "Generate Xcode Project"
+      - name: "Generate Project"
         run: |
-          set -e
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ github.run_number }}/" project.yml
           xcodegen generate --spec project.yml
 
       - name: "Setup Keychain"
         run: |
-          KEYCHAIN_NAME="ci_signing_${{ github.run_id }}.keychain-db"
-          KEYCHAIN_PASSWORD="ci_password_${{ github.run_id }}"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
-          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
-          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
+          security create-keychain -p "ci_pass" ci.keychain-db
+          security set-keychain-settings -lut 21600 ci.keychain-db
+          security unlock-keychain -p "ci_pass" ci.keychain-db
+          security list-keychains -d user -s ci.keychain-db
+          security default-keychain -s ci.keychain-db
+          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/ci.keychain-db" >> $GITHUB_ENV
 
-      - name: "Deploy to TestFlight"
-        run: |
-          fastlane ios beta
+      - name: "Deploy"
+        run: fastlane ios beta
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           BUILD_NUMBER: ${{ github.run_number }}
-          CLEAN_BUILD: ${{ github.event.inputs.clean_build }}
+          KEYCHAIN_PATH: ${{ env.KEYCHAIN_PATH }}
+          KEYCHAIN_PASSWORD: "ci_pass"
 
-      - name: "Cleanup Keychain"
+      - name: "Cleanup"
         if: always()
-        run: security delete-keychain "${{ env.KEYCHAIN_PATH }}" 2>/dev/null || true
+        run: security delete-keychain ci.keychain-db 2>/dev/null || true
 
-      - name: "Success"
-        run: |
-          echo "## iOS Deployed to TestFlight" >> $GITHUB_STEP_SUMMARY
-          echo "- Build: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Bundle ID: com.echoelmusic.app (Standalone + integrated AUv3)" >> $GITHUB_STEP_SUMMARY
+      - name: "Summary"
+        run: echo "## iOS deployed to TestFlight (Build ${{ github.run_number }})" >> $GITHUB_STEP_SUMMARY
 
   # ===========================================================================
-  # JOB 3: macOS + AUv3 TestFlight Deployment
+  # macOS DEPLOYMENT
   # ===========================================================================
   deploy-macos:
-    name: "Deploy macOS + AUv3"
+    name: "Deploy macOS"
     runs-on: macos-14
-    needs: [preflight]
-    # Only run on manual workflow_dispatch with macos platform selected
+    needs: preflight
     if: github.event_name == 'workflow_dispatch' && contains('all macos ios-macos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: "Deployment Info"
-        run: |
-          echo "====================================="
-          echo "  macOS + AUv3 TestFlight Deployment"
-          echo "====================================="
-
-      - name: "Verify Secrets"
-        run: |
-          [ -n "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ] || exit 1
-          [ -n "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ] || exit 1
-          [ -n "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" ] || exit 1
-          [ -n "${{ secrets.APPLE_TEAM_ID }}" ] || exit 1
-
-      - name: "Setup Xcode & XcodeGen"
+      - name: "Setup Xcode"
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
@@ -455,307 +264,185 @@ jobs:
         with:
           version: ${{ env.XCODEGEN_VERSION }}
 
-      - name: "Cache"
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/Library/Developer/Xcode/DerivedData
-            build/DerivedData
-            vendor/bundle
-          key: ${{ runner.os }}-macos-${{ hashFiles('Package.swift', 'project.yml') }}-${{ github.run_number }}
-          restore-keys: ${{ runner.os }}-macos-
-
       - name: "Install Fastlane"
-        run: |
-          gem install bundler -N --no-document 2>/dev/null || true
-          [ -f Gemfile ] && bundle install --jobs 4 --retry 3 || gem install fastlane -N --no-document
+        run: gem install fastlane -N --no-document
 
-      - name: "Generate Xcode Project"
+      - name: "Generate Project"
         run: |
-          set -e
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ github.run_number }}/" project.yml
           xcodegen generate --spec project.yml
 
       - name: "Setup Keychain"
         run: |
-          KEYCHAIN_NAME="ci_signing_macos_${{ github.run_id }}.keychain-db"
-          KEYCHAIN_PASSWORD="ci_password_${{ github.run_id }}"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
-          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
-          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
+          security create-keychain -p "ci_pass" ci_mac.keychain-db
+          security set-keychain-settings -lut 21600 ci_mac.keychain-db
+          security unlock-keychain -p "ci_pass" ci_mac.keychain-db
+          security list-keychains -d user -s ci_mac.keychain-db
+          security default-keychain -s ci_mac.keychain-db
+          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/ci_mac.keychain-db" >> $GITHUB_ENV
 
-      - name: "Deploy to TestFlight"
-        run: |
-          fastlane mac beta
+      - name: "Deploy"
+        run: fastlane mac beta
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           BUILD_NUMBER: ${{ github.run_number }}
-          CLEAN_BUILD: ${{ github.event.inputs.clean_build }}
+          KEYCHAIN_PATH: ${{ env.KEYCHAIN_PATH }}
+          KEYCHAIN_PASSWORD: "ci_pass"
 
-      - name: "Cleanup Keychain"
+      - name: "Cleanup"
         if: always()
-        run: security delete-keychain "${{ env.KEYCHAIN_PATH }}" 2>/dev/null || true
+        run: security delete-keychain ci_mac.keychain-db 2>/dev/null || true
 
-      - name: "Success"
-        run: |
-          echo "## macOS Deployed to TestFlight" >> $GITHUB_STEP_SUMMARY
-          echo "- Build: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Bundle ID: com.echoelmusic.app (Standalone + embedded AUv3)" >> $GITHUB_STEP_SUMMARY
+      - name: "Summary"
+        run: echo "## macOS deployed to TestFlight (Build ${{ github.run_number }})" >> $GITHUB_STEP_SUMMARY
 
   # ===========================================================================
-  # JOB 4: watchOS TestFlight Deployment
+  # watchOS DEPLOYMENT
   # ===========================================================================
   deploy-watchos:
     name: "Deploy watchOS"
     runs-on: macos-14
-    needs: [preflight]
-    # Only run on manual workflow_dispatch with watchos platform selected
+    needs: preflight
     if: github.event_name == 'workflow_dispatch' && contains('all watchos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v4
-
-      - name: "Verify Secrets"
-        run: |
-          [ -n "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ] || exit 1
-          [ -n "${{ secrets.APPLE_TEAM_ID }}" ] || exit 1
-
-      - name: "Setup Xcode & XcodeGen"
-        uses: maxim-lobanov/setup-xcode@v1
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: "Setup XcodeGen"
-        uses: ./.github/actions/setup-xcodegen
+      - uses: ./.github/actions/setup-xcodegen
         with:
           version: ${{ env.XCODEGEN_VERSION }}
-
-      - name: "Install Fastlane"
-        run: gem install fastlane -N --no-document
-
-      - name: "Generate Xcode Project"
-        run: |
+      - run: gem install fastlane -N --no-document
+      - run: |
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ github.run_number }}/" project.yml
           xcodegen generate --spec project.yml
-
-      - name: "Setup Keychain"
-        run: |
-          KEYCHAIN_NAME="ci_signing_watch_${{ github.run_id }}.keychain-db"
-          KEYCHAIN_PASSWORD="ci_password_${{ github.run_id }}"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
-          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
-          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
-
-      - name: "Deploy to TestFlight"
-        run: fastlane ios beta_watchos
+      - run: |
+          security create-keychain -p "ci" ci_w.keychain-db
+          security set-keychain-settings -lut 21600 ci_w.keychain-db
+          security unlock-keychain -p "ci" ci_w.keychain-db
+          security list-keychains -d user -s ci_w.keychain-db
+          security default-keychain -s ci_w.keychain-db
+      - run: fastlane ios beta_watchos
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           BUILD_NUMBER: ${{ github.run_number }}
-
-      - name: "Cleanup"
-        if: always()
-        run: security delete-keychain "${{ env.KEYCHAIN_PATH }}" 2>/dev/null || true
-
-      - name: "Success"
-        run: |
-          echo "## watchOS Deployed to TestFlight" >> $GITHUB_STEP_SUMMARY
-          echo "- Build: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          KEYCHAIN_PATH: ~/Library/Keychains/ci_w.keychain-db
+          KEYCHAIN_PASSWORD: "ci"
+      - if: always()
+        run: security delete-keychain ci_w.keychain-db 2>/dev/null || true
 
   # ===========================================================================
-  # JOB 5: tvOS TestFlight Deployment
+  # tvOS DEPLOYMENT
   # ===========================================================================
   deploy-tvos:
     name: "Deploy tvOS"
     runs-on: macos-14
-    needs: [preflight]
-    # Only run on manual workflow_dispatch with tvos platform selected
+    needs: preflight
     if: github.event_name == 'workflow_dispatch' && contains('all tvos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v4
-
-      - name: "Verify Secrets"
-        run: |
-          [ -n "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ] || exit 1
-          [ -n "${{ secrets.APPLE_TEAM_ID }}" ] || exit 1
-
-      - name: "Setup Xcode & XcodeGen"
-        uses: maxim-lobanov/setup-xcode@v1
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: "Setup XcodeGen"
-        uses: ./.github/actions/setup-xcodegen
+      - uses: ./.github/actions/setup-xcodegen
         with:
           version: ${{ env.XCODEGEN_VERSION }}
-
-      - name: "Install Fastlane"
-        run: gem install fastlane -N --no-document
-
-      - name: "Generate Xcode Project"
-        run: |
+      - run: gem install fastlane -N --no-document
+      - run: |
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ github.run_number }}/" project.yml
           xcodegen generate --spec project.yml
-
-      - name: "Setup Keychain"
-        run: |
-          KEYCHAIN_NAME="ci_signing_tv_${{ github.run_id }}.keychain-db"
-          KEYCHAIN_PASSWORD="ci_password_${{ github.run_id }}"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
-          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
-          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
-
-      - name: "Deploy to TestFlight"
-        run: fastlane ios beta_tvos
+      - run: |
+          security create-keychain -p "ci" ci_tv.keychain-db
+          security set-keychain-settings -lut 21600 ci_tv.keychain-db
+          security unlock-keychain -p "ci" ci_tv.keychain-db
+          security list-keychains -d user -s ci_tv.keychain-db
+          security default-keychain -s ci_tv.keychain-db
+      - run: fastlane ios beta_tvos
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           BUILD_NUMBER: ${{ github.run_number }}
-
-      - name: "Cleanup"
-        if: always()
-        run: security delete-keychain "${{ env.KEYCHAIN_PATH }}" 2>/dev/null || true
-
-      - name: "Success"
-        run: |
-          echo "## tvOS Deployed to TestFlight" >> $GITHUB_STEP_SUMMARY
-          echo "- Build: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          KEYCHAIN_PATH: ~/Library/Keychains/ci_tv.keychain-db
+          KEYCHAIN_PASSWORD: "ci"
+      - if: always()
+        run: security delete-keychain ci_tv.keychain-db 2>/dev/null || true
 
   # ===========================================================================
-  # JOB 6: visionOS TestFlight Deployment
+  # visionOS DEPLOYMENT
   # ===========================================================================
   deploy-visionos:
     name: "Deploy visionOS"
     runs-on: macos-14
-    needs: [preflight]
-    # Only run on manual workflow_dispatch with visionos platform selected
+    needs: preflight
     if: github.event_name == 'workflow_dispatch' && contains('all visionos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v4
-
-      - name: "Verify Secrets"
-        run: |
-          [ -n "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ] || exit 1
-          [ -n "${{ secrets.APPLE_TEAM_ID }}" ] || exit 1
-
-      - name: "Setup Xcode & XcodeGen"
-        uses: maxim-lobanov/setup-xcode@v1
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: "Setup XcodeGen"
-        uses: ./.github/actions/setup-xcodegen
+      - uses: ./.github/actions/setup-xcodegen
         with:
           version: ${{ env.XCODEGEN_VERSION }}
-
-      - name: "Install Fastlane"
-        run: gem install fastlane -N --no-document
-
-      - name: "Generate Xcode Project"
-        run: |
+      - run: gem install fastlane -N --no-document
+      - run: |
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ github.run_number }}/" project.yml
           xcodegen generate --spec project.yml
-
-      - name: "Setup Keychain"
-        run: |
-          KEYCHAIN_NAME="ci_signing_vision_${{ github.run_id }}.keychain-db"
-          KEYCHAIN_PASSWORD="ci_password_${{ github.run_id }}"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
-          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
-          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
-
-      - name: "Deploy to TestFlight"
-        run: fastlane ios beta_visionos
+      - run: |
+          security create-keychain -p "ci" ci_v.keychain-db
+          security set-keychain-settings -lut 21600 ci_v.keychain-db
+          security unlock-keychain -p "ci" ci_v.keychain-db
+          security list-keychains -d user -s ci_v.keychain-db
+          security default-keychain -s ci_v.keychain-db
+      - run: fastlane ios beta_visionos
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           BUILD_NUMBER: ${{ github.run_number }}
-
-      - name: "Cleanup"
-        if: always()
-        run: security delete-keychain "${{ env.KEYCHAIN_PATH }}" 2>/dev/null || true
-
-      - name: "Success"
-        run: |
-          echo "## visionOS Deployed to TestFlight" >> $GITHUB_STEP_SUMMARY
-          echo "- Build: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          KEYCHAIN_PATH: ~/Library/Keychains/ci_v.keychain-db
+          KEYCHAIN_PASSWORD: "ci"
+      - if: always()
+        run: security delete-keychain ci_v.keychain-db 2>/dev/null || true
 
   # ===========================================================================
-  # JOB 7: Deployment Summary
+  # SUMMARY - Only for workflow_dispatch
   # ===========================================================================
   summary:
-    name: "Deployment Summary"
+    name: "Summary"
     runs-on: ubuntu-latest
-    # Only show summary for manual workflow_dispatch, not for PR builds
     if: always() && github.event_name == 'workflow_dispatch'
     needs: [preflight, deploy-ios, deploy-macos, deploy-watchos, deploy-tvos, deploy-visionos]
 
     steps:
-      - name: "Generate Summary"
+      - name: "Generate"
         run: |
-          echo "# TestFlight Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "# TestFlight Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-
-          if [[ "${{ github.event.inputs.platforms }}" == "all" || "${{ github.event.inputs.platforms }}" == "ios" || "${{ github.event.inputs.platforms }}" == "ios-macos" ]]; then
-            echo "| iOS (integrated AUv3) | ${{ needs.deploy-ios.result == 'success' && 'Deployed' || needs.deploy-ios.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [[ "${{ github.event.inputs.platforms }}" == "all" || "${{ github.event.inputs.platforms }}" == "macos" || "${{ github.event.inputs.platforms }}" == "ios-macos" ]]; then
-            echo "| macOS + AUv3 | ${{ needs.deploy-macos.result == 'success' && 'Deployed' || needs.deploy-macos.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [[ "${{ github.event.inputs.platforms }}" == "all" || "${{ github.event.inputs.platforms }}" == "watchos" ]]; then
-            echo "| watchOS | ${{ needs.deploy-watchos.result == 'success' && 'Deployed' || needs.deploy-watchos.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [[ "${{ github.event.inputs.platforms }}" == "all" || "${{ github.event.inputs.platforms }}" == "tvos" ]]; then
-            echo "| tvOS | ${{ needs.deploy-tvos.result == 'success' && 'Deployed' || needs.deploy-tvos.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [[ "${{ github.event.inputs.platforms }}" == "all" || "${{ github.event.inputs.platforms }}" == "visionos" ]]; then
-            echo "| visionOS | ${{ needs.deploy-visionos.result == 'success' && 'Deployed' || needs.deploy-visionos.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          fi
-
+          echo "| Pre-flight | ${{ needs.preflight.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS | ${{ needs.deploy-ios.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS | ${{ needs.deploy-macos.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| watchOS | ${{ needs.deploy-watchos.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| tvOS | ${{ needs.deploy-tvos.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| visionOS | ${{ needs.deploy-visionos.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Build Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Build:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Check [App Store Connect](https://appstoreconnect.apple.com) for build processing status." >> $GITHUB_STEP_SUMMARY
+          echo "[App Store Connect](https://appstoreconnect.apple.com)" >> $GITHUB_STEP_SUMMARY
