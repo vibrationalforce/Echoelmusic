@@ -374,7 +374,7 @@ public class QuantumLiveActivityManager: ObservableObject {
             log.info("[LiveActivity] Started: \(name)", category: .ui)
 
         } catch {
-            log.info("[LiveActivity] Failed to start: \(error)", level: .error, category: .ui)
+            log.error("[LiveActivity] Failed to start: \(error)", category: .ui)
             throw error
         }
     }

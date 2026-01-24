@@ -99,6 +99,7 @@ class AIModelLoader: ObservableObject {
 
     // MARK: - Cache
 
+    private let log = EchoelLogger.shared
     private var modelCache: [ModelType: URL] = [:]
     private let cacheDirectory: URL
 
@@ -134,7 +135,7 @@ class AIModelLoader: ObservableObject {
                     log.info("✅ AIModelLoader: Loaded \(modelType.rawValue)", category: .system)
                 }
             } catch {
-                log.info("⚠️ AIModelLoader: Failed to load \(modelType.rawValue) - \(error.localizedDescription)", level: .warning, category: .system)
+                log.warning("⚠️ AIModelLoader: Failed to load \(modelType.rawValue) - \(error.localizedDescription)", category: .system)
                 if modelType.isCritical {
                     status = .error("Critical model failed: \(modelType.rawValue)")
                     return

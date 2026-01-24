@@ -82,7 +82,7 @@ struct EchoelmusicApp: App {
                             try await unifiedControlHub.enableBiometricMonitoring()
                             log.info("✅ Biometric monitoring enabled via UnifiedControlHub", category: .system)
                         } catch {
-                            log.info("⚠️ Biometric monitoring not available: \(error.localizedDescription)", category: .system, level: .warning)
+                            log.warning("⚠️ Biometric monitoring not available: \(error.localizedDescription)", category: .system)
                         }
 
                         // Enable MIDI 2.0 + MPE
@@ -90,7 +90,7 @@ struct EchoelmusicApp: App {
                             try await unifiedControlHub.enableMIDI2()
                             log.info("✅ MIDI 2.0 + MPE enabled via UnifiedControlHub", category: .system)
                         } catch {
-                            log.info("⚠️ MIDI 2.0 not available: \(error.localizedDescription)", category: .system, level: .warning)
+                            log.warning("⚠️ MIDI 2.0 not available: \(error.localizedDescription)", category: .system)
                         }
                     }
 

@@ -76,7 +76,7 @@ class JUCEPluginIntegration: ObservableObject {
 
         log.info("🎸 Bio-data sent to JUCE plugin: HRV=\(hrv), Coherence=\(coherence), HR=\(heartRate)", category: .plugin)
         #else
-        log.info("⚠️ BioDataBridge not available - JUCE plugin not compiled", category: .plugin, level: .warning)
+        log.warning("⚠️ BioDataBridge not available - JUCE plugin not compiled", category: .plugin)
         #endif
     }
 

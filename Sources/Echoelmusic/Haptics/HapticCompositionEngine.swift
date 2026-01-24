@@ -205,7 +205,7 @@ public final class HapticCompositionEngine: ObservableObject {
             log.info("HapticCompositionEngine: Engine initialized successfully", category: .system)
 
         } catch {
-            log.info("HapticCompositionEngine: Failed to create engine: \(error)", level: .error, category: .system)
+            log.error("HapticCompositionEngine: Failed to create engine: \(error)", category: .system)
             state = .error
         }
     }
@@ -215,7 +215,7 @@ public final class HapticCompositionEngine: ObservableObject {
             try engine?.start()
             state = .idle
         } catch {
-            log.info("HapticCompositionEngine: Failed to restart engine: \(error)", level: .error, category: .system)
+            log.error("HapticCompositionEngine: Failed to restart engine: \(error)", category: .system)
             state = .error
         }
     }
@@ -223,7 +223,7 @@ public final class HapticCompositionEngine: ObservableObject {
     private func handleEngineStopped(reason: CHHapticEngine.StoppedReason) {
         switch reason {
         case .audioSessionInterrupt:
-            log.info("HapticCompositionEngine: Audio session interrupted", level: .warning, category: .system)
+            log.warning("HapticCompositionEngine: Audio session interrupted", category: .system)
         case .applicationSuspended:
             log.info("HapticCompositionEngine: Application suspended", category: .system)
         case .engineDestroyed:
@@ -235,9 +235,9 @@ public final class HapticCompositionEngine: ObservableObject {
         case .notifyWhenFinished:
             log.info("HapticCompositionEngine: Playback finished", category: .system)
         case .systemError:
-            log.info("HapticCompositionEngine: System error", level: .error, category: .system)
+            log.error("HapticCompositionEngine: System error", category: .system)
         @unknown default:
-            log.info("HapticCompositionEngine: Unknown stop reason", level: .warning, category: .system)
+            log.warning("HapticCompositionEngine: Unknown stop reason", category: .system)
         }
         state = .idle
     }
@@ -639,7 +639,7 @@ public final class HapticCompositionEngine: ObservableObject {
     /// Play a haptic composition
     public func play(_ composition: HapticComposition) {
         guard isSupported, let engine = engine else {
-            log.info("HapticCompositionEngine: Cannot play - engine not available", level: .warning, category: .system)
+            log.warning("HapticCompositionEngine: Cannot play - engine not available", category: .system)
             return
         }
 
@@ -651,7 +651,7 @@ public final class HapticCompositionEngine: ObservableObject {
             player.completionHandler = { [weak self] error in
                 Task { @MainActor in
                     if let error = error {
-                        log.info("HapticCompositionEngine: Playback error: \(error)", level: .error, category: .system)
+                        log.error("HapticCompositionEngine: Playback error: \(error)", category: .system)
                     }
 
                     if composition.looping {
@@ -671,7 +671,7 @@ public final class HapticCompositionEngine: ObservableObject {
             log.info("HapticCompositionEngine: Playing '\(composition.name)'", category: .system)
 
         } catch {
-            log.info("HapticCompositionEngine: Failed to play: \(error)", level: .error, category: .system)
+            log.error("HapticCompositionEngine: Failed to play: \(error)", category: .system)
             state = .error
         }
     }
@@ -726,7 +726,7 @@ public final class HapticCompositionEngine: ObservableObject {
             try player.start(atTime: CHHapticTimeImmediate)
 
         } catch {
-            log.info("HapticCompositionEngine: Transient failed: \(error)", level: .error, category: .system)
+            log.error("HapticCompositionEngine: Transient failed: \(error)", category: .system)
         }
     }
 

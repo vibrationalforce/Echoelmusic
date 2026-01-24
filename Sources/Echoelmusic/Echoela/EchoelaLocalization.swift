@@ -264,6 +264,7 @@ public final class EchoelaLocalizationManager: ObservableObject {
 
     // MARK: - Private
 
+    private let log = EchoelLogger.shared
     private let languageRecognizer = NLLanguageRecognizer()
     private let preferenceKey = "echoela_language_preference"
 

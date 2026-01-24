@@ -502,7 +502,7 @@ public class UnifiedControlHub: ObservableObject {
         syncMode: CrossPlatformSessionManager.SyncMode = .adaptive
     ) -> CrossPlatformSessionManager.CrossPlatformSession? {
         guard let manager = crossPlatformSessionManager else {
-            Log.info("⚠️ Cross-Platform Session Manager not enabled", category: .system, level: .warning)
+            Log.warning("⚠️ Cross-Platform Session Manager not enabled", category: .system)
             return nil
         }
 

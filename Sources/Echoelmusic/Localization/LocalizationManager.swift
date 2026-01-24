@@ -65,6 +65,12 @@ class LocalizationManager: ObservableObject {
         case polish = "pl"
         case turkish = "tr"
 
+        // Nordic/Scandinavian Languages (High Apple penetration markets)
+        case dutch = "nl"           // Netherlands - wealthy, high Apple penetration
+        case danish = "da"          // Denmark - 63% iPhone market share!
+        case swedish = "sv"         // Sweden - wealthy Scandinavia
+        case norwegian = "no"       // Norway - very wealthy
+
         // Asian Languages
         case chineseSimplified = "zh-Hans"
         case chineseTraditional = "zh-Hant"
@@ -106,6 +112,11 @@ class LocalizationManager: ObservableObject {
             case .russian: return "Русский"
             case .polish: return "Polski"
             case .turkish: return "Türkçe"
+            // Nordic/Scandinavian
+            case .dutch: return "Nederlands"
+            case .danish: return "Dansk"
+            case .swedish: return "Svenska"
+            case .norwegian: return "Norsk"
             case .chineseSimplified: return "简体中文"
             case .chineseTraditional: return "繁體中文"
             case .japanese: return "日本語"
@@ -309,8 +320,9 @@ class LocalizationManager: ObservableObject {
 
     private func getPluralForm(for count: Int, language: Language) -> String {
         switch language {
-        case .english, .german, .spanish, .french, .italian, .portuguese:
-            // Germanic/Romance: singular (1), plural (other)
+        case .english, .german, .spanish, .french, .italian, .portuguese,
+             .dutch, .danish, .swedish, .norwegian:
+            // Germanic/Romance/Nordic: singular (1), plural (other)
             return count == 1 ? "one" : "other"
 
         case .russian, .polish, .ukrainian:
@@ -465,6 +477,15 @@ class LocalizationManager: ObservableObject {
             return polishTranslations
         case .turkish:
             return turkishTranslations
+        // Nordic/Scandinavian Languages
+        case .dutch:
+            return dutchTranslations
+        case .danish:
+            return danishTranslations
+        case .swedish:
+            return swedishTranslations
+        case .norwegian:
+            return norwegianTranslations
         case .chineseTraditional:
             return chineseTraditionalTranslations
         case .bengali:
@@ -1799,6 +1820,150 @@ class LocalizationManager: ObservableObject {
             "error.network": "नेटवर्क त्रुटी",
             "error.permission": "परवानगी आवश्यक",
             "error.file_not_found": "फाइल सापडली नाही"
+        ]
+    }
+
+    // MARK: - Dutch Translations
+
+    private var dutchTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Welkom",
+            "general.ok": "OK",
+            "general.cancel": "Annuleren",
+            "general.save": "Opslaan",
+            "general.delete": "Verwijderen",
+            "general.edit": "Bewerken",
+            "general.done": "Gereed",
+            "general.close": "Sluiten",
+            "general.settings": "Instellingen",
+
+            "bio.hrv": "Hartslagvariabiliteit",
+            "bio.coherence": "Coherentie",
+            "bio.heart_rate": "Hartslag",
+            "bio.breathing_rate": "Ademhalingsfrequentie",
+            "bio.stress": "Stress",
+            "bio.relaxation": "Ontspanning",
+            "bio.meditation": "Meditatie",
+
+            "emotion.neutral": "Neutraal",
+            "emotion.happy": "Blij",
+            "emotion.sad": "Verdrietig",
+            "emotion.energetic": "Energiek",
+            "emotion.calm": "Kalm",
+
+            "error.generic": "Er is een fout opgetreden",
+            "error.network": "Netwerkfout",
+            "error.permission": "Toestemming vereist",
+            "error.file_not_found": "Bestand niet gevonden"
+        ]
+    }
+
+    // MARK: - Danish Translations
+
+    private var danishTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Velkommen",
+            "general.ok": "OK",
+            "general.cancel": "Annuller",
+            "general.save": "Gem",
+            "general.delete": "Slet",
+            "general.edit": "Rediger",
+            "general.done": "Færdig",
+            "general.close": "Luk",
+            "general.settings": "Indstillinger",
+
+            "bio.hrv": "Hjertefrekvensvariabilitet",
+            "bio.coherence": "Kohærens",
+            "bio.heart_rate": "Puls",
+            "bio.breathing_rate": "Vejrtrækningsfrekvens",
+            "bio.stress": "Stress",
+            "bio.relaxation": "Afslapning",
+            "bio.meditation": "Meditation",
+
+            "emotion.neutral": "Neutral",
+            "emotion.happy": "Glad",
+            "emotion.sad": "Trist",
+            "emotion.energetic": "Energisk",
+            "emotion.calm": "Rolig",
+
+            "error.generic": "Der opstod en fejl",
+            "error.network": "Netværksfejl",
+            "error.permission": "Tilladelse påkrævet",
+            "error.file_not_found": "Fil ikke fundet"
+        ]
+    }
+
+    // MARK: - Swedish Translations
+
+    private var swedishTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Välkommen",
+            "general.ok": "OK",
+            "general.cancel": "Avbryt",
+            "general.save": "Spara",
+            "general.delete": "Ta bort",
+            "general.edit": "Redigera",
+            "general.done": "Klar",
+            "general.close": "Stäng",
+            "general.settings": "Inställningar",
+
+            "bio.hrv": "Hjärtfrekvensvariabilitet",
+            "bio.coherence": "Koherens",
+            "bio.heart_rate": "Puls",
+            "bio.breathing_rate": "Andningsfrekvens",
+            "bio.stress": "Stress",
+            "bio.relaxation": "Avslappning",
+            "bio.meditation": "Meditation",
+
+            "emotion.neutral": "Neutral",
+            "emotion.happy": "Glad",
+            "emotion.sad": "Ledsen",
+            "emotion.energetic": "Energisk",
+            "emotion.calm": "Lugn",
+
+            "error.generic": "Ett fel uppstod",
+            "error.network": "Nätverksfel",
+            "error.permission": "Behörighet krävs",
+            "error.file_not_found": "Filen hittades inte"
+        ]
+    }
+
+    // MARK: - Norwegian Translations
+
+    private var norwegianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Velkommen",
+            "general.ok": "OK",
+            "general.cancel": "Avbryt",
+            "general.save": "Lagre",
+            "general.delete": "Slett",
+            "general.edit": "Rediger",
+            "general.done": "Ferdig",
+            "general.close": "Lukk",
+            "general.settings": "Innstillinger",
+
+            "bio.hrv": "Hjertefrekvensvariabilitet",
+            "bio.coherence": "Koherens",
+            "bio.heart_rate": "Puls",
+            "bio.breathing_rate": "Pustefrekvens",
+            "bio.stress": "Stress",
+            "bio.relaxation": "Avslapning",
+            "bio.meditation": "Meditasjon",
+
+            "emotion.neutral": "Nøytral",
+            "emotion.happy": "Glad",
+            "emotion.sad": "Trist",
+            "emotion.energetic": "Energisk",
+            "emotion.calm": "Rolig",
+
+            "error.generic": "Det oppsto en feil",
+            "error.network": "Nettverksfeil",
+            "error.permission": "Tillatelse kreves",
+            "error.file_not_found": "Fil ikke funnet"
         ]
     }
 
