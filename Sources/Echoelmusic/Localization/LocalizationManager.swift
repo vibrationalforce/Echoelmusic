@@ -73,7 +73,7 @@ class LocalizationManager: ObservableObject {
         case hindi = "hi"
         case bengali = "bn"
         case tamil = "ta"
-        case indonesian = "id"
+        case indonesian = "id"      // Indonesia - Largest SE Asian market
         case thai = "th"
         case vietnamese = "vi"
 
@@ -82,8 +82,7 @@ class LocalizationManager: ObservableObject {
         case hebrew = "he"
         case persian = "fa"
 
-        // Tier 5: Strategic Expansion (NEW - 15 Languages)
-        case indonesian = "id"      // Indonesia - Largest SE Asian market
+        // Tier 5: Strategic Expansion (NEW - 12 Languages)
         case malay = "ms"           // Malaysia/Singapore
         case finnish = "fi"         // Finland - Nordic completion
         case greek = "el"           // Greece - Mediterranean
@@ -121,7 +120,6 @@ class LocalizationManager: ObservableObject {
             case .hebrew: return "עברית"
             case .persian: return "فارسی"
             // Tier 5: Strategic Expansion
-            case .indonesian: return "Bahasa Indonesia"
             case .malay: return "Bahasa Melayu"
             case .finnish: return "Suomi"
             case .greek: return "Ελληνικά"
