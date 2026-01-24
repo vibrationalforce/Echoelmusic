@@ -1300,13 +1300,13 @@ extension PresetManager {
     public func loadExpandedPresets() {
         // Note: Add custom preset loading logic here
         // This would integrate with the existing PresetManager system
-        log.info(category: .system, "[Presets] Loaded 50+ expanded presets")
-        log.info(category: .system, "[Presets] - BioReactive: \(BioReactivePreset.all.count)")
-        log.info(category: .system, "[Presets] - Musical: \(MusicalPreset.all.count)")
-        log.info(category: .system, "[Presets] - Visual: \(VisualPreset.all.count)")
-        log.info(category: .system, "[Presets] - Lighting: \(LightingPreset.all.count)")
-        log.info(category: .system, "[Presets] - Streaming: \(StreamingPreset.all.count)")
-        log.info(category: .system, "[Presets] - Collaboration: \(CollaborationPreset.allExpanded.count)")
+        log.info("[Presets] Loaded 50+ expanded presets", category: .system)
+        log.info("[Presets] - BioReactive: \(BioReactivePreset.all.count)", category: .system)
+        log.info("[Presets] - Musical: \(MusicalPreset.all.count)", category: .system)
+        log.info("[Presets] - Visual: \(VisualPreset.all.count)", category: .system)
+        log.info("[Presets] - Lighting: \(LightingPreset.all.count)", category: .system)
+        log.info("[Presets] - Streaming: \(StreamingPreset.all.count)", category: .system)
+        log.info("[Presets] - Collaboration: \(CollaborationPreset.allExpanded.count)", category: .system)
     }
 
     /// Total count of all presets including expanded

@@ -35,7 +35,7 @@ class TeamCollaborationHub: ObservableObject {
 
     private init() {
         startWellnessMonitoring()
-        log.info(category: .social, "✅ TeamCollaborationHub: Initialized")
+        log.info("✅ TeamCollaborationHub: Initialized", category: .social)
     }
 
     // MARK: - Session Management

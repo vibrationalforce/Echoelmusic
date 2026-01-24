@@ -32,7 +32,7 @@ class LocalizationManager: ObservableObject {
         didSet {
             if currentLanguage != oldValue {
                 languageDidChange.send(currentLanguage)
-                log.info(category: .system, "🌍 Language changed to: \(currentLanguage.displayName)")
+                log.info("🌍 Language changed to: \(currentLanguage.displayName)", category: .system)
             }
         }
     }

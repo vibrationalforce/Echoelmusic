@@ -122,7 +122,7 @@ struct Session: Identifiable, Codable {
         let data = try encoder.encode(self)
         try data.write(to: sessionFile)
 
-        log.info(category: .recording, "💾 Session saved: \(name)")
+        log.info("💾 Session saved: \(name)", category: .recording)
     }
 
     /// Load session from disk

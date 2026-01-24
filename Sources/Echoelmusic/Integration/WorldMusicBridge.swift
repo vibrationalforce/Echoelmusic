@@ -92,7 +92,7 @@ class WorldMusicBridge: ObservableObject {
 
     private init() {
         loadMusicStyles()
-        log.info(category: .audio, "✅ WorldMusicBridge: Loaded \(availableStyles.count) music styles")
+        log.info("✅ WorldMusicBridge: Loaded \(availableStyles.count) music styles", category: .audio)
     }
 
     // MARK: - Load Music Styles (Mirror of WorldMusicDatabase.cpp)

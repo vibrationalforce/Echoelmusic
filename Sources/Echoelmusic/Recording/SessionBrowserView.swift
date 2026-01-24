@@ -215,14 +215,14 @@ struct SessionBrowserView: View {
             try recordingEngine.loadSession(id: id)
             dismiss()
         } catch {
-            log.error(category: .recording, "❌ Failed to load session: \(error)")
+            log.error("❌ Failed to load session: \(error)", category: .recording)
         }
     }
 
     private func deleteSession(_ id: UUID) {
         sessions.removeAll { $0.id == id }
         // In real implementation, delete from disk
-        log.info(category: .recording, "🗑️ Deleted session: \(id)")
+        log.info("🗑️ Deleted session: \(id)", category: .recording)
     }
 }
 

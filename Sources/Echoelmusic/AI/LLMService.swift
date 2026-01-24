@@ -646,7 +646,7 @@ struct LLMChatView: View {
             do {
                 _ = try await llm.sendMessage(text, bioContext: context)
             } catch {
-                log.error(category: .intelligence, "LLM Error: \(error)")
+                log.error("LLM Error: \(error)", category: .intelligence)
             }
         }
     }
