@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,11 +41,16 @@ fun EchoelmusicApp() {
     var coherence by remember { mutableFloatStateOf(0.5f) }
     var isPlaying by remember { mutableStateOf(false) }
 
-    // Update from bio engine
-    LaunchedEffect(Unit) {
+    // Update from bio engine with proper cleanup
+    DisposableEffect(Unit) {
         EchoelmusicApplication.bioReactiveEngine.setHeartRateCallback { hr, _, coh ->
             heartRate = hr
             coherence = coh
+        }
+
+        // Clean up callback when composable is disposed to prevent memory leaks
+        onDispose {
+            EchoelmusicApplication.bioReactiveEngine.clearCallback()
         }
     }
 

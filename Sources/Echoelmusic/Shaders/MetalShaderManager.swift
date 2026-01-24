@@ -222,7 +222,7 @@ class MetalShaderManager: ObservableObject {
         }
 
         // Create compute pipeline for particles
-        if let particleFunction = library.makeFunction(name: "updateParticles") {
+        if let particleFunction = library.makeFunction(name: "echoelUpdateParticles") {
             do {
                 particleUpdatePipeline = try device.makeComputePipelineState(function: particleFunction)
             } catch {

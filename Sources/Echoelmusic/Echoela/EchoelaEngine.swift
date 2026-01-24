@@ -835,13 +835,13 @@ public final class EchoelaEngine: ObservableObject {
         // Add warmth
         if personality.warmth > 0.7 {
             let warmPrefixes = ["Hey there! ", "Hi! ", "Hello! ", ""]
-            message = warmPrefixes.randomElement()! + message
+            message = (warmPrefixes.randomElement() ?? "") + message
         }
 
         // Add playfulness
         if personality.playfulness > 0.7 {
             let playfulSuffixes = [" 😊", " ✨", " 💡", ""]
-            message += playfulSuffixes.randomElement()!
+            message += playfulSuffixes.randomElement() ?? ""
         }
 
         // Adjust verbosity

@@ -584,6 +584,43 @@ public enum WebSocketSecurityError: Error, LocalizedError {
     }
 }
 
+/// General WebSocket operation errors
+public enum WebSocketError: Error, LocalizedError {
+    case notConnected
+    case encodingFailed(String)
+    case decodingFailed(String)
+    case connectionTimeout
+    case maxRetriesExceeded
+
+    public var errorDescription: String? {
+        switch self {
+        case .notConnected:
+            return "WebSocket is not connected"
+        case .encodingFailed(let message):
+            return "Failed to encode message: \(message)"
+        case .decodingFailed(let message):
+            return "Failed to decode message: \(message)"
+        case .connectionTimeout:
+            return "WebSocket connection timed out"
+        case .maxRetriesExceeded:
+            return "Maximum retry attempts exceeded"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .notConnected:
+            return "Please check your internet connection and try again"
+        case .encodingFailed, .decodingFailed:
+            return "Please try again or contact support if the issue persists"
+        case .connectionTimeout:
+            return "Please check your internet connection"
+        case .maxRetriesExceeded:
+            return "Please try again later"
+        }
+    }
+}
+
 // MARK: - WebSocket Metrics
 
 /// Connection quality metrics
@@ -953,7 +990,9 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
         let data = try encoder.encode(signedMessage)
 
         // Send
-        let messageString = String(data: data, encoding: .utf8)!
+        guard let messageString = String(data: data, encoding: .utf8) else {
+            throw WebSocketError.encodingFailed("Failed to encode message as UTF-8")
+        }
         try await webSocketTask?.send(.string(messageString))
 
         await MainActor.run {
@@ -999,7 +1038,9 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
 
     /// Send queued message
     private func sendQueuedMessage(_ queued: QueuedWebSocketMessage) async throws {
-        let messageString = String(data: queued.messageData, encoding: .utf8)!
+        guard let messageString = String(data: queued.messageData, encoding: .utf8) else {
+            throw WebSocketError.encodingFailed("Failed to decode queued message as UTF-8")
+        }
         try await webSocketTask?.send(.string(messageString))
 
         await MainActor.run {

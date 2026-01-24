@@ -24,9 +24,9 @@ public struct PrivacyPolicy {
 
     // MARK: - Metadata
 
-    public static let version = "1.1.0"
+    public static let version = "1.2.0"
     public static let effectiveDate = "January 7, 2026"
-    public static let lastUpdated = "January 21, 2026"
+    public static let lastUpdated = "January 24, 2026"
     public static let companyName = "Echoelmusic Inc."
     public static let contactEmail = "privacy@echoelmusic.com"
     public static let dpoEmail = "privacy@echoelmusic.com" // Data Protection Officer
@@ -700,9 +700,9 @@ public struct PrivacyPolicy {
 /// Comprehensive Terms of Service
 public struct TermsOfService {
 
-    public static let version = "1.1.0"
+    public static let version = "1.2.0"
     public static let effectiveDate = "January 7, 2026"
-    public static let lastUpdated = "January 21, 2026"
+    public static let lastUpdated = "January 24, 2026"
 
     public static let fullText = """
     TERMS OF SERVICE

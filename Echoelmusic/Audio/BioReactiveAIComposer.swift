@@ -372,7 +372,7 @@ class MarkovMelodyGenerator {
             var duration = avgNoteDuration
             if characteristics.noteSpacing == .varied {
                 let variations: [Double] = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
-                duration = variations.randomElement()! * avgNoteDuration
+                duration = (variations.randomElement() ?? 1.0) * avgNoteDuration
             }
 
             // Humanization

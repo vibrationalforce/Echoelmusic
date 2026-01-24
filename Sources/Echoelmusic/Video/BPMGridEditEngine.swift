@@ -822,7 +822,7 @@ public class BPMGridEditEngine: ObservableObject {
             // Onset when energy increases significantly
             if energy > lastEnergy * 1.5 && energy > 0.01 {
                 let time = Double(i) / Double(sampleRate)
-                if onsets.isEmpty || time - onsets.last! > 0.1 {
+                if onsets.isEmpty || (onsets.last.map { time - $0 > 0.1 } ?? true) {
                     onsets.append(time)
                 }
             }
