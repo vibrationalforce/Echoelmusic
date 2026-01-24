@@ -365,7 +365,7 @@ class QualityAssuranceSystem: ObservableObject {
 
         log.info("✅ Test Suite Complete", category: .system)
         log.info("📊 Overall Quality Score: \(String(format: "%.1f", overallQualityScore))%", category: .system)
-        log.info("⚠️ Issues Found: \(issues.count)", level: .warning, category: .system)
+        log.warning("⚠️ Issues Found: \(issues.count)", category: .system)
     }
 
     private func runTest(name: String, category: QualityTest.TestCategory, duration: Double) async {

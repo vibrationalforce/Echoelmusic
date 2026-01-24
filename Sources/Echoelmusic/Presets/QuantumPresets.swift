@@ -483,7 +483,7 @@ public class PresetManager: ObservableObject {
         addToRecent(preset.id)
 
         currentPreset = preset
-        log.info(category: .system, "[Presets] Applied: \(preset.name)")
+        log.info("[Presets] Applied: \(preset.name)", category: .system)
     }
 
     public func toggleFavorite(_ presetId: String) {

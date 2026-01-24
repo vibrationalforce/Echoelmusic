@@ -162,7 +162,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         ]
 
         session.sendMessage(message, replyHandler: nil) { error in
-            log.info("⌚ Failed to send bio data: \(error.localizedDescription)", category: .system, level: .error)
+            log.error("⌚ Failed to send bio data: \(error.localizedDescription)", category: .system)
         }
     }
 
@@ -183,7 +183,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         session.sendMessage(message, replyHandler: { reply in
             log.info("⌚ Watch session started: \(reply)", category: .system)
         }) { error in
-            log.info("⌚ Failed to start watch session: \(error.localizedDescription)", category: .system, level: .error)
+            log.error("⌚ Failed to start watch session: \(error.localizedDescription)", category: .system)
         }
     }
 
@@ -197,7 +197,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         ]
 
         session.sendMessage(message, replyHandler: nil) { error in
-            log.info("⌚ Failed to stop watch session: \(error.localizedDescription)", category: .system, level: .error)
+            log.error("⌚ Failed to stop watch session: \(error.localizedDescription)", category: .system)
         }
     }
 
@@ -222,7 +222,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             try session.updateApplicationContext(settings)
             log.info("⌚ Watch settings updated", category: .system)
         } catch {
-            log.info("⌚ Failed to update watch settings: \(error.localizedDescription)", category: .system, level: .error)
+            log.error("⌚ Failed to update watch settings: \(error.localizedDescription)", category: .system)
         }
     }
 
@@ -240,7 +240,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
                 self?.handleBioDataReply(reply)
             }
         }) { error in
-            log.info("⌚ Failed to request bio data: \(error.localizedDescription)", category: .system, level: .error)
+            log.error("⌚ Failed to request bio data: \(error.localizedDescription)", category: .system)
         }
     }
 
@@ -358,7 +358,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         Task { @MainActor in
             if let error = error {
-                log.info("⌚ WCSession activation failed: \(error.localizedDescription)", category: .system, level: .error)
+                log.error("⌚ WCSession activation failed: \(error.localizedDescription)", category: .system)
                 syncStatus = .error(error.localizedDescription)
             } else {
                 log.info("⌚ WCSession activated: \(activationState.rawValue)", category: .system)
@@ -420,7 +420,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     nonisolated func session(_ session: WCSession, didFinish fileTransfer: WCSessionFileTransfer, error: Error?) {
         if let error = error {
-            log.info("⌚ File transfer failed: \(error.localizedDescription)", category: .system, level: .error)
+            log.error("⌚ File transfer failed: \(error.localizedDescription)", category: .system)
         } else {
             log.info("⌚ File transfer completed: \(fileTransfer.file.fileURL.lastPathComponent)", category: .system)
         }

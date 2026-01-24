@@ -192,6 +192,11 @@ public final class EchoelaEngine: ObservableObject {
 
     public static let shared = EchoelaEngine()
 
+    // MARK: - Localization
+
+    /// Localization manager for multi-language support
+    public let localization = EchoelaLocalizationManager.shared
+
     // MARK: - Published State
 
     /// Whether Echoela is currently active
@@ -499,24 +504,24 @@ public final class EchoelaEngine: ObservableObject {
         switch reason {
         case .hesitation:
             return selectCalmMessage([
-                "Take your time. Would you like some guidance?",
-                "No rush. I'm here if you need a hint.",
-                "Whenever you're ready. Need any help?"
+                localization.string(for: .helpHesitation1),
+                localization.string(for: .helpHesitation2),
+                localization.string(for: .helpHesitation3)
             ])
         case .repeatedErrors:
             return selectCalmMessage([
-                "That can be tricky. Would you like me to explain?",
-                "Let me help clarify this for you.",
-                "This part takes practice. Want some tips?"
+                localization.string(for: .helpRepeatedErrors1),
+                localization.string(for: .helpRepeatedErrors2),
+                localization.string(for: .helpRepeatedErrors3)
             ])
         case .firstTime:
             return selectCalmMessage([
-                "This is new. Would you like a quick overview?",
-                "First time here? I can show you around.",
-                "Let me introduce you to this feature."
+                localization.string(for: .helpFirstTime1),
+                localization.string(for: .helpFirstTime2),
+                localization.string(for: .helpFirstTime3)
             ])
         case .userRequested:
-            return "How can I help you?"
+            return localization.string(for: .helpUserRequested)
         }
     }
 
@@ -601,23 +606,28 @@ public final class EchoelaEngine: ObservableObject {
         let welcomeContext = GuidanceContext(
             id: "echoela_welcome",
             topic: .welcome,
-            title: "Hello, I'm Echoela",
-            description: "I'm here to help you explore Echoelmusic at your own pace. I'll offer gentle guidance when you might need it, but you're always in control. You can dismiss me anytime.",
+            title: localization.string(for: .welcomeTitle),
+            description: localization.string(for: .welcomeDescription),
             hints: [],
             steps: [
                 GuidanceStep(
-                    title: "I'm Optional",
-                    description: "You can turn me off in Settings anytime. No pressure.",
+                    title: localization.string(for: .welcomeOptional),
+                    description: localization.string(for: .welcomeOptionalDesc),
                     action: nil
                 ),
                 GuidanceStep(
-                    title: "I Learn Your Style",
-                    description: "I'll adapt to how you use the app. More help when you're learning, less when you're confident.",
+                    title: localization.string(for: .welcomeLearnStyle),
+                    description: localization.string(for: .welcomeLearnStyleDesc),
                     action: nil
                 ),
                 GuidanceStep(
-                    title: "I Never Rush You",
-                    description: "Take all the time you need. There are no timers or scores.",
+                    title: localization.string(for: .welcomeNoRush),
+                    description: localization.string(for: .welcomeNoRushDesc),
+                    action: nil
+                ),
+                GuidanceStep(
+                    title: localization.string(for: .welcomeAskAnytime),
+                    description: localization.string(for: .welcomeAskAnytimeDesc),
                     action: nil
                 )
             ]
@@ -1013,8 +1023,9 @@ public final class EchoelaEngine: ObservableObject {
         utterance.volume = 0.8  // Slightly softer for atmosphere
         utterance.preUtteranceDelay = 0.3  // Gentle pause before speaking
 
-        // Use a pleasant voice
-        if let voice = AVSpeechSynthesisVoice(language: Locale.current.language.languageCode?.identifier ?? "en-US") {
+        // Use voice matching user's language preference
+        let languageCode = localization.currentLanguage.speechLanguageCode
+        if let voice = AVSpeechSynthesisVoice(language: languageCode) {
             utterance.voice = voice
         }
 

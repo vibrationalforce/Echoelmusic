@@ -32,7 +32,7 @@ class LocalizationManager: ObservableObject {
         didSet {
             if currentLanguage != oldValue {
                 languageDidChange.send(currentLanguage)
-                log.info(category: .system, "🌍 Language changed to: \(currentLanguage.displayName)")
+                log.info("🌍 Language changed to: \(currentLanguage.displayName)", category: .system)
             }
         }
     }
@@ -65,6 +65,12 @@ class LocalizationManager: ObservableObject {
         case polish = "pl"
         case turkish = "tr"
 
+        // Nordic/Scandinavian Languages (High Apple penetration markets)
+        case dutch = "nl"           // Netherlands - wealthy, high Apple penetration
+        case danish = "da"          // Denmark - 63% iPhone market share!
+        case swedish = "sv"         // Sweden - wealthy Scandinavia
+        case norwegian = "no"       // Norway - very wealthy
+
         // Asian Languages
         case chineseSimplified = "zh-Hans"
         case chineseTraditional = "zh-Hant"
@@ -73,7 +79,7 @@ class LocalizationManager: ObservableObject {
         case hindi = "hi"
         case bengali = "bn"
         case tamil = "ta"
-        case indonesian = "id"
+        case indonesian = "id"      // Indonesia - Largest SE Asian market
         case thai = "th"
         case vietnamese = "vi"
 
@@ -81,6 +87,19 @@ class LocalizationManager: ObservableObject {
         case arabic = "ar"
         case hebrew = "he"
         case persian = "fa"
+
+        // Tier 5: Strategic Expansion (NEW - 12 Languages)
+        case malay = "ms"           // Malaysia/Singapore
+        case finnish = "fi"         // Finland - Nordic completion
+        case greek = "el"           // Greece - Mediterranean
+        case czech = "cs"           // Czech Republic - Central Europe
+        case romanian = "ro"        // Romania - Eastern Europe
+        case hungarian = "hu"       // Hungary - Central Europe
+        case ukrainian = "uk"       // Ukraine - Eastern Europe
+        case filipino = "tl"        // Philippines - Large market
+        case swahili = "sw"         // East Africa - Growing market
+        case telugu = "te"          // South India - 80M+ speakers
+        case marathi = "mr"         // India - 90M+ speakers
 
         var displayName: String {
             switch self {
@@ -93,6 +112,11 @@ class LocalizationManager: ObservableObject {
             case .russian: return "Русский"
             case .polish: return "Polski"
             case .turkish: return "Türkçe"
+            // Nordic/Scandinavian
+            case .dutch: return "Nederlands"
+            case .danish: return "Dansk"
+            case .swedish: return "Svenska"
+            case .norwegian: return "Norsk"
             case .chineseSimplified: return "简体中文"
             case .chineseTraditional: return "繁體中文"
             case .japanese: return "日本語"
@@ -106,6 +130,18 @@ class LocalizationManager: ObservableObject {
             case .arabic: return "العربية"
             case .hebrew: return "עברית"
             case .persian: return "فارسی"
+            // Tier 5: Strategic Expansion
+            case .malay: return "Bahasa Melayu"
+            case .finnish: return "Suomi"
+            case .greek: return "Ελληνικά"
+            case .czech: return "Čeština"
+            case .romanian: return "Română"
+            case .hungarian: return "Magyar"
+            case .ukrainian: return "Українська"
+            case .filipino: return "Filipino"
+            case .swahili: return "Kiswahili"
+            case .telugu: return "తెలుగు"
+            case .marathi: return "मराठी"
             }
         }
 
@@ -284,11 +320,12 @@ class LocalizationManager: ObservableObject {
 
     private func getPluralForm(for count: Int, language: Language) -> String {
         switch language {
-        case .english, .german, .spanish, .french, .italian, .portuguese:
-            // Germanic/Romance: singular (1), plural (other)
+        case .english, .german, .spanish, .french, .italian, .portuguese,
+             .dutch, .danish, .swedish, .norwegian:
+            // Germanic/Romance/Nordic: singular (1), plural (other)
             return count == 1 ? "one" : "other"
 
-        case .russian, .polish:
+        case .russian, .polish, .ukrainian:
             // Slavic: one (1), few (2-4), many (5+), other
             let mod10 = count % 10
             let mod100 = count % 100
@@ -298,6 +335,27 @@ class LocalizationManager: ObservableObject {
                 return "few"
             } else {
                 return "many"
+            }
+
+        case .czech:
+            // Czech: one (1), few (2-4), other
+            if count == 1 {
+                return "one"
+            } else if count >= 2 && count <= 4 {
+                return "few"
+            } else {
+                return "other"
+            }
+
+        case .romanian:
+            // Romanian: one (1), few (0, 2-19, 101-119...), other
+            let mod100 = count % 100
+            if count == 1 {
+                return "one"
+            } else if count == 0 || (mod100 >= 2 && mod100 <= 19) {
+                return "few"
+            } else {
+                return "other"
             }
 
         case .arabic:
@@ -317,9 +375,14 @@ class LocalizationManager: ObservableObject {
             }
 
         case .japanese, .korean, .chineseSimplified, .chineseTraditional,
-             .indonesian, .thai, .vietnamese, .turkish:
-            // No plural distinction
+             .indonesian, .malay, .thai, .vietnamese, .turkish, .hungarian,
+             .filipino, .swahili, .telugu, .marathi:
+            // No plural distinction (or two-form languages that use other)
             return "other"
+
+        case .finnish, .greek:
+            // Finnish/Greek: singular (1), plural (other)
+            return count == 1 ? "one" : "other"
 
         default:
             return count == 1 ? "one" : "other"
@@ -409,8 +472,59 @@ class LocalizationManager: ObservableObject {
             return russianTranslations
         case .hindi:
             return hindiTranslations
-        default:
-            return englishTranslations // Fallback
+        // Additional Core Languages
+        case .polish:
+            return polishTranslations
+        case .turkish:
+            return turkishTranslations
+        // Nordic/Scandinavian Languages
+        case .dutch:
+            return dutchTranslations
+        case .danish:
+            return danishTranslations
+        case .swedish:
+            return swedishTranslations
+        case .norwegian:
+            return norwegianTranslations
+        case .chineseTraditional:
+            return chineseTraditionalTranslations
+        case .bengali:
+            return bengaliTranslations
+        case .tamil:
+            return tamilTranslations
+        case .thai:
+            return thaiTranslations
+        case .vietnamese:
+            return vietnameseTranslations
+        case .hebrew:
+            return hebrewTranslations
+        case .persian:
+            return persianTranslations
+        // Tier 5: Strategic Expansion
+        case .indonesian:
+            return indonesianTranslations
+        case .malay:
+            return malayTranslations
+        case .finnish:
+            return finnishTranslations
+        case .greek:
+            return greekTranslations
+        case .czech:
+            return czechTranslations
+        case .romanian:
+            return romanianTranslations
+        case .hungarian:
+            return hungarianTranslations
+        case .ukrainian:
+            return ukrainianTranslations
+        case .filipino:
+            return filipinoTranslations
+        case .swahili:
+            return swahiliTranslations
+        case .telugu:
+            return teluguTranslations
+        case .marathi:
+            return marathiTranslations
         }
     }
 
@@ -950,6 +1064,906 @@ class LocalizationManager: ObservableObject {
             "error.network": "नेटवर्क त्रुटि",
             "error.permission": "अनुमति आवश्यक",
             "error.file_not_found": "फ़ाइल नहीं मिली"
+        ]
+    }
+
+    // MARK: - Polish Translations
+
+    private var polishTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Witamy",
+            "general.ok": "OK",
+            "general.cancel": "Anuluj",
+            "general.save": "Zapisz",
+            "general.delete": "Usuń",
+            "general.edit": "Edytuj",
+            "general.done": "Gotowe",
+            "general.close": "Zamknij",
+            "general.settings": "Ustawienia",
+
+            "bio.hrv": "Zmienność rytmu serca",
+            "bio.coherence": "Koherencja",
+            "bio.heart_rate": "Tętno",
+            "bio.breathing_rate": "Częstość oddechów",
+            "bio.stress": "Stres",
+            "bio.relaxation": "Relaksacja",
+            "bio.meditation": "Medytacja",
+
+            "emotion.neutral": "Neutralny",
+            "emotion.happy": "Szczęśliwy",
+            "emotion.sad": "Smutny",
+            "emotion.energetic": "Energiczny",
+            "emotion.calm": "Spokojny",
+
+            "error.generic": "Wystąpił błąd",
+            "error.network": "Błąd sieci",
+            "error.permission": "Wymagane uprawnienie",
+            "error.file_not_found": "Nie znaleziono pliku"
+        ]
+    }
+
+    // MARK: - Turkish Translations
+
+    private var turkishTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Hoş geldiniz",
+            "general.ok": "Tamam",
+            "general.cancel": "İptal",
+            "general.save": "Kaydet",
+            "general.delete": "Sil",
+            "general.edit": "Düzenle",
+            "general.done": "Bitti",
+            "general.close": "Kapat",
+            "general.settings": "Ayarlar",
+
+            "bio.hrv": "Kalp Hızı Değişkenliği",
+            "bio.coherence": "Tutarlılık",
+            "bio.heart_rate": "Kalp Hızı",
+            "bio.breathing_rate": "Solunum Hızı",
+            "bio.stress": "Stres",
+            "bio.relaxation": "Rahatlama",
+            "bio.meditation": "Meditasyon",
+
+            "emotion.neutral": "Nötr",
+            "emotion.happy": "Mutlu",
+            "emotion.sad": "Üzgün",
+            "emotion.energetic": "Enerjik",
+            "emotion.calm": "Sakin",
+
+            "error.generic": "Bir hata oluştu",
+            "error.network": "Ağ hatası",
+            "error.permission": "İzin gerekli",
+            "error.file_not_found": "Dosya bulunamadı"
+        ]
+    }
+
+    // MARK: - Chinese Traditional Translations
+
+    private var chineseTraditionalTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "歡迎",
+            "general.ok": "確定",
+            "general.cancel": "取消",
+            "general.save": "儲存",
+            "general.delete": "刪除",
+            "general.edit": "編輯",
+            "general.done": "完成",
+            "general.close": "關閉",
+            "general.settings": "設定",
+
+            "bio.hrv": "心率變異性",
+            "bio.coherence": "一致性",
+            "bio.heart_rate": "心率",
+            "bio.breathing_rate": "呼吸頻率",
+            "bio.stress": "壓力",
+            "bio.relaxation": "放鬆",
+            "bio.meditation": "冥想",
+
+            "emotion.neutral": "中性",
+            "emotion.happy": "快樂",
+            "emotion.sad": "悲傷",
+            "emotion.energetic": "充滿活力",
+            "emotion.calm": "平靜",
+
+            "error.generic": "發生錯誤",
+            "error.network": "網路錯誤",
+            "error.permission": "需要權限",
+            "error.file_not_found": "找不到檔案"
+        ]
+    }
+
+    // MARK: - Bengali Translations
+
+    private var bengaliTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "স্বাগতম",
+            "general.ok": "ঠিক আছে",
+            "general.cancel": "বাতিল",
+            "general.save": "সংরক্ষণ",
+            "general.delete": "মুছুন",
+            "general.edit": "সম্পাদনা",
+            "general.done": "সম্পন্ন",
+            "general.close": "বন্ধ",
+            "general.settings": "সেটিংস",
+
+            "bio.hrv": "হার্ট রেট ভ্যারিয়েবিলিটি",
+            "bio.coherence": "সমন্বয়",
+            "bio.heart_rate": "হার্ট রেট",
+            "bio.breathing_rate": "শ্বাসের হার",
+            "bio.stress": "মানসিক চাপ",
+            "bio.relaxation": "শিথিলতা",
+            "bio.meditation": "ধ্যান",
+
+            "emotion.neutral": "নিরপেক্ষ",
+            "emotion.happy": "খুশি",
+            "emotion.sad": "দুঃখিত",
+            "emotion.energetic": "উদ্যমী",
+            "emotion.calm": "শান্ত",
+
+            "error.generic": "একটি ত্রুটি ঘটেছে",
+            "error.network": "নেটওয়ার্ক ত্রুটি",
+            "error.permission": "অনুমতি প্রয়োজন",
+            "error.file_not_found": "ফাইল পাওয়া যায়নি"
+        ]
+    }
+
+    // MARK: - Tamil Translations
+
+    private var tamilTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "வரவேற்கிறோம்",
+            "general.ok": "சரி",
+            "general.cancel": "ரத்து",
+            "general.save": "சேமி",
+            "general.delete": "நீக்கு",
+            "general.edit": "திருத்து",
+            "general.done": "முடிந்தது",
+            "general.close": "மூடு",
+            "general.settings": "அமைப்புகள்",
+
+            "bio.hrv": "இதய துடிப்பு மாறுபாடு",
+            "bio.coherence": "ஒத்திசைவு",
+            "bio.heart_rate": "இதய துடிப்பு",
+            "bio.breathing_rate": "சுவாச விகிதம்",
+            "bio.stress": "மன அழுத்தம்",
+            "bio.relaxation": "தளர்வு",
+            "bio.meditation": "தியானம்",
+
+            "emotion.neutral": "நடுநிலை",
+            "emotion.happy": "மகிழ்ச்சி",
+            "emotion.sad": "சோகம்",
+            "emotion.energetic": "ஆற்றல்மிக்க",
+            "emotion.calm": "அமைதி",
+
+            "error.generic": "பிழை ஏற்பட்டது",
+            "error.network": "நெட்வொர்க் பிழை",
+            "error.permission": "அனுமதி தேவை",
+            "error.file_not_found": "கோப்பு கிடைக்கவில்லை"
+        ]
+    }
+
+    // MARK: - Thai Translations
+
+    private var thaiTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "ยินดีต้อนรับ",
+            "general.ok": "ตกลง",
+            "general.cancel": "ยกเลิก",
+            "general.save": "บันทึก",
+            "general.delete": "ลบ",
+            "general.edit": "แก้ไข",
+            "general.done": "เสร็จสิ้น",
+            "general.close": "ปิด",
+            "general.settings": "การตั้งค่า",
+
+            "bio.hrv": "ความแปรปรวนของอัตราการเต้นของหัวใจ",
+            "bio.coherence": "ความสอดคล้อง",
+            "bio.heart_rate": "อัตราการเต้นของหัวใจ",
+            "bio.breathing_rate": "อัตราการหายใจ",
+            "bio.stress": "ความเครียด",
+            "bio.relaxation": "การผ่อนคลาย",
+            "bio.meditation": "การทำสมาธิ",
+
+            "emotion.neutral": "เป็นกลาง",
+            "emotion.happy": "มีความสุข",
+            "emotion.sad": "เศร้า",
+            "emotion.energetic": "มีพลัง",
+            "emotion.calm": "สงบ",
+
+            "error.generic": "เกิดข้อผิดพลาด",
+            "error.network": "ข้อผิดพลาดเครือข่าย",
+            "error.permission": "ต้องได้รับอนุญาต",
+            "error.file_not_found": "ไม่พบไฟล์"
+        ]
+    }
+
+    // MARK: - Vietnamese Translations
+
+    private var vietnameseTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Chào mừng",
+            "general.ok": "OK",
+            "general.cancel": "Hủy",
+            "general.save": "Lưu",
+            "general.delete": "Xóa",
+            "general.edit": "Chỉnh sửa",
+            "general.done": "Xong",
+            "general.close": "Đóng",
+            "general.settings": "Cài đặt",
+
+            "bio.hrv": "Biến thiên nhịp tim",
+            "bio.coherence": "Sự mạch lạc",
+            "bio.heart_rate": "Nhịp tim",
+            "bio.breathing_rate": "Nhịp thở",
+            "bio.stress": "Căng thẳng",
+            "bio.relaxation": "Thư giãn",
+            "bio.meditation": "Thiền định",
+
+            "emotion.neutral": "Trung lập",
+            "emotion.happy": "Vui vẻ",
+            "emotion.sad": "Buồn",
+            "emotion.energetic": "Tràn đầy năng lượng",
+            "emotion.calm": "Bình tĩnh",
+
+            "error.generic": "Đã xảy ra lỗi",
+            "error.network": "Lỗi mạng",
+            "error.permission": "Cần quyền truy cập",
+            "error.file_not_found": "Không tìm thấy tệp"
+        ]
+    }
+
+    // MARK: - Hebrew Translations
+
+    private var hebrewTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "ברוכים הבאים",
+            "general.ok": "אישור",
+            "general.cancel": "ביטול",
+            "general.save": "שמור",
+            "general.delete": "מחק",
+            "general.edit": "ערוך",
+            "general.done": "סיום",
+            "general.close": "סגור",
+            "general.settings": "הגדרות",
+
+            "bio.hrv": "שונות קצב הלב",
+            "bio.coherence": "קוהרנטיות",
+            "bio.heart_rate": "קצב לב",
+            "bio.breathing_rate": "קצב נשימה",
+            "bio.stress": "מתח",
+            "bio.relaxation": "הרפיה",
+            "bio.meditation": "מדיטציה",
+
+            "emotion.neutral": "ניטרלי",
+            "emotion.happy": "שמח",
+            "emotion.sad": "עצוב",
+            "emotion.energetic": "אנרגטי",
+            "emotion.calm": "רגוע",
+
+            "error.generic": "אירעה שגיאה",
+            "error.network": "שגיאת רשת",
+            "error.permission": "נדרשת הרשאה",
+            "error.file_not_found": "הקובץ לא נמצא"
+        ]
+    }
+
+    // MARK: - Persian Translations
+
+    private var persianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "خوش آمدید",
+            "general.ok": "تایید",
+            "general.cancel": "لغو",
+            "general.save": "ذخیره",
+            "general.delete": "حذف",
+            "general.edit": "ویرایش",
+            "general.done": "انجام شد",
+            "general.close": "بستن",
+            "general.settings": "تنظیمات",
+
+            "bio.hrv": "تغییرپذیری ضربان قلب",
+            "bio.coherence": "انسجام",
+            "bio.heart_rate": "ضربان قلب",
+            "bio.breathing_rate": "سرعت تنفس",
+            "bio.stress": "استرس",
+            "bio.relaxation": "آرامش",
+            "bio.meditation": "مدیتیشن",
+
+            "emotion.neutral": "خنثی",
+            "emotion.happy": "شاد",
+            "emotion.sad": "غمگین",
+            "emotion.energetic": "پرانرژی",
+            "emotion.calm": "آرام",
+
+            "error.generic": "خطایی رخ داد",
+            "error.network": "خطای شبکه",
+            "error.permission": "مجوز لازم است",
+            "error.file_not_found": "فایل یافت نشد"
+        ]
+    }
+
+    // MARK: - Indonesian Translations
+
+    private var indonesianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Selamat datang",
+            "general.ok": "OK",
+            "general.cancel": "Batal",
+            "general.save": "Simpan",
+            "general.delete": "Hapus",
+            "general.edit": "Edit",
+            "general.done": "Selesai",
+            "general.close": "Tutup",
+            "general.settings": "Pengaturan",
+
+            "bio.hrv": "Variabilitas Detak Jantung",
+            "bio.coherence": "Koherensi",
+            "bio.heart_rate": "Detak Jantung",
+            "bio.breathing_rate": "Laju Pernapasan",
+            "bio.stress": "Stres",
+            "bio.relaxation": "Relaksasi",
+            "bio.meditation": "Meditasi",
+
+            "emotion.neutral": "Netral",
+            "emotion.happy": "Bahagia",
+            "emotion.sad": "Sedih",
+            "emotion.energetic": "Energik",
+            "emotion.calm": "Tenang",
+
+            "error.generic": "Terjadi kesalahan",
+            "error.network": "Kesalahan jaringan",
+            "error.permission": "Izin diperlukan",
+            "error.file_not_found": "File tidak ditemukan"
+        ]
+    }
+
+    // MARK: - Malay Translations
+
+    private var malayTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Selamat datang",
+            "general.ok": "OK",
+            "general.cancel": "Batal",
+            "general.save": "Simpan",
+            "general.delete": "Padam",
+            "general.edit": "Edit",
+            "general.done": "Selesai",
+            "general.close": "Tutup",
+            "general.settings": "Tetapan",
+
+            "bio.hrv": "Variabiliti Kadar Jantung",
+            "bio.coherence": "Koherensi",
+            "bio.heart_rate": "Kadar Jantung",
+            "bio.breathing_rate": "Kadar Pernafasan",
+            "bio.stress": "Tekanan",
+            "bio.relaxation": "Relaksasi",
+            "bio.meditation": "Meditasi",
+
+            "emotion.neutral": "Neutral",
+            "emotion.happy": "Gembira",
+            "emotion.sad": "Sedih",
+            "emotion.energetic": "Bertenaga",
+            "emotion.calm": "Tenang",
+
+            "error.generic": "Ralat berlaku",
+            "error.network": "Ralat rangkaian",
+            "error.permission": "Kebenaran diperlukan",
+            "error.file_not_found": "Fail tidak dijumpai"
+        ]
+    }
+
+    // MARK: - Finnish Translations
+
+    private var finnishTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Tervetuloa",
+            "general.ok": "OK",
+            "general.cancel": "Peruuta",
+            "general.save": "Tallenna",
+            "general.delete": "Poista",
+            "general.edit": "Muokkaa",
+            "general.done": "Valmis",
+            "general.close": "Sulje",
+            "general.settings": "Asetukset",
+
+            "bio.hrv": "Sykevälivaihtelu",
+            "bio.coherence": "Koherenssi",
+            "bio.heart_rate": "Syke",
+            "bio.breathing_rate": "Hengitystiheys",
+            "bio.stress": "Stressi",
+            "bio.relaxation": "Rentoutuminen",
+            "bio.meditation": "Meditaatio",
+
+            "emotion.neutral": "Neutraali",
+            "emotion.happy": "Iloinen",
+            "emotion.sad": "Surullinen",
+            "emotion.energetic": "Energinen",
+            "emotion.calm": "Rauhallinen",
+
+            "error.generic": "Tapahtui virhe",
+            "error.network": "Verkkovirhe",
+            "error.permission": "Lupa vaaditaan",
+            "error.file_not_found": "Tiedostoa ei löydy"
+        ]
+    }
+
+    // MARK: - Greek Translations
+
+    private var greekTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Καλώς ήρθατε",
+            "general.ok": "OK",
+            "general.cancel": "Ακύρωση",
+            "general.save": "Αποθήκευση",
+            "general.delete": "Διαγραφή",
+            "general.edit": "Επεξεργασία",
+            "general.done": "Τέλος",
+            "general.close": "Κλείσιμο",
+            "general.settings": "Ρυθμίσεις",
+
+            "bio.hrv": "Μεταβλητότητα Καρδιακού Ρυθμού",
+            "bio.coherence": "Συνοχή",
+            "bio.heart_rate": "Καρδιακοί Παλμοί",
+            "bio.breathing_rate": "Ρυθμός Αναπνοής",
+            "bio.stress": "Άγχος",
+            "bio.relaxation": "Χαλάρωση",
+            "bio.meditation": "Διαλογισμός",
+
+            "emotion.neutral": "Ουδέτερο",
+            "emotion.happy": "Χαρούμενος",
+            "emotion.sad": "Λυπημένος",
+            "emotion.energetic": "Ενεργητικός",
+            "emotion.calm": "Ήρεμος",
+
+            "error.generic": "Παρουσιάστηκε σφάλμα",
+            "error.network": "Σφάλμα δικτύου",
+            "error.permission": "Απαιτείται άδεια",
+            "error.file_not_found": "Το αρχείο δεν βρέθηκε"
+        ]
+    }
+
+    // MARK: - Czech Translations
+
+    private var czechTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Vítejte",
+            "general.ok": "OK",
+            "general.cancel": "Zrušit",
+            "general.save": "Uložit",
+            "general.delete": "Smazat",
+            "general.edit": "Upravit",
+            "general.done": "Hotovo",
+            "general.close": "Zavřít",
+            "general.settings": "Nastavení",
+
+            "bio.hrv": "Variabilita srdeční frekvence",
+            "bio.coherence": "Koherence",
+            "bio.heart_rate": "Srdeční tep",
+            "bio.breathing_rate": "Dechová frekvence",
+            "bio.stress": "Stres",
+            "bio.relaxation": "Relaxace",
+            "bio.meditation": "Meditace",
+
+            "emotion.neutral": "Neutrální",
+            "emotion.happy": "Šťastný",
+            "emotion.sad": "Smutný",
+            "emotion.energetic": "Energický",
+            "emotion.calm": "Klidný",
+
+            "error.generic": "Došlo k chybě",
+            "error.network": "Chyba sítě",
+            "error.permission": "Vyžadováno povolení",
+            "error.file_not_found": "Soubor nenalezen"
+        ]
+    }
+
+    // MARK: - Romanian Translations
+
+    private var romanianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Bine ați venit",
+            "general.ok": "OK",
+            "general.cancel": "Anulare",
+            "general.save": "Salvare",
+            "general.delete": "Ștergere",
+            "general.edit": "Editare",
+            "general.done": "Gata",
+            "general.close": "Închide",
+            "general.settings": "Setări",
+
+            "bio.hrv": "Variabilitatea Ritmului Cardiac",
+            "bio.coherence": "Coerență",
+            "bio.heart_rate": "Ritm Cardiac",
+            "bio.breathing_rate": "Frecvența Respiratorie",
+            "bio.stress": "Stres",
+            "bio.relaxation": "Relaxare",
+            "bio.meditation": "Meditație",
+
+            "emotion.neutral": "Neutru",
+            "emotion.happy": "Fericit",
+            "emotion.sad": "Trist",
+            "emotion.energetic": "Energic",
+            "emotion.calm": "Calm",
+
+            "error.generic": "A apărut o eroare",
+            "error.network": "Eroare de rețea",
+            "error.permission": "Permisiune necesară",
+            "error.file_not_found": "Fișier negăsit"
+        ]
+    }
+
+    // MARK: - Hungarian Translations
+
+    private var hungarianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Üdvözöljük",
+            "general.ok": "OK",
+            "general.cancel": "Mégse",
+            "general.save": "Mentés",
+            "general.delete": "Törlés",
+            "general.edit": "Szerkesztés",
+            "general.done": "Kész",
+            "general.close": "Bezárás",
+            "general.settings": "Beállítások",
+
+            "bio.hrv": "Szívritmus-variabilitás",
+            "bio.coherence": "Koherencia",
+            "bio.heart_rate": "Pulzus",
+            "bio.breathing_rate": "Légzésszám",
+            "bio.stress": "Stressz",
+            "bio.relaxation": "Relaxáció",
+            "bio.meditation": "Meditáció",
+
+            "emotion.neutral": "Semleges",
+            "emotion.happy": "Boldog",
+            "emotion.sad": "Szomorú",
+            "emotion.energetic": "Energikus",
+            "emotion.calm": "Nyugodt",
+
+            "error.generic": "Hiba történt",
+            "error.network": "Hálózati hiba",
+            "error.permission": "Engedély szükséges",
+            "error.file_not_found": "Fájl nem található"
+        ]
+    }
+
+    // MARK: - Ukrainian Translations
+
+    private var ukrainianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Ласкаво просимо",
+            "general.ok": "OK",
+            "general.cancel": "Скасувати",
+            "general.save": "Зберегти",
+            "general.delete": "Видалити",
+            "general.edit": "Редагувати",
+            "general.done": "Готово",
+            "general.close": "Закрити",
+            "general.settings": "Налаштування",
+
+            "bio.hrv": "Варіабельність серцевого ритму",
+            "bio.coherence": "Когерентність",
+            "bio.heart_rate": "Частота серцебиття",
+            "bio.breathing_rate": "Частота дихання",
+            "bio.stress": "Стрес",
+            "bio.relaxation": "Розслаблення",
+            "bio.meditation": "Медитація",
+
+            "emotion.neutral": "Нейтральний",
+            "emotion.happy": "Щасливий",
+            "emotion.sad": "Сумний",
+            "emotion.energetic": "Енергійний",
+            "emotion.calm": "Спокійний",
+
+            "error.generic": "Сталася помилка",
+            "error.network": "Помилка мережі",
+            "error.permission": "Потрібен дозвіл",
+            "error.file_not_found": "Файл не знайдено"
+        ]
+    }
+
+    // MARK: - Filipino Translations
+
+    private var filipinoTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Maligayang pagdating",
+            "general.ok": "OK",
+            "general.cancel": "Kanselahin",
+            "general.save": "I-save",
+            "general.delete": "Tanggalin",
+            "general.edit": "I-edit",
+            "general.done": "Tapos",
+            "general.close": "Isara",
+            "general.settings": "Mga Setting",
+
+            "bio.hrv": "Pagkakaiba-iba ng Heart Rate",
+            "bio.coherence": "Koherensya",
+            "bio.heart_rate": "Heart Rate",
+            "bio.breathing_rate": "Bilis ng Paghinga",
+            "bio.stress": "Stress",
+            "bio.relaxation": "Pagpapahinga",
+            "bio.meditation": "Meditasyon",
+
+            "emotion.neutral": "Neutral",
+            "emotion.happy": "Masaya",
+            "emotion.sad": "Malungkot",
+            "emotion.energetic": "Masigla",
+            "emotion.calm": "Kalmado",
+
+            "error.generic": "May nangyaring error",
+            "error.network": "Error sa network",
+            "error.permission": "Kailangan ng permiso",
+            "error.file_not_found": "Hindi nakita ang file"
+        ]
+    }
+
+    // MARK: - Swahili Translations
+
+    private var swahiliTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Karibu",
+            "general.ok": "Sawa",
+            "general.cancel": "Ghairi",
+            "general.save": "Hifadhi",
+            "general.delete": "Futa",
+            "general.edit": "Hariri",
+            "general.done": "Imekamilika",
+            "general.close": "Funga",
+            "general.settings": "Mipangilio",
+
+            "bio.hrv": "Tofauti ya Mapigo ya Moyo",
+            "bio.coherence": "Mshikamano",
+            "bio.heart_rate": "Mapigo ya Moyo",
+            "bio.breathing_rate": "Kiwango cha Kupumua",
+            "bio.stress": "Msongo",
+            "bio.relaxation": "Kupumzika",
+            "bio.meditation": "Kutafakari",
+
+            "emotion.neutral": "Wastani",
+            "emotion.happy": "Furaha",
+            "emotion.sad": "Huzuni",
+            "emotion.energetic": "Nguvu",
+            "emotion.calm": "Utulivu",
+
+            "error.generic": "Hitilafu imetokea",
+            "error.network": "Hitilafu ya mtandao",
+            "error.permission": "Ruhusa inahitajika",
+            "error.file_not_found": "Faili haipatikani"
+        ]
+    }
+
+    // MARK: - Telugu Translations
+
+    private var teluguTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "స్వాగతం",
+            "general.ok": "సరే",
+            "general.cancel": "రద్దు",
+            "general.save": "సేవ్",
+            "general.delete": "తొలగించు",
+            "general.edit": "సవరించు",
+            "general.done": "పూర్తయింది",
+            "general.close": "మూసివేయి",
+            "general.settings": "సెట్టింగ్స్",
+
+            "bio.hrv": "హృదయ స్పందన వైవిధ్యత",
+            "bio.coherence": "సమన్వయం",
+            "bio.heart_rate": "హృదయ స్పందన",
+            "bio.breathing_rate": "శ్వాస రేటు",
+            "bio.stress": "ఒత్తిడి",
+            "bio.relaxation": "విశ్రాంతి",
+            "bio.meditation": "ధ్యానం",
+
+            "emotion.neutral": "తటస్థ",
+            "emotion.happy": "సంతోషం",
+            "emotion.sad": "దుఃఖం",
+            "emotion.energetic": "శక్తివంతం",
+            "emotion.calm": "ప్రశాంతం",
+
+            "error.generic": "లోపం సంభవించింది",
+            "error.network": "నెట్‌వర్క్ లోపం",
+            "error.permission": "అనుమతి అవసరం",
+            "error.file_not_found": "ఫైల్ కనుగొనబడలేదు"
+        ]
+    }
+
+    // MARK: - Marathi Translations
+
+    private var marathiTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "स्वागत आहे",
+            "general.ok": "ठीक आहे",
+            "general.cancel": "रद्द करा",
+            "general.save": "जतन करा",
+            "general.delete": "हटवा",
+            "general.edit": "संपादित करा",
+            "general.done": "झाले",
+            "general.close": "बंद करा",
+            "general.settings": "सेटिंग्ज",
+
+            "bio.hrv": "हृदय गती परिवर्तनीयता",
+            "bio.coherence": "सुसंगतता",
+            "bio.heart_rate": "हृदय गती",
+            "bio.breathing_rate": "श्वसन दर",
+            "bio.stress": "ताण",
+            "bio.relaxation": "विश्रांती",
+            "bio.meditation": "ध्यान",
+
+            "emotion.neutral": "तटस्थ",
+            "emotion.happy": "आनंदी",
+            "emotion.sad": "दुःखी",
+            "emotion.energetic": "ऊर्जावान",
+            "emotion.calm": "शांत",
+
+            "error.generic": "त्रुटी आली",
+            "error.network": "नेटवर्क त्रुटी",
+            "error.permission": "परवानगी आवश्यक",
+            "error.file_not_found": "फाइल सापडली नाही"
+        ]
+    }
+
+    // MARK: - Dutch Translations
+
+    private var dutchTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Welkom",
+            "general.ok": "OK",
+            "general.cancel": "Annuleren",
+            "general.save": "Opslaan",
+            "general.delete": "Verwijderen",
+            "general.edit": "Bewerken",
+            "general.done": "Gereed",
+            "general.close": "Sluiten",
+            "general.settings": "Instellingen",
+
+            "bio.hrv": "Hartslagvariabiliteit",
+            "bio.coherence": "Coherentie",
+            "bio.heart_rate": "Hartslag",
+            "bio.breathing_rate": "Ademhalingsfrequentie",
+            "bio.stress": "Stress",
+            "bio.relaxation": "Ontspanning",
+            "bio.meditation": "Meditatie",
+
+            "emotion.neutral": "Neutraal",
+            "emotion.happy": "Blij",
+            "emotion.sad": "Verdrietig",
+            "emotion.energetic": "Energiek",
+            "emotion.calm": "Kalm",
+
+            "error.generic": "Er is een fout opgetreden",
+            "error.network": "Netwerkfout",
+            "error.permission": "Toestemming vereist",
+            "error.file_not_found": "Bestand niet gevonden"
+        ]
+    }
+
+    // MARK: - Danish Translations
+
+    private var danishTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Velkommen",
+            "general.ok": "OK",
+            "general.cancel": "Annuller",
+            "general.save": "Gem",
+            "general.delete": "Slet",
+            "general.edit": "Rediger",
+            "general.done": "Færdig",
+            "general.close": "Luk",
+            "general.settings": "Indstillinger",
+
+            "bio.hrv": "Hjertefrekvensvariabilitet",
+            "bio.coherence": "Kohærens",
+            "bio.heart_rate": "Puls",
+            "bio.breathing_rate": "Vejrtrækningsfrekvens",
+            "bio.stress": "Stress",
+            "bio.relaxation": "Afslapning",
+            "bio.meditation": "Meditation",
+
+            "emotion.neutral": "Neutral",
+            "emotion.happy": "Glad",
+            "emotion.sad": "Trist",
+            "emotion.energetic": "Energisk",
+            "emotion.calm": "Rolig",
+
+            "error.generic": "Der opstod en fejl",
+            "error.network": "Netværksfejl",
+            "error.permission": "Tilladelse påkrævet",
+            "error.file_not_found": "Fil ikke fundet"
+        ]
+    }
+
+    // MARK: - Swedish Translations
+
+    private var swedishTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Välkommen",
+            "general.ok": "OK",
+            "general.cancel": "Avbryt",
+            "general.save": "Spara",
+            "general.delete": "Ta bort",
+            "general.edit": "Redigera",
+            "general.done": "Klar",
+            "general.close": "Stäng",
+            "general.settings": "Inställningar",
+
+            "bio.hrv": "Hjärtfrekvensvariabilitet",
+            "bio.coherence": "Koherens",
+            "bio.heart_rate": "Puls",
+            "bio.breathing_rate": "Andningsfrekvens",
+            "bio.stress": "Stress",
+            "bio.relaxation": "Avslappning",
+            "bio.meditation": "Meditation",
+
+            "emotion.neutral": "Neutral",
+            "emotion.happy": "Glad",
+            "emotion.sad": "Ledsen",
+            "emotion.energetic": "Energisk",
+            "emotion.calm": "Lugn",
+
+            "error.generic": "Ett fel uppstod",
+            "error.network": "Nätverksfel",
+            "error.permission": "Behörighet krävs",
+            "error.file_not_found": "Filen hittades inte"
+        ]
+    }
+
+    // MARK: - Norwegian Translations
+
+    private var norwegianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Velkommen",
+            "general.ok": "OK",
+            "general.cancel": "Avbryt",
+            "general.save": "Lagre",
+            "general.delete": "Slett",
+            "general.edit": "Rediger",
+            "general.done": "Ferdig",
+            "general.close": "Lukk",
+            "general.settings": "Innstillinger",
+
+            "bio.hrv": "Hjertefrekvensvariabilitet",
+            "bio.coherence": "Koherens",
+            "bio.heart_rate": "Puls",
+            "bio.breathing_rate": "Pustefrekvens",
+            "bio.stress": "Stress",
+            "bio.relaxation": "Avslapning",
+            "bio.meditation": "Meditasjon",
+
+            "emotion.neutral": "Nøytral",
+            "emotion.happy": "Glad",
+            "emotion.sad": "Trist",
+            "emotion.energetic": "Energisk",
+            "emotion.calm": "Rolig",
+
+            "error.generic": "Det oppsto en feil",
+            "error.network": "Nettverksfeil",
+            "error.permission": "Tillatelse kreves",
+            "error.file_not_found": "Fil ikke funnet"
         ]
     }
 

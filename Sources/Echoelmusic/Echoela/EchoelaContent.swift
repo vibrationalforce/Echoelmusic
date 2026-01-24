@@ -2,7 +2,7 @@
  * EchoelaContent.swift
  * Echoelmusic - Guided Tour Content Library
  *
- * All guidance content for Echoela
+ * All guidance content for Echoela with multi-language support
  * Written in calm, clear, non-judgmental language
  *
  * Principles:
@@ -12,10 +12,20 @@
  * - No assumptions about ability
  * - Optional depth (expand for more)
  *
+ * Supported Languages: EN, DE, JA, ES, FR, ZH, KO, PT, IT, RU, AR, HI
+ *
  * Created: 2026-01-15
+ * Updated: 2026-01-24 - Added multi-language support
  */
 
 import Foundation
+
+// MARK: - Localized Content Helper
+
+/// Helper to get localized string with current language
+private func L(_ key: LocalizationKey) -> String {
+    return EchoelaLocalizationManager.shared.string(for: key)
+}
 
 // MARK: - Content Provider
 
@@ -60,28 +70,28 @@ public struct EchoelaContentProvider {
         GuidanceContext(
             id: "welcome",
             topic: .welcome,
-            title: "Hello, I'm Echoela",
-            description: "I'm here to help you explore Echoelmusic. I'll offer gentle guidance when you might need it, but you're always in control.",
+            title: L(.welcomeTitle),
+            description: L(.welcomeDescription),
             hints: [],
             steps: [
                 GuidanceStep(
-                    title: "I'm Optional",
-                    description: "You can turn me off in Settings anytime. I won't be offended.",
+                    title: L(.welcomeOptional),
+                    description: L(.welcomeOptionalDesc),
                     action: nil
                 ),
                 GuidanceStep(
-                    title: "I Learn Your Style",
-                    description: "As you use the app, I'll give you less guidance when you're confident, and more when things are new.",
+                    title: L(.welcomeLearnStyle),
+                    description: L(.welcomeLearnStyleDesc),
                     action: nil
                 ),
                 GuidanceStep(
-                    title: "I Never Rush You",
-                    description: "There are no timers, no scores, no pressure. Take all the time you need.",
+                    title: L(.welcomeNoRush),
+                    description: L(.welcomeNoRushDesc),
                     action: nil
                 ),
                 GuidanceStep(
-                    title: "Ask Anytime",
-                    description: "If you ever need help, just tap the Echoela button or look for the sparkle icon.",
+                    title: L(.welcomeAskAnytime),
+                    description: L(.welcomeAskAnytimeDesc),
                     action: nil
                 )
             ]
@@ -94,12 +104,12 @@ public struct EchoelaContentProvider {
         GuidanceContext(
             id: "general_help",
             topic: .generalHelp,
-            title: "How Can I Help?",
-            description: "Choose a topic to learn more about it. You can always come back here.",
+            title: L(.generalHelpTitle),
+            description: L(.generalHelpDescription),
             hints: [
                 GuidanceHint(
-                    shortText: "Tip: Topics you've explored are marked with a checkmark.",
-                    detailedText: "But you can revisit them anytime. There's no limit to how many times you can read something.",
+                    shortText: L(.generalHelpTip),
+                    detailedText: L(.generalHelpTipDetail),
                     relatedTopics: []
                 )
             ],
@@ -113,34 +123,34 @@ public struct EchoelaContentProvider {
         GuidanceContext(
             id: "audio_basics",
             topic: .audioBasics,
-            title: "Audio Basics",
-            description: "Learn how sound works in Echoelmusic.",
+            title: L(.audioBasicsTitle),
+            description: L(.audioBasicsDescription),
             hints: [
                 GuidanceHint(
-                    shortText: "You don't need music experience to use this app.",
-                    detailedText: "Echoelmusic is designed for everyone. The app creates sounds for you based on your input.",
+                    shortText: L(.audioBasicsHint),
+                    detailedText: L(.audioBasicsHintDetail),
                     relatedTopics: [.presets]
                 )
             ],
             steps: [
                 GuidanceStep(
-                    title: "What You Hear",
-                    description: "Echoelmusic creates sounds in real-time. These sounds change based on what you do — touching the screen, your heart rate, your voice, or your movements.",
+                    title: L(.audioWhatYouHear),
+                    description: L(.audioWhatYouHearDesc),
                     action: nil
                 ),
                 GuidanceStep(
-                    title: "Volume Control",
-                    description: "Use your device's volume buttons to adjust how loud the sound is. You can also find a volume slider in the app.",
+                    title: L(.audioVolume),
+                    description: L(.audioVolumeDesc),
                     action: nil
                 ),
                 GuidanceStep(
-                    title: "Sound Types",
-                    description: "The app can make many kinds of sounds: gentle tones, rhythms, ambient textures, and more. Presets give you different sound styles to try.",
+                    title: L(.audioSoundTypes),
+                    description: L(.audioSoundTypesDesc),
                     action: nil
                 ),
                 GuidanceStep(
-                    title: "No Wrong Sounds",
-                    description: "There's no wrong way to make sound here. Whatever you create is valid. This is about exploration, not perfection.",
+                    title: L(.audioNoWrong),
+                    description: L(.audioNoWrongDesc),
                     action: nil
                 )
             ]

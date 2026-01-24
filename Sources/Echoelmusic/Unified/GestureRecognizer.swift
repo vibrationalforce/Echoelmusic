@@ -67,7 +67,7 @@ class GestureRecognizer: ObservableObject {
 
     init(handTracker: HandTrackingManager) {
         self.handTracker = handTracker
-        log.info(category: .spatial, "✋ GestureRecognizer initialized")
+        log.info("✋ GestureRecognizer initialized", category: .spatial)
     }
 
 
