@@ -291,7 +291,7 @@ PROFESSIONAL FEATURES
 • Ableton Push 3 LED control
 • Multi-track recording & export
 • Live streaming to YouTube, Twitch, Instagram
-• VST3/AU plugin integration (JUCE)
+• VST3/AU/AUv3 plugin support (EchoelCore native)
 • Developer SDK for custom plugins
 
 ACCESSIBILITY (WCAG AAA)

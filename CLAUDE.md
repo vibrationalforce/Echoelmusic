@@ -585,15 +585,15 @@ Inspired by [nw_wrld](https://github.com/aagentah/nw_wrld) event-driven sequence
 - **Edge Case Tests** - Boundary conditions, error handling
 - **Concurrency Tests** - Multi-engine, thread safety
 
-#### JUCE 100% Integration (NEW)
-- **DynamicEQ** - 8-band dynamic EQ (JUCE 7+ compatible)
-- **SpectralSculptor** - Spectral processing suite (FFT API fixed)
-- **All DSP Effects** - 50+ DSP processors enabled
+#### EchoelCore Pure Native DSP (NO JUCE!)
+- **DynamicEQ** - 8-band dynamic EQ (Pure Swift/Accelerate)
+- **SpectralSculptor** - Spectral processing suite (vDSP FFT)
+- **All DSP Effects** - 50+ DSP processors (100% native)
 - **AI & Visualization** - SmartMixer, SpectrumAnalyzer, BioReactiveVisualizer
 - **Hardware Integration** - Ableton Link, MIDI, OSC, Modular, DJ Equipment
 - **Video & Visuals** - VideoWeaver, VisualForge, LaserForce
 - **Platform Services** - CreatorManager, AgencyManager, GlobalReach, EchoHub
-- **Plugin Formats** - VST3, AU, AAX, AUv3, CLAP, LV2, Standalone
+- **Plugin Formats** - AUv3 (native), VST3/AU (optional desktop)
 
 #### Biofeedback Modulation System (NEW)
 - **BioModulator** - Real-time biometric to audio parameter mapping
@@ -836,14 +836,16 @@ cd android
 ./gradlew test
 ```
 
-### Desktop Plugins (CMake/JUCE)
+### Desktop Plugins (CMake - Pure Native Preferred)
 ```bash
 mkdir build && cd build
-cmake .. -DUSE_JUCE=ON -DCMAKE_BUILD_TYPE=Release
+
+# Recommended: Pure native mode (NO JUCE!)
+cmake .. -DUSE_JUCE=OFF -DCMAKE_BUILD_TYPE=Release
 cmake --build . --parallel
 
-# Swift-only mode (no JUCE required)
-cmake .. -DUSE_JUCE=OFF
+# Legacy: JUCE mode (optional, for VST3/AU compatibility only)
+# cmake .. -DUSE_JUCE=ON -DCMAKE_BUILD_TYPE=Release
 ```
 
 ---

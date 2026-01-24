@@ -308,7 +308,7 @@ public final class ReleaseManager: ObservableObject {
                 improvements: [
                     "12 language support",
                     "24+ engine presets",
-                    "JUCE 100% integration"
+                    "EchoelCore pure native DSP"
                 ],
                 breakingChanges: []
             )
