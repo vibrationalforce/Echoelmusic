@@ -471,7 +471,7 @@ struct PrivacyConsentStepView: View {
                 PrivacyToggleRow(
                     icon: "bubble.left.and.bubble.right",
                     title: "Anonymous Feedback",
-                    description: "Help improve Echoela (fully anonymized)",
+                    description: "Help improve Echoelmusic (fully anonymized)",
                     isOn: $allowFeedback
                 )
 
@@ -540,13 +540,13 @@ struct PrivacyConsentStepView: View {
     }
 
     private func saveConsent() {
-        // Save consent preferences (integrates with EchoelaSecurityManager)
-        UserDefaults.standard.set(allowLearning, forKey: "echoela_consent_learning")
-        UserDefaults.standard.set(allowFeedback, forKey: "echoela_consent_feedback")
-        UserDefaults.standard.set(allowVoice, forKey: "echoela_consent_voice")
-        UserDefaults.standard.set(allowAnalytics, forKey: "echoela_consent_analytics")
-        UserDefaults.standard.set(true, forKey: "echoela_has_consented")
-        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "echoela_consent_timestamp")
+        // Save consent preferences
+        UserDefaults.standard.set(allowLearning, forKey: "echoelmusic_consent_learning")
+        UserDefaults.standard.set(allowFeedback, forKey: "echoelmusic_consent_feedback")
+        UserDefaults.standard.set(allowVoice, forKey: "echoelmusic_consent_voice")
+        UserDefaults.standard.set(allowAnalytics, forKey: "echoelmusic_consent_analytics")
+        UserDefaults.standard.set(true, forKey: "echoelmusic_has_consented")
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "echoelmusic_consent_timestamp")
     }
 }
 

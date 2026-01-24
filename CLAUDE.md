@@ -569,7 +569,6 @@ Inspired by [nw_wrld](https://github.com/aagentah/nw_wrld) event-driven sequence
 - **RTL Support** - Arabic and Hebrew right-to-left layout
 - **70+ Localization Keys** - All UI elements translated
 - **LocalizationManager** - Runtime language switching with pluralization rules
-- **EchoelaLocalizationManager** - AI assistant with full translations
 - **LocalizedText** - SwiftUI component for translated text
 
 #### 8000% Comprehensive Tests (NEW)
