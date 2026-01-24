@@ -117,10 +117,13 @@ jobs:
           xcodegen generate --spec project.yml
 
       - name: "Setup Keychain"
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD || github.run_id }}
         run: |
-          security create-keychain -p "ci_pass" ci.keychain-db
+          set -e
+          security create-keychain -p "$KEYCHAIN_PASSWORD" ci.keychain-db
           security set-keychain-settings -lut 21600 ci.keychain-db
-          security unlock-keychain -p "ci_pass" ci.keychain-db
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" ci.keychain-db
           security list-keychains -d user -s ci.keychain-db
           security default-keychain -s ci.keychain-db
 
@@ -133,7 +136,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           BUILD_NUMBER: ${{ github.run_number }}
           KEYCHAIN_PATH: ~/Library/Keychains/ci.keychain-db
-          KEYCHAIN_PASSWORD: "ci_pass"
+          KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD || github.run_id }}
 
       - name: "Cleanup"
         if: always()
@@ -170,10 +173,13 @@ jobs:
           xcodegen generate --spec project.yml
 
       - name: "Setup Keychain"
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD || github.run_id }}
         run: |
-          security create-keychain -p "ci_pass" ci_mac.keychain-db
+          set -e
+          security create-keychain -p "$KEYCHAIN_PASSWORD" ci_mac.keychain-db
           security set-keychain-settings -lut 21600 ci_mac.keychain-db
-          security unlock-keychain -p "ci_pass" ci_mac.keychain-db
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" ci_mac.keychain-db
           security list-keychains -d user -s ci_mac.keychain-db
           security default-keychain -s ci_mac.keychain-db
 
@@ -186,7 +192,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           BUILD_NUMBER: ${{ github.run_number }}
           KEYCHAIN_PATH: ~/Library/Keychains/ci_mac.keychain-db
-          KEYCHAIN_PASSWORD: "ci_pass"
+          KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD || github.run_id }}
 
       - name: "Cleanup"
         if: always()

@@ -708,7 +708,9 @@ public class CollaborationServer: NSObject, ObservableObject {
         }
 
         let data = try JSONEncoder().encode(message)
-        let messageString = String(data: data, encoding: .utf8)!
+        guard let messageString = String(data: data, encoding: .utf8) else {
+            throw CollaborationError.encodingFailed("Failed to encode message as UTF-8")
+        }
 
         try await webSocketTask.send(.string(messageString))
         logger.collaboration("Sent message: \(message.type.rawValue)")
@@ -830,6 +832,7 @@ public enum CollaborationError: Error, LocalizedError {
     case noActiveSession
     case maxReconnectAttemptsReached
     case sendFailed
+    case encodingFailed(String)
 
     public var errorDescription: String? {
         switch self {
@@ -845,6 +848,8 @@ public enum CollaborationError: Error, LocalizedError {
             return "Maximum reconnection attempts reached"
         case .sendFailed:
             return "Failed to send message"
+        case .encodingFailed(let message):
+            return "Encoding failed: \(message)"
         }
     }
 

@@ -325,10 +325,10 @@ kernel void blendLayers(texture2d<float, access::read> baseTexture [[texture(0)]
 
 // MARK: - Particle System
 
-kernel void updateParticles(device ParticleData* particles [[buffer(0)]],
-                           constant AdvancedUniforms& uniforms [[buffer(1)]],
-                           constant float* audioSpectrum [[buffer(2)]],
-                           uint id [[thread_position_in_grid]]) {
+kernel void echoelUpdateParticles(device ParticleData* particles [[buffer(0)]],
+                                  constant AdvancedUniforms& uniforms [[buffer(1)]],
+                                  constant float* audioSpectrum [[buffer(2)]],
+                                  uint id [[thread_position_in_grid]]) {
     ParticleData particle = particles[id];
 
     // Update life

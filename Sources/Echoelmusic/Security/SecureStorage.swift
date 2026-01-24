@@ -436,14 +436,19 @@ public final class CertificatePinningManager: NSObject {
     public static let shared = CertificatePinningManager()
 
     /// Pinned certificate hashes (SPKI SHA-256)
+    /// IMPORTANT: Replace with actual production certificate hashes before release!
+    /// Generate hashes using: openssl s_client -connect api.echoelmusic.com:443 | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | openssl enc -base64
     private var pinnedHashes: [String: Set<String>] = [
         "api.echoelmusic.com": [
-            // Production certificates (add your actual hashes)
-            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", // Primary
-            "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="  // Backup
+            // TODO: PRODUCTION - Replace with actual certificate hashes before App Store submission
+            // Primary certificate hash (expires: check certificate expiry)
+            // "sha256/REAL_PRIMARY_CERTIFICATE_HASH_HERE=",
+            // Backup certificate hash (for certificate rotation)
+            // "sha256/REAL_BACKUP_CERTIFICATE_HASH_HERE="
         ],
         "cdn.echoelmusic.com": [
-            "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC="
+            // TODO: PRODUCTION - Replace with actual CDN certificate hash
+            // "sha256/REAL_CDN_CERTIFICATE_HASH_HERE="
         ]
     ]
 
