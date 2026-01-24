@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Echoelmusic</string>
+    <string name="app_description">منصة صوتية بصرية بيو-تفاعلية</string>
+
+    <!-- Health Connect -->
+    <string name="health_connect_rationale">يستخدم Echoelmusic بيانات معدل ضربات القلب وتقلب معدل ضربات القلب للميزات الصوتية البيو-تفاعلية. تتم معالجة هذه البيانات محليًا ولا يتم تحميلها أبدًا.</string>
+
+    <!-- Audio -->
+    <string name="audio_service_title">صوت Echoelmusic</string>
+    <string name="audio_service_text">محرك الصوت يعمل</string>
+
+    <!-- Screens -->
+    <string name="synth_title">مُركِّب متعدد الأصوات</string>
+    <string name="tr808_title">TR-808 باس</string>
+    <string name="bio_title">التحكم البيو-تفاعلي</string>
+    <string name="ai_title">توليد الذكاء الاصطناعي الكمي</string>
+    <string name="settings_title">الإعدادات</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_video">فيديو</string>
+    <string name="nav_creative">إبداعي</string>
+    <string name="nav_science">علوم</string>
+    <string name="nav_wellness">العافية</string>
+    <string name="nav_collaboration">التعاون</string>
+
+    <!-- Common Actions -->
+    <string name="action_start">بدء</string>
+    <string name="action_stop">إيقاف</string>
+    <string name="action_save">حفظ</string>
+    <string name="action_cancel">إلغاء</string>
+    <string name="action_confirm">تأكيد</string>
+    <string name="action_delete">حذف</string>
+    <string name="action_share">مشاركة</string>
+    <string name="action_help">مساعدة</string>
+
+    <!-- Bio-Reactive -->
+    <string name="bio_heart_rate">معدل ضربات القلب</string>
+    <string name="bio_hrv">تقلب معدل ضربات القلب</string>
+    <string name="bio_coherence">التماسك</string>
+    <string name="bio_breathing">التنفس</string>
+    <string name="bio_stress">التوتر</string>
+    <string name="bio_relaxation">الاسترخاء</string>
+    <string name="bio_meditation">التأمل</string>
+
+    <!-- Wellness -->
+    <string name="wellness_center">مركز العافية</string>
+    <string name="wellness_focus">التركيز</string>
+    <string name="wellness_disclaimer">أداة إبداعية للاستكشاف الفني. ليس جهازًا طبيًا.</string>
+
+    <!-- Quantum -->
+    <string name="quantum_mode">الوضع الكمي</string>
+    <string name="quantum_coherence">التماسك الكمي</string>
+    <string name="quantum_entanglement">التشابك الكمي</string>
+    <string name="quantum_superposition">التراكب</string>
+
+    <!-- Errors -->
+    <string name="error_generic">حدث خطأ</string>
+    <string name="error_connection">خطأ في الاتصال</string>
+    <string name="error_permission">الإذن مطلوب</string>
+</resources>
