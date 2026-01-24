@@ -10,7 +10,7 @@ name: "⚡ Quick Test"
 on:
   workflow_dispatch:
   push:
-    branches: [develop]  # Only develop, main uses ios-testflight.yml
+    branches: [develop]  # Only develop, main uses pr-check.yml
     paths:
       - 'Sources/**/*.swift'
       - 'Tests/**/*.swift'

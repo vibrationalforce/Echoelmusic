@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build-check:
-    name: "Build Check"
+    name: "PR Build Check"
     runs-on: macos-14
     timeout-minutes: 30
 

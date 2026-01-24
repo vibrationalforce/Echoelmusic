@@ -3,7 +3,7 @@
 # =============================================================================
 # Builds for Windows, macOS, Linux, and Android
 # NOTE: This workflow does NOT run on pull requests!
-#       - For PR checks → use ios-testflight.yml
+#       - For PR checks → use pr-check.yml
 #       - For manual releases → use 🚀 Release All Platforms
 # =============================================================================
 

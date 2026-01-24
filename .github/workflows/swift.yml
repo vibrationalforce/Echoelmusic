@@ -1,8 +1,8 @@
 # =============================================================================
 # ECHOELMUSIC - Swift Build (Legacy/Disabled)
 # =============================================================================
-# NOTE: This workflow is disabled. Use ios-testflight.yml for PR checks.
-# The ios-testflight.yml workflow provides better PR build validation.
+# NOTE: This workflow is disabled. Use pr-check.yml for PR checks.
+# The pr-check.yml workflow provides better PR build validation.
 # =============================================================================
 
 name: Swift
