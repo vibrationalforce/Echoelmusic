@@ -145,7 +145,7 @@ jobs:
           -enableCodeCoverage YES \
           -resultBundlePath TestResults \
           2>&1 | tee test.log | xcpretty || cat test.log
-      continue-on-error: true
+      # NOTE: Test failures MUST fail the build - do not add continue-on-error
 
     - name: Generate Code Coverage
       if: success()

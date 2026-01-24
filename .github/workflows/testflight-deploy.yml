@@ -68,7 +68,7 @@ jobs:
           # Check secrets
           [ -n "$ASC_KEY_ID" ] && echo "[OK] APP_STORE_CONNECT_KEY_ID" || { echo "[FAIL] APP_STORE_CONNECT_KEY_ID not set"; ((ERRORS++)); }
           [ -n "$ASC_ISSUER_ID" ] && echo "[OK] APP_STORE_CONNECT_ISSUER_ID" || { echo "[FAIL] APP_STORE_CONNECT_ISSUER_ID not set"; ((ERRORS++)); }
-          [ -n "$ASC_KEY" ] && echo "[OK] APP_STORE_CONNECT_PRIVATE_KEY (${#ASC_KEY} chars)" || { echo "[FAIL] APP_STORE_CONNECT_PRIVATE_KEY not set"; ((ERRORS++)); }
+          [ -n "$ASC_KEY" ] && echo "[OK] APP_STORE_CONNECT_PRIVATE_KEY configured" || { echo "[FAIL] APP_STORE_CONNECT_PRIVATE_KEY not set"; ((ERRORS++)); }
           [ -n "$TEAM_ID" ] && echo "[OK] APPLE_TEAM_ID" || { echo "[FAIL] APPLE_TEAM_ID not set"; ((ERRORS++)); }
 
           echo ""
@@ -93,7 +93,7 @@ jobs:
     name: "iOS"
     runs-on: macos-14
     needs: preflight
-    if: contains('all ios ios-macos', github.event.inputs.platforms)
+    if: needs.preflight.result == 'success' && contains('all ios ios-macos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
@@ -146,7 +146,7 @@ jobs:
     name: "macOS"
     runs-on: macos-14
     needs: preflight
-    if: contains('all macos ios-macos', github.event.inputs.platforms)
+    if: needs.preflight.result == 'success' && contains('all macos ios-macos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
@@ -199,7 +199,7 @@ jobs:
     name: "watchOS"
     runs-on: macos-14
     needs: preflight
-    if: contains('all watchos', github.event.inputs.platforms)
+    if: needs.preflight.result == 'success' && contains('all watchos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
@@ -237,7 +237,7 @@ jobs:
     name: "tvOS"
     runs-on: macos-14
     needs: preflight
-    if: contains('all tvos', github.event.inputs.platforms)
+    if: needs.preflight.result == 'success' && contains('all tvos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
@@ -275,7 +275,7 @@ jobs:
     name: "visionOS"
     runs-on: macos-14
     needs: preflight
-    if: contains('all visionos', github.event.inputs.platforms)
+    if: needs.preflight.result == 'success' && contains('all visionos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:

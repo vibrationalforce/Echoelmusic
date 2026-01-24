@@ -203,22 +203,32 @@ public class ProductionHealthKitManager {
             return
         }
 
-        // Define types to read
-        let typesToRead: Set<HKObjectType> = [
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
-            HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
-            HKObjectType.quantityType(forIdentifier: .restingHeartRate)!,
-            HKObjectType.quantityType(forIdentifier: .walkingHeartRateAverage)!,
-            HKObjectType.quantityType(forIdentifier: .respiratoryRate)!,
-            HKObjectType.quantityType(forIdentifier: .oxygenSaturation)!,
-            HKObjectType.workoutType()
+        // Define types to read (with safe unwrapping to prevent crashes)
+        var typesToRead: Set<HKObjectType> = [HKObjectType.workoutType()]
+
+        // Safely add quantity types - handle cases where types might not be available
+        let quantityIdentifiers: [HKQuantityTypeIdentifier] = [
+            .heartRate,
+            .heartRateVariabilitySDNN,
+            .restingHeartRate,
+            .walkingHeartRateAverage,
+            .respiratoryRate,
+            .oxygenSaturation
         ]
 
-        // Define types to write (for workout sessions)
-        let typesToWrite: Set<HKSampleType> = [
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
-            HKObjectType.workoutType()
-        ]
+        for identifier in quantityIdentifiers {
+            if let quantityType = HKObjectType.quantityType(forIdentifier: identifier) {
+                typesToRead.insert(quantityType)
+            } else {
+                logger.warning("⚠️ HealthKit quantity type not available: \(identifier.rawValue)", category: .biofeedback)
+            }
+        }
+
+        // Define types to write (for workout sessions) - with safe unwrapping
+        var typesToWrite: Set<HKSampleType> = [HKObjectType.workoutType()]
+        if let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) {
+            typesToWrite.insert(heartRateType)
+        }
 
         logger.info("🔐 Requesting HealthKit authorization...", category: .biofeedback)
 
