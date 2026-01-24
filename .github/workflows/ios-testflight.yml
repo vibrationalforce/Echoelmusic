@@ -74,10 +74,16 @@ jobs:
   preflight:
     name: "Pre-flight Check"
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
+    # IMPORTANT: Only run for manual workflow_dispatch, NOT for pull_request events
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 5
 
     steps:
+      - name: "Debug Event Info"
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+
       - name: "Checkout"
         uses: actions/checkout@v4
 
@@ -205,11 +211,17 @@ jobs:
   pr-check:
     name: "PR Build Check"
     runs-on: macos-14
-    # Only run on pull_request events, skip for manual workflow_dispatch
-    if: github.event_name == 'pull_request'
+    # IMPORTANT: Only run for pull_request events, NOT for workflow_dispatch
+    if: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 30
 
     steps:
+      - name: "Debug Event Info"
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "PR: #${{ github.event.pull_request.number }}"
+          echo "Branch: ${{ github.head_ref }} -> ${{ github.base_ref }}"
+
       - name: "Checkout"
         uses: actions/checkout@v4
         with:
@@ -769,8 +781,8 @@ jobs:
   summary:
     name: "Deployment Summary"
     runs-on: ubuntu-latest
-    # Only show summary for manual workflow_dispatch, not for PR builds
-    if: always() && github.event_name == 'workflow_dispatch'
+    # IMPORTANT: Only show summary for manual workflow_dispatch, not for PR builds
+    if: ${{ always() && github.event_name == 'workflow_dispatch' }}
     needs: [preflight, deploy-ios, deploy-macos, deploy-watchos, deploy-tvos, deploy-visionos]
 
     steps:
