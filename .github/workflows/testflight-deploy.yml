@@ -218,13 +218,18 @@ jobs:
       - run: |
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           xcodegen generate --spec project.yml
-      - run: |
-          security create-keychain -p "ci" ci_w.keychain-db
+      - name: "Setup Keychain"
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD || github.run_id }}
+        run: |
+          set -e
+          security create-keychain -p "$KEYCHAIN_PASSWORD" ci_w.keychain-db
           security set-keychain-settings -lut 21600 ci_w.keychain-db
-          security unlock-keychain -p "ci" ci_w.keychain-db
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" ci_w.keychain-db
           security list-keychains -d user -s ci_w.keychain-db
           security default-keychain -s ci_w.keychain-db
-      - run: fastlane ios beta_watchos
+      - name: "Deploy to TestFlight"
+        run: fastlane ios beta_watchos
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -232,7 +237,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           BUILD_NUMBER: ${{ github.run_number }}
           KEYCHAIN_PATH: ~/Library/Keychains/ci_w.keychain-db
-          KEYCHAIN_PASSWORD: "ci"
+          KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD || github.run_id }}
       - if: always()
         run: security delete-keychain ci_w.keychain-db 2>/dev/null || true
 
@@ -256,13 +261,18 @@ jobs:
       - run: |
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           xcodegen generate --spec project.yml
-      - run: |
-          security create-keychain -p "ci" ci_tv.keychain-db
+      - name: "Setup Keychain"
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD || github.run_id }}
+        run: |
+          set -e
+          security create-keychain -p "$KEYCHAIN_PASSWORD" ci_tv.keychain-db
           security set-keychain-settings -lut 21600 ci_tv.keychain-db
-          security unlock-keychain -p "ci" ci_tv.keychain-db
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" ci_tv.keychain-db
           security list-keychains -d user -s ci_tv.keychain-db
           security default-keychain -s ci_tv.keychain-db
-      - run: fastlane ios beta_tvos
+      - name: "Deploy to TestFlight"
+        run: fastlane ios beta_tvos
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -270,7 +280,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           BUILD_NUMBER: ${{ github.run_number }}
           KEYCHAIN_PATH: ~/Library/Keychains/ci_tv.keychain-db
-          KEYCHAIN_PASSWORD: "ci"
+          KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD || github.run_id }}
       - if: always()
         run: security delete-keychain ci_tv.keychain-db 2>/dev/null || true
 
@@ -294,13 +304,18 @@ jobs:
       - run: |
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           xcodegen generate --spec project.yml
-      - run: |
-          security create-keychain -p "ci" ci_v.keychain-db
+      - name: "Setup Keychain"
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD || github.run_id }}
+        run: |
+          set -e
+          security create-keychain -p "$KEYCHAIN_PASSWORD" ci_v.keychain-db
           security set-keychain-settings -lut 21600 ci_v.keychain-db
-          security unlock-keychain -p "ci" ci_v.keychain-db
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" ci_v.keychain-db
           security list-keychains -d user -s ci_v.keychain-db
           security default-keychain -s ci_v.keychain-db
-      - run: fastlane ios beta_visionos
+      - name: "Deploy to TestFlight"
+        run: fastlane ios beta_visionos
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -308,7 +323,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           BUILD_NUMBER: ${{ github.run_number }}
           KEYCHAIN_PATH: ~/Library/Keychains/ci_v.keychain-db
-          KEYCHAIN_PASSWORD: "ci"
+          KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD || github.run_id }}
       - if: always()
         run: security delete-keychain ci_v.keychain-db 2>/dev/null || true
 

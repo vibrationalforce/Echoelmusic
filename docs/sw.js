@@ -6,15 +6,35 @@
  * Background Sync, Push Notifications
  */
 
-const CACHE_NAME = 'echoelmusic-v3.0.0-minimal';
+const CACHE_NAME = 'echoelmusic-v3.1.0';
 const STATIC_ASSETS = [
-  '/Echoelmusic/',
-  '/Echoelmusic/index.html',
-  '/Echoelmusic/de/index.html',
-  '/Echoelmusic/favicon.svg',
-  '/Echoelmusic/app-icon.svg',
-  '/Echoelmusic/manifest.json',
-  '/Echoelmusic/version.json'
+  '/',
+  '/index.html',
+  // All 12 language versions
+  '/de/index.html',
+  '/ja/index.html',
+  '/es/index.html',
+  '/fr/index.html',
+  '/zh/index.html',
+  '/ko/index.html',
+  '/pt/index.html',
+  '/it/index.html',
+  '/ru/index.html',
+  '/ar/index.html',
+  '/hi/index.html',
+  // Static assets
+  '/favicon.svg',
+  '/app-icon.svg',
+  '/manifest.json',
+  '/version.json',
+  // Legal pages
+  '/privacy.html',
+  '/terms.html',
+  '/impressum.html',
+  '/faq.html',
+  '/support.html',
+  '/health.html',
+  '/use-cases.html'
 ];
 
 // Install: Cache static assets
@@ -73,7 +93,7 @@ self.addEventListener('fetch', (event) => {
           }
           // Fallback to main page for navigation requests
           if (event.request.mode === 'navigate') {
-            return caches.match('/Echoelmusic/');
+            return caches.match('/');
           }
         });
       })
@@ -95,8 +115,8 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
       self.registration.showNotification(data.title || 'Echoelmusic', {
         body: data.body || 'Time for your coherence session',
-        icon: '/Echoelmusic/favicon.svg',
-        badge: '/Echoelmusic/favicon.svg',
+        icon: '/favicon.svg',
+        badge: '/favicon.svg',
         vibrate: [100, 50, 100],
         tag: 'echoelmusic-notification',
         data: data
@@ -112,12 +132,12 @@ self.addEventListener('notificationclick', (event) => {
     clients.matchAll({ type: 'window' }).then((clientList) => {
       // Focus existing window or open new
       for (const client of clientList) {
-        if (client.url.includes('/Echoelmusic/') && 'focus' in client) {
+        if ('focus' in client) {
           return client.focus();
         }
       }
       if (clients.openWindow) {
-        return clients.openWindow('/Echoelmusic/');
+        return clients.openWindow('/');
       }
     })
   );
