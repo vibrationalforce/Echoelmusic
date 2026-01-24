@@ -399,6 +399,16 @@ class LocalizationManager: ObservableObject {
             return japaneseTranslations
         case .arabic:
             return arabicTranslations
+        case .korean:
+            return koreanTranslations
+        case .portuguese:
+            return portugueseTranslations
+        case .italian:
+            return italianTranslations
+        case .russian:
+            return russianTranslations
+        case .hindi:
+            return hindiTranslations
         default:
             return englishTranslations // Fallback
         }
@@ -623,16 +633,323 @@ class LocalizationManager: ObservableObject {
             "general.ok": "موافق",
             "general.cancel": "إلغاء",
             "general.save": "حفظ",
+            "general.delete": "حذف",
+            "general.edit": "تعديل",
+            "general.done": "تم",
+            "general.close": "إغلاق",
             "general.settings": "الإعدادات",
 
             "bio.hrv": "تقلب معدل ضربات القلب",
             "bio.coherence": "التماسك",
             "bio.heart_rate": "معدل ضربات القلب",
+            "bio.breathing_rate": "معدل التنفس",
+            "bio.stress": "التوتر",
+            "bio.relaxation": "الاسترخاء",
+            "bio.meditation": "التأمل",
 
+            "emotion.neutral": "محايد",
             "emotion.happy": "سعيد",
             "emotion.sad": "حزين",
             "emotion.calm": "هادئ",
-            "emotion.energetic": "نشيط"
+            "emotion.energetic": "نشيط",
+            "emotion.anxious": "قلق",
+            "emotion.focused": "مركز",
+            "emotion.relaxed": "مرتاح"
+        ]
+    }
+
+    private var koreanTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "환영합니다",
+            "general.ok": "확인",
+            "general.cancel": "취소",
+            "general.save": "저장",
+            "general.delete": "삭제",
+            "general.edit": "편집",
+            "general.done": "완료",
+            "general.close": "닫기",
+            "general.settings": "설정",
+
+            "bio.hrv": "심박변이도",
+            "bio.coherence": "일관성",
+            "bio.heart_rate": "심박수",
+            "bio.breathing_rate": "호흡수",
+            "bio.stress": "스트레스",
+            "bio.relaxation": "휴식",
+            "bio.meditation": "명상",
+
+            "music.scale": "음계",
+            "music.chord": "화음",
+            "music.rhythm": "리듬",
+            "music.tempo": "템포",
+            "music.key": "키",
+            "music.mode": "모드",
+            "music.interval": "음정",
+
+            "emotion.neutral": "중립",
+            "emotion.happy": "행복",
+            "emotion.sad": "슬픔",
+            "emotion.energetic": "활력",
+            "emotion.calm": "차분함",
+            "emotion.anxious": "불안",
+            "emotion.focused": "집중",
+            "emotion.relaxed": "편안함",
+
+            "effect.reverb": "리버브",
+            "effect.delay": "딜레이",
+            "effect.distortion": "디스토션",
+            "effect.compressor": "컴프레서",
+            "effect.eq": "이퀄라이저",
+            "effect.filter": "필터",
+            "effect.limiter": "리미터",
+
+            "export.title": "내보내기",
+            "export.format": "형식",
+            "export.quality": "품질",
+            "export.success": "내보내기 성공",
+            "export.failed": "내보내기 실패",
+
+            "error.generic": "오류가 발생했습니다",
+            "error.network": "네트워크 오류",
+            "error.permission": "권한이 필요합니다",
+            "error.file_not_found": "파일을 찾을 수 없습니다"
+        ]
+    }
+
+    private var portugueseTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Bem-vindo",
+            "general.ok": "OK",
+            "general.cancel": "Cancelar",
+            "general.save": "Salvar",
+            "general.delete": "Excluir",
+            "general.edit": "Editar",
+            "general.done": "Concluído",
+            "general.close": "Fechar",
+            "general.settings": "Configurações",
+
+            "bio.hrv": "Variabilidade da Frequência Cardíaca",
+            "bio.coherence": "Coerência",
+            "bio.heart_rate": "Frequência Cardíaca",
+            "bio.breathing_rate": "Taxa Respiratória",
+            "bio.stress": "Estresse",
+            "bio.relaxation": "Relaxamento",
+            "bio.meditation": "Meditação",
+
+            "music.scale": "Escala",
+            "music.chord": "Acorde",
+            "music.rhythm": "Ritmo",
+            "music.tempo": "Tempo",
+            "music.key": "Tom",
+            "music.mode": "Modo",
+            "music.interval": "Intervalo",
+
+            "emotion.neutral": "Neutro",
+            "emotion.happy": "Feliz",
+            "emotion.sad": "Triste",
+            "emotion.energetic": "Energético",
+            "emotion.calm": "Calmo",
+            "emotion.anxious": "Ansioso",
+            "emotion.focused": "Focado",
+            "emotion.relaxed": "Relaxado",
+
+            "effect.reverb": "Reverb",
+            "effect.delay": "Delay",
+            "effect.distortion": "Distorção",
+            "effect.compressor": "Compressor",
+            "effect.eq": "Equalizador",
+            "effect.filter": "Filtro",
+            "effect.limiter": "Limitador",
+
+            "export.title": "Exportar",
+            "export.format": "Formato",
+            "export.quality": "Qualidade",
+            "export.success": "Exportação bem-sucedida",
+            "export.failed": "Falha na exportação",
+
+            "error.generic": "Ocorreu um erro",
+            "error.network": "Erro de rede",
+            "error.permission": "Permissão necessária",
+            "error.file_not_found": "Arquivo não encontrado"
+        ]
+    }
+
+    private var italianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Benvenuto",
+            "general.ok": "OK",
+            "general.cancel": "Annulla",
+            "general.save": "Salva",
+            "general.delete": "Elimina",
+            "general.edit": "Modifica",
+            "general.done": "Fine",
+            "general.close": "Chiudi",
+            "general.settings": "Impostazioni",
+
+            "bio.hrv": "Variabilità della Frequenza Cardiaca",
+            "bio.coherence": "Coerenza",
+            "bio.heart_rate": "Frequenza Cardiaca",
+            "bio.breathing_rate": "Frequenza Respiratoria",
+            "bio.stress": "Stress",
+            "bio.relaxation": "Rilassamento",
+            "bio.meditation": "Meditazione",
+
+            "music.scale": "Scala",
+            "music.chord": "Accordo",
+            "music.rhythm": "Ritmo",
+            "music.tempo": "Tempo",
+            "music.key": "Tonalità",
+            "music.mode": "Modo",
+            "music.interval": "Intervallo",
+
+            "emotion.neutral": "Neutrale",
+            "emotion.happy": "Felice",
+            "emotion.sad": "Triste",
+            "emotion.energetic": "Energico",
+            "emotion.calm": "Calmo",
+            "emotion.anxious": "Ansioso",
+            "emotion.focused": "Concentrato",
+            "emotion.relaxed": "Rilassato",
+
+            "effect.reverb": "Riverbero",
+            "effect.delay": "Delay",
+            "effect.distortion": "Distorsione",
+            "effect.compressor": "Compressore",
+            "effect.eq": "Equalizzatore",
+            "effect.filter": "Filtro",
+            "effect.limiter": "Limitatore",
+
+            "export.title": "Esporta",
+            "export.format": "Formato",
+            "export.quality": "Qualità",
+            "export.success": "Esportazione riuscita",
+            "export.failed": "Esportazione fallita",
+
+            "error.generic": "Si è verificato un errore",
+            "error.network": "Errore di rete",
+            "error.permission": "Autorizzazione richiesta",
+            "error.file_not_found": "File non trovato"
+        ]
+    }
+
+    private var russianTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "Добро пожаловать",
+            "general.ok": "ОК",
+            "general.cancel": "Отмена",
+            "general.save": "Сохранить",
+            "general.delete": "Удалить",
+            "general.edit": "Редактировать",
+            "general.done": "Готово",
+            "general.close": "Закрыть",
+            "general.settings": "Настройки",
+
+            "bio.hrv": "Вариабельность сердечного ритма",
+            "bio.coherence": "Когерентность",
+            "bio.heart_rate": "Частота сердечных сокращений",
+            "bio.breathing_rate": "Частота дыхания",
+            "bio.stress": "Стресс",
+            "bio.relaxation": "Расслабление",
+            "bio.meditation": "Медитация",
+
+            "music.scale": "Гамма",
+            "music.chord": "Аккорд",
+            "music.rhythm": "Ритм",
+            "music.tempo": "Темп",
+            "music.key": "Тональность",
+            "music.mode": "Лад",
+            "music.interval": "Интервал",
+
+            "emotion.neutral": "Нейтральный",
+            "emotion.happy": "Счастливый",
+            "emotion.sad": "Грустный",
+            "emotion.energetic": "Энергичный",
+            "emotion.calm": "Спокойный",
+            "emotion.anxious": "Тревожный",
+            "emotion.focused": "Сосредоточенный",
+            "emotion.relaxed": "Расслабленный",
+
+            "effect.reverb": "Реверберация",
+            "effect.delay": "Задержка",
+            "effect.distortion": "Дисторшн",
+            "effect.compressor": "Компрессор",
+            "effect.eq": "Эквалайзер",
+            "effect.filter": "Фильтр",
+            "effect.limiter": "Лимитер",
+
+            "export.title": "Экспорт",
+            "export.format": "Формат",
+            "export.quality": "Качество",
+            "export.success": "Экспорт выполнен",
+            "export.failed": "Ошибка экспорта",
+
+            "error.generic": "Произошла ошибка",
+            "error.network": "Ошибка сети",
+            "error.permission": "Требуется разрешение",
+            "error.file_not_found": "Файл не найден"
+        ]
+    }
+
+    private var hindiTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "general.welcome": "स्वागत है",
+            "general.ok": "ठीक है",
+            "general.cancel": "रद्द करें",
+            "general.save": "सहेजें",
+            "general.delete": "हटाएं",
+            "general.edit": "संपादित करें",
+            "general.done": "हो गया",
+            "general.close": "बंद करें",
+            "general.settings": "सेटिंग्स",
+
+            "bio.hrv": "हृदय गति परिवर्तनशीलता",
+            "bio.coherence": "सुसंगति",
+            "bio.heart_rate": "हृदय गति",
+            "bio.breathing_rate": "श्वास दर",
+            "bio.stress": "तनाव",
+            "bio.relaxation": "विश्राम",
+            "bio.meditation": "ध्यान",
+
+            "music.scale": "स्केल",
+            "music.chord": "तार",
+            "music.rhythm": "ताल",
+            "music.tempo": "गति",
+            "music.key": "सुर",
+            "music.mode": "मोड",
+            "music.interval": "अंतराल",
+
+            "emotion.neutral": "तटस्थ",
+            "emotion.happy": "खुश",
+            "emotion.sad": "उदास",
+            "emotion.energetic": "ऊर्जावान",
+            "emotion.calm": "शांत",
+            "emotion.anxious": "चिंतित",
+            "emotion.focused": "केंद्रित",
+            "emotion.relaxed": "तनावमुक्त",
+
+            "effect.reverb": "रिवर्ब",
+            "effect.delay": "डिले",
+            "effect.distortion": "डिस्टॉर्शन",
+            "effect.compressor": "कंप्रेसर",
+            "effect.eq": "इक्वलाइज़र",
+            "effect.filter": "फ़िल्टर",
+            "effect.limiter": "लिमिटर",
+
+            "export.title": "निर्यात",
+            "export.format": "प्रारूप",
+            "export.quality": "गुणवत्ता",
+            "export.success": "निर्यात सफल",
+            "export.failed": "निर्यात विफल",
+
+            "error.generic": "एक त्रुटि हुई",
+            "error.network": "नेटवर्क त्रुटि",
+            "error.permission": "अनुमति आवश्यक",
+            "error.file_not_found": "फ़ाइल नहीं मिली"
         ]
     }
 

@@ -1,6 +1,6 @@
 {
-  "version": "3.0.0-minimal",
-  "build": "2026-01-11T12:00:00Z",
+  "version": "3.0.0",
+  "build": "2026-01-24T12:00:00Z",
   "features": {
     "uspFocused": true,
     "minimalDesign": true,
@@ -8,16 +8,16 @@
     "offlineMode": true,
     "webXR": "detection",
     "webBluetooth": "hooks",
-    "multiLanguage": true
+    "multiLanguage": true,
+    "customDomain": true
   },
   "changelog": [
-    "Simplified landing page - USP focused",
-    "Removed demo for cleaner experience",
-    "New headline: Your Body. Your Sound. Your Art.",
-    "3 core USP cards: Real-Time, All Platforms, 100% Yours",
-    "Trust badges: GDPR, AES-256, 5 Platforms, Bio-Reactive",
-    "Streamlined CTA section",
+    "Custom domain echoelmusic.com configured",
+    "Updated all canonical URLs to echoelmusic.com",
+    "Sitemap updated with all 16 pages",
+    "PWA manifest updated for custom domain",
+    "Version synced to 3.0.0 across all files",
     "German version synchronized",
-    "PWA ready for adaptive WebApp deployment"
+    "Added hreflang tags for SEO"
   ]
 }
