@@ -2,13 +2,13 @@
   "name": "Echoelmusic",
   "short_name": "Echoelmusic",
   "description": "Bio-reactive audio-visual platform. Transform biometrics into spatial audio and immersive visuals.",
-  "start_url": "/Echoelmusic/",
+  "start_url": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
-  "background_color": "#0C0A1A",
-  "theme_color": "#2DD4BF",
+  "background_color": "#030712",
+  "theme_color": "#22C55E",
   "orientation": "any",
-  "scope": "/Echoelmusic/",
+  "scope": "/",
   "lang": "en",
   "dir": "ltr",
   "categories": ["music", "health", "productivity", "entertainment"],
@@ -40,21 +40,17 @@
       "name": "Quick Session",
       "short_name": "Session",
       "description": "Start a bio-reactive session",
-      "url": "/Echoelmusic/?action=session",
+      "url": "/?action=session",
       "icons": [{"src": "favicon.svg", "sizes": "any"}]
     }
   ],
   "related_applications": [
     {
-      "platform": "play",
-      "url": "https://play.google.com/store/apps/details?id=com.echoelmusic.app"
-    },
-    {
       "platform": "itunes",
-      "url": "https://apps.apple.com/app/echoelmusic"
+      "url": "https://apps.apple.com/app/echoelmusic/id6757957358"
     }
   ],
-  "prefer_related_applications": false,
+  "prefer_related_applications": true,
   "handle_links": "preferred",
   "launch_handler": {
     "client_mode": "navigate-existing"
@@ -63,7 +59,7 @@
     "preferred_width": 400
   },
   "share_target": {
-    "action": "/Echoelmusic/",
+    "action": "/",
     "method": "GET",
     "params": {
       "title": "title",
@@ -74,7 +70,7 @@
   "protocol_handlers": [
     {
       "protocol": "web+echoelmusic",
-      "url": "/Echoelmusic/?protocol=%s"
+      "url": "/?protocol=%s"
     }
   ]
 }

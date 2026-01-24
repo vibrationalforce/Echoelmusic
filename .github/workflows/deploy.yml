@@ -1,11 +1,13 @@
 # =============================================================================
-# Echoelmusic - Unified Multi-Platform Deployment
+# Echoelmusic - Apple Platform Deployment
 # =============================================================================
-# ALL platforms via GitHub Actions - No Codemagic needed!
-# Apple (TestFlight) + Android (Play Store) + Windows + Linux
+# Apple-only deployment via GitHub Actions
+# iOS + macOS → TestFlight / App Store
+# =============================================================================
+# NOTE: Android, Windows, Linux deployment disabled - Apple-first focus
 # =============================================================================
 
-name: Deploy All Platforms
+name: Deploy Apple Platforms
 
 on:
   workflow_dispatch:
@@ -15,7 +17,7 @@ on:
         required: true
         default: 'all'
         type: choice
-        options: [all, ios, macos, android, windows, linux]
+        options: [all, ios, macos]
       environment:
         description: 'Environment'
         required: true
@@ -29,23 +31,12 @@ env:
   XCODEGEN_VERSION: '2.42.0'
 
 # =============================================================================
-# SECRETS REQUIRED:
+# SECRETS REQUIRED (Apple only):
 # =============================================================================
-# Apple (nur 4 Secrets!):
 #   APP_STORE_CONNECT_ISSUER_ID    - From App Store Connect > Keys
 #   APP_STORE_CONNECT_KEY_ID       - From App Store Connect > Keys
 #   APP_STORE_CONNECT_PRIVATE_KEY  - .p8 file content (plain text or base64)
 #   APPLE_TEAM_ID                  - From developer.apple.com > Membership
-#
-# Android:
-#   ANDROID_KEYSTORE_BASE64        - Keystore file (base64 encoded)
-#   ANDROID_KEYSTORE_PASSWORD      - Keystore password
-#   ANDROID_KEY_ALIAS              - Key alias
-#   ANDROID_KEY_PASSWORD           - Key password
-#   GOOGLE_PLAY_SERVICE_ACCOUNT    - Service account JSON (base64)
-#
-# Optional:
-#   SLACK_WEBHOOK_URL              - For notifications
 #
 # NOTE: No separate certificates repo needed! Uses automatic code signing.
 
@@ -363,16 +354,14 @@ jobs:
           retention-days: 30
 
   # ===========================================================================
-  # Android → Play Store Internal
+  # Android → Play Store Internal (DISABLED - Apple-first focus)
   # ===========================================================================
   android:
-    name: Android
+    name: Android (Disabled)
     runs-on: ubuntu-latest
     needs: prepare
     environment: production
-    if: >-
-      github.event_name == 'workflow_dispatch' &&
-      (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android')
+    if: false  # Disabled - Apple-only release plan
     steps:
       - uses: actions/checkout@v4
 
@@ -449,16 +438,14 @@ jobs:
           retention-days: 30
 
   # ===========================================================================
-  # Windows → GitHub Releases
+  # Windows → GitHub Releases (DISABLED - Apple-first focus)
   # ===========================================================================
   windows:
-    name: Windows
+    name: Windows (Disabled)
     runs-on: windows-latest
     needs: prepare
     continue-on-error: true
-    if: >-
-      github.event_name == 'workflow_dispatch' &&
-      (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'windows')
+    if: false  # Disabled - Apple-only release plan
     steps:
       - uses: actions/checkout@v4
         with:
@@ -503,16 +490,14 @@ jobs:
           retention-days: 30
 
   # ===========================================================================
-  # Linux → GitHub Releases
+  # Linux → GitHub Releases (DISABLED - Apple-first focus)
   # ===========================================================================
   linux:
-    name: Linux
+    name: Linux (Disabled)
     runs-on: ubuntu-22.04
     needs: prepare
     continue-on-error: true
-    if: >-
-      github.event_name == 'workflow_dispatch' &&
-      (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'linux')
+    if: false  # Disabled - Apple-only release plan
     steps:
       - uses: actions/checkout@v4
         with:
@@ -595,7 +580,7 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [prepare, ios, macos, android, windows, linux]
+    needs: [prepare, ios, macos]
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
@@ -615,40 +600,33 @@ jobs:
           body: |
             ## Echoelmusic v${{ needs.prepare.outputs.version }}
 
-            ### Downloads
+            ### Apple Platforms
 
-            | Platform | File | Store |
-            |----------|------|-------|
-            | iOS | TestFlight | [App Store](https://apps.apple.com) |
-            | macOS | TestFlight | [App Store](https://apps.apple.com) |
-            | Android | APK / AAB | [Play Store](https://play.google.com) |
-            | Windows | ZIP | Direct Download |
-            | Linux | AppImage | Direct Download |
+            | Platform | Distribution |
+            |----------|--------------|
+            | iOS | [App Store](https://apps.apple.com/app/echoelmusic/id6757957358) |
+            | macOS | [App Store](https://apps.apple.com/app/echoelmusic/id6757957358) |
 
-            ### Direct Downloads (Website License)
-            - macOS, Windows, Linux builds included below
-            - For licensing: [echoelmusic.com](https://echoelmusic.com)
+            For more info: [echoelmusic.com](https://echoelmusic.com)
           files: |
-            artifacts/**/*.zip
-            artifacts/**/*.AppImage
-            artifacts/**/*.apk
-            artifacts/**/*.aab
+            artifacts/**/*.ipa
+            artifacts/**/*.pkg
             artifacts/**/*.dmg
           draft: false
           prerelease: false
 
   # ===========================================================================
-  # Summary
+  # Summary (Apple-only)
   # ===========================================================================
   summary:
     name: Summary
     runs-on: ubuntu-latest
-    needs: [prepare, ios, macos, android, windows, linux]
+    needs: [prepare, ios, macos]
     if: always()
     steps:
       - name: Generate Summary
         run: |
-          echo "# Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "# Apple Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "**Build:** ${{ needs.prepare.outputs.build_number }}" >> $GITHUB_STEP_SUMMARY
@@ -657,6 +635,3 @@ jobs:
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| iOS | ${{ needs.ios.result == 'success' && '✅' || needs.ios.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| macOS | ${{ needs.macos.result == 'success' && '✅' || needs.macos.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Android | ${{ needs.android.result == 'success' && '✅' || needs.android.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Windows | ${{ needs.windows.result == 'success' && '✅' || needs.windows.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Linux | ${{ needs.linux.result == 'success' && '✅' || needs.linux.result == 'skipped' && '⏭️' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY

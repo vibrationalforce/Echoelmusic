@@ -176,6 +176,26 @@ jobs:
           echo "====================================="
           echo "PR: #${{ github.event.pull_request.number }}"
           echo "Branch: ${{ github.head_ref }} -> ${{ github.base_ref }}"
+          echo "Runner: $(uname -a)"
+          echo "====================================="
+
+      - name: "Validate Required Files"
+        run: |
+          echo "Checking required files..."
+          ERRORS=0
+          for file in Package.swift project.yml fastlane/Fastfile; do
+            if [[ -f "$file" ]]; then
+              echo "[OK] $file exists"
+            else
+              echo "[ERROR] $file is missing"
+              ((ERRORS++))
+            fi
+          done
+          if [[ $ERRORS -gt 0 ]]; then
+            echo "Missing required files!"
+            exit 1
+          fi
+          echo "All required files present"
 
       - name: "Setup Xcode"
         uses: maxim-lobanov/setup-xcode@v1
@@ -184,11 +204,16 @@ jobs:
 
       - name: "Install XcodeGen"
         run: |
+          echo "Installing XcodeGen..."
           if ! command -v xcodegen &> /dev/null; then
             echo "Installing XcodeGen via Homebrew..."
-            brew install xcodegen
-          else
-            echo "XcodeGen already installed"
+            brew install xcodegen || {
+              echo "Homebrew install failed, trying direct download..."
+              curl -fsSL https://github.com/yonaskolb/XcodeGen/releases/download/2.42.0/xcodegen.zip -o /tmp/xcodegen.zip
+              unzip -o /tmp/xcodegen.zip -d /tmp
+              sudo cp /tmp/xcodegen/bin/xcodegen /usr/local/bin/
+              chmod +x /usr/local/bin/xcodegen
+            }
           fi
           xcodegen --version
 
@@ -206,45 +231,93 @@ jobs:
       - name: "Generate Xcode Project"
         run: |
           set -e
-          if grep -q 'DEVELOPMENT_TEAM: ""' project.yml 2>/dev/null; then
-            sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml
-          fi
+          echo "Preparing project.yml for CI..."
+          # Replace empty DEVELOPMENT_TEAM with placeholder for CI builds
+          sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml 2>/dev/null || true
+
+          echo "Generating Xcode project..."
           xcodegen generate --spec project.yml
-          [ -d "Echoelmusic.xcodeproj" ] || exit 1
+
+          if [ -d "Echoelmusic.xcodeproj" ]; then
+            echo "Xcode project generated successfully"
+            ls -la Echoelmusic.xcodeproj/
+          else
+            echo "ERROR: Xcode project generation failed"
+            exit 1
+          fi
+
+      - name: "List Available Simulators"
+        run: |
+          echo "Available iOS Simulators:"
+          xcrun simctl list devices available | grep -E "iPhone|iPad" | head -20 || true
 
       - name: "Build iOS for Simulator"
         run: |
           set -o pipefail
+          echo "Building iOS app for simulator..."
+
+          # Try iPhone 15 Pro first, fallback to any available iPhone
+          DESTINATION='platform=iOS Simulator,name=iPhone 15 Pro'
+          if ! xcrun simctl list devices available | grep -q "iPhone 15 Pro"; then
+            DESTINATION='platform=iOS Simulator,OS=latest,name=iPhone 16 Pro'
+            echo "Using fallback destination: $DESTINATION"
+          fi
+
           xcodebuild build \
             -project Echoelmusic.xcodeproj \
             -scheme Echoelmusic \
-            -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+            -destination "$DESTINATION" \
             -configuration Debug \
             -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
             COMPILER_INDEX_STORE_ENABLE=NO \
-            2>&1 | tee build_ios.log
+            -quiet \
+            2>&1 | tee build_ios.log || {
+              echo "Build failed, showing last 100 lines of log:"
+              tail -100 build_ios.log
+              exit 1
+            }
           echo "iOS build successful"
 
       - name: "Build macOS"
         run: |
           set -o pipefail
+          echo "Building macOS app..."
           xcodebuild build \
             -project Echoelmusic.xcodeproj \
             -scheme Echoelmusic-macOS \
             -configuration Debug \
             -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
             COMPILER_INDEX_STORE_ENABLE=NO \
-            2>&1 | tee build_macos.log
+            -quiet \
+            2>&1 | tee build_macos.log || {
+              echo "Build failed, showing last 100 lines of log:"
+              tail -100 build_macos.log
+              exit 1
+            }
           echo "macOS build successful"
+
+      - name: "Build Summary"
+        if: success()
+        run: |
+          echo "## PR Build Check Passed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS Simulator | Built |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS | Built |" >> $GITHUB_STEP_SUMMARY
 
       - name: "Upload Build Logs"
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: pr-build-logs-${{ github.event.pull_request.number }}
-          path: build_*.log
+          path: |
+            build_*.log
+            Echoelmusic.xcodeproj/
           retention-days: 7
 
   # ===========================================================================
