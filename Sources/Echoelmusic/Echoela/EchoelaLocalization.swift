@@ -2,17 +2,25 @@
  * EchoelaLocalization.swift
  * Echoelmusic - Multi-Language Support for Echoela
  *
- * Provides localized content for Echoela in 12 languages:
- * EN, DE, JA, ES, FR, ZH, KO, PT, IT, RU, AR, HI
+ * Provides localized content for Echoela in 20 languages:
+ * EN, DE, JA, ES, FR, ZH, KO, PT, IT, RU, AR, HI,
+ * NL, DA, SV, NO, PL, TR, TH, VI
+ *
+ * Market Research Based Selection:
+ * - Tier 1: USA, China, Japan, UK, Germany, France (major revenue)
+ * - Tier 2: Netherlands, Denmark (63% iPhone!), Sweden, Norway (wealthy, high penetration)
+ * - Tier 3: Poland (Eastern Europe), Turkey (large market), Thailand, Vietnam (growth)
+ * - Tier 4: Arabic (48% YoY growth), Hindi (23% YoY growth)
  *
  * Features:
  * - Automatic language detection from device locale
  * - User language preference override
  * - Input language detection
  * - Localized guidance content
- * - RTL support for Arabic
+ * - RTL support for Arabic and Hebrew
  *
  * Created: 2026-01-24
+ * Updated: 2026-01-24 - Added 8 strategic languages based on market research
  */
 
 import Foundation
@@ -20,20 +28,35 @@ import NaturalLanguage
 
 // MARK: - Supported Languages
 
-/// All languages supported by Echoela
+/// All languages supported by Echoela (20 languages)
 public enum EchoelaLanguage: String, CaseIterable, Codable {
+    // Tier 1: Major Revenue Markets
     case english = "en"
     case german = "de"
     case japanese = "ja"
     case spanish = "es"
     case french = "fr"
     case chinese = "zh"
+
+    // Tier 2: High Penetration Markets
     case korean = "ko"
     case portuguese = "pt"
     case italian = "it"
+    case dutch = "nl"       // Netherlands - wealthy, high Apple penetration
+    case danish = "da"      // Denmark - 63% iPhone market share!
+    case swedish = "sv"     // Sweden - wealthy Scandinavia
+    case norwegian = "no"   // Norway - very wealthy
+
+    // Tier 3: Growth Markets
     case russian = "ru"
-    case arabic = "ar"
-    case hindi = "hi"
+    case polish = "pl"      // Poland - largest Eastern Europe
+    case turkish = "tr"     // Turkey - large growing market
+    case thai = "th"        // Thailand - Southeast Asia leader
+    case vietnamese = "vi"  // Vietnam - 23% YoY growth
+
+    // Tier 4: High Growth Emerging
+    case arabic = "ar"      // Saudi/UAE - 48% YoY growth
+    case hindi = "hi"       // India - 23% YoY growth
 
     /// Display name in native language
     public var nativeName: String {
@@ -47,7 +70,15 @@ public enum EchoelaLanguage: String, CaseIterable, Codable {
         case .korean: return "한국어"
         case .portuguese: return "Português"
         case .italian: return "Italiano"
+        case .dutch: return "Nederlands"
+        case .danish: return "Dansk"
+        case .swedish: return "Svenska"
+        case .norwegian: return "Norsk"
         case .russian: return "Русский"
+        case .polish: return "Polski"
+        case .turkish: return "Türkçe"
+        case .thai: return "ไทย"
+        case .vietnamese: return "Tiếng Việt"
         case .arabic: return "العربية"
         case .hindi: return "हिन्दी"
         }
@@ -65,7 +96,15 @@ public enum EchoelaLanguage: String, CaseIterable, Codable {
         case .korean: return "🇰🇷"
         case .portuguese: return "🇧🇷"
         case .italian: return "🇮🇹"
+        case .dutch: return "🇳🇱"
+        case .danish: return "🇩🇰"
+        case .swedish: return "🇸🇪"
+        case .norwegian: return "🇳🇴"
         case .russian: return "🇷🇺"
+        case .polish: return "🇵🇱"
+        case .turkish: return "🇹🇷"
+        case .thai: return "🇹🇭"
+        case .vietnamese: return "🇻🇳"
         case .arabic: return "🇸🇦"
         case .hindi: return "🇮🇳"
         }
@@ -74,6 +113,20 @@ public enum EchoelaLanguage: String, CaseIterable, Codable {
     /// Whether language is RTL (right-to-left)
     public var isRTL: Bool {
         self == .arabic
+    }
+
+    /// Market tier for prioritization
+    public var marketTier: Int {
+        switch self {
+        case .english, .german, .japanese, .spanish, .french, .chinese:
+            return 1  // Major revenue
+        case .korean, .portuguese, .italian, .dutch, .danish, .swedish, .norwegian:
+            return 2  // High penetration
+        case .russian, .polish, .turkish, .thai, .vietnamese:
+            return 3  // Growth markets
+        case .arabic, .hindi:
+            return 4  // High growth emerging
+        }
     }
 
     /// BCP 47 language tag for speech synthesis
@@ -88,7 +141,15 @@ public enum EchoelaLanguage: String, CaseIterable, Codable {
         case .korean: return "ko-KR"
         case .portuguese: return "pt-BR"
         case .italian: return "it-IT"
+        case .dutch: return "nl-NL"
+        case .danish: return "da-DK"
+        case .swedish: return "sv-SE"
+        case .norwegian: return "nb-NO"
         case .russian: return "ru-RU"
+        case .polish: return "pl-PL"
+        case .turkish: return "tr-TR"
+        case .thai: return "th-TH"
+        case .vietnamese: return "vi-VN"
         case .arabic: return "ar-SA"
         case .hindi: return "hi-IN"
         }
@@ -409,16 +470,28 @@ public struct EchoelaStrings {
     /// Get localized string for key and language
     public static func string(for key: LocalizationKey, language: EchoelaLanguage) -> String {
         switch language {
+        // Tier 1: Major Revenue Markets
         case .english: return english[key] ?? key.rawValue
         case .german: return german[key] ?? english[key] ?? key.rawValue
         case .japanese: return japanese[key] ?? english[key] ?? key.rawValue
         case .spanish: return spanish[key] ?? english[key] ?? key.rawValue
         case .french: return french[key] ?? english[key] ?? key.rawValue
         case .chinese: return chinese[key] ?? english[key] ?? key.rawValue
+        // Tier 2: High Penetration Markets
         case .korean: return korean[key] ?? english[key] ?? key.rawValue
         case .portuguese: return portuguese[key] ?? english[key] ?? key.rawValue
         case .italian: return italian[key] ?? english[key] ?? key.rawValue
+        case .dutch: return dutch[key] ?? english[key] ?? key.rawValue
+        case .danish: return danish[key] ?? english[key] ?? key.rawValue
+        case .swedish: return swedish[key] ?? english[key] ?? key.rawValue
+        case .norwegian: return norwegian[key] ?? english[key] ?? key.rawValue
+        // Tier 3: Growth Markets
         case .russian: return russian[key] ?? english[key] ?? key.rawValue
+        case .polish: return polish[key] ?? english[key] ?? key.rawValue
+        case .turkish: return turkish[key] ?? english[key] ?? key.rawValue
+        case .thai: return thai[key] ?? english[key] ?? key.rawValue
+        case .vietnamese: return vietnamese[key] ?? english[key] ?? key.rawValue
+        // Tier 4: High Growth Emerging
         case .arabic: return arabic[key] ?? english[key] ?? key.rawValue
         case .hindi: return hindi[key] ?? english[key] ?? key.rawValue
         }
@@ -1201,5 +1274,357 @@ public struct EchoelaStrings {
         .close: "बंद करें",
         .help: "मदद",
         .settings: "सेटिंग्स"
+    ]
+
+    // MARK: - Dutch (Netherlands - High Apple Penetration)
+
+    private static let dutch: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Hallo, ik ben Echoela",
+        .welcomeDescription: "Ik ben hier om je te helpen Echoelmusic te verkennen. Ik bied zachte begeleiding wanneer je het nodig hebt, maar jij hebt altijd de controle.",
+        .welcomeOptional: "Ik ben optioneel",
+        .welcomeOptionalDesc: "Je kunt me altijd uitschakelen in Instellingen. Ik neem het niet persoonlijk.",
+        .welcomeLearnStyle: "Ik leer jouw stijl",
+        .welcomeLearnStyleDesc: "Terwijl je de app gebruikt, geef ik minder begeleiding als je zelfverzekerd bent, en meer bij nieuwe dingen.",
+        .welcomeNoRush: "Ik haast je nooit",
+        .welcomeNoRushDesc: "Er zijn geen timers, scores of druk. Neem alle tijd die je nodig hebt.",
+        .welcomeAskAnytime: "Vraag wanneer je wilt",
+        .welcomeAskAnytimeDesc: "Als je hulp nodig hebt, tik op de Echoela-knop of zoek het sparkle-icoon.",
+
+        // General Help
+        .generalHelpTitle: "Hoe kan ik helpen?",
+        .generalHelpDescription: "Kies een onderwerp om meer te leren. Je kunt altijd terugkomen.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Leer hoe je lichaam verbonden is met de muziek.",
+        .biofeedbackDisclaimer: "Belangrijk: Dit is kunst, geen medicijn.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic is een creatief hulpmiddel. Het diagnosticeert, behandelt of geneest geen aandoeningen. Raadpleeg altijd zorgprofessionals bij medische vragen.",
+
+        // Help Offers
+        .helpHesitation1: "Neem je tijd. Wil je wat begeleiding?",
+        .helpHesitation2: "Geen haast. Ik ben hier als je een hint nodig hebt.",
+        .helpHesitation3: "Wanneer je klaar bent. Hulp nodig?",
+        .helpUserRequested: "Hoe kan ik je helpen?",
+
+        // UI Elements
+        .dismiss: "Sluiten",
+        .learnMore: "Meer leren",
+        .gotIt: "Begrepen",
+        .showMe: "Laat zien",
+        .skip: "Overslaan",
+        .next: "Volgende",
+        .previous: "Vorige",
+        .close: "Sluiten",
+        .help: "Help",
+        .settings: "Instellingen"
+    ]
+
+    // MARK: - Danish (Denmark - 63% iPhone Market Share!)
+
+    private static let danish: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Hej, jeg er Echoela",
+        .welcomeDescription: "Jeg er her for at hjælpe dig med at udforske Echoelmusic. Jeg tilbyder blid vejledning, når du har brug for det, men du har altid kontrollen.",
+        .welcomeOptional: "Jeg er valgfri",
+        .welcomeOptionalDesc: "Du kan slå mig fra i Indstillinger når som helst. Jeg bliver ikke fornærmet.",
+        .welcomeLearnStyle: "Jeg lærer din stil",
+        .welcomeLearnStyleDesc: "Mens du bruger appen, giver jeg mindre vejledning, når du er sikker, og mere når tingene er nye.",
+        .welcomeNoRush: "Jeg presser dig aldrig",
+        .welcomeNoRushDesc: "Der er ingen timere, scores eller pres. Tag al den tid du har brug for.",
+        .welcomeAskAnytime: "Spørg når som helst",
+        .welcomeAskAnytimeDesc: "Hvis du har brug for hjælp, tryk på Echoela-knappen eller kig efter glimt-ikonet.",
+
+        // General Help
+        .generalHelpTitle: "Hvordan kan jeg hjælpe?",
+        .generalHelpDescription: "Vælg et emne for at lære mere. Du kan altid vende tilbage hertil.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Lær hvordan din krop forbinder med musikken.",
+        .biofeedbackDisclaimer: "Vigtigt: Dette er kunst, ikke medicin.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic er et kreativt værktøj. Det diagnosticerer, behandler eller helbreder ingen tilstande. Konsulter altid sundhedsprofessionelle ved medicinske spørgsmål.",
+
+        // Help Offers
+        .helpHesitation1: "Tag din tid. Vil du have lidt vejledning?",
+        .helpHesitation2: "Intet hastværk. Jeg er her, hvis du har brug for et hint.",
+        .helpHesitation3: "Når du er klar. Har du brug for hjælp?",
+        .helpUserRequested: "Hvordan kan jeg hjælpe dig?",
+
+        // UI Elements
+        .dismiss: "Luk",
+        .learnMore: "Lær mere",
+        .gotIt: "Forstået",
+        .showMe: "Vis mig",
+        .skip: "Spring over",
+        .next: "Næste",
+        .previous: "Forrige",
+        .close: "Luk",
+        .help: "Hjælp",
+        .settings: "Indstillinger"
+    ]
+
+    // MARK: - Swedish (Sweden - Wealthy Scandinavia)
+
+    private static let swedish: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Hej, jag är Echoela",
+        .welcomeDescription: "Jag är här för att hjälpa dig utforska Echoelmusic. Jag erbjuder mjuk vägledning när du behöver det, men du har alltid kontrollen.",
+        .welcomeOptional: "Jag är valfri",
+        .welcomeOptionalDesc: "Du kan stänga av mig i Inställningar när som helst. Jag tar inte illa upp.",
+        .welcomeLearnStyle: "Jag lär mig din stil",
+        .welcomeLearnStyleDesc: "När du använder appen ger jag mindre vägledning när du är säker, och mer när saker är nya.",
+        .welcomeNoRush: "Jag stressar dig aldrig",
+        .welcomeNoRushDesc: "Det finns inga timers, poäng eller press. Ta all tid du behöver.",
+        .welcomeAskAnytime: "Fråga när som helst",
+        .welcomeAskAnytimeDesc: "Om du behöver hjälp, tryck på Echoela-knappen eller leta efter gnistr-ikonen.",
+
+        // General Help
+        .generalHelpTitle: "Hur kan jag hjälpa?",
+        .generalHelpDescription: "Välj ett ämne för att lära dig mer. Du kan alltid komma tillbaka hit.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Lär dig hur din kropp ansluter till musiken.",
+        .biofeedbackDisclaimer: "Viktigt: Detta är konst, inte medicin.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic är ett kreativt verktyg. Det diagnostiserar, behandlar eller botar inga tillstånd. Konsultera alltid vårdpersonal vid medicinska frågor.",
+
+        // Help Offers
+        .helpHesitation1: "Ta din tid. Vill du ha lite vägledning?",
+        .helpHesitation2: "Ingen brådska. Jag är här om du behöver en ledtråd.",
+        .helpHesitation3: "När du är redo. Behöver du hjälp?",
+        .helpUserRequested: "Hur kan jag hjälpa dig?",
+
+        // UI Elements
+        .dismiss: "Stäng",
+        .learnMore: "Läs mer",
+        .gotIt: "Förstått",
+        .showMe: "Visa mig",
+        .skip: "Hoppa över",
+        .next: "Nästa",
+        .previous: "Föregående",
+        .close: "Stäng",
+        .help: "Hjälp",
+        .settings: "Inställningar"
+    ]
+
+    // MARK: - Norwegian (Norway - Very Wealthy)
+
+    private static let norwegian: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Hei, jeg er Echoela",
+        .welcomeDescription: "Jeg er her for å hjelpe deg med å utforske Echoelmusic. Jeg tilbyr myk veiledning når du trenger det, men du har alltid kontrollen.",
+        .welcomeOptional: "Jeg er valgfri",
+        .welcomeOptionalDesc: "Du kan slå meg av i Innstillinger når som helst. Jeg tar det ikke personlig.",
+        .welcomeLearnStyle: "Jeg lærer din stil",
+        .welcomeLearnStyleDesc: "Mens du bruker appen, gir jeg mindre veiledning når du er sikker, og mer når ting er nye.",
+        .welcomeNoRush: "Jeg stresser deg aldri",
+        .welcomeNoRushDesc: "Det er ingen tidtakere, poeng eller press. Ta all den tiden du trenger.",
+        .welcomeAskAnytime: "Spør når som helst",
+        .welcomeAskAnytimeDesc: "Hvis du trenger hjelp, trykk på Echoela-knappen eller se etter gnist-ikonet.",
+
+        // General Help
+        .generalHelpTitle: "Hvordan kan jeg hjelpe?",
+        .generalHelpDescription: "Velg et emne for å lære mer. Du kan alltid komme tilbake hit.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Lær hvordan kroppen din kobler til musikken.",
+        .biofeedbackDisclaimer: "Viktig: Dette er kunst, ikke medisin.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic er et kreativt verktøy. Det diagnostiserer, behandler eller kurerer ingen tilstander. Konsulter alltid helsepersonell ved medisinske spørsmål.",
+
+        // Help Offers
+        .helpHesitation1: "Ta deg god tid. Vil du ha litt veiledning?",
+        .helpHesitation2: "Ingen hastverk. Jeg er her hvis du trenger et hint.",
+        .helpHesitation3: "Når du er klar. Trenger du hjelp?",
+        .helpUserRequested: "Hvordan kan jeg hjelpe deg?",
+
+        // UI Elements
+        .dismiss: "Lukk",
+        .learnMore: "Lær mer",
+        .gotIt: "Skjønner",
+        .showMe: "Vis meg",
+        .skip: "Hopp over",
+        .next: "Neste",
+        .previous: "Forrige",
+        .close: "Lukk",
+        .help: "Hjelp",
+        .settings: "Innstillinger"
+    ]
+
+    // MARK: - Polish (Poland - Largest Eastern Europe)
+
+    private static let polish: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Cześć, jestem Echoela",
+        .welcomeDescription: "Jestem tu, aby pomóc Ci odkrywać Echoelmusic. Oferuję delikatne wskazówki, gdy ich potrzebujesz, ale zawsze masz kontrolę.",
+        .welcomeOptional: "Jestem opcjonalna",
+        .welcomeOptionalDesc: "Możesz mnie wyłączyć w Ustawieniach w każdej chwili. Nie obrażę się.",
+        .welcomeLearnStyle: "Uczę się Twojego stylu",
+        .welcomeLearnStyleDesc: "Podczas korzystania z aplikacji daję mniej wskazówek, gdy jesteś pewny, a więcej, gdy rzeczy są nowe.",
+        .welcomeNoRush: "Nigdy Cię nie poganiem",
+        .welcomeNoRushDesc: "Nie ma żadnych timerów, punktów ani presji. Weź tyle czasu, ile potrzebujesz.",
+        .welcomeAskAnytime: "Pytaj kiedy chcesz",
+        .welcomeAskAnytimeDesc: "Jeśli potrzebujesz pomocy, dotknij przycisku Echoela lub poszukaj ikony iskierki.",
+
+        // General Help
+        .generalHelpTitle: "Jak mogę pomóc?",
+        .generalHelpDescription: "Wybierz temat, aby dowiedzieć się więcej. Zawsze możesz tu wrócić.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Dowiedz się, jak Twoje ciało łączy się z muzyką.",
+        .biofeedbackDisclaimer: "Ważne: To sztuka, nie medycyna.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic to narzędzie kreatywne. Nie diagnozuje, nie leczy ani nie leczy żadnych schorzeń. W kwestiach medycznych zawsze konsultuj się z lekarzem.",
+
+        // Help Offers
+        .helpHesitation1: "Nie spiesz się. Chcesz trochę wskazówek?",
+        .helpHesitation2: "Bez pośpiechu. Jestem tu, jeśli potrzebujesz podpowiedzi.",
+        .helpHesitation3: "Kiedy będziesz gotowy. Potrzebujesz pomocy?",
+        .helpUserRequested: "Jak mogę Ci pomóc?",
+
+        // UI Elements
+        .dismiss: "Zamknij",
+        .learnMore: "Dowiedz się więcej",
+        .gotIt: "Rozumiem",
+        .showMe: "Pokaż mi",
+        .skip: "Pomiń",
+        .next: "Dalej",
+        .previous: "Wstecz",
+        .close: "Zamknij",
+        .help: "Pomoc",
+        .settings: "Ustawienia"
+    ]
+
+    // MARK: - Turkish (Turkey - Large Growing Market)
+
+    private static let turkish: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Merhaba, ben Echoela",
+        .welcomeDescription: "Echoelmusic'i keşfetmene yardımcı olmak için buradayım. İhtiyacın olduğunda nazik rehberlik sunacağım, ama kontrol her zaman sende.",
+        .welcomeOptional: "Ben isteğe bağlıyım",
+        .welcomeOptionalDesc: "Beni Ayarlar'dan istediğin zaman kapatabilirsin. Gücenmem.",
+        .welcomeLearnStyle: "Tarzını öğreniyorum",
+        .welcomeLearnStyleDesc: "Uygulamayı kullandıkça, kendine güvendiğinde daha az, yeni şeylerle karşılaştığında daha fazla rehberlik vereceğim.",
+        .welcomeNoRush: "Seni asla acele ettirmem",
+        .welcomeNoRushDesc: "Zamanlayıcı yok, puan yok, baskı yok. İhtiyacın olan kadar zaman al.",
+        .welcomeAskAnytime: "İstediğin zaman sor",
+        .welcomeAskAnytimeDesc: "Yardıma ihtiyacın olursa, Echoela düğmesine dokun veya pırıltı simgesini ara.",
+
+        // General Help
+        .generalHelpTitle: "Nasıl yardımcı olabilirim?",
+        .generalHelpDescription: "Daha fazla öğrenmek için bir konu seç. Her zaman buraya dönebilirsin.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Vücudunun müzikle nasıl bağlantı kurduğunu öğren.",
+        .biofeedbackDisclaimer: "Önemli: Bu sanat, tıp değil.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic yaratıcı bir araçtır. Herhangi bir durumu teşhis, tedavi veya iyileştirmez. Tıbbi endişeler için her zaman sağlık uzmanlarına danışın.",
+
+        // Help Offers
+        .helpHesitation1: "Acele etme. Biraz rehberlik ister misin?",
+        .helpHesitation2: "Acele yok. İpucu lazımsa buradayım.",
+        .helpHesitation3: "Hazır olduğunda. Yardım lazım mı?",
+        .helpUserRequested: "Sana nasıl yardımcı olabilirim?",
+
+        // UI Elements
+        .dismiss: "Kapat",
+        .learnMore: "Daha fazla öğren",
+        .gotIt: "Anladım",
+        .showMe: "Göster",
+        .skip: "Atla",
+        .next: "Sonraki",
+        .previous: "Önceki",
+        .close: "Kapat",
+        .help: "Yardım",
+        .settings: "Ayarlar"
+    ]
+
+    // MARK: - Thai (Thailand - Southeast Asia Leader)
+
+    private static let thai: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "สวัสดี ฉันคือ Echoela",
+        .welcomeDescription: "ฉันอยู่ที่นี่เพื่อช่วยคุณสำรวจ Echoelmusic ฉันจะให้คำแนะนำอย่างอ่อนโยนเมื่อคุณต้องการ แต่คุณควบคุมได้เสมอ",
+        .welcomeOptional: "ฉันเป็นตัวเลือก",
+        .welcomeOptionalDesc: "คุณสามารถปิดฉันได้ในการตั้งค่าเมื่อไหร่ก็ได้ ฉันไม่โกรธ",
+        .welcomeLearnStyle: "ฉันเรียนรู้สไตล์ของคุณ",
+        .welcomeLearnStyleDesc: "เมื่อคุณใช้แอป ฉันจะให้คำแนะนำน้อยลงเมื่อคุณมั่นใจ และมากขึ้นเมื่อสิ่งต่างๆ ใหม่",
+        .welcomeNoRush: "ฉันไม่เร่งคุณเลย",
+        .welcomeNoRushDesc: "ไม่มีตัวจับเวลา ไม่มีคะแนน ไม่มีแรงกดดัน ใช้เวลาเท่าที่คุณต้องการ",
+        .welcomeAskAnytime: "ถามได้ทุกเมื่อ",
+        .welcomeAskAnytimeDesc: "หากคุณต้องการความช่วยเหลือ แตะปุ่ม Echoela หรือมองหาไอคอนประกาย",
+
+        // General Help
+        .generalHelpTitle: "ฉันช่วยอะไรได้บ้าง?",
+        .generalHelpDescription: "เลือกหัวข้อเพื่อเรียนรู้เพิ่มเติม คุณกลับมาที่นี่ได้เสมอ",
+
+        // Biofeedback
+        .biofeedbackTitle: "ไบโอฟีดแบค",
+        .biofeedbackDescription: "เรียนรู้ว่าร่างกายของคุณเชื่อมต่อกับเพลงอย่างไร",
+        .biofeedbackDisclaimer: "สำคัญ: นี่คือศิลปะ ไม่ใช่ยา",
+        .biofeedbackDisclaimerDetail: "Echoelmusic เป็นเครื่องมือสร้างสรรค์ ไม่ได้วินิจฉัย รักษา หรือรักษาอาการใดๆ ปรึกษาผู้เชี่ยวชาญด้านสุขภาพสำหรับข้อกังวลทางการแพทย์เสมอ",
+
+        // Help Offers
+        .helpHesitation1: "ใช้เวลาของคุณ ต้องการคำแนะนำบ้างไหม?",
+        .helpHesitation2: "ไม่ต้องรีบ ฉันอยู่ที่นี่ถ้าคุณต้องการคำใบ้",
+        .helpHesitation3: "เมื่อคุณพร้อม ต้องการความช่วยเหลือไหม?",
+        .helpUserRequested: "ฉันช่วยคุณได้อย่างไร?",
+
+        // UI Elements
+        .dismiss: "ปิด",
+        .learnMore: "เรียนรู้เพิ่มเติม",
+        .gotIt: "เข้าใจแล้ว",
+        .showMe: "แสดงให้ฉันดู",
+        .skip: "ข้าม",
+        .next: "ถัดไป",
+        .previous: "ก่อนหน้า",
+        .close: "ปิด",
+        .help: "ช่วยเหลือ",
+        .settings: "การตั้งค่า"
+    ]
+
+    // MARK: - Vietnamese (Vietnam - 23% YoY Growth)
+
+    private static let vietnamese: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Xin chào, tôi là Echoela",
+        .welcomeDescription: "Tôi ở đây để giúp bạn khám phá Echoelmusic. Tôi sẽ đưa ra hướng dẫn nhẹ nhàng khi bạn cần, nhưng bạn luôn kiểm soát.",
+        .welcomeOptional: "Tôi là tùy chọn",
+        .welcomeOptionalDesc: "Bạn có thể tắt tôi trong Cài đặt bất cứ lúc nào. Tôi sẽ không phiền.",
+        .welcomeLearnStyle: "Tôi học phong cách của bạn",
+        .welcomeLearnStyleDesc: "Khi bạn sử dụng ứng dụng, tôi sẽ đưa ra ít hướng dẫn hơn khi bạn tự tin, và nhiều hơn khi mọi thứ còn mới.",
+        .welcomeNoRush: "Tôi không bao giờ vội bạn",
+        .welcomeNoRushDesc: "Không có bộ đếm thời gian, điểm số, hay áp lực. Hãy dành thời gian bạn cần.",
+        .welcomeAskAnytime: "Hỏi bất cứ lúc nào",
+        .welcomeAskAnytimeDesc: "Nếu bạn cần trợ giúp, chỉ cần chạm vào nút Echoela hoặc tìm biểu tượng lấp lánh.",
+
+        // General Help
+        .generalHelpTitle: "Tôi có thể giúp gì?",
+        .generalHelpDescription: "Chọn một chủ đề để tìm hiểu thêm. Bạn luôn có thể quay lại đây.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Tìm hiểu cách cơ thể bạn kết nối với âm nhạc.",
+        .biofeedbackDisclaimer: "Quan trọng: Đây là nghệ thuật, không phải y học.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic là công cụ sáng tạo. Nó không chẩn đoán, điều trị hoặc chữa bất kỳ tình trạng nào. Luôn tham khảo ý kiến chuyên gia y tế về các vấn đề sức khỏe.",
+
+        // Help Offers
+        .helpHesitation1: "Từ từ thôi. Bạn có muốn một chút hướng dẫn không?",
+        .helpHesitation2: "Không vội. Tôi ở đây nếu bạn cần gợi ý.",
+        .helpHesitation3: "Khi bạn sẵn sàng. Cần giúp đỡ không?",
+        .helpUserRequested: "Tôi có thể giúp gì cho bạn?",
+
+        // UI Elements
+        .dismiss: "Đóng",
+        .learnMore: "Tìm hiểu thêm",
+        .gotIt: "Đã hiểu",
+        .showMe: "Cho tôi xem",
+        .skip: "Bỏ qua",
+        .next: "Tiếp theo",
+        .previous: "Trước",
+        .close: "Đóng",
+        .help: "Trợ giúp",
+        .settings: "Cài đặt"
     ]
 }
