@@ -27,7 +27,8 @@ The TestFlight deployment infrastructure is **well-structured and production-rea
 ## Files Analyzed
 
 ### Workflow Files
-- `.github/workflows/ios-testflight.yml` (762 lines)
+- `.github/workflows/testflight-deploy.yml` (337 lines) - Manual TestFlight deployment
+- `.github/workflows/pr-check.yml` (101 lines) - PR build validation
 - `.github/actions/setup-xcodegen/action.yml`
 - `.github/actions/setup-asc-api-key/action.yml`
 
@@ -111,10 +112,15 @@ Direct link: https://dash.cloudflare.com → echoelmusic.com → Caching → Con
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    TestFlight Multi-Platform                     │
+│               TestFlight Deployment (Split Workflows)            │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  TRIGGER: workflow_dispatch (manual) or pull_request (PR check) │
+│  PR CHECK (pr-check.yml):                                        │
+│    - Trigger: pull_request to main/develop                       │
+│    - Builds: iOS Simulator + macOS (no secrets required)         │
+│                                                                  │
+│  TESTFLIGHT DEPLOY (testflight-deploy.yml):                      │
+│    - Trigger: workflow_dispatch (manual)                         │
 │                                                                  │
 │  ┌──────────────┐                                               │
 │  │  preflight   │ ← Pre-flight validation (5 min)               │
@@ -171,7 +177,7 @@ All main apps use the same Bundle ID for Universal Purchase:
 **Fix Applied:** Added clarifying comment explaining that `platform: "ios"` is correct for visionOS in Fastlane until native support is added.
 
 ### Issue #2: No ASC Connection Test Before Build (FIXED)
-**Location:** `.github/workflows/ios-testflight.yml` (preflight job)
+**Location:** `.github/workflows/testflight-deploy.yml` (preflight job)
 **Status:** FIXED
 **Fix Applied:** Added comprehensive "Validate App Store Connect API Key" step that:
 - Validates all 4 required secrets are set
@@ -223,14 +229,14 @@ fastlane run app_store_connect_api_key \
 ## Deployment Commands
 
 ### Manual Trigger via GitHub UI
-1. Go to: https://github.com/vibrationalforce/Echoelmusic/actions/workflows/ios-testflight.yml
+1. Go to: https://github.com/vibrationalforce/Echoelmusic/actions/workflows/testflight-deploy.yml
 2. Click "Run workflow"
 3. Select platform(s): `all`, `ios`, `macos`, `watchos`, `tvos`, `visionos`, `ios-macos`
 4. Click "Run workflow"
 
 ### Manual Trigger via CLI
 ```bash
-gh workflow run ios-testflight.yml \
+gh workflow run testflight-deploy.yml \
   -f platforms=all \
   -f increment_build=true \
   -f clean_build=false
@@ -307,6 +313,7 @@ Could reduce total time by building all platforms in true parallel, but current 
 |------|---------|---------|
 | 2026-01-24 | 3.0.0 | Initial analysis, all checks passed |
 | 2026-01-24 | 3.1.0 | Added ASC validation, Cloudflare cache purge, documentation updates |
+| 2026-01-24 | 3.2.0 | Split ios-testflight.yml into pr-check.yml + testflight-deploy.yml for reliability |
 
 ---
 
@@ -314,23 +321,33 @@ Could reduce total time by building all platforms in true parallel, but current 
 
 ### Files Modified:
 
-1. **`.github/workflows/ios-testflight.yml`**
+1. **Workflow Split (v3.2.0)**
+   - Split `ios-testflight.yml` (762 lines) into two focused workflows:
+     - `pr-check.yml` (101 lines) - Fast PR validation (simulator builds, no secrets)
+     - `testflight-deploy.yml` (337 lines) - Manual TestFlight deployment (requires secrets)
+
+2. **`.github/workflows/testflight-deploy.yml`**
    - Added "Validate App Store Connect API Key" step in preflight job
    - Validates all 4 secrets before expensive builds
    - Adds direct links to GitHub Secrets on failure
 
-2. **`.github/workflows/pages.yml`**
+3. **`.github/workflows/pr-check.yml`**
+   - Job name: "PR Build Check" (matches expected status check)
+   - Builds iOS Simulator + macOS
+   - No secrets required
+
+4. **`.github/workflows/pages.yml`**
    - Added Cloudflare cache purge after deployment
    - Added live deployment verification
    - Added deployment summary with URLs
 
-3. **`fastlane/Fastfile`**
+5. **`fastlane/Fastfile`**
    - Added clarifying comment for visionOS platform behavior
 
-4. **`DEPLOYMENT_LOG.md`**
+6. **`DEPLOYMENT_LOG.md`**
    - Created comprehensive deployment guide
+   - Updated references to new workflow structure
    - Added Cloudflare secrets documentation
-   - Documented all fixes applied
 
 ---
 

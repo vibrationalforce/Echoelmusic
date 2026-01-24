@@ -1,0 +1,100 @@
+# =============================================================================
+# ECHOELMUSIC - PR BUILD CHECK
+# =============================================================================
+# Runs ONLY on pull requests - validates code compiles before merge
+# =============================================================================
+
+name: "PR Build Check"
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build-check:
+    name: "PR Build Check"
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Info"
+        run: |
+          echo "=============================================="
+          echo "  PR BUILD CHECK"
+          echo "=============================================="
+          echo "PR: #${{ github.event.pull_request.number }}"
+          echo "Title: ${{ github.event.pull_request.title }}"
+          echo "Branch: ${{ github.head_ref }} -> ${{ github.base_ref }}"
+          echo "=============================================="
+
+      - name: "Validate Project Files"
+        run: |
+          echo "Checking required files..."
+          for file in Package.swift project.yml fastlane/Fastfile; do
+            if [ -f "$file" ]; then
+              echo "[OK] $file"
+            else
+              echo "[FAIL] $file missing"
+              exit 1
+            fi
+          done
+          echo "All files present."
+
+      - name: "Setup Xcode 15.4"
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "15.4"
+
+      - name: "Install XcodeGen"
+        run: |
+          brew install xcodegen || true
+          xcodegen --version
+
+      - name: "Generate Xcode Project"
+        run: |
+          # Use placeholder Team ID for CI builds
+          sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml
+          xcodegen generate --spec project.yml
+          echo "Project generated successfully."
+
+      - name: "Build iOS (Simulator)"
+        run: |
+          echo "Building iOS for Simulator..."
+          xcodebuild build \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet
+          echo "[OK] iOS Simulator build succeeded"
+
+      - name: "Build macOS"
+        run: |
+          echo "Building macOS..."
+          xcodebuild build \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic-macOS \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet
+          echo "[OK] macOS build succeeded"
+
+      - name: "Summary"
+        run: |
+          echo "## PR Build Check Passed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS Simulator | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Ready to merge!" >> $GITHUB_STEP_SUMMARY
