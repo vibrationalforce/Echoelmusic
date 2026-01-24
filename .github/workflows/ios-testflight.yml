@@ -69,6 +69,91 @@ env:
 
 jobs:
   # ===========================================================================
+  # JOB 0: Pre-flight Validation (Runs before deployment)
+  # ===========================================================================
+  preflight:
+    name: "Pre-flight Check"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    timeout-minutes: 5
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Pre-flight Validation"
+        run: |
+          echo "=============================================="
+          echo "  ECHOELMUSIC PRE-FLIGHT VALIDATION"
+          echo "=============================================="
+
+          ERRORS=0
+
+          # Check required files
+          echo "--- Checking Required Files ---"
+          for file in Package.swift project.yml fastlane/Fastfile fastlane/Appfile; do
+            if [[ -f "$file" ]]; then
+              echo "[PASS] $file exists"
+            else
+              echo "[FAIL] $file is missing"
+              ((ERRORS++))
+            fi
+          done
+
+          # Check Bundle ID consistency
+          echo ""
+          echo "--- Checking Bundle ID ---"
+          BUNDLE_ID="com.echoelmusic.app"
+          if grep -q "$BUNDLE_ID" fastlane/Appfile; then
+            echo "[PASS] Bundle ID consistent: $BUNDLE_ID"
+          else
+            echo "[FAIL] Bundle ID mismatch"
+            ((ERRORS++))
+          fi
+
+          # Check metadata
+          echo ""
+          echo "--- Checking Metadata ---"
+          for meta in description.txt keywords.txt release_notes.txt privacy_url.txt; do
+            if [[ -s "fastlane/metadata/en-US/$meta" ]]; then
+              echo "[PASS] $meta has content"
+            else
+              echo "[FAIL] $meta is empty or missing"
+              ((ERRORS++))
+            fi
+          done
+
+          # Check version
+          echo ""
+          echo "--- Checking Version ---"
+          VERSION=$(grep "MARKETING_VERSION:" project.yml | head -1 | sed 's/.*: *//' | tr -d '"')
+          echo "[INFO] Marketing version: $VERSION"
+
+          # Summary
+          echo ""
+          echo "=============================================="
+          if [[ $ERRORS -gt 0 ]]; then
+            echo "[FAIL] Pre-flight check failed with $ERRORS error(s)"
+            exit 1
+          else
+            echo "[PASS] Pre-flight check passed"
+          fi
+
+      - name: "Deployment Summary"
+        run: |
+          echo "## Pre-flight Check Passed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Required Files | Verified |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bundle ID | Consistent |" >> $GITHUB_STEP_SUMMARY
+          echo "| Metadata | Complete |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | $(grep 'MARKETING_VERSION:' project.yml | head -1 | sed 's/.*: *//' | tr -d '\"') |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** ${{ github.event.inputs.platforms }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
   # JOB 1: PR Build Check (Simulator - No Secrets Required)
   # ===========================================================================
   pr-check:
@@ -168,8 +253,9 @@ jobs:
   deploy-ios:
     name: "Deploy iOS"
     runs-on: macos-14
+    needs: [preflight]
     # Only run on manual workflow_dispatch with ios platform selected
-    if: github.event_name == 'workflow_dispatch' && contains('all ios ios-macos', inputs.platforms)
+    if: github.event_name == 'workflow_dispatch' && contains('all ios ios-macos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
@@ -264,8 +350,9 @@ jobs:
   deploy-macos:
     name: "Deploy macOS + AUv3"
     runs-on: macos-14
+    needs: [preflight]
     # Only run on manual workflow_dispatch with macos platform selected
-    if: github.event_name == 'workflow_dispatch' && contains('all macos ios-macos', inputs.platforms)
+    if: github.event_name == 'workflow_dispatch' && contains('all macos ios-macos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
@@ -356,8 +443,9 @@ jobs:
   deploy-watchos:
     name: "Deploy watchOS"
     runs-on: macos-14
+    needs: [preflight]
     # Only run on manual workflow_dispatch with watchos platform selected
-    if: github.event_name == 'workflow_dispatch' && contains('all watchos', inputs.platforms)
+    if: github.event_name == 'workflow_dispatch' && contains('all watchos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
@@ -424,8 +512,9 @@ jobs:
   deploy-tvos:
     name: "Deploy tvOS"
     runs-on: macos-14
+    needs: [preflight]
     # Only run on manual workflow_dispatch with tvos platform selected
-    if: github.event_name == 'workflow_dispatch' && contains('all tvos', inputs.platforms)
+    if: github.event_name == 'workflow_dispatch' && contains('all tvos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
@@ -492,8 +581,9 @@ jobs:
   deploy-visionos:
     name: "Deploy visionOS"
     runs-on: macos-14
+    needs: [preflight]
     # Only run on manual workflow_dispatch with visionos platform selected
-    if: github.event_name == 'workflow_dispatch' && contains('all visionos', inputs.platforms)
+    if: github.event_name == 'workflow_dispatch' && contains('all visionos', github.event.inputs.platforms)
     timeout-minutes: 60
 
     steps:
@@ -562,7 +652,7 @@ jobs:
     runs-on: ubuntu-latest
     # Only show summary for manual workflow_dispatch, not for PR builds
     if: always() && github.event_name == 'workflow_dispatch'
-    needs: [deploy-ios, deploy-macos, deploy-watchos, deploy-tvos, deploy-visionos]
+    needs: [preflight, deploy-ios, deploy-macos, deploy-watchos, deploy-tvos, deploy-visionos]
 
     steps:
       - name: "Generate Summary"
