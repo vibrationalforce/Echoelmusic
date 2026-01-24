@@ -58,6 +58,23 @@ public enum EchoelaLanguage: String, CaseIterable, Codable {
     case arabic = "ar"      // Saudi/UAE - 48% YoY growth
     case hindi = "hi"       // India - 23% YoY growth
 
+    // Tier 5: Strategic Expansion (NEW - 15 Languages)
+    case indonesian = "id"  // Indonesia - Largest SE Asian market
+    case malay = "ms"       // Malaysia/Singapore
+    case finnish = "fi"     // Finland - Nordic completion
+    case greek = "el"       // Greece - Mediterranean
+    case czech = "cs"       // Czech Republic - Central Europe
+    case romanian = "ro"    // Romania - Eastern Europe
+    case hungarian = "hu"   // Hungary - Central Europe
+    case ukrainian = "uk"   // Ukraine - Eastern Europe
+    case hebrew = "he"      // Israel - Middle East, RTL
+    case filipino = "tl"    // Philippines - Large market
+    case swahili = "sw"     // East Africa - Growing market
+    case bengali = "bn"     // Bangladesh/India - 230M+ speakers
+    case tamil = "ta"       // South India/Sri Lanka - 80M+ speakers
+    case telugu = "te"      // South India - 80M+ speakers
+    case marathi = "mr"     // India - 90M+ speakers
+
     /// Display name in native language
     public var nativeName: String {
         switch self {
@@ -81,6 +98,22 @@ public enum EchoelaLanguage: String, CaseIterable, Codable {
         case .vietnamese: return "Tiếng Việt"
         case .arabic: return "العربية"
         case .hindi: return "हिन्दी"
+        // Tier 5: Strategic Expansion
+        case .indonesian: return "Bahasa Indonesia"
+        case .malay: return "Bahasa Melayu"
+        case .finnish: return "Suomi"
+        case .greek: return "Ελληνικά"
+        case .czech: return "Čeština"
+        case .romanian: return "Română"
+        case .hungarian: return "Magyar"
+        case .ukrainian: return "Українська"
+        case .hebrew: return "עברית"
+        case .filipino: return "Filipino"
+        case .swahili: return "Kiswahili"
+        case .bengali: return "বাংলা"
+        case .tamil: return "தமிழ்"
+        case .telugu: return "తెలుగు"
+        case .marathi: return "मराठी"
         }
     }
 
@@ -107,12 +140,28 @@ public enum EchoelaLanguage: String, CaseIterable, Codable {
         case .vietnamese: return "🇻🇳"
         case .arabic: return "🇸🇦"
         case .hindi: return "🇮🇳"
+        // Tier 5: Strategic Expansion
+        case .indonesian: return "🇮🇩"
+        case .malay: return "🇲🇾"
+        case .finnish: return "🇫🇮"
+        case .greek: return "🇬🇷"
+        case .czech: return "🇨🇿"
+        case .romanian: return "🇷🇴"
+        case .hungarian: return "🇭🇺"
+        case .ukrainian: return "🇺🇦"
+        case .hebrew: return "🇮🇱"
+        case .filipino: return "🇵🇭"
+        case .swahili: return "🇰🇪"
+        case .bengali: return "🇧🇩"
+        case .tamil: return "🇱🇰"
+        case .telugu: return "🇮🇳"
+        case .marathi: return "🇮🇳"
         }
     }
 
     /// Whether language is RTL (right-to-left)
     public var isRTL: Bool {
-        self == .arabic
+        self == .arabic || self == .hebrew
     }
 
     /// Market tier for prioritization
@@ -126,6 +175,9 @@ public enum EchoelaLanguage: String, CaseIterable, Codable {
             return 3  // Growth markets
         case .arabic, .hindi:
             return 4  // High growth emerging
+        case .indonesian, .malay, .finnish, .greek, .czech, .romanian, .hungarian,
+             .ukrainian, .hebrew, .filipino, .swahili, .bengali, .tamil, .telugu, .marathi:
+            return 5  // Strategic expansion
         }
     }
 
@@ -152,6 +204,22 @@ public enum EchoelaLanguage: String, CaseIterable, Codable {
         case .vietnamese: return "vi-VN"
         case .arabic: return "ar-SA"
         case .hindi: return "hi-IN"
+        // Tier 5: Strategic Expansion
+        case .indonesian: return "id-ID"
+        case .malay: return "ms-MY"
+        case .finnish: return "fi-FI"
+        case .greek: return "el-GR"
+        case .czech: return "cs-CZ"
+        case .romanian: return "ro-RO"
+        case .hungarian: return "hu-HU"
+        case .ukrainian: return "uk-UA"
+        case .hebrew: return "he-IL"
+        case .filipino: return "fil-PH"
+        case .swahili: return "sw-KE"
+        case .bengali: return "bn-BD"
+        case .tamil: return "ta-IN"
+        case .telugu: return "te-IN"
+        case .marathi: return "mr-IN"
         }
     }
 
@@ -494,6 +562,22 @@ public struct EchoelaStrings {
         // Tier 4: High Growth Emerging
         case .arabic: return arabic[key] ?? english[key] ?? key.rawValue
         case .hindi: return hindi[key] ?? english[key] ?? key.rawValue
+        // Tier 5: Strategic Expansion
+        case .indonesian: return indonesian[key] ?? english[key] ?? key.rawValue
+        case .malay: return malay[key] ?? english[key] ?? key.rawValue
+        case .finnish: return finnish[key] ?? english[key] ?? key.rawValue
+        case .greek: return greek[key] ?? english[key] ?? key.rawValue
+        case .czech: return czech[key] ?? english[key] ?? key.rawValue
+        case .romanian: return romanian[key] ?? english[key] ?? key.rawValue
+        case .hungarian: return hungarian[key] ?? english[key] ?? key.rawValue
+        case .ukrainian: return ukrainian[key] ?? english[key] ?? key.rawValue
+        case .hebrew: return hebrew[key] ?? english[key] ?? key.rawValue
+        case .filipino: return filipino[key] ?? english[key] ?? key.rawValue
+        case .swahili: return swahili[key] ?? english[key] ?? key.rawValue
+        case .bengali: return bengali[key] ?? english[key] ?? key.rawValue
+        case .tamil: return tamil[key] ?? english[key] ?? key.rawValue
+        case .telugu: return telugu[key] ?? english[key] ?? key.rawValue
+        case .marathi: return marathi[key] ?? english[key] ?? key.rawValue
         }
     }
 
@@ -1626,5 +1710,665 @@ public struct EchoelaStrings {
         .close: "Đóng",
         .help: "Trợ giúp",
         .settings: "Cài đặt"
+    ]
+
+    // MARK: - Indonesian (Indonesia - Largest SE Asian Market)
+
+    private static let indonesian: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Halo, saya Echoela",
+        .welcomeDescription: "Saya di sini untuk membantu Anda menjelajahi Echoelmusic. Saya akan memberikan panduan lembut saat Anda membutuhkannya, tapi Anda selalu memegang kendali.",
+        .welcomeOptional: "Saya opsional",
+        .welcomeOptionalDesc: "Anda bisa menonaktifkan saya di Pengaturan kapan saja. Saya tidak akan tersinggung.",
+        .welcomeLearnStyle: "Saya belajar gaya Anda",
+        .welcomeLearnStyleDesc: "Saat Anda menggunakan aplikasi, saya akan memberikan lebih sedikit panduan saat Anda percaya diri, dan lebih banyak saat hal-hal baru.",
+        .welcomeNoRush: "Saya tidak pernah terburu-buru",
+        .welcomeNoRushDesc: "Tidak ada timer, skor, atau tekanan. Ambil semua waktu yang Anda butuhkan.",
+        .welcomeAskAnytime: "Tanya kapan saja",
+        .welcomeAskAnytimeDesc: "Jika Anda butuh bantuan, cukup ketuk tombol Echoela atau cari ikon berkilau.",
+
+        // General Help
+        .generalHelpTitle: "Bagaimana saya bisa membantu?",
+        .generalHelpDescription: "Pilih topik untuk mempelajari lebih lanjut. Anda selalu bisa kembali ke sini.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Pelajari bagaimana tubuh Anda terhubung dengan musik.",
+        .biofeedbackDisclaimer: "Penting: Ini adalah seni, bukan obat.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic adalah alat kreatif. Tidak mendiagnosis, mengobati, atau menyembuhkan kondisi apa pun. Selalu konsultasikan dengan profesional kesehatan untuk masalah medis.",
+
+        // Help Offers
+        .helpHesitation1: "Pelan-pelan saja. Mau panduan?",
+        .helpHesitation2: "Tidak terburu-buru. Saya di sini jika Anda butuh petunjuk.",
+        .helpHesitation3: "Kapan Anda siap. Butuh bantuan?",
+        .helpUserRequested: "Bagaimana saya bisa membantu Anda?",
+
+        // UI Elements
+        .dismiss: "Tutup",
+        .learnMore: "Pelajari lebih",
+        .gotIt: "Mengerti",
+        .showMe: "Tunjukkan",
+        .skip: "Lewati",
+        .next: "Berikutnya",
+        .previous: "Sebelumnya",
+        .close: "Tutup",
+        .help: "Bantuan",
+        .settings: "Pengaturan"
+    ]
+
+    // MARK: - Malay (Malaysia/Singapore)
+
+    private static let malay: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Hai, saya Echoela",
+        .welcomeDescription: "Saya di sini untuk membantu anda meneroka Echoelmusic. Saya akan menawarkan panduan lembut apabila anda memerlukannya, tetapi anda sentiasa mengawal.",
+        .welcomeOptional: "Saya pilihan",
+        .welcomeOptionalDesc: "Anda boleh matikan saya dalam Tetapan bila-bila masa. Saya tidak akan tersinggung.",
+        .welcomeLearnStyle: "Saya belajar gaya anda",
+        .welcomeLearnStyleDesc: "Semasa anda menggunakan aplikasi, saya akan kurang memberi panduan apabila anda yakin, dan lebih apabila perkara baru.",
+        .welcomeNoRush: "Saya tidak pernah tergesa-gesa",
+        .welcomeNoRushDesc: "Tiada pemasa, skor, atau tekanan. Ambil masa yang anda perlukan.",
+        .welcomeAskAnytime: "Tanya bila-bila masa",
+        .welcomeAskAnytimeDesc: "Jika anda perlukan bantuan, ketik butang Echoela atau cari ikon berkilau.",
+
+        // General Help
+        .generalHelpTitle: "Bagaimana saya boleh membantu?",
+        .generalHelpDescription: "Pilih topik untuk mengetahui lebih lanjut. Anda sentiasa boleh kembali ke sini.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Ketahui bagaimana badan anda berhubung dengan muzik.",
+        .biofeedbackDisclaimer: "Penting: Ini adalah seni, bukan perubatan.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic adalah alat kreatif. Ia tidak mendiagnosis, merawat, atau menyembuhkan sebarang keadaan. Sentiasa rujuk profesional kesihatan untuk kebimbangan perubatan.",
+
+        // Help Offers
+        .helpHesitation1: "Ambil masa anda. Mahu panduan?",
+        .helpHesitation2: "Tidak tergesa-gesa. Saya di sini jika anda perlukan petunjuk.",
+        .helpHesitation3: "Apabila anda bersedia. Perlukan bantuan?",
+        .helpUserRequested: "Bagaimana saya boleh membantu anda?",
+
+        // UI Elements
+        .dismiss: "Tutup",
+        .learnMore: "Ketahui lebih",
+        .gotIt: "Faham",
+        .showMe: "Tunjukkan",
+        .skip: "Langkau",
+        .next: "Seterusnya",
+        .previous: "Sebelumnya",
+        .close: "Tutup",
+        .help: "Bantuan",
+        .settings: "Tetapan"
+    ]
+
+    // MARK: - Finnish (Finland - Nordic)
+
+    private static let finnish: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Hei, olen Echoela",
+        .welcomeDescription: "Olen täällä auttamassa sinua tutkimaan Echoelmusicin. Tarjoan lempeää opastusta kun tarvitset, mutta sinä hallitset aina.",
+        .welcomeOptional: "Olen valinnainen",
+        .welcomeOptionalDesc: "Voit kytkeä minut pois Asetuksista milloin tahansa. En loukkaannu.",
+        .welcomeLearnStyle: "Opin tyylisi",
+        .welcomeLearnStyleDesc: "Kun käytät sovellusta, annan vähemmän opastusta kun olet varma, ja enemmän kun asiat ovat uusia.",
+        .welcomeNoRush: "En kiirehdi koskaan",
+        .welcomeNoRushDesc: "Ei ajastimia, pisteitä tai painetta. Ota kaikki aika jonka tarvitset.",
+        .welcomeAskAnytime: "Kysy milloin tahansa",
+        .welcomeAskAnytimeDesc: "Jos tarvitset apua, napauta Echoela-painiketta tai etsi kimmelluskuvaketta.",
+
+        // General Help
+        .generalHelpTitle: "Miten voin auttaa?",
+        .generalHelpDescription: "Valitse aihe oppiaksesi lisää. Voit aina palata tänne.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biopalaute",
+        .biofeedbackDescription: "Opi miten kehosi yhdistyy musiikkiin.",
+        .biofeedbackDisclaimer: "Tärkeää: Tämä on taidetta, ei lääketiedettä.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic on luova työkalu. Se ei diagnosoi, hoida tai paranna mitään tilaa. Ota aina yhteyttä terveydenhuollon ammattilaiseen terveyshuolien kanssa.",
+
+        // Help Offers
+        .helpHesitation1: "Ota aikasi. Haluatko opastusta?",
+        .helpHesitation2: "Ei kiirettä. Olen täällä jos tarvitset vihjettä.",
+        .helpHesitation3: "Kun olet valmis. Tarvitsetko apua?",
+        .helpUserRequested: "Miten voin auttaa sinua?",
+
+        // UI Elements
+        .dismiss: "Sulje",
+        .learnMore: "Lue lisää",
+        .gotIt: "Selvä",
+        .showMe: "Näytä",
+        .skip: "Ohita",
+        .next: "Seuraava",
+        .previous: "Edellinen",
+        .close: "Sulje",
+        .help: "Apua",
+        .settings: "Asetukset"
+    ]
+
+    // MARK: - Greek (Greece - Mediterranean)
+
+    private static let greek: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Γεια, είμαι η Echoela",
+        .welcomeDescription: "Είμαι εδώ για να σε βοηθήσω να εξερευνήσεις το Echoelmusic. Θα προσφέρω ήπια καθοδήγηση όταν τη χρειάζεσαι, αλλά πάντα έχεις τον έλεγχο.",
+        .welcomeOptional: "Είμαι προαιρετική",
+        .welcomeOptionalDesc: "Μπορείς να με απενεργοποιήσεις στις Ρυθμίσεις ανά πάσα στιγμή. Δεν θα προσβληθώ.",
+        .welcomeLearnStyle: "Μαθαίνω το στυλ σου",
+        .welcomeLearnStyleDesc: "Καθώς χρησιμοποιείς την εφαρμογή, θα δίνω λιγότερη καθοδήγηση όταν είσαι σίγουρος, και περισσότερη σε νέα πράγματα.",
+        .welcomeNoRush: "Δεν σε βιάζω ποτέ",
+        .welcomeNoRushDesc: "Δεν υπάρχουν χρονόμετρα, βαθμολογίες ή πίεση. Πάρε όλο τον χρόνο που χρειάζεσαι.",
+        .welcomeAskAnytime: "Ρώτα όποτε θέλεις",
+        .welcomeAskAnytimeDesc: "Αν χρειάζεσαι βοήθεια, απλά πάτα το κουμπί Echoela ή ψάξε το εικονίδιο με τη λάμψη.",
+
+        // General Help
+        .generalHelpTitle: "Πώς μπορώ να βοηθήσω;",
+        .generalHelpDescription: "Επίλεξε ένα θέμα για να μάθεις περισσότερα. Μπορείς πάντα να επιστρέψεις εδώ.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Βιοανάδραση",
+        .biofeedbackDescription: "Μάθε πώς το σώμα σου συνδέεται με τη μουσική.",
+        .biofeedbackDisclaimer: "Σημαντικό: Αυτό είναι τέχνη, όχι ιατρική.",
+        .biofeedbackDisclaimerDetail: "Το Echoelmusic είναι δημιουργικό εργαλείο. Δεν διαγιγνώσκει, θεραπεύει ή ιατρεύει καμία κατάσταση. Συμβουλεύσου πάντα επαγγελματίες υγείας για ιατρικά θέματα.",
+
+        // Help Offers
+        .helpHesitation1: "Πάρε τον χρόνο σου. Θέλεις καθοδήγηση;",
+        .helpHesitation2: "Χωρίς βιασύνη. Είμαι εδώ αν χρειαστείς υπόδειξη.",
+        .helpHesitation3: "Όταν είσαι έτοιμος. Χρειάζεσαι βοήθεια;",
+        .helpUserRequested: "Πώς μπορώ να σε βοηθήσω;",
+
+        // UI Elements
+        .dismiss: "Κλείσιμο",
+        .learnMore: "Μάθε περισσότερα",
+        .gotIt: "Κατάλαβα",
+        .showMe: "Δείξε μου",
+        .skip: "Παράλειψη",
+        .next: "Επόμενο",
+        .previous: "Προηγούμενο",
+        .close: "Κλείσιμο",
+        .help: "Βοήθεια",
+        .settings: "Ρυθμίσεις"
+    ]
+
+    // MARK: - Czech (Czech Republic - Central Europe)
+
+    private static let czech: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Ahoj, jsem Echoela",
+        .welcomeDescription: "Jsem tu, abych ti pomohla prozkoumat Echoelmusic. Nabídnu ti jemné vedení, když ho budeš potřebovat, ale ty máš vždy kontrolu.",
+        .welcomeOptional: "Jsem volitelná",
+        .welcomeOptionalDesc: "Můžeš mě kdykoli vypnout v Nastavení. Neurazím se.",
+        .welcomeLearnStyle: "Učím se tvůj styl",
+        .welcomeLearnStyleDesc: "Jak budeš používat aplikaci, budu ti dávat méně rad, když budeš jistý, a více, když budou věci nové.",
+        .welcomeNoRush: "Nikdy tě nespěchám",
+        .welcomeNoRushDesc: "Žádné časovače, skóre ani tlak. Vezmi si veškerý čas, který potřebuješ.",
+        .welcomeAskAnytime: "Zeptej se kdykoli",
+        .welcomeAskAnytimeDesc: "Pokud potřebuješ pomoc, stačí klepnout na tlačítko Echoela nebo hledat ikonu jiskry.",
+
+        // General Help
+        .generalHelpTitle: "Jak mohu pomoci?",
+        .generalHelpDescription: "Vyber si téma a dozvíš se více. Vždy se sem můžeš vrátit.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Zjisti, jak je tvé tělo propojeno s hudbou.",
+        .biofeedbackDisclaimer: "Důležité: Toto je umění, ne medicína.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic je kreativní nástroj. Nediagnostikuje, neléčí ani neuzdravuje žádné stavy. Vždy konzultuj se zdravotnickými odborníky ohledně zdravotních problémů.",
+
+        // Help Offers
+        .helpHesitation1: "Nespěchej. Chceš trochu vedení?",
+        .helpHesitation2: "Bez spěchu. Jsem tu, pokud potřebuješ nápovědu.",
+        .helpHesitation3: "Až budeš připraven. Potřebuješ pomoc?",
+        .helpUserRequested: "Jak ti mohu pomoci?",
+
+        // UI Elements
+        .dismiss: "Zavřít",
+        .learnMore: "Zjistit více",
+        .gotIt: "Rozumím",
+        .showMe: "Ukaž mi",
+        .skip: "Přeskočit",
+        .next: "Další",
+        .previous: "Předchozí",
+        .close: "Zavřít",
+        .help: "Nápověda",
+        .settings: "Nastavení"
+    ]
+
+    // MARK: - Romanian (Romania - Eastern Europe)
+
+    private static let romanian: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Salut, sunt Echoela",
+        .welcomeDescription: "Sunt aici să te ajut să explorezi Echoelmusic. Voi oferi îndrumare blândă când ai nevoie, dar tu ești mereu în control.",
+        .welcomeOptional: "Sunt opțională",
+        .welcomeOptionalDesc: "Mă poți dezactiva din Setări oricând. Nu mă voi supăra.",
+        .welcomeLearnStyle: "Învăț stilul tău",
+        .welcomeLearnStyleDesc: "Pe măsură ce folosești aplicația, voi oferi mai puțină îndrumare când ești sigur, și mai multă când lucrurile sunt noi.",
+        .welcomeNoRush: "Nu te grăbesc niciodată",
+        .welcomeNoRushDesc: "Nu sunt cronometre, scoruri sau presiune. Ia-ți tot timpul de care ai nevoie.",
+        .welcomeAskAnytime: "Întreabă oricând",
+        .welcomeAskAnytimeDesc: "Dacă ai nevoie de ajutor, doar apasă butonul Echoela sau caută pictograma sclipitoare.",
+
+        // General Help
+        .generalHelpTitle: "Cum pot ajuta?",
+        .generalHelpDescription: "Alege un subiect pentru a afla mai multe. Poți reveni oricând aici.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Află cum corpul tău se conectează la muzică.",
+        .biofeedbackDisclaimer: "Important: Aceasta este artă, nu medicină.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic este un instrument creativ. Nu diagnostichează, tratează sau vindecă nicio afecțiune. Consultă întotdeauna profesioniști în sănătate pentru probleme medicale.",
+
+        // Help Offers
+        .helpHesitation1: "Nu te grăbi. Vrei puțină îndrumare?",
+        .helpHesitation2: "Fără grabă. Sunt aici dacă ai nevoie de un indiciu.",
+        .helpHesitation3: "Când ești gata. Ai nevoie de ajutor?",
+        .helpUserRequested: "Cum te pot ajuta?",
+
+        // UI Elements
+        .dismiss: "Închide",
+        .learnMore: "Află mai multe",
+        .gotIt: "Am înțeles",
+        .showMe: "Arată-mi",
+        .skip: "Sari",
+        .next: "Următorul",
+        .previous: "Anterior",
+        .close: "Închide",
+        .help: "Ajutor",
+        .settings: "Setări"
+    ]
+
+    // MARK: - Hungarian (Hungary - Central Europe)
+
+    private static let hungarian: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Szia, Echoela vagyok",
+        .welcomeDescription: "Azért vagyok itt, hogy segítsek felfedezni az Echoelmusic-ot. Gyengéd útmutatást adok, amikor szükséged van rá, de te mindig irányítasz.",
+        .welcomeOptional: "Opcionális vagyok",
+        .welcomeOptionalDesc: "Bármikor kikapcsolhatsz a Beállításokban. Nem sértődök meg.",
+        .welcomeLearnStyle: "Megtanulom a stílusodat",
+        .welcomeLearnStyleDesc: "Ahogy használod az alkalmazást, kevesebb útmutatást adok, amikor magabiztos vagy, és többet, amikor új dolgokkal találkozol.",
+        .welcomeNoRush: "Soha nem siettetlek",
+        .welcomeNoRushDesc: "Nincsenek időzítők, pontszámok vagy nyomás. Vedd el az összes időt, amire szükséged van.",
+        .welcomeAskAnytime: "Kérdezz bármikor",
+        .welcomeAskAnytimeDesc: "Ha segítségre van szükséged, csak érintsd meg az Echoela gombot, vagy keresd a csillogó ikont.",
+
+        // General Help
+        .generalHelpTitle: "Hogyan segíthetek?",
+        .generalHelpDescription: "Válassz egy témát, hogy többet megtudj. Mindig visszatérhetsz ide.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Ismerd meg, hogyan kapcsolódik a tested a zenéhez.",
+        .biofeedbackDisclaimer: "Fontos: Ez művészet, nem orvoslás.",
+        .biofeedbackDisclaimerDetail: "Az Echoelmusic kreatív eszköz. Nem diagnosztizál, kezel vagy gyógyít semmilyen állapotot. Mindig konzultálj egészségügyi szakemberekkel orvosi kérdésekben.",
+
+        // Help Offers
+        .helpHesitation1: "Ne siess. Szeretnél útmutatást?",
+        .helpHesitation2: "Nincs rohanás. Itt vagyok, ha tippre van szükséged.",
+        .helpHesitation3: "Amikor készen állsz. Segítségre van szükséged?",
+        .helpUserRequested: "Hogyan segíthetek neked?",
+
+        // UI Elements
+        .dismiss: "Bezárás",
+        .learnMore: "Tudj meg többet",
+        .gotIt: "Értem",
+        .showMe: "Mutasd",
+        .skip: "Kihagyás",
+        .next: "Következő",
+        .previous: "Előző",
+        .close: "Bezárás",
+        .help: "Súgó",
+        .settings: "Beállítások"
+    ]
+
+    // MARK: - Ukrainian (Ukraine - Eastern Europe)
+
+    private static let ukrainian: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Привіт, я Echoela",
+        .welcomeDescription: "Я тут, щоб допомогти вам досліджувати Echoelmusic. Я запропоную м'яке керівництво, коли вам потрібно, але ви завжди контролюєте ситуацію.",
+        .welcomeOptional: "Я необов'язкова",
+        .welcomeOptionalDesc: "Ви можете вимкнути мене в Налаштуваннях у будь-який час. Я не образжусь.",
+        .welcomeLearnStyle: "Я вивчаю ваш стиль",
+        .welcomeLearnStyleDesc: "Коли ви користуєтесь додатком, я даватиму менше порад, коли ви впевнені, і більше, коли речі нові.",
+        .welcomeNoRush: "Я ніколи не поспішаю вас",
+        .welcomeNoRushDesc: "Немає таймерів, балів або тиску. Візьміть весь час, який вам потрібен.",
+        .welcomeAskAnytime: "Запитуйте будь-коли",
+        .welcomeAskAnytimeDesc: "Якщо вам потрібна допомога, просто натисніть кнопку Echoela або знайдіть значок блиску.",
+
+        // General Help
+        .generalHelpTitle: "Як я можу допомогти?",
+        .generalHelpDescription: "Виберіть тему, щоб дізнатися більше. Ви завжди можете повернутися сюди.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Біофідбек",
+        .biofeedbackDescription: "Дізнайтеся, як ваше тіло з'єднується з музикою.",
+        .biofeedbackDisclaimer: "Важливо: Це мистецтво, а не медицина.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic - це творчий інструмент. Він не діагностує, не лікує та не виліковує жодного стану. Завжди консультуйтеся з медичними фахівцями щодо медичних питань.",
+
+        // Help Offers
+        .helpHesitation1: "Не поспішайте. Хочете трохи керівництва?",
+        .helpHesitation2: "Без поспіху. Я тут, якщо потрібна підказка.",
+        .helpHesitation3: "Коли будете готові. Потрібна допомога?",
+        .helpUserRequested: "Як я можу вам допомогти?",
+
+        // UI Elements
+        .dismiss: "Закрити",
+        .learnMore: "Дізнатися більше",
+        .gotIt: "Зрозуміло",
+        .showMe: "Покажіть",
+        .skip: "Пропустити",
+        .next: "Далі",
+        .previous: "Назад",
+        .close: "Закрити",
+        .help: "Допомога",
+        .settings: "Налаштування"
+    ]
+
+    // MARK: - Hebrew (Israel - Middle East, RTL)
+
+    private static let hebrew: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "שלום, אני אקואלה",
+        .welcomeDescription: "אני כאן כדי לעזור לך לחקור את Echoelmusic. אציע הדרכה עדינה כשתצטרך, אבל אתה תמיד שולט.",
+        .welcomeOptional: "אני אופציונלית",
+        .welcomeOptionalDesc: "אתה יכול לכבות אותי בהגדרות בכל עת. לא אעלב.",
+        .welcomeLearnStyle: "אני לומדת את הסגנון שלך",
+        .welcomeLearnStyleDesc: "ככל שתשתמש באפליקציה, אתן פחות הדרכה כשאתה בטוח, ויותר כשדברים חדשים.",
+        .welcomeNoRush: "אני לעולם לא ממהרת אותך",
+        .welcomeNoRushDesc: "אין טיימרים, ניקוד או לחץ. קח את כל הזמן שאתה צריך.",
+        .welcomeAskAnytime: "שאל בכל עת",
+        .welcomeAskAnytimeDesc: "אם אתה צריך עזרה, פשוט לחץ על כפתור אקואלה או חפש את סמל הניצוץ.",
+
+        // General Help
+        .generalHelpTitle: "איך אני יכולה לעזור?",
+        .generalHelpDescription: "בחר נושא כדי ללמוד עוד. אתה תמיד יכול לחזור לכאן.",
+
+        // Biofeedback
+        .biofeedbackTitle: "ביופידבק",
+        .biofeedbackDescription: "למד איך הגוף שלך מתחבר למוזיקה.",
+        .biofeedbackDisclaimer: "חשוב: זו אומנות, לא רפואה.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic הוא כלי יצירתי. הוא לא מאבחן, מטפל או מרפא שום מצב. התייעץ תמיד עם אנשי מקצוע בתחום הבריאות בנוגע לבעיות רפואיות.",
+
+        // Help Offers
+        .helpHesitation1: "קח את הזמן שלך. רוצה קצת הדרכה?",
+        .helpHesitation2: "בלי לחץ. אני כאן אם אתה צריך רמז.",
+        .helpHesitation3: "כשתהיה מוכן. צריך עזרה?",
+        .helpUserRequested: "איך אני יכולה לעזור לך?",
+
+        // UI Elements
+        .dismiss: "סגור",
+        .learnMore: "למד עוד",
+        .gotIt: "הבנתי",
+        .showMe: "הראה לי",
+        .skip: "דלג",
+        .next: "הבא",
+        .previous: "הקודם",
+        .close: "סגור",
+        .help: "עזרה",
+        .settings: "הגדרות"
+    ]
+
+    // MARK: - Filipino (Philippines - Large Market)
+
+    private static let filipino: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Kamusta, ako si Echoela",
+        .welcomeDescription: "Nandito ako para tulungan kang i-explore ang Echoelmusic. Mag-aalok ako ng mahinahong patnubay kapag kailangan mo, pero ikaw ang laging may kontrol.",
+        .welcomeOptional: "Opsyonal lang ako",
+        .welcomeOptionalDesc: "Pwede mo akong i-off sa Settings anumang oras. Hindi ako magagalit.",
+        .welcomeLearnStyle: "Natututunan ko ang istilo mo",
+        .welcomeLearnStyleDesc: "Habang ginagamit mo ang app, magbibigay ako ng mas kaunting patnubay kapag confident ka, at mas marami kapag bago ang mga bagay.",
+        .welcomeNoRush: "Hindi kita minamadali kailanman",
+        .welcomeNoRushDesc: "Walang timer, score, o pressure. Kumuha ng lahat ng oras na kailangan mo.",
+        .welcomeAskAnytime: "Magtanong anumang oras",
+        .welcomeAskAnytimeDesc: "Kung kailangan mo ng tulong, i-tap lang ang Echoela button o hanapin ang sparkle icon.",
+
+        // General Help
+        .generalHelpTitle: "Paano kita matutulungan?",
+        .generalHelpDescription: "Pumili ng paksa para matuto pa. Pwede kang bumalik dito anumang oras.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Alamin kung paano kumokonekta ang katawan mo sa musika.",
+        .biofeedbackDisclaimer: "Mahalaga: Ito ay sining, hindi medisina.",
+        .biofeedbackDisclaimerDetail: "Ang Echoelmusic ay isang creative tool. Hindi ito nagde-diagnose, nagtatreat, o nagpapagaling ng anumang kondisyon. Laging kumonsulta sa mga healthcare professional para sa mga medikal na alalahanin.",
+
+        // Help Offers
+        .helpHesitation1: "Huwag magmadali. Gusto mo ng konting patnubay?",
+        .helpHesitation2: "Walang apura. Nandito ako kung kailangan mo ng hint.",
+        .helpHesitation3: "Kapag handa ka na. Kailangan mo ba ng tulong?",
+        .helpUserRequested: "Paano kita matutulungan?",
+
+        // UI Elements
+        .dismiss: "Isara",
+        .learnMore: "Matuto pa",
+        .gotIt: "Sige",
+        .showMe: "Ipakita",
+        .skip: "Laktawan",
+        .next: "Susunod",
+        .previous: "Nakaraan",
+        .close: "Isara",
+        .help: "Tulong",
+        .settings: "Settings"
+    ]
+
+    // MARK: - Swahili (East Africa - Growing Market)
+
+    private static let swahili: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "Habari, mimi ni Echoela",
+        .welcomeDescription: "Niko hapa kukusaidia kuchunguza Echoelmusic. Nitatoa mwongozo laini unapohitaji, lakini wewe daima uko katika udhibiti.",
+        .welcomeOptional: "Mimi si lazima",
+        .welcomeOptionalDesc: "Unaweza kunizima katika Mipangilio wakati wowote. Sitachukia.",
+        .welcomeLearnStyle: "Ninajifunza mtindo wako",
+        .welcomeLearnStyleDesc: "Unapotumia programu, nitatoa mwongozo mdogo unapokuwa na uhakika, na zaidi mambo yanapokuwa mapya.",
+        .welcomeNoRush: "Siwi na haraka",
+        .welcomeNoRushDesc: "Hakuna vipima muda, alama, au shinikizo. Chukua muda wote unaohitaji.",
+        .welcomeAskAnytime: "Uliza wakati wowote",
+        .welcomeAskAnytimeDesc: "Ukihitaji msaada, gusa tu kitufe cha Echoela au tafuta ikoni ya kung'aa.",
+
+        // General Help
+        .generalHelpTitle: "Naweza kukusaidiaje?",
+        .generalHelpDescription: "Chagua mada ili kujifunza zaidi. Unaweza kurudi hapa wakati wowote.",
+
+        // Biofeedback
+        .biofeedbackTitle: "Biofeedback",
+        .biofeedbackDescription: "Jifunze jinsi mwili wako unavyounganishwa na muziki.",
+        .biofeedbackDisclaimer: "Muhimu: Hii ni sanaa, si dawa.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic ni zana ya ubunifu. Haigundui, haitibu, au kuponya hali yoyote. Daima wasiliana na wataalamu wa afya kwa wasiwasi wa kimatibabu.",
+
+        // Help Offers
+        .helpHesitation1: "Chukua muda wako. Ungependa mwongozo?",
+        .helpHesitation2: "Hakuna haraka. Niko hapa ukihitaji kidokezo.",
+        .helpHesitation3: "Unapokuwa tayari. Unahitaji msaada?",
+        .helpUserRequested: "Naweza kukusaidiaje?",
+
+        // UI Elements
+        .dismiss: "Funga",
+        .learnMore: "Jifunze zaidi",
+        .gotIt: "Nimeelewa",
+        .showMe: "Nionyeshe",
+        .skip: "Ruka",
+        .next: "Ijayo",
+        .previous: "Iliyotangulia",
+        .close: "Funga",
+        .help: "Msaada",
+        .settings: "Mipangilio"
+    ]
+
+    // MARK: - Bengali (Bangladesh/India - 230M+ Speakers)
+
+    private static let bengali: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "হ্যালো, আমি ইকোএলা",
+        .welcomeDescription: "আমি এখানে আপনাকে Echoelmusic অন্বেষণ করতে সাহায্য করতে এসেছি। আমি যখন প্রয়োজন হবে তখন মৃদু গাইডেন্স দেব, কিন্তু আপনি সবসময় নিয়ন্ত্রণে থাকবেন।",
+        .welcomeOptional: "আমি ঐচ্ছিক",
+        .welcomeOptionalDesc: "আপনি সেটিংস থেকে যেকোনো সময় আমাকে বন্ধ করতে পারেন। আমি মনে কষ্ট পাব না।",
+        .welcomeLearnStyle: "আমি আপনার স্টাইল শিখি",
+        .welcomeLearnStyleDesc: "আপনি যখন অ্যাপ ব্যবহার করবেন, আমি আত্মবিশ্বাসী হলে কম গাইডেন্স দেব, এবং নতুন কিছুতে বেশি দেব।",
+        .welcomeNoRush: "আমি কখনো তাড়াহুড়ো করি না",
+        .welcomeNoRushDesc: "কোনো টাইমার, স্কোর বা চাপ নেই। আপনার প্রয়োজনীয় সময় নিন।",
+        .welcomeAskAnytime: "যেকোনো সময় জিজ্ঞাসা করুন",
+        .welcomeAskAnytimeDesc: "যদি সাহায্য দরকার হয়, শুধু ইকোএলা বোতামে ট্যাপ করুন বা স্পার্কল আইকন খুঁজুন।",
+
+        // General Help
+        .generalHelpTitle: "আমি কীভাবে সাহায্য করতে পারি?",
+        .generalHelpDescription: "আরো জানতে একটি বিষয় বেছে নিন। আপনি সবসময় এখানে ফিরে আসতে পারেন।",
+
+        // Biofeedback
+        .biofeedbackTitle: "বায়োফিডব্যাক",
+        .biofeedbackDescription: "জানুন আপনার শরীর কীভাবে সঙ্গীতের সাথে সংযুক্ত।",
+        .biofeedbackDisclaimer: "গুরুত্বপূর্ণ: এটি শিল্প, ওষুধ নয়।",
+        .biofeedbackDisclaimerDetail: "Echoelmusic একটি সৃজনশীল টুল। এটি কোনো অবস্থা নির্ণয়, চিকিৎসা বা নিরাময় করে না। চিকিৎসা সংক্রান্ত উদ্বেগের জন্য সবসময় স্বাস্থ্য পেশাদারদের সাথে পরামর্শ করুন।",
+
+        // Help Offers
+        .helpHesitation1: "তাড়াহুড়ো করবেন না। কিছু গাইডেন্স চান?",
+        .helpHesitation2: "কোনো তাড়া নেই। ইঙ্গিত দরকার হলে আমি এখানে আছি।",
+        .helpHesitation3: "যখন আপনি প্রস্তুত। সাহায্য দরকার?",
+        .helpUserRequested: "আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+
+        // UI Elements
+        .dismiss: "বন্ধ করুন",
+        .learnMore: "আরো জানুন",
+        .gotIt: "বুঝেছি",
+        .showMe: "দেখান",
+        .skip: "এড়িয়ে যান",
+        .next: "পরবর্তী",
+        .previous: "পূর্ববর্তী",
+        .close: "বন্ধ",
+        .help: "সাহায্য",
+        .settings: "সেটিংস"
+    ]
+
+    // MARK: - Tamil (South India/Sri Lanka - 80M+ Speakers)
+
+    private static let tamil: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "வணக்கம், நான் எக்கோயெலா",
+        .welcomeDescription: "Echoelmusic-ஐ ஆராய உங்களுக்கு உதவ நான் இங்கே இருக்கிறேன். உங்களுக்கு தேவையான போது மென்மையான வழிகாட்டுதலை வழங்குவேன், ஆனால் நீங்கள் எப்போதும் கட்டுப்பாட்டில் இருப்பீர்கள்.",
+        .welcomeOptional: "நான் விருப்பமானவள்",
+        .welcomeOptionalDesc: "அமைப்புகளில் எப்போது வேண்டுமானாலும் என்னை அணைக்கலாம். நான் கோபப்பட மாட்டேன்.",
+        .welcomeLearnStyle: "உங்கள் பாணியை கற்றுக்கொள்கிறேன்",
+        .welcomeLearnStyleDesc: "நீங்கள் செயலியைப் பயன்படுத்தும்போது, நம்பிக்கையாக இருக்கும்போது குறைவான வழிகாட்டுதலும், புதிய விஷயங்களில் அதிகமும் தருவேன்.",
+        .welcomeNoRush: "நான் ஒருபோதும் அவசரப்படுத்த மாட்டேன்",
+        .welcomeNoRushDesc: "டைமர்கள், மதிப்பெண்கள் அல்லது அழுத்தம் இல்லை. உங்களுக்கு தேவையான நேரத்தை எடுத்துக்கொள்ளுங்கள்.",
+        .welcomeAskAnytime: "எப்போது வேண்டுமானாலும் கேளுங்கள்",
+        .welcomeAskAnytimeDesc: "உதவி தேவைப்பட்டால், எக்கோயெலா பொத்தானை தட்டுங்கள் அல்லது மின்னும் ஐகானைத் தேடுங்கள்.",
+
+        // General Help
+        .generalHelpTitle: "நான் எப்படி உதவ முடியும்?",
+        .generalHelpDescription: "மேலும் அறிய ஒரு தலைப்பைத் தேர்ந்தெடுங்கள். நீங்கள் எப்போதும் இங்கே திரும்பி வரலாம்.",
+
+        // Biofeedback
+        .biofeedbackTitle: "பயோஃபீட்பேக்",
+        .biofeedbackDescription: "உங்கள் உடல் இசையுடன் எவ்வாறு இணைகிறது என்பதை அறியுங்கள்.",
+        .biofeedbackDisclaimer: "முக்கியம்: இது கலை, மருத்துவம் அல்ல.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic ஒரு படைப்பாற்றல் கருவி. இது எந்த நிலையையும் கண்டறிவதில்லை, சிகிச்சையளிப்பதில்லை அல்லது குணப்படுத்துவதில்லை. மருத்துவ கவலைகளுக்கு எப்போதும் சுகாதார நிபுணர்களை அணுகவும்.",
+
+        // Help Offers
+        .helpHesitation1: "அவசரப்படாதீர்கள். சிறிது வழிகாட்டுதல் வேண்டுமா?",
+        .helpHesitation2: "அவசரம் இல்லை. குறிப்பு தேவைப்பட்டால் இங்கே இருக்கிறேன்.",
+        .helpHesitation3: "நீங்கள் தயாராகும்போது. உதவி தேவையா?",
+        .helpUserRequested: "நான் உங்களுக்கு எப்படி உதவ முடியும்?",
+
+        // UI Elements
+        .dismiss: "மூடு",
+        .learnMore: "மேலும் அறிக",
+        .gotIt: "புரிந்தது",
+        .showMe: "காட்டு",
+        .skip: "தவிர்",
+        .next: "அடுத்து",
+        .previous: "முந்தைய",
+        .close: "மூடு",
+        .help: "உதவி",
+        .settings: "அமைப்புகள்"
+    ]
+
+    // MARK: - Telugu (South India - 80M+ Speakers)
+
+    private static let telugu: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "హలో, నేను ఎకోయెలా",
+        .welcomeDescription: "Echoelmusic అన్వేషించడంలో మీకు సహాయం చేయడానికి నేను ఇక్కడ ఉన్నాను. మీకు అవసరమైనప్పుడు సున్నితమైన మార్గదర్శకత్వం అందిస్తాను, కానీ మీరు ఎల్లప్పుడూ నియంత్రణలో ఉంటారు.",
+        .welcomeOptional: "నేను ఐచ్ఛికం",
+        .welcomeOptionalDesc: "సెట్టింగ్స్‌లో ఎప్పుడైనా నన్ను ఆఫ్ చేయవచ్చు. నేను బాధపడను.",
+        .welcomeLearnStyle: "నేను మీ శైలిని నేర్చుకుంటాను",
+        .welcomeLearnStyleDesc: "మీరు యాప్ ఉపయోగించినప్పుడు, మీకు ధైర్యం ఉన్నప్పుడు తక్కువ మార్గదర్శకత్వం, కొత్త విషయాలకు ఎక్కువ ఇస్తాను.",
+        .welcomeNoRush: "నేను ఎప్పుడూ తొందరపెట్టను",
+        .welcomeNoRushDesc: "టైమర్లు, స్కోర్లు లేదా ఒత్తిడి లేవు. మీకు అవసరమైన సమయం తీసుకోండి.",
+        .welcomeAskAnytime: "ఎప్పుడైనా అడగండి",
+        .welcomeAskAnytimeDesc: "సహాయం అవసరమైతే, ఎకోయెలా బటన్ నొక్కండి లేదా మెరుపు ఐకాన్ చూడండి.",
+
+        // General Help
+        .generalHelpTitle: "నేను ఎలా సహాయం చేయగలను?",
+        .generalHelpDescription: "మరింత తెలుసుకోవడానికి టాపిక్ ఎంచుకోండి. మీరు ఎల్లప్పుడూ ఇక్కడికి తిరిగి రావచ్చు.",
+
+        // Biofeedback
+        .biofeedbackTitle: "బయోఫీడ్‌బ్యాక్",
+        .biofeedbackDescription: "మీ శరీరం సంగీతంతో ఎలా కనెక్ట్ అవుతుందో తెలుసుకోండి.",
+        .biofeedbackDisclaimer: "ముఖ్యం: ఇది కళ, వైద్యం కాదు.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic సృజనాత్మక సాధనం. ఇది ఏ పరిస్థితినీ నిర్ధారించదు, చికిత్స చేయదు లేదా నయం చేయదు. వైద్య సమస్యలకు ఎల్లప్పుడూ ఆరోగ్య నిపుణులను సంప్రదించండి.",
+
+        // Help Offers
+        .helpHesitation1: "తొందరపడకండి. కొంచెం మార్గదర్శకత్వం కావాలా?",
+        .helpHesitation2: "తొందర లేదు. హింట్ అవసరమైతే నేను ఇక్కడ ఉన్నాను.",
+        .helpHesitation3: "మీరు సిద్ధంగా ఉన్నప్పుడు. సహాయం కావాలా?",
+        .helpUserRequested: "నేను మీకు ఎలా సహాయం చేయగలను?",
+
+        // UI Elements
+        .dismiss: "మూసివేయి",
+        .learnMore: "మరింత తెలుసుకోండి",
+        .gotIt: "అర్థమైంది",
+        .showMe: "చూపించు",
+        .skip: "దాటవేయి",
+        .next: "తదుపరి",
+        .previous: "మునుపటి",
+        .close: "మూసివేయి",
+        .help: "సహాయం",
+        .settings: "సెట్టింగ్స్"
+    ]
+
+    // MARK: - Marathi (India - 90M+ Speakers)
+
+    private static let marathi: [LocalizationKey: String] = [
+        // Welcome
+        .welcomeTitle: "नमस्कार, मी इकोएला आहे",
+        .welcomeDescription: "Echoelmusic शोधण्यात तुम्हाला मदत करण्यासाठी मी येथे आहे. तुम्हाला गरज असेल तेव्हा मी सौम्य मार्गदर्शन देईन, पण तुम्ही नेहमी नियंत्रणात असता.",
+        .welcomeOptional: "मी पर्यायी आहे",
+        .welcomeOptionalDesc: "तुम्ही सेटिंग्जमध्ये कधीही मला बंद करू शकता. मला राग येणार नाही.",
+        .welcomeLearnStyle: "मी तुमची शैली शिकतो",
+        .welcomeLearnStyleDesc: "तुम्ही अॅप वापरता तेव्हा, तुम्ही आत्मविश्वासी असाल तेव्हा कमी मार्गदर्शन आणि नवीन गोष्टींसाठी जास्त देईन.",
+        .welcomeNoRush: "मी कधीही घाई करत नाही",
+        .welcomeNoRushDesc: "टायमर नाहीत, स्कोअर नाहीत किंवा दबाव नाही. तुम्हाला हवा तेवढा वेळ घ्या.",
+        .welcomeAskAnytime: "कधीही विचारा",
+        .welcomeAskAnytimeDesc: "मदत हवी असल्यास, फक्त इकोएला बटण दाबा किंवा चमकणारा आयकॉन शोधा.",
+
+        // General Help
+        .generalHelpTitle: "मी कशी मदत करू शकतो?",
+        .generalHelpDescription: "अधिक जाणून घेण्यासाठी विषय निवडा. तुम्ही नेहमी येथे परत येऊ शकता.",
+
+        // Biofeedback
+        .biofeedbackTitle: "बायोफीडबॅक",
+        .biofeedbackDescription: "तुमचे शरीर संगीताशी कसे जोडले जाते ते जाणून घ्या.",
+        .biofeedbackDisclaimer: "महत्त्वाचे: ही कला आहे, औषध नाही.",
+        .biofeedbackDisclaimerDetail: "Echoelmusic हे सर्जनशील साधन आहे. ते कोणत्याही स्थितीचे निदान, उपचार किंवा बरे करत नाही. वैद्यकीय चिंतांसाठी नेहमी आरोग्य व्यावसायिकांचा सल्ला घ्या.",
+
+        // Help Offers
+        .helpHesitation1: "घाई करू नका. थोडे मार्गदर्शन हवे?",
+        .helpHesitation2: "घाई नाही. इशारा हवा असल्यास मी येथे आहे.",
+        .helpHesitation3: "तुम्ही तयार असताना. मदत हवी?",
+        .helpUserRequested: "मी तुम्हाला कशी मदत करू शकतो?",
+
+        // UI Elements
+        .dismiss: "बंद करा",
+        .learnMore: "अधिक जाणून घ्या",
+        .gotIt: "समजले",
+        .showMe: "दाखवा",
+        .skip: "वगळा",
+        .next: "पुढे",
+        .previous: "मागील",
+        .close: "बंद करा",
+        .help: "मदत",
+        .settings: "सेटिंग्ज"
     ]
 }
