@@ -114,11 +114,29 @@ public struct AppStoreMetadata {
 
     // MARK: - Pricing
 
-    /// Price tier (0 = Free with IAP)
-    public static let priceTier = 0
+    /// Price tier - FREE
+    /// Echoelmusic is completely free:
+    /// - No in-app purchases
+    /// - No subscriptions
+    /// - All features included
+    /// - No ads
+    public static let priceTier = 0  // Free
+
+    /// App price (USD)
+    public static let appPrice = "Free"
 
     /// Available territories (all countries)
     public static let availableTerritories: [String] = ["ALL"]
+
+    /// Pricing model description
+    public static let pricingModel = PricingModel.free
+
+    public enum PricingModel: String {
+        case free = "Free"
+        case oneTimePurchase = "One-Time Purchase"
+        case subscription = "Subscription"
+        case freemium = "Freemium"
+    }
 }
 
 // MARK: - Age Rating Questionnaire
@@ -1204,10 +1222,11 @@ PERMISSIONS REQUESTED:
 
 All permissions are optional and the app provides full functionality in demo mode.
 
-SUBSCRIPTION TESTING:
-• Sandbox accounts can test all subscription tiers
-• Free tier provides full core functionality
-• Pro/Studio/Enterprise unlock additional hardware and cloud features
+PURCHASE TESTING:
+• Sandbox accounts can test the one-time purchase flow
+• Purchase unlocks all features permanently
+• Family Sharing can be tested with sandbox family accounts
+• No subscriptions - single $29.99 purchase unlocks everything
 
 KNOWN LIMITATIONS:
 • Quantum light emulation requires Metal-compatible device (iOS 15+)
@@ -1360,142 +1379,98 @@ Full privacy policy: https://echoelmusic.com/privacy
     }
 }
 
-// MARK: - In-App Purchases
+// MARK: - App Features (Free App - No In-App Purchases)
 
-public struct InAppPurchases {
+public struct AppFeatures {
 
-    /// All subscription tiers
-    public static let subscriptions: [Subscription] = [
-        .free,
-        .pro,
-        .studio,
-        .enterprise
+    // MARK: - Free App Model
+
+    /// Echoelmusic is completely FREE:
+    /// - No in-app purchases
+    /// - No subscriptions
+    /// - All features included
+    /// - No ads
+
+    /// All features included for free
+    public static let allFeatures: [String] = [
+        // Core Bio-Reactive
+        "✅ Bio-reactive audio creation with HRV/heart rate",
+        "✅ Apple Watch integration for real-time biometrics",
+        "✅ All 10 quantum visualization modes",
+        "✅ 4D spatial audio & AFA fields",
+
+        // Audio & Music
+        "✅ Unlimited AI art/music generation",
+        "✅ Cinematic orchestral film scoring engine",
+        "✅ 60+ audio interface presets",
+        "✅ 40+ MIDI controller mappings",
+        "✅ VST3/AU plugin integration",
+
+        // Video & Streaming
+        "✅ 16K video processing (up to 15360x8640)",
+        "✅ 1000 fps light-speed video",
+        "✅ Multi-platform streaming (YouTube, Twitch, etc.)",
+
+        // Hardware
+        "✅ Ableton Push 3 LED control",
+        "✅ DMX/Art-Net lighting control",
+        "✅ Cross-platform sessions (any device combo)",
+
+        // Collaboration
+        "✅ Host collaboration sessions (up to 100 participants)",
+        "✅ Join unlimited sessions",
+
+        // Accessibility
+        "✅ All 20+ accessibility profiles (WCAG AAA)",
+        "✅ VoiceOver/TalkBack full support",
+
+        // Storage & Export
+        "✅ Unlimited local storage",
+        "✅ iCloud sync included",
+        "✅ Export to all formats (4K video, ProRes, JSON)",
+
+        // Presets & Customization
+        "✅ 74+ curated engine presets",
+        "✅ Unlimited custom presets",
+
+        // Support & Updates
+        "✅ Lifetime updates (all future features)",
+        "✅ Priority email support"
     ]
 
-    /// Product identifiers
-    public static let productIDs = ProductIDs()
+    /// What's NOT included (to be transparent)
+    public static let notIncluded: [String] = [
+        "⚠️ Developer SDK & custom plugins (coming in future update)",
+        "⚠️ Enterprise features (1000+ participants, SLA)",
+        "ℹ️ Cloud storage beyond iCloud (use your own iCloud)"
+    ]
 
-    public struct ProductIDs {
-        // Subscriptions (auto-renewable)
-        public let proMonthly = "com.echoelmusic.subscription.pro.monthly"
-        public let proYearly = "com.echoelmusic.subscription.pro.yearly"
-        public let studioMonthly = "com.echoelmusic.subscription.studio.monthly"
-        public let studioYearly = "com.echoelmusic.subscription.studio.yearly"
-        public let enterpriseMonthly = "com.echoelmusic.subscription.enterprise.monthly"
-        public let enterpriseYearly = "com.echoelmusic.subscription.enterprise.yearly"
+    /// App summary
+    public static let appSummary = """
+    💰 ECHOELMUSIC - COMPLETELY FREE
 
-        // Non-consumable
-        public let lifetimePro = "com.echoelmusic.lifetime.pro"
-        public let lifetimeStudio = "com.echoelmusic.lifetime.studio"
+    Echoelmusic is 100% free:
+    • No in-app purchases
+    • No subscriptions
+    • No ads
+    • All features included
 
-        // Consumable
-        public let cloudStorageBoost1TB = "com.echoelmusic.consumable.storage.1tb"
-        public let cloudStorageBoost5TB = "com.echoelmusic.consumable.storage.5tb"
-    }
+    🤝 ETHICAL COMMITMENTS:
+    • No dark patterns
+    • No artificial limits
+    • No paywalls
+    • Privacy focused
+    """
+}
 
-    /// Free tier
-    public static let free = Subscription(
-        name: "Free",
-        productID: nil,
-        price: "$0",
-        features: [
-            "✅ Bio-reactive audio creation",
-            "✅ 5 quantum visualization modes",
-            "✅ Basic spatial audio (3D)",
-            "✅ Apple Watch integration",
-            "✅ 10 AI art/music generations per day",
-            "✅ Meditation & breathing exercises",
-            "✅ Join collaboration sessions",
-            "✅ Basic accessibility features",
-            "✅ Up to 3 custom presets",
-            "❌ Advanced visualizations (5 locked)",
-            "❌ 4D spatial audio & AFA fields",
-            "❌ Orchestral film scoring",
-            "❌ Professional streaming",
-            "❌ Hardware integrations (Push 3, DMX)",
-            "❌ Developer SDK & plugins",
-            "❌ Cloud storage (local only)",
-            "❌ Priority support"
-        ]
-    )
+// MARK: - Legacy In-App Purchases (Deprecated)
 
-    /// Pro tier
-    public static let pro = Subscription(
-        name: "Pro",
-        productID: "com.echoelmusic.subscription.pro.monthly",
-        price: "$9.99/month or $99/year",
-        features: [
-            "✅ Everything in Free",
-            "✅ All 10 quantum visualization modes",
-            "✅ 4D spatial audio & AFA fields",
-            "✅ Unlimited AI art/music generation",
-            "✅ Orchestral film scoring engine",
-            "✅ 4K video processing & effects",
-            "✅ Stream to 1 platform (1080p)",
-            "✅ Host collaboration sessions (up to 10)",
-            "✅ Unlimited custom presets",
-            "✅ 10 GB cloud storage",
-            "✅ Advanced accessibility (all 20+ profiles)",
-            "✅ Email support (24h response)",
-            "❌ 8K/16K video processing",
-            "❌ Multi-platform streaming",
-            "❌ Hardware integrations (Push 3, DMX)",
-            "❌ Developer SDK & plugins",
-            "❌ 100+ participant sessions"
-        ]
-    )
+@available(*, deprecated, message: "Echoelmusic is now free - no IAP")
+public struct InAppPurchases {
+    @available(*, deprecated, message: "App is now free")
+    public static let subscriptions: [LegacySubscription] = []
 
-    /// Studio tier
-    public static let studio = Subscription(
-        name: "Studio",
-        productID: "com.echoelmusic.subscription.studio.monthly",
-        price: "$29.99/month or $299/year",
-        features: [
-            "✅ Everything in Pro",
-            "✅ 8K/16K video processing (up to 15360x8640)",
-            "✅ 1000 fps light-speed video",
-            "✅ Multi-platform streaming (up to 5 destinations)",
-            "✅ Ableton Push 3 LED control",
-            "✅ DMX/Art-Net lighting control",
-            "✅ 60+ audio interface presets",
-            "✅ 40+ MIDI controller mappings",
-            "✅ Cross-platform sessions (any device combo)",
-            "✅ Host sessions up to 100 participants",
-            "✅ 100 GB cloud storage",
-            "✅ VST3/AU plugin integration",
-            "✅ Priority email support (4h response)",
-            "❌ Developer SDK & custom plugins",
-            "❌ 1000+ participant sessions",
-            "❌ Enterprise security features"
-        ]
-    )
-
-    /// Enterprise tier
-    public static let enterprise = Subscription(
-        name: "Enterprise",
-        productID: "com.echoelmusic.subscription.enterprise.monthly",
-        price: "$99.99/month or $999/year",
-        features: [
-            "✅ Everything in Studio",
-            "✅ Developer SDK & plugin API",
-            "✅ Custom plugin deployment",
-            "✅ Unlimited multi-platform streaming",
-            "✅ Host sessions up to 1000 participants",
-            "✅ 1 TB cloud storage",
-            "✅ Enterprise security (AES-256, cert pinning)",
-            "✅ Biometric authentication required",
-            "✅ Audit logging & compliance reports",
-            "✅ Dedicated account manager",
-            "✅ Priority phone/chat support (1h response)",
-            "✅ Custom feature development consultation",
-            "✅ White-label options available",
-            "✅ SLA guarantees (99.9% uptime)",
-            "✅ On-premise deployment options",
-            "✅ Advanced analytics & insights"
-        ]
-    )
-
-    public struct Subscription {
+    public struct LegacySubscription {
         public let name: String
         public let productID: String?
         public let price: String
@@ -1562,7 +1537,7 @@ extension AppStoreMetadata {
         log.info("  Primary Category: \(primaryCategory.rawValue)", category: .system)
         log.info("  Secondary Category: \(secondaryCategory.rawValue)", category: .system)
         log.info("  Age Rating: \(ageRating.rawValue)", category: .system)
-        log.info("  Price Tier: \(priceTier) (Free with IAP)", category: .system)
+        log.info("  Price Tier: \(priceTier) (Free)", category: .system)
         log.info("  Languages: \(supportedLanguages.count)", category: .system)
 
         log.info("URLS:", category: .system)
@@ -1570,10 +1545,7 @@ extension AppStoreMetadata {
         log.info("  Support: \(supportURL)", category: .system)
         log.info("  Privacy: \(privacyPolicyURL)", category: .system)
 
-        log.info("SUBSCRIPTIONS:", category: .system)
-        for sub in InAppPurchases.subscriptions {
-            log.info("  \(sub.name): \(sub.price)", category: .system)
-        }
+        log.info("PRICING: Free (no in-app purchases)", category: .system)
 
         log.info("SCREENSHOTS REQUIRED:", category: .system)
         for spec in AppStoreScreenshots.specifications {

@@ -101,11 +101,11 @@ end
 platform :ios do
 
   # ---------------------------------------------------------------------------
-  # iOS App + AUv3 Extension
+  # iOS App (AUv3 integrated in app - works as both host and plugin)
   # ---------------------------------------------------------------------------
-  desc "Build and upload iOS app with AUv3 to TestFlight"
+  desc "Build and upload iOS app to TestFlight"
   lane :beta do
-    UI.header "iOS TestFlight Build (with AUv3)"
+    UI.header "iOS TestFlight Build (with integrated AUv3)"
 
     api_key = setup_api_key
     keychain = setup_keychain
@@ -119,7 +119,7 @@ platform :ios do
       keychain_password: keychain[:password]
     )
 
-    # Main app profile
+    # Main app profile (AUv3 is integrated, no separate extension)
     get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app",
@@ -128,17 +128,7 @@ platform :ios do
     )
     app_profile = lane_context[SharedValues::SIGH_NAME]
 
-    # AUv3 extension profile
-    get_provisioning_profile(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app.auv3",
-      platform: "ios",
-      force: ENV["CLEAN_BUILD"] == "true"
-    )
-    auv3_profile = lane_context[SharedValues::SIGH_NAME]
-
-    UI.message("App profile: #{app_profile}")
-    UI.message("AUv3 profile: #{auv3_profile}")
+    UI.message("iOS App profile: #{app_profile}")
 
     # Build with proper signing
     build_app(
@@ -151,8 +141,7 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       export_options: {
         provisioningProfiles: {
-          "com.echoelmusic.app" => app_profile,
-          "com.echoelmusic.app.auv3" => auv3_profile
+          "com.echoelmusic.app" => app_profile
         }
       },
       xcargs: [
@@ -162,7 +151,7 @@ platform :ios do
       ].join(" ")
     )
 
-    upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE with AUv3")
+    upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
   end
 
   # ---------------------------------------------------------------------------
@@ -243,9 +232,10 @@ platform :ios do
       keychain_password: keychain[:password]
     )
 
+    # Unified bundle ID for tvOS (enables universal purchase)
     get_provisioning_profile(
       api_key: api_key,
-      app_identifier: "com.echoelmusic.tv",
+      app_identifier: "com.echoelmusic.app",
       platform: "tvos",
       force: ENV["CLEAN_BUILD"] == "true"
     )
@@ -261,7 +251,7 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       export_options: {
         provisioningProfiles: {
-          "com.echoelmusic.tv" => profile
+          "com.echoelmusic.app" => profile
         }
       },
       xcargs: [
@@ -292,9 +282,10 @@ platform :ios do
       keychain_password: keychain[:password]
     )
 
+    # Unified bundle ID for visionOS (enables universal purchase)
     get_provisioning_profile(
       api_key: api_key,
-      app_identifier: "com.echoelmusic.vision",
+      app_identifier: "com.echoelmusic.app",
       platform: "ios",
       force: ENV["CLEAN_BUILD"] == "true"
     )
@@ -311,7 +302,7 @@ platform :ios do
       destination: "generic/platform=visionOS",
       export_options: {
         provisioningProfiles: {
-          "com.echoelmusic.vision" => profile
+          "com.echoelmusic.app" => profile
         }
       },
       xcargs: [
@@ -416,11 +407,11 @@ end
 platform :mac do
 
   # ---------------------------------------------------------------------------
-  # macOS App + AUv3 Extension
+  # macOS App (AUv3 embedded inside app bundle)
   # ---------------------------------------------------------------------------
-  desc "Build and upload macOS app with AUv3 to TestFlight"
+  desc "Build and upload macOS app to TestFlight"
   lane :beta do
-    UI.header "macOS TestFlight Build (with AUv3)"
+    UI.header "macOS TestFlight Build (with embedded AUv3)"
 
     api_key = setup_api_key
     keychain = setup_keychain
@@ -434,26 +425,16 @@ platform :mac do
       keychain_password: keychain[:password]
     )
 
-    # Main app profile
+    # Main app profile (AUv3 is embedded inside app, inherits signing)
     get_provisioning_profile(
       api_key: api_key,
-      app_identifier: "com.echoelmusic.mac",
+      app_identifier: "com.echoelmusic.app",
       platform: "macos",
       force: ENV["CLEAN_BUILD"] == "true"
     )
     app_profile = lane_context[SharedValues::SIGH_NAME]
 
-    # AUv3 extension profile
-    get_provisioning_profile(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.mac.auv3",
-      platform: "macos",
-      force: ENV["CLEAN_BUILD"] == "true"
-    )
-    auv3_profile = lane_context[SharedValues::SIGH_NAME]
-
     UI.message("macOS App profile: #{app_profile}")
-    UI.message("macOS AUv3 profile: #{auv3_profile}")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -465,8 +446,7 @@ platform :mac do
       derived_data_path: "./build/DerivedData",
       export_options: {
         provisioningProfiles: {
-          "com.echoelmusic.mac" => app_profile,
-          "com.echoelmusic.mac.auv3" => auv3_profile
+          "com.echoelmusic.app" => app_profile
         }
       },
       xcargs: [
@@ -476,7 +456,7 @@ platform :mac do
       ].join(" ")
     )
 
-    upload_to_testflight_with_retry(api_key, "macOS Build #{BUILD_NUMBER} - Phase 10000 with AUv3 Plugins")
+    upload_to_testflight_with_retry(api_key, "macOS Build #{BUILD_NUMBER} - Standalone + AUv3 Plugins")
   end
 
   # ---------------------------------------------------------------------------
@@ -534,11 +514,14 @@ lane :beta_all do
   UI.success("  ALL PLATFORMS UPLOADED TO TESTFLIGHT!")
   UI.success("=" * 60)
   UI.success("")
-  UI.success("  iOS:      com.echoelmusic.app + AUv3")
-  UI.success("  macOS:    com.echoelmusic.mac + AUv3")
+  UI.success("  Unified Bundle ID: com.echoelmusic.app")
+  UI.success("  (Universal Purchase enabled across all platforms)")
+  UI.success("")
+  UI.success("  iOS:      com.echoelmusic.app (standalone + integrated AUv3)")
+  UI.success("  macOS:    com.echoelmusic.app (standalone + embedded AUv3)")
   UI.success("  watchOS:  com.echoelmusic.app.watchkitapp")
-  UI.success("  tvOS:     com.echoelmusic.tv")
-  UI.success("  visionOS: com.echoelmusic.vision")
+  UI.success("  tvOS:     com.echoelmusic.app")
+  UI.success("  visionOS: com.echoelmusic.app")
   UI.success("")
   UI.success("Check App Store Connect for build processing status.")
   UI.success("=" * 60)

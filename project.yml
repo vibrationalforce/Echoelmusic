@@ -5,8 +5,8 @@
 # Version: 3.0.0 - Phase 10000 ULTIMATE MODE
 #
 # Supported Platforms:
-# - iOS (iPhone + iPad) with AUv3 Audio Unit Extension
-# - macOS (Apple Silicon + Intel) with AUv3 Audio Unit Extension
+# - iOS (iPhone + iPad) with integrated AUv3 (works as host and plugin)
+# - macOS (Apple Silicon + Intel) with embedded AUv3 Audio Unit Extension
 # - watchOS (Apple Watch) with Complications
 # - tvOS (Apple TV) with Big Screen Experience
 # - visionOS (Apple Vision Pro) with Spatial Audio
@@ -149,43 +149,10 @@ targets:
         DEVELOPMENT_TEAM: ""
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "16.0"
-    dependencies:
-      - target: EchoelmusicAUv3-iOS
-        embed: true
+    # Note: iOS AUv3 is integrated into the main app (works as both host and plugin)
+    # No separate extension needed - same approach as macOS
     entitlements:
       path: Echoelmusic.entitlements
-
-  # ===========================================================================
-  # iOS AUv3 Audio Unit Extension
-  # ===========================================================================
-  EchoelmusicAUv3-iOS:
-    type: app-extension
-    platform: iOS
-    sources:
-      - path: Sources/EchoelmusicAUv3
-        type: group
-      - path: Sources/Echoelmusic/Sound/TR808BassSynth.swift
-        type: file
-    info:
-      path: Sources/EchoelmusicAUv3/Info.plist
-    settings:
-      base:
-        PRODUCT_NAME: EchoelmusicAUv3
-        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.auv3
-        INFOPLIST_FILE: Sources/EchoelmusicAUv3/Info.plist
-        GENERATE_INFOPLIST_FILE: NO
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "Apple Distribution"
-        CODE_SIGN_ENTITLEMENTS: Sources/EchoelmusicAUv3/EchoelmusicAUv3.entitlements
-        TARGETED_DEVICE_FAMILY: "1,2"
-        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
-        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
-        SKIP_INSTALL: YES
-    dependencies:
-      - framework: AudioToolbox.framework
-      - framework: AVFoundation.framework
-      - framework: CoreAudioKit.framework
-      - framework: Accelerate.framework
 
   # ===========================================================================
   # macOS App
@@ -234,7 +201,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: Echoelmusic
-        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.mac
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         INFOPLIST_FILE: Resources/macOS/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: EchoelmusicMac.entitlements
@@ -318,7 +285,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: EchoelmusicAUv3
-        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.mac.auv3
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.auv3
         INFOPLIST_FILE: Sources/EchoelmusicAUv3/Info-macOS.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_STYLE: Manual
@@ -429,7 +396,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: Echoelmusic
-        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.tv
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: EchoelmusicTV.entitlements
         CODE_SIGN_STYLE: Manual
@@ -482,7 +449,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: Echoelmusic
-        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.vision
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: EchoelmusicVision.entitlements
         CODE_SIGN_STYLE: Manual
@@ -548,12 +515,11 @@ targets:
 
 schemes:
 
-  # iOS Development
+  # iOS Development (AUv3 integrated in main app)
   Echoelmusic:
     build:
       targets:
         Echoelmusic: all
-        EchoelmusicAUv3-iOS: all
         EchoelmusicTests: [test]
         EchoelmusicUITests: [test]
     run:
@@ -652,11 +618,11 @@ schemes:
           randomExecutionOrder: false
 
   # All Platforms Release (for CI)
+  # Note: iOS and macOS AUv3 are integrated into their main apps (no separate targets)
   Echoelmusic-AllPlatforms:
     build:
       targets:
         Echoelmusic: [archive]
-        EchoelmusicAUv3-iOS: [archive]
         Echoelmusic-macOS: [archive]
         EchoelmusicAUv3-macOS: [archive]
         Echoelmusic-watchOS: [archive]

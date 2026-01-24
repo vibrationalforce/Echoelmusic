@@ -187,7 +187,7 @@ extension XcodeTargetConfiguration {
 extension XcodeTargetConfiguration {
     public static let macOSApp = XcodeTargetConfiguration(
         name: "EchoelmusicMac",
-        bundleIdentifier: "com.echoelmusic.mac",
+        bundleIdentifier: "com.echoelmusic.app",
         platform: .macOS,
         deploymentTarget: "12.0",
         productType: .application,
@@ -303,7 +303,7 @@ extension XcodeTargetConfiguration {
 extension XcodeTargetConfiguration {
     public static let tvOSApp = XcodeTargetConfiguration(
         name: "EchoelmusicTV",
-        bundleIdentifier: "com.echoelmusic.tv",
+        bundleIdentifier: "com.echoelmusic.app",
         platform: .tvOS,
         deploymentTarget: "15.0",
         productType: .application,
@@ -348,7 +348,7 @@ extension XcodeTargetConfiguration {
 extension XcodeTargetConfiguration {
     public static let visionOSApp = XcodeTargetConfiguration(
         name: "EchoelmusicVision",
-        bundleIdentifier: "com.echoelmusic.vision",
+        bundleIdentifier: "com.echoelmusic.app",
         platform: .visionOS,
         deploymentTarget: "1.0",
         productType: .application,
@@ -1114,11 +1114,11 @@ extension Dictionary where Key == String, Value == Any {
 
         // iCloud
         "com.apple.developer.icloud-container-identifiers": [
-            "iCloud.com.echoelmusic.mac"
+            "iCloud.com.echoelmusic.app"
         ],
         "com.apple.developer.icloud-services": ["CloudKit", "CloudDocuments"],
         "com.apple.developer.ubiquity-container-identifiers": [
-            "iCloud.com.echoelmusic.mac"
+            "iCloud.com.echoelmusic.app"
         ],
 
         // File Access

@@ -777,46 +777,48 @@ public struct TermsOfService {
     • Use the App for illegal purposes
 
 
-    5. SUBSCRIPTION AND PAYMENT
+    5. PURCHASE AND PAYMENT
 
-    5.1. SUBSCRIPTION TIERS
+    5.1. ONE-TIME PURCHASE MODEL
 
-    The App offers multiple subscription tiers:
+    Echoelmusic uses a simple, fair one-time purchase model:
 
-    • Free Tier: Basic features with limitations
-    • Premium Monthly: Full features, billed monthly
-    • Premium Annual: Full features, billed annually at discounted rate
-    • Family Plan: Up to 6 family members (Apple Family Sharing, Google Family Library)
-    • Educational: Discounted rate for verified students and educators
-    • Enterprise: Custom pricing for organizations
+    • One-Time Purchase: Pay once ($29.99 USD), own forever
+    • All Features Included: No artificial limitations or feature gates
+    • Lifetime Updates: All future features and updates included
+    • Family Sharing: Up to 6 family members can use the app (Apple Family Sharing, Google Family Library)
+    • Universal Purchase: Buy once, use on all your Apple devices (iOS, macOS, visionOS, tvOS, watchOS)
+    • No Subscriptions: No recurring charges, no renewal fees
 
     5.2. PAYMENT TERMS
 
-    • Platform Billing: Subscriptions processed through Apple App Store or Google Play Store
-    • Automatic Renewal: Subscriptions automatically renew unless cancelled
-    • Price Changes: We may change prices with 30 days' notice
+    • Platform Billing: Purchase processed through Apple App Store or Google Play Store
+    • One-Time Charge: Single payment, no recurring billing
+    • Price Changes: We may change prices for new customers; existing purchasers retain full access
     • Taxes: Prices exclude applicable taxes (added at checkout)
     • Currency: Charges in your local currency based on platform settings
 
-    5.3. FREE TRIALS
+    5.3. REFUNDS
 
-    • Trial Period: New users may receive free trial (typically 7-30 days)
-    • Automatic Conversion: Trial converts to paid subscription unless cancelled
-    • One Trial Per User: Only one free trial per user account
-    • Cancellation: Cancel anytime during trial to avoid charges
-
-    5.4. CANCELLATION AND REFUNDS
-
-    • Cancel Anytime: Cancel subscription through Apple/Google settings
-    • No Partial Refunds: No refunds for partial subscription periods
     • Platform Policy: Refunds subject to Apple/Google refund policies
-    • Access Continues: Access continues until end of paid period after cancellation
+    • Contact Platform: Request refunds through App Store or Google Play, not directly from us
+    • Reasonable Requests: We support reasonable refund requests for technical issues
 
-    5.5. IN-APP PURCHASES
+    5.4. WHAT'S INCLUDED
 
-    • Additional Content: Some features, presets, or plugins available for purchase
-    • Non-Transferable: Purchases tied to your account, non-transferable
-    • Consumable vs. Non-Consumable: Some purchases are one-time, others consumable
+    Your one-time purchase includes:
+    • All current features of Echoelmusic
+    • All future updates and new features
+    • Family Sharing for up to 6 family members
+    • Priority email support
+    • iCloud sync for your presets and sessions
+
+    5.5. OPTIONAL TIP JAR
+
+    • Voluntary Support: Optional tips to support continued development
+    • No Additional Features: Tips do not unlock additional features (you already have everything)
+    • Non-Refundable: Voluntary tips are non-refundable
+    • Gratitude: We deeply appreciate supporters who choose to tip
 
 
     6. USER CONTENT
@@ -1231,7 +1233,9 @@ public struct TermsOfService {
     • Personal, non-commercial use only
     • Age 13+ required (16+ in EU)
     • No reverse engineering or misuse
-    • Subscriptions auto-renew (cancel anytime)
+    • One-time purchase ($29.99) - no subscriptions
+    • Family Sharing included (up to 6 members)
+    • Lifetime updates included
     • NOT a medical device - wellness only
     • Respect others in collaboration features
     • We may terminate for violations

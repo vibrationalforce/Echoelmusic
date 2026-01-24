@@ -23,44 +23,44 @@ for_lane :beta do
   app_identifier "com.echoelmusic.app"
 end
 
-# macOS App
+# macOS App (unified bundle ID for universal purchase)
 for_platform :mac do
-  app_identifier "com.echoelmusic.mac"
+  app_identifier "com.echoelmusic.app"
 end
 
-# watchOS App
+# watchOS App (companion to iOS app)
 for_lane :beta_watchos do
   app_identifier "com.echoelmusic.app.watchkitapp"
 end
 
-# tvOS App
+# tvOS App (unified bundle ID for universal purchase)
 for_lane :beta_tvos do
-  app_identifier "com.echoelmusic.tv"
+  app_identifier "com.echoelmusic.app"
 end
 
-# visionOS App
+# visionOS App (unified bundle ID for universal purchase)
 for_lane :beta_visionos do
-  app_identifier "com.echoelmusic.vision"
+  app_identifier "com.echoelmusic.app"
 end
 
 # =============================================================================
 # All Bundle Identifiers (for reference)
 # =============================================================================
 #
-# iOS Family:
-#   - com.echoelmusic.app              (iOS main app)
-#   - com.echoelmusic.app.auv3         (iOS AUv3 extension)
-#   - com.echoelmusic.app.watchkitapp  (watchOS app)
+# UNIFIED BUNDLE ID STRATEGY (enables Universal Purchase):
+# All platforms use com.echoelmusic.app for Universal Purchase support.
+# This allows customers to buy once and get the app on all Apple platforms.
 #
-# macOS Family:
-#   - com.echoelmusic.mac              (macOS main app)
-#   - com.echoelmusic.mac.auv3         (macOS AUv3 extension)
+# Main Apps (Universal Purchase enabled):
+#   - com.echoelmusic.app              (iOS, macOS, tvOS, visionOS)
 #
-# Standalone:
-#   - com.echoelmusic.tv               (tvOS app)
-#   - com.echoelmusic.vision           (visionOS app)
+# Extensions:
+#   - com.echoelmusic.app.auv3         (iOS AUv3 - separate extension)
+#   - com.echoelmusic.app.watchkitapp  (watchOS companion app)
+#
+# Note: macOS AUv3 is embedded inside the main app bundle, not separate.
 #
 # App Groups:
-#   - group.com.echoelmusic.shared     (shared data between apps)
+#   - group.com.echoelmusic.shared     (shared data between apps & extensions)
 #
 # =============================================================================
