@@ -139,6 +139,50 @@ jobs:
             echo "[PASS] Pre-flight check passed"
           fi
 
+      - name: "Validate App Store Connect API Key"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          echo "=============================================="
+          echo "  APP STORE CONNECT API VALIDATION"
+          echo "=============================================="
+
+          # Check secrets are set (not empty)
+          if [[ -z "$ASC_KEY_ID" ]]; then
+            echo "[FAIL] APP_STORE_CONNECT_KEY_ID secret is not set"
+            echo "       Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 1
+          fi
+          echo "[PASS] ASC_KEY_ID is set (${ASC_KEY_ID:0:4}...)"
+
+          if [[ -z "$ASC_ISSUER_ID" ]]; then
+            echo "[FAIL] APP_STORE_CONNECT_ISSUER_ID secret is not set"
+            exit 1
+          fi
+          echo "[PASS] ASC_ISSUER_ID is set (${ASC_ISSUER_ID:0:8}...)"
+
+          if [[ -z "$ASC_KEY_CONTENT" ]]; then
+            echo "[FAIL] APP_STORE_CONNECT_PRIVATE_KEY secret is not set"
+            exit 1
+          fi
+
+          # Validate key format
+          if echo "$ASC_KEY_CONTENT" | grep -q "BEGIN PRIVATE KEY"; then
+            echo "[PASS] ASC_KEY_CONTENT has valid .p8 format"
+          elif echo "$ASC_KEY_CONTENT" | base64 -d 2>/dev/null | grep -q "BEGIN PRIVATE KEY"; then
+            echo "[PASS] ASC_KEY_CONTENT is base64 encoded .p8"
+          else
+            echo "[FAIL] ASC_KEY_CONTENT does not appear to be a valid .p8 key"
+            echo "       Expected: -----BEGIN PRIVATE KEY-----"
+            exit 1
+          fi
+
+          echo ""
+          echo "[PASS] All App Store Connect secrets validated"
+          echo "=============================================="
+
       - name: "Deployment Summary"
         run: |
           echo "## Pre-flight Check Passed" >> $GITHUB_STEP_SUMMARY
@@ -147,6 +191,7 @@ jobs:
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Required Files | Verified |" >> $GITHUB_STEP_SUMMARY
           echo "| Bundle ID | Consistent |" >> $GITHUB_STEP_SUMMARY
+          echo "| ASC API Key | Validated |" >> $GITHUB_STEP_SUMMARY
           echo "| Metadata | Complete |" >> $GITHUB_STEP_SUMMARY
           echo "| Version | $(grep 'MARKETING_VERSION:' project.yml | head -1 | sed 's/.*: *//' | tr -d '\"') |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
