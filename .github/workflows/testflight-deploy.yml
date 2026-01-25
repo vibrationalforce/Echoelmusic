@@ -116,8 +116,7 @@ jobs:
         run: |
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ github.run_number }}/" project.yml
-          # Use file locking to prevent race conditions with parallel jobs
-          flock -x /tmp/xcodegen.lock xcodegen generate --spec project.yml 2>/dev/null || xcodegen generate --spec project.yml
+          xcodegen generate --spec project.yml
 
       - name: "Setup Keychain"
         env:
@@ -173,8 +172,7 @@ jobs:
         run: |
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ github.run_number }}/" project.yml
-          # Use file locking to prevent race conditions with parallel jobs
-          flock -x /tmp/xcodegen.lock xcodegen generate --spec project.yml 2>/dev/null || xcodegen generate --spec project.yml
+          xcodegen generate --spec project.yml
 
       - name: "Setup Keychain"
         env:
@@ -219,10 +217,11 @@ jobs:
           xcode-version: ${{ env.XCODE_VERSION }}
       - run: brew install xcodegen || true
       - run: gem install fastlane -N --no-document
-      - run: |
+      - name: "Generate Project"
+        run: |
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          # Use file locking to prevent race conditions with parallel jobs
-          flock -x /tmp/xcodegen.lock xcodegen generate --spec project.yml 2>/dev/null || xcodegen generate --spec project.yml
+          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ github.run_number }}/" project.yml
+          xcodegen generate --spec project.yml
       - name: "Setup Keychain"
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD }}
@@ -263,10 +262,11 @@ jobs:
           xcode-version: ${{ env.XCODE_VERSION }}
       - run: brew install xcodegen || true
       - run: gem install fastlane -N --no-document
-      - run: |
+      - name: "Generate Project"
+        run: |
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          # Use file locking to prevent race conditions with parallel jobs
-          flock -x /tmp/xcodegen.lock xcodegen generate --spec project.yml 2>/dev/null || xcodegen generate --spec project.yml
+          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ github.run_number }}/" project.yml
+          xcodegen generate --spec project.yml
       - name: "Setup Keychain"
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD }}
@@ -307,10 +307,11 @@ jobs:
           xcode-version: ${{ env.XCODE_VERSION }}
       - run: brew install xcodegen || true
       - run: gem install fastlane -N --no-document
-      - run: |
+      - name: "Generate Project"
+        run: |
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          # Use file locking to prevent race conditions with parallel jobs
-          flock -x /tmp/xcodegen.lock xcodegen generate --spec project.yml 2>/dev/null || xcodegen generate --spec project.yml
+          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ github.run_number }}/" project.yml
+          xcodegen generate --spec project.yml
       - name: "Setup Keychain"
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD }}
