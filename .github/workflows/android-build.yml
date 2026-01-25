@@ -1,31 +1,29 @@
 # =============================================================================
-# ECHOELMUSIC ANDROID CI/CD PIPELINE (DISABLED)
+# ECHOELMUSIC ANDROID CI/CD PIPELINE
 # =============================================================================
-# DISABLED - Apple-first release strategy
-# Android support planned for later phase
+# Phase 10000 - Full Android support enabled
+# Builds on push to android/, PR to main/develop, or manual trigger
 # =============================================================================
 
-name: Android Build & Test (Disabled)
-
-# DISABLED - uncomment to re-enable Android builds
-# on:
-#   push:
-#     branches: [ main ]
-#     paths:
-#       - 'android/**'
-#       - '.github/workflows/android-build.yml'
-#   pull_request:
-#     branches: [ main, develop ]
-#     paths:
-#       - 'android/**'
-#   workflow_dispatch:
+name: Android Build & Test
 
 on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android-build.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'android/**'
   workflow_dispatch:
     inputs:
-      confirm:
-        description: 'Type ENABLE to run Android build'
-        required: true
+      build_release:
+        description: 'Build release APK/AAB'
+        required: false
+        default: 'true'
+        type: boolean
 
 env:
   JAVA_VERSION: '17'
