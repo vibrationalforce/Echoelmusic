@@ -850,7 +850,7 @@ public final class MIREngine {
         // Get most common key
         let keyVotes = Dictionary(grouping: analysisHistory) { $0.key.key }
         let mostCommonKey = keyVotes.max { $0.value.count < $1.value.count }?.value.first?.key
-            ?? analysisHistory.first!.key
+            ?? analysisHistory.first?.key
 
         // Calculate average BPM
         let bpmValues = analysisHistory.map { $0.beat.bpm }.filter { $0 > 0 }
@@ -917,13 +917,13 @@ public final class MIREngine {
                     sectionType = .verse
                 }
 
-                if !sections.isEmpty {
+                if let lastSection = sections.last {
                     sections[sections.count - 1] = Section(
-                        startTime: sections.last!.startTime,
+                        startTime: lastSection.startTime,
                         endTime: endTime,
-                        type: sections.last!.type,
-                        key: sections.last!.key,
-                        averageEnergy: sections.last!.averageEnergy
+                        type: lastSection.type,
+                        key: lastSection.key,
+                        averageEnergy: lastSection.averageEnergy
                     )
                 }
 
@@ -947,14 +947,14 @@ public final class MIREngine {
         }
 
         // Close last section
-        if !sections.isEmpty {
+        if let lastSection = sections.last {
             let lastTime = analysisHistory.last?.timestamp ?? 0
             sections[sections.count - 1] = Section(
-                startTime: sections.last!.startTime,
+                startTime: lastSection.startTime,
                 endTime: lastTime,
-                type: sections.last!.type,
-                key: sections.last!.key,
-                averageEnergy: sections.last!.averageEnergy
+                type: lastSection.type,
+                key: lastSection.key,
+                averageEnergy: lastSection.averageEnergy
             )
         }
 
