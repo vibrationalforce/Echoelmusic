@@ -602,6 +602,17 @@ class CollaborationHub {
 class ResourceManager {
     // Track compute, storage, network resources
 
+    /// Reference to CostBrake for enforcing cost limits
+    /// Uses shared instance for 500k EUR limit enforcement
+    private var costBrake: CostBrake?
+
+    init() {
+        // CostBrake integration - must be set up on main actor
+        Task { @MainActor in
+            self.costBrake = CostBrake.shared
+        }
+    }
+
     func estimateResourceUsage(for session: ManagerProductionSession) -> ResourceEstimate {
         ResourceEstimate(
             computeHours: 2.0,
@@ -610,6 +621,42 @@ class ResourceManager {
             estimatedCost: 0.50,
             carbonFootprint: 0.02
         )
+    }
+
+    /// Check if an operation with the given estimated cost can proceed
+    /// - Parameter estimatedCost: The estimated cost in EUR
+    /// - Returns: True if the operation can proceed within budget limits
+    @MainActor
+    func canAfford(estimatedCost: Double) -> Bool {
+        return CostBrake.shared.canAfford(estimatedCost: estimatedCost, category: .compute)
+    }
+
+    /// Record resource usage and associated costs through CostBrake
+    /// - Parameters:
+    ///   - session: The production session
+    ///   - description: Description of the resource usage
+    /// - Throws: CostBrakeError if cost limit would be exceeded
+    @MainActor
+    func recordResourceUsage(for session: ManagerProductionSession, description: String) throws {
+        let estimate = estimateResourceUsage(for: session)
+        try CostBrake.shared.recordCost(
+            estimate.estimatedCost,
+            category: .compute,
+            description: description,
+            operationId: session.id.uuidString
+        )
+    }
+
+    /// Get remaining budget from CostBrake
+    @MainActor
+    var remainingBudget: Double {
+        CostBrake.shared.remainingBudget
+    }
+
+    /// Check if cost brake is currently blocking new operations
+    @MainActor
+    var isBlocked: Bool {
+        CostBrake.shared.isBlocked
     }
 }
 
