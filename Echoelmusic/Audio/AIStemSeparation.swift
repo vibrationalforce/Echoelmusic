@@ -1478,10 +1478,12 @@ public final class AIStemSeparationEngine: ObservableObject {
     }
 
     private func createStereoBuffer(from monoAudio: [Float]) -> AVAudioPCMBuffer? {
-        let format = AVAudioFormat(
+        guard let format = AVAudioFormat(
             standardFormatWithSampleRate: sampleRate,
             channels: channelCount
-        )!
+        ) else {
+            return nil
+        }
 
         guard let buffer = AVAudioPCMBuffer(
             pcmFormat: format,
