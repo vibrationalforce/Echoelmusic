@@ -16,6 +16,8 @@ on:
       - 'Tests/**'
       - 'Package.swift'
       - 'project.yml'
+      - '.github/workflows/**'
+      - 'fastlane/**'
   # NOTE: PR checks are handled by pr-check.yml
   # This workflow runs on push (post-merge) for thorough testing
   workflow_dispatch:

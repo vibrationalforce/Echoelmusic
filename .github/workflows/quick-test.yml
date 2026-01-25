@@ -10,11 +10,12 @@ name: "⚡ Quick Test"
 on:
   workflow_dispatch:
   push:
-    branches: [develop]  # Only develop, main uses pr-check.yml
+    branches: [develop, 'claude/**']  # develop + claude feature branches
     paths:
       - 'Sources/**/*.swift'
       - 'Tests/**/*.swift'
       - 'Package.swift'
+      - '.github/workflows/**'
 
 jobs:
   swift-test:
