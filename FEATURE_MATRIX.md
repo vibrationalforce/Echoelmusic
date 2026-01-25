@@ -206,16 +206,18 @@
 
 ## 5D+ Touch Expression System (ROLI Seaboard Compatible)
 
-### Die 6 Dimensionen
+### Die 5 Dimensionen (Industriestandard) + Bio-Reaktive Erweiterung
 
-| Dimension | Name | MIDI Parameter | Status |
-|-----------|------|----------------|--------|
-| 1D | **Strike** | Note On Velocity | ✅ |
-| 2D | **Press** | Channel Aftertouch | ✅ |
-| 3D | **Glide** | Pitch Bend (14-bit) | ✅ |
-| 4D | **Slide** | CC74 Brightness | ✅ |
-| 5D | **Lift** | Note Off Velocity | ✅ |
-| 6D | **Bio-Reactive** | CC1 Modulation (HRV) | ✅ |
+| Dimension | Name | MIDI Parameter | MPE Axis | Status |
+|-----------|------|----------------|----------|--------|
+| **Strike** | Anschlagstärke | Note-On Velocity | Velocity | ✅ |
+| **Press** | Druck nach Anschlag | Channel Pressure | Z-Axis | ✅ |
+| **Glide** | Horizontale Bewegung | Pitch Bend (14-bit, ±48st) | X-Axis | ✅ |
+| **Slide** | Vertikale Bewegung | CC74 Brightness/Timbre | Y-Axis | ✅ |
+| **Lift** | Loslassgeschwindigkeit | Note-Off Velocity | Release | ✅ |
+| **Bio** | HRV Coherence Modulation | CC1 Modulation | Echoelmusic | ✅ |
+
+*Die ersten 5 Dimensionen entsprechen dem [ROLI 5D Touch](https://support.roli.com/support/solutions/articles/36000019157-what-is-5d-touch-) und [MPE Specification](https://midi.org/midi-polyphonic-expression-mpe-specification-adopted) Standard. "Bio" ist unsere proprietäre 6. Dimension.*
 
 ### Kompatible 5D Controller
 

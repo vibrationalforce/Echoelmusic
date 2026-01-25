@@ -14,18 +14,34 @@ import CoreMIDI
 // MARK: - 5D Touch Dimensions (ROLI Seaboard Compatible)
 //==============================================================================
 
-/// The 5 Dimensions of Touch (+ Bio-Reactive 6th Dimension)
-/// Based on ROLI's 5DOF (Degrees of Freedom) concept
-public enum TouchDimension: Int, CaseIterable, Identifiable, Sendable {
-    case strike = 1    // Initial velocity/attack (Note On Velocity)
-    case press = 2     // Continuous pressure (Channel Aftertouch/Poly AT)
-    case glide = 3     // Horizontal movement (Pitch Bend)
-    case slide = 4     // Vertical movement (CC74 Brightness)
-    case lift = 5      // Release velocity/lift-off (Note Off Velocity)
-    case bioReactive = 6  // 6th Dimension: HRV/Coherence modulation
+/// The 5 Dimensions of Touch (+ Bio-Reactive Extension)
+///
+/// Industry Standard Terminology (ROLI 5D Touch):
+/// - Strike: Initial touch velocity
+/// - Press: Continuous pressure (MPE Z-axis)
+/// - Glide: Horizontal movement (MPE X-axis)
+/// - Slide: Vertical movement (MPE Y-axis)
+/// - Lift: Release velocity
+///
+/// MPE Specification uses X, Y, Z axes:
+/// - X = Pitch Bend (Glide)
+/// - Y = CC74 Timbre/Brightness (Slide)
+/// - Z = Channel Pressure (Press)
+///
+/// References:
+/// - ROLI 5D Touch: https://support.roli.com/support/solutions/articles/36000019157
+/// - MPE Specification: https://midi.org/midi-polyphonic-expression-mpe-specification-adopted
+public enum TouchDimension: String, CaseIterable, Identifiable, Sendable {
+    case strike       // Initial velocity/attack (Note On Velocity)
+    case press        // Continuous pressure (Channel Pressure) - MPE Z-Axis
+    case glide        // Horizontal movement (Pitch Bend) - MPE X-Axis
+    case slide        // Vertical movement (CC74 Brightness) - MPE Y-Axis
+    case lift         // Release velocity/lift-off (Note Off Velocity)
+    case bio          // Echoelmusic Extension: HRV/Coherence modulation
 
-    public var id: Int { rawValue }
+    public var id: String { rawValue }
 
+    /// Industry-standard dimension name (ROLI terminology)
     public var name: String {
         switch self {
         case .strike: return "Strike"
@@ -33,29 +49,42 @@ public enum TouchDimension: Int, CaseIterable, Identifiable, Sendable {
         case .glide: return "Glide"
         case .slide: return "Slide"
         case .lift: return "Lift"
-        case .bioReactive: return "Bio-Reactive"
+        case .bio: return "Bio"
+        }
+    }
+
+    /// MPE axis designation (per MPE specification)
+    public var mpeAxis: String? {
+        switch self {
+        case .strike: return nil  // Velocity, not a continuous axis
+        case .press: return "Z"   // Pressure axis (Channel Pressure)
+        case .glide: return "X"   // Pitch axis (Pitch Bend)
+        case .slide: return "Y"   // Timbre axis (CC74)
+        case .lift: return nil    // Release velocity, not a continuous axis
+        case .bio: return nil     // Echoelmusic proprietary extension
         }
     }
 
     public var description: String {
         switch self {
         case .strike: return "Initial touch velocity - how hard you hit"
-        case .press: return "Continuous pressure while holding"
-        case .glide: return "Horizontal movement - pitch bend"
-        case .slide: return "Vertical movement - brightness/timbre"
+        case .press: return "Continuous pressure while holding (MPE Z-axis)"
+        case .glide: return "Horizontal movement - pitch bend (MPE X-axis)"
+        case .slide: return "Vertical movement - brightness/timbre (MPE Y-axis)"
         case .lift: return "Release velocity - how you let go"
-        case .bioReactive: return "HRV coherence modulates expression"
+        case .bio: return "HRV coherence modulates expression (Echoelmusic extension)"
         }
     }
 
+    /// Standard MIDI parameter per MPE specification
     public var midiParameter: String {
         switch self {
-        case .strike: return "Note On Velocity"
-        case .press: return "Channel Pressure / Poly AT"
-        case .glide: return "Pitch Bend (14-bit)"
-        case .slide: return "CC74 Brightness"
-        case .lift: return "Note Off Velocity"
-        case .bioReactive: return "CC1 Modulation (from HRV)"
+        case .strike: return "Note-On Velocity (0-127)"
+        case .press: return "Channel Pressure (MPE Z, 0-127)"
+        case .glide: return "Pitch Bend (MPE X, 14-bit, ±48 semitones)"
+        case .slide: return "CC74 Brightness (MPE Y, 0-127)"
+        case .lift: return "Note-Off Velocity (0-127)"
+        case .bio: return "CC1 Modulation (Echoelmusic, from HRV)"
         }
     }
 
@@ -66,7 +95,15 @@ public enum TouchDimension: Int, CaseIterable, Identifiable, Sendable {
         case .glide: return "arrow.left.and.right"
         case .slide: return "arrow.up.and.down"
         case .lift: return "hand.raised"
-        case .bioReactive: return "heart.fill"
+        case .bio: return "heart.fill"
+        }
+    }
+
+    /// Whether this is a standard MPE/ROLI dimension or Echoelmusic extension
+    public var isStandardMPE: Bool {
+        switch self {
+        case .strike, .press, .glide, .slide, .lift: return true
+        case .bio: return false
         }
     }
 }
@@ -577,7 +614,7 @@ public struct FiveDTouchView: View {
             case .glide: return result + abs(voice.glide)
             case .slide: return result + voice.slide
             case .lift: return result + voice.lift
-            case .bioReactive: return result + voice.bioModulation
+            case .bio: return result + voice.bioModulation
             }
         }
 
@@ -746,7 +783,7 @@ public enum FiveDEffectPreset: String, CaseIterable, Identifiable, Sendable {
                 FiveDEffectMapping(dimension: .press, targetParameter: "filterCutoff", minValue: 200, maxValue: 8000, curve: .exponential),
                 FiveDEffectMapping(dimension: .glide, targetParameter: "pitchBend", minValue: -2, maxValue: 2, curve: .linear),
                 FiveDEffectMapping(dimension: .slide, targetParameter: "brightness", minValue: 0, maxValue: 1, curve: .linear),
-                FiveDEffectMapping(dimension: .bioReactive, targetParameter: "reverbMix", minValue: 0.1, maxValue: 0.7, curve: .sCurve)
+                FiveDEffectMapping(dimension: .bio, targetParameter: "reverbMix", minValue: 0.1, maxValue: 0.7, curve: .sCurve)
             ]
 
         case .organicPad:
@@ -754,7 +791,7 @@ public enum FiveDEffectPreset: String, CaseIterable, Identifiable, Sendable {
                 FiveDEffectMapping(dimension: .strike, targetParameter: "volume", minValue: 0.3, maxValue: 1.0, curve: .logarithmic),
                 FiveDEffectMapping(dimension: .press, targetParameter: "chorusDepth", minValue: 0, maxValue: 0.8, curve: .linear),
                 FiveDEffectMapping(dimension: .slide, targetParameter: "wavetablePosition", minValue: 0, maxValue: 1, curve: .sCurve),
-                FiveDEffectMapping(dimension: .bioReactive, targetParameter: "breathModulation", minValue: 0, maxValue: 1, curve: .linear)
+                FiveDEffectMapping(dimension: .bio, targetParameter: "breathModulation", minValue: 0, maxValue: 1, curve: .linear)
             ]
 
         case .aggressiveLead:
@@ -770,8 +807,8 @@ public enum FiveDEffectPreset: String, CaseIterable, Identifiable, Sendable {
                 FiveDEffectMapping(dimension: .strike, targetParameter: "attack", minValue: 0.5, maxValue: 3.0, curve: .logarithmic),
                 FiveDEffectMapping(dimension: .press, targetParameter: "harmonics", minValue: 1, maxValue: 16, curve: .linear),
                 FiveDEffectMapping(dimension: .slide, targetParameter: "shimmer", minValue: 0, maxValue: 1, curve: .sCurve),
-                FiveDEffectMapping(dimension: .bioReactive, targetParameter: "coherenceModulation", minValue: 0, maxValue: 1, curve: .linear),
-                FiveDEffectMapping(dimension: .bioReactive, targetParameter: "spatialWidth", minValue: 0.2, maxValue: 1.0, curve: .sCurve)
+                FiveDEffectMapping(dimension: .bio, targetParameter: "coherenceModulation", minValue: 0, maxValue: 1, curve: .linear),
+                FiveDEffectMapping(dimension: .bio, targetParameter: "spatialWidth", minValue: 0.2, maxValue: 1.0, curve: .sCurve)
             ]
         }
     }
