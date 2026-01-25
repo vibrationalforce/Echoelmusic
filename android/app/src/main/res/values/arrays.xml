@@ -1,9 +1,197 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Health Connect Permissions -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- HEALTH CONNECT - COMPREHENSIVE PERMISSIONS ARRAY                       -->
+    <!-- All available data types with Read AND Write permissions              -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
     <string-array name="health_permissions">
+        <!-- ACTIVITY & FITNESS - READ -->
+        <item>android.permission.health.READ_ACTIVE_CALORIES_BURNED</item>
+        <item>android.permission.health.READ_EXERCISE</item>
+        <item>android.permission.health.READ_DISTANCE</item>
+        <item>android.permission.health.READ_ELEVATION_GAINED</item>
+        <item>android.permission.health.READ_FLOORS_CLIMBED</item>
+        <item>android.permission.health.READ_STEPS</item>
+        <item>android.permission.health.READ_TOTAL_CALORIES_BURNED</item>
+        <item>android.permission.health.READ_POWER</item>
+        <item>android.permission.health.READ_SPEED</item>
+        <item>android.permission.health.READ_WHEELCHAIR_PUSHES</item>
+
+        <!-- ACTIVITY & FITNESS - WRITE -->
+        <item>android.permission.health.WRITE_ACTIVE_CALORIES_BURNED</item>
+        <item>android.permission.health.WRITE_EXERCISE</item>
+        <item>android.permission.health.WRITE_DISTANCE</item>
+        <item>android.permission.health.WRITE_ELEVATION_GAINED</item>
+        <item>android.permission.health.WRITE_FLOORS_CLIMBED</item>
+        <item>android.permission.health.WRITE_STEPS</item>
+        <item>android.permission.health.WRITE_TOTAL_CALORIES_BURNED</item>
+        <item>android.permission.health.WRITE_POWER</item>
+        <item>android.permission.health.WRITE_SPEED</item>
+        <item>android.permission.health.WRITE_WHEELCHAIR_PUSHES</item>
+
+        <!-- BODY MEASUREMENTS - READ -->
+        <item>android.permission.health.READ_WEIGHT</item>
+        <item>android.permission.health.READ_HEIGHT</item>
+        <item>android.permission.health.READ_BODY_FAT</item>
+        <item>android.permission.health.READ_BODY_WATER_MASS</item>
+        <item>android.permission.health.READ_BONE_MASS</item>
+        <item>android.permission.health.READ_LEAN_BODY_MASS</item>
+        <item>android.permission.health.READ_BASAL_METABOLIC_RATE</item>
+
+        <!-- BODY MEASUREMENTS - WRITE -->
+        <item>android.permission.health.WRITE_WEIGHT</item>
+        <item>android.permission.health.WRITE_HEIGHT</item>
+        <item>android.permission.health.WRITE_BODY_FAT</item>
+        <item>android.permission.health.WRITE_BODY_WATER_MASS</item>
+        <item>android.permission.health.WRITE_BONE_MASS</item>
+        <item>android.permission.health.WRITE_LEAN_BODY_MASS</item>
+        <item>android.permission.health.WRITE_BASAL_METABOLIC_RATE</item>
+
+        <!-- VITALS - READ (Core for Bio-Reactive) -->
+        <item>android.permission.health.READ_HEART_RATE</item>
+        <item>android.permission.health.READ_HEART_RATE_VARIABILITY</item>
+        <item>android.permission.health.READ_RESTING_HEART_RATE</item>
+        <item>android.permission.health.READ_RESPIRATORY_RATE</item>
+        <item>android.permission.health.READ_OXYGEN_SATURATION</item>
+        <item>android.permission.health.READ_BLOOD_PRESSURE</item>
+        <item>android.permission.health.READ_BLOOD_GLUCOSE</item>
+        <item>android.permission.health.READ_BODY_TEMPERATURE</item>
+        <item>android.permission.health.READ_BASAL_BODY_TEMPERATURE</item>
+        <item>android.permission.health.READ_VO2_MAX</item>
+
+        <!-- VITALS - WRITE -->
+        <item>android.permission.health.WRITE_HEART_RATE</item>
+        <item>android.permission.health.WRITE_HEART_RATE_VARIABILITY</item>
+        <item>android.permission.health.WRITE_RESTING_HEART_RATE</item>
+        <item>android.permission.health.WRITE_RESPIRATORY_RATE</item>
+        <item>android.permission.health.WRITE_OXYGEN_SATURATION</item>
+        <item>android.permission.health.WRITE_BLOOD_PRESSURE</item>
+        <item>android.permission.health.WRITE_BLOOD_GLUCOSE</item>
+        <item>android.permission.health.WRITE_BODY_TEMPERATURE</item>
+        <item>android.permission.health.WRITE_BASAL_BODY_TEMPERATURE</item>
+        <item>android.permission.health.WRITE_VO2_MAX</item>
+
+        <!-- SLEEP - READ/WRITE -->
+        <item>android.permission.health.READ_SLEEP</item>
+        <item>android.permission.health.WRITE_SLEEP</item>
+
+        <!-- NUTRITION - READ/WRITE -->
+        <item>android.permission.health.READ_NUTRITION</item>
+        <item>android.permission.health.WRITE_NUTRITION</item>
+        <item>android.permission.health.READ_HYDRATION</item>
+        <item>android.permission.health.WRITE_HYDRATION</item>
+
+        <!-- CYCLE TRACKING - READ/WRITE -->
+        <item>android.permission.health.READ_MENSTRUATION</item>
+        <item>android.permission.health.WRITE_MENSTRUATION</item>
+        <item>android.permission.health.READ_INTERMENSTRUAL_BLEEDING</item>
+        <item>android.permission.health.WRITE_INTERMENSTRUAL_BLEEDING</item>
+        <item>android.permission.health.READ_OVULATION_TEST</item>
+        <item>android.permission.health.WRITE_OVULATION_TEST</item>
+        <item>android.permission.health.READ_CERVICAL_MUCUS</item>
+        <item>android.permission.health.WRITE_CERVICAL_MUCUS</item>
+        <item>android.permission.health.READ_SEXUAL_ACTIVITY</item>
+        <item>android.permission.health.WRITE_SEXUAL_ACTIVITY</item>
+    </string-array>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- BIO-REACTIVE CORE PERMISSIONS (Subset for quick permission request)    -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
+    <string-array name="bio_reactive_permissions">
+        <!-- Essential for bio-reactive audio synthesis -->
+        <item>android.permission.health.READ_HEART_RATE</item>
+        <item>android.permission.health.READ_HEART_RATE_VARIABILITY</item>
+        <item>android.permission.health.READ_RESTING_HEART_RATE</item>
+        <item>android.permission.health.READ_RESPIRATORY_RATE</item>
+        <item>android.permission.health.READ_OXYGEN_SATURATION</item>
+        <item>android.permission.health.READ_SLEEP</item>
+        <item>android.permission.health.READ_STEPS</item>
+        <item>android.permission.health.READ_ACTIVE_CALORIES_BURNED</item>
+        <item>android.permission.health.READ_EXERCISE</item>
+        <item>android.permission.health.READ_VO2_MAX</item>
+
+        <!-- Write for session tracking -->
+        <item>android.permission.health.WRITE_HEART_RATE</item>
+        <item>android.permission.health.WRITE_HEART_RATE_VARIABILITY</item>
+        <item>android.permission.health.WRITE_EXERCISE</item>
+        <item>android.permission.health.WRITE_SLEEP</item>
+    </string-array>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- WELLNESS PERMISSIONS (For wellness/meditation features)                -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
+    <string-array name="wellness_permissions">
         <item>android.permission.health.READ_HEART_RATE</item>
         <item>android.permission.health.READ_HEART_RATE_VARIABILITY</item>
         <item>android.permission.health.READ_RESPIRATORY_RATE</item>
+        <item>android.permission.health.READ_SLEEP</item>
+        <item>android.permission.health.READ_STEPS</item>
+        <item>android.permission.health.READ_ACTIVE_CALORIES_BURNED</item>
+        <item>android.permission.health.READ_WEIGHT</item>
+        <item>android.permission.health.READ_HEIGHT</item>
+        <item>android.permission.health.READ_HYDRATION</item>
+        <item>android.permission.health.READ_NUTRITION</item>
+        <item>android.permission.health.WRITE_HYDRATION</item>
+        <item>android.permission.health.WRITE_SLEEP</item>
+    </string-array>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- EXERCISE SESSION TYPES                                                  -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
+    <string-array name="exercise_types">
+        <item>Walking</item>
+        <item>Running</item>
+        <item>Cycling</item>
+        <item>Swimming</item>
+        <item>Yoga</item>
+        <item>Meditation</item>
+        <item>Strength Training</item>
+        <item>HIIT</item>
+        <item>Dancing</item>
+        <item>Pilates</item>
+        <item>Stretching</item>
+        <item>Breathing Exercise</item>
+        <item>Sound Bath</item>
+        <item>Bio-Reactive Session</item>
+        <item>Coherence Training</item>
+    </string-array>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- SLEEP STAGE TYPES                                                       -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
+    <string-array name="sleep_stages">
+        <item>Awake</item>
+        <item>Light Sleep</item>
+        <item>Deep Sleep</item>
+        <item>REM Sleep</item>
+        <item>Out of Bed</item>
+        <item>Unknown</item>
+    </string-array>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- BIO DATA TYPES FOR UI                                                   -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
+    <string-array name="bio_data_types">
+        <item>Heart Rate</item>
+        <item>HRV (RMSSD)</item>
+        <item>Resting Heart Rate</item>
+        <item>Respiratory Rate</item>
+        <item>Oxygen Saturation</item>
+        <item>Blood Pressure</item>
+        <item>Body Temperature</item>
+        <item>VO2 Max</item>
+        <item>Steps</item>
+        <item>Active Calories</item>
+        <item>Distance</item>
+        <item>Sleep Duration</item>
+        <item>Weight</item>
+        <item>Body Fat</item>
+        <item>Hydration</item>
     </string-array>
 </resources>
