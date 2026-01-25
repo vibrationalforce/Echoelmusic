@@ -452,6 +452,69 @@ float4 cosmicWebShader(
     return float4(color, intensity);
 }
 
+// MARK: - Photon Flow Visualization
+
+float4 photonFlowShader(
+    QuantumVertexOut in,
+    constant QuantumUniforms &uniforms,
+    constant PhotonData *photons
+) {
+    float2 uv = in.texCoord * 2.0 - 1.0;
+    float time = uniforms.time;
+    float coherence = uniforms.coherenceLevel;
+
+    float intensity = 0.0;
+    float3 totalColor = float3(0.0);
+
+    // Photon flow streams - particles flowing in coherent patterns
+    for (int i = 0; i < min(uniforms.photonCount, 64); i++) {
+        PhotonData photon = photons[i];
+
+        // Flow direction based on coherence
+        float flowAngle = float(i) * 0.1 + time * (0.5 + coherence * 0.5);
+        float2 flowDir = float2(cos(flowAngle), sin(flowAngle));
+
+        // Animated photon position along flow
+        float2 basePos = photon.position.xy;
+        float phase = fmod(time * 0.5 + float(i) * 0.05, 1.0);
+        float2 animatedPos = basePos + flowDir * phase * 0.5;
+
+        // Wrap around screen
+        animatedPos = fmod(animatedPos + 2.0, 2.0) - 1.0;
+
+        float dist = length(uv - animatedPos);
+
+        // Soft particle with trail
+        float particle = exp(-dist * 20.0) * photon.intensity;
+
+        // Trail effect
+        float2 trailPos = animatedPos - flowDir * 0.1;
+        float trailDist = length(uv - trailPos);
+        float trail = exp(-trailDist * 15.0) * photon.intensity * 0.5;
+
+        intensity += particle + trail;
+        totalColor += wavelengthToRGB(photon.wavelength) * (particle + trail);
+    }
+
+    // Add flow lines
+    float flowLines = 0.0;
+    for (int i = 0; i < 8; i++) {
+        float angle = float(i) * PI / 4.0 + time * 0.2;
+        float2 lineDir = float2(cos(angle), sin(angle));
+        float perpDist = abs(dot(uv, float2(-lineDir.y, lineDir.x)));
+        flowLines += exp(-perpDist * 50.0) * 0.1 * coherence;
+    }
+
+    intensity = clamp((intensity + flowLines) * coherence, 0.0, 1.0);
+    totalColor = clamp(totalColor * coherence, 0.0, 1.0);
+
+    // Add blue-violet tint for photon flow
+    float3 tint = float3(0.2, 0.4, 1.0);
+    totalColor = mix(totalColor, tint, 0.3);
+
+    return float4(totalColor, intensity);
+}
+
 // MARK: - Fibonacci Spiral Field
 
 float4 fibonacciFieldShader(
@@ -500,13 +563,14 @@ fragment float4 quantumPhotonicsShader(
         case 0: return interferencePatternShader(in, uniforms, photons);
         case 1: return waveFunctionShader(in, uniforms);
         case 2: return coherenceFieldShader(in, uniforms);
-        case 3: return sacredGeometryShader(in, uniforms);
-        case 4: return quantumTunnelShader(in, uniforms);
-        case 5: return biophotonAuraShader(in, uniforms);
-        case 6: return lightMandalaShader(in, uniforms);
-        case 7: return holographicDisplayShader(in, uniforms, photons);
-        case 8: return cosmicWebShader(in, uniforms);
-        case 9: return fibonacciFieldShader(in, uniforms, photons);
+        case 3: return photonFlowShader(in, uniforms, photons);
+        case 4: return sacredGeometryShader(in, uniforms);
+        case 5: return quantumTunnelShader(in, uniforms);
+        case 6: return biophotonAuraShader(in, uniforms);
+        case 7: return lightMandalaShader(in, uniforms);
+        case 8: return holographicDisplayShader(in, uniforms, photons);
+        case 9: return cosmicWebShader(in, uniforms);
+        case 10: return fibonacciFieldShader(in, uniforms, photons);
         default: return interferencePatternShader(in, uniforms, photons);
     }
 }

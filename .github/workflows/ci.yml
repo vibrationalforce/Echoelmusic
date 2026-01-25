@@ -104,7 +104,7 @@ jobs:
         path: |
           ~/.swiftpm
           .build
-          ~/Library/Developer/Xcode/DerivedData
+          # DerivedData excluded - causes cache invalidation issues
         key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}-${{ matrix.name }}
         restore-keys: |
           ${{ runner.os }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}-
@@ -152,8 +152,8 @@ jobs:
     - name: Generate Code Coverage
       if: success()
       run: |
-        PROFDATA=$(find ~/Library/Developer/Xcode/DerivedData -name "*.profdata" 2>/dev/null | head -1)
-        BINARY=$(find ~/Library/Developer/Xcode/DerivedData -name "Echoelmusic" -type f 2>/dev/null | head -1)
+        PROFDATA=$(find # DerivedData excluded - causes cache invalidation issues -name "*.profdata" 2>/dev/null | head -1)
+        BINARY=$(find # DerivedData excluded - causes cache invalidation issues -name "Echoelmusic" -type f 2>/dev/null | head -1)
         if [ -n "$PROFDATA" ] && [ -n "$BINARY" ]; then
           xcrun llvm-cov export -format="lcov" -instr-profile="$PROFDATA" "$BINARY" > coverage.lcov
         else
@@ -198,7 +198,7 @@ jobs:
         path: |
           ~/.swiftpm
           .build
-          ~/Library/Developer/Xcode/DerivedData
+          # DerivedData excluded - causes cache invalidation issues
         key: ${{ runner.os }}-spm-macos-${{ hashFiles('Package.swift', 'Package.resolved') }}
         restore-keys: |
           ${{ runner.os }}-spm-macos-
@@ -235,7 +235,7 @@ jobs:
           -configuration Debug \
           -enableCodeCoverage YES \
           2>&1 | tee test.log | xcpretty || cat test.log
-      continue-on-error: true
+      # NOTE: Test failures MUST fail the build - do not add continue-on-error
 
   # Job 4: Performance Tests
   performance-tests:
@@ -328,7 +328,7 @@ jobs:
         path: |
           ~/.swiftpm
           .build
-          ~/Library/Developer/Xcode/DerivedData
+          # DerivedData excluded - causes cache invalidation issues
         key: ${{ runner.os }}-spm-archive-${{ hashFiles('Package.swift', 'Package.resolved') }}
         restore-keys: |
           ${{ runner.os }}-spm-archive-
