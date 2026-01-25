@@ -1684,8 +1684,7 @@ extension XcodeProjectConfiguration {
         ## iCloud Configuration
 
         Enable CloudKit with containers:
-        - `iCloud.com.echoelmusic.app` (iOS)
-        - `iCloud.com.echoelmusic.mac` (macOS)
+        - `iCloud.com.echoelmusic.app` (All platforms)
 
         ## Deployment Checklist
 

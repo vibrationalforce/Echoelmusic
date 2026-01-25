@@ -88,7 +88,7 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.echoelmusic.mac
+        bundle_identifier: com.echoelmusic.app
       vars:
         XCODE_SCHEME: Echoelmusic
         VERSION: "1.1.0"
@@ -178,7 +178,7 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.echoelmusic.tv
+        bundle_identifier: com.echoelmusic.app
       vars:
         XCODE_SCHEME: Echoelmusic
         VERSION: "1.1.0"
@@ -220,7 +220,7 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.echoelmusic.vision
+        bundle_identifier: com.echoelmusic.app
       vars:
         XCODE_SCHEME: Echoelmusic
         VERSION: "1.1.0"

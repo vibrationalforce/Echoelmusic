@@ -30,7 +30,7 @@ TUIST_SETUP.md            Complete documentation (323 lines)
 | Target | Platform | Bundle ID | Deployment |
 |--------|----------|-----------|------------|
 | **Echoelmusic** | iOS | `com.echoelmusic.app` | iOS 15.0+ |
-| **EchoelmusicMac** | macOS | `com.echoelmusic.mac` | macOS 12.0+ |
+| **EchoelmusicMac** | macOS | `com.echoelmusic.app` | macOS 12.0+ |
 | **EchoelmusicWatch** | watchOS | `com.echoelmusic.app.watchkitapp` | watchOS 8.0+ |
 | **EchoelmusicTV** | tvOS | `com.echoelmusic.app.tv` | tvOS 15.0+ |
 | **EchoelmusicVision** | visionOS | `com.echoelmusic.app.vision` | visionOS 1.0+ |

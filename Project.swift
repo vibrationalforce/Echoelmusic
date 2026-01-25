@@ -336,7 +336,7 @@ let project = Project(
             name: "EchoelmusicMac",
             platform: .macOS,
             product: .app,
-            bundleId: "com.echoelmusic.mac",
+            bundleId: "com.echoelmusic.app",
             deploymentTarget: .macOS(targetVersion: "12.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
@@ -360,7 +360,7 @@ let project = Project(
             dependencies: [],
             settings: .settings(
                 base: [
-                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.mac",
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app",
                     "MACOSX_DEPLOYMENT_TARGET": "12.0",
                     "ENABLE_HARDENED_RUNTIME": "YES",
                     "ENABLE_PREVIEWS": "YES"

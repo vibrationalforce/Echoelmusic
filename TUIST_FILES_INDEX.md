@@ -305,7 +305,7 @@ com.echoelmusic.app (iOS Main)
 └── com.echoelmusic.app.tv (tvOS)
 └── com.echoelmusic.app.vision (visionOS)
 
-com.echoelmusic.mac (macOS Standalone)
+com.echoelmusic.app (macOS Standalone)
 
 com.echoelmusic.tests (Unit Tests)
 com.echoelmusic.uitests (UI Tests)

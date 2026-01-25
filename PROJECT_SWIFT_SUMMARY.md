@@ -137,7 +137,7 @@ All entitlements files have been created/updated with comprehensive capabilities
 - **Supports**: Mac Catalyst, Mac Designed for iPad
 
 ### 2. EchoelmusicMac (macOS App)
-- **Bundle ID**: `com.echoelmusic.mac`
+- **Bundle ID**: `com.echoelmusic.app`
 - **Platform**: macOS 12.0+
 - **Product**: Application
 - **Sources**: All Echoelmusic Swift and Metal sources

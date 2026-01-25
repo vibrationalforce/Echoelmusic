@@ -100,7 +100,7 @@ tuist generate
    - Main application target
 
 2. **EchoelmusicMac** (macOS App)
-   - Bundle ID: `com.echoelmusic.mac`
+   - Bundle ID: `com.echoelmusic.app`
    - Deployment Target: macOS 12.0+
    - Native macOS application
 
