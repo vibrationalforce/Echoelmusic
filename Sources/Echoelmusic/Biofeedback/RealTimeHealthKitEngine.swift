@@ -319,16 +319,31 @@ public final class RealTimeHealthKitEngine: ObservableObject {
             return false
         }
 
-        let typesToRead: Set<HKObjectType> = [
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
-            HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
-            HKObjectType.quantityType(forIdentifier: .respiratoryRate)!,
-            HKObjectType.quantityType(forIdentifier: .oxygenSaturation)!,
-            HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
-            HKObjectType.quantityType(forIdentifier: .stepCount)!,
-            HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!,
-            HKObjectType.categoryType(forIdentifier: .mindfulSession)!
-        ]
+        var typesToRead: Set<HKObjectType> = []
+        if let heartRate = HKObjectType.quantityType(forIdentifier: .heartRate) {
+            typesToRead.insert(heartRate)
+        }
+        if let hrv = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) {
+            typesToRead.insert(hrv)
+        }
+        if let respiratory = HKObjectType.quantityType(forIdentifier: .respiratoryRate) {
+            typesToRead.insert(respiratory)
+        }
+        if let oxygen = HKObjectType.quantityType(forIdentifier: .oxygenSaturation) {
+            typesToRead.insert(oxygen)
+        }
+        if let energy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
+            typesToRead.insert(energy)
+        }
+        if let steps = HKObjectType.quantityType(forIdentifier: .stepCount) {
+            typesToRead.insert(steps)
+        }
+        if let distance = HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning) {
+            typesToRead.insert(distance)
+        }
+        if let mindful = HKObjectType.categoryType(forIdentifier: .mindfulSession) {
+            typesToRead.insert(mindful)
+        }
 
         do {
             try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
@@ -385,7 +400,10 @@ public final class RealTimeHealthKitEngine: ObservableObject {
         guard let healthStore = healthStore else { return }
 
         // Heart rate query
-        let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
+        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            log.biofeedback("❤️ Heart rate type not available", level: .warning)
+            return
+        }
         heartRateQuery = HKAnchoredObjectQuery(
             type: heartRateType,
             predicate: nil,
