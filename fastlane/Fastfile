@@ -155,7 +155,8 @@ platform :ios do
   end
 
   # ---------------------------------------------------------------------------
-  # watchOS App (standalone - unified bundle ID for Universal Purchase)
+  # watchOS App (child bundle ID required by Apple for Universal Purchase)
+  # NOTE: watchOS apps MUST use a child bundle ID: com.echoelmusic.app.watchkitapp
   # ---------------------------------------------------------------------------
   desc "Build and upload watchOS app to TestFlight"
   lane :beta_watchos do
@@ -172,10 +173,10 @@ platform :ios do
       keychain_password: keychain[:password]
     )
 
-    # watchOS app profile (unified bundle ID for Universal Purchase)
+    # watchOS app profile (child bundle ID required for Universal Purchase)
     get_provisioning_profile(
       api_key: api_key,
-      app_identifier: "com.echoelmusic.app",
+      app_identifier: "com.echoelmusic.app.watchkitapp",
       platform: "ios",
       force: ENV["CLEAN_BUILD"] == "true"
     )
@@ -191,7 +192,7 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       export_options: {
         provisioningProfiles: {
-          "com.echoelmusic.app" => watch_profile
+          "com.echoelmusic.app.watchkitapp" => watch_profile
         }
       },
       xcargs: [
@@ -517,12 +518,12 @@ lane :beta_all do
   UI.success("  ALL PLATFORMS UPLOADED TO TESTFLIGHT!")
   UI.success("=" * 60)
   UI.success("")
-  UI.success("  Unified Bundle ID: com.echoelmusic.app")
-  UI.success("  (Universal Purchase enabled across all platforms)")
+  UI.success("  Universal Purchase Bundle IDs:")
+  UI.success("  (All linked via WKCompanionAppBundleIdentifier)")
   UI.success("")
   UI.success("  iOS:      com.echoelmusic.app (standalone + integrated AUv3)")
   UI.success("  macOS:    com.echoelmusic.app (standalone + embedded AUv3)")
-  UI.success("  watchOS:  com.echoelmusic.app (standalone)")
+  UI.success("  watchOS:  com.echoelmusic.app.watchkitapp (child of iOS app)")
   UI.success("  tvOS:     com.echoelmusic.app")
   UI.success("  visionOS: com.echoelmusic.app")
   UI.success("")
