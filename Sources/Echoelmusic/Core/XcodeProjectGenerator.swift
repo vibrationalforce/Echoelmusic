@@ -262,11 +262,13 @@ extension XcodeTargetConfiguration {
 }
 
 // MARK: - watchOS App Target
+// NOTE: watchOS apps MUST have a child bundle ID of the companion iOS app
+// This is required by Apple for Universal Purchase and proper app association
 
 extension XcodeTargetConfiguration {
     public static let watchOSApp = XcodeTargetConfiguration(
         name: "EchoelmusicWatch",
-        bundleIdentifier: "com.echoelmusic.app",
+        bundleIdentifier: "com.echoelmusic.app.watchkitapp",
         platform: .watchOS,
         deploymentTarget: "8.0",
         productType: .application,

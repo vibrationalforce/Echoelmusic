@@ -177,11 +177,13 @@ let project = Project(
         ),
 
         // MARK: - watchOS App
+        // NOTE: watchOS apps MUST have a child bundle ID of the companion iOS app
+        // This is required by Apple for Universal Purchase and proper app association
         Target(
             name: "EchoelmusicWatch",
             platform: .watchOS,
             product: .watch2App,
-            bundleId: "com.echoelmusic.app",
+            bundleId: "com.echoelmusic.app.watchkitapp",
             deploymentTarget: .watchOS(targetVersion: "8.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
@@ -203,7 +205,7 @@ let project = Project(
             dependencies: [],
             settings: .settings(
                 base: [
-                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app",
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app.watchkitapp",
                     "TARGETED_DEVICE_FAMILY": "4",
                     "SKIP_INSTALL": "YES",
                     "WATCHOS_DEPLOYMENT_TARGET": "8.0"
