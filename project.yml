@@ -343,7 +343,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: "Echoelmusic Watch"
-        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.watchkitapp
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: EchoelmusicWatch.entitlements
         CODE_SIGN_STYLE: Manual

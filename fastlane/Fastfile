@@ -155,7 +155,7 @@ platform :ios do
   end
 
   # ---------------------------------------------------------------------------
-  # watchOS App
+  # watchOS App (standalone - unified bundle ID for Universal Purchase)
   # ---------------------------------------------------------------------------
   desc "Build and upload watchOS app to TestFlight"
   lane :beta_watchos do
@@ -172,19 +172,10 @@ platform :ios do
       keychain_password: keychain[:password]
     )
 
-    # Companion iOS app profile (required for watchOS)
+    # watchOS app profile (unified bundle ID for Universal Purchase)
     get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app",
-      platform: "ios",
-      force: ENV["CLEAN_BUILD"] == "true"
-    )
-    ios_profile = lane_context[SharedValues::SIGH_NAME]
-
-    # watchOS app profile
-    get_provisioning_profile(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app.watchkitapp",
       platform: "ios",
       force: ENV["CLEAN_BUILD"] == "true"
     )
@@ -200,8 +191,7 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       export_options: {
         provisioningProfiles: {
-          "com.echoelmusic.app" => ios_profile,
-          "com.echoelmusic.app.watchkitapp" => watch_profile
+          "com.echoelmusic.app" => watch_profile
         }
       },
       xcargs: [
@@ -532,7 +522,7 @@ lane :beta_all do
   UI.success("")
   UI.success("  iOS:      com.echoelmusic.app (standalone + integrated AUv3)")
   UI.success("  macOS:    com.echoelmusic.app (standalone + embedded AUv3)")
-  UI.success("  watchOS:  com.echoelmusic.app.watchkitapp")
+  UI.success("  watchOS:  com.echoelmusic.app (standalone)")
   UI.success("  tvOS:     com.echoelmusic.app")
   UI.success("  visionOS: com.echoelmusic.app")
   UI.success("")

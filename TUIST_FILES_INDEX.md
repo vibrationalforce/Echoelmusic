@@ -298,17 +298,20 @@ TUIST_FILES_INDEX.md
 ## Bundle ID Hierarchy
 
 ```
-com.echoelmusic.app (iOS Main)
+com.echoelmusic.app (Unified Bundle ID - Universal Purchase)
+├── iOS (Main app with integrated AUv3)
+├── macOS (Main app with embedded AUv3)
+├── watchOS (Standalone)
+├── tvOS (Big screen)
+└── visionOS (Spatial audio)
+
+Extensions:
 ├── com.echoelmusic.app.widgets (Widget Extension)
-└── com.echoelmusic.app.auv3 (Audio Unit)
-└── com.echoelmusic.app.watchkitapp (watchOS)
-└── com.echoelmusic.app.tv (tvOS)
-└── com.echoelmusic.app.vision (visionOS)
+└── com.echoelmusic.app.auv3 (macOS Audio Unit Extension)
 
-com.echoelmusic.app (macOS Standalone)
-
-com.echoelmusic.tests (Unit Tests)
-com.echoelmusic.uitests (UI Tests)
+Tests:
+├── com.echoelmusic.tests (Unit Tests)
+└── com.echoelmusic.uitests (UI Tests)
 ```
 
 ---

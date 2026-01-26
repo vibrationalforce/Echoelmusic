@@ -31,9 +31,9 @@ TUIST_SETUP.md            Complete documentation (323 lines)
 |--------|----------|-----------|------------|
 | **Echoelmusic** | iOS | `com.echoelmusic.app` | iOS 15.0+ |
 | **EchoelmusicMac** | macOS | `com.echoelmusic.app` | macOS 12.0+ |
-| **EchoelmusicWatch** | watchOS | `com.echoelmusic.app.watchkitapp` | watchOS 8.0+ |
-| **EchoelmusicTV** | tvOS | `com.echoelmusic.app.tv` | tvOS 15.0+ |
-| **EchoelmusicVision** | visionOS | `com.echoelmusic.app.vision` | visionOS 1.0+ |
+| **EchoelmusicWatch** | watchOS | `com.echoelmusic.app` | watchOS 8.0+ |
+| **EchoelmusicTV** | tvOS | `com.echoelmusic.app` | tvOS 15.0+ |
+| **EchoelmusicVision** | visionOS | `com.echoelmusic.app` | visionOS 1.0+ |
 | **EchoelmusicWidgets** | iOS Ext | `com.echoelmusic.app.widgets` | iOS 15.0+ |
 | **EchoelmusicAUv3** | iOS Ext | `com.echoelmusic.app.auv3` | iOS 15.0+ |
 | **EchoelmusicTests** | iOS Tests | `com.echoelmusic.tests` | iOS 15.0+ |

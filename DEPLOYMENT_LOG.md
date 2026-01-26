@@ -162,7 +162,7 @@ All main apps use the same Bundle ID for Universal Purchase:
 | macOS | `com.echoelmusic.app` | Main app + embedded AUv3 |
 | tvOS | `com.echoelmusic.app` | Big screen experience |
 | visionOS | `com.echoelmusic.app` | Spatial audio immersive |
-| watchOS | `com.echoelmusic.app.watchkitapp` | Companion app |
+| watchOS | `com.echoelmusic.app` | Standalone (Universal Purchase) |
 | macOS AUv3 | `com.echoelmusic.app.auv3` | Embedded extension |
 
 **App Groups:** `group.com.echoelmusic.shared`

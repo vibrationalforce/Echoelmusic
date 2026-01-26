@@ -181,7 +181,7 @@ let project = Project(
             name: "EchoelmusicWatch",
             platform: .watchOS,
             product: .watch2App,
-            bundleId: "com.echoelmusic.app.watchkitapp",
+            bundleId: "com.echoelmusic.app",
             deploymentTarget: .watchOS(targetVersion: "8.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
@@ -203,7 +203,7 @@ let project = Project(
             dependencies: [],
             settings: .settings(
                 base: [
-                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app.watchkitapp",
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app",
                     "TARGETED_DEVICE_FAMILY": "4",
                     "SKIP_INSTALL": "YES",
                     "WATCHOS_DEPLOYMENT_TARGET": "8.0"

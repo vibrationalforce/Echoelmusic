@@ -266,7 +266,7 @@ extension XcodeTargetConfiguration {
 extension XcodeTargetConfiguration {
     public static let watchOSApp = XcodeTargetConfiguration(
         name: "EchoelmusicWatch",
-        bundleIdentifier: "com.echoelmusic.app.watchkitapp",
+        bundleIdentifier: "com.echoelmusic.app",
         platform: .watchOS,
         deploymentTarget: "8.0",
         productType: .application,

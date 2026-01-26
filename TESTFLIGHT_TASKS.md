@@ -13,8 +13,7 @@ This document outlines all tasks required for successful TestFlight deployment o
 | Task | Status | Notes |
 |------|--------|-------|
 | Apple Developer Program enrollment ($99/year) | ⬜ | [developer.apple.com/programs](https://developer.apple.com/programs) |
-| App ID created for `com.echoelmusic.app` | ⬜ | Enable HealthKit, Background Modes (Audio) |
-| App ID created for `com.echoelmusic.app.watchkitapp` | ⬜ | watchOS companion app |
+| App ID created for `com.echoelmusic.app` | ⬜ | Enable HealthKit, Background Modes (Audio) - used by all platforms |
 | App ID created for `com.echoelmusic.app.auv3` | ⬜ | macOS AUv3 extension |
 | Distribution Certificate created | ⬜ | Valid for 1 year |
 

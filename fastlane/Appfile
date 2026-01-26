@@ -28,9 +28,9 @@ for_platform :mac do
   app_identifier "com.echoelmusic.app"
 end
 
-# watchOS App (companion to iOS app)
+# watchOS App (standalone - unified bundle ID for Universal Purchase)
 for_lane :beta_watchos do
-  app_identifier "com.echoelmusic.app.watchkitapp"
+  app_identifier "com.echoelmusic.app"
 end
 
 # tvOS App (unified bundle ID for universal purchase)
@@ -52,11 +52,10 @@ end
 # This allows customers to buy once and get the app on all Apple platforms.
 #
 # Main Apps (Universal Purchase enabled):
-#   - com.echoelmusic.app              (iOS, macOS, tvOS, visionOS)
+#   - com.echoelmusic.app              (iOS, macOS, watchOS, tvOS, visionOS)
 #
 # Extensions:
-#   - com.echoelmusic.app.auv3         (iOS AUv3 - separate extension)
-#   - com.echoelmusic.app.watchkitapp  (watchOS companion app)
+#   - com.echoelmusic.app.auv3         (macOS AUv3 - embedded extension)
 #
 # Note: macOS AUv3 is embedded inside the main app bundle, not separate.
 #

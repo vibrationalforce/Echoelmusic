@@ -137,7 +137,7 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.echoelmusic.app.watchkitapp
+        bundle_identifier: com.echoelmusic.app
       vars:
         VERSION: "1.1.0"
       xcode: 15.2

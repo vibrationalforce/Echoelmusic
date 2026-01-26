@@ -105,17 +105,17 @@ tuist generate
    - Native macOS application
 
 3. **EchoelmusicWatch** (watchOS App)
-   - Bundle ID: `com.echoelmusic.app.watchkitapp`
+   - Bundle ID: `com.echoelmusic.app`
    - Deployment Target: watchOS 8.0+
-   - Apple Watch companion app
+   - Apple Watch standalone app (Universal Purchase)
 
 4. **EchoelmusicTV** (tvOS App)
-   - Bundle ID: `com.echoelmusic.app.tv`
+   - Bundle ID: `com.echoelmusic.app`
    - Deployment Target: tvOS 15.0+
    - Apple TV big screen experience
 
 5. **EchoelmusicVision** (visionOS App)
-   - Bundle ID: `com.echoelmusic.app.vision`
+   - Bundle ID: `com.echoelmusic.app`
    - Deployment Target: visionOS 1.0+
    - Spatial computing experience
 
