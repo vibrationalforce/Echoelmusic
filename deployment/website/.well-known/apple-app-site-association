@@ -1,0 +1,56 @@
+{
+  "appclips": {
+    "apps": [
+      "TEAM_ID.com.echoelmusic.app.Clip"
+    ]
+  },
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "TEAM_ID.com.echoelmusic.app.Clip",
+          "TEAM_ID.com.echoelmusic.app"
+        ],
+        "components": [
+          {
+            "/": "/clip/*",
+            "comment": "App Clip quick sessions"
+          },
+          {
+            "/": "/clip/breathwork",
+            "comment": "Breathwork session"
+          },
+          {
+            "/": "/clip/meditation",
+            "comment": "Meditation session"
+          },
+          {
+            "/": "/clip/coherence",
+            "comment": "Coherence check"
+          },
+          {
+            "/": "/clip/soundbath",
+            "comment": "Sound bath session"
+          },
+          {
+            "/": "/clip/energize",
+            "comment": "Energy boost session"
+          },
+          {
+            "/": "/clip/event/*",
+            "comment": "Event-specific sessions"
+          },
+          {
+            "/": "/clip/venue/*",
+            "comment": "Venue-specific sessions"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAM_ID.com.echoelmusic.app"
+    ]
+  }
+}

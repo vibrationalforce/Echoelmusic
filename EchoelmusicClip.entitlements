@@ -29,7 +29,6 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>appclips:echoelmusic.com</string>
-		<string>appclips:echoelmusic.app</string>
 		<string>appclips:www.echoelmusic.com</string>
 	</array>
 

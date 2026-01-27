@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atemübung - Echoelmusic</title>
+
+    <!-- App Clip Meta Tags -->
+    <meta name="apple-itunes-app" content="app-clip-bundle-id=com.echoelmusic.app.Clip, app-id=XXXXXXXXXX, app-clip-display=card">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="3 Minuten Atemübung">
+    <meta property="og:description" content="Box Breathing für sofortige Entspannung - direkt in deiner Hand">
+    <meta property="og:image" content="https://echoelmusic.com/images/breathwork-og.png">
+    <meta property="og:url" content="https://echoelmusic.com/clip/breathwork">
+    <meta property="og:type" content="website">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="3 Minuten Atemübung - Echoelmusic">
+    <meta name="twitter:description" content="Box Breathing für sofortige Entspannung">
+    <meta name="twitter:image" content="https://echoelmusic.com/images/breathwork-og.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0d47a1 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            animation: breathe 8s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(0.8); opacity: 0.7; }
+            25% { transform: scale(1.0); opacity: 1; }
+            50% { transform: scale(1.0); opacity: 1; }
+            75% { transform: scale(0.8); opacity: 0.7; }
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .duration {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .description {
+            font-size: 18px;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        .benefits {
+            text-align: left;
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 32px;
+        }
+
+        .benefits h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 12px;
+        }
+
+        .benefit {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+        }
+
+        .benefit-icon {
+            font-size: 20px;
+        }
+
+        .cta-button {
+            display: block;
+            background: white;
+            color: #0d47a1;
+            text-decoration: none;
+            padding: 18px 32px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 16px;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.02);
+        }
+
+        .note {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .back-link {
+            margin-top: 32px;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🌬️</div>
+        <h1>Atemübung</h1>
+        <div class="duration">3 Minuten</div>
+
+        <p class="description">
+            Box Breathing ist eine bewährte Atemtechnik, die von Navy SEALs bis zu Yogis genutzt wird.
+            4 Sekunden einatmen, halten, ausatmen, halten.
+        </p>
+
+        <div class="benefits">
+            <h3>Was du bekommst</h3>
+            <div class="benefit">
+                <span class="benefit-icon">😌</span>
+                <span>Sofortige Entspannung</span>
+            </div>
+            <div class="benefit">
+                <span class="benefit-icon">🧠</span>
+                <span>Mentale Klarheit</span>
+            </div>
+            <div class="benefit">
+                <span class="benefit-icon">💓</span>
+                <span>Verbesserte HRV</span>
+            </div>
+            <div class="benefit">
+                <span class="benefit-icon">🎵</span>
+                <span>Bio-reaktive Klänge</span>
+            </div>
+        </div>
+
+        <a href="https://echoelmusic.com/clip/breathwork" class="cta-button">
+            Session starten
+        </a>
+
+        <p class="note">
+            iPhone? Der App Clip startet automatisch.
+            <br>Kein Download erforderlich.
+        </p>
+
+        <a href="/clip" class="back-link">← Alle Sessions</a>
+    </div>
+</body>
+</html>

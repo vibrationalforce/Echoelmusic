@@ -646,7 +646,7 @@ let project = Project(
                 arguments: .arguments(
                     environmentVariables: [
                         "_XCAppClipURL": .init(
-                            value: "https://echoelmusic.app/clip/breathwork",
+                            value: "https://echoelmusic.com/clip/breathwork",
                             isEnabled: true
                         )
                     ]
