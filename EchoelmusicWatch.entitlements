@@ -29,5 +29,9 @@
 	<!-- Workout Processing -->
 	<key>com.apple.developer.healthkit.workout-processing</key>
 	<true/>
+
+	<!-- Push Notifications -->
+	<key>aps-environment</key>
+	<string>production</string>
 </dict>
 </plist>

@@ -53,5 +53,9 @@
 	<!-- Passthrough Mode -->
 	<key>com.apple.developer.visionos.passthrough</key>
 	<true/>
+
+	<!-- Push Notifications -->
+	<key>aps-environment</key>
+	<string>production</string>
 </dict>
 </plist>
