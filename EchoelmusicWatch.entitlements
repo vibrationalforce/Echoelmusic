@@ -27,8 +27,9 @@
 	<!-- ============================================================ -->
 
 	<!-- Apple Push Notification Service -->
+	<!-- PRODUCTION: Required for App Store / TestFlight distribution -->
 	<key>aps-environment</key>
-	<string>development</string>
+	<string>production</string>
 
 	<!-- ============================================================ -->
 	<!-- APP GROUPS -->

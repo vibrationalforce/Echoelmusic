@@ -44,5 +44,9 @@
 		<key>TVTopShelfImageWide</key>
 		<string>TopShelf-wide</string>
 	</dict>
+
+	<!-- App Store Export Compliance -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
