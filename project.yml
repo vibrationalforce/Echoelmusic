@@ -148,8 +148,9 @@ targets:
         DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "16.0"
-    # Note: iOS AUv3 is integrated into the main app (works as both host and plugin)
-    # No separate extension needed - same approach as macOS
+    dependencies:
+      - target: EchoelmusicAUv3-iOS
+        embed: true
     entitlements:
       path: Echoelmusic.entitlements
 
@@ -293,6 +294,89 @@ targets:
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
         SKIP_INSTALL: YES
         ENABLE_HARDENED_RUNTIME: YES
+    dependencies:
+      - framework: AudioToolbox.framework
+      - framework: AVFoundation.framework
+      - framework: CoreAudioKit.framework
+      - framework: Accelerate.framework
+
+  # ===========================================================================
+  # iOS AUv3 Audio Unit Extension
+  # ===========================================================================
+  EchoelmusicAUv3-iOS:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Sources/EchoelmusicAUv3
+        type: group
+      - path: Sources/Echoelmusic/Sound/TR808BassSynth.swift
+        type: file
+    info:
+      path: Sources/EchoelmusicAUv3/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleDisplayName: "Echoelmusic 808"
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: XPC!
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionAttributes:
+            AudioComponents:
+              - description: "Echoelmusic TR-808 Bass Synth with Pitch Glide"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: 808 Bass"
+                sandboxSafe: true
+                subtype: E808
+                tags: [Synth, Bass, 808]
+                type: aumu
+                version: 1
+              - description: "Echoelmusic Bio-Reactive AI Music Generator"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: BioComposer"
+                sandboxSafe: true
+                subtype: Ebio
+                tags: [Synth, Generator, AI]
+                type: aumu
+                version: 1
+              - description: "Echoelmusic AI Stem Separation"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: Stem Splitter"
+                sandboxSafe: true
+                subtype: Estm
+                tags: [Effect, AI, Separator]
+                type: aufx
+                version: 1
+              - description: "Echoelmusic MIDI 2.0 + MPE Processor"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: MIDI Pro"
+                sandboxSafe: true
+                subtype: Emid
+                tags: [MIDI, MPE, Processor]
+                type: aumi
+                version: 1
+          NSExtensionPointIdentifier: com.apple.AudioUnit-UI
+          NSExtensionPrincipalClass: EchoelmusicAudioUnitViewController
+    settings:
+      base:
+        PRODUCT_NAME: EchoelmusicAUv3
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.auv3
+        INFOPLIST_FILE: Sources/EchoelmusicAUv3/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicAUv3.entitlements
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+        SKIP_INSTALL: YES
     dependencies:
       - framework: AudioToolbox.framework
       - framework: AVFoundation.framework
@@ -511,11 +595,12 @@ targets:
 
 schemes:
 
-  # iOS Development (AUv3 integrated in main app)
+  # iOS Development (with embedded AUv3)
   Echoelmusic:
     build:
       targets:
         Echoelmusic: all
+        EchoelmusicAUv3-iOS: all
         EchoelmusicTests: [test]
         EchoelmusicUITests: [test]
     run:
@@ -614,11 +699,12 @@ schemes:
           randomExecutionOrder: false
 
   # All Platforms Release (for CI)
-  # Note: iOS and macOS AUv3 are integrated into their main apps (no separate targets)
+  # AUv3 extensions are embedded in their respective main apps
   Echoelmusic-AllPlatforms:
     build:
       targets:
         Echoelmusic: [archive]
+        EchoelmusicAUv3-iOS: [archive]
         Echoelmusic-macOS: [archive]
         EchoelmusicAUv3-macOS: [archive]
         Echoelmusic-watchOS: [archive]

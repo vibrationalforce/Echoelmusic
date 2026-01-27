@@ -115,6 +115,7 @@ let project = Project(
             ],
             entitlements: .file(path: "Echoelmusic.entitlements"),
             dependencies: [
+                .target(name: "EchoelmusicAUv3"),
                 .target(name: "EchoelmusicWidgets"),
                 .target(name: "EchoelmusicWatch"),
                 .target(name: "EchoelmusicTV")
@@ -288,7 +289,7 @@ let project = Project(
             )
         ),
 
-        // MARK: - AUv3 Audio Unit Plugin
+        // MARK: - iOS AUv3 Audio Unit Plugin
         Target(
             name: "EchoelmusicAUv3",
             platform: .iOS,
@@ -333,6 +334,84 @@ let project = Project(
             )
         ),
 
+        // MARK: - macOS AUv3 Audio Unit Plugin
+        Target(
+            name: "EchoelmusicMacAUv3",
+            platform: .macOS,
+            product: .appExtension,
+            bundleId: "com.echoelmusic.app.auv3",
+            deploymentTarget: .macOS(targetVersion: "12.0"),
+            infoPlist: .extendingDefault(with: [
+                "CFBundleDisplayName": "Echoelmusic AUv3",
+                "NSExtension": [
+                    "NSExtensionPointIdentifier": "com.apple.AudioUnit-UI",
+                    "NSExtensionPrincipalClass": "$(PRODUCT_MODULE_NAME).AudioUnitViewController",
+                    "AudioComponents": [
+                        [
+                            "name": "Echoelmusic Technologies: 808 Bass",
+                            "description": "TR-808 Bass Synth with Pitch Glide",
+                            "factoryFunction": "EchoelmusicAudioUnitFactory",
+                            "manufacturer": "Echo",
+                            "type": "aumu",
+                            "subtype": "E808",
+                            "version": 10000,
+                            "sandboxSafe": true,
+                            "tags": ["Synth", "Bass", "808"]
+                        ],
+                        [
+                            "name": "Echoelmusic Technologies: BioComposer",
+                            "description": "Bio-Reactive AI Music Generator",
+                            "factoryFunction": "EchoelmusicAudioUnitFactory",
+                            "manufacturer": "Echo",
+                            "type": "aumu",
+                            "subtype": "Ebio",
+                            "version": 10000,
+                            "sandboxSafe": true,
+                            "tags": ["Synth", "Generator", "AI"]
+                        ],
+                        [
+                            "name": "Echoelmusic Technologies: Stem Splitter",
+                            "description": "AI Stem Separation Effect",
+                            "factoryFunction": "EchoelmusicAudioUnitFactory",
+                            "manufacturer": "Echo",
+                            "type": "aufx",
+                            "subtype": "Estm",
+                            "version": 10000,
+                            "sandboxSafe": true,
+                            "tags": ["Effect", "AI", "Separator"]
+                        ],
+                        [
+                            "name": "Echoelmusic Technologies: MIDI Pro",
+                            "description": "MIDI 2.0 + MPE Processor",
+                            "factoryFunction": "EchoelmusicAudioUnitFactory",
+                            "manufacturer": "Echo",
+                            "type": "aumi",
+                            "subtype": "Emid",
+                            "version": 10000,
+                            "sandboxSafe": true,
+                            "tags": ["MIDI", "MPE", "Processor"]
+                        ]
+                    ]
+                ],
+                "CFBundleShortVersionString": "10000.1.0",
+                "CFBundleVersion": "10000"
+            ]),
+            sources: [
+                "Sources/Echoelmusic/Plugin/**/*.swift"
+            ],
+            entitlements: .file(path: "EchoelmusicMacAUv3.entitlements"),
+            dependencies: [],
+            settings: .settings(
+                base: [
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app.auv3",
+                    "MACOSX_DEPLOYMENT_TARGET": "12.0",
+                    "SKIP_INSTALL": "YES",
+                    "ENABLE_HARDENED_RUNTIME": "YES"
+                ],
+                defaultSettings: .recommended
+            )
+        ),
+
         // MARK: - macOS App
         Target(
             name: "EchoelmusicMac",
@@ -359,7 +438,9 @@ let project = Project(
                 "Sources/Echoelmusic/Resources/**"
             ],
             entitlements: .file(path: "EchoelmusicMac.entitlements"),
-            dependencies: [],
+            dependencies: [
+                .target(name: "EchoelmusicMacAUv3")
+            ],
             settings: .settings(
                 base: [
                     "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app",
@@ -514,12 +595,13 @@ let project = Project(
             buildAction: .buildAction(
                 targets: [
                     "Echoelmusic",
+                    "EchoelmusicAUv3",
                     "EchoelmusicMac",
+                    "EchoelmusicMacAUv3",
                     "EchoelmusicWatch",
                     "EchoelmusicTV",
                     "EchoelmusicVision",
-                    "EchoelmusicWidgets",
-                    "EchoelmusicAUv3"
+                    "EchoelmusicWidgets"
                 ]
             ),
             testAction: .targets(
