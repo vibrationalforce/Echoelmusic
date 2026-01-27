@@ -45,8 +45,8 @@ on:
         type: boolean
 
 env:
-  VERSION: '1.2.0'
-  XCODE_VERSION: '15.4'
+  VERSION: '1.2.1'
+  XCODE_VERSION: '16.2'
 
 jobs:
   # ===========================================================================
