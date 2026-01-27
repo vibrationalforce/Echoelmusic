@@ -98,7 +98,12 @@ struct VisionContentView: View {
             }
         }
         .task {
-            try? await healthKit.requestAuthorization()
+            do {
+                try await healthKit.requestAuthorization()
+            } catch {
+                // Log error but don't crash - HealthKit is optional on visionOS
+                Logger.warning("HealthKit authorization failed: \(error.localizedDescription)", subsystem: .healthKit)
+            }
         }
     }
 

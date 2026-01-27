@@ -262,6 +262,8 @@ extension XcodeTargetConfiguration {
 }
 
 // MARK: - watchOS App Target
+// NOTE: watchOS apps MUST have a child bundle ID of the companion iOS app
+// This is required by Apple for Universal Purchase and proper app association
 
 extension XcodeTargetConfiguration {
     public static let watchOSApp = XcodeTargetConfiguration(
@@ -1684,8 +1686,7 @@ extension XcodeProjectConfiguration {
         ## iCloud Configuration
 
         Enable CloudKit with containers:
-        - `iCloud.com.echoelmusic.app` (iOS)
-        - `iCloud.com.echoelmusic.mac` (macOS)
+        - `iCloud.com.echoelmusic.app` (All platforms)
 
         ## Deployment Checklist
 

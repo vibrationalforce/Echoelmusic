@@ -115,9 +115,11 @@ let project = Project(
             ],
             entitlements: .file(path: "Echoelmusic.entitlements"),
             dependencies: [
+                .target(name: "EchoelmusicAUv3"),
                 .target(name: "EchoelmusicWidgets"),
                 .target(name: "EchoelmusicWatch"),
-                .target(name: "EchoelmusicTV")
+                .target(name: "EchoelmusicTV"),
+                .target(name: "EchoelmusicClip")
             ],
             settings: .settings(
                 base: [
@@ -177,6 +179,8 @@ let project = Project(
         ),
 
         // MARK: - watchOS App
+        // NOTE: watchOS apps MUST have a child bundle ID of the companion iOS app
+        // This is required by Apple for Universal Purchase and proper app association
         Target(
             name: "EchoelmusicWatch",
             platform: .watchOS,
@@ -217,7 +221,7 @@ let project = Project(
             name: "EchoelmusicTV",
             platform: .tvOS,
             product: .app,
-            bundleId: "com.echoelmusic.app.tv",
+            bundleId: "com.echoelmusic.app",
             deploymentTarget: .tvOS(targetVersion: "15.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
@@ -239,7 +243,7 @@ let project = Project(
             dependencies: [],
             settings: .settings(
                 base: [
-                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app.tv",
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app",
                     "TARGETED_DEVICE_FAMILY": "3",
                     "TVOS_DEPLOYMENT_TARGET": "15.0",
                     "ENABLE_BITCODE": "NO"
@@ -253,7 +257,7 @@ let project = Project(
             name: "EchoelmusicVision",
             platform: .visionOS,
             product: .app,
-            bundleId: "com.echoelmusic.app.vision",
+            bundleId: "com.echoelmusic.app",
             deploymentTarget: .visionOS(targetVersion: "1.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
@@ -277,7 +281,7 @@ let project = Project(
             dependencies: [],
             settings: .settings(
                 base: [
-                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app.vision",
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app",
                     "TARGETED_DEVICE_FAMILY": "7",
                     "XROS_DEPLOYMENT_TARGET": "1.0",
                     "ENABLE_PREVIEWS": "YES"
@@ -286,7 +290,53 @@ let project = Project(
             )
         ),
 
-        // MARK: - AUv3 Audio Unit Plugin
+        // MARK: - App Clip (Quick Sessions without full download)
+        Target(
+            name: "EchoelmusicClip",
+            platform: .iOS,
+            product: .appClip,
+            bundleId: "com.echoelmusic.app.Clip",
+            deploymentTarget: .iOS(targetVersion: "16.0", devices: [.iphone]),
+            infoPlist: .extendingDefault(with: [
+                "CFBundleDisplayName": "Echoelmusic",
+                "CFBundleShortVersionString": "10000.1.0",
+                "CFBundleVersion": "10000",
+                "UILaunchScreen": [:],
+                "UIApplicationSceneManifest": [
+                    "UIApplicationSupportsMultipleScenes": false
+                ],
+                "NSAppClip": [
+                    "NSAppClipRequestEphemeralUserNotification": true,
+                    "NSAppClipRequestLocationConfirmation": true
+                ],
+                "NSLocationWhenInUseUsageDescription": "Echoelmusic uses location to verify you are at a partner venue for App Clip sessions.",
+                "NSMicrophoneUsageDescription": "Echoelmusic uses your microphone for audio-visual experiences.",
+                "ITSAppUsesNonExemptEncryption": false
+            ]),
+            sources: [
+                "Sources/Echoelmusic/AppClips/**/*.swift"
+            ],
+            resources: [
+                "Sources/Echoelmusic/AppClips/Assets.xcassets"
+            ],
+            entitlements: .file(path: "EchoelmusicClip.entitlements"),
+            dependencies: [],
+            settings: .settings(
+                base: [
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app.Clip",
+                    "TARGETED_DEVICE_FAMILY": "1",
+                    "INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents": "YES",
+                    "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
+                    "ENABLE_ON_DEMAND_RESOURCES": "YES",
+                    // App Clip size limit is 15MB - enable optimizations
+                    "DEAD_CODE_STRIPPING": "YES",
+                    "STRIP_INSTALLED_PRODUCT": "YES"
+                ],
+                defaultSettings: .recommended
+            )
+        ),
+
+        // MARK: - iOS AUv3 Audio Unit Plugin
         Target(
             name: "EchoelmusicAUv3",
             platform: .iOS,
@@ -331,12 +381,90 @@ let project = Project(
             )
         ),
 
+        // MARK: - macOS AUv3 Audio Unit Plugin
+        Target(
+            name: "EchoelmusicMacAUv3",
+            platform: .macOS,
+            product: .appExtension,
+            bundleId: "com.echoelmusic.app.auv3",
+            deploymentTarget: .macOS(targetVersion: "12.0"),
+            infoPlist: .extendingDefault(with: [
+                "CFBundleDisplayName": "Echoelmusic AUv3",
+                "NSExtension": [
+                    "NSExtensionPointIdentifier": "com.apple.AudioUnit-UI",
+                    "NSExtensionPrincipalClass": "$(PRODUCT_MODULE_NAME).AudioUnitViewController",
+                    "AudioComponents": [
+                        [
+                            "name": "Echoelmusic Technologies: 808 Bass",
+                            "description": "TR-808 Bass Synth with Pitch Glide",
+                            "factoryFunction": "EchoelmusicAudioUnitFactory",
+                            "manufacturer": "Echo",
+                            "type": "aumu",
+                            "subtype": "E808",
+                            "version": 10000,
+                            "sandboxSafe": true,
+                            "tags": ["Synth", "Bass", "808"]
+                        ],
+                        [
+                            "name": "Echoelmusic Technologies: BioComposer",
+                            "description": "Bio-Reactive AI Music Generator",
+                            "factoryFunction": "EchoelmusicAudioUnitFactory",
+                            "manufacturer": "Echo",
+                            "type": "aumu",
+                            "subtype": "Ebio",
+                            "version": 10000,
+                            "sandboxSafe": true,
+                            "tags": ["Synth", "Generator", "AI"]
+                        ],
+                        [
+                            "name": "Echoelmusic Technologies: Stem Splitter",
+                            "description": "AI Stem Separation Effect",
+                            "factoryFunction": "EchoelmusicAudioUnitFactory",
+                            "manufacturer": "Echo",
+                            "type": "aufx",
+                            "subtype": "Estm",
+                            "version": 10000,
+                            "sandboxSafe": true,
+                            "tags": ["Effect", "AI", "Separator"]
+                        ],
+                        [
+                            "name": "Echoelmusic Technologies: MIDI Pro",
+                            "description": "MIDI 2.0 + MPE Processor",
+                            "factoryFunction": "EchoelmusicAudioUnitFactory",
+                            "manufacturer": "Echo",
+                            "type": "aumi",
+                            "subtype": "Emid",
+                            "version": 10000,
+                            "sandboxSafe": true,
+                            "tags": ["MIDI", "MPE", "Processor"]
+                        ]
+                    ]
+                ],
+                "CFBundleShortVersionString": "10000.1.0",
+                "CFBundleVersion": "10000"
+            ]),
+            sources: [
+                "Sources/Echoelmusic/Plugin/**/*.swift"
+            ],
+            entitlements: .file(path: "EchoelmusicMacAUv3.entitlements"),
+            dependencies: [],
+            settings: .settings(
+                base: [
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app.auv3",
+                    "MACOSX_DEPLOYMENT_TARGET": "12.0",
+                    "SKIP_INSTALL": "YES",
+                    "ENABLE_HARDENED_RUNTIME": "YES"
+                ],
+                defaultSettings: .recommended
+            )
+        ),
+
         // MARK: - macOS App
         Target(
             name: "EchoelmusicMac",
             platform: .macOS,
             product: .app,
-            bundleId: "com.echoelmusic.mac",
+            bundleId: "com.echoelmusic.app",
             deploymentTarget: .macOS(targetVersion: "12.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
@@ -357,10 +485,12 @@ let project = Project(
                 "Sources/Echoelmusic/Resources/**"
             ],
             entitlements: .file(path: "EchoelmusicMac.entitlements"),
-            dependencies: [],
+            dependencies: [
+                .target(name: "EchoelmusicMacAUv3")
+            ],
             settings: .settings(
                 base: [
-                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.mac",
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app",
                     "MACOSX_DEPLOYMENT_TARGET": "12.0",
                     "ENABLE_HARDENED_RUNTIME": "YES",
                     "ENABLE_PREVIEWS": "YES"
@@ -505,6 +635,28 @@ let project = Project(
             )
         ),
 
+        // MARK: - App Clip Scheme
+        Scheme(
+            name: "EchoelmusicClip",
+            shared: true,
+            buildAction: .buildAction(targets: ["EchoelmusicClip"]),
+            runAction: .runAction(
+                configuration: "Debug",
+                executable: "EchoelmusicClip",
+                arguments: .arguments(
+                    environmentVariables: [
+                        "_XCAppClipURL": .init(
+                            value: "https://echoelmusic.com/clip/breathwork",
+                            isEnabled: true
+                        )
+                    ]
+                )
+            ),
+            archiveAction: .archiveAction(
+                configuration: "Release"
+            )
+        ),
+
         // MARK: - All Platforms Scheme
         Scheme(
             name: "Echoelmusic-AllPlatforms",
@@ -512,12 +664,14 @@ let project = Project(
             buildAction: .buildAction(
                 targets: [
                     "Echoelmusic",
+                    "EchoelmusicAUv3",
                     "EchoelmusicMac",
+                    "EchoelmusicMacAUv3",
                     "EchoelmusicWatch",
                     "EchoelmusicTV",
                     "EchoelmusicVision",
                     "EchoelmusicWidgets",
-                    "EchoelmusicAUv3"
+                    "EchoelmusicClip"
                 ]
             ),
             testAction: .targets(

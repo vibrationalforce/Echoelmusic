@@ -438,19 +438,28 @@ public final class CertificatePinningManager: NSObject {
     /// Pinned certificate hashes (SPKI SHA-256)
     /// IMPORTANT: Replace with actual production certificate hashes before release!
     /// Generate hashes using: openssl s_client -connect api.echoelmusic.com:443 | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | openssl enc -base64
+    ///
+    /// PRODUCTION CHECKLIST:
+    /// 1. Generate certificate hashes for api.echoelmusic.com and cdn.echoelmusic.com
+    /// 2. Include both primary and backup certificates for rotation
+    /// 3. Set isPinningEnabled = true
+    /// 4. Test pinning works correctly before App Store submission
     private var pinnedHashes: [String: Set<String>] = [
         "api.echoelmusic.com": [
-            // TODO: PRODUCTION - Replace with actual certificate hashes before App Store submission
-            // Primary certificate hash (expires: check certificate expiry)
-            // "sha256/REAL_PRIMARY_CERTIFICATE_HASH_HERE=",
-            // Backup certificate hash (for certificate rotation)
-            // "sha256/REAL_BACKUP_CERTIFICATE_HASH_HERE="
+            // PRODUCTION: Add your certificate hashes here
+            // Example format: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         ],
         "cdn.echoelmusic.com": [
-            // TODO: PRODUCTION - Replace with actual CDN certificate hash
-            // "sha256/REAL_CDN_CERTIFICATE_HASH_HERE="
+            // PRODUCTION: Add your CDN certificate hash here
         ]
     ]
+
+    /// Enable/disable certificate pinning (disable in DEBUG for development)
+    #if DEBUG
+    private let isPinningEnabled = false  // Disabled in DEBUG builds for easier development
+    #else
+    private let isPinningEnabled = true   // Always enabled in RELEASE builds
+    #endif
 
     private override init() {
         super.init()
@@ -482,11 +491,14 @@ extension CertificatePinningManager: URLSessionDelegate {
         didReceive challenge: URLAuthenticationChallenge,
         completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) {
-        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+        // Skip pinning if disabled (DEBUG builds) or no pinning configured
+        guard isPinningEnabled,
+              challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
               let serverTrust = challenge.protectionSpace.serverTrust,
               let host = challenge.protectionSpace.host as String?,
-              let expectedHashes = pinnedHashes[host] else {
-            // No pinning configured for this host - allow connection
+              let expectedHashes = pinnedHashes[host],
+              !expectedHashes.isEmpty else {
+            // No pinning configured for this host or pinning disabled - allow connection
             completionHandler(.performDefaultHandling, nil)
             return
         }

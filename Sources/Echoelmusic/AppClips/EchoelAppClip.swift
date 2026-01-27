@@ -132,11 +132,11 @@ public final class AppClipManager: ObservableObject {
 
     /// Parse URL to determine session type
     private func parseInvocationURL(_ url: URL) {
-        // URL format: https://echoelmusic.app/clip/[session-type]
+        // URL format: https://echoelmusic.com/clip/[session-type]
         // Examples:
-        // - https://echoelmusic.app/clip/breathwork
-        // - https://echoelmusic.app/clip/meditation?duration=300
-        // - https://echoelmusic.app/clip/event/abc123
+        // - https://echoelmusic.com/clip/breathwork
+        // - https://echoelmusic.com/clip/meditation?duration=300
+        // - https://echoelmusic.com/clip/event/abc123
 
         let pathComponents = url.pathComponents
 
@@ -647,7 +647,7 @@ public struct AppClipCodeGenerator {
     public static func generateURL(for sessionType: AppClipManager.QuickSessionType, duration: TimeInterval? = nil) -> URL {
         var components = URLComponents()
         components.scheme = "https"
-        components.host = "echoelmusic.app"
+        components.host = "echoelmusic.com"
         components.path = "/clip/\(sessionType.rawValue.lowercased())"
 
         if let duration = duration {
@@ -655,30 +655,30 @@ public struct AppClipCodeGenerator {
         }
 
         // Safe fallback - components should always produce valid URL with these inputs
-        return components.url ?? URL(string: "https://echoelmusic.app/clip")!
+        return components.url ?? URL(string: "https://echoelmusic.com/clip")!
     }
 
     /// Generate URL for event
     public static func generateEventURL(eventId: String) -> URL {
         var components = URLComponents()
         components.scheme = "https"
-        components.host = "echoelmusic.app"
+        components.host = "echoelmusic.com"
         components.path = "/clip/event/\(eventId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? eventId)"
 
         // Safe fallback
-        return components.url ?? URL(string: "https://echoelmusic.app/clip/event")!
+        return components.url ?? URL(string: "https://echoelmusic.com/clip/event")!
     }
 
     /// Generate URL for venue
     public static func generateVenueURL(venueId: String, sessionType: AppClipManager.QuickSessionType) -> URL {
         var components = URLComponents()
         components.scheme = "https"
-        components.host = "echoelmusic.app"
+        components.host = "echoelmusic.com"
         components.path = "/clip/venue/\(venueId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? venueId)"
         components.queryItems = [URLQueryItem(name: "session", value: sessionType.rawValue.lowercased())]
 
         // Safe fallback
-        return components.url ?? URL(string: "https://echoelmusic.app/clip/venue")!
+        return components.url ?? URL(string: "https://echoelmusic.com/clip/venue")!
     }
 }
 

@@ -45,6 +45,24 @@ public class PhotonicsVisualizationEngine: ObservableObject {
         case lightMandala = "Light Mandala"
         case holographicDisplay = "Holographic Display"
         case cosmicWeb = "Cosmic Web"
+        case fibonacciSpiralField = "Fibonacci Spiral Field"
+
+        /// Returns the shader index for Metal GPU rendering
+        public var shaderIndex: Int {
+            switch self {
+            case .interferencePattern: return 0
+            case .waveFunction: return 1
+            case .coherenceField: return 2
+            case .photonFlow: return 3
+            case .sacredGeometry: return 4
+            case .quantumTunnel: return 5
+            case .biophotonAura: return 6
+            case .lightMandala: return 7
+            case .holographicDisplay: return 8
+            case .cosmicWeb: return 9
+            case .fibonacciSpiralField: return 10
+            }
+        }
     }
 
     // MARK: - Configuration

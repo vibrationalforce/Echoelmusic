@@ -16,6 +16,8 @@ on:
       - 'Tests/**'
       - 'Package.swift'
       - 'project.yml'
+      - '.github/workflows/**'
+      - 'fastlane/**'
   # NOTE: PR checks are handled by pr-check.yml
   # This workflow runs on push (post-merge) for thorough testing
   workflow_dispatch:
@@ -45,20 +47,31 @@ jobs:
     - name: Swift Format Check
       run: |
         if command -v swift-format &> /dev/null; then
-          swift-format lint --recursive Sources/ Tests/ || true
+          # Warn but don't fail on format issues - report them for fixing
+          swift-format lint --recursive Sources/ Tests/ 2>&1 | tee format-report.txt || true
+          if [ -s format-report.txt ]; then
+            echo "::warning::Code formatting issues detected - please run swift-format"
+          fi
         else
-          echo "⚠️  swift-format not installed, skipping"
+          echo "::notice::swift-format not installed, skipping format check"
         fi
-      continue-on-error: true
+      # Format check is advisory - doesn't fail the build
 
     - name: SwiftLint
       run: |
         if command -v swiftlint &> /dev/null; then
-          swiftlint --strict || true
+          # Run SwiftLint and capture exit code
+          swiftlint --strict --reporter github-actions-logging 2>&1 | tee lint-report.txt
+          LINT_EXIT=${PIPESTATUS[0]}
+          # Only fail on error-level issues, not warnings
+          if grep -q "error:" lint-report.txt; then
+            echo "::error::Critical linting errors found - fix before merging"
+            exit 1
+          fi
         else
-          echo "⚠️  SwiftLint not installed, skipping"
+          echo "::notice::SwiftLint not installed, skipping lint check"
         fi
-      continue-on-error: true
+      # Fails on error-level lint issues
 
     - name: Check for TODO/FIXME
       run: |
@@ -102,7 +115,7 @@ jobs:
         path: |
           ~/.swiftpm
           .build
-          ~/Library/Developer/Xcode/DerivedData
+          # DerivedData excluded - causes cache invalidation issues
         key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}-${{ matrix.name }}
         restore-keys: |
           ${{ runner.os }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}-
@@ -150,8 +163,8 @@ jobs:
     - name: Generate Code Coverage
       if: success()
       run: |
-        PROFDATA=$(find ~/Library/Developer/Xcode/DerivedData -name "*.profdata" 2>/dev/null | head -1)
-        BINARY=$(find ~/Library/Developer/Xcode/DerivedData -name "Echoelmusic" -type f 2>/dev/null | head -1)
+        PROFDATA=$(find # DerivedData excluded - causes cache invalidation issues -name "*.profdata" 2>/dev/null | head -1)
+        BINARY=$(find # DerivedData excluded - causes cache invalidation issues -name "Echoelmusic" -type f 2>/dev/null | head -1)
         if [ -n "$PROFDATA" ] && [ -n "$BINARY" ]; then
           xcrun llvm-cov export -format="lcov" -instr-profile="$PROFDATA" "$BINARY" > coverage.lcov
         else
@@ -196,7 +209,7 @@ jobs:
         path: |
           ~/.swiftpm
           .build
-          ~/Library/Developer/Xcode/DerivedData
+          # DerivedData excluded - causes cache invalidation issues
         key: ${{ runner.os }}-spm-macos-${{ hashFiles('Package.swift', 'Package.resolved') }}
         restore-keys: |
           ${{ runner.os }}-spm-macos-
@@ -233,7 +246,7 @@ jobs:
           -configuration Debug \
           -enableCodeCoverage YES \
           2>&1 | tee test.log | xcpretty || cat test.log
-      continue-on-error: true
+      # NOTE: Test failures MUST fail the build - do not add continue-on-error
 
   # Job 4: Performance Tests
   performance-tests:
@@ -296,13 +309,33 @@ jobs:
     - name: Run Security Scan
       run: |
         echo "🔒 Running security scan..."
-        # Check for common security issues
+        SECURITY_ISSUES=0
+
+        # Check for common security TODOs (informational)
+        echo "📋 Security TODOs:"
         find Sources -name "*.swift" -exec grep -Hn "TODO.*security\|FIXME.*security" {} \; || true
-        # Check for hardcoded secrets
-        grep -rn "password\s*=\s*[\"']" Sources --include='*.swift' 2>/dev/null | grep -v '//' | head -5 || true
-        grep -rn "apiKey\s*=\s*[\"']" Sources --include='*.swift' 2>/dev/null | grep -v '//' | head -5 || true
-        echo "✅ Security scan completed"
-      continue-on-error: true
+
+        # Check for hardcoded secrets (CRITICAL - fails build)
+        echo "🔍 Checking for hardcoded secrets..."
+        SECRETS_FOUND=$(grep -rn "password\s*=\s*[\"'][^\"']\+" Sources --include='*.swift' 2>/dev/null | grep -v '// ' | grep -v 'placeholder' | grep -v 'example' | wc -l || echo "0")
+        API_KEYS_FOUND=$(grep -rn "apiKey\s*=\s*[\"'][A-Za-z0-9]\{20,\}" Sources --include='*.swift' 2>/dev/null | grep -v '// ' | wc -l || echo "0")
+
+        if [ "$SECRETS_FOUND" -gt 0 ] || [ "$API_KEYS_FOUND" -gt 0 ]; then
+          echo "::error::Potential hardcoded secrets detected! Review and remove before merging."
+          SECURITY_ISSUES=1
+        fi
+
+        # Check for force unwraps in security-sensitive files (CRITICAL)
+        FORCE_UNWRAPS=$(grep -rn '!\s*$\|!\.self\|!\s*{' Sources/Echoelmusic/Security --include='*.swift' 2>/dev/null | grep -v 'assertionFailure' | grep -v '// ' | wc -l || echo "0")
+        if [ "$FORCE_UNWRAPS" -gt 0 ]; then
+          echo "::warning::Force unwraps found in security code - consider using safe alternatives"
+        fi
+
+        if [ "$SECURITY_ISSUES" -gt 0 ]; then
+          exit 1
+        fi
+        echo "✅ Security scan completed - no critical issues"
+      # Security issues fail the build
 
   # Job 6: Build Archive (Release)
   build-archive:
@@ -326,7 +359,7 @@ jobs:
         path: |
           ~/.swiftpm
           .build
-          ~/Library/Developer/Xcode/DerivedData
+          # DerivedData excluded - causes cache invalidation issues
         key: ${{ runner.os }}-spm-archive-${{ hashFiles('Package.swift', 'Package.resolved') }}
         restore-keys: |
           ${{ runner.os }}-spm-archive-
@@ -345,14 +378,15 @@ jobs:
 
     - name: Build Release Archive
       run: |
+        set -o pipefail
         xcodebuild archive \
           -scheme Echoelmusic \
           -destination 'generic/platform=iOS' \
           -configuration Release \
           -archivePath ./build/Echoelmusic.xcarchive \
           CODE_SIGNING_ALLOWED=NO \
-          2>&1 | xcpretty || true
-      continue-on-error: true
+          2>&1 | tee archive.log | xcpretty || cat archive.log
+      # Archive must succeed for release builds
 
     - name: Upload Archive
       if: success()

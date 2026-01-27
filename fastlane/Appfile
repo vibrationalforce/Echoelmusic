@@ -28,9 +28,9 @@ for_platform :mac do
   app_identifier "com.echoelmusic.app"
 end
 
-# watchOS App (companion to iOS app)
+# watchOS App (standalone - unified bundle ID for Universal Purchase)
 for_lane :beta_watchos do
-  app_identifier "com.echoelmusic.app.watchkitapp"
+  app_identifier "com.echoelmusic.app"
 end
 
 # tvOS App (unified bundle ID for universal purchase)
@@ -54,13 +54,28 @@ end
 # Main Apps (Universal Purchase enabled):
 #   - com.echoelmusic.app              (iOS, macOS, tvOS, visionOS)
 #
-# Extensions:
-#   - com.echoelmusic.app.auv3         (iOS AUv3 - separate extension)
-#   - com.echoelmusic.app.watchkitapp  (watchOS companion app)
+# Child Apps (required for Universal Purchase association):
+#   - com.echoelmusic.app.watchkitapp  (watchOS - child of iOS app)
 #
-# Note: macOS AUv3 is embedded inside the main app bundle, not separate.
+# Extensions:
+#   - com.echoelmusic.app.auv3         (iOS & macOS AUv3 Audio Unit)
+#   - com.echoelmusic.app.widgets      (iOS WidgetKit Extension)
 #
 # App Groups:
 #   - group.com.echoelmusic.shared     (shared data between apps & extensions)
 #
 # =============================================================================
+
+# =============================================================================
+# Extension Bundle Identifiers (for Match/Sigh)
+# =============================================================================
+
+# iOS AUv3 Audio Unit Extension
+for_lane :beta_auv3 do
+  app_identifier "com.echoelmusic.app.auv3"
+end
+
+# iOS Widgets Extension
+for_lane :beta_widgets do
+  app_identifier "com.echoelmusic.app.widgets"
+end

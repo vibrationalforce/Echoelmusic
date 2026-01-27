@@ -309,12 +309,19 @@ private struct PermissionsPage: View {
     private func requestHealthKitPermission() {
         Task {
             let healthStore = HKHealthStore()
-            let typesToRead: Set<HKObjectType> = [
-                HKObjectType.quantityType(forIdentifier: .heartRate)!,
-                HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
-                HKObjectType.quantityType(forIdentifier: .respiratoryRate)!,
-                HKObjectType.quantityType(forIdentifier: .oxygenSaturation)!
-            ]
+            var typesToRead: Set<HKObjectType> = []
+            if let heartRate = HKObjectType.quantityType(forIdentifier: .heartRate) {
+                typesToRead.insert(heartRate)
+            }
+            if let hrv = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) {
+                typesToRead.insert(hrv)
+            }
+            if let respiratory = HKObjectType.quantityType(forIdentifier: .respiratoryRate) {
+                typesToRead.insert(respiratory)
+            }
+            if let oxygen = HKObjectType.quantityType(forIdentifier: .oxygenSaturation) {
+                typesToRead.insert(oxygen)
+            }
 
             do {
                 try await healthStore.requestAuthorization(toShare: [], read: typesToRead)

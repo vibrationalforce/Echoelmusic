@@ -58,8 +58,8 @@ dependencies {
     // Health Services (for HRV/HR on watch)
     implementation("androidx.health:health-services-client:1.0.0-rc02")
 
-    // Compose
-    implementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    // Compose (aligned with main app BOM)
+    implementation(platform("androidx.compose:compose-bom:2024.10.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material:material-icons-extended")

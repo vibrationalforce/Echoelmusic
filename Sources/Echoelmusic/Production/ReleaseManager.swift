@@ -163,7 +163,16 @@ public final class ReleaseManager: ObservableObject {
             throw ProductionError.configurationMissing("Invalid App Store lookup URL")
         }
 
-        let (data, _) = try await URLSession.shared.data(from: url)
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        // Validate HTTP response
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw ProductionError.networkError("Invalid response type from App Store")
+        }
+
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw ProductionError.networkError("App Store API returned status \(httpResponse.statusCode)")
+        }
 
         struct AppStoreLookup: Codable {
             var resultCount: Int

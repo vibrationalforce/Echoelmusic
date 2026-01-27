@@ -144,15 +144,18 @@ public struct SafeAudioBuffer: Sendable {
         // Ultimate fallback - create minimal valid buffer
         logger.error("All audio buffer creation attempts failed, using minimal buffer")
 
-        // This should never fail as we're using known-good parameters
-        let minimalFormat = AVAudioFormat(
+        // Use known-good parameters with guard for safety
+        guard let minimalFormat = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,
             sampleRate: 44100,
             channels: 1,
             interleaved: false
-        )!
+        ),
+        let minimalBuffer = AVAudioPCMBuffer(pcmFormat: minimalFormat, frameCapacity: 1) else {
+            fatalError("Failed to create minimal audio buffer with known-good parameters - this indicates a system-level audio failure")
+        }
 
-        return AVAudioPCMBuffer(pcmFormat: minimalFormat, frameCapacity: 1)!
+        return minimalBuffer
     }
 }
 

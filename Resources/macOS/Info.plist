@@ -97,5 +97,9 @@
 			<string>Alternate</string>
 		</dict>
 	</array>
+
+	<!-- App Store Export Compliance -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

@@ -42,7 +42,7 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     PRODUCT_NAME: $(TARGET_NAME)
-    MARKETING_VERSION: "1.2.0"
+    MARKETING_VERSION: "1.2.1"
     CURRENT_PROJECT_VERSION: "${BUILD_NUMBER:=1}"
     ENABLE_BITCODE: NO
     ALWAYS_SEARCH_USER_PATHS: NO
@@ -84,6 +84,7 @@ targets:
           - "**/WatchOS/**"
           - "**/tvOS/**"
           - "**/Platforms/**"
+          - "**/AppClips/**"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
@@ -144,13 +145,15 @@ targets:
         INFOPLIST_FILE: Resources/iOS/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: Echoelmusic.entitlements
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "Apple Distribution"
-        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "16.0"
-    # Note: iOS AUv3 is integrated into the main app (works as both host and plugin)
-    # No separate extension needed - same approach as macOS
+    dependencies:
+      - target: EchoelmusicAUv3-iOS
+        embed: true
+      - target: EchoelmusicClip
+        embed: true
     entitlements:
       path: Echoelmusic.entitlements
 
@@ -205,9 +208,8 @@ targets:
         INFOPLIST_FILE: Resources/macOS/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: EchoelmusicMac.entitlements
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "Apple Distribution"
-        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
         MACOSX_DEPLOYMENT_TARGET: "13.0"
         ENABLE_HARDENED_RUNTIME: YES
         COMBINE_HIDPI_IMAGES: YES
@@ -288,13 +290,96 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.auv3
         INFOPLIST_FILE: Sources/EchoelmusicAUv3/Info-macOS.plist
         GENERATE_INFOPLIST_FILE: NO
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "Apple Distribution"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
         CODE_SIGN_ENTITLEMENTS: EchoelmusicAUv3.entitlements
         MACOSX_DEPLOYMENT_TARGET: "13.0"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
         SKIP_INSTALL: YES
         ENABLE_HARDENED_RUNTIME: YES
+    dependencies:
+      - framework: AudioToolbox.framework
+      - framework: AVFoundation.framework
+      - framework: CoreAudioKit.framework
+      - framework: Accelerate.framework
+
+  # ===========================================================================
+  # iOS AUv3 Audio Unit Extension
+  # ===========================================================================
+  EchoelmusicAUv3-iOS:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Sources/EchoelmusicAUv3
+        type: group
+      - path: Sources/Echoelmusic/Sound/TR808BassSynth.swift
+        type: file
+    info:
+      path: Sources/EchoelmusicAUv3/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleDisplayName: "Echoelmusic 808"
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: XPC!
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionAttributes:
+            AudioComponents:
+              - description: "Echoelmusic TR-808 Bass Synth with Pitch Glide"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: 808 Bass"
+                sandboxSafe: true
+                subtype: E808
+                tags: [Synth, Bass, 808]
+                type: aumu
+                version: 1
+              - description: "Echoelmusic Bio-Reactive AI Music Generator"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: BioComposer"
+                sandboxSafe: true
+                subtype: Ebio
+                tags: [Synth, Generator, AI]
+                type: aumu
+                version: 1
+              - description: "Echoelmusic AI Stem Separation"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: Stem Splitter"
+                sandboxSafe: true
+                subtype: Estm
+                tags: [Effect, AI, Separator]
+                type: aufx
+                version: 1
+              - description: "Echoelmusic MIDI 2.0 + MPE Processor"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: MIDI Pro"
+                sandboxSafe: true
+                subtype: Emid
+                tags: [MIDI, MPE, Processor]
+                type: aumi
+                version: 1
+          NSExtensionPointIdentifier: com.apple.AudioUnit-UI
+          NSExtensionPrincipalClass: EchoelmusicAudioUnitViewController
+    settings:
+      base:
+        PRODUCT_NAME: EchoelmusicAUv3
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.auv3
+        INFOPLIST_FILE: Sources/EchoelmusicAUv3/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicAUv3.entitlements
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+        SKIP_INSTALL: YES
     dependencies:
       - framework: AudioToolbox.framework
       - framework: AVFoundation.framework
@@ -343,12 +428,12 @@ targets:
     settings:
       base:
         PRODUCT_NAME: "Echoelmusic Watch"
+        # NOTE: watchOS apps MUST have a child bundle ID of the companion iOS app
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.watchkitapp
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: EchoelmusicWatch.entitlements
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "Apple Distribution"
-        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
         WATCHOS_DEPLOYMENT_TARGET: "9.0"
         TARGETED_DEVICE_FAMILY: "4"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -399,9 +484,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: EchoelmusicTV.entitlements
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "Apple Distribution"
-        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
         TVOS_DEPLOYMENT_TARGET: "16.0"
         TARGETED_DEVICE_FAMILY: "3"
     entitlements:
@@ -452,12 +536,75 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: EchoelmusicVision.entitlements
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "Apple Distribution"
-        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
         XROS_DEPLOYMENT_TARGET: "1.0"
     entitlements:
       path: EchoelmusicVision.entitlements
+
+  # ===========================================================================
+  # iOS App Clip (Quick Session Entry Point)
+  # ===========================================================================
+  # App Clips have LIMITED capabilities - no HealthKit, HomeKit, SharePlay, etc.
+  # Size limit: 15 MB (iOS 16+), must be fast to launch
+  EchoelmusicClip:
+    type: application.on-demand-install-capable
+    platform: iOS
+    sources:
+      - path: Sources/Echoelmusic/AppClips
+        type: group
+      - path: Sources/Echoelmusic/Core
+        type: group
+      - path: Sources/Echoelmusic/Audio/AudioEngine.swift
+        type: file
+      - path: Sources/Echoelmusic/Theme
+        type: group
+    resources:
+      - path: Sources/Echoelmusic/Resources/Assets.xcassets
+        type: folder
+    info:
+      path: Resources/iOS/Info-Clip.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDisplayName: "Echoelmusic Clip"
+        LSRequiresIPhoneOS: true
+        NSMicrophoneUsageDescription: "Echoelmusic needs microphone access for quick audio sessions"
+        NSAppClip:
+          NSAppClipRequestEphemeralUserNotification: false
+          NSAppClipRequestLocationConfirmation: false
+        ITSAppUsesNonExemptEncryption: false
+        UIBackgroundModes:
+          - audio
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIUserInterfaceStyle: Dark
+    settings:
+      base:
+        PRODUCT_NAME: "Echoelmusic Clip"
+        # App Clip bundle ID MUST be child of parent app
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.Clip
+        INFOPLIST_FILE: Resources/iOS/Info-Clip.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicClip.entitlements
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
+        TARGETED_DEVICE_FAMILY: "1,2"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        # App Clip specific
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_ON_DEMAND_RESOURCES: YES
+    entitlements:
+      path: EchoelmusicClip.entitlements
 
   # ===========================================================================
   # iOS Unit Tests
@@ -515,11 +662,12 @@ targets:
 
 schemes:
 
-  # iOS Development (AUv3 integrated in main app)
+  # iOS Development (with embedded AUv3)
   Echoelmusic:
     build:
       targets:
         Echoelmusic: all
+        EchoelmusicAUv3-iOS: all
         EchoelmusicTests: [test]
         EchoelmusicUITests: [test]
     run:
@@ -617,12 +765,30 @@ schemes:
           parallelizable: false
           randomExecutionOrder: false
 
+  # App Clip Development
+  EchoelmusicClip:
+    build:
+      targets:
+        EchoelmusicClip: all
+    run:
+      config: Debug
+      environmentVariables:
+        _XCAppClipURL: "https://echoelmusic.app/clip/breathwork"
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
   # All Platforms Release (for CI)
-  # Note: iOS and macOS AUv3 are integrated into their main apps (no separate targets)
+  # AUv3 extensions are embedded in their respective main apps
   Echoelmusic-AllPlatforms:
     build:
       targets:
         Echoelmusic: [archive]
+        EchoelmusicAUv3-iOS: [archive]
+        EchoelmusicClip: [archive]
         Echoelmusic-macOS: [archive]
         EchoelmusicAUv3-macOS: [archive]
         Echoelmusic-watchOS: [archive]

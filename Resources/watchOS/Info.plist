@@ -27,6 +27,8 @@
 	</array>
 	<key>WKApplication</key>
 	<true/>
+	<key>WKCompanionAppBundleIdentifier</key>
+	<string>com.echoelmusic.app</string>
 	<key>WKRunsIndependentlyOfCompanionApp</key>
 	<true/>
 	<key>WKWatchOnly</key>
@@ -51,5 +53,9 @@
 		<string>CLKComplicationFamilyGraphicCircular</string>
 		<string>CLKComplicationFamilyGraphicRectangular</string>
 	</array>
+
+	<!-- App Store Export Compliance -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

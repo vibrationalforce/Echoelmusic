@@ -48,6 +48,11 @@
     {
       "platform": "itunes",
       "url": "https://apps.apple.com/app/echoelmusic/id6757957358"
+    },
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.echoelmusic.app",
+      "id": "com.echoelmusic.app"
     }
   ],
   "prefer_related_applications": true,

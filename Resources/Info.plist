@@ -39,6 +39,27 @@
 	<!-- Bluetooth Permission (for AirPods detection and ASAF) -->
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Echoelmusic detects your AirPods to enable Apple Spatial Audio Features (ASAF) and high-quality Multidimensional Brainwave Entrainment.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Echoelmusic connects to Bluetooth MIDI controllers for music creation.</string>
+
+	<!-- Camera Permission (for face tracking) -->
+	<key>NSCameraUsageDescription</key>
+	<string>Echoelmusic uses your camera for face tracking to control audio parameters with your facial expressions.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Echoelmusic uses TrueDepth camera for face tracking to map your expressions to audio-visual parameters.</string>
+
+	<!-- Local Network Permission (for DMX, Art-Net, OSC) -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Echoelmusic uses local network for DMX lighting control, Art-Net, and connecting to external audio interfaces.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+		<string>_rtsp._tcp</string>
+		<string>_artnet._udp</string>
+		<string>_osc._udp</string>
+		<string>_midi._udp</string>
+		<string>_echoelmusic._tcp</string>
+	</array>
 
 	<!-- Background Modes (for continuous audio playback) -->
 	<key>UIBackgroundModes</key>
@@ -94,6 +115,10 @@
 	<key>UIFileSharingEnabled</key>
 	<false/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<false/>
+
+	<!-- App Store Export Compliance -->
+	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>
 </plist>

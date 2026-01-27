@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import AVFoundation
 import QuartzCore
+import CoreLocation
 
 /// Global logger instance for UnifiedControlHub
 private let Log = EchoelLogger.shared
@@ -78,6 +79,10 @@ public class UnifiedControlHub: ObservableObject {
     // Phase λ∞: Eye Gaze Tracking Integration
     private var gazeTracker: GazeTracker?
     private var gazeTrackingCancellables = Set<AnyCancellable>()
+
+    // Weather Reactive Integration (WeatherKit)
+    private var weatherReactiveEngine: WeatherReactiveEngine?
+    private var weatherCancellables = Set<AnyCancellable>()
 
     // MARK: - Control Loop
 
@@ -727,6 +732,151 @@ public class UnifiedControlHub: ObservableObject {
     /// Set quantum emulation mode
     public func setQuantumMode(_ mode: QuantumLightEmulator.EmulationMode) {
         quantumLightEmulator?.setMode(mode)
+    }
+
+    // MARK: - Weather Reactive Integration
+
+    /// Enable weather-reactive audio/visual modulation
+    /// Uses WeatherKit with smart caching to stay within free tier (500k calls/month)
+    /// - Parameter location: Optional initial location (will use device location if nil)
+    public func enableWeatherReactive(location: CoreLocation.CLLocationCoordinate2D? = nil) {
+        weatherCancellables.removeAll()
+
+        let engine = WeatherReactiveEngine.shared
+        self.weatherReactiveEngine = engine
+
+        // Subscribe to audio parameter changes
+        engine.onAudioParametersChanged = { [weak self] params in
+            self?.applyWeatherAudioParameters(params)
+        }
+
+        // Subscribe to visual parameter changes
+        engine.onVisualParametersChanged = { [weak self] params in
+            self?.applyWeatherVisualParameters(params)
+        }
+
+        // Subscribe to lighting parameter changes
+        engine.onLightingParametersChanged = { [weak self] params in
+            self?.applyWeatherLightingParameters(params)
+        }
+
+        engine.enable()
+
+        // Fetch initial weather if location provided
+        if let loc = location {
+            Task {
+                await engine.updateWeather(for: loc)
+            }
+        }
+
+        Log.info("🌤️ Weather Reactive enabled\n  - Preset: \(engine.activePreset.name)\n  - Rate limiting: Active (free tier)", category: .system)
+    }
+
+    /// Disable weather-reactive features
+    public func disableWeatherReactive() {
+        weatherCancellables.removeAll()
+        weatherReactiveEngine?.disable()
+        weatherReactiveEngine = nil
+        Log.info("🌤️ Weather Reactive disabled", category: .system)
+    }
+
+    /// Update weather data for current location
+    /// - Parameter location: The location to fetch weather for
+    public func updateWeatherForLocation(_ location: CoreLocation.CLLocationCoordinate2D) async {
+        await weatherReactiveEngine?.updateWeather(for: location)
+    }
+
+    /// Set weather reactive preset
+    /// - Parameter preset: The preset to apply
+    public func setWeatherPreset(_ preset: WeatherReactivePreset) {
+        weatherReactiveEngine?.applyPreset(preset)
+    }
+
+    /// Get current weather description
+    public var weatherDescription: String? {
+        weatherReactiveEngine?.weatherDescription
+    }
+
+    /// Get current weather-suggested mood
+    public var weatherMood: String? {
+        weatherReactiveEngine?.currentMood
+    }
+
+    /// Check if weather reactive is enabled
+    public var isWeatherReactiveEnabled: Bool {
+        weatherReactiveEngine?.isEnabled ?? false
+    }
+
+    /// Get current weather audio parameters
+    public var weatherAudioParameters: WeatherAudioParameters? {
+        weatherReactiveEngine?.audioParameters
+    }
+
+    /// Apply weather-derived audio parameters to the audio engine
+    private func applyWeatherAudioParameters(_ params: WeatherAudioParameters) {
+        // Apply filter settings
+        audioEngine?.setFilterCutoff(params.filterCutoff)
+        audioEngine?.setFilterResonance(params.filterResonance)
+
+        // Apply reverb settings
+        audioEngine?.setReverbMix(params.reverbMix)
+        audioEngine?.setReverbDecay(params.reverbDecay)
+
+        // Apply delay settings
+        audioEngine?.setDelayTime(params.delayTime)
+        audioEngine?.setDelayFeedback(params.delayFeedback)
+        audioEngine?.setDelayMix(params.delayMix)
+
+        // Apply modulation
+        audioEngine?.setModulationRate(params.modulationRate)
+        audioEngine?.setModulationDepth(params.modulationDepth)
+
+        // Apply EQ/dynamics
+        audioEngine?.setBassBoost(params.bassBoost)
+        audioEngine?.setBrightness(params.brightness)
+        audioEngine?.setWarmth(params.warmth)
+
+        #if DEBUG
+        Log.audio("[Weather→Audio] Filter: \(Int(params.filterCutoff))Hz, Reverb: \(Int(params.reverbMix * 100))%, BPM: \(Int(params.suggestedBPM))")
+        #endif
+    }
+
+    /// Apply weather-derived visual parameters
+    private func applyWeatherVisualParameters(_ params: WeatherVisualParameters) {
+        // Apply to visual mapper if available
+        midiToVisualMapper?.setHue(params.primaryHue)
+        midiToVisualMapper?.setSaturation(params.saturation)
+        midiToVisualMapper?.setBrightness(params.brightness)
+        midiToVisualMapper?.setParticleDensity(params.particleDensity)
+        midiToVisualMapper?.setAnimationSpeed(params.animationSpeed)
+
+        // Apply to photonics visualization if available
+        photonicsVisualization?.setColorTemperature(params.colorTemperature)
+        photonicsVisualization?.setFogDensity(params.fogDensity)
+
+        #if DEBUG
+        Log.info("[Weather→Visual] Hue: \(Int(params.primaryHue))°, Particles: \(params.particleType.rawValue)", category: .system)
+        #endif
+    }
+
+    /// Apply weather-derived lighting parameters
+    private func applyWeatherLightingParameters(_ params: WeatherLightingParameters) {
+        // Apply to DMX lighting if available
+        midiToLightMapper?.setMasterIntensity(params.masterIntensity)
+        midiToLightMapper?.setColor(
+            r: params.colorR,
+            g: params.colorG,
+            b: params.colorB,
+            w: params.colorW
+        )
+        midiToLightMapper?.setStrobeRate(params.strobeRate)
+
+        // Apply to Push 3 LEDs if available
+        push3LEDController?.setGlobalBrightness(params.masterIntensity)
+
+        #if DEBUG
+        Log.led("[Weather→Light] Intensity: \(Int(params.masterIntensity * 100))%, RGB: (\(Int(params.colorR * 255)), \(Int(params.colorG * 255)), \(Int(params.colorB * 255)))")
+        #endif
     }
 
     // MARK: - Lifecycle

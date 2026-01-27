@@ -137,21 +137,21 @@ All entitlements files have been created/updated with comprehensive capabilities
 - **Supports**: Mac Catalyst, Mac Designed for iPad
 
 ### 2. EchoelmusicMac (macOS App)
-- **Bundle ID**: `com.echoelmusic.mac`
+- **Bundle ID**: `com.echoelmusic.app`
 - **Platform**: macOS 12.0+
 - **Product**: Application
 - **Sources**: All Echoelmusic Swift and Metal sources
 - **Capabilities**: USB, Camera, Audio, Network Server, Hardened Runtime
 
 ### 3. EchoelmusicWatch (watchOS App)
-- **Bundle ID**: `com.echoelmusic.app.watchkitapp`
+- **Bundle ID**: `com.echoelmusic.app`
 - **Platform**: watchOS 8.0+
-- **Product**: Watch2App
+- **Product**: Watch2App (Standalone - Universal Purchase)
 - **Sources**: `Sources/Echoelmusic/WatchOS/**`
 - **Capabilities**: HealthKit, Workout Processing, Background Delivery
 
 ### 4. EchoelmusicTV (tvOS App)
-- **Bundle ID**: `com.echoelmusic.app.tv`
+- **Bundle ID**: `com.echoelmusic.app`
 - **Platform**: tvOS 15.0+
 - **Product**: Application
 - **Sources**: `Sources/Echoelmusic/tvOS/**`

@@ -337,7 +337,17 @@ jobs:
 
     steps:
       - name: Generate Deployment Report
+        id: report
         run: |
+          # Determine overall status
+          if [[ "${{ needs.ios.result }}" == "success" || "${{ needs.macos.result }}" == "success" ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "emoji=🚀" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "emoji=❌" >> $GITHUB_OUTPUT
+          fi
+
           echo "# Apple Platform Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** ${{ needs.preflight.outputs.version }}" >> $GITHUB_STEP_SUMMARY
@@ -359,3 +369,28 @@ jobs:
           echo "1. [Open App Store Connect](https://appstoreconnect.apple.com) to check build processing" >> $GITHUB_STEP_SUMMARY
           echo "2. TestFlight builds usually process within 15-30 minutes" >> $GITHUB_STEP_SUMMARY
           echo "3. Add testers or submit for review when ready" >> $GITHUB_STEP_SUMMARY
+
+      # Optional: Slack notification (requires SLACK_WEBHOOK_URL secret)
+      - name: Slack Notification
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ steps.report.outputs.status }}
+          fields: repo,message,commit,author,eventName,workflow
+          text: |
+            ${{ steps.report.outputs.emoji }} *Echoelmusic Deployment*
+            Version: ${{ needs.preflight.outputs.version }} (Build ${{ needs.preflight.outputs.build_number }})
+            iOS: ${{ needs.ios.result }}
+            macOS: ${{ needs.macos.result }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+
+      # Optional: Discord notification (requires DISCORD_WEBHOOK_URL secret)
+      - name: Discord Notification
+        if: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d "{\"embeds\": [{\"title\": \"${{ steps.report.outputs.emoji }} Echoelmusic Deployment\", \"description\": \"Version ${{ needs.preflight.outputs.version }} (Build ${{ needs.preflight.outputs.build_number }})\", \"fields\": [{\"name\": \"iOS\", \"value\": \"${{ needs.ios.result }}\", \"inline\": true}, {\"name\": \"macOS\", \"value\": \"${{ needs.macos.result }}\", \"inline\": true}], \"color\": ${{ steps.report.outputs.status == 'success' && '5763719' || '15548997' }}}]}" \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}" || true
+        continue-on-error: true

@@ -509,7 +509,7 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
 
     // MARK: - Private Properties
 
-    private var centralManager: CBCentralManager!
+    private var centralManager: CBCentralManager?
     private var audioSession: BluetoothAudioSession
     private var audioEngine: AVAudioEngine
     private var inputBuffer: LockFreeRingBuffer
@@ -603,7 +603,8 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
 
     /// Start scanning for Bluetooth audio devices
     public func startScanning() {
-        guard centralManager.state == .poweredOn else { return }
+        guard let centralManager = centralManager,
+              centralManager.state == .poweredOn else { return }
         isScanning = true
 
         // Scan for audio devices (A2DP, HFP, LE Audio)
@@ -624,7 +625,7 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
 
     /// Stop scanning
     public func stopScanning() {
-        centralManager.stopScan()
+        centralManager?.stopScan()
         isScanning = false
     }
 

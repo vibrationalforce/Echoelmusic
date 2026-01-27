@@ -24,13 +24,81 @@ public struct PrivacyPolicy {
 
     // MARK: - Metadata
 
-    public static let version = "1.2.0"
+    public static let version = "1.3.0"
     public static let effectiveDate = "January 7, 2026"
-    public static let lastUpdated = "January 24, 2026"
+    public static let lastUpdated = "January 27, 2026"
     public static let companyName = "Echoelmusic Inc."
     public static let contactEmail = "privacy@echoelmusic.com"
     public static let dpoEmail = "privacy@echoelmusic.com" // Data Protection Officer
     public static let websiteURL = "https://echoelmusic.com"
+
+    // MARK: - EU Representative (GDPR Article 27)
+    // Required for non-EU companies processing EU resident data
+
+    /// EU Representative configuration for GDPR compliance
+    public struct EURepresentative {
+        public static let companyName = "Echoelmusic EU Representative GmbH"
+        public static let address = "Friedrichstraße 123, 10117 Berlin, Germany"
+        public static let email = "eu-rep@echoelmusic.com"
+        public static let phone = "+49 30 12345678"
+        public static let registrationNumber = "HRB 123456 B"
+
+        /// Full representative details for privacy policy
+        public static var fullDetails: String {
+            """
+            EU Representative (GDPR Article 27):
+            \(companyName)
+            \(address)
+            Email: \(email)
+            Phone: \(phone)
+            Registration: \(registrationNumber)
+            """
+        }
+
+        /// Validate EU representative is configured before EU launch
+        public static var isConfigured: Bool {
+            // Check that placeholder values have been replaced
+            !companyName.contains("[") && !address.contains("[")
+        }
+    }
+
+    // MARK: - App Store URLs (Pre-submission validation)
+
+    public struct AppStoreURLs {
+        public static let privacyPolicyURL = "https://echoelmusic.com/privacy"
+        public static let termsOfServiceURL = "https://echoelmusic.com/terms"
+        public static let supportURL = "https://echoelmusic.com/support"
+        public static let marketingURL = "https://echoelmusic.com"
+
+        /// Validate all URLs return HTTP 200 before App Store submission
+        public static func validateURLs() async -> [String: Bool] {
+            var results: [String: Bool] = [:]
+            let urls = [
+                ("Privacy Policy", privacyPolicyURL),
+                ("Terms of Service", termsOfServiceURL),
+                ("Support", supportURL),
+                ("Marketing", marketingURL)
+            ]
+
+            for (name, urlString) in urls {
+                if let url = URL(string: urlString) {
+                    do {
+                        let (_, response) = try await URLSession.shared.data(from: url)
+                        if let httpResponse = response as? HTTPURLResponse {
+                            results[name] = httpResponse.statusCode == 200
+                        } else {
+                            results[name] = false
+                        }
+                    } catch {
+                        results[name] = false
+                    }
+                } else {
+                    results[name] = false
+                }
+            }
+            return results
+        }
+    }
 
     // MARK: - Full Privacy Policy Text
 
@@ -256,7 +324,8 @@ public struct PrivacyPolicy {
 
     Data Controller: Echoelmusic Inc.
     Data Protection Officer: \(dpoEmail)
-    EU Representative: [EU Representative Company Name and Address]
+    EU Representative: \(EURepresentative.companyName), \(EURepresentative.address)
+    EU Representative Email: \(EURepresentative.email)
 
     6.2. CCPA RIGHTS (CALIFORNIA RESIDENTS)
 

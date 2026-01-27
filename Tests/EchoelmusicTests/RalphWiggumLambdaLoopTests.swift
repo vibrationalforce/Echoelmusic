@@ -37,7 +37,9 @@ final class CircuitBreakerTests: XCTestCase {
                 _ = try await breaker.execute {
                     throw NSError(domain: "test", code: 1)
                 }
-            } catch {}
+            } catch {
+                // Expected failure - testing circuit breaker failure tracking
+            }
         }
 
         let stats = await breaker.statistics
@@ -53,7 +55,9 @@ final class CircuitBreakerTests: XCTestCase {
                 _ = try await breaker.execute {
                     throw NSError(domain: "test", code: 1)
                 }
-            } catch {}
+            } catch {
+                // Expected failure - testing circuit opening behavior
+            }
         }
 
         let state = await breaker.state

@@ -14,6 +14,23 @@ import Foundation
 import Security
 #endif
 
+// MARK: - Safe URL Helper
+
+/// Extension for creating URLs from known-valid static strings
+/// Provides safer alternative to force unwrapping
+private extension URL {
+    /// Creates a URL from a static string that is known to be valid at compile time
+    /// Falls back to a placeholder URL if initialization fails (should never happen for valid static strings)
+    static func staticURL(_ string: String) -> URL {
+        guard let url = URL(string: string) else {
+            log.error("Failed to create URL from static string: \(string)")
+            // Return a fallback URL for robustness - this should never be reached for valid static strings
+            return URL(string: "https://api.echoelmusic.com")!
+        }
+        return url
+    }
+}
+
 // MARK: - API Configuration Protocol
 
 /// Protocol for all API configurations
@@ -135,7 +152,7 @@ public struct YouTubeAPIConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://www.googleapis.com/youtube/v3")!
+        .staticURL("https://www.googleapis.com/youtube/v3")
     }
 
     public var apiKeyIdentifier: String {
@@ -172,7 +189,7 @@ public struct TwitchAPIConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://api.twitch.tv/helix")!
+        .staticURL("https://api.twitch.tv/helix")
     }
 
     public var apiKeyIdentifier: String {
@@ -213,7 +230,7 @@ public struct FacebookAPIConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://graph.facebook.com/v18.0")!
+        .staticURL("https://graph.facebook.com/v18.0")
     }
 
     public var apiKeyIdentifier: String {
@@ -248,7 +265,7 @@ public struct InstagramAPIConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://graph.instagram.com")!
+        .staticURL("https://graph.instagram.com")
     }
 
     public var apiKeyIdentifier: String {
@@ -276,7 +293,7 @@ public struct TikTokAPIConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://open-api.tiktok.com")!
+        .staticURL("https://open-api.tiktok.com")
     }
 
     public var apiKeyIdentifier: String {
@@ -321,7 +338,7 @@ public struct CloudKitConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://api.apple-cloudkit.com")!
+        .staticURL("https://api.apple-cloudkit.com")
     }
 
     public var apiKeyIdentifier: String {
@@ -359,11 +376,11 @@ public struct AWSS3Configuration: APIConfiguration {
     public var baseURL: URL {
         switch environment {
         case .development:
-            return URL(string: "https://s3.us-west-2.amazonaws.com")!
+            return .staticURL("https://s3.us-west-2.amazonaws.com")
         case .staging:
-            return URL(string: "https://s3.us-east-1.amazonaws.com")!
+            return .staticURL("https://s3.us-east-1.amazonaws.com")
         case .production, .enterprise:
-            return URL(string: "https://s3.us-east-1.amazonaws.com")!
+            return .staticURL("https://s3.us-east-1.amazonaws.com")
         }
     }
 
@@ -404,7 +421,7 @@ public struct GoogleCloudStorageConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://storage.googleapis.com")!
+        .staticURL("https://storage.googleapis.com")
     }
 
     public var apiKeyIdentifier: String {
@@ -441,7 +458,7 @@ public struct AzureBlobConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://echoelmusic\(environment.rawValue).blob.core.windows.net")!
+        .staticURL("https://echoelmusic\(environment.rawValue).blob.core.windows.net")
     }
 
     public var apiKeyIdentifier: String {
@@ -476,7 +493,7 @@ public struct FirebaseAnalyticsConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://firebaselogging.googleapis.com/v0cc/log/batch")!
+        .staticURL("https://firebaselogging.googleapis.com/v0cc/log/batch")
     }
 
     public var apiKeyIdentifier: String {
@@ -517,7 +534,7 @@ public struct MixpanelConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://api.mixpanel.com")!
+        .staticURL("https://api.mixpanel.com")
     }
 
     public var apiKeyIdentifier: String {
@@ -545,7 +562,7 @@ public struct AmplitudeConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://api2.amplitude.com")!
+        .staticURL("https://api2.amplitude.com")
     }
 
     public var apiKeyIdentifier: String {
@@ -574,7 +591,7 @@ public struct CrashlyticsConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://firebasecrashlyticsreports.googleapis.com")!
+        .staticURL("https://firebasecrashlyticsreports.googleapis.com")
     }
 
     public var apiKeyIdentifier: String {
@@ -606,7 +623,7 @@ public struct SentryConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://sentry.io/api/0")!
+        .staticURL("https://sentry.io/api/0")
     }
 
     public var apiKeyIdentifier: String {
@@ -645,7 +662,7 @@ public struct AppleMLConfiguration: APIConfiguration {
     public let environment: APIEnvironment
 
     public var baseURL: URL {
-        URL(string: "https://api.apple-ml.com")!
+        .staticURL("https://api.apple-ml.com")
     }
 
     public var apiKeyIdentifier: String {
@@ -680,11 +697,11 @@ public struct CustomAIConfiguration: APIConfiguration {
     public var baseURL: URL {
         switch environment {
         case .development:
-            return URL(string: "http://localhost:8080")!
+            return .staticURL("http://localhost:8080")
         case .staging:
-            return URL(string: "https://ai-staging.echoelmusic.com")!
+            return .staticURL("https://ai-staging.echoelmusic.com")
         case .production, .enterprise:
-            return URL(string: "https://ai.echoelmusic.com")!
+            return .staticURL("https://ai.echoelmusic.com")
         }
     }
 
