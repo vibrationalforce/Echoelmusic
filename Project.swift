@@ -118,7 +118,8 @@ let project = Project(
                 .target(name: "EchoelmusicAUv3"),
                 .target(name: "EchoelmusicWidgets"),
                 .target(name: "EchoelmusicWatch"),
-                .target(name: "EchoelmusicTV")
+                .target(name: "EchoelmusicTV"),
+                .target(name: "EchoelmusicClip")
             ],
             settings: .settings(
                 base: [
@@ -284,6 +285,52 @@ let project = Project(
                     "TARGETED_DEVICE_FAMILY": "7",
                     "XROS_DEPLOYMENT_TARGET": "1.0",
                     "ENABLE_PREVIEWS": "YES"
+                ],
+                defaultSettings: .recommended
+            )
+        ),
+
+        // MARK: - App Clip (Quick Sessions without full download)
+        Target(
+            name: "EchoelmusicClip",
+            platform: .iOS,
+            product: .appClip,
+            bundleId: "com.echoelmusic.app.Clip",
+            deploymentTarget: .iOS(targetVersion: "16.0", devices: [.iphone]),
+            infoPlist: .extendingDefault(with: [
+                "CFBundleDisplayName": "Echoelmusic",
+                "CFBundleShortVersionString": "10000.1.0",
+                "CFBundleVersion": "10000",
+                "UILaunchScreen": [:],
+                "UIApplicationSceneManifest": [
+                    "UIApplicationSupportsMultipleScenes": false
+                ],
+                "NSAppClip": [
+                    "NSAppClipRequestEphemeralUserNotification": true,
+                    "NSAppClipRequestLocationConfirmation": true
+                ],
+                "NSLocationWhenInUseUsageDescription": "Echoelmusic uses location to verify you are at a partner venue for App Clip sessions.",
+                "NSMicrophoneUsageDescription": "Echoelmusic uses your microphone for audio-visual experiences.",
+                "ITSAppUsesNonExemptEncryption": false
+            ]),
+            sources: [
+                "Sources/Echoelmusic/AppClips/**/*.swift"
+            ],
+            resources: [
+                "Sources/Echoelmusic/AppClips/Assets.xcassets"
+            ],
+            entitlements: .file(path: "EchoelmusicClip.entitlements"),
+            dependencies: [],
+            settings: .settings(
+                base: [
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app.Clip",
+                    "TARGETED_DEVICE_FAMILY": "1",
+                    "INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents": "YES",
+                    "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
+                    "ENABLE_ON_DEMAND_RESOURCES": "YES",
+                    // App Clip size limit is 15MB - enable optimizations
+                    "DEAD_CODE_STRIPPING": "YES",
+                    "STRIP_INSTALLED_PRODUCT": "YES"
                 ],
                 defaultSettings: .recommended
             )
@@ -588,6 +635,28 @@ let project = Project(
             )
         ),
 
+        // MARK: - App Clip Scheme
+        Scheme(
+            name: "EchoelmusicClip",
+            shared: true,
+            buildAction: .buildAction(targets: ["EchoelmusicClip"]),
+            runAction: .runAction(
+                configuration: "Debug",
+                executable: "EchoelmusicClip",
+                arguments: .arguments(
+                    environmentVariables: [
+                        "_XCAppClipURL": .init(
+                            value: "https://echoelmusic.app/clip/breathwork",
+                            isEnabled: true
+                        )
+                    ]
+                )
+            ),
+            archiveAction: .archiveAction(
+                configuration: "Release"
+            )
+        ),
+
         // MARK: - All Platforms Scheme
         Scheme(
             name: "Echoelmusic-AllPlatforms",
@@ -601,7 +670,8 @@ let project = Project(
                     "EchoelmusicWatch",
                     "EchoelmusicTV",
                     "EchoelmusicVision",
-                    "EchoelmusicWidgets"
+                    "EchoelmusicWidgets",
+                    "EchoelmusicClip"
                 ]
             ),
             testAction: .targets(

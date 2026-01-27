@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- ============================================================ -->
+	<!-- APP CLIP ENTITLEMENTS -->
+	<!-- ============================================================ -->
+	<!--
+	App Clips have limited entitlements compared to full apps.
+	Only essential capabilities are enabled for quick sessions.
+	See: https://developer.apple.com/documentation/app_clips
+	-->
+
+	<!-- ============================================================ -->
+	<!-- APP GROUPS (Share data with parent app) -->
+	<!-- ============================================================ -->
+
+	<!-- App Groups (for sharing data with full app) -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.echoelmusic.shared</string>
+	</array>
+
+	<!-- ============================================================ -->
+	<!-- ASSOCIATED DOMAINS (Required for App Clip invocation) -->
+	<!-- ============================================================ -->
+
+	<!-- Associated Domains - Required for App Clip invocation via URL -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>appclips:echoelmusic.com</string>
+		<string>appclips:echoelmusic.app</string>
+		<string>appclips:www.echoelmusic.com</string>
+	</array>
+
+	<!-- ============================================================ -->
+	<!-- PARENT APP BUNDLE ID -->
+	<!-- ============================================================ -->
+
+	<!-- Parent Application Identifiers (link to full app) -->
+	<key>com.apple.developer.parent-application-identifiers</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.echoelmusic.app</string>
+	</array>
+
+	<!-- ============================================================ -->
+	<!-- LOCATION (For venue-based App Clips) -->
+	<!-- ============================================================ -->
+
+	<!-- On-Demand Resources (for lean App Clip size) -->
+	<key>com.apple.developer.on-demand-resources</key>
+	<true/>
+</dict>
+</plist>

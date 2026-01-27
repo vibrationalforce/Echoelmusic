@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- ============================================================ -->
+	<!-- HEALTHKIT -->
+	<!-- ============================================================ -->
+
 	<!-- HealthKit Access -->
 	<key>com.apple.developer.healthkit</key>
 	<true/>
@@ -10,11 +14,35 @@
 		<string>health-records</string>
 	</array>
 
+	<!-- Background Health Delivery -->
+	<key>com.apple.developer.healthkit.background-delivery</key>
+	<true/>
+
+	<!-- Workout Processing -->
+	<key>com.apple.developer.healthkit.workout-processing</key>
+	<true/>
+
+	<!-- ============================================================ -->
+	<!-- PUSH NOTIFICATIONS -->
+	<!-- ============================================================ -->
+
+	<!-- Apple Push Notification Service -->
+	<key>aps-environment</key>
+	<string>development</string>
+
+	<!-- ============================================================ -->
+	<!-- APP GROUPS -->
+	<!-- ============================================================ -->
+
 	<!-- App Groups -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.echoelmusic.shared</string>
 	</array>
+
+	<!-- ============================================================ -->
+	<!-- KEYCHAIN SHARING -->
+	<!-- ============================================================ -->
 
 	<!-- Keychain Sharing -->
 	<key>keychain-access-groups</key>
@@ -22,12 +50,12 @@
 		<string>$(AppIdentifierPrefix)com.echoelmusic.app</string>
 	</array>
 
-	<!-- Background Modes -->
-	<key>com.apple.developer.healthkit.background-delivery</key>
-	<true/>
+	<!-- ============================================================ -->
+	<!-- SIRI & SHORTCUTS -->
+	<!-- ============================================================ -->
 
-	<!-- Workout Processing -->
-	<key>com.apple.developer.healthkit.workout-processing</key>
+	<!-- Siri (for watchOS Shortcuts) -->
+	<key>com.apple.developer.siri</key>
 	<true/>
 </dict>
 </plist>
