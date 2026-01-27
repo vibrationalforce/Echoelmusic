@@ -52,14 +52,30 @@ end
 # This allows customers to buy once and get the app on all Apple platforms.
 #
 # Main Apps (Universal Purchase enabled):
-#   - com.echoelmusic.app              (iOS, macOS, watchOS, tvOS, visionOS)
+#   - com.echoelmusic.app              (iOS, macOS, tvOS, visionOS)
+#
+# Child Apps (required for Universal Purchase association):
+#   - com.echoelmusic.app.watchkitapp  (watchOS - child of iOS app)
 #
 # Extensions:
-#   - com.echoelmusic.app.auv3         (macOS AUv3 - embedded extension)
-#
-# Note: macOS AUv3 is embedded inside the main app bundle, not separate.
+#   - com.echoelmusic.app.auv3         (iOS & macOS AUv3 Audio Unit)
+#   - com.echoelmusic.app.widgets      (iOS WidgetKit Extension)
 #
 # App Groups:
 #   - group.com.echoelmusic.shared     (shared data between apps & extensions)
 #
 # =============================================================================
+
+# =============================================================================
+# Extension Bundle Identifiers (for Match/Sigh)
+# =============================================================================
+
+# iOS AUv3 Audio Unit Extension
+for_lane :beta_auv3 do
+  app_identifier "com.echoelmusic.app.auv3"
+end
+
+# iOS Widgets Extension
+for_lane :beta_widgets do
+  app_identifier "com.echoelmusic.app.widgets"
+end

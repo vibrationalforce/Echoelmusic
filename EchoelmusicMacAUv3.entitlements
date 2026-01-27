@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- App Sandbox (required for macOS App Store) -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+
+	<!-- Audio Input (required for audio processing) -->
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
+
+	<!-- App Groups (shared data with main app) -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.echoelmusic.shared</string>
+	</array>
+
+	<!-- Keychain Sharing (matches main app for shared access) -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.echoelmusic.app</string>
+	</array>
+
+	<!-- Inter-App Audio (AUv3 requirement) -->
+	<key>inter-app-audio</key>
+	<true/>
+
+	<!-- Network Client (for preset sync, etc.) -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+
+	<!-- User-Selected Files (for loading samples/presets) -->
+	<key>com.apple.security.files.user-selected.read-only</key>
+	<true/>
+
+	<!-- Hardened Runtime for Audio Unit -->
+	<key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+	<true/>
+</dict>
+</plist>

@@ -119,7 +119,7 @@ platform :ios do
       keychain_password: keychain[:password]
     )
 
-    # Main app profile (AUv3 is integrated, no separate extension)
+    # Main app profile
     get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app",
@@ -128,7 +128,27 @@ platform :ios do
     )
     app_profile = lane_context[SharedValues::SIGH_NAME]
 
+    # AUv3 Audio Unit extension profile
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.auv3",
+      platform: "ios",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    auv3_profile = lane_context[SharedValues::SIGH_NAME]
+
+    # Widgets extension profile
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.widgets",
+      platform: "ios",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    widgets_profile = lane_context[SharedValues::SIGH_NAME]
+
     UI.message("iOS App profile: #{app_profile}")
+    UI.message("iOS AUv3 profile: #{auv3_profile}")
+    UI.message("iOS Widgets profile: #{widgets_profile}")
 
     # Build with proper signing
     build_app(
@@ -141,7 +161,9 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       export_options: {
         provisioningProfiles: {
-          "com.echoelmusic.app" => app_profile
+          "com.echoelmusic.app" => app_profile,
+          "com.echoelmusic.app.auv3" => auv3_profile,
+          "com.echoelmusic.app.widgets" => widgets_profile
         }
       },
       xcargs: [
@@ -521,11 +543,15 @@ lane :beta_all do
   UI.success("  Universal Purchase Bundle IDs:")
   UI.success("  (All linked via WKCompanionAppBundleIdentifier)")
   UI.success("")
-  UI.success("  iOS:      com.echoelmusic.app (standalone + integrated AUv3)")
-  UI.success("  macOS:    com.echoelmusic.app (standalone + embedded AUv3)")
-  UI.success("  watchOS:  com.echoelmusic.app.watchkitapp (child of iOS app)")
+  UI.success("  iOS:      com.echoelmusic.app")
+  UI.success("  macOS:    com.echoelmusic.app")
+  UI.success("  watchOS:  com.echoelmusic.app.watchkitapp (child of iOS)")
   UI.success("  tvOS:     com.echoelmusic.app")
   UI.success("  visionOS: com.echoelmusic.app")
+  UI.success("")
+  UI.success("  Extensions:")
+  UI.success("  AUv3:     com.echoelmusic.app.auv3 (iOS & macOS)")
+  UI.success("  Widgets:  com.echoelmusic.app.widgets (iOS)")
   UI.success("")
   UI.success("Check App Store Connect for build processing status.")
   UI.success("=" * 60)
