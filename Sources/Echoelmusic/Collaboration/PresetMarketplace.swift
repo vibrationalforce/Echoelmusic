@@ -492,7 +492,10 @@ public final class MarketplaceAPIClient {
     // MARK: - Creators
 
     public func getCreator(id: UUID) async throws -> CreatorProfile {
-        return Self.mockCreators.first { $0.id == id } ?? Self.mockCreators[0]
+        guard let creator = Self.mockCreators.first(where: { $0.id == id }) ?? Self.mockCreators.first else {
+            throw MarketplaceError.creatorNotFound(id)
+        }
+        return creator
     }
 
     public func getCreatorPresets(creatorId: UUID) async throws -> [MarketplacePreset] {
@@ -686,7 +689,10 @@ public final class PresetDownloadManager {
 
     private let fileManager = FileManager.default
     private var presetsDirectory: URL {
-        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        // Documents directory is guaranteed to exist on Apple platforms
+        guard let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            fatalError("Documents directory not available - system configuration error")
+        }
         return documentsURL.appendingPathComponent("Presets", isDirectory: true)
     }
 
@@ -726,6 +732,7 @@ public enum MarketplaceError: Error, LocalizedError {
     case notPurchased
     case notFree
     case libraryError(String)
+    case creatorNotFound(UUID)
 
     public var errorDescription: String? {
         switch self {
@@ -741,6 +748,8 @@ public enum MarketplaceError: Error, LocalizedError {
             return "This preset is not free"
         case .libraryError(let message):
             return "Library error: \(message)"
+        case .creatorNotFound(let id):
+            return "Creator not found: \(id)"
         }
     }
 }
