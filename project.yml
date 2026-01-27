@@ -84,6 +84,7 @@ targets:
           - "**/WatchOS/**"
           - "**/tvOS/**"
           - "**/Platforms/**"
+          - "**/AppClips/**"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
@@ -150,6 +151,8 @@ targets:
         IPHONEOS_DEPLOYMENT_TARGET: "16.0"
     dependencies:
       - target: EchoelmusicAUv3-iOS
+        embed: true
+      - target: EchoelmusicClip
         embed: true
     entitlements:
       path: Echoelmusic.entitlements
@@ -540,6 +543,70 @@ targets:
       path: EchoelmusicVision.entitlements
 
   # ===========================================================================
+  # iOS App Clip (Quick Session Entry Point)
+  # ===========================================================================
+  # App Clips have LIMITED capabilities - no HealthKit, HomeKit, SharePlay, etc.
+  # Size limit: 15 MB (iOS 16+), must be fast to launch
+  EchoelmusicClip:
+    type: application.on-demand-install-capable
+    platform: iOS
+    sources:
+      - path: Sources/Echoelmusic/AppClips
+        type: group
+      - path: Sources/Echoelmusic/Core
+        type: group
+      - path: Sources/Echoelmusic/Audio/AudioEngine.swift
+        type: file
+      - path: Sources/Echoelmusic/Theme
+        type: group
+    resources:
+      - path: Sources/Echoelmusic/Resources/Assets.xcassets
+        type: folder
+    info:
+      path: Resources/iOS/Info-Clip.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDisplayName: "Echoelmusic Clip"
+        LSRequiresIPhoneOS: true
+        NSMicrophoneUsageDescription: "Echoelmusic needs microphone access for quick audio sessions"
+        NSAppClip:
+          NSAppClipRequestEphemeralUserNotification: false
+          NSAppClipRequestLocationConfirmation: false
+        ITSAppUsesNonExemptEncryption: false
+        UIBackgroundModes:
+          - audio
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIUserInterfaceStyle: Dark
+    settings:
+      base:
+        PRODUCT_NAME: "Echoelmusic Clip"
+        # App Clip bundle ID MUST be child of parent app
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.Clip
+        INFOPLIST_FILE: Resources/iOS/Info-Clip.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicClip.entitlements
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
+        TARGETED_DEVICE_FAMILY: "1,2"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        # App Clip specific
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_ON_DEMAND_RESOURCES: YES
+    entitlements:
+      path: EchoelmusicClip.entitlements
+
+  # ===========================================================================
   # iOS Unit Tests
   # ===========================================================================
   EchoelmusicTests:
@@ -698,6 +765,22 @@ schemes:
           parallelizable: false
           randomExecutionOrder: false
 
+  # App Clip Development
+  EchoelmusicClip:
+    build:
+      targets:
+        EchoelmusicClip: all
+    run:
+      config: Debug
+      environmentVariables:
+        _XCAppClipURL: "https://echoelmusic.app/clip/breathwork"
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
   # All Platforms Release (for CI)
   # AUv3 extensions are embedded in their respective main apps
   Echoelmusic-AllPlatforms:
@@ -705,6 +788,7 @@ schemes:
       targets:
         Echoelmusic: [archive]
         EchoelmusicAUv3-iOS: [archive]
+        EchoelmusicClip: [archive]
         Echoelmusic-macOS: [archive]
         EchoelmusicAUv3-macOS: [archive]
         Echoelmusic-watchOS: [archive]
