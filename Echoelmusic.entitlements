@@ -21,5 +21,9 @@
 	<array>
 		<string>$(AppIdentifierPrefix)com.echoelmusic.app</string>
 	</array>
+
+	<!-- Push Notifications -->
+	<key>aps-environment</key>
+	<string>production</string>
 </dict>
 </plist>
