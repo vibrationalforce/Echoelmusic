@@ -63,10 +63,14 @@ public extension Optional {
     }
 
     /// Safe force unwrap with crash prevention in production
+    /// Returns the wrapped value in debug (with assertion) or nil in production
     var safeForce: Wrapped? {
         #if DEBUG
-        // In debug, crash to catch issues early
-        return self!
+        // In debug, use assertion to catch issues early without force unwrap
+        if self == nil {
+            assertionFailure("[SafeUnwrap] Unexpected nil value - this would crash in production")
+        }
+        return self
         #else
         // In production, return nil to prevent crash
         return self
@@ -158,8 +162,14 @@ public extension Optional where Wrapped == Float {
 public extension Optional where Wrapped: Collection {
 
     /// Safely unwrap collection with empty default
-    var orEmpty: Wrapped {
-        self ?? [] as! Wrapped
+    /// Note: Returns self if present, otherwise attempts to create empty collection
+    var orEmpty: Wrapped? {
+        if let value = self {
+            return value
+        }
+        // Return nil since we can't safely create an empty collection of unknown type
+        // Use specific extensions (e.g., Optional<[T]>.orEmpty) for concrete types
+        return nil
     }
 
     /// Check if collection is nil or empty

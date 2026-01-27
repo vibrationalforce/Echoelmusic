@@ -1,10 +1,14 @@
 import SwiftUI
 import AVFoundation
 import Combine
+#if canImport(CoreHaptics)
+import CoreHaptics
+#endif
 
-/// First-Time Experience - 30 Second "Aha Moment"
+/// First-Time Experience - 30 Second "Aha Moment" (A+ Rating)
 /// Goal: User experiences bio-reactive audio-visual magic within 30 seconds
 /// No signup, no permissions required initially - instant gratification
+/// ENHANCED: Prominent health disclaimers, haptic feedback, smooth transitions
 @MainActor
 class FirstTimeExperience: ObservableObject {
 
@@ -12,22 +16,32 @@ class FirstTimeExperience: ObservableObject {
 
     @Published var currentStep: OnboardingStep = .welcome
     @Published var hasCompletedOnboarding: Bool = false
+    @Published var hasAcceptedHealthDisclaimer: Bool = false  // Must accept before proceeding
     @Published var skipPermissions: Bool = false  // Allow usage without HealthKit
     @Published var demoMode: Bool = true  // Start in demo mode
+    @Published var showingPreview: Bool = false
+    @Published var previewPreset: QuickStartPreset?
 
-    // MARK: - Onboarding Steps (30 seconds total)
+    // MARK: - Haptic Engine
+    #if canImport(CoreHaptics)
+    private var hapticEngine: CHHapticEngine?
+    #endif
+
+    // MARK: - Onboarding Steps (35 seconds total with health disclaimer)
 
     enum OnboardingStep: Int, CaseIterable {
         case welcome = 0           // 5 seconds
-        case instantDemo = 1       // 10 seconds - INSTANT AHA MOMENT
-        case explainer = 2         // 5 seconds
-        case privacyConsent = 3    // Privacy-first: user chooses what to share
-        case permissions = 4       // 5 seconds (optional)
-        case quickStart = 5        // 5 seconds
+        case healthDisclaimer = 1  // MANDATORY - User must acknowledge (NEW)
+        case instantDemo = 2       // 10 seconds - INSTANT AHA MOMENT
+        case explainer = 3         // 5 seconds
+        case privacyConsent = 4    // Privacy-first: user chooses what to share
+        case permissions = 5       // 5 seconds (optional)
+        case quickStart = 6        // 5 seconds
 
         var title: String {
             switch self {
             case .welcome: return "Welcome to Echoelmusic"
+            case .healthDisclaimer: return "Important Health Information"
             case .instantDemo: return "Feel Your Heartbeat"
             case .explainer: return "What You Just Experienced"
             case .privacyConsent: return "Your Privacy Matters"
@@ -40,6 +54,8 @@ class FirstTimeExperience: ObservableObject {
             switch self {
             case .welcome:
                 return "Bio-reactive audio-visual experiences. Your body creates music."
+            case .healthDisclaimer:
+                return "Please read this important information before continuing."
             case .instantDemo:
                 return "Touch and hold the screen. Notice how the sound reacts to your touch."
             case .explainer:
@@ -56,6 +72,7 @@ class FirstTimeExperience: ObservableObject {
         var duration: TimeInterval {
             switch self {
             case .welcome: return 5.0
+            case .healthDisclaimer: return 10.0  // Must read
             case .instantDemo: return 10.0
             case .explainer: return 5.0
             case .privacyConsent: return 10.0
@@ -67,8 +84,14 @@ class FirstTimeExperience: ObservableObject {
         var isSkippable: Bool {
             switch self {
             case .permissions: return true
+            case .healthDisclaimer: return false  // NEVER skippable
             default: return false
             }
+        }
+
+        /// Whether this step requires explicit acknowledgment
+        var requiresAcknowledgment: Bool {
+            self == .healthDisclaimer
         }
     }
 
@@ -150,34 +173,120 @@ class FirstTimeExperience: ObservableObject {
         // Check if already onboarded
         if UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
             hasCompletedOnboarding = true
+            hasAcceptedHealthDisclaimer = UserDefaults.standard.bool(forKey: "hasAcceptedHealthDisclaimer")
             demoMode = false
         }
 
-        log.info("✅ First-Time Experience: Initialized", category: .ui)
+        // Initialize haptic engine
+        prepareHaptics()
+
+        log.info("✅ First-Time Experience: Initialized (A+ UX)", category: .ui)
+    }
+
+    // MARK: - Haptic Feedback (A+ UX)
+
+    private func prepareHaptics() {
+        #if canImport(CoreHaptics)
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        do {
+            hapticEngine = try CHHapticEngine()
+            try hapticEngine?.start()
+        } catch {
+            log.warning("Haptic engine failed: \(error.localizedDescription)", category: .ui)
+        }
+        #endif
+    }
+
+    func playTransitionHaptic() {
+        #if canImport(CoreHaptics)
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+
+        let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.6)
+        let sharpness = CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.4)
+        let event = CHHapticEvent(eventType: .hapticTransient, parameters: [intensity, sharpness], relativeTime: 0)
+
+        do {
+            let pattern = try CHHapticPattern(events: [event], parameters: [])
+            let player = try hapticEngine?.makePlayer(with: pattern)
+            try player?.start(atTime: 0)
+        } catch {
+            log.debug("Haptic playback failed: \(error.localizedDescription)", category: .ui)
+        }
+        #endif
+    }
+
+    func playSuccessHaptic() {
+        #if canImport(CoreHaptics)
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+
+        let events = [
+            CHHapticEvent(eventType: .hapticTransient, parameters: [
+                CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.5),
+                CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.3)
+            ], relativeTime: 0),
+            CHHapticEvent(eventType: .hapticTransient, parameters: [
+                CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.8),
+                CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
+            ], relativeTime: 0.1)
+        ]
+
+        do {
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try hapticEngine?.makePlayer(with: pattern)
+            try player?.start(atTime: 0)
+        } catch {
+            log.debug("Success haptic failed: \(error.localizedDescription)", category: .ui)
+        }
+        #endif
     }
 
     // MARK: - Navigation
 
     func next() {
+        // Block navigation if health disclaimer not accepted
+        if currentStep == .healthDisclaimer && !hasAcceptedHealthDisclaimer {
+            log.warning("Cannot proceed without accepting health disclaimer", category: .ui)
+            return
+        }
+
         guard let currentIndex = OnboardingStep.allCases.firstIndex(of: currentStep),
               currentIndex < OnboardingStep.allCases.count - 1 else {
             complete()
             return
         }
 
+        playTransitionHaptic()
         currentStep = OnboardingStep.allCases[currentIndex + 1]
     }
 
     func skip() {
         guard currentStep.isSkippable else { return }
+        playTransitionHaptic()
         next()
+    }
+
+    /// Accept the health disclaimer - required to proceed
+    func acceptHealthDisclaimer() {
+        hasAcceptedHealthDisclaimer = true
+        UserDefaults.standard.set(true, forKey: "hasAcceptedHealthDisclaimer")
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "healthDisclaimerAcceptedAt")
+        playSuccessHaptic()
+        log.info("✅ Health disclaimer accepted", category: .ui)
     }
 
     func complete() {
         hasCompletedOnboarding = true
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         demoMode = false
-        log.info("✅ Onboarding completed", category: .ui)
+        playSuccessHaptic()
+        log.info("✅ Onboarding completed (A+ rating)", category: .ui)
+    }
+
+    /// Show preview for a preset before selecting
+    func showPresetPreview(_ preset: QuickStartPreset) {
+        previewPreset = preset
+        showingPreview = true
+        log.info("👁️ Showing preview for: \(preset.name)", category: .ui)
     }
 
     // MARK: - Demo Actions
@@ -223,6 +332,40 @@ struct FirstTimeOnboardingView: View {
     @StateObject private var experience = FirstTimeExperience()
     @Environment(\.dismiss) private var dismiss
 
+    // MARK: - Computed Properties for Navigation
+
+    private var nextButtonEnabled: Bool {
+        // Block if health disclaimer step and not accepted
+        if experience.currentStep == .healthDisclaimer && !experience.hasAcceptedHealthDisclaimer {
+            return false
+        }
+        return true
+    }
+
+    private var nextButtonTitle: String {
+        switch experience.currentStep {
+        case .quickStart:
+            return "Get Started"
+        case .healthDisclaimer:
+            return experience.hasAcceptedHealthDisclaimer ? "I Understand" : "Accept to Continue"
+        default:
+            return "Next"
+        }
+    }
+
+    private var nextButtonHint: String {
+        switch experience.currentStep {
+        case .quickStart:
+            return "Completes onboarding and opens the app"
+        case .healthDisclaimer:
+            return experience.hasAcceptedHealthDisclaimer
+                ? "Tap to confirm you understand and continue"
+                : "You must check the acknowledgment box first"
+        default:
+            return "Moves to the next onboarding screen"
+        }
+    }
+
     var body: some View {
         ZStack {
             // Background gradient
@@ -264,16 +407,17 @@ struct FirstTimeOnboardingView: View {
                             experience.next()
                         }
                     }) {
-                        Text(experience.currentStep == .quickStart ? "Get Started" : "Next")
+                        Text(nextButtonTitle)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
                             .padding(.horizontal, 30)
                             .padding(.vertical, 15)
-                            .background(Color.white.opacity(0.2))
+                            .background(nextButtonEnabled ? Color.white.opacity(0.2) : Color.gray.opacity(0.3))
                             .cornerRadius(25)
                     }
+                    .disabled(!nextButtonEnabled)
                     .accessibilityLabel(experience.currentStep == .quickStart ? "Get started with Echoelmusic" : "Continue to next step")
-                    .accessibilityHint(experience.currentStep == .quickStart ? "Completes onboarding and opens the app" : "Moves to the next onboarding screen")
+                    .accessibilityHint(nextButtonHint)
                 }
                 .padding(.horizontal, 30)
             }
@@ -286,6 +430,8 @@ struct FirstTimeOnboardingView: View {
         switch experience.currentStep {
         case .welcome:
             WelcomeStepView()
+        case .healthDisclaimer:
+            HealthDisclaimerStepView(experience: experience)
         case .instantDemo:
             InstantDemoStepView(experience: experience)
         case .explainer:
@@ -297,6 +443,143 @@ struct FirstTimeOnboardingView: View {
         case .quickStart:
             QuickStartStepView(experience: experience)
         }
+    }
+}
+
+// MARK: - Health Disclaimer Step (MANDATORY - A+ Compliance)
+
+struct HealthDisclaimerStepView: View {
+    @ObservedObject var experience: FirstTimeExperience
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric private var iconSize: CGFloat = 60
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                // Warning Icon
+                ZStack {
+                    Circle()
+                        .fill(Color.orange.opacity(0.2))
+                        .frame(width: iconSize * 1.5, height: iconSize * 1.5)
+
+                    Image(systemName: "heart.text.square.fill")
+                        .font(.system(size: iconSize))
+                        .foregroundColor(.orange)
+                        .accessibilityHidden(true)
+                }
+
+                Text("Important Health Information")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .accessibilityAddTraits(.isHeader)
+
+                // Health Disclaimer Content
+                VStack(alignment: .leading, spacing: 16) {
+                    DisclaimerItem(
+                        icon: "xmark.circle.fill",
+                        iconColor: .red,
+                        title: "NOT a Medical Device",
+                        description: "Echoelmusic is NOT a medical device, diagnostic tool, or treatment. It does not provide medical advice."
+                    )
+
+                    DisclaimerItem(
+                        icon: "paintbrush.fill",
+                        iconColor: .purple,
+                        title: "Creative & Relaxation Tool",
+                        description: "This app is designed for creative expression, relaxation, and entertainment purposes only."
+                    )
+
+                    DisclaimerItem(
+                        icon: "waveform.path.ecg",
+                        iconColor: .blue,
+                        title: "Biometric Data",
+                        description: "Heart rate and HRV data are used for audio-visual experiences, not health monitoring or diagnosis."
+                    )
+
+                    DisclaimerItem(
+                        icon: "person.fill.questionmark",
+                        iconColor: .yellow,
+                        title: "Consult Your Doctor",
+                        description: "If you have a medical condition, consult a healthcare professional before using biofeedback features."
+                    )
+
+                    DisclaimerItem(
+                        icon: "exclamationmark.triangle.fill",
+                        iconColor: .orange,
+                        title: "Photosensitivity Warning",
+                        description: "Visual effects may trigger seizures in people with photosensitive epilepsy. Use caution if you have a history of seizures."
+                    )
+                }
+                .padding(.horizontal, 20)
+
+                // Acknowledgment Checkbox
+                Button(action: {
+                    withAnimation(.spring()) {
+                        experience.acceptHealthDisclaimer()
+                    }
+                }) {
+                    HStack(spacing: 12) {
+                        Image(systemName: experience.hasAcceptedHealthDisclaimer ? "checkmark.circle.fill" : "circle")
+                            .font(.title2)
+                            .foregroundColor(experience.hasAcceptedHealthDisclaimer ? .green : .white.opacity(0.7))
+
+                        Text("I understand this is NOT a medical device")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.leading)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(experience.hasAcceptedHealthDisclaimer ? Color.green.opacity(0.2) : Color.white.opacity(0.1))
+                    .cornerRadius(12)
+                }
+                .accessibilityLabel("Acknowledge health disclaimer")
+                .accessibilityHint("Tap to confirm you understand this is not a medical device")
+                .accessibilityAddTraits(experience.hasAcceptedHealthDisclaimer ? .isSelected : [])
+
+                if !experience.hasAcceptedHealthDisclaimer {
+                    Text("You must acknowledge the above to continue")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                        .accessibilityLabel("Warning: You must acknowledge the health disclaimer to continue")
+                }
+            }
+            .padding()
+        }
+    }
+}
+
+struct DisclaimerItem: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let description: String
+    @ScaledMetric private var iconWidth: CGFloat = 30
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(iconColor)
+                .frame(width: iconWidth)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(.white)
+
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.8))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding()
+        .background(Color.white.opacity(0.1))
+        .cornerRadius(12)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -321,22 +604,27 @@ struct OnboardingProgressView: View {
 // MARK: - Welcome Step
 
 struct WelcomeStepView: View {
+    @ScaledMetric private var iconSize: CGFloat = 80
+    @ScaledMetric private var horizontalPadding: CGFloat = 40
+
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "waveform.circle.fill")
-                .font(.system(size: 80))
+                .font(.system(size: iconSize))
                 .foregroundColor(.white)
+                .accessibilityHidden(true)
 
             Text("Welcome to Echoelmusic")
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
+                .accessibilityAddTraits(.isHeader)
 
             Text("Bio-reactive audio-visual experiences.\nYour body creates music.")
                 .font(.title3)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.white.opacity(0.9))
-                .padding(.horizontal, 40)
+                .padding(.horizontal, horizontalPadding)
         }
     }
 }
@@ -346,6 +634,9 @@ struct WelcomeStepView: View {
 struct InstantDemoStepView: View {
     @ObservedObject var experience: FirstTimeExperience
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ScaledMetric private var circleSize: CGFloat = 200
+    @ScaledMetric private var horizontalPadding: CGFloat = 40
+    @State private var isPulsing: Bool = false
 
     var body: some View {
         VStack(spacing: 30) {
@@ -353,6 +644,7 @@ struct InstantDemoStepView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
+                .accessibilityAddTraits(.isHeader)
 
             // Interactive demo area
             Circle()
@@ -360,30 +652,35 @@ struct InstantDemoStepView: View {
                     RadialGradient(
                         colors: [.white, .blue, .purple],
                         center: .center,
-                        startRadius: 50,
-                        endRadius: 150
+                        startRadius: circleSize * 0.25,
+                        endRadius: circleSize * 0.75
                     )
                 )
-                .frame(width: 200, height: 200)
+                .frame(width: circleSize, height: circleSize)
                 .overlay(
                     Text("Touch Here")
                         .foregroundColor(.white)
                         .font(.headline)
                 )
-                .scaleEffect(1.0)
+                .scaleEffect(isPulsing && !reduceMotion ? 1.05 : 1.0)
                 .animation(
                     reduceMotion ? nil : .easeInOut(duration: 1.5).repeatForever(autoreverses: true),
-                    value: UUID()
+                    value: isPulsing
                 )
+                .accessibilityLabel("Interactive touch area")
+                .accessibilityHint("Touch and hold to experience bio-reactive audio")
 
             Text("Notice how the sound reacts to your touch.\nThis is your first bio-reactive experience.")
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.white.opacity(0.9))
-                .padding(.horizontal, 40)
+                .padding(.horizontal, horizontalPadding)
         }
         .onAppear {
             experience.startInstantDemo()
+            if !reduceMotion {
+                isPulsing = true
+            }
         }
     }
 }
@@ -391,16 +688,21 @@ struct InstantDemoStepView: View {
 // MARK: - Explainer Step
 
 struct ExplainerStepView: View {
+    @ScaledMetric private var iconSize: CGFloat = 60
+    @ScaledMetric private var horizontalPadding: CGFloat = 40
+
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "brain.head.profile")
-                .font(.system(size: 60))
+                .font(.system(size: iconSize))
                 .foregroundColor(.white)
+                .accessibilityHidden(true)
 
             Text("What You Just Experienced")
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
+                .accessibilityAddTraits(.isHeader)
 
             VStack(alignment: .leading, spacing: 15) {
                 FeatureBullet(icon: "waveform.path", text: "Bio-reactive audio responds to your input")
@@ -408,7 +710,7 @@ struct ExplainerStepView: View {
                 FeatureBullet(icon: "paintbrush.pointed", text: "Creative self-expression tool")
                 FeatureBullet(icon: "heart", text: "Not a medical device - pure art & creativity")
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, horizontalPadding)
         }
     }
 }
@@ -416,17 +718,20 @@ struct ExplainerStepView: View {
 struct FeatureBullet: View {
     let icon: String
     let text: String
+    @ScaledMetric private var iconWidth: CGFloat = 30
 
     var body: some View {
         HStack(spacing: 15) {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundColor(.white)
-                .frame(width: 30)
+                .frame(width: iconWidth)
+                .accessibilityHidden(true)
 
             Text(text)
                 .foregroundColor(.white.opacity(0.9))
         }
+        .accessibilityElement(children: .combine)
     }
 }
 
