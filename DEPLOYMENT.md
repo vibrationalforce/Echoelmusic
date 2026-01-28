@@ -426,3 +426,90 @@ Keep developing in VS Code, deploy to iPhone occasionally for testing.
 ---
 
 **Built with** SwiftUI, AVFoundation, and ❤️ in VS Code.
+
+---
+
+# CI/CD Deployment (GitHub Actions)
+
+## Website Deployment (echoelmusic.com)
+
+### Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `pages.yml` | Push to main (docs/**) | Deploy to GitHub Pages |
+| `auto-merge-docs.yml` | Push to claude/** (docs/**) | Auto-merge docs changes |
+
+### Update Website
+
+```bash
+# 1. Create branch
+git checkout -b claude/docs-update-e8NsA
+
+# 2. Edit website
+# ... modify docs/index.html ...
+
+# 3. Commit and push
+git add docs/
+git commit -m "docs: Update website"
+git push -u origin claude/docs-update-e8NsA
+
+# 4. Auto-merge workflow handles the rest
+```
+
+---
+
+## TestFlight Deployment (All Apple Platforms)
+
+### Required Secrets
+
+Configure in GitHub → Settings → Secrets → Actions:
+
+| Secret | Description |
+|--------|-------------|
+| `APP_STORE_CONNECT_KEY_ID` | API Key ID from App Store Connect |
+| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID from App Store Connect |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | p8 file contents |
+| `APPLE_TEAM_ID` | Apple Developer Team ID |
+
+### Deploy to TestFlight
+
+1. Go to **Actions** → **TestFlight Deploy**
+2. Click **Run workflow**
+3. Select platforms: `all`, `ios`, `macos`, `watchos`, `tvos`, `visionos`
+4. Click **Run workflow**
+
+### Supported Platforms
+
+| Platform | Bundle ID |
+|----------|-----------|
+| iOS | com.echoelmusic.app |
+| macOS | com.echoelmusic.app |
+| watchOS | com.echoelmusic.app.watchkitapp |
+| tvOS | com.echoelmusic.app |
+| visionOS | com.echoelmusic.app |
+
+Universal Purchase enabled - buy once, get on all platforms.
+
+---
+
+## CI/CD Troubleshooting
+
+### Website not updating
+1. Check Actions tab for workflow status
+2. Clear browser cache (Ctrl+Shift+R)
+3. Wait 2-5 minutes for CDN propagation
+
+### TestFlight pre-flight fails
+1. Verify all 4 secrets are configured
+2. Check API Key permissions in App Store Connect
+3. Ensure Team ID is correct
+
+### Build fails
+1. Check Xcode version (currently 16.2)
+2. Review build logs in Actions tab
+3. Verify certificates are valid
+
+---
+
+*Last updated: 2026-01-28*
