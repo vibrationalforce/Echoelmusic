@@ -31,11 +31,14 @@ let package = Package(
                 "Platforms/visionOS",
                 "Platforms/watchOS",
                 "Platforms/tvOS",
+                "Platforms/iOS",
+                "Platforms/macOS",
                 // Files requiring platform-specific frameworks
                 "VisionOS",
                 "WatchOS",
                 "tvOS",
-                "Widgets"
+                "Widgets",
+                "LiveActivity"
                 // NOTE: Sources/_Deferred/ is automatically excluded (sibling folder)
                 // See DEFERRED_FEATURES.md for deferred features roadmap
             ],
