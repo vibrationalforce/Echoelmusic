@@ -24,7 +24,7 @@ on:
 env:
   BUILD_TYPE: Release
   IPLUG2_VERSION: master
-  XCODE_VERSION: '15.4'
+  XCODE_VERSION: '16.2'
 
 jobs:
   # ============================================
