@@ -2,54 +2,55 @@ import SwiftUI
 
 // MARK: - Vaporwave Palace Theme
 // "Flüssiges Licht für deine Musik"
+// Design synchronized with echoelmusic.com website
 
 /// The Vaporwave Palace color palette
 /// Inspired by: 80s/90s aesthetics, neon lights, sunset gradients, liquid light
 struct VaporwaveColors {
 
-    // MARK: - Primary Neon Colors
+    // MARK: - Primary Neon Colors (exact website hex values)
 
-    /// Hot pink - primary accent
+    /// Hot pink - primary accent (#FF1494)
     static let neonPink = Color(red: 1.0, green: 0.08, blue: 0.58)
 
-    /// Electric cyan - secondary accent
+    /// Electric cyan - secondary accent (#00FFFF)
     static let neonCyan = Color(red: 0.0, green: 1.0, blue: 1.0)
 
-    /// Deep purple - tertiary
+    /// Deep purple - tertiary (#9933FF)
     static let neonPurple = Color(red: 0.6, green: 0.2, blue: 1.0)
 
-    /// Soft lavender
+    /// Soft lavender (#CC99FF)
     static let lavender = Color(red: 0.8, green: 0.6, blue: 1.0)
 
-    /// Warm coral/orange
+    /// Warm coral/orange (#FF7F66)
     static let coral = Color(red: 1.0, green: 0.5, blue: 0.4)
 
     // MARK: - Background Colors
 
-    /// Deep space black
-    static let deepBlack = Color(red: 0.02, green: 0.02, blue: 0.05)
+    /// Deep space black (#050510)
+    static let deepBlack = Color(red: 0.02, green: 0.02, blue: 0.0625)
 
-    /// Midnight blue
+    /// Midnight blue (#0D0D26)
     static let midnightBlue = Color(red: 0.05, green: 0.05, blue: 0.15)
 
-    /// Dark purple
+    /// Dark purple (#1A0D33)
     static let darkPurple = Color(red: 0.1, green: 0.05, blue: 0.2)
 
-    /// Sunset orange (for gradients)
+    /// Sunset orange (for gradients) (#FF6633)
     static let sunsetOrange = Color(red: 1.0, green: 0.4, blue: 0.2)
 
-    /// Sunset pink
+    /// Sunset pink (#FF3380)
     static let sunsetPink = Color(red: 1.0, green: 0.2, blue: 0.5)
 
-    // MARK: - Bio-Reactive Colors
+    // MARK: - Bio-Reactive Colors (website CSS variables)
 
-    /// Low coherence - stressed (warm red)
+    /// Low coherence - stressed (#FF4D4D)
     static let coherenceLow = Color(red: 1.0, green: 0.3, blue: 0.3)
 
-    /// Medium coherence - transitioning (warm yellow/gold)
+    /// Medium coherence - transitioning (#FFCC33)
     static let coherenceMedium = Color(red: 1.0, green: 0.8, blue: 0.2)
 
-    /// High coherence - flow state (cool cyan/green)
+    /// High coherence - flow state (#33FFCC)
     static let coherenceHigh = Color(red: 0.2, green: 1.0, blue: 0.8)
 
     // MARK: - Text Colors
@@ -57,11 +58,22 @@ struct VaporwaveColors {
     /// Primary text - bright white
     static let textPrimary = Color.white
 
-    /// Secondary text - soft white
-    static let textSecondary = Color.white.opacity(0.7)
+    /// Secondary text - soft white (rgba 255,255,255,0.85)
+    static let textSecondary = Color.white.opacity(0.85)
 
-    /// Tertiary text - dim
-    static let textTertiary = Color.white.opacity(0.4)
+    /// Tertiary/muted text (rgba 255,255,255,0.5)
+    static let textTertiary = Color.white.opacity(0.5)
+
+    // MARK: - Glass Effect Colors (website CSS)
+
+    /// Glass background (rgba 255,255,255,0.08)
+    static let glassBg = Color.white.opacity(0.08)
+
+    /// Glass border (rgba 255,255,255,0.15)
+    static let glassBorder = Color.white.opacity(0.15)
+
+    /// Glass border active state (rgba 255,20,148,0.5)
+    static let glassBorderActive = neonPink.opacity(0.5)
 
     // MARK: - Functional Colors
 
@@ -137,6 +149,164 @@ struct VaporwaveGradients {
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
+
+    /// Card accent bar gradient (top border on hover)
+    static let cardAccent = LinearGradient(
+        gradient: Gradient(colors: [
+            VaporwaveColors.neonPink,
+            VaporwaveColors.neonPurple,
+            VaporwaveColors.neonCyan
+        ]),
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+
+    /// Animated blob gradient (for background effects)
+    static func blobGradient(at position: UnitPoint) -> RadialGradient {
+        RadialGradient(
+            gradient: Gradient(colors: [
+                VaporwaveColors.neonPurple.opacity(0.15),
+                Color.clear
+            ]),
+            center: position,
+            startRadius: 0,
+            endRadius: 300
+        )
+    }
+}
+
+// MARK: - Animated Background Components
+
+/// Vaporwave animated gradient background (matches website design)
+struct VaporwaveAnimatedBackground: View {
+    @State private var animationPhase: CGFloat = 0
+
+    var body: some View {
+        ZStack {
+            // Base gradient
+            LinearGradient(
+                colors: [
+                    VaporwaveColors.deepBlack,
+                    VaporwaveColors.midnightBlue,
+                    VaporwaveColors.darkPurple
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            // Animated blob 1 (purple, top-left)
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [VaporwaveColors.neonPurple.opacity(0.15), .clear],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 250
+                    )
+                )
+                .frame(width: 500, height: 500)
+                .offset(x: -150 + sin(animationPhase) * 30, y: -200 + cos(animationPhase) * 20)
+                .blur(radius: 60)
+
+            // Animated blob 2 (pink, bottom-right)
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [VaporwaveColors.neonPink.opacity(0.12), .clear],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 200
+                    )
+                )
+                .frame(width: 400, height: 400)
+                .offset(x: 150 + cos(animationPhase * 0.8) * 25, y: 200 + sin(animationPhase * 0.8) * 30)
+                .blur(radius: 50)
+
+            // Animated blob 3 (cyan, center)
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [VaporwaveColors.neonCyan.opacity(0.08), .clear],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 300
+                    )
+                )
+                .frame(width: 600, height: 600)
+                .offset(x: sin(animationPhase * 0.6) * 40, y: cos(animationPhase * 0.6) * 35)
+                .blur(radius: 80)
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            withAnimation(.easeInOut(duration: 10).repeatForever(autoreverses: true)) {
+                animationPhase = .pi * 2
+            }
+        }
+    }
+}
+
+/// Grid pattern overlay (matches website design)
+struct VaporwaveGridOverlay: View {
+    let gridSize: CGFloat
+    let lineOpacity: Double
+
+    init(gridSize: CGFloat = 60, lineOpacity: Double = 0.03) {
+        self.gridSize = gridSize
+        self.lineOpacity = lineOpacity
+    }
+
+    var body: some View {
+        GeometryReader { geometry in
+            Canvas { context, size in
+                let color = Color(red: 1.0, green: 0.08, blue: 0.58).opacity(lineOpacity)
+
+                // Vertical lines
+                for x in stride(from: 0, through: size.width, by: gridSize) {
+                    var path = Path()
+                    path.move(to: CGPoint(x: x, y: 0))
+                    path.addLine(to: CGPoint(x: x, y: size.height))
+                    context.stroke(path, with: .color(color), lineWidth: 1)
+                }
+
+                // Horizontal lines
+                for y in stride(from: 0, through: size.height, by: gridSize) {
+                    var path = Path()
+                    path.move(to: CGPoint(x: 0, y: y))
+                    path.addLine(to: CGPoint(x: size.width, y: y))
+                    context.stroke(path, with: .color(color), lineWidth: 1)
+                }
+            }
+        }
+        .opacity(0.5)
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+    }
+}
+
+/// Complete vaporwave background with gradient and grid
+struct VaporwaveFullBackground: View {
+    let showGrid: Bool
+    let animated: Bool
+
+    init(showGrid: Bool = true, animated: Bool = true) {
+        self.showGrid = showGrid
+        self.animated = animated
+    }
+
+    var body: some View {
+        ZStack {
+            if animated {
+                VaporwaveAnimatedBackground()
+            } else {
+                VaporwaveGradients.background
+            }
+
+            if showGrid {
+                VaporwaveGridOverlay()
+            }
+        }
+        .ignoresSafeArea()
+    }
 }
 
 // MARK: - View Modifiers
@@ -154,29 +324,51 @@ struct NeonGlow: ViewModifier {
 }
 
 struct GlassCard: ViewModifier {
+    let isActive: Bool
+    let showAccentBar: Bool
+    let cornerRadius: CGFloat
+
+    init(isActive: Bool = false, showAccentBar: Bool = false, cornerRadius: CGFloat = 20) {
+        self.isActive = isActive
+        self.showAccentBar = showAccentBar
+        self.cornerRadius = cornerRadius
+    }
+
     func body(content: Content) -> some View {
         content
             .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(VaporwaveGradients.glassCard)
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(VaporwaveColors.glassBg)
                     .background(
-                        RoundedRectangle(cornerRadius: 20)
+                        RoundedRectangle(cornerRadius: cornerRadius)
                             .fill(Color.black.opacity(0.3))
                     )
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: cornerRadius)
                     .stroke(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color.white.opacity(0.2),
-                                Color.white.opacity(0.05)
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
+                        isActive ? VaporwaveColors.glassBorderActive : VaporwaveColors.glassBorder,
                         lineWidth: 1
                     )
+            )
+            .overlay(alignment: .top) {
+                if showAccentBar {
+                    VaporwaveGradients.cardAccent
+                        .frame(height: 3)
+                        .clipShape(
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: cornerRadius,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 0,
+                                topTrailingRadius: cornerRadius
+                            )
+                        )
+                }
+            }
+            .shadow(
+                color: isActive ? VaporwaveColors.neonPink.opacity(0.15) : .clear,
+                radius: 20,
+                y: 10
             )
     }
 }
@@ -211,8 +403,8 @@ extension View {
     }
 
     /// Apply glass card background
-    func glassCard() -> some View {
-        modifier(GlassCard())
+    func glassCard(isActive: Bool = false, showAccentBar: Bool = false, cornerRadius: CGFloat = 20) -> some View {
+        modifier(GlassCard(isActive: isActive, showAccentBar: showAccentBar, cornerRadius: cornerRadius))
     }
 
     /// Apply vaporwave button style
@@ -220,9 +412,14 @@ extension View {
         modifier(VaporwaveButton(isActive: isActive, activeColor: activeColor))
     }
 
-    /// Apply vaporwave background
+    /// Apply simple vaporwave background gradient
     func vaporwaveBackground() -> some View {
         self.background(VaporwaveGradients.background.ignoresSafeArea())
+    }
+
+    /// Apply full vaporwave background with animated blobs and grid
+    func vaporwaveFullBackground(showGrid: Bool = true, animated: Bool = true) -> some View {
+        self.background(VaporwaveFullBackground(showGrid: showGrid, animated: animated))
     }
 }
 
@@ -624,6 +821,277 @@ struct VaporwaveToggleRow: View {
         .toggleStyle(SwitchToggleStyle(tint: tintColor))
         .padding(VaporwaveSpacing.md)
         .glassCard()
+    }
+}
+
+/// Status badge with pulsing dot (matches website hero-badge)
+struct VaporwaveBadge: View {
+    let text: String
+    let dotColor: Color
+    let showPulse: Bool
+
+    @State private var isPulsing = false
+
+    init(_ text: String, dotColor: Color = VaporwaveColors.coherenceHigh, showPulse: Bool = true) {
+        self.text = text
+        self.dotColor = dotColor
+        self.showPulse = showPulse
+    }
+
+    var body: some View {
+        HStack(spacing: VaporwaveSpacing.sm) {
+            Circle()
+                .fill(dotColor)
+                .frame(width: 8, height: 8)
+                .scaleEffect(isPulsing ? 1.2 : 1.0)
+                .opacity(isPulsing ? 0.7 : 1.0)
+
+            Text(text)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(VaporwaveColors.textSecondary)
+        }
+        .padding(.horizontal, VaporwaveSpacing.md)
+        .padding(.vertical, VaporwaveSpacing.xs)
+        .background(VaporwaveColors.glassBg)
+        .overlay(
+            Capsule()
+                .stroke(VaporwaveColors.glassBorder, lineWidth: 1)
+        )
+        .clipShape(Capsule())
+        .onAppear {
+            if showPulse {
+                withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+                    isPulsing = true
+                }
+            }
+        }
+    }
+}
+
+/// Feature tag component (matches website feature-tag)
+struct VaporwaveTag: View {
+    let text: String
+    let color: Color
+
+    init(_ text: String, color: Color = VaporwaveColors.neonCyan) {
+        self.text = text
+        self.color = color
+    }
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(color)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(color.opacity(0.1))
+            .overlay(
+                Capsule()
+                    .stroke(color.opacity(0.2), lineWidth: 1)
+            )
+            .clipShape(Capsule())
+    }
+}
+
+/// Section label component (matches website section-label)
+struct VaporwaveSectionLabel: View {
+    let text: String
+
+    init(_ text: String) {
+        self.text = text
+    }
+
+    var body: some View {
+        Text(text.uppercased())
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundColor(VaporwaveColors.neonPink)
+            .tracking(1)
+            .padding(.horizontal, VaporwaveSpacing.md)
+            .padding(.vertical, VaporwaveSpacing.xs)
+            .background(
+                LinearGradient(
+                    colors: [
+                        VaporwaveColors.neonPink.opacity(0.2),
+                        VaporwaveColors.neonPurple.opacity(0.2)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .overlay(
+                Capsule()
+                    .stroke(VaporwaveColors.neonPink, lineWidth: 1)
+            )
+            .clipShape(Capsule())
+    }
+}
+
+/// Stat card component (matches website stat-card)
+struct VaporwaveStatCard: View {
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(spacing: VaporwaveSpacing.xs) {
+            Text(value)
+                .font(.system(size: 36, weight: .heavy))
+                .foregroundStyle(VaporwaveGradients.neon)
+
+            Text(label)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(VaporwaveColors.textTertiary)
+        }
+        .padding(VaporwaveSpacing.xl)
+        .frame(maxWidth: .infinity)
+        .glassCard()
+    }
+}
+
+/// Primary CTA button (matches website btn-primary)
+struct VaporwavePrimaryButton: View {
+    let title: String
+    let icon: String?
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    init(_ title: String, icon: String? = nil, action: @escaping () -> Void) {
+        self.title = title
+        self.icon = icon
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: VaporwaveSpacing.sm) {
+                if let icon = icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                Text(title)
+                    .font(.system(size: 16, weight: .bold))
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 32)
+            .padding(.vertical, 16)
+            .background(
+                LinearGradient(
+                    colors: [VaporwaveColors.neonPink, VaporwaveColors.neonPurple],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .clipShape(Capsule())
+            .shadow(
+                color: isHovered ? VaporwaveColors.neonPink.opacity(0.5) : .clear,
+                radius: 20
+            )
+            .scaleEffect(isHovered ? 1.02 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
+    }
+}
+
+/// Secondary button (matches website btn-secondary)
+struct VaporwaveSecondaryButton: View {
+    let title: String
+    let icon: String?
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    init(_ title: String, icon: String? = nil, action: @escaping () -> Void) {
+        self.title = title
+        self.icon = icon
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: VaporwaveSpacing.sm) {
+                if let icon = icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .medium))
+                }
+                Text(title)
+                    .font(.system(size: 16, weight: .semibold))
+            }
+            .foregroundColor(VaporwaveColors.textPrimary)
+            .padding(.horizontal, 32)
+            .padding(.vertical, 16)
+            .background(VaporwaveColors.glassBg)
+            .overlay(
+                Capsule()
+                    .stroke(
+                        isHovered ? VaporwaveColors.neonCyan : VaporwaveColors.glassBorder,
+                        lineWidth: 1
+                    )
+            )
+            .clipShape(Capsule())
+            .shadow(
+                color: isHovered ? VaporwaveColors.neonCyan.opacity(0.3) : .clear,
+                radius: 15
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
+    }
+}
+
+/// Workspace card (matches website workspace-card)
+struct VaporwaveWorkspaceCard: View {
+    let icon: String
+    let title: String
+    let description: String
+    let badge: String
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: VaporwaveSpacing.md) {
+                Text(icon)
+                    .font(.system(size: 48))
+
+                Text(title)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(VaporwaveColors.textPrimary)
+
+                Text(description)
+                    .font(.system(size: 14))
+                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .multilineTextAlignment(.center)
+
+                Text(badge)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, VaporwaveSpacing.md)
+                    .padding(.vertical, VaporwaveSpacing.xs)
+                    .background(VaporwaveGradients.neon)
+                    .clipShape(Capsule())
+            }
+            .padding(VaporwaveSpacing.xl)
+            .frame(maxWidth: .infinity)
+            .glassCard(isActive: isHovered)
+            .scaleEffect(isHovered ? 1.02 : 1.0)
+            .offset(y: isHovered ? -4 : 0)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                isHovered = hovering
+            }
+        }
     }
 }
 

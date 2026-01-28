@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <!-- Echoelmusic Green Gradient (matching website CI) -->
+    <!-- Echoelmusic Vaporwave Gradient -->
     <linearGradient id="brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#22C55E"/>
-      <stop offset="50%" stop-color="#10B981"/>
-      <stop offset="100%" stop-color="#34D399"/>
+      <stop offset="0%" stop-color="#FF1494"/>
+      <stop offset="50%" stop-color="#9933FF"/>
+      <stop offset="100%" stop-color="#00FFFF"/>
     </linearGradient>
   </defs>
 
-  <!-- Background - Deep green/black -->
-  <rect width="100" height="100" rx="22" fill="#030712"/>
+  <!-- Background - Deep space black -->
+  <rect width="100" height="100" rx="22" fill="#050510"/>
 
   <!-- Subtle gradient overlay -->
-  <rect width="100" height="100" rx="22" fill="url(#brand-grad)" opacity="0.08"/>
+  <rect width="100" height="100" rx="22" fill="url(#brand-grad)" opacity="0.1"/>
 
   <!-- Heart shape - geometric, clean -->
   <path d="M50 78
