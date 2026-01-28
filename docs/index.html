@@ -259,6 +259,32 @@
             margin-bottom: 24px;
         }
 
+        .hero-mantra {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: clamp(28px, 6vw, 64px);
+            letter-spacing: -1px;
+        }
+
+        .mantra-line {
+            display: block;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: mantraReveal 0.8s ease-out forwards;
+        }
+
+        .mantra-line:nth-child(1) { animation-delay: 0.2s; }
+        .mantra-line:nth-child(2) { animation-delay: 0.5s; }
+        .mantra-line:nth-child(3) { animation-delay: 0.8s; }
+
+        @keyframes mantraReveal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .gradient {
             background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
             -webkit-background-clip: text;
@@ -1076,9 +1102,13 @@
         <section class="hero">
             <span class="hero-label">Bio-Reactive Music Production</span>
 
-            <h1>Create Music With<br><span class="gradient">Your Heartbeat</span></h1>
+            <h1 class="hero-mantra">
+                <span class="mantra-line"><span class="gradient">FINDE</span> DEINEN KLANG</span>
+                <span class="mantra-line"><span class="gradient">FÜHLE</span> DEINE SEELE</span>
+                <span class="mantra-line"><span class="gradient">FOKUSSIERE</span> DEINEN GEIST</span>
+            </h1>
 
-            <p class="hero-sub">Professional DAW, video editor, and VJ controls that respond to your biometrics in real-time. Available free on all Apple devices.</p>
+            <p class="hero-sub">Bio-reaktive Musikproduktion. Dein Herzschlag steuert den Sound. Kostenlos auf allen Apple-Geräten.</p>
 
             <div class="hero-buttons">
                 <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="btn btn-primary">
