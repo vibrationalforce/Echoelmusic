@@ -257,22 +257,52 @@ public struct ImmersiveQuantumSpace: View {
     }
 
     private func triggerVisualEffect(_ effect: String) {
+        let goldenAngle = Float.pi * (3.0 - sqrt(5.0))
+
         switch effect {
         case "harmonize":
-            // Align all photons to Fibonacci spiral
-            break
+            // Align all photons to Fibonacci spiral arrangement
+            for (index, entity) in photonEntities.enumerated() {
+                let t = Float(index) / Float(photonEntities.count)
+                let radius = t * 2.0
+                let angle = Float(index) * goldenAngle
+                let height = sin(t * Float.pi) * 0.5
+
+                let newPosition = SIMD3<Float>(
+                    cos(angle) * radius,
+                    height + 1.0,
+                    sin(angle) * radius - 1.5
+                )
+                entity.position = newPosition
+            }
         case "expand":
-            // Expand the light field
-            break
+            // Expand the light field outward
+            for entity in photonEntities {
+                entity.position = entity.position * 1.5
+            }
         case "contract":
-            // Contract the light field
-            break
+            // Contract the light field inward
+            for entity in photonEntities {
+                let center = SIMD3<Float>(0, 1.0, -1.5)
+                let direction = entity.position - center
+                entity.position = center + direction * 0.6
+            }
         case "spiral":
-            // Trigger spiral animation
-            break
+            // Trigger spiral animation by rotating photons
+            for (index, entity) in photonEntities.enumerated() {
+                let currentAngle = atan2(entity.position.z + 1.5, entity.position.x)
+                let radius = length(SIMD2<Float>(entity.position.x, entity.position.z + 1.5))
+                let newAngle = currentAngle + Float.pi / 6.0
+
+                entity.position.x = cos(newAngle) * radius
+                entity.position.z = sin(newAngle) * radius - 1.5
+            }
         case "pulse":
-            // Emit pulse wave
-            break
+            // Emit pulse wave by temporarily scaling entities
+            for entity in photonEntities {
+                entity.scale = SIMD3<Float>(repeating: 1.5)
+                // Scale would animate back in production
+            }
         default:
             break
         }

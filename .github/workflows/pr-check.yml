@@ -15,6 +15,9 @@ concurrency:
   group: pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+env:
+  XCODE_VERSION: '16.2'
+
 jobs:
   build-check:
     name: "PR Build Check"
@@ -48,10 +51,10 @@ jobs:
           done
           echo "All files present."
 
-      - name: "Setup Xcode 16.2"
+      - name: "Setup Xcode"
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: "16.2"
+          xcode-version: ${{ env.XCODE_VERSION }}
 
       - name: "Install XcodeGen"
         run: |
@@ -88,13 +91,41 @@ jobs:
             -quiet
           echo "[OK] macOS build succeeded"
 
+      - name: "Run Tests (iOS Simulator)"
+        run: |
+          echo "Running iOS tests..."
+          xcodebuild test \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet \
+            2>&1 | xcpretty --test || exit 1
+          echo "[OK] iOS tests passed"
+
+      - name: "Run Tests (macOS)"
+        run: |
+          echo "Running macOS tests..."
+          xcodebuild test \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic-macOS \
+            -destination 'platform=macOS' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet \
+            2>&1 | xcpretty --test || exit 1
+          echo "[OK] macOS tests passed"
+
       - name: "Summary"
         run: |
           echo "## PR Build Check Passed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| iOS Simulator | ✅ |" >> $GITHUB_STEP_SUMMARY
-          echo "| macOS | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS Build | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS Tests | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS Build | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS Tests | ✅ |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Ready to merge!" >> $GITHUB_STEP_SUMMARY
+          echo "All builds and tests passed - ready to merge!" >> $GITHUB_STEP_SUMMARY
