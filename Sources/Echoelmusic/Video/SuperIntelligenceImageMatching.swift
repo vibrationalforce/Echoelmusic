@@ -697,9 +697,10 @@ public class SuperIntelligenceImageMatchingEngine: ObservableObject {
     public init() {
         // Create GPU-accelerated context
         if let metalDevice = MTLCreateSystemDefaultDevice() {
+            let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
             ciContext = CIContext(mtlDevice: metalDevice, options: [
-                .workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
-                .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
+                .workingColorSpace: colorSpace,
+                .outputColorSpace: colorSpace
             ])
         } else {
             ciContext = CIContext(options: nil)
