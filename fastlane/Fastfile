@@ -139,6 +139,28 @@ platform :ios do
     auv3_profile = lane_context[SharedValues::SIGH_NAME]
     UI.message("iOS AUv3 profile: #{auv3_profile}")
 
+    # Configure code signing for main app target
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["Echoelmusic"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: app_profile,
+      bundle_identifier: "com.echoelmusic.app"
+    )
+
+    # Configure code signing for AUv3 extension target
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["EchoelmusicAUv3"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: auv3_profile,
+      bundle_identifier: "com.echoelmusic.app.auv3"
+    )
+
     # Build with proper signing for app + AUv3 extension
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -456,6 +478,28 @@ platform :mac do
     )
     auv3_profile = lane_context[SharedValues::SIGH_NAME]
     UI.message("macOS AUv3 profile: #{auv3_profile}")
+
+    # Configure code signing for main macOS app target
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["Echoelmusic-macOS"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: app_profile,
+      bundle_identifier: "com.echoelmusic.app"
+    )
+
+    # Configure code signing for macOS AUv3 extension target
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["EchoelmusicAUv3-macOS"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: auv3_profile,
+      bundle_identifier: "com.echoelmusic.app.auv3"
+    )
 
     # Build with proper signing for app + AUv3 extension
     build_app(
