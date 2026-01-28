@@ -164,18 +164,22 @@ public struct AppIconGenerator {
         }
     }
 
-    // MARK: - Icon Design Constants
+    // MARK: - Icon Design Constants (Vaporwave Theme)
 
     public struct Design {
-        public static let primaryColor = Color(red: 0.4, green: 0.2, blue: 0.8) // Deep purple
-        public static let secondaryColor = Color(red: 0.2, green: 0.8, blue: 0.9) // Cyan
-        public static let accentColor = Color(red: 0.9, green: 0.3, blue: 0.5) // Magenta
-        public static let backgroundColor = Color(red: 0.05, green: 0.05, blue: 0.15) // Deep space
+        /// Neon Pink - Primary (#FF1494)
+        public static let primaryColor = Color(red: 1.0, green: 0.08, blue: 0.58)
+        /// Neon Cyan - Secondary (#00FFFF)
+        public static let secondaryColor = Color(red: 0.0, green: 1.0, blue: 1.0)
+        /// Neon Purple - Accent (#9933FF)
+        public static let accentColor = Color(red: 0.6, green: 0.2, blue: 1.0)
+        /// Deep Black - Background (#050510)
+        public static let backgroundColor = Color(red: 0.02, green: 0.02, blue: 0.06)
 
         public static let gradientColors: [Color] = [
-            Color(red: 0.3, green: 0.1, blue: 0.6),
-            Color(red: 0.5, green: 0.2, blue: 0.8),
-            Color(red: 0.2, green: 0.6, blue: 0.9)
+            Color(red: 1.0, green: 0.08, blue: 0.58),  // neonPink
+            Color(red: 0.6, green: 0.2, blue: 1.0),    // neonPurple
+            Color(red: 0.0, green: 1.0, blue: 1.0)     // neonCyan
         ]
     }
 }
@@ -191,11 +195,11 @@ public struct AppIconView: View {
 
     public var body: some View {
         ZStack {
-            // Background gradient
+            // Background gradient - Vaporwave deep space
             RadialGradient(
                 colors: [
-                    Color(red: 0.2, green: 0.1, blue: 0.4),
-                    Color(red: 0.05, green: 0.02, blue: 0.15)
+                    Color(red: 0.1, green: 0.05, blue: 0.2),  // Dark purple
+                    Color(red: 0.02, green: 0.02, blue: 0.06) // Deep black
                 ],
                 center: .center,
                 startRadius: 0,
@@ -217,12 +221,12 @@ public struct AppIconView: View {
             // Photon particles
             PhotonParticles(size: size)
 
-            // Glow effect
+            // Glow effect - Vaporwave neon pink
             Circle()
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color.cyan.opacity(0.3),
+                            Color(red: 1.0, green: 0.08, blue: 0.58).opacity(0.35), // neonPink
                             Color.clear
                         ],
                         center: .center,
@@ -247,9 +251,9 @@ struct QuantumRing: View {
             .stroke(
                 AngularGradient(
                     colors: [
-                        Color.purple.opacity(opacity),
-                        Color.cyan.opacity(opacity * 0.7),
-                        Color.purple.opacity(opacity)
+                        Color(red: 1.0, green: 0.08, blue: 0.58).opacity(opacity), // neonPink
+                        Color(red: 0.0, green: 1.0, blue: 1.0).opacity(opacity * 0.7), // neonCyan
+                        Color(red: 1.0, green: 0.08, blue: 0.58).opacity(opacity)  // neonPink
                     ],
                     center: .center
                 ),
@@ -264,18 +268,18 @@ struct AtomSymbol: View {
 
     var body: some View {
         ZStack {
-            // Nucleus
+            // Nucleus - Vaporwave heart glow
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [.white, Color.cyan],
+                        colors: [.white, Color(red: 1.0, green: 0.08, blue: 0.58)], // neonPink
                         center: .center,
                         startRadius: 0,
                         endRadius: size * 0.1
                     )
                 )
                 .frame(width: size * 0.15, height: size * 0.15)
-                .shadow(color: .cyan, radius: size * 0.05)
+                .shadow(color: Color(red: 1.0, green: 0.08, blue: 0.58), radius: size * 0.05) // neonPink
 
             // Electron orbits
             ForEach(0..<3, id: \.self) { orbit in
@@ -294,11 +298,14 @@ struct ElectronOrbit: View {
 
     var body: some View {
         ZStack {
-            // Orbit path
+            // Orbit path - Vaporwave gradient
             Ellipse()
                 .stroke(
                     LinearGradient(
-                        colors: [.cyan.opacity(0.5), .purple.opacity(0.3)],
+                        colors: [
+                            Color(red: 0.0, green: 1.0, blue: 1.0).opacity(0.5), // neonCyan
+                            Color(red: 0.6, green: 0.2, blue: 1.0).opacity(0.3)  // neonPurple
+                        ],
                         startPoint: .leading,
                         endPoint: .trailing
                     ),
@@ -310,7 +317,7 @@ struct ElectronOrbit: View {
             Circle()
                 .fill(Color.white)
                 .frame(width: size * 0.08, height: size * 0.08)
-                .shadow(color: .cyan, radius: size * 0.03)
+                .shadow(color: Color(red: 0.0, green: 1.0, blue: 1.0), radius: size * 0.03) // neonCyan
                 .offset(x: size * 0.4)
         }
         .rotationEffect(.degrees(rotation))
@@ -328,9 +335,9 @@ struct PhotonParticles: View {
             let y = sin(angle * .pi / 180) * distance
 
             Circle()
-                .fill(Color.white.opacity(0.6))
+                .fill(Color.white.opacity(0.7))
                 .frame(width: size * 0.02, height: size * 0.02)
-                .shadow(color: .cyan, radius: size * 0.01)
+                .shadow(color: Color(red: 1.0, green: 0.08, blue: 0.58), radius: size * 0.01) // neonPink glow
                 .offset(x: x, y: y)
         }
     }
@@ -345,19 +352,19 @@ public struct LaunchScreenView: View {
 
     public var body: some View {
         ZStack {
-            // Background
-            Color(red: 0.05, green: 0.02, blue: 0.1)
+            // Background - Vaporwave deep space
+            Color(red: 0.02, green: 0.02, blue: 0.06)
                 .ignoresSafeArea()
 
-            // Animated rings
+            // Animated rings - Vaporwave colors
             ForEach(0..<5, id: \.self) { ring in
                 Circle()
                     .stroke(
                         AngularGradient(
                             colors: [
-                                Color.purple.opacity(0.3),
-                                Color.cyan.opacity(0.2),
-                                Color.purple.opacity(0.3)
+                                Color(red: 1.0, green: 0.08, blue: 0.58).opacity(0.3), // neonPink
+                                Color(red: 0.0, green: 1.0, blue: 1.0).opacity(0.2),   // neonCyan
+                                Color(red: 1.0, green: 0.08, blue: 0.58).opacity(0.3)  // neonPink
                             ],
                             center: .center
                         ),
@@ -377,20 +384,20 @@ public struct LaunchScreenView: View {
             VStack(spacing: 30) {
                 // App icon
                 AppIconView(size: 120)
-                    .shadow(color: .purple.opacity(0.5), radius: 20)
+                    .shadow(color: Color(red: 1.0, green: 0.08, blue: 0.58).opacity(0.5), radius: 20) // neonPink
 
                 // App name
                 Text("Echoelmusic")
                     .font(.system(size: 36, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
 
-                Text("Quantum Light Experience")
+                Text("Bio-Reactive Production")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.cyan.opacity(0.8))
+                    .foregroundColor(Color(red: 0.0, green: 1.0, blue: 1.0).opacity(0.8)) // neonCyan
 
-                // Loading indicator
+                // Loading indicator - neonCyan
                 ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .cyan))
+                    .progressViewStyle(CircularProgressViewStyle(tint: Color(red: 0.0, green: 1.0, blue: 1.0)))
                     .scaleEffect(1.2)
                     .padding(.top, 40)
             }
