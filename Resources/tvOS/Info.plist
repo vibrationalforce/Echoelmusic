@@ -44,5 +44,14 @@
 		<key>TVTopShelfImageWide</key>
 		<string>TopShelf-wide</string>
 	</dict>
+	<key>MinimumOSVersion</key>
+	<string>15.0</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Echoelmusic uses microphone for voice commands and audio capture.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

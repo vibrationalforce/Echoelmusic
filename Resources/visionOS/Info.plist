@@ -58,5 +58,18 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>MinimumOSVersion</key>
+	<string>1.0</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Echoelmusic uses heart rate and HRV data to create personalized bio-reactive audio experiences in your spatial environment.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Echoelmusic may save your meditation and coherence training sessions to HealthKit.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Echoelmusic uses local network for DMX lighting control, Art-Net, and connecting to external audio interfaces.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

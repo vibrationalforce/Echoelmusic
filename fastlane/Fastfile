@@ -200,6 +200,28 @@ platform :ios do
     )
     watch_profile = lane_context[SharedValues::SIGH_NAME]
 
+    # Configure code signing for companion iOS app target
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["Echoelmusic"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: ios_profile,
+      bundle_identifier: "com.echoelmusic.app"
+    )
+
+    # Configure code signing for watchOS app target
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["Echoelmusic-watchOS"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: watch_profile,
+      bundle_identifier: "com.echoelmusic.app.watchkitapp"
+    )
+
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-watchOS",
@@ -250,6 +272,17 @@ platform :ios do
       force: ENV["CLEAN_BUILD"] == "true"
     )
     profile = lane_context[SharedValues::SIGH_NAME]
+
+    # Configure code signing for tvOS app target
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["Echoelmusic-tvOS"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: profile,
+      bundle_identifier: "com.echoelmusic.app"
+    )
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -302,6 +335,17 @@ platform :ios do
       force: ENV["CLEAN_BUILD"] == "true"
     )
     profile = lane_context[SharedValues::SIGH_NAME]
+
+    # Configure code signing for visionOS app target
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["Echoelmusic-visionOS"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: profile,
+      bundle_identifier: "com.echoelmusic.app"
+    )
 
     build_app(
       project: "Echoelmusic.xcodeproj",

@@ -233,13 +233,117 @@ jobs:
           -configuration Debug \
           -enableCodeCoverage YES \
           2>&1 | tee test.log | xcpretty || cat test.log
-      continue-on-error: true
 
-  # Job 4: Performance Tests
+  # Job 4: Build - watchOS
+  build-watchos:
+    name: Build (watchOS)
+    runs-on: macos-14
+    needs: code-quality
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: ${{ env.XCODE_VERSION }}
+
+    - name: Setup XcodeGen
+      uses: ./.github/actions/setup-xcodegen
+      with:
+        version: ${{ env.XCODEGEN_VERSION }}
+
+    - name: Generate Xcode Project
+      run: |
+        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+        xcodegen generate --spec project.yml
+
+    - name: Build watchOS
+      run: |
+        set -o pipefail
+        xcodebuild build \
+          -scheme Echoelmusic-watchOS \
+          -destination 'platform=watchOS Simulator,name=Apple Watch Series 9 (45mm)' \
+          -configuration Debug \
+          CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee build.log | xcpretty || cat build.log
+
+  # Job 5: Build - tvOS
+  build-tvos:
+    name: Build (tvOS)
+    runs-on: macos-14
+    needs: code-quality
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: ${{ env.XCODE_VERSION }}
+
+    - name: Setup XcodeGen
+      uses: ./.github/actions/setup-xcodegen
+      with:
+        version: ${{ env.XCODEGEN_VERSION }}
+
+    - name: Generate Xcode Project
+      run: |
+        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+        xcodegen generate --spec project.yml
+
+    - name: Build tvOS
+      run: |
+        set -o pipefail
+        xcodebuild build \
+          -scheme Echoelmusic-tvOS \
+          -destination 'platform=tvOS Simulator,name=Apple TV 4K (3rd generation)' \
+          -configuration Debug \
+          CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee build.log | xcpretty || cat build.log
+
+  # Job 6: Build - visionOS
+  build-visionos:
+    name: Build (visionOS)
+    runs-on: macos-14
+    needs: code-quality
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: ${{ env.XCODE_VERSION }}
+
+    - name: Setup XcodeGen
+      uses: ./.github/actions/setup-xcodegen
+      with:
+        version: ${{ env.XCODEGEN_VERSION }}
+
+    - name: Generate Xcode Project
+      run: |
+        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+        xcodegen generate --spec project.yml
+
+    - name: Build visionOS
+      run: |
+        set -o pipefail
+        xcodebuild build \
+          -scheme Echoelmusic-visionOS \
+          -destination 'platform=visionOS Simulator,name=Apple Vision Pro' \
+          -configuration Debug \
+          CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee build.log | xcpretty || cat build.log
+
+  # Job 7: Performance Tests
   performance-tests:
     name: Performance & Memory Tests
     runs-on: macos-14
-    needs: [build-test-ios, build-test-macos]
+    needs: [build-test-ios, build-test-macos, build-watchos, build-tvos, build-visionos]
     continue-on-error: true
 
     steps:
