@@ -594,11 +594,7 @@ struct StreamKeyInputSheet: View {
     }
 }
 
-// MARK: - StreamDestination Identifiable Extension
-
-extension StreamEngine.StreamDestination: @retroactive Identifiable {
-    public var id: String { rawValue }
-}
+// Note: StreamDestination Identifiable conformance is defined in StreamEngine.swift
 
 // MARK: - Preview
 
