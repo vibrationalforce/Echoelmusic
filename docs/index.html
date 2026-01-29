@@ -9,8 +9,8 @@
     <meta property="og:title" content="Echoelmusic - Bio-Reactive Creative Platform">
     <meta property="og:description" content="Dein Herzschlag steuert Sound, Video & Visuals. 100+ Instrumente, 60+ Effekte, weltweite Echtzeit-Collaboration.">
     <meta property="og:type" content="website">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%23FF1494'/><stop offset='100%25' stop-color='%239933FF'/></linearGradient></defs><rect width='512' height='512' rx='115' fill='%230a0a0f'/><path fill='url(%23g)' d='M256 140c-64 0-116 52-116 116s52 116 116 116 116-52 116-116-52-116-116-116zm0 180c-35 0-64-29-64-64s29-64 64-64 64 29 64 64-29 64-64 64z'/><path fill='%2300FFFF' d='M180 256h152' stroke='%2300FFFF' stroke-width='8'/><path fill='none' stroke='%23FF1494' stroke-width='12' stroke-linecap='round' d='M200 256l20-40 20 60 20-50 20 70 20-55 20 35'/></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%23FF1494'/><stop offset='100%25' stop-color='%239933FF'/></linearGradient></defs><rect width='512' height='512' rx='115' fill='%230a0a0f'/><path fill='url(%23g)' d='M256 140c-64 0-116 52-116 116s52 116 116 116 116-52 116-116-52-116-116-116zm0 180c-35 0-64-29-64-64s29-64 64-64 64 29 64 64-29 64-64 64z'/><path fill='%2300FFFF' d='M180 256h152' stroke='%2300FFFF' stroke-width='8'/><path fill='none' stroke='%23FF1494' stroke-width='12' stroke-linecap='round' d='M200 256l20-40 20 60 20-50 20 70 20-55 20 35'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='115' fill='%23050510'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%2300FFFF' stroke-width='3' fill='none' opacity='0.6' transform='rotate(-30 256 256)'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%23FF1494' stroke-width='3' fill='none' opacity='0.6' transform='rotate(30 256 256)'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%239933FF' stroke-width='3' fill='none' opacity='0.6' transform='rotate(90 256 256)'/><circle cx='256' cy='256' r='40' fill='%23FF1494'/><circle cx='256' cy='256' r='28' fill='%23fff'/><circle cx='356' cy='198' r='12' fill='%2300FFFF'/><circle cx='156' cy='314' r='12' fill='%23FF1494'/><circle cx='256' cy='136' r='12' fill='%239933FF'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='115' fill='%23050510'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%2300FFFF' stroke-width='3' fill='none' opacity='0.6' transform='rotate(-30 256 256)'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%23FF1494' stroke-width='3' fill='none' opacity='0.6' transform='rotate(30 256 256)'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%239933FF' stroke-width='3' fill='none' opacity='0.6' transform='rotate(90 256 256)'/><circle cx='256' cy='256' r='40' fill='%23FF1494'/><circle cx='256' cy='256' r='28' fill='%23fff'/><circle cx='356' cy='198' r='12' fill='%2300FFFF'/><circle cx='156' cy='314' r='12' fill='%23FF1494'/><circle cx='256' cy='136' r='12' fill='%239933FF'/></svg>">
     <style>
         :root { --pink: #FF1494; --cyan: #00FFFF; --purple: #9933FF; --black: #0a0a0f; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -58,23 +58,39 @@
     <div class="grid"></div>
     <div class="glow"></div>
 
-    <!-- Echoelmusic Logo - App Store Compatible -->
+    <!-- Echoelmusic Logo - Quantum Light Theme (matches App Icon) -->
     <div class="logo">
         <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#FF1494"/>
-                    <stop offset="100%" stop-color="#9933FF"/>
+                    <stop offset="50%" stop-color="#9933FF"/>
+                    <stop offset="100%" stop-color="#00FFFF"/>
                 </linearGradient>
+                <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#FF1494" stop-opacity="0.4"/>
+                    <stop offset="100%" stop-color="#FF1494" stop-opacity="0"/>
+                </radialGradient>
             </defs>
             <!-- Background -->
-            <rect width="512" height="512" rx="115" fill="#0a0a0f"/>
-            <!-- Circle Ring -->
-            <path fill="url(#logoGrad)" d="M256 140c-64 0-116 52-116 116s52 116 116 116 116-52 116-116-52-116-116-116zm0 180c-35 0-64-29-64-64s29-64 64-64 64 29 64 64-29 64-64 64z"/>
-            <!-- Heartbeat Line -->
-            <path fill="none" stroke="#00FFFF" stroke-width="8" stroke-linecap="round" d="M180 256h30"/>
-            <path fill="none" stroke="#FF1494" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" d="M210 256l20-40 20 60 20-50 20 70 20-55 20 35"/>
-            <path fill="none" stroke="#00FFFF" stroke-width="8" stroke-linecap="round" d="M330 256h30"/>
+            <rect width="512" height="512" rx="115" fill="#050510"/>
+            <!-- Quantum Rings -->
+            <ellipse cx="256" cy="256" rx="180" ry="180" stroke="url(#logoGrad)" stroke-width="2" fill="none" opacity="0.2"/>
+            <ellipse cx="256" cy="256" rx="140" ry="140" stroke="url(#logoGrad)" stroke-width="2" fill="none" opacity="0.25"/>
+            <ellipse cx="256" cy="256" rx="100" ry="100" stroke="url(#logoGrad)" stroke-width="3" fill="none" opacity="0.3"/>
+            <!-- Electron Orbits -->
+            <ellipse cx="256" cy="256" rx="120" ry="50" stroke="#00FFFF" stroke-width="2" fill="none" opacity="0.5" transform="rotate(-30 256 256)"/>
+            <ellipse cx="256" cy="256" rx="120" ry="50" stroke="#FF1494" stroke-width="2" fill="none" opacity="0.5" transform="rotate(30 256 256)"/>
+            <ellipse cx="256" cy="256" rx="120" ry="50" stroke="#9933FF" stroke-width="2" fill="none" opacity="0.5" transform="rotate(90 256 256)"/>
+            <!-- Nucleus Glow -->
+            <circle cx="256" cy="256" r="80" fill="url(#glowGrad)"/>
+            <!-- Nucleus Core -->
+            <circle cx="256" cy="256" r="35" fill="#FF1494"/>
+            <circle cx="256" cy="256" r="25" fill="#fff"/>
+            <!-- Electrons -->
+            <circle cx="356" cy="198" r="10" fill="#00FFFF"/>
+            <circle cx="156" cy="314" r="10" fill="#FF1494"/>
+            <circle cx="256" cy="136" r="10" fill="#9933FF"/>
         </svg>
     </div>
 
@@ -117,6 +133,7 @@
         <a href="privacy.html">Datenschutz</a>
         <a href="terms.html">AGB</a>
         <a href="support.html">Support</a>
+        <a href="security.html">Security</a>
     </footer>
 </body>
 </html>
