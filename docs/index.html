@@ -357,26 +357,6 @@
             margin-bottom: 16px;
         }
 
-        /* Audio Spectrum Visualizer */
-        .spectrum {
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            gap: 4px;
-            height: 40px;
-            margin-bottom: 40px;
-        }
-        .spectrum-bar {
-            width: 4px;
-            background: linear-gradient(180deg, var(--cyan), var(--pink));
-            border-radius: 2px;
-            animation: spectrumPulse 1s ease-in-out infinite;
-        }
-        @keyframes spectrumPulse {
-            0%, 100% { height: 10px; opacity: 0.5; }
-            50% { height: var(--h); opacity: 1; }
-        }
-
         /* Glass Morphism Feature Strip */
         .feature-strip {
             display: flex;
@@ -600,29 +580,6 @@
         .cta:hover::before { opacity: 1; }
         .cta:active { transform: translateY(-2px) scale(0.98); }
         .cta svg { width: 26px; height: 26px; }
-
-        /* CTA Group */
-        .cta-group {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        /* Secondary CTA */
-        .cta.cta-secondary {
-            background: transparent;
-            color: var(--cyan);
-            border: 2px solid var(--cyan);
-            box-shadow: 0 0 30px rgba(0,255,255,0.2);
-        }
-        .cta.cta-secondary:hover {
-            background: rgba(0,255,255,0.1);
-            box-shadow: 0 0 50px rgba(0,255,255,0.4);
-        }
-        .cta.cta-secondary::before {
-            background: linear-gradient(135deg, var(--cyan), var(--purple));
-        }
 
         /* Platforms */
         .platforms {
@@ -856,24 +813,7 @@
             <span><span class="highlight">Focus</span> Your Spirit</span>
         </div>
 
-        <!-- Audio Spectrum Visualizer -->
-        <div class="spectrum" aria-hidden="true">
-            <div class="spectrum-bar" style="--h: 15px; animation-delay: 0s;"></div>
-            <div class="spectrum-bar" style="--h: 25px; animation-delay: 0.1s;"></div>
-            <div class="spectrum-bar" style="--h: 35px; animation-delay: 0.2s;"></div>
-            <div class="spectrum-bar" style="--h: 30px; animation-delay: 0.3s;"></div>
-            <div class="spectrum-bar" style="--h: 40px; animation-delay: 0.15s;"></div>
-            <div class="spectrum-bar" style="--h: 35px; animation-delay: 0.25s;"></div>
-            <div class="spectrum-bar" style="--h: 25px; animation-delay: 0.35s;"></div>
-            <div class="spectrum-bar" style="--h: 30px; animation-delay: 0.05s;"></div>
-            <div class="spectrum-bar" style="--h: 20px; animation-delay: 0.4s;"></div>
-            <div class="spectrum-bar" style="--h: 35px; animation-delay: 0.2s;"></div>
-            <div class="spectrum-bar" style="--h: 40px; animation-delay: 0.1s;"></div>
-            <div class="spectrum-bar" style="--h: 30px; animation-delay: 0.3s;"></div>
-            <div class="spectrum-bar" style="--h: 20px; animation-delay: 0.15s;"></div>
-        </div>
-
-        <p class="tagline">Bio-Reactive, Immersive, Multidimensional — Human expression, worldwide collaboration, education and wellbeing in one comprehensive Ecosystem.</p>
+        <p class="tagline">Bio-Reactive, Immersive, Multidimensional — Human expression, realtime sessions, education and wellbeing in one comprehensive Ecosystem.</p>
 
         <!-- Glass Feature Tags -->
         <div class="feature-strip">
@@ -919,19 +859,13 @@
             </div>
         </div>
 
-        <!-- CTA Buttons -->
-        <div class="cta-group">
-            <a href="https://apps.apple.com/app/echoelmusic" class="cta" aria-label="Download on App Store">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                Download Free
-            </a>
-            <a href="webapp/" class="cta cta-secondary" aria-label="Try WebApp in Browser">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                Try in Browser
-            </a>
-        </div>
+        <!-- CTA Button -->
+        <a href="https://apps.apple.com/app/echoelmusic" class="cta" aria-label="Download on App Store">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            Download Free
+        </a>
 
-        <p class="platforms">iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro · Web</p>
+        <p class="platforms">iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro</p>
         <p class="beta-notice">The first beta version will be free for a short period of time!</p>
 
         <!-- Social Links -->
