@@ -1,257 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms of Service - Echoelmusic</title>
-    <meta name="description" content="Echoelmusic Terms of Service. Usage terms, licensing, and legal information.">
-    <meta name="theme-color" content="#22C55E">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <title>AGB - Echoelmusic</title>
+    <meta name="theme-color" content="#FF1494">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
     <style>
-        :root {
-            --color-primary: #22C55E;
-            --color-accent: #10B981;
-            --color-secondary: #34D399;
-            --color-bg: #030712;
-            --color-bg-mid: #052e16;
-            --color-surface: #0a3622;
-            --color-text: #FFFFFF;
-            --color-text-secondary: rgba(255,255,255,0.75);
-            --color-text-muted: rgba(255,255,255,0.5);
-            --color-border: rgba(34,197,94,0.2);
-            --font-sans: 'Atkinson Hyperlegible', system-ui, -apple-system, sans-serif;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: var(--font-sans);
-            background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-mid) 50%, var(--color-surface) 100%);
-            background-attachment: fixed;
-            color: var(--color-text);
-            line-height: 1.8;
-            min-height: 100vh;
-        }
-
-        .grid-bg {
-            position: fixed;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(34,197,94,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(34,197,94,0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            padding: 16px 24px;
-            background: rgba(3,7,18,0.9);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--color-border);
-        }
-
-        .nav-inner {
-            max-width: 900px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-
-        .nav-logo svg {
-            width: 36px;
-            height: 36px;
-        }
-
-        .nav-logo span {
-            font-family: var(--font-sans);
-            font-size: 18px;
-            font-weight: 700;
-            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nav-back {
-            color: var(--color-primary);
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.2s ease;
-        }
-
-        .nav-back:hover {
-            color: var(--color-secondary);
-        }
-
-        main {
-            position: relative;
-            z-index: 1;
-            padding: 120px 24px 80px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            font-family: var(--font-sans);
-            font-size: clamp(28px, 4vw, 40px);
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: linear-gradient(90deg, var(--color-text), var(--color-primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .updated {
-            color: var(--color-text-muted);
-            font-size: 14px;
-            margin-bottom: 40px;
-        }
-
-        h2 {
-            font-family: var(--font-sans);
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--color-primary);
-            margin: 40px 0 16px;
-        }
-
-        p, li {
-            color: var(--color-text-secondary);
-            margin-bottom: 16px;
-            font-size: 15px;
-        }
-
-        ul {
-            padding-left: 24px;
-            margin-bottom: 16px;
-        }
-
-        a {
-            color: var(--color-primary);
-            transition: color 0.2s ease;
-        }
-
-        a:hover {
-            color: var(--color-secondary);
-        }
-
-        .highlight {
-            background: rgba(34,197,94,0.05);
-            border-left: 3px solid var(--color-primary);
-            padding: 16px 20px;
-            border-radius: 0 12px 12px 0;
-            margin: 24px 0;
-        }
-
-        footer {
-            background: var(--color-bg);
-            padding: 40px 24px;
-            border-top: 1px solid var(--color-border);
-            text-align: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        footer p {
-            color: var(--color-text-muted);
-            font-size: 13px;
-        }
-
-        footer a {
-            color: var(--color-primary);
-            text-decoration: none;
-        }
+        :root { --pink: #FF1494; --cyan: #00FFFF; --black: #0a0a0f; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--black); color: rgba(255,255,255,0.85); line-height: 1.7; padding: 40px 20px; max-width: 640px; margin: 0 auto; }
+        .bg { position: fixed; inset: 0; z-index: -1; background: linear-gradient(180deg, #0a0a1a 0%, #1a0a2a 100%); }
+        a { color: var(--cyan); }
+        .back { display: inline-block; margin-bottom: 24px; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 14px; }
+        .back:hover { color: var(--cyan); }
+        h1 { color: #fff; font-size: 28px; margin-bottom: 8px; }
+        .date { color: rgba(255,255,255,0.4); font-size: 13px; margin-bottom: 32px; }
+        .summary { background: rgba(255,20,148,0.1); border-left: 3px solid var(--pink); padding: 16px; margin-bottom: 32px; border-radius: 0 8px 8px 0; }
+        h2 { color: var(--pink); font-size: 16px; margin: 28px 0 12px; }
+        p, li { margin-bottom: 12px; font-size: 14px; }
+        ul { padding-left: 20px; }
+        strong { color: #fff; }
+        footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 12px; color: rgba(255,255,255,0.4); }
+        footer a { color: rgba(255,255,255,0.5); margin-right: 16px; text-decoration: none; }
     </style>
 </head>
 <body>
-    <div class="grid-bg"></div>
-    <nav>
-        <div class="nav-inner">
-            <a href="index.html" class="nav-logo">
-                <svg viewBox="0 0 100 100" fill="none">
-                    <defs>
-                        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#22C55E"/>
-                            <stop offset="50%" stop-color="#10B981"/>
-                            <stop offset="100%" stop-color="#34D399"/>
-                        </linearGradient>
-                    </defs>
-                    <path d="M50 85 C30 65 10 50 10 32 C10 18 22 8 36 8 C44 8 50 14 50 14 C50 14 56 8 64 8 C78 8 90 18 90 32 C90 50 70 65 50 85Z" fill="url(#logo-gradient)"/>
-                    <path d="M20 42 L32 42 L38 28 L44 56 L50 20 L56 56 L62 28 L68 42 L80 42" stroke="white" stroke-width="4" stroke-linecap="round"/>
-                </svg>
-                <span>Echoelmusic</span>
-            </a>
-            <a href="index.html" class="nav-back">← Back</a>
-        </div>
-    </nav>
-    <main>
-        <h1>Terms of Service</h1>
-        <p class="updated">Last updated: January 2026</p>
+    <div class="bg"></div>
+    <a href="/" class="back">← Zurück</a>
+    <h1>Nutzungsbedingungen</h1>
+    <p class="date">Stand: Januar 2026</p>
 
-        <div class="highlight"><p><strong>Key Points:</strong> One license = all platforms. You own your creations. No subscriptions required.</p></div>
+    <div class="summary"><strong>Kurzfassung:</strong> Kostenlose App. Du besitzt deine Kreationen. Keine versteckten Kosten.</div>
 
-        <h2>1. Acceptance of Terms</h2>
-        <p>By using Echoelmusic, you agree to these Terms of Service. If you don't agree, please don't use the software.</p>
+    <h2>1. Nutzung</h2>
+    <p>Echoelmusic ist kostenlos für alle Apple-Geräte. Mit dem Download stimmst du diesen Bedingungen zu.</p>
 
-        <h2>2. License Grant</h2>
-        <p>Upon purchase, you receive a perpetual, non-exclusive license to use Echoelmusic on all supported platforms for personal and commercial purposes. This license is tied to your account and cannot be transferred or resold.</p>
-        <ul>
-            <li>Install on unlimited personal devices</li>
-            <li>Use for commercial music production</li>
-            <li>Use for live performances</li>
-            <li>Create and sell derivative works</li>
-        </ul>
+    <h2>2. Deine Inhalte</h2>
+    <p>Alles was du mit Echoelmusic erstellst gehört dir. Wir beanspruchen keine Rechte an deinen Kreationen.</p>
 
-        <h2>3. Content Ownership</h2>
-        <p><strong>Your Content:</strong> You retain full ownership of all content you create using Echoelmusic, including AI-generated content. We claim no rights to your creations.</p>
-        <p><strong>Our Content:</strong> Echoelmusic software, presets, and documentation remain our intellectual property.</p>
+    <h2>3. Erlaubt</h2>
+    <ul>
+        <li>Persönliche und kommerzielle Nutzung</li>
+        <li>Live-Performances</li>
+        <li>Veröffentlichung deiner Musik</li>
+    </ul>
 
-        <h2>4. Prohibited Uses</h2>
-        <ul>
-            <li>Reverse engineering or decompiling the software</li>
-            <li>Redistributing the software or license keys</li>
-            <li>Using the software for illegal purposes</li>
-            <li>Circumventing copy protection</li>
-        </ul>
+    <h2>4. Nicht erlaubt</h2>
+    <ul>
+        <li>Reverse Engineering der App</li>
+        <li>Weiterverkauf der Software</li>
+        <li>Illegale Nutzung</li>
+    </ul>
 
-        <h2>5. Beta Program</h2>
-        <p>Beta access is provided free of charge for testing purposes. Beta software may contain bugs. We appreciate feedback but make no guarantees about beta features being included in final release.</p>
+    <h2>5. Gesundheitshinweis</h2>
+    <p>Echoelmusic ist kein Medizinprodukt. Biofeedback-Features dienen nur der Entspannung.</p>
 
-        <h2>6. Disclaimer of Warranties</h2>
-        <p>Echoelmusic is provided "as is" without warranties of any kind. We don't warrant that the software will be error-free or uninterrupted.</p>
+    <h2>6. Haftung</h2>
+    <p>Die App wird "wie sie ist" bereitgestellt. Keine Garantie für Fehlerfreiheit.</p>
 
-        <h2>7. Limitation of Liability</h2>
-        <p>We are not liable for any indirect, incidental, or consequential damages arising from use of Echoelmusic. Our total liability is limited to the amount you paid for the license.</p>
+    <h2>7. Kontakt</h2>
+    <p><a href="mailto:support@echoelmusic.com">support@echoelmusic.com</a></p>
 
-        <h2>8. Health Disclaimer</h2>
-        <p>Echoelmusic is not a medical device. See our <a href="health.html">Health Disclaimer</a> for important information about biofeedback features.</p>
-
-        <h2>9. Updates & Changes</h2>
-        <p>We may update these terms occasionally. Continued use after changes constitutes acceptance. Major changes will be communicated via email.</p>
-
-        <h2>10. Contact</h2>
-        <p>Questions? <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a></p>
-    </main>
-    <footer><p>© 2026 Echoelmusic. <a href="privacy.html">Privacy</a> | <a href="health.html">Health</a> | <a href="faq.html">FAQ</a> | <a href="impressum.html">Imprint</a></p></footer>
+    <footer>
+        <a href="/">Home</a>
+        <a href="privacy.html">Datenschutz</a>
+        <a href="support.html">Support</a>
+    </footer>
 </body>
 </html>
