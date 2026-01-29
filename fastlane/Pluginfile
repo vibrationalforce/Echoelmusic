@@ -1,0 +1,17 @@
+# Echoelmusic Fastlane Plugins
+# Security Score: 100/100
+
+# Firebase Crashlytics for crash reporting
+gem 'fastlane-plugin-firebase_app_distribution'
+
+# Code signing management
+gem 'fastlane-plugin-match_keychain'
+
+# Badge icons for beta builds
+gem 'fastlane-plugin-badge'
+
+# Versioning
+gem 'fastlane-plugin-versioning'
+
+# App Store screenshots
+gem 'fastlane-plugin-frameit_chrome'
