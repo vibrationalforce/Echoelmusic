@@ -294,7 +294,7 @@ struct VJLaserControlView: View {
                     .foregroundColor(VaporwaveColors.textTertiary)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 4) {
-                    ForEach(LaserPattern.allCases, id: \.self) { pattern in
+                    ForEach(VJLaserPattern.allCases, id: \.self) { pattern in
                         LaserPatternButton(
                             pattern: pattern,
                             isSelected: vjEngine.selectedLaserPattern == pattern,
@@ -996,7 +996,7 @@ struct SacredGeometryPreview: View {
 }
 
 struct LaserPatternButton: View {
-    let pattern: LaserPattern
+    let pattern: VJLaserPattern
     let isSelected: Bool
     let action: () -> Void
 
@@ -1382,13 +1382,7 @@ extension VJLaserControlView.VJTab {
     }
 }
 
-// MARK: - Float Extension
-
-extension Float {
-    func clamped(to range: ClosedRange<Float>) -> Float {
-        return min(max(self, range.lowerBound), range.upperBound)
-    }
-}
+// Note: clamped(to:) extension moved to NumericExtensions.swift
 
 // MARK: - Models
 
@@ -1409,7 +1403,7 @@ class VJEngineViewModel: ObservableObject {
     // Laser
     @Published var laserEnabled = false
     @Published var selectedDAC: LaserDAC = .etherDream
-    @Published var selectedLaserPattern: LaserPattern = .circle
+    @Published var selectedLaserPattern: VJLaserPattern = .circle
     @Published var laserIntensity: Float = 0.8
     @Published var laserSpeed: Float = 0.5
     @Published var laserSize: Float = 0.7
@@ -1608,7 +1602,7 @@ enum LaserDAC: String {
     case genericILDA = "Generic ILDA"
 }
 
-enum LaserPattern: String, CaseIterable {
+enum VJLaserPattern: String, CaseIterable {
     case circle = "Circle"
     case spiral = "Spiral"
     case lissajous = "Lissajous"

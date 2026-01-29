@@ -21,7 +21,7 @@ public final class ProductionMonitoring: ObservableObject {
 
     private let logger = os.Logger(subsystem: "com.echoelmusic", category: "monitoring")
     private var metricsTimer: Timer?
-    private var eventQueue: [AnalyticsEvent] = []
+    private var eventQueue: [MonitoringAnalyticsEvent] = []
     private let maxQueueSize = 1000
     private let flushInterval: TimeInterval = 30
 
@@ -49,9 +49,9 @@ public final class ProductionMonitoring: ObservableObject {
         }
     }
 
-    // MARK: - Analytics Event
+    // MARK: - Monitoring Analytics Event
 
-    public struct AnalyticsEvent: Codable, Sendable {
+    public struct MonitoringAnalyticsEvent: Codable, Sendable {
         public var id: UUID
         public var name: String
         public var category: EventCategory
@@ -172,10 +172,10 @@ public final class ProductionMonitoring: ObservableObject {
 
     public func trackEvent(
         _ name: String,
-        category: AnalyticsEvent.EventCategory = .feature,
+        category: MonitoringAnalyticsEvent.EventCategory = .feature,
         parameters: [String: String] = [:]
     ) async {
-        let event = AnalyticsEvent(
+        let event = MonitoringAnalyticsEvent(
             id: UUID(),
             name: name,
             category: category,
@@ -209,7 +209,7 @@ public final class ProductionMonitoring: ObservableObject {
         logger.error("Error in \(context): \(error.localizedDescription)")
     }
 
-    private func getDeviceInfo() -> AnalyticsEvent.DeviceInfo {
+    private func getDeviceInfo() -> MonitoringAnalyticsEvent.DeviceInfo {
         var systemInfo = utsname()
         uname(&systemInfo)
         let model = withUnsafePointer(to: &systemInfo.machine) {
@@ -218,7 +218,7 @@ public final class ProductionMonitoring: ObservableObject {
             }
         }
 
-        return AnalyticsEvent.DeviceInfo(
+        return MonitoringAnalyticsEvent.DeviceInfo(
             model: model,
             osVersion: ProcessInfo.processInfo.operatingSystemVersionString,
             appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0",
@@ -241,7 +241,7 @@ public final class ProductionMonitoring: ObservableObject {
         }
     }
 
-    private func sendEventsToBackend(_ events: [AnalyticsEvent]) async {
+    private func sendEventsToBackend(_ events: [MonitoringAnalyticsEvent]) async {
         // Implementation would send to analytics API
         // Using batch endpoint for efficiency
     }

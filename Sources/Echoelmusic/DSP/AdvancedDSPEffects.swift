@@ -1218,10 +1218,4 @@ class AdvancedDSPEffects {
     }
 }
 
-// MARK: - Float Clamping Extension
-
-extension Float {
-    func clamped(to range: ClosedRange<Float>) -> Float {
-        return min(max(self, range.lowerBound), range.upperBound)
-    }
-}
+// Note: clamped(to:) extension moved to NumericExtensions.swift

@@ -284,7 +284,7 @@ class MemoryOptimizationManager: ObservableObject {
 
     // MARK: - Circular Buffer (für Audio-Streaming)
 
-    class CircularBuffer<T> {
+    class MemoryCircularBuffer<T> {
         private var buffer: [T]
         private var readIndex: Int = 0
         private var writeIndex: Int = 0

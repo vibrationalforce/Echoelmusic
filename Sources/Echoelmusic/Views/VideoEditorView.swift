@@ -244,7 +244,7 @@ struct VideoEditorView: View {
         }
     }
 
-    private func timelineTrack(name: String, color: Color, clips: [VideoClip]) -> some View {
+    private func timelineTrack(name: String, color: Color, clips: [EditorVideoClip]) -> some View {
         HStack(spacing: 0) {
             // Track label
             Text(name)
@@ -281,7 +281,7 @@ struct VideoEditorView: View {
         }
     }
 
-    private func clipView(clip: VideoClip, color: Color, isSelected: Bool) -> some View {
+    private func clipView(clip: EditorVideoClip, color: Color, isSelected: Bool) -> some View {
         RoundedRectangle(cornerRadius: 4)
             .fill(color.opacity(isSelected ? 0.6 : 0.3))
             .frame(width: CGFloat(clip.duration * 10 * timelineZoom), height: 36)
@@ -408,7 +408,7 @@ struct VideoEditorView: View {
 
 // MARK: - Video Clip Model
 
-struct VideoClip: Identifiable {
+struct EditorVideoClip: Identifiable {
     let id = UUID()
     var name: String
     var startTime: TimeInterval

@@ -171,10 +171,4 @@ public struct AudioParameters: Equatable {
     }
 }
 
-// MARK: - Extensions
-
-extension Comparable {
-    func clamped(to range: ClosedRange<Self>) -> Self {
-        return min(max(self, range.lowerBound), range.upperBound)
-    }
-}
+// Note: clamped(to:) extension moved to NumericExtensions.swift

@@ -2647,10 +2647,4 @@ public final class ContentCreatorPlugin: EchoelmusicPlugin {
     }
 }
 
-// MARK: - Extensions
-
-extension Float {
-    func clamped(to range: ClosedRange<Float>) -> Float {
-        return max(range.lowerBound, min(range.upperBound, self))
-    }
-}
+// Note: clamped(to:) extension moved to NumericExtensions.swift

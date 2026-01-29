@@ -62,7 +62,7 @@ public struct SecurityVerificationResult: Sendable {
 // MARK: - Safe URL Wrapper
 
 /// Crash-free URL construction
-public struct SafeURL: Sendable {
+public struct SecureSafeURL: Sendable {
     public let url: URL?
 
     public init(_ string: String) {
@@ -128,7 +128,7 @@ public extension Dictionary {
 // MARK: - Safe JSON Decoding
 
 /// Crash-free JSON decoding
-public struct SafeJSON: Sendable {
+public struct SecureSafeJSON: Sendable {
 
     /// Decode JSON data to type, returning nil on failure
     public static func decode<T: Decodable>(_ type: T.Type, from data: Data) -> T? {

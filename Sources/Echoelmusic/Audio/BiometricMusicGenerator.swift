@@ -700,21 +700,4 @@ public final class BiometricMusicGenerator: ObservableObject {
 }
 
 // MARK: - Extensions
-
-private extension Int {
-    func clamped(to range: ClosedRange<Int>) -> Int {
-        return max(range.lowerBound, min(range.upperBound, self))
-    }
-}
-
-private extension Float {
-    func clamped(to range: ClosedRange<Float>) -> Float {
-        return max(range.lowerBound, min(range.upperBound, self))
-    }
-}
-
-private extension Double {
-    func clamped(to range: ClosedRange<Double>) -> Double {
-        return max(range.lowerBound, min(range.upperBound, self))
-    }
-}
+// Note: clamped(to:) extensions moved to NumericExtensions.swift

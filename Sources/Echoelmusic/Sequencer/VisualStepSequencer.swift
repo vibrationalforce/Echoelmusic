@@ -494,13 +494,7 @@ struct StepButton: View {
     }
 }
 
-// MARK: - Helper Extension
-
-extension Comparable {
-    func clamped(to range: ClosedRange<Self>) -> Self {
-        min(max(self, range.lowerBound), range.upperBound)
-    }
-}
+// Note: clamped(to:) extension moved to NumericExtensions.swift
 
 // MARK: - Preview
 

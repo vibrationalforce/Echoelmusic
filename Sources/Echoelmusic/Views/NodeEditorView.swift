@@ -528,9 +528,9 @@ struct NodeGridBackground: View {
 
 struct NodePaletteSheet: View {
     @Binding var isPresented: Bool
-    let onSelect: (NodeType) -> Void
+    let onSelect: (EditorNodeType) -> Void
 
-    let categories: [(String, [NodeType])] = [
+    let categories: [(String, [EditorNodeType])] = [
         ("Generators", [.generator, .oscillator, .noise, .bioInput]),
         ("Processors", [.filter, .mixer, .math, .transform]),
         ("Effects", [.reverb, .delay, .distortion, .modulator]),
@@ -582,7 +582,7 @@ struct NodePaletteSheet: View {
 }
 
 struct NodeTypeCard: View {
-    let type: NodeType
+    let type: EditorNodeType
     let action: () -> Void
 
     var body: some View {
@@ -695,7 +695,7 @@ struct NodeInspectorPanel: View {
 }
 
 struct ParameterSlider: View {
-    @Binding var parameter: NodeParameter
+    @Binding var parameter: EditorNodeParameter
     let onChanged: () -> Void
 
     var body: some View {
@@ -753,7 +753,7 @@ struct PortInfoRow: View {
 }
 
 struct BioModulationRow: View {
-    @Binding var parameter: NodeParameter
+    @Binding var parameter: EditorNodeParameter
 
     var body: some View {
         HStack {
@@ -816,8 +816,8 @@ class NodeEditorViewModel: ObservableObject {
                     NodePort(id: UUID(), name: "Out", dataType: .audio, isOutput: true)
                 ],
                 parameters: [
-                    NodeParameter(name: "Cutoff", value: 0.5, min: 0, max: 1),
-                    NodeParameter(name: "Resonance", value: 0.3, min: 0, max: 1)
+                    EditorNodeParameter(name: "Cutoff", value: 0.5, min: 0, max: 1),
+                    EditorNodeParameter(name: "Resonance", value: 0.3, min: 0, max: 1)
                 ]
             ),
             VisualNode(
@@ -833,15 +833,15 @@ class NodeEditorViewModel: ObservableObject {
                     NodePort(id: UUID(), name: "Video", dataType: .video, isOutput: true)
                 ],
                 parameters: [
-                    NodeParameter(name: "Intensity", value: 0.7, min: 0, max: 1),
-                    NodeParameter(name: "Speed", value: 0.5, min: 0, max: 1)
+                    EditorNodeParameter(name: "Intensity", value: 0.7, min: 0, max: 1),
+                    EditorNodeParameter(name: "Speed", value: 0.5, min: 0, max: 1)
                 ],
                 showPreview: true
             )
         ]
     }
 
-    func addNode(type: NodeType, at position: CGPoint) {
+    func addNode(type: EditorNodeType, at position: CGPoint) {
         let node = VisualNode(
             id: UUID(),
             name: type.name,
@@ -905,11 +905,11 @@ class NodeEditorViewModel: ObservableObject {
 struct VisualNode: Identifiable {
     let id: UUID
     var name: String
-    var type: NodeType
+    var type: EditorNodeType
     var position: CGPoint
     var inputs: [NodePort]
     var outputs: [NodePort]
-    var parameters: [NodeParameter]
+    var parameters: [EditorNodeParameter]
     var showPreview: Bool = false
 }
 
@@ -921,7 +921,7 @@ struct NodePort: Identifiable {
     var isConnected: Bool = false
 }
 
-struct NodeParameter: Identifiable {
+struct EditorNodeParameter: Identifiable {
     let id = UUID()
     var name: String
     var value: Float
@@ -939,7 +939,7 @@ struct NodeConnection: Identifiable {
     let color: Color
 }
 
-enum NodeType: String, CaseIterable {
+enum EditorNodeType: String, CaseIterable {
     case generator, oscillator, noise, bioInput
     case filter, mixer, math, transform
     case reverb, delay, distortion, modulator
@@ -1050,12 +1050,12 @@ enum NodeType: String, CaseIterable {
         }
     }
 
-    var defaultParameters: [NodeParameter] {
+    var defaultParameters: [EditorNodeParameter] {
         switch self {
-        case .filter: return [NodeParameter(name: "Cutoff", value: 0.5, min: 0, max: 1), NodeParameter(name: "Resonance", value: 0.3, min: 0, max: 1)]
-        case .reverb: return [NodeParameter(name: "Size", value: 0.5, min: 0, max: 1), NodeParameter(name: "Decay", value: 0.5, min: 0, max: 1), NodeParameter(name: "Mix", value: 0.3, min: 0, max: 1)]
-        case .delay: return [NodeParameter(name: "Time", value: 0.3, min: 0, max: 1), NodeParameter(name: "Feedback", value: 0.4, min: 0, max: 1)]
-        case .visualizer: return [NodeParameter(name: "Intensity", value: 0.7, min: 0, max: 1), NodeParameter(name: "Speed", value: 0.5, min: 0, max: 1)]
+        case .filter: return [EditorNodeParameter(name: "Cutoff", value: 0.5, min: 0, max: 1), EditorNodeParameter(name: "Resonance", value: 0.3, min: 0, max: 1)]
+        case .reverb: return [EditorNodeParameter(name: "Size", value: 0.5, min: 0, max: 1), EditorNodeParameter(name: "Decay", value: 0.5, min: 0, max: 1), EditorNodeParameter(name: "Mix", value: 0.3, min: 0, max: 1)]
+        case .delay: return [EditorNodeParameter(name: "Time", value: 0.3, min: 0, max: 1), EditorNodeParameter(name: "Feedback", value: 0.4, min: 0, max: 1)]
+        case .visualizer: return [EditorNodeParameter(name: "Intensity", value: 0.7, min: 0, max: 1), EditorNodeParameter(name: "Speed", value: 0.5, min: 0, max: 1)]
         default: return []
         }
     }

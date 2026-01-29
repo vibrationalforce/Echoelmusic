@@ -380,9 +380,9 @@ public class FirebaseAnalyticsProvider: AnalyticsProvider {
     }
 }
 
-// MARK: - Analytics Event Model
+// MARK: - Stored Analytics Event Model
 
-struct AnalyticsEvent: Codable {
+struct StoredAnalyticsEvent: Codable {
     let id: UUID
     let name: String
     let properties: [String: AnalyticsAnyCodable]
@@ -452,7 +452,7 @@ class AnalyticsStorage {
     private let fileManager = FileManager.default
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
-    private var events: [AnalyticsEvent] = []
+    private var events: [StoredAnalyticsEvent] = []
     private var userProperties: [String: Any] = [:]
     private(set) var userId: String?
     let currentSessionId: String
@@ -468,7 +468,7 @@ class AnalyticsStorage {
         loadFromDisk()
     }
 
-    func store(event: AnalyticsEvent) {
+    func store(event: StoredAnalyticsEvent) {
         events.append(event)
 
         // Trim if over limit
@@ -494,7 +494,7 @@ class AnalyticsStorage {
         saveToDisk()
     }
 
-    func getPendingEvents() -> [AnalyticsEvent] {
+    func getPendingEvents() -> [StoredAnalyticsEvent] {
         return events.filter { !$0.isSynced }
     }
 
@@ -540,7 +540,7 @@ class AnalyticsStorage {
             let eventsURL = url.appendingPathComponent("events.json")
             if fileManager.fileExists(atPath: eventsURL.path) {
                 let data = try Data(contentsOf: eventsURL)
-                events = try decoder.decode([AnalyticsEvent].self, from: data)
+                events = try decoder.decode([StoredAnalyticsEvent].self, from: data)
             }
         } catch {
             events = []

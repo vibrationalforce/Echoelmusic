@@ -714,10 +714,4 @@ public final class AISceneDirector: ObservableObject {
     }
 }
 
-// MARK: - Double Extension
-
-private extension Double {
-    func clamped(to range: ClosedRange<Double>) -> Double {
-        return max(range.lowerBound, min(range.upperBound, self))
-    }
-}
+// Note: clamped(to:) extension moved to NumericExtensions.swift

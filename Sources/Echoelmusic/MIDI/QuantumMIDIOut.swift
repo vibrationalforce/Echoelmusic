@@ -1078,22 +1078,4 @@ public enum QuantumChordType: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-// MARK: - Extensions
-
-private extension UInt8 {
-    func clamped(to range: ClosedRange<UInt8>) -> UInt8 {
-        return max(range.lowerBound, min(range.upperBound, self))
-    }
-}
-
-private extension Float {
-    func clamped(to range: ClosedRange<Float>) -> Float {
-        return max(range.lowerBound, min(range.upperBound, self))
-    }
-}
-
-private extension Int {
-    func clamped(to range: ClosedRange<Int>) -> Int {
-        return max(range.lowerBound, min(range.upperBound, self))
-    }
-}
+// Note: clamped(to:) extensions moved to NumericExtensions.swift

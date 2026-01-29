@@ -5,7 +5,7 @@ import Accelerate
 
 // MARK: - Circular Buffer for O(1) Performance
 /// High-performance circular buffer replacing Array.removeFirst() O(n) with O(1)
-private struct CircularBuffer<T> {
+private struct RecordingCircularBuffer<T> {
     private var buffer: [T]
     private var writeIndex: Int = 0
     private var readIndex: Int = 0
@@ -94,7 +94,7 @@ class RecordingEngine: ObservableObject {
 
     /// Waveform buffer for real-time display (max 1000 samples)
     /// Uses CircularBuffer for O(1) append instead of Array.removeFirst() O(n)
-    private var waveformBuffer = CircularBuffer<Float>(capacity: 1000, defaultValue: 0.0)
+    private var waveformBuffer = RecordingCircularBuffer<Float>(capacity: 1000, defaultValue: 0.0)
 
     /// Reference to main audio engine for audio routing
     private weak var mainAudioEngine: AudioEngine?

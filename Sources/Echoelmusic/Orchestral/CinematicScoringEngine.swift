@@ -914,18 +914,4 @@ public final class CinematicScoringEngine: ObservableObject {
     }
 }
 
-// MARK: - Int Extension
-
-private extension Int {
-    func clamped(to range: ClosedRange<Int>) -> Int {
-        max(range.lowerBound, min(range.upperBound, self))
-    }
-}
-
-// MARK: - Float Extension
-
-private extension Float {
-    func clamped(to range: ClosedRange<Float>) -> Float {
-        max(range.lowerBound, min(range.upperBound, self))
-    }
-}
+// Note: clamped(to:) extensions moved to NumericExtensions.swift
