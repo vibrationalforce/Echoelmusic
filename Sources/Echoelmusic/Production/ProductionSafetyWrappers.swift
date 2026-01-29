@@ -156,16 +156,12 @@ public struct SafeAudioBuffer: Sendable {
     }
 }
 
-// MARK: - Safe Array Access
+// MARK: - Safe Array Access Extensions
 
-/// Safe array access extensions
+// Note: subscript(safe:) moved to SecurityHardening.swift to avoid duplicate declarations
+
+/// Additional safe array access extensions
 public extension Array {
-    /// Safely access element at index, returns nil if out of bounds
-    subscript(safe index: Int) -> Element? {
-        guard index >= 0 && index < count else { return nil }
-        return self[index]
-    }
-
     /// Safely access first element matching predicate
     func safeFirst(where predicate: (Element) -> Bool) -> Element? {
         first(where: predicate)

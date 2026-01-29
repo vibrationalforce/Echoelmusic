@@ -430,5 +430,5 @@ public final class EchoelLogger: @unchecked Sendable {
 
 // MARK: - Global Logger Access
 
-/// Global logger instance
-public let log = EchoelLogger.shared
+/// Global logger instance (renamed from 'log' to avoid conflicts with file-scoped private log constants)
+public let echoelLog = EchoelLogger.shared

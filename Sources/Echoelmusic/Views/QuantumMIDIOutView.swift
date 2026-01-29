@@ -586,7 +586,7 @@ struct PianoKeyboard: View {
                 HStack(spacing: 2) {
                     ForEach(0..<7, id: \.self) { index in
                         let note = UInt8((octave + 1) * 12 + whiteKeys[index])
-                        PianoKey(isBlack: false)
+                        QuantumPianoKey(isBlack: false)
                             .gesture(
                                 DragGesture(minimumDistance: 0)
                                     .onChanged { _ in onNoteOn(note) }
@@ -600,7 +600,7 @@ struct PianoKeyboard: View {
                     let note = UInt8((octave + 1) * 12 + blackKeys[index])
                     let offset = blackKeyOffset(for: index, keyWidth: keyWidth)
 
-                    PianoKey(isBlack: true)
+                    QuantumPianoKey(isBlack: true)
                         .frame(width: blackKeyWidth, height: geometry.size.height * 0.6)
                         .offset(x: offset)
                         .gesture(
@@ -619,10 +619,10 @@ struct PianoKeyboard: View {
     }
 }
 
-// MARK: - Piano Key
+// MARK: - Quantum Piano Key
 
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, *)
-struct PianoKey: View {
+struct QuantumPianoKey: View {
     let isBlack: Bool
     @State private var isPressed = false
 

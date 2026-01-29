@@ -576,10 +576,10 @@ struct UpgradePromptView: View {
 
                 // Features list
                 VStack(alignment: .leading, spacing: 12) {
-                    FeatureRow(icon: "applewatch", title: "Apple Watch Integration", description: "Echtzeit HRV & Coherence")
-                    FeatureRow(icon: "waveform.path.ecg", title: "Bio-Reaktive Audio", description: "Musik die auf dich reagiert")
-                    FeatureRow(icon: "person.3.fill", title: "Gruppen-Sessions", description: "Meditiere mit Freunden")
-                    FeatureRow(icon: "cloud.fill", title: "Cloud Sync", description: "Alle Geräte synchronisiert")
+                    AppClipFeatureRow(icon: "applewatch", title: "Apple Watch Integration", description: "Echtzeit HRV & Coherence")
+                    AppClipFeatureRow(icon: "waveform.path.ecg", title: "Bio-Reaktive Audio", description: "Musik die auf dich reagiert")
+                    AppClipFeatureRow(icon: "person.3.fill", title: "Gruppen-Sessions", description: "Meditiere mit Freunden")
+                    AppClipFeatureRow(icon: "cloud.fill", title: "Cloud Sync", description: "Alle Geräte synchronisiert")
                 }
                 .padding()
                 .background(Color(.systemGray6))
@@ -614,7 +614,7 @@ struct UpgradePromptView: View {
     }
 }
 
-struct FeatureRow: View {
+struct AppClipFeatureRow: View {
     let icon: String
     let title: String
     let description: String

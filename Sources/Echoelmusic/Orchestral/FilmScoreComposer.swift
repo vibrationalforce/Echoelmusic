@@ -798,8 +798,4 @@ public final class FilmScoreComposer: ObservableObject {
 
 // MARK: - Array Extension
 
-private extension Array {
-    subscript(safe index: Int) -> Element? {
-        indices.contains(index) ? self[index] : nil
-    }
-}
+// Note: subscript(safe:) now uses the public extension from SecurityHardening.swift

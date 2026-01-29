@@ -783,7 +783,7 @@ struct BioModulationRow: View {
 @MainActor
 class NodeEditorViewModel: ObservableObject {
     @Published var nodes: [VisualNode] = []
-    @Published var connections: [NodeConnection] = []
+    @Published var connections: [EditorNodeConnection] = []
     @Published var isProcessing = false
     @Published var bioSyncEnabled = true
 
@@ -870,7 +870,7 @@ class NodeEditorViewModel: ObservableObject {
         guard from.isOutput && !to.isOutput else { return }
         guard from.dataType == to.dataType || from.dataType == .float else { return }
 
-        let connection = NodeConnection(
+        let connection = EditorNodeConnection(
             id: UUID(),
             fromNode: nodes.first { $0.outputs.contains { $0.id == from.id } }?.id ?? UUID(),
             fromPort: from,
@@ -930,7 +930,7 @@ struct EditorNodeParameter: Identifiable {
     var bioSource: BioSource? = nil
 }
 
-struct NodeConnection: Identifiable {
+struct EditorNodeConnection: Identifiable {
     let id: UUID
     let fromNode: UUID
     let fromPort: NodePort
