@@ -512,12 +512,12 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     /// Get recommended audio interface for current platform
-    public func getRecommendedAudioInterface() -> HardwareEcosystem.AudioInterface? {
+    public func getRecommendedAudioInterface() -> AudioInterfaceRegistry.AudioInterface? {
         return hardwareEcosystem?.audioInterfaces.getRecommendedInterface()
     }
 
     /// Get all connected MIDI controllers
-    public func getConnectedMIDIControllers() -> [HardwareEcosystem.MIDIController] {
+    public func getConnectedMIDIControllers() -> [MIDIControllerRegistry.MIDIController] {
         return hardwareEcosystem?.midiControllers.supportedControllers.filter { controller in
             // Check if controller is actually connected
             hardwareEcosystem?.connectedDevices.contains { $0.name == controller.name } ?? false
@@ -525,7 +525,7 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     /// Get all available lighting fixtures
-    public func getAvailableLightingFixtures() -> [HardwareEcosystem.LightingFixture] {
+    public func getAvailableLightingFixtures() -> [LightingHardwareRegistry.LightingFixture] {
         return hardwareEcosystem?.lightingHardware.supportedFixtures ?? []
     }
 

@@ -204,6 +204,7 @@ public enum ConnectionType: String, CaseIterable {
     case xlr = "XLR"
     case ethernet = "Ethernet"
     case dmx = "DMX"
+    case ilda = "ILDA"
     case midi5Pin = "MIDI 5-Pin"
 
     // Wireless
@@ -1011,6 +1012,99 @@ public final class LightingHardwareRegistry {
             self.hasRDM = hasRDM
         }
     }
+
+    /// Lighting Fixture definition for individual lights
+    public struct LightingFixture: Identifiable, Hashable {
+        public let id: UUID
+        public let name: String
+        public let brand: String
+        public let type: FixtureType
+        public let channels: Int
+        public let protocols: [LightingProtocol]
+        public let connectionTypes: [ConnectionType]
+        public let hasRGB: Bool
+        public let hasRGBW: Bool
+        public let hasPanTilt: Bool
+        public let hasZoom: Bool
+
+        public init(
+            id: UUID = UUID(),
+            name: String,
+            brand: String,
+            type: FixtureType,
+            channels: Int,
+            protocols: [LightingProtocol],
+            connectionTypes: [ConnectionType],
+            hasRGB: Bool = false,
+            hasRGBW: Bool = false,
+            hasPanTilt: Bool = false,
+            hasZoom: Bool = false
+        ) {
+            self.id = id
+            self.name = name
+            self.brand = brand
+            self.type = type
+            self.channels = channels
+            self.protocols = protocols
+            self.connectionTypes = connectionTypes
+            self.hasRGB = hasRGB
+            self.hasRGBW = hasRGBW
+            self.hasPanTilt = hasPanTilt
+            self.hasZoom = hasZoom
+        }
+    }
+
+    /// Supported lighting fixtures
+    public let supportedFixtures: [LightingFixture] = [
+        // PAR Cans
+        LightingFixture(name: "SlimPAR Pro QZ12", brand: "Chauvet DJ", type: .parCan,
+                       channels: 9, protocols: [.dmx512], connectionTypes: [.dmx],
+                       hasRGB: true, hasRGBW: true),
+        LightingFixture(name: "COLORado 1-Quad Zoom", brand: "Chauvet Professional", type: .parCan,
+                       channels: 14, protocols: [.dmx512, .artNet, .sACN], connectionTypes: [.dmx, .ethernet],
+                       hasRGB: true, hasRGBW: true, hasZoom: true),
+        LightingFixture(name: "Source Four LED Series 3", brand: "ETC", type: .parCan,
+                       channels: 12, protocols: [.dmx512, .rdm], connectionTypes: [.dmx],
+                       hasRGB: true, hasRGBW: true),
+
+        // Moving Heads
+        LightingFixture(name: "Maverick MK3 Spot", brand: "Chauvet Professional", type: .movingHeadSpot,
+                       channels: 35, protocols: [.dmx512, .artNet, .sACN, .rdm], connectionTypes: [.dmx, .ethernet],
+                       hasRGB: true, hasPanTilt: true, hasZoom: true),
+        LightingFixture(name: "MAC Aura XB", brand: "Martin", type: .movingHeadWash,
+                       channels: 22, protocols: [.dmx512, .artNet, .rdm], connectionTypes: [.dmx, .ethernet],
+                       hasRGB: true, hasRGBW: true, hasPanTilt: true, hasZoom: true),
+        LightingFixture(name: "Rogue R2X Beam", brand: "Chauvet Professional", type: .movingHeadBeam,
+                       channels: 18, protocols: [.dmx512], connectionTypes: [.dmx],
+                       hasRGB: true, hasPanTilt: true),
+
+        // LED Bars & Strips
+        LightingFixture(name: "COLORband PiX-M ILS", brand: "Chauvet DJ", type: .ledBar,
+                       channels: 44, protocols: [.dmx512], connectionTypes: [.dmx],
+                       hasRGB: true, hasPanTilt: true),
+        LightingFixture(name: "LED Strip WS2812B", brand: "Generic", type: .ledStrip,
+                       channels: 3, protocols: [.ws2812], connectionTypes: [.usb],
+                       hasRGB: true),
+
+        // Lasers
+        LightingFixture(name: "Scorpion Storm RGBY", brand: "Chauvet DJ", type: .laser,
+                       channels: 11, protocols: [.dmx512], connectionTypes: [.dmx],
+                       hasRGB: true),
+        LightingFixture(name: "FB4 Max", brand: "Pangolin", type: .laser,
+                       channels: 12, protocols: [.dmx512, .ilda, .beyond], connectionTypes: [.dmx, .ilda, .ethernet],
+                       hasRGB: true),
+
+        // Smart Bulbs
+        LightingFixture(name: "Hue Color A19", brand: "Philips", type: .smartBulb,
+                       channels: 4, protocols: [.hue], connectionTypes: [.ethernet],
+                       hasRGB: true),
+        LightingFixture(name: "A19 Color", brand: "LIFX", type: .smartBulb,
+                       channels: 4, protocols: [.lifx], connectionTypes: [.wifi],
+                       hasRGB: true, hasRGBW: true),
+        LightingFixture(name: "Canvas", brand: "Nanoleaf", type: .ledPanel,
+                       channels: 4, protocols: [.nanoleaf], connectionTypes: [.wifi],
+                       hasRGB: true),
+    ]
 
     /// DMX Controllers and Interfaces
     public let controllers: [DMXController] = [
