@@ -48,7 +48,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
-            background: linear-gradient(135deg, var(--midnight) 0%, var(--dark-purple) 100%);
+            background: #000;
             color: #fff;
             min-height: 100vh;
             overflow-x: hidden;
@@ -63,12 +63,7 @@
             position: fixed;
             inset: 0;
             z-index: -10;
-            background: linear-gradient(180deg,
-                var(--deep-black) 0%,
-                var(--midnight) 30%,
-                var(--dark-purple) 60%,
-                #2D1B4E 100%
-            );
+            background: #000;
         }
 
         /* Floating Neon Blobs */
@@ -88,7 +83,7 @@
         .blob-1 {
             width: 600px;
             height: 600px;
-            background: radial-gradient(circle, rgba(153,51,255,0.25) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(153,51,255,0.12) 0%, transparent 70%);
             top: -10%;
             left: -10%;
             animation-delay: 0s;
@@ -96,7 +91,7 @@
         .blob-2 {
             width: 500px;
             height: 500px;
-            background: radial-gradient(circle, rgba(255,20,148,0.2) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255,20,148,0.1) 0%, transparent 70%);
             bottom: 20%;
             right: -10%;
             animation-delay: -7s;
@@ -105,7 +100,7 @@
         .blob-3 {
             width: 400px;
             height: 400px;
-            background: radial-gradient(circle, rgba(0,255,255,0.15) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(0,255,255,0.08) 0%, transparent 70%);
             top: 40%;
             left: 30%;
             animation-delay: -14s;
@@ -133,11 +128,11 @@
             inset: 0;
             background: linear-gradient(180deg,
                 transparent 0%,
-                rgba(153,51,255,0.1) 20%,
-                rgba(255,51,128,0.15) 40%,
-                rgba(255,102,51,0.2) 60%,
-                rgba(255,51,128,0.25) 80%,
-                rgba(153,51,255,0.3) 100%
+                rgba(153,51,255,0.05) 20%,
+                rgba(255,51,128,0.08) 40%,
+                rgba(255,102,51,0.1) 60%,
+                rgba(255,51,128,0.12) 80%,
+                rgba(153,51,255,0.15) 100%
             );
         }
         .sun {
@@ -639,11 +634,14 @@
             padding-bottom: 24px;
             font-size: 13px;
             color: var(--text-muted);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 28px;
         }
         footer a {
             color: var(--text-muted);
             text-decoration: none;
-            margin: 0 14px;
             transition: all 0.3s;
             position: relative;
         }
@@ -919,6 +917,14 @@
             <span><span class="highlight" data-i18n="focus">Focus</span> <span data-i18n="yourSpirit">Your Spirit</span></span>
         </div>
 
+        <!-- CTA Button -->
+        <a href="https://apps.apple.com/app/echoelmusic" class="cta" aria-label="Download on App Store">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            <span data-i18n="downloadFree">Download Free</span>
+        </a>
+        <p class="platforms" data-i18n="platforms">iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro</p>
+        <p class="beta-notice" data-i18n="betaNotice">The first beta version will be free for a short period of time!</p>
+
         <p class="tagline" data-i18n="tagline">Bio-Reactive, Immersive, Multidimensional — Human expression, creative sessions, education and wellbeing in one comprehensive Ecosystem.</p>
 
         <!-- Glass Feature Tags -->
@@ -964,15 +970,6 @@
                 <span data-i18n="ownershipDesc">100% intellectual property rights. No claims. Your art, your music, your vision — forever yours.</span>
             </div>
         </div>
-
-        <!-- CTA Button -->
-        <a href="https://apps.apple.com/app/echoelmusic" class="cta" aria-label="Download on App Store">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-            <span data-i18n="downloadFree">Download Free</span>
-        </a>
-
-        <p class="platforms" data-i18n="platforms">iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro</p>
-        <p class="beta-notice" data-i18n="betaNotice">The first beta version will be free for a short period of time!</p>
 
         <!-- Social Links -->
         <div class="social">
