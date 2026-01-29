@@ -159,6 +159,8 @@ public enum PolyvagalState: String, CaseIterable, Codable {
 
 /// Emotionale Ausdrücke basierend auf FACS (Facial Action Coding System)
 public struct FacialExpressionData: Codable {
+    public init() {}
+
     // Primäre Emotionen (Ekman)
     public var joy: Double = 0          // 0-1
     public var sadness: Double = 0
@@ -211,6 +213,8 @@ public struct FacialExpressionData: Codable {
 
 /// Gestik-Daten für psychosomatische Analyse
 public struct GestureData: Codable {
+    public init() {}
+
     // Hand Position
     public var leftHandPosition: SIMD3<Float> = .zero
     public var rightHandPosition: SIMD3<Float> = .zero
@@ -254,6 +258,8 @@ public struct GestureData: Codable {
 
 /// Körperbewegungsdaten für somatische Analyse
 public struct BodyMovementData: Codable {
+    public init() {}
+
     // Posture
     public var headTilt: Double = 0          // Grad, 0 = gerade
     public var shoulderSymmetry: Double = 1  // 0-1
