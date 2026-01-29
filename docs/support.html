@@ -1,64 +1,71 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Support - Echoelmusic</title>
+    <meta name="description" content="Get help with Echoelmusic bio-reactive creative platform.">
     <meta name="theme-color" content="#FF1494">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='115' fill='%23050510'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%2300FFFF' stroke-width='3' fill='none' opacity='0.6' transform='rotate(-30 256 256)'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%23FF1494' stroke-width='3' fill='none' opacity='0.6' transform='rotate(30 256 256)'/><circle cx='256' cy='256' r='40' fill='%23FF1494'/><circle cx='256' cy='256' r='28' fill='%23fff'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='115' fill='%23000'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%2300FFFF' stroke-width='3' fill='none' opacity='0.6' transform='rotate(-30 256 256)'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%23FF1494' stroke-width='3' fill='none' opacity='0.6' transform='rotate(30 256 256)'/><circle cx='256' cy='256' r='40' fill='%23FF1494'/><circle cx='256' cy='256' r='28' fill='%23fff'/></svg>">
     <style>
-        :root { --pink: #FF1494; --cyan: #00FFFF; --black: #0a0a0f; }
+        :root { --pink: #FF1494; --cyan: #00FFFF; --purple: #9933FF; --black: #000; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--black); color: rgba(255,255,255,0.85); line-height: 1.7; padding: 40px 20px; max-width: 640px; margin: 0 auto; }
-        .bg { position: fixed; inset: 0; z-index: -1; background: linear-gradient(180deg, #0a0a1a 0%, #1a0a2a 100%); }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--black); color: rgba(255,255,255,0.85); line-height: 1.7; padding: 40px 20px; max-width: 640px; margin: 0 auto; -webkit-font-smoothing: antialiased; }
         a { color: var(--cyan); }
         .back { display: inline-block; margin-bottom: 24px; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 14px; }
         .back:hover { color: var(--cyan); }
         h1 { color: #fff; font-size: 28px; margin-bottom: 24px; }
-        .contact { background: rgba(255,20,148,0.1); border: 1px solid rgba(255,20,148,0.3); padding: 24px; border-radius: 12px; margin-bottom: 32px; text-align: center; }
-        .contact h2 { color: var(--pink); font-size: 16px; margin-bottom: 12px; }
-        .contact a { display: inline-block; background: linear-gradient(135deg, var(--pink), #9933FF); color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 8px; }
-        h3 { color: var(--pink); font-size: 15px; margin: 24px 0 12px; }
+        .contact { background: rgba(255,20,148,0.08); border: 1px solid rgba(255,20,148,0.2); padding: 24px; border-radius: 12px; margin-bottom: 32px; text-align: center; }
+        .contact h2 { color: var(--pink); font-size: 15px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .contact a { display: inline-block; background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 8px; }
+        .contact a:hover { opacity: 0.9; }
+        h3 { color: var(--pink); font-size: 15px; margin: 24px 0 16px; text-transform: uppercase; letter-spacing: 1px; }
         p { margin-bottom: 12px; font-size: 14px; }
         .faq { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
         .faq strong { color: #fff; display: block; margin-bottom: 8px; font-size: 14px; }
-        .faq p { margin: 0; font-size: 13px; color: rgba(255,255,255,0.7); }
-        footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 12px; color: rgba(255,255,255,0.4); }
-        footer a { color: rgba(255,255,255,0.5); margin-right: 16px; text-decoration: none; }
+        .faq p { margin: 0; font-size: 13px; color: rgba(255,255,255,0.6); }
+        footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; color: rgba(255,255,255,0.3); }
+        footer a { color: rgba(255,255,255,0.4); margin-right: 16px; text-decoration: none; }
+        footer a:hover { color: var(--cyan); }
     </style>
 </head>
 <body>
-    <div class="bg"></div>
-    <a href="/" class="back">← Zurück</a>
+    <a href="/" class="back">← Back</a>
     <h1>Support</h1>
 
     <div class="contact">
-        <h2>Kontakt</h2>
-        <p>Wir antworten so schnell wie möglich.</p>
+        <h2>Contact</h2>
+        <p>We'll respond as soon as possible.</p>
         <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a>
     </div>
 
-    <h3>Häufige Fragen</h3>
+    <h3>FAQ</h3>
 
     <div class="faq">
-        <strong>Apple Watch verbindet nicht?</strong>
-        <p>Bluetooth aktivieren. In Einstellungen > Datenschutz > Health die Berechtigung erteilen.</p>
+        <strong>Apple Watch not connecting?</strong>
+        <p>Enable Bluetooth. Go to Settings > Privacy > Health and grant permission.</p>
     </div>
 
     <div class="faq">
-        <strong>Audio-Latenz?</strong>
-        <p>Buffer-Size in den Audio-Einstellungen reduzieren. Externe Audio-Interfaces empfohlen.</p>
+        <strong>Audio latency issues?</strong>
+        <p>Reduce buffer size in Audio Settings. External audio interfaces recommended for lowest latency (5.33ms).</p>
     </div>
 
     <div class="faq">
-        <strong>Biofeedback reagiert nicht?</strong>
-        <p>HealthKit-Berechtigung prüfen. Apple Watch muss getragen werden für Live-HRV.</p>
+        <strong>Biofeedback not responding?</strong>
+        <p>Check HealthKit permissions. Apple Watch must be worn for live HRV data.</p>
+    </div>
+
+    <div class="faq">
+        <strong>Face tracking not working?</strong>
+        <p>Grant camera permission. Face ID required for ARKit face tracking on iPhone.</p>
     </div>
 
     <footer>
         <a href="/">Home</a>
-        <a href="privacy.html">Datenschutz</a>
-        <a href="terms.html">AGB</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+        <a href="security.html">Security</a>
     </footer>
 </body>
 </html>
