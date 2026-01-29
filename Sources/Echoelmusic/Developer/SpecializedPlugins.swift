@@ -38,7 +38,7 @@ public final class TherapySessionPlugin: EchoelmusicPlugin {
         public var anonymizeExport: Bool = true
         public var protocolType: ProtocolType = .mindfulness
 
-        public enum ProtocolType: String, CaseIterable, Sendable {
+        public enum ProtocolType: String, CaseIterable, Sendable, Codable {
             case mindfulness = "Mindfulness Meditation"
             case breathwork = "Breathwork"
             case biofeedback = "Biofeedback Training"
@@ -1749,10 +1749,10 @@ public final class AccessibilityEnhancerPlugin: EchoelmusicPlugin {
 
     public struct VoiceCommand: Sendable {
         public var command: String
-        public var action: () -> Void
+        public var action: @Sendable () -> Void
         public var description: String
 
-        public init(command: String, description: String, action: @escaping () -> Void) {
+        public init(command: String, description: String, action: @Sendable @escaping () -> Void) {
             self.command = command
             self.description = description
             self.action = action
@@ -2213,9 +2213,9 @@ public final class ContentCreatorPlugin: EchoelmusicPlugin {
         public var description: String
         public var requiresModerator: Bool
         public var cooldown: TimeInterval
-        public var action: () -> Void
+        public var action: @Sendable () -> Void
 
-        public init(command: String, description: String, requiresModerator: Bool = false, cooldown: TimeInterval = 5.0, action: @escaping () -> Void) {
+        public init(command: String, description: String, requiresModerator: Bool = false, cooldown: TimeInterval = 5.0, action: @Sendable @escaping () -> Void) {
             self.command = command
             self.description = description
             self.requiresModerator = requiresModerator

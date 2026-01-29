@@ -511,6 +511,7 @@ class Timeline: ObservableObject {
     @Published var markers: [TimeMarker]
     @Published var tempo: Double // BPM for beat snapping
     @Published var duration: CMTime
+    @Published var textOverlays: [TextOverlay] = []
 
     init(name: String = "Untitled Timeline") {
         self.name = name
@@ -904,16 +905,7 @@ extension VideoEditingEngine {
     }
 }
 
-// MARK: - Timeline Text Support
-
-extension Timeline {
-    /// Text overlays on the timeline
-    var textOverlays: [TextOverlay] {
-        get { _textOverlays }
-        set { _textOverlays = newValue }
-    }
-    private var _textOverlays: [TextOverlay] = []
-}
+// Note: textOverlays property moved to main Timeline class definition
 
 // MARK: - Errors
 

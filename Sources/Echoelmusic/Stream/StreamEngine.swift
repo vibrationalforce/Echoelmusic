@@ -3,6 +3,7 @@ import AVFoundation
 import VideoToolbox
 import Metal
 import Combine
+import CoreImage
 
 /// Stream Engine - Native iOS/macOS OBS Replacement
 /// Multi-platform simultaneous streaming to Twitch, YouTube, Facebook, Custom RTMP

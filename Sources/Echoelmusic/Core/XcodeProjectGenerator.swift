@@ -96,7 +96,7 @@ public struct XcodeTargetConfiguration {
     public enum ProductType: String {
         case application = "com.apple.product-type.application"
         case appExtension = "com.apple.product-type.app-extension"
-        case audioUnitExtension = "com.apple.product-type.app-extension"
+        case audioUnitExtension = "com.apple.product-type.app-extension.audio-unit"
         case widgetExtension = "com.apple.product-type.app-extension.widgetkit"
     }
 }
