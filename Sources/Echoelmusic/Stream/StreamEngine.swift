@@ -9,7 +9,7 @@ import CoreImage
 /// Multi-platform simultaneous streaming to Twitch, YouTube, Facebook, Custom RTMP
 /// Hardware encoding, bio-reactive scenes, real-time analytics
 @MainActor
-class StreamEngine: ObservableObject {
+public class StreamEngine: ObservableObject {
 
     // MARK: - Published State
 

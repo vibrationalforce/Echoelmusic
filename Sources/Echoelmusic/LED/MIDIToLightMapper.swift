@@ -15,7 +15,7 @@ import AppKit
 /// Supports Art-Net, sACN (E1.31), and serial LED protocols
 /// Bio-reactive lighting for live performances and installations
 @MainActor
-class MIDIToLightMapper: ObservableObject {
+public class MIDIToLightMapper: ObservableObject {
 
     // MARK: - Published State
 

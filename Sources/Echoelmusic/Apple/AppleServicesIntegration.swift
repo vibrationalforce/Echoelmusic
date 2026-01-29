@@ -581,6 +581,7 @@ public final class EchoelWeatherService: ObservableObject {
     }
 
     #if canImport(WeatherKit)
+    @available(iOS 16.0, macOS 13.0, *)
     private func mapCondition(_ condition: WeatherCondition) -> WeatherData.WeatherCondition {
         switch condition {
         case .clear, .mostlyClear:
