@@ -42,7 +42,7 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     PRODUCT_NAME: $(TARGET_NAME)
-    MARKETING_VERSION: "1.2.0"
+    MARKETING_VERSION: "3.0.0"
     CURRENT_PROJECT_VERSION: "${BUILD_NUMBER:=1}"
     ENABLE_BITCODE: NO
     ALWAYS_SEARCH_USER_PATHS: NO
@@ -111,6 +111,7 @@ targets:
         NSCameraUsageDescription: "Echoelmusic uses your camera for face tracking to control audio parameters with facial expressions"
         NSFaceIDUsageDescription: "Echoelmusic uses TrueDepth camera for face tracking to map expressions to audio-visual parameters"
         NSMotionUsageDescription: "Echoelmusic uses motion data for gesture-based audio control and spatial audio head tracking"
+        NSEyeTrackingUsageDescription: "Echoelmusic uses eye tracking for immersive gaze-based audio control on supported devices"
         NSLocalNetworkUsageDescription: "Echoelmusic uses local network for DMX lighting control, Art-Net, and connecting to external audio interfaces"
         NSBonjourServices:
           - "_http._tcp"
@@ -148,7 +149,7 @@ targets:
         CODE_SIGN_IDENTITY: "Apple Distribution"
         DEVELOPMENT_TEAM: ""
         TARGETED_DEVICE_FAMILY: "1,2"
-        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
     # Note: iOS AUv3 is integrated into the main app (works as both host and plugin)
     # No separate extension needed - same approach as macOS
     entitlements:
@@ -404,6 +405,7 @@ targets:
         DEVELOPMENT_TEAM: ""
         TVOS_DEPLOYMENT_TARGET: "16.0"
         TARGETED_DEVICE_FAMILY: "3"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIconTV
     entitlements:
       path: EchoelmusicTV.entitlements
 
@@ -456,6 +458,7 @@ targets:
         CODE_SIGN_IDENTITY: "Apple Distribution"
         DEVELOPMENT_TEAM: ""
         XROS_DEPLOYMENT_TARGET: "1.0"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIconVision
     entitlements:
       path: EchoelmusicVision.entitlements
 

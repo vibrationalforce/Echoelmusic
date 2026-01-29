@@ -78,16 +78,16 @@ public struct AppStoreMetadata {
     public static let marketingURL = "https://echoelmusic.com"
 
     /// Support website
-    public static let supportURL = "https://support.echoelmusic.com"
+    public static let supportURL = "https://echoelmusic.com/support.html"
 
     /// Privacy policy URL
-    public static let privacyPolicyURL = "https://echoelmusic.com/privacy"
+    public static let privacyPolicyURL = "https://echoelmusic.com/privacy.html"
 
     /// Terms of service URL
-    public static let termsOfServiceURL = "https://echoelmusic.com/terms"
+    public static let termsOfServiceURL = "https://echoelmusic.com/terms.html"
 
     /// License agreement URL (optional EULA)
-    public static let licenseAgreementURL = "https://echoelmusic.com/eula"
+    public static let licenseAgreementURL = "https://echoelmusic.com/terms.html"
 
     // MARK: - Copyright
 

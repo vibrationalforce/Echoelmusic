@@ -57,26 +57,43 @@ runs:
           exit 1
         fi
 
-        # Extract
+        # Extract to dedicated directory
         echo "Extracting..."
-        unzip -o /tmp/xcodegen.zip -d /tmp
+        EXTRACT_DIR="/tmp/xcodegen-extract-$$"
+        mkdir -p "$EXTRACT_DIR"
+        unzip -o /tmp/xcodegen.zip -d "$EXTRACT_DIR"
 
-        # Find the extracted directory (could be XcodeGen or xcodegen)
-        XCODEGEN_DIR=$(find /tmp -maxdepth 1 -type d -iname "xcodegen*" | head -1)
-        echo "Found XcodeGen directory: $XCODEGEN_DIR"
+        # Debug: show extracted contents
+        echo "Extracted contents:"
+        ls -la "$EXTRACT_DIR"
 
-        if [ -z "$XCODEGEN_DIR" ] || [ ! -f "$XCODEGEN_DIR/bin/xcodegen" ]; then
-          echo "ERROR: Could not find xcodegen binary in extracted files"
-          ls -la /tmp/
+        # Find xcodegen binary - check multiple possible locations
+        XCODEGEN_BIN=""
+        for possible_path in \
+          "$EXTRACT_DIR/xcodegen/bin/xcodegen" \
+          "$EXTRACT_DIR/XcodeGen/bin/xcodegen" \
+          "$EXTRACT_DIR/bin/xcodegen" \
+          "$EXTRACT_DIR/xcodegen"; do
+          if [ -f "$possible_path" ]; then
+            XCODEGEN_BIN="$possible_path"
+            echo "Found xcodegen at: $XCODEGEN_BIN"
+            break
+          fi
+        done
+
+        if [ -z "$XCODEGEN_BIN" ]; then
+          echo "ERROR: Could not find xcodegen binary"
+          echo "Searching recursively..."
+          find "$EXTRACT_DIR" -name "xcodegen" -type f 2>/dev/null || true
           exit 1
         fi
 
         # Move to cache location
-        cp "$XCODEGEN_DIR/bin/xcodegen" ~/xcodegen-bin/
+        cp "$XCODEGEN_BIN" ~/xcodegen-bin/
         chmod +x ~/xcodegen-bin/xcodegen
 
         # Cleanup
-        rm -rf /tmp/xcodegen /tmp/xcodegen.zip
+        rm -rf "$EXTRACT_DIR" /tmp/xcodegen.zip
 
         echo "XcodeGen installed to ~/xcodegen-bin/"
 
