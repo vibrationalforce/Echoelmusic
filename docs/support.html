@@ -6,66 +6,118 @@
     <title>Support - Echoelmusic</title>
     <meta name="description" content="Get help with Echoelmusic bio-reactive creative platform.">
     <meta name="theme-color" content="#FF1494">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='115' fill='%23000'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%2300FFFF' stroke-width='3' fill='none' opacity='0.6' transform='rotate(-30 256 256)'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%23FF1494' stroke-width='3' fill='none' opacity='0.6' transform='rotate(30 256 256)'/><circle cx='256' cy='256' r='40' fill='%23FF1494'/><circle cx='256' cy='256' r='28' fill='%23fff'/></svg>">
+    <meta property="og:title" content="Support - Echoelmusic">
+    <meta property="og:description" content="Get help with Echoelmusic bio-reactive creative platform.">
+    <meta property="og:url" content="https://echoelmusic.com/support">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='115' fill='%23000'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%2300FFFF' stroke-width='3' fill='none' opacity='0.6' transform='rotate(-30 256 256)'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%23FF1494' stroke-width='3' fill='none' opacity='0.6' transform='rotate(30 256 256)'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%239933FF' stroke-width='3' fill='none' opacity='0.6' transform='rotate(90 256 256)'/><circle cx='256' cy='256' r='40' fill='%23FF1494'/><circle cx='256' cy='256' r='28' fill='%23fff'/></svg>">
+    <link rel="canonical" href="https://echoelmusic.com/support">
     <style>
         :root { --pink: #FF1494; --cyan: #00FFFF; --purple: #9933FF; --black: #000; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--black); color: rgba(255,255,255,0.85); line-height: 1.7; padding: 40px 20px; max-width: 640px; margin: 0 auto; -webkit-font-smoothing: antialiased; }
-        a { color: var(--cyan); }
-        .back { display: inline-block; margin-bottom: 24px; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 14px; }
-        .back:hover { color: var(--cyan); }
-        h1 { color: #fff; font-size: 28px; margin-bottom: 24px; }
-        .contact { background: rgba(255,20,148,0.08); border: 1px solid rgba(255,20,148,0.2); padding: 24px; border-radius: 12px; margin-bottom: 32px; text-align: center; }
-        .contact h2 { color: var(--pink); font-size: 15px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
-        .contact a { display: inline-block; background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 8px; }
-        .contact a:hover { opacity: 0.9; }
-        h3 { color: var(--pink); font-size: 15px; margin: 24px 0 16px; text-transform: uppercase; letter-spacing: 1px; }
-        p { margin-bottom: 12px; font-size: 14px; }
-        .faq { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
-        .faq strong { color: #fff; display: block; margin-bottom: 8px; font-size: 14px; }
-        .faq p { margin: 0; font-size: 13px; color: rgba(255,255,255,0.6); }
-        footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; color: rgba(255,255,255,0.3); }
-        footer a { color: rgba(255,255,255,0.4); margin-right: 16px; text-decoration: none; }
-        footer a:hover { color: var(--cyan); }
+        html { scroll-behavior: smooth; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif; background: var(--black); color: #fff; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+        .bg { position: fixed; inset: 0; z-index: -3; background: #000; }
+        .grid { position: fixed; bottom: 0; left: -100%; right: -100%; height: 40vh; z-index: -1; background: repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(255,20,148,0.04) 79px, rgba(255,20,148,0.04) 80px), repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0,255,255,0.06) 39px, rgba(0,255,255,0.06) 40px); transform: perspective(600px) rotateX(70deg); transform-origin: center bottom; mask-image: linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%); -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%); }
+        nav { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 16px 24px; }
+        .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+        .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff; font-weight: 600; font-size: 18px; }
+        .nav-logo svg { width: 36px; height: 36px; }
+        .nav-logo span { background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .nav-links { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .nav-links a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13px; padding: 8px 12px; border-radius: 8px; transition: all 0.2s; }
+        .nav-links a:hover { color: var(--cyan); background: rgba(0,255,255,0.08); }
+        .nav-links a.active { color: var(--cyan); background: rgba(0,255,255,0.12); }
+        main { max-width: 700px; margin: 0 auto; padding: 60px 24px 80px; }
+        .hero { text-align: center; margin-bottom: 48px; }
+        .hero h1 { font-size: clamp(32px, 7vw, 42px); font-weight: 700; margin-bottom: 16px; }
+        .hero h1 span { background: linear-gradient(135deg, var(--cyan), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .contact-hero { background: linear-gradient(135deg, rgba(255,20,148,0.08), rgba(153,51,255,0.08)); border: 1px solid rgba(255,20,148,0.2); padding: 32px; border-radius: 16px; text-align: center; margin-bottom: 48px; }
+        .contact-hero h2 { color: var(--pink); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+        .contact-hero p { color: rgba(255,255,255,0.6); margin-bottom: 16px; font-size: 14px; }
+        .contact-hero a { display: inline-block; background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; transition: all 0.2s; }
+        .contact-hero a:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,20,148,0.3); }
+        section h2 { color: var(--cyan); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid rgba(0,255,255,0.2); }
+        .faq { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; margin-bottom: 12px; transition: all 0.2s; }
+        .faq:hover { background: rgba(0,255,255,0.04); border-color: rgba(0,255,255,0.15); }
+        .faq strong { color: #fff; display: block; margin-bottom: 8px; font-size: 15px; }
+        .faq p { margin: 0; font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.6; }
+        footer { border-top: 1px solid rgba(255,255,255,0.06); padding: 32px 24px; text-align: center; }
+        .footer-links { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
+        .footer-links a { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; transition: color 0.2s; }
+        .footer-links a:hover { color: var(--cyan); }
+        .copyright { font-size: 12px; color: rgba(255,255,255,0.25); }
+        @media (max-width: 640px) { .nav-links { display: none; } main { padding: 40px 16px 60px; } }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
     </style>
 </head>
 <body>
-    <a href="/" class="back">← Back</a>
-    <h1>Support</h1>
-
-    <div class="contact">
-        <h2>Contact</h2>
-        <p>We'll respond as soon as possible.</p>
-        <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a>
-    </div>
-
-    <h3>FAQ</h3>
-
-    <div class="faq">
-        <strong>Apple Watch not connecting?</strong>
-        <p>Enable Bluetooth. Go to Settings > Privacy > Health and grant permission.</p>
-    </div>
-
-    <div class="faq">
-        <strong>Audio latency issues?</strong>
-        <p>Reduce buffer size in Audio Settings. External audio interfaces recommended for lowest latency (5.33ms).</p>
-    </div>
-
-    <div class="faq">
-        <strong>Biofeedback not responding?</strong>
-        <p>Check HealthKit permissions. Apple Watch must be worn for live HRV data.</p>
-    </div>
-
-    <div class="faq">
-        <strong>Face tracking not working?</strong>
-        <p>Grant camera permission. Face ID required for ARKit face tracking on iPhone.</p>
-    </div>
-
+    <div class="bg"></div>
+    <div class="grid"></div>
+    <nav>
+        <div class="nav-inner">
+            <a href="/" class="nav-logo">
+                <svg viewBox="0 0 512 512" fill="none"><rect width="512" height="512" rx="115" fill="#000"/><ellipse cx="256" cy="256" rx="120" ry="50" stroke="#00FFFF" stroke-width="3" fill="none" opacity="0.6" transform="rotate(-30 256 256)"/><ellipse cx="256" cy="256" rx="120" ry="50" stroke="#FF1494" stroke-width="3" fill="none" opacity="0.6" transform="rotate(30 256 256)"/><circle cx="256" cy="256" r="32" fill="#FF1494"/><circle cx="256" cy="256" r="22" fill="#fff"/></svg>
+                <span>Echoelmusic</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+                <a href="support.html" class="active">Support</a>
+                <a href="health.html">Health</a>
+                <a href="security.html">Security</a>
+                <a href="accessibility.html">Accessibility</a>
+            </div>
+        </div>
+    </nav>
+    <main>
+        <div class="hero">
+            <h1><span>Support</span></h1>
+        </div>
+        <div class="contact-hero">
+            <h2>Contact</h2>
+            <p>We'll respond as soon as possible.</p>
+            <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a>
+        </div>
+        <section>
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq">
+                <strong>Apple Watch not connecting?</strong>
+                <p>Enable Bluetooth. Go to Settings > Privacy > Health and grant permission to Echoelmusic.</p>
+            </div>
+            <div class="faq">
+                <strong>Audio latency issues?</strong>
+                <p>Reduce buffer size in Audio Settings. External audio interfaces recommended for lowest latency (5.33ms).</p>
+            </div>
+            <div class="faq">
+                <strong>Biofeedback not responding?</strong>
+                <p>Check HealthKit permissions in Settings. Apple Watch must be worn for live HRV data.</p>
+            </div>
+            <div class="faq">
+                <strong>Face tracking not working?</strong>
+                <p>Grant camera permission in Settings. Face ID required for ARKit face tracking on iPhone X or newer.</p>
+            </div>
+            <div class="faq">
+                <strong>How do I export my creations?</strong>
+                <p>Use the Share button in any session to export audio, video, or project files to Files, iCloud, or other apps.</p>
+            </div>
+            <div class="faq">
+                <strong>Is my data safe?</strong>
+                <p>Yes. All biometric data stays on your device. We don't collect or store any personal data. See our <a href="privacy.html">Privacy Policy</a>.</p>
+            </div>
+        </section>
+    </main>
     <footer>
-        <a href="/">Home</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-        <a href="security.html">Security</a>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="support.html">Support</a>
+            <a href="health.html">Health</a>
+            <a href="security.html">Security</a>
+            <a href="accessibility.html">Accessibility</a>
+        </div>
+        <p class="copyright">2026 Michael Terbuyken. All rights reserved.</p>
     </footer>
 </body>
 </html>
