@@ -112,14 +112,78 @@
             margin-bottom: 12px;
         }
 
-        /* Features */
-        .features {
-            font-size: clamp(11px, 2vw, 12px);
-            color: rgba(255,255,255,0.3);
-            margin-bottom: 36px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            max-width: 640px;
+            margin-bottom: 40px;
+            padding: 0 8px;
         }
+        @media (max-width: 600px) {
+            .feature-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        }
+        .feature-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 16px 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            border-color: rgba(255,20,148,0.3);
+            box-shadow: 0 8px 24px rgba(255,20,148,0.15), 0 0 40px rgba(0,255,255,0.08);
+        }
+        .feature-card:hover::before { opacity: 0.06; }
+        .feature-card:nth-child(2):hover { border-color: rgba(0,255,255,0.3); box-shadow: 0 8px 24px rgba(0,255,255,0.15), 0 0 40px rgba(153,51,255,0.08); }
+        .feature-card:nth-child(3):hover { border-color: rgba(153,51,255,0.3); box-shadow: 0 8px 24px rgba(153,51,255,0.15), 0 0 40px rgba(255,20,148,0.08); }
+        .feature-card:nth-child(5):hover { border-color: rgba(0,255,255,0.3); }
+        .feature-card:nth-child(6):hover { border-color: rgba(153,51,255,0.3); }
+        .feature-card:nth-child(7):hover { border-color: rgba(0,255,255,0.3); }
+        .feature-icon {
+            width: 28px;
+            height: 28px;
+            margin: 0 auto 10px;
+            opacity: 0.7;
+            transition: all 0.3s;
+        }
+        .feature-card:hover .feature-icon { opacity: 1; transform: scale(1.1); }
+        .feature-card:nth-child(1) .feature-icon { color: var(--pink); }
+        .feature-card:nth-child(2) .feature-icon { color: var(--cyan); }
+        .feature-card:nth-child(3) .feature-icon { color: var(--purple); }
+        .feature-card:nth-child(4) .feature-icon { color: var(--pink); }
+        .feature-card:nth-child(5) .feature-icon { color: var(--cyan); }
+        .feature-card:nth-child(6) .feature-icon { color: var(--purple); }
+        .feature-card:nth-child(7) .feature-icon { color: var(--pink); }
+        .feature-card:nth-child(8) .feature-icon { color: var(--cyan); }
+        .feature-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.85);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 4px;
+        }
+        .feature-count {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            font-weight: 500;
+        }
+        .feature-card:hover .feature-title { color: #fff; }
+        .feature-card:hover .feature-count { color: rgba(255,255,255,0.6); }
 
         /* CTA */
         .cta {
@@ -226,7 +290,49 @@
 
     <p class="tagline">Bio-Reactive, Immersive, Multidimensional — Human expression, worldwide collaboration, education and wellbeing in one comprehensive Ecosystem.</p>
 
-    <p class="features">100+ Instruments · 60+ Effects · Video · Visuals · Laser · DMX · Worldwide Collaboration</p>
+    <!-- Interactive Feature Grid -->
+    <div class="feature-grid">
+        <div class="feature-card">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+            <div class="feature-title">Instruments</div>
+            <div class="feature-count">100+ Synths & Samples</div>
+        </div>
+        <div class="feature-card">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M7 18h2V6H7v12zm4 4h2V2h-2v20zm-8-8h2v-4H3v4zm12 4h2V6h-2v12zm4-8v4h2v-4h-2z"/></svg>
+            <div class="feature-title">Effects</div>
+            <div class="feature-count">60+ DSP Processors</div>
+        </div>
+        <div class="feature-card">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+            <div class="feature-title">Video</div>
+            <div class="feature-count">16K · 1000fps</div>
+        </div>
+        <div class="feature-card">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C7.03 3 3 7.03 3 12s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/><circle cx="12" cy="12" r="5"/></svg>
+            <div class="feature-title">Visuals</div>
+            <div class="feature-count">Bio-Reactive VFX</div>
+        </div>
+        <div class="feature-card">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 4l7.53 13H4.47L12 6z"/><path d="M11 10h2v4h-2zm0 5h2v2h-2z"/></svg>
+            <div class="feature-title">Laser</div>
+            <div class="feature-count">ILDA · Art-Net</div>
+        </div>
+        <div class="feature-card">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+            <div class="feature-title">DMX</div>
+            <div class="feature-count">512+ Channels</div>
+        </div>
+        <div class="feature-card">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <div class="feature-title">Bio</div>
+            <div class="feature-count">HRV · Heart · Breath</div>
+        </div>
+        <div class="feature-card">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            <div class="feature-title">Worldwide</div>
+            <div class="feature-count">Zero-Latency Collab</div>
+        </div>
+    </div>
 
     <a href="https://apps.apple.com/app/echoelmusic" class="cta" aria-label="Download on App Store">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
