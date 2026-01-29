@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessibility - Echoelmusic</title>
+    <meta name="description" content="Echoelmusic is designed for everyone. WCAG 2.2 AAA compliant with 20+ accessibility profiles.">
+    <meta name="theme-color" content="#FF1494">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='115' fill='%23000'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%2300FFFF' stroke-width='3' fill='none' opacity='0.6' transform='rotate(-30 256 256)'/><ellipse cx='256' cy='256' rx='120' ry='50' stroke='%23FF1494' stroke-width='3' fill='none' opacity='0.6' transform='rotate(30 256 256)'/><circle cx='256' cy='256' r='40' fill='%23FF1494'/><circle cx='256' cy='256' r='28' fill='%23fff'/></svg>">
+    <style>
+        :root { --pink: #FF1494; --cyan: #00FFFF; --purple: #9933FF; --black: #000; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--black); color: rgba(255,255,255,0.85); line-height: 1.7; padding: 40px 20px; max-width: 720px; margin: 0 auto; -webkit-font-smoothing: antialiased; }
+        a { color: var(--cyan); }
+        .back { display: inline-block; margin-bottom: 24px; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 14px; }
+        .back:hover { color: var(--cyan); }
+        h1 { color: #fff; font-size: 28px; margin-bottom: 8px; }
+        .date { color: rgba(255,255,255,0.4); font-size: 13px; margin-bottom: 32px; }
+        .summary { background: rgba(0,255,255,0.08); border-left: 3px solid var(--cyan); padding: 16px; margin-bottom: 32px; border-radius: 0 8px 8px 0; }
+        h2 { color: var(--cyan); font-size: 15px; margin: 28px 0 12px; text-transform: uppercase; letter-spacing: 1px; }
+        h3 { color: var(--pink); font-size: 14px; margin: 20px 0 8px; }
+        p, li { margin-bottom: 12px; font-size: 14px; }
+        ul { padding-left: 20px; }
+        strong { color: #fff; }
+        .badge { display: inline-block; background: var(--cyan); color: var(--black); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; margin-right: 8px; margin-bottom: 8px; }
+        .badge.pink { background: var(--pink); }
+        .badge.purple { background: var(--purple); color: #fff; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 16px 0; }
+        .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; }
+        .card h4 { color: #fff; font-size: 14px; margin-bottom: 8px; }
+        .card p { font-size: 13px; color: rgba(255,255,255,0.6); margin: 0; }
+        .feature-list { list-style: none; padding: 0; }
+        .feature-list li { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 12px; }
+        .feature-list li:last-child { border: none; }
+        .check { color: var(--cyan); font-size: 16px; }
+        footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; color: rgba(255,255,255,0.3); }
+        footer a { color: rgba(255,255,255,0.4); margin-right: 16px; text-decoration: none; }
+        footer a:hover { color: var(--cyan); }
+    </style>
+</head>
+<body>
+    <a href="/" class="back">← Back</a>
+    <h1>Accessibility</h1>
+    <p class="date">Updated: January 2026</p>
+
+    <div class="summary">
+        <strong>Our Commitment:</strong> Echoelmusic is designed for everyone. We believe music creation and biofeedback experiences should be accessible to all, regardless of ability.
+    </div>
+
+    <p>
+        <span class="badge">WCAG 2.2 AAA</span>
+        <span class="badge pink">20+ Profiles</span>
+        <span class="badge purple">6 Platforms</span>
+    </p>
+
+    <h2>Supported Platforms</h2>
+    <div class="grid">
+        <div class="card">
+            <h4>iPhone & iPad</h4>
+            <p>Full accessibility with VoiceOver, Voice Control, Switch Control, and Dynamic Type</p>
+        </div>
+        <div class="card">
+            <h4>Apple Watch</h4>
+            <p>Coherence tracking with VoiceOver and haptic feedback</p>
+        </div>
+        <div class="card">
+            <h4>Mac</h4>
+            <p>Complete keyboard navigation, VoiceOver, and Voice Control</p>
+        </div>
+        <div class="card">
+            <h4>Apple TV</h4>
+            <p>Remote navigation with VoiceOver support</p>
+        </div>
+        <div class="card">
+            <h4>Vision Pro</h4>
+            <p>Spatial accessibility with eye tracking and voice commands</p>
+        </div>
+    </div>
+
+    <h2>Accessibility Features</h2>
+    <ul class="feature-list">
+        <li><span class="check">✓</span> <strong>VoiceOver</strong> – Full screen reader support with descriptive labels</li>
+        <li><span class="check">✓</span> <strong>Voice Control</strong> – Navigate and create using only your voice</li>
+        <li><span class="check">✓</span> <strong>Switch Control</strong> – External switch device compatibility</li>
+        <li><span class="check">✓</span> <strong>Dynamic Type</strong> – Scalable text sizes throughout the app</li>
+        <li><span class="check">✓</span> <strong>Dark Mode</strong> – Reduced eye strain with dark interface</li>
+        <li><span class="check">✓</span> <strong>High Contrast</strong> – Enhanced visibility for low vision users</li>
+        <li><span class="check">✓</span> <strong>Reduced Motion</strong> – Minimize animations for vestibular sensitivity</li>
+        <li><span class="check">✓</span> <strong>Color Blind Modes</strong> – 6 palettes for different color vision types</li>
+        <li><span class="check">✓</span> <strong>Live Captions</strong> – Real-time audio transcription</li>
+        <li><span class="check">✓</span> <strong>Audio Descriptions</strong> – Spoken descriptions of visual content</li>
+        <li><span class="check">✓</span> <strong>Haptic Feedback</strong> – Tactile responses for all interactions</li>
+        <li><span class="check">✓</span> <strong>Eye Tracking</strong> – Control with gaze on Vision Pro</li>
+    </ul>
+
+    <h2>Accessibility Profiles</h2>
+    <p>One-tap profiles optimized for specific needs:</p>
+
+    <h3>Vision</h3>
+    <ul>
+        <li><strong>Low Vision</strong> – Large text, high contrast, bold fonts</li>
+        <li><strong>Blind</strong> – VoiceOver with spatial audio descriptions</li>
+        <li><strong>Color Blind</strong> – Protanopia, Deuteranopia, Tritanopia modes</li>
+    </ul>
+
+    <h3>Hearing</h3>
+    <ul>
+        <li><strong>Deaf</strong> – Visual alerts, live captions, bass enhancement</li>
+        <li><strong>Hard of Hearing</strong> – Audio boost, visual beat indicators</li>
+    </ul>
+
+    <h3>Motor</h3>
+    <ul>
+        <li><strong>Limited Mobility</strong> – Large touch targets, voice control</li>
+        <li><strong>Tremor Support</strong> – Stabilized input, longer press times</li>
+        <li><strong>One-Handed</strong> – Reachable controls, gesture shortcuts</li>
+        <li><strong>Hands-Free</strong> – Complete voice and switch navigation</li>
+    </ul>
+
+    <h3>Cognitive</h3>
+    <ul>
+        <li><strong>ADHD</strong> – Focus mode, reduced distractions</li>
+        <li><strong>Dyslexia</strong> – OpenDyslexic font, increased spacing</li>
+        <li><strong>Autism-Friendly</strong> – Predictable interface, calm colors</li>
+        <li><strong>Memory Support</strong> – Context reminders, clear navigation</li>
+    </ul>
+
+    <h2>Color Blind Safe Palettes</h2>
+    <div class="grid">
+        <div class="card">
+            <h4>Protanopia</h4>
+            <p>Red-blind safe colors</p>
+        </div>
+        <div class="card">
+            <h4>Deuteranopia</h4>
+            <p>Green-blind safe colors</p>
+        </div>
+        <div class="card">
+            <h4>Tritanopia</h4>
+            <p>Blue-blind safe colors</p>
+        </div>
+        <div class="card">
+            <h4>Monochrome</h4>
+            <p>Full grayscale mode</p>
+        </div>
+        <div class="card">
+            <h4>High Contrast</h4>
+            <p>Maximum visibility</p>
+        </div>
+        <div class="card">
+            <h4>Soft</h4>
+            <p>Reduced saturation</p>
+        </div>
+    </div>
+
+    <h2>Standards Compliance</h2>
+    <ul>
+        <li><strong>WCAG 2.2 Level AAA</strong> – Highest accessibility standard</li>
+        <li><strong>Section 508</strong> – US federal accessibility requirements</li>
+        <li><strong>EN 301 549</strong> – European accessibility standard</li>
+        <li><strong>Apple Human Interface Guidelines</strong> – Platform best practices</li>
+    </ul>
+
+    <h2>Feedback</h2>
+    <p>We continuously improve accessibility based on user feedback. If you encounter barriers or have suggestions:</p>
+    <p><a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a></p>
+
+    <footer>
+        <a href="/">Home</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+        <a href="support.html">Support</a>
+    </footer>
+</body>
+</html>
