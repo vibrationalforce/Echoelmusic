@@ -1,6 +1,7 @@
 import Foundation
+import SwiftUI
 import Combine
-import os.log
+import os
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ECHOELMUSIC SELF-HEALING ENGINE

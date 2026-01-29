@@ -1,4 +1,6 @@
 import Foundation
+import SwiftUI
+import Combine
 import os.log
 
 /// Native Plugin Bridge for Swift

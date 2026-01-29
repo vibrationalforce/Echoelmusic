@@ -150,9 +150,14 @@ public class ProductionHealthKitManager {
     private var heartRateObserver: HKObserverQuery?
     private var hrvObserver: HKObserverQuery?
 
-    // Workout session
+    // Workout session (iOS 17+, watchOS 3+)
+    #if os(watchOS) || (os(iOS) && swift(>=5.9))
     private var workoutSession: HKWorkoutSession?
     private var workoutBuilder: HKLiveWorkoutBuilder?
+    #else
+    private var workoutSession: Any?
+    private var workoutBuilder: Any?
+    #endif
 
     // Data buffers
     private var rrIntervalBuffer: [Double] = []
@@ -664,6 +669,7 @@ public class ProductionHealthKitManager {
     // MARK: - Workout Integration
 
     /// Start a workout session for better real-time data
+    @available(iOS 17.0, watchOS 3.0, *)
     public func startWorkoutSession(activityType: HKWorkoutActivityType = .mindAndBody) {
         guard isAuthorized else {
             logger.warning("⚠️ Not authorized for workout sessions", category: .biofeedback)
@@ -706,6 +712,7 @@ public class ProductionHealthKitManager {
     }
 
     /// Stop current workout session
+    @available(iOS 17.0, watchOS 3.0, *)
     public func stopWorkoutSession(completion: ((HKWorkout?) -> Void)? = nil) {
         guard let session = workoutSession, let builder = workoutBuilder else {
             logger.warning("⚠️ No active workout session", category: .biofeedback)

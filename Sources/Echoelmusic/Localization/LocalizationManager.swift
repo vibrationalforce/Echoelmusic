@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Combine
 
 /// Localization Manager für globale Multi-Language-Unterstützung

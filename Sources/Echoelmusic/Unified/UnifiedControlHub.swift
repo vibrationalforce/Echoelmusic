@@ -498,9 +498,9 @@ public class UnifiedControlHub: ObservableObject {
     /// - Returns: The created session
     public func createCrossPlatformSession(
         name: String,
-        devices: [CrossPlatformSessionManager.SessionDevice],
-        syncMode: CrossPlatformSessionManager.SyncMode = .adaptive
-    ) -> CrossPlatformSessionManager.CrossPlatformSession? {
+        devices: [SessionDevice],
+        syncMode: SyncMode = .adaptive
+    ) -> CrossPlatformSession? {
         guard let manager = crossPlatformSessionManager else {
             Log.warning("⚠️ Cross-Platform Session Manager not enabled", category: .system)
             return nil
@@ -531,7 +531,7 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Sync biometric data across all devices in cross-platform session
     public func syncBiometricsToSession(hrvCoherence: Float, heartRate: Float, breathingRate: Float) {
-        let bioData = CrossPlatformSessionManager.BiometricSyncData(
+        let bioData = BiometricSyncData(
             hrvCoherence: hrvCoherence,
             heartRate: heartRate,
             breathingRate: breathingRate,
@@ -542,7 +542,7 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Sync audio parameters across all devices in cross-platform session
     public func syncAudioParametersToSession(bpm: Float, filterCutoff: Float, reverbWet: Float) {
-        let params = CrossPlatformSessionManager.AudioSyncParameters(
+        let params = AudioSyncParameters(
             bpm: bpm,
             filterCutoff: filterCutoff,
             reverbWet: reverbWet,
