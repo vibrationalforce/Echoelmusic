@@ -357,26 +357,6 @@
             margin-bottom: 16px;
         }
 
-        /* Audio Spectrum Visualizer */
-        .spectrum {
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            gap: 4px;
-            height: 40px;
-            margin-bottom: 40px;
-        }
-        .spectrum-bar {
-            width: 4px;
-            background: linear-gradient(180deg, var(--cyan), var(--pink));
-            border-radius: 2px;
-            animation: spectrumPulse 1s ease-in-out infinite;
-        }
-        @keyframes spectrumPulse {
-            0%, 100% { height: 10px; opacity: 0.5; }
-            50% { height: var(--h); opacity: 1; }
-        }
-
         /* Glass Morphism Feature Strip */
         .feature-strip {
             display: flex;
@@ -601,29 +581,6 @@
         .cta:active { transform: translateY(-2px) scale(0.98); }
         .cta svg { width: 26px; height: 26px; }
 
-        /* CTA Group */
-        .cta-group {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        /* Secondary CTA */
-        .cta.cta-secondary {
-            background: transparent;
-            color: var(--cyan);
-            border: 2px solid var(--cyan);
-            box-shadow: 0 0 30px rgba(0,255,255,0.2);
-        }
-        .cta.cta-secondary:hover {
-            background: rgba(0,255,255,0.1);
-            box-shadow: 0 0 50px rgba(0,255,255,0.4);
-        }
-        .cta.cta-secondary::before {
-            background: linear-gradient(135deg, var(--cyan), var(--purple));
-        }
-
         /* Platforms */
         .platforms {
             margin-top: 20px;
@@ -762,10 +719,134 @@
             transition: top 0.3s;
         }
         .skip-link:focus { top: 20px; }
+
+        /* Language Selector */
+        .lang-selector {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 18px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.3s;
+        }
+        .lang-btn:hover {
+            border-color: var(--cyan);
+            box-shadow: 0 0 20px rgba(0,255,255,0.3);
+        }
+        .lang-btn svg { width: 18px; height: 18px; color: var(--cyan); }
+        .lang-btn .arrow {
+            width: 12px;
+            height: 12px;
+            transition: transform 0.3s;
+        }
+        .lang-selector.open .lang-btn .arrow { transform: rotate(180deg); }
+        .lang-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 280px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.95);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+            padding: 8px;
+        }
+        .lang-selector.open .lang-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .lang-dropdown::-webkit-scrollbar { width: 6px; }
+        .lang-dropdown::-webkit-scrollbar-track { background: transparent; }
+        .lang-dropdown::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 3px; }
+        .lang-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .lang-option:hover {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+        .lang-option.active {
+            background: linear-gradient(135deg, rgba(255,20,148,0.2), rgba(0,255,255,0.2));
+            color: var(--cyan);
+        }
+        .lang-option .flag { font-size: 20px; }
+        .lang-option .name { flex: 1; }
+        .lang-option .code {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .lang-search {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 8px;
+            outline: none;
+        }
+        .lang-search:focus { border-color: var(--cyan); }
+        .lang-search::placeholder { color: var(--text-muted); }
+        @media (max-width: 480px) {
+            .lang-selector { top: 12px; right: 12px; }
+            .lang-btn { padding: 10px 14px; font-size: 13px; }
+            .lang-btn span { display: none; }
+            .lang-dropdown { width: 260px; right: 0; }
+        }
     </style>
 </head>
 <body>
-    <a href="#main" class="skip-link">Skip to main content</a>
+    <a href="#main" class="skip-link" data-i18n="skip">Skip to main content</a>
+
+    <!-- Language Selector -->
+    <div class="lang-selector" id="langSelector">
+        <button class="lang-btn" id="langBtn" aria-expanded="false" aria-haspopup="listbox">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+            <span id="currentLangName">English</span>
+            <svg class="arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+        <div class="lang-dropdown" id="langDropdown" role="listbox">
+            <input type="text" class="lang-search" id="langSearch" placeholder="Search language..." aria-label="Search languages">
+            <div id="langOptions"></div>
+        </div>
+    </div>
 
     <!-- Background Layers -->
     <div class="bg-deep-space"></div>
@@ -851,61 +932,44 @@
         <h1><span>Echoelmusic</span></h1>
 
         <div class="mantra">
-            <span><span class="highlight">Find</span> Your Sound</span>
-            <span><span class="highlight">Feel</span> Your Soul</span>
-            <span><span class="highlight">Focus</span> Your Spirit</span>
+            <span><span class="highlight" data-i18n="find">Find</span> <span data-i18n="yourSound">Your Sound</span></span>
+            <span><span class="highlight" data-i18n="feel">Feel</span> <span data-i18n="yourSoul">Your Soul</span></span>
+            <span><span class="highlight" data-i18n="focus">Focus</span> <span data-i18n="yourSpirit">Your Spirit</span></span>
         </div>
 
-        <!-- Audio Spectrum Visualizer -->
-        <div class="spectrum" aria-hidden="true">
-            <div class="spectrum-bar" style="--h: 15px; animation-delay: 0s;"></div>
-            <div class="spectrum-bar" style="--h: 25px; animation-delay: 0.1s;"></div>
-            <div class="spectrum-bar" style="--h: 35px; animation-delay: 0.2s;"></div>
-            <div class="spectrum-bar" style="--h: 30px; animation-delay: 0.3s;"></div>
-            <div class="spectrum-bar" style="--h: 40px; animation-delay: 0.15s;"></div>
-            <div class="spectrum-bar" style="--h: 35px; animation-delay: 0.25s;"></div>
-            <div class="spectrum-bar" style="--h: 25px; animation-delay: 0.35s;"></div>
-            <div class="spectrum-bar" style="--h: 30px; animation-delay: 0.05s;"></div>
-            <div class="spectrum-bar" style="--h: 20px; animation-delay: 0.4s;"></div>
-            <div class="spectrum-bar" style="--h: 35px; animation-delay: 0.2s;"></div>
-            <div class="spectrum-bar" style="--h: 40px; animation-delay: 0.1s;"></div>
-            <div class="spectrum-bar" style="--h: 30px; animation-delay: 0.3s;"></div>
-            <div class="spectrum-bar" style="--h: 20px; animation-delay: 0.15s;"></div>
-        </div>
-
-        <p class="tagline">Bio-Reactive, Immersive, Multidimensional — Human expression, worldwide collaboration, education and wellbeing in one comprehensive Ecosystem.</p>
+        <p class="tagline" data-i18n="tagline">Bio-Reactive, Immersive, Multidimensional — Human expression, realtime sessions, education and wellbeing in one comprehensive Ecosystem.</p>
 
         <!-- Glass Feature Tags -->
         <div class="feature-strip">
-            <div class="feature-tag"><span class="num">100+</span> Instruments</div>
-            <div class="feature-tag"><span class="num">60+</span> Effects</div>
-            <div class="feature-tag"><span class="num">16K</span> Video</div>
-            <div class="feature-tag">Bio-Reactive</div>
-            <div class="feature-tag">Laser & DMX</div>
-            <div class="feature-tag">Worldwide Collab</div>
+            <div class="feature-tag"><span class="num">100+</span> <span data-i18n="instruments">Instruments</span></div>
+            <div class="feature-tag"><span class="num">60+</span> <span data-i18n="effects">Effects</span></div>
+            <div class="feature-tag"><span class="num">16K</span> <span data-i18n="video">Video</span></div>
+            <div class="feature-tag" data-i18n="bioReactive">Bio-Reactive</div>
+            <div class="feature-tag" data-i18n="laserDmx">Laser & DMX</div>
+            <div class="feature-tag" data-i18n="worldwideCollab">Worldwide Collab</div>
         </div>
 
         <!-- Super Intelligence Glass Card -->
         <div class="si-card">
             <div class="si-header">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                <span>Super Intelligence</span>
+                <span data-i18n="superIntelligence">Super Intelligence</span>
             </div>
             <div class="si-features">
                 <div class="si-feature">
                     <div class="si-feature-icon">🎬</div>
-                    <div class="si-feature-title">Video AI</div>
-                    <div class="si-feature-desc">16K Resolution, 1000fps, 100+ AI Effects, One-Tap Professional Editing</div>
+                    <div class="si-feature-title" data-i18n="videoAi">Video AI</div>
+                    <div class="si-feature-desc" data-i18n="videoAiDesc">16K Resolution, 1000fps, 100+ AI Effects, One-Tap Professional Editing</div>
                 </div>
                 <div class="si-feature">
                     <div class="si-feature-icon">🎵</div>
-                    <div class="si-feature-title">Music AI</div>
-                    <div class="si-feature-desc">Genetic Synthesis, Biometric Composition, Full Orchestral Scoring</div>
+                    <div class="si-feature-title" data-i18n="musicAi">Music AI</div>
+                    <div class="si-feature-desc" data-i18n="musicAiDesc">Genetic Synthesis, Biometric Composition, Full Orchestral Scoring</div>
                 </div>
                 <div class="si-feature">
                     <div class="si-feature-icon">🎨</div>
-                    <div class="si-feature-title">Art AI</div>
-                    <div class="si-feature-desc">30+ Styles, Sacred Geometry, Bio-Reactive Real-Time Visuals</div>
+                    <div class="si-feature-title" data-i18n="artAi">Art AI</div>
+                    <div class="si-feature-desc" data-i18n="artAiDesc">30+ Styles, Sacred Geometry, Bio-Reactive Real-Time Visuals</div>
                 </div>
             </div>
         </div>
@@ -914,25 +978,19 @@
         <div class="ownership">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
             <div class="ownership-text">
-                <strong>You Own Everything You Create</strong>
-                100% intellectual property rights. No claims. Your art, your music, your vision — forever yours.
+                <strong data-i18n="ownershipTitle">You Own Everything You Create</strong>
+                <span data-i18n="ownershipDesc">100% intellectual property rights. No claims. Your art, your music, your vision — forever yours.</span>
             </div>
         </div>
 
-        <!-- CTA Buttons -->
-        <div class="cta-group">
-            <a href="https://apps.apple.com/app/echoelmusic" class="cta" aria-label="Download on App Store">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                Download Free
-            </a>
-            <a href="webapp/" class="cta cta-secondary" aria-label="Try WebApp in Browser">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                Try in Browser
-            </a>
-        </div>
+        <!-- CTA Button -->
+        <a href="https://apps.apple.com/app/echoelmusic" class="cta" aria-label="Download on App Store">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            <span data-i18n="downloadFree">Download Free</span>
+        </a>
 
-        <p class="platforms">iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro · Web</p>
-        <p class="beta-notice">The first beta version will be free for a short period of time!</p>
+        <p class="platforms" data-i18n="platforms">iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro</p>
+        <p class="beta-notice" data-i18n="betaNotice">The first beta version will be free for a short period of time!</p>
 
         <!-- Social Links -->
         <div class="social">
@@ -953,17 +1011,17 @@
         <!-- Language Badge -->
         <div class="lang-badge">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
-            <strong>37</strong> Languages · EN · DE · JA · ZH · ES · FR · KO · AR · HI · +28
+            <strong>37</strong> <span data-i18n="languagesLabel">Languages</span>
         </div>
 
         <!-- Footer -->
         <footer>
-            <a href="privacy.html">Privacy</a>
-            <a href="terms.html">Terms</a>
-            <a href="support.html">Support</a>
-            <a href="health.html">Health</a>
-            <a href="security.html">Security</a>
-            <a href="accessibility.html">Accessibility</a>
+            <a href="privacy.html" data-i18n="privacy">Privacy</a>
+            <a href="terms.html" data-i18n="terms">Terms</a>
+            <a href="support.html" data-i18n="support">Support</a>
+            <a href="health.html" data-i18n="health">Health</a>
+            <a href="security.html" data-i18n="security">Security</a>
+            <a href="accessibility.html" data-i18n="accessibility">Accessibility</a>
         </footer>
     </main>
 
@@ -1014,6 +1072,318 @@
             document.querySelectorAll('.particle').forEach(p => p.remove());
             document.getElementById('mouseGlow').style.display = 'none';
         }
+
+        // Language System
+        (function() {
+            const languages = [
+                { code: 'en', name: 'English', flag: '🇬🇧' },
+                { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+                { code: 'ja', name: '日本語', flag: '🇯🇵' },
+                { code: 'es', name: 'Español', flag: '🇪🇸' },
+                { code: 'fr', name: 'Français', flag: '🇫🇷' },
+                { code: 'zh', name: '中文', flag: '🇨🇳' },
+                { code: 'ko', name: '한국어', flag: '🇰🇷' },
+                { code: 'pt', name: 'Português', flag: '🇧🇷' },
+                { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+                { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+                { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+                { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
+                { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
+                { code: 'da', name: 'Dansk', flag: '🇩🇰' },
+                { code: 'sv', name: 'Svenska', flag: '🇸🇪' },
+                { code: 'no', name: 'Norsk', flag: '🇳🇴' },
+                { code: 'pl', name: 'Polski', flag: '🇵🇱' },
+                { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+                { code: 'th', name: 'ไทย', flag: '🇹🇭' },
+                { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳' },
+                { code: 'id', name: 'Bahasa Indonesia', flag: '🇮🇩' },
+                { code: 'ms', name: 'Bahasa Melayu', flag: '🇲🇾' },
+                { code: 'fi', name: 'Suomi', flag: '🇫🇮' },
+                { code: 'el', name: 'Ελληνικά', flag: '🇬🇷' },
+                { code: 'cs', name: 'Čeština', flag: '🇨🇿' },
+                { code: 'ro', name: 'Română', flag: '🇷🇴' },
+                { code: 'hu', name: 'Magyar', flag: '🇭🇺' },
+                { code: 'uk', name: 'Українська', flag: '🇺🇦' },
+                { code: 'he', name: 'עברית', flag: '🇮🇱' },
+                { code: 'fa', name: 'فارسی', flag: '🇮🇷' },
+                { code: 'tl', name: 'Filipino', flag: '🇵🇭' },
+                { code: 'sw', name: 'Kiswahili', flag: '🇰🇪' },
+                { code: 'bn', name: 'বাংলা', flag: '🇧🇩' },
+                { code: 'ta', name: 'தமிழ்', flag: '🇮🇳' },
+                { code: 'te', name: 'తెలుగు', flag: '🇮🇳' },
+                { code: 'mr', name: 'मराठी', flag: '🇮🇳' },
+                { code: 'mi', name: 'Māori', flag: '🇳🇿' }
+            ];
+
+            const translations = {
+                en: {
+                    skip: 'Skip to main content', find: 'Find', yourSound: 'Your Sound', feel: 'Feel', yourSoul: 'Your Soul', focus: 'Focus', yourSpirit: 'Your Spirit',
+                    tagline: 'Bio-Reactive, Immersive, Multidimensional — Human expression, realtime sessions, education and wellbeing in one comprehensive Ecosystem.',
+                    instruments: 'Instruments', effects: 'Effects', video: 'Video', bioReactive: 'Bio-Reactive', laserDmx: 'Laser & DMX', worldwideCollab: 'Worldwide Collab',
+                    superIntelligence: 'Super Intelligence', videoAi: 'Video AI', videoAiDesc: '16K Resolution, 1000fps, 100+ AI Effects, One-Tap Professional Editing',
+                    musicAi: 'Music AI', musicAiDesc: 'Genetic Synthesis, Biometric Composition, Full Orchestral Scoring',
+                    artAi: 'Art AI', artAiDesc: '30+ Styles, Sacred Geometry, Bio-Reactive Real-Time Visuals',
+                    ownershipTitle: 'You Own Everything You Create', ownershipDesc: '100% intellectual property rights. No claims. Your art, your music, your vision — forever yours.',
+                    downloadFree: 'Download Free', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: 'The first beta version will be free for a short period of time!', languagesLabel: 'Languages',
+                    privacy: 'Privacy', terms: 'Terms', support: 'Support', health: 'Health', security: 'Security', accessibility: 'Accessibility'
+                },
+                de: {
+                    skip: 'Zum Hauptinhalt springen', find: 'Finde', yourSound: 'Deinen Sound', feel: 'Spüre', yourSoul: 'Deine Seele', focus: 'Fokussiere', yourSpirit: 'Deinen Geist',
+                    tagline: 'Bio-Reaktiv, Immersiv, Multidimensional — Menschlicher Ausdruck, Echtzeit-Sessions, Bildung und Wohlbefinden in einem umfassenden Ökosystem.',
+                    instruments: 'Instrumente', effects: 'Effekte', video: 'Video', bioReactive: 'Bio-Reaktiv', laserDmx: 'Laser & DMX', worldwideCollab: 'Weltweite Zusammenarbeit',
+                    superIntelligence: 'Super Intelligenz', videoAi: 'Video KI', videoAiDesc: '16K Auflösung, 1000fps, 100+ KI-Effekte, One-Tap professionelle Bearbeitung',
+                    musicAi: 'Musik KI', musicAiDesc: 'Genetische Synthese, Biometrische Komposition, Vollständige Orchesterpartitur',
+                    artAi: 'Kunst KI', artAiDesc: '30+ Stile, Heilige Geometrie, Bio-Reaktive Echtzeit-Visuals',
+                    ownershipTitle: 'Du besitzt alles, was Du erschaffst', ownershipDesc: '100% geistiges Eigentum. Keine Ansprüche. Deine Kunst, Deine Musik, Deine Vision — für immer Dein.',
+                    downloadFree: 'Kostenlos laden', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: 'Die erste Beta-Version wird für kurze Zeit kostenlos sein!', languagesLabel: 'Sprachen',
+                    privacy: 'Datenschutz', terms: 'AGB', support: 'Support', health: 'Gesundheit', security: 'Sicherheit', accessibility: 'Barrierefreiheit'
+                },
+                ja: {
+                    skip: 'メインコンテンツへスキップ', find: '見つけよう', yourSound: 'あなたのサウンド', feel: '感じよう', yourSoul: 'あなたの魂', focus: '集中しよう', yourSpirit: 'あなたの精神',
+                    tagline: 'バイオリアクティブ、イマーシブ、マルチディメンショナル — 人間表現、リアルタイムセッション、教育とウェルビーイングを一つの包括的なエコシステムで。',
+                    instruments: '楽器', effects: 'エフェクト', video: 'ビデオ', bioReactive: 'バイオリアクティブ', laserDmx: 'レーザー＆DMX', worldwideCollab: 'ワールドワイドコラボ',
+                    superIntelligence: 'スーパーインテリジェンス', videoAi: 'ビデオAI', videoAiDesc: '16K解像度、1000fps、100以上のAIエフェクト、ワンタップでプロ編集',
+                    musicAi: 'ミュージックAI', musicAiDesc: 'ジェネティックシンセシス、バイオメトリック作曲、フルオーケストラスコアリング',
+                    artAi: 'アートAI', artAiDesc: '30以上のスタイル、神聖幾何学、バイオリアクティブリアルタイムビジュアル',
+                    ownershipTitle: '作成したものはすべてあなたのもの', ownershipDesc: '100%知的財産権。請求なし。あなたのアート、音楽、ビジョン — 永遠にあなたのもの。',
+                    downloadFree: '無料ダウンロード', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: '最初のベータ版は期間限定で無料です！', languagesLabel: '言語',
+                    privacy: 'プライバシー', terms: '利用規約', support: 'サポート', health: '健康', security: 'セキュリティ', accessibility: 'アクセシビリティ'
+                },
+                es: {
+                    skip: 'Saltar al contenido principal', find: 'Encuentra', yourSound: 'Tu Sonido', feel: 'Siente', yourSoul: 'Tu Alma', focus: 'Enfoca', yourSpirit: 'Tu Espíritu',
+                    tagline: 'Bio-Reactivo, Inmersivo, Multidimensional — Expresión humana, sesiones en tiempo real, educación y bienestar en un Ecosistema integral.',
+                    instruments: 'Instrumentos', effects: 'Efectos', video: 'Video', bioReactive: 'Bio-Reactivo', laserDmx: 'Láser y DMX', worldwideCollab: 'Colaboración Mundial',
+                    superIntelligence: 'Super Inteligencia', videoAi: 'Video IA', videoAiDesc: 'Resolución 16K, 1000fps, 100+ Efectos IA, Edición Profesional con Un Toque',
+                    musicAi: 'Música IA', musicAiDesc: 'Síntesis Genética, Composición Biométrica, Partitura Orquestal Completa',
+                    artAi: 'Arte IA', artAiDesc: '30+ Estilos, Geometría Sagrada, Visuales Bio-Reactivos en Tiempo Real',
+                    ownershipTitle: 'Eres dueño de todo lo que creas', ownershipDesc: '100% derechos de propiedad intelectual. Sin reclamos. Tu arte, tu música, tu visión — siempre tuyo.',
+                    downloadFree: 'Descargar Gratis', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: '¡La primera versión beta será gratuita por tiempo limitado!', languagesLabel: 'Idiomas',
+                    privacy: 'Privacidad', terms: 'Términos', support: 'Soporte', health: 'Salud', security: 'Seguridad', accessibility: 'Accesibilidad'
+                },
+                fr: {
+                    skip: 'Passer au contenu principal', find: 'Trouve', yourSound: 'Ton Son', feel: 'Ressens', yourSoul: 'Ton Âme', focus: 'Concentre', yourSpirit: 'Ton Esprit',
+                    tagline: 'Bio-Réactif, Immersif, Multidimensionnel — Expression humaine, sessions en temps réel, éducation et bien-être dans un Écosystème complet.',
+                    instruments: 'Instruments', effects: 'Effets', video: 'Vidéo', bioReactive: 'Bio-Réactif', laserDmx: 'Laser et DMX', worldwideCollab: 'Collaboration Mondiale',
+                    superIntelligence: 'Super Intelligence', videoAi: 'Vidéo IA', videoAiDesc: 'Résolution 16K, 1000fps, 100+ Effets IA, Édition Professionnelle en Un Clic',
+                    musicAi: 'Musique IA', musicAiDesc: 'Synthèse Génétique, Composition Biométrique, Partition Orchestrale Complète',
+                    artAi: 'Art IA', artAiDesc: '30+ Styles, Géométrie Sacrée, Visuels Bio-Réactifs en Temps Réel',
+                    ownershipTitle: 'Tu possèdes tout ce que tu crées', ownershipDesc: '100% droits de propriété intellectuelle. Aucune revendication. Ton art, ta musique, ta vision — à jamais tien.',
+                    downloadFree: 'Télécharger Gratuit', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: 'La première version bêta sera gratuite pendant une période limitée !', languagesLabel: 'Langues',
+                    privacy: 'Confidentialité', terms: 'Conditions', support: 'Support', health: 'Santé', security: 'Sécurité', accessibility: 'Accessibilité'
+                },
+                zh: {
+                    skip: '跳到主要内容', find: '发现', yourSound: '你的声音', feel: '感受', yourSoul: '你的灵魂', focus: '专注', yourSpirit: '你的精神',
+                    tagline: '生物反应式、沉浸式、多维度 — 人类表达、实时会话、教育和健康在一个综合生态系统中。',
+                    instruments: '乐器', effects: '效果', video: '视频', bioReactive: '生物反应式', laserDmx: '激光和DMX', worldwideCollab: '全球协作',
+                    superIntelligence: '超级智能', videoAi: '视频AI', videoAiDesc: '16K分辨率，1000fps，100+AI效果，一键专业编辑',
+                    musicAi: '音乐AI', musicAiDesc: '基因合成，生物测量作曲，完整管弦乐配乐',
+                    artAi: '艺术AI', artAiDesc: '30+风格，神圣几何，生物反应实时视觉',
+                    ownershipTitle: '你拥有你创造的一切', ownershipDesc: '100%知识产权。无任何声明。你的艺术、音乐、愿景 — 永远属于你。',
+                    downloadFree: '免费下载', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: '第一个测试版将在短时间内免费！', languagesLabel: '语言',
+                    privacy: '隐私', terms: '条款', support: '支持', health: '健康', security: '安全', accessibility: '无障碍'
+                },
+                ko: {
+                    skip: '메인 콘텐츠로 건너뛰기', find: '찾아라', yourSound: '너의 소리', feel: '느껴라', yourSoul: '너의 영혼', focus: '집중해라', yourSpirit: '너의 정신',
+                    tagline: '바이오 리액티브, 몰입형, 다차원 — 인간 표현, 실시간 세션, 교육 및 웰빙을 하나의 종합 생태계에서.',
+                    instruments: '악기', effects: '효과', video: '비디오', bioReactive: '바이오 리액티브', laserDmx: '레이저 & DMX', worldwideCollab: '전 세계 협업',
+                    superIntelligence: '슈퍼 인텔리전스', videoAi: '비디오 AI', videoAiDesc: '16K 해상도, 1000fps, 100개 이상의 AI 효과, 원탭 전문 편집',
+                    musicAi: '음악 AI', musicAiDesc: '유전적 합성, 생체 인식 작곡, 풀 오케스트라 스코어링',
+                    artAi: '아트 AI', artAiDesc: '30개 이상의 스타일, 신성 기하학, 바이오 리액티브 실시간 비주얼',
+                    ownershipTitle: '당신이 만든 모든 것을 소유합니다', ownershipDesc: '100% 지적 재산권. 어떤 클레임도 없습니다. 당신의 예술, 음악, 비전 — 영원히 당신 것.',
+                    downloadFree: '무료 다운로드', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: '첫 번째 베타 버전은 짧은 기간 동안 무료입니다!', languagesLabel: '언어',
+                    privacy: '개인정보', terms: '약관', support: '지원', health: '건강', security: '보안', accessibility: '접근성'
+                },
+                pt: {
+                    skip: 'Pular para o conteúdo principal', find: 'Encontre', yourSound: 'Seu Som', feel: 'Sinta', yourSoul: 'Sua Alma', focus: 'Foque', yourSpirit: 'Seu Espírito',
+                    tagline: 'Bio-Reativo, Imersivo, Multidimensional — Expressão humana, sessões em tempo real, educação e bem-estar em um Ecossistema abrangente.',
+                    instruments: 'Instrumentos', effects: 'Efeitos', video: 'Vídeo', bioReactive: 'Bio-Reativo', laserDmx: 'Laser e DMX', worldwideCollab: 'Colaboração Mundial',
+                    superIntelligence: 'Super Inteligência', videoAi: 'Vídeo IA', videoAiDesc: 'Resolução 16K, 1000fps, 100+ Efeitos IA, Edição Profissional com Um Toque',
+                    musicAi: 'Música IA', musicAiDesc: 'Síntese Genética, Composição Biométrica, Partitura Orquestral Completa',
+                    artAi: 'Arte IA', artAiDesc: '30+ Estilos, Geometria Sagrada, Visuais Bio-Reativos em Tempo Real',
+                    ownershipTitle: 'Você é dono de tudo que cria', ownershipDesc: '100% direitos de propriedade intelectual. Sem reivindicações. Sua arte, sua música, sua visão — para sempre seu.',
+                    downloadFree: 'Baixar Grátis', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: 'A primeira versão beta será gratuita por tempo limitado!', languagesLabel: 'Idiomas',
+                    privacy: 'Privacidade', terms: 'Termos', support: 'Suporte', health: 'Saúde', security: 'Segurança', accessibility: 'Acessibilidade'
+                },
+                it: {
+                    skip: 'Passa al contenuto principale', find: 'Trova', yourSound: 'Il Tuo Suono', feel: 'Senti', yourSoul: 'La Tua Anima', focus: 'Focalizza', yourSpirit: 'Il Tuo Spirito',
+                    tagline: 'Bio-Reattivo, Immersivo, Multidimensionale — Espressione umana, sessioni in tempo reale, educazione e benessere in un Ecosistema completo.',
+                    instruments: 'Strumenti', effects: 'Effetti', video: 'Video', bioReactive: 'Bio-Reattivo', laserDmx: 'Laser e DMX', worldwideCollab: 'Collaborazione Mondiale',
+                    superIntelligence: 'Super Intelligenza', videoAi: 'Video IA', videoAiDesc: 'Risoluzione 16K, 1000fps, 100+ Effetti IA, Editing Professionale con Un Tocco',
+                    musicAi: 'Musica IA', musicAiDesc: 'Sintesi Genetica, Composizione Biometrica, Partitura Orchestrale Completa',
+                    artAi: 'Arte IA', artAiDesc: '30+ Stili, Geometria Sacra, Visuali Bio-Reattive in Tempo Reale',
+                    ownershipTitle: 'Possiedi tutto ciò che crei', ownershipDesc: '100% diritti di proprietà intellettuale. Nessuna rivendicazione. La tua arte, la tua musica, la tua visione — per sempre tua.',
+                    downloadFree: 'Scarica Gratis', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: 'La prima versione beta sarà gratuita per un periodo limitato!', languagesLabel: 'Lingue',
+                    privacy: 'Privacy', terms: 'Termini', support: 'Supporto', health: 'Salute', security: 'Sicurezza', accessibility: 'Accessibilità'
+                },
+                ru: {
+                    skip: 'Перейти к основному содержанию', find: 'Найди', yourSound: 'Свой Звук', feel: 'Почувствуй', yourSoul: 'Свою Душу', focus: 'Сфокусируй', yourSpirit: 'Свой Дух',
+                    tagline: 'Био-Реактивный, Иммерсивный, Многомерный — Человеческое выражение, сессии в реальном времени, образование и благополучие в единой комплексной Экосистеме.',
+                    instruments: 'Инструменты', effects: 'Эффекты', video: 'Видео', bioReactive: 'Био-Реактивный', laserDmx: 'Лазер и DMX', worldwideCollab: 'Мировое Сотрудничество',
+                    superIntelligence: 'Супер Интеллект', videoAi: 'Видео ИИ', videoAiDesc: 'Разрешение 16K, 1000fps, 100+ ИИ-эффектов, Профессиональное Редактирование в Один Клик',
+                    musicAi: 'Музыка ИИ', musicAiDesc: 'Генетический Синтез, Биометрическая Композиция, Полная Оркестровая Партитура',
+                    artAi: 'Арт ИИ', artAiDesc: '30+ Стилей, Сакральная Геометрия, Био-Реактивные Визуалы в Реальном Времени',
+                    ownershipTitle: 'Вы владеете всем, что создаёте', ownershipDesc: '100% права интеллектуальной собственности. Никаких претензий. Ваше искусство, ваша музыка, ваше видение — навсегда ваше.',
+                    downloadFree: 'Скачать Бесплатно', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: 'Первая бета-версия будет бесплатной в течение короткого времени!', languagesLabel: 'Языки',
+                    privacy: 'Конфиденциальность', terms: 'Условия', support: 'Поддержка', health: 'Здоровье', security: 'Безопасность', accessibility: 'Доступность'
+                },
+                ar: {
+                    skip: 'انتقل إلى المحتوى الرئيسي', find: 'اعثر على', yourSound: 'صوتك', feel: 'اشعر', yourSoul: 'بروحك', focus: 'ركز', yourSpirit: 'على روحك',
+                    tagline: 'تفاعلي حيوياً، غامر، متعدد الأبعاد — التعبير البشري، جلسات في الوقت الفعلي، التعليم والرفاهية في نظام بيئي شامل.',
+                    instruments: 'آلات موسيقية', effects: 'تأثيرات', video: 'فيديو', bioReactive: 'تفاعلي حيوياً', laserDmx: 'ليزر و DMX', worldwideCollab: 'تعاون عالمي',
+                    superIntelligence: 'ذكاء خارق', videoAi: 'فيديو AI', videoAiDesc: 'دقة 16K، 1000 إطار/ثانية، 100+ تأثيرات AI، تحرير احترافي بلمسة واحدة',
+                    musicAi: 'موسيقى AI', musicAiDesc: 'تخليق جيني، تأليف بيومتري، تسجيل أوركسترالي كامل',
+                    artAi: 'فن AI', artAiDesc: '30+ أسلوب، هندسة مقدسة، مرئيات تفاعلية حيوية في الوقت الفعلي',
+                    ownershipTitle: 'أنت تملك كل ما تنشئه', ownershipDesc: '100% حقوق الملكية الفكرية. بدون مطالبات. فنك، موسيقاك، رؤيتك — ملكك إلى الأبد.',
+                    downloadFree: 'تحميل مجاني', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: 'النسخة التجريبية الأولى ستكون مجانية لفترة محدودة!', languagesLabel: 'اللغات',
+                    privacy: 'الخصوصية', terms: 'الشروط', support: 'الدعم', health: 'الصحة', security: 'الأمان', accessibility: 'إمكانية الوصول'
+                },
+                hi: {
+                    skip: 'मुख्य सामग्री पर जाएं', find: 'खोजें', yourSound: 'अपनी ध्वनि', feel: 'महसूस करें', yourSoul: 'अपनी आत्मा', focus: 'ध्यान दें', yourSpirit: 'अपनी भावना',
+                    tagline: 'बायो-रिएक्टिव, इमर्सिव, मल्टीडायमेंशनल — मानवीय अभिव्यक्ति, रीयलटाइम सेशन, शिक्षा और कल्याण एक व्यापक इकोसिस्टम में।',
+                    instruments: 'वाद्ययंत्र', effects: 'प्रभाव', video: 'वीडियो', bioReactive: 'बायो-रिएक्टिव', laserDmx: 'लेजर और DMX', worldwideCollab: 'विश्वव्यापी सहयोग',
+                    superIntelligence: 'सुपर इंटेलिजेंस', videoAi: 'वीडियो AI', videoAiDesc: '16K रिज़ॉल्यूशन, 1000fps, 100+ AI इफ़ेक्ट्स, वन-टैप प्रोफेशनल एडिटिंग',
+                    musicAi: 'म्यूज़िक AI', musicAiDesc: 'जेनेटिक सिंथेसिस, बायोमेट्रिक कम्पोज़िशन, फुल ऑर्केस्ट्रल स्कोरिंग',
+                    artAi: 'आर्ट AI', artAiDesc: '30+ स्टाइल, सेक्रेड जियोमेट्री, बायो-रिएक्टिव रीयल-टाइम विज़ुअल्स',
+                    ownershipTitle: 'आप जो बनाते हैं वह आपका है', ownershipDesc: '100% बौद्धिक संपदा अधिकार। कोई दावा नहीं। आपकी कला, आपका संगीत, आपकी दृष्टि — हमेशा आपकी।',
+                    downloadFree: 'मुफ्त डाउनलोड', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: 'पहला बीटा वर्शन कुछ समय के लिए मुफ्त होगा!', languagesLabel: 'भाषाएं',
+                    privacy: 'गोपनीयता', terms: 'शर्तें', support: 'सहायता', health: 'स्वास्थ्य', security: 'सुरक्षा', accessibility: 'पहुंच'
+                },
+                nl: {
+                    skip: 'Ga naar hoofdinhoud', find: 'Vind', yourSound: 'Jouw Geluid', feel: 'Voel', yourSoul: 'Jouw Ziel', focus: 'Focus', yourSpirit: 'Jouw Geest',
+                    tagline: 'Bio-Reactief, Meeslepend, Multidimensionaal — Menselijke expressie, realtime sessies, educatie en welzijn in één uitgebreid Ecosysteem.',
+                    instruments: 'Instrumenten', effects: 'Effecten', video: 'Video', bioReactive: 'Bio-Reactief', laserDmx: 'Laser & DMX', worldwideCollab: 'Wereldwijde Samenwerking',
+                    superIntelligence: 'Super Intelligentie', videoAi: 'Video AI', videoAiDesc: '16K Resolutie, 1000fps, 100+ AI Effecten, One-Tap Professionele Bewerking',
+                    musicAi: 'Muziek AI', musicAiDesc: 'Genetische Synthese, Biometrische Compositie, Volledige Orkestrale Partituur',
+                    artAi: 'Kunst AI', artAiDesc: '30+ Stijlen, Heilige Geometrie, Bio-Reactieve Real-Time Visuals',
+                    ownershipTitle: 'Je bezit alles wat je creëert', ownershipDesc: '100% intellectuele eigendomsrechten. Geen claims. Jouw kunst, jouw muziek, jouw visie — voor altijd van jou.',
+                    downloadFree: 'Gratis Downloaden', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: 'De eerste bètaversie zal korte tijd gratis zijn!', languagesLabel: 'Talen',
+                    privacy: 'Privacy', terms: 'Voorwaarden', support: 'Ondersteuning', health: 'Gezondheid', security: 'Beveiliging', accessibility: 'Toegankelijkheid'
+                },
+                tr: {
+                    skip: 'Ana içeriğe atla', find: 'Bul', yourSound: 'Sesini', feel: 'Hisset', yourSoul: 'Ruhunu', focus: 'Odaklan', yourSpirit: 'Ruhuna',
+                    tagline: 'Bio-Reaktif, Sürükleyici, Çok Boyutlu — İnsan ifadesi, gerçek zamanlı oturumlar, eğitim ve refah tek bir kapsamlı Ekosistemde.',
+                    instruments: 'Enstrümanlar', effects: 'Efektler', video: 'Video', bioReactive: 'Bio-Reaktif', laserDmx: 'Lazer ve DMX', worldwideCollab: 'Dünya Çapında İşbirliği',
+                    superIntelligence: 'Süper Zeka', videoAi: 'Video AI', videoAiDesc: '16K Çözünürlük, 1000fps, 100+ AI Efekti, Tek Dokunuşla Profesyonel Düzenleme',
+                    musicAi: 'Müzik AI', musicAiDesc: 'Genetik Sentez, Biyometrik Kompozisyon, Tam Orkestra Partisyonu',
+                    artAi: 'Sanat AI', artAiDesc: '30+ Stil, Kutsal Geometri, Bio-Reaktif Gerçek Zamanlı Görseller',
+                    ownershipTitle: 'Yarattığın her şeyin sahibisin', ownershipDesc: '100% fikri mülkiyet hakları. Hiçbir talep yok. Sanatın, müziğin, vizyonun — sonsuza kadar senin.',
+                    downloadFree: 'Ücretsiz İndir', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: 'İlk beta sürümü kısa bir süre için ücretsiz olacak!', languagesLabel: 'Diller',
+                    privacy: 'Gizlilik', terms: 'Şartlar', support: 'Destek', health: 'Sağlık', security: 'Güvenlik', accessibility: 'Erişilebilirlik'
+                },
+                pl: {
+                    skip: 'Przejdź do głównej treści', find: 'Znajdź', yourSound: 'Swój Dźwięk', feel: 'Poczuj', yourSoul: 'Swoją Duszę', focus: 'Skup', yourSpirit: 'Swojego Ducha',
+                    tagline: 'Bio-Reaktywny, Immersyjny, Wielowymiarowy — Ekspresja ludzka, sesje w czasie rzeczywistym, edukacja i dobre samopoczucie w jednym kompleksowym Ekosystemie.',
+                    instruments: 'Instrumenty', effects: 'Efekty', video: 'Wideo', bioReactive: 'Bio-Reaktywny', laserDmx: 'Laser i DMX', worldwideCollab: 'Współpraca Światowa',
+                    superIntelligence: 'Super Inteligencja', videoAi: 'Wideo AI', videoAiDesc: 'Rozdzielczość 16K, 1000fps, 100+ efektów AI, Profesjonalna edycja jednym dotknięciem',
+                    musicAi: 'Muzyka AI', musicAiDesc: 'Synteza Genetyczna, Kompozycja Biometryczna, Pełna Partytura Orkiestrowa',
+                    artAi: 'Sztuka AI', artAiDesc: '30+ Stylów, Święta Geometria, Bio-Reaktywne Wizualizacje w Czasie Rzeczywistym',
+                    ownershipTitle: 'Jesteś właścicielem wszystkiego co tworzysz', ownershipDesc: '100% praw własności intelektualnej. Bez roszczeń. Twoja sztuka, twoja muzyka, twoja wizja — na zawsze twoja.',
+                    downloadFree: 'Pobierz Za Darmo', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: 'Pierwsza wersja beta będzie bezpłatna przez krótki czas!', languagesLabel: 'Języki',
+                    privacy: 'Prywatność', terms: 'Warunki', support: 'Wsparcie', health: 'Zdrowie', security: 'Bezpieczeństwo', accessibility: 'Dostępność'
+                },
+                uk: {
+                    skip: 'Перейти до основного вмісту', find: 'Знайди', yourSound: 'Свій Звук', feel: 'Відчуй', yourSoul: 'Свою Душу', focus: 'Сфокусуй', yourSpirit: 'Свій Дух',
+                    tagline: 'Біо-Реактивний, Іммерсивний, Багатовимірний — Людське вираження, сесії в реальному часі, освіта та благополуччя в єдиній комплексній Екосистемі.',
+                    instruments: 'Інструменти', effects: 'Ефекти', video: 'Відео', bioReactive: 'Біо-Реактивний', laserDmx: 'Лазер і DMX', worldwideCollab: 'Світова Співпраця',
+                    superIntelligence: 'Супер Інтелект', videoAi: 'Відео AI', videoAiDesc: 'Роздільна здатність 16K, 1000fps, 100+ AI-ефектів, Професійне редагування одним дотиком',
+                    musicAi: 'Музика AI', musicAiDesc: 'Генетичний Синтез, Біометрична Композиція, Повна Оркестрова Партитура',
+                    artAi: 'Мистецтво AI', artAiDesc: '30+ Стилів, Сакральна Геометрія, Біо-Реактивні Візуали в Реальному Часі',
+                    ownershipTitle: 'Ви володієте всім, що створюєте', ownershipDesc: '100% права інтелектуальної власності. Жодних претензій. Ваше мистецтво, ваша музика, ваше бачення — назавжди ваше.',
+                    downloadFree: 'Завантажити Безкоштовно', platforms: 'iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro',
+                    betaNotice: 'Перша бета-версія буде безкоштовною протягом короткого часу!', languagesLabel: 'Мови',
+                    privacy: 'Конфіденційність', terms: 'Умови', support: 'Підтримка', health: "Здоров'я", security: 'Безпека', accessibility: 'Доступність'
+                }
+            };
+
+            // Add default translations for other languages (fallback to English)
+            const defaultLangs = ['da', 'sv', 'no', 'th', 'vi', 'id', 'ms', 'fi', 'el', 'cs', 'ro', 'hu', 'he', 'fa', 'tl', 'sw', 'bn', 'ta', 'te', 'mr', 'mi'];
+            defaultLangs.forEach(lang => { if (!translations[lang]) translations[lang] = translations.en; });
+
+            let currentLang = localStorage.getItem('echoelLang') || 'en';
+            const selector = document.getElementById('langSelector');
+            const btn = document.getElementById('langBtn');
+            const dropdown = document.getElementById('langDropdown');
+            const optionsContainer = document.getElementById('langOptions');
+            const search = document.getElementById('langSearch');
+            const currentLangName = document.getElementById('currentLangName');
+
+            function renderOptions(filter = '') {
+                const filtered = languages.filter(l =>
+                    l.name.toLowerCase().includes(filter.toLowerCase()) ||
+                    l.code.toLowerCase().includes(filter.toLowerCase())
+                );
+                optionsContainer.innerHTML = filtered.map(l => `
+                    <button class="lang-option ${l.code === currentLang ? 'active' : ''}" data-lang="${l.code}">
+                        <span class="flag">${l.flag}</span>
+                        <span class="name">${l.name}</span>
+                        <span class="code">${l.code}</span>
+                    </button>
+                `).join('');
+            }
+
+            function applyTranslations(lang) {
+                const t = translations[lang] || translations.en;
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (t[key]) el.textContent = t[key];
+                });
+                document.documentElement.lang = lang;
+                // RTL support
+                document.documentElement.dir = ['ar', 'he', 'fa'].includes(lang) ? 'rtl' : 'ltr';
+            }
+
+            function setLanguage(lang) {
+                currentLang = lang;
+                localStorage.setItem('echoelLang', lang);
+                const langData = languages.find(l => l.code === lang);
+                currentLangName.textContent = langData ? langData.name : 'English';
+                applyTranslations(lang);
+                renderOptions(search.value);
+                selector.classList.remove('open');
+                btn.setAttribute('aria-expanded', 'false');
+            }
+
+            btn.addEventListener('click', () => {
+                const isOpen = selector.classList.toggle('open');
+                btn.setAttribute('aria-expanded', isOpen);
+                if (isOpen) { search.focus(); search.value = ''; renderOptions(); }
+            });
+
+            search.addEventListener('input', (e) => renderOptions(e.target.value));
+
+            optionsContainer.addEventListener('click', (e) => {
+                const option = e.target.closest('.lang-option');
+                if (option) setLanguage(option.dataset.lang);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!selector.contains(e.target)) {
+                    selector.classList.remove('open');
+                    btn.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            // Initialize
+            renderOptions();
+            const langData = languages.find(l => l.code === currentLang);
+            currentLangName.textContent = langData ? langData.name : 'English';
+            applyTranslations(currentLang);
+        })();
     </script>
 </body>
 </html>

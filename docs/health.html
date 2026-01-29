@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Health Disclaimer - Echoelmusic</title>
-    <meta name="description" content="Important health and safety information for Echoelmusic users. Biofeedback disclaimer, photosensitivity warning, and medical advice.">
+    <meta name="description" content="Important health and safety information for Echoelmusic users.">
     <meta name="theme-color" content="#FF1494">
     <meta property="og:title" content="Health Disclaimer - Echoelmusic">
     <meta property="og:description" content="Important health and safety information for Echoelmusic users.">
@@ -15,26 +15,30 @@
         :root { --pink: #FF1494; --cyan: #00FFFF; --purple: #9933FF; --black: #000; --warning: #FF6B6B; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif; background: var(--black); color: #fff; min-height: 100vh; -webkit-font-smoothing: antialiased; }
-        .bg { position: fixed; inset: 0; z-index: -3; background: #000; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif; background: var(--black); color: #fff; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
         .grid { position: fixed; bottom: 0; left: -100%; right: -100%; height: 40vh; z-index: -1; background: repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(255,20,148,0.04) 79px, rgba(255,20,148,0.04) 80px), repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0,255,255,0.06) 39px, rgba(0,255,255,0.06) 40px); transform: perspective(600px) rotateX(70deg); transform-origin: center bottom; mask-image: linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%); -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%); }
+
         nav { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 16px 24px; }
         .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
         .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff; font-weight: 600; font-size: 18px; }
         .nav-logo svg { width: 36px; height: 36px; }
         .nav-logo span { background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .nav-links { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        .nav-links a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13px; padding: 8px 12px; border-radius: 8px; transition: all 0.2s; }
+        .nav-links a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13px; padding: 8px 14px; border-radius: 8px; transition: all 0.2s; }
         .nav-links a:hover { color: var(--cyan); background: rgba(0,255,255,0.08); }
         .nav-links a.active { color: var(--warning); background: rgba(255,107,107,0.12); }
+
         main { max-width: 700px; margin: 0 auto; padding: 60px 24px 80px; }
         .hero { text-align: center; margin-bottom: 48px; }
         .hero h1 { font-size: clamp(32px, 7vw, 42px); font-weight: 700; margin-bottom: 16px; }
         .hero h1 span { background: linear-gradient(135deg, var(--warning), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .hero .date { color: rgba(255,255,255,0.4); font-size: 13px; }
+
         .warning-box { background: rgba(255,107,107,0.1); border: 2px solid var(--warning); padding: 24px; border-radius: 12px; margin: 24px 0; }
-        .warning-box h3 { color: var(--warning); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .warning-box h3 { color: var(--warning); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
         .warning-box p { margin: 0; font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.7; }
+
         section { margin-bottom: 32px; }
         section h2 { color: var(--pink); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,20,148,0.2); }
         p { color: rgba(255,255,255,0.7); font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
@@ -43,24 +47,29 @@
         li strong { color: var(--cyan); }
         strong { color: #fff; }
         a { color: var(--cyan); }
+
         .info-box { background: rgba(0,255,255,0.05); border-left: 3px solid var(--cyan); padding: 20px; border-radius: 0 12px 12px 0; margin: 24px 0; }
         .info-box p { margin: 0; font-size: 13px; line-height: 1.6; }
+
         .contact-box { background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.2); border-radius: 12px; padding: 24px; text-align: center; margin-top: 40px; }
         .contact-box h3 { font-size: 16px; margin-bottom: 12px; }
         .contact-box a { display: inline-flex; align-items: center; gap: 8px; color: var(--cyan); text-decoration: none; font-weight: 600; padding: 10px 20px; border: 1px solid var(--cyan); border-radius: 8px; transition: all 0.2s; }
         .contact-box a:hover { background: var(--cyan); color: var(--black); }
+
         footer { border-top: 1px solid rgba(255,255,255,0.06); padding: 32px 24px; text-align: center; }
         .footer-links { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
         .footer-links a { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; transition: color 0.2s; }
         .footer-links a:hover { color: var(--cyan); }
         .copyright { font-size: 12px; color: rgba(255,255,255,0.25); }
+
         @media (max-width: 640px) { .nav-links { display: none; } main { padding: 40px 16px 60px; } }
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+        a:focus-visible { outline: 3px solid var(--cyan); outline-offset: 4px; }
     </style>
 </head>
 <body>
-    <div class="bg"></div>
     <div class="grid"></div>
+
     <nav>
         <div class="nav-inner">
             <a href="/" class="nav-logo">
@@ -78,6 +87,7 @@
             </div>
         </div>
     </nav>
+
     <main>
         <div class="hero">
             <h1><span>Health Disclaimer</span></h1>
@@ -136,6 +146,7 @@
             <a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a>
         </div>
     </main>
+
     <footer>
         <div class="footer-links">
             <a href="/">Home</a>
