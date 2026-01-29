@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <!-- Echoelmusic Vaporwave Gradient -->
+    <linearGradient id="brand-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF1494"/>
+      <stop offset="50%" stop-color="#9933FF"/>
+      <stop offset="100%" stop-color="#00FFFF"/>
+    </linearGradient>
+    <!-- Background gradient - Deep space -->
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050510"/>
+      <stop offset="50%" stop-color="#0D0D26"/>
+      <stop offset="100%" stop-color="#1A0D33"/>
+    </linearGradient>
+    <!-- Subtle glow filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Text glow -->
+    <filter id="text-glow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg-gradient)"/>
+
+  <!-- Subtle brand glow overlay -->
+  <rect width="1200" height="630" fill="url(#brand-gradient)" opacity="0.06"/>
+
+  <!-- Heart icon - left side -->
+  <g transform="translate(80, 140) scale(0.35)" filter="url(#glow)">
+    <path d="M512 800
+             C370 680 205 555 205 390
+             C205 290 285 205 390 205
+             C450 205 512 245 512 245
+             C512 245 574 205 634 205
+             C739 205 819 290 819 390
+             C819 555 654 680 512 800Z"
+          fill="url(#brand-gradient)"
+          opacity="0.9"/>
+    <!-- Sound wave inside heart -->
+    <path d="M310 455
+             Q375 455 395 415
+             Q415 375 445 415
+             Q475 455 512 375
+             Q549 455 579 415
+             Q609 375 629 415
+             Q649 455 714 455"
+          fill="none"
+          stroke="white"
+          stroke-width="36"
+          stroke-linecap="round"
+          opacity="0.95"/>
+  </g>
+
+  <!-- App name -->
+  <text x="420" y="280" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+        font-size="88" font-weight="700" fill="white" filter="url(#text-glow)">
+    Echoelmusic
+  </text>
+
+  <!-- Mantra -->
+  <text x="420" y="360" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif"
+        font-size="28" fill="url(#brand-gradient)" font-weight="500">
+    Find Your Sound, Feel Your Soul, Focus Your Spirit
+  </text>
+
+  <!-- Feature badges -->
+  <g transform="translate(420, 400)">
+    <rect x="0" y="0" width="140" height="36" rx="18" fill="url(#brand-gradient)" opacity="0.2"/>
+    <text x="70" y="24" font-family="SF Pro Text, sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="600">100+ Instruments</text>
+
+    <rect x="155" y="0" width="120" height="36" rx="18" fill="url(#brand-gradient)" opacity="0.2"/>
+    <text x="215" y="24" font-family="SF Pro Text, sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="600">60+ Effects</text>
+
+    <rect x="290" y="0" width="110" height="36" rx="18" fill="url(#brand-gradient)" opacity="0.2"/>
+    <text x="345" y="24" font-family="SF Pro Text, sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="600">Bio-Reactive</text>
+
+    <rect x="415" y="0" width="120" height="36" rx="18" fill="url(#brand-gradient)" opacity="0.2"/>
+    <text x="475" y="24" font-family="SF Pro Text, sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="600">37 Languages</text>
+  </g>
+
+  <!-- Tagline -->
+  <text x="420" y="500" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif"
+        font-size="18" fill="#888" font-weight="400">
+    Bio-Reactive Audio-Visual Platform
+  </text>
+
+  <!-- Platform icons hint -->
+  <text x="420" y="540" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif"
+        font-size="16" fill="#666" font-weight="400">
+    iPhone  ·  iPad  ·  Mac  ·  Apple Watch  ·  Apple TV  ·  Vision Pro
+  </text>
+
+  <!-- Decorative wave line at bottom -->
+  <path d="M0 590 Q300 570 600 590 Q900 610 1200 590"
+        fill="none" stroke="url(#brand-gradient)" stroke-width="2" opacity="0.3"/>
+</svg>
