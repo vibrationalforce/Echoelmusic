@@ -105,8 +105,8 @@ public enum StreamProtocol: String, CaseIterable, Sendable {
 // MARK: - Stream Destination
 
 /// Streaming destination configuration
-public struct StreamDestination: Identifiable, Sendable {
-    public let id = UUID()
+public struct StreamDestination: Identifiable, Hashable, Sendable {
+    public let id: UUID
     public var name: String
     public var platform: StreamPlatform
     public var url: String
@@ -115,7 +115,7 @@ public struct StreamDestination: Identifiable, Sendable {
     public var isEnabled: Bool
     public var backupUrl: String?
 
-    public enum StreamPlatform: String, CaseIterable, Sendable {
+    public enum StreamPlatform: String, CaseIterable, Hashable, Sendable {
         case youtube = "YouTube"
         case twitch = "Twitch"
         case facebook = "Facebook"
@@ -136,12 +136,23 @@ public struct StreamDestination: Identifiable, Sendable {
     }
 
     public init(name: String, platform: StreamPlatform, streamKey: String) {
+        self.id = UUID()
         self.name = name
         self.platform = platform
         self.url = platform.defaultUrl
         self.streamKey = streamKey
         self.protocol = platform == .facebook || platform == .instagram ? .rtmps : .rtmp
         self.isEnabled = true
+    }
+
+    // MARK: - Hashable
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    public static func == (lhs: StreamDestination, rhs: StreamDestination) -> Bool {
+        lhs.id == rhs.id
     }
 }
 

@@ -14,7 +14,7 @@ import UIKit
 
 /// High-performance circular buffer for real-time biometric data
 /// OPTIMIZATION: O(1) append operations, automatic overwrite of oldest data
-struct CircularBuffer<T> {
+struct HRVCircularBuffer<T> {
     private var buffer: [T?]
     private var writeIndex: Int = 0
     private(set) var count: Int = 0
@@ -151,7 +151,7 @@ class HealthKitManager: ObservableObject {
     /// Buffer for RR intervals (for coherence calculation)
     /// Stores last 60 seconds of RR intervals
     /// OPTIMIZED: Uses circular buffer for O(1) append/remove operations
-    private var rrIntervalBuffer: CircularBuffer<Double>
+    private var rrIntervalBuffer: HRVCircularBuffer<Double>
     private let maxBufferSize = 120 // 120 RR intervals ≈ 60 seconds at 60 BPM
 
     /// Cached FFT setup for coherence calculation (OPTIMIZATION: reuse between calls)
@@ -163,7 +163,7 @@ class HealthKitManager: ObservableObject {
 
     init() {
         // OPTIMIZATION: Pre-allocate circular buffer for O(1) operations
-        self.rrIntervalBuffer = CircularBuffer<Double>(capacity: maxBufferSize)
+        self.rrIntervalBuffer = HRVCircularBuffer<Double>(capacity: maxBufferSize)
         #if canImport(HealthKit)
         self.healthStore = HKHealthStore()
         #endif
@@ -680,9 +680,4 @@ class HealthKitManager: ObservableObject {
     }
 
 
-    // MARK: - Cleanup
-
-    deinit {
-        stopMonitoring()
-    }
 }

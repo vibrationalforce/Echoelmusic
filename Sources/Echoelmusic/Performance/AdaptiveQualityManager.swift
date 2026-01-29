@@ -267,12 +267,6 @@ class AdaptiveQualityManager: ObservableObject {
         }
     }
 
-    // MARK: - Initialization
-
-    init() {
-        startMonitoring()
-    }
-
     // MARK: - Monitoring
 
     private func startMonitoring() {

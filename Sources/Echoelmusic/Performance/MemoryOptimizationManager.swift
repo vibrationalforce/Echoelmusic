@@ -86,7 +86,7 @@ class MemoryOptimizationManager: ObservableObject {
 
     // MARK: - Cached Item
 
-    private class CachedItem {
+    class CachedItem {
         let key: String
         var data: Data
         var lastAccessed: Date
@@ -174,7 +174,7 @@ class MemoryOptimizationManager: ObservableObject {
 
     // MARK: - Compression Buffer
 
-    private class CompressionBuffer {
+    class CompressionBuffer {
         private var compressedData: Data?
         private var uncompressedSize: Int
 
@@ -284,7 +284,7 @@ class MemoryOptimizationManager: ObservableObject {
 
     // MARK: - Circular Buffer (für Audio-Streaming)
 
-    class CircularBuffer<T> {
+    class MemoryCircularBuffer<T> {
         private var buffer: [T]
         private var readIndex: Int = 0
         private var writeIndex: Int = 0

@@ -216,7 +216,7 @@ public extension GazeTrackerDelegate {
 /// Eye gaze tracking engine for bio-reactive control
 @available(iOS 15.0, macOS 12.0, *)
 @MainActor
-public final class GazeTracker: ObservableObject {
+public final class GazeTracker: NSObject, ObservableObject {
 
     //==========================================================================
     // MARK: - Published Properties

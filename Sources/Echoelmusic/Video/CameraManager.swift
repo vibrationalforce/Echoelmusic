@@ -8,24 +8,24 @@ import Combine
 /// Optimized for 120 FPS @ 1080p on iPhone 16 Pro
 /// Zero-copy texture pipeline from camera to Metal
 @MainActor
-class CameraManager: NSObject, ObservableObject {
+public class CameraManager: NSObject, ObservableObject {
 
     // MARK: - Published State
 
-    @Published var isCapturing: Bool = false
-    @Published var currentCamera: CameraPosition = .back
-    @Published var currentResolution: Resolution = .hd1920x1080
-    @Published var currentFrameRate: Int = 60
-    @Published var availableCameras: [CameraPosition] = []
+    @Published public var isCapturing: Bool = false
+    @Published public var currentCamera: CameraPosition = .back
+    @Published public var currentResolution: Resolution = .hd1920x1080
+    @Published public var currentFrameRate: Int = 60
+    @Published public var availableCameras: [CameraPosition] = []
 
     // MARK: - Performance Metrics
 
-    @Published var actualFrameRate: Double = 0.0
-    @Published var droppedFrames: Int = 0
+    @Published public var actualFrameRate: Double = 0.0
+    @Published public var droppedFrames: Int = 0
 
     // MARK: - Camera Positions
 
-    enum CameraPosition: String, CaseIterable {
+    public enum CameraPosition: String, CaseIterable {
         case front = "Front"
         case back = "Back"
         case ultraWide = "Ultra Wide"
@@ -57,7 +57,7 @@ class CameraManager: NSObject, ObservableObject {
 
     // MARK: - Resolution Presets
 
-    enum Resolution: String, CaseIterable {
+    public enum Resolution: String, CaseIterable {
         case hd1280x720 = "720p"
         case hd1920x1080 = "1080p"
         case uhd3840x2160 = "4K"

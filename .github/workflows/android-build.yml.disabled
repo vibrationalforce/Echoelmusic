@@ -197,7 +197,7 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Decode Keystore
-      if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      if: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       env:
         ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       run: |

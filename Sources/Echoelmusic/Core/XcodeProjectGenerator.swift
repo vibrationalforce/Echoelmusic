@@ -96,7 +96,7 @@ public struct XcodeTargetConfiguration {
     public enum ProductType: String {
         case application = "com.apple.product-type.application"
         case appExtension = "com.apple.product-type.app-extension"
-        case audioUnitExtension = "com.apple.product-type.app-extension"
+        case audioUnitExtension = "com.apple.product-type.app-extension.audio-unit"
         case widgetExtension = "com.apple.product-type.app-extension.widgetkit"
     }
 }
@@ -556,7 +556,7 @@ public enum Capability: String {
 
     // Security
     case faceID = "com.apple.developer.authentication-services.autofill-credential-provider"
-    case dataProtection = "com.apple.security.application-groups"
+    case dataProtection = "com.apple.developer.default-data-protection"
 
     // Payment
     case applePayPaymentProcessing = "com.apple.ApplePay"

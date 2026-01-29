@@ -238,7 +238,7 @@ class IntelligentAutomationEngine: ObservableObject {
         }
 
         enum FilterMovement: String {
-            case static = "Static"
+            case `static` = "Static"
             case subtle = "Subtle"
             case active = "Active"
             case extreme = "Extreme"
@@ -295,7 +295,7 @@ class IntelligentAutomationEngine: ObservableObject {
     }
 
     private var userProfile = UserStyleProfile(
-        preferredVolumeRange: -12...-3,
+        preferredVolumeRange: (-12)...(-3),
         compressionStyle: .moderate,
         reverbAmount: .subtle,
         filterMovement: .active,

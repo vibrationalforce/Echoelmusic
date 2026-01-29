@@ -22,24 +22,24 @@ import simd
 /// ILDA Frame Format constants
 public enum ILDAConstants {
     /// ILDA file signature "ILDA"
-    static let signature: [UInt8] = [0x49, 0x4C, 0x44, 0x41]
+    public static let signature: [UInt8] = [0x49, 0x4C, 0x44, 0x41]
 
     /// Format codes
-    static let format0_3DIndexed: UInt8 = 0      // 3D Coordinates with Indexed Color
-    static let format1_2DIndexed: UInt8 = 1      // 2D Coordinates with Indexed Color
-    static let format2_ColorPalette: UInt8 = 2  // Color Palette (ILDA standard)
-    static let format4_3DTrueColor: UInt8 = 4   // 3D Coordinates with True Color
-    static let format5_2DTrueColor: UInt8 = 5   // 2D Coordinates with True Color
+    public static let format0_3DIndexed: UInt8 = 0      // 3D Coordinates with Indexed Color
+    public static let format1_2DIndexed: UInt8 = 1      // 2D Coordinates with Indexed Color
+    public static let format2_ColorPalette: UInt8 = 2  // Color Palette (ILDA standard)
+    public static let format4_3DTrueColor: UInt8 = 4   // 3D Coordinates with True Color
+    public static let format5_2DTrueColor: UInt8 = 5   // 2D Coordinates with True Color
 
     /// Coordinate range: -32768 to +32767 (16-bit signed)
-    static let coordMin: Int16 = -32768
-    static let coordMax: Int16 = 32767
+    public static let coordMin: Int16 = -32768
+    public static let coordMax: Int16 = 32767
 
     /// Default sample rate
-    static let defaultSampleRate: Int = 30000  // 30kHz (points per second)
+    public static let defaultSampleRate: Int = 30000  // 30kHz (points per second)
 
     /// Ether Dream DAC port
-    static let etherDreamPort: UInt16 = 7765
+    public static let etherDreamPort: UInt16 = 7765
 }
 
 // MARK: - ILDA Point

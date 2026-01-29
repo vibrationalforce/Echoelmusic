@@ -427,13 +427,7 @@ class BioReactiveEnvironment: Entity {
     }
 }
 
-// MARK: - Extensions
-
-extension Float {
-    func clamped(to range: ClosedRange<Float>) -> Float {
-        return max(range.lowerBound, min(range.upperBound, self))
-    }
-}
+// Note: clamped(to:) extension moved to NumericExtensions.swift
 
 extension Notification.Name {
     static let bioDataUpdated = Notification.Name("bioDataUpdated")

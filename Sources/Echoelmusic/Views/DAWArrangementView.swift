@@ -5,7 +5,7 @@ import SwiftUI
 
 /// Professional DAW arrangement interface with bio-reactive features
 struct DAWArrangementView: View {
-    @StateObject private var engine = DAWProductionEngine()
+    @StateObject private var engine = ArrangementDAWProductionEngine()
     @State private var selectedTrackIndex: Int?
     @State private var timelineZoom: Double = 1.0
     @State private var showMixer = false
@@ -508,7 +508,7 @@ struct DAWArrangementView: View {
 
 // MARK: - DAW Models
 
-class DAWProductionEngine: ObservableObject {
+class ArrangementDAWProductionEngine: ObservableObject {
     @Published var tracks: [DAWTrack] = [
         DAWTrack(name: "Drums", instrumentName: "TR-808", color: VaporwaveColors.neonPink),
         DAWTrack(name: "Bass", instrumentName: "EchoSynth", color: VaporwaveColors.neonCyan),
@@ -554,7 +554,7 @@ struct DAWRegion: Identifiable {
 // MARK: - Mixer Sheet
 
 struct MixerSheet: View {
-    @ObservedObject var engine: DAWProductionEngine
+    @ObservedObject var engine: ArrangementDAWProductionEngine
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {

@@ -25,9 +25,9 @@ options:
   xcodeVersion: "16.2"
   deploymentTarget:
     iOS: "15.0"
-    macOS: "13.0"
-    watchOS: "9.0"
-    tvOS: "16.0"
+    macOS: "12.0"
+    watchOS: "8.0"
+    tvOS: "15.0"
     visionOS: "1.0"
   generateEmptyDirectories: true
   createIntermediateGroups: true
@@ -84,12 +84,13 @@ targets:
           - "**/WatchOS/**"
           - "**/tvOS/**"
           - "**/Platforms/**"
+          - "**/README.md"
+          - "**/*.md"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
       - path: Resources/PrivacyInfo.xcprivacy
         type: file
-        optional: true
     info:
       path: Resources/iOS/Info.plist
       properties:
@@ -170,6 +171,8 @@ targets:
           - "**/WatchOS/**"
           - "**/tvOS/**"
           - "**/Platforms/**"
+          - "**/README.md"
+          - "**/*.md"
           - "**/Widgets/**"
           - "**/LiveActivity/**"
     resources:
@@ -177,7 +180,6 @@ targets:
         type: folder
       - path: Resources/PrivacyInfo.xcprivacy
         type: file
-        optional: true
     info:
       path: Resources/macOS/Info.plist
       properties:
@@ -209,7 +211,7 @@ targets:
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
         DEVELOPMENT_TEAM: ""
-        MACOSX_DEPLOYMENT_TARGET: "13.0"
+        MACOSX_DEPLOYMENT_TARGET: "12.0"
         ENABLE_HARDENED_RUNTIME: YES
         COMBINE_HIDPI_IMAGES: YES
     dependencies:
@@ -292,7 +294,7 @@ targets:
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
         CODE_SIGN_ENTITLEMENTS: EchoelmusicAUv3.entitlements
-        MACOSX_DEPLOYMENT_TARGET: "13.0"
+        MACOSX_DEPLOYMENT_TARGET: "12.0"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
         SKIP_INSTALL: YES
         ENABLE_HARDENED_RUNTIME: YES
@@ -322,9 +324,13 @@ targets:
           - "**/Stream/**"
           - "**/Recording/**"
           - "**/Video/**"
+          - "**/README.md"
+          - "**/*.md"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
+      - path: Resources/PrivacyInfo.xcprivacy
+        type: file
     info:
       path: Resources/watchOS/Info.plist
       properties:
@@ -350,7 +356,7 @@ targets:
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
         DEVELOPMENT_TEAM: ""
-        WATCHOS_DEPLOYMENT_TARGET: "9.0"
+        WATCHOS_DEPLOYMENT_TARGET: "8.0"
         TARGETED_DEVICE_FAMILY: "4"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_EMIT_LOC_STRINGS: YES
@@ -374,9 +380,13 @@ targets:
           - "**/Widgets/**"
           - "**/LiveActivity/**"
           - "**/Biofeedback/**"
+          - "**/README.md"
+          - "**/*.md"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
+      - path: Resources/PrivacyInfo.xcprivacy
+        type: file
     info:
       path: Resources/tvOS/Info.plist
       properties:
@@ -403,7 +413,7 @@ targets:
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
         DEVELOPMENT_TEAM: ""
-        TVOS_DEPLOYMENT_TARGET: "16.0"
+        TVOS_DEPLOYMENT_TARGET: "15.0"
         TARGETED_DEVICE_FAMILY: "3"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIconTV
     entitlements:
@@ -425,9 +435,13 @@ targets:
           - "**/Platforms/**"
           - "**/Widgets/**"
           - "**/LiveActivity/**"
+          - "**/README.md"
+          - "**/*.md"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
+      - path: Resources/PrivacyInfo.xcprivacy
+        type: file
     info:
       path: Resources/visionOS/Info.plist
       properties:
@@ -461,6 +475,116 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIconVision
     entitlements:
       path: EchoelmusicVision.entitlements
+
+  # ===========================================================================
+  # iOS Widget Extension
+  # ===========================================================================
+  EchoelmusicWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Sources/Echoelmusic/Widgets
+        type: group
+      - path: Sources/Echoelmusic/LiveActivity
+        type: group
+      - path: Sources/Echoelmusic/Presets/QuantumPresets.swift
+        type: file
+      - path: Sources/Echoelmusic/Presets/PresetManager.swift
+        type: file
+      - path: Sources/Echoelmusic/Quantum/PhotonicsVisualizationEngine.swift
+        type: file
+      - path: Sources/Echoelmusic/Core/QuantumDataStore.swift
+        type: file
+      - path: Sources/Echoelmusic/Core/Logger.swift
+        type: file
+    resources:
+      - path: Sources/Echoelmusic/Resources/Assets.xcassets
+        type: folder
+    info:
+      path: Resources/iOS/WidgetsInfo.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleDisplayName: "Echoelmusic Widgets"
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: XPC!
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_NAME: EchoelmusicWidgets
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.widgets
+        INFOPLIST_FILE: Resources/iOS/WidgetsInfo.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicWidgets.entitlements
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Apple Distribution"
+        DEVELOPMENT_TEAM: ""
+        TARGETED_DEVICE_FAMILY: "1,2"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../../Frameworks @executable_path/../Frameworks"
+        SKIP_INSTALL: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
+    dependencies:
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+
+  # ===========================================================================
+  # iOS App Clip
+  # ===========================================================================
+  EchoelmusicClip:
+    type: application.on-demand-install-capable
+    platform: iOS
+    sources:
+      - path: Sources/EchoelmusicClip
+        type: group
+        optional: true
+      - path: Sources/Echoelmusic/Core/Logger.swift
+        type: file
+      - path: Sources/Echoelmusic/Core/QuantumDataStore.swift
+        type: file
+    resources:
+      - path: Sources/Echoelmusic/Resources/Assets.xcassets
+        type: folder
+    info:
+      path: Resources/iOS/ClipInfo.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleDisplayName: "Echoelmusic"
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        NSAppClip:
+          NSAppClipRequestEphemeralUserNotification: false
+          NSAppClipRequestLocationConfirmation: false
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_NAME: "Echoelmusic Clip"
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.Clip
+        INFOPLIST_FILE: Resources/iOS/ClipInfo.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicClip.entitlements
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Apple Distribution"
+        DEVELOPMENT_TEAM: ""
+        TARGETED_DEVICE_FAMILY: "1,2"
+        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    entitlements:
+      path: EchoelmusicClip.entitlements
 
   # ===========================================================================
   # iOS Unit Tests

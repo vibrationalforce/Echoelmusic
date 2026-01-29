@@ -1485,11 +1485,4 @@ public struct SuperIntelligenceHealthDisclaimer {
     """
 }
 
-// MARK: - Extensions
-
-extension Double {
-    /// Clamps value to specified range
-    func clamped(to range: ClosedRange<Double>) -> Double {
-        return min(max(self, range.lowerBound), range.upperBound)
-    }
-}
+// Note: clamped(to:) extension moved to NumericExtensions.swift

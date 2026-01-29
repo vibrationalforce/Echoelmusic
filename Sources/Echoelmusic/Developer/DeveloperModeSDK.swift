@@ -198,6 +198,13 @@ public struct QuantumPluginState: Sendable {
     }
 }
 
+// MARK: - Type Aliases for Protocol Compatibility
+
+/// Type aliases for backward compatibility and protocol conformance
+public typealias RenderContext = SDKRenderContext
+public typealias VisualOutput = SDKVisualOutput
+public typealias UserInteraction = SDKUserInteraction
+
 // MARK: - Render Context
 
 /// Context for visual rendering plugins

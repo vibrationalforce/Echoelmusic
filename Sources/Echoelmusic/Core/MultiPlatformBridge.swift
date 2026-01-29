@@ -549,19 +549,19 @@ extension MultiPlatformBridge: OSCHandlerDelegate,
         // Handle incoming MIDI
     }
 
-    func cvReceived(channel: Int, voltage: Float) {
+    func cvReceived(channel: Int, voltage: Float) async {
         // Handle incoming CV
     }
 
-    func gateReceived(channel: Int, state: Bool) {
+    func gateReceived(channel: Int, state: Bool) async {
         // Handle incoming gate
     }
 
-    func webSocketConnected(client: WebSocketHandler.WebSocketClient) {
+    func webSocketConnected(client: WebSocketHandler.WebSocketClient) async {
         // Handle new WebSocket client
     }
 
-    func webSocketReceived(client: WebSocketHandler.WebSocketClient, message: String) {
+    func webSocketReceived(client: WebSocketHandler.WebSocketClient, message: String) async {
         // Handle incoming WebSocket message
     }
 }
@@ -576,13 +576,13 @@ protocol MIDIHandlerDelegate: AnyObject {
 }
 
 protocol CVGateHandlerDelegate: AnyObject {
-    func cvReceived(channel: Int, voltage: Float)
-    func gateReceived(channel: Int, state: Bool)
+    func cvReceived(channel: Int, voltage: Float) async
+    func gateReceived(channel: Int, state: Bool) async
 }
 
 protocol DMXHandlerDelegate: AnyObject {}
 
 protocol WebSocketHandlerDelegate: AnyObject {
-    func webSocketConnected(client: WebSocketHandler.WebSocketClient)
-    func webSocketReceived(client: WebSocketHandler.WebSocketClient, message: String)
+    func webSocketConnected(client: WebSocketHandler.WebSocketClient) async
+    func webSocketReceived(client: WebSocketHandler.WebSocketClient, message: String) async
 }

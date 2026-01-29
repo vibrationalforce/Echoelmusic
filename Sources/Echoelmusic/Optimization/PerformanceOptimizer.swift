@@ -1,9 +1,10 @@
 import Foundation
+import SwiftUI
 import Metal
 import MetalPerformanceShaders
 import Accelerate
 import Combine
-import os.log
+import os
 
 /// Performance Optimizer - Guarantees 120 FPS on supported devices
 /// Adaptive quality, thermal management, battery optimization
