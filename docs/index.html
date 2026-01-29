@@ -36,9 +36,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             text-align: center;
-            padding: 40px 24px;
+            padding: 60px 24px 40px;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -272,6 +271,22 @@
         .social a:hover { color: var(--cyan); transform: translateY(-2px); }
         .social svg { width: 22px; height: 22px; }
 
+        /* Language Badge */
+        .lang-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 24px;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+        }
+        .lang-badge svg { width: 14px; height: 14px; opacity: 0.6; }
+        .lang-badge strong { color: var(--cyan); }
+
         /* Footer */
         footer {
             margin-top: auto;
@@ -401,6 +416,12 @@
         <a href="https://twitch.tv/echoelmusic" aria-label="Twitch" rel="noopener noreferrer" target="_blank">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
         </a>
+    </div>
+
+    <!-- Language Support -->
+    <div class="lang-badge">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+        <strong>37</strong> Languages · EN · DE · ES · FR · JA · ZH · +31
     </div>
 
     <footer>
