@@ -135,42 +135,6 @@
                 rgba(153,51,255,0.15) 100%
             );
         }
-        .sun {
-            position: absolute;
-            bottom: 15%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 200px;
-            background: linear-gradient(180deg,
-                var(--sunset-orange) 0%,
-                var(--sunset-pink) 50%,
-                var(--pink) 100%
-            );
-            border-radius: 50%;
-            box-shadow:
-                0 0 60px rgba(255,102,51,0.6),
-                0 0 120px rgba(255,51,128,0.4),
-                0 0 200px rgba(255,20,148,0.3);
-            animation: sunPulse 4s ease-in-out infinite;
-        }
-        .sun::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent 0px,
-                transparent 8px,
-                rgba(0,0,0,0.3) 8px,
-                rgba(0,0,0,0.3) 12px
-            );
-        }
-        @keyframes sunPulse {
-            0%, 100% { transform: translateX(-50%) scale(1); box-shadow: 0 0 60px rgba(255,102,51,0.6), 0 0 120px rgba(255,51,128,0.4); }
-            50% { transform: translateX(-50%) scale(1.05); box-shadow: 0 0 80px rgba(255,102,51,0.8), 0 0 160px rgba(255,51,128,0.6); }
-        }
 
         /* Animated Vaporwave Grid */
         .grid-container {
@@ -669,7 +633,7 @@
                 animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
             }
-            .blob, .grid, .particle, .sun { animation: none !important; }
+            .blob, .grid, .particle { animation: none !important; }
             .crt-overlay { display: none; }
         }
 
@@ -839,7 +803,6 @@
 
     <div class="sunset-container">
         <div class="sunset-gradient"></div>
-        <div class="sun"></div>
     </div>
 
     <div class="grid-container">
