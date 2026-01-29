@@ -1,1532 +1,219 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echoelmusic - Bio-Reactive Music Production</title>
-    <meta name="description" content="Create music with your heartbeat. Professional DAW with bio-reactive audio, video editing, and live visuals. Free for Apple devices.">
+    <title>Echoelmusic - Bio-Reactive Music</title>
+    <meta name="description" content="Dein Herzschlag steuert den Sound. Kostenlos auf allen Apple-Geräten.">
     <meta name="theme-color" content="#FF1494">
-    <link rel="canonical" href="https://echoelmusic.com/">
-    <meta property="og:title" content="Echoelmusic - Bio-Reactive Music Production">
-    <meta property="og:description" content="Create music with your heartbeat. Professional DAW with bio-reactive audio.">
-    <meta property="og:image" content="https://echoelmusic.com/og-image.png">
-    <meta property="og:url" content="https://echoelmusic.com/">
-    <meta name="twitter:card" content="summary_large_image">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
     <style>
         :root {
             --pink: #FF1494;
             --cyan: #00FFFF;
             --purple: #9933FF;
             --black: #0a0a0f;
-            --dark: #12121a;
-            --glass: rgba(255,255,255,0.06);
-            --glass-border: rgba(255,255,255,0.1);
-            --text: #ffffff;
-            --text-dim: rgba(255,255,255,0.7);
-            --text-muted: rgba(255,255,255,0.4);
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--black);
-            color: var(--text);
-            line-height: 1.6;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
             overflow-x: hidden;
         }
 
         /* Vaporwave Background */
-        .vaporwave-bg {
+        .bg {
             position: fixed;
             inset: 0;
             z-index: -2;
-            background: linear-gradient(180deg, #0a0a1a 0%, #1a0a2a 40%, #2a1a3a 70%, #0a0a1a 100%);
+            background: linear-gradient(180deg, #0a0a1a 0%, #1a0a2a 50%, #0a0a1a 100%);
         }
 
-        /* Perspective Grid */
-        .grid-perspective {
+        /* Grid */
+        .grid {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 50vh;
+            height: 45vh;
             z-index: -1;
-            background:
-                linear-gradient(90deg, var(--pink) 1px, transparent 1px),
-                linear-gradient(0deg, var(--pink) 1px, transparent 1px);
-            background-size: 80px 40px;
-            opacity: 0.15;
-            transform: perspective(500px) rotateX(60deg);
+            background: linear-gradient(90deg, var(--pink) 1px, transparent 1px),
+                        linear-gradient(0deg, var(--pink) 1px, transparent 1px);
+            background-size: 60px 30px;
+            opacity: 0.12;
+            transform: perspective(400px) rotateX(60deg);
             transform-origin: bottom;
-            mask-image: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            animation: gridMove 20s linear infinite;
+            mask-image: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+            -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
         }
 
-        @keyframes gridMove {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 400px; }
-        }
-
-        /* Ambient Glow */
-        .ambient {
+        /* Glow */
+        .glow {
             position: fixed;
-            inset: 0;
-            z-index: -1;
-            pointer-events: none;
-        }
-        .ambient::before {
-            content: '';
-            position: absolute;
-            top: -20%;
-            left: -10%;
-            width: 50%;
-            height: 50%;
-            background: radial-gradient(circle, rgba(153,51,255,0.15) 0%, transparent 60%);
-            animation: float1 25s ease-in-out infinite;
-        }
-        .ambient::after {
-            content: '';
-            position: absolute;
-            bottom: 20%;
-            right: -10%;
-            width: 40%;
-            height: 40%;
-            background: radial-gradient(circle, rgba(255,20,148,0.12) 0%, transparent 60%);
-            animation: float2 30s ease-in-out infinite;
-        }
-        @keyframes float1 {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(5%, 10%); }
-        }
-        @keyframes float2 {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(-5%, -10%); }
-        }
-
-        /* Header */
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            padding: 16px 24px;
-            background: rgba(10,10,15,0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        nav {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .logo svg { width: 36px; height: 36px; }
-
-        .logo-text {
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 32px;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .nav-links a:hover { color: var(--cyan); }
-
-        .nav-cta {
-            padding: 10px 24px;
-            background: linear-gradient(135deg, var(--pink), var(--purple));
-            color: white;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 8px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .nav-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(255,20,148,0.4);
-        }
-
-        /* Mobile Menu */
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            width: 32px;
-            height: 24px;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .menu-toggle span {
-            position: absolute;
-            left: 0;
+            top: -30%;
+            left: 50%;
+            transform: translateX(-50%);
             width: 100%;
-            height: 2px;
-            background: white;
-            transition: 0.3s;
+            height: 60%;
+            background: radial-gradient(ellipse, rgba(153,51,255,0.15) 0%, transparent 60%);
+            z-index: -1;
         }
 
-        .menu-toggle span:nth-child(1) { top: 0; }
-        .menu-toggle span:nth-child(2) { top: 50%; transform: translateY(-50%); }
-        .menu-toggle span:nth-child(3) { bottom: 0; }
-
-        .menu-toggle.active span:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
-        .menu-toggle.active span:nth-child(2) { opacity: 0; }
-        .menu-toggle.active span:nth-child(3) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
-
-        /* Hero */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 140px 24px 80px;
-            position: relative;
-        }
-
-        .hero-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 100px;
-            font-size: 13px;
-            color: var(--text-dim);
-            margin-bottom: 32px;
-        }
-
-        .hero-label::before {
-            content: '';
-            width: 8px;
-            height: 8px;
-            background: #33FFAA;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        /* Content */
+        .logo {
+            font-size: clamp(48px, 12vw, 80px);
+            margin-bottom: 8px;
         }
 
         h1 {
-            font-size: clamp(48px, 10vw, 96px);
-            font-weight: 800;
-            line-height: 1;
-            letter-spacing: -3px;
-            margin-bottom: 24px;
-        }
-
-        .hero-mantra {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            font-size: clamp(28px, 6vw, 64px);
+            font-size: clamp(32px, 8vw, 56px);
+            font-weight: 700;
             letter-spacing: -1px;
+            margin-bottom: 32px;
         }
-
-        .mantra-line {
-            display: block;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: mantraReveal 0.8s ease-out forwards;
-        }
-
-        .mantra-line:nth-child(1) { animation-delay: 0.2s; }
-        .mantra-line:nth-child(2) { animation-delay: 0.5s; }
-        .mantra-line:nth-child(3) { animation-delay: 0.8s; }
-
-        @keyframes mantraReveal {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .gradient {
-            background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
+        h1 span {
+            background: linear-gradient(135deg, var(--pink), var(--cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .hero-sub {
-            font-size: clamp(18px, 2.5vw, 22px);
-            color: var(--text-dim);
-            max-width: 600px;
-            margin-bottom: 40px;
-            line-height: 1.6;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 64px;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 16px 32px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 12px;
-            text-decoration: none;
-            transition: all 0.3s;
-            cursor: pointer;
-            border: none;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--pink), var(--purple));
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 32px rgba(255,20,148,0.4);
-        }
-
-        .btn-secondary {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--cyan);
-            box-shadow: 0 0 20px rgba(0,255,255,0.2);
-        }
-
-        .btn svg { width: 20px; height: 20px; }
-
-        /* App Demo */
-        .demo {
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto 48px;
-        }
-
-        .demo-frame {
-            background: var(--dark);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 12px;
-            box-shadow: 0 40px 80px rgba(0,0,0,0.5);
-        }
-
-        .demo-header {
-            display: flex;
-            gap: 6px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--glass-border);
-            margin-bottom: 12px;
-        }
-
-        .demo-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        .demo-dot:nth-child(1) { background: #ff5f57; }
-        .demo-dot:nth-child(2) { background: #ffbd2e; }
-        .demo-dot:nth-child(3) { background: #28c840; }
-
-        .demo-content {
-            display: grid;
-            grid-template-columns: 200px 1fr 180px;
-            gap: 12px;
-            height: 320px;
-        }
-
-        .demo-panel {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            padding: 16px;
-        }
-
-        .demo-bio {
+        .mantra {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-        }
-
-        .heart-ring {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 3px solid var(--pink);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            animation: heartPulse 1.2s ease-in-out infinite;
-        }
-
-        @keyframes heartPulse {
-            0%, 100% { transform: scale(1); border-color: var(--pink); }
-            50% { transform: scale(1.05); border-color: var(--purple); }
-        }
-
-        .heart-ring::before {
-            content: '';
-            position: absolute;
-            inset: -8px;
-            border-radius: 50%;
-            border: 1px solid rgba(255,20,148,0.3);
-            animation: ringExpand 1.2s ease-out infinite;
-        }
-
-        @keyframes ringExpand {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.3); opacity: 0; }
-        }
-
-        .bpm {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--pink);
-        }
-
-        .bpm-label {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .coherence-bar {
-            width: 80%;
-            height: 4px;
-            background: var(--glass);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .coherence-fill {
-            height: 100%;
-            width: 78%;
-            background: linear-gradient(90deg, var(--pink), var(--cyan));
-            border-radius: 2px;
-        }
-
-        .demo-waveform {
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            gap: 3px;
-            padding: 20px;
-        }
-
-        .wave-bar {
-            width: 4px;
-            background: linear-gradient(to top, var(--pink), var(--cyan));
-            border-radius: 2px;
-            animation: wave 1.2s ease-in-out infinite;
-        }
-
-        @keyframes wave {
-            0%, 100% { height: 20px; }
-            50% { height: 80px; }
-        }
-
-        .demo-visual {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .visual-sphere {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, var(--cyan), var(--purple));
-            box-shadow: 0 0 40px rgba(0,255,255,0.3);
-            animation: sphereFloat 4s ease-in-out infinite;
-        }
-
-        @keyframes sphereFloat {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-10px) scale(1.05); }
-        }
-
-        /* Stats Bar */
-        .stats-bar {
-            display: flex;
-            justify-content: center;
-            gap: 48px;
-            flex-wrap: wrap;
-            padding: 24px 0;
-            border-top: 1px solid var(--glass-border);
-        }
-
-        .stat {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 14px;
+            gap: 4px;
+            font-size: clamp(18px, 4vw, 28px);
             font-weight: 600;
-            color: var(--text);
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        .mantra .highlight {
+            color: var(--cyan);
         }
 
-        .stat-value strong {
-            font-size: 20px;
-            background: linear-gradient(135deg, var(--pink), var(--cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        /* Sections */
-        section {
-            padding: 120px 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 64px;
-        }
-
-        .section-label {
-            display: inline-block;
-            padding: 6px 14px;
-            background: rgba(255,20,148,0.1);
-            border: 1px solid rgba(255,20,148,0.3);
-            border-radius: 100px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--pink);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 16px;
-        }
-
-        .section-title {
-            font-size: clamp(32px, 5vw, 48px);
-            font-weight: 800;
-            letter-spacing: -1px;
-            margin-bottom: 16px;
-        }
-
-        .section-sub {
-            font-size: 18px;
-            color: var(--text-dim);
-            max-width: 500px;
-            margin: 0 auto;
+        .tagline {
+            font-size: clamp(14px, 3vw, 18px);
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 40px;
+            max-width: 400px;
         }
 
         /* Features */
         .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 24px;
-        }
-
-        .feature {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 32px;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .feature::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--pink), var(--purple), var(--cyan));
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .feature:hover {
-            transform: translateY(-4px);
-            border-color: rgba(255,20,148,0.3);
-        }
-
-        .feature:hover::before { opacity: 1; }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, rgba(255,20,148,0.2), rgba(153,51,255,0.2));
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        .feature-icon svg {
-            width: 24px;
-            height: 24px;
-            stroke: var(--pink);
-            fill: none;
-            stroke-width: 2;
-        }
-
-        .feature h3 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .feature p {
-            font-size: 15px;
-            color: var(--text-dim);
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .tags {
-            display: flex;
+            gap: 32px;
             flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 48px;
+        }
+        .feature {
+            display: flex;
+            align-items: center;
             gap: 8px;
-        }
-
-        .tag {
-            padding: 4px 10px;
-            background: rgba(0,255,255,0.1);
-            border: 1px solid rgba(0,255,255,0.2);
-            border-radius: 100px;
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--cyan);
-        }
-
-        /* Workspaces */
-        .workspaces-section {
-            background: linear-gradient(180deg, transparent, rgba(153,51,255,0.03), transparent);
-        }
-
-        .workspaces {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-        }
-
-        .workspace {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 28px 20px;
-            text-align: center;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .workspace:hover {
-            transform: translateY(-4px);
-            border-color: var(--cyan);
-        }
-
-        .workspace-icon {
-            width: 48px;
-            height: 48px;
-            margin: 0 auto 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(153,51,255,0.1));
-            border-radius: 12px;
-        }
-
-        .workspace-icon svg {
-            width: 24px;
-            height: 24px;
-            stroke: var(--cyan);
-            fill: none;
-            stroke-width: 2;
-        }
-
-        .workspace h3 {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        .workspace p {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        /* Testimonials */
-        .testimonials {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
-        }
-
-        .testimonial {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 28px;
-        }
-
-        .testimonial-stars {
-            color: #FFD700;
             font-size: 14px;
-            letter-spacing: 2px;
-            margin-bottom: 16px;
+            color: rgba(255,255,255,0.7);
         }
-
-        .testimonial p {
-            font-size: 15px;
-            color: var(--text-dim);
-            line-height: 1.7;
-            margin-bottom: 20px;
-            font-style: italic;
-        }
-
-        .testimonial-author {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .testimonial-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--pink), var(--purple));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .testimonial-name {
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .testimonial-role {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        /* FAQ */
-        .faq-list {
-            max-width: 700px;
-            margin: 0 auto;
-        }
-
-        .faq-item {
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .faq-q {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 24px 0;
-            background: none;
-            border: none;
-            color: var(--text);
-            font-size: 16px;
-            font-weight: 600;
-            text-align: left;
-            cursor: pointer;
-            font-family: inherit;
-            transition: color 0.2s;
-        }
-
-        .faq-q:hover { color: var(--cyan); }
-
-        .faq-icon {
-            font-size: 20px;
-            transition: transform 0.3s;
-        }
-
-        .faq-item.open .faq-icon { transform: rotate(45deg); }
-
-        .faq-a {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s, padding 0.3s;
-        }
-
-        .faq-item.open .faq-a {
-            max-height: 200px;
-            padding-bottom: 24px;
-        }
-
-        .faq-a p {
-            color: var(--text-dim);
-            font-size: 15px;
-            line-height: 1.7;
+        .feature svg {
+            width: 20px;
+            height: 20px;
+            color: var(--pink);
         }
 
         /* CTA */
-        .cta-section {
-            padding: 80px 24px;
+        .cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            color: #fff;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 24px rgba(255,20,148,0.3);
+        }
+        .cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(255,20,148,0.4);
+        }
+        .cta svg {
+            width: 24px;
+            height: 24px;
         }
 
-        .cta-box {
-            max-width: 800px;
-            margin: 0 auto;
-            background: linear-gradient(135deg, rgba(255,20,148,0.1), rgba(153,51,255,0.1));
-            border: 1px solid rgba(255,20,148,0.3);
-            border-radius: 24px;
-            padding: 64px 48px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cta-box::before {
-            content: '';
-            position: absolute;
-            top: -100%;
-            left: -100%;
-            width: 300%;
-            height: 300%;
-            background: conic-gradient(from 0deg, transparent, rgba(255,20,148,0.1), transparent);
-            animation: rotate 15s linear infinite;
-        }
-
-        @keyframes rotate {
-            100% { transform: rotate(360deg); }
-        }
-
-        .cta-content { position: relative; z-index: 1; }
-
-        .cta-box h2 {
-            font-size: clamp(28px, 4vw, 40px);
-            font-weight: 800;
-            margin-bottom: 16px;
-        }
-
-        .cta-box p {
-            font-size: 18px;
-            color: var(--text-dim);
-            margin-bottom: 32px;
+        /* Platforms */
+        .platforms {
+            margin-top: 32px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.4);
         }
 
         /* Footer */
         footer {
-            background: var(--black);
-            border-top: 1px solid var(--glass-border);
-            padding: 64px 24px 32px;
-        }
-
-        .footer-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .footer-grid {
-            display: grid;
-            grid-template-columns: 2fr repeat(3, 1fr);
-            gap: 48px;
-            margin-bottom: 48px;
-        }
-
-        .footer-brand p {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin: 16px 0 20px;
-            max-width: 250px;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 12px;
-        }
-
-        .social-link {
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            color: var(--text-dim);
-            transition: all 0.2s;
-        }
-
-        .social-link:hover {
-            border-color: var(--pink);
-            color: var(--pink);
-        }
-
-        .social-link svg { width: 16px; height: 16px; fill: currentColor; }
-
-        .footer-links h4 {
+            margin-top: auto;
+            padding-top: 48px;
             font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 16px;
-            color: var(--text);
+            color: rgba(255,255,255,0.3);
         }
-
-        .footer-links a {
-            display: block;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 14px;
-            padding: 6px 0;
-            transition: color 0.2s;
-        }
-
-        .footer-links a:hover { color: var(--cyan); }
-
-        .footer-bottom {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 32px;
-            border-top: 1px solid var(--glass-border);
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .footer-copy {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .footer-legal {
-            display: flex;
-            gap: 24px;
-        }
-
-        .footer-legal a {
-            font-size: 13px;
-            color: var(--text-muted);
+        footer a {
+            color: rgba(255,255,255,0.5);
             text-decoration: none;
         }
-
-        .footer-legal a:hover { color: var(--cyan); }
-
-        .footer-disclaimer {
-            width: 100%;
-            text-align: center;
-            padding-top: 24px;
-            font-size: 11px;
-            color: var(--text-muted);
-            opacity: 0.6;
-        }
-
-        /* Mobile */
-        .mobile-menu {
-            display: none;
-            position: fixed;
-            top: 68px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(10,10,15,0.98);
-            backdrop-filter: blur(20px);
-            padding: 32px 24px;
-            z-index: 99;
-            transform: translateX(100%);
-            transition: transform 0.3s;
-        }
-
-        .mobile-menu.active { transform: translateX(0); }
-
-        .mobile-menu ul { list-style: none; }
-
-        .mobile-menu a {
-            display: block;
-            padding: 16px 0;
-            color: var(--text);
-            text-decoration: none;
-            font-size: 18px;
-            font-weight: 500;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .mobile-menu .btn {
-            width: 100%;
-            justify-content: center;
-            margin-top: 24px;
-        }
-
-        @media (max-width: 900px) {
-            .nav-links, .nav > .nav-cta { display: none; }
-            .menu-toggle { display: block; }
-            .mobile-menu { display: block; }
-            .demo-content { grid-template-columns: 1fr; height: auto; }
-            .demo-content > div { min-height: 120px; }
-            .footer-grid { grid-template-columns: 1fr 1fr; }
-        }
-
-        @media (max-width: 600px) {
-            .hero-buttons { flex-direction: column; align-items: center; }
-            .btn { width: 100%; max-width: 280px; justify-content: center; }
-            .stats-bar { gap: 24px; }
-            .features { grid-template-columns: 1fr; }
-            .workspaces { grid-template-columns: repeat(2, 1fr); }
-            .footer-grid { grid-template-columns: 1fr; }
-            .footer-bottom { flex-direction: column; text-align: center; }
-        }
-
-        /* Animations */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s, transform 0.6s;
-        }
-
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.01ms !important;
-            }
+        footer a:hover {
+            color: var(--cyan);
         }
     </style>
 </head>
 <body>
-    <div class="vaporwave-bg"></div>
-    <div class="grid-perspective"></div>
-    <div class="ambient"></div>
+    <div class="bg"></div>
+    <div class="grid"></div>
+    <div class="glow"></div>
 
-    <header>
-        <nav>
-            <a href="/" class="logo">
-                <svg viewBox="0 0 100 100" fill="none">
-                    <defs>
-                        <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#FF1494"/>
-                            <stop offset="50%" stop-color="#9933FF"/>
-                            <stop offset="100%" stop-color="#00FFFF"/>
-                        </linearGradient>
-                    </defs>
-                    <path d="M50 85 C30 65 12 48 12 30 C12 16 24 6 38 6 C46 6 50 12 50 12 C50 12 54 6 62 6 C76 6 88 16 88 30 C88 48 70 65 50 85Z" fill="url(#lg)"/>
-                    <path d="M26 42 Q34 42 38 35 Q42 28 46 35 Q50 42 50 28 Q50 42 54 35 Q58 28 62 35 Q66 42 74 42" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
-                </svg>
-                <span class="logo-text">ECHOELMUSIC</span>
-            </a>
-            <ul class="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#workspaces">Workspaces</a></li>
-                <li><a href="#reviews">Reviews</a></li>
-                <li><a href="#faq">FAQ</a></li>
-                <li><a href="support.html">Support</a></li>
-            </ul>
-            <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="nav-cta">Download</a>
-            <button class="menu-toggle" id="menuToggle" aria-label="Menu">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-        </nav>
-    </header>
+    <div class="logo">🎵</div>
+    <h1><span>Echoelmusic</span></h1>
 
-    <div class="mobile-menu" id="mobileMenu">
-        <ul>
-            <li><a href="#features" onclick="closeMenu()">Features</a></li>
-            <li><a href="#workspaces" onclick="closeMenu()">Workspaces</a></li>
-            <li><a href="#reviews" onclick="closeMenu()">Reviews</a></li>
-            <li><a href="#faq" onclick="closeMenu()">FAQ</a></li>
-            <li><a href="support.html">Support</a></li>
-        </ul>
-        <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="btn btn-primary">Download Free</a>
+    <div class="mantra">
+        <span><span class="highlight">FINDE</span> DEINEN KLANG</span>
+        <span><span class="highlight">FÜHLE</span> DEINE SEELE</span>
+        <span><span class="highlight">FOKUSSIERE</span> DEINEN GEIST</span>
     </div>
 
-    <main>
-        <section class="hero">
-            <span class="hero-label">Bio-Reactive Music Production</span>
+    <p class="tagline">Bio-reaktive Musikproduktion. Dein Herzschlag steuert den Sound.</p>
 
-            <h1 class="hero-mantra">
-                <span class="mantra-line"><span class="gradient">FINDE</span> DEINEN KLANG</span>
-                <span class="mantra-line"><span class="gradient">FÜHLE</span> DEINE SEELE</span>
-                <span class="mantra-line"><span class="gradient">FOKUSSIERE</span> DEINEN GEIST</span>
-            </h1>
-
-            <p class="hero-sub">Bio-reaktive Musikproduktion. Dein Herzschlag steuert den Sound. Kostenlos auf allen Apple-Geräten.</p>
-
-            <div class="hero-buttons">
-                <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="btn btn-primary">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                    Download Free
-                </a>
-                <a href="#features" class="btn btn-secondary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Learn More
-                </a>
-            </div>
-
-            <div class="demo">
-                <div class="demo-frame">
-                    <div class="demo-header">
-                        <div class="demo-dot"></div>
-                        <div class="demo-dot"></div>
-                        <div class="demo-dot"></div>
-                    </div>
-                    <div class="demo-content">
-                        <div class="demo-panel demo-bio">
-                            <div class="heart-ring">
-                                <span class="bpm">72</span>
-                            </div>
-                            <span class="bpm-label">Heart Rate</span>
-                            <div class="coherence-bar">
-                                <div class="coherence-fill"></div>
-                            </div>
-                            <span class="bpm-label">Coherence 78%</span>
-                        </div>
-                        <div class="demo-panel demo-waveform">
-                            <div class="wave-bar" style="animation-delay:0s"></div>
-                            <div class="wave-bar" style="animation-delay:0.1s"></div>
-                            <div class="wave-bar" style="animation-delay:0.2s"></div>
-                            <div class="wave-bar" style="animation-delay:0.3s"></div>
-                            <div class="wave-bar" style="animation-delay:0.4s"></div>
-                            <div class="wave-bar" style="animation-delay:0.5s"></div>
-                            <div class="wave-bar" style="animation-delay:0.6s"></div>
-                            <div class="wave-bar" style="animation-delay:0.7s"></div>
-                            <div class="wave-bar" style="animation-delay:0.8s"></div>
-                            <div class="wave-bar" style="animation-delay:0.9s"></div>
-                            <div class="wave-bar" style="animation-delay:1s"></div>
-                            <div class="wave-bar" style="animation-delay:1.1s"></div>
-                            <div class="wave-bar" style="animation-delay:0.15s"></div>
-                            <div class="wave-bar" style="animation-delay:0.25s"></div>
-                            <div class="wave-bar" style="animation-delay:0.35s"></div>
-                        </div>
-                        <div class="demo-panel demo-visual">
-                            <div class="visual-sphere"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stats-bar">
-                <div class="stat">
-                    <div class="stat-value"><strong>100+</strong> Instruments</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value"><strong>60+</strong> Effects</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value"><strong>&lt;10ms</strong> Latency</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value"><strong>6</strong> Platforms</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value"><strong>Free</strong></div>
-                </div>
-            </div>
-        </section>
-
-        <section id="features">
-            <div class="section-header">
-                <span class="section-label">Features</span>
-                <h2 class="section-title">Professional Tools, Bio-Reactive</h2>
-                <p class="section-sub">Everything you need to create music, video, and live visuals</p>
-            </div>
-
-            <div class="features">
-                <article class="feature fade-in">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    </div>
-                    <h3>Bio-Reactive Engine</h3>
-                    <p>Your heart rate, HRV, and coherence drive the music. 60Hz real-time sync with Apple Watch. Enter flow state and transform your sound.</p>
-                    <div class="tags">
-                        <span class="tag">Apple Watch</span>
-                        <span class="tag">HRV</span>
-                        <span class="tag">Coherence</span>
-                    </div>
-                </article>
-
-                <article class="feature fade-in">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                    </div>
-                    <h3>Professional DAW</h3>
-                    <p>Full arrangement view, MIDI 2.0 + MPE, multi-track recording. Inspired by Ableton and FL Studio, built for bio-reactive creation.</p>
-                    <div class="tags">
-                        <span class="tag">MIDI 2.0</span>
-                        <span class="tag">MPE</span>
-                        <span class="tag">Multi-Track</span>
-                    </div>
-                </article>
-
-                <article class="feature fade-in">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                    </div>
-                    <h3>Video Editor</h3>
-                    <p>Timeline editing with 50+ AI effects. Bio-reactive video processing up to 16K. Beat-sync your edits automatically.</p>
-                    <div class="tags">
-                        <span class="tag">16K</span>
-                        <span class="tag">AI Effects</span>
-                        <span class="tag">Beat Sync</span>
-                    </div>
-                </article>
-
-                <article class="feature fade-in">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                    </div>
-                    <h3>VJ & Laser Control</h3>
-                    <p>Real-time visual mixing, ILDA laser patterns, DMX/Art-Net output. Your heartbeat drives the entire light show.</p>
-                    <div class="tags">
-                        <span class="tag">ILDA</span>
-                        <span class="tag">DMX</span>
-                        <span class="tag">Art-Net</span>
-                    </div>
-                </article>
-
-                <article class="feature fade-in">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    </div>
-                    <h3>Node Editor</h3>
-                    <p>Visual programming for advanced users. Connect bio signals, audio, and visuals with intuitive drag-and-drop nodes.</p>
-                    <div class="tags">
-                        <span class="tag">Visual</span>
-                        <span class="tag">Modular</span>
-                    </div>
-                </article>
-
-                <article class="feature fade-in">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17v.01"/><path d="M7 14v.01"/></svg>
-                    </div>
-                    <h3>AI Tools</h3>
-                    <p>AI-powered composition, mixing, mastering, and sound design. Generate unique sounds from your biometric signature.</p>
-                    <div class="tags">
-                        <span class="tag">Composer</span>
-                        <span class="tag">Master</span>
-                        <span class="tag">Design</span>
-                    </div>
-                </article>
-            </div>
-        </section>
-
-        <div class="workspaces-section">
-            <section id="workspaces">
-                <div class="section-header">
-                    <span class="section-label">Workspaces</span>
-                    <h2 class="section-title">One App, Six Modes</h2>
-                    <p class="section-sub">Switch seamlessly between professional creative environments</p>
-                </div>
-
-                <div class="workspaces">
-                    <div class="workspace fade-in">
-                        <div class="workspace-icon">
-                            <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                        </div>
-                        <h3>Palace</h3>
-                        <p>Bio-reactive performance</p>
-                    </div>
-                    <div class="workspace fade-in">
-                        <div class="workspace-icon">
-                            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                        </div>
-                        <h3>DAW</h3>
-                        <p>Arrangement view</p>
-                    </div>
-                    <div class="workspace fade-in">
-                        <div class="workspace-icon">
-                            <svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>
-                        </div>
-                        <h3>Session</h3>
-                        <p>Clip launcher</p>
-                    </div>
-                    <div class="workspace fade-in">
-                        <div class="workspace-icon">
-                            <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                        </div>
-                        <h3>Video</h3>
-                        <p>Timeline editing</p>
-                    </div>
-                    <div class="workspace fade-in">
-                        <div class="workspace-icon">
-                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/></svg>
-                        </div>
-                        <h3>VJ/Laser</h3>
-                        <p>Visual mixing</p>
-                    </div>
-                    <div class="workspace fade-in">
-                        <div class="workspace-icon">
-                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33"/></svg>
-                        </div>
-                        <h3>Nodes</h3>
-                        <p>Visual programming</p>
-                    </div>
-                </div>
-            </section>
+    <div class="features">
+        <div class="feature">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            HRV Biofeedback
         </div>
-
-        <section id="reviews">
-            <div class="section-header">
-                <span class="section-label">Reviews</span>
-                <h2 class="section-title">What Creators Say</h2>
-            </div>
-
-            <div class="testimonials">
-                <div class="testimonial fade-in">
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p>"Finally an app that connects my body to my music. The Apple Watch integration is seamless. I've never felt so connected to my productions."</p>
-                    <div class="testimonial-author">
-                        <div class="testimonial-avatar">MK</div>
-                        <div>
-                            <div class="testimonial-name">Marcus K.</div>
-                            <div class="testimonial-role">Producer</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="testimonial fade-in">
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p>"The VJ controls are incredible. I run entire light shows from my iPad with my heart rate driving the intensity. Game changer for live performances."</p>
-                    <div class="testimonial-author">
-                        <div class="testimonial-avatar">SL</div>
-                        <div>
-                            <div class="testimonial-name">Sarah L.</div>
-                            <div class="testimonial-role">Visual Artist</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="testimonial fade-in">
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p>"I use it for meditation music. When I'm calm, the music is calm. When I'm energized, it responds. It's like the app reads my state."</p>
-                    <div class="testimonial-author">
-                        <div class="testimonial-avatar">JT</div>
-                        <div>
-                            <div class="testimonial-name">James T.</div>
-                            <div class="testimonial-role">Wellness Creator</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="faq">
-            <div class="section-header">
-                <span class="section-label">FAQ</span>
-                <h2 class="section-title">Questions & Answers</h2>
-            </div>
-
-            <div class="faq-list">
-                <div class="faq-item">
-                    <button class="faq-q" onclick="toggleFaq(this)">
-                        <span>Is Echoelmusic really free?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-a">
-                        <p>Yes. All core features including the DAW, video editor, bio-reactive engine, and VJ controls are free. No subscription required.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-q" onclick="toggleFaq(this)">
-                        <span>Do I need an Apple Watch?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-a">
-                        <p>No. Apple Watch provides the best real-time biometric data, but Echoelmusic works without it. You can use simulation mode or connect other devices.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-q" onclick="toggleFaq(this)">
-                        <span>Which devices are supported?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-a">
-                        <p>iPhone (iOS 15+), iPad, Mac (macOS 12+), Apple Watch, Apple TV, and Vision Pro. One download works across all your devices.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-q" onclick="toggleFaq(this)">
-                        <span>Is it a medical device?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-a">
-                        <p>No. Echoelmusic is a creative tool for artistic expression, not a medical device. Biofeedback features are for relaxation and creative purposes only.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-q" onclick="toggleFaq(this)">
-                        <span>Can I export my work?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-a">
-                        <p>Yes. Export audio as WAV, AIFF, MP3, AAC. Video supports H.264, H.265, ProRes up to 16K. You own everything you create.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <div class="cta-section">
-            <div class="cta-box">
-                <div class="cta-content">
-                    <h2>Start Creating Today</h2>
-                    <p>Download free and transform your creativity with bio-reactive tools.</p>
-                    <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="btn btn-primary">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                        Download from App Store
-                    </a>
-                </div>
-            </div>
+        <div class="feature">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+            Spatial Audio
         </div>
-    </main>
+        <div class="feature">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Apple Watch
+        </div>
+    </div>
+
+    <a href="https://apps.apple.com/app/echoelmusic" class="cta">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        Kostenlos laden
+    </a>
+
+    <p class="platforms">iPhone · iPad · Mac · Apple Watch · Apple TV · Vision Pro</p>
 
     <footer>
-        <div class="footer-inner">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <a href="/" class="logo">
-                        <svg viewBox="0 0 100 100" fill="none" width="32" height="32">
-                            <defs><linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF1494"/><stop offset="50%" stop-color="#9933FF"/><stop offset="100%" stop-color="#00FFFF"/></linearGradient></defs>
-                            <path d="M50 85 C30 65 12 48 12 30 C12 16 24 6 38 6 C46 6 50 12 50 12 C50 12 54 6 62 6 C76 6 88 16 88 30 C88 48 70 65 50 85Z" fill="url(#lg2)"/>
-                            <path d="M26 42 Q34 42 38 35 Q42 28 46 35 Q50 42 50 28 Q50 42 54 35 Q58 28 62 35 Q66 42 74 42" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
-                        </svg>
-                        <span class="logo-text">ECHOELMUSIC</span>
-                    </a>
-                    <p>Bio-reactive audio-visual production. Create with your heartbeat.</p>
-                    <div class="social-links">
-                        <a href="https://instagram.com/echoelmusic" class="social-link" aria-label="Instagram">
-                            <svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8 0 3.2 0 3.6-.1 4.8-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.9.1-3.2 0-3.6 0-4.8-.1-3.3-.1-4.8-1.7-4.9-4.9-.1-1.3-.1-1.6-.1-4.8 0-3.2 0-3.6.1-4.8.1-3.2 1.7-4.8 4.9-4.9 1.3-.1 1.6-.1 4.8-.1zM12 0C8.7 0 8.3 0 7 .1 2.7.3.3 2.7.1 7 0 8.3 0 8.7 0 12s0 3.7.1 5c.2 4.3 2.6 6.7 6.9 6.9 1.3.1 1.7.1 5 .1s3.7 0 5-.1c4.3-.2 6.7-2.6 6.9-6.9.1-1.3.1-1.7.1-5s0-3.7-.1-5c-.2-4.3-2.6-6.7-6.9-6.9C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.8a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8z"/></svg>
-                        </a>
-                        <a href="https://youtube.com/@echoelmusic" class="social-link" aria-label="YouTube">
-                            <svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5a3 3 0 0 0-2.1 2.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.5 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
-                        </a>
-                        <a href="https://tiktok.com/@echoelmusic" class="social-link" aria-label="TikTok">
-                            <svg viewBox="0 0 24 24"><path d="M12.5 0c1.3 0 2.6 0 3.9 0 .1 1.5.6 3.1 1.8 4.2 1.1 1.1 2.7 1.6 4.2 1.8v4c-1.4 0-2.9-.4-4.2-1-.6-.3-1.1-.6-1.6-.9 0 2.9 0 5.8 0 8.8-.1 1.4-.5 2.8-1.4 3.9-1.3 1.9-3.6 3.2-5.9 3.2-1.4.1-2.9-.3-4.1-1-2-1.2-3.4-3.4-3.6-5.7 0-.5 0-1 0-1.5.2-1.9 1.1-3.7 2.6-5 1.7-1.4 4-2.1 6.2-1.7v4.4c-1-.3-2.2-.2-3 .4-.6.4-1 1-1.4 1.6-.2.5-.2 1-.1 1.6.2 1.6 1.8 3 3.5 2.9 1.1 0 2.2-.6 2.8-1.6.2-.4.3-.8.3-1.2V0h.1z"/></svg>
-                        </a>
-                    </div>
-                </div>
-                <div class="footer-links">
-                    <h4>Product</h4>
-                    <a href="#features">Features</a>
-                    <a href="#workspaces">Workspaces</a>
-                    <a href="#faq">FAQ</a>
-                </div>
-                <div class="footer-links">
-                    <h4>Support</h4>
-                    <a href="support.html">Help Center</a>
-                    <a href="health.html">Health Info</a>
-                    <a href="mailto:support@echoelmusic.com">Contact</a>
-                </div>
-                <div class="footer-links">
-                    <h4>Legal</h4>
-                    <a href="privacy.html">Privacy</a>
-                    <a href="terms.html">Terms</a>
-                    <a href="impressum.html">Imprint</a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p class="footer-copy">© 2026 Echoelmusic</p>
-                <div class="footer-legal">
-                    <a href="privacy.html">Privacy</a>
-                    <a href="terms.html">Terms</a>
-                </div>
-            </div>
-            <p class="footer-disclaimer">Creative tool for artistic expression. Not a medical device.</p>
-        </div>
+        <a href="https://github.com/vibrationalforce/Echoelmusic">GitHub</a>
     </footer>
-
-    <script>
-        // Mobile Menu
-        const toggle = document.getElementById('menuToggle');
-        const menu = document.getElementById('mobileMenu');
-
-        toggle.addEventListener('click', () => {
-            toggle.classList.toggle('active');
-            menu.classList.toggle('active');
-            document.body.style.overflow = menu.classList.contains('active') ? 'hidden' : '';
-        });
-
-        function closeMenu() {
-            toggle.classList.remove('active');
-            menu.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-
-        // FAQ
-        function toggleFaq(btn) {
-            const item = btn.parentElement;
-            const wasOpen = item.classList.contains('open');
-            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-            if (!wasOpen) item.classList.add('open');
-        }
-
-        // Scroll animations
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, { threshold: 0.1 });
-
-        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-    </script>
 </body>
 </html>
-<!-- Updated: Wed Jan 28 21:58:38 UTC 2026 -->
