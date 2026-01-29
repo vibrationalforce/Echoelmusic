@@ -84,6 +84,8 @@ targets:
           - "**/WatchOS/**"
           - "**/tvOS/**"
           - "**/Platforms/**"
+          - "**/README.md"
+          - "**/*.md"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
@@ -170,6 +172,8 @@ targets:
           - "**/WatchOS/**"
           - "**/tvOS/**"
           - "**/Platforms/**"
+          - "**/README.md"
+          - "**/*.md"
           - "**/Widgets/**"
           - "**/LiveActivity/**"
     resources:
@@ -322,6 +326,8 @@ targets:
           - "**/Stream/**"
           - "**/Recording/**"
           - "**/Video/**"
+          - "**/README.md"
+          - "**/*.md"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
@@ -374,6 +380,8 @@ targets:
           - "**/Widgets/**"
           - "**/LiveActivity/**"
           - "**/Biofeedback/**"
+          - "**/README.md"
+          - "**/*.md"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
@@ -425,6 +433,8 @@ targets:
           - "**/Platforms/**"
           - "**/Widgets/**"
           - "**/LiveActivity/**"
+          - "**/README.md"
+          - "**/*.md"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
