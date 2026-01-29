@@ -1249,15 +1249,4 @@ class TouchKeyboardViewModel: ObservableObject {
     }
 }
 
-// MARK: - Extension for TouchInstrumentsHub
-
-extension TouchInstrumentsHub {
-    var mpeZoneManager: MPEZoneManager? {
-        // Access would need to be passed through
-        return nil // This is set via connect()
-    }
-
-    var midi2Manager: MIDI2Manager? {
-        return nil // This is set via connect()
-    }
-}
+// Note: mpeZoneManager and midi2Manager are defined as private vars in TouchInstrumentsHub

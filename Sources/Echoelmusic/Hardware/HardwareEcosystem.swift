@@ -124,6 +124,9 @@ public enum DeviceType: String, CaseIterable {
     case metaQuest = "Meta Quest"
     case metaGlasses = "Ray-Ban Meta"
 
+    // Automotive
+    case tesla = "Tesla"
+
     // Audio Hardware
     case audioInterface = "Audio Interface"
     case midiController = "MIDI Controller"
@@ -1432,6 +1435,8 @@ public final class SmartHomeRegistry {
         case hue = "Philips Hue"
         case alexa = "Alexa"
         case googleHome = "Google Home"
+        case hdmi = "HDMI"
+        case airPlay = "AirPlay"
     }
 
     public struct SmartDevice: Identifiable, Hashable {
