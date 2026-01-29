@@ -29,15 +29,10 @@
         .mantra { display: flex; flex-direction: column; gap: 2px; font-size: clamp(16px, 3.5vw, 24px); font-weight: 600; margin-bottom: 24px; opacity: 0.9; }
         .mantra .highlight { color: var(--cyan); }
 
-        .tagline { font-size: clamp(13px, 2.5vw, 16px); color: rgba(255,255,255,0.6); margin-bottom: 28px; max-width: 480px; line-height: 1.5; }
+        .tagline { font-size: clamp(13px, 2.5vw, 16px); color: rgba(255,255,255,0.6); margin-bottom: 12px; max-width: 480px; line-height: 1.5; }
 
-        /* Features Grid */
-        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; max-width: 600px; margin-bottom: 32px; width: 100%; }
-        .feature { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.03); padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
-        .feature svg { width: 18px; height: 18px; flex-shrink: 0; }
-        .feature .icon-pink { color: var(--pink); }
-        .feature .icon-cyan { color: var(--cyan); }
-        .feature .icon-purple { color: var(--purple); }
+        /* Feature Line */
+        .features { font-size: clamp(11px, 2vw, 13px); color: rgba(255,255,255,0.45); margin-bottom: 32px; letter-spacing: 0.5px; }
 
         /* CTA */
         .cta { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 15px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 20px rgba(255,20,148,0.3); }
@@ -93,32 +88,7 @@
 
     <p class="tagline">Die bio-reaktive Kreativplattform. Musik, Video, Visuals und weltweite Collaboration - alles gesteuert durch deinen Herzschlag.</p>
 
-    <div class="features">
-        <div class="feature">
-            <svg class="icon-pink" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19V6l12-3v13M9 19c0 1.1-1.3 2-3 2s-3-.9-3-2 1.3-2 3-2 3 .9 3 2zm12-3c0 1.1-1.3 2-3 2s-3-.9-3-2 1.3-2 3-2 3 .9 3 2z"/></svg>
-            100+ Instrumente
-        </div>
-        <div class="feature">
-            <svg class="icon-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.3 6.3a4.5 4.5 0 000 6.4L12 20.4l7.7-7.7a4.5 4.5 0 00-6.4-6.4L12 7.6l-1.3-1.3a4.5 4.5 0 00-6.4 0z"/></svg>
-            HRV Biofeedback
-        </div>
-        <div class="feature">
-            <svg class="icon-purple" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-            Video & Visuals
-        </div>
-        <div class="feature">
-            <svg class="icon-pink" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-            Weltweite Collab
-        </div>
-        <div class="feature">
-            <svg class="icon-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            60+ DSP Effekte
-        </div>
-        <div class="feature">
-            <svg class="icon-purple" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.9 4.9l2.8 2.8m8.5 8.5l2.8 2.8M2 12h4m12 0h4M4.9 19.1l2.8-2.8m8.5-8.5l2.8-2.8"/></svg>
-            Laser & DMX
-        </div>
-    </div>
+    <p class="features">100+ Instrumente · 60+ Effekte · Video · Visuals · Laser · DMX · Weltweite Collaboration</p>
 
     <a href="https://apps.apple.com/app/echoelmusic" class="cta">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
