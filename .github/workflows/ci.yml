@@ -75,9 +75,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - destination: 'platform=iOS Simulator,name=iPhone 15 Pro'
-            name: 'iPhone 15 Pro'
-          - destination: 'platform=iOS Simulator,name=iPhone SE (3rd generation)'
+          - destination: 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro'
+            name: 'iPhone 16 Pro'
+          - destination: 'platform=iOS Simulator,OS=18.2,name=iPhone SE (3rd generation)'
             name: 'iPhone SE'
 
     steps:
@@ -370,7 +370,7 @@ jobs:
       run: |
         xcodebuild test \
           -scheme Echoelmusic \
-          -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+          -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
           -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testAdaptiveQualityAdjustment \
           -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testMemoryOptimizationCaching \
           CODE_SIGNING_ALLOWED=NO \
@@ -382,7 +382,7 @@ jobs:
         echo "🔍 Checking for memory leaks..."
         xcodebuild test \
           -scheme Echoelmusic \
-          -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+          -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
           -enableAddressSanitizer YES \
           CODE_SIGNING_ALLOWED=NO \
           2>&1 | xcpretty || true
