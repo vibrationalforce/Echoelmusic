@@ -86,7 +86,7 @@ class MemoryOptimizationManager: ObservableObject {
 
     // MARK: - Cached Item
 
-    private class CachedItem {
+    class CachedItem {
         let key: String
         var data: Data
         var lastAccessed: Date
@@ -174,7 +174,7 @@ class MemoryOptimizationManager: ObservableObject {
 
     // MARK: - Compression Buffer
 
-    private class CompressionBuffer {
+    class CompressionBuffer {
         private var compressedData: Data?
         private var uncompressedSize: Int
 
