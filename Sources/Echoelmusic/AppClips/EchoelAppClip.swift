@@ -500,9 +500,9 @@ struct BreathingGuideView: View {
 
     enum BreathPhase: String {
         case inhale = "Einatmen"
-        case hold1 = "Halten"
+        case hold1 = "Halten (Ein)"
         case exhale = "Ausatmen"
-        case hold2 = "Halten"
+        case hold2 = "Halten (Aus)"
     }
 
     var body: some View {

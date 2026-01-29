@@ -238,7 +238,7 @@ class IntelligentAutomationEngine: ObservableObject {
         }
 
         enum FilterMovement: String {
-            case static = "Static"
+            case `static` = "Static"
             case subtle = "Subtle"
             case active = "Active"
             case extreme = "Extreme"

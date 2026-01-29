@@ -132,7 +132,9 @@ public struct Scene: Identifiable, Equatable, Sendable {
     }
 
     public struct LightingSetup: Equatable, Sendable {
-        public var ambientColor: (r: Float, g: Float, b: Float)
+        public var ambientColorR: Float
+        public var ambientColorG: Float
+        public var ambientColorB: Float
         public var ambientIntensity: Float
         public var keyLightAngle: Float
         public var keyLightIntensity: Float
@@ -140,7 +142,9 @@ public struct Scene: Identifiable, Equatable, Sendable {
         public var rimEnabled: Bool
 
         public init() {
-            self.ambientColor = (0.1, 0.1, 0.2)
+            self.ambientColorR = 0.1
+            self.ambientColorG = 0.1
+            self.ambientColorB = 0.2
             self.ambientIntensity = 0.3
             self.keyLightAngle = 45
             self.keyLightIntensity = 1.0

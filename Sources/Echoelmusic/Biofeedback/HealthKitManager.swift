@@ -680,9 +680,4 @@ class HealthKitManager: ObservableObject {
     }
 
 
-    // MARK: - Cleanup
-
-    deinit {
-        stopMonitoring()
-    }
 }

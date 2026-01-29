@@ -556,7 +556,7 @@ public enum Capability: String {
 
     // Security
     case faceID = "com.apple.developer.authentication-services.autofill-credential-provider"
-    case dataProtection = "com.apple.security.application-groups"
+    case dataProtection = "com.apple.developer.default-data-protection"
 
     // Payment
     case applePayPaymentProcessing = "com.apple.ApplePay"
