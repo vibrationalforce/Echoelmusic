@@ -1,7 +1,8 @@
 # =============================================================================
 # ECHOELMUSIC - AUTO-MERGE DOCS CHANGES
 # =============================================================================
-# Automatically creates and merges PRs for docs-only changes from claude/* branches
+# Automatically merges docs-only changes from claude/* branches to main
+# Uses commit SHA from push event to handle branch reset scenarios
 # This enables instant website updates without manual intervention
 # =============================================================================
 
@@ -26,101 +27,148 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Checkout
+      - name: Checkout main with full history
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch and validate pushed commit
+        id: fetch
+        run: |
+          echo "=============================================="
+          echo "  FETCHING PUSHED COMMIT"
+          echo "=============================================="
+          echo "Push SHA: ${{ github.sha }}"
+          echo "Push ref: ${{ github.ref }}"
+          echo "Push branch: ${{ github.ref_name }}"
+
+          # Fetch the specific commit that was pushed (uses SHA, not branch)
+          git fetch origin ${{ github.sha }} --depth=1 || git fetch origin --all
+
+          # Verify commit exists in object store
+          if git cat-file -e ${{ github.sha }}^{commit} 2>/dev/null; then
+            echo "commit_exists=true" >> $GITHUB_OUTPUT
+            echo "[OK] Commit ${{ github.sha }} is accessible"
+          else
+            echo "commit_exists=false" >> $GITHUB_OUTPUT
+            echo "[ERROR] Commit ${{ github.sha }} not found"
+            exit 1
+          fi
 
       - name: Check if docs-only change
         id: check
+        if: steps.fetch.outputs.commit_exists == 'true'
         run: |
           echo "=============================================="
           echo "  CHECKING FOR DOCS-ONLY CHANGES"
           echo "=============================================="
 
-          # Get changed files between this branch and main
-          CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
-          echo "Changed files:"
-          echo "$CHANGED_FILES"
+          # CRITICAL: Use github.sha (the pushed commit), NOT HEAD or branch ref
+          # This handles the case where the branch was reset after push
+          CHANGED_FILES=$(git diff --name-only origin/main..${{ github.sha }} 2>/dev/null || echo "")
 
-          # Check if all changes are in docs/
-          NON_DOCS_CHANGES=$(echo "$CHANGED_FILES" | grep -v "^docs/" || true)
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "[INFO] No file differences found between main and ${{ github.sha }}"
+            echo "docs_only=false" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Changed files between main and pushed commit:"
+          echo "$CHANGED_FILES"
+          echo ""
+
+          # Store changed files for summary
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Check if all changes are in docs/ (excluding workflow files)
+          NON_DOCS_CHANGES=$(echo "$CHANGED_FILES" | grep -v "^docs/" | grep -v "^$" || true)
 
           if [ -z "$NON_DOCS_CHANGES" ]; then
             echo "docs_only=true" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
             echo ""
             echo "[OK] All changes are in docs/ - safe to auto-merge"
           else
             echo "docs_only=false" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
             echo ""
             echo "[INFO] Non-docs changes detected - manual review required:"
             echo "$NON_DOCS_CHANGES"
           fi
 
-      - name: Create PR
-        if: steps.check.outputs.docs_only == 'true'
-        id: create-pr
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref_name }}
-          base: main
-          title: "docs: Auto-update website content"
-          body: |
-            ## Automatic Website Update
-
-            This PR was automatically created for docs-only changes.
-
-            **Branch:** `${{ github.ref_name }}`
-            **Triggered by:** Push to claude/* branch
-
-            ### Changed Files
-            ```
-            ${{ steps.check.outputs.changed_files || 'docs/* files' }}
-            ```
-
-            This will be auto-merged to deploy changes to echoelmusic.com
-          labels: |
-            auto-merge
-            docs
-          draft: false
-
-      - name: Enable Auto-Merge
-        if: steps.check.outputs.docs_only == 'true' && steps.create-pr.outputs.pull-request-number
+      - name: Cherry-pick commit to main
+        if: steps.check.outputs.docs_only == 'true' && steps.check.outputs.has_changes == 'true'
+        id: merge
         run: |
-          echo "Enabling auto-merge for PR #${{ steps.create-pr.outputs.pull-request-number }}"
-          gh pr merge ${{ steps.create-pr.outputs.pull-request-number }} \
-            --auto \
-            --squash \
-            --subject "docs: Auto-update website content"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "=============================================="
+          echo "  MERGING DOCS CHANGES TO MAIN"
+          echo "=============================================="
 
-      - name: Direct Merge (if no PR needed)
-        if: steps.check.outputs.docs_only == 'true' && !steps.create-pr.outputs.pull-request-number
-        run: |
-          echo "No new PR needed - attempting direct merge"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Merge to main
-          git checkout main
-          git merge ${{ github.ref_name }} --no-edit -m "docs: Auto-merge website updates from ${{ github.ref_name }}"
-          git push origin main
+          # We're on main, cherry-pick the pushed commit
+          echo "Cherry-picking commit ${{ github.sha }} onto main..."
+
+          # Try cherry-pick with conflict detection
+          if git cherry-pick ${{ github.sha }} --no-commit 2>/dev/null; then
+            # Check if there are actual changes to commit
+            if git diff --cached --quiet; then
+              echo "merge_status=no_changes" >> $GITHUB_OUTPUT
+              echo "[INFO] No new changes to commit (already up to date)"
+            else
+              # Commit the changes
+              git commit -m "docs: Auto-merge website update" \
+                         -m "" \
+                         -m "Original commit: ${{ github.sha }}" \
+                         -m "Source: ${{ github.ref_name }}" \
+                         -m "" \
+                         -m "Auto-merged by GitHub Actions"
+
+              echo "Pushing to main..."
+              git push origin main
+
+              echo "merge_status=success" >> $GITHUB_OUTPUT
+              echo "[OK] Changes merged to main successfully!"
+            fi
+          else
+            echo "merge_status=conflict" >> $GITHUB_OUTPUT
+            echo "[ERROR] Cherry-pick failed - may have conflicts"
+            git cherry-pick --abort 2>/dev/null || true
+            exit 1
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Summary
+        if: always()
         run: |
           echo "## Auto-Merge Docs" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Check | Result |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Docs-only changes | ${{ steps.check.outputs.docs_only == 'true' && '✅ Yes' || '⚠️ No (manual review)' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| PR Created | ${{ steps.create-pr.outputs.pull-request-number || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Pushed Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Source Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit Found | ${{ steps.fetch.outputs.commit_exists == 'true' && 'Yes' || 'No' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docs-only | ${{ steps.check.outputs.docs_only == 'true' && 'Yes' || 'No' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Merge Status | ${{ steps.merge.outputs.merge_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.check.outputs.docs_only }}" == "true" ]; then
-            echo "✅ Website changes will be deployed automatically!" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ Manual review required for non-docs changes." >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "${{ steps.check.outputs.changed_files }}" ]; then
+            echo "### Changed Files" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.check.outputs.changed_files }}" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.merge.outputs.merge_status }}" == "success" ]; then
+            echo "Website deployment will follow automatically via pages.yml workflow." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.check.outputs.docs_only }}" != "true" ]; then
+            echo "Non-docs changes require manual review." >> $GITHUB_STEP_SUMMARY
           fi

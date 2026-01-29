@@ -3,830 +3,928 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echoelmusic - Bio-Reactive Audio Visual Production</title>
-    <meta name="description" content="Professional bio-reactive audio-visual production platform. Transform your heartbeat into sound, visuals & light. DAW, video editor, VJ controls, AI tools. iOS, macOS, watchOS, tvOS, visionOS.">
-    <meta name="keywords" content="bio-reactive music, biofeedback audio, HRV music, music production, DAW, video editor, VJ software, lighting control, DMX, ILDA laser">
-    <meta name="author" content="Echoelmusic">
+    <title>Echoelmusic - Bio-Reactive Music Production</title>
+    <meta name="description" content="Create music with your heartbeat. Professional DAW with bio-reactive audio, video editing, and live visuals. Free for Apple devices.">
     <meta name="theme-color" content="#FF1494">
-    <meta name="color-scheme" content="dark">
-
-    <!-- PWA -->
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="app-icon.svg">
-
-    <!-- SEO -->
     <link rel="canonical" href="https://echoelmusic.com/">
-    <link rel="alternate" hreflang="en" href="https://echoelmusic.com/">
-    <link rel="alternate" hreflang="de" href="https://echoelmusic.com/de/">
-    <link rel="alternate" hreflang="ja" href="https://echoelmusic.com/ja/">
-    <link rel="alternate" hreflang="es" href="https://echoelmusic.com/es/">
-    <link rel="alternate" hreflang="fr" href="https://echoelmusic.com/fr/">
-    <link rel="alternate" hreflang="zh" href="https://echoelmusic.com/zh/">
-    <link rel="alternate" hreflang="ko" href="https://echoelmusic.com/ko/">
-    <link rel="alternate" hreflang="pt" href="https://echoelmusic.com/pt/">
-    <link rel="alternate" hreflang="it" href="https://echoelmusic.com/it/">
-    <link rel="alternate" hreflang="ru" href="https://echoelmusic.com/ru/">
-    <link rel="alternate" hreflang="ar" href="https://echoelmusic.com/ar/">
-    <link rel="alternate" hreflang="hi" href="https://echoelmusic.com/hi/">
-    <link rel="alternate" hreflang="x-default" href="https://echoelmusic.com/">
-
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://echoelmusic.com/">
-    <meta property="og:title" content="Echoelmusic - Bio-Reactive Audio Visual Production">
-    <meta property="og:description" content="Professional bio-reactive production. DAW, video editor, VJ controls, AI tools. Create art that responds to your heartbeat.">
+    <meta property="og:title" content="Echoelmusic - Bio-Reactive Music Production">
+    <meta property="og:description" content="Create music with your heartbeat. Professional DAW with bio-reactive audio.">
     <meta property="og:image" content="https://echoelmusic.com/og-image.png">
-    <meta property="og:site_name" content="Echoelmusic">
-
-    <!-- Twitter Card -->
+    <meta property="og:url" content="https://echoelmusic.com/">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Echoelmusic - Bio-Reactive Audio Visual Production">
-    <meta name="twitter:description" content="Professional bio-reactive production platform for creators.">
-
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Echoelmusic",
-        "applicationCategory": "MultimediaApplication",
-        "operatingSystem": "macOS, iOS, watchOS, tvOS, visionOS",
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD",
-            "availability": "https://schema.org/InStock"
-        },
-        "description": "Professional bio-reactive audio-visual production platform with DAW, video editor, VJ controls, AI tools.",
-        "softwareVersion": "4.0.0",
-        "author": {
-            "@type": "Organization",
-            "name": "Echoelmusic"
-        }
-    }
-    </script>
-
-    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Vaporwave Color Palette */
-            --neon-pink: #FF1494;
-            --neon-cyan: #00FFFF;
-            --neon-purple: #9933FF;
-            --lavender: #CC99FF;
-            --coral: #FF7F66;
-            --deep-black: #050510;
-            --midnight-blue: #0D0D26;
-            --dark-purple: #1A0D33;
-            --sunset-orange: #FF6633;
-            --sunset-pink: #FF3380;
-
-            /* Bio-Reactive Colors */
-            --coherence-low: #FF4D4D;
-            --coherence-medium: #FFCC33;
-            --coherence-high: #33FFCC;
-
-            /* Text Colors */
-            --text-primary: #FFFFFF;
-            --text-secondary: rgba(255,255,255,0.85);
-            --text-muted: rgba(255,255,255,0.5);
-
-            /* Glass Effect */
-            --glass-bg: rgba(255,255,255,0.08);
-            --glass-border: rgba(255,255,255,0.15);
-            --glass-border-active: rgba(255,20,148,0.5);
-
-            /* Typography */
-            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-
-            /* Spacing */
-            --space-xs: 4px;
-            --space-sm: 8px;
-            --space-md: 16px;
-            --space-lg: 24px;
-            --space-xl: 32px;
-            --space-2xl: 48px;
-            --space-3xl: 64px;
-
-            /* Border Radius */
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 20px;
-            --radius-xl: 28px;
-
-            /* Layout */
-            --max-width: 1200px;
-
-            /* Transitions */
-            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-            /* Glows */
-            --glow-pink: 0 0 20px rgba(255,20,148,0.5), 0 0 40px rgba(255,20,148,0.25);
-            --glow-cyan: 0 0 20px rgba(0,255,255,0.5), 0 0 40px rgba(0,255,255,0.25);
-            --glow-purple: 0 0 20px rgba(153,51,255,0.5), 0 0 40px rgba(153,51,255,0.25);
+            --pink: #FF1494;
+            --cyan: #00FFFF;
+            --purple: #9933FF;
+            --black: #0a0a0f;
+            --dark: #12121a;
+            --glass: rgba(255,255,255,0.06);
+            --glass-border: rgba(255,255,255,0.1);
+            --text: #ffffff;
+            --text-dim: rgba(255,255,255,0.7);
+            --text-muted: rgba(255,255,255,0.4);
         }
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
 
         body {
-            font-family: var(--font-sans);
-            background: var(--deep-black);
-            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--black);
+            color: var(--text);
             line-height: 1.6;
-            font-size: 16px;
-            -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
             overflow-x: hidden;
         }
 
-        /* Animated Background */
-        .bg-gradient {
+        /* Vaporwave Background */
+        .vaporwave-bg {
             position: fixed;
-            top: 0;
+            inset: 0;
+            z-index: -2;
+            background: linear-gradient(180deg, #0a0a1a 0%, #1a0a2a 40%, #2a1a3a 70%, #0a0a1a 100%);
+        }
+
+        /* Perspective Grid */
+        .grid-perspective {
+            position: fixed;
+            bottom: 0;
             left: 0;
             right: 0;
-            bottom: 0;
+            height: 50vh;
+            z-index: -1;
             background:
-                radial-gradient(ellipse at 20% 20%, rgba(153,51,255,0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, rgba(255,20,148,0.12) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 50%, rgba(0,255,255,0.08) 0%, transparent 60%),
-                linear-gradient(180deg, var(--deep-black) 0%, var(--midnight-blue) 50%, var(--dark-purple) 100%);
-            z-index: -1;
+                linear-gradient(90deg, var(--pink) 1px, transparent 1px),
+                linear-gradient(0deg, var(--pink) 1px, transparent 1px);
+            background-size: 80px 40px;
+            opacity: 0.15;
+            transform: perspective(500px) rotateX(60deg);
+            transform-origin: bottom;
+            mask-image: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            animation: gridMove 20s linear infinite;
         }
 
-        .bg-grid {
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 400px; }
+        }
+
+        /* Ambient Glow */
+        .ambient {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image:
-                linear-gradient(rgba(255,20,148,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,20,148,0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
+            inset: 0;
             z-index: -1;
-            opacity: 0.5;
+            pointer-events: none;
         }
-
-        .skip-link {
+        .ambient::before {
+            content: '';
             position: absolute;
-            top: -100%;
-            left: var(--space-md);
-            background: var(--neon-pink);
-            color: var(--deep-black);
-            padding: var(--space-sm) var(--space-md);
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            z-index: 1000;
-            text-decoration: none;
+            top: -20%;
+            left: -10%;
+            width: 50%;
+            height: 50%;
+            background: radial-gradient(circle, rgba(153,51,255,0.15) 0%, transparent 60%);
+            animation: float1 25s ease-in-out infinite;
         }
-        .skip-link:focus { top: var(--space-md); }
-
-        :focus-visible { outline: 2px solid var(--neon-cyan); outline-offset: 2px; }
-
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-            html { scroll-behavior: auto; }
+        .ambient::after {
+            content: '';
+            position: absolute;
+            bottom: 20%;
+            right: -10%;
+            width: 40%;
+            height: 40%;
+            background: radial-gradient(circle, rgba(255,20,148,0.12) 0%, transparent 60%);
+            animation: float2 30s ease-in-out infinite;
+        }
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(5%, 10%); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-5%, -10%); }
         }
 
         /* Header */
-        .header {
+        header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 100;
-            background: rgba(5,5,16,0.85);
+            padding: 16px 24px;
+            background: rgba(10,10,15,0.8);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--glass-border);
         }
 
-        .header-inner {
-            max-width: var(--max-width);
+        nav {
+            max-width: 1200px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: var(--space-md) var(--space-lg);
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: var(--space-sm);
-            font-weight: 700;
-            font-size: 20px;
+            gap: 12px;
             text-decoration: none;
             color: inherit;
         }
 
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            position: relative;
-        }
-
-        .logo-icon svg {
-            width: 100%;
-            height: 100%;
-        }
+        .logo svg { width: 36px; height: 36px; }
 
         .logo-text {
-            background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple), var(--neon-cyan));
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            letter-spacing: 1px;
         }
 
         .nav-links {
             display: flex;
-            align-items: center;
-            gap: var(--space-xl);
+            gap: 32px;
+            list-style: none;
         }
 
         .nav-links a {
-            color: var(--text-secondary);
+            color: var(--text-dim);
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
-            transition: color var(--transition);
+            transition: color 0.2s;
         }
 
-        .nav-links a:hover {
-            color: var(--neon-cyan);
-        }
+        .nav-links a:hover { color: var(--cyan); }
 
         .nav-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-sm);
-            padding: var(--space-sm) var(--space-lg);
-            background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+            padding: 10px 24px;
+            background: linear-gradient(135deg, var(--pink), var(--purple));
             color: white;
-            font-weight: 600;
-            font-size: 14px;
-            border-radius: 50px;
             text-decoration: none;
-            transition: all var(--transition);
-            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .nav-cta:hover {
-            box-shadow: var(--glow-pink);
             transform: translateY(-2px);
-        }
-
-        .nav-cta svg {
-            width: 16px;
-            height: 16px;
+            box-shadow: 0 8px 24px rgba(255,20,148,0.4);
         }
 
         /* Mobile Menu */
-        .hamburger-btn {
+        .menu-toggle {
             display: none;
-            flex-direction: column;
-            justify-content: center;
-            gap: 5px;
-            width: 32px;
-            height: 32px;
-            background: transparent;
+            background: none;
             border: none;
+            width: 32px;
+            height: 24px;
             cursor: pointer;
-            padding: 4px;
+            position: relative;
         }
-        .hamburger-btn span {
-            display: block;
+
+        .menu-toggle span {
+            position: absolute;
+            left: 0;
             width: 100%;
             height: 2px;
-            background: var(--text-primary);
-            border-radius: 2px;
-            transition: all var(--transition);
+            background: white;
+            transition: 0.3s;
         }
-        .hamburger-btn.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
-        .hamburger-btn.open span:nth-child(2) { opacity: 0; }
-        .hamburger-btn.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
 
-        /* Hero Section */
+        .menu-toggle span:nth-child(1) { top: 0; }
+        .menu-toggle span:nth-child(2) { top: 50%; transform: translateY(-50%); }
+        .menu-toggle span:nth-child(3) { bottom: 0; }
+
+        .menu-toggle.active span:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
+        .menu-toggle.active span:nth-child(2) { opacity: 0; }
+        .menu-toggle.active span:nth-child(3) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
+
+        /* Hero */
         .hero {
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 120px var(--space-lg) var(--space-3xl);
             text-align: center;
+            padding: 140px 24px 80px;
             position: relative;
         }
 
-        .hero-badge {
+        .hero-label {
             display: inline-flex;
             align-items: center;
-            gap: var(--space-sm);
-            padding: var(--space-xs) var(--space-md);
-            background: var(--glass-bg);
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--glass);
             border: 1px solid var(--glass-border);
-            border-radius: 50px;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: var(--space-xl);
+            border-radius: 100px;
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: 32px;
         }
 
-        .hero-badge-dot {
+        .hero-label::before {
+            content: '';
             width: 8px;
             height: 8px;
-            background: var(--coherence-high);
+            background: #33FFAA;
             border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
+            animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.2); }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
-        .hero-title {
-            font-size: clamp(40px, 8vw, 80px);
+        h1 {
+            font-size: clamp(48px, 10vw, 96px);
             font-weight: 800;
-            line-height: 1.05;
-            margin-bottom: var(--space-lg);
-            letter-spacing: -2px;
+            line-height: 1;
+            letter-spacing: -3px;
+            margin-bottom: 24px;
         }
 
-        .hero-title-line {
-            display: block;
-        }
-
-        .hero-title .gradient-pink {
-            background: linear-gradient(135deg, var(--neon-pink), var(--sunset-pink));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero-title .gradient-cyan {
-            background: linear-gradient(135deg, var(--neon-cyan), var(--coherence-high));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero-title .gradient-purple {
-            background: linear-gradient(135deg, var(--neon-purple), var(--lavender));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero-subtitle {
-            font-size: clamp(18px, 2.5vw, 22px);
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto var(--space-xl);
-            line-height: 1.7;
-        }
-
-        .hero-cta-group {
+        .hero-mantra {
             display: flex;
-            gap: var(--space-md);
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: var(--space-2xl);
+            flex-direction: column;
+            gap: 8px;
+            font-size: clamp(28px, 6vw, 64px);
+            letter-spacing: -1px;
         }
 
-        .btn-primary {
+        .mantra-line {
+            display: block;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: mantraReveal 0.8s ease-out forwards;
+        }
+
+        .mantra-line:nth-child(1) { animation-delay: 0.2s; }
+        .mantra-line:nth-child(2) { animation-delay: 0.5s; }
+        .mantra-line:nth-child(3) { animation-delay: 0.8s; }
+
+        @keyframes mantraReveal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .gradient {
+            background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: clamp(18px, 2.5vw, 22px);
+            color: var(--text-dim);
+            max-width: 600px;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 64px;
+        }
+
+        .btn {
             display: inline-flex;
             align-items: center;
-            gap: var(--space-sm);
+            gap: 10px;
             padding: 16px 32px;
-            background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
-            color: white;
-            font-weight: 700;
             font-size: 16px;
-            border-radius: 50px;
+            font-weight: 600;
+            border-radius: 12px;
             text-decoration: none;
-            transition: all var(--transition);
+            transition: all 0.3s;
+            cursor: pointer;
             border: none;
         }
 
-        .btn-primary:hover {
-            box-shadow: var(--glow-pink);
-            transform: translateY(-3px);
+        .btn-primary {
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            color: white;
         }
 
-        .btn-primary svg {
-            width: 20px;
-            height: 20px;
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(255,20,148,0.4);
         }
 
         .btn-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-sm);
-            padding: 16px 32px;
-            background: var(--glass-bg);
+            background: var(--glass);
             border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 16px;
-            border-radius: 50px;
-            text-decoration: none;
-            transition: all var(--transition);
+            color: white;
         }
 
         .btn-secondary:hover {
-            border-color: var(--neon-cyan);
-            box-shadow: var(--glow-cyan);
+            border-color: var(--cyan);
+            box-shadow: 0 0 20px rgba(0,255,255,0.2);
         }
 
-        /* Platform Strip */
-        .platform-strip {
+        .btn svg { width: 20px; height: 20px; }
+
+        /* App Demo */
+        .demo {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto 48px;
+        }
+
+        .demo-frame {
+            background: var(--dark);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+        }
+
+        .demo-header {
             display: flex;
-            align-items: center;
-            gap: var(--space-2xl);
-            padding: var(--space-lg) 0;
-            border-top: 1px solid var(--glass-border);
+            gap: 6px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 12px;
         }
 
-        .platform-item {
+        .demo-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .demo-dot:nth-child(1) { background: #ff5f57; }
+        .demo-dot:nth-child(2) { background: #ffbd2e; }
+        .demo-dot:nth-child(3) { background: #28c840; }
+
+        .demo-content {
+            display: grid;
+            grid-template-columns: 200px 1fr 180px;
+            gap: 12px;
+            height: 320px;
+        }
+
+        .demo-panel {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .demo-bio {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: var(--space-xs);
+            justify-content: center;
+            gap: 16px;
         }
 
-        .platform-icon {
-            width: 28px;
-            height: 28px;
-            opacity: 0.6;
-            transition: opacity var(--transition);
+        .heart-ring {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid var(--pink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: heartPulse 1.2s ease-in-out infinite;
         }
 
-        .platform-item:hover .platform-icon {
-            opacity: 1;
+        @keyframes heartPulse {
+            0%, 100% { transform: scale(1); border-color: var(--pink); }
+            50% { transform: scale(1.05); border-color: var(--purple); }
         }
 
-        .platform-label {
+        .heart-ring::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,20,148,0.3);
+            animation: ringExpand 1.2s ease-out infinite;
+        }
+
+        @keyframes ringExpand {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+
+        .bpm {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--pink);
+        }
+
+        .bpm-label {
             font-size: 11px;
             color: var(--text-muted);
-            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        /* Stats Section */
-        .stats-section {
-            padding: var(--space-3xl) var(--space-lg);
-            background: linear-gradient(180deg, transparent 0%, rgba(153,51,255,0.05) 50%, transparent 100%);
+        .coherence-bar {
+            width: 80%;
+            height: 4px;
+            background: var(--glass);
+            border-radius: 2px;
+            overflow: hidden;
         }
 
-        .stats-grid {
-            max-width: var(--max-width);
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: var(--space-lg);
+        .coherence-fill {
+            height: 100%;
+            width: 78%;
+            background: linear-gradient(90deg, var(--pink), var(--cyan));
+            border-radius: 2px;
         }
 
-        .stat-card {
+        .demo-waveform {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 3px;
+            padding: 20px;
+        }
+
+        .wave-bar {
+            width: 4px;
+            background: linear-gradient(to top, var(--pink), var(--cyan));
+            border-radius: 2px;
+            animation: wave 1.2s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% { height: 20px; }
+            50% { height: 80px; }
+        }
+
+        .demo-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .visual-sphere {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, var(--cyan), var(--purple));
+            box-shadow: 0 0 40px rgba(0,255,255,0.3);
+            animation: sphereFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes sphereFloat {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.05); }
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            flex-wrap: wrap;
+            padding: 24px 0;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .stat {
             text-align: center;
-            padding: var(--space-xl);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius-lg);
-            transition: all var(--transition);
-        }
-
-        .stat-card:hover {
-            border-color: var(--neon-pink);
-            transform: translateY(-4px);
         }
 
         .stat-value {
-            font-size: clamp(36px, 5vw, 48px);
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .stat-value strong {
+            font-size: 20px;
+            background: linear-gradient(135deg, var(--pink), var(--cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: var(--space-xs);
         }
 
         .stat-label {
-            font-size: 14px;
+            font-size: 12px;
             color: var(--text-muted);
-            font-weight: 500;
         }
 
-        /* Features Section */
-        .features-section {
-            padding: var(--space-3xl) var(--space-lg);
-            max-width: var(--max-width);
+        /* Sections */
+        section {
+            padding: 120px 24px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
         .section-header {
             text-align: center;
-            margin-bottom: var(--space-2xl);
+            margin-bottom: 64px;
         }
 
         .section-label {
             display: inline-block;
-            padding: var(--space-xs) var(--space-md);
-            background: linear-gradient(135deg, rgba(255,20,148,0.2), rgba(153,51,255,0.2));
-            border: 1px solid var(--neon-pink);
-            border-radius: 50px;
+            padding: 6px 14px;
+            background: rgba(255,20,148,0.1);
+            border: 1px solid rgba(255,20,148,0.3);
+            border-radius: 100px;
             font-size: 12px;
             font-weight: 600;
-            color: var(--neon-pink);
+            color: var(--pink);
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: var(--space-md);
+            margin-bottom: 16px;
         }
 
         .section-title {
             font-size: clamp(32px, 5vw, 48px);
             font-weight: 800;
-            margin-bottom: var(--space-md);
             letter-spacing: -1px;
+            margin-bottom: 16px;
         }
 
-        .section-subtitle {
+        .section-sub {
             font-size: 18px;
-            color: var(--text-secondary);
-            max-width: 600px;
+            color: var(--text-dim);
+            max-width: 500px;
             margin: 0 auto;
         }
 
-        .features-grid {
+        /* Features */
+        .features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: var(--space-lg);
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 24px;
         }
 
-        .feature-card {
-            background: var(--glass-bg);
+        .feature {
+            background: var(--glass);
             border: 1px solid var(--glass-border);
-            border-radius: var(--radius-xl);
-            padding: var(--space-xl);
-            transition: all var(--transition);
-            cursor: pointer;
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s;
             position: relative;
             overflow: hidden;
         }
 
-        .feature-card::before {
+        .feature::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple), var(--neon-cyan));
+            height: 2px;
+            background: linear-gradient(90deg, var(--pink), var(--purple), var(--cyan));
             opacity: 0;
-            transition: opacity var(--transition);
+            transition: opacity 0.3s;
         }
 
-        .feature-card:hover::before {
-            opacity: 1;
+        .feature:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255,20,148,0.3);
         }
 
-        .feature-card:hover {
-            border-color: var(--glass-border-active);
-            transform: translateY(-6px);
-            box-shadow: 0 20px 40px rgba(255,20,148,0.15);
-        }
+        .feature:hover::before { opacity: 1; }
 
         .feature-icon {
-            width: 56px;
-            height: 56px;
+            width: 48px;
+            height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: linear-gradient(135deg, rgba(255,20,148,0.2), rgba(153,51,255,0.2));
-            border-radius: var(--radius-md);
-            margin-bottom: var(--space-md);
-            font-size: 28px;
+            border-radius: 12px;
+            margin-bottom: 20px;
         }
 
-        .feature-title {
+        .feature-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--pink);
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .feature h3 {
             font-size: 20px;
             font-weight: 700;
-            margin-bottom: var(--space-sm);
+            margin-bottom: 12px;
         }
 
-        .feature-desc {
+        .feature p {
             font-size: 15px;
-            color: var(--text-secondary);
+            color: var(--text-dim);
             line-height: 1.6;
-            margin-bottom: var(--space-md);
+            margin-bottom: 20px;
         }
 
-        .feature-tags {
+        .tags {
             display: flex;
             flex-wrap: wrap;
-            gap: var(--space-xs);
+            gap: 8px;
         }
 
-        .feature-tag {
+        .tag {
             padding: 4px 10px;
             background: rgba(0,255,255,0.1);
             border: 1px solid rgba(0,255,255,0.2);
-            border-radius: 50px;
+            border-radius: 100px;
             font-size: 11px;
             font-weight: 500;
-            color: var(--neon-cyan);
+            color: var(--cyan);
         }
 
-        /* Workspaces Section */
+        /* Workspaces */
         .workspaces-section {
-            padding: var(--space-3xl) var(--space-lg);
-            background: linear-gradient(180deg, transparent 0%, rgba(0,255,255,0.03) 50%, transparent 100%);
+            background: linear-gradient(180deg, transparent, rgba(153,51,255,0.03), transparent);
         }
 
-        .workspaces-grid {
-            max-width: var(--max-width);
-            margin: 0 auto;
+        .workspaces {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: var(--space-lg);
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
         }
 
-        .workspace-card {
-            background: var(--glass-bg);
+        .workspace {
+            background: var(--glass);
             border: 1px solid var(--glass-border);
-            border-radius: var(--radius-xl);
-            padding: var(--space-xl);
+            border-radius: 16px;
+            padding: 28px 20px;
             text-align: center;
-            transition: all var(--transition);
+            transition: all 0.3s;
+            cursor: pointer;
         }
 
-        .workspace-card:hover {
-            border-color: var(--neon-cyan);
+        .workspace:hover {
             transform: translateY(-4px);
+            border-color: var(--cyan);
         }
 
         .workspace-icon {
-            font-size: 48px;
-            margin-bottom: var(--space-md);
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(153,51,255,0.1));
+            border-radius: 12px;
         }
 
-        .workspace-title {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: var(--space-sm);
+        .workspace-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--cyan);
+            fill: none;
+            stroke-width: 2;
         }
 
-        .workspace-desc {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: var(--space-md);
-        }
-
-        .workspace-badge {
-            display: inline-block;
-            padding: var(--space-xs) var(--space-md);
-            background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
-            border-radius: 50px;
-            font-size: 11px;
+        .workspace h3 {
+            font-size: 16px;
             font-weight: 600;
-            color: white;
+            margin-bottom: 6px;
         }
 
-        /* CTA Section */
+        .workspace p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Testimonials */
+        .testimonials {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .testimonial {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 28px;
+        }
+
+        .testimonial-stars {
+            color: #FFD700;
+            font-size: 14px;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+
+        .testimonial p {
+            font-size: 15px;
+            color: var(--text-dim);
+            line-height: 1.7;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .testimonial-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .testimonial-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .testimonial-role {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* FAQ */
+        .faq-list {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .faq-q {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 0;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 16px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            transition: color 0.2s;
+        }
+
+        .faq-q:hover { color: var(--cyan); }
+
+        .faq-icon {
+            font-size: 20px;
+            transition: transform 0.3s;
+        }
+
+        .faq-item.open .faq-icon { transform: rotate(45deg); }
+
+        .faq-a {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s, padding 0.3s;
+        }
+
+        .faq-item.open .faq-a {
+            max-height: 200px;
+            padding-bottom: 24px;
+        }
+
+        .faq-a p {
+            color: var(--text-dim);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* CTA */
         .cta-section {
-            padding: var(--space-3xl) var(--space-lg);
-            text-align: center;
+            padding: 80px 24px;
         }
 
-        .cta-card {
+        .cta-box {
             max-width: 800px;
             margin: 0 auto;
-            background: linear-gradient(135deg, rgba(255,20,148,0.15), rgba(153,51,255,0.15));
-            border: 1px solid var(--neon-pink);
-            border-radius: var(--radius-xl);
-            padding: var(--space-3xl);
+            background: linear-gradient(135deg, rgba(255,20,148,0.1), rgba(153,51,255,0.1));
+            border: 1px solid rgba(255,20,148,0.3);
+            border-radius: 24px;
+            padding: 64px 48px;
+            text-align: center;
             position: relative;
             overflow: hidden;
         }
 
-        .cta-card::before {
+        .cta-box::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,20,148,0.1) 0%, transparent 50%);
-            animation: rotate 20s linear infinite;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: conic-gradient(from 0deg, transparent, rgba(255,20,148,0.1), transparent);
+            animation: rotate 15s linear infinite;
         }
 
         @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .cta-content {
-            position: relative;
-            z-index: 1;
-        }
+        .cta-content { position: relative; z-index: 1; }
 
-        .cta-title {
+        .cta-box h2 {
             font-size: clamp(28px, 4vw, 40px);
             font-weight: 800;
-            margin-bottom: var(--space-md);
+            margin-bottom: 16px;
         }
 
-        .cta-subtitle {
+        .cta-box p {
             font-size: 18px;
-            color: var(--text-secondary);
-            margin-bottom: var(--space-xl);
+            color: var(--text-dim);
+            margin-bottom: 32px;
         }
 
         /* Footer */
-        .footer {
-            background: var(--deep-black);
+        footer {
+            background: var(--black);
             border-top: 1px solid var(--glass-border);
-            padding: var(--space-2xl) var(--space-lg);
+            padding: 64px 24px 32px;
         }
 
         .footer-inner {
-            max-width: var(--max-width);
+            max-width: 1200px;
             margin: 0 auto;
         }
 
-        .footer-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: var(--space-2xl);
-            margin-bottom: var(--space-2xl);
-            flex-wrap: wrap;
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr repeat(3, 1fr);
+            gap: 48px;
+            margin-bottom: 48px;
         }
 
-        .footer-brand {
-            max-width: 300px;
-        }
-
-        .footer-brand .logo {
-            margin-bottom: var(--space-md);
-        }
-
-        .footer-brand-desc {
+        .footer-brand p {
             font-size: 14px;
             color: var(--text-muted);
-            margin-bottom: var(--space-md);
+            margin: 16px 0 20px;
+            max-width: 250px;
         }
 
         .social-links {
             display: flex;
-            gap: var(--space-md);
+            gap: 12px;
         }
 
         .social-link {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--glass-bg);
+            background: var(--glass);
             border: 1px solid var(--glass-border);
-            border-radius: 50%;
-            color: var(--text-secondary);
-            transition: all var(--transition);
+            border-radius: 8px;
+            color: var(--text-dim);
+            transition: all 0.2s;
         }
 
         .social-link:hover {
-            border-color: var(--neon-pink);
-            color: var(--neon-pink);
-            transform: translateY(-2px);
+            border-color: var(--pink);
+            color: var(--pink);
         }
 
-        .social-link svg {
-            width: 18px;
-            height: 18px;
-        }
-
-        .footer-links-group {
-            display: flex;
-            gap: var(--space-3xl);
-        }
+        .social-link svg { width: 16px; height: 16px; fill: currentColor; }
 
         .footer-links h4 {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            color: var(--text-primary);
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: var(--space-md);
+            margin-bottom: 16px;
+            color: var(--text);
         }
 
         .footer-links a {
@@ -834,22 +932,20 @@
             color: var(--text-muted);
             text-decoration: none;
             font-size: 14px;
-            margin-bottom: var(--space-sm);
-            transition: color var(--transition);
+            padding: 6px 0;
+            transition: color 0.2s;
         }
 
-        .footer-links a:hover {
-            color: var(--neon-cyan);
-        }
+        .footer-links a:hover { color: var(--cyan); }
 
         .footer-bottom {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-top: var(--space-xl);
+            padding-top: 32px;
             border-top: 1px solid var(--glass-border);
-            gap: var(--space-lg);
             flex-wrap: wrap;
+            gap: 16px;
         }
 
         .footer-copy {
@@ -859,398 +955,578 @@
 
         .footer-legal {
             display: flex;
-            gap: var(--space-lg);
+            gap: 24px;
         }
 
         .footer-legal a {
             font-size: 13px;
             color: var(--text-muted);
             text-decoration: none;
-            transition: color var(--transition);
         }
 
-        .footer-legal a:hover {
-            color: var(--neon-cyan);
-        }
+        .footer-legal a:hover { color: var(--cyan); }
 
         .footer-disclaimer {
             width: 100%;
+            text-align: center;
+            padding-top: 24px;
             font-size: 11px;
             color: var(--text-muted);
-            text-align: center;
-            padding-top: var(--space-md);
-            opacity: 0.7;
+            opacity: 0.6;
         }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        /* Mobile */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 68px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10,10,15,0.98);
+            backdrop-filter: blur(20px);
+            padding: 32px 24px;
+            z-index: 99;
+            transform: translateX(100%);
+            transition: transform 0.3s;
         }
 
-        @media (max-width: 768px) {
-            .nav-links { display: none; }
-            .hamburger-btn { display: flex; }
-            .hero { padding-top: 100px; min-height: auto; }
-            .hero-cta-group { flex-direction: column; align-items: center; }
-            .btn-primary, .btn-secondary { width: 100%; max-width: 300px; justify-content: center; }
-            .platform-strip { flex-wrap: wrap; justify-content: center; gap: var(--space-lg); }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .features-grid { grid-template-columns: 1fr; }
-            .workspaces-grid { grid-template-columns: 1fr; }
-            .footer-top { flex-direction: column; }
-            .footer-links-group { flex-direction: column; gap: var(--space-xl); }
+        .mobile-menu.active { transform: translateX(0); }
+
+        .mobile-menu ul { list-style: none; }
+
+        .mobile-menu a {
+            display: block;
+            padding: 16px 0;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 500;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .mobile-menu .btn {
+            width: 100%;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .nav-links, .nav > .nav-cta { display: none; }
+            .menu-toggle { display: block; }
+            .mobile-menu { display: block; }
+            .demo-content { grid-template-columns: 1fr; height: auto; }
+            .demo-content > div { min-height: 120px; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            .hero-buttons { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 280px; justify-content: center; }
+            .stats-bar { gap: 24px; }
+            .features { grid-template-columns: 1fr; }
+            .workspaces { grid-template-columns: repeat(2, 1fr); }
+            .footer-grid { grid-template-columns: 1fr; }
             .footer-bottom { flex-direction: column; text-align: center; }
         }
 
-        @media (max-width: 480px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            .platform-strip { gap: var(--space-md); }
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s, transform 0.6s;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="bg-gradient"></div>
-    <div class="bg-grid"></div>
+    <div class="vaporwave-bg"></div>
+    <div class="grid-perspective"></div>
+    <div class="ambient"></div>
 
-    <a href="#main" class="skip-link">Skip to content</a>
-
-    <header class="header" role="banner">
-        <div class="header-inner">
-            <a href="index.html" class="logo" aria-label="Echoelmusic Home">
-                <div class="logo-icon">
-                    <svg viewBox="0 0 100 100" fill="none">
-                        <defs>
-                            <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#FF1494"/>
-                                <stop offset="50%" stop-color="#9933FF"/>
-                                <stop offset="100%" stop-color="#00FFFF"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M50 82 C32 64 15 50 15 34 C15 22 25 12 37 12 C45 12 50 18 50 18 C50 18 55 12 63 12 C75 12 85 22 85 34 C85 50 68 64 50 82Z" fill="url(#logo-grad)" opacity="0.9"/>
-                        <path d="M28 44 Q35 44 38 38 Q41 32 44 38 Q47 44 50 32 Q53 44 56 38 Q59 32 62 38 Q65 44 72 44" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
-                    </svg>
-                </div>
+    <header>
+        <nav>
+            <a href="/" class="logo">
+                <svg viewBox="0 0 100 100" fill="none">
+                    <defs>
+                        <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FF1494"/>
+                            <stop offset="50%" stop-color="#9933FF"/>
+                            <stop offset="100%" stop-color="#00FFFF"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M50 85 C30 65 12 48 12 30 C12 16 24 6 38 6 C46 6 50 12 50 12 C50 12 54 6 62 6 C76 6 88 16 88 30 C88 48 70 65 50 85Z" fill="url(#lg)"/>
+                    <path d="M26 42 Q34 42 38 35 Q42 28 46 35 Q50 42 50 28 Q50 42 54 35 Q58 28 62 35 Q66 42 74 42" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                </svg>
                 <span class="logo-text">ECHOELMUSIC</span>
             </a>
-            <nav class="nav-links" aria-label="Main navigation">
-                <a href="#features">Features</a>
-                <a href="#workspaces">Workspaces</a>
-                <a href="use-cases.html">Use Cases</a>
-                <a href="support.html">Support</a>
-                <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="nav-cta">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                    Download
-                </a>
-            </nav>
-            <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="Menu" aria-expanded="false">
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#workspaces">Workspaces</a></li>
+                <li><a href="#reviews">Reviews</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="support.html">Support</a></li>
+            </ul>
+            <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="nav-cta">Download</a>
+            <button class="menu-toggle" id="menuToggle" aria-label="Menu">
                 <span></span>
                 <span></span>
                 <span></span>
             </button>
-        </div>
+        </nav>
     </header>
 
-    <main id="main" role="main">
-        <!-- Hero -->
-        <section class="hero" aria-labelledby="hero-title">
-            <div class="hero-badge">
-                <span class="hero-badge-dot"></span>
-                <span>Bio-Reactive Production Platform</span>
-            </div>
+    <div class="mobile-menu" id="mobileMenu">
+        <ul>
+            <li><a href="#features" onclick="closeMenu()">Features</a></li>
+            <li><a href="#workspaces" onclick="closeMenu()">Workspaces</a></li>
+            <li><a href="#reviews" onclick="closeMenu()">Reviews</a></li>
+            <li><a href="#faq" onclick="closeMenu()">FAQ</a></li>
+            <li><a href="support.html">Support</a></li>
+        </ul>
+        <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="btn btn-primary">Download Free</a>
+    </div>
 
-            <h1 id="hero-title" class="hero-title">
-                <span class="hero-title-line gradient-pink">Create with your</span>
-                <span class="hero-title-line gradient-cyan">Heartbeat</span>
+    <main>
+        <section class="hero">
+            <span class="hero-label">Bio-Reactive Music Production</span>
+
+            <h1 class="hero-mantra">
+                <span class="mantra-line"><span class="gradient">FINDE</span> DEINEN KLANG</span>
+                <span class="mantra-line"><span class="gradient">FÜHLE</span> DEINE SEELE</span>
+                <span class="mantra-line"><span class="gradient">FOKUSSIERE</span> DEINEN GEIST</span>
             </h1>
 
-            <p class="hero-subtitle">
-                Professional DAW, video editor, VJ controls, and AI tools that respond to your biometrics in real-time. Music, visuals, and light - all connected to your body.
-            </p>
+            <p class="hero-sub">Bio-reaktive Musikproduktion. Dein Herzschlag steuert den Sound. Kostenlos auf allen Apple-Geräten.</p>
 
-            <div class="hero-cta-group">
-                <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="btn-primary">
+            <div class="hero-buttons">
+                <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="btn btn-primary">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
                     Download Free
                 </a>
-                <a href="#features" class="btn-secondary">
-                    Explore Features
+                <a href="#features" class="btn btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Learn More
                 </a>
             </div>
 
-            <div class="platform-strip">
-                <div class="platform-item">
-                    <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
-                    <span class="platform-label">iPhone</span>
+            <div class="demo">
+                <div class="demo-frame">
+                    <div class="demo-header">
+                        <div class="demo-dot"></div>
+                        <div class="demo-dot"></div>
+                        <div class="demo-dot"></div>
+                    </div>
+                    <div class="demo-content">
+                        <div class="demo-panel demo-bio">
+                            <div class="heart-ring">
+                                <span class="bpm">72</span>
+                            </div>
+                            <span class="bpm-label">Heart Rate</span>
+                            <div class="coherence-bar">
+                                <div class="coherence-fill"></div>
+                            </div>
+                            <span class="bpm-label">Coherence 78%</span>
+                        </div>
+                        <div class="demo-panel demo-waveform">
+                            <div class="wave-bar" style="animation-delay:0s"></div>
+                            <div class="wave-bar" style="animation-delay:0.1s"></div>
+                            <div class="wave-bar" style="animation-delay:0.2s"></div>
+                            <div class="wave-bar" style="animation-delay:0.3s"></div>
+                            <div class="wave-bar" style="animation-delay:0.4s"></div>
+                            <div class="wave-bar" style="animation-delay:0.5s"></div>
+                            <div class="wave-bar" style="animation-delay:0.6s"></div>
+                            <div class="wave-bar" style="animation-delay:0.7s"></div>
+                            <div class="wave-bar" style="animation-delay:0.8s"></div>
+                            <div class="wave-bar" style="animation-delay:0.9s"></div>
+                            <div class="wave-bar" style="animation-delay:1s"></div>
+                            <div class="wave-bar" style="animation-delay:1.1s"></div>
+                            <div class="wave-bar" style="animation-delay:0.15s"></div>
+                            <div class="wave-bar" style="animation-delay:0.25s"></div>
+                            <div class="wave-bar" style="animation-delay:0.35s"></div>
+                        </div>
+                        <div class="demo-panel demo-visual">
+                            <div class="visual-sphere"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="platform-item">
-                    <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>
-                    <span class="platform-label">iPad</span>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat">
+                    <div class="stat-value"><strong>100+</strong> Instruments</div>
                 </div>
-                <div class="platform-item">
-                    <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v12H4V4zm16-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h6v2H8v2h8v-2h-2v-2h6c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-                    <span class="platform-label">Mac</span>
+                <div class="stat">
+                    <div class="stat-value"><strong>60+</strong> Effects</div>
                 </div>
-                <div class="platform-item">
-                    <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                    <span class="platform-label">Watch</span>
+                <div class="stat">
+                    <div class="stat-value"><strong>&lt;10ms</strong> Latency</div>
                 </div>
-                <div class="platform-item">
-                    <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/></svg>
-                    <span class="platform-label">TV</span>
+                <div class="stat">
+                    <div class="stat-value"><strong>6</strong> Platforms</div>
                 </div>
-                <div class="platform-item">
-                    <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                    <span class="platform-label">Vision Pro</span>
+                <div class="stat">
+                    <div class="stat-value"><strong>Free</strong></div>
                 </div>
             </div>
         </section>
 
-        <!-- Stats -->
-        <section class="stats-section" aria-label="Platform statistics">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value">100+</div>
-                    <div class="stat-label">Instruments</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">60+</div>
-                    <div class="stat-label">DSP Effects</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">&lt;10ms</div>
-                    <div class="stat-label">Latency</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">37</div>
-                    <div class="stat-label">Languages</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Features -->
-        <section id="features" class="features-section" aria-labelledby="features-title">
+        <section id="features">
             <div class="section-header">
                 <span class="section-label">Features</span>
-                <h2 id="features-title" class="section-title">Everything You Need to Create</h2>
-                <p class="section-subtitle">Professional bio-reactive audio, video, and lighting in one unified platform</p>
+                <h2 class="section-title">Professional Tools, Bio-Reactive</h2>
+                <p class="section-sub">Everything you need to create music, video, and live visuals</p>
             </div>
 
-            <div class="features-grid">
-                <article class="feature-card">
-                    <div class="feature-icon">💓</div>
-                    <h3 class="feature-title">Bio-Reactive Engine</h3>
-                    <p class="feature-desc">Heart rate, HRV, and coherence control your sound in real-time. 60Hz bio-sync with Apple Watch integration.</p>
-                    <div class="feature-tags">
-                        <span class="feature-tag">HRV Mapping</span>
-                        <span class="feature-tag">Coherence Score</span>
-                        <span class="feature-tag">Apple Watch</span>
+            <div class="features">
+                <article class="feature fade-in">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </div>
+                    <h3>Bio-Reactive Engine</h3>
+                    <p>Your heart rate, HRV, and coherence drive the music. 60Hz real-time sync with Apple Watch. Enter flow state and transform your sound.</p>
+                    <div class="tags">
+                        <span class="tag">Apple Watch</span>
+                        <span class="tag">HRV</span>
+                        <span class="tag">Coherence</span>
                     </div>
                 </article>
 
-                <article class="feature-card">
-                    <div class="feature-icon">🎹</div>
-                    <h3 class="feature-title">Full DAW</h3>
-                    <p class="feature-desc">Professional arrangement view, MIDI editing, multi-track recording. Ableton/FL Studio-inspired workflow.</p>
-                    <div class="feature-tags">
-                        <span class="feature-tag">MIDI 2.0</span>
-                        <span class="feature-tag">MPE</span>
-                        <span class="feature-tag">Multi-Track</span>
+                <article class="feature fade-in">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    </div>
+                    <h3>Professional DAW</h3>
+                    <p>Full arrangement view, MIDI 2.0 + MPE, multi-track recording. Inspired by Ableton and FL Studio, built for bio-reactive creation.</p>
+                    <div class="tags">
+                        <span class="tag">MIDI 2.0</span>
+                        <span class="tag">MPE</span>
+                        <span class="tag">Multi-Track</span>
                     </div>
                 </article>
 
-                <article class="feature-card">
-                    <div class="feature-icon">🎬</div>
-                    <h3 class="feature-title">Video Editor</h3>
-                    <p class="feature-desc">DaVinci-inspired timeline with 50+ effects. Bio-reactive video processing up to 16K resolution.</p>
-                    <div class="feature-tags">
-                        <span class="feature-tag">16K Support</span>
-                        <span class="feature-tag">AI Effects</span>
-                        <span class="feature-tag">Beat Sync</span>
+                <article class="feature fade-in">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    </div>
+                    <h3>Video Editor</h3>
+                    <p>Timeline editing with 50+ AI effects. Bio-reactive video processing up to 16K. Beat-sync your edits automatically.</p>
+                    <div class="tags">
+                        <span class="tag">16K</span>
+                        <span class="tag">AI Effects</span>
+                        <span class="tag">Beat Sync</span>
                     </div>
                 </article>
 
-                <article class="feature-card">
-                    <div class="feature-icon">💡</div>
-                    <h3 class="feature-title">VJ & Laser Control</h3>
-                    <p class="feature-desc">Resolume-style layer control, ILDA laser patterns, DMX/Art-Net lighting. Your heartbeat drives the show.</p>
-                    <div class="feature-tags">
-                        <span class="feature-tag">ILDA Laser</span>
-                        <span class="feature-tag">DMX 512</span>
-                        <span class="feature-tag">Art-Net</span>
+                <article class="feature fade-in">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    </div>
+                    <h3>VJ & Laser Control</h3>
+                    <p>Real-time visual mixing, ILDA laser patterns, DMX/Art-Net output. Your heartbeat drives the entire light show.</p>
+                    <div class="tags">
+                        <span class="tag">ILDA</span>
+                        <span class="tag">DMX</span>
+                        <span class="tag">Art-Net</span>
                     </div>
                 </article>
 
-                <article class="feature-card">
-                    <div class="feature-icon">🔗</div>
-                    <h3 class="feature-title">Node Editor</h3>
-                    <p class="feature-desc">TouchDesigner-style visual programming. Connect bio signals, audio, and visuals with drag-and-drop nodes.</p>
-                    <div class="feature-tags">
-                        <span class="feature-tag">Visual Programming</span>
-                        <span class="feature-tag">Custom Chains</span>
+                <article class="feature fade-in">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </div>
+                    <h3>Node Editor</h3>
+                    <p>Visual programming for advanced users. Connect bio signals, audio, and visuals with intuitive drag-and-drop nodes.</p>
+                    <div class="tags">
+                        <span class="tag">Visual</span>
+                        <span class="tag">Modular</span>
                     </div>
                 </article>
 
-                <article class="feature-card">
-                    <div class="feature-icon">🧠</div>
-                    <h3 class="feature-title">AI Tools</h3>
-                    <p class="feature-desc">Super Intelligence AI for composition, mixing, mastering, sound design, and video editing.</p>
-                    <div class="feature-tags">
-                        <span class="feature-tag">AI Composer</span>
-                        <span class="feature-tag">Auto-Master</span>
-                        <span class="feature-tag">Sound DNA</span>
+                <article class="feature fade-in">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17v.01"/><path d="M7 14v.01"/></svg>
+                    </div>
+                    <h3>AI Tools</h3>
+                    <p>AI-powered composition, mixing, mastering, and sound design. Generate unique sounds from your biometric signature.</p>
+                    <div class="tags">
+                        <span class="tag">Composer</span>
+                        <span class="tag">Master</span>
+                        <span class="tag">Design</span>
                     </div>
                 </article>
             </div>
         </section>
 
-        <!-- Workspaces -->
-        <section id="workspaces" class="workspaces-section" aria-labelledby="workspaces-title">
+        <div class="workspaces-section">
+            <section id="workspaces">
+                <div class="section-header">
+                    <span class="section-label">Workspaces</span>
+                    <h2 class="section-title">One App, Six Modes</h2>
+                    <p class="section-sub">Switch seamlessly between professional creative environments</p>
+                </div>
+
+                <div class="workspaces">
+                    <div class="workspace fade-in">
+                        <div class="workspace-icon">
+                            <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        </div>
+                        <h3>Palace</h3>
+                        <p>Bio-reactive performance</p>
+                    </div>
+                    <div class="workspace fade-in">
+                        <div class="workspace-icon">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        </div>
+                        <h3>DAW</h3>
+                        <p>Arrangement view</p>
+                    </div>
+                    <div class="workspace fade-in">
+                        <div class="workspace-icon">
+                            <svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>
+                        </div>
+                        <h3>Session</h3>
+                        <p>Clip launcher</p>
+                    </div>
+                    <div class="workspace fade-in">
+                        <div class="workspace-icon">
+                            <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                        </div>
+                        <h3>Video</h3>
+                        <p>Timeline editing</p>
+                    </div>
+                    <div class="workspace fade-in">
+                        <div class="workspace-icon">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/></svg>
+                        </div>
+                        <h3>VJ/Laser</h3>
+                        <p>Visual mixing</p>
+                    </div>
+                    <div class="workspace fade-in">
+                        <div class="workspace-icon">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33"/></svg>
+                        </div>
+                        <h3>Nodes</h3>
+                        <p>Visual programming</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <section id="reviews">
             <div class="section-header">
-                <span class="section-label">Workspaces</span>
-                <h2 id="workspaces-title" class="section-title">One App, All Your Creative Needs</h2>
-                <p class="section-subtitle">Switch seamlessly between professional workspaces</p>
+                <span class="section-label">Reviews</span>
+                <h2 class="section-title">What Creators Say</h2>
             </div>
 
-            <div class="workspaces-grid">
-                <div class="workspace-card">
-                    <div class="workspace-icon">🎛️</div>
-                    <h3 class="workspace-title">Palace</h3>
-                    <p class="workspace-desc">Bio-reactive performance mode with live visualizations and real-time parameter control.</p>
-                    <span class="workspace-badge">Bio-Reactive</span>
+            <div class="testimonials">
+                <div class="testimonial fade-in">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p>"Finally an app that connects my body to my music. The Apple Watch integration is seamless. I've never felt so connected to my productions."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">MK</div>
+                        <div>
+                            <div class="testimonial-name">Marcus K.</div>
+                            <div class="testimonial-role">Producer</div>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="workspace-card">
-                    <div class="workspace-icon">🎹</div>
-                    <h3 class="workspace-title">DAW</h3>
-                    <p class="workspace-desc">Full arrangement view for music production with MIDI, audio tracks, and automation.</p>
-                    <span class="workspace-badge">Production</span>
+                <div class="testimonial fade-in">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p>"The VJ controls are incredible. I run entire light shows from my iPad with my heart rate driving the intensity. Game changer for live performances."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">SL</div>
+                        <div>
+                            <div class="testimonial-name">Sarah L.</div>
+                            <div class="testimonial-role">Visual Artist</div>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="workspace-card">
-                    <div class="workspace-icon">🎚️</div>
-                    <h3 class="workspace-title">Session</h3>
-                    <p class="workspace-desc">Ableton-style clip launcher with scene triggering and live performance tools.</p>
-                    <span class="workspace-badge">Live</span>
-                </div>
-
-                <div class="workspace-card">
-                    <div class="workspace-icon">🎬</div>
-                    <h3 class="workspace-title">Video</h3>
-                    <p class="workspace-desc">Professional timeline editing with AI effects, color grading, and beat-sync.</p>
-                    <span class="workspace-badge">Video</span>
-                </div>
-
-                <div class="workspace-card">
-                    <div class="workspace-icon">💡</div>
-                    <h3 class="workspace-title">VJ/Laser</h3>
-                    <p class="workspace-desc">Real-time visual mixing with layer compositing, laser control, and DMX output.</p>
-                    <span class="workspace-badge">Lighting</span>
-                </div>
-
-                <div class="workspace-card">
-                    <div class="workspace-icon">🔗</div>
-                    <h3 class="workspace-title">Nodes</h3>
-                    <p class="workspace-desc">Visual programming for custom bio-reactive effects and signal routing.</p>
-                    <span class="workspace-badge">Advanced</span>
+                <div class="testimonial fade-in">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p>"I use it for meditation music. When I'm calm, the music is calm. When I'm energized, it responds. It's like the app reads my state."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">JT</div>
+                        <div>
+                            <div class="testimonial-name">James T.</div>
+                            <div class="testimonial-role">Wellness Creator</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- CTA -->
-        <section class="cta-section">
-            <div class="cta-card">
+        <section id="faq">
+            <div class="section-header">
+                <span class="section-label">FAQ</span>
+                <h2 class="section-title">Questions & Answers</h2>
+            </div>
+
+            <div class="faq-list">
+                <div class="faq-item">
+                    <button class="faq-q" onclick="toggleFaq(this)">
+                        <span>Is Echoelmusic really free?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-a">
+                        <p>Yes. All core features including the DAW, video editor, bio-reactive engine, and VJ controls are free. No subscription required.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-q" onclick="toggleFaq(this)">
+                        <span>Do I need an Apple Watch?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-a">
+                        <p>No. Apple Watch provides the best real-time biometric data, but Echoelmusic works without it. You can use simulation mode or connect other devices.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-q" onclick="toggleFaq(this)">
+                        <span>Which devices are supported?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-a">
+                        <p>iPhone (iOS 15+), iPad, Mac (macOS 12+), Apple Watch, Apple TV, and Vision Pro. One download works across all your devices.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-q" onclick="toggleFaq(this)">
+                        <span>Is it a medical device?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-a">
+                        <p>No. Echoelmusic is a creative tool for artistic expression, not a medical device. Biofeedback features are for relaxation and creative purposes only.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-q" onclick="toggleFaq(this)">
+                        <span>Can I export my work?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-a">
+                        <p>Yes. Export audio as WAV, AIFF, MP3, AAC. Video supports H.264, H.265, ProRes up to 16K. You own everything you create.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="cta-section">
+            <div class="cta-box">
                 <div class="cta-content">
-                    <h2 class="cta-title">Start Creating Today</h2>
-                    <p class="cta-subtitle">Download Echoelmusic free and transform your creativity with bio-reactive tools.</p>
-                    <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="btn-primary">
-                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                    <h2>Start Creating Today</h2>
+                    <p>Download free and transform your creativity with bio-reactive tools.</p>
+                    <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="btn btn-primary">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
                         Download from App Store
                     </a>
                 </div>
             </div>
-        </section>
+        </div>
     </main>
 
-    <footer class="footer" role="contentinfo">
+    <footer>
         <div class="footer-inner">
-            <div class="footer-top">
+            <div class="footer-grid">
                 <div class="footer-brand">
-                    <a href="index.html" class="logo">
-                        <div class="logo-icon">
-                            <svg viewBox="0 0 100 100" fill="none">
-                                <defs>
-                                    <linearGradient id="logo-grad-footer" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="#FF1494"/>
-                                        <stop offset="50%" stop-color="#9933FF"/>
-                                        <stop offset="100%" stop-color="#00FFFF"/>
-                                    </linearGradient>
-                                </defs>
-                                <path d="M50 82 C32 64 15 50 15 34 C15 22 25 12 37 12 C45 12 50 18 50 18 C50 18 55 12 63 12 C75 12 85 22 85 34 C85 50 68 64 50 82Z" fill="url(#logo-grad-footer)" opacity="0.9"/>
-                                <path d="M28 44 Q35 44 38 38 Q41 32 44 38 Q47 44 50 32 Q53 44 56 38 Q59 32 62 38 Q65 44 72 44" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
-                            </svg>
-                        </div>
+                    <a href="/" class="logo">
+                        <svg viewBox="0 0 100 100" fill="none" width="32" height="32">
+                            <defs><linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF1494"/><stop offset="50%" stop-color="#9933FF"/><stop offset="100%" stop-color="#00FFFF"/></linearGradient></defs>
+                            <path d="M50 85 C30 65 12 48 12 30 C12 16 24 6 38 6 C46 6 50 12 50 12 C50 12 54 6 62 6 C76 6 88 16 88 30 C88 48 70 65 50 85Z" fill="url(#lg2)"/>
+                            <path d="M26 42 Q34 42 38 35 Q42 28 46 35 Q50 42 50 28 Q50 42 54 35 Q58 28 62 35 Q66 42 74 42" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        </svg>
                         <span class="logo-text">ECHOELMUSIC</span>
                     </a>
-                    <p class="footer-brand-desc">Bio-reactive audio-visual production platform. Create with your heartbeat.</p>
+                    <p>Bio-reactive audio-visual production. Create with your heartbeat.</p>
                     <div class="social-links">
-                        <a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener" class="social-link" aria-label="Instagram">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                        <a href="https://instagram.com/echoelmusic" class="social-link" aria-label="Instagram">
+                            <svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8 0 3.2 0 3.6-.1 4.8-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.9.1-3.2 0-3.6 0-4.8-.1-3.3-.1-4.8-1.7-4.9-4.9-.1-1.3-.1-1.6-.1-4.8 0-3.2 0-3.6.1-4.8.1-3.2 1.7-4.8 4.9-4.9 1.3-.1 1.6-.1 4.8-.1zM12 0C8.7 0 8.3 0 7 .1 2.7.3.3 2.7.1 7 0 8.3 0 8.7 0 12s0 3.7.1 5c.2 4.3 2.6 6.7 6.9 6.9 1.3.1 1.7.1 5 .1s3.7 0 5-.1c4.3-.2 6.7-2.6 6.9-6.9.1-1.3.1-1.7.1-5s0-3.7-.1-5c-.2-4.3-2.6-6.7-6.9-6.9C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.8a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8z"/></svg>
                         </a>
-                        <a href="https://youtube.com/@echoelmusic" target="_blank" rel="noopener" class="social-link" aria-label="YouTube">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                        <a href="https://youtube.com/@echoelmusic" class="social-link" aria-label="YouTube">
+                            <svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5a3 3 0 0 0-2.1 2.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.5 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
                         </a>
-                        <a href="https://tiktok.com/@echoelmusic" target="_blank" rel="noopener" class="social-link" aria-label="TikTok">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
-                        </a>
-                        <a href="https://twitch.tv/echoelmusic" target="_blank" rel="noopener" class="social-link" aria-label="Twitch">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+                        <a href="https://tiktok.com/@echoelmusic" class="social-link" aria-label="TikTok">
+                            <svg viewBox="0 0 24 24"><path d="M12.5 0c1.3 0 2.6 0 3.9 0 .1 1.5.6 3.1 1.8 4.2 1.1 1.1 2.7 1.6 4.2 1.8v4c-1.4 0-2.9-.4-4.2-1-.6-.3-1.1-.6-1.6-.9 0 2.9 0 5.8 0 8.8-.1 1.4-.5 2.8-1.4 3.9-1.3 1.9-3.6 3.2-5.9 3.2-1.4.1-2.9-.3-4.1-1-2-1.2-3.4-3.4-3.6-5.7 0-.5 0-1 0-1.5.2-1.9 1.1-3.7 2.6-5 1.7-1.4 4-2.1 6.2-1.7v4.4c-1-.3-2.2-.2-3 .4-.6.4-1 1-1.4 1.6-.2.5-.2 1-.1 1.6.2 1.6 1.8 3 3.5 2.9 1.1 0 2.2-.6 2.8-1.6.2-.4.3-.8.3-1.2V0h.1z"/></svg>
                         </a>
                     </div>
                 </div>
-                <div class="footer-links-group">
-                    <div class="footer-links">
-                        <h4>Product</h4>
-                        <a href="#features">Features</a>
-                        <a href="#workspaces">Workspaces</a>
-                        <a href="use-cases.html">Use Cases</a>
-                        <a href="faq.html">FAQ</a>
-                    </div>
-                    <div class="footer-links">
-                        <h4>Support</h4>
-                        <a href="support.html">Help Center</a>
-                        <a href="health.html">Health Info</a>
-                    </div>
-                    <div class="footer-links">
-                        <h4>Legal</h4>
-                        <a href="privacy.html">Privacy</a>
-                        <a href="terms.html">Terms</a>
-                        <a href="impressum.html">Imprint</a>
-                    </div>
+                <div class="footer-links">
+                    <h4>Product</h4>
+                    <a href="#features">Features</a>
+                    <a href="#workspaces">Workspaces</a>
+                    <a href="#faq">FAQ</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Support</h4>
+                    <a href="support.html">Help Center</a>
+                    <a href="health.html">Health Info</a>
+                    <a href="mailto:support@echoelmusic.com">Contact</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Legal</h4>
+                    <a href="privacy.html">Privacy</a>
+                    <a href="terms.html">Terms</a>
+                    <a href="impressum.html">Imprint</a>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p class="footer-copy">&copy; 2026 Echoelmusic. All rights reserved.</p>
+                <p class="footer-copy">© 2026 Echoelmusic</p>
                 <div class="footer-legal">
-                    <a href="privacy.html">Privacy Policy</a>
-                    <a href="terms.html">Terms of Service</a>
+                    <a href="privacy.html">Privacy</a>
+                    <a href="terms.html">Terms</a>
                 </div>
             </div>
-            <p class="footer-disclaimer">Creative tool for artistic exploration. Not a medical device. Biofeedback features are for relaxation and creative purposes only.</p>
+            <p class="footer-disclaimer">Creative tool for artistic expression. Not a medical device.</p>
         </div>
     </footer>
 
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(() => {});
+        // Mobile Menu
+        const toggle = document.getElementById('menuToggle');
+        const menu = document.getElementById('mobileMenu');
+
+        toggle.addEventListener('click', () => {
+            toggle.classList.toggle('active');
+            menu.classList.toggle('active');
+            document.body.style.overflow = menu.classList.contains('active') ? 'hidden' : '';
+        });
+
+        function closeMenu() {
+            toggle.classList.remove('active');
+            menu.classList.remove('active');
+            document.body.style.overflow = '';
         }
 
-        function toggleMobileMenu() {
-            const btn = document.getElementById('hamburgerBtn');
-            const isOpen = btn.classList.toggle('open');
-            btn.setAttribute('aria-expanded', isOpen);
+        // FAQ
+        function toggleFaq(btn) {
+            const item = btn.parentElement;
+            const wasOpen = item.classList.contains('open');
+            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+            if (!wasOpen) item.classList.add('open');
         }
+
+        // Scroll animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
     </script>
 </body>
 </html>
+<!-- Updated: Wed Jan 28 21:58:38 UTC 2026 -->
