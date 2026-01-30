@@ -30,15 +30,31 @@ BUILD_NUMBER = ENV["BUILD_NUMBER"] || "1"
 # =============================================================================
 
 def setup_api_key
-  UI.user_error!("ASC_KEY_ID not set") unless ENV["ASC_KEY_ID"]
-  UI.user_error!("ASC_ISSUER_ID not set") unless ENV["ASC_ISSUER_ID"]
-  UI.user_error!("ASC_KEY_CONTENT not set") unless ENV["ASC_KEY_CONTENT"]
-  UI.user_error!("APPLE_TEAM_ID not set") unless ENV["APPLE_TEAM_ID"]
+  # Validate all required environment variables with helpful messages
+  missing = []
+  missing << "ASC_KEY_ID" unless ENV["ASC_KEY_ID"]&.length.to_i > 0
+  missing << "ASC_ISSUER_ID" unless ENV["ASC_ISSUER_ID"]&.length.to_i > 0
+  missing << "ASC_KEY_CONTENT" unless ENV["ASC_KEY_CONTENT"]&.length.to_i > 0
+  missing << "APPLE_TEAM_ID" unless ENV["APPLE_TEAM_ID"]&.length.to_i > 0
 
+  unless missing.empty?
+    UI.error("Missing required environment variables: #{missing.join(', ')}")
+    UI.error("Set these in GitHub Secrets or environment")
+    UI.user_error!("Cannot proceed without App Store Connect credentials")
+  end
+
+  # Validate key format
+  key_content = ENV["ASC_KEY_CONTENT"]
+  unless key_content.include?("BEGIN") && key_content.include?("PRIVATE KEY")
+    UI.important("Warning: ASC_KEY_CONTENT may not be in correct PEM format")
+    UI.message("Expected format: -----BEGIN PRIVATE KEY-----...-----END PRIVATE KEY-----")
+  end
+
+  UI.message("Setting up App Store Connect API key...")
   app_store_connect_api_key(
     key_id: ENV["ASC_KEY_ID"],
     issuer_id: ENV["ASC_ISSUER_ID"],
-    key_content: ENV["ASC_KEY_CONTENT"],
+    key_content: key_content,
     is_key_content_base64: false,
     in_house: false
   )
@@ -194,17 +210,33 @@ def cleanup_certificates(api_key)
   end
 end
 
-def upload_to_testflight_with_retry(api_key, changelog)
+def upload_to_testflight_with_retry(api_key, changelog, max_retries: 3)
   UI.message("Uploading to TestFlight...")
-  upload_to_testflight(
-    api_key: api_key,
-    skip_waiting_for_build_processing: true,
-    distribute_external: false,
-    notify_external_testers: false,
-    changelog: changelog,
-    reject_build_waiting_for_review: false
-  )
-  UI.success("Successfully uploaded to TestFlight!")
+
+  retries = 0
+  begin
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,
+      notify_external_testers: false,
+      changelog: changelog,
+      reject_build_waiting_for_review: false
+    )
+    UI.success("Successfully uploaded to TestFlight!")
+  rescue => e
+    retries += 1
+    if retries <= max_retries
+      delay = 30 * retries  # 30s, 60s, 90s
+      UI.important("Upload failed (attempt #{retries}/#{max_retries}): #{e.message}")
+      UI.message("Retrying in #{delay} seconds...")
+      sleep(delay)
+      retry
+    else
+      UI.error("Upload failed after #{max_retries} attempts")
+      raise e
+    end
+  end
 end
 
 # =============================================================================
