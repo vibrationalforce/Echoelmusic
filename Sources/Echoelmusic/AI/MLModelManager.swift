@@ -906,7 +906,12 @@ class MLModelManager {
         ]
 
         for modelType in criticalModels {
-            try? await loadModel(modelType)
+            do {
+                try await loadModel(modelType)
+            } catch {
+                log.ai("⚠️ Failed to preload critical model \(modelType): \(error.localizedDescription)", level: .warning)
+                // Continue loading other models - don't fail entire preload
+            }
         }
     }
 }

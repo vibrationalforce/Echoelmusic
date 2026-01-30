@@ -319,16 +319,37 @@ public final class RealTimeHealthKitEngine: ObservableObject {
             return false
         }
 
-        let typesToRead: Set<HKObjectType> = [
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
-            HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
-            HKObjectType.quantityType(forIdentifier: .respiratoryRate)!,
-            HKObjectType.quantityType(forIdentifier: .oxygenSaturation)!,
-            HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
-            HKObjectType.quantityType(forIdentifier: .stepCount)!,
-            HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!,
-            HKObjectType.categoryType(forIdentifier: .mindfulSession)!
-        ]
+        // Build types set safely without force unwrapping
+        var typesToRead: Set<HKObjectType> = []
+        if let heartRate = HKObjectType.quantityType(forIdentifier: .heartRate) {
+            typesToRead.insert(heartRate)
+        }
+        if let hrv = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) {
+            typesToRead.insert(hrv)
+        }
+        if let respRate = HKObjectType.quantityType(forIdentifier: .respiratoryRate) {
+            typesToRead.insert(respRate)
+        }
+        if let spo2 = HKObjectType.quantityType(forIdentifier: .oxygenSaturation) {
+            typesToRead.insert(spo2)
+        }
+        if let energy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
+            typesToRead.insert(energy)
+        }
+        if let steps = HKObjectType.quantityType(forIdentifier: .stepCount) {
+            typesToRead.insert(steps)
+        }
+        if let distance = HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning) {
+            typesToRead.insert(distance)
+        }
+        if let mindful = HKObjectType.categoryType(forIdentifier: .mindfulSession) {
+            typesToRead.insert(mindful)
+        }
+
+        guard !typesToRead.isEmpty else {
+            log.biofeedback("❤️ No HealthKit types available on this device", level: .warning)
+            return false
+        }
 
         do {
             try await healthStore.requestAuthorization(toShare: [], read: typesToRead)

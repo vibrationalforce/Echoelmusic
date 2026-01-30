@@ -29,6 +29,23 @@ class PerformanceOptimizer: ObservableObject {
     private var lastFrameTime: CFAbsoluteTime = 0
     private let logger = echoelLog
 
+    // MARK: - Resource Management (Timer & Observer Storage)
+
+    private var metricsTimer: Timer?
+    private var batteryTimer: Timer?
+    private var thermalObserver: NSObjectProtocol?
+
+    deinit {
+        // Clean up timers
+        metricsTimer?.invalidate()
+        batteryTimer?.invalidate()
+
+        // Remove notification observer
+        if let observer = thermalObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+
     // MARK: - Thermal State
 
     enum ThermalState: String {
@@ -188,16 +205,16 @@ class PerformanceOptimizer: ObservableObject {
     // MARK: - Start Monitoring
 
     private func startMonitoring() {
-        // Monitor FPS
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+        // Monitor FPS - store timer reference for cleanup
+        metricsTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updateMetrics()
             }
         }
 
-        // Monitor thermal state
+        // Monitor thermal state - store observer reference for cleanup
         #if os(iOS)
-        NotificationCenter.default.addObserver(
+        thermalObserver = NotificationCenter.default.addObserver(
             forName: ProcessInfo.thermalStateDidChangeNotification,
             object: nil,
             queue: .main
@@ -208,10 +225,10 @@ class PerformanceOptimizer: ObservableObject {
         }
         #endif
 
-        // Monitor battery
+        // Monitor battery - store timer reference for cleanup
         #if os(iOS)
         UIDevice.current.isBatteryMonitoringEnabled = true
-        Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+        batteryTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.batteryLevel = UIDevice.current.batteryLevel
                 self?.adjustForBattery()
