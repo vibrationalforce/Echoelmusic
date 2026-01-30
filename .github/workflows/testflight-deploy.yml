@@ -3,6 +3,7 @@
 # =============================================================================
 # Manual deployment to TestFlight for all Apple platforms
 # Trigger: Actions -> TestFlight Deploy -> Run workflow
+# IMPORTANT: This workflow ONLY runs on manual trigger (workflow_dispatch)
 # =============================================================================
 
 name: "TestFlight Deploy"
@@ -13,16 +14,16 @@ on:
       platforms:
         description: 'Platforms to deploy'
         required: true
-        default: 'all'
+        default: 'ios'
         type: choice
         options:
-          - all
           - ios
           - macos
+          - ios-macos
           - watchos
           - tvos
           - visionos
-          - ios-macos
+          - all
 
 env:
   XCODE_VERSION: '16.2'
@@ -39,7 +40,21 @@ jobs:
       ready: ${{ steps.check.outputs.ready }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: "Start"
+        run: |
+          echo "================================================"
+          echo "  TESTFLIGHT DEPLOYMENT - PRE-FLIGHT CHECK"
+          echo "================================================"
+          echo ""
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Run: ${{ github.run_number }}"
+          echo "Platforms: ${{ github.event.inputs.platforms }}"
+          echo ""
+
+      - name: "Checkout"
+        uses: actions/checkout@v4
 
       - name: "Validate"
         id: check
@@ -48,6 +63,66 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set +e
+          ERRORS=0
+
+          echo "--- Checking Files ---"
+          for f in Package.swift project.yml fastlane/Fastfile fastlane/Appfile; do
+            if [ -f "$f" ]; then
+              echo "[OK] $f"
+            else
+              echo "[FAIL] $f missing"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+
+          echo ""
+          echo "--- Checking Secrets ---"
+
+          if [ -n "$ASC_KEY_ID" ] && [ ${#ASC_KEY_ID} -gt 5 ]; then
+            echo "[OK] APP_STORE_CONNECT_KEY_ID (length: ${#ASC_KEY_ID})"
+          else
+            echo "[FAIL] APP_STORE_CONNECT_KEY_ID not set or too short"
+            ERRORS=$((ERRORS + 1))
+          fi
+
+          if [ -n "$ASC_ISSUER_ID" ] && [ ${#ASC_ISSUER_ID} -gt 10 ]; then
+            echo "[OK] APP_STORE_CONNECT_ISSUER_ID (length: ${#ASC_ISSUER_ID})"
+          else
+            echo "[FAIL] APP_STORE_CONNECT_ISSUER_ID not set or too short"
+            ERRORS=$((ERRORS + 1))
+          fi
+
+          if [ -n "$ASC_KEY_CONTENT" ] && [ ${#ASC_KEY_CONTENT} -gt 100 ]; then
+            echo "[OK] APP_STORE_CONNECT_PRIVATE_KEY (length: ${#ASC_KEY_CONTENT})"
+          else
+            echo "[FAIL] APP_STORE_CONNECT_PRIVATE_KEY not set or too short"
+            ERRORS=$((ERRORS + 1))
+          fi
+
+          if [ -n "$TEAM_ID" ] && [ ${#TEAM_ID} -ge 10 ]; then
+            echo "[OK] APPLE_TEAM_ID (length: ${#TEAM_ID})"
+          else
+            echo "[FAIL] APPLE_TEAM_ID not set or too short"
+            ERRORS=$((ERRORS + 1))
+          fi
+
+          echo ""
+          echo "================================================"
+
+          if [ $ERRORS -gt 0 ]; then
+            echo "ready=false" >> $GITHUB_OUTPUT
+            echo ""
+            echo "FAILED: $ERRORS error(s)"
+            echo ""
+            echo "Configure secrets at:"
+            echo "https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 1
+          fi
+
+          echo "ready=true" >> $GITHUB_OUTPUT
+          echo "SUCCESS: All checks passed"
         run: |
           echo "=============================================="
           echo "  TESTFLIGHT PRE-FLIGHT CHECK"
