@@ -21,7 +21,7 @@ class AudioFileImporter: ObservableObject {
         .mp3,
         .wav,
         .aiff,
-        .m4a
+        UTType(filenameExtension: "m4a") ?? .audio
     ]
 
     // MARK: - Import Methods

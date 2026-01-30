@@ -14,8 +14,8 @@
 
 import Foundation
 
-/// Logger instance for App Store metadata operations
-private let log = EchoelLogger.shared
+/// Logger alias for App Store metadata operations
+private var appStoreLog: EchoelLogger { echoelLog }
 
 // MARK: - App Store Metadata
 
@@ -1526,38 +1526,38 @@ extension AppStoreMetadata {
 
     /// Log all metadata for review
     public static func logAllMetadata() {
-        log.info("=== ECHOELMUSIC APP STORE METADATA ===", category: .system)
+        appStoreLog.info("=== ECHOELMUSIC APP STORE METADATA ===", category: .system)
 
-        log.info("APP INFORMATION:", category: .system)
-        log.info("  Name: \(appName)", category: .system)
-        log.info("  Bundle ID: \(bundleIdentifier)", category: .system)
-        log.info("  Primary Category: \(primaryCategory.rawValue)", category: .system)
-        log.info("  Secondary Category: \(secondaryCategory.rawValue)", category: .system)
-        log.info("  Age Rating: \(ageRating.rawValue)", category: .system)
-        log.info("  Price Tier: \(priceTier) (Free)", category: .system)
-        log.info("  Languages: \(supportedLanguages.count)", category: .system)
+        appStoreLog.info("APP INFORMATION:", category: .system)
+        appStoreLog.info("  Name: \(appName)", category: .system)
+        appStoreLog.info("  Bundle ID: \(bundleIdentifier)", category: .system)
+        appStoreLog.info("  Primary Category: \(primaryCategory.rawValue)", category: .system)
+        appStoreLog.info("  Secondary Category: \(secondaryCategory.rawValue)", category: .system)
+        appStoreLog.info("  Age Rating: \(ageRating.rawValue)", category: .system)
+        appStoreLog.info("  Price Tier: \(priceTier) (Free)", category: .system)
+        appStoreLog.info("  Languages: \(supportedLanguages.count)", category: .system)
 
-        log.info("URLS:", category: .system)
-        log.info("  Marketing: \(marketingURL)", category: .system)
-        log.info("  Support: \(supportURL)", category: .system)
-        log.info("  Privacy: \(privacyPolicyURL)", category: .system)
+        appStoreLog.info("URLS:", category: .system)
+        appStoreLog.info("  Marketing: \(marketingURL)", category: .system)
+        appStoreLog.info("  Support: \(supportURL)", category: .system)
+        appStoreLog.info("  Privacy: \(privacyPolicyURL)", category: .system)
 
-        log.info("PRICING: Free (no in-app purchases)", category: .system)
+        appStoreLog.info("PRICING: Free (no in-app purchases)", category: .system)
 
-        log.info("SCREENSHOTS REQUIRED:", category: .system)
+        appStoreLog.info("SCREENSHOTS REQUIRED:", category: .system)
         for spec in AppStoreScreenshots.specifications {
-            log.info("  \(spec.device): \(spec.count) screenshots at \(spec.size)", category: .system)
+            appStoreLog.info("  \(spec.device): \(spec.count) screenshots at \(spec.size)", category: .system)
         }
 
-        log.info("PRIVACY PRACTICES:", category: .system)
+        appStoreLog.info("PRIVACY PRACTICES:", category: .system)
         for practice in AppPrivacy.privacyPractices {
-            log.info("  \(practice.category.rawValue): \(practice.dataTypes.count) data types", category: .system)
+            appStoreLog.info("  \(practice.category.rawValue): \(practice.dataTypes.count) data types", category: .system)
         }
 
-        log.info("REVIEW NOTES:", category: .system)
-        log.info(ReviewInformation.reviewNotes, category: .system)
+        appStoreLog.info("REVIEW NOTES:", category: .system)
+        appStoreLog.info(ReviewInformation.reviewNotes, category: .system)
 
-        log.info("=== END METADATA ===", category: .system)
+        appStoreLog.info("=== END METADATA ===", category: .system)
     }
 
     /// Deprecated: Use logAllMetadata() instead

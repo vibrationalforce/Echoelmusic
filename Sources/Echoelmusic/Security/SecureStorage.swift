@@ -13,8 +13,8 @@ import CryptoKit
 import Security
 #endif
 
-/// Logger instance for security audit operations
-private let log = EchoelLogger.shared
+/// Logger alias for security audit operations
+private var securityLog: EchoelLogger { echoelLog }
 
 // MARK: - Secure Storage Manager
 
