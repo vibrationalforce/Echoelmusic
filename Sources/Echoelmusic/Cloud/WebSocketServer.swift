@@ -1224,26 +1224,24 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
 // MARK: - URLSessionWebSocketDelegate
 
 extension EchoelmusicWebSocket: URLSessionWebSocketDelegate {
-    nonisolated public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
-        Task { @MainActor [weak self] in
-            guard let self = self else { return }
-            self.logger.info("WebSocket opened with protocol: \(`protocol` ?? "none")", category: .network)
-            self.connectionState = .connected
+    public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
+        Task { @MainActor in
+            logger.info("WebSocket opened with protocol: \(`protocol` ?? "none")", category: .network)
+            connectionState = .connected
         }
     }
 
-    nonisolated public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
-        Task { @MainActor [weak self] in
-            guard let self = self else { return }
+    public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
+        Task { @MainActor in
             let reasonString = reason.flatMap { String(data: $0, encoding: .utf8) } ?? "Unknown"
-            self.logger.info("WebSocket closed: \(closeCode.rawValue) - \(reasonString)", category: .network)
+            logger.info("WebSocket closed: \(closeCode.rawValue) - \(reasonString)", category: .network)
 
-            self.connectionState = .disconnected
+            connectionState = .disconnected
 
             // Attempt reconnection
             if let url = webSocketTask.originalRequest?.url,
-               let token = await self.getAuthToken() {
-                await self.reconnect(url: url, token: token)
+               let token = await getAuthToken() {
+                await reconnect(url: url, token: token)
             }
         }
     }

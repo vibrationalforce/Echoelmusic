@@ -2,9 +2,6 @@ import Foundation
 import Combine
 import WatchConnectivity
 
-/// Local logger alias
-private let log = echoelLog
-
 // MARK: - Watch Connectivity Manager
 
 /// Manages bidirectional communication between iPhone and Apple Watch
