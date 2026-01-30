@@ -46,45 +46,85 @@ jobs:
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          ASC_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           echo "=============================================="
           echo "  TESTFLIGHT PRE-FLIGHT CHECK"
           echo "=============================================="
+          echo "Trigger: ${{ github.event_name }}"
           echo "Platforms: ${{ github.event.inputs.platforms }}"
           echo "Build: ${{ github.run_number }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Ref: ${{ github.ref }}"
           echo ""
 
           ERRORS=0
 
           # Check required files
+          echo "📁 Checking required files..."
           for f in Package.swift project.yml fastlane/Fastfile fastlane/Appfile; do
-            [ -f "$f" ] && echo "[OK] $f" || { echo "[FAIL] $f missing"; ((ERRORS++)); }
+            if [ -f "$f" ]; then
+              echo "  ✅ $f"
+            else
+              echo "  ❌ $f missing"
+              ERRORS=$((ERRORS + 1))
+            fi
           done
 
           echo ""
+          echo "🔐 Checking secrets..."
 
-          # Check secrets
-          [ -n "$ASC_KEY_ID" ] && echo "[OK] APP_STORE_CONNECT_KEY_ID" || { echo "[FAIL] APP_STORE_CONNECT_KEY_ID not set"; ((ERRORS++)); }
-          [ -n "$ASC_ISSUER_ID" ] && echo "[OK] APP_STORE_CONNECT_ISSUER_ID" || { echo "[FAIL] APP_STORE_CONNECT_ISSUER_ID not set"; ((ERRORS++)); }
-          [ -n "$ASC_KEY" ] && echo "[OK] APP_STORE_CONNECT_PRIVATE_KEY configured" || { echo "[FAIL] APP_STORE_CONNECT_PRIVATE_KEY not set"; ((ERRORS++)); }
-          [ -n "$TEAM_ID" ] && echo "[OK] APPLE_TEAM_ID" || { echo "[FAIL] APPLE_TEAM_ID not set"; ((ERRORS++)); }
+          # Check secrets with detailed output
+          if [ -n "$ASC_KEY_ID" ]; then
+            echo "  ✅ APP_STORE_CONNECT_KEY_ID (${#ASC_KEY_ID} chars)"
+          else
+            echo "  ❌ APP_STORE_CONNECT_KEY_ID not set"
+            ERRORS=$((ERRORS + 1))
+          fi
+
+          if [ -n "$ASC_ISSUER_ID" ]; then
+            echo "  ✅ APP_STORE_CONNECT_ISSUER_ID (${#ASC_ISSUER_ID} chars)"
+          else
+            echo "  ❌ APP_STORE_CONNECT_ISSUER_ID not set"
+            ERRORS=$((ERRORS + 1))
+          fi
+
+          if [ -n "$ASC_KEY_CONTENT" ]; then
+            echo "  ✅ APP_STORE_CONNECT_PRIVATE_KEY (${#ASC_KEY_CONTENT} chars)"
+          else
+            echo "  ❌ APP_STORE_CONNECT_PRIVATE_KEY not set"
+            ERRORS=$((ERRORS + 1))
+          fi
+
+          if [ -n "$TEAM_ID" ]; then
+            echo "  ✅ APPLE_TEAM_ID (${#TEAM_ID} chars)"
+          else
+            echo "  ❌ APPLE_TEAM_ID not set"
+            ERRORS=$((ERRORS + 1))
+          fi
 
           echo ""
           echo "=============================================="
 
           if [ $ERRORS -gt 0 ]; then
             echo "ready=false" >> $GITHUB_OUTPUT
-            echo "[FAIL] $ERRORS error(s) - cannot proceed"
             echo ""
-            echo "Configure secrets at:"
-            echo "https://github.com/${{ github.repository }}/settings/secrets/actions"
+            echo "❌ FAILED: $ERRORS error(s) - cannot proceed"
+            echo ""
+            echo "📋 Configure secrets at:"
+            echo "   https://github.com/${{ github.repository }}/settings/secrets/actions"
+            echo ""
+            echo "Required secrets:"
+            echo "  - APP_STORE_CONNECT_KEY_ID"
+            echo "  - APP_STORE_CONNECT_ISSUER_ID"
+            echo "  - APP_STORE_CONNECT_PRIVATE_KEY"
+            echo "  - APPLE_TEAM_ID"
             exit 1
           fi
 
           echo "ready=true" >> $GITHUB_OUTPUT
-          echo "[PASS] All checks passed - ready to deploy"
+          echo "✅ All checks passed - ready to deploy!"
 
   # ===========================================================================
   # iOS DEPLOYMENT
@@ -339,7 +379,7 @@ jobs:
   summary:
     name: "Summary"
     runs-on: ubuntu-latest
-    if: always()
+    if: ${{ always() }}
     needs: [preflight, deploy-ios, deploy-macos, deploy-watchos, deploy-tvos, deploy-visionos]
 
     steps:
@@ -348,16 +388,23 @@ jobs:
           echo "# 🚀 TestFlight Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Build:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Platforms:** ${{ github.event.inputs.platforms }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** ${{ github.event.inputs.platforms || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Pre-flight | ${{ needs.preflight.result == 'success' && '✅' || '❌' }} ${{ needs.preflight.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| iOS | ${{ needs.deploy-ios.result == 'success' && '✅' || needs.deploy-ios.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-ios.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| macOS | ${{ needs.deploy-macos.result == 'success' && '✅' || needs.deploy-macos.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-macos.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| watchOS | ${{ needs.deploy-watchos.result == 'success' && '✅' || needs.deploy-watchos.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-watchos.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| tvOS | ${{ needs.deploy-tvos.result == 'success' && '✅' || needs.deploy-tvos.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-tvos.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| visionOS | ${{ needs.deploy-visionos.result == 'success' && '✅' || needs.deploy-visionos.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-visionos.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Pre-flight | ${{ needs.preflight.result == 'success' && '✅' || needs.preflight.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.preflight.result || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS | ${{ needs.deploy-ios.result == 'success' && '✅' || needs.deploy-ios.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-ios.result || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS | ${{ needs.deploy-macos.result == 'success' && '✅' || needs.deploy-macos.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-macos.result || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| watchOS | ${{ needs.deploy-watchos.result == 'success' && '✅' || needs.deploy-watchos.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-watchos.result || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| tvOS | ${{ needs.deploy-tvos.result == 'success' && '✅' || needs.deploy-tvos.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-tvos.result || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| visionOS | ${{ needs.deploy-visionos.result == 'success' && '✅' || needs.deploy-visionos.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-visionos.result || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "[Open App Store Connect](https://appstoreconnect.apple.com)" >> $GITHUB_STEP_SUMMARY
+
+      - name: "Check Results"
+        if: ${{ needs.preflight.result == 'failure' }}
+        run: |
+          echo "::error::Pre-flight check failed. Please verify your secrets are configured correctly."
+          exit 1
