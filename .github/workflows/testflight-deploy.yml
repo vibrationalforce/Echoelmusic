@@ -36,10 +36,27 @@ jobs:
     name: "Pre-flight"
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # BULLETPROOF: Only run on manual workflow_dispatch
+    if: github.event_name == 'workflow_dispatch'
     outputs:
       ready: ${{ steps.check.outputs.ready }}
 
     steps:
+      - name: "Verify Manual Trigger"
+        run: |
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            echo "FATAL: This workflow only runs on manual trigger!"
+            echo "Event was: ${{ github.event_name }}"
+            echo ""
+            echo "To deploy to TestFlight:"
+            echo "1. Go to Actions tab"
+            echo "2. Select 'TestFlight Deploy'"
+            echo "3. Click 'Run workflow'"
+            echo "4. Select platforms and click green button"
+            exit 1
+          fi
+          echo "OK: Manual trigger verified (workflow_dispatch)"
+
       - name: "Start"
         run: |
           echo "================================================"
@@ -377,32 +394,32 @@ jobs:
   summary:
     name: "Summary"
     runs-on: ubuntu-latest
-    if: ${{ always() }}
+    if: always() && github.event_name == 'workflow_dispatch'
     needs: [preflight, deploy-ios, deploy-macos, deploy-watchos, deploy-tvos, deploy-visionos]
 
     steps:
       - name: "Generate Report"
         run: |
-          echo "# 🚀 TestFlight Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "# TestFlight Deployment Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Build:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Platforms:** ${{ github.event.inputs.platforms || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** ${{ github.event.inputs.platforms }}" >> $GITHUB_STEP_SUMMARY
           echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Pre-flight | ${{ needs.preflight.result == 'success' && '✅' || needs.preflight.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.preflight.result || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| iOS | ${{ needs.deploy-ios.result == 'success' && '✅' || needs.deploy-ios.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-ios.result || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| macOS | ${{ needs.deploy-macos.result == 'success' && '✅' || needs.deploy-macos.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-macos.result || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| watchOS | ${{ needs.deploy-watchos.result == 'success' && '✅' || needs.deploy-watchos.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-watchos.result || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| tvOS | ${{ needs.deploy-tvos.result == 'success' && '✅' || needs.deploy-tvos.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-tvos.result || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| visionOS | ${{ needs.deploy-visionos.result == 'success' && '✅' || needs.deploy-visionos.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.deploy-visionos.result || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Pre-flight | ${{ needs.preflight.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS | ${{ needs.deploy-ios.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS | ${{ needs.deploy-macos.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| watchOS | ${{ needs.deploy-watchos.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| tvOS | ${{ needs.deploy-tvos.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| visionOS | ${{ needs.deploy-visionos.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "[Open App Store Connect](https://appstoreconnect.apple.com)" >> $GITHUB_STEP_SUMMARY
 
       - name: "Check Results"
-        if: ${{ needs.preflight.result == 'failure' }}
+        if: needs.preflight.result == 'failure'
         run: |
           echo "::error::Pre-flight check failed. Please verify your secrets are configured correctly."
           exit 1
