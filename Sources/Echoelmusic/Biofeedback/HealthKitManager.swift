@@ -138,14 +138,16 @@ class HealthKitManager: ObservableObject {
     /// Active query for HRV monitoring
     private var hrvQuery: HKQuery?
 
-    /// Types to read from HealthKit
-    private let typesToRead: Set<HKObjectType> = [
-        HKObjectType.quantityType(forIdentifier: .heartRate)!,
-        HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
-        HKObjectType.quantityType(forIdentifier: .restingHeartRate)!,
-        HKObjectType.quantityType(forIdentifier: .respiratoryRate)!,
-        HKObjectType.quantityType(forIdentifier: .oxygenSaturation)!
-    ]
+    /// Types to read from HealthKit - safely constructed without force unwraps
+    private let typesToRead: Set<HKObjectType> = {
+        var types: Set<HKObjectType> = []
+        if let hr = HKObjectType.quantityType(forIdentifier: .heartRate) { types.insert(hr) }
+        if let hrv = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) { types.insert(hrv) }
+        if let rhr = HKObjectType.quantityType(forIdentifier: .restingHeartRate) { types.insert(rhr) }
+        if let resp = HKObjectType.quantityType(forIdentifier: .respiratoryRate) { types.insert(resp) }
+        if let spo2 = HKObjectType.quantityType(forIdentifier: .oxygenSaturation) { types.insert(spo2) }
+        return types
+    }()
     #endif
 
     /// Buffer for RR intervals (for coherence calculation)
@@ -190,7 +192,10 @@ class HealthKitManager: ObservableObject {
         }
 
         // Check authorization status
-        let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
+        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            errorMessage = "Heart rate type not available"
+            return
+        }
         let status = healthStore.authorizationStatus(for: heartRateType)
 
         switch status {
@@ -235,7 +240,11 @@ class HealthKitManager: ObservableObject {
             try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
 
             // Check if actually authorized
-            let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
+            guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+                authorizationState = .unavailable
+                errorMessage = "Heart rate type not available on this device"
+                return
+            }
             let status = healthStore.authorizationStatus(for: heartRateType)
 
             isAuthorized = (status == .sharingAuthorized)
@@ -279,7 +288,10 @@ class HealthKitManager: ObservableObject {
     /// Retry authorization check (useful after returning from Settings)
     func recheckAuthorization() {
         #if canImport(HealthKit)
-        let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
+        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            authorizationState = .unavailable
+            return
+        }
         let status = healthStore.authorizationStatus(for: heartRateType)
 
         switch status {

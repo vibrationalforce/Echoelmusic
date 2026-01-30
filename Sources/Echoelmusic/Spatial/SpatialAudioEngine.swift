@@ -249,11 +249,16 @@ class SpatialAudioEngine: ObservableObject {
         let duration: Double = 1.0
         let frameCount = AVAudioFrameCount(sampleRate * duration)
 
+        guard let audioFormat = AVAudioFormat(
+            standardFormatWithSampleRate: sampleRate,
+            channels: 1
+        ) else {
+            log.spatial("Failed to create audio format for test tone", level: .warning)
+            return
+        }
+
         guard let buffer = AVAudioPCMBuffer(
-            pcmFormat: AVAudioFormat(
-                standardFormatWithSampleRate: sampleRate,
-                channels: 1
-            )!,
+            pcmFormat: audioFormat,
             frameCapacity: frameCount
         ) else { return }
 

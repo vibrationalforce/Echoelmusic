@@ -221,8 +221,11 @@ class AutomaticVocalAligner: ObservableObject {
         )
 
         // Step 4: Time-stretch the dub track
+        guard let dubBuffer = dub.audioBuffer else {
+            throw AlignmentError.processingError("Dub track audio buffer not loaded")
+        }
         let alignedBuffer = try await applyTimeWarp(
-            buffer: dub.audioBuffer!,
+            buffer: dubBuffer,
             warpMap: adjustedWarpMap,
             preserveFormants: preserveFormants
         )

@@ -170,7 +170,10 @@ public class ServerConfiguration: ObservableObject {
     }
 
     private func measureLatency(to region: ServerRegion) async -> TimeInterval? {
-        let url = URL(string: "https://\(region.endpoint)/ping")!
+        guard let url = URL(string: "https://\(region.endpoint)/ping") else {
+            logger.network("Invalid endpoint URL for region: \(region.rawValue)", level: .warning)
+            return nil
+        }
         let start = Date()
 
         do {
@@ -217,6 +220,15 @@ public struct JWTToken: Codable {
     public let expiresAt: Date
     public let tokenType: String
     public let scope: String
+
+    /// CodingKeys for API compatibility (snake_case JSON keys)
+    private enum CodingKeys: String, CodingKey {
+        case accessToken = "access_token"
+        case refreshToken = "refresh_token"
+        case expiresAt = "expires_at"
+        case tokenType = "token_type"
+        case scope
+    }
 
     public var isExpired: Bool {
         Date() >= expiresAt
@@ -309,7 +321,10 @@ public class AuthenticationService: ObservableObject {
         logger.auth("Refreshing access token")
 
         let config = ServerConfiguration.shared
-        let url = URL(string: "\(config.apiBaseURL)/auth/refresh")!
+        guard let url = URL(string: "\(config.apiBaseURL)/auth/refresh") else {
+            logger.auth("Invalid refresh token URL", level: .error)
+            throw AuthError.invalidConfiguration
+        }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -584,7 +599,13 @@ public class CollaborationServer: NSObject, ObservableObject {
             throw CollaborationError.invalidURL
         }
 
-        let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+        // Configure session with proper timeouts
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 300
+        config.waitsForConnectivity = true
+
+        let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
         webSocketTask = session.webSocketTask(with: wsURL)
 
         // Add authentication header
@@ -1129,7 +1150,13 @@ public class RealtimeBioSync: ObservableObject {
             throw CollaborationError.invalidURL
         }
 
-        let session = URLSession(configuration: .default)
+        // Configure session with proper timeouts for bio sync
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 300
+        config.waitsForConnectivity = true
+
+        let session = URLSession(configuration: config)
         bioWebSocketTask = session.webSocketTask(with: wsURL)
 
         // Add authentication

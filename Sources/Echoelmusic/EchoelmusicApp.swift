@@ -35,27 +35,40 @@ struct EchoelmusicApp: App {
 
         // PERFORMANCE: Defer non-critical singleton initialization to background
         // This prevents 2-5 second startup blocking on main thread
-        Task.detached(priority: .userInitiated) {
-            // KRITISCH: Initialisiere alle Core-Systeme (Singletons)
-            // Diese werden jetzt async geladen für schnelleren App-Start!
-            _ = await MainActor.run { EchoelUniversalCore.shared }      // Master Integration Hub
-            _ = await MainActor.run { SelfHealingEngine.shared }        // Auto-Recovery System
-            _ = await MainActor.run { VideoAICreativeHub.shared }       // Video/AI Integration
-            _ = await MainActor.run { MultiPlatformBridge.shared }      // MIDI/OSC/DMX/CV Bridge
-            _ = await MainActor.run { EchoelTools.shared }              // Intelligent Creative Tools
+        Task(priority: .userInitiated) {
+            do {
+                // KRITISCH: Initialisiere alle Core-Systeme (Singletons)
+                // Diese werden jetzt async geladen für schnelleren App-Start!
+                // Use TaskGroup for parallel initialization with error handling
+                try await withThrowingTaskGroup(of: Void.self) { group in
+                    group.addTask { @MainActor in _ = EchoelUniversalCore.shared }
+                    group.addTask { @MainActor in _ = SelfHealingEngine.shared }
+                    group.addTask { @MainActor in _ = VideoAICreativeHub.shared }
+                    group.addTask { @MainActor in _ = MultiPlatformBridge.shared }
+                    group.addTask { @MainActor in _ = EchoelTools.shared }
+                    try await group.waitForAll()
+                }
 
-            // INSTRUMENT PIPELINE
-            _ = await MainActor.run { InstrumentOrchestrator.shared }   // UI→Synthesis→Audio Pipeline
-            _ = await MainActor.run { WorldMusicBridge.shared }         // 42 Global Music Styles
+                // INSTRUMENT PIPELINE (depends on core systems)
+                try await withThrowingTaskGroup(of: Void.self) { group in
+                    group.addTask { @MainActor in _ = InstrumentOrchestrator.shared }
+                    group.addTask { @MainActor in _ = WorldMusicBridge.shared }
+                    try await group.waitForAll()
+                }
 
-            // STREAMING PIPELINE
-            _ = await MainActor.run { SocialMediaManager.shared }       // One-Click Multi-Platform Publishing
-            // Note: StreamEngine requires Metal device - initialized lazily in StreamingView
+                // STREAMING PIPELINE
+                await MainActor.run { _ = SocialMediaManager.shared }
 
-            await MainActor.run {
-                log.info("⚛️ Echoelmusic Core Systems Initialized (async)", category: .system)
-                log.info("🎹 InstrumentOrchestrator: 54+ Instruments Ready", category: .system)
-                log.info("🌍 WorldMusicBridge: 42 Music Styles Loaded", category: .system)
+                await MainActor.run {
+                    log.info("⚛️ Echoelmusic Core Systems Initialized (async)", category: .system)
+                    log.info("🎹 InstrumentOrchestrator: 54+ Instruments Ready", category: .system)
+                    log.info("🌍 WorldMusicBridge: 42 Music Styles Loaded", category: .system)
+                }
+            } catch {
+                await MainActor.run {
+                    log.error("❌ Core system initialization failed: \(error.localizedDescription)", category: .system)
+                    // App can still function - singletons will init lazily on first access
+                }
             }
         }
     }

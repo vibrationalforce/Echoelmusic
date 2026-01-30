@@ -30,15 +30,31 @@ BUILD_NUMBER = ENV["BUILD_NUMBER"] || "1"
 # =============================================================================
 
 def setup_api_key
-  UI.user_error!("ASC_KEY_ID not set") unless ENV["ASC_KEY_ID"]
-  UI.user_error!("ASC_ISSUER_ID not set") unless ENV["ASC_ISSUER_ID"]
-  UI.user_error!("ASC_KEY_CONTENT not set") unless ENV["ASC_KEY_CONTENT"]
-  UI.user_error!("APPLE_TEAM_ID not set") unless ENV["APPLE_TEAM_ID"]
+  # Validate all required environment variables with helpful messages
+  missing = []
+  missing << "ASC_KEY_ID" unless ENV["ASC_KEY_ID"]&.length.to_i > 0
+  missing << "ASC_ISSUER_ID" unless ENV["ASC_ISSUER_ID"]&.length.to_i > 0
+  missing << "ASC_KEY_CONTENT" unless ENV["ASC_KEY_CONTENT"]&.length.to_i > 0
+  missing << "APPLE_TEAM_ID" unless ENV["APPLE_TEAM_ID"]&.length.to_i > 0
 
+  unless missing.empty?
+    UI.error("Missing required environment variables: #{missing.join(', ')}")
+    UI.error("Set these in GitHub Secrets or environment")
+    UI.user_error!("Cannot proceed without App Store Connect credentials")
+  end
+
+  # Validate key format
+  key_content = ENV["ASC_KEY_CONTENT"]
+  unless key_content.include?("BEGIN") && key_content.include?("PRIVATE KEY")
+    UI.important("Warning: ASC_KEY_CONTENT may not be in correct PEM format")
+    UI.message("Expected format: -----BEGIN PRIVATE KEY-----...-----END PRIVATE KEY-----")
+  end
+
+  UI.message("Setting up App Store Connect API key...")
   app_store_connect_api_key(
     key_id: ENV["ASC_KEY_ID"],
     issuer_id: ENV["ASC_ISSUER_ID"],
-    key_content: ENV["ASC_KEY_CONTENT"],
+    key_content: key_content,
     is_key_content_base64: false,
     in_house: false
   )
@@ -51,12 +67,23 @@ def setup_keychain
   { path: keychain_path, password: keychain_password }
 end
 
+# Helper to safely parse certificate expiration date
+def parse_cert_date(date_value)
+  return date_value if date_value.is_a?(Time)
+  return Time.parse(date_value.to_s) if date_value.respond_to?(:to_s)
+  Time.now # Fallback to now if unparseable
+rescue
+  Time.now
+end
+
 # Improved certificate management - reuses existing certificates
 def get_or_create_certificates(api_key, platform, keychain)
   UI.message("🔐 Managing certificates for #{platform}...")
 
   begin
     require 'spaceship'
+    require 'time'  # For Time.parse
+
     Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
       key_id: ENV["ASC_KEY_ID"],
       issuer_id: ENV["ASC_ISSUER_ID"],
@@ -75,40 +102,47 @@ def get_or_create_certificates(api_key, platform, keychain)
 
     # Find existing valid certificates
     all_certs = Spaceship::ConnectAPI::Certificate.all
-    valid_certs = all_certs.select do |cert|
-      cert_types.include?(cert.certificate_type) &&
-      cert.expiration_date > Time.now + (30 * 24 * 60 * 60) # Valid for at least 30 more days
+    dist_certs = all_certs.select { |c| cert_types.include?(c.certificate_type) }
+
+    UI.message("Found #{dist_certs.count} distribution certificate(s) at Apple")
+
+    # Log certificate details
+    dist_certs.each do |cert|
+      exp_time = parse_cert_date(cert.expiration_date)
+      UI.message("  - #{cert.id}: expires #{exp_time.strftime('%Y-%m-%d')}")
     end
 
-    UI.message("Found #{valid_certs.count} valid distribution certificate(s)")
+    # Find certificates valid for at least 30 more days
+    thirty_days_from_now = Time.now + (30 * 24 * 60 * 60)
+    valid_certs = dist_certs.select do |cert|
+      parse_cert_date(cert.expiration_date) > thirty_days_from_now
+    end
+
+    UI.message("Found #{valid_certs.count} certificate(s) valid for 30+ days")
 
     if valid_certs.any?
       UI.success("✅ Reusing existing certificate: #{valid_certs.first.id}")
-      # Download and install the existing certificate
+      # Download and install the existing certificate (don't create new)
       get_certificates(
         api_key: api_key,
         platform: platform,
         keychain_path: keychain[:path],
         keychain_password: keychain[:password],
-        generate_apple_certs: false  # Don't create new, just download existing
+        generate_apple_certs: false
+      )
+    elsif dist_certs.any?
+      # Have certificates but they expire soon - still use them rather than hit limit
+      UI.important("⚠️ Existing certificates expire within 30 days, but using them anyway")
+      get_certificates(
+        api_key: api_key,
+        platform: platform,
+        keychain_path: keychain[:path],
+        keychain_password: keychain[:password],
+        generate_apple_certs: false
       )
     else
-      # Check certificate count before creating
-      dist_certs = all_certs.select { |c| cert_types.include?(c.certificate_type) }
-
-      if dist_certs.count >= 2
-        UI.important("⚠️ Certificate limit reached (#{dist_certs.count}/2)")
-        UI.message("Revoking oldest certificate to make room...")
-
-        oldest = dist_certs.min_by { |c| c.expiration_date }
-        if oldest
-          UI.message("Revoking: #{oldest.id} (expires: #{oldest.expiration_date})")
-          oldest.delete!
-          UI.success("Certificate revoked, creating new one...")
-        end
-      end
-
-      # Now create new certificate
+      # No certificates at all - create one
+      UI.message("No distribution certificates found, creating new one...")
       get_certificates(
         api_key: api_key,
         platform: platform,
@@ -122,15 +156,22 @@ def get_or_create_certificates(api_key, platform, keychain)
 
   rescue => e
     UI.important("Certificate management error: #{e.message}")
-    UI.message("Falling back to standard get_certificates...")
+    UI.message("Falling back to get_certificates with generate_apple_certs: false...")
 
-    # Fallback to standard behavior
-    get_certificates(
-      api_key: api_key,
-      platform: platform,
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password]
-    )
+    # Fallback: try to download existing certs without creating new ones
+    begin
+      get_certificates(
+        api_key: api_key,
+        platform: platform,
+        keychain_path: keychain[:path],
+        keychain_password: keychain[:password],
+        generate_apple_certs: false
+      )
+    rescue => fallback_error
+      UI.error("Fallback also failed: #{fallback_error.message}")
+      UI.error("Please check your certificates at https://developer.apple.com/account/resources/certificates/list")
+      raise fallback_error
+    end
   end
 end
 
@@ -138,6 +179,8 @@ def cleanup_certificates(api_key)
   UI.message("Checking Distribution certificates...")
   begin
     require 'spaceship'
+    require 'time'
+
     Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
       key_id: ENV["ASC_KEY_ID"],
       issuer_id: ENV["ASC_ISSUER_ID"],
@@ -150,31 +193,50 @@ def cleanup_certificates(api_key)
 
     UI.message("Found #{all_certs.count} distribution certificate(s)")
 
+    # Only cleanup if we have more than 2 (shouldn't happen normally)
     if all_certs.count > 2
-      sorted = all_certs.sort_by { |c| c.expiration_date }.reverse
+      sorted = all_certs.sort_by { |c| parse_cert_date(c.expiration_date) }.reverse
       to_revoke = sorted[2..-1]
       to_revoke.each do |cert|
         UI.message("Revoking old certificate: #{cert.id}")
         cert.delete!
       end
       UI.success("Cleaned up #{to_revoke.count} old certificate(s)")
+    else
+      UI.message("Certificate count OK (#{all_certs.count}/2 max)")
     end
   rescue => e
     UI.important("Certificate check skipped: #{e.message}")
   end
 end
 
-def upload_to_testflight_with_retry(api_key, changelog)
+def upload_to_testflight_with_retry(api_key, changelog, max_retries: 3)
   UI.message("Uploading to TestFlight...")
-  upload_to_testflight(
-    api_key: api_key,
-    skip_waiting_for_build_processing: true,
-    distribute_external: false,
-    notify_external_testers: false,
-    changelog: changelog,
-    reject_build_waiting_for_review: false
-  )
-  UI.success("Successfully uploaded to TestFlight!")
+
+  retries = 0
+  begin
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,
+      notify_external_testers: false,
+      changelog: changelog,
+      reject_build_waiting_for_review: false
+    )
+    UI.success("Successfully uploaded to TestFlight!")
+  rescue => e
+    retries += 1
+    if retries <= max_retries
+      delay = 30 * retries  # 30s, 60s, 90s
+      UI.important("Upload failed (attempt #{retries}/#{max_retries}): #{e.message}")
+      UI.message("Retrying in #{delay} seconds...")
+      sleep(delay)
+      retry
+    else
+      UI.error("Upload failed after #{max_retries} attempts")
+      raise e
+    end
+  end
 end
 
 # =============================================================================
@@ -218,11 +280,11 @@ end
 platform :ios do
 
   # ---------------------------------------------------------------------------
-  # iOS App (AUv3 integrated - no separate extension target)
+  # iOS App (with Widgets Extension and App Clip)
   # ---------------------------------------------------------------------------
   desc "Build and upload iOS app to TestFlight"
   lane :beta do
-    UI.header "iOS TestFlight Build (AUv3 integrated)"
+    UI.header "iOS TestFlight Build (with Widgets + App Clip)"
 
     api_key = setup_api_key
     keychain = setup_keychain
@@ -230,7 +292,7 @@ platform :ios do
     # Smart certificate management (reuses existing, creates if needed)
     get_or_create_certificates(api_key, "ios", keychain)
 
-    # Main app profile (iOS AUv3 is integrated, no separate extension)
+    # Main app profile
     get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app",
@@ -239,6 +301,26 @@ platform :ios do
     )
     app_profile = lane_context[SharedValues::SIGH_NAME]
     UI.message("iOS App profile: #{app_profile}")
+
+    # Widgets extension profile
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.widgets",
+      platform: "ios",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    widgets_profile = lane_context[SharedValues::SIGH_NAME]
+    UI.message("Widgets profile: #{widgets_profile}")
+
+    # App Clip profile
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.Clip",
+      platform: "ios",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    clip_profile = lane_context[SharedValues::SIGH_NAME]
+    UI.message("App Clip profile: #{clip_profile}")
 
     # Configure code signing for main app target
     update_code_signing_settings(
@@ -251,7 +333,29 @@ platform :ios do
       bundle_identifier: "com.echoelmusic.app"
     )
 
-    # Build iOS app (AUv3 functionality integrated in main app)
+    # Configure code signing for Widgets extension
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["EchoelmusicWidgets"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: widgets_profile,
+      bundle_identifier: "com.echoelmusic.app.widgets"
+    )
+
+    # Configure code signing for App Clip
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["EchoelmusicClip"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: clip_profile,
+      bundle_identifier: "com.echoelmusic.app.Clip"
+    )
+
+    # Build iOS app with all extensions
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -262,7 +366,9 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       export_options: {
         provisioningProfiles: {
-          "com.echoelmusic.app" => app_profile
+          "com.echoelmusic.app" => app_profile,
+          "com.echoelmusic.app.widgets" => widgets_profile,
+          "com.echoelmusic.app.Clip" => clip_profile
         }
       },
       xcargs: [

@@ -11,6 +11,9 @@ import Foundation
 import Combine
 import Network
 
+/// Logger alias for Collaboration operations
+private var collabLog: EchoelLogger { echoelLog }
+
 // MARK: - Collaboration Mode
 
 /// Types of collaboration sessions
@@ -455,7 +458,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
         // Simulate discovering sessions
         updateStatistics()
 
-        log.collaboration("WorldwideCollaborationHub: Connected to \(selectedRegion.endpoint)")
+        collabLog.info("WorldwideCollaborationHub: Connected to \(selectedRegion.endpoint)", category: .collaboration)
     }
 
     /// Disconnect from network
@@ -467,7 +470,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
         }
         isConnected = false
         networkQuality = nil
-        log.collaboration("WorldwideCollaborationHub: Disconnected")
+        collabLog.info("WorldwideCollaborationHub: Disconnected", category: .collaboration)
     }
 
     // MARK: - Session Management
@@ -502,7 +505,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
 
         eventPublisher.send(.sessionStarted)
 
-        log.collaboration("WorldwideCollaborationHub: Created session '\(name)' [\(session.code)]")
+        collabLog.info("WorldwideCollaborationHub: Created session '\(name)' [\(session.code)]", category: .collaboration)
         return session
     }
 
@@ -537,7 +540,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
 
         eventPublisher.send(.participantJoined(participant))
 
-        log.collaboration("WorldwideCollaborationHub: Joined session [\(code)]")
+        collabLog.info("WorldwideCollaborationHub: Joined session [\(code)]", category: .collaboration)
     }
 
     /// Leave current session
@@ -549,7 +552,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
         currentSession = nil
         localParticipant = nil
 
-        log.collaboration("WorldwideCollaborationHub: Left session [\(session.code)]")
+        collabLog.info("WorldwideCollaborationHub: Left session [\(session.code)]", category: .collaboration)
     }
 
     /// End session (host only)
@@ -568,7 +571,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
         currentSession = nil
         localParticipant = nil
 
-        log.collaboration("WorldwideCollaborationHub: Ended session [\(session.code)]")
+        collabLog.info("WorldwideCollaborationHub: Ended session [\(session.code)]", category: .collaboration)
     }
 
     // MARK: - Communication
@@ -633,7 +636,7 @@ public final class WorldwideCollaborationHub: ObservableObject {
 
         eventPublisher.send(.quantumEntanglement(strength: strength))
 
-        log.collaboration("WorldwideCollaborationHub: Quantum entanglement triggered (strength: \(String(format: "%.2f", strength)))")
+        collabLog.info("WorldwideCollaborationHub: Quantum entanglement triggered (strength: \(String(format: "%.2f", strength)))", category: .collaboration)
     }
 
     /// Update shared parameters

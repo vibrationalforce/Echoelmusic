@@ -134,12 +134,19 @@ class RecordingEngine: ObservableObject {
         try? FileManager.default.createDirectory(at: sessionsDirectory, withIntermediateDirectories: true)
 
         // Setup recording format (48kHz, stereo, float32)
-        self.recordingFormat = AVAudioFormat(
+        guard let format = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,
             sampleRate: 48000,
             channels: 2,
             interleaved: false
-        )!
+        ) else {
+            log.recording("❌ Failed to create recording format - using fallback", level: .error)
+            // Fallback to standard format
+            self.recordingFormat = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2)
+                ?? AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)!
+            return
+        }
+        self.recordingFormat = format
 
         log.recording("📁 Recording engine initialized")
         log.recording("   Sessions directory: \(sessionsDirectory.path)")

@@ -213,7 +213,16 @@ public class FileAnalyticsProvider: AnalyticsProvider {
     }
 
     deinit {
-        try? fileHandle?.close()
+        // Remove all notification observers to prevent memory leaks
+        NotificationCenter.default.removeObserver(self)
+
+        // Close file handle with error logging
+        do {
+            try fileHandle?.close()
+        } catch {
+            // Can't use log in deinit, but file close failure is rare
+            print("AnalyticsManager: Failed to close file handle: \(error)")
+        }
     }
 
     public func track(event: String, properties: [String: Any]) {

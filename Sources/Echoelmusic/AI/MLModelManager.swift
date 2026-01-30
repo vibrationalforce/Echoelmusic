@@ -730,7 +730,14 @@ class MLModelManager {
             var modelURL = configuration.localURL
 
             // Download if not available locally
-            if modelURL == nil || !FileManager.default.fileExists(atPath: modelURL!.path) {
+            let needsDownload: Bool
+            if let localPath = modelURL?.path {
+                needsDownload = !FileManager.default.fileExists(atPath: localPath)
+            } else {
+                needsDownload = true
+            }
+
+            if needsDownload {
                 modelURL = try await downloadModel(configuration)
             }
 
@@ -906,7 +913,12 @@ class MLModelManager {
         ]
 
         for modelType in criticalModels {
-            try? await loadModel(modelType)
+            do {
+                try await loadModel(modelType)
+            } catch {
+                log.ai("⚠️ Failed to preload critical model \(modelType): \(error.localizedDescription)", level: .warning)
+                // Continue loading other models - don't fail entire preload
+            }
         }
     }
 }

@@ -2,6 +2,9 @@ import Foundation
 import Combine
 import Network
 
+/// Logger alias for CrossPlatformSessionManager
+private let log = echoelLog
+
 // MARK: - Cross-Platform Session Manager
 // Phase 10000 ULTIMATE - ANY Device Combination Works Together
 // Nobel Prize Multitrillion Dollar Company - Ralph Wiggum Lambda Loop
@@ -254,7 +257,13 @@ public final class CrossPlatformSessionManager: ObservableObject {
     }
 
     private func broadcast(_ packet: SyncPacket) {
-        guard let data = try? JSONEncoder().encode(packet) else { return }
+        let data: Data
+        do {
+            data = try JSONEncoder().encode(packet)
+        } catch {
+            log.hardware("Failed to encode sync packet: \(error.localizedDescription)", level: .error)
+            return
+        }
 
         for (_, connection) in connections {
             connection.send(content: data, completion: .contentProcessed { _ in })
@@ -264,19 +273,39 @@ public final class CrossPlatformSessionManager: ObservableObject {
     // MARK: - Encoding Helpers
 
     private func encodeBiometricData(_ data: BiometricSyncData) -> Data {
-        (try? JSONEncoder().encode(data)) ?? Data()
+        do {
+            return try JSONEncoder().encode(data)
+        } catch {
+            log.hardware("Failed to encode biometric data: \(error.localizedDescription)", level: .warning)
+            return Data()
+        }
     }
 
     private func encodeAudioParams(_ params: AudioSyncParameters) -> Data {
-        (try? JSONEncoder().encode(params)) ?? Data()
+        do {
+            return try JSONEncoder().encode(params)
+        } catch {
+            log.hardware("Failed to encode audio params: \(error.localizedDescription)", level: .warning)
+            return Data()
+        }
     }
 
     private func encodeVisualParams(_ params: VisualSyncParameters) -> Data {
-        (try? JSONEncoder().encode(params)) ?? Data()
+        do {
+            return try JSONEncoder().encode(params)
+        } catch {
+            log.hardware("Failed to encode visual params: \(error.localizedDescription)", level: .warning)
+            return Data()
+        }
     }
 
     private func encodeLightingData(_ data: LightingSyncData) -> Data {
-        (try? JSONEncoder().encode(data)) ?? Data()
+        do {
+            return try JSONEncoder().encode(data)
+        } catch {
+            log.hardware("Failed to encode lighting data: \(error.localizedDescription)", level: .warning)
+            return Data()
+        }
     }
 }
 

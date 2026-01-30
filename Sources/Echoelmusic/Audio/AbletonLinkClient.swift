@@ -262,7 +262,8 @@ public class AbletonLinkClient: ObservableObject {
         do {
             unicastListener = try NWListener(using: params, on: NWEndpoint.Port(integerLiteral: LinkConstants.port))
 
-            unicastListener?.stateUpdateHandler = { state in
+            unicastListener?.stateUpdateHandler = { [weak self] state in
+                guard self != nil else { return }
                 switch state {
                 case .ready:
                     log.audio("✅ Link: Unicast listener ready")
@@ -510,16 +511,53 @@ public class AbletonLinkClient: ObservableObject {
         sendStateUpdate()
     }
 
-    /// Request beat at specific phase
-    public func requestBeatAtPhase(_ phase: Double) {
-        // Quantize next beat to requested phase
+    /// Request beat at specific phase - returns time interval to wait
+    /// - Parameter phase: Target phase (0.0 to 1.0, where 0.0 = downbeat)
+    /// - Returns: TimeInterval to wait until target phase, or 0 if immediate
+    @discardableResult
+    public func requestBeatAtPhase(_ phase: Double) -> TimeInterval {
+        let normalizedPhase = max(0, min(1, phase))  // Clamp to 0-1
         let currentPhase = sessionState.phase
-        let phaseDiff = phase - currentPhase
+        let beatDuration = getBeatDuration()
 
-        if phaseDiff > 0 {
-            // Wait for phase
-            let beatsToWait = phaseDiff * sessionState.quantum
-            // This would be implemented with a precise timer
+        // Calculate phase distance (wrapping around if needed)
+        let phaseDistance: Double
+        if normalizedPhase >= currentPhase {
+            phaseDistance = normalizedPhase - currentPhase
+        } else {
+            // Wrap around: need to go past 1.0 to reach target
+            phaseDistance = (1.0 - currentPhase) + normalizedPhase
+        }
+
+        // Convert phase distance to time
+        let timeToWait = phaseDistance * sessionState.quantum * beatDuration
+
+        log.audio("🎯 Link: Phase request - current: \(String(format: "%.3f", currentPhase)), target: \(String(format: "%.3f", normalizedPhase)), wait: \(String(format: "%.3f", timeToWait))s")
+
+        return timeToWait
+    }
+
+    /// Quantize to next downbeat (phase 0.0)
+    /// - Returns: TimeInterval until next downbeat
+    public func timeUntilNextDownbeat() -> TimeInterval {
+        return requestBeatAtPhase(0.0)
+    }
+
+    /// Execute callback at specific phase
+    /// - Parameters:
+    ///   - phase: Target phase (0.0 to 1.0)
+    ///   - callback: Closure to execute when phase is reached
+    public func executeAtPhase(_ phase: Double, callback: @escaping () -> Void) {
+        let waitTime = requestBeatAtPhase(phase)
+
+        if waitTime <= 0.001 {
+            // Already at target phase
+            callback()
+        } else {
+            // Schedule callback
+            DispatchQueue.main.asyncAfter(deadline: .now() + waitTime) {
+                callback()
+            }
         }
     }
 
