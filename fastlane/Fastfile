@@ -51,6 +51,89 @@ def setup_keychain
   { path: keychain_path, password: keychain_password }
 end
 
+# Improved certificate management - reuses existing certificates
+def get_or_create_certificates(api_key, platform, keychain)
+  UI.message("🔐 Managing certificates for #{platform}...")
+
+  begin
+    require 'spaceship'
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key: ENV["ASC_KEY_CONTENT"]
+    )
+
+    # Determine certificate type based on platform
+    cert_types = case platform
+    when "ios", "tvos", "watchos"
+      ["IOS_DISTRIBUTION", "DISTRIBUTION"]
+    when "macos"
+      ["MAC_APP_DISTRIBUTION", "DEVELOPER_ID_APPLICATION"]
+    else
+      ["DISTRIBUTION"]
+    end
+
+    # Find existing valid certificates
+    all_certs = Spaceship::ConnectAPI::Certificate.all
+    valid_certs = all_certs.select do |cert|
+      cert_types.include?(cert.certificate_type) &&
+      cert.expiration_date > Time.now + (30 * 24 * 60 * 60) # Valid for at least 30 more days
+    end
+
+    UI.message("Found #{valid_certs.count} valid distribution certificate(s)")
+
+    if valid_certs.any?
+      UI.success("✅ Reusing existing certificate: #{valid_certs.first.id}")
+      # Download and install the existing certificate
+      get_certificates(
+        api_key: api_key,
+        platform: platform,
+        keychain_path: keychain[:path],
+        keychain_password: keychain[:password],
+        generate_apple_certs: false  # Don't create new, just download existing
+      )
+    else
+      # Check certificate count before creating
+      dist_certs = all_certs.select { |c| cert_types.include?(c.certificate_type) }
+
+      if dist_certs.count >= 2
+        UI.important("⚠️ Certificate limit reached (#{dist_certs.count}/2)")
+        UI.message("Revoking oldest certificate to make room...")
+
+        oldest = dist_certs.min_by { |c| c.expiration_date }
+        if oldest
+          UI.message("Revoking: #{oldest.id} (expires: #{oldest.expiration_date})")
+          oldest.delete!
+          UI.success("Certificate revoked, creating new one...")
+        end
+      end
+
+      # Now create new certificate
+      get_certificates(
+        api_key: api_key,
+        platform: platform,
+        keychain_path: keychain[:path],
+        keychain_password: keychain[:password],
+        generate_apple_certs: true
+      )
+    end
+
+    UI.success("✅ Certificate ready for #{platform}")
+
+  rescue => e
+    UI.important("Certificate management error: #{e.message}")
+    UI.message("Falling back to standard get_certificates...")
+
+    # Fallback to standard behavior
+    get_certificates(
+      api_key: api_key,
+      platform: platform,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password]
+    )
+  end
+end
+
 def cleanup_certificates(api_key)
   UI.message("Checking Distribution certificates...")
   begin
@@ -143,15 +226,9 @@ platform :ios do
 
     api_key = setup_api_key
     keychain = setup_keychain
-    cleanup_certificates(api_key)
 
-    # Get certificates
-    get_certificates(
-      api_key: api_key,
-      platform: "ios",
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password]
-    )
+    # Smart certificate management (reuses existing, creates if needed)
+    get_or_create_certificates(api_key, "ios", keychain)
 
     # Main app profile (iOS AUv3 is integrated, no separate extension)
     get_provisioning_profile(
@@ -207,14 +284,9 @@ platform :ios do
 
     api_key = setup_api_key
     keychain = setup_keychain
-    cleanup_certificates(api_key)
 
-    get_certificates(
-      api_key: api_key,
-      platform: "ios",
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password]
-    )
+    # Smart certificate management
+    get_or_create_certificates(api_key, "ios", keychain)
 
     # Companion iOS app profile (required for watchOS)
     get_provisioning_profile(
@@ -289,14 +361,9 @@ platform :ios do
 
     api_key = setup_api_key
     keychain = setup_keychain
-    cleanup_certificates(api_key)
 
-    get_certificates(
-      api_key: api_key,
-      platform: "ios",
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password]
-    )
+    # Smart certificate management
+    get_or_create_certificates(api_key, "ios", keychain)
 
     # Unified bundle ID for tvOS (enables universal purchase)
     get_provisioning_profile(
@@ -350,14 +417,9 @@ platform :ios do
 
     api_key = setup_api_key
     keychain = setup_keychain
-    cleanup_certificates(api_key)
 
-    get_certificates(
-      api_key: api_key,
-      platform: "ios",
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password]
-    )
+    # Smart certificate management
+    get_or_create_certificates(api_key, "ios", keychain)
 
     # Unified bundle ID for visionOS (enables universal purchase)
     # Note: visionOS uses "ios" platform for provisioning profiles in Fastlane
@@ -505,15 +567,9 @@ platform :mac do
 
     api_key = setup_api_key
     keychain = setup_keychain
-    cleanup_certificates(api_key)
 
-    # macOS uses different certificate type
-    get_certificates(
-      api_key: api_key,
-      platform: "macos",
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password]
-    )
+    # Smart certificate management for macOS
+    get_or_create_certificates(api_key, "macos", keychain)
 
     # Main app profile
     get_provisioning_profile(
