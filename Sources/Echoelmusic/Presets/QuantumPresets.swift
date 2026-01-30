@@ -36,6 +36,9 @@ public struct QuantumPreset: Identifiable, Codable, Sendable {
     public let breathingPaceSeconds: Float
     public let hrvSensitivity: Float
 
+    // Session settings
+    public let sessionDuration: TimeInterval // Duration in seconds
+
     // Accessibility
     public let colorScheme: String
     public let reducedMotion: Bool
@@ -79,6 +82,7 @@ public struct QuantumPreset: Identifiable, Codable, Sendable {
         coherenceTarget: Float = 0.7,
         breathingPaceSeconds: Float = 5.0,
         hrvSensitivity: Float = 1.0,
+        sessionDuration: TimeInterval = 600, // Default 10 minutes
         colorScheme: String = "standard",
         reducedMotion: Bool = false
     ) {
@@ -97,6 +101,7 @@ public struct QuantumPreset: Identifiable, Codable, Sendable {
         self.coherenceTarget = coherenceTarget
         self.breathingPaceSeconds = breathingPaceSeconds
         self.hrvSensitivity = hrvSensitivity
+        self.sessionDuration = sessionDuration
         self.colorScheme = colorScheme
         self.reducedMotion = reducedMotion
     }

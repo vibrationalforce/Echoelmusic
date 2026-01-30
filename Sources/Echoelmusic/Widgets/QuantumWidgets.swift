@@ -514,7 +514,8 @@ struct PresetTimelineProvider: AppIntentTimelineProvider {
 
     private func findPreset(id: String?) -> QuantumPreset? {
         guard let id = id else { return nil }
-        return PresetManager.shared.allPresets.first { $0.id == id }
+        // Use BuiltInPresets.all directly to avoid MainActor isolation issues in widget timeline providers
+        return BuiltInPresets.all.first { $0.id == id }
     }
 }
 
