@@ -309,12 +309,18 @@ private struct PermissionsPage: View {
     private func requestHealthKitPermission() {
         Task {
             let healthStore = HKHealthStore()
-            let typesToRead: Set<HKObjectType> = [
-                HKObjectType.quantityType(forIdentifier: .heartRate)!,
-                HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
-                HKObjectType.quantityType(forIdentifier: .respiratoryRate)!,
-                HKObjectType.quantityType(forIdentifier: .oxygenSaturation)!
-            ]
+
+            // Build types set safely without force unwraps
+            var typesToRead: Set<HKObjectType> = []
+            if let hr = HKObjectType.quantityType(forIdentifier: .heartRate) { typesToRead.insert(hr) }
+            if let hrv = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) { typesToRead.insert(hrv) }
+            if let resp = HKObjectType.quantityType(forIdentifier: .respiratoryRate) { typesToRead.insert(resp) }
+            if let spo2 = HKObjectType.quantityType(forIdentifier: .oxygenSaturation) { typesToRead.insert(spo2) }
+
+            guard !typesToRead.isEmpty else {
+                log.warning("No HealthKit types available on this device")
+                return
+            }
 
             do {
                 try await healthStore.requestAuthorization(toShare: [], read: typesToRead)

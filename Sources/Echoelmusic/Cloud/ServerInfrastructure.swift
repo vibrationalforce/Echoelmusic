@@ -170,7 +170,10 @@ public class ServerConfiguration: ObservableObject {
     }
 
     private func measureLatency(to region: ServerRegion) async -> TimeInterval? {
-        let url = URL(string: "https://\(region.endpoint)/ping")!
+        guard let url = URL(string: "https://\(region.endpoint)/ping") else {
+            logger.network("Invalid endpoint URL for region: \(region.rawValue)", level: .warning)
+            return nil
+        }
         let start = Date()
 
         do {
@@ -318,7 +321,10 @@ public class AuthenticationService: ObservableObject {
         logger.auth("Refreshing access token")
 
         let config = ServerConfiguration.shared
-        let url = URL(string: "\(config.apiBaseURL)/auth/refresh")!
+        guard let url = URL(string: "\(config.apiBaseURL)/auth/refresh") else {
+            logger.auth("Invalid refresh token URL", level: .error)
+            throw AuthError.invalidConfiguration
+        }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
