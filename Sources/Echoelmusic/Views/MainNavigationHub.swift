@@ -472,48 +472,11 @@ struct MainNavigationHub: View {
 
     @ViewBuilder
     private var workspaceContent: some View {
-        switch currentWorkspace {
-        case .palace:
-            VaporwavePalace()
-                .environmentObject(healthKitManager)
-                .environmentObject(audioEngine)
-                .environmentObject(microphoneManager)
-
-        case .daw:
-            DAWArrangementView()
-
-        case .session:
-            SessionClipView()
-
-        case .video:
-            VideoEditorView()
-
-        case .vj:
-            VJLaserControlView()
-
-        case .nodes:
-            NodeEditorView()
-
-        case .midi:
-            MIDIRoutingView()
-
-        case .mixing:
-            AudioRoutingMatrixView()
-
-        case .ai:
-            AISuperIntelligenceView()
-
-        case .hardware:
-            HardwarePickerView()
-
-        case .streaming:
-            StreamingView()
-
-        case .settings:
-            VaporwaveSettings()
-                .environmentObject(healthKitManager)
-                .environmentObject(audioEngine)
-        }
+        // Extracted to WorkspaceContentRouter for better modularity
+        WorkspaceContentRouter(workspace: currentWorkspace)
+            .environmentObject(healthKitManager)
+            .environmentObject(audioEngine)
+            .environmentObject(microphoneManager)
     }
 
     // MARK: - Transport Bar
