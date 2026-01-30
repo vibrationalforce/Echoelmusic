@@ -36,10 +36,11 @@ struct WaveformMode: View {
 
             // Sample buffer for display
             let samplesPerPixel = max(1, audioBuffer.count / Int(width))
-            let displaySamples = stride(from: 0, to: audioBuffer.count, by: samplesPerPixel)
+            let displaySamples = Array(stride(from: 0, to: audioBuffer.count, by: samplesPerPixel))
+            let sampleCount = displaySamples.count
 
             for (index, sampleIndex) in displaySamples.enumerated() {
-                let x = CGFloat(index) * (width / CGFloat(displaySamples.count))
+                let x = CGFloat(index) * (width / CGFloat(sampleCount))
                 let sample = audioBuffer[sampleIndex]
                 let y = centerY + CGFloat(sample) * (height * 0.4)  // Scale to 40% of height
 

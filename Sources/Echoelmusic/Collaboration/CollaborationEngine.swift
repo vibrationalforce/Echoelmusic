@@ -2,6 +2,9 @@ import Foundation
 import Combine
 import Network
 
+/// Local logger alias
+private let log = echoelLog
+
 /// Collaboration Engine - Ultra-Low-Latency Multiplayer with WebRTC
 /// Group Bio-Sync, Shared Metronome, Collective Coherence
 /// Target latency: <20ms LAN, <50ms Internet

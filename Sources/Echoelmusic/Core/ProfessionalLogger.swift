@@ -432,3 +432,6 @@ public final class EchoelLogger: @unchecked Sendable {
 
 /// Global logger instance (renamed from 'log' to avoid conflicts with file-scoped private log constants)
 public let echoelLog = EchoelLogger.shared
+
+/// Convenience alias for backward compatibility
+public let log = echoelLog
