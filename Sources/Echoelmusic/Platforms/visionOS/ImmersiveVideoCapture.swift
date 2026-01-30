@@ -49,6 +49,7 @@ final class ImmersiveVideoCaptureManager: ObservableObject {
     private var recordingTimer: Timer?
     private var bioDataBuffer: [BioDataPoint] = []
     private var cancellables = Set<AnyCancellable>()
+    private var timeObserverToken: Any?  // Store AVPlayer observer to remove later
 
     // MARK: - Types
 
@@ -268,6 +269,12 @@ final class ImmersiveVideoCaptureManager: ObservableObject {
     func stop() {
         log.video("🎬 Stopping playback")
 
+        // Remove time observer before releasing player to prevent memory leak
+        if let token = timeObserverToken {
+            player?.removeTimeObserver(token)
+            timeObserverToken = nil
+        }
+
         player?.pause()
         player?.seek(to: .zero)
         player = nil
@@ -277,7 +284,14 @@ final class ImmersiveVideoCaptureManager: ObservableObject {
     }
 
     private func startPlaybackTimeUpdates() {
-        player?.addPeriodicTimeObserver(
+        // Remove any existing observer first
+        if let token = timeObserverToken {
+            player?.removeTimeObserver(token)
+            timeObserverToken = nil
+        }
+
+        // Store the new observer token so we can remove it later
+        timeObserverToken = player?.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 0.1, preferredTimescale: 600),
             queue: .main
         ) { [weak self] time in

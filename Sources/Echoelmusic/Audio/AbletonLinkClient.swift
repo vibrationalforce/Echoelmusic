@@ -262,7 +262,8 @@ public class AbletonLinkClient: ObservableObject {
         do {
             unicastListener = try NWListener(using: params, on: NWEndpoint.Port(integerLiteral: LinkConstants.port))
 
-            unicastListener?.stateUpdateHandler = { state in
+            unicastListener?.stateUpdateHandler = { [weak self] state in
+                guard self != nil else { return }
                 switch state {
                 case .ready:
                     log.audio("✅ Link: Unicast listener ready")
