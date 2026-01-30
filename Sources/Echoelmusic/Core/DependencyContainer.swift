@@ -241,7 +241,9 @@ public enum SimpleLogLevel: String {
 
 struct DefaultLogger: LoggerProtocol {
     func log(_ message: String, level: SimpleLogLevel) {
+        #if DEBUG
         print("[\(level.rawValue.uppercased())] \(message)")
+        #endif
     }
 }
 

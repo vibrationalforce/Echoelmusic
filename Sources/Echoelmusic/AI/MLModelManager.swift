@@ -730,7 +730,14 @@ class MLModelManager {
             var modelURL = configuration.localURL
 
             // Download if not available locally
-            if modelURL == nil || !FileManager.default.fileExists(atPath: modelURL!.path) {
+            let needsDownload: Bool
+            if let localPath = modelURL?.path {
+                needsDownload = !FileManager.default.fileExists(atPath: localPath)
+            } else {
+                needsDownload = true
+            }
+
+            if needsDownload {
                 modelURL = try await downloadModel(configuration)
             }
 
