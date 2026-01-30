@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- App Groups (for data sharing with main app) -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.echoelmusic.shared</string>
+	</array>
+
+	<!-- App Clip Parent Application Identifiers -->
+	<key>com.apple.developer.parent-application-identifiers</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.echoelmusic.app</string>
+	</array>
+
+	<!-- App Clip Associated Domains (for invocation) -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>appclips:echoelmusic.com</string>
+	</array>
+</dict>
+</plist>

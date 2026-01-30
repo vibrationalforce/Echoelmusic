@@ -489,8 +489,6 @@ targets:
         type: group
       - path: Sources/Echoelmusic/Presets/QuantumPresets.swift
         type: file
-      - path: Sources/Echoelmusic/Presets/PresetManager.swift
-        type: file
       - path: Sources/Echoelmusic/Quantum/PhotonicsVisualizationEngine.swift
         type: file
       - path: Sources/Echoelmusic/Core/QuantumDataStore.swift
