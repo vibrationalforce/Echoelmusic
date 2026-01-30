@@ -51,12 +51,23 @@ def setup_keychain
   { path: keychain_path, password: keychain_password }
 end
 
+# Helper to safely parse certificate expiration date
+def parse_cert_date(date_value)
+  return date_value if date_value.is_a?(Time)
+  return Time.parse(date_value.to_s) if date_value.respond_to?(:to_s)
+  Time.now # Fallback to now if unparseable
+rescue
+  Time.now
+end
+
 # Improved certificate management - reuses existing certificates
 def get_or_create_certificates(api_key, platform, keychain)
   UI.message("🔐 Managing certificates for #{platform}...")
 
   begin
     require 'spaceship'
+    require 'time'  # For Time.parse
+
     Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
       key_id: ENV["ASC_KEY_ID"],
       issuer_id: ENV["ASC_ISSUER_ID"],
@@ -75,40 +86,47 @@ def get_or_create_certificates(api_key, platform, keychain)
 
     # Find existing valid certificates
     all_certs = Spaceship::ConnectAPI::Certificate.all
-    valid_certs = all_certs.select do |cert|
-      cert_types.include?(cert.certificate_type) &&
-      cert.expiration_date > Time.now + (30 * 24 * 60 * 60) # Valid for at least 30 more days
+    dist_certs = all_certs.select { |c| cert_types.include?(c.certificate_type) }
+
+    UI.message("Found #{dist_certs.count} distribution certificate(s) at Apple")
+
+    # Log certificate details
+    dist_certs.each do |cert|
+      exp_time = parse_cert_date(cert.expiration_date)
+      UI.message("  - #{cert.id}: expires #{exp_time.strftime('%Y-%m-%d')}")
     end
 
-    UI.message("Found #{valid_certs.count} valid distribution certificate(s)")
+    # Find certificates valid for at least 30 more days
+    thirty_days_from_now = Time.now + (30 * 24 * 60 * 60)
+    valid_certs = dist_certs.select do |cert|
+      parse_cert_date(cert.expiration_date) > thirty_days_from_now
+    end
+
+    UI.message("Found #{valid_certs.count} certificate(s) valid for 30+ days")
 
     if valid_certs.any?
       UI.success("✅ Reusing existing certificate: #{valid_certs.first.id}")
-      # Download and install the existing certificate
+      # Download and install the existing certificate (don't create new)
       get_certificates(
         api_key: api_key,
         platform: platform,
         keychain_path: keychain[:path],
         keychain_password: keychain[:password],
-        generate_apple_certs: false  # Don't create new, just download existing
+        generate_apple_certs: false
+      )
+    elsif dist_certs.any?
+      # Have certificates but they expire soon - still use them rather than hit limit
+      UI.important("⚠️ Existing certificates expire within 30 days, but using them anyway")
+      get_certificates(
+        api_key: api_key,
+        platform: platform,
+        keychain_path: keychain[:path],
+        keychain_password: keychain[:password],
+        generate_apple_certs: false
       )
     else
-      # Check certificate count before creating
-      dist_certs = all_certs.select { |c| cert_types.include?(c.certificate_type) }
-
-      if dist_certs.count >= 2
-        UI.important("⚠️ Certificate limit reached (#{dist_certs.count}/2)")
-        UI.message("Revoking oldest certificate to make room...")
-
-        oldest = dist_certs.min_by { |c| c.expiration_date }
-        if oldest
-          UI.message("Revoking: #{oldest.id} (expires: #{oldest.expiration_date})")
-          oldest.delete!
-          UI.success("Certificate revoked, creating new one...")
-        end
-      end
-
-      # Now create new certificate
+      # No certificates at all - create one
+      UI.message("No distribution certificates found, creating new one...")
       get_certificates(
         api_key: api_key,
         platform: platform,
@@ -122,15 +140,22 @@ def get_or_create_certificates(api_key, platform, keychain)
 
   rescue => e
     UI.important("Certificate management error: #{e.message}")
-    UI.message("Falling back to standard get_certificates...")
+    UI.message("Falling back to get_certificates with generate_apple_certs: false...")
 
-    # Fallback to standard behavior
-    get_certificates(
-      api_key: api_key,
-      platform: platform,
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password]
-    )
+    # Fallback: try to download existing certs without creating new ones
+    begin
+      get_certificates(
+        api_key: api_key,
+        platform: platform,
+        keychain_path: keychain[:path],
+        keychain_password: keychain[:password],
+        generate_apple_certs: false
+      )
+    rescue => fallback_error
+      UI.error("Fallback also failed: #{fallback_error.message}")
+      UI.error("Please check your certificates at https://developer.apple.com/account/resources/certificates/list")
+      raise fallback_error
+    end
   end
 end
 
@@ -138,6 +163,8 @@ def cleanup_certificates(api_key)
   UI.message("Checking Distribution certificates...")
   begin
     require 'spaceship'
+    require 'time'
+
     Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
       key_id: ENV["ASC_KEY_ID"],
       issuer_id: ENV["ASC_ISSUER_ID"],
@@ -150,14 +177,17 @@ def cleanup_certificates(api_key)
 
     UI.message("Found #{all_certs.count} distribution certificate(s)")
 
+    # Only cleanup if we have more than 2 (shouldn't happen normally)
     if all_certs.count > 2
-      sorted = all_certs.sort_by { |c| c.expiration_date }.reverse
+      sorted = all_certs.sort_by { |c| parse_cert_date(c.expiration_date) }.reverse
       to_revoke = sorted[2..-1]
       to_revoke.each do |cert|
         UI.message("Revoking old certificate: #{cert.id}")
         cert.delete!
       end
       UI.success("Cleaned up #{to_revoke.count} old certificate(s)")
+    else
+      UI.message("Certificate count OK (#{all_certs.count}/2 max)")
     end
   rescue => e
     UI.important("Certificate check skipped: #{e.message}")
