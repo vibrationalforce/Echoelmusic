@@ -27,7 +27,7 @@ class PerformanceOptimizer: ObservableObject {
 
     private var frameTimeHistory: [Double] = []
     private var lastFrameTime: CFAbsoluteTime = 0
-    private let logger = Logger(subsystem: "com.echoelmusic.performance", category: "Optimization")
+    private let logger = echoelLog
 
     // MARK: - Thermal State
 

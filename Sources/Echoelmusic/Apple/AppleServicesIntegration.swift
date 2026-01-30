@@ -19,8 +19,8 @@ import StoreKit
 import WeatherKit
 #endif
 
-/// Logger instance for Apple Services operations
-private let log = EchoelLogger.shared
+/// Logger alias for Apple Services operations
+private var appleServicesLog: EchoelLogger { echoelLog }
 
 #if canImport(CallKit)
 import CallKit
@@ -109,7 +109,7 @@ public final class AppleServicesHub: ObservableObject {
 
         isFullyInitialized = true
 
-        log.info("Apple Services Hub initialized: \(availableServices.count) services available", category: .system)
+        appleServicesLog.info("Apple Services Hub initialized: \(availableServices.count) services available", category: .system)
     }
 }
 
@@ -557,7 +557,7 @@ public final class EchoelWeatherService: ObservableObject {
             circadianRecommendation = generateCircadianRecommendation()
 
         } catch {
-            log.error("WeatherKit error: \(error)", category: .system)
+            appleServicesLog.error("WeatherKit error: \(error)", category: .system)
             throw error
         }
         #else

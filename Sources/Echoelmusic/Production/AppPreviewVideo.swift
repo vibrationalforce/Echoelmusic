@@ -13,8 +13,8 @@ import UIKit
 import AppKit
 #endif
 
-/// Logger instance for App Preview operations
-private let log = EchoelLogger.shared
+/// Logger alias for App Preview operations
+private var appPreviewLog: EchoelLogger { echoelLog }
 
 // MARK: - App Preview Script
 
@@ -1416,36 +1416,36 @@ public struct AppPreviewExporter {
 public struct AppPreviewDebugHelper {
     /// Log full script breakdown for debugging
     public static func logScriptBreakdown(script: AppPreviewScript = .standard) {
-        log.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
-        log.debug("APP STORE PREVIEW VIDEO SCRIPT", category: .video)
-        log.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
-        log.debug("Duration: \(script.duration)s", category: .video)
-        log.debug("Platform: \(script.videoSpecs.platform.rawValue)", category: .video)
-        log.debug("Resolution: \(script.videoSpecs.resolution.description)", category: .video)
-        log.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
+        appPreviewLog.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
+        appPreviewLog.debug("APP STORE PREVIEW VIDEO SCRIPT", category: .video)
+        appPreviewLog.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
+        appPreviewLog.debug("Duration: \(script.duration)s", category: .video)
+        appPreviewLog.debug("Platform: \(script.videoSpecs.platform.rawValue)", category: .video)
+        appPreviewLog.debug("Resolution: \(script.videoSpecs.resolution.description)", category: .video)
+        appPreviewLog.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
 
         for scene in script.scenes {
-            log.debug("Scene: \(scene.name) (\(String(format: "%.1f", scene.startTime))s - \(String(format: "%.1f", scene.endTime))s)", category: .video)
-            log.debug("   \(scene.visualDescription.replacingOccurrences(of: "\n", with: "\n   "))", category: .video)
-            log.debug("   Camera: \(scene.cameraMovement.rawValue)", category: .video)
+            appPreviewLog.debug("Scene: \(scene.name) (\(String(format: "%.1f", scene.startTime))s - \(String(format: "%.1f", scene.endTime))s)", category: .video)
+            appPreviewLog.debug("   \(scene.visualDescription.replacingOccurrences(of: "\n", with: "\n   "))", category: .video)
+            appPreviewLog.debug("   Camera: \(scene.cameraMovement.rawValue)", category: .video)
 
             if !scene.onScreenText.isEmpty {
-                log.debug("   Text Overlays:", category: .video)
+                appPreviewLog.debug("   Text Overlays:", category: .video)
                 for text in scene.onScreenText {
-                    log.debug("   - \(text.text) (\(String(format: "%.1f", text.startTime))s)", category: .video)
+                    appPreviewLog.debug("   - \(text.text) (\(String(format: "%.1f", text.startTime))s)", category: .video)
                 }
             }
         }
 
-        log.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
-        log.debug("VOICEOVER SCRIPT (\(script.voiceoverScript.language))", category: .video)
-        log.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
+        appPreviewLog.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
+        appPreviewLog.debug("VOICEOVER SCRIPT (\(script.voiceoverScript.language))", category: .video)
+        appPreviewLog.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
 
         for (index, line) in script.voiceoverScript.lines.enumerated() {
-            log.debug("\(index + 1). (\(String(format: "%.1f", line.startTime))s) \(line.text)", category: .video)
+            appPreviewLog.debug("\(index + 1). (\(String(format: "%.1f", line.startTime))s) \(line.text)", category: .video)
         }
 
-        log.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
+        appPreviewLog.debug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", category: .video)
     }
 
     /// Deprecated: Use logScriptBreakdown() instead

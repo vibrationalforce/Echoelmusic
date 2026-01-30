@@ -15,6 +15,7 @@ import Foundation
 import SwiftUI
 import Combine
 import simd
+import AVFoundation
 
 // MARK: - Cymatics State
 

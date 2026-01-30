@@ -37,7 +37,7 @@ final class SelfHealingEngine: ObservableObject {
 
     // MARK: - Logger
 
-    private let logger = Logger(subsystem: "com.echoelmusic", category: "SelfHealing")
+    private let logger = echoelLog
 
     // MARK: - Private State
 
