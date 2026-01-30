@@ -153,6 +153,11 @@ targets:
         IPHONEOS_DEPLOYMENT_TARGET: "15.0"
     # Note: iOS AUv3 is integrated into the main app (works as both host and plugin)
     # No separate extension needed - same approach as macOS
+    dependencies:
+      - target: EchoelmusicWidgets
+        embed: true
+      - target: EchoelmusicClip
+        embed: false
     entitlements:
       path: Echoelmusic.entitlements
 
@@ -540,7 +545,6 @@ targets:
     sources:
       - path: Sources/EchoelmusicClip
         type: group
-        optional: true
       - path: Sources/Echoelmusic/Core/Logger.swift
         type: file
       - path: Sources/Echoelmusic/Core/QuantumDataStore.swift
@@ -640,11 +644,13 @@ targets:
 
 schemes:
 
-  # iOS Development (AUv3 integrated in main app)
+  # iOS Development (with Widgets and App Clip)
   Echoelmusic:
     build:
       targets:
         Echoelmusic: all
+        EchoelmusicWidgets: all
+        EchoelmusicClip: all
         EchoelmusicTests: [test]
         EchoelmusicUITests: [test]
     run:
@@ -748,6 +754,8 @@ schemes:
     build:
       targets:
         Echoelmusic: [archive]
+        EchoelmusicWidgets: [archive]
+        EchoelmusicClip: [archive]
         Echoelmusic-macOS: [archive]
         EchoelmusicAUv3-macOS: [archive]
         Echoelmusic-watchOS: [archive]

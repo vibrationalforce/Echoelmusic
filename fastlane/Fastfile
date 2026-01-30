@@ -248,11 +248,11 @@ end
 platform :ios do
 
   # ---------------------------------------------------------------------------
-  # iOS App (AUv3 integrated - no separate extension target)
+  # iOS App (with Widgets Extension and App Clip)
   # ---------------------------------------------------------------------------
   desc "Build and upload iOS app to TestFlight"
   lane :beta do
-    UI.header "iOS TestFlight Build (AUv3 integrated)"
+    UI.header "iOS TestFlight Build (with Widgets + App Clip)"
 
     api_key = setup_api_key
     keychain = setup_keychain
@@ -260,7 +260,7 @@ platform :ios do
     # Smart certificate management (reuses existing, creates if needed)
     get_or_create_certificates(api_key, "ios", keychain)
 
-    # Main app profile (iOS AUv3 is integrated, no separate extension)
+    # Main app profile
     get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app",
@@ -269,6 +269,26 @@ platform :ios do
     )
     app_profile = lane_context[SharedValues::SIGH_NAME]
     UI.message("iOS App profile: #{app_profile}")
+
+    # Widgets extension profile
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.widgets",
+      platform: "ios",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    widgets_profile = lane_context[SharedValues::SIGH_NAME]
+    UI.message("Widgets profile: #{widgets_profile}")
+
+    # App Clip profile
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.Clip",
+      platform: "ios",
+      force: ENV["CLEAN_BUILD"] == "true"
+    )
+    clip_profile = lane_context[SharedValues::SIGH_NAME]
+    UI.message("App Clip profile: #{clip_profile}")
 
     # Configure code signing for main app target
     update_code_signing_settings(
@@ -281,7 +301,29 @@ platform :ios do
       bundle_identifier: "com.echoelmusic.app"
     )
 
-    # Build iOS app (AUv3 functionality integrated in main app)
+    # Configure code signing for Widgets extension
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["EchoelmusicWidgets"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: widgets_profile,
+      bundle_identifier: "com.echoelmusic.app.widgets"
+    )
+
+    # Configure code signing for App Clip
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["EchoelmusicClip"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: clip_profile,
+      bundle_identifier: "com.echoelmusic.app.Clip"
+    )
+
+    # Build iOS app with all extensions
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -292,7 +334,9 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       export_options: {
         provisioningProfiles: {
-          "com.echoelmusic.app" => app_profile
+          "com.echoelmusic.app" => app_profile,
+          "com.echoelmusic.app.widgets" => widgets_profile,
+          "com.echoelmusic.app.Clip" => clip_profile
         }
       },
       xcargs: [

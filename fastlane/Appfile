@@ -54,11 +54,14 @@ end
 # Main Apps (Universal Purchase enabled):
 #   - com.echoelmusic.app              (iOS, macOS, tvOS, visionOS)
 #
-# Extensions:
-#   - com.echoelmusic.app.auv3         (iOS AUv3 - separate extension)
+# Extensions & Clips:
+#   - com.echoelmusic.app.auv3         (macOS AUv3 - embedded extension)
 #   - com.echoelmusic.app.watchkitapp  (watchOS companion app)
+#   - com.echoelmusic.app.widgets      (iOS Widgets extension)
+#   - com.echoelmusic.app.Clip         (iOS App Clip)
 #
 # Note: macOS AUv3 is embedded inside the main app bundle, not separate.
+#       iOS AUv3 functionality is integrated into the main app.
 #
 # App Groups:
 #   - group.com.echoelmusic.shared     (shared data between apps & extensions)
