@@ -229,7 +229,7 @@ platform :ios do
     get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app.watchkitapp",
-      platform: "ios",
+      platform: "watchos",
       force: ENV["CLEAN_BUILD"] == "true"
     )
     watch_profile = lane_context[SharedValues::SIGH_NAME]
