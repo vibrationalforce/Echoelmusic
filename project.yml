@@ -59,9 +59,11 @@ settings:
       GCC_OPTIMIZATION_LEVEL: "0"
       DEBUG_INFORMATION_FORMAT: "dwarf"
       SWIFT_ACTIVE_COMPILATION_CONDITIONS: "DEBUG $(inherited)"
+      CODE_SIGN_IDENTITY: "Apple Development"
     Release:
       DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
       SWIFT_COMPILATION_MODE: "wholemodule"
+      CODE_SIGN_IDENTITY: "Apple Distribution"
 
 # =============================================================================
 # TARGETS
@@ -150,6 +152,8 @@ targets:
         DEVELOPMENT_TEAM: ""
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+        SDKROOT: iphoneos
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
     # Note: iOS AUv3 is integrated into the main app (works as both host and plugin)
     # No separate extension needed - same approach as macOS
     dependencies:
@@ -217,6 +221,8 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         ENABLE_HARDENED_RUNTIME: YES
         COMBINE_HIDPI_IMAGES: YES
+        SDKROOT: macosx
+        SUPPORTED_PLATFORMS: macosx
     dependencies:
       - target: EchoelmusicAUv3-macOS
         embed: true
@@ -296,10 +302,13 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: EchoelmusicAUv3.entitlements
+        DEVELOPMENT_TEAM: ""
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
         SKIP_INSTALL: YES
         ENABLE_HARDENED_RUNTIME: YES
+        SDKROOT: macosx
+        SUPPORTED_PLATFORMS: macosx
     dependencies:
       - framework: AudioToolbox.framework
       - framework: AVFoundation.framework
@@ -361,6 +370,8 @@ targets:
         TARGETED_DEVICE_FAMILY: "4"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_EMIT_LOC_STRINGS: YES
+        SDKROOT: watchos
+        SUPPORTED_PLATFORMS: "watchos watchsimulator"
     entitlements:
       path: EchoelmusicWatch.entitlements
 
@@ -416,6 +427,8 @@ targets:
         TVOS_DEPLOYMENT_TARGET: "15.0"
         TARGETED_DEVICE_FAMILY: "3"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIconTV
+        SDKROOT: appletvos
+        SUPPORTED_PLATFORMS: "appletvos appletvsimulator"
     entitlements:
       path: EchoelmusicTV.entitlements
 
@@ -472,6 +485,8 @@ targets:
         DEVELOPMENT_TEAM: ""
         XROS_DEPLOYMENT_TARGET: "1.0"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIconVision
+        SDKROOT: xros
+        SUPPORTED_PLATFORMS: "xros xrsimulator"
     entitlements:
       path: EchoelmusicVision.entitlements
 
@@ -524,6 +539,8 @@ targets:
         SKIP_INSTALL: YES
         SWIFT_EMIT_LOC_STRINGS: YES
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) WIDGET_EXTENSION"
+        SDKROOT: iphoneos
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
     dependencies:
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
@@ -576,6 +593,8 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "15.0"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SDKROOT: iphoneos
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
     entitlements:
       path: EchoelmusicClip.entitlements
 
