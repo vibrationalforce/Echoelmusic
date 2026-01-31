@@ -296,6 +296,7 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: EchoelmusicAUv3.entitlements
+        DEVELOPMENT_TEAM: ""
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
         SKIP_INSTALL: YES

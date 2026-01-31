@@ -71,10 +71,12 @@ end
 def build_xcargs_with_auth
   api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
 
+  # NOTE: Do NOT specify CODE_SIGN_IDENTITY - let Xcode resolve it automatically
+  # via API authentication. Specifying 'Apple Distribution' forces Xcode to look
+  # for a local certificate, which breaks cloud-managed signing.
   args = [
     "DEVELOPMENT_TEAM='#{TEAM_ID}'",
     "CODE_SIGN_STYLE='Automatic'",
-    "CODE_SIGN_IDENTITY='Apple Distribution'",
     "COMPILER_INDEX_STORE_ENABLE=NO",
     "-allowProvisioningUpdates",
     "-allowProvisioningDeviceRegistration"
@@ -83,6 +85,7 @@ def build_xcargs_with_auth
   # Add API authentication if key file exists (CI environment)
   if File.exist?(api_key_path)
     UI.message("Using App Store Connect API for cloud-managed signing")
+    UI.message("Xcode will automatically resolve signing identity via API")
     args += [
       "-authenticationKeyPath '#{api_key_path}'",
       "-authenticationKeyID '#{ENV['ASC_KEY_ID']}'",
@@ -317,32 +320,14 @@ platform :ios do
     api_key = setup_api_key
     keychain = setup_keychain
 
-    # Get/create certificates and profiles via App Store Connect API
-    UI.message("Setting up certificates and profiles...")
-
-    # Get distribution certificate
-    get_certificates(
-      api_key: api_key,
-      platform: "ios",
-      type: "appstore",
-      generate_apple_certs: true,
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password]
-    )
-
-    # Get provisioning profiles for all bundle IDs
-    ["com.echoelmusic.app", "com.echoelmusic.app.widgets", "com.echoelmusic.app.Clip"].each do |bundle_id|
-      sigh(
-        api_key: api_key,
-        app_identifier: bundle_id,
-        platform: "ios",
-        adhoc: false,
-        force: false,
-        readonly: false
-      )
-    end
+    # With xcodebuild API authentication (-authenticationKey* flags), we let
+    # Xcode handle certificate and profile management automatically.
+    # The API key file at ~/.appstoreconnect/private_keys/ enables this.
+    UI.message("Using xcodebuild automatic signing with API authentication")
+    UI.message("Xcode will create/download certificates and profiles as needed")
 
     # Build iOS app with cloud-managed signing
+    # xcodebuild with -allowProvisioningUpdates and API auth handles everything
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -368,26 +353,8 @@ platform :ios do
     UI.header "watchOS TestFlight Build"
 
     api_key = setup_api_key
-    keychain = setup_keychain
 
-    # Get/create certificates and profiles
-    get_certificates(
-      api_key: api_key,
-      platform: "ios",
-      type: "appstore",
-      generate_apple_certs: true,
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password]
-    )
-
-    sigh(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app.watchkitapp",
-      platform: "ios",
-      adhoc: false,
-      force: false,
-      readonly: false
-    )
+    UI.message("Using xcodebuild automatic signing with API authentication")
 
     # Build watchOS app with cloud-managed signing
     build_app(
@@ -416,26 +383,8 @@ platform :ios do
     UI.header "tvOS TestFlight Build"
 
     api_key = setup_api_key
-    keychain = setup_keychain
 
-    # Get/create certificates and profiles
-    get_certificates(
-      api_key: api_key,
-      platform: "ios",
-      type: "appstore",
-      generate_apple_certs: true,
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password]
-    )
-
-    sigh(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app",
-      platform: "tvos",
-      adhoc: false,
-      force: false,
-      readonly: false
-    )
+    UI.message("Using xcodebuild automatic signing with API authentication")
 
     # Build tvOS app with cloud-managed signing
     build_app(
@@ -463,26 +412,8 @@ platform :ios do
     UI.header "visionOS TestFlight Build"
 
     api_key = setup_api_key
-    keychain = setup_keychain
 
-    # Get/create certificates and profiles
-    get_certificates(
-      api_key: api_key,
-      platform: "ios",
-      type: "appstore",
-      generate_apple_certs: true,
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password]
-    )
-
-    sigh(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app",
-      platform: "ios",  # visionOS uses iOS signing
-      adhoc: false,
-      force: false,
-      readonly: false
-    )
+    UI.message("Using xcodebuild automatic signing with API authentication")
 
     # Build visionOS app with cloud-managed signing
     build_app(
@@ -602,29 +533,9 @@ platform :mac do
     UI.header "macOS TestFlight Build (with AUv3 Extension)"
 
     api_key = setup_api_key
-    keychain = setup_keychain
 
-    # Get/create certificates and profiles for macOS
-    get_certificates(
-      api_key: api_key,
-      platform: "macos",
-      type: "appstore",
-      generate_apple_certs: true,
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password]
-    )
-
-    # Get provisioning profiles for main app and AUv3 extension
-    ["com.echoelmusic.app", "com.echoelmusic.app.auv3"].each do |bundle_id|
-      sigh(
-        api_key: api_key,
-        app_identifier: bundle_id,
-        platform: "macos",
-        adhoc: false,
-        force: false,
-        readonly: false
-      )
-    end
+    UI.message("Using xcodebuild automatic signing with API authentication")
+    UI.message("Xcode will create/download certificates and profiles for main app + AUv3")
 
     # Build macOS app with cloud-managed signing
     build_app(
