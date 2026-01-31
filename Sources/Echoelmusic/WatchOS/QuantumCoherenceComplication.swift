@@ -101,7 +101,7 @@ public class QuantumComplicationDataSource: NSObject, CLKComplicationDataSource 
     // MARK: - Template Creation
 
     private func createTemplate(for complication: CLKComplication, date: Date) -> CLKComplicationTemplate? {
-        let coherence = dataStore.coherenceLevel
+        let coherence = Float(dataStore.coherenceLevel) // Convert Double to Float for ClockKit
         let heartRate = dataStore.heartRate
         let hrvCoherence = dataStore.hrvCoherence
 
@@ -313,30 +313,22 @@ public class QuantumComplicationDataSource: NSObject, CLKComplicationDataSource 
     }
 }
 
-// MARK: - Quantum Data Store
+// MARK: - Quantum Data Store Extension for watchOS
+// NOTE: Uses Core/QuantumDataStore.swift with App Groups for cross-device sync
 
 @available(watchOS 8.0, *)
-public class QuantumDataStore: ObservableObject {
-    public static let shared = QuantumDataStore()
-
-    @Published public var coherenceLevel: Float = 0.5
-    @Published public var heartRate: Double = 72
-    @Published public var hrvCoherence: Double = 50
-    @Published public var breathingRate: Double = 6
-    @Published public var isQuantumActive: Bool = false
-    @Published public var entanglementCount: Int = 0
-
-    private init() {}
-
-    public func update(
-        coherence: Float,
+extension QuantumDataStore {
+    /// Update biometrics and trigger complication reload
+    public func updateAndReloadComplications(
+        coherence: Double,
         heartRate: Double,
         hrvCoherence: Double,
         breathingRate: Double
     ) {
+        // Update shared data store (syncs via App Groups)
         self.coherenceLevel = coherence
         self.heartRate = heartRate
-        self.hrvCoherence = hrvCoherence
+        self.hrvValue = hrvCoherence
         self.breathingRate = breathingRate
 
         // Trigger complication update
@@ -355,7 +347,7 @@ public class QuantumDataStore: ObservableObject {
 
 @available(watchOS 8.0, *)
 public struct QuantumWatchView: View {
-    @ObservedObject private var dataStore = QuantumDataStore.shared
+    private let dataStore = QuantumDataStore.shared
 
     public init() {}
 
@@ -485,17 +477,5 @@ struct StatCard: View {
 
 #endif
 
-// MARK: - Cross-Platform Stub
-
-#if !os(watchOS)
-public class QuantumDataStore: ObservableObject {
-    public static let shared = QuantumDataStore()
-    @Published public var coherenceLevel: Float = 0.5
-    @Published public var heartRate: Double = 72
-    @Published public var hrvCoherence: Double = 50
-    @Published public var breathingRate: Double = 6
-    @Published public var isQuantumActive: Bool = false
-    @Published public var entanglementCount: Int = 0
-    private init() {}
-}
-#endif
+// NOTE: Cross-platform QuantumDataStore is now in Core/QuantumDataStore.swift
+// Uses App Groups for data sharing between iPhone, iPad, Apple Watch, etc.
