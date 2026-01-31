@@ -35,6 +35,8 @@ public final class QuantumDataStore: @unchecked Sendable {
         static let heartRate = "bio.heartRate"
         static let hrvValue = "bio.hrvValue"
         static let breathingRate = "bio.breathingRate"
+        static let entanglementCount = "quantum.entanglement.count"
+        static let isQuantumActive = "quantum.session.active"
     }
 
     // MARK: - Initialization
@@ -93,17 +95,40 @@ public final class QuantumDataStore: @unchecked Sendable {
         set { sharedDefaults?.set(newValue, forKey: Keys.breathingRate) }
     }
 
+    // MARK: - Quantum State
+
+    /// Alias for hrvValue for backward compatibility with widgets/live activity
+    public var hrvCoherence: Double {
+        get { hrvValue }
+        set { hrvValue = newValue }
+    }
+
+    /// Number of entangled devices in current session
+    public var entanglementCount: Int {
+        get { sharedDefaults?.integer(forKey: Keys.entanglementCount) ?? 0 }
+        set { sharedDefaults?.set(newValue, forKey: Keys.entanglementCount) }
+    }
+
+    /// Whether a quantum session is currently active
+    public var isQuantumActive: Bool {
+        get { sharedDefaults?.bool(forKey: Keys.isQuantumActive) ?? false }
+        set { sharedDefaults?.set(newValue, forKey: Keys.isQuantumActive) }
+    }
+
     // MARK: - Session Management
 
     /// Start a new quantum session
     public func startSession() {
         lastSessionDate = Date()
         peakCoherence = 0.0
+        isQuantumActive = true
     }
 
     /// End current session and update totals
     public func endSession(durationMinutes: Int) {
         totalSessionMinutes += durationMinutes
+        isQuantumActive = false
+        entanglementCount = 0
     }
 
     /// Update coherence and track peak
@@ -128,6 +153,8 @@ public final class QuantumDataStore: @unchecked Sendable {
         heartRate = 0.0
         hrvValue = 0.0
         breathingRate = 0.0
+        entanglementCount = 0
+        isQuantumActive = false
     }
 
     // MARK: - Widget Data

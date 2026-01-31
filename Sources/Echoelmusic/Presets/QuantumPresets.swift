@@ -478,6 +478,8 @@ public class PresetManager: ObservableObject {
         }
     }
 
+    #if !WIDGET_EXTENSION
+    /// Apply a preset to the UnifiedControlHub (not available in Widget extension)
     public func apply(_ preset: QuantumPreset, to hub: UnifiedControlHub) {
         // Apply quantum mode
         if let mode = QuantumLightEmulator.EmulationMode(rawValue: preset.emulationMode) {
@@ -489,6 +491,13 @@ public class PresetManager: ObservableObject {
 
         currentPreset = preset
         log.info("[Presets] Applied: \(preset.name)", category: .system)
+    }
+    #endif
+
+    /// Mark a preset as applied (for use when hub is not available, e.g., in Widget)
+    public func markAsApplied(_ preset: QuantumPreset) {
+        addToRecent(preset.id)
+        currentPreset = preset
     }
 
     public func toggleFavorite(_ presetId: String) {

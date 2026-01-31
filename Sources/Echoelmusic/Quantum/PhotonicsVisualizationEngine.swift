@@ -82,7 +82,9 @@ public class PhotonicsVisualizationEngine: ObservableObject {
 
     // MARK: - Private Properties
 
+    #if !WIDGET_EXTENSION
     private weak var quantumEmulator: QuantumLightEmulator?
+    #endif
     private var displayLink: CADisplayLink?
     private var lastFrameTime: CFTimeInterval = 0
     private var frameBuffer: [[SIMD4<Float>]] = []

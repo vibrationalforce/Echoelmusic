@@ -488,8 +488,6 @@ targets:
         type: group
       - path: Sources/Echoelmusic/Presets/QuantumPresets.swift
         type: file
-      - path: Sources/Echoelmusic/Quantum/PhotonicsVisualizationEngine.swift
-        type: file
       - path: Sources/Echoelmusic/Core/QuantumDataStore.swift
         type: file
       - path: Sources/Echoelmusic/Core/Logger.swift
@@ -525,6 +523,7 @@ targets:
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../../Frameworks @executable_path/../Frameworks"
         SKIP_INSTALL: YES
         SWIFT_EMIT_LOC_STRINGS: YES
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) WIDGET_EXTENSION"
     dependencies:
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework

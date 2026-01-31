@@ -26,6 +26,23 @@ private func safeDeepLink(_ path: String) -> URL {
     URL(string: "echoelmusic://\(path)") ?? URL(string: "echoelmusic://home") ?? widgetFallbackURL
 }
 
+// MARK: - Widget Visualization Type (Local Definition)
+
+/// Local visualization type enum for Widget target (mirrors WidgetVisualizationType)
+@available(iOS 17.0, macOS 14.0, watchOS 10.0, *)
+enum WidgetVisualizationType: String, CaseIterable, Sendable {
+    case interferencePattern = "Interference Pattern"
+    case waveFunction = "Wave Function"
+    case coherenceField = "Coherence Field"
+    case photonFlow = "Photon Flow"
+    case sacredGeometry = "Sacred Geometry"
+    case quantumTunnel = "Quantum Tunnel"
+    case biophotonAura = "Biophoton Aura"
+    case lightMandala = "Light Mandala"
+    case holographicDisplay = "Holographic Display"
+    case cosmicWeb = "Cosmic Web"
+}
+
 // MARK: - Widget Bundle
 
 @available(iOS 17.0, macOS 14.0, watchOS 10.0, *)
@@ -157,7 +174,7 @@ struct CoherenceTimelineProvider: AppIntentTimelineProvider {
 @available(iOS 17.0, macOS 14.0, watchOS 10.0, *)
 struct CoherenceEntry: TimelineEntry {
     let date: Date
-    let coherence: Float
+    let coherence: Double
     let hrv: Double
     let trend: CoherenceTrend
     let configuration: CoherenceWidgetIntent
@@ -498,16 +515,16 @@ struct PresetWidgetIntent: WidgetConfigurationIntent {
 @available(iOS 17.0, macOS 14.0, watchOS 10.0, *)
 struct PresetTimelineProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> PresetEntry {
-        PresetEntry(date: Date(), preset: QuantumPreset.deepMeditation, configuration: PresetWidgetIntent())
+        PresetEntry(date: Date(), preset: BuiltInPresets.deepMeditation, configuration: PresetWidgetIntent())
     }
 
     func snapshot(for configuration: PresetWidgetIntent, in context: Context) async -> PresetEntry {
-        let preset = findPreset(id: configuration.presetId) ?? QuantumPreset.deepMeditation
+        let preset = findPreset(id: configuration.presetId) ?? BuiltInPresets.deepMeditation
         return PresetEntry(date: Date(), preset: preset, configuration: configuration)
     }
 
     func timeline(for configuration: PresetWidgetIntent, in context: Context) async -> Timeline<PresetEntry> {
-        let preset = findPreset(id: configuration.presetId) ?? QuantumPreset.deepMeditation
+        let preset = findPreset(id: configuration.presetId) ?? BuiltInPresets.deepMeditation
         let entry = PresetEntry(date: Date(), preset: preset, configuration: configuration)
         return Timeline(entries: [entry], policy: .never)
     }
@@ -639,7 +656,7 @@ struct VisualizationProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<VisualizationEntry>) -> Void) {
         var entries: [VisualizationEntry] = []
         let currentDate = Date()
-        let visualizations = PhotonicsVisualizationEngine.VisualizationType.allCases
+        let visualizations = WidgetVisualizationType.allCases
 
         // Rotate through visualizations every 15 minutes
         for (index, viz) in visualizations.enumerated() {
@@ -659,7 +676,7 @@ struct VisualizationProvider: TimelineProvider {
 @available(iOS 17.0, macOS 14.0, watchOS 10.0, *)
 struct VisualizationEntry: TimelineEntry {
     let date: Date
-    let visualizationType: PhotonicsVisualizationEngine.VisualizationType
+    let visualizationType: WidgetVisualizationType
     let coherence: Float
 }
 
@@ -703,7 +720,7 @@ struct VisualizationWidgetView: View {
 
 @available(iOS 17.0, macOS 14.0, watchOS 10.0, *)
 struct WidgetVisualizationCanvas: View {
-    let type: PhotonicsVisualizationEngine.VisualizationType
+    let type: WidgetVisualizationType
     let coherence: Float
 
     var body: some View {
