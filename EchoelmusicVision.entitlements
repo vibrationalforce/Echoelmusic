@@ -54,9 +54,7 @@
 	<key>com.apple.developer.visionos.passthrough</key>
 	<true/>
 
-	<!-- Push Notifications -->
-	<key>aps-environment</key>
-	<string>production</string>
+	<!-- Push Notifications - Removed: Not implemented -->
 
 	<!-- iCloud/CloudKit (for cross-device sync) -->
 	<key>com.apple.developer.icloud-container-identifiers</key>

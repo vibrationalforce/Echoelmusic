@@ -405,8 +405,11 @@ public final class RealTimeHealthKitEngine: ObservableObject {
     private func startHealthKitQueries() {
         guard let healthStore = healthStore else { return }
 
-        // Heart rate query
-        let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
+        // Heart rate query - safe unwrap for production safety
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            log.biofeedback("⚠️ Heart rate type not available")
+            return
+        }
         heartRateQuery = HKAnchoredObjectQuery(
             type: heartRateType,
             predicate: nil,

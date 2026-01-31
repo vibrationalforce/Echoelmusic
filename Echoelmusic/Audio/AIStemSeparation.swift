@@ -686,18 +686,25 @@ final class AdvancedSpectralProcessor: @unchecked Sendable {
                 frame[i] = audio[startSample + i] * analysisWindow[i]
             }
 
-            // Perform FFT using Accelerate
+            // Perform FFT using Accelerate - with safe pointer handling
             frame.withUnsafeMutableBufferPointer { framePtr in
                 realPart.withUnsafeMutableBufferPointer { realPtr in
                     imagPart.withUnsafeMutableBufferPointer { imagPtr in
+                        // Safe guard: baseAddress should never be nil for non-empty arrays
+                        guard let realBase = realPtr.baseAddress,
+                              let imagBase = imagPtr.baseAddress,
+                              let frameBase = framePtr.baseAddress else {
+                            return
+                        }
+
                         var splitComplex = DSPSplitComplex(
-                            realp: realPtr.baseAddress!,
-                            imagp: imagPtr.baseAddress!
+                            realp: realBase,
+                            imagp: imagBase
                         )
 
                         // Convert to split complex
                         vDSP_ctoz(
-                            UnsafePointer<DSPComplex>(OpaquePointer(framePtr.baseAddress!)),
+                            UnsafePointer<DSPComplex>(OpaquePointer(frameBase)),
                             2,
                             &splitComplex,
                             1,
@@ -760,13 +767,20 @@ final class AdvancedSpectralProcessor: @unchecked Sendable {
                 imagPart[k] = mag * sin(ph)
             }
 
-            // Perform inverse FFT
+            // Perform inverse FFT - with safe pointer handling
             realPart.withUnsafeMutableBufferPointer { realPtr in
                 imagPart.withUnsafeMutableBufferPointer { imagPtr in
                     frame.withUnsafeMutableBufferPointer { framePtr in
+                        // Safe guard: baseAddress should never be nil for non-empty arrays
+                        guard let realBase = realPtr.baseAddress,
+                              let imagBase = imagPtr.baseAddress,
+                              let frameBase = framePtr.baseAddress else {
+                            return
+                        }
+
                         var splitComplex = DSPSplitComplex(
-                            realp: realPtr.baseAddress!,
-                            imagp: imagPtr.baseAddress!
+                            realp: realBase,
+                            imagp: imagBase
                         )
 
                         if let setup = fftSetup {
@@ -777,7 +791,7 @@ final class AdvancedSpectralProcessor: @unchecked Sendable {
                         vDSP_ztoc(
                             &splitComplex,
                             1,
-                            UnsafeMutablePointer<DSPComplex>(OpaquePointer(framePtr.baseAddress!)),
+                            UnsafeMutablePointer<DSPComplex>(OpaquePointer(frameBase)),
                             2,
                             vDSP_Length(fftSize / 2)
                         )

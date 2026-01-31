@@ -101,11 +101,12 @@ public final class SimpleHealthKitManager: ObservableObject {
             return true
         }
 
-        let typesToRead: Set<HKObjectType> = [
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
-            HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
-            HKObjectType.quantityType(forIdentifier: .respiratoryRate)!
-        ]
+        // Safe unwrap: these identifiers are guaranteed on iOS 15+, but avoid force unwrap for safety
+        let typesToRead: Set<HKObjectType> = Set([
+            HKQuantityType.quantityType(forIdentifier: .heartRate),
+            HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN),
+            HKQuantityType.quantityType(forIdentifier: .respiratoryRate)
+        ].compactMap { $0 })
 
         do {
             try await healthStore.requestAuthorization(toShare: [], read: typesToRead)

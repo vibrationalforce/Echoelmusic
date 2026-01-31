@@ -34,8 +34,6 @@
 		<string>applinks:echoelmusic.com</string>
 	</array>
 
-	<!-- Push Notifications -->
-	<key>aps-environment</key>
-	<string>production</string>
+	<!-- Push Notifications - Removed: Not implemented -->
 </dict>
 </plist>

@@ -94,18 +94,10 @@
 	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
+		<!-- Required for local network devices: MIDI controllers, DMX fixtures, Art-Net -->
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
-		<key>NSExceptionDomains</key>
-		<dict>
-			<key>localhost</key>
-			<dict>
-				<key>NSIncludesSubdomains</key>
-				<true/>
-				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-			</dict>
-		</dict>
+		<!-- Localhost HTTP exception removed for production security -->
 	</dict>
 </dict>
 </plist>
