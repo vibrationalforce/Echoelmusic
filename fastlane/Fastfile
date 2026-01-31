@@ -74,6 +74,7 @@ def build_xcargs_with_auth
   args = [
     "DEVELOPMENT_TEAM='#{TEAM_ID}'",
     "CODE_SIGN_STYLE='Automatic'",
+    "CODE_SIGN_IDENTITY='Apple Distribution'",
     "COMPILER_INDEX_STORE_ENABLE=NO",
     "-allowProvisioningUpdates",
     "-allowProvisioningDeviceRegistration"
@@ -314,6 +315,32 @@ platform :ios do
     UI.header "iOS TestFlight Build (with Widgets + App Clip)"
 
     api_key = setup_api_key
+    keychain = setup_keychain
+
+    # Get/create certificates and profiles via App Store Connect API
+    UI.message("Setting up certificates and profiles...")
+
+    # Get distribution certificate
+    get_certificates(
+      api_key: api_key,
+      platform: "ios",
+      type: "appstore",
+      generate_apple_certs: true,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password]
+    )
+
+    # Get provisioning profiles for all bundle IDs
+    ["com.echoelmusic.app", "com.echoelmusic.app.widgets", "com.echoelmusic.app.Clip"].each do |bundle_id|
+      sigh(
+        api_key: api_key,
+        app_identifier: bundle_id,
+        platform: "ios",
+        adhoc: false,
+        force: false,
+        readonly: false
+      )
+    end
 
     # Build iOS app with cloud-managed signing
     build_app(
@@ -341,6 +368,26 @@ platform :ios do
     UI.header "watchOS TestFlight Build"
 
     api_key = setup_api_key
+    keychain = setup_keychain
+
+    # Get/create certificates and profiles
+    get_certificates(
+      api_key: api_key,
+      platform: "ios",
+      type: "appstore",
+      generate_apple_certs: true,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password]
+    )
+
+    sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.watchkitapp",
+      platform: "ios",
+      adhoc: false,
+      force: false,
+      readonly: false
+    )
 
     # Build watchOS app with cloud-managed signing
     build_app(
