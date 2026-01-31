@@ -490,15 +490,21 @@ jobs:
         run: |
           KEYCHAIN_NAME="ci_watchos_${{ github.run_id }}.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME"
+          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
           security default-keychain -s "$KEYCHAIN_NAME"
+
+          # Allow codesign to access the keychain without prompting
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+
           echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
+
+          echo "Keychain ready: $KEYCHAIN_NAME"
 
       - name: "Setup App Store Connect API Key"
         env:
@@ -508,6 +514,14 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
+          # Verify the key file was created correctly
+          if [ ! -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 ]; then
+            echo "ERROR: Failed to create API key file"
+            exit 1
+          fi
+
+          echo "API Key file created at ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
           echo "xcodebuild will use cloud-managed signing (no local certificates needed)"
 
       - name: "Deploy to TestFlight"
@@ -517,12 +531,26 @@ jobs:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          # Retry logic for flaky Apple APIs
           MAX_RETRIES=3
           RETRY_DELAY=30
+
           for i in $(seq 1 $MAX_RETRIES); do
-            if fastlane ios beta_watchos; then exit 0; fi
-            [ $i -lt $MAX_RETRIES ] && sleep $RETRY_DELAY && RETRY_DELAY=$((RETRY_DELAY * 2))
+            echo "Attempt $i of $MAX_RETRIES..."
+
+            if fastlane ios beta_watchos; then
+              echo "watchOS deployment successful!"
+              exit 0
+            fi
+
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "Attempt $i failed, retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+              RETRY_DELAY=$((RETRY_DELAY * 2))
+            fi
           done
+
+          echo "All $MAX_RETRIES attempts failed"
           exit 1
 
       - name: "Cleanup"
@@ -571,15 +599,21 @@ jobs:
         run: |
           KEYCHAIN_NAME="ci_tvos_${{ github.run_id }}.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME"
+          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
           security default-keychain -s "$KEYCHAIN_NAME"
+
+          # Allow codesign to access the keychain without prompting
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+
           echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
+
+          echo "Keychain ready: $KEYCHAIN_NAME"
 
       - name: "Setup App Store Connect API Key"
         env:
@@ -589,6 +623,14 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
+          # Verify the key file was created correctly
+          if [ ! -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 ]; then
+            echo "ERROR: Failed to create API key file"
+            exit 1
+          fi
+
+          echo "API Key file created at ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
           echo "xcodebuild will use cloud-managed signing (no local certificates needed)"
 
       - name: "Deploy to TestFlight"
@@ -598,12 +640,26 @@ jobs:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          # Retry logic for flaky Apple APIs
           MAX_RETRIES=3
           RETRY_DELAY=30
+
           for i in $(seq 1 $MAX_RETRIES); do
-            if fastlane ios beta_tvos; then exit 0; fi
-            [ $i -lt $MAX_RETRIES ] && sleep $RETRY_DELAY && RETRY_DELAY=$((RETRY_DELAY * 2))
+            echo "Attempt $i of $MAX_RETRIES..."
+
+            if fastlane ios beta_tvos; then
+              echo "tvOS deployment successful!"
+              exit 0
+            fi
+
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "Attempt $i failed, retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+              RETRY_DELAY=$((RETRY_DELAY * 2))
+            fi
           done
+
+          echo "All $MAX_RETRIES attempts failed"
           exit 1
 
       - name: "Cleanup"
@@ -652,15 +708,21 @@ jobs:
         run: |
           KEYCHAIN_NAME="ci_visionos_${{ github.run_id }}.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME"
+          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
           security default-keychain -s "$KEYCHAIN_NAME"
+
+          # Allow codesign to access the keychain without prompting
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+
           echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
+
+          echo "Keychain ready: $KEYCHAIN_NAME"
 
       - name: "Setup App Store Connect API Key"
         env:
@@ -670,6 +732,14 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
+          # Verify the key file was created correctly
+          if [ ! -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 ]; then
+            echo "ERROR: Failed to create API key file"
+            exit 1
+          fi
+
+          echo "API Key file created at ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
           echo "xcodebuild will use cloud-managed signing (no local certificates needed)"
 
       - name: "Deploy to TestFlight"
@@ -679,12 +749,26 @@ jobs:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          # Retry logic for flaky Apple APIs
           MAX_RETRIES=3
           RETRY_DELAY=30
+
           for i in $(seq 1 $MAX_RETRIES); do
-            if fastlane ios beta_visionos; then exit 0; fi
-            [ $i -lt $MAX_RETRIES ] && sleep $RETRY_DELAY && RETRY_DELAY=$((RETRY_DELAY * 2))
+            echo "Attempt $i of $MAX_RETRIES..."
+
+            if fastlane ios beta_visionos; then
+              echo "visionOS deployment successful!"
+              exit 0
+            fi
+
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "Attempt $i failed, retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+              RETRY_DELAY=$((RETRY_DELAY * 2))
+            fi
           done
+
+          echo "All $MAX_RETRIES attempts failed"
           exit 1
 
       - name: "Cleanup"
