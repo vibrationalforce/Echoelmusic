@@ -88,7 +88,9 @@ public final class SimpleHealthKitManager: ObservableObject {
         useSimulation = true
         #endif
 
-        print("❤️ HealthKit Manager initialized (simulation: \(useSimulation))")
+        #if DEBUG
+        print("❤️ [HealthKit] Manager initialized (simulation: \(useSimulation))")
+        #endif
     }
 
     // MARK: - Authorization
@@ -111,13 +113,17 @@ public final class SimpleHealthKitManager: ObservableObject {
         do {
             try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
             isAuthorized = true
-            print("✅ HealthKit authorized")
+            #if DEBUG
+            print("✅ [HealthKit] Authorized")
+            #endif
             return true
         } catch {
             errorMessage = "HealthKit authorization failed: \(error.localizedDescription)"
             useSimulation = true
             isAuthorized = true // Allow app to run with simulation
-            print("⚠️ HealthKit auth failed, using simulation")
+            #if DEBUG
+            print("⚠️ [HealthKit] Auth failed, using simulation")
+            #endif
             return true
         }
         #else
@@ -141,7 +147,9 @@ public final class SimpleHealthKitManager: ObservableObject {
             #endif
         }
 
-        print("📊 Bio monitoring started")
+        #if DEBUG
+        print("📊 [Bio] Monitoring started")
+        #endif
     }
 
     public func stopMonitoring() {
@@ -156,7 +164,9 @@ public final class SimpleHealthKitManager: ObservableObject {
             #endif
         }
 
-        print("📊 Bio monitoring stopped")
+        #if DEBUG
+        print("📊 [Bio] Monitoring stopped")
+        #endif
     }
 
     // MARK: - Simulation
@@ -231,7 +241,9 @@ public final class SimpleHealthKitManager: ObservableObject {
                 limit: HKObjectQueryNoLimit
             ) { [weak self] _, samples, _, _, error in
                 if let error = error {
-                    print("❌ Heart rate query error: \(error)")
+                    #if DEBUG
+                    print("❌ [HealthKit] Heart rate query error: \(error)")
+                    #endif
                     return
                 }
                 self?.processHeartRateSamples(samples)
@@ -239,7 +251,9 @@ public final class SimpleHealthKitManager: ObservableObject {
 
             query.updateHandler = { [weak self] _, samples, _, _, error in
                 if let error = error {
-                    print("❌ Heart rate update error: \(error)")
+                    #if DEBUG
+                    print("❌ [HealthKit] Heart rate update error: \(error)")
+                    #endif
                     return
                 }
                 self?.processHeartRateSamples(samples)
@@ -258,7 +272,9 @@ public final class SimpleHealthKitManager: ObservableObject {
                 limit: HKObjectQueryNoLimit
             ) { [weak self] _, samples, _, _, error in
                 if let error = error {
-                    print("❌ HRV query error: \(error)")
+                    #if DEBUG
+                    print("❌ [HealthKit] HRV query error: \(error)")
+                    #endif
                     return
                 }
                 self?.processHRVSamples(samples)
@@ -266,7 +282,9 @@ public final class SimpleHealthKitManager: ObservableObject {
 
             query.updateHandler = { [weak self] _, samples, _, _, error in
                 if let error = error {
-                    print("❌ HRV update error: \(error)")
+                    #if DEBUG
+                    print("❌ [HealthKit] HRV update error: \(error)")
+                    #endif
                     return
                 }
                 self?.processHRVSamples(samples)

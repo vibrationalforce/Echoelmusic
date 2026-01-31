@@ -95,7 +95,9 @@ public final class AppState: ObservableObject {
             }
         }
 
-        print("Session started")
+        #if DEBUG
+        print("▶️ [Session] Started")
+        #endif
     }
 
     public func stopSession() {
@@ -113,7 +115,9 @@ public final class AppState: ObservableObject {
         // Stop audio
         audioEngine.stop()
 
-        print("Session stopped - Duration: \(formattedDuration)")
+        #if DEBUG
+        print("⏹️ [Session] Stopped - Duration: \(formattedDuration)")
+        #endif
     }
 
     private func updateSessionDuration() {

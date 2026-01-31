@@ -73,7 +73,9 @@ public final class AudioEngine: ObservableObject {
             try session.setPreferredIOBufferDuration(Double(AppConstants.bufferSize) / sampleRate)
             try session.setActive(true)
         } catch {
-            print("Audio session error: \(error)")
+            #if DEBUG
+            print("⚠️ [Audio] Session error: \(error)")
+            #endif
         }
         #endif
     }
@@ -174,7 +176,9 @@ public final class AudioEngine: ObservableObject {
             try engine?.start()
             isRunning = true
         } catch {
-            print("Engine start error: \(error)")
+            #if DEBUG
+            print("❌ [Audio] Engine start error: \(error)")
+            #endif
         }
     }
 
