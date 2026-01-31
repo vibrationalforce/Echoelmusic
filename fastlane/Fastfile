@@ -416,6 +416,26 @@ platform :ios do
     UI.header "tvOS TestFlight Build"
 
     api_key = setup_api_key
+    keychain = setup_keychain
+
+    # Get/create certificates and profiles
+    get_certificates(
+      api_key: api_key,
+      platform: "ios",
+      type: "appstore",
+      generate_apple_certs: true,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password]
+    )
+
+    sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app",
+      platform: "tvos",
+      adhoc: false,
+      force: false,
+      readonly: false
+    )
 
     # Build tvOS app with cloud-managed signing
     build_app(
@@ -443,6 +463,26 @@ platform :ios do
     UI.header "visionOS TestFlight Build"
 
     api_key = setup_api_key
+    keychain = setup_keychain
+
+    # Get/create certificates and profiles
+    get_certificates(
+      api_key: api_key,
+      platform: "ios",
+      type: "appstore",
+      generate_apple_certs: true,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password]
+    )
+
+    sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app",
+      platform: "ios",  # visionOS uses iOS signing
+      adhoc: false,
+      force: false,
+      readonly: false
+    )
 
     # Build visionOS app with cloud-managed signing
     build_app(
@@ -562,6 +602,29 @@ platform :mac do
     UI.header "macOS TestFlight Build (with AUv3 Extension)"
 
     api_key = setup_api_key
+    keychain = setup_keychain
+
+    # Get/create certificates and profiles for macOS
+    get_certificates(
+      api_key: api_key,
+      platform: "macos",
+      type: "appstore",
+      generate_apple_certs: true,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password]
+    )
+
+    # Get provisioning profiles for main app and AUv3 extension
+    ["com.echoelmusic.app", "com.echoelmusic.app.auv3"].each do |bundle_id|
+      sigh(
+        api_key: api_key,
+        app_identifier: bundle_id,
+        platform: "macos",
+        adhoc: false,
+        force: false,
+        readonly: false
+      )
+    end
 
     # Build macOS app with cloud-managed signing
     build_app(
