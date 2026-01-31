@@ -67,6 +67,33 @@ def setup_keychain
   { path: keychain_path, password: keychain_password }
 end
 
+# Build xcargs with App Store Connect API authentication for cloud-managed signing
+def build_xcargs_with_auth
+  api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
+
+  args = [
+    "DEVELOPMENT_TEAM='#{TEAM_ID}'",
+    "CODE_SIGN_STYLE='Automatic'",
+    "COMPILER_INDEX_STORE_ENABLE=NO",
+    "-allowProvisioningUpdates",
+    "-allowProvisioningDeviceRegistration"
+  ]
+
+  # Add API authentication if key file exists (CI environment)
+  if File.exist?(api_key_path)
+    UI.message("Using App Store Connect API for cloud-managed signing")
+    args += [
+      "-authenticationKeyPath '#{api_key_path}'",
+      "-authenticationKeyID '#{ENV['ASC_KEY_ID']}'",
+      "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
+    ]
+  else
+    UI.message("No API key file found, using local signing")
+  end
+
+  args.join(" ")
+end
+
 # Helper to safely parse certificate expiration date
 def parse_cert_date(date_value)
   return date_value if date_value.is_a?(Time)
@@ -288,9 +315,7 @@ platform :ios do
 
     api_key = setup_api_key
 
-    UI.message("Using Automatic Signing - Xcode manages certificates automatically")
-
-    # Build iOS app with automatic signing
+    # Build iOS app with cloud-managed signing
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -302,13 +327,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: [
-        "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-        "CODE_SIGN_STYLE='Automatic'",
-        "COMPILER_INDEX_STORE_ENABLE=NO",
-        "-allowProvisioningUpdates",
-        "-allowProvisioningDeviceRegistration"
-      ].join(" ")
+      xcargs: build_xcargs_with_auth
     )
 
     upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
@@ -323,8 +342,7 @@ platform :ios do
 
     api_key = setup_api_key
 
-    UI.message("Using Automatic Signing - Xcode manages certificates automatically")
-
+    # Build watchOS app with cloud-managed signing
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-watchOS",
@@ -332,17 +350,12 @@ platform :ios do
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
       derived_data_path: "./build/DerivedData",
+      destination: "generic/platform=watchOS",
       export_options: {
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: [
-        "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-        "CODE_SIGN_STYLE='Automatic'",
-        "COMPILER_INDEX_STORE_ENABLE=NO",
-        "-allowProvisioningUpdates",
-        "-allowProvisioningDeviceRegistration"
-      ].join(" ")
+      xcargs: build_xcargs_with_auth
     )
 
     upload_to_testflight_with_retry(api_key, "watchOS Build #{BUILD_NUMBER} - Bio-Reactive HRV")
@@ -357,8 +370,7 @@ platform :ios do
 
     api_key = setup_api_key
 
-    UI.message("Using Automatic Signing - Xcode manages certificates automatically")
-
+    # Build tvOS app with cloud-managed signing
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-tvOS",
@@ -370,13 +382,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: [
-        "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-        "CODE_SIGN_STYLE='Automatic'",
-        "COMPILER_INDEX_STORE_ENABLE=NO",
-        "-allowProvisioningUpdates",
-        "-allowProvisioningDeviceRegistration"
-      ].join(" ")
+      xcargs: build_xcargs_with_auth
     )
 
     upload_to_testflight_with_retry(api_key, "tvOS Build #{BUILD_NUMBER} - Big Screen Experience")
@@ -391,8 +397,7 @@ platform :ios do
 
     api_key = setup_api_key
 
-    UI.message("Using Automatic Signing - Xcode manages certificates automatically")
-
+    # Build visionOS app with cloud-managed signing
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-visionOS",
@@ -405,13 +410,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: [
-        "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-        "CODE_SIGN_STYLE='Automatic'",
-        "COMPILER_INDEX_STORE_ENABLE=NO",
-        "-allowProvisioningUpdates",
-        "-allowProvisioningDeviceRegistration"
-      ].join(" ")
+      xcargs: build_xcargs_with_auth
     )
 
     upload_to_testflight_with_retry(api_key, "visionOS Build #{BUILD_NUMBER} - Spatial Audio Immersive")
@@ -517,9 +516,7 @@ platform :mac do
 
     api_key = setup_api_key
 
-    UI.message("Using Automatic Signing - Xcode manages certificates automatically")
-
-    # Build with automatic signing for app + AUv3 extension
+    # Build macOS app with cloud-managed signing
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-macOS",
@@ -531,13 +528,7 @@ platform :mac do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: [
-        "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-        "CODE_SIGN_STYLE='Automatic'",
-        "COMPILER_INDEX_STORE_ENABLE=NO",
-        "-allowProvisioningUpdates",
-        "-allowProvisioningDeviceRegistration"
-      ].join(" ")
+      xcargs: build_xcargs_with_auth
     )
 
     upload_to_testflight_with_retry(api_key, "macOS Build #{BUILD_NUMBER} - Standalone + AUv3 Plugins")
