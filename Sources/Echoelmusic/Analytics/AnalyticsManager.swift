@@ -221,7 +221,9 @@ public class FileAnalyticsProvider: AnalyticsProvider {
             try fileHandle?.close()
         } catch {
             // Can't use log in deinit, but file close failure is rare
-            print("AnalyticsManager: Failed to close file handle: \(error)")
+            #if DEBUG
+            print("⚠️ [Analytics] Failed to close file handle: \(error)")
+            #endif
         }
     }
 

@@ -65,7 +65,9 @@ public final class OSCManager: ObservableObject {
             }
             listener?.start(queue: queue)
         } catch {
-            print("OSC listener error: \(error)")
+            #if DEBUG
+            print("⚠️ [OSC] Listener error: \(error)")
+            #endif
         }
 
         isSending = true
@@ -155,7 +157,9 @@ public final class OSCManager: ObservableObject {
     private func sendMessage(_ data: Data) {
         sendConnection?.send(content: data, completion: .contentProcessed { error in
             if let error = error {
-                print("OSC send error: \(error)")
+                #if DEBUG
+                print("⚠️ [OSC] Send error: \(error)")
+                #endif
             }
         })
     }
@@ -170,7 +174,9 @@ public final class OSCManager: ObservableObject {
     private func receiveMessage(_ connection: NWConnection) {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, _, error in
             if let error = error {
-                print("OSC receive error: \(error)")
+                #if DEBUG
+                print("⚠️ [OSC] Receive error: \(error)")
+                #endif
                 return
             }
 

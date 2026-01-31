@@ -287,94 +287,27 @@ platform :ios do
     UI.header "iOS TestFlight Build (with Widgets + App Clip)"
 
     api_key = setup_api_key
-    keychain = setup_keychain
 
-    # Smart certificate management (reuses existing, creates if needed)
-    get_or_create_certificates(api_key, "ios", keychain)
+    UI.message("Using Automatic Signing - Xcode manages certificates automatically")
 
-    # Main app profile
-    get_provisioning_profile(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app",
-      platform: "ios",
-      force: ENV["CLEAN_BUILD"] == "true"
-    )
-    app_profile = lane_context[SharedValues::SIGH_NAME]
-    UI.message("iOS App profile: #{app_profile}")
-
-    # Widgets extension profile
-    get_provisioning_profile(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app.widgets",
-      platform: "ios",
-      force: ENV["CLEAN_BUILD"] == "true"
-    )
-    widgets_profile = lane_context[SharedValues::SIGH_NAME]
-    UI.message("Widgets profile: #{widgets_profile}")
-
-    # App Clip profile
-    get_provisioning_profile(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app.Clip",
-      platform: "ios",
-      force: ENV["CLEAN_BUILD"] == "true"
-    )
-    clip_profile = lane_context[SharedValues::SIGH_NAME]
-    UI.message("App Clip profile: #{clip_profile}")
-
-    # Configure code signing for main app target
-    update_code_signing_settings(
-      path: "Echoelmusic.xcodeproj",
-      use_automatic_signing: false,
-      team_id: TEAM_ID,
-      targets: ["Echoelmusic"],
-      code_sign_identity: "Apple Distribution",
-      profile_name: app_profile,
-      bundle_identifier: "com.echoelmusic.app"
-    )
-
-    # Configure code signing for Widgets extension
-    update_code_signing_settings(
-      path: "Echoelmusic.xcodeproj",
-      use_automatic_signing: false,
-      team_id: TEAM_ID,
-      targets: ["EchoelmusicWidgets"],
-      code_sign_identity: "Apple Distribution",
-      profile_name: widgets_profile,
-      bundle_identifier: "com.echoelmusic.app.widgets"
-    )
-
-    # Configure code signing for App Clip
-    update_code_signing_settings(
-      path: "Echoelmusic.xcodeproj",
-      use_automatic_signing: false,
-      team_id: TEAM_ID,
-      targets: ["EchoelmusicClip"],
-      code_sign_identity: "Apple Distribution",
-      profile_name: clip_profile,
-      bundle_identifier: "com.echoelmusic.app.Clip"
-    )
-
-    # Build iOS app with all extensions
+    # Build iOS app with automatic signing
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
-      codesigning_identity: "Apple Distribution",
       derived_data_path: "./build/DerivedData",
       export_options: {
-        provisioningProfiles: {
-          "com.echoelmusic.app" => app_profile,
-          "com.echoelmusic.app.widgets" => widgets_profile,
-          "com.echoelmusic.app.Clip" => clip_profile
-        }
+        signingStyle: "automatic",
+        teamID: TEAM_ID
       },
       xcargs: [
         "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-        "CODE_SIGN_STYLE='Manual'",
-        "COMPILER_INDEX_STORE_ENABLE=NO"
+        "CODE_SIGN_STYLE='Automatic'",
+        "COMPILER_INDEX_STORE_ENABLE=NO",
+        "-allowProvisioningUpdates",
+        "-allowProvisioningDeviceRegistration"
       ].join(" ")
     )
 
@@ -389,50 +322,8 @@ platform :ios do
     UI.header "watchOS TestFlight Build"
 
     api_key = setup_api_key
-    keychain = setup_keychain
 
-    # Smart certificate management
-    get_or_create_certificates(api_key, "ios", keychain)
-
-    # Companion iOS app profile (required for watchOS)
-    get_provisioning_profile(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app",
-      platform: "ios",
-      force: ENV["CLEAN_BUILD"] == "true"
-    )
-    ios_profile = lane_context[SharedValues::SIGH_NAME]
-
-    # watchOS app profile
-    get_provisioning_profile(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app.watchkitapp",
-      platform: "watchos",
-      force: ENV["CLEAN_BUILD"] == "true"
-    )
-    watch_profile = lane_context[SharedValues::SIGH_NAME]
-
-    # Configure code signing for companion iOS app target
-    update_code_signing_settings(
-      path: "Echoelmusic.xcodeproj",
-      use_automatic_signing: false,
-      team_id: TEAM_ID,
-      targets: ["Echoelmusic"],
-      code_sign_identity: "Apple Distribution",
-      profile_name: ios_profile,
-      bundle_identifier: "com.echoelmusic.app"
-    )
-
-    # Configure code signing for watchOS app target
-    update_code_signing_settings(
-      path: "Echoelmusic.xcodeproj",
-      use_automatic_signing: false,
-      team_id: TEAM_ID,
-      targets: ["Echoelmusic-watchOS"],
-      code_sign_identity: "Apple Distribution",
-      profile_name: watch_profile,
-      bundle_identifier: "com.echoelmusic.app.watchkitapp"
-    )
+    UI.message("Using Automatic Signing - Xcode manages certificates automatically")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -440,18 +331,17 @@ platform :ios do
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
-      codesigning_identity: "Apple Distribution",
       derived_data_path: "./build/DerivedData",
       export_options: {
-        provisioningProfiles: {
-          "com.echoelmusic.app" => ios_profile,
-          "com.echoelmusic.app.watchkitapp" => watch_profile
-        }
+        signingStyle: "automatic",
+        teamID: TEAM_ID
       },
       xcargs: [
         "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-        "CODE_SIGN_STYLE='Manual'",
-        "COMPILER_INDEX_STORE_ENABLE=NO"
+        "CODE_SIGN_STYLE='Automatic'",
+        "COMPILER_INDEX_STORE_ENABLE=NO",
+        "-allowProvisioningUpdates",
+        "-allowProvisioningDeviceRegistration"
       ].join(" ")
     )
 
@@ -466,30 +356,8 @@ platform :ios do
     UI.header "tvOS TestFlight Build"
 
     api_key = setup_api_key
-    keychain = setup_keychain
 
-    # Smart certificate management
-    get_or_create_certificates(api_key, "ios", keychain)
-
-    # Unified bundle ID for tvOS (enables universal purchase)
-    get_provisioning_profile(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app",
-      platform: "tvos",
-      force: ENV["CLEAN_BUILD"] == "true"
-    )
-    profile = lane_context[SharedValues::SIGH_NAME]
-
-    # Configure code signing for tvOS app target
-    update_code_signing_settings(
-      path: "Echoelmusic.xcodeproj",
-      use_automatic_signing: false,
-      team_id: TEAM_ID,
-      targets: ["Echoelmusic-tvOS"],
-      code_sign_identity: "Apple Distribution",
-      profile_name: profile,
-      bundle_identifier: "com.echoelmusic.app"
-    )
+    UI.message("Using Automatic Signing - Xcode manages certificates automatically")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -497,17 +365,17 @@ platform :ios do
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
-      codesigning_identity: "Apple Distribution",
       derived_data_path: "./build/DerivedData",
       export_options: {
-        provisioningProfiles: {
-          "com.echoelmusic.app" => profile
-        }
+        signingStyle: "automatic",
+        teamID: TEAM_ID
       },
       xcargs: [
         "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-        "CODE_SIGN_STYLE='Manual'",
-        "COMPILER_INDEX_STORE_ENABLE=NO"
+        "CODE_SIGN_STYLE='Automatic'",
+        "COMPILER_INDEX_STORE_ENABLE=NO",
+        "-allowProvisioningUpdates",
+        "-allowProvisioningDeviceRegistration"
       ].join(" ")
     )
 
@@ -522,32 +390,8 @@ platform :ios do
     UI.header "visionOS TestFlight Build"
 
     api_key = setup_api_key
-    keychain = setup_keychain
 
-    # Smart certificate management
-    get_or_create_certificates(api_key, "ios", keychain)
-
-    # Unified bundle ID for visionOS (enables universal purchase)
-    # Note: visionOS uses "ios" platform for provisioning profiles in Fastlane
-    # as of 2024 - this is correct behavior until Fastlane adds native visionOS support
-    get_provisioning_profile(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app",
-      platform: "ios",  # visionOS profiles use iOS platform in sigh/match
-      force: ENV["CLEAN_BUILD"] == "true"
-    )
-    profile = lane_context[SharedValues::SIGH_NAME]
-
-    # Configure code signing for visionOS app target
-    update_code_signing_settings(
-      path: "Echoelmusic.xcodeproj",
-      use_automatic_signing: false,
-      team_id: TEAM_ID,
-      targets: ["Echoelmusic-visionOS"],
-      code_sign_identity: "Apple Distribution",
-      profile_name: profile,
-      bundle_identifier: "com.echoelmusic.app"
-    )
+    UI.message("Using Automatic Signing - Xcode manages certificates automatically")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -555,18 +399,18 @@ platform :ios do
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
-      codesigning_identity: "Apple Distribution",
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=visionOS",
       export_options: {
-        provisioningProfiles: {
-          "com.echoelmusic.app" => profile
-        }
+        signingStyle: "automatic",
+        teamID: TEAM_ID
       },
       xcargs: [
         "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-        "CODE_SIGN_STYLE='Manual'",
-        "COMPILER_INDEX_STORE_ENABLE=NO"
+        "CODE_SIGN_STYLE='Automatic'",
+        "COMPILER_INDEX_STORE_ENABLE=NO",
+        "-allowProvisioningUpdates",
+        "-allowProvisioningDeviceRegistration"
       ].join(" ")
     )
 
@@ -672,72 +516,27 @@ platform :mac do
     UI.header "macOS TestFlight Build (with AUv3 Extension)"
 
     api_key = setup_api_key
-    keychain = setup_keychain
 
-    # Smart certificate management for macOS
-    get_or_create_certificates(api_key, "macos", keychain)
+    UI.message("Using Automatic Signing - Xcode manages certificates automatically")
 
-    # Main app profile
-    get_provisioning_profile(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app",
-      platform: "macos",
-      force: ENV["CLEAN_BUILD"] == "true"
-    )
-    app_profile = lane_context[SharedValues::SIGH_NAME]
-    UI.message("macOS App profile: #{app_profile}")
-
-    # AUv3 Extension profile (REQUIRED for embedded extensions)
-    get_provisioning_profile(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app.auv3",
-      platform: "macos",
-      force: ENV["CLEAN_BUILD"] == "true"
-    )
-    auv3_profile = lane_context[SharedValues::SIGH_NAME]
-    UI.message("macOS AUv3 profile: #{auv3_profile}")
-
-    # Configure code signing for main macOS app target
-    update_code_signing_settings(
-      path: "Echoelmusic.xcodeproj",
-      use_automatic_signing: false,
-      team_id: TEAM_ID,
-      targets: ["Echoelmusic-macOS"],
-      code_sign_identity: "Apple Distribution",
-      profile_name: app_profile,
-      bundle_identifier: "com.echoelmusic.app"
-    )
-
-    # Configure code signing for macOS AUv3 extension target
-    update_code_signing_settings(
-      path: "Echoelmusic.xcodeproj",
-      use_automatic_signing: false,
-      team_id: TEAM_ID,
-      targets: ["EchoelmusicAUv3-macOS"],
-      code_sign_identity: "Apple Distribution",
-      profile_name: auv3_profile,
-      bundle_identifier: "com.echoelmusic.app.auv3"
-    )
-
-    # Build with proper signing for app + AUv3 extension
+    # Build with automatic signing for app + AUv3 extension
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-macOS",
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
-      codesigning_identity: "Apple Distribution",
       derived_data_path: "./build/DerivedData",
       export_options: {
-        provisioningProfiles: {
-          "com.echoelmusic.app" => app_profile,
-          "com.echoelmusic.app.auv3" => auv3_profile
-        }
+        signingStyle: "automatic",
+        teamID: TEAM_ID
       },
       xcargs: [
         "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-        "CODE_SIGN_STYLE='Manual'",
-        "COMPILER_INDEX_STORE_ENABLE=NO"
+        "CODE_SIGN_STYLE='Automatic'",
+        "COMPILER_INDEX_STORE_ENABLE=NO",
+        "-allowProvisioningUpdates",
+        "-allowProvisioningDeviceRegistration"
       ].join(" ")
     )
 

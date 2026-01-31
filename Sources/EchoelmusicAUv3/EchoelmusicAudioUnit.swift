@@ -130,13 +130,9 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
     // MARK: - Audio Format
 
     /// Default audio format (48kHz, stereo, float32)
-    public static let defaultFormat: AVAudioFormat = {
-        guard let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) else {
-            // Fallback to common format - should never fail
-            return AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 48000, channels: 2, interleaved: false)
-                ?? AVAudioFormat()
-        }
-        return format
+    public static let defaultFormat: AVAudioFormat? = {
+        AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2)
+            ?? AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 48000, channels: 2, interleaved: false)
     }()
 
     // MARK: - Initialization
@@ -465,28 +461,36 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
         switch auType {
         case .instrument:
             _factoryPresets = [
-                AUAudioUnitPreset(number: 0, name: "Classic 808"),
-                AUAudioUnitPreset(number: 1, name: "Hard Trap"),
-                AUAudioUnitPreset(number: 2, name: "Deep Sub"),
-                AUAudioUnitPreset(number: 3, name: "Distorted"),
-                AUAudioUnitPreset(number: 4, name: "Long Slide"),
-                AUAudioUnitPreset(number: 5, name: "Bio Flow"),
-                AUAudioUnitPreset(number: 6, name: "Quantum Pulse")
+                Self.makePreset(number: 0, name: "Classic 808"),
+                Self.makePreset(number: 1, name: "Hard Trap"),
+                Self.makePreset(number: 2, name: "Deep Sub"),
+                Self.makePreset(number: 3, name: "Distorted"),
+                Self.makePreset(number: 4, name: "Long Slide"),
+                Self.makePreset(number: 5, name: "Bio Flow"),
+                Self.makePreset(number: 6, name: "Quantum Pulse")
             ]
         case .effect:
             _factoryPresets = [
-                AUAudioUnitPreset(number: 0, name: "Vocal Isolation"),
-                AUAudioUnitPreset(number: 1, name: "Drums Only"),
-                AUAudioUnitPreset(number: 2, name: "Bass Boost"),
-                AUAudioUnitPreset(number: 3, name: "Karaoke Mode"),
-                AUAudioUnitPreset(number: 4, name: "Instrumental")
+                Self.makePreset(number: 0, name: "Vocal Isolation"),
+                Self.makePreset(number: 1, name: "Drums Only"),
+                Self.makePreset(number: 2, name: "Bass Boost"),
+                Self.makePreset(number: 3, name: "Karaoke Mode"),
+                Self.makePreset(number: 4, name: "Instrumental")
             ]
         case .midiProcessor:
             _factoryPresets = [
-                AUAudioUnitPreset(number: 0, name: "Default"),
-                AUAudioUnitPreset(number: 1, name: "MPE Mode")
+                Self.makePreset(number: 0, name: "Default"),
+                Self.makePreset(number: 1, name: "MPE Mode")
             ]
         }
+    }
+
+    /// Helper to create AUAudioUnitPreset (API requires setting properties after init)
+    private static func makePreset(number: Int, name: String) -> AUAudioUnitPreset {
+        let preset = AUAudioUnitPreset()
+        preset.number = number
+        preset.name = name
+        return preset
     }
 
     // MARK: - AUAudioUnit Overrides
@@ -533,10 +537,7 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
     open override func allocateRenderResources() throws {
         try super.allocateRenderResources()
 
-        guard let outputFormat = outputBusses[0].format else {
-            throw NSError(domain: "EchoelmusicAU", code: -1)
-        }
-
+        let outputFormat = outputBusses[0].format
         kernel?.initialize(
             sampleRate: outputFormat.sampleRate,
             channelCount: Int(outputFormat.channelCount)
@@ -708,7 +709,12 @@ open class EchoelmusicAudioUnitViewController: AUViewController {
 
     open override func viewDidLoad() {
         super.viewDidLoad()
+        #if os(iOS) || os(tvOS) || os(visionOS)
         view.backgroundColor = .black
+        #elseif os(macOS)
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor.black.cgColor
+        #endif
 
         if audioUnit != nil {
             connectViewToAU()
@@ -725,7 +731,7 @@ open class EchoelmusicAudioUnitViewController: AUViewController {
 
 /// Factory for creating Echoelmusic audio units
 @objc(EchoelmusicAudioUnitFactory)
-public class EchoelmusicAudioUnitFactory: NSObject, AUAudioUnitFactory {
+public class EchoelmusicAudioUnitFactory: NSObject, AUAudioUnitFactory, NSExtensionRequestHandling {
 
     public func createAudioUnit(with componentDescription: AudioComponentDescription) throws -> AUAudioUnit {
         // Determine type from component description
@@ -742,5 +748,11 @@ public class EchoelmusicAudioUnitFactory: NSObject, AUAudioUnitFactory {
         }
 
         return try EchoelmusicAudioUnit(componentDescription: componentDescription, auType: auType)
+    }
+
+    /// Required by NSExtensionRequestHandling for App Extension support
+    public func beginRequest(with context: NSExtensionContext) {
+        // Audio Unit extensions don't use this method for normal operation
+        // The system uses createAudioUnit(with:) instead
     }
 }

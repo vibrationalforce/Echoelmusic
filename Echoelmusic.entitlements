@@ -22,9 +22,8 @@
 		<string>$(AppIdentifierPrefix)com.echoelmusic.app</string>
 	</array>
 
-	<!-- Push Notifications -->
-	<key>aps-environment</key>
-	<string>production</string>
+	<!-- Push Notifications - Removed: Not implemented, would cause App Store rejection -->
+	<!-- To re-enable: Implement UNUserNotificationCenter and register for remote notifications -->
 
 	<!-- iCloud/CloudKit (for cross-device sync) -->
 	<key>com.apple.developer.icloud-container-identifiers</key>

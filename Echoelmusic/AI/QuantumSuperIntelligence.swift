@@ -253,7 +253,9 @@ final class QuantumSuperIntelligence: ObservableObject {
         // Entangle all systems
         entangleAudioVideoSystems()
 
-        print("🌟 GOD MODE ACTIVATED - Universal Energy Flow")
+        #if DEBUG
+        print("🌟 [Quantum] GOD MODE ACTIVATED - Universal Energy Flow")
+        #endif
     }
 
     func deactivateGodMode() {

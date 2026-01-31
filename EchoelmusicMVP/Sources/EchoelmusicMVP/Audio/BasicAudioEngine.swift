@@ -58,9 +58,13 @@ public final class BasicAudioEngine: ObservableObject {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try session.setActive(true)
-            print("🔊 Audio session configured")
+            #if DEBUG
+            print("🔊 [Audio] Session configured")
+            #endif
         } catch {
-            print("❌ Audio session error: \(error)")
+            #if DEBUG
+            print("❌ [Audio] Session error: \(error)")
+            #endif
         }
         #endif
     }
@@ -101,7 +105,9 @@ public final class BasicAudioEngine: ObservableObject {
         // Set volume
         engine.mainMixerNode.outputVolume = volume
 
-        print("🎛️ Audio engine configured")
+        #if DEBUG
+        print("🎛️ [Audio] Engine configured")
+        #endif
     }
 
     // MARK: - Tone Generation
@@ -168,9 +174,13 @@ public final class BasicAudioEngine: ObservableObject {
         do {
             try audioEngine?.start()
             isRunning = true
-            print("▶️ Audio engine started")
+            #if DEBUG
+            print("▶️ [Audio] Engine started")
+            #endif
         } catch {
-            print("❌ Failed to start audio engine: \(error)")
+            #if DEBUG
+            print("❌ [Audio] Failed to start engine: \(error)")
+            #endif
         }
     }
 
@@ -183,7 +193,9 @@ public final class BasicAudioEngine: ObservableObject {
         reverbNode = nil
         isRunning = false
 
-        print("⏹️ Audio engine stopped")
+        #if DEBUG
+        print("⏹️ [Audio] Engine stopped")
+        #endif
     }
 
     // MARK: - Bio Data Integration

@@ -36,6 +36,9 @@ public struct QuantumPreset: Identifiable, Codable, Sendable {
     public let breathingPaceSeconds: Float
     public let hrvSensitivity: Float
 
+    // Session settings
+    public let sessionDuration: TimeInterval // Duration in seconds
+
     // Accessibility
     public let colorScheme: String
     public let reducedMotion: Bool
@@ -79,6 +82,7 @@ public struct QuantumPreset: Identifiable, Codable, Sendable {
         coherenceTarget: Float = 0.7,
         breathingPaceSeconds: Float = 5.0,
         hrvSensitivity: Float = 1.0,
+        sessionDuration: TimeInterval = 600, // Default 10 minutes
         colorScheme: String = "standard",
         reducedMotion: Bool = false
     ) {
@@ -97,6 +101,7 @@ public struct QuantumPreset: Identifiable, Codable, Sendable {
         self.coherenceTarget = coherenceTarget
         self.breathingPaceSeconds = breathingPaceSeconds
         self.hrvSensitivity = hrvSensitivity
+        self.sessionDuration = sessionDuration
         self.colorScheme = colorScheme
         self.reducedMotion = reducedMotion
     }
@@ -473,6 +478,8 @@ public class PresetManager: ObservableObject {
         }
     }
 
+    #if !WIDGET_EXTENSION
+    /// Apply a preset to the UnifiedControlHub (not available in Widget extension)
     public func apply(_ preset: QuantumPreset, to hub: UnifiedControlHub) {
         // Apply quantum mode
         if let mode = QuantumLightEmulator.EmulationMode(rawValue: preset.emulationMode) {
@@ -484,6 +491,13 @@ public class PresetManager: ObservableObject {
 
         currentPreset = preset
         log.info("[Presets] Applied: \(preset.name)", category: .system)
+    }
+    #endif
+
+    /// Mark a preset as applied (for use when hub is not available, e.g., in Widget)
+    public func markAsApplied(_ preset: QuantumPreset) {
+        addToRecent(preset.id)
+        currentPreset = preset
     }
 
     public func toggleFavorite(_ presetId: String) {

@@ -26,8 +26,6 @@
 	<key>com.apple.developer.healthkit.workout-processing</key>
 	<true/>
 
-	<!-- Push Notifications -->
-	<key>aps-environment</key>
-	<string>production</string>
+	<!-- Push Notifications - Removed: Not implemented, would cause App Store rejection -->
 </dict>
 </plist>

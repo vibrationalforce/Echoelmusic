@@ -452,7 +452,7 @@ public class QuantumLiveActivityManager: ObservableObject {
         let currentDuration = activity.content.state.sessionDuration + 1
 
         await updateState(
-            coherenceLevel: dataStore.coherenceLevel,
+            coherenceLevel: Float(dataStore.coherenceLevel),
             hrvCoherence: Float(dataStore.hrvCoherence),
             sessionDuration: currentDuration,
             photonCount: Int.random(in: 50...200),

@@ -285,6 +285,17 @@ jobs:
 
           echo "Keychain ready: $KEYCHAIN_NAME"
 
+      - name: "Setup App Store Connect API Key"
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+        run: |
+          # Create API key file for xcodebuild automatic signing
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          echo "API Key file created for automatic signing"
+
       - name: "Deploy to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -314,10 +325,11 @@ jobs:
           echo "All $MAX_RETRIES attempts failed"
           exit 1
 
-      - name: "Cleanup Keychain"
+      - name: "Cleanup"
         if: always()
         run: |
           security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
+          rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
   # macOS DEPLOYMENT (includes AUv3 Extension)
@@ -380,6 +392,15 @@ jobs:
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
+      - name: "Setup App Store Connect API Key"
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
       - name: "Deploy to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -404,9 +425,11 @@ jobs:
           done
           exit 1
 
-      - name: "Cleanup Keychain"
+      - name: "Cleanup"
         if: always()
-        run: security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
+        run: |
+          security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
+          rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
   # watchOS DEPLOYMENT
@@ -457,6 +480,15 @@ jobs:
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
+      - name: "Setup App Store Connect API Key"
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
       - name: "Deploy to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -474,7 +506,9 @@ jobs:
 
       - name: "Cleanup"
         if: always()
-        run: security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
+        run: |
+          security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
+          rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
   # tvOS DEPLOYMENT
@@ -525,6 +559,15 @@ jobs:
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
+      - name: "Setup App Store Connect API Key"
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
       - name: "Deploy to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -542,7 +585,9 @@ jobs:
 
       - name: "Cleanup"
         if: always()
-        run: security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
+        run: |
+          security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
+          rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
   # visionOS DEPLOYMENT
@@ -593,6 +638,15 @@ jobs:
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
+      - name: "Setup App Store Connect API Key"
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
       - name: "Deploy to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -610,7 +664,9 @@ jobs:
 
       - name: "Cleanup"
         if: always()
-        run: security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
+        run: |
+          security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
+          rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
   # SUMMARY

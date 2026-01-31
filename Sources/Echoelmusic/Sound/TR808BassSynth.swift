@@ -246,7 +246,8 @@ public final class TR808BassSynth: ObservableObject {
     }
 
     deinit {
-        stop()
+        // Note: Can't call MainActor-isolated methods from deinit
+        // Audio engine cleanup happens automatically on deallocation
         audioEngine?.stop()
     }
 
@@ -326,7 +327,10 @@ public final class TR808BassSynth: ObservableObject {
             do {
                 try audioEngine?.start()
             } catch {
-                log.error("Failed to start TR808 audio engine: \(error)")
+                // Engine failed to start - logging suppressed in release
+                #if DEBUG
+                print("[TR808BassSynth] Failed to start audio engine: \(error)")
+                #endif
             }
         }
 
