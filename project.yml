@@ -328,7 +328,8 @@ targets:
           - "**/*.xcassets"
           - "**/VisionOS/**"
           - "**/tvOS/**"
-          - "**/Platforms/**"
+          - "**/Platforms/visionOS/**"
+          - "**/Platforms/tvOS/**"
           - "**/Widgets/**"
           - "**/LiveActivity/**"
           - "**/LED/**"
@@ -337,6 +338,7 @@ targets:
           - "**/Video/**"
           - "**/README.md"
           - "**/*.md"
+          - "**/EchoelmusicApp.swift"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
@@ -445,11 +447,13 @@ targets:
           - "**/*.xcassets"
           - "**/WatchOS/**"
           - "**/tvOS/**"
-          - "**/Platforms/**"
+          - "**/Platforms/watchOS/**"
+          - "**/Platforms/tvOS/**"
           - "**/Widgets/**"
           - "**/LiveActivity/**"
           - "**/README.md"
           - "**/*.md"
+          - "**/EchoelmusicApp.swift"
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
