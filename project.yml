@@ -159,8 +159,9 @@ targets:
     dependencies:
       - target: EchoelmusicWidgets
         embed: true
-      - target: EchoelmusicClip
-        embed: false
+      # App Clip temporarily disabled - needs provisioning profile setup
+      # - target: EchoelmusicClip
+      #   embed: false
     entitlements:
       path: Echoelmusic.entitlements
 
@@ -658,13 +659,14 @@ targets:
 
 schemes:
 
-  # iOS Development (with Widgets and App Clip)
+  # iOS Development (with Widgets)
+  # Note: App Clip temporarily disabled - needs provisioning profile setup
   Echoelmusic:
     build:
       targets:
         Echoelmusic: all
         EchoelmusicWidgets: all
-        EchoelmusicClip: all
+        # EchoelmusicClip: all  # Disabled until provisioning is configured
         EchoelmusicTests: [test]
         EchoelmusicUITests: [test]
     run:
@@ -764,12 +766,13 @@ schemes:
 
   # All Platforms Release (for CI)
   # Note: iOS and macOS AUv3 are integrated into their main apps (no separate targets)
+  # Note: App Clip temporarily disabled - needs provisioning profile setup
   Echoelmusic-AllPlatforms:
     build:
       targets:
         Echoelmusic: [archive]
         EchoelmusicWidgets: [archive]
-        EchoelmusicClip: [archive]
+        # EchoelmusicClip: [archive]  # Disabled until provisioning is configured
         Echoelmusic-macOS: [archive]
         EchoelmusicAUv3-macOS: [archive]
         Echoelmusic-watchOS: [archive]
