@@ -2,9 +2,11 @@
 
 ## Aktueller Stand (2026-02-01)
 
-### 🔴 Status: Benötigt manuelle Aktion
+### 🟡 Status: Bereit zum Testen
 
-Der Workflow ist vollständig konfiguriert, aber es gibt ein bekanntes Problem mit stale Apple Development Zertifikaten, die während früherer CI-Runs erstellt wurden.
+**Development Certificate wurde widerrufen** - der Workflow sollte jetzt funktionieren.
+
+Die stale Apple Development Zertifikate wurden entfernt. Xcodebuild mit cloud-managed signing wird neue Zertifikate automatisch erstellen.
 
 ### Secrets Status
 | Secret | Status |
@@ -17,47 +19,45 @@ Der Workflow ist vollständig konfiguriert, aber es gibt ein bekanntes Problem m
 ### Workflow-Konfiguration
 - **Branch:** `claude/deploy-testflight-e8NsA`
 - **Methode:** xcodebuild cloud-managed signing mit API-Authentifizierung
-- **Aktueller Run:** https://github.com/vibrationalforce/Echoelmusic/actions/runs/21565257277
+- **Signing Style:** Automatic mit `-allowProvisioningUpdates`
 
 ### Was funktioniert ✅
 1. **Keychain Setup** - Erstellt temporäre CI-Keychain korrekt
 2. **API Key Setup** - Schreibt AuthKey.p8 für xcodebuild
 3. **Project Generation** - XcodeGen generiert Xcode-Projekt
-4. **Fastlane Start** - Fastlane startet und läuft ~50 Sekunden
+4. **Fastlane Start** - Fastlane startet korrekt
+5. **Zertifikate** - Stale Development Certs widerrufen ✅
 
-### Was fehlschlägt ❌
-Der Build schlägt in der "Deploy to TestFlight" Phase fehl. Das wahrscheinlichste Problem:
+### Nächster Schritt ▶️
+**Workflow erneut ausführen:**
 
-**Stale Development Certificates:**
-- Frühere CI-Runs haben "Apple Development" Zertifikate erstellt
-- Die privaten Schlüssel dieser Zertifikate sind verloren (ephemere Runner)
-- Xcode versucht, diese Zertifikate zu verwenden, kann aber nicht
+```bash
+gh workflow run testflight.yml -f platform=ios -f skip_tests=true --ref claude/deploy-testflight-e8NsA
+```
+
+Oder manuell:
+1. GitHub → Actions → TestFlight
+2. "Run workflow" klicken
+3. Platform: `ios` auswählen
+4. "Run workflow" bestätigen
 
 ---
 
-## 🛠️ NÄCHSTER SCHRITT: Zertifikate bereinigen
+## 🔧 Falls der Build erneut fehlschlägt
 
-### Option 1: Development Zertifikate widerrufen (EMPFOHLEN)
+### Problem: "Maximum certificates generated"
+→ https://developer.apple.com/account/resources/certificates/list
+→ Alte Distribution Zertifikate löschen (max 2 erlaubt pro Typ)
 
-1. Öffne https://developer.apple.com/account/resources/certificates/list
-2. Suche nach **"Apple Development"** Zertifikaten
-3. **Widerrufe (Revoke)** alle Apple Development Zertifikate
-4. **NICHT** die Distribution Zertifikate widerrufen!
-5. Führe den Workflow erneut aus:
-   ```
-   GitHub Actions → TestFlight → Run workflow → ios
-   ```
+### Problem: "API Key insufficient permissions"
+→ App Store Connect → Users and Access → Integrations
+→ API Key braucht "Admin" oder "App Manager" Rolle
 
-### Option 2: Alle Zertifikate neu erstellen
+### Problem: "Profile not found" oder "Provisioning profile expired"
+→ https://developer.apple.com/account/resources/profiles/list
+→ Alte Profiles löschen, Workflow erstellt neue automatisch
 
-Wenn Option 1 nicht funktioniert:
-
-1. Öffne https://developer.apple.com/account/resources/certificates/list
-2. Widerrufe ALLE Zertifikate (Development und Distribution)
-3. Widerrufe auch alle Provisioning Profiles
-4. Führe den Workflow erneut aus - Xcode erstellt alles neu
-
-### Option 3: Fastlane Match einrichten (Langfristige Lösung)
+### Langfristige Lösung: Fastlane Match
 
 Für zuverlässiges CI empfehlen wir Fastlane Match:
 - Speichert Zertifikate in einem privaten Git-Repo
@@ -68,17 +68,17 @@ Für zuverlässiges CI empfehlen wir Fastlane Match:
 
 ## Durchgeführte Fixes (2026-02-01)
 
-| Commit | Beschreibung |
-|--------|--------------|
-| `0fabc54c` | Robustes Keychain Setup für alle Plattformen |
-| `2fbe0611` | CODE_SIGN_IDENTITY Konflikt entfernt |
-| `fd1bef90` | cert/sigh Actions hinzugefügt |
-| `0648bddf` | Manual signing Ansatz |
-| `ab7ebe9a` | Vereinfachte xcargs |
-| `2d0dbb94` | get_provisioning_profile mit lane_context |
-| `348a12e9` | Debug-Logging hinzugefügt |
-| `d2ae7338` | bundle exec entfernt |
-| `f5dcf793` | xcodebuild cloud signing (aktueller Stand) |
+| Aktion | Beschreibung | Status |
+|--------|--------------|--------|
+| Development Cert revoked | Stale Apple Development Zertifikate widerrufen | ✅ |
+| `19c456f1` | TESTFLIGHT_STATUS mit nächsten Schritten | ✅ |
+| `f5dcf793` | xcodebuild cloud signing (aktueller Ansatz) | ✅ |
+| `d2ae7338` | bundle exec entfernt, keychain debug | ✅ |
+| `348a12e9` | Debug-Logging hinzugefügt | ✅ |
+| `2d0dbb94` | get_provisioning_profile mit lane_context | ✅ |
+| `ab7ebe9a` | Vereinfachte xcargs | ✅ |
+| `0648bddf` | Manual signing Ansatz (superseded) | ⏭️ |
+| `fd1bef90` | cert/sigh Actions (superseded) | ⏭️ |
 
 ## Bundle IDs (alle registriert)
 
@@ -134,4 +134,4 @@ gh workflow run testflight.yml -f platform=all -f skip_tests=true --ref claude/d
 → Prüfen ob App IDs registriert sind
 
 ---
-*Letzte Aktualisierung: 2026-02-01 15:20*
+*Letzte Aktualisierung: 2026-02-01 - Certificate revoked, ready for deployment test*
