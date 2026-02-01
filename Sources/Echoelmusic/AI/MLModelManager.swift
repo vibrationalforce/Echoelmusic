@@ -8,6 +8,18 @@
 // Created: 2026-01-07
 // Phase: 10000 ULTIMATE LOOP MODE - Production ML Infrastructure
 //
+// COST-FREE OPERATION:
+// This manager is designed for OFFLINE-FIRST operation:
+// 1. Models can be bundled with the app (zero network costs)
+// 2. Remote downloads are OPTIONAL fallbacks
+// 3. All ML features work without internet connectivity
+// 4. No external API keys or subscriptions required
+//
+// To bundle models with your app:
+// 1. Add .mlmodelc files to your Xcode project's Resources
+// 2. Set BundledModelPaths for each model type
+// 3. Remote URLs only used if bundled models unavailable
+//
 
 import Foundation
 import CoreML
@@ -113,8 +125,16 @@ enum EchoelmusicMLModels: String, CaseIterable {
 struct MLModelConfiguration {
     let modelType: EchoelmusicMLModels
     let version: String
+
+    /// Path to model bundled with app (PREFERRED - zero network cost)
+    let bundledPath: String?
+
+    /// Local cache URL for downloaded models
     let localURL: URL?
+
+    /// Remote URL for fallback download (OPTIONAL - only if bundled not available)
     let remoteURL: URL?
+
     let checksum: String
     let computeUnits: MLComputeUnits
     let memoryRequirements: UInt64 // bytes
@@ -125,7 +145,23 @@ struct MLModelConfiguration {
     let inputDimensions: [String: [Int]]
     let outputDimensions: [String: [Int]]
 
-    /// Returns nil if documents directory is inaccessible (shouldn't happen on iOS/macOS)
+    /// Check if model is bundled with the app (zero cost)
+    var isBundled: Bool {
+        guard let bundledPath = bundledPath else { return false }
+        return Bundle.main.url(forResource: bundledPath, withExtension: "mlmodelc") != nil
+    }
+
+    /// Get bundled model URL if available
+    var bundledURL: URL? {
+        guard let bundledPath = bundledPath else { return nil }
+        return Bundle.main.url(forResource: bundledPath, withExtension: "mlmodelc")
+    }
+
+    /// Returns configuration for the given model type.
+    /// OFFLINE-FIRST: Models are loaded in this priority order:
+    /// 1. Bundled with app (zero network cost)
+    /// 2. Previously downloaded to local cache
+    /// 3. Remote download (only if enabled and network available)
     static func defaultConfiguration(for model: EchoelmusicMLModels) -> MLModelConfiguration {
         // Use fallback to temporary directory if documents unavailable
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
@@ -137,6 +173,7 @@ struct MLModelConfiguration {
             return MLModelConfiguration(
                 modelType: model,
                 version: "1.0.0",
+                bundledPath: "SoundStyleTransfer", // Look for SoundStyleTransfer.mlmodelc in bundle
                 localURL: modelsPath.appendingPathComponent("SoundStyleTransfer.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/sound_style_transfer_v1.mlmodelc.zip"),
                 checksum: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
@@ -154,6 +191,7 @@ struct MLModelConfiguration {
             return MLModelConfiguration(
                 modelType: model,
                 version: "1.2.0",
+                bundledPath: "VoiceToMIDI",
                 localURL: modelsPath.appendingPathComponent("VoiceToMIDI.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/voice_to_midi_v1.2.mlmodelc.zip"),
                 checksum: "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7",
@@ -171,6 +209,7 @@ struct MLModelConfiguration {
             return MLModelConfiguration(
                 modelType: model,
                 version: "2.0.0",
+                bundledPath: "EmotionRecognition",
                 localURL: modelsPath.appendingPathComponent("EmotionRecognition.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/emotion_recognition_v2.mlmodelc.zip"),
                 checksum: "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8",
@@ -188,6 +227,7 @@ struct MLModelConfiguration {
             return MLModelConfiguration(
                 modelType: model,
                 version: "1.1.0",
+                bundledPath: "HRVCoherencePredictor",
                 localURL: modelsPath.appendingPathComponent("HRVCoherencePredictor.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/hrv_coherence_v1.1.mlmodelc.zip"),
                 checksum: "d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9",
@@ -205,6 +245,7 @@ struct MLModelConfiguration {
             return MLModelConfiguration(
                 modelType: model,
                 version: "1.5.0",
+                bundledPath: "MusicGeneration",
                 localURL: modelsPath.appendingPathComponent("MusicGeneration.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/music_generation_v1.5.mlmodelc.zip"),
                 checksum: "e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0",
@@ -222,6 +263,7 @@ struct MLModelConfiguration {
             return MLModelConfiguration(
                 modelType: model,
                 version: "2.1.0",
+                bundledPath: "VisualStyleTransfer",
                 localURL: modelsPath.appendingPathComponent("VisualStyleTransfer.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/visual_style_v2.1.mlmodelc.zip"),
                 checksum: "f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1",
@@ -239,6 +281,7 @@ struct MLModelConfiguration {
             return MLModelConfiguration(
                 modelType: model,
                 version: "1.3.0",
+                bundledPath: "GestureRecognition",
                 localURL: modelsPath.appendingPathComponent("GestureRecognition.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/gesture_recognition_v1.3.mlmodelc.zip"),
                 checksum: "g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2",
@@ -256,6 +299,7 @@ struct MLModelConfiguration {
             return MLModelConfiguration(
                 modelType: model,
                 version: "1.0.0",
+                bundledPath: "BreathingPatternAnalysis",
                 localURL: modelsPath.appendingPathComponent("BreathingPatternAnalysis.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/breathing_pattern_v1.mlmodelc.zip"),
                 checksum: "h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3",
@@ -702,6 +746,9 @@ class MLModelManager {
 
     // MARK: - Model Loading
 
+    /// Whether to allow remote model downloads (set to false for fully offline operation)
+    @Published public var allowRemoteDownloads: Bool = true
+
     func loadModel(_ modelType: EchoelmusicMLModels, forceReload: Bool = false) async throws -> MLModel {
         // Check cache first
         if !forceReload, let cachedModel = cache.get(modelType) {
@@ -727,18 +774,31 @@ class MLModelManager {
             // Check memory availability
             try checkMemoryAvailability(configuration)
 
-            var modelURL = configuration.localURL
+            // OFFLINE-FIRST: Priority order for model loading:
+            // 1. Bundled with app (ZERO network cost)
+            // 2. Local cache (previously downloaded)
+            // 3. Remote download (only if allowed and available)
 
-            // Download if not available locally
-            let needsDownload: Bool
-            if let localPath = modelURL?.path {
-                needsDownload = !FileManager.default.fileExists(atPath: localPath)
-            } else {
-                needsDownload = true
+            var modelURL: URL?
+
+            // 1. Try bundled model first (zero cost, fastest)
+            if let bundledURL = configuration.bundledURL {
+                log.ai("Loading bundled model: \(modelType.rawValue)")
+                modelURL = bundledURL
             }
-
-            if needsDownload {
+            // 2. Try local cache
+            else if let localURL = configuration.localURL,
+                    FileManager.default.fileExists(atPath: localURL.path) {
+                log.ai("Loading cached model: \(modelType.rawValue)")
+                modelURL = localURL
+            }
+            // 3. Try remote download (only if enabled)
+            else if allowRemoteDownloads {
+                log.ai("Downloading model: \(modelType.rawValue)")
                 modelURL = try await downloadModel(configuration)
+            } else {
+                log.ai("Model not available offline: \(modelType.rawValue)", level: .warning)
+                throw MLModelError.modelNotFound(modelType)
             }
 
             guard let finalURL = modelURL else {
@@ -770,6 +830,38 @@ class MLModelManager {
 
         loadingTasks[modelType] = loadTask
         return try await loadTask.value
+    }
+
+    /// Check which models are available offline (bundled or cached)
+    func getOfflineAvailableModels() -> [EchoelmusicMLModels] {
+        return EchoelmusicMLModels.allCases.filter { modelType in
+            guard let config = configurations[modelType] else { return false }
+
+            // Check bundled
+            if config.bundledURL != nil {
+                return true
+            }
+
+            // Check local cache
+            if let localURL = config.localURL,
+               FileManager.default.fileExists(atPath: localURL.path) {
+                return true
+            }
+
+            return false
+        }
+    }
+
+    /// Check if all critical models are available offline
+    func areAllCriticalModelsOffline() -> Bool {
+        let criticalModels: [EchoelmusicMLModels] = [
+            .voiceToMIDI,
+            .gestureRecognition,
+            .hrvCoherencePredictor
+        ]
+
+        let offlineModels = getOfflineAvailableModels()
+        return criticalModels.allSatisfy { offlineModels.contains($0) }
     }
 
     func unloadModel(_ modelType: EchoelmusicMLModels) {
