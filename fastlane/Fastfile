@@ -318,6 +318,9 @@ platform :ios do
       adhoc: false,
       force: false
     )
+    main_profile_name = lane_context[SharedValues::SIGH_NAME]
+    main_profile_uuid = lane_context[SharedValues::SIGH_UUID]
+    UI.message("Main app profile: #{main_profile_name} (#{main_profile_uuid})")
 
     # Get App Store provisioning profile for widgets
     UI.message("Getting provisioning profile for widgets...")
@@ -329,8 +332,20 @@ platform :ios do
       adhoc: false,
       force: false
     )
+    widgets_profile_name = lane_context[SharedValues::SIGH_NAME]
+    widgets_profile_uuid = lane_context[SharedValues::SIGH_UUID]
+    UI.message("Widgets profile: #{widgets_profile_name} (#{widgets_profile_uuid})")
 
-    UI.message("Building iOS app...")
+    UI.message("Building iOS app with manual signing...")
+
+    # Use manual signing with Distribution certificate
+    # This avoids the Development certificate issue entirely
+    xcargs = [
+      "DEVELOPMENT_TEAM='#{TEAM_ID}'",
+      "CODE_SIGN_STYLE='Manual'",
+      "CODE_SIGN_IDENTITY='Apple Distribution'",
+      "COMPILER_INDEX_STORE_ENABLE=NO"
+    ].join(" ")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -339,11 +354,16 @@ platform :ios do
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
       derived_data_path: "./build/DerivedData",
+      codesigning_identity: "Apple Distribution",
       export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
+        signingStyle: "manual",
+        teamID: TEAM_ID,
+        provisioningProfiles: {
+          "com.echoelmusic.app" => main_profile_name,
+          "com.echoelmusic.app.widgets" => widgets_profile_name
+        }
       },
-      xcargs: build_xcargs_simple
+      xcargs: xcargs
     )
 
     upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
