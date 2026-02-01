@@ -308,39 +308,48 @@ platform :ios do
       generate_apple_certs: true
     )
 
-    # Get provisioning profiles and store their names
+    # Get provisioning profiles using get_provisioning_profile
     UI.message("Setting up provisioning profiles...")
     profile_mapping = {}
 
     # Main app profile
-    main_profile = sigh(
+    main_profile_path = get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app",
       readonly: false,
       adhoc: false,
-      force: false
+      force: false,
+      output_path: "./build/profiles"
     )
-    profile_mapping["Echoelmusic"] = ENV["sigh_com.echoelmusic.app_appstore_profile-name"] || File.basename(main_profile, ".*")
+    main_profile_name = lane_context[SharedValues::SIGH_NAME]
+    profile_mapping["com.echoelmusic.app"] = main_profile_name
+    UI.success("Main app profile: #{main_profile_name}")
 
     # Widgets extension profile
-    widgets_profile = sigh(
+    get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app.widgets",
       readonly: false,
       adhoc: false,
-      force: false
+      force: false,
+      output_path: "./build/profiles"
     )
-    profile_mapping["EchoelmusicWidgets"] = ENV["sigh_com.echoelmusic.app.widgets_appstore_profile-name"] || File.basename(widgets_profile, ".*")
+    widgets_profile_name = lane_context[SharedValues::SIGH_NAME]
+    profile_mapping["com.echoelmusic.app.widgets"] = widgets_profile_name
+    UI.success("Widgets profile: #{widgets_profile_name}")
 
     # App Clip profile
-    clip_profile = sigh(
+    get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app.Clip",
       readonly: false,
       adhoc: false,
-      force: false
+      force: false,
+      output_path: "./build/profiles"
     )
-    profile_mapping["EchoelmusicClip"] = ENV["sigh_com.echoelmusic.app.Clip_appstore_profile-name"] || File.basename(clip_profile, ".*")
+    clip_profile_name = lane_context[SharedValues::SIGH_NAME]
+    profile_mapping["com.echoelmusic.app.Clip"] = clip_profile_name
+    UI.success("App Clip profile: #{clip_profile_name}")
 
     UI.message("Profile mapping: #{profile_mapping}")
     UI.message("Building iOS app...")
@@ -356,11 +365,7 @@ platform :ios do
       export_options: {
         signingStyle: "manual",
         teamID: TEAM_ID,
-        provisioningProfiles: {
-          "com.echoelmusic.app" => profile_mapping["Echoelmusic"],
-          "com.echoelmusic.app.widgets" => profile_mapping["EchoelmusicWidgets"],
-          "com.echoelmusic.app.Clip" => profile_mapping["EchoelmusicClip"]
-        }
+        provisioningProfiles: profile_mapping
       },
       xcargs: build_xcargs_simple
     )
@@ -637,30 +642,35 @@ platform :mac do
     )
 
     # Get macOS provisioning profiles
+    UI.message("Setting up macOS provisioning profiles...")
     profile_mapping = {}
 
-    main_profile = sigh(
+    get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app",
       platform: "macos",
       readonly: false,
       adhoc: false,
-      force: false
+      force: false,
+      output_path: "./build/profiles"
     )
-    profile_mapping["Echoelmusic-macOS"] = ENV["sigh_com.echoelmusic.app_macos_appstore_profile-name"] || File.basename(main_profile, ".*")
+    profile_mapping["com.echoelmusic.app"] = lane_context[SharedValues::SIGH_NAME]
+    UI.success("macOS main app profile: #{profile_mapping['com.echoelmusic.app']}")
 
     # AUv3 extension profile
-    auv3_profile = sigh(
+    get_provisioning_profile(
       api_key: api_key,
       app_identifier: "com.echoelmusic.app.auv3",
       platform: "macos",
       readonly: false,
       adhoc: false,
-      force: false
+      force: false,
+      output_path: "./build/profiles"
     )
-    profile_mapping["EchoelmusicAUv3"] = ENV["sigh_com.echoelmusic.app.auv3_macos_appstore_profile-name"] || File.basename(auv3_profile, ".*")
+    profile_mapping["com.echoelmusic.app.auv3"] = lane_context[SharedValues::SIGH_NAME]
+    UI.success("macOS AUv3 profile: #{profile_mapping['com.echoelmusic.app.auv3']}")
 
-    UI.message("Building macOS app with manual signing...")
+    UI.message("Building macOS app...")
 
     # Build macOS app
     build_app(
@@ -673,10 +683,7 @@ platform :mac do
       export_options: {
         signingStyle: "manual",
         teamID: TEAM_ID,
-        provisioningProfiles: {
-          "com.echoelmusic.app" => profile_mapping["Echoelmusic-macOS"],
-          "com.echoelmusic.app.auv3" => profile_mapping["EchoelmusicAUv3"]
-        }
+        provisioningProfiles: profile_mapping
       },
       xcargs: build_xcargs_simple
     )
