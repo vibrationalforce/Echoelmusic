@@ -4,9 +4,9 @@
 
 ### 🟡 Status: Bereit zum Testen
 
-**Development Certificate wurde widerrufen** - der Workflow sollte jetzt funktionieren.
+**Provisioning-Konflikt behoben** - der Workflow sollte jetzt funktionieren.
 
-Die stale Apple Development Zertifikate wurden entfernt. Xcodebuild mit cloud-managed signing wird neue Zertifikate automatisch erstellen.
+`CODE_SIGN_IDENTITY: "Apple Distribution"` wurde entfernt, da es mit `CODE_SIGN_STYLE: Automatic` in Konflikt stand. Xcodebuild wählt bei Automatic Signing die richtige Identity automatisch.
 
 ### Secrets Status
 | Secret | Status |
@@ -70,6 +70,7 @@ Für zuverlässiges CI empfehlen wir Fastlane Match:
 
 | Aktion | Beschreibung | Status |
 |--------|--------------|--------|
+| `da29b0be` | CODE_SIGN_IDENTITY entfernt (Konflikt mit Automatic) | ✅ |
 | Development Cert revoked | Stale Apple Development Zertifikate widerrufen | ✅ |
 | `19c456f1` | TESTFLIGHT_STATUS mit nächsten Schritten | ✅ |
 | `f5dcf793` | xcodebuild cloud signing (aktueller Ansatz) | ✅ |
@@ -117,6 +118,10 @@ gh workflow run testflight.yml -f platform=all -f skip_tests=true --ref claude/d
 | `project.yml` | XcodeGen Projekt-Definition |
 
 ## Fehlerdiagnose
+
+### "Conflicting provisioning settings" Error
+→ `CODE_SIGN_IDENTITY` aus project.yml entfernen wenn `CODE_SIGN_STYLE: Automatic` verwendet wird
+→ Xcodebuild wählt bei Automatic die richtige Identity (Development für Debug, Distribution für Archive)
 
 ### "Apple Development signing certificate" Error
 → Development Zertifikate widerrufen (siehe oben)
