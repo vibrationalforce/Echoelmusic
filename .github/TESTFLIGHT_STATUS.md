@@ -1,6 +1,6 @@
 # TestFlight Deployment Status
 
-## Aktueller Stand (2026-01-31)
+## Aktueller Stand (2026-02-01)
 
 ### Secrets Status
 | Secret | Status |
@@ -14,15 +14,28 @@
 
 ### Workflow-Konfiguration
 - **Branch:** `claude/deploy-testflight-e8NsA`
-- **Letzte Fixes:** Keychain Setup Konsistenz für alle Plattformen
+- **Letzte Fixes:** Robusteres Keychain Setup (2026-02-01)
 - **Methode:** xcodebuild cloud-managed signing mit API-Authentifizierung
 
-### Letzte Korrekturen (2026-01-31)
-1. ✅ **Keychain Setup Fix**: watchOS, tvOS, visionOS Jobs hatten inkonsistentes Keychain Setup
-   - Vorher: `security list-keychains -d user -s "$KEYCHAIN_NAME"` (überschreibt alle Keychains)
-   - Nachher: `security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')` (behält vorhandene Keychains)
-2. ✅ **API Key Validierung**: Hinzugefügt in allen Plattform-Jobs
-3. ✅ **Verbesserte Logging**: Retry-Logik mit detaillierten Ausgaben
+### Aktuelle Workflow-Runs
+- **All Platforms:** https://github.com/vibrationalforce/Echoelmusic/actions/runs/21564351669
+- **iOS Only:** https://github.com/vibrationalforce/Echoelmusic/actions/runs/21564415131
+
+### Letzte Korrekturen (2026-02-01)
+1. ✅ **Robustes Keychain Setup** (Commit 0fabc54c):
+   - Kombiniert Keychain und API Key Setup in einem Schritt
+   - Fügt `set -e` für frühe Fehlererkennung hinzu
+   - Löscht existierende Keychains vor Neuerstellung
+   - Verwendet sichere Methode zum Erhalt vorhandener Keychains in Suchliste
+   - Angewendet auf alle 5 Plattformen (iOS, macOS, watchOS, tvOS, visionOS)
+
+2. ✅ **Keychain Step passiert jetzt erfolgreich**:
+   - Alle Plattformen passieren "Setup Keychain & API Key"
+   - Fehler tritt jetzt in "Deploy to TestFlight" auf
+
+3. 🔍 **Nächster Schritt - Fastlane Debug**:
+   - Workflow-Logs prüfen für genaue Fehlermeldung
+   - Mögliche Ursachen: Swift Build-Fehler, Zertifikate, App IDs
 
 ### Bundle IDs (alle registriert)
 ```
