@@ -63,7 +63,8 @@ settings:
     Release:
       DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
       SWIFT_COMPILATION_MODE: "wholemodule"
-      # CODE_SIGN_IDENTITY removed - let Xcode automatic signing choose
+      # For CI/CD: Use Distribution signing directly (bypasses Development cert issues)
+      CODE_SIGN_IDENTITY: "Apple Distribution"
 
 # =============================================================================
 # TARGETS
