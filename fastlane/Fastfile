@@ -292,25 +292,45 @@ platform :ios do
   # ---------------------------------------------------------------------------
   desc "Build and upload iOS app to TestFlight"
   lane :beta do
-    UI.header "iOS TestFlight Build (with Widgets + App Clip)"
+    UI.header "iOS TestFlight Build (with Widgets)"
 
     api_key = setup_api_key
+    keychain = setup_keychain
 
-    UI.message("Building iOS app with automatic cloud signing...")
+    # Get Distribution certificate (not Development!)
+    UI.message("Setting up iOS Distribution certificate...")
+    cert(
+      api_key: api_key,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password],
+      platform: "ios",
+      development: false,  # Distribution, not Development
+      generate_apple_certs: true
+    )
 
-    # Build using xcodebuild's automatic signing with API key authentication
-    # This lets Apple handle all certificate/profile creation via cloud
-    api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
+    # Get App Store provisioning profile for main app
+    UI.message("Getting provisioning profile for main app...")
+    sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app",
+      platform: "ios",
+      readonly: false,
+      adhoc: false,
+      force: false
+    )
 
-    xcargs = [
-      "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-      "CODE_SIGN_STYLE='Automatic'",
-      "COMPILER_INDEX_STORE_ENABLE=NO",
-      "-allowProvisioningUpdates",
-      "-authenticationKeyPath '#{api_key_path}'",
-      "-authenticationKeyID '#{ENV['ASC_KEY_ID']}'",
-      "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
-    ].join(" ")
+    # Get App Store provisioning profile for widgets
+    UI.message("Getting provisioning profile for widgets...")
+    sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.widgets",
+      platform: "ios",
+      readonly: false,
+      adhoc: false,
+      force: false
+    )
+
+    UI.message("Building iOS app...")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -323,7 +343,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: xcargs
+      xcargs: build_xcargs_simple
     )
 
     upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
