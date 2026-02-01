@@ -551,13 +551,13 @@ targets:
         SWIFT_EMIT_LOC_STRINGS: YES
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) WIDGET_EXTENSION"
         SDKROOT: iphoneos
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
       configs:
         Debug:
           CODE_SIGN_STYLE: Automatic
         Release:
           CODE_SIGN_STYLE: Automatic
           CODE_SIGN_IDENTITY: "Apple Distribution"
-        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
     dependencies:
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
