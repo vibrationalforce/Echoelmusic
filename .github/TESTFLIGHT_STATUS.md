@@ -33,9 +33,26 @@
    - Alle Plattformen passieren "Setup Keychain & API Key"
    - Fehler tritt jetzt in "Deploy to TestFlight" auf
 
-3. 🔍 **Nächster Schritt - Fastlane Debug**:
-   - Workflow-Logs prüfen für genaue Fehlermeldung
-   - Mögliche Ursachen: Swift Build-Fehler, Zertifikate, App IDs
+3. 🔍 **Aktueller Status - Certificate-Konflikt**:
+   - Das Problem: Stale Apple Development Zertifikate von früheren CI-Runs
+   - Fehler: "Your account already has an Apple Development signing certificate for this machine, but its private key is not installed in your keychain"
+   - Die privaten Schlüssel gehen verloren, da GitHub Actions Runner ephemer sind
+
+### Lösungsoptionen
+
+#### Option 1: Zertifikate manuell bereinigen (EMPFOHLEN)
+1. Gehe zu https://developer.apple.com/account/resources/certificates/list
+2. **Revoke** alle "Apple Development" Zertifikate (nicht Distribution!)
+3. Workflow erneut ausführen - Xcode erstellt automatisch neue
+
+#### Option 2: Match verwenden (für Teams)
+- Fastlane Match speichert Zertifikate in einem Git-Repo
+- Einmalige Einrichtung, dann funktioniert CI zuverlässig
+- Dokumentation: https://docs.fastlane.tools/actions/match/
+
+#### Option 3: Skip Development Signing
+- Nur Distribution-Zertifikate verwenden
+- Erfordert manuelle Profile-Konfiguration
 
 ### Bundle IDs (alle registriert)
 ```
