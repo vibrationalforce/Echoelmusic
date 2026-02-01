@@ -63,8 +63,7 @@ settings:
     Release:
       DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
       SWIFT_COMPILATION_MODE: "wholemodule"
-      # For CI/CD: Use Distribution signing directly (bypasses Development cert issues)
-      CODE_SIGN_IDENTITY: "Apple Distribution"
+      # CODE_SIGN_IDENTITY removed - Automatic signing handles this
 
 # =============================================================================
 # TARGETS
@@ -158,9 +157,8 @@ targets:
         Debug:
           CODE_SIGN_STYLE: Automatic
         Release:
-          # For CI: Manual signing with Distribution identity
           CODE_SIGN_STYLE: Automatic
-          CODE_SIGN_IDENTITY: "Apple Distribution"
+          # CODE_SIGN_IDENTITY removed - Automatic signing handles Distribution for archives
     # Note: iOS AUv3 is integrated into the main app (works as both host and plugin)
     # No separate extension needed - same approach as macOS
     dependencies:
@@ -557,7 +555,7 @@ targets:
           CODE_SIGN_STYLE: Automatic
         Release:
           CODE_SIGN_STYLE: Automatic
-          CODE_SIGN_IDENTITY: "Apple Distribution"
+          # CODE_SIGN_IDENTITY removed - Automatic signing handles Distribution for archives
     dependencies:
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
