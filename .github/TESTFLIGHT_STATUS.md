@@ -2,6 +2,10 @@
 
 ## Aktueller Stand (2026-02-01)
 
+### 🔴 Status: Benötigt manuelle Aktion
+
+Der Workflow ist vollständig konfiguriert, aber es gibt ein bekanntes Problem mit stale Apple Development Zertifikaten, die während früherer CI-Runs erstellt wurden.
+
 ### Secrets Status
 | Secret | Status |
 |--------|--------|
@@ -9,52 +13,75 @@
 | `APP_STORE_CONNECT_ISSUER_ID` | ✅ Vorhanden |
 | `APP_STORE_CONNECT_PRIVATE_KEY` | ✅ Vorhanden (.p8 Inhalt) |
 | `APPLE_TEAM_ID` | ✅ Vorhanden |
-| `DISTRIBUTION_CERTIFICATE_BASE64` | ❌ Nicht nötig (automatisch via API) |
-| `DISTRIBUTION_CERTIFICATE_PASSWORD` | ❌ Nicht nötig |
 
 ### Workflow-Konfiguration
 - **Branch:** `claude/deploy-testflight-e8NsA`
-- **Letzte Fixes:** Robusteres Keychain Setup (2026-02-01)
 - **Methode:** xcodebuild cloud-managed signing mit API-Authentifizierung
+- **Aktueller Run:** https://github.com/vibrationalforce/Echoelmusic/actions/runs/21565257277
 
-### Aktuelle Workflow-Runs
-- **All Platforms:** https://github.com/vibrationalforce/Echoelmusic/actions/runs/21564351669
-- **iOS Only:** https://github.com/vibrationalforce/Echoelmusic/actions/runs/21564415131
+### Was funktioniert ✅
+1. **Keychain Setup** - Erstellt temporäre CI-Keychain korrekt
+2. **API Key Setup** - Schreibt AuthKey.p8 für xcodebuild
+3. **Project Generation** - XcodeGen generiert Xcode-Projekt
+4. **Fastlane Start** - Fastlane startet und läuft ~50 Sekunden
 
-### Letzte Korrekturen (2026-02-01)
-1. ✅ **Robustes Keychain Setup** (Commit 0fabc54c):
-   - Kombiniert Keychain und API Key Setup in einem Schritt
-   - Fügt `set -e` für frühe Fehlererkennung hinzu
-   - Löscht existierende Keychains vor Neuerstellung
-   - Verwendet sichere Methode zum Erhalt vorhandener Keychains in Suchliste
-   - Angewendet auf alle 5 Plattformen (iOS, macOS, watchOS, tvOS, visionOS)
+### Was fehlschlägt ❌
+Der Build schlägt in der "Deploy to TestFlight" Phase fehl. Das wahrscheinlichste Problem:
 
-2. ✅ **Keychain Step passiert jetzt erfolgreich**:
-   - Alle Plattformen passieren "Setup Keychain & API Key"
-   - Fehler tritt jetzt in "Deploy to TestFlight" auf
+**Stale Development Certificates:**
+- Frühere CI-Runs haben "Apple Development" Zertifikate erstellt
+- Die privaten Schlüssel dieser Zertifikate sind verloren (ephemere Runner)
+- Xcode versucht, diese Zertifikate zu verwenden, kann aber nicht
 
-3. 🔍 **Aktueller Status - Certificate-Konflikt**:
-   - Das Problem: Stale Apple Development Zertifikate von früheren CI-Runs
-   - Fehler: "Your account already has an Apple Development signing certificate for this machine, but its private key is not installed in your keychain"
-   - Die privaten Schlüssel gehen verloren, da GitHub Actions Runner ephemer sind
+---
 
-### Lösungsoptionen
+## 🛠️ NÄCHSTER SCHRITT: Zertifikate bereinigen
 
-#### Option 1: Zertifikate manuell bereinigen (EMPFOHLEN)
-1. Gehe zu https://developer.apple.com/account/resources/certificates/list
-2. **Revoke** alle "Apple Development" Zertifikate (nicht Distribution!)
-3. Workflow erneut ausführen - Xcode erstellt automatisch neue
+### Option 1: Development Zertifikate widerrufen (EMPFOHLEN)
 
-#### Option 2: Match verwenden (für Teams)
-- Fastlane Match speichert Zertifikate in einem Git-Repo
-- Einmalige Einrichtung, dann funktioniert CI zuverlässig
+1. Öffne https://developer.apple.com/account/resources/certificates/list
+2. Suche nach **"Apple Development"** Zertifikaten
+3. **Widerrufe (Revoke)** alle Apple Development Zertifikate
+4. **NICHT** die Distribution Zertifikate widerrufen!
+5. Führe den Workflow erneut aus:
+   ```
+   GitHub Actions → TestFlight → Run workflow → ios
+   ```
+
+### Option 2: Alle Zertifikate neu erstellen
+
+Wenn Option 1 nicht funktioniert:
+
+1. Öffne https://developer.apple.com/account/resources/certificates/list
+2. Widerrufe ALLE Zertifikate (Development und Distribution)
+3. Widerrufe auch alle Provisioning Profiles
+4. Führe den Workflow erneut aus - Xcode erstellt alles neu
+
+### Option 3: Fastlane Match einrichten (Langfristige Lösung)
+
+Für zuverlässiges CI empfehlen wir Fastlane Match:
+- Speichert Zertifikate in einem privaten Git-Repo
+- Alle CI-Runs verwenden dieselben Zertifikate
 - Dokumentation: https://docs.fastlane.tools/actions/match/
 
-#### Option 3: Skip Development Signing
-- Nur Distribution-Zertifikate verwenden
-- Erfordert manuelle Profile-Konfiguration
+---
 
-### Bundle IDs (alle registriert)
+## Durchgeführte Fixes (2026-02-01)
+
+| Commit | Beschreibung |
+|--------|--------------|
+| `0fabc54c` | Robustes Keychain Setup für alle Plattformen |
+| `2fbe0611` | CODE_SIGN_IDENTITY Konflikt entfernt |
+| `fd1bef90` | cert/sigh Actions hinzugefügt |
+| `0648bddf` | Manual signing Ansatz |
+| `ab7ebe9a` | Vereinfachte xcargs |
+| `2d0dbb94` | get_provisioning_profile mit lane_context |
+| `348a12e9` | Debug-Logging hinzugefügt |
+| `d2ae7338` | bundle exec entfernt |
+| `f5dcf793` | xcodebuild cloud signing (aktueller Stand) |
+
+## Bundle IDs (alle registriert)
+
 ```
 com.echoelmusic.app           # iOS/macOS/tvOS/visionOS Main
 com.echoelmusic.app.widgets   # iOS Widgets Extension
@@ -63,45 +90,23 @@ com.echoelmusic.app.auv3      # macOS AUv3 Audio Unit
 com.echoelmusic.app.watchkitapp  # watchOS App
 ```
 
-## Nächste Schritte
+## Workflow Trigger
 
-### 1. Workflow testen
-```
-GitHub Actions → TestFlight → Run workflow → ios
+### iOS testen
+```bash
+gh workflow run testflight.yml -f platform=ios -f skip_tests=true --ref claude/deploy-testflight-e8NsA
 ```
 
-### 2. Bei Erfolg
-- [ ] Alle Plattformen testen (all)
+### Alle Plattformen
+```bash
+gh workflow run testflight.yml -f platform=all -f skip_tests=true --ref claude/deploy-testflight-e8NsA
+```
+
+## Bei Erfolg
+
+- [ ] Alle Plattformen testen
 - [ ] PR erstellen für main branch
-- [ ] TestFlight Link teilen
-
-### 3. Bei Fehlern prüfen
-
-#### "Maximum certificates generated"
-→ https://developer.apple.com/account/resources/certificates/list
-→ Alte Zertifikate löschen (max 2 erlaubt)
-
-#### "API Key insufficient permissions"
-→ App Store Connect → Users and Access → Integrations
-→ API Key braucht "Admin" oder "App Manager" Rolle
-
-#### "Profile not found"
-→ Fastlane erstellt Profile automatisch
-→ Prüfen ob App IDs registriert sind
-
-#### "Code sign error"
-→ Logs prüfen ob API Key korrekt geladen wird
-→ Team ID prüfen
-
-## Ralph Wiggum Loop Checklist
-
-```
-[ ] Scan    - Workflow Logs lesen
-[ ] Plan    - Fehler identifizieren
-[ ] Execute - Fix implementieren
-[ ] Validate - Erneut testen
-[ ] Loop    - Bis es funktioniert
-```
+- [ ] TestFlight Links verteilen
 
 ## Wichtige Dateien
 
@@ -109,43 +114,24 @@ GitHub Actions → TestFlight → Run workflow → ios
 |-------|-------|
 | `.github/workflows/testflight.yml` | CI/CD Workflow |
 | `fastlane/Fastfile` | Build & Upload Logic |
-| `fastlane/Appfile` | Bundle IDs & Team |
 | `project.yml` | XcodeGen Projekt-Definition |
-| `docs/TESTFLIGHT_SETUP.md` | Setup-Anleitung |
 
-## Entwicklungsumgebung
+## Fehlerdiagnose
 
-```
-iPhone → Claude Code → Git Push → GitHub Actions → Fastlane → TestFlight
-         ↓
-      XcodeGen (project.yml → Echoelmusic.xcodeproj)
-         ↓
-      Kein Mac nötig! Alles via API.
-```
+### "Apple Development signing certificate" Error
+→ Development Zertifikate widerrufen (siehe oben)
 
-## Letzte Änderungen
+### "Maximum certificates generated"
+→ https://developer.apple.com/account/resources/certificates/list
+→ Alte Zertifikate löschen (max 2 erlaubt pro Typ)
 
-1. ✅ Manuellen Certificate-Import entfernt (kein .p12 nötig)
-2. ✅ `generate_apple_certs: true` für alle Plattformen
-3. ✅ Konsistente API-Key-Setup Schritte
-4. ✅ Dokumentation aktualisiert
-5. ✅ Keychain Setup für watchOS/tvOS/visionOS korrigiert (behält vorhandene Keychains)
-6. ✅ API Key File Validierung hinzugefügt
-7. ✅ Verbesserte Retry-Logik mit detaillierter Ausgabe
+### "API Key insufficient permissions"
+→ App Store Connect → Users and Access → Integrations
+→ API Key braucht "Admin" oder "App Manager" Rolle
 
-## Bekannte Issues & Lösungen
-
-### "Keychain not accessible" oder "No identity found"
-→ Das neue Keychain-Setup erhält vorhandene Keychains, was dieses Problem beheben sollte.
-
-### "Code sign error" bei watchOS/tvOS/visionOS
-→ Stellen Sie sicher, dass die App IDs in developer.apple.com registriert sind:
-- `com.echoelmusic.app.watchkitapp` (watchOS)
-- `com.echoelmusic.app` (tvOS, visionOS)
-
-### "Provisioning profile doesn't include signing certificate"
-→ Xcodebuild mit `-allowProvisioningUpdates` sollte automatisch Profile erstellen.
-→ Falls nicht: Überprüfen Sie die Zertifikate unter https://developer.apple.com/account/resources/certificates/list
+### "Profile not found"
+→ Workflow verwendet `-allowProvisioningUpdates`
+→ Prüfen ob App IDs registriert sind
 
 ---
-*Ralph Wiggum sagt: "Das Zertifikat ist in der Cloud, und die Cloud ist im Computer!"*
+*Letzte Aktualisierung: 2026-02-01 15:20*
