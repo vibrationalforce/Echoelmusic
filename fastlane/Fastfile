@@ -67,18 +67,31 @@ def setup_keychain
   { path: keychain_path, password: keychain_password }
 end
 
-# Build xcargs with App Store Connect API authentication for cloud-managed signing
-def build_xcargs_with_auth
+# Build xcargs with manual signing (avoids Development certificate issues)
+def build_xcargs_with_manual_signing(profile_mapping = {})
+  args = [
+    "DEVELOPMENT_TEAM='#{TEAM_ID}'",
+    "CODE_SIGN_STYLE='Manual'",
+    "COMPILER_INDEX_STORE_ENABLE=NO"
+  ]
+
+  # Add provisioning profile specifiers for each target
+  profile_mapping.each do |target, profile_name|
+    args << "PROVISIONING_PROFILE_SPECIFIER[target=#{target}]='#{profile_name}'"
+  end
+
+  args.join(" ")
+end
+
+# Build xcargs with automatic signing (for platforms without extensions)
+def build_xcargs_with_auto_signing
   api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
 
-  # Use automatic signing with API authentication.
-  # cert/sigh actions have already set up the certificates and profiles.
   args = [
     "DEVELOPMENT_TEAM='#{TEAM_ID}'",
     "CODE_SIGN_STYLE='Automatic'",
     "COMPILER_INDEX_STORE_ENABLE=NO",
-    "-allowProvisioningUpdates",
-    "-allowProvisioningDeviceRegistration"
+    "-allowProvisioningUpdates"
   ]
 
   # Add API authentication if key file exists (CI environment)
@@ -316,32 +329,55 @@ platform :ios do
     api_key = setup_api_key
     keychain = setup_keychain
 
-    # Create/download distribution certificate (force creates new if needed)
+    # Create/download distribution certificate
     UI.message("Setting up distribution certificate...")
     cert(
       api_key: api_key,
       keychain_path: keychain[:path],
       keychain_password: keychain[:password],
-      development: false,  # Distribution certificate
-      force: false,  # Don't force revoke unless necessary
+      development: false,  # Distribution certificate only
+      force: false,
       generate_apple_certs: true
     )
 
-    # Get provisioning profiles for all bundle IDs
+    # Get provisioning profiles and store their names
     UI.message("Setting up provisioning profiles...")
-    ["com.echoelmusic.app", "com.echoelmusic.app.widgets", "com.echoelmusic.app.Clip"].each do |app_id|
-      sigh(
-        api_key: api_key,
-        app_identifier: app_id,
-        readonly: false,
-        adhoc: false,
-        force: false
-      )
-    end
+    profile_mapping = {}
 
-    UI.message("Building iOS app...")
+    # Main app profile
+    main_profile = sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app",
+      readonly: false,
+      adhoc: false,
+      force: false
+    )
+    profile_mapping["Echoelmusic"] = ENV["sigh_com.echoelmusic.app_appstore_profile-name"] || File.basename(main_profile, ".*")
 
-    # Build with automatic signing (cert/sigh have set up credentials)
+    # Widgets extension profile
+    widgets_profile = sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.widgets",
+      readonly: false,
+      adhoc: false,
+      force: false
+    )
+    profile_mapping["EchoelmusicWidgets"] = ENV["sigh_com.echoelmusic.app.widgets_appstore_profile-name"] || File.basename(widgets_profile, ".*")
+
+    # App Clip profile
+    clip_profile = sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.Clip",
+      readonly: false,
+      adhoc: false,
+      force: false
+    )
+    profile_mapping["EchoelmusicClip"] = ENV["sigh_com.echoelmusic.app.Clip_appstore_profile-name"] || File.basename(clip_profile, ".*")
+
+    UI.message("Profile mapping: #{profile_mapping}")
+    UI.message("Building iOS app with manual signing...")
+
+    # Build with manual signing using downloaded profiles
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -350,10 +386,15 @@ platform :ios do
       export_method: "app-store",
       derived_data_path: "./build/DerivedData",
       export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
+        signingStyle: "manual",
+        teamID: TEAM_ID,
+        provisioningProfiles: {
+          "com.echoelmusic.app" => profile_mapping["Echoelmusic"],
+          "com.echoelmusic.app.widgets" => profile_mapping["EchoelmusicWidgets"],
+          "com.echoelmusic.app.Clip" => profile_mapping["EchoelmusicClip"]
+        }
       },
-      xcargs: build_xcargs_with_auth
+      xcargs: build_xcargs_with_manual_signing(profile_mapping)
     )
 
     upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
@@ -367,10 +408,32 @@ platform :ios do
     UI.header "watchOS TestFlight Build"
 
     api_key = setup_api_key
+    keychain = setup_keychain
 
-    UI.message("Using xcodebuild automatic signing with API authentication")
+    # Create/download distribution certificate
+    UI.message("Setting up distribution certificate...")
+    cert(
+      api_key: api_key,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password],
+      platform: "ios",  # watchOS uses iOS certificates
+      development: false,
+      generate_apple_certs: true
+    )
 
-    # Build watchOS app with cloud-managed signing
+    # Get watchOS provisioning profile
+    sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.watchkitapp",
+      platform: "ios",  # watchOS uses iOS platform in sigh
+      readonly: false,
+      adhoc: false,
+      force: false
+    )
+
+    UI.message("Building watchOS app...")
+
+    # Build watchOS app
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-watchOS",
@@ -383,7 +446,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth
+      xcargs: build_xcargs_with_auto_signing
     )
 
     upload_to_testflight_with_retry(api_key, "watchOS Build #{BUILD_NUMBER} - Bio-Reactive HRV")
@@ -397,10 +460,32 @@ platform :ios do
     UI.header "tvOS TestFlight Build"
 
     api_key = setup_api_key
+    keychain = setup_keychain
 
-    UI.message("Using xcodebuild automatic signing with API authentication")
+    # Create/download distribution certificate
+    UI.message("Setting up distribution certificate...")
+    cert(
+      api_key: api_key,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password],
+      platform: "ios",  # tvOS uses iOS certificates
+      development: false,
+      generate_apple_certs: true
+    )
 
-    # Build tvOS app with cloud-managed signing
+    # Get tvOS provisioning profile
+    sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app",
+      platform: "tvos",
+      readonly: false,
+      adhoc: false,
+      force: false
+    )
+
+    UI.message("Building tvOS app...")
+
+    # Build tvOS app
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-tvOS",
@@ -413,7 +498,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth
+      xcargs: build_xcargs_with_auto_signing
     )
 
     upload_to_testflight_with_retry(api_key, "tvOS Build #{BUILD_NUMBER} - Big Screen Experience")
@@ -427,10 +512,32 @@ platform :ios do
     UI.header "visionOS TestFlight Build"
 
     api_key = setup_api_key
+    keychain = setup_keychain
 
-    UI.message("Using xcodebuild automatic signing with API authentication")
+    # Create/download distribution certificate
+    UI.message("Setting up distribution certificate...")
+    cert(
+      api_key: api_key,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password],
+      platform: "ios",  # visionOS uses iOS certificates
+      development: false,
+      generate_apple_certs: true
+    )
 
-    # Build visionOS app with cloud-managed signing
+    # Get visionOS provisioning profile
+    sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app",
+      platform: "ios",  # visionOS uses iOS platform
+      readonly: false,
+      adhoc: false,
+      force: false
+    )
+
+    UI.message("Building visionOS app...")
+
+    # Build visionOS app
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-visionOS",
@@ -443,7 +550,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth
+      xcargs: build_xcargs_with_auto_signing
     )
 
     upload_to_testflight_with_retry(api_key, "visionOS Build #{BUILD_NUMBER} - Spatial Audio Immersive")
@@ -548,11 +655,46 @@ platform :mac do
     UI.header "macOS TestFlight Build (with AUv3 Extension)"
 
     api_key = setup_api_key
+    keychain = setup_keychain
 
-    UI.message("Using xcodebuild automatic signing with API authentication")
-    UI.message("Xcode will create/download certificates and profiles for main app + AUv3")
+    # Create/download macOS distribution certificate
+    UI.message("Setting up macOS distribution certificate...")
+    cert(
+      api_key: api_key,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password],
+      platform: "macos",
+      development: false,
+      generate_apple_certs: true
+    )
 
-    # Build macOS app with cloud-managed signing
+    # Get macOS provisioning profiles
+    profile_mapping = {}
+
+    main_profile = sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app",
+      platform: "macos",
+      readonly: false,
+      adhoc: false,
+      force: false
+    )
+    profile_mapping["Echoelmusic-macOS"] = ENV["sigh_com.echoelmusic.app_macos_appstore_profile-name"] || File.basename(main_profile, ".*")
+
+    # AUv3 extension profile
+    auv3_profile = sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app.auv3",
+      platform: "macos",
+      readonly: false,
+      adhoc: false,
+      force: false
+    )
+    profile_mapping["EchoelmusicAUv3"] = ENV["sigh_com.echoelmusic.app.auv3_macos_appstore_profile-name"] || File.basename(auv3_profile, ".*")
+
+    UI.message("Building macOS app with manual signing...")
+
+    # Build macOS app
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-macOS",
@@ -561,10 +703,14 @@ platform :mac do
       export_method: "app-store",
       derived_data_path: "./build/DerivedData",
       export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
+        signingStyle: "manual",
+        teamID: TEAM_ID,
+        provisioningProfiles: {
+          "com.echoelmusic.app" => profile_mapping["Echoelmusic-macOS"],
+          "com.echoelmusic.app.auv3" => profile_mapping["EchoelmusicAUv3"]
+        }
       },
-      xcargs: build_xcargs_with_auth
+      xcargs: build_xcargs_with_manual_signing(profile_mapping)
     )
 
     upload_to_testflight_with_retry(api_key, "macOS Build #{BUILD_NUMBER} - Standalone + AUv3 Plugins")
