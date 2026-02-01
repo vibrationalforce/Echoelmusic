@@ -67,44 +67,12 @@ def setup_keychain
   { path: keychain_path, password: keychain_password }
 end
 
-# Build xcargs with manual signing (avoids Development certificate issues)
-def build_xcargs_with_manual_signing(profile_mapping = {})
-  args = [
+# Simple xcargs for building (signing handled by export_options)
+def build_xcargs_simple
+  [
     "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-    "CODE_SIGN_STYLE='Manual'",
     "COMPILER_INDEX_STORE_ENABLE=NO"
-  ]
-
-  # Add provisioning profile specifiers for each target
-  profile_mapping.each do |target, profile_name|
-    args << "PROVISIONING_PROFILE_SPECIFIER[target=#{target}]='#{profile_name}'"
-  end
-
-  args.join(" ")
-end
-
-# Build xcargs with automatic signing (for platforms without extensions)
-def build_xcargs_with_auto_signing
-  api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
-
-  args = [
-    "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-    "CODE_SIGN_STYLE='Automatic'",
-    "COMPILER_INDEX_STORE_ENABLE=NO",
-    "-allowProvisioningUpdates"
-  ]
-
-  # Add API authentication if key file exists (CI environment)
-  if File.exist?(api_key_path)
-    UI.message("Using App Store Connect API for cloud-managed signing")
-    args += [
-      "-authenticationKeyPath '#{api_key_path}'",
-      "-authenticationKeyID '#{ENV['ASC_KEY_ID']}'",
-      "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
-    ]
-  end
-
-  args.join(" ")
+  ].join(" ")
 end
 
 # Helper to safely parse certificate expiration date
@@ -375,9 +343,9 @@ platform :ios do
     profile_mapping["EchoelmusicClip"] = ENV["sigh_com.echoelmusic.app.Clip_appstore_profile-name"] || File.basename(clip_profile, ".*")
 
     UI.message("Profile mapping: #{profile_mapping}")
-    UI.message("Building iOS app with manual signing...")
+    UI.message("Building iOS app...")
 
-    # Build with manual signing using downloaded profiles
+    # Build app - cert/sigh have installed profiles, export_options handles signing
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -394,7 +362,7 @@ platform :ios do
           "com.echoelmusic.app.Clip" => profile_mapping["EchoelmusicClip"]
         }
       },
-      xcargs: build_xcargs_with_manual_signing(profile_mapping)
+      xcargs: build_xcargs_simple
     )
 
     upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
@@ -446,7 +414,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auto_signing
+      xcargs: build_xcargs_simple
     )
 
     upload_to_testflight_with_retry(api_key, "watchOS Build #{BUILD_NUMBER} - Bio-Reactive HRV")
@@ -498,7 +466,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auto_signing
+      xcargs: build_xcargs_simple
     )
 
     upload_to_testflight_with_retry(api_key, "tvOS Build #{BUILD_NUMBER} - Big Screen Experience")
@@ -550,7 +518,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auto_signing
+      xcargs: build_xcargs_simple
     )
 
     upload_to_testflight_with_retry(api_key, "visionOS Build #{BUILD_NUMBER} - Spatial Audio Immersive")
@@ -710,7 +678,7 @@ platform :mac do
           "com.echoelmusic.app.auv3" => profile_mapping["EchoelmusicAUv3"]
         }
       },
-      xcargs: build_xcargs_with_manual_signing(profile_mapping)
+      xcargs: build_xcargs_simple
     )
 
     upload_to_testflight_with_retry(api_key, "macOS Build #{BUILD_NUMBER} - Standalone + AUv3 Plugins")
