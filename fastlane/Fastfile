@@ -218,30 +218,172 @@ def cleanup_certificates(api_key)
   end
 end
 
+# Ensure app exists in App Store Connect (create if not)
+def ensure_app_exists(api_key, bundle_id, app_name, platform: "IOS")
+  UI.message("🔍 Checking if app '#{bundle_id}' exists in App Store Connect...")
+
+  begin
+    require 'spaceship'
+
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key: ENV["ASC_KEY_CONTENT"]
+    )
+
+    # Find existing app
+    apps = Spaceship::ConnectAPI::App.all
+    existing_app = apps.find { |a| a.bundle_id == bundle_id }
+
+    if existing_app
+      UI.success("✅ App '#{bundle_id}' exists: #{existing_app.name} (ID: #{existing_app.id})")
+      return existing_app
+    end
+
+    # App doesn't exist - need to create it
+    UI.important("⚠️ App '#{bundle_id}' not found in App Store Connect!")
+    UI.message("Creating new app...")
+
+    # Create the app using produce (deliver's create action)
+    produce(
+      api_key: api_key,
+      app_identifier: bundle_id,
+      app_name: app_name,
+      language: "en-US",
+      app_version: "1.0",
+      sku: bundle_id.gsub(".", "_"),
+      platform: platform,
+      team_id: ENV["APPLE_TEAM_ID"]
+    )
+
+    UI.success("✅ Created app '#{bundle_id}' in App Store Connect")
+
+    # Verify creation
+    apps = Spaceship::ConnectAPI::App.all
+    existing_app = apps.find { |a| a.bundle_id == bundle_id }
+
+    if existing_app
+      UI.success("✅ Verified: #{existing_app.name}")
+      return existing_app
+    else
+      UI.error("App creation reported success but app not found!")
+      return nil
+    end
+
+  rescue => e
+    UI.error("App check/creation failed: #{e.class} - #{e.message}")
+    UI.error(e.backtrace.first(5).join("\n"))
+
+    # Don't fail the build - upload_to_testflight will create if needed
+    UI.important("Will attempt upload anyway - TestFlight may create the app automatically")
+    return nil
+  end
+end
+
+# Validate IPA was built before upload
+def validate_ipa_exists(platform: "iOS")
+  ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
+  pkg_path = lane_context[SharedValues::PKG_OUTPUT_PATH]
+
+  output_path = ipa_path || pkg_path
+
+  UI.message("🔍 Validating build output...")
+
+  unless output_path && File.exist?(output_path)
+    UI.error("❌ No IPA/PKG found!")
+    UI.error("   IPA path: #{ipa_path || 'nil'}")
+    UI.error("   PKG path: #{pkg_path || 'nil'}")
+
+    # List what's in the build directory
+    build_dir = "./build"
+    if Dir.exist?(build_dir)
+      UI.message("Contents of #{build_dir}:")
+      Dir.glob("#{build_dir}/**/*.{ipa,pkg,xcarchive}").each do |f|
+        UI.message("  - #{f} (#{File.size(f) / 1024}KB)")
+      end
+    end
+
+    UI.user_error!("Build output not found - archive may have failed")
+  end
+
+  file_size = File.size(output_path) / (1024 * 1024)
+  UI.success("✅ Found: #{File.basename(output_path)} (#{file_size}MB)")
+
+  if file_size < 1
+    UI.error("❌ File too small (#{file_size}MB) - likely corrupted")
+    UI.user_error!("Build output appears corrupted")
+  end
+
+  return output_path
+end
+
 def upload_to_testflight_with_retry(api_key, changelog, max_retries: 3)
-  UI.message("Uploading to TestFlight...")
+  UI.header("📤 UPLOADING TO TESTFLIGHT")
+
+  # Validate IPA exists first
+  output_path = validate_ipa_exists
 
   retries = 0
   begin
+    UI.message("Uploading #{File.basename(output_path)} to TestFlight...")
+    UI.message("This may take several minutes for large files...")
+
     upload_to_testflight(
       api_key: api_key,
-      skip_waiting_for_build_processing: true,
+      skip_waiting_for_build_processing: false,  # CHANGED: Wait for processing to catch errors
       distribute_external: false,
       notify_external_testers: false,
       changelog: changelog,
-      reject_build_waiting_for_review: false
+      reject_build_waiting_for_review: false,
+      wait_processing_timeout_duration: 1800  # 30 minutes max wait
     )
-    UI.success("Successfully uploaded to TestFlight!")
+
+    UI.success("=" * 60)
+    UI.success("  ✅ SUCCESSFULLY UPLOADED TO TESTFLIGHT!")
+    UI.success("=" * 60)
+    UI.success("")
+    UI.success("  The build is now processing in App Store Connect.")
+    UI.success("  Check: https://appstoreconnect.apple.com/apps")
+    UI.success("")
+
   rescue => e
     retries += 1
+
+    error_message = e.message.to_s
+
+    # Check for specific errors
+    if error_message.include?("not found") || error_message.include?("does not exist")
+      UI.error("❌ App not found in App Store Connect!")
+      UI.error("   You need to create the app first at:")
+      UI.error("   https://appstoreconnect.apple.com/apps")
+      raise e
+    end
+
+    if error_message.include?("authentication") || error_message.include?("unauthorized")
+      UI.error("❌ Authentication failed!")
+      UI.error("   Check your API key permissions at:")
+      UI.error("   https://appstoreconnect.apple.com/access/integrations/api")
+      raise e
+    end
+
     if retries <= max_retries
       delay = 30 * retries  # 30s, 60s, 90s
-      UI.important("Upload failed (attempt #{retries}/#{max_retries}): #{e.message}")
+      UI.important("Upload failed (attempt #{retries}/#{max_retries}): #{error_message}")
       UI.message("Retrying in #{delay} seconds...")
       sleep(delay)
       retry
     else
-      UI.error("Upload failed after #{max_retries} attempts")
+      UI.error("=" * 60)
+      UI.error("  ❌ UPLOAD FAILED AFTER #{max_retries} ATTEMPTS")
+      UI.error("=" * 60)
+      UI.error("")
+      UI.error("  Error: #{error_message}")
+      UI.error("")
+      UI.error("  Troubleshooting:")
+      UI.error("  1. Check app exists: https://appstoreconnect.apple.com/apps")
+      UI.error("  2. Check API key: https://appstoreconnect.apple.com/access/integrations")
+      UI.error("  3. Check build logs above for signing errors")
+      UI.error("")
       raise e
     end
   end
@@ -296,6 +438,9 @@ platform :ios do
 
     api_key = setup_api_key
 
+    # Ensure app exists in App Store Connect
+    ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "IOS")
+
     # Cloud signing with API key authentication
     UI.message("Building iOS app with cloud signing...")
 
@@ -337,6 +482,9 @@ platform :ios do
     UI.header "watchOS TestFlight Build"
 
     api_key = setup_api_key
+
+    # Ensure app exists in App Store Connect
+    ensure_app_exists(api_key, "com.echoelmusic.app.watchkitapp", "Echoelmusic Watch", platform: "IOS")
 
     # Cloud signing with API key authentication (same as iOS)
     UI.message("Building watchOS app with cloud signing...")
@@ -380,6 +528,9 @@ platform :ios do
 
     api_key = setup_api_key
 
+    # Ensure app exists in App Store Connect (shares bundle ID with iOS for universal purchase)
+    ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "APPLE_TV")
+
     # Cloud signing with API key authentication (same as iOS)
     UI.message("Building tvOS app with cloud signing...")
 
@@ -421,6 +572,9 @@ platform :ios do
     UI.header "visionOS TestFlight Build"
 
     api_key = setup_api_key
+
+    # Ensure app exists in App Store Connect
+    ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "VISION_OS")
 
     # Cloud signing with API key authentication (same as iOS)
     UI.message("Building visionOS app with cloud signing...")
@@ -554,6 +708,9 @@ platform :mac do
     UI.header "macOS TestFlight Build (with AUv3 Extension)"
 
     api_key = setup_api_key
+
+    # Ensure app exists in App Store Connect
+    ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "MAC_OS")
 
     # Cloud signing with API key authentication (same as iOS)
     UI.message("Building macOS app with cloud signing...")
