@@ -332,15 +332,21 @@ jobs:
           echo "ASC Key ID: $ASC_KEY_ID"
           echo "ASC Issuer ID length: ${#ASC_ISSUER_ID}"
           echo "ASC Key Content lines: $(echo "$ASC_KEY_CONTENT" | wc -l)"
+          echo "KEYCHAIN_PATH: $KEYCHAIN_PATH"
+          echo "KEYCHAIN_PASSWORD set: $([ -n "$KEYCHAIN_PASSWORD" ] && echo 'yes' || echo 'no')"
           echo ""
           echo "=== Keychains ==="
           security list-keychains
+          echo ""
+          echo "=== Keychain exists ==="
+          ls -la "$KEYCHAIN_PATH" 2>/dev/null || echo "Keychain file not found at $KEYCHAIN_PATH"
           echo ""
           echo "=== Identities ==="
           security find-identity -v -p codesigning || echo "No identities found"
           echo ""
           echo "=== API Key File ==="
           ls -la ~/.appstoreconnect/private_keys/ || echo "No API keys found"
+          cat ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 | head -2 || true
           echo "=== End Debug ==="
 
           # Create output directory
@@ -348,7 +354,7 @@ jobs:
 
           # Single attempt with verbose output for debugging
           echo "Starting fastlane ios beta with verbose output..."
-          bundle exec fastlane ios beta --verbose 2>&1 || {
+          fastlane ios beta --verbose 2>&1 || {
             echo ""
             echo "=== Fastlane Failed ==="
             echo "Exit code: $?"
