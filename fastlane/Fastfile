@@ -71,11 +71,8 @@ end
 def build_xcargs_with_auth
   api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
 
-  # For automatic signing with API authentication, do NOT specify CODE_SIGN_IDENTITY.
-  # Xcode will automatically use:
-  # - "Apple Development" during archive (build phase)
-  # - "Apple Distribution" during export (IPA/PKG creation)
-  # Setting CODE_SIGN_IDENTITY manually causes a conflict with automatic signing.
+  # Use automatic signing with API authentication.
+  # cert/sigh actions have already set up the certificates and profiles.
   args = [
     "DEVELOPMENT_TEAM='#{TEAM_ID}'",
     "CODE_SIGN_STYLE='Automatic'",
@@ -87,14 +84,11 @@ def build_xcargs_with_auth
   # Add API authentication if key file exists (CI environment)
   if File.exist?(api_key_path)
     UI.message("Using App Store Connect API for cloud-managed signing")
-    UI.message("Xcode will select appropriate signing identity automatically")
     args += [
       "-authenticationKeyPath '#{api_key_path}'",
       "-authenticationKeyID '#{ENV['ASC_KEY_ID']}'",
       "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
     ]
-  else
-    UI.message("No API key file found, using local signing")
   end
 
   args.join(" ")
@@ -322,14 +316,32 @@ platform :ios do
     api_key = setup_api_key
     keychain = setup_keychain
 
-    # With xcodebuild API authentication (-authenticationKey* flags), we let
-    # Xcode handle certificate and profile management automatically.
-    # The API key file at ~/.appstoreconnect/private_keys/ enables this.
-    UI.message("Using xcodebuild automatic signing with API authentication")
-    UI.message("Xcode will create/download certificates and profiles as needed")
+    # Create/download distribution certificate (force creates new if needed)
+    UI.message("Setting up distribution certificate...")
+    cert(
+      api_key: api_key,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password],
+      development: false,  # Distribution certificate
+      force: false,  # Don't force revoke unless necessary
+      generate_apple_certs: true
+    )
 
-    # Build iOS app with cloud-managed signing
-    # xcodebuild with -allowProvisioningUpdates and API auth handles everything
+    # Get provisioning profiles for all bundle IDs
+    UI.message("Setting up provisioning profiles...")
+    ["com.echoelmusic.app", "com.echoelmusic.app.widgets", "com.echoelmusic.app.Clip"].each do |app_id|
+      sigh(
+        api_key: api_key,
+        app_identifier: app_id,
+        readonly: false,
+        adhoc: false,
+        force: false
+      )
+    end
+
+    UI.message("Building iOS app...")
+
+    # Build with automatic signing (cert/sigh have set up credentials)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
