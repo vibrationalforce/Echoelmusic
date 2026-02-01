@@ -26,6 +26,10 @@
 	<key>com.apple.developer.healthkit.workout-processing</key>
 	<true/>
 
-	<!-- Push Notifications - Removed: Not implemented, would cause App Store rejection -->
+	<!-- Sign in with Apple -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
 </dict>
 </plist>

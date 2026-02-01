@@ -45,5 +45,15 @@
 	<!-- HomeKit (for smart home lighting control) -->
 	<key>com.apple.developer.homekit</key>
 	<true/>
+
+	<!-- Sign in with Apple -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+
+	<!-- WeatherKit -->
+	<key>com.apple.developer.weatherkit</key>
+	<true/>
 </dict>
 </plist>

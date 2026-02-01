@@ -81,6 +81,14 @@
 	<key>com.apple.security.cs.disable-library-validation</key>
 	<true/>
 
-	<!-- Push Notifications - Removed: Not implemented -->
+	<!-- Sign in with Apple -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+
+	<!-- WeatherKit -->
+	<key>com.apple.developer.weatherkit</key>
+	<true/>
 </dict>
 </plist>
