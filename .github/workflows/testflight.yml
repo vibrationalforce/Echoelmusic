@@ -324,28 +324,41 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          FL_OUTPUT_DIR: ./build/fastlane
         run: |
-          # Retry logic for flaky Apple APIs
-          MAX_RETRIES=3
-          RETRY_DELAY=30
+          # Debug: Show environment and keychain state
+          echo "=== Debug Info ==="
+          echo "Team ID: $APPLE_TEAM_ID"
+          echo "ASC Key ID: $ASC_KEY_ID"
+          echo "ASC Issuer ID length: ${#ASC_ISSUER_ID}"
+          echo "ASC Key Content lines: $(echo "$ASC_KEY_CONTENT" | wc -l)"
+          echo ""
+          echo "=== Keychains ==="
+          security list-keychains
+          echo ""
+          echo "=== Identities ==="
+          security find-identity -v -p codesigning || echo "No identities found"
+          echo ""
+          echo "=== API Key File ==="
+          ls -la ~/.appstoreconnect/private_keys/ || echo "No API keys found"
+          echo "=== End Debug ==="
 
-          for i in $(seq 1 $MAX_RETRIES); do
-            echo "Attempt $i of $MAX_RETRIES..."
+          # Create output directory
+          mkdir -p ./build/fastlane ./build/profiles
 
-            if fastlane ios beta; then
-              echo "iOS deployment successful!"
-              exit 0
-            fi
+          # Single attempt with verbose output for debugging
+          echo "Starting fastlane ios beta with verbose output..."
+          bundle exec fastlane ios beta --verbose 2>&1 || {
+            echo ""
+            echo "=== Fastlane Failed ==="
+            echo "Exit code: $?"
+            echo ""
+            echo "=== Recent log output ==="
+            cat ./build/fastlane/*.log 2>/dev/null || echo "No fastlane logs found"
+            exit 1
+          }
 
-            if [ $i -lt $MAX_RETRIES ]; then
-              echo "Attempt $i failed, retrying in ${RETRY_DELAY}s..."
-              sleep $RETRY_DELAY
-              RETRY_DELAY=$((RETRY_DELAY * 2))
-            fi
-          done
-
-          echo "All $MAX_RETRIES attempts failed"
-          exit 1
+          echo "iOS deployment successful!"
 
       - name: "Cleanup"
         if: always()
