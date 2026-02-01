@@ -318,6 +318,62 @@ jobs:
           echo "Keychain ready: $KEYCHAIN_NAME"
           echo "API Key ready: AuthKey_${ASC_KEY_ID}.p8"
 
+      - name: "Test API Connection"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          echo "=== Testing App Store Connect API ==="
+
+          # Create a test Ruby script to validate the API connection
+          cat > /tmp/test_api.rb << 'RUBY_SCRIPT'
+          require 'spaceship'
+
+          begin
+            puts "Creating API token..."
+            token = Spaceship::ConnectAPI::Token.create(
+              key_id: ENV["ASC_KEY_ID"],
+              issuer_id: ENV["ASC_ISSUER_ID"],
+              key: ENV["ASC_KEY_CONTENT"]
+            )
+            puts "Token created successfully!"
+
+            Spaceship::ConnectAPI.token = token
+            puts "Connecting to App Store Connect..."
+
+            # Try to list apps (basic connectivity test)
+            apps = Spaceship::ConnectAPI::App.all
+            puts "Connected! Found #{apps.count} app(s)"
+            apps.each { |app| puts "  - #{app.bundle_id}: #{app.name}" }
+
+            # Check for our specific app
+            our_app = apps.find { |a| a.bundle_id == "com.echoelmusic.app" }
+            if our_app
+              puts "✅ App 'com.echoelmusic.app' found in App Store Connect"
+            else
+              puts "⚠️ App 'com.echoelmusic.app' NOT found - may need to create it"
+              puts "   Will try to create during build..."
+            end
+
+          rescue => e
+            puts "❌ API Connection Failed: #{e.class}"
+            puts "   Message: #{e.message}"
+            puts ""
+            puts "Possible issues:"
+            puts "  1. Invalid API key ID (should be ~10 chars)"
+            puts "  2. Invalid Issuer ID (should be UUID format)"
+            puts "  3. Invalid private key (should be PEM format)"
+            puts "  4. API key doesn't have App Manager role"
+            puts ""
+            exit 1
+          end
+          RUBY_SCRIPT
+
+          ruby /tmp/test_api.rb
+          echo "=== API Test Complete ==="
+
       - name: "Deploy to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -352,17 +408,26 @@ jobs:
           # Create output directory
           mkdir -p ./build/fastlane ./build/profiles
 
-          # Single attempt with verbose output for debugging
-          echo "Starting fastlane ios beta with verbose output..."
-          fastlane ios beta --verbose 2>&1 || {
+          # Capture full output to file for debugging
+          echo "Starting fastlane ios beta..."
+          set +e
+          fastlane ios beta --verbose 2>&1 | tee ./build/fastlane/output.log
+          FASTLANE_EXIT=$?
+          set -e
+
+          if [ $FASTLANE_EXIT -ne 0 ]; then
             echo ""
-            echo "=== Fastlane Failed ==="
-            echo "Exit code: $?"
+            echo "========================================"
+            echo "=== FASTLANE FAILED (exit: $FASTLANE_EXIT) ==="
+            echo "========================================"
             echo ""
-            echo "=== Recent log output ==="
-            cat ./build/fastlane/*.log 2>/dev/null || echo "No fastlane logs found"
+            echo "=== Last 100 lines of output ==="
+            tail -100 ./build/fastlane/output.log || true
+            echo ""
+            echo "=== Checking for common errors ==="
+            grep -i "error\|fail\|invalid\|denied\|unauthorized" ./build/fastlane/output.log | tail -20 || true
             exit 1
-          }
+          fi
 
           echo "iOS deployment successful!"
 
