@@ -267,52 +267,56 @@ jobs:
           echo "Project generated successfully"
           ls -la *.xcodeproj
 
-      - name: "Setup Keychain"
+      - name: "Setup Keychain & API Key"
         id: keychain
-        run: |
-          # Create a temporary keychain for this CI run
-          # xcodebuild needs a keychain even for cloud-managed signing
-          KEYCHAIN_NAME="ci_ios_${{ github.run_id }}.keychain-db"
-          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
-
-          # Note: set-key-partition-list may fail on empty keychain, which is fine
-          # for cloud-managed signing (xcodebuild handles certs automatically)
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || true
-
-          echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
-          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
-          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
-
-          echo "Keychain ready: $KEYCHAIN_NAME"
-
-      - name: "Setup App Store Connect API Key"
         env:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
         run: |
+          set -e
+
+          # Create a temporary keychain for this CI run
+          KEYCHAIN_NAME="ci_ios_${{ github.run_id }}.keychain-db"
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          echo "Creating keychain: $KEYCHAIN_NAME"
+
+          # Delete keychain if it exists from a previous failed run
+          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
+
+          # Create and configure the keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+
+          # Add to search list (preserve existing keychains)
+          EXISTING_KEYCHAINS=$(security list-keychains -d user | tr -d '"' | tr '\n' ' ')
+          security list-keychains -d user -s "$KEYCHAIN_NAME" $EXISTING_KEYCHAINS
+
+          # Set as default keychain
+          security default-keychain -s "$KEYCHAIN_NAME"
+
+          # Allow codesign access (may fail on empty keychain - that's OK)
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || true
+
+          # Export for other steps
+          echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
+          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
+          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
+
           # Create API key file for xcodebuild cloud-managed signing
-          # With -authenticationKeyPath, xcodebuild will:
-          # 1. Automatically create/download distribution certificates
-          # 2. Create/download provisioning profiles for all bundle IDs
-          # 3. Handle all code signing without local certificates
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-          # Verify the key file was created correctly
+          # Verify
           if [ ! -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 ]; then
             echo "ERROR: Failed to create API key file"
             exit 1
           fi
 
-          echo "API Key file created at ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          echo "xcodebuild will use cloud-managed signing (no local certificates needed)"
+          echo "Keychain ready: $KEYCHAIN_NAME"
+          echo "API Key ready: AuthKey_${ASC_KEY_ID}.p8"
 
       - name: "Deploy to TestFlight"
         env:
@@ -394,16 +398,27 @@ jobs:
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
-      - name: "Setup Keychain"
+      - name: "Setup Keychain & API Key"
         id: keychain
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
         run: |
+          set -e
+
           KEYCHAIN_NAME="ci_macos_${{ github.run_id }}.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          echo "Creating keychain: $KEYCHAIN_NAME"
+          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
+
+          EXISTING_KEYCHAINS=$(security list-keychains -d user | tr -d '"' | tr '\n' ' ')
+          security list-keychains -d user -s "$KEYCHAIN_NAME" $EXISTING_KEYCHAINS
+
           security default-keychain -s "$KEYCHAIN_NAME"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || true
 
@@ -411,15 +426,12 @@ jobs:
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
-      - name: "Setup App Store Connect API Key"
-        env:
-          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-        run: |
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          echo "xcodebuild will use cloud-managed signing (no local certificates needed)"
+
+          echo "Keychain ready: $KEYCHAIN_NAME"
+          echo "API Key ready: AuthKey_${ASC_KEY_ID}.p8"
 
       - name: "Deploy to TestFlight"
         env:
@@ -486,45 +498,45 @@ jobs:
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
-      - name: "Setup Keychain"
+      - name: "Setup Keychain & API Key"
         id: keychain
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
         run: |
+          set -e
+
           KEYCHAIN_NAME="ci_watchos_${{ github.run_id }}.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          echo "Creating keychain: $KEYCHAIN_NAME"
+          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
 
-          # Note: set-key-partition-list may fail on empty keychain, which is fine
-          # for cloud-managed signing (xcodebuild handles certs automatically)
+          EXISTING_KEYCHAINS=$(security list-keychains -d user | tr -d '"' | tr '\n' ' ')
+          security list-keychains -d user -s "$KEYCHAIN_NAME" $EXISTING_KEYCHAINS
+
+          security default-keychain -s "$KEYCHAIN_NAME"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || true
 
           echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
-          echo "Keychain ready: $KEYCHAIN_NAME"
-
-      - name: "Setup App Store Connect API Key"
-        env:
-          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-        run: |
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-          # Verify the key file was created correctly
           if [ ! -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 ]; then
             echo "ERROR: Failed to create API key file"
             exit 1
           fi
 
-          echo "API Key file created at ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          echo "xcodebuild will use cloud-managed signing (no local certificates needed)"
+          echo "Keychain ready: $KEYCHAIN_NAME"
+          echo "API Key ready: AuthKey_${ASC_KEY_ID}.p8"
 
       - name: "Deploy to TestFlight"
         env:
@@ -533,7 +545,6 @@ jobs:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Retry logic for flaky Apple APIs
           MAX_RETRIES=3
           RETRY_DELAY=30
 
@@ -596,39 +607,40 @@ jobs:
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
-      - name: "Setup Keychain"
+      - name: "Setup Keychain & API Key"
         id: keychain
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
         run: |
+          set -e
+
           KEYCHAIN_NAME="ci_tvos_${{ github.run_id }}.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          echo "Creating keychain: $KEYCHAIN_NAME"
+          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
 
-          # Note: set-key-partition-list may fail on empty keychain, which is fine
-          # for cloud-managed signing (xcodebuild handles certs automatically)
+          EXISTING_KEYCHAINS=$(security list-keychains -d user | tr -d '"' | tr '\n' ' ')
+          security list-keychains -d user -s "$KEYCHAIN_NAME" $EXISTING_KEYCHAINS
+
+          security default-keychain -s "$KEYCHAIN_NAME"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || true
 
           echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
-          echo "Keychain ready: $KEYCHAIN_NAME"
-
-      - name: "Setup App Store Connect API Key"
-        env:
-          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-        run: |
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-          echo "API Key file created at ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          echo "xcodebuild will use cloud-managed signing (no local certificates needed)"
+          echo "Keychain ready: $KEYCHAIN_NAME"
+          echo "API Key ready: AuthKey_${ASC_KEY_ID}.p8"
 
       - name: "Deploy to TestFlight"
         env:
@@ -637,7 +649,6 @@ jobs:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Retry logic for flaky Apple APIs
           MAX_RETRIES=3
           RETRY_DELAY=30
 
@@ -700,39 +711,40 @@ jobs:
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
-      - name: "Setup Keychain"
+      - name: "Setup Keychain & API Key"
         id: keychain
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
         run: |
+          set -e
+
           KEYCHAIN_NAME="ci_visionos_${{ github.run_id }}.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          echo "Creating keychain: $KEYCHAIN_NAME"
+          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
 
-          # Note: set-key-partition-list may fail on empty keychain, which is fine
-          # for cloud-managed signing (xcodebuild handles certs automatically)
+          EXISTING_KEYCHAINS=$(security list-keychains -d user | tr -d '"' | tr '\n' ' ')
+          security list-keychains -d user -s "$KEYCHAIN_NAME" $EXISTING_KEYCHAINS
+
+          security default-keychain -s "$KEYCHAIN_NAME"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || true
 
           echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
-          echo "Keychain ready: $KEYCHAIN_NAME"
-
-      - name: "Setup App Store Connect API Key"
-        env:
-          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-        run: |
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-          echo "API Key file created at ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          echo "xcodebuild will use cloud-managed signing (no local certificates needed)"
+          echo "Keychain ready: $KEYCHAIN_NAME"
+          echo "API Key ready: AuthKey_${ASC_KEY_ID}.p8"
 
       - name: "Deploy to TestFlight"
         env:
@@ -741,7 +753,6 @@ jobs:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Retry logic for flaky Apple APIs
           MAX_RETRIES=3
           RETRY_DELAY=30
 
