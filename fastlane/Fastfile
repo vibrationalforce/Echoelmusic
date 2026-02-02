@@ -591,21 +591,29 @@ platform :ios do
     UI.message("  SKU: #{ECHOELMUSIC_SKU}")
     UI.message("  Apple ID: #{ECHOELMUSIC_APPLE_ID}")
     UI.message("  Build Number: #{BUILD_NUMBER}")
+    UI.message("  TEAM_ID: #{TEAM_ID}")
+    UI.message("  ASC_KEY_ID: #{ENV['ASC_KEY_ID']}")
+    UI.message("  ASC_ISSUER_ID: #{ENV['ASC_ISSUER_ID']&.length} chars")
+    UI.message("  ASC_KEY_CONTENT: #{ENV['ASC_KEY_CONTENT']&.length || 0} chars")
     UI.message("=" * 60)
 
+    UI.message("Step 1: Setting up API key...")
     api_key = setup_api_key
+    UI.success("Step 1: API key setup complete!")
 
     # Note: App creation is handled automatically by upload_to_testflight
     # if the app doesn't exist in App Store Connect
 
     # Cloud signing with API key authentication (matching other platforms)
-    UI.message("Building iOS app with cloud signing...")
+    UI.message("Step 2: Preparing cloud signing...")
 
     api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
 
     # Verify API key file exists
     unless File.exist?(api_key_path)
       UI.error("❌ API key file not found at: #{api_key_path}")
+      UI.message("Listing ~/.appstoreconnect/private_keys/:")
+      Dir.glob(File.expand_path("~/.appstoreconnect/private_keys/*")).each { |f| UI.message("  - #{f}") }
       UI.user_error!("API key file missing - check ASC_KEY_ID and key setup")
     end
     UI.success("✅ API key file exists: #{api_key_path}")
@@ -620,12 +628,31 @@ platform :ios do
       "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
     ].join(" ")
 
+    UI.message("xcargs: #{xcargs}")
+
     # Create output directory
     output_dir = "./build/output/ios"
     FileUtils.mkdir_p(output_dir)
+    UI.message("Output directory: #{output_dir}")
+
+    # Verify project exists
+    project_path = "Echoelmusic.xcodeproj"
+    unless File.exist?(project_path)
+      UI.error("❌ Xcode project not found: #{project_path}")
+      UI.message("Current directory: #{Dir.pwd}")
+      UI.message("Contents: #{Dir.glob('*').join(', ')}")
+      UI.user_error!("Xcode project not found!")
+    end
+    UI.success("✅ Xcode project exists: #{project_path}")
+
+    UI.message("Step 3: Starting build_app...")
+    UI.message("  Project: #{project_path}")
+    UI.message("  Scheme: Echoelmusic-iOS")
+    UI.message("  Configuration: Release")
+    UI.message("  Clean: #{ENV['CLEAN_BUILD'] == 'true'}")
 
     build_app(
-      project: "Echoelmusic.xcodeproj",
+      project: project_path,
       scheme: "Echoelmusic-iOS",
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
@@ -643,6 +670,8 @@ platform :ios do
       },
       xcargs: xcargs
     )
+
+    UI.success("Step 3: build_app completed!")
 
     # Verify IPA was created
     ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
