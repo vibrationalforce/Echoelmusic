@@ -493,75 +493,57 @@ platform :ios do
   desc "Build and upload iOS app to TestFlight"
   lane :beta do
     UI.header "iOS TestFlight Build (with Widgets)"
-    UI.important "=== STEP 0: Fastlane initialized at #{Time.now} ==="
-    UI.important "   Ruby version: #{RUBY_VERSION}"
-    UI.important "   Fastlane version: #{Fastlane::VERSION}"
-    UI.important "   Working directory: #{Dir.pwd}"
-    UI.important "=== STEP 1: Starting lane ==="
-
-    # Record start time for timing validation
-    build_start_time = Time.now
-    UI.important "   Build start time: #{build_start_time}"
-
-    UI.important "=== STEP 2: Setting up API key ==="
-    UI.message "   ASC_KEY_ID present: #{ENV['ASC_KEY_ID']&.length.to_i > 0}"
-    UI.message "   ASC_ISSUER_ID present: #{ENV['ASC_ISSUER_ID']&.length.to_i > 0}"
-    UI.message "   ASC_KEY_CONTENT present: #{ENV['ASC_KEY_CONTENT']&.length.to_i > 0}"
-    UI.message "   APPLE_TEAM_ID present: #{ENV['APPLE_TEAM_ID']&.length.to_i > 0}"
-    api_key = setup_api_key
-    UI.success "✅ API key setup complete"
-
-    # Pre-build validation
-    UI.important "=== STEP 3: Validating project setup ==="
-    UI.message "   Checking for project file..."
-    UI.message "   Project exists: #{File.exist?('Echoelmusic.xcodeproj')}"
-    validate_project_setup("Echoelmusic.xcodeproj", "Echoelmusic")
-    UI.success "✅ Project validation complete"
-
-    # TEMPORARILY SKIPPING ensure_app_exists to isolate build failure
-    # Ensure app exists in App Store Connect
-    UI.important "=== STEP 4: SKIPPING App Store Connect check (debugging) ==="
-    UI.important "   Will check if app exists during upload instead"
-    # app_exists = ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "IOS")
-    # unless app_exists
-    #   UI.important("⚠️ App may not exist in App Store Connect - upload may fail")
-    #   UI.important("   Create the app at: https://appstoreconnect.apple.com/apps")
-    # end
-    UI.success "✅ App Store Connect check skipped (debugging)"
-
-    # Cloud signing with API key authentication
-    UI.important "=== STEP 5: Preparing cloud signing ==="
-    UI.message("Building iOS app with cloud signing...")
-    UI.message "   Current time: #{Time.now}"
-
-    api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
-    UI.message "   API key path: #{api_key_path}"
-
-    # Verify API key file exists
-    unless File.exist?(api_key_path)
-      UI.error("❌ API key file not found: #{api_key_path}")
-      UI.error("   Directory contents:")
-      Dir.glob(File.expand_path("~/.appstoreconnect/private_keys/*")).each { |f| UI.error("   - #{f}") }
-      UI.user_error!("API key file missing - cannot proceed with cloud signing")
-    end
-    UI.success("✅ API key file found at #{api_key_path}")
-
-    # xcargs: Let xcodebuild handle signing via cloud with API auth
-    xcargs = [
-      "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-      "CODE_SIGN_STYLE='Automatic'",
-      "COMPILER_INDEX_STORE_ENABLE=NO",
-      "-allowProvisioningUpdates",
-      "-authenticationKeyPath '#{api_key_path}'",
-      "-authenticationKeyID '#{ENV['ASC_KEY_ID']}'",
-      "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
-    ].join(" ")
-
-    UI.important "=== STEP 6: Starting xcodebuild archive ==="
-    UI.message("This should take 5-30 minutes depending on caching...")
-    UI.message("xcargs: #{xcargs}")
+    UI.important "=== STEP 0: Fastlane initialized ==="
+    UI.important "   Time: #{Time.now}"
+    UI.important "   Ruby: #{RUBY_VERSION}"
+    UI.important "   Dir: #{Dir.pwd}"
 
     begin
+      UI.important "=== STEP 1: Checking environment ==="
+      UI.message "   ASC_KEY_ID: #{ENV['ASC_KEY_ID']&.length.to_i > 0 ? 'present' : 'MISSING'}"
+      UI.message "   ASC_ISSUER_ID: #{ENV['ASC_ISSUER_ID']&.length.to_i > 0 ? 'present' : 'MISSING'}"
+      UI.message "   ASC_KEY_CONTENT: #{ENV['ASC_KEY_CONTENT']&.length.to_i > 0 ? "present (#{ENV['ASC_KEY_CONTENT']&.length} chars)" : 'MISSING'}"
+      UI.message "   APPLE_TEAM_ID: #{ENV['APPLE_TEAM_ID']&.length.to_i > 0 ? ENV['APPLE_TEAM_ID'] : 'MISSING'}"
+
+      UI.important "=== STEP 2: Checking API key file ==="
+      api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
+      if File.exist?(api_key_path)
+        UI.success "   ✅ API key file exists: #{api_key_path}"
+        UI.message "   File size: #{File.size(api_key_path)} bytes"
+      else
+        UI.error "   ❌ API key file NOT found: #{api_key_path}"
+        UI.user_error!("API key file missing")
+      end
+
+      UI.important "=== STEP 3: Setting up API key ==="
+      api_key = setup_api_key
+      UI.success "   ✅ API key setup complete"
+
+      UI.important "=== STEP 4: Validating project ==="
+      UI.message "   Project file: #{File.exist?('Echoelmusic.xcodeproj') ? 'exists' : 'MISSING'}"
+      validate_project_setup("Echoelmusic.xcodeproj", "Echoelmusic")
+      UI.success "   ✅ Project validation complete"
+
+      build_start_time = Time.now
+
+      UI.important "=== STEP 5: Preparing build ==="
+      api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
+
+      # xcargs: Let xcodebuild handle signing via cloud with API auth
+      xcargs = [
+        "DEVELOPMENT_TEAM='#{TEAM_ID}'",
+        "CODE_SIGN_STYLE='Automatic'",
+        "COMPILER_INDEX_STORE_ENABLE=NO",
+        "-allowProvisioningUpdates",
+        "-authenticationKeyPath '#{api_key_path}'",
+        "-authenticationKeyID '#{ENV['ASC_KEY_ID']}'",
+        "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
+      ].join(" ")
+
+      UI.important "=== STEP 6: Starting xcodebuild archive ==="
+      UI.message("This should take 5-30 minutes depending on caching...")
+      UI.message("xcargs: #{xcargs}")
+
       build_app(
         project: "Echoelmusic.xcodeproj",
         scheme: "Echoelmusic",
@@ -577,40 +559,45 @@ platform :ios do
         },
         xcargs: xcargs
       )
-      UI.success "✅ build_app completed"
+      UI.success "   ✅ build_app completed"
+
+      # Post-build validation
+      UI.important "=== STEP 7: Validating build output ==="
+      validate_build_completed(build_start_time, min_build_seconds: 60)
+
+      # Verify IPA was created
+      ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
+      UI.message("IPA path from lane_context: #{ipa_path || 'nil'}")
+
+      unless ipa_path && File.exist?(ipa_path)
+        # Try to find IPA in build directory
+        found_ipas = Dir.glob("./build/**/*.ipa")
+        if found_ipas.any?
+          ipa_path = found_ipas.first
+          UI.message("Found IPA at: #{ipa_path}")
+        else
+          UI.error("❌ No IPA found after build!")
+          UI.error("Contents of ./build directory:")
+          Dir.glob("./build/**/*").each { |f| UI.error("  - #{f}") }
+          UI.user_error!("Build completed but no IPA was produced!")
+        end
+      end
+
+      UI.success("✅ IPA ready: #{ipa_path} (#{File.size(ipa_path) / 1024 / 1024}MB)")
+
+      upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
+
     rescue => e
-      UI.error "❌ build_app FAILED: #{e.class}"
-      UI.error "   Message: #{e.message}"
-      UI.error "   Backtrace:"
-      e.backtrace.first(10).each { |line| UI.error "     #{line}" }
+      UI.error "=" * 60
+      UI.error "❌ iOS BUILD FAILED"
+      UI.error "=" * 60
+      UI.error "Error: #{e.class}"
+      UI.error "Message: #{e.message}"
+      UI.error ""
+      UI.error "Backtrace:"
+      e.backtrace.first(15).each { |line| UI.error "  #{line}" }
       raise e
     end
-
-    # Post-build validation
-    UI.important "=== STEP 7: Validating build output ==="
-    validate_build_completed(build_start_time, min_build_seconds: 60)
-
-    # Verify IPA was created
-    ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
-    UI.message("IPA path from lane_context: #{ipa_path || 'nil'}")
-
-    unless ipa_path && File.exist?(ipa_path)
-      # Try to find IPA in build directory
-      found_ipas = Dir.glob("./build/**/*.ipa")
-      if found_ipas.any?
-        ipa_path = found_ipas.first
-        UI.message("Found IPA at: #{ipa_path}")
-      else
-        UI.error("❌ No IPA found after build!")
-        UI.error("Contents of ./build directory:")
-        Dir.glob("./build/**/*").each { |f| UI.error("  - #{f}") }
-        UI.user_error!("Build completed but no IPA was produced!")
-      end
-    end
-
-    UI.success("✅ IPA ready: #{ipa_path} (#{File.size(ipa_path) / 1024 / 1024}MB)")
-
-    upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
   end
 
   # ---------------------------------------------------------------------------
