@@ -584,7 +584,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: "Echoelmusic Clip"
-        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.Clip
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.clip
         INFOPLIST_FILE: Resources/iOS/ClipInfo.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: EchoelmusicClip.entitlements

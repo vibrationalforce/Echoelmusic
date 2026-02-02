@@ -1,0 +1,79 @@
+# =============================================================================
+# ECHOELMUSIC - FASTLANE DELIVERFILE
+# =============================================================================
+# App Store Connect Metadata Configuration
+# Version: 3.0.0 - Phase 10000 ULTIMATE MODE
+# =============================================================================
+
+# App Store Connect App Identifier
+app_identifier "com.echoelmusic.app"
+
+# Apple ID of the app (from App Store Connect)
+apple_id "6757957358"
+
+# App SKU (Stock Keeping Unit) - unique identifier in App Store Connect
+app_sku "Simsalabimbam"
+
+# Team ID for signing
+team_id ENV["APPLE_TEAM_ID"]
+
+# App Store Connect Team ID
+itc_team_id ENV["APPLE_TEAM_ID"]
+
+# =============================================================================
+# METADATA CONFIGURATION
+# =============================================================================
+
+# Skip automatic metadata upload (manage manually in App Store Connect)
+skip_metadata false
+
+# Skip binary upload (handled by TestFlight lanes)
+skip_binary_upload false
+
+# Skip automatic screenshot upload
+skip_screenshots false
+
+# Force overwrite all remote screenshots
+overwrite_screenshots true
+
+# App Store submission information
+submit_for_review false
+automatic_release false
+
+# Phased release configuration
+phased_release true
+
+# =============================================================================
+# PRICING & AVAILABILITY
+# =============================================================================
+
+# Price tier (0 = free)
+price_tier 0
+
+# Available in all territories
+run_precheck_before_submit false
+
+# =============================================================================
+# APP PRIVACY
+# =============================================================================
+
+# App uses non-exempt encryption (NO - uses standard Apple APIs only)
+# This is already set in Info.plist but can be configured here too
+
+# =============================================================================
+# BUNDLE IDS FOR ALL PLATFORMS
+# =============================================================================
+#
+# Universal Purchase (same Apple ID for all platforms):
+#   - iOS:      com.echoelmusic.app
+#   - macOS:    com.echoelmusic.app
+#   - tvOS:     com.echoelmusic.app
+#   - visionOS: com.echoelmusic.app
+#   - watchOS:  com.echoelmusic.app.watchkitapp
+#
+# Extensions:
+#   - iOS Widgets:    com.echoelmusic.app.widgets
+#   - iOS App Clip:   com.echoelmusic.app.clip
+#   - macOS AUv3:     com.echoelmusic.app.auv3
+#
+# =============================================================================

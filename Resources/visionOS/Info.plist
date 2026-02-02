@@ -71,5 +71,9 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>NSEyeTrackingUsageDescription</key>
+	<string>Echoelmusic uses eye tracking for immersive gaze-based audio control.</string>
 </dict>
 </plist>
