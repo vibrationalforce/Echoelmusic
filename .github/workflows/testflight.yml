@@ -472,25 +472,38 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FL_OUTPUT_DIR: ./build/fastlane
         run: |
-          # Simplified deploy script for debugging
           echo "=== iOS TestFlight Deployment ==="
+          echo "Step 1: Current directory and files..."
+          pwd
+          ls -la
 
-          # Setup API key file
+          echo "Step 2: Creating directories..."
           mkdir -p ~/.appstoreconnect/private_keys ./build/fastlane
+          echo "Directories created"
+
+          echo "Step 3: Writing API key file..."
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          echo "API key file written"
 
-          echo "Environment:"
+          echo "Step 4: Checking environment..."
           echo "  APPLE_TEAM_ID: $APPLE_TEAM_ID"
           echo "  ASC_KEY_ID: $ASC_KEY_ID"
-          echo "  Key file exists: $(test -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 && echo yes || echo no)"
-          echo ""
+          echo "  ASC_ISSUER_ID length: ${#ASC_ISSUER_ID}"
+          echo "  ASC_KEY_CONTENT length: ${#ASC_KEY_CONTENT}"
+          test -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 && echo "  Key file: EXISTS" || echo "  Key file: MISSING"
 
-          echo "Running fastlane..."
-          # Run fastlane directly (no pipe) to see all output immediately
+          echo "Step 5: Checking fastlane..."
+          which fastlane || echo "fastlane not found in PATH"
+          fastlane --version
+
+          echo "Step 6: Listing fastlane directory..."
+          ls -la fastlane/
+
+          echo "Step 7: Running fastlane ios beta..."
           fastlane ios beta --verbose
-          echo ""
-          echo "Fastlane completed successfully!"
+
+          echo "Step 8: Fastlane completed!"
 
           # Success - verify build artifacts exist
           echo "✅ FASTLANE EXITED SUCCESSFULLY"
