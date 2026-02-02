@@ -529,11 +529,21 @@ jobs:
           echo "" | tee -a ./build/fastlane/deploy.log
           echo "=== Starting Fastlane ===" | tee -a ./build/fastlane/deploy.log
 
-          # Run fastlane - capture output to both log file and artifact directory
-          fastlane ios beta --verbose 2>&1 | tee ./build/fastlane/fastlane.log
-          FASTLANE_EXIT=${PIPESTATUS[0]}
+          # Write a simple test script to verify environment
+          echo "Verifying environment before fastlane..."
+          ruby -e 'puts "TEAM_ID from Ruby: #{ENV["APPLE_TEAM_ID"].inspect}"' | tee -a ./build/fastlane/deploy.log
+          ruby -e 'puts "KEY_CONTENT length: #{ENV["ASC_KEY_CONTENT"]&.length}"' | tee -a ./build/fastlane/deploy.log
+
+          # Run fastlane WITHOUT pipe - write to file directly
+          echo "Running: fastlane ios beta --verbose"
+          fastlane ios beta --verbose > ./build/fastlane/fastlane.log 2>&1
+          FASTLANE_EXIT=$?
 
           echo "Fastlane exit code: $FASTLANE_EXIT" | tee -a ./build/fastlane/deploy.log
+
+          # Always show last 100 lines in console
+          echo "=== Last 100 lines of fastlane output ===" | tee -a ./build/fastlane/deploy.log
+          tail -100 ./build/fastlane/fastlane.log
 
           if [ $FASTLANE_EXIT -ne 0 ]; then
             echo ""
