@@ -3,19 +3,16 @@
 <plist version="1.0">
 <dict>
 	<!-- =================================================================== -->
-	<!-- SIMPLIFIED ENTITLEMENTS FOR INITIAL TESTFLIGHT BUILD -->
+	<!-- MINIMAL ENTITLEMENTS FOR INITIAL TESTFLIGHT BUILD -->
 	<!-- =================================================================== -->
-	<!-- Only essential capabilities that work with automatic signing -->
-	<!-- Advanced capabilities (App Groups, iCloud, HomeKit) can be added -->
-	<!-- after provisioning profiles are properly configured -->
+	<!-- No special capabilities - basic app signing only -->
+	<!-- This tests the build pipeline without any App ID configuration -->
+	<!-- Add capabilities after basic build is confirmed working: -->
+	<!--   - HealthKit (requires App ID capability) -->
+	<!--   - App Groups (requires App ID capability) -->
+	<!--   - iCloud (requires App ID capability) -->
+	<!--   - HomeKit (requires App ID capability) -->
 	<!-- =================================================================== -->
-
-	<!-- HealthKit Access (basic - no health-records which requires approval) -->
-	<key>com.apple.developer.healthkit</key>
-	<true/>
-
-	<!-- Audio Background Mode (for audio playback) -->
-	<!-- Note: inter-app-audio is deprecated, using UIBackgroundModes in Info.plist instead -->
 
 </dict>
 </plist>
