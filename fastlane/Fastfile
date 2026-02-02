@@ -618,6 +618,12 @@ platform :ios do
       UI.message("This should take 5-30 minutes depending on caching...")
       UI.message("xcargs: #{xcargs}")
 
+      # Debug: Show build settings
+      UI.message("=== Build Settings Debug ===")
+      build_settings = `xcodebuild -project Echoelmusic.xcodeproj -scheme Echoelmusic -showBuildSettings 2>&1 | head -100`
+      UI.message(build_settings)
+      UI.message("=== End Build Settings ===")
+
       build_app(
         project: "Echoelmusic.xcodeproj",
         scheme: "Echoelmusic",
