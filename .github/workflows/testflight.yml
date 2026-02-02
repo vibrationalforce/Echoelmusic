@@ -487,23 +487,10 @@ jobs:
           echo ""
 
           echo "Running fastlane..."
-          fastlane ios beta --verbose 2>&1 | tee ./build/fastlane/output.log
-          FASTLANE_EXIT=$?
-
+          # Run fastlane directly (no pipe) to see all output immediately
+          fastlane ios beta --verbose
           echo ""
-          echo "Fastlane completed with exit code: $FASTLANE_EXIT"
-          echo ""
-
-          if [ $FASTLANE_EXIT -ne 0 ]; then
-            echo "❌ FASTLANE FAILED"
-            echo ""
-            echo "=== Error Summary ==="
-            grep -E "(error:|Error:|ERROR|failed|Failed|FAILED|❌|user_error)" ./build/fastlane/output.log | tail -50 || true
-            echo ""
-            echo "=== Last 100 lines ==="
-            tail -100 ./build/fastlane/output.log || true
-            exit 1
-          fi
+          echo "Fastlane completed successfully!"
 
           # Success - verify build artifacts exist
           echo "✅ FASTLANE EXITED SUCCESSFULLY"
