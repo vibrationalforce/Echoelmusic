@@ -440,23 +440,65 @@ jobs:
             exit 1
           fi
 
-          # Success - verify upload
-          echo "✅ FASTLANE COMPLETED SUCCESSFULLY"
+          # Success - verify build artifacts exist
+          echo "✅ FASTLANE EXITED SUCCESSFULLY"
           echo "============================================"
           echo ""
 
-          # Show what was built
-          echo "=== Build Artifacts ==="
-          find ./build -name "*.ipa" -exec ls -lh {} \; 2>/dev/null || echo "No IPA found"
+          # CRITICAL: Verify IPA was actually built
+          echo "=== Verifying Build Artifacts ==="
+          IPA_COUNT=$(find ./build -name "*.ipa" 2>/dev/null | wc -l)
+
+          if [ "$IPA_COUNT" -eq 0 ]; then
+            echo "❌ CRITICAL: No IPA file found after 'successful' build!"
+            echo ""
+            echo "This means fastlane exited with code 0 but didn't actually build anything."
+            echo "Possible causes:"
+            echo "  1. Xcode project generation failed"
+            echo "  2. Scheme not found"
+            echo "  3. Build failed silently"
+            echo "  4. Signing configuration issues"
+            echo ""
+            echo "=== Contents of ./build ==="
+            find ./build -type f 2>/dev/null | head -50 || echo "No files found"
+            echo ""
+            echo "=== Last 100 lines of fastlane output ==="
+            tail -100 ./build/fastlane/output.log || true
+            echo ""
+            echo "=== Searching for errors ==="
+            grep -i "error\|fail\|invalid\|missing" ./build/fastlane/output.log | tail -50 || true
+            exit 1
+          fi
+
+          echo "Found $IPA_COUNT IPA file(s):"
+          find ./build -name "*.ipa" -exec ls -lh {} \;
           echo ""
 
-          # Check for upload confirmation
+          # Verify IPA size is reasonable (should be at least 5MB for a real app)
+          for ipa in $(find ./build -name "*.ipa"); do
+            IPA_SIZE=$(stat -f%z "$ipa" 2>/dev/null || stat -c%s "$ipa" 2>/dev/null || echo "0")
+            IPA_SIZE_MB=$((IPA_SIZE / 1024 / 1024))
+            echo "IPA size: ${IPA_SIZE_MB}MB"
+
+            if [ "$IPA_SIZE_MB" -lt 5 ]; then
+              echo "❌ CRITICAL: IPA file is too small (${IPA_SIZE_MB}MB < 5MB minimum)"
+              echo "   This indicates a corrupted or incomplete build"
+              exit 1
+            fi
+            echo "✅ IPA size check passed"
+          done
+          echo ""
+
+          # Check for upload confirmation in logs
           if grep -q "Successfully uploaded" ./build/fastlane/output.log; then
             echo "✅ Upload confirmed in logs"
           elif grep -q "uploaded to TestFlight" ./build/fastlane/output.log; then
             echo "✅ TestFlight upload confirmed"
+          elif grep -q "Build processing" ./build/fastlane/output.log; then
+            echo "✅ Build submitted for processing"
           else
-            echo "⚠️ Upload confirmation not found in logs - check App Store Connect"
+            echo "⚠️ Upload confirmation not explicitly found in logs"
+            echo "   Check App Store Connect to verify the build was received"
           fi
 
           echo ""

@@ -317,6 +317,64 @@ def validate_ipa_exists(platform: "iOS")
   return output_path
 end
 
+# Pre-build validation to catch issues early
+def validate_project_setup(project_path, scheme)
+  UI.message("🔍 Validating project setup...")
+
+  # Check project exists
+  unless File.exist?(project_path)
+    UI.error("❌ Project not found: #{project_path}")
+    UI.error("   Current directory: #{Dir.pwd}")
+    UI.error("   Files in current directory:")
+    Dir.glob("*.xcodeproj").each { |f| UI.error("   - #{f}") }
+    UI.user_error!("Xcode project '#{project_path}' does not exist!")
+  end
+  UI.success("✅ Project exists: #{project_path}")
+
+  # List available schemes
+  UI.message("Checking available schemes...")
+  schemes_output = `xcodebuild -project "#{project_path}" -list 2>&1`
+  UI.message("Available schemes:")
+  UI.message(schemes_output)
+
+  # Check if our scheme exists
+  unless schemes_output.include?(scheme)
+    UI.error("❌ Scheme '#{scheme}' not found in project!")
+    UI.user_error!("Scheme '#{scheme}' does not exist in #{project_path}")
+  end
+  UI.success("✅ Scheme '#{scheme}' found")
+
+  # Check signing setup
+  UI.message("Checking signing configuration...")
+  if ENV["APPLE_TEAM_ID"].nil? || ENV["APPLE_TEAM_ID"].empty?
+    UI.error("❌ APPLE_TEAM_ID not set!")
+    UI.user_error!("APPLE_TEAM_ID environment variable is required")
+  end
+  UI.success("✅ Team ID configured: #{ENV['APPLE_TEAM_ID']}")
+
+  UI.success("✅ Project setup validation passed")
+end
+
+# Post-build validation with timing check
+def validate_build_completed(start_time, min_build_seconds: 120)
+  elapsed = Time.now - start_time
+  UI.message("Build completed in #{elapsed.round(1)} seconds")
+
+  if elapsed < min_build_seconds
+    UI.error("⚠️ Build completed suspiciously fast (#{elapsed.round(1)}s < #{min_build_seconds}s minimum)")
+    UI.error("   This usually indicates the build failed silently or was cached incorrectly")
+
+    # Check if IPA exists
+    ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
+    unless ipa_path && File.exist?(ipa_path)
+      UI.error("❌ No IPA file found after build!")
+      UI.user_error!("Build appears to have failed - no IPA produced and build was too fast")
+    end
+  end
+
+  UI.success("✅ Build timing validation passed")
+end
+
 def upload_to_testflight_with_retry(api_key, changelog, max_retries: 3)
   UI.header("📤 UPLOADING TO TESTFLIGHT")
 
@@ -436,15 +494,32 @@ platform :ios do
   lane :beta do
     UI.header "iOS TestFlight Build (with Widgets)"
 
+    # Record start time for timing validation
+    build_start_time = Time.now
+
     api_key = setup_api_key
 
+    # Pre-build validation
+    validate_project_setup("Echoelmusic.xcodeproj", "Echoelmusic")
+
     # Ensure app exists in App Store Connect
-    ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "IOS")
+    app_exists = ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "IOS")
+    unless app_exists
+      UI.important("⚠️ App may not exist in App Store Connect - upload may fail")
+      UI.important("   Create the app at: https://appstoreconnect.apple.com/apps")
+    end
 
     # Cloud signing with API key authentication
     UI.message("Building iOS app with cloud signing...")
 
     api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
+
+    # Verify API key file exists
+    unless File.exist?(api_key_path)
+      UI.error("❌ API key file not found: #{api_key_path}")
+      UI.user_error!("API key file missing - cannot proceed with cloud signing")
+    end
+    UI.success("✅ API key file found")
 
     # xcargs: Let xcodebuild handle signing via cloud with API auth
     xcargs = [
@@ -457,6 +532,9 @@ platform :ios do
       "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
     ].join(" ")
 
+    UI.message("Starting xcodebuild archive...")
+    UI.message("This should take 5-30 minutes depending on caching...")
+
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -464,12 +542,37 @@ platform :ios do
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
       derived_data_path: "./build/DerivedData",
+      output_directory: "./build",
+      output_name: "Echoelmusic.ipa",
       export_options: {
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
       xcargs: xcargs
     )
+
+    # Post-build validation
+    validate_build_completed(build_start_time, min_build_seconds: 60)
+
+    # Verify IPA was created
+    ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
+    UI.message("IPA path from lane_context: #{ipa_path || 'nil'}")
+
+    unless ipa_path && File.exist?(ipa_path)
+      # Try to find IPA in build directory
+      found_ipas = Dir.glob("./build/**/*.ipa")
+      if found_ipas.any?
+        ipa_path = found_ipas.first
+        UI.message("Found IPA at: #{ipa_path}")
+      else
+        UI.error("❌ No IPA found after build!")
+        UI.error("Contents of ./build directory:")
+        Dir.glob("./build/**/*").each { |f| UI.error("  - #{f}") }
+        UI.user_error!("Build completed but no IPA was produced!")
+      end
+    end
+
+    UI.success("✅ IPA ready: #{ipa_path} (#{File.size(ipa_path) / 1024 / 1024}MB)")
 
     upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
   end
