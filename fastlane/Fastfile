@@ -30,12 +30,16 @@ BUILD_NUMBER = ENV["BUILD_NUMBER"] || "1"
 # =============================================================================
 
 def setup_api_key
+  UI.message("setup_api_key: Starting...")
+
   # Validate all required environment variables with helpful messages
   missing = []
   missing << "ASC_KEY_ID" unless ENV["ASC_KEY_ID"]&.length.to_i > 0
   missing << "ASC_ISSUER_ID" unless ENV["ASC_ISSUER_ID"]&.length.to_i > 0
   missing << "ASC_KEY_CONTENT" unless ENV["ASC_KEY_CONTENT"]&.length.to_i > 0
   missing << "APPLE_TEAM_ID" unless ENV["APPLE_TEAM_ID"]&.length.to_i > 0
+
+  UI.message("setup_api_key: Environment check - missing: #{missing.inspect}")
 
   unless missing.empty?
     UI.error("Missing required environment variables: #{missing.join(', ')}")
@@ -45,19 +49,33 @@ def setup_api_key
 
   # Validate key format
   key_content = ENV["ASC_KEY_CONTENT"]
+  UI.message("setup_api_key: key_content length: #{key_content&.length || 0}")
+  UI.message("setup_api_key: key_content first 50 chars: #{key_content&.slice(0, 50) || 'nil'}")
+
   unless key_content.include?("BEGIN") && key_content.include?("PRIVATE KEY")
     UI.important("Warning: ASC_KEY_CONTENT may not be in correct PEM format")
     UI.message("Expected format: -----BEGIN PRIVATE KEY-----...-----END PRIVATE KEY-----")
   end
 
-  UI.message("Setting up App Store Connect API key...")
-  app_store_connect_api_key(
-    key_id: ENV["ASC_KEY_ID"],
-    issuer_id: ENV["ASC_ISSUER_ID"],
-    key_content: key_content,
-    is_key_content_base64: false,
-    in_house: false
-  )
+  UI.message("setup_api_key: Calling app_store_connect_api_key...")
+  begin
+    result = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: key_content,
+      is_key_content_base64: false,
+      in_house: false
+    )
+    UI.message("setup_api_key: app_store_connect_api_key succeeded")
+    result
+  rescue => e
+    UI.error("setup_api_key: app_store_connect_api_key FAILED!")
+    UI.error("   Error class: #{e.class}")
+    UI.error("   Error message: #{e.message}")
+    UI.error("   Backtrace:")
+    e.backtrace.first(10).each { |line| UI.error("     #{line}") }
+    raise e
+  end
 end
 
 def setup_keychain
