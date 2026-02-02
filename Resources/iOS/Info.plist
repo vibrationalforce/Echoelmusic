@@ -77,6 +77,8 @@
 	</array>
 	<key>NSMotionUsageDescription</key>
 	<string>Echoelmusic uses motion data for gesture-based audio control and spatial audio head tracking.</string>
+	<key>NSEyeTrackingUsageDescription</key>
+	<string>Echoelmusic uses eye tracking for immersive gaze-based audio control on supported devices.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIRequiresFullScreen</key>

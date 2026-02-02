@@ -217,7 +217,7 @@ let project = Project(
             name: "EchoelmusicTV",
             platform: .tvOS,
             product: .app,
-            bundleId: "com.echoelmusic.app.tv",
+            bundleId: "com.echoelmusic.app",
             deploymentTarget: .tvOS(targetVersion: "15.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
@@ -239,7 +239,7 @@ let project = Project(
             dependencies: [],
             settings: .settings(
                 base: [
-                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app.tv",
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app",
                     "TARGETED_DEVICE_FAMILY": "3",
                     "TVOS_DEPLOYMENT_TARGET": "15.0",
                     "ENABLE_BITCODE": "NO"
@@ -253,7 +253,7 @@ let project = Project(
             name: "EchoelmusicVision",
             platform: .visionOS,
             product: .app,
-            bundleId: "com.echoelmusic.app.vision",
+            bundleId: "com.echoelmusic.app",
             deploymentTarget: .visionOS(targetVersion: "1.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
@@ -277,7 +277,7 @@ let project = Project(
             dependencies: [],
             settings: .settings(
                 base: [
-                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app.vision",
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app",
                     "TARGETED_DEVICE_FAMILY": "7",
                     "XROS_DEPLOYMENT_TARGET": "1.0",
                     "ENABLE_PREVIEWS": "YES"
@@ -336,7 +336,7 @@ let project = Project(
             name: "EchoelmusicMac",
             platform: .macOS,
             product: .app,
-            bundleId: "com.echoelmusic.mac",
+            bundleId: "com.echoelmusic.app",
             deploymentTarget: .macOS(targetVersion: "12.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
@@ -360,7 +360,7 @@ let project = Project(
             dependencies: [],
             settings: .settings(
                 base: [
-                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.mac",
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app",
                     "MACOSX_DEPLOYMENT_TARGET": "12.0",
                     "ENABLE_HARDENED_RUNTIME": "YES",
                     "ENABLE_PREVIEWS": "YES"
