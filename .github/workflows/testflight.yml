@@ -405,23 +405,36 @@ jobs:
           # Create output directory
           mkdir -p ./build/fastlane ./build/profiles
 
-          echo ""
-          echo "=== Pre-flight Debug Info ==="
-          echo "Current directory: $(pwd)"
-          echo "Xcode project files:"
-          ls -la *.xcodeproj 2>/dev/null || echo "No .xcodeproj found!"
-          echo ""
-          echo "Listing Xcode schemes:"
-          xcodebuild -project Echoelmusic.xcodeproj -list 2>&1 || echo "Failed to list schemes!"
-          echo ""
-          echo "Checking for source files:"
-          find Sources/Echoelmusic -name "*.swift" | head -10
-          echo "Total Swift files: $(find Sources/Echoelmusic -name "*.swift" | wc -l)"
-          echo ""
-          echo "============================================"
-          echo "Starting fastlane ios beta..."
-          echo "============================================"
-          echo ""
+          # Create debug log that will be uploaded as artifact
+          DEBUG_LOG="./build/fastlane/debug.log"
+
+          echo "" | tee -a $DEBUG_LOG
+          echo "=== Pre-flight Debug Info ===" | tee -a $DEBUG_LOG
+          echo "Current directory: $(pwd)" | tee -a $DEBUG_LOG
+          echo "Date: $(date)" | tee -a $DEBUG_LOG
+          echo "" | tee -a $DEBUG_LOG
+
+          echo "=== Xcode Project Files ===" | tee -a $DEBUG_LOG
+          ls -la *.xcodeproj 2>&1 | tee -a $DEBUG_LOG || echo "No .xcodeproj found!" | tee -a $DEBUG_LOG
+          echo "" | tee -a $DEBUG_LOG
+
+          echo "=== Xcode Schemes ===" | tee -a $DEBUG_LOG
+          xcodebuild -project Echoelmusic.xcodeproj -list 2>&1 | tee -a $DEBUG_LOG || echo "Failed to list schemes!" | tee -a $DEBUG_LOG
+          echo "" | tee -a $DEBUG_LOG
+
+          echo "=== Source Files ===" | tee -a $DEBUG_LOG
+          find Sources/Echoelmusic -name "*.swift" 2>/dev/null | head -10 | tee -a $DEBUG_LOG
+          echo "Total Swift files: $(find Sources/Echoelmusic -name "*.swift" 2>/dev/null | wc -l)" | tee -a $DEBUG_LOG
+          echo "" | tee -a $DEBUG_LOG
+
+          echo "=== Team ID ===" | tee -a $DEBUG_LOG
+          echo "APPLE_TEAM_ID: $APPLE_TEAM_ID" | tee -a $DEBUG_LOG
+          echo "" | tee -a $DEBUG_LOG
+
+          echo "============================================" | tee -a $DEBUG_LOG
+          echo "Starting fastlane ios beta..." | tee -a $DEBUG_LOG
+          echo "============================================" | tee -a $DEBUG_LOG
+          echo "" | tee -a $DEBUG_LOG
 
           set +e
           fastlane ios beta --verbose 2>&1 | tee ./build/fastlane/output.log
@@ -455,6 +468,11 @@ jobs:
             echo "## ❌ iOS Build Failed" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Exit code: $FASTLANE_EXIT" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Pre-flight Debug Info" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat ./build/fastlane/debug.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No debug.log found" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Error Summary" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
@@ -546,10 +564,9 @@ jobs:
         with:
           name: ios-build-logs-${{ github.run_number }}
           path: |
-            ./build/fastlane/output.log
-            ./build/**/*.log
+            ./build/fastlane/
           retention-days: 7
-          if-no-files-found: ignore
+          if-no-files-found: warn
 
   # ===========================================================================
   # macOS DEPLOYMENT (includes AUv3 Extension)
