@@ -471,6 +471,26 @@ jobs:
           echo "" | tee -a $DEBUG_LOG
 
           echo "============================================" | tee -a $DEBUG_LOG
+          echo "Pre-fastlane checks..." | tee -a $DEBUG_LOG
+          echo "============================================" | tee -a $DEBUG_LOG
+          echo "" | tee -a $DEBUG_LOG
+
+          # Verify fastlane is available
+          echo "Fastlane version:" | tee -a $DEBUG_LOG
+          fastlane --version 2>&1 | tee -a $DEBUG_LOG || {
+            echo "❌ Fastlane not found!" | tee -a $DEBUG_LOG
+            exit 1
+          }
+
+          echo "" | tee -a $DEBUG_LOG
+          echo "Environment check:" | tee -a $DEBUG_LOG
+          echo "  ASC_KEY_ID length: ${#ASC_KEY_ID}" | tee -a $DEBUG_LOG
+          echo "  ASC_ISSUER_ID length: ${#ASC_ISSUER_ID}" | tee -a $DEBUG_LOG
+          echo "  ASC_KEY_CONTENT length: ${#ASC_KEY_CONTENT}" | tee -a $DEBUG_LOG
+          echo "  APPLE_TEAM_ID: $APPLE_TEAM_ID" | tee -a $DEBUG_LOG
+          echo "" | tee -a $DEBUG_LOG
+
+          echo "============================================" | tee -a $DEBUG_LOG
           echo "Starting fastlane ios beta..." | tee -a $DEBUG_LOG
           echo "============================================" | tee -a $DEBUG_LOG
           echo "" | tee -a $DEBUG_LOG
@@ -479,6 +499,9 @@ jobs:
           fastlane ios beta --verbose 2>&1 | tee ./build/fastlane/output.log
           FASTLANE_EXIT=$?
           set -e
+
+          echo "" | tee -a $DEBUG_LOG
+          echo "Fastlane completed with exit code: $FASTLANE_EXIT" | tee -a $DEBUG_LOG
 
           echo ""
           echo "============================================"
