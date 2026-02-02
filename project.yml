@@ -86,6 +86,8 @@ targets:
           - "**/WatchOS/**"
           - "**/tvOS/**"
           - "**/Platforms/**"
+          - "**/Widgets/**"
+          - "**/LiveActivity/**"
           - "**/README.md"
           - "**/*.md"
     resources:
