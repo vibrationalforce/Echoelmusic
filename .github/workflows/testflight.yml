@@ -502,21 +502,41 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FL_OUTPUT_DIR: ./build/fastlane
         run: |
-          set -e
-          echo "=== iOS TestFlight Deployment ==="
-          echo ""
+          # Enable bash tracing to see exactly what's happening
+          set -x
 
-          # Debug: Show environment variable lengths
+          echo "=== iOS TestFlight Deployment ==="
+          mkdir -p ./build/fastlane
+
+          # Debug: Show environment variable lengths (without revealing content)
           echo "=== Environment Check ==="
-          echo "ASC_KEY_ID: ${#ASC_KEY_ID} chars"
-          echo "ASC_ISSUER_ID: ${#ASC_ISSUER_ID} chars"
-          echo "ASC_KEY_CONTENT_RAW: ${#ASC_KEY_CONTENT_RAW} chars"
+          echo "ASC_KEY_ID length: ${#ASC_KEY_ID}"
+          echo "ASC_ISSUER_ID length: ${#ASC_ISSUER_ID}"
+          echo "ASC_KEY_CONTENT_RAW length: ${#ASC_KEY_CONTENT_RAW}"
           echo "APPLE_TEAM_ID: $APPLE_TEAM_ID"
-          echo ""
+
+          # Check if secrets are empty
+          if [ -z "$ASC_KEY_ID" ]; then
+            echo "ERROR: ASC_KEY_ID is empty!"
+            exit 1
+          fi
+          if [ -z "$ASC_ISSUER_ID" ]; then
+            echo "ERROR: ASC_ISSUER_ID is empty!"
+            exit 1
+          fi
+          if [ -z "$ASC_KEY_CONTENT_RAW" ]; then
+            echo "ERROR: ASC_KEY_CONTENT_RAW is empty!"
+            exit 1
+          fi
+          if [ -z "$APPLE_TEAM_ID" ]; then
+            echo "ERROR: APPLE_TEAM_ID is empty!"
+            exit 1
+          fi
+          echo "All required secrets are present"
 
           # Normalize API key (convert literal \n to actual newlines if needed)
           if echo "$ASC_KEY_CONTENT_RAW" | grep -q '\\n'; then
-            echo "Normalizing API key content (literal \\n detected)..."
+            echo "Normalizing API key content (literal backslash-n detected)..."
             ASC_KEY_CONTENT=$(printf '%b' "$ASC_KEY_CONTENT_RAW")
           else
             echo "API key content appears to have actual newlines already"
@@ -529,54 +549,73 @@ jobs:
           export ASC_ISSUER_ID
           export APPLE_TEAM_ID
 
-          echo "ASC_KEY_CONTENT (normalized): ${#ASC_KEY_CONTENT} chars, $(echo "$ASC_KEY_CONTENT" | wc -l | tr -d ' ') lines"
-          echo ""
+          echo "ASC_KEY_CONTENT (normalized) length: ${#ASC_KEY_CONTENT}"
+          echo "ASC_KEY_CONTENT lines: $(echo "$ASC_KEY_CONTENT" | wc -l | tr -d ' ')"
+
+          # List what's in the API key directory
+          echo "=== API Key Directory Contents ==="
+          ls -la ~/.appstoreconnect/private_keys/ 2>/dev/null || echo "Directory doesn't exist yet"
 
           # Verify API key file exists from Setup step
-          mkdir -p ./build/fastlane
-          if [ ! -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 ]; then
+          API_KEY_FILE=~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          if [ ! -f "$API_KEY_FILE" ]; then
             echo "WARNING: API key file not found from Setup step!"
             echo "Creating from normalized content..."
             mkdir -p ~/.appstoreconnect/private_keys
-            echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-            chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+            echo "$ASC_KEY_CONTENT" > "$API_KEY_FILE"
+            chmod 600 "$API_KEY_FILE"
           fi
 
-          API_KEY_LINES=$(wc -l < ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 | tr -d ' ')
-          echo "API key file: $API_KEY_LINES lines"
+          # Verify file exists and has content
+          if [ ! -f "$API_KEY_FILE" ]; then
+            echo "ERROR: API key file still doesn't exist!"
+            exit 1
+          fi
+
+          API_KEY_LINES=$(wc -l < "$API_KEY_FILE" | tr -d ' ')
+          API_KEY_SIZE=$(stat -f%z "$API_KEY_FILE" 2>/dev/null || stat -c%s "$API_KEY_FILE" 2>/dev/null || echo "0")
+          echo "API key file: $API_KEY_LINES lines, $API_KEY_SIZE bytes"
 
           # Validate API key file has proper format
           if [ "$API_KEY_LINES" -lt 3 ]; then
-            echo "ERROR: API key file has too few lines!"
-            echo "File contents (first/last line):"
-            head -1 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-            tail -1 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+            echo "ERROR: API key file has too few lines ($API_KEY_LINES)!"
+            echo "First line:"
+            head -1 "$API_KEY_FILE"
+            echo "Last line:"
+            tail -1 "$API_KEY_FILE"
             exit 1
           fi
-          echo ""
+
+          # Verify PEM format
+          if ! head -1 "$API_KEY_FILE" | grep -q "BEGIN.*PRIVATE KEY"; then
+            echo "ERROR: API key file doesn't start with PEM header!"
+            head -1 "$API_KEY_FILE"
+            exit 1
+          fi
+          echo "API key file validation passed"
 
           echo "=== Starting Fastlane ==="
           echo "Running: fastlane ios beta --verbose"
-          echo ""
+
+          # Disable tracing for fastlane (too verbose)
+          set +x
 
           # Run fastlane with output captured
-          set +e
           fastlane ios beta --verbose 2>&1 | tee /tmp/fastlane.log
-          FASTLANE_EXIT=$?
-          set -e
+          FASTLANE_EXIT=${PIPESTATUS[0]}
 
           if [ $FASTLANE_EXIT -ne 0 ]; then
             echo ""
             echo "## ❌ Fastlane Failed (exit code: $FASTLANE_EXIT)" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Last 100 lines of output" >> $GITHUB_STEP_SUMMARY
+            echo "### Last 150 lines of output" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -100 /tmp/fastlane.log >> $GITHUB_STEP_SUMMARY
+            tail -150 /tmp/fastlane.log >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Error lines" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            grep -i "error\|fail\|user_error\|missing\|invalid" /tmp/fastlane.log | tail -20 >> $GITHUB_STEP_SUMMARY || echo "No specific errors found" >> $GITHUB_STEP_SUMMARY
+            grep -i "error\|fail\|user_error\|missing\|invalid" /tmp/fastlane.log | tail -30 >> $GITHUB_STEP_SUMMARY || echo "No specific errors found" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
