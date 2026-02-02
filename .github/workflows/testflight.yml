@@ -472,6 +472,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FL_OUTPUT_DIR: ./build/fastlane
         run: |
+          set -x  # Enable trace mode to see each command
           echo "=== iOS TestFlight Deployment ==="
           echo "Step 1: Current directory and files..."
           pwd
