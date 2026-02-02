@@ -585,21 +585,28 @@ platform :ios do
   # ---------------------------------------------------------------------------
   desc "Build and upload iOS app to TestFlight"
   lane :beta do
-    UI.header "iOS TestFlight Build"
-    UI.message("=" * 60)
-    UI.message("  Bundle ID: com.echoelmusic.app")
-    UI.message("  SKU: #{ECHOELMUSIC_SKU}")
-    UI.message("  Apple ID: #{ECHOELMUSIC_APPLE_ID}")
-    UI.message("  Build Number: #{BUILD_NUMBER}")
-    UI.message("  TEAM_ID: #{TEAM_ID}")
-    UI.message("  ASC_KEY_ID: #{ENV['ASC_KEY_ID']}")
-    UI.message("  ASC_ISSUER_ID: #{ENV['ASC_ISSUER_ID']&.length} chars")
-    UI.message("  ASC_KEY_CONTENT: #{ENV['ASC_KEY_CONTENT']&.length || 0} chars")
-    UI.message("=" * 60)
+    begin
+      UI.header "iOS TestFlight Build"
+      UI.message("=" * 60)
+      UI.message("  Bundle ID: com.echoelmusic.app")
+      UI.message("  SKU: #{ECHOELMUSIC_SKU}")
+      UI.message("  Apple ID: #{ECHOELMUSIC_APPLE_ID}")
+      UI.message("  Build Number: #{BUILD_NUMBER}")
+      UI.message("  TEAM_ID: #{TEAM_ID.inspect}")
+      UI.message("  ASC_KEY_ID: #{ENV['ASC_KEY_ID']}")
+      UI.message("  ASC_ISSUER_ID: #{ENV['ASC_ISSUER_ID']&.length} chars")
+      UI.message("  ASC_KEY_CONTENT: #{ENV['ASC_KEY_CONTENT']&.length || 0} chars")
+      UI.message("=" * 60)
 
-    UI.message("Step 1: Setting up API key...")
-    api_key = setup_api_key
-    UI.success("Step 1: API key setup complete!")
+      # Validate TEAM_ID is set
+      if TEAM_ID.nil? || TEAM_ID.empty?
+        UI.error("TEAM_ID is not set! APPLE_TEAM_ID env var must be present when fastlane loads.")
+        UI.user_error!("Missing TEAM_ID - set APPLE_TEAM_ID environment variable")
+      end
+
+      UI.message("Step 1: Setting up API key...")
+      api_key = setup_api_key
+      UI.success("Step 1: API key setup complete!")
 
     # Note: App creation is handled automatically by upload_to_testflight
     # if the app doesn't exist in App Store Connect
@@ -687,6 +694,18 @@ platform :ios do
     end
 
     upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
+
+    rescue => e
+      UI.error("=" * 60)
+      UI.error("iOS BETA LANE FAILED!")
+      UI.error("=" * 60)
+      UI.error("Error class: #{e.class}")
+      UI.error("Error message: #{e.message}")
+      UI.error("")
+      UI.error("Backtrace:")
+      e.backtrace.first(20).each { |line| UI.error("  #{line}") }
+      raise e
+    end
   end
 
   # ---------------------------------------------------------------------------
