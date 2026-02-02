@@ -506,32 +506,34 @@ jobs:
           echo "=== iOS TestFlight Deployment ==="
           mkdir -p ./build/fastlane
 
-          # Debug: Show environment variable lengths
-          echo "=== Environment Check ==="
-          echo "ASC_KEY_ID: ${#ASC_KEY_ID} chars"
-          echo "ASC_ISSUER_ID: ${#ASC_ISSUER_ID} chars"
-          echo "ASC_KEY_CONTENT: ${#ASC_KEY_CONTENT} chars"
-          echo "APPLE_TEAM_ID: $APPLE_TEAM_ID"
+          # Debug: Show environment variable lengths and values
+          echo "=== Environment Check ===" | tee ./build/fastlane/deploy.log
+          echo "ASC_KEY_ID: ${#ASC_KEY_ID} chars" | tee -a ./build/fastlane/deploy.log
+          echo "ASC_ISSUER_ID: ${#ASC_ISSUER_ID} chars" | tee -a ./build/fastlane/deploy.log
+          echo "ASC_KEY_CONTENT: ${#ASC_KEY_CONTENT} chars" | tee -a ./build/fastlane/deploy.log
+          echo "APPLE_TEAM_ID: $APPLE_TEAM_ID" | tee -a ./build/fastlane/deploy.log
 
           # List API key directory
-          echo "=== API Key Directory ==="
-          ls -la ~/.appstoreconnect/private_keys/ 2>/dev/null || echo "Directory doesn't exist"
+          echo "=== API Key Directory ===" | tee -a ./build/fastlane/deploy.log
+          ls -la ~/.appstoreconnect/private_keys/ 2>&1 | tee -a ./build/fastlane/deploy.log || echo "Directory doesn't exist" | tee -a ./build/fastlane/deploy.log
 
-          # The Fastfile handles key normalization internally
-          # Just ensure the API key file is written with normalized content
+          # Check API key file
           API_KEY_FILE=~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           if [ -f "$API_KEY_FILE" ]; then
-            echo "API key file exists: $(wc -l < "$API_KEY_FILE" | tr -d ' ') lines"
+            echo "API key file exists: $(wc -l < "$API_KEY_FILE" | tr -d ' ') lines" | tee -a ./build/fastlane/deploy.log
+            echo "First line: $(head -1 "$API_KEY_FILE")" | tee -a ./build/fastlane/deploy.log
           else
-            echo "WARNING: API key file not found, Setup step may have failed"
+            echo "WARNING: API key file not found" | tee -a ./build/fastlane/deploy.log
           fi
 
-          echo ""
-          echo "=== Starting Fastlane ==="
+          echo "" | tee -a ./build/fastlane/deploy.log
+          echo "=== Starting Fastlane ===" | tee -a ./build/fastlane/deploy.log
 
-          # Run fastlane - let Fastfile handle all normalization
-          fastlane ios beta --verbose 2>&1 | tee /tmp/fastlane.log
+          # Run fastlane - capture output to both log file and artifact directory
+          fastlane ios beta --verbose 2>&1 | tee ./build/fastlane/fastlane.log
           FASTLANE_EXIT=${PIPESTATUS[0]}
+
+          echo "Fastlane exit code: $FASTLANE_EXIT" | tee -a ./build/fastlane/deploy.log
 
           if [ $FASTLANE_EXIT -ne 0 ]; then
             echo ""
@@ -539,13 +541,13 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Last 200 lines of output" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -200 /tmp/fastlane.log >> $GITHUB_STEP_SUMMARY
+            tail -200 ./build/fastlane/fastlane.log >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
 
           echo ""
-          echo "✅ Fastlane completed successfully!"
+          echo "✅ Fastlane completed successfully!" | tee -a ./build/fastlane/deploy.log
 
           # Success - verify build artifacts exist
           echo "✅ FASTLANE EXITED SUCCESSFULLY"
