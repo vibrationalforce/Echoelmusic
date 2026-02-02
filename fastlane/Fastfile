@@ -303,17 +303,25 @@ def ensure_app_exists(api_key, bundle_id, app_name, platform: "IOS")
   begin
     require 'spaceship'
 
-    # Normalize key content if needed
-    key_content = ENV["ASC_KEY_CONTENT"] || ""
-    if key_content.include?('\\n') && !key_content.include?("\n")
-      key_content = key_content.gsub('\\n', "\n")
-    end
+    # Use the token from the api_key that was already set up
+    # This avoids issues with environment variable handling
+    if api_key && api_key[:key_id]
+      UI.message("Using existing API key token...")
+      Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(api_key)
+    else
+      UI.important("No valid api_key passed, attempting to create token from environment...")
+      # Fallback: Normalize key content if needed
+      key_content = ENV["ASC_KEY_CONTENT"] || ""
+      if key_content.include?('\\n') && !key_content.include?("\n")
+        key_content = key_content.gsub('\\n', "\n")
+      end
 
-    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
-      key_id: ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key: key_content
-    )
+      Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+        key_id: ENV["ASC_KEY_ID"],
+        issuer_id: ENV["ASC_ISSUER_ID"],
+        key: key_content
+      )
+    end
 
     # Find existing app
     apps = Spaceship::ConnectAPI::App.all
