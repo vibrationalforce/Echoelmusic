@@ -307,7 +307,8 @@ def ensure_app_exists(api_key, bundle_id, app_name, platform: "IOS")
     # This avoids issues with environment variable handling
     if api_key && api_key[:key_id]
       UI.message("Using existing API key token...")
-      Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(api_key)
+      # Convert Hash to keyword arguments with double-splat
+      Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(**api_key)
     else
       UI.important("No valid api_key passed, attempting to create token from environment...")
       # Fallback: Normalize key content if needed
