@@ -30,7 +30,9 @@ BUILD_NUMBER = ENV["BUILD_NUMBER"] || "1"
 # =============================================================================
 
 def setup_api_key
-  UI.message("setup_api_key: Starting...")
+  UI.message("=" * 60)
+  UI.message("setup_api_key: Starting API key setup...")
+  UI.message("=" * 60)
 
   # Validate all required environment variables with helpful messages
   missing = []
@@ -39,7 +41,11 @@ def setup_api_key
   missing << "ASC_KEY_CONTENT" unless ENV["ASC_KEY_CONTENT"]&.length.to_i > 0
   missing << "APPLE_TEAM_ID" unless ENV["APPLE_TEAM_ID"]&.length.to_i > 0
 
-  UI.message("setup_api_key: Environment check - missing: #{missing.inspect}")
+  UI.message("setup_api_key: Environment variables:")
+  UI.message("   ASC_KEY_ID: #{ENV['ASC_KEY_ID'] ? "present (#{ENV['ASC_KEY_ID'].length} chars)" : 'MISSING'}")
+  UI.message("   ASC_ISSUER_ID: #{ENV['ASC_ISSUER_ID'] ? "present (#{ENV['ASC_ISSUER_ID'].length} chars)" : 'MISSING'}")
+  UI.message("   ASC_KEY_CONTENT: #{ENV['ASC_KEY_CONTENT'] ? "present (#{ENV['ASC_KEY_CONTENT'].length} chars)" : 'MISSING'}")
+  UI.message("   APPLE_TEAM_ID: #{ENV['APPLE_TEAM_ID'] || 'MISSING'}")
 
   unless missing.empty?
     UI.error("Missing required environment variables: #{missing.join(', ')}")
@@ -47,17 +53,52 @@ def setup_api_key
     UI.user_error!("Cannot proceed without App Store Connect credentials")
   end
 
-  # Validate key format
+  # Get and normalize key content
+  # GitHub secrets sometimes store newlines as literal '\n' strings
   key_content = ENV["ASC_KEY_CONTENT"]
-  UI.message("setup_api_key: key_content length: #{key_content&.length || 0}")
-  UI.message("setup_api_key: key_content first 50 chars: #{key_content&.slice(0, 50) || 'nil'}")
+  original_length = key_content.length
 
-  unless key_content.include?("BEGIN") && key_content.include?("PRIVATE KEY")
-    UI.important("Warning: ASC_KEY_CONTENT may not be in correct PEM format")
-    UI.message("Expected format: -----BEGIN PRIVATE KEY-----...-----END PRIVATE KEY-----")
+  UI.message("setup_api_key: Analyzing key content...")
+  UI.message("   Original length: #{original_length} chars")
+  UI.message("   Contains literal '\\n': #{key_content.include?('\\n')}")
+  UI.message("   Contains actual newlines: #{key_content.include?("\n")}")
+  UI.message("   Line count (by \\n): #{key_content.split("\n").count}")
+
+  # Normalize: replace literal '\n' with actual newlines if needed
+  if key_content.include?('\\n') && !key_content.include?("\n")
+    UI.message("setup_api_key: Normalizing literal \\n to actual newlines...")
+    key_content = key_content.gsub('\\n', "\n")
+    UI.message("   After normalization: #{key_content.length} chars, #{key_content.split("\n").count} lines")
   end
 
-  UI.message("setup_api_key: Calling app_store_connect_api_key...")
+  # Show key format info (without revealing the actual key)
+  lines = key_content.split("\n")
+  UI.message("setup_api_key: Key format check:")
+  UI.message("   First line: #{lines.first || 'empty'}")
+  UI.message("   Last line: #{lines.last || 'empty'}")
+  UI.message("   Total lines: #{lines.count}")
+
+  # Validate PEM format
+  has_begin = key_content.include?("-----BEGIN")
+  has_end = key_content.include?("-----END")
+  has_private = key_content.include?("PRIVATE KEY")
+
+  unless has_begin && has_end && has_private
+    UI.error("setup_api_key: Key does NOT appear to be valid PEM format!")
+    UI.error("   Has BEGIN marker: #{has_begin}")
+    UI.error("   Has END marker: #{has_end}")
+    UI.error("   Has PRIVATE KEY: #{has_private}")
+    UI.error("")
+    UI.error("Expected format:")
+    UI.error("   -----BEGIN PRIVATE KEY-----")
+    UI.error("   <base64 encoded key data>")
+    UI.error("   -----END PRIVATE KEY-----")
+    UI.user_error!("ASC_KEY_CONTENT is not in valid PEM format")
+  end
+
+  UI.success("setup_api_key: Key format validation PASSED")
+
+  UI.message("setup_api_key: Calling app_store_connect_api_key action...")
   begin
     result = app_store_connect_api_key(
       key_id: ENV["ASC_KEY_ID"],
@@ -66,13 +107,24 @@ def setup_api_key
       is_key_content_base64: false,
       in_house: false
     )
-    UI.message("setup_api_key: app_store_connect_api_key succeeded")
+    UI.success("setup_api_key: app_store_connect_api_key SUCCEEDED!")
+    UI.message("=" * 60)
     result
   rescue => e
+    UI.error("=" * 60)
     UI.error("setup_api_key: app_store_connect_api_key FAILED!")
+    UI.error("=" * 60)
     UI.error("   Error class: #{e.class}")
     UI.error("   Error message: #{e.message}")
-    UI.error("   Backtrace:")
+    UI.error("")
+    UI.error("Possible causes:")
+    UI.error("   1. Invalid API key ID (should be ~10 alphanumeric characters)")
+    UI.error("   2. Invalid Issuer ID (should be UUID format)")
+    UI.error("   3. Private key doesn't match the API key ID")
+    UI.error("   4. API key was revoked in App Store Connect")
+    UI.error("   5. Key content has incorrect encoding")
+    UI.error("")
+    UI.error("Backtrace (first 10 lines):")
     e.backtrace.first(10).each { |line| UI.error("     #{line}") }
     raise e
   end
