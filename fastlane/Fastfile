@@ -627,6 +627,7 @@ platform :ios do
         derived_data_path: "./build/DerivedData",
         output_directory: "./build",
         output_name: "Echoelmusic.ipa",
+        destination: "generic/platform=iOS",
         export_options: {
           signingStyle: "automatic",
           teamID: TEAM_ID
