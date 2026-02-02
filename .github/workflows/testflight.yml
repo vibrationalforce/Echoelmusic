@@ -511,6 +511,17 @@ jobs:
           security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
           rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
+      - name: "Upload Build Logs"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-logs-${{ github.run_number }}
+          path: |
+            ./build/fastlane/output.log
+            ./build/**/*.log
+          retention-days: 7
+          if-no-files-found: ignore
+
   # ===========================================================================
   # macOS DEPLOYMENT (includes AUv3 Extension)
   # ===========================================================================
