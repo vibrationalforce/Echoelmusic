@@ -4,6 +4,17 @@
 # Multi-Platform TestFlight Deployment - ALL Apple Ecosystems
 # Version: 3.0.0 - Phase 10000 ULTIMATE MODE
 #
+# App Store Connect:
+#   SKU: Simsalabimbam
+#   Apple ID: 6757957358
+#
+# Bundle IDs:
+#   - iOS/macOS/tvOS/visionOS: com.echoelmusic.app
+#   - watchOS: com.echoelmusic.app.watchkitapp
+#   - AUv3 Extension: com.echoelmusic.app.auv3
+#   - Widgets: com.echoelmusic.app.widgets
+#   - App Clip: com.echoelmusic.app.clip
+#
 # Supported Platforms:
 # - iOS (iPhone + iPad) with integrated AUv3 (works as host and plugin)
 # - macOS (Apple Silicon + Intel) with embedded AUv3 Audio Unit Extension

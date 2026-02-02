@@ -289,16 +289,30 @@ def cleanup_certificates(api_key)
 end
 
 # Ensure app exists in App Store Connect (create if not)
+# App Store Connect Configuration
+# SKU: Simsalabimbam
+# Apple ID: 6757957358
+ECHOELMUSIC_SKU = "Simsalabimbam"
+ECHOELMUSIC_APPLE_ID = "6757957358"
+
 def ensure_app_exists(api_key, bundle_id, app_name, platform: "IOS")
   UI.message("🔍 Checking if app '#{bundle_id}' exists in App Store Connect...")
+  UI.message("   SKU: #{ECHOELMUSIC_SKU}")
+  UI.message("   Apple ID: #{ECHOELMUSIC_APPLE_ID}")
 
   begin
     require 'spaceship'
 
+    # Normalize key content if needed
+    key_content = ENV["ASC_KEY_CONTENT"] || ""
+    if key_content.include?('\\n') && !key_content.include?("\n")
+      key_content = key_content.gsub('\\n', "\n")
+    end
+
     Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
       key_id: ENV["ASC_KEY_ID"],
       issuer_id: ENV["ASC_ISSUER_ID"],
-      key: ENV["ASC_KEY_CONTENT"]
+      key: key_content
     )
 
     # Find existing app
@@ -312,7 +326,7 @@ def ensure_app_exists(api_key, bundle_id, app_name, platform: "IOS")
 
     # App doesn't exist - need to create it
     UI.important("⚠️ App '#{bundle_id}' not found in App Store Connect!")
-    UI.message("Creating new app...")
+    UI.message("Creating new app with SKU: #{ECHOELMUSIC_SKU}...")
 
     # Create the app using produce (deliver's create action)
     produce(
@@ -321,7 +335,7 @@ def ensure_app_exists(api_key, bundle_id, app_name, platform: "IOS")
       app_name: app_name,
       language: "en-US",
       app_version: "1.0",
-      sku: bundle_id.gsub(".", "_"),
+      sku: ECHOELMUSIC_SKU,
       platform: platform,
       team_id: ENV["APPLE_TEAM_ID"]
     )
@@ -563,6 +577,12 @@ platform :ios do
   desc "Build and upload iOS app to TestFlight"
   lane :beta do
     UI.header "iOS TestFlight Build"
+    UI.message("=" * 60)
+    UI.message("  Bundle ID: com.echoelmusic.app")
+    UI.message("  SKU: #{ECHOELMUSIC_SKU}")
+    UI.message("  Apple ID: #{ECHOELMUSIC_APPLE_ID}")
+    UI.message("  Build Number: #{BUILD_NUMBER}")
+    UI.message("=" * 60)
 
     api_key = setup_api_key
 
@@ -574,6 +594,13 @@ platform :ios do
 
     api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
 
+    # Verify API key file exists
+    unless File.exist?(api_key_path)
+      UI.error("❌ API key file not found at: #{api_key_path}")
+      UI.user_error!("API key file missing - check ASC_KEY_ID and key setup")
+    end
+    UI.success("✅ API key file exists: #{api_key_path}")
+
     xcargs = [
       "DEVELOPMENT_TEAM='#{TEAM_ID}'",
       "CODE_SIGN_STYLE='Automatic'",
@@ -584,20 +611,42 @@ platform :ios do
       "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
     ].join(" ")
 
+    # Create output directory
+    output_dir = "./build/output/ios"
+    FileUtils.mkdir_p(output_dir)
+
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-iOS",
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
+      output_directory: output_dir,
+      output_name: "Echoelmusic-iOS",
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=iOS",
       export_options: {
         signingStyle: "automatic",
-        teamID: TEAM_ID
+        teamID: TEAM_ID,
+        uploadBitcode: false,
+        uploadSymbols: true,
+        compileBitcode: false
       },
       xcargs: xcargs
     )
+
+    # Verify IPA was created
+    ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
+    if ipa_path && File.exist?(ipa_path)
+      ipa_size = File.size(ipa_path) / (1024 * 1024)
+      UI.success("✅ IPA created: #{ipa_path} (#{ipa_size}MB)")
+    else
+      UI.error("❌ IPA not found after build!")
+      # List contents of output directory
+      UI.message("Contents of #{output_dir}:")
+      Dir.glob("#{output_dir}/**/*").each { |f| UI.message("  - #{f}") }
+      UI.user_error!("Build completed but IPA not found")
+    end
 
     upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
   end
@@ -608,6 +657,10 @@ platform :ios do
   desc "Build and upload watchOS app to TestFlight"
   lane :beta_watchos do
     UI.header "watchOS TestFlight Build"
+    UI.message("=" * 60)
+    UI.message("  Bundle ID: com.echoelmusic.app.watchkitapp")
+    UI.message("  Build Number: #{BUILD_NUMBER}")
+    UI.message("=" * 60)
 
     api_key = setup_api_key
 
@@ -629,17 +682,25 @@ platform :ios do
       "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
     ].join(" ")
 
+    # Create output directory
+    output_dir = "./build/output/watchos"
+    FileUtils.mkdir_p(output_dir)
+
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-watchOS",
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
+      output_directory: output_dir,
+      output_name: "Echoelmusic-watchOS",
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=watchOS",
       export_options: {
         signingStyle: "automatic",
-        teamID: TEAM_ID
+        teamID: TEAM_ID,
+        uploadBitcode: false,
+        uploadSymbols: true
       },
       xcargs: xcargs
     )
@@ -653,6 +714,10 @@ platform :ios do
   desc "Build and upload tvOS app to TestFlight"
   lane :beta_tvos do
     UI.header "tvOS TestFlight Build"
+    UI.message("=" * 60)
+    UI.message("  Bundle ID: com.echoelmusic.app")
+    UI.message("  Build Number: #{BUILD_NUMBER}")
+    UI.message("=" * 60)
 
     api_key = setup_api_key
 
@@ -674,17 +739,25 @@ platform :ios do
       "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
     ].join(" ")
 
+    # Create output directory
+    output_dir = "./build/output/tvos"
+    FileUtils.mkdir_p(output_dir)
+
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-tvOS",
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
+      output_directory: output_dir,
+      output_name: "Echoelmusic-tvOS",
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=tvOS",
       export_options: {
         signingStyle: "automatic",
-        teamID: TEAM_ID
+        teamID: TEAM_ID,
+        uploadBitcode: false,
+        uploadSymbols: true
       },
       xcargs: xcargs
     )
@@ -698,6 +771,10 @@ platform :ios do
   desc "Build and upload visionOS app to TestFlight"
   lane :beta_visionos do
     UI.header "visionOS TestFlight Build"
+    UI.message("=" * 60)
+    UI.message("  Bundle ID: com.echoelmusic.app")
+    UI.message("  Build Number: #{BUILD_NUMBER}")
+    UI.message("=" * 60)
 
     api_key = setup_api_key
 
@@ -719,17 +796,25 @@ platform :ios do
       "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
     ].join(" ")
 
+    # Create output directory
+    output_dir = "./build/output/visionos"
+    FileUtils.mkdir_p(output_dir)
+
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-visionOS",
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
+      output_directory: output_dir,
+      output_name: "Echoelmusic-visionOS",
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=visionOS",
       export_options: {
         signingStyle: "automatic",
-        teamID: TEAM_ID
+        teamID: TEAM_ID,
+        uploadBitcode: false,
+        uploadSymbols: true
       },
       xcargs: xcargs
     )
@@ -834,6 +919,11 @@ platform :mac do
   desc "Build and upload macOS app to TestFlight"
   lane :beta do
     UI.header "macOS TestFlight Build (with AUv3 Extension)"
+    UI.message("=" * 60)
+    UI.message("  Bundle ID: com.echoelmusic.app")
+    UI.message("  AUv3 Bundle ID: com.echoelmusic.app.auv3")
+    UI.message("  Build Number: #{BUILD_NUMBER}")
+    UI.message("=" * 60)
 
     api_key = setup_api_key
 
@@ -855,16 +945,24 @@ platform :mac do
       "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
     ].join(" ")
 
+    # Create output directory
+    output_dir = "./build/output/macos"
+    FileUtils.mkdir_p(output_dir)
+
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-macOS",
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
+      output_directory: output_dir,
+      output_name: "Echoelmusic-macOS",
       derived_data_path: "./build/DerivedData",
       export_options: {
         signingStyle: "automatic",
-        teamID: TEAM_ID
+        teamID: TEAM_ID,
+        uploadBitcode: false,
+        uploadSymbols: true
       },
       xcargs: xcargs
     )

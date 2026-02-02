@@ -3,6 +3,10 @@
 # =============================================================================
 # Multi-Platform Configuration for TestFlight Deployment
 # Version: 3.0.0 - Phase 10000 ULTIMATE MODE
+#
+# App Store Connect Configuration:
+#   SKU: Simsalabimbam
+#   Apple ID: 6757957358
 # =============================================================================
 
 # Apple Developer Team ID (from environment)
@@ -12,10 +16,17 @@ team_id ENV["APPLE_TEAM_ID"]
 itc_team_id ENV["APPLE_TEAM_ID"]
 
 # =============================================================================
+# App Store Connect Identifiers
+# =============================================================================
+
+# Apple ID for Echoelmusic in App Store Connect
+apple_id "6757957358"
+
+# =============================================================================
 # Bundle Identifiers by Platform
 # =============================================================================
 
-# iOS App (iPhone + iPad)
+# iOS App (iPhone + iPad) - Default
 app_identifier "com.echoelmusic.app"
 
 # iOS AUv3 Audio Unit Extension
@@ -58,12 +69,16 @@ end
 #   - com.echoelmusic.app.auv3         (macOS AUv3 - embedded extension)
 #   - com.echoelmusic.app.watchkitapp  (watchOS companion app)
 #   - com.echoelmusic.app.widgets      (iOS Widgets extension)
-#   - com.echoelmusic.app.Clip         (iOS App Clip)
+#   - com.echoelmusic.app.clip         (iOS App Clip)
 #
 # Note: macOS AUv3 is embedded inside the main app bundle, not separate.
 #       iOS AUv3 functionality is integrated into the main app.
 #
 # App Groups:
 #   - group.com.echoelmusic.shared     (shared data between apps & extensions)
+#
+# App Store Connect:
+#   - SKU: Simsalabimbam
+#   - Apple ID: 6757957358
 #
 # =============================================================================

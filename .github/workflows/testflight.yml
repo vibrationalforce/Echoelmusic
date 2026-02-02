@@ -270,7 +270,7 @@ jobs:
       - name: "Setup Keychain & API Key"
         id: keychain
         env:
-          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_CONTENT_RAW: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
         run: |
           set -e
@@ -304,19 +304,53 @@ jobs:
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
+          # CRITICAL: Normalize API key content
+          # GitHub secrets may store newlines as literal '\n' strings
+          echo "=== Normalizing API Key Content ==="
+          echo "Raw key length: ${#ASC_KEY_CONTENT_RAW} chars"
+
+          # Check if key contains literal \n (escaped newlines)
+          if echo "$ASC_KEY_CONTENT_RAW" | grep -q '\\n'; then
+            echo "Detected literal \\n - converting to actual newlines..."
+            ASC_KEY_CONTENT=$(printf '%b' "$ASC_KEY_CONTENT_RAW")
+          else
+            echo "Key appears to have actual newlines already"
+            ASC_KEY_CONTENT="$ASC_KEY_CONTENT_RAW"
+          fi
+
+          echo "Normalized key length: ${#ASC_KEY_CONTENT} chars"
+          echo "Key lines: $(echo "$ASC_KEY_CONTENT" | wc -l | tr -d ' ')"
+          echo "First line: $(echo "$ASC_KEY_CONTENT" | head -1)"
+          echo "Last line: $(echo "$ASC_KEY_CONTENT" | tail -1)"
+
+          # Validate PEM format
+          if ! echo "$ASC_KEY_CONTENT" | grep -q "BEGIN.*PRIVATE KEY"; then
+            echo "ERROR: Key does not contain valid PEM header!"
+            echo "Expected: -----BEGIN PRIVATE KEY-----"
+            exit 1
+          fi
+
           # Create API key file for xcodebuild cloud-managed signing
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-          # Verify
+          # Verify file was created and has content
           if [ ! -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 ]; then
             echo "ERROR: Failed to create API key file"
             exit 1
           fi
 
+          FILE_LINES=$(wc -l < ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 | tr -d ' ')
+          if [ "$FILE_LINES" -lt 3 ]; then
+            echo "ERROR: API key file has too few lines ($FILE_LINES)"
+            echo "This suggests the key wasn't normalized correctly"
+            exit 1
+          fi
+
+          echo "=== API Key Setup Complete ==="
           echo "Keychain ready: $KEYCHAIN_NAME"
-          echo "API Key ready: AuthKey_${ASC_KEY_ID}.p8"
+          echo "API Key ready: AuthKey_${ASC_KEY_ID}.p8 ($FILE_LINES lines)"
 
       - name: "Debug Project State"
         env:
