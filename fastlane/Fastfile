@@ -595,8 +595,8 @@ platform :ios do
 
     api_key = setup_api_key
 
-    # Ensure app exists in App Store Connect
-    ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "IOS")
+    # Note: App creation is handled automatically by upload_to_testflight
+    # if the app doesn't exist in App Store Connect
 
     # Cloud signing with API key authentication (matching other platforms)
     UI.message("Building iOS app with cloud signing...")
@@ -673,8 +673,8 @@ platform :ios do
 
     api_key = setup_api_key
 
-    # Ensure app exists in App Store Connect
-    ensure_app_exists(api_key, "com.echoelmusic.app.watchkitapp", "Echoelmusic Watch", platform: "IOS")
+    # Note: App creation is handled automatically by upload_to_testflight
+    # if the app doesn't exist in App Store Connect
 
     # Cloud signing with API key authentication (same as iOS)
     UI.message("Building watchOS app with cloud signing...")
@@ -730,8 +730,8 @@ platform :ios do
 
     api_key = setup_api_key
 
-    # Ensure app exists in App Store Connect (shares bundle ID with iOS for universal purchase)
-    ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "APPLE_TV")
+    # Note: App creation is handled automatically by upload_to_testflight
+    # if the app doesn't exist in App Store Connect
 
     # Cloud signing with API key authentication (same as iOS)
     UI.message("Building tvOS app with cloud signing...")
@@ -787,8 +787,8 @@ platform :ios do
 
     api_key = setup_api_key
 
-    # Ensure app exists in App Store Connect
-    ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "VISION_OS")
+    # Note: App creation is handled automatically by upload_to_testflight
+    # if the app doesn't exist in App Store Connect
 
     # Cloud signing with API key authentication (same as iOS)
     UI.message("Building visionOS app with cloud signing...")
@@ -936,8 +936,8 @@ platform :mac do
 
     api_key = setup_api_key
 
-    # Ensure app exists in App Store Connect
-    ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "MAC_OS")
+    # Note: App creation is handled automatically by upload_to_testflight
+    # if the app doesn't exist in App Store Connect
 
     # Cloud signing with API key authentication (same as iOS)
     UI.message("Building macOS app with cloud signing...")
