@@ -581,6 +581,32 @@ end
 platform :ios do
 
   # ---------------------------------------------------------------------------
+  # Debug Lane - Test Environment Variables
+  # ---------------------------------------------------------------------------
+  desc "Debug: Show environment variables"
+  lane :debug_env do
+    UI.header "Environment Debug"
+    UI.message("=" * 60)
+    UI.message("TEAM_ID constant: #{TEAM_ID.inspect}")
+    UI.message("BUILD_NUMBER constant: #{BUILD_NUMBER.inspect}")
+    UI.message("")
+    UI.message("ENV['APPLE_TEAM_ID']: #{ENV['APPLE_TEAM_ID'].inspect}")
+    UI.message("ENV['ASC_KEY_ID']: #{ENV['ASC_KEY_ID'].inspect}")
+    UI.message("ENV['ASC_ISSUER_ID']: #{ENV['ASC_ISSUER_ID']&.length} chars")
+    UI.message("ENV['ASC_KEY_CONTENT']: #{ENV['ASC_KEY_CONTENT']&.length || 0} chars")
+    UI.message("=" * 60)
+
+    if TEAM_ID.nil? || TEAM_ID.empty?
+      UI.error("TEAM_ID is nil or empty!")
+      UI.user_error!("TEAM_ID not set - check APPLE_TEAM_ID env var")
+    else
+      UI.success("TEAM_ID is set: #{TEAM_ID}")
+    end
+
+    UI.success("Environment debug complete!")
+  end
+
+  # ---------------------------------------------------------------------------
   # iOS App (with Widgets Extension and App Clip)
   # ---------------------------------------------------------------------------
   desc "Build and upload iOS app to TestFlight"

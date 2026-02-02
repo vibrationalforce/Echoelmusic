@@ -534,8 +534,23 @@ jobs:
           ruby -e 'puts "TEAM_ID from Ruby: #{ENV["APPLE_TEAM_ID"].inspect}"' | tee -a ./build/fastlane/deploy.log
           ruby -e 'puts "KEY_CONTENT length: #{ENV["ASC_KEY_CONTENT"]&.length}"' | tee -a ./build/fastlane/deploy.log
 
-          # Run fastlane WITHOUT pipe - write to file directly
-          echo "Running: fastlane ios beta --verbose"
+          # First run debug_env to verify environment
+          echo "=== Running debug_env lane first ===" | tee -a ./build/fastlane/deploy.log
+          fastlane ios debug_env 2>&1 | tee ./build/fastlane/debug_env.log
+          DEBUG_EXIT=$?
+          echo "debug_env exit code: $DEBUG_EXIT" | tee -a ./build/fastlane/deploy.log
+
+          if [ $DEBUG_EXIT -ne 0 ]; then
+            echo "::error title=Debug Env Failed::Exit code $DEBUG_EXIT"
+            echo "::group::Debug Env Output"
+            cat ./build/fastlane/debug_env.log
+            echo "::endgroup::"
+            exit 1
+          fi
+
+          # Now run the actual beta lane
+          echo "" | tee -a ./build/fastlane/deploy.log
+          echo "=== Running ios beta lane ===" | tee -a ./build/fastlane/deploy.log
           fastlane ios beta --verbose > ./build/fastlane/fastlane.log 2>&1
           FASTLANE_EXIT=$?
 
