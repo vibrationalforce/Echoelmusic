@@ -161,12 +161,13 @@ targets:
           # CODE_SIGN_IDENTITY removed - Automatic signing handles Distribution for archives
     # Note: iOS AUv3 is integrated into the main app (works as both host and plugin)
     # No separate extension needed - same approach as macOS
-    dependencies:
-      - target: EchoelmusicWidgets
-        embed: true
-      # App Clip temporarily disabled - needs provisioning profile setup
-      # - target: EchoelmusicClip
-      #   embed: false
+    # dependencies:
+    #   - target: EchoelmusicWidgets
+    #     embed: true
+    #   # App Clip temporarily disabled - needs provisioning profile setup
+    #   # - target: EchoelmusicClip
+    #   #   embed: false
+    # NOTE: Widgets temporarily disabled for TestFlight - enable after signing configured
     entitlements:
       path: Echoelmusic.entitlements
 
@@ -667,13 +668,13 @@ targets:
 
 schemes:
 
-  # iOS Development (with Widgets)
-  # Note: App Clip temporarily disabled - needs provisioning profile setup
+  # iOS Development
+  # Note: Widgets and App Clip temporarily disabled - needs provisioning profile setup
   Echoelmusic:
     build:
       targets:
         Echoelmusic: all
-        EchoelmusicWidgets: all
+        # EchoelmusicWidgets: all  # Disabled until provisioning is configured
         # EchoelmusicClip: all  # Disabled until provisioning is configured
         EchoelmusicTests: [test]
         EchoelmusicUITests: [test]
@@ -774,12 +775,12 @@ schemes:
 
   # All Platforms Release (for CI)
   # Note: iOS and macOS AUv3 are integrated into their main apps (no separate targets)
-  # Note: App Clip temporarily disabled - needs provisioning profile setup
+  # Note: Widgets and App Clip temporarily disabled - needs provisioning profile setup
   Echoelmusic-AllPlatforms:
     build:
       targets:
         Echoelmusic: [archive]
-        EchoelmusicWidgets: [archive]
+        # EchoelmusicWidgets: [archive]  # Disabled until provisioning is configured
         # EchoelmusicClip: [archive]  # Disabled until provisioning is configured
         Echoelmusic-macOS: [archive]
         EchoelmusicAUv3-macOS: [archive]
