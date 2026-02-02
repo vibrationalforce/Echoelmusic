@@ -493,17 +493,28 @@ platform :ios do
   desc "Build and upload iOS app to TestFlight"
   lane :beta do
     UI.header "iOS TestFlight Build (with Widgets)"
+    UI.important "=== STEP 0: Fastlane initialized at #{Time.now} ==="
+    UI.important "   Ruby version: #{RUBY_VERSION}"
+    UI.important "   Fastlane version: #{Fastlane::VERSION}"
+    UI.important "   Working directory: #{Dir.pwd}"
     UI.important "=== STEP 1: Starting lane ==="
 
     # Record start time for timing validation
     build_start_time = Time.now
+    UI.important "   Build start time: #{build_start_time}"
 
     UI.important "=== STEP 2: Setting up API key ==="
+    UI.message "   ASC_KEY_ID present: #{ENV['ASC_KEY_ID']&.length.to_i > 0}"
+    UI.message "   ASC_ISSUER_ID present: #{ENV['ASC_ISSUER_ID']&.length.to_i > 0}"
+    UI.message "   ASC_KEY_CONTENT present: #{ENV['ASC_KEY_CONTENT']&.length.to_i > 0}"
+    UI.message "   APPLE_TEAM_ID present: #{ENV['APPLE_TEAM_ID']&.length.to_i > 0}"
     api_key = setup_api_key
     UI.success "✅ API key setup complete"
 
     # Pre-build validation
     UI.important "=== STEP 3: Validating project setup ==="
+    UI.message "   Checking for project file..."
+    UI.message "   Project exists: #{File.exist?('Echoelmusic.xcodeproj')}"
     validate_project_setup("Echoelmusic.xcodeproj", "Echoelmusic")
     UI.success "✅ Project validation complete"
 
@@ -521,15 +532,19 @@ platform :ios do
     # Cloud signing with API key authentication
     UI.important "=== STEP 5: Preparing cloud signing ==="
     UI.message("Building iOS app with cloud signing...")
+    UI.message "   Current time: #{Time.now}"
 
     api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
+    UI.message "   API key path: #{api_key_path}"
 
     # Verify API key file exists
     unless File.exist?(api_key_path)
       UI.error("❌ API key file not found: #{api_key_path}")
+      UI.error("   Directory contents:")
+      Dir.glob(File.expand_path("~/.appstoreconnect/private_keys/*")).each { |f| UI.error("   - #{f}") }
       UI.user_error!("API key file missing - cannot proceed with cloud signing")
     end
-    UI.success("✅ API key file found")
+    UI.success("✅ API key file found at #{api_key_path}")
 
     # xcargs: Let xcodebuild handle signing via cloud with API auth
     xcargs = [
