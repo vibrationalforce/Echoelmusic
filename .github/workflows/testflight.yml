@@ -451,7 +451,7 @@ jobs:
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          ASC_KEY_CONTENT_RAW: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FL_OUTPUT_DIR: ./build/fastlane
         run: |
@@ -461,30 +461,19 @@ jobs:
           echo "============================================"
           echo ""
 
-          # CRITICAL: Normalize the API key content
-          # GitHub secrets may store newlines as literal '\n' strings
-          # We need to convert them to actual newlines for both env var and file
-          echo "Normalizing API key content..."
-
-          # Check if key contains literal \n (escaped newlines)
-          if echo "$ASC_KEY_CONTENT_RAW" | grep -q '\\n'; then
-            echo "  Detected literal \\n in key - converting to actual newlines..."
-            # Use printf to interpret escape sequences
-            export ASC_KEY_CONTENT=$(printf '%b' "$ASC_KEY_CONTENT_RAW")
-          else
-            echo "  Key appears to have actual newlines already"
-            export ASC_KEY_CONTENT="$ASC_KEY_CONTENT_RAW"
-          fi
-
           # Show key info (without revealing content)
-          echo "  Key length: ${#ASC_KEY_CONTENT} chars"
-          echo "  Key lines: $(echo "$ASC_KEY_CONTENT" | wc -l | tr -d ' ')"
+          echo "API Key Configuration:"
+          echo "  Key ID: $ASC_KEY_ID"
+          echo "  Issuer ID length: ${#ASC_ISSUER_ID} chars"
+          echo "  Key content length: ${#ASC_KEY_CONTENT} chars"
+          echo "  Key content lines: $(echo "$ASC_KEY_CONTENT" | wc -l | tr -d ' ')"
           echo "  First line: $(echo "$ASC_KEY_CONTENT" | head -1)"
           echo "  Last line: $(echo "$ASC_KEY_CONTENT" | tail -1)"
           echo ""
 
-          # Re-write the API key file with normalized content
-          echo "Re-writing API key file with normalized content..."
+          # Re-write the API key file to ensure it exists
+          echo "Writing API key file..."
+          mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
