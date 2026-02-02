@@ -54,7 +54,7 @@ settings:
     SWIFT_VERSION: "5.9"
     PRODUCT_NAME: $(TARGET_NAME)
     MARKETING_VERSION: "3.0.0"
-    CURRENT_PROJECT_VERSION: "${BUILD_NUMBER:=1}"
+    CURRENT_PROJECT_VERSION: "${BUILD_NUMBER}"
     ENABLE_BITCODE: NO
     ALWAYS_SEARCH_USER_PATHS: NO
     SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited)"
@@ -161,7 +161,7 @@ targets:
         INFOPLIST_FILE: Resources/iOS/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: Echoelmusic.entitlements
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "${APPLE_TEAM_ID}"
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "15.0"
         SDKROOT: iphoneos
@@ -237,7 +237,7 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: EchoelmusicMac.entitlements
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "${APPLE_TEAM_ID}"
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         ENABLE_HARDENED_RUNTIME: YES
         COMBINE_HIDPI_IMAGES: YES
@@ -322,7 +322,7 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: EchoelmusicAUv3.entitlements
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "${APPLE_TEAM_ID}"
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
         SKIP_INSTALL: YES
@@ -386,7 +386,7 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: EchoelmusicWatch.entitlements
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "${APPLE_TEAM_ID}"
         WATCHOS_DEPLOYMENT_TARGET: "8.0"
         TARGETED_DEVICE_FAMILY: "4"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -444,7 +444,7 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: EchoelmusicTV.entitlements
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "${APPLE_TEAM_ID}"
         TVOS_DEPLOYMENT_TARGET: "15.0"
         TARGETED_DEVICE_FAMILY: "3"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIconTV
@@ -504,7 +504,7 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: EchoelmusicVision.entitlements
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "${APPLE_TEAM_ID}"
         XROS_DEPLOYMENT_TARGET: "1.0"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIconVision
         SDKROOT: xros
@@ -553,7 +553,7 @@ targets:
         INFOPLIST_FILE: Resources/iOS/WidgetsInfo.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: EchoelmusicWidgets.entitlements
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "${APPLE_TEAM_ID}"
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../../Frameworks @executable_path/../Frameworks"
@@ -616,7 +616,7 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: EchoelmusicClip.entitlements
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "${APPLE_TEAM_ID}"
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "15.0"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

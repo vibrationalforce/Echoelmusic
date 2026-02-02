@@ -2,58 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- =================================================================== -->
+	<!-- SIMPLIFIED ENTITLEMENTS FOR INITIAL TESTFLIGHT BUILD -->
+	<!-- =================================================================== -->
+	<!-- Only essential capabilities that work with automatic signing -->
+	<!-- Advanced capabilities (App Groups, iCloud, HomeKit) can be added -->
+	<!-- after provisioning profiles are properly configured -->
+	<!-- =================================================================== -->
+
 	<!-- HealthKit Access (basic - no health-records which requires approval) -->
 	<key>com.apple.developer.healthkit</key>
 	<true/>
 
-	<!-- Audio Background Mode -->
-	<key>inter-app-audio</key>
-	<true/>
+	<!-- Audio Background Mode (for audio playback) -->
+	<!-- Note: inter-app-audio is deprecated, using UIBackgroundModes in Info.plist instead -->
 
-	<!-- App Groups (for widget/watch communication) -->
-	<key>com.apple.security.application-groups</key>
-	<array>
-		<string>group.com.echoelmusic.shared</string>
-	</array>
-
-	<!-- Keychain Sharing -->
-	<key>keychain-access-groups</key>
-	<array>
-		<string>$(AppIdentifierPrefix)com.echoelmusic.app</string>
-	</array>
-
-	<!-- Push Notifications - Removed: Not implemented, would cause App Store rejection -->
-	<!-- To re-enable: Implement UNUserNotificationCenter and register for remote notifications -->
-
-	<!-- iCloud/CloudKit (for cross-device sync) -->
-	<key>com.apple.developer.icloud-container-identifiers</key>
-	<array>
-		<string>iCloud.com.echoelmusic.app</string>
-	</array>
-	<key>com.apple.developer.icloud-services</key>
-	<array>
-		<string>CloudKit</string>
-		<string>CloudDocuments</string>
-	</array>
-	<key>com.apple.developer.ubiquity-container-identifiers</key>
-	<array>
-		<string>iCloud.com.echoelmusic.app</string>
-	</array>
-	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
-	<string>$(TeamIdentifierPrefix)com.echoelmusic.app</string>
-
-	<!-- HomeKit (for smart home lighting control) -->
-	<key>com.apple.developer.homekit</key>
-	<true/>
-
-	<!-- Sign in with Apple -->
-	<key>com.apple.developer.applesignin</key>
-	<array>
-		<string>Default</string>
-	</array>
-
-	<!-- WeatherKit -->
-	<key>com.apple.developer.weatherkit</key>
-	<true/>
 </dict>
 </plist>

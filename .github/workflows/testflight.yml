@@ -248,24 +248,41 @@ jobs:
           fastlane --version
 
       - name: "Generate Project"
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
-          # Update Team ID
-          sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
+          # XcodeGen uses environment variable substitution
+          # project.yml references ${APPLE_TEAM_ID} and ${BUILD_NUMBER}
+          echo "Environment variables for XcodeGen:"
+          echo "  APPLE_TEAM_ID: $APPLE_TEAM_ID"
+          echo "  BUILD_NUMBER: $BUILD_NUMBER"
 
-          # Verify sed worked
-          if ! grep -q "DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"" project.yml; then
-            echo "ERROR: Failed to set DEVELOPMENT_TEAM in project.yml"
+          # Verify environment variables are set
+          if [ -z "$APPLE_TEAM_ID" ]; then
+            echo "ERROR: APPLE_TEAM_ID is not set!"
             exit 1
           fi
 
-          # Update Build Number
-          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
+          if [ -z "$BUILD_NUMBER" ]; then
+            echo "WARNING: BUILD_NUMBER not set, using default 1"
+            export BUILD_NUMBER=1
+          fi
 
-          # Generate Xcode project
+          # Generate Xcode project with environment variable substitution
           xcodegen generate --spec project.yml
 
+          # Verify project was generated
           echo "Project generated successfully"
           ls -la *.xcodeproj
+
+          # Verify DEVELOPMENT_TEAM was set correctly in generated project
+          echo "Checking generated project settings..."
+          if grep -r "DEVELOPMENT_TEAM" Echoelmusic.xcodeproj/project.pbxproj | head -3; then
+            echo "DEVELOPMENT_TEAM found in generated project"
+          else
+            echo "WARNING: Could not verify DEVELOPMENT_TEAM in generated project"
+          fi
 
       - name: "Setup Keychain & API Key"
         id: keychain
@@ -718,14 +735,16 @@ jobs:
           gem install fastlane:${{ env.FASTLANE_VERSION }} -N --no-document
 
       - name: "Generate Project"
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
-          sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          if ! grep -q "DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"" project.yml; then
-            echo "ERROR: Failed to set DEVELOPMENT_TEAM"
-            exit 1
-          fi
-          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
+          echo "Generating Xcode project..."
+          echo "  APPLE_TEAM_ID: $APPLE_TEAM_ID"
+          echo "  BUILD_NUMBER: ${BUILD_NUMBER:-1}"
+          export BUILD_NUMBER="${BUILD_NUMBER:-1}"
           xcodegen generate --spec project.yml
+          echo "Project generated successfully"
 
       - name: "Setup Keychain & API Key"
         id: keychain
@@ -829,10 +848,14 @@ jobs:
           gem install fastlane:${{ env.FASTLANE_VERSION }} -N --no-document
 
       - name: "Generate Project"
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
-          sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
+          echo "Generating Xcode project..."
+          export BUILD_NUMBER="${BUILD_NUMBER:-1}"
           xcodegen generate --spec project.yml
+          echo "Project generated successfully"
 
       - name: "Setup Keychain & API Key"
         id: keychain
@@ -941,10 +964,14 @@ jobs:
           gem install fastlane:${{ env.FASTLANE_VERSION }} -N --no-document
 
       - name: "Generate Project"
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
-          sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
+          echo "Generating Xcode project..."
+          export BUILD_NUMBER="${BUILD_NUMBER:-1}"
           xcodegen generate --spec project.yml
+          echo "Project generated successfully"
 
       - name: "Setup Keychain & API Key"
         id: keychain
@@ -1048,10 +1075,14 @@ jobs:
           gem install fastlane:${{ env.FASTLANE_VERSION }} -N --no-document
 
       - name: "Generate Project"
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
-          sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
+          echo "Generating Xcode project..."
+          export BUILD_NUMBER="${BUILD_NUMBER:-1}"
           xcodegen generate --spec project.yml
+          echo "Project generated successfully"
 
       - name: "Setup Keychain & API Key"
         id: keychain
