@@ -493,23 +493,31 @@ platform :ios do
   desc "Build and upload iOS app to TestFlight"
   lane :beta do
     UI.header "iOS TestFlight Build (with Widgets)"
+    UI.important "=== STEP 1: Starting lane ==="
 
     # Record start time for timing validation
     build_start_time = Time.now
 
+    UI.important "=== STEP 2: Setting up API key ==="
     api_key = setup_api_key
+    UI.success "✅ API key setup complete"
 
     # Pre-build validation
+    UI.important "=== STEP 3: Validating project setup ==="
     validate_project_setup("Echoelmusic.xcodeproj", "Echoelmusic")
+    UI.success "✅ Project validation complete"
 
     # Ensure app exists in App Store Connect
+    UI.important "=== STEP 4: Checking app in App Store Connect ==="
     app_exists = ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "IOS")
     unless app_exists
       UI.important("⚠️ App may not exist in App Store Connect - upload may fail")
       UI.important("   Create the app at: https://appstoreconnect.apple.com/apps")
     end
+    UI.success "✅ App Store Connect check complete"
 
     # Cloud signing with API key authentication
+    UI.important "=== STEP 5: Preparing cloud signing ==="
     UI.message("Building iOS app with cloud signing...")
 
     api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
@@ -532,26 +540,37 @@ platform :ios do
       "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
     ].join(" ")
 
-    UI.message("Starting xcodebuild archive...")
+    UI.important "=== STEP 6: Starting xcodebuild archive ==="
     UI.message("This should take 5-30 minutes depending on caching...")
+    UI.message("xcargs: #{xcargs}")
 
-    build_app(
-      project: "Echoelmusic.xcodeproj",
-      scheme: "Echoelmusic",
-      configuration: "Release",
-      clean: ENV["CLEAN_BUILD"] == "true",
-      export_method: "app-store",
-      derived_data_path: "./build/DerivedData",
-      output_directory: "./build",
-      output_name: "Echoelmusic.ipa",
-      export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
-      },
-      xcargs: xcargs
-    )
+    begin
+      build_app(
+        project: "Echoelmusic.xcodeproj",
+        scheme: "Echoelmusic",
+        configuration: "Release",
+        clean: ENV["CLEAN_BUILD"] == "true",
+        export_method: "app-store",
+        derived_data_path: "./build/DerivedData",
+        output_directory: "./build",
+        output_name: "Echoelmusic.ipa",
+        export_options: {
+          signingStyle: "automatic",
+          teamID: TEAM_ID
+        },
+        xcargs: xcargs
+      )
+      UI.success "✅ build_app completed"
+    rescue => e
+      UI.error "❌ build_app FAILED: #{e.class}"
+      UI.error "   Message: #{e.message}"
+      UI.error "   Backtrace:"
+      e.backtrace.first(10).each { |line| UI.error "     #{line}" }
+      raise e
+    end
 
     # Post-build validation
+    UI.important "=== STEP 7: Validating build output ==="
     validate_build_completed(build_start_time, min_build_seconds: 60)
 
     # Verify IPA was created
