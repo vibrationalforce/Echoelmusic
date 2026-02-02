@@ -318,6 +318,26 @@ jobs:
           echo "Keychain ready: $KEYCHAIN_NAME"
           echo "API Key ready: AuthKey_${ASC_KEY_ID}.p8"
 
+      - name: "Debug Project State"
+        run: |
+          echo "## 🔍 iOS Project Debug Info" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Xcode Project" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ls -la *.xcodeproj 2>&1 >> $GITHUB_STEP_SUMMARY || echo "No .xcodeproj found!" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Available Schemes" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          xcodebuild -project Echoelmusic.xcodeproj -list 2>&1 >> $GITHUB_STEP_SUMMARY || echo "Failed to list schemes!" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Source Files (first 20)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          find Sources/Echoelmusic -name "*.swift" 2>/dev/null | head -20 >> $GITHUB_STEP_SUMMARY || true
+          echo "Total: $(find Sources/Echoelmusic -name "*.swift" 2>/dev/null | wc -l | tr -d ' ') Swift files" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
       - name: "Test API Connection"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
