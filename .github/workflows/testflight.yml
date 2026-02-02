@@ -541,18 +541,37 @@ jobs:
 
           echo "Fastlane exit code: $FASTLANE_EXIT" | tee -a ./build/fastlane/deploy.log
 
-          # Always show last 100 lines in console
-          echo "=== Last 100 lines of fastlane output ===" | tee -a ./build/fastlane/deploy.log
-          tail -100 ./build/fastlane/fastlane.log
-
           if [ $FASTLANE_EXIT -ne 0 ]; then
             echo ""
+            echo "::error title=Fastlane Failed::Exit code $FASTLANE_EXIT"
+
+            # Extract and show key error lines using GitHub annotation format
+            echo "::group::Fastlane Error Output"
+            cat ./build/fastlane/fastlane.log
+            echo "::endgroup::"
+
+            # Look for specific error patterns and annotate them
+            if grep -q "TEAM_ID" ./build/fastlane/fastlane.log; then
+              TEAM_ERR=$(grep "TEAM_ID" ./build/fastlane/fastlane.log | head -1)
+              echo "::error::$TEAM_ERR"
+            fi
+
+            if grep -q "user_error" ./build/fastlane/fastlane.log; then
+              USER_ERR=$(grep "user_error" ./build/fastlane/fastlane.log | head -1)
+              echo "::error::$USER_ERR"
+            fi
+
+            if grep -q "Missing" ./build/fastlane/fastlane.log; then
+              MISS_ERR=$(grep "Missing" ./build/fastlane/fastlane.log | head -1)
+              echo "::error::$MISS_ERR"
+            fi
+
+            # Write to step summary
             echo "## ❌ Fastlane Failed (exit code: $FASTLANE_EXIT)" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Last 200 lines of output" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -200 ./build/fastlane/fastlane.log >> $GITHUB_STEP_SUMMARY
+            cat ./build/fastlane/fastlane.log >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
+
             exit 1
           fi
 
