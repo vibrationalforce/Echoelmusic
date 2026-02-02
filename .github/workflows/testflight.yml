@@ -472,6 +472,10 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FL_OUTPUT_DIR: ./build/fastlane
         run: |
+          # Enable command tracing and exit on error for debugging
+          set -x
+          set -e
+
           # Debug: Show environment state
           echo "============================================"
           echo "  iOS TESTFLIGHT DEPLOYMENT"
@@ -564,10 +568,11 @@ jobs:
           echo "============================================" | tee -a $DEBUG_LOG
           echo "" | tee -a $DEBUG_LOG
 
+          # Disable tracing and exit-on-error for fastlane (it has its own error handling)
+          set +x
           set +e
           fastlane ios beta --verbose 2>&1 | tee ./build/fastlane/output.log
           FASTLANE_EXIT=$?
-          set -e
 
           echo "" | tee -a $DEBUG_LOG
           echo "Fastlane completed with exit code: $FASTLANE_EXIT" | tee -a $DEBUG_LOG
