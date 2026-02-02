@@ -595,7 +595,7 @@ platform :ios do
 
       UI.important "=== STEP 4: Validating project ==="
       UI.message "   Project file: #{File.exist?('Echoelmusic.xcodeproj') ? 'exists' : 'MISSING'}"
-      validate_project_setup("Echoelmusic.xcodeproj", "Echoelmusic")
+      validate_project_setup("Echoelmusic.xcodeproj", "Echoelmusic-iOS")
       UI.success "   ✅ Project validation complete"
 
       build_start_time = Time.now
@@ -620,13 +620,13 @@ platform :ios do
 
       # Debug: Show build settings
       UI.message("=== Build Settings Debug ===")
-      build_settings = `xcodebuild -project Echoelmusic.xcodeproj -scheme Echoelmusic -showBuildSettings 2>&1 | head -100`
+      build_settings = `xcodebuild -project Echoelmusic.xcodeproj -scheme Echoelmusic-iOS -showBuildSettings 2>&1 | head -100`
       UI.message(build_settings)
       UI.message("=== End Build Settings ===")
 
       build_app(
         project: "Echoelmusic.xcodeproj",
-        scheme: "Echoelmusic",
+        scheme: "Echoelmusic-iOS",
         configuration: "Release",
         clean: ENV["CLEAN_BUILD"] == "true",
         export_method: "app-store",

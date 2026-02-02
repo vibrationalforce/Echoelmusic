@@ -668,7 +668,7 @@ targets:
 
 schemes:
 
-  # iOS Development
+  # iOS Development (Legacy scheme name - for backwards compatibility)
   # Note: Widgets and App Clip temporarily disabled - needs provisioning profile setup
   Echoelmusic:
     build:
@@ -685,6 +685,20 @@ schemes:
       gatherCoverageData: true
       targets:
         - EchoelmusicTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  # iOS Release (Dedicated iOS scheme matching other platforms' naming)
+  Echoelmusic-iOS:
+    build:
+      targets:
+        Echoelmusic: all
+    run:
+      config: Debug
     profile:
       config: Release
     analyze:
