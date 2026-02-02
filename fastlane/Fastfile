@@ -507,14 +507,16 @@ platform :ios do
     validate_project_setup("Echoelmusic.xcodeproj", "Echoelmusic")
     UI.success "✅ Project validation complete"
 
+    # TEMPORARILY SKIPPING ensure_app_exists to isolate build failure
     # Ensure app exists in App Store Connect
-    UI.important "=== STEP 4: Checking app in App Store Connect ==="
-    app_exists = ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "IOS")
-    unless app_exists
-      UI.important("⚠️ App may not exist in App Store Connect - upload may fail")
-      UI.important("   Create the app at: https://appstoreconnect.apple.com/apps")
-    end
-    UI.success "✅ App Store Connect check complete"
+    UI.important "=== STEP 4: SKIPPING App Store Connect check (debugging) ==="
+    UI.important "   Will check if app exists during upload instead"
+    # app_exists = ensure_app_exists(api_key, "com.echoelmusic.app", "Echoelmusic", platform: "IOS")
+    # unless app_exists
+    #   UI.important("⚠️ App may not exist in App Store Connect - upload may fail")
+    #   UI.important("   Create the app at: https://appstoreconnect.apple.com/apps")
+    # end
+    UI.success "✅ App Store Connect check skipped (debugging)"
 
     # Cloud signing with API key authentication
     UI.important "=== STEP 5: Preparing cloud signing ==="
