@@ -319,6 +319,8 @@ jobs:
           echo "API Key ready: AuthKey_${ASC_KEY_ID}.p8"
 
       - name: "Debug Project State"
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           echo "## 🔍 iOS Project Debug Info" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -330,6 +332,23 @@ jobs:
           echo "### Available Schemes" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           xcodebuild -project Echoelmusic.xcodeproj -list 2>&1 >> $GITHUB_STEP_SUMMARY || echo "Failed to list schemes!" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quick Build Test (checking if project can compile)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          # Try a quick build test to iOS simulator (no signing needed)
+          xcodebuild \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic \
+            -destination "generic/platform=iOS Simulator" \
+            -configuration Debug \
+            ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tail -100 >> $GITHUB_STEP_SUMMARY || {
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "❌ Quick build test FAILED" >> $GITHUB_STEP_SUMMARY
+              echo "This means the project has compilation errors" >> $GITHUB_STEP_SUMMARY
+            }
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Source Files (first 20)" >> $GITHUB_STEP_SUMMARY
