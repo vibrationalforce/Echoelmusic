@@ -472,154 +472,36 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FL_OUTPUT_DIR: ./build/fastlane
         run: |
-          # Enable command tracing and exit on error for debugging
-          set -x
-          set -e
+          # Simplified deploy script for debugging
+          echo "=== iOS TestFlight Deployment ==="
 
-          # Debug: Show environment state
-          echo "============================================"
-          echo "  iOS TESTFLIGHT DEPLOYMENT"
-          echo "============================================"
-          echo ""
-
-          # Show key info (without revealing content)
-          echo "API Key Configuration:"
-          echo "  Key ID: $ASC_KEY_ID"
-          echo "  Issuer ID length: ${#ASC_ISSUER_ID} chars"
-          echo "  Key content length: ${#ASC_KEY_CONTENT} chars"
-          echo "  Key content lines: $(echo "$ASC_KEY_CONTENT" | wc -l | tr -d ' ')"
-          echo "  First line: $(echo "$ASC_KEY_CONTENT" | head -1)"
-          echo "  Last line: $(echo "$ASC_KEY_CONTENT" | tail -1)"
-          echo ""
-
-          # Re-write the API key file to ensure it exists
-          echo "Writing API key file..."
-          mkdir -p ~/.appstoreconnect/private_keys
+          # Setup API key file
+          mkdir -p ~/.appstoreconnect/private_keys ./build/fastlane
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-          echo "Configuration:"
-          echo "  Team ID: $APPLE_TEAM_ID"
-          echo "  API Key ID: $ASC_KEY_ID"
-          echo "  Issuer ID length: ${#ASC_ISSUER_ID} chars"
-          echo "  Private Key lines: $(echo "$ASC_KEY_CONTENT" | wc -l)"
+          echo "Environment:"
+          echo "  APPLE_TEAM_ID: $APPLE_TEAM_ID"
+          echo "  ASC_KEY_ID: $ASC_KEY_ID"
+          echo "  Key file exists: $(test -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 && echo yes || echo no)"
           echo ""
 
-          # Verify API key file
-          if [ -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 ]; then
-            echo "✅ API Key file exists"
-            echo "   File lines: $(wc -l < ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8)"
-          else
-            echo "❌ API Key file missing!"
-            exit 1
-          fi
-
-          # Create output directory
-          mkdir -p ./build/fastlane ./build/profiles
-
-          # Create debug log that will be uploaded as artifact
-          DEBUG_LOG="./build/fastlane/debug.log"
-
-          echo "" | tee -a $DEBUG_LOG
-          echo "=== Pre-flight Debug Info ===" | tee -a $DEBUG_LOG
-          echo "Current directory: $(pwd)" | tee -a $DEBUG_LOG
-          echo "Date: $(date)" | tee -a $DEBUG_LOG
-          echo "" | tee -a $DEBUG_LOG
-
-          echo "=== Xcode Project Files ===" | tee -a $DEBUG_LOG
-          ls -la *.xcodeproj 2>&1 | tee -a $DEBUG_LOG || echo "No .xcodeproj found!" | tee -a $DEBUG_LOG
-          echo "" | tee -a $DEBUG_LOG
-
-          echo "=== Xcode Schemes ===" | tee -a $DEBUG_LOG
-          xcodebuild -project Echoelmusic.xcodeproj -list 2>&1 | tee -a $DEBUG_LOG || echo "Failed to list schemes!" | tee -a $DEBUG_LOG
-          echo "" | tee -a $DEBUG_LOG
-
-          echo "=== Source Files ===" | tee -a $DEBUG_LOG
-          find Sources/Echoelmusic -name "*.swift" 2>/dev/null | head -10 | tee -a $DEBUG_LOG
-          echo "Total Swift files: $(find Sources/Echoelmusic -name "*.swift" 2>/dev/null | wc -l)" | tee -a $DEBUG_LOG
-          echo "" | tee -a $DEBUG_LOG
-
-          echo "=== Team ID ===" | tee -a $DEBUG_LOG
-          echo "APPLE_TEAM_ID: $APPLE_TEAM_ID" | tee -a $DEBUG_LOG
-          echo "" | tee -a $DEBUG_LOG
-
-          echo "============================================" | tee -a $DEBUG_LOG
-          echo "Pre-fastlane checks..." | tee -a $DEBUG_LOG
-          echo "============================================" | tee -a $DEBUG_LOG
-          echo "" | tee -a $DEBUG_LOG
-
-          # Verify fastlane is available
-          echo "Fastlane version:" | tee -a $DEBUG_LOG
-          fastlane --version 2>&1 | tee -a $DEBUG_LOG || {
-            echo "❌ Fastlane not found!" | tee -a $DEBUG_LOG
-            exit 1
-          }
-
-          echo "" | tee -a $DEBUG_LOG
-          echo "Environment check:" | tee -a $DEBUG_LOG
-          echo "  ASC_KEY_ID length: ${#ASC_KEY_ID}" | tee -a $DEBUG_LOG
-          echo "  ASC_ISSUER_ID length: ${#ASC_ISSUER_ID}" | tee -a $DEBUG_LOG
-          echo "  ASC_KEY_CONTENT length: ${#ASC_KEY_CONTENT}" | tee -a $DEBUG_LOG
-          echo "  APPLE_TEAM_ID: $APPLE_TEAM_ID" | tee -a $DEBUG_LOG
-          echo "" | tee -a $DEBUG_LOG
-
-          echo "============================================" | tee -a $DEBUG_LOG
-          echo "Starting fastlane ios beta..." | tee -a $DEBUG_LOG
-          echo "============================================" | tee -a $DEBUG_LOG
-          echo "" | tee -a $DEBUG_LOG
-
-          # Disable tracing and exit-on-error for fastlane (it has its own error handling)
-          set +x
-          set +e
+          echo "Running fastlane..."
           fastlane ios beta --verbose 2>&1 | tee ./build/fastlane/output.log
           FASTLANE_EXIT=$?
 
-          echo "" | tee -a $DEBUG_LOG
-          echo "Fastlane completed with exit code: $FASTLANE_EXIT" | tee -a $DEBUG_LOG
-
           echo ""
-          echo "============================================"
+          echo "Fastlane completed with exit code: $FASTLANE_EXIT"
+          echo ""
 
           if [ $FASTLANE_EXIT -ne 0 ]; then
-            echo "❌ FASTLANE FAILED (exit code: $FASTLANE_EXIT)"
-            echo "============================================"
+            echo "❌ FASTLANE FAILED"
             echo ""
-
-            # Show build artifacts (if any)
-            echo "=== Build Artifacts ==="
-            find ./build -name "*.ipa" -o -name "*.xcarchive" 2>/dev/null | head -10 || echo "No artifacts found"
-            echo ""
-
-            # Show key error messages
             echo "=== Error Summary ==="
-            grep -E "(error:|Error:|ERROR|failed|Failed|FAILED|❌)" ./build/fastlane/output.log | tail -30 || true
+            grep -E "(error:|Error:|ERROR|failed|Failed|FAILED|❌|user_error)" ./build/fastlane/output.log | tail -50 || true
             echo ""
-
-            # Show last 100 lines for context
             echo "=== Last 100 lines ==="
             tail -100 ./build/fastlane/output.log || true
-            echo ""
-
-            # Also write to step summary for visibility
-            echo "## ❌ iOS Build Failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Exit code: $FASTLANE_EXIT" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Pre-flight Debug Info" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            cat ./build/fastlane/debug.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No debug.log found" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Error Summary" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            grep -E "(error:|Error:|ERROR|failed|Failed|FAILED|❌|user_error)" ./build/fastlane/output.log | tail -50 >> $GITHUB_STEP_SUMMARY || true
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Last 50 Lines of Output" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -50 ./build/fastlane/output.log >> $GITHUB_STEP_SUMMARY || true
-            echo '```' >> $GITHUB_STEP_SUMMARY
-
             exit 1
           fi
 
