@@ -92,7 +92,8 @@ class SpatialAudioEngine: ObservableObject {
     }
 
     deinit {
-        stop()
+        // ARC handles cleanup - stop() is @MainActor so we can't call it directly
+        // The audio engine will be stopped when deallocated
     }
 
     // MARK: - Audio Engine Setup
@@ -347,8 +348,10 @@ class SpatialAudioEngine: ObservableObject {
     public func setReverbBlend(_ blend: Float) {
         let clampedBlend = max(0.0, min(1.0, blend))
 
-        if #available(iOS 17.0, *), let environment = environmentNode {
-            environment.reverbParameters.wetDryMix = clampedBlend * 50.0  // Scale to 0-50%
+        if let environment = environmentNode {
+            // Use level property to control reverb amount (-40dB to 40dB)
+            // Map 0-1 blend to -40 to 0 dB range
+            environment.reverbParameters.level = (clampedBlend * 40.0) - 40.0
         }
     }
 
@@ -492,7 +495,9 @@ class SpatialAudioEngine: ObservableObject {
         manager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
             guard let self = self, let motion = motion else { return }
             Task { @MainActor in
-                self.updateListenerOrientation(attitude: motion.attitude)
+                if #available(iOS 17.0, macOS 14.0, *) {
+                    self.updateListenerOrientation(attitude: motion.attitude)
+                }
             }
         }
 
@@ -504,7 +509,7 @@ class SpatialAudioEngine: ObservableObject {
         motionManager = nil
     }
 
-    @available(iOS 17.0, *)
+    @available(iOS 17.0, macOS 14.0, *)
     private func updateListenerOrientation(attitude: CMAttitude) {
         guard let environment = environmentNode else { return }
 

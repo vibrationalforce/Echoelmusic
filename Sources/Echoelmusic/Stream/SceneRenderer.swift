@@ -251,7 +251,7 @@ class SceneRenderer {
     // MARK: - Rendering
 
     /// Render a complete scene to texture
-    func renderScene(_ scene: Scene, size: CGSize, time: Float) -> MTLTexture? {
+    func renderScene(_ scene: StreamScene, size: CGSize, time: Float) -> MTLTexture? {
         // Create or reuse output texture
         if outputTexture == nil ||
            outputTexture?.width != Int(size.width) ||
