@@ -328,42 +328,48 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
+          set -x  # Enable command echoing for debugging
+
           # Show debug info
-          echo "=== Debug Info ==="
+          echo "=== Pre-Build Debug Info ==="
           echo "Xcode version: $(xcodebuild -version)"
           echo "Team ID: ${APPLE_TEAM_ID:0:4}****"
           echo "API Key ID: ${ASC_KEY_ID}"
-          echo "Schemes available:"
-          xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null || echo "No project found"
-          echo "=================="
+          echo "API Key file exists: $(test -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 && echo 'YES' || echo 'NO')"
+          echo ""
+          echo "=== Project Info ==="
+          ls -la *.xcodeproj 2>/dev/null || echo "No .xcodeproj found!"
+          echo ""
+          echo "=== Schemes Available ==="
+          xcodebuild -list -project Echoelmusic.xcodeproj 2>&1 || echo "Failed to list schemes"
+          echo "=========================="
 
-          # Retry logic for flaky Apple APIs
-          MAX_RETRIES=3
-          RETRY_DELAY=30
+          # Run fastlane with verbose output
+          echo "=== Starting fastlane ios beta ==="
+          fastlane ios beta --verbose 2>&1 | tee /tmp/fastlane_output.log
+          FASTLANE_EXIT=$?
 
-          for i in $(seq 1 $MAX_RETRIES); do
-            echo "Attempt $i of $MAX_RETRIES..."
+          echo ""
+          echo "=== Fastlane Exit Code: $FASTLANE_EXIT ==="
 
-            # Run with verbose output to capture errors
-            if fastlane ios beta --verbose 2>&1 | tee /tmp/fastlane_output.log; then
-              echo "iOS deployment successful!"
-              exit 0
-            fi
+          # Show build artifacts
+          echo "=== Build Artifacts ==="
+          find . -name "*.ipa" -o -name "*.app" 2>/dev/null | head -20 || echo "No artifacts found"
+          ls -la build/ 2>/dev/null || echo "No build directory"
+          echo "======================="
 
-            # Show last 100 lines of output for debugging
-            echo "=== Last 100 lines of fastlane output ==="
-            tail -100 /tmp/fastlane_output.log || true
-            echo "=========================================="
+          # Show last 200 lines of output
+          echo "=== Last 200 lines of fastlane output ==="
+          tail -200 /tmp/fastlane_output.log
+          echo "=========================================="
 
-            if [ $i -lt $MAX_RETRIES ]; then
-              echo "Attempt $i failed, retrying in ${RETRY_DELAY}s..."
-              sleep $RETRY_DELAY
-              RETRY_DELAY=$((RETRY_DELAY * 2))
-            fi
-          done
+          if [ $FASTLANE_EXIT -eq 0 ]; then
+            echo "iOS deployment completed!"
+          else
+            echo "iOS deployment FAILED with exit code $FASTLANE_EXIT"
+          fi
 
-          echo "All $MAX_RETRIES attempts failed"
-          exit 1
+          exit $FASTLANE_EXIT
 
       - name: "Cleanup"
         if: always()
