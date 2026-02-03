@@ -427,6 +427,13 @@ jobs:
             tail -100 build/logs/archive.log
             echo "=== Searching for errors ==="
             grep -i "error:" build/logs/archive.log | tail -20 || echo "No error: lines found"
+            echo "=== Searching for signing/provisioning issues ==="
+            grep -iE "sign|provision|certificate|profile|team|identity" build/logs/archive.log | tail -30 || echo "No signing messages found"
+            # Output key errors as annotations so they appear in job summary
+            echo "=== Key Error Messages (as annotations) ==="
+            while IFS= read -r line; do
+              echo "::error::$line"
+            done < <(grep -i "error:" build/logs/archive.log | tail -5)
             exit $ARCHIVE_EXIT
           fi
 
