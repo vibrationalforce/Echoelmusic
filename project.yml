@@ -63,7 +63,7 @@ settings:
     Release:
       DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
       SWIFT_COMPILATION_MODE: "wholemodule"
-      # CODE_SIGN_IDENTITY is not set - let automatic signing determine identity
+      CODE_SIGN_IDENTITY: "Apple Distribution"
 
 # =============================================================================
 # TARGETS
