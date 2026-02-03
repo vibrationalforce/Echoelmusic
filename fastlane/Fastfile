@@ -336,13 +336,25 @@ platform :ios do
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
+      destination: "generic/platform=iOS",
       derived_data_path: "./build/DerivedData",
+      archive_path: "./build/Echoelmusic.xcarchive",
+      output_directory: "./build",
+      output_name: "Echoelmusic",
+      buildlog_path: "./build/logs",
       export_options: {
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
       xcargs: build_xcargs_with_auth
     )
+
+    # Verify IPA was created
+    ipa_path = "./build/Echoelmusic.ipa"
+    unless File.exist?(ipa_path)
+      UI.user_error!("IPA file was not created at #{ipa_path}! Check build logs in ./build/logs/")
+    end
+    UI.success("IPA created at: #{ipa_path}")
 
     upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
   end
