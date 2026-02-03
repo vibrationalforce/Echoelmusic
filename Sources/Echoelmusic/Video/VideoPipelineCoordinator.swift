@@ -154,8 +154,8 @@ public final class VideoPipelineCoordinator: ObservableObject {
 
     /// Start streaming (requires capture to be active)
     public func startStreaming(
-        destinations: [StreamDestination],
-        streamKeys: [StreamDestination: String]
+        destinations: [StreamEngine.StreamDestination],
+        streamKeys: [StreamEngine.StreamDestination: String]
     ) async throws {
         guard let stream = streamEngine else {
             throw VideoPipelineError.streamNotSetUp
@@ -329,11 +329,11 @@ public final class VideoPipelineCoordinator: ObservableObject {
     }
 
     /// Set bio-reactive parameters for effects
-    public func updateBioParameters(coherence: Float, heartRate: Float, breathPhase: Float) {
+    public func updateBioParameters(coherence: Float, heartRate: Float, breathingRate: Float) {
         videoProcessingEngine?.updateBioParameters(
-            coherence: coherence,
             heartRate: heartRate,
-            breathPhase: breathPhase
+            breathingRate: breathingRate,
+            coherence: coherence
         )
     }
 
