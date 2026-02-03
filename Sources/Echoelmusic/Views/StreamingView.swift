@@ -550,7 +550,7 @@ struct StreamKeyInputSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: VaporwaveSpacing.xl) {
                 Image(systemName: "key.fill")
                     .font(.system(size: 50))
