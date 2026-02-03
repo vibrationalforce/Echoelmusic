@@ -363,21 +363,34 @@ jobs:
           tail -200 /tmp/fastlane_output.log
           echo "=========================================="
 
-          if [ $FASTLANE_EXIT -eq 0 ]; then
-            echo "iOS deployment completed!"
+          # Verify IPA was created
+          echo "=== Verifying Build Output ==="
+          IPA_COUNT=$(find . -name "*.ipa" 2>/dev/null | wc -l)
+          echo "IPA files found: $IPA_COUNT"
+          find . -name "*.ipa" -exec ls -la {} \; 2>/dev/null || echo "No IPA files"
+
+          if [ $FASTLANE_EXIT -eq 0 ] && [ "$IPA_COUNT" -gt 0 ]; then
+            echo "iOS deployment completed successfully! IPA created."
+          elif [ $FASTLANE_EXIT -eq 0 ]; then
+            echo "WARNING: Fastlane reported success but NO IPA file was created!"
+            echo "This means the build did not actually produce an artifact."
+            exit 1
           else
             echo "iOS deployment FAILED with exit code $FASTLANE_EXIT"
+            exit $FASTLANE_EXIT
           fi
-
-          exit $FASTLANE_EXIT
 
       - name: "Upload Fastlane Logs"
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: fastlane-ios-logs
-          path: /tmp/fastlane_output.log
+          path: |
+            /tmp/fastlane_output.log
+            *.ipa
+            build/**/*.ipa
           retention-days: 7
+          if-no-files-found: warn
 
       - name: "Cleanup"
         if: always()
