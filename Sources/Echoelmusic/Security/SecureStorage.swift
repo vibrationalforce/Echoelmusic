@@ -12,6 +12,9 @@ import CryptoKit
 #if canImport(Security)
 import Security
 #endif
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Logger alias for security audit operations
 private var securityLog: EchoelLogger { echoelLog }
@@ -406,7 +409,7 @@ public final class SecurityAuditLogger {
 
             // Log critical events to system
             if !entry.success && (entry.event == "violation" || entry.event == "cert_pin") {
-                log.warning("[SECURITY AUDIT] \(entry.timestamp): \(entry.event) - \(entry.details)", category: .system)
+                echoelLog.warning("[SECURITY AUDIT] \(entry.timestamp): \(entry.event) - \(entry.details)", category: .system)
             }
         }
     }

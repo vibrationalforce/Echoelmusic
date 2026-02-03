@@ -499,8 +499,8 @@ public final class ScientificVisualizationEngine: ObservableObject {
         case .gaussian:
             let u1 = Double.random(in: 0..<1)
             let u2 = Double.random(in: 0..<1)
-            let z0 = sqrt(-2 * log(u1)) * cos(2 * .pi * u2)
-            let z1 = sqrt(-2 * log(u1)) * sin(2 * .pi * u2)
+            let z0 = sqrt(-2 * Darwin.log(u1)) * cos(2 * .pi * u2)
+            let z1 = sqrt(-2 * Darwin.log(u1)) * sin(2 * .pi * u2)
             return DataPoint(values: [z0 * 0.3 + 0.5, z1 * 0.3 + 0.5])
 
         case .spiral:
