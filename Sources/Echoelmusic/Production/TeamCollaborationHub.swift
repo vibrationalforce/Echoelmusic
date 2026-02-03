@@ -299,7 +299,7 @@ class TeamCollaborationHub: ObservableObject {
         var totalHours: Double = 0.0
 
         for session in activeSessions where session.status == .active {
-            let sessionStart = session.startedAt
+            let sessionStart = session.createdAt
             let sessionEnd = session.endedAt ?? now
             let sessionDuration = sessionEnd.timeIntervalSince(sessionStart) / 3600.0
             totalHours += sessionDuration

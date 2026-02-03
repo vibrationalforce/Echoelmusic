@@ -398,6 +398,7 @@ public enum AIVideoEffect: String, CaseIterable, Codable {
     case audioMusic = "Music Generation"
     case audioSFX = "Sound Effects AI"
     case audioDub = "Auto Dubbing"
+    case autoSubtitles = "Auto Subtitles"
 
     // === CREATIVE AI (15) ===
     case creativeGlitch = "Glitch Art"
