@@ -372,7 +372,6 @@ jobs:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          set -e  # Exit on error
           set -x  # Enable command echoing for debugging
 
           # Show debug info
@@ -390,6 +389,7 @@ jobs:
           echo ""
           echo "=== Step 1: Creating Archive ==="
 
+          set +e  # Don't exit on error, we need to capture the exit code
           xcodebuild archive \
             -project Echoelmusic.xcodeproj \
             -scheme Echoelmusic \
@@ -404,10 +404,26 @@ jobs:
             -authenticationKeyID "${ASC_KEY_ID}" \
             -authenticationKeyIssuerID "${ASC_ISSUER_ID}" \
             2>&1 | tee build/logs/archive.log
+          ARCHIVE_EXIT=${PIPESTATUS[0]}
+          set -e
+
+          echo ""
+          echo "=== xcodebuild archive exit code: $ARCHIVE_EXIT ==="
+
+          if [ $ARCHIVE_EXIT -ne 0 ]; then
+            echo "::error::xcodebuild archive FAILED with exit code $ARCHIVE_EXIT"
+            echo "=== Last 100 lines of archive log ==="
+            tail -100 build/logs/archive.log
+            echo "=== Searching for errors ==="
+            grep -i "error:" build/logs/archive.log | tail -20 || echo "No error: lines found"
+            exit $ARCHIVE_EXIT
+          fi
 
           # Verify archive was created
           if [ ! -d "build/Echoelmusic.xcarchive" ]; then
-            echo "::error::Archive was not created!"
+            echo "::error::Archive was not created despite xcodebuild success!"
+            echo "=== Full archive log ==="
+            cat build/logs/archive.log
             exit 1
           fi
           echo "Archive created at: build/Echoelmusic.xcarchive"
