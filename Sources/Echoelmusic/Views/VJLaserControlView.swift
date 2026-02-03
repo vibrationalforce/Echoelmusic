@@ -1172,8 +1172,8 @@ struct SurfaceRowView: View {
 }
 
 struct KeystoneKnob: View {
-    @Binding var x: Float
-    @Binding var y: Float
+    @Binding var x: CGFloat
+    @Binding var y: CGFloat
 
     var body: some View {
         ZStack {
@@ -1188,13 +1188,13 @@ struct KeystoneKnob: View {
             Circle()
                 .fill(VaporwaveColors.neonCyan)
                 .frame(width: 8, height: 8)
-                .offset(x: CGFloat(x) * 15, y: CGFloat(y) * 15)
+                .offset(x: x * 15, y: y * 15)
         }
         .gesture(
             DragGesture()
                 .onChanged { drag in
-                    x = Float(drag.translation.width / 50).clamped(to: -1...1)
-                    y = Float(drag.translation.height / 50).clamped(to: -1...1)
+                    x = (drag.translation.width / 50).clamped(to: -1...1)
+                    y = (drag.translation.height / 50).clamped(to: -1...1)
                 }
         )
     }
