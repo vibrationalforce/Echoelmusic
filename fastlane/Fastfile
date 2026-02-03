@@ -71,11 +71,13 @@ end
 def build_xcargs_with_auth
   api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
 
-  # For App Store/TestFlight distribution, we need Distribution signing (not Development).
-  # CODE_SIGN_IDENTITY tells Xcode to use Distribution certificates.
-  # -allowProvisioningUpdates with API auth will auto-create/download the profiles.
+  # For App Store/TestFlight distribution, we need:
+  # 1. CODE_SIGN_STYLE='Manual' - Override automatic signing to allow Distribution
+  # 2. CODE_SIGN_IDENTITY='Apple Distribution' - Use Distribution certificates
+  # 3. -allowProvisioningUpdates with API auth will auto-create/download the profiles
   args = [
     "DEVELOPMENT_TEAM='#{TEAM_ID}'",
+    "CODE_SIGN_STYLE='Manual'",
     "CODE_SIGN_IDENTITY='Apple Distribution'",
     "COMPILER_INDEX_STORE_ENABLE=NO",
     "-allowProvisioningUpdates",
