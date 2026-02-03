@@ -405,10 +405,13 @@ jobs:
             -project Echoelmusic.xcodeproj \
             -scheme Echoelmusic \
             -configuration Release \
-            -destination "generic/platform=iOS" \
+            -sdk iphoneos \
             -archivePath build/Echoelmusic.xcarchive \
             -derivedDataPath build/DerivedData \
             DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
+            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGNING_REQUIRED=YES \
+            CODE_SIGNING_ALLOWED=YES \
             COMPILER_INDEX_STORE_ENABLE=NO \
             -allowProvisioningUpdates \
             -allowProvisioningDeviceRegistration \
