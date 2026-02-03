@@ -379,8 +379,19 @@ jobs:
           echo "Xcode version: $(xcodebuild -version)"
           echo "Team ID: ${APPLE_TEAM_ID:0:4}****"
           echo "API Key ID: ${ASC_KEY_ID}"
+          echo "API Issuer ID: ${ASC_ISSUER_ID:0:8}****"
           API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          echo "API Key file path: $API_KEY_PATH"
           echo "API Key file exists: $(test -f $API_KEY_PATH && echo 'YES' || echo 'NO')"
+          if [ -f "$API_KEY_PATH" ]; then
+            echo "API Key file size: $(wc -c < $API_KEY_PATH) bytes"
+            echo "API Key file first line: $(head -1 $API_KEY_PATH)"
+          fi
+
+          # Verify project signing settings
+          echo ""
+          echo "=== Project Build Settings ==="
+          xcodebuild -project Echoelmusic.xcodeproj -scheme Echoelmusic -showBuildSettings 2>&1 | grep -E "DEVELOPMENT_TEAM|CODE_SIGN|PROVISIONING" | head -20 || true
 
           # Create directories
           mkdir -p build/logs
