@@ -15,8 +15,8 @@ public class StreamEngine: ObservableObject {
 
     @Published var isStreaming: Bool = false
     @Published var activeStreams: [StreamDestination: StreamStatus] = [:]
-    @Published var currentScene: Scene?
-    @Published var availableScenes: [Scene] = []
+    @Published var currentScene: StreamScene?
+    @Published var availableScenes: [StreamScene] = []
     @Published var bitrate: Int = 6000 // kbps
     @Published var resolution: Resolution = .hd1920x1080
     @Published var frameRate: Int = 60
@@ -58,7 +58,7 @@ public class StreamEngine: ObservableObject {
         case custom1 = "Custom RTMP 1"
         case custom2 = "Custom RTMP 2"
 
-        var id: String { rawValue }
+        public var id: String { rawValue }
 
         var rtmpURL: String {
             switch self {
@@ -491,7 +491,7 @@ public class StreamEngine: ObservableObject {
 
     // MARK: - Crossfade Transition
 
-    private func performCrossfade(from: Scene?, to: Scene?, duration: TimeInterval) async {
+    private func performCrossfade(from: StreamScene?, to: StreamScene?, duration: TimeInterval) async {
         let frameInterval: TimeInterval = 1.0 / 60.0  // 60 FPS
         let totalFrames = Int(duration / frameInterval)
 
@@ -514,7 +514,7 @@ public class StreamEngine: ObservableObject {
         log.streaming("🎬 Crossfade transition completed (\(String(format: "%.1f", duration))s)")
     }
 
-    private func renderCrossfadeFrame(fromScene: Scene?, toScene: Scene, blendFactor: Float) async {
+    private func renderCrossfadeFrame(fromScene: StreamScene?, toScene: StreamScene?, blendFactor: Float) async {
         // Mix the two scenes based on blend factor
         // fromScene * (1 - blendFactor) + toScene * blendFactor
         // This would be implemented with Metal compute shader in production

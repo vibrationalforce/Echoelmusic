@@ -2574,10 +2574,10 @@ public final class ContentCreatorPlugin: EchoelmusicPlugin {
 
     private func setupDefaultScenes() {
         bioScenes = [
-            OBSScene(name: "HighEnergy", coherenceRange: 0.8...1.0, priority: 3),
-            OBSScene(name: "Focused", coherenceRange: 0.6..<0.8, priority: 2),
-            OBSScene(name: "Relaxed", coherenceRange: 0.4..<0.6, priority: 1),
-            OBSScene(name: "Main", coherenceRange: 0.0..<0.4, priority: 0)
+            OBSScene(name: "HighEnergy", coherenceRange: Float(0.8)...Float(1.0), priority: 3),
+            OBSScene(name: "Focused", coherenceRange: Float(0.6)...Float(0.79), priority: 2),
+            OBSScene(name: "Relaxed", coherenceRange: Float(0.4)...Float(0.59), priority: 1),
+            OBSScene(name: "Main", coherenceRange: Float(0.0)...Float(0.39), priority: 0)
         ]
     }
 
