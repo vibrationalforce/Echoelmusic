@@ -326,7 +326,17 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
+          # Show debug info
+          echo "=== Debug Info ==="
+          echo "Xcode version: $(xcodebuild -version)"
+          echo "Team ID: ${APPLE_TEAM_ID:0:4}****"
+          echo "API Key ID: ${ASC_KEY_ID}"
+          echo "Schemes available:"
+          xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null || echo "No project found"
+          echo "=================="
+
           # Retry logic for flaky Apple APIs
           MAX_RETRIES=3
           RETRY_DELAY=30
@@ -334,10 +344,16 @@ jobs:
           for i in $(seq 1 $MAX_RETRIES); do
             echo "Attempt $i of $MAX_RETRIES..."
 
-            if fastlane ios beta; then
+            # Run with verbose output to capture errors
+            if fastlane ios beta --verbose 2>&1 | tee /tmp/fastlane_output.log; then
               echo "iOS deployment successful!"
               exit 0
             fi
+
+            # Show last 100 lines of output for debugging
+            echo "=== Last 100 lines of fastlane output ==="
+            tail -100 /tmp/fastlane_output.log || true
+            echo "=========================================="
 
             if [ $i -lt $MAX_RETRIES ]; then
               echo "Attempt $i failed, retrying in ${RETRY_DELAY}s..."
