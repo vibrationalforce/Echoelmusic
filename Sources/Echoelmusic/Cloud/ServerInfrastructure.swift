@@ -450,6 +450,7 @@ public enum AuthError: Error, LocalizedError {
     case refreshFailed
     case keychainFailed
     case invalidCredentials
+    case invalidConfiguration
 
     public var errorDescription: String? {
         switch self {
@@ -461,6 +462,8 @@ public enum AuthError: Error, LocalizedError {
             return "Keychain access failed"
         case .invalidCredentials:
             return "Invalid credentials provided"
+        case .invalidConfiguration:
+            return "Invalid server configuration"
         }
     }
 
@@ -472,6 +475,8 @@ public enum AuthError: Error, LocalizedError {
             return "Check your network connection and try again"
         case .keychainFailed:
             return "Please restart the app and try again"
+        case .invalidConfiguration:
+            return "Please check server settings and try again"
         }
     }
 }
@@ -655,7 +660,7 @@ public class CollaborationServer: NSObject, ObservableObject {
     private func reconnect() async {
         guard reconnectAttempt < maxReconnectAttempts else {
             logger.error("Max reconnection attempts reached", category: .collaboration)
-            connectionState = .failed(CollaborationError.maxReconnectAttemptsReached)
+            connectionState = .failed("Max reconnection attempts reached")
             return
         }
 

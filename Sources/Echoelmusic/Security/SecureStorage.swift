@@ -19,7 +19,6 @@ private var securityLog: EchoelLogger { echoelLog }
 // MARK: - Secure Storage Manager
 
 /// Thread-safe secure storage manager with AES-256-GCM encryption
-@MainActor
 public final class SecureStorageManager {
     public static let shared = SecureStorageManager()
 
