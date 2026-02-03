@@ -1076,7 +1076,7 @@ public class UnifiedControlHub: ObservableObject {
         // Handle preset changes
         if let presetChange = params.presetChange {
             Log.info("[Gesture→Audio] Preset change requested: \(presetChange)", category: .system)
-            audioEngine.loadPreset(named: presetChange)
+            audioEngine.loadPreset(named: String(presetChange))
         }
     }
 
@@ -1092,9 +1092,10 @@ public class UnifiedControlHub: ObservableObject {
             if let _ = crossPlatformSessionManager?.activeSession {
                 let params = tracker.getControlParameters()
                 // Gaze-derived parameters can be synced as part of biometric data
-                let hrvModifier = params.attention * 20  // Attention affects coherence perception
+                let hrvModifier = Float(params.attention * 20)  // Attention affects coherence perception
+                let baseCoherence = Float(healthKitManager?.hrvCoherence ?? 50.0)
                 syncBiometricsToSession(
-                    hrvCoherence: healthKitManager?.hrvCoherence ?? 50 + Float(hrvModifier),
+                    hrvCoherence: baseCoherence + hrvModifier,
                     heartRate: Float(healthKitManager?.heartRate ?? 72),
                     breathingRate: Float(healthKitManager?.breathingRate ?? 12)
                 )
@@ -1145,7 +1146,7 @@ public class UnifiedControlHub: ObservableObject {
             hrvCoherence: healthKit.hrvCoherence,
             heartRate: healthKit.heartRate,
             breathingRate: healthKit.breathingRate,
-            audioLevel: Double(audioEngine?.currentLevel ?? 0.5)
+            audioLevel: audioEngine?.currentLevel ?? 0.5
         )
 
         if let visualMapper = midiToVisualMapper {
@@ -1186,10 +1187,9 @@ public class UnifiedControlHub: ObservableObject {
 
         // Update Push 3 LED patterns
         if let push3 = push3LEDController {
-            push3.updateBioReactive(
+            push3.updateFromBioSignals(
                 hrvCoherence: bioData.hrvCoherence,
-                heartRate: bioData.heartRate,
-                breathingRate: bioData.breathingRate
+                heartRate: bioData.heartRate
             )
         }
 
