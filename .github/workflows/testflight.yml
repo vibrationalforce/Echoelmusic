@@ -20,6 +20,19 @@
 name: "TestFlight"
 
 on:
+  # Automatic deployment on push to claude/* branches
+  push:
+    branches:
+      - 'claude/fix-testflight-*'
+    paths:
+      - '.github/workflows/testflight.yml'
+      - 'Sources/**'
+      - 'Package.swift'
+      - 'project.yml'
+      - 'fastlane/**'
+      - '*.entitlements'
+      - 'Resources/**'
+
   workflow_dispatch:
     inputs:
       platform:
@@ -190,12 +203,14 @@ jobs:
         id: parse
         run: |
           PLATFORM="${{ github.event.inputs.platform }}"
-          if [ "$PLATFORM" = "all" ]; then
+          # For push events (no input), default to 'all'
+          if [ -z "$PLATFORM" ] || [ "$PLATFORM" = "all" ]; then
             echo 'platforms=["ios","macos","watchos","tvos","visionos"]' >> $GITHUB_OUTPUT
+            echo "Building: ALL platforms (push trigger)"
           else
             echo "platforms=[\"$PLATFORM\"]" >> $GITHUB_OUTPUT
+            echo "Building: $PLATFORM"
           fi
-          echo "Building: $PLATFORM"
 
   # ===========================================================================
   # iOS DEPLOYMENT (includes Widgets + App Clip)
@@ -206,7 +221,7 @@ jobs:
     needs: preflight
     if: |
       needs.preflight.outputs.ready == 'true' &&
-      (github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'all')
+      (github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'all' || github.event.inputs.platform == '')
     timeout-minutes: 60
 
     steps:
@@ -538,7 +553,7 @@ jobs:
     needs: preflight
     if: |
       needs.preflight.outputs.ready == 'true' &&
-      (github.event.inputs.platform == 'macos' || github.event.inputs.platform == 'all')
+      (github.event.inputs.platform == 'macos' || github.event.inputs.platform == 'all' || github.event.inputs.platform == '')
     timeout-minutes: 60
 
     steps:
@@ -649,7 +664,7 @@ jobs:
     needs: preflight
     if: |
       needs.preflight.outputs.ready == 'true' &&
-      (github.event.inputs.platform == 'watchos' || github.event.inputs.platform == 'all')
+      (github.event.inputs.platform == 'watchos' || github.event.inputs.platform == 'all' || github.event.inputs.platform == '')
     timeout-minutes: 60
 
     steps:
@@ -765,7 +780,7 @@ jobs:
     needs: preflight
     if: |
       needs.preflight.outputs.ready == 'true' &&
-      (github.event.inputs.platform == 'tvos' || github.event.inputs.platform == 'all')
+      (github.event.inputs.platform == 'tvos' || github.event.inputs.platform == 'all' || github.event.inputs.platform == '')
     timeout-minutes: 60
 
     steps:
@@ -881,7 +896,7 @@ jobs:
     needs: preflight
     if: |
       needs.preflight.outputs.ready == 'true' &&
-      (github.event.inputs.platform == 'visionos' || github.event.inputs.platform == 'all')
+      (github.event.inputs.platform == 'visionos' || github.event.inputs.platform == 'all' || github.event.inputs.platform == '')
     timeout-minutes: 60
 
     steps:
