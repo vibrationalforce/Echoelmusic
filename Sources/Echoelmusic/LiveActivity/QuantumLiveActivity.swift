@@ -72,6 +72,8 @@ public struct QuantumSessionAttributes: ActivityAttributes {
 
 @available(iOS 16.2, *)
 public struct QuantumLiveActivityWidget: Widget {
+    public init() {}
+
     public var body: some WidgetConfiguration {
         ActivityConfiguration(for: QuantumSessionAttributes.self) { context in
             // Lock Screen / Banner View
