@@ -71,12 +71,12 @@ end
 def build_xcargs_with_auth
   api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
 
-  # With automatic signing + API authentication (-allowProvisioningUpdates),
-  # xcodebuild will automatically manage certificates and provisioning profiles.
-  # We ONLY specify the team and allow provisioning updates - nothing else for signing.
-  # Let the project's signing configuration (Automatic) handle the rest.
+  # For App Store/TestFlight distribution, we need Distribution signing (not Development).
+  # CODE_SIGN_IDENTITY tells Xcode to use Distribution certificates.
+  # -allowProvisioningUpdates with API auth will auto-create/download the profiles.
   args = [
     "DEVELOPMENT_TEAM='#{TEAM_ID}'",
+    "CODE_SIGN_IDENTITY='Apple Distribution'",
     "COMPILER_INDEX_STORE_ENABLE=NO",
     "-allowProvisioningUpdates",
     "-allowProvisioningDeviceRegistration"
